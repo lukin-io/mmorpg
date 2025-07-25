@@ -1,6 +1,13 @@
 Rails.application.routes.draw do
   devise_for :users
-  get "up" => "rails/health#show", as: :rails_health_check
   resources :characters
 
+  resources :regions
+  resources :items
+  resources :inventories, only: [:index, :show]
+
+  resources :guilds do
+    resources :memberships, only: [:create, :destroy]
+  end
+  root "characters#index"
 end

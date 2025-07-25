@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_07_25_145251) do
+ActiveRecord::Schema[8.0].define(version: 2025_07_25_160104) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -30,11 +30,10 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_25_145251) do
   create_table "guilds", force: :cascade do |t|
     t.string "name"
     t.text "description"
-    t.string "leader_type", null: false
     t.bigint "leader_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["leader_type", "leader_id"], name: "index_guilds_on_leader"
+    t.index ["leader_id"], name: "index_guilds_on_leader_id"
   end
 
   create_table "inventories", force: :cascade do |t|
@@ -54,6 +53,15 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_25_145251) do
     t.jsonb "attrs"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+  end
+
+  create_table "memberships", force: :cascade do |t|
+    t.bigint "guild_id", null: false
+    t.bigint "character_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["character_id"], name: "index_memberships_on_character_id"
+    t.index ["guild_id"], name: "index_memberships_on_guild_id"
   end
 
   create_table "regions", force: :cascade do |t|
@@ -79,6 +87,9 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_25_145251) do
   end
 
   add_foreign_key "characters", "users"
+  add_foreign_key "guilds", "characters", column: "leader_id"
   add_foreign_key "inventories", "items"
   add_foreign_key "inventories", "users"
+  add_foreign_key "memberships", "characters"
+  add_foreign_key "memberships", "guilds"
 end

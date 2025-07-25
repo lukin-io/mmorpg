@@ -1,9 +1,10 @@
-# This file should ensure the existence of records required to run the application in every environment (production,
-# development, test). The code here should be idempotent so that it can be executed at any point in every environment.
-# The data can then be loaded with the bin/rails db:seed command (or created alongside the database with db:setup).
-#
-# Example:
-#
-#   ["Action", "Comedy", "Drama", "Horror"].each do |genre_name|
-#     MovieGenre.find_or_create_by!(name: genre_name)
-#   end
+Region.create!(name: "Starter Village", description: "The starting point for adventurers", x_coord: 0, y_coord: 0)
+Region.create!(name: "Dark Forest", description: "Dangerous, mysterious woodland", x_coord: 10, y_coord: 5)
+Region.create!(name: "Silver City", description: "Central hub for trade and crafting", x_coord: -5, y_coord: 8)
+
+Item.create!(name: "Iron Sword", item_type: "Weapon", rarity: "Common", attrs: {attack: 5})
+Item.create!(name: "Leather Armor", item_type: "Armor", rarity: "Common", attrs: {defense: 3})
+Item.create!(name: "Healing Potion", item_type: "Consumable", rarity: "Uncommon", attrs: {heal: 20})
+
+leader_character = Character.first
+Guild.create!(name: "Warriors of Light", description: "Guild for brave warriors", leader: leader_character)
