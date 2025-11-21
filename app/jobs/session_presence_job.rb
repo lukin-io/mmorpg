@@ -14,15 +14,15 @@ class SessionPresenceJob < ApplicationJob
 
     case state
     when "active", "online"
-      session.mark_active!(timestamp)
+      session.mark_active!(timestamp: timestamp)
       user.update!(last_seen_at: timestamp)
       publisher.online!(user: user, session: session)
     when "idle"
-      session.mark_idle!(timestamp)
+      session.mark_idle!(timestamp: timestamp)
       user.update!(last_seen_at: timestamp)
       publisher.idle!(user: user, session: session)
     when "offline"
-      session.mark_offline!(timestamp)
+      session.mark_offline!(timestamp: timestamp)
       publisher.offline!(user: user, session: session)
     end
   end

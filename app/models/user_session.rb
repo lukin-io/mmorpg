@@ -9,7 +9,7 @@ class UserSession < ApplicationRecord
 
   belongs_to :user
 
-  enum :status, STATUS_VALUES, _suffix: :status
+  enum :status, STATUS_VALUES, suffix: :status
 
   validates :device_id, :signed_in_at, presence: true
   validates :device_id, uniqueness: {scope: :user_id}

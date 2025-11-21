@@ -5,7 +5,7 @@ RSpec.describe UserSession, type: :model do
     it "updates last_seen_at and status" do
       session = create(:user_session, status: "idle", last_seen_at: 5.minutes.ago)
 
-      session.mark_active!(Time.current)
+      session.mark_active!(timestamp: Time.current)
 
       expect(session.reload).to have_attributes(
         status: "online"
@@ -17,7 +17,7 @@ RSpec.describe UserSession, type: :model do
     it "marks status as idle" do
       session = create(:user_session, status: "online")
 
-      session.mark_idle!(Time.current)
+      session.mark_idle!(timestamp: Time.current)
 
       expect(session.reload.status).to eq("idle")
     end
@@ -27,7 +27,7 @@ RSpec.describe UserSession, type: :model do
     it "marks session as offline and records sign out" do
       session = create(:user_session, signed_out_at: nil)
 
-      session.mark_offline!(Time.current)
+      session.mark_offline!(timestamp: Time.current)
 
       expect(session.reload).to be_offline_status
       expect(session.signed_out_at).not_to be_nil
