@@ -3,12 +3,12 @@
 class Purchase < ApplicationRecord
   belongs_to :user
 
-  enum status: {
+  enum :status, {
     pending: "pending",
     succeeded: "succeeded",
     failed: "failed",
     refunded: "refunded"
-  }, suffix: :status
+  }, suffix: true
 
   validates :provider, :external_id, :status, :currency, presence: true
   validates :external_id, uniqueness: true
