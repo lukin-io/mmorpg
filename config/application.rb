@@ -16,6 +16,16 @@ module Mmorpg
     # Common ones are `templates`, `generators`, or `middleware`, for example.
     config.autoload_lib(ignore: %w[assets tasks])
 
+    config.autoload_paths << Rails.root.join("app/components")
+    config.eager_load_paths << Rails.root.join("app/lib")
+    config.active_job.queue_adapter = :sidekiq
+
+    config.generators do |generator|
+      generator.test_framework :rspec
+      generator.fixture_replacement :factory_bot, dir: "spec/factories"
+      generator.helper false
+    end
+
     # Configuration for the application, engines, and railties goes here.
     #
     # These settings can be overridden in specific environments using the files

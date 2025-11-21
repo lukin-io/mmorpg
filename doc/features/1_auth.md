@@ -2,11 +2,9 @@
 
 ## Account Lifecycle
 - Devise handles email/password registration, confirmation, password resets.
-- Support OAuth (Google, VK) later via `omniauth` adapters to ease onboarding for Neverlands veterans.
 - Require verified email before enabling PvP, trading, or chat to limit spam/bots.
 
 ## Security & Compliance
-- Enforce MFA (TOTP/SMS) for moderator/admin accounts; optional for players.
 - Rate-limit login attempts (Rack::Attack) and add device/session history per user.
 - Store premium token balances per account; ledger every purchase/consumption event.
 

@@ -1,6 +1,13 @@
 #!/usr/bin/env ruby
 
-require_relative "../config/environment"
-require "solid_queue/cli"
+require "English"
 
-SolidQueue::Cli.start(ARGV)
+APP_ROOT = File.expand_path("..", __dir__)
+SIDEKIQ_CONFIG = File.join(APP_ROOT, "config", "sidekiq.yml")
+
+Dir.chdir(APP_ROOT) do
+  exec "bundle", "exec", "sidekiq", "-C", SIDEKIQ_CONFIG, *ARGV
+rescue Errno::ENOENT => e
+  warn "Failed to start Sidekiq: #{e.message}"
+  exit 1
+end
