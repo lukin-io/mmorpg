@@ -8,7 +8,7 @@ class Purchase < ApplicationRecord
     succeeded: "succeeded",
     failed: "failed",
     refunded: "refunded"
-  }, _suffix: :status
+  }, suffix: :status
 
   validates :provider, :external_id, :status, :currency, presence: true
   validates :external_id, uniqueness: true
