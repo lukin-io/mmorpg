@@ -35,7 +35,7 @@ Rails.application.configure do
 
   # Log to STDOUT with the current request id as a default log tag.
   config.log_tags = [ :request_id ]
-  config.logger   = ActiveSupport::TaggedLogging.logger(STDOUT)
+  config.logger = ActiveSupport::TaggedLogging.logger($stdout)
 
   # Change to "debug" to log everything (including potentially personally-identifiable information!).
   config.log_level = ENV.fetch("RAILS_LOG_LEVEL", "info")
@@ -46,12 +46,13 @@ Rails.application.configure do
   # Don't log any deprecations.
   config.active_support.report_deprecations = false
 
-  # Replace the default in-process memory cache store with a durable alternative.
-  config.cache_store = :solid_cache_store
-
-  # Replace the default in-process and non-durable queuing backend for Active Job.
-  config.active_job.queue_adapter = :solid_queue
-  config.solid_queue.connects_to = { database: { writing: :queue } }
+  # Replace the default in-process memory cache store with Redis.
+  redis_cache_url = ENV.fetch("REDIS_CACHE_URL", "redis://localhost:6379/1")
+  config.cache_store = :redis_cache_store, {
+    url: redis_cache_url,
+    namespace: "mmorpg-cache",
+    driver: :ruby
+  }
 
   # Ignore bad email addresses and do not raise email delivery errors.
   # Set this to true and configure the email server for immediate delivery to raise delivery errors.

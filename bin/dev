@@ -1,2 +1,15 @@
-#!/usr/bin/env ruby
-exec "./bin/rails", "server", *ARGV
+#!/usr/bin/env sh
+
+set -e
+
+APP_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+PROCFILE="$APP_ROOT/Procfile.dev"
+
+if command -v foreman >/dev/null 2>&1; then
+  exec foreman start -f "$PROCFILE" "$@"
+elif command -v overmind >/dev/null 2>&1; then
+  exec overmind start -f "$PROCFILE" "$@"
+else
+  echo "Please install foreman (gem install foreman) or overmind to run Procfile.dev" >&2
+  exit 1
+fi

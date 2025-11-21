@@ -18,17 +18,20 @@ A full-stack Ruby on Rails MMORPG inspired by the classic Neverlands.ru. This pr
 
 ## 🚀 Tech Stack
 
-- **Ruby on Rails 8.x** (Full-stack monolith)
-- **PostgreSQL** (primary database)
+- **Ruby 3.4.4 + Rails 8.1.1** (full-stack Hotwire monolith)
+- **PostgreSQL 18** (primary datastore)
+- **Redis** (dedicated instances for cache, Action Cable, and Sidekiq)
 - **Hotwire**
   - Turbo Drive (navigation)
   - Turbo Frames (partial updates)
   - Turbo Streams (real-time UI)
   - Stimulus controllers (interactivity)
-- **Tailwind CSS** (optional / if included)
-- **Minitest or RSpec** (your choice — project supports both)
-- **Sidekiq** (optional, for asynchronous jobs)
-- **Redis** (optional, sessions/jobs/pub-sub)
+- **Devise + Pundit + Rolify** (auth + authorization + roles)
+- **Sidekiq 8** (background jobs for combat/chat/events)
+- **ViewComponent** (server-rendered UI composition)
+- **Flipper** (feature flag rollout)
+- **RSpec + Capybara + FactoryBot + VCR/WebMock** (tests + contract specs)
+- **Stripe Adapter Scaffold (Stripe Ruby 18.x)** (payments / premium items)
 
 ---
 
@@ -59,6 +62,51 @@ This is a clone/re-imagining of the classic MMORPG **Neverlands.ru**, featuring:
 | **doc/features/*.md**        | Per-system breakdown derived from the GDD (technical implementation plan)|
 
 Use this README as the entry point, then jump to the guide that matches the type of work you’re doing.
+
+---
+
+## 🛠️ Getting Started
+
+1. **Install dependencies**
+   ```bash
+   bundle install
+   ```
+2. **Prepare the databases**
+   ```bash
+   bin/rails db:prepare
+   ```
+3. **Start the full stack (web, Sidekiq, Action Cable)**
+   ```bash
+   gem install foreman # first time only
+   bin/dev
+   ```
+
+### Required environment variables
+
+| Variable | Purpose | Default |
+| --- | --- | --- |
+| `REDIS_CACHE_URL` | Redis instance for Rails cache | `redis://localhost:6379/1` |
+| `REDIS_SIDEKIQ_URL` | Redis instance for Sidekiq queues | `redis://localhost:6379/2` |
+| `REDIS_CABLE_URL` | Redis instance for Action Cable pub/sub | `redis://localhost:6379/3-5` |
+| `STRIPE_SECRET_KEY` | Stripe API secret for premium purchases | *(not set)* |
+| `SIDEKIQ_CONCURRENCY` | Override worker threads | `5` |
+| `APP_URL` | Base URL for payment callbacks | `http://localhost:3000` |
+
+### Background jobs & feature flags
+
+- `Procfile.dev` runs **web**, **worker**, and **cable** processes. Use `foreman`/`overmind`.
+- Feature toggles live in Flipper. Toggle them via console or `Flipper::UI` when wired.
+- Sidekiq dashboard is mounted at `/sidekiq` (admin role required).
+
+### Testing & QA
+
+- Run the full suite with `bundle exec rspec`.
+- Security/linting:
+  - `bundle exec rubocop`
+  - `bundle exec standardrb`
+  - `bundle exec brakeman`
+  - `bundle exec bundler-audit`
+- Hotwire contract tests belong in `spec/system` or `spec/streams`.
 
 ---
 

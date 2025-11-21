@@ -1,0 +1,10 @@
+---
+:concurrency: <%= ENV.fetch("SIDEKIQ_CONCURRENCY", 5).to_i %>
+:queues:
+  - default
+  - combat
+  - chat
+  - payments
+  - low
+:logfile: ./log/sidekiq.log
+

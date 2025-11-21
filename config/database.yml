@@ -18,6 +18,9 @@ default: &default
   # For details on connection pooling, see Rails configuration guide
   # https://guides.rubyonrails.org/configuring.html#database-pooling
   max_connections: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+  username: <%= ENV.fetch("POSTGRES_USER", "postgres") %>
+  password: <%= ENV["POSTGRES_PASSWORD"] %>
+  host: <%= ENV.fetch("POSTGRES_HOST", "localhost") %>
 
 
 development:
@@ -85,20 +88,25 @@ test:
 # for a full overview on how database connection configuration can be specified.
 #
 production:
-  primary: &primary_production
-    <<: *default
-    database: mmorpg_production
-    username: mmorpg
-    password: <%= ENV["MMORPG_DATABASE_PASSWORD"] %>
-  cache:
-    <<: *primary_production
-    database: mmorpg_production_cache
-    migrations_paths: db/cache_migrate
-  queue:
-    <<: *primary_production
-    database: mmorpg_production_queue
-    migrations_paths: db/queue_migrate
-  cable:
-    <<: *primary_production
-    database: mmorpg_production_cable
-    migrations_paths: db/cable_migrate
+  <<: *default
+  database: mmorpg_production
+  username: <%= ENV.fetch("POSTGRES_USER", "mmorpg") %>
+  password: <%= ENV.fetch("MMORPG_DATABASE_PASSWORD", ENV["POSTGRES_PASSWORD"]) %>
+
+  # primary: &primary_production
+  #   <<: *default
+  #   database: mmorpg_production
+  #   username: mmorpg
+  #   password: <%= ENV["MMORPG_DATABASE_PASSWORD"] %>
+  # cache:
+  #   <<: *primary_production
+  #   database: mmorpg_production_cache
+  #   migrations_paths: db/cache_migrate
+  # queue:
+  #   <<: *primary_production
+  #   database: mmorpg_production_queue
+  #   migrations_paths: db/queue_migrate
+  # cable:
+  #   <<: *primary_production
+  #   database: mmorpg_production_cable
+  #   migrations_paths: db/cable_migrate
