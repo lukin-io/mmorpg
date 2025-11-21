@@ -30,4 +30,3 @@ module Guilds
     attr_reader :role
   end
 end
-

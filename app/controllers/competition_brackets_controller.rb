@@ -12,4 +12,3 @@ class CompetitionBracketsController < ApplicationController
     redirect_to competition_bracket_path(bracket), notice: "Bracket updated."
   end
 end
-

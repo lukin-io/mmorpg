@@ -13,4 +13,3 @@ class ProfessionProgressPolicy < ApplicationPolicy
     end
   end
 end
-

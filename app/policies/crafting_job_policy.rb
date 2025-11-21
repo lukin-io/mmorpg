@@ -15,4 +15,3 @@ class CraftingJobPolicy < ApplicationPolicy
     end
   end
 end
-

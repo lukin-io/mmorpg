@@ -2,6 +2,7 @@
 
 class ChatChannel < ApplicationRecord
   include ActionView::RecordIdentifier
+
   CHANNEL_TYPES = {
     global: 0,
     local: 1,

@@ -5,4 +5,3 @@ class Mount < ApplicationRecord
 
   validates :name, :mount_type, presence: true
 end
-

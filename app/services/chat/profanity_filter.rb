@@ -46,7 +46,7 @@ module Chat
       else
         %w[foo swear curse]
       end
-    rescue StandardError
+    rescue
       %w[foo swear curse]
     end
   end

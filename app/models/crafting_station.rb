@@ -7,4 +7,3 @@ class CraftingStation < ApplicationRecord
 
   scope :in_city, ->(city_name) { where(city: city_name) }
 end
-

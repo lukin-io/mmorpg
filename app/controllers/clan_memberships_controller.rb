@@ -7,4 +7,3 @@ class ClanMembershipsController < ApplicationController
     redirect_to clan_path(membership.clan), notice: "Removed from clan."
   end
 end
-

@@ -33,4 +33,3 @@ module Clans
     attr_reader :attacker, :defender
   end
 end
-

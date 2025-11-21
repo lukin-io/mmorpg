@@ -23,4 +23,3 @@ class AuctionListingPolicy < ApplicationPolicy
     end
   end
 end
-

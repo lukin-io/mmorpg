@@ -32,4 +32,3 @@ module Housing
     attr_reader :user, :plot
   end
 end
-

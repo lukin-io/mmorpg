@@ -21,4 +21,3 @@ class GuildMembershipPolicy < ApplicationPolicy
     record.guild.leader == user || user&.has_any_role?(:gm, :admin)
   end
 end
-

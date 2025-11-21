@@ -6,4 +6,3 @@ class Recipe < ApplicationRecord
 
   validates :name, :tier, :duration_seconds, :output_item_name, presence: true
 end
-

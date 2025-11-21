@@ -15,4 +15,3 @@ class ProfessionsController < ApplicationController
     redirect_to professions_path, notice: "Profession leveled up."
   end
 end
-

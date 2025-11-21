@@ -5,4 +5,3 @@ class EventSchedule < ApplicationRecord
 
   validates :schedule_type, presence: true
 end
-

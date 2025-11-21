@@ -46,4 +46,3 @@ module Guilds
     end
   end
 end
-

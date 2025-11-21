@@ -18,4 +18,3 @@ class GameEvent < ApplicationRecord
     feature_flag_key.presence || "events:#{slug}"
   end
 end
-

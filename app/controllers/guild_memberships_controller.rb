@@ -19,4 +19,3 @@ class GuildMembershipsController < ApplicationController
     params.require(:guild_membership).permit(:role, :status)
   end
 end
-

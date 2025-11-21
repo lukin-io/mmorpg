@@ -8,6 +8,7 @@ Rails.application.routes.draw do
   end
 
   resource :session_ping, only: :create
+  resources :profiles, only: :show, controller: :public_profiles, param: :profile_name
 
   resources :chat_channels, only: [:index, :show] do
     resources :chat_messages, only: :create
@@ -42,6 +43,8 @@ Rails.application.routes.draw do
   resources :housing_plots, only: [:index, :create, :update]
   resources :pet_companions, only: [:index, :create]
   resources :mounts, only: [:index, :create]
+
+  resources :announcements, only: [:index, :create]
 
   resources :game_events, only: [:index, :show, :update]
   resources :leaderboards, only: [:index, :show] do

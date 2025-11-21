@@ -78,7 +78,7 @@ module Chat
         raise ArgumentError, "private channels require exactly two participants"
       end
 
-      slug = "whisper-#{participant_ids.join('-')}"
+      slug = "whisper-#{participant_ids.join("-")}"
       ChatChannel.find_or_create_by!(slug:) do |channel|
         channel.name = "Private Whisper"
         channel.channel_type = :whisper

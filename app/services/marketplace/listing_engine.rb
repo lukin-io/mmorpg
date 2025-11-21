@@ -43,4 +43,3 @@ module Marketplace
     end
   end
 end
-

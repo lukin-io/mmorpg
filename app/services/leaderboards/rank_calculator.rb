@@ -21,4 +21,3 @@ module Leaderboards
     attr_reader :leaderboard
   end
 end
-

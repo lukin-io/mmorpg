@@ -6,4 +6,3 @@ class AchievementGrant < ApplicationRecord
 
   validates :source, presence: true
 end
-

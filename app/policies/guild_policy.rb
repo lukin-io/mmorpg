@@ -23,4 +23,3 @@ class GuildPolicy < ApplicationPolicy
     end
   end
 end
-

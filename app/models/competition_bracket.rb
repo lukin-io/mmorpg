@@ -10,4 +10,3 @@ class CompetitionBracket < ApplicationRecord
   belongs_to :game_event
   has_many :competition_matches, dependent: :destroy
 end
-

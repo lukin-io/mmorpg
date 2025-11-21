@@ -31,4 +31,3 @@ class ClansController < ApplicationController
     params.require(:clan).permit(:name, :description)
   end
 end
-

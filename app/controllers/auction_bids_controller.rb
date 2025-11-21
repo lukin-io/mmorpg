@@ -17,4 +17,3 @@ class AuctionBidsController < ApplicationController
     params.require(:auction_bid).permit(:amount)
   end
 end
-

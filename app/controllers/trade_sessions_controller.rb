@@ -20,4 +20,3 @@ class TradeSessionsController < ApplicationController
     redirect_to trade_session_path(trade_session), notice: "Trade updated."
   end
 end
-

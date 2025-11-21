@@ -21,4 +21,3 @@ class AuctionListing < ApplicationRecord
     auction_bids.order(amount: :desc).first
   end
 end
-

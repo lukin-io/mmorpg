@@ -5,4 +5,3 @@ class Leaderboard < ApplicationRecord
 
   validates :name, :scope, :season, :starts_at, :ends_at, presence: true
 end
-

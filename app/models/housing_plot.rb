@@ -6,4 +6,3 @@ class HousingPlot < ApplicationRecord
 
   validates :plot_type, :location_key, presence: true
 end
-

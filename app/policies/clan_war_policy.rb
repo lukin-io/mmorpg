@@ -5,4 +5,3 @@ class ClanWarPolicy < ApplicationPolicy
     user&.has_any_role?(:gm, :admin) || user&.clans&.exists?
   end
 end
-

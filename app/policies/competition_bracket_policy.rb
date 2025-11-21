@@ -15,4 +15,3 @@ class CompetitionBracketPolicy < ApplicationPolicy
     end
   end
 end
-

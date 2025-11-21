@@ -29,9 +29,8 @@ module Events
       request = Net::HTTP::Post.new(uri.request_uri, {"Content-Type" => "application/json"})
       request.body = payload.to_json
       http.request(request)
-    rescue StandardError => e
+    rescue => e
       Rails.logger.warn("Event webhook failed: #{e.message}")
     end
   end
 end
-

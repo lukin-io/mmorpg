@@ -28,3 +28,6 @@
 - Premium token balance lives on `users.premium_tokens_balance`; ledger entries in `premium_token_ledger_entries` are created via `Payments::PremiumTokenLedger`.
 - Presence broadcasts stream through `PresenceChannel` and the `idle-tracker` Stimulus controller pings `SessionPingsController` to mark users idle/active.
 - Moderation/audit requirements are backed by `AuditLog` records written with `AuditLogger`.
+- Players manage up to 5 `Character` records per account (`characters` table) with clan and guild membership automatically inherited from their account memberships.
+- Public profile data is exposed via `PublicProfilesController#show`, which uses `Users::PublicProfile` to return sanitized JSON (profile name, reputation, achievements, guild/clan, housing) while omitting emails.
+- Privacy controls (`chat_privacy`, `friend_request_privacy`, `duel_privacy`) live on the `users` table and gate friend requests, chat availability, and duel invitations through helper methods such as `User#allows_friend_request_from?`.

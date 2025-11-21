@@ -10,8 +10,7 @@ class ClanWarsController < ApplicationController
     scheduler.schedule!(territory_key: params[:territory_key], starts_at: Time.zone.parse(params[:scheduled_at]))
 
     redirect_to clan_path(attacker), notice: "War scheduled."
-  rescue StandardError => e
+  rescue => e
     redirect_to clan_path(attacker), alert: e.message
   end
 end
-

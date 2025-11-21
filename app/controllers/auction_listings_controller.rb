@@ -39,4 +39,3 @@ class AuctionListingsController < ApplicationController
     )
   end
 end
-

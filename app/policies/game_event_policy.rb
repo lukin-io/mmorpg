@@ -19,4 +19,3 @@ class GameEventPolicy < ApplicationPolicy
     end
   end
 end
-

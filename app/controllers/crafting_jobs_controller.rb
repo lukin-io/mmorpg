@@ -12,7 +12,7 @@ class CraftingJobsController < ApplicationController
 
     job = Crafting::JobScheduler.new(user: current_user, recipe:, station:).enqueue!
     redirect_to crafting_jobs_path, notice: "Crafting job queued (completes at #{job.completes_at.to_formatted_s(:long)})"
-  rescue StandardError => e
+  rescue => e
     redirect_to crafting_jobs_path, alert: e.message
   end
 
@@ -22,4 +22,3 @@ class CraftingJobsController < ApplicationController
     params.require(:crafting_job).permit(:recipe_id, :crafting_station_id)
   end
 end
-

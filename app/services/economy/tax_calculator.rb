@@ -15,7 +15,7 @@ module Economy
 
     def call(location:, clan: nil, listing_value: 0)
       modifier = clan&.clan_territories&.find_by(territory_key: location)&.tax_rate || 0
-      volume_penalty = listing_value > 100_000 ? 0.02 : 0
+      volume_penalty = ((listing_value > 100_000) ? 0.02 : 0)
       (base_rate + modifier + volume_penalty).round(4)
     end
 
@@ -24,4 +24,3 @@ module Economy
     attr_reader :base_rate
   end
 end
-

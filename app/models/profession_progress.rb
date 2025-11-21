@@ -10,4 +10,3 @@ class ProfessionProgress < ApplicationRecord
     increment!(:experience, amount)
   end
 end
-

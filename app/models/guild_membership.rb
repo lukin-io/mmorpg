@@ -22,4 +22,12 @@ class GuildMembership < ApplicationRecord
   validates :guild_id, uniqueness: {scope: :user_id}
 
   scope :with_role, ->(role_name) { where(role: roles[role_name]) }
+
+  after_commit :sync_user_characters
+
+  private
+
+  def sync_user_characters
+    user&.sync_character_memberships!
+  end
 end

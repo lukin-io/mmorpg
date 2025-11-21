@@ -29,4 +29,3 @@ class ClanPolicy < ApplicationPolicy
     record.leader == user || user&.has_any_role?(:gm, :admin)
   end
 end
-

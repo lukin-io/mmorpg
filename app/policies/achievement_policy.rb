@@ -15,4 +15,3 @@ class AchievementPolicy < ApplicationPolicy
     end
   end
 end
-

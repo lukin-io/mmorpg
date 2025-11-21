@@ -13,4 +13,12 @@ class ClanMembership < ApplicationRecord
   belongs_to :user
 
   validates :clan_id, uniqueness: {scope: :user_id}
+
+  after_commit :sync_user_characters
+
+  private
+
+  def sync_user_characters
+    user&.sync_character_memberships!
+  end
 end

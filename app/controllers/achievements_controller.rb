@@ -12,4 +12,3 @@ class AchievementsController < ApplicationController
     redirect_to achievements_path, notice: "Achievement unlocked!"
   end
 end
-

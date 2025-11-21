@@ -17,4 +17,3 @@ class PetCompanionsController < ApplicationController
     params.require(:pet_companion).permit(:pet_species_id, :nickname)
   end
 end
-

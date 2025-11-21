@@ -19,4 +19,3 @@ class LeaderboardPolicy < ApplicationPolicy
     end
   end
 end
-

@@ -16,4 +16,3 @@ class LeaderboardsController < ApplicationController
     redirect_to leaderboard, notice: "Leaderboard recalculated."
   end
 end
-

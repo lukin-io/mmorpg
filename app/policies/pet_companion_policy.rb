@@ -15,4 +15,3 @@ class PetCompanionPolicy < ApplicationPolicy
     end
   end
 end
-

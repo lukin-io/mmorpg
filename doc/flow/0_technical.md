@@ -15,12 +15,21 @@ date: 2025-11-21
 
 ## Table of Contents
 - [General Description](#general-description)
+- [Vision & Objectives](#vision--objectives)
+- [Rails Monolith Baseline](#rails-monolith-baseline)
+- [Core Gems & Services](#core-gems--services)
+- [Development & Tooling](#development--tooling)
 - [Tech & Runtime Matrix](#tech--runtime-matrix)
 - [Environment & Commands](#environment--commands)
 - [Primary Flows](#primary-flows)
-- [Responsibilities & File Map](#responsibilities--file-map)
-- [Testing & Verification](#testing--verification)
-- [Deployment & Ops](#deployment--ops)
+- [Sequence & Lifecycle Highlights](#sequence--lifecycle-highlights)
+- [Environment Matrix](#environment-matrix)
+- [Operational Runbook & Troubleshooting](#operational-runbook--troubleshooting)
+- [Data Ownership & Migration Roadmap](#data-ownership--migration-roadmap)
+- [Hotwire & Stimulus Conventions](#hotwire--stimulus-conventions)
+- [Responsible for Implementation Files](#responsible-for-implementation-files)
+- [Testing & QA](#testing--qa)
+- [Deployment Considerations](#deployment-considerations)
 - [Status Codes & Envelopes](#status-codes--envelopes)
 
 ---
@@ -33,6 +42,41 @@ date: 2025-11-21
 - **Feature Flags**: `Flipper` with ActiveRecord adapter; `config/initializers/flipper.rb` wires default adapter; flags can be toggled via console/UI to stage features (combat, guilds, housing, etc.).
 - **Payments**: `Payments::StripeAdapter` (Stripe Ruby 18.x) scaffolds checkout session creation with `APP_URL` fallback for success/cancel URLs. Purchase ledger lives in `Purchase` model (`db/migrate/20251121084500_create_purchases.rb`).
 - **Game Engine**: Deterministic POROs in `app/lib/game/` (systems, formulas, maps, utils) orchestrated by services in `app/services/game/**`. RNG is seeded via `Game::Utils::Rng` to ensure reproducible combat.
+
+---
+
+## Vision & Objectives
+- Recreate the classic Neverlands.ru gameplay experience while modernizing the Rails stack and operational tooling.
+- Maintain authenticity, nostalgia, and community-first mechanics (guilds/clans, shared chat, turn-based combat).
+- Target players who prefer strategic, social MMORPGs delivered via fast, reliable server-rendered Hotwire flows.
+- Ship iteratively with feature flags so combat, economy, and housing systems can be toggled safely per environment.
+
+---
+
+## Rails Monolith Baseline
+- Ruby 3.4.4 + Rails 8.1.1 monolith (no SPA). All gameplay/UI logic flows through the main app, respecting `AGENT.md`, `GUIDE.md`, and `MMO_*` guides.
+- PostgreSQL 18 is the source of truth; Redis is used strictly for cache/Action Cable/Sidekiq (separate DBs to avoid contention).
+- Hotwire (Turbo + Stimulus) powers every dynamic UI interaction; respond with Turbo Streams instead of custom JS fetch calls.
+- Tailwind/utility CSS allowed for styling, but everything renders via ERB/ViewComponents for deterministic server behavior.
+
+---
+
+## Core Gems & Services
+- **Authentication/Authorization**: `devise`, `pundit`, `rolify` (future expansions may add `cancancan` per feature spec).
+- **Hotwire stack**: `turbo-rails`, `stimulus-rails`, `view_component` for composable server-side UI.
+- **Background jobs**: `sidekiq` (8.x) for combat resolution, chat moderation, scheduled events.
+- **Feature flags**: `flipper` + `flipper-active_record` ensuring gradual rollout control.
+- **Payments**: `stripe` Ruby SDK (18.x) for checkout sessions; ledger recorded via `Purchase`.
+- **Tooling & security**: `rubocop-rails-omakase`, `standard`, `brakeman`, `bundler-audit`, `vcr`, `webmock`.
+
+---
+
+## Development & Tooling
+- `bin/dev` (foreman/overmind) runs `web`, `worker`, and `cable` processes defined in `Procfile.dev`.
+- Linting: `bundle exec rubocop`, `bundle exec standardrb`; security: `bundle exec brakeman`, `bundle exec bundler-audit`.
+- Testing stack: RSpec 8 + Capybara + FactoryBot + VCR/WebMock (Hotwire/system specs planned).
+- Seeds (`db/seeds.rb`) populate default admin + feature flags; extend seeds when gameplay data lands (classes, items, NPCs, map tiles).
+- Contract/Hotwire tests will validate Turbo Stream payloads once UI flows solidify, mirroring `doc/features/0_technical.md` expectations.
 
 ---
 
@@ -226,7 +270,7 @@ bundle exec bundler-audit # optional CVE scan
 
 ---
 
-## Testing & Verification
+## Testing & QA
 - **RSpec 8.x**: Models (`spec/models/*.rb`), services (`spec/services/**`), requests/integration (future expansions). Current suite requires a reachable `postgres` user/password.
 - **Factories**: `spec/factories/*.rb` (users, roles, purchases). Use `FactoryBot` syntax helpers (included via `spec/rails_helper.rb` + `spec/support/factory_bot.rb`).
 - **Mocking HTTP**: `VCR` + `WebMock` preconfigured (`spec/support/vcr.rb`, `webmock.rb`).
@@ -243,7 +287,7 @@ Known testing constraint (Nov 21, 2025): `bundle exec rspec` fails without `POST
 
 ---
 
-## Deployment & Ops
+## Deployment Considerations
 - **Docker/Fly/Render** ready: `Dockerfile` + `Procfile` (non-dev) to be configured per target.
 - **Logging**: Tagged logging to `$stdout` for container compatibility; `config.log_level` defaults to `ENV["RAILS_LOG_LEVEL"] || "info"`.
 - **Action Cable**: Redis adapter across all environments (`config/cable.yml`), `cable` process in dev via `Procfile.dev`.

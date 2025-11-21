@@ -24,4 +24,3 @@ class HousingPlotsController < ApplicationController
     params.require(:housing_plot).permit(:plot_type, :location_key, access_rules: {})
   end
 end
-

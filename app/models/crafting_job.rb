@@ -16,4 +16,3 @@ class CraftingJob < ApplicationRecord
 
   scope :active, -> { where(status: [:queued, :in_progress]) }
 end
-

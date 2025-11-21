@@ -27,4 +27,3 @@ module Crafting
     attr_reader :user, :recipe
   end
 end
-

@@ -25,4 +25,3 @@ class TradeSessionPolicy < ApplicationPolicy
     record&.initiator == user || record&.recipient == user
   end
 end
-

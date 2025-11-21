@@ -5,4 +5,3 @@ class MarketplaceKiosk < ApplicationRecord
 
   validates :city, :item_name, :price, :expires_at, presence: true
 end
-

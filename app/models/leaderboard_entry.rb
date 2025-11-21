@@ -6,4 +6,3 @@ class LeaderboardEntry < ApplicationRecord
   validates :entity_type, :entity_id, presence: true
   validates :score, numericality: true
 end
-

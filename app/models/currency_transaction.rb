@@ -7,4 +7,3 @@ class CurrencyTransaction < ApplicationRecord
   validates :amount, numericality: {other_than: 0}
   validates :reason, presence: true
 end
-

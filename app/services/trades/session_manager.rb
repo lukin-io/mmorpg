@@ -41,4 +41,3 @@ module Trades
     attr_reader :initiator, :recipient
   end
 end
-

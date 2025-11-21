@@ -22,4 +22,3 @@ class MountsController < ApplicationController
     params.require(:mount).permit(:name, :mount_type, :speed_bonus)
   end
 end
-

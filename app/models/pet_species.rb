@@ -5,4 +5,3 @@ class PetSpecies < ApplicationRecord
 
   validates :name, :ability_type, presence: true
 end
-

@@ -21,4 +21,3 @@ class MarketplaceKiosksController < ApplicationController
     params.require(:marketplace_kiosk).permit(:city, :item_name, :quantity, :price, :expires_at)
   end
 end
-

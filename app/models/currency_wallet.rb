@@ -19,4 +19,3 @@ class CurrencyWallet < ApplicationRecord
     end
   end
 end
-

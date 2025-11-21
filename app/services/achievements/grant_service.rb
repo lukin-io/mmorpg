@@ -37,4 +37,3 @@ module Achievements
     end
   end
 end
-

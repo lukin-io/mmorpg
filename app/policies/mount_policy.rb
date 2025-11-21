@@ -15,4 +15,3 @@ class MountPolicy < ApplicationPolicy
     end
   end
 end
-

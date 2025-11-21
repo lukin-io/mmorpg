@@ -6,4 +6,3 @@ class Achievement < ApplicationRecord
   validates :key, :name, presence: true
   validates :key, uniqueness: true
 end
-

@@ -5,4 +5,3 @@ class HousingDecorItem < ApplicationRecord
 
   validates :name, presence: true
 end
-

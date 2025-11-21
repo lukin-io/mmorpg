@@ -90,12 +90,18 @@ Use this README as the entry point, then jump to the guide that matches the type
 
 | Variable | Purpose | Default |
 | --- | --- | --- |
-| `REDIS_CACHE_URL` | Redis instance for Rails cache | `redis://localhost:6379/1` |
-| `REDIS_SIDEKIQ_URL` | Redis instance for Sidekiq queues | `redis://localhost:6379/2` |
-| `REDIS_CABLE_URL` | Redis instance for Action Cable pub/sub | `redis://localhost:6379/3-5` |
+| `REDIS_CACHE_URL` | Redis instance for Rails cache | `redis://localhost:6380/0` |
+| `REDIS_SIDEKIQ_URL` | Redis instance for Sidekiq queues | `redis://localhost:6381/0` |
+| `REDIS_CABLE_URL` | Redis instance for Action Cable pub/sub | `redis://localhost:6382/0-2` |
 | `STRIPE_SECRET_KEY` | Stripe API secret for premium purchases | *(not set)* |
 | `SIDEKIQ_CONCURRENCY` | Override worker threads | `5` |
 | `APP_URL` | Base URL for payment callbacks | `http://localhost:3000` |
+
+After preparing the database, run seeds to load the baseline gameplay dataset (classes, items, NPCs, map tiles, feature flags):
+
+```bash
+bin/rails db:seed
+```
 
 ### Social & Meta configuration
 
@@ -125,6 +131,9 @@ Use this README as the entry point, then jump to the guide that matches the type
 - Login and password reset endpoints are throttled with Rack::Attack—tune limits via `REDIS_CACHE_URL` if needed.
 - Premium token balances live on `users.premium_tokens_balance` with an immutable ledger (`premium_token_ledger_entries`) that records every credit/debit.
 - Device/session history is persisted in `user_sessions`. Presence updates are broadcast through `PresenceChannel`; the browser sends periodic pings via the `idle-tracker` Stimulus controller.
+- Accounts can create up to 5 `Character` records (see `Character` model). Clan and guild memberships automatically sync from the owning `User`, so per-character state reflects the account’s alliances.
+- Public profiles are exposed at `GET /profiles/:profile_name` and are powered by `Users::PublicProfile`. They reveal profile name, reputation, achievements, guild/clan, and housing data—never emails.
+- Privacy toggles (`chat_privacy`, `friend_request_privacy`, `duel_privacy`) gate inbound interactions; use `User#allows_chat_from?` / `#allows_friend_request_from?` before opening sockets or enqueuing invites.
 
 ### Testing & QA
 

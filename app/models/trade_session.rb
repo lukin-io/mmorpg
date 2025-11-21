@@ -18,4 +18,3 @@ class TradeSession < ApplicationRecord
 
   scope :active, -> { where(status: [:pending, :confirming]).where("expires_at > ?", Time.current) }
 end
-

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_11_21_142400) do
+ActiveRecord::Schema[8.1].define(version: 2025_11_21_150000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -36,6 +36,14 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_21_142400) do
     t.string "reward_type"
     t.datetime "updated_at", null: false
     t.index ["key"], name: "index_achievements_on_key", unique: true
+  end
+
+  create_table "announcements", force: :cascade do |t|
+    t.text "body", null: false
+    t.datetime "created_at", null: false
+    t.string "title", null: false
+    t.datetime "updated_at", null: false
+    t.index ["created_at"], name: "index_announcements_on_created_at"
   end
 
   create_table "auction_bids", force: :cascade do |t|
@@ -78,6 +86,33 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_21_142400) do
     t.index ["actor_id"], name: "index_audit_logs_on_actor_id"
     t.index ["created_at"], name: "index_audit_logs_on_created_at"
     t.index ["target_type", "target_id"], name: "index_audit_logs_on_target"
+  end
+
+  create_table "character_classes", force: :cascade do |t|
+    t.jsonb "base_stats", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.text "description", null: false
+    t.string "name", null: false
+    t.datetime "updated_at", null: false
+    t.index ["name"], name: "index_character_classes_on_name", unique: true
+  end
+
+  create_table "characters", force: :cascade do |t|
+    t.bigint "character_class_id"
+    t.bigint "clan_id"
+    t.datetime "created_at", null: false
+    t.bigint "experience", default: 0, null: false
+    t.bigint "guild_id"
+    t.integer "level", default: 1, null: false
+    t.jsonb "metadata", default: {}, null: false
+    t.string "name", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.index ["character_class_id"], name: "index_characters_on_character_class_id"
+    t.index ["clan_id"], name: "index_characters_on_clan_id"
+    t.index ["guild_id"], name: "index_characters_on_guild_id"
+    t.index ["name"], name: "index_characters_on_name", unique: true
+    t.index ["user_id"], name: "index_characters_on_user_id"
   end
 
   create_table "chat_channel_memberships", force: :cascade do |t|
@@ -399,6 +434,18 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_21_142400) do
     t.index ["user_id"], name: "index_housing_plots_on_user_id"
   end
 
+  create_table "item_templates", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "name", null: false
+    t.string "rarity", null: false
+    t.string "slot", null: false
+    t.jsonb "stat_modifiers", default: {}, null: false
+    t.datetime "updated_at", null: false
+    t.index ["name"], name: "index_item_templates_on_name", unique: true
+    t.index ["rarity"], name: "index_item_templates_on_rarity"
+    t.index ["slot"], name: "index_item_templates_on_slot"
+  end
+
   create_table "leaderboard_entries", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.bigint "entity_id", null: false
@@ -437,6 +484,18 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_21_142400) do
     t.index ["sender_id"], name: "index_mail_messages_on_sender_id"
   end
 
+  create_table "map_tile_templates", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.jsonb "metadata", default: {}, null: false
+    t.boolean "passable", default: true, null: false
+    t.string "terrain_type", null: false
+    t.datetime "updated_at", null: false
+    t.integer "x", null: false
+    t.integer "y", null: false
+    t.string "zone", null: false
+    t.index ["zone", "x", "y"], name: "index_map_tile_templates_on_zone_and_x_and_y", unique: true
+  end
+
   create_table "marketplace_kiosks", force: :cascade do |t|
     t.string "city", null: false
     t.datetime "created_at", null: false
@@ -458,6 +517,18 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_21_142400) do
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
     t.index ["user_id"], name: "index_mounts_on_user_id"
+  end
+
+  create_table "npc_templates", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.text "dialogue", null: false
+    t.integer "level", default: 1, null: false
+    t.jsonb "metadata", default: {}, null: false
+    t.string "name", null: false
+    t.string "role", null: false
+    t.datetime "updated_at", null: false
+    t.index ["name"], name: "index_npc_templates_on_name", unique: true
+    t.index ["role"], name: "index_npc_templates_on_role"
   end
 
   create_table "pet_companions", force: :cascade do |t|
@@ -612,19 +683,24 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_21_142400) do
   end
 
   create_table "users", force: :cascade do |t|
+    t.integer "chat_privacy", default: 0, null: false
     t.datetime "confirmation_sent_at"
     t.string "confirmation_token"
     t.datetime "confirmed_at"
     t.datetime "created_at", null: false
     t.datetime "current_sign_in_at"
     t.inet "current_sign_in_ip"
+    t.integer "duel_privacy", default: 0, null: false
     t.string "email", default: "", null: false
     t.string "encrypted_password", default: "", null: false
+    t.integer "friend_request_privacy", default: 0, null: false
     t.datetime "last_seen_at"
     t.datetime "last_sign_in_at"
     t.inet "last_sign_in_ip"
     t.integer "premium_tokens_balance", default: 0, null: false
+    t.string "profile_name", null: false
     t.datetime "remember_created_at"
+    t.integer "reputation_score", default: 0, null: false
     t.datetime "reset_password_sent_at"
     t.string "reset_password_token"
     t.jsonb "session_metadata", default: {}, null: false
@@ -633,6 +709,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_21_142400) do
     t.datetime "updated_at", null: false
     t.index ["confirmation_token"], name: "index_users_on_confirmation_token", unique: true
     t.index ["email"], name: "index_users_on_email", unique: true
+    t.index ["profile_name"], name: "index_users_on_profile_name", unique: true
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
   end
 
@@ -650,6 +727,10 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_21_142400) do
   add_foreign_key "auction_bids", "users", column: "bidder_id"
   add_foreign_key "auction_listings", "users", column: "seller_id"
   add_foreign_key "audit_logs", "users", column: "actor_id"
+  add_foreign_key "characters", "character_classes"
+  add_foreign_key "characters", "clans"
+  add_foreign_key "characters", "guilds"
+  add_foreign_key "characters", "users"
   add_foreign_key "chat_channel_memberships", "chat_channels"
   add_foreign_key "chat_channel_memberships", "users"
   add_foreign_key "chat_channels", "users", column: "creator_id"

@@ -33,4 +33,3 @@ module Crafting
     attr_reader :user, :recipe, :station, :validator
   end
 end
-

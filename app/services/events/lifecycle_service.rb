@@ -36,4 +36,3 @@ module Events
     end
   end
 end
-

@@ -5,4 +5,3 @@ class CompetitionMatch < ApplicationRecord
 
   validates :round_number, :scheduled_at, presence: true
 end
-

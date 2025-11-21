@@ -31,4 +31,3 @@ class GuildsController < ApplicationController
     params.require(:guild).permit(:name, :motto)
   end
 end
-

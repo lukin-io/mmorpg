@@ -21,4 +21,3 @@ class GuildApplicationPolicy < ApplicationPolicy
     GuildMembership.where(guild: record.guild, user: user).where(role: %i[officer leader recruiter]).exists?
   end
 end
-
