@@ -16,9 +16,10 @@ module Mmorpg
     # Common ones are `templates`, `generators`, or `middleware`, for example.
     config.autoload_lib(ignore: %w[assets tasks])
 
-    components_path = Rails.root.join("app/components")
-    config.autoload_paths << components_path
-    config.eager_load_paths << components_path
+    config.autoload_paths << Rails.root.join("app/components")
+    config.autoload_paths << Rails.root.join("app/lib")
+    config.eager_load_paths << Rails.root.join("app/components")
+    config.eager_load_paths << Rails.root.join("app/lib")
     config.active_job.queue_adapter = :sidekiq
 
     config.generators do |generator|
