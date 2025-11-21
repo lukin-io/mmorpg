@@ -1,0 +1,16 @@
+<%= turbo_stream_from @chat_channel %>
+
+<section class="chat-channel" data-controller="chat">
+  <header>
+    <h1><%= @chat_channel.name %></h1>
+    <p>Channel type: <%= @chat_channel.channel_type.humanize %></p>
+  </header>
+
+  <div id="<%= dom_id(@chat_channel, :messages) %>" data-chat-target="messages" class="chat-messages">
+    <%= render @chat_messages %>
+  </div>
+
+  <div id="<%= dom_id(@chat_channel, :form) %>" class="chat-form">
+    <%= render "chat_messages/form", chat_channel: @chat_channel, chat_message: @chat_message %>
+  </div>
+</section>

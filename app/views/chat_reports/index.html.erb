@@ -1,0 +1,35 @@
+<section>
+  <header>
+    <h1>Chat Reports</h1>
+    <p>Moderation queue for inappropriate messages.</p>
+  </header>
+
+  <% if @chat_reports.any? %>
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Reporter</th>
+          <th>Message</th>
+          <th>Reason</th>
+          <th>Status</th>
+          <th>Filed</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @chat_reports.each do |report| %>
+          <tr>
+            <td><%= report.id %></td>
+            <td><%= report.reporter.email %></td>
+            <td><%= report.evidence["message_preview"] || report.chat_message&.filtered_body %></td>
+            <td><%= report.reason %></td>
+            <td><%= report.status.humanize %></td>
+            <td><%= l(report.created_at, format: :short) %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% else %>
+    <p>No reports yet.</p>
+  <% end %>
+</section>

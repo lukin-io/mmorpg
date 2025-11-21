@@ -1,0 +1,14 @@
+<%= form_with model: [chat_channel, chat_message], data: { action: "turbo:submit-end->chat#resetForm" } do |form| %>
+  <% if chat_message.errors.any? %>
+    <div class="form-errors">
+      <%= chat_message.errors.full_messages.to_sentence %>
+    </div>
+  <% end %>
+
+  <div class="field">
+    <%= form.text_area :body, rows: 3, required: true, placeholder: "Type your message...", data: { chat_target: "input" } %>
+  </div>
+  <div class="actions">
+    <%= form.submit "Send" %>
+  </div>
+<% end %>

@@ -1,0 +1,30 @@
+<section>
+  <header>
+    <h1>Compose Mail</h1>
+  </header>
+
+  <%= form_with model: @mail_message, url: mail_messages_path do |form| %>
+    <% if @mail_message.errors.any? %>
+      <div class="form-errors"><%= @mail_message.errors.full_messages.to_sentence %></div>
+    <% end %>
+
+    <div class="field">
+      <%= form.label :recipient_email, "Recipient Email" %>
+      <%= form.email_field :recipient_email, required: true %>
+    </div>
+
+    <div class="field">
+      <%= form.label :subject %>
+      <%= form.text_field :subject, required: true %>
+    </div>
+
+    <div class="field">
+      <%= form.label :body %>
+      <%= form.text_area :body, rows: 6, required: true %>
+    </div>
+
+    <div class="actions">
+      <%= form.submit "Send" %>
+    </div>
+  <% end %>
+</section>

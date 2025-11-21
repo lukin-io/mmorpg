@@ -11,6 +11,19 @@ class User < ApplicationRecord
   has_many :user_sessions, dependent: :destroy
   has_many :premium_token_ledger_entries, dependent: :destroy
   has_many :audit_logs, foreign_key: :actor_id, dependent: :nullify
+  has_many :chat_channel_memberships, dependent: :destroy
+  has_many :chat_channels, through: :chat_channel_memberships
+  has_many :chat_messages, foreign_key: :sender_id, dependent: :nullify
+  has_many :friendships, foreign_key: :requester_id, dependent: :destroy
+  has_many :incoming_friendships, class_name: "Friendship", foreign_key: :receiver_id, dependent: :destroy
+  has_many :mail_messages, foreign_key: :sender_id, dependent: :nullify
+  has_many :received_mail_messages, class_name: "MailMessage", foreign_key: :recipient_id, dependent: :destroy
+  has_many :chat_reports, foreign_key: :reporter_id, dependent: :nullify
+  has_many :chat_moderation_actions, foreign_key: :target_user_id, dependent: :destroy
+  has_many :moderation_actions_as_actor,
+    class_name: "ChatModerationAction",
+    foreign_key: :actor_id,
+    dependent: :nullify
 
   after_create :assign_default_role
 

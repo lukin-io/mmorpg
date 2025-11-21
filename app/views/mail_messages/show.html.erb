@@ -1,0 +1,18 @@
+<section>
+  <header>
+    <h1><%= @mail_message.subject %></h1>
+    <p>
+      From <%= @mail_message.sender&.email || "System" %>
+      to <%= @mail_message.recipient&.email || "Unknown" %>
+      at <%= l(@mail_message.delivered_at, format: :long) %>
+    </p>
+  </header>
+
+  <article class="mail-body">
+    <%= simple_format @mail_message.body %>
+  </article>
+
+  <footer>
+    <%= link_to "Back to mailbox", mail_messages_path %>
+  </footer>
+</section>

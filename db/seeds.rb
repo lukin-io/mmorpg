@@ -17,3 +17,11 @@ if defined?(Flipper)
     Flipper.add(feature)
   end
 end
+
+if defined?(ChatChannel)
+  ChatChannel.find_or_create_by!(slug: "global") do |channel|
+    channel.name = "Global"
+    channel.channel_type = :global
+    channel.system_owned = true
+  end
+end

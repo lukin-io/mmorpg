@@ -9,6 +9,14 @@ Rails.application.routes.draw do
 
   resource :session_ping, only: :create
 
+  resources :chat_channels, only: [:index, :show] do
+    resources :chat_messages, only: :create
+  end
+
+  resources :friendships, only: [:index, :create, :update, :destroy]
+  resources :mail_messages, only: [:index, :show, :new, :create]
+  resources :chat_reports, only: [:index, :create]
+
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.

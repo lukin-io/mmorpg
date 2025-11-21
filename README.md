@@ -44,6 +44,7 @@ This is a clone/re-imagining of the classic MMORPG **Neverlands.ru**, featuring:
 - Player characters, stats, skills, and equipment
 - Inventory, items, professions, crafting
 - Guilds/clans
+- Social foundation: Turbo-driven chat (global/local), friend lists, in-game mail, and moderation workflows
 - Quests, storylines, NPC interactions
 - Auctions, economy, loot tables
 - Map exploration & zones
@@ -91,6 +92,11 @@ Use this README as the entry point, then jump to the guide that matches the type
 | `STRIPE_SECRET_KEY` | Stripe API secret for premium purchases | *(not set)* |
 | `SIDEKIQ_CONCURRENCY` | Override worker threads | `5` |
 | `APP_URL` | Base URL for payment callbacks | `http://localhost:3000` |
+
+### Chat configuration
+
+- `config/chat_profanity.yml` controls the banned-word dictionary that feeds the profanity filter. Restart the server (or touch `tmp/restart.txt` in deployment) after editing it.
+- `db/seeds.rb` creates the default global chat channel so that new environments always have a system-owned channel available.
 
 ### Background jobs & feature flags
 

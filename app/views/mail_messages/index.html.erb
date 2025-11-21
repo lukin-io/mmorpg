@@ -1,0 +1,43 @@
+<section>
+  <header>
+    <h1>Mailbox</h1>
+    <%= link_to "Compose New Mail", new_mail_message_path, class: "button" %>
+  </header>
+
+  <div class="mailbox-columns">
+    <div>
+      <h2>Inbox</h2>
+      <% if @inbox_messages.any? %>
+        <ul>
+          <% @inbox_messages.each do |message| %>
+            <li>
+              <%= link_to message.subject, mail_message_path(message) %>
+              <small>from <%= message.sender&.email || \"System\" %> at <%= l(message.delivered_at, format: :short) %></small>
+              <% unless message.read? %>
+                <span class="badge">New</span>
+              <% end %>
+            </li>
+          <% end %>
+        </ul>
+      <% else %>
+        <p>No messages yet.</p>
+      <% end %>
+    </div>
+
+    <div>
+      <h2>Sent</h2>
+      <% if @sent_messages.any? %>
+        <ul>
+          <% @sent_messages.each do |message| %>
+            <li>
+              <%= message.subject %>
+              <small>to <%= message.recipient&.email || \"Unknown\" %> at <%= l(message.delivered_at, format: :short) %></small>
+            </li>
+          <% end %>
+        </ul>
+      <% else %>
+        <p>No sent messages.</p>
+      <% end %>
+    </div>
+  </div>
+</section>

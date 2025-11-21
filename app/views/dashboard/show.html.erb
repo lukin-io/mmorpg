@@ -14,5 +14,17 @@
       <% end %>
     </ul>
   </section>
+
+  <section>
+    <h2>Social Tools</h2>
+    <ul>
+      <li><%= link_to "Chat Channels", chat_channels_path %></li>
+      <li><%= link_to "Friend List", friendships_path %></li>
+      <li><%= link_to "Mailbox", mail_messages_path %></li>
+      <% if policy(ChatReport.new).index? %>
+        <li><%= link_to "Chat Reports", chat_reports_path %></li>
+      <% end %>
+    </ul>
+  </section>
 </div>
 
