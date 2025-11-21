@@ -3,11 +3,11 @@ require "ostruct"
 
 RSpec.describe Game::Combat::TurnResolver do
   let(:attacker_stats) do
-    Game::Systems::StatBlock.new(base: {attack: 12, crit_chance: 50}, mods: {})
+    Game::Systems::StatBlock.new(base: { attack: 12, crit_chance: 50 }, mods: {})
   end
 
   let(:defender_stats) do
-    Game::Systems::StatBlock.new(base: {defense: 4, luck: 10}, mods: {})
+    Game::Systems::StatBlock.new(base: { defense: 4, luck: 10 }, mods: {})
   end
 
   let(:attacker) { OpenStruct.new(name: "Warrior", stats: attacker_stats) }

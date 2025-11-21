@@ -19,10 +19,10 @@ jobs:
           bundler-cache: true
 
       - name: Scan for common Rails security vulnerabilities using static analysis
-        run: bin/brakeman --no-pager
+        run: bundle exec brakeman --no-pager
 
       - name: Scan for known security vulnerabilities in gems used
-        run: bin/bundler-audit
+        run: bundle exec bundler-audit check --update
 
   scan_js:
     runs-on: ubuntu-latest
@@ -63,7 +63,10 @@ jobs:
             rubocop-${{ runner.os }}-${{ env.DEPENDENCIES_HASH }}-
 
       - name: Lint code for consistent style
-        run: bin/rubocop -f github
+        run: bundle exec rubocop -f github
+
+      - name: Enforce Ruby community defaults with StandardRB
+        run: bundle exec standardrb
 
   test:
     runs-on: ubuntu-latest
@@ -104,7 +107,7 @@ jobs:
           # REDIS_URL: redis://localhost:6379/0
         run: |
           bin/rails db:prepare
-          bin/rails test
+          bundle exec rspec
 
   system-test:
     runs-on: ubuntu-latest
@@ -145,7 +148,11 @@ jobs:
           # REDIS_URL: redis://localhost:6379/0
         run: |
           bin/rails db:prepare
-          bin/rails test:system
+          if [ -d spec/system ] && [ "$(find spec/system -type f -name '*_spec.rb' | head -n 1)" ]; then
+            bundle exec rspec spec/system
+          else
+            echo "No RSpec system specs to run."
+          fi
 
       - name: Keep screenshots from failed system tests
         uses: actions/upload-artifact@v4
