@@ -1,0 +1,15 @@
+<section>
+  <header>
+    <h1>Guild Ledger</h1>
+    <%= link_to "Found Guild", new_guild_path, class: "button" %>
+  </header>
+
+  <ul>
+    <% @guilds.each do |guild| %>
+      <li>
+        <%= link_to guild.name, guild_path(guild) %>
+        <small>Level <%= guild.level %> — Leader: <%= guild.leader.email %></small>
+      </li>
+    <% end %>
+  </ul>
+</section>

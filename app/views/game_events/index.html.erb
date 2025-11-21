@@ -1,0 +1,11 @@
+<section>
+  <header>
+    <h1>Game Events</h1>
+  </header>
+
+  <ul>
+    <% @game_events.each do |event| %>
+      <li><%= link_to event.name, game_event_path(event) %> — <%= event.status.humanize %></li>
+    <% end %>
+  </ul>
+</section>

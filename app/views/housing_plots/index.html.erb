@@ -1,0 +1,23 @@
+<section>
+  <header>
+    <h1>Housing</h1>
+  </header>
+
+  <ul>
+    <% @housing_plots.each do |plot| %>
+      <li>
+        <strong><%= plot.plot_type %></strong> at <%= plot.location_key %>
+        <p>Storage slots: <%= plot.storage_slots %></p>
+      </li>
+    <% end %>
+  </ul>
+
+  <section>
+    <h2>Create Plot</h2>
+    <%= form_with model: HousingPlot.new, url: housing_plots_path do |form| %>
+      <%= form.text_field :plot_type, placeholder: "Plot type" %>
+      <%= form.text_field :location_key, placeholder: "Location" %>
+      <%= form.submit "Create" %>
+    <% end %>
+  </section>
+</section>

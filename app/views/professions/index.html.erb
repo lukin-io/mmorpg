@@ -1,0 +1,23 @@
+<section>
+  <header>
+    <h1>Professions</h1>
+  </header>
+
+  <ul>
+    <% @professions.each do |profession| %>
+      <li>
+        <strong><%= profession.name %></strong>
+        <span><%= profession.category %></span>
+      </li>
+    <% end %>
+  </ul>
+
+  <section>
+    <h2>Your Progress</h2>
+    <ul>
+      <% @progresses.each do |progress| %>
+        <li><%= progress.profession.name %> — Level <%= progress.skill_level %></li>
+      <% end %>
+    </ul>
+  </section>
+</section>

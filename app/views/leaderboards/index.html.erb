@@ -1,0 +1,11 @@
+<section>
+  <header>
+    <h1>Leaderboards</h1>
+  </header>
+
+  <ul>
+    <% @leaderboards.each do |leaderboard| %>
+      <li><%= link_to leaderboard.name, leaderboard_path(leaderboard) %> (Season <%= leaderboard.season %>)</li>
+    <% end %>
+  </ul>
+</section>

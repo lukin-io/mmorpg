@@ -1,0 +1,15 @@
+<section>
+  <header>
+    <h1><%= @auction_listing.item_name %></h1>
+    <p>Quantity: <%= @auction_listing.quantity %></p>
+    <p>Current Bid: <%= @auction_listing.highest_bid&.amount || @auction_listing.starting_bid %> <%= @auction_listing.currency_type %></p>
+  </header>
+
+  <section>
+    <h2>Place Bid</h2>
+    <%= form_with model: [@auction_listing, @auction_bid] do |form| %>
+      <%= form.number_field :amount %>
+      <%= form.submit "Bid" %>
+    <% end %>
+  </section>
+</section>

@@ -17,6 +17,38 @@ Rails.application.routes.draw do
   resources :mail_messages, only: [:index, :show, :new, :create]
   resources :chat_reports, only: [:index, :create]
 
+  resources :guilds do
+    resources :guild_applications, only: :create
+  end
+  resources :guild_applications, only: :update
+  resources :guild_memberships, only: [:update, :destroy]
+
+  resources :clans
+  resources :clan_memberships, only: :destroy
+  resources :clan_wars, only: :create
+
+  resources :auction_listings do
+    resources :auction_bids, only: :create
+  end
+  resources :marketplace_kiosks, only: [:index, :create]
+  resources :trade_sessions, only: [:create, :show, :update]
+
+  resources :professions, only: :index do
+    post :update_progress, on: :member
+  end
+  resources :crafting_jobs, only: [:index, :create]
+
+  resources :achievements, only: [:index, :create]
+  resources :housing_plots, only: [:index, :create, :update]
+  resources :pet_companions, only: [:index, :create]
+  resources :mounts, only: [:index, :create]
+
+  resources :game_events, only: [:index, :show, :update]
+  resources :leaderboards, only: [:index, :show] do
+    post :recalculate, on: :member
+  end
+  resources :competition_brackets, only: [:show, :update]
+
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.

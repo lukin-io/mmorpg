@@ -45,6 +45,10 @@ This is a clone/re-imagining of the classic MMORPG **Neverlands.ru**, featuring:
 - Inventory, items, professions, crafting
 - Guilds/clans
 - Social foundation: Turbo-driven chat (global/local), friend lists, in-game mail, and moderation workflows
+- Economy stack: wallets, auction house, direct trade sessions, and kiosk listings
+- Crafting/profession progression with job queues and recipe validation
+- Achievements, titles, housing plots, pets, and mounts for meta goals
+- Events & community loops: scheduled game events, leaderboards, and competition brackets
 - Quests, storylines, NPC interactions
 - Auctions, economy, loot tables
 - Map exploration & zones
@@ -93,10 +97,21 @@ Use this README as the entry point, then jump to the guide that matches the type
 | `SIDEKIQ_CONCURRENCY` | Override worker threads | `5` |
 | `APP_URL` | Base URL for payment callbacks | `http://localhost:3000` |
 
-### Chat configuration
+### Social & Meta configuration
 
 - `config/chat_profanity.yml` controls the banned-word dictionary that feeds the profanity filter. Restart the server (or touch `tmp/restart.txt` in deployment) after editing it.
-- `db/seeds.rb` creates the default global chat channel so that new environments always have a system-owned channel available.
+- `db/seeds.rb` creates the default global chat channel plus baseline professions, pet species, and the seasonal `winter_festival` event.
+
+### Economy configuration
+
+- Currency wallets (`currency_wallets` + `currency_transactions`) store gold/silver/premium balances per user. Utility services live in `app/services/economy`.
+- Auction house tax math is centralized in `Economy::TaxCalculator`; adjust base rates there instead of inside controllers.
+- Marketplace kiosks provide rapid listings per city; tweak defaults/seeds in `db/seeds.rb`.
+
+### Events & Leaderboards
+
+- Game events toggle feature flags via `Events::LifecycleService`, so ensure corresponding Flipper keys exist when creating new events.
+- `Leaderboards::RankCalculator` recalculates ranks; long-term we can offload to a job, but for now the controller action is enough for manual refreshes.
 
 ### Background jobs & feature flags
 

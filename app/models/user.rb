@@ -24,8 +24,24 @@ class User < ApplicationRecord
     class_name: "ChatModerationAction",
     foreign_key: :actor_id,
     dependent: :nullify
+  has_many :guild_memberships, dependent: :destroy
+  has_many :guilds, through: :guild_memberships
+  has_many :guild_applications, foreign_key: :applicant_id, dependent: :destroy
+  has_many :guilds_led, class_name: "Guild", foreign_key: :leader_id, dependent: :nullify
+  has_many :guild_bank_entries, foreign_key: :actor_id, dependent: :nullify
+  has_many :clan_memberships, dependent: :destroy
+  has_many :clans, through: :clan_memberships
+  has_many :clans_led, class_name: "Clan", foreign_key: :leader_id, dependent: :nullify
+  has_one :currency_wallet, dependent: :destroy
+  has_many :profession_progresses, dependent: :destroy
+  has_many :crafting_jobs, dependent: :nullify
+  has_many :achievement_grants, dependent: :destroy
+  has_many :housing_plots, dependent: :destroy
+  has_many :pet_companions, dependent: :destroy
+  has_many :mounts, dependent: :destroy
 
   after_create :assign_default_role
+  after_create :ensure_currency_wallet!
 
   scope :verified, -> { where.not(confirmed_at: nil) }
 
@@ -59,5 +75,9 @@ class User < ApplicationRecord
 
   def assign_default_role
     add_role(:player) unless roles.exists?
+  end
+
+  def ensure_currency_wallet!
+    create_currency_wallet!(gold_balance: 0, silver_balance: 0, premium_tokens_balance: premium_tokens_balance) unless currency_wallet
   end
 end

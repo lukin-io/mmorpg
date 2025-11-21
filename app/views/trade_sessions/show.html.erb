@@ -1,0 +1,19 @@
+<section>
+  <header>
+    <h1>Trade Session</h1>
+    <p><strong>Initiator:</strong> <%= @trade_session.initiator.email %></p>
+    <p><strong>Recipient:</strong> <%= @trade_session.recipient.email %></p>
+    <p>Status: <%= @trade_session.status.humanize %></p>
+  </header>
+
+  <section>
+    <h2>Items</h2>
+    <ul>
+      <% @trade_items.each do |item| %>
+        <li><%= item.owner.email %>: <%= item.item_name || item.currency_type %> x<%= item.quantity || item.currency_amount %></li>
+      <% end %>
+    </ul>
+  </section>
+
+  <%= button_to "Confirm Trade", trade_session_path(@trade_session), method: :put %>
+</section>

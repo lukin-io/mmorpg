@@ -1,0 +1,12 @@
+<section>
+  <header>
+    <h1><%= @game_event.name %></h1>
+    <p>Status: <%= @game_event.status.humanize %></p>
+    <p>Starts: <%= l(@game_event.starts_at, format: :short) %> — Ends: <%= l(@game_event.ends_at, format: :short) %></p>
+  </header>
+
+  <% if policy(@game_event).update? %>
+    <%= button_to "Activate", game_event_path(@game_event, event_action: :activate), method: :put %>
+    <%= button_to "Conclude", game_event_path(@game_event, event_action: :conclude), method: :put %>
+  <% end %>
+</section>

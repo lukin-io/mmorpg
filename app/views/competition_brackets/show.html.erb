@@ -1,0 +1,12 @@
+<section>
+  <header>
+    <h1>Bracket</h1>
+    <p>Status: <%= @competition_bracket.status.humanize %></p>
+  </header>
+
+  <ol>
+    <% @matches.each do |match| %>
+      <li>Round <%= match.round_number %> — <%= match.participants %> (scheduled <%= l(match.scheduled_at, format: :short) %>)</li>
+    <% end %>
+  </ol>
+</section>

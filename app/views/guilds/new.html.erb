@@ -1,0 +1,19 @@
+<section>
+  <header>
+    <h1>Found a Guild</h1>
+  </header>
+
+  <%= form_with model: @guild do |form| %>
+    <div class="field">
+      <%= form.label :name %>
+      <%= form.text_field :name %>
+    </div>
+    <div class="field">
+      <%= form.label :motto %>
+      <%= form.text_field :motto %>
+    </div>
+    <div class="actions">
+      <%= form.submit "Create" %>
+    </div>
+  <% end %>
+</section>

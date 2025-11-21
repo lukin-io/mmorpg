@@ -1,0 +1,47 @@
+# 2. Social Systems — Economy & Trading Flow
+
+## Overview
+- Covers multi-currency wallets, auction house, kiosk marketplace, and direct trades from `doc/features/2_user.md` + `9_economy.md`.
+- Currency movements run through `CurrencyWallet` + `CurrencyTransaction` for auditing.
+- Auction listings and bids exposed through HTML controllers plus Hotwire-ready tables.
+
+## Domain Models
+- `CurrencyWallet`, `CurrencyTransaction` — track balances and immutable ledger rows.
+- `AuctionListing`, `AuctionBid`, `MarketplaceKiosk` — represent public trading venues.
+- `TradeSession`, `TradeItem` — secure, dual-confirmed trades including item + currency payloads.
+
+## Services & Workflows
+- `Economy::TaxCalculator` applies dynamic city + ownership modifiers to auction taxes.
+- `Marketplace::ListingEngine` validates params, calculates tax, and persists `AuctionListing` rows.
+- `Trades::SessionManager` starts sessions, enforces TTL, and handles two-step confirmations.
+
+## Controllers & UI
+- `AuctionListingsController` (`index/new/create/show`) with nested `AuctionBidsController#create` for bidding.
+- `MarketplaceKiosksController#index` lists quick-sell kiosks and provides a form to add entries.
+- `TradeSessionsController` handles starting, viewing, and confirming trade sessions; view `app/views/trade_sessions/show.html.erb` summarizes contributions and exposes a confirm button.
+
+## Policies & Security
+- `AuctionListingPolicy`, `TradeSessionPolicy` ensure only verified players list/bid and only participants confirm trades.
+
+## Testing & Verification
+- Model specs for wallets, listings, bids.
+- Service specs for tax calculator, listing engine, trade session manager.
+- Request specs covering listing creation, bidding, and trade confirmation flows.
+
+---
+
+## Responsible for Implementation Files
+- models:
+  - `app/models/currency_wallet.rb`, `app/models/currency_transaction.rb`, `app/models/auction_listing.rb`, `app/models/auction_bid.rb`, `app/models/marketplace_kiosk.rb`, `app/models/trade_session.rb`, `app/models/trade_item.rb`
+- services:
+  - `app/services/economy/tax_calculator.rb`, `app/services/marketplace/listing_engine.rb`, `app/services/trades/session_manager.rb`
+- controllers/views:
+  - `app/controllers/auction_listings_controller.rb`, `app/controllers/auction_bids_controller.rb`, `app/views/auction_listings/*`
+  - `app/controllers/marketplace_kiosks_controller.rb`, `app/views/marketplace_kiosks/index.html.erb`
+  - `app/controllers/trade_sessions_controller.rb`, `app/views/trade_sessions/show.html.erb`
+- policies:
+  - `app/policies/auction_listing_policy.rb`, `app/policies/trade_session_policy.rb`
+- database:
+  - `db/migrate/20251121142307_create_economy_and_trading.rb`
+- docs/tests:
+  - `doc/flow/2_user_economy_trading.md`, associated specs (to be expanded under `spec/models`, `spec/services`, `spec/requests`).
