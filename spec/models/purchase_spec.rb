@@ -10,4 +10,12 @@ RSpec.describe Purchase, type: :model do
 
     expect(purchase).not_to be_valid
   end
+
+  it "credits premium tokens when succeeding" do
+    purchase = create(:purchase, status: "pending")
+
+    expect(Payments::PremiumTokenLedger).to receive(:credit)
+
+    purchase.update!(status: "succeeded")
+  end
 end

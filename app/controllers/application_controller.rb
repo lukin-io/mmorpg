@@ -4,13 +4,24 @@ class ApplicationController < ActionController::Base
   include Pundit::Authorization
 
   before_action :authenticate_user!
+  before_action :ensure_device_identifier
 
   # Changes to the importmap will invalidate the etag for HTML responses
   stale_when_importmap_changes
 
   rescue_from Pundit::NotAuthorizedError, with: :user_not_authorized
 
+  helper_method :current_device_id
+
   private
+
+  def ensure_device_identifier
+    current_device_id if user_signed_in?
+  end
+
+  def current_device_id
+    @current_device_id ||= Auth::DeviceIdentifier.resolve(request)
+  end
 
   def user_not_authorized
     respond_to do |format|

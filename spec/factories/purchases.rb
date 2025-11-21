@@ -6,6 +6,6 @@ FactoryBot.define do
     status { "pending" }
     amount_cents { 500 }
     currency { "USD" }
-    metadata { {} }
+    metadata { {"token_amount" => 50} }
   end
 end

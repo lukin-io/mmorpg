@@ -112,6 +112,7 @@ If a command is not available in this project, skip it and note that explicitly.
 
 2. **Linting** (recommended/required where configured):
    - `bundle exec rubocop`
+   - `bundle exec standardrb`
 
 3. **Security** (where configured):
    - `bundle exec brakeman` or `bin/brakeman`
