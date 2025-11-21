@@ -1,0 +1,12 @@
+<section>
+  <header>
+    <h1>Clans</h1>
+    <%= link_to "Found Clan", new_clan_path, class: "button" %>
+  </header>
+
+  <ul>
+    <% @clans.each do |clan| %>
+      <li><%= link_to clan.name, clan_path(clan) %> (Prestige: <%= clan.prestige %>)</li>
+    <% end %>
+  </ul>
+</section>

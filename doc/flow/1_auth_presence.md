@@ -11,6 +11,8 @@ date: 2025-11-21
 - [Environment & Configuration](#environment--configuration)
 - [Login & Session Lifecycle](#login--session-lifecycle)
 - [Premium Token Ledger Flow](#premium-token-ledger-flow)
+- [Profiles & Characters](#profiles--characters)
+- [Privacy Controls](#privacy-controls)
 - [Presence & Idle Tracking](#presence--idle-tracking)
 - [Moderation & Audit Logging](#moderation--audit-logging)
 - [Testing Strategy](#testing-strategy)
@@ -24,6 +26,8 @@ This document captures the end-to-end flow for:
 - Rack::Attack throttling on login/password reset endpoints.
 - Device/session history persisted via `UserSession`.
 - Premium token balance & immutable ledger entries.
+- Character & profile management (`User` owns up to 5 `Character` records; public profile endpoint surfaces sanitized view data).
+- Privacy controls for chat availability, friend requests, and duel invitations.
 - Presence/idle events pushed to clients through `PresenceChannel` and the `idle-tracker` Stimulus controller.
 - Audit logging for moderator/GM/admin-sensitive operations tied to premium adjustments.
 
@@ -38,6 +42,8 @@ Use this file whenever modifying auth, presence, or premium token logic.
 | Session tracking | `app/services/auth/user_session_manager.rb`, `app/models/user_session.rb`, `config/initializers/warden_hooks.rb` | Warden hooks call service to persist device info + presence events. |
 | Rack::Attack | `config/initializers/rack_attack.rb`, `config/application.rb` | Middleware throttles `/users/sign_in` & `/users/password`. |
 | Premium ledger | `app/models/premium_token_ledger_entry.rb`, `app/services/payments/premium_token_ledger.rb`, `app/models/purchase.rb` | Credits on purchase success; debits/adjustments via service entry points. |
+| Characters & profiles | `app/models/character.rb`, `app/controllers/public_profiles_controller.rb`, `app/services/users/public_profile.rb`, `config/routes.rb` | Users own up to 5 characters. Public profiles available at `/profiles/:profile_name` (JSON). |
+| Privacy toggles | `app/models/user.rb`, `app/models/friendship.rb` | `chat_privacy`, `friend_request_privacy`, `duel_privacy` enums gate inbound interactions; friendships respect receiver preference on create. |
 | Presence | `app/channels/presence_channel.rb`, `app/javascript/channels/presence_channel.js`, `app/jobs/session_presence_job.rb`, `app/javascript/controllers/idle_tracker_controller.js` | Broadcast online/idle/offline statuses. |
 | Audit logs | `app/models/audit_log.rb`, `app/services/audit_logger.rb` | Records moderator/admin actions (premium adjustments, bans, etc.). |
 | Policies | `app/policies/user_policy.rb` | Role-based access (player/moderator/gm/admin). |
@@ -101,6 +107,38 @@ Browser -> Devise Controller -> Warden Hooks -> UserSessionManager -> UserSessio
 
 ---
 
+## Profiles & Characters
+### Character lifecycle
+- `Character` belongs to `User`, optional `CharacterClass`, and optional `Guild`/`Clan`.
+- Creation limit: `User::MAX_CHARACTERS` (currently 5). Validation fires on create.
+- Membership inheritance:
+  - `before_validation` copies `user.primary_guild` and `user.primary_clan` into the character record.
+  - `GuildMembership`/`ClanMembership` `after_commit` callbacks invoke `User#sync_character_memberships!` to keep existing characters in sync when the account joins or leaves an alliance.
+- Table: `characters` (name unique, level, experience, metadata JSONB, foreign keys for user/class/guild/clan).
+
+### Public profiles
+- `profile_name` is a unique slug derived from the user’s email local part at migration time (and maintained via `before_validation`).
+- `PublicProfilesController#show` looks up `User` by `profile_name` (no authentication) and renders `Users::PublicProfile` JSON. The serializer exposes:
+  - `id`, `profile_name`, `reputation_score`.
+  - Guild & clan snapshots (name, slug, level/prestige).
+  - A trimmed housing list (location key, plot type, storage slots).
+  - Achievement grants (name, points, granted_at).
+- No PII such as `email` is included. Consumers should rely on `profile_name` for public handles.
+
+---
+
+## Privacy Controls
+- `User` defines enums for `chat_privacy`, `friend_request_privacy`, and `duel_privacy`. Options: `:everyone`, `:allies_only` (friends or same guild/clan), `:nobody`.
+- Helper methods:
+  - `allows_chat_from?(other_user)`
+  - `allows_friend_request_from?(other_user)`
+  - `allows_duel_from?(other_user)`
+  - `allied_with?(other_user)` checks friendships (`Friendship.accepted_between`) plus shared guild/clan memberships.
+- `Friendship` validation leverages `allows_friend_request_from?` so blocked/limited users can’t be spammed with invites.
+- Surface these helpers before opening sockets, queueing duels, or delivering chat invitations.
+
+---
+
 ## Presence & Idle Tracking
 **Client**
 ```erb
@@ -133,8 +171,11 @@ Browser -> Devise Controller -> Warden Hooks -> UserSessionManager -> UserSessio
 | Layer | File | Notes |
 | --- | --- | --- |
 | Models | `spec/models/user_session_spec.rb`, `spec/models/premium_token_ledger_entry_spec.rb`, `spec/models/user_spec.rb` | Validations, lifecycle helpers. |
+| Models (auth adjuncts) | `spec/models/character_spec.rb`, `spec/models/friendship_spec.rb` | Character inheritance/limits, privacy-aware friend requests. |
 | Services | `spec/services/payments/premium_token_ledger_spec.rb` | Balance adjustments, error handling. |
+| Services (profiles) | `spec/services/users/public_profile_spec.rb` | Ensures serializer hides email and reflects guild/housing state. |
 | Requests | `spec/requests/session_pings_spec.rb` | Ensures presence pings enqueue job. |
+| Requests (profiles) | `spec/requests/public_profiles_spec.rb` | Public profile endpoint JSON contract. |
 | Policies | `spec/policies/user_policy_spec.rb` | Role-based coverage. |
 
 Before running `bundle exec rspec`, ensure Postgres credentials are set (`POSTGRES_PASSWORD`, etc.) or tests will fail with `fe_sendauth: no password supplied`.
@@ -149,6 +190,7 @@ Before running `bundle exec rspec`, ensure Postgres credentials are set (`POSTGR
 | Token balance negative error | Attempted debit > balance | Catch `Payments::PremiumTokenLedger::InsufficientBalanceError` and surface validation error. |
 | Users stuck “offline” after login | Cookies disabled → device_id missing | Investigate `Auth::DeviceIdentifier`; fall back to session-based ID. |
 | `PG::ConnectionBad` during tests | Missing DB password/env | Export `POSTGRES_USER/PASSWORD/HOST` before running specs. |
+| 403 on friend request | Receiver privacy set to `nobody` | Surface the error copy from `Friendship` validation; prompt sender to use chat/mail instead. |
 
 **Monitoring Hooks**
 - Add alerts on Rack::Attack throttle counts (accessible via Rails logs).

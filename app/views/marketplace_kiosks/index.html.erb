@@ -1,0 +1,38 @@
+<section>
+  <header>
+    <h1>Marketplace Kiosks</h1>
+  </header>
+
+  <table>
+    <thead>
+      <tr>
+        <th>City</th>
+        <th>Item</th>
+        <th>Price</th>
+        <th>Expires</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @kiosks.each do |kiosk| %>
+        <tr>
+          <td><%= kiosk.city %></td>
+          <td><%= kiosk.item_name %></td>
+          <td><%= kiosk.price %></td>
+          <td><%= l(kiosk.expires_at, format: :short) %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+
+  <section>
+    <h2>List Item</h2>
+    <%= form_with model: MarketplaceKiosk.new, url: marketplace_kiosks_path do |form| %>
+      <%= form.text_field :city, placeholder: "City" %>
+      <%= form.text_field :item_name, placeholder: "Item" %>
+      <%= form.number_field :quantity, placeholder: "Qty" %>
+      <%= form.number_field :price, placeholder: "Price" %>
+      <%= form.datetime_field :expires_at %>
+      <%= form.submit "List" %>
+    <% end %>
+  </section>
+</section>

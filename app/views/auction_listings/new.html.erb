@@ -1,0 +1,39 @@
+<section>
+  <header>
+    <h1>New Auction Listing</h1>
+  </header>
+
+  <%= form_with model: @auction_listing do |form| %>
+    <div class="field">
+      <%= form.label :item_name %>
+      <%= form.text_field :item_name %>
+    </div>
+    <div class="field">
+      <%= form.label :quantity %>
+      <%= form.number_field :quantity, value: 1 %>
+    </div>
+    <div class="field">
+      <%= form.label :currency_type %>
+      <%= form.select :currency_type, %w[gold silver premium_tokens] %>
+    </div>
+    <div class="field">
+      <%= form.label :starting_bid %>
+      <%= form.number_field :starting_bid %>
+    </div>
+    <div class="field">
+      <%= form.label :buyout_price %>
+      <%= form.number_field :buyout_price %>
+    </div>
+    <div class="field">
+      <%= form.label :ends_at %>
+      <%= form.datetime_field :ends_at %>
+    </div>
+    <div class="field">
+      <%= form.label :location_key, "Listing Location" %>
+      <%= form.text_field :location_key %>
+    </div>
+    <div class="actions">
+      <%= form.submit "Post Listing" %>
+    </div>
+  <% end %>
+</section>

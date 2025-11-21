@@ -1,0 +1,23 @@
+<section>
+  <header>
+    <h1>Achievements</h1>
+  </header>
+
+  <ul>
+    <% @achievements.each do |achievement| %>
+      <li>
+        <strong><%= achievement.name %></strong> (<%= achievement.points %> pts)
+        <p><%= achievement.description %></p>
+      </li>
+    <% end %>
+  </ul>
+
+  <section>
+    <h2>Your Unlocks</h2>
+    <ul>
+      <% @grants.each do |grant| %>
+        <li><%= grant.achievement.name %> — granted at <%= l(grant.granted_at, format: :short) %></li>
+      <% end %>
+    </ul>
+  </section>
+</section>

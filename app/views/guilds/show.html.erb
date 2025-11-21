@@ -1,0 +1,24 @@
+<section>
+  <header>
+    <h1><%= @guild.name %></h1>
+    <p><%= @guild.motto %></p>
+    <p>Leader: <%= @guild.leader.email %></p>
+  </header>
+
+  <section>
+    <h2>Members</h2>
+    <ul>
+      <% @memberships.each do |membership| %>
+        <li><%= membership.user.email %> — <%= membership.role.humanize %></li>
+      <% end %>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Apply</h2>
+    <%= form_with url: guild_guild_applications_path(@guild), scope: :guild_application do |form| %>
+      <%= form.text_area :answers, placeholder: "Tell us about yourself" %>
+      <%= form.submit "Submit" %>
+    <% end %>
+  </section>
+</section>

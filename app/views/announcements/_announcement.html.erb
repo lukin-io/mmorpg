@@ -1,0 +1,8 @@
+<article id="<%= dom_id(announcement) %>" class="border border-slate-700 rounded p-3 bg-slate-900/40">
+  <header class="flex items-center justify-between">
+    <h2><%= announcement.title %></h2>
+    <small><%= announcement.created_at.to_fs(:long) %></small>
+  </header>
+  <p><%= simple_format(announcement.body) %></p>
+</article>
+

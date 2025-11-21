@@ -1,0 +1,17 @@
+<section class="space-y-4">
+  <header>
+    <h1>Announcements</h1>
+    <p>Share real-time updates with the realm. Submissions stream live via Turbo.</p>
+  </header>
+
+  <%= render "form", announcement: @announcement %>
+
+  <turbo-frame id="announcements_list">
+    <div id="announcements" class="space-y-3">
+      <% @announcements.each do |announcement| %>
+        <%= render announcement %>
+      <% end %>
+    </div>
+  </turbo-frame>
+</section>
+

@@ -25,7 +25,7 @@ Rails.application.configure do
     config.action_controller.perform_caching = false
   end
 
-  redis_cache_url = ENV.fetch("REDIS_CACHE_URL", "redis://localhost:6379/1")
+  redis_cache_url = ENV.fetch("REDIS_CACHE_URL", "redis://localhost:6380/0")
   config.cache_store = :redis_cache_store, {url: redis_cache_url, namespace: "mmorpg-cache"}
 
   # Store uploaded files on the local file system (see config/storage.yml for options).

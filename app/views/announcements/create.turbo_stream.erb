@@ -1,0 +1,8 @@
+<%= turbo_stream.prepend "announcements_list" do %>
+  <%= render @announcement %>
+<% end %>
+
+<%= turbo_stream.replace "announcement_form" do %>
+  <%= render "form", announcement: Announcement.new %>
+<% end %>
+

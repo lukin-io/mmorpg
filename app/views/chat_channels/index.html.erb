@@ -1,0 +1,15 @@
+<section class="chat-channel-list">
+  <header>
+    <h1>Chat Channels</h1>
+    <p>Choose a channel to join real-time conversations.</p>
+  </header>
+
+  <ul>
+    <% @chat_channels.each do |channel| %>
+      <li>
+        <%= link_to channel.name, chat_channel_path(channel) %>
+        <small>(<%= channel.channel_type.humanize %>)</small>
+      </li>
+    <% end %>
+  </ul>
+</section>

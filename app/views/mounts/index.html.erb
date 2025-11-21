@@ -1,0 +1,21 @@
+<section>
+  <header>
+    <h1>Mounts</h1>
+  </header>
+
+  <ul>
+    <% @mounts.each do |mount| %>
+      <li><%= mount.name %> — <%= mount.mount_type %> (+<%= mount.speed_bonus %> speed)</li>
+    <% end %>
+  </ul>
+
+  <section>
+    <h2>Add Mount</h2>
+    <%= form_with model: Mount.new, url: mounts_path do |form| %>
+      <%= form.text_field :name, placeholder: "Name" %>
+      <%= form.text_field :mount_type, placeholder: "Type" %>
+      <%= form.number_field :speed_bonus, value: 0 %>
+      <%= form.submit "Add" %>
+    <% end %>
+  </section>
+</section>

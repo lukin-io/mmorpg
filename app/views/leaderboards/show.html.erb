@@ -1,0 +1,29 @@
+<section>
+  <header>
+    <h1><%= @leaderboard.name %></h1>
+    <p>Scope: <%= @leaderboard.scope %> — Season <%= @leaderboard.season %></p>
+  </header>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Rank</th>
+        <th>Entity</th>
+        <th>Score</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @entries.each do |entry| %>
+        <tr>
+          <td><%= entry.rank %></td>
+          <td><%= entry.entity_type %>#<%= entry.entity_id %></td>
+          <td><%= entry.score %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+
+  <% if policy(@leaderboard).recalculate? %>
+    <%= button_to "Recalculate", recalculate_leaderboard_path(@leaderboard), method: :post %>
+  <% end %>
+</section>

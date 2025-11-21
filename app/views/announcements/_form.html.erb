@@ -1,0 +1,29 @@
+<turbo-frame id="announcement_form">
+  <%= form_with model: announcement, data: {turbo_frame: "announcement_form"} do |form| %>
+    <% if announcement.errors.any? %>
+      <div class="flash alert">
+        <p><strong>Could not post announcement:</strong></p>
+        <ul>
+          <% announcement.errors.full_messages.each do |message| %>
+            <li><%= message %></li>
+          <% end %>
+        </ul>
+      </div>
+    <% end %>
+
+    <div class="field">
+      <%= form.label :title %>
+      <%= form.text_field :title, required: true %>
+    </div>
+
+    <div class="field">
+      <%= form.label :body %>
+      <%= form.text_area :body, rows: 3, required: true %>
+    </div>
+
+    <div class="actions">
+      <%= form.submit "Post Announcement" %>
+    </div>
+  <% end %>
+</turbo-frame>
+

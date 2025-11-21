@@ -1,0 +1,25 @@
+<section>
+  <header>
+    <h1><%= @clan.name %></h1>
+    <p><%= @clan.description %></p>
+    <p>Leader: <%= @clan.leader.email %></p>
+  </header>
+
+  <section>
+    <h2>Territories</h2>
+    <ul>
+      <% @territories.each do |territory| %>
+        <li><%= territory.territory_key %> — Tax: <%= number_to_percentage(territory.tax_rate * 100, precision: 2) %></li>
+      <% end %>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Wars</h2>
+    <ul>
+      <% @wars.each do |war| %>
+        <li><%= war.territory_key %> — <%= war.status.humanize %> on <%= l(war.scheduled_at, format: :short) %></li>
+      <% end %>
+    </ul>
+  </section>
+</section>

@@ -44,6 +44,11 @@ This is a clone/re-imagining of the classic MMORPG **Neverlands.ru**, featuring:
 - Player characters, stats, skills, and equipment
 - Inventory, items, professions, crafting
 - Guilds/clans
+- Social foundation: Turbo-driven chat (global/local), friend lists, in-game mail, and moderation workflows
+- Economy stack: wallets, auction house, direct trade sessions, and kiosk listings
+- Crafting/profession progression with job queues and recipe validation
+- Achievements, titles, housing plots, pets, and mounts for meta goals
+- Events & community loops: scheduled game events, leaderboards, and competition brackets
 - Quests, storylines, NPC interactions
 - Auctions, economy, loot tables
 - Map exploration & zones
@@ -85,12 +90,34 @@ Use this README as the entry point, then jump to the guide that matches the type
 
 | Variable | Purpose | Default |
 | --- | --- | --- |
-| `REDIS_CACHE_URL` | Redis instance for Rails cache | `redis://localhost:6379/1` |
-| `REDIS_SIDEKIQ_URL` | Redis instance for Sidekiq queues | `redis://localhost:6379/2` |
-| `REDIS_CABLE_URL` | Redis instance for Action Cable pub/sub | `redis://localhost:6379/3-5` |
+| `REDIS_CACHE_URL` | Redis instance for Rails cache | `redis://localhost:6380/0` |
+| `REDIS_SIDEKIQ_URL` | Redis instance for Sidekiq queues | `redis://localhost:6381/0` |
+| `REDIS_CABLE_URL` | Redis instance for Action Cable pub/sub | `redis://localhost:6382/0-2` |
 | `STRIPE_SECRET_KEY` | Stripe API secret for premium purchases | *(not set)* |
 | `SIDEKIQ_CONCURRENCY` | Override worker threads | `5` |
 | `APP_URL` | Base URL for payment callbacks | `http://localhost:3000` |
+
+After preparing the database, run seeds to load the baseline gameplay dataset (classes, items, NPCs, map tiles, feature flags):
+
+```bash
+bin/rails db:seed
+```
+
+### Social & Meta configuration
+
+- `config/chat_profanity.yml` controls the banned-word dictionary that feeds the profanity filter. Restart the server (or touch `tmp/restart.txt` in deployment) after editing it.
+- `db/seeds.rb` creates the default global chat channel plus baseline professions, pet species, and the seasonal `winter_festival` event.
+
+### Economy configuration
+
+- Currency wallets (`currency_wallets` + `currency_transactions`) store gold/silver/premium balances per user. Utility services live in `app/services/economy`.
+- Auction house tax math is centralized in `Economy::TaxCalculator`; adjust base rates there instead of inside controllers.
+- Marketplace kiosks provide rapid listings per city; tweak defaults/seeds in `db/seeds.rb`.
+
+### Events & Leaderboards
+
+- Game events toggle feature flags via `Events::LifecycleService`, so ensure corresponding Flipper keys exist when creating new events.
+- `Leaderboards::RankCalculator` recalculates ranks; long-term we can offload to a job, but for now the controller action is enough for manual refreshes.
 
 ### Background jobs & feature flags
 
@@ -104,6 +131,9 @@ Use this README as the entry point, then jump to the guide that matches the type
 - Login and password reset endpoints are throttled with Rack::Attack—tune limits via `REDIS_CACHE_URL` if needed.
 - Premium token balances live on `users.premium_tokens_balance` with an immutable ledger (`premium_token_ledger_entries`) that records every credit/debit.
 - Device/session history is persisted in `user_sessions`. Presence updates are broadcast through `PresenceChannel`; the browser sends periodic pings via the `idle-tracker` Stimulus controller.
+- Accounts can create up to 5 `Character` records (see `Character` model). Clan and guild memberships automatically sync from the owning `User`, so per-character state reflects the account’s alliances.
+- Public profiles are exposed at `GET /profiles/:profile_name` and are powered by `Users::PublicProfile`. They reveal profile name, reputation, achievements, guild/clan, and housing data—never emails.
+- Privacy toggles (`chat_privacy`, `friend_request_privacy`, `duel_privacy`) gate inbound interactions; use `User#allows_chat_from?` / `#allows_friend_request_from?` before opening sockets or enqueuing invites.
 
 ### Testing & QA
 

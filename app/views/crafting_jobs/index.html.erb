@@ -1,0 +1,22 @@
+<section>
+  <header>
+    <h1>Crafting Jobs</h1>
+  </header>
+
+  <ul>
+    <% @crafting_jobs.each do |job| %>
+      <li>
+        <%= job.recipe.name %> — <%= job.status.humanize %> (completes at <%= l(job.completes_at, format: :short) %>)
+      </li>
+    <% end %>
+  </ul>
+
+  <section>
+    <h2>Queue Job</h2>
+    <%= form_with url: crafting_jobs_path, scope: :crafting_job do |form| %>
+      <%= form.collection_select :recipe_id, Recipe.all.order(:name), :id, :name %>
+      <%= form.collection_select :crafting_station_id, CraftingStation.all.order(:name), :id, :name %>
+      <%= form.submit "Queue" %>
+    <% end %>
+  </section>
+</section>

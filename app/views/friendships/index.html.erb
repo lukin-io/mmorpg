@@ -1,0 +1,68 @@
+<section>
+  <header>
+    <h1>Friends</h1>
+    <p>Manage your friend list and pending requests.</p>
+  </header>
+
+  <div class="friendship-columns">
+    <div>
+      <h2>Pending Requests</h2>
+      <% if @pending_requests.any? %>
+        <ul>
+          <% @pending_requests.each do |friendship| %>
+            <li>
+              <%= friendship.requester.email %>
+              <%= button_to "Accept", friendship_path(friendship, decision: :accept), method: :patch %>
+              <%= button_to "Reject", friendship_path(friendship, decision: :reject), method: :patch, form: { data: { turbo_confirm: "Reject this request?" } } %>
+            </li>
+          <% end %>
+        </ul>
+      <% else %>
+        <p>No pending requests.</p>
+      <% end %>
+    </div>
+
+    <div>
+      <h2>Outgoing Requests</h2>
+      <% if @outgoing_requests.any? %>
+        <ul>
+          <% @outgoing_requests.each do |friendship| %>
+            <li><%= friendship.receiver.email %> — pending</li>
+          <% end %>
+        </ul>
+      <% else %>
+        <p>No outgoing requests.</p>
+      <% end %>
+    </div>
+
+    <div>
+      <h2>Friends</h2>
+      <% if @accepted_friendships.any? %>
+        <ul>
+          <% @accepted_friendships.each do |friendship| %>
+            <% friend = friendship.requester == current_user ? friendship.receiver : friendship.requester %>
+            <li>
+              <%= friend.email %>
+              <%= button_to "Remove", friendship_path(friendship), method: :delete, form: { data: { turbo_confirm: "Remove this friend?" } } %>
+            </li>
+          <% end %>
+        </ul>
+      <% else %>
+        <p>No friends yet.</p>
+      <% end %>
+    </div>
+  </div>
+
+  <section>
+    <h2>Add Friend</h2>
+    <%= form_with model: @friendship, url: friendships_path do |form| %>
+      <div class="field">
+        <%= form.label :receiver_id, "Select player" %>
+        <%= form.collection_select :receiver_id, User.verified.order(:email), :id, :email, prompt: "Choose player" %>
+      </div>
+      <div class="actions">
+        <%= form.submit "Send Request" %>
+      </div>
+    <% end %>
+  </section>
+</section>
