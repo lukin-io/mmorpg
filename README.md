@@ -98,6 +98,13 @@ Use this README as the entry point, then jump to the guide that matches the type
 - Feature toggles live in Flipper. Toggle them via console or `Flipper::UI` when wired.
 - Sidekiq dashboard is mounted at `/sidekiq` (admin role required).
 
+## 🔐 Authentication & Presence
+
+- Devise is configured with Confirmable, Trackable, and Timeoutable. Users must confirm email before accessing social features (chat, trading, PvP).
+- Login and password reset endpoints are throttled with Rack::Attack—tune limits via `REDIS_CACHE_URL` if needed.
+- Premium token balances live on `users.premium_tokens_balance` with an immutable ledger (`premium_token_ledger_entries`) that records every credit/debit.
+- Device/session history is persisted in `user_sessions`. Presence updates are broadcast through `PresenceChannel`; the browser sends periodic pings via the `idle-tracker` Stimulus controller.
+
 ### Testing & QA
 
 - Run the full suite with `bundle exec rspec`.

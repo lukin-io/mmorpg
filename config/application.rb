@@ -26,6 +26,8 @@ module Mmorpg
       generator.helper false
     end
 
+    config.middleware.use Rack::Attack
+
     # Configuration for the application, engines, and railties goes here.
     #
     # These settings can be overridden in specific environments using the files

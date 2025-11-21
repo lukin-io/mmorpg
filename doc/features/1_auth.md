@@ -20,3 +20,11 @@
 ## Moderation Hooks
 - Roles (player, moderator, GM, admin) defined in Devise + Pundit policies.
 - Audit logging for bans, mutes, premium refunds, quest/manual adjustments.
+
+## Implementation Notes
+- `User` uses Devise Confirmable/Trackable/Timeoutable with default role assignment (`player`) through Rolify.
+- `Rack::Attack` throttles `/users/sign_in` and `/users/password` requests; tune via `config/initializers/rack_attack.rb`.
+- Session/device history is stored in `user_sessions`, managed via Warden hooks and `Auth::UserSessionManager`.
+- Premium token balance lives on `users.premium_tokens_balance`; ledger entries in `premium_token_ledger_entries` are created via `Payments::PremiumTokenLedger`.
+- Presence broadcasts stream through `PresenceChannel` and the `idle-tracker` Stimulus controller pings `SessionPingsController` to mark users idle/active.
+- Moderation/audit requirements are backed by `AuditLog` records written with `AuditLogger`.

@@ -23,7 +23,7 @@
     <%= javascript_importmap_tags %>
   </head>
 
-  <body>
+  <body <%= idle_tracker_attributes %>>
     <header class="flash-messages">
       <% flash.each do |type, message| %>
         <div class="flash <%= type %>"><%= message %></div>
