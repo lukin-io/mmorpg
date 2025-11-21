@@ -2,7 +2,7 @@
 
 class Rack::Attack
   redis_cache_url = ENV.fetch("REDIS_CACHE_URL", "redis://localhost:6379/1")
-  self.cache.store = ActiveSupport::Cache::RedisCacheStore.new(url: redis_cache_url, namespace: "rack-attack")
+  cache.store = ActiveSupport::Cache::RedisCacheStore.new(url: redis_cache_url, namespace: "rack-attack")
 
   # Limit brute force attempts on Devise endpoints.
   throttle("logins/ip", limit: 10, period: 60.seconds) do |req|
@@ -28,7 +28,7 @@ class Rack::Attack
         "Content-Type" => "application/json",
         "Retry-After" => retry_after.to_s
       },
-      [ { error: "too_many_requests" }.to_json ]
+      [{error: "too_many_requests"}.to_json]
     ]
   end
 end

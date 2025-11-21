@@ -12,7 +12,7 @@ class Purchase < ApplicationRecord
 
   validates :provider, :external_id, :status, :currency, presence: true
   validates :external_id, uniqueness: true
-  validates :amount_cents, numericality: { greater_than: 0 }
+  validates :amount_cents, numericality: {greater_than: 0}
 
   after_update_commit :credit_premium_tokens, if: :succeeded_status?
 

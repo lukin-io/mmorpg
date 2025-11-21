@@ -29,7 +29,7 @@ class ApplicationController < ActionController::Base
         redirect_to(request.referer || root_path, alert: "You are not authorized to perform this action.")
       end
       format.turbo_stream { head :forbidden }
-      format.json { render json: { error: "forbidden" }, status: :forbidden }
+      format.json { render json: {error: "forbidden"}, status: :forbidden }
     end
   end
 end

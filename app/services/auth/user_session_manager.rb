@@ -49,9 +49,7 @@ module Auth
       Presence::Publisher.new.offline!(user: user, session: session)
     end
 
-    def device_id
-      @device_id
-    end
+    attr_reader :device_id
 
     private
 

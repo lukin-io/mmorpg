@@ -12,7 +12,7 @@ class UserSession < ApplicationRecord
   enum :status, STATUS_VALUES, _suffix: :status
 
   validates :device_id, :signed_in_at, presence: true
-  validates :device_id, uniqueness: { scope: :user_id }
+  validates :device_id, uniqueness: {scope: :user_id}
 
   scope :active, -> { where(status: %w[online idle]) }
 

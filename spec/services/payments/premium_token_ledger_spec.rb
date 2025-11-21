@@ -9,7 +9,7 @@ RSpec.describe Payments::PremiumTokenLedger do
         user: user,
         amount: 25,
         reason: "purchase:stripe",
-        metadata: { "receipt" => "123" }
+        metadata: {"receipt" => "123"}
       )
 
       expect(entry).to be_persisted

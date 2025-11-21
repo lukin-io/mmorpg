@@ -3,7 +3,7 @@
 class CreateAuditLogs < ActiveRecord::Migration[7.1]
   def change
     create_table :audit_logs do |t|
-      t.references :actor, null: false, foreign_key: { to_table: :users }
+      t.references :actor, null: false, foreign_key: {to_table: :users}
       t.references :target, polymorphic: true
       t.string :action, null: false
       t.jsonb :metadata, null: false, default: {}

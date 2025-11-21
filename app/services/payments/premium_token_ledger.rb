@@ -16,7 +16,7 @@ module Payments
       ).apply!
     end
 
-    def self.debit(user:, amount:, reason:, reference: nil, metadata: {}, actor:)
+    def self.debit(user:, amount:, reason:, actor:, reference: nil, metadata: {})
       new(
         user: user,
         amount: -amount.abs,
@@ -28,7 +28,7 @@ module Payments
       ).apply!
     end
 
-    def self.adjust(user:, delta:, reason:, reference: nil, metadata: {}, actor:)
+    def self.adjust(user:, delta:, reason:, actor:, reference: nil, metadata: {})
       new(
         user: user,
         amount: delta,

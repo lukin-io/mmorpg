@@ -10,11 +10,11 @@ class PremiumTokenLedgerEntry < ApplicationRecord
   belongs_to :user
   belongs_to :reference, polymorphic: true, optional: true
 
-  enum :entry_type, ENTRY_TYPES, _suffix: :entry
+  enum :entry_type, ENTRY_TYPES, suffix: :entry
 
   validates :entry_type, :delta, :balance_after, presence: true
-  validates :delta, numericality: { other_than: 0 }
-  validates :balance_after, numericality: { greater_than_or_equal_to: 0 }
+  validates :delta, numericality: {other_than: 0}
+  validates :balance_after, numericality: {greater_than_or_equal_to: 0}
 
   scope :recent, -> { order(created_at: :desc) }
 end

@@ -17,7 +17,7 @@ module VerifiedEmailRequired
         redirect_to root_path, alert: "Verify your email to access this feature."
       end
       format.turbo_stream { head :forbidden }
-      format.json { render json: { error: "email_not_verified" }, status: :forbidden }
+      format.json { render json: {error: "email_not_verified"}, status: :forbidden }
     end
   end
 end

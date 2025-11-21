@@ -8,7 +8,7 @@ RSpec.describe "SessionPings", type: :request do
     sign_in user
 
     expect do
-      post session_ping_path, params: { session_ping: { state: "active" } }
+      post session_ping_path, params: {session_ping: {state: "active"}}
     end.to have_enqueued_job(SessionPresenceJob)
   end
 end

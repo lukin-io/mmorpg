@@ -19,7 +19,7 @@ module Payments
             price_data: {
               currency: purchase.currency.downcase,
               unit_amount: purchase.amount_cents,
-              product_data: { name: "Neverlands Premium Item" }
+              product_data: {name: "Neverlands Premium Item"}
             },
             quantity: 1
           }

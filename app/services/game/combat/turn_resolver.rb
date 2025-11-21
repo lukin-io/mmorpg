@@ -21,8 +21,8 @@ module Game
         total_damage = (damage * crit_multiplier).to_i
 
         Result.new(
-          log: [ "#{attacker.name} used #{action} for #{total_damage} damage#{" (CRIT)" if crit_multiplier > 1}" ],
-          hp_changes: { defender: -total_damage },
+          log: ["#{attacker.name} used #{action} for #{total_damage} damage#{" (CRIT)" if crit_multiplier > 1}"],
+          hp_changes: {defender: -total_damage},
           effects: []
         )
       end
