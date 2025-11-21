@@ -65,6 +65,7 @@ This is a clone/re-imagining of the classic MMORPG **Neverlands.ru**, featuring:
 | **MMO_ADDITIONAL_GUIDE.md**  | Gameplay/MMORPG domain-specific engineering conventions                  |
 | **doc/gdd.md**               | Game design vision, classes, mechanics, story                            |
 | **doc/features/*.md**        | Per-system breakdown derived from the GDD (technical implementation plan)|
+| **changelog.md**             | High-level timeline of implemented features mapped back to `doc/features`|
 
 Use this README as the entry point, then jump to the guide that matches the type of work you’re doing.
 
