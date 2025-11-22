@@ -7,7 +7,7 @@
   </header>
 
   <div id="<%= dom_id(@chat_channel, :messages) %>" data-chat-target="messages" class="chat-messages">
-    <%= render @chat_messages %>
+    <%= render partial: "chat_messages/chat_message", collection: @chat_messages, as: :chat_message %>
   </div>
 
   <div id="<%= dom_id(@chat_channel, :form) %>" class="chat-form">

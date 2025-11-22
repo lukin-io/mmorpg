@@ -1,0 +1,41 @@
+forest:
+  - name: "Forest Wisp"
+    kind: "pve"
+    difficulty: "easy"
+    loot_table: "forest_basic"
+    weight: 60
+  - name: "Ent Guardian"
+    kind: "pve"
+    difficulty: "hard"
+    loot_table: "forest_guardian"
+    weight: 10
+mountain:
+  - name: "Rock Troll"
+    kind: "pve"
+    difficulty: "medium"
+    loot_table: "mountain_heavy"
+    weight: 40
+river:
+  - name: "River Serpent"
+    kind: "pve"
+    difficulty: "medium"
+    loot_table: "river_scale"
+    weight: 50
+city:
+  - name: "Pickpocket"
+    kind: "pvp"
+    difficulty: "dynamic"
+    loot_table: "city_guard"
+    weight: 20
+castle:
+  - name: "Arena Herald"
+    kind: "arena"
+    difficulty: "tournament"
+    loot_table: "arena_rewards"
+    weight: 30
+plains:
+  - name: "Roaming Bandits"
+    kind: "pve"
+    difficulty: "medium"
+    loot_table: "plains_bandit"
+    weight: 50

@@ -54,6 +54,17 @@ This is a clone/re-imagining of the classic MMORPG **Neverlands.ru**, featuring:
 - Map exploration & zones
 - Real-time updates via Turbo Streams
 
+### Player & Character Systems (Feature 3)
+
+The `doc/features/3_player.md` specification is now wired into the codebase:
+
+- **Movement & Exploration** — `Game::Movement::TurnProcessor` enforces server-side, turn-per-action movement over tile grids built from `MapTileTemplate` + `Zone` data. Spawn points, respawn timers, and biome encounters are configured via `Zone`, `SpawnPoint`, and `config/gameplay/biomes.yml`.
+- **Combat** — `Battle`, `BattleParticipant`, and `CombatLogEntry` persist PvE/PvP encounters with initiative order, moderation-aware logs, and arena ladders via `Game::Combat::ArenaLadder` + `PostBattleProcessor`.
+- **Progression & Stats** — `Players::Progression::LevelUpService`, `StatAllocationService`, and `Players::Alignment::AccessGate` manage XP curves, stat points, faction alignment, and reputation-gated content.
+- **Classes & Abilities** — `CharacterClass`, `ClassSpecialization`, `SkillTree`, `SkillNode`, and `Ability` define core/advanced class kits. `Game::Combat::SkillExecutor` consumes these definitions for deterministic turns.
+- **Items & Inventory** — `Inventory`, `InventoryItem`, and `Game::Inventory::*` services implement equipment slots, stacking rules, premium safeguards, and enhancement/enchantment risk tied to crafting skills.
+- **Crafting & Professions** — Gathering nodes plus `Professions::GatheringResolver` feed crafting recipes. The Doctor profession shortens downtime after battles through `Professions::Doctor::TraumaResponse`.
+
 ---
 
 ## 📄 Documentation Map
@@ -108,6 +119,11 @@ bin/rails db:seed
 
 - `config/chat_profanity.yml` controls the banned-word dictionary that feeds the profanity filter. Restart the server (or touch `tmp/restart.txt` in deployment) after editing it.
 - `db/seeds.rb` creates the default global chat channel plus baseline professions, pet species, and the seasonal `winter_festival` event.
+
+### Gameplay configuration
+
+- `config/gameplay/biomes.yml` maps biome keys to encounter tables consumed by `Game::Exploration::EncounterResolver`.
+- `db/seeds.rb` provisions core character classes (Warrior/Mage/Hunter/Priest/Thief), advanced specializations, abilities, spawn points, gathering nodes, and starter items.
 
 ### Economy configuration
 

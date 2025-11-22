@@ -4,5 +4,6 @@ FactoryBot.define do
     profession
     skill_level { 1 }
     experience { 0 }
+    mastery_tier { 0 }
   end
 end

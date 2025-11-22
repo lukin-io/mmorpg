@@ -9,6 +9,12 @@ class GuildMembershipPolicy < ApplicationPolicy
     moderator_or_leader? || record.user == user
   end
 
+  def permitted_attributes
+    attrs = [:status]
+    attrs << :role if moderator_or_leader?
+    attrs
+  end
+
   class Scope < Scope
     def resolve
       scope.joins(:guild).where(guilds: {id: user.guild_ids})

@@ -3,18 +3,18 @@
 module Game
   module Movement
     class MovementValidator
-      def initialize(grid)
-        @grid = grid
+      def initialize(tile_source)
+        @tile_source = tile_source
       end
 
       def valid?(x, y)
-        tile = grid.tile_at(x, y)
+        tile = tile_source.tile_at(x, y)
         tile&.passable?
       end
 
       private
 
-      attr_reader :grid
+      attr_reader :tile_source
     end
   end
 end

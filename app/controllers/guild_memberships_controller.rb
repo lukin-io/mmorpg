@@ -9,13 +9,13 @@ class GuildMembershipsController < ApplicationController
 
   def update
     membership = authorize GuildMembership.find(params[:id])
-    membership.update!(membership_params)
+    membership.update!(membership_params(membership))
     redirect_to guild_path(membership.guild), notice: "Membership updated."
   end
 
   private
 
-  def membership_params
-    params.require(:guild_membership).permit(:role, :status)
+  def membership_params(membership)
+    params.require(:guild_membership).permit(policy(membership).permitted_attributes)
   end
 end

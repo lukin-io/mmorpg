@@ -5,4 +5,5 @@ class MapTileTemplate < ApplicationRecord
   validates :x, presence: true
   validates :y, presence: true
   validates :terrain_type, presence: true
+  validates :biome, presence: true
 end
