@@ -7,12 +7,14 @@ module Game
         @turn_resolver = turn_resolver
       end
 
-      def call(attacker:, defender:, action:, rng_seed: 1)
+      def call(attacker:, defender:, action:, rng_seed: 1, battle: nil, ability: nil)
         turn_resolver.new(
-          attacker: attacker,
-          defender: defender,
-          action: action,
-          rng: Random.new(rng_seed)
+          attacker:,
+          defender:,
+          action:,
+          rng: Random.new(rng_seed),
+          battle:,
+          ability:
         ).call
       end
 

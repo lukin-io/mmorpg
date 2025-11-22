@@ -8,6 +8,10 @@ class ApplicationPolicy
     @record = record
   end
 
+  def permitted_attributes
+    []
+  end
+
   def index?
     false
   end

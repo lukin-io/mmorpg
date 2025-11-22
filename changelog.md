@@ -11,6 +11,20 @@
 ## Return Values
 - Not applicable; this is a documentation file.
 
+## 2025-11-22
+
+### Added
+- Implemented `doc/features/3_player.md`, covering movement/exploration (`Zone`, `SpawnPoint`, `Game::Movement::TurnProcessor`), deterministic PvE/PvP encounters (`Battle`, `CombatLogEntry`, `ArenaRanking`), progression/stat services, class specializations/skill trees/abilities, fully modeled inventory + enhancement systems, and profession-driven crafting/Doctor trauma recovery.
+- Introduced biome encounter config at `config/gameplay/biomes.yml` plus comprehensive seeds for classes, spawn points, abilities, and gathering nodes.
+
+### Feature Coverage Snapshot
+
+| Feature | Title                       | Status | Notes |
+|---------|-----------------------------|--------|-------|
+| 3       | Player & Character Systems  | ✅ Done | Movement, combat, progression, classes, inventory, and crafting loops are modeled with deterministic services. |
+
+Completed features: **4** / 14 total (`doc/features/0`–`doc/features/13`).
+
 ## 2025-11-21
 
 ### Added
