@@ -1,0 +1,60 @@
+<div class="page-header">
+  <h1>Spawn Schedules</h1>
+  <p class="text-muted">Configure respawn timers and rarity overrides per region.</p>
+</div>
+
+<div class="spawn-schedule-grid">
+  <section>
+    <h2>Existing Overrides</h2>
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Region</th>
+          <th>Monster</th>
+          <th>Respawn (s)</th>
+          <th>Rarity Override</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody id="spawn-schedule-table">
+        <% @spawn_schedules.each do |schedule| %>
+          <%= render "spawn_schedule_row", schedule: schedule %>
+        <% end %>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>New Override</h2>
+    <%= form_with model: @spawn_schedule do |form| %>
+      <div class="field">
+        <%= form.label :region_key %>
+        <%= form.select :region_key, @region_catalog.all.map { |region| [region.name, region.key] }, include_blank: true %>
+      </div>
+
+      <div class="field">
+        <%= form.label :monster_key %>
+        <%= form.text_field :monster_key, placeholder: "forest_wolf" %>
+        <p class="text-muted">Reference keys from config/gameplay/world/monsters.yml</p>
+      </div>
+
+      <div class="field">
+        <%= form.label :respawn_seconds %>
+        <%= form.number_field :respawn_seconds, min: 10 %>
+      </div>
+
+      <div class="field">
+        <%= form.label :rarity_override %>
+        <%= form.text_field :rarity_override, placeholder: "elite" %>
+      </div>
+
+      <div class="field">
+        <%= form.label :active %>
+        <%= form.check_box :active %>
+      </div>
+
+      <%= form.submit "Save Override", class: "btn btn-primary" %>
+    <% end %>
+  </section>
+</div>
+

@@ -26,3 +26,42 @@ body {
   margin-bottom: 0.5rem;
   background: #1f2933;
 }
+
+.quest-layout {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.quest-layout--stacked {
+  display: flex;
+  flex-direction: column;
+}
+
+.quest-card {
+  background: #111827;
+  border: 1px solid #1f2937;
+  border-radius: 0.75rem;
+  padding: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.quest-card h3 {
+  margin: 0 0 0.25rem;
+}
+
+.quest-dialogue {
+  background: #111827;
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  min-height: 300px;
+}
+
+.quest-dialogue-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  background: #0f172a;
+  border-radius: 0.75rem;
+}

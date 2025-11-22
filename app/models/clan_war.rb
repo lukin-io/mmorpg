@@ -13,4 +13,8 @@ class ClanWar < ApplicationRecord
 
   validates :territory_key, presence: true
   validates :scheduled_at, presence: true
+
+  def world_region
+    Game::World::RegionCatalog.instance.region_for_territory(territory_key)
+  end
 end

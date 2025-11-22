@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_11_22_123000) do
+ActiveRecord::Schema[8.1].define(version: 2025_11_22_133000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -70,6 +70,19 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_22_123000) do
     t.datetime "updated_at", null: false
     t.integer "wins", default: 0, null: false
     t.index ["character_id"], name: "index_arena_rankings_on_character_id", unique: true
+  end
+
+  create_table "arena_tournaments", force: :cascade do |t|
+    t.string "announcer_npc_key"
+    t.bigint "competition_bracket_id", null: false
+    t.datetime "created_at", null: false
+    t.bigint "event_instance_id", null: false
+    t.jsonb "metadata", default: {}, null: false
+    t.string "name", null: false
+    t.integer "status", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.index ["competition_bracket_id"], name: "index_arena_tournaments_on_competition_bracket_id"
+    t.index ["event_instance_id"], name: "index_arena_tournaments_on_event_instance_id"
   end
 
   create_table "auction_bids", force: :cascade do |t|
@@ -361,6 +374,20 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_22_123000) do
     t.index ["battle_id"], name: "index_combat_log_entries_on_battle_id"
   end
 
+  create_table "community_objectives", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "current_amount", default: 0, null: false
+    t.bigint "event_instance_id", null: false
+    t.integer "goal_amount", default: 0, null: false
+    t.jsonb "metadata", default: {}, null: false
+    t.string "resource_key", null: false
+    t.integer "status", default: 0, null: false
+    t.string "title", null: false
+    t.datetime "updated_at", null: false
+    t.index ["event_instance_id", "resource_key"], name: "index_objectives_on_event_and_resource"
+    t.index ["event_instance_id"], name: "index_community_objectives_on_event_instance_id"
+  end
+
   create_table "competition_brackets", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.bigint "game_event_id", null: false
@@ -425,6 +452,31 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_22_123000) do
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
     t.index ["user_id"], name: "index_currency_wallets_on_user_id", unique: true
+  end
+
+  create_table "cutscene_events", force: :cascade do |t|
+    t.jsonb "content", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.string "key", null: false
+    t.jsonb "metadata", default: {}, null: false
+    t.bigint "quest_id"
+    t.datetime "updated_at", null: false
+    t.index ["key"], name: "index_cutscene_events_on_key", unique: true
+    t.index ["quest_id"], name: "index_cutscene_events_on_quest_id"
+  end
+
+  create_table "event_instances", force: :cascade do |t|
+    t.string "announcer_npc_key"
+    t.datetime "created_at", null: false
+    t.datetime "ends_at", null: false
+    t.bigint "game_event_id", null: false
+    t.jsonb "metadata", default: {}, null: false
+    t.datetime "starts_at", null: false
+    t.integer "status", default: 0, null: false
+    t.jsonb "temporary_npc_keys", default: [], null: false
+    t.datetime "updated_at", null: false
+    t.index ["game_event_id", "starts_at"], name: "index_event_instances_on_game_event_id_and_starts_at"
+    t.index ["game_event_id"], name: "index_event_instances_on_game_event_id"
   end
 
   create_table "event_schedules", force: :cascade do |t|
@@ -694,6 +746,22 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_22_123000) do
     t.index ["user_id"], name: "index_mounts_on_user_id"
   end
 
+  create_table "npc_reports", force: :cascade do |t|
+    t.integer "category", default: 0, null: false
+    t.bigint "character_id"
+    t.datetime "created_at", null: false
+    t.text "description", null: false
+    t.jsonb "evidence", default: {}, null: false
+    t.jsonb "metadata", default: {}, null: false
+    t.string "npc_key", null: false
+    t.bigint "reporter_id", null: false
+    t.integer "status", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.index ["character_id"], name: "index_npc_reports_on_character_id"
+    t.index ["npc_key", "status"], name: "index_npc_reports_on_npc_key_and_status"
+    t.index ["reporter_id"], name: "index_npc_reports_on_reporter_id"
+  end
+
   create_table "npc_templates", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.text "dialogue", null: false
@@ -784,6 +852,66 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_22_123000) do
     t.index ["user_id"], name: "index_purchases_on_user_id"
   end
 
+  create_table "quest_assignments", force: :cascade do |t|
+    t.bigint "character_id", null: false
+    t.datetime "completed_at"
+    t.datetime "created_at", null: false
+    t.datetime "expires_at"
+    t.jsonb "metadata", default: {}, null: false
+    t.datetime "next_available_at"
+    t.jsonb "progress", default: {}, null: false
+    t.bigint "quest_id", null: false
+    t.datetime "started_at"
+    t.integer "status", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.index ["character_id"], name: "index_quest_assignments_on_character_id"
+    t.index ["quest_id", "character_id"], name: "index_quest_assignments_on_quest_id_and_character_id", unique: true
+    t.index ["quest_id"], name: "index_quest_assignments_on_quest_id"
+  end
+
+  create_table "quest_chains", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.text "description"
+    t.string "key", null: false
+    t.jsonb "metadata", default: {}, null: false
+    t.string "title", null: false
+    t.datetime "updated_at", null: false
+    t.index ["key"], name: "index_quest_chains_on_key", unique: true
+  end
+
+  create_table "quest_objectives", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.jsonb "metadata", default: {}, null: false
+    t.string "objective_type", null: false
+    t.boolean "optional", default: false, null: false
+    t.integer "position", default: 1, null: false
+    t.bigint "quest_id", null: false
+    t.jsonb "requirements", default: {}, null: false
+    t.datetime "updated_at", null: false
+    t.index ["quest_id"], name: "index_quest_objectives_on_quest_id"
+  end
+
+  create_table "quests", force: :cascade do |t|
+    t.integer "chapter", default: 1, null: false
+    t.integer "cooldown_seconds", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.string "daily_reset_slot"
+    t.string "key", null: false
+    t.jsonb "metadata", default: {}, null: false
+    t.bigint "quest_chain_id"
+    t.integer "quest_type", default: 0, null: false
+    t.boolean "repeatable", default: false, null: false
+    t.jsonb "requirements", default: {}, null: false
+    t.jsonb "rewards", default: {}, null: false
+    t.integer "sequence", default: 1, null: false
+    t.text "summary"
+    t.string "title", null: false
+    t.datetime "updated_at", null: false
+    t.index ["key"], name: "index_quests_on_key", unique: true
+    t.index ["quest_chain_id", "sequence"], name: "index_quests_on_quest_chain_id_and_sequence"
+    t.index ["quest_chain_id"], name: "index_quests_on_quest_chain_id"
+  end
+
   create_table "recipes", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "duration_seconds", default: 60, null: false
@@ -846,6 +974,20 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_22_123000) do
     t.bigint "zone_id", null: false
     t.index ["zone_id", "faction_key"], name: "index_spawn_points_on_zone_id_and_faction_key"
     t.index ["zone_id"], name: "index_spawn_points_on_zone_id"
+  end
+
+  create_table "spawn_schedules", force: :cascade do |t|
+    t.boolean "active", default: true, null: false
+    t.bigint "configured_by_id", null: false
+    t.datetime "created_at", null: false
+    t.jsonb "metadata", default: {}, null: false
+    t.string "monster_key", null: false
+    t.string "rarity_override"
+    t.string "region_key", null: false
+    t.integer "respawn_seconds", default: 60, null: false
+    t.datetime "updated_at", null: false
+    t.index ["configured_by_id"], name: "index_spawn_schedules_on_configured_by_id"
+    t.index ["region_key", "monster_key"], name: "index_spawn_schedules_on_region_key_and_monster_key", unique: true
   end
 
   create_table "titles", force: :cascade do |t|
@@ -957,6 +1099,8 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_22_123000) do
   add_foreign_key "achievement_grants", "achievements"
   add_foreign_key "achievement_grants", "users"
   add_foreign_key "arena_rankings", "characters"
+  add_foreign_key "arena_tournaments", "competition_brackets"
+  add_foreign_key "arena_tournaments", "event_instances"
   add_foreign_key "auction_bids", "auction_listings"
   add_foreign_key "auction_bids", "users", column: "bidder_id"
   add_foreign_key "auction_listings", "users", column: "seller_id"
@@ -992,6 +1136,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_22_123000) do
   add_foreign_key "clans", "users", column: "leader_id"
   add_foreign_key "class_specializations", "character_classes"
   add_foreign_key "combat_log_entries", "battles"
+  add_foreign_key "community_objectives", "event_instances"
   add_foreign_key "competition_brackets", "game_events"
   add_foreign_key "competition_matches", "competition_brackets"
   add_foreign_key "crafting_jobs", "crafting_stations"
@@ -999,6 +1144,8 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_22_123000) do
   add_foreign_key "crafting_jobs", "users"
   add_foreign_key "currency_transactions", "currency_wallets"
   add_foreign_key "currency_wallets", "users"
+  add_foreign_key "cutscene_events", "quests"
+  add_foreign_key "event_instances", "game_events"
   add_foreign_key "event_schedules", "game_events"
   add_foreign_key "friendships", "users", column: "receiver_id"
   add_foreign_key "friendships", "users", column: "requester_id"
@@ -1022,16 +1169,23 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_22_123000) do
   add_foreign_key "mail_messages", "users", column: "sender_id"
   add_foreign_key "marketplace_kiosks", "users", column: "seller_id"
   add_foreign_key "mounts", "users"
+  add_foreign_key "npc_reports", "characters"
+  add_foreign_key "npc_reports", "users", column: "reporter_id"
   add_foreign_key "pet_companions", "pet_species", column: "pet_species_id"
   add_foreign_key "pet_companions", "users"
   add_foreign_key "premium_token_ledger_entries", "users"
   add_foreign_key "profession_progresses", "professions"
   add_foreign_key "profession_progresses", "users"
   add_foreign_key "purchases", "users"
+  add_foreign_key "quest_assignments", "characters"
+  add_foreign_key "quest_assignments", "quests"
+  add_foreign_key "quest_objectives", "quests"
+  add_foreign_key "quests", "quest_chains"
   add_foreign_key "recipes", "professions"
   add_foreign_key "skill_nodes", "skill_trees"
   add_foreign_key "skill_trees", "character_classes"
   add_foreign_key "spawn_points", "zones"
+  add_foreign_key "spawn_schedules", "users", column: "configured_by_id"
   add_foreign_key "trade_items", "trade_sessions"
   add_foreign_key "trade_items", "users", column: "owner_id"
   add_foreign_key "trade_sessions", "users", column: "initiator_id"

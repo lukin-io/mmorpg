@@ -51,6 +51,17 @@ Rails.application.routes.draw do
     post :recalculate, on: :member
   end
   resources :competition_brackets, only: [:show, :update]
+  resources :quests, only: [:index, :show] do
+    member do
+      post :accept
+      post :complete
+    end
+    collection do
+      post :daily
+    end
+  end
+  resources :spawn_schedules, only: [:index, :create, :update]
+  resources :npc_reports, only: [:new, :create]
 
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 

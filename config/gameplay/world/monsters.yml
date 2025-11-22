@@ -1,0 +1,77 @@
+# Monster taxonomy per region with rarity weighting and respawn timers.
+monsters:
+  ashen_forest:
+    entries:
+      - key: "forest_wolf"
+        name: "Forest Wolf"
+        rarity: "common"
+        weight: 50
+        respawn_seconds: 45
+        hostility: "hostile"
+        loot_table:
+          "Wolf Fang": 60
+          "Pelt Scrap": 30
+      - key: "spirit_stag"
+        name: "Spirit Stag"
+        rarity: "rare"
+        weight: 10
+        respawn_seconds: 300
+        hostility: "neutral"
+        loot_table:
+          "Luminous Antler": 20
+
+  frostfang_mountains:
+    entries:
+      - key: "ice_golem"
+        name: "Ice Golem"
+        rarity: "elite"
+        weight: 5
+        respawn_seconds: 900
+        hostility: "hostile"
+        loot_table:
+          "Glacier Core": 15
+          "Frozen Dust": 50
+      - key: "snow_lynx"
+        name: "Snow Lynx"
+        rarity: "uncommon"
+        weight: 25
+        respawn_seconds: 120
+        hostility: "hostile"
+        loot_table:
+          "Lynx Fur": 40
+
+  sapphire_riverlands:
+    entries:
+      - key: "river_serpent"
+        name: "River Serpent"
+        rarity: "uncommon"
+        weight: 20
+        respawn_seconds: 150
+        hostility: "hostile"
+        loot_table:
+          "Serpent Scale": 50
+          "Water Essence": 15
+
+  everfall_capital:
+    entries:
+      - key: "arena_doppelganger"
+        name: "Arena Doppelganger"
+        rarity: "event"
+        weight: 1
+        respawn_seconds: 0
+        hostility: "hostile"
+        loot_table:
+          "Champion's Mark": 100
+
+  obsidian_castle:
+    entries:
+      - key: "shadow_legionnaire"
+        name: "Shadow Legionnaire"
+        rarity: "elite"
+        weight: 15
+        respawn_seconds: 600
+        hostility: "hostile"
+        loot_table:
+          "Obsidian Shard": 45
+          "Umbral Thread": 15
+

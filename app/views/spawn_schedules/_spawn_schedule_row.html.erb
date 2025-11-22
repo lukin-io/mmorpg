@@ -1,0 +1,12 @@
+<tr id="<%= dom_id(schedule) %>">
+  <td><%= schedule.region_key.humanize %></td>
+  <td><%= schedule.monster_key.humanize %></td>
+  <td><%= schedule.respawn_seconds %></td>
+  <td><%= schedule.rarity_override.presence || "-" %></td>
+  <td>
+    <%= form_with model: schedule, data: {turbo_frame: "_top"} do |form| %>
+      <%= form.check_box :active, onchange: "this.form.requestSubmit()" %> Active
+    <% end %>
+  </td>
+</tr>
+

@@ -1,0 +1,101 @@
+# NPC archetype definitions consumed by the population directory.
+npcs:
+  magistrate_serra:
+    name: "Magistrate Serra"
+    archetype: "magistrate"
+    region: "everfall_capital"
+    location: "Hall of Magistrates"
+    faction_alignment: "crownwatch"
+    roles: ["report_intake", "quest_giver"]
+    dialogue:
+      friendly:
+        - "Justice favors the vigilant. How may the Crown assist you?"
+      neutral:
+        - "State your business, citizen."
+      hostile:
+        - "Your reputation precedes you—and not in a good way."
+    reputation_thresholds:
+      hostile: -25
+      guarded: 0
+      friendly: 40
+    quests:
+      main_story: ["chapter_1_prologue", "chapter_2_conclave"]
+      daily: ["city_watch_patrol"]
+    moderation_categories: ["chat_abuse", "botting", "griefing", "exploit_reports"]
+
+  storyteller_ivarn:
+    name: "Ivárn the Chronicler"
+    archetype: "storyteller"
+    region: "ashen_forest"
+    location: "Rootbound Shrine"
+    faction_alignment: "wardens"
+    roles: ["lore", "quest_giver"]
+    dialogue:
+      friendly:
+        - "Listen close; the trees remember every oath."
+      neutral:
+        - "The forest watches all travelers."
+    reputation_thresholds:
+      friendly: 10
+    quests:
+      side: ["forest_memory", "warden_trials"]
+
+  trainer_maela:
+    name: "Maela Emberstrike"
+    archetype: "trainer"
+    region: "sapphire_riverlands"
+    location: "Fisher's Commune"
+    faction_alignment: "artisans"
+    roles: ["trainer", "vendor"]
+    dialogue:
+      friendly:
+        - "A steady hand reels in more than fish."
+    reputation_thresholds:
+      friendly: 5
+    training_offers:
+      professions: ["fishing", "cooking"]
+      costs:
+        silver: 150
+
+  guard_rurik:
+    name: "Captain Rurik"
+    archetype: "guard"
+    region: "obsidian_castle"
+    location: "Midnight Gate"
+    faction_alignment: "vigil"
+    roles: ["event_host", "quest_giver"]
+    dialogue:
+      friendly:
+        - "Hold the line and the realm survives."
+      hostile:
+        - "I should have you in chains for your crimes."
+    reputation_thresholds:
+      hostile: -10
+      trusted: 30
+    quests:
+      raids: ["obsidian_siege_prep"]
+    event_hooks:
+      tournament_announcer: true
+
+  vendor_luthe:
+    name: "Luthe"
+    archetype: "vendor"
+    region: "everfall_capital"
+    location: "Grand Bazaar"
+    faction_alignment: "crownwatch"
+    roles: ["vendor"]
+    inventory_tags: ["festival", "cosmetics"]
+
+  event_host_samira:
+    name: "Samira of Seasons"
+    archetype: "event_host"
+    region: "everfall_capital"
+    location: "Arena of Crowns"
+    faction_alignment: "crownwatch"
+    roles: ["event_host", "announcer"]
+    dialogue:
+      friendly:
+        - "Champions, the arena awaits your glory!"
+    event_hooks:
+      seasonal_keys: ["wintertide", "sunblossom"]
+

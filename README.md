@@ -65,6 +65,14 @@ The `doc/features/3_player.md` specification is now wired into the codebase:
 - **Items & Inventory** — `Inventory`, `InventoryItem`, and `Game::Inventory::*` services implement equipment slots, stacking rules, premium safeguards, and enhancement/enchantment risk tied to crafting skills.
 - **Crafting & Professions** — Gathering nodes plus `Professions::GatheringResolver` feed crafting recipes. The Doctor profession shortens downtime after battles through `Professions::Doctor::TraumaResponse`.
 
+### World, NPC, and Quest Systems (Feature 4)
+
+- **Deterministic World Data** — `config/gameplay/world/*.yml` defines Neverlands regions, landmarks, hidden areas, and resource nodes consumed by `Game::World::RegionCatalog`, `Game::World::Region`, and `Economy::TaxCalculator` for territory buffs/taxes.
+- **NPCs & Monsters** — `Game::World::PopulationDirectory` merges NPC archetypes + monster taxonomy (rarity, respawn timers) with optional overrides from `SpawnSchedule`, surfacing data to `Game::Exploration::EncounterResolver`.
+- **Quests & Narrative** — `Quest*` models plus `Game::Quests::ChainProgression`, `DailyRotation`, and `DynamicHookResolver` manage main, side, daily, and event quests. `QuestsController` ships a Hotwire quest log/dialogue UI optimized for mobile via the new `layout-stack` Stimulus controller.
+- **Events & Tournaments** — `Game::Events::Scheduler`, `EventInstance`, `ArenaTournament`, and `CommunityObjective` orchestrate seasonal NPCs, brackets, announcers, and drives, with `ScheduledEventJob` spawning instances by slug.
+- **Moderation & Reporting** — Magistrate/guard NPCs route reports through `NpcReportsController` → `Game::Moderation::NpcIntake`, persisting `NpcReport` tickets and logging to `AuditLog`.
+
 ---
 
 ## 📄 Documentation Map
@@ -76,6 +84,7 @@ The `doc/features/3_player.md` specification is now wired into the codebase:
 | **MMO_ADDITIONAL_GUIDE.md**  | Gameplay/MMORPG domain-specific engineering conventions                  |
 | **doc/gdd.md**               | Game design vision, classes, mechanics, story                            |
 | **doc/features/*.md**        | Per-system breakdown derived from the GDD (technical implementation plan)|
+| **doc/flow/4_world_npc_systems.md** | Implementation notes for world data, NPCs, quests, events, and magistrate reporting |
 | **changelog.md**             | High-level timeline of implemented features mapped back to `doc/features`|
 
 Use this README as the entry point, then jump to the guide that matches the type of work you’re doing.

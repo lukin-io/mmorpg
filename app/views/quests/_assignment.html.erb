@@ -1,0 +1,9 @@
+<div class="quest-card" id="<%= dom_id(assignment) %>">
+  <h3><%= assignment.quest.title %></h3>
+  <p class="text-muted"><%= assignment.quest.summary %></p>
+  <p>Status: <strong><%= assignment.status.humanize %></strong></p>
+  <div class="quest-card__actions">
+    <%= link_to "View", quest_path(assignment.quest), data: {turbo_frame: "quest-dialogue"}, class: "btn" %>
+  </div>
+</div>
+

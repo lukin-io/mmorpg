@@ -1,0 +1,8 @@
+<%= turbo_stream.replace dom_id(@assignment) do %>
+  <%= render "assignment", assignment: @assignment %>
+<% end %>
+
+<%= turbo_stream.replace "quest-dialogue" do %>
+  <%= render "dialogue_frame", quest: @quest, assignment: @assignment %>
+<% end %>
+

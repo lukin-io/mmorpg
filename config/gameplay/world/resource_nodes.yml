@@ -1,0 +1,48 @@
+# Deterministic resource node placements keyed by region.
+resource_nodes:
+  ashen_forest:
+    - kind: "herb_patch"
+      resource_key: "emberbloom"
+      coordinates: {x: 12, y: 8}
+      respawn_seconds: 300
+      rewards:
+        herbs: {"Emberbloom": 2}
+    - kind: "timber_cluster"
+      resource_key: "ancient_oak"
+      coordinates: {x: 30, y: 22}
+      respawn_seconds: 600
+      rewards:
+        logs: {"Ancient Oak": 1}
+
+  frostfang_mountains:
+    - kind: "ore_vein"
+      resource_key: "glacier_steel"
+      coordinates: {x: 78, y: 88}
+      respawn_seconds: 900
+      rewards:
+        ores: {"Glacier Steel": 1}
+
+  sapphire_riverlands:
+    - kind: "fishing_pool"
+      resource_key: "sapphire_koi"
+      coordinates: {x: 45, y: 52}
+      respawn_seconds: 180
+      rewards:
+        fish: {"Sapphire Koi": 1}
+
+  everfall_capital:
+    - kind: "artisan_request"
+      resource_key: "guild_contract"
+      coordinates: {x: 110, y: 28}
+      respawn_seconds: 3600
+      rewards:
+        quests: {"Contract": 1}
+
+  obsidian_castle:
+    - kind: "siege_cache"
+      resource_key: "obsidian_powder"
+      coordinates: {x: 155, y: 105}
+      respawn_seconds: 1200
+      rewards:
+        materials: {"Obsidian Powder": 3}
+

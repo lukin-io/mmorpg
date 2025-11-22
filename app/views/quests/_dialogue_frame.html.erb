@@ -1,0 +1,25 @@
+<turbo-frame id="quest-dialogue">
+  <div class="quest-dialogue">
+    <header>
+      <h2><%= quest.title %></h2>
+      <p class="text-muted"><%= quest.summary %></p>
+    </header>
+
+    <%= render "objectives", quest: quest %>
+
+    <div class="quest-dialogue__actions">
+      <% if assignment.pending? %>
+        <%= button_to "Accept Quest", accept_quest_path(quest), method: :post, class: "btn btn-primary" %>
+      <% elsif assignment.in_progress? %>
+        <%= button_to "Complete Quest", complete_quest_path(quest), method: :post, class: "btn" %>
+      <% else %>
+        <p>Quest status: <strong><%= assignment.status.humanize %></strong></p>
+      <% end %>
+    </div>
+
+    <div class="quest-dialogue__footer">
+      <%= link_to "Report issue to Magistrate", new_npc_report_path(npc_key: "magistrate_serra"), class: "link" %>
+    </div>
+  </div>
+</turbo-frame>
+

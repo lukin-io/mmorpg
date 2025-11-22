@@ -23,6 +23,7 @@ class Character < ApplicationRecord
   has_many :battle_participants, dependent: :destroy
   has_many :battles, through: :battle_participants
   has_many :initiated_battles, class_name: "Battle", foreign_key: :initiator_id, dependent: :nullify
+  has_many :quest_assignments, dependent: :destroy
 
   validates :name, presence: true, uniqueness: true, length: {maximum: MAX_NAME_LENGTH}
   validates :level, numericality: {greater_than: 0}

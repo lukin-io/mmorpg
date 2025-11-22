@@ -8,9 +8,7 @@ development:
   channel_prefix: mmorpg_development
 
 test:
-  adapter: redis
-  url: <%= ENV.fetch("REDIS_CABLE_URL", "redis://localhost:6382/1") %>
-  channel_prefix: mmorpg_test
+  adapter: test
 
 production:
   adapter: redis
