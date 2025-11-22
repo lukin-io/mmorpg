@@ -6,7 +6,7 @@ RSpec.describe Game::Inventory::EnhancementService do
   end
   let(:inventory_owner) { create(:character) }
   let(:inventory_item) { create(:inventory_item, inventory: inventory_owner.inventory, item_template:) }
-  let(:profession) { create(:profession, name: "Blacksmithing") }
+  let(:profession) { create(:profession) }
   let(:skilled_progress) { create(:profession_progress, profession:, skill_level: 6) }
   let(:unskilled_progress) { create(:profession_progress, profession:, skill_level: 1) }
 

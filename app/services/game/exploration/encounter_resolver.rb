@@ -12,7 +12,7 @@ module Game
     class EncounterResolver
       def resolve(zone:, biome:, tile_metadata:, rng: Random.new(1))
         entries = zone.encounter_table[biome] || biome_table[biome] || []
-        entries = entries + Array.wrap(tile_metadata["encounters"]) if tile_metadata["encounters"]
+        entries += Array.wrap(tile_metadata["encounters"]) if tile_metadata["encounters"]
         return unless entries.present?
 
         selected = weighted_sample(entries, rng)

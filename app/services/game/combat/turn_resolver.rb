@@ -27,7 +27,7 @@ module Game
         log_entries = [log_line]
 
         if ability&.kind == "reaction"
-          log_entries << "#{defender.name} suffered #{ability.effects['status']}" if ability.effects["status"]
+          log_entries << "#{defender.name} suffered #{ability.effects["status"]}" if ability.effects["status"]
         end
 
         persist_logs(log_entries, total_damage:, effects:)

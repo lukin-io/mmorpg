@@ -1,7 +1,7 @@
 require "rails_helper"
 
 RSpec.describe Professions::GatheringResolver do
-  let(:profession) { create(:profession, name: "Herbalism", gathering: true) }
+  let(:profession) { create(:profession, category: "gathering", gathering: true) }
   let(:progress) { create(:profession_progress, profession:, skill_level: 5) }
   let(:zone) { create(:zone) }
   let(:node) { create(:gathering_node, profession:, zone:, difficulty: 3, rewards: {"herb" => 1}) }

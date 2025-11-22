@@ -21,7 +21,7 @@ module Game
 
         winner_ranking = find_or_create_ranking(winner)
         loser = opposing_character(winner)
-        loser_ranking = loser ? find_or_create_ranking(loser) : nil
+        loser_ranking = find_or_create_ranking(loser) if loser
 
         expected_winner = expected_score(winner_ranking.rating, loser_ranking&.rating || winner_ranking.rating)
         winner_delta = (K_FACTOR * (1 - expected_winner)).round
@@ -33,13 +33,11 @@ module Game
           streak: winner_ranking.streak + 1
         )
 
-        if loser_ranking
-          loser_ranking.update!(
-            rating: [loser_ranking.rating + loser_delta, 1].max,
-            losses: loser_ranking.losses + 1,
-            streak: 0
-          )
-        end
+        loser_ranking&.update!(
+          rating: [loser_ranking.rating + loser_delta, 1].max,
+          losses: loser_ranking.losses + 1,
+          streak: 0
+        )
 
         {
           winner_rating: winner_ranking.rating,
