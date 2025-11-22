@@ -63,6 +63,24 @@ module Game
         end
       end
 
+      def spawn_ephemeral(npc_key:, zone_key:, location:)
+        npc = npc(npc_key)
+        raise ArgumentError, "Unknown NPC #{npc_key}" unless npc
+
+        Moderation::Instrumentation.track(
+          "live_ops.spawn_npc",
+          npc_key: npc_key,
+          zone_key: zone_key,
+          location: location
+        )
+
+        {
+          npc:,
+          zone_key: zone_key.to_s,
+          location:
+        }
+      end
+
       private
 
       attr_reader :npcs, :monster_tables

@@ -1,0 +1,21 @@
+<section>
+  <header>
+    <h1>Battle Log — #<%= @battle.id %></h1>
+    <p>Zone: <%= @battle.zone&.name || "Unknown" %></p>
+  </header>
+
+  <ol class="combat-log">
+    <% @combat_log_entries.each do |entry| %>
+      <li>
+        <strong>Round <%= entry.round_number %>:</strong>
+        <span><%= entry.message %></span>
+        <%= link_to "Report", new_moderation_report_path(
+          source: :combat_log,
+          origin_reference: entry.id,
+          metadata: { battle_id: @battle.id, round_number: entry.round_number }
+        ), class: "button button--link" %>
+      </li>
+    <% end %>
+  </ol>
+</section>
+

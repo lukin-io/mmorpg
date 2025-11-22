@@ -1,0 +1,36 @@
+<%= turbo_stream_from Moderation::Ticket::BROADCAST_STREAM %>
+
+<section data-controller="moderation-queue">
+  <header class="moderation-queue__header">
+    <h1>Moderation Queue</h1>
+    <span class="badge" data-moderation-queue-target="count"><%= Moderation::Ticket.open_queue.count %></span>
+  </header>
+
+  <div class="moderation-metrics">
+    <div>
+      <strong>Avg resolution time</strong>
+      <p><%= @dashboard.average_resolution_time_hours %> hrs</p>
+    </div>
+    <div>
+      <strong>Report volume (24h)</strong>
+      <ul>
+        <% @dashboard.report_volume_by_category.each do |category, count| %>
+          <li><%= category.humanize %>: <%= count %></li>
+        <% end %>
+      </ul>
+    </div>
+    <div>
+      <strong>Repeat offenders</strong>
+      <ul>
+        <% @dashboard.repeat_offenders.each do |entry| %>
+          <li><%= entry[:user]&.profile_name || "Unknown" %> — <%= entry[:count] %> tickets</li>
+        <% end %>
+      </ul>
+    </div>
+  </div>
+
+  <div id="moderation_tickets_list" class="moderation-ticket-list">
+    <%= render partial: "ticket", collection: @tickets, as: :ticket %>
+  </div>
+</section>
+

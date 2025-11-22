@@ -1,0 +1,88 @@
+<section>
+  <header>
+    <h1>Ticket #<%= @ticket.id %></h1>
+    <p><%= @ticket.category.humanize %> — <%= @ticket.status.humanize %></p>
+  </header>
+
+  <article>
+    <h2>Description</h2>
+    <p><%= simple_format(@ticket.description) %></p>
+
+    <h3>Evidence</h3>
+    <pre><%= JSON.pretty_generate(@ticket.evidence) %></pre>
+
+    <h3>Metadata</h3>
+    <pre><%= JSON.pretty_generate(@ticket.metadata) %></pre>
+  </article>
+
+  <section>
+    <h2>Update Ticket</h2>
+    <%= form_with model: @ticket, url: admin_moderation_ticket_path(@ticket), method: :patch do |form| %>
+      <div class="field">
+        <%= form.label :status %>
+        <%= form.select :status, Moderation::Ticket.statuses.keys.map { |key| [key.humanize, key] } %>
+      </div>
+      <div class="field">
+        <%= form.label :priority %>
+        <%= form.select :priority, Moderation::Ticket.priorities.keys.map { |key| [key.humanize, key] } %>
+      </div>
+      <div class="actions">
+        <%= form.submit "Save" %>
+      </div>
+    <% end %>
+  </section>
+
+  <section>
+    <h2>Enforcement Action</h2>
+    <%= form_with model: @action, url: admin_moderation_ticket_actions_path(@ticket) do |form| %>
+      <div class="field">
+        <%= form.label :action_type %>
+        <%= form.select :action_type, Moderation::Action.action_types.keys.map { |key| [key.humanize, key] } %>
+      </div>
+      <div class="field">
+        <%= form.label :reason %>
+        <%= form.text_area :reason, rows: 4 %>
+      </div>
+      <div class="field">
+        <%= form.label :duration_seconds, "Duration (seconds)" %>
+        <%= form.number_field :duration_seconds %>
+      </div>
+      <div class="actions">
+        <%= form.submit "Apply action" %>
+      </div>
+    <% end %>
+  </section>
+
+  <section>
+    <h2>Appeals</h2>
+    <% if @ticket.appeals.any? %>
+      <ul>
+        <% @ticket.appeals.each do |appeal| %>
+          <li>
+            <strong><%= appeal.status.humanize %></strong> — <%= appeal.body %>
+            <% if appeal.reviewer %>
+              <em>(Reviewed by <%= appeal.reviewer.email %>)</em>
+            <% end %>
+          </li>
+        <% end %>
+      </ul>
+    <% else %>
+      <p>No appeals yet.</p>
+    <% end %>
+
+    <%= form_with model: @appeal, url: admin_moderation_ticket_appeal_path(@ticket, @appeal), method: :patch do |form| %>
+      <div class="field">
+        <%= form.label :status %>
+        <%= form.select :status, Moderation::Appeal.statuses.keys.map { |key| [key.humanize, key] } %>
+      </div>
+      <div class="field">
+        <%= form.label :resolution_notes %>
+        <%= form.text_area :resolution_notes, rows: 3 %>
+      </div>
+      <div class="actions">
+        <%= form.submit "Update appeal" %>
+      </div>
+    <% end %>
+  </section>
+</section>
+

@@ -1,0 +1,24 @@
+<p>Hi <%= @ticket.reporter.profile_name %>,</p>
+
+<p>Your moderation ticket <strong>#<%= @ticket.id %></strong> has been updated.</p>
+<% duration_text = if @action.action_type_permanent_ban?
+  "Permanent"
+elsif @action.expires_at.present?
+  "Until #{@action.expires_at.utc.iso8601}"
+elsif @action.duration_seconds.present?
+  distance_of_time_in_words(Time.current, Time.current + @action.duration_seconds)
+end %>
+
+<ul>
+  <li>Status: <%= @ticket.status.humanize %></li>
+  <li>Action: <%= @action.action_type.humanize %></li>
+  <li>Moderator notes: <%= @action.reason %></li>
+  <% if duration_text.present? %>
+    <li>Duration: <%= duration_text %></li>
+  <% end %>
+</ul>
+
+<p>If you believe this decision is incorrect you can submit an appeal from your in-game inbox within 48 hours.</p>
+
+<p>— Neverlands GM Team</p>
+

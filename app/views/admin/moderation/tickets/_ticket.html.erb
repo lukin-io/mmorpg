@@ -1,0 +1,19 @@
+<article id="<%= dom_id(ticket) %>" class="moderation-ticket">
+  <header>
+    <h2>Ticket #<%= ticket.id %> — <%= ticket.category.humanize %></h2>
+    <p>Status: <%= ticket.status.humanize %> • Priority: <%= ticket.priority.humanize %></p>
+  </header>
+  <p><%= simple_format(ticket.description) %></p>
+  <dl>
+    <dt>Reporter</dt>
+    <dd><%= ticket.reporter&.email %></dd>
+    <dt>Subject</dt>
+    <dd><%= ticket.subject_user&.email || "Unknown" %></dd>
+    <dt>Source</dt>
+    <dd><%= ticket.source.humanize %></dd>
+  </dl>
+  <footer>
+    <%= link_to "Review", admin_moderation_ticket_path(ticket), class: "button" %>
+  </footer>
+</article>
+

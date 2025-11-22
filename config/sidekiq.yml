@@ -5,6 +5,8 @@
   - combat
   - chat
   - payments
+  - moderation
+  - live_ops
   - low
 :logfile: ./log/sidekiq.log
 

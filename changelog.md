@@ -11,6 +11,23 @@
 ## Return Values
 - Not applicable; this is a documentation file.
 
+## 2025-11-22 (Later)
+
+### Added
+- Implemented `doc/features/5_moderation.md`, delivering the full moderation/reporting stack:
+  - Player-facing report UI spanning chat (`ChatReportsController`), profiles (`Moderation::ReportsController`), combat logs (`CombatLogsController`), and NPC magistrates (`NpcReportsController`).
+  - `Moderation::Ticket` lifecycle with Turbo-streamed queue, Action Cable badge updates, detector feeds (`Moderation::Detectors::HealingExploit`), appeals (`Moderation::AppealWorkflow`), instrumentation, anomaly alerts, and Discord/Telegram webhook escalations.
+  - Enforcement toolkit via `Admin::Moderation::TicketsController`, `Moderation::PenaltyService`, premium refund logging, trade lock / suspension fields, and notifier services that drive in-game mail + email.
+  - Live Ops console (`LiveOps::Event`, `Admin::LiveOps::EventsController`) plus scheduled monitors/rollback services for arenas and clan wars.
+
+### Feature Coverage Snapshot
+
+| Feature | Title                       | Status | Notes |
+|---------|-----------------------------|--------|-------|
+| 5       | Moderation, Safety & Live Ops | ✅ Done | Unified ticketing, enforcement, appeals, instrumentation, Action Cable queue, automated detectors, and GM live-op controls shipped. |
+
+Completed features: **5** / 14 total (`doc/features/0`–`doc/features/13`).
+
 ## 2025-11-22
 
 ### Added
