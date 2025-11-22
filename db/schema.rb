@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_11_22_133000) do
+ActiveRecord::Schema[8.1].define(version: 2025_11_22_140500) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -289,11 +289,13 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_22_133000) do
     t.bigint "chat_message_id"
     t.datetime "created_at", null: false
     t.jsonb "evidence", default: {}, null: false
+    t.bigint "moderation_ticket_id"
     t.text "reason", null: false
     t.bigint "reporter_id", null: false
     t.integer "status", default: 0, null: false
     t.datetime "updated_at", null: false
     t.index ["chat_message_id"], name: "index_chat_reports_on_chat_message_id"
+    t.index ["moderation_ticket_id"], name: "index_chat_reports_on_moderation_ticket_id"
     t.index ["reporter_id"], name: "index_chat_reports_on_reporter_id"
     t.index ["status"], name: "index_chat_reports_on_status"
   end
@@ -695,6 +697,22 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_22_133000) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "live_ops_events", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "event_type", null: false
+    t.datetime "executed_at"
+    t.text "notes"
+    t.jsonb "payload", default: {}, null: false
+    t.bigint "requested_by_id", null: false
+    t.string "severity", default: "normal", null: false
+    t.string "status", default: "pending", null: false
+    t.datetime "updated_at", null: false
+    t.index ["event_type"], name: "index_live_ops_events_on_event_type"
+    t.index ["requested_by_id"], name: "index_live_ops_events_on_requested_by_id"
+    t.index ["severity"], name: "index_live_ops_events_on_severity"
+    t.index ["status"], name: "index_live_ops_events_on_status"
+  end
+
   create_table "mail_messages", force: :cascade do |t|
     t.jsonb "attachment_payload", default: {}, null: false
     t.text "body", null: false
@@ -735,6 +753,73 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_22_133000) do
     t.index ["seller_id"], name: "index_marketplace_kiosks_on_seller_id"
   end
 
+  create_table "moderation_actions", force: :cascade do |t|
+    t.string "action_type", null: false
+    t.bigint "actor_id", null: false
+    t.jsonb "context", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.integer "duration_seconds"
+    t.datetime "expires_at"
+    t.jsonb "metadata", default: {}, null: false
+    t.text "reason", null: false
+    t.bigint "target_character_id"
+    t.bigint "target_user_id"
+    t.bigint "ticket_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["action_type"], name: "index_moderation_actions_on_action_type"
+    t.index ["actor_id"], name: "index_moderation_actions_on_actor_id"
+    t.index ["expires_at"], name: "index_moderation_actions_on_expires_at"
+    t.index ["target_character_id"], name: "index_moderation_actions_on_target_character_id"
+    t.index ["target_user_id"], name: "index_moderation_actions_on_target_user_id"
+    t.index ["ticket_id"], name: "index_moderation_actions_on_ticket_id"
+  end
+
+  create_table "moderation_appeals", force: :cascade do |t|
+    t.bigint "appellant_id", null: false
+    t.text "body", null: false
+    t.datetime "created_at", null: false
+    t.text "resolution_notes"
+    t.bigint "reviewer_id"
+    t.datetime "sla_due_at"
+    t.string "status", default: "submitted", null: false
+    t.bigint "ticket_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["appellant_id"], name: "index_moderation_appeals_on_appellant_id"
+    t.index ["reviewer_id"], name: "index_moderation_appeals_on_reviewer_id"
+    t.index ["sla_due_at"], name: "index_moderation_appeals_on_sla_due_at"
+    t.index ["status"], name: "index_moderation_appeals_on_status"
+    t.index ["ticket_id"], name: "index_moderation_appeals_on_ticket_id"
+  end
+
+  create_table "moderation_tickets", force: :cascade do |t|
+    t.bigint "assigned_moderator_id"
+    t.string "category", null: false
+    t.datetime "created_at", null: false
+    t.text "description", null: false
+    t.jsonb "evidence", default: {}, null: false
+    t.jsonb "metadata", default: {}, null: false
+    t.string "origin_reference"
+    t.string "priority", default: "normal", null: false
+    t.bigint "reporter_id", null: false
+    t.datetime "resolved_at"
+    t.datetime "responded_at"
+    t.string "source", null: false
+    t.string "status", default: "open", null: false
+    t.bigint "subject_character_id"
+    t.bigint "subject_user_id"
+    t.datetime "updated_at", null: false
+    t.string "zone_key"
+    t.index ["assigned_moderator_id"], name: "index_moderation_tickets_on_assigned_moderator_id"
+    t.index ["category"], name: "index_moderation_tickets_on_category"
+    t.index ["created_at"], name: "index_moderation_tickets_on_created_at"
+    t.index ["priority"], name: "index_moderation_tickets_on_priority"
+    t.index ["reporter_id"], name: "index_moderation_tickets_on_reporter_id"
+    t.index ["status"], name: "index_moderation_tickets_on_status"
+    t.index ["subject_character_id"], name: "index_moderation_tickets_on_subject_character_id"
+    t.index ["subject_user_id"], name: "index_moderation_tickets_on_subject_user_id"
+    t.index ["zone_key"], name: "index_moderation_tickets_on_zone_key"
+  end
+
   create_table "mounts", force: :cascade do |t|
     t.jsonb "appearance", default: {}, null: false
     t.datetime "created_at", null: false
@@ -753,11 +838,13 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_22_133000) do
     t.text "description", null: false
     t.jsonb "evidence", default: {}, null: false
     t.jsonb "metadata", default: {}, null: false
+    t.bigint "moderation_ticket_id"
     t.string "npc_key", null: false
     t.bigint "reporter_id", null: false
     t.integer "status", default: 0, null: false
     t.datetime "updated_at", null: false
     t.index ["character_id"], name: "index_npc_reports_on_character_id"
+    t.index ["moderation_ticket_id"], name: "index_npc_reports_on_moderation_ticket_id"
     t.index ["npc_key", "status"], name: "index_npc_reports_on_npc_key_and_status"
     t.index ["reporter_id"], name: "index_npc_reports_on_reporter_id"
   end
@@ -1066,12 +1153,16 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_22_133000) do
     t.string "reset_password_token"
     t.jsonb "session_metadata", default: {}, null: false
     t.integer "sign_in_count", default: 0, null: false
+    t.datetime "suspended_until"
+    t.datetime "trade_locked_until"
     t.string "unconfirmed_email"
     t.datetime "updated_at", null: false
     t.index ["confirmation_token"], name: "index_users_on_confirmation_token", unique: true
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["profile_name"], name: "index_users_on_profile_name", unique: true
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
+    t.index ["suspended_until"], name: "index_users_on_suspended_until"
+    t.index ["trade_locked_until"], name: "index_users_on_trade_locked_until"
   end
 
   create_table "users_roles", id: false, force: :cascade do |t|
@@ -1127,6 +1218,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_22_133000) do
   add_foreign_key "chat_moderation_actions", "users", column: "actor_id"
   add_foreign_key "chat_moderation_actions", "users", column: "target_user_id"
   add_foreign_key "chat_reports", "chat_messages"
+  add_foreign_key "chat_reports", "moderation_tickets"
   add_foreign_key "chat_reports", "users", column: "reporter_id"
   add_foreign_key "clan_memberships", "clans"
   add_foreign_key "clan_memberships", "users"
@@ -1165,11 +1257,24 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_22_133000) do
   add_foreign_key "inventory_items", "inventories"
   add_foreign_key "inventory_items", "item_templates"
   add_foreign_key "leaderboard_entries", "leaderboards"
+  add_foreign_key "live_ops_events", "users", column: "requested_by_id"
   add_foreign_key "mail_messages", "users", column: "recipient_id"
   add_foreign_key "mail_messages", "users", column: "sender_id"
   add_foreign_key "marketplace_kiosks", "users", column: "seller_id"
+  add_foreign_key "moderation_actions", "characters", column: "target_character_id"
+  add_foreign_key "moderation_actions", "moderation_tickets", column: "ticket_id"
+  add_foreign_key "moderation_actions", "users", column: "actor_id"
+  add_foreign_key "moderation_actions", "users", column: "target_user_id"
+  add_foreign_key "moderation_appeals", "moderation_tickets", column: "ticket_id"
+  add_foreign_key "moderation_appeals", "users", column: "appellant_id"
+  add_foreign_key "moderation_appeals", "users", column: "reviewer_id"
+  add_foreign_key "moderation_tickets", "characters", column: "subject_character_id"
+  add_foreign_key "moderation_tickets", "users", column: "assigned_moderator_id"
+  add_foreign_key "moderation_tickets", "users", column: "reporter_id"
+  add_foreign_key "moderation_tickets", "users", column: "subject_user_id"
   add_foreign_key "mounts", "users"
   add_foreign_key "npc_reports", "characters"
+  add_foreign_key "npc_reports", "moderation_tickets"
   add_foreign_key "npc_reports", "users", column: "reporter_id"
   add_foreign_key "pet_companions", "pet_species", column: "pet_species_id"
   add_foreign_key "pet_companions", "users"

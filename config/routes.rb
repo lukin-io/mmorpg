@@ -62,6 +62,27 @@ Rails.application.routes.draw do
   end
   resources :spawn_schedules, only: [:index, :create, :update]
   resources :npc_reports, only: [:new, :create]
+  resources :combat_logs, only: :show
+
+  namespace :moderation do
+    resources :reports, only: [:new, :create]
+    resources :tickets, only: [] do
+      resources :appeals, only: [:new, :create]
+    end
+  end
+
+  namespace :admin do
+    namespace :moderation do
+      resources :tickets, only: [:index, :show, :update] do
+        resources :actions, only: :create
+        resource :appeal, only: :update
+      end
+    end
+
+    namespace :live_ops do
+      resources :events, only: [:index, :create, :update]
+    end
+  end
 
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 

@@ -9,9 +9,10 @@ module Game
     class NpcIntake
       class InvalidNpc < StandardError; end
 
-      def initialize(population_directory: Game::World::PopulationDirectory.instance, audit_logger: AuditLogger)
+      def initialize(population_directory: Game::World::PopulationDirectory.instance, audit_logger: AuditLogger, report_intake: ::Moderation::ReportIntake.new)
         @population_directory = population_directory
         @audit_logger = audit_logger
+        @report_intake = report_intake
       end
 
       def call(reporter:, npc_key:, category:, description:, evidence: {}, character: nil)
@@ -39,12 +40,25 @@ module Game
           metadata: {category:, npc_key:}
         )
 
+        intake_ticket = report_intake.call(
+          reporter:,
+          subject_user: character&.user,
+          subject_character: character,
+          source: :npc,
+          category:,
+          description:,
+          evidence:,
+          metadata: report.metadata.merge(npc_key: npc_key),
+          npc_report: report
+        )
+
+        report.update!(moderation_ticket: intake_ticket)
         report
       end
 
       private
 
-      attr_reader :population_directory, :audit_logger
+      attr_reader :population_directory, :audit_logger, :report_intake
     end
   end
 end

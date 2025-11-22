@@ -1,0 +1,14 @@
+<section class="public-profile">
+  <header>
+    <h1><%= @user.profile_name %></h1>
+    <p><%= @user.email %></p>
+  </header>
+
+  <div>
+    <%= link_to "Report Player", new_moderation_report_path(
+      source: :profile,
+      subject_user_id: @user.id
+    ), class: "button" %>
+  </div>
+</section>
+

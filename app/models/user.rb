@@ -37,6 +37,30 @@ class User < ApplicationRecord
     class_name: "ChatModerationAction",
     foreign_key: :actor_id,
     dependent: :nullify
+  has_many :moderation_tickets_reported,
+    class_name: "Moderation::Ticket",
+    foreign_key: :reporter_id,
+    dependent: :nullify
+  has_many :moderation_tickets_assigned,
+    class_name: "Moderation::Ticket",
+    foreign_key: :assigned_moderator_id,
+    dependent: :nullify
+  has_many :moderation_actions_taken,
+    class_name: "Moderation::Action",
+    foreign_key: :actor_id,
+    dependent: :nullify
+  has_many :moderation_actions_received,
+    class_name: "Moderation::Action",
+    foreign_key: :target_user_id,
+    dependent: :destroy
+  has_many :moderation_appeals,
+    class_name: "Moderation::Appeal",
+    foreign_key: :appellant_id,
+    dependent: :nullify
+  has_many :live_ops_events_requested,
+    class_name: "LiveOps::Event",
+    foreign_key: :requested_by_id,
+    dependent: :nullify
   has_many :guild_memberships, dependent: :destroy
   has_many :guilds, through: :guild_memberships
   has_many :guild_applications, foreign_key: :applicant_id, dependent: :destroy
@@ -77,6 +101,14 @@ class User < ApplicationRecord
 
   def moderator?
     has_any_role?(:moderator, :gm, :admin)
+  end
+
+  def suspended?
+    suspended_until.present? && suspended_until.future?
+  end
+
+  def trade_locked?
+    trade_locked_until.present? && trade_locked_until.future?
   end
 
   def timeout_in

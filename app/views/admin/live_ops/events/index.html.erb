@@ -1,0 +1,65 @@
+<section>
+  <header>
+    <h1>Live Ops Console</h1>
+    <p>Spawn NPCs, trigger events, seed rewards, or roll back standings.</p>
+  </header>
+
+  <%= form_with model: @event, url: admin_live_ops_events_path do |form| %>
+    <div class="field">
+      <%= form.label :event_type %>
+      <%= form.select :event_type, LiveOps::Event.event_types.keys.map { |key| [key.humanize, key] } %>
+    </div>
+    <div class="field">
+      <%= form.label :severity %>
+      <%= form.select :severity, LiveOps::Event.severities.keys.map { |key| [key.humanize, key] } %>
+    </div>
+    <div class="field">
+      <%= form.label :payload, "Payload (JSON)" %>
+      <%= form.text_area :payload, rows: 4, placeholder: '{"npc_key":"gm_guard","zone_key":"ashen_forest","location":"(10,4)"}' %>
+    </div>
+    <div class="field">
+      <%= form.label :notes %>
+      <%= form.text_area :notes, rows: 3 %>
+    </div>
+    <div class="actions">
+      <label>
+        <%= check_box_tag :execute_now, true %>
+        Execute immediately
+      </label>
+      <%= form.submit "Queue command" %>
+    </div>
+  <% end %>
+
+  <h2>Recent Events</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Type</th>
+        <th>Status</th>
+        <th>Severity</th>
+        <th>Notes</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @events.each do |event| %>
+        <tr>
+          <td><%= event.id %></td>
+          <td><%= event.event_type.humanize %></td>
+          <td><%= event.status.humanize %></td>
+          <td><%= event.severity.humanize %></td>
+          <td><%= event.notes %></td>
+          <td>
+            <% if event.pending? %>
+              <%= button_to "Execute", admin_live_ops_event_path(event), method: :patch, data: { turbo_confirm: "Run this command now?" } %>
+            <% else %>
+              —
+            <% end %>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</section>
+

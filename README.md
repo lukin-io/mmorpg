@@ -72,6 +72,7 @@ The `doc/features/3_player.md` specification is now wired into the codebase:
 - **Quests & Narrative** — `Quest*` models plus `Game::Quests::ChainProgression`, `DailyRotation`, and `DynamicHookResolver` manage main, side, daily, and event quests. `QuestsController` ships a Hotwire quest log/dialogue UI optimized for mobile via the new `layout-stack` Stimulus controller.
 - **Events & Tournaments** — `Game::Events::Scheduler`, `EventInstance`, `ArenaTournament`, and `CommunityObjective` orchestrate seasonal NPCs, brackets, announcers, and drives, with `ScheduledEventJob` spawning instances by slug.
 - **Moderation & Reporting** — Magistrate/guard NPCs route reports through `NpcReportsController` → `Game::Moderation::NpcIntake`, persisting `NpcReport` tickets and logging to `AuditLog`.
+- **Moderation, Safety & Live Ops (Feature 5)** — Unified `Moderation::Ticket` workflow fed by chat/profile/combat/NPC entry points, Turbo-streamed moderator queue, enforcement via `Moderation::PenaltyService`, appeals handled by `Moderation::AppealWorkflow`, automated detectors (`Moderation::Detectors::HealingExploit`), anomaly alerts/webhooks, and GM controls through `LiveOps::Event` + `LiveOps::CommandRunner`.
 
 ---
 

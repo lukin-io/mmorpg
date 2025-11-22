@@ -24,6 +24,10 @@ class Character < ApplicationRecord
   has_many :battles, through: :battle_participants
   has_many :initiated_battles, class_name: "Battle", foreign_key: :initiator_id, dependent: :nullify
   has_many :quest_assignments, dependent: :destroy
+  has_many :moderation_tickets_as_subject,
+    class_name: "Moderation::Ticket",
+    foreign_key: :subject_character_id,
+    dependent: :nullify
 
   validates :name, presence: true, uniqueness: true, length: {maximum: MAX_NAME_LENGTH}
   validates :level, numericality: {greater_than: 0}

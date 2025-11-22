@@ -1,0 +1,55 @@
+<%= form_with model: @ticket, url: moderation_reports_path, data: { turbo: true } do |form| %>
+  <% if @subject_user %>
+    <p>Reporting player: <strong><%= @subject_user.profile_name %></strong></p>
+  <% end %>
+  <% if @subject_character %>
+    <p>Character: <strong><%= @subject_character.name %></strong></p>
+  <% end %>
+
+  <%= form.hidden_field :source %>
+  <%= form.hidden_field :subject_user_id, value: @subject_user&.id %>
+  <%= form.hidden_field :subject_character_id, value: @subject_character&.id %>
+  <%= form.hidden_field :origin_reference %>
+
+  <div class="field">
+    <%= form.label :category %>
+    <%= form.select :category, Moderation::Ticket.categories.keys.map { |key| [key.humanize, key] }, prompt: "Select reason" %>
+  </div>
+
+  <div class="field">
+    <%= form.label :priority %>
+    <%= form.select :priority, Moderation::Ticket.priorities.keys.map { |key| [key.humanize, key] } %>
+  </div>
+
+  <div class="field">
+    <%= form.label :description %>
+    <%= form.text_area :description, rows: 6, required: true %>
+  </div>
+
+  <fieldset>
+    <legend>Evidence</legend>
+    <%= form.fields_for :evidence do |evidence_fields| %>
+      <div class="field">
+        <%= evidence_fields.label :log_excerpt, "Log excerpt" %>
+        <%= evidence_fields.text_area :log_excerpt, rows: 3 %>
+      </div>
+      <div class="field">
+        <%= evidence_fields.label :screenshot_url %>
+        <%= evidence_fields.text_field :screenshot_url %>
+      </div>
+      <div class="field">
+        <%= evidence_fields.label :combat_replay_id %>
+        <%= evidence_fields.text_field :combat_replay_id %>
+      </div>
+      <div class="field">
+        <%= evidence_fields.label :chat_log_reference %>
+        <%= evidence_fields.text_field :chat_log_reference %>
+      </div>
+    <% end %>
+  </fieldset>
+
+  <div class="actions">
+    <%= form.submit "Submit report" %>
+  </div>
+<% end %>
+

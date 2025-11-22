@@ -8,14 +8,28 @@ class ChatReportsController < ApplicationController
 
   def create
     current_user.ensure_social_features!
-    @chat_report = current_user.chat_reports.new(processed_params)
-    authorize @chat_report
+    authorize ChatReport
 
-    if @chat_report.save
-      redirect_back fallback_location: chat_channels_path, notice: "Report submitted for moderator review."
-    else
-      redirect_back fallback_location: chat_channels_path, alert: @chat_report.errors.full_messages.to_sentence
+    ActiveRecord::Base.transaction do
+      @chat_report = current_user.chat_reports.create!(processed_params)
+      Moderation::ReportIntake.new.call(
+        reporter: current_user,
+        subject_user: @chat_report.chat_message&.sender,
+        source: :chat,
+        category: :chat_abuse,
+        description: @chat_report.reason,
+        evidence: @chat_report.evidence,
+        metadata: {
+          chat_report_id: @chat_report.id,
+          chat_message_id: @chat_report.chat_message_id
+        },
+        chat_report: @chat_report
+      )
     end
+
+    redirect_back fallback_location: chat_channels_path, notice: "Report submitted for moderator review."
+  rescue ActiveRecord::RecordInvalid => e
+    redirect_back fallback_location: chat_channels_path, alert: e.record.errors.full_messages.to_sentence
   end
 
   private

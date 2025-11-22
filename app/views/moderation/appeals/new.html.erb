@@ -1,0 +1,18 @@
+<section>
+  <header>
+    <h1>Appeal Ticket #<%= @ticket.id %></h1>
+    <p>Appeals must include new information or context.</p>
+  </header>
+
+  <%= form_with model: @appeal, url: moderation_ticket_appeals_path(@ticket) do |form| %>
+    <div class="field">
+      <%= form.label :body, "Appeal details" %>
+      <%= form.text_area :body, rows: 6, required: true %>
+    </div>
+
+    <div class="actions">
+      <%= form.submit "Submit appeal" %>
+    </div>
+  <% end %>
+</section>
+

@@ -17,6 +17,7 @@ class NpcReport < ApplicationRecord
 
   belongs_to :reporter, class_name: "User"
   belongs_to :character, optional: true
+  belongs_to :moderation_ticket, class_name: "Moderation::Ticket", optional: true
 
   validates :npc_key, :description, presence: true
 end

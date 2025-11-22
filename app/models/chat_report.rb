@@ -12,6 +12,7 @@ class ChatReport < ApplicationRecord
 
   belongs_to :chat_message, optional: true
   belongs_to :reporter, class_name: "User"
+  belongs_to :moderation_ticket, class_name: "Moderation::Ticket", optional: true
 
   validates :reason, presence: true
   validates :evidence, presence: true
