@@ -1,0 +1,16 @@
+<section class="quest-objectives">
+  <h3>Objectives</h3>
+  <% if quest.quest_objectives.any? %>
+    <ol>
+      <% quest.quest_objectives.order(:position).each do |objective| %>
+        <li>
+          <strong><%= objective.objective_type.humanize %>:</strong>
+          <%= objective.metadata["description"] || objective.requirements.to_json %>
+        </li>
+      <% end %>
+    </ol>
+  <% else %>
+    <p>Objectives will appear here once the quest is fully scripted.</p>
+  <% end %>
+</section>
+

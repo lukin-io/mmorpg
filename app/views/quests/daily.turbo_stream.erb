@@ -1,0 +1,6 @@
+<%= turbo_stream.replace "daily-quests" do %>
+  <turbo-frame id="daily-quests">
+    <%= render "daily_slots", slots: @slots %>
+  </turbo-frame>
+<% end %>
+

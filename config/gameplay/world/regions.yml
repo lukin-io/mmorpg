@@ -1,0 +1,130 @@
+# Static Neverlands region descriptors used by the world catalog.
+# Each region defines deterministic layout metadata referenced by services.
+regions:
+  ashen_forest:
+    name: "Ashen Forest"
+    biome: "forest"
+    territory_key: "ashen_forest"
+    zones:
+      - "Ashen Forest"
+      - "Elder Grove"
+    coordinates:
+      x: [0, 48]
+      y: [0, 48]
+    landmarks:
+      - "Elder Tree"
+      - "Rootbound Shrine"
+    hidden_areas:
+      - key: "wolf_den"
+        description: "Hidden alcove filled with rare wolves; opens during dusk turns."
+      - key: "spirit_hollow"
+        description: "Quest-only access once players cleanse the blight."
+    clan_bonuses:
+      tax_bonus_basis_points: 75
+      gathering_yield: 0.1
+      travel_buff: "forest_stride"
+    metadata:
+      difficulty: "standard"
+      recommended_level: 5
+      lore_hook: "Home of the Wardens and ancient spirits."
+
+  frostfang_mountains:
+    name: "Frostfang Mountains"
+    biome: "mountain"
+    territory_key: "frostfang_peak"
+    zones:
+      - "Frostfang Approach"
+      - "Glacier Pass"
+    coordinates:
+      x: [60, 120]
+      y: [60, 120]
+    landmarks:
+      - "Stormwatch Citadel"
+      - "Echoing Cliff"
+    hidden_areas:
+      - key: "stormforge"
+        description: "Mythic anvil for crafting legendary weapons."
+    clan_bonuses:
+      tax_bonus_basis_points: 120
+      crafting_speed: 0.15
+      travel_buff: "mountain_resolve"
+    metadata:
+      difficulty: "hard"
+      recommended_level: 25
+      lore_hook: "Dragons once slept beneath the glacier."
+
+  sapphire_riverlands:
+    name: "Sapphire Riverlands"
+    biome: "river"
+    territory_key: "sapphire_delta"
+    zones:
+      - "Riverwatch"
+      - "Sunken Archive"
+    coordinates:
+      x: [20, 80]
+      y: [30, 70]
+    landmarks:
+      - "Cerulean Falls"
+      - "Fisher's Commune"
+    hidden_areas:
+      - key: "sunken_archive"
+        description: "Ancient ruins accessible with diving gear quest reward."
+    clan_bonuses:
+      tax_bonus_basis_points: 50
+      fishing_yield: 0.2
+      travel_buff: "river_stride"
+    metadata:
+      difficulty: "standard"
+      recommended_level: 12
+      lore_hook: "Nexus of artisan guild trade routes."
+
+  everfall_capital:
+    name: "Everfall Capital"
+    biome: "city"
+    territory_key: "everfall_core"
+    zones:
+      - "Grand Bazaar"
+      - "Royal Keep"
+    coordinates:
+      x: [90, 140]
+      y: [10, 60]
+    landmarks:
+      - "Hall of Magistrates"
+      - "Arena of Crowns"
+    hidden_areas:
+      - key: "council_vault"
+        description: "Triggered during chapter quests; holds royal archives."
+    clan_bonuses:
+      tax_bonus_basis_points: 200
+      marketplace_fee_discount: 0.03
+      travel_buff: "city_stride"
+    metadata:
+      difficulty: "social"
+      recommended_level: 1
+      lore_hook: "Political heart of Neverlands with layered intrigue."
+
+  obsidian_castle:
+    name: "Obsidian Castle"
+    biome: "castle"
+    territory_key: "obsidian_spire"
+    zones:
+      - "Outer Courtyard"
+      - "Throne Battlements"
+    coordinates:
+      x: [130, 180]
+      y: [80, 130]
+    landmarks:
+      - "Midnight Gate"
+      - "Siegeworks"
+    hidden_areas:
+      - key: "shadow_vault"
+        description: "Raid instance unlocked through clan warfare victory."
+    clan_bonuses:
+      tax_bonus_basis_points: 250
+      siege_damage_bonus: 0.15
+      travel_buff: "castle_stride"
+    metadata:
+      difficulty: "raid"
+      recommended_level: 35
+      lore_hook: "Final bastion against the invading dark."
+

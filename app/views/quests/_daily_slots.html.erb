@@ -1,0 +1,19 @@
+<div class="quest-section">
+  <h2>Daily Objectives</h2>
+  <% if slots.present? %>
+    <% slots.each do |slot, assignments| %>
+      <section class="quest-card">
+        <h4><%= slot.titleize %></h4>
+        <% assignments.each do |assignment| %>
+          <p>
+            <strong><%= assignment.quest.title %></strong>
+            — <%= assignment.status.humanize %>
+          </p>
+        <% end %>
+      </section>
+    <% end %>
+  <% else %>
+    <p>No dailies available yet. Check back after reset.</p>
+  <% end %>
+</div>
+

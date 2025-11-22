@@ -1,0 +1,43 @@
+<div class="page-header">
+  <h1>Report to <%= @npc&.name || "Magistrate" %></h1>
+  <% if @npc %>
+    <p class="text-muted"><%= @npc.dialogue.fetch("friendly", []).first %></p>
+  <% else %>
+    <p class="text-muted">Select a magistrate NPC key to route your report.</p>
+  <% end %>
+</div>
+
+<%= form_with model: @report, url: npc_reports_path do |form| %>
+  <div class="field">
+    <%= form.label :npc_key, "NPC Magistrate" %>
+    <%= form.text_field :npc_key, value: @report.npc_key %>
+  </div>
+
+  <div class="field">
+    <%= form.label :category %>
+    <%= form.select :category, @categories.map { |category| [category.humanize, category] } %>
+  </div>
+
+  <div class="field">
+    <%= form.label :description %>
+    <%= form.text_area :description, rows: 5 %>
+  </div>
+
+  <div class="field">
+    <%= form.label :location, "Location / Tile" %>
+    <%= form.text_field :location %>
+  </div>
+
+  <div class="field">
+    <%= form.label :chat_log_reference, "Chat Log Reference" %>
+    <%= form.text_field :chat_log_reference %>
+  </div>
+
+  <div class="field">
+    <%= form.label :screenshot_url, "Screenshot URL" %>
+    <%= form.text_field :screenshot_url %>
+  </div>
+
+  <%= form.submit "Submit Report", class: "btn btn-primary" %>
+<% end %>
+

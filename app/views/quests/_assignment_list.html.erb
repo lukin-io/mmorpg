@@ -1,0 +1,11 @@
+<div class="quest-section">
+  <h2>Main & Side Quests</h2>
+  <% if assignments.any? %>
+    <% assignments.each do |assignment| %>
+      <%= render "assignment", assignment: assignment %>
+    <% end %>
+  <% else %>
+    <p>No quests tracked yet.</p>
+  <% end %>
+</div>
+

@@ -10,6 +10,8 @@ class GameEvent < ApplicationRecord
 
   has_many :event_schedules, dependent: :destroy
   has_many :competition_brackets, dependent: :destroy
+  has_many :event_instances, dependent: :destroy
+  has_many :arena_tournaments, through: :event_instances
 
   validates :name, :slug, :starts_at, :ends_at, presence: true
   validates :slug, uniqueness: true

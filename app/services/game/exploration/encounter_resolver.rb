@@ -10,9 +10,15 @@ module Game
     # Returns:
     #   Hash describing the encounter or nil when no encounter triggers.
     class EncounterResolver
+      def initialize(region_catalog: Game::World::RegionCatalog.instance, population_directory: Game::World::PopulationDirectory.instance)
+        @region_catalog = region_catalog
+        @population_directory = population_directory
+      end
+
       def resolve(zone:, biome:, tile_metadata:, rng: Random.new(1))
         entries = zone.encounter_table[biome] || biome_table[biome] || []
         entries += Array.wrap(tile_metadata["encounters"]) if tile_metadata["encounters"]
+        entries += region_spawn_entries(zone)
         return unless entries.present?
 
         selected = weighted_sample(entries, rng)
@@ -22,16 +28,27 @@ module Game
           name: selected["name"],
           kind: selected["kind"] || "ambient",
           loot_table: selected["loot_table"],
+          rarity: selected["rarity"],
+          respawn_seconds: selected["respawn_seconds"],
           difficulty: selected["difficulty"] || zone.metadata.fetch("difficulty", "standard")
         }
       end
 
       private
 
+      attr_reader :region_catalog, :population_directory
+
       def biome_table
         @biome_table ||= YAML.safe_load(
           Rails.root.join("config/gameplay/biomes.yml").read
         )
+      end
+
+      def region_spawn_entries(zone)
+        region = region_catalog.region_for_zone(zone)
+        return [] unless region
+
+        population_directory.spawn_entries_for(region.key)
       end
 
       def weighted_sample(entries, rng)

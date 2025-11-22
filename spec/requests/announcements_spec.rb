@@ -4,7 +4,7 @@ RSpec.describe "Announcements", type: :request do
   describe "POST /announcements" do
     it "responds with a Turbo Stream payload and renders the prepend contract" do
       user = create(:user)
-      sign_in user
+      sign_in user, scope: :user
 
       expect do
         post announcements_path,
