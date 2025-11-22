@@ -7,6 +7,7 @@ module Moderation
   # Returns:
   #   Moderation::Appeal
   class Appeal < ApplicationRecord
+    self.table_name = "moderation_appeals"
     enum :status, {
       submitted: "submitted",
       acknowledged: "acknowledged",

@@ -8,6 +8,7 @@ module Moderation
   #   Moderation::Ticket
   class Ticket < ApplicationRecord
     BROADCAST_STREAM = "moderation_tickets"
+    self.table_name = "moderation_tickets"
 
     enum :category, {
       chat_abuse: "chat_abuse",

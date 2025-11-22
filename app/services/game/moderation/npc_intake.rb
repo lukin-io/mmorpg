@@ -9,7 +9,7 @@ module Game
     class NpcIntake
       class InvalidNpc < StandardError; end
 
-      def initialize(population_directory: Game::World::PopulationDirectory.instance, audit_logger: AuditLogger, report_intake: Moderation::ReportIntake.new)
+      def initialize(population_directory: Game::World::PopulationDirectory.instance, audit_logger: AuditLogger, report_intake: ::Moderation::ReportIntake.new)
         @population_directory = population_directory
         @audit_logger = audit_logger
         @report_intake = report_intake

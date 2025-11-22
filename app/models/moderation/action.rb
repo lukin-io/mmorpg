@@ -7,6 +7,7 @@ module Moderation
   # Returns:
   #   Moderation::Action
   class Action < ApplicationRecord
+    self.table_name = "moderation_actions"
     enum :action_type, {
       warning: "warning",
       temp_ban: "temp_ban",
