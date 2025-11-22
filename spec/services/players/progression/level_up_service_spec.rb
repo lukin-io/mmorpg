@@ -11,4 +11,3 @@ RSpec.describe Players::Progression::LevelUpService do
     expect(character.last_level_up_at).to be_present
   end
 end
-

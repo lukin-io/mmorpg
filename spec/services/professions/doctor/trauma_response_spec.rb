@@ -16,4 +16,3 @@ RSpec.describe Professions::Doctor::TraumaResponse do
     expect(position.reload.respawn_available_at).to be < 5.minutes.from_now
   end
 end
-

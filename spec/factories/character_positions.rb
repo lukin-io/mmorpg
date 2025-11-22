@@ -8,4 +8,3 @@ FactoryBot.define do
     last_turn_number { 0 }
   end
 end
-

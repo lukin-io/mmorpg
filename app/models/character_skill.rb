@@ -7,4 +7,3 @@ class CharacterSkill < ApplicationRecord
 
   validates :unlocked_at, presence: true
 end
-

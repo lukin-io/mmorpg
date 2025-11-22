@@ -10,4 +10,3 @@ class InventoryItem < ApplicationRecord
   validates :quantity, numericality: {greater_than: 0}
   validates :weight, :enhancement_level, numericality: {greater_than_or_equal_to: 0}
 end
-

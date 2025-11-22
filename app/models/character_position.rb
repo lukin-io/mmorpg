@@ -18,4 +18,3 @@ class CharacterPosition < ApplicationRecord
     active? && (last_action_at.nil? || last_action_at <= cooldown_seconds.seconds.ago)
   end
 end
-

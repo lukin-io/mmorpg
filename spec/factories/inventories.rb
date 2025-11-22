@@ -8,4 +8,3 @@ FactoryBot.define do
     currency_storage { {} }
   end
 end
-

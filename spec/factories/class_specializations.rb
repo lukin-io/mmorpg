@@ -6,4 +6,3 @@ FactoryBot.define do
     unlock_requirements { {quest: "heroic_trial"} }
   end
 end
-

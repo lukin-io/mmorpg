@@ -10,4 +10,3 @@ FactoryBot.define do
     buffs { {} }
   end
 end
-

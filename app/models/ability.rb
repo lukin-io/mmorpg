@@ -9,4 +9,3 @@ class Ability < ApplicationRecord
   validates :name, presence: true
   validates :kind, inclusion: {in: KINDS}
 end
-

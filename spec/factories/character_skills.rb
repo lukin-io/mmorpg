@@ -5,4 +5,3 @@ FactoryBot.define do
     unlocked_at { Time.current }
   end
 end
-

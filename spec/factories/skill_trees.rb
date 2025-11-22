@@ -6,4 +6,3 @@ FactoryBot.define do
     metadata { {} }
   end
 end
-

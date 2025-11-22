@@ -11,4 +11,3 @@ class SpawnPoint < ApplicationRecord
   validates :faction_key, presence: true
   validates :respawn_seconds, numericality: {greater_than: 0}
 end
-

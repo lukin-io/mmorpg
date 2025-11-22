@@ -8,4 +8,3 @@ class GatheringNode < ApplicationRecord
   validates :resource_key, presence: true
   validates :difficulty, :respawn_seconds, numericality: {greater_than: 0}
 end
-

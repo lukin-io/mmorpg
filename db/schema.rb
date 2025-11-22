@@ -10,9 +10,23 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_11_21_150000) do
+ActiveRecord::Schema[8.1].define(version: 2025_11_22_123000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
+
+  create_table "abilities", force: :cascade do |t|
+    t.bigint "character_class_id", null: false
+    t.jsonb "combo_tags", default: [], null: false
+    t.integer "cooldown_seconds", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.jsonb "effects", default: {}, null: false
+    t.string "kind", default: "active", null: false
+    t.string "name", null: false
+    t.jsonb "resource_cost", default: {}, null: false
+    t.datetime "updated_at", null: false
+    t.index ["character_class_id", "name"], name: "index_abilities_on_character_class_id_and_name", unique: true
+    t.index ["character_class_id"], name: "index_abilities_on_character_class_id"
+  end
 
   create_table "achievement_grants", force: :cascade do |t|
     t.bigint "achievement_id", null: false
@@ -44,6 +58,18 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_21_150000) do
     t.string "title", null: false
     t.datetime "updated_at", null: false
     t.index ["created_at"], name: "index_announcements_on_created_at"
+  end
+
+  create_table "arena_rankings", force: :cascade do |t|
+    t.bigint "character_id", null: false
+    t.datetime "created_at", null: false
+    t.jsonb "ladder_metadata", default: {}, null: false
+    t.integer "losses", default: 0, null: false
+    t.integer "rating", default: 1200, null: false
+    t.integer "streak", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.integer "wins", default: 0, null: false
+    t.index ["character_id"], name: "index_arena_rankings_on_character_id", unique: true
   end
 
   create_table "auction_bids", force: :cascade do |t|
@@ -88,30 +114,106 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_21_150000) do
     t.index ["target_type", "target_id"], name: "index_audit_logs_on_target"
   end
 
+  create_table "battle_participants", force: :cascade do |t|
+    t.bigint "battle_id", null: false
+    t.jsonb "buffs", default: {}, null: false
+    t.bigint "character_id"
+    t.datetime "created_at", null: false
+    t.integer "hp_remaining", default: 0, null: false
+    t.integer "initiative", default: 0, null: false
+    t.bigint "npc_template_id"
+    t.string "role", default: "combatant", null: false
+    t.jsonb "stat_snapshot", default: {}, null: false
+    t.string "team", default: "alpha", null: false
+    t.datetime "updated_at", null: false
+    t.index ["battle_id"], name: "index_battle_participants_on_battle_id"
+    t.index ["character_id"], name: "index_battle_participants_on_character_id"
+    t.index ["npc_template_id"], name: "index_battle_participants_on_npc_template_id"
+  end
+
+  create_table "battles", force: :cascade do |t|
+    t.boolean "allow_spectators", default: true, null: false
+    t.integer "battle_type", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "ended_at"
+    t.jsonb "initiative_order", default: [], null: false
+    t.bigint "initiator_id", null: false
+    t.jsonb "metadata", default: {}, null: false
+    t.boolean "moderation_override", default: false, null: false
+    t.datetime "started_at"
+    t.integer "status", default: 0, null: false
+    t.integer "turn_number", default: 1, null: false
+    t.datetime "updated_at", null: false
+    t.bigint "zone_id"
+    t.index ["initiator_id"], name: "index_battles_on_initiator_id"
+    t.index ["status"], name: "index_battles_on_status"
+    t.index ["zone_id"], name: "index_battles_on_zone_id"
+  end
+
   create_table "character_classes", force: :cascade do |t|
     t.jsonb "base_stats", default: {}, null: false
+    t.jsonb "combo_rules", default: {}, null: false
     t.datetime "created_at", null: false
     t.text "description", null: false
+    t.jsonb "equipment_tags", default: [], null: false
     t.string "name", null: false
+    t.string "resource_type", default: "stamina", null: false
     t.datetime "updated_at", null: false
     t.index ["name"], name: "index_character_classes_on_name", unique: true
   end
 
+  create_table "character_positions", force: :cascade do |t|
+    t.bigint "character_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "last_action_at"
+    t.integer "last_turn_number", default: 0, null: false
+    t.datetime "respawn_available_at"
+    t.integer "state", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.integer "x", null: false
+    t.integer "y", null: false
+    t.bigint "zone_id", null: false
+    t.index ["character_id"], name: "index_character_positions_on_character_id", unique: true
+    t.index ["zone_id", "x", "y"], name: "index_character_positions_on_zone_id_and_x_and_y"
+    t.index ["zone_id"], name: "index_character_positions_on_zone_id"
+  end
+
+  create_table "character_skills", force: :cascade do |t|
+    t.bigint "character_id", null: false
+    t.datetime "created_at", null: false
+    t.bigint "skill_node_id", null: false
+    t.datetime "unlocked_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["character_id", "skill_node_id"], name: "index_character_skills_on_character_id_and_skill_node_id", unique: true
+    t.index ["character_id"], name: "index_character_skills_on_character_id"
+    t.index ["skill_node_id"], name: "index_character_skills_on_skill_node_id"
+  end
+
   create_table "characters", force: :cascade do |t|
+    t.integer "alignment_score", default: 0, null: false
+    t.jsonb "allocated_stats", default: {}, null: false
     t.bigint "character_class_id"
     t.bigint "clan_id"
     t.datetime "created_at", null: false
     t.bigint "experience", default: 0, null: false
+    t.string "faction_alignment", default: "neutral", null: false
     t.bigint "guild_id"
+    t.datetime "last_level_up_at"
     t.integer "level", default: 1, null: false
     t.jsonb "metadata", default: {}, null: false
     t.string "name", null: false
+    t.integer "reputation", default: 0, null: false
+    t.jsonb "resource_pools", default: {}, null: false
+    t.bigint "secondary_specialization_id"
+    t.integer "skill_points_available", default: 0, null: false
+    t.integer "stat_points_available", default: 0, null: false
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
     t.index ["character_class_id"], name: "index_characters_on_character_class_id"
     t.index ["clan_id"], name: "index_characters_on_clan_id"
     t.index ["guild_id"], name: "index_characters_on_guild_id"
     t.index ["name"], name: "index_characters_on_name", unique: true
+    t.index ["secondary_specialization_id"], name: "index_characters_on_secondary_specialization_id"
     t.index ["user_id"], name: "index_characters_on_user_id"
   end
 
@@ -236,6 +338,29 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_21_150000) do
     t.index ["slug"], name: "index_clans_on_slug", unique: true
   end
 
+  create_table "class_specializations", force: :cascade do |t|
+    t.bigint "character_class_id", null: false
+    t.datetime "created_at", null: false
+    t.text "description"
+    t.string "name", null: false
+    t.jsonb "unlock_requirements", default: {}, null: false
+    t.datetime "updated_at", null: false
+    t.index ["character_class_id", "name"], name: "index_class_specializations_on_character_class_id_and_name", unique: true
+    t.index ["character_class_id"], name: "index_class_specializations_on_character_class_id"
+  end
+
+  create_table "combat_log_entries", force: :cascade do |t|
+    t.bigint "battle_id", null: false
+    t.datetime "created_at", null: false
+    t.text "message", null: false
+    t.jsonb "payload", default: {}, null: false
+    t.integer "round_number", default: 1, null: false
+    t.integer "sequence", default: 1, null: false
+    t.datetime "updated_at", null: false
+    t.index ["battle_id", "round_number"], name: "index_combat_log_entries_on_battle_id_and_round_number"
+    t.index ["battle_id"], name: "index_combat_log_entries_on_battle_id"
+  end
+
   create_table "competition_brackets", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.bigint "game_event_id", null: false
@@ -353,6 +478,20 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_21_150000) do
     t.index ["slug"], name: "index_game_events_on_slug", unique: true
   end
 
+  create_table "gathering_nodes", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "difficulty", default: 1, null: false
+    t.bigint "profession_id", null: false
+    t.string "resource_key", null: false
+    t.integer "respawn_seconds", default: 60, null: false
+    t.jsonb "rewards", default: {}, null: false
+    t.datetime "updated_at", null: false
+    t.bigint "zone_id", null: false
+    t.index ["profession_id", "resource_key"], name: "index_gathering_nodes_on_profession_id_and_resource_key"
+    t.index ["profession_id"], name: "index_gathering_nodes_on_profession_id"
+    t.index ["zone_id"], name: "index_gathering_nodes_on_zone_id"
+  end
+
   create_table "guild_applications", force: :cascade do |t|
     t.jsonb "answers", default: {}, null: false
     t.bigint "applicant_id", null: false
@@ -434,13 +573,48 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_21_150000) do
     t.index ["user_id"], name: "index_housing_plots_on_user_id"
   end
 
+  create_table "inventories", force: :cascade do |t|
+    t.bigint "character_id", null: false
+    t.datetime "created_at", null: false
+    t.jsonb "currency_storage", default: {}, null: false
+    t.integer "current_weight", default: 0, null: false
+    t.jsonb "metadata", default: {}, null: false
+    t.integer "slot_capacity", default: 30, null: false
+    t.datetime "updated_at", null: false
+    t.integer "weight_capacity", default: 100, null: false
+    t.index ["character_id"], name: "index_inventories_on_character_id", unique: true
+  end
+
+  create_table "inventory_items", force: :cascade do |t|
+    t.boolean "bound", default: false, null: false
+    t.datetime "created_at", null: false
+    t.integer "enhancement_level", default: 0, null: false
+    t.boolean "equipped", default: false, null: false
+    t.bigint "inventory_id", null: false
+    t.bigint "item_template_id", null: false
+    t.datetime "last_enhanced_at"
+    t.boolean "premium", default: false, null: false
+    t.jsonb "properties", default: {}, null: false
+    t.integer "quantity", default: 1, null: false
+    t.string "slot_kind"
+    t.datetime "updated_at", null: false
+    t.integer "weight", default: 0, null: false
+    t.index ["inventory_id", "slot_kind"], name: "index_inventory_items_on_inventory_id_and_slot_kind"
+    t.index ["inventory_id"], name: "index_inventory_items_on_inventory_id"
+    t.index ["item_template_id"], name: "index_inventory_items_on_item_template_id"
+  end
+
   create_table "item_templates", force: :cascade do |t|
     t.datetime "created_at", null: false
+    t.jsonb "enhancement_rules", default: {}, null: false
     t.string "name", null: false
+    t.boolean "premium", default: false, null: false
     t.string "rarity", null: false
     t.string "slot", null: false
+    t.integer "stack_limit", default: 99, null: false
     t.jsonb "stat_modifiers", default: {}, null: false
     t.datetime "updated_at", null: false
+    t.integer "weight", default: 1, null: false
     t.index ["name"], name: "index_item_templates_on_name", unique: true
     t.index ["rarity"], name: "index_item_templates_on_rarity"
     t.index ["slot"], name: "index_item_templates_on_slot"
@@ -485,6 +659,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_21_150000) do
   end
 
   create_table "map_tile_templates", force: :cascade do |t|
+    t.string "biome", default: "plains", null: false
     t.datetime "created_at", null: false
     t.jsonb "metadata", default: {}, null: false
     t.boolean "passable", default: true, null: false
@@ -587,6 +762,9 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_21_150000) do
     t.datetime "created_at", null: false
     t.text "description"
     t.boolean "gathering", default: false, null: false
+    t.string "gathering_resource"
+    t.integer "healing_bonus", default: 0, null: false
+    t.jsonb "metadata", default: {}, null: false
     t.string "name", null: false
     t.datetime "updated_at", null: false
     t.index ["name"], name: "index_professions_on_name", unique: true
@@ -627,6 +805,47 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_21_150000) do
     t.datetime "updated_at", null: false
     t.index ["name", "resource_type", "resource_id"], name: "index_roles_on_name_and_resource_type_and_resource_id"
     t.index ["resource_type", "resource_id"], name: "index_roles_on_resource"
+  end
+
+  create_table "skill_nodes", force: :cascade do |t|
+    t.integer "cooldown_seconds", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.jsonb "effects", default: {}, null: false
+    t.string "key", null: false
+    t.string "name", null: false
+    t.string "node_type", default: "passive", null: false
+    t.jsonb "requirements", default: {}, null: false
+    t.jsonb "resource_cost", default: {}, null: false
+    t.bigint "skill_tree_id", null: false
+    t.integer "tier", default: 1, null: false
+    t.datetime "updated_at", null: false
+    t.index ["skill_tree_id", "key"], name: "index_skill_nodes_on_skill_tree_id_and_key", unique: true
+    t.index ["skill_tree_id"], name: "index_skill_nodes_on_skill_tree_id"
+  end
+
+  create_table "skill_trees", force: :cascade do |t|
+    t.bigint "character_class_id", null: false
+    t.datetime "created_at", null: false
+    t.text "description"
+    t.jsonb "metadata", default: {}, null: false
+    t.string "name", null: false
+    t.datetime "updated_at", null: false
+    t.index ["character_class_id"], name: "index_skill_trees_on_character_class_id"
+  end
+
+  create_table "spawn_points", force: :cascade do |t|
+    t.string "city_key"
+    t.datetime "created_at", null: false
+    t.boolean "default_entry", default: false, null: false
+    t.string "faction_key", null: false
+    t.jsonb "metadata", default: {}, null: false
+    t.integer "respawn_seconds", default: 60, null: false
+    t.datetime "updated_at", null: false
+    t.integer "x", null: false
+    t.integer "y", null: false
+    t.bigint "zone_id", null: false
+    t.index ["zone_id", "faction_key"], name: "index_spawn_points_on_zone_id_and_faction_key"
+    t.index ["zone_id"], name: "index_spawn_points_on_zone_id"
   end
 
   create_table "titles", force: :cascade do |t|
@@ -721,14 +940,39 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_21_150000) do
     t.index ["user_id"], name: "index_users_roles_on_user_id"
   end
 
+  create_table "zones", force: :cascade do |t|
+    t.string "biome", null: false
+    t.datetime "created_at", null: false
+    t.jsonb "encounter_table", default: {}, null: false
+    t.integer "height", default: 32, null: false
+    t.jsonb "metadata", default: {}, null: false
+    t.string "name", null: false
+    t.integer "turn_counter", default: 1, null: false
+    t.datetime "updated_at", null: false
+    t.integer "width", default: 32, null: false
+    t.index ["name"], name: "index_zones_on_name", unique: true
+  end
+
+  add_foreign_key "abilities", "character_classes"
   add_foreign_key "achievement_grants", "achievements"
   add_foreign_key "achievement_grants", "users"
+  add_foreign_key "arena_rankings", "characters"
   add_foreign_key "auction_bids", "auction_listings"
   add_foreign_key "auction_bids", "users", column: "bidder_id"
   add_foreign_key "auction_listings", "users", column: "seller_id"
   add_foreign_key "audit_logs", "users", column: "actor_id"
+  add_foreign_key "battle_participants", "battles"
+  add_foreign_key "battle_participants", "characters"
+  add_foreign_key "battle_participants", "npc_templates"
+  add_foreign_key "battles", "characters", column: "initiator_id"
+  add_foreign_key "battles", "zones"
+  add_foreign_key "character_positions", "characters"
+  add_foreign_key "character_positions", "zones"
+  add_foreign_key "character_skills", "characters"
+  add_foreign_key "character_skills", "skill_nodes"
   add_foreign_key "characters", "character_classes"
   add_foreign_key "characters", "clans"
+  add_foreign_key "characters", "class_specializations", column: "secondary_specialization_id"
   add_foreign_key "characters", "guilds"
   add_foreign_key "characters", "users"
   add_foreign_key "chat_channel_memberships", "chat_channels"
@@ -746,6 +990,8 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_21_150000) do
   add_foreign_key "clan_wars", "clans", column: "attacker_clan_id"
   add_foreign_key "clan_wars", "clans", column: "defender_clan_id"
   add_foreign_key "clans", "users", column: "leader_id"
+  add_foreign_key "class_specializations", "character_classes"
+  add_foreign_key "combat_log_entries", "battles"
   add_foreign_key "competition_brackets", "game_events"
   add_foreign_key "competition_matches", "competition_brackets"
   add_foreign_key "crafting_jobs", "crafting_stations"
@@ -756,6 +1002,8 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_21_150000) do
   add_foreign_key "event_schedules", "game_events"
   add_foreign_key "friendships", "users", column: "receiver_id"
   add_foreign_key "friendships", "users", column: "requester_id"
+  add_foreign_key "gathering_nodes", "professions"
+  add_foreign_key "gathering_nodes", "zones"
   add_foreign_key "guild_applications", "guilds"
   add_foreign_key "guild_applications", "users", column: "applicant_id"
   add_foreign_key "guild_applications", "users", column: "reviewed_by_id"
@@ -766,6 +1014,9 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_21_150000) do
   add_foreign_key "guilds", "users", column: "leader_id"
   add_foreign_key "housing_decor_items", "housing_plots"
   add_foreign_key "housing_plots", "users"
+  add_foreign_key "inventories", "characters"
+  add_foreign_key "inventory_items", "inventories"
+  add_foreign_key "inventory_items", "item_templates"
   add_foreign_key "leaderboard_entries", "leaderboards"
   add_foreign_key "mail_messages", "users", column: "recipient_id"
   add_foreign_key "mail_messages", "users", column: "sender_id"
@@ -778,6 +1029,9 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_21_150000) do
   add_foreign_key "profession_progresses", "users"
   add_foreign_key "purchases", "users"
   add_foreign_key "recipes", "professions"
+  add_foreign_key "skill_nodes", "skill_trees"
+  add_foreign_key "skill_trees", "character_classes"
+  add_foreign_key "spawn_points", "zones"
   add_foreign_key "trade_items", "trade_sessions"
   add_foreign_key "trade_items", "users", column: "owner_id"
   add_foreign_key "trade_sessions", "users", column: "initiator_id"

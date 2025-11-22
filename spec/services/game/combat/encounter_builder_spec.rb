@@ -12,4 +12,3 @@ RSpec.describe Game::Combat::EncounterBuilder do
     expect(battle.initiative_order).not_to be_empty
   end
 end
-

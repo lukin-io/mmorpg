@@ -43,4 +43,3 @@ module Professions
     end
   end
 end
-

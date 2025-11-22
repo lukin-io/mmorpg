@@ -8,4 +8,3 @@ class CombatLogEntry < ApplicationRecord
 
   validates :message, presence: true
 end
-

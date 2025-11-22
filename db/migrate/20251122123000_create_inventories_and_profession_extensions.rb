@@ -3,7 +3,7 @@
 class CreateInventoriesAndProfessionExtensions < ActiveRecord::Migration[8.1]
   def change
     create_table :inventories do |t|
-      t.references :character, null: false, foreign_key: true
+      t.references :character, null: false, foreign_key: true, index: {unique: true}
       t.integer :slot_capacity, null: false, default: 30
       t.integer :weight_capacity, null: false, default: 100
       t.integer :current_weight, null: false, default: 0
@@ -11,7 +11,6 @@ class CreateInventoriesAndProfessionExtensions < ActiveRecord::Migration[8.1]
       t.jsonb :currency_storage, null: false, default: {}
       t.timestamps
     end
-    add_index :inventories, :character_id, unique: true
 
     create_table :inventory_items do |t|
       t.references :inventory, null: false, foreign_key: true

@@ -7,4 +7,3 @@ class ClassSpecialization < ApplicationRecord
 
   validates :name, presence: true
 end
-

@@ -14,4 +14,3 @@ class Zone < ApplicationRecord
   validates :biome, presence: true, inclusion: {in: BIOMES}
   validates :width, :height, numericality: {greater_than: 0}
 end
-

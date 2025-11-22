@@ -13,4 +13,3 @@ RSpec.describe Professions::GatheringResolver do
     expect(result[:rewards]).to eq({"herb" => 1})
   end
 end
-

@@ -16,4 +16,3 @@ RSpec.describe Game::Combat::ArenaLadder do
     expect(result[:loser_rating]).to be < 1200
   end
 end
-

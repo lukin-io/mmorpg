@@ -8,4 +8,3 @@ FactoryBot.define do
     rewards { {"herb" => 1} }
   end
 end
-

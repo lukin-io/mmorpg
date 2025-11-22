@@ -9,4 +9,3 @@ FactoryBot.define do
     combo_tags { [] }
   end
 end
-

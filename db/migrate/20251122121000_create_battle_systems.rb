@@ -42,7 +42,7 @@ class CreateBattleSystems < ActiveRecord::Migration[8.1]
     add_index :combat_log_entries, [:battle_id, :round_number]
 
     create_table :arena_rankings do |t|
-      t.references :character, null: false, foreign_key: true
+      t.references :character, null: false, foreign_key: true, index: {unique: true}
       t.integer :rating, null: false, default: 1200
       t.integer :wins, null: false, default: 0
       t.integer :losses, null: false, default: 0
@@ -50,6 +50,5 @@ class CreateBattleSystems < ActiveRecord::Migration[8.1]
       t.jsonb :ladder_metadata, null: false, default: {}
       t.timestamps
     end
-    add_index :arena_rankings, :character_id, unique: true
   end
 end

@@ -10,4 +10,3 @@ class SkillNode < ApplicationRecord
   validates :key, :name, presence: true
   validates :node_type, inclusion: {in: NODE_TYPES}
 end
-

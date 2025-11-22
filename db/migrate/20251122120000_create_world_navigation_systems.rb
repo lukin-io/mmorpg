@@ -28,7 +28,7 @@ class CreateWorldNavigationSystems < ActiveRecord::Migration[8.1]
     add_index :spawn_points, [:zone_id, :faction_key]
 
     create_table :character_positions do |t|
-      t.references :character, null: false, foreign_key: true
+      t.references :character, null: false, foreign_key: true, index: {unique: true}
       t.references :zone, null: false, foreign_key: true
       t.integer :x, null: false
       t.integer :y, null: false
@@ -38,7 +38,6 @@ class CreateWorldNavigationSystems < ActiveRecord::Migration[8.1]
       t.datetime :respawn_available_at
       t.timestamps
     end
-    add_index :character_positions, :character_id, unique: true
     add_index :character_positions, [:zone_id, :x, :y]
 
     add_column :map_tile_templates, :biome, :string, null: false, default: "plains"

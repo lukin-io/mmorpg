@@ -10,4 +10,3 @@ FactoryBot.define do
     properties { {} }
   end
 end
-

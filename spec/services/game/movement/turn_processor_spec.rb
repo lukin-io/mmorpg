@@ -28,4 +28,3 @@ RSpec.describe Game::Movement::TurnProcessor do
     end.to raise_error(Game::Movement::TurnProcessor::MovementViolationError)
   end
 end
-

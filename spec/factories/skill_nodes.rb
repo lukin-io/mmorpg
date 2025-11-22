@@ -11,4 +11,3 @@ FactoryBot.define do
     cooldown_seconds { 0 }
   end
 end
-

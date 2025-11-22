@@ -8,4 +8,3 @@ FactoryBot.define do
     ladder_metadata { {} }
   end
 end
-

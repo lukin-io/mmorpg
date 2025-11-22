@@ -13,4 +13,3 @@ class BattleParticipant < ApplicationRecord
     character&.name || npc_template&.name || "Unknown"
   end
 end
-

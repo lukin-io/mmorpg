@@ -7,4 +7,3 @@ FactoryBot.define do
     payload { {damage: 10} }
   end
 end
-

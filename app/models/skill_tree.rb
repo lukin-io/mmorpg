@@ -7,4 +7,3 @@ class SkillTree < ApplicationRecord
 
   validates :name, presence: true
 end
-

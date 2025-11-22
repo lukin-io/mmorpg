@@ -6,4 +6,3 @@ class ArenaRanking < ApplicationRecord
 
   validates :rating, :wins, :losses, :streak, numericality: {greater_than_or_equal_to: 0}
 end
-

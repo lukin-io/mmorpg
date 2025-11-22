@@ -10,4 +10,3 @@ FactoryBot.define do
     enhancement_rules { {"base_success_chance" => 60, "required_skill_level" => 1} }
   end
 end
-
