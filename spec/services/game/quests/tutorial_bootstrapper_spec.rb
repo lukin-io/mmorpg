@@ -6,6 +6,7 @@ RSpec.describe Game::Quests::TutorialBootstrapper do
 
   before do
     %w[movement_tutorial combat_tutorial stat_allocation_tutorial gear_upgrade_tutorial].each do |key|
+      Quest.where(key: key).delete_all
       create(:quest, quest_chain:, key:)
     end
   end

@@ -4,7 +4,10 @@ RSpec.describe Users::ProfileStats do
   let(:user) { create(:user) }
   let(:character) { create(:character, user:) }
   let(:quest_chain) { create(:quest_chain) }
-  let(:quest) { create(:quest, quest_chain:, key: "stat_allocation_tutorial") }
+  let(:quest) do
+    Quest.where(key: "stat_allocation_tutorial").delete_all
+    create(:quest, quest_chain:, key: "stat_allocation_tutorial")
+  end
 
   before do
     battle = create(:battle, initiator: character)
