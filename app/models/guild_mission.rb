@@ -22,7 +22,12 @@ class GuildMission < ApplicationRecord
 
   def apply_progress!(amount)
     new_progress = progress_quantity + amount
-    new_status = new_progress >= required_quantity ? :completed : status
+    new_status =
+      if new_progress >= required_quantity
+        :completed
+      else
+        status
+      end
     update!(progress_quantity: [new_progress, required_quantity].min, status: new_status)
   end
 end

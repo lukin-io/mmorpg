@@ -25,9 +25,10 @@ class CraftingJobsController < ApplicationController
       station:
     ).enqueue!(quantity: crafting_job_params[:quantity].to_i)
 
+    job_label = "job".pluralize(jobs.size)
     redirect_to crafting_jobs_path,
-      notice: "#{jobs.size} crafting #{'job'.pluralize(jobs.size)} queued."
-  rescue StandardError => e
+      notice: "#{jobs.size} crafting #{job_label} queued."
+  rescue => e
     redirect_to crafting_jobs_path, alert: e.message
   end
 
@@ -46,7 +47,7 @@ class CraftingJobsController < ApplicationController
     respond_to do |format|
       format.turbo_stream
     end
-  rescue StandardError => e
+  rescue => e
     render turbo_stream: turbo_stream.update(
       "crafting-preview",
       e.message

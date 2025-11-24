@@ -61,7 +61,7 @@ module Crafting
     def ensure_materials!
       mats = recipe.materials
       return if mats.blank?
-      return if inventory && inventory.materials_available?(mats)
+      return if inventory&.materials_available?(mats)
 
       raise Pundit::NotAuthorizedError, "Missing required materials"
     end

@@ -18,18 +18,20 @@ class ProfessionTool < ApplicationRecord
   end
 
   def degrade!(amount)
-    update!(durability: [durability - amount, 0].max)
+    update!(durability: (durability - amount).clamp(0, max_durability))
   end
 
   def repair!(amount: max_durability)
     update!(
-      durability: [durability + amount, max_durability].min
+      durability: (durability + amount).clamp(0, max_durability)
     )
   end
 
   private
 
   def clamp_durability
-    self.durability = [[durability, 0].max, max_durability].min if durability && max_durability
+    return unless durability && max_durability
+
+    self.durability = durability.clamp(0, max_durability)
   end
 end

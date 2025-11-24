@@ -53,15 +53,13 @@ class AddCharacterAndMetadataToProfessionProgresses < ActiveRecord::Migration[8.
     return unless user
 
     character = MigrationCharacter.where(user_id: user.id).order(:id).first
-    unless character
-      character = MigrationCharacter.create!(
-        user_id: user.id,
-        name: "Crafter-#{user.id}-#{progress.id}",
-        level: 1,
-        experience: 0,
-        metadata: {}
-      )
-    end
+    character ||= MigrationCharacter.create!(
+      user_id: user.id,
+      name: "Crafter-#{user.id}-#{progress.id}",
+      level: 1,
+      experience: 0,
+      metadata: {}
+    )
 
     progress.update_columns(character_id: character.id)
   end

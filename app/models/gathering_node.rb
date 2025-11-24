@@ -25,7 +25,12 @@ class GatheringNode < ApplicationRecord
       else
         0
       end
-    party_bonus = party_size > 1 ? -(party_size * group_bonus_percent / 100.0 * base) : 0
+    party_bonus =
+      if party_size > 1
+        -(party_size * group_bonus_percent / 100.0 * base)
+      else
+        0
+      end
     (base + biome_modifier + party_bonus).clamp(10, base * 2)
   end
 

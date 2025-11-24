@@ -1,21 +1,25 @@
 # frozen_string_literal: true
 
 class Recipe < ApplicationRecord
-  SOURCE_KINDS = {
-    quest: "quest",
-    drop: "drop",
-    vendor: "vendor",
-    guild_research: "guild_research",
-    tutorial: "tutorial"
-  }.freeze unless const_defined?(:SOURCE_KINDS)
+  unless defined?(SOURCE_KINDS)
+    SOURCE_KINDS = {
+      quest: "quest",
+      drop: "drop",
+      vendor: "vendor",
+      guild_research: "guild_research",
+      tutorial: "tutorial"
+    }.freeze
+  end
 
-  RISK_LEVELS = {
-    safe: "safe",
-    moderate: "moderate",
-    risky: "risky"
-  }.freeze unless const_defined?(:RISK_LEVELS)
+  unless defined?(RISK_LEVELS)
+    RISK_LEVELS = {
+      safe: "safe",
+      moderate: "moderate",
+      risky: "risky"
+    }.freeze
+  end
 
-  STATION_ARCHETYPES = CraftingStation::ARCHETYPES unless const_defined?(:STATION_ARCHETYPES)
+  STATION_ARCHETYPES = CraftingStation::ARCHETYPES unless defined?(STATION_ARCHETYPES)
 
   enum :source_kind, SOURCE_KINDS, prefix: :source_kind
   enum :risk_level, RISK_LEVELS, prefix: :risk_level

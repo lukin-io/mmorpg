@@ -4,9 +4,9 @@ RSpec.describe ProfessionProgress do
   describe "slot limits" do
     it "prevents exceeding gathering slots per character" do
       character = create(:character)
-      herbalism = create(:profession, name: "Herbalism", category: "gathering", gathering: true)
-      fishing = create(:profession, name: "Fishing", category: "gathering", gathering: true)
-      hunting = create(:profession, name: "Hunting", category: "gathering", gathering: true)
+      herbalism = create(:profession, category: "gathering", gathering: true)
+      fishing = create(:profession, category: "gathering", gathering: true)
+      hunting = create(:profession, category: "gathering", gathering: true)
 
       create(:profession_progress, character:, profession: herbalism, slot_kind: "gathering")
       create(:profession_progress, character:, profession: fishing, slot_kind: "gathering")

@@ -47,15 +47,13 @@ class ExpandCraftingAndEconomyTables < ActiveRecord::Migration[8.1]
         next unless user
 
         character = MigrationCharacter.where(user_id: user.id).order(:id).first
-        unless character
-          character = MigrationCharacter.create!(
-            user_id: user.id,
-            name: "Crafter-#{user.id}-job#{job.id}",
-            level: 1,
-            experience: 0,
-            metadata: {}
-          )
-        end
+        character ||= MigrationCharacter.create!(
+          user_id: user.id,
+          name: "Crafter-#{user.id}-job#{job.id}",
+          level: 1,
+          experience: 0,
+          metadata: {}
+        )
 
         job.update_columns(character_id: character.id)
       end

@@ -22,7 +22,7 @@ class ProfessionsController < ApplicationController
     ).enroll!
 
     redirect_to professions_path, notice: "#{profession.name} unlocked."
-  rescue StandardError => e
+  rescue => e
     redirect_to professions_path, alert: e.message
   end
 
@@ -32,7 +32,7 @@ class ProfessionsController < ApplicationController
 
     Professions::ResetService.new(progress: progress, actor: current_user).reset!(mode: params[:mode])
     redirect_to professions_path, notice: "Profession progress reset."
-  rescue StandardError => e
+  rescue => e
     redirect_to professions_path, alert: e.message
   end
 end

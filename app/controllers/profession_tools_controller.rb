@@ -13,7 +13,7 @@ class ProfessionToolsController < ApplicationController
     ).repair!(materials: tool.metadata.fetch("repair_materials", {}))
 
     redirect_to professions_path, notice: "#{tool.tool_type} repaired."
-  rescue StandardError => e
+  rescue => e
     redirect_to professions_path, alert: e.message
   end
 end
