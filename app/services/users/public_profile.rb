@@ -14,7 +14,8 @@ module Users
         achievements: achievements_payload,
         guild: guild_payload,
         clan: clan_payload,
-        housing: housing_payload
+        housing: housing_payload,
+        stats: stats_payload
       }
     end
 
@@ -62,6 +63,10 @@ module Users
           storage_slots: plot.storage_slots
         }
       end
+    end
+
+    def stats_payload
+      Users::ProfileStats.new(user:).as_json
     end
   end
 end

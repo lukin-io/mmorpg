@@ -2,6 +2,8 @@
 
 # Battle persists PvE/PvP encounters, initiative order, and combat status.
 class Battle < ApplicationRecord
+  PVP_MODES = %w[duel skirmish arena clan].freeze
+
   enum :battle_type, {
     pve: 0,
     pvp: 1,
@@ -20,8 +22,16 @@ class Battle < ApplicationRecord
   has_many :combat_log_entries, dependent: :destroy
 
   validates :turn_number, numericality: {greater_than: 0}
+  validates :pvp_mode, inclusion: {in: PVP_MODES}, allow_nil: true
 
   def next_sequence_for(round_number)
     combat_log_entries.where(round_number:).maximum(:sequence).to_i + 1
+  end
+
+  def ladder_type
+    return "arena" if battle_type == "arena"
+    return pvp_mode if pvp_mode.present?
+
+    nil
   end
 end

@@ -22,6 +22,7 @@ module Game
         Battle.transaction do
           battle = Battle.create!(
             battle_type: battle_type_from_mode,
+            pvp_mode: pvp_mode_for_mode,
             status: :active,
             initiator:,
             zone: zone || initiator.position&.zone,
@@ -50,6 +51,15 @@ module Game
         when :arena then :arena
         else
           :pve
+        end
+      end
+
+      def pvp_mode_for_mode
+        case mode.to_sym
+        when :duel then "duel"
+        when :skirmish then "skirmish"
+        when :clan then "clan"
+        when :arena then "arena"
         end
       end
 

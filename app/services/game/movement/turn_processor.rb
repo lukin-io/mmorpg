@@ -32,8 +32,6 @@ module Game
 
       def call
         position = respawn_service.ensure_position!
-        ensure_ready!(position)
-
         dx, dy = fetch_offset
         target_x = position.x + dx
         target_y = position.y + dy
@@ -42,7 +40,11 @@ module Game
         validator = movement_validator_class.new(provider)
         raise MovementViolationError, "Tile is not passable" unless validator.valid?(target_x, target_y)
 
-        encounter = resolve_encounter(provider:, zone: position.zone, x: target_x, y: target_y)
+        tile_metadata = provider.metadata_at(target_x, target_y) || {}
+        cooldown_seconds = environment_cooldown(zone: position.zone, tile_metadata:)
+        ensure_ready!(position, cooldown_seconds:)
+
+        encounter = resolve_encounter(provider:, zone: position.zone, x: target_x, y: target_y, tile_metadata:)
 
         position.update!(
           x: target_x,
@@ -60,12 +62,12 @@ module Game
 
       attr_reader :character, :direction, :rng, :movement_validator_class, :respawn_service, :encounter_resolver
 
-      def ensure_ready?(position)
-        position.ready_for_action?(cooldown_seconds: ACTION_COOLDOWN_SECONDS)
+      def ensure_ready?(position, cooldown_seconds:)
+        position.ready_for_action?(cooldown_seconds:)
       end
 
-      def ensure_ready!(position)
-        return if ensure_ready?(position)
+      def ensure_ready!(position, cooldown_seconds:)
+        return if ensure_ready?(position, cooldown_seconds:)
 
         raise MovementViolationError, "Action already consumed for current turn"
       end
@@ -74,13 +76,19 @@ module Game
         OFFSETS.fetch(direction) { raise MovementViolationError, "Unknown direction #{direction}" }
       end
 
-      def resolve_encounter(provider:, zone:, x:, y:)
+      def resolve_encounter(provider:, zone:, x:, y:, tile_metadata:)
         encounter_resolver.resolve(
           zone:,
           biome: provider.biome_at(x, y),
-          tile_metadata: provider.metadata_at(x, y),
+          tile_metadata: tile_metadata,
           rng:
         )
+      end
+
+      def environment_cooldown(zone:, tile_metadata:)
+        Game::Movement::TerrainModifier
+          .new(zone:)
+          .cooldown_seconds(base_seconds: ACTION_COOLDOWN_SECONDS, tile_metadata:)
       end
     end
   end

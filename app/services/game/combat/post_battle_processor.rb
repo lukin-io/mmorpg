@@ -17,9 +17,10 @@ module Game
 
       def call(winner: nil)
         updates = {}
-        updates[:arena] = arena_ladder.apply!(winner:) if winner && battle.battle_type == "arena"
+        updates[:ladder] = arena_ladder.apply!(winner:) if winner && battle.ladder_type
         apply_doctor_support!
         schedule_respawns!
+        apply_infirmary_support!
         battle.update!(status: :completed, ended_at: Time.current) if battle.status != "completed"
         updates
       end
@@ -65,6 +66,18 @@ module Game
           state: :downed,
           respawn_available_at: Time.current + respawn_seconds_for(character)
         )
+      end
+
+      def apply_infirmary_support!
+        return unless battle.zone
+
+        infirmary = Game::Recovery::InfirmaryService.new(zone: battle.zone)
+        return unless infirmary.available?
+
+        battle.battle_participants.each do |participant|
+          position = participant.character&.position
+          infirmary.stabilize!(character_position: position) if position&.respawn_available_at
+        end
       end
 
       def respawn_seconds_for(character)

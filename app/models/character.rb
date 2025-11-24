@@ -16,7 +16,8 @@ class Character < ApplicationRecord
 
   has_one :position, class_name: "CharacterPosition", dependent: :destroy
   has_one :inventory, dependent: :destroy
-  has_one :arena_ranking, dependent: :destroy
+  has_many :arena_rankings, dependent: :destroy
+  has_one :arena_ranking, -> { where(ladder_type: "arena") }, class_name: "ArenaRanking", dependent: :destroy
 
   has_many :character_skills, dependent: :destroy
   has_many :skill_nodes, through: :character_skills
@@ -26,6 +27,7 @@ class Character < ApplicationRecord
   has_many :battles, through: :battle_participants
   has_many :initiated_battles, class_name: "Battle", foreign_key: :initiator_id, dependent: :nullify
   has_many :quest_assignments, dependent: :destroy
+  has_many :movement_commands, dependent: :destroy
   has_many :moderation_tickets_as_subject,
     class_name: "Moderation::Ticket",
     foreign_key: :subject_character_id,
@@ -43,6 +45,7 @@ class Character < ApplicationRecord
 
   before_validation :inherit_memberships, on: :create
   after_create :ensure_inventory!
+  after_create_commit :ensure_tutorial_assignments
 
   def stats
     base = (character_class&.base_stats || {}).transform_keys(&:to_sym)
@@ -72,5 +75,11 @@ class Character < ApplicationRecord
 
   def ensure_inventory!
     create_inventory!(slot_capacity: 30, weight_capacity: 100) unless inventory
+  end
+
+  def ensure_tutorial_assignments
+    Game::Quests::TutorialBootstrapper.new(character: self).call
+  rescue ActiveRecord::RecordNotFound
+    true
   end
 end

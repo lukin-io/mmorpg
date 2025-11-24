@@ -54,7 +54,7 @@ This is a clone/re-imagining of the classic MMORPG **Neverlands.ru**, featuring:
 - Map exploration & zones
 - Real-time updates via Turbo Streams
 
-### Authentication & Account Services (Feature 1)
+### 1. Authentication & Account Services (Feature 1)
 
 - Spec: `doc/features/1_auth.md`, flow: `doc/flow/1_auth_presence.md`.
 - Devise modules (confirmable/trackable/timeoutable) live in `app/models/user.rb`; Rack::Attack rules are wired in `config/initializers/rack_attack.rb`.
@@ -63,7 +63,7 @@ This is a clone/re-imagining of the classic MMORPG **Neverlands.ru**, featuring:
 - Characters, profile handles, and privacy toggles (`profile_name`, `chat_privacy`, `friend_request_privacy`, `duel_privacy`) back `PublicProfilesController` and `Users::PublicProfile`, exposing sanitized JSON at `GET /profiles/:profile_name`.
 - Moderation/audit trail for auth-sensitive actions is centralized in `AuditLogger` and `AuditLog`.
 
-### Accounts, Profiles & Social Graph (Feature 2)
+### 2. Accounts, Profiles & Social Graph (Feature 2)
 
 - Spec: `doc/features/2_user.md`.
 - Friendships (`Friendship` model + scopes) respect privacy gates via `User#allows_friend_request_from?`; allied status checks shared guild/clan memberships.
@@ -71,7 +71,7 @@ This is a clone/re-imagining of the classic MMORPG **Neverlands.ru**, featuring:
 - Public profile factory + request specs (`spec/services/users/public_profile_spec.rb`, `spec/requests/public_profiles_spec.rb`) cover reputation, achievements, guild/clan snapshots, housing plots, and omit PII.
 - Achievements, housing, mounts, pets, trades, and other user-owned collections are exposed through corresponding controllers/policies so the broader social graph (friends, guilds, clans) can drive privacy-aware UIs.
 
-### Player & Character Systems (Feature 3)
+### 3. Player & Character Systems (Feature 3)
 
 The `doc/features/3_player.md` specification is now wired into the codebase:
 
@@ -82,21 +82,21 @@ The `doc/features/3_player.md` specification is now wired into the codebase:
 - **Items & Inventory** — `Inventory`, `InventoryItem`, and `Game::Inventory::*` services implement equipment slots, stacking rules, premium safeguards, and enhancement/enchantment risk tied to crafting skills.
 - **Crafting & Professions** — Gathering nodes plus `Professions::GatheringResolver` feed crafting recipes. The Doctor profession shortens downtime after battles through `Professions::Doctor::TraumaResponse`. `Crafting::JobScheduler`, `Professions::CraftingOutcomeCalculator`, and the Hotwire-driven crafting UI (see `CraftingJobsController`) now handle station queues, portable kits, profession slot limits, quality previews, and Turbo-streamed job notifications.
 
-### World, NPC, and Quest Systems (Feature 4)
+### 4. World, NPC, and Quest Systems (Feature 4)
 
 - **Deterministic World Data** — `config/gameplay/world/*.yml` defines Neverlands regions, landmarks, hidden areas, and resource nodes consumed by `Game::World::RegionCatalog`, `Game::World::Region`, and `Economy::TaxCalculator` for territory buffs/taxes.
 - **NPCs & Monsters** — `Game::World::PopulationDirectory` merges NPC archetypes + monster taxonomy (rarity, respawn timers) with optional overrides from `SpawnSchedule`, surfacing data to `Game::Exploration::EncounterResolver`.
 - **Quests & Narrative** — `Quest*` models plus `Game::Quests::ChainProgression`, `DailyRotation`, and `DynamicHookResolver` manage main, side, daily, and event quests. `QuestsController` ships a Hotwire quest log/dialogue UI optimized for mobile via the new `layout-stack` Stimulus controller.
 - **Events & Tournaments** — `Game::Events::Scheduler`, `EventInstance`, `ArenaTournament`, and `CommunityObjective` orchestrate seasonal NPCs, brackets, announcers, and drives, with `ScheduledEventJob` spawning instances by slug.
 
-### Moderation, Safety & Live Ops (Feature 5)
+### 5. Moderation, Safety & Live Ops (Feature 5)
 
 - **Unified Reporting Funnel** — Chat buttons, player profiles, combat logs, and NPC magistrates all hit `Moderation::ReportIntake`, normalizing evidence and opening `Moderation::Ticket` rows that broadcast into the moderator queue via Turbo Streams + Action Cable.
 - **Enforcement Toolkit** — `Admin::Moderation::TicketsController`, `Moderation::PenaltyService`, and `Moderation::Action` provide warnings, mutes, temp/permanent bans, trade locks, quest adjustments, and premium refunds with audit logging and SLA-aware appeals through `Moderation::AppealWorkflow`.
 - **GM Live Ops Console** — `LiveOps::Event`, `Admin::LiveOps::EventsController`, and `LiveOps::CommandRunner` let moderators spawn NPCs, seed rewards, pause arenas, or trigger rollbacks, while scheduled jobs (`LiveOps::ArenaMonitorJob`, `LiveOps::ClanWarMonitorJob`) auto-flag anomalies.
 - **Transparency & Instrumentation** — `Moderation::PenaltyNotifier`, `Moderation::TicketStatusNotifierJob`, structured logging (`Moderation::Instrumentation`), anomaly alerts, and Discord/Telegram webhooks keep players informed and surface surge metrics to dashboards.
 
-### Crafting, Gathering, and Professions (Feature 6)
+### 6. Crafting, Gathering, and Professions (Feature 6)
 
 - **Profession Slots & Progression** — `Profession`, `ProfessionProgress`, and `ProfessionTool` enforce “2 primary + 2 gathering” limits, track XP/quality buffs, and attach degradable tools with repair flows through `ProfessionToolsController`.
 - **Recipes, Stations & Queueing** — `Recipe`, `CraftingStation`, `Crafting::RecipeValidator`, and `Crafting::JobScheduler` validate skill/buff requirements, apply portable penalties, and queue multi-craft batches with deterministic completion via `CraftingJobCompletionJob`.
@@ -104,11 +104,20 @@ The `doc/features/3_player.md` specification is now wired into the codebase:
 - **Gathering & Economy Hooks** — `Professions::GatheringResolver` adds biome/party bonuses and timed respawns, seeds provision moonleaf nodes, and the marketplace now supports commission gates (`Marketplace::ListingEngine`, auction listing fields) plus guild missions demanding bulk crafts.
 - **Doctor & Integration Touchpoints** — Post-battle trauma recovery (`Professions::Doctor::TraumaResponse` via `Game::Combat::PostBattleProcessor`), guild missions, achievements, and crafting notifications tie Feature 6 into combat, social, and housing systems.
 
-### Game Overview (Feature 7)
+### 7. Game Overview (Feature 7)
 
 - Public route `GET /game_overview` mirrors `doc/features/7_game_overview.md`, giving stakeholders a Hotwire landing page with the project vision, target personas, tone, and platform stack.
 - Live KPIs (retention, community, monetization) stream through `GameOverview::SuccessMetricsSnapshot` + `GameOverviewSnapshot` so viewers can refresh without signing in.
 - Stimulus-powered refresh polling (60 seconds) keeps the metrics Turbo frame current while staying fully server-rendered.
+
+### 8. Gameplay Mechanics (Feature 8)
+
+- Spec: `doc/features/8_gameplay_mechanics.md`, flow: `doc/flow/8_gameplay_mechanics.md`.
+- **Player Movement** — `MovementCommand`, `Game::Movement::CommandQueue`, and `Game::MovementCommandProcessorJob` queue latency-hidden movement while `Game::Movement::TurnProcessor` + `TerrainModifier` apply road/swamp cooldown modifiers from `config/gameplay/terrain_modifiers.yml`.
+- **Combat** — Battles now capture `pvp_mode`, `Game::Combat::ArenaLadder` updates duel/skirmish/clan ladders, and `Game::Combat::TurnResolver` + `EffectBookkeeper` apply buffs/debuffs with richer combat log payloads for moderation/replays.
+- **Character Progression** — `Players::Progression::ExperiencePipeline`, `SkillUnlockService`, `RespecService`, and `SpecializationUnlocker` manage XP sources, quest-gated unlocks, and respec paths, while `Players::Alignment::AccessGate#evaluate` exposes city/vendor/storyline gating reasons.
+- **Items & Inventory** — `Game::Inventory::ExpansionService` delivers housing- or premium-driven storage expanders without breaking the fairness caps enforced by `ItemTemplate#premium_stat_cap`.
+- **Supporting Systems** — `Game::Recovery::InfirmaryService` reduces trauma downtime in city zones, `Game::Quests::TutorialBootstrapper` auto-assigns movement/combat/stat/gear tutorials, and `Users::ProfileStats` powers profile damage/quest/arena metrics.
 
 ---
 
@@ -169,6 +178,7 @@ bin/rails db:seed
 ### Gameplay configuration
 
 - `config/gameplay/biomes.yml` maps biome keys to encounter tables consumed by `Game::Exploration::EncounterResolver`.
+- `config/gameplay/terrain_modifiers.yml` shapes road/swamp/forest movement cooldown multipliers consumed by `Game::Movement::TerrainModifier`.
 - `db/seeds.rb` provisions core character classes (Warrior/Mage/Hunter/Priest/Thief), advanced specializations, abilities, spawn points, gathering nodes, and starter items.
 
 ### Economy configuration

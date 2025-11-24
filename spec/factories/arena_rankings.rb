@@ -6,5 +6,6 @@ FactoryBot.define do
     losses { 0 }
     streak { 0 }
     ladder_metadata { {} }
+    ladder_type { "arena" }
   end
 end
