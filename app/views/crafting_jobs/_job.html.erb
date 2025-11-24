@@ -1,0 +1,12 @@
+<div id="<%= dom_id(job) %>" class="crafting-job">
+  <header>
+    <strong><%= job.recipe.name %></strong>
+    <span><%= job.status.humanize %></span>
+  </header>
+  <div class="job-progress">
+    <progress value="<%= job.progress_percent %>" max="100"></progress>
+    <small>Completes at <%= l(job.completes_at, format: :short) %></small>
+  </div>
+  <p>Quality: <%= job.quality_tier.titleize %> (chance <%= job.success_chance %>%)</p>
+</div>
+

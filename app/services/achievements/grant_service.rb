@@ -33,6 +33,11 @@ module Achievements
         # placeholder for Title unlock logic
       when "currency"
         wallet.adjust!(currency: :gold, amount: achievement.reward_payload["gold"].to_i)
+      when "housing_trophy"
+        plot = user.housing_plots.first_or_create!(plot_type: "studio", location_key: "capital")
+        plot.housing_decor_items.create!(
+          name: achievement.reward_payload["trophy_name"] || achievement.name
+        )
       end
     end
   end

@@ -1,0 +1,9 @@
+<div class="crafting-preview-panel">
+  <% if preview.present? %>
+    <p>Success chance: <strong><%= preview.success_chance %>%</strong></p>
+    <p>Expected quality: <strong><%= preview.quality_tier.titleize %></strong></p>
+  <% else %>
+    <p>Select a recipe and station to preview success chance.</p>
+  <% end %>
+</div>
+

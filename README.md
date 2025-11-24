@@ -63,7 +63,7 @@ The `doc/features/3_player.md` specification is now wired into the codebase:
 - **Progression & Stats** — `Players::Progression::LevelUpService`, `StatAllocationService`, and `Players::Alignment::AccessGate` manage XP curves, stat points, faction alignment, and reputation-gated content.
 - **Classes & Abilities** — `CharacterClass`, `ClassSpecialization`, `SkillTree`, `SkillNode`, and `Ability` define core/advanced class kits. `Game::Combat::SkillExecutor` consumes these definitions for deterministic turns.
 - **Items & Inventory** — `Inventory`, `InventoryItem`, and `Game::Inventory::*` services implement equipment slots, stacking rules, premium safeguards, and enhancement/enchantment risk tied to crafting skills.
-- **Crafting & Professions** — Gathering nodes plus `Professions::GatheringResolver` feed crafting recipes. The Doctor profession shortens downtime after battles through `Professions::Doctor::TraumaResponse`.
+- **Crafting & Professions** — Gathering nodes plus `Professions::GatheringResolver` feed crafting recipes. The Doctor profession shortens downtime after battles through `Professions::Doctor::TraumaResponse`. `Crafting::JobScheduler`, `Professions::CraftingOutcomeCalculator`, and the Hotwire-driven crafting UI (see `CraftingJobsController`) now handle station queues, portable kits, profession slot limits, quality previews, and Turbo-streamed job notifications.
 
 ### World, NPC, and Quest Systems (Feature 4)
 

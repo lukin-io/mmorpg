@@ -44,7 +44,7 @@ module Game
           character = participant.character
           next unless character
 
-          character.user.profession_progresses.includes(:profession).select do |progress|
+          character.profession_progresses.includes(:profession).select do |progress|
             progress.profession.name.casecmp("Doctor").zero?
           end
         end.flatten

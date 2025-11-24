@@ -7,6 +7,7 @@ class Guild < ApplicationRecord
   has_many :members, through: :guild_memberships, source: :user
   has_many :guild_applications, dependent: :destroy
   has_many :guild_bank_entries, dependent: :destroy
+  has_many :guild_missions, dependent: :destroy
 
   belongs_to :leader, class_name: "User"
 

@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 class ApplicationController < ActionController::Base
+  include CurrentCharacterContext
   include Pundit::Authorization
 
   before_action :authenticate_user!

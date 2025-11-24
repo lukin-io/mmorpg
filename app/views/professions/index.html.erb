@@ -1,23 +1,68 @@
-<section>
+<section class="professions-panel">
   <header>
     <h1>Professions</h1>
+    <% primary_used = @progresses.values.count { |p| p.primary? } %>
+    <% gathering_used = @progresses.values.count { |p| p.gathering? } %>
+    <p>
+      Primary slots: <%= primary_used %>/<%= ProfessionProgress::PRIMARY_SLOT_LIMIT %> |
+      Gathering slots: <%= gathering_used %>/<%= ProfessionProgress::GATHERING_SLOT_LIMIT %>
+    </p>
   </header>
 
-  <ul>
-    <% @professions.each do |profession| %>
-      <li>
-        <strong><%= profession.name %></strong>
-        <span><%= profession.category %></span>
-      </li>
-    <% end %>
-  </ul>
+  <% @professions.group_by(&:category).each do |category, professions| %>
+    <section class="profession-category">
+      <h2><%= category.titleize %></h2>
+      <ul class="profession-list">
+        <% professions.each do |profession| %>
+          <% progress = @progresses[profession.id] %>
+          <li id="<%= dom_id(profession) %>">
+            <div class="summary">
+              <strong><%= profession.name %></strong>
+              <span class="slot-kind"><%= profession.slot_kind.titleize %></span>
+            </div>
+            <p><%= profession.description.presence || "No description yet." %></p>
+            <% if progress %>
+              <p>Level <%= progress.skill_level %> — XP <%= progress.experience %></p>
+              <div class="actions">
+                <%= button_to "Reset (Premium)",
+                    reset_progress_profession_path(profession, mode: :premium),
+                    method: :post,
+                    data: {turbo_confirm: "Spend premium tokens to reset #{profession.name}?"} %>
+                <%= button_to "Reset (Quest)",
+                    reset_progress_profession_path(profession, mode: :quest),
+                    method: :post,
+                    form: {data: {turbo_confirm: "Have you finished the reset quest?"}} %>
+              </div>
+            <% else %>
+              <%= button_to "Enroll",
+                  enroll_profession_path(profession),
+                  method: :post,
+                  class: "btn-primary" %>
+            <% end %>
+          </li>
+        <% end %>
+      </ul>
+    </section>
+  <% end %>
 
-  <section>
-    <h2>Your Progress</h2>
-    <ul>
-      <% @progresses.each do |progress| %>
-        <li><%= progress.profession.name %> — Level <%= progress.skill_level %></li>
-      <% end %>
-    </ul>
+  <section class="profession-tools">
+    <h2>Tools</h2>
+    <% if @tools.any? %>
+      <ul>
+        <% @tools.each do |tool| %>
+          <li>
+            <strong><%= tool.tool_type %></strong>
+            — <%= tool.profession.name %>
+            <span>Durability: <%= tool.durability %>/<%= tool.max_durability %></span>
+            <%= button_to "Repair",
+                repair_profession_tool_path(tool),
+                method: :post,
+                class: "btn-secondary" %>
+          </li>
+        <% end %>
+      </ul>
+    <% else %>
+      <p>No tools equipped yet.</p>
+    <% end %>
   </section>
 </section>

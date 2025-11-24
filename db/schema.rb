@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_11_22_140500) do
+ActiveRecord::Schema[8.1].define(version: 2025_11_22_143514) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -97,18 +97,23 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_22_140500) do
 
   create_table "auction_listings", force: :cascade do |t|
     t.integer "buyout_price"
+    t.string "commission_scope", default: "personal", null: false
     t.datetime "created_at", null: false
     t.string "currency_type", null: false
     t.datetime "ends_at", null: false
     t.jsonb "item_metadata", default: {}, null: false
     t.string "item_name", null: false
+    t.string "location_key", default: "capital", null: false
     t.integer "quantity", default: 1, null: false
+    t.bigint "required_profession_id"
+    t.integer "required_skill_level", default: 0, null: false
     t.bigint "seller_id", null: false
     t.integer "starting_bid", null: false
     t.integer "status", default: 0, null: false
     t.float "tax_rate", default: 0.0, null: false
     t.datetime "updated_at", null: false
     t.index ["ends_at"], name: "index_auction_listings_on_ends_at"
+    t.index ["required_profession_id"], name: "index_auction_listings_on_required_profession_id"
     t.index ["seller_id"], name: "index_auction_listings_on_seller_id"
     t.index ["status"], name: "index_auction_listings_on_status"
   end
@@ -411,15 +416,23 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_22_140500) do
   end
 
   create_table "crafting_jobs", force: :cascade do |t|
+    t.integer "batch_quantity", default: 1, null: false
+    t.bigint "character_id", null: false
     t.datetime "completes_at", null: false
     t.bigint "crafting_station_id", null: false
     t.datetime "created_at", null: false
+    t.boolean "portable_penalty_applied", default: false, null: false
+    t.integer "quality_score", default: 0, null: false
+    t.string "quality_tier", default: "common", null: false
     t.bigint "recipe_id", null: false
     t.jsonb "result_payload", default: {}, null: false
     t.datetime "started_at", null: false
     t.integer "status", default: 0, null: false
+    t.integer "success_chance", default: 0, null: false
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
+    t.index ["character_id", "status"], name: "index_crafting_jobs_on_character_id_and_status"
+    t.index ["character_id"], name: "index_crafting_jobs_on_character_id"
     t.index ["crafting_station_id"], name: "index_crafting_jobs_on_crafting_station_id"
     t.index ["recipe_id"], name: "index_crafting_jobs_on_recipe_id"
     t.index ["user_id"], name: "index_crafting_jobs_on_user_id"
@@ -431,7 +444,11 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_22_140500) do
     t.datetime "created_at", null: false
     t.jsonb "metadata", default: {}, null: false
     t.string "name", null: false
+    t.boolean "portable", default: false, null: false
+    t.string "station_archetype", default: "city", null: false
     t.string "station_type", null: false
+    t.integer "success_penalty", default: 0, null: false
+    t.decimal "time_penalty_multiplier", precision: 5, scale: 2, default: "1.0", null: false
     t.datetime "updated_at", null: false
   end
 
@@ -535,6 +552,9 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_22_140500) do
   create_table "gathering_nodes", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "difficulty", default: 1, null: false
+    t.integer "group_bonus_percent", default: 0, null: false
+    t.datetime "last_harvested_at"
+    t.datetime "next_available_at"
     t.bigint "profession_id", null: false
     t.string "resource_key", null: false
     t.integer "respawn_seconds", default: 60, null: false
@@ -586,6 +606,21 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_22_140500) do
     t.index ["guild_id", "user_id"], name: "index_guild_memberships_on_guild_id_and_user_id", unique: true
     t.index ["guild_id"], name: "index_guild_memberships_on_guild_id"
     t.index ["user_id"], name: "index_guild_memberships_on_user_id"
+  end
+
+  create_table "guild_missions", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "guild_id", null: false
+    t.jsonb "metadata", default: {}, null: false
+    t.integer "progress_quantity", default: 0, null: false
+    t.string "required_item_name", null: false
+    t.bigint "required_profession_id", null: false
+    t.integer "required_quantity", default: 0, null: false
+    t.integer "status", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.index ["guild_id", "status"], name: "index_guild_missions_on_guild_id_and_status"
+    t.index ["guild_id"], name: "index_guild_missions_on_guild_id"
+    t.index ["required_profession_id"], name: "index_guild_missions_on_required_profession_id"
   end
 
   create_table "guilds", force: :cascade do |t|
@@ -900,16 +935,39 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_22_140500) do
   end
 
   create_table "profession_progresses", force: :cascade do |t|
+    t.bigint "character_id", null: false
     t.datetime "created_at", null: false
+    t.bigint "equipped_tool_id"
     t.bigint "experience", default: 0, null: false
     t.integer "mastery_tier", default: 0, null: false
+    t.jsonb "metadata", default: {}, null: false
     t.bigint "profession_id", null: false
     t.integer "skill_level", default: 1, null: false
+    t.string "slot_kind", default: "primary", null: false
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
+    t.index ["character_id", "profession_id"], name: "idx_profession_progresses_on_character_and_profession", unique: true
+    t.index ["character_id"], name: "index_profession_progresses_on_character_id"
+    t.index ["equipped_tool_id"], name: "index_profession_progresses_on_equipped_tool_id"
     t.index ["profession_id"], name: "index_profession_progresses_on_profession_id"
     t.index ["user_id", "profession_id"], name: "index_profession_progresses_on_user_and_profession", unique: true
     t.index ["user_id"], name: "index_profession_progresses_on_user_id"
+  end
+
+  create_table "profession_tools", force: :cascade do |t|
+    t.bigint "character_id", null: false
+    t.datetime "created_at", null: false
+    t.integer "durability", default: 100, null: false
+    t.boolean "equipped", default: true, null: false
+    t.integer "max_durability", default: 100, null: false
+    t.jsonb "metadata", default: {}, null: false
+    t.bigint "profession_id", null: false
+    t.integer "quality_rating", default: 0, null: false
+    t.string "tool_type", null: false
+    t.datetime "updated_at", null: false
+    t.index ["character_id", "tool_type"], name: "index_profession_tools_on_character_id_and_tool_type"
+    t.index ["character_id"], name: "index_profession_tools_on_character_id"
+    t.index ["profession_id"], name: "index_profession_tools_on_profession_id"
   end
 
   create_table "professions", force: :cascade do |t|
@@ -1002,11 +1060,18 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_22_140500) do
   create_table "recipes", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "duration_seconds", default: 60, null: false
+    t.boolean "guild_bound", default: false, null: false
     t.string "name", null: false
     t.string "output_item_name", null: false
+    t.integer "premium_token_cost", default: 0, null: false
     t.bigint "profession_id", null: false
+    t.jsonb "quality_modifiers", default: {}, null: false
+    t.string "required_station_archetype", default: "city", null: false
     t.jsonb "requirements", default: {}, null: false
     t.jsonb "rewards", default: {}, null: false
+    t.string "risk_level", default: "safe", null: false
+    t.string "source_kind", default: "quest", null: false
+    t.string "source_reference"
     t.integer "tier", default: 1, null: false
     t.datetime "updated_at", null: false
     t.index ["profession_id"], name: "index_recipes_on_profession_id"
@@ -1194,6 +1259,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_22_140500) do
   add_foreign_key "arena_tournaments", "event_instances"
   add_foreign_key "auction_bids", "auction_listings"
   add_foreign_key "auction_bids", "users", column: "bidder_id"
+  add_foreign_key "auction_listings", "professions", column: "required_profession_id"
   add_foreign_key "auction_listings", "users", column: "seller_id"
   add_foreign_key "audit_logs", "users", column: "actor_id"
   add_foreign_key "battle_participants", "battles"
@@ -1231,6 +1297,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_22_140500) do
   add_foreign_key "community_objectives", "event_instances"
   add_foreign_key "competition_brackets", "game_events"
   add_foreign_key "competition_matches", "competition_brackets"
+  add_foreign_key "crafting_jobs", "characters"
   add_foreign_key "crafting_jobs", "crafting_stations"
   add_foreign_key "crafting_jobs", "recipes"
   add_foreign_key "crafting_jobs", "users"
@@ -1250,6 +1317,8 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_22_140500) do
   add_foreign_key "guild_bank_entries", "users", column: "actor_id"
   add_foreign_key "guild_memberships", "guilds"
   add_foreign_key "guild_memberships", "users"
+  add_foreign_key "guild_missions", "guilds"
+  add_foreign_key "guild_missions", "professions", column: "required_profession_id"
   add_foreign_key "guilds", "users", column: "leader_id"
   add_foreign_key "housing_decor_items", "housing_plots"
   add_foreign_key "housing_plots", "users"
@@ -1279,8 +1348,12 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_22_140500) do
   add_foreign_key "pet_companions", "pet_species", column: "pet_species_id"
   add_foreign_key "pet_companions", "users"
   add_foreign_key "premium_token_ledger_entries", "users"
+  add_foreign_key "profession_progresses", "characters"
+  add_foreign_key "profession_progresses", "profession_tools", column: "equipped_tool_id"
   add_foreign_key "profession_progresses", "professions"
   add_foreign_key "profession_progresses", "users"
+  add_foreign_key "profession_tools", "characters"
+  add_foreign_key "profession_tools", "professions"
   add_foreign_key "purchases", "users"
   add_foreign_key "quest_assignments", "characters"
   add_foreign_key "quest_assignments", "quests"

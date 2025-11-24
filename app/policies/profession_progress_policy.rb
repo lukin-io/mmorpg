@@ -1,11 +1,13 @@
 # frozen_string_literal: true
 
 class ProfessionProgressPolicy < ApplicationPolicy
-  def update_progress?
-    record.user == user
+  def enroll?
+    user.present?
   end
 
-  alias_method :update?, :update_progress?
+  def reset?
+    record.user == user
+  end
 
   class Scope < Scope
     def resolve
