@@ -1,0 +1,19 @@
+<section class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+  <h2 class="text-2xl font-semibold mb-4"><%= section.fetch(:title) %></h2>
+  <div class="space-y-3">
+    <% section.fetch(:bullets, []).each do |bullet| %>
+      <p class="text-slate-700"><%= bullet %></p>
+    <% end %>
+  </div>
+  <% if section[:highlights].present? %>
+    <div class="mt-4 grid gap-4 md:grid-cols-2">
+      <% section[:highlights].each do |highlight| %>
+        <div class="rounded-lg border border-slate-100 p-4 bg-slate-50">
+          <p class="text-sm uppercase tracking-wide text-slate-500"><%= highlight[:label] %></p>
+          <p class="text-base text-slate-700"><%= highlight[:description] %></p>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+</section>
+

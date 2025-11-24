@@ -1,0 +1,14 @@
+<% presenter = @presenter %>
+
+<div class="game-overview space-y-10">
+  <%= render "game_overview/hero", hero: presenter.hero %>
+
+  <%= render "game_overview/vision", section: presenter.section(:vision_objectives) %>
+  <%= render "game_overview/target_audience", section: presenter.section(:target_audience) %>
+  <%= render "game_overview/genre_tone", section: presenter.section(:genre_tone) %>
+  <%= render "game_overview/platform_technology",
+    section: presenter.section(:platform_technology),
+    stack_cards: presenter.platform_stack_cards %>
+  <%= render "game_overview/success_metrics", presenter: presenter %>
+</div>
+

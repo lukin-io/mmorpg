@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_11_22_143514) do
+ActiveRecord::Schema[8.1].define(version: 2025_11_24_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -547,6 +547,22 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_22_143514) do
     t.integer "status", default: 0, null: false
     t.datetime "updated_at", null: false
     t.index ["slug"], name: "index_game_events_on_slug", unique: true
+  end
+
+  create_table "game_overview_snapshots", force: :cascade do |t|
+    t.integer "active_clans_7d", default: 0, null: false
+    t.integer "active_guilds_7d", default: 0, null: false
+    t.decimal "avg_tokens_per_paying_user", precision: 10, scale: 2, default: "0.0", null: false
+    t.datetime "captured_at", null: false
+    t.integer "chat_senders_7d", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.integer "daily_returning_players", default: 0, null: false
+    t.integer "premium_purchases_30d", default: 0, null: false
+    t.integer "seasonal_events_active", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.integer "weekly_returning_players", default: 0, null: false
+    t.decimal "whale_share_percent", precision: 5, scale: 2, default: "0.0", null: false
+    t.index ["captured_at"], name: "index_game_overview_snapshots_on_captured_at", unique: true
   end
 
   create_table "gathering_nodes", force: :cascade do |t|
