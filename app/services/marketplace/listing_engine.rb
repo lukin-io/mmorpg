@@ -28,7 +28,11 @@ module Marketplace
         buyout_price: params[:buyout_price],
         status: :active,
         ends_at: params[:ends_at],
-        tax_rate:
+        location_key: params[:location_key].presence || "capital",
+        tax_rate: tax_rate,
+        required_profession_id: params[:required_profession_id],
+        required_skill_level: params[:required_skill_level].to_i,
+        commission_scope: params[:commission_scope] || "personal"
       )
       listing.save!
       listing

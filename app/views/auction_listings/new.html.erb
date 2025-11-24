@@ -32,6 +32,18 @@
       <%= form.label :location_key, "Listing Location" %>
       <%= form.text_field :location_key %>
     </div>
+    <div class="field">
+      <%= form.label :required_profession_id, "Commission Profession" %>
+      <%= form.collection_select :required_profession_id, @professions, :id, :name, include_blank: "Open to all" %>
+    </div>
+    <div class="field">
+      <%= form.label :required_skill_level %>
+      <%= form.number_field :required_skill_level, min: 0 %>
+    </div>
+    <div class="field">
+      <%= form.label :commission_scope %>
+      <%= form.select :commission_scope, [%w[Personal personal], %w[Guild guild], %w[Public public]], include_blank: false %>
+    </div>
     <div class="actions">
       <%= form.submit "Post Listing" %>
     </div>

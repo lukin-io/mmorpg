@@ -1,22 +1,46 @@
-<section>
+<section class="crafting-jobs" data-controller="crafting">
+  <%= turbo_stream_from ["crafting_jobs", current_character.id] %>
+  <%= turbo_stream_from ["notifications", current_user.id] %>
+
   <header>
     <h1>Crafting Jobs</h1>
   </header>
 
-  <ul>
-    <% @crafting_jobs.each do |job| %>
-      <li>
-        <%= job.recipe.name %> — <%= job.status.humanize %> (completes at <%= l(job.completes_at, format: :short) %>)
-      </li>
-    <% end %>
-  </ul>
+  <div class="crafting-layout">
+    <div class="crafting-form">
+      <h2>Queue Jobs</h2>
+      <%= form_with url: preview_crafting_jobs_path,
+            scope: :crafting_job,
+            data: {"crafting-target": "form", turbo_frame: "crafting-preview"} do |form| %>
+        <div>
+          <%= form.label :recipe_id, "Recipe" %>
+          <%= form.collection_select :recipe_id, @recipes, :id, :name,
+                {}, data: {action: "change->crafting#submitPreview"} %>
+        </div>
+        <div>
+          <%= form.label :crafting_station_id, "Station" %>
+          <%= form.collection_select :crafting_station_id, @stations, :id, :name,
+                {}, data: {action: "change->crafting#submitPreview"} %>
+        </div>
+        <div>
+          <%= form.label :quantity %>
+          <%= form.number_field :quantity, min: 1, max: 5, value: 1 %>
+        </div>
+        <%= button_tag "Queue Jobs",
+            formaction: crafting_jobs_path,
+            formmethod: :post,
+            data: {turbo_frame: "_top"} %>
+      <% end %>
 
-  <section>
-    <h2>Queue Job</h2>
-    <%= form_with url: crafting_jobs_path, scope: :crafting_job do |form| %>
-      <%= form.collection_select :recipe_id, Recipe.all.order(:name), :id, :name %>
-      <%= form.collection_select :crafting_station_id, CraftingStation.all.order(:name), :id, :name %>
-      <%= form.submit "Queue" %>
-    <% end %>
-  </section>
+      <turbo-frame id="crafting-preview">
+        <%= render "preview", preview: nil %>
+      </turbo-frame>
+    </div>
+
+    <div class="crafting-job-list">
+      <%= turbo_frame_tag "crafting-jobs-list" do %>
+        <%= render partial: "crafting_jobs/job", collection: @crafting_jobs, as: :job %>
+      <% end %>
+    </div>
+  </div>
 </section>

@@ -85,11 +85,11 @@ end
 
 if defined?(Profession)
   [
-    {name: "Blacksmithing", category: "production"},
-    {name: "Alchemy", category: "production"},
-    {name: "Herbalism", category: "gathering", gathering: true, gathering_resource: "herb"},
-    {name: "Fishing", category: "gathering", gathering: true, gathering_resource: "fish"},
-    {name: "Doctor", category: "support", description: "Battlefield medic", healing_bonus: 20}
+    {name: "Blacksmithing", category: "production", metadata: {reset_cost_tokens: 200}},
+    {name: "Alchemy", category: "production", metadata: {reset_cost_tokens: 150}},
+    {name: "Herbalism", category: "gathering", gathering: true, gathering_resource: "herb", metadata: {reset_cost_tokens: 100}},
+    {name: "Fishing", category: "gathering", gathering: true, gathering_resource: "fish", metadata: {reset_cost_tokens: 100}},
+    {name: "Doctor", category: "support", description: "Battlefield medic", healing_bonus: 20, metadata: {reset_cost_tokens: 250}}
   ].each do |attrs|
     Profession.find_or_create_by!(name: attrs[:name]) do |profession|
       profession.category = attrs[:category]
@@ -97,6 +97,64 @@ if defined?(Profession)
       profession.gathering_resource = attrs[:gathering_resource]
       profession.healing_bonus = attrs.fetch(:healing_bonus, 0)
       profession.description = attrs[:description]
+      profession.metadata = attrs[:metadata] || {}
+    end
+  end
+end
+
+if defined?(CraftingStation)
+  [
+    {name: "Castleton Forge", city: "Castleton Keep", station_type: "forge", capacity: 4, station_archetype: :city},
+    {name: "Whispering Woods Field Kit", city: "Whispering Woods", station_type: "field_kit", capacity: 1, station_archetype: :field_kit, portable: true, time_penalty_multiplier: 1.4, success_penalty: 10},
+    {name: "Guild Hall Loom", city: "Castleton Keep", station_type: "loom", capacity: 3, station_archetype: :guild_hall, success_penalty: 0}
+  ].each do |attrs|
+    CraftingStation.find_or_create_by!(name: attrs[:name]) do |station|
+      station.city = attrs[:city]
+      station.station_type = attrs[:station_type]
+      station.capacity = attrs[:capacity]
+      station.station_archetype = attrs[:station_archetype]
+      station.portable = attrs.fetch(:portable, false)
+      station.time_penalty_multiplier = attrs.fetch(:time_penalty_multiplier, 1.0)
+      station.success_penalty = attrs.fetch(:success_penalty, 0)
+      station.metadata = {}
+    end
+  end
+end
+
+if defined?(Recipe)
+  smith = Profession.find_by(name: "Blacksmithing")
+  alchemy = Profession.find_by(name: "Alchemy")
+  if smith
+    Recipe.find_or_create_by!(profession: smith, name: "Tempered Longsword") do |recipe|
+      recipe.tier = 2
+      recipe.duration_seconds = 180
+      recipe.output_item_name = "Tempered Longsword"
+      recipe.requirements = {"skill_level" => 5, "materials" => {"Iron Ingot" => 4, "Coal Chunk" => 1}, "tool_wear" => 8}
+      recipe.rewards = {"items" => [{"name" => "Tempered Longsword", "quantity" => 1}]}
+      recipe.source_kind = :quest
+      recipe.risk_level = :moderate
+      recipe.required_station_archetype = :city
+      recipe.quality_modifiers = {"city_bonus" => 5}
+    end
+  end
+  if alchemy
+    Recipe.find_or_create_by!(profession: alchemy, name: "Aetheric Elixir") do |recipe|
+      recipe.tier = 3
+      recipe.duration_seconds = 240
+      recipe.output_item_name = "Aetheric Elixir"
+      recipe.requirements = {
+        "skill_level" => 8,
+        "materials" => {"Moonleaf" => 2, "Riverwater" => 1},
+        "tool_wear" => 5,
+        "success_penalty" => 5
+      }
+      recipe.rewards = {"items" => [{"name" => "Aetheric Elixir", "quantity" => 1}]}
+      recipe.source_kind = :guild_research
+      recipe.risk_level = :risky
+      recipe.premium_token_cost = 5
+      recipe.required_station_archetype = :guild_hall
+      recipe.quality_modifiers = {"legendary_threshold" => 95}
+      recipe.guild_bound = true
     end
   end
 end
@@ -163,6 +221,46 @@ if defined?(GatheringNode) && defined?(Profession)
       node.difficulty = 3
       node.respawn_seconds = 45
       node.rewards = {"moonleaf" => 1, "glowcap" => 0.2}
+    end
+  end
+end
+
+if defined?(Achievement)
+  [
+    {key: "master_artisan", name: "Master Artisan", reward_type: "housing_trophy", reward_payload: {"trophy_name" => "Forgemaster Bust"}},
+    {key: "legendary_artisan", name: "Legendary Artisan", reward_type: "title", reward_payload: {"title" => "Artisan of Legends"}}
+  ].each do |attrs|
+    Achievement.find_or_create_by!(key: attrs[:key]) do |achievement|
+      achievement.name = attrs[:name]
+      achievement.reward_type = attrs[:reward_type]
+      achievement.reward_payload = attrs[:reward_payload]
+    end
+  end
+end
+
+if defined?(Quest)
+  [
+    {key: "starter_crafting_tools", title: "Tools of the Trade", sequence: 1, quest_type: :side, chapter: 1},
+    {key: "profession_reset", title: "Reforge Your Path", sequence: 2, quest_type: :side, chapter: 1}
+  ].each do |attrs|
+    Quest.find_or_create_by!(key: attrs[:key]) do |quest|
+      quest.title = attrs[:title]
+      quest.sequence = attrs[:sequence]
+      quest.quest_type = attrs[:quest_type]
+      quest.chapter = attrs[:chapter]
+      quest.summary = "Tutorial quest for crafting systems."
+    end
+  end
+end
+
+if defined?(GuildMission)
+  guild = Guild.first
+  profession = Profession.find_by(name: "Blacksmithing")
+  if guild && profession
+    GuildMission.find_or_create_by!(guild:, required_profession: profession, required_item_name: "Tempered Longsword") do |mission|
+      mission.required_quantity = 10
+      mission.status = :active
+      mission.metadata = {"reward" => "guild_xp"}
     end
   end
 end

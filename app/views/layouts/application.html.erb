@@ -29,6 +29,10 @@
         <div class="flash <%= type %>"><%= message %></div>
       <% end %>
     </header>
+    <% if current_user %>
+      <%= turbo_stream_from ["notifications", current_user.id] %>
+      <div id="<%= dom_id(current_user, :notifications) %>" class="notifications"></div>
+    <% end %>
 
     <main>
       <%= yield %>

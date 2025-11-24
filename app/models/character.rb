@@ -20,6 +20,8 @@ class Character < ApplicationRecord
 
   has_many :character_skills, dependent: :destroy
   has_many :skill_nodes, through: :character_skills
+  has_many :profession_progresses, dependent: :destroy
+  has_many :profession_tools, dependent: :destroy
   has_many :battle_participants, dependent: :destroy
   has_many :battles, through: :battle_participants
   has_many :initiated_battles, class_name: "Battle", foreign_key: :initiator_id, dependent: :nullify

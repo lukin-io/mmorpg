@@ -35,9 +35,19 @@ Rails.application.routes.draw do
   resources :trade_sessions, only: [:create, :show, :update]
 
   resources :professions, only: :index do
-    post :update_progress, on: :member
+    member do
+      post :enroll
+      post :reset_progress
+    end
   end
-  resources :crafting_jobs, only: [:index, :create]
+  resources :crafting_jobs, only: [:index, :create] do
+    collection do
+      post :preview
+    end
+  end
+  resources :profession_tools, only: [] do
+    post :repair, on: :member
+  end
 
   resources :achievements, only: [:index, :create]
   resources :housing_plots, only: [:index, :create, :update]

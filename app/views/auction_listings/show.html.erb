@@ -3,6 +3,13 @@
     <h1><%= @auction_listing.item_name %></h1>
     <p>Quantity: <%= @auction_listing.quantity %></p>
     <p>Current Bid: <%= @auction_listing.highest_bid&.amount || @auction_listing.starting_bid %> <%= @auction_listing.currency_type %></p>
+    <% if @auction_listing.profession_gate? %>
+      <p>
+        Requires <%= @auction_listing.required_profession.name %>
+        (Skill <%= @auction_listing.required_skill_level %>,
+        Scope: <%= @auction_listing.commission_scope.titleize %>)
+      </p>
+    <% end %>
   </header>
 
   <section>

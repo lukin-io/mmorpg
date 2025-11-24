@@ -7,6 +7,7 @@ class AuctionListingsController < ApplicationController
 
   def new
     @auction_listing = authorize AuctionListing.new
+    @professions = Profession.order(:name)
   end
 
   def create
@@ -15,6 +16,7 @@ class AuctionListingsController < ApplicationController
     redirect_to auction_listing_path(listing), notice: "Listing created."
   rescue ActiveRecord::RecordInvalid => e
     @auction_listing = AuctionListing.new(listing_params)
+    @professions = Profession.order(:name)
     flash.now[:alert] = e.message
     render :new, status: :unprocessable_entity
   end
@@ -35,6 +37,9 @@ class AuctionListingsController < ApplicationController
       :buyout_price,
       :ends_at,
       :location_key,
+      :required_profession_id,
+      :required_skill_level,
+      :commission_scope,
       item_metadata: {}
     )
   end

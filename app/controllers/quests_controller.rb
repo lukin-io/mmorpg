@@ -63,13 +63,6 @@ class QuestsController < ApplicationController
     @quest = authorize Quest.find(params[:id])
   end
 
-  def ensure_active_character!
-    @current_character = current_user.characters.first
-    raise Pundit::NotAuthorizedError, "Character required" unless @current_character
-  end
-
-  attr_reader :current_character
-
   def main_story_chain
     QuestChain.find_by(key: "main_story")
   end

@@ -9,6 +9,10 @@ class CraftingJobPolicy < ApplicationPolicy
     user&.verified_for_social_features?
   end
 
+  def preview?
+    create?
+  end
+
   class Scope < Scope
     def resolve
       scope.where(user:)
