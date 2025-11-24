@@ -17,13 +17,14 @@ module GameOverviewHelper
     return content_tag(:span, "—", class: "metric-delta neutral") if delta.nil? || delta.zero?
 
     direction = delta.positive? ? "positive" : "negative"
+    sign = delta.positive? ? "+" : ""
     value = case format
     when :percent
-      "#{delta.positive? ? "+" : ""}#{number_with_precision(delta.to_f, precision: 2)}%"
+      "#{sign}#{number_with_precision(delta.to_f, precision: 2)}%"
     when :decimal
-      "#{delta.positive? ? "+" : ""}#{number_with_precision(delta.to_f, precision: 2)}"
+      "#{sign}#{number_with_precision(delta.to_f, precision: 2)}"
     else
-      "#{delta.positive? ? "+" : ""}#{number_with_delimiter(delta.to_i)}"
+      "#{sign}#{number_with_delimiter(delta.to_i)}"
     end
 
     content_tag(:span, value, class: "metric-delta #{direction}")

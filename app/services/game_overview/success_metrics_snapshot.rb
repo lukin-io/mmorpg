@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require "set"
-
 module GameOverview
   # SuccessMetricsSnapshot aggregates live retention/community/monetization KPIs.
   # It can return an attributes hash for presenters or persist data for trend charts.

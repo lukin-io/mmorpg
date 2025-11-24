@@ -4,6 +4,7 @@ require "rails_helper"
 
 RSpec.describe GameOverview::SuccessMetricsSnapshot do
   include ActiveSupport::Testing::TimeHelpers
+
   describe "#call" do
     it "aggregates retention, community, and monetization KPIs" do
       freeze_time do

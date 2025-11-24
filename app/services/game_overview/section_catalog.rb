@@ -24,10 +24,8 @@ module GameOverview
     end
 
     def sections
-      @sections ||= begin
-        sections_hash.map do |key, value|
-          Section.new(key: key.to_sym, content: value.deep_symbolize_keys)
-        end
+      @sections ||= sections_hash.map do |key, value|
+        Section.new(key: key.to_sym, content: value.deep_symbolize_keys)
       end
     end
 
@@ -44,11 +42,7 @@ module GameOverview
     attr_reader :config_path, :env
 
     def config
-      @config ||= begin
-        raw = ERB.new(File.read(config_path)).result
-        data = YAML.safe_load(raw, aliases: true)
-        (data[env] || data["default"]).with_indifferent_access
-      end
+      @config ||= load_config
     end
 
     def sections_hash
@@ -57,6 +51,12 @@ module GameOverview
 
     def sections_index
       @sections_index ||= sections.index_by(&:key)
+    end
+
+    def load_config
+      raw = ERB.new(File.read(config_path)).result
+      data = YAML.safe_load(raw, aliases: true)
+      (data[env] || data["default"]).with_indifferent_access
     end
   end
 end
