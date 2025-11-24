@@ -248,7 +248,7 @@ if defined?(Quest)
       quest.sequence = attrs[:sequence]
       quest.quest_type = attrs[:quest_type]
       quest.chapter = attrs[:chapter]
-      quest.description = "Tutorial quest for crafting systems."
+      quest.summary = "Tutorial quest for crafting systems."
     end
   end
 end
