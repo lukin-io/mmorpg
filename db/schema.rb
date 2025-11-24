@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_11_24_120000) do
+ActiveRecord::Schema[8.1].define(version: 2025_11_24_132000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -64,12 +64,13 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_24_120000) do
     t.bigint "character_id", null: false
     t.datetime "created_at", null: false
     t.jsonb "ladder_metadata", default: {}, null: false
+    t.string "ladder_type", default: "arena", null: false
     t.integer "losses", default: 0, null: false
     t.integer "rating", default: 1200, null: false
     t.integer "streak", default: 0, null: false
     t.datetime "updated_at", null: false
     t.integer "wins", default: 0, null: false
-    t.index ["character_id"], name: "index_arena_rankings_on_character_id", unique: true
+    t.index ["character_id", "ladder_type"], name: "index_arena_rankings_on_character_id_and_ladder_type", unique: true
   end
 
   create_table "arena_tournaments", force: :cascade do |t|
@@ -158,6 +159,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_24_120000) do
     t.bigint "initiator_id", null: false
     t.jsonb "metadata", default: {}, null: false
     t.boolean "moderation_override", default: false, null: false
+    t.string "pvp_mode"
     t.datetime "started_at"
     t.integer "status", default: 0, null: false
     t.integer "turn_number", default: 1, null: false
@@ -220,6 +222,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_24_120000) do
     t.integer "level", default: 1, null: false
     t.jsonb "metadata", default: {}, null: false
     t.string "name", null: false
+    t.jsonb "progression_sources", default: {}, null: false
     t.integer "reputation", default: 0, null: false
     t.jsonb "resource_pools", default: {}, null: false
     t.bigint "secondary_specialization_id"
@@ -882,6 +885,25 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_24_120000) do
     t.index ["user_id"], name: "index_mounts_on_user_id"
   end
 
+  create_table "movement_commands", force: :cascade do |t|
+    t.bigint "character_id", null: false
+    t.datetime "created_at", null: false
+    t.string "direction", null: false
+    t.string "error_message"
+    t.integer "latency_ms", default: 0, null: false
+    t.jsonb "metadata", default: {}, null: false
+    t.integer "predicted_x"
+    t.integer "predicted_y"
+    t.datetime "processed_at"
+    t.integer "status", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.bigint "zone_id", null: false
+    t.index ["character_id"], name: "index_movement_commands_on_character_id"
+    t.index ["created_at"], name: "index_movement_commands_on_created_at"
+    t.index ["status"], name: "index_movement_commands_on_status"
+    t.index ["zone_id"], name: "index_movement_commands_on_zone_id"
+  end
+
   create_table "npc_reports", force: :cascade do |t|
     t.integer "category", default: 0, null: false
     t.bigint "character_id"
@@ -1358,6 +1380,8 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_24_120000) do
   add_foreign_key "moderation_tickets", "users", column: "reporter_id"
   add_foreign_key "moderation_tickets", "users", column: "subject_user_id"
   add_foreign_key "mounts", "users"
+  add_foreign_key "movement_commands", "characters"
+  add_foreign_key "movement_commands", "zones"
   add_foreign_key "npc_reports", "characters"
   add_foreign_key "npc_reports", "moderation_tickets"
   add_foreign_key "npc_reports", "users", column: "reporter_id"

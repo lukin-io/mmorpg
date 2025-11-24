@@ -1,0 +1,20 @@
+default:
+  speed_multiplier: 1.0
+  label: "Neutral terrain"
+
+road:
+  speed_multiplier: 0.6
+  label: "Roadway boost"
+
+swamp:
+  speed_multiplier: 1.6
+  label: "Swamp slowdown"
+
+forest:
+  speed_multiplier: 1.2
+  label: "Dense forest drag"
+
+mountain:
+  speed_multiplier: 1.4
+  label: "Mountain climb fatigue"
+

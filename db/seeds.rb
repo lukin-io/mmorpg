@@ -11,6 +11,7 @@ if defined?(User)
     user.password = "password!"
     user.confirmed_at = Time.current
   end
+  lukin_user.add_role(:admin)
 end
 
 if defined?(ClassSpecialization) && defined?(CharacterClass)
@@ -58,8 +59,24 @@ end
 if defined?(Ability)
   CharacterClass.find_each do |klass|
     [
-      {name: "#{klass.name} Signature", kind: "active", resource_cost: {klass.resource_type => 20}, effects: {damage: 25}},
-      {name: "#{klass.name} Guard", kind: "reaction", resource_cost: {}, effects: {status: "shield"}}
+      {
+        name: "#{klass.name} Signature",
+        kind: "active",
+        resource_cost: {klass.resource_type => 20},
+        effects: {
+          damage: 25,
+          debuffs: [{name: "Shattered Armor", duration: 2, stat_changes: {"defense" => -2}}]
+        }
+      },
+      {
+        name: "#{klass.name} Guard",
+        kind: "reaction",
+        resource_cost: {},
+        effects: {
+          status: "shield",
+          buffs: [{name: "Guarding Stance", duration: 2, stat_changes: {"defense" => 5}}]
+        }
+      }
     ].each do |ability_attrs|
       Ability.find_or_create_by!(character_class: klass, name: ability_attrs[:name]) do |ability|
         ability.kind = ability_attrs[:kind]
@@ -190,6 +207,20 @@ if defined?(GameEvent)
   end
 end
 
+def zone_metadata_for(name, biome)
+  case name
+  when "Castleton Keep"
+    {
+      "default_movement_modifier" => "road",
+      "infirmary" => {"reduction_seconds" => 20}
+    }
+  else
+    {
+      "default_movement_modifier" => biome
+    }
+  end
+end
+
 if defined?(Zone)
   [
     {name: "Castleton Keep", biome: "city", width: 10, height: 10},
@@ -201,7 +232,7 @@ if defined?(Zone)
       zone.width = attrs[:width]
       zone.height = attrs[:height]
       zone.encounter_table = {}
-      zone.metadata = {}
+      zone.metadata = zone_metadata_for(attrs[:name], attrs[:biome])
     end
   end
 end
@@ -253,15 +284,25 @@ end
 
 if defined?(Quest)
   [
-    {key: "starter_crafting_tools", title: "Tools of the Trade", sequence: 1, quest_type: :side, chapter: 1},
-    {key: "profession_reset", title: "Reforge Your Path", sequence: 2, quest_type: :side, chapter: 1}
+    {key: "starter_crafting_tools", title: "Tools of the Trade", sequence: 1, quest_type: :side, chapter: 1,
+     summary: "Tutorial quest for crafting systems."},
+    {key: "profession_reset", title: "Reforge Your Path", sequence: 2, quest_type: :side, chapter: 1,
+     summary: "Walkthrough for resetting profession choices."},
+    {key: "movement_tutorial", title: "First Steps", sequence: 1, quest_type: :main_story, chapter: 0,
+     summary: "Learn tile-based movement and turn actions."},
+    {key: "combat_tutorial", title: "Trial by Combat", sequence: 2, quest_type: :main_story, chapter: 0,
+     summary: "Covers initiative, PvE fights, and combat logs."},
+    {key: "stat_allocation_tutorial", title: "Forging Your Build", sequence: 3, quest_type: :main_story, chapter: 0,
+     summary: "Explains stat allocation and respec options."},
+    {key: "gear_upgrade_tutorial", title: "Dress for Battle", sequence: 4, quest_type: :main_story, chapter: 0,
+     summary: "Introduces equipment slots, weight, and enhancements."}
   ].each do |attrs|
     Quest.find_or_create_by!(key: attrs[:key]) do |quest|
       quest.title = attrs[:title]
       quest.sequence = attrs[:sequence]
       quest.quest_type = attrs[:quest_type]
       quest.chapter = attrs[:chapter]
-      quest.summary = "Tutorial quest for crafting systems."
+      quest.summary = attrs[:summary]
     end
   end
 end

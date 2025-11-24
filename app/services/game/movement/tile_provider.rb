@@ -28,6 +28,10 @@ module Game
         tiles[[x, y]]&.metadata || {}
       end
 
+      def terrain_type_at(x, y)
+        tiles[[x, y]]&.terrain_type
+      end
+
       private
 
       attr_reader :zone, :tiles

@@ -17,11 +17,12 @@ module Game
       end
 
       def apply!(winner:)
-        return {} unless battle&.battle_type == "arena"
+        ladder_type = battle&.ladder_type
+        return {} unless ladder_type
 
-        winner_ranking = find_or_create_ranking(winner)
+        winner_ranking = find_or_create_ranking(winner, ladder_type)
         loser = opposing_character(winner)
-        loser_ranking = find_or_create_ranking(loser) if loser
+        loser_ranking = find_or_create_ranking(loser, ladder_type) if loser
 
         expected_winner = expected_score(winner_ranking.rating, loser_ranking&.rating || winner_ranking.rating)
         winner_delta = (K_FACTOR * (1 - expected_winner)).round
@@ -49,16 +50,17 @@ module Game
 
       attr_reader :battle
 
-      def find_or_create_ranking(character)
-        character.arena_ranking || character.create_arena_ranking!
+      def find_or_create_ranking(character, ladder_type)
+        return unless character
+
+        character.arena_rankings.for_ladder(ladder_type).first ||
+          character.arena_rankings.create!(ladder_type:)
       end
 
       def opposing_character(winner)
-        battle.battle_participants
-          .where.not(character_id: winner.id)
-          .where.not(character_id: nil)
-          .first
-          &.character
+        scope = battle.battle_participants.where.not(character_id: nil)
+        scope = scope.where.not(character_id: winner.id) if winner&.id
+        scope.first&.character
       end
 
       def expected_score(rating_a, rating_b)

@@ -38,7 +38,10 @@ module LiveOps
     private
 
     def suspicious_rankings
-      ArenaRanking.where("rating >= ?", RATING_THRESHOLD).where("updated_at >= ?", 1.hour.ago)
+      ArenaRanking
+        .for_ladder("arena")
+        .where("rating >= ?", RATING_THRESHOLD)
+        .where("updated_at >= ?", 1.hour.ago)
     end
 
     def auto_reporter
