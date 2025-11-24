@@ -1,0 +1,21 @@
+<section class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm"
+  data-controller="success-metrics"
+  data-success-metrics-url-value="<%= game_overview_path(format: :turbo_stream) %>"
+  data-success-metrics-interval-value="60000">
+  <div class="flex items-center justify-between mb-4">
+    <div>
+      <h2 class="text-2xl font-semibold"><%= presenter.section(:success_metrics).fetch(:title) %></h2>
+      <p class="text-slate-600 text-sm"><%= presenter.section(:success_metrics).fetch(:description) %></p>
+    </div>
+    <button
+      class="rounded-md border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100"
+      data-action="success-metrics#refresh">
+      Refresh
+    </button>
+  </div>
+
+  <turbo-frame id="game_overview_metrics">
+    <%= render "game_overview/success_metrics_grid", presenter: presenter %>
+  </turbo-frame>
+</section>
+

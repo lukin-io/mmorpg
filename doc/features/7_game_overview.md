@@ -22,3 +22,4 @@
 - Retention: players returning daily for quests, crafting, and social features.
 - Community growth: active guilds/clans, forum/Discord engagement, seasonal event participation.
 - Monetization balance: premium items enhance, not dominate, gameplay; whales subsidize without pay-to-win.
+gem

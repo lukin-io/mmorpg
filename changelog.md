@@ -11,6 +11,21 @@
 ## Return Values
 - Not applicable; this is a documentation file.
 
+## 2025-11-24
+
+### Added
+- Implemented `doc/features/7_game_overview.md`, delivering the public `/game_overview` landing page with hero copy, persona highlights, genre/tone context, platform stack callouts, and live success metrics wired to real data.
+- Added `GameOverviewSnapshot` rollups, `GameOverview::SuccessMetricsSnapshot` service, Turbo/Stimulus refresh loop, and nightly job scaffolding for long-term KPI tracking.
+- Documented the new flow under `doc/flow/7_game_overview.md` and surfaced the page inside `README.md`.
+
+### Feature Coverage Snapshot
+
+| Feature | Title           | Status | Notes |
+|---------|-----------------|--------|-------|
+| 7       | Game Overview   | ✅ Done | Public hero page with living KPIs, personas, genre/tone, and platform stack, backed by deterministic snapshot services. |
+
+Completed features: **6** / 14 total (`doc/features/0`–`doc/features/13`).
+
 ## 2025-11-22 (Later)
 
 ### Added

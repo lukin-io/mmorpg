@@ -1,0 +1,7 @@
+<div class="rounded-lg border border-slate-100 bg-slate-50 p-4 shadow-sm">
+  <p class="text-xs uppercase tracking-wide text-slate-500 mb-1"><%= metric.title %></p>
+  <p class="text-3xl font-semibold text-slate-900 mb-2"><%= formatted_metric_value(metric) %></p>
+  <%= metric_delta_badge(metric.delta, format: metric.format) %>
+  <p class="text-sm text-slate-600 mt-2"><%= metric.description %></p>
+</div>
+

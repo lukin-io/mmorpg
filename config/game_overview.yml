@@ -1,0 +1,115 @@
+default: &default
+  hero:
+    title: "Neverlands Game Overview"
+    subtitle: "Faithfully revive Neverlands.ru with modern UX while honoring its social roots."
+    tagline: "Rails 8 + Hotwire • deterministic combat • community-first systems"
+    ctas:
+      - label: "Enter Dashboard"
+        path: "/"
+      - label: "Browse Quests"
+        path: "/quests"
+  sections:
+    vision_objectives:
+      title: "Vision & Objectives"
+      description: "Every pillar below comes directly from doc/features/7_game_overview.md."
+      bullets:
+        - "Faithfully recreate the core Neverlands.ru experience with modern UX while honoring nostalgia."
+        - "Foster deep community engagement through shared social hubs, cooperative mechanics, and PvP rivalries."
+        - "Provide a long-term progression loop mixing narrative, PvP ladders, crafting mastery, and seasonal events."
+      links:
+        - label: "View Leaderboards"
+          path: "/leaderboards"
+        - label: "Explore Crafting"
+          path: "/professions"
+    target_audience:
+      title: "Target Audience"
+      personas:
+        - name: "Veteran Heroes"
+          description: "Returning Neverlands players looking for the authentic revival with a respectful UX glow-up."
+          systems:
+            - "Classic turn cadence & combat logs"
+            - "Legacy zone layouts rendered with Turbo frames"
+        - name: "Tactical MMO Fans"
+          description: "Players who love turn-based, tile-grid MMORPGs that reward planning over twitch reflexes."
+          systems:
+            - "Deterministic Game::Movement service and arena ladders"
+            - "Skill trees + loadouts managed under Players::Progression"
+        - name: "Community Organizers"
+          description: "Guild/clan leaders, role-players, and arena competitors that thrive on social infrastructure."
+          systems:
+            - "Guilds/Clans controllers with treasury management"
+            - "Chat/friend/mailing stack with moderation hooks"
+    genre_tone:
+      title: "Genre & Tone"
+      bullets:
+        - "Medieval fantasy MMORPG with turn-based encounter resolution and tile-grid exploration."
+        - "Emphasis on strategic planning, faction politics, and resource control rather than twitch reflexes."
+      highlights:
+        - label: "Zone & Tile Engine"
+          description: "Grid/topology pulled from config/gameplay/world/*.yml into Game::World services."
+        - label: "Faction Reputation"
+          description: "Reputation + alignment tracking in Players::Alignment ensures politics impact PvP/PvE."
+    platform_technology:
+      title: "Platform & Technology"
+      bullets:
+        - "Browser-first Rails + Hotwire experience responsive to desktop and mobile Safari/Chrome."
+        - "Future-proof JSON:API endpoints once core gameplay stabilizes for companion apps."
+      technology_stack:
+        - label: "Rails / Ruby"
+          value_template: "%{rails_version} / %{ruby_version}"
+        - label: "Hotwire"
+          value_template: "%{hotwire_stack}"
+        - label: "Persistence"
+          value_template: "%{persistence_layer}"
+        - label: "Background Jobs"
+          value_template: "%{job_stack}"
+    success_metrics:
+      title: "Success Metrics"
+      description: "Live KPIs track retention, community energy, and monetization balance without slipping into pay-to-win."
+      metrics:
+        - key: daily_returning_players
+          title: "Daily Returning Players"
+          description: "Players completing quests, crafting, or chatting in the last 24h."
+          format: count
+        - key: weekly_returning_players
+          title: "Weekly Returning Players"
+          description: "Unique adventurers active during the last 7 days."
+          format: count
+        - key: chat_senders_7d
+          title: "Chat Senders (7d)"
+          description: "Community members posting at least once in public channels this week."
+          format: count
+        - key: active_guilds_7d
+          title: "Active Guilds (7d)"
+          description: "Guilds with active members contributing actions in the last 7 days."
+          format: count
+        - key: active_clans_7d
+          title: "Active Clans (7d)"
+          description: "Clans registering recent participation or war updates."
+          format: count
+        - key: seasonal_events_active
+          title: "Seasonal Events Live"
+          description: "Event instances currently marked active."
+          format: count
+        - key: premium_purchases_30d
+          title: "Premium Purchases (30d)"
+          description: "Succeeded premium purchases over the last 30 days."
+          format: count
+        - key: avg_tokens_per_paying_user
+          title: "Avg Tokens / Paying User"
+          description: "Average premium tokens credited per paying user in the last 30 days."
+          format: decimal
+        - key: whale_share_percent
+          title: "Top 5% Spend Share"
+          description: "Percent of premium tokens attributed to the top 5% of spenders."
+          format: percent
+
+development:
+  <<: *default
+
+test:
+  <<: *default
+
+production:
+  <<: *default
+

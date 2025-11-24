@@ -1,0 +1,17 @@
+<section class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+  <h2 class="text-2xl font-semibold mb-4"><%= section.fetch(:title) %></h2>
+  <div class="grid gap-4 md:grid-cols-3">
+    <% section.fetch(:personas, []).each do |persona| %>
+      <div class="rounded-lg border border-slate-100 p-4 bg-slate-50">
+        <h3 class="text-xl font-semibold mb-2"><%= persona.fetch(:name) %></h3>
+        <p class="text-sm text-slate-600 mb-3"><%= persona.fetch(:description) %></p>
+        <ul class="list-disc list-inside text-sm text-slate-700 space-y-1">
+          <% persona.fetch(:systems, []).each do |system| %>
+            <li><%= system %></li>
+          <% end %>
+        </ul>
+      </div>
+    <% end %>
+  </div>
+</section>
+

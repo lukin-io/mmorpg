@@ -1,0 +1,13 @@
+<section class="game-overview__hero rounded-xl border border-slate-200 bg-slate-900 text-white p-8 shadow-lg">
+  <p class="uppercase tracking-wide text-sm text-amber-200 mb-2">Feature 7 · Game Overview</p>
+  <h1 class="text-3xl font-semibold mb-4"><%= hero.fetch(:title) %></h1>
+  <p class="text-lg text-slate-200 mb-2"><%= hero.fetch(:subtitle) %></p>
+  <p class="text-sm text-slate-400 mb-6"><%= hero.fetch(:tagline) %></p>
+
+  <div class="flex flex-wrap gap-3">
+    <% hero.fetch(:ctas, []).each do |cta| %>
+      <%= link_to cta.fetch(:label), cta.fetch(:path), class: "inline-flex items-center justify-center rounded-md bg-amber-400 px-4 py-2 font-semibold text-slate-900 hover:bg-amber-300 transition" %>
+    <% end %>
+  </div>
+</section>
+

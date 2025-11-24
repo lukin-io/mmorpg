@@ -54,6 +54,23 @@ This is a clone/re-imagining of the classic MMORPG **Neverlands.ru**, featuring:
 - Map exploration & zones
 - Real-time updates via Turbo Streams
 
+### Authentication & Account Services (Feature 1)
+
+- Spec: `doc/features/1_auth.md`, flow: `doc/flow/1_auth_presence.md`.
+- Devise modules (confirmable/trackable/timeoutable) live in `app/models/user.rb`; Rack::Attack rules are wired in `config/initializers/rack_attack.rb`.
+- Session tracking + presence: `Auth::UserSessionManager`, `SessionPingsController`, `SessionPresenceJob`, and `PresenceChannel` keep `user_sessions` online/idle/offline in sync with Turbo Streams.
+- Premium token ledger (`Payments::PremiumTokenLedger`, `premium_token_ledger_entries`) powers purchase credits/debits with audit logs.
+- Characters, profile handles, and privacy toggles (`profile_name`, `chat_privacy`, `friend_request_privacy`, `duel_privacy`) back `PublicProfilesController` and `Users::PublicProfile`, exposing sanitized JSON at `GET /profiles/:profile_name`.
+- Moderation/audit trail for auth-sensitive actions is centralized in `AuditLogger` and `AuditLog`.
+
+### Accounts, Profiles & Social Graph (Feature 2)
+
+- Spec: `doc/features/2_user.md`.
+- Friendships (`Friendship` model + scopes) respect privacy gates via `User#allows_friend_request_from?`; allied status checks shared guild/clan memberships.
+- Guild/clan memberships (`GuildMembership`, `ClanMembership`) sync down to all characters through `User#sync_character_memberships!`.
+- Public profile factory + request specs (`spec/services/users/public_profile_spec.rb`, `spec/requests/public_profiles_spec.rb`) cover reputation, achievements, guild/clan snapshots, housing plots, and omit PII.
+- Achievements, housing, mounts, pets, trades, and other user-owned collections are exposed through corresponding controllers/policies so the broader social graph (friends, guilds, clans) can drive privacy-aware UIs.
+
 ### Player & Character Systems (Feature 3)
 
 The `doc/features/3_player.md` specification is now wired into the codebase:
@@ -71,8 +88,27 @@ The `doc/features/3_player.md` specification is now wired into the codebase:
 - **NPCs & Monsters** — `Game::World::PopulationDirectory` merges NPC archetypes + monster taxonomy (rarity, respawn timers) with optional overrides from `SpawnSchedule`, surfacing data to `Game::Exploration::EncounterResolver`.
 - **Quests & Narrative** — `Quest*` models plus `Game::Quests::ChainProgression`, `DailyRotation`, and `DynamicHookResolver` manage main, side, daily, and event quests. `QuestsController` ships a Hotwire quest log/dialogue UI optimized for mobile via the new `layout-stack` Stimulus controller.
 - **Events & Tournaments** — `Game::Events::Scheduler`, `EventInstance`, `ArenaTournament`, and `CommunityObjective` orchestrate seasonal NPCs, brackets, announcers, and drives, with `ScheduledEventJob` spawning instances by slug.
-- **Moderation & Reporting** — Magistrate/guard NPCs route reports through `NpcReportsController` → `Game::Moderation::NpcIntake`, persisting `NpcReport` tickets and logging to `AuditLog`.
-- **Moderation, Safety & Live Ops (Feature 5)** — Unified `Moderation::Ticket` workflow fed by chat/profile/combat/NPC entry points, Turbo-streamed moderator queue, enforcement via `Moderation::PenaltyService`, appeals handled by `Moderation::AppealWorkflow`, automated detectors (`Moderation::Detectors::HealingExploit`), anomaly alerts/webhooks, and GM controls through `LiveOps::Event` + `LiveOps::CommandRunner`.
+
+### Moderation, Safety & Live Ops (Feature 5)
+
+- **Unified Reporting Funnel** — Chat buttons, player profiles, combat logs, and NPC magistrates all hit `Moderation::ReportIntake`, normalizing evidence and opening `Moderation::Ticket` rows that broadcast into the moderator queue via Turbo Streams + Action Cable.
+- **Enforcement Toolkit** — `Admin::Moderation::TicketsController`, `Moderation::PenaltyService`, and `Moderation::Action` provide warnings, mutes, temp/permanent bans, trade locks, quest adjustments, and premium refunds with audit logging and SLA-aware appeals through `Moderation::AppealWorkflow`.
+- **GM Live Ops Console** — `LiveOps::Event`, `Admin::LiveOps::EventsController`, and `LiveOps::CommandRunner` let moderators spawn NPCs, seed rewards, pause arenas, or trigger rollbacks, while scheduled jobs (`LiveOps::ArenaMonitorJob`, `LiveOps::ClanWarMonitorJob`) auto-flag anomalies.
+- **Transparency & Instrumentation** — `Moderation::PenaltyNotifier`, `Moderation::TicketStatusNotifierJob`, structured logging (`Moderation::Instrumentation`), anomaly alerts, and Discord/Telegram webhooks keep players informed and surface surge metrics to dashboards.
+
+### Crafting, Gathering, and Professions (Feature 6)
+
+- **Profession Slots & Progression** — `Profession`, `ProfessionProgress`, and `ProfessionTool` enforce “2 primary + 2 gathering” limits, track XP/quality buffs, and attach degradable tools with repair flows through `ProfessionToolsController`.
+- **Recipes, Stations & Queueing** — `Recipe`, `CraftingStation`, `Crafting::RecipeValidator`, and `Crafting::JobScheduler` validate skill/buff requirements, apply portable penalties, and queue multi-craft batches with deterministic completion via `CraftingJobCompletionJob`.
+- **Hotwire Crafting UI** — `/crafting_jobs` streams recipe filters, success previews, and job progress bars (`app/views/crafting_jobs/*`), while `/professions` exposes enroll/reset buttons, slot counters, and tool repair actions.
+- **Gathering & Economy Hooks** — `Professions::GatheringResolver` adds biome/party bonuses and timed respawns, seeds provision moonleaf nodes, and the marketplace now supports commission gates (`Marketplace::ListingEngine`, auction listing fields) plus guild missions demanding bulk crafts.
+- **Doctor & Integration Touchpoints** — Post-battle trauma recovery (`Professions::Doctor::TraumaResponse` via `Game::Combat::PostBattleProcessor`), guild missions, achievements, and crafting notifications tie Feature 6 into combat, social, and housing systems.
+
+### Game Overview (Feature 7)
+
+- Public route `GET /game_overview` mirrors `doc/features/7_game_overview.md`, giving stakeholders a Hotwire landing page with the project vision, target personas, tone, and platform stack.
+- Live KPIs (retention, community, monetization) stream through `GameOverview::SuccessMetricsSnapshot` + `GameOverviewSnapshot` so viewers can refresh without signing in.
+- Stimulus-powered refresh polling (60 seconds) keeps the metrics Turbo frame current while staying fully server-rendered.
 
 ---
 
