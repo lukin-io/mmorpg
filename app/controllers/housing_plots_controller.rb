@@ -3,6 +3,7 @@
 class HousingPlotsController < ApplicationController
   def index
     @housing_plots = policy_scope(HousingPlot).where(user: current_user)
+    @housing_plots.each { |plot| Housing::UpkeepService.new(plot: plot).collect! }
   end
 
   def create

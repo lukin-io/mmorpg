@@ -63,7 +63,15 @@ module Professions
     def grant_rewards!
       rewards = recipe.rewards.fetch("items", [])
       rewards.each do |reward|
-        job.character.inventory.add_item_by_name!(reward["name"], quantity: reward["quantity"].to_i)
+        qty = reward["quantity"].to_i
+        item_name = reward["name"]
+        job.character.inventory.add_item_by_name!(item_name, quantity: qty)
+        Economy::DemandTracker.record_crafting!(
+          recipe: recipe,
+          item_name: item_name,
+          quantity: qty,
+          zone: job.character.position&.zone
+        )
       end
 
       {"items" => rewards}

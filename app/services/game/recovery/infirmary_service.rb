@@ -25,6 +25,7 @@ module Game
         reduction = settings.fetch("reduction_seconds", 15).to_i
         target_time = [character_position.respawn_available_at - reduction.seconds, Time.current].max
         character_position.update!(respawn_available_at: target_time)
+        ::Economy::MedicalSupplySink.new(zone: zone).consume!(character: character_position.character)
         character_position
       end
 

@@ -4,6 +4,7 @@ RSpec.describe "AuctionListings", type: :request do
   describe "POST /auction_listings" do
     it "creates a listing" do
       user = create(:user)
+      user.currency_wallet.update!(gold_balance: 1_000)
       sign_in user, scope: :user
 
       expect do

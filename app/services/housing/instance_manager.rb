@@ -15,12 +15,15 @@ module Housing
     def ensure_default_plot!(plot_type: "apartment", location_key: "starter_city")
       raise ArgumentError, "User required" unless user
 
-      user.housing_plots.first || user.housing_plots.create!(
+      plot = user.housing_plots.first || user.housing_plots.create!(
         plot_type:,
         location_key:,
         storage_slots: 20,
-        access_rules: {"visibility" => "friends"}
+        access_rules: {"visibility" => "friends"},
+        next_upkeep_due_at: Time.current + Housing::UpkeepService::INTERVAL
       )
+      Housing::UpkeepService.new(plot: plot).collect!
+      plot
     end
 
     def update_access!(rules:)

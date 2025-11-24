@@ -10,7 +10,7 @@ module Players
     # Returns:
     #   Character after XP + source ledger updates.
     class ExperiencePipeline
-      SOURCE_KEYS = %w[quest combat gathering].freeze
+      SOURCE_KEYS = %w[quest combat gathering premium].freeze
 
       def initialize(character:, level_up_service: Players::Progression::LevelUpService.new(character:))
         @character = character

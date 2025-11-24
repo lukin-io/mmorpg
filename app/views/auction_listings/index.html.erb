@@ -4,12 +4,30 @@
     <%= link_to "Create Listing", new_auction_listing_path, class: "button" %>
   </header>
 
+  <section class="filters">
+    <%= form_with url: auction_listings_path, method: :get, scope: :filter, local: true do |form| %>
+      <%= form.text_field :item_type, placeholder: "Item type", value: @filter_params[:item_type] %>
+      <%= form.text_field :rarity, placeholder: "Rarity", value: @filter_params[:rarity] %>
+      <%= form.text_field :stat_key, placeholder: "Stat", value: @filter_params[:stat_key] %>
+      <%= form.number_field :stat_min, placeholder: "Min stat", value: @filter_params[:stat_min] %>
+      <%= form.select :currency_type, [["Any", ""], ["Gold", "gold"], ["Silver", "silver"], ["Premium Tokens", "premium_tokens"]], selected: @filter_params[:currency_type] %>
+      <%= form.submit "Apply" %>
+      <%= link_to "Clear", auction_listings_path %>
+    <% end %>
+
+    <% if @listing_filter.filters.present? %>
+      <p>Active filters: <%= @listing_filter.filters.map { |k, v| "#{k}=#{v}" }.join(", ") %></p>
+    <% end %>
+  </section>
+
   <table>
     <thead>
       <tr>
         <th>Item</th>
         <th>Seller</th>
         <th>Current Bid</th>
+        <th>Tax Rate</th>
+        <th>Demand</th>
         <th>Ends</th>
       </tr>
     </thead>
@@ -19,6 +37,8 @@
           <td><%= link_to listing.item_name, auction_listing_path(listing) %></td>
           <td><%= listing.seller.email %></td>
           <td><%= listing.highest_bid&.amount || listing.starting_bid %> <%= listing.currency_type %></td>
+          <td><%= number_to_percentage(listing.tax_rate * 100, precision: 2) %></td>
+          <td><%= listing.demand_score %></td>
           <td><%= l(listing.ends_at, format: :short) %></td>
         </tr>
       <% end %>

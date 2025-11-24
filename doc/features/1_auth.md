@@ -1,33 +1,31 @@
 # 1. Authentication & Account Services
 
 ## Account Lifecycle
-- Devise handles email/password registration, confirmation, password resets.
-- Require verified email before enabling PvP, trading, or chat to limit spam/bots.
+- Devise handles registration, confirmation, password reset, and session timeout (`app/models/user.rb`, `config/initializers/devise.rb`). Rolify seeds a default `player` role on create.
+- `User#verified_for_social_features?` prevents unconfirmed accounts from trading, chatting, or starting PvP. Controllers gate features through Pundit policies (see `ApplicationPolicy`, `AuctionListingPolicy`, `TradeSessionPolicy`).
+- Account creation spawns a dedicated `CurrencyWallet`, premium ledger entries, and a profile slug; characters inherit clan/guild memberships from the owning user.
 
 ## Security & Compliance
-- Rate-limit login attempts (Rack::Attack) and add device/session history per user.
-- Store premium token balances per account; ledger every purchase/consumption event.
+- `config/initializers/rack_attack.rb` rate-limits `/users/sign_in` and `/users/password` endpoints; device/session history lives in `user_sessions` (managed through Warden hooks and `Auth::UserSessionManager`).
+- Premium currency safety: balances live on `users.premium_tokens_balance` and `currency_wallets.premium_tokens_balance`; `Payments::PremiumTokenLedger` + `Economy::WalletService` ensure every debit/credit is atomic and emits an `AuditLog`.
+- Audit trails cover bans, mutes, premium adjustments, quest compensation, and GM overrides via `AuditLogger`.
 
-## Profiles & Identity
-- Each account can manage multiple characters; characters inherit guild/clan membership.
-- Public profile exposes reputation, achievements, guild, housing without leaking email.
-- Privacy controls for chat availability, friend requests, duel invitations.
+## Profiles, Identity & Privacy
+- `PublicProfilesController#show` renders sanitized data via `Users::PublicProfile`: reputation, achievements, guild/clan, housing plots—never email addresses.
+- Each account supports up to five `Character` records (`User::MAX_CHARACTERS`). Privacy enums (`chat_privacy`, `friend_request_privacy`, `duel_privacy`) control inbound requests through helper predicates (`User#allows_chat_from?`, etc.).
+- Characters inherit guild/clan ties from the owner when created (`Character#inherit_memberships`), ensuring social permissions stay consistent.
 
 ## Session & Presence
-- Turbo-native sessions; Action Cable broadcasts presence to chat/guild channels when a user logs in/out.
-- Idle detection for turn timers and AFK indicators in battles.
+- `SessionPingsController#create` receives idle-tracker Stimulus pings so `User#mark_last_seen!` stays current. Presence is broadcast via Action Cable streams (chat, guild, clan) whenever Devise signs a user in/out.
+- Side panels rely on `Users::ProfileStats` and `GameOverview` data to show live activity; idle detection gates turn timers and AFK indicators inside `game/combat` services.
 
 ## Moderation Hooks
-- Roles (player, moderator, GM, admin) defined in Devise + Pundit policies.
-- Audit logging for bans, mutes, premium refunds, quest/manual adjustments.
+- Roles (`player`, `moderator`, `gm`, `admin`) are granted through Rolify and enforced with Pundit policies across controllers.
+- Inline chat/profile report flows call `Moderation::ReportIntake`, tagging the reporting user and the subject account.
+- Trade locks, bans, and refund events update the audit log and propagate to clients via Turbo Stream notices and Action Cable broadcasts.
 
-## Implementation Notes
-- `User` uses Devise Confirmable/Trackable/Timeoutable with default role assignment (`player`) through Rolify.
-- `Rack::Attack` throttles `/users/sign_in` and `/users/password` requests; tune via `config/initializers/rack_attack.rb`.
-- Session/device history is stored in `user_sessions`, managed via Warden hooks and `Auth::UserSessionManager`.
-- Premium token balance lives on `users.premium_tokens_balance`; ledger entries in `premium_token_ledger_entries` are created via `Payments::PremiumTokenLedger`.
-- Presence broadcasts stream through `PresenceChannel` and the `idle-tracker` Stimulus controller pings `SessionPingsController` to mark users idle/active.
-- Moderation/audit requirements are backed by `AuditLog` records written with `AuditLogger`.
-- Players manage up to 5 `Character` records per account (`characters` table) with clan and guild membership automatically inherited from their account memberships.
-- Public profile data is exposed via `PublicProfilesController#show`, which uses `Users::PublicProfile` to return sanitized JSON (profile name, reputation, achievements, guild/clan, housing) while omitting emails.
-- Privacy controls (`chat_privacy`, `friend_request_privacy`, `duel_privacy`) live on the `users` table and gate friend requests, chat availability, and duel invitations through helper methods such as `User#allows_friend_request_from?`.
+## Responsible for Implementation Files
+- **Models & Policies:** `app/models/user.rb`, `app/models/user_session.rb`, `app/models/role.rb`, `app/policies/**/*`.
+- **Controllers:** Devise controllers, `ApplicationController`, `SessionPingsController`, `PublicProfilesController`.
+- **Services:** `Auth::UserSessionManager`, `Users::PublicProfile`, `Users::ProfileStats`, `Payments::PremiumTokenLedger`, `Economy::WalletService`, `AuditLogger`.
+- **Config:** `config/initializers/devise.rb`, `config/initializers/rack_attack.rb`, `config/initializers/warden.rb` (if present), `config/routes.rb` (Devise + session ping routes).

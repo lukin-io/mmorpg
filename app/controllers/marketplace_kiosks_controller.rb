@@ -2,7 +2,7 @@
 
 class MarketplaceKiosksController < ApplicationController
   def index
-    @kiosks = policy_scope(MarketplaceKiosk).order(expires_at: :asc)
+    @kiosks = policy_scope(MarketplaceKiosk).active.order(expires_at: :asc)
   end
 
   def create
@@ -10,7 +10,7 @@ class MarketplaceKiosksController < ApplicationController
     if @kiosk.save
       redirect_to marketplace_kiosks_path, notice: "Listing added to kiosk."
     else
-      @kiosks = policy_scope(MarketplaceKiosk)
+      @kiosks = policy_scope(MarketplaceKiosk).active
       render :index, status: :unprocessable_entity
     end
   end

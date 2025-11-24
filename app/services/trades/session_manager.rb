@@ -29,10 +29,17 @@ module Trades
     def confirm!(session:, actor:)
       raise Pundit::NotAuthorizedError unless [session.initiator, session.recipient].include?(actor)
 
+      completed = false
       session.with_lock do
         new_status = session.confirming? ? :completed : :confirming
-        session.update!(status: new_status)
+        completed = new_status == :completed
+        session.update!(
+          status: new_status,
+          completed_at: completed ? Time.current : session.completed_at
+        )
       end
+
+      Trades::SettlementService.new(trade_session: session).call if completed
       session
     end
 

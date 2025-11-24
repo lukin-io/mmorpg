@@ -183,9 +183,12 @@ bin/rails db:seed
 
 ### Economy configuration
 
-- Currency wallets (`currency_wallets` + `currency_transactions`) store gold/silver/premium balances per user. Utility services live in `app/services/economy`.
-- Auction house tax math is centralized in `Economy::TaxCalculator`; adjust base rates there instead of inside controllers.
+- Currency wallets (`currency_wallets` + `currency_transactions`) store gold/silver/premium balances per user. `Economy::WalletService` enforces soft caps, logging, and sinks (listing fees, repairs, housing upkeep via `Housing::UpkeepService`, infirmaries via `Economy::MedicalSupplySink`).
+- Auction house tax math is centralized in `Economy::TaxCalculator`; adjust base rates there instead of inside controllers. Listing caps/fees live in `Economy::ListingCapEnforcer` + `Economy::ListingFeeCalculator`, while advanced filters flow through `Marketplace::ListingFilter`.
 - Marketplace kiosks provide rapid listings per city; tweak defaults/seeds in `db/seeds.rb`.
+- Direct trades run through `Trades::SessionManager`, `Trades::PreviewBuilder`, and `Trades::SettlementService` (dual-confirm UI + currency/premium settlement).
+- `EconomyAnalyticsJob` executes `Economy::AnalyticsReporter` + `Economy::FraudDetector` to populate `EconomicSnapshot`/`ItemPricePoint` tables and raise `EconomyAlert` rows for Live Ops/moderation dashboards.
+- Premium artifacts (teleports, storage upgrades, XP boosts) route through `Premium::ArtifactStore`, which debits the premium ledger and applies effects via `Game::Movement::TeleportService`, `Game::Inventory::ExpansionService`, and `Players::Progression::ExperiencePipeline`.
 
 ### Events & Leaderboards
 
