@@ -20,7 +20,7 @@ gem "flipper"
 gem "flipper-active_record"
 gem "jbuilder"
 gem "stripe", "~> 18.0"
-gem "view_component", "~> 3.11"
+gem "view_component", "~> 4.1"
 
 # Windows does not include zoneinfo files, so bundle the tzinfo-data gem
 gem "tzinfo-data", platforms: %i[windows jruby]
