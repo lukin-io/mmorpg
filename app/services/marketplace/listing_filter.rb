@@ -21,8 +21,7 @@ module Marketplace
       filtered = apply_item_type_filter(filtered)
       filtered = apply_rarity_filter(filtered)
       filtered = apply_currency_filter(filtered)
-      filtered = apply_stat_filter(filtered)
-      filtered
+      apply_stat_filter(filtered)
     end
 
     private

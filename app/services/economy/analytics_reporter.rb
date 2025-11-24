@@ -40,7 +40,7 @@ module Economy
     end
 
     def currency_velocity(currency)
-      total_supply = CurrencyWallet.sum("#{currency}_balance")
+      total_supply = CurrencyWallet.sum(currency_column_for(currency))
       return 0 if total_supply.zero?
 
       total_movement = CurrencyTransaction
@@ -75,6 +75,19 @@ module Economy
             volume: volume
           )
         end
+    end
+
+    def currency_column_for(currency)
+      case currency.to_s
+      when "gold"
+        :gold_balance
+      when "silver"
+        :silver_balance
+      when "premium_tokens"
+        :premium_tokens_balance
+      else
+        raise ArgumentError, "Unknown currency #{currency}"
+      end
     end
   end
 end

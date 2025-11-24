@@ -56,13 +56,15 @@ module Economy
       applied_amount = amount - overflow
 
       set_balance!(currency, current_balance + applied_amount)
-      record_transaction!(
-        currency: currency,
-        amount: applied_amount,
-        reason: reason,
-        balance_after: wallet.balance_for(currency),
-        metadata: metadata
-      ) if applied_amount.nonzero?
+      if applied_amount.nonzero?
+        record_transaction!(
+          currency: currency,
+          amount: applied_amount,
+          reason: reason,
+          balance_after: wallet.balance_for(currency),
+          metadata: metadata
+        )
+      end
 
       return if overflow.zero?
 

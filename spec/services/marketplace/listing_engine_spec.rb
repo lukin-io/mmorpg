@@ -26,7 +26,7 @@ RSpec.describe Marketplace::ListingEngine do
   end
 
   it "raises when the seller exceeds the daily listing cap" do
-    (Economy::ListingCapEnforcer::MAX_LISTINGS_PER_DAY).times do
+    Economy::ListingCapEnforcer::MAX_LISTINGS_PER_DAY.times do
       create(:auction_listing, seller: user, created_at: 1.hour.ago, status: :active)
     end
 
