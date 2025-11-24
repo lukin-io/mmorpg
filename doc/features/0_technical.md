@@ -1,33 +1,32 @@
 # 0. Technical Foundation
 
-## Vision & Objectives
-- Recreate the classic Neverlands.ru gameplay loop while modernizing the stack.
-- Maintain authenticity, nostalgia, and strong community-driven systems.
-- Target fans of traditional medieval MMORPGs seeking social, strategic play.
+## Stack Baseline
+- Ruby **3.4.4** + Rails **8.1.1** monolith configured in `config/application.rb`, `.ruby-version`, and the `Gemfile`. Hotwire (`turbo-rails`, `stimulus-rails`) powers every interactive screen; no SPA layer.
+- PostgreSQL 18 is the source of truth (`config/database.yml`). Redis backs cache, Action Cable, and Sidekiq queues; env vars such as `REDIS_CACHE_URL`/`REDIS_SIDEKIQ_URL` are documented in the README.
+- Processes are orchestrated via `Procfile.dev` + `bin/dev`, which boot Puma (`web`), Sidekiq (`worker`), and Action Cable (`cable`) together.
 
-## Rails Monolith Baseline
-- Ruby 3.x + Rails 7.x monolith as mandated by `AGENT.md` / `GUIDE.md`.
-- Postgres as the primary datastore; Redis backing Action Cable, cache, and Sidekiq jobs.
-- Hotwire (Turbo + Stimulus) for all reactive UI; no SPA framework.
-- Tailwind- or Bootstrap-style utility classes allowed, but keep HTML server-rendered via Turbo Streams.
-
-## Core Gems & Services
-- `devise` for authentication (see `1_auth.md`), `pundit`/`cancancan` for authorization, `rolify` for roles.
-- `stimulus-rails`, `turbo-rails`, `view_component` for composable UI.
-- Background processing: `sidekiq` (battle resolution, chat moderation, scheduled events).
-- Payments/premium items: integrate with Stripe or YooMoney adapters later, store purchase ledger in Postgres.
+## Core Services & Libraries
+- **Authentication/Authorization:** Devise + Pundit + Rolify (`app/models/user.rb`, `app/policies/**/*`). Rack::Attack (`config/initializers/rack_attack.rb`) protects login/password endpoints.
+- **Realtime/UI:** Turbo Streams and Stimulus controllers live in `app/javascript/controllers`; server-side rendering uses ERB and ViewComponent.
+- **Background jobs:** Sidekiq is configured via `config/sidekiq.yml` and `config/initializers/sidekiq.rb`; domain jobs (combat, crafting, economy analytics) live under `app/jobs`.
+- **Payments/Premium:** Stripe integration (`app/services/payments/stripe_adapter.rb`) and the premium token ledger (`Payments::PremiumTokenLedger`) ensure purchases stay auditable.
+- **Feature Flags:** Flipper (`config/initializers/flipper.rb`) gates combat, housing, and event systems.
 
 ## Testing & QA
-- RSpec + Capybara + FactoryBot for model, service, and system specs.
-- Contract tests for Hotwire stream updates to ensure Turbo Frames broadcast expected payloads.
-- VCR/webmock for external payment APIs.
+- RSpec 8 (`spec/**/*`) with FactoryBot + Faker for fixtures, WebMock/VCR for HTTP isolation, and Capybara for Hotwire UI specs. Test helpers live in `spec/rails_helper.rb`, `spec/spec_helper.rb`, and `spec/support/**/*`.
+- Contract coverage for deterministic gameplay exists in `spec/services/game/**/*` (turn resolver, movement) and `spec/services/economy/**/*` (wallet, analytics, fraud detection).
+- Lint/security: `bundle exec rubocop`, `bundle exec standardrb`, `bundle exec brakeman`, and `bundle exec bundler-audit` are run before shipping (see `AGENT.md` expectations).
 
-## Development & Tooling
-- Standard Rails bin/dev with foreman-style Procfile (web, worker, cable).
-- RuboCop + StandardRB for linting; Brakeman for security scans.
-- Seed data covering classes, items, NPCs, map tiles to speed iteration.
+## Deployment & Ops
+- Dockerfile + `Procfile` enable container-based deploys (Fly.io/Render/Heroku compatible). `config/puma.rb` and `config/cable.yml` are tuned for single-tenant environments but respect ENV overrides.
+- Observability hooks:
+  - `AuditLogger` writes to `audit_logs` for privileged actions (premium adjustments, GM overrides).
+  - Sidekiq Web UI is mounted at `/sidekiq` behind admin auth.
+  - Moderation/event alerts integrate with Discord through webhook services (`app/services/moderation/webhook_dispatcher.rb`).
+- Feature flags and maintenance tasks are seeded via `db/seeds.rb` so every environment matches the expected baseline.
 
-## Deployment Considerations
-- Containerized via Dockerfile already present; target Fly.io/Render/Heroku-compatible release.
-- Separate Redis instance for Action Cable vs Sidekiq to avoid noisy neighbors.
-- Feature flags (Flipper) to gate incremental delivery of systems (combat, guilds, housing, etc.).
+## Responsible for Implementation Files
+- **Configuration:** `config/application.rb`, `config/environments/*.rb`, `config/database.yml`, `config/cable.yml`, `config/puma.rb`, `Procfile.dev`, `bin/dev`.
+- **Initializers & Infra:** `config/initializers/*` (Devise, Flipper, Rack::Attack, Sidekiq), `config/sidekiq.yml`.
+- **Tooling & Docs:** `README.md` (env vars + setup), `doc/flow/0_technical.md` (in-depth flow), `AGENT.md`, `GUIDE.md`, `MMO_ADDITIONAL_GUIDE.md`.
+- **Jobs & Observability:** `app/jobs/*`, `app/services/audit_logger.rb`, `app/services/moderation/webhook_dispatcher.rb`.

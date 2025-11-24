@@ -9,6 +9,14 @@
       <%= form.text_field :item_name %>
     </div>
     <div class="field">
+      <%= form.label :item_type %>
+      <%= form.text_field :item_metadata_item_type, name: "auction_listing[item_metadata][item_type]" %>
+    </div>
+    <div class="field">
+      <%= form.label :rarity %>
+      <%= form.text_field :item_metadata_rarity, name: "auction_listing[item_metadata][rarity]" %>
+    </div>
+    <div class="field">
       <%= form.label :quantity %>
       <%= form.number_field :quantity, value: 1 %>
     </div>
@@ -44,6 +52,12 @@
       <%= form.label :commission_scope %>
       <%= form.select :commission_scope, [%w[Personal personal], %w[Guild guild], %w[Public public]], include_blank: false %>
     </div>
+    <% if current_user.has_any_role?(:gm, :admin) %>
+      <div class="field">
+        <%= form.check_box :override_inflation_controls %>
+        <%= form.label :override_inflation_controls, "Override listing caps (GM only)" %>
+      </div>
+    <% end %>
     <div class="actions">
       <%= form.submit "Post Listing" %>
     </div>

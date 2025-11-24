@@ -1,31 +1,32 @@
 # 5. Moderation, Safety, and Live Ops
 
 ## Goals & Principles
-- Preserve nostalgic community vibe while protecting players from abuse, spam, and exploits.
-- Empower GMs/moderators with Hotwire-admin tools to act quickly without full redeploys.
-- Provide transparent player-facing processes for reports, penalties, and appeals.
+- Protect the nostalgia-driven Neverlands community without sacrificing trust: fast GM tooling, transparent communications, and auditable actions (`AuditLogger`, `audit_logs` table).
+- All punitive actions (ban/mute/trade-lock/refund) are gated by Pundit policies and tied to a `Moderation::Ticket`, ensuring accountability.
 
 ## Reporting & Ticket Flow
-- In-game report UI accessible from chat, player profiles, combat logs, and NPC magistrates (per GDD).
-- Categories: chat abuse, botting, griefing, exploit/cheating, inappropriate names, payment disputes.
-- Reports generate tickets stored in Postgres with evidence (log excerpts, screenshots, combat replay IDs).
-- Action Cable updates notify moderators of new tickets; status changes reflected in player inbox.
+- Inline report entry points (chat lines, player profiles, NPC magistrates) submit payloads to `Moderation::ReportIntake`, which sanitizes evidence and creates `Moderation::Ticket` rows.
+- Tickets reference `Moderation::Action`, `Moderation::Appeal`, and optional chat/NPC reports for traceability; Turbo streams update moderator dashboards (`app/services/moderation/dashboard_presenter.rb`).
+- Evidence: chat excerpts, screenshot URLs, combat replay IDs, zone keys. `Moderation::Instrumentation` tracks volume/response times for analytics.
 
 ## Enforcement Toolkit
-- Role-based admin panel (Pundit policies) letting moderators issue warnings, temp/perma bans, mutes, trade locks.
-- Trauma/healing exploits flagged automatically by detectors; suspicious accounts queued for review.
-- Premium refunds and quest adjustments logged for audit, surfaced in account history (ties into `1_auth.md`).
+- `Moderation::PenaltyService` issues warnings, mutes, bans, trade locks, and premium reimbursements while logging via `AuditLogger`.
+- Automated detectors raise tickets without manual reports:
+  - `Moderation::Detectors::HealingExploit` watches trauma reductions.
+  - `Economy::FraudDetector` monitors suspicious trades and emits `EconomyAlert` rows for GM follow-up.
+- GM/admin panels (namespaced controllers under `app/controllers/admin/moderation/*`) expose ticket queues, actions, and appeal workflows.
 
-## Live Ops & Events Oversight
-- GM commands to spawn NPCs, trigger seasonal events, seed rewards, or pause arenas when exploits detected.
-- Scheduled jobs monitor arena tournaments, clan wars; ability to rollback standings if cheating confirmed.
+## Live Ops & Event Oversight
+- Live Ops commands (in `app/services/live_ops` and `app/controllers/admin/live_ops/events_controller.rb`) let staff spawn/disable quests, pause arenas, or compensate players after outages.
+- Scheduled jobs (e.g., `EconomyAnalyticsJob`, tournament recalculations) surface anomalies early; moderators can roll back standings if cheating is confirmed.
 
 ## Transparency & Player Communication
-- Penalty notifications delivered via in-game mail and email, including reason and duration.
-- Appeal workflow with SLA targets; moderators can re-open tickets and attach follow-up notes.
-- Public-facing policy docs linked from `/doc/features/5_moderation.md` summary for future knowledge base export.
+- Penalties notify players via in-game mail (`MailMessage`) and email, including reason/duration. Appeals use `Moderation::Appeal` + `Moderation::AppealsController`.
+- Policy docs (this file + `README.md` excerpts) are linked from the UI; penalty history is visible to account owners through audit logs in the profile modal.
+- Webhooks (`app/services/moderation/webhook_dispatcher.rb`) publish high-severity actions to Discord/Telegram for rapid team response.
 
-## Instrumentation & Alerting
-- Structured logs for moderation actions shipped to ELK/Datadog; anomaly alerts for surge in reports per zone.
-- Dashboard widgets for report volume, resolution time, repeat offenders.
-- Integrate with Discord/Telegram webhooks for urgent escalations (e.g., dupe exploit outbreak).
+## Responsible for Implementation Files
+- **Models:** `app/models/moderation/ticket.rb`, `app/models/moderation/action.rb`, `app/models/moderation/appeal.rb`, `app/models/chat_report.rb`, `app/models/economy_alert.rb`, `app/models/audit_log.rb`.
+- **Services:** `app/services/moderation/report_intake.rb`, `app/services/moderation/penalty_service.rb`, `app/services/moderation/detectors/*.rb`, `app/services/economy/fraud_detector.rb`, `app/services/audit_logger.rb`, `app/services/moderation/webhook_dispatcher.rb`, `app/services/moderation/dashboard_presenter.rb`.
+- **Controllers:** `app/controllers/moderation/reports_controller.rb`, `app/controllers/moderation/tickets_controller.rb`, `app/controllers/admin/moderation/tickets_controller.rb`, `app/controllers/admin/moderation/actions_controller.rb`, `app/controllers/admin/moderation/appeals_controller.rb`.
+- **Jobs & Alerts:** `app/jobs/economy_analytics_job.rb` (fraud detection), Sidekiq worker configs, Discord/Telegram webhook integrations.

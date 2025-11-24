@@ -21,6 +21,16 @@ class AuctionListing < ApplicationRecord
 
   scope :live, -> { active.where("ends_at > ?", Time.current) }
   scope :commissionable, -> { where.not(required_profession_id: nil) }
+  scope :with_item_type, ->(item_type) { where("item_metadata ->> 'item_type' = ?", item_type) }
+  scope :with_rarity, ->(rarity) { where("item_metadata ->> 'rarity' = ?", rarity) }
+  scope :with_stat_at_least,
+    lambda { |stat, minimum|
+      where(
+        Arel.sql("(item_metadata -> 'stats' ->> ?)::integer >= ?"),
+        stat,
+        minimum
+      )
+    }
 
   def highest_bid
     auction_bids.order(amount: :desc).first
@@ -28,5 +38,16 @@ class AuctionListing < ApplicationRecord
 
   def profession_gate?
     required_profession.present? && required_skill_level.positive?
+  end
+
+  def listing_value
+    (starting_bid || 0) * (quantity || 1)
+  end
+
+  def demand_score
+    MarketDemandSignal
+      .where(item_name:)
+      .where("recorded_at >= ?", 3.days.ago)
+      .sum(:quantity)
   end
 end

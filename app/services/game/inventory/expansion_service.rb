@@ -17,12 +17,14 @@ module Game
         @ledger = ledger
       end
 
-      def expand!(source:, premium_cost: DEFAULT_PREMIUM_COST)
+      def expand!(source:, premium_cost: DEFAULT_PREMIUM_COST, slot_bonus: DEFAULT_SLOT_BONUS, weight_bonus: DEFAULT_WEIGHT_BONUS)
         case source.to_sym
         when :housing
           apply_housing_expansion!
         when :premium
           apply_premium_expansion!(premium_cost:)
+        when :artifact
+          apply_expansion(slot_bonus:, weight_bonus:)
         else
           raise ArgumentError, "Unknown expansion source #{source}"
         end

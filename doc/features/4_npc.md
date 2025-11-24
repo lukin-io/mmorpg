@@ -1,30 +1,35 @@
 # 4. World, NPC, and Quest Systems
 
 ## World Structure
-- Static overworld map divided into regions (forests, mountains, rivers, cities, castles) mirroring Neverlands layout.
-- Landmarks, hidden areas, and resource nodes defined in data files for deterministic placement.
-- Territory control ties into clan warfare; controlled regions grant buffs or taxes.
+- The overworld is modeled through `Zone`, `MapTileTemplate`, `Game::World::RegionCatalog`, and `SpawnPoint`. Each tile stores biome, passability, and metadata so services like `Game::Movement::TileProvider` can resolve encounters deterministically.
+- Territory buffs/taxes hook into `ClanTerritory` and `Economy::TaxCalculator`, letting clan ownership affect regions/cities referenced in `12_clan_system.md`.
+- Resource nodes (`GatheringNode`, `Professions::GatheringResolver`) and spawn schedules (`SpawnSchedule`) keep the world active even when no events are running.
 
 ## NPCs & Monsters
-- NPC archetypes: vendors, quest givers, trainers, guards, storytellers, event hosts.
-- Monster taxonomy per region with rarity tiers; spawn schedules and respawn timers configurable via admin UI.
-- NPC reactions influenced by player reputation/faction; hostile/friendly states drive dialogue trees.
+- NPC templates live in `app/models/npc_template.rb` with roles (vendors, trainers, announcers) and metadata driving dialogues and shops. Monster data ties into `Game::Economy::LootGenerator` and combat services.
+- Reputation/faction checks use `Character#alignment_score` + `QuestAssignment` state to gate dialogue options and vendor pricing.
+- Guard/magistrate behavior surfaces moderation/reporting actions (see `Moderation::ReportIntake` and `doc/features/5_moderation.md`).
 
 ## Quests & Narrative
-- Main storyline quests unlock sequential chapters; cutscenes delivered via Turbo frames with dialogue choices.
-- Side quests for lore, reputation, crafting recipes, and cosmetic rewards.
-- Daily repeatable quests for resource sinks and engagement loops.
-- Dynamic quest hooks for events (seasonal, tournaments) and rare encounters.
+- Quests are stored in `Quest`, `QuestObjective`, `QuestAssignment`, and `QuestChain`. Controllers (`QuestsController`) and services `Game::Quests::TutorialBootstrapper` drive onboarding, repeatables, and chapter unlocks.
+- Hotwire quest log: filters for active/completed/daily states update via Turbo Streams (views under `app/views/quests`), and map overlays highlight objectives via Stimulus controllers.
+- Rewards integrate with XP (`Players::Progression`), currency (`Economy::WalletService`), recipes (`Recipe`), and cosmetics/achievements.
 
-## Events & Special Features
-- Seasonal/holiday events add temporary NPCs, quests, and themed rewards.
-- Arena tournaments scheduled with brackets, announcer NPCs, ranking boards.
-- Community-driven activities (resource gathering drives, guild contests) started by GMs via admin panel.
+## Events & Special Activities
+- Seasonal/holiday hooks rely on `EventInstance`, `EventSchedule`, `GameEventsController`, `LiveOps::Event`, and `AnnouncementsController` to spawn NPCs, quests, and themed rewards.
+- Arena tournaments (`ArenaTournament`, `CompetitionBracket`) and community drives (guild missions, gathering contests) broadcast through Action Cable + Turbo.
+- GM tooling under `app/services/live_ops` and `app/controllers/admin/live_ops/events_controller.rb` lets staff toggle quests, adjust timers, or compensate players.
 
 ## Moderation & Reporting
-- In-game reporting tied to NPC magistrates/guards; players submit reports that open moderation tickets.
-- Actionable categories: chat abuse, botting, griefing, exploit reports.
+- NPC magistrates/officers surface inline report entry points that call `Moderation::ReportIntake` with location metadata (`zone_key`), screenshot URLs, or combat replay IDs.
+- Quest/NPC changes are tracked via `AuditLog` entries when GMs spawn/disable content, ensuring disputes can be resolved quickly.
 
-## Mobile & Accessibility Considerations
-- Hotwire-responsive layouts ensure map, quest log, chat panels adapt to mobile Safari/Chrome.
-- NPC dialogues and quest objectives optimized for short sessions on mobile devices.
+## Mobile & Accessibility
+- The quest log, map overlay, and NPC dialogue screens use Hotwire responsive patterns outlined in `GUIDE.md`. Stimulus controllers keep interactions one-handed on phones/tablets.
+- Inline cutscenes (ViewComponents/partials) avoid autoplay audio and include subtitles for accessibility.
+
+## Responsible for Implementation Files
+- **World Data:** `app/models/zone.rb`, `app/models/map_tile_template.rb`, `app/models/spawn_point.rb`, `app/models/spawn_schedule.rb`, `app/lib/game/world/region_catalog.rb`.
+- **NPC & Questing:** `app/models/npc_template.rb`, `app/models/quest*.rb`, `app/controllers/quests_controller.rb`, `app/services/game/quests/tutorial_bootstrapper.rb`.
+- **Events:** `app/models/event_instance.rb`, `app/models/event_schedule.rb`, `app/controllers/game_events_controller.rb`, `app/controllers/admin/live_ops/events_controller.rb`, `app/services/live_ops/*`.
+- **Moderation Hooks:** `app/services/moderation/report_intake.rb`, `app/models/audit_log.rb`, `app/services/audit_logger.rb`.

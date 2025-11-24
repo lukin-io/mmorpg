@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_11_24_132000) do
+ActiveRecord::Schema[8.1].define(version: 2025_11_24_143000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -457,20 +457,27 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_24_132000) do
 
   create_table "currency_transactions", force: :cascade do |t|
     t.integer "amount", null: false
+    t.integer "balance_after", default: 0, null: false
     t.datetime "created_at", null: false
     t.string "currency_type", null: false
     t.bigint "currency_wallet_id", null: false
     t.jsonb "metadata", default: {}, null: false
     t.string "reason", null: false
     t.datetime "updated_at", null: false
+    t.index ["created_at"], name: "index_currency_transactions_on_created_at"
+    t.index ["currency_type", "created_at"], name: "index_currency_transactions_on_type_and_created_at"
     t.index ["currency_wallet_id"], name: "index_currency_transactions_on_currency_wallet_id"
   end
 
   create_table "currency_wallets", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "gold_balance", default: 0, null: false
+    t.integer "gold_soft_cap", default: 2000000, null: false
     t.integer "premium_tokens_balance", default: 0, null: false
+    t.integer "premium_tokens_soft_cap", default: 5000, null: false
     t.integer "silver_balance", default: 0, null: false
+    t.integer "silver_soft_cap", default: 150000, null: false
+    t.jsonb "sink_totals", default: {}, null: false
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
     t.index ["user_id"], name: "index_currency_wallets_on_user_id", unique: true
@@ -485,6 +492,34 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_24_132000) do
     t.datetime "updated_at", null: false
     t.index ["key"], name: "index_cutscene_events_on_key", unique: true
     t.index ["quest_id"], name: "index_cutscene_events_on_quest_id"
+  end
+
+  create_table "economic_snapshots", force: :cascade do |t|
+    t.integer "active_listings", default: 0, null: false
+    t.date "captured_on", null: false
+    t.datetime "created_at", null: false
+    t.decimal "currency_velocity_gold", precision: 10, scale: 2, default: "0.0", null: false
+    t.decimal "currency_velocity_premium_tokens", precision: 10, scale: 2, default: "0.0", null: false
+    t.decimal "currency_velocity_silver", precision: 10, scale: 2, default: "0.0", null: false
+    t.integer "daily_trade_volume_gold", default: 0, null: false
+    t.integer "daily_trade_volume_premium_tokens", default: 0, null: false
+    t.jsonb "item_price_index", default: {}, null: false
+    t.jsonb "metadata", default: {}, null: false
+    t.integer "suspicious_trade_count", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.index ["captured_on"], name: "index_economic_snapshots_on_captured_on", unique: true
+  end
+
+  create_table "economy_alerts", force: :cascade do |t|
+    t.string "alert_type", null: false
+    t.datetime "created_at", null: false
+    t.datetime "flagged_at", null: false
+    t.jsonb "payload", default: {}, null: false
+    t.string "status", default: "open", null: false
+    t.bigint "trade_session_id"
+    t.datetime "updated_at", null: false
+    t.index ["status"], name: "index_economy_alerts_on_status"
+    t.index ["trade_session_id"], name: "index_economy_alerts_on_trade_session_id"
   end
 
   create_table "event_instances", force: :cascade do |t|
@@ -569,12 +604,14 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_24_132000) do
   end
 
   create_table "gathering_nodes", force: :cascade do |t|
+    t.boolean "contested", default: false, null: false
     t.datetime "created_at", null: false
     t.integer "difficulty", default: 1, null: false
     t.integer "group_bonus_percent", default: 0, null: false
     t.datetime "last_harvested_at"
     t.datetime "next_available_at"
     t.bigint "profession_id", null: false
+    t.string "rarity_tier", default: "common", null: false
     t.string "resource_key", null: false
     t.integer "respawn_seconds", default: 60, null: false
     t.jsonb "rewards", default: {}, null: false
@@ -674,9 +711,11 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_24_132000) do
     t.jsonb "access_rules", default: {}, null: false
     t.datetime "created_at", null: false
     t.string "location_key", null: false
+    t.datetime "next_upkeep_due_at"
     t.string "plot_type", null: false
     t.integer "storage_slots", default: 20, null: false
     t.datetime "updated_at", null: false
+    t.integer "upkeep_gold_cost", default: 200, null: false
     t.bigint "user_id", null: false
     t.index ["user_id"], name: "index_housing_plots_on_user_id"
   end
@@ -710,6 +749,18 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_24_132000) do
     t.index ["inventory_id", "slot_kind"], name: "index_inventory_items_on_inventory_id_and_slot_kind"
     t.index ["inventory_id"], name: "index_inventory_items_on_inventory_id"
     t.index ["item_template_id"], name: "index_inventory_items_on_item_template_id"
+  end
+
+  create_table "item_price_points", force: :cascade do |t|
+    t.integer "average_price", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.string "currency_type", null: false
+    t.string "item_name", null: false
+    t.integer "median_price", default: 0, null: false
+    t.date "sampled_on", null: false
+    t.datetime "updated_at", null: false
+    t.integer "volume", default: 0, null: false
+    t.index ["item_name", "sampled_on", "currency_type"], name: "index_item_price_points_on_item_and_sample"
   end
 
   create_table "item_templates", force: :cascade do |t|
@@ -795,6 +846,22 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_24_132000) do
     t.index ["zone", "x", "y"], name: "index_map_tile_templates_on_zone_and_x_and_y", unique: true
   end
 
+  create_table "market_demand_signals", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "item_name", null: false
+    t.jsonb "metadata", default: {}, null: false
+    t.bigint "profession_id"
+    t.integer "quantity", default: 0, null: false
+    t.datetime "recorded_at", null: false
+    t.string "source", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "zone_id"
+    t.index ["item_name"], name: "index_market_demand_signals_on_item_name"
+    t.index ["profession_id"], name: "index_market_demand_signals_on_profession_id"
+    t.index ["recorded_at"], name: "index_market_demand_signals_on_recorded_at"
+    t.index ["zone_id"], name: "index_market_demand_signals_on_zone_id"
+  end
+
   create_table "marketplace_kiosks", force: :cascade do |t|
     t.string "city", null: false
     t.datetime "created_at", null: false
@@ -805,6 +872,17 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_24_132000) do
     t.bigint "seller_id", null: false
     t.datetime "updated_at", null: false
     t.index ["seller_id"], name: "index_marketplace_kiosks_on_seller_id"
+  end
+
+  create_table "medical_supply_pools", force: :cascade do |t|
+    t.integer "available_quantity", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.string "item_name", null: false
+    t.datetime "last_restocked_at"
+    t.datetime "updated_at", null: false
+    t.bigint "zone_id", null: false
+    t.index ["zone_id", "item_name"], name: "index_medical_supply_pools_on_zone_and_item", unique: true
+    t.index ["zone_id"], name: "index_medical_supply_pools_on_zone_id"
   end
 
   create_table "moderation_actions", force: :cascade do |t|
@@ -1194,6 +1272,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_24_132000) do
     t.string "currency_type"
     t.jsonb "item_metadata", default: {}, null: false
     t.string "item_name"
+    t.string "item_quality"
     t.bigint "owner_id", null: false
     t.integer "quantity", default: 1, null: false
     t.bigint "trade_session_id", null: false
@@ -1203,6 +1282,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_24_132000) do
   end
 
   create_table "trade_sessions", force: :cascade do |t|
+    t.datetime "completed_at"
     t.datetime "created_at", null: false
     t.datetime "expires_at", null: false
     t.bigint "initiator_id", null: false
@@ -1342,6 +1422,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_24_132000) do
   add_foreign_key "currency_transactions", "currency_wallets"
   add_foreign_key "currency_wallets", "users"
   add_foreign_key "cutscene_events", "quests"
+  add_foreign_key "economy_alerts", "trade_sessions"
   add_foreign_key "event_instances", "game_events"
   add_foreign_key "event_schedules", "game_events"
   add_foreign_key "friendships", "users", column: "receiver_id"
@@ -1367,7 +1448,10 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_24_132000) do
   add_foreign_key "live_ops_events", "users", column: "requested_by_id"
   add_foreign_key "mail_messages", "users", column: "recipient_id"
   add_foreign_key "mail_messages", "users", column: "sender_id"
+  add_foreign_key "market_demand_signals", "professions"
+  add_foreign_key "market_demand_signals", "zones"
   add_foreign_key "marketplace_kiosks", "users", column: "seller_id"
+  add_foreign_key "medical_supply_pools", "zones"
   add_foreign_key "moderation_actions", "characters", column: "target_character_id"
   add_foreign_key "moderation_actions", "moderation_tickets", column: "ticket_id"
   add_foreign_key "moderation_actions", "users", column: "actor_id"

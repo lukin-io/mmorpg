@@ -32,7 +32,10 @@ Rails.application.routes.draw do
     resources :auction_bids, only: :create
   end
   resources :marketplace_kiosks, only: [:index, :create]
-  resources :trade_sessions, only: [:create, :show, :update]
+  resources :trade_sessions, only: [:create, :show, :update] do
+    resources :trade_items, only: :create
+  end
+  resources :trade_items, only: :destroy
 
   resources :professions, only: :index do
     member do

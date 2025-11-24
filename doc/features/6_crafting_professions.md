@@ -1,39 +1,37 @@
 # 6. Crafting, Gathering, and Professions
 
 ## Design Pillars
-- Crafting is a parallel progression path, not just endgame padding.
-- Professions interlock with economy (auction house, trading) and combat readiness (potions, gear repair).
-- Gathering loops should encourage world exploration and social cooperation (parties farm nodes faster, guild quests need specific materials).
+- Crafting is a first-class progression pillar. Systems under `app/services/crafting` and `app/services/professions` ensure profession gameplay touches combat readiness, housing, and the player economy.
+- Gathering loops encourage cooperation: `GatheringNode` rarity tiers, contested flags, and party bonuses push groups into the wild while doctor-crafted medical supplies feed infirmary sinks.
+- Every craft updates analytics (`Economy::DemandTracker` → `MarketDemandSignal`) so the auction house can surface demand spikes.
 
 ## Profession Categories
-- **Gathering:** Fishing, Herbalism, Hunting, Mining, Lumberjacking (supports weapon/armor crafting), plus Doctor post-combat care.
-- **Production:** Blacksmithing, Tailoring, Alchemy, Cooking, Enchanting, Medical (consumables for trauma healing).
-- **Support:** Cartography (reveals hidden nodes), Engineering (siege devices for clan wars).
-
-Each character can master two primary professions and two gathering jobs; reset via expensive questline or premium service.
+- **Gathering:** fishing, herbalism, hunting, mining, lumberjacking—implemented via `Profession`, `ProfessionProgress`, `GatheringNode`, and services such as `Professions::GatheringResolver`.
+- **Production:** blacksmithing, tailoring, alchemy, cooking, enchanting, medical (doctor). `Recipe`, `CraftingJob`, and `Professions::CraftingOutcomeCalculator` drive the math; doctor crafts also restock `MedicalSupplyPool`.
+- **Support:** engineering/cartography (coming soon) lean on `ProfessionTool`, `Professions::ToolMaintenance`, and guild/clan research hooks.
+- Characters can hold two primary and two gathering tracks; respec logic lives in `Professions::ResetService` (future) and premium services.
 
 ## Progression & Skills
-- Skill points per profession increase through successful crafts/gathers; higher tiers unlock advanced recipes.
-- Quality ratings (Common → Legendary) influenced by profession skill, tool quality, buffs, and location bonuses.
-- Failure states for risky crafts (enchantments) consume materials but reward small XP to reduce frustration.
+- Experience accrues per craft/gather; `ProfessionProgress` tracks skill levels, tool bonuses, and achievements. Success chance/quality tiers come from `Professions::CraftingOutcomeCalculator` and `Professions::CraftingOutcomeResolver`.
+- Craft quality tiers (common→legendary) depend on station archetype, tool durability, profession level, and RNG seeding (deterministic via `Random.new(seed)`).
+- Failure states still grant XP and can trigger guild missions or achievements, keeping progression smooth.
 
-## Crafting Stations & Tools
-- City-based stations: forge, loom, alchemy lab, infirmary, etc., each with queue limits during peak times.
-- Portable kits allow low-tier crafting in the field with penalties (longer time, lower success rate).
-- Tools degrade; players craft/repair them, creating a sink for materials.
+## Crafting Stations, Tools & Queues
+- City stations are modeled with `CraftingStation` (capacity, archetype, penalties). `Crafting::JobScheduler` enforces queue limits, portable penalties, and completion jobs (`CraftingJobCompletionJob`).
+- Tools degrade via `Professions::ToolMaintenance.degrade!`; repairs consume materials, creating additional sinks.
+- Premium artifacts/expansions rely on `Game::Inventory::ExpansionService` (housing-based boosts) and `Premium::ArtifactStore`.
 
-## Recipes & Resources
-- Recipes acquired via quests, drops, vendors, or guild research trees; some bound to guild/clan achievements.
-- Gathering nodes: herbs, ore veins, rare fish spots, monster parts; respawn timers vary by biome.
-- Premium artifacts require both crafting and premium tokens, ensuring monetization ties to gameplay.
-
-## Integration with Other Systems
-- Auction house listings include profession requirements, making it easy to source commissions.
-- Guild missions demand bulk crafted goods, driving coordinated profession leveling.
-- Doctor profession shortens trauma timers after PvP, incentivizing support roles in clans.
-- Crafting achievements feed into titles/housing trophies (see `2_user.md`).
+## Recipes, Resources & Economy Links
+- Recipes (`Recipe`) include material requirements, station archetypes, premium token costs, and guild-binding flags added via migrations like `20251122141036_expand_crafting_and_economy_tables`.
+- Gathering nodes feed the marketplace: contested/rarity fields on `GatheringNode` influence respawn speeds and event hooks. Crafted medical supplies flow into `MedicalSupplyPool` and are consumed by infirmaries.
+- Auction listings expose profession requirements (fields on `AuctionListing`) so commissions are discoverable. Guild missions (`GuildMission`) request bulk crafts, advancing communal goals.
 
 ## UI & UX
-- Hotwire-driven crafting interface with recipe filters, material availability indicators, and success chance preview.
-- Progress bars stream updates via Turbo; players can queue multiple crafts and receive notifications when done.
-- Tutorial quests introduce gathering tools, crafting stations, and profession trainers in starter city.
+- Hotwire forms in `app/views/crafting_jobs` show recipe filters, material availability, success chances, and queue status. Turbo Streams broadcast job completion (`CraftingJobCompletionJob`).
+- Tutorial quests (`Game::Quests::TutorialBootstrapper`) introduce gathering tools, crafting trainers, and profession enrollment via `ProfessionsController`.
+- Housing/workshop integration: `Housing::InstanceManager` + `Housing::UpkeepService` tie storage expansions and station access to profession progress.
+
+## Responsible for Implementation Files
+- **Models:** `app/models/profession*.rb`, `app/models/profession_progress.rb`, `app/models/profession_tool.rb`, `app/models/recipe.rb`, `app/models/crafting_job.rb`, `app/models/crafting_station.rb`, `app/models/gathering_node.rb`, `app/models/guild_mission.rb`, `app/models/medical_supply_pool.rb`.
+- **Services:** `app/services/crafting/job_scheduler.rb`, `app/services/crafting/recipe_validator.rb`, `app/services/professions/crafting_outcome_calculator.rb`, `app/services/professions/crafting_outcome_resolver.rb`, `app/services/professions/tool_maintenance.rb`, `app/services/professions/gathering_resolver.rb`, `app/services/economy/demand_tracker.rb`.
+- **Jobs & Controllers:** `app/jobs/crafting_job_completion_job.rb`, `app/controllers/crafting_jobs_controller.rb`, `app/controllers/professions_controller.rb`.

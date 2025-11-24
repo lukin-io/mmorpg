@@ -6,14 +6,68 @@
     <p>Status: <%= @trade_session.status.humanize %></p>
   </header>
 
-  <section>
-    <h2>Items</h2>
-    <ul>
-      <% @trade_items.each do |item| %>
-        <li><%= item.owner.email %>: <%= item.item_name || item.currency_type %> x<%= item.quantity || item.currency_amount %></li>
-      <% end %>
-    </ul>
+  <% if @preview.warning? %>
+    <div class="alert warning">
+      <strong>Heads up:</strong> Net value difference exceeds safe threshold.
+    </div>
+  <% end %>
+
+  <section class="trade-preview">
+    <div>
+      <h2><%= @trade_session.initiator.profile_name %></h2>
+      <p>Gold: <%= @preview.initiator_totals[:gold] %></p>
+      <p>Silver: <%= @preview.initiator_totals[:silver] %></p>
+      <p>Premium tokens: <%= @preview.initiator_totals[:premium_tokens] %></p>
+      <ul>
+        <% @preview.initiator_totals[:items].each do |item| %>
+          <li>
+            <%= item.item_name %> x<%= item.quantity %>
+            <% if item.owner == current_user %>
+              <%= button_to "Remove", trade_item_path(item), method: :delete, data: {turbo_confirm: "Remove this item?"} %>
+            <% end %>
+          </li>
+        <% end %>
+      </ul>
+    </div>
+    <div>
+      <h2><%= @trade_session.recipient.profile_name %></h2>
+      <p>Gold: <%= @preview.recipient_totals[:gold] %></p>
+      <p>Silver: <%= @preview.recipient_totals[:silver] %></p>
+      <p>Premium tokens: <%= @preview.recipient_totals[:premium_tokens] %></p>
+      <ul>
+        <% @preview.recipient_totals[:items].each do |item| %>
+          <li>
+            <%= item.item_name %> x<%= item.quantity %>
+            <% if item.owner == current_user %>
+              <%= button_to "Remove", trade_item_path(item), method: :delete, data: {turbo_confirm: "Remove this item?"} %>
+            <% end %>
+          </li>
+        <% end %>
+      </ul>
+    </div>
   </section>
 
-  <%= button_to "Confirm Trade", trade_session_path(@trade_session), method: :put %>
+  <section class="trade-contributions">
+    <h2>Add Item</h2>
+    <%= form_with model: @trade_item, url: trade_session_trade_items_path(@trade_session) do |form| %>
+      <%= form.text_field :item_name, placeholder: "Item name" %>
+      <%= form.number_field :quantity, min: 1, value: 1 %>
+      <%= form.text_field :item_quality, placeholder: "Quality (optional)" %>
+      <%= form.submit "Add Item" %>
+    <% end %>
+
+    <h2>Add Currency</h2>
+    <%= form_with model: @trade_item, url: trade_session_trade_items_path(@trade_session) do |form| %>
+      <%= form.select :currency_type, TradeItem::CURRENCY_TYPES %>
+      <%= form.number_field :currency_amount, min: 1 %>
+      <%= form.submit "Add Currency" %>
+    <% end %>
+  </section>
+
+  <section class="trade-net">
+    <p>Net gold delta: <%= @preview.net_gold %></p>
+    <p>Net premium tokens: <%= @preview.net_premium_tokens %></p>
+  </section>
+
+  <%= button_to "Confirm Trade", trade_session_path(@trade_session), method: :put, data: {turbo_confirm: "Confirm trade?"} %>
 </section>

@@ -11,14 +11,15 @@
 - `TradeSession`, `TradeItem` — secure, dual-confirmed trades including item + currency payloads.
 
 ## Services & Workflows
-- `Economy::TaxCalculator` applies dynamic city + ownership modifiers to auction taxes.
-- `Marketplace::ListingEngine` validates params, calculates tax, and persists `AuctionListing` rows.
-- `Trades::SessionManager` starts sessions, enforces TTL, and handles two-step confirmations.
+- `Economy::WalletService` centralizes currency adjustments/soft caps. `Economy::TaxCalculator` + `Economy::ListingFeeCalculator` apply city/ownership modifiers, and `Economy::ListingCapEnforcer` keeps inflation in check.
+- `Marketplace::ListingEngine` validates params, calculates tax/fees, and persists `AuctionListing` rows. `Marketplace::ListingFilter` powers advanced search UI.
+- `Trades::SessionManager` starts sessions, enforces TTL, and handles two-step confirmations; `Trades::PreviewBuilder` powers the anti-scam UI and `Trades::SettlementService` moves currency/premium tokens after completion.
+- `Economy::AnalyticsReporter` + `Economy::FraudDetector` feed `EconomicSnapshot`/`EconomyAlert` tables via `EconomyAnalyticsJob`.
 
 ## Controllers & UI
 - `AuctionListingsController` (`index/new/create/show`) with nested `AuctionBidsController#create` for bidding.
 - `MarketplaceKiosksController#index` lists quick-sell kiosks and provides a form to add entries.
-- `TradeSessionsController` handles starting, viewing, and confirming trade sessions; view `app/views/trade_sessions/show.html.erb` summarizes contributions and exposes a confirm button.
+- `TradeSessionsController` handles starting, viewing, and confirming trade sessions; `TradeItemsController` manages per-player contributions. View `app/views/trade_sessions/show.html.erb` renders the contribution preview before confirmation.
 
 ## Policies & Security
 - `AuctionListingPolicy`, `TradeSessionPolicy` ensure only verified players list/bid and only participants confirm trades.

@@ -58,6 +58,12 @@ module Payments
         raise InsufficientBalanceError, "Cannot spend more tokens than available" if new_balance.negative?
 
         user.update!(premium_tokens_balance: new_balance)
+        wallet = user.currency_wallet || user.create_currency_wallet!(
+          gold_balance: 0,
+          silver_balance: 0,
+          premium_tokens_balance: user.premium_tokens_balance
+        )
+        wallet.update!(premium_tokens_balance: new_balance)
 
         entry = user.premium_token_ledger_entries.create!(
           entry_type: entry_type,

@@ -2,7 +2,10 @@
 
 class AuctionListingsController < ApplicationController
   def index
-    @auction_listings = policy_scope(AuctionListing).live.order(ends_at: :asc)
+    scope = policy_scope(AuctionListing).live.order(ends_at: :asc)
+    @filter_params = filter_params
+    @listing_filter = Marketplace::ListingFilter.new(scope:, params: @filter_params)
+    @auction_listings = @listing_filter.call
   end
 
   def new
@@ -40,7 +43,12 @@ class AuctionListingsController < ApplicationController
       :required_profession_id,
       :required_skill_level,
       :commission_scope,
+      :override_inflation_controls,
       item_metadata: {}
     )
+  end
+
+  def filter_params
+    params.fetch(:filter, {}).permit(:item_type, :rarity, :currency_type, :stat_key, :stat_min)
   end
 end
