@@ -5,8 +5,8 @@ RSpec.describe Users::ProfileStats do
   let(:character) { create(:character, user:) }
   let(:quest_chain) { create(:quest_chain) }
   let(:quest) do
-    Quest.where(key: "stat_allocation_tutorial").delete_all
-    create(:quest, quest_chain:, key: "stat_allocation_tutorial")
+    Quest.find_by(key: "stat_allocation_tutorial") ||
+      create(:quest, quest_chain:, key: "stat_allocation_tutorial")
   end
 
   before do

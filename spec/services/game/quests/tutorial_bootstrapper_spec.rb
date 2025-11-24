@@ -5,9 +5,15 @@ RSpec.describe Game::Quests::TutorialBootstrapper do
   let(:quest_chain) { create(:quest_chain) }
 
   before do
-    %w[movement_tutorial combat_tutorial stat_allocation_tutorial gear_upgrade_tutorial].each do |key|
-      Quest.where(key: key).delete_all
-      create(:quest, quest_chain:, key:)
+    %w[movement_tutorial combat_tutorial stat_allocation_tutorial gear_upgrade_tutorial].each_with_index do |key, index|
+      Quest.find_or_create_by!(key:) do |quest|
+        quest.quest_chain = quest_chain
+        quest.title = key.humanize
+        quest.summary = "Tutorial quest for #{key.humanize}"
+        quest.sequence = index + 1
+        quest.quest_type = :main_story
+        quest.chapter = 0
+      end
     end
   end
 
