@@ -4,7 +4,7 @@
 # to make the web console appear.
 development:
   adapter: redis
-  url: <%= ENV.fetch("REDIS_CABLE_URL", "redis://localhost:6382/0") %>
+  url: <%= ENV.fetch("REDIS_CABLE_URL", "redis://localhost:6379/0") %>
   channel_prefix: mmorpg_development
 
 test:
@@ -12,5 +12,5 @@ test:
 
 production:
   adapter: redis
-  url: <%= ENV.fetch("REDIS_CABLE_URL", "redis://localhost:6382/2") %>
+  url: <%= ENV.fetch("REDIS_CABLE_URL", "redis://localhost:6379/2") %>
   channel_prefix: mmorpg_production

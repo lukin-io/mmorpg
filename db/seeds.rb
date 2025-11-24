@@ -1,9 +1,16 @@
+lukin_user = nil
+
 if defined?(User)
   admin = User.find_or_create_by!(email: "admin@neverlands.test") do |user|
     user.password = "ChangeMe123!"
     user.confirmed_at = Time.current
   end
   admin.add_role(:admin)
+
+  lukin_user = User.find_or_create_by!(email: "lukin.maksim@gmail.com") do |user|
+    user.password = "password!"
+    user.confirmed_at = Time.current
+  end
 end
 
 if defined?(ClassSpecialization) && defined?(CharacterClass)
@@ -72,6 +79,12 @@ end
 if defined?(Flipper)
   %i[combat_system guilds housing].each do |feature|
     Flipper.add(feature)
+  end
+
+  if lukin_user
+    Flipper.disable(:combat_system, lukin_user)
+    Flipper.disable(:housing, lukin_user)
+    Flipper.disable(:guilds, lukin_user)
   end
 end
 
