@@ -4,10 +4,7 @@ RSpec.describe Users::ProfileStats do
   let(:user) { create(:user) }
   let(:character) { create(:character, user:) }
   let(:quest_chain) { create(:quest_chain) }
-  let(:quest) do
-    Quest.find_by(key: "stat_allocation_tutorial") ||
-      create(:quest, quest_chain:, key: "stat_allocation_tutorial")
-  end
+  let(:quest) { create(:quest, quest_chain:, key: "profile_stats_#{SecureRandom.hex(4)}") }
 
   before do
     battle = create(:battle, initiator: character)
