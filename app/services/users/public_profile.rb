@@ -24,13 +24,7 @@ module Users
     attr_reader :user
 
     def achievements_payload
-      user.achievement_grants.includes(:achievement).map do |grant|
-        {
-          name: grant.achievement.name,
-          points: grant.achievement.points,
-          granted_at: grant.granted_at
-        }
-      end
+      Achievements::ProfileShowcaseBuilder.new(user:).call
     end
 
     def guild_payload

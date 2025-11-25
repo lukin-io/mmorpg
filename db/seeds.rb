@@ -271,14 +271,16 @@ end
 
 if defined?(Achievement)
   [
-    {key: "master_artisan", name: "Master Artisan", reward_type: "housing_trophy", reward_payload: {"trophy_name" => "Forgemaster Bust"}},
-    {key: "legendary_artisan", name: "Legendary Artisan", reward_type: "title", reward_payload: {"title" => "Artisan of Legends"}}
+    {key: "master_artisan", name: "Master Artisan", reward_type: "housing_trophy", reward_payload: {"trophy_name" => "Forgemaster Bust"}, category: "crafting"},
+    {key: "legendary_artisan", name: "Legendary Artisan", reward_type: "title", reward_payload: {"title_key" => "legendary_artisan_title"}, category: "crafting"}
   ].each do |attrs|
-    Achievement.find_or_create_by!(key: attrs[:key]) do |achievement|
-      achievement.name = attrs[:name]
-      achievement.reward_type = attrs[:reward_type]
-      achievement.reward_payload = attrs[:reward_payload]
-    end
+    achievement = Achievement.find_or_initialize_by(key: attrs[:key])
+    achievement.name = attrs[:name]
+    achievement.reward_type = attrs[:reward_type]
+    achievement.reward_payload = attrs[:reward_payload]
+    achievement.category = attrs[:category] || "general"
+    achievement.display_priority = attrs[:display_priority] || 0
+    achievement.save!
   end
 end
 
@@ -483,5 +485,428 @@ if defined?(ArenaSeason)
     season.starts_at = 1.week.ago
     season.ends_at = 1.month.from_now
     season.metadata = {"description" => "Launch window ranked play."}
+  end
+end
+
+# ------------------------------------------------------------------
+# Gameplay feature sandboxes used by flow + feature documentation
+# ------------------------------------------------------------------
+admin ||= User.find_by(email: "admin@neverlands.test")
+lukin_user ||= User.find_by(email: "lukin.maksim@gmail.com")
+
+main_character = nil
+secondary_character = nil
+lukin_character = nil
+
+if defined?(Character) && admin
+  warrior = CharacterClass.find_by(name: "Warrior")
+  mage = CharacterClass.find_by(name: "Mage")
+  hunter = CharacterClass.find_by(name: "Hunter")
+
+  if warrior
+    main_character = Character.find_or_create_by!(user: admin, name: "Aldric Stormguard") do |char|
+      char.character_class = warrior
+      char.level = 22
+      char.experience = 125_000
+      char.faction_alignment = "alliance"
+      char.alignment_score = 15
+      char.reputation = 1_200
+      char.allocated_stats = {"strength" => 16, "vitality" => 12, "agility" => 5}
+      char.resource_pools = {"rage" => {"current" => 70, "max" => 110}}
+      char.metadata = {"battlefield_roles" => %w[tank leader]}
+    end
+    main_character.reload
+    main_character.inventory || main_character.create_inventory!(slot_capacity: 48, weight_capacity: 160)
+  end
+
+  if mage
+    secondary_character = Character.find_or_create_by!(user: admin, name: "Lyra Dawnsong") do |char|
+      char.character_class = mage
+      char.level = 18
+      char.experience = 82_000
+      char.faction_alignment = "alliance"
+      char.alignment_score = 6
+      char.reputation = 640
+      char.allocated_stats = {"intellect" => 18, "vitality" => 6, "agility" => 4}
+      char.resource_pools = {"mana" => {"current" => 125, "max" => 150}}
+      char.metadata = {"battlefield_roles" => %w[burst support]}
+    end
+    secondary_character.reload
+    secondary_character.inventory || secondary_character.create_inventory!(slot_capacity: 42, weight_capacity: 130)
+  end
+
+  if hunter && lukin_user
+    lukin_character = Character.find_or_create_by!(user: lukin_user, name: "Rovan Emberfall") do |char|
+      char.character_class = hunter
+      char.level = 16
+      char.experience = 61_000
+      char.faction_alignment = "rebellion"
+      char.alignment_score = 2
+      char.reputation = 480
+      char.allocated_stats = {"agility" => 14, "strength" => 7, "vitality" => 5}
+      char.resource_pools = {"focus" => {"current" => 90, "max" => 120}}
+      char.metadata = {"battlefield_roles" => %w[scout archer]}
+    end
+    lukin_character.reload
+    lukin_character.inventory || lukin_character.create_inventory!(slot_capacity: 36, weight_capacity: 140)
+  end
+end
+
+if defined?(ProfessionProgress) && main_character
+  smithing = Profession.find_by(name: "Blacksmithing")
+  herbalism = Profession.find_by(name: "Herbalism")
+
+  if smithing
+    ProfessionProgress.find_or_create_by!(character: main_character, profession: smithing) do |progress|
+      progress.user = admin
+      progress.skill_level = 9
+      progress.experience = 420
+      progress.slot_kind = "primary"
+      progress.metadata = {"buff_bonus" => 12, "specializations" => ["weaponry"]}
+    end
+  end
+
+  if herbalism
+    ProfessionProgress.find_or_create_by!(character: main_character, profession: herbalism) do |progress|
+      progress.user = admin
+      progress.skill_level = 5
+      progress.experience = 180
+      progress.slot_kind = "gathering"
+      progress.metadata = {"trail_bonus" => 8, "foraging_route" => "whispering_woods"}
+    end
+  end
+end
+
+if defined?(ItemTemplate)
+  longsword_template = ItemTemplate.find_or_create_by!(name: "Tempered Longsword") do |item|
+    item.slot = "weapon"
+    item.rarity = "rare"
+    item.stat_modifiers = {"attack" => 18, "crit" => 5}
+    item.weight = 5
+    item.enhancement_rules = {"base_success_chance" => 60, "required_skill_level" => 6}
+  end
+
+  elixir_template = ItemTemplate.find_or_create_by!(name: "Aetheric Elixir") do |item|
+    item.slot = "consumable"
+    item.rarity = "epic"
+    item.stat_modifiers = {"intellect" => 6}
+    item.weight = 1
+    item.enhancement_rules = {"consumable" => true}
+  end
+end
+
+if defined?(CraftingJob) && main_character
+  smith_recipe = Recipe.find_by(name: "Tempered Longsword")
+  forge = CraftingStation.find_by(name: "Castleton Forge")
+  if smith_recipe && forge
+    active_job = CraftingJob.find_or_initialize_by(
+      character: main_character,
+      recipe: smith_recipe,
+      status: :in_progress
+    )
+    active_job.user = admin
+    active_job.crafting_station = forge
+    active_job.batch_quantity = 2
+    active_job.started_at ||= 10.minutes.ago
+    active_job.completes_at = 5.minutes.from_now
+    active_job.success_chance = 82
+    active_job.quality_score = 84
+    active_job.quality_tier = :rare
+    active_job.result_payload = {"preview" => {"items" => [{"name" => "Tempered Longsword", "quantity" => 2, "quality" => "rare"}]}}
+    active_job.portable_penalty_applied = false
+    active_job.save!
+  end
+
+  alchemy_recipe = Recipe.find_by(name: "Aetheric Elixir")
+  guild_station = CraftingStation.find_by(name: "Guild Hall Loom")
+  if alchemy_recipe && guild_station && secondary_character
+    completed_job = CraftingJob.find_or_initialize_by(
+      character: secondary_character,
+      recipe: alchemy_recipe,
+      status: :completed
+    )
+    completed_job.user = admin
+    completed_job.crafting_station = guild_station
+    completed_job.batch_quantity = 1
+    completed_job.started_at ||= 50.minutes.ago
+    completed_job.completes_at ||= 35.minutes.ago
+    completed_job.success_chance = 76
+    completed_job.quality_score = 91
+    completed_job.quality_tier = :epic
+    completed_job.result_payload = {"items" => [{"name" => "Aetheric Elixir", "quantity" => 1, "quality" => "epic"}]}
+    completed_job.portable_penalty_applied = false
+    completed_job.save!
+  end
+end
+
+if defined?(InventoryItem)
+  if main_character&.inventory && (longsword_template = ItemTemplate.find_by(name: "Tempered Longsword"))
+    InventoryItem.find_or_create_by!(inventory: main_character.inventory, item_template: longsword_template) do |item|
+      item.quantity = 1
+      item.weight = longsword_template.weight
+      item.enhancement_level = 2
+      item.properties = {"crafted_by" => "Aldric", "quality_score" => 84}
+      item.slot_kind = "weapon"
+    end
+  end
+
+  if secondary_character&.inventory && (elixir_template = ItemTemplate.find_by(name: "Aetheric Elixir"))
+    InventoryItem.find_or_create_by!(inventory: secondary_character.inventory, item_template: elixir_template) do |item|
+      item.quantity = 2
+      item.weight = elixir_template.weight
+      item.properties = {"batch_id" => "winter-festival-brew", "quality_score" => 91}
+      item.slot_kind = "consumable"
+    end
+  end
+end
+
+housing_plot = nil
+
+if defined?(HousingPlot) && admin
+  guild_id = admin.primary_guild&.id
+  housing_plot = HousingPlot.find_or_create_by!(user: admin, location_key: "castleton_upper", plot_type: "townhome") do |plot|
+    plot.plot_tier = "deluxe"
+    plot.exterior_style = "aurora"
+    plot.room_slots = 4
+    plot.utility_slots = 2
+    plot.storage_slots = 60
+    plot.showcase_enabled = true
+    plot.visit_scope = guild_id ? "guild" : "friends"
+    plot.access_rules = {"friends_can_decorate" => true, "guild_ids" => Array(guild_id)}
+    plot.upkeep_gold_cost = 450
+    plot.next_upkeep_due_at = 3.days.from_now
+  end
+end
+
+if defined?(HousingDecorItem) && housing_plot
+  HousingDecorItem.find_or_create_by!(housing_plot:, name: "Forgemaster Bust Trophy") do |decor|
+    decor.decor_type = :trophy
+    decor.trophy = true
+    decor.placement = {"room" => "atrium", "x" => 2, "y" => 1}
+    decor.metadata = {"achievement_key" => "master_artisan", "lighting" => "ember"}
+  end
+
+  HousingDecorItem.find_or_create_by!(housing_plot:, name: "Arcane Anvil") do |decor|
+    decor.decor_type = :utility
+    decor.placement = {"room" => "workshop", "x" => 0, "y" => 0}
+    decor.metadata = {"buff_key" => "crafting_speed", "bonus_percent" => 8}
+    decor.utility_slot = 1
+  end
+end
+
+if defined?(PetCompanion) && admin
+  fox_species = PetSpecies.find_by(name: "Silver Fox")
+  if fox_species
+    PetCompanion.find_or_create_by!(user: admin, pet_species: fox_species) do |pet|
+      pet.nickname = "Ember"
+      pet.level = 7
+      pet.bonding_experience = 360
+      pet.affinity_stage = :friendly
+      pet.gathering_bonus = 12
+      pet.passive_bonus_type = "herbalism_speed"
+      pet.passive_bonus_value = 5
+      pet.care_state = {"last_task" => "moonlit-run"}
+      pet.care_task_available_at = 1.hour.from_now
+    end
+  end
+end
+
+if defined?(MountStableSlot) && defined?(Mount) && admin
+  slot = MountStableSlot.find_or_create_by!(user: admin, slot_index: 0) do |stable_slot|
+    stable_slot.status = :active
+    stable_slot.unlocked_at = 5.days.ago
+    stable_slot.cosmetics = {"banners" => ["winter_festival"]}
+  end
+
+  mount = Mount.find_or_create_by!(user: admin, name: "Stormglide") do |m|
+    m.mount_type = "gryphon"
+    m.faction_key = "alliance"
+    m.rarity = "epic"
+    m.speed_bonus = 35
+    m.summon_state = :summoned
+    m.cosmetic_variant = "frostfeather"
+    m.appearance = {"armour" => "silver", "trail" => "aurora"}
+  end
+
+  mount.update!(mount_stable_slot: slot)
+  slot.update!(current_mount: mount) unless slot.current_mount_id == mount.id
+end
+
+if defined?(AchievementGrant) && admin
+  %w[master_artisan legendary_artisan].each_with_index do |key, index|
+    achievement = Achievement.find_by(key:)
+    next unless achievement
+
+    AchievementGrant.find_or_create_by!(user: admin, achievement:) do |grant|
+      grant.source = "seed.story_reward"
+      grant.granted_at = (index + 1).days.ago
+    end
+  end
+end
+
+if defined?(Title) && defined?(TitleGrant) && admin
+  artisan_title = Title.find_or_create_by!(requirement_key: "legendary_artisan_title") do |title|
+    title.name = "Legendary Artisan"
+    title.perks = {"housing_storage_bonus" => 10, "crafting_quality_bonus" => 3}
+    title.priority_party_finder = true
+  end
+
+  TitleGrant.find_or_create_by!(user: admin, title: artisan_title) do |grant|
+    grant.source = "achievement.legendary_artisan"
+    grant.granted_at = 1.day.ago
+    grant.equipped = true
+  end
+
+  admin.update!(active_title: artisan_title) if admin.respond_to?(:active_title=)
+end
+
+admin_wallet = nil
+
+if defined?(CurrencyWallet)
+  if admin
+    admin_wallet = admin.currency_wallet || CurrencyWallet.create!(user: admin)
+    admin_wallet.adjust!(currency: :gold, amount: 7_500, reason: "seed.story_reward", metadata: {"source" => "winter_festival"})
+    admin_wallet.adjust!(currency: :gold, amount: -350, reason: "sink.housing_upkeep", metadata: {"housing_plot_id" => housing_plot&.id})
+    admin_wallet.adjust!(currency: :silver, amount: 1_200, reason: "seed.market_sale", metadata: {"item" => "Tempered Longsword"})
+    admin_wallet.adjust!(currency: :premium_tokens, amount: 40, reason: "seed.founders_pack")
+  end
+
+  if lukin_user
+    wallet = lukin_user.currency_wallet || CurrencyWallet.create!(user: lukin_user)
+    wallet.adjust!(currency: :gold, amount: 4_200, reason: "seed.pvp_rewards")
+    wallet.adjust!(currency: :gold, amount: -600, reason: "sink.auction_bid", metadata: {"item" => "Tempered Longsword"})
+    wallet.adjust!(currency: :silver, amount: 800, reason: "seed.trade_posting")
+  end
+end
+
+if defined?(PremiumTokenLedgerEntry) && admin_wallet
+  PremiumTokenLedgerEntry.find_or_create_by!(user: admin, entry_type: :purchase, reason: "founders.pack") do |entry|
+    entry.delta = 40
+    entry.balance_after = admin_wallet.premium_tokens_balance
+    entry.metadata = {"source" => "seed"}
+  end
+end
+
+if defined?(AuctionListing) && defined?(AuctionBid) && admin && lukin_user
+  listing = AuctionListing.find_or_create_by!(seller: admin, item_name: "Tempered Longsword") do |auction|
+    auction.currency_type = "gold"
+    auction.status = :active
+    auction.location_key = "castleton_market"
+    auction.quantity = 1
+    auction.starting_bid = 1_200
+    auction.buyout_price = 2_200
+    auction.ends_at = 6.hours.from_now
+    auction.item_metadata = {"rarity" => "rare", "item_type" => "weapon", "stats" => {"attack" => 18}}
+  end
+
+  AuctionBid.find_or_create_by!(auction_listing: listing, bidder: lukin_user) do |bid|
+    bid.amount = 1_500
+  end
+end
+
+event_instance = nil
+
+if defined?(EventInstance) && defined?(GameEvent)
+  festival_event = GameEvent.find_by(slug: "winter_festival")
+  if festival_event
+    event_instance = EventInstance.find_or_create_by!(game_event: festival_event, status: :active) do |instance|
+      instance.starts_at = 1.day.ago
+      instance.ends_at = 6.days.from_now
+      instance.announcer_npc_key = "captain_elara"
+      instance.metadata = {"featured_quest_key" => "movement_tutorial", "bonus_rewards" => ["winter_token"]}
+    end
+    unless event_instance.starts_at
+      event_instance.update!(
+        starts_at: 1.day.ago,
+        ends_at: 6.days.from_now,
+        metadata: event_instance.metadata.merge("featured_quest_key" => "movement_tutorial")
+      )
+    end
+  end
+end
+
+if defined?(CommunityObjective) && event_instance
+  CommunityObjective.find_or_create_by!(event_instance:, resource_key: "donated_ice_shards") do |objective|
+    objective.title = "Reinforce the Ice Sculptures"
+    objective.goal_amount = 10_000
+    objective.current_amount = 6_450
+    objective.status = :tracking
+    objective.metadata = {
+      "top_contributors" => [
+        {"user" => admin&.email, "amount" => 1_200},
+        {"user" => lukin_user&.email, "amount" => 640}
+      ],
+      "checkpoint_rewards" => {"2500" => "festival_fireworks", "7500" => "housing_banner"}
+    }
+  end
+end
+
+if defined?(Announcement) && event_instance
+  Announcement.find_or_create_by!(title: "Winter Festival Live!") do |announcement|
+    announcement.body = <<~BODY
+      The Winter Festival event instance #{event_instance.id} is now active in Castleton Keep.
+      Donate ice shards to reinforce the sculptures, chase limited quests, and unlock the Stormglide gryphon cosmetic variant.
+    BODY
+  end
+end
+
+if defined?(QuestAssignment) && main_character
+  in_progress_quest = Quest.find_by(key: "movement_tutorial")
+  completed_quest = Quest.find_by(key: "combat_tutorial")
+  failed_quest = Quest.find_by(key: "gear_upgrade_tutorial")
+
+  if in_progress_quest
+    assignment = QuestAssignment.find_or_create_by!(quest: in_progress_quest, character: main_character)
+    assignment.update!(
+      status: :in_progress,
+      started_at: 2.hours.ago,
+      expires_at: 1.day.from_now,
+      progress: {"current_step_position" => 3, "decisions" => {"bridge" => "ambush-route"}},
+      metadata: {"story_flags" => ["met_scout"], "branch" => "shadow_path"}
+    )
+  end
+
+  if completed_quest
+    completed_assignment = QuestAssignment.find_or_create_by!(quest: completed_quest, character: main_character)
+    completed_assignment.update!(
+      status: :completed,
+      started_at: 5.hours.ago,
+      completed_at: 2.hours.ago,
+      rewards_claimed_at: 90.minutes.ago,
+      progress: {"current_step_position" => 5, "completed" => true, "decisions" => {"arena" => "parley"}},
+      metadata: {"story_flags" => ["trained_with_captain"], "branch" => "valor"}
+    )
+  end
+
+  if failed_quest
+    failed_assignment = QuestAssignment.find_or_create_by!(quest: failed_quest, character: main_character)
+    failed_assignment.update!(
+      status: :failed,
+      started_at: 1.day.ago,
+      abandoned_at: 12.hours.ago,
+      abandon_reason: "timed_out",
+      progress: {"current_step_position" => 2, "failure_step" => 2, "decisions" => {"forge" => "delay"}},
+      metadata: {
+        "story_flags" => ["missed_patrol"],
+        "branch" => "reckless",
+        "event_instance_id" => event_instance&.id,
+        "failure_report" => {"cause" => "breach", "npc" => "Captain Elara"}
+      }
+    )
+  end
+end
+
+if defined?(QuestAnalyticsSnapshot)
+  QuestAnalyticsSnapshot.find_or_create_by!(captured_on: Date.current, quest_chain_key: "main_story") do |snapshot|
+    snapshot.completion_rate = 82.5
+    snapshot.abandon_rate = 12.0
+    snapshot.avg_completion_minutes = 26
+    snapshot.bottleneck_step_key = "gear_upgrade_tutorial.step2"
+    snapshot.bottleneck_step_position = 2
+    snapshot.metadata = {
+      "event_instance_id" => event_instance&.id,
+      "top_branches" => {"valor" => 58, "shadow_path" => 31},
+      "failure_examples" => [{"quest_key" => "gear_upgrade_tutorial", "reason" => "timed_out"}]
+    }
   end
 end

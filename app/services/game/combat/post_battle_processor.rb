@@ -21,7 +21,12 @@ module Game
         apply_doctor_support!
         schedule_respawns!
         apply_infirmary_support!
-        battle.update!(status: :completed, ended_at: Time.current) if battle.status != "completed"
+        if battle.status != "completed"
+          battle.update!(status: :completed, ended_at: Time.current)
+          Combat::AggregateStatsJob.perform_later(battle.id)
+        else
+          Combat::AggregateStatsJob.perform_later(battle.id) unless battle.combat_analytics_report
+        end
         updates
       end
 

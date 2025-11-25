@@ -20,6 +20,7 @@ class Battle < ApplicationRecord
   belongs_to :initiator, class_name: "Character"
   has_many :battle_participants, dependent: :destroy
   has_many :combat_log_entries, dependent: :destroy
+  has_one :combat_analytics_report, dependent: :destroy
 
   validates :turn_number, numericality: {greater_than: 0}
   validates :pvp_mode, inclusion: {in: PVP_MODES}, allow_nil: true

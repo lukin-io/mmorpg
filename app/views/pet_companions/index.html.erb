@@ -1,20 +1,56 @@
-<section>
-  <header>
-    <h1>Pets</h1>
+<section class="pets-panel">
+  <header class="mb-4">
+    <h1 class="text-3xl font-semibold">Companion Pets</h1>
+    <p class="text-slate-400">Keep companions happy to unlock passive buffs and gathering bonuses.</p>
   </header>
 
-  <ul>
+  <div class="grid gap-4 md:grid-cols-2">
     <% @pet_companions.each do |pet| %>
-      <li><%= pet.nickname || pet.pet_species.name %> — Level <%= pet.level %></li>
-    <% end %>
-  </ul>
+      <article class="bg-slate-900 rounded-lg p-4 shadow" data-mobile-hud-target="panel" id="<%= dom_id(pet) %>">
+        <header class="flex justify-between items-center">
+          <div>
+            <h2 class="text-xl font-semibold"><%= pet.nickname || pet.pet_species.name %></h2>
+            <p class="text-sm text-slate-400">Level <%= pet.level %> • <%= pet.affinity_stage.titleize %> — <%= pet.bonding_experience %> XP</p>
+          </div>
+          <div class="text-right text-xs text-slate-500">
+            <p>Passive Combat Bonus: <%= pet.passive_bonuses[:combat] %>%</p>
+            <p>Gathering Bonus: <%= pet.passive_bonuses[:gathering] %>%</p>
+          </div>
+        </header>
 
-  <section>
-    <h2>Adopt Pet</h2>
-    <%= form_with model: PetCompanion.new, url: pet_companions_path do |form| %>
-      <%= form.collection_select :pet_species_id, PetSpecies.all.order(:name), :id, :name %>
-      <%= form.text_field :nickname, placeholder: "Nickname" %>
-      <%= form.submit "Adopt" %>
+        <section class="mt-3">
+          <h3 class="text-sm uppercase tracking-wide text-slate-500">Care Tasks</h3>
+          <div class="flex flex-wrap gap-2 mt-2">
+            <% @care_tasks.each do |task_key, task| %>
+              <%= button_to "#{task_key.to_s.titleize} (+#{task[:bonding_xp]}xp)",
+                care_pet_companion_path(pet, task: task_key),
+                method: :post,
+                class: "btn-secondary text-sm",
+                disabled: !pet.care_available? %>
+            <% end %>
+          </div>
+          <% unless pet.care_available? %>
+            <p class="text-xs text-slate-400 mt-2">Care ready <%= time_ago_in_words(pet.care_task_available_at) %> from now.</p>
+          <% end %>
+        </section>
+      </article>
+    <% end %>
+  </div>
+
+  <section class="mt-6 border-t border-slate-800 pt-4">
+    <h2 class="text-2xl font-semibold mb-2">Adopt New Companion</h2>
+    <%= form_with model: PetCompanion.new, url: pet_companions_path, class: "grid md:grid-cols-3 gap-3" do |form| %>
+      <div>
+        <%= form.label :pet_species_id, "Species" %>
+        <%= form.collection_select :pet_species_id, PetSpecies.order(:name), :id, :name %>
+      </div>
+      <div>
+        <%= form.label :nickname %>
+        <%= form.text_field :nickname, placeholder: "Nickname" %>
+      </div>
+      <div class="self-end">
+        <%= form.submit "Adopt Companion", class: "btn-primary w-full" %>
+      </div>
     <% end %>
   </section>
 </section>
