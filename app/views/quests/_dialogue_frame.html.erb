@@ -3,15 +3,53 @@
     <header>
       <h2><%= quest.title %></h2>
       <p class="text-muted"><%= quest.summary %></p>
+      <p class="quest-dialogue__meta">
+        Difficulty: <strong><%= quest.difficulty_tier.humanize %></strong> ·
+        Recommended party: <%= quest.recommended_party_size %>
+      </p>
     </header>
+
+    <% if story_result&.completed? %>
+      <div class="alert alert-success">Narrative arc completed. Claim rewards below.</div>
+    <% elsif story_result&.failed? %>
+      <div class="alert alert-warning">Branch failed—check objectives for recovery steps.</div>
+    <% end %>
 
     <%= render "objectives", quest: quest %>
 
+    <%= render "story_step",
+      quest: quest,
+      assignment: assignment,
+      current_step: current_step,
+      next_step: next_step %>
+
+    <%= render "map_overlay", pins: map_pins %>
+
+    <% if reward_result.present? %>
+      <section class="quest-rewards">
+        <h3>Rewards Granted</h3>
+        <pre><%= JSON.pretty_generate(reward_result.applied) %></pre>
+      </section>
+    <% elsif assignment.completed? && assignment.rewards_claimed? %>
+      <section class="quest-rewards">
+        <h3>Rewards</h3>
+        <p class="text-muted">Rewards already claimed.</p>
+      </section>
+    <% end %>
+
     <div class="quest-dialogue__actions">
       <% if assignment.pending? %>
-        <%= button_to "Accept Quest", accept_quest_path(quest), method: :post, class: "btn btn-primary" %>
+        <%= button_to "Accept Quest",
+          accept_quest_path(quest),
+          method: :post,
+          data: { turbo_frame: "quest-dialogue" },
+          class: "btn btn-primary" %>
       <% elsif assignment.in_progress? %>
-        <%= button_to "Complete Quest", complete_quest_path(quest), method: :post, class: "btn" %>
+        <%= button_to "Mark Complete",
+          complete_quest_path(quest),
+          method: :post,
+          data: { turbo_frame: "quest-dialogue" },
+          class: "btn" %>
       <% else %>
         <p>Quest status: <strong><%= assignment.status.humanize %></strong></p>
       <% end %>

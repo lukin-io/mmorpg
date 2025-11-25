@@ -86,8 +86,9 @@ The `doc/features/3_player.md` specification is now wired into the codebase:
 
 - **Deterministic World Data** — `config/gameplay/world/*.yml` defines Neverlands regions, landmarks, hidden areas, and resource nodes consumed by `Game::World::RegionCatalog`, `Game::World::Region`, and `Economy::TaxCalculator` for territory buffs/taxes.
 - **NPCs & Monsters** — `Game::World::PopulationDirectory` merges NPC archetypes + monster taxonomy (rarity, respawn timers) with optional overrides from `SpawnSchedule`, surfacing data to `Game::Exploration::EncounterResolver`.
-- **Quests & Narrative** — `Quest*` models plus `Game::Quests::ChainProgression`, `DailyRotation`, and `DynamicHookResolver` manage main, side, daily, and event quests. `QuestsController` ships a Hotwire quest log/dialogue UI optimized for mobile via the new `layout-stack` Stimulus controller.
+- **Quests & Narrative** — `Quest*` models plus `Game::Quests::StorylineProgression`, `DailyRotation`, and `DynamicHookResolver` manage main, side, daily, and event quests. `QuestsController` ships a Hotwire quest log/dialogue UI optimized for mobile via the new `layout-stack` Stimulus controller.
 - **Events & Tournaments** — `Game::Events::Scheduler`, `EventInstance`, `ArenaTournament`, and `CommunityObjective` orchestrate seasonal NPCs, brackets, announcers, and drives, with `ScheduledEventJob` spawning instances by slug.
+- **Quest GM Ops & Analytics** — `Admin::GmConsoleController`, `Game::Quests::GmConsoleService`, `QuestAnalyticsJob`, `Analytics::QuestSnapshotCalculator`, and `app/views/admin/gm_console/*` let moderators spawn/disable quests, adjust timers, compensate players, and review completion/abandon bottlenecks sourced from `QuestAnalyticsSnapshot`.
 
 ### 5. Moderation, Safety & Live Ops (Feature 5)
 

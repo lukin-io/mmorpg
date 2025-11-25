@@ -1,9 +1,47 @@
 <div class="quest-card" id="<%= dom_id(assignment) %>">
-  <h3><%= assignment.quest.title %></h3>
-  <p class="text-muted"><%= assignment.quest.summary %></p>
-  <p>Status: <strong><%= assignment.status.humanize %></strong></p>
+  <header class="quest-card__header">
+    <div>
+      <h3><%= assignment.quest.title %></h3>
+      <p class="text-muted"><%= assignment.quest.summary %></p>
+    </div>
+    <span class="badge">
+      <%= assignment.quest.quest_type.humanize %>
+    </span>
+  </header>
+
+  <dl class="quest-card__meta">
+    <div>
+      <dt>Difficulty</dt>
+      <dd><%= assignment.quest.difficulty_tier.humanize %></dd>
+    </div>
+    <div>
+      <dt>Party</dt>
+      <dd><%= assignment.quest.recommended_party_size %> Adventurer<%= "s" if assignment.quest.recommended_party_size > 1 %></dd>
+    </div>
+    <div>
+      <dt>Status</dt>
+      <dd><strong><%= assignment.status.humanize %></strong></dd>
+    </div>
+    <% if assignment.next_available_at.present? %>
+      <div>
+        <dt>Next Reset</dt>
+        <dd><%= l assignment.next_available_at, format: :short %></dd>
+      </div>
+    <% end %>
+  </dl>
+
+  <div class="quest-card__requirements">
+    <span>Requires Level <%= assignment.quest.min_level %>+</span>
+    <span>Reputation <%= assignment.quest.min_reputation %>+</span>
+    <% if assignment.quest.quest_chapter&.faction_alignment.present? %>
+      <span>Alignment: <%= assignment.quest.quest_chapter.faction_alignment.humanize %></span>
+    <% end %>
+  </div>
+
   <div class="quest-card__actions">
-    <%= link_to "View", quest_path(assignment.quest), data: {turbo_frame: "quest-dialogue"}, class: "btn" %>
+    <%= link_to "View Details", quest_path(assignment.quest),
+      data: {turbo_frame: "quest-dialogue"},
+      class: "btn" %>
   </div>
 </div>
 

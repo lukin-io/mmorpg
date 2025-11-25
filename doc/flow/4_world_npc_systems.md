@@ -28,7 +28,7 @@ date: 2025-11-22
 
 ## Quests & Narrative
 - Schema: `quest_chains`, `quests`, `quest_objectives`, `quest_assignments`, and `cutscene_events`.
-- Services: `Game::Quests::ChainProgression` gates sequential unlocks; `DailyRotation` handles morning/afternoon/evening resets; `DynamicHookResolver` unlocks seasonal/tournament quests.
+- Services: `Game::Quests::StorylineProgression` gates sequential unlocks; `DailyRotation` handles morning/afternoon/evening resets; `DynamicHookResolver` unlocks seasonal/tournament quests.
 - Controller/UI: `QuestsController` (Hotwire) renders quest log, dialogue, dailies, and magistrate links; responsive layout ensures stacked panels on mobile browsers.
 - Data: assignments attach to `Character`, enabling per-character state for main, side, daily, and event hooks.
 

@@ -1,0 +1,103 @@
+<div class="page-header">
+  <h1>Quest GM Console</h1>
+  <p class="text-muted">Spawn quests, pause problematic content, adjust timers, and compensate players after incidents.</p>
+</div>
+
+<div class="gm-console-grid">
+  <section>
+    <h2>Spawn Quest Assignment</h2>
+    <%= form_with url: spawn_admin_gm_console_path, scope: :gm, method: :post do |form| %>
+      <div class="field">
+        <%= form.label :quest_key %>
+        <%= form.select :quest_key, options_from_collection_for_select(@quests, :key, :title) %>
+      </div>
+      <div class="field">
+        <%= form.label :character_id %>
+        <%= form.number_field :character_id, min: 1, required: true %>
+      </div>
+      <%= form.submit "Spawn", class: "btn btn-primary" %>
+    <% end %>
+  </section>
+
+  <section>
+    <h2>Disable Quest</h2>
+    <%= form_with url: disable_admin_gm_console_path, scope: :gm, method: :post do |form| %>
+      <div class="field">
+        <%= form.label :quest_key %>
+        <%= form.select :quest_key, options_from_collection_for_select(@quests, :key, :title) %>
+      </div>
+      <div class="field">
+        <%= form.label :reason %>
+        <%= form.text_field :reason, required: true %>
+      </div>
+      <%= form.submit "Disable", class: "btn btn-danger" %>
+    <% end %>
+  </section>
+
+  <section>
+    <h2>Adjust Timers</h2>
+    <%= form_with url: adjust_timers_admin_gm_console_path, scope: :gm, method: :post do |form| %>
+      <div class="field">
+        <%= form.label :quest_key %>
+        <%= form.select :quest_key, options_from_collection_for_select(@quests, :key, :title) %>
+      </div>
+      <div class="field">
+        <%= form.label :minutes, "Minutes to subtract" %>
+        <%= form.number_field :minutes, required: true %>
+      </div>
+      <%= form.submit "Adjust", class: "btn" %>
+    <% end %>
+  </section>
+
+  <section>
+    <h2>Compensate Players</h2>
+    <%= form_with url: compensate_admin_gm_console_path, scope: :gm, method: :post do |form| %>
+      <div class="field">
+        <%= form.label :quest_key %>
+        <%= form.select :quest_key, options_from_collection_for_select(@quests, :key, :title) %>
+      </div>
+      <div class="field">
+        <%= form.label :currency %>
+        <%= form.select :currency, [["Gold", :gold], ["Silver", :silver], ["Premium Tokens", :premium_tokens]] %>
+      </div>
+      <div class="field">
+        <%= form.label :amount %>
+        <%= form.number_field :amount, min: 1, required: true %>
+      </div>
+      <%= form.submit "Compensate", class: "btn" %>
+    <% end %>
+  </section>
+</div>
+
+<section class="quest-analytics">
+  <h2>Quest Analytics Snapshots</h2>
+  <% if @snapshots.any? %>
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Chain</th>
+          <th>Completion %</th>
+          <th>Abandon %</th>
+          <th>Avg Minutes</th>
+          <th>Bottleneck Step</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @snapshots.each do |snapshot| %>
+          <tr>
+            <td><%= snapshot.captured_on %></td>
+            <td><%= snapshot.quest_chain_key %></td>
+            <td><%= snapshot.completion_rate %></td>
+            <td><%= snapshot.abandon_rate %></td>
+            <td><%= snapshot.avg_completion_minutes %></td>
+            <td><%= snapshot.bottleneck_step_key || snapshot.bottleneck_step_position %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% else %>
+    <p class="text-muted">No snapshots generated yet. Schedule QuestAnalyticsJob to populate this table.</p>
+  <% end %>
+</section>
+

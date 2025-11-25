@@ -6,7 +6,8 @@ class ScheduledEventJob < ApplicationJob
   def perform(event_slug, options = {})
     event = GameEvent.find_by!(slug: event_slug)
     Rails.logger.info("Executing scheduled event #{event.slug}")
-    Game::Events::Scheduler.new(event).spawn_instance!(**symbolize_keys(options))
+    instance = Game::Events::Scheduler.new(event).spawn_instance!(**symbolize_keys(options))
+    Game::Events::QuestOrchestrator.new(instance).prepare!(characters: Character.all)
   end
 
   private

@@ -1,0 +1,18 @@
+<section class="quest-map">
+  <h3>Map Overlay</h3>
+  <% if pins.present? %>
+    <ul>
+      <% pins.each do |pin| %>
+        <li>
+          <strong><%= pin["label"] %></strong>
+          <span class="text-muted">
+            <%= pin["type"].to_s.humanize %> · <%= pin["zone"] || "Unknown zone" %>
+          </span>
+        </li>
+      <% end %>
+    </ul>
+  <% else %>
+    <p class="text-muted">No overlay data yet. Designers can add nodes via quest metadata.</p>
+  <% end %>
+</section>
+

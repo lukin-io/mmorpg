@@ -1,0 +1,45 @@
+<section class="quest-story-step">
+  <h3>Story Step</h3>
+  <% if current_step.present? %>
+    <p class="text-muted">
+      <strong><%= current_step.step_type.humanize %></strong>
+      <% if current_step.npc_key.present? %>
+        with <%= current_step.npc_key.humanize %>
+      <% end %>
+    </p>
+
+    <% if current_step.content.present? %>
+      <div class="quest-story-step__content">
+        <% current_step.content.each do |key, value| %>
+          <p><strong><%= key.to_s.humanize %>:</strong> <%= value %></p>
+        <% end %>
+      </div>
+    <% end %>
+
+    <% if current_step.choices.any? %>
+      <div class="quest-story-step__choices">
+        <p>Choose your response:</p>
+        <% current_step.choices.each do |choice| %>
+          <%= button_to choice["label"],
+            advance_story_quest_path(quest, choice_key: choice["key"]),
+            method: :post,
+            form: { data: { turbo_frame: "quest-dialogue" } },
+            class: "btn btn-outline" %>
+        <% end %>
+      </div>
+    <% elsif current_step.requires_confirmation? %>
+      <%= button_to "Continue",
+        advance_story_quest_path(quest),
+        method: :post,
+        form: { data: { turbo_frame: "quest-dialogue" } },
+        class: "btn" %>
+    <% elsif next_step %>
+      <p class="text-muted">Complete the current objectives to progress.</p>
+    <% else %>
+      <p class="text-muted">Final beat reached—complete the quest to claim rewards.</p>
+    <% end %>
+  <% else %>
+    <p class="text-muted">No narrative steps authored yet.</p>
+  <% end %>
+</section>
+

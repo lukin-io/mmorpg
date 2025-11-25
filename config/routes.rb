@@ -68,6 +68,7 @@ Rails.application.routes.draw do
     member do
       post :accept
       post :complete
+      post :advance_story
     end
     collection do
       post :daily
@@ -94,6 +95,13 @@ Rails.application.routes.draw do
 
     namespace :live_ops do
       resources :events, only: [:index, :create, :update]
+    end
+
+    resource :gm_console, only: :show, controller: "gm_console" do
+      post :spawn
+      post :disable
+      post :adjust_timers
+      post :compensate
     end
   end
 
