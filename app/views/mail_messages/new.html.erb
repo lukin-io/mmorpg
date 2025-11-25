@@ -23,6 +23,22 @@
       <%= form.text_area :body, rows: 6, required: true %>
     </div>
 
+    <fieldset>
+      <legend>Attachment (optional)</legend>
+      <div class="field">
+        <%= form.label :attachment_payload_item_name, "Item name" %>
+        <%= form.text_field :attachment_payload, name: "mail_message[attachment_payload][item_name]" %>
+      </div>
+      <div class="field">
+        <%= form.label :attachment_payload_currency, "Currency type" %>
+        <%= form.select :attachment_payload, options_for_select([["Gold", "gold"], ["Silver", "silver"], ["Premium Tokens", "premium_tokens"]]), {}, name: "mail_message[attachment_payload][currency]" %>
+      </div>
+      <div class="field">
+        <%= form.label :attachment_payload_amount, "Amount" %>
+        <%= form.number_field :attachment_payload, name: "mail_message[attachment_payload][amount]" %>
+      </div>
+    </fieldset>
+
     <div class="actions">
       <%= form.submit "Send" %>
     </div>

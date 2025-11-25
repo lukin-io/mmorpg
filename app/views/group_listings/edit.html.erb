@@ -1,0 +1,24 @@
+<section>
+  <header>
+    <h1>Edit Listing</h1>
+  </header>
+
+  <%= form_with model: @group_listing do |form| %>
+    <div class="field">
+      <%= form.label :title %>
+      <%= form.text_field :title, required: true %>
+    </div>
+    <div class="field">
+      <%= form.label :description %>
+      <%= form.text_area :description, rows: 4 %>
+    </div>
+    <div class="field">
+      <%= form.label :status %>
+      <%= form.select :status, GroupListing::STATUSES.keys.map { |key| [key.to_s.humanize, key] } %>
+    </div>
+    <div class="actions">
+      <%= form.submit "Update Listing" %>
+    </div>
+  <% end %>
+</section>
+

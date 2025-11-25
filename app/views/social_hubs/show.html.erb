@@ -1,0 +1,28 @@
+<section>
+  <header>
+    <h1><%= @social_hub.name %></h1>
+    <p>Zone: <%= @social_hub.zone&.name || "Unknown" %></p>
+  </header>
+
+  <article class="card">
+    <p><%= @social_hub.metadata["description"] || "Community meeting point." %></p>
+  </article>
+
+  <section>
+    <h2>Upcoming Events</h2>
+    <% if @upcoming_events.any? %>
+      <ul>
+        <% @upcoming_events.each do |event| %>
+          <li>
+            <strong><%= event.title %></strong>
+            <small><%= l(event.starts_at, format: :long) %></small>
+            <p><%= event.description %></p>
+          </li>
+        <% end %>
+      </ul>
+    <% else %>
+      <p>No scheduled events.</p>
+    <% end %>
+  </section>
+</section>
+

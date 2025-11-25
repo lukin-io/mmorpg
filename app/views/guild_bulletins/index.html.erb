@@ -1,0 +1,49 @@
+<section>
+  <header>
+    <h1><%= @guild.name %> Bulletin Board</h1>
+  </header>
+
+  <section>
+    <h2>Post Update</h2>
+    <%= form_with model: [@guild, @guild_bulletin] do |form| %>
+      <div class="field">
+        <%= form.label :title %>
+        <%= form.text_field :title, required: true %>
+      </div>
+      <div class="field">
+        <%= form.label :body %>
+        <%= form.text_area :body, rows: 4, required: true %>
+      </div>
+      <div class="field">
+        <%= form.label :pinned %>
+        <%= form.check_box :pinned %>
+      </div>
+      <div class="actions">
+        <%= form.submit "Publish" %>
+      </div>
+    <% end %>
+  </section>
+
+  <section>
+    <h2>Recent Bulletins</h2>
+    <% if @bulletins.any? %>
+      <ul class="card-list">
+        <% @bulletins.each do |bulletin| %>
+          <li class="card">
+            <header>
+              <strong><%= bulletin.title %></strong>
+              <small>by <%= bulletin.author.profile_name %> at <%= l(bulletin.published_at, format: :short) %></small>
+            </header>
+            <p><%= simple_format(bulletin.body) %></p>
+            <% if policy(bulletin).destroy? %>
+              <%= button_to "Remove", bulletin, method: :delete, form: { data: { turbo_confirm: "Delete bulletin?" } }, class: "button button--ghost" %>
+            <% end %>
+          </li>
+        <% end %>
+      </ul>
+    <% else %>
+      <p>No bulletins yet.</p>
+    <% end %>
+  </section>
+</section>
+

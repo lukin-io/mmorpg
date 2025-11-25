@@ -10,7 +10,8 @@ class ChatChannel < ApplicationRecord
     clan: 3,
     party: 4,
     whisper: 5,
-    system: 6
+    system: 6,
+    arena: 7
   }.freeze
 
   enum :channel_type, CHANNEL_TYPES
@@ -32,7 +33,7 @@ class ChatChannel < ApplicationRecord
   before_validation :assign_slug, on: :create
 
   def membership_required?
-    !(global? || local?)
+    !(global? || local? || arena?)
   end
 
   def ensure_membership!(user)

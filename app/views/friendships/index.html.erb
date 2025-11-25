@@ -35,15 +35,22 @@
       <% end %>
     </div>
 
-    <div>
+    <div data-controller="presence-panel">
       <h2>Friends</h2>
       <% if @accepted_friendships.any? %>
-        <ul>
-          <% @accepted_friendships.each do |friendship| %>
-            <% friend = friendship.requester == current_user ? friendship.receiver : friendship.requester %>
+        <ul data-presence-panel-target="friendList">
+          <% @friend_presence.each do |presence| %>
             <li>
-              <%= friend.email %>
-              <%= button_to "Remove", friendship_path(friendship), method: :delete, form: { data: { turbo_confirm: "Remove this friend?" } } %>
+              <strong><%= presence[:profile_name] %></strong>
+              <small>Status: <%= presence[:status].to_s.upcase %></small>
+              <small><%= presence[:zone_name] || "Unknown zone" %></small>
+              <% friendship = @accepted_friendships.find do |f|
+                    friend = f.requester == current_user ? f.receiver : f.requester
+                    friend.id == presence[:id]
+                  end %>
+              <% if friendship %>
+                <%= button_to "Remove", friendship_path(friendship), method: :delete, form: { data: { turbo_confirm: "Remove this friend?" } }, class: "button button--ghost" %>
+              <% end %>
             </li>
           <% end %>
         </ul>

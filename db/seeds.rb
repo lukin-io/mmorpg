@@ -453,3 +453,35 @@ if defined?(MapTileTemplate)
     end
   end
 end
+
+if defined?(SocialHub)
+  SocialHub.find_or_create_by!(slug: "castle-tavern") do |hub|
+    hub.name = "Castleton Tavern"
+    hub.hub_type = "tavern"
+    hub.zone = Zone.find_by(name: "Castleton Keep")
+    hub.metadata = {"description" => "Central hangout with notice board and minigames."}
+  end
+end
+
+if defined?(GroupListing) && defined?(Guild)
+  owner = User.first
+  guild = Guild.first
+  if owner && guild
+    GroupListing.find_or_create_by!(owner:, title: "Evening Dungeon Run") do |listing|
+      listing.description = "Looking for healers and ranged DPS for Frost Peaks delve."
+      listing.listing_type = :party
+      listing.status = :open
+      listing.guild = guild
+    end
+  end
+end
+
+if defined?(ArenaSeason)
+  ArenaSeason.find_or_create_by!(slug: "founders-season") do |season|
+    season.name = "Founders Season"
+    season.status = :live
+    season.starts_at = 1.week.ago
+    season.ends_at = 1.month.from_now
+    season.metadata = {"description" => "Launch window ranked play."}
+  end
+end

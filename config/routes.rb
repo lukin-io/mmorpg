@@ -17,12 +17,20 @@ Rails.application.routes.draw do
   resources :friendships, only: [:index, :create, :update, :destroy]
   resources :mail_messages, only: [:index, :show, :new, :create]
   resources :chat_reports, only: [:index, :create]
+  resources :ignore_list_entries, only: [:index, :create, :destroy]
+  resources :group_listings
+  resources :social_hubs, only: [:index, :show]
 
   resources :guilds do
     resources :guild_applications, only: :create
+    resources :guild_bank_entries, only: [:index, :create]
+    resources :guild_bulletins, only: [:index, :create]
+    resources :guild_ranks, only: [:index, :update, :create]
   end
   resources :guild_applications, only: :update
   resources :guild_memberships, only: [:update, :destroy]
+  resources :guild_bulletins, only: :destroy
+  resources :guild_ranks, only: :destroy
 
   resources :clans
   resources :clan_memberships, only: :destroy
@@ -56,6 +64,24 @@ Rails.application.routes.draw do
   resources :housing_plots, only: [:index, :create, :update]
   resources :pet_companions, only: [:index, :create]
   resources :mounts, only: [:index, :create]
+  resources :parties do
+    member do
+      post :ready_check
+      post :leave
+      post :promote
+      post :disband
+    end
+
+    resources :party_invitations, only: :create
+    resources :party_memberships, only: [:update, :destroy]
+  end
+  resources :party_invitations, only: :update
+  resources :arena_matches, only: [:index, :show, :create] do
+    member do
+      post :spectate
+    end
+  end
+  resources :arena_seasons, only: [:index, :show]
 
   resources :announcements, only: [:index, :create]
 

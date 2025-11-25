@@ -21,9 +21,15 @@ class SessionPresenceJob < ApplicationJob
       session.mark_idle!(timestamp: timestamp)
       user.update!(last_seen_at: timestamp)
       publisher.idle!(user: user, session: session)
+    when "busy"
+      session.mark_busy!(timestamp: timestamp)
+      user.update!(last_seen_at: timestamp)
+      publisher.busy!(user: user, session: session)
     when "offline"
       session.mark_offline!(timestamp: timestamp)
       publisher.offline!(user: user, session: session)
     end
+
+    Presence::FriendBroadcaster.new.broadcast_for(user)
   end
 end

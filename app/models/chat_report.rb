@@ -16,4 +16,18 @@ class ChatReport < ApplicationRecord
 
   validates :reason, presence: true
   validates :evidence, presence: true
+
+  after_create :register_with_chat_message
+
+  def source_summary
+    source_context.fetch("source", "chat")
+  end
+
+  private
+
+  def register_with_chat_message
+    return unless chat_message
+
+    chat_message.register_report!(label: source_summary)
+  end
 end

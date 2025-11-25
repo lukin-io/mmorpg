@@ -16,6 +16,10 @@ module Presence
       broadcast(user:, session:, status: "idle")
     end
 
+    def busy!(user:, session:)
+      broadcast(user:, session:, status: "busy")
+    end
+
     def offline!(user:, session:)
       broadcast(user:, session:, status: "offline")
     end
@@ -30,7 +34,10 @@ module Presence
         status: status,
         session_id: session.id,
         device_id: session.device_id,
-        occurred_at: Time.current.iso8601
+        occurred_at: Time.current.iso8601,
+        zone_name: session.current_zone_name,
+        location: session.current_location_label,
+        last_activity_at: session.last_activity_at&.iso8601
       }
       broadcaster.broadcast(CHANNEL, payload)
     end

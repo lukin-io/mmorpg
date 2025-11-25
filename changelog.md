@@ -11,6 +11,25 @@
 ## Return Values
 - Not applicable; this is a documentation file.
 
+## 2025-11-25
+
+### Added
+- Implemented `doc/features/11_social_features.md`, delivering the end-to-end social layer:
+  - Chat upgrades: spam throttling (`Chat::SpamThrottler`), moderation-aware pipeline (`Moderation::ChatPipeline`), arena chat scopes, inline reporting context, and richer mail attachments/system notifiers.
+  - Friends & presence: Action Cable-backed presence lists (`Presence::FriendBroadcaster`, `presence-panel` Stimulus), ignore lists, privacy-aware whispers, and group finder listings.
+  - Guild & party tooling: customizable ranks/permissions, shared bank + bulletin board, perk tracker, new party/ready-check system tied to dedicated chat channels.
+  - PvP arenas: matchmaking service, spectator Action Cable channel, reward job, and UI to queue/spectate matches.
+  - Community integrations: Discord/Telegram webhook dispatcher plus report-volume alert job to escalate spikes.
+- Added `doc/flow/social_system.md`, README/env-var documentation, seeds for social hubs/listings/seasons, and coverage tests for throttling, pipeline privacy protections, and parties.
+
+### Feature Coverage Snapshot
+
+| Feature | Title              | Status | Notes |
+|---------|--------------------|--------|-------|
+| 11      | Social Systems     | ✅ Done | Chat/presence revamp, guild/party utilities, arena spectators, reporting safety nets, and community webhooks shipped. |
+
+Completed features: **7** / 14 total (`doc/features/0`–`doc/features/13`).
+
 ## 2025-11-24
 
 ### Added

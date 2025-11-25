@@ -1,0 +1,60 @@
+<section>
+  <header>
+    <h1><%= @guild.name %> Ranks</h1>
+    <p>Customize permissions per rank.</p>
+  </header>
+
+  <section>
+    <h2>Create Rank</h2>
+    <%= form_with model: [@guild, @guild_rank] do |form| %>
+      <div class="field">
+        <%= form.label :name %>
+        <%= form.text_field :name, required: true %>
+      </div>
+      <div class="field">
+        <%= form.label :position %>
+        <%= form.number_field :position, required: true %>
+      </div>
+      <div class="actions">
+        <%= form.submit "Add Rank" %>
+      </div>
+    <% end %>
+  </section>
+
+  <section>
+    <h2>Existing Ranks</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Position</th>
+          <th>Permissions</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @ranks.each do |rank| %>
+          <tr>
+            <td><%= rank.name %></td>
+            <td><%= rank.position %></td>
+            <td>
+              <%= form_with model: rank, url: guild_rank_path(rank), method: :patch, local: true do |form| %>
+                <% GuildRank::DEFAULT_PERMISSIONS.keys.each do |permission| %>
+                  <label>
+                    <%= permission.to_s.humanize %>
+                    <%= form.check_box :"permissions[#{permission}]", checked: rank.allows?(permission) %>
+                  </label>
+                <% end %>
+                <%= form.submit "Save", class: "button button--ghost" %>
+              <% end %>
+            </td>
+            <td>
+              <%= button_to "Delete", guild_rank_path(rank), method: :delete, form: { data: { turbo_confirm: "Delete this rank?" } }, class: "button button--ghost" %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </section>
+</section>
+

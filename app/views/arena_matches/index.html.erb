@@ -1,0 +1,44 @@
+<section>
+  <header>
+    <h1>Arena Matches</h1>
+    <p>Queue characters for duels or spectate live battles.</p>
+  </header>
+
+  <section>
+    <h2>Queue Duel</h2>
+    <%= form_with model: @arena_match, url: arena_matches_path do |form| %>
+      <div class="field">
+        <%= form.label :character_ids, "Characters" %>
+        <%= form.collection_select :character_ids, current_user.characters, :id, :name, {}, multiple: true %>
+      </div>
+      <div class="field">
+        <%= form.label :match_type %>
+        <%= form.select :match_type, ArenaMatch::MATCH_TYPES.keys.map { |key| [key.humanize, key] } %>
+      </div>
+      <div class="actions">
+        <%= form.submit "Queue" %>
+      </div>
+    <% end %>
+  </section>
+
+  <section>
+    <h2>Recent Matches</h2>
+    <% if @arena_matches.any? %>
+      <ul class="card-list">
+        <% @arena_matches.each do |match| %>
+          <li class="card">
+            <header>
+              <strong>Match #<%= match.id %></strong>
+              <small><%= match.match_type.humanize %></small>
+            </header>
+            <p>Status: <%= match.status.humanize %></p>
+            <%= link_to "View", arena_match_path(match), class: "button button--ghost" %>
+          </li>
+        <% end %>
+      </ul>
+    <% else %>
+      <p>No matches yet.</p>
+    <% end %>
+  </section>
+</section>
+

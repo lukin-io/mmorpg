@@ -12,6 +12,7 @@ class MailMessage < ApplicationRecord
 
   scope :inbox_for, ->(user) { where(recipient: user).order(delivered_at: :desc) }
   scope :sent_by, ->(user) { where(sender: user).order(delivered_at: :desc) }
+  scope :system_notifications, -> { where(system_notification: true) }
 
   def mark_read!
     update!(read_at: Time.current)
@@ -21,11 +22,29 @@ class MailMessage < ApplicationRecord
     read_at.present?
   end
 
+  def system_notification?
+    system_notification
+  end
+
+  def attachments_claimed?
+    attachments_claimed_at.present?
+  end
+
+  def claim_attachments!
+    return if attachments_claimed?
+
+    update!(attachments_claimed_at: Time.current)
+  end
+
   private
 
   def attachment_payload_is_hash
-    return if attachment_payload.is_a?(Hash)
+    unless attachment_payload.is_a?(Hash)
+      errors.add(:attachment_payload, "must be a JSON object")
+      return
+    end
 
-    errors.add(:attachment_payload, "must be a JSON object")
+    invalid_keys = attachment_payload.keys - ATTACHMENT_KEYS
+    errors.add(:attachment_payload, "contains unsupported keys: #{invalid_keys.join(", ")}") if invalid_keys.any?
   end
 end

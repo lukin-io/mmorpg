@@ -3,7 +3,8 @@
 class ChatChannelsController < ApplicationController
   def index
     current_user.ensure_social_features!
-    @chat_channels = policy_scope(ChatChannel).order(:name)
+    @chat_channels = policy_scope(ChatChannel).includes(:memberships).order(:name)
+    @channel_groups = @chat_channels.group_by(&:channel_type)
   end
 
   def show

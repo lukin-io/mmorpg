@@ -26,6 +26,8 @@ module Chat
         scoped_channel(:clan, context.fetch(:clan_id))
       when :party
         scoped_channel(:party, context.fetch(:party_id))
+      when :arena
+        arena_channel(context)
       when :private, :whisper
         whisper_channel(context)
       else
@@ -84,6 +86,27 @@ module Chat
         channel.channel_type = :whisper
         channel.system_owned = false
         channel.metadata = {"participant_ids" => participant_ids}
+      end.tap do |channel|
+        participant_ids.each do |participant_id|
+          channel.memberships.find_or_create_by!(user_id: participant_id)
+        end
+      end
+    end
+
+    def arena_channel(context)
+      match_id = context.fetch(:arena_match_id)
+      participant_ids = Array(context[:participant_ids]).presence ||
+        ArenaMatch.find(match_id).arena_participations.pluck(:user_id)
+      slug = "arena-#{match_id}"
+
+      ChatChannel.find_or_create_by!(slug:) do |channel|
+        channel.name = "Arena Match ##{match_id}"
+        channel.channel_type = :arena
+        channel.system_owned = true
+        channel.metadata = {
+          "arena_match_id" => match_id,
+          "participant_ids" => participant_ids
+        }
       end.tap do |channel|
         participant_ids.each do |participant_id|
           channel.memberships.find_or_create_by!(user_id: participant_id)

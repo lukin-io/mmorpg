@@ -4,12 +4,19 @@
     <p>Choose a channel to join real-time conversations.</p>
   </header>
 
-  <ul>
-    <% @chat_channels.each do |channel| %>
-      <li>
-        <%= link_to channel.name, chat_channel_path(channel) %>
-        <small>(<%= channel.channel_type.humanize %>)</small>
-      </li>
-    <% end %>
-  </ul>
+  <% @channel_groups.each do |type, channels| %>
+    <article class="card">
+      <header>
+        <h2><%= type.to_s.humanize %></h2>
+      </header>
+      <ul>
+        <% channels.each do |channel| %>
+          <li>
+            <%= link_to channel.name, chat_channel_path(channel) %>
+            <small><%= channel.memberships.count %> members</small>
+          </li>
+        <% end %>
+      </ul>
+    </article>
+  <% end %>
 </section>
