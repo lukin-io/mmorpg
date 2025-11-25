@@ -36,7 +36,7 @@ RSpec.describe Game::Quests::QuestGateEvaluator do
         result = described_class.new(character:, quest:).call
 
         expect(result).not_to be_allowed
-        expect(result.reasons.map { _1[:type] }).to contain_exactly(:level, :reputation, :faction_alignment)
+        expect(result.reasons.map { |failure| failure[:type] }).to contain_exactly(:level, :reputation, :faction_alignment)
       end
     end
   end

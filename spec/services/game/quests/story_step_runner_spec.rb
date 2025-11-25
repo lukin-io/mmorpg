@@ -31,7 +31,7 @@ RSpec.describe Game::Quests::StoryStepRunner do
       def apply(choice_key:)
         consequence = @step.branching_outcomes["consequences"][choice_key]
         Game::Quests::BranchingChoiceResolver::Result.new(
-          status: (consequence["result"] || :continue),
+          status: consequence["result"] || :continue,
           flags: Array(consequence["grant_flags"]),
           reason: consequence["failure_reason"]
         )

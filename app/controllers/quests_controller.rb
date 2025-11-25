@@ -119,7 +119,7 @@ class QuestsController < ApplicationController
 
   def refresh_dynamic_hooks!
     Game::Quests::DynamicQuestRefresher.new.refresh!(character: current_character)
-  rescue StandardError => e
+  rescue => e
     Rails.logger.warn("Failed to refresh dynamic quests: #{e.message}")
   end
 
