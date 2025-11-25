@@ -1,0 +1,16 @@
+<div class="quest-section">
+  <h2>Weekly & Event Repeatables</h2>
+  <% if assignments.present? %>
+    <ul class="quest-repeatable-list">
+      <% assignments.each do |assignment| %>
+        <li>
+          <strong><%= assignment.quest.title %></strong>
+          <span class="text-muted">Resets <%= assignment.next_available_at ? time_ago_in_words(assignment.next_available_at) + " from now" : "soon" %></span>
+        </li>
+      <% end %>
+    </ul>
+  <% else %>
+    <p class="text-muted">No weekly quests scheduled for your character yet.</p>
+  <% end %>
+</div>
+

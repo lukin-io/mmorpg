@@ -3,6 +3,13 @@
 <% end %>
 
 <%= turbo_stream.replace "quest-dialogue" do %>
-  <%= render "dialogue_frame", quest: @quest, assignment: @assignment %>
+  <%= render "dialogue_frame",
+    quest: @quest,
+    assignment: @assignment,
+    current_step: @current_step,
+    next_step: @next_step,
+    map_pins: @map_overlay_pins,
+    story_result: @story_result,
+    reward_result: @reward_result %>
 <% end %>
 

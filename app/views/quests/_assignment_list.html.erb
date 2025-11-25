@@ -1,11 +1,25 @@
 <div class="quest-section">
-  <h2>Main & Side Quests</h2>
+  <% headings = {
+    "active" => "Active Quests",
+    "completed" => "Completed Quests",
+    "repeatable" => "Repeatable Quests"
+  } %>
+  <h2><%= headings.fetch(filter.to_s, "Quests") %></h2>
   <% if assignments.any? %>
     <% assignments.each do |assignment| %>
       <%= render "assignment", assignment: assignment %>
     <% end %>
   <% else %>
-    <p>No quests tracked yet.</p>
+    <p class="text-muted">
+      <% case filter %>
+      <% when "completed" %>
+        You have not completed any storyline quests yet.
+      <% when "repeatable" %>
+        No repeatable quests are currently available—check back after the next reset.
+      <% else %>
+        No active quests yet. Advance the story or pick up daily tasks to get started.
+      <% end %>
+    </p>
   <% end %>
 </div>
 

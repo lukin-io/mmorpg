@@ -1,0 +1,40 @@
+---
+quests:
+  - key: "main_story_chapter_1"
+    title: "Shadows Over Neverlands"
+    summary: "Investigate the rifts appearing outside Ardent Landing."
+    quest_type: "main_story"
+    quest_chain_key: "main_story"
+    quest_chapter_key: "chapter_1"
+    sequence: 1
+    chapter: 1
+    difficulty_tier: "story"
+    recommended_party_size: 1
+    min_level: 1
+    min_reputation: 0
+    rewards:
+      xp: 500
+      currency:
+        gold: 50
+      reputation: 5
+      cosmetics:
+        - "story_tunic"
+  - key: "artisan_crafters_weekly"
+    title: "Foundry Backlog"
+    summary: "Deliver forged plates to reinforce the capital gates."
+    quest_type: "weekly"
+    sequence: 5
+    chapter: 1
+    difficulty_tier: "veteran"
+    recommended_party_size: 3
+    min_level: 20
+    rewards:
+      xp: 1200
+      currency:
+        gold: 150
+      recipes:
+        - "reinforced_plate"
+      profession_unlocks:
+        - "Armorsmith"
+
+

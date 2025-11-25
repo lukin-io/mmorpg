@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_11_24_143000) do
+ActiveRecord::Schema[8.1].define(version: 2025_11_24_150000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -1113,7 +1113,23 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_24_143000) do
     t.index ["user_id"], name: "index_purchases_on_user_id"
   end
 
+  create_table "quest_analytics_snapshots", force: :cascade do |t|
+    t.decimal "abandon_rate", precision: 5, scale: 2, default: "0.0", null: false
+    t.integer "avg_completion_minutes", default: 0, null: false
+    t.string "bottleneck_step_key"
+    t.integer "bottleneck_step_position"
+    t.date "captured_on", null: false
+    t.decimal "completion_rate", precision: 5, scale: 2, default: "0.0", null: false
+    t.datetime "created_at", null: false
+    t.jsonb "metadata", default: {}, null: false
+    t.string "quest_chain_key", null: false
+    t.datetime "updated_at", null: false
+    t.index ["captured_on", "quest_chain_key"], name: "index_quest_analytics_snapshots_on_date_and_chain", unique: true
+  end
+
   create_table "quest_assignments", force: :cascade do |t|
+    t.string "abandon_reason"
+    t.datetime "abandoned_at"
     t.bigint "character_id", null: false
     t.datetime "completed_at"
     t.datetime "created_at", null: false
@@ -1122,6 +1138,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_24_143000) do
     t.datetime "next_available_at"
     t.jsonb "progress", default: {}, null: false
     t.bigint "quest_id", null: false
+    t.datetime "rewards_claimed_at"
     t.datetime "started_at"
     t.integer "status", default: 0, null: false
     t.datetime "updated_at", null: false
@@ -1140,6 +1157,24 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_24_143000) do
     t.index ["key"], name: "index_quest_chains_on_key", unique: true
   end
 
+  create_table "quest_chapters", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "faction_alignment"
+    t.string "key", null: false
+    t.integer "level_gate", default: 1, null: false
+    t.jsonb "metadata", default: {}, null: false
+    t.integer "position", default: 1, null: false
+    t.bigint "quest_chain_id", null: false
+    t.integer "reputation_gate", default: 0, null: false
+    t.text "synopsis"
+    t.string "title", null: false
+    t.string "unlock_cutscene_key"
+    t.datetime "updated_at", null: false
+    t.index ["key"], name: "index_quest_chapters_on_key", unique: true
+    t.index ["quest_chain_id", "position"], name: "index_quest_chapters_on_quest_chain_id_and_position", unique: true
+    t.index ["quest_chain_id"], name: "index_quest_chapters_on_quest_chain_id"
+  end
+
   create_table "quest_objectives", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.jsonb "metadata", default: {}, null: false
@@ -1152,15 +1187,37 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_24_143000) do
     t.index ["quest_id"], name: "index_quest_objectives_on_quest_id"
   end
 
+  create_table "quest_steps", force: :cascade do |t|
+    t.jsonb "branching_outcomes", default: {}, null: false
+    t.jsonb "content", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.string "npc_key"
+    t.integer "position", default: 1, null: false
+    t.bigint "quest_id", null: false
+    t.boolean "requires_confirmation", default: false, null: false
+    t.string "step_type", null: false
+    t.datetime "updated_at", null: false
+    t.index ["quest_id", "position"], name: "index_quest_steps_on_quest_id_and_position", unique: true
+    t.index ["quest_id"], name: "index_quest_steps_on_quest_id"
+  end
+
   create_table "quests", force: :cascade do |t|
+    t.boolean "active", default: true, null: false
     t.integer "chapter", default: 1, null: false
     t.integer "cooldown_seconds", default: 0, null: false
     t.datetime "created_at", null: false
     t.string "daily_reset_slot"
+    t.integer "difficulty_tier", default: 0, null: false
+    t.jsonb "failure_consequence", default: {}, null: false
     t.string "key", null: false
+    t.jsonb "map_overlays", default: {}, null: false
     t.jsonb "metadata", default: {}, null: false
+    t.integer "min_level", default: 1, null: false
+    t.integer "min_reputation", default: 0, null: false
     t.bigint "quest_chain_id"
+    t.bigint "quest_chapter_id"
     t.integer "quest_type", default: 0, null: false
+    t.integer "recommended_party_size", default: 1, null: false
     t.boolean "repeatable", default: false, null: false
     t.jsonb "requirements", default: {}, null: false
     t.jsonb "rewards", default: {}, null: false
@@ -1168,9 +1225,13 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_24_143000) do
     t.text "summary"
     t.string "title", null: false
     t.datetime "updated_at", null: false
+    t.index ["difficulty_tier"], name: "index_quests_on_difficulty_tier"
     t.index ["key"], name: "index_quests_on_key", unique: true
+    t.index ["min_level"], name: "index_quests_on_min_level"
     t.index ["quest_chain_id", "sequence"], name: "index_quests_on_quest_chain_id_and_sequence"
     t.index ["quest_chain_id"], name: "index_quests_on_quest_chain_id"
+    t.index ["quest_chapter_id"], name: "index_quests_on_quest_chapter_id"
+    t.index ["recommended_party_size"], name: "index_quests_on_recommended_party_size"
   end
 
   create_table "recipes", force: :cascade do |t|
@@ -1481,8 +1542,11 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_24_143000) do
   add_foreign_key "purchases", "users"
   add_foreign_key "quest_assignments", "characters"
   add_foreign_key "quest_assignments", "quests"
+  add_foreign_key "quest_chapters", "quest_chains"
   add_foreign_key "quest_objectives", "quests"
+  add_foreign_key "quest_steps", "quests"
   add_foreign_key "quests", "quest_chains"
+  add_foreign_key "quests", "quest_chapters"
   add_foreign_key "recipes", "professions"
   add_foreign_key "skill_nodes", "skill_trees"
   add_foreign_key "skill_trees", "character_classes"

@@ -1,0 +1,10 @@
+<div class="quest-filters">
+  <% [["active", "Active"], ["completed", "Completed"], ["repeatable", "Repeatable"]].each do |(key, label)| %>
+    <% active = (filter == key) %>
+    <%= link_to "#{label} (#{filter_counts[key.to_sym] || 0})",
+      quests_path(filter: key),
+      data: { turbo_frame: "quest-log" },
+      class: ["quest-filter__link", ("is-active" if active)] %>
+  <% end %>
+</div>
+

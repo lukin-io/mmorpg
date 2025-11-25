@@ -1,20 +1,25 @@
 <div class="page-header">
   <h1>Quest Log</h1>
-  <p class="text-muted">Track your main story, side quests, and daily objectives.</p>
+  <p class="text-muted">Filter story, side, repeatable, and event quests with live updates.</p>
 </div>
 
 <div class="quest-layout" data-controller="layout-stack">
   <turbo-frame id="quest-log">
-    <%= render "assignment_list", assignments: @quest_assignments %>
+    <%= render "filters", filter: @filter, filter_counts: @filter_counts %>
+    <%= render "assignment_list", assignments: @quest_assignments, filter: @filter %>
   </turbo-frame>
 
   <turbo-frame id="daily-quests">
     <%= render "daily_slots", slots: @daily_slots %>
   </turbo-frame>
 
+  <turbo-frame id="weekly-quests">
+    <%= render "repeatable_assignments", assignments: @weekly_assignments %>
+  </turbo-frame>
+
   <turbo-frame id="quest-dialogue">
     <div class="quest-dialogue-placeholder">
-      <p>Select a quest to view dialogue and objectives.</p>
+      <p>Select a quest to view dialogue, cutscenes, and map overlays.</p>
     </div>
   </turbo-frame>
 </div>
