@@ -1,0 +1,25 @@
+{
+  "ignored_warnings": [
+    {
+      "warning_type": "File Access",
+      "warning_code": 16,
+      "fingerprint": "044b013de2ee82531222fe98650f79c258924e7708ca79d550ddf9094d112996",
+      "check_name": "FileAccess",
+      "message": "Model attribute used in file name",
+      "file": "app/jobs/webhooks/deliver_job.rb",
+      "line": 17,
+      "link": "https://brakemanscanner.org/docs/warning_types/file_access/",
+      "code": "Net::HTTP.new(URI.parse(WebhookEvent.find(event_id).webhook_endpoint.target_url).host, URI.parse(WebhookEvent.find(event_id).webhook_endpoint.target_url).port)",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "Webhooks::DeliverJob",
+        "method": "perform"
+      },
+      "user_input": "WebhookEvent.find(event_id).webhook_endpoint",
+      "confidence": "Weak",
+      "note": "Endpoint URLs pass through Webhooks::UrlSafety.ensure_safe! before HTTP clients are constructed so SSRF is mitigated."
+    }
+  ]
+}
+

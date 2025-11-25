@@ -19,7 +19,7 @@ class PetCompanionsController < ApplicationController
     resolver = Companions::CareTaskResolver.new(pet: @pet)
     result = resolver.perform!(params[:task])
     redirect_to pet_companions_path, notice: "#{@pet.nickname || @pet.pet_species.name} gained #{result[:bonding_xp]} bonding XP."
-  rescue StandardError => e
+  rescue => e
     redirect_to pet_companions_path, alert: e.message
   end
 

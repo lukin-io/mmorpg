@@ -14,8 +14,7 @@ module Webhooks
       uri = URI.parse(endpoint.target_url)
       Webhooks::UrlSafety.ensure_safe!(uri)
 
-      # brakeman:ignore FileAccess -- URL safety is enforced via Webhooks::UrlSafety.ensure_safe!
-      http = Net::HTTP.new(uri.host, uri.port)
+      http = Net::HTTP.new(uri.host, uri.port) # brakeman:ignore FileAccess -- URL safety enforced above
       http.use_ssl = uri.scheme == "https"
 
       request = Net::HTTP::Post.new(uri.request_uri)
