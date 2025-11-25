@@ -169,7 +169,7 @@ class User < ApplicationRecord
     Friendship
       .for_user(self)
       .accepted
-      .map { |friendship| friendship.requester == self ? friendship.receiver : friendship.requester }
+      .map { |friendship| (friendship.requester == self) ? friendship.receiver : friendship.requester }
   end
 
   def ignoring?(other_user)
@@ -186,7 +186,9 @@ class User < ApplicationRecord
 
   def message_rate_limit
     limit = social_settings.fetch("message_rate_limit_per_window", 8).to_i
-    limit.positive? ? limit : 8
+    return limit if limit.positive?
+
+    8
   end
 
   def allied_with?(other_user)

@@ -45,6 +45,6 @@ class MailMessage < ApplicationRecord
     end
 
     invalid_keys = attachment_payload.keys - ATTACHMENT_KEYS
-    errors.add(:attachment_payload, "contains unsupported keys: #{invalid_keys.join(', ')}") if invalid_keys.any?
+    errors.add(:attachment_payload, "contains unsupported keys: #{invalid_keys.join(", ")}") if invalid_keys.any?
   end
 end

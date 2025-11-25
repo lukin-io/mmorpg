@@ -51,7 +51,7 @@ module Chat
 
     private
 
-    attr_reader :user, :channel, :body, :moderation_handler, :spam_throttler
+    attr_reader :user, :channel, :body, :moderation_handler
 
     def create_system_message(text)
       channel.chat_messages.create!(

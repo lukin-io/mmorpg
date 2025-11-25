@@ -22,10 +22,10 @@ class ChatMessagesController < ApplicationController
       format.json { head :created }
     end
   rescue Chat::Errors::MutedError,
-      Chat::Errors::UnauthorizedCommandError,
-      Chat::Errors::SpamThrottledError,
-      Chat::Errors::PrivacyBlockedError,
-      ActiveRecord::RecordInvalid => e
+    Chat::Errors::UnauthorizedCommandError,
+    Chat::Errors::SpamThrottledError,
+    Chat::Errors::PrivacyBlockedError,
+    ActiveRecord::RecordInvalid => e
     handle_chat_error(e.message)
   end
 
