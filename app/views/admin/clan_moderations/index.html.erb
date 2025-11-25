@@ -1,0 +1,52 @@
+<section>
+  <header>
+    <h1>Clan Moderation Console</h1>
+    <p>Review recent clans, roll back abusive actions, or dissolve inactive groups.</p>
+  </header>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div>
+      <h2>Active Clans</h2>
+      <ul>
+        <% @clans.each do |clan| %>
+          <li class="mb-3 border p-3 rounded">
+            <strong><%= clan.name %></strong> — Level <%= clan.level %> • Leader: <%= clan.leader.profile_name %>
+            <div class="mt-2 flex flex-col gap-2">
+              <%= form_with url: admin_clan_moderations_path, method: :post, local: true do |form| %>
+                <%= form.hidden_field :clan_id, value: clan.id %>
+                <%= form.hidden_field :operation, value: "rollback" %>
+                <div class="flex gap-2 items-center">
+                  <%= form.label :log_entry_id, "Rollback log entry", class: "sr-only" %>
+                  <%= form.number_field :log_entry_id, placeholder: "Log entry ID", class: "w-32" %>
+                  <%= form.submit "Rollback", class: "button button--secondary" %>
+                </div>
+              <% end %>
+
+              <%= form_with url: admin_clan_moderations_path, method: :post, data: {turbo_confirm: "Dissolve #{clan.name}? This cannot be undone."}, local: true do |form| %>
+                <%= form.hidden_field :clan_id, value: clan.id %>
+                <%= form.hidden_field :operation, value: "dissolve" %>
+                <%= form.text_field :reason, placeholder: "Reason", class: "w-full" %>
+                <%= form.submit "Dissolve Clan", class: "button button--danger mt-2" %>
+              <% end %>
+            </div>
+          </li>
+        <% end %>
+      </ul>
+    </div>
+
+    <div>
+      <h2>Recent Moderation Actions</h2>
+      <ul>
+        <% @recent_actions.each do |action| %>
+          <li class="mb-2">
+            <strong><%= action.action_type.humanize %></strong>
+            for <%= action.clan.name %> by <%= action.gm_user.profile_name %>
+            (<%= l(action.created_at, format: :short) %>)
+            <div class="text-sm text-slate-500"><%= action.notes %></div>
+          </li>
+        <% end %>
+      </ul>
+    </div>
+  </div>
+</section>
+

@@ -1,25 +1,275 @@
 <section>
-  <header>
+  <header class="mb-6">
     <h1><%= @clan.name %></h1>
-    <p><%= @clan.description %></p>
-    <p>Leader: <%= @clan.leader.email %></p>
+    <p class="text-slate-600"><%= @clan.description %></p>
+    <p>Leader: <%= @clan.leader.profile_name %></p>
+    <p>Your role: <%= clan_membership&.role || "Visitor" %></p>
   </header>
 
-  <section>
-    <h2>Territories</h2>
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+    <div class="border rounded p-4">
+      <h3>Level & XP</h3>
+      <p>Level <strong><%= @clan.level %></strong></p>
+      <p><%= number_with_delimiter(@clan.experience) %> / <%= number_with_delimiter(@next_level_xp) %> XP</p>
+    </div>
+    <div class="border rounded p-4">
+      <h3>Prestige</h3>
+      <p><%= @clan.prestige %></p>
+    </div>
+    <div class="border rounded p-4">
+      <h3>Treasury</h3>
+      <p>Gold: <%= number_with_delimiter(@clan.treasury_gold) %></p>
+      <p>Silver: <%= number_with_delimiter(@clan.treasury_silver) %></p>
+      <p>Tokens: <%= number_with_delimiter(@clan.treasury_premium_tokens) %></p>
+    </div>
+  </div>
+
+  <section class="mb-8">
+    <h2>Territories & Fast Travel</h2>
     <ul>
       <% @territories.each do |territory| %>
-        <li><%= territory.territory_key %> — Tax: <%= number_to_percentage(territory.tax_rate * 100, precision: 2) %></li>
+        <li>
+          <strong><%= territory.territory_key %></strong>
+          — Tax: <%= number_to_percentage(territory.tax_rate * 100, precision: 2) %>
+          <% if territory.fast_travel_node.present? %>
+            • Fast Travel Node: <%= territory.fast_travel_node %>
+          <% end %>
+        </li>
       <% end %>
     </ul>
   </section>
 
-  <section>
-    <h2>Wars</h2>
+  <section class="mb-8">
+    <h2>Wars & Declarations</h2>
     <ul>
       <% @wars.each do |war| %>
-        <li><%= war.territory_key %> — <%= war.status.humanize %> on <%= l(war.scheduled_at, format: :short) %></li>
+        <li>
+          <%= war.territory_key %> — <%= war.status.humanize %> on <%= l(war.scheduled_at, format: :short) %>
+          <% if war.support_objective_keys.present? %>
+            <span class="text-sm text-slate-500">Support: <%= war.support_objective_keys.join(", ") %></span>
+          <% end %>
+        </li>
+      <% end %>
+    </ul>
+
+    <% if clan_permission_matrix.allows?(:declare_war) %>
+      <%= form_with url: clan_clan_wars_path(@clan), method: :post, class: "mt-4 flex flex-wrap gap-2" do |form| %>
+        <%= form.text_field :territory_key, placeholder: "Territory key" %>
+        <%= form.text_field :defender_id, placeholder: "Defender clan ID" %>
+        <%= form.datetime_field :scheduled_at %>
+        <%= form.text_field :support_objectives, placeholder: "Support objectives (comma separated)" %>
+        <%= form.submit "Schedule War", class: "button" %>
+      <% end %>
+    <% end %>
+  </section>
+
+  <% if clan_permission_matrix.allows?(:manage_treasury) %>
+    <section class="mb-8">
+      <h2>Treasury Management</h2>
+      <%= form_with url: clan_clan_treasury_transactions_path(@clan), method: :post, class: "flex flex-wrap gap-2" do |form| %>
+        <%= form.select :direction, [["Deposit", "deposit"], ["Withdraw", "withdraw"]] %>
+        <%= form.select :currency_type, [["Gold", "gold"], ["Silver", "silver"], ["Premium Tokens", "premium_tokens"]] %>
+        <%= form.number_field :amount, placeholder: "Amount", min: 1 %>
+        <%= form.text_field :reason, placeholder: "Reason" %>
+        <%= form.text_field :note, placeholder: "Note (optional)" %>
+        <%= form.submit "Submit", class: "button" %>
+      <% end %>
+
+      <h3 class="mt-4">Recent Transactions</h3>
+      <ul>
+        <% @treasury_transactions.each do |entry| %>
+          <li><%= entry.created_at.strftime("%b %d %H:%M") %> — <%= entry.reason.humanize %> (<%= entry.currency_type %> <%= entry.amount %>)</li>
+        <% end %>
+      </ul>
+    </section>
+  <% end %>
+
+  <section class="mb-8">
+    <h2>Recruitment</h2>
+    <% unless clan_membership %>
+      <%= form_with url: clan_clan_applications_path(@clan), method: :post do |form| %>
+        <% @clan.recruitment_questions.each_with_index do |question, index| %>
+          <div class="field">
+            <%= label_tag "clan_application_vetting_answers_question_#{index}", question %>
+            <%= text_area_tag "clan_application[vetting_answers][question_#{index}]" %>
+          </div>
+        <% end %>
+        <div class="field">
+          <%= form.label :referral_user_id, "Referral User ID" %>
+          <%= form.number_field :referral_user_id %>
+        </div>
+        <%= form.submit "Apply", class: "button" %>
+      <% end %>
+    <% end %>
+
+    <% if clan_permission_matrix.allows?(:manage_recruitment) %>
+      <h3>Pending Applications</h3>
+      <ul>
+        <% @pending_applications.each do |application| %>
+          <li class="mb-2">
+            <strong><%= application.applicant.profile_name %></strong>
+            <% if application.character %> (Character Level <%= application.character.level %>) <% end %>
+            <div class="flex gap-2 mt-1">
+              <%= form_with url: clan_clan_application_path(@clan, application), method: :patch do |form| %>
+                <%= form.hidden_field :decision, value: :approved %>
+                <%= form.submit "Approve", class: "button button--secondary" %>
+              <% end %>
+              <%= form_with url: clan_clan_application_path(@clan, application), method: :patch do |form| %>
+                <%= form.hidden_field :decision, value: :rejected %>
+                <%= form.text_field :decision_reason, placeholder: "Reason" %>
+                <%= form.submit "Reject", class: "button button--danger" %>
+              <% end %>
+            </div>
+          </li>
+        <% end %>
+      </ul>
+    <% end %>
+  </section>
+
+  <section class="mb-8">
+    <h2>Message Board</h2>
+    <% if clan_permission_matrix.allows?(:post_announcements) %>
+      <%= form_with url: clan_clan_message_board_posts_path(@clan), method: :post do |form| %>
+        <div class="field">
+          <%= form.label :title %>
+          <%= form.text_field :title %>
+        </div>
+        <div class="field">
+          <%= form.label :body %>
+          <%= form.text_area :body %>
+        </div>
+        <div class="field">
+          <%= form.check_box :pinned %>
+          <%= form.label :pinned, "Pin to top" %>
+        </div>
+        <div class="field">
+          <%= form.check_box :broadcast %>
+          <%= form.label :broadcast, "Broadcast to Discord" %>
+        </div>
+        <%= form.submit "Post Announcement", class: "button" %>
+      <% end %>
+    <% end %>
+
+    <ul class="mt-4">
+      <% @message_board_posts.each do |post| %>
+        <li class="border rounded p-3 mb-3">
+          <strong><%= post.title %></strong> by <%= post.author.profile_name %> (<%= l(post.published_at, format: :short) %>)
+          <p><%= post.body %></p>
+        </li>
       <% end %>
     </ul>
   </section>
+
+  <section class="mb-8">
+    <h2>Clan Quests</h2>
+    <ul>
+      <% @active_clan_quests.each do |quest| %>
+        <li>
+          <strong><%= quest.quest_key.humanize %></strong>
+          <% quest.requirements.each do |metric, required| %>
+            <span><%= metric.humanize %>: <%= quest.progress[metric].to_i %>/<%= required %></span>
+          <% end %>
+          <% if clan_membership %>
+            <%= form_with url: clan_clan_quest_path(@clan, quest), method: :patch, class: "inline-flex gap-2 ml-2" do %>
+              <%= hidden_field_tag :metric, quest.requirements.keys.first %>
+              <%= number_field_tag :amount, 1, min: 1, class: "w-16" %>
+              <%= submit_tag "Contribute", class: "button button--secondary" %>
+            <% end %>
+          <% end %>
+        </li>
+      <% end %>
+    </ul>
+    <% if clan_permission_matrix.allows?(:coordinate_quests) %>
+      <%= form_with url: clan_clan_quests_path(@clan), method: :post, class: "mt-4 flex gap-2" do |form| %>
+        <%= form.text_field :template_key, placeholder: "Template key (e.g. defend_caravans)" %>
+        <%= form.submit "Start Quest", class: "button" %>
+      <% end %>
+    <% end %>
+  </section>
+
+  <% if clan_permission_matrix.allows?(:manage_infrastructure) %>
+    <section class="mb-8">
+      <h2>Stronghold Upgrades</h2>
+      <ul>
+        <% @stronghold_upgrades.each do |upgrade| %>
+          <li>
+            <strong><%= upgrade.upgrade_key.humanize %></strong> — <%= upgrade.status.humanize %> (<%= upgrade.percent_complete %>%)
+            <%= form_with url: clan_clan_stronghold_upgrade_path(@clan, upgrade), method: :patch, class: "inline-flex gap-2 ml-2" do %>
+              <%= text_field_tag :item_key, "steel_ingot", placeholder: "Item key" %>
+              <%= number_field_tag :amount, 1, min: 1 %>
+              <%= submit_tag "Contribute", class: "button button--secondary" %>
+            <% end %>
+          </li>
+        <% end %>
+      </ul>
+      <%= form_with url: clan_clan_stronghold_upgrades_path(@clan), method: :post, class: "mt-3 flex gap-2" do %>
+        <%= text_field_tag :upgrade_key, nil, placeholder: "Upgrade key (war_room)" %>
+        <%= submit_tag "Queue Upgrade", class: "button" %>
+      <% end %>
+    </section>
+
+    <section class="mb-8">
+      <h2>Research Projects</h2>
+      <ul>
+        <% @research_projects.each do |project| %>
+          <li>
+            <strong><%= project.project_key %></strong> — <%= project.status.humanize %>
+            <%= form_with url: clan_clan_research_project_path(@clan, project), method: :patch, class: "inline-flex gap-2 ml-2" do %>
+              <%= text_field_tag :resource_key, "refined_lumber", placeholder: "Resource key" %>
+              <%= number_field_tag :amount, 1, min: 1 %>
+              <%= submit_tag "Contribute", class: "button button--secondary" %>
+            <% end %>
+          </li>
+        <% end %>
+      </ul>
+      <%= form_with url: clan_clan_research_projects_path(@clan), method: :post, class: "mt-3 flex gap-2" do %>
+        <%= text_field_tag :track, nil, placeholder: "Track (resource_yield)" %>
+        <%= number_field_tag :tier, 1, min: 1 %>
+        <%= submit_tag "Queue Research", class: "button" %>
+      <% end %>
+    </section>
+  <% end %>
+
+  <% if clan_permission_matrix.allows?(:manage_permissions) %>
+    <section class="mb-8">
+      <h2>Role Permissions</h2>
+      <table class="w-full">
+        <thead>
+          <tr>
+            <th>Role</th>
+            <% Rails.configuration.x.clans.dig("permissions", "keys").each do |permission| %>
+              <th><%= permission.humanize %></th>
+            <% end %>
+          </tr>
+        </thead>
+        <tbody>
+          <% ClanMembership.roles.keys.each do |role| %>
+            <tr>
+              <td><%= role.humanize %></td>
+              <% Rails.configuration.x.clans.dig("permissions", "keys").each do |permission| %>
+                <% record = @clan.clan_role_permissions.find_by(role: role, permission_key: permission) %>
+                <td>
+                  <%= form_with url: clan_role_permissions_path(@clan), method: :patch do |form| %>
+                    <%= hidden_field_tag :role, role %>
+                    <%= hidden_field_tag :permission_key, permission %>
+                    <%= hidden_field_tag :enabled, !(record&.enabled?) %>
+                    <%= submit_tag(record&.enabled? ? "✓" : "✗", class: "button button--tiny") %>
+                  <% end %>
+                </td>
+              <% end %>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="mb-8">
+      <h2>Audit Log</h2>
+      <ul>
+        <% @recent_logs.each do |log| %>
+          <li><%= l(log.created_at, format: :short) %> — <%= log.action %> (<%= log.metadata.to_json %>)</li>
+        <% end %>
+      </ul>
+    </section>
+  <% end %>
 </section>

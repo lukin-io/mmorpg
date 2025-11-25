@@ -1,7 +1,17 @@
 <section>
   <header>
     <h1>Found a Clan</h1>
+    <p>Founders must meet the progression quests/fees outlined below.</p>
   </header>
+
+  <article class="bg-slate-50 border rounded p-4 my-4">
+    <h2>Requirements</h2>
+    <ul>
+      <li>Minimum Level: <strong><%= @founding_requirements["required_level"] %></strong></li>
+      <li>Quest: <strong><%= @founding_requirements["quest_key"] %></strong></li>
+      <li>Gold Fee: <strong><%= number_with_delimiter(@founding_requirements["gold_fee"]) %></strong></li>
+    </ul>
+  </article>
 
   <%= form_with model: @clan do |form| %>
     <div class="field">

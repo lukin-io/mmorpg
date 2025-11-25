@@ -6,7 +6,8 @@ class ClanMembership < ApplicationRecord
     officer: 1,
     warlord: 2,
     quartermaster: 3,
-    leader: 4
+    leader: 4,
+    recruiter: 5
   }
 
   belongs_to :clan
@@ -15,6 +16,10 @@ class ClanMembership < ApplicationRecord
   validates :clan_id, uniqueness: {scope: :user_id}
 
   after_commit :sync_user_characters
+
+  def permission_matrix
+    Clans::PermissionMatrix.new(clan:, membership: self)
+  end
 
   private
 
