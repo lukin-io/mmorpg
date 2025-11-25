@@ -41,6 +41,11 @@ class MailMessagesController < ApplicationController
   private
 
   def mail_message_params
-    params.require(:mail_message).permit(:recipient_email, :subject, :body)
+    params.require(:mail_message).permit(
+      :recipient_email,
+      :subject,
+      :body,
+      attachment_payload: MailMessage::ATTACHMENT_KEYS
+    )
   end
 end

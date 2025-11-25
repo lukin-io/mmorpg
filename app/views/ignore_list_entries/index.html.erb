@@ -1,0 +1,40 @@
+<section>
+  <header>
+    <h1>Ignore List</h1>
+    <p>Players on this list cannot whisper or message you directly.</p>
+  </header>
+
+  <div class="stack stack--md">
+    <% if @entries.any? %>
+      <ul class="card-list">
+        <% @entries.each do |entry| %>
+          <li class="card">
+            <strong><%= entry.ignored_user.profile_name %></strong>
+            <small><%= entry.notes.presence || entry.context %></small>
+            <%= button_to "Remove", ignore_list_entry_path(entry), method: :delete, form: { data: { turbo_confirm: "Remove this player from ignore list?" } }, class: "button button--ghost" %>
+          </li>
+        <% end %>
+      </ul>
+    <% else %>
+      <p>You are not ignoring anyone.</p>
+    <% end %>
+  </div>
+
+  <section>
+    <h2>Add Player</h2>
+    <%= form_with model: @ignore_list_entry do |form| %>
+      <div class="field">
+        <%= form.label :ignored_user_id, "Player" %>
+        <%= form.collection_select :ignored_user_id, User.verified.order(:profile_name), :id, :profile_name, prompt: "Select user" %>
+      </div>
+      <div class="field">
+        <%= form.label :notes %>
+        <%= form.text_field :notes, placeholder: "Optional note" %>
+      </div>
+      <div class="actions">
+        <%= form.submit "Add to ignore list" %>
+      </div>
+    <% end %>
+  </section>
+</section>
+

@@ -25,6 +25,17 @@ class ChatMessage < ApplicationRecord
 
   after_create_commit :broadcast_new_message
 
+  def register_report!(label: nil)
+    labels = moderation_labels
+    labels |= [label] if label.present?
+
+    update_columns(
+      reported_count: reported_count + 1,
+      moderation_labels: labels,
+      updated_at: Time.current
+    )
+  end
+
   private
 
   def apply_profanity_filter

@@ -66,6 +66,7 @@ class User < ApplicationRecord
   has_many :guild_applications, foreign_key: :applicant_id, dependent: :destroy
   has_many :guilds_led, class_name: "Guild", foreign_key: :leader_id, dependent: :nullify
   has_many :guild_bank_entries, foreign_key: :actor_id, dependent: :nullify
+  has_many :guild_bulletins, foreign_key: :author_id, dependent: :nullify
   has_many :clan_memberships, dependent: :destroy
   has_many :clans, through: :clan_memberships
   has_many :clans_led, class_name: "Clan", foreign_key: :leader_id, dependent: :nullify
@@ -76,6 +77,27 @@ class User < ApplicationRecord
   has_many :housing_plots, dependent: :destroy
   has_many :pet_companions, dependent: :destroy
   has_many :mounts, dependent: :destroy
+  has_many :group_listings, foreign_key: :owner_id, dependent: :destroy
+  has_many :ignore_list_entries, dependent: :destroy
+  has_many :ignored_users, through: :ignore_list_entries, source: :ignored_user
+  has_many :ignored_by_entries,
+    class_name: "IgnoreListEntry",
+    foreign_key: :ignored_user_id,
+    dependent: :destroy
+  has_many :ignored_by_users, through: :ignored_by_entries, source: :user
+  has_many :party_memberships, dependent: :destroy
+  has_many :parties, through: :party_memberships
+  has_many :parties_led, class_name: "Party", foreign_key: :leader_id, dependent: :destroy
+  has_many :party_invitations_sent,
+    class_name: "PartyInvitation",
+    foreign_key: :sender_id,
+    dependent: :nullify
+  has_many :party_invitations_received,
+    class_name: "PartyInvitation",
+    foreign_key: :recipient_id,
+    dependent: :destroy
+  has_many :arena_participations, dependent: :destroy
+  has_many :arena_matches, through: :arena_participations
 
   after_create :assign_default_role
   after_create :ensure_currency_wallet!
@@ -124,6 +146,8 @@ class User < ApplicationRecord
   end
 
   def allows_chat_from?(other_user)
+    return false if ignoring?(other_user) || ignored_by?(other_user)
+
     privacy_allows?(chat_privacy, other_user)
   end
 
@@ -139,6 +163,30 @@ class User < ApplicationRecord
     return false if other_user.blank?
 
     Friendship.accepted_between(self, other_user).exists?
+  end
+
+  def friends
+    Friendship
+      .for_user(self)
+      .accepted
+      .map { |friendship| friendship.requester == self ? friendship.receiver : friendship.requester }
+  end
+
+  def ignoring?(other_user)
+    return false if other_user.blank?
+
+    ignore_list_entries.exists?(ignored_user: other_user)
+  end
+
+  def ignored_by?(other_user)
+    return false if other_user.blank?
+
+    ignored_by_entries.exists?(user: other_user)
+  end
+
+  def message_rate_limit
+    limit = social_settings.fetch("message_rate_limit_per_window", 8).to_i
+    limit.positive? ? limit : 8
   end
 
   def allied_with?(other_user)

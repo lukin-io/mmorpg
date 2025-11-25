@@ -1,0 +1,20 @@
+<section>
+  <header>
+    <h1>Social Hubs</h1>
+    <p>Visit taverns, arenas, and notice boards to meet other adventurers.</p>
+  </header>
+
+  <ul class="card-list">
+    <% @social_hubs.each do |hub| %>
+      <li class="card">
+        <header>
+          <strong><%= hub.name %></strong>
+          <small><%= hub.hub_type.humanize %></small>
+        </header>
+        <p><%= hub.metadata["description"] %></p>
+        <%= link_to "View hub", social_hub_path(hub.slug), class: "button button--ghost" %>
+      </li>
+    <% end %>
+  </ul>
+</section>
+

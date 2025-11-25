@@ -27,6 +27,7 @@ class ChatReportsController < ApplicationController
       )
     end
 
+    Moderation::ReportVolumeAlertJob.perform_later(source: "chat")
     redirect_back fallback_location: chat_channels_path, notice: "Report submitted for moderator review."
   rescue ActiveRecord::RecordInvalid => e
     redirect_back fallback_location: chat_channels_path, alert: e.record.errors.full_messages.to_sentence
@@ -38,6 +39,9 @@ class ChatReportsController < ApplicationController
     permitted = chat_report_params.to_h
     evidence = permitted.delete("evidence") || {}
     evidence = evidence.present? ? evidence : {}
+    source = permitted.delete("source").presence || "chat"
+    source_context = permitted.delete("source_context") || {}
+    source_context = source_context.merge("source" => source)
 
     if permitted["chat_message_id"].present?
       message = ChatMessage.find_by(id: permitted["chat_message_id"])
@@ -47,10 +51,10 @@ class ChatReportsController < ApplicationController
       ).compact
     end
 
-    permitted.merge(evidence:)
+    permitted.merge(evidence:, source_context:)
   end
 
   def chat_report_params
-    params.require(:chat_report).permit(:chat_message_id, :reason, evidence: {})
+    params.require(:chat_report).permit(:chat_message_id, :reason, :source, evidence: {}, source_context: {})
   end
 end

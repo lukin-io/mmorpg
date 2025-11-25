@@ -1,0 +1,67 @@
+<section>
+  <header>
+    <h1><%= @party.name %></h1>
+    <p><%= @party.purpose %></p>
+    <p>Status: <%= @party.status.humanize %></p>
+  </header>
+
+  <section>
+    <h2>Members</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Player</th>
+          <th>Role</th>
+          <th>Ready?</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @memberships.each do |membership| %>
+          <tr>
+            <td><%= membership.user.profile_name %></td>
+            <td><%= membership.role.humanize %></td>
+            <td>
+              <% if membership.user == current_user %>
+                <%= button_to "Toggle",
+                  party_party_membership_path(@party, membership, ready_state: membership.ready? ? false : true),
+                  method: :patch,
+                  class: "button button--ghost" %>
+              <% else %>
+                <%= membership.ready_state.humanize %>
+              <% end %>
+            </td>
+            <td>
+              <% if policy(@party).manage? && membership.user != @party.leader %>
+                <%= button_to "Kick", party_party_membership_path(@party, membership), method: :delete, form: { data: { turbo_confirm: "Remove this member?" } } %>
+              <% end %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>Invitations</h2>
+    <%= form_with model: [@party, PartyInvitation.new] do |form| %>
+      <div class="field">
+        <%= form.label :recipient_id, "Player" %>
+        <%= form.collection_select :recipient_id, User.verified.order(:profile_name), :id, :profile_name, prompt: "Select player" %>
+      </div>
+      <div class="actions">
+        <%= form.submit "Send invite" %>
+      </div>
+    <% end %>
+  </section>
+
+  <% if policy(@party).manage? %>
+    <section class="stack stack--sm">
+      <%= button_to "Start ready check", ready_check_party_path(@party), method: :post, class: "button" %>
+      <%= button_to "Disband party", disband_party_path(@party), method: :post, form: { data: { turbo_confirm: "Disband this party?" } }, class: "button button--danger" %>
+    </section>
+  <% else %>
+    <%= button_to "Leave party", leave_party_path(@party), method: :post, class: "button button--ghost" %>
+  <% end %>
+</section>
+

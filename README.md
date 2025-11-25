@@ -174,6 +174,11 @@ bin/rails db:seed
 ### Social & Meta configuration
 
 - `config/chat_profanity.yml` controls the banned-word dictionary that feeds the profanity filter. Restart the server (or touch `tmp/restart.txt` in deployment) after editing it.
+- Action Cable presence streams broadcast on `PresenceChannel`. Friend list widgets listen for the global `presence:updated` browser event.
+- `SOCIAL_DISCORD_WEBHOOK_URL` / `SOCIAL_TELEGRAM_WEBHOOK_URL` power the community announcement dispatcher for guild perks, arena winners, and social hub spotlights.
+- `REPORT_VOLUME_ALERT_THRESHOLD` (default `25`) controls when `Moderation::ReportVolumeAlertJob` escalates spikes to Discord/Telegram.
+- Chat spam throttling defaults to 8 messages per 10 seconds and can be tuned per-user via `users.social_settings["message_rate_limit_per_window"]`.
+- Group finder listings (`/group_listings`), social hubs (`/social_hubs`), parties, and arena matches are all Hotwire-ready endpoints that surface the broader social layer described in `doc/features/11_social_features.md`.
 - `db/seeds.rb` creates the default global chat channel plus baseline professions, pet species, and the seasonal `winter_festival` event.
 
 ### Gameplay configuration

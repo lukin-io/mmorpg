@@ -9,7 +9,21 @@
   <p><%= chat_message.filtered_body %></p>
 
   <% if policy(ChatReport.new).create? && chat_message.sender != current_user %>
-    <%= button_to "Report", chat_reports_path(chat_report: {chat_message_id: chat_message.id, reason: "Inappropriate language"}),
+    <%= button_to "Report",
+      chat_reports_path(
+        chat_report: {
+          chat_message_id: chat_message.id,
+          reason: "Inappropriate language",
+          source: "chat",
+          source_context: {
+            channel_id: chat_message.chat_channel_id,
+            sender_id: chat_message.sender_id
+          },
+          evidence: {
+            location: chat_message.chat_channel.name
+          }
+        }
+      ),
       method: :post,
       form: { data: { turbo_confirm: "Report this message?" } },
       class: "chat-message__report" %>

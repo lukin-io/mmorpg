@@ -1,0 +1,41 @@
+<section>
+  <header>
+    <h1>Arena Match #<%= @arena_match.id %></h1>
+    <p>Status: <%= @arena_match.status.humanize %></p>
+    <% if @arena_match.spectator_code.present? %>
+      <p>Spectator Code: <code><%= @arena_match.spectator_code %></code></p>
+    <% end %>
+  </header>
+
+  <section>
+    <h2>Participants</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Team</th>
+          <th>Character</th>
+          <th>Result</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @participations.each do |participation| %>
+          <tr>
+            <td><%= participation.team.capitalize %></td>
+            <td><%= participation.character.name %></td>
+            <td><%= participation.result.humanize %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>Spectator Controls</h2>
+    <%= button_to "Spectate via Turbo stream", spectate_arena_match_path(@arena_match), method: :post, class: "button" %>
+    <div data-controller="arena-spectator" data-arena-spectator-match-id-value="<%= @arena_match.id %>">
+      <h3>Live Feed</h3>
+      <ul data-arena-spectator-target="log" class="timeline"></ul>
+    </div>
+  </section>
+</section>
+

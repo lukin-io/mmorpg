@@ -8,6 +8,7 @@ class FriendshipsController < ApplicationController
     @outgoing_requests = @friendships.select { |friendship| friendship.requester == current_user && friendship.pending? }
     @accepted_friendships = @friendships.select(&:accepted?)
     @friendship ||= Friendship.new
+    @friend_presence = Presence::FriendBroadcaster.new.snapshot_for(current_user)
   end
 
   def create

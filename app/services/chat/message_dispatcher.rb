@@ -13,21 +13,27 @@ module Chat
   class MessageDispatcher
     Result = Struct.new(:message, :command_executed?, keyword_init: true)
 
-    def initialize(user:, channel:, body:, moderation_handler: Chat::Moderation::CommandHandler.new)
+    def initialize(user:, channel:, body:, moderation_handler: Chat::Moderation::CommandHandler.new, spam_throttler: nil)
       @user = user
       @channel = channel
       @body = body.to_s.strip
       @moderation_handler = moderation_handler
+      @spam_throttler = spam_throttler
     end
 
     def call
       raise ArgumentError, "message cannot be blank" if body.blank?
 
-      ensure_player_can_post!
+      pipeline_result = ::Moderation::ChatPipeline.new(
+        user:,
+        channel:,
+        input: body,
+        moderation_handler: moderation_handler,
+        spam_throttler: spam_throttler
+      ).call
 
-      command_result = moderation_handler.call(user:, channel:, input: body)
-      if command_result&.handled?
-        message = create_system_message(command_result.system_message)
+      if pipeline_result.command_executed?
+        message = create_system_message(pipeline_result.system_message)
         return Result.new(message:, command_executed?: true)
       end
 
@@ -45,16 +51,7 @@ module Chat
 
     private
 
-    attr_reader :user, :channel, :body, :moderation_handler
-
-    def ensure_player_can_post!
-      user.ensure_social_features!
-
-      raise Chat::Errors::MutedError, "You are muted globally" if ChatModerationAction.muting?(user:, channel:)
-
-      membership = channel.memberships.find_by(user:)
-      raise Chat::Errors::MutedError, "Muted in this channel" if membership&.muted?
-    end
+    attr_reader :user, :channel, :body, :moderation_handler, :spam_throttler
 
     def create_system_message(text)
       channel.chat_messages.create!(
@@ -71,6 +68,10 @@ module Chat
         "sender_role" => user.roles.pluck(:name),
         "channel_type" => channel.channel_type
       }
+    end
+
+    def spam_throttler
+      @spam_throttler ||= Chat::SpamThrottler.new(user:, channel:)
     end
   end
 end

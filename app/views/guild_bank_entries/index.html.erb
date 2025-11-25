@@ -1,0 +1,71 @@
+<section>
+  <header>
+    <h1><%= @guild.name %> Bank</h1>
+    <p>Manage shared guild funds.</p>
+  </header>
+
+  <div class="card stack stack--md">
+    <h2>Treasury Balances</h2>
+    <ul>
+      <li>Gold: <%= number_with_delimiter(@guild.treasury_gold) %></li>
+      <li>Silver: <%= number_with_delimiter(@guild.treasury_silver) %></li>
+      <li>Premium Tokens: <%= number_with_delimiter(@guild.treasury_premium_tokens) %></li>
+    </ul>
+  </div>
+
+  <section>
+    <h2>New Entry</h2>
+    <%= form_with model: [@guild, @guild_bank_entry] do |form| %>
+      <div class="field">
+        <%= form.label :entry_type %>
+        <%= form.select :entry_type, GuildBankEntry.entry_types.keys.map { |key| [key.humanize, key] } %>
+      </div>
+      <div class="field">
+        <%= form.label :currency_type %>
+        <%= form.select :currency_type, %w[gold silver premium_tokens].map { |currency| [currency.humanize, currency] } %>
+      </div>
+      <div class="field">
+        <%= form.label :amount %>
+        <%= form.number_field :amount, required: true %>
+      </div>
+      <div class="field">
+        <%= form.label :notes %>
+        <%= form.text_field :notes %>
+      </div>
+      <div class="actions">
+        <%= form.submit "Record entry" %>
+      </div>
+    <% end %>
+  </section>
+
+  <section>
+    <h2>Ledger</h2>
+    <% if @entries.any? %>
+      <table>
+        <thead>
+          <tr>
+            <th>When</th>
+            <th>Actor</th>
+            <th>Type</th>
+            <th>Amount</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @entries.each do |entry| %>
+            <tr>
+              <td><%= l(entry.created_at, format: :short) %></td>
+              <td><%= entry.actor.profile_name %></td>
+              <td><%= entry.entry_type.humanize %></td>
+              <td><%= entry.amount %> <%= entry.currency_type.humanize %></td>
+              <td><%= entry.notes %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    <% else %>
+      <p>No transactions yet.</p>
+    <% end %>
+  </section>
+</section>
+

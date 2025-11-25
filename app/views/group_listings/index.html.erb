@@ -1,0 +1,60 @@
+<section>
+  <header>
+    <h1>Group Finder</h1>
+    <p>Post parties, guild recruitment notices, or profession commissions.</p>
+  </header>
+
+  <div class="stack stack--lg">
+    <div>
+      <h2>Create Listing</h2>
+      <%= form_with model: @group_listing do |form| %>
+        <div class="field">
+          <%= form.label :title %>
+          <%= form.text_field :title, required: true %>
+        </div>
+        <div class="field">
+          <%= form.label :description %>
+          <%= form.text_area :description, rows: 3 %>
+        </div>
+        <div class="field">
+          <%= form.label :listing_type %>
+          <%= form.select :listing_type, GroupListing::LISTING_TYPES.keys.map { |key| [key.to_s.humanize, key] } %>
+        </div>
+        <div class="field">
+          <%= form.label :status %>
+          <%= form.select :status, GroupListing::STATUSES.keys.map { |key| [key.to_s.humanize, key] } %>
+        </div>
+        <div class="actions">
+          <%= form.submit "Publish Listing" %>
+        </div>
+      <% end %>
+    </div>
+
+    <div>
+      <h2>Active Listings</h2>
+      <% if @group_listings.any? %>
+        <ul class="card-list">
+          <% @group_listings.each do |listing| %>
+            <li class="card">
+              <header>
+                <strong><%= listing.title %></strong>
+                <small><%= listing.listing_type.humanize %> · <%= listing.status.humanize %></small>
+              </header>
+              <p><%= simple_format(listing.description) %></p>
+              <footer>
+                <small>Posted by <%= listing.owner.profile_name %></small>
+                <% if listing.owner == current_user %>
+                  <%= link_to "Edit", edit_group_listing_path(listing), class: "button button--ghost" %>
+                  <%= button_to "Remove", listing, method: :delete, form: { data: { turbo_confirm: "Remove this listing?" } }, class: "button button--ghost" %>
+                <% end %>
+              </footer>
+            </li>
+          <% end %>
+        </ul>
+      <% else %>
+        <p>No listings yet.</p>
+      <% end %>
+    </div>
+  </div>
+</section>
+
