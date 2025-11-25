@@ -271,14 +271,16 @@ end
 
 if defined?(Achievement)
   [
-    {key: "master_artisan", name: "Master Artisan", reward_type: "housing_trophy", reward_payload: {"trophy_name" => "Forgemaster Bust"}},
-    {key: "legendary_artisan", name: "Legendary Artisan", reward_type: "title", reward_payload: {"title" => "Artisan of Legends"}}
+    {key: "master_artisan", name: "Master Artisan", reward_type: "housing_trophy", reward_payload: {"trophy_name" => "Forgemaster Bust"}, category: "crafting"},
+    {key: "legendary_artisan", name: "Legendary Artisan", reward_type: "title", reward_payload: {"title_key" => "legendary_artisan_title"}, category: "crafting"}
   ].each do |attrs|
-    Achievement.find_or_create_by!(key: attrs[:key]) do |achievement|
-      achievement.name = attrs[:name]
-      achievement.reward_type = attrs[:reward_type]
-      achievement.reward_payload = attrs[:reward_payload]
-    end
+    achievement = Achievement.find_or_initialize_by(key: attrs[:key])
+    achievement.name = attrs[:name]
+    achievement.reward_type = attrs[:reward_type]
+    achievement.reward_payload = attrs[:reward_payload]
+    achievement.category = attrs[:category] || "general"
+    achievement.display_priority = attrs[:display_priority] || 0
+    achievement.save!
   end
 end
 

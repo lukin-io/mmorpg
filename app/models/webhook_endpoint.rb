@@ -11,9 +11,9 @@ class WebhookEndpoint < ApplicationRecord
 
   def target_url_must_be_http
     uri = URI.parse(target_url)
-    return if %w[http https].include?(uri.scheme)
+    return if Webhooks::UrlSafety.safe?(uri)
 
-    errors.add(:target_url, "must be HTTP or HTTPS")
+    errors.add(:target_url, "must be HTTP/HTTPS and point to a public host")
   rescue URI::InvalidURIError
     errors.add(:target_url, "is invalid")
   end

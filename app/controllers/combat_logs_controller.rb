@@ -22,7 +22,7 @@ class CombatLogsController < ApplicationController
     scope = @battle.combat_log_entries.includes(:ability)
     scope = scope.damage if params[:filter] == "damage"
     scope = scope.healing if params[:filter] == "healing"
-    scope = scope.by_actor(params[:actor_id])
+    scope = scope.by_actor(params[:actor_id]) if params[:actor_id].present?
     scope
   end
 
