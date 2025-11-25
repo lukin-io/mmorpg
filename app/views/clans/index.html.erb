@@ -1,12 +1,34 @@
 <section>
-  <header>
-    <h1>Clans</h1>
+  <header class="flex items-center justify-between">
+    <div>
+      <h1>Clans</h1>
+      <p>Alliance overview with level, prestige, and territory control.</p>
+    </div>
     <%= link_to "Found Clan", new_clan_path, class: "button" %>
   </header>
 
-  <ul>
-    <% @clans.each do |clan| %>
-      <li><%= link_to clan.name, clan_path(clan) %> (Prestige: <%= clan.prestige %>)</li>
-    <% end %>
-  </ul>
+  <div class="mt-4 overflow-x-auto">
+    <table class="w-full">
+      <thead>
+        <tr>
+          <th class="text-left py-2">Clan</th>
+          <th class="text-left py-2">Leader</th>
+          <th class="text-left py-2">Level</th>
+          <th class="text-left py-2">Prestige</th>
+          <th class="text-left py-2">Territories</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @clans.each do |clan| %>
+          <tr class="border-t">
+            <td class="py-2"><%= link_to clan.name, clan_path(clan) %></td>
+            <td class="py-2"><%= clan.leader.profile_name %></td>
+            <td class="py-2">Lvl <%= clan.level %></td>
+            <td class="py-2"><%= clan.prestige %></td>
+            <td class="py-2"><%= clan.clan_territories.count %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
 </section>

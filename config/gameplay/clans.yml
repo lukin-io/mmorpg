@@ -1,0 +1,181 @@
+default: &default
+  founding:
+    required_level: 35
+    gold_fee: 250000
+    quest_key: "legacy_of_banners"
+  xp:
+    base_threshold: 5000
+    scaling_factor: 1.35
+    per_level_rewards:
+      "2":
+        buffs:
+          - "crafting_speed_tier1"
+        cosmetics:
+          - "crest_silver"
+      "5":
+        buffs:
+          - "resource_yield_tier1"
+          - "fast_travel_discount"
+        cosmetics:
+          - "banner_gold"
+      "10":
+        buffs:
+          - "territory_tax_bonus"
+        cosmetics:
+          - "war_standard_dragon"
+  permissions:
+    keys:
+      - manage_recruitment
+      - manage_treasury
+      - declare_war
+      - manage_infrastructure
+      - post_announcements
+      - coordinate_quests
+      - manage_permissions
+    defaults:
+      member:
+        post_announcements: false
+      recruiter:
+        manage_recruitment: true
+        post_announcements: true
+      quartermaster:
+        manage_treasury: true
+        post_announcements: true
+      warlord:
+        declare_war: true
+        coordinate_quests: true
+      officer:
+        manage_recruitment: true
+        manage_treasury: true
+        coordinate_quests: true
+        post_announcements: true
+        manage_permissions: true
+      leader:
+        manage_recruitment: true
+        manage_treasury: true
+        declare_war: true
+        manage_infrastructure: true
+        post_announcements: true
+        coordinate_quests: true
+        manage_permissions: true
+  treasury:
+    withdrawal_limits:
+      member:
+        gold: 0
+        silver: 0
+        premium_tokens: 0
+      recruiter:
+        gold: 1000
+        silver: 2500
+        premium_tokens: 0
+      quartermaster:
+        gold: 100000
+        silver: 200000
+        premium_tokens: 1000
+      warlord:
+        gold: 5000
+        silver: 12000
+        premium_tokens: 0
+      officer:
+        gold: 20000
+        silver: 50000
+        premium_tokens: 200
+      leader:
+        gold: 250000
+        silver: 500000
+        premium_tokens: 5000
+  recruitment:
+    default_vetting_questions:
+      - "What role do you main in group content?"
+      - "How many nights per week can you attend wars?"
+      - "Link a referral if another member can vouch for you."
+    auto_accept:
+      min_level: 50
+      requires_referral: true
+  stronghold:
+    upgrade_templates:
+      war_room:
+        requirements:
+          crafted_items:
+            - item_key: "steel_ingot"
+              quantity: 200
+            - item_key: "reinforced_lumber"
+              quantity: 150
+          quests:
+            - "siege_readiness"
+        unlocks:
+          vendors:
+            - "siege_quartermaster"
+          training_dummies: true
+      command_hall:
+        requirements:
+          crafted_items:
+            - item_key: "arcane_glass"
+              quantity: 80
+          quests:
+            - "command_chain"
+        unlocks:
+          war_rooms: 1
+          fast_travel_pad: true
+  research:
+    tracks:
+      resource_yield:
+        tiers:
+          "1":
+            cost:
+              crafting:
+                - item_key: "refined_lumber"
+                  quantity: 120
+            unlocks:
+              buffs:
+                - "resource_yield_tier1"
+          "2":
+            cost:
+              crafting:
+                - item_key: "sunsteel_bar"
+                  quantity: 90
+            unlocks:
+              buffs:
+                - "resource_yield_tier2"
+      crafting_speed:
+        tiers:
+          "1":
+            cost:
+              crafting:
+                - item_key: "artisan_thread"
+                  quantity: 60
+            unlocks:
+              buffs:
+                - "crafting_speed_tier1"
+  quests:
+    templates:
+      defend_caravans:
+        quest_key: "clan_defend_caravans"
+        requirements:
+          escort_runs: 3
+        reward_xp: 800
+      craft_supply_drive:
+        quest_key: "clan_craft_supply_drive"
+        requirements:
+          crafted_deliveries: 50
+        reward_xp: 600
+      clear_raids:
+        quest_key: "clan_clear_raids"
+        requirements:
+          raid_victories: 2
+        reward_xp: 1000
+  warfare:
+    support_objectives:
+      - "sabotage_supply_lines"
+      - "fortify_watchtowers"
+      - "escort_scouts"
+
+development:
+  <<: *default
+
+test:
+  <<: *default
+
+production:
+  <<: *default
+

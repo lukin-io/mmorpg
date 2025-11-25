@@ -32,9 +32,17 @@ Rails.application.routes.draw do
   resources :guild_bulletins, only: :destroy
   resources :guild_ranks, only: :destroy
 
-  resources :clans
-  resources :clan_memberships, only: :destroy
-  resources :clan_wars, only: :create
+  resources :clans do
+    resources :clan_applications, only: [:create, :update], path: "applications"
+    resources :clan_message_board_posts, only: [:create, :update, :destroy], path: "messages"
+    resources :clan_treasury_transactions, only: :create, path: "treasury"
+    resources :clan_stronghold_upgrades, only: [:create, :update], path: "stronghold_upgrades"
+    resources :clan_research_projects, only: [:create, :update], path: "research_projects"
+    resources :clan_quests, only: [:create, :update], path: "quests"
+    resource :clan_role_permissions, only: :update, path: "role_permissions"
+    resources :clan_wars, only: :create
+  end
+  resources :clan_memberships, only: [:update, :destroy]
 
   resources :auction_listings do
     resources :auction_bids, only: :create
@@ -122,6 +130,8 @@ Rails.application.routes.draw do
     namespace :live_ops do
       resources :events, only: [:index, :create, :update]
     end
+
+    resources :clan_moderations, only: [:index, :create]
 
     resource :gm_console, only: :show, controller: "gm_console" do
       post :spawn

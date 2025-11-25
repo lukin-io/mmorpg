@@ -70,6 +70,15 @@ class User < ApplicationRecord
   has_many :clan_memberships, dependent: :destroy
   has_many :clans, through: :clan_memberships
   has_many :clans_led, class_name: "Clan", foreign_key: :leader_id, dependent: :nullify
+  has_many :clan_applications, foreign_key: :applicant_id, dependent: :destroy
+  has_many :reviewed_clan_applications,
+    class_name: "ClanApplication",
+    foreign_key: :reviewed_by_id,
+    dependent: :nullify
+  has_many :clan_treasury_transactions, foreign_key: :actor_id, dependent: :nullify
+  has_many :clan_message_board_posts, foreign_key: :author_id, dependent: :nullify
+  has_many :clan_log_entries, foreign_key: :actor_id, dependent: :nullify
+  has_many :clan_moderation_actions, foreign_key: :gm_user_id, dependent: :nullify
   has_one :currency_wallet, dependent: :destroy
   has_many :profession_progresses, dependent: :destroy
   has_many :crafting_jobs, dependent: :nullify

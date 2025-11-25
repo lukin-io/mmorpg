@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_11_25_103737) do
+ActiveRecord::Schema[8.1].define(version: 2025_11_25_130000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -361,6 +361,38 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_25_103737) do
     t.index ["status"], name: "index_chat_reports_on_status"
   end
 
+  create_table "clan_applications", force: :cascade do |t|
+    t.bigint "applicant_id", null: false
+    t.boolean "auto_accepted", default: false, null: false
+    t.bigint "character_id"
+    t.bigint "clan_id", null: false
+    t.datetime "created_at", null: false
+    t.text "decision_reason"
+    t.bigint "referral_user_id"
+    t.datetime "reviewed_at"
+    t.bigint "reviewed_by_id"
+    t.integer "status", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.jsonb "vetting_answers", default: {}, null: false
+    t.index ["applicant_id"], name: "index_clan_applications_on_applicant_id"
+    t.index ["character_id"], name: "index_clan_applications_on_character_id"
+    t.index ["clan_id"], name: "index_clan_applications_on_clan_id"
+    t.index ["referral_user_id"], name: "index_clan_applications_on_referral_user_id"
+    t.index ["reviewed_by_id"], name: "index_clan_applications_on_reviewed_by_id"
+  end
+
+  create_table "clan_log_entries", force: :cascade do |t|
+    t.string "action", null: false
+    t.bigint "actor_id"
+    t.bigint "clan_id", null: false
+    t.datetime "created_at", null: false
+    t.jsonb "metadata", default: {}, null: false
+    t.datetime "updated_at", null: false
+    t.index ["actor_id"], name: "index_clan_log_entries_on_actor_id"
+    t.index ["clan_id", "created_at"], name: "index_clan_log_entries_on_clan_id_and_created_at"
+    t.index ["clan_id"], name: "index_clan_log_entries_on_clan_id"
+  end
+
   create_table "clan_memberships", force: :cascade do |t|
     t.bigint "clan_id", null: false
     t.datetime "created_at", null: false
@@ -373,42 +405,181 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_25_103737) do
     t.index ["user_id"], name: "index_clan_memberships_on_user_id"
   end
 
-  create_table "clan_territories", force: :cascade do |t|
+  create_table "clan_message_board_posts", force: :cascade do |t|
+    t.bigint "author_id", null: false
+    t.text "body", null: false
+    t.datetime "broadcasted_at"
     t.bigint "clan_id", null: false
     t.datetime "created_at", null: false
+    t.jsonb "metadata", default: {}, null: false
+    t.boolean "pinned", default: false, null: false
+    t.datetime "published_at", null: false
+    t.string "title", null: false
+    t.datetime "updated_at", null: false
+    t.index ["author_id"], name: "index_clan_message_board_posts_on_author_id"
+    t.index ["clan_id", "pinned"], name: "index_clan_message_board_posts_on_clan_id_and_pinned"
+    t.index ["clan_id"], name: "index_clan_message_board_posts_on_clan_id"
+  end
+
+  create_table "clan_moderation_actions", force: :cascade do |t|
+    t.string "action_type", null: false
+    t.bigint "clan_id", null: false
+    t.datetime "created_at", null: false
+    t.bigint "gm_user_id", null: false
+    t.text "notes"
+    t.datetime "rolled_back_at"
+    t.bigint "target_id"
+    t.string "target_type"
+    t.datetime "updated_at", null: false
+    t.index ["clan_id"], name: "index_clan_moderation_actions_on_clan_id"
+    t.index ["gm_user_id"], name: "index_clan_moderation_actions_on_gm_user_id"
+    t.index ["target_type", "target_id"], name: "index_clan_moderation_actions_on_target"
+  end
+
+  create_table "clan_quest_contributions", force: :cascade do |t|
+    t.integer "amount", default: 0, null: false
+    t.bigint "character_id", null: false
+    t.bigint "clan_quest_id", null: false
+    t.string "contribution_type", null: false
+    t.datetime "created_at", null: false
+    t.jsonb "metadata", default: {}, null: false
+    t.datetime "updated_at", null: false
+    t.index ["character_id"], name: "index_clan_quest_contributions_on_character_id"
+    t.index ["clan_quest_id"], name: "index_clan_quest_contributions_on_clan_quest_id"
+  end
+
+  create_table "clan_quests", force: :cascade do |t|
+    t.bigint "clan_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "expires_at"
+    t.jsonb "progress", default: {}, null: false
+    t.bigint "quest_id"
+    t.string "quest_key", null: false
+    t.jsonb "requirements", default: {}, null: false
+    t.integer "status", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.index ["clan_id", "quest_key"], name: "index_clan_quests_on_clan_id_and_quest_key", unique: true
+    t.index ["clan_id"], name: "index_clan_quests_on_clan_id"
+    t.index ["quest_id"], name: "index_clan_quests_on_quest_id"
+  end
+
+  create_table "clan_research_projects", force: :cascade do |t|
+    t.bigint "clan_id", null: false
+    t.datetime "completed_at"
+    t.datetime "created_at", null: false
+    t.jsonb "progress", default: {}, null: false
+    t.string "project_key", null: false
+    t.jsonb "requirements", default: {}, null: false
+    t.integer "status", default: 0, null: false
+    t.jsonb "unlocks_payload", default: {}, null: false
+    t.datetime "updated_at", null: false
+    t.index ["clan_id", "project_key"], name: "index_clan_research_projects_on_clan_and_key", unique: true
+    t.index ["clan_id"], name: "index_clan_research_projects_on_clan_id"
+  end
+
+  create_table "clan_role_permissions", force: :cascade do |t|
+    t.bigint "clan_id", null: false
+    t.datetime "created_at", null: false
+    t.boolean "enabled", default: false, null: false
+    t.string "permission_key", null: false
+    t.integer "role", null: false
+    t.datetime "updated_at", null: false
+    t.index ["clan_id", "role", "permission_key"], name: "index_clan_role_permissions_on_role_and_permission", unique: true
+    t.index ["clan_id"], name: "index_clan_role_permissions_on_clan_id"
+  end
+
+  create_table "clan_stronghold_upgrades", force: :cascade do |t|
+    t.bigint "clan_id", null: false
+    t.datetime "completed_at"
+    t.datetime "created_at", null: false
+    t.jsonb "progress", default: {}, null: false
+    t.jsonb "requirements", default: {}, null: false
+    t.datetime "started_at"
+    t.integer "status", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.string "upgrade_key", null: false
+    t.index ["clan_id", "upgrade_key"], name: "index_clan_stronghold_upgrades_on_clan_and_key", unique: true
+    t.index ["clan_id"], name: "index_clan_stronghold_upgrades_on_clan_id"
+  end
+
+  create_table "clan_territories", force: :cascade do |t|
+    t.jsonb "benefits", default: {}, null: false
+    t.bigint "clan_id", null: false
+    t.datetime "created_at", null: false
+    t.string "exclusive_dungeon_key"
+    t.string "fast_travel_node_key"
     t.datetime "last_claimed_at"
     t.integer "tax_rate_basis_points", default: 0, null: false
     t.string "territory_key", null: false
     t.datetime "updated_at", null: false
+    t.string "world_region_key"
     t.index ["clan_id"], name: "index_clan_territories_on_clan_id"
     t.index ["territory_key"], name: "index_clan_territories_on_territory_key", unique: true
   end
 
+  create_table "clan_treasury_transactions", force: :cascade do |t|
+    t.bigint "actor_id", null: false
+    t.integer "amount", null: false
+    t.bigint "clan_id", null: false
+    t.datetime "created_at", null: false
+    t.string "currency_type", null: false
+    t.jsonb "metadata", default: {}, null: false
+    t.string "reason", null: false
+    t.datetime "updated_at", null: false
+    t.index ["actor_id"], name: "index_clan_treasury_transactions_on_actor_id"
+    t.index ["clan_id"], name: "index_clan_treasury_transactions_on_clan_id"
+  end
+
   create_table "clan_wars", force: :cascade do |t|
     t.bigint "attacker_clan_id", null: false
+    t.bigint "battle_id"
     t.datetime "created_at", null: false
+    t.datetime "declaration_made_at"
     t.bigint "defender_clan_id", null: false
+    t.datetime "preparation_begins_at"
     t.datetime "resolved_at"
     t.jsonb "result_payload", default: {}, null: false
     t.datetime "scheduled_at", null: false
     t.integer "status", default: 0, null: false
+    t.jsonb "support_objectives", default: [], null: false
     t.string "territory_key", null: false
     t.datetime "updated_at", null: false
     t.index ["attacker_clan_id", "defender_clan_id", "territory_key"], name: "index_clan_wars_on_participants_and_territory"
     t.index ["attacker_clan_id"], name: "index_clan_wars_on_attacker_clan_id"
+    t.index ["battle_id"], name: "index_clan_wars_on_battle_id"
     t.index ["defender_clan_id"], name: "index_clan_wars_on_defender_clan_id"
   end
 
+  create_table "clan_xp_events", force: :cascade do |t|
+    t.integer "amount", null: false
+    t.bigint "clan_id", null: false
+    t.datetime "created_at", null: false
+    t.jsonb "metadata", default: {}, null: false
+    t.datetime "recorded_at", null: false
+    t.string "source", null: false
+    t.datetime "updated_at", null: false
+    t.index ["clan_id"], name: "index_clan_xp_events_on_clan_id"
+  end
+
   create_table "clans", force: :cascade do |t|
+    t.jsonb "banner_data", default: {}, null: false
     t.datetime "created_at", null: false
     t.text "description"
+    t.string "discord_webhook_url"
+    t.integer "experience", default: 0, null: false
+    t.jsonb "fast_travel_nodes", default: [], null: false
+    t.jsonb "infrastructure_state", default: {}, null: false
     t.bigint "leader_id", null: false
+    t.integer "level", default: 1, null: false
     t.string "name", null: false
     t.integer "prestige", default: 0, null: false
+    t.jsonb "recruitment_settings", default: {}, null: false
     t.string "slug", null: false
     t.integer "treasury_gold", default: 0, null: false
     t.integer "treasury_premium_tokens", default: 0, null: false
+    t.jsonb "treasury_rules", default: {}, null: false
     t.integer "treasury_silver", default: 0, null: false
+    t.jsonb "unlocked_buffs", default: [], null: false
     t.datetime "updated_at", null: false
     t.index ["leader_id"], name: "index_clans_on_leader_id"
     t.index ["slug"], name: "index_clans_on_slug", unique: true
@@ -1683,11 +1854,33 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_25_103737) do
   add_foreign_key "chat_reports", "chat_messages"
   add_foreign_key "chat_reports", "moderation_tickets"
   add_foreign_key "chat_reports", "users", column: "reporter_id"
+  add_foreign_key "clan_applications", "characters"
+  add_foreign_key "clan_applications", "clans"
+  add_foreign_key "clan_applications", "users", column: "applicant_id"
+  add_foreign_key "clan_applications", "users", column: "referral_user_id"
+  add_foreign_key "clan_applications", "users", column: "reviewed_by_id"
+  add_foreign_key "clan_log_entries", "clans"
+  add_foreign_key "clan_log_entries", "users", column: "actor_id"
   add_foreign_key "clan_memberships", "clans"
   add_foreign_key "clan_memberships", "users"
+  add_foreign_key "clan_message_board_posts", "clans"
+  add_foreign_key "clan_message_board_posts", "users", column: "author_id"
+  add_foreign_key "clan_moderation_actions", "clans"
+  add_foreign_key "clan_moderation_actions", "users", column: "gm_user_id"
+  add_foreign_key "clan_quest_contributions", "characters"
+  add_foreign_key "clan_quest_contributions", "clan_quests"
+  add_foreign_key "clan_quests", "clans"
+  add_foreign_key "clan_quests", "quests"
+  add_foreign_key "clan_research_projects", "clans"
+  add_foreign_key "clan_role_permissions", "clans"
+  add_foreign_key "clan_stronghold_upgrades", "clans"
   add_foreign_key "clan_territories", "clans"
+  add_foreign_key "clan_treasury_transactions", "clans"
+  add_foreign_key "clan_treasury_transactions", "users", column: "actor_id"
+  add_foreign_key "clan_wars", "battles"
   add_foreign_key "clan_wars", "clans", column: "attacker_clan_id"
   add_foreign_key "clan_wars", "clans", column: "defender_clan_id"
+  add_foreign_key "clan_xp_events", "clans"
   add_foreign_key "clans", "users", column: "leader_id"
   add_foreign_key "class_specializations", "character_classes"
   add_foreign_key "combat_log_entries", "battles"

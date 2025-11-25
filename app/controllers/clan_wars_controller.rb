@@ -2,12 +2,23 @@
 
 class ClanWarsController < ApplicationController
   def create
-    attacker = current_user.clans.first || (raise Pundit::NotAuthorizedError, "Join a clan first")
+    attacker = Clan.find(params[:clan_id])
+    authorize attacker, :declare_war?
     defender = Clan.find(params[:defender_id])
-    authorize ClanWar
 
+    starts_at = Time.zone.parse(params[:scheduled_at])
     scheduler = Clans::WarScheduler.new(attacker:, defender:)
-    scheduler.schedule!(territory_key: params[:territory_key], starts_at: Time.zone.parse(params[:scheduled_at]))
+    support_param = params[:support_objectives]
+    support_objectives = if support_param.is_a?(String)
+      support_param.split(",").map(&:strip)
+    else
+      Array(support_param)
+    end.reject(&:blank?)
+    scheduler.schedule!(
+      territory_key: params[:territory_key],
+      starts_at: starts_at,
+      support_objectives: support_objectives
+    )
 
     redirect_to clan_path(attacker), notice: "War scheduled."
   rescue => e

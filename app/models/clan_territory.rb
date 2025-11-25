@@ -11,10 +11,15 @@ class ClanTerritory < ApplicationRecord
   end
 
   def world_region
-    Game::World::RegionCatalog.instance.region_for_territory(territory_key)
+    key = world_region_key.presence || territory_key
+    Game::World::RegionCatalog.instance.region_for_territory(key)
   end
 
   def clan_bonuses
-    world_region&.clan_bonuses || {}
+    (world_region&.clan_bonuses || {}).merge(benefits || {})
+  end
+
+  def fast_travel_node
+    fast_travel_node_key || clan_bonuses.dig("fast_travel", "node_key")
   end
 end

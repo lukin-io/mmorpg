@@ -43,7 +43,7 @@ This is a clone/re-imagining of the classic MMORPG **Neverlands.ru**, featuring:
 - Grid-based movement
 - Player characters, stats, skills, and equipment
 - Inventory, items, professions, crafting
-- Guilds/clans
+- Guilds/clans (territory wars, shared treasuries, research trees, Discord-integrated announcements, recruitment pipeline with vetting + referrals)
 - Social foundation: Turbo-driven chat (global/local), friend lists, in-game mail, and moderation workflows
 - Economy stack: wallets, auction house, direct trade sessions, and kiosk listings
 - Crafting/profession progression with job queues and recipe validation
@@ -186,6 +186,7 @@ bin/rails db:seed
 - `config/gameplay/biomes.yml` maps biome keys to encounter tables consumed by `Game::Exploration::EncounterResolver`.
 - `config/gameplay/terrain_modifiers.yml` shapes road/swamp/forest movement cooldown multipliers consumed by `Game::Movement::TerrainModifier`.
 - `db/seeds.rb` provisions core character classes (Warrior/Mage/Hunter/Priest/Thief), advanced specializations, abilities, spawn points, gathering nodes, and starter items.
+- `config/gameplay/clans.yml` defines clan founding requirements, permission defaults, treasury limits, stronghold/research templates, and clan quest rewards referenced by the services in `doc/flow/clan_system.md`.
 
 ### Economy configuration
 
