@@ -663,7 +663,7 @@ end
 housing_plot = nil
 
 if defined?(HousingPlot) && admin
-  guild_id = admin.primary_guild_id
+  guild_id = admin.primary_guild&.id
   housing_plot = HousingPlot.find_or_create_by!(user: admin, location_key: "castleton_upper", plot_type: "townhome") do |plot|
     plot.plot_tier = "deluxe"
     plot.exterior_style = "aurora"
