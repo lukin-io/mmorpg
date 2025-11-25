@@ -12,6 +12,7 @@
   - Combat log viewer (`CombatLogsController#show`) surfaces “Report” links per round.
   - NPC magistrates (`NpcReportsController#create`) reuse `Game::Moderation::NpcIntake` which now delegates to `Moderation::ReportIntake`.
 - `Moderation::Ticket` stores reporter, subject, category, source, evidence, metadata, Action Cable broadcast state, and automatically issues zone surge anomaly jobs.
+ - Player-facing transparency: `Moderation::PanelsController#show` renders the `Moderation::PanelBuilder` payload (policy summaries, penalty state, appeal statuses) for self-service review.
 
 ## Enforcement Toolkit
 - Moderation UI lives under `Admin::Moderation::TicketsController` with Turbo-updating queue + ticket detail view.
@@ -26,6 +27,7 @@
 
 ## Transparency, Appeals, & Player Communication
 - `Moderation::TicketStatusNotifierJob` mirrors status changes into in-game mail (`MailMessage`) and emails (`ModerationMailer#status_update`); `Moderation::PenaltyNotifier` handles penalty-specific notifications.
+- Contextual guideline reminders leverage the `moderation-guideline` Stimulus controller embedded in chat/arena UIs, reinforcing policy summaries inline.
 - Players submit appeals via `Moderation::AppealsController` + `Moderation::AppealWorkflow`, which enforces SLAs and reopens tickets when overturned.
 - Admin appeal review flows through `Admin::Moderation::AppealsController`.
 

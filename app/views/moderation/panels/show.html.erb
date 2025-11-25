@@ -1,0 +1,51 @@
+<section class="bg-slate-900 rounded-lg p-4 shadow" data-controller="moderation-guideline">
+  <header class="mb-4">
+    <h1 class="text-3xl font-semibold">Moderation Panel</h1>
+    <p class="text-slate-400">Review recent penalties, appeals, and policy reminders.</p>
+  </header>
+
+  <section class="mb-4">
+    <h2 class="text-xl font-semibold mb-2">Active Penalties</h2>
+    <ul class="text-sm text-slate-300">
+      <li>Suspended until: <%= @panel[:penalties][:suspended_until] || "N/A" %></li>
+      <li>Trade lock until: <%= @panel[:penalties][:trade_locked_until] || "N/A" %></li>
+    </ul>
+  </section>
+
+  <section class="mb-4">
+    <h2 class="text-xl font-semibold mb-2">Tickets</h2>
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="text-left text-slate-400">
+          <th>ID</th>
+          <th>Status</th>
+          <th>Penalty</th>
+          <th>Appeal</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @panel[:tickets].each do |ticket| %>
+          <tr>
+            <td><%= ticket[:ticket_id] %></td>
+            <td><%= ticket[:status] %></td>
+            <td><%= ticket[:penalty_state] %></td>
+            <td><%= ticket[:appeal_status] %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2 class="text-xl font-semibold mb-2">Policy Summaries</h2>
+    <ul>
+      <% @panel[:policy_keys].each do |key| %>
+        <li class="text-sm text-slate-300" data-action="mouseenter->moderation-guideline#show mouseleave->moderation-guideline#hide" data-guideline="<%= key %>">
+          <%= key.titleize %>
+        </li>
+      <% end %>
+    </ul>
+    <div data-moderation-guideline-target="tooltip" class="hidden text-xs text-slate-200 mt-2"></div>
+  </section>
+</section>
+

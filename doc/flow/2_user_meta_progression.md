@@ -10,12 +10,16 @@
 - `PetSpecies`, `PetCompanion`, `Mount` — capture companion/mount ownership and abilities.
 
 ## Services & Workflows
-- `Achievements::GrantService` handles idempotent grants and reward application.
-- `Housing::InstanceManager` provisions default plots and updates access rules.
-- `Companions::AbilityService` surfaces buff payloads for combat/economy integrations.
+- `Achievements::GrantService` handles idempotent grants and reward application (currency, titles, housing trophies).
+- `Achievements::ProfileShowcaseBuilder` composes profile/housing/forum payloads for top achievements + equipped titles.
+- `Housing::InstanceManager` provisions default plots, handles tier upgrades, and visit scope updates.
+- `Housing::DecorPlacementService` enforces décor slot limits for furniture/trophies/utility stations.
+- `Companions::BonusCalculator` surfaces buff payloads; `Companions::CareTaskResolver` awards bonding XP through care quests.
+- `Mounts::StableManager` unlocks slots, assigns mounts, and summons active travel bonuses.
 
 ## Controllers & UI
-- `AchievementsController#index`, `HousingPlotsController`, `PetCompanionsController`, `MountsController` expose simple management screens (see `app/views/...`).
+- `AchievementsController#index`, `HousingPlotsController`, `PetCompanionsController`, `MountsController` expose responsive management screens (see `app/views/...`) with mobile HUD collapse targets.
+- `Moderation::PanelsController#show` provides the player-facing moderation status pane referenced by these systems.
 
 ## Policies
 - `AchievementPolicy`, `HousingPlotPolicy`, `PetCompanionPolicy`, `MountPolicy` limit actions to owning players (with GM overrides for housing updates).
@@ -31,7 +35,10 @@
 - models:
   - `app/models/achievement.rb`, `app/models/achievement_grant.rb`, `app/models/title.rb`, `app/models/housing_plot.rb`, `app/models/housing_decor_item.rb`, `app/models/pet_species.rb`, `app/models/pet_companion.rb`, `app/models/mount.rb`
 - services:
-  - `app/services/achievements/grant_service.rb`, `app/services/housing/instance_manager.rb`, `app/services/companions/ability_service.rb`
+  - `app/services/achievements/grant_service.rb`, `app/services/achievements/profile_showcase_builder.rb`
+  - `app/services/housing/instance_manager.rb`, `app/services/housing/decor_placement_service.rb`
+  - `app/services/companions/bonus_calculator.rb`, `app/services/companions/care_task_resolver.rb`
+  - `app/services/mounts/stable_manager.rb`
 - controllers/views:
   - `app/controllers/achievements_controller.rb`, `app/views/achievements/index.html.erb`
   - `app/controllers/housing_plots_controller.rb`, `app/views/housing_plots/index.html.erb`

@@ -1,19 +1,53 @@
-<section>
-  <header>
-    <h1>Battle Log — #<%= @battle.id %></h1>
-    <p>Zone: <%= @battle.zone&.name || "Unknown" %></p>
+<section class="combat-log-view" data-mobile-hud-target="panel" id="<%= dom_id(@battle) %>">
+  <header class="mb-4 flex justify-between items-center">
+    <div>
+      <h1 class="text-3xl font-semibold">Battle #<%= @battle.id %> Logs</h1>
+      <p class="text-slate-400 text-sm">Zone: <%= @battle.zone&.name || "Unknown" %> • Mode: <%= @battle.pvp_mode || @battle.battle_type %></p>
+    </div>
+    <div class="flex gap-2">
+      <%= link_to "Export CSV", combat_log_path(@battle, format: :csv, filter: params[:filter], actor_id: params[:actor_id]), class: "btn-secondary" %>
+      <%= link_to "Share JSON", combat_log_path(@battle, format: :json), class: "btn-secondary" %>
+    </div>
   </header>
 
-  <ol class="combat-log">
+  <% if @analytics %>
+    <section class="bg-slate-900 rounded-lg p-4 mb-4">
+      <h2 class="text-lg font-semibold mb-2">Analytics</h2>
+      <p class="text-sm text-slate-400">Total Damage: <%= @analytics.payload["total_damage"] %> • Total Healing: <%= @analytics.payload["total_healing"] %></p>
+    </section>
+  <% end %>
+
+  <section class="mb-4">
+    <%= form_with url: combat_log_path(@battle), method: :get, class: "flex gap-2" do |form| %>
+      <div>
+        <%= form.label :filter, "Filter" %>
+        <%= form.select :filter, [["All", nil], ["Damage", :damage], ["Healing", :healing]], selected: params[:filter] %>
+      </div>
+      <div>
+        <%= form.label :actor_id, "Actor ID" %>
+        <%= form.number_field :actor_id, value: params[:actor_id] %>
+      </div>
+      <div class="self-end">
+        <%= form.submit "Apply", class: "btn-primary" %>
+      </div>
+    <% end %>
+  </section>
+
+  <ol class="combat-log space-y-2">
     <% @combat_log_entries.each do |entry| %>
-      <li>
-        <strong>Round <%= entry.round_number %>:</strong>
-        <span><%= entry.message %></span>
-        <%= link_to "Report", new_moderation_report_path(
-          source: :combat_log,
-          origin_reference: entry.id,
-          metadata: { battle_id: @battle.id, round_number: entry.round_number }
-        ), class: "button button--link" %>
+      <li class="bg-slate-900 rounded px-3 py-2">
+        <div class="flex justify-between text-sm">
+          <strong>Round <%= entry.round_number %>, Seq <%= entry.sequence %></strong>
+          <span class="text-slate-500">DMG: <%= entry.damage_amount %> • HEAL: <%= entry.healing_amount %></span>
+        </div>
+        <p class="text-slate-200"><%= entry.message %></p>
+        <div class="text-right">
+          <%= link_to "Report", new_moderation_report_path(
+            source: :combat_log,
+            origin_reference: entry.id,
+            metadata: { battle_id: @battle.id, round_number: entry.round_number }
+          ), class: "text-xs text-red-400 underline" %>
+        </div>
       </li>
     <% end %>
   </ol>

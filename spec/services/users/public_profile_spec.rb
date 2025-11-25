@@ -15,7 +15,8 @@ RSpec.describe Users::PublicProfile do
     expect(payload[:reputation]).to eq(250)
     expect(payload[:guild]).to include(name: guild.name)
     expect(payload[:housing].first).to include(location_key: plot.location_key)
-    expect(payload[:achievements].first).to include(name: "Explorer")
+    combat_showcase = payload[:achievements][:categories]["combat"].first
+    expect(combat_showcase).to include(name: "Explorer")
     expect(payload.values.join).not_to include(user.email)
   end
 end

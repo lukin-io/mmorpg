@@ -69,9 +69,27 @@ Rails.application.routes.draw do
   end
 
   resources :achievements, only: [:index, :create]
-  resources :housing_plots, only: [:index, :create, :update]
-  resources :pet_companions, only: [:index, :create]
-  resources :mounts, only: [:index, :create]
+  resources :housing_plots, only: [:index, :create, :update] do
+    member do
+      post :upgrade
+      post :decorate
+      delete "decorate/:decor_id", action: :remove_decor, as: :remove_decor
+    end
+  end
+  resources :pet_companions, only: [:index, :create] do
+    member do
+      post :care
+    end
+  end
+  resources :mounts, only: [:index, :create] do
+    collection do
+      post :unlock_slot
+    end
+    member do
+      post :assign_to_slot
+      post :summon
+    end
+  end
   resources :parties do
     member do
       post :ready_check
@@ -117,6 +135,7 @@ Rails.application.routes.draw do
     resources :tickets, only: [] do
       resources :appeals, only: [:new, :create]
     end
+    resource :panel, only: :show
   end
 
   namespace :admin do
@@ -155,4 +174,10 @@ Rails.application.routes.draw do
 
   # Defines the root path route ("/")
   root "dashboard#show"
+
+  namespace :api do
+    namespace :v1 do
+      resources :fan_tools, only: :index
+    end
+  end
 end

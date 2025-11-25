@@ -23,7 +23,7 @@
     <%= javascript_importmap_tags %>
   </head>
 
-  <body <%= idle_tracker_attributes %>>
+  <body <%= idle_tracker_attributes %> data-controller="mobile-hud">
     <header class="flash-messages">
       <% flash.each do |type, message| %>
         <div class="flash <%= type %>"><%= message %></div>

@@ -9,6 +9,13 @@ class MountPolicy < ApplicationPolicy
     user.present?
   end
 
+  def update?
+    record.user == user
+  end
+
+  alias_method :assign_to_slot?, :update?
+  alias_method :summon?, :update?
+
   class Scope < Scope
     def resolve
       scope.where(user:)
