@@ -21,8 +21,6 @@ class ClanWarPolicy < ApplicationPolicy
       record.attacker_clan
     when Clan
       record
-    else
-      nil
     end
   end
 end

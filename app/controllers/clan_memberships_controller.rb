@@ -5,7 +5,7 @@ class ClanMembershipsController < ApplicationController
     membership = ClanMembership.find(params[:id])
     authorize membership.clan, :manage_permissions?
 
-    if membership.update(role: membership_params[:role])
+    if membership.update(role: membership_role_param)
       Clans::LogWriter.new(clan: membership.clan).record!(
         action: "membership.promoted",
         actor: current_user,
@@ -31,7 +31,10 @@ class ClanMembershipsController < ApplicationController
 
   private
 
-  def membership_params
-    params.require(:clan_membership).permit(:role)
+  def membership_role_param
+    role = params.require(:clan_membership).fetch(:role).to_s
+    return role if ClanMembership.roles.key?(role)
+
+    raise ActionController::BadRequest, "Invalid role"
   end
 end

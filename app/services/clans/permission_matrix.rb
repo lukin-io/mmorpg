@@ -48,10 +48,8 @@ module Clans
     attr_reader :clan, :membership
 
     def cached_permissions
-      @cached_permissions ||= begin
-        clan.clan_role_permissions.where(role: membership.role).each_with_object({}) do |permission, memo|
-          memo[permission.permission_key.to_s] = permission.enabled?
-        end
+      @cached_permissions ||= clan.clan_role_permissions.where(role: membership.role).each_with_object({}) do |permission, memo|
+        memo[permission.permission_key.to_s] = permission.enabled?
       end
     end
 
