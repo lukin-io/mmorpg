@@ -1,10 +1,10 @@
 <%= turbo_stream_from @chat_channel %>
 
 <section class="chat-channel" data-controller="chat">
-  <header>
+  <div class="page-header">
     <h1><%= @chat_channel.name %></h1>
-    <p>Channel type: <%= @chat_channel.channel_type.humanize %></p>
-  </header>
+    <p>Channel type: <span class="badge"><%= @chat_channel.channel_type.humanize %></span></p>
+  </div>
 
   <div id="<%= dom_id(@chat_channel, :messages) %>" data-chat-target="messages" class="chat-messages">
     <%= render partial: "chat_messages/chat_message", collection: @chat_messages, as: :chat_message %>

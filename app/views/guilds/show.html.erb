@@ -1,24 +1,41 @@
-<section>
-  <header>
-    <h1><%= @guild.name %></h1>
-    <p><%= @guild.motto %></p>
-    <p>Leader: <%= @guild.leader.email %></p>
-  </header>
+<section class="guild-card">
+  <div class="page-header flex justify-between items-center">
+    <div>
+      <h1><%= @guild.name %></h1>
+      <p class="text-muted"><%= @guild.motto %></p>
+    </div>
+    <div class="guild-banner"></div>
+  </div>
 
-  <section>
-    <h2>Members</h2>
-    <ul>
-      <% @memberships.each do |membership| %>
-        <li><%= membership.user.email %> — <%= membership.role.humanize %></li>
+  <div class="grid md:grid-cols-2 gap-4 mt-4">
+    <section class="card">
+      <h2>Guild Info</h2>
+      <p><strong>Leader:</strong> <%= @guild.leader.profile_name || @guild.leader.email %></p>
+      <p><strong>Members:</strong> <%= @memberships.count %></p>
+      <p><strong>Founded:</strong> <%= @guild.created_at.strftime("%B %d, %Y") %></p>
+    </section>
+
+    <section class="card">
+      <h2>Apply to Join</h2>
+      <%= form_with url: guild_guild_applications_path(@guild), scope: :guild_application do |form| %>
+        <div class="field">
+          <%= form.label :answers, "Tell us about yourself" %>
+          <%= form.text_area :answers, placeholder: "Why do you want to join?", rows: 4 %>
+        </div>
+        <%= form.submit "Submit Application", class: "btn-primary" %>
       <% end %>
-    </ul>
-  </section>
+    </section>
+  </div>
 
-  <section>
-    <h2>Apply</h2>
-    <%= form_with url: guild_guild_applications_path(@guild), scope: :guild_application do |form| %>
-      <%= form.text_area :answers, placeholder: "Tell us about yourself" %>
-      <%= form.submit "Submit" %>
-    <% end %>
+  <section class="card mt-4">
+    <h2>Members</h2>
+    <div class="guild-members-list">
+      <% @memberships.each do |membership| %>
+        <div class="guild-member">
+          <span><%= membership.user.profile_name || membership.user.email %></span>
+          <span class="guild-rank badge"><%= membership.role.humanize %></span>
+        </div>
+      <% end %>
+    </div>
   </section>
 </section>

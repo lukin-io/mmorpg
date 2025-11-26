@@ -1,15 +1,31 @@
-<section>
-  <header>
-    <h1>Guild Ledger</h1>
-    <%= link_to "Found Guild", new_guild_path, class: "button" %>
-  </header>
+<div class="page-header flex justify-between items-center">
+  <div>
+    <h1>Guilds</h1>
+    <p>Join a guild to team up with other players.</p>
+  </div>
+  <%= link_to "Create Guild", new_guild_path, class: "btn-primary" %>
+</div>
 
-  <ul>
-    <% @guilds.each do |guild| %>
-      <li>
-        <%= link_to guild.name, guild_path(guild) %>
-        <small>Level <%= guild.level %> — Leader: <%= guild.leader.email %></small>
-      </li>
-    <% end %>
-  </ul>
-</section>
+<div class="grid md:grid-cols-2 gap-4">
+  <% @guilds.each do |guild| %>
+    <article class="guild-card">
+      <header class="flex gap-3">
+        <div class="guild-banner"></div>
+        <div>
+          <h2><%= link_to guild.name, guild_path(guild) %></h2>
+          <p class="text-muted text-sm"><%= guild.motto %></p>
+        </div>
+      </header>
+      <div class="flex justify-between items-center mt-3 text-sm">
+        <span class="text-muted">Leader: <%= guild.leader.profile_name || guild.leader.email %></span>
+        <span class="badge"><%= guild.guild_memberships.count %> members</span>
+      </div>
+    </article>
+  <% end %>
+</div>
+
+<% if @guilds.empty? %>
+  <div class="empty-state">
+    <p>No guilds have been created yet. Be the first to start one!</p>
+  </div>
+<% end %>

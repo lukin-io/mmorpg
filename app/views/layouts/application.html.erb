@@ -1,11 +1,13 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
-    <title><%= content_for(:title) || "Mmorpg" %></title>
+    <title><%= content_for(:title) || "Neverlands" %></title>
+    <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="application-name" content="Mmorpg">
+    <meta name="application-name" content="Neverlands">
     <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#3D3929">
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
 
@@ -24,18 +26,94 @@
   </head>
 
   <body <%= idle_tracker_attributes %> data-controller="mobile-hud">
-    <header class="flash-messages">
-      <% flash.each do |type, message| %>
-        <div class="flash <%= type %>"><%= message %></div>
-      <% end %>
-    </header>
-    <% if current_user %>
-      <%= turbo_stream_from ["notifications", current_user.id] %>
-      <div id="<%= dom_id(current_user, :notifications) %>" class="notifications"></div>
-    <% end %>
+    <div class="game-wrapper">
+      <%# Game Header with navigation %>
+      <header class="game-header">
+        <div class="game-header-inner">
+          <%= link_to "Neverlands", root_path, class: "game-logo" %>
 
-    <main>
-      <%= yield %>
-    </main>
+          <nav class="game-nav">
+            <% if current_user %>
+              <%= link_to "Dashboard", root_path, class: ("active" if controller_name == "dashboard") %>
+              <%= link_to "Quests", quests_path, class: ("active" if controller_name == "quests") %>
+              <%= link_to "Chat", chat_channels_path, class: ("active" if controller_name == "chat_channels") %>
+              <%= link_to "Guilds", guilds_path, class: ("active" if controller_name == "guilds") %>
+              <%= link_to "Profile", profile_path(current_user.profile_name), class: ("active" if controller_name == "public_profiles") %>
+            <% end %>
+          </nav>
+
+          <div class="user-status-bar">
+            <% if current_user %>
+              <span class="user-nickname"><%= current_user.profile_name || current_user.email %></span>
+              <%= button_to "Log out", destroy_user_session_path, method: :delete, class: "btn-secondary btn-sm" %>
+            <% else %>
+              <%= link_to "Log in", new_user_session_path, class: "btn-secondary btn-sm" %>
+              <%= link_to "Register", new_user_registration_path, class: "btn-primary btn-sm" %>
+            <% end %>
+          </div>
+        </div>
+      </header>
+
+      <%# Flash Messages %>
+      <% if flash.any? %>
+        <div class="flash-messages container">
+          <% flash.each do |type, message| %>
+            <div class="flash <%= type %>"><%= message %></div>
+          <% end %>
+        </div>
+      <% end %>
+
+      <%# Real-time notifications %>
+      <% if current_user %>
+        <%= turbo_stream_from ["notifications", current_user.id] %>
+        <div id="<%= dom_id(current_user, :notifications) %>" class="notifications"></div>
+      <% end %>
+
+      <%# Main Content %>
+      <div class="game-content">
+        <% if content_for?(:sidebar) %>
+          <aside class="game-sidebar">
+            <%= yield :sidebar %>
+          </aside>
+        <% end %>
+
+        <main class="game-main">
+          <%= yield %>
+        </main>
+      </div>
+
+      <%# Footer %>
+      <footer class="game-footer">
+        <p class="copy">© <%= Time.current.year %> Neverlands • Ruby on Rails MMORPG</p>
+      </footer>
+
+      <%# Mobile Bottom Navigation %>
+      <% if current_user %>
+        <nav class="mobile-hud" data-mobile-hud-target="hud">
+          <div class="mobile-hud-inner">
+            <%= link_to root_path, class: "mobile-hud-btn" do %>
+              <span class="icon">🏠</span>
+              <span>Home</span>
+            <% end %>
+            <%= link_to quests_path, class: "mobile-hud-btn" do %>
+              <span class="icon">📜</span>
+              <span>Quests</span>
+            <% end %>
+            <%= link_to chat_channels_path, class: "mobile-hud-btn" do %>
+              <span class="icon">💬</span>
+              <span>Chat</span>
+            <% end %>
+            <%= link_to guilds_path, class: "mobile-hud-btn" do %>
+              <span class="icon">⚔️</span>
+              <span>Guild</span>
+            <% end %>
+            <%= link_to profile_path(current_user.profile_name), class: "mobile-hud-btn" do %>
+              <span class="icon">👤</span>
+              <span>Profile</span>
+            <% end %>
+          </div>
+        </nav>
+      <% end %>
+    </div>
   </body>
 </html>

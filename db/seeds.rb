@@ -96,12 +96,7 @@ end
 if defined?(Flipper)
   %i[combat_system guilds housing].each do |feature|
     Flipper.add(feature)
-  end
-
-  if lukin_user
-    Flipper.disable(:combat_system, lukin_user)
-    Flipper.disable(:housing, lukin_user)
-    Flipper.disable(:guilds, lukin_user)
+    Flipper.enable(feature)
   end
 end
 

@@ -1,21 +1,59 @@
-<div class="space-y-6">
-  <section>
-    <h1>Neverlands Control Panel</h1>
-    <p>Welcome, <%= current_user.email %>. Use this dashboard while core gameplay screens are being built.</p>
-  </section>
+<% content_for :sidebar do %>
+  <div class="sidebar-panel">
+    <div class="sidebar-panel-header">Character</div>
+    <div class="sidebar-panel-body">
+      <div class="char-frame">
+        <div class="char-frame-avatar"></div>
+        <div class="char-frame-name"><%= current_user.profile_name || "Adventurer" %></div>
+        <div class="char-frame-level">Level 1 Novice</div>
+        <div class="char-frame-bars">
+          <div class="char-bar progress">
+            <div class="progress-bar progress-bar--hp" style="width: 100%"></div>
+            <span class="char-bar-label">HP 100/100</span>
+          </div>
+          <div class="char-bar progress">
+            <div class="progress-bar progress-bar--mp" style="width: 100%"></div>
+            <span class="char-bar-label">MP 50/50</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
-  <section>
+  <div class="sidebar-panel">
+    <div class="sidebar-panel-header">Quick Menu</div>
+    <ul class="sidebar-menu">
+      <li><%= link_to "My Profile", profile_path(current_user.profile_name) %></li>
+      <li><%= link_to "Inventory", "#" %></li>
+      <li><%= link_to "Skills", "#" %></li>
+      <li><%= link_to "Map", "#" %></li>
+    </ul>
+  </div>
+<% end %>
+
+<div class="page-header">
+  <h1>Neverlands Control Panel</h1>
+  <p>Welcome, <%= current_user.profile_name || current_user.email %>. Choose your adventure.</p>
+</div>
+
+<div class="dashboard-grid">
+  <section class="dashboard-card">
     <h2>Feature Flags</h2>
     <ul>
       <% @feature_flags.each do |feature| %>
         <li>
-          <strong><%= feature.key %></strong> — <%= feature.enabled? ? "enabled" : "disabled" %>
+          <strong><%= feature.key %></strong>
+          <% if feature.enabled? %>
+            <span class="badge badge--success">enabled</span>
+          <% else %>
+            <span class="badge">disabled</span>
+          <% end %>
         </li>
       <% end %>
     </ul>
   </section>
 
-  <section>
+  <section class="dashboard-card">
     <h2>Social Tools</h2>
     <ul>
       <li><%= link_to "Chat Channels", chat_channels_path %></li>
@@ -26,5 +64,42 @@
       <% end %>
     </ul>
   </section>
-</div>
 
+  <section class="dashboard-card">
+    <h2>Gameplay</h2>
+    <ul>
+      <li><%= link_to "Quests", quests_path %></li>
+      <li><%= link_to "Crafting", crafting_jobs_path %></li>
+      <li><%= link_to "Professions", professions_path %></li>
+    </ul>
+  </section>
+
+  <section class="dashboard-card">
+    <h2>Meta Progression</h2>
+    <ul>
+      <li><%= link_to "Housing", housing_plots_path %></li>
+      <li><%= link_to "Pets", pet_companions_path %></li>
+      <li><%= link_to "Mounts", mounts_path %></li>
+      <li><%= link_to "Achievements", achievements_path %></li>
+    </ul>
+  </section>
+
+  <section class="dashboard-card">
+    <h2>Economy</h2>
+    <ul>
+      <li><%= link_to "Auction House", auction_listings_path %></li>
+      <li><%= link_to "Marketplace", marketplace_kiosks_path %></li>
+      <li><%= link_to "Trade", trade_sessions_path %></li>
+    </ul>
+  </section>
+
+  <section class="dashboard-card">
+    <h2>Community</h2>
+    <ul>
+      <li><%= link_to "Guilds", guilds_path %></li>
+      <li><%= link_to "Clans", clans_path %></li>
+      <li><%= link_to "Leaderboards", leaderboards_path %></li>
+      <li><%= link_to "Events", game_events_path %></li>
+    </ul>
+  </section>
+</div>
