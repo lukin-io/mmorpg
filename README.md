@@ -26,6 +26,7 @@ A full-stack Ruby on Rails MMORPG inspired by the classic Neverlands.ru. This pr
   - Turbo Frames (partial updates)
   - Turbo Streams (real-time UI)
   - Stimulus controllers (interactivity)
+- **CSV gem** (explicit dependency for combat log exports on Ruby 3.4+)
 - **Devise + Pundit + Rolify** (auth + authorization + roles)
 - **Sidekiq 8** (background jobs for combat/chat/events)
 - **ViewComponent** (server-rendered UI composition)
