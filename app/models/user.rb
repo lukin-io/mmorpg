@@ -83,9 +83,11 @@ class User < ApplicationRecord
   has_many :profession_progresses, dependent: :destroy
   has_many :crafting_jobs, dependent: :nullify
   has_many :achievement_grants, dependent: :destroy
+  has_many :title_grants, dependent: :destroy
   has_many :housing_plots, dependent: :destroy
   has_many :pet_companions, dependent: :destroy
   has_many :mounts, dependent: :destroy
+  has_many :mount_stable_slots, dependent: :destroy
   has_many :group_listings, foreign_key: :owner_id, dependent: :destroy
   has_many :ignore_list_entries, dependent: :destroy
   has_many :ignored_users, through: :ignore_list_entries, source: :ignored_user
@@ -107,7 +109,9 @@ class User < ApplicationRecord
     dependent: :destroy
   has_many :arena_participations, dependent: :destroy
   has_many :arena_matches, through: :arena_participations
+  has_many :integration_tokens, foreign_key: :created_by_id, dependent: :destroy
 
+  belongs_to :active_title, class_name: "Title", optional: true
   after_create :assign_default_role
   after_create :ensure_currency_wallet!
   before_validation :ensure_profile_name

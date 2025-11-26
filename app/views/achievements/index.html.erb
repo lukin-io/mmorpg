@@ -1,23 +1,70 @@
-<section>
-  <header>
-    <h1>Achievements</h1>
+<section class="achievements-panel">
+  <header class="flex justify-between items-center mb-4">
+    <div>
+      <h1 class="text-3xl font-semibold">Achievements & Titles</h1>
+      <p class="text-slate-400">Account-wide milestones spanning combat, crafting, exploration, and social play.</p>
+    </div>
+    <%= link_to "JSON Feed", api_v1_fan_tools_path(format: :json, token: params[:token]), class: "text-sm underline" if defined?(api_v1_fan_tools_path) %>
   </header>
 
-  <ul>
-    <% @achievements.each do |achievement| %>
-      <li>
-        <strong><%= achievement.name %></strong> (<%= achievement.points %> pts)
-        <p><%= achievement.description %></p>
-      </li>
+  <nav class="flex gap-2 mb-4">
+    <%= link_to "All", achievements_path, class: "btn-secondary #{'btn-primary' unless params[:category].present?}" %>
+    <% Achievement::CATEGORIES.each do |category| %>
+      <%= link_to category.titleize, achievements_path(category: category), class: "btn-secondary #{'btn-primary' if params[:category] == category}" %>
     <% end %>
-  </ul>
+  </nav>
 
-  <section>
-    <h2>Your Unlocks</h2>
-    <ul>
-      <% @grants.each do |grant| %>
-        <li><%= grant.achievement.name %> — granted at <%= l(grant.granted_at, format: :short) %></li>
+  <div class="grid gap-4 md:grid-cols-2">
+    <% @achievements.each do |achievement| %>
+      <article class="bg-slate-900 rounded-lg p-4 shadow" data-mobile-hud-target="panel" id="<%= dom_id(achievement) %>">
+        <header class="flex justify-between items-center">
+          <div>
+            <h2 class="text-xl font-semibold"><%= achievement.name %></h2>
+            <p class="text-xs text-slate-400"><%= achievement.category.titleize %> • <%= achievement.points %> pts</p>
+          </div>
+          <% if achievement.title_reward %>
+            <span class="text-xs text-amber-400 uppercase tracking-wide">Title Reward</span>
+          <% end %>
+        </header>
+        <p class="mt-2 text-sm text-slate-300"><%= achievement.description %></p>
+      </article>
+    <% end %>
+  </div>
+
+  <section class="mt-6 border-t border-slate-800 pt-4 grid md:grid-cols-2 gap-4">
+    <div>
+      <h2 class="text-2xl font-semibold mb-2">Your Showcase</h2>
+      <% @showcase[:categories].each do |category, entries| %>
+        <div class="mb-3">
+          <h3 class="text-sm uppercase text-slate-500"><%= category.titleize %></h3>
+          <ul class="text-sm text-slate-300 list-disc list-inside">
+            <% entries.each do |entry| %>
+              <li><%= entry[:name] %> (<%= entry[:points] %> pts) — <%= l(entry[:granted_at], format: :short) %></li>
+            <% end %>
+          </ul>
+        </div>
       <% end %>
-    </ul>
+    </div>
+    <div>
+      <h2 class="text-2xl font-semibold mb-2">Titles</h2>
+      <ul class="text-sm text-slate-300 space-y-2">
+        <% @showcase[:titles].each do |title| %>
+          <li class="flex items-center justify-between">
+            <span><%= title[:name] %></span>
+            <% if title[:equipped] %>
+              <span class="text-emerald-400 text-xs uppercase">Equipped</span>
+            <% end %>
+          </li>
+        <% end %>
+      </ul>
+    </div>
+  </section>
+
+  <section class="mt-6 border-t border-slate-800 pt-4">
+    <h2 class="text-2xl font-semibold mb-2">Manual Unlock</h2>
+    <%= form_with url: achievements_path, method: :post, class: "flex gap-2" do |form| %>
+      <%= form.collection_select :achievement_id, Achievement.order(:name), :id, :name %>
+      <%= form.submit "Grant Achievement", class: "btn-primary" %>
+    <% end %>
   </section>
 </section>

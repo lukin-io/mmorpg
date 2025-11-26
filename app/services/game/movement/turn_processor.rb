@@ -86,9 +86,17 @@ module Game
       end
 
       def environment_cooldown(zone:, tile_metadata:)
-        Game::Movement::TerrainModifier
+        base = Game::Movement::TerrainModifier
           .new(zone:)
           .cooldown_seconds(base_seconds: ACTION_COOLDOWN_SECONDS, tile_metadata:)
+        (base / mount_speed_multiplier).round(2)
+      end
+
+      def mount_speed_multiplier
+        @mount_speed_multiplier ||= begin
+          active_mount = character.user&.mounts&.find_by(summon_state: :summoned)
+          active_mount ? active_mount.travel_multiplier : 1.0
+        end
       end
     end
   end

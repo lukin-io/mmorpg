@@ -180,6 +180,11 @@ bin/rails db:seed
 - Chat spam throttling defaults to 8 messages per 10 seconds and can be tuned per-user via `users.social_settings["message_rate_limit_per_window"]`.
 - Group finder listings (`/group_listings`), social hubs (`/social_hubs`), parties, and arena matches are all Hotwire-ready endpoints that surface the broader social layer described in `doc/features/11_social_features.md`.
 - `db/seeds.rb` creates the default global chat channel plus baseline professions, pet species, and the seasonal `winter_festival` event.
+- Housing tiers/upgrades run through `Housing::InstanceManager#upgrade_tier!` with décor placement limits enforced by `Housing::DecorPlacementService`. Visit `/housing_plots` to manage access rules, showcasing achievements, and décor loadouts.
+- Companion care quests are handled via `Companions::CareTaskResolver` + `Companions::BonusCalculator`; `/pet_companions` exposes the leveling UI.
+- Stable management (`/mounts`) uses `Mounts::StableManager` to unlock slots (gold/premium sinks) and summon mounts for overworld speed buffs wired into `Game::Movement::TurnProcessor`.
+- The player-facing moderation dashboard lives at `/moderation/panel`, summarizing policy keys, penalties, and appeal states; contextual tooltips in chat/arena views leverage the `moderation-guideline` Stimulus controller.
+- Fan integrations authenticate with `IntegrationToken` records (`X-Integration-Token` header) and call `GET /api/v1/fan_tools` for achievement/housing feeds. Webhooks configured via `WebhookEndpoint` emit events through `Webhooks::EventDispatcher`.
 
 ### Gameplay configuration
 

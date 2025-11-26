@@ -11,4 +11,8 @@
   <div class="actions">
     <%= form.submit "Send" %>
   </div>
+  <p class="text-xs text-slate-500 mt-2" data-controller="moderation-guideline" data-action="mouseenter->moderation-guideline#show mouseleave->moderation-guideline#hide" data-guideline="chat_abuse">
+    Remember: harassment-free chat. Hover to review guidelines.
+    <span data-moderation-guideline-target="tooltip" class="hidden"></span>
+  </p>
 <% end %>

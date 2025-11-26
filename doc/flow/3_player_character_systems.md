@@ -5,14 +5,14 @@
 - Server-authoritative turn processing lives in `Game::Movement`/`Game::Combat`; ActiveRecord models keep persistence + visibility for moderation.
 
 ## Movement & Exploration
-- `Zone`, `SpawnPoint`, and `CharacterPosition` store deterministic location data; `Game::Movement::TurnProcessor` enforces one action per server tick.
+- `Zone`, `SpawnPoint`, and `CharacterPosition` store deterministic location data; `Game::Movement::TurnProcessor` enforces one action per server tick and now factors in active mount travel multipliers.
 - `config/gameplay/biomes.yml` + `Game::Exploration::EncounterResolver` control biome-aware encounters layered onto `MapTileTemplate` tiles.
 - Respawns use `Game::Movement::RespawnService` with faction-aware spawn points and downtime windows.
 
 ## Combat Flow
-- `Battle` + `BattleParticipant` persist PvE/PvP participants, initiative, and spectator flags.
-- `Game::Combat::EncounterBuilder` provisions duels, skirmishes, and arena matches; `TurnResolver` writes `CombatLogEntry` rows for moderators/spectators.
-- `Game::Combat::ArenaLadder` + `PostBattleProcessor` update ladder ratings, doctor recovery, and respawn scheduling.
+- `Battle` + `BattleParticipant` persist PvE/PvP participants, initiative, and spectator flags (with share tokens/exportable logs).
+- `Game::Combat::EncounterBuilder` provisions duels, skirmishes, and arena matches; `TurnResolver` writes enriched `CombatLogEntry` analytics rows for moderators/spectators.
+- `Game::Combat::ArenaLadder` + `PostBattleProcessor` update ladder ratings, doctor recovery, respawn scheduling, and enqueue `Combat::AggregateStatsJob` → `Game::Combat::Analytics::ReportBuilder`.
 
 ## Progression & Stats
 - `Players::Progression::LevelUpService` awards XP, stat, and skill points using quadratic thresholds.
@@ -41,7 +41,7 @@
 - services:
   - `app/services/game/movement/turn_processor.rb`, `respawn_service.rb`, `tile_provider.rb`
   - `app/services/game/exploration/encounter_resolver.rb`
-  - `app/services/game/combat/encounter_builder.rb`, `turn_resolver.rb`, `attack_service.rb`, `skill_executor.rb`, `log_writer.rb`, `arena_ladder.rb`, `post_battle_processor.rb`
+  - `app/services/game/combat/encounter_builder.rb`, `turn_resolver.rb`, `attack_service.rb`, `skill_executor.rb`, `log_writer.rb`, `arena_ladder.rb`, `post_battle_processor.rb`, `app/services/game/combat/analytics/report_builder.rb`
   - `app/services/game/inventory/manager.rb`, `equipment_service.rb`, `enhancement_service.rb`
   - `app/services/players/progression/level_up_service.rb`, `stat_allocation_service.rb`, `app/services/players/alignment/access_gate.rb`
   - `app/services/professions/gathering_resolver.rb`, `app/services/professions/doctor/trauma_response.rb`

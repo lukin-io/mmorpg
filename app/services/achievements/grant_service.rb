@@ -17,7 +17,13 @@ module Achievements
         record.source = source
       end
 
-      apply_reward! if grant.previously_new_record?
+      if grant.previously_new_record?
+        apply_reward!
+        Webhooks::EventDispatcher.new(
+          event_type: "achievement.unlocked",
+          payload: {user_id: user.id, achievement_key: achievement.key}
+        ).call
+      end
       grant
     end
 
@@ -30,13 +36,25 @@ module Achievements
 
       case achievement.reward_type
       when "title"
-        # placeholder for Title unlock logic
+        title = achievement.title_reward || Title.find_by(requirement_key: achievement.reward_payload["title_key"])
+        return unless title
+
+        Titles::EquipService.new(user:).call(
+          title: title,
+          source: "achievement:#{achievement.key}"
+        )
       when "currency"
-        wallet.adjust!(currency: :gold, amount: achievement.reward_payload["gold"].to_i)
+        wallet.adjust!(
+          currency: :gold,
+          amount: achievement.reward_payload["gold"].to_i,
+          reason: "achievement.#{achievement.key}"
+        )
       when "housing_trophy"
         plot = user.housing_plots.first_or_create!(plot_type: "studio", location_key: "capital")
         plot.housing_decor_items.create!(
-          name: achievement.reward_payload["trophy_name"] || achievement.name
+          name: achievement.reward_payload["trophy_name"] || achievement.name,
+          decor_type: :trophy,
+          metadata: achievement.reward_payload
         )
       end
     end

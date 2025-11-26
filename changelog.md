@@ -11,6 +11,25 @@
 ## Return Values
 - Not applicable; this is a documentation file.
 
+## 2025-11-26
+
+### Added
+- Implemented `doc/features/13_additional_features.md`, covering the extended quality-of-life set:
+  - Player Housing: tier upgrades with gold/premium sinks (`Housing::InstanceManager#upgrade_tier!`), décor placement + utility slot limits (`Housing::DecorPlacementService`), visit scopes, and showcase mode surfaced via the revamped `/housing_plots`.
+  - Pets & Mounts: companion care quests (`Companions::CareTaskResolver`), passive buff math (`Companions::BonusCalculator`), stable slot unlocks/summoning (`Mounts::StableManager`), and mount-driven movement speed hooked into `Game::Movement::TurnProcessor`.
+  - Achievements & Titles: category filters, profile/housing/forum payloads (`Achievements::ProfileShowcaseBuilder`), title equips (`Titles::EquipService`), and webhook/API fan-tool feeds (`Api::V1::FanToolsController`, `Webhooks::EventDispatcher`).
+  - Combat Logs & Analytics: enriched log rows (damage/healing/ability tags), CSV/JSON exports, `Combat::AggregateStatsJob`, and `Game::Combat::Analytics::ReportBuilder`.
+  - Mobile Compatibility + Moderation UX: responsive Hotwire panels with `mobile-hud` controller, moderation tooltip helpers, and the self-serve `/moderation/panel` view built on `Moderation::PanelBuilder`.
+  - Future Hooks: integration tokens + webhook endpoints for community tooling, Twitch embed support on arena pages, and documentation/readme updates.
+
+### Feature Coverage Snapshot
+
+| Feature | Title                   | Status | Notes |
+|---------|-------------------------|--------|-------|
+| 13      | Extended Feature Set    | ✅ Done | Housing tiers/décor, pet/mount progression, achievement showcase, combat analytics exports, mobile HUD, moderation panel, and fan-tool API/webhooks shipped. |
+
+Completed features: **8** / 14 total (`doc/features/0`–`doc/features/13`).
+
 ## 2025-11-25
 
 ### Added

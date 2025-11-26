@@ -1,23 +1,135 @@
-<section>
-  <header>
-    <h1>Housing</h1>
+<section class="housing-dashboard" data-controller="layout-stack">
+  <header class="flex justify-between items-center mb-4">
+    <div>
+      <h1 class="text-3xl font-semibold">Player Housing</h1>
+      <p class="text-slate-400 text-sm">Manage plot access, décor, and upgrade tiers.</p>
+    </div>
+    <%= link_to "Housing Docs", doc_path("flow/2_user_meta_progression"), class: "text-sm underline" if defined?(doc_path) %>
   </header>
 
-  <ul>
+  <div class="grid gap-4">
     <% @housing_plots.each do |plot| %>
-      <li>
-        <strong><%= plot.plot_type %></strong> at <%= plot.location_key %>
-        <p>Storage slots: <%= plot.storage_slots %></p>
-      </li>
-    <% end %>
-  </ul>
+      <article class="bg-slate-900 rounded-lg p-4 shadow" data-mobile-hud-target="panel" id="<%= dom_id(plot) %>">
+        <header>
+          <h2 class="text-xl font-semibold"><%= plot.plot_type.titleize %> — <%= plot.plot_tier.titleize %></h2>
+          <p class="text-sm text-slate-400">
+            <%= plot.location_key.humanize %> • Exterior: <%= plot.exterior_style.titleize %> • Storage: <%= plot.storage_slots %> • Utility Slots: <%= plot.utility_slots %>
+          </p>
+        </header>
 
-  <section>
-    <h2>Create Plot</h2>
+        <div class="grid md:grid-cols-2 gap-4 mt-4">
+          <section>
+            <h3 class="text-lg font-medium">Access & Showcase</h3>
+            <%= form_with model: plot, url: housing_plot_path(plot), method: :patch do |form| %>
+              <div class="field">
+                <%= form.label :visit_scope, "Visit Scope" %>
+                <%= form.select :visit_scope, HousingPlot.visit_scopes.keys.map { |scope| [scope.titleize, scope] }, {}, class: "w-full" %>
+              </div>
+              <div class="field">
+                <%= form.label :visit_guild_id, "Guild Access" %>
+                <%= form.number_field :visit_guild_id, value: plot.visit_guild_id, placeholder: "Guild ID" %>
+              </div>
+              <div class="field">
+                <%= form.label :showcase_enabled, "Showcase achievements at entrance" %>
+                <%= form.check_box :showcase_enabled, checked: plot.showcase_enabled %>
+              </div>
+              <div class="field">
+                <%= form.label :access_rules, "Custom Access Rules (JSON)" %>
+                <%= form.text_area :access_rules, value: plot.access_rules.to_json, rows: 3 %>
+              </div>
+              <%= form.submit "Save Preferences", class: "btn-primary" %>
+            <% end %>
+          </section>
+
+          <section>
+            <h3 class="text-lg font-medium">Upgrade Tier</h3>
+            <p class="text-sm text-slate-400 mb-2">Higher tiers unlock more rooms, décor slots, and exterior styles.</p>
+            <%= form_with url: upgrade_housing_plot_path(plot), method: :post, scope: :upgrade do |form| %>
+              <div class="field">
+                <%= form.label :plot_tier %>
+                <%= form.select :plot_tier, HousingPlot::PLOT_TIERS.keys.map { |tier| [tier.titleize, tier] }, selected: plot.plot_tier %>
+              </div>
+              <div class="field">
+                <%= form.label :exterior_style %>
+                <%= form.text_field :exterior_style, value: plot.exterior_style %>
+              </div>
+              <%= form.submit "Upgrade Tier", class: "btn-secondary" %>
+            <% end %>
+          </section>
+        </div>
+
+        <section class="mt-4">
+          <h3 class="text-lg font-medium mb-2">Décor & Utility Stations</h3>
+          <div class="flex flex-wrap gap-2 mb-3">
+            <% plot.housing_decor_items.each do |decor| %>
+              <div class="bg-slate-800 rounded px-3 py-2 flex items-center gap-2">
+                <div>
+                  <strong><%= decor.name %></strong>
+                  <p class="text-xs text-slate-400"><%= decor.decor_type.titleize %></p>
+                </div>
+                <%= button_to "Remove", remove_decor_housing_plot_path(plot, decor_id: decor.id), method: :delete, class: "text-xs text-red-400" %>
+              </div>
+            <% end %>
+            <% if plot.housing_decor_items.empty? %>
+              <p class="text-sm text-slate-500">No décor placed yet.</p>
+            <% end %>
+          </div>
+          <%= form_with url: decorate_housing_plot_path(plot), method: :post, scope: :decor do |form| %>
+            <div class="grid md:grid-cols-4 gap-3">
+              <div>
+                <%= form.label :name %>
+                <%= form.text_field :name, required: true %>
+              </div>
+              <div>
+                <%= form.label :decor_type %>
+                <%= form.select :decor_type, HousingDecorItem.decor_types.keys.map { |type| [type.titleize, type] } %>
+              </div>
+              <div>
+                <%= form.label :utility_slot, "Utility Slot" %>
+                <%= form.number_field :utility_slot, min: 0 %>
+              </div>
+              <div>
+                <%= form.label :placement, "Placement JSON" %>
+                <%= form.text_field :placement, placeholder: '{"x":0,"y":0}' %>
+              </div>
+            </div>
+            <div class="mt-3">
+              <%= form.label :metadata, "Metadata JSON" %>
+              <%= form.text_field :metadata, placeholder: '{"buff_key":"alchemy"}' %>
+            </div>
+            <%= form.submit "Add Décor", class: "btn-secondary mt-3" %>
+          <% end %>
+        </section>
+      </article>
+    <% end %>
+  </div>
+
+  <section class="mt-6 border-t border-slate-800 pt-4">
+    <h2 class="text-2xl font-semibold mb-2">Purchase Additional Plot</h2>
     <%= form_with model: HousingPlot.new, url: housing_plots_path do |form| %>
-      <%= form.text_field :plot_type, placeholder: "Plot type" %>
-      <%= form.text_field :location_key, placeholder: "Location" %>
-      <%= form.submit "Create" %>
+      <div class="grid md:grid-cols-4 gap-3">
+        <div>
+          <%= form.label :plot_type %>
+          <%= form.text_field :plot_type, placeholder: "Plot type", required: true %>
+        </div>
+        <div>
+          <%= form.label :location_key %>
+          <%= form.text_field :location_key, placeholder: "Location key", required: true %>
+        </div>
+        <div>
+          <%= form.label :plot_tier %>
+          <%= form.select :plot_tier, HousingPlot::PLOT_TIERS.keys.map { |tier| [tier.titleize, tier] } %>
+        </div>
+        <div>
+          <%= form.label :visit_scope %>
+          <%= form.select :visit_scope, HousingPlot.visit_scopes.keys.map { |scope| [scope.titleize, scope] }, selected: "friends" %>
+        </div>
+      </div>
+      <div class="mt-3">
+        <%= form.label :exterior_style %>
+        <%= form.text_field :exterior_style, placeholder: "Classic", required: true %>
+      </div>
+      <%= form.submit "Provision Plot", class: "btn-primary mt-3" %>
     <% end %>
   </section>
 </section>

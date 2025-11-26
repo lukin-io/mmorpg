@@ -1,21 +1,85 @@
-<section>
-  <header>
-    <h1>Mounts</h1>
+<section class="mounts-dashboard">
+  <header class="mb-4 flex justify-between items-center">
+    <div>
+      <h1 class="text-3xl font-semibold">Mounts & Stable</h1>
+      <p class="text-slate-400">Summon mounts for overworld travel speed bonuses and cosmetics.</p>
+    </div>
   </header>
 
-  <ul>
+  <div class="grid gap-4 md:grid-cols-2">
     <% @mounts.each do |mount| %>
-      <li><%= mount.name %> — <%= mount.mount_type %> (+<%= mount.speed_bonus %> speed)</li>
+      <article class="bg-slate-900 rounded-lg p-4 shadow" data-mobile-hud-target="panel" id="<%= dom_id(mount) %>">
+        <header class="flex justify-between">
+          <div>
+            <h2 class="text-xl font-semibold"><%= mount.name %></h2>
+            <p class="text-sm text-slate-400"><%= mount.mount_type.titleize %> • <%= mount.faction_key.titleize %> faction • <%= mount.rarity.titleize %></p>
+          </div>
+          <span class="text-sm text-emerald-400 font-semibold">+<%= mount.speed_bonus %>% speed</span>
+        </header>
+        <p class="text-xs text-slate-500 mt-2">State: <%= mount.summon_state.titleize %></p>
+        <div class="flex gap-2 mt-3">
+          <%= form_with url: assign_to_slot_mount_path(mount), method: :post, scope: :slot do |form| %>
+            <%= form.number_field :slot_index, min: 0, placeholder: "Slot #" %>
+            <%= form.submit "Assign Slot", class: "btn-secondary" %>
+          <% end %>
+          <%= form_with url: summon_mount_path(mount), method: :post, scope: :slot do |form| %>
+            <%= form.hidden_field :slot_index, value: mount.mount_stable_slot&.slot_index %>
+            <%= form.submit "Summon", class: "btn-primary", disabled: mount.mount_stable_slot.nil? %>
+          <% end %>
+        </div>
+      </article>
     <% end %>
-  </ul>
+  </div>
 
-  <section>
-    <h2>Add Mount</h2>
-    <%= form_with model: Mount.new, url: mounts_path do |form| %>
-      <%= form.text_field :name, placeholder: "Name" %>
-      <%= form.text_field :mount_type, placeholder: "Type" %>
-      <%= form.number_field :speed_bonus, value: 0 %>
-      <%= form.submit "Add" %>
+  <section class="mt-6 border-t border-slate-800 pt-4">
+    <h2 class="text-2xl font-semibold mb-2">Stable Slots</h2>
+    <div class="flex flex-wrap gap-3">
+      <% @stable_slots.each do |slot| %>
+        <div class="bg-slate-800 rounded-lg p-3 w-48">
+          <p class="text-sm font-semibold">Slot <%= slot.slot_index %></p>
+          <p class="text-xs text-slate-400">Status: <%= slot.status.titleize %></p>
+          <% if slot.current_mount %>
+            <p class="text-xs text-slate-400 mt-1">Mount: <%= slot.current_mount.name %></p>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+    <%= form_with url: unlock_slot_mounts_path, method: :post, scope: :slot, class: "mt-3 flex gap-2" do |form| %>
+      <%= form.number_field :slot_index, min: 0, placeholder: "Slot # to unlock" %>
+      <%= form.submit "Unlock Slot", class: "btn-secondary" %>
+    <% end %>
+  </section>
+
+  <section class="mt-6 border-t border-slate-800 pt-4">
+    <h2 class="text-2xl font-semibold mb-2">Register New Mount</h2>
+    <%= form_with model: Mount.new, url: mounts_path, class: "grid md:grid-cols-3 gap-3" do |form| %>
+      <div>
+        <%= form.label :name %>
+        <%= form.text_field :name, required: true %>
+      </div>
+      <div>
+        <%= form.label :mount_type %>
+        <%= form.text_field :mount_type, required: true %>
+      </div>
+      <div>
+        <%= form.label :speed_bonus %>
+        <%= form.number_field :speed_bonus, value: 0 %>
+      </div>
+      <div>
+        <%= form.label :faction_key %>
+        <%= form.text_field :faction_key, value: "neutral" %>
+      </div>
+      <div>
+        <%= form.label :rarity %>
+        <%= form.text_field :rarity, value: "common" %>
+      </div>
+      <div>
+        <%= form.label :cosmetic_variant %>
+        <%= form.text_field :cosmetic_variant, value: "default" %>
+      </div>
+      <div class="md:col-span-3 text-right">
+        <%= form.submit "Register Mount", class: "btn-primary" %>
+      </div>
     <% end %>
   </section>
 </section>

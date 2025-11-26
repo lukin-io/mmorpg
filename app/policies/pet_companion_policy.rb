@@ -9,6 +9,12 @@ class PetCompanionPolicy < ApplicationPolicy
     user.present?
   end
 
+  def update?
+    record.user == user
+  end
+
+  alias_method :care?, :update?
+
   class Scope < Scope
     def resolve
       scope.where(user:)
