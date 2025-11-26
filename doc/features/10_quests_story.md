@@ -1,7 +1,7 @@
 # 10. Quests, Narrative, and Events
 
 ## Story Structure
-- **Data Model:** `QuestChain`, `QuestChapter`, `Quest`, `QuestStep`, and `QuestAssignment` capture authored story beats plus per-character state. Chapters define `level_gate`, `reputation_gate`, and `faction_alignment` so the main storyline mirrors Neverlands canon while unlocking sequentially through `sequence` ordering.
+- **Data Model:** `QuestChain`, `QuestChapter`, `Quest`, `QuestStep`, and `QuestAssignment` capture authored story beats plus per-character state. Chapters define `level_gate`, `reputation_gate`, and `faction_alignment` so the main storyline mirrors Elselands canon while unlocking sequentially through `sequence` ordering.
 - **Access Control:** `Game::Quests::StorylineProgression` walks chapters in order, relies on `Game::Quests::QuestGateEvaluator`, and creates/updates `QuestAssignment` rows only when level/reputation/faction requirements are satisfied. Side quests reuse the same schema through the `quest_type` enum (`:main_story`, `:side`, `:dynamic`, etc.).
 - **Branching Narrative:** Each `QuestStep` may include `branching_outcomes`. `Game::Quests::StoryStepRunner` and `Game::Quests::BranchingChoiceResolver` track dialogue decisions, award or revoke reputation/faction alignment, and unlock/lock follow-up quests by touching additional `QuestAssignment` records. Failure routes feed `Game::Quests::FailureConsequenceHandler`, which can spawn rival arcs.
 

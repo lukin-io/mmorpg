@@ -9,7 +9,7 @@ RSpec.describe "GameOverview", type: :request do
       get game_overview_path
 
       expect(response).to have_http_status(:ok)
-      expect(response.body).to include("Neverlands Game Overview")
+      expect(response.body).to include("Elselands Game Overview")
       expect(CGI.unescapeHTML(response.body)).to include("Vision & Objectives")
     end
 

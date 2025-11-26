@@ -1,7 +1,7 @@
 # ITEM_SYSTEM_GUIDE.md — Items, Inventory & Loot Architecture
 
 This guide defines the item, inventory, equipment, and loot design
-for the Neverlands Rails MMORPG.
+for the Elselands Rails MMORPG.
 
 ---
 

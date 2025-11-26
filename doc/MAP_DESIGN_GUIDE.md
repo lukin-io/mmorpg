@@ -1,4 +1,4 @@
-# MAP_DESIGN_GUIDE.md — Zone & Grid Architecture for Neverlands MMORPG
+# MAP_DESIGN_GUIDE.md — Zone & Grid Architecture for Elselands MMORPG
 
 This guide explains how maps, zones, tiles, and world layout are implemented
 inside the Rails game engine.
@@ -13,7 +13,7 @@ Your maps must be:
 - server-authoritative
 - simple to render via Turbo
 
-Zones are defined in DB.  
+Zones are defined in DB.
 Grids/tiles are built dynamically at runtime or loaded from JSON/YAML.
 
 ---

@@ -1,10 +1,10 @@
-### Game Design Document (Neverlands.ru Clone)
+### Game Design Document (Elselands.ru Clone)
 
 #### Implementation must follow AGENT.md and GUIDE.md in the repo (Rails monolith + Hotwire).
 
 ## Game Overview
 - **Vision and Objectives**
-  - Recreate the classic experience of Neverlands.ru, maintaining authenticity.
+  - Recreate the classic experience of Elselands.ru, maintaining authenticity.
   - Foster community engagement and nostalgic gameplay.
 
 - **Target Audience**
@@ -106,5 +106,5 @@
 - In-game moderation and reporting system
 - Mobile compatibility (responsive Hotwire/Stimulus implementation)
 
-By including these elements, your clone will accurately represent and enhance the experience players enjoyed with Neverlands.ru.
+By including these elements, your clone will accurately represent and enhance the experience players enjoyed with Elselands.ru.
 

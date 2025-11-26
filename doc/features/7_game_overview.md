@@ -1,7 +1,7 @@
 # 7. Game Overview
 
 ## Vision & Objectives
-- Deliver an authentic Neverlands revival with modern UX: deterministic combat, Hotwire-first UI, and social depth across guilds, clans, housing, and Live Ops.
+- Deliver an authentic Elselands revival with modern UX: deterministic combat, Hotwire-first UI, and social depth across guilds, clans, housing, and Live Ops.
 - Keep the world reactive—quests, crafting, trades, arenas, and moderation feeds roll up into a unified dashboard so designers can react without redeploying.
 - Balance nostalgia with sustainability: premium systems focus on convenience/cosmetics while gameplay pillars remain effort-driven.
 

@@ -1,7 +1,7 @@
 # 5. Moderation, Safety, and Live Ops
 
 ## Goals & Principles
-- Protect the nostalgia-driven Neverlands community without sacrificing trust: fast GM tooling, transparent communications, and auditable actions (`AuditLogger`, `audit_logs` table).
+- Protect the nostalgia-driven Elselands community without sacrificing trust: fast GM tooling, transparent communications, and auditable actions (`AuditLogger`, `audit_logs` table).
 - All punitive actions (ban/mute/trade-lock/refund) are gated by Pundit policies and tied to a `Moderation::Ticket`, ensuring accountability.
 
 ## Reporting & Ticket Flow

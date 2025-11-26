@@ -1,7 +1,7 @@
 lukin_user = nil
 
 if defined?(User)
-  admin = User.find_or_create_by!(email: "admin@neverlands.test") do |user|
+  admin = User.find_or_create_by!(email: "admin@elselands.test") do |user|
     user.password = "ChangeMe123!"
     user.confirmed_at = Time.current
   end
@@ -406,7 +406,7 @@ if defined?(NpcTemplate)
       name: "Captain Elara",
       level: 20,
       role: "quest_giver",
-      dialogue: "Neverlands needs defenders. Will you answer the call?",
+      dialogue: "Elselands needs defenders. Will you answer the call?",
       metadata: {zone: "Castleton Keep"}
     },
     {
@@ -486,7 +486,7 @@ end
 # ------------------------------------------------------------------
 # Gameplay feature sandboxes used by flow + feature documentation
 # ------------------------------------------------------------------
-admin ||= User.find_by(email: "admin@neverlands.test")
+admin ||= User.find_by(email: "admin@elselands.test")
 lukin_user ||= User.find_by(email: "lukin.maksim@gmail.com")
 
 main_character = nil

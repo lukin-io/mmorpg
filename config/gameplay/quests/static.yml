@@ -1,7 +1,7 @@
 ---
 quests:
   - key: "main_story_chapter_1"
-    title: "Shadows Over Neverlands"
+    title: "Shadows Over Elselands"
     summary: "Investigate the rifts appearing outside Ardent Landing."
     quest_type: "main_story"
     quest_chain_key: "main_story"

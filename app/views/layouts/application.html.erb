@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <title><%= content_for(:title) || "Neverlands" %></title>
+    <title><%= content_for(:title) || "Elselands" %></title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="application-name" content="Neverlands">
+    <meta name="application-name" content="Elselands">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#3D3929">
     <%= csrf_meta_tags %>
@@ -30,7 +30,7 @@
       <%# Game Header with navigation %>
       <header class="game-header">
         <div class="game-header-inner">
-          <%= link_to "Neverlands", root_path, class: "game-logo" %>
+          <%= link_to "Elselands", root_path, class: "game-logo" %>
 
           <nav class="game-nav">
             <% if current_user %>
@@ -84,7 +84,7 @@
 
       <%# Footer %>
       <footer class="game-footer">
-        <p class="copy">© <%= Time.current.year %> Neverlands • Ruby on Rails MMORPG</p>
+        <p class="copy">© <%= Time.current.year %> Elselands • Ruby on Rails MMORPG</p>
       </footer>
 
       <%# Mobile Bottom Navigation %>

@@ -14,7 +14,7 @@ date: 2025-11-22
 - Quest layouts, map/quest/chat panels share the new `layout-stack` Stimulus controller for mobile Safari/Chrome.
 
 ## World Structure
-- `config/gameplay/world/regions.yml` mirrors Neverlands regions (forest, mountain, river, city, castle). Each entry encodes landmarks, hidden areas, resource focus, and clan buff payloads.
+- `config/gameplay/world/regions.yml` mirrors Elselands regions (forest, mountain, river, city, castle). Each entry encodes landmarks, hidden areas, resource focus, and clan buff payloads.
 - `config/gameplay/world/resource_nodes.yml` pinpoints deterministic coordinates for herb, ore, fishing, artisan, and siege caches.
 - `Game::World::RegionCatalog` loads YAML at boot, memoizes `Game::World::Region` POROs, and exposes helpers for territory, zone, or coordinate lookups.
 - `Economy::TaxCalculator` and `ClanTerritory#clan_bonuses` consume region metadata so clan ownership buffs/taxes apply automatically wherever `territory_key` matches.

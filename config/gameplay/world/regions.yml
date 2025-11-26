@@ -1,4 +1,4 @@
-# Static Neverlands region descriptors used by the world catalog.
+# Static Elselands region descriptors used by the world catalog.
 # Each region defines deterministic layout metadata referenced by services.
 regions:
   ashen_forest:
@@ -101,7 +101,7 @@ regions:
     metadata:
       difficulty: "social"
       recommended_level: 1
-      lore_hook: "Political heart of Neverlands with layered intrigue."
+      lore_hook: "Political heart of Elselands with layered intrigue."
 
   obsidian_castle:
     name: "Obsidian Castle"

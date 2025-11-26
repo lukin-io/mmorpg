@@ -1,6 +1,6 @@
 # 0_technical.md — Rails Monolith Flow & Ownership
 ---
-title: WEB-000 — Neverlands Rails Monolith Technical Flow
+title: WEB-000 — Elselands Rails Monolith Technical Flow
 description: Full-stack reference for the core Rails 8.1.1 monolith (auth, jobs, payments, game engine, Hotwire UI). Documents commands, data stores, responsibility map, determinism guarantees, and verification flows.
 date: 2025-11-21
 ---
@@ -46,7 +46,7 @@ date: 2025-11-21
 ---
 
 ## Vision & Objectives
-- Recreate the classic Neverlands.ru gameplay experience while modernizing the Rails stack and operational tooling.
+- Recreate the classic Elselands.ru gameplay experience while modernizing the Rails stack and operational tooling.
 - Maintain authenticity, nostalgia, and community-first mechanics (guilds/clans, shared chat, turn-based combat).
 - Target players who prefer strategic, social MMORPGs delivered via fast, reliable server-rendered Hotwire flows.
 - Ship iteratively with feature flags so combat, economy, and housing systems can be toggled safely per environment.
@@ -186,7 +186,7 @@ bundle exec bundler-audit # optional CVE scan
 ## Environment Matrix
 | Aspect | Dev | Staging | Production |
 | --- | --- | --- | --- |
-| Base URL | `http://localhost:3000` | `https://staging.neverlands.example` | `https://play.neverlands.example` |
+| Base URL | `http://localhost:3000` | `https://staging.elselands.example` | `https://play.elselands.example` |
 | Rails env | `development` | `staging` | `production` |
 | DB | local Postgres 18 (docker/local install) | managed Postgres 18 (shared) | managed Postgres 18 (HA) |
 | Redis | single instance for cache/cable/sidekiq | dedicated cache vs queue vs cable URLs | dedicated cache vs queue vs cable URLs |
