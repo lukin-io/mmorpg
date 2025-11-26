@@ -230,6 +230,41 @@ bin/rails db:seed
 
 ---
 
+## 📋 TODO: Documentation Gaps
+
+The following features are implemented and seeded in `db/seeds.rb` but need expanded documentation in this README:
+
+### Crafting & Professions
+- [ ] **ProfessionProgress slot_kind** — Document how `slot_kind` (primary/gathering/support) enforces "2 primary + 2 gathering" limits and affects profession enrollment. Explain how `metadata.buff_bonus` and biome-specific bonuses work.
+- [ ] **CraftingJob status lifecycle** — Document status transitions (queued → in_progress → completed/failed), how `progress_percent` is calculated, and how `CraftingJobCompletionJob` handles completion.
+- [ ] **Crafted InventoryItem properties** — Document how crafted items store `properties` (crafted_by, quality_score, batch_id) and how `slot_kind` is set from recipe output. Explain how enhancement levels and quality tiers affect item stats.
+
+### Quest System
+- [ ] **QuestAssignment branching metadata** — Document how `progress.decisions` stores player choices, how `metadata.story_flags` tracks narrative state, and how `metadata.branch` enables branching storylines. Reference `Game::Quests::StorylineProgression`.
+- [ ] **Quest failure handling** — Document `abandon_reason`, `abandoned_at`, and how `metadata.failure_report` tracks failure causes. Explain how `Quest#failure_consequence` is applied when quests fail.
+- [ ] **QuestAnalyticsSnapshot bottleneck detection** — Document how `bottleneck_step_key` and `bottleneck_step_position` identify quest completion bottlenecks. Explain how `metadata.top_branches` and `metadata.failure_examples` inform GM tooling.
+
+### Events & Community
+- [ ] **EventAnnouncement model** — Document the `Announcement` model and how it links to `EventInstance` for in-game event notifications. Explain how announcements are displayed in the UI.
+- [ ] **CommunityObjective checkpoint rewards** — Document how `metadata.checkpoint_rewards` defines milestone rewards (e.g., `{"2500" => "festival_fireworks"}`) and how `top_contributors` tracking works.
+- [ ] **EventInstance quest linking** — Document how `metadata.featured_quest_key` links quests to event instances and how `announcer_npc_key` enables event-specific NPC dialogue.
+
+### Economy & Trading
+- [ ] **CurrencyWallet transaction examples** — Document how `CurrencyWallet#adjust!` creates `CurrencyTransaction` records with `reason` and `metadata` fields. Explain the difference between credit adjustments (quest rewards, market sales) and debit adjustments (sinks like housing upkeep, auction bids). Reference `Economy::WalletService`.
+- [ ] **PremiumTokenLedgerEntry audit trail** — Document how `PremiumTokenLedgerEntry` records track premium token purchases, spends, and adjustments with `entry_type`, `delta`, `balance_after`, and `reference` polymorphic associations. Explain how this provides an immutable audit log for premium transactions.
+- [ ] **AuctionListing and AuctionBid lifecycle** — Document how `AuctionListing` stores item metadata, currency type, starting bid, buyout price, and `ends_at` timestamps. Explain how `AuctionBid` records track bidder history and how the highest bid is determined. Reference auction house controllers and settlement logic.
+
+### Housing & Meta Progression
+- [ ] **HousingPlot tier and decor system** — Document how `plot_tier` (starter/deluxe/estate/citadel) affects `storage_slots` and `utility_slots`. Explain how `HousingDecorItem` with `decor_type` (furniture/trophy/storage/utility) are placed, how utility items consume `utility_slots`, and how trophy decor showcases achievements. Reference `Housing::DecorPlacementService` and `Housing::InstanceManager`.
+- [ ] **PetCompanion bonding and care tasks** — Document how `bonding_experience` and `affinity_stage` (neutral/friendly/bonded/legendary) progress through care tasks. Explain how `care_task_available_at` gates care interactions and how `Companions::CareTaskResolver` applies bonding XP. Document passive bonuses via `Companions::BonusCalculator`.
+- [ ] **Mount and MountStableSlot management** — Document how `MountStableSlot` unlocks slots (status: locked/unlocked/active) and how `Mount` records are assigned to slots. Explain `summon_state` (stabled/summoned/cooldown), `speed_bonus`, `cosmetic_variant`, and how mounts affect travel speed via `travel_multiplier`. Reference `Mounts::StableManager`.
+- [ ] **AchievementGrant and TitleGrant system** — Document how `AchievementGrant` records link users to achievements with `source` and `granted_at` timestamps. Explain how `TitleGrant` records track title ownership, `equipped` status, and how `users.active_title_id` reflects the currently displayed title. Document how title `perks` (e.g., housing storage bonus) are applied.
+
+### Seeds & Development Data
+- [ ] **Seeds gameplay scenarios** — Document that `db/seeds.rb` creates example gameplay scenarios (active/completed/failed quests, in-progress/completed crafting jobs, housing plots with decor, pets/mounts, achievement grants, wallet transactions, auction listings) for testing and flow documentation. Explain how to reset seeds for clean development environments.
+
+---
+
 ## Why `MMO_ADDITIONAL_GUIDE.md` Exists
 
 While you already have **`AGENT.md`** (AI/workflow instructions) and **`GUIDE.md`** (Rails practices), neither file covers the *MMO-specific* architecture decisions needed to keep the codebase consistent. The **GDD** explains gameplay behavior, but not how to structure:
