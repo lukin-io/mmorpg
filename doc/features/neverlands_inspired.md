@@ -505,110 +505,269 @@ if (savedHeight) {
 
 ### Original Neverlands Examples
 
-#### JavaScript Map Rendering
-```javascript
-var mapData = {
-  tiles: [], // 5x5 grid around player
-  playerX: 2,
-  playerY: 2,
-  zone: 'forest'
-};
+The Neverlands map system is a sophisticated tile-based movement system with smooth animations, dynamic tile loading, and real-time HP/MP regeneration display.
 
-function renderMap() {
-  var container = document.getElementById('mapGrid');
-  container.innerHTML = '';
-
-  for (var y = 0; y < 5; y++) {
-    for (var x = 0; x < 5; x++) {
-      var tile = mapData.tiles[y * 5 + x];
-      var div = document.createElement('div');
-      div.className = 'map-tile tile-' + tile.terrain;
-
-      // Player position
-      if (x == mapData.playerX && y == mapData.playerY) {
-        div.innerHTML += '<div class="player-marker">●</div>';
-      }
-
-      // NPCs/monsters
-      if (tile.npc) {
-        div.innerHTML += '<div class="npc-marker" onclick="interactNpc(' + tile.npc.id + ')">' + tile.npc.icon + '</div>';
-      }
-
-      // Resources
-      if (tile.resource) {
-        div.innerHTML += '<div class="resource-marker" onclick="gatherResource(' + tile.resource.id + ')">' + tile.resource.icon + '</div>';
-      }
-
-      // Click to move
-      div.onclick = function(tx, ty) {
-        return function() { moveToTile(tx, ty); };
-      }(x, y);
-
-      container.appendChild(div);
-    }
-  }
-}
-
-function moveToTile(targetX, targetY) {
-  var dx = targetX - mapData.playerX;
-  var dy = targetY - mapData.playerY;
-
-  // Only adjacent moves allowed
-  if (Math.abs(dx) + Math.abs(dy) != 1) return;
-
-  var direction = '';
-  if (dy < 0) direction = 'north';
-  else if (dy > 0) direction = 'south';
-  else if (dx < 0) direction = 'west';
-  else if (dx > 0) direction = 'east';
-
-  sendToServer({ action: 'move', direction: direction });
-}
-
-// Keyboard controls
-document.addEventListener('keydown', function(e) {
-  switch (e.key) {
-    case 'ArrowUp': case 'w': moveDirection('north'); break;
-    case 'ArrowDown': case 's': moveDirection('south'); break;
-    case 'ArrowLeft': case 'a': moveDirection('west'); break;
-    case 'ArrowRight': case 'd': moveDirection('east'); break;
-  }
-});
+#### HTML Structure
+```html
+<SCRIPT language="JavaScript">
+var inshp = [5,5,7,7,1500,9000];  // [currentHP, maxHP, currentMP, maxMP, hpRegenRate, mpRegenRate]
+var mapbt = [["que","Quests","token1",[]],["inf","Character","token2",[]],["inv","Inventory","token3",[]]];
+var build = ["lukin",0,0,"none","","",0,"main","Nature","m_1000_1000",1,0,""];
+var map = [[1000,1000,30,"day",[],""],[[999,1000,"token"],[1000,999,"token"],[999,999,"token"]]];
+view_map();
+</SCRIPT>
 ```
 
-#### CSS Map Styling
-```css
-#mapGrid {
-  display: grid;
-  grid-template-columns: repeat(5, 60px);
-  grid-template-rows: repeat(5, 60px);
-  gap: 2px;
-  background: #1a1a1a;
-  padding: 10px;
+#### HP/MP Regeneration Timer
+```javascript
+var interv;
+
+function ins_HP() {
+  interv = setInterval("cha_HP()", 1000);
+  if(inshp[0] < 0) inshp[0] = 0;
+  if(inshp[3] < 7) inshp[3] = 7;
 }
-.map-tile {
-  position: relative;
-  cursor: pointer;
-  border: 1px solid #333;
+
+function cha_HP() {
+  if(inshp[0] < 0) inshp[0] = 0;
+  if(inshp[0] > inshp[1]) inshp[0] = inshp[1];
+  if(inshp[2] > inshp[3]) inshp[2] = inshp[3];
+  if(inshp[0] >= inshp[1] && inshp[2] >= inshp[3]) clearInterval(interv);
+
+  // Calculate bar widths (160px max)
+  s_hp_f = Math.round(160 * (inshp[0] / inshp[1]));
+  s_ma_f = Math.round(160 * (inshp[2] / inshp[3]));
+
+  document.getElementById('fHP').width = s_hp_f;
+  document.getElementById('eHP').width = 160 - s_hp_f;
+  document.getElementById('fMP').width = s_ma_f;
+  document.getElementById('eMP').width = 160 - s_ma_f;
+  document.getElementById('hbar').innerHTML = '&nbsp;[<font color=#bb0000><b>' +
+    Math.round(inshp[0]) + '</b>/<b>' + inshp[1] + '</b></font> | ' +
+    '<font color=#336699><b>' + Math.round(inshp[2]) + '</b>/<b>' + inshp[3] + '</b></font>]';
+
+  // Regenerate HP/MP each tick
+  inshp[0] += inshp[1] / inshp[4];  // HP regen
+  inshp[2] += inshp[3] / inshp[5];  // MP regen
 }
-.tile-grass { background: #2d5a27; }
-.tile-forest { background: #1a3d16; }
-.tile-water { background: #1a4a6a; pointer-events: none; }
-.tile-mountain { background: #4a4a4a; }
-.tile-road { background: #5a4a3a; }
-.player-marker {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  font-size: 24px;
-  color: #fff;
-  text-shadow: 0 0 5px #0ff;
+```
+
+#### Dynamic Map Rendering
+```javascript
+var world = false;
+var width = 3;
+var height = 1;
+var move_interval = 50;
+var current_x = 0;
+var current_y = 0;
+var time_left = 0;
+var moving_status = 0;
+var avail = {};  // Available tiles with verification tokens
+
+function view_map() {
+  view_build_top();  // Render header with HP/MP bars
+
+  var documentHeight = document.body.clientHeight;
+  var documentWidth = document.body.clientWidth;
+
+  // Calculate visible grid size based on viewport
+  width = Math.max(1, Math.floor(((documentWidth / 100) - 1) / 2));
+  height = Math.max(1, Math.floor(((documentHeight / 100) - 1) / 2));
+
+  // Build available tiles from server data
+  for(var i = 0; i < map[1].length; i++) {
+    avail[map[1][i][0] + '_' + map[1][i][1]] = map[1][i][2];  // x_y = token
+  }
+
+  current_x = map[0][0];
+  current_y = map[0][1];
+  showCursor();
+  showMap(current_x, current_y);
+  view_build_bottom();
 }
-.npc-marker, .resource-marker {
-  position: absolute;
-  font-size: 16px;
-  cursor: pointer;
+
+function showMap(x, y) {
+  if(!world) {
+    world = d.createElement('DIV');
+    world.id = 'world_map';
+    d.getElementById('world_cont').appendChild(world);
+  }
+  world.innerHTML = '';
+
+  var table = d.createElement('TABLE');
+  var tbody = d.createElement('TBODY');
+
+  for(var i = -height; i <= height; i++) {
+    var tr = d.createElement('TR');
+    for(var j = -width; j <= width; j++) {
+      var td = d.createElement('TD');
+      // Load tile image from server
+      td.style.backgroundImage = 'url(/map/world/' + map[0][3] + '/' + (y+i) + '/' + (x+j) + '_' + (y+i) + '.jpg)';
+
+      var img = d.createElement('IMG');
+      img.width = 100;
+      img.height = 100;
+      img.id = 'img_' + (x+j) + '_' + (y+i);
+
+      var dx = x + j;
+      var dy = y + i;
+
+      // Mark clickable tiles with verification tokens
+      if(avail[dx + '_' + dy] && !finStatus) {
+        img.src = '/map/world/here.gif';  // Available tile indicator
+        img.onclick = function(dx, dy) {
+          return function() { moveMapTo(dx, dy, map[0][2]); };
+        }(dx, dy);
+        img.style.cursor = 'pointer';
+      }
+
+      td.appendChild(img);
+      tr.appendChild(td);
+    }
+    tbody.appendChild(tr);
+  }
+  table.appendChild(tbody);
+  world.appendChild(table);
+
+  current_x = x;
+  current_y = y;
+  loaded_left = x - width;
+  loaded_right = x + width;
+  loaded_top = y - height;
+  loaded_bottom = y + height;
+}
+```
+
+#### Smooth Movement Animation
+```javascript
+function move() {
+  var path = (time_left) / (pause * 1000);
+
+  if(time_left <= 0) {
+    clearInterval(t);
+    finFunction();  // Movement complete
+    return;
+  }
+
+  // Calculate sliding position
+  if(dest_y < current_y) {
+    var app_y = dest_y + (Math.abs(dest_y - current_y) * path);
+    // Load new tiles as we approach edge
+    if((app_y - height) <= (loaded_top + 0.2)) {
+      loaded_top -= 1;
+      loadMap('top', loaded_top);
+    }
+    // Unload tiles we've passed
+    if((app_y + (height*2)) <= loaded_bottom) {
+      loaded_bottom -= 1;
+      freeMap('bottom');
+    }
+    cur_margin_top += (Math.abs(dest_y - current_y) * 100) / (pause*1000 / move_interval);
+  }
+  // ... similar for other directions
+
+  // Apply smooth scroll via CSS margin
+  world.style.marginTop = parseInt(cur_margin_top) + 'px';
+  world.style.marginLeft = parseInt(cur_margin_left) + 'px';
+
+  time_left -= move_interval;
+}
+
+function moveMapTo(x, y, ps) {
+  if(moving_status == 1) return false;  // Already moving
+  gox = x;
+  goy = y;
+  gop = ps;  // Movement speed/pause
+  // AJAX request with tile verification token
+  AjaxGet('map_ajax.php?act=1&mx=' + x + '&my=' + y + '&gti=' + map[0][2] + '&vcode=' + avail[x + '_' + y]);
+  return true;
+}
+```
+
+#### Movement Timer Display
+```javascript
+function TimerStart(secgo, mrinit) {
+  if(time_left_sec <= 0) {
+    if(mrinit) {
+      ButtonSt(true);   // Disable buttons during movement
+      MapReInit([]);    // Clear available tiles
+    }
+    time_left_sec = secgo * 1000;
+    timer_img.src = '/map/world/timer.png';
+    document.getElementById('timerfon').style.display = 'block';
+    document.getElementById('timerdiv').style.display = 'block';
+    document.getElementById('tdsec').innerHTML = secgo;
+    tsec = setInterval('timerst(' + mrinit + ')', 1000);
+  } else {
+    time_left_sec += secgo * 1000;  // Add to existing timer
+  }
+}
+
+function timerst(lp) {
+  time_left_sec -= 1000;
+  if(time_left_sec <= 0) {
+    if(lp) {
+      ButtonSt(false);   // Re-enable buttons
+      MapReInit(map[1]); // Restore available tiles
+      finStatus = 0;
+    }
+    timer_img.src = '/1x1.gif';
+    document.getElementById('tdsec').innerHTML = '';
+    document.getElementById('timerdiv').style.display = 'none';
+    clearInterval(tsec);
+  } else {
+    document.getElementById('tdsec').innerHTML = (time_left_sec / 1000);
+  }
+}
+```
+
+#### Direction-Based Character Sprite
+```javascript
+function showTransport(name, from_x, from_y, to_x, to_y, p, type) {
+  if(!transport_img) createCursor();
+
+  // Calculate angle between points
+  var rad = Math.atan2((to_y - from_y), (to_x - from_x));
+  var pi = 3.141592;
+  var grad = Math.round(rad / pi * 180 / (360 / p));
+  if(grad == p) grad = 0;
+  if(grad < 0) grad = p + grad;
+
+  // Load sprite for this direction (0-7 for 8 directions)
+  transport_img.src = '/map/' + name + '_' + grad + '.' + type;
+  return true;
+}
+```
+
+#### Context Action Buttons
+```javascript
+function ButtonGen() {
+  var str = '';
+  bavail = {};
+  for(var i = 0; i < mapbt.length; i++) {
+    bavail[mapbt[i][0]] = [mapbt[i][2], mapbt[i][3]];
+    str += ' <input type=button class=fr_but id="' + mapbt[i][0] + '" value="' + mapbt[i][1] + '" onclick=\'ButClick("' + mapbt[i][0] + '")\'>';
+  }
+  return str;
+}
+
+function ButClick(id) {
+  var goloc = '';
+  switch(id) {
+    case 'inf': goloc = 'main.php?act=10&go=inf&vcode=' + bavail[id][0]; break;
+    case 'inv': goloc = 'main.php?act=10&go=inv&vcode=' + bavail[id][0]; break;
+    case 'fig': fight_map(bavail[id][0]); break;
+    case 'dep': goloc = 'main.php?act=10&go=dep&vcode=' + bavail[id][0]; break;
+    case 'que': QActive(bavail[id][0]); break;
+  }
+  if(goloc) location = goloc;
+}
+
+function ButtonSt(st) {
+  // Enable/disable all buttons
+  for(var i = 0; i < mapbt.length; i++) {
+    document.getElementById(mapbt[i][0]).disabled = st;
+  }
 }
 ```
 
@@ -616,18 +775,30 @@ document.addEventListener('keydown', function(e) {
 - **Status:** ✅ Implemented
 - **Files:**
   - `app/controllers/world_controller.rb` — Map rendering, movement, interactions
-  - `app/views/world/_map.html.erb` — 5x5 tile grid with clickable actions
+  - `app/views/world/_map.html.erb` — Tile grid with clickable actions
   - `app/views/world/_city_view.html.erb` — City/indoor locations
-  - `app/javascript/controllers/game_world_controller.js` — Keyboard movement, tile clicks
+  - `app/javascript/controllers/game_world_controller.js` — Smooth animated movement, timer overlay, direction sprites, move tokens
+  - `app/javascript/controllers/vitals_controller.js` — Client-side HP/MP regen animation
   - `app/services/game/movement/turn_processor.rb` — Server-side validation
   - `app/models/map_tile_template.rb` — Tile definitions with terrain/resources
 
-### Key Adaptations
-- Server-authoritative movement (anti-cheat)
+### Features Implemented ✅
+- Tile-click movement with direction detection
+- Keyboard controls (WASD/arrows)
+- Adjacent tile highlighting
+- Tile action popups (NPC, resource, building)
+- Movement animation with delay
+- Server-authoritative movement validation
 - Terrain modifiers affect movement speed
-- Procedural features (NPCs, resources) based on zone + RNG
-- Cooldown system prevents movement spam
-- City/dungeon views as separate biome modes
+- **Smooth Animated Movement** — Character slides between tiles with CSS easeOut transitions (`game_world_controller.js`)
+- **Movement Verification Tokens** — Each tile has a `move_token` for anti-cheat validation
+- **Direction-Based Sprites** — Character marker rotates based on movement direction (CSS transform)
+- **Timer Overlay** — Visual countdown during movement cooldowns (`movementTimer` target)
+- **Client-Side HP/MP Regen** — Animated bar updates every second (`vitals_controller.js`)
+- **Context Action Buttons** — Dynamic buttons with enable/disable during movement (`buttonPanel` target)
+
+### Features To Implement 🔄
+1. **Dynamic Tile Loading** — Load/unload tiles as player moves (for infinite/large maps) — *Not needed for current 5x5 grid*
 
 ---
 

@@ -1,34 +1,66 @@
 import { Controller } from "@hotwired/stimulus"
 
-// GameWorldController handles map tile clicks, animated movement, and interactions
-// Based on classic browser MMORPG map navigation patterns
+/**
+ * GameWorldController - Tile-based map navigation
+ *
+ * Inspired by Neverlands' map movement system with:
+ * - Smooth animated movement between tiles
+ * - Movement cooldown timer overlay
+ * - Direction-based character orientation
+ * - Dynamic tile verification
+ * - Context-sensitive action buttons
+ */
 export default class extends Controller {
-  static targets = ["map", "actionPanel", "movementTimer", "playerMarker"]
+  static targets = [
+    "map", "mapContainer", "actionPanel", "movementTimer", "timerText",
+    "playerMarker", "cursor", "buttonPanel"
+  ]
   static values = {
     playerX: Number,
     playerY: Number,
     moveUrl: String,
     zoneWidth: Number,
     zoneHeight: Number,
-    moveCooldown: { type: Number, default: 3 }
+    moveCooldown: { type: Number, default: 3 },
+    moveInterval: { type: Number, default: 50 },
+    tileSize: { type: Number, default: 100 }
   }
 
+  // Movement state
+  isMoving = false
+  moveTimer = null
+  cooldownTimer = null
+  timeLeft = 0
+  destX = 0
+  destY = 0
+  currentMarginX = 0
+  currentMarginY = 0
+  availableTiles = {}
+  selectedTile = null
+  actionPopup = null
+
   connect() {
-    this.selectedTile = null
-    this.isMoving = false
-    this.availableTiles = this.calculateAvailableTiles()
+    this.buildAvailableTiles()
     this.highlightAvailableTiles()
+    this.showCursor()
 
     // Bind keyboard events
-    document.addEventListener("keydown", this.handleKeydown.bind(this))
+    this.boundKeydown = this.handleKeydown.bind(this)
+    document.addEventListener("keydown", this.boundKeydown)
   }
 
   disconnect() {
-    document.removeEventListener("keydown", this.handleKeydown.bind(this))
+    document.removeEventListener("keydown", this.boundKeydown)
+    this.stopMovement()
+    this.stopCooldownTimer()
   }
 
-  calculateAvailableTiles() {
-    const available = []
+  /**
+   * Build available tiles map from data attributes
+   * Each tile has a verification token for anti-cheat
+   */
+  buildAvailableTiles() {
+    this.availableTiles = {}
     const directions = [
       { dx: 0, dy: -1, dir: "north" },
       { dx: 0, dy: 1, dir: "south" },
@@ -42,14 +74,16 @@ export default class extends Controller {
       if (x >= 0 && y >= 0 && x < this.zoneWidthValue && y < this.zoneHeightValue) {
         const tile = document.querySelector(`[data-x="${x}"][data-y="${y}"]`)
         if (tile && !tile.classList.contains("map-tile--blocked")) {
-          available.push({ x, y, dir, tile })
+          const token = tile.dataset.moveToken || "valid"
+          this.availableTiles[`${x}_${y}`] = { x, y, dir, tile, token }
         }
       }
     })
-
-    return available
   }
 
+  /**
+   * Highlight tiles the player can move to
+   */
   highlightAvailableTiles() {
     // Remove old highlights
     document.querySelectorAll(".map-tile--available").forEach(el => {
@@ -57,9 +91,31 @@ export default class extends Controller {
     })
 
     // Add new highlights
-    this.availableTiles.forEach(({ tile }) => {
+    Object.values(this.availableTiles).forEach(({ tile }) => {
       tile.classList.add("map-tile--available")
     })
+  }
+
+  /**
+   * Clear available tile highlights during movement
+   */
+  clearAvailableTiles() {
+    document.querySelectorAll(".map-tile--available").forEach(el => {
+      el.classList.remove("map-tile--available")
+    })
+  }
+
+  /**
+   * Show player cursor/marker
+   */
+  showCursor() {
+    if (this.hasCursorTarget) {
+      this.cursorTarget.style.display = "block"
+      this.cursorTarget.classList.add("cursor--idle")
+    }
+    if (this.hasPlayerMarkerTarget) {
+      this.playerMarkerTarget.classList.add("player-marker--visible")
+    }
   }
 
   clickTile(event) {
@@ -107,8 +163,16 @@ export default class extends Controller {
     return (dx === 1 && dy === 0) || (dx === 0 && dy === 1)
   }
 
+  /**
+   * Move to a tile with smooth animation
+   */
   moveToTile(x, y) {
     if (this.isMoving) return
+
+    // Check if tile is available
+    const tileKey = `${x}_${y}`
+    const tileData = this.availableTiles[tileKey]
+    if (!tileData) return
 
     // Determine direction
     let direction = null
@@ -120,57 +184,244 @@ export default class extends Controller {
     if (!direction) return
 
     this.isMoving = true
-    this.showMovingAnimation(direction, x, y)
+    this.destX = x
+    this.destY = y
 
-    // Submit move via form
-    const form = document.createElement("form")
-    form.method = "POST"
-    form.action = this.moveUrlValue
+    // Disable action buttons during movement
+    this.disableButtons(true)
 
-    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content
-    if (csrfToken) {
-      const csrfInput = document.createElement("input")
-      csrfInput.type = "hidden"
-      csrfInput.name = "authenticity_token"
-      csrfInput.value = csrfToken
-      form.appendChild(csrfInput)
-    }
+    // Clear available tile highlights
+    this.clearAvailableTiles()
 
-    const dirInput = document.createElement("input")
-    dirInput.type = "hidden"
-    dirInput.name = "direction"
-    dirInput.value = direction
-    form.appendChild(dirInput)
+    // Show character facing movement direction
+    this.showMovingCharacter(direction)
 
-    document.body.appendChild(form)
+    // Start timer overlay
+    this.startMovementTimer(this.moveCooldownValue)
 
-    // Small delay to show animation before submitting
-    setTimeout(() => {
-      form.submit()
-    }, 300)
+    // Start smooth sliding animation
+    this.startSmoothMovement(direction, x, y)
+
+    // Submit move to server via AJAX
+    this.submitMove(direction, tileData.token)
   }
 
-  showMovingAnimation(direction, targetX, targetY) {
-    // Add moving class to player marker
+  /**
+   * Smooth sliding animation between tiles
+   */
+  startSmoothMovement(direction, targetX, targetY) {
+    const totalTime = this.moveCooldownValue * 1000
+    this.timeLeft = totalTime
+    const startTime = performance.now()
+
+    // Calculate total distance to move
+    const dx = targetX - this.playerXValue
+    const dy = targetY - this.playerYValue
+    const totalMoveX = dx * this.tileSizeValue
+    const totalMoveY = dy * this.tileSizeValue
+
+    const animate = (currentTime) => {
+      const elapsed = currentTime - startTime
+      const progress = Math.min(elapsed / totalTime, 1)
+
+      // Ease out animation
+      const easeProgress = 1 - Math.pow(1 - progress, 3)
+
+      // Apply transform to map container (slide map opposite to movement)
+      if (this.hasMapContainerTarget) {
+        const moveX = -totalMoveX * easeProgress
+        const moveY = -totalMoveY * easeProgress
+        this.mapContainerTarget.style.transform = `translate(${moveX}px, ${moveY}px)`
+      }
+
+      // Update time left
+      this.timeLeft = totalTime - elapsed
+      this.updateTimerDisplay()
+
+      if (progress < 1) {
+        this.moveTimer = requestAnimationFrame(animate)
+      } else {
+        this.finishMovement()
+      }
+    }
+
+    this.moveTimer = requestAnimationFrame(animate)
+  }
+
+  /**
+   * Called when movement animation completes
+   */
+  finishMovement() {
+    this.stopMovement()
+    this.stopCooldownTimer()
+
+    // Reset transform
+    if (this.hasMapContainerTarget) {
+      this.mapContainerTarget.style.transform = ""
+    }
+
+    // Update player position
+    this.playerXValue = this.destX
+    this.playerYValue = this.destY
+
+    // Show idle cursor
+    if (this.hasCursorTarget) {
+      this.cursorTarget.classList.remove("cursor--moving")
+      this.cursorTarget.classList.add("cursor--idle")
+    }
+
+    // Re-enable buttons
+    this.disableButtons(false)
+
+    // Rebuild available tiles for new position
+    this.buildAvailableTiles()
+    this.highlightAvailableTiles()
+  }
+
+  /**
+   * Stop movement animation
+   */
+  stopMovement() {
+    if (this.moveTimer) {
+      cancelAnimationFrame(this.moveTimer)
+      this.moveTimer = null
+    }
+    this.isMoving = false
+  }
+
+  /**
+   * Show character sprite facing movement direction
+   */
+  showMovingCharacter(direction) {
     if (this.hasPlayerMarkerTarget) {
       this.playerMarkerTarget.classList.add("player-marker--moving")
       this.playerMarkerTarget.dataset.direction = direction
+
+      // Direction-based sprite rotation (8 directions like Neverlands)
+      const rotations = {
+        north: 0,
+        east: 90,
+        south: 180,
+        west: 270
+      }
+      this.playerMarkerTarget.style.transform = `rotate(${rotations[direction] || 0}deg)`
     }
 
-    // Show movement indicator on target tile
-    const targetTile = document.querySelector(`[data-x="${targetX}"][data-y="${targetY}"]`)
-    if (targetTile) {
-      targetTile.classList.add("map-tile--moving-to")
+    if (this.hasCursorTarget) {
+      this.cursorTarget.classList.remove("cursor--idle")
+      this.cursorTarget.classList.add("cursor--moving")
+      this.cursorTarget.dataset.direction = direction
     }
-
-    // Show timer
-    this.showMovementTimer()
   }
 
-  showMovementTimer() {
+  /**
+   * Movement timer overlay
+   */
+  startMovementTimer(seconds) {
+    this.timeLeft = seconds * 1000
+
     if (this.hasMovementTimerTarget) {
       this.movementTimerTarget.style.display = "block"
-      this.movementTimerTarget.innerHTML = `<div class="timer-circle">⏳</div>`
+      this.movementTimerTarget.classList.add("timer--active")
+    }
+
+    this.updateTimerDisplay()
+  }
+
+  updateTimerDisplay() {
+    const secondsLeft = Math.ceil(this.timeLeft / 1000)
+
+    if (this.hasTimerTextTarget) {
+      this.timerTextTarget.textContent = secondsLeft > 0 ? secondsLeft : ""
+    }
+
+    if (this.hasMovementTimerTarget && secondsLeft > 0) {
+      this.movementTimerTarget.innerHTML = `
+        <div class="timer-overlay">
+          <div class="timer-icon">⏳</div>
+          <div class="timer-countdown">${secondsLeft}</div>
+        </div>
+      `
+    }
+  }
+
+  stopCooldownTimer() {
+    if (this.cooldownTimer) {
+      clearInterval(this.cooldownTimer)
+      this.cooldownTimer = null
+    }
+
+    if (this.hasMovementTimerTarget) {
+      this.movementTimerTarget.style.display = "none"
+      this.movementTimerTarget.classList.remove("timer--active")
+      this.movementTimerTarget.innerHTML = ""
+    }
+  }
+
+  /**
+   * Submit move to server
+   */
+  submitMove(direction, token) {
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content
+
+    fetch(this.moveUrlValue, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRF-Token": csrfToken,
+        Accept: "application/json"
+      },
+      body: JSON.stringify({
+        direction: direction,
+        move_token: token
+      })
+    })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          // Server confirmed move - page will reload with new position
+          // or we update state if using Turbo
+          if (data.redirect) {
+            window.location.href = data.redirect
+          }
+        } else {
+          // Move failed - reset state
+          this.handleMoveFailed(data.error)
+        }
+      })
+      .catch(error => {
+        console.error("Move failed:", error)
+        this.handleMoveFailed("Network error")
+      })
+  }
+
+  handleMoveFailed(error) {
+    this.stopMovement()
+    this.stopCooldownTimer()
+
+    // Reset transform
+    if (this.hasMapContainerTarget) {
+      this.mapContainerTarget.style.transform = ""
+    }
+
+    // Show error
+    alert(`Move failed: ${error}`)
+
+    // Re-enable buttons
+    this.disableButtons(false)
+    this.buildAvailableTiles()
+    this.highlightAvailableTiles()
+  }
+
+  /**
+   * Enable/disable action buttons during movement
+   */
+  disableButtons(disabled) {
+    if (this.hasButtonPanelTarget) {
+      const buttons = this.buttonPanelTarget.querySelectorAll("button, input[type='button']")
+      buttons.forEach(btn => {
+        btn.disabled = disabled
+      })
     }
   }
 
