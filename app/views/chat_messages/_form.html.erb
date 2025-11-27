@@ -1,18 +1,32 @@
-<%= form_with model: [chat_channel, chat_message], data: { action: "turbo:submit-end->chat#resetForm" } do |form| %>
+<%= form_with model: [chat_channel, chat_message],
+              class: "chat-form",
+              data: {
+                turbo_frame: "_top",
+                action: "turbo:submit-end->chat#resetForm"
+              } do |form| %>
+
   <% if chat_message.errors.any? %>
-    <div class="form-errors">
+    <div class="chat-form-errors flash error">
       <%= chat_message.errors.full_messages.to_sentence %>
     </div>
   <% end %>
 
-  <div class="field">
-    <%= form.text_area :body, rows: 3, required: true, placeholder: "Type your message...", data: { chat_target: "input" } %>
+  <div class="chat-input-wrapper">
+    <%= form.text_field :body,
+        class: "chat-input",
+        placeholder: "Type a message... (Enter to send)",
+        autocomplete: "off",
+        data: {
+          chat_target: "input",
+          action: "keydown->chat#handleKeydown input->chat#handleInput"
+        } %>
+
+    <%= form.submit "Send", class: "btn-primary chat-send-btn" %>
   </div>
-  <div class="actions">
-    <%= form.submit "Send" %>
-  </div>
-  <p class="text-xs text-slate-500 mt-2" data-controller="moderation-guideline" data-action="mouseenter->moderation-guideline#show mouseleave->moderation-guideline#hide" data-guideline="chat_abuse">
-    Remember: harassment-free chat. Hover to review guidelines.
-    <span data-moderation-guideline-target="tooltip" class="hidden"></span>
+
+  <p class="chat-guidelines text-xs text-muted">
+    Be respectful. <span class="chat-guideline-link" data-controller="moderation-guideline"
+    data-action="mouseenter->moderation-guideline#show mouseleave->moderation-guideline#hide"
+    data-guideline="chat_abuse">View guidelines</span>
   </p>
 <% end %>

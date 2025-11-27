@@ -1,10 +1,12 @@
 # 11. Social Systems & Communication
 
 ## Chat & Messaging
-- **Channel Model:** `ChatChannel` now supports `global`, `local`, `guild`, `clan`, `party`, `arena`, `whisper`, and `system` types. `ChatChannel#membership_required?` gates private channels, while `ChatChannelMembership` enforces uniqueness, mute timers, and GM roles.
+- **Real-Time WebSocket Chat:** Messages are delivered instantly via ActionCable and Turbo Streams. No page reloads required — `ChatMessage#after_create_commit` broadcasts to all channel subscribers, and Turbo automatically appends new messages to the DOM.
+- **Channel Model:** `ChatChannel` supports `global`, `local`, `guild`, `clan`, `party`, `arena`, `whisper`, and `system` types. `ChatChannel#membership_required?` gates private channels, while `ChatChannelMembership` enforces uniqueness, mute timers, and GM roles.
 - **Dispatch Pipeline:** `Chat::MessageDispatcher` feeds every post into `Moderation::ChatPipeline`, which validates verification state, applies GM mute bans (`ChatModerationAction`), respects whisper privacy, and executes `/gm` commands via `Chat::Moderation::CommandHandler`. `Chat::SpamThrottler` caps per-user throughput (default 8 msgs/10s, adjustable via `User#social_settings`).
 - **Profanity & Reporting:** `ChatMessage` retains filtered body text, visibility enum, and `moderation_labels`. Inline report buttons POST to `ChatReportsController`, hydrating `ChatReport#source_context` + `#evidence` and scheduling `Moderation::ReportVolumeAlertJob` to escalate spikes.
-- **Mail System:** `MailMessage` now tracks attachments (`MailMessage::ATTACHMENT_KEYS`), `system_notification` flag, and `origin_metadata`. `MailMessages::SystemNotifier` emits automated mail (arena rewards, guild perks) while players compose messages through Turbo forms with attachment fields.
+- **UI Features:** Stimulus `chat_controller.js` handles auto-scroll (when at bottom), "New messages" indicator, Enter-to-send, and form reset. Messages animate in with slide-up effect. User avatars, relative timestamps, and hover-reveal report buttons enhance UX.
+- **Mail System:** `MailMessage` tracks attachments (`MailMessage::ATTACHMENT_KEYS`), `system_notification` flag, and `origin_metadata`. `MailMessages::SystemNotifier` emits automated mail (arena rewards, guild perks) while players compose messages through Turbo forms with attachment fields.
 - **Channel Routing:** `Chat::ChannelRouter` auto-creates arena/party/guild slugs, ensures membership, and seeds metadata (arena match IDs, participant lists). Arena/party creation hooks automatically call `channel.ensure_membership!`.
 
 ## Friends & Presence
