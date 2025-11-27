@@ -93,6 +93,17 @@ Stimulus chat_controller scrolls to bottom
 - Enter to send, Shift+Enter for newline
 - Error handling with inline form errors
 
+### Neverlands-Inspired Interactions
+- **Username Click**: Click username → start whisper (`/w username`); Ctrl+Click → insert `@mention`
+- **Right-Click Context Menu**: Shows Whisper, View Profile, Mention, Copy Name, Ignore options
+- **Message Highlighting**:
+  - `.chat-msg--mention` (blue) — when someone mentions you with @username
+  - `.chat-msg--whisper` (red/pink) — private whisper messages
+  - `.chat-msg--clan` (gray) — clan/guild channel messages
+  - `.chat-msg--mass` / `.chat-msg--announcement` (orange) — system broadcasts
+- **Emoji Picker**: Toggle emoji panel with common game-related emojis (⚔️ 🛡️ 💰 🏰 etc.)
+- **Chat Commands**: `/w [name]` whisper, `/me [action]` emote, `/ignore [name]` block user, `@name` mention
+
 ## Testing & Verification
 - Model specs for profanity filtering and friendship validations.
 - Service specs for `Chat::ProfanityFilter` + `Chat::MessageDispatcher`.

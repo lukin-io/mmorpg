@@ -7,10 +7,12 @@
 
   <div class="chat-msg-body">
     <header class="chat-msg-header">
-      <span class="chat-msg-sender">
-        <%= link_to chat_message.sender.profile_name || "Anonymous",
-            profile_path(chat_message.sender.profile_name),
-            class: "sender-link" %>
+      <span class="chat-msg-sender"
+            data-action="click->chat#clickUsername contextmenu->chat#showUserMenu"
+            data-username="<%= chat_message.sender.profile_name %>"
+            data-user-id="<%= chat_message.sender_id %>"
+            title="Click to whisper, Ctrl+Click to mention">
+        <%= chat_message.sender.profile_name || "Anonymous" %>
       </span>
 
       <% if chat_message.metadata&.dig("sender_role")&.include?("admin") %>

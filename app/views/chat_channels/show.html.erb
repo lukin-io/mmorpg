@@ -3,7 +3,10 @@
 <%# Subscribe to real-time updates via ActionCable/Turbo Streams %>
 <%= turbo_stream_from @chat_channel %>
 
-<section class="chat-channel-page" data-controller="chat" data-chat-auto-scroll-value="true">
+<section class="chat-channel-page"
+         data-controller="chat"
+         data-chat-auto-scroll-value="true"
+         data-chat-current-user-value="<%= current_user.profile_name %>">
   <div class="chat-header">
     <div class="chat-header-info">
       <h1><%= @chat_channel.name %></h1>
@@ -75,7 +78,11 @@
         <li><code>/w [name]</code> - Whisper</li>
         <li><code>/me [action]</code> - Emote</li>
         <li><code>/ignore [name]</code> - Ignore user</li>
+        <li><code>@name</code> - Mention user</li>
       </ul>
     </div>
   </aside>
+
+  <%# User context menu (appears on right-click of username) %>
+  <div class="user-menu" data-chat-target="userMenu"></div>
 </section>

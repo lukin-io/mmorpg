@@ -31,6 +31,182 @@
 - `Admin::GmConsoleController` — GM overrides: spawn/disable quests, adjust timers, compensate players; hits `Game::Quests::GmConsoleService`.
 - `Events::AnnouncementsController` (if present) or Turbo streams that surface scheduled events + quest tie-ins.
 
+### Quest Dialog System (Neverlands-Inspired)
+
+The quest dialog system presents NPC conversations as step-by-step modal dialogs with navigation.
+
+#### Dialog Flow
+```
+Player clicks "Quests" button or NPC
+        ↓
+AJAX/Turbo fetches quest dialog data
+        ↓
+Modal overlay appears with:
+  - NPC avatar (130x130 portrait)
+  - Dialog text (step 0)
+  - Navigation buttons
+        ↓
+Player navigates: ← Prev | Next →
+        ↓
+At final step, action buttons appear:
+  - "Accept Quest" (type 1)
+  - "Complete Quest" (type 2)
+        ↓
+Action triggers server call → rewards/progression
+```
+
+#### Stimulus Controller: `quest_dialog_controller.js`
+```javascript
+export default class extends Controller {
+  static targets = ["dialog", "avatar", "navigation", "overlay"]
+  static values = {
+    steps: Array,      // Dialog text steps
+    npcAvatar: String, // NPC portrait URL
+    questId: Number,
+    actionType: Number, // 1=accept, 2=complete
+    actionCode: String
+  }
+
+  currentStep = 0
+
+  connect() {
+    this.showOverlay()
+    this.renderStep()
+  }
+
+  nextStep() {
+    if (this.currentStep < this.stepsValue.length - 1) {
+      this.currentStep++
+      this.renderStep()
+    }
+  }
+
+  prevStep() {
+    if (this.currentStep > 0) {
+      this.currentStep--
+      this.renderStep()
+    }
+  }
+
+  renderStep() {
+    this.dialogTarget.innerHTML = this.stepsValue[this.currentStep]
+    this.renderNavigation()
+  }
+
+  renderNavigation() {
+    let nav = ""
+    if (this.currentStep > 0) {
+      nav += `<button class="quest-nav-btn quest-nav-prev" data-action="click->quest-dialog#prevStep">← Back</button>`
+    }
+    if (this.currentStep < this.stepsValue.length - 1) {
+      nav += `<button class="quest-nav-btn quest-nav-next" data-action="click->quest-dialog#nextStep">Continue →</button>`
+    } else if (this.actionTypeValue) {
+      // Final step - show action button
+      const label = this.actionTypeValue === 1 ? "Accept Quest" : "Complete Quest"
+      const cssClass = this.actionTypeValue === 1 ? "quest-accept-btn" : "quest-complete-btn"
+      nav += `<button class="${cssClass}" data-action="click->quest-dialog#submitAction">${label}</button>`
+    }
+    this.navigationTarget.innerHTML = nav
+  }
+
+  submitAction() {
+    const url = `/quests/${this.questIdValue}/${this.actionTypeValue === 1 ? 'accept' : 'complete'}`
+    fetch(url, {
+      method: 'POST',
+      headers: { 'X-CSRF-Token': document.querySelector('[name="csrf-token"]').content }
+    }).then(response => response.json())
+      .then(data => {
+        this.close()
+        // Show reward notification if applicable
+      })
+  }
+
+  close() {
+    this.overlayTarget.remove()
+  }
+}
+```
+
+#### CSS for Quest Dialog
+```css
+/* Quest dialog modal */
+.quest-dialog-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.quest-dialog-box {
+  background: url('/assets/quest_dialog_bg.png') no-repeat center;
+  width: 750px;
+  min-height: 350px;
+  padding: 40px 80px;
+  position: relative;
+}
+
+.quest-dialog-close {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  cursor: pointer;
+}
+
+.quest-dialog-content {
+  display: flex;
+  gap: 20px;
+}
+
+.quest-dialog-text {
+  flex: 1;
+  font-size: 1rem;
+  line-height: 1.6;
+  color: #222;
+}
+
+.quest-dialog-avatar {
+  width: 130px;
+  height: 130px;
+  border: 3px solid var(--nl-gold);
+  border-radius: var(--nl-radius-sm);
+  overflow: hidden;
+}
+
+.quest-dialog-nav {
+  margin-top: 20px;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+.quest-nav-btn {
+  padding: 8px 20px;
+  background: var(--nl-bg-secondary);
+  border: 2px solid var(--nl-border-medium);
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.quest-accept-btn {
+  background: linear-gradient(180deg, #4CAF50 0%, #2E7D32 100%);
+  color: white;
+  padding: 10px 30px;
+  border: 2px solid #1B5E20;
+  font-weight: bold;
+}
+
+.quest-complete-btn {
+  background: linear-gradient(180deg, #FFD700 0%, #FFA000 100%);
+  color: #333;
+  padding: 10px 30px;
+  border: 2px solid #FF8F00;
+  font-weight: bold;
+}
+```
+
 ---
 
 ## Jobs & Background Processing
