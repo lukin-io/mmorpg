@@ -1,0 +1,41 @@
+<div class="tactical-grid" style="--grid-size: <%= match.grid_size %>;">
+  <% match.grid_size.times do |y| %>
+    <div class="grid-row">
+      <% match.grid_size.times do |x| %>
+        <%
+          tile = match.grid_state&.dig(y, x)
+          participant = match.participant_at(x, y)
+          is_valid_move = @valid_moves&.any? { |m| m[:x] == x && m[:y] == y }
+          tile_type = tile.is_a?(Hash) ? tile["type"] : nil
+        %>
+        <div class="grid-tile <%= tile_type %> <%= 'valid-move' if is_valid_move %> <%= 'has-character' if participant %>"
+             data-x="<%= x %>"
+             data-y="<%= y %>"
+             data-action="click->tactical-combat#clickTile"
+             data-tactical-combat-target="tile">
+
+          <% if tile_type == "obstacle" %>
+            <span class="tile-icon">🪨</span>
+          <% elsif tile_type == "cover" %>
+            <span class="tile-icon">🛡️</span>
+          <% end %>
+
+          <% if participant %>
+            <div class="character-marker <%= participant.character == current_character ? 'own' : 'enemy' %> <%= 'defeated' unless participant.alive? %>"
+                 data-character-id="<%= participant.character_id %>">
+              <span class="char-icon"><%= participant.character == current_character ? '🧙' : '👹' %></span>
+              <div class="mini-hp-bar">
+                <div class="hp-fill" style="width: <%= (participant.current_hp.to_f / participant.character.max_hp * 100).round %>%"></div>
+              </div>
+            </div>
+          <% end %>
+
+          <% if is_valid_move %>
+            <div class="move-indicator">◉</div>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+</div>
+

@@ -1,0 +1,51 @@
+<div class="premium-store">
+  <div class="page-header">
+    <h1 class="page-title">✨ Premium Store</h1>
+    <div class="balance-display">
+      <span class="balance-icon">💎</span>
+      <span class="balance-amount"><%= number_with_delimiter(@balance) %></span>
+      <span class="balance-label">Premium Tokens</span>
+      <%= link_to "Get More", "#", class: "game-btn game-btn--sm" %>
+    </div>
+  </div>
+
+  <% if @featured.any? %>
+    <div class="featured-items card">
+      <h2>✨ Featured Items</h2>
+      <div class="featured-grid">
+        <% @featured.each do |item| %>
+          <%= render "premium_store/item_card", item: item, featured: true %>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+
+  <div class="store-layout">
+    <aside class="store-sidebar card">
+      <h3>Categories</h3>
+      <ul class="category-list">
+        <li class="<%= 'active' if @current_category == 'all' %>">
+          <%= link_to "All Items", premium_store_index_path(category: "all") %>
+        </li>
+        <% @categories.each do |key, label| %>
+          <li class="<%= 'active' if @current_category == key.to_s %>">
+            <%= link_to label, premium_store_index_path(category: key) %>
+          </li>
+        <% end %>
+      </ul>
+    </aside>
+
+    <main class="store-main">
+      <div class="items-grid">
+        <% @artifacts.each do |item| %>
+          <%= render "premium_store/item_card", item: item, featured: false %>
+        <% end %>
+      </div>
+
+      <% if @artifacts.empty? %>
+        <p class="no-items">No items in this category.</p>
+      <% end %>
+    </main>
+  </div>
+</div>
+

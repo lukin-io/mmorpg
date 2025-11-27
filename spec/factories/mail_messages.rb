@@ -3,7 +3,7 @@ FactoryBot.define do
     association :sender, factory: :user
     association :recipient, factory: :user
     subject { "Greetings" }
-    body { "Welcome to Neverlands" }
+    body { "Welcome to Elselands" }
     attachment_payload { {} }
     delivered_at { Time.current }
   end

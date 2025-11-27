@@ -1,0 +1,51 @@
+<div class="betting-panel card">
+  <h3>Your Bet</h3>
+
+  <% if my_bet.present? %>
+    <div class="my-bet-info">
+      <p>You bet <strong><%= number_with_delimiter(my_bet.amount) %> <%= my_bet.currency_type %></strong> on <strong><%= my_bet.predicted_winner.name %></strong></p>
+      <p class="potential-winnings">Potential winnings: <strong><%= number_with_delimiter(my_bet.potential_winnings) %> <%= my_bet.currency_type %></strong></p>
+
+      <% if my_bet.pending? %>
+        <% if match.pending? %>
+          <%= button_to "Cancel Bet", arena_match_arena_bet_path(match, my_bet), method: :delete, class: "game-btn game-btn--danger", data: {confirm: "Cancel your bet and get a refund?"} %>
+        <% else %>
+          <p class="bet-locked">🔒 Bet locked - match in progress</p>
+        <% end %>
+      <% elsif my_bet.won? %>
+        <p class="bet-won">🏆 You won <%= number_with_delimiter(my_bet.payout_amount) %> <%= my_bet.currency_type %>!</p>
+      <% elsif my_bet.lost? %>
+        <p class="bet-lost">💀 Better luck next time!</p>
+      <% elsif my_bet.refunded? %>
+        <p class="bet-refunded">💰 Bet refunded</p>
+      <% end %>
+    </div>
+  <% elsif match.pending? %>
+    <div class="place-bet-form">
+      <p>Choose a fighter and place your bet!</p>
+
+      <%= form_with model: [match, ArenaBet.new], url: arena_match_arena_bets_path(match), class: "bet-form", data: {turbo: true} do |f| %>
+        <div class="form-group">
+          <%= f.label :predicted_winner_id, "Bet On" %>
+          <%= f.select :predicted_winner_id,
+                       match.arena_participations.map { |p| ["#{p.character.name} (#{ArenaBet.odds_for(match, p.character)}x)", p.character_id] },
+                       {},
+                       class: "form-control" %>
+        </div>
+
+        <div class="form-group">
+          <%= f.label :amount, "Bet Amount" %>
+          <%= f.number_field :amount, min: ArenaBet::MIN_BET, max: ArenaBet::MAX_BET, value: 100, class: "form-control" %>
+          <p class="form-hint">Your gold: <%= number_with_delimiter(current_character.gold) %></p>
+        </div>
+
+        <%= f.hidden_field :currency_type, value: :gold %>
+
+        <%= f.submit "Place Bet", class: "game-btn game-btn--primary" %>
+      <% end %>
+    </div>
+  <% else %>
+    <p class="betting-closed">Betting is closed for this match.</p>
+  <% end %>
+</div>
+

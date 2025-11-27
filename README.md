@@ -1,6 +1,6 @@
-# Neverlands — Ruby on Rails MMORPG (Hotwire Monolith)
+# Elselands — Ruby on Rails MMORPG (Hotwire Monolith)
 
-A full-stack Ruby on Rails MMORPG inspired by the classic Neverlands.ru. This project is a **server-rendered Rails monolith** using **Hotwire (Turbo + Stimulus)** for reactive UI, backed by a clean and modular domain architecture.
+A full-stack Ruby on Rails MMORPG inspired by the classic Elselands.ru. This project is a **server-rendered Rails monolith** using **Hotwire (Turbo + Stimulus)** for reactive UI, backed by a clean and modular domain architecture.
 
 ---
 
@@ -38,7 +38,7 @@ A full-stack Ruby on Rails MMORPG inspired by the classic Neverlands.ru. This pr
 
 ## 🎮 Project Overview
 
-This is a clone/re-imagining of the classic MMORPG **Neverlands.ru**, featuring:
+This is a clone/re-imagining of the classic MMORPG **Elselands.ru**, featuring:
 
 - Turn-based combat (PvE & PvP)
 - Grid-based movement
@@ -85,7 +85,7 @@ The `doc/features/3_player.md` specification is now wired into the codebase:
 
 ### 4. World, NPC, and Quest Systems (Feature 4)
 
-- **Deterministic World Data** — `config/gameplay/world/*.yml` defines Neverlands regions, landmarks, hidden areas, and resource nodes consumed by `Game::World::RegionCatalog`, `Game::World::Region`, and `Economy::TaxCalculator` for territory buffs/taxes.
+- **Deterministic World Data** — `config/gameplay/world/*.yml` defines Elselands regions, landmarks, hidden areas, and resource nodes consumed by `Game::World::RegionCatalog`, `Game::World::Region`, and `Economy::TaxCalculator` for territory buffs/taxes.
 - **NPCs & Monsters** — `Game::World::PopulationDirectory` merges NPC archetypes + monster taxonomy (rarity, respawn timers) with optional overrides from `SpawnSchedule`, surfacing data to `Game::Exploration::EncounterResolver`.
 - **Quests & Narrative** — `Quest*` models plus `Game::Quests::StorylineProgression`, `DailyRotation`, and `DynamicHookResolver` manage main, side, daily, and event quests. `QuestsController` ships a Hotwire quest log/dialogue UI optimized for mobile via the new `layout-stack` Stimulus controller.
 - **Events & Tournaments** — `Game::Events::Scheduler`, `EventInstance`, `ArenaTournament`, and `CommunityObjective` orchestrate seasonal NPCs, brackets, announcers, and drives, with `ScheduledEventJob` spawning instances by slug.

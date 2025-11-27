@@ -7,7 +7,7 @@ module Clans
   # - the founder pays the gold fee up front
   #
   # Usage:
-  #   Clans::FoundingGate.new(user:, character:, wallet:).enforce!(clan_name: "Neverlands Vanguard")
+  #   Clans::FoundingGate.new(user:, character:, wallet:).enforce!(clan_name: "Elselands Vanguard")
   #
   # Returns:
   #   true once the fee is collected; raises RequirementError if conditions fail.

@@ -7,6 +7,9 @@ Rails.application.routes.draw do
     mount Sidekiq::Web => "/sidekiq"
   end
 
+  # Public battle logs (shareable URLs like Neverlands' /logs.fcg?fid=xxx)
+  get "logs/:share_token", to: "public_battle_logs#show", as: :public_battle_log
+
   resource :session_ping, only: :create
   resources :profiles, only: :show, controller: :public_profiles, param: :profile_name
 
@@ -59,6 +62,16 @@ Rails.application.routes.draw do
       post :reset_progress
     end
   end
+
+  # Skill Trees & Abilities
+  resources :skill_trees, only: [:index, :show] do
+    member do
+      post :unlock
+    end
+    collection do
+      post :respec
+    end
+  end
   resources :crafting_jobs, only: [:index, :create] do
     collection do
       post :preview
@@ -102,12 +115,114 @@ Rails.application.routes.draw do
     resources :party_memberships, only: [:update, :destroy]
   end
   resources :party_invitations, only: :update
+  # Arena System
+  resources :arena, only: [:index], controller: "arena" do
+    collection do
+      get :lobby
+    end
+  end
+
+  resources :arena_rooms, only: [:index, :show] do
+    resources :arena_applications, only: [:index, :create, :destroy] do
+      member do
+        post :accept
+      end
+    end
+  end
+
+  resources :arena_applications, only: [] do
+    member do
+      post :accept
+      delete :cancel
+    end
+  end
+
   resources :arena_matches, only: [:index, :show, :create] do
     member do
       post :spectate
+      get :log
     end
   end
+
   resources :arena_seasons, only: [:index, :show]
+
+  # Tactical Arena - Grid-based combat
+  resources :tactical_arena, only: [:index, :show, :create] do
+    member do
+      post :join
+      post :move
+      post :attack
+      post :skill
+      post :end_turn
+      post :forfeit
+    end
+  end
+
+  # Arena Betting
+  resources :arena_matches do
+    resources :arena_bets, only: [:index, :create, :destroy]
+  end
+
+  # Dungeons
+  resources :dungeons, only: [:index, :show] do
+    resources :instances, controller: "dungeon_instances", only: [:create, :show] do
+      member do
+        post :enter_encounter
+        post :complete_encounter
+        post :leave
+      end
+    end
+  end
+  resources :dungeon_instances, only: [:show] do
+    member do
+      post :enter_encounter
+      post :complete_encounter
+      post :leave
+    end
+  end
+
+  # Inventory Management
+  resource :inventory, only: [:show] do
+    post :equip
+    post :unequip
+    post :use
+    post :sort
+  end
+  resources :inventory_items, only: [:destroy], path: "inventory/items"
+
+  # Equipment Enhancement
+  resources :equipment_enhancements, only: [:index, :show] do
+    member do
+      post :enhance
+      post :preview
+    end
+  end
+
+  # Premium Store
+  resources :premium_store, only: [:index, :show] do
+    member do
+      post :purchase
+      post :gift
+    end
+  end
+
+  # Marketplace Kiosks
+  resources :marketplace_kiosks, only: [:show] do
+    member do
+      post :quick_buy
+      post :quick_sell
+    end
+  end
+
+  # Titles
+  resources :titles, only: [:index] do
+    member do
+      post :equip
+    end
+    collection do
+      delete :unequip
+    end
+  end
 
   resources :announcements, only: [:index, :create]
 
@@ -171,6 +286,34 @@ Rails.application.routes.draw do
   # get "service-worker" => "rails/pwa#service_worker", as: :pwa_service_worker
 
   resource :game_overview, controller: "game_overview", only: :show
+
+  # Game World - Main gameplay area
+  resource :world, only: :show, controller: "world" do
+    post :move
+    post :enter
+    post :exit_location
+    post :gather
+    post :interact
+    post :dialogue_action
+  end
+
+  # PvE Combat
+  resource :combat, only: :show, controller: "combat" do
+    post :start
+    post :action
+    post :flee
+    get :skills
+  end
+
+  # Resource Gathering
+  resources :gathering, only: [:show] do
+    member do
+      post :harvest
+    end
+    collection do
+      get :nodes
+    end
+  end
 
   # Defines the root path route ("/")
   root "dashboard#show"

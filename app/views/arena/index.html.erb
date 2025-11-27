@@ -1,0 +1,126 @@
+<% content_for :title, "Arena - Elselands" %>
+
+<div class="arena-page" data-controller="arena" data-arena-character-level-value="<%= current_character.level %>">
+  <div class="page-header">
+    <h1>⚔️ Arena</h1>
+    <p class="text-muted">Battle other players for glory and rewards!</p>
+  </div>
+
+  <%# Current Application Status %>
+  <% if @current_application %>
+    <div class="arena-current-app card">
+      <h3>⏳ Your Active Application</h3>
+      <p>
+        <strong><%= fight_type_with_icon(@current_application.fight_type) %></strong>
+        in <%= room_type_icon(@current_application.arena_room.room_type) %> <%= @current_application.arena_room.name %>
+      </p>
+      <p class="application-settings-row">
+        <%= application_settings_display(@current_application) %>
+      </p>
+      <p class="text-muted">
+        Expires in <%= distance_of_time_in_words_to_now(@current_application.expires_at) %>
+      </p>
+      <%= button_to "❌ Cancel Application",
+          cancel_arena_application_path(@current_application),
+          method: :delete,
+          class: "btn-danger btn-sm",
+          data: { turbo_confirm: "Cancel your fight application?" } %>
+    </div>
+  <% end %>
+
+  <%# Room Grid %>
+  <div class="arena-section">
+    <div class="section-header">
+      <h2>Arena Rooms</h2>
+      <button class="btn-secondary btn-sm" data-action="click->arena#showRooms">
+        Toggle Building View
+      </button>
+    </div>
+
+    <div class="arena-rooms" data-arena-target="roomGrid">
+      <% @rooms.each do |room| %>
+        <% accessible = room.accessible_by?(current_character) %>
+        <div class="arena-room arena-room--<%= accessible ? 'available' : 'unavailable' %> arena-room--faction-<%= room.faction_restriction || 'none' %>"
+             data-room-id="<%= room.id %>"
+             data-level-min="<%= room.level_min %>"
+             data-level-max="<%= room.level_max %>"
+             <% if accessible %>
+               data-action="click->arena#selectRoom"
+             <% end %>>
+          <div class="arena-room-name">
+            <%= room_type_badge(room.room_type) %>
+          </div>
+          <div class="arena-room-level">📊 Levels <%= room.level_min %>-<%= room.level_max %></div>
+          <div class="arena-room-count">
+            <span title="Open applications">👥 <%= room.open_application_count %> waiting</span>
+          </div>
+          <%= arena_room_status_tag(room) %>
+          <% if accessible %>
+            <%= link_to "🚪 Enter", arena_room_path(room), class: "btn-primary btn-sm" %>
+          <% else %>
+            <span class="text-muted text-sm">
+              <% if room.level_min > current_character.level %>
+                🔒 Level <%= room.level_min %> required
+              <% elsif room.level_max < current_character.level %>
+                ⬆️ Max level <%= room.level_max %>
+              <% elsif room.faction_restriction %>
+                <%= faction_icon(room.faction_restriction) %> <%= room.faction_restriction.humanize %> only
+              <% end %>
+            </span>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <%# Recent Matches %>
+  <% if @recent_matches.any? %>
+    <div class="arena-section">
+      <h2>Recent Matches</h2>
+      <div class="arena-recent-matches">
+        <% @recent_matches.each do |participation| %>
+          <% match = participation.arena_match %>
+          <div class="arena-match-card">
+            <div class="match-info">
+              <span class="match-type"><%= fight_type_with_icon(match.match_type) %></span>
+              <span class="match-result match-result--<%= participation.result %>">
+                <%= case participation.result.to_sym
+                    when :win then "🏆 Victory"
+                    when :loss then "💀 Defeat"
+                    when :draw then "🤝 Draw"
+                    else participation.result.humanize
+                    end %>
+              </span>
+            </div>
+            <div class="match-meta">
+              🕐 <%= time_ago_in_words(match.created_at) %> ago
+              <% if participation.rating_delta != 0 %>
+                <span class="rating-delta rating-delta--<%= participation.rating_delta > 0 ? 'positive' : 'negative' %>">
+                  <%= participation.rating_delta > 0 ? '📈 +' : '📉 ' %><%= participation.rating_delta %>
+                </span>
+              <% end %>
+            </div>
+            <%= link_to "📜 View Log", arena_match_path(match), class: "arena-log-link" %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+
+  <%# Fight Type Tabs %>
+  <div class="arena-tabs">
+    <%= link_to "⚔️ Duels", arena_path(ft: 1), class: "arena-tab #{'arena-tab--active' if params[:ft] == '1' || params[:ft].nil?}" %>
+    <%= link_to "👥 Team Battle", arena_path(ft: 2), class: "arena-tab #{'arena-tab--active' if params[:ft] == '2'}" %>
+    <%= link_to "💀 Sacrifice", arena_path(ft: 3), class: "arena-tab #{'arena-tab--active' if params[:ft] == '3'}" %>
+    <span class="arena-tab arena-tab--disabled">🎯 Tactical</span>
+    <span class="arena-tab arena-tab--disabled">🎰 Betting</span>
+    <%= link_to "📊 Statistics", arena_path(ft: 4), class: "arena-tab #{'arena-tab--active' if params[:ft] == '4'}" %>
+  </div>
+</div>
+
+<%# Countdown overlay (hidden by default) %>
+<div class="arena-countdown" data-arena-target="countdown" style="display: none;">
+  <div class="arena-countdown-title">Match Starting</div>
+  <div class="arena-countdown-timer">--</div>
+</div>
+

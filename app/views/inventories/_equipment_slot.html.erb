@@ -1,0 +1,29 @@
+<div class="equipment-slot equipment-slot--<%= slot %> <%= 'filled' if item %>"
+     data-slot="<%= slot %>"
+     data-action="click->inventory#clickEquipmentSlot"
+     title="<%= label %>">
+  <% if item %>
+    <div class="equipped-item item-rarity--<%= item.item_template.rarity %>">
+      <span class="item-icon"><%= item_slot_icon(item.item_template) %></span>
+      <div class="item-tooltip">
+        <strong><%= item.item_template.name %></strong>
+        <p class="item-rarity"><%= item.item_template.rarity.titleize %></p>
+        <% if item.item_template.stats.present? %>
+          <div class="item-stats">
+            <% item.item_template.stats.each do |stat, value| %>
+              <span>+<%= value %> <%= stat.titleize %></span>
+            <% end %>
+          </div>
+        <% end %>
+        <p class="item-action">Click to unequip</p>
+      </div>
+    </div>
+    <%= button_to unequip_inventory_path(slot: slot), method: :post, class: "unequip-btn", title: "Unequip", data: {turbo: true} do %>
+      ✕
+    <% end %>
+  <% else %>
+    <span class="slot-placeholder"><%= equipment_slot_icon(slot) %></span>
+    <span class="slot-label"><%= label %></span>
+  <% end %>
+</div>
+

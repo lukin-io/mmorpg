@@ -1,0 +1,30 @@
+<%# Combat Status Indicator %>
+<% player = battle.battle_participants.find_by(team: "player") %>
+<% enemy = battle.battle_participants.find_by(team: "enemy") %>
+
+<div class="combat-status">
+  <div class="combat-turn">
+    <span class="combat-turn-label">Turn</span>
+    <span class="combat-turn-number"><%= battle.turn_number %></span>
+  </div>
+
+  <div class="combat-hp-summary">
+    <div class="hp-summary-player">
+      <span class="hp-label">You:</span>
+      <span class="hp-value <%= 'hp-low' if player.character.current_hp < player.character.max_hp * 0.25 %>">
+        <%= player.character.current_hp %>/<%= player.character.max_hp %>
+      </span>
+    </div>
+    <div class="hp-summary-enemy">
+      <span class="hp-label">Enemy:</span>
+      <span class="hp-value">
+        <%= enemy.current_hp %>/<%= enemy.max_hp %>
+      </span>
+    </div>
+  </div>
+
+  <% if player.is_defending %>
+    <div class="combat-status-effect">🛡️ Defending</div>
+  <% end %>
+</div>
+

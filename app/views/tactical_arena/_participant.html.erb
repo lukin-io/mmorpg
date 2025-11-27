@@ -1,0 +1,35 @@
+<div class="participant-card <%= participant.alive? ? 'alive' : 'defeated' %> <%= participant.character == current_character ? 'own' : 'enemy' %>">
+  <div class="participant-header">
+    <span class="participant-name"><%= participant.character.name %></span>
+    <span class="participant-level">[<%= participant.character.level %>]</span>
+  </div>
+
+  <div class="participant-vitals">
+    <div class="vital-bar hp-bar">
+      <div class="vital-fill" style="width: <%= (participant.current_hp.to_f / participant.character.max_hp * 100).round %>%"></div>
+      <span class="vital-text"><%= participant.current_hp %>/<%= participant.character.max_hp %> HP</span>
+    </div>
+
+    <div class="vital-bar mp-bar">
+      <div class="vital-fill" style="width: <%= (participant.current_mp.to_f / [participant.character.max_mp, 1].max * 100).round %>%"></div>
+      <span class="vital-text"><%= participant.current_mp %>/<%= participant.character.max_mp %> MP</span>
+    </div>
+  </div>
+
+  <div class="participant-stats">
+    <span class="stat" title="Movement Range">🚶 <%= participant.movement_range %></span>
+    <span class="stat" title="Attack Range">🎯 <%= participant.attack_range %></span>
+    <span class="stat" title="Position">(<%=participant.grid_x %>, <%= participant.grid_y %>)</span>
+  </div>
+
+  <% if participant.buffs.present? %>
+    <div class="participant-buffs">
+      <% participant.buffs.each do |buff_key, value| %>
+        <span class="buff-badge" title="<%= buff_key.humanize %>: +<%= value %> (<%= participant.buff_durations[buff_key] %> turns)">
+          ⬆️ <%= buff_key.humanize.truncate(10) %>
+        </span>
+      <% end %>
+    </div>
+  <% end %>
+</div>
+

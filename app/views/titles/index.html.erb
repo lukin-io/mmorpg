@@ -1,0 +1,59 @@
+<div class="titles-page">
+  <div class="page-header">
+    <h1 class="page-title">👑 Titles & Achievements</h1>
+    <p class="page-subtitle">Show off your accomplishments</p>
+  </div>
+
+  <div class="titles-layout">
+    <div class="titles-main">
+      <div id="equipped_title">
+        <%= render "titles/equipped", title: @equipped_title %>
+      </div>
+
+      <div class="earned-titles card">
+        <h2>Your Titles (<%= @earned_titles.count %>)</h2>
+
+        <div id="titles_list">
+          <%= render "titles/list", earned_titles: @earned_titles, equipped_title: @equipped_title %>
+        </div>
+      </div>
+    </div>
+
+    <div class="titles-sidebar">
+      <div class="all-titles card">
+        <h3>All Available Titles</h3>
+        <div class="titles-catalog">
+          <% @available_titles.group_by(&:rarity).each do |rarity, titles| %>
+            <div class="rarity-group">
+              <h4 class="rarity-header rarity--<%= rarity %>"><%= rarity.titleize %></h4>
+              <ul class="title-list">
+                <% titles.each do |title| %>
+                  <li class="catalog-title <%= 'earned' if @earned_titles.any? { |tg| tg.title == title } %>">
+                    <span class="title-name"><%= title.name %></span>
+                    <% if @earned_titles.any? { |tg| tg.title == title } %>
+                      <span class="earned-badge">✓</span>
+                    <% else %>
+                      <span class="locked-badge">🔒</span>
+                    <% end %>
+                  </li>
+                <% end %>
+              </ul>
+            </div>
+          <% end %>
+        </div>
+      </div>
+
+      <div class="title-tips card">
+        <h3>How to Earn Titles</h3>
+        <ul>
+          <li>Complete achievements</li>
+          <li>Reach milestones</li>
+          <li>Win arena matches</li>
+          <li>Complete dungeons</li>
+          <li>Special events</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+

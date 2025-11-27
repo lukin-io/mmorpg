@@ -1,73 +1,138 @@
-<section>
-  <header>
-    <h1>Trade Session</h1>
-    <p><strong>Initiator:</strong> <%= @trade_session.initiator.email %></p>
-    <p><strong>Recipient:</strong> <%= @trade_session.recipient.email %></p>
-    <p>Status: <%= @trade_session.status.humanize %></p>
-  </header>
+<%= turbo_stream_from @trade_session %>
 
-  <% if @preview.warning? %>
-    <div class="alert warning">
-      <strong>Heads up:</strong> Net value difference exceeds safe threshold.
-    </div>
-  <% end %>
+<div class="trade-session" data-controller="trade" data-trade-session-id-value="<%= @trade_session.id %>">
+  <div class="page-header">
+    <h1 class="page-title">Trading with <%= trade_partner(@trade_session).profile_name %></h1>
+  </div>
 
-  <section class="trade-preview">
-    <div>
-      <h2><%= @trade_session.initiator.profile_name %></h2>
-      <p>Gold: <%= @preview.initiator_totals[:gold] %></p>
-      <p>Silver: <%= @preview.initiator_totals[:silver] %></p>
-      <p>Premium tokens: <%= @preview.initiator_totals[:premium_tokens] %></p>
-      <ul>
-        <% @preview.initiator_totals[:items].each do |item| %>
-          <li>
-            <%= item.item_name %> x<%= item.quantity %>
-            <% if item.owner == current_user %>
-              <%= button_to "Remove", trade_item_path(item), method: :delete, data: {turbo_confirm: "Remove this item?"} %>
-            <% end %>
-          </li>
+  <div class="trade-layout">
+    <div class="trade-side trade-side--you">
+      <h2>Your Offer</h2>
+
+      <div class="trade-items" id="your_trade_items">
+        <% your_items = @trade_items.select { |i| i.owner == current_user } %>
+        <% if your_items.any? %>
+          <% your_items.each do |item| %>
+            <%= render "trade_sessions/trade_item", item: item, can_remove: !@trade_session.locked? %>
+          <% end %>
+        <% else %>
+          <p class="no-items">No items added yet</p>
         <% end %>
-      </ul>
+      </div>
+
+      <% unless @trade_session.locked? %>
+        <div class="add-item-form card">
+          <%= form_with model: [@trade_session, @trade_item], url: trade_session_trade_items_path(@trade_session), class: "trade-item-form" do |f| %>
+            <div class="form-group">
+              <%= f.label :item_key, "Add Item" %>
+              <%= f.select :item_key, inventory_items_for_select(current_user), { include_blank: "Select item..." }, class: "form-control" %>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <%= f.label :quantity %>
+                <%= f.number_field :quantity, class: "form-control", min: 1, value: 1 %>
+              </div>
+            </div>
+
+            <%= f.submit "Add to Trade", class: "game-btn game-btn--primary" %>
+          <% end %>
+        </div>
+
+        <div class="add-currency-form card">
+          <h4>Add Currency</h4>
+          <%= form_with model: [@trade_session, @trade_item], url: trade_session_trade_items_path(@trade_session), class: "currency-form" do |f| %>
+            <%= f.hidden_field :item_type, value: "currency" %>
+
+            <div class="form-group">
+              <%= f.label :currency_type %>
+              <%= f.select :currency_type, [["Gold", "gold"], ["Silver", "silver"]], {}, class: "form-control" %>
+            </div>
+
+            <div class="form-group">
+              <%= f.label :amount %>
+              <%= f.number_field :amount, class: "form-control", min: 1 %>
+            </div>
+
+            <%= f.submit "Add Currency", class: "game-btn" %>
+          <% end %>
+        </div>
+      <% end %>
     </div>
-    <div>
-      <h2><%= @trade_session.recipient.profile_name %></h2>
-      <p>Gold: <%= @preview.recipient_totals[:gold] %></p>
-      <p>Silver: <%= @preview.recipient_totals[:silver] %></p>
-      <p>Premium tokens: <%= @preview.recipient_totals[:premium_tokens] %></p>
-      <ul>
-        <% @preview.recipient_totals[:items].each do |item| %>
-          <li>
-            <%= item.item_name %> x<%= item.quantity %>
-            <% if item.owner == current_user %>
-              <%= button_to "Remove", trade_item_path(item), method: :delete, data: {turbo_confirm: "Remove this item?"} %>
-            <% end %>
-          </li>
+
+    <div class="trade-divider">
+      <div class="trade-arrows">⇄</div>
+    </div>
+
+    <div class="trade-side trade-side--partner">
+      <h2><%= trade_partner(@trade_session).profile_name %>'s Offer</h2>
+
+      <div class="trade-items" id="partner_trade_items">
+        <% partner_items = @trade_items.reject { |i| i.owner == current_user } %>
+        <% if partner_items.any? %>
+          <% partner_items.each do |item| %>
+            <%= render "trade_sessions/trade_item", item: item, can_remove: false %>
+          <% end %>
+        <% else %>
+          <p class="no-items">No items added yet</p>
         <% end %>
-      </ul>
+      </div>
     </div>
-  </section>
+  </div>
 
-  <section class="trade-contributions">
-    <h2>Add Item</h2>
-    <%= form_with model: @trade_item, url: trade_session_trade_items_path(@trade_session) do |form| %>
-      <%= form.text_field :item_name, placeholder: "Item name" %>
-      <%= form.number_field :quantity, min: 1, value: 1 %>
-      <%= form.text_field :item_quality, placeholder: "Quality (optional)" %>
-      <%= form.submit "Add Item" %>
+  <div class="trade-summary card">
+    <h3>Trade Summary</h3>
+
+    <div class="summary-content">
+      <div class="summary-column">
+        <h4>You Give:</h4>
+        <ul>
+          <% @preview[:you_give].each do |item| %>
+            <li><%= item[:name] %> <% if item[:quantity] > 1 %>x<%= item[:quantity] %><% end %></li>
+          <% end %>
+        </ul>
+        <% if @preview[:you_give_currency].present? %>
+          <p class="currency-total"><%= @preview[:you_give_currency] %></p>
+        <% end %>
+      </div>
+
+      <div class="summary-column">
+        <h4>You Receive:</h4>
+        <ul>
+          <% @preview[:you_receive].each do |item| %>
+            <li><%= item[:name] %> <% if item[:quantity] > 1 %>x<%= item[:quantity] %><% end %></li>
+          <% end %>
+        </ul>
+        <% if @preview[:you_receive_currency].present? %>
+          <p class="currency-total"><%= @preview[:you_receive_currency] %></p>
+        <% end %>
+      </div>
+    </div>
+
+    <% if @preview[:warnings].any? %>
+      <div class="trade-warnings">
+        <% @preview[:warnings].each do |warning| %>
+          <p class="warning">⚠️ <%= warning %></p>
+        <% end %>
+      </div>
     <% end %>
+  </div>
 
-    <h2>Add Currency</h2>
-    <%= form_with model: @trade_item, url: trade_session_trade_items_path(@trade_session) do |form| %>
-      <%= form.select :currency_type, TradeItem::CURRENCY_TYPES %>
-      <%= form.number_field :currency_amount, min: 1 %>
-      <%= form.submit "Add Currency" %>
+  <div class="trade-actions">
+    <% if @trade_session.status == "pending" %>
+      <% if trade_confirmed_by_you?(@trade_session) %>
+        <p class="waiting-notice">Waiting for <%= trade_partner(@trade_session).profile_name %> to confirm...</p>
+      <% else %>
+        <%= button_to "Confirm Trade", trade_session_path(@trade_session, confirm: true), method: :patch, class: "game-btn game-btn--success", data: { confirm: "Are you sure you want to confirm this trade?" } %>
+      <% end %>
+
+      <%= button_to "Cancel Trade", trade_session_path(@trade_session, cancel: true), method: :patch, class: "game-btn game-btn--danger" %>
+    <% elsif @trade_session.status == "completed" %>
+      <p class="trade-complete">✅ Trade completed successfully!</p>
+      <%= link_to "Back to Game", root_path, class: "game-btn" %>
+    <% elsif @trade_session.status == "cancelled" %>
+      <p class="trade-cancelled">❌ Trade was cancelled.</p>
+      <%= link_to "Back to Game", root_path, class: "game-btn" %>
     <% end %>
-  </section>
-
-  <section class="trade-net">
-    <p>Net gold delta: <%= @preview.net_gold %></p>
-    <p>Net premium tokens: <%= @preview.net_premium_tokens %></p>
-  </section>
-
-  <%= button_to "Confirm Trade", trade_session_path(@trade_session), method: :put, data: {turbo_confirm: "Confirm trade?"} %>
-</section>
+  </div>
+</div>

@@ -1,0 +1,81 @@
+<div class="arena-seasons-page" data-controller="arena-season">
+  <div class="page-header">
+    <h1 class="page-title">Arena Seasons</h1>
+    <p class="page-subtitle">Compete for glory and exclusive rewards</p>
+  </div>
+
+  <% if @current_season.present? %>
+    <div class="current-season-banner card">
+      <div class="season-header">
+        <h2><%= @current_season.name %></h2>
+        <span class="season-badge season-badge--active">Active Season</span>
+      </div>
+
+      <div class="season-info">
+        <div class="info-row">
+          <span class="label">Ends in:</span>
+          <span class="value countdown" data-ends-at="<%= @current_season.ends_at.iso8601 %>">
+            <%= distance_of_time_in_words_to_now(@current_season.ends_at) %>
+          </span>
+        </div>
+
+        <div class="info-row">
+          <span class="label">Your Rank:</span>
+          <span class="value rank-badge rank-badge--<%= current_character_rank_tier(@current_season) %>">
+            #<%= current_character_rank(@current_season) %> (<%= current_character_rating(@current_season) %> rating)
+          </span>
+        </div>
+
+        <div class="info-row">
+          <span class="label">Matches Played:</span>
+          <span class="value"><%= current_character_matches(@current_season) %></span>
+        </div>
+      </div>
+
+      <div class="season-actions">
+        <%= link_to "View Leaderboard", arena_season_path(@current_season), class: "game-btn game-btn--primary" %>
+        <%= link_to "Enter Arena", arena_index_path, class: "game-btn" %>
+      </div>
+    </div>
+  <% end %>
+
+  <div class="past-seasons">
+    <h2>Past Seasons</h2>
+
+    <div class="seasons-grid">
+      <% @past_seasons.each do |season| %>
+        <div class="season-card card">
+          <h3><%= season.name %></h3>
+          <p class="season-dates">
+            <%= season.starts_at.strftime("%b %d") %> - <%= season.ends_at.strftime("%b %d, %Y") %>
+          </p>
+
+          <div class="season-stats">
+            <div class="stat">
+              <span class="stat-value"><%= season.total_matches %></span>
+              <span class="stat-label">Matches</span>
+            </div>
+            <div class="stat">
+              <span class="stat-value"><%= season.unique_participants %></span>
+              <span class="stat-label">Participants</span>
+            </div>
+          </div>
+
+          <% if season.rewards.present? %>
+            <div class="season-rewards">
+              <h4>Rewards Distributed:</h4>
+              <ul>
+                <% season.rewards.each do |reward| %>
+                  <li><%= reward["name"] %></li>
+                <% end %>
+              </ul>
+            </div>
+          <% end %>
+
+          <%= link_to "View Results", arena_season_path(season), class: "game-btn" %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>
+

@@ -1,8 +1,8 @@
 lukin_user = nil
 
 if defined?(User)
-  admin = User.find_or_create_by!(email: "admin@neverlands.test") do |user|
-    user.password = "ChangeMe123!"
+  admin = User.find_or_create_by!(email: "admin@elselands.test") do |user|
+    user.password = "password!"
     user.confirmed_at = Time.current
   end
   admin.add_role(:admin)
@@ -96,12 +96,7 @@ end
 if defined?(Flipper)
   %i[combat_system guilds housing].each do |feature|
     Flipper.add(feature)
-  end
-
-  if lukin_user
-    Flipper.disable(:combat_system, lukin_user)
-    Flipper.disable(:housing, lukin_user)
-    Flipper.disable(:guilds, lukin_user)
+    Flipper.enable(feature)
   end
 end
 
@@ -212,11 +207,18 @@ def zone_metadata_for(name, biome)
   when "Castleton Keep"
     {
       "default_movement_modifier" => "road",
-      "infirmary" => {"reduction_seconds" => 20}
+      "infirmary" => {"reduction_seconds" => 20},
+      "exit_to" => "Starter Plains"
+    }
+  when "Starter Plains"
+    {
+      "default_movement_modifier" => "road",
+      "encounter_rate" => 0.15
     }
   else
     {
-      "default_movement_modifier" => biome
+      "default_movement_modifier" => biome,
+      "encounter_rate" => 0.2
     }
   end
 end
@@ -224,6 +226,7 @@ end
 if defined?(Zone)
   [
     {name: "Castleton Keep", biome: "city", width: 10, height: 10},
+    {name: "Starter Plains", biome: "plains", width: 15, height: 15},
     {name: "Whispering Woods", biome: "forest", width: 12, height: 12},
     {name: "Frost Peaks", biome: "mountain", width: 8, height: 8}
   ].each do |attrs|
@@ -239,9 +242,10 @@ end
 
 if defined?(SpawnPoint) && defined?(Zone)
   {
-    "Castleton Keep" => [{x: 0, y: 0, faction_key: "neutral", default_entry: true}],
-    "Whispering Woods" => [{x: 0, y: 0, faction_key: "rebellion", respawn_seconds: 90}],
-    "Frost Peaks" => [{x: 2, y: 2, faction_key: "alliance", respawn_seconds: 120}]
+    "Castleton Keep" => [{x: 5, y: 5, faction_key: "neutral", default_entry: true}],
+    "Starter Plains" => [{x: 7, y: 7, faction_key: "neutral", default_entry: true}],
+    "Whispering Woods" => [{x: 0, y: 0, faction_key: "rebellion", respawn_seconds: 90, default_entry: true}],
+    "Frost Peaks" => [{x: 2, y: 2, faction_key: "alliance", respawn_seconds: 120, default_entry: true}]
   }.each do |zone_name, points|
     zone = Zone.find_by(name: zone_name)
     next unless zone
@@ -411,7 +415,7 @@ if defined?(NpcTemplate)
       name: "Captain Elara",
       level: 20,
       role: "quest_giver",
-      dialogue: "Neverlands needs defenders. Will you answer the call?",
+      dialogue: "Elselands needs defenders. Will you answer the call?",
       metadata: {zone: "Castleton Keep"}
     },
     {
@@ -439,14 +443,161 @@ if defined?(NpcTemplate)
 end
 
 if defined?(MapTileTemplate)
-  [
-    {zone: "Castleton Keep", x: 0, y: 0, terrain_type: "plaza", passable: true, biome: "city"},
-    {zone: "Castleton Keep", x: 1, y: 0, terrain_type: "barracks", passable: true, biome: "city"},
-    {zone: "Castleton Keep", x: -1, y: 0, terrain_type: "armory", passable: true, biome: "city"},
-    {zone: "Whispering Woods", x: 0, y: 0, terrain_type: "grove", passable: true, biome: "forest", metadata: {encounters: [{"name" => "Forest Wisp", "weight" => 50}]}},
-    {zone: "Whispering Woods", x: 1, y: 0, terrain_type: "bog", passable: false, biome: "forest"},
-    {zone: "Whispering Woods", x: 0, y: 1, terrain_type: "trail", passable: true, biome: "forest"}
-  ].each do |attrs|
+  # Castleton Keep - City tiles with buildings and NPCs
+  city_tiles = []
+  castleton = Zone.find_by(name: "Castleton Keep")
+  if castleton
+    # Central plaza
+    city_tiles << {zone: castleton, x: 5, y: 5, terrain_type: "city", biome: "city", metadata: {"building" => "Town Square"}}
+    city_tiles << {zone: castleton, x: 4, y: 5, terrain_type: "city", biome: "city", metadata: {"building" => "Blacksmith", "npc" => "Smith Gorn"}}
+    city_tiles << {zone: castleton, x: 6, y: 5, terrain_type: "city", biome: "city", metadata: {"building" => "General Store", "npc" => "Merchant Elara"}}
+    city_tiles << {zone: castleton, x: 5, y: 4, terrain_type: "city", biome: "city", metadata: {"building" => "Tavern", "npc" => "Innkeeper Bram"}}
+    city_tiles << {zone: castleton, x: 5, y: 6, terrain_type: "city", biome: "city", metadata: {"building" => "Guild Hall"}}
+    city_tiles << {zone: castleton, x: 4, y: 4, terrain_type: "city", biome: "city", metadata: {"npc" => "Guard Captain"}}
+    city_tiles << {zone: castleton, x: 6, y: 4, terrain_type: "city", biome: "city", metadata: {"building" => "Bank"}}
+    city_tiles << {zone: castleton, x: 4, y: 6, terrain_type: "city", biome: "city", metadata: {"building" => "Auction House"}}
+    city_tiles << {zone: castleton, x: 6, y: 6, terrain_type: "city", biome: "city", metadata: {"building" => "Quest Board", "npc" => "Quest Master"}}
+    # Walls and gates
+    city_tiles << {zone: castleton, x: 5, y: 9, terrain_type: "city", biome: "city", metadata: {"building" => "South Gate"}}
+    city_tiles << {zone: castleton, x: 5, y: 0, terrain_type: "city", biome: "city", metadata: {"building" => "North Gate"}}
+  end
+
+  # Starter Plains - Outdoor area with resources, NPCs, and terrain variety
+  plains = Zone.find_by(name: "Starter Plains")
+  plains_tiles = []
+  if plains
+    # Generate a variety of terrain
+    (0..14).each do |x|
+      (0..14).each do |y|
+        tile_meta = {}
+        terrain = "plains"
+
+        # Add rivers (horizontal stripe)
+        if y == 10 && x.between?(3, 11)
+          terrain = "river"
+          tile_meta["blocked"] = true if x != 7 # Bridge at x=7
+          tile_meta["building"] = "Stone Bridge" if x == 7
+        # Lake
+        elsif x.between?(11, 13) && y.between?(3, 5)
+          terrain = "lake"
+          tile_meta["blocked"] = true
+          tile_meta["resource"] = "Fishing Spot" if x == 11 && y == 4
+          tile_meta["resource_type"] = "fish" if x == 11 && y == 4
+        # Forest patches
+        elsif (x.between?(1, 3) && y.between?(2, 4)) || (x.between?(10, 12) && y.between?(11, 13))
+          terrain = "forest"
+          # Add wood resources in forests
+          if rand < 0.3
+            tile_meta["resource"] = "Oak Tree"
+            tile_meta["resource_type"] = "wood"
+          end
+        # Mountain areas
+        elsif x.between?(0, 2) && y.between?(12, 14)
+          terrain = "mountain"
+          tile_meta["blocked"] = true if x == 0 || y == 14
+          if rand < 0.3 && !tile_meta["blocked"]
+            tile_meta["resource"] = "Iron Deposit"
+            tile_meta["resource_type"] = "ore"
+          end
+        end
+
+        # Add herbs scattered around plains
+        if terrain == "plains" && rand < 0.1
+          tile_meta["resource"] = "Wild Herbs"
+          tile_meta["resource_type"] = "herb"
+        end
+
+        # Add enemy NPCs in certain areas (not near spawn)
+        distance_from_spawn = Math.sqrt((x - 7)**2 + (y - 7)**2)
+        if terrain == "plains" && distance_from_spawn > 4 && rand < 0.08
+          enemies = ["Wild Wolf", "Forest Boar", "Bandit Scout", "Giant Rat"]
+          tile_meta["npc"] = enemies.sample
+        end
+
+        # Add friendly NPCs
+        if x == 7 && y == 3
+          tile_meta["npc"] = "Wandering Trader"
+        elsif x == 3 && y == 8
+          tile_meta["npc"] = "Old Hermit"
+          tile_meta["building"] = "Hermit's Hut"
+        end
+
+        # City entrance marker
+        if x == 7 && y == 0
+          tile_meta["building"] = "Road to Castleton"
+        end
+
+        plains_tiles << {
+          zone: plains,
+          x: x,
+          y: y,
+          terrain_type: terrain,
+          biome: terrain,
+          passable: !tile_meta["blocked"],
+          metadata: tile_meta
+        }
+      end
+    end
+  end
+
+  # Whispering Woods - Dense forest with resources and enemies
+  woods = Zone.find_by(name: "Whispering Woods")
+  woods_tiles = []
+  if woods
+    (0..11).each do |x|
+      (0..11).each do |y|
+        tile_meta = {}
+        terrain = "forest"
+
+        # Dense impassable areas
+        if (x == 0 || x == 11 || y == 0 || y == 11) && rand < 0.4
+          tile_meta["blocked"] = true
+        end
+
+        # Swamp area
+        if x.between?(7, 10) && y.between?(7, 10)
+          terrain = "swamp"
+          if rand < 0.2
+            tile_meta["resource"] = "Swamp Moss"
+            tile_meta["resource_type"] = "herb"
+          end
+        end
+
+        # Enemy spawns
+        distance_from_entrance = Math.sqrt(x**2 + y**2)
+        if distance_from_entrance > 3 && rand < 0.12 && !tile_meta["blocked"]
+          enemies = ["Forest Wisp", "Giant Spider", "Corrupted Treant", "Shadow Wolf"]
+          tile_meta["npc"] = enemies.sample
+        end
+
+        # Resources
+        if terrain == "forest" && rand < 0.15 && !tile_meta["blocked"] && !tile_meta["npc"]
+          resources = [
+            {name: "Moonleaf", type: "herb"},
+            {name: "Ancient Oak", type: "wood"},
+            {name: "Glowing Mushroom", type: "herb"}
+          ]
+          res = resources.sample
+          tile_meta["resource"] = res[:name]
+          tile_meta["resource_type"] = res[:type]
+        end
+
+        woods_tiles << {
+          zone: woods,
+          x: x,
+          y: y,
+          terrain_type: terrain,
+          biome: terrain,
+          passable: !tile_meta["blocked"],
+          metadata: tile_meta
+        }
+      end
+    end
+  end
+
+  # Insert all tiles
+  (city_tiles + plains_tiles + woods_tiles).each do |attrs|
+    next unless attrs[:zone]
     MapTileTemplate.find_or_create_by!(zone: attrs[:zone], x: attrs[:x], y: attrs[:y]) do |tile|
       tile.terrain_type = attrs[:terrain_type]
       tile.passable = attrs.fetch(:passable, true)
@@ -491,7 +642,7 @@ end
 # ------------------------------------------------------------------
 # Gameplay feature sandboxes used by flow + feature documentation
 # ------------------------------------------------------------------
-admin ||= User.find_by(email: "admin@neverlands.test")
+admin ||= User.find_by(email: "admin@elselands.test")
 lukin_user ||= User.find_by(email: "lukin.maksim@gmail.com")
 
 main_character = nil
@@ -910,3 +1061,118 @@ if defined?(QuestAnalyticsSnapshot)
     }
   end
 end
+
+# ==============================================================================
+# Arena Rooms
+# ==============================================================================
+puts "Seeding Arena Rooms..."
+
+if defined?(ArenaRoom)
+  arena_rooms = [
+    {
+      name: "Training Grounds",
+      slug: "training",
+      room_type: :training,
+      level_min: 1,
+      level_max: 10,
+      faction_restriction: nil,
+      description: "Practice arena for new combatants. Low stakes, all welcome."
+    },
+    {
+      name: "Trial Hall",
+      slug: "trial",
+      room_type: :trial,
+      level_min: 5,
+      level_max: 20,
+      faction_restriction: nil,
+      description: "Prove your worth in serious combat. Medium trauma fights."
+    },
+    {
+      name: "Challenge Arena",
+      slug: "challenge",
+      room_type: :challenge,
+      level_min: 15,
+      level_max: 40,
+      faction_restriction: nil,
+      description: "For seasoned warriors. High stakes combat."
+    },
+    {
+      name: "Initiation Chamber",
+      slug: "initiation",
+      room_type: :initiation,
+      level_min: 10,
+      level_max: 25,
+      faction_restriction: nil,
+      description: "Initiation rites for guilds and clans."
+    },
+    {
+      name: "Hall of Light",
+      slug: "light",
+      room_type: :light,
+      level_min: 20,
+      level_max: 60,
+      faction_restriction: "light",
+      description: "Champions of Light fight for honor and justice."
+    },
+    {
+      name: "Shadow Pit",
+      slug: "dark",
+      room_type: :dark,
+      level_min: 20,
+      level_max: 60,
+      faction_restriction: "dark",
+      description: "The forces of Darkness test their strength here."
+    },
+    {
+      name: "Balance Sanctum",
+      slug: "balance",
+      room_type: :balance,
+      level_min: 20,
+      level_max: 60,
+      faction_restriction: "neutral",
+      description: "Neutral warriors maintain equilibrium through combat."
+    },
+    {
+      name: "Chaos Coliseum",
+      slug: "chaos",
+      room_type: :chaos,
+      level_min: 30,
+      level_max: 80,
+      faction_restriction: nil,
+      description: "Free-for-all mayhem. Anything goes. High trauma!"
+    },
+    {
+      name: "Patron's Throne Room",
+      slug: "patron",
+      room_type: :patron,
+      level_min: 50,
+      level_max: 100,
+      faction_restriction: nil,
+      description: "Elite arena for high-level patrons and champions."
+    },
+    {
+      name: "Hall of Law",
+      slug: "law",
+      room_type: :law,
+      level_min: 25,
+      level_max: 70,
+      faction_restriction: nil,
+      description: "Judicial combat to settle disputes and honor duels."
+    }
+  ]
+
+  arena_rooms.each do |room_data|
+    ArenaRoom.find_or_create_by!(slug: room_data[:slug]) do |room|
+      room.name = room_data[:name]
+      room.room_type = room_data[:room_type]
+      room.level_min = room_data[:level_min]
+      room.level_max = room_data[:level_max]
+      room.faction_restriction = room_data[:faction_restriction]
+      room.active = true
+      room.metadata = {description: room_data[:description]}
+    end
+    puts "  Created/Found ArenaRoom: #{room_data[:name]}"
+  end
+end
+
+puts "Arena rooms seeding complete!"

@@ -1,0 +1,81 @@
+<div class="dialogue-result">
+  <% case result.dialogue_type %>
+  <% when :quest_accepted %>
+    <div class="result-card result--success">
+      <h3>✅ Quest Accepted!</h3>
+      <p><strong><%= result.data[:quest][:name] %></strong></p>
+      <p><%= result.data[:quest][:description] %></p>
+      <div class="quest-objectives">
+        <h4>Objectives:</h4>
+        <% result.data[:quest][:objectives]&.each do |obj| %>
+          <div class="objective">☐ <%= obj["description"] || obj["key"] %></div>
+        <% end %>
+      </div>
+    </div>
+
+  <% when :quest_completed %>
+    <div class="result-card result--success">
+      <h3>🎉 Quest Completed!</h3>
+      <p><strong><%= result.data[:quest][:name] %></strong></p>
+      <div class="rewards-earned">
+        <h4>Rewards:</h4>
+        <span class="reward">⭐ <%= result.data[:rewards]["xp"] %> XP</span>
+        <span class="reward">💰 <%= result.data[:rewards]["gold"] %> Gold</span>
+      </div>
+    </div>
+
+  <% when :purchase_complete %>
+    <div class="result-card result--success">
+      <h3>🛒 Purchase Complete!</h3>
+      <p>Bought <%= result.data[:quantity] %>x <strong><%= result.data[:item] %></strong></p>
+      <p>Paid: <%= result.data[:total_price] %> gold</p>
+    </div>
+
+  <% when :sale_complete %>
+    <div class="result-card result--success">
+      <h3>💵 Sale Complete!</h3>
+      <p>Sold <%= result.data[:quantity] %>x <strong><%= result.data[:item] %></strong></p>
+      <p>Received: <%= result.data[:gold_received] %> gold</p>
+    </div>
+
+  <% when :skill_learned %>
+    <div class="result-card result--success">
+      <h3>📚 Skill Learned!</h3>
+      <p>You have learned <strong><%= result.data[:skill][:name] %></strong>!</p>
+    </div>
+
+  <% when :rested %>
+    <div class="result-card result--success">
+      <h3>😴 Well Rested!</h3>
+      <p>You rested in the <%= result.data[:room] %> and recovered <%= result.data[:healed] %> HP.</p>
+    </div>
+
+  <% when :deposited %>
+    <div class="result-card result--success">
+      <h3>🏦 Deposit Complete!</h3>
+      <p>Deposited <%= result.data[:amount] %> <%= result.data[:currency] %> into your bank.</p>
+    </div>
+
+  <% when :withdrawn %>
+    <div class="result-card result--success">
+      <h3>💵 Withdrawal Complete!</h3>
+      <p>Withdrew <%= result.data[:amount] %> <%= result.data[:currency] %> from your bank.</p>
+    </div>
+
+  <% when :error %>
+    <div class="result-card result--error">
+      <h3>❌ Error</h3>
+      <p><%= result.message %></p>
+    </div>
+
+  <% else %>
+    <div class="result-card">
+      <p><%= result.message %></p>
+    </div>
+  <% end %>
+
+  <div class="result-actions">
+    <%= link_to "Continue", world_path, class: "game-btn game-btn--primary", data: { turbo_frame: "game_content" } %>
+  </div>
+</div>
+

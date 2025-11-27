@@ -1,0 +1,167 @@
+<%# Combat participant display %>
+<% participant ||= nil %>
+<% side ||= :left %>
+<% return unless participant %>
+
+<%
+  name = participant.combatant_name
+  hp = participant.current_hp || 100
+  max_hp = participant.max_hp || 100
+  mp = participant.current_mp || 50
+  max_mp = participant.max_mp || 50
+  fatigue = participant.fatigue || 100.0
+  level = participant.character&.level || participant.npc_template&.level || 1
+  hp_percent = max_hp > 0 ? (hp.to_f / max_hp * 100).round(1) : 0
+  mp_percent = max_mp > 0 ? (mp.to_f / max_mp * 100).round(1) : 0
+  is_player = participant.participant_type == "player"
+  team_color = participant.team == "alpha" ? "#0052A6" : "#087C20"
+%>
+
+<div class="nl-participant nl-participant--<%= side %>"
+     id="participant-<%= participant.id %>"
+     data-participant-id="<%= participant.id %>">
+
+  <%# Name and level header %>
+  <div class="nl-participant-header">
+    <span class="nl-participant-name" style="color: <%= team_color %>;">
+      <strong><%= name %></strong>
+    </span>
+    <span class="nl-participant-level">[<%= level %>]</span>
+    <span class="nl-participant-fatigue" style="color: #009b45;">
+      <strong><%= fatigue.round %>%</strong>
+    </span>
+  </div>
+
+  <%# HP/MP bars container %>
+  <div class="nl-vitals-container">
+    <%# Totem/Avatar %>
+    <div class="nl-totem">
+      <% if participant.character %>
+        <div class="nl-avatar nl-avatar--player">
+          <%= participant.character.name[0].upcase %>
+        </div>
+      <% else %>
+        <div class="nl-avatar nl-avatar--npc">
+          👹
+        </div>
+      <% end %>
+    </div>
+
+    <%# Bars %>
+    <div class="nl-bars">
+      <div class="nl-bars-frame">
+        <div class="nl-bar-left-cap"></div>
+        <div class="nl-bars-inner">
+          <%# HP Bar %>
+          <div class="nl-bar nl-bar--hp">
+            <div class="nl-bar-fill nl-bar-fill--hp <%= 'critical' if hp_percent < 25 %>"
+                 style="width: <%= hp_percent %>%;"
+                 data-turn-combat-target="hpBar<%= participant.id %>">
+            </div>
+          </div>
+          <div class="nl-bar-separator"></div>
+          <%# MP Bar %>
+          <div class="nl-bar nl-bar--mp">
+            <div class="nl-bar-fill nl-bar-fill--mp"
+                 style="width: <%= mp_percent %>%;"
+                 data-turn-combat-target="mpBar<%= participant.id %>">
+            </div>
+          </div>
+        </div>
+        <div class="nl-bar-right-cap"></div>
+      </div>
+
+      <%# HP/MP text overlay %>
+      <div class="nl-vitals-text">
+        <span class="nl-hp-text" data-turn-combat-target="hpText<%= participant.id %>">
+          <%= format_vital(hp, max_hp) %>
+        </span>
+        <span class="nl-mp-text" data-turn-combat-target="mpText<%= participant.id %>">
+          <%= format_vital(mp, max_mp) %>
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <%# Equipment slots (visual representation) %>
+  <div class="nl-equipment-grid">
+    <div class="nl-equipment-column nl-equipment-left">
+      <div class="nl-slot nl-slot--helmet" title="Helmet Slot">🎭</div>
+      <div class="nl-slot nl-slot--amulet" title="Amulet Slot">📿</div>
+      <div class="nl-slot nl-slot--weapon" title="Weapon Slot">⚔️</div>
+      <div class="nl-slot nl-slot--belt" title="Belt Slot">🎗️</div>
+      <div class="nl-slot nl-slot--belt-item" title="Belt Item 1">📦</div>
+      <div class="nl-slot nl-slot--belt-item" title="Belt Item 2">📦</div>
+      <div class="nl-slot nl-slot--belt-item" title="Belt Item 3">📦</div>
+      <div class="nl-slot nl-slot--boots" title="Boots Slot">👢</div>
+    </div>
+
+    <div class="nl-equipment-avatar">
+      <% if participant.character %>
+        <div class="nl-full-avatar">
+          <%= image_tag "avatars/default_male.png", alt: name, class: "nl-avatar-img" rescue content_tag(:div, name[0..1].upcase, class: "nl-avatar-placeholder") %>
+        </div>
+      <% else %>
+        <div class="nl-full-avatar nl-full-avatar--npc">
+          <span class="nl-npc-icon">👹</span>
+        </div>
+      <% end %>
+    </div>
+
+    <div class="nl-equipment-column nl-equipment-right">
+      <div class="nl-slot nl-slot--pocket" title="Pocket Slot">👝</div>
+      <div class="nl-slot nl-slot--pocket-item" title="Pocket Item">📦</div>
+      <div class="nl-slot nl-slot--bracers" title="Bracers Slot">🦾</div>
+      <div class="nl-slot nl-slot--gloves" title="Gloves Slot">🧤</div>
+      <div class="nl-slot nl-slot--shield" title="Shield/Off-hand">🛡️</div>
+      <div class="nl-slot nl-slot--ring" title="Ring 1">💍</div>
+      <div class="nl-slot nl-slot--ring" title="Ring 2">💍</div>
+      <div class="nl-slot nl-slot--armor" title="Armor Slot">🎽</div>
+    </div>
+  </div>
+
+  <%# Body part damage display (for enemy) %>
+  <% if side == :right %>
+    <div class="nl-body-damage">
+      <table class="nl-stats-table">
+        <% participant.body_damage&.each do |part, damage| %>
+          <% next if damage.to_i.zero? %>
+          <tr>
+            <td class="nl-stat-label"><%= part.titleize %>:</td>
+            <td class="nl-stat-value nl-stat-damage"><%= damage %> dmg</td>
+          </tr>
+        <% end %>
+      </table>
+    </div>
+
+    <%# Enemy stats (if visible) %>
+    <% if participant.npc_template %>
+      <div class="nl-enemy-stats">
+        <table class="nl-stats-table">
+          <tr>
+            <td class="nl-stat-label">Strength:</td>
+            <td class="nl-stat-value"><%= rand(15..30) %></td>
+          </tr>
+          <tr>
+            <td class="nl-stat-label">Agility:</td>
+            <td class="nl-stat-value"><%= rand(10..25) %></td>
+          </tr>
+          <tr>
+            <td class="nl-stat-label">Luck:</td>
+            <td class="nl-stat-value"><%= rand(5..20) %></td>
+          </tr>
+        </table>
+      </div>
+    <% end %>
+  <% end %>
+</div>
+
+<%
+def format_vital(current, max)
+  max_len = max.to_s.length
+  current_str = current.to_s.rjust(max_len, ' ')
+  max_str = max.to_s.rjust(max_len, ' ')
+  "  #{current_str}/#{max_str}"
+end
+%>
+

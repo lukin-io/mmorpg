@@ -45,7 +45,7 @@ module Auth
       session = user.user_sessions.find_by(device_id: device_id)
       return unless session
 
-      session.mark_offline!(Time.current)
+      session.mark_offline!(timestamp: Time.current)
       Presence::Publisher.new.offline!(user: user, session: session)
     end
 

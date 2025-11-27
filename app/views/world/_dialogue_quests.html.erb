@@ -1,0 +1,91 @@
+<div class="quest-dialogue-section">
+  <% if result.data[:completable_quests].any? %>
+    <div class="quests-completable">
+      <h3>🎉 Ready to Complete</h3>
+      <% result.data[:completable_quests].each do |qa| %>
+        <div class="quest-card quest-card--completable">
+          <div class="quest-header">
+            <span class="quest-name"><%= qa[:quest][:name] %></span>
+          </div>
+          <p class="quest-desc"><%= qa[:quest][:description] %></p>
+          <div class="quest-rewards">
+            <span class="reward"><%= qa[:quest][:rewards]["xp"] %> XP</span>
+            <span class="reward"><%= qa[:quest][:rewards]["gold"] %> Gold</span>
+          </div>
+          <%= button_to "Complete Quest",
+                world_dialogue_action_path(
+                  npc_id: result.data[:npc][:id],
+                  action_key: "complete_quest",
+                  action_params: { quest_id: qa[:quest][:id] }
+                ),
+                method: :post,
+                class: "game-btn game-btn--success",
+                data: { turbo: true } %>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+
+  <% if result.data[:active_quests].any? %>
+    <div class="quests-active">
+      <h3>📋 Active Quests</h3>
+      <% result.data[:active_quests].each do |qa| %>
+        <div class="quest-card quest-card--active">
+          <div class="quest-header">
+            <span class="quest-name"><%= qa[:quest][:name] %></span>
+            <span class="quest-status">In Progress</span>
+          </div>
+          <p class="quest-desc"><%= qa[:quest][:description] %></p>
+          <div class="quest-objectives">
+            <% qa[:quest][:objectives]&.each do |obj| %>
+              <div class="objective">
+                <span class="objective-text"><%= obj["description"] || obj["key"] %></span>
+                <span class="objective-progress">
+                  <%= qa[:progress][obj["key"]] || 0 %>/<%= obj["target"] || 1 %>
+                </span>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+
+  <% if result.data[:available_quests].any? %>
+    <div class="quests-available">
+      <h3>❗ Available Quests</h3>
+      <% result.data[:available_quests].each do |quest| %>
+        <div class="quest-card quest-card--available">
+          <div class="quest-header">
+            <span class="quest-name"><%= quest[:name] %></span>
+            <span class="quest-level">Lv. <%= quest[:level_required] %></span>
+          </div>
+          <p class="quest-desc"><%= quest[:description] %></p>
+          <div class="quest-objectives">
+            <% quest[:objectives]&.each do |obj| %>
+              <div class="objective">
+                <span class="objective-text"><%= obj["description"] || obj["key"] %></span>
+              </div>
+            <% end %>
+          </div>
+          <div class="quest-rewards">
+            <span class="reward">💰 <%= quest[:rewards]["gold"] %></span>
+            <span class="reward">⭐ <%= quest[:rewards]["xp"] %> XP</span>
+          </div>
+          <%= button_to "Accept Quest",
+                world_dialogue_action_path(
+                  npc_id: result.data[:npc][:id],
+                  action_key: "accept_quest",
+                  action_params: { quest_id: quest[:id] }
+                ),
+                method: :post,
+                class: "game-btn game-btn--primary",
+                data: { turbo: true } %>
+        </div>
+      <% end %>
+    </div>
+  <% else %>
+    <p class="no-quests">No quests available at this time.</p>
+  <% end %>
+</div>
+

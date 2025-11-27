@@ -2,7 +2,7 @@
 
 module Game
   module World
-    # Region encapsulates deterministic metadata for a Neverlands world slice.
+    # Region encapsulates deterministic metadata for a Elselands world slice.
     #
     # Usage:
     #   region = Game::World::Region.new("ashen_forest", config_hash)

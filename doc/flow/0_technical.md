@@ -1,6 +1,6 @@
 # 0_technical.md — Rails Monolith Flow & Ownership
 ---
-title: WEB-000 — Neverlands Rails Monolith Technical Flow
+title: WEB-000 — Elselands Rails Monolith Technical Flow
 description: Full-stack reference for the core Rails 8.1.1 monolith (auth, jobs, payments, game engine, Hotwire UI). Documents commands, data stores, responsibility map, determinism guarantees, and verification flows.
 date: 2025-11-21
 ---
@@ -46,7 +46,7 @@ date: 2025-11-21
 ---
 
 ## Vision & Objectives
-- Recreate the classic Neverlands.ru gameplay experience while modernizing the Rails stack and operational tooling.
+- Recreate the classic Elselands.ru gameplay experience while modernizing the Rails stack and operational tooling.
 - Maintain authenticity, nostalgia, and community-first mechanics (guilds/clans, shared chat, turn-based combat).
 - Target players who prefer strategic, social MMORPGs delivered via fast, reliable server-rendered Hotwire flows.
 - Ship iteratively with feature flags so combat, economy, and housing systems can be toggled safely per environment.
@@ -186,7 +186,7 @@ bundle exec bundler-audit # optional CVE scan
 ## Environment Matrix
 | Aspect | Dev | Staging | Production |
 | --- | --- | --- | --- |
-| Base URL | `http://localhost:3000` | `https://staging.neverlands.example` | `https://play.neverlands.example` |
+| Base URL | `http://localhost:3000` | `https://staging.elselands.example` | `https://play.elselands.example` |
 | Rails env | `development` | `staging` | `production` |
 | DB | local Postgres 18 (docker/local install) | managed Postgres 18 (shared) | managed Postgres 18 (HA) |
 | Redis | single instance for cache/cable/sidekiq | dedicated cache vs queue vs cable URLs | dedicated cache vs queue vs cable URLs |
@@ -261,8 +261,25 @@ bundle exec bundler-audit # optional CVE scan
   - `app/lib/game/systems/*.rb`, `app/lib/game/formulas/*.rb`, `app/lib/game/maps/*.rb`, `app/lib/game/utils/rng.rb` — Deterministic stat/effect/turn systems, damage & crit formulas, grid/tile definitions, RNG seeding helper.
 - game services:
   - `app/services/game/combat/*.rb`, `app/services/game/movement/*.rb`, `app/services/game/economy/loot_generator.rb` — Turn resolution, attack orchestration, skill execution, movement validation/pathfinding, loot generation.
+  - `app/services/game/combat/skill_executor.rb` — Combat skill execution (damage, heal, buff, debuff, DOT, HOT, AOE, drain, shield).
+  - `app/services/game/combat/turn_based_combat_service.rb` — Neverlands-inspired turn-based combat with body-part targeting, action points, and magic slots.
+  - `app/services/game/npc/dialogue_service.rb` — NPC dialogue orchestration (quest_giver, vendor, trainer, innkeeper, banker, guard, hostile).
+  - `app/services/game/quests/dynamic_quest_generator.rb` — Procedural quest generation (daily, zone, trigger-based).
+- combat config:
+  - `config/gameplay/combat_actions.yml` — Body-part definitions, attack costs, block costs, magic slots for Neverlands-inspired combat.
+- combat ui:
+  - `app/views/combat/_battle.html.erb`, `app/views/combat/_nl_*.html.erb` — Turn-based combat UI partials.
+  - `app/javascript/controllers/turn_combat_controller.js` — Stimulus controller for combat interactions.
+- chat services:
+  - `app/services/chat/moderation_service.rb` — Chat moderation heuristics (profanity, spam, harassment detection, penalty escalation).
+  - `app/channels/realtime_chat_channel.rb` — WebSocket chat with channel access control.
 - hotwire ui:
   - `app/views/layouts/application.html.erb`, `app/assets/stylesheets/application.css`, `app/javascript/application.js`, `app/components/application_component.rb` — Layout with Turbo/Stimulus assets, flash rendering, base styles, ViewComponent base class.
+- alignment & faction:
+  - `app/models/character.rb` — `ALIGNMENT_TIERS`, `CHAOS_TIERS`, tier calculation methods, emoji accessors.
+  - `app/helpers/alignment_helper.rb` — Faction/tier icons, alignment badges, trauma/timeout badges, character nameplates.
+  - `app/helpers/arena_helper.rb` — Fight type/kind icons, room type badges, match status tags.
+  - `db/migrate/20251127140000_add_chaos_score_to_characters.rb` — Adds `chaos_score` column.
 - dashboard:
   - `app/controllers/dashboard_controller.rb`, `app/views/dashboard/show.html.erb` — Authenticated landing view summarizing feature flags and welcome copy.
 - docs:

@@ -1,0 +1,18 @@
+<div class="stats-preview card">
+  <h3>Stat Changes</h3>
+
+  <div class="stats-comparison">
+    <% preview_stats.each do |stat, new_value| %>
+      <% old_value = current_stats[stat] || 0 %>
+      <% change = new_value - old_value %>
+      <div class="stat-row">
+        <span class="stat-name"><%= stat.to_s.titleize %></span>
+        <span class="stat-current"><%= old_value %></span>
+        <span class="stat-arrow">→</span>
+        <span class="stat-new"><%= new_value %></span>
+        <span class="stat-change positive">+<%= change %></span>
+      </div>
+    <% end %>
+  </div>
+</div>
+

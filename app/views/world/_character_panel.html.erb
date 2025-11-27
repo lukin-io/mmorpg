@@ -1,0 +1,52 @@
+<div class="char-panel">
+  <div class="char-panel-header">
+    <div class="char-avatar"></div>
+    <div class="char-identity">
+      <h2 class="char-name"><%= character.name %></h2>
+      <p class="char-class"><%= character.character_class&.name || "Novice" %> Lv.<%= character.level %></p>
+    </div>
+  </div>
+
+  <div class="char-bars">
+    <div class="stat-bar stat-bar--hp">
+      <div class="stat-bar-fill" style="width: 100%"></div>
+      <span class="stat-bar-text">HP: 100/100</span>
+    </div>
+    <div class="stat-bar stat-bar--mp">
+      <div class="stat-bar-fill" style="width: 100%"></div>
+      <span class="stat-bar-text">MP: 50/50</span>
+    </div>
+    <div class="stat-bar stat-bar--xp">
+      <% xp_percent = character.level < 100 ? ((character.experience % 1000) / 10.0).round : 100 %>
+      <div class="stat-bar-fill" style="width: <%= xp_percent %>%"></div>
+      <span class="stat-bar-text">XP: <%= xp_percent %>%</span>
+    </div>
+  </div>
+
+  <div class="char-stats-grid">
+    <div class="char-stat">
+      <span class="char-stat-label">STR</span>
+      <span class="char-stat-value"><%= character.stats.get(:strength) %></span>
+    </div>
+    <div class="char-stat">
+      <span class="char-stat-label">DEX</span>
+      <span class="char-stat-value"><%= character.stats.get(:dexterity) %></span>
+    </div>
+    <div class="char-stat">
+      <span class="char-stat-label">INT</span>
+      <span class="char-stat-value"><%= character.stats.get(:intelligence) %></span>
+    </div>
+    <div class="char-stat">
+      <span class="char-stat-label">CON</span>
+      <span class="char-stat-value"><%= character.stats.get(:constitution) %></span>
+    </div>
+  </div>
+
+  <div class="char-resources">
+    <div class="char-resource">
+      <span class="resource-icon">🪙</span>
+      <span class="resource-value"><%= number_with_delimiter(current_user.currency_wallet&.gold_balance || 0) %></span>
+    </div>
+  </div>
+</div>
+

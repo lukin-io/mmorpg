@@ -7,13 +7,9 @@ class PublicProfilesController < ApplicationController
   def show
     @user = User.find_by!(profile_name: params[:profile_name])
 
-    if html_request_without_explicit_format?
-      render json: public_profile_payload
-    else
-      respond_to do |format|
-        format.json { render json: public_profile_payload }
-        format.html
-      end
+    respond_to do |format|
+      format.html # renders show.html.erb
+      format.json { render json: public_profile_payload }
     end
   end
 
@@ -21,9 +17,5 @@ class PublicProfilesController < ApplicationController
 
   def public_profile_payload
     Users::PublicProfile.new(user: @user).as_json
-  end
-
-  def html_request_without_explicit_format?
-    request.format.html? && params[:format].blank?
   end
 end

@@ -1,50 +1,82 @@
-<section>
-  <header>
-    <h1>Parties</h1>
-    <p>Create or join groups for dungeons, arenas, and PvP.</p>
-  </header>
+<div class="parties-page" data-controller="party">
+  <div class="page-header">
+    <h1 class="page-title">Party Finder</h1>
+    <p class="page-subtitle">Team up with other adventurers</p>
+  </div>
 
-  <section>
-    <h2>Create Party</h2>
-    <%= form_with model: @party do |form| %>
-      <div class="field">
-        <%= form.label :name %>
-        <%= form.text_field :name, required: true %>
-      </div>
-      <div class="field">
-        <%= form.label :purpose %>
-        <%= form.text_area :purpose, rows: 3 %>
-      </div>
-      <div class="field">
-        <%= form.label :max_size %>
-        <%= form.number_field :max_size, min: 2, max: 10, value: 5 %>
-      </div>
-      <div class="actions">
-        <%= form.submit "Create party" %>
-      </div>
-    <% end %>
-  </section>
+  <div class="parties-layout">
+    <div class="parties-main">
+      <% if current_user_party.present? %>
+        <div class="current-party-banner card">
+          <h3>Your Current Party</h3>
+          <p>You are in: <strong><%= current_user_party.name %></strong></p>
+          <%= link_to "View Party", party_path(current_user_party), class: "game-btn game-btn--primary" %>
+        </div>
+      <% end %>
 
-  <section>
-    <h2>Your Parties</h2>
-    <% if @parties.any? %>
-      <ul class="card-list">
-        <% @parties.each do |party| %>
-          <li class="card">
-            <header>
-              <strong><%= party.name %></strong>
-              <small>Leader: <%= party.leader.profile_name %></small>
-            </header>
-            <p><%= party.purpose %></p>
-            <footer>
-              <%= link_to "View", party, class: "button button--ghost" %>
-            </footer>
-          </li>
+      <div class="parties-list">
+        <h2>Available Parties</h2>
+        <% if @parties.any? %>
+          <% @parties.each do |party| %>
+            <div class="party-card card">
+              <div class="party-header">
+                <h3 class="party-name"><%= party.name %></h3>
+                <span class="party-size"><%= party.active_members.count %>/<%= party.max_size %></span>
+              </div>
+
+              <div class="party-info">
+                <p class="party-purpose"><%= party.purpose %></p>
+                <p class="party-leader">Leader: <strong><%= party.leader.profile_name %></strong></p>
+                <span class="party-status party-status--<%= party.status %>"><%= party.status.titleize %></span>
+              </div>
+
+              <div class="party-members">
+                <% party.active_members.limit(5).each do |membership| %>
+                  <span class="member-avatar" title="<%= membership.user.profile_name %>">
+                    <%= membership.user.profile_name[0].upcase %>
+                  </span>
+                <% end %>
+                <% if party.active_members.count > 5 %>
+                  <span class="member-more">+<%= party.active_members.count - 5 %></span>
+                <% end %>
+              </div>
+
+              <div class="party-actions">
+                <%= link_to "View", party_path(party), class: "game-btn" %>
+                <% if can_join_party?(party) %>
+                  <%= button_to "Request Join", party_invitations_path(party), method: :post, class: "game-btn game-btn--primary" %>
+                <% end %>
+              </div>
+            </div>
+          <% end %>
+        <% else %>
+          <p class="no-parties">No parties available. Create one to start adventuring!</p>
         <% end %>
-      </ul>
-    <% else %>
-      <p>No parties yet.</p>
-    <% end %>
-  </section>
-</section>
+      </div>
+    </div>
 
+    <div class="parties-sidebar">
+      <div class="create-party-panel card">
+        <h3>Create Party</h3>
+        <%= form_with model: @party, local: true, class: "party-form" do |f| %>
+          <div class="form-group">
+            <%= f.label :name, "Party Name" %>
+            <%= f.text_field :name, class: "form-control", placeholder: "Epic Dungeon Run" %>
+          </div>
+
+          <div class="form-group">
+            <%= f.label :purpose, "Purpose" %>
+            <%= f.text_area :purpose, class: "form-control", rows: 2, placeholder: "What are you looking for?" %>
+          </div>
+
+          <div class="form-group">
+            <%= f.label :max_size, "Max Size" %>
+            <%= f.select :max_size, (2..10).to_a, {}, class: "form-control" %>
+          </div>
+
+          <%= f.submit "Create Party", class: "game-btn game-btn--primary" %>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>

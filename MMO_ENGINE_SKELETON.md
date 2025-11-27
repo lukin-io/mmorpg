@@ -1,6 +1,6 @@
-# MMO_ENGINE_SKELETON.md — Starter Architecture for the Neverlands MMORPG Engine
+# MMO_ENGINE_SKELETON.md — Starter Architecture for the Elselands MMORPG Engine
 
-This file provides a **ready-to-build skeleton** for implementing the full MMORPG gameplay engine inside a Ruby on Rails monolith.  
+This file provides a **ready-to-build skeleton** for implementing the full MMORPG gameplay engine inside a Ruby on Rails monolith.
 It focuses on **combat**, **movement**, **stats**, **maps**, **loot**, and a deterministic simulation layer separated from controllers/views.
 
 This skeleton is intentionally lightweight, extensible, and Rails‑friendly.
@@ -336,58 +336,58 @@ end
 
 # 9. Recommended Next Additions
 
-### ✔ Character stat progression  
+### ✔ Character stat progression
 Level → stat growth curves → derived stats
 
-### ✔ Full skill system skeleton  
-`Game::Combat::SkillExecutor` base class  
+### ✔ Full skill system skeleton
+`Game::Combat::SkillExecutor` base class
 Skill definitions under `app/lib/game/skills/`
 
-### ✔ Status effect hierarchy  
+### ✔ Status effect hierarchy
 Poison, shield, reflect, stuns
 
-### ✔ Pathfinding algorithms  
+### ✔ Pathfinding algorithms
 Grid-based BFS / Dijkstra for tile movement
 
-### ✔ Targeting system  
+### ✔ Targeting system
 AoE, line-based, cone, circle, radius
 
-### ✔ Combat log broadcasting (Turbo Streams)  
+### ✔ Combat log broadcasting (Turbo Streams)
 Push real-time updates to players during fights
 
-### ✔ Model migrations  
-- characters  
-- stats  
-- items  
-- inventory  
-- zones  
-- tiles  
-- battles  
+### ✔ Model migrations
+- characters
+- stats
+- items
+- inventory
+- zones
+- tiles
+- battles
 - skills
 
-### ✔ Game admin panel  
-- spawn NPCs  
-- spawn items  
-- view battle logs  
+### ✔ Game admin panel
+- spawn NPCs
+- spawn items
+- view battle logs
 - view map zones
 
-### ✔ Engine-level tests  
-- deterministic combat flows  
-- seeded RNG test suite  
+### ✔ Engine-level tests
+- deterministic combat flows
+- seeded RNG test suite
 - battle system integration tests
 
 ---
 
 # 10. Summary
 
-This skeleton is the foundation for the full Neverlands MMORPG engine in Rails:
+This skeleton is the foundation for the full Elselands MMORPG engine in Rails:
 
-- Deterministic  
-- Testable  
-- Modular  
-- Rails-friendly  
-- Organized  
-- Scalable  
+- Deterministic
+- Testable
+- Modular
+- Rails-friendly
+- Organized
+- Scalable
 
 Use this skeleton when creating **combat**, **movement**, **stats**, **loot**, **maps**, and all other gameplay systems.
 

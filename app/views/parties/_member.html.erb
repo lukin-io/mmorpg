@@ -1,0 +1,30 @@
+<div class="party-member" id="party_member_<%= membership.id %>">
+  <div class="member-avatar">
+    <%= membership.user.profile_name[0].upcase %>
+  </div>
+
+  <div class="member-info">
+    <span class="member-name">
+      <%= membership.user.profile_name %>
+      <% if membership.role == "leader" %>
+        <span class="leader-badge">👑</span>
+      <% end %>
+    </span>
+    <span class="member-role"><%= membership.role.titleize %></span>
+    <% if membership.user.character.present? %>
+      <span class="member-level">Lv.<%= membership.user.character.level %> <%= membership.user.character.character_class.name %></span>
+    <% end %>
+  </div>
+
+  <div class="member-status member-status--<%= membership.status %>">
+    <%= membership.status.titleize %>
+  </div>
+
+  <% if party_leader?(party) && membership.user != current_user %>
+    <div class="member-actions">
+      <%= button_to "Promote", promote_party_path(party, membership_id: membership.id), method: :post, class: "game-btn game-btn--sm" %>
+      <%= button_to "Kick", party_membership_path(party, membership), method: :delete, class: "game-btn game-btn--sm game-btn--danger", data: { confirm: "Remove from party?" } %>
+    </div>
+  <% end %>
+</div>
+

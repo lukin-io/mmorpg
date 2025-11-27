@@ -1,0 +1,87 @@
+<%#
+  Character Vitals Bar - HP/MP display with real-time updates
+
+  Usage:
+    <%= render "shared/vitals_bar", character: current_character %>
+
+  Optional locals:
+    - compact: true/false (default: false) - Smaller compact version
+    - show_text: true/false (default: true) - Show text values
+    - bar_width: integer (default: 160) - Width in pixels
+%>
+
+<% character ||= current_character %>
+<% compact ||= false %>
+<% show_text = local_assigns.fetch(:show_text, true) %>
+<% bar_width ||= 160 %>
+
+<%
+  hp_percent = character.max_hp.to_i.zero? ? 0 : ((character.current_hp.to_f / character.max_hp) * 100).round(1)
+  mp_percent = character.max_mp.to_i.zero? ? 0 : ((character.current_mp.to_f / character.max_mp) * 100).round(1)
+  low_hp = hp_percent <= 25
+%>
+
+<div class="vitals-container <%= 'vitals-container--compact' if compact %>"
+     data-controller="vitals"
+     data-vitals-character-id-value="<%= character.id %>"
+     data-vitals-current-hp-value="<%= character.current_hp %>"
+     data-vitals-max-hp-value="<%= character.max_hp %>"
+     data-vitals-current-mp-value="<%= character.current_mp %>"
+     data-vitals-max-mp-value="<%= character.max_mp %>"
+     data-vitals-hp-regen-interval-value="<%= character.hp_regen_interval_seconds || 1500 %>"
+     data-vitals-mp-regen-interval-value="<%= character.mp_regen_interval_seconds || 9000 %>"
+     data-vitals-in-combat-value="<%= character.respond_to?(:in_combat?) ? character.in_combat? : false %>"
+     data-vitals-bar-width-value="<%= bar_width %>"
+     data-hp-percent="<%= low_hp ? 'low' : 'normal' %>">
+
+  <%# Float container for combat text %>
+  <div class="vitals-float-container" data-vitals-target="floatContainer"></div>
+
+  <%# HP Bar %>
+  <div class="vitals-bar vitals-bar--hp" data-vitals-target="hpBar">
+    <div class="vitals-bar-label">HP</div>
+    <div class="vitals-bar-track" style="width: <%= bar_width %>px;">
+      <div class="vitals-bar-fill vitals-bar-fill--hp"
+           data-vitals-target="hpFill"
+           style="width: <%= (hp_percent * bar_width / 100).round %>px;"></div>
+      <div class="vitals-bar-empty vitals-bar-empty--hp"></div>
+    </div>
+    <% if show_text %>
+      <div class="vitals-bar-text" data-vitals-target="hpText">
+        <%= character.current_hp.round %>/<%= character.max_hp %>
+      </div>
+    <% end %>
+  </div>
+
+  <%# MP Bar %>
+  <div class="vitals-bar vitals-bar--mp" data-vitals-target="mpBar">
+    <div class="vitals-bar-label">MP</div>
+    <div class="vitals-bar-track" style="width: <%= bar_width %>px;">
+      <div class="vitals-bar-fill vitals-bar-fill--mp"
+           data-vitals-target="mpFill"
+           style="width: <%= (mp_percent * bar_width / 100).round %>px;"></div>
+      <div class="vitals-bar-empty vitals-bar-empty--mp"></div>
+    </div>
+    <% if show_text %>
+      <div class="vitals-bar-text" data-vitals-target="mpText">
+        <%= character.current_mp.round %>/<%= character.max_mp %>
+      </div>
+    <% end %>
+  </div>
+
+  <%# Combined status text %>
+  <% if show_text && !compact %>
+    <div class="vitals-status-text" data-vitals-target="statusText">
+      [<span class="hp-value"><%= character.current_hp.round %></span>/<span class="hp-max"><%= character.max_hp %></span> |
+       <span class="mp-value"><%= character.current_mp.round %></span>/<span class="mp-max"><%= character.max_mp %></span>]
+    </div>
+  <% end %>
+
+  <%# Combat indicator %>
+  <% if character.respond_to?(:in_combat?) && character.in_combat? %>
+    <div class="vitals-combat-indicator" title="In Combat">⚔️</div>
+  <% end %>
+
+  <%# Regen indicator %>
+  <div class="vitals-regen-indicator" title="Regenerating">⟳</div>
+</div>

@@ -1,0 +1,27 @@
+<div class="equipment-slots">
+  <div class="equipment-row">
+    <%= render "inventories/equipment_slot", slot: :head, item: equipment[:head], label: "Head" %>
+  </div>
+
+  <div class="equipment-row equipment-row--body">
+    <%= render "inventories/equipment_slot", slot: :amulet, item: equipment[:amulet], label: "Amulet" %>
+    <%= render "inventories/equipment_slot", slot: :chest, item: equipment[:chest], label: "Chest" %>
+    <%= render "inventories/equipment_slot", slot: :off_hand, item: equipment[:off_hand], label: "Off Hand" %>
+  </div>
+
+  <div class="equipment-row equipment-row--hands">
+    <%= render "inventories/equipment_slot", slot: :main_hand, item: equipment[:main_hand], label: "Main Hand" %>
+    <%= render "inventories/equipment_slot", slot: :hands, item: equipment[:hands], label: "Gloves" %>
+  </div>
+
+  <div class="equipment-row equipment-row--lower">
+    <%= render "inventories/equipment_slot", slot: :ring_1, item: equipment[:ring_1], label: "Ring 1" %>
+    <%= render "inventories/equipment_slot", slot: :legs, item: equipment[:legs], label: "Legs" %>
+    <%= render "inventories/equipment_slot", slot: :ring_2, item: equipment[:ring_2], label: "Ring 2" %>
+  </div>
+
+  <div class="equipment-row">
+    <%= render "inventories/equipment_slot", slot: :feet, item: equipment[:feet], label: "Feet" %>
+  </div>
+</div>
+

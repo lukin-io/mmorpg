@@ -1,31 +1,69 @@
-<article class="chat-message <%= "chat-message--system" if chat_message.system? %>">
-  <header>
-    <strong><%= chat_message.sender.email %></strong>
-    <time datetime="<%= chat_message.created_at.iso8601 %>"><%= l(chat_message.created_at, format: :short) %></time>
-    <% if chat_message.flagged? %>
-      <span class="badge badge--warning">Filtered</span>
-    <% end %>
-  </header>
-  <p><%= chat_message.filtered_body %></p>
+<%= tag.article id: dom_id(chat_message),
+                  class: chat_message_classes(chat_message),
+                  data: { message_id: chat_message.id } do %>
+  <div class="chat-msg-avatar">
+    <span class="avatar-icon"><%= chat_message.sender.profile_name&.first&.upcase || "?" %></span>
+  </div>
+
+  <div class="chat-msg-body">
+    <header class="chat-msg-header">
+      <span class="chat-msg-sender"
+            data-action="click->chat#clickUsername contextmenu->chat#showUserMenu"
+            data-username="<%= chat_message.sender.profile_name %>"
+            data-user-id="<%= chat_message.sender_id %>"
+            title="Click to whisper, Ctrl+Click to mention">
+        <%= chat_message.sender.profile_name || "Anonymous" %>
+      </span>
+
+      <% if chat_message.metadata&.dig("sender_role")&.include?("admin") %>
+        <span class="badge badge--admin">Admin</span>
+      <% elsif chat_message.metadata&.dig("sender_role")&.include?("moderator") %>
+        <span class="badge badge--mod">Mod</span>
+      <% end %>
+
+      <time class="chat-msg-time"
+            datetime="<%= chat_message.created_at.iso8601 %>"
+            title="<%= l(chat_message.created_at, format: :long) %>">
+        <%= time_ago_in_words(chat_message.created_at) %> ago
+      </time>
+
+      <% if chat_message.flagged? %>
+        <span class="badge badge--warning" title="This message was filtered">⚠️</span>
+      <% end %>
+    </header>
+
+    <div class="chat-msg-content">
+      <% if chat_message.system? %>
+        <em><%= chat_message.filtered_body %></em>
+      <% else %>
+        <%= simple_format(h(chat_message.filtered_body), {}, wrapper_tag: "span") %>
+      <% end %>
+    </div>
+  </div>
 
   <% if policy(ChatReport.new).create? && chat_message.sender != current_user %>
-    <%= button_to "Report",
-      chat_reports_path(
-        chat_report: {
-          chat_message_id: chat_message.id,
-          reason: "Inappropriate language",
-          source: "chat",
-          source_context: {
-            channel_id: chat_message.chat_channel_id,
-            sender_id: chat_message.sender_id
-          },
-          evidence: {
-            location: chat_message.chat_channel.name
-          }
-        }
-      ),
-      method: :post,
-      form: { data: { turbo_confirm: "Report this message?" } },
-      class: "chat-message__report" %>
+    <div class="chat-msg-actions">
+      <%= button_to chat_reports_path(
+            chat_report: {
+              chat_message_id: chat_message.id,
+              reason: "Inappropriate content",
+              source: "chat",
+              source_context: {
+                channel_id: chat_message.chat_channel_id,
+                sender_id: chat_message.sender_id
+              },
+              evidence: {
+                location: chat_message.chat_channel.name,
+                message_body: chat_message.body.truncate(100)
+              }
+            }
+          ),
+          method: :post,
+          form: { data: { turbo_confirm: "Report this message for moderation?" } },
+          class: "chat-msg-report-btn",
+          title: "Report message" do %>
+        🚩
+      <% end %>
+    </div>
   <% end %>
-</article>
+<% end %>

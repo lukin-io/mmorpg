@@ -1,0 +1,23 @@
+<div class="login-container">
+  <h1>Forgot your password?</h1>
+  <p class="text-muted">Enter your email and we'll send you reset instructions.</p>
+
+  <%= form_for(resource, as: resource_name, url: password_path(resource_name), html: { method: :post }) do |f| %>
+    <%= render "devise/shared/error_messages", resource: resource %>
+
+    <div class="field">
+      <%= f.label :email %>
+      <%= f.email_field :email, autofocus: true, autocomplete: "email" %>
+    </div>
+
+    <div class="field">
+      <%= f.submit "Send reset instructions", class: "btn-primary w-full" %>
+    </div>
+  <% end %>
+
+  <hr>
+
+  <div class="text-center">
+    <%= link_to "Back to login", new_session_path(resource_name) %>
+  </div>
+</div>

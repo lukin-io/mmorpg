@@ -10,6 +10,19 @@
 - Reputation/faction checks use `Character#alignment_score` + `QuestAssignment` state to gate dialogue options and vendor pricing.
 - Guard/magistrate behavior surfaces moderation/reporting actions (see `Moderation::ReportIntake` and `doc/features/5_moderation.md`).
 
+### NPC Dialogue System (✅ Implemented)
+- **Service**: `Game::Npc::DialogueService` orchestrates all NPC interactions
+- **Roles Supported**: quest_giver, vendor, trainer, innkeeper, banker, guard, auctioneer, crafter, hostile
+- **Features**:
+  - Quest giver: View/accept/complete quests
+  - Vendor: Buy/sell items with metadata-driven pricing
+  - Trainer: Learn skills with gold cost and prerequisites
+  - Innkeeper: Rest to heal HP (Common/Private/Suite rooms)
+  - Banker: Deposit/withdraw gold between wallet and bank
+  - Guard: Zone info and directions
+  - Hostile: Combat prompt with threat level indicator
+- **Zone Scoping**: `NpcTemplate.in_zone(zone_name)` + `#can_spawn_at?` for position-based NPC queries
+
 ## Quests & Narrative
 - Quests are stored in `Quest`, `QuestObjective`, `QuestAssignment`, and `QuestChain`. Controllers (`QuestsController`) and services `Game::Quests::TutorialBootstrapper` drive onboarding, repeatables, and chapter unlocks.
 - Hotwire quest log: filters for active/completed/daily states update via Turbo Streams (views under `app/views/quests`), and map overlays highlight objectives via Stimulus controllers.
@@ -31,5 +44,6 @@
 ## Responsible for Implementation Files
 - **World Data:** `app/models/zone.rb`, `app/models/map_tile_template.rb`, `app/models/spawn_point.rb`, `app/models/spawn_schedule.rb`, `app/lib/game/world/region_catalog.rb`.
 - **NPC & Questing:** `app/models/npc_template.rb`, `app/models/quest*.rb`, `app/controllers/quests_controller.rb`, `app/services/game/quests/tutorial_bootstrapper.rb`.
+- **NPC Dialogue:** `app/services/game/npc/dialogue_service.rb`, `app/controllers/world_controller.rb` (`interact`, `dialogue_action`), `app/views/world/dialogue.html.erb`, `app/views/world/_dialogue_*.html.erb`.
 - **Events:** `app/models/event_instance.rb`, `app/models/event_schedule.rb`, `app/controllers/game_events_controller.rb`, `app/controllers/admin/live_ops/events_controller.rb`, `app/services/live_ops/*`.
 - **Moderation Hooks:** `app/services/moderation/report_intake.rb`, `app/models/audit_log.rb`, `app/services/audit_logger.rb`.

@@ -1,0 +1,90 @@
+<div class="arena-betting" data-controller="arena-bets" data-arena-bets-match-id-value="<%= @arena_match.id %>">
+  <div class="page-header">
+    <%= link_to "← Back to Match", arena_match_path(@arena_match), class: "back-link" %>
+    <h1 class="page-title">Betting Pool</h1>
+  </div>
+
+  <div class="betting-layout">
+    <div class="betting-main">
+      <div class="pool-overview card">
+        <h2>Total Pool: <%= number_with_delimiter(@total_pool) %> 🪙</h2>
+
+        <div class="odds-grid">
+          <% @odds.each do |odds_data| %>
+            <div class="odds-card">
+              <div class="fighter-info">
+                <span class="fighter-name"><%= odds_data[:character].name %></span>
+                <span class="fighter-level">[Lv.<%= odds_data[:character].level %>]</span>
+              </div>
+
+              <div class="odds-display">
+                <span class="odds-value"><%= odds_data[:odds] %>x</span>
+                <span class="odds-label">Payout Multiplier</span>
+              </div>
+
+              <div class="pool-amount">
+                <%= number_with_delimiter(odds_data[:pool]) %> gold bet
+              </div>
+
+              <% if @my_bet.nil? && @arena_match.pending? %>
+                <%= button_to "Bet on #{odds_data[:character].name}",
+                             arena_match_arena_bets_path(@arena_match),
+                             params: {arena_bet: {predicted_winner_id: odds_data[:character].id, amount: 100, currency_type: :gold}},
+                             method: :post,
+                             class: "game-btn game-btn--primary",
+                             data: {action: "click->arena-bets#showBetForm", character_id: odds_data[:character].id} %>
+              <% end %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+
+      <div class="bet-history card">
+        <h3>Recent Bets</h3>
+        <% if @bets.any? %>
+          <table class="bets-table">
+            <thead>
+              <tr>
+                <th>Bettor</th>
+                <th>Betting On</th>
+                <th>Amount</th>
+                <th>Potential Win</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% @bets.order(created_at: :desc).limit(20).each do |bet| %>
+                <tr class="<%= 'my-bet' if bet.user == current_user %>">
+                  <td><%= bet.user.profile_name %></td>
+                  <td><%= bet.predicted_winner.name %></td>
+                  <td><%= number_with_delimiter(bet.amount) %> 🪙</td>
+                  <td><%= number_with_delimiter(bet.potential_winnings) %> 🪙</td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        <% else %>
+          <p class="no-bets">No bets placed yet. Be the first!</p>
+        <% end %>
+      </div>
+    </div>
+
+    <div class="betting-sidebar">
+      <div id="betting_panel">
+        <%= render "arena_bets/betting_panel", match: @arena_match, my_bet: @my_bet %>
+      </div>
+
+      <div class="betting-rules card">
+        <h3>Betting Rules</h3>
+        <ul>
+          <li>Minimum bet: <%= ArenaBet::MIN_BET %> gold</li>
+          <li>Maximum bet: <%= number_with_delimiter(ArenaBet::MAX_BET) %> gold</li>
+          <li>One bet per match per player</li>
+          <li>5% house rake on winnings</li>
+          <li>Bets locked when match starts</li>
+          <li>Refunds if match is cancelled</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+

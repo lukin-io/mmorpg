@@ -1,13 +1,13 @@
 # 10. Quests, Narrative, and Events
 
 ## Story Structure
-- **Data Model:** `QuestChain`, `QuestChapter`, `Quest`, `QuestStep`, and `QuestAssignment` capture authored story beats plus per-character state. Chapters define `level_gate`, `reputation_gate`, and `faction_alignment` so the main storyline mirrors Neverlands canon while unlocking sequentially through `sequence` ordering.
+- **Data Model:** `QuestChain`, `QuestChapter`, `Quest`, `QuestStep`, and `QuestAssignment` capture authored story beats plus per-character state. Chapters define `level_gate`, `reputation_gate`, and `faction_alignment` so the main storyline mirrors Elselands canon while unlocking sequentially through `sequence` ordering.
 - **Access Control:** `Game::Quests::StorylineProgression` walks chapters in order, relies on `Game::Quests::QuestGateEvaluator`, and creates/updates `QuestAssignment` rows only when level/reputation/faction requirements are satisfied. Side quests reuse the same schema through the `quest_type` enum (`:main_story`, `:side`, `:dynamic`, etc.).
 - **Branching Narrative:** Each `QuestStep` may include `branching_outcomes`. `Game::Quests::StoryStepRunner` and `Game::Quests::BranchingChoiceResolver` track dialogue decisions, award or revoke reputation/faction alignment, and unlock/lock follow-up quests by touching additional `QuestAssignment` records. Failure routes feed `Game::Quests::FailureConsequenceHandler`, which can spawn rival arcs.
 
 ## Quest Types
 - **Static Content:** Designers author arcs in `config/gameplay/quests/static.yml`, then `Game::Quests::StaticQuestBuilder` seeds/updates `Quest`/`QuestChapter`/`QuestStep` rows. These cover key cities, factions, and dungeons.
-- **Dynamic Missions:** `Game::Quests::DynamicQuestGenerator` pairs quest metadata (`dynamic_triggers`) with live world triggers (resource shortages, clan control, seasonal event keys). `Game::Quests::DynamicQuestRefresher` invokes the generator whenever a character opens the quest log, ensuring emergent hooks react to current state.
+- **Dynamic Missions (✅ Implemented):** `Game::Quests::DynamicQuestGenerator` generates procedural quests from triggers, zones, and daily rotation. Supports 7 quest types (kill, gather, collect, escort, deliver, explore, defend) with level-scaled rewards. `DynamicQuestRefresher` invokes the generator when opening the quest log.
 - **Repeatables:** `Game::Quests::DailyRotation` deterministically assigns daily quests across morning/afternoon/evening slots, while `Game::Quests::RepeatableQuestScheduler` refreshes weekly/event quests with predictable cooldowns.
 - **Event Quests:** `Game::Events::Scheduler` + `ScheduledEventJob` instantiate seasonal festivals/tournaments. `Game::Events::QuestOrchestrator` wires those instances to dynamic quests, announcer NPCs, and world reskins so events feel bespoke.
 

@@ -1,22 +1,20 @@
-<section class="chat-channel-list">
-  <header>
-    <h1>Chat Channels</h1>
-    <p>Choose a channel to join real-time conversations.</p>
-  </header>
+<div class="page-header">
+  <h1>Chat Channels</h1>
+  <p>Choose a channel to join real-time conversations.</p>
+</div>
 
+<div class="dashboard-grid">
   <% @channel_groups.each do |type, channels| %>
-    <article class="card">
-      <header>
-        <h2><%= type.to_s.humanize %></h2>
-      </header>
+    <section class="dashboard-card">
+      <h2><%= type.to_s.humanize %></h2>
       <ul>
         <% channels.each do |channel| %>
-          <li>
+          <li class="flex justify-between items-center">
             <%= link_to channel.name, chat_channel_path(channel) %>
-            <small><%= channel.memberships.count %> members</small>
+            <span class="badge"><%= channel.memberships.count %> online</span>
           </li>
         <% end %>
       </ul>
-    </article>
+    </section>
   <% end %>
-</section>
+</div>

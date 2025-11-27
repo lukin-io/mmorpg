@@ -2,87 +2,180 @@
 
 module Players
   module Progression
-    # RespecService resets allocated stats/skills using either a completed quest or premium token payment.
+    # Handles skill respec (reset) for characters.
     #
-    # Usage:
-    #   Players::Progression::RespecService.new(character:, source: :quest, quest_key: "rebirth_ritual").call!
-    #   Players::Progression::RespecService.new(character:, source: :premium, premium_cost: 50).call!
+    # Supports free respec (quest token) or paid respec (gold/premium).
+    #
+    # @example Respec skills via quest
+    #   service = RespecService.new(character: char, source: :quest, quest_key: "respec_ritual")
+    #   service.call! # => true/false
+    #
+    # @example Respec skills via premium tokens
+    #   service = RespecService.new(character: char, source: :premium, premium_cost: 25)
+    #   service.call! # => true/false
+    #
     class RespecService
-      SOURCES = %w[quest premium].freeze
+      include ActiveModel::Model
+      include ActiveModel::Validations
 
-      def initialize(character:, source:, quest_key: nil, premium_cost: 0, ledger: Payments::PremiumTokenLedger)
+      RESPEC_GOLD_COST = 1000
+      RESPEC_COOLDOWN_HOURS = 24
+
+      attr_reader :character, :source, :quest_key, :premium_cost, :payment_method
+
+      def initialize(character:, source: :gold, quest_key: nil, premium_cost: nil, payment_method: nil)
         @character = character
-        @source = source.to_s
+        @source = source
         @quest_key = quest_key
-        @premium_cost = premium_cost.to_i
-        @ledger = ledger
+        @premium_cost = premium_cost || 25
+        @payment_method = payment_method || source
       end
 
+      # Resets all skill points and stats, refunding them to the character.
+      #
+      # @return [Boolean] true if successful
       def call!
-        validate_source!
+        respec!
+      end
 
-        Character.transaction do
-          enforce_source_requirements!
-          refund_stats!
-          refund_skills!
+      # Resets all skill points and stats, refunding them to the character.
+      #
+      # @return [Boolean] true if successful
+      def respec!
+        return false unless valid_respec?
+
+        CharacterSkill.transaction do
+          # Calculate refunded skill points (from resource_cost jsonb or default 1)
+          refunded_skill_points = character.character_skills.sum do |cs|
+            cs.skill_node.resource_cost&.fetch("skill_points", 1) || 1
+          end
+
+          # Calculate refunded stat points
+          refunded_stat_points = character.allocated_stats&.values&.sum.to_i
+
+          # Remove all skills
+          character.character_skills.destroy_all
+
+          # Remove granted abilities (from skill unlocks)
+          remove_skill_granted_abilities!
+
+          # Refund skill points
+          character.increment!(:skill_points_available, refunded_skill_points) if refunded_skill_points.positive?
+
+          # Refund stat points
+          character.increment!(:stat_points_available, refunded_stat_points) if refunded_stat_points.positive?
+
+          # Clear allocated stats
+          character.update!(allocated_stats: {})
+
+          # Charge cost
+          charge_respec_cost!
+
+          # Set cooldown
+          character.update!(last_respec_at: Time.current) if character.respond_to?(:last_respec_at)
         end
 
-        character
+        true
+      rescue ActiveRecord::RecordInvalid => e
+        errors.add(:base, e.message)
+        false
       end
 
       private
 
-      attr_reader :character, :source, :quest_key, :premium_cost, :ledger
-
-      def validate_source!
-        raise ArgumentError, "Unknown respec source #{source}" unless SOURCES.include?(source)
+      def valid_respec?
+        validate_has_skills_or_stats &&
+          validate_cooldown &&
+          validate_payment
       end
 
-      def enforce_source_requirements!
-        case source
-        when "quest" then ensure_quest_completed!
-        when "premium" then charge_premium_tokens!
+      def validate_has_skills_or_stats
+        has_skills = character.character_skills.any?
+        has_stats = character.allocated_stats.present? && character.allocated_stats.values.sum.positive?
+
+        unless has_skills || has_stats
+          errors.add(:base, "No skills or stats to reset")
+          return false
+        end
+        true
+      end
+
+      def validate_cooldown
+        return true unless character.respond_to?(:last_respec_at)
+        return true if character.last_respec_at.nil?
+
+        hours_since = ((Time.current - character.last_respec_at) / 1.hour).to_i
+        if hours_since < RESPEC_COOLDOWN_HOURS
+          remaining = RESPEC_COOLDOWN_HOURS - hours_since
+          errors.add(:base, "Respec available in #{remaining} hours")
+          return false
+        end
+        true
+      end
+
+      def validate_payment
+        case source.to_sym
+        when :gold
+          if character.respond_to?(:gold) && character.gold < RESPEC_GOLD_COST
+            errors.add(:base, "Need #{RESPEC_GOLD_COST} gold (have #{character.gold})")
+            return false
+          end
+        when :premium
+          if character.user.premium_tokens_balance < premium_cost
+            errors.add(:base, "Need #{premium_cost} premium tokens")
+            return false
+          end
+        when :quest
+          unless quest_completed?
+            errors.add(:base, "Required quest not completed")
+            return false
+          end
+        when :quest_token
+          unless character.respond_to?(:has_respec_token?) && character.has_respec_token?
+            errors.add(:base, "No respec token available")
+            return false
+          end
+        end
+        true
+      end
+
+      def quest_completed?
+        return false unless quest_key
+
+        character.quest_assignments.joins(:quest).exists?(quests: {key: quest_key}, status: :completed)
+      end
+
+      def charge_respec_cost!
+        case source.to_sym
+        when :gold
+          character.decrement!(:gold, RESPEC_GOLD_COST) if character.respond_to?(:gold)
+        when :premium
+          Payments::PremiumTokenLedger.debit(
+            user: character.user,
+            amount: premium_cost,
+            reason: "Skill Respec",
+            actor: character.user
+          )
+        when :quest
+          # Quest completion is the payment, nothing to charge
+        when :quest_token
+          character.consume_respec_token! if character.respond_to?(:consume_respec_token!)
         end
       end
 
-      def ensure_quest_completed!
-        quest = Quest.find_by(key: quest_key)
-        raise Pundit::NotAuthorizedError, "Quest requirement missing" unless quest
+      def remove_skill_granted_abilities!
+        return unless character.respond_to?(:abilities)
 
-        completed = QuestAssignment.exists?(quest:, character:, status: :completed)
-        raise Pundit::NotAuthorizedError, "Quest not completed" unless completed
-      end
+        # Get all ability keys from skill nodes
+        ability_keys = character.character_skills
+          .joins(:skill_node)
+          .where.not(skill_nodes: {ability_key: nil})
+          .pluck("skill_nodes.ability_key")
 
-      def charge_premium_tokens!
-        raise ArgumentError, "premium_cost required" unless premium_cost.positive?
+        return if ability_keys.empty?
 
-        ledger.debit(
-          user: character.user,
-          amount: premium_cost,
-          reason: "character_respec",
-          actor: character.user,
-          metadata: {character_id: character.id}
-        )
-      rescue Payments::PremiumTokenLedger::InsufficientBalanceError => e
-        raise Pundit::NotAuthorizedError, e.message
-      end
-
-      def refund_stats!
-        spent = character.allocated_stats.values.map(&:to_i).sum
-        return if spent.zero?
-
-        character.stat_points_available += spent
-        character.allocated_stats = {}
-        character.save!
-      end
-
-      def refund_skills!
-        spent = character.character_skills.count
-        return if spent.zero?
-
-        character.skill_points_available += spent
-        character.character_skills.destroy_all
-        character.save!
+        abilities = Ability.where(key: ability_keys)
+        character.abilities.delete(abilities)
       end
     end
   end

@@ -1,16 +1,88 @@
+<% content_for :title, "#{@chat_channel.name} - Chat" %>
+
+<%# Subscribe to real-time updates via ActionCable/Turbo Streams %>
 <%= turbo_stream_from @chat_channel %>
 
-<section class="chat-channel" data-controller="chat">
-  <header>
-    <h1><%= @chat_channel.name %></h1>
-    <p>Channel type: <%= @chat_channel.channel_type.humanize %></p>
-  </header>
-
-  <div id="<%= dom_id(@chat_channel, :messages) %>" data-chat-target="messages" class="chat-messages">
-    <%= render partial: "chat_messages/chat_message", collection: @chat_messages, as: :chat_message %>
+<section class="chat-channel-page"
+         data-controller="chat"
+         data-chat-auto-scroll-value="true"
+         data-chat-current-user-value="<%= current_user.profile_name %>">
+  <div class="chat-header">
+    <div class="chat-header-info">
+      <h1><%= @chat_channel.name %></h1>
+      <span class="badge badge--<%= @chat_channel.channel_type %>"><%= @chat_channel.channel_type.humanize %></span>
+    </div>
+    <div class="chat-header-actions">
+      <%= link_to "← Back to Channels", chat_channels_path, class: "btn-secondary btn-sm" %>
+    </div>
   </div>
 
-  <div id="<%= dom_id(@chat_channel, :form) %>" class="chat-form">
-    <%= render "chat_messages/form", chat_channel: @chat_channel, chat_message: @chat_message %>
+  <div class="chat-container">
+    <%# Messages area %>
+    <div id="<%= dom_id(@chat_channel, :messages) %>"
+         data-chat-target="messages"
+         class="chat-messages-container">
+
+      <% if @chat_messages.empty? %>
+        <div class="chat-empty">
+          <p>No messages yet. Be the first to say something!</p>
+        </div>
+      <% else %>
+        <%= render partial: "chat_messages/chat_message", collection: @chat_messages, as: :chat_message %>
+      <% end %>
+    </div>
+
+    <%# New message indicator (shown when scrolled up) %>
+    <button class="new-message-indicator" data-action="click->chat#jumpToBottom">
+      ↓ New messages
+    </button>
+
+    <%# Message input form %>
+    <div id="<%= dom_id(@chat_channel, :form) %>" class="chat-input-area">
+      <%= render "chat_messages/form", chat_channel: @chat_channel, chat_message: @chat_message %>
+    </div>
   </div>
+
+  <%# Channel info sidebar %>
+  <aside class="chat-sidebar">
+    <div class="chat-sidebar-section">
+      <h3>Channel Info</h3>
+      <p class="text-muted text-sm">
+        <% case @chat_channel.channel_type %>
+        <% when "global" %>
+          Public channel visible to all players.
+        <% when "guild" %>
+          Guild members only.
+        <% when "party" %>
+          Party members only.
+        <% when "whisper" %>
+          Private conversation.
+        <% else %>
+          <%= @chat_channel.channel_type.humanize %> channel.
+        <% end %>
+      </p>
+    </div>
+
+    <div class="chat-sidebar-section">
+      <h3>Online Now</h3>
+      <div class="chat-online-users" data-chat-target="onlineCount">
+        <p class="text-muted text-sm">
+          <%= pluralize(@chat_channel.memberships.count, "member") %>
+        </p>
+      </div>
+    </div>
+
+    <div class="chat-sidebar-section">
+      <h3>Chat Commands</h3>
+      <ul class="chat-commands-list">
+        <li><code>/w [name]</code> - Whisper</li>
+        <li><code>/me [action]</code> - Emote</li>
+        <li><code>/ignore [name]</code> - Ignore user</li>
+        <li><code>@name</code> - Mention user</li>
+      </ul>
+    </div>
+  </aside>
+
+  <%# User context menu (appears on right-click of username) %>
+  <div class="user-menu" data-chat-target="userMenu"></div>
 </section>

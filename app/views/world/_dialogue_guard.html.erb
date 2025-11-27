@@ -1,0 +1,44 @@
+<div class="guard-dialogue-section">
+  <% if result.data[:zone_info].present? %>
+    <div class="zone-info-card">
+      <h3>📍 Area Information</h3>
+      <div class="info-grid">
+        <div class="info-item">
+          <span class="info-label">Zone:</span>
+          <span class="info-value"><%= result.data[:zone_info][:name] %></span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Level Range:</span>
+          <span class="info-value"><%= result.data[:zone_info][:level_range] %></span>
+        </div>
+        <% if result.data[:zone_info][:faction] %>
+          <div class="info-item">
+            <span class="info-label">Faction:</span>
+            <span class="info-value"><%= result.data[:zone_info][:faction].titleize %></span>
+          </div>
+        <% end %>
+        <div class="info-item">
+          <span class="info-label">PvP Status:</span>
+          <span class="info-value pvp-<%= result.data[:zone_info][:pvp_enabled] ? 'enabled' : 'disabled' %>">
+            <%= result.data[:zone_info][:pvp_enabled] ? "⚔️ Enabled" : "🛡️ Disabled" %>
+          </span>
+        </div>
+      </div>
+    </div>
+  <% end %>
+
+  <% if result.data[:directions].any? %>
+    <div class="directions-card">
+      <h3>🧭 Nearby Landmarks</h3>
+      <ul class="landmarks-list">
+        <% result.data[:directions].each do |landmark| %>
+          <li class="landmark">
+            <span class="landmark-name"><%= landmark["name"] %></span>
+            <span class="landmark-direction"><%= landmark["direction"] %></span>
+          </li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+</div>
+

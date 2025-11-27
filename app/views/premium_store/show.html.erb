@@ -1,0 +1,85 @@
+<div class="premium-item-detail">
+  <div class="page-header">
+    <%= link_to "← Back to Store", premium_store_index_path, class: "back-link" %>
+    <h1 class="page-title"><%= @artifact[:name] %></h1>
+  </div>
+
+  <div class="item-detail-layout">
+    <div class="item-showcase card">
+      <div class="item-icon-large item-icon--<%= @artifact[:category] %>">
+        <%= premium_item_icon(@artifact) %>
+      </div>
+
+      <div class="item-meta">
+        <span class="category-badge"><%= @artifact[:category].to_s.titleize %></span>
+        <% if @artifact[:unique] %>
+          <span class="unique-badge">Unique</span>
+        <% end %>
+        <% if @artifact[:duration].present? %>
+          <span class="duration-badge"><%= @artifact[:duration] %></span>
+        <% end %>
+      </div>
+    </div>
+
+    <div class="item-details card">
+      <h2>About this Item</h2>
+      <p class="item-description"><%= @artifact[:description] %></p>
+
+      <% if @artifact[:benefits].present? %>
+        <div class="item-benefits">
+          <h3>Benefits</h3>
+          <ul>
+            <% @artifact[:benefits].each do |benefit| %>
+              <li><%= benefit %></li>
+            <% end %>
+          </ul>
+        </div>
+      <% end %>
+
+      <% if @artifact[:restrictions].present? %>
+        <div class="item-restrictions">
+          <h3>Restrictions</h3>
+          <ul>
+            <% @artifact[:restrictions].each do |restriction| %>
+              <li><%= restriction %></li>
+            <% end %>
+          </ul>
+        </div>
+      <% end %>
+    </div>
+
+    <div class="purchase-panel card">
+      <div class="price-display">
+        <% if @artifact[:original_price].present? && @artifact[:original_price] > @artifact[:price] %>
+          <span class="original-price"><%= @artifact[:original_price] %> tokens</span>
+          <span class="discount">Save <%= @artifact[:original_price] - @artifact[:price] %>!</span>
+        <% end %>
+        <span class="current-price">💎 <%= @artifact[:price] %> Premium Tokens</span>
+      </div>
+
+      <div class="balance-info">
+        Your Balance: 💎 <%= number_with_delimiter(current_user.premium_tokens_balance) %>
+      </div>
+
+      <% if @already_owned %>
+        <p class="owned-notice">✓ You already own this item!</p>
+      <% elsif @can_purchase %>
+        <%= button_to "Purchase", purchase_premium_store_path(@artifact[:key]), method: :post, class: "game-btn game-btn--primary game-btn--large", data: {confirm: "Purchase #{@artifact[:name]} for #{@artifact[:price]} tokens?"} %>
+
+        <hr>
+
+        <div class="gift-section">
+          <h4>🎁 Gift to a Friend</h4>
+          <%= form_with url: gift_premium_store_path(@artifact[:key]), method: :post, class: "gift-form" do |f| %>
+            <%= f.text_field :recipient_name, placeholder: "Friend's username", class: "form-control" %>
+            <%= f.submit "Send as Gift", class: "game-btn" %>
+          <% end %>
+        </div>
+      <% else %>
+        <p class="insufficient-notice">You need <%= @artifact[:price] - current_user.premium_tokens_balance %> more tokens.</p>
+        <%= link_to "Get Premium Tokens", "#", class: "game-btn game-btn--primary" %>
+      <% end %>
+    </div>
+  </div>
+</div>
+

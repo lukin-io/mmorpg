@@ -1,0 +1,41 @@
+<div class="listing-card card listing-card--<%= listing.item_metadata&.dig('rarity') || 'common' %>">
+  <div class="listing-header">
+    <span class="item-icon"><%= item_rarity_icon(listing) %></span>
+    <h3 class="item-name"><%= listing.item_name %></h3>
+    <% if listing.quantity > 1 %>
+      <span class="item-quantity">x<%= listing.quantity %></span>
+    <% end %>
+  </div>
+
+  <div class="listing-details">
+    <% if listing.item_metadata.present? %>
+      <div class="item-stats">
+        <% listing.item_metadata.fetch("stats", {}).each do |stat, value| %>
+          <span class="stat-badge">+<%= value %> <%= stat.titleize %></span>
+        <% end %>
+      </div>
+    <% end %>
+
+    <div class="listing-price">
+      <span class="price-label">Current Bid:</span>
+      <span class="price-value"><%= number_with_delimiter(listing.highest_bid&.amount || listing.starting_bid) %> <%= currency_icon(listing.currency_type) %></span>
+    </div>
+
+    <% if listing.buyout_price.present? %>
+      <div class="listing-buyout">
+        <span class="price-label">Buyout:</span>
+        <span class="price-value"><%= number_with_delimiter(listing.buyout_price) %> <%= currency_icon(listing.currency_type) %></span>
+      </div>
+    <% end %>
+
+    <div class="listing-meta">
+      <span class="listing-seller">Seller: <%= listing.seller.profile_name %></span>
+      <span class="listing-time">Ends: <%= time_ago_in_words(listing.ends_at) %></span>
+    </div>
+  </div>
+
+  <div class="listing-actions">
+    <%= link_to "View Details", auction_listing_path(listing), class: "game-btn game-btn--primary" %>
+  </div>
+</div>
+

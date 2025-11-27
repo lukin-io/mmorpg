@@ -1,4 +1,4 @@
-# MMO_TESTING_GUIDE.md — Testing Guide for the Neverlands MMORPG
+# MMO_TESTING_GUIDE.md — Testing Guide for the Elselands MMORPG
 
 This guide defines how to test the MMORPG game engine inside a Rails monolith.
 The focus is **determinism**, **repeatability**, **clarity**, and **gameplay correctness**.
@@ -195,10 +195,10 @@ end
 # 9. Summary
 
 This guide ensures your MMORPG logic remains:
-- deterministic  
-- testable  
-- trustworthy  
-- scalable as complexity grows  
-- decoupled from Rails UI/DB  
+- deterministic
+- testable
+- trustworthy
+- scalable as complexity grows
+- decoupled from Rails UI/DB
 
 Use this whenever writing or reviewing game-related tests.

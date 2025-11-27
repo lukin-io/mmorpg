@@ -1,0 +1,194 @@
+<%# Combat log %>
+<%
+  entries ||= []
+
+  # Element colors
+  element_colors = {
+    "normal" => "#000000",
+    "fire" => "#E80005",
+    "water" => "#1C60C6",
+    "earth" => "#148101",
+    "air" => "#14BCE0",
+    "arcane" => "#9932CC"
+  }
+
+  # Body part translations
+  body_parts_display = {
+    "head" => "head",
+    "torso" => "torso",
+    "stomach" => "stomach",
+    "legs" => "legs"
+  }
+%>
+
+<div class="nl-log-container">
+  <table class="nl-log-table" cellspacing="0" cellpadding="4" border="0">
+    <% if entries.empty? %>
+      <tr>
+        <td class="nl-log-entry nl-log-system">
+          <span class="nl-log-time"><%= Time.current.strftime("%H:%M") %></span>
+          Combat begins!
+        </td>
+      </tr>
+    <% else %>
+      <% entries.each do |entry| %>
+        <tr>
+          <td class="nl-log-entry nl-log-<%= entry_type_class(entry) %>">
+            <%# Timestamp %>
+            <span class="nl-log-time"><%= format_log_time(entry) %></span>
+
+            <%# Log message based on type %>
+            <% case entry_type(entry) %>
+            <% when :battle_start %>
+              Combat between
+              <%= render_combatant(entry, :attacker) %>
+              and
+              <%= render_combatant(entry, :defender) %>
+              begins!
+
+            <% when :attack %>
+              <%= render_combatant(entry, :attacker) %>
+              <% if entry_hit?(entry) %>
+                hits
+                <%= render_combatant(entry, :defender) %>'s
+                <span class="nl-log-bodypart">(<%= body_parts_display[entry_body_part(entry)] %>)</span>
+                for
+                <span class="nl-log-damage"><%= entry_damage(entry) %></span>
+                damage<%= entry_critical?(entry) ? " (CRITICAL!)" : "" %>.
+              <% elsif entry_blocked?(entry) %>
+                's attack on
+                <%= render_combatant(entry, :defender) %>'s
+                <span class="nl-log-bodypart">(<%= body_parts_display[entry_body_part(entry)] %>)</span>
+                was <strong>BLOCKED</strong>!
+              <% else %>
+                's attack on
+                <%= render_combatant(entry, :defender) %>
+                <span class="nl-log-miss">misses</span>!
+              <% end %>
+
+            <% when :skill %>
+              <%= render_combatant(entry, :actor) %>
+              used
+              <span class="nl-log-skill" style="color: <%= element_colors[entry_element(entry)] || '#E34242' %>;">
+                «<%= entry_skill_name(entry) %>»
+              </span>
+              <% if entry_skill_amount(entry) %>
+                (<%= entry_skill_amount(entry) %>)
+              <% end %>
+
+            <% when :heal %>
+              <%= render_combatant(entry, :actor) %>
+              restored
+              <span class="nl-log-heal">«<%= entry_amount(entry) %> HP»</span>.
+
+            <% when :buff %>
+              <%= render_combatant(entry, :actor) %>
+              applied
+              <span class="nl-log-buff">«<%= entry_skill_name(entry) %>»</span>.
+
+            <% when :defeat %>
+              <%= render_combatant(entry, :target) %>
+              has been <span class="nl-log-defeat">defeated</span>!
+
+            <% when :victory %>
+              <span class="nl-log-victory">
+                Victory! <%= render_combatant(entry, :winner) %> wins the battle!
+              </span>
+
+            <% else %>
+              <%= entry.respond_to?(:message) ? entry.message : entry.to_s %>
+            <% end %>
+          </td>
+        </tr>
+      <% end %>
+    <% end %>
+  </table>
+</div>
+
+<%# Helper methods %>
+<%
+def entry_type_class(entry)
+  return "system" unless entry.respond_to?(:log_type) || entry.is_a?(Hash)
+
+  log_type = entry.is_a?(Hash) ? entry[:log_type] : entry.log_type
+  case log_type.to_s
+  when "attack" then "attack"
+  when "skill" then "skill"
+  when "heal" then "heal"
+  when "defeat" then "defeat"
+  when "victory" then "victory"
+  else "system"
+  end
+end
+
+def format_log_time(entry)
+  time = entry.respond_to?(:created_at) ? entry.created_at : Time.current
+  time.strftime("%H:%M")
+end
+
+def entry_type(entry)
+  return :system unless entry.respond_to?(:log_type) || entry.is_a?(Hash)
+
+  log_type = entry.is_a?(Hash) ? entry[:log_type] : entry.log_type
+  log_type&.to_sym || :system
+end
+
+def render_combatant(entry, role)
+  payload = entry.respond_to?(:payload) ? entry.payload : (entry.is_a?(Hash) ? entry[:data] : {})
+  payload ||= {}
+
+  name = payload[role.to_s] || payload[role] || "Unknown"
+  team = payload["#{role}_team"] || "alpha"
+  color = team == "alpha" ? "#0052A6" : "#087C20"
+
+  "<span style='color: #{color};'><strong>#{name}</strong></span>".html_safe
+end
+
+def entry_hit?(entry)
+  payload = entry.respond_to?(:payload) ? entry.payload : (entry.is_a?(Hash) ? entry[:data] : {})
+  result = payload["result"] || payload[:result]
+  %w[hit critical].include?(result.to_s)
+end
+
+def entry_blocked?(entry)
+  payload = entry.respond_to?(:payload) ? entry.payload : (entry.is_a?(Hash) ? entry[:data] : {})
+  result = payload["result"] || payload[:result]
+  result.to_s == "blocked"
+end
+
+def entry_critical?(entry)
+  payload = entry.respond_to?(:payload) ? entry.payload : (entry.is_a?(Hash) ? entry[:data] : {})
+  payload["critical"] || payload[:critical]
+end
+
+def entry_body_part(entry)
+  payload = entry.respond_to?(:payload) ? entry.payload : (entry.is_a?(Hash) ? entry[:data] : {})
+  payload["body_part"] || payload[:body_part] || "torso"
+end
+
+def entry_damage(entry)
+  payload = entry.respond_to?(:payload) ? entry.payload : (entry.is_a?(Hash) ? entry[:data] : {})
+  payload["damage"] || payload[:damage] || 0
+end
+
+def entry_skill_name(entry)
+  payload = entry.respond_to?(:payload) ? entry.payload : (entry.is_a?(Hash) ? entry[:data] : {})
+  payload["skill"] || payload[:skill] || "Unknown Skill"
+end
+
+def entry_element(entry)
+  payload = entry.respond_to?(:payload) ? entry.payload : (entry.is_a?(Hash) ? entry[:data] : {})
+  payload["element"] || payload[:element] || "normal"
+end
+
+def entry_skill_amount(entry)
+  payload = entry.respond_to?(:payload) ? entry.payload : (entry.is_a?(Hash) ? entry[:data] : {})
+  payload["amount"] || payload[:amount]
+end
+
+def entry_amount(entry)
+  payload = entry.respond_to?(:payload) ? entry.payload : (entry.is_a?(Hash) ? entry[:data] : {})
+  payload["amount"] || payload[:amount] || 0
+end
+%>
+

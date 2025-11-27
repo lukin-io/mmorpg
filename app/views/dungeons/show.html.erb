@@ -1,0 +1,110 @@
+<div class="dungeon-detail">
+  <div class="page-header">
+    <%= link_to "← Back to Dungeons", dungeons_path, class: "back-link" %>
+    <h1 class="page-title"><%= @dungeon_template.name %></h1>
+  </div>
+
+  <div class="dungeon-layout">
+    <div class="dungeon-main">
+      <div class="dungeon-overview card">
+        <div class="overview-header">
+          <span class="dungeon-icon-large"><%= dungeon_icon(@dungeon_template) %></span>
+          <div class="overview-info">
+            <p class="description"><%= @dungeon_template.description %></p>
+            <div class="stats-row">
+              <span>Level <%= @dungeon_template.min_level %><%= " - #{@dungeon_template.max_level}" if @dungeon_template.max_level %></span>
+              <span>•</span>
+              <span><%= @dungeon_template.min_party_size %>-<%= @dungeon_template.max_party_size %> Players</span>
+              <span>•</span>
+              <span>~<%= @dungeon_template.estimated_duration_minutes %> min</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="encounters-preview card">
+        <h2>Encounters</h2>
+        <div class="encounters-list">
+          <% @encounters.each_with_index do |encounter, index| %>
+            <div class="encounter-item encounter-item--<%= encounter.encounter_type %>">
+              <span class="encounter-number"><%= index + 1 %></span>
+              <div class="encounter-info">
+                <h4><%= encounter.name %></h4>
+                <span class="encounter-type"><%= encounter.encounter_type.titleize %></span>
+              </div>
+              <% if encounter.boss? %>
+                <span class="boss-badge">👑 BOSS</span>
+              <% end %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+
+      <div class="loot-preview card">
+        <h2>Possible Loot</h2>
+        <div class="loot-grid">
+          <% @loot_preview.each do |loot| %>
+            <div class="loot-item">
+              <span class="loot-icon"><%= item_icon(loot["item_key"]) %></span>
+              <span class="loot-name"><%= loot["item_key"].titleize %></span>
+            </div>
+          <% end %>
+          <% if @dungeon_template.loot_table&.size.to_i > 5 %>
+            <div class="loot-more">+<%= @dungeon_template.loot_table.size - 5 %> more...</div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+
+    <div class="dungeon-sidebar">
+      <div class="enter-dungeon card">
+        <h3>Enter Dungeon</h3>
+
+        <% if @can_enter %>
+          <%= form_with url: dungeon_instances_path(@dungeon_template), method: :post, class: "enter-form" do |f| %>
+            <div class="form-group">
+              <%= f.label :difficulty, "Difficulty" %>
+              <%= f.select :difficulty, [
+                ["Easy (80% stats)", :easy],
+                ["Normal (100% stats)", :normal],
+                ["Hard (130% stats)", :hard],
+                ["Nightmare (180% stats)", :nightmare]
+              ], {}, class: "form-control" %>
+            </div>
+
+            <div class="difficulty-info">
+              <p>Higher difficulties grant better rewards but are more challenging.</p>
+            </div>
+
+            <%= f.submit "Enter Dungeon", class: "game-btn game-btn--primary" %>
+          <% end %>
+        <% else %>
+          <div class="locked-info">
+            <p class="lock-reason"><%= dungeon_lock_reason(@dungeon_template) %></p>
+          </div>
+        <% end %>
+      </div>
+
+      <div class="rewards-summary card">
+        <h3>Completion Rewards</h3>
+        <div class="reward-row">
+          <span class="reward-icon">✨</span>
+          <span class="reward-value"><%= @dungeon_template.completion_xp %> XP</span>
+        </div>
+        <div class="reward-row">
+          <span class="reward-icon">🪙</span>
+          <span class="reward-value"><%= @dungeon_template.completion_gold %> Gold</span>
+        </div>
+        <p class="reward-note">Rewards scale with difficulty</p>
+      </div>
+
+      <% if @dungeon_template.required_quest.present? %>
+        <div class="requirements card">
+          <h3>Requirements</h3>
+          <p>Complete quest: <strong><%= @dungeon_template.required_quest.titleize %></strong></p>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>
+

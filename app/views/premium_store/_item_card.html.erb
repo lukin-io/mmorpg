@@ -1,0 +1,33 @@
+<div class="premium-item-card <%= 'featured' if featured %> <%= 'owned' if already_owned?(item) %>">
+  <% if item[:discount].present? %>
+    <span class="discount-badge">-<%= item[:discount] %>%</span>
+  <% end %>
+
+  <div class="item-icon item-icon--<%= item[:category] %>">
+    <%= premium_item_icon(item) %>
+  </div>
+
+  <div class="item-info">
+    <h3 class="item-name"><%= item[:name] %></h3>
+    <p class="item-category"><%= item[:category].to_s.titleize %></p>
+    <p class="item-description"><%= item[:description] %></p>
+  </div>
+
+  <div class="item-price">
+    <% if item[:original_price].present? && item[:original_price] > item[:price] %>
+      <span class="original-price"><%= item[:original_price] %></span>
+    <% end %>
+    <span class="current-price">💎 <%= item[:price] %></span>
+  </div>
+
+  <div class="item-actions">
+    <% if already_owned?(item) %>
+      <span class="owned-badge">✓ Owned</span>
+    <% elsif can_purchase?(item) %>
+      <%= link_to "View Details", premium_store_path(item[:key]), class: "game-btn game-btn--primary" %>
+    <% else %>
+      <span class="insufficient-badge">Insufficient Tokens</span>
+    <% end %>
+  </div>
+</div>
+

@@ -1,14 +1,46 @@
 <section class="public-profile">
-  <header>
-    <h1><%= @user.profile_name %></h1>
-    <p><%= @user.email %></p>
-  </header>
+  <div class="profile-header">
+    <div class="profile-avatar"></div>
+    <div class="profile-info">
+      <h1><%= @user.profile_name || @user.email.split("@").first %></h1>
+      <p class="profile-title">Novice Adventurer</p>
+      <p class="text-muted"><%= @user.email %></p>
+    </div>
+  </div>
 
-  <div>
+  <div class="profile-stats">
+    <div class="profile-stat">
+      <div class="profile-stat-value">1</div>
+      <div class="profile-stat-label">Level</div>
+    </div>
+    <div class="profile-stat">
+      <div class="profile-stat-value">0</div>
+      <div class="profile-stat-label">Battles Won</div>
+    </div>
+    <div class="profile-stat">
+      <div class="profile-stat-value">0</div>
+      <div class="profile-stat-label">Quests Done</div>
+    </div>
+    <div class="profile-stat">
+      <div class="profile-stat-value">0</div>
+      <div class="profile-stat-label">Achievements</div>
+    </div>
+  </div>
+
+  <section class="mt-4">
+    <h2>About</h2>
+    <p class="text-muted">No biography set.</p>
+  </section>
+
+  <section class="mt-4">
+    <h2>Guild & Clan</h2>
+    <p class="text-muted">Not affiliated with any guild or clan.</p>
+  </section>
+
+  <div class="mt-4">
     <%= link_to "Report Player", new_moderation_report_path(
       source: :profile,
       subject_user_id: @user.id
-    ), class: "button" %>
+    ), class: "btn-danger btn-sm" %>
   </div>
 </section>
-

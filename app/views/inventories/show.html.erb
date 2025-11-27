@@ -1,0 +1,48 @@
+<div class="inventory-page" data-controller="inventory">
+  <div class="page-header">
+    <h1 class="page-title">Inventory</h1>
+    <div class="inventory-actions">
+      <%= button_to "Sort by Type", sort_inventory_path(sort_type: :type), method: :post, class: "game-btn" %>
+      <%= button_to "Sort by Rarity", sort_inventory_path(sort_type: :rarity), method: :post, class: "game-btn" %>
+    </div>
+  </div>
+
+  <div class="inventory-layout">
+    <div class="character-panel">
+      <div class="character-model card">
+        <div class="character-avatar">
+          <span class="avatar-icon">🧙</span>
+          <span class="character-name"><%= current_character.name %></span>
+          <span class="character-level">Level <%= current_character.level %></span>
+        </div>
+
+        <div id="equipment_panel">
+          <%= render "inventories/equipment", equipment: @equipment %>
+        </div>
+      </div>
+
+      <div id="stats_panel">
+        <%= render "inventories/stats", stats: @stats %>
+      </div>
+    </div>
+
+    <div class="inventory-main">
+      <div class="bag-panel card">
+        <div class="bag-header">
+          <h2>Bag</h2>
+          <span class="bag-capacity"><%= @items.count %>/<%= @inventory.max_slots %> slots</span>
+        </div>
+
+        <div id="inventory_grid">
+          <%= render "inventories/grid", items: @items %>
+        </div>
+      </div>
+
+      <div class="inventory-footer">
+        <span class="gold-display">🪙 <%= number_with_delimiter(current_character.gold) %> Gold</span>
+        <span class="weight-display">⚖️ <%= @inventory.current_weight %>/<%= @inventory.max_weight %> weight</span>
+      </div>
+    </div>
+  </div>
+</div>
+

@@ -1,0 +1,99 @@
+<%# Attack/block selection %>
+<%
+  attacks ||= []
+  blocks ||= []
+  action_limit ||= 80
+
+  body_parts = %w[head torso stomach legs]
+  attack_labels = ["Head", "Torso", "Stomach", "Legs"]
+  block_labels = ["Head", "Torso", "Stomach", "Legs"]
+%>
+
+<div class="nl-action-selection">
+  <div class="nl-action-info">
+    <span class="nl-info-text">
+      <strong>Action Points: <span class="nl-ap-available">5-<%= action_limit %></span></strong>
+    </span>
+  </div>
+
+  <div class="nl-action-grid">
+    <%# Left side - Attacks %>
+    <div class="nl-attacks-column">
+      <% body_parts.each_with_index do |part, index| %>
+        <div class="nl-action-row">
+          <div class="nl-action-mana" id="mana-u<%= index %>"></div>
+          <select class="nl-action-select nl-attack-select"
+                  name="attacks[<%= index %>]"
+                  id="attack-<%= index %>"
+                  data-body-part="<%= part %>"
+                  data-action="change->turn-combat#updateActionPoints">
+            <option value="">
+              <%= attack_labels[index] %> [no attack selected]
+            </option>
+
+            <%# Basic attack options %>
+            <option value="simple" data-cost="0">
+              Simple Attack [0]
+            </option>
+            <option value="aimed" data-cost="20">
+              Aimed Attack [20]
+            </option>
+
+            <%# Targeted attacks for this body part %>
+            <% attacks.select { |a| a[:body_part] == part || a[:body_parts]&.include?(part) }.each do |attack| %>
+              <option value="<%= attack[:key] %>" data-cost="<%= attack[:cost] %>">
+                <%= attack[:name] %> [<%= attack[:cost] %>]
+              </option>
+            <% end %>
+          </select>
+        </div>
+      <% end %>
+    </div>
+
+    <%# Divider %>
+    <div class="nl-action-divider"></div>
+
+    <%# Right side - Blocks %>
+    <div class="nl-blocks-column">
+      <% body_parts.each_with_index do |part, index| %>
+        <div class="nl-action-row">
+          <select class="nl-action-select nl-block-select"
+                  name="blocks[<%= index %>]"
+                  id="block-<%= index %>"
+                  data-body-part="<%= part %>"
+                  data-action="change->turn-combat#updateActionPoints">
+            <option value="">
+              <%= block_labels[index] %> [no block selected]
+            </option>
+
+            <%# Basic block %>
+            <option value="basic_block" data-cost="30">
+              Basic Block [30]
+            </option>
+
+            <%# Shield blocks %>
+            <option value="shield_block" data-cost="40">
+              Shield Block [40]
+            </option>
+
+            <%# Targeted blocks %>
+            <% blocks.select { |b| b[:body_part] == part }.each do |block| %>
+              <option value="<%= block[:key] %>" data-cost="<%= block[:cost] %>">
+                <%= block[:name] %> [<%= block[:cost] %>]
+              </option>
+            <% end %>
+          </select>
+          <div class="nl-action-mana" id="mana-b<%= index %>"></div>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <%# Attack penalty notice %>
+  <div class="nl-penalty-notice" id="penalty-notice" style="display: none;">
+    <span class="nl-penalty-text">
+      Multiple attack penalty: <strong id="penalty-amount">0</strong> AP
+    </span>
+  </div>
+</div>
+

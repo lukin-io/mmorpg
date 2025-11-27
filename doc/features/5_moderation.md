@@ -1,7 +1,7 @@
 # 5. Moderation, Safety, and Live Ops
 
 ## Goals & Principles
-- Protect the nostalgia-driven Neverlands community without sacrificing trust: fast GM tooling, transparent communications, and auditable actions (`AuditLogger`, `audit_logs` table).
+- Protect the nostalgia-driven Elselands community without sacrificing trust: fast GM tooling, transparent communications, and auditable actions (`AuditLogger`, `audit_logs` table).
 - All punitive actions (ban/mute/trade-lock/refund) are gated by Pundit policies and tied to a `Moderation::Ticket`, ensuring accountability.
 
 ## Reporting & Ticket Flow
@@ -16,6 +16,13 @@
   - `Economy::FraudDetector` monitors suspicious trades and emits `EconomyAlert` rows for GM follow-up.
 - GM/admin panels (namespaced controllers under `app/controllers/admin/moderation/*`) expose ticket queues, actions, and appeal workflows.
 
+### Chat Moderation Heuristics (✅ Implemented)
+- **Service**: `Chat::ModerationService` provides comprehensive automated chat moderation
+- **Detections**: Profanity, spam (rate limiting), duplicates, caps abuse, link spam, advertising, harassment
+- **Penalties**: Warning → 5min mute → 30min mute → 2hr mute → 24hr mute → Ban referral
+- **Background Scanning**: `ChatModerationJob` scans channels for accumulated violations
+- **Channel Access**: `RealtimeChatChannel#can_access_channel?` enforces role-based permissions (guild, clan, party, whisper)
+
 ## Live Ops & Event Oversight
 - Live Ops commands (in `app/services/live_ops` and `app/controllers/admin/live_ops/events_controller.rb`) let staff spawn/disable quests, pause arenas, or compensate players after outages.
 - Scheduled jobs (e.g., `EconomyAnalyticsJob`, tournament recalculations) surface anomalies early; moderators can roll back standings if cheating is confirmed.
@@ -27,6 +34,8 @@
 
 ## Responsible for Implementation Files
 - **Models:** `app/models/moderation/ticket.rb`, `app/models/moderation/action.rb`, `app/models/moderation/appeal.rb`, `app/models/chat_report.rb`, `app/models/economy_alert.rb`, `app/models/audit_log.rb`.
-- **Services:** `app/services/moderation/report_intake.rb`, `app/services/moderation/penalty_service.rb`, `app/services/moderation/detectors/*.rb`, `app/services/economy/fraud_detector.rb`, `app/services/audit_logger.rb`, `app/services/moderation/webhook_dispatcher.rb`, `app/services/moderation/dashboard_presenter.rb`.
+- **Services:** `app/services/moderation/report_intake.rb`, `app/services/moderation/penalty_service.rb`, `app/services/moderation/detectors/*.rb`, `app/services/economy/fraud_detector.rb`, `app/services/audit_logger.rb`, `app/services/moderation/webhook_dispatcher.rb`, `app/services/moderation/dashboard_presenter.rb`, `app/services/chat/moderation_service.rb`.
 - **Controllers:** `app/controllers/moderation/reports_controller.rb`, `app/controllers/moderation/tickets_controller.rb`, `app/controllers/admin/moderation/tickets_controller.rb`, `app/controllers/admin/moderation/actions_controller.rb`, `app/controllers/admin/moderation/appeals_controller.rb`.
-- **Jobs & Alerts:** `app/jobs/economy_analytics_job.rb` (fraud detection), Sidekiq worker configs, Discord/Telegram webhook integrations.
+- **Jobs & Alerts:** `app/jobs/economy_analytics_job.rb` (fraud detection), `app/jobs/chat_moderation_job.rb`, Sidekiq worker configs, Discord/Telegram webhook integrations.
+- **Channels:** `app/channels/realtime_chat_channel.rb` (access control).
+- **Migrations:** `db/migrate/20251127120000_create_chat_violations.rb`.

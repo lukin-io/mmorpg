@@ -1,4 +1,4 @@
-# COMBAT_SYSTEM_GUIDE.md — Combat Architecture for Neverlands MMORPG
+# COMBAT_SYSTEM_GUIDE.md — Combat Architecture for Elselands MMORPG
 
 This guide defines how to implement combat, turns, skills, crits, buffs,
 and battle flow inside the Rails MMORPG engine.
@@ -14,15 +14,15 @@ Combat must be:
 - modular (easy to add skills/effects)
 - fast and predictable
 
-Controllers never contain damage logic.  
-UI never calculates numbers.  
+Controllers never contain damage logic.
+UI never calculates numbers.
 All math stays in formulas & services.
 
 ---
 
 # 2. Combat Flow
 
-1. Player selects action  
+1. Player selects action
 2. Controller passes to:
    ```
    Game::Combat::TurnResolver

@@ -4,14 +4,14 @@ module RedisConfig
   module_function
 
   def cache_url
-    ENV.fetch("REDIS_CACHE_URL", "redis://localhost:6380/0")
+    ENV.fetch("REDIS_CACHE_URL", "redis://localhost:6379/0")
   end
 
   def sidekiq_url
-    ENV.fetch("REDIS_SIDEKIQ_URL", "redis://localhost:6381/0")
+    ENV.fetch("REDIS_SIDEKIQ_URL", "redis://localhost:6379/0")
   end
 
   def cable_url
-    ENV.fetch("REDIS_CABLE_URL", "redis://localhost:6382/0")
+    ENV.fetch("REDIS_CABLE_URL", "redis://localhost:6379/0")
   end
 end

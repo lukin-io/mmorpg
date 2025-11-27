@@ -1,67 +1,103 @@
-<section>
-  <header>
-    <h1><%= @party.name %></h1>
-    <p><%= @party.purpose %></p>
-    <p>Status: <%= @party.status.humanize %></p>
-  </header>
+<%= turbo_stream_from @party %>
 
-  <section>
-    <h2>Members</h2>
-    <table>
-      <thead>
-        <tr>
-          <th>Player</th>
-          <th>Role</th>
-          <th>Ready?</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        <% @memberships.each do |membership| %>
-          <tr>
-            <td><%= membership.user.profile_name %></td>
-            <td><%= membership.role.humanize %></td>
-            <td>
-              <% if membership.user == current_user %>
-                <%= button_to "Toggle",
-                  party_party_membership_path(@party, membership, ready_state: membership.ready? ? false : true),
-                  method: :patch,
-                  class: "button button--ghost" %>
-              <% else %>
-                <%= membership.ready_state.humanize %>
-              <% end %>
-            </td>
-            <td>
-              <% if policy(@party).manage? && membership.user != @party.leader %>
-                <%= button_to "Kick", party_party_membership_path(@party, membership), method: :delete, form: { data: { turbo_confirm: "Remove this member?" } } %>
-              <% end %>
-            </td>
-          </tr>
+<div class="party-detail" data-controller="party" data-party-id-value="<%= @party.id %>">
+  <div class="page-header">
+    <h1 class="page-title"><%= @party.name %></h1>
+    <%= link_to "← Back to Parties", parties_path, class: "back-link" %>
+  </div>
+
+  <div class="party-layout">
+    <div class="party-main">
+      <div class="party-info-card card">
+        <div class="party-status-row">
+          <span class="party-status party-status--<%= @party.status %>"><%= @party.status.titleize %></span>
+          <span class="party-size"><%= @party.active_members.count %>/<%= @party.max_size %> members</span>
+        </div>
+        <% if @party.purpose.present? %>
+          <p class="party-purpose"><%= @party.purpose %></p>
         <% end %>
-      </tbody>
-    </table>
-  </section>
-
-  <section>
-    <h2>Invitations</h2>
-    <%= form_with model: [@party, PartyInvitation.new] do |form| %>
-      <div class="field">
-        <%= form.label :recipient_id, "Player" %>
-        <%= form.collection_select :recipient_id, User.verified.order(:profile_name), :id, :profile_name, prompt: "Select player" %>
       </div>
-      <div class="actions">
-        <%= form.submit "Send invite" %>
+
+      <div class="party-members-card card" id="party_members">
+        <h2>Members</h2>
+        <div class="members-list">
+          <% @memberships.active.each do |membership| %>
+            <%= render "parties/member", membership: membership, party: @party %>
+          <% end %>
+        </div>
       </div>
-    <% end %>
-  </section>
 
-  <% if policy(@party).manage? %>
-    <section class="stack stack--sm">
-      <%= button_to "Start ready check", ready_check_party_path(@party), method: :post, class: "button" %>
-      <%= button_to "Disband party", disband_party_path(@party), method: :post, form: { data: { turbo_confirm: "Disband this party?" } }, class: "button button--danger" %>
-    </section>
-  <% else %>
-    <%= button_to "Leave party", leave_party_path(@party), method: :post, class: "button button--ghost" %>
-  <% end %>
-</section>
+      <% if @party.ready_check_running? %>
+        <div class="ready-check-panel card" id="ready_check_panel">
+          <h3>🔔 Ready Check in Progress</h3>
+          <div class="ready-status-grid">
+            <% @memberships.active.each do |m| %>
+              <div class="ready-member ready-member--<%= m.ready_state %>">
+                <span class="member-name"><%= m.user.profile_name %></span>
+                <span class="ready-indicator">
+                  <% case m.ready_state %>
+                  <% when "ready" %>
+                    ✅
+                  <% when "not_ready" %>
+                    ❌
+                  <% else %>
+                    ⏳
+                  <% end %>
+                </span>
+              </div>
+            <% end %>
+          </div>
+          <% if current_membership&.pending? %>
+            <%= button_to "I'm Ready!", party_membership_path(@party, current_membership, ready_state: :ready), method: :patch, class: "game-btn game-btn--success" %>
+            <%= button_to "Not Ready", party_membership_path(@party, current_membership, ready_state: :not_ready), method: :patch, class: "game-btn game-btn--danger" %>
+          <% end %>
+        </div>
+      <% end %>
 
+      <% if @invitations.any? && party_leader?(@party) %>
+        <div class="pending-invitations card">
+          <h3>Pending Requests</h3>
+          <% @invitations.each do |invite| %>
+            <div class="invitation-row">
+              <span class="invitee-name"><%= invite.user.profile_name %></span>
+              <div class="invitation-actions">
+                <%= button_to "Accept", party_invitation_path(invite, status: :accepted), method: :patch, class: "game-btn game-btn--success" %>
+                <%= button_to "Decline", party_invitation_path(invite, status: :declined), method: :patch, class: "game-btn game-btn--danger" %>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+
+    <div class="party-sidebar">
+      <% if party_member?(@party) %>
+        <div class="party-actions-card card">
+          <h3>Actions</h3>
+
+          <% if party_leader?(@party) %>
+            <%= button_to "Start Ready Check", ready_check_party_path(@party), method: :post, class: "game-btn game-btn--primary", disabled: @party.ready_check_running? %>
+
+            <hr>
+            <%= button_to "Disband Party", disband_party_path(@party), method: :post, class: "game-btn game-btn--danger", data: { confirm: "Disband this party?" } %>
+          <% end %>
+
+          <%= button_to "Leave Party", leave_party_path(@party), method: :post, class: "game-btn game-btn--secondary" %>
+        </div>
+      <% else %>
+        <div class="join-party-card card">
+          <h3>Join this Party</h3>
+          <p>Request to join and wait for the leader to accept.</p>
+          <%= button_to "Request to Join", party_invitations_path(@party), method: :post, class: "game-btn game-btn--primary" %>
+        </div>
+      <% end %>
+
+      <div class="party-chat-link card">
+        <h3>Party Chat</h3>
+        <% if @party.chat_channel.present? %>
+          <%= link_to "Open Chat", chat_channel_path(@party.chat_channel), class: "game-btn" %>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>

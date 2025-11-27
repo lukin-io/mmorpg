@@ -7,7 +7,7 @@ class ModerationMailer < ApplicationMailer
 
     mail(
       to: ticket.reporter.email,
-      subject: "Neverlands Moderation Update — Ticket ##{ticket.id}"
+      subject: "Elselands Moderation Update — Ticket ##{ticket.id}"
     )
   end
 
@@ -16,7 +16,7 @@ class ModerationMailer < ApplicationMailer
 
     mail(
       to: ticket.reporter.email,
-      subject: "Neverlands Ticket ##{ticket.id} is now #{ticket.status.humanize}"
+      subject: "Elselands Ticket ##{ticket.id} is now #{ticket.status.humanize}"
     )
   end
 end

@@ -1,4 +1,4 @@
-# MMO_ADDITIONAL_GUIDE.md — Rails Architecture Guide for the Neverlands MMORPG
+# MMO_ADDITIONAL_GUIDE.md — Rails Architecture Guide for the Elselands MMORPG
 
 This guide defines how to translate the **GDD (game design document)** into a clean, maintainable,
 scalable **Ruby on Rails architecture**.
@@ -322,14 +322,14 @@ end
 
 # 7. Summary
 
-This guide ensures that all game mechanics in the Neverlands MMORPG are:
+This guide ensures that all game mechanics in the Elselands MMORPG are:
 
-- deterministic  
-- testable  
-- scalable  
-- Rails-friendly  
-- organized  
-- consistent  
+- deterministic
+- testable
+- scalable
+- Rails-friendly
+- organized
+- consistent
 
 Use this file whenever implementing or modifying combat, movement, items, map systems, or any gameplay logic.
 

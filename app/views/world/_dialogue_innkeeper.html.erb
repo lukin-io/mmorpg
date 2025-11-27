@@ -1,0 +1,36 @@
+<div class="innkeeper-dialogue-section">
+  <div class="innkeeper-header">
+    <span class="player-gold">💰 Gold: <%= result.data[:player_gold] %></span>
+    <span class="player-hp">❤️ HP: <%= result.data[:current_hp] %>/<%= result.data[:max_hp] %></span>
+  </div>
+
+  <div class="room-options">
+    <h3>🛏️ Room Options</h3>
+    <div class="rooms-grid">
+      <% result.data[:room_options].each do |room| %>
+        <div class="room-card">
+          <h4><%= room[:name] %></h4>
+          <p class="room-heal">Restores <%= room[:heal_percent] %>% HP</p>
+          <% if room[:bonus_duration] %>
+            <p class="room-bonus">+ Well Rested buff (<%= room[:bonus_duration] / 60 %> min)</p>
+          <% end %>
+          <p class="room-price"><%= room[:price] %> gold</p>
+          <% if result.data[:player_gold] >= room[:price] %>
+            <%= button_to "Rest Here",
+                  world_dialogue_action_path(
+                    npc_id: npc.id,
+                    action_key: "rest",
+                    action_params: { room_type: room[:key] }
+                  ),
+                  method: :post,
+                  class: "game-btn game-btn--primary",
+                  data: { turbo: true } %>
+          <% else %>
+            <span class="insufficient-gold">Not enough gold</span>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>
+

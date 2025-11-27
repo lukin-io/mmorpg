@@ -1,9 +1,45 @@
-<div class="crafting-preview-panel">
-  <% if preview.present? %>
-    <p>Success chance: <strong><%= preview.success_chance %>%</strong></p>
-    <p>Expected quality: <strong><%= preview.quality_tier.titleize %></strong></p>
-  <% else %>
-    <p>Select a recipe and station to preview success chance.</p>
+<div class="crafting-preview">
+  <h4>Crafting Preview</h4>
+
+  <div class="preview-stats">
+    <div class="stat-row">
+      <span class="label">Success Chance:</span>
+      <span class="value"><%= @preview[:success_chance] %>%</span>
+    </div>
+
+    <div class="stat-row">
+      <span class="label">Quality Bonus:</span>
+      <span class="value">+<%= @preview[:quality_bonus] %></span>
+    </div>
+
+    <div class="stat-row">
+      <span class="label">Crafting Time:</span>
+      <span class="value"><%= distance_of_time_in_words(@preview[:duration_seconds]) %></span>
+    </div>
+
+    <div class="stat-row">
+      <span class="label">XP Gained:</span>
+      <span class="value"><%= @preview[:xp_reward] %> XP</span>
+    </div>
+  </div>
+
+  <% if @preview[:quality_tiers].present? %>
+    <div class="quality-chances">
+      <h5>Quality Chances:</h5>
+      <% @preview[:quality_tiers].each do |tier, chance| %>
+        <div class="quality-row quality-row--<%= tier %>">
+          <span class="tier-name"><%= tier.titleize %></span>
+          <span class="tier-chance"><%= chance %>%</span>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+
+  <% if @preview[:warnings].present? %>
+    <div class="preview-warnings">
+      <% @preview[:warnings].each do |warning| %>
+        <p class="warning">⚠️ <%= warning %></p>
+      <% end %>
+    </div>
   <% end %>
 </div>
-

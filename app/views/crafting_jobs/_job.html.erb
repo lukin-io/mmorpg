@@ -1,12 +1,36 @@
-<div id="<%= dom_id(job) %>" class="crafting-job">
-  <header>
-    <strong><%= job.recipe.name %></strong>
-    <span><%= job.status.humanize %></span>
-  </header>
-  <div class="job-progress">
-    <progress value="<%= job.progress_percent %>" max="100"></progress>
-    <small>Completes at <%= l(job.completes_at, format: :short) %></small>
+<div class="crafting-job crafting-job--<%= job.status %>" id="crafting_job_<%= job.id %>">
+  <div class="job-icon">
+    <%= crafting_job_icon(job) %>
   </div>
-  <p>Quality: <%= job.quality_tier.titleize %> (chance <%= job.success_chance %>%)</p>
-</div>
 
+  <div class="job-info">
+    <h4 class="job-name"><%= job.recipe.name %></h4>
+    <p class="job-station">Station: <%= job.crafting_station.name %></p>
+
+    <% if job.status == "queued" || job.status == "in_progress" %>
+      <div class="job-progress">
+        <div class="progress-bar">
+          <div class="progress-fill" style="width: <%= job.progress_percent %>%"></div>
+        </div>
+        <span class="progress-text"><%= job.progress_percent %>%</span>
+      </div>
+      <p class="job-time">
+        <% if job.completes_at > Time.current %>
+          Completes in: <%= distance_of_time_in_words_to_now(job.completes_at) %>
+        <% else %>
+          Completing...
+        <% end %>
+      </p>
+    <% elsif job.status == "completed" %>
+      <p class="job-result job-result--success">✅ Complete! <%= job.result_quality %> quality</p>
+    <% elsif job.status == "failed" %>
+      <p class="job-result job-result--failure">❌ Failed</p>
+    <% end %>
+  </div>
+
+  <div class="job-actions">
+    <% if job.status == "queued" %>
+      <%= button_to "Cancel", crafting_job_path(job), method: :delete, class: "game-btn game-btn--sm game-btn--danger" %>
+    <% end %>
+  </div>
+</div>

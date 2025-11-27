@@ -1,0 +1,7 @@
+<%# Combat Log Entries %>
+<% entries.each do |entry| %>
+  <div class="combat-log-entry <%= entry_class_for(entry) %>">
+    <span class="log-text"><%= entry %></span>
+  </div>
+<% end %>
+

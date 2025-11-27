@@ -1,22 +1,126 @@
-<section>
-  <header>
-    <h1><%= @auction_listing.item_name %></h1>
-    <p>Quantity: <%= @auction_listing.quantity %></p>
-    <p>Current Bid: <%= @auction_listing.highest_bid&.amount || @auction_listing.starting_bid %> <%= @auction_listing.currency_type %></p>
-    <% if @auction_listing.profession_gate? %>
-      <p>
-        Requires <%= @auction_listing.required_profession.name %>
-        (Skill <%= @auction_listing.required_skill_level %>,
-        Scope: <%= @auction_listing.commission_scope.titleize %>)
-      </p>
-    <% end %>
-  </header>
+<div class="auction-detail" data-controller="auction" data-auction-listing-id-value="<%= @auction_listing.id %>">
+  <div class="page-header">
+    <%= link_to "← Back to Auction House", auction_listings_path, class: "back-link" %>
+    <h1 class="page-title"><%= @auction_listing.item_name %></h1>
+  </div>
 
-  <section>
-    <h2>Place Bid</h2>
-    <%= form_with model: [@auction_listing, @auction_bid] do |form| %>
-      <%= form.number_field :amount %>
-      <%= form.submit "Bid" %>
-    <% end %>
-  </section>
-</section>
+  <div class="auction-detail-layout">
+    <div class="listing-main card">
+      <div class="item-display">
+        <div class="item-icon-large item-icon--<%= @auction_listing.item_metadata&.dig('rarity') || 'common' %>">
+          <%= item_rarity_icon(@auction_listing) %>
+        </div>
+
+        <div class="item-info">
+          <h2 class="item-name"><%= @auction_listing.item_name %></h2>
+          <% if @auction_listing.quantity > 1 %>
+            <p class="item-quantity">Quantity: <%= @auction_listing.quantity %></p>
+          <% end %>
+
+          <% if @auction_listing.item_metadata.present? %>
+            <div class="item-description">
+              <p><%= @auction_listing.item_metadata["description"] %></p>
+            </div>
+
+            <div class="item-stats-list">
+              <% @auction_listing.item_metadata.fetch("stats", {}).each do |stat, value| %>
+                <div class="stat-row">
+                  <span class="stat-name"><%= stat.titleize %></span>
+                  <span class="stat-value">+<%= value %></span>
+                </div>
+              <% end %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+
+      <hr>
+
+      <div class="listing-pricing">
+        <div class="price-row">
+          <span class="label">Starting Bid:</span>
+          <span class="value"><%= number_with_delimiter(@auction_listing.starting_bid) %> <%= currency_icon(@auction_listing.currency_type) %></span>
+        </div>
+
+        <div class="price-row price-row--highlight">
+          <span class="label">Current Bid:</span>
+          <span class="value"><%= number_with_delimiter(@auction_listing.highest_bid&.amount || @auction_listing.starting_bid) %> <%= currency_icon(@auction_listing.currency_type) %></span>
+        </div>
+
+        <% if @auction_listing.buyout_price.present? %>
+          <div class="price-row">
+            <span class="label">Buyout Price:</span>
+            <span class="value"><%= number_with_delimiter(@auction_listing.buyout_price) %> <%= currency_icon(@auction_listing.currency_type) %></span>
+          </div>
+        <% end %>
+
+        <div class="time-remaining">
+          <span class="label">Time Remaining:</span>
+          <span class="value countdown" data-auction-target="countdown" data-ends-at="<%= @auction_listing.ends_at.iso8601 %>">
+            <%= distance_of_time_in_words_to_now(@auction_listing.ends_at) %>
+          </span>
+        </div>
+      </div>
+
+      <hr>
+
+      <div class="seller-info">
+        <span class="label">Seller:</span>
+        <%= link_to @auction_listing.seller.profile_name, profile_path(@auction_listing.seller.profile_name), class: "seller-link" %>
+        <span class="seller-location">Location: <%= @auction_listing.location_key.titleize %></span>
+      </div>
+
+      <% if @auction_listing.profession_gate? %>
+        <div class="profession-requirement">
+          <span class="requirement-badge">Requires: <%= @auction_listing.required_profession.name %> Lv.<%= @auction_listing.required_skill_level %></span>
+        </div>
+      <% end %>
+    </div>
+
+    <div class="bidding-panel card">
+      <h3>Place a Bid</h3>
+
+      <% if @auction_listing.seller == current_user %>
+        <p class="owner-notice">This is your listing.</p>
+        <%= button_to "Cancel Listing", auction_listing_path(@auction_listing), method: :delete, class: "game-btn game-btn--danger", data: { confirm: "Cancel this listing?" } %>
+      <% elsif @auction_listing.ends_at < Time.current %>
+        <p class="expired-notice">This auction has ended.</p>
+      <% else %>
+        <%= form_with model: [@auction_listing, @auction_bid], url: auction_listing_auction_bids_path(@auction_listing), class: "bid-form" do |f| %>
+          <div class="form-group">
+            <%= f.label :amount, "Your Bid (#{@auction_listing.currency_type.titleize})" %>
+            <% min_bid = (@auction_listing.highest_bid&.amount || @auction_listing.starting_bid) + 1 %>
+            <%= f.number_field :amount, class: "form-control", min: min_bid, value: min_bid, required: true %>
+            <p class="form-hint">Minimum bid: <%= number_with_delimiter(min_bid) %></p>
+          </div>
+
+          <%= f.submit "Place Bid", class: "game-btn game-btn--primary" %>
+        <% end %>
+
+        <% if @auction_listing.buyout_price.present? %>
+          <hr>
+          <div class="buyout-section">
+            <p>Or buy it now:</p>
+            <%= button_to "Buyout for #{number_with_delimiter(@auction_listing.buyout_price)} #{currency_icon(@auction_listing.currency_type)}".html_safe, auction_listing_auction_bids_path(@auction_listing, auction_bid: { amount: @auction_listing.buyout_price, buyout: true }), method: :post, class: "game-btn game-btn--success", data: { confirm: "Buy this item for #{number_with_delimiter(@auction_listing.buyout_price)}?" } %>
+          </div>
+        <% end %>
+      <% end %>
+
+      <% if @auction_listing.auction_bids.any? %>
+        <hr>
+        <div class="bid-history">
+          <h4>Bid History</h4>
+          <ul class="bid-list">
+            <% @auction_listing.auction_bids.order(created_at: :desc).limit(5).each do |bid| %>
+              <li class="bid-item">
+                <span class="bidder"><%= bid.bidder.profile_name %></span>
+                <span class="bid-amount"><%= number_with_delimiter(bid.amount) %></span>
+                <span class="bid-time"><%= time_ago_in_words(bid.created_at) %> ago</span>
+              </li>
+            <% end %>
+          </ul>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>

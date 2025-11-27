@@ -1,7 +1,7 @@
 default: &default
   hero:
-    title: "Neverlands Game Overview"
-    subtitle: "Faithfully revive Neverlands.ru with modern UX while honoring its social roots."
+    title: "Elselands Game Overview"
+    subtitle: "Faithfully revive Elselands.ru with modern UX while honoring its social roots."
     tagline: "Rails 8 + Hotwire • deterministic combat • community-first systems"
     ctas:
       - label: "Enter Dashboard"
@@ -13,7 +13,7 @@ default: &default
       title: "Vision & Objectives"
       description: "Every pillar below comes directly from doc/features/7_game_overview.md."
       bullets:
-        - "Faithfully recreate the core Neverlands.ru experience with modern UX while honoring nostalgia."
+        - "Faithfully recreate the core Elselands.ru experience with modern UX while honoring nostalgia."
         - "Foster deep community engagement through shared social hubs, cooperative mechanics, and PvP rivalries."
         - "Provide a long-term progression loop mixing narrative, PvP ladders, crafting mastery, and seasonal events."
       links:
@@ -25,7 +25,7 @@ default: &default
       title: "Target Audience"
       personas:
         - name: "Veteran Heroes"
-          description: "Returning Neverlands players looking for the authentic revival with a respectful UX glow-up."
+          description: "Returning Elselands players looking for the authentic revival with a respectful UX glow-up."
           systems:
             - "Classic turn cadence & combat logs"
             - "Legacy zone layouts rendered with Turbo frames"

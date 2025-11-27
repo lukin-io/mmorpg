@@ -1,0 +1,83 @@
+<div class="tactical-arena-lobby">
+  <div class="page-header">
+    <h1 class="page-title">Tactical Arena</h1>
+    <p class="page-subtitle">Grid-based strategic combat</p>
+  </div>
+
+  <div class="tactical-layout">
+    <div class="tactical-main">
+      <div class="create-match-panel card">
+        <h2>Create Tactical Match</h2>
+        <%= form_with url: tactical_arena_index_path, method: :post, class: "create-form" do |f| %>
+          <div class="form-row">
+            <div class="form-group">
+              <%= f.label :grid_size, "Grid Size" %>
+              <%= f.select :grid_size, [[" 6x6 (Quick)", 6], ["8x8 (Standard)", 8], ["10x10 (Extended)", 10]], {}, class: "form-control" %>
+            </div>
+
+            <div class="form-group">
+              <%= f.label :turn_time_limit, "Turn Time (seconds)" %>
+              <%= f.select :turn_time_limit, [[" 30s (Blitz)", 30], ["60s (Standard)", 60], ["120s (Strategic)", 120]], {}, class: "form-control" %>
+            </div>
+          </div>
+
+          <%= f.submit "Create Match", class: "game-btn game-btn--primary" %>
+        <% end %>
+      </div>
+
+      <div class="available-matches card">
+        <h2>Open Matches</h2>
+        <% if @available_matches.any? %>
+          <div class="matches-list">
+            <% @available_matches.each do |match| %>
+              <div class="match-card">
+                <div class="match-info">
+                  <span class="creator-name"><%= match.creator.name %></span>
+                  <span class="grid-info"><%= match.grid_size %>x<%= match.grid_size %> grid</span>
+                  <span class="time-info"><%= match.turn_time_limit %>s turns</span>
+                </div>
+                <%= button_to "Join Match", join_tactical_arena_path(match), method: :post, class: "game-btn game-btn--primary" %>
+              </div>
+            <% end %>
+          </div>
+        <% else %>
+          <p class="no-matches">No open matches. Create one to start!</p>
+        <% end %>
+      </div>
+    </div>
+
+    <div class="tactical-sidebar">
+      <div class="my-matches card">
+        <h3>Your Matches</h3>
+        <% if @my_matches.any? %>
+          <ul class="match-list">
+            <% @my_matches.each do |match| %>
+              <li class="match-item match-item--<%= match.status %>">
+                <%= link_to tactical_arena_path(match), class: "match-link" do %>
+                  <span class="opponent-name">
+                    vs <%= match.creator == current_character ? match.opponent&.name || "Waiting..." : match.creator.name %>
+                  </span>
+                  <span class="match-status"><%= match.status.titleize %></span>
+                <% end %>
+              </li>
+            <% end %>
+          </ul>
+        <% else %>
+          <p class="no-matches">No active matches.</p>
+        <% end %>
+      </div>
+
+      <div class="tactical-rules card">
+        <h3>How to Play</h3>
+        <ul class="rules-list">
+          <li>🎯 Click tiles to move your character</li>
+          <li>⚔️ Click enemies to attack when in range</li>
+          <li>✨ Use skills for special abilities</li>
+          <li>🛡️ Stand on cover tiles for defense bonus</li>
+          <li>⏱️ Each turn has <%= TacticalMatch::ACTIONS_PER_TURN %> actions</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+

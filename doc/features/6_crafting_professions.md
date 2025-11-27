@@ -31,6 +31,18 @@
 - Tutorial quests (`Game::Quests::TutorialBootstrapper`) introduce gathering tools, crafting trainers, and profession enrollment via `ProfessionsController`.
 - Housing/workshop integration: `Housing::InstanceManager` + `Housing::UpkeepService` tie storage expansions and station access to profession progress.
 
+### Crafting Queue UI (✅ Implemented)
+- **Views**: `index.html.erb` — Active jobs list, recipe browser, craft form
+- **Views**: `_job.html.erb` — Job progress bars, time remaining, status
+- **Views**: `_recipe_card.html.erb` — Recipe details with materials
+- **Views**: `_preview.html.erb` — Success chance, quality tiers, XP reward
+- **Stimulus**: `crafting_controller.js` — Recipe filtering, selection, preview loading
+- **Features**:
+  - Filter recipes by profession, tier, and search
+  - Live preview with success chance calculation
+  - Active job tracking with progress bars
+  - Profession progress display in sidebar
+
 ## Responsible for Implementation Files
 - **Models:** `app/models/profession*.rb`, `app/models/profession_progress.rb`, `app/models/profession_tool.rb`, `app/models/recipe.rb`, `app/models/crafting_job.rb`, `app/models/crafting_station.rb`, `app/models/gathering_node.rb`, `app/models/guild_mission.rb`, `app/models/medical_supply_pool.rb`.
 - **Services:** `app/services/crafting/job_scheduler.rb`, `app/services/crafting/recipe_validator.rb`, `app/services/professions/crafting_outcome_calculator.rb`, `app/services/professions/crafting_outcome_resolver.rb`, `app/services/professions/tool_maintenance.rb`, `app/services/professions/gathering_resolver.rb`, `app/services/economy/demand_tracker.rb`.

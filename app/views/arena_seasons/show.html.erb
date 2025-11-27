@@ -1,0 +1,130 @@
+<div class="arena-season-detail" data-controller="arena-season">
+  <div class="page-header">
+    <%= link_to "← Back to Seasons", arena_seasons_path, class: "back-link" %>
+    <h1 class="page-title"><%= @arena_season.name %></h1>
+    <% if @arena_season.active? %>
+      <span class="season-badge season-badge--active">Active</span>
+    <% else %>
+      <span class="season-badge season-badge--ended">Ended</span>
+    <% end %>
+  </div>
+
+  <div class="season-layout">
+    <div class="season-main">
+      <div class="leaderboard-card card">
+        <h2>Leaderboard</h2>
+
+        <div class="leaderboard-filters">
+          <button class="filter-btn filter-btn--active" data-filter="all">All</button>
+          <button class="filter-btn" data-filter="duel">Duel</button>
+          <button class="filter-btn" data-filter="team_battle">Team Battle</button>
+        </div>
+
+        <table class="leaderboard-table">
+          <thead>
+            <tr>
+              <th>Rank</th>
+              <th>Player</th>
+              <th>Rating</th>
+              <th>W/L</th>
+              <th>Win Rate</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @rankings.each_with_index do |ranking, index| %>
+              <tr class="<%= 'leaderboard-row--highlight' if ranking.character == current_character %>">
+                <td class="rank-cell">
+                  <span class="rank-badge rank-badge--<%= rank_tier(index + 1) %>">
+                    <%= index + 1 %>
+                  </span>
+                </td>
+                <td class="player-cell">
+                  <%= link_to ranking.character.name, profile_path(ranking.character.user.profile_name) %>
+                  <span class="player-level">[<%= ranking.character.level %>]</span>
+                </td>
+                <td class="rating-cell"><%= ranking.rating %></td>
+                <td class="record-cell"><%= ranking.wins %>/<%= ranking.losses %></td>
+                <td class="winrate-cell"><%= (ranking.win_rate * 100).round(1) %>%</td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+
+        <% if @rankings.size >= 50 %>
+          <div class="leaderboard-more">
+            <%= link_to "Load More", arena_season_path(@arena_season, page: 2), class: "game-btn" %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+
+    <div class="season-sidebar">
+      <div class="season-info-card card">
+        <h3>Season Info</h3>
+
+        <div class="info-rows">
+          <div class="info-row">
+            <span class="label">Start Date:</span>
+            <span class="value"><%= @arena_season.starts_at.strftime("%B %d, %Y") %></span>
+          </div>
+          <div class="info-row">
+            <span class="label">End Date:</span>
+            <span class="value"><%= @arena_season.ends_at.strftime("%B %d, %Y") %></span>
+          </div>
+          <div class="info-row">
+            <span class="label">Total Matches:</span>
+            <span class="value"><%= @arena_season.arena_matches.count %></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="season-rewards-card card">
+        <h3>Season Rewards</h3>
+
+        <div class="rewards-tiers">
+          <div class="reward-tier reward-tier--legendary">
+            <span class="tier-name">🏆 Champion (Top 1)</span>
+            <ul>
+              <li>Exclusive Champion Title</li>
+              <li>Champion's Mount</li>
+              <li>5000 Gold</li>
+            </ul>
+          </div>
+
+          <div class="reward-tier reward-tier--epic">
+            <span class="tier-name">🥇 Gladiator (Top 10)</span>
+            <ul>
+              <li>Gladiator Title</li>
+              <li>Unique Weapon Skin</li>
+              <li>2000 Gold</li>
+            </ul>
+          </div>
+
+          <div class="reward-tier reward-tier--rare">
+            <span class="tier-name">🥈 Combatant (Top 100)</span>
+            <ul>
+              <li>Combatant Title</li>
+              <li>500 Gold</li>
+            </ul>
+          </div>
+
+          <div class="reward-tier reward-tier--common">
+            <span class="tier-name">🎖️ Participant</span>
+            <ul>
+              <li>Season Badge</li>
+              <li>100 Gold</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <% if @arena_season.active? %>
+        <div class="quick-play-card card">
+          <h3>Quick Play</h3>
+          <%= link_to "Enter Arena", arena_index_path, class: "game-btn game-btn--primary" %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>
+

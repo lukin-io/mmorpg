@@ -29,7 +29,7 @@ module MailMessages
     attr_reader :sender
 
     def default_sender
-      User.find_by(email: "admin@neverlands.test") || User.first!
+      User.find_by(email: "admin@elselands.test") || User.first!
     end
 
     def filter_payload(payload)

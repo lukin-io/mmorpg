@@ -1,55 +1,169 @@
-<section class="combat-log-view" data-mobile-hud-target="panel" id="<%= dom_id(@battle) %>">
-  <header class="mb-4 flex justify-between items-center">
-    <div>
-      <h1 class="text-3xl font-semibold">Battle #<%= @battle.id %> Logs</h1>
-      <p class="text-slate-400 text-sm">Zone: <%= @battle.zone&.name || "Unknown" %> • Mode: <%= @battle.pvp_mode || @battle.battle_type %></p>
-    </div>
-    <div class="flex gap-2">
-      <%= link_to "Export CSV", combat_log_path(@battle, format: :csv, filter: params[:filter], actor_id: params[:actor_id]), class: "btn-secondary" %>
-      <%= link_to "Share JSON", combat_log_path(@battle, format: :json), class: "btn-secondary" %>
-    </div>
-  </header>
+<%# Combat Log Viewer - Rich log rendering with statistics %>
+<section class="combat-log-viewer"
+         data-controller="combat-log"
+         data-combat-log-battle-id-value="<%= @battle.id %>"
+         data-combat-log-ended-value="<%= @battle_ended %>">
 
-  <% if @analytics %>
-    <section class="bg-slate-900 rounded-lg p-4 mb-4">
-      <h2 class="text-lg font-semibold mb-2">Analytics</h2>
-      <p class="text-sm text-slate-400">Total Damage: <%= @analytics.payload["total_damage"] %> • Total Healing: <%= @analytics.payload["total_healing"] %></p>
-    </section>
+  <%# Header with decorative elements %>
+  <div class="combat-log-header">
+    <div class="header-decoration left"></div>
+    <div class="header-content">
+      <h1>⚔️ Battle Log #<%= @battle.id %></h1>
+      <p class="battle-meta">
+        <span class="zone"><%= @battle.zone&.name || "Unknown Zone" %></span>
+        <span class="separator">•</span>
+        <span class="type"><%= @battle.battle_type.titleize %></span>
+        <span class="separator">•</span>
+        <span class="rounds">Round <%= @battle.round_number %></span>
+        <% if @battle_ended %>
+          <span class="separator">•</span>
+          <span class="status completed">Battle Ended</span>
+        <% else %>
+          <span class="separator">•</span>
+          <span class="status ongoing">In Progress</span>
+        <% end %>
+      </p>
+    </div>
+    <div class="header-decoration right"></div>
+  </div>
+
+  <%# View Mode Tabs %>
+  <div class="combat-log-tabs">
+    <% if @is_public %>
+      <%= link_to "📜 Combat Log",
+          public_battle_log_path(@battle.share_token, p: 1),
+          class: "tab #{@view_mode == :log ? 'active' : ''}" %>
+      <%= link_to "📊 Statistics",
+          public_battle_log_path(@battle.share_token, stat: 1),
+          class: "tab #{@view_mode == :statistics ? 'active' : ''}" %>
+    <% else %>
+      <%= link_to "📜 Combat Log",
+          combat_log_path(@battle, p: 1),
+          class: "tab #{@view_mode == :log ? 'active' : ''}" %>
+      <%= link_to "📊 Statistics",
+          combat_log_path(@battle, stat: 1),
+          class: "tab #{@view_mode == :statistics ? 'active' : ''}" %>
+    <% end %>
+    <div class="tab-spacer"></div>
+    <div class="export-buttons">
+      <% unless @is_public %>
+        <button type="button"
+                class="export-btn share-btn"
+                data-controller="clipboard"
+                data-clipboard-text-value="<%= public_battle_log_url(@battle.share_token) %>"
+                data-action="click->clipboard#copy"
+                title="Copy shareable link">
+          🔗 Share
+        </button>
+      <% end %>
+      <% if @is_public %>
+        <%= link_to "📋 JSON", public_battle_log_path(@battle.share_token, format: :json), class: "export-btn" %>
+      <% else %>
+        <%= link_to "📄 CSV", combat_log_path(@battle, format: :csv), class: "export-btn" %>
+        <%= link_to "📋 JSON", combat_log_path(@battle, format: :json), class: "export-btn" %>
+      <% end %>
+    </div>
+  </div>
+
+  <% if @is_public %>
+    <div class="public-notice">
+      <span class="notice-icon">🌐</span>
+      <span class="notice-text">Public Battle Log — Anyone with this link can view</span>
+    </div>
   <% end %>
 
-  <section class="mb-4">
-    <%= form_with url: combat_log_path(@battle), method: :get, class: "flex gap-2" do |form| %>
-      <div>
-        <%= form.label :filter, "Filter" %>
-        <%= form.select :filter, [["All", nil], ["Damage", :damage], ["Healing", :healing]], selected: params[:filter] %>
+  <% if @view_mode == :statistics %>
+    <%# Statistics View %>
+    <%= render "statistics" %>
+  <% else %>
+    <%# Log View %>
+    <div class="combat-log-content">
+      <%# Filters %>
+      <div class="log-filters">
+        <%= form_with url: combat_log_path(@battle), method: :get, class: "filter-form", data: {turbo_frame: "_self"} do |f| %>
+          <div class="filter-group">
+            <%= f.label :filter, "Filter:" %>
+            <%= f.select :filter, [["All Events", nil], ["Damage Only", "damage"], ["Healing Only", "healing"]], {}, {onchange: "this.form.submit()"} %>
+          </div>
+          <div class="filter-group">
+            <%= f.label :element, "Element:" %>
+            <%= f.select :element, [["All", nil], ["Normal", "normal"], ["Fire", "fire"], ["Water", "water"], ["Earth", "earth"], ["Air", "air"], ["Arcane", "arcane"]], {}, {onchange: "this.form.submit()"} %>
+          </div>
+          <div class="filter-group">
+            <%= f.label :actor_id, "Actor:" %>
+            <%= f.select :actor_id, [["All", nil]] + @battle.battle_participants.map { |p| [p.combatant_name, p.id] }, {}, {onchange: "this.form.submit()"} %>
+          </div>
+        <% end %>
       </div>
-      <div>
-        <%= form.label :actor_id, "Actor ID" %>
-        <%= form.number_field :actor_id, value: params[:actor_id] %>
-      </div>
-      <div class="self-end">
-        <%= form.submit "Apply", class: "btn-primary" %>
-      </div>
-    <% end %>
-  </section>
 
-  <ol class="combat-log space-y-2">
-    <% @combat_log_entries.each do |entry| %>
-      <li class="bg-slate-900 rounded px-3 py-2">
-        <div class="flex justify-between text-sm">
-          <strong>Round <%= entry.round_number %>, Seq <%= entry.sequence %></strong>
-          <span class="text-slate-500">DMG: <%= entry.damage_amount %> • HEAL: <%= entry.healing_amount %></span>
+      <%# Log Entries %>
+      <div class="log-entries" data-combat-log-target="entries">
+        <% @combat_log_entries.group_by(&:round_number).each do |round, entries| %>
+          <div class="round-group">
+            <div class="round-header">Round <%= round %></div>
+            <% entries.each do |entry| %>
+              <%= render "log_entry", entry: entry %>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+
+      <%# Pagination %>
+      <% if @total_pages && @total_pages > 1 %>
+        <div class="log-pagination">
+          <span class="page-label">Pages:</span>
+          <% (1..@total_pages).each do |page| %>
+            <% if page == @page %>
+              <span class="current-page"><%= page %></span>
+            <% else %>
+              <% if @is_public %>
+                <%= link_to page, public_battle_log_path(@battle.share_token, p: page), class: "page-link" %>
+              <% else %>
+                <%= link_to page, combat_log_path(@battle, p: page, filter: params[:filter], element: params[:element], actor_id: params[:actor_id]), class: "page-link" %>
+              <% end %>
+            <% end %>
+          <% end %>
         </div>
-        <p class="text-slate-200"><%= entry.message %></p>
-        <div class="text-right">
-          <%= link_to "Report", new_moderation_report_path(
-            source: :combat_log,
-            origin_reference: entry.id,
-            metadata: { battle_id: @battle.id, round_number: entry.round_number }
-          ), class: "text-xs text-red-400 underline" %>
+      <% end %>
+    </div>
+
+    <%# Participants Panel (shown when battle ongoing) %>
+    <% unless @battle_ended %>
+      <div class="battle-participants">
+        <hr>
+        <p class="participants-label">Battle Participants:</p>
+        <div class="teams-display">
+          <div class="team team-alpha">
+            <% @team_alpha.each_with_index do |participant, i| %>
+              <span class="participant <%= participant.is_alive ? 'alive' : 'dead' %>">
+                <%= participant.combatant_name %>
+                <span class="vitals">[<%= participant.current_hp %>/<%= participant.max_hp %>]</span>
+              </span><%= i < @team_alpha.length - 1 ? ", " : "" %>
+            <% end %>
+          </div>
+          <span class="vs">vs</span>
+          <div class="team team-beta">
+            <% @team_beta.each_with_index do |participant, i| %>
+              <span class="participant <%= participant.is_alive ? 'alive' : 'dead' %>">
+                <%= participant.combatant_name %>
+                <span class="vitals">[<%= participant.current_hp %>/<%= participant.max_hp %>]</span>
+              </span><%= i < @team_beta.length - 1 ? ", " : "" %>
+            <% end %>
+          </div>
         </div>
-      </li>
+      </div>
     <% end %>
-  </ol>
+  <% end %>
+
+  <%# Footer %>
+  <div class="combat-log-footer">
+    <div class="footer-decoration left"></div>
+    <div class="footer-links">
+      <%= link_to "← Back to Battle", combat_path, class: "footer-link" if @battle.active? %>
+      <%= link_to "← Back to Arena", arena_path, class: "footer-link" if @battle.battle_type == "pvp" %>
+      <%= link_to "← Back to World", world_path, class: "footer-link" %>
+    </div>
+    <div class="footer-decoration right"></div>
+  </div>
 </section>
 

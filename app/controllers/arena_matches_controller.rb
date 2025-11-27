@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class ArenaMatchesController < ApplicationController
-  before_action :set_arena_match, only: [:show, :spectate]
+  before_action :set_arena_match, only: [:show, :spectate, :log]
 
   def index
     @arena_matches = policy_scope(ArenaMatch).recent.includes(arena_participations: :character)
@@ -11,6 +11,23 @@ class ArenaMatchesController < ApplicationController
   def show
     authorize @arena_match
     @participations = @arena_match.arena_participations.includes(:character)
+    @broadcaster = Arena::CombatBroadcaster.new(@arena_match)
+
+    respond_to do |format|
+      format.html
+      format.json { render json: match_payload }
+    end
+  end
+
+  # GET /arena_matches/:id/log
+  def log
+    authorize @arena_match, :show?
+    @combat_log = @arena_match.metadata["combat_log"] || []
+
+    respond_to do |format|
+      format.html { render partial: "arena_matches/combat_log", locals: {log: @combat_log} }
+      format.json { render json: {log: @combat_log} }
+    end
   end
 
   def create
@@ -42,6 +59,27 @@ class ArenaMatchesController < ApplicationController
 
   def set_arena_match
     @arena_match = ArenaMatch.find(params[:id])
+  end
+
+  def match_payload
+    {
+      id: @arena_match.id,
+      status: @arena_match.status,
+      match_type: @arena_match.match_type,
+      spectator_code: @arena_match.spectator_code,
+      started_at: @arena_match.started_at&.iso8601,
+      ended_at: @arena_match.ended_at&.iso8601,
+      duration: @arena_match.duration,
+      participants: @participations.map do |p|
+        {
+          character_id: p.character_id,
+          character_name: p.character.name,
+          team: p.team,
+          result: p.result,
+          rating_delta: p.rating_delta
+        }
+      end
+    }
   end
 
   def build_participants

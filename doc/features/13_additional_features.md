@@ -38,28 +38,54 @@
 
 ---
 
-## Combat Logs & Analytics
+## Combat Logs & Analytics (✅ Implemented)
 - **Data Model:** `CombatLogEntry` now records actor/target references, ability IDs, damage/healing totals, and tag arrays. `CombatAnalyticsReport` stores per-battle aggregates (damage, healing, ability usage, duration).
 - **Services & Jobs:** `Game::Combat::LogWriter` writes enriched payloads, `Game::Combat::Analytics::ReportBuilder` summarizes battles, and `Combat::AggregateStatsJob` runs via `Game::Combat::PostBattleProcessor`.
 - **Controllers & Views:** `CombatLogsController#show` supports HTML plus JSON/CSV exports with damage/healing/actor filters. `app/views/combat_logs/show.html.erb` displays analytics cards, filter forms, and moderation links, keeping Turbo streams in sync with report downloads.
+- **Stimulus Controller:** `combat_analytics_controller.js` provides:
+  - DPS/HPS calculation from log entries
+  - Bar chart visualization for damage/healing by source
+  - Ability breakdown table with percentages
+  - JSON/CSV export functions
+  - Entry filtering by type
 
 ---
 
-## Mobile Compatibility & HUD
-- **Stimulus & Styles:** The global `mobile-hud` controller collapses panels on small viewports; `app/assets/stylesheets/application.css` adds responsive button styles and layout adjustments across housing, pets, mounts, achievements, and combat logs.
+## Mobile Compatibility & HUD (✅ Implemented)
+- **Stimulus Controller:** `mobile_hud_controller.js` provides:
+  - Touch swipe gestures (left/right/up/down) for panel navigation
+  - Panel toggle with slide animations
+  - Overlay backdrop for modal-style panels
+  - Quick action buttons for common actions
+  - Haptic feedback via `navigator.vibrate`
+  - Responsive breakpoint detection
+- **CSS Styles:** Full mobile-first responsive layout with:
+  - Fixed bottom quick-action bar
+  - Slide-in panels from edges
+  - Touch-optimized button sizes
+  - Panel overlay for modal behavior
 - **View Hooks:** Each major dashboard marks its cards with `data-mobile-hud-target="panel"` so gesture toggles behave consistently without duplicating JS.
 
 ---
 
-## Moderation & Reporting UX Enhancements
+## Moderation & Reporting UX Enhancements (✅ Implemented)
 - **Player Panel:** `Moderation::PanelBuilder` aggregates penalties, ticket status, and policy summaries. `Moderation::PanelsController#show` renders the logged-in player panel (`app/views/moderation/panels/show.html.erb`), giving users visibility into enforcement actions and appeal states.
-- **Guideline Tooltips:** `moderation-guideline` Stimulus controller powers inline reminders wired into chat message forms and arena headers, reinforcing community expectations.
+- **Guideline Tooltips:** `moderation_guideline_controller.js` provides:
+  - Hover tooltips with category-specific rules (chat, arena, trade, general)
+  - Inline reminder banners that appear on focus
+  - Auto-hide timers with fade animations
+  - Link to full guidelines page
+  - Default rule sets for each context
 - **Docs:** `doc/flow/5_moderation_live_ops.md` now documents the transparency panel and tooltip behavior.
 
 ---
 
-## Future Roadmap Hooks
-- **Integration Tokens & Webhooks:** `IntegrationToken`, `WebhookEndpoint`, `WebhookEvent`, `Webhooks::EventDispatcher`, and `Webhooks::DeliverJob` provide authenticated webhook delivery with HTTP/S validation and HMAC signatures.
+## Integration & Webhooks (✅ Implemented)
+- **Webhook System:**
+  - `WebhookEvent` model tracks event payloads, status, attempts, and delivery timestamps
+  - `Webhooks::EventDispatcher` dispatches events to subscribed endpoints with HMAC signatures
+  - `Webhooks::DeliverJob` handles async delivery with exponential backoff retry (5 attempts)
+  - Supported events: `player.level_up`, `player.achievement`, `arena.match_complete`, `dungeon.complete`, `auction.sale`, `clan.war_declared`, `clan.war_result`
 - **Fan Tool API:** `Api::V1::BaseController` + `Api::V1::FanToolsController#index` expose curated housing/achievement feeds for community tools via `X-Integration-Token`.
 - **Arena Stream Embeds:** `app/views/arena_matches/show.html.erb` can render Twitch players when clans schedule cross-promo events.
 - **Documentation:** README, `doc/flow/2_user_meta_progression.md`, `doc/flow/3_player_character_systems.md`, and `changelog.md` all highlight these integrations.

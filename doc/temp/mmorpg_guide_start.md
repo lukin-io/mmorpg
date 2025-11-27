@@ -48,7 +48,7 @@ Here’s a generalized pair of docs you can drop in as `AGENT.md` and `GUIDE.md`
 
 *   Add Hotwire (Turbo + Stimulus) and classic Rails HTML views.
 
- Your Neverlands MMORPG GDD stays as a separate domain document you reference for behavior, not as coding standards. neverlands_clone_gdd
+ Your Elselands MMORPG GDD stays as a separate domain document you reference for behavior, not as coding standards. elselands_clone_gdd
 
 You can tune wording per project, but this should work as a reusable baseline.
 
@@ -64,7 +64,7 @@ Copy code
 ```markdown
 # AGENT.md — General Ruby on Rails Engineering Agent
 
-This repository is a **Ruby on Rails application** (HTML + Hotwire and optionally JSON APIs).  
+This repository is a **Ruby on Rails application** (HTML + Hotwire and optionally JSON APIs).
 This file defines how the engineering agent should behave when making changes.
 
 If this file conflicts with **project‑specific docs** (`README`, `CONTRIBUTING`, etc.), **project docs win**.
@@ -84,14 +84,14 @@ If this file conflicts with **project‑specific docs** (`README`, `CONTRIBUTING
 
 bash Copy code   ```bash
 bin/rails db:prepare
-```  
+```
 *   If present, always prefer project wrappers such as:
 
 bash Copy code   ```bash
 bin/setup
 bin/dev
 bin/ci
-```  
+```
 instead of manually wiring processes.
 
 *   Follow any additional setup instructions described in the project `README` (JS bundler, Redis, etc.).
@@ -107,7 +107,7 @@ Before returning a patch, run all **relevant** checks. Common ones:
 
 bash Copy code   ```bash
 bundle exec rubocop
-```  
+```
 2.   **Tests**
 
 Use whatever the project uses:
@@ -116,20 +116,20 @@ Use whatever the project uses:
 
 bash Copy code   ```bash
 bundle exec rspec
-```  
+```
     *   or Minitest:
 
 bash Copy code   ```bash
 bin/rails test
 bin/rails test:system
-```  
+```
 
 3.   **Security (if available)**
 
 bash Copy code   ```bash
 bundle exec brakeman -q
 bundle exec bundle audit check --update
-```  
+```
 4.   **Frontend/JS/system tests**
 
  If the project defines them (e.g. `yarn test`, `npm test`, additional `bin/rails test:*` tasks), run them as well.
@@ -263,7 +263,7 @@ def create
     end
   end
 end
-```  
+```
 *   On validation failure, re‑render the form within the same frame with HTTP 422 (for APIs) or an appropriate status for HTML.
 
 ### 5.2 Stimulus patterns
@@ -362,7 +362,7 @@ CHECKS
 - bundle exec rspec             # exit 0
 - bundle exec brakeman -q       # not available in this project
 - bundle exec bundle audit ...  # exit 0
-```  
+```
 
 This general contract is meant to be reused across **multiple Rails projects** (monoliths, Hotwire apps, and APIs).
 
@@ -408,7 +408,7 @@ This guide applies to **full‑stack Rails apps**:
 
 ## 1) Philosophy & Decision Rules
 
-- **Deliver as a senior Rails engineer.**  
+- **Deliver as a senior Rails engineer.**
   Code should be maintainable, testable, and idiomatic.
 
 - **Rails‑way first, KISS over patterns.**
@@ -419,21 +419,21 @@ This guide applies to **full‑stack Rails apps**:
   - Prefer server‑rendered HTML and Turbo updates.
   - Reach for heavy SPA frameworks only when absolutely necessary.
 
-- **DRY when duplication hurts, not before.**  
+- **DRY when duplication hurts, not before.**
   Avoid speculative abstractions; prefer explicit code until duplication is real and painful.
 
-- **Selective SOLID.**  
+- **Selective SOLID.**
   Apply only where it clarifies the code and makes testing easier; avoid ceremony.
 
-- **Consistent APIs.**  
+- **Consistent APIs.**
   When exposing JSON:
   - Use a single serialization strategy (Jbuilder, Blueprinter, AMS, or plain `render json:`).
   - Keep status codes and error formats predictable.
 
-- **Greenfield assumption (`in_development: true`).**  
+- **Greenfield assumption (`in_development: true`).**
   In young projects, it’s okay to reshape schema/models aggressively. In mature projects, favour additive/migratory changes over breaking ones.
 
-- **Document the change.**  
+- **Document the change.**
   Significant features/fixes should result in a short entry in `CHANGELOG.md` and/or updated `README.md`.
 
 ---
@@ -471,7 +471,7 @@ def perform
 
   # ...
 end
-```  
+```
 *   Keep methods small and focused; aim for one responsibility per method.
 
 *   Use Ruby 3 features (safe navigation, pattern matching) when they **improve clarity**, not just because they’re new.
@@ -499,7 +499,7 @@ ruby Copy code   ```ruby
 def post_params
   params.require(:post).permit(:title, :body, :published_at, :category_id)
 end
-```  
+```
 *   **Routing:**
 
     *   Use `resources` and shallow nesting.
@@ -546,7 +546,7 @@ erb Copy code   ```erb
 <%= turbo_stream.replace "new_post" do %>
   <%= render "form", post: Post.new %>
 <% end %>
-```  
+```
 *   Controllers should typically respond to both HTML and `turbo_stream` for create/update/destroy actions.
 
 ### 5.3 Stimulus
@@ -564,7 +564,7 @@ export default class extends Controller {
     this.contentTarget.hidden = !this.contentTarget.hidden
   }
 }
-```  
+```
 *   Bind via data attributes in views:
 
 erb Copy code   ```erb
@@ -574,7 +574,7 @@ erb Copy code   ```erb
     Hidden content
   </div>
 </div>
-```  
+```
 *   Avoid inline scripts; keep JS inside controllers.
 
 * * *
@@ -627,12 +627,12 @@ When the app exposes JSON endpoints:
 
 ruby Copy code   ```ruby
 scope :published, -> { where.not(published_at: nil) }
-```  
+```
 *   Use enums for finite sets of states:
 
 ruby Copy code   ```ruby
 enum status: { draft: 0, published: 1, archived: 2 }
-```  
+```
 *   Minimize callbacks; they can hide side effects. When behavior becomes complex, consider services or explicit orchestration.
 
 ### 7.1 Migrations
@@ -675,7 +675,7 @@ class Orders::Checkout
   end
   # ...
 end
-```  
+```
 *   Services should be small and mostly stateless.
 
 *   Precede non‑trivial services with a short doc comment:
@@ -1070,7 +1070,7 @@ Here are your downloads:
 
     *   `GUIDE.md`
 
-2.   In your GDD folder (e.g. `doc/gdd/neverlands_clone.md`), you can add a short “Technical implementation” note:
+2.   In your GDD folder (e.g. `doc/gdd/elselands_clone.md`), you can add a short “Technical implementation” note:
 
 > Implementation must follow AGENT.md and GUIDE.md in the repo (Rails monolith + Hotwire).
 
@@ -1080,7 +1080,7 @@ If you want, next step I can add a tiny `README` section stub for the MMORPG rep
 
 ##### You said:
 
-Here's another AGENTS as well, could we borrow something for our 'general' ones? 
+Here's another AGENTS as well, could we borrow something for our 'general' ones?
 ```
 # CLAUDE.md
 
@@ -1330,7 +1330,7 @@ erb <!-- GOOD: Declarative - HTML declares what happens --><div data-controller=
 
 ### Testing Examples
 ```
-ruby # GOOD - Testing critical domain business logic test "syncs balances" do Holding::Syncer.any_instance.expects(:sync_holdings).returns([]).once assert_difference "@account.balances.count", 2 do Balance::Syncer.new(@account, strategy: :forward).sync_balances end end # BAD - Testing ActiveRecord functionality test "saves balance" do balance_record = Balance.new(balance: 100, currency: "USD") assert balance_record.save end 
+ruby # GOOD - Testing critical domain business logic test "syncs balances" do Holding::Syncer.any_instance.expects(:sync_holdings).returns([]).once assert_difference "@account.balances.count", 2 do Balance::Syncer.new(@account, strategy: :forward).sync_balances end end # BAD - Testing ActiveRecord functionality test "saves balance" do balance_record = Balance.new(balance: 100, currency: "USD") assert balance_record.save end
 ```
 ### Stubs and Mocks
 - Use `mocha` gem
@@ -1418,7 +1418,7 @@ Here are the refreshed files:
 
 You can just drop these into the root of your MMORPG repo and plug them into Cursor/agents.
 
-If you want, next step we can add **one tiny section per file** that’s _specifically_ “Neverlands clone notes” (e.g. where GDD lives, high-level domain objects: Player, Character, Inventory, Map, CombatLog, etc.) while keeping everything else reusable for future projects.
+If you want, next step we can add **one tiny section per file** that’s _specifically_ “Elselands clone notes” (e.g. where GDD lives, high-level domain objects: Player, Character, Inventory, Map, CombatLog, etc.) while keeping everything else reusable for future projects.
 
 ##### You said:
 
@@ -1538,7 +1538,7 @@ You now have **Version 2**, which is:
 
 *   Borrowed universally good patterns from Claude’s MD
 
-*   Still clean, realistic, and usable for your Neverlands MMORPG project **and** future Rails monoliths
+*   Still clean, realistic, and usable for your Elselands MMORPG project **and** future Rails monoliths
 
 This is now the best possible general-purpose agent + engineering guide for **any** full-stack Rails monolith you build.
 
@@ -1652,9 +1652,9 @@ markdown
 Copy code
 
 ```markdown
-# Neverlands — Ruby on Rails MMORPG (Hotwire Monolith)
+# Elselands — Ruby on Rails MMORPG (Hotwire Monolith)
 
-A full-stack Ruby on Rails MMORPG inspired by the classic Neverlands.ru.  
+A full-stack Ruby on Rails MMORPG inspired by the classic Elselands.ru.
 This project is a **server-rendered Rails monolith** using **Hotwire (Turbo + Stimulus)** for reactive UI, backed by a clean and modular domain architecture.
 
 ---
@@ -1677,7 +1677,7 @@ This project is a **server-rendered Rails monolith** using **Hotwire (Turbo + St
 
 ## 🎮 Project Overview
 
-This is a clone/re-imagining of the classic MMORPG **Neverlands.ru**, featuring:
+This is a clone/re-imagining of the classic MMORPG **Elselands.ru**, featuring:
 
 - Turn-based combat (PvE & PvP)
 - Grid-based movement
@@ -1692,7 +1692,7 @@ This is a clone/re-imagining of the classic MMORPG **Neverlands.ru**, featuring:
 The full game design is documented in:
 ```
 
-/doc/gdd/neverlands_clone_gdd.md
+/doc/gdd/elselands_clone_gdd.md
 
 yaml
 
@@ -1857,7 +1857,7 @@ This project follows a **clean Rails + domain-driven game logic** approach:
 bash Copy code   ```
 app/services/game/
 app/lib/game/
-```  
+```
 *   Hotwire ensures interactive gameplay without SPA overhead
 
 *   Database constraints maintain world consistency
@@ -1936,15 +1936,15 @@ Copy code
 
 It will define:
 
-- domain conventions  
-- folder structure  
-- naming rules  
-- combat formulas  
-- progression architecture  
-- testing strategy for game mechanics  
-- clear patterns for new gameplay features  
+- domain conventions
+- folder structure
+- naming rules
+- combat formulas
+- progression architecture
+- testing strategy for game mechanics
+- clear patterns for new gameplay features
 
-Just say:  
+Just say:
 👉 **“Generate MMO_ADDITIONAL_GUIDE.md”**
 ```
 
@@ -2118,7 +2118,7 @@ GDD                      ← for gameplay rules, referenced manually
 You say:
 
 > “Implement turn resolution following
-> 
+>
 >  AGENT.md + GUIDE.md + MMO_ADDITIONAL_GUIDE.md + GDD.”
 
 AI will:
@@ -2277,7 +2277,7 @@ They look similar because both are _Rails guides_, but their **purpose and scope
 | File | Purpose |
 | --- | --- |
 | **GUIDE.md** | Rails engineering standards for _any_ monolith app. Hotwire, models, controllers, testing, Rails-way patterns. |
-| **MMO_ADDITIONAL_GUIDE.md** | How the _Neverlands MMORPG_ should be architected inside Rails: combat, turns, items, skills, zones, map grid, game logic. |
+| **MMO_ADDITIONAL_GUIDE.md** | How the _Elselands MMORPG_ should be architected inside Rails: combat, turns, items, skills, zones, map grid, game logic. |
 
 **GUIDE.md** is universal.
 
@@ -2530,7 +2530,7 @@ If you’re writing:
 
 **Game engine architecture.**
 
- Defines how to implement your Neverlands clone.
+ Defines how to implement your Elselands clone.
 
  Knows stats, combat, turns, movement, loot, zones, NPCs.
 
@@ -2943,7 +2943,7 @@ Copy code
 ```markdown
 # AGENT.md — Global Rules for the AI Assistant
 
-This project uses additional domain-specific guides.  
+This project uses additional domain-specific guides.
 ALWAYS load and follow these files when relevant:
 
 - [GUIDE.md](GUIDE.md)
@@ -3128,7 +3128,7 @@ Just tell me!
 
 ##### You said:
 
-My agents.md's top looks like that, correct? 
+My agents.md's top looks like that, correct?
 ```
 # AGENT.md — General Ruby on Rails Engineering Agent
 
@@ -3344,7 +3344,7 @@ If any file opens blank or errors, tell me and I will rebuild them instantly.
 
 ##### You said:
 
-Review: 
+Review:
 ```
 # AGENT.md — General Ruby on Rails Engineering Agent
 
@@ -3468,7 +3468,7 @@ Perfect where it is — the agent will read it before acting.
 Cursor agents make fewer mistakes when you explicitly say:
 
 > These guides supplement this AGENT.md.
-> 
+>
 >  When instructions conflict, AGENT.md wins.
 
 Insert this right after your “authoritative sources” paragraph:
@@ -3833,7 +3833,7 @@ md
 Copy code
 
 ```md
-If any guide contradicts AGENT.md, **AGENT.md takes priority**, because it defines how the AI assistant must behave.  
+If any guide contradicts AGENT.md, **AGENT.md takes priority**, because it defines how the AI assistant must behave.
 For domain rules, the corresponding guide (combat, maps, items, etc.) is authoritative.
 ```
 
@@ -3864,7 +3864,7 @@ Just tell me.
 
 ##### You said:
 
-Ok, here's how my structure and docs for MMORPG (Neverlands.ru) analog looks like: 
+Ok, here's how my structure and docs for MMORPG (Elselands.ru) analog looks like:
 ```
 lukin@pc mmorpg $ ls -na
 total 180

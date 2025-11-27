@@ -1,0 +1,85 @@
+<div class="enhancement-detail" data-controller="enhancement">
+  <div class="page-header">
+    <%= link_to "← Back to Enhancement", equipment_enhancements_path, class: "back-link" %>
+    <h1 class="page-title">Enhance: <%= @item.item_template.name %></h1>
+  </div>
+
+  <div class="enhancement-workshop">
+    <div class="item-display card">
+      <div class="item-showcase">
+        <div class="item-icon-large item-rarity--<%= @item.item_template.rarity %>">
+          <%= item_slot_icon(@item.item_template) %>
+          <% if @current_level > 0 %>
+            <span class="current-enhancement">+<%= @current_level %></span>
+          <% end %>
+        </div>
+
+        <div class="enhancement-arrow">→</div>
+
+        <div class="item-icon-large item-rarity--<%= @item.item_template.rarity %> preview">
+          <%= item_slot_icon(@item.item_template) %>
+          <span class="next-enhancement">+<%= @next_level %></span>
+        </div>
+      </div>
+
+      <div class="item-info">
+        <h2><%= @item.item_template.name %></h2>
+        <p class="rarity rarity--<%= @item.item_template.rarity %>"><%= @item.item_template.rarity.titleize %></p>
+      </div>
+    </div>
+
+    <div id="enhancement_preview">
+      <%= render "equipment_enhancements/preview", item: @item, current_stats: @item.item_template.stats || {}, preview_stats: calculate_enhanced_stats(@item, @next_level), stat_changes: {} %>
+    </div>
+
+    <div class="enhancement-requirements card">
+      <h3>Enhancement Requirements</h3>
+
+      <div class="requirement-row">
+        <span class="req-icon">🪙</span>
+        <span class="req-label">Gold Cost:</span>
+        <span class="req-value <%= 'met' if current_character.gold >= @enhancement_cost %>">
+          <%= number_with_delimiter(@enhancement_cost) %>
+          (You have: <%= number_with_delimiter(current_character.gold) %>)
+        </span>
+      </div>
+
+      <div class="requirement-row">
+        <span class="req-icon">📦</span>
+        <span class="req-label">Materials:</span>
+        <span class="req-value">
+          <%= @required_materials[:quantity] %>x <%= @required_materials[:material_key].titleize %>
+        </span>
+      </div>
+
+      <div class="requirement-row">
+        <span class="req-icon">🎯</span>
+        <span class="req-label">Success Rate:</span>
+        <span class="req-value success-rate--<%= success_rate_class(@success_rate) %>">
+          <%= @success_rate %>%
+        </span>
+      </div>
+    </div>
+
+    <div class="enhancement-actions">
+      <% if @can_enhance %>
+        <%= button_to "⚒️ Enhance Equipment",
+                     enhance_equipment_enhancement_path(@item),
+                     method: :post,
+                     class: "game-btn game-btn--primary game-btn--large",
+                     data: {confirm: "Attempt enhancement? (#{@success_rate}% success rate)"} %>
+      <% else %>
+        <p class="cannot-enhance">
+          <% if current_character.gold < @enhancement_cost %>
+            ❌ Not enough gold
+          <% elsif !has_materials?(@required_materials) %>
+            ❌ Missing materials
+          <% else %>
+            ❌ Cannot enhance further
+          <% end %>
+        </p>
+      <% end %>
+    </div>
+  </div>
+</div>
+
