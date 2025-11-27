@@ -1,0 +1,41 @@
+<div class="vendor-dialogue-section">
+  <div class="vendor-header">
+    <span class="player-gold">💰 Your Gold: <%= result.data[:player_gold] %></span>
+  </div>
+
+  <% if result.data[:shop_inventory].any? %>
+    <div class="shop-inventory">
+      <h3>🛒 Items for Sale</h3>
+      <div class="shop-grid">
+        <% result.data[:shop_inventory].each do |item| %>
+          <div class="shop-item rarity--<%= item[:rarity] || 'common' %>">
+            <div class="item-icon">📦</div>
+            <div class="item-info">
+              <span class="item-name"><%= item[:name] %></span>
+              <span class="item-price"><%= item[:price] %> gold</span>
+              <% if item[:stock] > 0 %>
+                <span class="item-stock">Stock: <%= item[:stock] %></span>
+              <% end %>
+            </div>
+            <% if result.data[:player_gold] >= item[:price] %>
+              <%= button_to "Buy",
+                    world_dialogue_action_path(
+                      npc_id: npc.id,
+                      action_key: "buy_item",
+                      action_params: { item_id: item[:id], quantity: 1 }
+                    ),
+                    method: :post,
+                    class: "game-btn game-btn--small game-btn--primary",
+                    data: { turbo: true } %>
+            <% else %>
+              <span class="insufficient-gold">Not enough gold</span>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  <% else %>
+    <p class="no-items">No items available for purchase.</p>
+  <% end %>
+</div>
+

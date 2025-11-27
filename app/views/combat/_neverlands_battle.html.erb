@@ -1,0 +1,90 @@
+<%# Neverlands-inspired combat UI %>
+<div class="nl-combat-container"
+     data-controller="neverlands-combat"
+     data-neverlands-combat-battle-id-value="<%= @battle.id %>"
+     data-neverlands-combat-action-limit-value="<%= @battle.action_points_per_turn || 80 %>"
+     data-neverlands-combat-mana-limit-value="<%= @battle.max_mana_per_turn || 50 %>">
+
+  <%# Top spacer %>
+  <div class="nl-combat-spacer"></div>
+
+  <div class="nl-combat-main">
+    <%# Left panel - Player %>
+    <div class="nl-combat-side nl-combat-player">
+      <%= render "combat/nl_participant", participant: @player_participant, side: :left %>
+    </div>
+
+    <%# Center panel - Actions & Combat Log %>
+    <div class="nl-combat-center">
+      <%# Battle header with controls %>
+      <div class="nl-combat-header">
+        <%= render "combat/nl_battle_header", battle: @battle %>
+      </div>
+
+      <%# Magic/Skill slots %>
+      <% if @available_skills.any? %>
+        <div class="nl-magic-slots">
+          <%= render "combat/nl_magic_slots", skills: @available_skills %>
+        </div>
+      <% end %>
+
+      <%# Action selection (attacks + blocks) %>
+      <% if @battle.active? && @can_act %>
+        <div class="nl-action-panel">
+          <%= render "combat/nl_action_selection",
+                     attacks: @available_attacks,
+                     blocks: @available_blocks,
+                     action_limit: @battle.action_points_per_turn || 80 %>
+        </div>
+      <% end %>
+
+      <%# Action points display %>
+      <div class="nl-action-points" id="action-points-display">
+        <span class="nl-ap-label">Action Points:</span>
+        <span class="nl-ap-value" data-neverlands-combat-target="actionPointsUsed">0</span>
+        <span class="nl-ap-separator">/</span>
+        <span class="nl-ap-max"><%= @battle.action_points_per_turn || 80 %></span>
+        <span class="nl-ap-penalty" data-neverlands-combat-target="penalty" style="display: none;">
+          [penalty: <span data-neverlands-combat-target="penaltyValue">0</span>]
+        </span>
+      </div>
+
+      <%# Submit buttons %>
+      <% if @battle.active? && @can_act %>
+        <div class="nl-submit-buttons">
+          <%= button_to "Submit Turn",
+                        combat_action_path(action_type: :turn),
+                        method: :post,
+                        class: "nl-btn nl-btn-primary",
+                        id: "submit-turn-btn",
+                        data: {
+                          action: "click->neverlands-combat#submitTurn",
+                          neverlands_combat_target: "submitBtn"
+                        } %>
+          <button type="button" class="nl-btn nl-btn-secondary"
+                  data-action="click->neverlands-combat#resetSelections">
+            Reset
+          </button>
+        </div>
+      <% end %>
+
+      <%# Group display %>
+      <div class="nl-group-display">
+        <%= render "combat/nl_group_display",
+                   team_alpha: @team_alpha,
+                   team_beta: @team_beta %>
+      </div>
+
+      <%# Combat log %>
+      <div class="nl-combat-log" id="combat-log" data-neverlands-combat-target="combatLog">
+        <%= render "combat/nl_combat_log", entries: @combat_log %>
+      </div>
+    </div>
+
+    <%# Right panel - Enemy %>
+    <div class="nl-combat-side nl-combat-enemy">
+      <%= render "combat/nl_participant", participant: @enemy_participant, side: :right %>
+    </div>
+  </div>
+</div>
+

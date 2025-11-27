@@ -125,11 +125,74 @@ class WorldController < ApplicationController
   end
 
   def interact
-    # Handle NPC interactions, object interactions, etc.
-    npc_key = params[:npc_key]
+    npc_id = params[:npc_id] || params[:npc_key]
+    npc_template = NpcTemplate.find_by(id: npc_id) || NpcTemplate.find_by(npc_key: npc_id)
 
-    # TODO: Implement NPC dialogue system
-    redirect_to world_path, notice: "Interacted with #{npc_key}."
+    unless npc_template
+      return respond_to do |format|
+        format.html { redirect_to world_path, alert: "NPC not found." }
+        format.json { render json: {error: "NPC not found"}, status: :not_found }
+      end
+    end
+
+    service = Game::Npc::DialogueService.new(character: current_character, npc_template: npc_template)
+    result = service.start_dialogue!
+
+    respond_to do |format|
+      if result.success
+        format.html { render "world/dialogue", locals: {result: result, npc: npc_template} }
+        format.turbo_stream do
+          render turbo_stream: turbo_stream.replace(
+            "game-main",
+            partial: "world/dialogue",
+            locals: {result: result, npc: npc_template}
+          )
+        end
+        format.json { render json: result.to_h }
+      else
+        format.html { redirect_to world_path, alert: result.message }
+        format.json { render json: {error: result.message}, status: :unprocessable_entity }
+      end
+    end
+  end
+
+  # POST /world/dialogue_action
+  def dialogue_action
+    npc_id = params[:npc_id]
+    action_key = params[:action_key]
+    action_params = params[:action_params]&.to_unsafe_h || {}
+
+    npc_template = NpcTemplate.find_by(id: npc_id)
+    unless npc_template
+      return render json: {error: "NPC not found"}, status: :not_found
+    end
+
+    service = Game::Npc::DialogueService.new(character: current_character, npc_template: npc_template)
+    result = service.process_choice!(action_key, action_params.symbolize_keys)
+
+    respond_to do |format|
+      format.turbo_stream do
+        if result.success
+          case result.dialogue_type
+          when :quest_accepted, :quest_completed
+            render turbo_stream: [
+              turbo_stream.replace("dialogue-content", partial: "world/dialogue_result", locals: {result: result}),
+              turbo_stream.replace("flash", partial: "shared/flash", locals: {notice: result.message})
+            ]
+          when :purchase_complete, :sale_complete, :skill_learned, :rested
+            render turbo_stream: [
+              turbo_stream.replace("dialogue-content", partial: "world/dialogue_result", locals: {result: result}),
+              turbo_stream.replace("player-gold", partial: "shared/player_gold", locals: {gold: current_character.reload.gold})
+            ]
+          else
+            render turbo_stream: turbo_stream.replace("dialogue-content", partial: "world/dialogue_result", locals: {result: result})
+          end
+        else
+          render turbo_stream: turbo_stream.replace("flash", partial: "shared/flash", locals: {alert: result.message})
+        end
+      end
+      format.json { render json: result.to_h }
+    end
   end
 
   private
@@ -352,8 +415,24 @@ class WorldController < ApplicationController
   end
 
   def npcs_at_current_tile
-    # TODO: Query NPC templates/instances at current position
-    []
+    zone = @position.zone
+    return [] unless zone
+
+    # Get NPCs that can spawn in this zone
+    zone_npcs = NpcTemplate.in_zone(zone.name)
+
+    # Filter by position if NPC has spawn area restrictions
+    zone_npcs.select do |npc|
+      npc.can_spawn_at?(zone: zone, x: @position.x, y: @position.y)
+    end
+  end
+
+  def hostile_npcs_at_tile
+    npcs_at_current_tile.select { |npc| npc.role == "hostile" }
+  end
+
+  def friendly_npcs_at_tile
+    npcs_at_current_tile.reject { |npc| npc.role == "hostile" }
   end
 
   def gathering_nodes_at_current_tile

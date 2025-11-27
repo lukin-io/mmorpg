@@ -1,0 +1,48 @@
+<div class="dialogue-panel card" data-controller="npc-dialogue" data-npc-dialogue-npc-id-value="<%= npc.id %>">
+  <div class="dialogue-header">
+    <div class="npc-portrait">
+      <% if npc.metadata&.dig("portrait") %>
+        <%= image_tag npc.metadata["portrait"], alt: npc.name, class: "npc-avatar" %>
+      <% else %>
+        <div class="npc-avatar npc-avatar--placeholder">
+          <%= npc.name[0].upcase %>
+        </div>
+      <% end %>
+    </div>
+    <div class="npc-info">
+      <h2 class="npc-name"><%= npc.name %></h2>
+      <span class="npc-role npc-role--<%= npc.role %>"><%= npc.role.titleize %></span>
+      <span class="npc-level">Level <%= npc.level %></span>
+    </div>
+  </div>
+
+  <div class="dialogue-content" id="dialogue-content">
+    <div class="dialogue-message">
+      <p><%= result.data[:greeting] || result.message %></p>
+    </div>
+
+    <% case result.dialogue_type %>
+    <% when :quest_giver %>
+      <%= render "world/dialogue_quests", result: result %>
+    <% when :vendor %>
+      <%= render "world/dialogue_vendor", result: result, npc: npc %>
+    <% when :trainer %>
+      <%= render "world/dialogue_trainer", result: result, npc: npc %>
+    <% when :innkeeper %>
+      <%= render "world/dialogue_innkeeper", result: result, npc: npc %>
+    <% when :banker %>
+      <%= render "world/dialogue_banker", result: result, npc: npc %>
+    <% when :guard %>
+      <%= render "world/dialogue_guard", result: result %>
+    <% when :hostile %>
+      <%= render "world/dialogue_hostile", result: result, npc: npc %>
+    <% else %>
+      <%= render "world/dialogue_generic", result: result %>
+    <% end %>
+  </div>
+
+  <div class="dialogue-actions">
+    <%= link_to "Leave", world_path, class: "game-btn game-btn--secondary", data: { turbo_frame: "game_content" } %>
+  </div>
+</div>
+

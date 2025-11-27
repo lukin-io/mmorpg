@@ -73,4 +73,3 @@ class CreateArenaRoomsAndApplications < ActiveRecord::Migration[8.1]
     end
   end
 end
-

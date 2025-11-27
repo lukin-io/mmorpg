@@ -1,0 +1,53 @@
+<div class="trainer-dialogue-section">
+  <div class="trainer-header">
+    <span class="player-gold">💰 Gold: <%= result.data[:player_gold] %></span>
+    <span class="skill-points">⭐ Skill Points: <%= result.data[:skill_points] %></span>
+  </div>
+
+  <% if result.data[:available_skills].any? %>
+    <div class="trainable-skills">
+      <h3>📚 Skills Available to Learn</h3>
+      <div class="skills-list">
+        <% result.data[:available_skills].each do |skill| %>
+          <div class="skill-card skill-type--<%= skill[:type] %>">
+            <div class="skill-header">
+              <span class="skill-name"><%= skill[:name] %></span>
+              <span class="skill-tier">Tier <%= skill[:tier] %></span>
+            </div>
+            <div class="skill-effects">
+              <% skill[:effects].each do |key, value| %>
+                <span class="effect"><%= key.to_s.titleize %>: <%= value %></span>
+              <% end %>
+            </div>
+            <div class="skill-cost">
+              Cost: <%= skill[:cost] %> gold
+            </div>
+            <% if skill[:requirements].any? %>
+              <div class="skill-requirements">
+                <% if skill[:requirements]["level"] %>
+                  <span class="req">Requires Level <%= skill[:requirements]["level"] %></span>
+                <% end %>
+              </div>
+            <% end %>
+            <% if result.data[:player_gold] >= skill[:cost] %>
+              <%= button_to "Learn Skill",
+                    world_dialogue_action_path(
+                      npc_id: npc.id,
+                      action_key: "learn_skill",
+                      action_params: { skill_id: skill[:id] }
+                    ),
+                    method: :post,
+                    class: "game-btn game-btn--primary",
+                    data: { turbo: true } %>
+            <% else %>
+              <span class="insufficient-gold">Not enough gold</span>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  <% else %>
+    <p class="no-skills">No new skills available to learn at this time.</p>
+  <% end %>
+</div>
+

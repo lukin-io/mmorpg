@@ -26,4 +26,3 @@ module Arena
     end
   end
 end
-

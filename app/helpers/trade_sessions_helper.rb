@@ -39,4 +39,3 @@ module TradeSessionsHelper
     end || []
   end
 end
-

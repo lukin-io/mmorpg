@@ -26,6 +26,64 @@ date: 2025-11-22
 - `SpawnSchedule` records allow GMs/moderators to override respawn/rates. Hotwire UI at `/spawn_schedules` writes to this table; overrides flow back into `EncounterResolver` via `PopulationDirectory`.
 - `Game::Exploration::EncounterResolver` now blends zone encounter tables with population spawn entries, surfacing rarity + respawn hints for deterministic RNG rolls.
 
+### NPC Dialogue System (✅ Implemented)
+**Service:** `Game::Npc::DialogueService` — orchestrates all NPC interactions
+**Controller:** `WorldController#interact`, `WorldController#dialogue_action`
+**Files:**
+- `app/services/game/npc/dialogue_service.rb`
+- `app/views/world/dialogue.html.erb`
+- `app/views/world/_dialogue_*.html.erb` (quests, vendor, trainer, innkeeper, banker, guard, hostile, generic, result)
+
+**Supported NPC Roles:**
+| Role | Dialogue Type | Actions |
+|------|--------------|---------|
+| `quest_giver` | Quest list | Accept, complete, view progress |
+| `vendor` | Shop inventory | Buy items, sell items |
+| `trainer` | Skill list | Learn skills (gold cost) |
+| `innkeeper` | Room options | Rest (heal HP, buffs) |
+| `banker` | Balance view | Deposit, withdraw gold/silver |
+| `guard` | Zone info | Get directions, area info |
+| `hostile` | Combat prompt | Attack or flee |
+| `auctioneer` | Redirect | Opens `/auction_listings` |
+| `crafter` | Redirect | Opens `/crafting_jobs` |
+
+**Flow:**
+1. Player clicks NPC on map → `WorldController#interact`
+2. `DialogueService#start_dialogue!` returns role-specific data
+3. View renders appropriate dialogue partial based on `result.dialogue_type`
+4. Player selects action → `WorldController#dialogue_action`
+5. `DialogueService#process_choice!` executes action (buy, rest, accept quest, etc.)
+6. Turbo Stream updates dialogue content or redirects
+
+**Key Behaviors:**
+- Quest availability filtered by level requirement
+- Vendor prices from NPC metadata or item base price
+- Trainer skills filtered by requirements and already-learned
+- Inn rooms: Common (50% HP, 10g), Private (100% HP, 50g), Suite (100% HP + buff, 200g)
+- Bank stores gold/silver separately from character wallet
+
+### NPCs at Current Tile (✅ Implemented)
+**Model:** `NpcTemplate` — enhanced with zone scopes and spawn logic
+**Method:** `WorldController#npcs_at_current_tile`
+
+**Implementation:**
+- `NpcTemplate.in_zone(zone_name)` — queries NPCs by metadata zone field
+- `NpcTemplate#can_spawn_at?(zone:, x:, y:)` — checks position restrictions
+- `#hostile_npcs_at_tile` / `#friendly_npcs_at_tile` — role-based filtering
+
+**NPC Metadata Fields:**
+```json
+{
+  "zone": "Whispering Woods",
+  "zones": ["Forest", "Plains"],
+  "spawn_area": { "min_x": 0, "max_x": 10, "min_y": 0, "max_y": 10 },
+  "biomes": ["forest", "plains"],
+  "greetings": ["Hello!", "Greetings traveler."],
+  "inventory": [{ "item_key": "health_potion", "price": 50 }],
+  "teaches": { "class": 1 }
+}
+```
+
 ## Quests & Narrative
 - Schema: `quest_chains`, `quests`, `quest_objectives`, `quest_assignments`, and `cutscene_events`.
 - Services: `Game::Quests::StorylineProgression` gates sequential unlocks; `DailyRotation` handles morning/afternoon/evening resets; `DynamicHookResolver` unlocks seasonal/tournament quests.

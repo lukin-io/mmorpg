@@ -5,7 +5,7 @@ class CombatController < ApplicationController
   include CurrentCharacterContext
 
   before_action :ensure_active_character!
-  before_action :set_battle, only: %i[show action flee]
+  before_action :set_battle, only: %i[show action flee skills]
 
   # GET /combat
   # Show current combat status
@@ -89,6 +89,17 @@ class CombatController < ApplicationController
           rewards: result.rewards
         }
       end
+    end
+  end
+
+  # GET /combat/skills
+  # Get available combat skills
+  def skills
+    @skills = Game::Combat::SkillExecutor.available_skills(current_character)
+
+    respond_to do |format|
+      format.html { render partial: "combat/skills", locals: {skills: @skills} }
+      format.json { render json: {skills: @skills} }
     end
   end
 

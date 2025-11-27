@@ -151,8 +151,135 @@ module Arena
     end
 
     def process_skill(character, skill_id, target)
-      # TODO: Implement skill system
-      failure("Skills not yet implemented")
+      return failure("No skill specified") unless skill_id
+
+      # Find the skill
+      skill = find_skill(character, skill_id)
+      return failure("Skill not found or not unlocked") unless skill
+
+      # Find target character
+      target_char = find_target(target)
+      return failure("Target not found") unless target_char
+
+      # Create a battle wrapper for the arena match
+      battle_wrapper = ArenaBattleWrapper.new(match)
+
+      # Execute the skill
+      executor = Game::Combat::SkillExecutor.new(
+        caster: character,
+        target: target_char,
+        skill: skill,
+        battle: battle_wrapper
+      )
+
+      result = executor.execute!
+      return failure(result.message) unless result.success
+
+      # Log the skill use
+      log_entry("skill", character, "uses #{skill.name} on #{target_char.name}")
+
+      # Broadcast skill effects
+      broadcaster.broadcast_combat_action(character, "skill", target_char, result.damage, skill_name: skill.name)
+
+      # Update vitals
+      broadcaster.broadcast_vitals_update(character)
+      broadcaster.broadcast_vitals_update(target_char)
+
+      # Check for victory
+      check_match_end!
+
+      success(
+        damage: result.damage,
+        healing: result.healing,
+        critical: result.critical,
+        effects: result.effects_applied
+      )
+    end
+
+    def find_skill(character, skill_id)
+      skill_id = skill_id.to_s
+
+      # Check if it's an ability (ability_123)
+      if skill_id.start_with?("ability_")
+        ability_id = skill_id.sub("ability_", "").to_i
+        return character.character_class&.abilities&.find_by(id: ability_id, kind: "active")
+      end
+
+      # Check if it's a skill node (skill_123)
+      if skill_id.start_with?("skill_")
+        node_id = skill_id.sub("skill_", "").to_i
+        return character.skill_nodes.where(node_type: "active").find_by(id: node_id)
+      end
+
+      # Try direct ID lookup
+      character.skill_nodes.where(node_type: "active").find_by(id: skill_id) ||
+        character.character_class&.abilities&.find_by(id: skill_id, kind: "active")
+    end
+
+    def find_target(target_id)
+      return nil unless target_id
+
+      match.arena_participations.includes(:character).find_by(character_id: target_id)&.character
+    end
+
+    def check_match_end!
+      # Check if any participant is defeated
+      match.arena_participations.includes(:character).each do |participation|
+        if participation.character.current_hp <= 0
+          # Mark as defeated
+          participation.update!(result: "defeated", ended_at: Time.current)
+        end
+      end
+
+      # Check if match should end
+      alive = match.arena_participations.where(result: nil).count
+      if alive <= 1
+        winner = match.arena_participations.where(result: nil).first&.character
+        end_match!(winner)
+      end
+    end
+
+    def end_match!(winner)
+      match.update!(
+        status: :completed,
+        ended_at: Time.current,
+        winner_id: winner&.id
+      )
+
+      # Distribute rewards
+      Arena::RewardsDistributor.new(match).distribute!
+
+      broadcaster.broadcast_match_ended(winner)
+    end
+
+    # Wrapper to make ArenaMatch work with SkillExecutor
+    class ArenaBattleWrapper
+      attr_accessor :metadata
+
+      def initialize(match)
+        @match = match
+        @metadata = match.metadata || {}
+      end
+
+      def id
+        @match.id
+      end
+
+      def round_number
+        @match.current_round || 1
+      end
+
+      def battle_participants
+        @match.arena_participations
+      end
+
+      def combat_log_entries
+        @match.combat_log_entries
+      end
+
+      def save!
+        @match.update!(metadata: @metadata)
+      end
     end
 
     def process_flee(character)

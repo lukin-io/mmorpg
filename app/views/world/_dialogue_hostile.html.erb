@@ -1,0 +1,34 @@
+<div class="hostile-dialogue-section">
+  <div class="hostile-warning">
+    <span class="warning-icon">⚠️</span>
+    <p class="warning-text"><%= result.message %></p>
+  </div>
+
+  <div class="threat-info">
+    <% threat = result.data[:threat_level] %>
+    <% case threat %>
+    <% when -1 %>
+      <span class="threat-level threat--low">🟢 Lower Level Enemy</span>
+    <% when 0 %>
+      <span class="threat-level threat--equal">🟡 Equal Level Enemy</span>
+    <% when 1 %>
+      <span class="threat-level threat--high">🔴 Higher Level Enemy</span>
+    <% end %>
+  </div>
+
+  <% if result.data[:can_attack] %>
+    <div class="hostile-actions">
+      <%= button_to "⚔️ Attack",
+            combat_start_path(npc_template_id: result.data[:npc][:id]),
+            method: :post,
+            class: "game-btn game-btn--danger",
+            data: { turbo: true, confirm: "Are you sure you want to attack?" } %>
+
+      <%= link_to "🏃 Back Away",
+            world_path,
+            class: "game-btn game-btn--secondary",
+            data: { turbo_frame: "game_content" } %>
+    </div>
+  <% end %>
+</div>
+

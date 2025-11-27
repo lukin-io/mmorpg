@@ -1,8 +1,87 @@
 # frozen_string_literal: true
 
 class NpcTemplate < ApplicationRecord
+  ROLES = %w[quest_giver vendor trainer guard innkeeper banker auctioneer crafter hostile lore].freeze
+
   validates :name, presence: true, uniqueness: true
   validates :level, numericality: {greater_than: 0}
-  validates :role, presence: true
+  validates :role, presence: true, inclusion: {in: ROLES}
   validates :dialogue, presence: true
+
+  # Scope to find NPCs that can appear in a specific zone
+  scope :in_zone, ->(zone_name) {
+    where("metadata->>'zone' = ? OR metadata->'zones' ? ?", zone_name, zone_name)
+  }
+
+  # Scope to find NPCs by role
+  scope :with_role, ->(role) { where(role: role) }
+
+  # Scope for hostile NPCs only
+  scope :hostile, -> { where(role: "hostile") }
+
+  # Scope for non-hostile NPCs
+  scope :friendly, -> { where.not(role: "hostile") }
+
+  # Check if NPC can spawn at a specific position
+  def can_spawn_at?(zone:, x: nil, y: nil)
+    zone_name = zone.respond_to?(:name) ? zone.name : zone.to_s
+
+    # Check if NPC is allowed in this zone
+    allowed_zone = metadata&.dig("zone") == zone_name ||
+                   metadata&.dig("zones")&.include?(zone_name) ||
+                   metadata&.dig("zones").nil?
+
+    return false unless allowed_zone
+
+    # Check position restrictions if any
+    if x && y && metadata&.dig("spawn_area")
+      area = metadata["spawn_area"]
+      return false if x < (area["min_x"] || 0) || x > (area["max_x"] || 999)
+      return false if y < (area["min_y"] || 0) || y > (area["max_y"] || 999)
+    end
+
+    # Check biome restrictions
+    if zone.respond_to?(:biome) && metadata&.dig("biomes")
+      return false unless metadata["biomes"].include?(zone.biome)
+    end
+
+    true
+  end
+
+  # Get greeting based on NPC metadata
+  def greeting
+    greetings = metadata&.dig("greetings") || []
+    greetings.sample || dialogue
+  end
+
+  # Check if NPC has shop inventory
+  def vendor?
+    role == "vendor" && metadata&.dig("inventory").present?
+  end
+
+  # Check if NPC can train skills
+  def trainer?
+    role == "trainer" && metadata&.dig("teaches").present?
+  end
+
+  # Get NPC's faction
+  def faction
+    metadata&.dig("faction")
+  end
+
+  # Get NPC's description
+  def description
+    metadata&.dig("description") || dialogue
+  end
+
+  # Get NPC health for combat
+  def health
+    metadata&.dig("health") || (level * 20) + 50
+  end
+
+  # Get NPC damage range for combat
+  def damage_range
+    base = level * 2 + 5
+    (base..base + level)
+  end
 end

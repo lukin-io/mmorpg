@@ -28,4 +28,3 @@ class PartyChannel < ApplicationCable::Channel
     false
   end
 end
-

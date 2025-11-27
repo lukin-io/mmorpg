@@ -17,23 +17,27 @@ RSpec.describe Game::Quests::DynamicQuestGenerator do
 
   describe "#generate!" do
     it "assigns quests whose triggers match the provided world state" do
-      assignments = described_class.new.generate!(
+      result = described_class.new.generate!(
         character:,
         triggers: {resource_shortage: "ashen_ore", event_key: "festival"}
       )
 
-      expect(assignments.map(&:quest)).to contain_exactly(matching_quest)
-      expect(assignments.first.metadata["generated_from"]["resource_shortage"]).to eq("ashen_ore")
+      expect(result.success).to be(true)
+      expect(result.assignments.map(&:quest)).to include(matching_quest)
+      expect(result.assignments.first.metadata["generated_from"]["resource_shortage"]).to eq("ashen_ore")
     end
 
-    it "skips quests whose triggers do not match" do
-      assignments = described_class.new.generate!(
+    it "skips existing quests whose triggers do not match" do
+      result = described_class.new.generate!(
         character:,
         triggers: {resource_shortage: "unknown"}
       )
 
-      expect(assignments).to be_empty
+      expect(result.success).to be(true)
+      # Should not assign the non_matching_quest (which needs moonleaf)
       expect(QuestAssignment.exists?(quest: non_matching_quest, character:)).to be(false)
+      # May generate procedural quests based on the trigger
+      expect(result.assignments.map(&:quest)).not_to include(non_matching_quest)
     end
   end
 end

@@ -1,0 +1,41 @@
+<div class="banker-dialogue-section">
+  <div class="bank-balances">
+    <div class="balance-row">
+      <span class="balance-label">Your Wallet:</span>
+      <span class="balance-value">💰 <%= result.data[:wallet_gold] %> gold, <%= result.data[:wallet_silver] %> silver</span>
+    </div>
+    <div class="balance-row">
+      <span class="balance-label">Bank Balance:</span>
+      <span class="balance-value">🏦 <%= result.data[:bank_gold] %> gold, <%= result.data[:bank_silver] %> silver</span>
+    </div>
+  </div>
+
+  <div class="bank-actions">
+    <div class="bank-section">
+      <h3>💰 Deposit Gold</h3>
+      <%= form_with url: world_dialogue_action_path, method: :post, local: false, class: "bank-form", data: { turbo: true } do |f| %>
+        <%= hidden_field_tag :npc_id, npc.id %>
+        <%= hidden_field_tag :action_key, "deposit" %>
+        <div class="form-row">
+          <%= number_field_tag "action_params[amount]", nil, min: 1, max: result.data[:wallet_gold], placeholder: "Amount", class: "form-input" %>
+          <%= hidden_field_tag "action_params[currency]", "gold" %>
+          <%= submit_tag "Deposit", class: "game-btn game-btn--primary" %>
+        </div>
+      <% end %>
+    </div>
+
+    <div class="bank-section">
+      <h3>💵 Withdraw Gold</h3>
+      <%= form_with url: world_dialogue_action_path, method: :post, local: false, class: "bank-form", data: { turbo: true } do |f| %>
+        <%= hidden_field_tag :npc_id, npc.id %>
+        <%= hidden_field_tag :action_key, "withdraw" %>
+        <div class="form-row">
+          <%= number_field_tag "action_params[amount]", nil, min: 1, max: result.data[:bank_gold], placeholder: "Amount", class: "form-input" %>
+          <%= hidden_field_tag "action_params[currency]", "gold" %>
+          <%= submit_tag "Withdraw", class: "game-btn game-btn--primary" %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>
+

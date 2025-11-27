@@ -1,0 +1,12 @@
+<div class="generic-dialogue-section">
+  <div class="npc-speech">
+    <p><%= result.data[:greeting] || result.message %></p>
+  </div>
+
+  <% if result.data[:npc][:description].present? %>
+    <div class="npc-description">
+      <p><em><%= result.data[:npc][:description] %></em></p>
+    </div>
+  <% end %>
+</div>
+

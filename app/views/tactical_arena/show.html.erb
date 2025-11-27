@@ -1,0 +1,79 @@
+<%= turbo_stream_from @tactical_match %>
+
+<div class="tactical-match" data-controller="tactical-combat" data-tactical-combat-match-id-value="<%= @tactical_match.id %>" data-tactical-combat-my-turn-value="<%= my_turn? %>">
+  <div class="tactical-header">
+    <div class="match-info">
+      <h1><%= @tactical_match.creator.name %> vs <%= @tactical_match.opponent&.name || "Waiting..." %></h1>
+      <div class="turn-info">
+        <span class="turn-number">Turn <%= @tactical_match.turn_number %></span>
+        <span class="current-turn <%= 'my-turn' if my_turn? %>">
+          <% if my_turn? %>
+            🎯 Your Turn (<%= @tactical_match.actions_remaining %> actions left)
+          <% else %>
+            ⏳ Opponent's Turn
+          <% end %>
+        </span>
+      </div>
+    </div>
+
+    <div class="match-actions">
+      <% if my_turn? %>
+        <%= button_to "End Turn", end_turn_tactical_arena_path(@tactical_match), method: :post, class: "game-btn game-btn--secondary" %>
+      <% end %>
+      <%= button_to "Forfeit", forfeit_tactical_arena_path(@tactical_match), method: :post, class: "game-btn game-btn--danger", data: { confirm: "Are you sure you want to forfeit?" } %>
+    </div>
+  </div>
+
+  <div class="tactical-layout">
+    <div class="tactical-grid-container">
+      <div id="tactical_grid">
+        <%= render "tactical_arena/grid", match: @tactical_match %>
+      </div>
+    </div>
+
+    <div class="tactical-sidebar">
+      <div class="participants-panel card">
+        <h3>Combatants</h3>
+        <% @tactical_match.tactical_participants.each do |participant| %>
+          <%= render "tactical_arena/participant", participant: participant %>
+        <% end %>
+      </div>
+
+      <% if my_turn? && current_character.abilities.any? %>
+        <div class="skills-panel card">
+          <h3>Skills</h3>
+          <div class="skills-list">
+            <% current_character.abilities.each do |ability| %>
+              <button class="skill-btn"
+                      data-action="click->tactical-combat#selectSkill"
+                      data-skill-id="<%= ability.id %>"
+                      data-skill-name="<%= ability.name %>"
+                      title="<%= ability.description %>">
+                <%= ability.name %>
+                <span class="skill-cost"><%= ability.mp_cost || 0 %> MP</span>
+              </button>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+
+      <div class="combat-log-panel card" id="combat_log">
+        <%= render "tactical_arena/combat_log", entries: @combat_log %>
+      </div>
+    </div>
+  </div>
+
+  <% if @tactical_match.completed? || @tactical_match.forfeited? %>
+    <div class="match-result-overlay">
+      <div class="match-result card">
+        <h2 class="<%= @tactical_match.winner == current_character ? 'victory' : 'defeat' %>">
+          <%= @tactical_match.winner == current_character ? "🏆 Victory!" : "💀 Defeat" %>
+        </h2>
+        <p>Winner: <strong><%= @tactical_match.winner&.name %></strong></p>
+        <p>Total Turns: <%= @tactical_match.turn_number %></p>
+        <%= link_to "Return to Lobby", tactical_arena_index_path, class: "game-btn game-btn--primary" %>
+      </div>
+    </div>
+  <% end %>
+</div>
+

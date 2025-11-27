@@ -249,8 +249,101 @@ class RealtimeChatChannel < ApplicationCable::Channel
   end
 
   def can_access_channel?(channel)
-    # TODO: Implement channel access control
+    return false unless current_user
+    return false if user_muted?
+
+    case channel.channel_type
+    when "global"
+      # Global chat is accessible to all authenticated users
+      true
+    when "local"
+      # Local chat is accessible to all authenticated users
+      true
+    when "arena"
+      # Arena chat is accessible to all authenticated users
+      true
+    when "guild"
+      # Guild chat requires guild membership
+      user_in_guild?(channel)
+    when "clan"
+      # Clan chat requires clan membership
+      user_in_clan?(channel)
+    when "party"
+      # Party chat requires party membership
+      user_in_party?(channel)
+    when "whisper"
+      # Whisper channels require being a participant
+      user_in_whisper?(channel)
+    when "system"
+      # System channels are read-only, accessible to all
+      true
+    else
+      # Unknown channel type - check explicit membership
+      channel.memberships.exists?(user: current_user)
+    end
+  end
+
+  def user_muted?
+    return false unless current_user.respond_to?(:chat_muted_until)
+
+    current_user.chat_muted_until.present? && current_user.chat_muted_until > Time.current
+  end
+
+  def user_in_guild?(channel)
+    # Extract guild ID from channel metadata or name
+    guild_id = channel.metadata&.dig("guild_id")
+    return false unless guild_id
+
+    # Check if user has a character in this guild
+    current_user.characters.exists?(guild_id: guild_id)
+  end
+
+  def user_in_clan?(channel)
+    # Extract clan ID from channel metadata
+    clan_id = channel.metadata&.dig("clan_id")
+    return false unless clan_id
+
+    # Check if user has a character in this clan
+    current_user.characters.exists?(clan_id: clan_id)
+  end
+
+  def user_in_party?(channel)
+    # Extract party ID from channel metadata
+    party_id = channel.metadata&.dig("party_id")
+    return false unless party_id
+
+    # Check if user's active character is in this party
+    active_character = current_user.characters.find_by(active: true)
+    return false unless active_character
+
+    PartyMembership.exists?(party_id: party_id, character: active_character)
+  end
+
+  def user_in_whisper?(channel)
+    # Whisper channels have exactly 2 participants stored in metadata
+    participants = channel.metadata&.dig("participants") || []
+    participants.include?(current_user.id)
+  end
+
+  def can_send_to_channel?(channel)
+    # Additional check before sending messages
+    return false unless can_access_channel?(channel)
+    return false if user_muted?
+    return false if channel.system? # Can't send to system channels
+
+    # Check if user is ignored by recipient (for whisper)
+    if channel.whisper?
+      recipient_id = (channel.metadata&.dig("participants") || []).find { |id| id != current_user.id }
+      return false if user_ignored_by?(recipient_id)
+    end
+
     true
+  end
+
+  def user_ignored_by?(user_id)
+    return false unless user_id
+
+    IgnoreListEntry.exists?(user_id: user_id, ignored_user_id: current_user.id)
   end
 
   def transmit_error(message)

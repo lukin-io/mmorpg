@@ -13,7 +13,7 @@
 | **StorylineProgression** | ✅ Implemented | Gate enforcement |
 | **RewardService** | ✅ Implemented | XP, currency, item rewards |
 | **EventInstance** | ✅ Implemented | Seasonal events |
-| **DynamicQuestGenerator** | ⚠️ Partial | Basic implementation |
+| **DynamicQuestGenerator** | ✅ Implemented | Full procedural quest generation |
 
 ---
 
@@ -94,6 +94,52 @@
 - `Game::Quests::StorylineProgression` + `QuestGateEvaluator` — enforce level/reputation/faction gates before creating `QuestAssignment` rows.
 - `Game::Quests::StoryStepRunner`, `BranchingChoiceResolver`, `FailureConsequenceHandler` — run narrative steps, record choices, spawn rival arcs, handle fail states.
 - `Game::Quests::DynamicQuestGenerator`, `DynamicQuestRefresher`, `RepeatableQuestScheduler`, `DailyRotation` — create emergent missions and deterministic daily/weekly lineups.
+
+### DynamicQuestGenerator (✅ Implemented)
+**Service:** `Game::Quests::DynamicQuestGenerator`
+**File:** `app/services/game/quests/dynamic_quest_generator.rb`
+
+**Capabilities:**
+1. **Trigger-Based Generation** — Create quests from world state (resource shortage, territory conflict, events)
+2. **Daily Quests** — Generate 3 rotating daily quests per character
+3. **Zone Quests** — Auto-generate quests when entering new zones
+
+**Quest Types Generated:**
+| Type | Objective Template | Example |
+|------|-------------------|---------|
+| `kill` | Slay %{count} %{target} | "Eliminate 10 Forest Wolves" |
+| `gather` | Gather %{count} %{target} | "Gather 15 Moonleaf Herbs" |
+| `collect` | Collect %{count} drops | "Collect 5 Wolf Pelts" |
+| `explore` | Discover %{count} locations | "Explore 3 areas in Whispering Woods" |
+| `escort` | Escort NPC to destination | "Escort the Merchant to Town" |
+| `deliver` | Deliver item to NPC | "Deliver Supplies to Captain Elara" |
+| `defend` | Survive %{count} waves | "Defend the Outpost for 5 waves" |
+
+**Reward Scaling:**
+- XP: `(50 + level × 25) × difficulty_multiplier`
+- Gold: `(10 + level × 5) × difficulty_multiplier`
+- Difficulty multipliers: Easy (0.75), Normal (1.0), Hard (1.5), Elite (2.0)
+
+**Usage Examples:**
+```ruby
+# From world triggers
+generator = Game::Quests::DynamicQuestGenerator.new
+generator.generate!(character: char, triggers: {
+  resource_shortage: "iron_ore",
+  territory_contested: "northern_pass"
+})
+
+# Daily quests
+generator.generate_daily!(character, count: 3)
+
+# Zone-specific quests
+generator.generate_for_zone!(character, zone)
+```
+
+**Key Behaviors:**
+- Quests stored with unique keys to prevent duplicates
+- Trigger matching supports: level range, zone, faction, event
+- Zone quests auto-generated for kill (if hostiles present), gather (if resources), explore (if first visit)
 - `Game::Quests::RewardService` — grants XP (`Players::Progression::ExperiencePipeline`), currencies (`Economy::WalletService`), alignment, recipes, housing capacity (`Game::Inventory::ExpansionService`), or premium fragments; writes `last_reward` metadata.
 - `Game::Events::Scheduler`, `Game::Events::QuestOrchestrator`, `Events::AnnouncementService` — tie seasonal events to quest arcs, broadcast world reskins, queue announcer NPCs.
 - `Analytics::QuestSnapshotCalculator`, `Analytics::QuestTracker` — build GM dashboards and event telemetry.

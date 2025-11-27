@@ -24,4 +24,3 @@ module CraftingJobsHelper
     PROFESSION_ICONS[profession_key] || "📦"
   end
 end
-

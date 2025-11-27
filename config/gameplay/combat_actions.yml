@@ -1,0 +1,385 @@
+# Neverlands-inspired combat action configuration
+# Body parts for targeting and blocking
+
+body_parts:
+  head:
+    key: "head"
+    name: "Head"
+    damage_multiplier: 1.3
+    block_difficulty: 35
+  torso:
+    key: "torso"
+    name: "Torso"
+    damage_multiplier: 1.0
+    block_difficulty: 30
+  stomach:
+    key: "stomach"
+    name: "Stomach"
+    damage_multiplier: 1.1
+    block_difficulty: 30
+  legs:
+    key: "legs"
+    name: "Legs"
+    damage_multiplier: 0.9
+    block_difficulty: 35
+
+# Attack types
+# type 1 = melee attack, type 2 = block, type 3 = instant magic
+# type 4 = potion/item, type 5 = targeted ally spell, type 6 = text action
+# type 7 = area effect
+
+attack_types:
+  # Basic attacks
+  simple:
+    key: "simple"
+    name: "Simple Attack"
+    action_cost: 0
+    mana_cost: 0
+    type: 1
+    description: "A basic attack with no special targeting"
+
+  aimed:
+    key: "aimed"
+    name: "Aimed Attack"
+    action_cost: 0
+    mana_cost: 0
+    type: 1
+    description: "A more precise attack"
+
+  # Targeted attacks (by body part)
+  head_strike:
+    key: "head_strike"
+    name: "Head Strike"
+    action_cost: 35
+    mana_cost: 0
+    type: 2
+    body_part: "head"
+    description: "Target the head"
+
+  head_torso:
+    key: "head_torso"
+    name: "Head + Torso"
+    action_cost: 50
+    mana_cost: 0
+    type: 2
+    body_parts: ["head", "torso"]
+    description: "Target head and torso"
+
+  head_stomach:
+    key: "head_stomach"
+    name: "Head + Stomach"
+    action_cost: 60
+    mana_cost: 0
+    type: 2
+    body_parts: ["head", "stomach"]
+    description: "Target head and stomach"
+
+  torso_strike:
+    key: "torso_strike"
+    name: "Torso Strike"
+    action_cost: 30
+    mana_cost: 0
+    type: 2
+    body_part: "torso"
+    description: "Target the torso"
+
+  torso_stomach:
+    key: "torso_stomach"
+    name: "Torso + Stomach"
+    action_cost: 50
+    mana_cost: 0
+    type: 2
+    body_parts: ["torso", "stomach"]
+    description: "Target torso and stomach"
+
+  torso_legs:
+    key: "torso_legs"
+    name: "Torso + Legs"
+    action_cost: 60
+    mana_cost: 0
+    type: 2
+    body_parts: ["torso", "legs"]
+    description: "Target torso and legs"
+
+  stomach_strike:
+    key: "stomach_strike"
+    name: "Stomach Strike"
+    action_cost: 30
+    mana_cost: 0
+    type: 2
+    body_part: "stomach"
+    description: "Target the stomach"
+
+  stomach_legs:
+    key: "stomach_legs"
+    name: "Stomach + Legs"
+    action_cost: 50
+    mana_cost: 0
+    type: 2
+    body_parts: ["stomach", "legs"]
+    description: "Target stomach and legs"
+
+  legs_strike:
+    key: "legs_strike"
+    name: "Leg Strike"
+    action_cost: 35
+    mana_cost: 0
+    type: 2
+    body_part: "legs"
+    description: "Target the legs"
+
+  legs_head:
+    key: "legs_head"
+    name: "Legs + Head"
+    action_cost: 80
+    mana_cost: 0
+    type: 2
+    body_parts: ["legs", "head"]
+    description: "Sweep to legs then strike head"
+
+# Shield blocks (higher cost, better protection)
+block_types:
+  head_block:
+    key: "head_block"
+    name: "Head Block [Shield]"
+    action_cost: 40
+    mana_cost: 0
+    type: 2
+    requires_shield: true
+    body_part: "head"
+
+  head_torso_block:
+    key: "head_torso_block"
+    name: "Head + Torso Block [Shield]"
+    action_cost: 85
+    mana_cost: 0
+    type: 2
+    requires_shield: true
+    body_parts: ["head", "torso"]
+
+  torso_block:
+    key: "torso_block"
+    name: "Torso Block [Shield]"
+    action_cost: 40
+    mana_cost: 0
+    type: 2
+    requires_shield: true
+    body_part: "torso"
+
+  stomach_block:
+    key: "stomach_block"
+    name: "Stomach Block [Shield]"
+    action_cost: 40
+    mana_cost: 0
+    type: 2
+    requires_shield: true
+    body_part: "stomach"
+
+  legs_block:
+    key: "legs_block"
+    name: "Legs Block [Shield]"
+    action_cost: 40
+    mana_cost: 0
+    type: 2
+    requires_shield: true
+    body_part: "legs"
+
+  full_block:
+    key: "full_block"
+    name: "Full Body Block [Shield]"
+    action_cost: 130
+    mana_cost: 0
+    type: 2
+    requires_shield: true
+    body_parts: ["head", "torso", "stomach", "legs"]
+
+# Magic spells
+magic_types:
+  # Defensive magic
+  magic_shield:
+    key: "magic_shield"
+    name: "Magic Shield"
+    action_cost: 45
+    mana_cost: 20
+    type: 3
+    element: "arcane"
+    effect: "shield"
+    description: "Create a magical barrier"
+
+  rainbow_barrier:
+    key: "rainbow_barrier"
+    name: "Rainbow Barrier"
+    action_cost: 60
+    mana_cost: 40
+    type: 3
+    element: "arcane"
+    effect: "barrier"
+    description: "Multi-element protection"
+
+  crystal_sphere:
+    key: "crystal_sphere"
+    name: "Crystal Sphere"
+    action_cost: 90
+    mana_cost: 65
+    type: 3
+    element: "earth"
+    effect: "immunity"
+    description: "Complete damage immunity for one attack"
+
+  # Healing
+  hp_restore:
+    key: "hp_restore"
+    name: "HP Restoration"
+    action_cost: 30
+    mana_cost: 0
+    type: 4
+    effect: "heal_hp"
+    amount: 30
+    description: "Restore HP"
+
+  mp_restore:
+    key: "mp_restore"
+    name: "MP Restoration"
+    action_cost: 30
+    mana_cost: 0
+    type: 4
+    effect: "heal_mp"
+    amount: 20
+    description: "Restore MP"
+
+  # Fire magic
+  fire_arrow:
+    key: "fire_arrow"
+    name: "Fire Arrow"
+    action_cost: 100
+    mana_cost: 50
+    type: 3
+    element: "fire"
+    damage: 30
+    description: "Launch a flaming arrow"
+
+  fire_wall:
+    key: "fire_wall"
+    name: "Fire Wall"
+    action_cost: 150
+    mana_cost: 300
+    type: 3
+    element: "fire"
+    damage: 50
+    effect: "dot"
+    description: "Create a wall of flames"
+
+  # Water/Ice magic
+  ice_arrow:
+    key: "ice_arrow"
+    name: "Ice Arrow"
+    action_cost: 100
+    mana_cost: 50
+    type: 3
+    element: "water"
+    damage: 25
+    effect: "slow"
+    description: "Frozen projectile that slows target"
+
+  freeze:
+    key: "freeze"
+    name: "Freeze"
+    action_cost: 150
+    mana_cost: 150
+    type: 3
+    element: "water"
+    effect: "stun"
+    duration: 1
+    description: "Freeze target in place"
+
+  # Earth magic
+  stone_arrow:
+    key: "stone_arrow"
+    name: "Stone Arrow"
+    action_cost: 100
+    mana_cost: 75
+    type: 3
+    element: "earth"
+    damage: 35
+    description: "Heavy stone projectile"
+
+  meteor:
+    key: "meteor"
+    name: "Meteor Rain"
+    action_cost: 125
+    mana_cost: 150
+    type: 7
+    element: "earth"
+    damage: 40
+    aoe: true
+    description: "Rain meteors on all enemies"
+
+  # Air/Lightning magic
+  lightning:
+    key: "lightning"
+    name: "Lightning"
+    action_cost: 100
+    mana_cost: 50
+    type: 3
+    element: "air"
+    damage: 28
+    description: "Strike with lightning"
+
+  chain_lightning:
+    key: "chain_lightning"
+    name: "Chain Lightning"
+    action_cost: 150
+    mana_cost: 125
+    type: 7
+    element: "air"
+    damage: 25
+    chain: 3
+    description: "Lightning that jumps between targets"
+
+  # Support spells
+  healing:
+    key: "healing"
+    name: "Healing"
+    action_cost: 100
+    mana_cost: 100
+    type: 5
+    effect: "heal"
+    amount: 50
+    target: "ally"
+    description: "Heal an ally"
+
+  greater_healing:
+    key: "greater_healing"
+    name: "Greater Healing"
+    action_cost: 100
+    mana_cost: 100
+    type: 5
+    effect: "heal"
+    amount: 100
+    target: "ally"
+    description: "Powerful healing spell"
+
+# Action point penalties for multiple attacks
+attack_penalties:
+  - attacks: 0
+    penalty: 0
+  - attacks: 1
+    penalty: 0
+  - attacks: 2
+    penalty: 25
+  - attacks: 3
+    penalty: 75
+  - attacks: 4
+    penalty: 150
+  - attacks: 5
+    penalty: 250
+
+# Default action point budget
+defaults:
+  action_points_per_turn: 80
+  max_mana_per_attack: 50
+  base_hit_chance: 85
+  base_block_chance: 50
+  critical_hit_chance: 10
+  critical_hit_multiplier: 1.5
+

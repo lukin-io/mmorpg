@@ -1,0 +1,60 @@
+<%# Neverlands-style battle header with controls %>
+<% battle ||= @battle %>
+
+<div class="nl-header-controls">
+  <%# Battle type indicator %>
+  <span class="nl-battle-type">
+    <% case battle.battle_type %>
+    <% when "pve" %>
+      ⚔️ PvE Combat
+    <% when "pvp" %>
+      ⚔️ PvP Duel
+    <% when "arena" %>
+      🏟️ Arena Match
+    <% end %>
+  </span>
+
+  <%# Round counter %>
+  <span class="nl-round-counter">
+    Round: <strong><%= battle.round_number %></strong>
+  </span>
+
+  <%# Control buttons %>
+  <div class="nl-header-buttons">
+    <%# Inventory button %>
+    <button class="nl-header-btn" title="Inventory" disabled>
+      <img src="/images/ui/inventory_btn.png" alt="Inventory" class="nl-btn-icon" onerror="this.parentElement.innerHTML='📦'">
+    </button>
+
+    <%# Mercenary button %>
+    <button class="nl-header-btn" title="Mercenary" disabled>
+      <img src="/images/ui/mercenary_btn.png" alt="Mercenary" class="nl-btn-icon" onerror="this.parentElement.innerHTML='🧙'">
+    </button>
+
+    <%# Surrender button %>
+    <% can_surrender = battle.active? && %w[pve pvp].include?(battle.battle_type) %>
+    <button class="nl-header-btn <%= 'nl-header-btn--disabled' unless can_surrender %>"
+            title="Surrender"
+            <%= "disabled" unless can_surrender %>
+            data-action="click->neverlands-combat#surrender"
+            data-confirm="Are you sure you want to surrender?">
+      <img src="/images/ui/surrender_btn.png" alt="Surrender" class="nl-btn-icon" onerror="this.parentElement.innerHTML='🏳️'">
+    </button>
+
+    <%# Combat log button %>
+    <%= link_to combat_logs_path(battle),
+                target: "_blank",
+                class: "nl-header-btn",
+                title: "View Full Combat Log" do %>
+      <img src="/images/ui/log_btn.png" alt="Log" class="nl-btn-icon" onerror="this.innerHTML='📜'">
+    <% end %>
+
+    <%# Refresh button %>
+    <button class="nl-header-btn"
+            title="Refresh"
+            data-action="click->neverlands-combat#refresh">
+      <img src="/images/ui/refresh_btn.png" alt="Refresh" class="nl-btn-icon" onerror="this.parentElement.innerHTML='🔄'">
+    </button>
+  </div>
+</div>
+

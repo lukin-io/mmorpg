@@ -40,6 +40,27 @@
 - `Premium::ArtifactStore` redeems premium artifacts (teleports → `Game::Movement::TeleportService`, storage boosters → `Game::Inventory::ExpansionService`, XP boosts → `Players::Progression::ExperiencePipeline`). All redemptions go through the premium token ledger for refunds/adjustments and are auditable via `AuditLogger`.
 - Cosmetic purchases (housing decor, mounts, titles) continue to use the ledger; refer to `doc/features/1_auth.md` and `5_moderation.md` for moderation visibility expectations.
 
+### Premium Store UI (✅ Implemented)
+- **Controller**: `PremiumStoreController` — index, show, purchase, gift
+- **Service**: `Premium::ArtifactStore` — purchase!, gift!, featured_items
+- **Views**: Category sidebar, featured carousel, item cards, detail with gifting
+- **Features**:
+  - Balance display with token count
+  - Category filtering (cosmetics, mounts, pets, boosts, storage, titles)
+  - Featured items section
+  - Discount badges and original price strikethrough
+  - Gift to friend option
+  - Unique item ownership tracking
+
+### Marketplace Kiosks UI (✅ Implemented)
+- **Controller**: `MarketplaceKiosksController` — show, quick_buy, quick_sell
+- **Views**: Three-panel layout (buy, sell, local listings)
+- **Features**:
+  - Quick-buy common items at fixed prices
+  - Quick-sell inventory items at vendor price
+  - View local auction listings
+  - Zone-based kiosk availability
+
 ## Player-driven Market Controls
 - Taxes remain dynamic per clan-owned territory (`Economy::TaxCalculator` + `ClanTerritory`), but we now throttle inflation with:
   - Daily listing caps enforced in `Economy::ListingCapEnforcer`.

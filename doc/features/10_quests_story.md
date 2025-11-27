@@ -7,7 +7,7 @@
 
 ## Quest Types
 - **Static Content:** Designers author arcs in `config/gameplay/quests/static.yml`, then `Game::Quests::StaticQuestBuilder` seeds/updates `Quest`/`QuestChapter`/`QuestStep` rows. These cover key cities, factions, and dungeons.
-- **Dynamic Missions:** `Game::Quests::DynamicQuestGenerator` pairs quest metadata (`dynamic_triggers`) with live world triggers (resource shortages, clan control, seasonal event keys). `Game::Quests::DynamicQuestRefresher` invokes the generator whenever a character opens the quest log, ensuring emergent hooks react to current state.
+- **Dynamic Missions (✅ Implemented):** `Game::Quests::DynamicQuestGenerator` generates procedural quests from triggers, zones, and daily rotation. Supports 7 quest types (kill, gather, collect, escort, deliver, explore, defend) with level-scaled rewards. `DynamicQuestRefresher` invokes the generator when opening the quest log.
 - **Repeatables:** `Game::Quests::DailyRotation` deterministically assigns daily quests across morning/afternoon/evening slots, while `Game::Quests::RepeatableQuestScheduler` refreshes weekly/event quests with predictable cooldowns.
 - **Event Quests:** `Game::Events::Scheduler` + `ScheduledEventJob` instantiate seasonal festivals/tournaments. `Game::Events::QuestOrchestrator` wires those instances to dynamic quests, announcer NPCs, and world reskins so events feel bespoke.
 

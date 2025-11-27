@@ -30,4 +30,3 @@ module Characters
     end
   end
 end
-

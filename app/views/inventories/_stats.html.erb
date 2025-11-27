@@ -1,0 +1,53 @@
+<div class="stats-panel card">
+  <h3>Character Stats</h3>
+
+  <div class="stats-grid">
+    <div class="stat-row">
+      <span class="stat-name">❤️ HP</span>
+      <span class="stat-value"><%= stats[:current_hp] %>/<%= stats[:max_hp] %></span>
+    </div>
+    <div class="stat-row">
+      <span class="stat-name">💙 MP</span>
+      <span class="stat-value"><%= stats[:current_mp] %>/<%= stats[:max_mp] %></span>
+    </div>
+
+    <hr>
+
+    <div class="stat-row">
+      <span class="stat-name">💪 Strength</span>
+      <span class="stat-value"><%= stats[:strength] %></span>
+    </div>
+    <div class="stat-row">
+      <span class="stat-name">🏃 Dexterity</span>
+      <span class="stat-value"><%= stats[:dexterity] %></span>
+    </div>
+    <div class="stat-row">
+      <span class="stat-name">🧠 Intelligence</span>
+      <span class="stat-value"><%= stats[:intelligence] %></span>
+    </div>
+    <div class="stat-row">
+      <span class="stat-name">❤️‍🔥 Vitality</span>
+      <span class="stat-value"><%= stats[:vitality] %></span>
+    </div>
+    <div class="stat-row">
+      <span class="stat-name">✨ Spirit</span>
+      <span class="stat-value"><%= stats[:spirit] %></span>
+    </div>
+
+    <hr>
+
+    <div class="stat-row">
+      <span class="stat-name">⚔️ Attack</span>
+      <span class="stat-value"><%= stats[:attack_power] %></span>
+    </div>
+    <div class="stat-row">
+      <span class="stat-name">🛡️ Defense</span>
+      <span class="stat-value"><%= stats[:defense] %></span>
+    </div>
+    <div class="stat-row">
+      <span class="stat-name">💫 Crit Rate</span>
+      <span class="stat-value"><%= stats[:crit_rate] %>%</span>
+    </div>
+  </div>
+</div>
+

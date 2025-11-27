@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_11_27_100000) do
+ActiveRecord::Schema[8.1].define(version: 2025_11_27_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -99,6 +99,23 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_27_100000) do
     t.index ["fight_type"], name: "index_arena_applications_on_fight_type"
     t.index ["matched_with_id"], name: "index_arena_applications_on_matched_with_id"
     t.index ["status"], name: "index_arena_applications_on_status"
+  end
+
+  create_table "arena_bets", force: :cascade do |t|
+    t.integer "amount", null: false
+    t.bigint "arena_match_id", null: false
+    t.datetime "created_at", null: false
+    t.integer "currency_type", default: 0, null: false
+    t.integer "payout_amount", default: 0
+    t.bigint "predicted_winner_id", null: false
+    t.integer "status", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.index ["arena_match_id", "status"], name: "index_arena_bets_on_arena_match_id_and_status"
+    t.index ["arena_match_id"], name: "index_arena_bets_on_arena_match_id"
+    t.index ["predicted_winner_id"], name: "index_arena_bets_on_predicted_winner_id"
+    t.index ["user_id", "arena_match_id"], name: "index_arena_bets_on_user_id_and_arena_match_id", unique: true
+    t.index ["user_id"], name: "index_arena_bets_on_user_id"
   end
 
   create_table "arena_matches", force: :cascade do |t|
@@ -432,6 +449,22 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_27_100000) do
     t.index ["moderation_ticket_id"], name: "index_chat_reports_on_moderation_ticket_id"
     t.index ["reporter_id"], name: "index_chat_reports_on_reporter_id"
     t.index ["status"], name: "index_chat_reports_on_status"
+  end
+
+  create_table "chat_violations", force: :cascade do |t|
+    t.bigint "chat_message_id"
+    t.datetime "created_at", null: false
+    t.jsonb "metadata", default: {}, null: false
+    t.string "reason"
+    t.string "severity", null: false
+    t.integer "severity_points", default: 1, null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.string "violation_type", null: false
+    t.index ["chat_message_id"], name: "index_chat_violations_on_chat_message_id"
+    t.index ["user_id", "created_at"], name: "index_chat_violations_on_user_id_and_created_at"
+    t.index ["user_id"], name: "index_chat_violations_on_user_id"
+    t.index ["violation_type"], name: "index_chat_violations_on_violation_type"
   end
 
   create_table "clan_applications", force: :cascade do |t|
@@ -811,6 +844,72 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_27_100000) do
     t.datetime "updated_at", null: false
     t.index ["key"], name: "index_cutscene_events_on_key", unique: true
     t.index ["quest_id"], name: "index_cutscene_events_on_quest_id"
+  end
+
+  create_table "dungeon_encounters", force: :cascade do |t|
+    t.datetime "completed_at"
+    t.datetime "created_at", null: false
+    t.decimal "difficulty_modifier", precision: 4, scale: 2, default: "1.0"
+    t.bigint "dungeon_instance_id", null: false
+    t.integer "encounter_index", null: false
+    t.integer "encounter_template_id"
+    t.datetime "started_at"
+    t.integer "status", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.index ["dungeon_instance_id", "encounter_index"], name: "idx_encounters_on_instance_and_index", unique: true
+    t.index ["dungeon_instance_id"], name: "index_dungeon_encounters_on_dungeon_instance_id"
+  end
+
+  create_table "dungeon_instances", force: :cascade do |t|
+    t.integer "attempts_remaining", default: 3
+    t.integer "completion_time_seconds"
+    t.datetime "created_at", null: false
+    t.integer "current_encounter_index", default: 0
+    t.integer "difficulty", default: 1, null: false
+    t.bigint "dungeon_template_id", null: false
+    t.datetime "ended_at"
+    t.datetime "expires_at"
+    t.string "instance_key", null: false
+    t.bigint "leader_id", null: false
+    t.bigint "party_id", null: false
+    t.datetime "started_at"
+    t.integer "status", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.index ["dungeon_template_id"], name: "index_dungeon_instances_on_dungeon_template_id"
+    t.index ["instance_key"], name: "index_dungeon_instances_on_instance_key", unique: true
+    t.index ["leader_id"], name: "index_dungeon_instances_on_leader_id"
+    t.index ["party_id", "status"], name: "index_dungeon_instances_on_party_id_and_status"
+    t.index ["party_id"], name: "index_dungeon_instances_on_party_id"
+  end
+
+  create_table "dungeon_progress_checkpoints", force: :cascade do |t|
+    t.integer "checkpoint_index", null: false
+    t.datetime "created_at", null: false
+    t.bigint "dungeon_instance_id", null: false
+    t.integer "encounter_index", null: false
+    t.jsonb "party_state", default: []
+    t.datetime "updated_at", null: false
+    t.index ["dungeon_instance_id", "checkpoint_index"], name: "idx_checkpoints_on_instance_and_index", unique: true
+    t.index ["dungeon_instance_id"], name: "index_dungeon_progress_checkpoints_on_dungeon_instance_id"
+  end
+
+  create_table "dungeon_templates", force: :cascade do |t|
+    t.string "biome"
+    t.datetime "created_at", null: false
+    t.text "description"
+    t.integer "duration_minutes", default: 120, null: false
+    t.jsonb "encounters", default: [], null: false
+    t.string "key", null: false
+    t.integer "max_level", default: 100, null: false
+    t.integer "max_party_size", default: 5, null: false
+    t.jsonb "metadata", default: {}, null: false
+    t.integer "min_level", default: 1, null: false
+    t.integer "min_party_size", default: 1, null: false
+    t.string "name", null: false
+    t.jsonb "rewards", default: {}, null: false
+    t.datetime "updated_at", null: false
+    t.index ["key"], name: "index_dungeon_templates_on_key", unique: true
+    t.index ["min_level", "max_level"], name: "index_dungeon_templates_on_min_level_and_max_level"
   end
 
   create_table "economic_snapshots", force: :cascade do |t|
@@ -1856,6 +1955,53 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_27_100000) do
     t.index ["region_key", "monster_key"], name: "index_spawn_schedules_on_region_key_and_monster_key", unique: true
   end
 
+  create_table "tactical_matches", force: :cascade do |t|
+    t.integer "actions_remaining", default: 3
+    t.bigint "arena_room_id"
+    t.datetime "created_at", null: false
+    t.bigint "creator_id", null: false
+    t.bigint "current_turn_character_id"
+    t.datetime "ended_at"
+    t.datetime "expires_at"
+    t.integer "grid_size", default: 8, null: false
+    t.jsonb "grid_state", default: {}
+    t.string "instance_key"
+    t.bigint "opponent_id"
+    t.datetime "started_at"
+    t.integer "status", default: 0, null: false
+    t.integer "turn_number", default: 1
+    t.datetime "turn_started_at"
+    t.integer "turn_time_limit", default: 60, null: false
+    t.datetime "updated_at", null: false
+    t.bigint "winner_id"
+    t.index ["arena_room_id"], name: "index_tactical_matches_on_arena_room_id"
+    t.index ["creator_id"], name: "index_tactical_matches_on_creator_id"
+    t.index ["instance_key"], name: "index_tactical_matches_on_instance_key", unique: true
+    t.index ["opponent_id"], name: "index_tactical_matches_on_opponent_id"
+    t.index ["status"], name: "index_tactical_matches_on_status"
+    t.index ["winner_id"], name: "index_tactical_matches_on_winner_id"
+  end
+
+  create_table "tactical_participants", force: :cascade do |t|
+    t.boolean "alive", default: true, null: false
+    t.integer "attack_range", default: 1
+    t.jsonb "buff_durations", default: {}
+    t.jsonb "buffs", default: {}
+    t.bigint "character_id", null: false
+    t.datetime "created_at", null: false
+    t.integer "current_hp", null: false
+    t.integer "current_mp", default: 0
+    t.integer "grid_x", default: 0, null: false
+    t.integer "grid_y", default: 0, null: false
+    t.integer "movement_range", default: 3
+    t.bigint "tactical_match_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["character_id"], name: "index_tactical_participants_on_character_id"
+    t.index ["tactical_match_id", "alive"], name: "index_tactical_participants_on_tactical_match_id_and_alive"
+    t.index ["tactical_match_id", "character_id"], name: "idx_on_tactical_match_id_character_id_7b7c3cb512", unique: true
+    t.index ["tactical_match_id"], name: "index_tactical_participants_on_tactical_match_id"
+  end
+
   create_table "title_grants", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.boolean "equipped", default: false, null: false
@@ -1934,6 +2080,8 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_27_100000) do
 
   create_table "users", force: :cascade do |t|
     t.bigint "active_title_id"
+    t.string "chat_mute_reason"
+    t.datetime "chat_muted_until"
     t.integer "chat_privacy", default: 0, null: false
     t.datetime "confirmation_sent_at"
     t.string "confirmation_token"
@@ -2027,6 +2175,9 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_27_100000) do
   add_foreign_key "arena_applications", "arena_matches"
   add_foreign_key "arena_applications", "arena_rooms"
   add_foreign_key "arena_applications", "characters", column: "applicant_id"
+  add_foreign_key "arena_bets", "arena_matches"
+  add_foreign_key "arena_bets", "characters", column: "predicted_winner_id"
+  add_foreign_key "arena_bets", "users"
   add_foreign_key "arena_matches", "arena_rooms"
   add_foreign_key "arena_matches", "arena_seasons"
   add_foreign_key "arena_matches", "arena_tournaments"
@@ -2067,6 +2218,8 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_27_100000) do
   add_foreign_key "chat_reports", "chat_messages"
   add_foreign_key "chat_reports", "moderation_tickets"
   add_foreign_key "chat_reports", "users", column: "reporter_id"
+  add_foreign_key "chat_violations", "chat_messages"
+  add_foreign_key "chat_violations", "users"
   add_foreign_key "clan_applications", "characters"
   add_foreign_key "clan_applications", "clans"
   add_foreign_key "clan_applications", "users", column: "applicant_id"
@@ -2109,6 +2262,11 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_27_100000) do
   add_foreign_key "currency_transactions", "currency_wallets"
   add_foreign_key "currency_wallets", "users"
   add_foreign_key "cutscene_events", "quests"
+  add_foreign_key "dungeon_encounters", "dungeon_instances"
+  add_foreign_key "dungeon_instances", "characters", column: "leader_id"
+  add_foreign_key "dungeon_instances", "dungeon_templates"
+  add_foreign_key "dungeon_instances", "parties"
+  add_foreign_key "dungeon_progress_checkpoints", "dungeon_instances"
   add_foreign_key "economy_alerts", "trade_sessions"
   add_foreign_key "event_instances", "game_events"
   add_foreign_key "event_schedules", "game_events"
@@ -2204,6 +2362,12 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_27_100000) do
   add_foreign_key "social_hubs", "zones"
   add_foreign_key "spawn_points", "zones"
   add_foreign_key "spawn_schedules", "users", column: "configured_by_id"
+  add_foreign_key "tactical_matches", "arena_rooms"
+  add_foreign_key "tactical_matches", "characters", column: "creator_id"
+  add_foreign_key "tactical_matches", "characters", column: "opponent_id"
+  add_foreign_key "tactical_matches", "characters", column: "winner_id"
+  add_foreign_key "tactical_participants", "characters"
+  add_foreign_key "tactical_participants", "tactical_matches"
   add_foreign_key "title_grants", "titles"
   add_foreign_key "title_grants", "users"
   add_foreign_key "trade_items", "trade_sessions"

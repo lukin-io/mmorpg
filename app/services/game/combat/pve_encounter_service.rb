@@ -219,8 +219,104 @@ module Game
       end
 
       def process_skill!(skill_id)
-        # TODO: Implement skill system
-        failure("Skills not yet implemented")
+        return failure("No skill specified") unless skill_id
+
+        # Find the skill (can be ability or skill_node)
+        skill = find_skill(skill_id)
+        return failure("Skill not found or not unlocked") unless skill
+
+        # Get NPC participant as target
+        npc_participant = battle.battle_participants.find_by(participant_type: "npc")
+        return failure("No target found") unless npc_participant
+
+        # Create a target wrapper for the NPC
+        npc_target = NpcCombatTarget.new(npc_participant, npc_template)
+
+        # Execute the skill
+        executor = Game::Combat::SkillExecutor.new(
+          caster: character,
+          target: npc_target,
+          skill: skill,
+          battle: battle
+        )
+
+        result = executor.execute!
+        return failure(result.message) unless result.success
+
+        combat_log = [result.message]
+
+        # Check if NPC is defeated
+        if npc_target.current_hp <= 0
+          return complete_battle!(winner: :player, combat_log: combat_log)
+        end
+
+        # NPC counterattack
+        npc_damage = calculate_npc_damage(npc_stats, character, is_defending: false)
+        vitals_service.apply_damage(npc_damage, source: npc_template.name)
+        combat_log << "#{npc_template.name} counterattacks for #{npc_damage} damage!"
+
+        # Check if player is defeated
+        if character.reload.current_hp <= 0
+          return complete_battle!(winner: :npc, combat_log: combat_log)
+        end
+
+        battle.update!(turn_number: battle.turn_number + 1)
+        broadcast_combat_update!(combat_log)
+
+        Result.new(
+          success: true,
+          battle: battle,
+          message: result.message,
+          combat_log: combat_log
+        )
+      end
+
+      def find_skill(skill_id)
+        skill_id = skill_id.to_s
+
+        # Check if it's an ability (ability_123)
+        if skill_id.start_with?("ability_")
+          ability_id = skill_id.sub("ability_", "").to_i
+          return character.character_class&.abilities&.find_by(id: ability_id, kind: "active")
+        end
+
+        # Check if it's a skill node (skill_123)
+        if skill_id.start_with?("skill_")
+          node_id = skill_id.sub("skill_", "").to_i
+          return character.skill_nodes.where(node_type: "active").find_by(id: node_id)
+        end
+
+        # Try direct ID lookup
+        character.skill_nodes.where(node_type: "active").find_by(id: skill_id) ||
+          character.character_class&.abilities&.find_by(id: skill_id, kind: "active")
+      end
+
+      # Wrapper class for NPC combat target
+      class NpcCombatTarget
+        attr_accessor :current_hp, :current_mp
+
+        def initialize(participant, template)
+          @participant = participant
+          @template = template
+          @current_hp = participant.current_hp || template.health
+          @current_mp = participant.current_mp || 0
+        end
+
+        def name
+          @template.name
+        end
+
+        def id
+          @participant.id
+        end
+
+        def max_hp
+          @template.health
+        end
+
+        def save!
+          @participant.update!(current_hp: @current_hp, current_mp: @current_mp)
+        end
       end
 
       def process_flee!

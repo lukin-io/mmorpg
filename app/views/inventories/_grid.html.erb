@@ -1,0 +1,62 @@
+<div class="inventory-grid">
+  <% items.each do |item| %>
+    <div class="inventory-slot filled"
+         data-item-id="<%= item.id %>"
+         data-action="click->inventory#selectItem contextmenu->inventory#showContextMenu">
+      <div class="item-icon item-rarity--<%= item.item_template.rarity %>">
+        <%= item_slot_icon(item.item_template) %>
+        <% if item.quantity > 1 %>
+          <span class="item-quantity"><%= item.quantity %></span>
+        <% end %>
+        <% if item.enhanced_level.to_i > 0 %>
+          <span class="item-enhancement">+<%= item.enhanced_level %></span>
+        <% end %>
+      </div>
+
+      <div class="item-tooltip">
+        <div class="tooltip-header">
+          <strong class="item-name"><%= item.item_template.name %></strong>
+          <% if item.enhanced_level.to_i > 0 %>
+            <span class="enhancement-badge">+<%= item.enhanced_level %></span>
+          <% end %>
+        </div>
+        <p class="item-rarity rarity--<%= item.item_template.rarity %>"><%= item.item_template.rarity.titleize %></p>
+        <p class="item-type"><%= item.item_template.item_type.titleize %></p>
+
+        <% if item.item_template.stats.present? %>
+          <div class="item-stats">
+            <% item.item_template.stats.each do |stat, value| %>
+              <span class="stat-line">+<%= value %> <%= stat.titleize %></span>
+            <% end %>
+          </div>
+        <% end %>
+
+        <% if item.item_template.description.present? %>
+          <p class="item-description"><%= item.item_template.description %></p>
+        <% end %>
+
+        <div class="item-actions-hint">
+          <span>Left-click: Select</span>
+          <span>Right-click: Options</span>
+        </div>
+      </div>
+    </div>
+  <% end %>
+
+  <% (@inventory.max_slots - items.count).times do |i| %>
+    <div class="inventory-slot empty" data-slot-index="<%= items.count + i %>">
+      <span class="empty-slot-icon">+</span>
+    </div>
+  <% end %>
+</div>
+
+<div class="item-context-menu" data-inventory-target="contextMenu" style="display: none;">
+  <ul>
+    <li data-action="click->inventory#equipItem">Equip</li>
+    <li data-action="click->inventory#useItem">Use</li>
+    <li data-action="click->inventory#enhanceItem">Enhance</li>
+    <li data-action="click->inventory#splitStack">Split Stack</li>
+    <li class="danger" data-action="click->inventory#discardItem">Discard</li>
+  </ul>
+</div>
+

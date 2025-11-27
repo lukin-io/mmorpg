@@ -15,8 +15,18 @@
 | **Arena Combat** | ✅ Implemented | CombatProcessor with damage/defend logic |
 | **City View** | ✅ Implemented | Interactive buildings, tooltips, district nav |
 | **Ignore List Server-Side** | ✅ Implemented | `Chat::IgnoreFilter` + `BroadcastChatMessageWithIgnoreJob` |
-| **Tactical Fights** | ❌ Not Implemented | Positioning-based combat |
-| **Betting/Totalizator** | ❌ Not Implemented | Spectator wagering |
+| **Tactical Fights** | ✅ Implemented | Grid-based positioning combat in `/tactical_arena` |
+| **Betting/Totalizator** | ✅ Implemented | Spectator wagering on matches via `ArenaBet` |
+| **Dungeon Instances** | ✅ Implemented | Instanced PvE dungeons with checkpoints |
+| **Inventory UI** | ✅ Implemented | Full equipment/bag interface with tooltips |
+| **Equipment Enhancement** | ✅ Implemented | Item upgrade workflow with materials |
+| **Premium Store** | ✅ Implemented | Cosmetic/boost purchase with gifting |
+| **Marketplace Kiosks** | ✅ Implemented | Quick-buy/sell interface in world |
+| **Titles UI** | ✅ Implemented | Title selection and equip interface |
+| **Mobile HUD** | ✅ Implemented | Touch gestures, panel toggles |
+| **Combat Analytics** | ✅ Implemented | DPS/HPS charts, JSON/CSV export |
+| **Moderation Tooltips** | ✅ Implemented | Inline guideline reminders |
+| **Webhook Delivery** | ✅ Implemented | Event dispatch with retry logic |
 
 ---
 

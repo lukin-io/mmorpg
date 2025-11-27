@@ -37,4 +37,3 @@ module ArenaSeasonsHelper
     end
   end
 end
-

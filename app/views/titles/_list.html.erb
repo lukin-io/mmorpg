@@ -1,0 +1,43 @@
+<div class="titles-grid">
+  <% if earned_titles.any? %>
+    <% earned_titles.each do |title_grant| %>
+      <div class="title-card <%= 'equipped' if equipped_title == title_grant.title %>" data-title-id="<%= title_grant.title.id %>">
+        <div class="title-header">
+          <span class="title-name rarity--<%= title_grant.title.rarity %>"><%= title_grant.title.name %></span>
+          <% if equipped_title == title_grant.title %>
+            <span class="equipped-badge">✓ Equipped</span>
+          <% end %>
+        </div>
+
+        <div class="title-preview">
+          <% if title_grant.title.prefix.present? %>
+            <span class="preview-prefix"><%= title_grant.title.prefix %></span>
+          <% end %>
+          <span class="preview-name">Name</span>
+          <% if title_grant.title.suffix.present? %>
+            <span class="preview-suffix"><%= title_grant.title.suffix %></span>
+          <% end %>
+        </div>
+
+        <% if title_grant.title.description.present? %>
+          <p class="title-description"><%= title_grant.title.description %></p>
+        <% end %>
+
+        <div class="title-meta">
+          <span class="earned-date">Earned: <%= l(title_grant.granted_at, format: :short) %></span>
+        </div>
+
+        <div class="title-actions">
+          <% if equipped_title != title_grant.title %>
+            <%= button_to "Equip", equip_title_path(title_grant.title), method: :post, class: "game-btn game-btn--primary", data: {turbo: true} %>
+          <% else %>
+            <%= button_to "Unequip", unequip_titles_path, method: :delete, class: "game-btn game-btn--secondary", data: {turbo: true} %>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+  <% else %>
+    <p class="no-titles">You haven't earned any titles yet. Complete achievements to unlock titles!</p>
+  <% end %>
+</div>
+

@@ -21,8 +21,15 @@
 | **arena_match_controller.js** | ✅ Implemented | `app/javascript/controllers/arena_match_controller.js` |
 | **CSS Styles** | ✅ Implemented | `app/assets/stylesheets/application.css` — Arena section |
 | **Arena Rewards** | ✅ Implemented | `app/services/arena/rewards_distributor.rb` — XP, gold, rating, item drops |
-| **Tactical Fights** | ❌ Not Implemented | Positioning-based combat |
-| **Betting/Totalizator** | ❌ Not Implemented | Spectator wagering |
+| **Tactical Fights** | ✅ Implemented | Grid-based positioning combat via `/tactical_arena` |
+| **Betting/Totalizator** | ✅ Implemented | Spectator wagering via `ArenaBet` model |
+| **TacticalArenaController** | ✅ Implemented | `app/controllers/tactical_arena_controller.rb` — Grid combat actions |
+| **TacticalMatch Model** | ✅ Implemented | `app/models/tactical_match.rb` — Match state, grid, turns |
+| **TacticalParticipant Model** | ✅ Implemented | `app/models/tactical_participant.rb` — Position, HP, buffs |
+| **TacticalMatchChannel** | ✅ Implemented | `app/channels/tactical_match_channel.rb` — Real-time grid updates |
+| **tactical_combat_controller.js** | ✅ Implemented | `app/javascript/controllers/tactical_combat_controller.js` |
+| **ArenaBet Model** | ✅ Implemented | `app/models/arena_bet.rb` — Wagers, odds, payouts |
+| **ArenaBetsController** | ✅ Implemented | `app/controllers/arena_bets_controller.rb` — Place/cancel bets |
 
 ---
 
@@ -604,12 +611,74 @@ end
 
 ---
 
+## Tactical Fights (✅ Implemented)
+
+### UC-10: Create Tactical Match
+**Actor:** Player wanting grid-based combat
+**Flow:**
+1. Player navigates to `/tactical_arena` → views available matches
+2. Selects grid size (6x6, 8x8, 10x10) and turn time limit
+3. Creates match → `TacticalArenaController#create` → `TacticalMatch` in pending state
+4. Grid initialized with obstacles and cover tiles
+5. Waits for opponent to join
+
+### UC-11: Join and Play Tactical Match
+**Actor:** Two players in tactical combat
+**Flow:**
+1. Opponent joins via `TacticalArenaController#join`
+2. Match transitions to `:active`, participants placed on grid
+3. Creator takes first turn (3 actions per turn)
+4. Actions: move (click tile), attack (click enemy), skill (select + target)
+5. `Arena::TacticalCombat::MoveProcessor`, `AttackProcessor`, `SkillProcessor` handle each action
+6. Turn advances after 3 actions or manual end turn
+7. Match ends when one participant reaches 0 HP
+
+### Key Behaviors
+- **Grid Sizes:** 6x6 (quick), 8x8 (standard), 10x10 (extended)
+- **Turn Time:** 30s (blitz), 60s (standard), 120s (strategic)
+- **Actions per Turn:** 3 (move, attack, or skill each)
+- **Terrain:** Obstacles (impassable), Cover (+20% defense)
+- **Real-time Updates:** `TacticalMatchChannel` broadcasts grid changes
+
+---
+
+## Betting/Totalizator (✅ Implemented)
+
+### UC-12: Place Arena Bet
+**Actor:** Spectator watching a match
+**Flow:**
+1. Navigate to match → click "Betting Pool"
+2. View current odds for each combatant
+3. Select fighter, enter wager amount (10-10,000 gold)
+4. `ArenaBetsController#create` → validates funds, deducts gold
+5. Odds recalculate based on pool distribution
+6. Bet locked when match starts
+
+### UC-13: Collect Winnings
+**Actor:** Winning bettor
+**Flow:**
+1. Match ends → `Arena::RewardsDistributor` resolves all bets
+2. Correct predictions marked `:won`, payout calculated (pool share × 0.95)
+3. Gold credited to winner's wallet
+4. Incorrect predictions marked `:lost`
+
+### Key Behaviors
+- **Min/Max Bet:** 10-10,000 gold
+- **One Bet Per Match:** Unique constraint on user + match
+- **5% House Rake:** Ensures long-term economy sink
+- **Odds Calculation:** Total pool / character pool
+- **No Self-Betting:** Participants cannot bet on their own match
+
+---
+
 ## Responsible for Implementation Files
-- **Models:** `app/models/arena_match.rb`, `app/models/arena_season.rb`, `app/models/arena_participation.rb`, `app/models/arena_room.rb` (new), `app/models/arena_application.rb` (new)
-- **Services:** `app/services/arena/application_handler.rb`, `app/services/arena/matchmaker.rb`, `app/services/arena/combat_broadcaster.rb`, `app/services/arena/combat_processor.rb`, `app/services/arena/reward_job.rb`
-- **Controllers:** `app/controllers/arena_controller.rb`, `app/controllers/arena_rooms_controller.rb`, `app/controllers/arena_applications_controller.rb`, `app/controllers/arena_matches_controller.rb`
-- **Channels:** `app/channels/arena_channel.rb`, `app/channels/arena_match_channel.rb`
-- **Frontend:** `app/javascript/controllers/arena_controller.js`, `app/javascript/controllers/arena_match_controller.js`, `app/javascript/channels/arena_channel.js`
-- **Views:** `app/views/arena/*`, `app/views/arena_rooms/*`, `app/views/arena_matches/*`
-- **Config:** `config/routes.rb`, `db/seeds.rb` (arena rooms)
+- **Models:** `app/models/arena_match.rb`, `app/models/arena_season.rb`, `app/models/arena_participation.rb`, `app/models/arena_room.rb`, `app/models/arena_application.rb`, `app/models/tactical_match.rb`, `app/models/tactical_participant.rb`, `app/models/arena_bet.rb`
+- **Services:** `app/services/arena/application_handler.rb`, `app/services/arena/matchmaker.rb`, `app/services/arena/combat_broadcaster.rb`, `app/services/arena/combat_processor.rb`, `app/services/arena/reward_job.rb`, `app/services/arena/tactical_combat/move_processor.rb`, `app/services/arena/tactical_combat/attack_processor.rb`, `app/services/arena/tactical_combat/skill_processor.rb`, `app/services/arena/tactical_combat/move_calculator.rb`
+- **Controllers:** `app/controllers/arena_controller.rb`, `app/controllers/arena_rooms_controller.rb`, `app/controllers/arena_applications_controller.rb`, `app/controllers/arena_matches_controller.rb`, `app/controllers/tactical_arena_controller.rb`, `app/controllers/arena_bets_controller.rb`
+- **Channels:** `app/channels/arena_channel.rb`, `app/channels/arena_match_channel.rb`, `app/channels/tactical_match_channel.rb`
+- **Frontend:** `app/javascript/controllers/arena_controller.js`, `app/javascript/controllers/arena_match_controller.js`, `app/javascript/controllers/tactical_combat_controller.js`
+- **Views:** `app/views/arena/*`, `app/views/arena_rooms/*`, `app/views/arena_matches/*`, `app/views/tactical_arena/*`, `app/views/arena_bets/*`
+- **Policies:** `app/policies/tactical_match_policy.rb`
+- **Migrations:** `db/migrate/20251127100000_create_tactical_matches.rb`, `db/migrate/20251127100001_create_tactical_participants.rb`, `db/migrate/20251127100002_create_arena_bets.rb`
+- **Config:** `config/routes.rb`, `db/seeds.rb`
 

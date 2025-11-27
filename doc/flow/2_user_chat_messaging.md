@@ -18,6 +18,9 @@
 | **Chat::MessageDispatcher** | ✅ Implemented | Moderation pipeline |
 | **Chat::ProfanityFilter** | ✅ Implemented | Word filtering |
 | **Chat::SpamThrottler** | ✅ Implemented | Rate limiting |
+| **Chat::ModerationService** | ✅ Implemented | Full moderation heuristics |
+| **ChatModerationJob** | ✅ Implemented | Background channel scanning |
+| **Channel Access Control** | ✅ Implemented | Role-based channel permissions |
 
 ---
 
@@ -153,7 +156,58 @@ Stimulus chat_controller scrolls to bottom
 - `Chat::ProfanityFilter` — reads `config/chat_profanity.yml`, replaces banned words, sets `flagged?` metadata.
 - `Chat::MessageDispatcher` — guards posting (verification + mute checks), applies moderation commands, persists chat messages, and triggers Turbo broadcasts.
 - `Chat::SpamThrottler` — rate limits messages per user (default 8 msgs/10s).
+- `Chat::ModerationService` — comprehensive moderation heuristics (see below).
 - `Chat::Moderation::CommandHandler` — parses `/gm` commands (`mute`, `unmute`, `ban`), emits `ChatModerationAction` rows, and returns system summaries for chat logs.
+
+### Chat Moderation Service (✅ Implemented)
+**Service:** `Chat::ModerationService`
+**File:** `app/services/chat/moderation_service.rb`
+**Job:** `ChatModerationJob`
+
+**Detection Types:**
+| Violation | Severity | Action |
+|-----------|----------|--------|
+| Profanity | Medium | Filter words, log violation |
+| Spam (>10 msg/min) | Medium | Block message |
+| Rapid spam (>4 msg/10s) | Low | Warning |
+| Duplicate messages | Low | Warning |
+| Caps lock abuse (>70%) | Low | Auto-lowercase |
+| Link spam | Medium | Block for new users |
+| Advertising keywords | High | Block + referral |
+| Harassment patterns | Critical | Block + ban referral |
+
+**Penalty Escalation:**
+- 3 warnings → 5 minute mute
+- 5 warnings → 30 minute mute
+- 8 warnings → 2 hour mute
+- 12 warnings → 24 hour mute
+- 15 warnings → Manual ban referral
+
+**Background Scanning:**
+```ruby
+ChatModerationJob.perform_later(channel_id, window_minutes: 60)
+```
+Scans channel for accumulated violations and applies penalties to repeat offenders.
+
+### Channel Access Control (✅ Implemented)
+**Location:** `RealtimeChatChannel#can_access_channel?`
+
+**Access Rules by Channel Type:**
+| Channel Type | Access Rule |
+|--------------|-------------|
+| `global` | All authenticated users |
+| `local` | All authenticated users |
+| `arena` | All authenticated users |
+| `guild` | Character must be in guild |
+| `clan` | Character must be in clan |
+| `party` | Active character in party |
+| `whisper` | Must be participant |
+| `system` | Read-only for all |
+
+**Additional Checks:**
+- Muted users cannot access any channels until mute expires
+- Whisper channels check ignore list (`IgnoreListEntry`)
+- System channels cannot receive messages (read-only)
 
 ## Controllers & UI
 - `ChatChannelsController#index/show` — Turbo-driven lobby + channel view. `ChatMessagesController#create` leverages `MessageDispatcher` and re-renders forms on error.

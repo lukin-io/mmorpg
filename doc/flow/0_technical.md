@@ -261,6 +261,18 @@ bundle exec bundler-audit # optional CVE scan
   - `app/lib/game/systems/*.rb`, `app/lib/game/formulas/*.rb`, `app/lib/game/maps/*.rb`, `app/lib/game/utils/rng.rb` — Deterministic stat/effect/turn systems, damage & crit formulas, grid/tile definitions, RNG seeding helper.
 - game services:
   - `app/services/game/combat/*.rb`, `app/services/game/movement/*.rb`, `app/services/game/economy/loot_generator.rb` — Turn resolution, attack orchestration, skill execution, movement validation/pathfinding, loot generation.
+  - `app/services/game/combat/skill_executor.rb` — Combat skill execution (damage, heal, buff, debuff, DOT, HOT, AOE, drain, shield).
+  - `app/services/game/combat/turn_based_combat_service.rb` — Neverlands-inspired turn-based combat with body-part targeting, action points, and magic slots.
+  - `app/services/game/npc/dialogue_service.rb` — NPC dialogue orchestration (quest_giver, vendor, trainer, innkeeper, banker, guard, hostile).
+  - `app/services/game/quests/dynamic_quest_generator.rb` — Procedural quest generation (daily, zone, trigger-based).
+- combat config:
+  - `config/gameplay/combat_actions.yml` — Body-part definitions, attack costs, block costs, magic slots for Neverlands-inspired combat.
+- combat ui:
+  - `app/views/combat/_neverlands_battle.html.erb`, `app/views/combat/_nl_*.html.erb` — Neverlands-style combat UI partials.
+  - `app/javascript/controllers/neverlands_combat_controller.js` — Stimulus controller for combat interactions.
+- chat services:
+  - `app/services/chat/moderation_service.rb` — Chat moderation heuristics (profanity, spam, harassment detection, penalty escalation).
+  - `app/channels/realtime_chat_channel.rb` — WebSocket chat with channel access control.
 - hotwire ui:
   - `app/views/layouts/application.html.erb`, `app/assets/stylesheets/application.css`, `app/javascript/application.js`, `app/components/application_component.rb` — Layout with Turbo/Stimulus assets, flash rendering, base styles, ViewComponent base class.
 - dashboard:

@@ -29,4 +29,3 @@ module PartiesHelper
     true
   end
 end
-

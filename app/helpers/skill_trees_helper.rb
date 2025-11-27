@@ -42,4 +42,3 @@ module SkillTreesHelper
     node.prerequisite_node_ids.all? { |prereq_id| unlocked_skills[prereq_id].present? }
   end
 end
-

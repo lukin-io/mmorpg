@@ -1,0 +1,74 @@
+<%# Neverlands-style group/team display %>
+<%
+  team_alpha ||= []
+  team_beta ||= []
+%>
+
+<div class="nl-groups">
+  <%# Team Alpha (Player's team) %>
+  <span class="nl-group nl-group--alpha">
+    <a href="#" class="nl-group-private" title="Private message to team">
+      📨
+    </a>
+    <% team_alpha.each_with_index do |participant, index| %>
+      <%
+        name = participant.combatant_name
+        hp = participant.current_hp || 0
+        max_hp = participant.max_hp || 100
+        level = participant.character&.level || participant.npc_template&.level || 1
+        is_alive = participant.is_alive
+        color = is_alive ? "#0052A6" : "#999999"
+      %>
+      <span class="nl-group-member <%= 'nl-group-member--dead' unless is_alive %>"
+            style="color: <%= color %>;">
+        <strong><%= name %></strong>
+        <a href="<%= participant.character ? profile_path(participant.character) : '#' %>"
+           target="_blank"
+           class="nl-info-link">
+          ℹ️
+        </a>
+        [<%= hp %>/<%= max_hp %>]
+      </span>
+      <%= ", " unless index == team_alpha.size - 1 %>
+    <% end %>
+  </span>
+
+  <span class="nl-group-vs">vs</span>
+
+  <%# Team Beta (Enemy team) %>
+  <span class="nl-group nl-group--beta">
+    <a href="#" class="nl-group-private" title="Private message to team">
+      📨
+    </a>
+    <% team_beta.each_with_index do |participant, index| %>
+      <%
+        name = participant.combatant_name
+        hp = participant.current_hp || 0
+        max_hp = participant.max_hp || 100
+        level = participant.character&.level || participant.npc_template&.level || 1
+        is_alive = participant.is_alive
+        color = is_alive ? "#087C20" : "#999999"
+      %>
+      <span class="nl-group-member <%= 'nl-group-member--dead' unless is_alive %>"
+            style="color: <%= color %>;">
+        <strong><%= name %></strong>
+        <% if participant.character %>
+          <a href="<%= profile_path(participant.character) %>"
+             target="_blank"
+             class="nl-info-link">
+            ℹ️
+          </a>
+        <% elsif participant.npc_template %>
+          <a href="#"
+             class="nl-info-link"
+             title="NPC Info">
+            ℹ️
+          </a>
+        <% end %>
+        [<%= hp %>/<%= max_hp %>]
+      </span>
+      <%= ", " unless index == team_beta.size - 1 %>
+    <% end %>
+  </span>
+</div>
+

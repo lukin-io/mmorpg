@@ -143,6 +143,84 @@ Rails.application.routes.draw do
 
   resources :arena_seasons, only: [:index, :show]
 
+  # Tactical Arena - Grid-based combat
+  resources :tactical_arena, only: [:index, :show, :create] do
+    member do
+      post :join
+      post :move
+      post :attack
+      post :skill
+      post :end_turn
+      post :forfeit
+    end
+  end
+
+  # Arena Betting
+  resources :arena_matches do
+    resources :arena_bets, only: [:index, :create, :destroy]
+  end
+
+  # Dungeons
+  resources :dungeons, only: [:index, :show] do
+    resources :instances, controller: "dungeon_instances", only: [:create, :show] do
+      member do
+        post :enter_encounter
+        post :complete_encounter
+        post :leave
+      end
+    end
+  end
+  resources :dungeon_instances, only: [:show] do
+    member do
+      post :enter_encounter
+      post :complete_encounter
+      post :leave
+    end
+  end
+
+  # Inventory Management
+  resource :inventory, only: [:show] do
+    post :equip
+    post :unequip
+    post :use
+    post :sort
+  end
+  resources :inventory_items, only: [:destroy], path: "inventory/items"
+
+  # Equipment Enhancement
+  resources :equipment_enhancements, only: [:index, :show] do
+    member do
+      post :enhance
+      post :preview
+    end
+  end
+
+  # Premium Store
+  resources :premium_store, only: [:index, :show] do
+    member do
+      post :purchase
+      post :gift
+    end
+  end
+
+  # Marketplace Kiosks
+  resources :marketplace_kiosks, only: [:show] do
+    member do
+      post :quick_buy
+      post :quick_sell
+    end
+  end
+
+  # Titles
+  resources :titles, only: [:index] do
+    member do
+      post :equip
+    end
+    collection do
+      delete :unequip
+    end
+  end
+
   resources :announcements, only: [:index, :create]
 
   resources :game_events, only: [:index, :show, :update]
@@ -213,6 +291,7 @@ Rails.application.routes.draw do
     post :exit_location
     post :gather
     post :interact
+    post :dialogue_action
   end
 
   # PvE Combat
@@ -220,6 +299,7 @@ Rails.application.routes.draw do
     post :start
     post :action
     post :flee
+    get :skills
   end
 
   # Resource Gathering

@@ -1,0 +1,76 @@
+<div class="dungeons-page">
+  <div class="page-header">
+    <h1 class="page-title">Dungeons</h1>
+    <p class="page-subtitle">Explore dangerous depths for glory and loot</p>
+  </div>
+
+  <% if @active_instances.any? %>
+    <div class="active-dungeons card">
+      <h2>Active Dungeon Runs</h2>
+      <div class="instances-list">
+        <% @active_instances.each do |instance| %>
+          <div class="instance-card instance-card--<%= instance.difficulty %>">
+            <div class="instance-info">
+              <h3><%= instance.dungeon_template.name %></h3>
+              <span class="difficulty-badge"><%= instance.difficulty.titleize %></span>
+              <span class="progress">Encounter <%= instance.current_encounter_index + 1 %>/<%= instance.dungeon_encounters.count %></span>
+            </div>
+            <div class="instance-meta">
+              <span>Attempts: <%= instance.attempts_remaining %>/3</span>
+              <span>Expires: <%= time_ago_in_words(instance.expires_at) %></span>
+            </div>
+            <%= link_to "Continue", dungeon_instance_path(instance), class: "game-btn game-btn--primary" %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+
+  <div class="dungeons-grid">
+    <% @dungeon_templates.each do |template| %>
+      <div class="dungeon-card card">
+        <div class="dungeon-header">
+          <span class="dungeon-icon"><%= dungeon_icon(template) %></span>
+          <h2 class="dungeon-name"><%= template.name %></h2>
+        </div>
+
+        <p class="dungeon-description"><%= template.description %></p>
+
+        <div class="dungeon-info">
+          <div class="info-row">
+            <span class="label">Level:</span>
+            <span class="value"><%= template.min_level %><%= " - #{template.max_level}" if template.max_level %></span>
+          </div>
+          <div class="info-row">
+            <span class="label">Party Size:</span>
+            <span class="value"><%= template.min_party_size %> - <%= template.max_party_size %></span>
+          </div>
+          <div class="info-row">
+            <span class="label">Encounters:</span>
+            <span class="value"><%= template.encounter_templates.count %></span>
+          </div>
+          <div class="info-row">
+            <span class="label">Duration:</span>
+            <span class="value">~<%= template.estimated_duration_minutes %> min</span>
+          </div>
+        </div>
+
+        <div class="dungeon-rewards">
+          <h4>Rewards</h4>
+          <span class="reward">✨ <%= template.completion_xp %> XP</span>
+          <span class="reward">🪙 <%= template.completion_gold %> Gold</span>
+        </div>
+
+        <div class="dungeon-actions">
+          <%= link_to "View Details", dungeon_path(template), class: "game-btn" %>
+          <% if can_enter_dungeon?(template) %>
+            <%= button_to "Enter", dungeon_instances_path(template), method: :post, class: "game-btn game-btn--primary" %>
+          <% else %>
+            <span class="locked-notice">🔒 <%= dungeon_lock_reason(template) %></span>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+</div>
+

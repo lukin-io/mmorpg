@@ -30,4 +30,3 @@ module AuctionListingsHelper
     "rarity--#{rarity}"
   end
 end
-

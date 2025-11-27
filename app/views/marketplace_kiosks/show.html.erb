@@ -1,0 +1,75 @@
+<div class="marketplace-kiosk" data-controller="kiosk">
+  <div class="kiosk-header">
+    <%= link_to "← Back to World", world_path, class: "back-link" %>
+    <h1 class="kiosk-title"><%= @kiosk[:name] %></h1>
+    <p class="kiosk-location"><%= @kiosk[:zone].titleize %></p>
+  </div>
+
+  <div class="kiosk-layout">
+    <div class="kiosk-panel buy-panel card">
+      <h2>🛒 Quick Buy</h2>
+
+      <% if @quick_buy_items.any? %>
+        <div class="quick-buy-grid">
+          <% @quick_buy_items.each do |item| %>
+            <div class="quick-buy-item">
+              <div class="item-info">
+                <span class="item-icon"><%= item[:icon] %></span>
+                <span class="item-name"><%= item[:name] %></span>
+                <span class="item-price">🪙 <%= item[:price] %></span>
+              </div>
+
+              <%= form_with url: quick_buy_marketplace_kiosk_path(@kiosk[:id]), method: :post, class: "buy-form" do |f| %>
+                <%= f.hidden_field :item_key, value: item[:key] %>
+                <%= f.number_field :quantity, value: 1, min: 1, max: 99, class: "qty-input" %>
+                <%= f.submit "Buy", class: "game-btn game-btn--sm" %>
+              <% end %>
+            </div>
+          <% end %>
+        </div>
+      <% else %>
+        <p class="no-items">No items available at this kiosk.</p>
+      <% end %>
+    </div>
+
+    <div class="kiosk-panel sell-panel card">
+      <h2>💰 Quick Sell</h2>
+
+      <% if @sell_prices.any? %>
+        <div class="sell-items-list">
+          <% @sell_prices.each do |item, price| %>
+            <div class="sell-item">
+              <span class="item-name"><%= item.item_template.name %></span>
+              <span class="item-qty">x<%= item.quantity %></span>
+              <span class="sell-price">🪙 <%= price %></span>
+              <%= button_to "Sell", quick_sell_marketplace_kiosk_path(@kiosk[:id], item_id: item.id), method: :post, class: "game-btn game-btn--sm" %>
+            </div>
+          <% end %>
+        </div>
+      <% else %>
+        <p class="no-items">No sellable items in inventory.</p>
+      <% end %>
+    </div>
+
+    <div class="kiosk-panel listings-panel card">
+      <h2>📋 Local Listings</h2>
+
+      <% if @featured_listings.any? %>
+        <div class="listings-list">
+          <% @featured_listings.each do |listing| %>
+            <div class="listing-item">
+              <span class="item-name"><%= listing.item_name %></span>
+              <span class="item-price">🪙 <%= listing.starting_bid %></span>
+              <span class="time-left"><%= time_ago_in_words(listing.ends_at) %></span>
+              <%= link_to "View", auction_listing_path(listing), class: "game-btn game-btn--sm" %>
+            </div>
+          <% end %>
+        </div>
+        <%= link_to "View All Listings", auction_listings_path, class: "game-btn" %>
+      <% else %>
+        <p class="no-listings">No active listings in this area.</p>
+      <% end %>
+    </div>
+  </div>
+</div>
+
