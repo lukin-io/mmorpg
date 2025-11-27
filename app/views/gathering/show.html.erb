@@ -1,0 +1,80 @@
+<div class="gathering-modal" id="gathering-modal" data-controller="gathering">
+  <div class="gathering-modal-content card">
+    <h2 class="gathering-title">
+      <%= resource_icon(@gathering_node.resource_key) %>
+      <%= @gathering_node.resource_key.to_s.titleize %>
+    </h2>
+
+    <div class="gathering-info">
+      <div class="gathering-stat">
+        <span class="stat-label">Rarity:</span>
+        <span class="stat-value rarity-<%= @gathering_node.rarity_tier %>">
+          <%= @gathering_node.rarity_tier.titleize %>
+        </span>
+      </div>
+      <div class="gathering-stat">
+        <span class="stat-label">Difficulty:</span>
+        <span class="stat-value"><%= @gathering_node.difficulty %></span>
+      </div>
+      <div class="gathering-stat">
+        <span class="stat-label">Your Skill:</span>
+        <span class="stat-value"><%= @profession_progress&.skill_level || 0 %></span>
+      </div>
+      <div class="gathering-stat">
+        <span class="stat-label">Success Chance:</span>
+        <span class="stat-value <%= @harvest_chance >= 70 ? 'chance-high' : @harvest_chance >= 40 ? 'chance-medium' : 'chance-low' %>">
+          <%= @harvest_chance %>%
+        </span>
+      </div>
+    </div>
+
+    <% if @gathering_node.available? %>
+      <div class="gathering-status gathering-status--available">
+        ✓ Available for gathering
+      </div>
+    <% else %>
+      <div class="gathering-status gathering-status--respawning">
+        ⏳ Respawning...
+        <span class="respawn-timer" data-gathering-target="timer" data-respawn-at="<%= @gathering_node.next_available_at.iso8601 %>">
+          <%= time_until_available(@gathering_node.next_available_at) %>
+        </span>
+      </div>
+    <% end %>
+
+    <div class="gathering-actions">
+      <% if @can_harvest %>
+        <%= button_to "⛏️ Gather Resource", gathering_harvest_path(@gathering_node),
+            method: :post,
+            class: "game-btn btn-primary gathering-btn",
+            data: { turbo: true, action: "click->gathering#startGathering" } %>
+      <% elsif !@profession_progress %>
+        <div class="gathering-warning">
+          ⚠️ You need the <%= @gathering_node.profession.name %> profession to gather this resource.
+        </div>
+      <% else %>
+        <button class="game-btn btn-primary gathering-btn" disabled>
+          ⏳ Respawning...
+        </button>
+      <% end %>
+
+      <%= link_to "Cancel", world_path, class: "game-btn btn-secondary" %>
+    </div>
+
+    <% if @gathering_node.rewards.present? %>
+      <div class="gathering-rewards-preview">
+        <h4>Possible Rewards:</h4>
+        <ul class="rewards-list">
+          <% @gathering_node.rewards.each do |reward| %>
+            <li class="reward-item">
+              <%= reward[:item_key].to_s.titleize %>
+              <% if reward[:quantity] && reward[:quantity] > 1 %>
+                (x<%= reward[:quantity] %>)
+              <% end %>
+            </li>
+          <% end %>
+        </ul>
+      </div>
+    <% end %>
+  </div>
+</div>
+

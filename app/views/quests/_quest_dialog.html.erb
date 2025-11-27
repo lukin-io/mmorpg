@@ -1,0 +1,171 @@
+<%#
+  Quest Dialog - Step-by-step NPC conversation modal
+  Inspired by Neverlands' quest dialog system
+
+  Usage:
+    <%= render "quests/quest_dialog", quest: @quest, assignment: @quest_assignment %>
+
+  Required locals:
+    - quest: Quest object
+    - assignment: QuestAssignment (optional, for tracking progress)
+
+  Optional locals:
+    - steps: Array of dialog step hashes (default: built from quest data)
+    - auto_open: Boolean (default: false)
+%>
+
+<% quest ||= @quest %>
+<% assignment ||= @quest_assignment %>
+<% auto_open ||= false %>
+
+<%
+  # Build dialog steps from quest data
+  steps ||= quest.dialog_steps.presence || [
+    {
+      npc_name: quest.npc_giver&.name || "Quest Giver",
+      npc_avatar: quest.npc_giver&.avatar_url || asset_path("default_npc.png"),
+      text: quest.intro_text.presence || quest.description,
+      choices: []
+    }
+  ]
+
+  can_accept = assignment.nil? && quest.available_for?(current_character) rescue false
+  can_complete = assignment&.completable? rescue false
+%>
+
+<div class="quest-dialog-overlay"
+     data-quest-dialog-target="overlay"
+     data-action="click->quest-dialog#overlayClick"></div>
+
+<div class="quest-dialog <%= 'quest-dialog--open' if auto_open %>"
+     data-controller="quest-dialog"
+     data-quest-dialog-quest-id-value="<%= quest.id %>"
+     data-quest-dialog-quest-assignment-id-value="<%= assignment&.id %>"
+     data-quest-dialog-current-step-value="0"
+     data-quest-dialog-total-steps-value="<%= steps.length %>"
+     data-quest-dialog-can-accept-value="<%= can_accept %>"
+     data-quest-dialog-can-complete-value="<%= can_complete %>"
+     data-quest-dialog-steps="<%= steps.to_json %>"
+     data-action="keydown->quest-dialog#handleKeydown"
+     tabindex="0">
+
+  <%# Dialog Header %>
+  <div class="quest-dialog-header">
+    <h2 class="quest-dialog-title"><%= quest.title %></h2>
+    <button class="quest-dialog-close"
+            data-action="click->quest-dialog#closeDialog"
+            aria-label="Close dialog">&times;</button>
+  </div>
+
+  <%# NPC Section %>
+  <div class="quest-dialog-npc">
+    <div class="quest-dialog-npc-avatar-frame">
+      <img class="quest-dialog-npc-avatar"
+           data-quest-dialog-target="npcAvatar"
+           src="<%= steps.first&.dig(:npc_avatar) || asset_path('default_npc.png') %>"
+           alt="<%= steps.first&.dig(:npc_name) || 'NPC' %>">
+    </div>
+    <span class="quest-dialog-npc-name" data-quest-dialog-target="npcName">
+      <%= steps.first&.dig(:npc_name) || quest.npc_giver&.name || "Quest Giver" %>
+    </span>
+  </div>
+
+  <%# Dialog Content %>
+  <div class="quest-dialog-content" data-quest-dialog-target="dialogContent">
+    <div class="quest-dialog-text" data-quest-dialog-target="dialogText">
+      <%= steps.first&.dig(:text) || quest.description %>
+    </div>
+
+    <%# Choices Container %>
+    <div class="quest-dialog-choices" data-quest-dialog-target="choicesContainer" style="display: none;">
+      <%# Choices will be dynamically inserted here %>
+    </div>
+  </div>
+
+  <%# Quest Info (shown on relevant steps) %>
+  <div class="quest-dialog-info">
+    <% if quest.objectives.present? %>
+      <div class="quest-dialog-objectives">
+        <h4>Objectives:</h4>
+        <ul>
+          <% quest.objectives.each do |objective| %>
+            <li class="<%= 'objective--complete' if assignment&.objective_complete?(objective[:key]) %>">
+              <%= objective[:description] %>
+              <% if objective[:count] && objective[:count] > 1 %>
+                <span class="objective-progress">
+                  (<%= assignment&.objective_progress(objective[:key]) || 0 %>/<%= objective[:count] %>)
+                </span>
+              <% end %>
+            </li>
+          <% end %>
+        </ul>
+      </div>
+    <% end %>
+
+    <% if quest.rewards.present? %>
+      <div class="quest-dialog-rewards">
+        <h4>Rewards:</h4>
+        <ul>
+          <% if quest.xp_reward.to_i > 0 %>
+            <li class="reward-xp">✨ <%= quest.xp_reward %> XP</li>
+          <% end %>
+          <% if quest.gold_reward.to_i > 0 %>
+            <li class="reward-gold">💰 <%= quest.gold_reward %> Gold</li>
+          <% end %>
+          <% quest.item_rewards&.each do |item| %>
+            <li class="reward-item">📦 <%= item[:name] %> x<%= item[:count] || 1 %></li>
+          <% end %>
+        </ul>
+      </div>
+    <% end %>
+  </div>
+
+  <%# Navigation Footer %>
+  <div class="quest-dialog-footer">
+    <div class="quest-dialog-nav">
+      <button class="quest-dialog-btn quest-dialog-btn--nav"
+              data-quest-dialog-target="prevButton"
+              data-action="click->quest-dialog#previousStep"
+              style="visibility: hidden;"
+              aria-label="Previous">
+        ◀ Previous
+      </button>
+
+      <span class="quest-dialog-step-indicator" data-quest-dialog-target="stepIndicator">
+        1 / <%= steps.length %>
+      </span>
+
+      <button class="quest-dialog-btn quest-dialog-btn--nav"
+              data-quest-dialog-target="nextButton"
+              data-action="click->quest-dialog#nextStep"
+              style="<%= steps.length <= 1 ? 'visibility: hidden;' : '' %>"
+              aria-label="Next">
+        Next ▶
+      </button>
+    </div>
+
+    <div class="quest-dialog-actions">
+      <%# Accept button (for new quests) %>
+      <button class="quest-dialog-btn quest-dialog-btn--accept game-btn btn-success"
+              data-quest-dialog-target="acceptButton"
+              data-action="click->quest-dialog#acceptQuest"
+              style="display: <%= can_accept && steps.length == 1 ? 'inline-flex' : 'none' %>;">
+        ✓ Accept Quest
+      </button>
+
+      <%# Complete button (for completed quests) %>
+      <button class="quest-dialog-btn quest-dialog-btn--complete game-btn btn-primary"
+              data-quest-dialog-target="completeButton"
+              data-action="click->quest-dialog#completeQuest"
+              style="display: <%= can_complete && steps.length == 1 ? 'inline-flex' : 'none' %>;">
+        ★ Complete Quest
+      </button>
+
+      <%# Decline/Close button %>
+      <button class="quest-dialog-btn quest-dialog-btn--decline game-btn btn-secondary"
+              data-action="click->quest-dialog#closeDialog">
+        Close
+      </button>
+    </div>
+  </div>
+</div>

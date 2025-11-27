@@ -1,0 +1,43 @@
+<%#
+  Online players list partial
+  Shows currently online players with status indicators
+
+  @example
+    <%= render "shared/online_players" %>
+%>
+<% online_users = User.joins(:user_sessions)
+     .where(user_sessions: { signed_out_at: nil })
+     .where("user_sessions.last_seen_at > ?", 5.minutes.ago)
+     .distinct
+     .limit(50) rescue [] %>
+
+<div class="online-header">
+  Online
+  <span class="online-count">(<%= online_users.size %>)</span>
+</div>
+
+<div class="online-list">
+  <% online_users.each do |user| %>
+    <% session = user.user_sessions.where(signed_out_at: nil).order(last_seen_at: :desc).first %>
+    <% status = session&.last_seen_at&.> 2.minutes.ago ? 'online' : 'idle' %>
+
+    <div class="online-player"
+         data-user-id="<%= user.id %>"
+         data-action="click->chat#clickUsername contextmenu->chat#showUserMenu"
+         data-username="<%= user.profile_name %>"
+         data-user-id="<%= user.id %>">
+      <span class="online-player-status online-player-status--<%= status %>"></span>
+      <span class="online-player-name"><%= user.profile_name || user.email.split('@').first %></span>
+      <% if user.characters.any? %>
+        <span class="online-player-level">[<%= user.characters.first.level %>]</span>
+      <% end %>
+    </div>
+  <% end %>
+
+  <% if online_users.empty? %>
+    <div class="online-empty">
+      <p class="text-muted text-sm">No players online</p>
+    </div>
+  <% end %>
+</div>
+

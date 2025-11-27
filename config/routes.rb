@@ -102,11 +102,35 @@ Rails.application.routes.draw do
     resources :party_memberships, only: [:update, :destroy]
   end
   resources :party_invitations, only: :update
+  # Arena System (Neverlands-inspired)
+  resources :arena, only: [:index], controller: "arena" do
+    collection do
+      get :lobby
+    end
+  end
+
+  resources :arena_rooms, only: [:index, :show] do
+    resources :arena_applications, only: [:index, :create, :destroy] do
+      member do
+        post :accept
+      end
+    end
+  end
+
+  resources :arena_applications, only: [] do
+    member do
+      post :accept
+      delete :cancel
+    end
+  end
+
   resources :arena_matches, only: [:index, :show, :create] do
     member do
       post :spectate
+      get :log
     end
   end
+
   resources :arena_seasons, only: [:index, :show]
 
   resources :announcements, only: [:index, :create]
@@ -179,6 +203,23 @@ Rails.application.routes.draw do
     post :exit_location
     post :gather
     post :interact
+  end
+
+  # PvE Combat
+  resource :combat, only: :show, controller: "combat" do
+    post :start
+    post :action
+    post :flee
+  end
+
+  # Resource Gathering
+  resources :gathering, only: [:show] do
+    member do
+      post :harvest
+    end
+    collection do
+      get :nodes
+    end
   end
 
   # Defines the root path route ("/")

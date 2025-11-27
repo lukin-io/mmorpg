@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_11_25_153000) do
+ActiveRecord::Schema[8.1].define(version: 2025_11_27_100000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -68,7 +68,41 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_25_153000) do
     t.index ["created_at"], name: "index_announcements_on_created_at"
   end
 
+  create_table "arena_applications", force: :cascade do |t|
+    t.bigint "applicant_id", null: false
+    t.bigint "arena_match_id"
+    t.bigint "arena_room_id", null: false
+    t.boolean "closed_fight", default: false, null: false
+    t.datetime "created_at", null: false
+    t.integer "enemy_count"
+    t.integer "enemy_level_max"
+    t.integer "enemy_level_min"
+    t.datetime "expires_at"
+    t.integer "fight_kind", default: 0, null: false
+    t.integer "fight_type", default: 0, null: false
+    t.datetime "matched_at"
+    t.bigint "matched_with_id"
+    t.jsonb "metadata", default: {}, null: false
+    t.datetime "starts_at"
+    t.integer "status", default: 0, null: false
+    t.integer "team_count", default: 1
+    t.integer "team_level_max"
+    t.integer "team_level_min"
+    t.integer "timeout_seconds", default: 180, null: false
+    t.integer "trauma_percent", default: 30, null: false
+    t.datetime "updated_at", null: false
+    t.integer "wait_minutes", default: 10
+    t.index ["applicant_id"], name: "index_arena_applications_on_applicant_id"
+    t.index ["arena_match_id"], name: "index_arena_applications_on_arena_match_id"
+    t.index ["arena_room_id", "status"], name: "index_arena_applications_on_arena_room_id_and_status"
+    t.index ["arena_room_id"], name: "index_arena_applications_on_arena_room_id"
+    t.index ["fight_type"], name: "index_arena_applications_on_fight_type"
+    t.index ["matched_with_id"], name: "index_arena_applications_on_matched_with_id"
+    t.index ["status"], name: "index_arena_applications_on_status"
+  end
+
   create_table "arena_matches", force: :cascade do |t|
+    t.bigint "arena_room_id"
     t.bigint "arena_season_id"
     t.bigint "arena_tournament_id"
     t.string "bracket_position"
@@ -82,6 +116,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_25_153000) do
     t.datetime "updated_at", null: false
     t.string "winning_team"
     t.bigint "zone_id"
+    t.index ["arena_room_id"], name: "index_arena_matches_on_arena_room_id"
     t.index ["arena_season_id"], name: "index_arena_matches_on_arena_season_id"
     t.index ["arena_tournament_id"], name: "index_arena_matches_on_arena_tournament_id"
     t.index ["spectator_code"], name: "index_arena_matches_on_spectator_code", unique: true
@@ -117,6 +152,25 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_25_153000) do
     t.datetime "updated_at", null: false
     t.integer "wins", default: 0, null: false
     t.index ["character_id", "ladder_type"], name: "index_arena_rankings_on_character_id_and_ladder_type", unique: true
+  end
+
+  create_table "arena_rooms", force: :cascade do |t|
+    t.boolean "active", default: true, null: false
+    t.datetime "created_at", null: false
+    t.string "faction_restriction"
+    t.integer "level_max", default: 100, null: false
+    t.integer "level_min", default: 0, null: false
+    t.integer "max_concurrent_matches", default: 10, null: false
+    t.jsonb "metadata", default: {}, null: false
+    t.string "name", null: false
+    t.integer "room_type", default: 0, null: false
+    t.string "slug", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "zone_id"
+    t.index ["active"], name: "index_arena_rooms_on_active"
+    t.index ["room_type"], name: "index_arena_rooms_on_room_type"
+    t.index ["slug"], name: "index_arena_rooms_on_slug", unique: true
+    t.index ["zone_id"], name: "index_arena_rooms_on_zone_id"
   end
 
   create_table "arena_seasons", force: :cascade do |t|
@@ -275,12 +329,21 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_25_153000) do
     t.bigint "character_class_id"
     t.bigint "clan_id"
     t.datetime "created_at", null: false
+    t.integer "current_hp", default: 100, null: false
+    t.integer "current_mp", default: 50, null: false
     t.bigint "experience", default: 0, null: false
     t.string "faction_alignment", default: "neutral", null: false
     t.bigint "guild_id"
+    t.integer "hp_regen_interval", default: 300, null: false
+    t.boolean "in_combat", default: false, null: false
+    t.datetime "last_combat_at"
     t.datetime "last_level_up_at"
+    t.datetime "last_regen_tick_at"
     t.integer "level", default: 1, null: false
+    t.integer "max_hp", default: 100, null: false
+    t.integer "max_mp", default: 50, null: false
     t.jsonb "metadata", default: {}, null: false
+    t.integer "mp_regen_interval", default: 600, null: false
     t.string "name", null: false
     t.jsonb "progression_sources", default: {}, null: false
     t.integer "reputation", default: 0, null: false
@@ -1960,6 +2023,11 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_25_153000) do
   add_foreign_key "achievement_grants", "achievements"
   add_foreign_key "achievement_grants", "users"
   add_foreign_key "achievements", "titles", column: "title_reward_id"
+  add_foreign_key "arena_applications", "arena_applications", column: "matched_with_id"
+  add_foreign_key "arena_applications", "arena_matches"
+  add_foreign_key "arena_applications", "arena_rooms"
+  add_foreign_key "arena_applications", "characters", column: "applicant_id"
+  add_foreign_key "arena_matches", "arena_rooms"
   add_foreign_key "arena_matches", "arena_seasons"
   add_foreign_key "arena_matches", "arena_tournaments"
   add_foreign_key "arena_matches", "zones"
@@ -1967,6 +2035,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_25_153000) do
   add_foreign_key "arena_participations", "characters"
   add_foreign_key "arena_participations", "users"
   add_foreign_key "arena_rankings", "characters"
+  add_foreign_key "arena_rooms", "zones"
   add_foreign_key "arena_tournaments", "competition_brackets"
   add_foreign_key "arena_tournaments", "event_instances"
   add_foreign_key "auction_bids", "auction_listings"

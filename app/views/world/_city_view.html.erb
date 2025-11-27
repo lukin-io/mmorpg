@@ -1,0 +1,83 @@
+<%# City view with interactive buildings (Neverlands-inspired) %>
+<% zone ||= @zone %>
+<% buildings ||= city_buildings(zone) %>
+
+<div class="city-view"
+     data-controller="city"
+     data-city-zone-id-value="<%= zone.id %>"
+     data-city-buildings-value="<%= buildings.to_json %>">
+
+  <%# City header %>
+  <div class="city-header">
+    <h1 class="city-name"><%= zone.name %></h1>
+    <p class="city-description"><%= zone.description || "A bustling city full of adventure." %></p>
+  </div>
+
+  <%# District navigation arrows %>
+  <div class="city-nav" data-city-target="districtNav">
+    <button class="city-nav-arrow city-nav-arrow--north"
+            data-action="click->city#navigateDistrict"
+            data-direction="north"
+            title="North District">▲</button>
+    <button class="city-nav-arrow city-nav-arrow--south"
+            data-action="click->city#navigateDistrict"
+            data-direction="south"
+            title="South District">▼</button>
+    <button class="city-nav-arrow city-nav-arrow--east"
+            data-action="click->city#navigateDistrict"
+            data-direction="east"
+            title="East District">▶</button>
+    <button class="city-nav-arrow city-nav-arrow--west"
+            data-action="click->city#navigateDistrict"
+            data-direction="west"
+            title="West District">◀</button>
+  </div>
+
+  <%# City map with buildings %>
+  <div class="city-map" data-city-target="map">
+    <%# Background decorations %>
+    <div class="city-decoration city-decoration--fountain" style="grid-column: 4; grid-row: 4;">
+      ⛲
+    </div>
+    <div class="city-decoration city-decoration--statue" style="grid-column: 2; grid-row: 2;">
+      🗿
+    </div>
+
+    <%# Dynamic buildings %>
+    <% buildings.each do |building| %>
+      <div class="city-building city-building--<%= building[:type] %>"
+           data-building-id="<%= building[:id] %>"
+           data-building-name="<%= building[:name] %>"
+           data-building-type="<%= building[:type] %>"
+           data-building-key="<%= building[:key] %>"
+           data-building-description="<%= building[:description] %>"
+           data-building-npcs="<%= (building[:npcs] || []).to_json %>"
+           style="grid-column: <%= building[:grid_x] + 1 %>; grid-row: <%= building[:grid_y] + 1 %>;">
+        <div class="city-building-icon"><%= building_icon(building[:type]) %></div>
+        <div class="city-building-name"><%= building[:name] %></div>
+      </div>
+    <% end %>
+
+    <%# Player marker %>
+    <div class="city-player-marker" style="grid-column: <%= @position.x + 1 %>; grid-row: <%= @position.y + 1 %>;">
+      <div class="player-avatar">🧙</div>
+      <div class="player-name"><%= current_character.name %></div>
+    </div>
+  </div>
+
+  <%# Building info panel (appears on click) %>
+  <div class="city-building-info" data-city-target="buildingInfo">
+    <p class="city-hint">Click a building to see details</p>
+  </div>
+
+  <%# Quick actions %>
+  <div class="city-actions">
+    <button class="btn-secondary" data-action="click->city#exitCity">
+      🚪 Exit to World Map
+    </button>
+  </div>
+
+  <%# Tooltip (hidden by default) %>
+  <div class="city-tooltip" data-city-target="tooltip" style="display: none;"></div>
+</div>
+

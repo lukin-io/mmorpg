@@ -1,5 +1,95 @@
 # 2. Social Systems — Chat, Friends, and Mail Flow
 
+## Implementation Status
+
+| Component | Status | Details |
+|-----------|--------|---------|
+| **ChatChannel (DB model)** | ✅ Implemented | `app/models/chat_channel.rb` — Channel metadata |
+| **ChatMessage** | ✅ Implemented | `app/models/chat_message.rb` — Message storage, broadcasts |
+| **RealtimeChatChannel** | ✅ Implemented | `app/channels/realtime_chat_channel.rb` — WebSocket chat |
+| **ChatEmoji** | ✅ Implemented | `app/models/chat_emoji.rb` — Emoji text conversion |
+| **chat_controller.js** | ✅ Implemented | Username click, context menu, emoji picker |
+| **Emoji Picker** | ✅ Implemented | 40+ emojis, `:NNN:` code conversion |
+| **Username Context Menu** | ✅ Implemented | Whisper, Profile, Mention, Copy, Ignore |
+| **Message Highlighting** | ✅ Implemented | CSS classes for mention, whisper, clan, announcement |
+| **Whisper Commands** | ✅ Implemented | `/w username` and `%username%` formats |
+| **Clan Chat Prefix** | ✅ Implemented | `%clan%` message routing |
+| **Ignore List Integration** | ✅ Implemented | `app/services/chat/ignore_filter.rb` + `BroadcastChatMessageWithIgnoreJob` |
+| **Chat::MessageDispatcher** | ✅ Implemented | Moderation pipeline |
+| **Chat::ProfanityFilter** | ✅ Implemented | Word filtering |
+| **Chat::SpamThrottler** | ✅ Implemented | Rate limiting |
+
+---
+
+## Use Cases
+
+### UC-1: Send Chat Message
+**Actor:** Verified player in chat channel
+**Flow:**
+1. Player types message in input field
+2. Presses Enter or clicks Send
+3. `ChatMessagesController#create` → `Chat::MessageDispatcher`
+4. Moderation pipeline checks: spam, mute, profanity
+5. `ChatMessage.create!` persists and triggers `broadcast_append_later_to`
+6. All subscribers receive message via Turbo Stream
+7. `chat_controller.js` auto-scrolls to bottom
+
+### UC-2: Whisper to Player
+**Actor:** Player wanting private communication
+**Flow:**
+1. Player types `/w username message` or `%username% message`
+2. `RealtimeChatChannel#speak` parses command
+3. Target user looked up, whisper created with `chat_type: :whisper`
+4. Message broadcast only to sender and recipient channels
+5. Both see message styled with `.chat-msg--whisper` (red tint)
+
+### UC-3: Use Emoji
+**Actor:** Player wanting to add emoji
+**Flow:**
+1. Player clicks emoji button (😀) to open picker
+2. Selects emoji from grid (40+ game-themed options)
+3. Emoji inserted at cursor position
+4. Or types `:001:` code directly in message
+5. `ChatEmoji.convert_all` transforms codes to Unicode on send
+
+### UC-4: Interact with Username
+**Actor:** Player seeing another player's message
+**Flow:**
+1. Click username → `/w username ` inserted in input
+2. Ctrl+Click → `@username ` inserted for mention
+3. Right-click → Context menu appears with options
+4. Select action: Whisper, View Profile, Mention, Copy Name, Ignore
+
+---
+
+## Key Behavior
+
+### Chat Command Parsing
+| Command | Action |
+|---------|--------|
+| `/w name msg` | Send whisper to `name` |
+| `%name% msg` | Alternate whisper syntax |
+| `%clan% msg` | Send to clan chat |
+| `%party% msg` | Send to party chat |
+| `/shout msg` | Global shout (level 5+) |
+| `@name` | Mention player (highlights their view) |
+
+### Emoji Conversion
+- `:001:` through `:040:` — Numeric codes to emoji
+- Text shortcuts: `:)` → 🙂, `:D` → 😄, `<3` → ❤️
+
+### Message Types & CSS Classes
+| Type | Class | Color |
+|------|-------|-------|
+| Normal | `.chat-msg` | Default |
+| System | `.chat-msg--system` | Gray |
+| Whisper | `.chat-msg--whisper` | Red/pink |
+| Mention | `.chat-msg--mention` | Blue highlight |
+| Clan | `.chat-msg--clan` | Gray background |
+| Announcement | `.chat-msg--announcement` | Orange |
+
+---
+
 ## Overview
 - Implements the first slice of `doc/features/2_user.md`: chat channels (global/local), moderation primitives, persistent friend lists, and player mailboxes.
 - Rails handles persistence/controllers/UI; chat-specific orchestration lives in `app/services/chat`.

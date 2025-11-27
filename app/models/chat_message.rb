@@ -36,6 +36,33 @@ class ChatMessage < ApplicationRecord
     )
   end
 
+  # Check if this is a whisper/private message
+  def whisper?
+    metadata&.dig("whisper") == true || chat_channel&.channel_type == "whisper"
+  end
+
+  # Check if this is a clan message
+  def clan_message?
+    chat_channel&.channel_type == "clan"
+  end
+
+  # Check if this is a party message
+  def party_message?
+    chat_channel&.channel_type == "party"
+  end
+
+  # Check if this is an arena-related message
+  def arena_message?
+    metadata&.dig("arena") == true
+  end
+
+  # Check if the message mentions a specific character
+  def mentions?(character)
+    return false if character.nil? || body.blank?
+
+    body.downcase.include?("@#{character.name.downcase}")
+  end
+
   private
 
   def apply_profanity_filter
@@ -47,11 +74,24 @@ class ChatMessage < ApplicationRecord
   end
 
   def broadcast_new_message
-    broadcast_append_later_to(
-      chat_channel,
-      target: dom_id(chat_channel, :messages),
-      partial: "chat_messages/chat_message",
-      locals: {chat_message: self}
-    )
+    # Get all users who should NOT receive this message due to ignore lists
+    excluded_ids = Chat::IgnoreFilter.excluded_recipient_ids(sender)
+
+    if excluded_ids.empty?
+      # No exclusions - use standard broadcast
+      broadcast_append_later_to(
+        chat_channel,
+        target: dom_id(chat_channel, :messages),
+        partial: "chat_messages/chat_message",
+        locals: {chat_message: self}
+      )
+    else
+      # Broadcast with ignore filtering via custom job
+      BroadcastChatMessageWithIgnoreJob.perform_later(
+        id,
+        chat_channel.id,
+        excluded_ids
+      )
+    end
   end
 end

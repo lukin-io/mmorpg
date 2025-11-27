@@ -1,5 +1,80 @@
 # 10. Quests, Narrative, and Events Flow
 
+## Implementation Status
+
+| Component | Status | Details |
+|-----------|--------|---------|
+| **Quest Models** | ✅ Implemented | `QuestChain`, `QuestChapter`, `Quest`, `QuestStep`, `QuestAssignment` |
+| **QuestsController** | ✅ Implemented | index, show, accept, complete, advance_story |
+| **Quest Dialog Views** | ✅ Implemented | `app/views/quests/_quest_dialog.html.erb` — Full NPC dialog modal |
+| **quest_dialog_controller.js** | ✅ Implemented | `app/javascript/controllers/quest_dialog_controller.js` — Navigation, typewriter, choices |
+| **Quest Dialog CSS** | ✅ Implemented | `app/assets/stylesheets/application.css` — Dark fantasy themed |
+| **StaticQuestBuilder** | ✅ Implemented | Seeds quests from YAML |
+| **StorylineProgression** | ✅ Implemented | Gate enforcement |
+| **RewardService** | ✅ Implemented | XP, currency, item rewards |
+| **EventInstance** | ✅ Implemented | Seasonal events |
+| **DynamicQuestGenerator** | ⚠️ Partial | Basic implementation |
+
+---
+
+## Use Cases
+
+### UC-1: Accept Quest from NPC
+**Actor:** Player interacting with NPC
+**Flow:**
+1. Player clicks NPC or quest marker in world
+2. Quest dialog overlay appears with NPC avatar
+3. Dialog text shows quest description (step 0)
+4. Player navigates through dialog steps (← Prev / Next →)
+5. At final step, "Accept Quest" button appears
+6. Click triggers `QuestsController#accept`
+7. `QuestAssignment` created with `status: :in_progress`
+
+### UC-2: Complete Quest
+**Actor:** Player with completed objectives
+**Flow:**
+1. Player returns to NPC after completing objectives
+2. Quest dialog shows completion text
+3. "Complete Quest" button appears at final step
+4. Click triggers `QuestsController#complete`
+5. `RewardService` grants XP, items, currencies
+6. `QuestAssignment` updated to `status: :completed`
+
+### UC-3: Navigate Branching Story
+**Actor:** Player at decision point
+**Flow:**
+1. Quest step presents choice (e.g., "Help villagers" vs "Ignore")
+2. Player clicks chosen option
+3. `BranchingChoiceResolver` records decision in progress
+4. Story progresses to appropriate branch
+5. Future steps/rewards may differ based on choice
+
+---
+
+## Key Behavior
+
+### Quest Gating
+- `level_gate`: Character must meet minimum level
+- `reputation_gate`: Required reputation with faction
+- `faction_alignment`: Must match Light/Dark/Neutral
+- `prerequisite_quests`: Must complete prior quests
+
+### Dialog Navigation
+- Multi-step dialogs with Prev/Next buttons
+- Step indicator dots (• ◦ ◦ ◦)
+- NPC avatar (130x130) on left side
+- Action buttons only appear at final step
+
+### Reward Types
+- Experience points (XP)
+- Currency (gold, faction tokens)
+- Items (equipment, consumables)
+- Recipes (crafting unlocks)
+- Alignment shifts
+- Reputation gains
+
+---
+
 ## Overview
 - Complements `doc/features/10_quests_story.md` by detailing how quest data moves through services, controllers, jobs, and analytics.
 - Covers authored quests, dynamic/daily/event quests, branching narrative, rewards, and GM tooling.

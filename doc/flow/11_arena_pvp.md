@@ -1,5 +1,87 @@
 # 11. Arena & PvP Combat Flow
 
+## Implementation Status
+
+| Component | Status | Details |
+|-----------|--------|---------|
+| **ArenaRoom Model** | ✅ Implemented | `app/models/arena_room.rb` — Room types, level/faction restrictions |
+| **ArenaApplication Model** | ✅ Implemented | `app/models/arena_application.rb` — Fight types, parameters, status |
+| **Arena Routes** | ✅ Implemented | `config/routes.rb` — `/arena`, `/arena_rooms`, `/arena_applications` |
+| **ArenaController** | ✅ Implemented | `app/controllers/arena_controller.rb` — Lobby with room grid |
+| **ArenaRoomsController** | ✅ Implemented | `app/controllers/arena_rooms_controller.rb` — Room detail view |
+| **ArenaApplicationsController** | ✅ Implemented | `app/controllers/arena_applications_controller.rb` — Create/accept/cancel |
+| **Arena::ApplicationHandler** | ✅ Implemented | `app/services/arena/application_handler.rb` — Application lifecycle |
+| **Arena::CombatProcessor** | ✅ Implemented | `app/services/arena/combat_processor.rb` — Attack, defend, damage calc |
+| **Arena::CombatBroadcaster** | ✅ Implemented | `app/services/arena/combat_broadcaster.rb` — Real-time updates |
+| **Arena Views** | ✅ Implemented | `app/views/arena/`, `app/views/arena_rooms/`, `app/views/arena_matches/` |
+| **Arena Seeds** | ✅ Implemented | `db/seeds.rb` — 10 arena rooms (Training, Trial, Faction halls) |
+| **ArenaChannel** | ✅ Implemented | `app/channels/arena_channel.rb` — Room-level updates |
+| **ArenaMatchChannel** | ✅ Implemented | `app/channels/arena_match_channel.rb` — Combat updates |
+| **arena_controller.js** | ✅ Implemented | `app/javascript/controllers/arena_controller.js` |
+| **arena_match_controller.js** | ✅ Implemented | `app/javascript/controllers/arena_match_controller.js` |
+| **CSS Styles** | ✅ Implemented | `app/assets/stylesheets/application.css` — Arena section |
+| **Arena Rewards** | ✅ Implemented | `app/services/arena/rewards_distributor.rb` — XP, gold, rating, item drops |
+| **Tactical Fights** | ❌ Not Implemented | Positioning-based combat |
+| **Betting/Totalizator** | ❌ Not Implemented | Spectator wagering |
+
+---
+
+## Use Cases
+
+### UC-1: Submit Fight Application
+**Actor:** Player with character meeting room requirements
+**Flow:**
+1. Player navigates to Arena → selects a room
+2. If accessible (level/faction match), shows application form
+3. Player selects fight type (duel/group/sacrifice), equipment rules, timeout, trauma %
+4. Submits application → `ArenaApplicationsController#create` → `Arena::ApplicationHandler#create`
+5. Application appears in room's open list, broadcast to all room subscribers
+6. Application expires after `wait_minutes` if not matched
+
+### UC-2: Accept Fight Application
+**Actor:** Player browsing open applications
+**Flow:**
+1. Player sees open applications in room, each with applicant name/level
+2. Clicks "Accept" on compatible application
+3. `ArenaApplicationsController#accept` → `Arena::ApplicationHandler#accept`
+4. Both applications marked as `matched`, new `ArenaMatch` created
+5. 10-second countdown starts via `Arena::MatchStarterJob`
+6. Match transitions to `:live`, combat begins
+
+### UC-3: Arena Combat
+**Actor:** Two matched players
+**Flow:**
+1. Both players see match view with HP/MP bars, action buttons
+2. `ArenaMatchChannel` streams real-time updates
+3. Player clicks Attack/Defend → `arena_match_controller.js` → `ArenaMatchChannel#submit_action`
+4. `Arena::CombatProcessor#process_action` calculates damage, applies to target
+5. `Arena::CombatBroadcaster` pushes HP updates, combat log entries
+6. When one team's HP reaches 0, match ends, ratings updated
+
+---
+
+## Key Behavior
+
+### Room Accessibility
+- Characters can only access rooms where `level_min <= character.level <= level_max`
+- Faction-restricted rooms require matching `faction_alignment`
+- Inaccessible rooms are grayed out with reason shown
+
+### Fight Matching
+- Applications only match within the same room
+- Level ranges must overlap
+- Fight type must match exactly
+- Trauma percentage affects post-fight XP loss
+
+### Combat System
+- Turn-based with real-time updates
+- Base damage = character attack stat + weapon bonus + random(1-5)
+- Defense reduces damage; defending stance adds 1.5x defense
+- Critical hits (10% chance) deal 1.5x damage
+- Combat lockout: no regeneration during/10s after combat
+
+---
+
 ## Overview
 This document describes the Arena PvP system, inspired by Neverlands' classic arena mechanics. The system supports multiple fight types, room-based matchmaking, real-time combat updates, and comprehensive fight logging.
 

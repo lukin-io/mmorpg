@@ -1,0 +1,53 @@
+<div class="gathering-result <%= success ? 'gathering-result--success' : 'gathering-result--fail' %>">
+  <% if success %>
+    <h3 class="result-title">✨ Gathering Success! ✨</h3>
+
+    <div class="result-rewards">
+      <h4>You gathered:</h4>
+      <ul class="rewards-list">
+        <% rewards&.each do |reward| %>
+          <li class="reward-item">
+            📦 <%= reward[:item_key].to_s.titleize %>
+            <% if reward[:quantity] && reward[:quantity] > 1 %>
+              x<%= reward[:quantity] %>
+            <% end %>
+          </li>
+        <% end %>
+      </ul>
+    </div>
+
+    <% if xp_gained.to_i > 0 %>
+      <div class="result-xp">
+        +<%= xp_gained %> Profession XP
+      </div>
+    <% end %>
+
+    <% if respawn_at.present? %>
+      <div class="result-respawn">
+        Node respawns at: <%= respawn_at.strftime("%H:%M:%S") %>
+      </div>
+    <% end %>
+  <% else %>
+    <h3 class="result-title">❌ Gathering Failed</h3>
+    <p class="result-message">
+      The gathering attempt was unsuccessful. You can try again after a short cooldown.
+    </p>
+
+    <% if xp_gained.to_i > 0 %>
+      <div class="result-xp">
+        +<%= xp_gained %> Profession XP (partial)
+      </div>
+    <% end %>
+
+    <% if cooldown.to_i > 0 %>
+      <div class="result-cooldown">
+        Cooldown: <%= cooldown %> seconds
+      </div>
+    <% end %>
+  <% end %>
+
+  <div class="result-actions">
+    <%= link_to "Return to World", world_path, class: "game-btn btn-primary" %>
+  </div>
+</div>
+

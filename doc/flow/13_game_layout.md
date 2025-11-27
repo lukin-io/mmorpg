@@ -1,5 +1,98 @@
 # 13. Game Layout & Frame System
 
+## Implementation Status
+
+| Component | Status | Details |
+|-----------|--------|---------|
+| **game.html.erb Layout** | ✅ Implemented | `app/views/layouts/game.html.erb` — CSS Grid layout |
+| **game_layout_controller.js** | ✅ Implemented | `app/javascript/controllers/game_layout_controller.js` — Full resize, modes, shortcuts |
+| **_vitals_bar.html.erb** | ✅ Implemented | `app/views/shared/_vitals_bar.html.erb` — Header vitals partial |
+| **_online_players.html.erb** | ✅ Implemented | `app/views/shared/_online_players.html.erb` |
+| **RealtimeChatChannel** | ✅ Implemented | `app/channels/realtime_chat_channel.rb` — Global chat |
+| **PresenceChannel** | ✅ Implemented | `app/channels/presence_channel.rb` — Online tracking |
+| **CSS Grid Layout** | ✅ Implemented | `app/assets/stylesheets/application.css` — Game layout section |
+| **Resize Handle** | ✅ Implemented | Drag to resize bottom panel with min/max constraints |
+| **Chat Modes** | ✅ Implemented | All/Private/None filtering via CSS classes |
+| **Chat Speed Cycling** | ✅ Implemented | 3s/5s/10s/30s refresh options |
+| **Keyboard Shortcuts** | ✅ Implemented | Alt+C (chat mode), Alt+H (hide panel), Alt+M (map), Alt+Enter (focus chat) |
+| **localStorage Preferences** | ✅ Implemented | Panel height, chat mode, chat speed persisted |
+
+---
+
+## Use Cases
+
+### UC-1: Navigate Game Interface
+**Actor:** Logged-in player
+**Flow:**
+1. Player lands on any game page with `game.html.erb` layout
+2. Header shows: logo, character name/level, HP/MP bars, nav buttons, exit
+3. Main content area displays current view (world, arena, quests, etc.)
+4. Bottom panel shows chat messages + online players list
+5. Resize handle allows adjusting bottom panel height
+
+### UC-2: Chat in Real-Time
+**Actor:** Player wanting to communicate
+**Flow:**
+1. Player types message in chat input, presses Enter
+2. Form submits via Turbo, `ChatMessagesController#create` processes
+3. `RealtimeChatChannel` broadcasts to all subscribers
+4. All online players see message appear without page reload
+5. Stimulus controller auto-scrolls to bottom
+
+### UC-3: Resize Chat Panel
+**Actor:** Player preferring larger/smaller chat
+**Flow:**
+1. Player drags resize handle (the `═══` bar)
+2. `game_layout_controller.js` calculates new height
+3. Height snaps to 60px increments (like Neverlands)
+4. CSS custom property `--bottom-panel-height` updates
+5. Preference saved to localStorage for persistence
+
+### UC-4: Toggle Chat Mode
+**Actor:** Player wanting to filter messages
+**Flow:**
+1. Player clicks chat mode button (💬)
+2. Cycles: All → Private Only → Hidden → All
+3. CSS class filters visible messages
+4. "Private Only" shows only whispers
+5. "Hidden" shows placeholder text
+
+---
+
+## Key Behavior
+
+### Panel Layout
+```
+┌─────────────────────────────────────────┐
+│  HEADER (50px)                          │
+├─────────────────────────────────────────┤
+│  MAIN CONTENT (flexible)                │
+├─────────────────────────────────────────┤
+│  RESIZE HANDLE (8px)                    │
+├─────────────────────────────────────────┤
+│  BOTTOM PANEL (240px default)           │
+│  ┌─────────────────┬───────────────┐    │
+│  │ CHAT            │ ONLINE (300px)│    │
+│  └─────────────────┴───────────────┘    │
+│  CHAT INPUT BAR (40px)                  │
+└─────────────────────────────────────────┘
+```
+
+### Resize Constraints
+- Minimum height: 120px
+- Maximum height: 500px
+- Step size: 60px (snapping)
+- Default: 240px
+
+### Chat Modes
+| Mode | Button | Behavior |
+|------|--------|----------|
+| 0 (All) | 💬 | Show all messages |
+| 1 (Private) | 🔒 | Show only whispers/private |
+| 2 (Hidden) | 🔇 | Hide chat, show placeholder |
+
+---
+
 ## Overview
 This document describes the main game layout, inspired by Neverlands' frame-based design but implemented with modern CSS Grid and Turbo Frames. The layout provides:
 - Top area for main game content (map, city, profile, combat)

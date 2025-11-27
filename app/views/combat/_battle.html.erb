@@ -1,0 +1,87 @@
+<%# Combat Battle View %>
+<% player = battle.battle_participants.find_by(team: "player") %>
+<% enemy = battle.battle_participants.find_by(team: "enemy") %>
+<% character = player.character %>
+<% npc = enemy.npc_template %>
+
+<div class="combat-container" id="combat-container">
+  <%# Combatants Display %>
+  <div class="combat-combatants">
+    <%# Player Side %>
+    <div class="combatant combatant--player">
+      <div class="combatant-avatar">
+        <div class="combatant-avatar-placeholder">🧑‍⚔️</div>
+      </div>
+      <div class="combatant-info">
+        <h3 class="combatant-name"><%= character.name %></h3>
+        <span class="combatant-level">[Lv. <%= character.level %>]</span>
+      </div>
+      <div class="combatant-bars">
+        <div class="combat-hp-bar">
+          <div class="combat-hp-bar-fill" style="width: <%= (character.current_hp.to_f / character.max_hp * 100).round %>%;"></div>
+          <span class="combat-hp-text"><%= character.current_hp %>/<%= character.max_hp %></span>
+        </div>
+        <div class="combat-mp-bar">
+          <div class="combat-mp-bar-fill" style="width: <%= (character.current_mp.to_f / character.max_mp * 100).round %>%;"></div>
+          <span class="combat-mp-text"><%= character.current_mp %>/<%= character.max_mp %></span>
+        </div>
+      </div>
+    </div>
+
+    <%# VS Separator %>
+    <div class="combat-vs">⚔️</div>
+
+    <%# Enemy Side %>
+    <div class="combatant combatant--enemy">
+      <div class="combatant-avatar">
+        <div class="combatant-avatar-placeholder">👹</div>
+      </div>
+      <div class="combatant-info">
+        <h3 class="combatant-name"><%= npc.name %></h3>
+        <span class="combatant-level">[Lv. <%= npc.level %>]</span>
+      </div>
+      <div class="combatant-bars">
+        <div class="combat-hp-bar combat-hp-bar--enemy">
+          <div class="combat-hp-bar-fill" style="width: <%= (enemy.current_hp.to_f / enemy.max_hp * 100).round %>%;"></div>
+          <span class="combat-hp-text"><%= enemy.current_hp %>/<%= enemy.max_hp %></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <%# Combat Status %>
+  <div id="combat-status">
+    <%= render "combat/status", battle: battle %>
+  </div>
+
+  <%# Combat Log %>
+  <div class="combat-log-container card">
+    <h4>Combat Log</h4>
+    <div class="combat-log" id="combat-log" data-pve-combat-target="log">
+      <%# Log entries will be appended here %>
+    </div>
+  </div>
+
+  <%# Action Buttons %>
+  <div class="combat-actions" id="combat-actions">
+    <% if battle.active? %>
+      <%= button_to "⚔️ Attack", combat_action_path(action_type: :attack),
+          method: :post,
+          class: "game-btn btn-primary combat-action-btn",
+          data: { turbo: true } %>
+
+      <%= button_to "🛡️ Defend", combat_action_path(action_type: :defend),
+          method: :post,
+          class: "game-btn btn-secondary combat-action-btn",
+          data: { turbo: true } %>
+
+      <%= button_to "🏃 Flee", combat_flee_path,
+          method: :post,
+          class: "game-btn btn-danger combat-action-btn",
+          data: { turbo: true, confirm: "Attempt to flee? You may take damage!" } %>
+    <% else %>
+      <%= link_to "Return to World", world_path, class: "game-btn btn-primary" %>
+    <% end %>
+  </div>
+</div>
+

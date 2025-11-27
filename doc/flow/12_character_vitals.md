@@ -1,5 +1,78 @@
 # 12. Character Vitals & Regeneration Flow
 
+## Implementation Status
+
+| Component | Status | Details |
+|-----------|--------|---------|
+| **Character vitals columns** | ✅ Implemented | `current_hp`, `max_hp`, `current_mp`, `max_mp`, `hp_regen_interval_seconds`, `mp_regen_interval_seconds` |
+| **VitalsService** | ✅ Implemented | `app/services/characters/vitals_service.rb` — Damage, heal, mana, regen |
+| **DeathHandler** | ✅ Implemented | `app/services/characters/death_handler.rb` — Respawn logic |
+| **VitalsChannel** | ✅ Implemented | `app/channels/vitals_channel.rb` — Real-time HP/MP broadcasts |
+| **vitals_controller.js** | ✅ Implemented | `app/javascript/controllers/vitals_controller.js` — Client-side bars, regen, floating text |
+| **_vitals_bar.html.erb** | ✅ Implemented | `app/views/shared/_vitals_bar.html.erb` — HP/MP bar partial |
+| **RegenTickerJob** | ✅ Implemented | `app/jobs/characters/regen_ticker_job.rb` — Server-side regen ticks |
+| **CSS Styles** | ✅ Implemented | `app/assets/stylesheets/application.css` — Vitals section with dark theme |
+| **Combat Floating Text** | ✅ Implemented | Damage/heal/mana floating text with animations |
+
+---
+
+## Use Cases
+
+### UC-1: Display Character Vitals
+**Actor:** Player viewing their character
+**Flow:**
+1. Page loads with `_vitals_bar.html.erb` partial
+2. Stimulus `vitals_controller.js` initializes with current HP/MP values
+3. Bars display at proportional widths (160px max)
+4. Text shows format: `[HP/MaxHP | MP/MaxMP]`
+
+### UC-2: Take Combat Damage
+**Actor:** Character in combat (arena, PvE)
+**Flow:**
+1. Combat action deals damage
+2. `VitalsService#take_damage(amount)` called
+3. `current_hp` reduced, `last_combat_at` set to now
+4. `VitalsChannel.broadcast_vitals_update(character)` pushes to client
+5. `vitals_controller.js` animates HP bar decrease
+6. Floating damage text appears (`-15` in red)
+7. If HP ≤ 0, `DeathHandler.call(character)` triggers respawn
+
+### UC-3: Regenerate HP/MP
+**Actor:** Character out of combat for 10+ seconds
+**Flow:**
+1. Client-side: `vitals_controller.js` starts regen timer when `out_of_combat`
+2. Every second, adds `max_hp / hp_regen_interval` to display
+3. Server-side: `RegenTickerJob` runs periodic ticks
+4. On server tick, broadcasts actual values to sync client
+5. Regen stops when both HP and MP are at max
+
+---
+
+## Key Behavior
+
+### Regeneration Formula (Neverlands-style)
+```
+HP per tick = max_hp / hp_regen_interval_seconds
+MP per tick = max_mp / mp_regen_interval_seconds
+
+Example: max_hp=100, interval=1500 → 100/1500 = 0.067 HP/second
+         Full regen from 0 takes 1500 seconds (~25 minutes)
+```
+
+### Combat Lockout
+- Taking or dealing damage sets `in_combat = true` and `last_combat_at = Time.current`
+- Regen is blocked while in combat
+- After 10 seconds with no combat actions, `out_of_combat?` returns true
+- Regen resumes automatically
+
+### Death Handling
+- When HP reaches 0, character dies
+- `DeathHandler` applies death penalties (XP loss based on trauma %)
+- Character respawns at nearest safe zone with full HP/MP
+- Death broadcast sent to relevant channels
+
+---
+
 ## Overview
 This document describes the HP/MP (Health/Mana) system, inspired by Neverlands' real-time regeneration mechanics. The system handles:
 - Visual HP/MP bar displays with smooth animations

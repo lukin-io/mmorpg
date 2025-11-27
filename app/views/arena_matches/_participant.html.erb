@@ -1,0 +1,27 @@
+<%# Arena match participant with HP/MP bars %>
+<% character = participation.character %>
+<% hp_percent = character.max_hp.zero? ? 0 : ((character.current_hp.to_f / character.max_hp) * 100).round(1) %>
+<% mp_percent = character.max_mp.zero? ? 0 : ((character.current_mp.to_f / character.max_mp) * 100).round(1) %>
+
+<div class="arena-participant <%= 'arena-participant--dead' if character.current_hp <= 0 %>"
+     data-character-id="<%= character.id %>">
+  <span class="arena-participant-name"><%= character.name %></span>
+  <span class="arena-participant-level">[<%= character.level %>]</span>
+
+  <div class="arena-bars">
+    <div class="arena-hp-bar">
+      <div class="arena-hp-fill" style="width: <%= hp_percent %>%"></div>
+      <span class="arena-hp-text"><%= character.current_hp %>/<%= character.max_hp %></span>
+    </div>
+    <div class="arena-mp-bar">
+      <div class="arena-mp-fill" style="width: <%= mp_percent %>%"></div>
+    </div>
+  </div>
+
+  <% if participation.result.present? && participation.result != "pending" %>
+    <span class="arena-result-badge arena-result-badge--<%= participation.result %>">
+      <%= participation.result.humanize %>
+    </span>
+  <% end %>
+</div>
+

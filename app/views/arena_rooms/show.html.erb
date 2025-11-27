@@ -1,0 +1,183 @@
+<% content_for :title, "#{@room.name} - Arena" %>
+
+<div class="arena-room-page"
+     data-controller="arena"
+     data-arena-room-id-value="<%= @room.id %>"
+     data-arena-character-id-value="<%= current_character.id %>"
+     data-arena-character-level-value="<%= current_character.level %>">
+
+  <div class="page-header">
+    <div class="header-left">
+      <%= link_to "← Back to Arena", arena_path, class: "btn-secondary btn-sm" %>
+      <h1><%= room_type_icon(@room.room_type) %> <%= @room.name %></h1>
+    </div>
+    <div class="header-meta">
+      <span class="badge">Levels <%= @room.level_min %>-<%= @room.level_max %></span>
+      <% if @room.faction_restriction %>
+        <span class="badge badge--faction"><%= @room.faction_restriction.humanize %></span>
+      <% end %>
+    </div>
+  </div>
+
+  <div class="arena-room-layout">
+    <%# Left: Application Form %>
+    <div class="arena-form-panel" data-arena-target="formContainer">
+      <% if @my_application %>
+        <div class="arena-current-app card">
+          <h3>Your Application</h3>
+          <p>
+            <strong><%= @my_application.fight_type.humanize %></strong>
+            (<%= @my_application.fight_kind.humanize %>)
+          </p>
+          <p class="text-muted">
+            Expires in <%= distance_of_time_in_words_to_now(@my_application.expires_at) %>
+          </p>
+          <%= button_to "Cancel",
+              arena_room_arena_application_path(@room, @my_application),
+              method: :delete,
+              class: "btn-danger" %>
+        </div>
+      <% else %>
+        <div class="card">
+          <h3>Submit Application</h3>
+          <%= form_with url: arena_room_arena_applications_path(@room),
+                        method: :post,
+                        class: "arena-form",
+                        data: { action: "submit->arena#submitApplication" } do |f| %>
+
+            <div class="arena-form-row">
+              <label class="arena-form-label">Fight Type</label>
+              <%= f.select :fight_type,
+                  [["Duel (1v1)", "duel"], ["Group", "group"], ["Sacrifice (FFA)", "sacrifice"]],
+                  { prompt: "Select fight type" },
+                  class: "arena-form-select", required: true %>
+            </div>
+
+            <div class="arena-form-row">
+              <label class="arena-form-label">Equipment</label>
+              <%= f.select :fight_kind,
+                  [
+                    ["No Weapons", "no_weapons"],
+                    ["No Artifacts", "no_artifacts"],
+                    ["Limited Artifacts", "limited_artifacts"],
+                    ["Free (All Equipment)", "free"]
+                  ],
+                  { prompt: "Select equipment rules" },
+                  class: "arena-form-select", required: true %>
+            </div>
+
+            <div class="arena-form-row">
+              <label class="arena-form-label">Timeout</label>
+              <%= f.select :timeout_seconds,
+                  [["2 min", 120], ["3 min", 180], ["4 min", 240], ["5 min", 300]],
+                  { prompt: "Select timeout" },
+                  class: "arena-form-select", required: true %>
+            </div>
+
+            <div class="arena-form-row">
+              <label class="arena-form-label">Trauma %</label>
+              <%= f.select :trauma_percent,
+                  [["Low (10%)", 10], ["Medium (30%)", 30], ["High (50%)", 50], ["Very High (80%)", 80]],
+                  { prompt: "Select trauma level" },
+                  class: "arena-form-select", required: true %>
+            </div>
+
+            <div class="arena-form-row">
+              <%= f.submit "Submit Application", class: "btn-primary" %>
+            </div>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+
+    <%# Right: Applications List %>
+    <div class="arena-applications-panel">
+      <div class="card">
+        <div class="card-header">
+          <h3>Open Applications</h3>
+          <span class="badge"><%= @applications.count %></span>
+        </div>
+
+        <div class="arena-applications" data-arena-target="applicationList">
+          <% if @applications.empty? %>
+            <div class="arena-empty">
+              <p>No open applications. Be the first to submit one!</p>
+            </div>
+          <% else %>
+            <% @applications.each do |app| %>
+              <div class="arena-application <%= 'arena-application--own' if app.applicant == current_character %>"
+                   data-application-id="<%= app.id %>">
+                <span class="arena-application-type arena-application-type--<%= app.fight_type %>">
+                  <%= app.fight_type.humanize %>
+                </span>
+
+                <div class="arena-application-info">
+                  <div class="arena-application-players">
+                    <strong><%= app.applicant.name %></strong>
+                    [<%= app.applicant.level %>]
+                  </div>
+                  <div class="arena-application-details">
+                    <%= app.fight_kind.humanize %> •
+                    <%= app.timeout_seconds / 60 %>min •
+                    <%= app.trauma_percent %>% trauma
+                  </div>
+                </div>
+
+                <span class="arena-application-timer <%= 'arena-application-timer--urgent' if app.time_until_expiration < 60 %>">
+                  <%= distance_of_time_in_words_to_now(app.expires_at) %>
+                </span>
+
+                <div class="arena-application-actions">
+                  <% if app.applicant == current_character %>
+                    <span class="text-muted">Your application</span>
+                  <% elsif app.acceptable_by?(current_character) %>
+                    <%= button_to "Accept",
+                        accept_arena_room_arena_application_path(@room, app),
+                        method: :post,
+                        class: "btn-primary btn-sm",
+                        data: {
+                          action: "click->arena#acceptApplication",
+                          application_id: app.id
+                        } %>
+                  <% else %>
+                    <span class="text-muted text-sm">Not eligible</span>
+                  <% end %>
+                </div>
+              </div>
+            <% end %>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <%# Active Matches in this room %>
+  <% if @active_matches.any? %>
+    <div class="arena-section">
+      <h3>Active Matches</h3>
+      <div class="arena-active-matches">
+        <% @active_matches.each do |match| %>
+          <div class="arena-match-live">
+            <span class="match-status"><%= match.status.humanize %></span>
+            <div class="match-participants">
+              <% match.arena_participations.group_by(&:team).each do |team, participants| %>
+                <span class="team">
+                  <%= participants.map { |p| p.character.name }.join(", ") %>
+                </span>
+                <span class="vs">vs</span>
+              <% end %>
+            </div>
+            <%= link_to "Spectate", spectate_arena_match_path(match), class: "btn-secondary btn-sm" %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+
+  <%# Countdown overlay %>
+  <div class="arena-countdown" data-arena-target="countdown" style="display: none;">
+    <div class="arena-countdown-title">Match Starting</div>
+    <div class="arena-countdown-timer">--</div>
+  </div>
+</div>
+

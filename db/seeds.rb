@@ -1061,3 +1061,118 @@ if defined?(QuestAnalyticsSnapshot)
     }
   end
 end
+
+# ==============================================================================
+# Arena Rooms (Neverlands-inspired)
+# ==============================================================================
+puts "Seeding Arena Rooms..."
+
+if defined?(ArenaRoom)
+  arena_rooms = [
+    {
+      name: "Training Grounds",
+      slug: "training",
+      room_type: :training,
+      level_min: 1,
+      level_max: 10,
+      faction_restriction: nil,
+      description: "Practice arena for new combatants. Low stakes, all welcome."
+    },
+    {
+      name: "Trial Hall",
+      slug: "trial",
+      room_type: :trial,
+      level_min: 5,
+      level_max: 20,
+      faction_restriction: nil,
+      description: "Prove your worth in serious combat. Medium trauma fights."
+    },
+    {
+      name: "Challenge Arena",
+      slug: "challenge",
+      room_type: :challenge,
+      level_min: 15,
+      level_max: 40,
+      faction_restriction: nil,
+      description: "For seasoned warriors. High stakes combat."
+    },
+    {
+      name: "Initiation Chamber",
+      slug: "initiation",
+      room_type: :initiation,
+      level_min: 10,
+      level_max: 25,
+      faction_restriction: nil,
+      description: "Initiation rites for guilds and clans."
+    },
+    {
+      name: "Hall of Light",
+      slug: "light",
+      room_type: :light,
+      level_min: 20,
+      level_max: 60,
+      faction_restriction: "light",
+      description: "Champions of Light fight for honor and justice."
+    },
+    {
+      name: "Shadow Pit",
+      slug: "dark",
+      room_type: :dark,
+      level_min: 20,
+      level_max: 60,
+      faction_restriction: "dark",
+      description: "The forces of Darkness test their strength here."
+    },
+    {
+      name: "Balance Sanctum",
+      slug: "balance",
+      room_type: :balance,
+      level_min: 20,
+      level_max: 60,
+      faction_restriction: "neutral",
+      description: "Neutral warriors maintain equilibrium through combat."
+    },
+    {
+      name: "Chaos Coliseum",
+      slug: "chaos",
+      room_type: :chaos,
+      level_min: 30,
+      level_max: 80,
+      faction_restriction: nil,
+      description: "Free-for-all mayhem. Anything goes. High trauma!"
+    },
+    {
+      name: "Patron's Throne Room",
+      slug: "patron",
+      room_type: :patron,
+      level_min: 50,
+      level_max: 100,
+      faction_restriction: nil,
+      description: "Elite arena for high-level patrons and champions."
+    },
+    {
+      name: "Hall of Law",
+      slug: "law",
+      room_type: :law,
+      level_min: 25,
+      level_max: 70,
+      faction_restriction: nil,
+      description: "Judicial combat to settle disputes and honor duels."
+    }
+  ]
+
+  arena_rooms.each do |room_data|
+    ArenaRoom.find_or_create_by!(slug: room_data[:slug]) do |room|
+      room.name = room_data[:name]
+      room.room_type = room_data[:room_type]
+      room.level_min = room_data[:level_min]
+      room.level_max = room_data[:level_max]
+      room.faction_restriction = room_data[:faction_restriction]
+      room.active = true
+      room.metadata = { description: room_data[:description] }
+    end
+    puts "  Created/Found ArenaRoom: #{room_data[:name]}"
+  end
+end
+
+puts "Arena rooms seeding complete!"

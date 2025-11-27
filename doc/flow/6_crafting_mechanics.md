@@ -28,6 +28,17 @@
 - `ProfessionToolsController#repair`.
 - Notifications stream via `application.html.erb` + `shared/_notification`.
 
+### Gathering UI (✅ Implemented)
+- **Controller**: `GatheringController` with routes `/gathering/:id` and `/gathering/:id/harvest`
+- **Views**: `app/views/gathering/show.html.erb`, `_result.html.erb` — Node details, harvest button, success/fail results
+- **Stimulus**: `gathering_controller.js` — Respawn timer, gathering animations, notifications
+- **Helper**: `GatheringHelper` — Resource icons, time formatting, rarity colors
+- **Features**:
+  - Shows node rarity, difficulty, skill requirement, success chance
+  - Respawn timer countdown with auto-enable when ready
+  - Success/failure screens with rewards and XP display
+  - Profession requirement validation
+
 ## Background Integrations
 - `Game::Combat::PostBattleProcessor` doctor support.
 - `Marketplace::ListingEngine` required profession/skill-level commissions.

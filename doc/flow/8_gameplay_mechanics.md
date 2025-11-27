@@ -14,6 +14,18 @@
 - `Game::Combat::TurnResolver` applies buff/debuff definitions via `Game::Combat::EffectBookkeeper`, logs attacker/defender IDs, and ticks status effects each turn.
 - `CombatLogEntry` payloads now include IDs/damage totals used for moderation, replays, and analytics.
 
+### PvE Combat (✅ Implemented)
+- **Service**: `Game::Combat::PveEncounterService` orchestrates NPC encounters from world map
+- **Controller**: `CombatController` handles `/combat` routes (show, start, action, flee)
+- **Views**: Full combat UI with combatant display, HP bars, action buttons, combat log
+- **Stimulus**: `pve_combat_controller.js` for real-time updates and animations
+- **Features**:
+  - Turn-based combat with attack/defend/flee actions
+  - Damage calculation with critical hits
+  - XP and gold rewards on victory
+  - Item drop system from NPC loot tables
+  - Death handling with respawn
+
 ## Character Progression
 - `Players::Progression::ExperiencePipeline` tracks XP by source (quest/combat/gathering) and feeds `LevelUpService`.
 - `Players::Progression::SkillUnlockService`, `RespecService`, and `SpecializationUnlocker` enforce quest/level requirements and respec payment paths (quest token or premium ledger).

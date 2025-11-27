@@ -1,5 +1,92 @@
 # 11. Social Systems & Communication
 
+## Implementation Status
+
+| Feature | Status | Details |
+|---------|--------|---------|
+| **Real-Time Chat** | ✅ Implemented | ActionCable + Turbo Streams |
+| **RealtimeChatChannel** | ✅ Implemented | Global, whisper, clan, party chat |
+| **ChatEmoji** | ✅ Implemented | 40+ emojis, `:NNN:` codes, text shortcuts |
+| **Username Context Menu** | ✅ Implemented | Whisper, Profile, Mention, Copy, Ignore |
+| **Message Highlighting** | ✅ Implemented | Mention, whisper, clan, announcement styles |
+| **PresenceChannel** | ✅ Implemented | Online players, zone presence |
+| **Arena Rooms** | ✅ Implemented | 10 rooms with level/faction restrictions |
+| **Arena Applications** | ✅ Implemented | Submit, accept, cancel fight requests |
+| **Arena Combat** | ✅ Implemented | CombatProcessor with damage/defend logic |
+| **City View** | ✅ Implemented | Interactive buildings, tooltips, district nav |
+| **Ignore List Server-Side** | ✅ Implemented | `Chat::IgnoreFilter` + `BroadcastChatMessageWithIgnoreJob` |
+| **Tactical Fights** | ❌ Not Implemented | Positioning-based combat |
+| **Betting/Totalizator** | ❌ Not Implemented | Spectator wagering |
+
+---
+
+## Use Cases
+
+### UC-1: Chat with Other Players
+**Actor:** Verified player
+**Pre-conditions:** Character exists, verified account
+**Flow:**
+1. Open chat channel or use bottom panel
+2. Type message, press Enter
+3. Message appears for all channel subscribers instantly
+4. Messages can include emoji (picker or `:001:` codes)
+5. Click other usernames for quick interactions
+
+### UC-2: Private Conversation
+**Actor:** Two players
+**Flow:**
+1. Player A types `/w PlayerB hello`
+2. Message delivered only to A and B
+3. Both see red-tinted whisper styling
+4. Can reply by clicking sender name
+
+### UC-3: Join Arena Fight
+**Actor:** Player wanting PvP
+**Flow:**
+1. Navigate to Arena → select accessible room
+2. Submit fight application (duel/group, parameters)
+3. Wait for another player to accept
+4. Countdown → match begins
+5. Exchange attacks/defends via real-time combat
+6. Winner determined when opponent HP reaches 0
+
+### UC-4: Explore City
+**Actor:** Player in city zone
+**Flow:**
+1. World view detects city biome, shows city layout
+2. Buildings displayed on grid with icons
+3. Hover building → tooltip with name/type
+4. Click building → info panel with NPCs, description
+5. "Enter" button → navigate into building zone
+
+---
+
+## Key Behavior
+
+### Chat Features
+- Messages broadcast via WebSocket (no polling)
+- Auto-scroll when at bottom, "New messages" indicator when scrolled up
+- Username click/right-click for quick actions
+- Emoji picker with 40+ game-themed options
+- Profanity filter replaces banned words
+- Spam throttle: 8 msgs/10s default
+
+### Arena Rules
+- Room accessibility based on character level and faction
+- Fight types: duel (1v1), group (team), sacrifice (FFA)
+- Equipment rules: no weapons, no artifacts, limited, free
+- Timeout: 2-5 minutes
+- Trauma: 10-80% XP loss on defeat
+- Real-time HP updates via ActionCable
+
+### Presence System
+- Online status broadcast to friends
+- Zone presence for local chat
+- Away/busy/offline status detection
+- Online player list in bottom panel
+
+---
+
 ## Chat & Messaging
 - **Real-Time WebSocket Chat:** Messages are delivered instantly via ActionCable and Turbo Streams. No page reloads required — `ChatMessage#after_create_commit` broadcasts to all channel subscribers, and Turbo automatically appends new messages to the DOM.
 - **Channel Model:** `ChatChannel` supports `global`, `local`, `guild`, `clan`, `party`, `arena`, `whisper`, and `system` types. `ChatChannel#membership_required?` gates private channels, while `ChatChannelMembership` enforces uniqueness, mute timers, and GM roles.
