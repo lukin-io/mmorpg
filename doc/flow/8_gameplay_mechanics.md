@@ -178,6 +178,83 @@
 
 ---
 
+## Combat Log Viewer (✅ Implemented)
+
+### Overview
+A rich combat log viewer inspired by classic MMORPG log systems. Displays combat events with element colors, body-part targeting, damage/healing statistics, and participant breakdowns.
+
+### Use Case: View Combat Log
+**Actor:** Player who participated in a battle
+**Flow:**
+1. Player navigates to `/combat_logs/:battle_id`
+2. Controller loads `Battle` with participants and log entries
+3. Default view shows paginated log entries grouped by round
+4. Each entry rendered with:
+   - Timestamp and sequence number
+   - Actor/target with team colors (blue=alpha, green=beta)
+   - Action type icon (⚔️ attack, ✨ skill, 💚 heal, 💀 death)
+   - Body part in italics (e.g., "head", "torso")
+   - Damage with element color (fire=red, water=blue, arcane=purple)
+
+### Use Case: View Statistics
+**Flow:**
+1. Player clicks "Statistics" tab → `stat=1` param
+2. `Combat::StatisticsCalculator` computes breakdowns:
+   - Element damage breakdown with percentage bars
+   - Participant table: damage by element, total, XP earned
+   - Team summary cards: members, alive, total damage/healing
+   - Body part targeting stats
+   - Round-by-round summary chart
+3. Dead participants shown with reduced opacity
+4. Winners highlighted with XP earned column
+
+### Use Case: Real-Time Updates
+**Flow:**
+1. During active battle, `combat_log_controller.js` subscribes to BattleChannel
+2. New log entries arrive via WebSocket
+3. Controller appends entry to correct round group
+4. Entry flashes with gold highlight animation
+5. View auto-scrolls to new entry
+
+### Use Case: Export Log
+**Flow:**
+1. Player clicks "CSV" or "JSON" export button
+2. Controller renders full log in requested format
+3. CSV: round, sequence, type, message, damage, healing, tags
+4. JSON: full payload including actor/target metadata
+
+### Use Case: Share Battle Log (Public URL)
+**Actor:** Any player who participated in or viewed a battle
+**Flow:**
+1. Player views combat log at `/combat_logs/:id`
+2. Clicks "🔗 Share" button
+3. Shareable URL copied to clipboard: `/logs/:share_token`
+4. Anyone with link can view at `PublicBattleLogsController#show`
+5. No authentication required for public view
+6. Statistics view also accessible via `?stat=1`
+
+**Key Behaviors:**
+- **Log Entry Types:** timestamp, attack, skill, restoration, miss, block, status, death, loot, system
+- **Element Colors:** normal (#ccc), fire (#E80005), water (#1C60C6), earth (#8B4513), air (#14BCE0), arcane (#9932CC)
+- **Team Colors:** alpha (#0052A6 blue), beta (#087C20 green), dead (#999 grey)
+- **Pagination:** 50 entries per page
+- **Filtering:** By type, element, or actor
+
+**Services:**
+- `Combat::LogBuilder` — creates structured log entries with proper types and payloads
+- `Combat::StatisticsCalculator` — computes damage/healing breakdown by element, participant, body part
+
+**Files:**
+- `app/services/combat/log_builder.rb`
+- `app/services/combat/statistics_calculator.rb`
+- `app/controllers/combat_logs_controller.rb`
+- `app/views/combat_logs/show.html.erb`
+- `app/views/combat_logs/_log_entry.html.erb`
+- `app/views/combat_logs/_statistics.html.erb`
+- `app/javascript/controllers/combat_log_controller.js`
+
+---
+
 ## Supporting Systems
 - `Game::Recovery::InfirmaryService` reads zone infirmary metadata to reduce trauma downtime post-battle, complementing the Doctor profession.
 - `Game::Quests::TutorialBootstrapper` auto-enrolls new characters into movement/combat/stat/gear tutorial quests defined in seeds.
@@ -187,13 +264,16 @@
 - **Models:**
   - `app/models/movement_command.rb`, `app/models/battle.rb`, `app/models/arena_ranking.rb`, `app/models/character.rb`
   - `app/models/dungeon_instance.rb`, `app/models/dungeon_progress_checkpoint.rb`, `app/models/dungeon_encounter.rb`
+  - `app/models/combat_log_entry.rb`
 - **Controllers:**
   - `app/controllers/inventories_controller.rb`, `app/controllers/equipment_enhancements_controller.rb`
   - `app/controllers/dungeons_controller.rb`
+  - `app/controllers/combat_logs_controller.rb`, `app/controllers/public_battle_logs_controller.rb`
 - **Services/Jobs:**
   - `app/services/game/movement/command_queue.rb`, `turn_processor.rb`, `terrain_modifier.rb`
   - `app/jobs/game/movement_command_processor_job.rb`
   - `app/services/game/combat/turn_resolver.rb`, `effect_bookkeeper.rb`, `arena_ladder.rb`, `post_battle_processor.rb`
+  - `app/services/combat/log_builder.rb`, `app/services/combat/statistics_calculator.rb`
   - `app/services/players/progression/experience_pipeline.rb`, `skill_unlock_service.rb`, `respec_service.rb`, `specialization_unlocker.rb`
   - `app/services/players/alignment/access_gate.rb`
   - `app/services/game/inventory/expansion_service.rb`, `equipment_service.rb`, `enhancement_service.rb`
@@ -202,6 +282,9 @@
   - `app/services/users/profile_stats.rb`, `users/public_profile.rb`
 - **Views:**
   - `app/views/inventories/*`, `app/views/equipment_enhancements/*`, `app/views/dungeons/*`
+  - `app/views/combat_logs/show.html.erb`, `app/views/combat_logs/_log_entry.html.erb`, `app/views/combat_logs/_statistics.html.erb`
+- **JavaScript:**
+  - `app/javascript/controllers/combat_log_controller.js`
 - **Helpers:**
   - `app/helpers/inventories_helper.rb`, `app/helpers/equipment_enhancements_helper.rb`, `app/helpers/dungeons_helper.rb`
 - **Policies:**

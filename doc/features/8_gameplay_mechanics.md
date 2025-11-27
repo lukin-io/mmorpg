@@ -30,6 +30,27 @@
 - **Stimulus**: `turn_combat_controller.js` for interactive combat UI
 - **Views**: `_battle.html.erb`, `_nl_participant.html.erb`, `_nl_action_selection.html.erb`, `_nl_magic_slots.html.erb`, `_nl_combat_log.html.erb`
 
+### Combat Log Viewer (✅ Implemented)
+- **Services**:
+  - `Combat::LogBuilder` — builds structured log entries with types (attack, skill, restoration, death, loot, etc.)
+  - `Combat::StatisticsCalculator` — calculates damage/healing breakdown by element, participant, body part
+- **Controller**: `CombatLogsController` — log viewer with pagination, filtering, statistics mode, CSV/JSON export
+- **Views**:
+  - `combat_logs/show.html.erb` — main log viewer with tabs for log/stats
+  - `combat_logs/_log_entry.html.erb` — rich log entry rendering with colors
+  - `combat_logs/_statistics.html.erb` — statistics view with element breakdown, participant table
+- **Stimulus**: `combat_log_controller.js` — real-time log updates via ActionCable, entry filtering, highlighting
+- **Features**:
+  - Log entry types: timestamp, attack, skill, restoration, miss, block, status, death, loot, system
+  - Element-colored damage (fire/water/earth/air/arcane)
+  - Team-colored participants (blue for alpha, green for beta)
+  - Body part indicators in attack logs
+  - Pagination for long battles
+  - Statistics view with damage breakdown by element/participant
+  - Round-by-round summary chart
+  - Live updates during combat via WebSocket
+  - CSV and JSON export options
+
 ## Character Progression
 - XP flows through `Players::Progression::ExperiencePipeline`, which aggregates quest/combat/gathering/premium sources before invoking `Players::Progression::LevelUpService`.
 - Reputation/faction alignment on `Character` gates quests, vendors, and clan roles. Stat points are stored in JSON columns and surfaced in profile sheets.
@@ -96,6 +117,7 @@
 ## Responsible for Implementation Files
 - **Movement:** `app/services/game/movement/*.rb`, `app/models/character_position.rb`, `app/models/map_tile_template.rb`, `app/models/spawn_point.rb`.
 - **Combat:** `app/services/game/combat/*.rb` (incl. `skill_executor.rb`, `pve_encounter_service.rb`, `turn_based_combat_service.rb`), `app/services/arena/combat_processor.rb`, `app/lib/game/formulas/*.rb`, `app/lib/game/systems/*.rb`, `app/models/battle*.rb`, `app/models/combat_log_entry.rb`, `app/helpers/combat_helper.rb`, `app/views/combat/_skills.html.erb`, `app/views/combat/_battle.html.erb`, `app/views/combat/_nl_*.html.erb`, `app/javascript/controllers/turn_combat_controller.js`, `config/gameplay/combat_actions.yml`.
+- **Combat Logs:** `app/services/combat/log_builder.rb`, `app/services/combat/statistics_calculator.rb`, `app/controllers/combat_logs_controller.rb`, `app/views/combat_logs/show.html.erb`, `app/views/combat_logs/_log_entry.html.erb`, `app/views/combat_logs/_statistics.html.erb`, `app/javascript/controllers/combat_log_controller.js`.
 - **Progression:** `app/services/players/progression/*.rb`, `app/models/character.rb`, `app/models/skill_tree.rb`, `app/models/skill_node.rb`, `app/models/class_specialization.rb`.
 - **Items & Inventory:** `app/models/item_template.rb`, `app/models/inventory*.rb`, `app/services/game/inventory/*.rb`, `app/services/premium/artifact_store.rb`.
 - **Supporting Services:** `app/services/game/recovery/infirmary_service.rb`, `app/services/professions/doctor/trauma_response.rb`, `app/services/users/profile_stats.rb`.

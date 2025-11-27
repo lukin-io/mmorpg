@@ -8773,3 +8773,895 @@ turbo-frame[busy] {
   color: var(--nl-text-muted);
   font-size: 0.8rem;
 }
+
+/* ========================================
+   Combat Log Viewer Styles
+   ======================================== */
+
+.combat-log-viewer {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  background: linear-gradient(180deg, #1a1a2e 0%, #0d0d1a 100%);
+  border: 2px solid #3a3a5a;
+  border-radius: 12px;
+  color: #e0e0e0;
+  font-family: "Courier New", monospace;
+}
+
+/* Header */
+.combat-log-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+  padding: 20px 0;
+  background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.2), transparent);
+}
+
+.combat-log-header h1 {
+  font-size: 28px;
+  color: #d4af37;
+  text-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
+  margin: 0;
+}
+
+.combat-log-header .battle-meta {
+  font-size: 14px;
+  color: #888;
+  margin-top: 5px;
+}
+
+.combat-log-header .separator {
+  margin: 0 8px;
+  color: #555;
+}
+
+.combat-log-header .status.completed {
+  color: #4a9900;
+}
+
+.combat-log-header .status.ongoing {
+  color: #ff9900;
+  animation: pulse 2s infinite;
+}
+
+.header-decoration {
+  width: 100px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #d4af37);
+}
+
+.header-decoration.right {
+  background: linear-gradient(90deg, #d4af37, transparent);
+}
+
+/* Tabs */
+.combat-log-tabs {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.combat-log-tabs .tab {
+  padding: 10px 20px;
+  background: #2a2a4a;
+  border: 1px solid #3a3a5a;
+  border-radius: 6px;
+  color: #888;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+
+.combat-log-tabs .tab:hover {
+  background: #3a3a6a;
+  color: #fff;
+}
+
+.combat-log-tabs .tab.active {
+  background: #4a4a8a;
+  color: #d4af37;
+  border-color: #d4af37;
+}
+
+.combat-log-tabs .tab-spacer {
+  flex: 1;
+}
+
+.export-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.export-btn {
+  padding: 8px 12px;
+  background: #333;
+  border: 1px solid #555;
+  border-radius: 4px;
+  color: #aaa;
+  text-decoration: none;
+  font-size: 12px;
+}
+
+.export-btn:hover {
+  background: #444;
+  color: #fff;
+}
+
+.share-btn {
+  background: #2a4a2a;
+  border-color: #4a9900;
+  color: #4aff4a;
+  cursor: pointer;
+}
+
+.share-btn:hover {
+  background: #3a5a3a;
+}
+
+.share-btn.copied {
+  background: #4a9900;
+  color: #fff;
+}
+
+.share-btn.copy-error {
+  background: #5a2a2a;
+  border-color: #cc0000;
+  color: #ff4444;
+}
+
+/* Public notice banner */
+.public-notice {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 10px 20px;
+  margin-bottom: 15px;
+  background: linear-gradient(90deg, transparent, rgba(74, 153, 0, 0.2), transparent);
+  border-radius: 8px;
+  color: #4aff4a;
+  font-size: 13px;
+}
+
+.public-notice .notice-icon {
+  font-size: 18px;
+}
+
+.public-notice .notice-text {
+  opacity: 0.8;
+}
+
+/* Filters */
+.log-filters {
+  display: flex;
+  gap: 15px;
+  padding: 15px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  margin-bottom: 15px;
+}
+
+.filter-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.filter-group label {
+  font-size: 12px;
+  color: #888;
+}
+
+.filter-group select {
+  padding: 6px 10px;
+  background: #2a2a4a;
+  border: 1px solid #3a3a5a;
+  border-radius: 4px;
+  color: #e0e0e0;
+  font-size: 12px;
+}
+
+/* Log Entries */
+.combat-log-content {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  padding: 15px;
+}
+
+.log-entries {
+  max-height: 600px;
+  overflow-y: auto;
+  padding-right: 10px;
+}
+
+.round-group {
+  margin-bottom: 20px;
+}
+
+.round-header {
+  text-align: center;
+  padding: 8px;
+  background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.3), transparent);
+  color: #d4af37;
+  font-weight: bold;
+  margin-bottom: 10px;
+  border-radius: 4px;
+}
+
+.log-entry {
+  padding: 8px 12px;
+  margin-bottom: 4px;
+  background: rgba(30, 30, 50, 0.6);
+  border-left: 3px solid #444;
+  border-radius: 0 4px 4px 0;
+  transition: all 0.2s;
+}
+
+.log-entry:hover {
+  background: rgba(40, 40, 60, 0.8);
+}
+
+.log-entry.new-entry {
+  animation: flashNew 0.5s ease;
+}
+
+@keyframes flashNew {
+  0% { background: rgba(212, 175, 55, 0.4); }
+  100% { background: rgba(30, 30, 50, 0.6); }
+}
+
+.log-entry.highlighted {
+  background: rgba(60, 60, 100, 0.8);
+  border-left-color: #d4af37;
+}
+
+/* Entry header */
+.entry-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: #666;
+  margin-bottom: 4px;
+}
+
+.entry-time {
+  font-family: monospace;
+}
+
+/* Entry content */
+.entry-content {
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.entry-content .actor {
+  font-weight: bold;
+}
+
+.entry-content .actor.team-alpha {
+  color: #0052A6;
+}
+
+.entry-content .actor.team-beta {
+  color: #087C20;
+}
+
+.entry-content .actor.dead {
+  color: #999 !important;
+  text-decoration: line-through;
+}
+
+.entry-content .target {
+  font-weight: bold;
+}
+
+.entry-content .target.team-alpha {
+  color: #0052A6;
+}
+
+.entry-content .target.team-beta {
+  color: #087C20;
+}
+
+.entry-content .action {
+  color: #888;
+  margin: 0 4px;
+}
+
+.entry-content .action.critical-hit {
+  color: #ff6600 !important;
+  font-weight: bold;
+}
+
+.entry-content .action.blocked {
+  color: #4a9eff;
+}
+
+.entry-content .action.miss {
+  color: #888;
+  font-style: italic;
+}
+
+.entry-content .action.death {
+  color: #cc0000;
+}
+
+.entry-content .body-part {
+  color: #aa88ff;
+  font-style: italic;
+}
+
+.entry-content .damage {
+  font-weight: bold;
+  padding: 2px 6px;
+  border-radius: 3px;
+  margin-left: 4px;
+}
+
+.entry-content .damage.element-normal { color: #ccc; }
+.entry-content .damage.element-fire { color: #E80005; background: rgba(232, 0, 5, 0.2); }
+.entry-content .damage.element-water { color: #1C60C6; background: rgba(28, 96, 198, 0.2); }
+.entry-content .damage.element-earth { color: #8B4513; background: rgba(139, 69, 19, 0.2); }
+.entry-content .damage.element-air { color: #14BCE0; background: rgba(20, 188, 224, 0.2); }
+.entry-content .damage.element-arcane { color: #9932CC; background: rgba(153, 50, 204, 0.2); }
+
+.entry-content .healing {
+  color: #4a9900;
+  font-weight: bold;
+}
+
+.entry-content .skill-name {
+  font-weight: bold;
+}
+
+.entry-content .skill-name.element-fire { color: #E80005; }
+.entry-content .skill-name.element-water { color: #1C60C6; }
+.entry-content .skill-name.element-earth { color: #8B4513; }
+.entry-content .skill-name.element-air { color: #14BCE0; }
+.entry-content .skill-name.element-arcane { color: #9932CC; }
+
+.entry-content .restoration {
+  color: #4a9900;
+}
+
+.entry-content .status-effect {
+  color: #ff9900;
+  font-weight: bold;
+}
+
+.entry-content .duration {
+  color: #888;
+  font-size: 11px;
+}
+
+.entry-content .loot-item {
+  color: #d4af37;
+  font-weight: bold;
+}
+
+.entry-content .skill-up {
+  color: #4aff4a;
+  font-weight: bold;
+}
+
+.entry-content .system-message {
+  color: #ff9900;
+  font-style: italic;
+}
+
+.entry-content .timestamp-marker {
+  color: #666;
+  display: block;
+  text-align: center;
+}
+
+/* Log type-specific border colors */
+.log-entry.log-type-attack { border-left-color: #cc4444; }
+.log-entry.log-type-skill { border-left-color: #9932CC; }
+.log-entry.log-type-restoration { border-left-color: #4a9900; }
+.log-entry.log-type-block { border-left-color: #4a9eff; }
+.log-entry.log-type-miss { border-left-color: #666; }
+.log-entry.log-type-death { border-left-color: #cc0000; }
+.log-entry.log-type-loot { border-left-color: #d4af37; }
+.log-entry.log-type-system { border-left-color: #ff9900; }
+
+/* Pagination */
+.log-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 15px;
+  margin-top: 15px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+}
+
+.page-label {
+  color: #888;
+  font-size: 12px;
+}
+
+.page-link {
+  padding: 6px 12px;
+  background: #2a2a4a;
+  border: 1px solid #3a3a5a;
+  border-radius: 4px;
+  color: #888;
+  text-decoration: none;
+}
+
+.page-link:hover {
+  background: #3a3a6a;
+  color: #fff;
+}
+
+.current-page {
+  padding: 6px 12px;
+  background: #4a4a8a;
+  border: 1px solid #d4af37;
+  border-radius: 4px;
+  color: #d4af37;
+  font-weight: bold;
+}
+
+/* Battle Participants Panel */
+.battle-participants {
+  margin-top: 20px;
+  padding-top: 15px;
+  border-top: 1px solid #333;
+}
+
+.battle-participants hr {
+  border: none;
+  border-top: 1px dashed #444;
+  margin-bottom: 10px;
+}
+
+.participants-label {
+  color: #888;
+  font-size: 12px;
+  margin-bottom: 10px;
+}
+
+.teams-display {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.teams-display .team {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.teams-display .team-alpha .participant {
+  color: #0052A6;
+}
+
+.teams-display .team-beta .participant {
+  color: #087C20;
+}
+
+.teams-display .participant.dead {
+  color: #999 !important;
+}
+
+.teams-display .vitals {
+  font-size: 11px;
+  color: #888;
+}
+
+.teams-display .vs {
+  color: #666;
+  font-weight: bold;
+  font-size: 16px;
+}
+
+/* Statistics View */
+.combat-statistics {
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+}
+
+.stats-section {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 8px;
+  padding: 20px;
+  border: 1px solid #3a3a5a;
+}
+
+.stats-section h2 {
+  color: #d4af37;
+  font-size: 18px;
+  margin: 0 0 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #3a3a5a;
+}
+
+/* Element Breakdown */
+.element-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.element-bar {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.element-label {
+  width: 100px;
+  font-size: 13px;
+}
+
+.bar-container {
+  flex: 1;
+  height: 24px;
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: 4px;
+  position: relative;
+  overflow: hidden;
+}
+
+.bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.5s ease;
+}
+
+.element-bar.element-normal .bar-fill { background: linear-gradient(90deg, #666, #888); }
+.element-bar.element-fire .bar-fill { background: linear-gradient(90deg, #E80005, #ff4444); }
+.element-bar.element-water .bar-fill { background: linear-gradient(90deg, #1C60C6, #4a9eff); }
+.element-bar.element-earth .bar-fill { background: linear-gradient(90deg, #8B4513, #a67c52); }
+.element-bar.element-air .bar-fill { background: linear-gradient(90deg, #14BCE0, #66ddff); }
+.element-bar.element-arcane .bar-fill { background: linear-gradient(90deg, #9932CC, #cc66ff); }
+
+.bar-value {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 11px;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+/* Stats Table */
+.stats-table-container {
+  overflow-x: auto;
+}
+
+.stats-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.stats-table th,
+.stats-table td {
+  padding: 10px;
+  text-align: center;
+  border: 1px solid #3a3a5a;
+}
+
+.stats-table th {
+  background: rgba(212, 175, 55, 0.2);
+  color: #d4af37;
+  font-weight: normal;
+}
+
+.stats-table .participant-name {
+  text-align: left;
+  white-space: nowrap;
+}
+
+.stats-table .participant-name .name {
+  font-weight: bold;
+}
+
+.stats-table .participant-name .level {
+  color: #888;
+  font-size: 11px;
+}
+
+.stats-table .participant-name .invisible {
+  color: #666;
+}
+
+.stats-table .info-link {
+  font-size: 10px;
+  text-decoration: none;
+}
+
+.stats-table tr.team-alpha td { background: rgba(0, 82, 166, 0.1); }
+.stats-table tr.team-beta td { background: rgba(8, 124, 32, 0.1); }
+.stats-table tr.dead td { opacity: 0.5; }
+
+.stats-table .damage-cell {
+  font-weight: bold;
+}
+
+.stats-table .damage-cell.element-fire { color: #E80005; }
+.stats-table .damage-cell.element-water { color: #1C60C6; }
+.stats-table .damage-cell.element-earth { color: #8B4513; }
+.stats-table .damage-cell.element-air { color: #14BCE0; }
+.stats-table .damage-cell.element-arcane { color: #9932CC; }
+
+.stats-table .hits-count {
+  font-size: 10px;
+  color: #888;
+  font-weight: normal;
+}
+
+.stats-table .total-cell {
+  background: rgba(212, 175, 55, 0.1) !important;
+}
+
+.stats-table .xp-cell {
+  color: #4aff4a;
+}
+
+.stats-table tfoot .totals-row td {
+  background: rgba(212, 175, 55, 0.15);
+  font-weight: bold;
+}
+
+/* Team Cards */
+.team-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.team-card {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  padding: 15px;
+  border: 1px solid #3a3a5a;
+}
+
+.team-card.team-alpha {
+  border-color: rgba(0, 82, 166, 0.5);
+}
+
+.team-card.team-beta {
+  border-color: rgba(8, 124, 32, 0.5);
+}
+
+.team-card h3 {
+  margin: 0 0 15px;
+  font-size: 16px;
+}
+
+.team-card.team-alpha h3 { color: #0052A6; }
+.team-card.team-beta h3 { color: #087C20; }
+
+.team-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.team-stats .stat {
+  display: flex;
+  justify-content: space-between;
+  padding: 5px 0;
+  border-bottom: 1px dotted #333;
+}
+
+.team-stats .stat-label {
+  color: #888;
+}
+
+.team-stats .stat-value {
+  font-weight: bold;
+}
+
+/* Body Part Stats */
+.body-parts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 15px;
+}
+
+.body-part-card {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  padding: 15px;
+  text-align: center;
+  border: 1px solid #3a3a5a;
+}
+
+.body-part-card .part-icon {
+  font-size: 24px;
+  margin-bottom: 5px;
+}
+
+.body-part-card .part-name {
+  font-weight: bold;
+  color: #d4af37;
+  margin-bottom: 10px;
+}
+
+.body-part-card .part-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 11px;
+  color: #888;
+}
+
+/* Round Summary Chart */
+.round-chart {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 8px;
+  height: 150px;
+  padding: 10px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+}
+
+.round-bar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.round-bar .round-label {
+  font-size: 10px;
+  color: #888;
+}
+
+.round-bar .bar-stack {
+  display: flex;
+  flex-direction: column-reverse;
+  width: 30px;
+  min-height: 5px;
+}
+
+.round-bar .damage-bar {
+  background: #cc4444;
+  width: 100%;
+}
+
+.round-bar .healing-bar {
+  background: #4a9900;
+  width: 100%;
+}
+
+.round-bar .round-events {
+  font-size: 9px;
+  color: #666;
+}
+
+.chart-legend {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin-top: 10px;
+  font-size: 11px;
+}
+
+.legend-item.damage { color: #cc4444; }
+.legend-item.healing { color: #4a9900; }
+
+/* Stats Footer */
+.stats-footer {
+  text-align: center;
+  padding: 15px;
+}
+
+.back-link {
+  color: #d4af37;
+  text-decoration: none;
+}
+
+.back-link:hover {
+  text-decoration: underline;
+}
+
+/* Combat Log Footer */
+.combat-log-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  padding: 20px 0;
+  margin-top: 20px;
+  border-top: 1px solid #3a3a5a;
+}
+
+.footer-decoration {
+  width: 80px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #3a3a5a);
+}
+
+.footer-decoration.right {
+  background: linear-gradient(90deg, #3a3a5a, transparent);
+}
+
+.footer-links {
+  display: flex;
+  gap: 20px;
+}
+
+.footer-link {
+  color: #888;
+  text-decoration: none;
+  font-size: 13px;
+  transition: color 0.2s;
+}
+
+.footer-link:hover {
+  color: #d4af37;
+}
+
+/* Battle End Marker */
+.battle-end-marker {
+  text-align: center;
+  padding: 20px;
+  margin-top: 20px;
+  background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.2), transparent);
+  color: #d4af37;
+}
+
+.battle-end-marker .winner {
+  display: block;
+  margin-top: 10px;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .combat-log-viewer {
+    padding: 10px;
+    border-radius: 0;
+  }
+
+  .combat-log-header h1 {
+    font-size: 20px;
+  }
+
+  .combat-log-tabs {
+    flex-wrap: wrap;
+  }
+
+  .log-filters {
+    flex-direction: column;
+  }
+
+  .log-entries {
+    max-height: 400px;
+  }
+
+  .teams-display {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .stats-table {
+    font-size: 10px;
+  }
+
+  .stats-table th,
+  .stats-table td {
+    padding: 6px;
+  }
+}

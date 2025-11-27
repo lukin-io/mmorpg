@@ -1,0 +1,207 @@
+<%# Combat Statistics View - Damage breakdown by element and participant %>
+<div class="combat-statistics">
+  <%# Element Damage Breakdown %>
+  <div class="stats-section element-breakdown">
+    <h2>⚡ Element Breakdown</h2>
+    <div class="element-bars">
+      <% @element_breakdown.each do |element, data| %>
+        <div class="element-bar element-<%= element %>">
+          <div class="element-label">
+            <%= element_icon(element) %> <%= element.titleize %>
+          </div>
+          <div class="bar-container">
+            <div class="bar-fill" style="width: <%= data[:percentage] %>%"></div>
+            <span class="bar-value"><%= number_with_delimiter(data[:damage]) %> dmg (<%= data[:hits] %> hits)</span>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <%# Participant Statistics Table %>
+  <div class="stats-section participant-stats">
+    <h2>👥 Participant Statistics</h2>
+    <div class="stats-table-container">
+      <table class="stats-table">
+        <thead>
+          <tr>
+            <th>Character</th>
+            <th class="element-col">
+              <span class="element-icon element-normal" title="Normal">⚔️</span>
+            </th>
+            <th class="element-col">
+              <span class="element-icon element-fire" title="Fire">🔥</span>
+            </th>
+            <th class="element-col">
+              <span class="element-icon element-water" title="Water">💧</span>
+            </th>
+            <th class="element-col">
+              <span class="element-icon element-earth" title="Earth">🌍</span>
+            </th>
+            <th class="element-col">
+              <span class="element-icon element-air" title="Air">💨</span>
+            </th>
+            <th class="element-col">
+              <span class="element-icon element-arcane" title="Arcane">✨</span>
+            </th>
+            <th>Total</th>
+            <th>XP</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @participants.each do |participant| %>
+            <%
+              team_class = "team-#{participant[:team]}"
+              alive_class = participant[:is_alive] ? "alive" : "dead"
+            %>
+            <tr class="<%= team_class %> <%= alive_class %>">
+              <td class="participant-name">
+                <% if participant[:visible] %>
+                  <span class="name"><%= participant[:name] %></span>
+                  <span class="level">[<%= participant[:level] %>]</span>
+                  <%= link_to "ℹ️", "#", class: "info-link", title: "View profile" %>
+                <% else %>
+                  <span class="name invisible"><i>invisible</i></span>
+                <% end %>
+              </td>
+              <% %w[normal fire water earth air arcane].each do |element| %>
+                <td class="damage-cell element-<%= element %>">
+                  <span class="damage-value"><%= participant[:element_damages][element][:damage] %></span>
+                  <span class="hits-count">(<%= participant[:element_damages][element][:hits] %>)</span>
+                </td>
+              <% end %>
+              <td class="total-cell">
+                <span class="damage-value"><%= number_with_delimiter(participant[:total_damage]) %></span>
+                <span class="hits-count">(<%= participant[:total_hits] %>)</span>
+              </td>
+              <td class="xp-cell">
+                <%= number_with_delimiter(participant[:xp_earned]) %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+        <tfoot>
+          <tr class="totals-row">
+            <td>Totals</td>
+            <% %w[normal fire water earth air arcane].each do |element| %>
+              <td class="damage-cell element-<%= element %>">
+                <%= number_with_delimiter(@element_breakdown[element][:damage]) %>
+              </td>
+            <% end %>
+            <td class="total-cell">
+              <strong><%= number_with_delimiter(@statistics.total_damage) %></strong>
+            </td>
+            <td></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+
+  <%# Team Summary %>
+  <div class="stats-section team-summary">
+    <h2>⚔️ Team Summary</h2>
+    <div class="team-cards">
+      <% @statistics.by_team.each do |team, stats| %>
+        <div class="team-card team-<%= team %>">
+          <h3><%= team == :alpha ? "🔵 Team Alpha" : "🟢 Team Beta" %></h3>
+          <div class="team-stats">
+            <div class="stat">
+              <span class="stat-label">Members</span>
+              <span class="stat-value"><%= stats[:alive] %>/<%= stats[:members] %> alive</span>
+            </div>
+            <div class="stat">
+              <span class="stat-label">Total Damage</span>
+              <span class="stat-value"><%= number_with_delimiter(stats[:total_damage]) %></span>
+            </div>
+            <div class="stat">
+              <span class="stat-label">Total Healing</span>
+              <span class="stat-value"><%= number_with_delimiter(stats[:total_healing]) %></span>
+            </div>
+            <div class="stat">
+              <span class="stat-label">Total Hits</span>
+              <span class="stat-value"><%= stats[:total_hits] %></span>
+            </div>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <%# Body Part Breakdown %>
+  <div class="stats-section body-part-stats">
+    <h2>🎯 Body Part Targeting</h2>
+    <div class="body-parts-grid">
+      <% @statistics.body_part_breakdown.each do |part, data| %>
+        <div class="body-part-card">
+          <div class="part-icon"><%= body_part_icon(part) %></div>
+          <div class="part-name"><%= part.titleize %></div>
+          <div class="part-stats">
+            <span class="attacks"><%= data[:attacks] %> attacks</span>
+            <span class="damage"><%= number_with_delimiter(data[:damage]) %> dmg</span>
+            <span class="blocked"><%= data[:blocked] %> blocked</span>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <%# Round Summary %>
+  <div class="stats-section round-summary">
+    <h2>📈 Round Summary</h2>
+    <div class="round-chart">
+      <% @statistics.round_summary.each do |round_data| %>
+        <div class="round-bar">
+          <div class="round-label">R<%= round_data[:round] %></div>
+          <div class="bar-stack">
+            <div class="damage-bar"
+                 style="height: <%= [round_data[:total_damage] / 10.0, 100].min %>px"
+                 title="<%= round_data[:total_damage] %> damage"></div>
+            <div class="healing-bar"
+                 style="height: <%= [round_data[:total_healing] / 10.0, 100].min %>px"
+                 title="<%= round_data[:total_healing] %> healing"></div>
+          </div>
+          <div class="round-events"><%= round_data[:events] %> events</div>
+        </div>
+      <% end %>
+    </div>
+    <div class="chart-legend">
+      <span class="legend-item damage">■ Damage</span>
+      <span class="legend-item healing">■ Healing</span>
+    </div>
+  </div>
+
+  <%# Back to Log link %>
+  <div class="stats-footer">
+    <% if @is_public %>
+      <%= link_to "← View Combat Log", public_battle_log_path(@battle.share_token, p: 1), class: "back-link" %>
+    <% else %>
+      <%= link_to "← View Combat Log", combat_log_path(@battle, p: 1), class: "back-link" %>
+    <% end %>
+  </div>
+</div>
+
+<%
+  def element_icon(element)
+    case element
+    when "normal" then "⚔️"
+    when "fire" then "🔥"
+    when "water" then "💧"
+    when "earth" then "🌍"
+    when "air" then "💨"
+    when "arcane" then "✨"
+    else "❓"
+    end
+  end
+
+  def body_part_icon(part)
+    case part
+    when "head" then "🎯"
+    when "torso" then "👕"
+    when "stomach" then "🫃"
+    when "legs" then "🦵"
+    else "❓"
+    end
+  end
+%>
+

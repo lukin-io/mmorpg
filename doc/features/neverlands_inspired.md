@@ -868,6 +868,218 @@ body_damage: {
 
 ---
 
+## Combat Log System
+
+### Original Neverlands Examples
+
+#### HTML Structure
+```html
+<HTML>
+<HEAD>
+<TITLE>Combat Log</TITLE>
+<LINK href="/css/logs.css" rel="STYLESHEET" type="text/css">
+<SCRIPT src="/js/vlogs.js"></SCRIPT>
+</HEAD>
+<BODY bgcolor="#FFFFFF">
+<SCRIPT language="JavaScript">
+var d = document;
+var logs = [];  // Array of combat log entries
+var params = [0,1,694463422,1,0];  // [totalPages, ?, fightId, currentPage, ?]
+var show = 1;  // 1=log view, 2=stats view
+var off = 1;   // 1=fight ended, 0=ongoing
+viewlog();
+</SCRIPT>
+</BODY>
+</HTML>
+```
+
+#### JavaScript Combat Log Renderer
+```javascript
+var f_pl = ["head","torso","stomach","legs"];
+var magco = ['000000','000000','E80005','148101','1C60C6','14BCE0'];
+// Colors: normal, normal, fire, nature, water, air
+
+function viewlh() {
+    for(i=1; i<logs.length; i++) {
+        d.write('<P>');
+        for(j=0; j<logs[i].length; j++) {
+            if((typeof logs[i][j] != 'string') && !isNaN(parseInt(logs[i][j][0]))) {
+                switch(logs[i][j][0]) {
+                    case 0: // Timestamp
+                        d.write('<font class=ftime>'+logs[i][j][1]+'</font> ');
+                        break;
+                    case 1: // Player action
+                        d.write(' '+sh_align(logs[i][j][4],0)+sh_sign_s(logs[i][j][5])+
+                            '<font color=#'+(logs[i][j][1] == 1 ? '0052A6' : '087C20')+'>'+
+                            '<b>'+logs[i][j][2]+'</b></font>['+logs[i][j][3]+']');
+                        break;
+                    case 2: // Restored HP/MP
+                        d.write(' restored <font color=#E34242><b>«'+logs[i][j][1]+' '+logs[i][j][2]+'»</b></font>.');
+                        break;
+                    case 3: // Used ability
+                        d.write(' used <font color=#E34242><b>«'+logs[i][j][1]+'»</b></font>.');
+                        break;
+                    case 4: // Invisible player
+                        d.write(' <font color=#'+(logs[i][j][1] == 1 ? '0052A6' : '087C20')+'>'+
+                            '<b><i>invisible</i></b></font>');
+                        break;
+                    case 5: // NPC/creature
+                        d.write(' '+sh_align(logs[i][j][3],0)+sh_sign_s(logs[i][j][4])+
+                            '<b>'+logs[i][j][1]+'</b>['+logs[i][j][2]+']');
+                        break;
+                    case 6: // Body part indicator
+                        d.write(' <font class=fpla>('+f_pl[logs[i][j][1]]+')</font>');
+                        break;
+                    case 7: // Applied effect
+                        d.write(' applied <font color=#E34242><b>«'+logs[i][j][1]+'»</b></font>');
+                        break;
+                    case 8: // Hunting/butchering result
+                        d.write('Butchering result: <font color=#E34242><b>«'+logs[i][j][2]+'»</b></font>.'+
+                            (!logs[i][j][3] ? '' : ' Skill «Hunting» increased by 1!'));
+                        break;
+                    case 9: // Spell cast with element color
+                        d.write(' cast spell <font color=#'+magco[logs[i][j][3]]+'>'+
+                            '<b>«'+logs[i][j][1]+'»</b></font>');
+                        break;
+                    case 10: // Magic effect
+                        d.write(' <font color=#'+magco[logs[i][j][2]]+'>'+
+                            '<b>«'+logs[i][j][1]+'»</b></font>');
+                        break;
+                }
+            } else {
+                d.write(logs[i][j]);
+            }
+        }
+        d.write('<P>');
+    }
+
+    // Show participants if fight ongoing
+    if(!off) {
+        d.write('<hr size="1" color="#cecece" width="100%">');
+        d.write('<P>Battle participants: ');
+        gr_det(lives_g1,1,0);
+        d.write(' vs ');
+        gr_det(lives_g2,2,0);
+        d.write('</P>');
+    }
+
+    // Pagination
+    if(params[0] > 0) {
+        d.write('<P><font class=ftime>Pages:</font>');
+        for(i=1; i<=params[0]; i++) {
+            d.write(' '+(i != params[3] ? '<A href="?fid='+params[2]+'&p='+i+'">'+i+'</A>' : '<B>'+i+'</B>'));
+        }
+        if(off) d.write(' | <A href="?fid='+params[2]+'&stat=1">Battle Statistics</A>');
+        d.write('</P>');
+    }
+}
+
+// Statistics view - damage breakdown by element
+function viewsh() {
+    var stcou = list.length;
+    if(stcou > 0) {
+        d.write('<TABLE cellspacing=0 cellpadding=0 border=0 align=center>');
+        d.write('<TR><TD colspan=8 align=center><font color=#777777>Battle Statistics</font></TD></TR>');
+        d.write('<TR>'+
+            '<TD><B>Character</B></TD>'+
+            '<TD><B>Normal</B></TD>'+
+            '<TD><B>Fire</B></TD>'+
+            '<TD><B>Water</B></TD>'+
+            '<TD><B>Earth</B></TD>'+
+            '<TD><B>Air</B></TD>'+
+            '<TD><B>Total</B></TD>'+
+            '<TD><B>XP</B></TD></TR>');
+
+        for(i=1; i<stcou; i++) {
+            if (typeof list[i] != 'string') {
+                // list[i] = [visible, team, name, level, align, sign,
+                //            normalDmg, fireDmg, waterDmg, earthDmg, airDmg,
+                //            normalHits, fireHits, waterHits, earthHits, airHits, xp]
+                var totalDmg = list[i][6]+list[i][7]+list[i][8]+list[i][9]+list[i][10];
+                var totalHits = list[i][11]+list[i][12]+list[i][13]+list[i][14]+list[i][15];
+                d.write('<TR>'+
+                    '<TD>'+list[i][2]+'['+list[i][3]+']</TD>'+
+                    '<TD>'+list[i][6]+'<sup>('+list[i][11]+')</sup></TD>'+
+                    '<TD>'+list[i][7]+'<sup>('+list[i][12]+')</sup></TD>'+
+                    '<TD>'+list[i][8]+'<sup>('+list[i][13]+')</sup></TD>'+
+                    '<TD>'+list[i][9]+'<sup>('+list[i][14]+')</sup></TD>'+
+                    '<TD>'+list[i][10]+'<sup>('+list[i][15]+')</sup></TD>'+
+                    '<TD>'+totalDmg+'<sup>('+totalHits+')</sup></TD>'+
+                    '<TD>'+list[i][16]+'</TD></TR>');
+            }
+        }
+        d.write('</TABLE>');
+    }
+}
+
+// Participant display with HP status
+function gr_det(garr, grn, grlive) {
+    var bgc;
+    for(j=0; j<garr.length; j++) {
+        bgc = grn == 1 ? '0052A6' : '087C20';  // Blue for team 1, green for team 2
+
+        // Grey out dead participants
+        if(!grlive) bgc = pl_live(garr[j][7], bgc);
+
+        switch(garr[j][0]) {
+            case 1:  // Player
+                d.write('<font color=#'+bgc+'><b>'+garr[j][1]+'</b></font> ['+garr[j][5]+'/'+garr[j][6]+']');
+                break;
+            case 3:  // NPC/Bot
+                d.write('<font color=#'+bgc+'><b>'+garr[j][1]+'</b></font> ['+garr[j][2]+'/'+garr[j][3]+']');
+                break;
+            case 4:  // Invisible
+                d.write('<font color=#'+bgc+'><b><i>invisible</i></b></font>');
+                break;
+        }
+        d.write((j != garr.length-1 ? ', ' : ''));
+    }
+}
+
+function pl_live(pll, bgc) {
+    return !pll ? '999999' : bgc;  // Grey if dead
+}
+```
+
+### Elselands Implementation
+
+- **Status:** ✅ Implemented
+- **Files:**
+  - `app/models/combat_log_entry.rb` — Enhanced with log types and element tracking
+  - `app/services/combat/log_builder.rb` — Builds structured log entries
+  - `app/services/combat/statistics_calculator.rb` — Damage breakdown by element/type
+  - `app/controllers/combat_logs_controller.rb` — Log viewer with stats mode
+  - `app/views/combat_logs/show.html.erb` — Rich log rendering
+  - `app/views/combat_logs/_statistics.html.erb` — Statistics table
+  - `app/javascript/controllers/combat_log_controller.js` — Interactive log with live updates
+  - `app/assets/stylesheets/application.css` — Combat log styling
+
+### Key Features Adapted
+1. **Log Entry Types** — Timestamp, attack, skill, restoration, body part, etc.
+2. **Element Colors** — Fire (red), Water (blue), Nature (green), Air (cyan), Arcane (purple)
+3. **Statistics View** — Damage/hits breakdown by element and character
+4. **Team Colors** — Blue for player team, green for enemy team
+5. **Body Part Display** — Shows targeted body parts in combat log
+6. **Pagination** — For long battles
+7. **Live Updates** — WebSocket-based log updates during combat
+8. **Export** — CSV and JSON export options
+9. **Public Shareable URLs** — Like Neverlands' `/logs.fcg?fid=xxx`, battles have shareable permalinks via `/logs/:share_token`
+
+### Public Battle Log URLs
+Inspired by Neverlands' shareable log URLs (`http://www.neverlands.ru/logs.fcg?fid=694463422`), Elselands provides public battle log permalinks:
+
+- **Route:** `GET /logs/:share_token`
+- **Example:** `https://elselands.com/logs/abc123def456`
+- **Controller:** `PublicBattleLogsController` — no authentication required
+- **Share Token:** Auto-generated on battle creation, stored in `battles.share_token`
+- **Features:**
+  - Copy shareable link with "🔗 Share" button
+  - Public notice banner shows link is viewable by anyone
+  - JSON export available for public logs
+  - Statistics view accessible without login
+
+---
+
 ## Future Neverlands-Inspired Features
 
 *(Add new sections here as examples are shared)*

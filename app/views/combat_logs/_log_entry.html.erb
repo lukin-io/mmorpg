@@ -1,0 +1,131 @@
+<%# Single combat log entry with rich formatting %>
+<%
+  entry_class = "log-entry log-type-#{entry.log_type}"
+  entry_class += " element-#{entry.tags.find { |t| %w[fire water earth air arcane].include?(t) } || 'normal'}"
+  entry_class += " critical" if entry.payload["critical"]
+  entry_class += " blocked" if entry.payload["blocked"]
+
+  actor_team = entry.payload["actor_team"]
+  target_team = entry.payload["target_team"]
+%>
+<div class="<%= entry_class %>" data-log-id="<%= entry.id %>">
+  <div class="entry-header">
+    <span class="entry-time"><%= entry.created_at.strftime("%H:%M:%S") %></span>
+    <span class="entry-sequence">#<%= entry.sequence %></span>
+  </div>
+
+  <div class="entry-content">
+    <% case entry.log_type %>
+    <% when "timestamp" %>
+      <span class="timestamp-marker">═══ <%= entry.message %> ═══</span>
+
+    <% when "attack" %>
+      <span class="actor team-<%= actor_team %>"><%= entry.payload["actor_name"] %></span>
+      <% if entry.payload["critical"] %>
+        <span class="action critical-hit">💥 CRITICAL!</span>
+      <% elsif entry.payload["blocked"] %>
+        <span class="action blocked">🛡️ blocked by</span>
+        <span class="target team-<%= target_team %>"><%= entry.payload["target_name"] %></span>
+      <% else %>
+        <span class="action">⚔️ hits</span>
+        <span class="target team-<%= target_team %>"><%= entry.payload["target_name"] %></span>
+      <% end %>
+
+      <% if entry.payload["body_part"] %>
+        <span class="body-part">(<%= entry.payload["body_part"] %>)</span>
+      <% end %>
+
+      <% if entry.damage_amount > 0 %>
+        <span class="damage element-<%= entry.payload['element'] || 'normal' %>">
+          <%= entry.damage_amount %> dmg
+        </span>
+      <% end %>
+
+    <% when "skill" %>
+      <span class="actor team-<%= actor_team %>"><%= entry.payload["actor_name"] %></span>
+      <span class="action">✨ casts</span>
+      <span class="skill-name element-<%= entry.payload['element'] || 'arcane' %>">
+        «<%= entry.payload["skill_name"] %>»
+      </span>
+      <% if entry.payload["target_name"] %>
+        <span class="action">on</span>
+        <span class="target team-<%= target_team %>"><%= entry.payload["target_name"] %></span>
+      <% end %>
+      <% if entry.damage_amount > 0 %>
+        <span class="damage element-<%= entry.payload['element'] || 'arcane' %>">
+          <%= entry.damage_amount %> dmg
+        </span>
+      <% end %>
+      <% if entry.healing_amount > 0 %>
+        <span class="healing">+<%= entry.healing_amount %> HP</span>
+      <% end %>
+
+    <% when "restoration" %>
+      <span class="actor team-<%= actor_team %>"><%= entry.payload["actor_name"] %></span>
+      <span class="action">💚 restored</span>
+      <span class="restoration">
+        «<%= entry.payload["amount"] %> <%= entry.payload["resource"]&.upcase %>»
+      </span>
+      <% if entry.payload["source"] %>
+        <span class="source">from «<%= entry.payload["source"] %>»</span>
+      <% end %>
+
+    <% when "miss" %>
+      <span class="actor team-<%= actor_team %>"><%= entry.payload["actor_name"] %></span>
+      <span class="action miss">💨 misses</span>
+      <span class="target team-<%= target_team %>"><%= entry.payload["target_name"] %></span>
+      <% if entry.payload["body_part"] %>
+        <span class="body-part">(<%= entry.payload["body_part"] %>)</span>
+      <% end %>
+
+    <% when "block" %>
+      <span class="actor team-<%= actor_team %>"><%= entry.payload["actor_name"] %></span>
+      <span class="action blocked">🛡️ blocks attack on</span>
+      <span class="body-part">(<%= entry.payload["body_part"] %>)</span>
+      <% if entry.payload["damage_reduced"] %>
+        <span class="reduction">(<%= entry.payload["damage_reduced"] %> reduced)</span>
+      <% end %>
+
+    <% when "status" %>
+      <span class="actor team-<%= actor_team %>"><%= entry.payload["actor_name"] %></span>
+      <span class="action">✨ applies</span>
+      <span class="status-effect">«<%= entry.payload["effect_name"] %>»</span>
+      <% if entry.payload["target_name"] && entry.payload["target_name"] != entry.payload["actor_name"] %>
+        <span class="action">to</span>
+        <span class="target team-<%= target_team %>"><%= entry.payload["target_name"] %></span>
+      <% end %>
+      <span class="duration">(<%= entry.payload["duration"] %> rounds)</span>
+
+    <% when "death" %>
+      <span class="actor dead team-<%= actor_team %>"><%= entry.payload["actor_name"] %></span>
+      <span class="action death">💀 has been defeated!</span>
+
+    <% when "loot" %>
+      <span class="actor team-<%= actor_team %>"><%= entry.payload["actor_name"] %></span>
+      <span class="action">🎁 obtained</span>
+      <span class="loot-item">«<%= entry.payload["item_name"] %>»</span>
+      <% if entry.payload["quantity"].to_i > 1 %>
+        <span class="quantity">x<%= entry.payload["quantity"] %></span>
+      <% end %>
+      <% if entry.payload["skill_increased"] %>
+        <span class="skill-up">Skill «<%= entry.payload["skill_increased"] %>» increased!</span>
+      <% end %>
+
+    <% when "system" %>
+      <span class="system-message"><%= entry.message %></span>
+
+    <% else %>
+      <%# Fallback for unknown types %>
+      <span class="raw-message"><%= entry.message %></span>
+    <% end %>
+  </div>
+
+  <% if entry.tags.present? %>
+    <div class="entry-tags">
+      <% entry.tags.each do |tag| %>
+        <span class="tag tag-<%= tag.parameterize %>"><%= tag %></span>
+      <% end %>
+    </div>
+  <% end %>
+</div>
+

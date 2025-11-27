@@ -7,6 +7,9 @@ Rails.application.routes.draw do
     mount Sidekiq::Web => "/sidekiq"
   end
 
+  # Public battle logs (shareable URLs like Neverlands' /logs.fcg?fid=xxx)
+  get "logs/:share_token", to: "public_battle_logs#show", as: :public_battle_log
+
   resource :session_ping, only: :create
   resources :profiles, only: :show, controller: :public_profiles, param: :profile_name
 
