@@ -4,18 +4,19 @@
 
 | Component | Status | Details |
 |-----------|--------|---------|
-| **game.html.erb Layout** | ✅ Implemented | `app/views/layouts/game.html.erb` — CSS Grid layout |
-| **game_layout_controller.js** | ✅ Implemented | `app/javascript/controllers/game_layout_controller.js` — Full resize, modes, shortcuts |
-| **_vitals_bar.html.erb** | ✅ Implemented | `app/views/shared/_vitals_bar.html.erb` — Header vitals partial |
-| **_online_players.html.erb** | ✅ Implemented | `app/views/shared/_online_players.html.erb` |
+| **game.html.erb Layout** | ✅ Implemented | `app/views/layouts/game.html.erb` — Neverlands-style dark CSS Grid layout |
+| **game_layout_controller.js** | ✅ Implemented | `app/javascript/controllers/game_layout_controller.js` — Resize, tabs, player menu, shortcuts |
+| **_vitals_bar.html.erb** | ✅ Implemented | `app/views/shared/_vitals_bar.html.erb` — Status bar vitals (dark theme) |
+| **_online_players_compact.html.erb** | ✅ Implemented | `app/views/shared/_online_players_compact.html.erb` — Compact sidebar list |
 | **RealtimeChatChannel** | ✅ Implemented | `app/channels/realtime_chat_channel.rb` — Global chat |
 | **PresenceChannel** | ✅ Implemented | `app/channels/presence_channel.rb` — Online tracking |
-| **CSS Grid Layout** | ✅ Implemented | `app/assets/stylesheets/application.css` — Game layout section |
+| **CSS Grid Layout** | ✅ Implemented | `app/assets/stylesheets/application.css` — `.nl-game-layout` dark fantasy theme |
 | **Resize Handle** | ✅ Implemented | Drag to resize bottom panel with min/max constraints |
+| **Tabbed Log System** | ✅ Implemented | Chat, Battle Log, Events, System tabs |
 | **Chat Modes** | ✅ Implemented | All/Private/None filtering via CSS classes |
-| **Chat Speed Cycling** | ✅ Implemented | 3s/5s/10s/30s refresh options |
-| **Keyboard Shortcuts** | ✅ Implemented | Alt+C (chat mode), Alt+H (hide panel), Alt+M (map), Alt+Enter (focus chat) |
-| **localStorage Preferences** | ✅ Implemented | Panel height, chat mode, chat speed persisted |
+| **Keyboard Shortcuts** | ✅ Implemented | Alt+H (toggle), Alt+C (chat mode), Alt+1-4 (tabs), Alt+Enter (focus) |
+| **Player Context Menu** | ✅ Implemented | Right-click for whisper, profile, invite, ignore |
+| **localStorage Preferences** | ✅ Implemented | Panel height, active tab, chat mode persisted |
 
 ---
 
@@ -61,35 +62,58 @@
 
 ## Key Behavior
 
-### Panel Layout
+### Panel Layout (Neverlands Style)
 ```
 ┌─────────────────────────────────────────┐
-│  HEADER (50px)                          │
+│  STATUS BAR (32px) - minimal dark theme │
+│  [Name][Lvl] | HP/MP bars | 📜🎒📋🗺️⚔️ | ✕ │
 ├─────────────────────────────────────────┤
-│  MAIN CONTENT (flexible)                │
+│                                         │
+│  MAIN CONTENT (~90% of screen)          │
+│  (Map / Profile / Combat / Quest, etc.) │
+│                                         │
 ├─────────────────────────────────────────┤
-│  RESIZE HANDLE (8px)                    │
+│  RESIZE HANDLE (6px) - drag to resize   │
 ├─────────────────────────────────────────┤
-│  BOTTOM PANEL (240px default)           │
-│  ┌─────────────────┬───────────────┐    │
-│  │ CHAT            │ ONLINE (300px)│    │
-│  └─────────────────┴───────────────┘    │
-│  CHAT INPUT BAR (40px)                  │
+│  BOTTOM PANEL (~10%, 180px default)     │
+│  ┌─────────────────────────────┬───────┐│
+│  │ TABS: 💬Chat ⚔️Battle 📢Events ⚙️Sys│ONLINE││
+│  ├─────────────────────────────┤PLAYERS││
+│  │ Messages / Logs             │  LIST ││
+│  ├─────────────────────────────┤(120px)││
+│  │ [Chat Input ▸]              │       ││
+│  └─────────────────────────────┴───────┘│
 └─────────────────────────────────────────┘
 ```
 
 ### Resize Constraints
-- Minimum height: 120px
-- Maximum height: 500px
-- Step size: 60px (snapping)
-- Default: 240px
+- Minimum height: 80px
+- Maximum height: 400px
+- Default: 180px
+
+### Tabbed Log System
+| Tab | Icon | Content |
+|-----|------|---------|
+| Chat | 💬 | Real-time chat messages |
+| Battle | ⚔️ | Combat log entries |
+| Events | 📢 | Game events, achievements |
+| System | ⚙️ | System messages, errors |
 
 ### Chat Modes
-| Mode | Button | Behavior |
-|------|--------|----------|
-| 0 (All) | 💬 | Show all messages |
-| 1 (Private) | 🔒 | Show only whispers/private |
-| 2 (Hidden) | 🔇 | Hide chat, show placeholder |
+| Mode | Behavior |
+|------|----------|
+| All | Show all messages |
+| Private | Show only whispers |
+| None | Hide chat messages |
+
+### Keyboard Shortcuts
+| Shortcut | Action |
+|----------|--------|
+| Alt+H | Toggle bottom panel |
+| Alt+C | Cycle chat mode |
+| Alt+1-4 | Switch tabs |
+| Alt+Enter | Focus chat input |
+| Escape | Close menus |
 
 ---
 
@@ -975,10 +999,13 @@ export default class extends Controller {
 ---
 
 ## Responsible for Implementation Files
-- **Layouts:** `app/views/layouts/game.html.erb`
-- **Controllers:** `app/javascript/controllers/game_layout_controller.js`, `app/javascript/controllers/chat_input_controller.js`
-- **Partials:** `app/views/shared/_vitals_bar.html.erb`, `app/views/shared/_chat_panel.html.erb`, `app/views/shared/_online_players.html.erb`
-- **Channels:** `app/channels/chat_channel.rb`, `app/channels/presence_channel.rb`
-- **CSS:** `app/assets/stylesheets/application.css` (game layout section)
-- **Routes:** `config/routes.rb` (`chat_panel_path`, `online_players_path`)
+- **Layouts:** `app/views/layouts/game.html.erb` (Neverlands-style dark theme)
+- **Controllers:** `app/javascript/controllers/game_layout_controller.js` (resize, tabs, player menu, keyboard shortcuts)
+- **Partials:**
+  - `app/views/shared/_vitals_bar.html.erb` — HP/MP bars for status bar
+  - `app/views/shared/_online_players_compact.html.erb` — Compact sidebar player list
+  - `app/views/shared/_online_players.html.erb` — Full player list (legacy)
+- **Channels:** `app/channels/realtime_chat_channel.rb`, `app/channels/presence_channel.rb`
+- **CSS:** `app/assets/stylesheets/application.css` (`.nl-game-layout` section with dark fantasy theme)
+- **Routes:** `config/routes.rb` (`chat_channels_path`, `chat_messages_path`)
 

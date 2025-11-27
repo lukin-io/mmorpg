@@ -447,25 +447,27 @@ if defined?(MapTileTemplate)
   city_tiles = []
   castleton = Zone.find_by(name: "Castleton Keep")
   if castleton
+    zone_name = castleton.name  # Store zone name as string, not the Zone object
     # Central plaza
-    city_tiles << {zone: castleton, x: 5, y: 5, terrain_type: "city", biome: "city", metadata: {"building" => "Town Square"}}
-    city_tiles << {zone: castleton, x: 4, y: 5, terrain_type: "city", biome: "city", metadata: {"building" => "Blacksmith", "npc" => "Smith Gorn"}}
-    city_tiles << {zone: castleton, x: 6, y: 5, terrain_type: "city", biome: "city", metadata: {"building" => "General Store", "npc" => "Merchant Elara"}}
-    city_tiles << {zone: castleton, x: 5, y: 4, terrain_type: "city", biome: "city", metadata: {"building" => "Tavern", "npc" => "Innkeeper Bram"}}
-    city_tiles << {zone: castleton, x: 5, y: 6, terrain_type: "city", biome: "city", metadata: {"building" => "Guild Hall"}}
-    city_tiles << {zone: castleton, x: 4, y: 4, terrain_type: "city", biome: "city", metadata: {"npc" => "Guard Captain"}}
-    city_tiles << {zone: castleton, x: 6, y: 4, terrain_type: "city", biome: "city", metadata: {"building" => "Bank"}}
-    city_tiles << {zone: castleton, x: 4, y: 6, terrain_type: "city", biome: "city", metadata: {"building" => "Auction House"}}
-    city_tiles << {zone: castleton, x: 6, y: 6, terrain_type: "city", biome: "city", metadata: {"building" => "Quest Board", "npc" => "Quest Master"}}
+    city_tiles << {zone: zone_name, x: 5, y: 5, terrain_type: "city", biome: "city", metadata: {"building" => "Town Square"}}
+    city_tiles << {zone: zone_name, x: 4, y: 5, terrain_type: "city", biome: "city", metadata: {"building" => "Blacksmith", "npc" => "Smith Gorn"}}
+    city_tiles << {zone: zone_name, x: 6, y: 5, terrain_type: "city", biome: "city", metadata: {"building" => "General Store", "npc" => "Merchant Elara"}}
+    city_tiles << {zone: zone_name, x: 5, y: 4, terrain_type: "city", biome: "city", metadata: {"building" => "Tavern", "npc" => "Innkeeper Bram"}}
+    city_tiles << {zone: zone_name, x: 5, y: 6, terrain_type: "city", biome: "city", metadata: {"building" => "Guild Hall"}}
+    city_tiles << {zone: zone_name, x: 4, y: 4, terrain_type: "city", biome: "city", metadata: {"npc" => "Guard Captain"}}
+    city_tiles << {zone: zone_name, x: 6, y: 4, terrain_type: "city", biome: "city", metadata: {"building" => "Bank"}}
+    city_tiles << {zone: zone_name, x: 4, y: 6, terrain_type: "city", biome: "city", metadata: {"building" => "Auction House"}}
+    city_tiles << {zone: zone_name, x: 6, y: 6, terrain_type: "city", biome: "city", metadata: {"building" => "Quest Board", "npc" => "Quest Master"}}
     # Walls and gates
-    city_tiles << {zone: castleton, x: 5, y: 9, terrain_type: "city", biome: "city", metadata: {"building" => "South Gate"}}
-    city_tiles << {zone: castleton, x: 5, y: 0, terrain_type: "city", biome: "city", metadata: {"building" => "North Gate"}}
+    city_tiles << {zone: zone_name, x: 5, y: 9, terrain_type: "city", biome: "city", metadata: {"building" => "South Gate"}}
+    city_tiles << {zone: zone_name, x: 5, y: 0, terrain_type: "city", biome: "city", metadata: {"building" => "North Gate"}}
   end
 
   # Starter Plains - Outdoor area with resources, NPCs, and terrain variety
   plains = Zone.find_by(name: "Starter Plains")
   plains_tiles = []
   if plains
+    plains_name = plains.name  # Store zone name as string, not the Zone object
     # Generate a variety of terrain
     (0..14).each do |x|
       (0..14).each do |y|
@@ -528,7 +530,7 @@ if defined?(MapTileTemplate)
         end
 
         plains_tiles << {
-          zone: plains,
+          zone: plains_name,
           x: x,
           y: y,
           terrain_type: terrain,
@@ -544,6 +546,7 @@ if defined?(MapTileTemplate)
   woods = Zone.find_by(name: "Whispering Woods")
   woods_tiles = []
   if woods
+    woods_name = woods.name  # Store zone name as string, not the Zone object
     (0..11).each do |x|
       (0..11).each do |y|
         tile_meta = {}
@@ -583,7 +586,7 @@ if defined?(MapTileTemplate)
         end
 
         woods_tiles << {
-          zone: woods,
+          zone: woods_name,
           x: x,
           y: y,
           terrain_type: terrain,

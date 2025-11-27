@@ -504,20 +504,53 @@ if (savedHeight) {
 ```
 
 ### Elselands Implementation
-- **Status:** ✅ Implemented (modernized)
+- **Status:** ✅ Implemented (modernized, Neverlands dark theme)
 - **Files:**
-  - `app/views/layouts/game.html.erb` — CSS Grid layout (no iframes)
-  - `app/javascript/controllers/game_layout_controller.js` — Resize, persistence, mobile HUD
-  - `app/views/shared/_vitals_bar.html.erb` — Header vitals
-  - `app/views/shared/_chat_panel.html.erb` — Bottom left chat
-  - `app/views/shared/_online_players.html.erb` — Bottom right players
+  - `app/views/layouts/game.html.erb` — Neverlands-style CSS Grid layout (no iframes)
+  - `app/javascript/controllers/game_layout_controller.js` — Resize, tabs, persistence, player menu
+  - `app/views/shared/_vitals_bar.html.erb` — Status bar vitals (dark theme)
+  - `app/views/shared/_online_players_compact.html.erb` — Compact players list (right sidebar)
+  - `app/assets/stylesheets/application.css` — `.nl-game-layout` section with dark fantasy theme
+
+### Layout Structure
+```
++------------------------------------------------+
+|  STATUS BAR (minimal): Name [Lvl] | HP/MP | Nav|  ~32px
++------------------------------------------------+
+|                                                |
+|            MAIN CONTENT (~90%)                 |
+|     (Map / Profile / Combat / Quest / etc.)    |
+|                                                |
++------------------------------------------------+
+|  RESIZE HANDLE (draggable)                     |  ~6px
++------------------------------------------------+
+|  BOTTOM PANEL (~10%)                           |
+| +--------------------------------------+------+|
+| | TABBED LOGS (90%)                    |ONLINE||
+| | [Chat] [Battle] [Events] [System]    |PLAYERS|
+| | Messages / combat log / events...    | LIST ||
+| | [Input field for chat]               |(10%) ||
+| +--------------------------------------+------+|
++------------------------------------------------+
+```
+
+### Key Features
+- **Dark Fantasy Theme** — Colors: `#0a0a12`, `#12121a`, gold accents `#b49b64`
+- **Minimal Status Bar** — Just character name, level, HP/MP bars, quick nav icons
+- **Tabbed Log System** — Chat, Battle Log, Events, System tabs in bottom panel
+- **Resizable Bottom Panel** — Drag handle with localStorage persistence
+- **Compact Online Players** — Right sidebar shows active players with status dots
+- **Player Context Menu** — Right-click for whisper, profile, invite, ignore
+- **Keyboard Shortcuts** — Alt+H (toggle panel), Alt+C (chat mode), Alt+1-4 (tabs)
 
 ### Key Adaptations
 - **CSS Grid** replaces iframes for better performance and SEO
 - **Turbo Frames** for dynamic content within grid areas
-- **localStorage** persistence for panel sizes
-- **Mobile HUD** with gesture support (swipe panels)
-- **ActionCable** for real-time updates across all panels
+- **localStorage** persistence for panel sizes, active tab, chat mode
+- **Stimulus Controller** for all interactivity (no inline handlers)
+- **ActionCable** integration for real-time chat and battle log updates
+- **Dark Fantasy CSS Variables** — Easy theming via `--nl-*` custom properties
+- **Mobile Responsive** — Hides online panel on small screens, collapsible tabs
 
 ---
 
