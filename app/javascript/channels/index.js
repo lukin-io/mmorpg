@@ -1,2 +1,2 @@
-import "./presence_channel"
+import "channels/presence_channel"
 

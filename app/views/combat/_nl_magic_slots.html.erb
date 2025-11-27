@@ -1,4 +1,4 @@
-<%# Neverlands-style magic/skill slots %>
+<%# Magic/skill slots %>
 <%
   skills ||= []
   slots_per_row = 9
@@ -14,7 +14,7 @@
              data-skill-key="<%= skill[:key] || skill[:id] %>"
              data-cost="<%= skill[:cost] || 50 %>"
              data-mana="<%= skill[:mana] || 0 %>"
-             data-action="click->neverlands-combat#toggleMagicSlot"
+             data-action="click->turn-combat#toggleMagicSlot"
              title="<%= skill[:name] %> [<%= skill[:cost] || 50 %> AP, <%= skill[:mana] || 0 %> MP]">
           <div class="nl-magic-icon">
             <%= magic_icon(skill[:element] || skill[:type]) %>

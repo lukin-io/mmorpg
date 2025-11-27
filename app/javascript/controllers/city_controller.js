@@ -1,7 +1,7 @@
 import { Controller } from "@hotwired/stimulus"
 
 /**
- * City controller for interactive city view (Neverlands-inspired)
+ * City controller for interactive city view
  * Handles building hover/click, district navigation, and city interactions
  */
 export default class extends Controller {

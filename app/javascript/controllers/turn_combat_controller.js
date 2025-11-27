@@ -1,7 +1,7 @@
 import { Controller } from "@hotwired/stimulus"
 
 /**
- * Neverlands-inspired combat controller.
+ * Turn-based combat controller.
  *
  * Handles:
  * - Attack/block selection with action point tracking
@@ -24,7 +24,7 @@ export default class extends Controller {
     manaLimit: { type: Number, default: 50 }
   }
 
-  // Attack penalties for multiple attacks (from Neverlands)
+  // Attack penalties for multiple attacks
   static attackPenalties = [0, 0, 25, 75, 150, 250]
 
   connect() {
@@ -379,10 +379,10 @@ export default class extends Controller {
     if (!participants) return
 
     participants.forEach(p => {
-      const hpBar = document.querySelector(`[data-neverlands-combat-target="hpBar${p.id}"]`)
-      const mpBar = document.querySelector(`[data-neverlands-combat-target="mpBar${p.id}"]`)
-      const hpText = document.querySelector(`[data-neverlands-combat-target="hpText${p.id}"]`)
-      const mpText = document.querySelector(`[data-neverlands-combat-target="mpText${p.id}"]`)
+      const hpBar = document.querySelector(`[data-turn-combat-target="hpBar${p.id}"]`)
+      const mpBar = document.querySelector(`[data-turn-combat-target="mpBar${p.id}"]`)
+      const hpText = document.querySelector(`[data-turn-combat-target="hpText${p.id}"]`)
+      const mpText = document.querySelector(`[data-turn-combat-target="mpText${p.id}"]`)
 
       if (hpBar) {
         const hpPercent = p.max_hp > 0 ? (p.current_hp / p.max_hp * 100) : 0

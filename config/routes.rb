@@ -112,7 +112,7 @@ Rails.application.routes.draw do
     resources :party_memberships, only: [:update, :destroy]
   end
   resources :party_invitations, only: :update
-  # Arena System (Neverlands-inspired)
+  # Arena System
   resources :arena, only: [:index], controller: "arena" do
     collection do
       get :lobby

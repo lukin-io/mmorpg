@@ -4,7 +4,7 @@ import consumer from "../channels/consumer"
 /**
  * Arena match controller for live combat view
  * Handles combat log, participant HP, countdown, and match results
- * Inspired by Neverlands' real-time combat updates
+ * Real-time combat updates via ActionCable
  */
 export default class extends Controller {
   static targets = [

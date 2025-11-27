@@ -2,7 +2,7 @@
 
 class CreateArenaRoomsAndApplications < ActiveRecord::Migration[8.1]
   def change
-    # Arena rooms with level/faction restrictions (Neverlands-inspired)
+    # Arena rooms with level/faction restrictions
     create_table :arena_rooms do |t|
       t.references :zone, foreign_key: true
       t.string :name, null: false

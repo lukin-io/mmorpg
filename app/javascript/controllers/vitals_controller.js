@@ -3,7 +3,7 @@ import consumer from "../channels/consumer"
 
 /**
  * Vitals Controller - HP/MP display with client-side prediction
- * Inspired by Neverlands' ins_HP/cha_HP system
+ * Real-time HP/MP update system
  *
  * Handles:
  * - Visual HP/MP bar displays with smooth animations
@@ -24,10 +24,10 @@ export default class extends Controller {
     maxHp: Number,
     currentMp: Number,
     maxMp: Number,
-    hpRegenInterval: { type: Number, default: 1500 },  // Neverlands default
-    mpRegenInterval: { type: Number, default: 9000 },  // Neverlands default
+    hpRegenInterval: { type: Number, default: 1500 },
+    mpRegenInterval: { type: Number, default: 9000 },
     inCombat: { type: Boolean, default: false },
-    barWidth: { type: Number, default: 160 }  // Neverlands uses 160px
+    barWidth: { type: Number, default: 160 }
   }
 
   // Client-side display state
@@ -184,7 +184,7 @@ export default class extends Controller {
 
     this.element.classList.add("vitals--regenerating")
 
-    // Tick every second (like Neverlands' setInterval("cha_HP()", 1000))
+    // Tick every second
     this.regenTimer = setInterval(() => this.tickRegen(), 1000)
   }
 
@@ -202,7 +202,7 @@ export default class extends Controller {
       return
     }
 
-    // Calculate regen per tick (Neverlands formula: maxHP/interval per second)
+    // Calculate regen per tick (maxHP/interval per second)
     const hpPerTick = this.maxHpValue / this.hpRegenIntervalValue
     const mpPerTick = this.maxMpValue / this.mpRegenIntervalValue
 
@@ -261,7 +261,7 @@ export default class extends Controller {
   // === DISPLAY UPDATE ===
 
   updateDisplay() {
-    // Calculate bar widths (Neverlands uses 160px max)
+    // Calculate bar widths (160px max)
     const hpPercent = this.maxHpValue > 0 ? (this.displayHp / this.maxHpValue) : 0
     const mpPercent = this.maxMpValue > 0 ? (this.displayMp / this.maxMpValue) : 0
 
@@ -290,7 +290,7 @@ export default class extends Controller {
       this.mpTextTarget.textContent = `${mp}/${this.maxMpValue}`
     }
 
-    // Neverlands-style combined text [HP/MaxHP | MP/MaxMP]
+    // Combined text display [HP/MaxHP | MP/MaxMP]
     if (this.hasStatusTextTarget) {
       this.statusTextTarget.innerHTML =
         `[<span class="hp-value">${hp}</span>/<span class="hp-max">${this.maxHpValue}</span> | ` +

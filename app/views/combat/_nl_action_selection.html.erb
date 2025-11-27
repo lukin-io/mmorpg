@@ -1,4 +1,4 @@
-<%# Neverlands-style attack/block selection %>
+<%# Attack/block selection %>
 <%
   attacks ||= []
   blocks ||= []
@@ -26,7 +26,7 @@
                   name="attacks[<%= index %>]"
                   id="attack-<%= index %>"
                   data-body-part="<%= part %>"
-                  data-action="change->neverlands-combat#updateActionPoints">
+                  data-action="change->turn-combat#updateActionPoints">
             <option value="">
               <%= attack_labels[index] %> [no attack selected]
             </option>
@@ -61,7 +61,7 @@
                   name="blocks[<%= index %>]"
                   id="block-<%= index %>"
                   data-body-part="<%= part %>"
-                  data-action="change->neverlands-combat#updateActionPoints">
+                  data-action="change->turn-combat#updateActionPoints">
             <option value="">
               <%= block_labels[index] %> [no block selected]
             </option>

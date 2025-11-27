@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Arena room within arena complex with level/faction restrictions
-# Inspired by Neverlands' room system (Training Hall, Trial Hall, faction halls, etc.)
+# Room types: Training Hall, Trial Hall, faction halls, etc.
 #
 # @example Check if character can access room
 #   room = ArenaRoom.find_by(slug: "training-hall")

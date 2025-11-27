@@ -140,7 +140,7 @@ module Arena
         rewards[:rating_change] = config[:loser_rating_base]
       end
 
-      # Apply trauma penalty (Neverlands-style)
+      # Apply trauma penalty
       if match.arena_applications.first&.trauma_percent
         trauma = match.arena_applications.first.trauma_percent
         if !is_winner && trauma > 0
@@ -310,7 +310,7 @@ module Arena
     end
 
     def apply_trauma(character, percent)
-      # Neverlands-style trauma - temporary stat reduction
+      # Trauma - temporary stat reduction
       trauma_duration = 30.minutes
 
       character.status_effects.create!(

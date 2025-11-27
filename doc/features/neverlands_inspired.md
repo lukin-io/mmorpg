@@ -806,14 +806,14 @@ function viewl(vst) {
 - **Files:**
   - `app/services/game/combat/turn_based_combat_service.rb` — Core combat logic
   - `config/gameplay/combat_actions.yml` — Action costs, body parts, magic config
-  - `db/migrate/20251127130000_add_neverlands_combat_fields.rb` — Body-part tracking
-  - `app/views/combat/_neverlands_battle.html.erb` — Main combat UI
+  - `db/migrate/20251127130000_add_combat_fields.rb` — Body-part tracking
+  - `app/views/combat/_battle.html.erb` — Main combat UI
   - `app/views/combat/_nl_participant.html.erb` — HP/MP bars, equipment display
   - `app/views/combat/_nl_action_selection.html.erb` — Attack/block dropdowns
   - `app/views/combat/_nl_magic_slots.html.erb` — Magic slot grid
   - `app/views/combat/_nl_combat_log.html.erb` — Combat log with element colors
   - `app/views/combat/_nl_group_display.html.erb` — Team vs Team display
-  - `app/javascript/controllers/neverlands_combat_controller.js` — Stimulus controller
+  - `app/javascript/controllers/turn_combat_controller.js` — Stimulus controller
 
 ### Key Mechanics Implemented
 

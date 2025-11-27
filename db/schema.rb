@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_11_27_120000) do
+ActiveRecord::Schema[8.1].define(version: 2025_11_27_130000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -263,32 +263,56 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_27_120000) do
   end
 
   create_table "battle_participants", force: :cascade do |t|
+    t.integer "action_points_used", default: 0
     t.bigint "battle_id", null: false
+    t.jsonb "body_damage", default: {"head" => 0, "legs" => 0, "torso" => 0, "stomach" => 0}
     t.jsonb "buffs", default: {}, null: false
     t.bigint "character_id"
+    t.jsonb "combat_buffs", default: []
     t.datetime "created_at", null: false
+    t.integer "current_hp", default: 100
+    t.integer "current_mp", default: 50
+    t.jsonb "damage_dealt", default: {"air" => 0, "fire" => 0, "earth" => 0, "total" => 0, "water" => 0, "normal" => 0}
+    t.jsonb "damage_received", default: {"air" => 0, "fire" => 0, "earth" => 0, "total" => 0, "water" => 0, "normal" => 0}
+    t.decimal "fatigue", precision: 5, scale: 2, default: "100.0"
+    t.integer "hits_blocked", default: 0
+    t.integer "hits_landed", default: 0
     t.integer "hp_remaining", default: 0, null: false
     t.integer "initiative", default: 0, null: false
+    t.boolean "is_alive", default: true
+    t.integer "mana_used", default: 0
+    t.integer "max_hp", default: 100
+    t.integer "max_mp", default: 50
     t.bigint "npc_template_id"
+    t.string "participant_type", default: "player"
+    t.jsonb "pending_attacks", default: []
+    t.jsonb "pending_blocks", default: []
+    t.jsonb "pending_skills", default: []
     t.string "role", default: "combatant", null: false
     t.jsonb "stat_snapshot", default: {}, null: false
     t.string "team", default: "alpha", null: false
     t.datetime "updated_at", null: false
+    t.index ["battle_id", "is_alive"], name: "index_battle_participants_on_battle_id_and_is_alive"
     t.index ["battle_id"], name: "index_battle_participants_on_battle_id"
     t.index ["character_id"], name: "index_battle_participants_on_character_id"
     t.index ["npc_template_id"], name: "index_battle_participants_on_npc_template_id"
   end
 
   create_table "battles", force: :cascade do |t|
+    t.integer "action_points_per_turn", default: 80
     t.boolean "allow_spectators", default: true, null: false
     t.integer "battle_type", default: 0, null: false
+    t.string "combat_mode", default: "standard"
     t.datetime "created_at", null: false
+    t.integer "current_turn_character_id"
     t.datetime "ended_at"
     t.jsonb "initiative_order", default: [], null: false
     t.bigint "initiator_id", null: false
+    t.integer "max_mana_per_turn", default: 50
     t.jsonb "metadata", default: {}, null: false
     t.boolean "moderation_override", default: false, null: false
     t.string "pvp_mode"
+    t.integer "round_number", default: 1
     t.string "share_token"
     t.datetime "started_at"
     t.integer "status", default: 0, null: false
@@ -720,6 +744,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_27_120000) do
     t.datetime "created_at", null: false
     t.integer "damage_amount", default: 0, null: false
     t.integer "healing_amount", default: 0, null: false
+    t.string "log_type", default: "action"
     t.text "message", null: false
     t.jsonb "payload", default: {}, null: false
     t.integer "round_number", default: 1, null: false
@@ -732,6 +757,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_27_120000) do
     t.index ["actor_id"], name: "index_combat_log_entries_on_actor_id"
     t.index ["battle_id", "round_number"], name: "index_combat_log_entries_on_battle_id_and_round_number"
     t.index ["battle_id"], name: "index_combat_log_entries_on_battle_id"
+    t.index ["log_type"], name: "index_combat_log_entries_on_log_type"
     t.index ["tags"], name: "index_combat_log_entries_on_tags", using: :gin
     t.index ["target_id"], name: "index_combat_log_entries_on_target_id"
   end

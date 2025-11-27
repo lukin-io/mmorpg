@@ -12,18 +12,18 @@ module Game
       end
 
       def enhance!
-        return {success: false, error: "Item cannot be enhanced"} unless item.item_template.enhanceable?
+        return {success: false, error: "Item cannot be enhanced"} unless enhanceable?
         return {success: false, error: "Max enhancement level reached"} if at_max_level?
 
         next_level = current_level + 1
         cost = calculate_cost(next_level)
         materials = calculate_materials(next_level)
 
-        return {success: false, error: "Not enough gold"} if character.gold < cost
+        return {success: false, error: "Not enough gold"} if gold_balance < cost
         return {success: false, error: "Missing materials"} unless has_materials?(materials)
 
         # Consume resources
-        character.decrement!(:gold, cost)
+        deduct_gold!(cost)
         consume_materials!(materials)
 
         # Roll for success
@@ -31,7 +31,7 @@ module Game
         success = rand(100) < success_rate
 
         if success
-          item.update!(enhanced_level: next_level)
+          item.update!(enhancement_level: next_level)
           {success: true, level_up: true, new_level: next_level}
         else
           {success: true, level_up: false, new_level: current_level}
@@ -40,8 +40,12 @@ module Game
 
       private
 
+      def enhanceable?
+        item.item_template.respond_to?(:enhanceable?) ? item.item_template.enhanceable? : true
+      end
+
       def current_level
-        item.enhanced_level.to_i
+        item.enhancement_level.to_i
       end
 
       def at_max_level?
@@ -57,6 +61,20 @@ module Game
         when "legendary" then 15
         else 5
         end
+      end
+
+      def gold_balance
+        wallet&.gold_balance || 0
+      end
+
+      def wallet
+        character.user&.currency_wallet
+      end
+
+      def deduct_gold!(amount)
+        return unless wallet
+
+        wallet.adjust!(currency: :gold, amount: -amount, reason: "enhancement.cost")
       end
 
       def calculate_cost(level)
@@ -77,19 +95,19 @@ module Game
       end
 
       def calculate_materials(level)
-        material_key = case item.item_template.item_type
-        when "weapon" then "weapon_stone"
-        when "armor" then "armor_stone"
-        else "enhancement_stone"
+        material_name = case item.item_template.slot
+        when "main_hand", "off_hand" then "Weapon Stone"
+        when "head", "chest", "hands", "legs", "feet" then "Armor Stone"
+        else "Enhancement Stone"
         end
 
-        {material_key: material_key, quantity: [level, 1].max}
+        {material_name: material_name, quantity: [level, 1].max}
       end
 
       def has_materials?(materials)
         mat = character.inventory.inventory_items
           .joins(:item_template)
-          .find_by(item_templates: {item_key: materials[:material_key]})
+          .find_by(item_templates: {name: materials[:material_name]})
 
         mat && mat.quantity >= materials[:quantity]
       end
@@ -97,7 +115,7 @@ module Game
       def consume_materials!(materials)
         mat = character.inventory.inventory_items
           .joins(:item_template)
-          .find_by(item_templates: {item_key: materials[:material_key]})
+          .find_by(item_templates: {name: materials[:material_name]})
 
         return unless mat
 
@@ -112,7 +130,8 @@ module Game
       def calculate_success_rate(level)
         base_rate = 100
         rate = base_rate - (level * 8)
-        rate += (character.luck || 0) / 10
+        luck_stat = character.stats.luck rescue 0
+        rate += luck_stat / 10
         rate.clamp(5, 100)
       end
     end

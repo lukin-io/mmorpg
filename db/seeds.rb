@@ -1063,7 +1063,7 @@ if defined?(QuestAnalyticsSnapshot)
 end
 
 # ==============================================================================
-# Arena Rooms (Neverlands-inspired)
+# Arena Rooms
 # ==============================================================================
 puts "Seeding Arena Rooms..."
 

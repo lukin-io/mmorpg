@@ -3,7 +3,6 @@
 module Characters
   # Handles server-side vital calculations
   # Manages HP/MP damage, healing, consumption, and regeneration
-  # Inspired by Neverlands' HP/MP regeneration system
   #
   # @example Apply damage
   #   service = Characters::VitalsService.new(character)
@@ -132,7 +131,7 @@ module Characters
       character.current_hp < character.max_hp || character.current_mp < character.max_mp
     end
 
-    # Calculate HP regen per tick (Neverlands formula: maxHP / interval)
+    # Calculate HP regen per tick (formula: maxHP / interval)
     #
     # @return [Float] HP to regenerate per tick
     def hp_per_tick

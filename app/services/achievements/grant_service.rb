@@ -19,10 +19,10 @@ module Achievements
 
       if grant.previously_new_record?
         apply_reward!
-        Webhooks::EventDispatcher.new(
+        Webhooks::EventDispatcher.dispatch(
           event_type: "achievement.unlocked",
           payload: {user_id: user.id, achievement_key: achievement.key}
-        ).call
+        )
       end
       grant
     end

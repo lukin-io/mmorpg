@@ -268,8 +268,8 @@ bundle exec bundler-audit # optional CVE scan
 - combat config:
   - `config/gameplay/combat_actions.yml` — Body-part definitions, attack costs, block costs, magic slots for Neverlands-inspired combat.
 - combat ui:
-  - `app/views/combat/_neverlands_battle.html.erb`, `app/views/combat/_nl_*.html.erb` — Neverlands-style combat UI partials.
-  - `app/javascript/controllers/neverlands_combat_controller.js` — Stimulus controller for combat interactions.
+  - `app/views/combat/_battle.html.erb`, `app/views/combat/_nl_*.html.erb` — Turn-based combat UI partials.
+  - `app/javascript/controllers/turn_combat_controller.js` — Stimulus controller for combat interactions.
 - chat services:
   - `app/services/chat/moderation_service.rb` — Chat moderation heuristics (profanity, spam, harassment detection, penalty escalation).
   - `app/channels/realtime_chat_channel.rb` — WebSocket chat with channel access control.

@@ -1951,7 +1951,7 @@ kbd {
 }
 
 /* ============================================
-   GAME UI ELEMENTS (Neverlands-inspired)
+   GAME UI ELEMENTS
    ============================================ */
 
 /* Combat/Fight text styles */
@@ -2524,7 +2524,7 @@ kbd {
   opacity: 1;
 }
 
-/* Message type highlighting (Neverlands-inspired) */
+/* Message type highlighting */
 .chat-msg--mention {
   background: rgba(102, 153, 187, 0.25);
   border-left: 3px solid #6699bb;
@@ -2575,7 +2575,7 @@ kbd {
   border-radius: 2px;
 }
 
-/* Clickable usernames (Neverlands-style) */
+/* Clickable usernames */
 .chat-msg-sender {
   cursor: pointer;
   transition: color 0.15s;
@@ -2586,7 +2586,7 @@ kbd {
   text-decoration: underline;
 }
 
-/* User context menu (Neverlands-style) */
+/* User context menu */
 .user-menu {
   position: fixed;
   background: #FCFAF3;
@@ -2863,7 +2863,7 @@ turbo-frame[busy] {
 }
 
 /* ============================================
-   ARENA / PVP SYSTEM (Neverlands-Inspired)
+   ARENA / PVP SYSTEM
    ============================================ */
 
 /* Arena room grid */
@@ -3375,7 +3375,6 @@ turbo-frame[busy] {
 
 /* ============================================
    CHARACTER VITALS - HP/MP BARS
-   (Neverlands-Inspired Regeneration System)
    ============================================ */
 
 .vitals-container {
@@ -3434,7 +3433,7 @@ turbo-frame[busy] {
   background: linear-gradient(180deg, #0d2840 0%, #071525 100%);
 }
 
-/* Neverlands-style text display: [HP/MaxHP | MP/MaxMP] */
+/* Vitals text display: [HP/MaxHP | MP/MaxMP] */
 .vitals-status-text {
   font-family: 'Courier New', monospace;
   font-size: 11px;
@@ -3617,7 +3616,7 @@ turbo-frame[busy] {
 
 /* ============================================
    QUEST DIALOG SYSTEM
-   (Neverlands-Inspired Step-by-Step Dialogs)
+   (Step-by-Step Dialogs)
    ============================================ */
 
 /* Dark overlay */
@@ -4582,7 +4581,7 @@ turbo-frame[busy] {
 }
 
 /* ==============================================================================
-   CITY VIEW STYLES (Neverlands-inspired interactive city)
+   CITY VIEW STYLES (interactive city)
    ============================================================================== */
 
 /* City view container */
@@ -8098,7 +8097,7 @@ turbo-frame[busy] {
 }
 
 /* ============================================
-   NEVERLANDS-INSPIRED COMBAT UI
+   TURN-BASED COMBAT UI
    ============================================ */
 
 .nl-combat-container {
@@ -8157,7 +8156,7 @@ turbo-frame[busy] {
   margin-left: auto;
 }
 
-/* HP/MP Bars - Neverlands style */
+/* HP/MP Bars */
 .nl-vitals-container {
   display: flex;
   align-items: flex-start;
@@ -8262,7 +8261,7 @@ turbo-frame[busy] {
   color: #000;
 }
 
-/* Equipment grid - Neverlands layout */
+/* Equipment grid layout */
 .nl-equipment-grid {
   display: flex;
   gap: 5px;

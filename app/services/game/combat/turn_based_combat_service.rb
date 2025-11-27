@@ -2,7 +2,7 @@
 
 module Game
   module Combat
-    # Neverlands-inspired turn-based combat service.
+    # Turn-based combat service with body-part targeting.
     #
     # Handles body-part targeting, action points, blocking, and magic.
     #

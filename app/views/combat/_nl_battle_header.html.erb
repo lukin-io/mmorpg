@@ -1,4 +1,4 @@
-<%# Neverlands-style battle header with controls %>
+<%# Battle header with controls %>
 <% battle ||= @battle %>
 
 <div class="nl-header-controls">
@@ -36,7 +36,7 @@
     <button class="nl-header-btn <%= 'nl-header-btn--disabled' unless can_surrender %>"
             title="Surrender"
             <%= "disabled" unless can_surrender %>
-            data-action="click->neverlands-combat#surrender"
+            data-action="click->turn-combat#surrender"
             data-confirm="Are you sure you want to surrender?">
       <img src="/images/ui/surrender_btn.png" alt="Surrender" class="nl-btn-icon" onerror="this.parentElement.innerHTML='🏳️'">
     </button>
@@ -52,7 +52,7 @@
     <%# Refresh button %>
     <button class="nl-header-btn"
             title="Refresh"
-            data-action="click->neverlands-combat#refresh">
+            data-action="click->turn-combat#refresh">
       <img src="/images/ui/refresh_btn.png" alt="Refresh" class="nl-btn-icon" onerror="this.parentElement.innerHTML='🔄'">
     </button>
   </div>

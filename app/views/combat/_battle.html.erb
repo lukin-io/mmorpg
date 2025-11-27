@@ -1,87 +1,90 @@
-<%# Combat Battle View %>
-<% player = battle.battle_participants.find_by(team: "player") %>
-<% enemy = battle.battle_participants.find_by(team: "enemy") %>
-<% character = player.character %>
-<% npc = enemy.npc_template %>
+<%# Turn-based combat UI %>
+<div class="nl-combat-container"
+     data-controller="turn-combat"
+     data-turn-combat-battle-id-value="<%= @battle.id %>"
+     data-turn-combat-action-limit-value="<%= @battle.action_points_per_turn || 80 %>"
+     data-turn-combat-mana-limit-value="<%= @battle.max_mana_per_turn || 50 %>">
 
-<div class="combat-container" id="combat-container">
-  <%# Combatants Display %>
-  <div class="combat-combatants">
-    <%# Player Side %>
-    <div class="combatant combatant--player">
-      <div class="combatant-avatar">
-        <div class="combatant-avatar-placeholder">🧑‍⚔️</div>
+  <%# Top spacer %>
+  <div class="nl-combat-spacer"></div>
+
+  <div class="nl-combat-main">
+    <%# Left panel - Player %>
+    <div class="nl-combat-side nl-combat-player">
+      <%= render "combat/nl_participant", participant: @player_participant, side: :left %>
+    </div>
+
+    <%# Center panel - Actions & Combat Log %>
+    <div class="nl-combat-center">
+      <%# Battle header with controls %>
+      <div class="nl-combat-header">
+        <%= render "combat/nl_battle_header", battle: @battle %>
       </div>
-      <div class="combatant-info">
-        <h3 class="combatant-name"><%= character.name %></h3>
-        <span class="combatant-level">[Lv. <%= character.level %>]</span>
+
+      <%# Magic/Skill slots %>
+      <% if @available_skills.any? %>
+        <div class="nl-magic-slots">
+          <%= render "combat/nl_magic_slots", skills: @available_skills %>
+        </div>
+      <% end %>
+
+      <%# Action selection (attacks + blocks) %>
+      <% if @battle.active? && @can_act %>
+        <div class="nl-action-panel">
+          <%= render "combat/nl_action_selection",
+                     attacks: @available_attacks,
+                     blocks: @available_blocks,
+                     action_limit: @battle.action_points_per_turn || 80 %>
+        </div>
+      <% end %>
+
+      <%# Action points display %>
+      <div class="nl-action-points" id="action-points-display">
+        <span class="nl-ap-label">Action Points:</span>
+        <span class="nl-ap-value" data-turn-combat-target="actionPointsUsed">0</span>
+        <span class="nl-ap-separator">/</span>
+        <span class="nl-ap-max"><%= @battle.action_points_per_turn || 80 %></span>
+        <span class="nl-ap-penalty" data-turn-combat-target="penalty" style="display: none;">
+          [penalty: <span data-turn-combat-target="penaltyValue">0</span>]
+        </span>
       </div>
-      <div class="combatant-bars">
-        <div class="combat-hp-bar">
-          <div class="combat-hp-bar-fill" style="width: <%= (character.current_hp.to_f / character.max_hp * 100).round %>%;"></div>
-          <span class="combat-hp-text"><%= character.current_hp %>/<%= character.max_hp %></span>
+
+      <%# Submit buttons %>
+      <% if @battle.active? && @can_act %>
+        <div class="nl-submit-buttons">
+          <%= button_to "Submit Turn",
+                        combat_action_path(action_type: :turn),
+                        method: :post,
+                        class: "nl-btn nl-btn-primary",
+                        id: "submit-turn-btn",
+                        data: {
+                          action: "click->turn-combat#submitTurn",
+                          turn_combat_target: "submitBtn"
+                        } %>
+          <button type="button" class="nl-btn nl-btn-secondary"
+                  data-action="click->turn-combat#resetSelections">
+            Reset
+          </button>
         </div>
-        <div class="combat-mp-bar">
-          <div class="combat-mp-bar-fill" style="width: <%= (character.current_mp.to_f / character.max_mp * 100).round %>%;"></div>
-          <span class="combat-mp-text"><%= character.current_mp %>/<%= character.max_mp %></span>
-        </div>
+      <% end %>
+
+      <%# Group display %>
+      <div class="nl-group-display">
+        <%= render "combat/nl_group_display",
+                   team_alpha: @team_alpha,
+                   team_beta: @team_beta %>
+      </div>
+
+      <%# Combat log %>
+      <div class="nl-combat-log" id="combat-log" data-turn-combat-target="combatLog">
+        <%= render "combat/nl_combat_log", entries: @combat_log %>
       </div>
     </div>
 
-    <%# VS Separator %>
-    <div class="combat-vs">⚔️</div>
-
-    <%# Enemy Side %>
-    <div class="combatant combatant--enemy">
-      <div class="combatant-avatar">
-        <div class="combatant-avatar-placeholder">👹</div>
-      </div>
-      <div class="combatant-info">
-        <h3 class="combatant-name"><%= npc.name %></h3>
-        <span class="combatant-level">[Lv. <%= npc.level %>]</span>
-      </div>
-      <div class="combatant-bars">
-        <div class="combat-hp-bar combat-hp-bar--enemy">
-          <div class="combat-hp-bar-fill" style="width: <%= (enemy.current_hp.to_f / enemy.max_hp * 100).round %>%;"></div>
-          <span class="combat-hp-text"><%= enemy.current_hp %>/<%= enemy.max_hp %></span>
-        </div>
-      </div>
+    <%# Right panel - Enemy %>
+    <div class="nl-combat-side nl-combat-enemy">
+      <%= render "combat/nl_participant", participant: @enemy_participant, side: :right %>
     </div>
-  </div>
-
-  <%# Combat Status %>
-  <div id="combat-status">
-    <%= render "combat/status", battle: battle %>
-  </div>
-
-  <%# Combat Log %>
-  <div class="combat-log-container card">
-    <h4>Combat Log</h4>
-    <div class="combat-log" id="combat-log" data-pve-combat-target="log">
-      <%# Log entries will be appended here %>
-    </div>
-  </div>
-
-  <%# Action Buttons %>
-  <div class="combat-actions" id="combat-actions">
-    <% if battle.active? %>
-      <%= button_to "⚔️ Attack", combat_action_path(action_type: :attack),
-          method: :post,
-          class: "game-btn btn-primary combat-action-btn",
-          data: { turbo: true } %>
-
-      <%= button_to "🛡️ Defend", combat_action_path(action_type: :defend),
-          method: :post,
-          class: "game-btn btn-secondary combat-action-btn",
-          data: { turbo: true } %>
-
-      <%= button_to "🏃 Flee", combat_flee_path,
-          method: :post,
-          class: "game-btn btn-danger combat-action-btn",
-          data: { turbo: true, confirm: "Attempt to flee? You may take damage!" } %>
-    <% else %>
-      <%= link_to "Return to World", world_path, class: "game-btn btn-primary" %>
-    <% end %>
   </div>
 </div>
 

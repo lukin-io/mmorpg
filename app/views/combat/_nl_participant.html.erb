@@ -1,4 +1,4 @@
-<%# Neverlands-style participant display %>
+<%# Combat participant display %>
 <% participant ||= nil %>
 <% side ||= :left %>
 <% return unless participant %>
@@ -56,7 +56,7 @@
           <div class="nl-bar nl-bar--hp">
             <div class="nl-bar-fill nl-bar-fill--hp <%= 'critical' if hp_percent < 25 %>"
                  style="width: <%= hp_percent %>%;"
-                 data-neverlands-combat-target="hpBar<%= participant.id %>">
+                 data-turn-combat-target="hpBar<%= participant.id %>">
             </div>
           </div>
           <div class="nl-bar-separator"></div>
@@ -64,7 +64,7 @@
           <div class="nl-bar nl-bar--mp">
             <div class="nl-bar-fill nl-bar-fill--mp"
                  style="width: <%= mp_percent %>%;"
-                 data-neverlands-combat-target="mpBar<%= participant.id %>">
+                 data-turn-combat-target="mpBar<%= participant.id %>">
             </div>
           </div>
         </div>
@@ -73,10 +73,10 @@
 
       <%# HP/MP text overlay %>
       <div class="nl-vitals-text">
-        <span class="nl-hp-text" data-neverlands-combat-target="hpText<%= participant.id %>">
+        <span class="nl-hp-text" data-turn-combat-target="hpText<%= participant.id %>">
           <%= format_vital(hp, max_hp) %>
         </span>
-        <span class="nl-mp-text" data-neverlands-combat-target="mpText<%= participant.id %>">
+        <span class="nl-mp-text" data-turn-combat-target="mpText<%= participant.id %>">
           <%= format_vital(mp, max_mp) %>
         </span>
       </div>

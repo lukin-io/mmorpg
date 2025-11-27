@@ -3,7 +3,7 @@ import { Controller } from "@hotwired/stimulus"
 /**
  * Game Layout Controller
  * Manages the main game layout with resizable panels, chat modes, and persistence
- * Inspired by Neverlands' frameset layout (modern CSS Grid implementation)
+ * Modern CSS Grid implementation replacing legacy frameset layouts
  *
  * Features:
  * - Resizable bottom panel (drag handle)

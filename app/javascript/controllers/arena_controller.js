@@ -4,7 +4,7 @@ import consumer from "../channels/consumer"
 /**
  * Arena lobby controller
  * Handles room navigation, application submission, and real-time updates
- * Inspired by Neverlands' arena room system
+ * Arena room system with real-time updates
  */
 export default class extends Controller {
   static targets = [

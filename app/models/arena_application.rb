@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# Arena fight application waiting for opponents (Neverlands-inspired)
+# Arena fight application waiting for opponents
 # Players submit applications with fight parameters, then accept/decline pending fights.
 #
 # @example Create a duel application

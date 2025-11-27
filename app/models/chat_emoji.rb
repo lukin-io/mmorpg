@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# Chat emoji/smiley conversion (Neverlands-inspired)
+# Chat emoji/smiley conversion
 # Converts text codes like :001: to emoji or image tags
 #
 # @example Find and convert emoji
@@ -13,7 +13,7 @@
 #
 class ChatEmoji
   EMOJI_MAP = {
-    # Basic emotions (Neverlands style :NNN:)
+    # Basic emotions (:NNN: format)
     "001" => { unicode: "😀", name: "happy" },
     "002" => { unicode: "😢", name: "sad" },
     "003" => { unicode: "😂", name: "laugh" },

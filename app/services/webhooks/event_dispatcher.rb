@@ -16,6 +16,7 @@ module Webhooks
       player.level_up
       player.achievement
       player.death
+      achievement.unlocked
       arena.match_complete
       dungeon.complete
       auction.sale

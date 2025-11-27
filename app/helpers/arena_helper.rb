@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module ArenaHelper
-  # Get icon for room type (Neverlands-inspired room types)
+  # Get icon for room type
   def room_type_icon(room_type)
     case room_type.to_sym
     when :training then "🏋️"

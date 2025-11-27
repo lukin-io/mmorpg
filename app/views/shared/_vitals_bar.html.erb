@@ -1,6 +1,5 @@
 <%#
   Character Vitals Bar - HP/MP display with real-time updates
-  Inspired by Neverlands' HP/MP bar system
 
   Usage:
     <%= render "shared/vitals_bar", character: current_character %>
@@ -70,7 +69,7 @@
     <% end %>
   </div>
 
-  <%# Neverlands-style combined status text %>
+  <%# Combined status text %>
   <% if show_text && !compact %>
     <div class="vitals-status-text" data-vitals-target="statusText">
       [<span class="hp-value"><%= character.current_hp.round %></span>/<span class="hp-max"><%= character.max_hp %></span> |

@@ -1,7 +1,7 @@
 import { Controller } from "@hotwired/stimulus"
 
 // ChatController handles real-time chat functionality
-// Inspired by Neverlands chat:
+// Chat features:
 // - Click username to reply/whisper
 // - Right-click username for context menu
 // - Auto-scroll to new messages
@@ -107,7 +107,7 @@ export default class extends Controller {
   }
 
   // ============================================
-  // USERNAME INTERACTIONS (Neverlands-style)
+  // USERNAME INTERACTIONS
   // ============================================
 
   // Left-click on username: insert @mention or start reply

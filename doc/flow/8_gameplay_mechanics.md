@@ -93,9 +93,9 @@
 
 **Files:**
 - `app/services/game/combat/turn_based_combat_service.rb`
-- `app/views/combat/_neverlands_battle.html.erb`
-- `app/javascript/controllers/neverlands_combat_controller.js`
-- `db/migrate/20251127130000_add_neverlands_combat_fields.rb`
+- `app/views/combat/_battle.html.erb`
+- `app/javascript/controllers/turn_combat_controller.js`
+- `db/migrate/20251127130000_add_combat_fields.rb`
 
 ## Character Progression
 - `Players::Progression::ExperiencePipeline` tracks XP by source (quest/combat/gathering) and feeds `LevelUpService`.

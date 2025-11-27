@@ -3,7 +3,7 @@ import { Controller } from "@hotwired/stimulus"
 /**
  * Quest Dialog Controller
  * Handles step-by-step quest dialog UI with NPC avatars
- * Inspired by Neverlands' quest dialog system
+ * Step-by-step quest dialog system
  *
  * Features:
  * - Multi-step dialog navigation

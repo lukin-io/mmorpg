@@ -27,8 +27,8 @@
   - Magic slot system for skill activation
   - Real-time combat log with timestamps and event details
   - Turn-based resolution with skill → attack → end-of-round phases
-- **Stimulus**: `neverlands_combat_controller.js` for interactive combat UI
-- **Views**: `_neverlands_battle.html.erb`, `_nl_participant.html.erb`, `_nl_action_selection.html.erb`, `_nl_magic_slots.html.erb`, `_nl_combat_log.html.erb`
+- **Stimulus**: `turn_combat_controller.js` for interactive combat UI
+- **Views**: `_battle.html.erb`, `_nl_participant.html.erb`, `_nl_action_selection.html.erb`, `_nl_magic_slots.html.erb`, `_nl_combat_log.html.erb`
 
 ## Character Progression
 - XP flows through `Players::Progression::ExperiencePipeline`, which aggregates quest/combat/gathering/premium sources before invoking `Players::Progression::LevelUpService`.
@@ -95,7 +95,7 @@
 
 ## Responsible for Implementation Files
 - **Movement:** `app/services/game/movement/*.rb`, `app/models/character_position.rb`, `app/models/map_tile_template.rb`, `app/models/spawn_point.rb`.
-- **Combat:** `app/services/game/combat/*.rb` (incl. `skill_executor.rb`, `pve_encounter_service.rb`, `turn_based_combat_service.rb`), `app/services/arena/combat_processor.rb`, `app/lib/game/formulas/*.rb`, `app/lib/game/systems/*.rb`, `app/models/battle*.rb`, `app/models/combat_log_entry.rb`, `app/helpers/combat_helper.rb`, `app/views/combat/_skills.html.erb`, `app/views/combat/_neverlands_battle.html.erb`, `app/views/combat/_nl_*.html.erb`, `app/javascript/controllers/neverlands_combat_controller.js`, `config/gameplay/combat_actions.yml`.
+- **Combat:** `app/services/game/combat/*.rb` (incl. `skill_executor.rb`, `pve_encounter_service.rb`, `turn_based_combat_service.rb`), `app/services/arena/combat_processor.rb`, `app/lib/game/formulas/*.rb`, `app/lib/game/systems/*.rb`, `app/models/battle*.rb`, `app/models/combat_log_entry.rb`, `app/helpers/combat_helper.rb`, `app/views/combat/_skills.html.erb`, `app/views/combat/_battle.html.erb`, `app/views/combat/_nl_*.html.erb`, `app/javascript/controllers/turn_combat_controller.js`, `config/gameplay/combat_actions.yml`.
 - **Progression:** `app/services/players/progression/*.rb`, `app/models/character.rb`, `app/models/skill_tree.rb`, `app/models/skill_node.rb`, `app/models/class_specialization.rb`.
 - **Items & Inventory:** `app/models/item_template.rb`, `app/models/inventory*.rb`, `app/services/game/inventory/*.rb`, `app/services/premium/artifact_store.rb`.
 - **Supporting Services:** `app/services/game/recovery/infirmary_service.rb`, `app/services/professions/doctor/trauma_response.rb`, `app/services/users/profile_stats.rb`.

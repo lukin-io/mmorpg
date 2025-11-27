@@ -98,7 +98,7 @@
     </div>
   <% end %>
 
-  <%# Fight Type Tabs (like Neverlands) %>
+  <%# Fight Type Tabs %>
   <div class="arena-tabs">
     <%= link_to "Duels", arena_path(ft: 1), class: "arena-tab #{'arena-tab--active' if params[:ft] == '1' || params[:ft].nil?}" %>
     <%= link_to "Group", arena_path(ft: 2), class: "arena-tab #{'arena-tab--active' if params[:ft] == '2'}" %>
