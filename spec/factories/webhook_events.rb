@@ -5,7 +5,7 @@ FactoryBot.define do
     association :webhook_endpoint
     event_type { "player.level_up" }
     payload { {test: true}.to_json }
-    status { :pending }
+    status { "pending" }
     delivery_attempts { 0 }
   end
 end

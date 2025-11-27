@@ -5,7 +5,7 @@ require "rails_helper"
 RSpec.describe Webhooks::EventDispatcher do
   describe ".dispatch" do
     let(:user) { create(:user) }
-    let(:integration_token) { create(:integration_token, user: user) }
+    let(:integration_token) { create(:integration_token, created_by: user) }
     let!(:webhook_endpoint) do
       create(:webhook_endpoint,
         integration_token: integration_token,
@@ -83,7 +83,7 @@ RSpec.describe Webhooks::EventDispatcher do
 
   describe "#deliver!" do
     let(:user) { create(:user) }
-    let(:integration_token) { create(:integration_token, user: user) }
+    let(:integration_token) { create(:integration_token, created_by: user) }
     let(:webhook_endpoint) do
       create(:webhook_endpoint,
         integration_token: integration_token,
@@ -115,10 +115,10 @@ RSpec.describe Webhooks::EventDispatcher do
         expect(webhook_event.reload.status).to eq("delivered")
       end
 
-      it "sets delivered_at timestamp" do
+      it "sets last_attempted_at timestamp" do
         dispatcher.deliver!
 
-        expect(webhook_event.reload.delivered_at).to be_present
+        expect(webhook_event.reload.last_attempted_at).to be_present
       end
 
       it "returns true" do
@@ -138,8 +138,8 @@ RSpec.describe Webhooks::EventDispatcher do
         expect(webhook_event.reload.status).to eq("failed")
       end
 
-      it "increments attempts" do
-        expect { dispatcher.deliver! }.to change { webhook_event.reload.attempts }.by(1)
+      it "increments delivery_attempts" do
+        expect { dispatcher.deliver! }.to change { webhook_event.reload.delivery_attempts }.by(1)
       end
 
       it "schedules retry" do

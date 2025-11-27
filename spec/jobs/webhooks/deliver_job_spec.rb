@@ -4,7 +4,7 @@ require "rails_helper"
 
 RSpec.describe Webhooks::DeliverJob, type: :job do
   let(:user) { create(:user) }
-  let(:integration_token) { create(:integration_token, user: user) }
+  let(:integration_token) { create(:integration_token, created_by: user) }
   let(:webhook_endpoint) do
     create(:webhook_endpoint,
       integration_token: integration_token,

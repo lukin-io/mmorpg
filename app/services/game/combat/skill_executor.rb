@@ -64,8 +64,8 @@ module Game
       def self.available_skills(character)
         skills = []
 
-        # Add class abilities
-        if character.character_class
+        # Add class abilities (if character_class has abilities association)
+        if character.character_class.respond_to?(:abilities)
           character.character_class.abilities.where(kind: "active").each do |ability|
             skills << {
               id: "ability_#{ability.id}",

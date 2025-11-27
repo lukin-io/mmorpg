@@ -65,4 +65,44 @@ module CombatHelper
     else "full"
     end
   end
+
+  # Format vital stats as "current/max"
+  def format_vital(current, max)
+    "#{current.to_i}/#{max.to_i}"
+  end
+
+  # Calculate vital bar width percentage (0-100)
+  def vital_bar_width(current, max)
+    return 0 if max.to_i.zero?
+    ((current.to_f / max) * 100).round.clamp(0, 100)
+  end
+
+  # Return icon for combat action type
+  def combat_action_icon(action_type)
+    case action_type.to_sym
+    when :attack then "⚔️"
+    when :block then "🛡️"
+    when :skill then "✨"
+    when :flee then "🏃"
+    when :surrender then "🏳️"
+    else "❓"
+    end
+  end
+
+  # Return localized label for body part
+  def body_part_label(body_part)
+    body_part.to_s.titleize
+  end
+
+  # Return CSS class based on damage severity
+  def damage_color_class(damage, max_hp)
+    return "damage-normal" if max_hp.to_i.zero?
+
+    percent = (damage.to_f / max_hp) * 100
+    case percent
+    when 30.. then "damage-critical"
+    when 15..30 then "damage-warning"
+    else "damage-normal"
+    end
+  end
 end

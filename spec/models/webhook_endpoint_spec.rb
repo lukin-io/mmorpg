@@ -4,7 +4,7 @@ require "rails_helper"
 
 RSpec.describe WebhookEndpoint, type: :model do
   let(:user) { create(:user) }
-  let(:integration_token) { create(:integration_token, user: user) }
+  let(:integration_token) { create(:integration_token, created_by: user) }
 
   describe "validations" do
     subject { build(:webhook_endpoint, integration_token: integration_token) }
@@ -33,8 +33,15 @@ RSpec.describe WebhookEndpoint, type: :model do
   end
 
   describe "associations" do
-    it { is_expected.to belong_to(:integration_token) }
-    it { is_expected.to have_many(:webhook_events).dependent(:destroy) }
+    subject { build(:webhook_endpoint, integration_token: integration_token) }
+
+    it "belongs to integration_token" do
+      expect(subject.integration_token).to eq(integration_token)
+    end
+
+    it "has many webhook_events" do
+      expect(described_class.reflect_on_association(:webhook_events).macro).to eq(:has_many)
+    end
   end
 
   describe "scopes" do

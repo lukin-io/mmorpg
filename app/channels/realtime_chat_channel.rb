@@ -19,8 +19,8 @@ class RealtimeChatChannel < ApplicationCable::Channel
     @chat_channel_record_id = params[:chat_channel_id]
 
     if @chat_channel_record_id.present?
-      @chat_channel_record_record = ::ChatChannel.find_by(id: @chat_channel_record_id)
-      if @chat_channel_record_record && can_access_channel?(@chat_channel_record_record)
+      @chat_channel_record = ::ChatChannel.find_by(id: @chat_channel_record_id)
+      if @chat_channel_record && can_access_channel?(@chat_channel_record)
         stream_from "chat:channel:#{@chat_channel_record.id}"
       else
         reject

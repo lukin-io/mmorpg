@@ -32,23 +32,25 @@ module Webhooks
         endpoints = WebhookEndpoint.active.subscribed_to(event_type)
         return if endpoints.empty?
 
-        event = create_event(event_type, payload, source)
-
+        events = []
         endpoints.find_each do |endpoint|
+          event = create_event(event_type, payload, endpoint)
           Webhooks::DeliverJob.perform_later(event.id, endpoint.id)
+          events << event
         end
 
-        event
+        # Return first event for backwards compatibility
+        events.first
       end
 
       # Create and persist webhook event
-      def create_event(event_type, payload, source)
+      def create_event(event_type, payload, endpoint)
         WebhookEvent.create!(
+          webhook_endpoint: endpoint,
           event_type: event_type,
-          payload: payload.to_json,
-          source: source || "system",
+          payload: payload.is_a?(String) ? payload : payload.to_json,
           status: :pending,
-          attempts: 0
+          delivery_attempts: 0
         )
       end
     end
@@ -63,7 +65,7 @@ module Webhooks
     # Deliver the webhook event
     def deliver!
       return false unless event.pending? || event.failed?
-      return false unless endpoint.active?
+      return false unless endpoint.enabled?
 
       begin
         response = send_request
@@ -76,7 +78,7 @@ module Webhooks
     private
 
     def send_request
-      uri = URI.parse(endpoint.url)
+      uri = URI.parse(endpoint.target_url)
       http = Net::HTTP.new(uri.host, uri.port)
       http.use_ssl = uri.scheme == "https"
       http.open_timeout = 10
@@ -101,38 +103,31 @@ module Webhooks
     end
 
     def handle_response(response)
-      event.increment!(:attempts)
+      event.increment!(:delivery_attempts)
+      event.update!(last_attempted_at: Time.current)
 
       if response.code.to_i.between?(200, 299)
-        event.update!(
-          status: :delivered,
-          delivered_at: Time.current,
-          last_response_code: response.code.to_i
-        )
+        event.update!(status: :delivered)
         true
       else
-        event.update!(
-          status: :failed,
-          last_response_code: response.code.to_i,
-          last_error: response.body.truncate(500)
-        )
-        schedule_retry if event.attempts < 5
+        event.update!(status: :failed)
+        schedule_retry if event.delivery_attempts < 5
         false
       end
     end
 
-    def handle_error(error)
-      event.increment!(:attempts)
+    def handle_error(_error)
+      event.increment!(:delivery_attempts)
       event.update!(
         status: :failed,
-        last_error: error.message.truncate(500)
+        last_attempted_at: Time.current
       )
-      schedule_retry if event.attempts < 5
+      schedule_retry if event.delivery_attempts < 5
       false
     end
 
     def schedule_retry
-      delay = [30, 60, 300, 1800, 3600][event.attempts - 1] || 3600
+      delay = [30, 60, 300, 1800, 3600][event.delivery_attempts - 1] || 3600
       Webhooks::DeliverJob.set(wait: delay.seconds).perform_later(event.id, endpoint.id)
     end
   end

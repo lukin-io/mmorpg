@@ -538,8 +538,18 @@ module Game
           xp = calculate_xp_reward(winner)
           gold = calculate_gold_reward(winner)
 
-          winner.character.increment!(:experience, xp)
-          winner.character.increment!(:gold, gold)
+          # Grant XP (if experience column exists)
+          if winner.character.respond_to?(:experience)
+            winner.character.increment!(:experience, xp)
+          end
+
+          # Grant gold through currency wallet (if available)
+          winner.character.user&.currency_wallet&.adjust!(
+            currency: :gold,
+            amount: gold,
+            reason: "combat_victory",
+            metadata: {battle_id: battle.id}
+          )
         end
       end
 

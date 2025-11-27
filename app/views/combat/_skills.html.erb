@@ -5,7 +5,7 @@
     <div class="skills-grid">
       <% skills.each do |skill| %>
         <div class="skill-slot" data-skill-id="<%= skill[:id] %>">
-          <%= button_to combat_action_path(action_type: :skill, skill_id: skill[:id]),
+          <%= button_to action_combat_path(action_type: :skill, skill_id: skill[:id]),
                         method: :post,
                         class: "skill-btn skill-type--#{skill[:type]}",
                         data: { turbo: true },

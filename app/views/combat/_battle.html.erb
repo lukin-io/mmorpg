@@ -53,7 +53,7 @@
       <% if @battle.active? && @can_act %>
         <div class="nl-submit-buttons">
           <%= button_to "Submit Turn",
-                        combat_action_path(action_type: :turn),
+                        action_combat_path(action_type: :turn),
                         method: :post,
                         class: "nl-btn nl-btn-primary",
                         id: "submit-turn-btn",
