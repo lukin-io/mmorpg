@@ -84,12 +84,12 @@
             <div class="match-info">
               <span class="match-type"><%= fight_type_with_icon(match.match_type) %></span>
               <span class="match-result match-result--<%= participation.result %>">
-                <% case participation.result.to_sym %>
-                <% when :win %> 🏆 Victory
-                <% when :loss %> 💀 Defeat
-                <% when :draw %> 🤝 Draw
-                <% else %> <%= participation.result.humanize %>
-                <% end %>
+                <%= case participation.result.to_sym
+                    when :win then "🏆 Victory"
+                    when :loss then "💀 Defeat"
+                    when :draw then "🤝 Draw"
+                    else participation.result.humanize
+                    end %>
               </span>
             </div>
             <div class="match-meta">

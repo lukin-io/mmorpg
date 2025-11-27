@@ -22,7 +22,7 @@ class ArenaMatch < ApplicationRecord
     duel: 0,
     skirmish: 1,
     tournament: 2,
-    group: 3,
+    team_battle: 3, # renamed from 'group' to avoid ActiveRecord conflict
     sacrifice: 4
   }.freeze
 

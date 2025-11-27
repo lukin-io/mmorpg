@@ -21,7 +21,7 @@ module Arena
         case fight_type.to_sym
         when :duel
           matches.concat(match_duels(applications))
-        when :group
+        when :team_battle
           matches.concat(match_groups(applications))
         when :sacrifice
           matches.concat(match_sacrifice(applications, room))
