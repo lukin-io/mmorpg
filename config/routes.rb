@@ -172,6 +172,15 @@ Rails.application.routes.draw do
 
   resource :game_overview, controller: "game_overview", only: :show
 
+  # Game World - Main gameplay area
+  resource :world, only: :show, controller: "world" do
+    post :move
+    post :enter
+    post :exit_location
+    post :gather
+    post :interact
+  end
+
   # Defines the root path route ("/")
   root "dashboard#show"
 

@@ -26,7 +26,7 @@
       <li><%= link_to "My Profile", profile_path(current_user.profile_name) %></li>
       <li><%= link_to "Inventory", "#" %></li>
       <li><%= link_to "Skills", "#" %></li>
-      <li><%= link_to "Map", "#" %></li>
+      <li><%= link_to "Game World", world_path %></li>
     </ul>
   </div>
 <% end %>
@@ -34,6 +34,16 @@
 <div class="page-header">
   <h1>Elselands Control Panel</h1>
   <p>Welcome, <%= current_user.profile_name || current_user.email %>. Choose your adventure.</p>
+</div>
+
+<div class="enter-world-panel">
+  <%= link_to world_path, class: "enter-world-btn" do %>
+    <span class="enter-world-icon">⚔️</span>
+    <span class="enter-world-text">
+      <strong>Enter the World</strong>
+      <small>Begin your adventure in Elselands</small>
+    </span>
+  <% end %>
 </div>
 
 <div class="dashboard-grid">

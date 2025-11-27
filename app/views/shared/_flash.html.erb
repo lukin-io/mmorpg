@@ -1,0 +1,5 @@
+<% flash_class = type.to_s == "notice" ? "flash success" : "flash alert" %>
+<div class="<%= flash_class %>">
+  <%= message %>
+</div>
+

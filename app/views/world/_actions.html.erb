@@ -1,0 +1,88 @@
+<div class="actions-panel">
+  <h3>Actions</h3>
+
+  <%# Movement Controls %>
+  <% movement_action = available_actions.find { |a| a[:type] == :move } %>
+  <% if movement_action %>
+    <div class="movement-controls">
+      <h4>Move</h4>
+      <div class="direction-pad">
+        <div class="direction-row">
+          <% if movement_action[:directions].include?(:north) %>
+            <%= button_to "↑ North", move_world_path(direction: :north),
+                method: :post, class: "direction-btn direction-btn--north" %>
+          <% else %>
+            <span class="direction-btn direction-btn--disabled">↑</span>
+          <% end %>
+        </div>
+        <div class="direction-row direction-row--middle">
+          <% if movement_action[:directions].include?(:west) %>
+            <%= button_to "← West", move_world_path(direction: :west),
+                method: :post, class: "direction-btn direction-btn--west" %>
+          <% else %>
+            <span class="direction-btn direction-btn--disabled">←</span>
+          <% end %>
+
+          <span class="direction-center">◉</span>
+
+          <% if movement_action[:directions].include?(:east) %>
+            <%= button_to "East →", move_world_path(direction: :east),
+                method: :post, class: "direction-btn direction-btn--east" %>
+          <% else %>
+            <span class="direction-btn direction-btn--disabled">→</span>
+          <% end %>
+        </div>
+        <div class="direction-row">
+          <% if movement_action[:directions].include?(:south) %>
+            <%= button_to "↓ South", move_world_path(direction: :south),
+                method: :post, class: "direction-btn direction-btn--south" %>
+          <% else %>
+            <span class="direction-btn direction-btn--disabled">↓</span>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  <% else %>
+    <div class="movement-cooldown">
+      <p class="text-muted">Movement on cooldown...</p>
+    </div>
+  <% end %>
+
+  <%# Location Actions %>
+  <div class="location-actions">
+    <% exit_action = available_actions.find { |a| a[:type] == :exit } %>
+    <% if exit_action %>
+      <%= button_to "🚪 #{exit_action[:label]}", exit_location_world_path,
+          method: :post, class: "btn-secondary w-full" %>
+    <% end %>
+
+    <%# City-specific actions %>
+    <% if position.zone.biome == "city" %>
+      <div class="city-actions mt-3">
+        <h4>City Services</h4>
+        <div class="action-grid">
+          <%= link_to "🏪 Marketplace", marketplace_kiosks_path, class: "action-btn" %>
+          <%= link_to "🏛️ Auction House", auction_listings_path, class: "action-btn" %>
+          <%= link_to "⚒️ Crafting", crafting_jobs_path, class: "action-btn" %>
+          <%= link_to "🏥 Infirmary", "#", class: "action-btn" %>
+          <%= link_to "🏦 Bank", "#", class: "action-btn" %>
+          <%= link_to "📜 Quest Board", quests_path, class: "action-btn" %>
+        </div>
+      </div>
+    <% end %>
+
+    <%# Gathering Actions %>
+    <% gather_action = available_actions.find { |a| a[:type] == :gather } %>
+    <% if gather_action && gather_action[:nodes].any? %>
+      <div class="gather-actions mt-3">
+        <h4>Gather Resources</h4>
+        <% gather_action[:nodes].each do |node| %>
+          <%= button_to "🌿 Gather #{node.resource_key.titleize}",
+              gather_world_path(node_id: node.id),
+              method: :post, class: "btn-secondary" %>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+</div>
+

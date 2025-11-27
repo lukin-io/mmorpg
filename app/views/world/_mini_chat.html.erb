@@ -1,0 +1,16 @@
+<div class="mini-chat-panel">
+  <h3>Local Chat</h3>
+  <div class="mini-chat-messages" id="local-chat-messages">
+    <p class="chat-system-message">Welcome to the area chat.</p>
+  </div>
+  <div class="mini-chat-form">
+    <%= form_with url: "#", method: :post, class: "chat-input-form" do |f| %>
+      <%= f.text_field :message, placeholder: "Say something...", class: "chat-input" %>
+      <%= f.submit "Send", class: "btn-primary btn-sm" %>
+    <% end %>
+  </div>
+  <div class="chat-link">
+    <%= link_to "Open Full Chat →", chat_channels_path, class: "text-sm" %>
+  </div>
+</div>
+

@@ -1,0 +1,46 @@
+<% content_for :title, "#{@zone.name} - Elselands" %>
+
+<div class="game-world"
+     data-controller="game-world"
+     data-game-world-player-x-value="<%= @position.x %>"
+     data-game-world-player-y-value="<%= @position.y %>"
+     data-game-world-move-url-value="<%= move_world_path %>"
+     data-action="keydown@window->game-world#keydown">
+
+  <%# Left Panel: Character Stats & Quick Actions %>
+  <aside class="world-sidebar">
+    <%= render "world/character_panel", character: current_character %>
+    <%= render "world/quick_actions" %>
+  </aside>
+
+  <%# Main Game Area %>
+  <main class="world-main">
+    <%# Location Header %>
+    <div class="location-header">
+      <h1 class="location-name"><%= @zone.name %></h1>
+      <p class="location-coords">[<%= @position.x %>, <%= @position.y %>]</p>
+      <span class="location-biome badge badge--<%= @zone.biome %>"><%= @zone.biome.titleize %></span>
+    </div>
+
+    <%# Map Grid %>
+    <turbo-frame id="game-map">
+      <%= render "world/map", position: @position, nearby_tiles: @nearby_tiles, zone: @zone, tile_data: @tile_data %>
+    </turbo-frame>
+
+    <%# Location Description & Entities %>
+    <turbo-frame id="location-info">
+      <%= render "world/location_info", position: @position, tile: @tile, zone: @zone %>
+    </turbo-frame>
+
+    <%# Available Actions %>
+    <turbo-frame id="available-actions" data-game-world-target="actionPanel">
+      <%= render "world/actions", available_actions: @available_actions, position: @position %>
+    </turbo-frame>
+  </main>
+
+  <%# Right Panel: Players & Chat %>
+  <aside class="world-right-panel">
+    <%= render "world/players_here", players: @players_here %>
+    <%= render "world/mini_chat" %>
+  </aside>
+</div>
