@@ -1,0 +1,37 @@
+<div class="skill-tree-detail" data-controller="skill-tree" data-skill-tree-id-value="<%= @skill_tree.id %>">
+  <div class="page-header">
+    <h1 class="page-title"><%= @skill_tree.name %></h1>
+    <%= link_to "← Back to Trees", skill_trees_path, class: "back-link" %>
+  </div>
+
+  <div class="skill-points-panel card" id="skill_points_display">
+    <%= render "skill_trees/points", points: @available_points %>
+  </div>
+
+  <div class="skill-tree-container">
+    <div class="skill-tree-canvas" data-skill-tree-target="canvas">
+      <% @nodes.group_by(&:tier).sort.each do |tier, nodes| %>
+        <div class="skill-tier" data-tier="<%= tier %>">
+          <h3 class="tier-label">Tier <%= tier %></h3>
+          <div class="tier-nodes">
+            <% nodes.each do |node| %>
+              <% unlocked = @unlocked_skills[node.id].present? %>
+              <% can_unlock = can_unlock_node?(node, @unlocked_skills, @available_points) %>
+              <div id="skill_node_<%= node.id %>">
+                <%= render "skill_trees/node", node: node, unlocked: unlocked, can_unlock: can_unlock %>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <div class="skill-details-panel card" data-skill-tree-target="details" style="display: none;">
+    <h3 data-skill-tree-target="detailName"></h3>
+    <p data-skill-tree-target="detailDescription"></p>
+    <div data-skill-tree-target="detailStats"></div>
+    <div data-skill-tree-target="detailActions"></div>
+  </div>
+</div>
+

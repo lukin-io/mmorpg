@@ -1,46 +1,102 @@
-<section class="crafting-jobs" data-controller="crafting">
-  <%= turbo_stream_from ["crafting_jobs", current_character.id] %>
-  <%= turbo_stream_from ["notifications", current_user.id] %>
-
-  <header>
-    <h1>Crafting Jobs</h1>
-  </header>
+<div class="crafting-page" data-controller="crafting">
+  <div class="page-header">
+    <h1 class="page-title">Crafting Workshop</h1>
+    <p class="page-subtitle">Create items from recipes using your profession skills</p>
+  </div>
 
   <div class="crafting-layout">
-    <div class="crafting-form">
-      <h2>Queue Jobs</h2>
-      <%= form_with url: preview_crafting_jobs_path,
-            scope: :crafting_job,
-            data: {"crafting-target": "form", turbo_frame: "crafting-preview"} do |form| %>
-        <div>
-          <%= form.label :recipe_id, "Recipe" %>
-          <%= form.collection_select :recipe_id, @recipes, :id, :name,
-                {}, data: {action: "change->crafting#submitPreview"} %>
-        </div>
-        <div>
-          <%= form.label :crafting_station_id, "Station" %>
-          <%= form.collection_select :crafting_station_id, @stations, :id, :name,
-                {}, data: {action: "change->crafting#submitPreview"} %>
-        </div>
-        <div>
-          <%= form.label :quantity %>
-          <%= form.number_field :quantity, min: 1, max: 5, value: 1 %>
-        </div>
-        <%= button_tag "Queue Jobs",
-            formaction: crafting_jobs_path,
-            formmethod: :post,
-            data: {turbo_frame: "_top"} %>
-      <% end %>
+    <div class="crafting-main">
+      <div class="active-jobs card">
+        <h2>Active Crafting Jobs</h2>
 
-      <turbo-frame id="crafting-preview">
-        <%= render "preview", preview: nil %>
-      </turbo-frame>
+        <% if @crafting_jobs.any? %>
+          <div class="jobs-list" id="crafting_jobs_list">
+            <% @crafting_jobs.each do |job| %>
+              <%= render "crafting_jobs/job", job: job %>
+            <% end %>
+          </div>
+        <% else %>
+          <p class="no-jobs">No active crafting jobs. Start one below!</p>
+        <% end %>
+      </div>
+
+      <div class="recipe-browser card">
+        <h2>Recipe Browser</h2>
+
+        <div class="recipe-filters">
+          <div class="filter-group">
+            <label for="profession_filter">Profession:</label>
+            <select id="profession_filter" class="form-control" data-action="change->crafting#filterRecipes">
+              <option value="">All Professions</option>
+              <% Profession.order(:name).each do |prof| %>
+                <option value="<%= prof.id %>"><%= prof.name %></option>
+              <% end %>
+            </select>
+          </div>
+
+          <div class="filter-group">
+            <label for="tier_filter">Tier:</label>
+            <select id="tier_filter" class="form-control" data-action="change->crafting#filterRecipes">
+              <option value="">All Tiers</option>
+              <% (1..5).each do |tier| %>
+                <option value="<%= tier %>">Tier <%= tier %></option>
+              <% end %>
+            </select>
+          </div>
+
+          <div class="filter-group">
+            <input type="text" id="recipe_search" class="form-control" placeholder="Search recipes..." data-action="input->crafting#filterRecipes">
+          </div>
+        </div>
+
+        <div class="recipes-grid" id="recipes_grid" data-crafting-target="recipesGrid">
+          <% @recipes.each do |recipe| %>
+            <%= render "crafting_jobs/recipe_card", recipe: recipe %>
+          <% end %>
+        </div>
+      </div>
     </div>
 
-    <div class="crafting-job-list">
-      <%= turbo_frame_tag "crafting-jobs-list" do %>
-        <%= render partial: "crafting_jobs/job", collection: @crafting_jobs, as: :job %>
-      <% end %>
+    <div class="crafting-sidebar">
+      <div class="craft-form card" id="craft_form_panel">
+        <h3>Craft Item</h3>
+
+        <%= form_with url: crafting_jobs_path, method: :post, class: "crafting-form", data: { turbo: true } do |f| %>
+          <div class="form-group">
+            <%= f.label "crafting_job[recipe_id]", "Recipe" %>
+            <%= f.select "crafting_job[recipe_id]", @recipes.map { |r| [r.name, r.id] }, { include_blank: "Select recipe..." }, class: "form-control", data: { action: "change->crafting#loadPreview", crafting_target: "recipeSelect" } %>
+          </div>
+
+          <div class="form-group">
+            <%= f.label "crafting_job[crafting_station_id]", "Station" %>
+            <%= f.select "crafting_job[crafting_station_id]", @stations.map { |s| ["#{s.name} (#{s.archetype})", s.id] }, { include_blank: "Select station..." }, class: "form-control", data: { action: "change->crafting#loadPreview", crafting_target: "stationSelect" } %>
+          </div>
+
+          <div class="form-group">
+            <%= f.label "crafting_job[quantity]", "Quantity" %>
+            <%= f.number_field "crafting_job[quantity]", class: "form-control", value: 1, min: 1, max: 10 %>
+          </div>
+
+          <div id="crafting-preview" data-crafting-target="preview">
+            <p class="preview-placeholder">Select a recipe and station to see crafting details</p>
+          </div>
+
+          <%= f.submit "Start Crafting", class: "game-btn game-btn--primary" %>
+        <% end %>
+      </div>
+
+      <div class="profession-status card">
+        <h3>Your Professions</h3>
+        <% current_character.profession_progresses.includes(:profession).each do |progress| %>
+          <div class="profession-row">
+            <span class="profession-name"><%= progress.profession.name %></span>
+            <span class="profession-level">Lv.<%= progress.skill_level %></span>
+            <div class="profession-xp-bar">
+              <div class="xp-fill" style="width: <%= progress.xp_percent %>%"></div>
+            </div>
+          </div>
+        <% end %>
+      </div>
     </div>
   </div>
-</section>
+</div>

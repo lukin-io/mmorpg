@@ -15,6 +15,17 @@
 - Reputation/faction alignment on `Character` gates quests, vendors, and clan roles. Stat points are stored in JSON columns and surfaced in profile sheets.
 - Skill trees and specializations are represented by `SkillTree`, `SkillNode`, `CharacterSkill`, and `ClassSpecialization`; unlock services run in `Players::Progression::*`.
 
+### Skill Trees UI (✅ Implemented)
+- **Controller**: `SkillTreesController` — index, show, unlock, respec actions
+- **Views**: Tree browser, node visualization, unlock buttons, skill points display
+- **Services**: `SkillUnlockService` (validates level/quest/prerequisites), `RespecService` (gold/premium/quest refund)
+- **Stimulus**: `skill_tree_controller.js` — node selection, tooltips, unlock animations
+- **Features**:
+  - Visual skill tree with tier-based layout
+  - Prerequisite validation and quest gating
+  - Skill point cost from `resource_cost` JSONB
+  - Respec with cooldown and payment options
+
 ## Classes, Skills, Abilities
 - Launch classes (Warrior, Mage, Hunter, Priest, Thief) live in `CharacterClass`. Each provides base stats, allowed weapons, and ability kits.
 - Secondary specializations unlock via quest chains and `ClassSpecialization` associations; combos/resources (rage/mana/etc.) are tracked in `character.resource_pools`.

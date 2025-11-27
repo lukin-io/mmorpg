@@ -1,65 +1,87 @@
-<section>
-  <header>
-    <h1>New Auction Listing</h1>
-  </header>
+<div class="auction-create">
+  <div class="page-header">
+    <%= link_to "← Back to Auction House", auction_listings_path, class: "back-link" %>
+    <h1 class="page-title">Create Listing</h1>
+  </div>
 
-  <%= form_with model: @auction_listing do |form| %>
-    <div class="field">
-      <%= form.label :item_name %>
-      <%= form.text_field :item_name %>
-    </div>
-    <div class="field">
-      <%= form.label :item_type %>
-      <%= form.text_field :item_metadata_item_type, name: "auction_listing[item_metadata][item_type]" %>
-    </div>
-    <div class="field">
-      <%= form.label :rarity %>
-      <%= form.text_field :item_metadata_rarity, name: "auction_listing[item_metadata][rarity]" %>
-    </div>
-    <div class="field">
-      <%= form.label :quantity %>
-      <%= form.number_field :quantity, value: 1 %>
-    </div>
-    <div class="field">
-      <%= form.label :currency_type %>
-      <%= form.select :currency_type, %w[gold silver premium_tokens] %>
-    </div>
-    <div class="field">
-      <%= form.label :starting_bid %>
-      <%= form.number_field :starting_bid %>
-    </div>
-    <div class="field">
-      <%= form.label :buyout_price %>
-      <%= form.number_field :buyout_price %>
-    </div>
-    <div class="field">
-      <%= form.label :ends_at %>
-      <%= form.datetime_field :ends_at %>
-    </div>
-    <div class="field">
-      <%= form.label :location_key, "Listing Location" %>
-      <%= form.text_field :location_key %>
-    </div>
-    <div class="field">
-      <%= form.label :required_profession_id, "Commission Profession" %>
-      <%= form.collection_select :required_profession_id, @professions, :id, :name, include_blank: "Open to all" %>
-    </div>
-    <div class="field">
-      <%= form.label :required_skill_level %>
-      <%= form.number_field :required_skill_level, min: 0 %>
-    </div>
-    <div class="field">
-      <%= form.label :commission_scope %>
-      <%= form.select :commission_scope, [%w[Personal personal], %w[Guild guild], %w[Public public]], include_blank: false %>
-    </div>
-    <% if current_user.has_any_role?(:gm, :admin) %>
-      <div class="field">
-        <%= form.check_box :override_inflation_controls %>
-        <%= form.label :override_inflation_controls, "Override listing caps (GM only)" %>
+  <div class="create-listing-form card">
+    <%= form_with model: @auction_listing, url: auction_listings_path, class: "listing-form" do |f| %>
+      <div class="form-section">
+        <h3>Item Details</h3>
+
+        <div class="form-group">
+          <%= f.label :item_name, "Item Name" %>
+          <%= f.text_field :item_name, class: "form-control", required: true, placeholder: "e.g. Iron Sword +5" %>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <%= f.label :quantity, "Quantity" %>
+            <%= f.number_field :quantity, class: "form-control", value: 1, min: 1, required: true %>
+          </div>
+
+          <div class="form-group">
+            <%= f.label :location_key, "Auction Location" %>
+            <%= f.select :location_key, [["Central Market", "central_market"], ["Guild Hall", "guild_hall"], ["Frontier Post", "frontier_post"]], {}, class: "form-control", required: true %>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <h3>Pricing</h3>
+
+        <div class="form-group">
+          <%= f.label :currency_type, "Currency Type" %>
+          <%= f.select :currency_type, [["Gold", "gold"], ["Silver", "silver"], ["Premium Tokens", "premium_tokens"]], {}, class: "form-control", required: true %>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <%= f.label :starting_bid, "Starting Bid" %>
+            <%= f.number_field :starting_bid, class: "form-control", min: 1, required: true %>
+          </div>
+
+          <div class="form-group">
+            <%= f.label :buyout_price, "Buyout Price (Optional)" %>
+            <%= f.number_field :buyout_price, class: "form-control", min: 1 %>
+            <p class="form-hint">Leave empty for no buyout option</p>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <%= f.label :ends_at, "Auction Duration" %>
+          <%= f.select :ends_at, [
+            ["12 Hours", 12.hours.from_now],
+            ["24 Hours", 24.hours.from_now],
+            ["48 Hours", 48.hours.from_now],
+            ["7 Days", 7.days.from_now]
+          ], {}, class: "form-control", required: true %>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <h3>Commission Settings (Optional)</h3>
+
+        <div class="form-group">
+          <%= f.label :required_profession_id, "Required Profession" %>
+          <%= f.select :required_profession_id, @professions.map { |p| [p.name, p.id] }, { include_blank: "None" }, class: "form-control" %>
+        </div>
+
+        <div class="form-group">
+          <%= f.label :required_skill_level, "Required Skill Level" %>
+          <%= f.number_field :required_skill_level, class: "form-control", value: 0, min: 0 %>
+        </div>
+
+        <div class="form-group">
+          <%= f.label :commission_scope, "Visibility" %>
+          <%= f.select :commission_scope, [["Public", "public"], ["Guild Only", "guild"], ["Personal", "personal"]], {}, class: "form-control" %>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <%= f.submit "Create Listing", class: "game-btn game-btn--primary" %>
+        <%= link_to "Cancel", auction_listings_path, class: "game-btn game-btn--secondary" %>
       </div>
     <% end %>
-    <div class="actions">
-      <%= form.submit "Post Listing" %>
-    </div>
-  <% end %>
-</section>
+  </div>
+</div>

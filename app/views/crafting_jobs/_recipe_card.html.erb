@@ -1,0 +1,31 @@
+<div class="recipe-card" data-profession-id="<%= recipe.profession_id %>" data-tier="<%= recipe.tier %>" data-name="<%= recipe.name.downcase %>">
+  <div class="recipe-header">
+    <span class="recipe-icon"><%= recipe_icon(recipe) %></span>
+    <h4 class="recipe-name"><%= recipe.name %></h4>
+  </div>
+
+  <div class="recipe-info">
+    <span class="recipe-profession"><%= recipe.profession.name %></span>
+    <span class="recipe-tier">Tier <%= recipe.tier %></span>
+    <span class="recipe-skill">Req. Skill: <%= recipe.required_skill_level %></span>
+  </div>
+
+  <div class="recipe-materials">
+    <h5>Materials:</h5>
+    <ul>
+      <% recipe.materials.each do |mat| %>
+        <li><%= mat["name"] %> x<%= mat["quantity"] %></li>
+      <% end %>
+    </ul>
+  </div>
+
+  <div class="recipe-output">
+    <span class="output-label">Creates:</span>
+    <span class="output-item"><%= recipe.output_item_name %></span>
+  </div>
+
+  <button type="button" class="game-btn game-btn--sm" data-action="click->crafting#selectRecipe" data-recipe-id="<%= recipe.id %>">
+    Select
+  </button>
+</div>
+

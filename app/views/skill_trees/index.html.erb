@@ -1,0 +1,43 @@
+<div class="skill-trees-page" data-controller="skill-tree">
+  <div class="page-header">
+    <h1 class="page-title">Skill Trees</h1>
+    <p class="page-subtitle">Unlock abilities and passives to customize your <%= current_character.character_class.name %></p>
+  </div>
+
+  <div class="skill-points-panel card" id="skill_points_display">
+    <%= render "skill_trees/points", points: @available_points %>
+  </div>
+
+  <div class="skill-trees-grid">
+    <% @skill_trees.each do |tree| %>
+      <div class="skill-tree-card card">
+        <div class="tree-header">
+          <span class="tree-icon"><%= skill_tree_icon(tree) %></span>
+          <h2 class="tree-name"><%= tree.name %></h2>
+        </div>
+
+        <p class="tree-description"><%= tree.description %></p>
+
+        <div class="tree-progress">
+          <% unlocked = tree.skill_nodes.count { |n| @unlocked_skills[n.id] } %>
+          <% total = tree.skill_nodes.count %>
+          <div class="progress-bar">
+            <div class="progress-fill" style="width: <%= (unlocked.to_f / [total, 1].max * 100).round %>%"></div>
+          </div>
+          <span class="progress-text"><%= unlocked %>/<%= total %> unlocked</span>
+        </div>
+
+        <%= link_to skill_tree_path(tree), class: "game-btn game-btn--primary" do %>
+          View Tree
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+
+  <div class="respec-panel card">
+    <h3>Reset Skills</h3>
+    <p>Reset all skill points to redistribute them. Costs <%= Players::Progression::RespecService::RESPEC_GOLD_COST %> gold.</p>
+    <%= button_to "Respec Skills", respec_skill_trees_path, method: :post, class: "game-btn game-btn--danger", data: { confirm: "Are you sure? This will reset ALL your skills." } %>
+  </div>
+</div>
+

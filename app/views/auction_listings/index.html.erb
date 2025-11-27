@@ -1,47 +1,67 @@
-<section>
-  <header>
-    <h1>Auction House</h1>
-    <%= link_to "Create Listing", new_auction_listing_path, class: "button" %>
-  </header>
+<div class="auction-house" data-controller="auction">
+  <div class="page-header">
+    <h1 class="page-title">Auction House</h1>
+    <p class="page-subtitle">Buy and sell items with other players</p>
+  </div>
 
-  <section class="filters">
-    <%= form_with url: auction_listings_path, method: :get, scope: :filter, local: true do |form| %>
-      <%= form.text_field :item_type, placeholder: "Item type", value: @filter_params[:item_type] %>
-      <%= form.text_field :rarity, placeholder: "Rarity", value: @filter_params[:rarity] %>
-      <%= form.text_field :stat_key, placeholder: "Stat", value: @filter_params[:stat_key] %>
-      <%= form.number_field :stat_min, placeholder: "Min stat", value: @filter_params[:stat_min] %>
-      <%= form.select :currency_type, [["Any", ""], ["Gold", "gold"], ["Silver", "silver"], ["Premium Tokens", "premium_tokens"]], selected: @filter_params[:currency_type] %>
-      <%= form.submit "Apply" %>
-      <%= link_to "Clear", auction_listings_path %>
-    <% end %>
+  <div class="auction-layout">
+    <aside class="auction-sidebar card">
+      <h3>Filters</h3>
+      <%= form_with url: auction_listings_path, method: :get, class: "filter-form", data: { turbo_frame: "auction_results" } do |f| %>
+        <div class="form-group">
+          <%= f.label :item_type, "Item Type" %>
+          <%= f.select :item_type, [["All Types", ""], ["Weapons", "weapon"], ["Armor", "armor"], ["Consumables", "consumable"], ["Materials", "material"], ["Recipes", "recipe"]], { selected: @filter_params[:item_type] }, class: "form-control" %>
+        </div>
 
-    <% if @listing_filter.filters.present? %>
-      <p>Active filters: <%= @listing_filter.filters.map { |k, v| "#{k}=#{v}" }.join(", ") %></p>
-    <% end %>
-  </section>
+        <div class="form-group">
+          <%= f.label :rarity, "Rarity" %>
+          <%= f.select :rarity, [["Any Rarity", ""], ["Common", "common"], ["Uncommon", "uncommon"], ["Rare", "rare"], ["Epic", "epic"], ["Legendary", "legendary"]], { selected: @filter_params[:rarity] }, class: "form-control" %>
+        </div>
 
-  <table>
-    <thead>
-      <tr>
-        <th>Item</th>
-        <th>Seller</th>
-        <th>Current Bid</th>
-        <th>Tax Rate</th>
-        <th>Demand</th>
-        <th>Ends</th>
-      </tr>
-    </thead>
-    <tbody>
-      <% @auction_listings.each do |listing| %>
-        <tr>
-          <td><%= link_to listing.item_name, auction_listing_path(listing) %></td>
-          <td><%= listing.seller.email %></td>
-          <td><%= listing.highest_bid&.amount || listing.starting_bid %> <%= listing.currency_type %></td>
-          <td><%= number_to_percentage(listing.tax_rate * 100, precision: 2) %></td>
-          <td><%= listing.demand_score %></td>
-          <td><%= l(listing.ends_at, format: :short) %></td>
-        </tr>
+        <div class="form-group">
+          <%= f.label :currency_type, "Currency" %>
+          <%= f.select :currency_type, [["Any", ""], ["Gold", "gold"], ["Silver", "silver"], ["Premium Tokens", "premium_tokens"]], { selected: @filter_params[:currency_type] }, class: "form-control" %>
+        </div>
+
+        <div class="form-group">
+          <%= f.label :stat_key, "Stat Bonus" %>
+          <%= f.select :stat_key, [["Any", ""], ["Strength", "strength"], ["Dexterity", "dexterity"], ["Intelligence", "intelligence"], ["Vitality", "vitality"]], { selected: @filter_params[:stat_key] }, class: "form-control" %>
+        </div>
+
+        <div class="form-group">
+          <%= f.label :stat_min, "Min Stat Value" %>
+          <%= f.number_field :stat_min, class: "form-control", value: @filter_params[:stat_min], min: 0 %>
+        </div>
+
+        <%= f.submit "Apply Filters", class: "game-btn game-btn--primary" %>
+        <%= link_to "Clear", auction_listings_path, class: "game-btn game-btn--secondary" %>
       <% end %>
-    </tbody>
-  </table>
-</section>
+    </aside>
+
+    <main class="auction-main">
+      <div class="auction-header">
+        <div class="auction-actions">
+          <%= link_to "Create Listing", new_auction_listing_path, class: "game-btn game-btn--primary" %>
+          <%= link_to "My Listings", auction_listings_path(seller: "me"), class: "game-btn" %>
+        </div>
+      </div>
+
+      <%= turbo_frame_tag "auction_results" do %>
+        <div class="auction-results">
+          <% if @auction_listings.any? %>
+            <div class="listings-grid">
+              <% @auction_listings.each do |listing| %>
+                <%= render "auction_listings/listing_card", listing: listing %>
+              <% end %>
+            </div>
+          <% else %>
+            <div class="no-results">
+              <p>No listings found matching your criteria.</p>
+              <%= link_to "Clear filters", auction_listings_path, class: "game-btn" %>
+            </div>
+          <% end %>
+        </div>
+      <% end %>
+    </main>
+  </div>
+</div>

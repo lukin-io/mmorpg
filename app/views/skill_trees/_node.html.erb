@@ -1,0 +1,30 @@
+<div class="skill-node skill-node--<%= node.node_type %> <%= 'skill-node--unlocked' if unlocked %> <%= 'skill-node--available' if can_unlock && !unlocked %>"
+     data-node-id="<%= node.id %>"
+     data-action="click->skill-tree#selectNode mouseenter->skill-tree#showTooltip mouseleave->skill-tree#hideTooltip"
+     data-node-name="<%= node.name %>"
+     data-node-description="<%= node.description %>"
+     data-node-type="<%= node.node_type %>"
+     data-node-cost="<%= node.point_cost %>"
+     data-node-level="<%= node.required_level %>"
+     data-node-unlocked="<%= unlocked %>">
+
+  <div class="node-icon">
+    <%= skill_node_icon(node) %>
+  </div>
+
+  <div class="node-name"><%= node.name %></div>
+
+  <% if unlocked %>
+    <div class="node-badge node-badge--unlocked">✓</div>
+  <% elsif can_unlock %>
+    <%= button_to unlock_skill_tree_path(node.skill_tree, node_id: node.id),
+                  method: :post,
+                  class: "node-unlock-btn",
+                  data: { turbo_stream: true } do %>
+      Unlock (<%= node.point_cost %> pts)
+    <% end %>
+  <% else %>
+    <div class="node-badge node-badge--locked">🔒</div>
+  <% end %>
+</div>
+

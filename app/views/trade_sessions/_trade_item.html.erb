@@ -1,0 +1,22 @@
+<div class="trade-item" id="trade_item_<%= item.id %>">
+  <div class="item-icon">
+    <%= trade_item_icon(item) %>
+  </div>
+
+  <div class="item-info">
+    <span class="item-name"><%= item.item_name || item.item_key&.titleize %></span>
+    <% if item.quantity > 1 %>
+      <span class="item-quantity">x<%= item.quantity %></span>
+    <% end %>
+    <% if item.item_type == "currency" %>
+      <span class="currency-badge"><%= item.amount %> <%= item.currency_type&.titleize %></span>
+    <% end %>
+  </div>
+
+  <% if can_remove %>
+    <%= button_to trade_item_path(item), method: :delete, class: "remove-btn", title: "Remove from trade" do %>
+      ✕
+    <% end %>
+  <% end %>
+</div>
+

@@ -114,6 +114,17 @@
 - **Parties:** `Party`, `PartyMembership`, and `PartyInvitation` handle group lifecycle (ready checks, leadership swaps, invites). `Parties::ReadyCheck` orchestrates Turbo-ready toggles; each party automatically provisions a `ChatChannel` + membership for real-time coordination.
 - **Social Hubs:** Static + seeded `SocialHub` records capture taverns, arena lobbies, and event plazas. `social_hubs#index/show` surface metadata, upcoming hub events, and links into the broader social economy.
 
+### Party System UI (✅ Implemented)
+- **Controller**: `PartiesController` — index, show, create, ready_check, leave, promote, disband
+- **Views**: Party finder, member list, ready check panel, invitation management
+- **Stimulus**: `party_controller.js` — Real-time updates via `PartyChannel`
+- **ActionCable**: `PartyChannel` for member join/leave, ready checks, disbands
+- **Features**:
+  - Party creation with purpose and max size
+  - Ready check with per-member status display
+  - Leader promotion and member kick
+  - Automatic chat channel provisioning
+
 ## PvP Arenas & Competitions
 See `doc/flow/11_arena_pvp.md` for comprehensive arena system documentation.
 

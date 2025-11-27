@@ -12,6 +12,26 @@
 - Direct Player Trades: the session page uses `Trades::PreviewBuilder` to show an anti-scam summary; contributors add/remove rows via `TradeItemsController`. Dual confirmation triggers `Trades::SettlementService`, moving gold/silver with `Economy::WalletService` and premium tokens via `Payments::PremiumTokenLedger`.
 - Marketplace kiosks clamp duration (`MarketplaceKiosk::MAX_DURATION_HOURS`) so city pop-ups feel rapid-fire.
 
+### Auction House UI (✅ Implemented)
+- **Views**: `index.html.erb` — Filterable grid of listings with sidebar filters
+- **Views**: `show.html.erb` — Item detail with bidding panel, bid history, buyout
+- **Views**: `new.html.erb` — Create listing form with pricing and commission settings
+- **Helper**: `AuctionListingsHelper` — Rarity icons, currency symbols
+- **Features**:
+  - Filter by item type, rarity, currency, stat bonuses
+  - Listing cards with rarity-colored borders
+  - Bid history and countdown timer
+  - Buyout option with confirmation
+
+### Trading UI (✅ Implemented)
+- **Views**: `trade_sessions/show.html.erb` — Split-view trade interface
+- **Features**:
+  - Your offer vs partner's offer layout
+  - Add items from inventory
+  - Add currency (gold/silver)
+  - Trade summary with warnings
+  - Dual confirmation system
+
 ## Crafting & Resource Economy
 - `GatheringNode` gained rarity tiers (`rarity_tier` enum) plus a `contested` flag that speeds respawns for PvP hotspots.
 - `Economy::DemandTracker` records every crafted item (`MarketDemandSignal` rows) and routes doctor-crafted goods into per-zone `MedicalSupplyPool` stockpiles. Infirmaries then burn those supplies during trauma recovery.

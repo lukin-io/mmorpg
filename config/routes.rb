@@ -59,6 +59,16 @@ Rails.application.routes.draw do
       post :reset_progress
     end
   end
+
+  # Skill Trees & Abilities
+  resources :skill_trees, only: [:index, :show] do
+    member do
+      post :unlock
+    end
+    collection do
+      post :respec
+    end
+  end
   resources :crafting_jobs, only: [:index, :create] do
     collection do
       post :preview
