@@ -1169,7 +1169,7 @@ if defined?(ArenaRoom)
       room.level_max = room_data[:level_max]
       room.faction_restriction = room_data[:faction_restriction]
       room.active = true
-      room.metadata = { description: room_data[:description] }
+      room.metadata = {description: room_data[:description]}
     end
     puts "  Created/Found ArenaRoom: #{room_data[:name]}"
   end

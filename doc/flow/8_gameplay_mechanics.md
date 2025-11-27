@@ -102,6 +102,87 @@
 - `Players::Progression::SkillUnlockService`, `RespecService`, and `SpecializationUnlocker` enforce quest/level requirements and respec payment paths (quest token or premium ledger).
 - `Players::Alignment::AccessGate#evaluate` exposes detailed gating reasons for cities, vendors, and storylines.
 
+## Alignment & Faction System (✅ Implemented)
+
+### Overview
+A dual-axis alignment system inspired by classic MMORPGs, tracking both Light/Dark progression and Order/Chaos behavior with visual emoji indicators throughout the UI.
+
+### Faction Alignments (Base Choice)
+Players choose one of three base factions at character creation:
+
+| Faction | Emoji | Description |
+|---------|-------|-------------|
+| Alliance | 🛡️ | Defenders of order and civilization |
+| Rebellion | ⚔️ | Freedom fighters against tyranny |
+| Neutral | 🏳️ | Unaligned, mercenary path |
+
+### Alignment Tiers (Light/Dark Axis)
+Based on `alignment_score` (-1000 to +1000), characters progress through 9 tiers:
+
+| Tier | Score Range | Emoji | Description |
+|------|-------------|-------|-------------|
+| Absolute Darkness | -1000 to -800 | 🖤 | Embraced true evil |
+| True Darkness | -799 to -500 | ⬛ | Committed to dark path |
+| Child of Darkness | -499 to -200 | 🌑 | Walking the shadow |
+| Twilight Walker | -199 to -50 | 🌘 | Leaning dark |
+| Neutral | -49 to 49 | ☯️ | Balanced |
+| Dawn Seeker | 50 to 199 | 🌒 | Leaning light |
+| Child of Light | 200 to 499 | 🌕 | Walking the light |
+| True Light | 500 to 799 | ✨ | Committed to good |
+| Celestial | 800 to 1000 | 👼 | Achieved enlightenment |
+
+### Chaos Tiers (Order/Chaos Axis)
+Based on `chaos_score` (0 to 1000), characters have a secondary alignment:
+
+| Tier | Score Range | Emoji | Description |
+|------|-------------|-------|-------------|
+| Lawful | 0 to 199 | ⚖️ | Follows rules strictly |
+| Balanced | 200 to 499 | 🔄 | Pragmatic approach |
+| Chaotic | 500 to 799 | 🔥 | Unpredictable actions |
+| Absolute Chaos | 800 to 1000 | 💥 | Pure anarchy |
+
+### Key Character Methods
+```ruby
+character.alignment_tier      # => :true_light
+character.alignment_emoji     # => "✨"
+character.faction_emoji       # => "🛡️"
+character.alignment_display   # => "🛡️ ✨ True Light"
+character.adjust_alignment!(100)  # Increase score
+character.adjust_chaos!(50)       # Increase chaos
+```
+
+### UI Display Helpers
+`AlignmentHelper` provides:
+- `alignment_badge(character)` — Full badge with faction + tier
+- `alignment_icons(character)` — Compact icon display
+- `character_nameplate(character)` — Name with alignment icons
+- `trauma_badge(percent)` — 💚💛🧡❤️💔 based on severity
+- `timeout_badge(seconds)` — ⏱️2️⃣ through ⏱️5️⃣
+
+`ArenaHelper` provides:
+- `fight_type_with_icon(type)` — ⚔️ Duel, 👥 Group, etc.
+- `fight_kind_with_icon(kind)` — 🥊 No Weapons, etc.
+- `arena_match_status_badge(status)` — ⏳🔍⏰🔴✅❌
+- `application_settings_display(app)` — Compact fight settings
+
+### Alignment Effects
+- **Arena Rooms:** Faction-restricted rooms (law, light, balance, chaos, dark)
+- **Quest Gates:** Alignment requirements via `AccessGate#evaluate`
+- **NPC Reactions:** Faction affects dialogue options and shop prices
+- **Skill Unlocks:** Some abilities require specific alignment tiers
+
+### Files
+- `app/models/character.rb` — `ALIGNMENT_TIERS`, `CHAOS_TIERS`, tier methods
+- `app/helpers/alignment_helper.rb` — All display helpers
+- `app/helpers/arena_helper.rb` — Fight/room icons
+- `app/services/players/alignment/access_gate.rb` — Requirement checking
+- `db/migrate/20251127140000_add_chaos_score_to_characters.rb`
+
+### Tests
+- `spec/models/character_spec.rb` — Alignment tier tests
+- `spec/helpers/alignment_helper_spec.rb` — Helper tests
+- `spec/helpers/arena_helper_spec.rb` — Arena helper tests
+
 ## Classes, Skills, Abilities
 - Ability seeds now include structured buffs/debuffs; `TurnResolver` consumes them to apply stat changes and status messaging.
 - Skill tree unlocks are enforced through the new services above, ensuring hybrid builds and epic specialization questlines remain deterministic.
@@ -262,7 +343,8 @@ A rich combat log viewer inspired by classic MMORPG log systems. Displays combat
 
 ## Responsible for Implementation Files
 - **Models:**
-  - `app/models/movement_command.rb`, `app/models/battle.rb`, `app/models/arena_ranking.rb`, `app/models/character.rb`
+  - `app/models/movement_command.rb`, `app/models/battle.rb`, `app/models/arena_ranking.rb`
+  - `app/models/character.rb` — `ALIGNMENT_TIERS`, `CHAOS_TIERS`, tier calculation methods
   - `app/models/dungeon_instance.rb`, `app/models/dungeon_progress_checkpoint.rb`, `app/models/dungeon_encounter.rb`
   - `app/models/combat_log_entry.rb`
 - **Controllers:**
@@ -287,6 +369,8 @@ A rich combat log viewer inspired by classic MMORPG log systems. Displays combat
   - `app/javascript/controllers/combat_log_controller.js`
 - **Helpers:**
   - `app/helpers/inventories_helper.rb`, `app/helpers/equipment_enhancements_helper.rb`, `app/helpers/dungeons_helper.rb`
+  - `app/helpers/alignment_helper.rb` — Faction/tier icons, alignment badges, trauma/timeout badges
+  - `app/helpers/arena_helper.rb` — Fight type/kind icons, room badges, match status tags
 - **Policies:**
   - `app/policies/dungeon_instance_policy.rb`
 - **Migrations/Config/Seeds:**
@@ -296,6 +380,7 @@ A rich combat log viewer inspired by classic MMORPG log systems. Displays combat
   - `db/migrate/20251127100003_create_dungeon_instances.rb`
   - `db/migrate/20251127100004_create_dungeon_progress_checkpoints.rb`
   - `db/migrate/20251127100005_create_dungeon_encounters.rb`
+  - `db/migrate/20251127140000_add_chaos_score_to_characters.rb`
   - `config/gameplay/terrain_modifiers.yml`
   - `db/seeds.rb` (tutorial quests, ability effects, zone metadata)
 
@@ -304,4 +389,5 @@ A rich combat log viewer inspired by classic MMORPG log systems. Displays combat
 - Combat ladders/effects/logs: `spec/services/game/combat/arena_ladder_spec.rb`, `spec/services/game/combat/turn_resolver_spec.rb`, `spec/jobs/live_ops/arena_monitor_job_spec.rb`.
 - Progression/respec/specializations/alignment: specs under `spec/services/players/**`.
 - Inventory expansion, infirmary recovery, tutorial bootstrapper, and profile stats: dedicated specs under `spec/services/game/**` and `spec/services/users/**`.
+- Alignment/faction system: `spec/models/character_spec.rb`, `spec/helpers/alignment_helper_spec.rb`, `spec/helpers/arena_helper_spec.rb`.
 

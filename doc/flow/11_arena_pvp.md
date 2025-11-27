@@ -20,6 +20,8 @@
 | **arena_controller.js** | ✅ Implemented | `app/javascript/controllers/arena_controller.js` |
 | **arena_match_controller.js** | ✅ Implemented | `app/javascript/controllers/arena_match_controller.js` |
 | **CSS Styles** | ✅ Implemented | `app/assets/stylesheets/application.css` — Arena section |
+| **Alignment Icons** | ✅ Implemented | `app/helpers/alignment_helper.rb` — Faction/tier emoji badges |
+| **Arena Helper Icons** | ✅ Implemented | `app/helpers/arena_helper.rb` — Fight type/kind/status icons |
 | **Arena Rewards** | ✅ Implemented | `app/services/arena/rewards_distributor.rb` — XP, gold, rating, item drops |
 | **Tactical Fights** | ✅ Implemented | Grid-based positioning combat via `/tactical_arena` |
 | **Betting/Totalizator** | ✅ Implemented | Spectator wagering via `ArenaBet` model |
@@ -40,7 +42,7 @@
 **Flow:**
 1. Player navigates to Arena → selects a room
 2. If accessible (level/faction match), shows application form
-3. Player selects fight type (duel/group/sacrifice), equipment rules, timeout, trauma %
+3. Player selects fight type (duel/team_battle/sacrifice), equipment rules, timeout, trauma %
 4. Submits application → `ArenaApplicationsController#create` → `Arena::ApplicationHandler#create`
 5. Application appears in room's open list, broadcast to all room subscribers
 6. Application expires after `wait_minutes` if not matched
@@ -112,7 +114,7 @@ Each arena has multiple rooms with level restrictions and special rules:
 
 ### Fight Types
 1. **Duels** (`duel`) — 1v1 combat
-2. **Group Battles** (`group`) — Team vs Team (configurable sizes)
+2. **Team Battles** (`team_battle`) — Team vs Team (configurable sizes)
 3. **Sacrifice Battles** (`sacrifice`) — Free-for-all melee
 4. **Tactical** (`tactical`) — Strategy-based with positioning
 5. **Betting/Totalizator** (`betting`) — Spectator wagering matches
@@ -187,7 +189,7 @@ class ArenaApplication < ApplicationRecord
   belongs_to :arena_room
   belongs_to :applicant, class_name: "Character"
 
-  enum :fight_type, { duel: 0, group: 1, sacrifice: 2, tactical: 3 }
+  enum :fight_type, { duel: 0, team_battle: 1, sacrifice: 2, tactical: 3 }
   enum :fight_kind, {
     no_weapons: 0, no_artifacts: 1, limited_artifacts: 2,
     free: 3, clan_vs_clan: 4, faction_vs_faction: 5,

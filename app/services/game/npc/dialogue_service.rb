@@ -504,8 +504,8 @@ module Game
 
       def bank_deposit(amount, currency = "gold")
         amount = amount.to_i
-        wallet_field = currency == "gold" ? :gold : :silver
-        bank_field = currency == "gold" ? :bank_gold : :bank_silver
+        wallet_field = (currency == "gold") ? :gold : :silver
+        bank_field = (currency == "gold") ? :bank_gold : :bank_silver
 
         return failure("Invalid amount") if amount <= 0
         return failure("Not enough #{currency}") if character.send(wallet_field).to_i < amount
@@ -523,8 +523,8 @@ module Game
 
       def bank_withdraw(amount, currency = "gold")
         amount = amount.to_i
-        wallet_field = currency == "gold" ? :gold : :silver
-        bank_field = currency == "gold" ? :bank_gold : :bank_silver
+        wallet_field = (currency == "gold") ? :gold : :silver
+        bank_field = (currency == "gold") ? :bank_gold : :bank_silver
 
         return failure("Invalid amount") if amount <= 0
         return failure("Not enough #{currency} in bank") if character.user.send(bank_field).to_i < amount

@@ -7,9 +7,9 @@ class PublicProfilesController < ApplicationController
   def show
     @user = User.find_by!(profile_name: params[:profile_name])
 
-      respond_to do |format|
+    respond_to do |format|
       format.html # renders show.html.erb
-        format.json { render json: public_profile_payload }
+      format.json { render json: public_profile_payload }
     end
   end
 

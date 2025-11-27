@@ -40,15 +40,15 @@ class CombatController < ApplicationController
         format.html { redirect_to combat_path, notice: result.message }
         format.turbo_stream do
           render turbo_stream: [
-            turbo_stream.replace("game-main", partial: "combat/battle", locals: { battle: result.battle }),
-            turbo_stream.append("combat-log", partial: "combat/log_entries", locals: { entries: result.combat_log })
+            turbo_stream.replace("game-main", partial: "combat/battle", locals: {battle: result.battle}),
+            turbo_stream.append("combat-log", partial: "combat/log_entries", locals: {entries: result.combat_log})
           ]
         end
-        format.json { render json: { success: true, battle_id: result.battle.id, message: result.message } }
+        format.json { render json: {success: true, battle_id: result.battle.id, message: result.message} }
       else
         format.html { redirect_to world_path, alert: result.message }
-        format.turbo_stream { render turbo_stream: turbo_stream.replace("flash", partial: "shared/flash", locals: { alert: result.message }) }
-        format.json { render json: { success: false, error: result.message }, status: :unprocessable_entity }
+        format.turbo_stream { render turbo_stream: turbo_stream.replace("flash", partial: "shared/flash", locals: {alert: result.message}) }
+        format.json { render json: {success: false, error: result.message}, status: :unprocessable_entity }
       end
     end
   end
@@ -69,13 +69,13 @@ class CombatController < ApplicationController
     respond_to do |format|
       format.turbo_stream do
         streams = [
-          turbo_stream.append("combat-log", partial: "combat/log_entries", locals: { entries: result.combat_log })
+          turbo_stream.append("combat-log", partial: "combat/log_entries", locals: {entries: result.combat_log})
         ]
 
-        if result.battle&.completed?
-          streams << turbo_stream.replace("combat-actions", partial: "combat/result", locals: { result: result })
+        streams << if result.battle&.completed?
+          turbo_stream.replace("combat-actions", partial: "combat/result", locals: {result: result})
         else
-          streams << turbo_stream.replace("combat-status", partial: "combat/status", locals: { battle: result.battle })
+          turbo_stream.replace("combat-status", partial: "combat/status", locals: {battle: result.battle})
         end
 
         render turbo_stream: streams
@@ -122,12 +122,12 @@ class CombatController < ApplicationController
       else
         format.turbo_stream do
           render turbo_stream: [
-            turbo_stream.append("combat-log", partial: "combat/log_entries", locals: { entries: result.combat_log }),
-            turbo_stream.replace("combat-status", partial: "combat/status", locals: { battle: result.battle })
+            turbo_stream.append("combat-log", partial: "combat/log_entries", locals: {entries: result.combat_log}),
+            turbo_stream.replace("combat-status", partial: "combat/status", locals: {battle: result.battle})
           ]
         end
       end
-      format.json { render json: { success: result.success, message: result.message, combat_log: result.combat_log } }
+      format.json { render json: {success: result.success, message: result.message, combat_log: result.combat_log} }
     end
   end
 
@@ -136,15 +136,15 @@ class CombatController < ApplicationController
   def set_battle
     @battle = current_character.battle_participants
       .joins(:battle)
-      .where(battles: { status: :active })
+      .where(battles: {status: :active})
       .first&.battle
   end
 
   def respond_with_error(message)
     respond_to do |format|
       format.html { redirect_to world_path, alert: message }
-      format.turbo_stream { render turbo_stream: turbo_stream.replace("flash", partial: "shared/flash", locals: { alert: message }) }
-      format.json { render json: { success: false, error: message }, status: :unprocessable_entity }
+      format.turbo_stream { render turbo_stream: turbo_stream.replace("flash", partial: "shared/flash", locals: {alert: message}) }
+      format.json { render json: {success: false, error: message}, status: :unprocessable_entity }
     end
   end
 end

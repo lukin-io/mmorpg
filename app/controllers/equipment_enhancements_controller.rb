@@ -75,7 +75,7 @@ class EquipmentEnhancementsController < ApplicationController
 
   def calculate_enhancement_cost(item, level)
     base_cost = 100
-    multiplier = 1.5 ** level
+    multiplier = 1.5**level
     (base_cost * multiplier * (item.item_template.rarity_multiplier || 1)).to_i
   end
 

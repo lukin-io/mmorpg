@@ -271,7 +271,7 @@ module Chat
       end
 
       # Check for repeated characters (AAAAAAAA)
-      if content =~ /(.)\1{#{PATTERNS[:repeated_char_threshold]},}/i
+      if /(.)\1{#{PATTERNS[:repeated_char_threshold]},}/i.match?(content)
         return {
           type: :caps_abuse,
           severity: :low,
@@ -283,7 +283,7 @@ module Chat
     end
 
     def check_link_spam(user, content, channel)
-      return nil unless content =~ PATTERNS[:url_pattern]
+      return nil unless content&.match?(PATTERNS[:url_pattern])
 
       # Check if user can post links (level requirement or trust)
       unless user_can_post_links?(user)
@@ -331,7 +331,7 @@ module Chat
 
     def check_harassment(content)
       PATTERNS[:harassment_patterns].each do |pattern|
-        if content =~ pattern
+        if content&.match?(pattern)
           return {
             type: :harassment,
             severity: :critical,

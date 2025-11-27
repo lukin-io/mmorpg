@@ -2,10 +2,39 @@
 
 class Character < ApplicationRecord
   MAX_NAME_LENGTH = 30
+
+  # Base faction alignments (player chooses one)
   ALIGNMENTS = {
     neutral: "neutral",
     alliance: "alliance",
     rebellion: "rebellion"
+  }.freeze
+
+  # Alignment score thresholds for tier progression
+  # Score ranges: -1000 to +1000
+  ALIGNMENT_TIERS = {
+    # Negative scores (Dark path)
+    absolute_darkness: {range: -1000..-800, emoji: "🖤", name: "Absolute Darkness"},
+    true_darkness: {range: -799..-500, emoji: "⬛", name: "True Darkness"},
+    child_of_darkness: {range: -499..-200, emoji: "🌑", name: "Child of Darkness"},
+
+    # Neutral zone
+    twilight_walker: {range: -199..-50, emoji: "🌘", name: "Twilight Walker"},
+    neutral: {range: -49..49, emoji: "☯️", name: "Neutral"},
+    dawn_seeker: {range: 50..199, emoji: "🌒", name: "Dawn Seeker"},
+
+    # Positive scores (Light path)
+    child_of_light: {range: 200..499, emoji: "🌕", name: "Child of Light"},
+    true_light: {range: 500..799, emoji: "✨", name: "True Light"},
+    celestial: {range: 800..1000, emoji: "👼", name: "Celestial"}
+  }.freeze
+
+  # Chaos alignment (separate axis, based on karma/actions)
+  CHAOS_TIERS = {
+    lawful: {range: 0..199, emoji: "⚖️", name: "Lawful"},
+    balanced: {range: 200..499, emoji: "🔄", name: "Balanced"},
+    chaotic: {range: 500..799, emoji: "🔥", name: "Chaotic"},
+    absolute_chaos: {range: 800..1000, emoji: "💥", name: "Absolute Chaos"}
   }.freeze
 
   belongs_to :user
@@ -54,6 +83,69 @@ class Character < ApplicationRecord
       base[key] = base.fetch(key, 0) + value.to_i
     end
     Game::Systems::StatBlock.new(base:)
+  end
+
+  # Get current alignment tier based on alignment_score
+  def alignment_tier
+    score = alignment_score.to_i.clamp(-1000, 1000)
+    ALIGNMENT_TIERS.find { |_, data| data[:range].include?(score) }&.first || :neutral
+  end
+
+  # Get alignment tier data (emoji, name)
+  def alignment_tier_data
+    ALIGNMENT_TIERS[alignment_tier] || ALIGNMENT_TIERS[:neutral]
+  end
+
+  # Get alignment emoji icon
+  def alignment_emoji
+    alignment_tier_data[:emoji]
+  end
+
+  # Get alignment tier display name
+  def alignment_tier_name
+    alignment_tier_data[:name]
+  end
+
+  # Get chaos tier based on chaos_score (defaults to 0 if not set)
+  def chaos_tier
+    score = (chaos_score || 0).to_i.clamp(0, 1000)
+    CHAOS_TIERS.find { |_, data| data[:range].include?(score) }&.first || :lawful
+  end
+
+  # Get chaos tier data
+  def chaos_tier_data
+    CHAOS_TIERS[chaos_tier] || CHAOS_TIERS[:lawful]
+  end
+
+  # Get chaos emoji
+  def chaos_emoji
+    chaos_tier_data[:emoji]
+  end
+
+  # Get faction emoji based on faction_alignment
+  def faction_emoji
+    case faction_alignment
+    when "alliance" then "🛡️"
+    when "rebellion" then "⚔️"
+    else "🏳️"
+    end
+  end
+
+  # Full alignment display with emojis
+  def alignment_display
+    "#{faction_emoji} #{alignment_emoji} #{alignment_tier_name}"
+  end
+
+  # Adjust alignment score (clamped to valid range)
+  def adjust_alignment!(delta)
+    new_score = (alignment_score + delta).clamp(-1000, 1000)
+    update!(alignment_score: new_score)
+  end
+
+  # Adjust chaos score
+  def adjust_chaos!(delta)
+    new_score = ((chaos_score || 0) + delta).clamp(0, 1000)
+    update!(chaos_score: new_score)
   end
 
   private

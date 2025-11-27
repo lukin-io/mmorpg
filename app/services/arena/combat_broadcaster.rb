@@ -115,7 +115,7 @@ module Arena
     end
 
     # Alias for compatibility with CombatProcessor
-    alias broadcast_match_started broadcast_match_start
+    alias_method :broadcast_match_started, :broadcast_match_start
 
     # Broadcast vitals update for a character
     #

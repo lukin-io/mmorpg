@@ -25,7 +25,7 @@ class ArenaController < ApplicationController
   # Turbo frame for lobby updates
   def lobby
     @rooms = ArenaRoom.active.order(:room_type)
-    render partial: "arena/lobby", locals: { rooms: @rooms }
+    render partial: "arena/lobby", locals: {rooms: @rooms}
   end
 
   private

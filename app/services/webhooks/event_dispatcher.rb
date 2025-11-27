@@ -68,7 +68,7 @@ module Webhooks
       begin
         response = send_request
         handle_response(response)
-      rescue StandardError => e
+      rescue => e
         handle_error(e)
       end
     end

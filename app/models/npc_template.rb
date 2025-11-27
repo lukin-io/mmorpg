@@ -28,8 +28,8 @@ class NpcTemplate < ApplicationRecord
 
     # Check if NPC is allowed in this zone
     allowed_zone = metadata&.dig("zone") == zone_name ||
-                   metadata&.dig("zones")&.include?(zone_name) ||
-                   metadata&.dig("zones").nil?
+      metadata&.dig("zones")&.include?(zone_name) ||
+      metadata&.dig("zones").nil?
 
     return false unless allowed_zone
 

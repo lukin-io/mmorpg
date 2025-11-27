@@ -31,14 +31,14 @@ class BroadcastChatMessageWithIgnoreJob < ApplicationJob
     # Render the message partial once
     html = ApplicationController.render(
       partial: "chat_messages/chat_message",
-      locals: { chat_message: message }
+      locals: {chat_message: message}
     )
 
     # Broadcast to each non-excluded user individually
     # Using Turbo Streams for each user's personal stream
     recipient_user_ids.each do |user_id|
       Turbo::StreamsChannel.broadcast_append_to(
-        [channel, { user_id: user_id }],
+        [channel, {user_id: user_id}],
         target: ActionView::RecordIdentifier.dom_id(channel, :messages),
         html: html
       )

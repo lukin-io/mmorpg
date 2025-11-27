@@ -18,10 +18,10 @@
 #
 class ArenaApplication < ApplicationRecord
   FIGHT_TYPES = {
-    duel: 0,       # 1v1 combat
-    group: 1,      # Team vs Team
-    sacrifice: 2,  # Free-for-all melee
-    tactical: 3    # Strategy-based with positioning
+    duel: 0,        # 1v1 combat
+    team_battle: 1, # Team vs Team (renamed from 'group' to avoid ActiveRecord conflict)
+    sacrifice: 2,   # Free-for-all melee
+    tactical: 3     # Strategy-based with positioning
   }.freeze
 
   FIGHT_KINDS = {
@@ -56,10 +56,10 @@ class ArenaApplication < ApplicationRecord
   belongs_to :matched_with, class_name: "ArenaApplication", optional: true
   belongs_to :arena_match, optional: true
 
-  validates :timeout_seconds, inclusion: { in: VALID_TIMEOUTS }
-  validates :trauma_percent, inclusion: { in: VALID_TRAUMA_PERCENTS }
+  validates :timeout_seconds, inclusion: {in: VALID_TIMEOUTS}
+  validates :trauma_percent, inclusion: {in: VALID_TRAUMA_PERCENTS}
   validate :applicant_can_access_room, on: :create
-  validate :group_params_valid, if: :group?
+  validate :group_params_valid, if: :team_battle?
 
   before_create :set_expiration
 

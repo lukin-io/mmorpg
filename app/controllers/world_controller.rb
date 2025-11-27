@@ -36,7 +36,7 @@ class WorldController < ApplicationController
   def move
     direction = params[:direction]&.to_sym
 
-    result = Game::Movement::TurnProcessor.new(
+    Game::Movement::TurnProcessor.new(
       character: current_character,
       direction: direction
     ).call
@@ -65,7 +65,7 @@ class WorldController < ApplicationController
 
     # Find spawn point in target zone
     spawn_point = target_zone.spawn_points.default_entries.first ||
-                  target_zone.spawn_points.first
+      target_zone.spawn_points.first
 
     if spawn_point.nil?
       return redirect_to world_path, alert: "No entry point available."
@@ -86,15 +86,15 @@ class WorldController < ApplicationController
     # Find the parent/outdoor zone
     current_zone = @position.zone
     exit_zone = Zone.find_by(name: current_zone.metadata&.dig("exit_to")) ||
-                Zone.find_by(biome: "plains") ||
-                Zone.find_by(biome: "forest")
+      Zone.find_by(biome: "plains") ||
+      Zone.find_by(biome: "forest")
 
     if exit_zone.nil?
       return redirect_to world_path, alert: "No exit available."
     end
 
     spawn_point = exit_zone.spawn_points.default_entries.first ||
-                  exit_zone.spawn_points.first
+      exit_zone.spawn_points.first
 
     @position.update!(
       zone: exit_zone,
@@ -205,7 +205,7 @@ class WorldController < ApplicationController
     return redirect_to root_path, alert: "No zones available." unless starter_zone
 
     spawn = starter_zone.spawn_points.default_entries.first ||
-            starter_zone.spawn_points.first
+      starter_zone.spawn_points.first
 
     current_character.create_position!(
       zone: starter_zone,
@@ -349,27 +349,27 @@ class WorldController < ApplicationController
       features["npc"] = npcs[rng.rand(npcs.size)]
     elsif roll < 20
       # Resource node
-      case zone.biome
+      resources = case zone.biome
       when "forest"
-        resources = [
+        [
           {name: "Moonleaf Herb", type: "herb"},
           {name: "Oak Wood", type: "wood"},
           {name: "Wild Berries", type: "herb"}
         ]
       when "plains"
-        resources = [
+        [
           {name: "Iron Ore", type: "ore"},
           {name: "Healing Herb", type: "herb"},
           {name: "Flax Plant", type: "herb"}
         ]
       when "mountain"
-        resources = [
+        [
           {name: "Gold Vein", type: "ore"},
           {name: "Crystal Formation", type: "ore"},
           {name: "Mountain Herb", type: "herb"}
         ]
       else
-        resources = [{name: "Wild Plant", type: "herb"}]
+        [{name: "Wild Plant", type: "herb"}]
       end
 
       resource = resources[rng.rand(resources.size)]
@@ -452,11 +452,15 @@ class WorldController < ApplicationController
   def movement_cooldown
     # Base cooldown, can be modified by terrain/buffs
     base = 3 # seconds
-    terrain_modifier = Game::Movement::TerrainModifier.new(
-      zone: @position.zone,
-      x: @position.x,
-      y: @position.y
-    ).cooldown_multiplier rescue 1.0
+    terrain_modifier = begin
+      Game::Movement::TerrainModifier.new(
+        zone: @position.zone,
+        x: @position.x,
+        y: @position.y
+      ).cooldown_multiplier
+    rescue
+      1.0
+    end
 
     (base * terrain_modifier).to_i
   end

@@ -266,7 +266,7 @@ module Arena
       item = character.inventory.add_item!(
         item_template,
         source: "Arena Reward",
-        metadata: { match_id: match.id }
+        metadata: {match_id: match.id}
       )
 
       @last_awarded_item = item_key
@@ -285,7 +285,7 @@ module Arena
       end
 
       item
-    rescue StandardError => e
+    rescue => e
       Rails.logger.error("Failed to award arena item: #{e.message}")
       nil
     end
@@ -318,9 +318,9 @@ module Arena
         power: percent,
         expires_at: trauma_duration.from_now,
         source: "Arena defeat",
-        metadata: { match_id: match.id }
+        metadata: {match_id: match.id}
       )
-    rescue StandardError => e
+    rescue => e
       Rails.logger.warn("Failed to apply arena trauma: #{e.message}")
     end
   end

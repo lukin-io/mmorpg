@@ -130,7 +130,11 @@ module Game
       def calculate_success_rate(level)
         base_rate = 100
         rate = base_rate - (level * 8)
-        luck_stat = character.stats.luck rescue 0
+        luck_stat = begin
+          character.stats.luck
+        rescue
+          0
+        end
         rate += luck_stat / 10
         rate.clamp(5, 100)
       end

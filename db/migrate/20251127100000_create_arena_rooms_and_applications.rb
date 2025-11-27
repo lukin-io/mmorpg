@@ -24,8 +24,8 @@ class CreateArenaRoomsAndApplications < ActiveRecord::Migration[8.1]
     # Arena applications (fight queue)
     create_table :arena_applications do |t|
       t.references :arena_room, null: false, foreign_key: true
-      t.references :applicant, null: false, foreign_key: { to_table: :characters }
-      t.references :matched_with, foreign_key: { to_table: :arena_applications }
+      t.references :applicant, null: false, foreign_key: {to_table: :characters}
+      t.references :matched_with, foreign_key: {to_table: :arena_applications}
       t.references :arena_match, foreign_key: true
 
       t.integer :fight_type, null: false, default: 0

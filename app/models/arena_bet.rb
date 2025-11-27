@@ -92,7 +92,7 @@ class ArenaBet < ApplicationRecord
   end
 
   def user_has_funds
-    balance = currency_type == "gold" ? user.character&.gold : user.character&.silver
+    balance = (currency_type == "gold") ? user.character&.gold : user.character&.silver
     return if balance.to_i >= amount
 
     errors.add(:amount, "exceeds available funds")

@@ -71,8 +71,7 @@ module ChatMessagesHelper
             emoji: emoji.unicode,
             code: emoji.code
           },
-          title: emoji.name
-        )
+          title: emoji.name)
       end.join.html_safe
     end
   end

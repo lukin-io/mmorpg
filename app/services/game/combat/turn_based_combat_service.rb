@@ -169,7 +169,7 @@ module Game
         if participant.character
           Game::Combat::SkillExecutor.available_skills(participant.character).each do |skill|
             actions[:skills] << skill.merge(
-              cost: config.dig("magic_types", skill[:id])&.dig("action_cost") || 50,
+              cost: config.dig("magic_types", skill[:id], "action_cost") || 50,
               mana: skill[:cost][:mp] || skill[:cost]["mp"] || 0
             )
           end
@@ -552,7 +552,7 @@ module Game
       end
 
       def calculate_gold_reward(winner)
-        10 + rand(1..20)
+        rand(11..30)
       end
 
       def create_log_entry(log_type, participant, data)
@@ -584,7 +584,7 @@ module Game
             "💨 #{data[:attacker]}'s attack on #{data[:defender]}'s #{data[:body_part]} misses!"
           end
         when :skill
-          "✨ #{participant.combatant_name} uses «#{data[:skill]}» — #{data[:effect]}#{data[:amount] ? " (#{data[:amount]})" : ""}"
+          "✨ #{participant.combatant_name} uses «#{data[:skill]}» — #{data[:effect]}#{" (#{data[:amount]})" if data[:amount]}"
         when :dot
           "🔥 #{participant.combatant_name} takes #{data[:damage]} damage from #{data[:source]}!"
         else

@@ -71,22 +71,22 @@ module WorldHelper
   # @return [Array<Hash>] default building data
   def default_city_buildings
     [
-      { id: 1, name: "General Store", type: "shop", key: "general_store", grid_x: 1, grid_y: 1,
-        description: "Buy supplies and sell your loot here.", npcs: [{ key: "merchant", name: "Merchant Elara" }] },
-      { id: 2, name: "The Golden Tankard", type: "tavern", key: "tavern", grid_x: 3, grid_y: 1,
-        description: "Rest, eat, and hear the latest rumors.", npcs: [{ key: "innkeeper", name: "Innkeeper Bram" }] },
-      { id: 3, name: "Ironforge Smithy", type: "blacksmith", key: "blacksmith", grid_x: 5, grid_y: 1,
-        description: "Weapons and armor crafted with skill.", npcs: [{ key: "smith", name: "Smith Gorn" }] },
-      { id: 4, name: "City Bank", type: "bank", key: "bank", grid_x: 1, grid_y: 3,
-        description: "Store your gold and valuables safely.", npcs: [{ key: "banker", name: "Banker Wells" }] },
-      { id: 5, name: "Arena", type: "arena", key: "arena", grid_x: 5, grid_y: 3,
-        description: "Test your strength against other warriors!", npcs: [] },
-      { id: 6, name: "Guild Hall", type: "guild", key: "guild_hall", grid_x: 3, grid_y: 5,
-        description: "The center of guild activities.", npcs: [{ key: "guild_master", name: "Guild Master Aldric" }] },
-      { id: 7, name: "Temple of Light", type: "temple", key: "temple", grid_x: 1, grid_y: 5,
-        description: "Heal your wounds and seek divine guidance.", npcs: [{ key: "priest", name: "Priestess Luna" }] },
-      { id: 8, name: "City Gate", type: "gate", key: "city_gate", grid_x: 5, grid_y: 5,
-        description: "The main entrance to the city.", npcs: [{ key: "guard", name: "Gate Guard" }] }
+      {id: 1, name: "General Store", type: "shop", key: "general_store", grid_x: 1, grid_y: 1,
+       description: "Buy supplies and sell your loot here.", npcs: [{key: "merchant", name: "Merchant Elara"}]},
+      {id: 2, name: "The Golden Tankard", type: "tavern", key: "tavern", grid_x: 3, grid_y: 1,
+       description: "Rest, eat, and hear the latest rumors.", npcs: [{key: "innkeeper", name: "Innkeeper Bram"}]},
+      {id: 3, name: "Ironforge Smithy", type: "blacksmith", key: "blacksmith", grid_x: 5, grid_y: 1,
+       description: "Weapons and armor crafted with skill.", npcs: [{key: "smith", name: "Smith Gorn"}]},
+      {id: 4, name: "City Bank", type: "bank", key: "bank", grid_x: 1, grid_y: 3,
+       description: "Store your gold and valuables safely.", npcs: [{key: "banker", name: "Banker Wells"}]},
+      {id: 5, name: "Arena", type: "arena", key: "arena", grid_x: 5, grid_y: 3,
+       description: "Test your strength against other warriors!", npcs: []},
+      {id: 6, name: "Guild Hall", type: "guild", key: "guild_hall", grid_x: 3, grid_y: 5,
+       description: "The center of guild activities.", npcs: [{key: "guild_master", name: "Guild Master Aldric"}]},
+      {id: 7, name: "Temple of Light", type: "temple", key: "temple", grid_x: 1, grid_y: 5,
+       description: "Heal your wounds and seek divine guidance.", npcs: [{key: "priest", name: "Priestess Luna"}]},
+      {id: 8, name: "City Gate", type: "gate", key: "city_gate", grid_x: 5, grid_y: 5,
+       description: "The main entrance to the city.", npcs: [{key: "guard", name: "Gate Guard"}]}
     ]
   end
 

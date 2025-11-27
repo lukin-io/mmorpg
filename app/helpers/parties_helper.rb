@@ -5,7 +5,7 @@ module PartiesHelper
   def current_user_party
     @current_user_party ||= current_user.parties
       .joins(:party_memberships)
-      .where(party_memberships: { user_id: current_user.id, status: :active })
+      .where(party_memberships: {user_id: current_user.id, status: :active})
       .first
   end
 

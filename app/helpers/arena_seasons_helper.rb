@@ -24,7 +24,7 @@ module ArenaSeasonsHelper
   def current_character_matches(season)
     season.arena_matches
       .joins(:arena_participations)
-      .where(arena_participations: { character: current_character })
+      .where(arena_participations: {character: current_character})
       .count
   end
 

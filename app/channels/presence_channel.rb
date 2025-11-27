@@ -65,7 +65,7 @@ class PresenceChannel < ApplicationCable::Channel
   # Ping to keep presence active
   def ping
     mark_online
-    transmit({ type: "pong", timestamp: Time.current.iso8601 })
+    transmit({type: "pong", timestamp: Time.current.iso8601})
   end
 
   # Update zone presence (when player moves)
@@ -145,8 +145,8 @@ class PresenceChannel < ApplicationCable::Channel
 
     if zone_id.present?
       # Filter by zone - requires character positions
-      sessions = sessions.joins(user: { characters: :position })
-        .where(positions: { zone_id: zone_id })
+      sessions = sessions.joins(user: {characters: :position})
+        .where(positions: {zone_id: zone_id})
     end
 
     sessions.map(&:user).compact

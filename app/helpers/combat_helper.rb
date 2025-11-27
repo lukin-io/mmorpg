@@ -46,7 +46,7 @@ module CombatHelper
     button_to label,
       combat_action_path(action_type: action_type),
       method: :post,
-      class: "game-btn game-btn--#{options[:style] || 'primary'}",
+      class: "game-btn game-btn--#{options[:style] || "primary"}",
       data: {turbo: true}
   end
 

@@ -275,6 +275,11 @@ bundle exec bundler-audit # optional CVE scan
   - `app/channels/realtime_chat_channel.rb` — WebSocket chat with channel access control.
 - hotwire ui:
   - `app/views/layouts/application.html.erb`, `app/assets/stylesheets/application.css`, `app/javascript/application.js`, `app/components/application_component.rb` — Layout with Turbo/Stimulus assets, flash rendering, base styles, ViewComponent base class.
+- alignment & faction:
+  - `app/models/character.rb` — `ALIGNMENT_TIERS`, `CHAOS_TIERS`, tier calculation methods, emoji accessors.
+  - `app/helpers/alignment_helper.rb` — Faction/tier icons, alignment badges, trauma/timeout badges, character nameplates.
+  - `app/helpers/arena_helper.rb` — Fight type/kind icons, room type badges, match status tags.
+  - `db/migrate/20251127140000_add_chaos_score_to_characters.rb` — Adds `chaos_score` column.
 - dashboard:
   - `app/controllers/dashboard_controller.rb`, `app/views/dashboard/show.html.erb` — Authenticated landing view summarizing feature flags and welcome copy.
 - docs:

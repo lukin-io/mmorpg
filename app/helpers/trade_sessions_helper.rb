@@ -3,7 +3,7 @@
 # Helpers for trade session views.
 module TradeSessionsHelper
   def trade_partner(trade_session)
-    trade_session.initiator == current_user ? trade_session.recipient : trade_session.initiator
+    (trade_session.initiator == current_user) ? trade_session.recipient : trade_session.initiator
   end
 
   def trade_confirmed_by_you?(trade_session)
@@ -17,7 +17,7 @@ module TradeSessionsHelper
   def trade_item_icon(item)
     case item.item_type
     when "currency"
-      item.currency_type == "gold" ? "🪙" : "🥈"
+      (item.currency_type == "gold") ? "🪙" : "🥈"
     when "weapon"
       "⚔️"
     when "armor"

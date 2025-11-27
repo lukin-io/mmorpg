@@ -346,7 +346,7 @@ module Game
 
       def generate_generic_quest_data(character, quest_type, difficulty)
         level = character.level
-        template = OBJECTIVE_TEMPLATES[quest_type] || OBJECTIVE_TEMPLATES["kill"]
+        OBJECTIVE_TEMPLATES[quest_type] || OBJECTIVE_TEMPLATES["kill"]
         count = calculate_objective_count(quest_type, level, difficulty)
 
         {
@@ -373,7 +373,7 @@ module Game
 
       def generate_kill_quest(character, zone)
         enemies = NpcTemplate.hostile.in_zone(zone.name).pluck(:name)
-        target = enemies.sample || "hostile creatures"
+        enemies.sample || "hostile creatures"
         count = calculate_objective_count("kill", character.level, "normal")
 
         {

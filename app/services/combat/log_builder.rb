@@ -58,7 +58,11 @@ module Combat
 
       # Create an attack log entry
       def attack(battle:, actor:, target:, body_part:, damage:, element: "normal", critical: false, blocked: false)
-        result_type = blocked ? "blocked" : (critical ? "critical" : "hit")
+        result_type = if blocked
+          "blocked"
+        else
+          (critical ? "critical" : "hit")
+        end
 
         message = format_attack_message(actor, target, body_part, damage, result_type, element)
 
@@ -108,7 +112,7 @@ module Combat
           battle: battle,
           log_type: "restoration",
           actor: actor,
-          healing_amount: (resource == "hp" ? amount : 0),
+          healing_amount: ((resource == "hp") ? amount : 0),
           message: message,
           tags: ["restoration", resource],
           payload: {
@@ -304,15 +308,13 @@ module Combat
         case actor
         when BattleParticipant
           actor.team
-        else
-          nil
         end
       end
 
       def format_attack_message(actor, target, body_part, damage, result_type, element)
         actor_str = actor_name(actor)
         target_str = actor_name(target)
-        element_str = element != "normal" ? " (#{element})" : ""
+        element_str = (element != "normal") ? " (#{element})" : ""
 
         case result_type
         when "critical"
@@ -326,7 +328,7 @@ module Combat
 
       def format_skill_message(actor, skill_name, element, target, damage, healing)
         actor_str = actor_name(actor)
-        color = ELEMENT_COLORS[element] || ELEMENT_COLORS["arcane"]
+        ELEMENT_COLORS[element] || ELEMENT_COLORS["arcane"]
 
         if healing > 0
           "✨ #{actor_str} casts «#{skill_name}» — heals for #{healing} HP"
@@ -340,7 +342,7 @@ module Combat
 
       def format_restoration_message(actor, resource, amount, source)
         actor_str = actor_name(actor)
-        resource_label = resource == "hp" ? "HP" : "MP"
+        resource_label = (resource == "hp") ? "HP" : "MP"
         source_str = source ? " from «#{source}»" : ""
 
         "💚 #{actor_str} restored #{amount} #{resource_label}#{source_str}"

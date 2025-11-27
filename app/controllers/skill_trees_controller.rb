@@ -46,9 +46,9 @@ class SkillTreesController < ApplicationController
       respond_to do |format|
         format.turbo_stream do
           render turbo_stream: [
-            turbo_stream.replace("skill_node_#{node.id}", partial: "skill_trees/node", locals: { node: node, unlocked: true, can_unlock: false }),
-            turbo_stream.replace("skill_points_display", partial: "skill_trees/points", locals: { points: current_character.reload.available_skill_points }),
-            turbo_stream.append("notifications", partial: "shared/notification", locals: { type: :success, message: "Unlocked #{node.name}!" })
+            turbo_stream.replace("skill_node_#{node.id}", partial: "skill_trees/node", locals: {node: node, unlocked: true, can_unlock: false}),
+            turbo_stream.replace("skill_points_display", partial: "skill_trees/points", locals: {points: current_character.reload.available_skill_points}),
+            turbo_stream.append("notifications", partial: "shared/notification", locals: {type: :success, message: "Unlocked #{node.name}!"})
           ]
         end
         format.html { redirect_to @skill_tree, notice: "Unlocked #{node.name}!" }
@@ -56,7 +56,7 @@ class SkillTreesController < ApplicationController
     else
       respond_to do |format|
         format.turbo_stream do
-          render turbo_stream: turbo_stream.append("notifications", partial: "shared/notification", locals: { type: :alert, message: service.errors.full_messages.to_sentence })
+          render turbo_stream: turbo_stream.append("notifications", partial: "shared/notification", locals: {type: :alert, message: service.errors.full_messages.to_sentence})
         end
         format.html { redirect_to @skill_tree, alert: service.errors.full_messages.to_sentence }
       end

@@ -116,7 +116,7 @@ module Characters
     def in_arena_match?
       ArenaParticipation.joins(:arena_match)
         .where(character: character)
-        .where(arena_matches: { status: [:pending, :matching, :live] })
+        .where(arena_matches: {status: [:pending, :matching, :live]})
         .exists?
     end
   end

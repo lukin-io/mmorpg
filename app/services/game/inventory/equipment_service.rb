@@ -21,9 +21,7 @@ module Game
 
         # Unequip existing item in slot
         existing = equipped_in_slot(target_slot)
-        if existing
-          existing.update!(equipped: false, equipment_slot: nil)
-        end
+        existing&.update!(equipped: false, equipment_slot: nil)
 
         # Equip new item
         item.update!(equipped: true, equipment_slot: target_slot)

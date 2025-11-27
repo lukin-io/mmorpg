@@ -25,8 +25,8 @@ class ArenaMatchesController < ApplicationController
     @combat_log = @arena_match.metadata["combat_log"] || []
 
     respond_to do |format|
-      format.html { render partial: "arena_matches/combat_log", locals: { log: @combat_log } }
-      format.json { render json: { log: @combat_log } }
+      format.html { render partial: "arena_matches/combat_log", locals: {log: @combat_log} }
+      format.json { render json: {log: @combat_log} }
     end
   end
 

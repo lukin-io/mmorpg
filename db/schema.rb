@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_11_27_130000) do
+ActiveRecord::Schema[8.1].define(version: 2025_11_27_140000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -367,6 +367,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_27_130000) do
   create_table "characters", force: :cascade do |t|
     t.integer "alignment_score", default: 0, null: false
     t.jsonb "allocated_stats", default: {}, null: false
+    t.integer "chaos_score", default: 0, null: false
     t.bigint "character_class_id"
     t.bigint "clan_id"
     t.datetime "created_at", null: false

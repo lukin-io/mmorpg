@@ -12,7 +12,7 @@ class GatheringController < ApplicationController
   def show
     @profession_progress = current_character.profession_progresses
       .joins(:profession)
-      .find_by(professions: { id: @gathering_node.profession_id })
+      .find_by(professions: {id: @gathering_node.profession_id})
 
     @can_harvest = can_harvest?
     @harvest_chance = calculate_harvest_chance
@@ -23,7 +23,7 @@ class GatheringController < ApplicationController
   def harvest
     profession_progress = current_character.profession_progresses
       .joins(:profession)
-      .find_by(professions: { id: @gathering_node.profession_id })
+      .find_by(professions: {id: @gathering_node.profession_id})
 
     unless profession_progress
       return respond_with_error("You don't have the required profession to harvest this resource.")
@@ -66,7 +66,7 @@ class GatheringController < ApplicationController
               })
             ]
           end
-          format.json { render json: { success: true, rewards: result[:rewards], respawn_at: result[:respawn_at] } }
+          format.json { render json: {success: true, rewards: result[:rewards], respawn_at: result[:respawn_at]} }
         end
       else
         respond_to do |format|
@@ -80,12 +80,12 @@ class GatheringController < ApplicationController
               xp_gained: @gathering_node.difficulty
             })
           end
-          format.json { render json: { success: false, cooldown: result[:cooldown] } }
+          format.json { render json: {success: false, cooldown: result[:cooldown]} }
         end
       end
     rescue Pundit::NotAuthorizedError => e
       respond_with_error(e.message)
-    rescue StandardError => e
+    rescue => e
       respond_with_error(e.message)
     end
   end
@@ -94,10 +94,10 @@ class GatheringController < ApplicationController
   # List available gathering nodes in current zone
   def nodes
     position = current_character.current_position
-    return render json: { nodes: [] } unless position&.zone
+    return render json: {nodes: []} unless position&.zone
 
     nodes = GatheringNode.where(zone: position.zone).available
-    render json: { nodes: nodes.map { |n| node_json(n) } }
+    render json: {nodes: nodes.map { |n| node_json(n) }}
   end
 
   private
@@ -127,7 +127,7 @@ class GatheringController < ApplicationController
     skill_gap = profession_progress.skill_level - @gathering_node.difficulty
     location_bonus = profession_progress.location_bonus_for(@gathering_node.zone)
     party_size = current_character.current_party&.members&.count || 1
-    group_bonus = party_size > 1 ? (party_size - 1) * @gathering_node.group_bonus_percent : 0
+    group_bonus = (party_size > 1) ? (party_size - 1) * @gathering_node.group_bonus_percent : 0
 
     (base + (skill_gap * 4) + location_bonus + group_bonus).clamp(10, 95)
   end
@@ -173,9 +173,9 @@ class GatheringController < ApplicationController
     respond_to do |format|
       format.html { redirect_to world_path, alert: message }
       format.turbo_stream do
-        render turbo_stream: turbo_stream.replace("flash", partial: "shared/flash", locals: { alert: message })
+        render turbo_stream: turbo_stream.replace("flash", partial: "shared/flash", locals: {alert: message})
       end
-      format.json { render json: { success: false, error: message }, status: :unprocessable_entity }
+      format.json { render json: {success: false, error: message}, status: :unprocessable_entity }
     end
   end
 end

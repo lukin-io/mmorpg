@@ -32,8 +32,8 @@ class ArenaRoom < ApplicationRecord
 
   validates :name, presence: true
   validates :slug, presence: true, uniqueness: true
-  validates :level_min, :level_max, numericality: { greater_than_or_equal_to: 0 }
-  validates :max_concurrent_matches, numericality: { greater_than: 0 }
+  validates :level_min, :level_max, numericality: {greater_than_or_equal_to: 0}
+  validates :max_concurrent_matches, numericality: {greater_than: 0}
   validate :level_range_valid
 
   scope :active, -> { where(active: true) }

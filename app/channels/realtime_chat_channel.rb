@@ -88,7 +88,7 @@ class RealtimeChatChannel < ApplicationCable::Channel
     mode = data["mode"]
     return unless %w[all private none].include?(mode)
 
-    transmit({ type: "mode_changed", mode: mode })
+    transmit({type: "mode_changed", mode: mode})
   end
 
   private
@@ -122,7 +122,7 @@ class RealtimeChatChannel < ApplicationCable::Channel
   end
 
   def send_whisper(target_name, content)
-    target = User.joins(:characters).find_by(characters: { name: target_name })
+    target = User.joins(:characters).find_by(characters: {name: target_name})
     return transmit_error("User not found: #{target_name}") unless target
     return transmit_error("Cannot whisper yourself") if target == current_user
 
@@ -228,15 +228,15 @@ class RealtimeChatChannel < ApplicationCable::Channel
   def parse_chat_command(content)
     case content
     when /^\/w\s+(\S+)\s+(.+)$/i, /^%(\S+)%\s*(.+)$/i
-      { type: :whisper, target: ::Regexp.last_match(1), content: ::Regexp.last_match(2) }
+      {type: :whisper, target: ::Regexp.last_match(1), content: ::Regexp.last_match(2)}
     when /^%clan%\s*(.+)$/i, /^\/clan\s+(.+)$/i
-      { type: :clan, content: ::Regexp.last_match(1) }
+      {type: :clan, content: ::Regexp.last_match(1)}
     when /^%party%\s*(.+)$/i, /^\/party\s+(.+)$/i
-      { type: :party, content: ::Regexp.last_match(1) }
+      {type: :party, content: ::Regexp.last_match(1)}
     when /^\/shout\s+(.+)$/i, /^!(.+)$/
-      { type: :shout, content: ::Regexp.last_match(1) }
+      {type: :shout, content: ::Regexp.last_match(1)}
     else
-      { type: :normal, content: content }
+      {type: :normal, content: content}
     end
   end
 
@@ -347,6 +347,6 @@ class RealtimeChatChannel < ApplicationCable::Channel
   end
 
   def transmit_error(message)
-    transmit({ type: "error", message: message })
+    transmit({type: "error", message: message})
   end
 end

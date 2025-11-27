@@ -4,6 +4,24 @@ This document captures all functionality inspired by the Neverlands MMORPG that 
 
 ---
 
+## Implementation Status Summary
+
+| # | Feature | Status | Key Files |
+|---|---------|--------|-----------|
+| 1 | [Chat System](#chat-system) | ✅ Implemented | `chat_controller.js`, `realtime_chat_channel.rb`, `moderation_service.rb` |
+| 2 | [Arena/PvP System](#arenapvp-system) | ✅ Implemented | `arena_controller.rb`, `matchmaker.rb`, `combat_processor.rb` |
+| 3 | [Character Vitals](#character-vitals-hpmp-bars) | ✅ Implemented | `vitals_controller.js`, `vitals_service.rb`, `vitals_channel.rb` |
+| 4 | [Quest Dialog System](#quest-dialog-system) | ✅ Implemented | `quest_dialog_controller.js`, `quests_controller.rb` |
+| 5 | [Game Layout](#game-layout) | ✅ Implemented | `game_layout_controller.js`, CSS Grid layout |
+| 6 | [Map Movement](#map-movement) | ✅ Implemented | `game_world_controller.js`, smooth animation, timers |
+| 7 | [Turn-Based Combat](#turn-based-combat-system) | ✅ Implemented | `turn_based_combat_service.rb`, `turn_combat_controller.js` |
+| 8 | [Combat Log System](#combat-log-system) | ✅ Implemented | `log_builder.rb`, `statistics_calculator.rb`, public URLs |
+| 9 | [Alignment & Faction](#alignment--faction-system) | ✅ Implemented | `character.rb`, `alignment_helper.rb`, `arena_helper.rb` |
+
+**Legend:** ✅ Implemented | 🔄 Partial | ❌ Not Started
+
+---
+
 ## Table of Contents
 1. [Chat System](#chat-system)
 2. [Arena/PvP System](#arenapvp-system)
@@ -12,6 +30,8 @@ This document captures all functionality inspired by the Neverlands MMORPG that 
 5. [Game Layout](#game-layout)
 6. [Map Movement](#map-movement)
 7. [Turn-Based Combat System](#turn-based-combat-system)
+8. [Combat Log System](#combat-log-system)
+9. [Alignment & Faction System](#alignment--faction-system)
 
 ---
 
@@ -1248,6 +1268,191 @@ Inspired by Neverlands' shareable log URLs (`http://www.neverlands.ru/logs.fcg?f
   - Public notice banner shows link is viewable by anyone
   - JSON export available for public logs
   - Statistics view accessible without login
+
+---
+
+## Alignment & Faction System
+
+### Original Neverlands Examples
+
+Neverlands features a complex alignment/faction system that affects PvP matchmaking, special abilities, and visual identity.
+
+#### Alignment Icons & Names
+```javascript
+// Faction alignments with icons
+var align_ar = [
+  "0;0",                        // 0: None
+  "darks.gif;Children of Dark", // 1: Dark faction (beginners)
+  "lights.gif;Children of Light", // 2: Light faction (beginners)
+  "sumers.gif;Children of Twilight", // 3: Twilight/Balance faction
+  "chaoss.gif;Children of Chaos", // 4: Chaos faction
+  "light.gif;True Light",       // 5: Advanced Light
+  "dark.gif;True Darkness",     // 6: Advanced Dark
+  "sumer.gif;Neutral Twilight", // 7: Advanced Balance
+  "chaos.gif;Absolute Chaos",   // 8: Advanced Chaos
+  "angel.gif;Angel"             // 9: Special alignment
+];
+
+function sh_align(alid, mode) {
+  if (alid > 0) {
+    split_ar = align_ar[alid].split(";");
+    return '<img src="http://image.neverlands.ru/signs/' + split_ar[0] +
+           '" width=15 height=12 alt="' + split_ar[1] + '">' + (!mode ? '&nbsp;' : '');
+  }
+  return '';
+}
+```
+
+#### Clan/Guild Sign System
+```javascript
+var reg_exp = /[f]\d\d\d/i;  // Family clan pattern
+
+function sh_sign(sign, signn, signs) {
+  if (reg_exp.test(sign)) sign = 'fami.gif';  // Family clan default icon
+  if (sign && sign != 'none' && sign != 'n') {
+    return '<img src="http://image.neverlands.ru/signs/' + sign +
+           '" width=15 height=12 alt=" ' + signn +
+           (signs ? ' (' + signs + ')' : '') + ' ">&nbsp;';
+  }
+  return '';
+}
+```
+
+#### Fight Type Configuration
+```javascript
+function fsign(sftype, sftime, sftrav) {
+  var fst = '';
+
+  // Fight type icon
+  switch(sftype) {
+    case 0: ftmp_pic = '2'; ftmp = 'unarmed'; break;          // No weapons
+    case 1: ftmp_pic = '1'; ftmp = 'free-for-all'; break;     // Standard
+    case 2: ftmp_pic = '1'; ftmp = 'clan vs clan'; break;     // Clan battle
+    case 3: ftmp_pic = '1'; ftmp = 'faction vs faction'; break; // Alignment battle
+    case 4: ftmp_pic = '1'; ftmp = 'clan vs all'; break;
+    case 5: ftmp_pic = '1'; ftmp = 'faction vs all'; break;
+    case 6: ftmp_pic = '1'; ftmp = 'closed (10v10)'; break;   // Private match
+    case 7: ftmp_pic = '3'; ftmp = 'no artifacts'; break;     // No magic items
+    case 8: ftmp_pic = '4'; ftmp = 'limited artifacts'; break;
+  }
+  fst += '<img src="/gameplay/fight' + ftmp_pic + '.gif" alt="' + ftmp + '">';
+
+  // Timeout icon (2-5 minutes)
+  switch(sftime) {
+    case 120: ftmp_pic = '2'; ftmp = '2 minutes'; break;
+    case 180: ftmp_pic = '3'; ftmp = '3 minutes'; break;
+    case 240: ftmp_pic = '4'; ftmp = '4 minutes'; break;
+    case 300: ftmp_pic = '5'; ftmp = '5 minutes'; break;
+  }
+  fst += '<img src="/gameplay/time' + ftmp_pic + '.gif" alt="' + ftmp + '">';
+
+  // Trauma/injury level icon
+  switch(sftrav) {
+    case 10:  ftmp_pic = '4'; ftmp = 'low'; break;
+    case 30:  ftmp_pic = '3'; ftmp = 'medium'; break;
+    case 50:  ftmp_pic = '2'; ftmp = 'high'; break;
+    case 80:  ftmp_pic = '1'; ftmp = 'very high'; break;
+    case 100: ftmp_pic = '1'; ftmp = 'very high'; break;
+    case 110: ftmp_pic = '0'; ftmp = 'trauma'; break;  // Permanent injury
+  }
+  fst += '<img src="/gameplay/injury' + ftmp_pic + '.gif" alt="' + ftmp + '">';
+
+  return fst;
+}
+```
+
+#### Location Type Labels
+```javascript
+function ltxt(lid) {
+  switch(lid) {
+    case 2: return 'City';
+    case 3: return 'Village';
+    case 7: return 'Nature';
+    default: return 'City';
+  }
+}
+
+function UpButton(lid) {
+  switch(lid) {
+    case 1: return 'Nature';
+    case 2: return 'City';
+    case 3: return 'Village';
+    case 4: return 'Exit';
+  }
+}
+```
+
+### Elselands Implementation
+- **Status:** ✅ Implemented
+- **Files:**
+  - `app/models/character.rb` — `faction_alignment`, `alignment_score` attributes
+  - `app/models/arena_room.rb` — Faction-restricted room types (law, light, balance, chaos, dark)
+  - `app/models/arena_application.rb` — `fight_type`, `fight_kind`, `trauma_percent`, `timeout_seconds`
+  - `app/services/players/alignment/access_gate.rb` — Faction/reputation gate checking
+  - `app/services/arena/matchmaker.rb` — Faction-based matchmaking
+  - `app/helpers/arena_helper.rb` — `fight_type_label`, `fight_kind_label` display helpers
+
+### Feature Comparison
+
+| Neverlands Feature | Elselands Status | Implementation |
+|--------------------|------------------|----------------|
+| **Faction Alignments** | ✅ Implemented | `neutral`, `alliance`, `rebellion` in Character model |
+| **Alignment Score** | ✅ Implemented | `alignment_score` numeric attribute (-1000 to +1000) |
+| **Alignment Tiers** | ✅ Implemented | 9 tiers from Absolute Darkness to Celestial |
+| **Chaos Score** | ✅ Implemented | `chaos_score` attribute with 4 tiers (Lawful → Absolute Chaos) |
+| **Faction-Restricted Rooms** | ✅ Implemented | Arena rooms with `law`, `light`, `balance`, `chaos`, `dark` types |
+| **Clan Signs/Icons** | ✅ Implemented | Guild/Clan emblems via `Guild` and `Clan` models |
+| **Fight Types** | ✅ Implemented | `duel`, `team_battle`, `sacrifice` (FFA), `tactical` with emoji icons |
+| **Fight Kinds** | ✅ Implemented | `no_weapons`, `no_artifacts`, `limited_artifacts`, `free`, `clan_vs_clan`, `faction_vs_faction` |
+| **Timeout Settings** | ✅ Implemented | 120, 180, 240, 300 seconds with icons |
+| **Trauma Levels** | ✅ Implemented | 10, 30, 50, 80 percent with color-coded icons |
+| **Alignment Icons** | ✅ Implemented | Emoji icons for all tiers (🖤⬛🌑🌘☯️🌒🌕✨👼) |
+| **Faction Icons** | ✅ Implemented | 🛡️ Alliance, ⚔️ Rebellion, 🏳️ Neutral |
+| **Location Type Labels** | ✅ Implemented | Zone/region system with icons (🏰🏘️🌲🗝️🏟️🏛️) |
+
+### Alignment Tiers (Light/Dark Axis)
+
+| Tier | Score Range | Emoji | Name |
+|------|-------------|-------|------|
+| Absolute Darkness | -1000 to -800 | 🖤 | Absolute Darkness |
+| True Darkness | -799 to -500 | ⬛ | True Darkness |
+| Child of Darkness | -499 to -200 | 🌑 | Child of Darkness |
+| Twilight Walker | -199 to -50 | 🌘 | Twilight Walker |
+| Neutral | -49 to 49 | ☯️ | Neutral |
+| Dawn Seeker | 50 to 199 | 🌒 | Dawn Seeker |
+| Child of Light | 200 to 499 | 🌕 | Child of Light |
+| True Light | 500 to 799 | ✨ | True Light |
+| Celestial | 800 to 1000 | 👼 | Celestial |
+
+### Chaos Tiers (Order/Chaos Axis)
+
+| Tier | Score Range | Emoji | Name |
+|------|-------------|-------|------|
+| Lawful | 0 to 199 | ⚖️ | Lawful |
+| Balanced | 200 to 499 | 🔄 | Balanced |
+| Chaotic | 500 to 799 | 🔥 | Chaotic |
+| Absolute Chaos | 800 to 1000 | 💥 | Absolute Chaos |
+
+### Key Files
+- `app/models/character.rb` — `ALIGNMENT_TIERS`, `CHAOS_TIERS`, tier calculation methods
+- `app/helpers/alignment_helper.rb` — All icon constants and badge helpers
+- `app/helpers/arena_helper.rb` — Fight type/kind icons, match status badges
+- `app/views/arena/*.html.erb` — Updated with emoji icons throughout
+- `db/migrate/20251127140000_add_chaos_score_to_characters.rb` — Added chaos_score column
+
+### Key Adaptations
+- **Database-backed alignments** instead of client-side arrays
+- **AccessGate service** for centralized faction checks
+- **Pundit policies** for authorization based on alignment
+- **Arena matchmaking** respects faction restrictions
+- **Trauma percent** affects post-battle debuffs via `Arena::RewardsDistributor`
+- **Emoji icons** throughout UI for visual identification
+- **Character nameplate helper** displays alignment icons with name
+
+### Potential Enhancements 🔄
+1. **Alignment-Specific Abilities** — Unlock skills based on faction (similar to Neverlands alignment powers)
+2. **Faction Wars** — Large-scale PvP events between factions
+3. **Alignment Reputation Vendors** — Faction-specific shops and rewards
 
 ---
 

@@ -67,7 +67,7 @@ module Arena
 
       finalize_participations(winning_team)
       apply_trauma
-      log_entry("system", nil, "Match ended! Winner: #{winning_team || 'Draw'}")
+      log_entry("system", nil, "Match ended! Winner: #{winning_team || "Draw"}")
       broadcaster.broadcast_match_ended(winning_team)
       true
     end
@@ -96,7 +96,7 @@ module Arena
       max_health = team_health.values.max
       winners = team_health.select { |_team, health| health == max_health }
 
-      winners.size == 1 ? winners.keys.first : nil
+      (winners.size == 1) ? winners.keys.first : nil
     end
 
     private
@@ -123,7 +123,7 @@ module Arena
 
       # Log and broadcast
       log_type = critical ? "critical" : "damage"
-      log_entry(log_type, attacker, "attacks #{target.name} for #{damage} damage#{' (CRITICAL!)' if critical}")
+      log_entry(log_type, attacker, "attacks #{target.name} for #{damage} damage#{" (CRITICAL!)" if critical}")
 
       broadcaster.broadcast_vitals_update(target)
       broadcaster.broadcast_combat_action(attacker, "attack", target, damage, critical:)
@@ -315,7 +315,7 @@ module Arena
       defense = base + armor_bonus
 
       if character.metadata&.dig("defending") &&
-         Time.parse(character.metadata["defend_until"]) > Time.current
+          Time.parse(character.metadata["defend_until"]) > Time.current
         defense = (defense * 1.5).round
         character.metadata.delete("defending")
         character.metadata.delete("defend_until")
@@ -356,7 +356,7 @@ module Arena
     def finalize_participations(winning_team)
       match.arena_participations.each do |participation|
         if participation.result.blank? || participation.result == "pending"
-          result = participation.team == winning_team ? "victory" : "defeat"
+          result = (participation.team == winning_team) ? "victory" : "defeat"
           rating_delta = calculate_rating_delta(participation, winning_team)
           participation.update!(
             result:,
@@ -370,11 +370,11 @@ module Arena
     def calculate_rating_delta(participation, winning_team)
       # Simple ELO-like rating change
       if participation.team == winning_team
-        10 + rand(1..5)
+        rand(11..15)
       elsif winning_team.nil?
         0 # Draw
       else
-        -(10 + rand(1..5))
+        -rand(11..15)
       end
     end
 

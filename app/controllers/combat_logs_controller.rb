@@ -7,7 +7,7 @@ class CombatLogsController < ApplicationController
 
   def show
     authorize @battle
-    @view_mode = params[:stat] == "1" ? :statistics : :log
+    @view_mode = (params[:stat] == "1") ? :statistics : :log
     @page = (params[:p] || 1).to_i
     @per_page = 50
 

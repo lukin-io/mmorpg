@@ -26,8 +26,43 @@ RSpec.describe ArenaHelper, type: :helper do
       expect(helper.fight_type_label("duel")).to eq("1v1 Duel")
     end
 
-    it "returns label for group type" do
-      expect(helper.fight_type_label("group")).to eq("Group Battle")
+    it "returns label for team_battle type" do
+      expect(helper.fight_type_label("team_battle")).to eq("Team Battle")
+    end
+  end
+
+  describe "#fight_type_with_icon" do
+    it "returns label with icon for duel" do
+      expect(helper.fight_type_with_icon("duel")).to include("⚔️")
+    end
+
+    it "returns label with icon for team_battle" do
+      expect(helper.fight_type_with_icon("team_battle")).to include("👥")
+    end
+  end
+
+  describe "#arena_room_status_tag" do
+    it "returns open tag when room has capacity" do
+      room = double(has_capacity?: true)
+      result = helper.arena_room_status_tag(room)
+      expect(result).to include("🟢")
+      expect(result).to include("Open")
+    end
+
+    it "returns full tag when room is at capacity" do
+      room = double(has_capacity?: false)
+      result = helper.arena_room_status_tag(room)
+      expect(result).to include("🔴")
+      expect(result).to include("Full")
+    end
+  end
+
+  describe "#arena_match_status_tag" do
+    it "returns live badge for live matches" do
+      match = double(status: "live")
+      result = helper.arena_match_status_tag(match)
+      expect(result).to include("🔴")
+      expect(result).to include("LIVE")
     end
   end
 

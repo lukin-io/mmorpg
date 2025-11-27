@@ -155,7 +155,7 @@ module Arena
         app2.update!(status: :matched, arena_match: result.match, matched_with: app1)
         result.match
       end
-    rescue StandardError => e
+    rescue => e
       Rails.logger.error("Failed to create duel match: #{e.message}")
       nil
     end
@@ -195,7 +195,7 @@ module Arena
       Arena::MatchStarterJob.set(wait: 30.seconds).perform_later(match.id)
 
       match
-    rescue StandardError => e
+    rescue => e
       Rails.logger.error("Failed to create sacrifice match: #{e.message}")
       nil
     end

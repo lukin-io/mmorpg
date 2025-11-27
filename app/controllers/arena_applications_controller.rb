@@ -15,7 +15,7 @@ class ArenaApplicationsController < ApplicationController
       .order(created_at: :asc)
 
     respond_to do |format|
-      format.html { render partial: "arena_applications/list", locals: { applications: @applications } }
+      format.html { render partial: "arena_applications/list", locals: {applications: @applications} }
       format.json { render json: applications_payload }
     end
   end
@@ -32,10 +32,10 @@ class ArenaApplicationsController < ApplicationController
     respond_to do |format|
       if result.success?
         format.html { redirect_to arena_room_path(@room), notice: "Application submitted!" }
-        format.json { render json: { success: true, application: result.application }, status: :created }
+        format.json { render json: {success: true, application: result.application}, status: :created }
       else
         format.html { redirect_to arena_room_path(@room), alert: result.errors.join(", ") }
-        format.json { render json: { success: false, errors: result.errors }, status: :unprocessable_entity }
+        format.json { render json: {success: false, errors: result.errors}, status: :unprocessable_entity }
       end
     end
   end
@@ -61,7 +61,7 @@ class ArenaApplicationsController < ApplicationController
         end
       else
         format.html { redirect_back fallback_location: arena_path, alert: result.errors.join(", ") }
-        format.json { render json: { success: false, errors: result.errors }, status: :unprocessable_entity }
+        format.json { render json: {success: false, errors: result.errors}, status: :unprocessable_entity }
       end
     end
   end
@@ -82,10 +82,10 @@ class ArenaApplicationsController < ApplicationController
     respond_to do |format|
       if result.success?
         format.html { redirect_to arena_room_path(@application.arena_room), notice: "Application cancelled" }
-        format.json { render json: { success: true } }
+        format.json { render json: {success: true} }
       else
         format.html { redirect_back fallback_location: arena_path, alert: result.errors.join(", ") }
-        format.json { render json: { success: false, errors: result.errors }, status: :unprocessable_entity }
+        format.json { render json: {success: false, errors: result.errors}, status: :unprocessable_entity }
       end
     end
   end

@@ -56,7 +56,7 @@ module Game
       # @param skill_id [Integer, nil] optional skill ID for :skill actions
       # @return [Result] the action result
       def process_action!(action_type:, skill_id: nil)
-        @battle = character.battle_participants.find_by(battle: { status: :active })&.battle
+        @battle = character.battle_participants.find_by(battle: {status: :active})&.battle
         return failure("Not in combat") unless battle
 
         case action_type.to_sym
@@ -157,7 +157,7 @@ module Game
         npc_participant.is_defending = false
         npc_participant.save!
 
-        combat_log << "You attack #{npc_template.name} for #{player_damage} damage#{is_crit ? ' (CRITICAL!)' : ''}."
+        combat_log << "You attack #{npc_template.name} for #{player_damage} damage#{" (CRITICAL!)" if is_crit}."
 
         # Check if NPC defeated
         if npc_participant.current_hp <= 0
@@ -192,7 +192,7 @@ module Game
 
       def process_defend!
         player_participant = battle.battle_participants.find_by(team: "player")
-        npc_participant = battle.battle_participants.find_by(team: "enemy")
+        battle.battle_participants.find_by(team: "enemy")
 
         player_participant.update!(is_defending: true)
 
@@ -375,12 +375,12 @@ module Game
           Characters::DeathHandler.call(character)
         end
 
-        broadcast_combat_ended!(winner == :player ? "victory" : "defeat")
+        broadcast_combat_ended!((winner == :player) ? "victory" : "defeat")
 
         Result.new(
           success: winner == :player,
           battle: battle,
-          message: winner == :player ? "Victory!" : "Defeat!",
+          message: (winner == :player) ? "Victory!" : "Defeat!",
           combat_log: combat_log,
           rewards: rewards
         )
@@ -399,10 +399,10 @@ module Game
           character.inventory.add_item!(item, source: "Dropped by #{npc_template.name}")
         end
 
-        { xp: xp, gold: gold, item: item&.name }
-      rescue StandardError => e
+        {xp: xp, gold: gold, item: item&.name}
+      rescue => e
         Rails.logger.error("Failed to grant PvE rewards: #{e.message}")
-        { xp: 0, gold: 0 }
+        {xp: 0, gold: 0}
       end
 
       def calculate_xp_reward
@@ -411,11 +411,11 @@ module Game
 
         # Bonus for fighting higher level NPCs
         multiplier = if level_diff > 0
-                       1.0 + (level_diff * 0.1)
+          1.0 + (level_diff * 0.1)
         elsif level_diff < -5
-                       0.5 # Reduced XP for much lower level NPCs
+          0.5 # Reduced XP for much lower level NPCs
         else
-                       1.0
+          1.0
         end
 
         (base * multiplier).round
@@ -466,7 +466,7 @@ module Game
       end
 
       def character_in_combat?
-        character.battle_participants.joins(:battle).where(battles: { status: :active }).exists?
+        character.battle_participants.joins(:battle).where(battles: {status: :active}).exists?
       end
 
       def vitals_service
