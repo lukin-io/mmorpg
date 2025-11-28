@@ -410,6 +410,8 @@ end
 - Position system: Uses `character.position` (not `current_position`) → `CharacterPosition`
 - Zone system: Uses `Zone#biome` for resource type determination
 - Combat system: Attack via `start_combat_path(npc_template_id:, tile_npc_id:)`
+  - See `doc/COMBAT_SYSTEM_GUIDE.md` for full combat mechanics
+  - Action Points scale with level and agility: `50 + (level * 3) + (agility * 2)`
 
 ### Important Model Notes
 - `Character` has `has_one :position` (not `current_position`)

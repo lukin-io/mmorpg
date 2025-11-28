@@ -89,6 +89,11 @@ module Game
         @npc_template ||= battle.battle_participants.find_by(team: "enemy")&.npc_template
         return failure("Enemy not found") unless npc_template
 
+        # Validate action points
+        total_ap_cost = calculate_turn_ap_cost(attacks, blocks, skills)
+        max_ap = battle.action_points_per_turn || character.max_action_points
+        return failure("Exceeds action points (#{total_ap_cost}/#{max_ap})") if total_ap_cost > max_ap
+
         player_participant = battle.battle_participants.find_by(team: "player")
         npc_participant = battle.battle_participants.find_by(team: "enemy")
 
@@ -177,7 +182,8 @@ module Game
           zone: @zone,
           initiator: character,
           turn_number: 1,
-          initiative_order: calculate_initiative
+          initiative_order: calculate_initiative,
+          action_points_per_turn: character.max_action_points
         )
       end
 
@@ -566,6 +572,55 @@ module Game
       def crit_chance(attacker)
         base = attacker.respond_to?(:critical_chance) ? attacker.critical_chance : 5
         [base, 50].min
+      end
+
+      # Calculate total action point cost for a turn
+      # @param attacks [Array] array of attack actions
+      # @param blocks [Array] array of block actions
+      # @param skills [Array] array of skill actions
+      # @return [Integer] total AP cost
+      def calculate_turn_ap_cost(attacks, blocks, skills)
+        attack_costs = load_action_costs("attack_types")
+        block_costs = load_action_costs("block_types")
+
+        # Calculate attack costs
+        attack_total = attacks.sum do |attack|
+          key = attack["action_key"] || attack[:action_key]
+          attack_costs.dig(key, "action_cost") || 0
+        end
+
+        # Calculate block costs
+        block_total = blocks.sum do |block|
+          key = block["action_key"] || block[:action_key]
+          block_costs.dig(key, "action_cost") || 30 # Default block cost
+        end
+
+        # Calculate skill costs
+        skill_total = skills.sum do |skill|
+          skill["cost"] || skill[:cost] || 0
+        end
+
+        # Add multi-attack penalty
+        penalty = calculate_multi_attack_penalty(attacks.size)
+
+        attack_total + block_total + skill_total + penalty
+      end
+
+      # Load action costs from config
+      def load_action_costs(category)
+        config_path = Rails.root.join("config/gameplay/combat_actions.yml")
+        return {} unless File.exist?(config_path)
+
+        config = YAML.load_file(config_path, permitted_classes: [Symbol])
+        config[category] || {}
+      end
+
+      # Calculate penalty for multiple attacks
+      def calculate_multi_attack_penalty(attack_count)
+        return 0 if attack_count <= 1
+
+        penalties = [0, 0, 25, 75, 150, 250]
+        penalties[[attack_count, penalties.size - 1].min]
       end
 
       def character_in_combat?
