@@ -293,6 +293,7 @@ Rails.application.routes.draw do
     post :enter
     post :exit_location
     post :gather
+    post :gather_resource
     post :interact
     post :dialogue_action
   end

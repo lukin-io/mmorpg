@@ -11,9 +11,7 @@ class CombatController < ApplicationController
   # Show current combat status
   def show
     if @battle
-      @player_participant = @battle.battle_participants.find_by(team: "player")
-      @enemy_participant = @battle.battle_participants.find_by(team: "enemy")
-      @combat_log = @battle.combat_log_entries.order(created_at: :desc).limit(10)
+      setup_battle_view_variables
     else
       redirect_to world_path, notice: "You are not in combat."
     end
@@ -39,13 +37,30 @@ class CombatController < ApplicationController
       if result.success
         format.html { redirect_to combat_path, notice: result.message }
         format.turbo_stream do
+          # Set instance variables for the battle partial
+          @battle = result.battle
+          setup_battle_view_variables
           render turbo_stream: [
-            turbo_stream.replace("game-main", partial: "combat/battle", locals: {battle: result.battle}),
+            turbo_stream.replace("main_content", partial: "combat/battle"),
             turbo_stream.append("combat-log", partial: "combat/log_entries", locals: {entries: result.combat_log})
           ]
         end
         format.json { render json: {success: true, battle_id: result.battle.id, message: result.message} }
       else
+        # If already in combat, redirect to existing battle instead of showing error
+        if result.message == "Already in combat"
+          set_battle
+          if @battle
+            format.html { redirect_to combat_path }
+            format.turbo_stream do
+              setup_battle_view_variables
+              render turbo_stream: turbo_stream.replace("main_content", partial: "combat/battle")
+            end
+            format.json { render json: {success: true, battle_id: @battle.id, message: "Redirecting to existing combat"} }
+            return
+          end
+        end
+
         format.html { redirect_to world_path, alert: result.message }
         format.turbo_stream { render turbo_stream: turbo_stream.replace("flash", partial: "shared/flash", locals: {alert: result.message}) }
         format.json { render json: {success: false, error: result.message}, status: :unprocessable_entity }
@@ -117,7 +132,7 @@ class CombatController < ApplicationController
       if result.success && result.battle&.completed?
         format.html { redirect_to world_path, notice: "You escaped!" }
         format.turbo_stream do
-          render turbo_stream: turbo_stream.replace("game-main", partial: "world/map")
+          render turbo_stream: turbo_stream.replace("main_content", partial: "world/map")
         end
       else
         format.turbo_stream do
@@ -138,6 +153,40 @@ class CombatController < ApplicationController
       .joins(:battle)
       .where(battles: {status: :active})
       .first&.battle
+  end
+
+  def setup_battle_view_variables
+    @player_participant = @battle.battle_participants.find_by(team: "player")
+    @enemy_participant = @battle.battle_participants.find_by(team: "enemy")
+    @combat_log = @battle.combat_log_entries.order(created_at: :desc).limit(10)
+
+    # Action availability
+    @can_act = @battle.active? && @player_participant&.is_alive
+    @available_skills = @can_act ? Game::Combat::SkillExecutor.available_skills(current_character) : []
+    @available_attacks = default_attacks
+    @available_blocks = default_blocks
+
+    # Team display (for group battles)
+    @team_alpha = @battle.battle_participants.where(team: "player")
+    @team_beta = @battle.battle_participants.where(team: "enemy")
+  end
+
+  def default_attacks
+    [
+      {id: "head", name: "Head", cost: 0},
+      {id: "torso", name: "Torso", cost: 0},
+      {id: "stomach", name: "Stomach", cost: 50},
+      {id: "legs", name: "Legs", cost: 90}
+    ]
+  end
+
+  def default_blocks
+    [
+      {id: "head", name: "Head", cost: 35},
+      {id: "torso", name: "Torso", cost: 50},
+      {id: "stomach", name: "Stomach", cost: 60},
+      {id: "legs", name: "Legs", cost: 30}
+    ]
   end
 
   def respond_with_error(message)

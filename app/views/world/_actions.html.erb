@@ -71,15 +71,79 @@
       </div>
     <% end %>
 
-    <%# Gathering Actions %>
+    <%# Gathering Actions (GatheringNode based - profession required) %>
     <% gather_action = available_actions.find { |a| a[:type] == :gather } %>
     <% if gather_action && gather_action[:nodes].any? %>
       <div class="gather-actions mt-3">
-        <h4>Gather Resources</h4>
+        <h4>Profession Nodes</h4>
         <% gather_action[:nodes].each do |node| %>
           <%= button_to "🌿 Gather #{node.resource_key.titleize}",
               gather_world_path(node_id: node.id),
               method: :post, class: "btn-secondary" %>
+        <% end %>
+      </div>
+    <% end %>
+
+    <%# Tile Resource Gathering (biome based - no profession required) %>
+    <% tile_resource_action = available_actions.find { |a| a[:type] == :tile_resource } %>
+    <% if tile_resource_action && tile_resource_action[:resource] %>
+      <% resource = tile_resource_action[:resource] %>
+      <div class="tile-resource-actions mt-3">
+        <h4>Resources Here</h4>
+        <% if resource[:available] %>
+          <%= button_to resource_icon(resource[:type]) + " Gather #{resource[:name]}",
+              gather_resource_world_path,
+              method: :post,
+              class: "btn-gather btn-gather--#{resource[:type]}",
+              data: { turbo: true } %>
+        <% else %>
+          <div class="resource-depleted">
+            <span class="resource-icon"><%= resource_icon(resource[:type]) %></span>
+            <span class="resource-name"><%= resource[:name] %></span>
+            <span class="resource-respawn">
+              Respawns in <%= format_time_remaining(resource[:respawn_in]) %>
+            </span>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+
+    <%# Tile NPC (biome-based random spawns) %>
+    <% tile_npc_action = available_actions.find { |a| a[:type] == :tile_npc } %>
+    <% if tile_npc_action && tile_npc_action[:npc] %>
+      <% npc = tile_npc_action[:npc] %>
+      <div class="tile-npc-actions mt-3">
+        <h4>Creature Here</h4>
+        <% if npc[:alive] %>
+          <div class="npc-info npc-info--<%= npc[:hostile] ? 'hostile' : 'friendly' %>">
+            <div class="npc-header">
+              <span class="npc-icon"><%= npc[:hostile] ? '👹' : '👤' %></span>
+              <span class="npc-name"><%= npc[:name] %></span>
+              <span class="npc-level">Lv.<%= npc[:level] %></span>
+            </div>
+            <% if npc[:hostile] %>
+              <div class="npc-hp-bar">
+                <div class="npc-hp-fill" style="width: <%= npc[:hp_percentage] %>%"></div>
+                <span class="npc-hp-text"><%= npc[:hp] %>/<%= npc[:max_hp] %></span>
+              </div>
+              <%= link_to "⚔️ Attack", start_combat_path(npc_template_id: npc[:npc_template_id], tile_npc_id: npc[:id]),
+                  class: "btn-attack",
+                  data: { turbo_method: :post, turbo_frame: "main_content" } %>
+            <% else %>
+              <p class="npc-description"><%= npc[:description] %></p>
+              <%= link_to "💬 Talk", interact_world_path(npc_id: npc[:npc_template_id]),
+                  class: "btn-interact",
+                  data: { turbo_method: :post, turbo_frame: "main_content" } %>
+            <% end %>
+          </div>
+        <% else %>
+          <div class="npc-defeated">
+            <span class="npc-icon">💀</span>
+            <span class="npc-name"><%= npc[:name] %></span>
+            <span class="npc-respawn">
+              Respawns in <%= format_time_remaining(npc[:respawn_in]) %>
+            </span>
+          </div>
         <% end %>
       </div>
     <% end %>

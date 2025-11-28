@@ -105,4 +105,31 @@ module CombatHelper
     else "damage-normal"
     end
   end
+
+  # Return CSS class for combat log entry
+  # @param entry [String, CombatLogEntry] the log entry
+  # @return [String] CSS class name
+  def entry_class_for(entry)
+    return "log-entry--info" unless entry.respond_to?(:to_s)
+
+    text = entry.to_s.downcase
+
+    if text.include?("critical") || text.include?("crit")
+      "log-entry--critical"
+    elsif text.include?("damage") || text.include?("attack")
+      "log-entry--damage"
+    elsif text.include?("heal") || text.include?("healing")
+      "log-entry--heal"
+    elsif text.include?("buff")
+      "log-entry--buff"
+    elsif text.include?("debuff") || text.include?("reduce")
+      "log-entry--debuff"
+    elsif text.include?("victory") || text.include?("defeat")
+      "log-entry--result"
+    elsif text.include?("escape") || text.include?("flee")
+      "log-entry--flee"
+    else
+      "log-entry--info"
+    end
+  end
 end

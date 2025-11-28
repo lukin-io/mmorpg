@@ -17,6 +17,8 @@ This document captures all functionality inspired by the Neverlands MMORPG that 
 | 7 | [Turn-Based Combat](#turn-based-combat-system) | ✅ Implemented | `turn_based_combat_service.rb`, `turn_combat_controller.js` |
 | 8 | [Combat Log System](#combat-log-system) | ✅ Implemented | `log_builder.rb`, `statistics_calculator.rb`, public URLs |
 | 9 | [Alignment & Faction](#alignment--faction-system) | ✅ Implemented | `character.rb`, `alignment_helper.rb`, `arena_helper.rb` |
+| 10 | [Tile Resource Gathering](#tile-resource-gathering) | ✅ Implemented | `tile_resource.rb`, `tile_gathering_service.rb`, biome config |
+| 11 | [Tile NPC Spawning](#tile-npc-spawning) | ✅ Implemented | `tile_npc.rb`, `tile_npc_service.rb`, biome NPC config |
 
 **Legend:** ✅ Implemented | 🔄 Partial | ❌ Not Started
 
@@ -32,6 +34,8 @@ This document captures all functionality inspired by the Neverlands MMORPG that 
 7. [Turn-Based Combat System](#turn-based-combat-system)
 8. [Combat Log System](#combat-log-system)
 9. [Alignment & Faction System](#alignment--faction-system)
+10. [Tile Resource Gathering](#tile-resource-gathering)
+11. [Tile NPC Spawning](#tile-npc-spawning)
 
 ---
 
@@ -1486,6 +1490,185 @@ function UpButton(lid) {
 1. **Alignment-Specific Abilities** — Unlock skills based on faction (similar to Neverlands alignment powers)
 2. **Faction Wars** — Large-scale PvP events between factions
 3. **Alignment Reputation Vendors** — Faction-specific shops and rewards
+
+---
+
+## Tile Resource Gathering
+
+### Concept
+
+Neverlands-style tile-based resource gathering where each map tile can contain a resource node. When gathered, the resource is added to the player's inventory and the node depletes, respawning after ~30 minutes with a new random resource based on the tile's biome.
+
+### Original Neverlands Behavior (Inferred)
+- Resources visible on map tiles as clickable icons
+- Single-click to gather
+- Resource disappears after collection
+- Timer-based respawn with new resource type
+- Different biomes yield different resource types
+
+### How Spawning Works
+
+**Initial Spawn (Lazy):**
+1. Player visits a tile → system checks for existing `TileResource` at (zone, x, y)
+2. If none exists → determine biome from tile/zone
+3. Load biome config from YAML → weighted random selection based on `spawn_chance`
+4. Create `TileResource` record with selected resource
+
+**Gathering:**
+1. Player clicks "Gather" → `TileGatheringService.gather!` called
+2. Quantity decremented, item added to inventory
+3. If depleted → set `respawns_at`, schedule `TileResourceRespawnJob`
+
+**Respawn:**
+1. Background job runs after ~30 minutes
+2. **A NEW random resource is selected** (not the same one!)
+3. Record updated with new resource key/type
+
+### Elselands Implementation
+- **Status:** ✅ Implemented
+- **Files:**
+  - `app/models/tile_resource.rb` — Resource at (zone, x, y) with harvest/respawn logic
+  - `app/services/game/world/tile_gathering_service.rb` — Gathering orchestration
+  - `app/services/game/world/biome_resource_config.rb` — YAML-driven biome resource definitions
+  - `app/jobs/tile_resource_respawn_job.rb` — Background job for timed respawns
+  - `app/controllers/world_controller.rb` — `#gather_resource` action
+  - `config/gameplay/biome_resources.yml` — Biome resource spawn configuration
+
+### Key Features
+| Feature | Description |
+|---------|-------------|
+| **Biome-Based Spawns** | Forest spawns wood/herbs, mountain spawns ore/crystals, etc. |
+| **Weighted Random Selection** | Resources have `spawn_chance` affecting probability |
+| **30-Minute Respawns** | Base timer with biome/rarity modifiers |
+| **Inventory Integration** | Resources added via `Game::Inventory::Manager` |
+| **Auto ItemTemplate Creation** | Creates missing item templates on gather |
+| **Depleted State UI** | Shows "Respawns in X:XX" countdown |
+| **Color-Coded Gather Buttons** | Green=herb, gray=ore, brown=wood, etc. |
+
+### Biome Resources
+
+| Biome | Resources | Respawn Modifier |
+|-------|-----------|------------------|
+| Plains | Iron Ore, Copper Ore, Healing Herb, Flax Plant | +0 |
+| Forest | Oak Wood, Birch Wood, Moonleaf Herb, Wild Berries, Ancient Oak | -5 min |
+| Mountain | Iron Ore, Gold Vein, Crystal Formation, Silver Ore, Mythril Ore | +10 min |
+| Swamp | Swamp Moss, Poison Bloom, Bog Iron, Glowing Mushroom | -2 min |
+| Lake/River | Common Fish, Golden Carp, Water Lily, River Pearl | +0 |
+| City | *(none)* | N/A |
+
+### UI Elements
+```html
+<!-- Available resource -->
+<button class="btn-gather btn-gather--ore">
+  ⛏️ Gather Iron Ore
+</button>
+
+<!-- Depleted resource -->
+<div class="resource-depleted">
+  <span class="resource-icon">⛏️</span>
+  <span class="resource-name">Iron Ore</span>
+  <span class="resource-respawn">Respawns in 25m 30s</span>
+</div>
+```
+
+### Key Adaptations
+- **Server-authoritative** — All gathering validated server-side
+- **Unique constraint** — One resource per tile via DB index
+- **Background jobs** — Respawn scheduling via Sidekiq/SolidQueue
+- **Turbo integration** — Actions panel updates via Turbo Stream
+- **No profession required** — Unlike `GatheringNode`, tile resources are for all players
+
+---
+
+## Tile NPC Spawning
+
+### Concept
+
+Similar to resources, NPCs spawn randomly on tiles based on biome. Hostile NPCs can be attacked, friendly NPCs offer services. Respawn time is ~30 minutes with ±5 minute variance.
+
+### How NPC Spawning Works
+
+**Initial Spawn (Lazy):**
+1. Player visits a tile → system checks for existing `TileNpc` at (zone, x, y)
+2. If none exists → determine biome from tile/zone
+3. Load biome NPC config → weighted random selection based on `spawn_chance`
+4. Find or create `NpcTemplate` for selected NPC type
+5. Create `TileNpc` with calculated level (base ± variance), full HP
+
+**Combat/Interaction:**
+- Hostile NPCs → "Attack" button → initiates combat
+- Friendly NPCs → "Talk" button → NPC dialogue/services
+
+**Defeat & Respawn:**
+1. NPC defeated → set `defeated_at`, calculate respawn time
+2. Respawn time = 30min ± 5min random + biome modifier + rarity modifier
+3. Schedule `TileNpcRespawnJob` for `respawns_at` time
+4. When job runs → **A NEW random NPC spawns** (different type possible!)
+
+### Elselands Implementation
+- **Status:** ✅ Implemented
+- **Files:**
+  - `app/models/tile_npc.rb` — NPC at (zone, x, y) with defeat/respawn logic
+  - `app/services/game/world/tile_npc_service.rb` — NPC spawn orchestration
+  - `app/services/game/world/biome_npc_config.rb` — YAML-driven biome NPC definitions
+  - `app/jobs/tile_npc_respawn_job.rb` — Background job for timed respawns
+  - `config/gameplay/biome_npcs.yml` — Biome NPC spawn configuration
+
+### Key Features
+
+| Feature | Description |
+|---------|-------------|
+| **Biome-Based Spawns** | Forest spawns wolves/spiders, mountain spawns trolls/elementals, etc. |
+| **Weighted Selection** | NPCs have `spawn_chance` affecting probability |
+| **30-Min Respawn ±5** | Random variance prevents predictable farming |
+| **Hostile vs Friendly** | Hostile → Attack button, Friendly → Talk button |
+| **HP Bar Display** | Shows current/max HP for hostile NPCs |
+| **Level Variance** | NPCs spawn with level ± variance |
+
+### Biome NPCs
+
+| Biome | Sample NPCs |
+|-------|-------------|
+| Plains | Wild Boar, Plains Wolf, Bandit Scout, Wandering Merchant |
+| Forest | Forest Wolf, Giant Spider, Goblin Scout, Forest Bear, Hermit Druid |
+| Mountain | Mountain Goat, Rock Elemental, Harpy, Mountain Troll |
+| Swamp | Giant Swamp Rat, Bog Zombie, Poison Frog, Swamp Hag |
+| Lake/River | Lake Serpent, Giant Crab, River Crocodile |
+
+### UI Elements
+
+```html
+<!-- Hostile NPC -->
+<div class="npc-info npc-info--hostile">
+  <div class="npc-header">
+    <span class="npc-icon">👹</span>
+    <span class="npc-name">Wild Boar</span>
+    <span class="npc-level">Lv.2</span>
+  </div>
+  <div class="npc-hp-bar">...</div>
+  <a class="btn-attack">⚔️ Attack</a>
+</div>
+
+<!-- Defeated NPC -->
+<div class="npc-defeated">
+  <span class="npc-icon">💀</span>
+  <span class="npc-name">Wild Boar</span>
+  <span class="npc-respawn">Respawns in 27m 30s</span>
+</div>
+```
+
+### Key Adaptations
+- **Server-authoritative** — Combat/defeat validated server-side
+- **Unique constraint** — One NPC per tile via DB index
+- **Background jobs** — Respawn scheduling via background queue
+- **NPC Templates** — Auto-creates `NpcTemplate` records for new NPCs
+- **Combat integration** — Links to existing combat system via `start_combat_path`
+
+### Important Implementation Notes
+- Use `character.position` (not `current_position`) to get `CharacterPosition`
+- `NpcTemplate` stores stats in `metadata` JSONB:
+  - `metadata["health"]` for HP, `metadata["base_damage"]` for attack
+- `TileNpc.at_tile(zone, x, y)` is a class method (not a scope)
 
 ---
 

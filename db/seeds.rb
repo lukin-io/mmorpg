@@ -747,6 +747,54 @@ if defined?(ItemTemplate)
     item.weight = 1
     item.enhancement_rules = {"consumable" => true}
   end
+
+  # Resource/Material Item Templates (for gathering)
+  resource_items = [
+    # Ore resources
+    {key: "iron_ore", name: "Iron Ore", item_type: "material", rarity: "common", weight: 3},
+    {key: "copper_ore", name: "Copper Ore", item_type: "material", rarity: "common", weight: 3},
+    {key: "gold_vein", name: "Gold Vein", item_type: "material", rarity: "uncommon", weight: 4},
+    {key: "silver_ore", name: "Silver Ore", item_type: "material", rarity: "uncommon", weight: 3},
+    {key: "mythril_ore", name: "Mythril Ore", item_type: "material", rarity: "epic", weight: 2},
+    {key: "bog_iron", name: "Bog Iron", item_type: "material", rarity: "common", weight: 3},
+    {key: "river_stone", name: "River Stone", item_type: "material", rarity: "common", weight: 2},
+    # Wood resources
+    {key: "oak_wood", name: "Oak Wood", item_type: "material", rarity: "common", weight: 2},
+    {key: "birch_wood", name: "Birch Wood", item_type: "material", rarity: "common", weight: 2},
+    {key: "ancient_oak", name: "Ancient Oak", item_type: "material", rarity: "rare", weight: 3},
+    # Herb resources
+    {key: "healing_herb", name: "Healing Herb", item_type: "material", rarity: "common", weight: 1},
+    {key: "moonleaf_herb", name: "Moonleaf Herb", item_type: "material", rarity: "uncommon", weight: 1},
+    {key: "wild_berries", name: "Wild Berries", item_type: "material", rarity: "common", weight: 1},
+    {key: "flax_plant", name: "Flax Plant", item_type: "material", rarity: "uncommon", weight: 1},
+    {key: "mountain_herb", name: "Mountain Herb", item_type: "material", rarity: "uncommon", weight: 1},
+    {key: "swamp_moss", name: "Swamp Moss", item_type: "material", rarity: "common", weight: 1},
+    {key: "poison_bloom", name: "Poison Bloom", item_type: "material", rarity: "uncommon", weight: 1},
+    {key: "glowing_mushroom", name: "Glowing Mushroom", item_type: "material", rarity: "uncommon", weight: 1},
+    {key: "water_lily", name: "Water Lily", item_type: "material", rarity: "common", weight: 1},
+    {key: "wild_plant", name: "Wild Plant", item_type: "material", rarity: "common", weight: 1},
+    # Crystal/gem resources
+    {key: "crystal_formation", name: "Crystal Formation", item_type: "material", rarity: "rare", weight: 1},
+    {key: "swamp_gas_crystal", name: "Swamp Gas Crystal", item_type: "material", rarity: "rare", weight: 1},
+    {key: "river_pearl", name: "River Pearl", item_type: "material", rarity: "rare", weight: 1},
+    # Fish resources
+    {key: "common_fish", name: "Common Fish", item_type: "material", rarity: "common", weight: 2},
+    {key: "golden_carp", name: "Golden Carp", item_type: "material", rarity: "uncommon", weight: 2},
+    {key: "freshwater_clam", name: "Freshwater Clam", item_type: "material", rarity: "uncommon", weight: 1}
+  ]
+
+  resource_items.each do |attrs|
+    ItemTemplate.find_or_create_by!(key: attrs[:key]) do |item|
+      item.name = attrs[:name]
+      item.item_type = attrs[:item_type]
+      item.slot = "material"
+      item.rarity = attrs[:rarity]
+      item.weight = attrs[:weight]
+      item.stack_limit = 99
+      item.stat_modifiers = {}
+    end
+  end
+  puts "Created #{resource_items.size} resource item templates"
 end
 
 if defined?(CraftingJob) && main_character

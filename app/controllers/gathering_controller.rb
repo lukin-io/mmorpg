@@ -93,7 +93,7 @@ class GatheringController < ApplicationController
   # GET /gathering/nodes
   # List available gathering nodes in current zone
   def nodes
-    position = current_character.current_position
+    position = current_character.position
     return render json: {nodes: []} unless position&.zone
 
     nodes = GatheringNode.where(zone: position.zone).available

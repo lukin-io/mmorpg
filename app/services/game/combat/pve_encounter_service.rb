@@ -22,7 +22,7 @@ module Game
       def initialize(character, npc_template, zone: nil)
         @character = character
         @npc_template = npc_template
-        @zone = zone || character.current_position&.zone
+        @zone = zone || character.position&.zone
         @errors = []
       end
 
@@ -56,8 +56,11 @@ module Game
       # @param skill_id [Integer, nil] optional skill ID for :skill actions
       # @return [Result] the action result
       def process_action!(action_type:, skill_id: nil)
-        @battle = character.battle_participants.find_by(battle: {status: :active})&.battle
+        @battle = character.battle_participants.joins(:battle).find_by(battles: {status: :active})&.battle
         return failure("Not in combat") unless battle
+
+        # Get NPC template from battle if not provided
+        @npc_template ||= battle.battle_participants.find_by(team: "enemy")&.npc_template
 
         case action_type.to_sym
         when :attack
@@ -94,7 +97,7 @@ module Game
           initiative: character_initiative,
           current_hp: character.current_hp,
           max_hp: character.max_hp,
-          is_active: true
+          is_alive: true
         )
 
         # NPC participant (virtual character)
@@ -104,7 +107,7 @@ module Game
           initiative: npc_initiative,
           current_hp: npc_max_hp,
           max_hp: npc_max_hp,
-          is_active: true
+          is_alive: true
         )
       end
 
@@ -130,12 +133,20 @@ module Game
       end
 
       def npc_stats
-        @npc_stats ||= npc_template.stats.presence || {
-          attack: npc_template.level * 3 + 5,
-          defense: npc_template.level * 2 + 3,
-          agility: npc_template.level + 5,
-          hp: npc_template.level * 10 + 20
-        }.with_indifferent_access
+        @npc_stats ||= begin
+          # Try to get stats from metadata, otherwise generate based on level
+          metadata_stats = npc_template.metadata&.dig("stats")
+          if metadata_stats.present?
+            metadata_stats.with_indifferent_access
+          else
+            {
+              attack: (npc_template.metadata&.dig("base_damage") || npc_template.level * 3 + 5),
+              defense: npc_template.level * 2 + 3,
+              agility: npc_template.level + 5,
+              hp: (npc_template.metadata&.dig("health") || npc_template.level * 10 + 20)
+            }.with_indifferent_access
+          end
+        end
       end
 
       def npc_max_hp
