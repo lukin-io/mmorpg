@@ -33,34 +33,26 @@ class CombatController < ApplicationController
     service = Game::Combat::PveEncounterService.new(current_character, npc_template)
     result = service.start_encounter!
 
+    # Handle "Already in combat" case by redirecting to existing battle
+    if !result.success && result.message == "Already in combat"
+      set_battle
+      if @battle
+        respond_to do |format|
+          format.html { redirect_to combat_path }
+          format.turbo_stream { redirect_to combat_path, status: :see_other }
+          format.json { render json: {success: true, battle_id: @battle.id, message: "Showing existing combat"} }
+        end
+        return
+      end
+    end
+
     respond_to do |format|
       if result.success
+        # Redirect to combat page - Turbo Drive will handle the navigation
         format.html { redirect_to combat_path, notice: result.message }
-        format.turbo_stream do
-          # Set instance variables for the battle partial
-          @battle = result.battle
-          setup_battle_view_variables
-          render turbo_stream: [
-            turbo_stream.replace("main_content", partial: "combat/battle"),
-            turbo_stream.append("combat-log", partial: "combat/log_entries", locals: {entries: result.combat_log})
-          ]
-        end
+        format.turbo_stream { redirect_to combat_path, status: :see_other }
         format.json { render json: {success: true, battle_id: result.battle.id, message: result.message} }
       else
-        # If already in combat, redirect to existing battle instead of showing error
-        if result.message == "Already in combat"
-          set_battle
-          if @battle
-            format.html { redirect_to combat_path }
-            format.turbo_stream do
-              setup_battle_view_variables
-              render turbo_stream: turbo_stream.replace("main_content", partial: "combat/battle")
-            end
-            format.json { render json: {success: true, battle_id: @battle.id, message: "Redirecting to existing combat"} }
-            return
-          end
-        end
-
         format.html { redirect_to world_path, alert: result.message }
         format.turbo_stream { render turbo_stream: turbo_stream.replace("flash", partial: "shared/flash", locals: {alert: result.message}) }
         format.json { render json: {success: false, error: result.message}, status: :unprocessable_entity }
@@ -79,18 +71,43 @@ class CombatController < ApplicationController
     skill_id = params[:skill_id]
 
     service = Game::Combat::PveEncounterService.new(current_character, nil)
-    result = service.process_action!(action_type: action_type, skill_id: skill_id)
+
+    # Handle turn-based action with attacks/blocks/skills arrays
+    if action_type == :turn
+      attacks = parse_json_param(params[:attacks])
+      blocks = parse_json_param(params[:blocks])
+      skills = parse_json_param(params[:skills])
+      result = service.process_turn!(attacks: attacks, blocks: blocks, skills: skills)
+    else
+      result = service.process_action!(action_type: action_type, skill_id: skill_id)
+    end
+
+    # Handle failed results
+    unless result.success
+      return respond_with_error(result.message)
+    end
 
     respond_to do |format|
       format.turbo_stream do
-        streams = [
-          turbo_stream.append("combat-log", partial: "combat/log_entries", locals: {entries: result.combat_log})
-        ]
+        streams = []
 
-        streams << if result.battle&.completed?
-          turbo_stream.replace("combat-actions", partial: "combat/result", locals: {result: result})
+        # Update battle UI based on state
+        if result.battle&.completed?
+          streams << turbo_stream.replace("nl-combat-container", partial: "combat/result", locals: {result: result, battle: result.battle})
         else
-          turbo_stream.replace("combat-status", partial: "combat/status", locals: {battle: result.battle})
+          # Update participant HP bars
+          player_participant = result.battle.battle_participants.find_by(team: "player")
+          enemy_participant = result.battle.battle_participants.find_by(team: "enemy")
+
+          streams << turbo_stream.update("participant-1", partial: "combat/nl_participant",
+            locals: {participant: player_participant, side: :left})
+          streams << turbo_stream.update("participant-2", partial: "combat/nl_participant",
+            locals: {participant: enemy_participant, side: :right})
+
+          # Append new combat log entries (don't replace, just append)
+          if result.combat_log.present?
+            streams << turbo_stream.append("nl-log-table", partial: "combat/nl_log_entries", locals: {entries: result.combat_log})
+          end
         end
 
         render turbo_stream: streams
@@ -195,5 +212,14 @@ class CombatController < ApplicationController
       format.turbo_stream { render turbo_stream: turbo_stream.replace("flash", partial: "shared/flash", locals: {alert: message}) }
       format.json { render json: {success: false, error: message}, status: :unprocessable_entity }
     end
+  end
+
+  def parse_json_param(param)
+    return [] if param.blank?
+    return param if param.is_a?(Array)
+
+    JSON.parse(param)
+  rescue JSON::ParserError
+    []
   end
 end

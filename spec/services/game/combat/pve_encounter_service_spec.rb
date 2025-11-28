@@ -261,6 +261,79 @@ RSpec.describe Game::Combat::PveEncounterService do
     end
   end
 
+  describe "#process_turn!" do
+    let!(:battle_result) { service.start_encounter! }
+    let(:battle) { battle_result.battle }
+
+    it "processes attacks and deals damage" do
+      npc_participant = battle.battle_participants.find_by(team: "enemy")
+      initial_hp = npc_participant.current_hp
+
+      attacks = [{"body_part" => "head", "action_key" => "simple", "slot_index" => 0}]
+      result = service.process_turn!(attacks: attacks, blocks: [], skills: [])
+
+      expect(result.success).to be true
+      expect(npc_participant.reload.current_hp).to be < initial_hp
+    end
+
+    it "processes aimed attacks with bonus damage" do
+      npc_participant = battle.battle_participants.find_by(team: "enemy")
+
+      attacks = [{"body_part" => "head", "action_key" => "aimed", "slot_index" => 0}]
+      result = service.process_turn!(attacks: attacks, blocks: [], skills: [])
+
+      expect(result.success).to be true
+      expect(result.combat_log.first).to include("aimed attack")
+    end
+
+    it "processes blocks" do
+      attacks = []
+      blocks = [{"body_part" => "torso", "action_key" => "basic_block", "slot_index" => 0}]
+      result = service.process_turn!(attacks: attacks, blocks: blocks, skills: [])
+
+      expect(result.success).to be true
+      expect(result.combat_log).to include("You defend your torso.")
+    end
+
+    it "returns combat log with all actions" do
+      attacks = [{"body_part" => "head", "action_key" => "simple", "slot_index" => 0}]
+      blocks = [{"body_part" => "torso", "action_key" => "basic_block", "slot_index" => 1}]
+      result = service.process_turn!(attacks: attacks, blocks: blocks, skills: [])
+
+      expect(result.combat_log.length).to be >= 2 # At least attack and NPC attack
+    end
+
+    it "advances turn number" do
+      initial_turn = battle.turn_number
+      attacks = [{"body_part" => "head", "action_key" => "simple", "slot_index" => 0}]
+
+      service.process_turn!(attacks: attacks, blocks: [], skills: [])
+
+      expect(battle.reload.turn_number).to eq(initial_turn + 1)
+    end
+
+    context "when not in combat" do
+      before do
+        battle.update!(status: :completed)
+      end
+
+      it "returns failure" do
+        result = service.process_turn!(attacks: [], blocks: [], skills: [])
+        expect(result.success).to be false
+        expect(result.message).to eq("Not in combat")
+      end
+    end
+
+    context "with symbol keys" do
+      it "handles symbol keys in attacks" do
+        attacks = [{body_part: "head", action_key: "simple", slot_index: 0}]
+        result = service.process_turn!(attacks: attacks, blocks: [], skills: [])
+
+        expect(result.success).to be true
+      end
+    end
+  end
+
   describe "battle completion" do
     let!(:battle_result) { service.start_encounter! }
     let(:battle) { battle_result.battle }

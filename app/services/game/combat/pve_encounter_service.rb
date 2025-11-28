@@ -76,6 +76,98 @@ module Game
         end
       end
 
+      # Process a full turn with attacks, blocks, and skills
+      #
+      # @param attacks [Array] array of attack actions [{body_part:, action_key:, slot_index:}]
+      # @param blocks [Array] array of block actions [{body_part:, action_key:, slot_index:}]
+      # @param skills [Array] array of skill actions
+      # @return [Result] the turn result
+      def process_turn!(attacks: [], blocks: [], skills: [])
+        @battle = character.battle_participants.joins(:battle).find_by(battles: {status: :active})&.battle
+        return failure("Not in combat") unless battle
+
+        @npc_template ||= battle.battle_participants.find_by(team: "enemy")&.npc_template
+        return failure("Enemy not found") unless npc_template
+
+        player_participant = battle.battle_participants.find_by(team: "player")
+        npc_participant = battle.battle_participants.find_by(team: "enemy")
+
+        combat_log = []
+        total_player_damage = 0
+        total_npc_damage = 0
+
+        # Process player's blocks (set defending state)
+        blocks_set = blocks.map { |b| b["body_part"] || b[:body_part] }.compact
+        player_participant.update!(is_defending: blocks_set.any?)
+
+        if blocks_set.any?
+          combat_log << "You defend your #{blocks_set.join(", ")}."
+        end
+
+        # Process player's attacks
+        attacks.each do |attack|
+          body_part = attack["body_part"] || attack[:body_part]
+          action_key = attack["action_key"] || attack[:action_key]
+
+          next if action_key.blank?
+
+          # Calculate damage based on attack type
+          base_damage = calculate_damage(character, npc_stats, is_defending: npc_participant.is_defending)
+          damage_modifier = (action_key == "aimed") ? 1.3 : 1.0
+          damage = (base_damage * damage_modifier).to_i
+
+          # Check for critical
+          is_crit = rand(100) < crit_chance(character)
+          damage = (damage * 1.5).to_i if is_crit
+
+          total_player_damage += damage
+          attack_name = (action_key == "aimed") ? "aimed attack" : "attack"
+          combat_log << "You #{attack_name} #{npc_template.name}'s #{body_part} for #{damage} damage#{" (CRITICAL!)" if is_crit}."
+        end
+
+        # Apply player damage to NPC
+        if total_player_damage > 0
+          npc_participant.current_hp = [npc_participant.current_hp - total_player_damage, 0].max
+          npc_participant.is_defending = false
+          npc_participant.save!
+
+          # Check if NPC defeated
+          if npc_participant.current_hp <= 0
+            return complete_battle!(winner: :player, combat_log: combat_log)
+          end
+        end
+
+        # NPC's turn - select random body part to attack
+        npc_target = %w[head torso stomach legs].sample
+        npc_attacking_blocked_part = blocks_set.include?(npc_target)
+
+        npc_base_damage = calculate_npc_damage(npc_stats, character, is_defending: npc_attacking_blocked_part)
+        total_npc_damage = npc_base_damage
+
+        combat_log << "#{npc_template.name} attacks your #{npc_target} for #{total_npc_damage} damage#{" (blocked!)" if npc_attacking_blocked_part}."
+
+        # Apply NPC damage to player
+        vitals_service.apply_damage(total_npc_damage, source: npc_template.name)
+        player_participant.is_defending = false
+        player_participant.save!
+
+        # Check if player defeated
+        if character.reload.current_hp <= 0
+          return complete_battle!(winner: :npc, combat_log: combat_log)
+        end
+
+        # Advance turn
+        battle.update!(turn_number: battle.turn_number + 1)
+        broadcast_combat_update!(combat_log)
+
+        Result.new(
+          success: true,
+          battle: battle,
+          message: "Turn #{battle.turn_number} completed",
+          combat_log: combat_log
+        )
+      end
+
       private
 
       def create_battle!

@@ -106,6 +106,29 @@ module CombatHelper
     end
   end
 
+  # Return icon for magic/skill element type
+  # @param element [String, Symbol] the element or skill type
+  # @return [String] emoji icon
+  def magic_icon(element)
+    case element.to_s
+    when "fire" then "🔥"
+    when "water", "ice" then "❄️"
+    when "earth" then "🪨"
+    when "air", "lightning" then "⚡"
+    when "arcane" then "✨"
+    when "heal" then "💚"
+    when "shield" then "🛡️"
+    when "buff" then "⬆️"
+    when "debuff" then "⬇️"
+    when "damage" then "⚔️"
+    when "dot" then "🔥"
+    when "hot" then "💖"
+    when "aoe" then "💥"
+    when "drain" then "🩸"
+    else "🔮"
+    end
+  end
+
   # Return CSS class for combat log entry
   # @param entry [String, CombatLogEntry] the log entry
   # @return [String] CSS class name

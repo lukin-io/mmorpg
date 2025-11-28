@@ -92,13 +92,13 @@ RSpec.describe "Combat", type: :request do
       end
 
       context "with turbo stream request" do
-        it "returns turbo stream response" do
+        it "redirects to combat page" do
           post start_combat_path,
             params: {npc_template_id: npc_template.id},
             headers: {"Accept" => "text/vnd.turbo-stream.html"}
 
-          expect(response).to have_http_status(:ok)
-          expect(response.content_type).to include("turbo-stream")
+          expect(response).to have_http_status(:see_other)
+          expect(response).to redirect_to(combat_path)
         end
       end
 
@@ -143,9 +143,10 @@ RSpec.describe "Combat", type: :request do
     end
 
     context "when already in combat" do
+      let!(:existing_battle) { create(:battle, initiator: character, status: :active) }
+
       before do
         # Create existing battle with NPC
-        existing_battle = create(:battle, initiator: character, status: :active)
         create(:battle_participant, battle: existing_battle, character: character, team: "player")
         create(:battle_participant, battle: existing_battle, npc_template: npc_template, team: "enemy")
       end
@@ -154,13 +155,26 @@ RSpec.describe "Combat", type: :request do
         post start_combat_path, params: {npc_template_id: npc_template.id}
         expect(response).to have_http_status(:ok)
           .or have_http_status(:redirect)
-          .or have_http_status(:no_content)
       end
 
       it "does not create additional battle" do
         expect {
           post start_combat_path, params: {npc_template_id: npc_template.id}
         }.not_to change(Battle, :count)
+      end
+
+      it "redirects to combat page via turbo stream" do
+        post start_combat_path,
+          params: {npc_template_id: npc_template.id},
+          headers: {"Accept" => "text/vnd.turbo-stream.html"}
+
+        expect(response).to have_http_status(:see_other)
+        expect(response).to redirect_to(combat_path)
+      end
+
+      it "redirects to combat path for HTML format" do
+        post start_combat_path, params: {npc_template_id: npc_template.id}
+        expect(response).to redirect_to(combat_path)
       end
     end
   end

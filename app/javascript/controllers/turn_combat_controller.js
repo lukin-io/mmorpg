@@ -250,7 +250,7 @@ export default class extends Controller {
     // Disable controls while submitting
     this.setControlsEnabled(false)
 
-    // Submit via fetch
+    // Submit via fetch with turbo-stream support
     const formData = new FormData()
     formData.append('action_type', 'turn')
     formData.append('attacks', JSON.stringify(attacks))
@@ -261,19 +261,40 @@ export default class extends Controller {
       method: 'POST',
       body: formData,
       headers: {
-        'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content
+        'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content,
+        'Accept': 'text/vnd.turbo-stream.html, text/html, application/xhtml+xml'
       }
     })
-    .then(response => response.json())
+    .then(response => {
+      const contentType = response.headers.get('content-type') || ''
+
+      // Handle turbo-stream response
+      if (contentType.includes('turbo-stream')) {
+        return response.text().then(html => {
+          // Let Turbo process the stream
+          Turbo.renderStreamMessage(html)
+          this.setControlsEnabled(true)
+          this.resetSelections()
+          return { success: true, turboStream: true }
+        })
+      }
+
+      // Handle JSON response (error cases)
+      if (contentType.includes('json')) {
+        return response.json()
+      }
+
+      // Default: assume success for other responses
+      this.setControlsEnabled(true)
+      return { success: true }
+    })
     .then(data => {
-      if (data.success) {
-        if (data.round_complete) {
-          // Round resolved - updates will come via ActionCable
-        } else {
-          // Waiting for opponent
-          this.showWaitingMessage()
-        }
-      } else {
+      if (data.turboStream) {
+        // Already handled above
+        return
+      }
+
+      if (!data.success) {
         alert(data.message || 'Failed to submit turn')
         this.setControlsEnabled(true)
       }

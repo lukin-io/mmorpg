@@ -126,14 +126,17 @@
                 <div class="npc-hp-fill" style="width: <%= npc[:hp_percentage] %>%"></div>
                 <span class="npc-hp-text"><%= npc[:hp] %>/<%= npc[:max_hp] %></span>
               </div>
-              <%= link_to "⚔️ Attack", start_combat_path(npc_template_id: npc[:npc_template_id], tile_npc_id: npc[:id]),
-                  class: "btn-attack",
-                  data: { turbo_method: :post, turbo_frame: "main_content" } %>
+              <%= form_with url: start_combat_path, method: :post, data: { turbo_frame: "_top" } do |f| %>
+                <%= f.hidden_field :npc_template_id, value: npc[:npc_template_id] %>
+                <%= f.hidden_field :tile_npc_id, value: npc[:id] %>
+                <%= f.submit "⚔️ Attack", class: "btn-attack" %>
+              <% end %>
             <% else %>
               <p class="npc-description"><%= npc[:description] %></p>
-              <%= link_to "💬 Talk", interact_world_path(npc_id: npc[:npc_template_id]),
-                  class: "btn-interact",
-                  data: { turbo_method: :post, turbo_frame: "main_content" } %>
+              <%= form_with url: interact_world_path, method: :post, data: { turbo_frame: "_top" } do |f| %>
+                <%= f.hidden_field :npc_id, value: npc[:npc_template_id] %>
+                <%= f.submit "💬 Talk", class: "btn-interact" %>
+              <% end %>
             <% end %>
           </div>
         <% else %>
