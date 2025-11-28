@@ -295,7 +295,7 @@ module Game
       end
 
       def zone_info
-        zone = character.current_position&.zone
+        zone = character.position&.zone
         return {} unless zone
 
         {
@@ -307,7 +307,7 @@ module Game
       end
 
       def nearby_locations
-        zone = character.current_position&.zone
+        zone = character.position&.zone
         return [] unless zone
 
         # Return nearby zones or points of interest

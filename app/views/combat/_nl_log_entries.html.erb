@@ -1,0 +1,24 @@
+<%# Simple combat log entries for Turbo Stream append %>
+<%
+  entries ||= []
+
+  def log_entry_class(text)
+    return "nl-log-victory" if text.include?("Victory") || text.include?("wins")
+    return "nl-log-defeat" if text.include?("defeated") || text.include?("slain")
+    return "nl-log-heal" if text.include?("heal") || text.include?("restored")
+    return "nl-log-damage" if text.include?("damage") || text.include?("attack")
+    return "nl-log-system" if text.include?("defend") || text.include?("block")
+    "nl-log-attack"
+  end
+%>
+
+<% entries.each do |entry| %>
+  <% text = entry.is_a?(String) ? entry : entry.to_s %>
+  <tr class="nl-log-new">
+    <td class="nl-log-entry <%= log_entry_class(text) %>">
+      <span class="nl-log-time"><%= Time.current.strftime("%H:%M") %></span>
+      <%= text %>
+    </td>
+  </tr>
+<% end %>
+

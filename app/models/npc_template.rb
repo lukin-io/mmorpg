@@ -9,8 +9,9 @@ class NpcTemplate < ApplicationRecord
   validates :dialogue, presence: true
 
   # Scope to find NPCs that can appear in a specific zone
+  # Using jsonb_exists() instead of ? operator to avoid Rails bind variable conflicts
   scope :in_zone, ->(zone_name) {
-    where("metadata->>'zone' = ? OR metadata->'zones' ? ?", zone_name, zone_name)
+    where("metadata->>'zone' = :zone OR jsonb_exists(metadata->'zones', :zone)", zone: zone_name)
   }
 
   # Scope to find NPCs by role

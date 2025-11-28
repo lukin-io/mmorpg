@@ -105,4 +105,54 @@ module CombatHelper
     else "damage-normal"
     end
   end
+
+  # Return icon for magic/skill element type
+  # @param element [String, Symbol] the element or skill type
+  # @return [String] emoji icon
+  def magic_icon(element)
+    case element.to_s
+    when "fire" then "🔥"
+    when "water", "ice" then "❄️"
+    when "earth" then "🪨"
+    when "air", "lightning" then "⚡"
+    when "arcane" then "✨"
+    when "heal" then "💚"
+    when "shield" then "🛡️"
+    when "buff" then "⬆️"
+    when "debuff" then "⬇️"
+    when "damage" then "⚔️"
+    when "dot" then "🔥"
+    when "hot" then "💖"
+    when "aoe" then "💥"
+    when "drain" then "🩸"
+    else "🔮"
+    end
+  end
+
+  # Return CSS class for combat log entry
+  # @param entry [String, CombatLogEntry] the log entry
+  # @return [String] CSS class name
+  def entry_class_for(entry)
+    return "log-entry--info" unless entry.respond_to?(:to_s)
+
+    text = entry.to_s.downcase
+
+    if text.include?("critical") || text.include?("crit")
+      "log-entry--critical"
+    elsif text.include?("damage") || text.include?("attack")
+      "log-entry--damage"
+    elsif text.include?("heal") || text.include?("healing")
+      "log-entry--heal"
+    elsif text.include?("buff")
+      "log-entry--buff"
+    elsif text.include?("debuff") || text.include?("reduce")
+      "log-entry--debuff"
+    elsif text.include?("victory") || text.include?("defeat")
+      "log-entry--result"
+    elsif text.include?("escape") || text.include?("flee")
+      "log-entry--flee"
+    else
+      "log-entry--info"
+    end
+  end
 end

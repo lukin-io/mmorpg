@@ -1,0 +1,49 @@
+<%#
+  Compact online players list for Neverlands-style layout
+  Shows currently online players in a narrow sidebar format
+
+  @example
+    <%= render "shared/online_players_compact" %>
+%>
+<% online_users = User.joins(:user_sessions)
+     .where(user_sessions: { signed_out_at: nil })
+     .where("user_sessions.last_seen_at > ?", 5.minutes.ago)
+     .distinct
+     .limit(50) rescue [] %>
+
+<div class="nl-players-header">
+  <span class="nl-players-title">Online</span>
+  <span class="nl-players-count"><%= online_users.size %></span>
+</div>
+
+<div class="nl-players-list">
+  <% online_users.each do |user| %>
+    <% session = user.user_sessions.where(signed_out_at: nil).order(last_seen_at: :desc).first %>
+    <% status = session&.last_seen_at&.> 2.minutes.ago ? 'active' : 'idle' %>
+
+    <div class="nl-player"
+         data-user-id="<%= user.id %>"
+         data-action="click->game-layout#whisperPlayer contextmenu->game-layout#showPlayerMenu"
+         data-username="<%= user.profile_name %>"
+         title="<%= user.profile_name %>">
+      <span class="nl-player-dot nl-player-dot--<%= status %>"></span>
+      <span class="nl-player-name"><%= truncate(user.profile_name || user.email.split('@').first, length: 12) %></span>
+      <% if user.characters.any? %>
+        <span class="nl-player-lvl"><%= user.characters.first.level %></span>
+      <% end %>
+    </div>
+  <% end %>
+
+  <% if online_users.empty? %>
+    <div class="nl-players-empty">—</div>
+  <% end %>
+</div>
+
+<%# Context menu for player interactions %>
+<div class="nl-player-menu" data-game-layout-target="playerMenu" style="display: none;">
+  <button data-action="click->game-layout#whisperPlayer">📨 Whisper</button>
+  <button data-action="click->game-layout#viewProfile">👤 Profile</button>
+  <button data-action="click->game-layout#inviteToParty">🤝 Invite</button>
+  <button data-action="click->game-layout#ignorePlayer">🚫 Ignore</button>
+</div>
+

@@ -1,0 +1,232 @@
+# Biome Resource Configuration
+# Defines what resources can spawn in each biome
+# Resources are weighted by spawn_chance (higher = more common)
+
+plains:
+  respawn_modifier: 0  # seconds added/subtracted from base respawn
+  resources:
+    - key: iron_ore
+      type: ore
+      name: Iron Ore
+      quantity: 1
+      spawn_chance: 30
+      metadata:
+        rarity: common
+    - key: copper_ore
+      type: ore
+      name: Copper Ore
+      quantity: 1
+      spawn_chance: 25
+      metadata:
+        rarity: common
+    - key: healing_herb
+      type: herb
+      name: Healing Herb
+      quantity: 2
+      spawn_chance: 35
+      metadata:
+        rarity: common
+    - key: flax_plant
+      type: herb
+      name: Flax Plant
+      quantity: 1
+      spawn_chance: 10
+      metadata:
+        rarity: uncommon
+
+forest:
+  respawn_modifier: -300  # 5 minutes faster
+  resources:
+    - key: oak_wood
+      type: wood
+      name: Oak Wood
+      quantity: 2
+      spawn_chance: 35
+      metadata:
+        rarity: common
+    - key: birch_wood
+      type: wood
+      name: Birch Wood
+      quantity: 1
+      spawn_chance: 25
+      metadata:
+        rarity: common
+    - key: moonleaf_herb
+      type: herb
+      name: Moonleaf Herb
+      quantity: 1
+      spawn_chance: 20
+      metadata:
+        rarity: uncommon
+    - key: wild_berries
+      type: herb
+      name: Wild Berries
+      quantity: 3
+      spawn_chance: 15
+      metadata:
+        rarity: common
+    - key: ancient_oak
+      type: wood
+      name: Ancient Oak
+      quantity: 1
+      spawn_chance: 5
+      metadata:
+        rarity: rare
+
+mountain:
+  respawn_modifier: 600  # 10 minutes slower
+  resources:
+    - key: iron_ore
+      type: ore
+      name: Iron Ore
+      quantity: 2
+      spawn_chance: 30
+      metadata:
+        rarity: common
+    - key: gold_vein
+      type: ore
+      name: Gold Vein
+      quantity: 1
+      spawn_chance: 15
+      metadata:
+        rarity: uncommon
+    - key: crystal_formation
+      type: crystal
+      name: Crystal Formation
+      quantity: 1
+      spawn_chance: 10
+      metadata:
+        rarity: rare
+    - key: mountain_herb
+      type: herb
+      name: Mountain Herb
+      quantity: 1
+      spawn_chance: 20
+      metadata:
+        rarity: uncommon
+    - key: silver_ore
+      type: ore
+      name: Silver Ore
+      quantity: 1
+      spawn_chance: 20
+      metadata:
+        rarity: uncommon
+    - key: mythril_ore
+      type: ore
+      name: Mythril Ore
+      quantity: 1
+      spawn_chance: 5
+      metadata:
+        rarity: epic
+
+swamp:
+  respawn_modifier: -120  # 2 minutes faster
+  resources:
+    - key: swamp_moss
+      type: herb
+      name: Swamp Moss
+      quantity: 2
+      spawn_chance: 35
+      metadata:
+        rarity: common
+    - key: poison_bloom
+      type: herb
+      name: Poison Bloom
+      quantity: 1
+      spawn_chance: 20
+      metadata:
+        rarity: uncommon
+    - key: bog_iron
+      type: ore
+      name: Bog Iron
+      quantity: 1
+      spawn_chance: 25
+      metadata:
+        rarity: common
+    - key: glowing_mushroom
+      type: herb
+      name: Glowing Mushroom
+      quantity: 1
+      spawn_chance: 15
+      metadata:
+        rarity: uncommon
+    - key: swamp_gas_crystal
+      type: crystal
+      name: Swamp Gas Crystal
+      quantity: 1
+      spawn_chance: 5
+      metadata:
+        rarity: rare
+
+lake:
+  respawn_modifier: 0
+  resources:
+    - key: common_fish
+      type: fish
+      name: Common Fish
+      quantity: 1
+      spawn_chance: 40
+      metadata:
+        rarity: common
+    - key: river_pearl
+      type: gem
+      name: River Pearl
+      quantity: 1
+      spawn_chance: 10
+      metadata:
+        rarity: rare
+    - key: water_lily
+      type: herb
+      name: Water Lily
+      quantity: 1
+      spawn_chance: 30
+      metadata:
+        rarity: common
+    - key: golden_carp
+      type: fish
+      name: Golden Carp
+      quantity: 1
+      spawn_chance: 20
+      metadata:
+        rarity: uncommon
+
+river:
+  respawn_modifier: -60
+  resources:
+    - key: common_fish
+      type: fish
+      name: Common Fish
+      quantity: 1
+      spawn_chance: 50
+      metadata:
+        rarity: common
+    - key: river_stone
+      type: ore
+      name: River Stone
+      quantity: 2
+      spawn_chance: 30
+      metadata:
+        rarity: common
+    - key: freshwater_clam
+      type: fish
+      name: Freshwater Clam
+      quantity: 1
+      spawn_chance: 20
+      metadata:
+        rarity: uncommon
+
+city:
+  respawn_modifier: 1800  # Very slow in cities
+  resources: []  # No natural resources in cities
+
+default:
+  respawn_modifier: 0
+  resources:
+    - key: wild_plant
+      type: herb
+      name: Wild Plant
+      quantity: 1
+      spawn_chance: 100
+      metadata:
+        rarity: common
+

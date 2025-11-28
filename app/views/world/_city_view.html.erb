@@ -10,7 +10,7 @@
   <%# City header %>
   <div class="city-header">
     <h1 class="city-name"><%= zone.name %></h1>
-    <p class="city-description"><%= zone.description || "A bustling city full of adventure." %></p>
+    <p class="city-description"><%= zone.metadata&.dig("description") || "A bustling city full of adventure." %></p>
   </div>
 
   <%# District navigation arrows %>

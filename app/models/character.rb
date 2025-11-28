@@ -85,6 +85,19 @@ class Character < ApplicationRecord
     Game::Systems::StatBlock.new(base:)
   end
 
+  # Calculate maximum action points for combat
+  # Formula: Base AP (50) + (Level × 3) + (Agility × 2)
+  # This determines how many attacks/blocks a character can perform per turn
+  #
+  # @return [Integer] the character's maximum action points
+  def max_action_points
+    base_ap = 50
+    level_bonus = level * 3
+    agility_bonus = stats.get(:agility).to_i * 2
+
+    base_ap + level_bonus + agility_bonus
+  end
+
   # Get current alignment tier based on alignment_score
   def alignment_tier
     score = alignment_score.to_i.clamp(-1000, 1000)

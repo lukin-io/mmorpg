@@ -176,4 +176,38 @@ RSpec.describe Character, type: :model do
       end
     end
   end
+
+  describe "#max_action_points" do
+    let(:character_class) { create(:character_class, base_stats: {strength: 5, vitality: 5, agility: 8, intellect: 3}) }
+    let(:character) { create(:character, character_class: character_class, level: 10) }
+
+    it "calculates AP based on level and agility" do
+      # Formula: 50 (base) + (level * 3) + (agility * 2)
+      # = 50 + (10 * 3) + (8 * 2)
+      # = 50 + 30 + 16 = 96
+      expect(character.max_action_points).to eq(96)
+    end
+
+    it "increases AP with higher level" do
+      character.update!(level: 20)
+      # = 50 + (20 * 3) + (8 * 2)
+      # = 50 + 60 + 16 = 126
+      expect(character.max_action_points).to eq(126)
+    end
+
+    it "increases AP with allocated agility" do
+      character.update!(allocated_stats: {"agility" => 5})
+      # Base agility: 8, Allocated: 5, Total: 13
+      # = 50 + (10 * 3) + (13 * 2)
+      # = 50 + 30 + 26 = 106
+      expect(character.max_action_points).to eq(106)
+    end
+
+    it "returns appropriate AP for level 1 character" do
+      low_class = create(:character_class, base_stats: {strength: 5, vitality: 5, agility: 5, intellect: 5})
+      low_char = create(:character, level: 1, character_class: low_class)
+      # = 50 + (1 * 3) + (5 * 2) = 50 + 3 + 10 = 63
+      expect(low_char.max_action_points).to eq(63)
+    end
+  end
 end

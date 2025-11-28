@@ -33,21 +33,3 @@
   <% end %>
 </div>
 
-<%# Magic icon helper %>
-<%
-def magic_icon(element)
-  case element.to_s
-  when "fire" then "🔥"
-  when "water", "ice" then "❄️"
-  when "earth" then "🪨"
-  when "air", "lightning" then "⚡"
-  when "arcane" then "✨"
-  when "heal" then "💚"
-  when "shield" then "🛡️"
-  when "buff" then "⬆️"
-  when "debuff" then "⬇️"
-  else "🔮"
-  end
-end
-%>
-

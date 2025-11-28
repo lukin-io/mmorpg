@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_11_27_140000) do
+ActiveRecord::Schema[8.1].define(version: 2025_11_28_084408) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -280,6 +280,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_27_140000) do
     t.integer "hp_remaining", default: 0, null: false
     t.integer "initiative", default: 0, null: false
     t.boolean "is_alive", default: true
+    t.boolean "is_defending", default: false
     t.integer "mana_used", default: 0
     t.integer "max_hp", default: 100
     t.integer "max_mp", default: 50
@@ -1312,6 +1313,8 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_27_140000) do
   create_table "item_templates", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.jsonb "enhancement_rules", default: {}, null: false
+    t.string "item_type", default: "equipment"
+    t.string "key"
     t.string "name", null: false
     t.boolean "premium", default: false, null: false
     t.string "rarity", null: false
@@ -1320,6 +1323,8 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_27_140000) do
     t.jsonb "stat_modifiers", default: {}, null: false
     t.datetime "updated_at", null: false
     t.integer "weight", default: 1, null: false
+    t.index ["item_type"], name: "index_item_templates_on_item_type"
+    t.index ["key"], name: "index_item_templates_on_key", unique: true
     t.index ["name"], name: "index_item_templates_on_name", unique: true
     t.index ["rarity"], name: "index_item_templates_on_rarity"
     t.index ["slot"], name: "index_item_templates_on_slot"
@@ -1585,9 +1590,11 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_27_140000) do
     t.integer "level", default: 1, null: false
     t.jsonb "metadata", default: {}, null: false
     t.string "name", null: false
+    t.string "npc_key"
     t.string "role", null: false
     t.datetime "updated_at", null: false
     t.index ["name"], name: "index_npc_templates_on_name", unique: true
+    t.index ["npc_key"], name: "index_npc_templates_on_npc_key", unique: true
     t.index ["role"], name: "index_npc_templates_on_role"
   end
 
@@ -2029,6 +2036,53 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_27_140000) do
     t.index ["tactical_match_id"], name: "index_tactical_participants_on_tactical_match_id"
   end
 
+  create_table "tile_npcs", force: :cascade do |t|
+    t.string "biome"
+    t.datetime "created_at", null: false
+    t.integer "current_hp"
+    t.datetime "defeated_at"
+    t.bigint "defeated_by_id"
+    t.integer "level", default: 1, null: false
+    t.integer "max_hp"
+    t.jsonb "metadata", default: {}, null: false
+    t.string "npc_key", null: false
+    t.string "npc_role", default: "hostile", null: false
+    t.bigint "npc_template_id", null: false
+    t.datetime "respawns_at"
+    t.datetime "updated_at", null: false
+    t.integer "x", null: false
+    t.integer "y", null: false
+    t.string "zone", null: false
+    t.index ["biome"], name: "index_tile_npcs_on_biome"
+    t.index ["defeated_by_id"], name: "index_tile_npcs_on_defeated_by_id"
+    t.index ["npc_role"], name: "index_tile_npcs_on_npc_role"
+    t.index ["npc_template_id"], name: "index_tile_npcs_on_npc_template_id"
+    t.index ["respawns_at"], name: "index_tile_npcs_on_respawns_at"
+    t.index ["zone", "x", "y"], name: "index_tile_npcs_on_zone_and_x_and_y", unique: true
+  end
+
+  create_table "tile_resources", force: :cascade do |t|
+    t.integer "base_quantity", default: 1, null: false
+    t.string "biome"
+    t.datetime "created_at", null: false
+    t.bigint "harvested_by_id"
+    t.datetime "last_harvested_at"
+    t.jsonb "metadata", default: {}, null: false
+    t.integer "quantity", default: 1, null: false
+    t.string "resource_key", null: false
+    t.string "resource_type", default: "material", null: false
+    t.datetime "respawns_at"
+    t.datetime "updated_at", null: false
+    t.integer "x", null: false
+    t.integer "y", null: false
+    t.string "zone", null: false
+    t.index ["biome"], name: "index_tile_resources_on_biome"
+    t.index ["harvested_by_id"], name: "index_tile_resources_on_harvested_by_id"
+    t.index ["resource_type"], name: "index_tile_resources_on_resource_type"
+    t.index ["respawns_at"], name: "index_tile_resources_on_respawns_at"
+    t.index ["zone", "x", "y"], name: "index_tile_resources_on_zone_and_x_and_y", unique: true
+  end
+
   create_table "title_grants", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.boolean "equipped", default: false, null: false
@@ -2395,6 +2449,9 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_27_140000) do
   add_foreign_key "tactical_matches", "characters", column: "winner_id"
   add_foreign_key "tactical_participants", "characters"
   add_foreign_key "tactical_participants", "tactical_matches"
+  add_foreign_key "tile_npcs", "characters", column: "defeated_by_id"
+  add_foreign_key "tile_npcs", "npc_templates"
+  add_foreign_key "tile_resources", "characters", column: "harvested_by_id"
   add_foreign_key "title_grants", "titles"
   add_foreign_key "title_grants", "users"
   add_foreign_key "trade_items", "trade_sessions"
