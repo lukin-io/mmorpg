@@ -30,6 +30,8 @@ class WorldController < ApplicationController
     @available_actions = available_actions
     @npcs_here = npcs_at_current_tile
     @gathering_nodes = gathering_nodes_at_current_tile
+    @tile_resource = tile_resource_at_current_tile
+    @tile_npc = tile_npc_at_current_tile
     @players_here = players_at_current_tile
   end
 
@@ -122,6 +124,39 @@ class WorldController < ApplicationController
     redirect_to world_path, notice: "Gathered #{node.resource_key.titleize}!"
   rescue ActiveRecord::RecordNotFound
     redirect_to world_path, alert: "Resource not found."
+  end
+
+  # POST /world/gather_resource
+  # Gather a resource from the current tile
+  def gather_resource
+    service = Game::World::TileGatheringService.new(
+      character: current_character,
+      zone: @position.zone.name,
+      x: @position.x,
+      y: @position.y
+    )
+
+    result = service.gather!
+
+    respond_to do |format|
+      if result.success
+        format.html { redirect_to world_path, notice: result.message }
+        format.turbo_stream do
+          render turbo_stream: [
+            turbo_stream.replace("flash-messages", partial: "shared/flash", locals: {type: "notice", message: result.message}),
+            turbo_stream.replace("available-actions", partial: "world/actions", locals: {available_actions: available_actions, position: @position}),
+            turbo_stream.replace("location-info", partial: "world/location_info", locals: {position: @position, tile: current_tile, zone: @position.zone})
+          ]
+        end
+        format.json { render json: {success: true, item: result.item_name, quantity: result.quantity, message: result.message} }
+      else
+        format.html { redirect_to world_path, alert: result.message }
+        format.turbo_stream do
+          render turbo_stream: turbo_stream.replace("flash-messages", partial: "shared/flash", locals: {type: "alert", message: result.message})
+        end
+        format.json { render json: {success: false, message: result.message, respawn_in: result.respawn_in}, status: :unprocessable_entity }
+      end
+    end
   end
 
   def interact
@@ -393,9 +428,21 @@ class WorldController < ApplicationController
       actions << {type: :exit, label: "Exit City"}
     end
 
-    # Gathering actions
+    # Gathering actions (profession-based nodes)
     if gathering_nodes_at_current_tile.any?
       actions << {type: :gather, nodes: gathering_nodes_at_current_tile}
+    end
+
+    # Tile resource actions (biome-based, no profession required)
+    tile_resource = tile_resource_at_current_tile
+    if tile_resource.present?
+      actions << {type: :tile_resource, resource: tile_resource}
+    end
+
+    # Tile NPC actions (biome-based random spawns)
+    tile_npc = tile_npc_at_current_tile
+    if tile_npc.present?
+      actions << {type: :tile_npc, npc: tile_npc}
     end
 
     actions
@@ -438,6 +485,28 @@ class WorldController < ApplicationController
   def gathering_nodes_at_current_tile
     # Gathering nodes are zone-wide, shown based on profession requirements
     GatheringNode.where(zone: @position.zone).available.limit(3)
+  end
+
+  def tile_resource_at_current_tile
+    # Get tile resource info at current position (for display)
+    service = Game::World::TileGatheringService.new(
+      character: current_character,
+      zone: @position.zone.name,
+      x: @position.x,
+      y: @position.y
+    )
+    service.resource_info
+  end
+
+  def tile_npc_at_current_tile
+    # Get tile NPC info at current position (for display)
+    service = Game::World::TileNpcService.new(
+      character: current_character,
+      zone: @position.zone.name,
+      x: @position.x,
+      y: @position.y
+    )
+    service.npc_info
   end
 
   def players_at_current_tile

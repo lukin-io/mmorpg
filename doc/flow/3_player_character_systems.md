@@ -19,6 +19,12 @@
 - `Players::Progression::StatAllocationService` writes to `characters.allocated_stats` while preserving available pools.
 - `Players::Alignment::AccessGate` gates quests, gear, and services using reputation/alignment requirements.
 
+### Combat Action Points
+- `Character#max_action_points` calculates AP budget per combat turn
+- **Formula:** `50 (base) + (Level × 3) + (Agility × 2)`
+- Higher level = more actions per turn; agility builds gain additional AP
+- `Battle.action_points_per_turn` stores character's AP at battle creation
+
 ## Alignment & Faction System
 - **Faction Alignments:** Characters choose `neutral`, `alliance`, or `rebellion` base factions with emoji icons (🛡️⚔️🏳️).
 - **Alignment Tiers:** `alignment_score` (-1000 to +1000) determines 9 progression tiers from Absolute Darkness (🖤) to Celestial (👼).
@@ -45,7 +51,7 @@
   - `app/models/battle.rb`, `app/models/battle_participant.rb`, `app/models/combat_log_entry.rb`, `app/models/arena_ranking.rb`
   - `app/models/class_specialization.rb`, `app/models/skill_tree.rb`, `app/models/skill_node.rb`, `app/models/character_skill.rb`, `app/models/ability.rb`
   - `app/models/inventory.rb`, `app/models/inventory_item.rb`
-  - `app/models/character.rb` — `ALIGNMENT_TIERS`, `CHAOS_TIERS`, tier calculation methods
+  - `app/models/character.rb` — `ALIGNMENT_TIERS`, `CHAOS_TIERS`, tier calculation methods, `max_action_points`
 - services:
   - `app/services/game/movement/turn_processor.rb`, `respawn_service.rb`, `tile_provider.rb`
   - `app/services/game/exploration/encounter_resolver.rb`

@@ -1,0 +1,466 @@
+# Biome NPC Configuration
+# Defines what NPCs can spawn in each biome
+# NPCs are weighted by spawn_chance (higher = more common)
+
+plains:
+  respawn_modifier: 0  # seconds added/subtracted from base respawn
+  npcs:
+    - key: wild_boar
+      name: Wild Boar
+      role: hostile
+      level: 2
+      level_variance: 1
+      spawn_chance: 30
+      hp: 80
+      damage: 8
+      xp: 15
+      metadata:
+        rarity: common
+        description: "A tusked beast that charges at intruders."
+      loot:
+        - item: boar_hide
+          chance: 50
+        - item: raw_meat
+          chance: 80
+    - key: plains_wolf
+      name: Plains Wolf
+      role: hostile
+      level: 3
+      level_variance: 1
+      spawn_chance: 25
+      hp: 60
+      damage: 12
+      xp: 20
+      metadata:
+        rarity: common
+        description: "A lone wolf hunting on the grasslands."
+      loot:
+        - item: wolf_pelt
+          chance: 40
+    - key: bandit_scout
+      name: Bandit Scout
+      role: hostile
+      level: 4
+      level_variance: 2
+      spawn_chance: 15
+      hp: 100
+      damage: 15
+      xp: 30
+      metadata:
+        rarity: uncommon
+        description: "A shady figure watching the roads."
+      loot:
+        - item: stolen_coins
+          chance: 60
+        - item: bandit_dagger
+          chance: 20
+    - key: wandering_merchant
+      name: Wandering Merchant
+      role: vendor
+      level: 5
+      spawn_chance: 5
+      dialogue: "Looking to trade? I have wares from distant lands!"
+      metadata:
+        rarity: rare
+        description: "A traveling merchant with exotic goods."
+        inventory:
+          - item_key: health_potion
+            price: 25
+          - item_key: bread
+            price: 5
+    - key: lost_traveler
+      name: Lost Traveler
+      role: quest_giver
+      level: 1
+      spawn_chance: 5
+      dialogue: "Oh thank goodness! Can you help me find my way?"
+      metadata:
+        rarity: rare
+        description: "A confused traveler in need of assistance."
+
+forest:
+  respawn_modifier: -180  # 3 minutes faster (more wildlife)
+  npcs:
+    - key: forest_wolf
+      name: Forest Wolf
+      role: hostile
+      level: 3
+      level_variance: 2
+      spawn_chance: 25
+      hp: 70
+      damage: 14
+      xp: 22
+      metadata:
+        rarity: common
+        description: "A grey wolf stalking through the trees."
+      loot:
+        - item: wolf_pelt
+          chance: 50
+        - item: wolf_fang
+          chance: 30
+    - key: giant_spider
+      name: Giant Spider
+      role: hostile
+      level: 4
+      level_variance: 1
+      spawn_chance: 20
+      hp: 50
+      damage: 18
+      xp: 25
+      metadata:
+        rarity: common
+        description: "A massive spider with venomous fangs."
+      loot:
+        - item: spider_silk
+          chance: 70
+        - item: spider_venom
+          chance: 40
+    - key: goblin_scout
+      name: Goblin Scout
+      role: hostile
+      level: 3
+      level_variance: 1
+      spawn_chance: 20
+      hp: 45
+      damage: 10
+      xp: 18
+      metadata:
+        rarity: common
+        description: "A sneaky goblin on patrol."
+      loot:
+        - item: goblin_ear
+          chance: 80
+        - item: crude_dagger
+          chance: 30
+    - key: forest_bear
+      name: Forest Bear
+      role: hostile
+      level: 6
+      level_variance: 2
+      spawn_chance: 10
+      hp: 150
+      damage: 25
+      xp: 50
+      metadata:
+        rarity: uncommon
+        description: "A massive brown bear defending its territory."
+      loot:
+        - item: bear_pelt
+          chance: 60
+        - item: bear_claw
+          chance: 40
+    - key: forest_sprite
+      name: Forest Sprite
+      role: friendly
+      level: 5
+      spawn_chance: 5
+      dialogue: "The forest whispers secrets to those who listen..."
+      metadata:
+        rarity: rare
+        description: "A mystical being of the woods."
+    - key: hermit_druid
+      name: Hermit Druid
+      role: trainer
+      level: 10
+      spawn_chance: 3
+      dialogue: "Seek harmony with nature, young one."
+      metadata:
+        rarity: rare
+        description: "An old druid living in solitude."
+        teaches:
+          - herbalism
+          - nature_magic
+
+mountain:
+  respawn_modifier: 300  # 5 minutes slower (harsh terrain)
+  npcs:
+    - key: mountain_goat
+      name: Mountain Goat
+      role: hostile
+      level: 3
+      level_variance: 1
+      spawn_chance: 25
+      hp: 60
+      damage: 10
+      xp: 15
+      metadata:
+        rarity: common
+        description: "An aggressive goat that headbutts threats."
+      loot:
+        - item: goat_horn
+          chance: 50
+    - key: rock_elemental
+      name: Rock Elemental
+      role: hostile
+      level: 8
+      level_variance: 2
+      spawn_chance: 15
+      hp: 200
+      damage: 30
+      xp: 80
+      metadata:
+        rarity: uncommon
+        description: "A living boulder animated by ancient magic."
+      loot:
+        - item: elemental_core
+          chance: 30
+        - item: stone_dust
+          chance: 80
+    - key: harpy
+      name: Harpy
+      role: hostile
+      level: 6
+      level_variance: 2
+      spawn_chance: 20
+      hp: 80
+      damage: 20
+      xp: 45
+      metadata:
+        rarity: common
+        description: "A winged creature with a piercing shriek."
+      loot:
+        - item: harpy_feather
+          chance: 60
+    - key: mountain_troll
+      name: Mountain Troll
+      role: hostile
+      level: 10
+      level_variance: 3
+      spawn_chance: 8
+      hp: 300
+      damage: 40
+      xp: 120
+      metadata:
+        rarity: rare
+        description: "A hulking troll with regenerating flesh."
+      loot:
+        - item: troll_blood
+          chance: 50
+        - item: troll_club
+          chance: 20
+    - key: dwarven_prospector
+      name: Dwarven Prospector
+      role: vendor
+      level: 8
+      spawn_chance: 5
+      dialogue: "Aye, found some fine ore today! Care to trade?"
+      metadata:
+        rarity: rare
+        description: "A dwarf searching for precious metals."
+        inventory:
+          - item_key: iron_ore
+            price: 15
+          - item_key: pickaxe
+            price: 100
+
+swamp:
+  respawn_modifier: -120  # 2 minutes faster
+  npcs:
+    - key: swamp_rat
+      name: Giant Swamp Rat
+      role: hostile
+      level: 2
+      level_variance: 1
+      spawn_chance: 30
+      hp: 40
+      damage: 8
+      xp: 12
+      metadata:
+        rarity: common
+        description: "A diseased rodent lurking in the muck."
+      loot:
+        - item: rat_tail
+          chance: 60
+    - key: bog_zombie
+      name: Bog Zombie
+      role: hostile
+      level: 5
+      level_variance: 2
+      spawn_chance: 20
+      hp: 120
+      damage: 15
+      xp: 35
+      metadata:
+        rarity: common
+        description: "An undead creature risen from the swamp."
+      loot:
+        - item: rotten_flesh
+          chance: 80
+        - item: zombie_heart
+          chance: 20
+    - key: poison_frog
+      name: Poison Frog
+      role: hostile
+      level: 3
+      level_variance: 1
+      spawn_chance: 25
+      hp: 30
+      damage: 20
+      xp: 20
+      metadata:
+        rarity: common
+        description: "A brightly colored frog with toxic skin."
+      loot:
+        - item: frog_poison
+          chance: 70
+    - key: swamp_hag
+      name: Swamp Hag
+      role: hostile
+      level: 8
+      level_variance: 2
+      spawn_chance: 10
+      hp: 100
+      damage: 25
+      xp: 60
+      metadata:
+        rarity: uncommon
+        description: "A cackling witch brewing dark potions."
+      loot:
+        - item: hag_eye
+          chance: 40
+        - item: dark_potion
+          chance: 50
+    - key: will_o_wisp
+      name: Will-o'-Wisp
+      role: hostile
+      level: 4
+      level_variance: 1
+      spawn_chance: 15
+      hp: 25
+      damage: 30
+      xp: 28
+      metadata:
+        rarity: uncommon
+        description: "A ghostly light that leads travelers astray."
+      loot:
+        - item: spirit_essence
+          chance: 60
+
+lake:
+  respawn_modifier: 0
+  npcs:
+    - key: lake_serpent
+      name: Lake Serpent
+      role: hostile
+      level: 5
+      level_variance: 2
+      spawn_chance: 25
+      hp: 90
+      damage: 18
+      xp: 35
+      metadata:
+        rarity: common
+        description: "A long serpent that hunts in the shallows."
+      loot:
+        - item: serpent_scale
+          chance: 50
+    - key: water_sprite
+      name: Water Sprite
+      role: friendly
+      level: 4
+      spawn_chance: 10
+      dialogue: "The lake holds many secrets beneath its surface..."
+      metadata:
+        rarity: rare
+        description: "A playful spirit of the water."
+    - key: giant_crab
+      name: Giant Crab
+      role: hostile
+      level: 4
+      level_variance: 1
+      spawn_chance: 30
+      hp: 100
+      damage: 15
+      xp: 25
+      metadata:
+        rarity: common
+        description: "A massive crustacean with powerful pincers."
+      loot:
+        - item: crab_shell
+          chance: 60
+        - item: crab_meat
+          chance: 80
+    - key: fisherman
+      name: Old Fisherman
+      role: quest_giver
+      level: 3
+      spawn_chance: 8
+      dialogue: "The fish aren't biting today... say, could you help me with something?"
+      metadata:
+        rarity: rare
+        description: "An elderly man with a fishing rod."
+
+river:
+  respawn_modifier: -60
+  npcs:
+    - key: river_crocodile
+      name: River Crocodile
+      role: hostile
+      level: 5
+      level_variance: 2
+      spawn_chance: 30
+      hp: 110
+      damage: 22
+      xp: 40
+      metadata:
+        rarity: common
+        description: "A scaly predator basking on the riverbank."
+      loot:
+        - item: crocodile_hide
+          chance: 50
+        - item: crocodile_tooth
+          chance: 40
+    - key: river_troll
+      name: River Troll
+      role: hostile
+      level: 7
+      level_variance: 2
+      spawn_chance: 15
+      hp: 180
+      damage: 28
+      xp: 65
+      metadata:
+        rarity: uncommon
+        description: "A moss-covered troll guarding a bridge."
+      loot:
+        - item: troll_moss
+          chance: 70
+    - key: giant_otter
+      name: Giant Otter
+      role: hostile
+      level: 3
+      level_variance: 1
+      spawn_chance: 25
+      hp: 50
+      damage: 12
+      xp: 18
+      metadata:
+        rarity: common
+        description: "An oversized otter with sharp teeth."
+      loot:
+        - item: otter_pelt
+          chance: 60
+
+city:
+  respawn_modifier: 1800  # Very slow in cities (30 min extra)
+  npcs: []  # No random NPCs spawn in cities - they're placed NPCs
+
+default:
+  respawn_modifier: 0
+  npcs:
+    - key: wild_animal
+      name: Wild Animal
+      role: hostile
+      level: 1
+      level_variance: 1
+      spawn_chance: 100
+      hp: 50
+      damage: 5
+      xp: 10
+      metadata:
+        rarity: common
+        description: "A wild creature of unknown origin."
+      loot:
+        - item: animal_hide
+          chance: 50
+

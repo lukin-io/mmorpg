@@ -22,7 +22,7 @@ module Game
       def initialize(character, npc_template, zone: nil)
         @character = character
         @npc_template = npc_template
-        @zone = zone || character.current_position&.zone
+        @zone = zone || character.position&.zone
         @errors = []
       end
 
@@ -56,8 +56,11 @@ module Game
       # @param skill_id [Integer, nil] optional skill ID for :skill actions
       # @return [Result] the action result
       def process_action!(action_type:, skill_id: nil)
-        @battle = character.battle_participants.find_by(battle: {status: :active})&.battle
+        @battle = character.battle_participants.joins(:battle).find_by(battles: {status: :active})&.battle
         return failure("Not in combat") unless battle
+
+        # Get NPC template from battle if not provided
+        @npc_template ||= battle.battle_participants.find_by(team: "enemy")&.npc_template
 
         case action_type.to_sym
         when :attack
@@ -73,6 +76,102 @@ module Game
         end
       end
 
+      # Process a full turn with attacks, blocks, and skills
+      #
+      # @param attacks [Array] array of attack actions [{body_part:, action_key:, slot_index:}]
+      # @param blocks [Array] array of block actions [{body_part:, action_key:, slot_index:}]
+      # @param skills [Array] array of skill actions
+      # @return [Result] the turn result
+      def process_turn!(attacks: [], blocks: [], skills: [])
+        @battle = character.battle_participants.joins(:battle).find_by(battles: {status: :active})&.battle
+        return failure("Not in combat") unless battle
+
+        @npc_template ||= battle.battle_participants.find_by(team: "enemy")&.npc_template
+        return failure("Enemy not found") unless npc_template
+
+        # Validate action points
+        total_ap_cost = calculate_turn_ap_cost(attacks, blocks, skills)
+        max_ap = battle.action_points_per_turn || character.max_action_points
+        return failure("Exceeds action points (#{total_ap_cost}/#{max_ap})") if total_ap_cost > max_ap
+
+        player_participant = battle.battle_participants.find_by(team: "player")
+        npc_participant = battle.battle_participants.find_by(team: "enemy")
+
+        combat_log = []
+        total_player_damage = 0
+
+        # Process player's blocks (set defending state)
+        blocks_set = blocks.map { |b| b["body_part"] || b[:body_part] }.compact
+        player_participant.update!(is_defending: blocks_set.any?)
+
+        if blocks_set.any?
+          combat_log << "You defend your #{blocks_set.join(", ")}."
+        end
+
+        # Process player's attacks
+        attacks.each do |attack|
+          body_part = attack["body_part"] || attack[:body_part]
+          action_key = attack["action_key"] || attack[:action_key]
+
+          next if action_key.blank?
+
+          # Calculate damage based on attack type
+          base_damage = calculate_damage(character, npc_stats, is_defending: npc_participant.is_defending)
+          damage_modifier = (action_key == "aimed") ? 1.3 : 1.0
+          damage = (base_damage * damage_modifier).to_i
+
+          # Check for critical
+          is_crit = rand(100) < crit_chance(character)
+          damage = (damage * 1.5).to_i if is_crit
+
+          total_player_damage += damage
+          attack_name = (action_key == "aimed") ? "aimed attack" : "attack"
+          combat_log << "You #{attack_name} #{npc_template.name}'s #{body_part} for #{damage} damage#{" (CRITICAL!)" if is_crit}."
+        end
+
+        # Apply player damage to NPC
+        if total_player_damage > 0
+          npc_participant.current_hp = [npc_participant.current_hp - total_player_damage, 0].max
+          npc_participant.is_defending = false
+          npc_participant.save!
+
+          # Check if NPC defeated
+          if npc_participant.current_hp <= 0
+            return complete_battle!(winner: :player, combat_log: combat_log)
+          end
+        end
+
+        # NPC's turn - select random body part to attack
+        npc_target = %w[head torso stomach legs].sample
+        npc_attacking_blocked_part = blocks_set.include?(npc_target)
+
+        npc_base_damage = calculate_npc_damage(npc_stats, character, is_defending: npc_attacking_blocked_part)
+        total_npc_damage = npc_base_damage
+
+        combat_log << "#{npc_template.name} attacks your #{npc_target} for #{total_npc_damage} damage#{" (blocked!)" if npc_attacking_blocked_part}."
+
+        # Apply NPC damage to player
+        vitals_service.apply_damage(total_npc_damage, source: npc_template.name)
+        player_participant.is_defending = false
+        player_participant.save!
+
+        # Check if player defeated
+        if character.reload.current_hp <= 0
+          return complete_battle!(winner: :npc, combat_log: combat_log)
+        end
+
+        # Advance turn
+        battle.update!(turn_number: battle.turn_number + 1)
+        broadcast_combat_update!(combat_log)
+
+        Result.new(
+          success: true,
+          battle: battle,
+          message: "Turn #{battle.turn_number} completed",
+          combat_log: combat_log
+        )
+      end
+
       private
 
       def create_battle!
@@ -82,7 +181,8 @@ module Game
           zone: @zone,
           initiator: character,
           turn_number: 1,
-          initiative_order: calculate_initiative
+          initiative_order: calculate_initiative,
+          action_points_per_turn: character.max_action_points
         )
       end
 
@@ -94,7 +194,7 @@ module Game
           initiative: character_initiative,
           current_hp: character.current_hp,
           max_hp: character.max_hp,
-          is_active: true
+          is_alive: true
         )
 
         # NPC participant (virtual character)
@@ -104,7 +204,7 @@ module Game
           initiative: npc_initiative,
           current_hp: npc_max_hp,
           max_hp: npc_max_hp,
-          is_active: true
+          is_alive: true
         )
       end
 
@@ -130,12 +230,20 @@ module Game
       end
 
       def npc_stats
-        @npc_stats ||= npc_template.stats.presence || {
-          attack: npc_template.level * 3 + 5,
-          defense: npc_template.level * 2 + 3,
-          agility: npc_template.level + 5,
-          hp: npc_template.level * 10 + 20
-        }.with_indifferent_access
+        @npc_stats ||= begin
+          # Try to get stats from metadata, otherwise generate based on level
+          metadata_stats = npc_template.metadata&.dig("stats")
+          if metadata_stats.present?
+            metadata_stats.with_indifferent_access
+          else
+            {
+              attack: npc_template.metadata&.dig("base_damage") || npc_template.level * 3 + 5,
+              defense: npc_template.level * 2 + 3,
+              agility: npc_template.level + 5,
+              hp: npc_template.metadata&.dig("health") || npc_template.level * 10 + 20
+            }.with_indifferent_access
+          end
+        end
       end
 
       def npc_max_hp
@@ -463,6 +571,55 @@ module Game
       def crit_chance(attacker)
         base = attacker.respond_to?(:critical_chance) ? attacker.critical_chance : 5
         [base, 50].min
+      end
+
+      # Calculate total action point cost for a turn
+      # @param attacks [Array] array of attack actions
+      # @param blocks [Array] array of block actions
+      # @param skills [Array] array of skill actions
+      # @return [Integer] total AP cost
+      def calculate_turn_ap_cost(attacks, blocks, skills)
+        attack_costs = load_action_costs("attack_types")
+        block_costs = load_action_costs("block_types")
+
+        # Calculate attack costs
+        attack_total = attacks.sum do |attack|
+          key = attack["action_key"] || attack[:action_key]
+          attack_costs.dig(key, "action_cost") || 0
+        end
+
+        # Calculate block costs
+        block_total = blocks.sum do |block|
+          key = block["action_key"] || block[:action_key]
+          block_costs.dig(key, "action_cost") || 30 # Default block cost
+        end
+
+        # Calculate skill costs
+        skill_total = skills.sum do |skill|
+          skill["cost"] || skill[:cost] || 0
+        end
+
+        # Add multi-attack penalty
+        penalty = calculate_multi_attack_penalty(attacks.size)
+
+        attack_total + block_total + skill_total + penalty
+      end
+
+      # Load action costs from config
+      def load_action_costs(category)
+        config_path = Rails.root.join("config/gameplay/combat_actions.yml")
+        return {} unless File.exist?(config_path)
+
+        config = YAML.load_file(config_path, permitted_classes: [Symbol])
+        config[category] || {}
+      end
+
+      # Calculate penalty for multiple attacks
+      def calculate_multi_attack_penalty(attack_count)
+        return 0 if attack_count <= 1
+
+        penalties = [0, 0, 25, 75, 150, 250]
+        penalties[[attack_count, penalties.size - 1].min]
       end
 
       def character_in_combat?

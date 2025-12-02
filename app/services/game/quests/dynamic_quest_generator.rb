@@ -317,7 +317,7 @@ module Game
 
       def generate_explore_quest_data(character, difficulty)
         level = character.level
-        zone = character.current_position&.zone
+        zone = character.position&.zone
         zone_name = zone&.name || "the wilderness"
         count = calculate_objective_count("explore", level, difficulty)
 
@@ -566,7 +566,7 @@ module Game
       end
 
       def available_kill_targets(character)
-        zone = character.current_position&.zone
+        zone = character.position&.zone
         return %w[monsters creatures enemies] unless zone
 
         NpcTemplate.hostile.in_zone(zone.name).pluck(:name).presence ||
@@ -574,7 +574,7 @@ module Game
       end
 
       def available_resources(character)
-        zone = character.current_position&.zone
+        zone = character.position&.zone
         return %w[herbs ore wood] unless zone
 
         zone_resources(zone).presence || %w[herbs ore wood]

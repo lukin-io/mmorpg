@@ -1,5 +1,5 @@
 import { Controller } from "@hotwired/stimulus"
-import consumer from "../channels/consumer"
+import consumer from "channels/consumer"
 
 /**
  * Arena match controller for live combat view

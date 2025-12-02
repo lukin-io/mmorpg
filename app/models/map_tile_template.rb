@@ -8,6 +8,22 @@ class MapTileTemplate < ApplicationRecord
   validates :x, presence: true
   validates :y, presence: true
   validates :terrain_type, presence: true
+  validate :zone_must_be_string
+
+  # Custom setter to ensure zone is always stored as a string name
+  def zone=(value)
+    super(value.is_a?(Zone) ? value.name : value)
+  end
+
+  private
+
+  def zone_must_be_string
+    if zone.present? && zone.to_s.start_with?("#<Zone:")
+      errors.add(:zone, "must be a zone name string, not a Zone object")
+    end
+  end
+
+  public
 
   scope :in_zone, ->(zone_or_name) {
     name = zone_or_name.is_a?(Zone) ? zone_or_name.name : zone_or_name
