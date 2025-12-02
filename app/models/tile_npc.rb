@@ -166,7 +166,7 @@ class TileNpc < ApplicationRecord
       dialogue: npc_data[:dialogue] || "...",
       metadata: {
         biome: biome,
-        base_hp: npc_data[:hp] || 100,
+        health: npc_data[:hp] || 100,
         base_damage: npc_data[:damage] || 10,
         xp_reward: npc_data[:xp] || 10,
         loot_table: npc_data[:loot] || []
