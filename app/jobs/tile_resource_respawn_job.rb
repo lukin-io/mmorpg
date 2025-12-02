@@ -16,7 +16,7 @@ class TileResourceRespawnJob < ApplicationJob
 
     tile_resource.respawn!
     Rails.logger.info("[TileResourceRespawn] Respawned #{tile_resource.resource_key} at #{tile_resource.zone} (#{tile_resource.x}, #{tile_resource.y})")
-  rescue StandardError => e
+  rescue => e
     Rails.logger.error("[TileResourceRespawn] Failed to respawn resource #{tile_resource_id}: #{e.message}")
     raise # Re-raise to trigger retry
   end

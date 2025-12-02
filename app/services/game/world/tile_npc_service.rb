@@ -53,7 +53,7 @@ module Game
       # Check if there's an alive hostile NPC (for combat)
       def hostile_npc_present?
         npc = find_or_spawn_npc
-        npc&.alive? && npc&.hostile?
+        npc&.alive? && npc.hostile?
       end
 
       # Get the TileNpc record (for combat initiation)

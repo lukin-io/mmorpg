@@ -99,7 +99,6 @@ module Game
 
         combat_log = []
         total_player_damage = 0
-        total_npc_damage = 0
 
         # Process player's blocks (set defending state)
         blocks_set = blocks.map { |b| b["body_part"] || b[:body_part] }.compact
@@ -238,10 +237,10 @@ module Game
             metadata_stats.with_indifferent_access
           else
             {
-              attack: (npc_template.metadata&.dig("base_damage") || npc_template.level * 3 + 5),
+              attack: npc_template.metadata&.dig("base_damage") || npc_template.level * 3 + 5,
               defense: npc_template.level * 2 + 3,
               agility: npc_template.level + 5,
-              hp: (npc_template.metadata&.dig("health") || npc_template.level * 10 + 20)
+              hp: npc_template.metadata&.dig("health") || npc_template.level * 10 + 20
             }.with_indifferent_access
           end
         end

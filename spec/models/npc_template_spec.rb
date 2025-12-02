@@ -12,15 +12,15 @@ RSpec.describe NpcTemplate, type: :model do
       # Fix: Use jsonb_exists() function instead of ? operator
 
       let!(:npc_single_zone) do
-        create(:npc_template, name: "Forest Guardian", metadata: { "zone" => "dark_forest" })
+        create(:npc_template, name: "Forest Guardian", metadata: {"zone" => "dark_forest"})
       end
 
       let!(:npc_multi_zone) do
-        create(:npc_template, name: "Wandering Merchant", metadata: { "zones" => ["dark_forest", "crystal_caves", "sunlit_plains"] })
+        create(:npc_template, name: "Wandering Merchant", metadata: {"zones" => ["dark_forest", "crystal_caves", "sunlit_plains"]})
       end
 
       let!(:npc_other_zone) do
-        create(:npc_template, name: "Cave Troll", metadata: { "zone" => "crystal_caves" })
+        create(:npc_template, name: "Cave Troll", metadata: {"zone" => "crystal_caves"})
       end
 
       let!(:npc_no_zone) do
@@ -89,14 +89,14 @@ RSpec.describe NpcTemplate, type: :model do
 
   describe "metadata JSONB storage" do
     it "stores zone as string" do
-      npc = create(:npc_template, metadata: { "zone" => "test_zone" })
+      npc = create(:npc_template, metadata: {"zone" => "test_zone"})
 
       expect(npc.reload.metadata["zone"]).to eq("test_zone")
     end
 
     it "stores zones as array" do
       zones = ["zone_a", "zone_b", "zone_c"]
-      npc = create(:npc_template, metadata: { "zones" => zones })
+      npc = create(:npc_template, metadata: {"zones" => zones})
 
       expect(npc.reload.metadata["zones"]).to eq(zones)
     end

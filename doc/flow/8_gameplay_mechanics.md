@@ -82,6 +82,25 @@
 | Stomach | 1.1x | 30 AP |
 | Legs | 0.9x | 35 AP |
 
+**Action Points System:**
+Action Points (AP) are **character-based**, scaling with level and agility:
+
+```
+Max AP = 50 (base) + (Level × 3) + (Agility × 2)
+```
+
+| Level | Agility | Max AP | Description |
+|-------|---------|--------|-------------|
+| 1 | 5 | 63 | New character |
+| 10 | 8 | 96 | Mid-level character |
+| 20 | 10 | 130 | High-level character |
+| 30 | 15 | 170 | Endgame agility build |
+
+**Implementation:**
+- `Character#max_action_points` — calculates AP from base + level + agility
+- `Battle.action_points_per_turn` — stores character's AP at battle creation
+- `PveEncounterService#calculate_turn_ap_cost` — validates turn against AP budget
+
 **Attack Penalties:**
 | Attacks | Penalty |
 |---------|---------|

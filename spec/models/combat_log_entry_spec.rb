@@ -126,12 +126,12 @@ RSpec.describe CombatLogEntry do
   describe "round and sequence tracking" do
     it "tracks combat progression accurately" do
       # Round 1
-      entry1 = create(:combat_log_entry, battle: battle, round_number: 1, sequence: 1, message: "Player attacks")
-      entry2 = create(:combat_log_entry, battle: battle, round_number: 1, sequence: 2, message: "Enemy counters")
+      create(:combat_log_entry, battle: battle, round_number: 1, sequence: 1, message: "Player attacks")
+      create(:combat_log_entry, battle: battle, round_number: 1, sequence: 2, message: "Enemy counters")
 
       # Round 2
-      entry3 = create(:combat_log_entry, battle: battle, round_number: 2, sequence: 1, message: "Player defends")
-      entry4 = create(:combat_log_entry, battle: battle, round_number: 2, sequence: 2, message: "Enemy attacks")
+      create(:combat_log_entry, battle: battle, round_number: 2, sequence: 1, message: "Player defends")
+      create(:combat_log_entry, battle: battle, round_number: 2, sequence: 2, message: "Enemy attacks")
 
       entries = battle.combat_log_entries.to_a
       expect(entries.map(&:round_number)).to eq([1, 1, 2, 2])

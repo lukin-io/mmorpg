@@ -16,7 +16,7 @@ class TileNpcRespawnJob < ApplicationJob
 
     tile_npc.respawn!
     Rails.logger.info("[TileNpcRespawn] Respawned #{tile_npc.npc_key} at #{tile_npc.zone} (#{tile_npc.x}, #{tile_npc.y})")
-  rescue StandardError => e
+  rescue => e
     Rails.logger.error("[TileNpcRespawn] Failed to respawn NPC #{tile_npc_id}: #{e.message}")
     raise # Re-raise to trigger retry
   end

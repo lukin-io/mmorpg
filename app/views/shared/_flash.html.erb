@@ -1,9 +1,9 @@
 <% # Handle both old style (type, message) and new style (alert/notice) %>
 <% if local_assigns[:type] && local_assigns[:message] %>
-  <% flash_class = type.to_s == "notice" ? "flash success" : "flash alert" %>
-  <div class="<%= flash_class %>">
-    <%= message %>
-  </div>
+<% flash_class = type.to_s == "notice" ? "flash success" : "flash alert" %>
+<div class="<%= flash_class %>">
+  <%= message %>
+</div>
 <% elsif local_assigns[:alert] %>
   <div class="flash alert">
     <%= alert %>

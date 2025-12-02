@@ -196,8 +196,8 @@ RSpec.describe Game::Combat::PveEncounterService do
         }
 
         # Should have at least some successful and some failed flee attempts
-        successes = results.count { |r| r.message == "Escaped!" }
-        failures = results.count { |r| r.message == "Failed to flee" }
+        results.count { |r| r.message == "Escaped!" }
+        results.count { |r| r.message == "Failed to flee" }
 
         # Just verify the system works; flee chance is random
         expect(results.all? { |r| r.success == true || r.success == false }).to be true
@@ -277,7 +277,7 @@ RSpec.describe Game::Combat::PveEncounterService do
     end
 
     it "processes aimed attacks with bonus damage" do
-      npc_participant = battle.battle_participants.find_by(team: "enemy")
+      battle.battle_participants.find_by(team: "enemy")
 
       attacks = [{"body_part" => "head", "action_key" => "aimed", "slot_index" => 0}]
       result = service.process_turn!(attacks: attacks, blocks: [], skills: [])
@@ -477,7 +477,7 @@ RSpec.describe Game::Combat::PveEncounterService do
 
       it "reduces XP for much lower level NPCs" do
         level_diff = -6 # NPC 6 levels lower
-        multiplier = level_diff < -5 ? 0.5 : 1.0
+        multiplier = (level_diff < -5) ? 0.5 : 1.0
         expect(multiplier).to eq(0.5)
       end
     end

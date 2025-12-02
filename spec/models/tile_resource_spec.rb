@@ -4,6 +4,7 @@ require "rails_helper"
 
 RSpec.describe TileResource, type: :model do
   include ActiveSupport::Testing::TimeHelpers
+
   describe "validations" do
     it "validates presence of required fields" do
       resource = TileResource.new

@@ -1048,12 +1048,40 @@ function viewl(vst) {
 | Mechanic | Description |
 |----------|-------------|
 | **Body-Part Targeting** | 4 zones: head, torso, stomach, legs with damage multipliers |
-| **Action Points** | Budget per turn (default 80), attacks/blocks/magic cost AP |
+| **Action Points** | Dynamic budget per turn based on character stats (see below) |
 | **Attack Penalties** | Multiple attacks incur escalating penalties (0, 0, 25, 75, 150, 250) |
 | **Magic Slots** | Click to activate, costs AP + MP |
 | **Blocking** | Select body part to block, reduces incoming damage |
 | **Combat Log** | Color-coded by element (fire=red, water=blue, earth=green, air=cyan) |
 | **Simultaneous Turns** | Both sides submit, then round resolves |
+
+### Action Points System
+
+Action Points (AP) determine how many attacks, blocks, and skills a character can perform per turn.
+Unlike the Neverlands fixed 80 AP, Elselands uses a **dynamic formula** based on character stats:
+
+**Formula:**
+```
+Max AP = 50 (base) + (Level × 3) + (Agility × 2)
+```
+
+**Examples:**
+| Level | Agility | Max AP | Character Type |
+|-------|---------|--------|----------------|
+| 1 | 5 | 63 | New character |
+| 10 | 8 | 96 | Mid-level hunter |
+| 20 | 10 | 130 | High-level rogue |
+| 30 | 15 | 170 | Endgame agility build |
+
+**Why Dynamic AP?**
+- Rewards character progression with more combat options
+- Agility builds (rogues, archers) gain more attacks per turn
+- Creates meaningful stat allocation decisions
+
+**Implementation:**
+- `Character#max_action_points` calculates AP from level + stats
+- `Battle.action_points_per_turn` stores character's AP at battle start
+- `PveEncounterService#process_turn!` validates turn costs against AP budget
 
 ### Action Types
 

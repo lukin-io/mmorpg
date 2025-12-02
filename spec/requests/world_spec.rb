@@ -17,7 +17,7 @@ RSpec.describe "World", type: :request do
     end
 
     it "stores description in metadata JSONB" do
-      zone = create(:zone, metadata: { "description" => "A test zone" })
+      zone = create(:zone, metadata: {"description" => "A test zone"})
       expect(zone.metadata["description"]).to eq("A test zone")
     end
   end
