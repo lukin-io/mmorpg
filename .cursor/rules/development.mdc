@@ -1,0 +1,589 @@
+---
+description: Unified Ruby on Rails standards for the Elselands MMORPG monolith. Rails-way + Hotwire + deterministic game engine. GDD-driven development.
+globs:
+  - app/**/*.rb
+  - app/views/**/*.erb
+  - app/views/**/*.haml
+  - app/javascript/**/*.js
+  - config/**/*.rb
+  - db/**/*.rb
+  - lib/**/*.rb
+  - spec/**/*.rb
+  - Gemfile
+alwaysApply: true
+in_development: true
+---
+
+# Elselands MMORPG — Development Guide (Cursor Rule)
+
+> Purpose: A single, practical reference for building the Elselands MMORPG—**high quality, deterministic, Rails-friendly, Hotwire-first**.
+
+This is a **full-stack Rails monolith** with:
+- Server-rendered HTML (ERB/ViewComponent)
+- **Hotwire** (Turbo Frames, Turbo Streams, Stimulus)
+- **Deterministic game engine** in `app/lib/game/`
+- Real-time combat/chat via Action Cable
+
+---
+
+## Project Guides (load before coding)
+
+| Guide | Use when... |
+|-------|-------------|
+| **AGENT.md** | Always (highest authority) |
+| **GUIDE.md** | General Rails patterns |
+| **MMO_ADDITIONAL_GUIDE.md** | Gameplay systems (combat, movement, items) |
+| **MMO_ENGINE_SKELETON.md** | Creating new engine classes/folders |
+| **doc/MMO_TESTING_GUIDE.md** | Writing game logic tests |
+| **doc/MAP_DESIGN_GUIDE.md** | Zones, maps, tiles, movement |
+| **doc/ITEM_SYSTEM_GUIDE.md** | Items, inventory, equipment, loot |
+| **doc/COMBAT_SYSTEM_GUIDE.md** | Combat, skills, buffs, turn resolution |
+| **doc/gdd.md** | Game design vision (source of truth for gameplay) |
+| **doc/features/*.md** | Per-system breakdown (technical specs) |
+
+---
+
+## 1) Philosophy & Decision Rules
+
+- **Deliver as a senior Rails engineer.** Production-grade, maintainable, idiomatic code.
+- **Rails-way + KISS.** Prefer built-ins. Add services/queries **only** when complexity demands it.
+- **Hotwire-first UI.** Turbo Frames for partials, Turbo Streams for real-time, Stimulus for interactivity.
+- **Deterministic game logic.** All combat/formulas must be pure, seeded, testable without DB.
+- **GDD is the source of truth** for gameplay rules. Code implements the GDD, not the other way around.
+- **DRY when duplication hurts**, not before. Avoid speculative abstractions.
+- **Readability > cleverness.** Small methods, early returns, descriptive names.
+- **UTC internally; ISO8601 in JSON.** Use `I18n` for user-facing times.
+- **Greenfield assumption.** Extend existing code before creating parallel paths.
+
+---
+
+## 2) Edit Scope & Safety
+
+### ✅ You MAY edit:
+- `app/**` (models, controllers, views, lib, services, jobs)
+- `config/**` (routes, initializers, locales)
+- `db/migrate/**` (new migrations only—don't edit committed ones)
+- `db/seeds.rb`
+- `lib/**`
+- `spec/**`
+- `.env.example`
+
+### ❌ Do NOT edit (unless explicitly asked):
+- `doc/gdd.md` (treat as read-only requirements)
+- `doc/features/**` (treat as specs, not code)
+- Secrets/credentials
+- Production/deployment configs
+- CI/workflow files
+- Docker/Kubernetes manifests
+
+---
+
+## 3) MUST Rules (non-negotiable)
+
+1. **Think and code like a senior Rails engineer.** Best practices, Rails way.
+2. **Rails-way + KISS.** Prefer ActiveRecord, ActionController. No "mini-frameworks."
+3. **Hotwire-first.** Turbo Drive for navigation, Turbo Frames for partials, Turbo Streams for real-time, Stimulus for JS behavior.
+4. **Deterministic game logic.** All formulas in `app/lib/game/`. Always accept `rng:` param. No side effects.
+5. **GDD compliance.** Gameplay must match `doc/gdd.md`. If implementation conflicts with GDD, flag it.
+6. **Tests & lint are mandatory.** Every change ships with tests. Suite must be green.
+7. **Avoid N+1.** Use `includes`/`preload` for all rendered associations.
+8. **DB constraints first.** Use NOT NULL, foreign keys, unique indexes.
+9. **Migrations are single-purpose.** One structural change per file. Reversible.
+10. **Seed new schema.** When adding tables, add 3-5 realistic records to `db/seeds.rb`.
+11. **Doc comments for POROs.** Include Purpose, Inputs, Returns, Usage example (see format below).
+12. **Minimal, scoped diffs.** Touch only files necessary for the task.
+13. **No new dependencies** without documenting in PR message.
+14. **Flow docs for features.** Create/update `doc/flow/FEATURE_*.md` after implementation.
+15. **"Responsible for implementation files" section.** Every flow doc must list all files that implement the feature.
+16. **Reconcile docs on bug fixes.** When a bug fix realigns functionality with GDD, update the matching flow doc.
+17. **Version history in flow docs.** Append new versions (v1.0, v1.1) instead of overwriting; never delete prior versions.
+18. **Specs cover bug fixes.** Every bug fix ships with a regression spec that fails without the fix and passes with it.
+19. **Environment variables in `.env.example`.** When introducing new env vars, add them with comments.
+
+---
+
+### Doc Comment Format (for POROs/services/concerns)
+
+```ruby
+# Purpose: Calculates damage dealt in combat encounters
+#
+# Inputs:
+#   - attacker: Character or NPC with stats
+#   - defender: Character or NPC with stats
+#   - rng: Random instance for deterministic results (default: Random.new(1))
+#
+# Returns:
+#   Integer - final damage value (minimum 1)
+#
+# Usage:
+#   formula = Game::Formulas::DamageFormula.new(rng: Random.new(123))
+#   damage = formula.call(warrior, goblin)
+#   # => 14
+```
+
+---
+
+## 4) SHOULD Rules (recommended)
+
+- Small, single-purpose methods; early returns; descriptive names.
+- Keep controllers thin; push domain logic to models/services.
+- Jobs are **idempotent**; POROs are **stateless**.
+- Factories minimal—only required attributes.
+- Use `frozen_string_literal: true` in every Ruby file.
+- Prefer double quotes for strings.
+- Use guard clauses over nested conditionals.
+
+---
+
+## 5) NEVER Rules (forbidden)
+
+- **Never** put game calculations in controllers or views.
+- **Never** use unseeded randomness in game logic. Always: `Random.new(seed)`.
+- **Never** hit the DB from formula/combat classes.
+- **Never** bypass Turbo—avoid custom AJAX when Turbo suffices.
+- **Never** inline JS in views—use Stimulus controllers.
+- **Never** leave known N+1 in hot paths.
+- **Never** commit secrets or credentials.
+- **Never** edit committed migrations in shared environments.
+- **Never** use camelCase for Ruby methods/variables.
+
+---
+
+## 6) Project Structure & Naming
+
+### Folder Structure
+
+```
+app/
+  controllers/         # thin, orchestration only
+  models/              # persistence, validations, simple domain logic
+  views/               # ERB templates + Turbo Streams
+  components/          # ViewComponent (if used)
+  lib/
+    game/
+      systems/         # StatBlock, Effect, EffectStack, TurnCycle
+      formulas/        # DamageFormula, CritFormula, DefenseFormula
+      maps/            # Grid, Tile, Pathfinder
+      combat/          # TurnResolver, SkillExecutor
+      movement/        # MovementValidator, TurnProcessor
+      inventory/       # EquipmentService, StackManager
+  services/
+    game/              # orchestration services (use sparingly)
+  jobs/                # background jobs (idempotent)
+  channels/            # Action Cable channels
+  javascript/
+    controllers/       # Stimulus controllers
+```
+
+### Naming Conventions
+
+| Type | Convention | Example |
+|------|------------|---------|
+| Engine classes | `Game::Module::ClassName` | `Game::Combat::TurnResolver` |
+| Formulas | `Game::Formulas::XxxFormula` | `Game::Formulas::DamageFormula` |
+| Services | `Game::Domain::ActionService` | `Game::Movement::TurnProcessor` |
+| Models | Singular CamelCase | `Character`, `Inventory`, `Zone` |
+| Files/methods | snake_case | `turn_resolver.rb`, `apply_damage` |
+| Stimulus controllers | behavior-based | `combat_controller.js`, `inventory_controller.js` |
+
+---
+
+## 7) Controllers (pragmatic)
+
+### Turbo-First Patterns
+
+```ruby
+def create
+  @post = Post.new(post_params)
+
+  if @post.save
+    respond_to do |format|
+      format.html { redirect_to @post, notice: "Post created successfully." }
+      format.turbo_stream
+    end
+  else
+    respond_to do |format|
+      format.html { render :new, status: :unprocessable_entity }
+      format.turbo_stream { render :new, status: :unprocessable_entity }
+    end
+  end
+end
+```
+
+### Strong Params
+
+```ruby
+def character_params
+  params.require(:character).permit(
+    :name, :class_id, :zone_id,
+    stats_attributes: [:strength, :dexterity, :intelligence]
+  )
+end
+```
+
+---
+
+## 8) Game Engine Architecture
+
+### Deterministic Formula Pattern
+
+```ruby
+# app/lib/game/formulas/damage_formula.rb
+class Game::Formulas::DamageFormula
+  def initialize(rng: Random.new(1))
+    @rng = rng
+  end
+
+  def call(attacker, defender)
+    atk = attacker.stats.get(:attack)
+    defn = defender.stats.get(:defense)
+    base = atk - (defn / 2)
+    [base, 1].max
+  end
+end
+```
+
+### Combat Turn Resolution
+
+```ruby
+# app/services/game/combat/turn_resolver.rb
+class Game::Combat::TurnResolver
+  Result = Struct.new(:log, :hp_changes, :effects)
+
+  def initialize(attacker:, defender:, action:, rng: Random.new(1))
+    @attacker = attacker
+    @defender = defender
+    @action = action
+    @rng = rng
+  end
+
+  def call
+    dmg = Game::Formulas::DamageFormula.new(rng: @rng).call(@attacker, @defender)
+    crit = Game::Formulas::CritFormula.new(rng: @rng).call(@attacker, @defender)
+    final_dmg = (dmg * crit).to_i
+
+    Result.new(
+      ["#{@attacker.name} used #{@action} for #{final_dmg} damage"],
+      { defender: -final_dmg },
+      []
+    )
+  end
+end
+```
+
+---
+
+## 9) Hotwire UI Patterns
+
+### Turbo Frames
+
+```erb
+<%= turbo_frame_tag "inventory" do %>
+  <%= render @items %>
+<% end %>
+```
+
+### Turbo Streams (combat log push)
+
+```erb
+<!-- app/views/battles/attack.turbo_stream.erb -->
+<%= turbo_stream.append "combat_log" do %>
+  <%= render partial: "battles/log_entry", locals: { entry: @result.log.last } %>
+<% end %>
+
+<%= turbo_stream.replace "hp_bars" do %>
+  <%= render partial: "battles/hp_bars", locals: { battle: @battle } %>
+<% end %>
+```
+
+### Stimulus Controller
+
+```javascript
+// app/javascript/controllers/combat_controller.js
+import { Controller } from "@hotwired/stimulus"
+
+export default class extends Controller {
+  static targets = ["log", "hpBar"]
+
+  attack(event) {
+    event.preventDefault()
+    // Turbo handles the rest via turbo_stream response
+  }
+}
+```
+
+---
+
+## 10) Testing (RSpec)
+
+### Deterministic Game Logic Tests
+
+```ruby
+RSpec.describe Game::Formulas::DamageFormula do
+  let(:rng) { Random.new(123) }
+  let(:formula) { described_class.new(rng: rng) }
+
+  let(:attacker) { build_char(stats: { attack: 10, crit_chance: 20 }) }
+  let(:defender) { build_char(stats: { defense: 4, luck: 5 }) }
+
+  it "calculates deterministic damage" do
+    expect(formula.call(attacker, defender)).to eq(8)
+  end
+end
+
+def build_char(stats:)
+  OpenStruct.new(
+    stats: Game::Systems::StatBlock.new(base: stats),
+    name: "Test Dummy"
+  )
+end
+```
+
+### System Tests (Hotwire UI)
+
+```ruby
+RSpec.describe "Combat UI", type: :system do
+  it "updates combat log via Turbo Stream" do
+    visit battle_path(battle)
+    click_on "Attack"
+
+    expect(page).to have_text("dealt damage")
+    expect(page).to have_selector(".hp-bar")
+  end
+end
+```
+
+---
+
+## 11) Verification Checklist
+
+**Run these before considering any change "done":**
+
+```bash
+# 1. Linting
+bundle exec rubocop
+
+# 2. Tests
+bundle exec rspec
+
+# 3. Security (if configured)
+bundle exec brakeman -q
+bundle exec bundle audit check --update
+```
+
+**Report format:**
+
+```text
+CHECKS
+- bundle exec rubocop    # exit 0
+- bundle exec rspec      # exit 0
+- bundle exec brakeman   # exit 0 (or "not configured")
+```
+
+---
+
+## 12) GDD Compliance Verification
+
+After implementation, verify against `doc/gdd.md` and `doc/features/*.md`:
+
+### 1. Gameplay Audit
+- [ ] Mechanics match GDD description
+- [ ] Formulas match documented rules
+- [ ] Stat progression matches GDD curves
+
+### 2. UI/Controller Audit
+- [ ] Routes exist for documented interactions
+- [ ] Turbo Frames/Streams match expected behavior
+- [ ] Stimulus controllers handle documented interactions
+
+### 3. Model/Data Audit
+- [ ] All documented fields exist in migrations
+- [ ] Validations match GDD constraints
+- [ ] Associations match documented relationships
+
+### 4. Discrepancy Classification
+
+**A. Implementation Issues** (code doesn't match GDD):
+```
+[IMPL] [MECHANIC] - [GDD says: X] vs [code does: Y]
+```
+→ Fix code before proceeding. Re-run verification after fixes.
+
+**B. GDD Discrepancies** (GDD is unclear/outdated):
+```
+[GDD] [MECHANIC] - [GDD says: X] but [makes more sense: Y]
+```
+→ Do NOT modify `doc/gdd.md`. Report separately for game design review.
+→ Implement what makes sense, flag the discrepancy in the flow doc.
+
+---
+
+## 13) Definition of Done
+
+A feature is **done** when:
+
+- [ ] Rails-way + KISS honored; no unnecessary layers
+- [ ] Hotwire-first: Turbo Frames/Streams + Stimulus (not custom AJAX)
+- [ ] Game logic is deterministic, seeded, in `app/lib/game/`
+- [ ] GDD compliance verified
+- [ ] Tests are green and meaningful (model + request + system where appropriate)
+- [ ] No N+1 queries in hot paths
+- [ ] DB constraints present (NOT NULL, FKs, indexes)
+- [ ] Security basics respected (strong params, CSRF, authZ)
+- [ ] Flow doc created/updated in `doc/flow/`
+
+---
+
+## 14) Safe Defaults for Game State
+
+When data is missing, use safe defaults instead of nil:
+
+| Type | Safe Default |
+|------|-------------|
+| Numeric (HP, stats) | `0` or minimum valid |
+| String (name, desc) | `""` (empty) |
+| Boolean | `false` |
+| Array (inventory) | `[]` |
+| Object (stats) | Minimal valid object |
+| Timestamp | `Time.current` |
+
+**Never return nil for required game state fields.**
+
+---
+
+## 15) Regression Prevention
+
+1. **Before modifying existing code:** Run specs to establish baseline (all green)
+2. **After changes:** ALL prior specs must pass
+3. **Bug fixes:** Ship with regression spec that fails without fix, passes with fix
+4. **Cross-reference:** Verify GDD sections still satisfied
+
+---
+
+## 16) Prompt Template for Features
+
+When using AI assistance, use this template:
+
+```text
+Task: FEATURE_NAME — Elselands MMORPG
+
+Context:
+- GDD section: doc/gdd.md#relevant-section
+- Feature spec: doc/features/X_feature.md
+- Flow doc: doc/flow/X_feature.md (create if missing)
+
+Guides to follow:
+- AGENT.md (always)
+- GUIDE.md (Rails patterns)
+- MMO_ADDITIONAL_GUIDE.md (game architecture)
+- doc/MMO_TESTING_GUIDE.md (if adding tests)
+- doc/COMBAT_SYSTEM_GUIDE.md (if combat-related)
+
+Task:
+1. Read the GDD section and feature spec
+2. Identify required models, services, engine classes
+3. Provide a detailed plan (files + responsibilities)
+4. Wait for confirmation before writing code
+
+Constraints:
+- Deterministic game logic (seeded RNG)
+- Hotwire-first UI (Turbo + Stimulus)
+- Game calculations in app/lib/game/, never in controllers
+- Tests must be green before completion
+
+Spec coverage requirements (non-negotiable):
+- [ ] Model spec for new models/validations/associations
+- [ ] Request spec for each controller action (success + error cases)
+- [ ] Service spec for game engine classes (seeded RNG)
+- [ ] System spec for critical Hotwire interactions
+- [ ] Policy spec for authorization rules (if using Pundit)
+
+Documentation requirements (after verification passes):
+- [ ] Flow doc created/updated in `doc/flow/FEATURE_*.md`
+- [ ] Version history appended (not overwritten)
+- [ ] "Responsible for implementation files" section lists all new files
+
+GDD compliance checklist:
+- [ ] Mechanics match GDD description exactly
+- [ ] Formulas match documented rules
+- [ ] Stat values/progression match GDD curves
+- [ ] No undocumented gameplay behaviors added
+
+Regression prevention:
+- [ ] Run existing specs BEFORE changes (all green)
+- [ ] Run specs AFTER changes (all still green)
+- [ ] Bug fixes include regression spec
+```
+
+---
+
+## 17) Flow Doc Template
+
+Every feature needs a flow doc at `doc/flow/FEATURE_*.md`:
+
+```markdown
+# Feature Name
+
+## Version History
+- **v1.0** (YYYY-MM-DD): Initial implementation
+- **v1.1** (YYYY-MM-DD): Added X, fixed Y
+
+## Overview
+Brief description of what this feature does.
+
+## GDD Reference
+- Section: `doc/gdd.md#relevant-section`
+- Feature spec: `doc/features/X_feature.md`
+
+## Implementation Notes
+Key decisions, trade-offs, edge cases.
+
+## Hotwire Integration
+- Turbo Frames: which frames are used
+- Turbo Streams: what gets pushed/replaced
+- Stimulus: which controllers handle behavior
+
+## Game Engine Classes
+- `Game::Module::ClassName` - purpose
+
+## Responsible for Implementation Files
+
+### Models
+- `app/models/example.rb`
+
+### Controllers
+- `app/controllers/examples_controller.rb`
+
+### Views
+- `app/views/examples/index.html.erb`
+
+### Game Engine
+- `app/lib/game/systems/example.rb`
+
+### Specs
+- `spec/models/example_spec.rb`
+- `spec/requests/examples_spec.rb`
+```
+
+---
+
+## 18) Final Output Format
+
+When completing a task, respond with:
+
+**RATIONALE:**
+- 3-5 bullets describing approach and trade-offs
+
+**CHANGES:**
+- Files touched and what changed in each
+
+**CHECKS:**
+```text
+- bundle exec rubocop    # exit 0
+- bundle exec rspec      # exit 0
+```
+
+---
+
+Use this cursor rule as the **unified development standard** for the Elselands MMORPG.
+When project-specific guides (`MMO_ADDITIONAL_GUIDE.md`, etc.) add stricter rules, those take precedence.
