@@ -28,7 +28,7 @@ This guide applies to **full-stack Rails apps**:
 
 ## 1) Philosophy & Decision Rules
 
-- **Deliver as a senior Rails engineer.**  
+- **Deliver as a senior Rails engineer.**
   Code should be maintainable, testable, and idiomatic.
 
 - **Rails-way first, KISS over patterns.**
@@ -39,21 +39,21 @@ This guide applies to **full-stack Rails apps**:
   - Prefer server-rendered HTML and Turbo updates.
   - Reach for heavy SPA frameworks only when absolutely necessary.
 
-- **DRY when duplication hurts, not before.**  
+- **DRY when duplication hurts, not before.**
   Avoid speculative abstractions; prefer explicit code until duplication is real and painful.
 
-- **Selective SOLID.**  
+- **Selective SOLID.**
   Apply only where it clarifies the code and makes testing easier; avoid ceremony.
 
-- **Consistent APIs.**  
+- **Consistent APIs.**
   When exposing JSON:
   - Use a single serialization strategy (Jbuilder, serializer classes, or plain `render json:`).
   - Keep status codes and error formats predictable.
 
-- **Greenfield assumption (`in_development: true`).**  
+- **Greenfield assumption (`in_development: true`).**
   In young projects, it’s okay to reshape schema/models aggressively. In mature projects, favour additive/migratory changes over breaking ones.
 
-- **Document the change.**  
+- **Document the change.**
   Significant features/fixes should result in a short entry in `CHANGELOG.md` and/or updated `README.md`.
 
 ---
@@ -332,7 +332,14 @@ Support both RSpec and Minitest; follow the project’s choice.
 
 - Freeze or travel time when needed (`ActiveSupport::Testing::TimeHelpers`).
 - Stub external HTTP calls (WebMock, VCR, etc.); never hit real services in CI.
-- Ensure tests are independent; don’t rely on state from other examples.
+- Ensure tests are independent; don't rely on state from other examples.
+
+**Regression Prevention:**
+
+1. **Before modifying existing code:** Run specs to establish baseline (all green).
+2. **After changes:** ALL prior specs must pass—treat any failure as a regression.
+3. **Bug fixes:** Ship with a regression spec that fails without the fix and passes with it.
+4. **Cross-reference:** Verify GDD sections still satisfied after gameplay changes.
 
 ---
 

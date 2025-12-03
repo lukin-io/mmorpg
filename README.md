@@ -135,7 +135,20 @@ The `doc/features/3_player.md` specification is now wired into the codebase:
 | **doc/flow/4_world_npc_systems.md** | Implementation notes for world data, NPCs, quests, events, and magistrate reporting |
 | **changelog.md**             | High-level timeline of implemented features mapped back to `doc/features`|
 
-Use this README as the entry point, then jump to the guide that matches the type of work you’re doing.
+Use this README as the entry point, then jump to the guide that matches the type of work you're doing.
+
+---
+
+## 🤖 AI-Assisted Development
+
+This project includes a cursor rule at `.cursor/rules/development.mdc` with:
+- MUST/SHOULD/NEVER rules for MMORPG development
+- Prompt templates for AI-assisted features
+- GDD compliance checklists
+- Flow doc templates
+- Regression prevention workflows
+
+Load it automatically in Cursor or reference it when using AI assistants.
 
 ---
 

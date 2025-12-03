@@ -146,20 +146,25 @@ CHECKS
 
 ## 4. Edit scope & safety
 
-- Only touch files necessary for the requested change.
-- Do **not** modify:
-  - Secrets/credentials.
-  - Production/deployment configuration.
-  - CI/workflow configuration.
-  - Docker/kubernetes manifests.
-  unless explicitly asked.
-- Treat domain docs (product specs, GDDs, PRDs, etc.) as **requirements**, not as code;
-  only edit them if the task is explicitly about documentation.
-- If the project has a structured `doc/` tree (`doc/requirements`, `doc/flow`, `doc/prd`, game design docs, etc.),
-  treat it as documentation, not as a playground.
+### ✅ You MAY edit:
+- `app/**` (models, controllers, views, lib, services, jobs)
+- `config/**` (routes, initializers, locales)
+- `db/migrate/**` (new migrations only—don't edit committed ones)
+- `db/seeds.rb`
+- `lib/**`
+- `spec/**`
+- `.env.example`
+
+### ❌ Do NOT edit (unless explicitly asked):
+- `doc/gdd.md` (treat as read-only requirements)
+- `doc/features/**` (treat as specs, not code)
+- Secrets/credentials
+- Production/deployment configs
+- CI/workflow files
+- Docker/Kubernetes manifests
 
 For this MMORPG project, the **Game Design Document (GDD)** is the primary source of gameplay/domain rules;
-use it as input when making design decisions, but don’t overwrite it unless asked.
+use it as input when making design decisions, but don't overwrite it unless asked.
 
 ---
 
@@ -205,6 +210,19 @@ use it as input when making design decisions, but don’t overwrite it unless as
     - Never trust user input; escape output in views.
     - Honour CSRF protections.
     - Use well-tested libraries for authentication/authorization (Devise, OmniAuth, Pundit, etc.) where appropriate.
+
+---
+
+## 5.1 NEVER rules (forbidden)
+
+- **Never** put game calculations in controllers or views.
+- **Never** use unseeded randomness in game logic. Always: `Random.new(seed)`.
+- **Never** hit the DB from formula/combat classes.
+- **Never** bypass Turbo—avoid custom AJAX when Turbo suffices.
+- **Never** inline JS in views—use Stimulus controllers.
+- **Never** leave known N+1 in hot paths.
+- **Never** commit secrets or credentials.
+- **Never** edit committed migrations in shared environments.
 
 ---
 
