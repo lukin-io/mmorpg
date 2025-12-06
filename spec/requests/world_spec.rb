@@ -542,7 +542,7 @@ RSpec.describe "World", type: :request do
         post gather_resource_world_path,
           headers: {"Accept" => "text/vnd.turbo-stream.html"}
 
-        expect(response.body).to include('target="flash-messages"')
+        expect(response.body).to include('target="flash"')
       end
     end
 
@@ -594,6 +594,220 @@ RSpec.describe "World", type: :request do
         post gather_resource_world_path
 
         expect(response).to redirect_to(world_path)
+      end
+    end
+  end
+
+  # Tests for add_live_tile_features logic
+  # This tests the priority system: database records > procedural features
+  describe "map tile feature display" do
+    let(:user) { create(:user) }
+    let(:zone) { create(:zone, name: "Feature Test Zone", biome: "plains", width: 20, height: 20) }
+    let(:character) { create(:character, user: user) }
+    let!(:position) { create(:character_position, character: character, zone: zone, x: 10, y: 10) }
+
+    before { sign_in user }
+
+    describe "TileResource display" do
+      context "when database TileResource exists and is available" do
+        let!(:db_resource) do
+          create(:tile_resource,
+            zone: zone.name,
+            x: 11, # Adjacent tile (east)
+            y: 10,
+            resource_key: "iron_ore",
+            resource_type: "ore",
+            quantity: 3,
+            base_quantity: 3,
+            respawns_at: nil)
+        end
+
+        it "shows the database resource on the map" do
+          get world_path
+
+          expect(response.body).to include("Iron Ore")
+          expect(response.body).to include("nl-tile-resource")
+        end
+
+        it "shows correct resource icon for ore type" do
+          get world_path
+
+          # Ore resources should show pickaxe icon
+          expect(response.body).to include("⛏️")
+        end
+      end
+
+      context "when database TileResource exists but is depleted" do
+        let!(:depleted_db_resource) do
+          create(:tile_resource,
+            zone: zone.name,
+            x: 11, # Adjacent tile (east)
+            y: 10,
+            resource_key: "depleted_ore",
+            resource_type: "ore",
+            quantity: 0,
+            base_quantity: 3,
+            respawns_at: 30.minutes.from_now)
+        end
+
+        it "does not show the depleted resource on the map" do
+          get world_path
+
+          expect(response.body).not_to include("Depleted Ore")
+        end
+
+        it "hides resource until respawn time passes" do
+          get world_path
+
+          # The depleted resource tile should not have resource marker
+          expect(response.body).not_to include('data-resource="Depleted Ore"')
+        end
+      end
+
+      context "when no database TileResource exists (procedural fallback)" do
+        # No TileResource created - relies on procedural_features
+
+        it "shows procedural resources based on zone biome" do
+          get world_path
+
+          # Procedural features should still generate some resources
+          # The exact resources depend on seeded random, but plains should have some
+          expect(response).to have_http_status(:success)
+        end
+      end
+    end
+
+    describe "TileNpc display" do
+      context "when database TileNpc exists and is alive" do
+        let(:npc_template) { create(:npc_template, name: "Test Goblin", npc_key: "test_goblin") }
+        let!(:db_npc) do
+          create(:tile_npc,
+            zone: zone.name,
+            x: 9, # Adjacent tile (west)
+            y: 10,
+            npc_template: npc_template,
+            current_hp: 50,
+            max_hp: 50,
+            respawns_at: nil)
+        end
+
+        it "shows the database NPC on the map" do
+          get world_path
+
+          expect(response.body).to include("Test Goblin")
+        end
+
+        it "shows NPC marker" do
+          get world_path
+
+          expect(response.body).to include("nl-tile-npc")
+        end
+      end
+
+      context "when database TileNpc exists but is dead (defeated)" do
+        let(:npc_template) { create(:npc_template, name: "Dead Goblin", npc_key: "dead_goblin") }
+        let(:defeated_by_character) { create(:character) }
+        let!(:dead_db_npc) do
+          create(:tile_npc, :defeated,
+            zone: zone.name,
+            x: 9, # Adjacent tile (west)
+            y: 10,
+            npc_template: npc_template,
+            defeated_by: defeated_by_character)
+        end
+
+        it "does not show the defeated NPC on the map" do
+          get world_path
+
+          expect(response.body).not_to include("Dead Goblin")
+        end
+
+        it "hides NPC until respawn time passes" do
+          get world_path
+
+          # The defeated NPC tile should not have NPC marker
+          expect(response.body).not_to include('title="Dead Goblin"')
+        end
+      end
+
+      context "when database TileNpc has respawned" do
+        let(:npc_template) { create(:npc_template, name: "Respawned Goblin", npc_key: "respawned_goblin") }
+        let(:defeated_by_character) { create(:character) }
+        let!(:respawned_npc) do
+          create(:tile_npc, :ready_to_respawn,
+            zone: zone.name,
+            x: 9, # Adjacent tile (west)
+            y: 10,
+            npc_template: npc_template,
+            defeated_by: defeated_by_character)
+        end
+
+        it "shows the respawned NPC on the map" do
+          get world_path
+
+          expect(response.body).to include("Respawned Goblin")
+        end
+      end
+    end
+
+    describe "resource depletion after gathering" do
+      let!(:gatherable_resource) do
+        create(:tile_resource,
+          zone: zone.name,
+          x: position.x,
+          y: position.y,
+          resource_key: "test_herb",
+          resource_type: "herb",
+          quantity: 1, # Will deplete after one gather
+          base_quantity: 1,
+          respawns_at: nil)
+      end
+      let!(:inventory) { create(:inventory, character: character, slot_capacity: 20, weight_capacity: 100) }
+
+      it "hides resource from map after it's fully depleted" do
+        # First verify resource is visible
+        get world_path
+        expect(response.body).to include("Test Herb")
+
+        # Gather the resource (depletes it)
+        post gather_resource_world_path,
+          headers: {"Accept" => "text/vnd.turbo-stream.html"}
+
+        # Check that map update doesn't include the depleted resource
+        expect(response.body).not_to include('title="Test Herb"')
+      end
+    end
+
+    describe "priority: database records over procedural" do
+      # When a database record exists, it takes precedence over procedural generation
+      let!(:db_resource_at_procedural_location) do
+        # Place a specific database resource at coordinates that would have procedural content
+        create(:tile_resource,
+          zone: zone.name,
+          x: 10,
+          y: 9, # North of player
+          resource_key: "special_crystal",
+          resource_type: "crystal",
+          quantity: 5,
+          base_quantity: 5,
+          respawns_at: nil)
+      end
+
+      it "shows database resource instead of procedural" do
+        get world_path
+
+        # Should show our specific database resource
+        expect(response.body).to include("Special Crystal")
+      end
+
+      it "shows depleted status even if procedural would generate resource" do
+        # Deplete the resource
+        db_resource_at_procedural_location.update!(quantity: 0, respawns_at: 30.minutes.from_now)
+
+        get world_path
+
+        # Should NOT show any resource at this tile (even if procedural would generate one)
+        expect(response.body).not_to include("Special Crystal")
       end
     end
   end

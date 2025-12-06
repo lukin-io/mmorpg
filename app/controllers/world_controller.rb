@@ -341,30 +341,54 @@ class WorldController < ApplicationController
     tiles
   end
 
-  # Add actual database resource/npc data to tile metadata
-  # Only shows features that are currently available (not depleted)
+  # Add resource/npc data to tile metadata
+  # Priority: 1) Database records (TileResource/TileNpc)
+  #           2) Procedural features as fallback
+  # Depleted resources (quantity = 0) are hidden
   def add_live_tile_features(zone_name, x, y, metadata)
-    # Check for available TileResource
+    # Check for TileResource in database
     resource = TileResource.at_tile(zone_name, x, y)
-    if resource&.available?
-      metadata["resource"] = resource.display_name
-      metadata["resource_type"] = resource.resource_type
-      metadata["resource_quantity"] = resource.quantity
+
+    if resource
+      # Database record exists - show if available, hide if depleted
+      if resource.available?
+        metadata["resource"] = resource.display_name
+        metadata["resource_type"] = resource.resource_type
+        metadata["resource_quantity"] = resource.quantity
+      else
+        # Resource is depleted, don't show it
+        metadata.delete("resource")
+        metadata.delete("resource_type")
+        metadata.delete("resource_quantity")
+      end
     else
-      # Remove any stale resource data
-      metadata.delete("resource")
-      metadata.delete("resource_type")
-      metadata.delete("resource_quantity")
+      # No database record - use procedural features as visual hint
+      # Resource will be created when player attempts to gather
+      procedural = procedural_features(@position.zone, x, y)
+      if procedural["resource"]
+        metadata["resource"] = procedural["resource"]
+        metadata["resource_type"] = procedural["resource_type"]
+      end
     end
 
-    # Check for TileNpc
+    # Check for TileNpc in database
     npc = TileNpc.at_tile(zone_name, x, y)
-    if npc&.alive?
-      metadata["npc"] = npc.display_name
-      metadata["npc_level"] = npc.level
+
+    if npc
+      # Database record exists - show if alive
+      if npc.alive?
+        metadata["npc"] = npc.display_name
+        metadata["npc_level"] = npc.level
+      else
+        metadata.delete("npc")
+        metadata.delete("npc_level")
+      end
     else
-      metadata.delete("npc")
-      metadata.delete("npc_level")
+      # No database record - use procedural features as visual hint
+      procedural ||= procedural_features(@position.zone, x, y)
+      if procedural["npc"]
+        metadata["npc"] = procedural["npc"]
+      end
     end
 
     metadata
