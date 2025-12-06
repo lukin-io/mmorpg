@@ -1,0 +1,83 @@
+html, body { height:100%; width: 100%; margin: 0px; padding: 0px; }
+body { min-height: 100%; height: auto !important; height: 100%; position: relative; }
+
+#darker { position: absolute; display: none; left: 0; top: 0; width: 100%; height: 100%; z-index: 100; }
+.TB_overlayBG { background-color:#000; filter:alpha(opacity=75); -moz-opacity: 0.75; opacity: 0.75; }
+.TB_overlayMacFFBGHack { background: url(http://image.neverlands.ru/map/darker.png) repeat; }
+
+#block_uni{ position: absolute; left: 50%; height: 327px; width: 749px; margin-left: -395px; top: 25px; z-index: 101}
+.block{ margin:0 auto;}
+.block .block_bg{background:url(http://image.neverlands.ru/gameplay/dialogs/block_bg.jpg) no-repeat;}
+.block .block_l{background:url(http://image.neverlands.ru/gameplay/dialogs/block_bg_l.png) no-repeat;}
+.block .block_t{background:url(http://image.neverlands.ru/gameplay/dialogs/block_bg_t.png) no-repeat;}
+.block .block_b{background:url(http://image.neverlands.ru/gameplay/dialogs/block_bg_b.png) no-repeat;}
+.block .block_r{background:url(http://image.neverlands.ru/gameplay/dialogs/block_bg_r.png) no-repeat;}
+.block .block_close{height:18px; width:18px; position:absolute; margin-left:595px; margin-top:-26px; background:url(http://image.neverlands.ru/gameplay/dialogs/close.jpg) no-repeat;}
+.block .block_close:hover{ background:url(http://image.neverlands.ru/gameplay/dialogs/close_hov.jpg) no-repeat;}
+.block td{vertical-align:top; text-align:left;}
+.block .text{padding-top:30px;vertical-align:top; font-family: Tahoma,Verdana; font-size: 14px; font-weight: bold; color: #555555;}
+.block .text div{ height: 180px; overflow:hidden;}
+.block .text a{ text-decoration : underline; color: #90292A; }
+.block .buttons{height: 35px;}
+.block .buttons div{height: 35px; text-align:center; padding-right:55px;}
+.block .buttons div a{position:relative;display:inline-block; margin-right:5px;margin-top: -10px;}
+
+.block_prev{width:39px; height:33px; background:url(http://image.neverlands.ru/gameplay/dialogs/block_prev.gif) no-repeat; }
+.block_end{width:102px; height:34px; background:url(http://image.neverlands.ru/gameplay/dialogs/block_end.gif) no-repeat;}
+.block_get{width:103px; height:34px; background:url(http://image.neverlands.ru/gameplay/dialogs/block_get.gif) no-repeat;}
+.block_next{width:39px; height:33px; background:url(http://image.neverlands.ru/gameplay/dialogs/block_next.gif) no-repeat;}
+
+.block_prev:hover{background:url(http://image.neverlands.ru/gameplay/dialogs/block_prev_hov.gif) no-repeat;}
+.block_end:hover{background:url(http://image.neverlands.ru/gameplay/dialogs/block_end_hov.gif) no-repeat;}
+.block_get:hover{background:url(http://image.neverlands.ru/gameplay/dialogs/block_get_hov.gif) no-repeat;}
+.block_next:hover{background:url(http://image.neverlands.ru/gameplay/dialogs/block_next_hov.gif) no-repeat;}
+
+.block .ava{width:155px;padding-top:30px;}
+.block .ava div{float:left;}
+.block .ava div.ava_img{ position:absolute; padding:6px 0 0 17px;}
+.block .ava div.ava_border{background:url(http://image.neverlands.ru/gameplay/dialogs/block_border.png) no-repeat right; height:215px; width:155px; position:absolute;}
+
+#static_window{position:absolute; left: 50%; top: 105px; height:182px; padding-left:28px; margin-left: -204px; width:380px; background: url(http://image.neverlands.ru/gameplay/dialogs/ws_left.png) no-repeat; z-index: 101;}
+#static_window .circ{height:18px; width:18px;background: url(http://image.neverlands.ru/gameplay/dialogs/cl2_but.jpg) no-repeat; position:absolute; margin-left:329px; margin-top:9px;}
+#static_window .circ:hover{background-position:0 100%;}
+#static_window .ws_top{position:absolute; height:3px; width:355px; background: url(http://image.neverlands.ru/gameplay/dialogs/ws_top.png) no-repeat;}
+#static_window .ws_right{position:absolute; height:155px; width:27px; background: url(http://image.neverlands.ru/gameplay/dialogs/ws_right.png) no-repeat; margin-left:355px;}
+#static_window .ws_bottom{position:absolute; height:27px; width:358px; background: url(http://image.neverlands.ru/gameplay/dialogs/ws_bot.png) no-repeat; margin-top:155px;}
+#static_window .ws_middle{position:absolute; height:152px; width:355px; background: url(http://image.neverlands.ru/gameplay/dialogs/ws_mid.jpg) no-repeat; margin-top:3px;}
+#static_window .ws_middle{position:absolute; height:152px; width:355px; background: url(http://image.neverlands.ru/gameplay/dialogs/ws_mid.jpg) no-repeat; margin-top:3px;}
+#static_window .ws_middle .cl_but{position:absolute; height:34px; width:103px; margin-top:100px; margin-left:145px;background: url(http://image.neverlands.ru/gameplay/dialogs/cl_but.jpg) no-repeat 0 100%;}
+#static_window .ws_middle .cl_but:hover{background-position:0 0;}
+#static_window .ws_middle .text{position:absolute; height:95px; width:230px; margin-top:15px; margin-left:100px;}
+
+#uni{position:absolute; left: 50%; top: 35px; margin-left: -380px; width:760px; z-index: 101;}
+.uni_window{margin-bottom:10px;}
+.uni_window td{vertical-align:top; text-align:left;}
+.uni_window td .centr{vertical-align:middle; text-align:center;}
+.uni_window .circ{height:18px; width:18px;background: url(http://image.neverlands.ru/gameplay/dialogs/cl2_but.jpg) no-repeat; position:absolute; margin-left:-8px; margin-top:-2px;}
+.uni_window .circ:hover{background-position:0 100%;}
+*html .uni_window .circ:hover{background-position:0 105%;}
+.uni_window .wu_top{height:11px;background: url(http://image.neverlands.ru/gameplay/dialogs/wu_top_center.gif) repeat-x;}
+.uni_window .wu_top_left{height:11px;background: url(http://image.neverlands.ru/gameplay/dialogs/wu_top_left.png) no-repeat; width:37px;}
+.uni_window .wu_top_right{height:11px;background: url(http://image.neverlands.ru/gameplay/dialogs/wu_top_right.png) no-repeat; width:37px;}
+.uni_window .wu_l_gr{width:44px; background: url(http://image.neverlands.ru/gameplay/dialogs/wu_l_gr.jpg) repeat-y right;}
+.uni_window .wu_r_gr{width:44px; background: url(http://image.neverlands.ru/gameplay/dialogs/wu_r_gr.jpg) repeat-y left;}
+.uni_window .wu_m_gr{background:#ececec; padding:10px 10px 0px 5px;font-size:14px;}
+.uni_window .wu_b_l{width:44px; background: url(http://image.neverlands.ru/gameplay/dialogs/wu_l_b.png) no-repeat; height:84px;}
+.uni_window .wu_b_r{width:44px; background: url(http://image.neverlands.ru/gameplay/dialogs/wu_r_b.png) no-repeat; height:84px;}
+.uni_window .wu_b_m{width:auto; height:35px;background:#ececec url(http://image.neverlands.ru/gameplay/dialogs/wu_b_m.jpg) repeat-x  bottom;}
+.uni_window .wu_b_m_l{height:84px; width:35px;background:#ececec url(http://image.neverlands.ru/gameplay/dialogs/wu_b_m_l.jpg) no-repeat  bottom;}
+.uni_window .wu_b_m_r{width:66px;background:#ececec url(http://image.neverlands.ru/gameplay/dialogs/wu_b_m_r.jpg) no-repeat  bottom;}
+.uni_window .wu_bb_l{float:left;height:3px;background: url(http://image.neverlands.ru/gameplay/dialogs/wu_b_l.png) no-repeat; width:76px;}
+.uni_window .wu_bb_r{float:right;height:3px;background: url(http://image.neverlands.ru/gameplay/dialogs/wu_b_r.png) no-repeat; width:93px;}
+.uni_window .but{display:block; height:33px; width:103px; margin:25px auto 0 auto; position:relative; left:10px;}
+
+.uni_window .ok{background: url(http://image.neverlands.ru/gameplay/dialogs/ok_but.jpg) no-repeat 0 0;}
+.uni_window .ok:hover{background: url(http://image.neverlands.ru/gameplay/dialogs/ok_but.jpg) no-repeat 0 100%;}
+.uni_window .ac{background: url(http://image.neverlands.ru/gameplay/dialogs/ac_but.jpg) no-repeat 0 0;}
+.uni_window .ac:hover{background: url(http://image.neverlands.ru/gameplay/dialogs/ac_but.jpg) no-repeat 0 100%;}
+.uni_window .sr{background: url(http://image.neverlands.ru/gameplay/dialogs/sr_but.jpg) no-repeat 0 0;}
+.uni_window .sr:hover{background: url(http://image.neverlands.ru/gameplay/dialogs/sr_but.jpg) no-repeat 0 100%;}
+.uni_window .lov{background: url(http://image.neverlands.ru/gameplay/dialogs/lov_but.jpg) no-repeat 0 0;}
+.uni_window .lov:hover{background: url(http://image.neverlands.ru/gameplay/dialogs/lov_but.jpg) no-repeat 0 100%;}
+
+.timer_s{font-family:Tahoma, Verdana, Arial; font-size:11px; font-weight:bold; color:#ffffff;}

@@ -94,16 +94,22 @@ class PresenceChannel < ApplicationCable::Channel
   end
 
   def mark_online
-    session = current_user.current_session
-    session&.mark_online! if session.respond_to?(:mark_online!)
+    # Mark session online if the method exists
+    if current_user.respond_to?(:current_session)
+      session = current_user.current_session
+      session&.mark_online! if session.respond_to?(:mark_online!)
+    end
 
     # Broadcast to online players channel
     broadcast_status("online")
   end
 
   def mark_offline
-    session = current_user.current_session
-    session&.mark_offline!(timestamp: Time.current) if session.respond_to?(:mark_offline!)
+    # Mark session offline if the method exists
+    if current_user.respond_to?(:current_session)
+      session = current_user.current_session
+      session&.mark_offline!(timestamp: Time.current) if session.respond_to?(:mark_offline!)
+    end
 
     # Broadcast to online players channel
     broadcast_status("offline")

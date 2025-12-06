@@ -1,95 +1,101 @@
 /*
  * Elselands MMORPG - Complete Stylesheet
- * Dark Fantasy MMORPG Theme
+ * Light Theme (Original Style)
  */
 
 /* ============================================
-   CSS VARIABLES - DARK FANTASY THEME
+   CSS VARIABLES - LIGHT THEME (Default)
+   Exact colors from original game CSS
    ============================================ */
 
 :root {
-  /* Primary color palette - dark medieval/fantasy theme */
-  --nl-bg-primary: #1a1714;
-  --nl-bg-secondary: #252220;
-  --nl-bg-tertiary: #2d2a27;
-  --nl-bg-accent: #3a3632;
-  --nl-bg-dark: #0f0d0b;
-  --nl-bg-darker: #080706;
-  --nl-bg-panel: #1f1c19;
-  --nl-bg-card: linear-gradient(145deg, #2a2622 0%, #1a1714 100%);
+  /* Primary color palette - light cream/white theme */
+  --nl-bg-primary: #FFFFFF;
+  --nl-bg-secondary: #FCFAF3;
+  --nl-bg-tertiary: #F3ECD7;
+  --nl-bg-accent: #FAFAFA;
+  --nl-bg-dark: #F0F0F0;
+  --nl-bg-darker: #E0E0E0;
+  --nl-bg-panel: #FFFFFF;
+  --nl-bg-card: #FFFFFF;
 
-  /* Gold/Bronze accent colors - fantasy metallic */
-  --nl-gold: #c9a227;
-  --nl-gold-light: #e3c15d;
-  --nl-gold-dark: #8b6914;
-  --nl-gold-glow: rgba(201, 162, 39, 0.3);
-  --nl-bronze: #cd7f32;
-  --nl-copper: #b87333;
+  /* Gold accent colors */
+  --nl-gold: #B9A05C;
+  --nl-gold-light: #DECFA6;
+  --nl-gold-dark: #A9904C;
+  --nl-gold-glow: rgba(185, 160, 92, 0.3);
+  --nl-bronze: #A29275;
+  --nl-copper: #7A6848;
 
-  /* Border colors - aged metal/stone */
-  --nl-border: #4a4540;
-  --nl-border-light: #5a554f;
-  --nl-border-medium: #6b645c;
-  --nl-border-dark: #2a2520;
-  --nl-border-gold: #8b6914;
-  --nl-border-glow: rgba(201, 162, 39, 0.4);
+  /* Border colors */
+  --nl-border: #DECFA6;
+  --nl-border-light: #E8DFC8;
+  --nl-border-medium: #CCCCCC;
+  --nl-border-dark: #B9A05C;
+  --nl-border-gold: #B9A05C;
+  --nl-border-glow: rgba(185, 160, 92, 0.4);
 
-  /* Text colors - parchment/fantasy */
-  --nl-text: #d4cfc4;
-  --nl-text-primary: #e8e3d8;
-  --nl-text-secondary: #b5afa3;
-  --nl-text-muted: #7a756c;
-  --nl-text-dim: #5a5550;
-  --nl-text-light: #f5f0e5;
-  --nl-text-inverse: #1a1714;
-  --nl-text-link: #7eb8da;
-  --nl-text-link-hover: #a8d4f0;
+  /* Text colors */
+  --nl-text: #222222;
+  --nl-text-primary: #000000;
+  --nl-text-secondary: #333333;
+  --nl-text-muted: #666666;
+  --nl-text-dim: #888888;
+  --nl-text-light: #FFFFFF;
+  --nl-text-inverse: #FFFFFF;
+  --nl-text-link: #336699;
+  --nl-text-link-hover: #003366;
 
-  /* Status colors - magical/fantasy */
-  --nl-success: #2d8f4e;
-  --nl-success-bg: rgba(45, 143, 78, 0.15);
-  --nl-success-glow: rgba(45, 143, 78, 0.4);
-  --nl-warning: #d4830a;
-  --nl-warning-bg: rgba(212, 131, 10, 0.15);
-  --nl-danger: #b33a3a;
-  --nl-danger-bg: rgba(179, 58, 58, 0.15);
-  --nl-danger-glow: rgba(179, 58, 58, 0.4);
-  --nl-info: #4a8bb3;
-  --nl-info-bg: rgba(74, 139, 179, 0.15);
+  /* Status colors */
+  --nl-success: #087C20;
+  --nl-success-bg: rgba(8, 124, 32, 0.1);
+  --nl-success-glow: rgba(8, 124, 32, 0.3);
+  --nl-warning: #EF6B00;
+  --nl-warning-bg: rgba(239, 107, 0, 0.1);
+  --nl-danger: #CC0000;
+  --nl-danger-bg: rgba(204, 0, 0, 0.1);
+  --nl-danger-glow: rgba(204, 0, 0, 0.3);
+  --nl-info: #003366;
+  --nl-info-bg: rgba(0, 51, 102, 0.1);
 
-  /* Special colors - magic/elements */
-  --nl-hp-bar: linear-gradient(90deg, #8b2323 0%, #cd3636 50%, #8b2323 100%);
-  --nl-hp-empty: #2a1515;
-  --nl-mp-bar: linear-gradient(90deg, #1a4a7a 0%, #2a6aaa 50%, #1a4a7a 100%);
-  --nl-mp-empty: #0f1a2a;
-  --nl-xp-bar: linear-gradient(90deg, #1a5a2a 0%, #2a8a4a 50%, #1a5a2a 100%);
-  --nl-chat-highlight: #4a7a9a;
-  --nl-chat-private: #9a4a5a;
-  --nl-chat-whisper: #8a4a6a;
-  --nl-premium: #ffd700;
+  /* HP/MP bars - original colors */
+  --nl-hp-bar: linear-gradient(to bottom, #4a9900, #2d6600);
+  --nl-hp-empty: #1a3300;
+  --nl-hp-color: #bb0000;
+  --nl-mp-bar: linear-gradient(to bottom, #3366aa, #1a4477);
+  --nl-mp-empty: #0a1a33;
+  --nl-mp-color: #336699;
+  --nl-xp-bar: linear-gradient(to bottom, #6699ff, #3366cc);
+  --nl-chat-highlight: #6699BB;
+  --nl-chat-private: #D16F67;
+  --nl-chat-whisper: #D16F67;
+  --nl-chat-system: #EF6B00;
+  --nl-premium: #FFD700;
   --nl-premium-bg: rgba(255, 215, 0, 0.1);
 
-  /* Rarity colors - WoW-inspired */
-  --nl-rarity-common: #9d9d9d;
-  --nl-rarity-uncommon: #1eff00;
-  --nl-rarity-rare: #0070dd;
-  --nl-rarity-epic: #a335ee;
-  --nl-rarity-legendary: #ff8000;
-  --nl-rarity-artifact: #e6cc80;
-  --nl-rarity-heirloom: #00ccff;
+  /* Rarity colors */
+  --nl-rarity-common: #666666;
+  --nl-rarity-uncommon: #087C20;
+  --nl-rarity-rare: #0052A6;
+  --nl-rarity-epic: #9933CC;
+  --nl-rarity-legendary: #FF6600;
+  --nl-rarity-artifact: #CC9900;
+  --nl-rarity-heirloom: #0099CC;
 
-  /* Faction colors */
-  --nl-faction-light: #f0e68c;
-  --nl-faction-dark: #483d8b;
-  --nl-faction-neutral: #708090;
-  --nl-faction-chaos: #8b0000;
-  --nl-faction-order: #4169e1;
+  /* Team/Faction colors */
+  --nl-faction-light: #0052A6;
+  --nl-faction-dark: #990000;
+  --nl-faction-neutral: #666666;
+  --nl-faction-chaos: #CC0000;
+  --nl-faction-order: #003366;
+  --nl-team-1: #0052A6;
+  --nl-team-2: #087C20;
 
-  /* Typography - fantasy fonts */
-  --nl-font-heading: 'Cinzel', 'Georgia', 'Times New Roman', serif;
-  --nl-font-primary: 'Tahoma', 'Verdana', 'Arial', sans-serif;
-  --nl-font-secondary: 'Verdana', 'Tahoma', 'Arial', sans-serif;
-  --nl-font-display: 'Cinzel Decorative', 'Georgia', serif;
+  /* Typography - original fonts */
+  --nl-font-heading: 'Tahoma', 'Verdana', 'Arial', sans-serif;
+  --nl-font-primary: 'Verdana', 'Tahoma', 'Arial', sans-serif;
+  --nl-font-secondary: 'Tahoma', 'Verdana', 'Arial', sans-serif;
+  --nl-font-display: 'Arial', 'Tahoma', 'Verdana', sans-serif;
   --nl-font-mono: 'Consolas', 'Monaco', monospace;
 
   /* Spacing */
@@ -99,34 +105,32 @@
   --nl-space-lg: 1.5rem;
   --nl-space-xl: 2rem;
 
-  /* Border radius - slightly more rounded for fantasy feel */
-  --nl-radius: 4px;
-  --nl-radius-sm: 2px;
-  --nl-radius-md: 6px;
-  --nl-radius-lg: 8px;
-  --nl-radius-xl: 12px;
+  /* Border radius - minimal like original */
+  --nl-radius: 0px;
+  --nl-radius-sm: 0px;
+  --nl-radius-md: 2px;
+  --nl-radius-lg: 4px;
+  --nl-radius-xl: 6px;
 
-  /* Shadows - deeper, more dramatic */
-  --nl-shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.4);
-  --nl-shadow-md: 0 4px 8px rgba(0, 0, 0, 0.5);
-  --nl-shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.6);
-  --nl-shadow-inset: inset 0 2px 6px rgba(0, 0, 0, 0.4);
-  --nl-shadow-glow: 0 0 10px rgba(201, 162, 39, 0.3);
-  --nl-shadow-glow-strong: 0 0 20px rgba(201, 162, 39, 0.5);
+  /* Shadows - subtle */
+  --nl-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.1);
+  --nl-shadow-md: 0 2px 4px rgba(0, 0, 0, 0.15);
+  --nl-shadow-lg: 0 4px 8px rgba(0, 0, 0, 0.2);
+  --nl-shadow-inset: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+  --nl-shadow-glow: 0 0 5px rgba(185, 160, 92, 0.3);
+  --nl-shadow-glow-strong: 0 0 10px rgba(185, 160, 92, 0.5);
 
   /* Gradients */
-  --nl-gradient-dark: linear-gradient(180deg, #2a2622 0%, #1a1714 100%);
-  --nl-gradient-panel: linear-gradient(145deg, #2d2a27 0%, #1f1c19 50%, #1a1714 100%);
-  --nl-gradient-gold: linear-gradient(180deg, #e3c15d 0%, #c9a227 50%, #8b6914 100%);
-  --nl-gradient-button: linear-gradient(180deg, #3a3632 0%, #2a2622 100%);
-  --nl-gradient-button-hover: linear-gradient(180deg, #4a4642 0%, #3a3632 100%);
+  --nl-gradient-dark: linear-gradient(180deg, #F0F0F0 0%, #E0E0E0 100%);
+  --nl-gradient-panel: linear-gradient(180deg, #FFFFFF 0%, #FAFAFA 100%);
+  --nl-gradient-gold: linear-gradient(180deg, #DECFA6 0%, #B9A05C 100%);
+  --nl-gradient-button: #FFFFFF;
+  --nl-gradient-button-hover: #F3ECD7;
 }
 
 /* ============================================
-   BASE RESET & TYPOGRAPHY - DARK FANTASY
+   BASE RESET & TYPOGRAPHY - LIGHT THEME
    ============================================ */
-
-@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cinzel+Decorative:wght@400;700&display=swap');
 
 *, *::before, *::after {
   box-sizing: border-box;
@@ -143,43 +147,35 @@ body {
   line-height: 1.5;
   color: var(--nl-text);
   background-color: var(--nl-bg-primary);
-  /* Dark fantasy background with subtle texture */
-  background-image:
-    radial-gradient(ellipse at top, rgba(50, 45, 40, 0.4) 0%, transparent 50%),
-    radial-gradient(ellipse at bottom, rgba(30, 25, 20, 0.6) 0%, transparent 50%),
-    url("data:image/svg+xml,%3Csvg viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
   margin: 0;
   padding: 0;
   min-height: 100vh;
 }
 
-/* Fantasy-style headings */
+/* Headings */
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--nl-font-heading);
-  font-weight: 600;
-  color: var(--nl-gold-light);
+  font-weight: bold;
+  color: var(--nl-text-primary);
   margin: 0 0 var(--nl-space-sm);
   line-height: 1.3;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
 }
 
 h1 {
-  font-size: 1.6rem;
-  color: var(--nl-gold);
-  border-bottom: 2px solid var(--nl-border-gold);
+  font-size: 1.4rem;
+  color: var(--nl-text-primary);
+  border-bottom: 1px solid var(--nl-border);
   padding-bottom: var(--nl-space-sm);
-  text-transform: uppercase;
-  letter-spacing: 1px;
 }
 
 h2 {
-  font-size: 1.35rem;
-  color: var(--nl-gold-light);
+  font-size: 1.25rem;
+  color: var(--nl-text-primary);
 }
 
 h3 {
-  font-size: 1.15rem;
-  color: var(--nl-text-primary);
+  font-size: 1.1rem;
+  color: var(--nl-text-secondary);
 }
 
 h4, h5, h6 {
@@ -194,8 +190,12 @@ p {
 
 a {
   color: var(--nl-text-link);
-  text-decoration: none;
-  transition: all 0.2s ease;
+  text-decoration: underline;
+  transition: color 0.15s ease;
+}
+
+a:hover {
+  color: var(--nl-text-link-hover);
 }
 
 a:hover {
@@ -4874,577 +4874,415 @@ turbo-frame[busy] {
 }
 
 /* ==============================================================================
-   NEVERLANDS-STYLE GAME LAYOUT (Dark Fantasy Theme)
-   Modern CSS Grid layout inspired by Neverlands MMORPG
-   Layout: Status Bar (minimal) | Main Content (90%) | Bottom Panel (10%)
+   GAME LAYOUT (Matching Original UI)
+   Layout: Top Bar (name + vitals + links) | Main (full) | Floating Players | Bottom Chat
    ============================================================================== */
 
-/* --- CSS Variables for Neverlands Theme --- */
+/* --- CSS Variables for Game Theme (Light) --- */
 .nl-game-layout {
-  --nl-bg-darkest: #0a0a12;
-  --nl-bg-dark: #12121a;
-  --nl-bg-medium: #1a1a2e;
-  --nl-bg-light: #252538;
-  --nl-border-dark: #2a2a4a;
-  --nl-border-gold: #8b7355;
-  --nl-gold-bright: #d4af37;
-  --nl-gold: #b49b64;
-  --nl-gold-dim: #8b7355;
-  --nl-text-bright: #f0e6d2;
-  --nl-text: #c8b89a;
-  --nl-text-dim: #8a8070;
-  --nl-hp-fill: linear-gradient(180deg, #4a8b00 0%, #2d5500 100%);
-  --nl-hp-low: linear-gradient(180deg, #a88000 0%, #665400 100%);
-  --nl-hp-critical: linear-gradient(180deg, #a80000 0%, #550000 100%);
-  --nl-mp-fill: linear-gradient(180deg, #0066aa 0%, #003366 100%);
-  --nl-status-bar-height: 32px;
-  --nl-bottom-height: 180px;
-  --nl-resize-height: 6px;
-  --nl-players-width: 120px;
-  --nl-tab-height: 28px;
-  --nl-input-height: 36px;
+  --nl-bg: #FFFFFF;
+  --nl-border: #CCCCCC;
+  --nl-border-gold: #DECFA6;
+  --nl-text: #000000;
+  --nl-text-dim: #666666;
+  --nl-link: #336699;
+  --nl-hp-fill: #CC0000;
+  --nl-mp-fill: #336699;
+  --nl-top-bar-height: 18px;
+  --nl-bottom-bar-height: 24px;
+  --nl-players-width: 200px;
 }
 
-/* --- Main Layout Grid --- */
+/* --- Main Layout: 3 rows --- */
 .nl-game-layout {
   display: grid;
-  grid-template-rows: var(--nl-status-bar-height) 1fr var(--nl-resize-height) var(--nl-bottom-height);
+  grid-template-rows: var(--nl-top-bar-height) 1fr var(--nl-bottom-bar-height);
   height: 100vh;
   width: 100vw;
   overflow: hidden;
-  background: var(--nl-bg-darkest);
+  background: var(--nl-bg);
   color: var(--nl-text);
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  font-size: 13px;
+  font-family: Verdana, Tahoma, Arial, sans-serif;
+  font-size: 12px;
 }
 
-/* --- Status Bar (Top) --- */
-.nl-status-bar {
+/* ====================== TOP BAR (like original) ====================== */
+.nl-top-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 8px;
-  background: linear-gradient(180deg, #1e1e28 0%, #14141c 100%);
-  border-bottom: 1px solid var(--nl-border-dark);
-  gap: 12px;
-  z-index: 100;
+  padding: 0 4px;
+  background: var(--nl-bg);
+  border-bottom: 1px solid var(--nl-border);
+  height: var(--nl-top-bar-height);
+  font-size: 12px;
 }
 
-.nl-status-left {
+.nl-top-left {
   display: flex;
   align-items: center;
-  gap: 12px;
-  flex: 1;
-}
-
-.nl-char-name {
-  color: var(--nl-gold);
-  font-weight: 600;
-  font-size: 13px;
-}
-
-.nl-char-level {
-  color: var(--nl-text-dim);
-  font-size: 11px;
-}
-
-.nl-quick-nav {
-  display: flex;
   gap: 4px;
 }
 
-.nl-nav-icon {
-  width: 26px;
-  height: 26px;
+.nl-player-link {
+  color: var(--nl-text);
+  text-decoration: none;
+  font-weight: normal;
+}
+
+.nl-player-link:hover {
+  text-decoration: underline;
+}
+
+.nl-player-level {
+  color: var(--nl-text);
+  font-size: 12px;
+  margin-left: 0;
+}
+
+/* HP/MP bars inline - simple colored bars like original */
+.nl-vitals-inline {
   display: flex;
   align-items: center;
-  justify-content: center;
-  background: linear-gradient(180deg, #2a2a3a 0%, #1e1e28 100%);
-  border: 1px solid var(--nl-border-dark);
-  border-radius: 4px;
-  font-size: 14px;
-  text-decoration: none;
-  transition: all 0.15s ease;
+  gap: 2px;
+  margin-left: 6px;
 }
 
-.nl-nav-icon:hover {
-  background: linear-gradient(180deg, #3a3a4a 0%, #2e2e38 100%);
-  border-color: var(--nl-gold-dim);
-  transform: translateY(-1px);
+.nl-hp-bar-inline,
+.nl-mp-bar-inline {
+  width: 100px;
+  height: 10px;
+  background: #E0E0E0;
+  border: 1px solid #999999;
+  position: relative;
 }
 
-.nl-status-right {
+.nl-hp-bar-inline .nl-bar-fill {
+  height: 100%;
+  background: var(--nl-hp-fill);
+}
+
+.nl-mp-bar-inline .nl-bar-fill {
+  height: 100%;
+  background: var(--nl-mp-fill);
+}
+
+.nl-vitals-text {
+  font-size: 11px;
+  color: var(--nl-text);
+  margin-left: 4px;
+}
+
+/* Navigation links (right side of top bar) */
+.nl-top-nav {
   display: flex;
   align-items: center;
   gap: 12px;
 }
 
-.nl-gold {
-  color: var(--nl-gold-bright);
+.nl-nav-link {
+  color: var(--nl-link);
+  text-decoration: none;
   font-size: 12px;
-  font-weight: 500;
 }
 
-.nl-exit-btn {
-  width: 22px;
-  height: 22px;
+.nl-nav-link:hover {
+  text-decoration: underline;
+}
+
+/* Close button */
+.nl-top-right {
+  display: flex;
+  align-items: center;
+}
+
+.nl-close-btn {
+  width: 16px;
+  height: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: transparent;
-  border: 1px solid #4a2020;
-  border-radius: 4px;
-  color: #a04040;
-  font-size: 12px;
+  background: #E0E0E0;
+  border: 1px solid #999999;
+  color: #333333;
+  font-size: 11px;
   font-weight: bold;
   text-decoration: none;
-  transition: all 0.15s ease;
+  cursor: pointer;
 }
 
-.nl-exit-btn:hover {
-  background: #3a1515;
-  border-color: #a04040;
-  color: #ff6060;
+.nl-close-btn:hover {
+  background: #D0D0D0;
 }
 
-/* --- Main Content Area --- */
-.nl-main-content {
-  overflow: auto;
-  background: linear-gradient(180deg, #1a1a25 0%, #15151f 100%);
+/* ====================== MAIN AREA (full width, contains floating players) ====================== */
+.nl-main-area {
   position: relative;
+  overflow: hidden;
+  background: var(--nl-bg);
 }
 
-.nl-main-content > turbo-frame {
+.nl-main-area > turbo-frame {
   display: block;
   height: 100%;
+  overflow: auto;
 }
 
-/* --- Resize Handle --- */
-.nl-resize-handle {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(180deg, #2a2a3a 0%, #1e1e28 100%);
-  border-top: 1px solid var(--nl-border-dark);
-  border-bottom: 1px solid var(--nl-border-dark);
-  cursor: ns-resize;
-  user-select: none;
-  transition: background 0.2s;
-}
-
-.nl-resize-handle:hover {
-  background: linear-gradient(180deg, #3a3a4a 0%, #2e2e38 100%);
-}
-
-.nl-resize-grip {
-  width: 40px;
-  height: 2px;
-  background: var(--nl-border-dark);
-  border-radius: 1px;
-}
-
-.nl-resize-handle:hover .nl-resize-grip {
-  background: var(--nl-gold-dim);
-}
-
-/* --- Bottom Panel --- */
-.nl-bottom-panel {
-  display: grid;
-  grid-template-columns: 1fr var(--nl-players-width);
-  background: var(--nl-bg-dark);
-  border-top: 1px solid var(--nl-gold-dim);
-  overflow: hidden;
-}
-
-/* --- Chat Section (Left - 90%) --- */
-.nl-chat-section {
-  display: flex;
-  flex-direction: column;
-  border-right: 1px solid var(--nl-border-dark);
-  overflow: hidden;
-}
-
-/* Chat Tabs */
-.nl-chat-tabs {
-  display: flex;
-  background: linear-gradient(180deg, #1e1e28 0%, #16161e 100%);
-  border-bottom: 1px solid var(--nl-border-dark);
-  padding: 0 4px;
-  gap: 2px;
-  height: var(--nl-tab-height);
-  align-items: flex-end;
-}
-
-.nl-chat-tab {
-  padding: 4px 10px;
-  background: transparent;
-  border: 1px solid transparent;
-  border-bottom: none;
-  border-radius: 4px 4px 0 0;
-  color: var(--nl-text-dim);
-  font-size: 11px;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  white-space: nowrap;
-}
-
-.nl-chat-tab:hover {
-  color: var(--nl-text);
-  background: rgba(255,255,255,0.05);
-}
-
-.nl-chat-tab--active {
-  background: var(--nl-bg-dark);
-  border-color: var(--nl-border-dark);
-  color: var(--nl-gold);
-  position: relative;
-}
-
-.nl-chat-tab--active::after {
-  content: '';
+/* ====================== FLOATING PLAYERS PANEL (bottom-right corner) ====================== */
+.nl-players-float {
   position: absolute;
-  bottom: -1px;
-  left: 0;
+  bottom: 0;
   right: 0;
-  height: 1px;
-  background: var(--nl-bg-dark);
-}
-
-.nl-chat-tab--flash {
-  animation: nl-tab-flash 0.5s ease;
-}
-
-@keyframes nl-tab-flash {
-  0%, 100% { background: transparent; }
-  50% { background: rgba(212, 175, 55, 0.3); color: var(--nl-gold-bright); }
-}
-
-/* Tab Panels */
-.nl-chat-content {
-  flex: 1;
-  overflow: hidden;
-  position: relative;
-}
-
-.nl-tab-panel {
-  position: absolute;
-  inset: 0;
-  display: none;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.nl-tab-panel--active {
-  display: flex;
-}
-
-.nl-tab-panel > turbo-frame {
+  width: var(--nl-players-width);
+  max-height: 50%;
+  background: var(--nl-bg);
+  border-left: 1px solid var(--nl-border);
+  border-top: 1px solid var(--nl-border);
   display: flex;
   flex-direction: column;
-  height: 100%;
+  font-size: 11px;
+  z-index: 50;
 }
 
-/* Chat Messages Container */
-.nl-chat-messages {
-  flex: 1;
-  overflow-y: auto;
-  padding: 4px 8px;
-  font-size: 12px;
-  line-height: 1.4;
-}
-
-.nl-chat-messages::-webkit-scrollbar {
-  width: 6px;
-}
-
-.nl-chat-messages::-webkit-scrollbar-track {
-  background: var(--nl-bg-darkest);
-}
-
-.nl-chat-messages::-webkit-scrollbar-thumb {
-  background: var(--nl-border-dark);
-  border-radius: 3px;
-}
-
-.nl-chat-messages::-webkit-scrollbar-thumb:hover {
-  background: var(--nl-gold-dim);
-}
-
-/* Log Container (for battle, events, system tabs) */
-.nl-log-container {
-  flex: 1;
-  overflow-y: auto;
-  padding: 4px 8px;
-  font-size: 12px;
-}
-
-.nl-log-empty {
-  color: var(--nl-text-dim);
-  font-style: italic;
-  text-align: center;
-  padding: 20px;
-}
-
-.nl-log-entry {
-  padding: 2px 0;
-  border-bottom: 1px solid rgba(255,255,255,0.03);
-}
-
-.nl-log-time {
-  color: var(--nl-text-dim);
-  font-size: 10px;
-  margin-right: 6px;
-}
-
-.nl-log-entry--damage { color: #e34242; }
-.nl-log-entry--heal { color: #4a8b00; }
-.nl-log-entry--xp { color: #d4af37; }
-.nl-log-entry--item { color: #6b8cff; }
-.nl-log-entry--event { color: #ff9900; }
-
-/* Chat Input */
-.nl-chat-input {
-  display: flex;
-  padding: 4px 6px;
-  background: linear-gradient(180deg, #1a1a24 0%, #14141c 100%);
-  border-top: 1px solid var(--nl-border-dark);
-  height: var(--nl-input-height);
-  gap: 4px;
-}
-
-.nl-chat-form {
-  display: flex;
-  flex: 1;
-  gap: 4px;
-}
-
-.nl-chat-field {
-  flex: 1;
-  padding: 4px 10px;
-  background: var(--nl-bg-darkest);
-  border: 1px solid var(--nl-border-dark);
-  border-radius: 4px;
-  color: var(--nl-text-bright);
-  font-size: 12px;
-}
-
-.nl-chat-field::placeholder {
-  color: var(--nl-text-dim);
-}
-
-.nl-chat-field:focus {
-  outline: none;
-  border-color: var(--nl-gold-dim);
-}
-
-.nl-chat-send {
-  width: 32px;
-  background: linear-gradient(180deg, #3a5a20 0%, #2a4010 100%);
-  border: 1px solid #4a6a30;
-  border-radius: 4px;
-  color: #90c050;
-  font-weight: bold;
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.nl-chat-send:hover {
-  background: linear-gradient(180deg, #4a6a30 0%, #3a5020 100%);
-  color: #b0e070;
-}
-
-/* --- Players Section (Right - 10%) --- */
-.nl-players-section {
-  display: flex;
-  flex-direction: column;
-  background: linear-gradient(180deg, #16161e 0%, #12121a 100%);
-  overflow: hidden;
-}
-
-.nl-players-header {
+.nl-players-header-float {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 4px 8px;
-  background: linear-gradient(180deg, #1e1e28 0%, #16161e 100%);
-  border-bottom: 1px solid var(--nl-border-dark);
-  height: var(--nl-tab-height);
+  padding: 2px 4px;
+  border-bottom: 1px solid var(--nl-border);
+  background: #F8F8F8;
 }
 
-.nl-players-title {
+.nl-sort-links {
+  font-size: 10px;
   color: var(--nl-text-dim);
+}
+
+.nl-sort-links a {
+  color: var(--nl-link);
+  text-decoration: none;
+  margin: 0 2px;
+}
+
+.nl-sort-links a:hover {
+  text-decoration: underline;
+}
+
+.nl-refresh-check {
   font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.nl-players-count {
-  background: var(--nl-bg-darkest);
-  padding: 1px 6px;
-  border-radius: 8px;
-  font-size: 10px;
-  color: var(--nl-gold);
-}
-
-.nl-players-list {
-  flex: 1;
-  overflow-y: auto;
-  padding: 4px;
-}
-
-.nl-players-list::-webkit-scrollbar {
-  width: 4px;
-}
-
-.nl-players-list::-webkit-scrollbar-thumb {
-  background: var(--nl-border-dark);
-  border-radius: 2px;
-}
-
-.nl-player {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 2px;
+}
+
+.nl-refresh-check input {
+  width: 12px;
+  height: 12px;
+}
+
+.nl-players-location {
   padding: 2px 4px;
-  border-radius: 3px;
-  cursor: pointer;
-  transition: background 0.1s;
+  border-bottom: 1px solid var(--nl-border);
+  text-align: right;
+  font-size: 10px;
 }
 
-.nl-player:hover {
-  background: rgba(255,255,255,0.05);
-}
-
-.nl-player-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.nl-player-dot--active {
-  background: #40c057;
-  box-shadow: 0 0 4px #40c057;
-}
-
-.nl-player-dot--idle {
-  background: #fab005;
-}
-
-.nl-player-name {
-  flex: 1;
-  font-size: 11px;
+.nl-location-text {
+  display: block;
   color: var(--nl-text);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  font-weight: bold;
+}
+
+.nl-total-online {
+  display: block;
+  color: var(--nl-text-dim);
+}
+
+.nl-players-list-float {
+  flex: 1;
+  overflow-y: auto;
+  padding: 2px;
+}
+
+/* Player entries */
+.nl-player-entry {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 1px 2px;
+  font-size: 11px;
+}
+
+.nl-player-arrow {
+  color: var(--nl-link);
+  font-size: 10px;
+}
+
+.nl-player-icon {
+  font-size: 10px;
+}
+
+.nl-player-icon.nl-faction-light { color: #0052A6; }
+.nl-player-icon.nl-faction-dark { color: #CC0000; }
+.nl-player-icon.nl-faction-neutral { color: #087C20; }
+
+.nl-player-name-link {
+  color: var(--nl-link);
+  text-decoration: none;
+}
+
+.nl-player-name-link:hover {
+  text-decoration: underline;
 }
 
 .nl-player-lvl {
-  font-size: 9px;
-  color: var(--nl-text-dim);
+  color: var(--nl-text);
+  font-size: 10px;
 }
 
-.nl-players-empty {
+.nl-player-status {
+  color: var(--nl-text-dim);
+  font-size: 10px;
+  margin-left: 2px;
+}
+
+.nl-no-players {
   text-align: center;
   color: var(--nl-text-dim);
   padding: 8px;
-  font-size: 11px;
+  font-style: italic;
 }
 
-/* Player Context Menu */
-.nl-player-menu {
-  position: absolute;
-  background: var(--nl-bg-medium);
-  border: 1px solid var(--nl-border-dark);
-  border-radius: 4px;
-  padding: 4px 0;
-  z-index: 1000;
-  min-width: 100px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+/* ====================== BOTTOM BAR (chat strip) ====================== */
+.nl-bottom-bar {
+  display: flex;
+  align-items: center;
+  background: #F0F0F0;
+  border-top: 1px solid var(--nl-border);
+  padding: 2px 4px;
+  gap: 8px;
+  height: var(--nl-bottom-bar-height);
 }
 
-.nl-player-menu button {
-  display: block;
-  width: 100%;
-  padding: 6px 12px;
-  background: transparent;
-  border: none;
-  color: var(--nl-text);
+.nl-action-area {
+  display: flex;
+  gap: 4px;
+}
+
+.nl-action-btn-small {
+  padding: 2px 8px;
+  background: #E0E0E0;
+  border: 1px solid #999999;
   font-size: 11px;
-  text-align: left;
+  font-family: Verdana, Tahoma, Arial, sans-serif;
   cursor: pointer;
-  transition: background 0.1s;
 }
 
-.nl-player-menu button:hover {
-  background: rgba(255,255,255,0.1);
-  color: var(--nl-gold);
+.nl-action-btn-small:hover {
+  background: #D0D0D0;
 }
 
-/* --- Flash Messages --- */
+.nl-chat-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.nl-chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  font-size: 11px;
+  line-height: 1.3;
+  padding: 0 4px;
+  max-height: calc(var(--nl-bottom-bar-height) - 18px);
+}
+
+.nl-chat-input-bar {
+  display: flex;
+}
+
+.nl-chat-form-inline {
+  display: flex;
+  flex: 1;
+}
+
+.nl-chat-input-field {
+  flex: 1;
+  padding: 1px 4px;
+  border: 1px solid var(--nl-border);
+  font-size: 11px;
+  font-family: Verdana, Tahoma, Arial, sans-serif;
+}
+
+.nl-chat-input-field:focus {
+  outline: none;
+  border-color: var(--nl-border-gold);
+}
+
+.nl-chat-loading {
+  color: var(--nl-text-dim);
+  font-size: 11px;
+}
+
+.nl-status-icons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nl-time-display {
+  font-size: 11px;
+  color: var(--nl-text-dim);
+}
+
+/* ====================== FLASH MESSAGES ====================== */
 .nl-flash-container {
   position: fixed;
-  top: 40px;
+  top: 24px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 10000;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 4px;
 }
 
 .nl-flash {
-  padding: 8px 16px;
-  background: var(--nl-bg-medium);
-  border: 1px solid var(--nl-border-dark);
-  border-radius: 4px;
+  padding: 6px 12px;
+  background: var(--nl-bg);
+  border: 1px solid var(--nl-border);
   color: var(--nl-text);
-  font-size: 12px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-  animation: nl-flash-in 0.3s ease;
+  font-size: 11px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
 }
 
-.nl-flash--notice { border-color: #4a8b00; color: #90c050; }
-.nl-flash--alert { border-color: #a04040; color: #ff6060; }
-.nl-flash--warning { border-color: #a88000; color: #ffb000; }
+.nl-flash--notice { border-color: #087C20; color: #087C20; background: #EEFFEE; }
+.nl-flash--alert { border-color: #CC0000; color: #CC0000; background: #FFEEEE; }
+.nl-flash--warning { border-color: #EF6B00; color: #996600; background: #FFF5E5; }
 
-@keyframes nl-flash-in {
-  from { opacity: 0; transform: translateY(-10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-/* --- Notifications --- */
+/* ====================== NOTIFICATIONS ====================== */
 .nl-notifications {
   position: fixed;
-  bottom: calc(var(--nl-bottom-height) + 20px);
-  right: 20px;
+  bottom: 30px;
+  right: calc(var(--nl-players-width) + 10px);
   z-index: 9999;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 4px;
   pointer-events: none;
 }
 
 .nl-notification {
-  padding: 8px 12px;
-  background: var(--nl-bg-dark);
-  border: 1px solid var(--nl-gold-dim);
-  border-radius: 4px;
-  color: var(--nl-gold);
-  font-size: 12px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.5);
-  animation: nl-notification-in 0.3s ease;
+  padding: 6px 10px;
+  background: #FCFAF3;
+  border: 1px solid var(--nl-border-gold);
+  color: var(--nl-text);
+  font-size: 11px;
   pointer-events: auto;
 }
 
-@keyframes nl-notification-in {
-  from { opacity: 0; transform: translateX(20px); }
-  to { opacity: 1; transform: translateX(0); }
-}
-
-/* --- Loading State --- */
+/* ====================== LOADING ====================== */
 .nl-loading {
   display: flex;
   align-items: center;
@@ -5452,116 +5290,21 @@ turbo-frame[busy] {
   height: 100%;
   color: var(--nl-text-dim);
   font-style: italic;
-  font-size: 12px;
+  font-size: 11px;
 }
 
-.nl-loading::before {
-  content: '';
-  width: 12px;
-  height: 12px;
-  border: 2px solid var(--nl-border-dark);
-  border-top-color: var(--nl-gold);
-  border-radius: 50%;
-  margin-right: 8px;
-  animation: nl-spin 0.8s linear infinite;
-}
-
-@keyframes nl-spin {
-  to { transform: rotate(360deg); }
-}
-
-/* --- Vitals Bar (Dark Theme Override) --- */
-.nl-status-bar .vitals-container {
-  display: flex;
-  gap: 6px;
-}
-
-.nl-status-bar .vital-bar {
-  width: 80px;
-  height: 12px;
-  background: var(--nl-bg-darkest);
-  border: 1px solid var(--nl-border-dark);
-  border-radius: 2px;
-  position: relative;
-  overflow: hidden;
-}
-
-.nl-status-bar .vital-fill {
-  height: 100%;
-  transition: width 0.3s ease;
-}
-
-.nl-status-bar .vital-fill--hp {
-  background: var(--nl-hp-fill);
-}
-
-.nl-status-bar .vital-fill--mp {
-  background: var(--nl-mp-fill);
-}
-
-.nl-status-bar .vital-text {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 9px;
-  color: #fff;
-  text-shadow: 0 1px 1px rgba(0,0,0,0.5);
-}
-
-/* --- Resizing State --- */
-.nl-game-layout--resizing {
-  cursor: ns-resize;
-  user-select: none;
-}
-
-.nl-game-layout--resizing * {
-  pointer-events: none;
-}
-
-.nl-game-layout--resizing .nl-resize-handle {
-  pointer-events: auto;
-  background: linear-gradient(180deg, #3a4a30 0%, #2a3a20 100%);
-}
-
-.nl-game-layout--resizing .nl-resize-grip {
-  background: var(--nl-gold);
-}
-
-/* --- Collapsed State --- */
-.nl-game-layout--collapsed {
-  grid-template-rows: var(--nl-status-bar-height) 1fr var(--nl-resize-height) 0px;
-}
-
-.nl-game-layout--collapsed .nl-bottom-panel {
-  display: none;
-}
-
-/* --- Responsive --- */
-@media (max-width: 900px) {
-  .nl-game-layout {
-    --nl-players-width: 100px;
-  }
-}
-
+/* ====================== RESPONSIVE ====================== */
 @media (max-width: 768px) {
   .nl-game-layout {
-    --nl-players-width: 0px;
-    --nl-status-bar-height: 28px;
-    --nl-bottom-height: 140px;
+    --nl-players-width: 150px;
   }
 
-  .nl-players-section {
-    display: none;
+  .nl-players-float {
+    max-height: 40%;
   }
 
-  .nl-quick-nav {
-    display: none;
-  }
-
-  .nl-chat-tabs {
-    overflow-x: auto;
+  .nl-top-nav {
+    gap: 8px;
   }
 }
 
@@ -10917,4 +10660,908 @@ turbo-frame[busy] {
   .stats-table td {
     padding: 6px;
   }
+}
+
+/* ============================================
+   NEVERLANDS-INSPIRED BEIGE THEME
+   ============================================ */
+
+/* Beige/Cream theme variables */
+.nl-theme-beige {
+  --nl-bg-primary: #FCFAF3;
+  --nl-bg-secondary: #F3ECD7;
+  --nl-bg-tertiary: #E5DCC4;
+  --nl-bg-panel: #FFFFFF;
+  --nl-border: #B9A05C;
+  --nl-border-light: #DECFA6;
+  --nl-text: #222222;
+  --nl-text-secondary: #333333;
+  --nl-text-muted: #666666;
+  --nl-text-link: #336699;
+  --nl-hp-bar: linear-gradient(to bottom, #4a0000, #8b0000);
+  --nl-mp-bar: linear-gradient(to bottom, #003366, #336699);
+}
+
+/* ============================================
+   NEVERLANDS STATUS BAR - Action Buttons
+   ============================================ */
+
+.nl-action-buttons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nl-action-btn {
+  background: #FFFFFF;
+  border: 1px solid #DECFA6;
+  color: #333333;
+  cursor: pointer;
+  font: 11px Tahoma, Verdana, sans-serif;
+  font-weight: bold;
+  padding: 4px 12px;
+  text-decoration: none;
+  text-align: center;
+  transition: all 0.15s ease;
+}
+
+.nl-action-btn:hover {
+  background: #F3ECD7;
+  color: #336699;
+  border-color: #B9A05C;
+}
+
+.nl-action-btn--disabled {
+  background: #F3ECD7;
+  color: #999999;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* ============================================
+   NEVERLANDS HP/MP VITALS BAR
+   ============================================ */
+
+.nl-vitals {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.nl-vitals-row {
+  display: flex;
+  align-items: center;
+}
+
+.nl-vitals-divider {
+  width: 1px;
+  height: 6px;
+  background: #ffffff;
+  margin: 0 1px;
+}
+
+.nl-hp-fill {
+  height: 6px;
+  background: linear-gradient(to bottom, #4a9900, #2d6600);
+  image-rendering: pixelated;
+}
+
+.nl-hp-empty {
+  height: 6px;
+  background: #1a3300;
+  image-rendering: pixelated;
+}
+
+.nl-mp-fill {
+  height: 6px;
+  background: linear-gradient(to bottom, #3366aa, #1a4477);
+  image-rendering: pixelated;
+}
+
+.nl-mp-empty {
+  height: 6px;
+  background: #0a1a33;
+  image-rendering: pixelated;
+}
+
+.nl-vitals-text {
+  font-family: Verdana, Tahoma, Arial, sans-serif;
+  font-size: 11px;
+  color: #003366;
+  white-space: nowrap;
+  margin-left: 4px;
+}
+
+.nl-hp-text {
+  color: #bb0000;
+}
+
+.nl-mp-text {
+  color: #336699;
+}
+
+/* ============================================
+   WORLD MAP (Full Screen Like Original)
+   ============================================ */
+
+.nl-map-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  background: #FFFFFF;
+  overflow: hidden;
+  position: relative;
+}
+
+.nl-map-viewport {
+  position: relative;
+  overflow: auto;
+  flex: 1;
+}
+
+.nl-map-world {
+  position: relative;
+  display: inline-block;
+}
+
+.nl-map-world table {
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+/* Tile styling */
+.nl-map-tile {
+  width: 100px;
+  height: 100px;
+  position: relative;
+  background-size: cover;
+  background-position: center;
+}
+
+/* Terrain backgrounds (CSS fallback when no images) */
+.nl-tile-bg--plains {
+  background: linear-gradient(135deg, #90c060 0%, #70a040 50%, #80b050 100%);
+}
+
+.nl-tile-bg--forest {
+  background: linear-gradient(135deg, #2d5a1d 0%, #1a4010 50%, #2d5a1d 100%);
+}
+
+.nl-tile-bg--mountain {
+  background: linear-gradient(135deg, #8a7a6a 0%, #6a5a4a 50%, #7a6a5a 100%);
+}
+
+.nl-tile-bg--city {
+  background: linear-gradient(135deg, #a0a0a0 0%, #808080 50%, #909090 100%);
+}
+
+.nl-tile-bg--river,
+.nl-tile-bg--lake {
+  background: linear-gradient(135deg, #4080c0 0%, #3070b0 50%, #4080c0 100%);
+}
+
+.nl-tile-bg--swamp {
+  background: linear-gradient(135deg, #505030 0%, #404020 50%, #505030 100%);
+}
+
+.nl-tile-bg--desert {
+  background: linear-gradient(135deg, #d4c090 0%, #c4b080 50%, #d4c090 100%);
+}
+
+/* Tile clickable overlay */
+.nl-tile-clickable {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 5;
+}
+
+.nl-tile-clickable--available {
+  /* Red dashed border like original */
+  border: 3px dashed #CC0000;
+  box-sizing: border-box;
+  animation: nl-tile-pulse 1.5s ease-in-out infinite;
+}
+
+.nl-tile-clickable--available:hover {
+  border-color: #FF0000;
+  background: rgba(255, 0, 0, 0.1);
+}
+
+.nl-tile-inactive,
+.nl-tile-player {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+@keyframes nl-tile-pulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+/* Legacy tile-img classes (for backwards compatibility) */
+.nl-tile-img {
+  display: block;
+  opacity: 0;
+}
+
+.nl-tile-img--available {
+  opacity: 1;
+}
+
+/* Tile entities */
+.nl-tile-entity {
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  background: rgba(0, 0, 0, 0.6);
+  border-radius: 4px;
+  padding: 2px 4px;
+}
+
+.nl-entity-icon {
+  font-size: 16px;
+}
+
+.nl-tile-npc { color: #ff6666; }
+.nl-tile-resource { color: #66ff66; }
+.nl-tile-building { color: #ffcc66; }
+
+/* ============================================
+   MAP OVERLAY (Cursor, Timer)
+   ============================================ */
+
+.nl-map-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* Cursor */
+.nl-cursor {
+  position: absolute;
+  display: block;
+  width: 100px;
+  height: 100px;
+  z-index: 10;
+}
+
+.nl-cursor-img {
+  width: 100px;
+  height: 100px;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+.nl-cursor-img--idle {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect x='3' y='3' width='94' height='94' fill='none' stroke='%23cc0000' stroke-width='4'/%3E%3C/svg%3E");
+  animation: nl-cursor-blink 1s ease-in-out infinite;
+}
+
+@keyframes nl-cursor-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+.nl-cursor-img--moving {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Ccircle cx='50' cy='50' r='20' fill='%23ffcc00'/%3E%3C/svg%3E");
+  animation: nl-cursor-spin 0.5s linear infinite;
+}
+
+@keyframes nl-cursor-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Direction variants for cursor */
+.nl-cursor-img--dir-n { transform: rotate(0deg); }
+.nl-cursor-img--dir-ne { transform: rotate(45deg); }
+.nl-cursor-img--dir-e { transform: rotate(90deg); }
+.nl-cursor-img--dir-se { transform: rotate(135deg); }
+.nl-cursor-img--dir-s { transform: rotate(180deg); }
+.nl-cursor-img--dir-sw { transform: rotate(225deg); }
+.nl-cursor-img--dir-w { transform: rotate(270deg); }
+.nl-cursor-img--dir-nw { transform: rotate(315deg); }
+
+/* Timer badge (like original - small red pill with white number) */
+.nl-timer-bg {
+  position: absolute;
+  z-index: 20;
+  display: none;
+}
+
+.nl-timer-img {
+  display: none;
+}
+
+.nl-timer-text {
+  position: absolute;
+  z-index: 21;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.nl-timer-seconds {
+  display: inline-block;
+  min-width: 30px;
+  padding: 2px 6px;
+  background: #CC0000;
+  border: 1px solid #990000;
+  border-radius: 8px;
+  font-family: Tahoma, Verdana, Arial, sans-serif;
+  font-size: 11px;
+  font-weight: bold;
+  color: #FFFFFF;
+  text-align: center;
+}
+
+/* ============================================
+   MAP INFO BAR (minimal, below map)
+   ============================================ */
+
+.nl-map-info {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 4px 8px;
+  background: #FFFFFF;
+  font-size: 11px;
+  color: #333333;
+}
+
+.nl-location-name {
+  font-weight: normal;
+  font-size: 11px;
+  color: #333333;
+}
+
+.nl-location-coords {
+  font-family: Verdana, Tahoma, Arial, sans-serif;
+  font-size: 11px;
+  color: #666666;
+}
+
+.nl-location-biome {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  text-transform: uppercase;
+}
+
+.nl-biome--plains { background: #90c060; color: #fff; }
+.nl-biome--forest { background: #2d5a1d; color: #fff; }
+.nl-biome--mountain { background: #6a5a4a; color: #fff; }
+.nl-biome--city { background: #808080; color: #fff; }
+.nl-biome--river, .nl-biome--lake { background: #3070b0; color: #fff; }
+.nl-biome--swamp { background: #505030; color: #fff; }
+
+/* ============================================
+   MAP CONTROLS
+   ============================================ */
+
+.nl-map-controls {
+  display: none; /* Hidden by default - keyboard hints shown on hover */
+  padding: 4px 8px;
+  background: #FFFFFF;
+  text-align: center;
+  font-size: 10px;
+  color: #888888;
+}
+
+.nl-map-container:hover .nl-map-controls {
+  display: block;
+}
+
+.nl-control-hint kbd {
+  display: inline-block;
+  padding: 2px 6px;
+  font-size: 10px;
+  font-family: monospace;
+  background: var(--nl-bg-secondary, #F3ECD7);
+  border: 1px solid var(--nl-border-light, #DECFA6);
+  border-radius: 3px;
+}
+
+/* ============================================
+   ONLINE PLAYERS
+   ============================================ */
+
+.nl-players-header {
+  background: #F5F5F5;
+  padding: 4px 8px;
+  border-bottom: 1px solid #CCCCCC;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.nl-players-location {
+  font-size: 11px;
+  color: var(--nl-text-secondary, #b5afa3);
+}
+
+.nl-players-total {
+  font-size: 10px;
+  color: var(--nl-text-muted, #7a756c);
+}
+
+.nl-players-sort {
+  display: flex;
+  gap: 4px;
+  font-size: 10px;
+}
+
+.nl-players-sort a {
+  color: var(--nl-text-link, #7eb8da);
+  text-decoration: underline;
+}
+
+.nl-player-entry {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  font-size: 11px;
+  border-bottom: 1px dotted var(--nl-border-dark, #2a2520);
+  cursor: pointer;
+}
+
+.nl-player-entry:hover {
+  background: var(--nl-bg-secondary, #252220);
+}
+
+.nl-player-arrow {
+  color: var(--nl-text-muted, #7a756c);
+  font-size: 10px;
+}
+
+.nl-player-align-icon {
+  width: 15px;
+  height: 12px;
+}
+
+.nl-player-clan-icon {
+  width: 15px;
+  height: 12px;
+}
+
+.nl-player-name-link {
+  color: var(--nl-text-link, #7eb8da);
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.nl-player-name-link:hover {
+  text-decoration: underline;
+}
+
+.nl-player-level {
+  color: var(--nl-text-muted, #7a756c);
+}
+
+.nl-player-status-icon {
+  margin-left: auto;
+}
+
+/* ============================================
+   CITY VIEW (Location Images)
+   ============================================ */
+
+.nl-city-view {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: #FFFFFF;
+}
+
+.nl-city-image {
+  max-width: 100%;
+  height: auto;
+  border: 1px solid #000000;
+}
+
+.nl-city-description {
+  padding: 16px;
+  background: var(--nl-bg-primary, #FCFAF3);
+  font-family: Verdana, Tahoma, Arial, sans-serif;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--nl-text, #222222);
+}
+
+.nl-city-description .nl-warning {
+  color: #CC0000;
+  font-weight: bold;
+}
+
+.nl-city-description .nl-highlight {
+  color: #336699;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* ============================================
+   CHARACTER PROFILE
+   ============================================ */
+
+.nl-profile-container {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  gap: 16px;
+  padding: 16px;
+  background: var(--nl-bg-primary, #FCFAF3);
+}
+
+.nl-profile-left {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.nl-profile-avatar {
+  width: 100%;
+  border: 2px solid var(--nl-border, #B9A05C);
+}
+
+.nl-profile-equipment {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 4px;
+}
+
+.nl-equipment-slot {
+  width: 60px;
+  height: 60px;
+  border: 1px solid var(--nl-border-light, #DECFA6);
+  background: var(--nl-bg-secondary, #F3ECD7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nl-equipment-slot img {
+  max-width: 56px;
+  max-height: 56px;
+}
+
+.nl-profile-right {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.nl-profile-stats {
+  display: grid;
+  grid-template-columns: 150px 50px 30px;
+  gap: 4px 8px;
+  font-size: 12px;
+}
+
+.nl-stat-label {
+  color: var(--nl-text, #222222);
+}
+
+.nl-stat-value {
+  font-weight: bold;
+  color: var(--nl-text, #222222);
+}
+
+.nl-stat-modifier {
+  color: var(--nl-text-muted, #666666);
+}
+
+.nl-profile-xp-bar {
+  height: 20px;
+  background: var(--nl-bg-secondary, #F3ECD7);
+  border: 1px solid var(--nl-border, #B9A05C);
+  position: relative;
+}
+
+.nl-xp-fill {
+  height: 100%;
+  background: linear-gradient(to bottom, #6699ff, #3366cc);
+}
+
+.nl-xp-text {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: bold;
+  color: #FFFFFF;
+  text-shadow: 1px 1px 1px #000000;
+}
+
+/* Profile tabs */
+.nl-profile-tabs {
+  display: flex;
+  gap: 2px;
+  background: var(--nl-bg-secondary, #F3ECD7);
+  padding: 4px;
+}
+
+.nl-profile-tab {
+  padding: 6px 12px;
+  font-size: 11px;
+  font-weight: bold;
+  color: var(--nl-text-link, #336699);
+  text-decoration: underline;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+.nl-profile-tab:hover {
+  color: var(--nl-text, #222222);
+}
+
+.nl-profile-tab--active {
+  background: var(--nl-bg-primary, #FCFAF3);
+  color: var(--nl-text, #222222);
+  text-decoration: none;
+}
+
+/* ============================================
+   WORLD CONTAINER (Matching Original Layout)
+   ============================================ */
+
+.nl-world-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  background: #FFFFFF;
+  overflow: auto;
+}
+
+/* Map view - full width map taking entire space */
+.nl-world-container--map {
+  padding: 0;
+}
+
+/* City view - centered image */
+.nl-world-container--city {
+  padding: 0;
+  align-items: center;
+}
+
+/* ============================================
+   CITY IMAGE CONTAINER (centered large image)
+   ============================================ */
+
+.nl-city-image-container {
+  position: relative;
+  width: 100%;
+  max-width: 1000px;
+  margin: 0 auto;
+  background: #000;
+}
+
+.nl-city-image {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: none;
+}
+
+.nl-city-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  background: #2a2a3a;
+  color: #aaaaaa;
+}
+
+.nl-city-placeholder-icon {
+  font-size: 64px;
+  margin-bottom: 12px;
+}
+
+.nl-city-placeholder-name {
+  font-size: 20px;
+  font-weight: bold;
+  color: #cccccc;
+}
+
+/* ============================================
+   PLAYERS SIDEBAR SORT BAR
+   ============================================ */
+
+.nl-players-sort-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  background: var(--nl-bg-tertiary, #2d2a27);
+  border-bottom: 1px solid var(--nl-border-dark, #2a2520);
+  font-size: 10px;
+}
+
+.nl-sort-label {
+  color: var(--nl-text-muted, #7a756c);
+}
+
+.nl-players-sort a {
+  color: var(--nl-text-link, #7eb8da);
+  text-decoration: underline;
+  font-size: 10px;
+}
+
+.nl-players-sort a:hover {
+  color: var(--nl-text-light, #f5f0e5);
+}
+
+.nl-refresh-toggle {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--nl-text-muted, #7a756c);
+  font-size: 10px;
+}
+
+.nl-refresh-toggle input {
+  width: 12px;
+  height: 12px;
+}
+
+/* ============================================
+   CHAR INFO IN STATUS BAR
+   ============================================ */
+
+.nl-char-info {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  margin-right: 8px;
+}
+
+/* ============================================
+   ACTION BUTTONS DISABLED STATE
+   ============================================ */
+
+.nl-action-btn--disabled {
+  background: #F3ECD7 !important;
+  color: #aaaaaa !important;
+  cursor: not-allowed !important;
+  pointer-events: none !important;
+}
+
+/* ============================================
+   LOCATION INFO STYLING
+   ============================================ */
+
+.nl-location-info {
+  padding: 8px 12px;
+  background: #FAFAFA;
+  border-top: 1px solid #CCCCCC;
+}
+
+.nl-location-entities {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.nl-entity-card {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--nl-bg-primary, #FCFAF3);
+  border: 1px solid var(--nl-border-light, #DECFA6);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.nl-entity-card:hover {
+  background: #FFFFFF;
+  border-color: var(--nl-border, #B9A05C);
+}
+
+.nl-entity-card-icon {
+  font-size: 24px;
+}
+
+.nl-entity-card-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.nl-entity-card-name {
+  font-weight: bold;
+  font-size: 12px;
+  color: var(--nl-text, #222222);
+}
+
+.nl-entity-card-type {
+  font-size: 10px;
+  color: var(--nl-text-muted, #666666);
+}
+
+/* ============================================
+   ACTION BUTTONS PANEL
+   ============================================ */
+
+.nl-actions-panel {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px 16px;
+  background: var(--nl-bg-primary, #FCFAF3);
+  border-top: 1px solid var(--nl-border, #B9A05C);
+}
+
+.nl-action-btn-large {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: #FFFFFF;
+  border: 1px solid #DECFA6;
+  color: #333333;
+  font: 12px Tahoma, Verdana, sans-serif;
+  font-weight: bold;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.15s ease;
+}
+
+.nl-action-btn-large:hover {
+  background: #F3ECD7;
+  color: #336699;
+  border-color: #B9A05C;
+}
+
+.nl-action-btn-large--attack {
+  color: #cc0000;
+  border-color: #cc6666;
+}
+
+.nl-action-btn-large--attack:hover {
+  background: #ffeeee;
+  border-color: #cc0000;
+}
+
+.nl-action-btn-large--gather {
+  color: #008800;
+  border-color: #66aa66;
+}
+
+.nl-action-btn-large--gather:hover {
+  background: #eeffee;
+  border-color: #008800;
+}
+
+.nl-action-btn-large--enter {
+  color: #0066aa;
+  border-color: #6699cc;
+}
+
+.nl-action-btn-large--enter:hover {
+  background: #eeeeff;
+  border-color: #0066aa;
 }

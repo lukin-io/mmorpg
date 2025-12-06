@@ -26,7 +26,14 @@ module Game
           to_add = [remaining, capacity].min
           ensure_weight_capacity!(item_template.weight * to_add)
 
-          stack.increment!(:quantity, to_add)
+          if stack.new_record?
+            # New stack - set quantity directly and save
+            stack.quantity = to_add
+            stack.save!
+          else
+            # Existing stack - increment
+            stack.increment!(:quantity, to_add)
+          end
           increment_weight!(item_template.weight * to_add)
           remaining -= to_add
           last_stack = stack
@@ -64,7 +71,8 @@ module Game
         return stack if stack
 
         ensure_slot_capacity!
-        inventory.inventory_items.create!(
+        # Build (don't save yet) - caller will set quantity and save
+        inventory.inventory_items.build(
           item_template:,
           quantity: 0,
           weight: item_template.weight,

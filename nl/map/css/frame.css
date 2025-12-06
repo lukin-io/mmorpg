@@ -1,0 +1,167 @@
+BODY
+{
+       FONT-FAMILY: Verdana, Tahoma, Arial;
+       FONT-SIZE: 12px;
+       FONT-WEIGHT: normal;
+       MARGIN: 0px;
+       FONT-STYLE: normal;
+       COLOR: #000000;
+       BACKGROUND-COLOR: #FFFFFF;       
+}
+
+TD
+{
+       FONT-FAMILY: Verdana, Tahoma, Arial;
+       FONT-SIZE: 12px;
+       COLOR: #000000;     
+}
+
+A
+{
+       COLOR: #336699;
+       TEXT-DECORATION: underline;
+}
+
+FORM
+{
+       margin-left: 0px;
+       margin-top: 0px;
+       margin-right: 0px;
+       margin-bottom: 0px;
+}
+
+.nick
+{
+       FONT-FAMILY: Verdana, Tahoma, Arial;
+       FONT-SIZE: 12px;
+       TEXT-DECORATION: none;
+       COLOR: #222222;
+}
+
+.hpbar
+{
+       FONT-FAMILY: Verdana, Tahoma, Arial;
+       FONT-SIZE: 11px;
+       TEXT-DECORATION: none;
+       COLOR: #003366;
+}
+
+.freetxt
+{
+       FONT-FAMILY: Verdana, Tahoma, Arial;
+       FONT-SIZE: 10px;
+       TEXT-DECORATION: none;
+       COLOR: #222222;
+}
+
+.category
+{
+       FONT-FAMILY: Tahoma, Verdana, Arial;
+       FONT-SIZE: 12px;
+       TEXT-DECORATION: underline;
+       COLOR: #336699;
+}
+
+.inv
+{
+       FONT-FAMILY: Tahoma, Verdana, Arial;
+       FONT-SIZE: 12px;
+       TEXT-DECORATION: none;
+       COLOR: #716E44;
+}
+
+.filt
+{
+       FONT-FAMILY: Verdana, Tahoma, Arial;
+       FONT-SIZE: 11px;
+       COLOR: #222222;
+}
+
+.ftia
+{
+       FONT-FAMILY: Tahoma, Verdana, Arial;
+       FONT-SIZE: 11px;
+       TEXT-DECORATION: none;
+       COLOR: #003366;
+}
+
+.ftiy
+{
+       FONT-FAMILY: Tahoma, Verdana, Arial;
+       FONT-SIZE: 11px;
+       TEXT-DECORATION: none;
+       COLOR: #ffffff;
+       BACKGROUND-COLOR: #6699bb;
+}
+
+.fr_but 
+{
+       BACKGROUND: #FFFFFF;
+       BORDER-BOTTOM: #DECFA6 1px solid;
+       BORDER-LEFT: #DECFA6 1px solid;
+       BORDER-RIGHT: #DECFA6 1px solid;
+       BORDER-TOP: #DECFA6 1px solid;
+       COLOR: #333333; 
+       CURSOR: hand; 
+       FONT: 11px Tahoma,Verdana,Helvetica; 
+       FONT-WEIGHT: bold;
+       TEXT-ALIGN: center;
+}
+
+.fr_but_dis 
+{
+       BACKGROUND: #F3ECD7; 
+       BORDER-BOTTOM: #DECFA6 1px solid; 
+       BORDER-LEFT: #DECFA6 1px solid; 
+       BORDER-RIGHT: #DECFA6 1px solid; 
+       BORDER-TOP: #DECFA6 1px solid; 
+       COLOR: #333333; 
+       CURSOR: hand; 
+       FONT: 11px Tahoma, Verdana, Helvetica; 
+       FONT-WEIGHT: bold;
+}
+
+.gr_but 
+{
+       BACKGROUND: #E0E0E0; 
+       BORDER-BOTTOM: #CCCCCC 1px solid; 
+       BORDER-LEFT: #CCCCCC 1px solid; 
+       BORDER-RIGHT: #CCCCCC 1px solid; 
+       BORDER-TOP: #CCCCCC 1px solid; 
+       COLOR: #333333; 
+       CURSOR: hand; 
+       FONT: 10px Verdana,Tahoma,Helvetica; 
+       FONT-WEIGHT: bold;
+}
+
+.gr_text 
+{
+       BACKGROUND: #FFFFFF; 
+       BORDER-BOTTOM: #CCCCCC 1px solid; 
+       BORDER-LEFT: #CCCCCC 1px solid; 
+       BORDER-RIGHT: #CCCCCC 1px solid; 
+       BORDER-TOP: #CCCCCC 1px solid; 
+       COLOR: #333333;
+       FONT: 10px Verdana,Tahoma,Helvetica; 
+       FONT-WEIGHT: bold;
+}
+
+.invbut 
+{
+       BACKGROUND: #FFFFFF;
+       BORDER-BOTTOM: #CE0202 1px solid; 
+       BORDER-LEFT: #CE0202 1px solid; 
+       BORDER-RIGHT: #CE0202 1px solid; 
+       BORDER-TOP: #CE0202 1px solid; 
+       COLOR: #333333; 
+       CURSOR: hand; 
+       FONT: 10px Verdana,Tahoma;
+}
+
+.tab 
+{
+       PADDING-TOP: 3px;
+       PADDING-BOTTOM: 3px;
+}
+
+#tooltip{background:#fff;border:1px solid #999;color:#333;font: 12px Tahoma;margin:0px;padding:3px 5px;position:absolute;visibility:hidden;z-index:100;}

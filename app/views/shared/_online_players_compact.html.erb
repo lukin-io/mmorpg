@@ -1,48 +1,98 @@
 <%#
-  Compact online players list for Neverlands-style layout
-  Shows currently online players in a narrow sidebar format
+  Online Players Sidebar
+  Shows currently online players with location, sorting options, and player entries
+
+  Features:
+  - Sorting options: a-z, z-a, level up, level down
+  - Location name and total count
+  - Player list with alignment icons, clan signs, names, levels
 
   @example
     <%= render "shared/online_players_compact" %>
 %>
-<% online_users = User.joins(:user_sessions)
-     .where(user_sessions: { signed_out_at: nil })
-     .where("user_sessions.last_seen_at > ?", 5.minutes.ago)
-     .distinct
-     .limit(50) rescue [] %>
+<%
+  # Get online users
+  online_users = User.joins(:user_sessions)
+       .where(user_sessions: { signed_out_at: nil })
+       .where("user_sessions.last_seen_at > ?", 5.minutes.ago)
+       .includes(:characters)
+       .distinct
+       .limit(50) rescue []
 
-<div class="nl-players-header">
-  <span class="nl-players-title">Online</span>
-  <span class="nl-players-count"><%= online_users.size %></span>
+  # Current zone info for location display
+  current_zone = @position&.zone || @zone
+  location_name = current_zone&.name || "Unknown Location"
+  total_online = online_users.size
+%>
+
+<%# Sorting options %>
+<div class="nl-players-sort-bar">
+  <span class="nl-sort-label">Сортировка:</span>
+  <span class="nl-players-sort">
+    <a href="#" data-action="click->game-layout#sortPlayers" data-sort="az">a-z</a>
+    <a href="#" data-action="click->game-layout#sortPlayers" data-sort="za">z-a</a>
+    <a href="#" data-action="click->game-layout#sortPlayers" data-sort="lvl-asc">0-33</a>
+    <a href="#" data-action="click->game-layout#sortPlayers" data-sort="lvl-desc">33-0</a>
+  </span>
+  <label class="nl-refresh-toggle">
+    <input type="checkbox" checked data-action="change->game-layout#toggleAutoRefresh">
+    обновить
+  </label>
 </div>
 
-<div class="nl-players-list">
-  <% online_users.each do |user| %>
-    <% session = user.user_sessions.where(signed_out_at: nil).order(last_seen_at: :desc).first %>
-    <% status = session&.last_seen_at&.> 2.minutes.ago ? 'active' : 'idle' %>
+<%# Location header %>
+<div class="nl-players-header">
+  <div class="nl-players-location"><%= location_name %></div>
+  <div class="nl-players-total">Всего [ <%= total_online %> ]</div>
+</div>
 
-    <div class="nl-player"
+<%# Players list %>
+<div class="nl-players-list" data-game-layout-target="playersList">
+  <% online_users.each do |user| %>
+    <%
+      session = user.user_sessions.where(signed_out_at: nil).order(last_seen_at: :desc).first
+      status = session&.last_seen_at&.> 2.minutes.ago ? 'active' : 'idle'
+      character = user.characters.first
+      char_level = character&.level || 0
+      char_name = character&.name || user.profile_name || user.email.split('@').first
+
+      # Alignment icon (simplified)
+      alignment_icon = case character&.faction_alignment
+                       when "alliance" then "🛡️"
+                       when "rebellion" then "⚔️"
+                       else "→"
+                       end
+
+      # Status icon
+      status_icon = case status
+                    when 'active' then "в"
+                    else "я"
+                    end
+    %>
+    <div class="nl-player-entry"
          data-user-id="<%= user.id %>"
-         data-action="click->game-layout#whisperPlayer contextmenu->game-layout#showPlayerMenu"
-         data-username="<%= user.profile_name %>"
-         title="<%= user.profile_name %>">
-      <span class="nl-player-dot nl-player-dot--<%= status %>"></span>
-      <span class="nl-player-name"><%= truncate(user.profile_name || user.email.split('@').first, length: 12) %></span>
-      <% if user.characters.any? %>
-        <span class="nl-player-lvl"><%= user.characters.first.level %></span>
-      <% end %>
+         data-username="<%= char_name %>"
+         data-level="<%= char_level %>"
+         data-action="click->game-layout#whisperPlayer contextmenu->game-layout#showPlayerMenu">
+      <span class="nl-player-arrow"><%= alignment_icon %></span>
+      <a href="<%= profile_path(user.profile_name) rescue '#' %>"
+         class="nl-player-name-link"
+         data-turbo-frame="main_content"><%= truncate(char_name, length: 15) %></a>
+      <span class="nl-player-level">[<%= char_level %>]</span>
+      <span class="nl-player-status-icon" title="<%= status == 'active' ? 'Active' : 'Idle' %>"><%= status_icon %></span>
     </div>
   <% end %>
 
   <% if online_users.empty? %>
-    <div class="nl-players-empty">—</div>
+    <div class="nl-players-empty">Никого нет</div>
   <% end %>
 </div>
 
 <%# Context menu for player interactions %>
 <div class="nl-player-menu" data-game-layout-target="playerMenu" style="display: none;">
-  <button data-action="click->game-layout#whisperPlayer">📨 Whisper</button>
-  <button data-action="click->game-layout#viewProfile">👤 Profile</button>
+  <button data-action="click->game-layout#whisperPlayer">📨 Private Message</button>
+  <button data-action="click->game-layout#viewProfile">👤 View Info</button>
+  <button data-action="click->game-layout#copyNickname">📋 Copy Nick</button>
   <button data-action="click->game-layout#inviteToParty">🤝 Invite</button>
   <button data-action="click->game-layout#ignorePlayer">🚫 Ignore</button>
 </div>

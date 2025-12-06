@@ -3,7 +3,7 @@ import { Controller } from "@hotwired/stimulus"
 /**
  * GameWorldController - Tile-based map navigation
  *
- * Inspired by Neverlands' map movement system with:
+ * Map movement system with:
  * - Smooth animated movement between tiles
  * - Movement cooldown timer overlay
  * - Direction-based character orientation
@@ -297,7 +297,7 @@ export default class extends Controller {
       this.playerMarkerTarget.classList.add("player-marker--moving")
       this.playerMarkerTarget.dataset.direction = direction
 
-      // Direction-based sprite rotation (8 directions like Neverlands)
+      // Direction-based sprite rotation (8 directions)
       const rotations = {
         north: 0,
         east: 90,

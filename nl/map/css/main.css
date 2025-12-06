@@ -1,0 +1,444 @@
+FORM
+{
+	MARGIN-LEFT: 0px;
+	MARGIN-TOP: 0px;
+	MARGIN-RIGHT: 0px;
+	MARGIN-BOTTOM: 0px;
+}
+
+a.reglink{
+font-family :  Verdana, Arial, Helvetica, Tahoma, Verdana, sans-serif;
+	font-size : 11px;
+	text-decoration : none;
+	color : #41341E;
+}
+a.reglink:hover{
+font-family :  Verdana, Arial, Helvetica, Tahoma, Verdana, sans-serif;
+	font-size : 11px;
+	text-decoration : underline;
+	color : #41341E;
+}
+.weaponch{
+font-family : Tahoma, Verdana, Arial, Helvetica, Tahoma, Verdana, sans-serif;
+	text-decoration : none;
+	color : #333333;
+	font-size : 11px;
+}
+.fighttxt{
+font-family : Verdana, Arial, Helvetica, Tahoma, Verdana, sans-serif;
+	text-decoration : none;
+	color : #222222;
+	font-size : 12px;
+}
+.fighttime{
+font-family : Tahoma, Verdana, Arial, Helvetica, Tahoma, Verdana, sans-serif;
+	text-decoration : none;
+	color : #888888;
+	font-size : 12px;
+}
+.chattxt{
+font-family : Verdana, Tahoma, Helvetica, Tahoma, Verdana, sans-serif;
+	text-decoration : none;
+	color : #000000;
+	font-size : 10pt;
+}
+.forumt{
+font-family : Tahoma, Verdana, Arial, Helvetica, Tahoma, Verdana, sans-serif;
+	text-decoration : underline;
+	color : #333333;
+	font-size : 13px;
+	FONT-WEIGHT: bold
+}
+.ftit{
+font-family : Tahoma, Verdana, Arial, Helvetica, Tahoma, Verdana, sans-serif;
+	text-decoration : none;
+	color : #696969;
+	font-size : 15px;
+	FONT-WEIGHT: bold
+}
+.ftxt{
+font-family : Tahoma, Verdana, Arial, Helvetica, Tahoma, Verdana, sans-serif;
+	text-decoration : none;
+	color : #333333;
+	font-size : 11px
+}
+.forumwe{
+font-family : Tahoma, Verdana, Arial, Helvetica, Tahoma, Verdana, sans-serif;
+	text-decoration : none;
+	color : #333333;
+	font-size : 13px;
+	FONT-WEIGHT: bold
+}
+.forumne{
+font-family : Tahoma, Verdana, Arial, Helvetica, Tahoma, Verdana, sans-serif;
+	text-decoration : none;
+	color : #333333;
+	font-size : 12px
+}
+.fsm{
+font-family : Tahoma, Verdana, Arial, Helvetica, Tahoma, Verdana, sans-serif;
+	text-decoration : none;
+	color : #222222;
+	font-size : 11px;
+}
+.suppo{
+font-family : Tahoma, Verdana, Arial, Helvetica, Tahoma, Verdana, sans-serif;
+	text-decoration : none;
+	color : #888888;
+	font-size : 11px;
+}
+.anonstxt{
+font-family : Verdana, Arial, Verdana, Arial, Helvetica, Tahoma, Verdana, sans-serif;
+	text-decoration : none;
+	color : #333333;
+	font-size : 11px;
+}
+.proce{
+font-family : Verdana, Arial, Verdana, Arial, Helvetica, Tahoma, Verdana, sans-serif;
+	text-decoration : none;
+	color : #cc0000;
+	font-size : 10px;
+}
+.copy{
+font-family : Verdana, Arial, Verdana, Arial, Helvetica, Tahoma, Verdana, sans-serif;
+	text-decoration : none;
+	color : #F8F3D7;
+	font-size : 11px;
+}
+.anonstitle{
+font-family : Arial,Verdana,Tahoma,Arial,Verdana, Arial, Verdana, Arial, Helvetica, Tahoma, Verdana, sans-serif;
+	text-decoration : underline;
+	color : #333366;
+	font-size : 16px;
+	FONT-WEIGHT: bold
+}
+.guestb{
+font-family : Verdana, Arial, Verdana, Arial, Helvetica, Tahoma, Verdana, sans-serif;
+	font-size : 11px;
+	text-decoration : none;
+	color : #222222;
+}
+.placename{
+font-family : Tahoma, Verdana, Arial, Verdana, Arial, Helvetica, Tahoma, Verdana, sans-serif;
+	font-size : 12px;
+	text-decoration : none;
+	color : #222222;
+}
+.travma{
+font-family : Tahoma, Verdana, Arial, Verdana, Arial, Helvetica, Tahoma, Verdana, sans-serif;
+	font-size : 11px;
+	text-decoration : none;
+	color : #222222;
+}
+.inv{
+font-family : Tahoma, Verdana, Arial, Verdana, Arial, Helvetica, Tahoma, Verdana, sans-serif;
+	font-size : 12px;
+	text-decoration : none;
+	color : #716E44;
+}
+.invtitle{
+font-family : Tahoma, Verdana, Arial, Verdana, Arial, Helvetica, Tahoma, Verdana, sans-serif;
+	font-size : 11px;
+	text-decoration : none;
+	color : #f5f5f5;
+	FONT-WEIGHT: bold
+}
+.nickname{
+font-family : Verdana, Arial, Verdana, Arial, Helvetica, Tahoma, Verdana, sans-serif;
+	font-size : 12px;
+	text-decoration : none;
+	color : #222222;
+}
+.zaya{
+font-family : Tahoma, Verdana, Arial, Verdana, Arial, Helvetica, Tahoma, Verdana, sans-serif;
+	font-size : 12px;
+	text-decoration : underline;
+	color : #336699;
+}
+.freemain{
+font-family : Tahoma, Verdana, Arial, Verdana, Arial, Helvetica, Tahoma, Verdana, sans-serif;
+	font-size : 12px;
+	text-decoration : none;
+	color : #222222;
+}
+.gr_f{
+	color : #0052A6;
+}
+.gr_s{
+	color : #087C20;
+}
+.logintext{
+font-family : Verdana, Tahoma,  Arial, Verdana, Arial, Helvetica, Tahoma, Verdana, sans-serif;
+	font-size : 11px;
+	text-decoration : none;
+	color : #336699;
+	FONT-WEIGHT: bold
+}
+.freetxt{
+font-family : Verdana, Tahoma,  Arial, Verdana, Arial, Helvetica, Tahoma, Verdana, sans-serif;
+	font-size : 10px;
+	text-decoration : none;
+	color : #222222;
+}
+
+.hpfont{
+font-family :  Verdana,Arial,Tahoma, Verdana, Arial, Helvetica, Tahoma, Verdana, sans-serif;
+	font-size : 11px;
+	text-decoration : none;
+	color : #003366;
+}
+
+.chattext{
+font-family : Verdana, Helvetica, Arial, Verdana, Arial, Helvetica, Tahoma, Verdana, sans-serif;
+	font-size : 13px;
+	text-decoration : none;
+	color : #222222;
+}
+.chattime{
+font-family : Tahoma, Verdana, Arial, Verdana, Arial, Helvetica, Tahoma, Verdana, sans-serif;
+	font-size : 11px;
+	text-decoration : none;
+	color : #003366;
+}
+
+.yochattime{
+font-family : Tahoma, Verdana, Arial, Verdana, Arial, Helvetica, Tahoma, Verdana, sans-serif;
+	font-size : 11px;
+	text-decoration : none;
+	color : #ffffff;
+	background-color:#6699bb;
+}
+
+.prchattime{
+font-family : Tahoma, Verdana, Arial, Verdana, Arial, Helvetica, Tahoma, Verdana, sans-serif;
+	font-size : 11px;
+	text-decoration : none;
+	color : #ffffff;
+	background-color:#D16F67;
+}
+
+.massm{
+font-family : Tahoma, Verdana, Arial, Verdana, Arial, Helvetica, Tahoma, Verdana, sans-serif;
+	font-size : 11px;
+	text-decoration : none;
+	color : #ffffff;
+	background-color:#EF6B00;
+}
+
+.guest {
+	BACKGROUND: #F8F3D7; BORDER-BOTTOM: #665B48 1px solid; BORDER-LEFT: #665B48 1px solid; BORDER-RIGHT: #665B48 1px solid; BORDER-TOP: #665B48 1px solid; COLOR: #41341E; FONT: 11px Verdana,Tahoma,Verdana,Arial,Tahoma,Verdana,Helvetica; FONT-WEIGHT: bold; WIDTH: 200px
+}
+
+.submit {
+	BACKGROUND: #A29275; BORDER-BOTTOM: #7A6848 1px solid; BORDER-LEFT: #7A6848 1px solid; BORDER-RIGHT: #7A6848 1px solid; BORDER-TOP: #7A6848 1px solid; COLOR: #fff; CURSOR: hand; FONT: 11px Verdana,Helvetica; FONT-WEIGHT: bold
+}
+.invbut {
+	BACKGROUND: #ffffff; BORDER-BOTTOM: #CE0202 1px solid; BORDER-LEFT: #CE0202 1px solid; BORDER-RIGHT: #CE0202 1px solid; BORDER-TOP: #CE0202 1px solid; COLOR: #333; CURSOR: hand; FONT: 10px Verdana,Tahoma,Verdana,Helvetica
+}
+.lbut {
+	BACKGROUND: #ffffff; BORDER-BOTTOM: #DECFA6 1px solid; BORDER-LEFT: #DECFA6 1px solid; BORDER-RIGHT: #DECFA6 1px solid; BORDER-TOP: #DECFA6 1px solid; COLOR: #333; CURSOR: hand; FONT: 11px Tahoma,Verdana,Helvetica; FONT-WEIGHT: bold
+}
+.lbutbig {
+	BACKGROUND: #f0f0f0; BORDER-BOTTOM: #cccccc 1px solid; BORDER-LEFT: #cccccc 1px solid; BORDER-RIGHT: #cccccc 1px solid; BORDER-TOP: #cccccc 1px solid; COLOR: #333; CURSOR: hand; FONT: 10px Verdana,Tahoma,Verdana,Helvetica; FONT-WEIGHT: bold; WIDTH: 150px
+}
+.lbutdis {
+	BACKGROUND: #F3ECD7; BORDER-BOTTOM: #DECFA6 1px solid; BORDER-LEFT: #DECFA6 1px solid; BORDER-RIGHT: #DECFA6 1px solid; BORDER-TOP: #DECFA6 1px solid; COLOR: #ffffff; CURSOR: hand; FONT: 11px Tahoma,Verdana,Helvetica; FONT-WEIGHT: bold
+}
+.addza {
+	BACKGROUND: #e0e0e0; BORDER-BOTTOM: #CCCCCC 1px solid; BORDER-LEFT: #CCCCCC 1px solid; BORDER-RIGHT: #CCCCCC 1px solid; BORDER-TOP: #CCCCCC 1px solid; COLOR: #333; CURSOR: hand; FONT: 10px Verdana,Tahoma,Helvetica; FONT-WEIGHT: bold
+}
+.submitclass {
+	WIDTH: 20px
+}
+
+
+#offspace {
+	PADDING-LEFT: 18px
+}
+#shortblock {
+	PADDING-LEFT: 5px;
+	PADDING-RIGHT: 5px
+}
+.loginupform{
+font-family : Verdana, Arial, Verdana, Arial, Helvetica, Tahoma, Verdana, sans-serif;
+	font-size : 11px;
+	text-decoration : none;
+	color : #41341E;
+}
+.loginupformsec{
+font-family : Verdana, Arial, Verdana, Arial, Helvetica, Tahoma, Verdana, sans-serif;
+	font-size : 11px;
+	text-decoration : none;
+	color : #ffffff;
+}
+.poll{
+font-family : Verdana, Arial, Verdana, Arial, Helvetica, Tahoma, Verdana, sans-serif;
+	font-size : 11px;
+	text-decoration : none;
+	color : #003366;
+}
+.kalendar{
+font-family : Verdana, Arial, Verdana, Arial, Helvetica, Tahoma, Verdana, sans-serif;
+	font-size : 12px;
+	text-decoration : none;
+	color : #333333;
+}
+.anonssmall{
+font-family : Verdana, Arial, Verdana, Arial, Helvetica, Tahoma, Verdana, sans-serif;
+	font-size : 11px;
+	text-decoration : underline;
+	color : #336699;
+}
+.dateclass{
+font-family : Verdana, Arial, Verdana, Arial, Helvetica, Tahoma, Verdana, sans-serif;
+	font-size : 11px;
+	text-decoration : none;
+	color : #666666;
+}
+.subclass{
+font-family : Tahoma, Verdana, Arial, Verdana, Arial, Helvetica, Tahoma, Verdana, sans-serif;
+	font-size : 10px;
+	text-decoration : none;
+	color : #444444;
+}
+.title{
+font-family : Verdana, Arial, Verdana, Arial, Helvetica, Tahoma, Verdana, sans-serif;
+	font-size : 12px;
+	text-decoration : none;
+	color : #003366;
+	text-decoration: underline;
+}
+.redtitle{
+font-family : Verdana, Arial, Verdana, Arial, Helvetica, Tahoma, Verdana, sans-serif;
+	font-size : 10px;
+	text-decoration : none;
+	color : #990000;
+}
+.uptxt{
+font-family : Tahoma, Verdana, Arial, Verdana, Arial, Helvetica, Tahoma, Verdana, sans-serif;
+	font-size : 10px;
+	text-decoration : none;
+	color : #ffffff;
+}
+.redtitle_big{
+font-family : Verdana, Arial, Verdana, Arial, Helvetica, Tahoma, Verdana, sans-serif;
+	font-size : 12px;
+	text-decoration : none;
+	color : #003366;
+}
+.daystitle_big{
+font-family : Verdana, Arial, Verdana, Arial, Helvetica, Tahoma, Verdana, sans-serif;
+	font-size : 12px;
+	text-decoration : none;
+	color : #003366;
+	background-color:#fafafa;
+}
+.redtitle_st{
+font-family : Verdana, Arial, Verdana, Arial, Helvetica, Tahoma, Verdana, sans-serif;
+	font-size : 12px;
+	text-decoration : none;
+	color : #d60000;
+}
+.pathbar{
+font-family : Verdana, Arial, Verdana, Arial, Helvetica, Tahoma, Verdana, sans-serif;
+	font-size : 10px;
+	text-decoration : none;
+	color : #333333;
+}
+.text{
+font-family : Verdana, Arial, Verdana, Arial, Helvetica, Tahoma, Verdana, sans-serif;
+	font-size : 11px;
+	text-decoration : none;
+	color : #333333;
+}
+.menutxt{
+font-family : Arial, Tahoma, Verdana, Arial, Helvetica, Tahoma, Verdana, sans-serif;
+	font-size : 12px;
+	text-decoration : underline;
+	color : #000000;
+}
+.menutxttit{
+font-family : Arial, Tahoma, Verdana, Arial, Helvetica, Tahoma, Verdana, sans-serif;
+	font-size : 12px;
+	text-decoration : none;
+	color : #000000;
+}
+.pathbarmain{
+font-family : Verdana, Arial, Verdana, Arial, Helvetica, Tahoma, Verdana, sans-serif;
+	font-size : 10px;
+	text-decoration : none;
+	color : #003366;
+}
+.submenu{
+font-family : Tahoma, Verdana, Arial, Verdana, Arial, Helvetica, Tahoma, Verdana, sans-serif;
+	font-size : 10px;
+	text-decoration : none;
+	color : #003366;
+}
+.textBox {
+	BACKGROUND-COLOR: #ffffff; COLOR: #333333; FONT-FAMILY:Verdana, Arial; FONT-SIZE: 11px; FONT-STYLE: normal
+}
+.LogintextBox {
+	BACKGROUND-COLOR: #ffffff; COLOR: #333333; FONT-FAMILY:Verdana, Arial; FONT-SIZE: 11px; FONT-STYLE: normal; WIDTH:150px
+}
+.LogintextBox2 {
+	BACKGROUND-COLOR: #ffffff; COLOR: #333333; FONT-FAMILY:Verdana, Arial; FONT-SIZE: 11px; FONT-STYLE: normal; WIDTH:80px
+}
+.LogintextBox3 {
+	BACKGROUND-COLOR: #ffffff; COLOR: #333333; FONT-FAMILY:Verdana, Arial; FONT-SIZE: 11px; FONT-STYLE: normal; WIDTH:530px
+}
+.LogintextBox4 {
+	BACKGROUND-COLOR: #ffffff; COLOR: #333333; FONT-FAMILY:Verdana, Arial; FONT-SIZE: 11px; FONT-STYLE: normal; WIDTH:200px
+}
+.LogintextBox5 {
+	BACKGROUND-COLOR: #ffffff; COLOR: #333333; FONT-FAMILY:Verdana, Arial; FONT-SIZE: 11px; FONT-STYLE: normal; WIDTH:65px
+}
+.LogintextBox6 {
+	BACKGROUND-COLOR: #ffffff; COLOR: #333333; FONT-FAMILY:Verdana, Arial; FONT-SIZE: 11px; FONT-STYLE: normal
+}
+
+.chatpost {
+	BACKGROUND-COLOR: #ffffff; COLOR: #333333; FONT-FAMILY:Verdana, Arial; FONT-SIZE: 11px; FONT-STYLE: normal
+}
+
+.textBox3 {
+	BACKGROUND-COLOR: #ffffff; COLOR: #333333; FONT-FAMILY:Verdana, Arial; FONT-SIZE: 11px; FONT-STYLE: normal; WIDTH:572px
+}
+
+.zayavki {
+	BACKGROUND-COLOR: #ffffff; COLOR: #222222; FONT-FAMILY:Verdana, Arial; FONT-SIZE: 10px; FONT-STYLE: normal
+}
+.selfight {
+	BACKGROUND-COLOR: #ffffff; COLOR: #222222; FONT-FAMILY:Verdana, Arial; FONT-SIZE: 10px; FONT-STYLE: normal; WIDTH: 210px
+}
+.buttonSub {
+PADDING-BOTTOM: 0px;
+PADDING-TOP: 0px;
+BACKGROUND-COLOR: #dddddd;
+	 CURSOR: hand; 
+	 FONT-FAMILY: Verdana; 
+	 FONT-SIZE: 10px; FONT-STYLE: normal; 
+	 FONT-WEIGHT: normal; color: black;
+}
+.chatpostbut {
+	BACKGROUND: #E7E7E7; BORDER-BOTTOM: #DDDDDD 0px solid; BORDER-LEFT: #CE0202 0px solid; BORDER-RIGHT: #CE0202 0px solid; BORDER-TOP: #CE0202 0px solid; COLOR: #724000; CURSOR: hand; FONT: 12px Tahoma,Verdana,Helvetica; FONT-WEIGHT: bold;
+}
+.textBox2 {
+	BACKGROUND: #fff; BORDER-BOTTOM: #698EB4 1px solid; BORDER-LEFT: #698EB4 1px solid; BORDER-RIGHT: #698EB4 1px solid; BORDER-TOP: #698EB4 1px solid; COLOR: #000; CURSOR: hand; FONT: 11px Tahoma,Verdana,Helvetica; WIDTH: 90px
+}
+.input_cl_s {
+	BORDER-RIGHT: #767676 1pt solid; BORDER-TOP: #767676 1pt solid; MARGIN-TOP: 0px; FONT-SIZE: 10px; MARGIN-BOTTOM: 0px; BORDER-LEFT: #767676 1pt solid; COLOR: #556680; BORDER-BOTTOM: #767676 1pt solid; FONT-FAMILY: Verdana, Arial, Helvetica
+}
+.usermenu {
+  background-color: #FCFAF3; border-color: #B9A05C #A9904C #A9904C #B9A05C; border-style: solid; border-width: 1px; position: absolute; left: 0px; top: 0px; visibility: hidden;
+}
+
+a.usermenulink {
+  font-family: Tahoma, Arial, Verdana; font-size: 11px; font-weight: bold; color: #222222; border: 0px solid #000000; padding: 2px 12px 2px 12px; display: block; text-decoration: none;
+}
+
+a.usermenulink:hover {
+  background-color: #F3ECD7; color: #336699;
+}
+
+#tooltip{background:#fff;border:1px solid #999;color:#333;font: 12px Tahoma;margin:0px;padding:3px 5px;position:absolute;visibility:hidden;z-index:10;}

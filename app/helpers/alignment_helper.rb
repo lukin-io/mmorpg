@@ -156,7 +156,7 @@ module AlignmentHelper
     LOCATION_ICONS[location_type.to_sym] || "📍"
   end
 
-  # Full fight settings display (like Neverlands fsign function)
+  # Full fight settings display
   def fight_settings_display(fight_type: nil, fight_kind: nil, timeout: nil, trauma: nil)
     parts = []
     parts << fight_type_icon_only(fight_type) if fight_type
