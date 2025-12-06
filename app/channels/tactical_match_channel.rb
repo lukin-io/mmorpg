@@ -22,8 +22,9 @@ class TacticalMatchChannel < ApplicationCable::Channel
   private
 
   def can_view_match?
-    return true if @tactical_match.creator_id == current_user.character&.id
-    return true if @tactical_match.opponent_id == current_user.character&.id
+    character = current_user.characters.first
+    return true if @tactical_match.creator_id == character&.id
+    return true if @tactical_match.opponent_id == character&.id
 
     # Allow spectators for completed matches
     @tactical_match.completed? || @tactical_match.forfeited?

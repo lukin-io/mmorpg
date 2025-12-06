@@ -146,7 +146,7 @@ class WorldController < ApplicationController
       else
         format.html { redirect_to world_path, alert: result.message }
         format.turbo_stream do
-          render turbo_stream: turbo_stream.update("flash-messages", partial: "shared/flash", locals: {type: "alert", message: result.message})
+          render turbo_stream: turbo_stream.update("flash", partial: "shared/flash", locals: {type: "alert", message: result.message})
         end
         format.json { render json: {success: false, message: result.message, respawn_in: result.respawn_in}, status: :unprocessable_entity }
       end
@@ -597,7 +597,7 @@ class WorldController < ApplicationController
 
   def render_error(message)
     render turbo_stream: turbo_stream.update(
-      "flash-messages",
+      "flash",
       partial: "shared/flash",
       locals: {type: :alert, message: message}
     )
@@ -614,7 +614,7 @@ class WorldController < ApplicationController
     @available_actions = available_actions
 
     render turbo_stream: [
-      turbo_stream.update("flash-messages", partial: "shared/flash", locals: {type: "notice", message: message}),
+      turbo_stream.update("flash", partial: "shared/flash", locals: {type: "notice", message: message}),
       turbo_stream.update("game-map", partial: "world/map", locals: {
         position: @position,
         nearby_tiles: @nearby_tiles,
