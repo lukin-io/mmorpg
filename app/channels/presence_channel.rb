@@ -180,7 +180,7 @@ class PresenceChannel < ApplicationCable::Channel
     return "online" unless user.respond_to?(:current_session)
 
     session = user.current_session
-    return "offline" unless session&.respond_to?(:online?) && session&.online?
+    return "offline" unless session&.respond_to?(:online?) && session.online?
 
     if session.respond_to?(:away?) && session.away?
       "away"

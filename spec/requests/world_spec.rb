@@ -496,8 +496,7 @@ RSpec.describe "World", type: :request do
         resource_key: "oak_wood",
         resource_type: "wood",
         quantity: 10,
-        base_quantity: 10
-      )
+        base_quantity: 10)
     end
 
     before do
@@ -588,7 +587,7 @@ RSpec.describe "World", type: :request do
         # Depleted resources should not show resource data attribute
         # Note: The attribute should not be present, checking exact behavior
         tile_html = response.body[/tile_5_5.*?<\/td>/m]
-        expect(tile_html).not_to include('data-resource=')
+        expect(tile_html).not_to include("data-resource=")
       end
     end
 

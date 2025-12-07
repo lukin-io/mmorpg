@@ -10,8 +10,7 @@ RSpec.describe "shared/_nl_vitals_bar.html.erb", type: :view do
       current_mp: 40,
       max_mp: 80,
       hp_regen_interval: 300,
-      mp_regen_interval: 600
-    )
+      mp_regen_interval: 600)
   end
 
   before do

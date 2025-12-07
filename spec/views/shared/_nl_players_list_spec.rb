@@ -10,8 +10,7 @@ RSpec.describe "shared/_nl_players_list.html.erb", type: :view do
         name: "HeroPlayer",
         level: 15,
         faction: "light",
-        to_param: "1"
-      )
+        to_param: "1")
     end
 
     let(:player2) do
@@ -20,8 +19,7 @@ RSpec.describe "shared/_nl_players_list.html.erb", type: :view do
         name: "DarkKnight",
         level: 20,
         faction: "dark",
-        to_param: "2"
-      )
+        to_param: "2")
     end
 
     let(:player3) do
@@ -30,8 +28,7 @@ RSpec.describe "shared/_nl_players_list.html.erb", type: :view do
         name: "NeutralGuy",
         level: 5,
         faction: nil,
-        to_param: "3"
-      )
+        to_param: "3")
     end
 
     before do
@@ -134,8 +131,7 @@ RSpec.describe "shared/_nl_players_list.html.erb", type: :view do
         name: "NoFaction",
         level: 10,
         faction: nil,
-        to_param: "1"
-      )
+        to_param: "1")
     end
 
     before do
