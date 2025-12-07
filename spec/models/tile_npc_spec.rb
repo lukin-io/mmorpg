@@ -127,8 +127,14 @@ RSpec.describe TileNpc, type: :model do
   describe "#respawn!" do
     let(:npc) { create(:tile_npc, :defeated, biome: "forest") }
 
+    before do
+      # Ensure BiomeNpcConfig is freshly loaded to avoid test order issues
+      Game::World::BiomeNpcConfig.reload!
+    end
+
     it "resets NPC with new random NPC from biome" do
       npc.respawn!
+      npc.reload # Ensure we have fresh data from DB
       expect(npc.current_hp).to be > 0
       expect(npc.respawns_at).to be_nil
       expect(npc.defeated_at).to be_nil
@@ -137,6 +143,7 @@ RSpec.describe TileNpc, type: :model do
 
     it "selects NPC appropriate for biome" do
       npc.respawn!
+      npc.reload
       forest_npcs = Game::World::BiomeNpcConfig.npc_keys("forest").map(&:to_s)
       expect(forest_npcs).to include(npc.npc_key)
     end
