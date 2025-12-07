@@ -153,9 +153,15 @@ class TileNpc < ApplicationRecord
   end
 
   def find_or_create_template(npc_data)
-    # Try to find existing template
-    template = NpcTemplate.find_by(npc_key: npc_data[:key])
-    return template if template
+    # Try to find existing template by npc_key first, then by name
+    template = NpcTemplate.find_by(npc_key: npc_data[:key]) ||
+      NpcTemplate.find_by(name: npc_data[:name])
+
+    if template
+      # Update npc_key if missing (for templates created by factory)
+      template.update!(npc_key: npc_data[:key]) if template.npc_key.blank?
+      return template
+    end
 
     # Create new template
     NpcTemplate.create!(
@@ -174,6 +180,7 @@ class TileNpc < ApplicationRecord
     )
   rescue ActiveRecord::RecordInvalid => e
     Rails.logger.error("Failed to create NPC template for #{npc_data[:key]}: #{e.message}")
-    nil
+    # Try one more time to find by name (race condition protection)
+    NpcTemplate.find_by(name: npc_data[:name])
   end
 end

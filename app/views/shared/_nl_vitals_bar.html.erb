@@ -1,0 +1,33 @@
+<%#
+  Inline HP/MP Bar (matches original layout)
+  Shows: [red HP bar][values text]
+
+  Usage:
+    <%= render "shared/nl_vitals_bar", character: current_character %>
+%>
+
+<% character ||= current_character %>
+<%
+  hp_percent = character.max_hp.to_i.zero? ? 0 : ((character.current_hp.to_f / character.max_hp) * 100).round
+  mp_percent = character.max_mp.to_i.zero? ? 0 : ((character.current_mp.to_f / character.max_mp) * 100).round
+%>
+
+<div class="nl-vitals-inline"
+     data-controller="nl-vitals"
+     data-nl-vitals-current-hp-value="<%= character.current_hp %>"
+     data-nl-vitals-max-hp-value="<%= character.max_hp %>"
+     data-nl-vitals-current-mp-value="<%= character.current_mp %>"
+     data-nl-vitals-max-mp-value="<%= character.max_mp %>"
+     data-nl-vitals-hp-regen-rate-value="<%= character.hp_regen_interval || 300 %>"
+     data-nl-vitals-mp-regen-rate-value="<%= character.mp_regen_interval || 600 %>">
+
+  <%# HP Bar (red) %>
+  <div class="nl-hp-bar-inline" data-nl-vitals-target="hpBar">
+    <div class="nl-bar-fill" style="width: <%= hp_percent %>%;" data-nl-vitals-target="hpFill"></div>
+  </div>
+
+  <%# Values text: [HP/MaxHP | MP/MaxMP] %>
+  <span class="nl-vitals-text" data-nl-vitals-target="text">
+    [<%= character.current_hp.round %>/<%= character.max_hp %> | <%= character.current_mp.round %>/<%= character.max_mp %>]
+  </span>
+</div>

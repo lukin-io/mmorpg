@@ -1,16 +1,45 @@
-<%# City view with interactive buildings %>
-<% zone ||= @zone %>
-<% buildings ||= city_buildings(zone) %>
+<%#
+  City View
+  Shows a large city image with description and interactive buildings
 
-<div class="city-view"
+  Variables:
+    - zone: Zone model (city)
+    - position: CharacterPosition
+%>
+<% zone ||= @zone %>
+<% buildings ||= city_buildings(zone) rescue [] %>
+<% city_image = zone.metadata&.dig("image") || "city_default.jpg" %>
+<% city_description = zone.metadata&.dig("description") || "A bustling city full of adventure. The streets are alive with merchants, adventurers, and citizens going about their daily business." %>
+
+<div class="nl-city-view"
      data-controller="city"
      data-city-zone-id-value="<%= zone.id %>"
      data-city-buildings-value="<%= buildings.to_json %>">
 
+  <%# Large city image %>
+  <div class="nl-city-image-container">
+    <%= image_tag city_image, class: "nl-city-image", alt: zone.name, onerror: "this.style.display='none'" rescue nil %>
+    <%# Fallback if no image %>
+    <div class="nl-city-placeholder">
+      <span class="nl-city-placeholder-icon">🏰</span>
+      <span class="nl-city-placeholder-name"><%= zone.name %></span>
+    </div>
+  </div>
+
+  <%# City description %>
+  <div class="nl-city-description">
+    <p><%= city_description %></p>
+    <% if zone.metadata&.dig("warning").present? %>
+      <p class="nl-warning"><%= zone.metadata["warning"] %></p>
+    <% end %>
+    <% if zone.metadata&.dig("quest_hint").present? %>
+      <p><span class="nl-highlight" data-action="click->city#showQuestDialog"><%= zone.metadata["quest_hint"] %></span></p>
+    <% end %>
+  </div>
+
   <%# City header %>
   <div class="city-header">
     <h1 class="city-name"><%= zone.name %></h1>
-    <p class="city-description"><%= zone.metadata&.dig("description") || "A bustling city full of adventure." %></p>
   </div>
 
   <%# District navigation arrows %>

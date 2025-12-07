@@ -1,0 +1,16 @@
+<%# Players list for the floating panel %>
+<% players = @players_here || [] %>
+<% players.each do |player| %>
+  <div class="nl-player-entry">
+    <span class="nl-player-arrow">→</span>
+    <% if player.respond_to?(:faction) && player.faction.present? %>
+      <span class="nl-player-icon nl-faction-<%= player.faction.downcase %>">☠</span>
+    <% else %>
+      <span class="nl-player-icon">→</span>
+    <% end %>
+    <a href="<%= profile_path(profile_name: player.name) %>" class="nl-player-name-link"><%= player.name %></a><span class="nl-player-lvl">[<%= player.level %>]</span><span class="nl-player-status">g</span>
+  </div>
+<% end %>
+<% if players.empty? %>
+  <div class="nl-no-players">No other players here</div>
+<% end %>

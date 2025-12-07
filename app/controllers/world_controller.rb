@@ -58,8 +58,8 @@ class WorldController < ApplicationController
   def enter
     location_key = params[:location_key]
 
-    # Find the zone/building to enter
-    target_zone = Zone.find_by(slug: location_key) || Zone.find_by(name: location_key)
+    # Find the zone/building to enter (search by name, case-insensitive)
+    target_zone = Zone.find_by("LOWER(name) = ?", location_key.to_s.downcase)
 
     if target_zone.nil?
       return redirect_to world_path, alert: "Location not found."
@@ -141,18 +141,12 @@ class WorldController < ApplicationController
     respond_to do |format|
       if result.success
         format.html { redirect_to world_path, notice: result.message }
-        format.turbo_stream do
-          render turbo_stream: [
-            turbo_stream.replace("flash-messages", partial: "shared/flash", locals: {type: "notice", message: result.message}),
-            turbo_stream.replace("available-actions", partial: "world/actions", locals: {available_actions: available_actions, position: @position}),
-            turbo_stream.replace("location-info", partial: "world/location_info", locals: {position: @position, tile: current_tile, zone: @position.zone})
-          ]
-        end
+        format.turbo_stream { render_gather_update(result.message) }
         format.json { render json: {success: true, item: result.item_name, quantity: result.quantity, message: result.message} }
       else
         format.html { redirect_to world_path, alert: result.message }
         format.turbo_stream do
-          render turbo_stream: turbo_stream.replace("flash-messages", partial: "shared/flash", locals: {type: "alert", message: result.message})
+          render turbo_stream: turbo_stream.update("flash", partial: "shared/flash", locals: {type: "alert", message: result.message})
         end
         format.json { render json: {success: false, message: result.message, respawn_in: result.respawn_in}, status: :unprocessable_entity }
       end
@@ -315,11 +309,22 @@ class WorldController < ApplicationController
         tile_template = MapTileTemplate.find_by(zone: zone, x: x, y: y)
 
         if tile_template
-          row << tile_template
+          # Use tile template but override with actual resource/npc data
+          metadata = tile_template.respond_to?(:metadata) ? (tile_template.metadata || {}).dup : {}
+          metadata = add_live_tile_features(zone.name, x, y, metadata)
+
+          row << OpenStruct.new(
+            x: x,
+            y: y,
+            terrain_type: tile_template.respond_to?(:terrain_type) ? tile_template.terrain_type : zone.biome,
+            walkable: tile_template.respond_to?(:walkable) ? tile_template.walkable : true,
+            metadata: metadata
+          )
         else
           # Generate procedural terrain based on position
           terrain = procedural_terrain(zone, x, y)
-          metadata = procedural_features(zone, x, y)
+          # Start with empty metadata and add live features
+          metadata = add_live_tile_features(zone.name, x, y, {})
 
           row << OpenStruct.new(
             x: x,
@@ -334,6 +339,59 @@ class WorldController < ApplicationController
     end
 
     tiles
+  end
+
+  # Add resource/npc data to tile metadata
+  # Priority: 1) Database records (TileResource/TileNpc)
+  #           2) Procedural features as fallback
+  # Depleted resources (quantity = 0) are hidden
+  def add_live_tile_features(zone_name, x, y, metadata)
+    # Check for TileResource in database
+    resource = TileResource.at_tile(zone_name, x, y)
+
+    if resource
+      # Database record exists - show if available, hide if depleted
+      if resource.available?
+        metadata["resource"] = resource.display_name
+        metadata["resource_type"] = resource.resource_type
+        metadata["resource_quantity"] = resource.quantity
+      else
+        # Resource is depleted, don't show it
+        metadata.delete("resource")
+        metadata.delete("resource_type")
+        metadata.delete("resource_quantity")
+      end
+    else
+      # No database record - use procedural features as visual hint
+      # Resource will be created when player attempts to gather
+      procedural = procedural_features(@position.zone, x, y)
+      if procedural["resource"]
+        metadata["resource"] = procedural["resource"]
+        metadata["resource_type"] = procedural["resource_type"]
+      end
+    end
+
+    # Check for TileNpc in database
+    npc = TileNpc.at_tile(zone_name, x, y)
+
+    if npc
+      # Database record exists - show if alive
+      if npc.alive?
+        metadata["npc"] = npc.display_name
+        metadata["npc_level"] = npc.level
+      else
+        metadata.delete("npc")
+        metadata.delete("npc_level")
+      end
+    else
+      # No database record - use procedural features as visual hint
+      procedural ||= procedural_features(@position.zone, x, y)
+      if procedural["npc"]
+        metadata["npc"] = procedural["npc"]
+      end
+    end
+
+    metadata
   end
 
   def procedural_terrain(zone, x, y)
@@ -535,29 +593,67 @@ class WorldController < ApplicationController
   end
 
   def render_map_update
+    # Set instance variables that partials expect
+    @movement_cooldown = movement_cooldown
+    @tile = current_tile
+    @zone = @position.zone
+    @nearby_tiles = nearby_tiles_with_features
+    @available_actions = available_actions
+
     render turbo_stream: [
-      turbo_stream.replace("game-map", partial: "world/map", locals: {
+      turbo_stream.update("game-map", partial: "world/map", locals: {
         position: @position,
-        nearby_tiles: nearby_tiles,
-        zone: @position.zone
+        nearby_tiles: @nearby_tiles,
+        zone: @zone,
+        tile_data: {}
       }),
-      turbo_stream.replace("location-info", partial: "world/location_info", locals: {
+      turbo_stream.update("location-info", partial: "world/location_info", locals: {
         position: @position,
-        tile: current_tile,
-        zone: @position.zone
+        tile: @tile,
+        zone: @zone
       }),
-      turbo_stream.replace("available-actions", partial: "world/actions", locals: {
-        available_actions: available_actions,
+      turbo_stream.update("available-actions", partial: "world/actions", locals: {
+        available_actions: @available_actions,
         position: @position
       })
     ]
   end
 
   def render_error(message)
-    render turbo_stream: turbo_stream.replace(
-      "flash-messages",
+    render turbo_stream: turbo_stream.update(
+      "flash",
       partial: "shared/flash",
       locals: {type: :alert, message: message}
     )
+  end
+
+  # Render update after gathering a resource
+  # Updates map (to show resource state), location info, actions, and flash message
+  def render_gather_update(message)
+    # Set instance variables that partials expect
+    @movement_cooldown = movement_cooldown
+    @tile = current_tile
+    @zone = @position.zone
+    @nearby_tiles = nearby_tiles_with_features
+    @available_actions = available_actions
+
+    render turbo_stream: [
+      turbo_stream.update("flash", partial: "shared/flash", locals: {type: "notice", message: message}),
+      turbo_stream.update("game-map", partial: "world/map", locals: {
+        position: @position,
+        nearby_tiles: @nearby_tiles,
+        zone: @zone,
+        tile_data: {}
+      }),
+      turbo_stream.update("location-info", partial: "world/location_info", locals: {
+        position: @position,
+        tile: @tile,
+        zone: @zone
+      }),
+      turbo_stream.update("available-actions", partial: "world/actions", locals: {
+        available_actions: @available_actions,
+        position: @position
+      })
+    ]
   end
 end

@@ -14,10 +14,20 @@ module Game
       end
 
       def tile_at(x, y)
-        record = tiles[[x, y]]
-        return unless record
+        # Check bounds first
+        return nil if x < 0 || y < 0 || x >= zone.width || y >= zone.height
 
-        Game::Maps::Tile.new(x:, y:, passable: record.passable)
+        record = tiles[[x, y]]
+
+        if record
+          Game::Maps::Tile.new(x:, y:, passable: record.passable)
+        else
+          # No tile record - generate a default passable tile based on zone
+          # Tiles without records are assumed passable unless the biome is impassable
+          biome = zone.biome
+          passable = !%w[mountain water ocean].include?(biome)
+          Game::Maps::Tile.new(x:, y:, passable: passable)
+        end
       end
 
       def biome_at(x, y)

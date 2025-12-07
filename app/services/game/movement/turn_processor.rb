@@ -12,7 +12,7 @@ module Game
     class TurnProcessor
       Result = Struct.new(:position, :encounter, keyword_init: true)
 
-      ACTION_COOLDOWN_SECONDS = 2
+      ACTION_COOLDOWN_SECONDS = 3
       OFFSETS = {
         north: [0, -1],
         south: [0, 1],

@@ -508,53 +508,49 @@ if (savedHeight) {
 ```
 
 ### Elselands Implementation
-- **Status:** ✅ Implemented (modernized, Neverlands dark theme)
+- **Status:** ✅ Implemented (modernized, light theme matching original)
 - **Files:**
-  - `app/views/layouts/game.html.erb` — Neverlands-style CSS Grid layout (no iframes)
-  - `app/javascript/controllers/game_layout_controller.js` — Resize, tabs, persistence, player menu
-  - `app/views/shared/_vitals_bar.html.erb` — Status bar vitals (dark theme)
-  - `app/views/shared/_online_players_compact.html.erb` — Compact players list (right sidebar)
-  - `app/assets/stylesheets/application.css` — `.nl-game-layout` section with dark fantasy theme
+  - `app/views/layouts/game.html.erb` — CSS Grid layout (no iframes)
+  - `app/javascript/controllers/game_layout_controller.js` — Players sorting, auto-refresh, notifications
+  - `app/views/shared/_nl_vitals_bar.html.erb` — Inline HP bar with text values
+  - `app/views/shared/_nl_players_list.html.erb` — Players list for floating panel
+  - `app/assets/stylesheets/application.css` — `.nl-game-layout` section with light theme
 
-### Layout Structure
+### Layout Structure (Matching Original Screenshots)
 ```
-+------------------------------------------------+
-|  STATUS BAR (minimal): Name [Lvl] | HP/MP | Nav|  ~32px
-+------------------------------------------------+
-|                                                |
-|            MAIN CONTENT (~90%)                 |
-|     (Map / Profile / Combat / Quest / etc.)    |
-|                                                |
-+------------------------------------------------+
-|  RESIZE HANDLE (draggable)                     |  ~6px
-+------------------------------------------------+
-|  BOTTOM PANEL (~10%)                           |
-| +--------------------------------------+------+|
-| | TABBED LOGS (90%)                    |ONLINE||
-| | [Chat] [Battle] [Events] [System]    |PLAYERS|
-| | Messages / combat log / events...    | LIST ||
-| | [Input field for chat]               |(10%) ||
-| +--------------------------------------+------+|
-+------------------------------------------------+
++------------------------------------------------------------+
+|  TOP BAR: Name[Lv] + HP Bar + [values] | Nav Links | ✕    |
++------------------------------------------------------------+
+|                                                            |
+|                    MAIN CONTENT (full)                     |
+|      (Map / City Image / Profile / Combat / etc.)          |
+|                                                            |
+|                                    +-------------------+   |
+|                                    | FLOATING PLAYERS  |   |
+|                                    | Sort: a-z z-a     |   |
+|                                    | Location [count]  |   |
+|                                    | → Player1[10]     |   |
+|                                    +-------------------+   |
++------------------------------------------------------------+
+| [Action] [Say]  | Chat messages... |     Time: 18:45:30   |
++------------------------------------------------------------+
 ```
 
 ### Key Features
-- **Dark Fantasy Theme** — Colors: `#0a0a12`, `#12121a`, gold accents `#b49b64`
-- **Minimal Status Bar** — Just character name, level, HP/MP bars, quick nav icons
-- **Tabbed Log System** — Chat, Battle Log, Events, System tabs in bottom panel
-- **Resizable Bottom Panel** — Drag handle with localStorage persistence
-- **Compact Online Players** — Right sidebar shows active players with status dots
-- **Player Context Menu** — Right-click for whisper, profile, invite, ignore
-- **Keyboard Shortcuts** — Alt+H (toggle panel), Alt+C (chat mode), Alt+1-4 (tabs)
+- **Light Theme** — White backgrounds (#FFFFFF), light borders (#CCCCCC), blue links (#336699)
+- **Top Bar** — Character name + level, inline HP bar, vitals text `[HP/MaxHP | MP/MaxMP]`, nav links
+- **Navigation Links** — Quests, Character, Inventory, Enter/Exit as text links (not buttons)
+- **Floating Players Panel** — Bottom-right corner overlay with sort options
+- **Bottom Chat Bar** — Slim strip with action buttons, chat input, time display
+- **Turbo Frames** — Dynamic content updates for main area
 
 ### Key Adaptations
-- **CSS Grid** replaces iframes for better performance and SEO
-- **Turbo Frames** for dynamic content within grid areas
-- **localStorage** persistence for panel sizes, active tab, chat mode
+- **CSS Grid** replaces iframes for better performance
+- **Floating Panel** instead of fixed sidebar for players list
+- **Light theme** matching original Neverlands colors
+- **Simplified layout** — No resizable panels, no tabbed logs
+- **localStorage** persistence for sort preferences, auto-refresh toggle
 - **Stimulus Controller** for all interactivity (no inline handlers)
-- **ActionCable** integration for real-time chat and battle log updates
-- **Dark Fantasy CSS Variables** — Easy theming via `--nl-*` custom properties
-- **Mobile Responsive** — Hides online panel on small screens, collapsible tabs
 
 ---
 
@@ -832,30 +828,39 @@ function ButtonSt(st) {
 - **Status:** ✅ Implemented
 - **Files:**
   - `app/controllers/world_controller.rb` — Map rendering, movement, interactions
-  - `app/views/world/_map.html.erb` — Tile grid with clickable actions
+  - `app/views/world/_map.html.erb` — Tile grid with clickable tiles
   - `app/views/world/_city_view.html.erb` — City/indoor locations
-  - `app/javascript/controllers/game_world_controller.js` — Smooth animated movement, timer overlay, direction sprites, move tokens
-  - `app/javascript/controllers/vitals_controller.js` — Client-side HP/MP regen animation
+  - `app/javascript/controllers/nl_world_map_controller.js` — Mouse-click movement, timer display
+  - `app/javascript/controllers/nl_vitals_controller.js` — Client-side HP/MP regen animation
   - `app/services/game/movement/turn_processor.rb` — Server-side validation
   - `app/models/map_tile_template.rb` — Tile definitions with terrain/resources
 
 ### Features Implemented ✅
-- Tile-click movement with direction detection
-- Keyboard controls (WASD/arrows)
-- Adjacent tile highlighting
-- Tile action popups (NPC, resource, building)
-- Movement animation with delay
-- Server-authoritative movement validation
-- Terrain modifiers affect movement speed
-- **Smooth Animated Movement** — Character slides between tiles with CSS easeOut transitions (`game_world_controller.js`)
-- **Movement Verification Tokens** — Each tile has a `move_token` for anti-cheat validation
-- **Direction-Based Sprites** — Character marker rotates based on movement direction (CSS transform)
-- **Timer Overlay** — Visual countdown during movement cooldowns (`movementTimer` target)
-- **Client-Side HP/MP Regen** — Animated bar updates every second (`vitals_controller.js`)
-- **Context Action Buttons** — Dynamic buttons with enable/disable during movement (`buttonPanel` target)
+- **Mouse-Click Only Movement** — Click on adjacent tiles to move (no keyboard navigation)
+- **Adjacent Tile Highlighting** — Red dashed border (`.nl-tile-clickable--available`) with pulsing animation
+- **Cursor Display** — Red border on player's current position
+- **Timer Badge** — Small red pill with countdown number during movement cooldown
+- **Server-Authoritative Movement** — POST to `/world/move` with direction parameter
+- **Turbo Stream Updates** — Server returns updated map via Turbo Stream
+- **Terrain Backgrounds** — CSS gradient fallbacks for each terrain type
+- **Entity Markers** — NPC (👹), resource (🌿⛏️🪵), building icons on tiles
+- **Client-Side HP/MP Regen** — Animated bar updates every second (`nl_vitals_controller.js`)
 
-### Features To Implement 🔄
-1. **Dynamic Tile Loading** — Load/unload tiles as player moves (for infinite/large maps) — *Not needed for current 5x5 grid*
+### Movement Flow
+1. Player sees 5x5 grid of tiles around their position
+2. Adjacent walkable tiles show red dashed border
+3. Player clicks an available tile
+4. Controller sends `POST /world/move` with direction (north/south/east/west)
+5. Timer badge shows countdown during movement
+6. Server validates and processes movement
+7. Turbo Stream response updates the map
+8. Cursor repositions to new tile
+
+### Key Simplifications from Original
+- **No keyboard navigation** — Mouse clicks only for simplicity
+- **No smooth scrolling animation** — Instant tile updates via Turbo
+- **No dynamic tile loading** — 5x5 grid is pre-rendered
+- **Simpler timer** — Red badge instead of overlay background
 
 ---
 
@@ -1121,6 +1126,94 @@ body_damage: {
 - **Server-authoritative** — all damage calculated server-side
 - **YAML Configuration** for action costs, body parts, magic
 - **Turbo Streams** for combat log updates
+
+### Original Neverlands CSS (fight.css)
+
+```css
+/* Core styles */
+BODY {
+  FONT-FAMILY: Verdana, Tahoma, Arial;
+  FONT-SIZE: 12px;
+  MARGIN: 0px;
+  COLOR: #000000;
+}
+
+A {
+  COLOR: #336699;
+  TEXT-DECORATION: underline;
+}
+
+/* Combat text classes */
+.ftxt { FONT-SIZE: 10px; COLOR: #222222; }  /* Combat info text */
+.fpla { FONT-SIZE: 11px; COLOR: #888888; }  /* Body part labels */
+.nick { FONT-SIZE: 12px; COLOR: #222222; }  /* Character names */
+.ftime { FONT-SIZE: 12px; COLOR: #888888; } /* Timestamps */
+.proce { FONT-SIZE: 10px; COLOR: #CC0000; } /* Damage values */
+
+/* Combat buttons */
+.fbut {
+  BACKGROUND: #ffffff;
+  BORDER: #DECFA6 1px solid;
+  COLOR: #333333;
+  FONT: 11px Tahoma, Verdana, Arial;
+  FONT-WEIGHT: bold;
+  CURSOR: pointer;
+}
+
+/* HP/MP bar backgrounds */
+.hpfull { BACKGROUND: url('hpbg1.gif') repeat-x; }  /* Cyan gradient */
+.hplos  { BACKGROUND: url('hpbg2.gif') repeat-x; }  /* Gray gradient */
+.mpfull { BACKGROUND: url('mpbg1.gif') repeat-x; }  /* Blue gradient */
+.mplos  { BACKGROUND: url('mpbg2.gif') repeat-x; }  /* Gray gradient */
+
+/* Layout positioning */
+#lines_container { position: relative; }
+#leftC { position: absolute; left: 0px; top: 0; }
+#rightC { position: absolute; right: 0px; top: 0; }
+#lines { padding: 7px 15px 0 18px; }
+#text { position: absolute; z-index: 2; left: 25px; top: 6px; font-size: 11px; }
+
+/* Action selection */
+.fsel {
+  FONT-SIZE: 10px;
+  WIDTH: 210px;
+  COLOR: #222222;
+  BACKGROUND-COLOR: #ffffff;
+}
+
+/* Mana input box */
+.mbox {
+  FONT-SIZE: 10px;
+  BORDER: #767676 1pt solid;
+  COLOR: #556680;
+}
+```
+
+### Visual Reference
+
+**Active Combat Screen (`fight.png`):**
+- Three-panel layout: Player | Actions | Enemy
+- HP bars with cyan gradient, MP bars with blue gradient
+- Equipment slots displayed as grid around avatar
+- Attack/block dropdowns for 4 body parts
+- Action point counter with penalty display
+- Combat log with timestamps and colored names
+
+**Battle End Screen (`end_fight.png`):**
+- Same player panel (HP/MP/equipment)
+- Combat log showing victory/defeat messages
+- "Finish Battle" button
+- Detailed log entries with body part hits, blocks, dodges
+
+### Elselands CSS Implementation
+
+The combat CSS uses the `nl-combat-*` prefix:
+- `nl-combat-container` - Main combat wrapper
+- `nl-participant` - Player/enemy panels
+- `nl-bar--hp`, `nl-bar--mp` - Health/mana bars
+- `nl-action-select` - Attack/block dropdowns
+- `nl-magic-slots` - Skill slot grid
+- `nl-combat-log` - Combat log container
 
 ---
 
@@ -1700,9 +1793,644 @@ Similar to resources, NPCs spawn randomly on tiles based on biome. Hostile NPCs 
 
 ---
 
-## Future Neverlands-Inspired Features
+## Visual Reference Analysis (nl/ folder)
 
-*(Add new sections here as examples are shared)*
+Screenshots from the original Neverlands game showing the target UI/UX.
+
+### Layout Structure (layout.jpg)
+
+```
++------------------------------------------------------------+
+|  Player name [level]  |  HP/MP bars  |  Action Buttons     |  ~32px
++------------------------------------------------------------+
+|                                                            |
+|                    MAIN CONTENT (~70%)                     |
+|         (Map / City Image / Profile / Combat)              |
+|                                                            |
++------------------------------------------------------------+
+|  BOTTOM PANEL (~20%)                                       |
+| +--------------------------------------------------+------+|
+| | CHAT / EVENT LOGS                                |ONLINE||
+| | [Timestamp] player: message                      |PLAYERS|
+| | [System] Random event notification               | LIST ||
+| +--------------------------------------------------+------+|
++------------------------------------------------------------+
+```
+
+### Map View (map.jpg, map_move.jpg)
+
+**Key Features:**
+- Large tile-based world map (100x100px per tile)
+- Painted terrain images (forest, mountain, beach, city walls, buildings)
+- Red animated cursor on current player position
+- Adjacent walkable tiles show clickable overlay (`here.gif`)
+- Movement timer countdown (28 seconds) during travel
+- Day/night variants of tile images
+
+**Top Bar:**
+- Player name with level in brackets: `lukin[0]`
+- HP bar (red gradient) + MP bar (blue gradient)
+- Action buttons: Квесты (Quests), Ваш персонаж (Character), Инвентарь (Inventory), Войти (Enter)
+
+**Right Sidebar:**
+- Location name: "Форпост, Западные Ворота [5]"
+- Total players: "Всего [1877]"
+- Online players list with icons and levels
+
+### City View (city.jpg, main_ui.jpg)
+
+**Key Features:**
+- Large detailed city/location image (not tile grid)
+- Quest/story text below the image
+- System announcements in colored text (red for warnings)
+- Same layout structure as map view
+
+**Bottom Chat Panel:**
+- Timestamps in blue: `[11:06:14]`
+- Player messages: `>>> persill > lukin: message`
+- System events in red: `NeverLands.Ru Внимание! Случайное событие!`
+- News announcements in bold
+
+### Profile View (profile.jpg)
+
+**Left Column:**
+- Character avatar image
+- Equipment slots (weapon, armor, accessories)
+- Paper doll visualization
+
+**Center Column:**
+- Stats: Деньги (Money), Сила (Strength), Ловкость (Dexterity), etc.
+- Experience bar: "Повышения: 15"
+- Fatigue/Stamina bar: "Усталость: 0%"
+- Combat stats: Побед (Wins), Поражений (Losses)
+
+**Right Column:**
+- Tabs: Сервисы, Умения (Skills), Навыки, Достижения (Achievements), Настройки (Settings)
+- Sub-tabs: Платные сервисы, Лотереи, Открытки, Подарки, Пароль, Рефералы
+
+---
+
+## Original Neverlands Source Code Reference
+
+### map.js — Complete Map System
+
+```javascript
+// === GLOBAL STATE ===
+var d = document;
+var world = false;              // Map container DIV
+var transport_img = false;      // Cursor/character sprite
+var timer_img = false;          // Timer overlay image
+var width = 3;                  // Visible tiles left/right of player
+var height = 1;                 // Visible tiles above/below player
+var move_interval = 50;         // Animation frame interval (ms)
+var current_x = 0;              // Current player X
+var current_y = 0;              // Current player Y
+var time_left = 0;              // Movement animation time remaining
+var time_left_sec = 0;          // Cooldown timer remaining
+var pause = 0;                  // Movement duration
+var cur_margin_top = 0;         // Map scroll offset Y
+var cur_margin_left = 0;        // Map scroll offset X
+var dest_x = 0;                 // Destination X
+var dest_y = 0;                 // Destination Y
+var loaded_left = 0;            // Loaded tile bounds
+var loaded_right = 0;
+var loaded_top = 0;
+var loaded_bottom = 0;
+var moving_status = 0;          // 0=idle, 1=moving
+var finStatus = 0;              // Movement completion status
+var avail = {};                 // Available tiles {x_y: token}
+var bavail = {};                // Button verification tokens
+
+// === DYNAMIC GRID SIZING ===
+// Calculates visible grid based on viewport
+function view_map() {
+    view_build_top();  // Render header
+
+    var documentHeight = document.body.clientHeight;
+    var documentWidth = document.body.clientWidth;
+
+    // Calculate grid size (tiles are 100x100px)
+    width = Math.max(1, Math.floor(((documentWidth / 100) - 1) / 2));
+    height = Math.max(1, Math.floor(((documentHeight / 100) - 1) / 2));
+
+    var widthPx = ((width * 2) + 1) * 100;
+    var heightPx = ((height * 2) + 1) * 100;
+
+    // Create map container with overflow hidden
+    d.write('<div style="position: absolute; border: 1px solid black; overflow: hidden; ' +
+            'width: ' + widthPx + 'px; height: ' + heightPx + 'px; ' +
+            'left: 50%; margin-left: -' + (widthPx / 2) + 'px;" id="world_cont"></div>');
+
+    // Build available tiles from server data
+    // map[1] = [[x, y, token], [x, y, token], ...]
+    for (var i = 0; i < map[1].length; i++) {
+        avail[map[1][i][0] + '_' + map[1][i][1]] = map[1][i][2];
+    }
+
+    current_x = map[0][0];
+    current_y = map[0][1];
+    showCursor();
+    showMap(current_x, current_y);
+    view_build_bottom();
+}
+
+// === TILE RENDERING ===
+function showMap(x, y) {
+    if (!world) {
+        world = d.createElement('DIV');
+        world.id = 'world_map';
+        d.getElementById('world_cont').appendChild(world);
+    }
+    world.innerHTML = '';
+
+    var table = d.createElement('TABLE');
+    var tbody = d.createElement('TBODY');
+    table.border = 0;
+    table.cellPadding = 0;
+    table.cellSpacing = 0;
+
+    for (var i = -height; i <= height; i++) {
+        var tr = d.createElement('TR');
+        for (var j = -width; j <= width; j++) {
+            var td = d.createElement('TD');
+            // Tile background image: /map/world/{day|night}/{y}/{x}_{y}.jpg
+            td.style.backgroundImage = 'url(http://image.neverlands.ru/map/world/' +
+                map[0][3] + '/' + (y + i) + '/' + (x + j) + '_' + (y + i) + '.jpg)';
+
+            var img = d.createElement('IMG');
+            img.src = 'http://image.neverlands.ru/1x1.gif';  // Transparent 1px
+            img.width = 100;
+            img.height = 100;
+            img.id = 'img_' + (x + j) + '_' + (y + i);
+
+            var dx = x + j;
+            var dy = y + i;
+
+            // Mark clickable tiles with verification tokens
+            if (avail[dx + '_' + dy] && !finStatus) {
+                img.src = 'http://image.neverlands.ru/map/world/here.gif';
+                img.onclick = function(dx, dy) {
+                    return function() { moveMapTo(dx, dy, map[0][2]); }
+                }(dx, dy);
+                img.style.cursor = 'pointer';
+            }
+
+            td.appendChild(img);
+            tr.appendChild(td);
+        }
+        tbody.appendChild(tr);
+    }
+
+    table.appendChild(tbody);
+    world.appendChild(table);
+
+    current_x = x;
+    current_y = y;
+    loaded_left = x - width;
+    loaded_right = x + width;
+    loaded_top = y - height;
+    loaded_bottom = y + height;
+}
+
+// === SMOOTH MOVEMENT ANIMATION ===
+function move() {
+    var path = time_left / (pause * 1000);
+
+    if (time_left <= 0) {
+        clearInterval(t);
+        finFunction();
+        return;
+    }
+
+    // Moving north (y decreasing)
+    if (dest_y < current_y) {
+        var app_y = dest_y + (Math.abs(dest_y - current_y) * path);
+        // Load new tiles as we approach edge
+        if ((app_y - height) <= (loaded_top + 0.2)) {
+            loaded_top -= 1;
+            loadMap('top', loaded_top);
+        }
+        // Unload tiles we've passed
+        if ((app_y + (height * 2)) <= loaded_bottom) {
+            loaded_bottom -= 1;
+            freeMap('bottom');
+        }
+        cur_margin_top += (Math.abs(dest_y - current_y) * 100) / (pause * 1000 / move_interval);
+    }
+    // Similar for other directions...
+
+    // Apply smooth scroll via CSS margin
+    world.style.marginTop = parseInt(cur_margin_top) + 'px';
+    world.style.marginLeft = parseInt(cur_margin_left) + 'px';
+
+    time_left -= move_interval;
+}
+
+// === MOVEMENT REQUEST ===
+function moveMapTo(x, y, ps) {
+    if (moving_status == 1) return false;  // Already moving
+    gox = x;
+    goy = y;
+    gop = ps;  // Movement speed
+    // AJAX with anti-cheat token
+    AjaxGet('map_ajax.php?act=1&mx=' + x + '&my=' + y +
+            '&gti=' + map[0][2] + '&vcode=' + avail[x + '_' + y]);
+    return true;
+}
+
+// === MOVEMENT TIMER ===
+function TimerStart(secgo, mrinit) {
+    if (time_left_sec <= 0) {
+        if (mrinit) {
+            ButtonSt(true);   // Disable buttons
+            MapReInit([]);    // Clear available tiles
+        }
+        time_left_sec = secgo * 1000;
+        timer_img.src = 'http://image.neverlands.ru/map/world/timer.png';
+        d.getElementById('timerfon').style.display = 'block';
+        d.getElementById('timerdiv').style.display = 'block';
+        d.getElementById('tdsec').innerHTML = secgo;
+        tsec = setInterval('timerst(' + mrinit + ')', 1000);
+    } else {
+        time_left_sec += secgo * 1000;  // Add to existing timer
+    }
+}
+
+// === CURSOR & CHARACTER SPRITES ===
+function showCursor() {
+    if (!transport_img) createCursor();
+    transport_img.src = 'http://image.neverlands.ru/map/nl_cursor.png';
+}
+
+function showTransport(name, from_x, from_y, to_x, to_y, p, type) {
+    if (!transport_img) createCursor();
+
+    // Calculate direction angle
+    var rad = Math.atan2((to_y - from_y), (to_x - from_x));
+    var pi = 3.141592;
+    var grad = Math.round(rad / pi * 180 / (360 / p));
+    if (grad == p) grad = 0;
+    if (grad < 0) grad = p + grad;
+
+    // Load direction sprite (man_0.gif through man_7.gif for 8 directions)
+    transport_img.src = 'http://image.neverlands.ru/map/' + name + '_' + grad + '.' + type;
+}
+
+// === DYNAMIC TILE LOADING ===
+function loadMap(dir) {
+    var tbody = world.lastChild.lastChild;
+    var tr, td, img;
+
+    switch (dir) {
+        case 'bottom':
+            tr = d.createElement('TR');
+            for (var i = loaded_left; i <= loaded_right; i++) {
+                td = d.createElement('TD');
+                td.style.backgroundImage = 'url(http://image.neverlands.ru/map/world/' +
+                    map[0][3] + '/' + loaded_bottom + '/' + i + '_' + loaded_bottom + '.jpg)';
+                img = d.createElement('IMG');
+                img.src = 'http://image.neverlands.ru/1x1.gif';
+                img.width = 100;
+                img.height = 100;
+                img.id = 'img_' + i + '_' + loaded_bottom;
+                td.appendChild(img);
+                tr.appendChild(td);
+            }
+            tbody.appendChild(tr);
+            break;
+        // Similar for 'top', 'left', 'right'...
+    }
+}
+
+function freeMap(dir) {
+    var tbody = world.lastChild.lastChild;
+    switch (dir) {
+        case 'top':
+            cur_margin_top += 100;
+            tbody.removeChild(tbody.firstChild);
+            break;
+        // Similar for other directions...
+    }
+}
+```
+
+### hpmp.js — HP/MP Regeneration Animation
+
+```javascript
+var interv;
+
+// Start HP/MP regeneration interval
+function ins_HP() {
+    interv = setInterval("cha_HP()", 1000);
+    if (inshp[0] < 0) inshp[0] = 0;
+    if (inshp[3] < 7) inshp[3] = 7;
+}
+
+// Update HP/MP bars every second
+// inshp = [currentHP, maxHP, currentMP, maxMP, hpRegenRate, mpRegenRate]
+function cha_HP() {
+    // Clamp values
+    if (inshp[0] < 0) inshp[0] = 0;
+    if (inshp[0] > inshp[1]) inshp[0] = inshp[1];
+    if (inshp[2] > inshp[3]) inshp[2] = inshp[3];
+
+    // Stop when full
+    if (inshp[0] >= inshp[1] && inshp[2] >= inshp[3]) clearInterval(interv);
+
+    // Calculate bar widths (160px max)
+    s_hp_f = Math.round(160 * (inshp[0] / inshp[1]));
+    s_ma_f = Math.round(160 * (inshp[2] / inshp[3]));
+
+    // Update bar elements
+    document.getElementById('fHP').width = s_hp_f;
+    document.getElementById('eHP').width = 160 - s_hp_f;
+    document.getElementById('fMP').width = s_ma_f;
+    document.getElementById('eMP').width = 160 - s_ma_f;
+
+    // Update text display: [5/5 | 7/7]
+    document.getElementById('hbar').innerHTML =
+        '&nbsp;[<font color=#bb0000><b>' + Math.round(inshp[0]) + '</b>/<b>' + inshp[1] + '</b></font> | ' +
+        '<font color=#336699><b>' + Math.round(inshp[2]) + '</b>/<b>' + inshp[3] + '</b></font>]';
+
+    // Regenerate per tick
+    inshp[0] += inshp[1] / inshp[4];  // HP regen
+    inshp[2] += inshp[3] / inshp[5];  // MP regen
+}
+```
+
+### signs.js — Alignment & Faction Icons
+
+```javascript
+// Faction alignments with icons
+var align_ar = [
+    "0;0",                          // 0: None
+    "darks.gif;Child of Dark",      // 1: Dark faction (beginner)
+    "lights.gif;Child of Light",    // 2: Light faction (beginner)
+    "sumers.gif;Child of Twilight", // 3: Twilight/Balance
+    "chaoss.gif;Child of Chaos",    // 4: Chaos faction
+    "light.gif;True Light",         // 5: Advanced Light
+    "dark.gif;True Darkness",       // 6: Advanced Dark
+    "sumer.gif;Neutral Twilight",   // 7: Advanced Balance
+    "chaos.gif;Absolute Chaos",     // 8: Advanced Chaos
+    "angel.gif;Angel"               // 9: Special alignment
+];
+
+var reg_exp = /[f]\d\d\d/i;  // Family clan pattern
+
+// Display alignment icon
+function sh_align(alid, mode) {
+    if (alid > 0) {
+        var split_ar = align_ar[alid].split(";");
+        return '<img src="http://image.neverlands.ru/signs/' + split_ar[0] +
+               '" width=15 height=12 alt="' + split_ar[1] + '">' + (!mode ? '&nbsp;' : '');
+    }
+    return '';
+}
+
+// Display clan/guild sign
+function sh_sign(sign, signn, signs) {
+    if (reg_exp.test(sign)) sign = 'fami.gif';  // Family clan default
+    if (sign && sign != 'none' && sign != 'n') {
+        return '<img src="http://image.neverlands.ru/signs/' + sign +
+               '" width=15 height=12 alt=" ' + signn + (signs ? ' (' + signs + ')' : '') + ' ">&nbsp;';
+    }
+    return '';
+}
+
+// Fight type icons
+function fsign(sftype, sftime, sftrav) {
+    var fst = '';
+
+    // Fight type icon
+    switch (sftype) {
+        case 0: ftmp_pic = '2'; ftmp = 'no weapons'; break;
+        case 1: ftmp_pic = '1'; ftmp = 'free-for-all'; break;
+        case 2: ftmp_pic = '1'; ftmp = 'clan vs clan'; break;
+        case 3: ftmp_pic = '1'; ftmp = 'faction vs faction'; break;
+        // ...
+    }
+    fst += '<img src="/gameplay/fight' + ftmp_pic + '.gif" alt="' + ftmp + '">';
+
+    // Timeout icon (2-5 minutes)
+    switch (sftime) {
+        case 120: ftmp_pic = '2'; ftmp = '2 minutes'; break;
+        case 180: ftmp_pic = '3'; ftmp = '3 minutes'; break;
+        // ...
+    }
+    fst += '<img src="/gameplay/time' + ftmp_pic + '.gif" alt="' + ftmp + '">';
+
+    // Trauma/injury level
+    switch (sftrav) {
+        case 10: ftmp_pic = '4'; ftmp = 'low'; break;
+        case 30: ftmp_pic = '3'; ftmp = 'medium'; break;
+        // ...
+    }
+    fst += '<img src="/gameplay/injury' + ftmp_pic + '.gif" alt="' + ftmp + '">';
+
+    return fst;
+}
+```
+
+### quest.js — Quest Dialog System
+
+```javascript
+var QuestStep = 0;
+var QuestDialogLeng = 0;
+var ND = false;  // Dialog container
+var QCODE = '';  // Quest verification code
+
+// Navigate dialog steps
+function StepByStep(cr) {
+    QuestStep += cr;
+    d.getElementById('QuestDia').innerHTML = QuestD[QuestStep];
+    d.getElementById('QuestNav').innerHTML = DialogNav();
+}
+
+// Generate navigation buttons
+function DialogNav() {
+    var navt = '';
+    if (QuestStep > 0)
+        navt += '<a class="block_prev" href="javascript: StepByStep(-1);"></a>';
+    if (QuestStep < QuestDialogLeng)
+        navt += '<a class="block_next" href="javascript: StepByStep(1);"></a>';
+    if (QuestStep == QuestDialogLeng && QuestP[1][0]) {
+        switch (QuestP[1][0]) {
+            case 1:  // Accept quest
+                navt += '<a class="block_get" href="javascript: AjaxGet(\'quest_ajax.php?act=1&qid=' +
+                        QuestP[1][2] + '&vcode=' + QuestP[1][1] + '\');"></a>';
+                break;
+            case 2:  // Complete quest
+                navt += '<a class="block_end" href="javascript: AjaxGet(\'quest_ajax.php?act=2&qid=' +
+                        QuestP[1][2] + '&vcode=' + QuestP[1][1] + '\');"></a>';
+                break;
+        }
+    }
+    return navt ? '<BR>' + navt : '';
+}
+
+// Create modal overlay
+function CreateDialogDiv() {
+    ND = d.createElement('div');
+    ND.id = 'darker';
+    ND.className = 'TB_overlayBG';  // Dark semi-transparent overlay
+    d.body.appendChild(ND);
+
+    ND = d.createElement('div');
+    ND.id = 'block_uni';
+    ND.className = 'png';
+    d.body.appendChild(ND);
+}
+
+// Process quest response
+function QuestReady() {
+    if (ND === false) {
+        CreateDialogDiv();
+        LD = d.getElementById('block_uni');
+        DD = d.getElementById('darker');
+        DD.style.display = 'block';
+    }
+
+    QuestD = eval(arr_res[1]);  // Dialog steps array
+    QuestP = eval(arr_res[2]);  // Quest parameters [npcAvatar, [actionType, vcode, questId]]
+
+    QuestStep = 0;
+    QuestDialogLeng = QuestD.length - 1;
+
+    // Render dialog with NPC avatar
+    LD.innerHTML = '...dialog HTML with QuestD[0] and QuestP[0] avatar...';
+}
+```
+
+### CSS — Key Styles
+
+```css
+/* frame.css - Core styles */
+.nick {
+    font-family: Verdana, Tahoma, Arial;
+    font-size: 12px;
+    color: #222222;
+}
+
+.hpbar {
+    font-family: Verdana, Tahoma, Arial;
+    font-size: 11px;
+    color: #003366;
+}
+
+.fr_but {
+    background: #FFFFFF;
+    border: 1px solid #DECFA6;
+    color: #333333;
+    cursor: pointer;
+    font: 11px Tahoma, Verdana;
+    font-weight: bold;
+}
+
+/* stl.css - Dialog/overlay styles */
+#darker {
+    position: absolute;
+    display: none;
+    left: 0; top: 0;
+    width: 100%; height: 100%;
+    z-index: 100;
+}
+
+.TB_overlayBG {
+    background-color: #000;
+    filter: alpha(opacity=75);
+    opacity: 0.75;
+}
+
+.timer_s {
+    font-family: Tahoma, Verdana, Arial;
+    font-size: 11px;
+    font-weight: bold;
+    color: #ffffff;
+}
+
+/* main.css - Colors */
+.gr_f { color: #0052A6; }  /* Team 1 (blue) */
+.gr_s { color: #087C20; }  /* Team 2 (green) */
+
+.usermenu {
+    background-color: #FCFAF3;
+    border: 1px solid #B9A05C;
+    position: absolute;
+}
+
+a.usermenulink {
+    font-family: Tahoma, Arial, Verdana;
+    font-size: 11px;
+    font-weight: bold;
+    color: #222222;
+    padding: 2px 12px;
+    display: block;
+}
+
+a.usermenulink:hover {
+    background-color: #F3ECD7;
+    color: #336699;
+}
+```
+
+---
+
+## Elselands Modern Implementation
+
+### Target Layout (CSS Grid, no iframes)
+
+```
++------------------------------------------------------------+
+|  HEADER: Logo | Name[Lv] | HP/MP | Buttons | Exit          |
++------------------------------------------------------------+
+|                    |                                       |
+|   SIDEBAR          |         MAIN CONTENT                  |
+|   (collapsible)    |   (Map / City / Profile / Combat)     |
+|   - Character      |                                       |
+|   - Quick Stats    |                                       |
+|   - Mini Actions   |                                       |
+|                    |                                       |
++--------------------+---------------------------------------+
+|                                                            |
+|   BOTTOM PANEL (resizable)                                 |
+|   [Chat] [Battle] [Events] [System]     | Online Players   |
+|   Message content area                  | List             |
+|   [Input field]                         |                  |
++------------------------------------------------------------+
+```
+
+### Color Palette (Neverlands-inspired)
+
+```css
+:root {
+    /* Neverlands Beige Theme */
+    --nl-bg-primary: #FCFAF3;      /* Main background */
+    --nl-bg-secondary: #F3ECD7;    /* Hover/selected */
+    --nl-bg-dark: #E5DCC4;         /* Panels */
+    --nl-border: #B9A05C;          /* Gold border */
+    --nl-border-light: #DECFA6;    /* Light border */
+
+    /* Text */
+    --nl-text: #222222;            /* Primary text */
+    --nl-text-muted: #666666;      /* Muted text */
+    --nl-text-link: #336699;       /* Links */
+
+    /* HP/MP */
+    --nl-hp: #bb0000;              /* Health red */
+    --nl-mp: #336699;              /* Mana blue */
+    --nl-hp-bar: linear-gradient(to bottom, #4a0, #280);
+    --nl-mp-bar: linear-gradient(to bottom, #06a, #035);
+
+    /* Teams */
+    --nl-team1: #0052A6;           /* Blue team */
+    --nl-team2: #087C20;           /* Green team */
+
+    /* System messages */
+    --nl-warning: #CC0000;         /* Red warnings */
+    --nl-success: #087C20;         /* Green success */
+    --nl-info: #336699;            /* Blue info */
+}
+```
 
 ---
 
@@ -1716,4 +2444,16 @@ When implementing Neverlands-inspired features:
 4. **Accessibility** — Add keyboard controls and screen reader support
 5. **Mobile-first** — Ensure touch targets and responsive layouts
 6. **Document thoroughly** — Update this file + relevant flow docs
+
+### Key Differences from Original
+
+| Original (Neverlands) | Modern (Elselands) |
+|----------------------|-------------------|
+| `<frameset>` with iframes | CSS Grid + Turbo Frames |
+| `onclick="function()"` | Stimulus `data-action` |
+| `document.write()` | Server-rendered ERB |
+| XMLHttpRequest polling | ActionCable WebSocket |
+| Global JS variables | Stimulus controller values |
+| Inline styles | CSS custom properties |
+| Table-based layout | Semantic HTML + Grid |
 

@@ -94,23 +94,29 @@ class PresenceChannel < ApplicationCable::Channel
   end
 
   def mark_online
-    session = current_user.current_session
-    session&.mark_online! if session.respond_to?(:mark_online!)
+    # Mark session online if the method exists
+    if current_user.respond_to?(:current_session)
+      session = current_user.current_session
+      session&.mark_online! if session.respond_to?(:mark_online!)
+    end
 
     # Broadcast to online players channel
     broadcast_status("online")
   end
 
   def mark_offline
-    session = current_user.current_session
-    session&.mark_offline!(timestamp: Time.current) if session.respond_to?(:mark_offline!)
+    # Mark session offline if the method exists
+    if current_user.respond_to?(:current_session)
+      session = current_user.current_session
+      session&.mark_offline!(timestamp: Time.current) if session.respond_to?(:mark_offline!)
+    end
 
     # Broadcast to online players channel
     broadcast_status("offline")
   end
 
   def broadcast_status(status)
-    return unless current_user.character
+    return unless current_user.characters.any?
 
     ActionCable.server.broadcast(ONLINE_PLAYERS_CHANNEL, {
       type: "player_status",
@@ -120,7 +126,7 @@ class PresenceChannel < ApplicationCable::Channel
   end
 
   def broadcast_zone_enter(zone)
-    return unless current_user.character
+    return unless current_user.characters.any?
 
     ActionCable.server.broadcast("presence:zone:#{zone.id}", {
       type: "player_entered",
@@ -129,13 +135,13 @@ class PresenceChannel < ApplicationCable::Channel
   end
 
   def broadcast_zone_leave(zone)
-    return unless current_user.character
+    return unless current_user.characters.any?
 
     ActionCable.server.broadcast("presence:zone:#{zone.id}", {
       type: "player_left",
       player: {
         user_id: current_user.id,
-        character_name: current_user.character&.name
+        character_name: current_user.characters.first&.name
       }
     })
   end
@@ -153,15 +159,16 @@ class PresenceChannel < ApplicationCable::Channel
   end
 
   def format_player(user)
-    character = user.character
+    # Get first character (active character)
+    character = user.characters.first
 
     {
       user_id: user.id,
       character_id: character&.id,
       character_name: character&.name || user.profile_name,
       level: character&.level,
-      faction: character&.faction_alignment,
-      title: character&.current_title,
+      faction: character&.try(:faction_alignment),
+      title: nil, # Character doesn't have current_title
       status: user_status(user),
       zone_id: character&.position&.zone_id,
       zone_name: character&.position&.zone&.name
@@ -169,12 +176,15 @@ class PresenceChannel < ApplicationCable::Channel
   end
 
   def user_status(user)
-    session = user.current_session
-    return "offline" unless session&.online?
+    # Check if user has current_session method (may not exist yet)
+    return "online" unless user.respond_to?(:current_session)
 
-    if session.away?
+    session = user.current_session
+    return "offline" unless session&.respond_to?(:online?) && session.online?
+
+    if session.respond_to?(:away?) && session.away?
       "away"
-    elsif session.busy?
+    elsif session.respond_to?(:busy?) && session.busy?
       "busy"
     else
       "online"

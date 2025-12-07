@@ -6,53 +6,48 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <%= csrf_meta_tags %>
   <%= csp_meta_tag %>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400&family=Cinzel:wght@400;600;700&display=swap" rel="stylesheet">
   <%= stylesheet_link_tag "application", data: { turbo_track: "reload" } %>
   <%= javascript_importmap_tags %>
 </head>
-<body class="nl-game-layout" data-controller="game-layout"
-      data-game-layout-bottom-height-value="180"
-      data-game-layout-min-bottom-height-value="80"
-      data-game-layout-max-bottom-height-value="400">
+<body class="nl-game-layout" data-controller="game-layout">
 
-  <%# === TOP STATUS BAR (minimal, integrated into main) === %>
-  <header class="nl-status-bar">
-    <div class="nl-status-left">
+  <%# === TOP STATUS BAR (like original: name[lv] + HP/MP + text links) === %>
+  <header class="nl-top-bar">
+    <%# Left: Character name + level + HP/MP bars %>
+    <div class="nl-top-left">
       <% if current_character %>
-        <span class="nl-char-name"><%= current_character.name %></span>
-        <span class="nl-char-level">[<%= current_character.level %>]</span>
-        <%= render "shared/vitals_bar", character: current_character, compact: true, dark: true %>
+        <a href="<%= profile_path(profile_name: current_character.name) %>" class="nl-player-link">
+          <%= current_character.name %></a><span class="nl-player-level">[<%= current_character.level %>]</span>
+        <%= render "shared/nl_vitals_bar", character: current_character %>
       <% end %>
     </div>
 
-    <nav class="nl-quick-nav">
+    <%# Right: Navigation text links (like original) %>
+    <nav class="nl-top-nav">
       <% if current_character %>
-        <%= link_to "📜", "#", class: "nl-nav-icon", title: "Character", data: { turbo_frame: "main_content" } %>
-        <%= link_to "🎒", "#", class: "nl-nav-icon", title: "Inventory", data: { turbo_frame: "main_content" } %>
-        <%= link_to "📋", quests_path, class: "nl-nav-icon", title: "Quests", data: { turbo_frame: "main_content" } %>
-        <%= link_to "🗺️", world_path, class: "nl-nav-icon", title: "Map", data: { turbo_frame: "main_content" } %>
-        <%= link_to "⚔️", arena_path, class: "nl-nav-icon", title: "Arena", data: { turbo_frame: "main_content" } %>
+        <%= link_to "Quests", quests_path, class: "nl-nav-link", data: { turbo_frame: "main_content" } %>
+        <%= link_to "Character", profile_path(profile_name: current_character.name), class: "nl-nav-link", data: { turbo_frame: "main_content" } %>
+        <%= link_to "Inventory", inventory_path, class: "nl-nav-link", data: { turbo_frame: "main_content" } %>
+        <% if @position&.zone&.biome == "city" %>
+          <%= link_to "Exit", exit_location_world_path, class: "nl-nav-link", data: { turbo_method: :post } %>
+        <% else %>
+          <%= link_to "Enter", world_path, class: "nl-nav-link", data: { turbo_frame: "main_content" } %>
+        <% end %>
       <% end %>
     </nav>
 
-    <div class="nl-status-right">
-      <% if current_character&.gold.present? %>
-        <span class="nl-gold">💰 <%= number_with_delimiter(current_character.gold) %></span>
-      <% end %>
+    <%# Far right: Close button %>
+    <div class="nl-top-right">
       <% if user_signed_in? %>
         <%= link_to destroy_user_session_path,
             data: { turbo_method: :delete, turbo_confirm: "Leave game?" },
-            class: "nl-exit-btn", title: "Exit" do %>
-          ✕
-        <% end %>
+            class: "nl-close-btn", title: "Exit" do %>✕<% end %>
       <% end %>
     </div>
   </header>
 
-  <%# === MAIN CONTENT AREA (takes ~90% of screen) === %>
-  <main class="nl-main-content" data-game-layout-target="mainContent">
+  <%# === MAIN CONTENT AREA (full width, takes most of screen) === %>
+  <main class="nl-main-area" data-game-layout-target="mainContent">
     <%= turbo_frame_tag "main_content" do %>
       <% if content_for?(:main_content) %>
         <%= yield :main_content %>
@@ -60,88 +55,68 @@
         <%= yield %>
       <% end %>
     <% end %>
+
+    <%# === FLOATING PLAYERS PANEL (bottom-right corner) === %>
+    <aside class="nl-players-float" data-game-layout-target="playersPanel">
+      <div class="nl-players-header-float">
+        <span class="nl-sort-links">
+          Сортировка:
+          <a href="#" data-action="click->game-layout#sortPlayers" data-sort="az">a-z</a>
+          <a href="#" data-action="click->game-layout#sortPlayers" data-sort="za">z-a</a>
+          <a href="#" data-action="click->game-layout#sortPlayers" data-sort="lvl-asc">0-33</a>
+          <a href="#" data-action="click->game-layout#sortPlayers" data-sort="lvl-desc">33-0</a>
+        </span>
+        <label class="nl-refresh-check">
+          <input type="checkbox" checked data-action="change->game-layout#toggleAutoRefresh"> обновить
+        </label>
+      </div>
+      <div class="nl-players-location">
+        <span class="nl-location-text"><%= @position&.zone&.name || "Unknown" %> [ <%= @players_here&.count || 0 %> ]</span>
+        <span class="nl-total-online">Всего [ <%= User.joins(:user_sessions).where(user_sessions: { signed_out_at: nil }).where("user_sessions.last_seen_at > ?", 5.minutes.ago).distinct.count rescue 0 %> ]</span>
+      </div>
+      <div class="nl-players-list-float" data-game-layout-target="playersList">
+        <%= render "shared/nl_players_list" %>
+      </div>
+    </aside>
   </main>
 
-  <%# === RESIZE HANDLE === %>
-  <div class="nl-resize-handle"
-       data-game-layout-target="resizeHandle"
-       data-action="mousedown->game-layout#startResize touchstart->game-layout#startResize">
-    <div class="nl-resize-grip"></div>
-  </div>
+  <%# === BOTTOM CHAT BAR (small strip at very bottom) === %>
+  <footer class="nl-bottom-bar" data-game-layout-target="bottomBar">
+    <%# Left: Action buttons %>
+    <div class="nl-action-area">
+      <button class="nl-action-btn-small" data-action="click->game-layout#showActionMenu">Действие</button>
+      <button class="nl-action-btn-small" data-action="click->game-layout#focusChat">Сказать</button>
+    </div>
 
-  <%# === BOTTOM PANEL (Chat + Logs | Online Players) === %>
-  <footer class="nl-bottom-panel" data-game-layout-target="bottomPanel">
-    <%# Left side: Chat & Logs (90%) %>
-    <div class="nl-chat-section" data-game-layout-target="chatPanel">
-      <%# Tabs for different log types %>
-      <div class="nl-chat-tabs" data-game-layout-target="chatTabs">
-        <button class="nl-chat-tab nl-chat-tab--active" data-tab="chat" data-action="click->game-layout#switchTab">
-          💬 Chat
-        </button>
-        <button class="nl-chat-tab" data-tab="battle" data-action="click->game-layout#switchTab">
-          ⚔️ Battle
-        </button>
-        <button class="nl-chat-tab" data-tab="events" data-action="click->game-layout#switchTab">
-          📢 Events
-        </button>
-        <button class="nl-chat-tab" data-tab="system" data-action="click->game-layout#switchTab">
-          ⚙️ System
-        </button>
+    <%# Center: Chat messages area %>
+    <div class="nl-chat-area" data-game-layout-target="chatArea">
+      <div class="nl-chat-messages" id="chat-messages" data-game-layout-target="chatMessages">
+        <%# Chat messages loaded via Turbo %>
+        <% global_chat = ChatChannel.global.first %>
+        <%= turbo_frame_tag "chat_messages", src: global_chat ? chat_channel_path(global_chat) : nil, loading: "lazy" do %>
+          <div class="nl-chat-loading">Loading...</div>
+        <% end %>
       </div>
-
-      <%# Tab content panels %>
-      <div class="nl-chat-content">
-        <%# Chat Tab %>
-        <div class="nl-tab-panel nl-tab-panel--active" data-tab-content="chat" data-game-layout-target="tabPanel">
-          <%= turbo_frame_tag "chat_panel", src: chat_channels_path, loading: "lazy" do %>
-            <div class="nl-loading">Loading chat...</div>
+      <div class="nl-chat-input-bar">
+        <% chat_channel = @chat_channel || ChatChannel.global.first %>
+        <% if chat_channel %>
+          <%= form_with url: chat_channel_chat_messages_path(chat_channel),
+                        method: :post,
+                        class: "nl-chat-form-inline",
+                        data: { controller: "chat-input", action: "turbo:submit-end->chat-input#reset" } do |f| %>
+            <%= f.text_field :body,
+                class: "nl-chat-input-field",
+                placeholder: "Type message...",
+                autocomplete: "off",
+                data: { chat_input_target: "input", action: "keydown->chat-input#handleKeydown" } %>
           <% end %>
-        </div>
-
-        <%# Battle Log Tab %>
-        <div class="nl-tab-panel" data-tab-content="battle" data-game-layout-target="tabPanel">
-          <div class="nl-log-container" id="battle-log">
-            <div class="nl-log-empty">No battle activity</div>
-          </div>
-        </div>
-
-        <%# Events Tab %>
-        <div class="nl-tab-panel" data-tab-content="events" data-game-layout-target="tabPanel">
-          <div class="nl-log-container" id="events-log">
-            <div class="nl-log-empty">No events</div>
-          </div>
-        </div>
-
-        <%# System Tab %>
-        <div class="nl-tab-panel" data-tab-content="system" data-game-layout-target="tabPanel">
-          <div class="nl-log-container" id="system-log">
-            <div class="nl-log-empty">No system messages</div>
-          </div>
-        </div>
-      </div>
-
-      <%# Chat Input %>
-      <div class="nl-chat-input">
-        <%= form_with url: chat_messages_path(chat_channel_id: @chat_channel&.id || ChatChannel.global.first&.id),
-                      method: :post,
-                      class: "nl-chat-form",
-                      data: {
-                        controller: "chat-input",
-                        action: "turbo:submit-end->chat-input#reset"
-                      } do |f| %>
-          <%= f.text_field :body,
-              class: "nl-chat-field",
-              placeholder: "Type message... (/w name, /me action)",
-              autocomplete: "off",
-              data: { chat_input_target: "input", action: "keydown->chat-input#handleKeydown" } %>
-          <%= f.submit "→", class: "nl-chat-send" %>
         <% end %>
       </div>
     </div>
 
-    <%# Right side: Online Players (10%) %>
-    <div class="nl-players-section" data-game-layout-target="onlinePanel">
-      <%= render "shared/online_players_compact" %>
+    <%# Right: Status icons %>
+    <div class="nl-status-icons">
+      <span class="nl-time-display"><%= Time.current.strftime("%H:%M:%S") %></span>
     </div>
   </footer>
 

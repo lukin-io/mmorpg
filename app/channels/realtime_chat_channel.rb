@@ -102,13 +102,14 @@ class RealtimeChatChannel < ApplicationCable::Channel
   end
 
   def broadcast_presence(event)
-    return unless current_user.character
+    character = current_user.characters.first
+    return unless character
 
     ActionCable.server.broadcast("chat:#{@chat_type}", {
       type: event,
       user_id: current_user.id,
-      character_name: current_user.character.name,
-      level: current_user.character.level
+      character_name: character.name,
+      level: character.level
     })
   end
 
@@ -143,7 +144,7 @@ class RealtimeChatChannel < ApplicationCable::Channel
   end
 
   def send_clan_message(content)
-    character = current_user.character
+    character = current_user.characters.first
     return transmit_error("You are not in a clan") unless character&.clan
 
     content = process_emoji(content)
@@ -157,7 +158,7 @@ class RealtimeChatChannel < ApplicationCable::Channel
   end
 
   def send_party_message(content)
-    character = current_user.character
+    character = current_user.characters.first
     return transmit_error("You are not in a party") unless character&.current_party
 
     content = process_emoji(content)
@@ -171,7 +172,7 @@ class RealtimeChatChannel < ApplicationCable::Channel
   end
 
   def send_shout(content)
-    character = current_user.character
+    character = current_user.characters.first
     return transmit_error("You need level 5 to shout") unless character&.level.to_i >= 5
 
     content = process_emoji(content)
@@ -185,16 +186,17 @@ class RealtimeChatChannel < ApplicationCable::Channel
   end
 
   def create_message(content, **options)
+    character = current_user.characters.first
     ChatMessage.create(
       user: current_user,
-      sender: current_user.character,
+      sender: character,
       chat_channel_id: @chat_channel_record&.id,
       content: content,
       chat_type: options[:chat_type] || @chat_type,
       recipient: options[:recipient],
       metadata: {
-        sender_level: current_user.character&.level,
-        sender_title: current_user.character&.current_title
+        sender_level: character&.level,
+        sender_title: nil # Character doesn't have current_title
       }
     )
   rescue ActiveRecord::RecordInvalid => e

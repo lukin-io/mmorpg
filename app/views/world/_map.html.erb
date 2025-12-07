@@ -1,109 +1,145 @@
-<div class="game-map-container"
-     data-controller="game-world"
-     data-game-world-player-x-value="<%= position.x %>"
-     data-game-world-player-y-value="<%= position.y %>"
-     data-game-world-move-url-value="<%= move_world_path %>"
-     data-game-world-zone-width-value="<%= zone.width %>"
-     data-game-world-zone-height-value="<%= zone.height %>"
-     data-game-world-target="map">
+<%#
+  World Map - Tile-based map with click movement
 
-  <%# Movement timer overlay %>
-  <div class="movement-timer" data-game-world-target="movementTimer" style="display: none;"></div>
+  Variables:
+    - position: CharacterPosition (current player position)
+    - nearby_tiles: Array of tile rows
+    - zone: Zone model
+    - tile_data: Hash of tile features (optional)
+%>
 
-  <div class="game-map">
-    <% nearby_tiles.each_with_index do |row, row_idx| %>
-      <div class="map-row">
-        <% row.each do |tile| %>
-          <% is_player = tile.x == position.x && tile.y == position.y %>
-          <% terrain = tile.respond_to?(:terrain_type) ? tile.terrain_type : zone.biome %>
-          <% tile_meta = tile.respond_to?(:metadata) ? (tile.metadata || {}) : {} %>
-          <% is_walkable = tile.respond_to?(:walkable) ? tile.walkable : !tile_meta["blocked"] %>
+<%
+  # Calculate grid dimensions
+  grid_width = nearby_tiles.first&.size || 5
+  grid_height = nearby_tiles.size
+  tile_size = 100  # pixels
 
-          <% tile_classes = ["map-tile", "map-tile--#{terrain}"] %>
-          <% tile_classes << "map-tile--current" if is_player %>
-          <% tile_classes << "map-tile--walkable" if is_walkable %>
-          <% tile_classes << "map-tile--blocked" unless is_walkable %>
-          <% tile_classes << "map-tile--has-npc" if tile_meta["npc"].present? %>
-          <% tile_classes << "map-tile--has-resource" if tile_meta["resource"].present? %>
-          <% tile_classes << "map-tile--has-building" if tile_meta["building"].present? %>
+  # Adjacent tiles (walkable)
+  adjacent_coords = [
+    [position.x - 1, position.y],  # west
+    [position.x + 1, position.y],  # east
+    [position.x, position.y - 1],  # north
+    [position.x, position.y + 1]   # south
+  ].select { |x, y| x >= 0 && y >= 0 && x < zone.width && y < zone.height }
+%>
 
-          <div class="<%= tile_classes.join(' ') %>"
-               data-action="click->game-world#clickTile"
-               data-x="<%= tile.x %>"
-               data-y="<%= tile.y %>"
-               data-terrain="<%= terrain %>"
-               <%= "data-npc=\"#{tile_meta['npc']}\"".html_safe if tile_meta["npc"].present? %>
-               <%= "data-resource=\"#{tile_meta['resource']}\"".html_safe if tile_meta["resource"].present? %>
-               <%= "data-building=\"#{tile_meta['building']}\"".html_safe if tile_meta["building"].present? %>>
+<div class="nl-map-container"
+     data-controller="nl-world-map"
+     data-nl-world-map-player-x-value="<%= position.x %>"
+     data-nl-world-map-player-y-value="<%= position.y %>"
+     data-nl-world-map-move-url-value="<%= move_world_path %>"
+     data-nl-world-map-zone-width-value="<%= zone.width %>"
+     data-nl-world-map-zone-height-value="<%= zone.height %>"
+     data-nl-world-map-tile-size-value="<%= tile_size %>"
+     data-nl-world-map-move-cooldown-value="<%= @movement_cooldown || 3 %>"
+     data-nl-world-map-zone-name-value="<%= zone.name %>">
 
-            <%# Terrain decorations %>
-            <% if terrain == "river" || terrain == "lake" %>
-              <div class="tile-decoration tile-decoration--water">〰️</div>
-            <% elsif terrain == "forest" && !is_player %>
-              <div class="tile-decoration tile-decoration--tree">🌲</div>
-            <% elsif terrain == "mountain" && !is_player %>
-              <div class="tile-decoration tile-decoration--mountain">⛰️</div>
-            <% end %>
+  <%# Map viewport %>
+  <div class="nl-map-viewport"
+       id="world_cont"
+       data-nl-world-map-target="viewport">
 
-            <%# Player marker %>
-            <% if is_player %>
-              <div class="player-marker" data-game-world-target="playerMarker">
-                <span class="player-icon">🧙</span>
-              </div>
-            <% end %>
+    <%# Map table with tiles %>
+    <div class="nl-map-world" id="world_map" data-nl-world-map-target="mapContainer">
+      <table border="0" cellpadding="0" cellspacing="0">
+        <tbody>
+          <% nearby_tiles.each_with_index do |row, row_idx| %>
+            <tr>
+              <% row.each do |tile| %>
+                <%
+                  is_player = tile.x == position.x && tile.y == position.y
+                  is_adjacent = adjacent_coords.include?([tile.x, tile.y])
+                  terrain = tile.respond_to?(:terrain_type) ? tile.terrain_type : zone.biome
+                  tile_meta = tile.respond_to?(:metadata) ? (tile.metadata || {}) : {}
+                  is_walkable = tile.respond_to?(:walkable) ? tile.walkable : !tile_meta["blocked"]
 
-            <%# NPC marker %>
-            <% if tile_meta["npc"].present? && !is_player %>
-              <div class="tile-entity tile-npc" title="Click to interact with <%= tile_meta['npc'] %>">
-                <span class="entity-icon">👹</span>
-                <span class="entity-name"><%= tile_meta['npc'] %></span>
-              </div>
-            <% end %>
+                  # CSS class for terrain background
+                  tile_bg_class = "nl-tile-bg--#{terrain}"
 
-            <%# Resource marker %>
-            <% if tile_meta["resource"].present? && !is_player %>
-              <% resource_icon = case tile_meta["resource_type"]
-                                 when "herb" then "🌿"
-                                 when "ore" then "⛏️"
-                                 when "fish" then "🐟"
-                                 when "wood" then "🪵"
-                                 else "✨"
-                                 end %>
-              <div class="tile-entity tile-resource" title="Click to gather <%= tile_meta['resource'] %>">
-                <span class="entity-icon"><%= resource_icon %></span>
-              </div>
-            <% end %>
+                  # Is this tile available for movement?
+                  is_available = is_adjacent && is_walkable && !is_player
+                %>
+                <td class="nl-map-tile <%= tile_bg_class %>"
+                    id="tile_<%= tile.x %>_<%= tile.y %>"
+                    data-x="<%= tile.x %>"
+                    data-y="<%= tile.y %>"
+                    data-terrain="<%= terrain %>"
+                    <%= "data-npc=\"#{tile_meta['npc']}\"".html_safe if tile_meta["npc"].present? %>
+                    <%= "data-resource=\"#{tile_meta['resource']}\"".html_safe if tile_meta["resource"].present? %>>
 
-            <%# Building marker %>
-            <% if tile_meta["building"].present? && !is_player %>
-              <div class="tile-entity tile-building" title="Click to enter <%= tile_meta['building'] %>">
-                <span class="entity-icon">🏛️</span>
-              </div>
-            <% end %>
+                  <% if is_available %>
+                    <%# Clickable tile - available for movement %>
+                    <div class="nl-tile-clickable nl-tile-clickable--available"
+                         data-action="click->nl-world-map#clickTile"
+                         data-available="true"
+                         style="cursor: pointer;">
+                    </div>
+                  <% elsif is_player %>
+                    <%# Player position - show cursor here %>
+                    <div class="nl-tile-player"></div>
+                  <% else %>
+                    <%# Non-clickable tile %>
+                    <div class="nl-tile-inactive"></div>
+                  <% end %>
 
-            <span class="tile-coords"><%= tile.x %>,<%= tile.y %></span>
-          </div>
-        <% end %>
+                  <%# NPC marker %>
+                  <% if tile_meta["npc"].present? %>
+                    <div class="nl-tile-entity nl-tile-npc" title="<%= tile_meta['npc'] %>">
+                      <span class="nl-entity-icon">👹</span>
+                    </div>
+                  <% end %>
+
+                  <%# Resource marker %>
+                  <% if tile_meta["resource"].present? %>
+                    <% resource_icon = case tile_meta["resource_type"]
+                                       when "herb" then "🌿"
+                                       when "ore" then "⛏️"
+                                       when "fish" then "🐟"
+                                       when "wood" then "🪵"
+                                       else "✨"
+                                       end %>
+                    <div class="nl-tile-entity nl-tile-resource" title="<%= tile_meta['resource'] %>">
+                      <span class="nl-entity-icon"><%= resource_icon %></span>
+                    </div>
+                  <% end %>
+                </td>
+              <% end %>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+
+    <%# Overlay for cursor and timer %>
+    <div class="nl-map-overlay" id="world_cont2" data-nl-world-map-target="overlay">
+      <%# Player cursor (red border) %>
+      <div class="nl-cursor" id="cursor" data-nl-world-map-target="cursor">
+        <div class="nl-cursor-img nl-cursor-img--idle" data-nl-world-map-target="cursorImg"></div>
       </div>
-    <% end %>
+
+      <%# Timer countdown (red badge) %>
+      <div class="nl-timer-text" id="timerdiv" data-nl-world-map-target="timerDiv" style="display: none;">
+        <span class="nl-timer-seconds" id="tdsec" data-nl-world-map-target="timerSeconds"></span>
+      </div>
+    </div>
   </div>
 
-  <div class="map-controls">
-    <p class="text-sm text-muted">
-      💡 <strong>Green tiles</strong> = can move there |
-      Click tile or use <kbd>↑↓←→</kbd> / <kbd>WASD</kbd> to move
-    </p>
+  <%# Location info %>
+  <div class="nl-map-info">
+    <span class="nl-location-name"><%= zone.name %></span>
+    <span class="nl-location-coords">[<%= position.x %>, <%= position.y %>]</span>
   </div>
 
-  <div class="map-legend">
-    <span class="legend-item"><span class="legend-color legend-color--available"></span> Can Move</span>
-    <span class="legend-item"><span class="legend-color legend-color--city"></span> City</span>
-    <span class="legend-item"><span class="legend-color legend-color--plains"></span> Plains</span>
-    <span class="legend-item"><span class="legend-color legend-color--forest"></span> Forest</span>
-    <span class="legend-item"><span class="legend-color legend-color--mountain"></span> Mountain</span>
-    <span class="legend-item"><span class="legend-color legend-color--river"></span> Water</span>
-    <span class="legend-item">👹 Enemy</span>
-    <span class="legend-item">🌿 Resource</span>
-    <span class="legend-item">🏛️ Building</span>
-  </div>
+  <%# Hidden form for movement - Turbo will handle the submission %>
+  <%= form_with url: move_world_path,
+                method: :post,
+                id: "movement-form",
+                class: "nl-move-form",
+                data: {
+                  turbo: true,
+                  nl_world_map_target: "moveForm"
+                },
+                style: "display: none;" do |f| %>
+    <%= f.hidden_field :direction, id: "movement-direction", value: "" %>
+  <% end %>
 </div>
