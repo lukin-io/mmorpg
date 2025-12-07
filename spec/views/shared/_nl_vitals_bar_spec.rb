@@ -4,14 +4,14 @@ require "rails_helper"
 
 RSpec.describe "shared/_nl_vitals_bar.html.erb", type: :view do
   let(:character) do
-    create(:character).tap do |c|
-      allow(c).to receive(:current_hp).and_return(75)
-      allow(c).to receive(:max_hp).and_return(100)
-      allow(c).to receive(:current_mp).and_return(40)
-      allow(c).to receive(:max_mp).and_return(80)
-      allow(c).to receive(:hp_regen_interval_seconds).and_return(1500)
-      allow(c).to receive(:mp_regen_interval_seconds).and_return(9000)
-    end
+    create(:character,
+      current_hp: 75,
+      max_hp: 100,
+      current_mp: 40,
+      max_mp: 80,
+      hp_regen_interval: 300,
+      mp_regen_interval: 600
+    )
   end
 
   before do
@@ -62,8 +62,8 @@ RSpec.describe "shared/_nl_vitals_bar.html.erb", type: :view do
     it "includes regen rate data attributes" do
       render partial: "shared/nl_vitals_bar", locals: {character: character}
 
-      expect(rendered).to have_css("[data-nl-vitals-hp-regen-rate-value='1500']")
-      expect(rendered).to have_css("[data-nl-vitals-mp-regen-rate-value='9000']")
+      expect(rendered).to have_css("[data-nl-vitals-hp-regen-rate-value='300']")
+      expect(rendered).to have_css("[data-nl-vitals-mp-regen-rate-value='600']")
     end
   end
 
@@ -165,21 +165,22 @@ RSpec.describe "shared/_nl_vitals_bar.html.erb", type: :view do
     end
   end
 
-  context "with decimal HP values" do
-    let(:decimal_hp_character) do
-      create(:character, current_hp: 33.7, max_hp: 100, current_mp: 25.5, max_mp: 50)
+  context "with HP values" do
+    let(:hp_character) do
+      # DB stores integers, so values are truncated
+      create(:character, current_hp: 33, max_hp: 100, current_mp: 25, max_mp: 50)
     end
 
-    it "rounds HP display value" do
-      render partial: "shared/nl_vitals_bar", locals: {character: decimal_hp_character}
+    it "displays HP value correctly" do
+      render partial: "shared/nl_vitals_bar", locals: {character: hp_character}
 
-      expect(rendered).to include("34/100") # 33.7 rounds to 34
+      expect(rendered).to include("33/100")
     end
 
-    it "rounds MP display value" do
-      render partial: "shared/nl_vitals_bar", locals: {character: decimal_hp_character}
+    it "displays MP value correctly" do
+      render partial: "shared/nl_vitals_bar", locals: {character: hp_character}
 
-      expect(rendered).to include("26/50") # 25.5 rounds to 26
+      expect(rendered).to include("25/50")
     end
   end
 end

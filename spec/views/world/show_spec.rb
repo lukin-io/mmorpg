@@ -88,12 +88,15 @@ RSpec.describe "world/show.html.erb", type: :view do
 
   describe "city view" do
     let(:city_zone) { create(:zone, name: "City Zone", biome: "city", width: 10, height: 10) }
-    let(:city_position) { create(:character_position, character: character, zone: city_zone, x: 5, y: 5) }
 
     before do
-      allow(view).to receive(:in_city?).and_return(true)
+      without_partial_double_verification do
+        allow(view).to receive(:in_city?).and_return(true)
+      end
+      # Update existing position to city zone
+      position.update!(zone: city_zone, x: 5, y: 5)
       assign(:zone, city_zone)
-      assign(:position, city_position)
+      assign(:position, position)
     end
 
     it "has world container with city class" do

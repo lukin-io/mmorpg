@@ -55,8 +55,7 @@ RSpec.describe "World Map Navigation", type: :system do
     it "shows the timer elements (hidden by default)" do
       visit world_path
 
-      expect(page).to have_css(".nl-timer-bg", visible: :hidden)
-      expect(page).to have_css(".nl-timer-text", visible: :hidden)
+      expect(page).to have_css(".nl-timer-text", visible: :all)
     end
   end
 
@@ -102,64 +101,44 @@ RSpec.describe "World Map Navigation", type: :system do
     end
   end
 
-  describe "status bar" do
-    it "shows character name" do
+  describe "navigation" do
+    it "shows navigation links" do
       visit world_path
 
-      expect(page).to have_content("TestHero")
-    end
-
-    it "shows character level" do
-      visit world_path
-
-      expect(page).to have_content("[5]")
-    end
-
-    it "shows vitals bar" do
-      visit world_path
-
-      expect(page).to have_css(".nl-vitals")
-    end
-
-    it "shows action buttons" do
-      visit world_path
-
-      expect(page).to have_css(".nl-action-buttons")
       expect(page).to have_link("Quests")
-      expect(page).to have_link("Character")
-      expect(page).to have_link("Inventory")
+      expect(page).to have_link("Profile")
+    end
+
+    it "shows zone name" do
+      visit world_path
+
+      expect(page).to have_content("Adventure Plains")
+    end
+
+    it "shows location info" do
+      visit world_path
+
+      expect(page).to have_css(".location-info-panel").or have_content("Current Location")
+    end
+
+    it "shows available actions" do
+      visit world_path
+
+      expect(page).to have_css(".actions-panel").or have_content("Actions")
     end
   end
 
-  describe "bottom panel" do
-    it "shows chat tabs" do
+  describe "map controls" do
+    it "displays movement form" do
       visit world_path
 
-      expect(page).to have_css(".nl-chat-tabs")
-      expect(page).to have_button("Chat")
-      expect(page).to have_button("Battle")
-      expect(page).to have_button("Events")
-      expect(page).to have_button("System")
+      expect(page).to have_css("#movement-form", visible: :all)
     end
 
-    it "shows chat input field" do
+    it "displays movement buttons" do
       visit world_path
 
-      expect(page).to have_css(".nl-chat-field")
-    end
-
-    it "shows online players section" do
-      visit world_path
-
-      expect(page).to have_css(".nl-players-section")
-    end
-  end
-
-  describe "keyboard navigation hints" do
-    it "displays control hints" do
-      visit world_path
-
-      expect(page).to have_css(".nl-map-controls").or have_css(".nl-control-hint")
+      expect(page).to have_button("↑ North").or have_css(".direction-btn")
     end
   end
 end

@@ -16,7 +16,7 @@
     <%# Left: Character name + level + HP/MP bars %>
     <div class="nl-top-left">
       <% if current_character %>
-        <a href="<%= character_path(current_character) %>" class="nl-player-link">
+        <a href="<%= profile_path(profile_name: current_character.name) %>" class="nl-player-link">
           <%= current_character.name %></a><span class="nl-player-level">[<%= current_character.level %>]</span>
         <%= render "shared/nl_vitals_bar", character: current_character %>
       <% end %>
@@ -26,10 +26,10 @@
     <nav class="nl-top-nav">
       <% if current_character %>
         <%= link_to "Quests", quests_path, class: "nl-nav-link", data: { turbo_frame: "main_content" } %>
-        <%= link_to "Character", character_path(current_character), class: "nl-nav-link", data: { turbo_frame: "main_content" } %>
+        <%= link_to "Character", profile_path(profile_name: current_character.name), class: "nl-nav-link", data: { turbo_frame: "main_content" } %>
         <%= link_to "Inventory", inventory_path, class: "nl-nav-link", data: { turbo_frame: "main_content" } %>
         <% if @position&.zone&.biome == "city" %>
-          <%= link_to "Exit", world_exit_path, class: "nl-nav-link", data: { turbo_method: :post } %>
+          <%= link_to "Exit", exit_location_world_path, class: "nl-nav-link", data: { turbo_method: :post } %>
         <% else %>
           <%= link_to "Enter", world_path, class: "nl-nav-link", data: { turbo_frame: "main_content" } %>
         <% end %>
@@ -92,20 +92,24 @@
     <div class="nl-chat-area" data-game-layout-target="chatArea">
       <div class="nl-chat-messages" id="chat-messages" data-game-layout-target="chatMessages">
         <%# Chat messages loaded via Turbo %>
-        <%= turbo_frame_tag "chat_messages", src: chat_channel_messages_path(ChatChannel.global.first&.id || 1), loading: "lazy" do %>
+        <% global_chat = ChatChannel.global.first %>
+        <%= turbo_frame_tag "chat_messages", src: global_chat ? chat_channel_path(global_chat) : nil, loading: "lazy" do %>
           <div class="nl-chat-loading">Loading...</div>
         <% end %>
       </div>
       <div class="nl-chat-input-bar">
-        <%= form_with url: chat_messages_path(chat_channel_id: @chat_channel&.id || ChatChannel.global.first&.id),
-                      method: :post,
-                      class: "nl-chat-form-inline",
-                      data: { controller: "chat-input", action: "turbo:submit-end->chat-input#reset" } do |f| %>
-          <%= f.text_field :body,
-              class: "nl-chat-input-field",
-              placeholder: "Type message...",
-              autocomplete: "off",
-              data: { chat_input_target: "input", action: "keydown->chat-input#handleKeydown" } %>
+        <% chat_channel = @chat_channel || ChatChannel.global.first %>
+        <% if chat_channel %>
+          <%= form_with url: chat_channel_chat_messages_path(chat_channel),
+                        method: :post,
+                        class: "nl-chat-form-inline",
+                        data: { controller: "chat-input", action: "turbo:submit-end->chat-input#reset" } do |f| %>
+            <%= f.text_field :body,
+                class: "nl-chat-input-field",
+                placeholder: "Type message...",
+                autocomplete: "off",
+                data: { chat_input_target: "input", action: "keydown->chat-input#handleKeydown" } %>
+          <% end %>
         <% end %>
       </div>
     </div>

@@ -208,10 +208,11 @@ RSpec.describe "layouts/game.html.erb", type: :view do
 
   describe "when in city zone" do
     let(:city_zone) { create(:zone, name: "City", biome: "city") }
-    let(:city_position) { create(:character_position, character: character, zone: city_zone) }
 
     before do
-      assign(:position, city_position)
+      # Update existing position to city zone instead of creating duplicate
+      position.update!(zone: city_zone)
+      assign(:position, position)
     end
 
     it "shows Exit link instead of Enter" do
@@ -223,8 +224,10 @@ RSpec.describe "layouts/game.html.erb", type: :view do
 
   describe "when not signed in" do
     before do
-      allow(view).to receive(:user_signed_in?).and_return(false)
-      allow(view).to receive(:current_character).and_return(nil)
+      without_partial_double_verification do
+        allow(view).to receive(:user_signed_in?).and_return(false)
+        allow(view).to receive(:current_character).and_return(nil)
+      end
     end
 
     it "does not show navigation links" do

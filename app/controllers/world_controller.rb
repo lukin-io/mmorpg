@@ -58,8 +58,8 @@ class WorldController < ApplicationController
   def enter
     location_key = params[:location_key]
 
-    # Find the zone/building to enter
-    target_zone = Zone.find_by(slug: location_key) || Zone.find_by(name: location_key)
+    # Find the zone/building to enter (search by name, case-insensitive)
+    target_zone = Zone.find_by("LOWER(name) = ?", location_key.to_s.downcase)
 
     if target_zone.nil?
       return redirect_to world_path, alert: "Location not found."
