@@ -18,8 +18,8 @@
      data-nl-vitals-max-hp-value="<%= character.max_hp %>"
      data-nl-vitals-current-mp-value="<%= character.current_mp %>"
      data-nl-vitals-max-mp-value="<%= character.max_mp %>"
-     data-nl-vitals-hp-regen-rate-value="<%= character.hp_regen_interval_seconds || 1500 %>"
-     data-nl-vitals-mp-regen-rate-value="<%= character.mp_regen_interval_seconds || 9000 %>">
+     data-nl-vitals-hp-regen-rate-value="<%= character.hp_regen_interval || 300 %>"
+     data-nl-vitals-mp-regen-rate-value="<%= character.mp_regen_interval || 600 %>">
 
   <%# HP Bar (red) %>
   <div class="nl-hp-bar-inline" data-nl-vitals-target="hpBar">

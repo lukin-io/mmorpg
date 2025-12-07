@@ -33,9 +33,11 @@ RSpec.describe "world/show.html.erb", type: :view do
   end
 
   before do
-    allow(view).to receive(:current_user).and_return(user)
-    allow(view).to receive(:current_character).and_return(character)
-    allow(view).to receive(:in_city?).and_return(false)
+    without_partial_double_verification do
+      allow(view).to receive(:current_user).and_return(user)
+      allow(view).to receive(:current_character).and_return(character)
+      allow(view).to receive(:in_city?).and_return(false)
+    end
 
     assign(:zone, zone)
     assign(:position, position)
@@ -113,4 +115,3 @@ RSpec.describe "world/show.html.erb", type: :view do
     end
   end
 end
-

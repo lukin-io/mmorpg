@@ -271,7 +271,7 @@ RSpec.describe "world/_map.html.erb", type: :view do
         tile_data: {}
       }
 
-      expect(rendered).to have_css(".nl-timer-text")
+      expect(rendered).to have_css(".nl-timer-text", visible: :all)
     end
 
     it "includes timer seconds span" do
@@ -282,7 +282,7 @@ RSpec.describe "world/_map.html.erb", type: :view do
         tile_data: {}
       }
 
-      expect(rendered).to have_css(".nl-timer-seconds")
+      expect(rendered).to have_css(".nl-timer-seconds", visible: :all)
     end
 
     it "timer is hidden by default" do
@@ -304,8 +304,8 @@ RSpec.describe "world/_map.html.erb", type: :view do
         tile_data: {}
       }
 
-      expect(rendered).to have_css("[data-nl-world-map-target='timerDiv']")
-      expect(rendered).to have_css("[data-nl-world-map-target='timerSeconds']")
+      expect(rendered).to have_css("[data-nl-world-map-target='timerDiv']", visible: :all)
+      expect(rendered).to have_css("[data-nl-world-map-target='timerSeconds']", visible: :all)
     end
   end
 
@@ -354,7 +354,7 @@ RSpec.describe "world/_map.html.erb", type: :view do
         tile_data: {}
       }
 
-      expect(rendered).to have_css("form#movement-form", visible: :hidden)
+      expect(rendered).to have_css("form#movement-form", visible: :all)
     end
 
     it "movement form has direction input" do
@@ -365,7 +365,7 @@ RSpec.describe "world/_map.html.erb", type: :view do
         tile_data: {}
       }
 
-      expect(rendered).to have_css("form#movement-form input#movement-direction", visible: :hidden)
+      expect(rendered).to have_css("form#movement-form input#movement-direction", visible: :all)
     end
 
     it "movement form has data-turbo attribute" do
@@ -376,7 +376,7 @@ RSpec.describe "world/_map.html.erb", type: :view do
         tile_data: {}
       }
 
-      expect(rendered).to have_css("form#movement-form[data-turbo='true']", visible: :hidden)
+      expect(rendered).to have_css("form#movement-form[data-turbo='true']", visible: :all)
     end
 
     it "movement form is a stimulus target" do
@@ -387,7 +387,7 @@ RSpec.describe "world/_map.html.erb", type: :view do
         tile_data: {}
       }
 
-      expect(rendered).to have_css("form[data-nl-world-map-target='moveForm']", visible: :hidden)
+      expect(rendered).to have_css("form[data-nl-world-map-target='moveForm']", visible: :all)
     end
   end
 

@@ -4,7 +4,12 @@ require "rails_helper"
 
 RSpec.describe Game::Inventory::Manager do
   let(:character) { create(:character) }
-  let(:inventory) { create(:inventory, character: character, slot_capacity: 20, weight_capacity: 100, current_weight: 0) }
+  # Use the inventory created by the character factory, update its capacity
+  let(:inventory) do
+    inv = character.inventory
+    inv.update!(slot_capacity: 20, weight_capacity: 100, current_weight: 0)
+    inv
+  end
   let(:item_template) { create(:item_template, name: "Iron Ore", weight: 1, stack_limit: 99) }
 
   subject(:manager) { described_class.new(inventory: inventory) }
@@ -163,4 +168,3 @@ RSpec.describe Game::Inventory::Manager do
     end
   end
 end
-

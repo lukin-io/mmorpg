@@ -322,7 +322,7 @@ RSpec.describe "World", type: :request do
   describe "POST /world/enter" do
     let(:user) { create(:user) }
     let(:outdoor_zone) { create(:zone, name: "Plains", biome: "plains", width: 20, height: 20) }
-    let(:city_zone) { create(:zone, name: "Capital", biome: "city", slug: "capital", width: 10, height: 10) }
+    let(:city_zone) { create(:zone, name: "Capital", biome: "city", width: 10, height: 10) }
     let(:character) { create(:character, user: user) }
     let!(:position) { create(:character_position, character: character, zone: outdoor_zone, x: 5, y: 5) }
     let!(:spawn_point) { create(:spawn_point, zone: city_zone, x: 3, y: 3, default_entry: true) }
@@ -474,10 +474,13 @@ RSpec.describe "World", type: :request do
     let(:user) { create(:user) }
     let(:zone) { create(:zone, name: "Resource Zone", biome: "forest", width: 20, height: 20) }
     let(:character) { create(:character, user: user) }
-    let!(:inventory) { create(:inventory, character: character, slot_capacity: 20, weight_capacity: 100, current_weight: 0) }
     let!(:position) { create(:character_position, character: character, zone: zone, x: 5, y: 5) }
 
-    before { sign_in user }
+    before do
+      sign_in user
+      # Use the inventory created by the character factory
+      character.inventory.update!(slot_capacity: 20, weight_capacity: 100, current_weight: 0)
+    end
 
     # Regression test: Ensure gather_resource doesn't fail with inventory validation errors
     # Previously failed with "Quantity must be greater than 0" when creating new inventory items
@@ -762,7 +765,11 @@ RSpec.describe "World", type: :request do
           base_quantity: 1,
           respawns_at: nil)
       end
-      let!(:inventory) { create(:inventory, character: character, slot_capacity: 20, weight_capacity: 100) }
+
+      before do
+        # Use the inventory created by the character factory
+        character.inventory.update!(slot_capacity: 20, weight_capacity: 100)
+      end
 
       it "hides resource from map after it's fully depleted" do
         # First verify resource is visible

@@ -119,14 +119,7 @@ RSpec.describe "shared/_nl_vitals_bar.html.erb", type: :view do
 
   context "when character has full HP" do
     let(:full_hp_character) do
-      create(:character).tap do |c|
-        allow(c).to receive(:current_hp).and_return(100)
-        allow(c).to receive(:max_hp).and_return(100)
-        allow(c).to receive(:current_mp).and_return(50)
-        allow(c).to receive(:max_mp).and_return(50)
-        allow(c).to receive(:hp_regen_interval_seconds).and_return(1500)
-        allow(c).to receive(:mp_regen_interval_seconds).and_return(9000)
-      end
+      create(:character, current_hp: 100, max_hp: 100, current_mp: 50, max_mp: 50)
     end
 
     it "shows 100% HP fill" do
@@ -144,14 +137,7 @@ RSpec.describe "shared/_nl_vitals_bar.html.erb", type: :view do
 
   context "when character has zero HP" do
     let(:dead_character) do
-      create(:character).tap do |c|
-        allow(c).to receive(:current_hp).and_return(0)
-        allow(c).to receive(:max_hp).and_return(100)
-        allow(c).to receive(:current_mp).and_return(0)
-        allow(c).to receive(:max_mp).and_return(50)
-        allow(c).to receive(:hp_regen_interval_seconds).and_return(1500)
-        allow(c).to receive(:mp_regen_interval_seconds).and_return(9000)
-      end
+      create(:character, current_hp: 0, max_hp: 100, current_mp: 0, max_mp: 50)
     end
 
     it "shows 0% HP fill" do
@@ -169,14 +155,7 @@ RSpec.describe "shared/_nl_vitals_bar.html.erb", type: :view do
 
   context "when character has low HP (under 25%)" do
     let(:low_hp_character) do
-      create(:character).tap do |c|
-        allow(c).to receive(:current_hp).and_return(20)
-        allow(c).to receive(:max_hp).and_return(100)
-        allow(c).to receive(:current_mp).and_return(10)
-        allow(c).to receive(:max_mp).and_return(50)
-        allow(c).to receive(:hp_regen_interval_seconds).and_return(1500)
-        allow(c).to receive(:mp_regen_interval_seconds).and_return(9000)
-      end
+      create(:character, current_hp: 20, max_hp: 100, current_mp: 10, max_mp: 50)
     end
 
     it "shows 20% HP fill" do
@@ -188,14 +167,7 @@ RSpec.describe "shared/_nl_vitals_bar.html.erb", type: :view do
 
   context "with decimal HP values" do
     let(:decimal_hp_character) do
-      create(:character).tap do |c|
-        allow(c).to receive(:current_hp).and_return(33.7)
-        allow(c).to receive(:max_hp).and_return(100)
-        allow(c).to receive(:current_mp).and_return(25.5)
-        allow(c).to receive(:max_mp).and_return(50)
-        allow(c).to receive(:hp_regen_interval_seconds).and_return(1500)
-        allow(c).to receive(:mp_regen_interval_seconds).and_return(9000)
-      end
+      create(:character, current_hp: 33.7, max_hp: 100, current_mp: 25.5, max_mp: 50)
     end
 
     it "rounds HP display value" do

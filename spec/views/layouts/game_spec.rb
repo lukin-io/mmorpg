@@ -10,21 +10,15 @@ RSpec.describe "layouts/game.html.erb", type: :view do
   let(:chat_channel) { create(:chat_channel, name: "Global", channel_type: :global) }
 
   before do
-    allow(view).to receive(:current_user).and_return(user)
-    allow(view).to receive(:current_character).and_return(character)
-    allow(view).to receive(:user_signed_in?).and_return(true)
+    # Define helper methods on the view context
+    without_partial_double_verification do
+      allow(view).to receive(:current_user).and_return(user)
+      allow(view).to receive(:current_character).and_return(character)
+      allow(view).to receive(:user_signed_in?).and_return(true)
+    end
     assign(:position, position)
     assign(:chat_channel, chat_channel)
     assign(:players_here, [])
-
-    # Stub character methods
-    allow(character).to receive(:current_hp).and_return(80)
-    allow(character).to receive(:max_hp).and_return(100)
-    allow(character).to receive(:current_mp).and_return(40)
-    allow(character).to receive(:max_mp).and_return(50)
-    allow(character).to receive(:gold).and_return(1500)
-    allow(character).to receive(:hp_regen_interval_seconds).and_return(1500)
-    allow(character).to receive(:mp_regen_interval_seconds).and_return(9000)
 
     # Stub ChatChannel.global
     allow(ChatChannel).to receive(:global).and_return(ChatChannel.where(id: chat_channel.id))

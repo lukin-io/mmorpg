@@ -92,7 +92,7 @@ RSpec.describe "shared/_nl_players_list.html.erb", type: :view do
     it "links to character profile" do
       render partial: "shared/nl_players_list"
 
-      expect(rendered).to have_link("HeroPlayer", href: character_path(1))
+      expect(rendered).to have_link("HeroPlayer", href: profile_path(profile_name: "HeroPlayer"))
     end
   end
 
@@ -152,4 +152,3 @@ RSpec.describe "shared/_nl_players_list.html.erb", type: :view do
     end
   end
 end
-

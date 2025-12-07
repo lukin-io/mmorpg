@@ -134,7 +134,7 @@ RSpec.describe "world/_city_view.html.erb", type: :view do
 
   context "without metadata" do
     let(:zone_no_metadata) do
-      create(:zone, name: "Empty City", biome: "city", metadata: nil)
+      create(:zone, name: "Empty City", biome: "city", metadata: {})
     end
 
     it "renders default description" do
@@ -151,4 +151,3 @@ RSpec.describe "world/_city_view.html.erb", type: :view do
     end
   end
 end
-

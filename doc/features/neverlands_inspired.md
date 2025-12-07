@@ -1127,6 +1127,94 @@ body_damage: {
 - **YAML Configuration** for action costs, body parts, magic
 - **Turbo Streams** for combat log updates
 
+### Original Neverlands CSS (fight.css)
+
+```css
+/* Core styles */
+BODY {
+  FONT-FAMILY: Verdana, Tahoma, Arial;
+  FONT-SIZE: 12px;
+  MARGIN: 0px;
+  COLOR: #000000;
+}
+
+A {
+  COLOR: #336699;
+  TEXT-DECORATION: underline;
+}
+
+/* Combat text classes */
+.ftxt { FONT-SIZE: 10px; COLOR: #222222; }  /* Combat info text */
+.fpla { FONT-SIZE: 11px; COLOR: #888888; }  /* Body part labels */
+.nick { FONT-SIZE: 12px; COLOR: #222222; }  /* Character names */
+.ftime { FONT-SIZE: 12px; COLOR: #888888; } /* Timestamps */
+.proce { FONT-SIZE: 10px; COLOR: #CC0000; } /* Damage values */
+
+/* Combat buttons */
+.fbut {
+  BACKGROUND: #ffffff;
+  BORDER: #DECFA6 1px solid;
+  COLOR: #333333;
+  FONT: 11px Tahoma, Verdana, Arial;
+  FONT-WEIGHT: bold;
+  CURSOR: pointer;
+}
+
+/* HP/MP bar backgrounds */
+.hpfull { BACKGROUND: url('hpbg1.gif') repeat-x; }  /* Cyan gradient */
+.hplos  { BACKGROUND: url('hpbg2.gif') repeat-x; }  /* Gray gradient */
+.mpfull { BACKGROUND: url('mpbg1.gif') repeat-x; }  /* Blue gradient */
+.mplos  { BACKGROUND: url('mpbg2.gif') repeat-x; }  /* Gray gradient */
+
+/* Layout positioning */
+#lines_container { position: relative; }
+#leftC { position: absolute; left: 0px; top: 0; }
+#rightC { position: absolute; right: 0px; top: 0; }
+#lines { padding: 7px 15px 0 18px; }
+#text { position: absolute; z-index: 2; left: 25px; top: 6px; font-size: 11px; }
+
+/* Action selection */
+.fsel {
+  FONT-SIZE: 10px;
+  WIDTH: 210px;
+  COLOR: #222222;
+  BACKGROUND-COLOR: #ffffff;
+}
+
+/* Mana input box */
+.mbox {
+  FONT-SIZE: 10px;
+  BORDER: #767676 1pt solid;
+  COLOR: #556680;
+}
+```
+
+### Visual Reference
+
+**Active Combat Screen (`fight.png`):**
+- Three-panel layout: Player | Actions | Enemy
+- HP bars with cyan gradient, MP bars with blue gradient
+- Equipment slots displayed as grid around avatar
+- Attack/block dropdowns for 4 body parts
+- Action point counter with penalty display
+- Combat log with timestamps and colored names
+
+**Battle End Screen (`end_fight.png`):**
+- Same player panel (HP/MP/equipment)
+- Combat log showing victory/defeat messages
+- "Finish Battle" button
+- Detailed log entries with body part hits, blocks, dodges
+
+### Elselands CSS Implementation
+
+The combat CSS uses the `nl-combat-*` prefix:
+- `nl-combat-container` - Main combat wrapper
+- `nl-participant` - Player/enemy panels
+- `nl-bar--hp`, `nl-bar--mp` - Health/mana bars
+- `nl-action-select` - Attack/block dropdowns
+- `nl-magic-slots` - Skill slot grid
+- `nl-combat-log` - Combat log container
+
 ---
 
 ## Combat Log System

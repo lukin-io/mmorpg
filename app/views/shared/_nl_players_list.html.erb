@@ -8,7 +8,7 @@
     <% else %>
       <span class="nl-player-icon">→</span>
     <% end %>
-    <a href="<%= character_path(player) %>" class="nl-player-name-link"><%= player.name %></a><span class="nl-player-lvl">[<%= player.level %>]</span><span class="nl-player-status">g</span>
+    <a href="<%= profile_path(profile_name: player.name) %>" class="nl-player-name-link"><%= player.name %></a><span class="nl-player-lvl">[<%= player.level %>]</span><span class="nl-player-status">g</span>
   </div>
 <% end %>
 <% if players.empty? %>

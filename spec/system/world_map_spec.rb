@@ -3,6 +3,8 @@
 require "rails_helper"
 
 RSpec.describe "World Map Navigation", type: :system do
+  include Warden::Test::Helpers
+
   let(:user) { create(:user) }
   let(:zone) { create(:zone, name: "Adventure Plains", biome: "plains", width: 50, height: 50) }
   let(:character) { create(:character, user: user, name: "TestHero", level: 5) }
@@ -10,7 +12,7 @@ RSpec.describe "World Map Navigation", type: :system do
 
   before do
     driven_by(:rack_test)
-    sign_in user
+    login_as(user, scope: :user)
   end
 
   describe "viewing the world map" do
@@ -161,4 +163,3 @@ RSpec.describe "World Map Navigation", type: :system do
     end
   end
 end
-
