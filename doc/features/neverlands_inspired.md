@@ -19,6 +19,7 @@ This document captures all functionality inspired by the Neverlands MMORPG that 
 | 9 | [Alignment & Faction](#alignment--faction-system) | ✅ Implemented | `character.rb`, `alignment_helper.rb`, `arena_helper.rb` |
 | 10 | [Tile Resource Gathering](#tile-resource-gathering) | ✅ Implemented | `tile_resource.rb`, `tile_gathering_service.rb`, biome config |
 | 11 | [Tile NPC Spawning](#tile-npc-spawning) | ✅ Implemented | `tile_npc.rb`, `tile_npc_service.rb`, biome NPC config |
+| 12 | [Character Stats & Skills](#character-stats--skills-allocation) | 🔄 Partial | `passive_skill_registry.rb`, `stat_allocation_controller.js` |
 
 **Legend:** ✅ Implemented | 🔄 Partial | ❌ Not Started
 
@@ -36,6 +37,7 @@ This document captures all functionality inspired by the Neverlands MMORPG that 
 9. [Alignment & Faction System](#alignment--faction-system)
 10. [Tile Resource Gathering](#tile-resource-gathering)
 11. [Tile NPC Spawning](#tile-npc-spawning)
+12. [Character Stats & Skills Allocation](#character-stats--skills-allocation)
 
 ---
 
@@ -2431,6 +2433,201 @@ a.usermenulink:hover {
     --nl-info: #336699;            /* Blue info */
 }
 ```
+
+---
+
+## Character Stats & Skills Allocation
+
+### Original Neverlands Examples
+
+The character profile screen allows players to allocate stat points and skill points using +/- buttons with real-time UI updates. Changes are tracked client-side and saved via form submission.
+
+#### JavaScript Stats Allocation
+```javascript
+var d = document;
+
+// Add stat point
+function AddStats(StatsID) {
+    var FrObj = d.getElementById("freestats");
+    var fr = parseInt(FrObj.value);
+    if (fr > 0) {
+        fr--;
+        var CAObj = d.getElementById("f" + StatsID);
+        var curValue = parseInt(d.getElementById("h" + StatsID).value);
+        var curAdd = parseInt(CAObj.value) + 1;
+        d.getElementById("st" + StatsID).innerHTML =
+            "<b>&nbsp;" + (curValue + curAdd) + "</b><sup>(<font color=#009D29>+" + curAdd + "</font>)</sup>";
+        FrObj.value = fr;
+        CAObj.value = curAdd;
+        d.getElementById("frdiv").innerHTML = 'Points: ' + fr;
+    }
+}
+
+// Remove stat point
+function RemStats(StatsID) {
+    var CAObj = d.getElementById("f" + StatsID);
+    var curAdd = parseInt(CAObj.value);
+    if (curAdd > 0) {
+        curAdd--;
+        var FrObj = d.getElementById("freestats");
+        var curValue = parseInt(d.getElementById("h" + StatsID).value);
+        var fr = parseInt(FrObj.value) + 1;
+        d.getElementById("st" + StatsID).innerHTML =
+            "<b>&nbsp;" + (curValue + curAdd) + "</b>" +
+            (curAdd > 0 ? "<sup>(<font color=#009D29>+" + curAdd + "</font>)</sup>" : "");
+        FrObj.value = fr;
+        CAObj.value = curAdd;
+        d.getElementById("frdiv").innerHTML = 'Points: ' + fr;
+    }
+}
+
+function SaveStats() {
+    d.getElementById("FSaveStats").submit();
+}
+```
+
+#### JavaScript Skills Allocation
+```javascript
+// Add skill point (combat skills cost 10, peaceful skills cost 2)
+function AddSkill(skill_id) {
+    var freeskills = parseInt(document.saveskill.freeskills.value);
+    var cost = 10;  // Combat skill cost
+
+    if (freeskills >= cost) {
+        var curVal = parseInt(document.saveskill['h' + skill_id].value);
+        var addVal = parseInt(document.saveskill['f' + skill_id].value) + 1;
+
+        if (curVal + addVal <= 100) {  // Max 100
+            document.saveskill['f' + skill_id].value = addVal;
+            freeskills -= cost;
+            document.saveskill.freeskills.value = freeskills;
+
+            d.getElementById('sk' + skill_id).innerHTML =
+                '[' + String(curVal + addVal).padStart(3, '0') + '/100]';
+            d.getElementById('frskdiv').innerHTML = 'Combat skill points: ' + freeskills;
+        }
+    }
+}
+
+function RemoveSkill(skill_id) {
+    var addVal = parseInt(document.saveskill['f' + skill_id].value);
+    if (addVal > 0) {
+        var curVal = parseInt(document.saveskill['h' + skill_id].value);
+        addVal--;
+        document.saveskill['f' + skill_id].value = addVal;
+
+        var freeskills = parseInt(document.saveskill.freeskills.value) + 10;
+        document.saveskill.freeskills.value = freeskills;
+
+        d.getElementById('sk' + skill_id).innerHTML =
+            '[' + String(curVal + addVal).padStart(3, '0') + '/100]';
+        d.getElementById('frskdiv').innerHTML = 'Combat skill points: ' + freeskills;
+    }
+}
+```
+
+#### HTML Structure (Stats)
+```html
+<FORM id="FSaveStats" action=main.php method=POST>
+  <INPUT TYPE=hidden name="freestats" id="freestats" value="15">
+
+  <!-- For each stat: h=base value, f=added value -->
+  <input type="hidden" name="h0" id="h0" value="1">  <!-- Base strength -->
+  <input type="hidden" name="f0" id="f0" value="0">  <!-- Added strength -->
+
+  <table>
+    <tr>
+      <td>Strength:</td>
+      <td id="st0"><b>&nbsp;1</b></td>
+      <td>
+        <a href="javascript: AddStats(0);">+</a>
+        <a href="javascript: RemStats(0);">—</a>
+      </td>
+    </tr>
+    <!-- More stats... -->
+  </table>
+
+  <div id="frdiv">Points: 15</div>
+  <a href="javascript: SaveStats();">Save</a>
+</FORM>
+```
+
+#### HTML Structure (Skills)
+```html
+<FORM action=main.php name=saveskill method=POST>
+  <INPUT TYPE=hidden name=freeskills value="10">
+  <INPUT TYPE=hidden name=freeskillsmir value="2">  <!-- Peaceful skill points -->
+
+  <table>
+    <!-- Combat Skills -->
+    <tr>
+      <td colspan=2><b>Combat Skills</b></td>
+      <td colspan=2><b>Peaceful Skills</b></td>
+    </tr>
+    <tr>
+      <td>
+        <a href="javascript: AddSkill('0');">+</a>
+        <a href="javascript: RemoveSkill('0');">—</a>
+        • Melee Combat
+      </td>
+      <td id=sk0>[000/100]</td>
+      <input type=hidden name=h0 value=0>  <!-- Base -->
+      <input type=hidden name=f0 value=0>  <!-- Added -->
+
+      <td>
+        <a href="javascript: AddSkill('22');">+</a>
+        <a href="javascript: RemoveSkill('22');">—</a>
+        • Caution
+      </td>
+      <td id=sk22>[000/100]</td>
+    </tr>
+    <!-- More skills... -->
+
+    <tr>
+      <td colspan=4>
+        <div id=frskdiv>Combat points: 10 | Peaceful points: 2</div>
+      </td>
+    </tr>
+  </table>
+</FORM>
+```
+
+#### Key UI Patterns
+
+1. **+/- Buttons** — Simple links that call JavaScript functions
+2. **Hidden Form Fields** — Track base value (h), added value (f), and free points
+3. **Visual Feedback** — Green `+X` superscript shows pending changes
+4. **Skill Format** — `[000/100]` with zero-padding
+5. **Point Categories** — Combat skills (10pts each), Peaceful skills (2pts each)
+6. **Dot Indicators** — Green dot (•) = available, Red dot = locked/unavailable
+
+### Elselands Implementation
+
+- **Status:** 🔄 Partial (Passive skills exist, need UI)
+- **Files:**
+  - `app/lib/game/skills/passive_skill_registry.rb` — Skill definitions
+  - `app/lib/game/skills/passive_skill_calculator.rb` — Effect calculations
+  - `app/models/character.rb` — `passive_skills` JSONB, stat allocation methods
+  - `app/javascript/controllers/stat_allocation_controller.js` — (To implement)
+  - `app/views/characters/_stat_allocation.html.erb` — (To implement)
+
+### Key Adaptations Needed
+
+| Neverlands Feature | Elselands Approach |
+|--------------------|-------------------|
+| Inline `onclick` | Stimulus `data-action` |
+| Global form names | `data-stat-allocation-target` |
+| `document.write` | Server-rendered ERB + Turbo |
+| Form POST | Turbo Form with PATCH |
+| `[000/100]` format | Progress bar + text |
+| Separate skill pools | Single skill_points pool |
+
+### Stat Categories
+
+| Category | Stats | Allocation |
+|----------|-------|------------|
+| **Primary** | Strength, Dexterity, Intelligence, Wisdom, Constitution | Level-up points |
+| **Passive Skills** | Wanderer, Endurance, Perception, etc. | Experience/training |
 
 ---
 

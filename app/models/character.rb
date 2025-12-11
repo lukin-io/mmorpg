@@ -161,6 +161,52 @@ class Character < ApplicationRecord
     update!(chaos_score: new_score)
   end
 
+  # ===================
+  # Passive Skills
+  # ===================
+
+  # Get the level of a passive skill
+  #
+  # @param skill_key [Symbol, String] the skill identifier (e.g., :wanderer)
+  # @return [Integer] skill level (0-100, defaults to 0)
+  def passive_skill_level(skill_key)
+    (passive_skills[skill_key.to_s] || 0).to_i
+  end
+
+  # Set the level of a passive skill
+  #
+  # @param skill_key [Symbol, String] the skill identifier
+  # @param level [Integer] new level (clamped to 0-max_level)
+  def set_passive_skill!(skill_key, level)
+    key = skill_key.to_s
+    max = Game::Skills::PassiveSkillRegistry.max_level(key)
+    clamped = level.to_i.clamp(0, max)
+
+    new_skills = passive_skills.merge(key => clamped)
+    update!(passive_skills: new_skills)
+  end
+
+  # Increase a passive skill by a given amount
+  #
+  # @param skill_key [Symbol, String] the skill identifier
+  # @param amount [Integer] amount to increase (default 1)
+  def increase_passive_skill!(skill_key, amount = 1)
+    current = passive_skill_level(skill_key)
+    set_passive_skill!(skill_key, current + amount)
+  end
+
+  # Get a calculator for all passive skill effects
+  #
+  # @return [Game::Skills::PassiveSkillCalculator]
+  def passive_skill_calculator
+    @passive_skill_calculator ||= Game::Skills::PassiveSkillCalculator.new(self)
+  end
+
+  # Clear the cached calculator (call after skill changes)
+  def clear_passive_skill_cache!
+    @passive_skill_calculator = nil
+  end
+
   private
 
   def inherit_memberships

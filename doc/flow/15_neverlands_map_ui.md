@@ -4,6 +4,7 @@ title: WEB-115 — Game Map & Layout Flow
 description: Documents the game layout, tile-based world map, HP/MP vitals system, movement mechanics, and UI components inspired by classic browser MMORPGs.
 date: 2025-12-06
 updated: 2025-12-11
+related: doc/flow/16_passive_skills.md
 ---
 
 ## Summary
@@ -260,8 +261,18 @@ This ensures:
 - `moveUrl` — Server endpoint (`/world/move`)
 - `zoneWidth`, `zoneHeight` — Zone dimensions
 - `tileSize` (default: 100px)
-- `moveCooldown` (default: 3 seconds)
+- `moveCooldown` — Computed cooldown (base 10s, reduced by Wanderer skill, modified by terrain/mount)
 - `zoneName` — Current zone name
+
+**Movement Cooldown Formula:**
+See `doc/flow/16_passive_skills.md` for full details.
+```
+cooldown = (base * (1 - wanderer_reduction) * terrain_modifier) / mount_speed
+```
+- Base: 10 seconds
+- Wanderer skill: 0-70% reduction (at skill levels 0-100)
+- Terrain: varies by biome (swamp 1.5x, road 0.8x, etc.)
+- Mount: divides by travel multiplier
 
 ### Tile Types
 
