@@ -14,12 +14,16 @@
   grid_height = nearby_tiles.size
   tile_size = 100  # pixels
 
-  # Adjacent tiles (walkable)
+  # Adjacent tiles (walkable) - cardinal + diagonal directions
   adjacent_coords = [
-    [position.x - 1, position.y],  # west
-    [position.x + 1, position.y],  # east
-    [position.x, position.y - 1],  # north
-    [position.x, position.y + 1]   # south
+    [position.x - 1, position.y],      # west
+    [position.x + 1, position.y],      # east
+    [position.x, position.y - 1],      # north
+    [position.x, position.y + 1],      # south
+    [position.x + 1, position.y - 1],  # northeast
+    [position.x + 1, position.y + 1],  # southeast
+    [position.x - 1, position.y + 1],  # southwest
+    [position.x - 1, position.y - 1]   # northwest
   ].select { |x, y| x >= 0 && y >= 0 && x < zone.width && y < zone.height }
 %>
 

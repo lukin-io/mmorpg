@@ -57,4 +57,58 @@ RSpec.describe Game::Movement::TurnProcessor do
       end.not_to raise_error
     end
   end
+
+  describe "diagonal movement" do
+    let(:diag_zone) { create(:zone, name: "DiagonalTest", width: 5, height: 5, biome: "city") }
+    let!(:diag_spawn_point) { create(:spawn_point, zone: diag_zone, x: 2, y: 2, default_entry: true) }
+    let(:diag_character) { create(:character, faction_alignment: "neutral") }
+
+    before do
+      # Create tiles for all 8 directions around center (2,2)
+      [[2, 2], [1, 2], [3, 2], [2, 1], [2, 3], [3, 1], [3, 3], [1, 3], [1, 1]].each do |x, y|
+        MapTileTemplate.create!(zone: diag_zone.name, x: x, y: y, terrain_type: "plaza", passable: true, biome: "city")
+      end
+
+      # Remove any existing position and create at center
+      diag_character.position&.destroy
+      diag_character.reload
+      create(:character_position, character: diag_character, zone: diag_zone, x: 2, y: 2)
+    end
+
+    it "moves northeast (x+1, y-1)" do
+      travel_to(Time.current) do
+        result = described_class.new(character: diag_character, direction: :northeast, rng: Random.new(1)).call
+
+        expect(result.position.x).to eq(3)
+        expect(result.position.y).to eq(1)
+      end
+    end
+
+    it "moves southeast (x+1, y+1)" do
+      travel_to(Time.current) do
+        result = described_class.new(character: diag_character, direction: :southeast, rng: Random.new(1)).call
+
+        expect(result.position.x).to eq(3)
+        expect(result.position.y).to eq(3)
+      end
+    end
+
+    it "moves southwest (x-1, y+1)" do
+      travel_to(Time.current) do
+        result = described_class.new(character: diag_character, direction: :southwest, rng: Random.new(1)).call
+
+        expect(result.position.x).to eq(1)
+        expect(result.position.y).to eq(3)
+      end
+    end
+
+    it "moves northwest (x-1, y-1)" do
+      travel_to(Time.current) do
+        result = described_class.new(character: diag_character, direction: :northwest, rng: Random.new(1)).call
+
+        expect(result.position.x).to eq(1)
+        expect(result.position.y).to eq(1)
+      end
+    end
+  end
 end

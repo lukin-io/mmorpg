@@ -516,6 +516,12 @@ class WorldController < ApplicationController
     directions << :west if @position.x > 0
     directions << :east if @position.x < zone.width - 1
 
+    # Check each diagonal direction
+    directions << :northeast if @position.y > 0 && @position.x < zone.width - 1
+    directions << :southeast if @position.y < zone.height - 1 && @position.x < zone.width - 1
+    directions << :southwest if @position.y < zone.height - 1 && @position.x > 0
+    directions << :northwest if @position.y > 0 && @position.x > 0
+
     directions
   end
 

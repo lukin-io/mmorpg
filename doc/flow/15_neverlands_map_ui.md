@@ -3,7 +3,7 @@
 title: WEB-115 — Game Map & Layout Flow
 description: Documents the game layout, tile-based world map, HP/MP vitals system, movement mechanics, and UI components inspired by classic browser MMORPGs.
 date: 2025-12-06
-updated: 2025-12-06
+updated: 2025-12-11
 ---
 
 ## Summary
@@ -196,19 +196,26 @@ currentMp += maxMp / mpRegenRate;  // MP regen
 
 **Features:**
 - Click on adjacent tiles to move (no keyboard navigation)
+- Supports all 8 directions: cardinal (N, S, E, W) and diagonal (NE, SE, SW, NW)
 - Red dashed border highlights available tiles
 - Movement countdown timer (red badge with number)
 - Server-side movement validation
 
+**Movement Directions:**
+The player can move to any of the 8 adjacent tiles:
+- **Cardinal:** north (0, -1), south (0, +1), east (+1, 0), west (-1, 0)
+- **Diagonal:** northeast (+1, -1), southeast (+1, +1), southwest (-1, +1), northwest (-1, -1)
+
 **Movement Flow:**
-1. Adjacent walkable tiles display red dashed border (`.nl-tile-clickable--available`)
+1. All 8 adjacent walkable tiles display red dashed border (`.nl-tile-clickable--available`)
 2. Player clicks an available tile
-3. JavaScript sets cooldown in `sessionStorage` (persists across DOM updates)
-4. Hidden form submits via `requestSubmit()` (Turbo handles the response)
-5. Timer badge shows countdown during movement
-6. Server responds with Turbo Stream to update map
-7. New Stimulus controller connects, reads cooldown from `sessionStorage`
-8. Cursor repositions to new location
+3. JavaScript determines direction from dx/dy offset
+4. JavaScript sets cooldown in `sessionStorage` (persists across DOM updates)
+5. Hidden form submits via `requestSubmit()` (Turbo handles the response)
+6. Timer badge shows countdown during movement
+7. Server responds with Turbo Stream to update map
+8. New Stimulus controller connects, reads cooldown from `sessionStorage`
+9. Cursor repositions to new location
 
 ### Critical: Turbo Stream Update Pattern
 
@@ -411,10 +418,16 @@ This ensures:
 ### RSpec Coverage
 
 **Request Specs:** `spec/requests/world_spec.rb`
-- Movement in all 4 directions (north, south, east, west)
+- Movement in all 8 directions (cardinal: north, south, east, west + diagonal: northeast, southeast, southwest, northwest)
 - Boundary checking (can't move outside zone)
 - Turbo stream responses
 - Zone transitions (enter/exit)
+
+**Service Specs:** `spec/services/game/movement/turn_processor_spec.rb`
+- Movement in all 4 cardinal directions
+- Movement in all 4 diagonal directions (northeast, southeast, southwest, northwest)
+- Cooldown enforcement
+- Terrain modifiers
 
 **View Specs:**
 - `spec/views/world/_map_spec.rb` — Map rendering, clickable tiles, cursor, timer
@@ -424,8 +437,9 @@ This ensures:
 
 ### Manual Testing Checklist
 - [ ] Map tiles render with correct terrain backgrounds
-- [ ] Adjacent tiles show red dashed border
-- [ ] Click on adjacent tile triggers movement
+- [ ] All 8 adjacent tiles (cardinal + diagonal) show red dashed border
+- [ ] Click on adjacent tile triggers movement in correct direction
+- [ ] Diagonal movement works (NE, SE, SW, NW)
 - [ ] Timer badge shows countdown during movement
 - [ ] Non-adjacent tiles are not clickable
 - [ ] Cursor shows on player position
