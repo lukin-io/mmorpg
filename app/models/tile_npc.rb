@@ -73,16 +73,16 @@ class TileNpc < ApplicationRecord
   # Respawn the NPC with a new random NPC from the biome
   def respawn!
     new_npc_data = Game::World::BiomeNpcConfig.sample_npc(biome || "plains")
-    return unless new_npc_data
+    return false unless new_npc_data
 
     # Find or create NPC template
     template = find_or_create_template(new_npc_data)
-    return unless template
+    return false unless template
 
     update!(
       npc_template: template,
-      npc_key: new_npc_data[:key],
-      npc_role: new_npc_data[:role] || "hostile",
+      npc_key: new_npc_data[:key].to_s,
+      npc_role: (new_npc_data[:role] || "hostile").to_s,
       level: calculate_spawn_level(new_npc_data),
       current_hp: template.health,
       max_hp: template.health,
@@ -91,6 +91,7 @@ class TileNpc < ApplicationRecord
       defeated_by: nil,
       metadata: new_npc_data[:metadata] || {}
     )
+    true
   end
 
   # Get display name
@@ -153,23 +154,27 @@ class TileNpc < ApplicationRecord
   end
 
   def find_or_create_template(npc_data)
+    # Normalize key to string for consistent lookups
+    npc_key = npc_data[:key].to_s
+    npc_name = npc_data[:name].to_s
+
     # Try to find existing template by npc_key first, then by name
-    template = NpcTemplate.find_by(npc_key: npc_data[:key]) ||
-      NpcTemplate.find_by(name: npc_data[:name])
+    template = NpcTemplate.find_by(npc_key: npc_key) ||
+      NpcTemplate.find_by(name: npc_name)
 
     if template
       # Update npc_key if missing (for templates created by factory)
-      template.update!(npc_key: npc_data[:key]) if template.npc_key.blank?
+      template.update!(npc_key: npc_key) if template.npc_key.blank?
       return template
     end
 
     # Create new template
     NpcTemplate.create!(
-      npc_key: npc_data[:key],
-      name: npc_data[:name],
-      role: npc_data[:role] || "hostile",
+      npc_key: npc_key,
+      name: npc_name,
+      role: npc_data[:role]&.to_s || "hostile",
       level: npc_data[:level] || 1,
-      dialogue: npc_data[:dialogue] || "...",
+      dialogue: npc_data[:dialogue]&.to_s || "...",
       metadata: {
         biome: biome,
         health: npc_data[:hp] || 100,
@@ -179,8 +184,8 @@ class TileNpc < ApplicationRecord
       }.merge(npc_data[:metadata] || {})
     )
   rescue ActiveRecord::RecordInvalid => e
-    Rails.logger.error("Failed to create NPC template for #{npc_data[:key]}: #{e.message}")
-    # Try one more time to find by name (race condition protection)
-    NpcTemplate.find_by(name: npc_data[:name])
+    Rails.logger.error("Failed to create NPC template for #{npc_key}: #{e.message}")
+    # Try one more time to find by key or name (race condition protection)
+    NpcTemplate.find_by(npc_key: npc_key) || NpcTemplate.find_by(name: npc_name)
   end
 end

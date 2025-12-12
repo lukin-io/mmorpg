@@ -133,7 +133,8 @@ RSpec.describe TileNpc, type: :model do
     end
 
     it "resets NPC with new random NPC from biome" do
-      npc.respawn!
+      result = npc.respawn!
+      expect(result).to be true
       npc.reload # Ensure we have fresh data from DB
       expect(npc.current_hp).to be > 0
       expect(npc.respawns_at).to be_nil
@@ -142,10 +143,18 @@ RSpec.describe TileNpc, type: :model do
     end
 
     it "selects NPC appropriate for biome" do
-      npc.respawn!
+      result = npc.respawn!
+      expect(result).to be true
       npc.reload
       forest_npcs = Game::World::BiomeNpcConfig.npc_keys("forest").map(&:to_s)
       expect(forest_npcs).to include(npc.npc_key)
+    end
+
+    it "uses default biome when specified biome has no NPCs" do
+      npc.update!(biome: "nonexistent")
+      result = npc.respawn!
+      # Should still succeed using default biome fallback
+      expect(result).to be true
     end
   end
 
