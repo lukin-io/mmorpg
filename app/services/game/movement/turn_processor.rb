@@ -4,6 +4,19 @@ module Game
   module Movement
     # TurnProcessor enforces server-side, turn-based movement and resolves encounters.
     #
+    # Movement cooldown formula:
+    #   1. Base: 10 seconds
+    #   2. Wanderer skill: reduces by 0-70% based on skill level (0-100)
+    #   3. Terrain modifier: multiplies based on terrain type
+    #   4. Mount speed: divides by mount travel multiplier
+    #
+    # Examples:
+    #   - Wanderer 0, no mount, normal terrain:  10 * 1.0 / 1.0 = 10.0s
+    #   - Wanderer 50, no mount, normal terrain: 6.5 * 1.0 / 1.0 = 6.5s
+    #   - Wanderer 100, no mount, normal terrain: 3.0 * 1.0 / 1.0 = 3.0s
+    #   - Wanderer 100, no mount, swamp terrain: 3.0 * 1.5 / 1.0 = 4.5s
+    #   - Wanderer 100, fast mount, normal terrain: 3.0 * 1.0 / 1.5 = 2.0s
+    #
     # Usage:
     #   result = Game::Movement::TurnProcessor.new(character:, direction: :north).call
     #
@@ -12,12 +25,16 @@ module Game
     class TurnProcessor
       Result = Struct.new(:position, :encounter, keyword_init: true)
 
-      ACTION_COOLDOWN_SECONDS = 3
+      BASE_MOVEMENT_COOLDOWN_SECONDS = 10
       OFFSETS = {
         north: [0, -1],
         south: [0, 1],
         east: [1, 0],
-        west: [-1, 0]
+        west: [-1, 0],
+        northeast: [1, -1],
+        southeast: [1, 1],
+        southwest: [-1, 1],
+        northwest: [-1, -1]
       }.freeze
 
       def initialize(character:, direction:, rng: Random.new(1), movement_validator: MovementValidator,
@@ -86,10 +103,20 @@ module Game
       end
 
       def environment_cooldown(zone:, tile_metadata:)
-        base = Game::Movement::TerrainModifier
+        # 1. Apply Wanderer skill to base cooldown
+        base_with_wanderer = wanderer_adjusted_cooldown
+
+        # 2. Apply terrain modifiers
+        terrain_adjusted = Game::Movement::TerrainModifier
           .new(zone:)
-          .cooldown_seconds(base_seconds: ACTION_COOLDOWN_SECONDS, tile_metadata:)
-        (base / mount_speed_multiplier).round(2)
+          .cooldown_seconds(base_seconds: base_with_wanderer, tile_metadata:)
+
+        # 3. Apply mount speed multiplier
+        (terrain_adjusted / mount_speed_multiplier).round(2)
+      end
+
+      def wanderer_adjusted_cooldown
+        character.passive_skill_calculator.apply_movement_cooldown(BASE_MOVEMENT_COOLDOWN_SECONDS)
       end
 
       def mount_speed_multiplier

@@ -13,6 +13,16 @@ Rails.application.routes.draw do
   resource :session_ping, only: :create
   resources :profiles, only: :show, controller: :public_profiles, param: :profile_name
 
+  # Character Stats & Skills Allocation (Neverlands-inspired)
+  resources :characters, only: [] do
+    member do
+      get :stats
+      patch :stats, action: :update_stats
+      get :skills
+      patch :skills, action: :update_skills
+    end
+  end
+
   resources :chat_channels, only: [:index, :show] do
     resources :chat_messages, only: :create
   end

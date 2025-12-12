@@ -140,10 +140,17 @@ export default class extends Controller {
     const dx = toX - this.playerXValue
     const dy = toY - this.playerYValue
 
+    // Cardinal directions
     if (dx === -1 && dy === 0) return "west"
     if (dx === 1 && dy === 0) return "east"
     if (dx === 0 && dy === -1) return "north"
     if (dx === 0 && dy === 1) return "south"
+
+    // Diagonal directions
+    if (dx === 1 && dy === -1) return "northeast"
+    if (dx === 1 && dy === 1) return "southeast"
+    if (dx === -1 && dy === 1) return "southwest"
+    if (dx === -1 && dy === -1) return "northwest"
 
     return null
   }

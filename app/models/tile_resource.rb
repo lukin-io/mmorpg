@@ -3,6 +3,8 @@
 # TileResource tracks resource spawns at specific map tiles.
 # Resources respawn after a cooldown period (default 30 minutes).
 # Different biomes spawn different resource types.
+# Biome modifiers: forest −5m, mountain +10m, swamp −2m.
+# Rarity modifiers from metadata["rarity"]: rare +15m, epic +30m.
 #
 # Usage:
 #   TileResource.at_tile(zone_name, x, y) # Find resource at tile

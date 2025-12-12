@@ -1,0 +1,71 @@
+<%#
+  Stat Allocation Partial - Neverlands-inspired +/- buttons
+  Uses stat_allocation_controller.js for client-side updates
+%>
+<div class="nl-allocation-panel"
+     data-controller="stat-allocation"
+     data-stat-allocation-free-value="<%= @character.stat_points_available %>"
+     data-stat-allocation-stats-value="<%= @stats_data.transform_values { |v| v[:total] }.to_json %>"
+     data-stat-allocation-added-value="{}">
+
+  <div class="nl-allocation-points">
+    <span class="nl-allocation-points-label">Available Points:</span>
+    <span class="nl-allocation-points-value" data-stat-allocation-target="freePoints">
+      <%= @character.stat_points_available %>
+    </span>
+  </div>
+
+  <%= form_with url: stats_character_path(@character), method: :patch, class: "nl-allocation-form", data: { turbo_frame: "stat-allocation" } do |f| %>
+    <div class="nl-stats-grid">
+      <% @allocatable_stats.each do |stat_key| %>
+        <% stat_info = @stats_data[stat_key] %>
+        <div class="nl-stat-row">
+          <div class="nl-stat-name">
+            <span class="nl-stat-label"><%= stat_key.to_s.humanize %></span>
+            <span class="nl-stat-base">(base: <%= stat_info[:base] %>)</span>
+          </div>
+
+          <div class="nl-stat-controls">
+            <button type="button"
+                    class="nl-stat-btn nl-stat-btn--minus"
+                    data-action="click->stat-allocation#removeStat"
+                    data-stat-allocation-stat-param="<%= stat_key %>">
+              −
+            </button>
+
+            <span class="nl-stat-value"
+                  data-stat-allocation-target="statValue"
+                  data-stat="<%= stat_key %>">
+              <b><%= stat_info[:total] %></b>
+            </span>
+
+            <button type="button"
+                    class="nl-stat-btn nl-stat-btn--plus"
+                    data-action="click->stat-allocation#addStat"
+                    data-stat-allocation-stat-param="<%= stat_key %>">
+              +
+            </button>
+
+            <%= hidden_field_tag "allocated_stats[#{stat_key}]", 0,
+                                 data: { stat_allocation_target: "statInput", stat: stat_key } %>
+          </div>
+        </div>
+      <% end %>
+    </div>
+
+    <div class="nl-allocation-actions">
+      <button type="button"
+              class="nl-btn nl-btn--secondary"
+              data-action="click->stat-allocation#reset">
+        Reset
+      </button>
+      <button type="submit"
+              class="nl-btn nl-btn--primary nl-btn--disabled"
+              data-stat-allocation-target="saveButton"
+              disabled>
+        Save Stats
+      </button>
+    </div>
+  <% end %>
+</div>
+

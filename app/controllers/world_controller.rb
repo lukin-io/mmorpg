@@ -516,6 +516,12 @@ class WorldController < ApplicationController
     directions << :west if @position.x > 0
     directions << :east if @position.x < zone.width - 1
 
+    # Check each diagonal direction
+    directions << :northeast if @position.y > 0 && @position.x < zone.width - 1
+    directions << :southeast if @position.y < zone.height - 1 && @position.x < zone.width - 1
+    directions << :southwest if @position.y < zone.height - 1 && @position.x > 0
+    directions << :northwest if @position.y > 0 && @position.x > 0
+
     directions
   end
 
@@ -577,19 +583,37 @@ class WorldController < ApplicationController
   end
 
   def movement_cooldown
-    # Base cooldown, can be modified by terrain/buffs
-    base = 3 # seconds
+    # Movement cooldown formula:
+    # 1. Base: 10 seconds
+    # 2. Wanderer skill: reduces by 0-70% based on skill level
+    # 3. Terrain modifier: multiplies based on terrain type
+    # 4. Mount speed: divides by mount travel multiplier
+    base = Game::Skills::PassiveSkillCalculator::BASE_MOVEMENT_COOLDOWN
+
+    # Apply Wanderer skill
+    wanderer_adjusted = current_character.passive_skill_calculator.apply_movement_cooldown(base)
+
+    # Apply terrain modifier
     terrain_modifier = begin
-      Game::Movement::TerrainModifier.new(
-        zone: @position.zone,
-        x: @position.x,
-        y: @position.y
-      ).cooldown_multiplier
+      Game::Movement::TerrainModifier.new(zone: @position.zone).speed_multiplier(tile_metadata: current_tile_metadata)
     rescue
       1.0
     end
 
-    (base * terrain_modifier).to_i
+    # Apply mount speed
+    mount_multiplier = begin
+      active_mount = current_character.user&.mounts&.find_by(summon_state: :summoned)
+      active_mount ? active_mount.travel_multiplier : 1.0
+    rescue
+      1.0
+    end
+
+    ((wanderer_adjusted * terrain_modifier) / mount_multiplier).round.to_i
+  end
+
+  def current_tile_metadata
+    tile = MapTileTemplate.find_by(zone: @position.zone, x: @position.x, y: @position.y)
+    tile&.metadata || {}
   end
 
   def render_map_update

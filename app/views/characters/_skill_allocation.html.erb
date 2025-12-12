@@ -1,0 +1,87 @@
+<%#
+  Skill Allocation Partial - Neverlands-inspired +/- buttons
+  Uses skill_allocation_controller.js for client-side updates
+%>
+<div class="nl-allocation-panel"
+     data-controller="skill-allocation"
+     data-skill-allocation-free-value="<%= @character.skill_points_available %>"
+     data-skill-allocation-skills-value="<%= @skills_data.transform_values { |v| v[:level] }.to_json %>"
+     data-skill-allocation-added-value="{}">
+
+  <div class="nl-allocation-points">
+    <span class="nl-allocation-points-label">Skill Points:</span>
+    <span class="nl-allocation-points-value" data-skill-allocation-target="freePoints">
+      <%= @character.skill_points_available %>
+    </span>
+  </div>
+
+  <%= form_with url: skills_character_path(@character), method: :patch, class: "nl-allocation-form", data: { turbo_frame: "skill-allocation" } do |f| %>
+    <div class="nl-skills-grid">
+      <% @skill_definitions.each do |skill_key, definition| %>
+        <% skill_info = @skills_data[skill_key] %>
+        <div class="nl-skill-row">
+          <div class="nl-skill-info">
+            <span class="nl-skill-name"><%= definition[:name] %></span>
+            <span class="nl-skill-category nl-skill-category--<%= definition[:category] %>">
+              <%= definition[:category].to_s.humanize %>
+            </span>
+            <p class="nl-skill-description"><%= definition[:description] %></p>
+          </div>
+
+          <div class="nl-skill-controls">
+            <button type="button"
+                    class="nl-stat-btn nl-stat-btn--minus"
+                    data-action="click->skill-allocation#removeSkill"
+                    data-skill-allocation-skill-param="<%= skill_key %>">
+              −
+            </button>
+
+            <span class="nl-skill-value"
+                  data-skill-allocation-target="skillValue"
+                  data-skill="<%= skill_key %>">
+              [<%= skill_info[:level].to_s.rjust(3, "0") %>/100]
+            </span>
+
+            <button type="button"
+                    class="nl-stat-btn nl-stat-btn--plus"
+                    data-action="click->skill-allocation#addSkill"
+                    data-skill-allocation-skill-param="<%= skill_key %>">
+              +
+            </button>
+
+            <%= hidden_field_tag "allocated_skills[#{skill_key}]", skill_info[:level],
+                                 data: { skill_allocation_target: "skillInput", skill: skill_key } %>
+          </div>
+
+          <div class="nl-skill-effect"
+               data-skill-allocation-target="skillEffect"
+               data-skill="<%= skill_key %>">
+            <% case skill_key.to_sym
+               when :wanderer
+                 reduction = (skill_info[:level] / 100.0 * 70).round
+                 cooldown = (10 * (1 - reduction / 100.0)).round(1) %>
+              Movement: <%= cooldown %>s (-<%= reduction %>%)
+            <% else %>
+              Effect: <%= skill_info[:level] %>%
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+    </div>
+
+    <div class="nl-allocation-actions">
+      <button type="button"
+              class="nl-btn nl-btn--secondary"
+              data-action="click->skill-allocation#reset">
+        Reset
+      </button>
+      <button type="submit"
+              class="nl-btn nl-btn--primary nl-btn--disabled"
+              data-skill-allocation-target="saveButton"
+              disabled>
+        Save Skills
+      </button>
+    </div>
+  <% end %>
+</div>
+

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_11_28_084408) do
+ActiveRecord::Schema[8.1].define(version: 2025_12_11_145857) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -388,6 +388,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_28_084408) do
     t.jsonb "metadata", default: {}, null: false
     t.integer "mp_regen_interval", default: 600, null: false
     t.string "name", null: false
+    t.jsonb "passive_skills", default: {}, null: false
     t.jsonb "progression_sources", default: {}, null: false
     t.integer "reputation", default: 0, null: false
     t.jsonb "resource_pools", default: {}, null: false

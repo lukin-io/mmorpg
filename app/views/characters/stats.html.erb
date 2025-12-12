@@ -1,0 +1,19 @@
+<%# Character Stats Allocation Page - Neverlands-inspired UI %>
+<% content_for :title, "Stats - #{@character.name}" %>
+
+<div class="nl-allocation-page">
+  <div class="nl-allocation-header">
+    <h1 class="nl-allocation-title">Character Stats</h1>
+    <p class="nl-allocation-subtitle"><%= @character.name %> - Level <%= @character.level %> <%= @character.character_class&.name || "Novice" %></p>
+  </div>
+
+  <turbo-frame id="stat-allocation">
+    <%= render "characters/stat_allocation" %>
+  </turbo-frame>
+
+  <div class="nl-allocation-footer">
+    <%= link_to "Back to World", world_path, class: "nl-btn nl-btn--secondary" %>
+    <%= link_to "Passive Skills", skills_character_path(@character), class: "nl-btn nl-btn--secondary" %>
+  </div>
+</div>
+

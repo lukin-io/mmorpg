@@ -210,4 +210,180 @@ RSpec.describe Character, type: :model do
       expect(low_char.max_action_points).to eq(63)
     end
   end
+
+  # ============================================
+  # Passive Skills
+  # ============================================
+  describe "passive skills" do
+    let(:character) { create(:character, passive_skills: {}) }
+
+    describe "#passive_skill_level" do
+      it "returns 0 for unset skill" do
+        expect(character.passive_skill_level(:wanderer)).to eq(0)
+      end
+
+      it "returns the skill level when set" do
+        character.update!(passive_skills: {"wanderer" => 50})
+        expect(character.passive_skill_level(:wanderer)).to eq(50)
+      end
+
+      it "handles string keys" do
+        character.update!(passive_skills: {"wanderer" => 25})
+        expect(character.passive_skill_level("wanderer")).to eq(25)
+      end
+
+      it "handles symbol keys" do
+        character.update!(passive_skills: {"wanderer" => 75})
+        expect(character.passive_skill_level(:wanderer)).to eq(75)
+      end
+
+      it "returns 0 for nil value" do
+        character.update!(passive_skills: {"wanderer" => nil})
+        expect(character.passive_skill_level(:wanderer)).to eq(0)
+      end
+    end
+
+    describe "#set_passive_skill!" do
+      it "sets a skill level" do
+        character.set_passive_skill!(:wanderer, 30)
+        expect(character.passive_skill_level(:wanderer)).to eq(30)
+      end
+
+      it "persists to database" do
+        character.set_passive_skill!(:wanderer, 40)
+        character.reload
+        expect(character.passive_skill_level(:wanderer)).to eq(40)
+      end
+
+      it "clamps to max level" do
+        character.set_passive_skill!(:wanderer, 150)
+        expect(character.passive_skill_level(:wanderer)).to eq(100)
+      end
+
+      it "clamps negative values to 0" do
+        character.set_passive_skill!(:wanderer, -10)
+        expect(character.passive_skill_level(:wanderer)).to eq(0)
+      end
+
+      it "updates existing skill level" do
+        character.set_passive_skill!(:wanderer, 20)
+        character.set_passive_skill!(:wanderer, 60)
+        expect(character.passive_skill_level(:wanderer)).to eq(60)
+      end
+
+      it "handles string keys" do
+        character.set_passive_skill!("wanderer", 45)
+        expect(character.passive_skill_level(:wanderer)).to eq(45)
+      end
+    end
+
+    describe "#increase_passive_skill!" do
+      it "increases skill by 1 by default" do
+        character.set_passive_skill!(:wanderer, 10)
+        character.increase_passive_skill!(:wanderer)
+        expect(character.passive_skill_level(:wanderer)).to eq(11)
+      end
+
+      it "increases skill by specified amount" do
+        character.set_passive_skill!(:wanderer, 10)
+        character.increase_passive_skill!(:wanderer, 5)
+        expect(character.passive_skill_level(:wanderer)).to eq(15)
+      end
+
+      it "clamps at max level" do
+        character.set_passive_skill!(:wanderer, 98)
+        character.increase_passive_skill!(:wanderer, 10)
+        expect(character.passive_skill_level(:wanderer)).to eq(100)
+      end
+
+      it "starts from 0 for unset skill" do
+        character.increase_passive_skill!(:wanderer, 5)
+        expect(character.passive_skill_level(:wanderer)).to eq(5)
+      end
+    end
+
+    describe "#passive_skill_calculator" do
+      it "returns a PassiveSkillCalculator instance" do
+        expect(character.passive_skill_calculator).to be_a(Game::Skills::PassiveSkillCalculator)
+      end
+
+      it "caches the calculator" do
+        calc1 = character.passive_skill_calculator
+        calc2 = character.passive_skill_calculator
+        expect(calc1).to equal(calc2)
+      end
+    end
+
+    describe "#clear_passive_skill_cache!" do
+      it "clears the cached calculator" do
+        calc1 = character.passive_skill_calculator
+        character.clear_passive_skill_cache!
+        calc2 = character.passive_skill_calculator
+        expect(calc1).not_to equal(calc2)
+      end
+    end
+
+    describe "integration with calculator" do
+      it "calculates movement cooldown based on wanderer skill" do
+        character.set_passive_skill!(:wanderer, 0)
+        cooldown_at_0 = character.passive_skill_calculator.apply_movement_cooldown(10)
+
+        character.set_passive_skill!(:wanderer, 100)
+        character.clear_passive_skill_cache!
+        cooldown_at_100 = character.passive_skill_calculator.apply_movement_cooldown(10)
+
+        expect(cooldown_at_0).to eq(10) # No reduction at level 0
+        expect(cooldown_at_100).to eq(3) # 70% reduction at level 100
+      end
+
+      it "provides smooth scaling between levels" do
+        character.set_passive_skill!(:wanderer, 50)
+        cooldown = character.passive_skill_calculator.apply_movement_cooldown(10)
+
+        # At level 50: 35% reduction -> 10 * 0.65 = 6.5
+        expect(cooldown).to eq(6.5)
+      end
+    end
+  end
+
+  # ============================================
+  # Stats Allocation
+  # ============================================
+  describe "stats allocation" do
+    let(:character_class) { create(:character_class, base_stats: {"strength" => 10, "dexterity" => 10}) }
+    let(:character) { create(:character, character_class: character_class, allocated_stats: {}) }
+
+    describe "#stats" do
+      it "returns StatBlock with base stats" do
+        stats = character.stats
+        expect(stats.get(:strength)).to eq(10)
+        expect(stats.get(:dexterity)).to eq(10)
+      end
+
+      it "includes allocated stats" do
+        character.update!(allocated_stats: {"strength" => 5})
+        stats = character.stats
+        expect(stats.get(:strength)).to eq(15) # 10 base + 5 allocated
+      end
+
+      it "handles multiple allocations" do
+        character.update!(allocated_stats: {"strength" => 3, "dexterity" => 2})
+        stats = character.stats
+        expect(stats.get(:strength)).to eq(13)
+        expect(stats.get(:dexterity)).to eq(12)
+      end
+
+      it "handles nil character class" do
+        character.update!(character_class: nil)
+        stats = character.stats
+        expect(stats).to be_a(Game::Systems::StatBlock)
+      end
+
+      it "adds allocated stats to missing base stats" do
+        character.update!(allocated_stats: {"luck" => 5})
+        stats = character.stats
+        expect(stats.get(:luck)).to eq(5)
+      end
+    end
+  end
 end
