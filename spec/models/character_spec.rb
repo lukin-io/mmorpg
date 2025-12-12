@@ -223,22 +223,22 @@ RSpec.describe Character, type: :model do
       end
 
       it "returns the skill level when set" do
-        character.update!(passive_skills: { "wanderer" => 50 })
+        character.update!(passive_skills: {"wanderer" => 50})
         expect(character.passive_skill_level(:wanderer)).to eq(50)
       end
 
       it "handles string keys" do
-        character.update!(passive_skills: { "wanderer" => 25 })
+        character.update!(passive_skills: {"wanderer" => 25})
         expect(character.passive_skill_level("wanderer")).to eq(25)
       end
 
       it "handles symbol keys" do
-        character.update!(passive_skills: { "wanderer" => 75 })
+        character.update!(passive_skills: {"wanderer" => 75})
         expect(character.passive_skill_level(:wanderer)).to eq(75)
       end
 
       it "returns 0 for nil value" do
-        character.update!(passive_skills: { "wanderer" => nil })
+        character.update!(passive_skills: {"wanderer" => nil})
         expect(character.passive_skill_level(:wanderer)).to eq(0)
       end
     end
@@ -350,7 +350,7 @@ RSpec.describe Character, type: :model do
   # Stats Allocation
   # ============================================
   describe "stats allocation" do
-    let(:character_class) { create(:character_class, base_stats: { "strength" => 10, "dexterity" => 10 }) }
+    let(:character_class) { create(:character_class, base_stats: {"strength" => 10, "dexterity" => 10}) }
     let(:character) { create(:character, character_class: character_class, allocated_stats: {}) }
 
     describe "#stats" do
@@ -361,13 +361,13 @@ RSpec.describe Character, type: :model do
       end
 
       it "includes allocated stats" do
-        character.update!(allocated_stats: { "strength" => 5 })
+        character.update!(allocated_stats: {"strength" => 5})
         stats = character.stats
         expect(stats.get(:strength)).to eq(15) # 10 base + 5 allocated
       end
 
       it "handles multiple allocations" do
-        character.update!(allocated_stats: { "strength" => 3, "dexterity" => 2 })
+        character.update!(allocated_stats: {"strength" => 3, "dexterity" => 2})
         stats = character.stats
         expect(stats.get(:strength)).to eq(13)
         expect(stats.get(:dexterity)).to eq(12)
@@ -380,7 +380,7 @@ RSpec.describe Character, type: :model do
       end
 
       it "adds allocated stats to missing base stats" do
-        character.update!(allocated_stats: { "luck" => 5 })
+        character.update!(allocated_stats: {"luck" => 5})
         stats = character.stats
         expect(stats.get(:luck)).to eq(5)
       end
