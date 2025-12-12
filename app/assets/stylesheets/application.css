@@ -11542,3 +11542,325 @@ turbo-frame[busy] {
   background: #eeeeff;
   border-color: #0066aa;
 }
+
+/* ============================================
+   NL ALLOCATION UI (Stats & Skills)
+   Neverlands-inspired +/- allocation pattern
+   ============================================ */
+
+.nl-allocation-page {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 16px;
+  font-family: Tahoma, Verdana, Arial, sans-serif;
+  font-size: 11px;
+  color: #333333;
+}
+
+.nl-allocation-header {
+  text-align: center;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #DECFA6;
+}
+
+.nl-allocation-title {
+  font-size: 16px;
+  font-weight: bold;
+  color: #336699;
+  margin: 0 0 4px 0;
+}
+
+.nl-allocation-subtitle {
+  font-size: 11px;
+  color: #666666;
+  margin: 0;
+}
+
+.nl-allocation-panel {
+  background: #F8F5ED;
+  border: 1px solid #DECFA6;
+  padding: 12px;
+  margin-bottom: 16px;
+}
+
+.nl-allocation-points {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  margin-bottom: 12px;
+  background: #FFFFFF;
+  border: 1px solid #E8DFC4;
+  font-weight: bold;
+}
+
+.nl-allocation-points-label {
+  color: #666666;
+}
+
+.nl-allocation-points-value {
+  color: #009D29;
+  font-size: 14px;
+}
+
+.nl-allocation-form {
+  display: block;
+}
+
+/* Stats Grid */
+.nl-stats-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.nl-stat-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px;
+  background: #FFFFFF;
+  border: 1px solid #E8DFC4;
+}
+
+.nl-stat-name {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.nl-stat-label {
+  font-weight: bold;
+  color: #333333;
+}
+
+.nl-stat-base {
+  font-size: 10px;
+  color: #888888;
+}
+
+.nl-stat-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nl-stat-btn {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: bold;
+  border: 1px solid #DECFA6;
+  background: #FFFFFF;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.nl-stat-btn:hover {
+  background: #F3ECD7;
+  border-color: #B9A05C;
+}
+
+.nl-stat-btn:active {
+  background: #E8DFC4;
+}
+
+.nl-stat-btn--plus {
+  color: #009D29;
+}
+
+.nl-stat-btn--plus:hover {
+  background: #eeffee;
+  border-color: #66aa66;
+}
+
+.nl-stat-btn--minus {
+  color: #cc0000;
+}
+
+.nl-stat-btn--minus:hover {
+  background: #ffeeee;
+  border-color: #cc6666;
+}
+
+.nl-stat-value {
+  min-width: 60px;
+  text-align: center;
+  font-size: 12px;
+  color: #333333;
+}
+
+.nl-stat-value b {
+  font-size: 14px;
+}
+
+.nl-stat-added {
+  color: #009D29;
+  font-size: 10px;
+  margin-left: 2px;
+}
+
+/* Skills Grid */
+.nl-skills-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.nl-skill-row {
+  padding: 12px;
+  background: #FFFFFF;
+  border: 1px solid #E8DFC4;
+}
+
+.nl-skill-info {
+  margin-bottom: 8px;
+}
+
+.nl-skill-name {
+  font-weight: bold;
+  color: #336699;
+  font-size: 12px;
+}
+
+.nl-skill-category {
+  display: inline-block;
+  padding: 1px 6px;
+  margin-left: 6px;
+  font-size: 9px;
+  border-radius: 3px;
+  background: #E8DFC4;
+  color: #666666;
+}
+
+.nl-skill-category--movement {
+  background: #e6f2e6;
+  color: #006600;
+}
+
+.nl-skill-category--combat {
+  background: #f2e6e6;
+  color: #660000;
+}
+
+.nl-skill-category--survival {
+  background: #e6e6f2;
+  color: #000066;
+}
+
+.nl-skill-description {
+  font-size: 10px;
+  color: #666666;
+  margin: 4px 0 0 0;
+}
+
+.nl-skill-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.nl-skill-value {
+  font-family: monospace;
+  font-size: 12px;
+  color: #333333;
+  min-width: 80px;
+  text-align: center;
+}
+
+.nl-skill-added {
+  color: #009D29;
+  font-size: 10px;
+  margin-left: 2px;
+}
+
+.nl-skill-effect {
+  margin-top: 8px;
+  padding: 4px 8px;
+  background: #F3ECD7;
+  border-left: 3px solid #B9A05C;
+  font-size: 10px;
+  color: #666666;
+}
+
+/* Allocation Actions */
+.nl-allocation-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #E8DFC4;
+}
+
+.nl-btn {
+  padding: 8px 16px;
+  font-family: Tahoma, Verdana, Arial, sans-serif;
+  font-size: 11px;
+  font-weight: bold;
+  border: 1px solid #DECFA6;
+  background: #FFFFFF;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.15s ease;
+}
+
+.nl-btn:hover {
+  background: #F3ECD7;
+  border-color: #B9A05C;
+}
+
+.nl-btn--primary {
+  background: #336699;
+  color: #FFFFFF;
+  border-color: #336699;
+}
+
+.nl-btn--primary:hover {
+  background: #2a5580;
+}
+
+.nl-btn--secondary {
+  background: #FFFFFF;
+  color: #336699;
+}
+
+.nl-btn--disabled {
+  background: #E8DFC4;
+  color: #999999;
+  border-color: #DECFA6;
+  cursor: not-allowed;
+}
+
+.nl-btn--disabled:hover {
+  background: #E8DFC4;
+}
+
+/* Allocation Footer */
+.nl-allocation-footer {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+/* Shake animation for invalid actions */
+@keyframes nl-shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-4px); }
+  40% { transform: translateX(4px); }
+  60% { transform: translateX(-4px); }
+  80% { transform: translateX(4px); }
+}
+
+.nl-shake {
+  animation: nl-shake 0.3s ease;
+}

@@ -19,7 +19,7 @@ This document captures all functionality inspired by the Neverlands MMORPG that 
 | 9 | [Alignment & Faction](#alignment--faction-system) | ✅ Implemented | `character.rb`, `alignment_helper.rb`, `arena_helper.rb` |
 | 10 | [Tile Resource Gathering](#tile-resource-gathering) | ✅ Implemented | `tile_resource.rb`, `tile_gathering_service.rb`, biome config |
 | 11 | [Tile NPC Spawning](#tile-npc-spawning) | ✅ Implemented | `tile_npc.rb`, `tile_npc_service.rb`, biome NPC config |
-| 12 | [Character Stats & Skills](#character-stats--skills-allocation) | 🔄 Partial | `passive_skill_registry.rb`, `stat_allocation_controller.js` |
+| 12 | [Character Stats & Skills](#character-stats--skills-allocation) | ✅ Implemented | `characters_controller.rb`, `stat_allocation_controller.js`, `skill_allocation_controller.js` |
 
 **Legend:** ✅ Implemented | 🔄 Partial | ❌ Not Started
 
@@ -2603,15 +2603,22 @@ function RemoveSkill(skill_id) {
 
 ### Elselands Implementation
 
-- **Status:** 🔄 Partial (Passive skills exist, need UI)
+- **Status:** ✅ Implemented (v1.0 - 2025-12-11)
+- **Flow Doc:** `doc/flow/17_stat_skill_allocation.md`
 - **Files:**
+  - `app/controllers/characters_controller.rb` — Stats/skills allocation controller
   - `app/lib/game/skills/passive_skill_registry.rb` — Skill definitions
   - `app/lib/game/skills/passive_skill_calculator.rb` — Effect calculations
   - `app/models/character.rb` — `passive_skills` JSONB, stat allocation methods
-  - `app/javascript/controllers/stat_allocation_controller.js` — (To implement)
-  - `app/views/characters/_stat_allocation.html.erb` — (To implement)
+  - `app/javascript/controllers/stat_allocation_controller.js` — Stats +/- UI
+  - `app/javascript/controllers/skill_allocation_controller.js` — Skills +/- UI
+  - `app/views/characters/stats.html.erb` — Stats page
+  - `app/views/characters/_stat_allocation.html.erb` — Stats form partial
+  - `app/views/characters/skills.html.erb` — Skills page
+  - `app/views/characters/_skill_allocation.html.erb` — Skills form partial
+  - `spec/requests/characters_spec.rb` — Request specs
 
-### Key Adaptations Needed
+### Key Adaptations Made
 
 | Neverlands Feature | Elselands Approach |
 |--------------------|-------------------|
@@ -2619,15 +2626,24 @@ function RemoveSkill(skill_id) {
 | Global form names | `data-stat-allocation-target` |
 | `document.write` | Server-rendered ERB + Turbo |
 | Form POST | Turbo Form with PATCH |
-| `[000/100]` format | Progress bar + text |
+| `[000/100]` format | Same format for skills |
 | Separate skill pools | Single skill_points pool |
+
+### Routes
+
+```
+GET  /characters/:id/stats   → stats
+PATCH /characters/:id/stats  → update_stats
+GET  /characters/:id/skills  → skills
+PATCH /characters/:id/skills → update_skills
+```
 
 ### Stat Categories
 
 | Category | Stats | Allocation |
 |----------|-------|------------|
-| **Primary** | Strength, Dexterity, Intelligence, Wisdom, Constitution | Level-up points |
-| **Passive Skills** | Wanderer, Endurance, Perception, etc. | Experience/training |
+| **Primary** | Strength, Dexterity, Intelligence, Constitution, Agility, Luck | Level-up points |
+| **Passive Skills** | Wanderer (movement speed) | Skill points |
 
 ---
 

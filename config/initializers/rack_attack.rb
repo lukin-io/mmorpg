@@ -5,8 +5,8 @@ class Rack::Attack
   if Rails.env.test?
     cache.store = ActiveSupport::Cache::MemoryStore.new
   else
-    redis_cache_url = ENV.fetch("REDIS_CACHE_URL", "redis://localhost:6379/1")
-    cache.store = ActiveSupport::Cache::RedisCacheStore.new(url: redis_cache_url, namespace: "rack-attack")
+  redis_cache_url = ENV.fetch("REDIS_CACHE_URL", "redis://localhost:6379/1")
+  cache.store = ActiveSupport::Cache::RedisCacheStore.new(url: redis_cache_url, namespace: "rack-attack")
   end
 
   # Limit brute force attempts on Devise endpoints.
