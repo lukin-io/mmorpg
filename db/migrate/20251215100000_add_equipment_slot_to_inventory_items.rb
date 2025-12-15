@@ -6,6 +6,6 @@ class AddEquipmentSlotToInventoryItems < ActiveRecord::Migration[8.1]
     add_column :inventory_items, :slot_index, :integer
 
     add_index :inventory_items, [:inventory_id, :equipped, :equipment_slot],
-              name: "idx_inventory_equipped_slot"
+      name: "idx_inventory_equipped_slot"
   end
 end

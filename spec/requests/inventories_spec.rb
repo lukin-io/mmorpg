@@ -43,7 +43,7 @@ RSpec.describe "Inventories", type: :request do
   describe "POST /inventory/equip" do
     let(:item_template) do
       create(:item_template, name: "Iron Sword", item_type: "equipment", slot: "main_hand",
-                             stat_modifiers: {attack: 10})
+        stat_modifiers: {attack: 10})
     end
     let!(:inventory_item) do
       create(:inventory_item, inventory: inventory, item_template: item_template, equipped: false)
@@ -59,7 +59,7 @@ RSpec.describe "Inventories", type: :request do
     context "with turbo_stream format" do
       it "returns turbo stream response" do
         post equip_inventory_path, params: {item_id: inventory_item.id},
-                                   headers: {"Accept" => "text/vnd.turbo-stream.html"}
+          headers: {"Accept" => "text/vnd.turbo-stream.html"}
 
         expect(response).to have_http_status(:success)
         expect(response.media_type).to eq("text/vnd.turbo-stream.html")
@@ -73,7 +73,7 @@ RSpec.describe "Inventories", type: :request do
     end
     let!(:inventory_item) do
       create(:inventory_item, inventory: inventory, item_template: item_template,
-                              equipped: true, equipment_slot: :main_hand)
+        equipped: true, equipment_slot: :main_hand)
     end
 
     it "unequips the item" do
@@ -87,7 +87,7 @@ RSpec.describe "Inventories", type: :request do
   describe "POST /inventory/use" do
     let(:item_template) do
       create(:item_template, name: "Health Potion", item_type: "consumable", slot: "none",
-                             stat_modifiers: {"heal_hp" => 50}, stack_limit: 99)
+        stat_modifiers: {"heal_hp" => 50}, stack_limit: 99)
     end
     let!(:inventory_item) do
       create(:inventory_item, inventory: inventory, item_template: item_template, quantity: 3)

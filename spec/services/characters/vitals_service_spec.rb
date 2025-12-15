@@ -10,7 +10,7 @@ RSpec.describe Characters::VitalsService do
   end
   let(:character) do
     create(:character, character_class: character_class, current_hp: 80, max_hp: 100,
-                       current_mp: 30, max_mp: 50, hp_regen_interval: 100, mp_regen_interval: 60)
+      current_mp: 30, max_mp: 50, hp_regen_interval: 100, mp_regen_interval: 60)
   end
 
   subject(:service) { described_class.new(character) }
@@ -70,11 +70,11 @@ RSpec.describe Characters::VitalsService do
     context "with equipped items" do
       let(:sword_template) do
         create(:item_template, name: "Iron Sword", item_type: "equipment", slot: "main_hand",
-                               stat_modifiers: {"attack" => 15})
+          stat_modifiers: {"attack" => 15})
       end
       let(:armor_template) do
         create(:item_template, name: "Iron Armor", item_type: "equipment", slot: "chest",
-                               stat_modifiers: {"defense" => 10})
+          stat_modifiers: {"defense" => 10})
       end
 
       before do

@@ -377,21 +377,24 @@ if defined?(ItemTemplate)
   [
     {
       name: "Iron Longsword",
-      slot: "weapon",
+      item_type: "equipment",
+      slot: "main_hand",
       rarity: "common",
       stat_modifiers: {attack: 6},
       weight: 4
     },
     {
       name: "Oak Longbow",
-      slot: "weapon",
+      item_type: "equipment",
+      slot: "main_hand",
       rarity: "uncommon",
       stat_modifiers: {attack: 5, agility: 2},
       weight: 3
     },
     {
       name: "Mystic Robes",
-      slot: "head",
+      item_type: "equipment",
+      slot: "chest",
       rarity: "rare",
       stat_modifiers: {intellect: 4, vitality: 2},
       weight: 1,
@@ -399,10 +402,12 @@ if defined?(ItemTemplate)
     }
   ].each do |attrs|
     ItemTemplate.find_or_create_by!(name: attrs[:name]) do |item|
+      item.item_type = attrs[:item_type]
       item.slot = attrs[:slot]
       item.rarity = attrs[:rarity]
       item.stat_modifiers = attrs[:stat_modifiers]
       item.weight = attrs[:weight] || 2
+      item.stack_limit = attrs[:stack_limit] || 1
       item.premium = attrs.fetch(:premium, false)
       item.enhancement_rules = {"base_success_chance" => 55, "required_skill_level" => 5, "failure_penalty" => "downgrade"}
     end
@@ -733,18 +738,22 @@ end
 
 if defined?(ItemTemplate)
   longsword_template = ItemTemplate.find_or_create_by!(name: "Tempered Longsword") do |item|
-    item.slot = "weapon"
+    item.item_type = "equipment"
+    item.slot = "main_hand"
     item.rarity = "rare"
     item.stat_modifiers = {"attack" => 18, "crit" => 5}
     item.weight = 5
+    item.stack_limit = 1
     item.enhancement_rules = {"base_success_chance" => 60, "required_skill_level" => 6}
   end
 
   elixir_template = ItemTemplate.find_or_create_by!(name: "Aetheric Elixir") do |item|
-    item.slot = "consumable"
+    item.item_type = "consumable"
+    item.slot = "none"
     item.rarity = "epic"
     item.stat_modifiers = {"intellect" => 6}
     item.weight = 1
+    item.stack_limit = 99
     item.enhancement_rules = {"consumable" => true}
   end
 
