@@ -105,12 +105,13 @@ module Characters
       current_zone = character.position&.zone
 
       if current_zone
-        spawn = SpawnPoint.find_by(zone: current_zone, spawn_type: :player_respawn)
+        # Use default_entry flag to identify player spawn points
+        spawn = SpawnPoint.find_by(zone: current_zone, default_entry: true)
         return spawn if spawn
       end
 
-      # Fall back to default city spawn
-      SpawnPoint.find_by(spawn_type: :player_default)
+      # Fall back to any default spawn point
+      SpawnPoint.find_by(default_entry: true)
     end
 
     def in_arena_match?

@@ -1,7 +1,10 @@
 <%# Turn-based combat UI %>
+<% character_id = defined?(current_character) ? current_character&.id : @player_participant&.character&.id %>
 <div class="nl-combat-container"
+     id="nl-combat-container"
      data-controller="turn-combat"
      data-turn-combat-battle-id-value="<%= @battle.id %>"
+     data-turn-combat-character-id-value="<%= character_id %>"
      data-turn-combat-action-limit-value="<%= @battle.action_points_per_turn || 80 %>"
      data-turn-combat-mana-limit-value="<%= @battle.max_mana_per_turn || 50 %>">
 

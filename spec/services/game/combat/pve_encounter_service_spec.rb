@@ -484,29 +484,270 @@ RSpec.describe Game::Combat::PveEncounterService do
   end
 
   describe "ActionCable broadcasts" do
-    let(:broadcast_spy) { class_spy(ActionCable.server) }
-
     before do
       allow(ActionCable.server).to receive(:broadcast)
     end
 
-    it "broadcasts combat_started on encounter start" do
-      service.start_encounter!
+    describe "character combat channel" do
+      it "broadcasts combat_started on encounter start" do
+        service.start_encounter!
 
-      expect(ActionCable.server).to have_received(:broadcast).with(
-        "character:#{character.id}:combat",
-        hash_including(type: "combat_started")
-      )
+        expect(ActionCable.server).to have_received(:broadcast).with(
+          "character:#{character.id}:combat",
+          hash_including(type: "combat_started")
+        )
+      end
+
+      it "broadcasts combat_update on action" do
+        service.start_encounter!
+        service.process_action!(action_type: :attack)
+
+        expect(ActionCable.server).to have_received(:broadcast).with(
+          "character:#{character.id}:combat",
+          hash_including(type: "combat_update")
+        )
+      end
+
+      it "broadcasts combat_ended on battle completion" do
+        service.start_encounter!
+        battle = service.battle
+        battle.battle_participants.find_by(team: "enemy").update!(current_hp: 1)
+        service.process_action!(action_type: :attack)
+
+        expect(ActionCable.server).to have_received(:broadcast).with(
+          "character:#{character.id}:combat",
+          hash_including(type: "combat_ended")
+        )
+      end
     end
 
-    it "broadcasts combat_update on action" do
-      service.start_encounter!
-      service.process_action!(action_type: :attack)
+    describe "battle channel broadcasts" do
+      it "broadcasts round_complete to battle channel on encounter start" do
+        result = service.start_encounter!
 
-      expect(ActionCable.server).to have_received(:broadcast).with(
-        "character:#{character.id}:combat",
-        hash_including(type: "combat_update")
-      )
+        expect(ActionCable.server).to have_received(:broadcast).with(
+          "battle:#{result.battle.id}",
+          hash_including(
+            type: "round_complete",
+            log_entries: array_including(hash_including(:message, :type))
+          )
+        )
+      end
+
+      it "broadcasts round_complete with participants on action" do
+        result = service.start_encounter!
+        service.process_action!(action_type: :attack)
+
+        expect(ActionCable.server).to have_received(:broadcast).with(
+          "battle:#{result.battle.id}",
+          hash_including(
+            type: "round_complete",
+            participants: kind_of(Array)
+          )
+        ).at_least(:once)
+      end
+
+      it "broadcasts battle_end on victory" do
+        result = service.start_encounter!
+        result.battle.battle_participants.find_by(team: "enemy").update!(current_hp: 1)
+        service.process_action!(action_type: :attack)
+
+        expect(ActionCable.server).to have_received(:broadcast).with(
+          "battle:#{result.battle.id}",
+          hash_including(
+            type: "battle_end",
+            winner_team: "player",
+            outcome: "victory"
+          )
+        )
+      end
+
+      it "broadcasts battle_end on defeat" do
+        result = service.start_encounter!
+        character.update!(current_hp: 1, max_hp: 100)
+        allow_any_instance_of(Characters::VitalsService).to receive(:apply_damage) do
+          character.update!(current_hp: 0)
+        end
+        allow(Characters::DeathHandler).to receive(:call)
+        service.process_action!(action_type: :attack)
+
+        expect(ActionCable.server).to have_received(:broadcast).with(
+          "battle:#{result.battle.id}",
+          hash_including(
+            type: "battle_end",
+            winner_team: "enemy",
+            outcome: "defeat"
+          )
+        )
+      end
+
+      it "broadcasts battle_end on flee" do
+        result = service.start_encounter!
+        # Force a successful flee by mocking rand
+        allow_any_instance_of(described_class).to receive(:rand).and_return(1)
+        service.process_action!(action_type: :flee)
+
+        expect(ActionCable.server).to have_received(:broadcast).with(
+          "battle:#{result.battle.id}",
+          hash_including(
+            type: "battle_end",
+            outcome: "fled"
+          )
+        )
+      end
+    end
+  end
+
+  describe "combat log persistence" do
+    before do
+      allow(ActionCable.server).to receive(:broadcast)
+    end
+
+    describe "#start_encounter!" do
+      it "creates initial combat log entry" do
+        expect { service.start_encounter! }.to change(CombatLogEntry, :count).by(1)
+      end
+
+      it "persists log with combat start message" do
+        result = service.start_encounter!
+        entry = result.battle.combat_log_entries.last
+
+        expect(entry.message).to include("Combat begins")
+        expect(entry.message).to include(npc_template.name)
+      end
+
+      it "sets log entry attributes correctly" do
+        result = service.start_encounter!
+        entry = result.battle.combat_log_entries.last
+
+        expect(entry.round_number).to eq(1)
+        expect(entry.sequence).to eq(1)
+        expect(entry.log_type).to eq("system")
+      end
+    end
+
+    describe "#process_action!" do
+      let!(:battle_result) { service.start_encounter! }
+
+      it "persists attack log entries" do
+        expect {
+          service.process_action!(action_type: :attack)
+        }.to change(CombatLogEntry, :count).by_at_least(2) # player attack + npc attack
+      end
+
+      it "persists defend log entries" do
+        expect {
+          service.process_action!(action_type: :defend)
+        }.to change(CombatLogEntry, :count).by_at_least(1)
+      end
+
+      it "sets correct log_type for attack" do
+        service.process_action!(action_type: :attack)
+        attack_entry = battle_result.battle.combat_log_entries.find_by("message LIKE ?", "%attack%")
+
+        expect(attack_entry.log_type).to eq("attack")
+      end
+
+      it "extracts damage amount" do
+        service.process_action!(action_type: :attack)
+        attack_entry = battle_result.battle.combat_log_entries.find_by("message LIKE ?", "%damage%")
+
+        expect(attack_entry.damage_amount).to be > 0
+      end
+
+      it "increments sequence within same round" do
+        service.process_action!(action_type: :attack)
+        entries = battle_result.battle.combat_log_entries.where(round_number: 2).order(:sequence)
+
+        expect(entries.map(&:sequence)).to eq((1..entries.count).to_a)
+      end
+    end
+
+    describe "#process_turn!" do
+      let!(:battle_result) { service.start_encounter! }
+
+      it "persists all turn actions as log entries" do
+        attacks = [{"body_part" => "head", "action_key" => "simple", "slot_index" => 0}]
+        blocks = [{"body_part" => "torso", "action_key" => "basic_block", "slot_index" => 0}]
+
+        expect {
+          service.process_turn!(attacks: attacks, blocks: blocks, skills: [])
+        }.to change(CombatLogEntry, :count).by_at_least(2)
+      end
+
+      it "persists defend message" do
+        blocks = [{"body_part" => "legs", "action_key" => "basic_block", "slot_index" => 0}]
+        service.process_turn!(attacks: [], blocks: blocks, skills: [])
+
+        defend_entry = battle_result.battle.combat_log_entries.find_by("message LIKE ?", "%defend%")
+        expect(defend_entry).to be_present
+        expect(defend_entry.log_type).to eq("defend")
+      end
+    end
+
+    describe "log entry error handling" do
+      let!(:battle_result) { service.start_encounter! }
+
+      it "continues combat even if log persistence fails" do
+        allow_any_instance_of(Battle).to receive(:combat_log_entries).and_raise(StandardError)
+
+        # Should not raise error
+        expect { service.process_action!(action_type: :attack) }.not_to raise_error
+      end
+    end
+  end
+
+  describe "log persistence on battle completion" do
+    before do
+      allow(ActionCable.server).to receive(:broadcast)
+    end
+
+    context "on victory" do
+      let!(:battle_result) { service.start_encounter! }
+
+      before do
+        battle_result.battle.battle_participants.find_by(team: "enemy").update!(current_hp: 1)
+      end
+
+      it "persists combat log entries including victory message" do
+        initial_count = battle_result.battle.combat_log_entries.count
+        service.process_action!(action_type: :attack)
+
+        # Battle should have more log entries after action
+        expect(battle_result.battle.combat_log_entries.count).to be > initial_count
+
+        # Check that victory-related entry exists
+        victory_entry = battle_result.battle.combat_log_entries.find { |e|
+          e.message.downcase.include?("victory") || e.message.include?("defeated")
+        }
+        expect(victory_entry).to be_present
+      end
+    end
+
+    context "on defeat" do
+      let!(:battle_result) { service.start_encounter! }
+
+      before do
+        character.update!(current_hp: 1)
+        allow_any_instance_of(Characters::VitalsService).to receive(:apply_damage) do
+          character.update!(current_hp: 0)
+        end
+        allow(Characters::DeathHandler).to receive(:call)
+      end
+
+      it "persists combat log entries when player is defeated" do
+        initial_count = battle_result.battle.combat_log_entries.count
+        service.process_action!(action_type: :attack)
+
+        # Battle should have more log entries after action
+        expect(battle_result.battle.combat_log_entries.count).to be > initial_count
+
+        # Check for defeat-related entry
+        defeat_entry = battle_result.battle.combat_log_entries.find { |e|
+          e.message.downcase.include?("defeat") || e.message.downcase.include?("slain")
+        }
+        expect(defeat_entry).to be_present
+      end
     end
   end
 
