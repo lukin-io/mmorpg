@@ -9,7 +9,7 @@ RSpec.describe Game::Inventory::EnhancementService do
   let(:inventory_item) do
     create(:inventory_item, inventory: character.inventory, item_template: item_template, enhancement_level: 0)
   end
-  let(:material_template) { create(:item_template, name: "Weapon Stone", slot: "consumable", rarity: "common") }
+  let(:material_template) { create(:item_template, :consumable, name: "Weapon Stone", rarity: "common") }
 
   before do
     # Set up gold in wallet

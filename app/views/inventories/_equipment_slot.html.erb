@@ -8,9 +8,9 @@
       <div class="item-tooltip">
         <strong><%= item.item_template.name %></strong>
         <p class="item-rarity"><%= item.item_template.rarity.titleize %></p>
-        <% if item.item_template.stats.present? %>
+        <% if item.item_template.stat_modifiers.present? %>
           <div class="item-stats">
-            <% item.item_template.stats.each do |stat, value| %>
+            <% item.item_template.stat_modifiers.each do |stat, value| %>
               <span>+<%= value %> <%= stat.titleize %></span>
             <% end %>
           </div>

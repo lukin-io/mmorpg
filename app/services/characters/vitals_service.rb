@@ -163,7 +163,82 @@ module Characters
       ((character.current_mp.to_f / character.max_mp) * 100).round(1)
     end
 
+    # Returns a summary hash of character stats for display
+    #
+    # @return [Hash] stats summary with base stats and derived values
+    def stats_summary
+      stats = character.stats
+
+      {
+        current_hp: character.current_hp,
+        max_hp: character.max_hp,
+        current_mp: character.current_mp,
+        max_mp: character.max_mp,
+        strength: stats.get(:strength),
+        dexterity: stats.get(:dexterity),
+        intelligence: stats.get(:intelligence),
+        vitality: stats.get(:vitality),
+        spirit: stats.get(:spirit),
+        attack_power: calculate_attack_power(stats),
+        defense: calculate_defense(stats),
+        crit_rate: calculate_crit_rate(stats)
+      }
+    end
+
     private
+
+    # Calculate attack power from stats
+    #
+    # @param stats [Game::Systems::StatBlock] character stats
+    # @return [Integer] attack power value
+    def calculate_attack_power(stats)
+      base = stats.get(:strength).to_i * 2
+      dex_bonus = stats.get(:dexterity).to_i / 2
+      base + dex_bonus + equipment_attack_bonus
+    end
+
+    # Calculate defense from stats
+    #
+    # @param stats [Game::Systems::StatBlock] character stats
+    # @return [Integer] defense value
+    def calculate_defense(stats)
+      base = stats.get(:vitality).to_i
+      str_bonus = stats.get(:strength).to_i / 3
+      base + str_bonus + equipment_defense_bonus
+    end
+
+    # Calculate critical hit rate from stats
+    #
+    # @param stats [Game::Systems::StatBlock] character stats
+    # @return [Integer] crit rate percentage
+    def calculate_crit_rate(stats)
+      base = 5
+      dex_bonus = stats.get(:dexterity).to_i / 5
+      luck_bonus = stats.get(:luck).to_i / 10
+      [base + dex_bonus + luck_bonus, 100].min
+    end
+
+    # Get attack bonus from equipped items
+    #
+    # @return [Integer] total attack bonus from equipment
+    def equipment_attack_bonus
+      return 0 unless character.inventory
+
+      character.inventory.inventory_items.equipped.includes(:item_template).sum do |item|
+        item.item_template.stat_modifiers&.fetch("attack", 0).to_i
+      end
+    end
+
+    # Get defense bonus from equipped items
+    #
+    # @return [Integer] total defense bonus from equipment
+    def equipment_defense_bonus
+      return 0 unless character.inventory
+
+      character.inventory.inventory_items.equipped.includes(:item_template).sum do |item|
+        item.item_template.stat_modifiers&.fetch("defense", 0).to_i
+      end
+    end
 
     def broadcast_vital_update(type, amount, source)
       ActionCable.server.broadcast(

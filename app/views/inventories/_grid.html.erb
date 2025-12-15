@@ -8,32 +8,30 @@
         <% if item.quantity > 1 %>
           <span class="item-quantity"><%= item.quantity %></span>
         <% end %>
-        <% if item.enhanced_level.to_i > 0 %>
-          <span class="item-enhancement">+<%= item.enhanced_level %></span>
+        <% if item.enhancement_level.to_i > 0 %>
+          <span class="item-enhancement">+<%= item.enhancement_level %></span>
         <% end %>
       </div>
 
       <div class="item-tooltip">
         <div class="tooltip-header">
           <strong class="item-name"><%= item.item_template.name %></strong>
-          <% if item.enhanced_level.to_i > 0 %>
-            <span class="enhancement-badge">+<%= item.enhanced_level %></span>
+          <% if item.enhancement_level.to_i > 0 %>
+            <span class="enhancement-badge">+<%= item.enhancement_level %></span>
           <% end %>
         </div>
         <p class="item-rarity rarity--<%= item.item_template.rarity %>"><%= item.item_template.rarity.titleize %></p>
         <p class="item-type"><%= item.item_template.item_type.titleize %></p>
 
-        <% if item.item_template.stats.present? %>
+        <% if item.item_template.stat_modifiers.present? %>
           <div class="item-stats">
-            <% item.item_template.stats.each do |stat, value| %>
+            <% item.item_template.stat_modifiers.each do |stat, value| %>
               <span class="stat-line">+<%= value %> <%= stat.titleize %></span>
             <% end %>
           </div>
         <% end %>
 
-        <% if item.item_template.description.present? %>
-          <p class="item-description"><%= item.item_template.description %></p>
-        <% end %>
+        <%# Description is not in current schema - skip for now %>
 
         <div class="item-actions-hint">
           <span>Left-click: Select</span>

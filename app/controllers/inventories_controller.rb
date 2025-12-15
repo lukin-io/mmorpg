@@ -29,8 +29,9 @@ class InventoriesController < ApplicationController
     if result[:success]
       respond_to do |format|
         format.turbo_stream do
+          @inventory = current_character.inventory.reload
           render turbo_stream: [
-            turbo_stream.replace("inventory_grid", partial: "inventories/grid", locals: {items: current_character.inventory.inventory_items.reload}),
+            turbo_stream.replace("inventory_grid", partial: "inventories/grid", locals: {items: @inventory.inventory_items, inventory: @inventory}),
             turbo_stream.replace("equipment_panel", partial: "inventories/equipment", locals: {equipment: current_character_equipment}),
             turbo_stream.replace("stats_panel", partial: "inventories/stats", locals: {stats: Characters::VitalsService.new(current_character).stats_summary})
           ]
@@ -57,8 +58,9 @@ class InventoriesController < ApplicationController
     if result[:success]
       respond_to do |format|
         format.turbo_stream do
+          @inventory = current_character.inventory.reload
           render turbo_stream: [
-            turbo_stream.replace("inventory_grid", partial: "inventories/grid", locals: {items: current_character.inventory.inventory_items.reload}),
+            turbo_stream.replace("inventory_grid", partial: "inventories/grid", locals: {items: @inventory.inventory_items, inventory: @inventory}),
             turbo_stream.replace("equipment_panel", partial: "inventories/equipment", locals: {equipment: current_character_equipment}),
             turbo_stream.replace("stats_panel", partial: "inventories/stats", locals: {stats: Characters::VitalsService.new(current_character).stats_summary})
           ]
