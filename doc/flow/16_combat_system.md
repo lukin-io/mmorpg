@@ -1,5 +1,9 @@
 # Combat System - Flow Documentation
 
+## Version History
+- **v1.0** (2024-12-01): Initial implementation
+- **v1.1** (2024-12-15): Added BattleChannel for real-time HP/MP updates, combat log persistence, and battle completion handling
+
 ## Overview
 
 The combat system implements Neverlands-inspired turn-based PvE combat with:
@@ -8,6 +12,9 @@ The combat system implements Neverlands-inspired turn-based PvE combat with:
 - Magic/skill slot activation
 - Simultaneous turn resolution
 - Detailed combat logs and statistics
+- **Real-time HP/MP updates via ActionCable** (BattleChannel)
+- **Persistent combat logs** (stored in `combat_log_entries` table)
+- **Proper battle completion handling** with rewards display
 
 ## UI Layout
 
@@ -43,31 +50,46 @@ The combat system implements Neverlands-inspired turn-based PvE combat with:
 
 ### Controllers
 - `app/controllers/combat_controller.rb` - Main combat controller
-  - `show` - Display active battle
+  - `show` - Display active battle (loads persisted combat logs)
   - `start` - Start combat with NPC
-  - `action` - Process turn actions
+  - `action` - Process turn actions (renders `_result` partial on battle completion)
   - `flee` - Attempt to escape
 
 ### Services
 - `app/services/game/combat/pve_encounter_service.rb` - PvE encounter management
+  - `start_encounter!` - Creates battle and broadcasts `combat_started`
+  - `process_turn!` - Resolves round and broadcasts `round_complete`
+  - `complete_battle!` - Marks battle as completed and broadcasts `combat_ended`
+  - `persist_log_entry!` - Saves combat log entries to database
 - `app/services/game/combat/turn_based_combat_service.rb` - Turn resolution
 - `app/services/game/combat/turn_resolver.rb` - Attack/damage calculation
 - `app/services/game/combat/skill_executor.rb` - Skill execution
 - `app/services/game/combat/log_writer.rb` - Combat log generation
 - `app/services/game/combat/post_battle_processor.rb` - Rewards, XP
 
+### Channels
+- `app/channels/battle_channel.rb` - Real-time battle updates
+  - Streams `battle:#{battle_id}` for round_complete, vitals_update, combat_ended events
+  - `request_state` action returns current battle state (turn, participants, logs)
+  - Only allows subscriptions for battle participants
+
 ### Views
 - `app/views/combat/show.html.erb` - Combat page
-- `app/views/combat/_battle.html.erb` - Main battle layout
+- `app/views/combat/_battle.html.erb` - Main battle layout (includes `characterId` data attribute)
 - `app/views/combat/_nl_participant.html.erb` - Player/enemy display
 - `app/views/combat/_nl_action_selection.html.erb` - Attack/block selectors
 - `app/views/combat/_nl_magic_slots.html.erb` - Skill slots
 - `app/views/combat/_nl_combat_log.html.erb` - Combat log display
+- `app/views/combat/_nl_log_entries.html.erb` - New log entries (with dynamic CSS classes)
 - `app/views/combat/_nl_group_display.html.erb` - Team display
-- `app/views/combat/_result.html.erb` - Battle result screen
+- `app/views/combat/_result.html.erb` - Battle result screen (XP, gold, item rewards)
 
 ### JavaScript
 - `app/javascript/controllers/turn_combat_controller.js` - Stimulus controller
+  - Subscribes to `BattleChannel` and `VitalsChannel`
+  - Handles `round_complete`, `vitals_update`, `combat_ended` events
+  - Updates participant HP/MP bars in real-time
+  - Displays battle results with "Return to World" button
 - `app/javascript/controllers/pve_combat_controller.js` - PvE-specific logic
 
 ## Combat Flow
@@ -206,22 +228,72 @@ All combat CSS uses the `.nl-combat-*` prefix and CSS variables defined in `.nl-
 - Combat log: `11px`
 - Timestamps: `10px` monospace
 
-## Turbo Stream Updates
+## Real-Time Updates
 
-Combat uses Turbo Streams for real-time updates:
+### ActionCable (BattleChannel)
+Combat uses ActionCable for real-time HP/MP and log updates:
+
 ```ruby
-turbo_stream.update("participant-1", partial: "combat/nl_participant", ...)
-turbo_stream.update("participant-2", partial: "combat/nl_participant", ...)
+# Server broadcasts to battle channel
+ActionCable.server.broadcast("battle:#{battle_id}", {
+  type: "round_complete",
+  battle_id: battle_id,
+  turn: battle.current_turn,
+  combat_log: [message],
+  participants: {
+    participant_id => { current_hp: hp, current_mp: mp, max_hp: max_hp, max_mp: max_mp }
+  }
+})
+```
+
+```javascript
+// Client subscribes in turn_combat_controller.js
+this.battleSubscription = consumer.subscriptions.create(
+  { channel: "BattleChannel", battle_id: this.battleIdValue },
+  { received: (data) => this.handleBattleUpdate(data) }
+)
+```
+
+### Turbo Stream Updates
+Combat also uses Turbo Streams for form responses:
+```ruby
+turbo_stream.update("participant-#{id}", partial: "combat/nl_participant", ...)
 turbo_stream.append("nl-log-table", partial: "combat/nl_log_entries", ...)
+turbo_stream.replace("nl-combat-container", partial: "combat/result", ...) # On battle end
+```
+
+### Combat Log Persistence
+Combat logs are persisted to `combat_log_entries` table for page reload support:
+```ruby
+CombatLogEntry.create!(
+  battle: battle,
+  participant: participant,
+  log_type: :attack | :damage | :block | :heal | :buff | :death | :victory | :defeat,
+  message: "Warrior attacks Bandit Scout for 15 damage",
+  damage_amount: 15,
+  round_number: battle.current_turn
+)
 ```
 
 ## Testing
 
 ### Request Specs
 - `spec/requests/combat_spec.rb`
+  - Combat action processing
+  - Battle completion via Turbo Stream (replaces `nl-combat-container` with result)
+  - Victory/defeat scenarios
+
+### Channel Specs
+- `spec/channels/battle_channel_spec.rb`
+  - Subscription confirmation for battle participants
+  - Rejection for non-participants/invalid battles
+  - `request_state` action transmits battle state (turn, HP/MP, logs)
 
 ### Service Specs
 - `spec/services/game/combat/pve_encounter_service_spec.rb`
+  - Turn processing with attacks and blocks
+  - Combat log persistence on battle completion
+  - ActionCable broadcasts (round_complete, combat_ended)
 - `spec/services/game/combat/turn_based_combat_service_spec.rb`
 - `spec/services/game/combat/turn_resolver_spec.rb`
 
@@ -233,10 +305,11 @@ turbo_stream.append("nl-log-table", partial: "combat/nl_log_entries", ...)
 | Type | Path |
 |------|------|
 | Controller | `app/controllers/combat_controller.rb` |
+| Channel | `app/channels/battle_channel.rb` |
 | Service | `app/services/game/combat/*.rb` |
-| Model | `app/models/battle.rb`, `app/models/battle_participant.rb` |
+| Model | `app/models/battle.rb`, `app/models/battle_participant.rb`, `app/models/combat_log_entry.rb` |
 | Views | `app/views/combat/_*.html.erb` |
 | JavaScript | `app/javascript/controllers/turn_combat_controller.js` |
 | CSS | `app/assets/stylesheets/application.css` (nl-combat-* classes) |
-| Specs | `spec/requests/combat_spec.rb`, `spec/services/game/combat/*_spec.rb` |
+| Specs | `spec/requests/combat_spec.rb`, `spec/channels/battle_channel_spec.rb`, `spec/services/game/combat/*_spec.rb` |
 
