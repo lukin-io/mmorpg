@@ -99,9 +99,12 @@ class CombatController < ApplicationController
           player_participant = result.battle.battle_participants.find_by(team: "player")
           enemy_participant = result.battle.battle_participants.find_by(team: "enemy")
 
-          streams << turbo_stream.update("participant-1", partial: "combat/nl_participant",
+          # Use actual participant IDs from the partial
+          streams << turbo_stream.replace("participant-#{player_participant.id}",
+            partial: "combat/nl_participant",
             locals: {participant: player_participant, side: :left})
-          streams << turbo_stream.update("participant-2", partial: "combat/nl_participant",
+          streams << turbo_stream.replace("participant-#{enemy_participant.id}",
+            partial: "combat/nl_participant",
             locals: {participant: enemy_participant, side: :right})
 
           # Append new combat log entries (don't replace, just append)

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_12_11_145857) do
+ActiveRecord::Schema[8.1].define(version: 2025_12_15_100000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -1284,6 +1284,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_11_145857) do
     t.boolean "bound", default: false, null: false
     t.datetime "created_at", null: false
     t.integer "enhancement_level", default: 0, null: false
+    t.string "equipment_slot"
     t.boolean "equipped", default: false, null: false
     t.bigint "inventory_id", null: false
     t.bigint "item_template_id", null: false
@@ -1291,9 +1292,11 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_11_145857) do
     t.boolean "premium", default: false, null: false
     t.jsonb "properties", default: {}, null: false
     t.integer "quantity", default: 1, null: false
+    t.integer "slot_index"
     t.string "slot_kind"
     t.datetime "updated_at", null: false
     t.integer "weight", default: 0, null: false
+    t.index ["inventory_id", "equipped", "equipment_slot"], name: "idx_inventory_equipped_slot"
     t.index ["inventory_id", "slot_kind"], name: "index_inventory_items_on_inventory_id_and_slot_kind"
     t.index ["inventory_id"], name: "index_inventory_items_on_inventory_id"
     t.index ["item_template_id"], name: "index_inventory_items_on_item_template_id"

@@ -1,12 +1,16 @@
 # 12. Character Vitals & Regeneration Flow
 
+## Version History
+- **v1.0** (2024-12-01): Initial implementation
+- **v1.1** (2024-12-15): Fixed DeathHandler respawn logic to use `default_entry: true` instead of non-existent `spawn_type` column
+
 ## Implementation Status
 
 | Component | Status | Details |
 |-----------|--------|---------|
 | **Character vitals columns** | ✅ Implemented | `current_hp`, `max_hp`, `current_mp`, `max_mp`, `hp_regen_interval_seconds`, `mp_regen_interval_seconds` |
-| **VitalsService** | ✅ Implemented | `app/services/characters/vitals_service.rb` — Damage, heal, mana, regen |
-| **DeathHandler** | ✅ Implemented | `app/services/characters/death_handler.rb` — Respawn logic |
+| **VitalsService** | ✅ Implemented | `app/services/characters/vitals_service.rb` — Damage, heal, mana, regen, stats_summary |
+| **DeathHandler** | ✅ Implemented | `app/services/characters/death_handler.rb` — Respawn logic (uses `default_entry: true`) |
 | **VitalsChannel** | ✅ Implemented | `app/channels/vitals_channel.rb` — Real-time HP/MP broadcasts |
 | **vitals_controller.js** | ✅ Implemented | `app/javascript/controllers/vitals_controller.js` — Client-side bars, regen, floating text |
 | **_vitals_bar.html.erb** | ✅ Implemented | `app/views/shared/_vitals_bar.html.erb` — HP/MP bar partial |
@@ -70,6 +74,7 @@ Example: max_hp=100, interval=1500 → 100/1500 = 0.067 HP/second
 - `DeathHandler` applies death penalties (XP loss based on trauma %)
 - Character respawns at nearest safe zone with full HP/MP
 - Death broadcast sent to relevant channels
+- **Respawn Point Logic:** Uses `SpawnPoint.where(zone: character.current_zone, default_entry: true).first` to find respawn location (Note: `spawn_type` column does not exist; use `default_entry: true` instead)
 
 ---
 
@@ -645,4 +650,7 @@ end
 - **Frontend:** `app/javascript/controllers/vitals_controller.js`, `app/javascript/channels/vitals_channel.js`
 - **Views:** `app/views/characters/_vitals_bar.html.erb`
 - **CSS:** `app/assets/stylesheets/application.css` (vitals section)
+- **Specs:**
+  - `spec/services/characters/vitals_service_spec.rb`
+  - `spec/services/characters/death_handler_spec.rb` (covers apply_penalties, broadcast_death, respawn_character, move_to_respawn_point, find_respawn_point, in_arena_match?)
 

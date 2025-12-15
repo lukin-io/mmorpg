@@ -1,4 +1,5 @@
 import { Controller } from "@hotwired/stimulus"
+import consumer from "channels/consumer"
 
 /**
  * Turn-based combat controller.
@@ -20,6 +21,7 @@ export default class extends Controller {
 
   static values = {
     battleId: Number,
+    characterId: Number,
     actionLimit: { type: Number, default: 80 },
     manaLimit: { type: Number, default: 50 }
   }
@@ -42,18 +44,74 @@ export default class extends Controller {
     if (this.subscription) {
       this.subscription.unsubscribe()
     }
+    if (this.vitalsSubscription) {
+      this.vitalsSubscription.unsubscribe()
+    }
   }
 
   // Subscribe to combat channel for real-time updates
   subscribeToChannel() {
-    if (typeof ActionCable === 'undefined') return
+    if (!this.hasBattleIdValue) return
 
-    this.subscription = ActionCable.createConsumer().subscriptions.create(
+    this.subscription = consumer.subscriptions.create(
       { channel: "BattleChannel", battle_id: this.battleIdValue },
       {
         received: (data) => this.handleCombatUpdate(data)
       }
     )
+
+    // Also subscribe to character vitals channel for HP updates
+    if (this.hasCharacterIdValue) {
+      this.vitalsSubscription = consumer.subscriptions.create(
+        { channel: "VitalsChannel", character_id: this.characterIdValue },
+        {
+          received: (data) => this.handleVitalsUpdate(data)
+        }
+      )
+    }
+  }
+
+  // Handle vitals updates (HP changes from server)
+  handleVitalsUpdate(data) {
+    if (data.type === "damage" || data.type === "heal") {
+      // Update the player participant HP display
+      const playerParticipant = document.querySelector('.nl-participant--left')
+      if (playerParticipant) {
+        const hpFill = playerParticipant.querySelector('.nl-bar-fill--hp')
+        const hpText = playerParticipant.querySelector('.nl-hp-text')
+
+        if (hpFill && data.hp_percent !== undefined) {
+          hpFill.style.width = `${data.hp_percent}%`
+          hpFill.classList.toggle('critical', data.hp_percent < 25)
+        }
+
+        if (hpText && data.current_hp !== undefined && data.max_hp !== undefined) {
+          const maxLen = data.max_hp.toString().length
+          const currentStr = data.current_hp.toString().padStart(maxLen, ' ')
+          const maxStr = data.max_hp.toString().padStart(maxLen, ' ')
+          hpText.textContent = `  ${currentStr}/${maxStr}`
+        }
+      }
+    }
+
+    if (data.type === "death") {
+      this.handlePlayerDeath(data)
+    }
+  }
+
+  // Handle player death
+  handlePlayerDeath(data) {
+    const actionPanel = document.querySelector('.nl-action-panel')
+    if (actionPanel) {
+      actionPanel.innerHTML = `
+        <div class="nl-battle-result nl-battle-result--defeat">
+          <h2>💀 You Have Fallen!</h2>
+          <p>${data.message || "You have been defeated."}</p>
+          <a href="/world" class="nl-btn nl-btn-primary">Return to World</a>
+        </div>
+      `
+    }
+    this.setControlsEnabled(false)
   }
 
   // Handle real-time combat updates

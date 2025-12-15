@@ -10,7 +10,7 @@ RSpec.describe Game::Inventory::Manager do
     inv.update!(slot_capacity: 20, weight_capacity: 100, current_weight: 0)
     inv
   end
-  let(:item_template) { create(:item_template, name: "Iron Ore", weight: 1, stack_limit: 99) }
+  let(:item_template) { create(:item_template, :material, name: "Iron Ore", weight: 1, stack_limit: 99) }
 
   subject(:manager) { described_class.new(inventory: inventory) }
 
@@ -80,7 +80,7 @@ RSpec.describe Game::Inventory::Manager do
     end
 
     context "when stack limit is reached" do
-      let(:small_stack_item) { create(:item_template, name: "Potion", weight: 0.5, stack_limit: 10) }
+      let(:small_stack_item) { create(:item_template, :consumable, name: "Potion", weight: 1, stack_limit: 10) }
       let!(:full_stack) do
         inventory.inventory_items.create!(
           item_template: small_stack_item,
@@ -116,7 +116,7 @@ RSpec.describe Game::Inventory::Manager do
     end
 
     context "when weight limit would be exceeded" do
-      let(:heavy_item) { create(:item_template, name: "Boulder", weight: 50, stack_limit: 10) }
+      let(:heavy_item) { create(:item_template, :material, name: "Boulder", weight: 50, stack_limit: 10) }
 
       before do
         inventory.update!(weight_capacity: 60, current_weight: 50)
