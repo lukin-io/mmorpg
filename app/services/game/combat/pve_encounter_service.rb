@@ -483,6 +483,9 @@ module Game
           Characters::DeathHandler.call(character)
         end
 
+        # Persist final combat log entries
+        combat_log.each { |message| persist_log_entry!(message) }
+
         broadcast_combat_ended!((winner == :player) ? "victory" : "defeat")
 
         Result.new(
@@ -631,6 +634,10 @@ module Game
       end
 
       def broadcast_combat_started!
+        # Persist initial log entry
+        persist_log_entry!("Combat begins with #{npc_template.name}!")
+
+        # Broadcast to character channel (legacy)
         ActionCable.server.broadcast(
           "character:#{character.id}:combat",
           {
@@ -642,11 +649,38 @@ module Game
             enemy_max_hp: npc_max_hp
           }
         )
+
+        # Broadcast to battle channel for real-time UI updates
+        ActionCable.server.broadcast(
+          "battle:#{battle.id}",
+          {
+            type: "round_complete",
+            battle_id: battle.id,
+            turn: 1,
+            log_entries: [{message: "Combat begins with #{npc_template.name}!", type: "system"}],
+            participants: battle.battle_participants.map do |p|
+              {
+                id: p.id,
+                current_hp: p.current_hp,
+                max_hp: p.max_hp,
+                current_mp: p.current_mp || 0,
+                max_mp: p.max_mp || 50
+              }
+            end
+          }
+        )
       end
 
       def broadcast_combat_update!(combat_log)
         npc_participant = battle.battle_participants.find_by(team: "enemy")
+        player_participant = battle.battle_participants.find_by(team: "player")
 
+        # Persist combat log entries to database
+        combat_log.each do |message|
+          persist_log_entry!(message)
+        end
+
+        # Broadcast to character channel (legacy)
         ActionCable.server.broadcast(
           "character:#{character.id}:combat",
           {
@@ -660,9 +694,37 @@ module Game
             combat_log: combat_log
           }
         )
+
+        # Broadcast to battle channel for real-time UI updates
+        ActionCable.server.broadcast(
+          "battle:#{battle.id}",
+          {
+            type: "round_complete",
+            battle_id: battle.id,
+            turn: battle.turn_number,
+            log_entries: combat_log.map { |msg| {message: msg, type: log_type_from_message(msg)} },
+            participants: [
+              {
+                id: player_participant.id,
+                current_hp: player_participant.current_hp,
+                max_hp: player_participant.max_hp,
+                current_mp: player_participant.current_mp || 0,
+                max_mp: player_participant.max_mp || 50
+              },
+              {
+                id: npc_participant.id,
+                current_hp: npc_participant.current_hp,
+                max_hp: npc_participant.max_hp,
+                current_mp: npc_participant.current_mp || 0,
+                max_mp: npc_participant.max_mp || 50
+              }
+            ]
+          }
+        )
       end
 
       def broadcast_combat_ended!(outcome)
+        # Broadcast to character channel (legacy)
         ActionCable.server.broadcast(
           "character:#{character.id}:combat",
           {
@@ -671,6 +733,72 @@ module Game
             outcome: outcome
           }
         )
+
+        # Broadcast to battle channel for real-time UI updates
+        ActionCable.server.broadcast(
+          "battle:#{battle.id}",
+          {
+            type: "battle_end",
+            battle_id: battle.id,
+            outcome: outcome,
+            winner_team: (outcome == "victory") ? "player" : "enemy",
+            message: outcome_message(outcome)
+          }
+        )
+      end
+
+      def outcome_message(outcome)
+        case outcome
+        when "victory" then "Victory! You have defeated #{npc_template.name}!"
+        when "defeat" then "Defeat! You have been slain by #{npc_template.name}."
+        when "fled" then "You have fled from combat."
+        else "Combat has ended."
+        end
+      end
+
+      def persist_log_entry!(message)
+        battle.combat_log_entries.create!(
+          round_number: battle.turn_number,
+          sequence: next_log_sequence,
+          log_type: log_type_from_message(message),
+          message: message,
+          damage_amount: extract_damage(message),
+          actor_id: actor_id_from_message(message),
+          target_id: target_id_from_message(message)
+        )
+      rescue => e
+        Rails.logger.error("Failed to persist combat log: #{e.message}")
+      end
+
+      def next_log_sequence
+        (battle.combat_log_entries.where(round_number: battle.turn_number).maximum(:sequence) || 0) + 1
+      end
+
+      def log_type_from_message(message)
+        return "attack" if message.include?("attack") || message.include?("damage")
+        return "defend" if message.include?("defend") || message.include?("blocked")
+        return "skill" if message.include?("used")
+        return "defeat" if message.include?("defeated") || message.include?("slain")
+        return "victory" if message.include?("Victory")
+
+        "system"
+      end
+
+      def extract_damage(message)
+        match = message.match(/for (\d+) damage/)
+        match ? match[1].to_i : 0
+      end
+
+      def actor_id_from_message(message)
+        return character.id if message.start_with?("You ")
+
+        nil
+      end
+
+      def target_id_from_message(message)
+        return character.id if message.include?("attacks you") || message.include?("your")
+
+        nil
       end
 
       def failure(message)

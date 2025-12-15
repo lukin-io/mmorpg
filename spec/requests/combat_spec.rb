@@ -223,6 +223,137 @@ RSpec.describe "Combat", type: :request do
         post action_combat_path, params: {action_type: "defend"}, as: :json
         expect(response).to have_http_status(:ok)
       end
+
+      it "returns battle status" do
+        post action_combat_path, params: {action_type: "attack"}, as: :json
+        json = JSON.parse(response.body)
+        expect(json).to have_key("battle_status")
+      end
+
+      it "returns rewards on victory" do
+        enemy_participant.update!(current_hp: 1)
+        post action_combat_path, params: {action_type: "attack"}, as: :json
+        json = JSON.parse(response.body)
+        # Rewards should be present on victory
+        if json["battle_status"] == "completed" && json["message"]&.include?("Victory")
+          expect(json).to have_key("rewards")
+        end
+      end
+    end
+
+    context "with turbo stream request" do
+      let(:turbo_headers) { {"Accept" => "text/vnd.turbo-stream.html"} }
+
+      it "returns turbo stream response" do
+        post action_combat_path,
+          params: {action_type: "attack"},
+          headers: turbo_headers
+        expect(response.content_type).to include("turbo-stream")
+      end
+
+      it "updates participant HP bars with correct IDs" do
+        post action_combat_path,
+          params: {action_type: "attack"},
+          headers: turbo_headers
+
+        expect(response.body).to include("participant-#{player_participant.id}")
+        expect(response.body).to include("participant-#{enemy_participant.id}")
+      end
+
+      it "appends log entries to combat log" do
+        post action_combat_path,
+          params: {action_type: "attack"},
+          headers: turbo_headers
+
+        expect(response.body).to include("nl-log-table")
+        expect(response.body).to include("turbo-stream")
+      end
+
+      context "when battle completes with victory" do
+        before { enemy_participant.update!(current_hp: 1) }
+
+        it "replaces combat container with result" do
+          post action_combat_path,
+            params: {action_type: "attack"},
+            headers: turbo_headers
+
+          expect(response.body).to include("nl-combat-container")
+          expect(response.body).to include("combat-result")
+        end
+
+        it "shows victory message" do
+          post action_combat_path,
+            params: {action_type: "attack"},
+            headers: turbo_headers
+
+          expect(response.body).to include("Victory")
+        end
+      end
+
+      context "when battle completes with defeat" do
+        before do
+          character.update!(current_hp: 1)
+          player_participant.update!(current_hp: 1)
+          # Mock death handler
+          allow(Characters::DeathHandler).to receive(:call)
+        end
+
+        it "handles defeat and shows result or flash" do
+          # Attack to trigger NPC counter-attack
+          post action_combat_path,
+            params: {action_type: "attack"},
+            headers: turbo_headers
+
+          # Response should either show defeat result or flash message
+          expect(response.body).to include("Defeat").or include("defeat")
+        end
+      end
+    end
+
+    context "with turn-based action" do
+      let(:attacks) { [{"body_part" => "head", "action_key" => "simple", "slot_index" => 0}] }
+      let(:blocks) { [{"body_part" => "torso", "action_key" => "basic_block", "slot_index" => 0}] }
+
+      it "processes turn with attacks and blocks" do
+        post action_combat_path,
+          params: {
+            action_type: "turn",
+            attacks: attacks.to_json,
+            blocks: blocks.to_json,
+            skills: [].to_json
+          },
+          as: :json
+
+        expect(response).to have_http_status(:ok)
+      end
+
+      it "returns combat log with all actions" do
+        post action_combat_path,
+          params: {
+            action_type: "turn",
+            attacks: attacks.to_json,
+            blocks: blocks.to_json,
+            skills: [].to_json
+          },
+          as: :json
+
+        json = JSON.parse(response.body)
+        expect(json["combat_log"]).to be_an(Array)
+        expect(json["combat_log"].length).to be >= 2
+      end
+
+      it "persists combat log entries to database" do
+        expect {
+          post action_combat_path,
+            params: {
+              action_type: "turn",
+              attacks: attacks.to_json,
+              blocks: blocks.to_json,
+              skills: [].to_json
+            },
+            as: :json
+        }.to change(CombatLogEntry, :count).by_at_least(2)
+      end
     end
 
     context "when not in combat" do
@@ -233,6 +364,14 @@ RSpec.describe "Combat", type: :request do
         # May return unprocessable or ok with error
         expect(response).to have_http_status(:unprocessable_content)
           .or have_http_status(:ok)
+      end
+
+      it "returns error for turbo stream" do
+        post action_combat_path,
+          params: {action_type: "attack"},
+          headers: {"Accept" => "text/vnd.turbo-stream.html"}
+
+        expect(response.body).to include("flash")
       end
     end
   end

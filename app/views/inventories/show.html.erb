@@ -39,7 +39,7 @@
       </div>
 
       <div class="inventory-footer">
-        <span class="gold-display">🪙 <%= number_with_delimiter(current_character.gold) %> Gold</span>
+        <span class="gold-display">🪙 <%= number_with_delimiter(current_character.user&.currency_wallet&.gold_balance || 0) %> Gold</span>
         <span class="weight-display">⚖️ <%= @inventory.current_weight %>/<%= @inventory.max_weight %> weight</span>
       </div>
     </div>
