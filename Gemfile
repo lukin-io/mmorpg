@@ -11,7 +11,7 @@ gem "turbo-rails"
 gem "stimulus-rails"
 gem "propshaft"
 gem "redis"
-gem "connection_pool", "~> 3.0" # Pin to 2.x for Rails 8.1.1 compatibility (connection_pool 3.x has breaking changes)
+gem "connection_pool", "~> 2.4" # Pin to 2.x for Rails 8.1.1 compatibility
 gem "sidekiq", "~> 8.0"
 gem "devise"
 gem "pundit"
