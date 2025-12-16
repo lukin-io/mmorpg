@@ -489,23 +489,23 @@ RSpec.describe Game::Combat::PveEncounterService do
     end
 
     describe "character combat channel" do
-    it "broadcasts combat_started on encounter start" do
-      service.start_encounter!
+      it "broadcasts combat_started on encounter start" do
+        service.start_encounter!
 
-      expect(ActionCable.server).to have_received(:broadcast).with(
-        "character:#{character.id}:combat",
-        hash_including(type: "combat_started")
-      )
-    end
+        expect(ActionCable.server).to have_received(:broadcast).with(
+          "character:#{character.id}:combat",
+          hash_including(type: "combat_started")
+        )
+      end
 
-    it "broadcasts combat_update on action" do
-      service.start_encounter!
-      service.process_action!(action_type: :attack)
+      it "broadcasts combat_update on action" do
+        service.start_encounter!
+        service.process_action!(action_type: :attack)
 
-      expect(ActionCable.server).to have_received(:broadcast).with(
-        "character:#{character.id}:combat",
-        hash_including(type: "combat_update")
-      )
+        expect(ActionCable.server).to have_received(:broadcast).with(
+          "character:#{character.id}:combat",
+          hash_including(type: "combat_update")
+        )
       end
 
       it "broadcasts combat_ended on battle completion" do
