@@ -106,6 +106,13 @@
                       <span class="nl-entity-icon"><%= resource_icon %></span>
                     </div>
                   <% end %>
+
+                  <%# Building marker %>
+                  <% if tile_meta["building"].present? %>
+                    <div class="nl-tile-entity nl-tile-building nl-tile-building--<%= tile_meta['building_type'] %>" title="<%= tile_meta['building'] %>">
+                      <span class="nl-entity-icon"><%= tile_meta['building_icon'] || '🏰' %></span>
+                    </div>
+                  <% end %>
                 </td>
               <% end %>
             </tr>

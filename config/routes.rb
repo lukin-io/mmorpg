@@ -301,6 +301,7 @@ Rails.application.routes.draw do
   resource :world, only: :show, controller: "world" do
     post :move
     post :enter
+    post :enter_building
     post :exit_location
     post :gather
     post :gather_resource

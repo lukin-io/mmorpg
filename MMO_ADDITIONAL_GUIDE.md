@@ -91,6 +91,10 @@ app/
         pathfinder.rb
       economy/
         loot_generator.rb
+      world/
+        tile_building_service.rb
+        tile_npc_service.rb
+        tile_gathering_service.rb
   lib/
     game/
       formulas/
@@ -155,6 +159,13 @@ Contains:
 - grid definition
 - tiles: passable, blocked, special
 - spawn points per zone
+- tile buildings (enterable structures)
+
+### TileBuilding
+- zone transitions (castle gates, portals)
+- entry requirements (level, faction, quest)
+- displayed on map with custom icons
+- service: `Game::World::TileBuildingService`
 
 ### Battle
 - active combatants

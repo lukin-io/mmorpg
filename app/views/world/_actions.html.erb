@@ -150,6 +150,40 @@
         <% end %>
       </div>
     <% end %>
+
+    <%# Tile Building (enterable structures like castles, forts, inns) %>
+    <% tile_building_action = available_actions.find { |a| a[:type] == :tile_building } %>
+    <% if tile_building_action && tile_building_action[:building] %>
+      <% building = tile_building_action[:building] %>
+      <div class="tile-building-actions mt-3">
+        <h4>Structure Here</h4>
+        <div class="building-info building-info--<%= building[:building_type] %>">
+          <div class="building-header">
+            <span class="building-icon"><%= building[:icon] %></span>
+            <span class="building-name"><%= building[:name] %></span>
+          </div>
+          <% if building[:description].present? %>
+            <p class="building-description"><%= building[:description] %></p>
+          <% end %>
+          <% if building[:destination].present? %>
+            <p class="building-destination">
+              <small>Leads to: <strong><%= building[:destination] %></strong></small>
+            </p>
+          <% end %>
+          <% if building[:can_enter] %>
+            <%= form_with url: enter_building_world_path, method: :post, data: { turbo: true } do |f| %>
+              <%= f.hidden_field :building_id, value: building[:id] %>
+              <%= f.submit "🚪 Enter #{building[:name]}", class: "btn-enter-building" %>
+            <% end %>
+          <% else %>
+            <div class="building-blocked">
+              <span class="building-blocked-icon">🔒</span>
+              <span class="building-blocked-reason"><%= building[:blocked_reason] %></span>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
   </div>
 </div>
 

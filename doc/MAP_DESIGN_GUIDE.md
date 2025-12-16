@@ -126,7 +126,84 @@ Or define an NPC spawner service.
 
 ---
 
-# 8. Environmental Effects
+# 8. Tile Buildings (Enterable Structures)
+
+Buildings are placed at specific tile coordinates and allow zone transitions.
+
+## 8.1 TileBuilding Model
+
+```
+TileBuilding
+  zone: String        # Zone name where building appears
+  x: Integer          # X coordinate
+  y: Integer          # Y coordinate
+  building_key: String # Unique identifier
+  building_type: String # castle, fort, inn, shop, dungeon_entrance, portal, etc.
+  name: String        # Display name
+  destination_zone: Zone # Zone to enter (optional)
+  destination_x: Integer # Spawn X in destination (optional)
+  destination_y: Integer # Spawn Y in destination (optional)
+  icon: String        # Custom emoji icon
+  required_level: Integer # Min level to enter
+  faction_key: String # Faction restriction (optional)
+  metadata: JSONB     # Additional data (description, quest requirements)
+  active: Boolean     # Can be entered
+```
+
+## 8.2 Building Types
+
+| Type | Icon | Purpose |
+|------|------|---------|
+| castle | 🏰 | Main city/stronghold entrances |
+| fort | 🏯 | Military outposts |
+| inn | 🏨 | Rest locations |
+| shop | 🏪 | Merchant buildings |
+| dungeon_entrance | ⚔️ | Dungeon entry points |
+| portal | 🌀 | Magical transport points |
+| guild_hall | 🏛️ | Guild headquarters |
+| tavern | 🍺 | Social hubs |
+| temple | ⛪ | Religious sites |
+
+## 8.3 Entry Requirements
+
+Buildings can restrict entry based on:
+- Character level (`required_level`)
+- Faction membership (`faction_key`)
+- Quest completion (`metadata.required_quest`)
+- Item possession (`metadata.required_item`)
+
+## 8.4 Map Display
+
+Buildings appear on tiles alongside NPCs and resources:
+
+```erb
+<%# Building marker %>
+<% if tile_meta["building"].present? %>
+  <div class="nl-tile-entity nl-tile-building">
+    <span class="nl-entity-icon"><%= tile_meta['building_icon'] %></span>
+  </div>
+<% end %>
+```
+
+## 8.5 Service Usage
+
+```ruby
+service = Game::World::TileBuildingService.new(
+  character: current_character,
+  zone: "Starter Plains",
+  x: 7,
+  y: 0
+)
+
+if service.building_present?
+  info = service.building_info
+  result = service.enter!  # Move character to destination
+end
+```
+
+---
+
+# 9. Environmental Effects
 
 Example effects:
 - fog (reduces visibility)
@@ -140,7 +217,7 @@ tile.effects = [ { name: "fire", damage: 2 } ]
 
 ---
 
-# 9. Dynamic vs Static Maps
+# 10. Dynamic vs Static Maps
 
 ## Static
 - handcrafted
@@ -155,14 +232,15 @@ Both can be supported.
 
 ---
 
-# 10. Summary
+# 11. Summary
 
 Use this guide when implementing:
 - zones
 - map rendering
-- tile interactions
+- tile interactions (NPCs, resources, buildings)
 - movement rules
 - environmental effects
 - pathfinding
+- zone transitions (via TileBuilding)
 
 This ensures consistent world design in the Rails MMORPG engine.

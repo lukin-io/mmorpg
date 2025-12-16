@@ -152,6 +152,8 @@ module Game
 
         # Apply NPC damage to player
         vitals_service.apply_damage(total_npc_damage, source: npc_template.name)
+        character.reload # Reload to get updated HP from vitals_service
+        player_participant.current_hp = character.current_hp
         player_participant.is_defending = false
         player_participant.save!
 
@@ -274,11 +276,14 @@ module Game
 
         # NPC attacks player
         npc_damage = calculate_npc_damage(npc_stats, character, is_defending: player_participant.is_defending)
-        player_participant.is_defending = false
-        player_participant.save!
 
         # Apply damage to character
         vitals_service.apply_damage(npc_damage, source: npc_template.name)
+        character.reload # Reload to get updated HP from vitals_service
+        player_participant.current_hp = character.current_hp
+        player_participant.is_defending = false
+        player_participant.save!
+
         combat_log << "#{npc_template.name} attacks you for #{npc_damage} damage."
 
         # Check if player defeated
@@ -309,9 +314,11 @@ module Game
         # NPC still attacks
         npc_damage = calculate_npc_damage(npc_stats, character, is_defending: true)
         vitals_service.apply_damage(npc_damage, source: npc_template.name)
+        character.reload # Reload to get updated HP from vitals_service
+        player_participant.update!(current_hp: character.current_hp)
         combat_log << "#{npc_template.name} attacks you for #{npc_damage} damage (reduced by defense)."
 
-        if character.reload.current_hp <= 0
+        if character.current_hp <= 0
           return complete_battle!(winner: :npc, combat_log: combat_log)
         end
 
@@ -361,10 +368,13 @@ module Game
         # NPC counterattack
         npc_damage = calculate_npc_damage(npc_stats, character, is_defending: false)
         vitals_service.apply_damage(npc_damage, source: npc_template.name)
+        character.reload # Reload to get updated HP from vitals_service
+        player_participant = battle.battle_participants.find_by(team: "player")
+        player_participant&.update!(current_hp: character.current_hp)
         combat_log << "#{npc_template.name} counterattacks for #{npc_damage} damage!"
 
         # Check if player is defeated
-        if character.reload.current_hp <= 0
+        if character.current_hp <= 0
           return complete_battle!(winner: :npc, combat_log: combat_log)
         end
 
@@ -452,9 +462,12 @@ module Game
           # NPC gets a free attack
           npc_damage = calculate_npc_damage(npc_stats, character, is_defending: false)
           vitals_service.apply_damage(npc_damage, source: npc_template.name)
+          character.reload # Reload to get updated HP from vitals_service
+          player_participant = battle.battle_participants.find_by(team: "player")
+          player_participant&.update!(current_hp: character.current_hp)
           combat_log << "#{npc_template.name} attacks you for #{npc_damage} damage as you try to escape!"
 
-          if character.reload.current_hp <= 0
+          if character.current_hp <= 0
             return complete_battle!(winner: :npc, combat_log: combat_log)
           end
 

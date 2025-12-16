@@ -32,6 +32,7 @@ class WorldController < ApplicationController
     @gathering_nodes = gathering_nodes_at_current_tile
     @tile_resource = tile_resource_at_current_tile
     @tile_npc = tile_npc_at_current_tile
+    @tile_building = tile_building_at_current_tile
     @players_here = players_at_current_tile
   end
 
@@ -106,6 +107,46 @@ class WorldController < ApplicationController
     )
 
     redirect_to world_path, notice: "Exited to #{exit_zone.name}."
+  end
+
+  # POST /world/enter_building
+  # Enter a building at the current tile
+  def enter_building
+    building = TileBuilding.find_by(id: params[:building_id])
+
+    unless building
+      return respond_to do |format|
+        format.html { redirect_to world_path, alert: "Building not found." }
+        format.turbo_stream { render_error("Building not found.") }
+      end
+    end
+
+    # Verify building is at current position
+    unless building.zone == @position.zone.name && building.x == @position.x && building.y == @position.y
+      return respond_to do |format|
+        format.html { redirect_to world_path, alert: "You must be at the building to enter." }
+        format.turbo_stream { render_error("You must be at the building to enter.") }
+      end
+    end
+
+    service = Game::World::TileBuildingService.new(
+      character: current_character,
+      zone: @position.zone.name,
+      x: @position.x,
+      y: @position.y
+    )
+
+    result = service.enter!
+
+    respond_to do |format|
+      if result.success
+        format.html { redirect_to world_path, notice: result.message }
+        format.turbo_stream { render_map_update }
+      else
+        format.html { redirect_to world_path, alert: result.message }
+        format.turbo_stream { render_error(result.message) }
+      end
+    end
   end
 
   def gather
@@ -391,6 +432,15 @@ class WorldController < ApplicationController
       end
     end
 
+    # Check for TileBuilding in database
+    building = TileBuilding.active.at_tile(zone_name, x, y)
+
+    if building
+      metadata["building"] = building.display_name
+      metadata["building_type"] = building.building_type
+      metadata["building_icon"] = building.display_icon
+    end
+
     metadata
   end
 
@@ -503,6 +553,12 @@ class WorldController < ApplicationController
       actions << {type: :tile_npc, npc: tile_npc}
     end
 
+    # Tile Building actions (enterable structures)
+    tile_building = tile_building_at_current_tile
+    if tile_building.present?
+      actions << {type: :tile_building, building: tile_building}
+    end
+
     actions
   end
 
@@ -571,6 +627,17 @@ class WorldController < ApplicationController
       y: @position.y
     )
     service.npc_info
+  end
+
+  def tile_building_at_current_tile
+    # Get tile building info at current position (for display)
+    service = Game::World::TileBuildingService.new(
+      character: current_character,
+      zone: @position.zone.name,
+      x: @position.x,
+      y: @position.y
+    )
+    service.building_info
   end
 
   def players_at_current_tile

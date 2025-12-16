@@ -1236,3 +1236,114 @@ if defined?(ArenaRoom)
 end
 
 puts "Arena rooms seeding complete!"
+
+# ==============================================================================
+# Tile Buildings (Enterable structures on map tiles)
+# ==============================================================================
+puts "Seeding Tile Buildings..."
+
+if defined?(TileBuilding) && defined?(Zone)
+  starter_plains = Zone.find_by(name: "Starter Plains")
+  castleton = Zone.find_by(name: "Castleton Keep")
+  whispering_woods = Zone.find_by(name: "Whispering Woods")
+
+  tile_buildings = []
+
+  # Castle entrance from Starter Plains to Castleton Keep
+  if starter_plains && castleton
+    tile_buildings << {
+      zone: starter_plains.name,
+      x: 7,
+      y: 0,
+      building_key: "castleton_gate",
+      building_type: "castle",
+      name: "Castleton Keep Gates",
+      destination_zone: castleton,
+      destination_x: 5,
+      destination_y: 9,
+      icon: "🏰",
+      required_level: 1,
+      metadata: {
+        "description" => "The main gates to Castleton Keep, home to the Alliance forces."
+      }
+    }
+  end
+
+  # Exit from Castleton Keep back to Starter Plains
+  if castleton && starter_plains
+    tile_buildings << {
+      zone: castleton.name,
+      x: 5,
+      y: 9,
+      building_key: "castleton_exit",
+      building_type: "portal",
+      name: "City Gates",
+      destination_zone: starter_plains,
+      destination_x: 7,
+      destination_y: 1,
+      icon: "🚪",
+      required_level: 1,
+      metadata: {
+        "description" => "Exit the city walls to the Starter Plains."
+      }
+    }
+  end
+
+  # Inn in Castleton Keep
+  if castleton
+    tile_buildings << {
+      zone: castleton.name,
+      x: 3,
+      y: 3,
+      building_key: "castleton_inn",
+      building_type: "inn",
+      name: "The Wanderer's Rest",
+      destination_zone: nil,  # No zone transition, but shows on map
+      icon: "🏨",
+      required_level: 1,
+      metadata: {
+        "description" => "A cozy inn for weary travelers. Rest here to restore vitality."
+      }
+    }
+  end
+
+  # Forest dungeon entrance in Whispering Woods
+  if whispering_woods
+    tile_buildings << {
+      zone: whispering_woods.name,
+      x: 6,
+      y: 6,
+      building_key: "shadow_cave_entrance",
+      building_type: "dungeon_entrance",
+      name: "Shadow Cave",
+      destination_zone: nil,  # Dungeon system would handle this
+      icon: "⚔️",
+      required_level: 10,
+      metadata: {
+        "description" => "A dark cave entrance shrouded in mist. Dangerous creatures lurk within.",
+        "dungeon_key" => "shadow_cave",
+        "difficulty" => "normal"
+      }
+    }
+  end
+
+  tile_buildings.each do |attrs|
+    TileBuilding.find_or_create_by!(building_key: attrs[:building_key]) do |building|
+      building.zone = attrs[:zone]
+      building.x = attrs[:x]
+      building.y = attrs[:y]
+      building.building_type = attrs[:building_type]
+      building.name = attrs[:name]
+      building.destination_zone = attrs[:destination_zone]
+      building.destination_x = attrs[:destination_x]
+      building.destination_y = attrs[:destination_y]
+      building.icon = attrs[:icon]
+      building.required_level = attrs[:required_level]
+      building.active = true
+      building.metadata = attrs[:metadata] || {}
+    end
+    puts "  Created/Found TileBuilding: #{attrs[:name]}"
+  end
+end
+
+puts "Tile buildings seeding complete!"

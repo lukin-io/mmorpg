@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_12_15_100000) do
+ActiveRecord::Schema[8.1].define(version: 2025_12_16_091841) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -2040,6 +2040,30 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_15_100000) do
     t.index ["tactical_match_id"], name: "index_tactical_participants_on_tactical_match_id"
   end
 
+  create_table "tile_buildings", force: :cascade do |t|
+    t.boolean "active", default: true, null: false
+    t.string "building_key", null: false
+    t.string "building_type", default: "castle", null: false
+    t.datetime "created_at", null: false
+    t.integer "destination_x"
+    t.integer "destination_y"
+    t.bigint "destination_zone_id"
+    t.string "faction_key"
+    t.string "icon", default: "🏰"
+    t.jsonb "metadata", default: {}, null: false
+    t.string "name", null: false
+    t.integer "required_level", default: 1, null: false
+    t.datetime "updated_at", null: false
+    t.integer "x", null: false
+    t.integer "y", null: false
+    t.string "zone", null: false
+    t.index ["active"], name: "index_tile_buildings_on_active"
+    t.index ["building_key"], name: "index_tile_buildings_on_building_key", unique: true
+    t.index ["building_type"], name: "index_tile_buildings_on_building_type"
+    t.index ["destination_zone_id"], name: "index_tile_buildings_on_destination_zone_id"
+    t.index ["zone", "x", "y"], name: "index_tile_buildings_on_zone_and_x_and_y", unique: true
+  end
+
   create_table "tile_npcs", force: :cascade do |t|
     t.string "biome"
     t.datetime "created_at", null: false
@@ -2453,6 +2477,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_15_100000) do
   add_foreign_key "tactical_matches", "characters", column: "winner_id"
   add_foreign_key "tactical_participants", "characters"
   add_foreign_key "tactical_participants", "tactical_matches"
+  add_foreign_key "tile_buildings", "zones", column: "destination_zone_id"
   add_foreign_key "tile_npcs", "characters", column: "defeated_by_id"
   add_foreign_key "tile_npcs", "npc_templates"
   add_foreign_key "tile_resources", "characters", column: "harvested_by_id"
