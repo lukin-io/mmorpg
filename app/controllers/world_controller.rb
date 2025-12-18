@@ -25,15 +25,21 @@ class WorldController < ApplicationController
 
   def show
     @zone = @position.zone
-    @tile = current_tile
-    @nearby_tiles = nearby_tiles_with_features
-    @available_actions = available_actions
-    @npcs_here = npcs_at_current_tile
-    @gathering_nodes = gathering_nodes_at_current_tile
-    @tile_resource = tile_resource_at_current_tile
-    @tile_npc = tile_npc_at_current_tile
-    @tile_building = tile_building_at_current_tile
-    @players_here = players_at_current_tile
+
+    # City zones render an interactive illustrated view instead of tile grid
+    if city_zone?
+      render_city_view
+    else
+      @tile = current_tile
+      @nearby_tiles = nearby_tiles_with_features
+      @available_actions = available_actions
+      @npcs_here = npcs_at_current_tile
+      @gathering_nodes = gathering_nodes_at_current_tile
+      @tile_resource = tile_resource_at_current_tile
+      @tile_npc = tile_npc_at_current_tile
+      @tile_building = tile_building_at_current_tile
+      @players_here = players_at_current_tile
+    end
   end
 
   def move
@@ -109,6 +115,38 @@ class WorldController < ApplicationController
     redirect_to world_path, notice: "Exited to #{exit_zone.name}."
   end
 
+  # POST /world/interact_hotspot
+  # Interact with a city hotspot (building, exit, feature)
+  def interact_hotspot
+    service = Game::World::CityHotspotService.new(
+      character: current_character,
+      zone: @position.zone
+    )
+
+    result = service.interact!(params[:hotspot_id])
+
+    if result.success
+      if result.redirect_url.present?
+        # Navigate to feature page (arena, crafting, etc.)
+        # Use redirect_to for both formats - Turbo will handle it as a full page visit
+        redirect_to result.redirect_url, notice: result.message
+      elsif result.destination_zone.present?
+        # Zone transition - reload the world view
+        respond_to do |format|
+          format.html { redirect_to world_path, notice: result.message }
+          format.turbo_stream { redirect_to world_path, notice: result.message }
+        end
+      else
+        redirect_to world_path, notice: result.message
+      end
+    else
+      respond_to do |format|
+        format.html { redirect_to world_path, alert: result.message }
+        format.turbo_stream { render_error(result.message) }
+      end
+    end
+  end
+
   # POST /world/enter_building
   # Enter a building at the current tile
   def enter_building
@@ -140,8 +178,10 @@ class WorldController < ApplicationController
 
     respond_to do |format|
       if result.success
+        # Always redirect after entering a building - the target zone may be a city
+        # which requires the full city_view template instead of partial updates
         format.html { redirect_to world_path, notice: result.message }
-        format.turbo_stream { render_map_update }
+        format.turbo_stream { redirect_to world_path, notice: result.message }
       else
         format.html { redirect_to world_path, alert: result.message }
         format.turbo_stream { render_error(result.message) }
@@ -266,6 +306,22 @@ class WorldController < ApplicationController
   end
 
   private
+
+  # Check if current zone is a city (renders illustrated view)
+  def city_zone?
+    @position.zone.biome == "city"
+  end
+
+  # Set up data for city view rendering
+  def render_city_view
+    @city_service = Game::World::CityHotspotService.new(
+      character: current_character,
+      zone: @position.zone
+    )
+    @hotspots = @city_service.hotspots
+
+    render "world/city_view"
+  end
 
   def ensure_character_position!
     return if current_character.position.present?

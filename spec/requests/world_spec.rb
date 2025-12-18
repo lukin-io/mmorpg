@@ -910,37 +910,15 @@ RSpec.describe "World", type: :request do
         expect(response.body).to include("Test Castle").or include("enter")
       end
 
-      it "returns turbo stream on turbo stream format" do
+      it "redirects on turbo stream format (target zone may require full page reload for city view)" do
         post enter_building_world_path,
           params: {building_id: building.id},
           headers: {"Accept" => "text/vnd.turbo-stream.html"}
 
-        expect(response.media_type).to eq("text/vnd.turbo-stream.html")
-        expect(response.body).to include("turbo-stream")
-      end
-
-      it "turbo stream updates game-map element" do
-        post enter_building_world_path,
-          params: {building_id: building.id},
-          headers: {"Accept" => "text/vnd.turbo-stream.html"}
-
-        expect(response.body).to include('target="game-map"')
-      end
-
-      it "turbo stream updates location-info element" do
-        post enter_building_world_path,
-          params: {building_id: building.id},
-          headers: {"Accept" => "text/vnd.turbo-stream.html"}
-
-        expect(response.body).to include('target="location-info"')
-      end
-
-      it "turbo stream updates available-actions element" do
-        post enter_building_world_path,
-          params: {building_id: building.id},
-          headers: {"Accept" => "text/vnd.turbo-stream.html"}
-
-        expect(response.body).to include('target="available-actions"')
+        # After entering a building, we always redirect to /world because:
+        # 1. Target zone might be a city which requires city_view.html.erb (not partials)
+        # 2. Full page navigation ensures correct view is rendered
+        expect(response).to redirect_to(world_path)
       end
     end
 

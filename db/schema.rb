@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_12_16_091841) do
+ActiveRecord::Schema[8.1].define(version: 2025_12_18_132823) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -492,6 +492,30 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_16_091841) do
     t.index ["user_id", "created_at"], name: "index_chat_violations_on_user_id_and_created_at"
     t.index ["user_id"], name: "index_chat_violations_on_user_id"
     t.index ["violation_type"], name: "index_chat_violations_on_violation_type"
+  end
+
+  create_table "city_hotspots", force: :cascade do |t|
+    t.jsonb "action_params", default: {}
+    t.string "action_type", default: "open_feature", null: false
+    t.boolean "active", default: true
+    t.datetime "created_at", null: false
+    t.bigint "destination_zone_id"
+    t.string "hotspot_type", default: "building", null: false
+    t.string "image_hover"
+    t.string "image_normal"
+    t.string "key", null: false
+    t.string "name", null: false
+    t.integer "position_x", null: false
+    t.integer "position_y", null: false
+    t.integer "required_level", default: 1
+    t.datetime "updated_at", null: false
+    t.integer "z_index", default: 0
+    t.bigint "zone_id", null: false
+    t.index ["active"], name: "index_city_hotspots_on_active"
+    t.index ["destination_zone_id"], name: "index_city_hotspots_on_destination_zone_id"
+    t.index ["hotspot_type"], name: "index_city_hotspots_on_hotspot_type"
+    t.index ["zone_id", "key"], name: "index_city_hotspots_on_zone_id_and_key", unique: true
+    t.index ["zone_id"], name: "index_city_hotspots_on_zone_id"
   end
 
   create_table "clan_applications", force: :cascade do |t|
@@ -2329,6 +2353,8 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_16_091841) do
   add_foreign_key "chat_reports", "users", column: "reporter_id"
   add_foreign_key "chat_violations", "chat_messages"
   add_foreign_key "chat_violations", "users"
+  add_foreign_key "city_hotspots", "zones"
+  add_foreign_key "city_hotspots", "zones", column: "destination_zone_id"
   add_foreign_key "clan_applications", "characters"
   add_foreign_key "clan_applications", "clans"
   add_foreign_key "clan_applications", "users", column: "applicant_id"

@@ -1347,3 +1347,132 @@ if defined?(TileBuilding) && defined?(Zone)
 end
 
 puts "Tile buildings seeding complete!"
+
+# ============================================================
+# CITY HOTSPOTS
+# Interactive building hotspots for city illustrated view
+# ============================================================
+puts "\n=== Seeding City Hotspots ==="
+
+# Find existing zones
+castleton = Zone.find_by(name: "Castleton Keep")
+starter_plains = Zone.find_by(name: "Starter Plains")
+
+if castleton
+  city_hotspots = []
+
+  # NOTE: position_x/y are pixel coordinates on city.png (1536x1024)
+  # These are TEMPORARY spread positions - adjust to match actual building locations in city.png
+  # The image_hover is the highlight overlay that appears on hover
+
+  # City Gates / Exit - leads back to Starter Plains at (7,0) where TileBuilding castle entrance is
+  city_hotspots << {
+    zone: castleton,
+    key: "city_gate",
+    name: "City Gates",
+    hotspot_type: "exit",
+    position_x: 50,
+    position_y: 700,
+    image_hover: "gate.png",
+    action_type: "enter_zone",
+    destination_zone: starter_plains,
+    action_params: {"destination_x" => 7, "destination_y" => 0},
+    required_level: 1,
+    z_index: 10
+  }
+
+  # Arena - for PvP battles (right side, upper area)
+  city_hotspots << {
+    zone: castleton,
+    key: "arena",
+    name: "Arena",
+    hotspot_type: "building",
+    position_x: 1100,
+    position_y: 100,
+    image_hover: "arena.png",
+    action_type: "open_feature",
+    action_params: {"feature" => "arena"},
+    required_level: 5,
+    z_index: 20
+  }
+
+  # Workshop - for crafting (right side, middle)
+  city_hotspots << {
+    zone: castleton,
+    key: "workshop",
+    name: "Workshop",
+    hotspot_type: "building",
+    position_x: 1100,
+    position_y: 400,
+    image_hover: "workshop.png",
+    action_type: "open_feature",
+    action_params: {"feature" => "crafting"},
+    required_level: 1,
+    z_index: 20
+  }
+
+  # Clinic / Hospital - for healing (left side, middle)
+  city_hotspots << {
+    zone: castleton,
+    key: "clinic",
+    name: "Clinic",
+    hotspot_type: "building",
+    position_x: 300,
+    position_y: 400,
+    image_hover: "clinic.png",
+    action_type: "open_feature",
+    action_params: {"feature" => "healing"},
+    required_level: 1,
+    z_index: 20
+  }
+
+  # House - player housing (center area)
+  city_hotspots << {
+    zone: castleton,
+    key: "house",
+    name: "Housing District",
+    hotspot_type: "building",
+    position_x: 700,
+    position_y: 300,
+    image_hover: "house.png",
+    action_type: "open_feature",
+    action_params: {"feature" => "housing"},
+    required_level: 10,
+    z_index: 20
+  }
+
+  # Decorative Tree - no action (center foreground)
+  city_hotspots << {
+    zone: castleton,
+    key: "tree_center",
+    name: "Ancient Oak",
+    hotspot_type: "decoration",
+    position_x: 700,
+    position_y: 600,
+    image_hover: "tree.png",
+    action_type: "none",
+    z_index: 5
+  }
+
+  city_hotspots.each do |attrs|
+    CityHotspot.find_or_create_by!(zone: attrs[:zone], key: attrs[:key]) do |hotspot|
+      hotspot.name = attrs[:name]
+      hotspot.hotspot_type = attrs[:hotspot_type]
+      hotspot.position_x = attrs[:position_x]
+      hotspot.position_y = attrs[:position_y]
+      hotspot.image_normal = nil  # Not used - overlay only
+      hotspot.image_hover = attrs[:image_hover]
+      hotspot.action_type = attrs[:action_type]
+      hotspot.destination_zone = attrs[:destination_zone]
+      hotspot.action_params = attrs[:action_params] || {}
+      hotspot.required_level = attrs[:required_level] || 1
+      hotspot.z_index = attrs[:z_index] || 0
+      hotspot.active = true
+    end
+    puts "  Created/Found CityHotspot: #{attrs[:name]}"
+  end
+else
+  puts "  Skipping city hotspots: Castleton Keep zone not found"
+end
+
+puts "City hotspots seeding complete!"

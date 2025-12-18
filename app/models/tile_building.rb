@@ -11,9 +11,10 @@
 #   building.enter!(character)             # Move character to destination zone
 #
 class TileBuilding < ApplicationRecord
-  BUILDING_TYPES = %w[castle fort inn shop dungeon_entrance portal guild_hall tavern temple].freeze
+  BUILDING_TYPES = %w[city castle fort inn shop dungeon_entrance portal guild_hall tavern temple].freeze
 
   BUILDING_ICONS = {
+    "city" => "🏙️",
     "castle" => "🏰",
     "fort" => "🏯",
     "inn" => "🏨",

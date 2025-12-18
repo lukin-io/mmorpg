@@ -5,7 +5,7 @@
 - **v1.1** (2024-12-16): Added comprehensive specs (model, service, request), updated documentation guides
 
 ## Overview
-The Tile Buildings system allows placing enterable structures (castles, forts, inns, dungeons, portals) on specific map tiles. Players can see building icons on the map and enter them to transition to interior zones.
+The Tile Buildings system allows placing enterable structures (cities, castles, forts, inns, dungeons, portals) on specific map tiles. Players can see building icons on the map and enter them to transition to interior zones.
 
 ## GDD Reference
 - Feature spec: Custom implementation for zone transitions via map structures

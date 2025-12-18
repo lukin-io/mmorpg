@@ -138,7 +138,7 @@ TileBuilding
   x: Integer          # X coordinate
   y: Integer          # Y coordinate
   building_key: String # Unique identifier
-  building_type: String # castle, fort, inn, shop, dungeon_entrance, portal, etc.
+  building_type: String # city, castle, fort, inn, shop, dungeon_entrance, portal, etc.
   name: String        # Display name
   destination_zone: Zone # Zone to enter (optional)
   destination_x: Integer # Spawn X in destination (optional)
@@ -154,7 +154,8 @@ TileBuilding
 
 | Type | Icon | Purpose |
 |------|------|---------|
-| castle | 🏰 | Main city/stronghold entrances |
+| city | 🏙️ | City entrances (interactive city view) |
+| castle | 🏰 | Castle/stronghold entrances |
 | fort | 🏯 | Military outposts |
 | inn | 🏨 | Rest locations |
 | shop | 🏪 | Merchant buildings |

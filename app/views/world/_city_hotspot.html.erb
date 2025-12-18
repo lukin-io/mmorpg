@@ -1,0 +1,68 @@
+<%# Individual city hotspot - positioned overlay on city.png %>
+<%#
+  The city view shows city.png as background. Each hotspot is positioned
+  at exact pixel coordinates matching where a building appears in city.png.
+
+  The overlay image (image_hover) is the same size as that portion of city.png
+  and is rendered with opacity 0. On hover, opacity becomes 1, creating a
+  "highlight" effect on the building.
+
+  hotspot: CityHotspot instance
+    - position_x, position_y: pixel position matching city.png building location
+    - image_hover: overlay image that highlights when hovered
+    - action_type: enter_zone, open_feature, none
+%>
+
+<div class="<%= hotspot.css_class %>"
+     style="left: <%= hotspot.position_x %>px; top: <%= hotspot.position_y %>px; z-index: <%= hotspot.z_index %>;"
+     data-city-view-target="hotspot"
+     data-hotspot-id="<%= hotspot.id %>"
+     data-tooltip="<%= hotspot.name %>">
+
+  <% if hotspot.clickable? && hotspot.can_interact?(current_character) %>
+    <%# Clickable building - overlay highlights on hover, click triggers action %>
+    <%= form_with url: interact_hotspot_world_path, method: :post, local: false,
+        data: { turbo: true }, class: "city-hotspot-form" do |f| %>
+      <%= f.hidden_field :hotspot_id, value: hotspot.id %>
+
+      <button type="submit" class="city-hotspot-button"
+              data-action="mouseenter->city-view#showOverlay mouseleave->city-view#hideOverlay">
+        <% if hotspot.image_hover.present? %>
+          <img src="<%= asset_path(hotspot.image_hover) %>"
+               alt="<%= hotspot.name %>"
+               class="city-hotspot-overlay"
+               data-city-view-target="overlay" />
+        <% else %>
+          <span class="city-hotspot-hitbox" style="width: 80px; height: 80px;"></span>
+        <% end %>
+      </button>
+    <% end %>
+
+  <% elsif hotspot.action_type != "none" %>
+    <%# Locked building - shows grayscale overlay and lock icon on hover %>
+    <div class="city-hotspot-blocked"
+         data-blocked-reason="<%= hotspot.interaction_blocked_reason(current_character) %>"
+         data-action="mouseenter->city-view#showOverlay mouseleave->city-view#hideOverlay">
+      <% if hotspot.image_hover.present? %>
+        <img src="<%= asset_path(hotspot.image_hover) %>"
+             alt="<%= hotspot.name %> (Locked)"
+             class="city-hotspot-overlay city-hotspot-overlay--locked"
+             data-city-view-target="overlay" />
+      <% end %>
+      <span class="city-hotspot-lock">🔒</span>
+    </div>
+
+  <% else %>
+    <%# Decoration - highlights on hover but not clickable %>
+    <div class="city-hotspot-decoration"
+         data-action="mouseenter->city-view#showOverlay mouseleave->city-view#hideOverlay">
+      <% if hotspot.image_hover.present? %>
+        <img src="<%= asset_path(hotspot.image_hover) %>"
+             alt="<%= hotspot.name %>"
+             class="city-hotspot-overlay"
+             data-city-view-target="overlay" />
+      <% end %>
+    </div>
+  <% end %>
+</div>
+
