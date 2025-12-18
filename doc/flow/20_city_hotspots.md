@@ -2,6 +2,7 @@
 
 ## Version History
 - **v1.0** (2024-12-18): Initial implementation - interactive illustrated city view with building hotspots
+- **v1.1** (2025-12-18): Fixed FEATURE_ROUTES mapping - `workshop` and `crafting` now route to `/crafting_jobs`. Fixed hitbox clickability and full-area forms. Updated request specs in `spec/requests/world_spec.rb`.
 
 ## Overview
 The City Hotspots system provides an interactive illustrated city view for city-type zones. Instead of a tile-based map grid, players see a visual illustration with clickable building hotspots. Each hotspot can lead to different game features (arena, crafting, healing) or zone transitions.
@@ -47,8 +48,22 @@ This matches the Neverlands approach where hovering over a building area shows i
 | Action | Behavior |
 |--------|----------|
 | `enter_zone` | Move character to destination_zone |
-| `open_feature` | Navigate to feature URL (/arena, /crafting) |
+| `open_feature` | Navigate to feature URL (via FEATURE_ROUTES mapping) |
 | `none` | No action (decorations) |
+
+### Feature Routes Mapping
+The `CityHotspot::FEATURE_ROUTES` constant maps feature keys to their actual Rails routes:
+
+| Feature Key | Route | Description |
+|-------------|-------|-------------|
+| `arena` | `/arena` | PvP arena feature |
+| `crafting` | `/crafting_jobs` | Crafting workshop |
+| `workshop` | `/crafting_jobs` | Crafting workshop (alias) |
+| `healing` | `/healing` | Healing feature (TODO) |
+| `clinic` | `/healing` | Healing feature (alias, TODO) |
+| `shop` | `/shop` | Shop feature (TODO) |
+| `tavern` | `/tavern` | Tavern feature (TODO) |
+| `guild` | `/guilds` | Guilds feature (TODO) |
 
 ### Entry Flow
 1. Player enters city zone (via TileBuilding)
@@ -75,6 +90,19 @@ This matches the Neverlands approach where hovering over a building area shows i
 - Cropped to the exact building area size
 - Positioned using `position_x`/`position_y` matching city.png coordinates
 - The image's natural dimensions define the clickable area
+
+### Castleton Keep Building Positions
+
+These are the current hotspot positions for `city.png` (1536 x 1024):
+
+| Building | Key | Position (x, y) | Size (w x h) | Action |
+|----------|-----|-----------------|--------------|--------|
+| City Gates | `city_gate` | (680, 850) | 180 x 150 | Exit to Starter Plains |
+| Arena | `arena` | (1050, 200) | 300 x 250 | PvP battles |
+| Workshop | `workshop` | (100, 350) | 250 x 200 | Crafting |
+| Clinic | `clinic` | (1150, 500) | 200 x 180 | Healing |
+| Housing District | `house` | (550, 300) | 200 x 180 | Player housing |
+| Ancient Oak | `tree_center` | (750, 550) | 150 x 200 | Decoration (no action) |
 
 ## Hotwire Integration
 

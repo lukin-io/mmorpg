@@ -47,6 +47,8 @@ class Character < ApplicationRecord
   has_one :inventory, dependent: :destroy
   has_many :arena_rankings, dependent: :destroy
   has_one :arena_ranking, -> { where(ladder_type: "arena") }, class_name: "ArenaRanking", dependent: :destroy
+  has_many :arena_applications, foreign_key: :applicant_id, dependent: :destroy
+  has_many :arena_participations, dependent: :destroy
 
   has_many :character_skills, dependent: :destroy
   has_many :skill_nodes, through: :character_skills

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_12_18_132823) do
+ActiveRecord::Schema[8.1].define(version: 2025_12_18_155628) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -500,6 +500,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_18_132823) do
     t.boolean "active", default: true
     t.datetime "created_at", null: false
     t.bigint "destination_zone_id"
+    t.integer "height"
     t.string "hotspot_type", default: "building", null: false
     t.string "image_hover"
     t.string "image_normal"
@@ -509,6 +510,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_18_132823) do
     t.integer "position_y", null: false
     t.integer "required_level", default: 1
     t.datetime "updated_at", null: false
+    t.integer "width"
     t.integer "z_index", default: 0
     t.bigint "zone_id", null: false
     t.index ["active"], name: "index_city_hotspots_on_active"

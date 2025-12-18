@@ -38,6 +38,10 @@ class Recipe < ApplicationRecord
     requirements.fetch("materials", {})
   end
 
+  def required_skill_level
+    requirements.fetch("skill_level", tier * 10)
+  end
+
   def requires_premium_tokens?
     premium_token_cost.positive?
   end

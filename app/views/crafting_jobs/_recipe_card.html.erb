@@ -13,8 +13,8 @@
   <div class="recipe-materials">
     <h5>Materials:</h5>
     <ul>
-      <% recipe.materials.each do |mat| %>
-        <li><%= mat["name"] %> x<%= mat["quantity"] %></li>
+      <% recipe.materials.each do |item_name, quantity| %>
+        <li><%= item_name %> x<%= quantity %></li>
       <% end %>
     </ul>
   </div>

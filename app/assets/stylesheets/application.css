@@ -824,6 +824,29 @@ textarea {
   border-bottom: 1px solid var(--nl-border-light);
 }
 
+.page-header-top {
+  margin-bottom: var(--nl-space-sm);
+}
+
+.back-to-city {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  font-size: 0.85rem;
+  color: var(--nl-text-muted);
+  background: var(--nl-bg-secondary);
+  border: 1px solid var(--nl-border-light);
+  border-radius: 4px;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+.back-to-city:hover {
+  color: var(--nl-text-primary);
+  background: var(--nl-bg-tertiary);
+  border-color: var(--nl-gold);
+}
+
 .page-header h1 { margin-bottom: var(--nl-space-xs); }
 
 .page-header p {
@@ -11866,236 +11889,127 @@ turbo-frame[busy] {
 }
 
 /* ============================================
-   CITY VIEW - Interactive Illustrated City
+   CITY VIEW
    ============================================ */
 
-.city-view-container {
-  max-width: 100%;
-  margin: 0 auto;
-  padding: 0;
-}
+.city-view-container { max-width: 100%; margin: 0 auto; }
+.city-header { text-align: center; padding: 12px; background: var(--nl-bg-tertiary); border-bottom: 2px solid var(--nl-gold); }
+.city-name { font-size: 1.5rem; color: var(--nl-text-primary); margin: 0; }
+.city-description { font-size: 0.9rem; color: var(--nl-text-muted); margin: 4px 0 0; }
 
-/* City Header */
-.city-header {
-  text-align: center;
-  padding: 12px 16px;
-  background: var(--nl-bg-tertiary);
-  border-bottom: 2px solid var(--nl-gold);
-}
-
-.city-name {
-  font-family: var(--nl-font-header, Georgia, serif);
-  font-size: 1.5rem;
-  color: var(--nl-text-primary);
-  margin: 0 0 4px 0;
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
-}
-
-.city-description {
-  font-size: 0.9rem;
-  color: var(--nl-text-muted);
-  margin: 0;
-}
-
-/* Main City View - Background + Hotspots */
 .city-view {
   position: relative;
   width: 100%;
   max-width: 1536px;
   aspect-ratio: 1536 / 1024;
   margin: 0 auto;
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
+  background-size: 100% 100%;
   overflow: hidden;
   border: 2px solid var(--nl-gold);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
-/* Responsive city view */
-@media (max-width: 1600px) {
-  .city-view {
-    max-width: 100%;
-  }
-}
-
-/* Hotspot Base Styles */
-.city-hotspot {
-  position: absolute;
-  cursor: pointer;
-  transition: transform 0.15s ease;
-}
-
-.city-hotspot:hover {
-  transform: scale(1.02);
-  z-index: 100 !important;
-}
-
-/* Hotspot Type Variants */
-.city-hotspot--building {
-  cursor: pointer;
-}
-
-.city-hotspot--exit {
-  cursor: pointer;
-}
-
-.city-hotspot--decoration {
-  cursor: default;
-  pointer-events: none;
-}
-
-.city-hotspot--feature {
-  cursor: pointer;
-}
-
-/* Hotspot Form/Button */
-.city-hotspot-form {
-  display: block;
-  margin: 0;
-  padding: 0;
-  width: 100%;
-  height: 100%;
-}
-
-.city-hotspot-button {
-  background: none;
-  border: none;
-  padding: 0;
-  margin: 0;
-  cursor: pointer;
-  display: block;
-  position: relative;
-  width: 100%;
-  height: 100%;
-}
-
-.city-hotspot-button:active {
-  transform: scale(0.98);
-}
-
-/*
- * Highlight overlay - always rendered but invisible until hover.
- * The image's natural dimensions define the clickable hotspot area.
- * On hover, opacity changes to 1 to "highlight" the building.
- */
-.city-hotspot-overlay {
-  display: block;
-  width: auto;
-  height: auto;
-  opacity: 0;
-  transition: opacity 0.15s ease;
-}
-
-/* Show overlay on hover */
-.city-hotspot-overlay--visible {
-  opacity: 1;
-}
-
-/* Invisible hitbox overlay - fallback if no image */
-.city-hotspot-hitbox {
-  display: block;
+/* TODO: Uncomment when work with overlap
+.city-overlay {
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-}
-
-/* Locked overlay - grayscale effect */
-.city-hotspot-overlay--locked {
-  filter: grayscale(60%) brightness(0.7);
-}
-
-/* Lock icon for blocked hotspots */
-.city-hotspot-lock {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  font-size: 32px;
-  z-index: 10;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
   opacity: 0;
-  transition: opacity 0.15s ease;
+  pointer-events: none;
+  transition: opacity 0.15s;
 }
+.city-overlay--visible { opacity: 1; }
+*/
 
-.city-hotspot-blocked:hover .city-hotspot-lock {
+/* HITBOX - Clickable area at building position */
+.city-hitbox {
+  position: absolute;
+  cursor: pointer;
+  z-index: 10;
+  background: rgba(255, 255, 255, 0.1);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+.city-hitbox:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+/* Form inside hitbox must fill entire area */
+.city-hitbox form {
+  display: block;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+/* Override global button styles for hitbox */
+.city-hitbox-btn,
+.city-hitbox-btn:hover,
+.city-hitbox-btn:focus,
+.city-hitbox-btn:active {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100%;
+  height: 100%;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  cursor: pointer;
+  padding: 0;
+  margin: 0;
+}
+/* Label text - only visible on hover */
+.city-hitbox-label {
+  font-family: 'Cinzel', Georgia, serif;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+  color: #ffd700;
+  text-shadow:
+    0 0 10px rgba(0, 0, 0, 0.9),
+    0 0 20px rgba(0, 0, 0, 0.7),
+    0 2px 4px rgba(0, 0, 0, 0.9);
+  text-align: center;
+  opacity: 0;
+  transform: translateY(5px);
+  transition: all 0.25s ease;
+}
+.city-hitbox:hover .city-hitbox-label {
+  opacity: 1;
+  transform: translateY(0);
+}
+.city-hitbox-label--locked {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  font-family: Georgia, serif;
+  font-size: 0.85rem;
+  color: #888;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+.city-hitbox:hover .city-hitbox-label--locked {
   opacity: 1;
 }
 
-/* Blocked Hotspot */
-.city-hotspot-blocked {
-  position: relative;
-  cursor: not-allowed;
-}
-
-/* Decoration hotspot */
-.city-hotspot-decoration {
-  position: relative;
-  cursor: default;
-}
-
-/* Tooltip */
+/* TOOLTIP */
 .city-tooltip {
   position: absolute;
   display: none;
-  background: rgba(34, 34, 34, 0.95);
-  color: #FFFFFF;
-  padding: 8px 12px;
+  background: rgba(0,0,0,0.9);
+  color: #fff;
+  padding: 6px 10px;
   border-radius: 4px;
   font-size: 0.85rem;
-  font-weight: 500;
-  white-space: nowrap;
   pointer-events: none;
-  z-index: 1000;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  z-index: 100;
   border: 1px solid var(--nl-gold);
 }
 
-.city-tooltip::before {
-  content: "";
-  position: absolute;
-  top: -6px;
-  left: 10px;
-  border-left: 6px solid transparent;
-  border-right: 6px solid transparent;
-  border-bottom: 6px solid var(--nl-gold);
-}
-
-/* City Actions Panel */
-.city-actions {
-  background: var(--nl-bg-tertiary);
-  border-top: 2px solid var(--nl-gold);
-  padding: 12px 16px;
-  text-align: center;
-}
-
-.city-actions-info {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 16px;
-  flex-wrap: wrap;
-}
-
-.city-location-label {
-  font-size: 0.9rem;
-  color: var(--nl-text-secondary);
-  font-weight: 500;
-}
-
-/* Responsive Hotspot Positioning */
-/* Scale hotspot positions based on container width */
-@media (max-width: 1200px) {
-  .city-hotspot {
-    transform-origin: top left;
-  }
-}
-
-/* Hover glow effect for buildings */
-.city-hotspot--building:hover .city-hotspot-image,
-.city-hotspot--exit:hover .city-hotspot-image,
-.city-hotspot--feature:hover .city-hotspot-image {
-  filter: drop-shadow(0 0 8px rgba(185, 160, 92, 0.6));
-}
+.city-actions { background: var(--nl-bg-tertiary); border-top: 2px solid var(--nl-gold); padding: 12px; text-align: center; }
+.city-location-label { font-size: 0.9rem; color: var(--nl-text-secondary); }

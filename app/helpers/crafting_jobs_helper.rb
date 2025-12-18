@@ -15,12 +15,12 @@ module CraftingJobsHelper
   }.freeze
 
   def crafting_job_icon(job)
-    profession_key = job.recipe.profession.key.downcase
+    profession_key = job.recipe.profession.name.downcase
     PROFESSION_ICONS[profession_key] || "📦"
   end
 
   def recipe_icon(recipe)
-    profession_key = recipe.profession.key.downcase
+    profession_key = recipe.profession.name.downcase
     PROFESSION_ICONS[profession_key] || "📦"
   end
 end

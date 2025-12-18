@@ -153,6 +153,15 @@ module Game
       def handle_feature_navigation(hotspot)
         url = hotspot.navigate_url
 
+        # If the URL is /world, the feature is not implemented yet
+        if url == "/world"
+          return Result.new(
+            success: false,
+            message: "#{hotspot.name} is coming soon!",
+            hotspot: hotspot
+          )
+        end
+
         Result.new(
           success: true,
           message: "Entering #{hotspot.name}...",

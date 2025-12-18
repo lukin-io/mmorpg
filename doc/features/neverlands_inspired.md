@@ -2856,6 +2856,19 @@ Elselands mirrors this with:
 2. Overlay image with `opacity: 0` (invisible by default)
 3. `opacity: 1` on hover via CSS class toggle
 
+### Castleton Keep Building Positions
+
+Current hotspot positions for `city.png` (1536 x 1024):
+
+| Building | Key | Position (x, y) | Size (w x h) | Action |
+|----------|-----|-----------------|--------------|--------|
+| City Gates | `city_gate` | (680, 850) | 180 x 150 | Exit to Starter Plains |
+| Arena | `arena` | (1050, 200) | 300 x 250 | PvP battles |
+| Workshop | `workshop` | (100, 350) | 250 x 200 | Crafting |
+| Clinic | `clinic` | (1150, 500) | 200 x 180 | Healing |
+| Housing District | `house` | (550, 300) | 200 x 180 | Player housing |
+| Ancient Oak | `tree_center` | (750, 550) | 150 x 200 | Decoration (no action) |
+
 ### Key Files
 - `app/models/city_hotspot.rb` - Hotspot model
 - `app/services/game/world/city_hotspot_service.rb` - Interaction service

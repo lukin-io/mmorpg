@@ -1361,18 +1361,35 @@ starter_plains = Zone.find_by(name: "Starter Plains")
 if castleton
   city_hotspots = []
 
-  # NOTE: position_x/y are pixel coordinates on city.png (1536x1024)
-  # These are TEMPORARY spread positions - adjust to match actual building locations in city.png
-  # The image_hover is the highlight overlay that appears on hover
+  # ==========================================================================
+  # CITY HOTSPOT POSITIONING GUIDE
+  # ==========================================================================
+  # - city.png is 1536x1024 pixels
+  # - Each overlay image (arena.png, gate.png, etc.) is also 1536x1024 with
+  #   transparent areas except for the highlighted building
+  # - position_x/y: Where to place the HITBOX (invisible clickable area)
+  #   This should be the top-left corner of the building's clickable area
+  # - width/height: Size of the HITBOX (clickable area)
+  #   Adjust these to match the building's dimensions on city.png
+  #
+  # HOW TO FIND POSITIONS:
+  # 1. Open city.png in an image editor
+  # 2. Find the building you want to make clickable
+  # 3. Note the top-left pixel coordinates (position_x, position_y)
+  # 4. Measure the building's width and height in pixels
+  # ==========================================================================
 
-  # City Gates / Exit - leads back to Starter Plains at (7,0) where TileBuilding castle entrance is
+  # City Gates / Exit - leads back to Starter Plains
+  # TODO: Adjust position to match gate location on city.png
   city_hotspots << {
     zone: castleton,
     key: "city_gate",
     name: "City Gates",
     hotspot_type: "exit",
-    position_x: 50,
-    position_y: 700,
+    position_x: 680,    # Center-bottom area (adjust to match your city.png)
+    position_y: 850,
+    width: 180,
+    height: 150,
     image_hover: "gate.png",
     action_type: "enter_zone",
     destination_zone: starter_plains,
@@ -1381,14 +1398,17 @@ if castleton
     z_index: 10
   }
 
-  # Arena - for PvP battles (right side, upper area)
+  # Arena - for PvP battles
+  # TODO: Adjust position to match arena location on city.png
   city_hotspots << {
     zone: castleton,
     key: "arena",
     name: "Arena",
     hotspot_type: "building",
-    position_x: 1100,
-    position_y: 100,
+    position_x: 1050,   # Right side (adjust to match your city.png)
+    position_y: 200,
+    width: 300,
+    height: 250,
     image_hover: "arena.png",
     action_type: "open_feature",
     action_params: {"feature" => "arena"},
@@ -1396,14 +1416,17 @@ if castleton
     z_index: 20
   }
 
-  # Workshop - for crafting (right side, middle)
+  # Workshop - for crafting
+  # TODO: Adjust position to match workshop location on city.png
   city_hotspots << {
     zone: castleton,
     key: "workshop",
     name: "Workshop",
     hotspot_type: "building",
-    position_x: 1100,
-    position_y: 400,
+    position_x: 100,    # Left side (adjust to match your city.png)
+    position_y: 350,
+    width: 250,
+    height: 200,
     image_hover: "workshop.png",
     action_type: "open_feature",
     action_params: {"feature" => "crafting"},
@@ -1411,14 +1434,17 @@ if castleton
     z_index: 20
   }
 
-  # Clinic / Hospital - for healing (left side, middle)
+  # Clinic / Hospital - for healing
+  # TODO: Adjust position to match clinic location on city.png
   city_hotspots << {
     zone: castleton,
     key: "clinic",
     name: "Clinic",
     hotspot_type: "building",
-    position_x: 300,
-    position_y: 400,
+    position_x: 1150,   # Right side, lower (adjust to match your city.png)
+    position_y: 500,
+    width: 200,
+    height: 180,
     image_hover: "clinic.png",
     action_type: "open_feature",
     action_params: {"feature" => "healing"},
@@ -1426,14 +1452,17 @@ if castleton
     z_index: 20
   }
 
-  # House - player housing (center area)
+  # House - player housing
+  # TODO: Adjust position to match house location on city.png
   city_hotspots << {
     zone: castleton,
     key: "house",
     name: "Housing District",
     hotspot_type: "building",
-    position_x: 700,
+    position_x: 550,    # Center area (adjust to match your city.png)
     position_y: 300,
+    width: 200,
+    height: 180,
     image_hover: "house.png",
     action_type: "open_feature",
     action_params: {"feature" => "housing"},
@@ -1441,14 +1470,18 @@ if castleton
     z_index: 20
   }
 
-  # Decorative Tree - no action (center foreground)
+  # Decorative Tree - no action, just hover effect
+  # NOTE: tree.png is 1024x1536 (rotated) - may need different handling
+  # TODO: Adjust position to match tree location on city.png
   city_hotspots << {
     zone: castleton,
     key: "tree_center",
     name: "Ancient Oak",
     hotspot_type: "decoration",
-    position_x: 700,
-    position_y: 600,
+    position_x: 750,    # Center area (adjust to match your city.png)
+    position_y: 550,
+    width: 150,
+    height: 200,
     image_hover: "tree.png",
     action_type: "none",
     z_index: 5
@@ -1460,7 +1493,9 @@ if castleton
       hotspot.hotspot_type = attrs[:hotspot_type]
       hotspot.position_x = attrs[:position_x]
       hotspot.position_y = attrs[:position_y]
-      hotspot.image_normal = nil  # Not used - overlay only
+      hotspot.width = attrs[:width]
+      hotspot.height = attrs[:height]
+      hotspot.image_normal = nil  # Not used - overlay approach uses full-size images
       hotspot.image_hover = attrs[:image_hover]
       hotspot.action_type = attrs[:action_type]
       hotspot.destination_zone = attrs[:destination_zone]

@@ -54,14 +54,12 @@
         </div>
       </header>
 
-      <%# Flash Messages %>
-      <% if flash.any? %>
-        <div class="flash-messages container">
-          <% flash.each do |type, message| %>
-            <div class="flash <%= type %>"><%= message %></div>
-          <% end %>
-        </div>
-      <% end %>
+      <%# Flash Messages - Turbo Stream target for dynamic updates %>
+      <div id="flash" class="flash-messages container">
+        <% flash.each do |type, message| %>
+          <div class="flash <%= type %>"><%= message %></div>
+        <% end %>
+      </div>
 
       <%# Real-time notifications %>
       <% if current_user %>

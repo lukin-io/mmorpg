@@ -910,14 +910,15 @@ RSpec.describe "World", type: :request do
         expect(response.body).to include("Test Castle").or include("enter")
       end
 
-      it "redirects on turbo stream format (target zone may require full page reload for city view)" do
+      it "redirects on turbo stream format to trigger full page reload" do
         post enter_building_world_path,
           params: {building_id: building.id},
           headers: {"Accept" => "text/vnd.turbo-stream.html"}
 
-        # After entering a building, we always redirect to /world because:
+        # After entering a building, we redirect because:
         # 1. Target zone might be a city which requires city_view.html.erb (not partials)
-        # 2. Full page navigation ensures correct view is rendered
+        # 2. Redirect with see_other status triggers Turbo to do full page navigation
+        expect(response).to have_http_status(:see_other)
         expect(response).to redirect_to(world_path)
       end
     end
@@ -1344,6 +1345,320 @@ RSpec.describe "World", type: :request do
       post enter_building_world_path, params: {building_id: building.id}
 
       expect(response).to redirect_to(new_user_session_path)
+    end
+  end
+
+  # ============================================
+  # Bug Fix: interact_hotspot Turbo Stream handling
+  # ============================================
+  # Regression tests for the interact_hotspot action handling.
+  #
+  # Bug: Feature hotspots (Arena, Workshop, etc.) weren't navigating properly
+  #      because only enter_zone had proper respond_to block with status: :see_other
+  # Fix: Added proper respond_to block for open_feature hotspots
+
+  describe "POST /world/interact_hotspot" do
+    let(:user) { create(:user) }
+    let(:city_zone) { create(:zone, name: "Hotspot Test City", biome: "city", width: 20, height: 20) }
+    let(:destination_zone) { create(:zone, name: "Destination Plains", biome: "plains", width: 20, height: 20) }
+    let(:character) { create(:character, user: user, level: 10) }
+    let!(:position) { create(:character_position, character: character, zone: city_zone, x: 5, y: 5) }
+    let!(:spawn_point) { create(:spawn_point, zone: destination_zone, x: 5, y: 5, default_entry: true) }
+
+    before { sign_in user, scope: :user }
+
+    context "with open_feature hotspot (Arena)" do
+      let!(:arena_hotspot) do
+        create(:city_hotspot, :arena,
+          zone: city_zone,
+          required_level: 1,
+          active: true)
+      end
+
+      describe "HTML format" do
+        it "redirects to arena page on success" do
+          post interact_hotspot_world_path, params: {hotspot_id: arena_hotspot.id}
+
+          expect(response).to redirect_to("/arena")
+        end
+
+        it "includes success notice in flash" do
+          post interact_hotspot_world_path, params: {hotspot_id: arena_hotspot.id}
+
+          expect(flash[:notice]).to include("Arena")
+        end
+      end
+
+      describe "Turbo Stream format" do
+        it "returns 303 See Other redirect for proper Turbo handling" do
+          post interact_hotspot_world_path,
+            params: {hotspot_id: arena_hotspot.id},
+            headers: {"Accept" => "text/vnd.turbo-stream.html"}
+
+          expect(response).to have_http_status(:see_other)
+        end
+
+        it "redirects to arena page" do
+          post interact_hotspot_world_path,
+            params: {hotspot_id: arena_hotspot.id},
+            headers: {"Accept" => "text/vnd.turbo-stream.html"}
+
+          expect(response).to redirect_to("/arena")
+        end
+
+        it "sets flash notice before redirect" do
+          post interact_hotspot_world_path,
+            params: {hotspot_id: arena_hotspot.id},
+            headers: {"Accept" => "text/vnd.turbo-stream.html"}
+
+          expect(flash[:notice]).to include("Entering")
+        end
+      end
+    end
+
+    context "with open_feature hotspot (Workshop/Crafting)" do
+      let!(:workshop_hotspot) do
+        create(:city_hotspot, :workshop,
+          zone: city_zone,
+          required_level: 1,
+          active: true)
+      end
+
+      it "redirects to crafting jobs page (HTML)" do
+        post interact_hotspot_world_path, params: {hotspot_id: workshop_hotspot.id}
+
+        expect(response).to redirect_to("/crafting_jobs")
+      end
+
+      it "redirects to crafting jobs page (Turbo Stream)" do
+        post interact_hotspot_world_path,
+          params: {hotspot_id: workshop_hotspot.id},
+          headers: {"Accept" => "text/vnd.turbo-stream.html"}
+
+        expect(response).to redirect_to("/crafting_jobs")
+        expect(response).to have_http_status(:see_other)
+      end
+    end
+
+    context "with enter_zone hotspot (Exit)" do
+      let!(:exit_hotspot) do
+        create(:city_hotspot, :city_gate,
+          zone: city_zone,
+          destination_zone: destination_zone,
+          required_level: 1,
+          active: true)
+      end
+
+      describe "HTML format" do
+        it "redirects to world path after zone transition" do
+          post interact_hotspot_world_path, params: {hotspot_id: exit_hotspot.id}
+
+          expect(response).to redirect_to(world_path)
+        end
+
+        it "updates character position to destination zone" do
+          post interact_hotspot_world_path, params: {hotspot_id: exit_hotspot.id}
+
+          position.reload
+          expect(position.zone).to eq(destination_zone)
+        end
+
+        it "uses spawn point coordinates" do
+          post interact_hotspot_world_path, params: {hotspot_id: exit_hotspot.id}
+
+          position.reload
+          expect(position.x).to eq(spawn_point.x)
+          expect(position.y).to eq(spawn_point.y)
+        end
+      end
+
+      describe "Turbo Stream format" do
+        it "returns 303 See Other redirect for proper Turbo handling" do
+          post interact_hotspot_world_path,
+            params: {hotspot_id: exit_hotspot.id},
+            headers: {"Accept" => "text/vnd.turbo-stream.html"}
+
+          expect(response).to have_http_status(:see_other)
+        end
+
+        it "redirects to world path" do
+          post interact_hotspot_world_path,
+            params: {hotspot_id: exit_hotspot.id},
+            headers: {"Accept" => "text/vnd.turbo-stream.html"}
+
+          expect(response).to redirect_to(world_path)
+        end
+      end
+    end
+
+    context "when hotspot not found (null case)" do
+      it "redirects with alert for HTML format" do
+        post interact_hotspot_world_path, params: {hotspot_id: 99999}
+
+        expect(response).to redirect_to(world_path)
+        follow_redirect!
+        expect(response.body).to include("not found")
+      end
+
+      it "returns turbo stream error for Turbo format" do
+        post interact_hotspot_world_path,
+          params: {hotspot_id: 99999},
+          headers: {"Accept" => "text/vnd.turbo-stream.html"}
+
+        expect(response.media_type).to eq("text/vnd.turbo-stream.html")
+        expect(response.body).to include("turbo-stream")
+      end
+    end
+
+    context "when character level too low (failure case)" do
+      let!(:high_level_hotspot) do
+        create(:city_hotspot,
+          zone: city_zone,
+          required_level: 50,
+          active: true,
+          action_type: "open_feature",
+          action_params: {"feature" => "arena"})
+      end
+
+      it "redirects with alert for HTML format" do
+        post interact_hotspot_world_path, params: {hotspot_id: high_level_hotspot.id}
+
+        expect(response).to redirect_to(world_path)
+        follow_redirect!
+        expect(response.body).to include("level 50")
+      end
+
+      it "returns turbo stream error for Turbo format" do
+        post interact_hotspot_world_path,
+          params: {hotspot_id: high_level_hotspot.id},
+          headers: {"Accept" => "text/vnd.turbo-stream.html"}
+
+        expect(response.media_type).to eq("text/vnd.turbo-stream.html")
+      end
+    end
+
+    context "when hotspot is inactive (failure case)" do
+      let!(:inactive_hotspot) do
+        create(:city_hotspot,
+          zone: city_zone,
+          active: false,
+          action_type: "open_feature")
+      end
+
+      it "redirects with alert for HTML format" do
+        post interact_hotspot_world_path, params: {hotspot_id: inactive_hotspot.id}
+
+        expect(response).to redirect_to(world_path)
+        follow_redirect!
+        expect(response.body).to include("unavailable").or include("cannot")
+      end
+    end
+
+    context "with decoration hotspot (null interaction case)" do
+      let!(:decoration_hotspot) do
+        create(:city_hotspot,
+          zone: city_zone,
+          action_type: "none",
+          hotspot_type: "decoration",
+          active: true)
+      end
+
+      it "returns failure for decoration hotspots" do
+        post interact_hotspot_world_path, params: {hotspot_id: decoration_hotspot.id}
+
+        expect(response).to redirect_to(world_path)
+        follow_redirect!
+        expect(response.body).to include("cannot").or include("no interaction")
+      end
+    end
+
+    context "without authentication" do
+      before { sign_out user }
+
+      it "redirects to login page" do
+        arena_hotspot = create(:city_hotspot, :arena, zone: city_zone)
+
+        post interact_hotspot_world_path, params: {hotspot_id: arena_hotspot.id}
+
+        expect(response).to redirect_to(new_user_session_path)
+      end
+    end
+
+    context "when hotspot belongs to different zone" do
+      let(:other_zone) { create(:zone, name: "Other City", biome: "city") }
+      let!(:other_hotspot) do
+        create(:city_hotspot, :arena, zone: other_zone, active: true)
+      end
+
+      it "returns failure when hotspot zone doesn't match character zone" do
+        post interact_hotspot_world_path, params: {hotspot_id: other_hotspot.id}
+
+        expect(response).to redirect_to(world_path)
+        follow_redirect!
+        expect(response.body).to include("not found")
+      end
+    end
+  end
+
+  # ============================================
+  # Integration: City View with Hotspots
+  # ============================================
+  # Integration tests for the full city view flow
+
+  describe "city view integration" do
+    let(:user) { create(:user) }
+    let(:city_zone) { create(:zone, name: "Integration Test City", biome: "city", width: 20, height: 20) }
+    let(:character) { create(:character, user: user, level: 10) }
+    let!(:position) { create(:character_position, character: character, zone: city_zone, x: 5, y: 5) }
+
+    before { sign_in user, scope: :user }
+
+    context "with multiple hotspots" do
+      let!(:arena) { create(:city_hotspot, :arena, zone: city_zone, active: true, required_level: 1) }
+      let!(:workshop) { create(:city_hotspot, :workshop, zone: city_zone, active: true, required_level: 1) }
+      let!(:exit_gate) do
+        dest = create(:zone, name: "Exit Dest", biome: "plains")
+        create(:spawn_point, zone: dest, default_entry: true)
+        create(:city_hotspot, :city_gate, zone: city_zone, destination_zone: dest, active: true)
+      end
+      let!(:decoration) { create(:city_hotspot, :decoration, zone: city_zone, active: true) }
+
+      it "renders city view with all active hotspots" do
+        get world_path
+
+        expect(response).to have_http_status(:success)
+        expect(response.body).to include("Arena")
+        expect(response.body).to include("Workshop")
+        expect(response.body).to include("City Gates")
+      end
+
+      it "includes form for each interactive hotspot" do
+        get world_path
+
+        expect(response.body).to include("interact_hotspot")
+        expect(response.body).to include(arena.id.to_s)
+        expect(response.body).to include(workshop.id.to_s)
+      end
+
+      it "arena hotspot navigates to arena page" do
+        post interact_hotspot_world_path, params: {hotspot_id: arena.id}
+
+        expect(response).to redirect_to("/arena")
+      end
+
+      it "workshop hotspot navigates to crafting page" do
+        post interact_hotspot_world_path, params: {hotspot_id: workshop.id}
+
+        expect(response).to redirect_to("/crafting_jobs")
+      end
+
+      it "exit gate transitions to destination zone" do
+        post interact_hotspot_world_path, params: {hotspot_id: exit_gate.id}
+
+        expect(response).to redirect_to(world_path)
+        position.reload
+        expect(position.zone.biome).to eq("plains")
+      end
     end
   end
 end

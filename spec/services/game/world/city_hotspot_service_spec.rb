@@ -227,6 +227,67 @@ RSpec.describe Game::World::CityHotspotService do
         expect(result.message).to include("cannot interact")
       end
     end
+
+    context "with unimplemented feature (housing)" do
+      let!(:housing_hotspot) do
+        create(:city_hotspot,
+          zone: city_zone,
+          key: "housing",
+          name: "Housing District",
+          hotspot_type: "feature",
+          action_type: "open_feature",
+          action_params: {"feature" => "housing"},
+          required_level: 1,
+          active: true)
+      end
+
+      it "returns failure with 'coming soon' message" do
+        result = subject.interact!(housing_hotspot.id)
+        expect(result.success).to be false
+        expect(result.message).to include("coming soon")
+        expect(result.redirect_url).to be_nil
+      end
+    end
+
+    context "with unimplemented feature (clinic)" do
+      let!(:clinic_hotspot) do
+        create(:city_hotspot,
+          zone: city_zone,
+          key: "clinic",
+          name: "Clinic",
+          hotspot_type: "feature",
+          action_type: "open_feature",
+          action_params: {"feature" => "clinic"},
+          required_level: 1,
+          active: true)
+      end
+
+      it "returns failure with 'coming soon' message" do
+        result = subject.interact!(clinic_hotspot.id)
+        expect(result.success).to be false
+        expect(result.message).to include("coming soon")
+      end
+    end
+
+    context "with unimplemented feature (healing)" do
+      let!(:healing_hotspot) do
+        create(:city_hotspot,
+          zone: city_zone,
+          key: "healing",
+          name: "Healing",
+          hotspot_type: "feature",
+          action_type: "open_feature",
+          action_params: {"feature" => "healing"},
+          required_level: 1,
+          active: true)
+      end
+
+      it "returns failure with 'coming soon' message" do
+        result = subject.interact!(healing_hotspot.id)
+        expect(result.success).to be false
+        expect(result.message).to include("coming soon")
+      end
+    end
   end
 
   describe "Result struct" do

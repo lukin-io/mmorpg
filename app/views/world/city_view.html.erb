@@ -1,8 +1,6 @@
 <%# City View - Interactive illustrated city with clickable hotspots %>
-<%# Instead of tile grid, displays background image with positioned building hotspots %>
 
 <div class="city-view-container">
-  <%# City header with zone info %>
   <div class="city-header">
     <h2 class="city-name"><%= @zone.name %></h2>
     <% if @zone.metadata&.dig("description") %>
@@ -10,27 +8,23 @@
     <% end %>
   </div>
 
-  <%# Main city illustration with hotspots %>
-  <div class="city-view"
-       data-controller="city-view"
-       data-city-view-background-value="<%= asset_path('city.png') %>">
+  <div class="city-view" data-controller="city-view" data-city-view-background-value="<%= asset_path('city.png') %>">
 
-    <%# Background image is set via CSS %>
+    <%#
+      TODO: Add overlay images when ready to work on hover highlights.
+      Each hotspot.image_hover should be rendered as a full-size overlay at position 0,0.
+      See city_view_controller.js for showOverlay/hideOverlay methods.
+    %>
 
-    <%# Render each hotspot %>
+    <%# Invisible hitboxes at building positions %>
     <% @hotspots.each do |hotspot| %>
       <%= render "world/city_hotspot", hotspot: hotspot %>
     <% end %>
 
-    <%# Tooltip element %>
     <div class="city-tooltip" data-city-view-target="tooltip"></div>
   </div>
 
-  <%# City actions panel %>
   <div class="city-actions">
-    <div class="city-actions-info">
-      <span class="city-location-label">📍 You are in <%= @zone.name %></span>
-    </div>
+    <span class="city-location-label">📍 You are in <%= @zone.name %></span>
   </div>
 </div>
-

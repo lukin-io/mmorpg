@@ -60,7 +60,7 @@ class ArenaApplicationsController < ApplicationController
           }
         end
       else
-        format.html { redirect_back fallback_location: arena_path, alert: result.errors.join(", ") }
+        format.html { redirect_back fallback_location: arena_index_path, alert: result.errors.join(", ") }
         format.json { render json: {success: false, errors: result.errors}, status: :unprocessable_entity }
       end
     end
@@ -84,7 +84,7 @@ class ArenaApplicationsController < ApplicationController
         format.html { redirect_to arena_room_path(@application.arena_room), notice: "Application cancelled" }
         format.json { render json: {success: true} }
       else
-        format.html { redirect_back fallback_location: arena_path, alert: result.errors.join(", ") }
+        format.html { redirect_back fallback_location: arena_index_path, alert: result.errors.join(", ") }
         format.json { render json: {success: false, errors: result.errors}, status: :unprocessable_entity }
       end
     end

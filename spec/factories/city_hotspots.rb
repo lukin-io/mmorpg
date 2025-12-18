@@ -8,6 +8,8 @@ FactoryBot.define do
     hotspot_type { "building" }
     position_x { 100 }
     position_y { 100 }
+    width { 150 }
+    height { 100 }
     image_normal { "test_building.png" }
     image_hover { "test_building_hl.png" }
     action_type { "open_feature" }

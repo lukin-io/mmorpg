@@ -28,7 +28,7 @@ class WorldController < ApplicationController
 
     # City zones render an interactive illustrated view instead of tile grid
     if city_zone?
-      render_city_view
+      prepare_city_view
     else
       @tile = current_tile
       @nearby_tiles = nearby_tiles_with_features
@@ -39,6 +39,28 @@ class WorldController < ApplicationController
       @tile_npc = tile_npc_at_current_tile
       @tile_building = tile_building_at_current_tile
       @players_here = players_at_current_tile
+    end
+
+    # Handle both HTML and Turbo Stream requests with full page render
+    # Turbo Stream requests can come from redirects after building entry
+    respond_to do |format|
+      format.html do
+        if city_zone?
+          render "world/city_view"
+        else
+          render "world/show"
+        end
+      end
+      format.turbo_stream do
+        # For Turbo Stream requests (e.g., after enter_building redirect),
+        # render full HTML page to avoid "Content missing"
+        # Use formats: [:html] to find the .html.erb template
+        if city_zone?
+          render "world/city_view", formats: [:html], layout: "application"
+        else
+          render "world/show", formats: [:html], layout: "application"
+        end
+      end
     end
   end
 
@@ -128,13 +150,21 @@ class WorldController < ApplicationController
     if result.success
       if result.redirect_url.present?
         # Navigate to feature page (arena, crafting, etc.)
-        # Use redirect_to for both formats - Turbo will handle it as a full page visit
-        redirect_to result.redirect_url, notice: result.message
+        respond_to do |format|
+          format.html { redirect_to result.redirect_url, notice: result.message }
+          format.turbo_stream do
+            flash[:notice] = result.message
+            redirect_to result.redirect_url, status: :see_other
+          end
+        end
       elsif result.destination_zone.present?
-        # Zone transition - reload the world view
+        # Zone transition - redirect to reload the world view
         respond_to do |format|
           format.html { redirect_to world_path, notice: result.message }
-          format.turbo_stream { redirect_to world_path, notice: result.message }
+          format.turbo_stream do
+            flash[:notice] = result.message
+            redirect_to world_path, status: :see_other
+          end
         end
       else
         redirect_to world_path, notice: result.message
@@ -181,7 +211,11 @@ class WorldController < ApplicationController
         # Always redirect after entering a building - the target zone may be a city
         # which requires the full city_view template instead of partial updates
         format.html { redirect_to world_path, notice: result.message }
-        format.turbo_stream { redirect_to world_path, notice: result.message }
+        format.turbo_stream do
+          # Redirect via Turbo - triggers full page navigation
+          flash[:notice] = result.message
+          redirect_to world_path, status: :see_other
+        end
       else
         format.html { redirect_to world_path, alert: result.message }
         format.turbo_stream { render_error(result.message) }
@@ -313,14 +347,12 @@ class WorldController < ApplicationController
   end
 
   # Set up data for city view rendering
-  def render_city_view
+  def prepare_city_view
     @city_service = Game::World::CityHotspotService.new(
       character: current_character,
       zone: @position.zone
     )
     @hotspots = @city_service.hotspots
-
-    render "world/city_view"
   end
 
   def ensure_character_position!
