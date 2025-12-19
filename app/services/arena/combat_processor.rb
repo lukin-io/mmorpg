@@ -29,12 +29,61 @@ module Arena
       return failure("Character not in this match") unless participant?(character)
       return failure("Character is dead") if character.current_hp <= 0
 
-      case action_type.to_sym
+      result = case action_type.to_sym
       when :attack then process_attack(character, params[:target])
       when :defend then process_defend(character)
       when :skill then process_skill(character, params[:skill_id], params[:target])
       when :flee then process_flee(character)
       else failure("Unknown action type: #{action_type}")
+      end
+
+      # After player action, process NPC turn if this is an NPC fight
+      if result.success? && npc_fight? && !should_end?
+        process_npc_turn_after_delay
+      end
+
+      result
+    end
+
+    # Check if this match involves an NPC opponent
+    #
+    # @return [Boolean] true if match has NPC participant
+    def npc_fight?
+      match.metadata&.dig("is_npc_fight") == true ||
+        match.arena_participations.npcs.exists?
+    end
+
+    # Process the NPC's turn (called after player action)
+    #
+    # @return [Result, nil] result of NPC action or nil if no NPC
+    def process_npc_turn
+      npc_participation = match.arena_participations.npcs.first
+      return nil unless npc_participation
+
+      npc = npc_participation.npc_template
+      return nil unless npc
+
+      # Check if NPC is still alive
+      if npc_participation.current_hp <= 0
+        return nil
+      end
+
+      # Use AI to decide action
+      ai = Arena::NpcCombatAi.new(
+        npc_template: npc,
+        match: match,
+        rng: Random.new(match.id + Time.current.to_i)
+      )
+
+      decision = ai.decide_action
+
+      case decision.action_type
+      when :attack
+        process_npc_attack(npc_participation, decision.target, decision.params)
+      when :defend
+        process_npc_defend(npc_participation)
+      else
+        process_npc_attack(npc_participation, decision.target, decision.params)
       end
     end
 
@@ -102,8 +151,19 @@ module Arena
     private
 
     def process_attack(attacker, target)
-      target ||= find_default_target(attacker)
-      return failure("No valid target") unless target
+      # Find target - could be Character or NPC participation
+      target_participation = find_target_participation(attacker, target)
+      return failure("No valid target") unless target_participation
+
+      # Check if target is NPC or player
+      if target_participation.npc?
+        process_attack_on_npc(attacker, target_participation)
+      else
+        process_attack_on_player(attacker, target_participation.character)
+      end
+    end
+
+    def process_attack_on_player(attacker, target)
       return failure("Cannot attack ally") if same_team?(attacker, target)
       return failure("Target is dead") if target.current_hp <= 0
 
@@ -135,6 +195,100 @@ module Arena
       end
 
       success(damage:, critical:, target_hp: target.current_hp)
+    end
+
+    def process_attack_on_npc(attacker, npc_participation)
+      npc = npc_participation.npc_template
+      return failure("Target is dead") if npc_participation.current_hp <= 0
+
+      # Calculate damage
+      base_damage = calculate_base_damage(attacker)
+      npc_stats = npc_combat_stats(npc)
+      defense = npc_stats[:defense] || 5
+
+      # Check if NPC is defending
+      if npc_defending?(npc_participation)
+        defense = (defense * 1.5).round
+        npc_participation.metadata.delete("defending")
+        npc_participation.metadata.delete("defend_until")
+      end
+
+      damage = [base_damage - defense, 1].max
+
+      # Apply critical hit chance
+      critical = rand < 0.1
+      damage = (damage * 1.5).round if critical
+
+      # Apply damage to NPC
+      new_hp = [npc_participation.current_hp - damage, 0].max
+      npc_participation.current_hp = new_hp
+      npc_participation.save!
+
+      # Log and broadcast
+      log_type = critical ? "critical" : "damage"
+      log_entry(log_type, attacker, "attacks #{npc.name} for #{damage} damage#{" (CRITICAL!)" if critical}")
+
+      broadcast_npc_vitals_update(npc_participation)
+      broadcaster.broadcast_combat_action(attacker, "attack", nil, damage, critical:, npc_target: npc.name)
+
+      # Check for NPC defeat
+      if new_hp <= 0
+        handle_npc_defeat(npc_participation)
+        end_match if should_end?
+      end
+
+      success(damage:, critical:, target_hp: new_hp)
+    end
+
+    def find_target_participation(attacker, target)
+      attacker_team = match.arena_participations.find_by(character: attacker)&.team
+
+      if target.is_a?(Character)
+        match.arena_participations.find_by(character: target)
+      elsif target.is_a?(ArenaParticipation)
+        target
+      else
+        # Find default target (opponent with lowest HP)
+        match.arena_participations
+          .where.not(team: attacker_team)
+          .min_by do |p|
+            if p.npc?
+              p.current_hp
+            else
+              p.character&.current_hp.to_i
+            end
+          end
+      end
+    end
+
+    def broadcast_npc_vitals_update(npc_participation)
+      npc = npc_participation.npc_template
+      ActionCable.server.broadcast(
+        match.broadcast_channel,
+        {
+          type: "npc_vitals_update",
+          npc_name: npc.name,
+          npc_id: npc.id,
+          current_hp: npc_participation.current_hp,
+          max_hp: npc_participation.max_hp,
+          hp_percent: (npc_participation.current_hp.to_f / npc_participation.max_hp * 100).round
+        }
+      )
+    end
+
+    def handle_npc_defeat(npc_participation)
+      npc = npc_participation.npc_template
+      npc_participation.update!(result: "defeated", ended_at: Time.current)
+      log_entry("defeat", nil, "#{npc.name} has been defeated!")
+
+      ActionCable.server.broadcast(
+        match.broadcast_channel,
+        {
+          type: "npc_defeated",
+          npc_name: npc.name,
+          npc_id: npc.id
+        }
+      )
     end
 
     def process_defend(character)
@@ -411,6 +565,129 @@ module Arena
 
     def failure(message)
       Result.new(false, message, {})
+    end
+
+    # Schedule NPC turn after a brief delay (for UI feedback)
+    def process_npc_turn_after_delay
+      # Process immediately for now, could be async with job
+      # Small delay could be added with ActionCable streaming
+      process_npc_turn
+    end
+
+    # Process NPC attack action
+    def process_npc_attack(npc_participation, target, params)
+      npc = npc_participation.npc_template
+      target ||= find_player_target
+
+      return failure("No valid target") unless target
+      return failure("Target is dead") if target.current_hp <= 0
+
+      # Calculate NPC damage
+      npc_stats = npc_combat_stats(npc)
+      base_damage = npc_stats[:attack] + rand(1..5)
+      defense = calculate_defense(target)
+      damage = [base_damage - defense, 1].max
+
+      # Apply critical hit chance
+      crit_chance = npc_stats[:crit_chance] || 10
+      critical = rand(100) < crit_chance
+      damage = (damage * 1.5).round if critical
+
+      # Apply damage to player
+      target.current_hp = [target.current_hp - damage, 0].max
+      target.last_combat_at = Time.current
+      target.save!
+
+      # Log and broadcast
+      log_type = critical ? "critical" : "damage"
+      body_part = params[:body_part] || "torso"
+      log_entry(log_type, nil, "#{npc.name} attacks #{target.name}'s #{body_part} for #{damage} damage#{" (CRITICAL!)" if critical}")
+
+      broadcaster.broadcast_vitals_update(target)
+      broadcast_npc_action(npc, "attack", target, damage, critical: critical, body_part: body_part)
+
+      # Check for player defeat
+      if target.current_hp <= 0
+        handle_defeat(target)
+        end_match if should_end?
+      end
+
+      success(damage: damage, critical: critical, target_hp: target.current_hp)
+    end
+
+    # Process NPC defend action
+    def process_npc_defend(npc_participation)
+      npc = npc_participation.npc_template
+
+      # Store defend state in participation metadata
+      npc_participation.metadata ||= {}
+      npc_participation.metadata["defending"] = true
+      npc_participation.metadata["defend_until"] = 10.seconds.from_now.iso8601
+      npc_participation.save!
+
+      log_entry("action", nil, "#{npc.name} takes a defensive stance")
+      broadcast_npc_action(npc, "defend", nil, 0)
+
+      success(defending: true)
+    end
+
+    # Find player target for NPC attack
+    def find_player_target
+      match.arena_participations
+        .players
+        .includes(:character)
+        .reject { |p| p.character.current_hp <= 0 }
+        .first
+        &.character
+    end
+
+    # Get NPC combat stats
+    def npc_combat_stats(npc)
+      npc_config = Game::World::ArenaNpcConfig.find_npc(npc.npc_key)
+      if npc_config
+        Game::World::ArenaNpcConfig.extract_stats(npc_config)
+      else
+        level = npc.level || 1
+        {
+          attack: npc.metadata&.dig("base_damage") || (level * 3 + 5),
+          defense: level * 2 + 3,
+          agility: level + 5,
+          hp: npc.health || (level * 10 + 20),
+          crit_chance: 10
+        }.with_indifferent_access
+      end
+    end
+
+    # Broadcast NPC combat action
+    def broadcast_npc_action(npc, action_type, target, damage, critical: false, body_part: nil, skill_name: nil)
+      ActionCable.server.broadcast(
+        match.broadcast_channel,
+        {
+          type: "npc_combat_action",
+          npc_name: npc.name,
+          npc_avatar: npc.avatar_emoji,
+          action: action_type,
+          target_name: target&.name,
+          target_id: target&.id,
+          damage: damage,
+          critical: critical,
+          body_part: body_part,
+          skill_name: skill_name,
+          timestamp: Time.current.strftime("%H:%M:%S")
+        }
+      )
+    end
+
+    # Check if an NPC participation is defending
+    def npc_defending?(npc_participation)
+      return false unless npc_participation.metadata&.dig("defending")
+
+      defend_until = npc_participation.metadata["defend_until"]
+      return false unless defend_until
+
+      Time.parse(defend_until) > Time.current
+    rescue
+      false
     end
 
     # Simple result object for action outcomes

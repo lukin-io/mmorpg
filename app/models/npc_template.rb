@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class NpcTemplate < ApplicationRecord
-  ROLES = %w[quest_giver vendor trainer guard innkeeper banker auctioneer crafter hostile lore].freeze
+  ROLES = %w[quest_giver vendor trainer guard innkeeper banker auctioneer crafter hostile lore arena_bot].freeze
 
   validates :name, presence: true, uniqueness: true
   validates :level, numericality: {greater_than: 0}
@@ -22,6 +22,9 @@ class NpcTemplate < ApplicationRecord
 
   # Scope for non-hostile NPCs
   scope :friendly, -> { where.not(role: "hostile") }
+
+  # Scope for arena bot NPCs
+  scope :arena_bots, -> { where(role: "arena_bot") }
 
   # Check if NPC can spawn at a specific position
   def can_spawn_at?(zone:, x: nil, y: nil)
@@ -84,5 +87,38 @@ class NpcTemplate < ApplicationRecord
   def damage_range
     base = level * 2 + 5
     (base..base + level)
+  end
+
+  # Check if NPC is an arena bot
+  def arena_bot?
+    role == "arena_bot"
+  end
+
+  # Get arena-specific AI behavior
+  #
+  # @return [String] AI behavior type (defensive, balanced, aggressive)
+  def ai_behavior
+    metadata&.dig("ai_behavior") || "balanced"
+  end
+
+  # Get arena difficulty level
+  #
+  # @return [String] difficulty (easy, medium, hard)
+  def arena_difficulty
+    metadata&.dig("difficulty") || "medium"
+  end
+
+  # Get arena rooms this NPC can appear in
+  #
+  # @return [Array<String>] array of room slugs
+  def arena_rooms
+    metadata&.dig("arena_rooms") || []
+  end
+
+  # Get NPC avatar emoji for display
+  #
+  # @return [String] emoji avatar
+  def avatar_emoji
+    metadata&.dig("avatar") || "⚔️"
   end
 end

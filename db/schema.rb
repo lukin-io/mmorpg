@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_12_18_155628) do
+ActiveRecord::Schema[8.1].define(version: 2025_12_18_174704) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -69,7 +69,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_18_155628) do
   end
 
   create_table "arena_applications", force: :cascade do |t|
-    t.bigint "applicant_id", null: false
+    t.bigint "applicant_id"
     t.bigint "arena_match_id"
     t.bigint "arena_room_id", null: false
     t.boolean "closed_fight", default: false, null: false
@@ -83,6 +83,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_18_155628) do
     t.datetime "matched_at"
     t.bigint "matched_with_id"
     t.jsonb "metadata", default: {}, null: false
+    t.bigint "npc_template_id"
     t.datetime "starts_at"
     t.integer "status", default: 0, null: false
     t.integer "team_count", default: 1
@@ -94,10 +95,12 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_18_155628) do
     t.integer "wait_minutes", default: 10
     t.index ["applicant_id"], name: "index_arena_applications_on_applicant_id"
     t.index ["arena_match_id"], name: "index_arena_applications_on_arena_match_id"
+    t.index ["arena_room_id", "npc_template_id"], name: "idx_arena_apps_npc", where: "(npc_template_id IS NOT NULL)"
     t.index ["arena_room_id", "status"], name: "index_arena_applications_on_arena_room_id_and_status"
     t.index ["arena_room_id"], name: "index_arena_applications_on_arena_room_id"
     t.index ["fight_type"], name: "index_arena_applications_on_fight_type"
     t.index ["matched_with_id"], name: "index_arena_applications_on_matched_with_id"
+    t.index ["npc_template_id"], name: "index_arena_applications_on_npc_template_id"
     t.index ["status"], name: "index_arena_applications_on_status"
   end
 
@@ -143,18 +146,22 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_18_155628) do
 
   create_table "arena_participations", force: :cascade do |t|
     t.bigint "arena_match_id", null: false
-    t.bigint "character_id", null: false
+    t.bigint "character_id"
     t.datetime "created_at", null: false
+    t.datetime "ended_at"
     t.datetime "joined_at", null: false
+    t.jsonb "metadata", default: {}, null: false
+    t.bigint "npc_template_id"
     t.integer "rating_delta", default: 0, null: false
     t.integer "result", default: 0, null: false
     t.jsonb "reward_payload", default: {}, null: false
     t.string "team", null: false
     t.datetime "updated_at", null: false
-    t.bigint "user_id", null: false
+    t.bigint "user_id"
     t.index ["arena_match_id", "character_id"], name: "index_arena_participants_on_match_and_character", unique: true
     t.index ["arena_match_id"], name: "index_arena_participations_on_arena_match_id"
     t.index ["character_id"], name: "index_arena_participations_on_character_id"
+    t.index ["npc_template_id"], name: "index_arena_participations_on_npc_template_id"
     t.index ["user_id"], name: "index_arena_participations_on_user_id"
   end
 
@@ -2310,6 +2317,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_18_155628) do
   add_foreign_key "arena_applications", "arena_matches"
   add_foreign_key "arena_applications", "arena_rooms"
   add_foreign_key "arena_applications", "characters", column: "applicant_id"
+  add_foreign_key "arena_applications", "npc_templates"
   add_foreign_key "arena_bets", "arena_matches"
   add_foreign_key "arena_bets", "characters", column: "predicted_winner_id"
   add_foreign_key "arena_bets", "users"
@@ -2319,6 +2327,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_18_155628) do
   add_foreign_key "arena_matches", "zones"
   add_foreign_key "arena_participations", "arena_matches"
   add_foreign_key "arena_participations", "characters"
+  add_foreign_key "arena_participations", "npc_templates"
   add_foreign_key "arena_participations", "users"
   add_foreign_key "arena_rankings", "characters"
   add_foreign_key "arena_rooms", "zones"

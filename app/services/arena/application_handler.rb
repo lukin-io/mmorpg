@@ -71,6 +71,11 @@ module Arena
     # @param acceptor [Character] the character accepting
     # @return [Result] result with match or errors
     def accept(application:, acceptor:)
+      # NPC applications have different acceptance rules
+      if application.npc_application?
+        return accept_npc_application(application: application, acceptor: acceptor)
+      end
+
       unless application.acceptable_by?(acceptor)
         return Result.new(success?: false, errors: ["You cannot accept this application"])
       end
@@ -106,6 +111,45 @@ module Arena
         schedule_match_start(match, application.timeout_seconds)
 
         broadcast_match_created(match, application)
+
+        Result.new(success?: true, application: application, match: match)
+      end
+    rescue ActiveRecord::RecordInvalid => e
+      Result.new(success?: false, errors: [e.message])
+    end
+
+    # Accept an NPC application (player vs bot)
+    #
+    # @param application [ArenaApplication] the NPC application to accept
+    # @param acceptor [Character] the player character accepting
+    # @return [Result] result with match or errors
+    def accept_npc_application(application:, acceptor:)
+      # Validate room access
+      unless application.arena_room.accessible_by?(acceptor)
+        return Result.new(success?: false, errors: ["You cannot access this arena room"])
+      end
+
+      # Check if player already in combat
+      if acceptor.in_combat?
+        return Result.new(success?: false, errors: ["You are already in combat"])
+      end
+
+      ActiveRecord::Base.transaction do
+        # Create the match
+        match = create_npc_match(application, acceptor)
+
+        # Update application
+        application.update!(
+          status: :matched,
+          matched_at: Time.current,
+          arena_match: match
+        )
+
+        # NPC fights start immediately (shorter countdown for training)
+        npc_countdown = 5 # 5 seconds for NPC fights
+        schedule_match_start(match, npc_countdown)
+
+        broadcast_npc_match_created(match, application, acceptor)
 
         Result.new(success?: true, application: application, match: match)
       end
@@ -172,6 +216,52 @@ module Arena
       match
     end
 
+    def create_npc_match(application, acceptor)
+      npc = application.npc_template
+
+      match = ArenaMatch.create!(
+        arena_room: application.arena_room,
+        arena_season: ArenaSeason.current.first,
+        match_type: application.fight_type,
+        status: :pending,
+        metadata: {
+          fight_kind: application.fight_kind,
+          timeout_seconds: application.timeout_seconds,
+          trauma_percent: application.trauma_percent,
+          is_npc_fight: true,
+          npc_template_id: npc.id,
+          npc_name: npc.name,
+          npc_difficulty: npc.arena_difficulty,
+          npc_ai_behavior: npc.ai_behavior
+        }
+      )
+
+      # Add player participant (team "a")
+      ArenaParticipation.create!(
+        arena_match: match,
+        character: acceptor,
+        user: acceptor.user,
+        team: "a",
+        joined_at: Time.current
+      )
+
+      # Add NPC participant (team "b")
+      # Initialize NPC HP in metadata
+      npc_hp = npc.health
+      ArenaParticipation.create!(
+        arena_match: match,
+        npc_template: npc,
+        team: "b",
+        joined_at: Time.current,
+        metadata: {
+          "current_hp" => npc_hp,
+          "max_hp" => npc_hp
+        }
+      )
+
+      match
+    end
+
     def schedule_match_start(match, countdown_seconds)
       # Update match with start time
       starts_at = Time.current + countdown_seconds.seconds
@@ -201,8 +291,8 @@ module Arena
         }
       )
 
-      # Notify participants
-      match.arena_participations.each do |participation|
+      # Notify participants (only player participants have user_id)
+      match.arena_participations.players.each do |participation|
         ActionCable.server.broadcast(
           "user:#{participation.user_id}:notifications",
           {
@@ -212,6 +302,33 @@ module Arena
           }
         )
       end
+    end
+
+    def broadcast_npc_match_created(match, application, acceptor)
+      # Notify room that application was accepted
+      ActionCable.server.broadcast(
+        "arena:room:#{application.arena_room_id}",
+        {
+          type: "npc_match_created",
+          match_id: match.id,
+          application_id: application.id,
+          npc_name: application.npc_template&.name,
+          player_name: acceptor.name
+        }
+      )
+
+      # Notify the player
+      ActionCable.server.broadcast(
+        "user:#{acceptor.user_id}:notifications",
+        {
+          type: "arena_npc_match_starting",
+          match_id: match.id,
+          countdown: 5,
+          npc_name: application.npc_template&.name,
+          npc_level: application.npc_template&.level,
+          npc_difficulty: application.npc_template&.arena_difficulty
+        }
+      )
     end
 
     def broadcast_application_cancelled(application)
@@ -225,16 +342,27 @@ module Arena
     end
 
     def application_payload(application)
-      {
+      payload = {
         id: application.id,
         fight_type: application.fight_type,
         fight_kind: application.fight_kind,
-        applicant_name: application.applicant.name,
-        applicant_level: application.applicant.level,
+        applicant_name: application.applicant_name,
+        applicant_level: application.applicant_level,
         timeout_seconds: application.timeout_seconds,
         trauma_percent: application.trauma_percent,
         expires_at: application.expires_at&.iso8601
       }
+
+      # Add NPC-specific fields
+      if application.npc_application?
+        payload.merge!(
+          is_npc: true,
+          npc_difficulty: application.npc_difficulty,
+          npc_avatar: application.npc_template&.avatar_emoji
+        )
+      end
+
+      payload
     end
   end
 end

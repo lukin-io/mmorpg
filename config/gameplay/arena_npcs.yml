@@ -1,0 +1,269 @@
+# Arena NPC Configuration
+# Defines training bots for arena combat practice
+# NPCs are categorized by difficulty and arena room availability
+#
+# Difficulty levels:
+#   easy   - Low damage, high HP, defensive AI (for learning)
+#   medium - Balanced stats, mixed AI
+#   hard   - High damage, aggressive AI
+#
+# AI behaviors:
+#   defensive  - Prefers blocking, attacks only when HP > 70%
+#   balanced   - Mix of attack and defense based on situation
+#   aggressive - Always attacks, rarely defends
+
+training:
+  description: "Training Grounds bots for new players (levels 1-10)"
+  npcs:
+    - key: arena_training_dummy
+      name: Sparring Dummy
+      role: arena_bot
+      level: 1
+      hp: 40
+      damage: 3
+      xp: 5
+      dialogue: "*creaks and wobbles*"
+      spawn_chance: 30
+      metadata:
+        difficulty: easy
+        ai_behavior: defensive
+        arena_rooms:
+          - training
+        description: "A straw-stuffed practice target that barely fights back."
+        avatar: "🎯"
+
+    - key: arena_novice_fighter
+      name: Novice Fighter
+      role: arena_bot
+      level: 2
+      hp: 55
+      damage: 6
+      xp: 10
+      dialogue: "Show me what you've got, newcomer!"
+      spawn_chance: 25
+      metadata:
+        difficulty: easy
+        ai_behavior: balanced
+        arena_rooms:
+          - training
+        description: "A young warrior still learning the basics."
+        avatar: "⚔️"
+
+    - key: arena_practice_guard
+      name: Practice Guard
+      role: arena_bot
+      level: 3
+      hp: 70
+      damage: 8
+      xp: 15
+      dialogue: "I'll go easy on you... this time."
+      spawn_chance: 20
+      metadata:
+        difficulty: easy
+        ai_behavior: defensive
+        arena_rooms:
+          - training
+        description: "An arena guard who helps train new fighters."
+        avatar: "🛡️"
+
+    - key: arena_apprentice_warrior
+      name: Apprentice Warrior
+      role: arena_bot
+      level: 5
+      hp: 90
+      damage: 12
+      xp: 25
+      dialogue: "A worthy opponent? Let's find out!"
+      spawn_chance: 15
+      metadata:
+        difficulty: medium
+        ai_behavior: balanced
+        arena_rooms:
+          - training
+          - trial
+        description: "A more experienced fighter testing their skills."
+        avatar: "⚔️"
+
+    - key: arena_veteran_trainer
+      name: Veteran Trainer
+      role: arena_bot
+      level: 7
+      hp: 120
+      damage: 16
+      xp: 40
+      dialogue: "I've trained hundreds. You're not special... yet."
+      spawn_chance: 10
+      metadata:
+        difficulty: medium
+        ai_behavior: aggressive
+        arena_rooms:
+          - training
+          - trial
+        description: "A seasoned fighter who teaches through combat."
+        avatar: "🗡️"
+
+trial:
+  description: "Trial Hall bots for beginner competitive fights (levels 5-10)"
+  npcs:
+    - key: arena_trial_challenger
+      name: Trial Challenger
+      role: arena_bot
+      level: 6
+      hp: 100
+      damage: 14
+      xp: 30
+      dialogue: "Ready for a real challenge?"
+      spawn_chance: 30
+      metadata:
+        difficulty: medium
+        ai_behavior: balanced
+        arena_rooms:
+          - trial
+        description: "A fighter looking to prove themselves."
+        avatar: "⚔️"
+
+    - key: arena_iron_fist
+      name: Iron Fist Brawler
+      role: arena_bot
+      level: 8
+      hp: 130
+      damage: 18
+      xp: 45
+      dialogue: "These fists have never known defeat!"
+      spawn_chance: 20
+      metadata:
+        difficulty: medium
+        ai_behavior: aggressive
+        arena_rooms:
+          - trial
+        description: "A bare-knuckle fighter with devastating punches."
+        avatar: "👊"
+
+    - key: arena_shield_maiden
+      name: Shield Maiden
+      role: arena_bot
+      level: 9
+      hp: 150
+      damage: 14
+      xp: 50
+      dialogue: "My shield is my sword, my sword is my shield."
+      spawn_chance: 15
+      metadata:
+        difficulty: hard
+        ai_behavior: defensive
+        arena_rooms:
+          - trial
+        description: "A defensive specialist who outlasts opponents."
+        avatar: "🛡️"
+
+    - key: arena_blade_dancer
+      name: Blade Dancer
+      role: arena_bot
+      level: 10
+      hp: 110
+      damage: 22
+      xp: 60
+      dialogue: "Watch carefully... you'll only see this once."
+      spawn_chance: 10
+      metadata:
+        difficulty: hard
+        ai_behavior: aggressive
+        arena_rooms:
+          - trial
+        description: "A swift fighter who strikes with deadly precision."
+        avatar: "💃"
+
+challenge:
+  description: "Challenge Hall bots for open level range fights (levels 5-33)"
+  npcs:
+    - key: arena_pit_fighter
+      name: Pit Fighter
+      role: arena_bot
+      level: 12
+      hp: 180
+      damage: 24
+      xp: 80
+      dialogue: "The pit made me. It will unmake you."
+      spawn_chance: 25
+      metadata:
+        difficulty: medium
+        ai_behavior: aggressive
+        arena_rooms:
+          - challenge
+        description: "A hardened veteran of underground fighting pits."
+        avatar: "💀"
+
+    - key: arena_duelist
+      name: Honorable Duelist
+      role: arena_bot
+      level: 15
+      hp: 200
+      damage: 28
+      xp: 100
+      dialogue: "En garde! May the best fighter win."
+      spawn_chance: 20
+      metadata:
+        difficulty: hard
+        ai_behavior: balanced
+        arena_rooms:
+          - challenge
+          - initiation
+        description: "A noble fighter who values honor above all."
+        avatar: "🤺"
+
+    - key: arena_berserker
+      name: Arena Berserker
+      role: arena_bot
+      level: 18
+      hp: 220
+      damage: 35
+      xp: 130
+      dialogue: "RAAAAGH! BLOOD FOR THE ARENA!"
+      spawn_chance: 15
+      metadata:
+        difficulty: hard
+        ai_behavior: aggressive
+        arena_rooms:
+          - challenge
+          - initiation
+        description: "A rage-fueled warrior who knows no fear."
+        avatar: "🔥"
+
+    - key: arena_shadow_striker
+      name: Shadow Striker
+      role: arena_bot
+      level: 20
+      hp: 170
+      damage: 40
+      xp: 150
+      dialogue: "You won't see the blade that ends you."
+      spawn_chance: 10
+      metadata:
+        difficulty: hard
+        ai_behavior: aggressive
+        arena_rooms:
+          - challenge
+          - patron
+        description: "An assassin-type fighter with devastating critical hits."
+        stats:
+          crit_chance: 25
+
+default:
+  description: "Fallback bots if no specific room configuration exists"
+  npcs:
+    - key: arena_generic_fighter
+      name: Arena Fighter
+      role: arena_bot
+      level: 5
+      hp: 80
+      damage: 10
+      xp: 20
+      dialogue: "Let's have a good clean fight!"
+      spawn_chance: 100
+      metadata:
+        difficulty: medium
+        ai_behavior: balanced
+        arena_rooms: []
+        description: "A standard arena combatant."
+        avatar: "⚔️"
+

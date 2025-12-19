@@ -32,5 +32,13 @@ FactoryBot.define do
     trait :draw do
       result { :draw }
     end
+
+    # NPC participant (no character or user)
+    trait :npc do
+      character { nil }
+      user { nil }
+      association :npc_template
+      metadata { {"current_hp" => 100, "max_hp" => 100} }
+    end
   end
 end

@@ -52,14 +52,17 @@ class ArenaApplication < ApplicationRecord
   enum :status, STATUSES
 
   belongs_to :arena_room
-  belongs_to :applicant, class_name: "Character"
+  belongs_to :applicant, class_name: "Character", optional: true
+  belongs_to :npc_template, optional: true
   belongs_to :matched_with, class_name: "ArenaApplication", optional: true
   belongs_to :arena_match, optional: true
 
   validates :timeout_seconds, inclusion: {in: VALID_TIMEOUTS}
   validates :trauma_percent, inclusion: {in: VALID_TRAUMA_PERCENTS}
-  validate :applicant_can_access_room, on: :create
+  validate :applicant_can_access_room, on: :create, unless: :npc_application?
+  validate :npc_can_appear_in_room, on: :create, if: :npc_application?
   validate :group_params_valid, if: :team_battle?
+  validate :has_applicant_or_npc
 
   before_create :set_expiration
 
@@ -67,6 +70,9 @@ class ArenaApplication < ApplicationRecord
   scope :matched, -> { where(status: :matched) }
   scope :active, -> { where(status: [:open, :matched]) }
   scope :expired_and_unprocessed, -> { open.where("expires_at < ?", Time.current) }
+  scope :from_players, -> { where.not(applicant_id: nil) }
+  scope :from_npcs, -> { where.not(npc_template_id: nil) }
+  scope :npc_applications, -> { from_npcs }
 
   # Find applications that a character can accept
   #
@@ -152,6 +158,60 @@ class ArenaApplication < ApplicationRecord
     metadata["invited_character_ids"] || []
   end
 
+  # Check if this is an NPC-created application
+  #
+  # @return [Boolean] true if application is from an NPC
+  def npc_application?
+    npc_template_id.present?
+  end
+
+  # Check if this is a player-created application
+  #
+  # @return [Boolean] true if application is from a player
+  def player_application?
+    applicant_id.present?
+  end
+
+  # Get the applicant name (works for both players and NPCs)
+  #
+  # @return [String] the applicant's name
+  def applicant_name
+    if npc_application?
+      npc_template&.name || "Arena Bot"
+    else
+      applicant&.name || "Unknown"
+    end
+  end
+
+  # Get the applicant level (works for both players and NPCs)
+  #
+  # @return [Integer] the applicant's level
+  def applicant_level
+    if npc_application?
+      npc_template&.level || 1
+    else
+      applicant&.level || 1
+    end
+  end
+
+  # Get difficulty indicator for NPC applications
+  #
+  # @return [String, nil] difficulty level or nil for player applications
+  def npc_difficulty
+    return nil unless npc_application?
+
+    npc_template&.arena_difficulty || "medium"
+  end
+
+  # Get AI behavior for NPC applications
+  #
+  # @return [String, nil] AI behavior or nil for player applications
+  def npc_ai_behavior
+    return nil unless npc_application?
+
+    npc_template&.ai_behavior || "balanced"
+  end
+
   private
 
   def set_expiration
@@ -173,6 +233,26 @@ class ArenaApplication < ApplicationRecord
     end
     if enemy_count.nil? || enemy_count < 1
       errors.add(:enemy_count, "is required for group fights")
+    end
+  end
+
+  def has_applicant_or_npc
+    if applicant_id.blank? && npc_template_id.blank?
+      errors.add(:base, "must have either an applicant or an NPC template")
+    end
+    if applicant_id.present? && npc_template_id.present?
+      errors.add(:base, "cannot have both an applicant and an NPC template")
+    end
+  end
+
+  def npc_can_appear_in_room
+    return if arena_room.nil? || npc_template.nil?
+
+    npc_rooms = npc_template.arena_rooms
+    return if npc_rooms.empty? # Empty means NPC can appear anywhere
+
+    unless npc_rooms.include?(arena_room.slug)
+      errors.add(:npc_template, "cannot appear in this arena room")
     end
   end
 end
