@@ -17,6 +17,7 @@ plains:
       metadata:
         rarity: common
         description: "A tusked beast that charges at intruders."
+        avatar_image: "boar.png"
       loot:
         - item: boar_hide
           chance: 50
@@ -34,6 +35,7 @@ plains:
       metadata:
         rarity: common
         description: "A lone wolf hunting on the grasslands."
+        avatar_image: "wolf.png"
       loot:
         - item: wolf_pelt
           chance: 40
@@ -93,6 +95,7 @@ forest:
       metadata:
         rarity: common
         description: "A grey wolf stalking through the trees."
+        avatar_image: "wolf.png"
       loot:
         - item: wolf_pelt
           chance: 50
@@ -283,6 +286,7 @@ swamp:
       metadata:
         rarity: common
         description: "An undead creature risen from the swamp."
+        avatar_image: "zombie.png"
       loot:
         - item: rotten_flesh
           chance: 80

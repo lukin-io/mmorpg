@@ -31,6 +31,7 @@ training:
           - training
         description: "A straw-stuffed practice target that barely fights back."
         avatar: "🎯"
+        avatar_image: "scarecrow.png"
 
     - key: arena_novice_fighter
       name: Novice Fighter

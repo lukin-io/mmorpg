@@ -454,6 +454,73 @@ RSpec.describe Game::Combat::PveEncounterService do
     end
   end
 
+  describe "unified NPC architecture integration" do
+    # Verify the service uses Npc::CombatStats concern from NpcTemplate
+
+    context "stat consistency with concern" do
+      let(:level_10_npc) { create(:npc_template, level: 10, role: "hostile") }
+      let(:service) { described_class.new(character, level_10_npc) }
+
+      it "uses same stats as NpcTemplate#combat_stats" do
+        result = service.start_encounter!
+        npc_participant = result.battle.battle_participants.find_by(team: "enemy")
+
+        # HP should match the concern's calculation
+        expect(npc_participant.max_hp).to eq(level_10_npc.max_hp)
+      end
+
+      it "respects metadata overrides" do
+        level_10_npc.update!(metadata: {"health" => 500, "base_damage" => 50})
+        result = service.start_encounter!
+        npc_participant = result.battle.battle_participants.find_by(team: "enemy")
+
+        expect(npc_participant.max_hp).to eq(500)
+      end
+    end
+
+    context "role-based stat modifiers" do
+      it "does not apply arena_bot modifiers in PvE" do
+        # PvE typically uses hostile NPCs, but let's verify
+        hostile_npc = create(:npc_template, level: 10, role: "hostile")
+        arena_npc = create(:npc_template, level: 10, role: "arena_bot")
+
+        # Hostile NPC should have higher stats
+        expect(hostile_npc.max_hp).to be > arena_npc.max_hp
+        expect(hostile_npc.attack_power).to be > arena_npc.attack_power
+      end
+    end
+
+    context "empty metadata handling" do
+      # Note: Database has NOT NULL constraint, so we test with empty hash
+      let(:empty_metadata_npc) do
+        create(:npc_template, level: 5, role: "hostile", metadata: {})
+      end
+
+      let(:service) { described_class.new(character, empty_metadata_npc) }
+
+      it "uses formula defaults when metadata is empty" do
+        result = service.start_encounter!
+        npc_participant = result.battle.battle_participants.find_by(team: "enemy")
+
+        # Formula: level * 10 + 20 = 5 * 10 + 20 = 70
+        expect(npc_participant.max_hp).to eq(70)
+      end
+    end
+
+    context "cross-system consistency" do
+      let(:shared_npc) { create(:npc_template, level: 5, role: "hostile", metadata: {"health" => 80}) }
+
+      it "returns same stats in PvE as in direct combat_stats call" do
+        pve_service = described_class.new(character, shared_npc)
+        result = pve_service.start_encounter!
+        npc_participant = result.battle.battle_participants.find_by(team: "enemy")
+
+        # Should match NpcTemplate's combat_stats
+        expect(npc_participant.max_hp).to eq(shared_npc.combat_stats[:hp])
+      end
+    end
+  end
+
   describe "XP and gold reward calculation" do
     # Test the internal reward calculation methods
     it "calculates base XP based on NPC level" do

@@ -2,13 +2,18 @@
 
 ## Version History
 - **v1.0** (2024-12-18): Initial implementation - NPC arena bots for training fights
+- **v1.1** (2025-12-22): Updated to reference Unified NPC Architecture
 
 ## Overview
 Arena NPC Bots provide automated opponents for players to practice combat in the arena. These bots create fight applications that players can accept, enabling low-stakes training matches where players can learn combat mechanics without risking significant trauma or penalties.
 
+**Architecture Note**: Arena bots use the **Unified NPC Architecture** — they are `NpcTemplate` records with `role: "arena_bot"`. Stats and behavior come from the shared concerns `Npc::CombatStats` and `Npc::Combatable`. See `doc/flow/22_unified_npc_architecture.md` for the base layer.
+
 ## GDD Reference
 - Section: Arena PvP (training mode)
 - Feature spec: `doc/flow/11_arena_pvp.md`
+- Base NPC system: `doc/flow/4_world_npc_systems.md` (Unified NPC Architecture section)
+- Technical architecture: `doc/flow/22_unified_npc_architecture.md`
 
 ## Key Concepts
 
@@ -79,28 +84,34 @@ Bots are categorized by difficulty and AI behavior:
 
 ## Implementation Notes
 
-### Stat Extraction Pattern
-NPC stats are extracted following the same pattern as `PveEncounterService`:
+### Stat Extraction Pattern (Unified Architecture)
+
+Arena bots now use the **Unified NPC Architecture** via concerns. Stats come directly from `NpcTemplate`:
 
 ```ruby
-def npc_combat_stats(npc)
-  npc_config = Game::World::ArenaNpcConfig.find_npc(npc.npc_key)
-  if npc_config
-    Game::World::ArenaNpcConfig.extract_stats(npc_config)
-  else
-    # Fallback to level-based calculation
-    {
-      attack: level * 3 + 5,
-      defense: level * 2 + 3,
-      agility: level + 5,
-      hp: level * 10 + 20
-    }
+# Old pattern (deprecated)
+# npc_config = Game::World::ArenaNpcConfig.find_npc(npc.npc_key)
+
+# New pattern - uses Npc::CombatStats concern
+npc = NpcTemplate.find_by(npc_key: "arena_training_dummy")
+stats = npc.combat_stats  # => { attack: 8, defense: 5, hp: 28, ... }
+
+# Arena bots have 0.9x attack/defense modifier (training purpose)
+# This is automatically applied by the concern based on role
+```
+
+The `Arena::NpcCombatAi` service uses this directly:
+
+```ruby
+class Arena::NpcCombatAi
+  def stats
+    @stats ||= npc_template.combat_stats  # From Npc::CombatStats concern
   end
 end
 ```
 
 ### Deterministic AI
-All NPC decisions use seeded RNG for testability:
+All NPC decisions use seeded RNG for testability. The AI uses the unified `Npc::Combatable` concern:
 
 ```ruby
 ai = Arena::NpcCombatAi.new(
@@ -109,6 +120,10 @@ ai = Arena::NpcCombatAi.new(
   rng: Random.new(match.id + Time.current.to_i)
 )
 decision = ai.decide_action
+
+# Internally, decide_action uses the concern's should_defend? method:
+# npc_template.should_defend?(current_hp_ratio: hp_ratio, rng: rng)
+# npc_template.combat_behavior  # => :defensive, :balanced, :aggressive, :passive
 ```
 
 ### HP Tracking for NPCs

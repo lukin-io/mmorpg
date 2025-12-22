@@ -489,4 +489,69 @@ RSpec.describe Character, type: :model do
       end
     end
   end
+
+  # ============================================
+  # Avatar Assignment
+  # ============================================
+  describe "avatar" do
+    describe "AVATARS constant" do
+      it "contains all available player avatars" do
+        expect(Character::AVATARS).to contain_exactly(
+          "dwarven", "nightveil", "lightbearer", "pathfinder", "arcanist", "ironbound"
+        )
+      end
+
+      it "is frozen" do
+        expect(Character::AVATARS).to be_frozen
+      end
+    end
+
+    describe "automatic avatar assignment on create" do
+      it "assigns a random avatar on character creation" do
+        user = create(:user)
+        character = create(:character, user: user)
+
+        expect(character.avatar).to be_present
+        expect(Character::AVATARS).to include(character.avatar)
+      end
+
+      it "does not override explicitly set avatar" do
+        user = create(:user)
+        character = create(:character, user: user, avatar: "nightveil")
+
+        expect(character.avatar).to eq("nightveil")
+      end
+
+      it "assigns different avatars randomly (statistical test)" do
+        # Create multiple users to avoid character limit
+        avatars = 10.times.map do
+          user = create(:user)
+          create(:character, user: user).avatar
+        end
+
+        # With 6 avatars and 10 characters, we should see at least 2 different avatars
+        expect(avatars.uniq.size).to be > 1
+      end
+    end
+
+    describe "#avatar_image_path" do
+      it "returns the full asset path for the avatar" do
+        user = create(:user)
+        character = create(:character, user: user, avatar: "dwarven")
+
+        expect(character.avatar_image_path).to eq("avatars/dwarven.png")
+      end
+
+      it "returns fallback path when avatar is nil" do
+        user = create(:user)
+        character = build(:character, user: user, avatar: nil)
+        # Skip validation to test nil avatar case
+        character.save!(validate: false)
+        character.update_column(:avatar, nil)
+        character.reload
+
+        expect(character.avatar_image_path).to eq("avatars/dwarven.png")
+      end
+    end
+  end
 end

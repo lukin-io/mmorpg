@@ -6,8 +6,13 @@ module Arena
   #
   # Purpose: Control NPC actions during arena fights
   #
+  # Architecture:
+  #   This service uses the unified NPC architecture via Npc::CombatStats and Npc::Combatable
+  #   concerns included in NpcTemplate. Stats and behaviors are derived from the template's
+  #   combat_stats and combat_behavior methods, ensuring consistency with outside-world combat.
+  #
   # Inputs:
-  #   - npc_template: NpcTemplate for the arena bot
+  #   - npc_template: NpcTemplate for the arena bot (includes Npc::CombatStats, Npc::Combatable)
   #   - match: ArenaMatch the NPC is fighting in
   #   - rng: Seeded Random instance for deterministic behavior
   #
@@ -22,85 +27,47 @@ module Arena
   class NpcCombatAi
     Decision = Struct.new(:action_type, :target, :params, keyword_init: true)
 
-    # AI behavior thresholds
-    DEFEND_HP_THRESHOLD_DEFENSIVE = 0.7 # Defensive AI defends below 70% HP
-    DEFEND_HP_THRESHOLD_BALANCED = 0.4  # Balanced AI defends below 40% HP
-    DEFEND_CHANCE_DEFENSIVE = 0.4       # 40% chance to defend when appropriate
-    DEFEND_CHANCE_BALANCED = 0.2        # 20% chance to defend when appropriate
-
     attr_reader :npc_template, :match, :rng, :behavior
 
     # Initialize the combat AI
     #
-    # @param npc_template [NpcTemplate] the NPC fighting
+    # @param npc_template [NpcTemplate] the NPC fighting (with Npc::Combatable)
     # @param match [ArenaMatch] the arena match
     # @param rng [Random] seeded random for determinism
     def initialize(npc_template:, match:, rng: Random.new(1))
       @npc_template = npc_template
       @match = match
       @rng = rng
-      @behavior = npc_template.ai_behavior.to_sym
+      # Use unified combat_behavior from Npc::Combatable concern
+      @behavior = npc_template.combat_behavior
     end
 
     # Decide what action the NPC should take
+    # Uses Npc::Combatable#should_defend? for unified defense decision logic
     #
     # @return [Decision] the action decision
     def decide_action
-      case behavior
-      when :defensive
-        defensive_decision
-      when :aggressive
-        aggressive_decision
-      else
-        balanced_decision
+      npc_participation = find_npc_participation
+      hp_ratio = calculate_hp_ratio(npc_participation)
+
+      # Use unified should_defend? from Npc::Combatable concern
+      if npc_template.should_defend?(current_hp_ratio: hp_ratio, rng: rng)
+        return Decision.new(action_type: :defend, target: nil, params: {})
       end
+
+      # Default to attack
+      attack_decision
     end
 
     # Get NPC stats for combat calculations
+    # Delegates to unified combat_stats from Npc::CombatStats concern
     #
     # @return [Hash] stats hash
     def stats
-      @stats ||= begin
-        npc_config = Game::World::ArenaNpcConfig.find_npc(npc_template.npc_key)
-        if npc_config
-          Game::World::ArenaNpcConfig.extract_stats(npc_config)
-        else
-          fallback_stats
-        end
-      end
+      @stats ||= npc_template.combat_stats
     end
 
     private
-
-    def defensive_decision
-      npc_participation = find_npc_participation
-      hp_ratio = calculate_hp_ratio(npc_participation)
-
-      # Defend when HP is below threshold
-      if hp_ratio < DEFEND_HP_THRESHOLD_DEFENSIVE && rng.rand < DEFEND_CHANCE_DEFENSIVE
-        return Decision.new(action_type: :defend, target: nil, params: {})
-      end
-
-      # Otherwise attack
-      attack_decision
-    end
-
-    def aggressive_decision
-      # Aggressive AI always attacks
-      attack_decision
-    end
-
-    def balanced_decision
-      npc_participation = find_npc_participation
-      hp_ratio = calculate_hp_ratio(npc_participation)
-
-      # Sometimes defend when HP is low
-      if hp_ratio < DEFEND_HP_THRESHOLD_BALANCED && rng.rand < DEFEND_CHANCE_BALANCED
-        return Decision.new(action_type: :defend, target: nil, params: {})
-      end
-
-      attack_decision
-    end
 
     def attack_decision
       target = find_best_target
@@ -144,17 +111,6 @@ module Arena
       # Randomly select body part to target
       body_parts = %w[head torso stomach legs]
       {body_part: body_parts.sample(random: rng)}
-    end
-
-    def fallback_stats
-      level = npc_template.level || 1
-      {
-        attack: npc_template.metadata&.dig("base_damage") || (level * 3 + 5),
-        defense: level * 2 + 3,
-        agility: level + 5,
-        hp: npc_template.health || (level * 10 + 20),
-        crit_chance: 10
-      }.with_indifferent_access
     end
   end
 end

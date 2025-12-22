@@ -231,21 +231,10 @@ module Game
         npc_stats[:agility] + rand(1..10)
       end
 
+      # Get NPC combat stats using unified Npc::CombatStats concern
+      # This ensures consistency between outside-world and arena combat
       def npc_stats
-        @npc_stats ||= begin
-          # Try to get stats from metadata, otherwise generate based on level
-          metadata_stats = npc_template.metadata&.dig("stats")
-          if metadata_stats.present?
-            metadata_stats.with_indifferent_access
-          else
-            {
-              attack: npc_template.metadata&.dig("base_damage") || npc_template.level * 3 + 5,
-              defense: npc_template.level * 2 + 3,
-              agility: npc_template.level + 5,
-              hp: npc_template.metadata&.dig("health") || npc_template.level * 10 + 20
-            }.with_indifferent_access
-          end
-        end
+        @npc_stats ||= npc_template.combat_stats
       end
 
       def npc_max_hp

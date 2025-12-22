@@ -1,6 +1,31 @@
 # frozen_string_literal: true
 
+# NpcTemplate is the central model for all NPC definitions in the game.
+# It uses a unified architecture where all NPCs share common attributes and behaviors,
+# with role-specific extensions via metadata and concerns.
+#
+# Architecture (similar to STI but using role + metadata):
+#   - Base attributes: name, level, role, dialogue, metadata (JSONB)
+#   - Shared behaviors: Npc::CombatStats (stat calculation), Npc::Combatable (combat interface)
+#   - Role determines behavior: hostile, arena_bot, quest_giver, vendor, guard, etc.
+#   - Metadata stores role-specific data (AI behavior, loot tables, shop inventory, etc.)
+#
+# Usage:
+#   # Outside world hostile NPC
+#   wolf = NpcTemplate.find_by(npc_key: "forest_wolf")
+#   wolf.hostile?           # => true
+#   wolf.combat_stats       # => { attack: 15, defense: 8, hp: 100, ... }
+#
+#   # Arena training bot
+#   bot = NpcTemplate.find_by(npc_key: "arena_training_dummy")
+#   bot.arena_bot?          # => true
+#   bot.combat_behavior     # => :defensive
+#   bot.difficulty_rating   # => :easy
+#
 class NpcTemplate < ApplicationRecord
+  include Npc::CombatStats
+  include Npc::Combatable
+
   ROLES = %w[quest_giver vendor trainer guard innkeeper banker auctioneer crafter hostile lore arena_bot].freeze
 
   validates :name, presence: true, uniqueness: true
@@ -78,15 +103,16 @@ class NpcTemplate < ApplicationRecord
     metadata&.dig("description") || dialogue
   end
 
-  # Get NPC health for combat
+  # Legacy method - delegates to combat_stats for backward compatibility
+  # @deprecated Use #max_hp instead
   def health
-    metadata&.dig("health") || (level * 20) + 50
+    max_hp
   end
 
-  # Get NPC damage range for combat
+  # Legacy method - delegates to attack_damage_range for backward compatibility
+  # @deprecated Use #attack_damage_range instead
   def damage_range
-    base = level * 2 + 5
-    (base..base + level)
+    attack_damage_range
   end
 
   # Check if NPC is an arena bot
@@ -94,18 +120,20 @@ class NpcTemplate < ApplicationRecord
     role == "arena_bot"
   end
 
-  # Get arena-specific AI behavior
+  # Get arena-specific AI behavior (string version for backward compatibility)
   #
   # @return [String] AI behavior type (defensive, balanced, aggressive)
+  # @see #combat_behavior for Symbol version from Npc::Combatable
   def ai_behavior
-    metadata&.dig("ai_behavior") || "balanced"
+    combat_behavior.to_s
   end
 
-  # Get arena difficulty level
+  # Get arena difficulty level (string version for backward compatibility)
   #
   # @return [String] difficulty (easy, medium, hard)
+  # @see #difficulty_rating for Symbol version from Npc::Combatable
   def arena_difficulty
-    metadata&.dig("difficulty") || "medium"
+    difficulty_rating.to_s
   end
 
   # Get arena rooms this NPC can appear in
@@ -115,10 +143,42 @@ class NpcTemplate < ApplicationRecord
     metadata&.dig("arena_rooms") || []
   end
 
-  # Get NPC avatar emoji for display
+  # Get NPC avatar emoji for display (legacy, for backward compatibility)
   #
   # @return [String] emoji avatar
   def avatar_emoji
     metadata&.dig("avatar") || "⚔️"
+  end
+
+  # Get NPC avatar image filename for display
+  # Arena bots use scarecrow, open world NPCs use monster images
+  #
+  # @return [String] avatar image filename (without path, with extension)
+  def avatar_image
+    # Explicit override in metadata takes priority
+    if metadata&.dig("avatar_image").present?
+      return metadata["avatar_image"]
+    end
+
+    # Arena bots always use scarecrow
+    return "scarecrow.png" if arena_bot?
+
+    # Match NPC key to available monster images
+    key = npc_key.to_s.downcase
+    available_npc_images = %w[wolf boar skeleton zombie]
+
+    available_npc_images.each do |img|
+      return "#{img}.png" if key.include?(img)
+    end
+
+    # Fallback based on role/type
+    hostile? ? available_npc_images.sample + ".png" : "skeleton.png"
+  end
+
+  # Get full asset path for NPC avatar image
+  #
+  # @return [String] full asset path
+  def avatar_image_path
+    "npc/#{avatar_image}"
   end
 end

@@ -12013,3 +12013,90 @@ turbo-frame[busy] {
 
 .city-actions { background: var(--nl-bg-tertiary); border-top: 2px solid var(--nl-gold); padding: 12px; text-align: center; }
 .city-location-label { font-size: 0.9rem; color: var(--nl-text-secondary); }
+
+/* ==========================================================================
+   AVATAR SYSTEM
+   ========================================================================== */
+
+/* Base avatar styles */
+.avatar {
+  display: inline-block;
+  border-radius: 8px;
+  object-fit: cover;
+  border: 2px solid var(--nl-gold, #c4a349);
+  background: var(--nl-bg-secondary, #1a1a2e);
+  vertical-align: middle;
+}
+
+.avatar--small { width: 32px; height: 32px; border-radius: 4px; }
+.avatar--medium { width: 48px; height: 48px; }
+.avatar--large { width: 64px; height: 64px; }
+.avatar--xlarge { width: 96px; height: 96px; border-radius: 12px; }
+
+/* NPC avatar styling */
+.avatar.npc-avatar {
+  border-color: var(--nl-danger, #dc3545);
+  filter: hue-rotate(20deg);
+}
+
+/* Fallback avatar (emoji) */
+.avatar--fallback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, var(--nl-bg-secondary) 0%, var(--nl-bg-tertiary) 100%);
+}
+
+/* Arena participant avatar container */
+.arena-participant-avatar {
+  flex-shrink: 0;
+  margin-right: 12px;
+}
+
+.arena-participant {
+  display: flex;
+  align-items: flex-start;
+}
+
+.arena-participant-info {
+  flex: 1;
+}
+
+/* Combat avatar in totem slot */
+.nl-totem .avatar {
+  border-radius: 50%;
+  border-width: 3px;
+}
+
+.nl-totem .npc-avatar {
+  border-color: var(--nl-danger, #dc3545);
+}
+
+/* Equipment avatar area */
+.nl-equipment-avatar .avatar {
+  border-radius: 8px;
+  border: 3px solid var(--nl-gold, #c4a349);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+/* NPC nameplate in applications list */
+.npc-nameplate {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.npc-nameplate .npc-avatar {
+  font-size: 1.2em;
+}
+
+.npc-badge {
+  background: var(--nl-warning, #ffc107);
+  color: #000;
+  font-size: 0.7em;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: bold;
+}

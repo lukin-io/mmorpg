@@ -109,15 +109,25 @@
             </div>
           <% else %>
             <% @applications.each do |app| %>
-              <div class="arena-application <%= 'arena-application--own' if app.applicant == current_character %>"
-                   data-application-id="<%= app.id %>">
+              <div class="arena-application <%= 'arena-application--own' if app.applicant == current_character %> <%= 'arena-application--npc' if app.npc_application? %>"
+                   data-application-id="<%= app.id %>"
+                   data-npc="<%= app.npc_application? %>">
                 <span class="arena-application-type arena-application-type--<%= app.fight_type %>">
                   <%= fight_type_with_icon(app.fight_type) %>
                 </span>
 
                 <div class="arena-application-info">
                   <div class="arena-application-players">
-                    <%= character_nameplate(app.applicant, show_level: true) %>
+                    <% if app.npc_application? %>
+                      <span class="npc-nameplate">
+                        <span class="npc-avatar"><%= app.npc_template.avatar_emoji || "🤖" %></span>
+                        <strong class="npc-name"><%= app.npc_template.name %></strong>
+                        <span class="npc-level">[<%= app.npc_template.level %>]</span>
+                        <span class="npc-badge">🤖 Bot</span>
+                      </span>
+                    <% else %>
+                      <%= character_nameplate(app.applicant, show_level: true) %>
+                    <% end %>
                   </div>
                   <div class="arena-application-details">
                     <%= application_settings_display(app) %>
@@ -163,7 +173,18 @@
             <div class="match-participants">
               <% match.arena_participations.group_by(&:team).each_with_index do |(team, participants), idx| %>
                 <span class="team team--<%= team %>">
-                  <%= participants.map { |p| character_nameplate(p.character, show_level: true) }.join(", ").html_safe %>
+                  <% participants.each_with_index do |p, p_idx| %>
+                    <% if p.npc_template.present? %>
+                      <span class="npc-nameplate">
+                        <span class="npc-avatar"><%= p.npc_template.avatar_emoji || "🤖" %></span>
+                        <strong><%= p.npc_template.name %></strong>
+                        [<%= p.npc_template.level %>]
+                      </span>
+                    <% else %>
+                      <%= character_nameplate(p.character, show_level: true) %>
+                    <% end %>
+                    <% if p_idx < participants.size - 1 %>, <% end %>
+                  <% end %>
                 </span>
                 <% unless idx == match.arena_participations.group_by(&:team).size - 1 %>
                   <span class="vs">⚔️</span>

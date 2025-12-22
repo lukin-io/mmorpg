@@ -192,7 +192,120 @@ end
 
 ---
 
-# 9. Summary
+# 9. System Specs (Hotwire/Stimulus UI Testing)
+
+System specs (Capybara) test the full UI stack including Hotwire (Turbo Frames, Turbo Streams) and Stimulus controllers. These are **integration tests at the UI level**.
+
+## Test Types Hierarchy
+
+| Type | Purpose | Location | Uses DB? | Uses Browser? |
+|------|---------|----------|----------|---------------|
+| Unit | Pure game logic | `spec/lib/game/` | No | No |
+| Model | ActiveRecord + concerns | `spec/models/` | Yes | No |
+| Service | Business logic orchestration | `spec/services/` | Yes | No |
+| Request | Controller actions, HTTP responses | `spec/requests/` | Yes | No |
+| **System** | **Full UI with JS/Hotwire** | `spec/system/` | Yes | **Yes** |
+
+## System Specs Best Practices
+
+### Setup Pattern
+
+```ruby
+RSpec.describe "Feature Name", type: :system do
+  include Warden::Test::Helpers
+
+  let(:user) { create(:user) }
+  let(:character) { create(:character, user: user) }
+
+  before do
+    driven_by(:rack_test)  # Use :selenium for JS-heavy tests
+    login_as(user, scope: :user)
+  end
+
+  after { Warden.test_reset! }
+end
+```
+
+### Key Testing Patterns
+
+1. **Turbo Frame updates**: Check for frame ID and content changes
+2. **Turbo Stream broadcasts**: Verify real-time updates
+3. **Stimulus controller interactions**: Click handlers, form submissions
+4. **Flash messages**: Success/error notifications
+5. **Redirects**: Page navigation after actions
+
+### Example: Arena Combat UI Test
+
+```ruby
+describe "accepting NPC application" do
+  it "redirects to match page after accepting" do
+    visit arena_room_path(arena_room)
+    click_button "Accept"
+
+    expect(page).to have_current_path(/arena_matches/)
+    expect(page).to have_content("Fight accepted!")
+  end
+end
+```
+
+## When to Write System Specs
+
+✅ **Write system specs for:**
+- Critical user flows (combat, trading, quest completion)
+- Hotwire interactions (Turbo Streams, Frames)
+- Authentication-gated features
+- Multi-step wizards
+
+❌ **Skip system specs for:**
+- Pure API endpoints (use request specs)
+- Simple CRUD without JS
+- Admin-only features (low priority)
+- Performance-critical hot paths
+
+## Request vs System Specs
+
+| Aspect | Request Specs | System Specs |
+|--------|---------------|--------------|
+| Speed | Fast (~10ms each) | Slow (~1-5s each) |
+| JS Support | No | Yes |
+| Turbo Stream | Partial (response body) | Full (live updates) |
+| Authentication | Via `sign_in` helper | Via `login_as` (Warden) |
+| Use When | Testing controller logic | Testing user experience |
+
+## Coverage Guidelines
+
+- **Combat mechanics**: Request + System specs
+- **Arena NPCs**: Request specs for API, System specs for UI flow
+- **PvE encounters**: Request specs for logic, System specs for battle UI
+- **Avatars/visuals**: System specs to verify rendering
+
+## Responsible Test Files
+
+### Request Specs (Controller Integration)
+- `spec/requests/arena_npc_combat_spec.rb` - Arena NPC combat API
+- `spec/requests/pve_npc_combat_spec.rb` - Open world PvE API
+- `spec/requests/combat_spec.rb` - General combat endpoints
+
+### System Specs (UI Integration)
+- `spec/system/arena_npc_combat_spec.rb` - Arena NPC combat UI (25 tests)
+  - Viewing NPC applications in room
+  - Accepting NPC applications
+  - Match display with NPC avatars
+  - Combat actions (attack, defend)
+  - Victory/defeat scenarios
+  - Edge cases (closed matches, dead opponents)
+
+- `spec/system/pve_combat_spec.rb` - Open world PvE UI (28 tests)
+  - Battle interface elements
+  - Combat log display
+  - HP/MP bar updates
+  - Victory rewards display
+  - Defeat handling
+  - Edge cases (no battle, completed battles)
+
+---
+
+# 10. Summary
 
 This guide ensures your MMORPG logic remains:
 - deterministic
@@ -200,5 +313,12 @@ This guide ensures your MMORPG logic remains:
 - trustworthy
 - scalable as complexity grows
 - decoupled from Rails UI/DB
+
+**Test Types Summary:**
+- **Unit**: Pure game formulas (`spec/lib/game/`)
+- **Model**: ActiveRecord + concerns (`spec/models/`)
+- **Service**: Business orchestration (`spec/services/`)
+- **Request**: HTTP/controller level (`spec/requests/`)
+- **System**: Full UI with Hotwire (`spec/system/`)
 
 Use this whenever writing or reviewing game-related tests.
