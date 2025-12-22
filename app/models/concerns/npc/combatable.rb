@@ -135,10 +135,10 @@ module Npc
     # @return [Boolean]
     def should_defend?(current_hp_ratio:, rng: Random.new)
       thresholds = {
-        defensive: { hp: 0.7, chance: 0.4 },
-        balanced: { hp: 0.4, chance: 0.2 },
-        aggressive: { hp: 0.2, chance: 0.1 },
-        passive: { hp: 1.0, chance: 0.8 }
+        defensive: {hp: 0.7, chance: 0.4},
+        balanced: {hp: 0.4, chance: 0.2},
+        aggressive: {hp: 0.2, chance: 0.1},
+        passive: {hp: 1.0, chance: 0.8}
       }
 
       config = thresholds[combat_behavior] || thresholds[:balanced]

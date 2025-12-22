@@ -85,8 +85,8 @@ class ArenaParticipation < ApplicationRecord
     if npc?
       self.metadata ||= {}
       self.metadata["current_hp"] = [hp, 0].max
-    else
-      character&.update!(current_hp: [hp, 0].max) if character
+    elsif character
+      character.update!(current_hp: [hp, 0].max)
     end
   end
 

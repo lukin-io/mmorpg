@@ -377,7 +377,6 @@ RSpec.describe Npc::Combatable do
       end
 
       it "has 40% chance to defend below 70% HP" do
-        rng = Random.new(1)
         # Verify behavior is defensive
         expect(hostile_npc.combat_behavior).to eq(:defensive)
 
