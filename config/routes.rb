@@ -301,6 +301,8 @@ Rails.application.routes.draw do
   resource :world, only: :show, controller: "world" do
     post :move
     post :enter
+    post :enter_building
+    post :interact_hotspot
     post :exit_location
     post :gather
     post :gather_resource
@@ -326,8 +328,12 @@ Rails.application.routes.draw do
     end
   end
 
-  # Defines the root path route ("/")
-  root "dashboard#show"
+  # Dashboard - Admin/feature flag view
+  resource :dashboard, only: :show, controller: "dashboard"
+
+  # Root redirects to world (player's last location - map cell or city)
+  # WorldController handles position persistence and renders appropriate view
+  root "world#show"
 
   namespace :api do
     namespace :v1 do

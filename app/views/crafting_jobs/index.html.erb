@@ -1,5 +1,8 @@
 <div class="crafting-page" data-controller="crafting">
   <div class="page-header">
+    <div class="page-header-top">
+      <%= link_to "← Exit to City", world_path, class: "btn-secondary btn-sm back-to-city" %>
+    </div>
     <h1 class="page-title">Crafting Workshop</h1>
     <p class="page-subtitle">Create items from recipes using your profession skills</p>
   </div>
@@ -69,7 +72,7 @@
 
           <div class="form-group">
             <%= f.label "crafting_job[crafting_station_id]", "Station" %>
-            <%= f.select "crafting_job[crafting_station_id]", @stations.map { |s| ["#{s.name} (#{s.archetype})", s.id] }, { include_blank: "Select station..." }, class: "form-control", data: { action: "change->crafting#loadPreview", crafting_target: "stationSelect" } %>
+            <%= f.select "crafting_job[crafting_station_id]", @stations.map { |s| ["#{s.name} (#{s.station_archetype})", s.id] }, { include_blank: "Select station..." }, class: "form-control", data: { action: "change->crafting#loadPreview", crafting_target: "stationSelect" } %>
           </div>
 
           <div class="form-group">

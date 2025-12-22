@@ -2,6 +2,9 @@
 
 <div class="arena-page" data-controller="arena" data-arena-character-level-value="<%= current_character.level %>">
   <div class="page-header">
+    <div class="page-header-top">
+      <%= link_to "← Exit to City", world_path, class: "btn-secondary btn-sm back-to-city" %>
+    </div>
     <h1>⚔️ Arena</h1>
     <p class="text-muted">Battle other players for glory and rewards!</p>
   </div>
@@ -109,12 +112,12 @@
 
   <%# Fight Type Tabs %>
   <div class="arena-tabs">
-    <%= link_to "⚔️ Duels", arena_path(ft: 1), class: "arena-tab #{'arena-tab--active' if params[:ft] == '1' || params[:ft].nil?}" %>
-    <%= link_to "👥 Team Battle", arena_path(ft: 2), class: "arena-tab #{'arena-tab--active' if params[:ft] == '2'}" %>
-    <%= link_to "💀 Sacrifice", arena_path(ft: 3), class: "arena-tab #{'arena-tab--active' if params[:ft] == '3'}" %>
+    <%= link_to "⚔️ Duels", arena_index_path(ft: 1), class: "arena-tab #{'arena-tab--active' if params[:ft] == '1' || params[:ft].nil?}" %>
+    <%= link_to "👥 Team Battle", arena_index_path(ft: 2), class: "arena-tab #{'arena-tab--active' if params[:ft] == '2'}" %>
+    <%= link_to "💀 Sacrifice", arena_index_path(ft: 3), class: "arena-tab #{'arena-tab--active' if params[:ft] == '3'}" %>
     <span class="arena-tab arena-tab--disabled">🎯 Tactical</span>
     <span class="arena-tab arena-tab--disabled">🎰 Betting</span>
-    <%= link_to "📊 Statistics", arena_path(ft: 4), class: "arena-tab #{'arena-tab--active' if params[:ft] == '4'}" %>
+    <%= link_to "📊 Statistics", arena_index_path(ft: 4), class: "arena-tab #{'arena-tab--active' if params[:ft] == '4'}" %>
   </div>
 </div>
 

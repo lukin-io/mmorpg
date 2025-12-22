@@ -36,15 +36,7 @@
   <div class="nl-vitals-container">
     <%# Totem/Avatar %>
     <div class="nl-totem">
-      <% if participant.character %>
-        <div class="nl-avatar nl-avatar--player">
-          <%= participant.character.name[0].upcase %>
-        </div>
-      <% else %>
-        <div class="nl-avatar nl-avatar--npc">
-          👹
-        </div>
-      <% end %>
+      <%= battle_participant_avatar_tag(participant, size: :small) %>
     </div>
 
     <%# Bars %>
@@ -97,15 +89,9 @@
     </div>
 
     <div class="nl-equipment-avatar">
-      <% if participant.character %>
-        <div class="nl-full-avatar">
-          <%= image_tag "avatars/default_male.png", alt: name, class: "nl-avatar-img" rescue content_tag(:div, name[0..1].upcase, class: "nl-avatar-placeholder") %>
-        </div>
-      <% else %>
-        <div class="nl-full-avatar nl-full-avatar--npc">
-          <span class="nl-npc-icon">👹</span>
-        </div>
-      <% end %>
+      <div class="nl-full-avatar <%= 'nl-full-avatar--npc' unless participant.character %>">
+        <%= battle_participant_avatar_tag(participant, size: :xlarge, class: "nl-avatar-img") %>
+      </div>
     </div>
 
     <div class="nl-equipment-column nl-equipment-right">

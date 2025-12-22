@@ -88,13 +88,13 @@ Items have rarity tiers: `common`, `uncommon`, `rare`, `epic`, `legendary`. Rari
 ## Responsible for Implementation Files
 
 ### Models
-- `app/models/zone.rb`, `app/models/spawn_point.rb`, `app/models/character_position.rb`, `app/models/gathering_node.rb`
-- `app/models/battle.rb`, `app/models/battle_participant.rb`, `app/models/combat_log_entry.rb`, `app/models/arena_ranking.rb`
-- `app/models/class_specialization.rb`, `app/models/skill_tree.rb`, `app/models/skill_node.rb`, `app/models/character_skill.rb`, `app/models/ability.rb`
+  - `app/models/zone.rb`, `app/models/spawn_point.rb`, `app/models/character_position.rb`, `app/models/gathering_node.rb`
+  - `app/models/battle.rb`, `app/models/battle_participant.rb`, `app/models/combat_log_entry.rb`, `app/models/arena_ranking.rb`
+  - `app/models/class_specialization.rb`, `app/models/skill_tree.rb`, `app/models/skill_node.rb`, `app/models/character_skill.rb`, `app/models/ability.rb`
 - `app/models/inventory.rb` — `max_slots`, `max_weight` aliases, `material_count`, `materials_available?`, `consume_materials!`, `add_item_by_name!`
 - `app/models/inventory_item.rb` — `quantity`, `weight`, `equipped`, `enhancement_level`, `premium`, `equipment_slot`, `slot_index`
 - `app/models/item_template.rb` — `ITEM_TYPES`, `EQUIPMENT_SLOTS`, `equippable?`, `equipment_slot`, rarity/type validations
-- `app/models/character.rb` — `ALIGNMENT_TIERS`, `CHAOS_TIERS`, tier calculation methods, `max_action_points`
+  - `app/models/character.rb` — `ALIGNMENT_TIERS`, `CHAOS_TIERS`, tier calculation methods, `max_action_points`
 
 ### Controllers
 - `app/controllers/inventories_controller.rb` — `show`, `equip`, `unequip`, `use`, `destroy`, `sort` actions
@@ -108,8 +108,8 @@ Items have rarity tiers: `common`, `uncommon`, `rare`, `epic`, `legendary`. Rari
 - `app/views/inventories/_stats.html.erb` — stats panel partial
 
 ### Services (Game Engine)
-- `app/services/game/movement/turn_processor.rb`, `respawn_service.rb`, `tile_provider.rb`
-- `app/services/game/exploration/encounter_resolver.rb`
+  - `app/services/game/movement/turn_processor.rb`, `respawn_service.rb`, `tile_provider.rb`
+  - `app/services/game/exploration/encounter_resolver.rb`
 - `app/services/game/combat/encounter_builder.rb`, `turn_resolver.rb`, `attack_service.rb`, `skill_executor.rb`, `log_writer.rb`, `arena_ladder.rb`, `post_battle_processor.rb`
 - `app/services/game/combat/analytics/report_builder.rb`
 - `app/services/game/inventory/manager.rb` — slot/weight limits, stacking, `add_item!`, `remove_item!`, `sort_inventory!`
@@ -118,19 +118,19 @@ Items have rarity tiers: `common`, `uncommon`, `rare`, `epic`, `legendary`. Rari
 - `app/services/game/inventory/expansion_service.rb` — inventory capacity upgrades
 - `app/services/players/progression/level_up_service.rb`, `stat_allocation_service.rb`
 - `app/services/players/alignment/access_gate.rb`
-- `app/services/professions/gathering_resolver.rb`, `app/services/professions/doctor/trauma_response.rb`
+  - `app/services/professions/gathering_resolver.rb`, `app/services/professions/doctor/trauma_response.rb`
 - `app/services/characters/vitals_service.rb` — `stats_summary` method for equipment-aware stat calculations
 
 ### JavaScript (Stimulus)
 - `app/javascript/controllers/inventory_controller.js` — item selection, context menus, equip/use/enhance/split/discard actions
 
 ### Helpers
-- `app/helpers/alignment_helper.rb` — alignment badges, faction icons, trauma/timeout badges
-- `app/helpers/arena_helper.rb` — fight type/kind icons, room badges, match status
+  - `app/helpers/alignment_helper.rb` — alignment badges, faction icons, trauma/timeout badges
+  - `app/helpers/arena_helper.rb` — fight type/kind icons, room badges, match status
 
 ### Configuration/Data
-- `config/gameplay/biomes.yml`, `db/seeds.rb`
-- `db/migrate/20251127140000_add_chaos_score_to_characters.rb`
+  - `config/gameplay/biomes.yml`, `db/seeds.rb`
+  - `db/migrate/20251127140000_add_chaos_score_to_characters.rb`
 - `db/migrate/20251215100000_add_equipment_slot_to_inventory_items.rb` — `equipment_slot`, `slot_index` columns
 
 ### Specs
@@ -145,7 +145,7 @@ Items have rarity tiers: `common`, `uncommon`, `rare`, `epic`, `legendary`. Rari
 - specs under `spec/services/game/**`, `spec/services/players/**`, `spec/services/professions/**`
 
 ### Documentation
-- `doc/features/3_player.md`, `doc/flow/3_player_character_systems.md`, `doc/features/neverlands_inspired.md`
+  - `doc/features/3_player.md`, `doc/flow/3_player_character_systems.md`, `doc/features/neverlands_inspired.md`
 - `doc/ITEM_SYSTEM_GUIDE.md` — item, inventory & loot architecture guide
 
 ## Testing & Verification

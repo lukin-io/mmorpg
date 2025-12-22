@@ -1,16 +1,20 @@
 # 11. Arena & PvP Combat Flow
 
+## Version History
+- **v1.0** (2025-12-01): Initial arena PvP implementation
+- **v1.1** (2025-12-22): Added NPC arena bots for training, unified NPC architecture integration
+
 ## Implementation Status
 
 | Component | Status | Details |
 |-----------|--------|---------|
 | **ArenaRoom Model** | ✅ Implemented | `app/models/arena_room.rb` — Room types, level/faction restrictions |
-| **ArenaApplication Model** | ✅ Implemented | `app/models/arena_application.rb` — Fight types, parameters, status |
+| **ArenaApplication Model** | ✅ Implemented | `app/models/arena_application.rb` — Fight types, parameters, status, NPC support |
 | **Arena Routes** | ✅ Implemented | `config/routes.rb` — `/arena`, `/arena_rooms`, `/arena_applications` |
 | **ArenaController** | ✅ Implemented | `app/controllers/arena_controller.rb` — Lobby with room grid |
 | **ArenaRoomsController** | ✅ Implemented | `app/controllers/arena_rooms_controller.rb` — Room detail view |
 | **ArenaApplicationsController** | ✅ Implemented | `app/controllers/arena_applications_controller.rb` — Create/accept/cancel |
-| **Arena::ApplicationHandler** | ✅ Implemented | `app/services/arena/application_handler.rb` — Application lifecycle |
+| **Arena::ApplicationHandler** | ✅ Implemented | `app/services/arena/application_handler.rb` — Application lifecycle, NPC acceptance |
 | **Arena::CombatProcessor** | ✅ Implemented | `app/services/arena/combat_processor.rb` — Attack, defend, damage calc |
 | **Arena::CombatBroadcaster** | ✅ Implemented | `app/services/arena/combat_broadcaster.rb` — Real-time updates |
 | **Arena Views** | ✅ Implemented | `app/views/arena/`, `app/views/arena_rooms/`, `app/views/arena_matches/` |
@@ -32,6 +36,9 @@
 | **tactical_combat_controller.js** | ✅ Implemented | `app/javascript/controllers/tactical_combat_controller.js` |
 | **ArenaBet Model** | ✅ Implemented | `app/models/arena_bet.rb` — Wagers, odds, payouts |
 | **ArenaBetsController** | ✅ Implemented | `app/controllers/arena_bets_controller.rb` — Place/cancel bets |
+| **Arena NPC Bots** | ✅ Implemented | Training bots for new players via `NpcTemplate` with `arena_bot` role |
+| **Arena::NpcCombatAi** | ✅ Implemented | `app/services/arena/npc_combat_ai.rb` — Deterministic NPC AI |
+| **Arena::NpcApplicationService** | ✅ Implemented | `app/services/arena/npc_application_service.rb` — NPC application creation |
 
 ---
 
@@ -56,6 +63,17 @@
 4. Both applications marked as `matched`, new `ArenaMatch` created
 5. 10-second countdown starts via `Arena::MatchStarterJob`
 6. Match transitions to `:live`, combat begins
+
+### UC-2b: Accept NPC Bot Application (Training)
+**Actor:** New player learning combat
+**Flow:**
+1. Player navigates to Training Hall
+2. Sees NPC bot applications (auto-generated) with bot name/level
+3. Clicks "Accept" on a bot application
+4. `ArenaApplicationsController#accept` → `Arena::ApplicationHandler#accept`
+5. Application has `npc_template_id` → `create_match_with_npc`
+6. 5-second countdown (shorter for training)
+7. Match starts with NPC opponent controlled by `Arena::NpcCombatAi`
 
 ### UC-3: Arena Combat
 **Actor:** Two matched players
@@ -613,6 +631,63 @@ end
 
 ---
 
+## NPC Arena Bots (✅ Implemented)
+
+### Overview
+NPC arena bots provide training opponents for new players to learn combat mechanics in a safe environment. They use the **Unified NPC Architecture** (see `doc/flow/22_unified_npc_architecture.md`).
+
+### Architecture
+- **Model**: `NpcTemplate` with `role: "arena_bot"`
+- **Stat Calculation**: Via `Npc::CombatStats` concern (same as outside-world NPCs)
+- **Combat Behavior**: Via `Npc::Combatable` concern with AI behavior settings
+- **AI Decision Making**: `Arena::NpcCombatAi` service
+
+### UC-14: NPC Bot Spawning
+**Actor:** System (background job)
+**Flow:**
+1. `Arena::NpcSpawnerJob` runs periodically
+2. Checks each arena room for NPC slot availability
+3. Loads bot config from `config/gameplay/arena_npcs.yml`
+4. Selects random bot based on room and difficulty
+5. Creates `ArenaApplication` with `npc_template_id`
+6. Broadcasts new application to room subscribers
+
+### Key Behaviors
+- **Weaker Stats**: Arena bots have 0.9x attack/defense modifier (training purpose)
+- **AI Behavior Types**:
+  - `defensive`: Defends below 70% HP (40% chance)
+  - `balanced`: Defends below 40% HP (20% chance)
+  - `aggressive`: Rarely defends (10% chance below 20% HP)
+- **Shorter Countdown**: 5 seconds vs 10 seconds for PvP
+- **Deterministic Combat**: All NPC decisions use seeded RNG for reproducibility
+
+### Configuration
+Bot definitions in `config/gameplay/arena_npcs.yml`:
+```yaml
+training:
+  npcs:
+    - key: arena_training_dummy
+      name: Sparring Dummy
+      role: arena_bot
+      level: 1
+      hp: 40
+      damage: 3
+      metadata:
+        difficulty: easy
+        ai_behavior: defensive
+        arena_rooms: ["training"]
+```
+
+### Related Files
+- `app/services/arena/npc_combat_ai.rb` — AI decision making
+- `app/services/arena/npc_application_service.rb` — Bot application creation
+- `app/jobs/arena/npc_spawner_job.rb` — Periodic bot spawning
+- `config/gameplay/arena_npcs.yml` — Bot definitions
+- `app/models/concerns/npc/combat_stats.rb` — Stat calculation
+- `app/models/concerns/npc/combatable.rb` — Combat behavior
+
+---
+
 ## Tactical Fights (✅ Implemented)
 
 ### UC-10: Create Tactical Match
@@ -674,13 +749,76 @@ end
 ---
 
 ## Responsible for Implementation Files
-- **Models:** `app/models/arena_match.rb`, `app/models/arena_season.rb`, `app/models/arena_participation.rb`, `app/models/arena_room.rb`, `app/models/arena_application.rb`, `app/models/tactical_match.rb`, `app/models/tactical_participant.rb`, `app/models/arena_bet.rb`
-- **Services:** `app/services/arena/application_handler.rb`, `app/services/arena/matchmaker.rb`, `app/services/arena/combat_broadcaster.rb`, `app/services/arena/combat_processor.rb`, `app/services/arena/reward_job.rb`, `app/services/arena/tactical_combat/move_processor.rb`, `app/services/arena/tactical_combat/attack_processor.rb`, `app/services/arena/tactical_combat/skill_processor.rb`, `app/services/arena/tactical_combat/move_calculator.rb`
-- **Controllers:** `app/controllers/arena_controller.rb`, `app/controllers/arena_rooms_controller.rb`, `app/controllers/arena_applications_controller.rb`, `app/controllers/arena_matches_controller.rb`, `app/controllers/tactical_arena_controller.rb`, `app/controllers/arena_bets_controller.rb`
-- **Channels:** `app/channels/arena_channel.rb`, `app/channels/arena_match_channel.rb`, `app/channels/tactical_match_channel.rb`
-- **Frontend:** `app/javascript/controllers/arena_controller.js`, `app/javascript/controllers/arena_match_controller.js`, `app/javascript/controllers/tactical_combat_controller.js`
-- **Views:** `app/views/arena/*`, `app/views/arena_rooms/*`, `app/views/arena_matches/*`, `app/views/tactical_arena/*`, `app/views/arena_bets/*`
-- **Policies:** `app/policies/tactical_match_policy.rb`
-- **Migrations:** `db/migrate/20251127100000_create_tactical_matches.rb`, `db/migrate/20251127100001_create_tactical_participants.rb`, `db/migrate/20251127100002_create_arena_bets.rb`
-- **Config:** `config/routes.rb`, `db/seeds.rb`
+
+### Models
+- `app/models/arena_match.rb` — Match state, participants, result
+- `app/models/arena_season.rb` — Seasonal rankings
+- `app/models/arena_participation.rb` — Player/NPC match participation
+- `app/models/arena_room.rb` — Room configuration
+- `app/models/arena_application.rb` — Player/NPC fight applications
+- `app/models/tactical_match.rb` — Grid-based match state
+- `app/models/tactical_participant.rb` — Tactical combat participant
+- `app/models/arena_bet.rb` — Spectator wagers
+- `app/models/npc_template.rb` — NPC definitions (including arena bots)
+
+### Model Concerns
+- `app/models/concerns/npc/combat_stats.rb` — Unified NPC stat calculation
+- `app/models/concerns/npc/combatable.rb` — Combat behavior interface
+
+### Services
+- `app/services/arena/application_handler.rb` — Application lifecycle, NPC support
+- `app/services/arena/matchmaker.rb` — Auto-matching
+- `app/services/arena/combat_broadcaster.rb` — Real-time updates
+- `app/services/arena/combat_processor.rb` — Combat action processing
+- `app/services/arena/npc_combat_ai.rb` — NPC combat AI decisions
+- `app/services/arena/npc_application_service.rb` — NPC application creation
+- `app/services/arena/rewards_distributor.rb` — XP, gold, rating
+- `app/services/game/world/arena_npc_config.rb` — Arena bot YAML loader
+- `app/services/arena/tactical_combat/move_processor.rb` — Tactical movement
+- `app/services/arena/tactical_combat/attack_processor.rb` — Tactical attacks
+- `app/services/arena/tactical_combat/skill_processor.rb` — Tactical skills
+- `app/services/arena/tactical_combat/move_calculator.rb` — Path calculation
+
+### Jobs
+- `app/jobs/arena/npc_spawner_job.rb` — Periodic NPC bot spawning
+
+### Controllers
+- `app/controllers/arena_controller.rb` — Lobby
+- `app/controllers/arena_rooms_controller.rb` — Room views
+- `app/controllers/arena_applications_controller.rb` — Create/accept/cancel
+- `app/controllers/arena_matches_controller.rb` — Match views
+- `app/controllers/tactical_arena_controller.rb` — Tactical combat
+- `app/controllers/arena_bets_controller.rb` — Betting
+
+### Channels
+- `app/channels/arena_channel.rb` — Room-level updates
+- `app/channels/arena_match_channel.rb` — Combat updates
+- `app/channels/tactical_match_channel.rb` — Tactical updates
+
+### Frontend
+- `app/javascript/controllers/arena_controller.js`
+- `app/javascript/controllers/arena_match_controller.js`
+- `app/javascript/controllers/tactical_combat_controller.js`
+
+### Views
+- `app/views/arena/*`
+- `app/views/arena_rooms/*`
+- `app/views/arena_matches/*`
+- `app/views/tactical_arena/*`
+- `app/views/arena_bets/*`
+
+### Configuration
+- `config/routes.rb` — Arena routes
+- `config/gameplay/arena_npcs.yml` — Arena bot definitions
+- `db/seeds.rb` — Arena room seeds
+
+### Migrations
+- `db/migrate/20251127100000_create_tactical_matches.rb`
+- `db/migrate/20251127100001_create_tactical_participants.rb`
+- `db/migrate/20251127100002_create_arena_bets.rb`
+- `db/migrate/20251218174018_add_npc_support_to_arena.rb`
+- `db/migrate/20251218174704_add_metadata_to_arena_participations.rb`
+
+### Related Documentation
+- `doc/flow/22_unified_npc_architecture.md` — NPC architecture overview
 

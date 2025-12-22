@@ -160,7 +160,7 @@
     <div class="footer-decoration left"></div>
     <div class="footer-links">
       <%= link_to "← Back to Battle", combat_path, class: "footer-link" if @battle.active? %>
-      <%= link_to "← Back to Arena", arena_path, class: "footer-link" if @battle.battle_type == "pvp" %>
+      <%= link_to "← Back to Arena", arena_index_path, class: "footer-link" if @battle.battle_type == "pvp" %>
       <%= link_to "← Back to World", world_path, class: "footer-link" %>
     </div>
     <div class="footer-decoration right"></div>

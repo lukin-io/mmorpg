@@ -1,0 +1,26 @@
+<%# Hitbox at building position %>
+<% w = hotspot.width.presence || 150 %>
+<% h = hotspot.height.presence || 100 %>
+<% label = hotspot.hotspot_type == "exit" ? "Exit" : "Enter #{hotspot.name}" %>
+
+<div class="city-hitbox"
+     style="left:<%= hotspot.position_x %>px;top:<%= hotspot.position_y %>px;width:<%= w %>px;height:<%= h %>px;"
+     data-hotspot-key="<%= hotspot.key %>"
+     data-tooltip="<%= hotspot.name %>"
+     data-action="mouseenter->city-view#showOverlay mouseleave->city-view#hideOverlay">
+
+  <% if hotspot.clickable? && hotspot.can_interact?(current_character) %>
+    <%= form_with url: interact_hotspot_world_path, method: :post, local: false, data: { turbo: true } do |f| %>
+      <%= f.hidden_field :hotspot_id, value: hotspot.id %>
+      <button type="submit" class="city-hitbox-btn">
+        <span class="city-hitbox-label"><%= label %></span>
+      </button>
+    <% end %>
+
+  <% elsif hotspot.action_type != "none" %>
+    <span class="city-hitbox-label city-hitbox-label--locked">🔒 <%= hotspot.name %></span>
+
+  <% else %>
+    <%# Decoration - no label %>
+  <% end %>
+</div>

@@ -152,6 +152,8 @@ module Game
 
         # Apply NPC damage to player
         vitals_service.apply_damage(total_npc_damage, source: npc_template.name)
+        character.reload # Reload to get updated HP from vitals_service
+        player_participant.current_hp = character.current_hp
         player_participant.is_defending = false
         player_participant.save!
 
@@ -229,21 +231,10 @@ module Game
         npc_stats[:agility] + rand(1..10)
       end
 
+      # Get NPC combat stats using unified Npc::CombatStats concern
+      # This ensures consistency between outside-world and arena combat
       def npc_stats
-        @npc_stats ||= begin
-          # Try to get stats from metadata, otherwise generate based on level
-          metadata_stats = npc_template.metadata&.dig("stats")
-          if metadata_stats.present?
-            metadata_stats.with_indifferent_access
-          else
-            {
-              attack: npc_template.metadata&.dig("base_damage") || npc_template.level * 3 + 5,
-              defense: npc_template.level * 2 + 3,
-              agility: npc_template.level + 5,
-              hp: npc_template.metadata&.dig("health") || npc_template.level * 10 + 20
-            }.with_indifferent_access
-          end
-        end
+        @npc_stats ||= npc_template.combat_stats
       end
 
       def npc_max_hp
@@ -274,11 +265,14 @@ module Game
 
         # NPC attacks player
         npc_damage = calculate_npc_damage(npc_stats, character, is_defending: player_participant.is_defending)
-        player_participant.is_defending = false
-        player_participant.save!
 
         # Apply damage to character
         vitals_service.apply_damage(npc_damage, source: npc_template.name)
+        character.reload # Reload to get updated HP from vitals_service
+        player_participant.current_hp = character.current_hp
+        player_participant.is_defending = false
+        player_participant.save!
+
         combat_log << "#{npc_template.name} attacks you for #{npc_damage} damage."
 
         # Check if player defeated
@@ -309,9 +303,11 @@ module Game
         # NPC still attacks
         npc_damage = calculate_npc_damage(npc_stats, character, is_defending: true)
         vitals_service.apply_damage(npc_damage, source: npc_template.name)
+        character.reload # Reload to get updated HP from vitals_service
+        player_participant.update!(current_hp: character.current_hp)
         combat_log << "#{npc_template.name} attacks you for #{npc_damage} damage (reduced by defense)."
 
-        if character.reload.current_hp <= 0
+        if character.current_hp <= 0
           return complete_battle!(winner: :npc, combat_log: combat_log)
         end
 
@@ -361,10 +357,13 @@ module Game
         # NPC counterattack
         npc_damage = calculate_npc_damage(npc_stats, character, is_defending: false)
         vitals_service.apply_damage(npc_damage, source: npc_template.name)
+        character.reload # Reload to get updated HP from vitals_service
+        player_participant = battle.battle_participants.find_by(team: "player")
+        player_participant&.update!(current_hp: character.current_hp)
         combat_log << "#{npc_template.name} counterattacks for #{npc_damage} damage!"
 
         # Check if player is defeated
-        if character.reload.current_hp <= 0
+        if character.current_hp <= 0
           return complete_battle!(winner: :npc, combat_log: combat_log)
         end
 
@@ -452,9 +451,12 @@ module Game
           # NPC gets a free attack
           npc_damage = calculate_npc_damage(npc_stats, character, is_defending: false)
           vitals_service.apply_damage(npc_damage, source: npc_template.name)
+          character.reload # Reload to get updated HP from vitals_service
+          player_participant = battle.battle_participants.find_by(team: "player")
+          player_participant&.update!(current_hp: character.current_hp)
           combat_log << "#{npc_template.name} attacks you for #{npc_damage} damage as you try to escape!"
 
-          if character.reload.current_hp <= 0
+          if character.current_hp <= 0
             return complete_battle!(winner: :npc, combat_log: combat_log)
           end
 

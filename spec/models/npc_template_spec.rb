@@ -3,6 +3,145 @@
 require "rails_helper"
 
 RSpec.describe NpcTemplate, type: :model do
+  describe "concerns integration" do
+    let(:hostile_npc) { create(:npc_template, level: 10, role: "hostile") }
+    let(:arena_bot) { create(:npc_template, level: 10, role: "arena_bot") }
+
+    describe "Npc::CombatStats" do
+      it "includes CombatStats concern" do
+        expect(hostile_npc).to respond_to(:combat_stats)
+        expect(hostile_npc).to respond_to(:combat_stat)
+        expect(hostile_npc).to respond_to(:max_hp)
+        expect(hostile_npc).to respond_to(:attack_power)
+        expect(hostile_npc).to respond_to(:defense_value)
+        expect(hostile_npc).to respond_to(:attack_damage_range)
+      end
+
+      it "combat_stats returns consistent values" do
+        stats1 = hostile_npc.combat_stats
+        stats2 = hostile_npc.combat_stats
+
+        expect(stats1).to eq(stats2)
+      end
+    end
+
+    describe "Npc::Combatable" do
+      it "includes Combatable concern" do
+        expect(hostile_npc).to respond_to(:can_engage_combat?)
+        expect(hostile_npc).to respond_to(:hostile?)
+        expect(hostile_npc).to respond_to(:attackable?)
+        expect(hostile_npc).to respond_to(:combat_behavior)
+        expect(hostile_npc).to respond_to(:difficulty_rating)
+        expect(hostile_npc).to respond_to(:should_defend?)
+        expect(hostile_npc).to respond_to(:roll_initiative)
+        expect(hostile_npc).to respond_to(:loot_table)
+        expect(hostile_npc).to respond_to(:xp_reward)
+        expect(hostile_npc).to respond_to(:gold_reward)
+      end
+    end
+
+    describe "concern interaction" do
+      it "roll_initiative uses combat_stat for agility" do
+        agility = hostile_npc.combat_stat(:agility)
+        initiative = hostile_npc.roll_initiative(rng: Random.new(42))
+
+        expect(initiative).to be_between(agility + 1, agility + 10)
+      end
+
+      it "should_defend? considers combat_behavior" do
+        expect(hostile_npc.combat_behavior).to eq(:aggressive)
+        expect(arena_bot.combat_behavior).to eq(:balanced)
+
+        # Different behaviors have different defend chances
+        # This verifies the concerns work together
+      end
+    end
+  end
+
+  describe "legacy method compatibility" do
+    let(:npc) { create(:npc_template, level: 10, role: "hostile") }
+
+    describe "#health" do
+      it "delegates to max_hp for backward compatibility" do
+        expect(npc.health).to eq(npc.max_hp)
+      end
+
+      it "reflects metadata overrides" do
+        npc.update!(metadata: {"health" => 500})
+        expect(npc.health).to eq(500)
+      end
+    end
+
+    describe "#damage_range" do
+      it "delegates to attack_damage_range for backward compatibility" do
+        expect(npc.damage_range).to eq(npc.attack_damage_range)
+      end
+
+      it "returns a Range object" do
+        expect(npc.damage_range).to be_a(Range)
+      end
+    end
+
+    describe "#ai_behavior" do
+      it "returns string version of combat_behavior" do
+        expect(npc.ai_behavior).to eq("aggressive")
+        expect(npc.ai_behavior).to be_a(String)
+      end
+
+      it "reflects metadata override" do
+        npc.update!(metadata: {"ai_behavior" => "defensive"})
+        expect(npc.ai_behavior).to eq("defensive")
+      end
+    end
+
+    describe "#arena_difficulty" do
+      it "returns string version of difficulty_rating" do
+        expect(npc.arena_difficulty).to eq("medium")
+        expect(npc.arena_difficulty).to be_a(String)
+      end
+
+      it "reflects metadata override" do
+        npc.update!(metadata: {"difficulty" => "hard"})
+        expect(npc.arena_difficulty).to eq("hard")
+      end
+    end
+  end
+
+  describe "arena bot specific methods" do
+    let(:arena_bot) { create(:npc_template, role: "arena_bot", metadata: {"arena_rooms" => ["training"], "avatar" => "🎯"}) }
+    let(:hostile) { create(:npc_template, role: "hostile") }
+
+    describe "#arena_bot?" do
+      it "returns true for arena_bot role" do
+        expect(arena_bot.arena_bot?).to be true
+      end
+
+      it "returns false for other roles" do
+        expect(hostile.arena_bot?).to be false
+      end
+    end
+
+    describe "#arena_rooms" do
+      it "returns rooms from metadata" do
+        expect(arena_bot.arena_rooms).to eq(["training"])
+      end
+
+      it "returns empty array when not specified" do
+        expect(hostile.arena_rooms).to eq([])
+      end
+    end
+
+    describe "#avatar_emoji" do
+      it "returns avatar from metadata" do
+        expect(arena_bot.avatar_emoji).to eq("🎯")
+      end
+
+      it "returns default emoji when not specified" do
+        expect(hostile.avatar_emoji).to eq("⚔️")
+      end
+    end
+  end
+
   describe "scopes" do
     describe ".in_zone" do
       # This spec covers a bug where PostgreSQL's JSONB `?` operator conflicted

@@ -7,7 +7,7 @@
      data-arena-match-spectator-code-value="<%= @arena_match.spectator_code if !current_user_participating? %>">
 
   <div class="page-header">
-    <%= link_to "← Back to Arena", arena_path, class: "btn-secondary btn-sm" %>
+    <%= link_to "← Back to Arena", arena_index_path, class: "btn-secondary btn-sm" %>
     <h1>
       <%= @arena_match.match_type.humanize %> Match
       <span class="badge badge--<%= @arena_match.status %>"><%= @arena_match.status.humanize %></span>
@@ -145,7 +145,7 @@
           <div class="arena-result-stat-label">Winner</div>
         </div>
       </div>
-      <%= link_to "Return to Arena", arena_path, class: "btn-primary" %>
+      <%= link_to "Return to Arena", arena_index_path, class: "btn-primary" %>
     </div>
   <% end %>
 </div>

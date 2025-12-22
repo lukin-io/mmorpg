@@ -824,6 +824,29 @@ textarea {
   border-bottom: 1px solid var(--nl-border-light);
 }
 
+.page-header-top {
+  margin-bottom: var(--nl-space-sm);
+}
+
+.back-to-city {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  font-size: 0.85rem;
+  color: var(--nl-text-muted);
+  background: var(--nl-bg-secondary);
+  border: 1px solid var(--nl-border-light);
+  border-radius: 4px;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+.back-to-city:hover {
+  color: var(--nl-text-primary);
+  background: var(--nl-bg-tertiary);
+  border-color: var(--nl-gold);
+}
+
 .page-header h1 { margin-bottom: var(--nl-space-xs); }
 
 .page-header p {
@@ -11863,4 +11886,217 @@ turbo-frame[busy] {
 
 .nl-shake {
   animation: nl-shake 0.3s ease;
+}
+
+/* ============================================
+   CITY VIEW
+   ============================================ */
+
+.city-view-container { max-width: 100%; margin: 0 auto; }
+.city-header { text-align: center; padding: 12px; background: var(--nl-bg-tertiary); border-bottom: 2px solid var(--nl-gold); }
+.city-name { font-size: 1.5rem; color: var(--nl-text-primary); margin: 0; }
+.city-description { font-size: 0.9rem; color: var(--nl-text-muted); margin: 4px 0 0; }
+
+.city-view {
+  position: relative;
+  width: 100%;
+  max-width: 1536px;
+  aspect-ratio: 1536 / 1024;
+  margin: 0 auto;
+  background-size: 100% 100%;
+  overflow: hidden;
+  border: 2px solid var(--nl-gold);
+}
+
+/* TODO: Uncomment when work with overlap
+.city-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s;
+}
+.city-overlay--visible { opacity: 1; }
+*/
+
+/* HITBOX - Clickable area at building position */
+.city-hitbox {
+  position: absolute;
+  cursor: pointer;
+  z-index: 10;
+  background: rgba(255, 255, 255, 0.1);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+.city-hitbox:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+/* Form inside hitbox must fill entire area */
+.city-hitbox form {
+  display: block;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+/* Override global button styles for hitbox */
+.city-hitbox-btn,
+.city-hitbox-btn:hover,
+.city-hitbox-btn:focus,
+.city-hitbox-btn:active {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100%;
+  height: 100%;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  cursor: pointer;
+  padding: 0;
+  margin: 0;
+}
+/* Label text - only visible on hover */
+.city-hitbox-label {
+  font-family: 'Cinzel', Georgia, serif;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+  color: #ffd700;
+  text-shadow:
+    0 0 10px rgba(0, 0, 0, 0.9),
+    0 0 20px rgba(0, 0, 0, 0.7),
+    0 2px 4px rgba(0, 0, 0, 0.9);
+  text-align: center;
+  opacity: 0;
+  transform: translateY(5px);
+  transition: all 0.25s ease;
+}
+.city-hitbox:hover .city-hitbox-label {
+  opacity: 1;
+  transform: translateY(0);
+}
+.city-hitbox-label--locked {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  font-family: Georgia, serif;
+  font-size: 0.85rem;
+  color: #888;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+.city-hitbox:hover .city-hitbox-label--locked {
+  opacity: 1;
+}
+
+/* TOOLTIP */
+.city-tooltip {
+  position: absolute;
+  display: none;
+  background: rgba(0,0,0,0.9);
+  color: #fff;
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  pointer-events: none;
+  z-index: 100;
+  border: 1px solid var(--nl-gold);
+}
+
+.city-actions { background: var(--nl-bg-tertiary); border-top: 2px solid var(--nl-gold); padding: 12px; text-align: center; }
+.city-location-label { font-size: 0.9rem; color: var(--nl-text-secondary); }
+
+/* ==========================================================================
+   AVATAR SYSTEM
+   ========================================================================== */
+
+/* Base avatar styles */
+.avatar {
+  display: inline-block;
+  border-radius: 8px;
+  object-fit: cover;
+  border: 2px solid var(--nl-gold, #c4a349);
+  background: var(--nl-bg-secondary, #1a1a2e);
+  vertical-align: middle;
+}
+
+.avatar--small { width: 32px; height: 32px; border-radius: 4px; }
+.avatar--medium { width: 48px; height: 48px; }
+.avatar--large { width: 64px; height: 64px; }
+.avatar--xlarge { width: 96px; height: 96px; border-radius: 12px; }
+
+/* NPC avatar styling */
+.avatar.npc-avatar {
+  border-color: var(--nl-danger, #dc3545);
+  filter: hue-rotate(20deg);
+}
+
+/* Fallback avatar (emoji) */
+.avatar--fallback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, var(--nl-bg-secondary) 0%, var(--nl-bg-tertiary) 100%);
+}
+
+/* Arena participant avatar container */
+.arena-participant-avatar {
+  flex-shrink: 0;
+  margin-right: 12px;
+}
+
+.arena-participant {
+  display: flex;
+  align-items: flex-start;
+}
+
+.arena-participant-info {
+  flex: 1;
+}
+
+/* Combat avatar in totem slot */
+.nl-totem .avatar {
+  border-radius: 50%;
+  border-width: 3px;
+}
+
+.nl-totem .npc-avatar {
+  border-color: var(--nl-danger, #dc3545);
+}
+
+/* Equipment avatar area */
+.nl-equipment-avatar .avatar {
+  border-radius: 8px;
+  border: 3px solid var(--nl-gold, #c4a349);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+/* NPC nameplate in applications list */
+.npc-nameplate {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.npc-nameplate .npc-avatar {
+  font-size: 1.2em;
+}
+
+.npc-badge {
+  background: var(--nl-warning, #ffc107);
+  color: #000;
+  font-size: 0.7em;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: bold;
 }

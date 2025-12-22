@@ -386,4 +386,172 @@ RSpec.describe Character, type: :model do
       end
     end
   end
+
+  # ============================================
+  # Bug Fix: Missing Arena Associations
+  # ============================================
+  # Regression tests for missing arena_applications and arena_participations
+  # associations that caused NoMethodError in ArenaController#index.
+  #
+  # Bug: undefined method 'arena_applications' for an instance of Character
+  # Fix: Added has_many :arena_applications and :arena_participations associations
+
+  describe "arena associations" do
+    let(:user) { create(:user) }
+    let(:character) { create(:character, user: user) }
+
+    describe "arena_applications" do
+      it "responds to arena_applications" do
+        expect(character).to respond_to(:arena_applications)
+      end
+
+      it "returns an empty collection when no applications exist" do
+        expect(character.arena_applications).to be_empty
+      end
+
+      it "returns arena applications for the character" do
+        arena_room = create(:arena_room)
+        application = create(:arena_application, applicant: character, arena_room: arena_room)
+
+        expect(character.arena_applications).to include(application)
+      end
+
+      it "supports the active scope" do
+        arena_room = create(:arena_room)
+        active_app = create(:arena_application, applicant: character, arena_room: arena_room, status: :open)
+        expired_app = create(:arena_application, applicant: character, arena_room: arena_room, status: :expired)
+
+        expect(character.arena_applications.active).to include(active_app)
+        expect(character.arena_applications.active).not_to include(expired_app)
+      end
+
+      it "destroys arena_applications when character is destroyed" do
+        arena_room = create(:arena_room)
+        application = create(:arena_application, applicant: character, arena_room: arena_room)
+        application_id = application.id
+
+        character.destroy
+
+        expect(ArenaApplication.find_by(id: application_id)).to be_nil
+      end
+    end
+
+    describe "arena_participations" do
+      it "responds to arena_participations" do
+        expect(character).to respond_to(:arena_participations)
+      end
+
+      it "returns an empty collection when no participations exist" do
+        expect(character.arena_participations).to be_empty
+      end
+
+      it "returns arena participations for the character" do
+        arena_match = create(:arena_match)
+        participation = create(:arena_participation, character: character, arena_match: arena_match, user: user)
+
+        expect(character.arena_participations).to include(participation)
+      end
+
+      it "supports includes with arena_match" do
+        # Regression test: ArenaController uses this query pattern
+        # @recent_matches = current_character.arena_participations
+        #   .includes(:arena_match)
+        #   .order(created_at: :desc)
+        expect {
+          character.arena_participations.includes(:arena_match).order(created_at: :desc).to_a
+        }.not_to raise_error
+      end
+
+      it "destroys arena_participations when character is destroyed" do
+        arena_match = create(:arena_match)
+        participation = create(:arena_participation, character: character, arena_match: arena_match, user: user)
+        participation_id = participation.id
+
+        character.destroy
+
+        expect(ArenaParticipation.find_by(id: participation_id)).to be_nil
+      end
+    end
+
+    describe "arena_applications with active query" do
+      # Regression test: ArenaController#index calls current_character.arena_applications.active.first
+      it "returns the first active application" do
+        arena_room = create(:arena_room)
+        create(:arena_application, applicant: character, arena_room: arena_room, status: :open)
+
+        result = character.arena_applications.active.first
+        expect(result).to be_an(ArenaApplication)
+        expect(result.status).to eq("open")
+      end
+
+      it "returns nil when no active applications exist" do
+        expect(character.arena_applications.active.first).to be_nil
+      end
+    end
+  end
+
+  # ============================================
+  # Avatar Assignment
+  # ============================================
+  describe "avatar" do
+    describe "AVATARS constant" do
+      it "contains all available player avatars" do
+        expect(Character::AVATARS).to contain_exactly(
+          "dwarven", "nightveil", "lightbearer", "pathfinder", "arcanist", "ironbound"
+        )
+      end
+
+      it "is frozen" do
+        expect(Character::AVATARS).to be_frozen
+      end
+    end
+
+    describe "automatic avatar assignment on create" do
+      it "assigns a random avatar on character creation" do
+        user = create(:user)
+        character = create(:character, user: user)
+
+        expect(character.avatar).to be_present
+        expect(Character::AVATARS).to include(character.avatar)
+      end
+
+      it "does not override explicitly set avatar" do
+        user = create(:user)
+        character = create(:character, user: user, avatar: "nightveil")
+
+        expect(character.avatar).to eq("nightveil")
+      end
+
+      it "assigns different avatars randomly (statistical test)" do
+        # Create multiple users to avoid character limit
+        avatars = 10.times.map do
+          user = create(:user)
+          create(:character, user: user).avatar
+        end
+
+        # With 6 avatars and 10 characters, we should see at least 2 different avatars
+        expect(avatars.uniq.size).to be > 1
+      end
+    end
+
+    describe "#avatar_image_path" do
+      it "returns the full asset path for the avatar" do
+        user = create(:user)
+        character = create(:character, user: user, avatar: "dwarven")
+
+        expect(character.avatar_image_path).to eq("avatars/dwarven.png")
+      end
+
+      it "returns fallback path when avatar is nil" do
+        user = create(:user)
+        character = build(:character, user: user, avatar: nil)
+        # Skip validation to test nil avatar case
+        character.save!(validate: false)
+        character.update_column(:avatar, nil)
+        character.reload
+
+        expect(character.avatar_image_path).to eq("avatars/dwarven.png")
+      end
+    end
+  end
 end

@@ -20,6 +20,7 @@ This document captures all functionality inspired by the Neverlands MMORPG that 
 | 10 | [Tile Resource Gathering](#tile-resource-gathering) | ✅ Implemented | `tile_resource.rb`, `tile_gathering_service.rb`, biome config |
 | 11 | [Tile NPC Spawning](#tile-npc-spawning) | ✅ Implemented | `tile_npc.rb`, `tile_npc_service.rb`, biome NPC config |
 | 12 | [Character Stats & Skills](#character-stats--skills-allocation) | ✅ Implemented | `characters_controller.rb`, `stat_allocation_controller.js`, `skill_allocation_controller.js` |
+| 13 | [City Hotspots View](#city-hotspots-view) | ✅ Implemented | `city_hotspot.rb`, `city_view_controller.js`, `city_view.html.erb` |
 
 **Legend:** ✅ Implemented | 🔄 Partial | ❌ Not Started
 
@@ -38,6 +39,7 @@ This document captures all functionality inspired by the Neverlands MMORPG that 
 10. [Tile Resource Gathering](#tile-resource-gathering)
 11. [Tile NPC Spawning](#tile-npc-spawning)
 12. [Character Stats & Skills Allocation](#character-stats--skills-allocation)
+13. [City Hotspots View](#city-hotspots-view)
 
 ---
 
@@ -2644,6 +2646,236 @@ PATCH /characters/:id/skills → update_skills
 |----------|-------|------------|
 | **Primary** | Strength, Dexterity, Intelligence, Constitution, Agility, Luck | Level-up points |
 | **Passive Skills** | Wanderer (movement speed) | Skill points |
+
+---
+
+## City Hotspots View
+
+### Original Neverlands Example
+
+```html
+<!-- Neverlands city location view - interactive illustrated city -->
+<div style="width: 1250px; height: 600px; margin: 0 auto; position: relative;
+     background: url(http://image.neverlands.ru/cities/forpost/loc5_bg.jpg)">
+
+  <!-- Tavern hotspot -->
+  <div style="position:absolute; left: 154; top: 167;">
+    <a href="main.php?get_id=56&act=10&go=build&pl=bar0&vcode=...">
+      <img src=".../loc5_a.png"
+           onmouseover="this.src = '.../loc5_a_hl.png'; tooltip(this,'Таверна');"
+           onmouseout="this.src='.../loc5_a.png'; hide_info(this);" />
+    </a>
+  </div>
+
+  <!-- Arena hotspot -->
+  <div style="position:absolute; left: 374; top: 0;">
+    <a href="main.php?get_id=56&act=10&go=arena&vcode=...">
+      <img src=".../loc5_b.png"
+           onmouseover="this.src = '.../loc5_b_hl.png'; tooltip(this,'Арена для поединков');"
+           onmouseout="this.src='.../loc5_b.png'; hide_info(this);" />
+    </a>
+  </div>
+
+  <!-- Exit hotspot -->
+  <div style="position:absolute; left: 0; top: 25;">
+    <a href="main.php?get_id=56&act=10&go=up&vcode=...">
+      <img src=".../loc5_d.png"
+           onmouseover="this.src = '.../loc5_d_hl.png'; tooltip(this,'Выход из города');"
+           onmouseout="this.src='.../loc5_d.png'; hide_info(this);" />
+    </a>
+  </div>
+
+  <!-- Workshop -->
+  <div style="position:absolute; left: 982; top: 182;">
+    <a href="main.php?get_id=56&act=10&go=build&pl=workshop&vcode=...">
+      <img src=".../loc5_e.png"
+           onmouseover="this.src = '.../loc5_e_hl.png'; tooltip(this,'Мастерская');"
+           onmouseout="this.src='.../loc5_e.png'; hide_info(this);" />
+    </a>
+  </div>
+
+  <!-- Hospital -->
+  <div style="position:absolute; left: 807; top: 282;">
+    <a href="main.php?get_id=56&act=10&go=build&pl=hospi&vcode=...">
+      <img src=".../loc5_f.png"
+           onmouseover="this.src = '.../loc5_f_hl.png'; tooltip(this,'Больница');"
+           onmouseout="this.src='.../loc5_f.png'; hide_info(this);" />
+    </a>
+  </div>
+
+  <!-- Decoration (Christmas tree) -->
+  <div style="position:absolute; left: 513; top: 153;">
+    <a href="main.php?get_id=56&act=10&go=build&pl=construct5&vcode=...">
+      <img src=".../loc5_tree.gif"
+           onmouseover="this.src = '.../loc5_tree_hl.gif'; tooltip(this,'Ёлка');"
+           onmouseout="this.src='.../loc5_tree.gif'; hide_info(this);" />
+    </a>
+  </div>
+</div>
+```
+
+### Elselands Implementation
+
+#### Model: `CityHotspot`
+```ruby
+# app/models/city_hotspot.rb
+class CityHotspot < ApplicationRecord
+  HOTSPOT_TYPES = %w[building exit decoration feature].freeze
+  ACTION_TYPES = %w[enter_zone open_feature none].freeze
+
+  belongs_to :zone
+  belongs_to :destination_zone, class_name: "Zone", optional: true
+
+  validates :key, presence: true, uniqueness: { scope: :zone_id }
+  validates :hotspot_type, inclusion: { in: HOTSPOT_TYPES }
+  validates :action_type, inclusion: { in: ACTION_TYPES }
+
+  scope :for_zone, ->(zone) { where(zone: zone).where(active: true).order(:z_index) }
+
+  def can_interact?(character)
+    active? && action_type != "none" && character.level >= required_level
+  end
+end
+```
+
+#### Stimulus Controller: `city_view_controller.js`
+
+The controller uses an **overlay approach** rather than image swapping. The overlay image
+(same size as the building area in city.png) is always rendered but hidden (opacity: 0).
+On hover, we add a class to show it (opacity: 1), creating the highlight effect.
+
+```javascript
+// app/javascript/controllers/city_view_controller.js
+import { Controller } from "@hotwired/stimulus"
+
+export default class extends Controller {
+  static targets = ["hotspot", "overlay", "tooltip"]
+
+  // Show overlay on hover - add visible class
+  showOverlay(event) {
+    const button = event.currentTarget
+    const overlay = button.querySelector("[data-city-view-target='overlay']")
+    if (overlay) {
+      overlay.classList.add("city-hotspot-overlay--visible")
+    }
+    this.showTooltip(event)
+  }
+
+  // Hide overlay on mouse leave - remove visible class
+  hideOverlay(event) {
+    const button = event.currentTarget
+    const overlay = button.querySelector("[data-city-view-target='overlay']")
+    if (overlay) {
+      overlay.classList.remove("city-hotspot-overlay--visible")
+    }
+    this.hideTooltip()
+  }
+
+  showTooltip(event) {
+    const hotspot = event.currentTarget.closest("[data-tooltip]")
+    if (hotspot && this.hasTooltipTarget) {
+      this.tooltipTarget.textContent = hotspot.dataset.tooltip
+      this.tooltipTarget.style.display = "block"
+    }
+  }
+
+  hideTooltip() {
+    if (this.hasTooltipTarget) this.tooltipTarget.style.display = "none"
+  }
+}
+```
+
+#### View Template
+
+The overlay image is rendered with opacity: 0 and becomes visible on hover.
+The image's natural dimensions define the clickable area.
+
+```erb
+<%# app/views/world/city_view.html.erb %>
+<div class="city-view" data-controller="city-view"
+     style="background-image: url(<%= asset_path('city.png') %>); width: 1536px; height: 1024px;">
+
+  <% @hotspots.each do |hotspot| %>
+    <div class="city-hotspot city-hotspot--<%= hotspot.hotspot_type %>"
+         style="left: <%= hotspot.position_x %>px; top: <%= hotspot.position_y %>px;"
+         data-tooltip="<%= hotspot.name %>">
+
+      <% if hotspot.clickable? %>
+        <%= form_with url: interact_hotspot_world_path, method: :post, local: false do |f| %>
+          <%= f.hidden_field :hotspot_id, value: hotspot.id %>
+          <button type="submit" class="city-hotspot-button"
+                  data-action="mouseenter->city-view#showOverlay mouseleave->city-view#hideOverlay">
+            <%# Overlay image - hidden by default, shown on hover %>
+            <img src="<%= asset_path(hotspot.image_hover) %>"
+                 class="city-hotspot-overlay"
+                 data-city-view-target="overlay" />
+          </button>
+        <% end %>
+      <% end %>
+    </div>
+  <% end %>
+
+  <div class="city-tooltip" data-city-view-target="tooltip"></div>
+</div>
+```
+
+#### CSS for Overlay Effect
+```css
+.city-hotspot-overlay {
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.city-hotspot-overlay--visible {
+  opacity: 1;
+}
+```
+
+### Translation Table
+
+| Neverlands Feature | Elselands Approach |
+|--------------------|-------------------|
+| Inline `onmouseover`/`onmouseout` | Stimulus `data-action` on button |
+| Image swap (`this.src = '...'`) | CSS opacity toggle (0 → 1) |
+| Global `tooltip()` function | Controller method `showTooltip()` |
+| Direct URL links | Turbo Form with hidden hotspot_id |
+| Inline `style="position:absolute"` | CSS class `.city-hotspot` |
+| `_hl.png` as hover state | `image_hover` overlay (hidden by default) |
+| Hardcoded positions | Database `position_x`, `position_y` |
+| `vcode` token in URL | CSRF token via Rails form |
+
+### Key Insight: Overlay Positioning
+
+In Neverlands, each building image:
+1. Is positioned at exact pixel coordinates on the city background
+2. The normal image (`loc5_b.png`) may be transparent/invisible
+3. The hover image (`loc5_b_hl.png`) highlights that area
+
+Elselands mirrors this with:
+1. `position_x`/`position_y` matching city.png coordinates
+2. Overlay image with `opacity: 0` (invisible by default)
+3. `opacity: 1` on hover via CSS class toggle
+
+### Castleton Keep Building Positions
+
+Current hotspot positions for `city.png` (1536 x 1024):
+
+| Building | Key | Position (x, y) | Size (w x h) | Action |
+|----------|-----|-----------------|--------------|--------|
+| City Gates | `city_gate` | (680, 850) | 180 x 150 | Exit to Starter Plains |
+| Arena | `arena` | (1050, 200) | 300 x 250 | PvP battles |
+| Workshop | `workshop` | (100, 350) | 250 x 200 | Crafting |
+| Clinic | `clinic` | (1150, 500) | 200 x 180 | Healing |
+| Housing District | `house` | (550, 300) | 200 x 180 | Player housing |
+| Ancient Oak | `tree_center` | (750, 550) | 150 x 200 | Decoration (no action) |
+
+### Key Files
+- `app/models/city_hotspot.rb` - Hotspot model
+- `app/services/game/world/city_hotspot_service.rb` - Interaction service
+- `app/controllers/world_controller.rb` - `interact_hotspot` action
+- `app/views/world/city_view.html.erb` - City view template
+- `app/javascript/controllers/city_view_controller.js` - Stimulus controller
+- `doc/flow/20_city_hotspots.md` - Flow documentation
 
 ---
 

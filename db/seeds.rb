@@ -1236,3 +1236,278 @@ if defined?(ArenaRoom)
 end
 
 puts "Arena rooms seeding complete!"
+
+# ==============================================================================
+# Tile Buildings (Enterable structures on map tiles)
+# ==============================================================================
+puts "Seeding Tile Buildings..."
+
+if defined?(TileBuilding) && defined?(Zone)
+  starter_plains = Zone.find_by(name: "Starter Plains")
+  castleton = Zone.find_by(name: "Castleton Keep")
+  whispering_woods = Zone.find_by(name: "Whispering Woods")
+
+  tile_buildings = []
+
+  # Castle entrance from Starter Plains to Castleton Keep
+  if starter_plains && castleton
+    tile_buildings << {
+      zone: starter_plains.name,
+      x: 7,
+      y: 0,
+      building_key: "castleton_gate",
+      building_type: "castle",
+      name: "Castleton Keep Gates",
+      destination_zone: castleton,
+      destination_x: 5,
+      destination_y: 9,
+      icon: "🏰",
+      required_level: 1,
+      metadata: {
+        "description" => "The main gates to Castleton Keep, home to the Alliance forces."
+      }
+    }
+  end
+
+  # Exit from Castleton Keep back to Starter Plains
+  if castleton && starter_plains
+    tile_buildings << {
+      zone: castleton.name,
+      x: 5,
+      y: 9,
+      building_key: "castleton_exit",
+      building_type: "portal",
+      name: "City Gates",
+      destination_zone: starter_plains,
+      destination_x: 7,
+      destination_y: 1,
+      icon: "🚪",
+      required_level: 1,
+      metadata: {
+        "description" => "Exit the city walls to the Starter Plains."
+      }
+    }
+  end
+
+  # Inn in Castleton Keep
+  if castleton
+    tile_buildings << {
+      zone: castleton.name,
+      x: 3,
+      y: 3,
+      building_key: "castleton_inn",
+      building_type: "inn",
+      name: "The Wanderer's Rest",
+      destination_zone: nil,  # No zone transition, but shows on map
+      icon: "🏨",
+      required_level: 1,
+      metadata: {
+        "description" => "A cozy inn for weary travelers. Rest here to restore vitality."
+      }
+    }
+  end
+
+  # Forest dungeon entrance in Whispering Woods
+  if whispering_woods
+    tile_buildings << {
+      zone: whispering_woods.name,
+      x: 6,
+      y: 6,
+      building_key: "shadow_cave_entrance",
+      building_type: "dungeon_entrance",
+      name: "Shadow Cave",
+      destination_zone: nil,  # Dungeon system would handle this
+      icon: "⚔️",
+      required_level: 10,
+      metadata: {
+        "description" => "A dark cave entrance shrouded in mist. Dangerous creatures lurk within.",
+        "dungeon_key" => "shadow_cave",
+        "difficulty" => "normal"
+      }
+    }
+  end
+
+  tile_buildings.each do |attrs|
+    TileBuilding.find_or_create_by!(building_key: attrs[:building_key]) do |building|
+      building.zone = attrs[:zone]
+      building.x = attrs[:x]
+      building.y = attrs[:y]
+      building.building_type = attrs[:building_type]
+      building.name = attrs[:name]
+      building.destination_zone = attrs[:destination_zone]
+      building.destination_x = attrs[:destination_x]
+      building.destination_y = attrs[:destination_y]
+      building.icon = attrs[:icon]
+      building.required_level = attrs[:required_level]
+      building.active = true
+      building.metadata = attrs[:metadata] || {}
+    end
+    puts "  Created/Found TileBuilding: #{attrs[:name]}"
+  end
+end
+
+puts "Tile buildings seeding complete!"
+
+# ============================================================
+# CITY HOTSPOTS
+# Interactive building hotspots for city illustrated view
+# ============================================================
+puts "\n=== Seeding City Hotspots ==="
+
+# Find existing zones
+castleton = Zone.find_by(name: "Castleton Keep")
+starter_plains = Zone.find_by(name: "Starter Plains")
+
+if castleton
+  city_hotspots = []
+
+  # ==========================================================================
+  # CITY HOTSPOT POSITIONING GUIDE
+  # ==========================================================================
+  # - city.png is 1536x1024 pixels
+  # - Each overlay image (arena.png, gate.png, etc.) is also 1536x1024 with
+  #   transparent areas except for the highlighted building
+  # - position_x/y: Where to place the HITBOX (invisible clickable area)
+  #   This should be the top-left corner of the building's clickable area
+  # - width/height: Size of the HITBOX (clickable area)
+  #   Adjust these to match the building's dimensions on city.png
+  #
+  # HOW TO FIND POSITIONS:
+  # 1. Open city.png in an image editor
+  # 2. Find the building you want to make clickable
+  # 3. Note the top-left pixel coordinates (position_x, position_y)
+  # 4. Measure the building's width and height in pixels
+  # ==========================================================================
+
+  # City Gates / Exit - leads back to Starter Plains
+  # TODO: Adjust position to match gate location on city.png
+  city_hotspots << {
+    zone: castleton,
+    key: "city_gate",
+    name: "City Gates",
+    hotspot_type: "exit",
+    position_x: 680,    # Center-bottom area (adjust to match your city.png)
+    position_y: 850,
+    width: 180,
+    height: 150,
+    image_hover: "gate.png",
+    action_type: "enter_zone",
+    destination_zone: starter_plains,
+    action_params: {"destination_x" => 7, "destination_y" => 0},
+    required_level: 1,
+    z_index: 10
+  }
+
+  # Arena - for PvP battles
+  # TODO: Adjust position to match arena location on city.png
+  city_hotspots << {
+    zone: castleton,
+    key: "arena",
+    name: "Arena",
+    hotspot_type: "building",
+    position_x: 1050,   # Right side (adjust to match your city.png)
+    position_y: 200,
+    width: 300,
+    height: 250,
+    image_hover: "arena.png",
+    action_type: "open_feature",
+    action_params: {"feature" => "arena"},
+    required_level: 5,
+    z_index: 20
+  }
+
+  # Workshop - for crafting
+  # TODO: Adjust position to match workshop location on city.png
+  city_hotspots << {
+    zone: castleton,
+    key: "workshop",
+    name: "Workshop",
+    hotspot_type: "building",
+    position_x: 100,    # Left side (adjust to match your city.png)
+    position_y: 350,
+    width: 250,
+    height: 200,
+    image_hover: "workshop.png",
+    action_type: "open_feature",
+    action_params: {"feature" => "crafting"},
+    required_level: 1,
+    z_index: 20
+  }
+
+  # Clinic / Hospital - for healing
+  # TODO: Adjust position to match clinic location on city.png
+  city_hotspots << {
+    zone: castleton,
+    key: "clinic",
+    name: "Clinic",
+    hotspot_type: "building",
+    position_x: 1150,   # Right side, lower (adjust to match your city.png)
+    position_y: 500,
+    width: 200,
+    height: 180,
+    image_hover: "clinic.png",
+    action_type: "open_feature",
+    action_params: {"feature" => "healing"},
+    required_level: 1,
+    z_index: 20
+  }
+
+  # House - player housing
+  # TODO: Adjust position to match house location on city.png
+  city_hotspots << {
+    zone: castleton,
+    key: "house",
+    name: "Housing District",
+    hotspot_type: "building",
+    position_x: 550,    # Center area (adjust to match your city.png)
+    position_y: 300,
+    width: 200,
+    height: 180,
+    image_hover: "house.png",
+    action_type: "open_feature",
+    action_params: {"feature" => "housing"},
+    required_level: 10,
+    z_index: 20
+  }
+
+  # Decorative Tree - no action, just hover effect
+  # NOTE: tree.png is 1024x1536 (rotated) - may need different handling
+  # TODO: Adjust position to match tree location on city.png
+  city_hotspots << {
+    zone: castleton,
+    key: "tree_center",
+    name: "Ancient Oak",
+    hotspot_type: "decoration",
+    position_x: 750,    # Center area (adjust to match your city.png)
+    position_y: 550,
+    width: 150,
+    height: 200,
+    image_hover: "tree.png",
+    action_type: "none",
+    z_index: 5
+  }
+
+  city_hotspots.each do |attrs|
+    CityHotspot.find_or_create_by!(zone: attrs[:zone], key: attrs[:key]) do |hotspot|
+      hotspot.name = attrs[:name]
+      hotspot.hotspot_type = attrs[:hotspot_type]
+      hotspot.position_x = attrs[:position_x]
+      hotspot.position_y = attrs[:position_y]
+      hotspot.width = attrs[:width]
+      hotspot.height = attrs[:height]
+      hotspot.image_normal = nil  # Not used - overlay approach uses full-size images
+      hotspot.image_hover = attrs[:image_hover]
+      hotspot.action_type = attrs[:action_type]
+      hotspot.destination_zone = attrs[:destination_zone]
+      hotspot.action_params = attrs[:action_params] || {}
+      hotspot.required_level = attrs[:required_level] || 1
+      hotspot.z_index = attrs[:z_index] || 0
+      hotspot.active = true
+    end
+    puts "  Created/Found CityHotspot: #{attrs[:name]}"
+  end
+else
+  puts "  Skipping city hotspots: Castleton Keep zone not found"
+end
+
+puts "City hotspots seeding complete!"

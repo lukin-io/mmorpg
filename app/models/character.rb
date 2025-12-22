@@ -3,6 +3,9 @@
 class Character < ApplicationRecord
   MAX_NAME_LENGTH = 30
 
+  # Available player avatars (randomly assigned on character creation)
+  AVATARS = %w[dwarven nightveil lightbearer pathfinder arcanist ironbound].freeze
+
   # Base faction alignments (player chooses one)
   ALIGNMENTS = {
     neutral: "neutral",
@@ -47,6 +50,8 @@ class Character < ApplicationRecord
   has_one :inventory, dependent: :destroy
   has_many :arena_rankings, dependent: :destroy
   has_one :arena_ranking, -> { where(ladder_type: "arena") }, class_name: "ArenaRanking", dependent: :destroy
+  has_many :arena_applications, foreign_key: :applicant_id, dependent: :destroy
+  has_many :arena_participations, dependent: :destroy
 
   has_many :character_skills, dependent: :destroy
   has_many :skill_nodes, through: :character_skills
@@ -73,6 +78,7 @@ class Character < ApplicationRecord
   validate :respect_character_limit, on: :create
 
   before_validation :inherit_memberships, on: :create
+  before_validation :assign_random_avatar, on: :create
   after_create :ensure_inventory!
   after_create_commit :ensure_tutorial_assignments
 
@@ -207,6 +213,14 @@ class Character < ApplicationRecord
     @passive_skill_calculator = nil
   end
 
+  # Get full asset path for character avatar image
+  #
+  # @return [String] full asset path (e.g., "avatars/dwarven.png")
+  def avatar_image_path
+    avatar_name = avatar.presence || AVATARS.first
+    "avatars/#{avatar_name}.png"
+  end
+
   private
 
   def inherit_memberships
@@ -232,5 +246,11 @@ class Character < ApplicationRecord
     Game::Quests::TutorialBootstrapper.new(character: self).call
   rescue ActiveRecord::RecordNotFound
     true
+  end
+
+  def assign_random_avatar
+    return if avatar.present?
+
+    self.avatar = AVATARS.sample
   end
 end

@@ -155,4 +155,118 @@ module CombatHelper
       "log-entry--info"
     end
   end
+
+  # ===========================================================================
+  # Combat Log Entry Helpers (for _nl_combat_log.html.erb)
+  # ===========================================================================
+
+  # Return CSS class for log entry type
+  def entry_type_class(entry)
+    return "system" unless entry.respond_to?(:log_type) || entry.is_a?(Hash)
+
+    log_type = entry.is_a?(Hash) ? entry[:log_type] : entry.log_type
+    case log_type.to_s
+    when "attack" then "attack"
+    when "skill" then "skill"
+    when "heal" then "heal"
+    when "defeat" then "defeat"
+    when "victory" then "victory"
+    else "system"
+    end
+  end
+
+  # Format log entry timestamp
+  def format_log_time(entry)
+    time = entry.respond_to?(:created_at) ? entry.created_at : Time.current
+    time.strftime("%H:%M")
+  end
+
+  # Return log entry type as symbol
+  def entry_type(entry)
+    return :system unless entry.respond_to?(:log_type) || entry.is_a?(Hash)
+
+    log_type = entry.is_a?(Hash) ? entry[:log_type] : entry.log_type
+    log_type&.to_sym || :system
+  end
+
+  # Render combatant name with team color
+  def render_combatant(entry, role)
+    payload = extract_payload(entry)
+    payload ||= {}
+
+    name = payload[role.to_s] || payload[role] || "Unknown"
+    team = payload["#{role}_team"] || "alpha"
+    color = (team == "alpha") ? "#0052A6" : "#087C20"
+
+    "<span style='color: #{color};'><strong>#{name}</strong></span>".html_safe
+  end
+
+  # Check if attack hit
+  def entry_hit?(entry)
+    payload = extract_payload(entry)
+    result = payload["result"] || payload[:result]
+    %w[hit critical].include?(result.to_s)
+  end
+
+  # Check if attack was blocked
+  def entry_blocked?(entry)
+    payload = extract_payload(entry)
+    result = payload["result"] || payload[:result]
+    result.to_s == "blocked"
+  end
+
+  # Check if attack was critical
+  def entry_critical?(entry)
+    payload = extract_payload(entry)
+    payload["critical"] || payload[:critical]
+  end
+
+  # Get body part from entry
+  def entry_body_part(entry)
+    payload = extract_payload(entry)
+    payload["body_part"] || payload[:body_part] || "torso"
+  end
+
+  # Get damage from entry
+  def entry_damage(entry)
+    payload = extract_payload(entry)
+    payload["damage"] || payload[:damage] || 0
+  end
+
+  # Get skill name from entry
+  def entry_skill_name(entry)
+    payload = extract_payload(entry)
+    payload["skill"] || payload[:skill] || "Unknown Skill"
+  end
+
+  # Get element from entry
+  def entry_element(entry)
+    payload = extract_payload(entry)
+    payload["element"] || payload[:element] || "normal"
+  end
+
+  # Get skill amount from entry
+  def entry_skill_amount(entry)
+    payload = extract_payload(entry)
+    payload["amount"] || payload[:amount]
+  end
+
+  # Get amount from entry
+  def entry_amount(entry)
+    payload = extract_payload(entry)
+    payload["amount"] || payload[:amount] || 0
+  end
+
+  private
+
+  # Extract payload from entry object or hash
+  def extract_payload(entry)
+    if entry.respond_to?(:payload)
+      entry.payload
+    elsif entry.is_a?(Hash)
+      entry[:data]
+    else
+      {}
+    end
+  end
 end

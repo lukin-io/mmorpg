@@ -10,6 +10,18 @@
 - Reputation/faction checks use `Character#alignment_score` + `QuestAssignment` state to gate dialogue options and vendor pricing.
 - Guard/magistrate behavior surfaces moderation/reporting actions (see `Moderation::ReportIntake` and `doc/features/5_moderation.md`).
 
+### Unified NPC Architecture (✅ Implemented)
+- **Model**: `NpcTemplate` with `role` field and JSONB `metadata`
+- **Concerns**: `Npc::CombatStats` (stat formulas), `Npc::Combatable` (combat behavior)
+- **Roles**: hostile, arena_bot, quest_giver, vendor, trainer, guard, innkeeper, banker, auctioneer, crafter, lore
+- **See**: `doc/flow/22_unified_npc_architecture.md` for full architecture
+
+### Avatar System (✅ Implemented)
+- **Player avatars**: Random assignment on character creation (6 options in `app/assets/images/avatars/`)
+- **NPC avatars**: Role-based images (arena bots use scarecrow, hostiles use monster images in `app/assets/images/npc/`)
+- **Helper**: `AvatarHelper` provides `character_avatar_tag`, `npc_avatar_tag`, `participation_avatar_tag`
+- **Config**: `avatar_image` field in NPC YAML configs (`biome_npcs.yml`, `arena_npcs.yml`)
+
 ### NPC Dialogue System (✅ Implemented)
 - **Service**: `Game::Npc::DialogueService` orchestrates all NPC interactions
 - **Roles Supported**: quest_giver, vendor, trainer, innkeeper, banker, guard, auctioneer, crafter, hostile
@@ -45,5 +57,7 @@
 - **World Data:** `app/models/zone.rb`, `app/models/map_tile_template.rb`, `app/models/spawn_point.rb`, `app/models/spawn_schedule.rb`, `app/lib/game/world/region_catalog.rb`.
 - **NPC & Questing:** `app/models/npc_template.rb`, `app/models/quest*.rb`, `app/controllers/quests_controller.rb`, `app/services/game/quests/tutorial_bootstrapper.rb`.
 - **NPC Dialogue:** `app/services/game/npc/dialogue_service.rb`, `app/controllers/world_controller.rb` (`interact`, `dialogue_action`), `app/views/world/dialogue.html.erb`, `app/views/world/_dialogue_*.html.erb`.
+- **NPC Architecture:** `app/models/concerns/npc/combat_stats.rb`, `app/models/concerns/npc/combatable.rb`, `config/gameplay/biome_npcs.yml`, `config/gameplay/arena_npcs.yml`.
+- **Avatar System:** `app/helpers/avatar_helper.rb`, `app/assets/images/avatars/`, `app/assets/images/npc/`, `db/migrate/20251222131711_add_avatar_to_characters.rb`.
 - **Events:** `app/models/event_instance.rb`, `app/models/event_schedule.rb`, `app/controllers/game_events_controller.rb`, `app/controllers/admin/live_ops/events_controller.rb`, `app/services/live_ops/*`.
 - **Moderation Hooks:** `app/services/moderation/report_intake.rb`, `app/models/audit_log.rb`, `app/services/audit_logger.rb`.
