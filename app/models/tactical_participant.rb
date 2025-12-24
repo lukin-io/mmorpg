@@ -46,14 +46,14 @@ class TacticalParticipant < ApplicationRecord
 
   # Get attack damage
   def attack_damage
-    base = character.strength * 2 + rand(1..10)
+    base = character.stats.get(:strength).to_i * 2 + rand(1..10)
     base += buffs.fetch("attack_bonus", 0)
     base
   end
 
   # Apply defense reduction
   def apply_defense(incoming_damage)
-    defense = character.vitality + cover_bonus
+    defense = character.stats.get(:vitality).to_i + cover_bonus
     defense += buffs.fetch("defense_bonus", 0)
 
     reduction = defense / 100.0

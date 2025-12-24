@@ -26,7 +26,7 @@ class SkillTreesController < ApplicationController
   # Shows a specific skill tree with nodes
   def show
     authorize @skill_tree
-    @nodes = @skill_tree.skill_nodes.order(:tier, :position)
+    @nodes = @skill_tree.skill_nodes.order(:tier, :id)
     @unlocked_skills = current_character.character_skills.includes(:skill_node).index_by { |cs| cs.skill_node_id }
     @available_points = current_character.available_skill_points
   end
@@ -46,8 +46,8 @@ class SkillTreesController < ApplicationController
       respond_to do |format|
         format.turbo_stream do
           render turbo_stream: [
-            turbo_stream.replace("skill_node_#{node.id}", partial: "skill_trees/node", locals: {node: node, unlocked: true, can_unlock: false}),
-            turbo_stream.replace("skill_points_display", partial: "skill_trees/points", locals: {points: current_character.reload.available_skill_points}),
+            turbo_stream.replace("skill_node_#{node.id}", partial: "skill_trees/node_frame", locals: {node: node, unlocked: true, can_unlock: false}),
+            turbo_stream.replace("skill_points_display", partial: "skill_trees/points_panel", locals: {points: current_character.reload.available_skill_points}),
             turbo_stream.append("notifications", partial: "shared/notification", locals: {type: :success, message: "Unlocked #{node.name}!"})
           ]
         end

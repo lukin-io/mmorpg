@@ -101,9 +101,9 @@ date: 2025-11-21
 ### Required Env Vars
 | Key | Purpose | Default |
 | --- | --- | --- |
-| `REDIS_CACHE_URL` | Rails cache | `redis://localhost:6379/1` |
-| `REDIS_SIDEKIQ_URL` | Sidekiq queues | `redis://localhost:6379/2` |
-| `REDIS_CABLE_URL` | Action Cable | `redis://localhost:6379/3-5` |
+| `REDIS_CACHE_URL` | Rails cache | `redis://localhost:6380/0` |
+| `REDIS_SIDEKIQ_URL` | Sidekiq queues | `redis://localhost:6379/0` |
+| `REDIS_CABLE_URL` | Action Cable pub/sub | `redis://localhost:6379/0` |
 | `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_HOST` | DB auth | fallback `postgres` / blank / `localhost` |
 | `APP_URL` | Base return URL for payments | `http://localhost:3000` |
 | `STRIPE_SECRET_KEY` | Stripe API key | none (required for real processing) |
@@ -307,7 +307,7 @@ Known testing constraint (Nov 21, 2025): `bundle exec rspec` fails without `POST
 ## Deployment Considerations
 - **Docker/Fly/Render** ready: `Dockerfile` + `Procfile` (non-dev) to be configured per target.
 - **Logging**: Tagged logging to `$stdout` for container compatibility; `config.log_level` defaults to `ENV["RAILS_LOG_LEVEL"] || "info"`.
-- **Action Cable**: Redis adapter across all environments (`config/cable.yml`), `cable` process in dev via `Procfile.dev`.
+- **Action Cable**: Redis adapter across all environments (`config/cable.yml`) and mounted at `/cable` (`config/routes.rb`). Dev can run a separate `cable` process via `Procfile.dev` when desired.
 - **Feature Gates**: Use Flipper CLI/UI to roll out combat/guild/housing features gradually; integrate with environment-specific seeds.
 
 ---
@@ -327,4 +327,3 @@ Known testing constraint (Nov 21, 2025): `bundle exec rspec` fails without `POST
 ---
 
 This document should be updated whenever the core stack, key flows, or ownership map changes (new services, migrations, commands, or deployment targets). Add versions, commands, or responsible files here to keep the monolith reference current.
-

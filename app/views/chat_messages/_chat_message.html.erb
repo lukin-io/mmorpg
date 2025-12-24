@@ -41,7 +41,8 @@
     </div>
   </div>
 
-  <% if policy(ChatReport.new).create? && chat_message.sender != current_user %>
+  <% viewer = safe_current_user %>
+  <% if viewer&.verified_for_social_features? && chat_message.sender_id != viewer.id %>
     <div class="chat-msg-actions">
       <%= button_to chat_reports_path(
             chat_report: {

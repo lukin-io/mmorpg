@@ -13,3 +13,8 @@
     reward_result: @reward_result %>
 <% end %>
 
+<% if flash.now[:alert].present? %>
+  <%= turbo_stream.update "flash", partial: "shared/flash", locals: {type: "alert", message: flash.now[:alert]} %>
+<% elsif flash.now[:notice].present? %>
+  <%= turbo_stream.update "flash", partial: "shared/flash", locals: {type: "notice", message: flash.now[:notice]} %>
+<% end %>

@@ -133,7 +133,7 @@ export default class extends Controller {
       el => el.dataset.skill === skill
     )
     if (inputEl) {
-      inputEl.value = total
+      inputEl.value = added
     }
 
     // Update effect preview
@@ -222,4 +222,3 @@ export default class extends Controller {
     setTimeout(() => element.classList.remove("nl-shake"), 300)
   }
 }
-

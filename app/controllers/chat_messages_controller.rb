@@ -25,7 +25,8 @@ class ChatMessagesController < ApplicationController
     Chat::Errors::UnauthorizedCommandError,
     Chat::Errors::SpamThrottledError,
     Chat::Errors::PrivacyBlockedError,
-    ActiveRecord::RecordInvalid => e
+    ActiveRecord::RecordInvalid,
+    ArgumentError => e
     handle_chat_error(e.message)
   end
 

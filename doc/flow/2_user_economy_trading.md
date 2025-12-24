@@ -21,6 +21,11 @@
 - `MarketplaceKiosksController#index` lists quick-sell kiosks and provides a form to add entries.
 - `TradeSessionsController` handles starting, viewing, and confirming trade sessions; `TradeItemsController` manages per-player contributions. View `app/views/trade_sessions/show.html.erb` renders the contribution preview before confirmation.
 
+### Hotwire UI Notes
+- **Auction bids:** The bid field uses HTML5 constraints (for example `min`) so obviously-invalid values are blocked client-side; server-side validations still enforce correctness and authorization.
+- **Trade sessions:** Offers can include both items and currency. The UI renders each offer line with an icon; `TradeSessionsHelper#trade_item_icon` treats currencies explicitly and falls back safely when item metadata/templates are missing.
+- **Authorization:** Trade sessions are restricted to participants (non-participants should see an authorization error rather than a partial/empty trade UI).
+
 ## Policies & Security
 - `AuctionListingPolicy`, `TradeSessionPolicy` ensure only verified players list/bid and only participants confirm trades.
 
@@ -28,6 +33,7 @@
 - Model specs for wallets, listings, bids.
 - Service specs for tax calculator, listing engine, trade session manager.
 - Request specs covering listing creation, bidding, and trade confirmation flows.
+- System spec: `spec/system/economy_group_loops_spec.rb` covers bidding and trade session UI flows end-to-end.
 
 ---
 

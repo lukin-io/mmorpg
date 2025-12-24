@@ -32,6 +32,7 @@
 | **TacticalArenaController** | ✅ Implemented | `app/controllers/tactical_arena_controller.rb` — Grid combat actions |
 | **TacticalMatch Model** | ✅ Implemented | `app/models/tactical_match.rb` — Match state, grid, turns |
 | **TacticalParticipant Model** | ✅ Implemented | `app/models/tactical_participant.rb` — Position, HP, buffs |
+| **TacticalCombatLogEntry Model** | ✅ Implemented | `app/models/tactical_combat_log_entry.rb` — Per-action log entries for tactical matches |
 | **TacticalMatchChannel** | ✅ Implemented | `app/channels/tactical_match_channel.rb` — Real-time grid updates |
 | **tactical_combat_controller.js** | ✅ Implemented | `app/javascript/controllers/tactical_combat_controller.js` |
 | **ArenaBet Model** | ✅ Implemented | `app/models/arena_bet.rb` — Wagers, odds, payouts |
@@ -716,6 +717,7 @@ training:
 - **Actions per Turn:** 3 (move, attack, or skill each)
 - **Terrain:** Obstacles (impassable), Cover (+20% defense)
 - **Real-time Updates:** `TacticalMatchChannel` broadcasts grid changes
+- **Combat Log:** Actions append `TacticalCombatLogEntry` rows; the `combat_log` panel refreshes via Turbo Streams after each action.
 
 ---
 
@@ -758,6 +760,7 @@ training:
 - `app/models/arena_application.rb` — Player/NPC fight applications
 - `app/models/tactical_match.rb` — Grid-based match state
 - `app/models/tactical_participant.rb` — Tactical combat participant
+- `app/models/tactical_combat_log_entry.rb` — Tactical combat log entries
 - `app/models/arena_bet.rb` — Spectator wagers
 - `app/models/npc_template.rb` — NPC definitions (including arena bots)
 
@@ -821,4 +824,3 @@ training:
 
 ### Related Documentation
 - `doc/flow/22_unified_npc_architecture.md` — NPC architecture overview
-

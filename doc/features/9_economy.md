@@ -29,6 +29,7 @@
   - Your offer vs partner's offer layout
   - Add items from inventory
   - Add currency (gold/silver)
+  - Offer line items render safe icons for both currencies and items (with fallbacks when templates/metadata are missing)
   - Trade summary with warnings
   - Dual confirmation system
 

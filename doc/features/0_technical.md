@@ -2,7 +2,7 @@
 
 ## Stack Baseline
 - Ruby **3.4.4** + Rails **8.1.1** monolith configured in `config/application.rb`, `.ruby-version`, and the `Gemfile`. Hotwire (`turbo-rails`, `stimulus-rails`) powers every interactive screen; no SPA layer.
-- PostgreSQL 18 is the source of truth (`config/database.yml`). Redis backs cache, Action Cable, and Sidekiq queues; env vars such as `REDIS_CACHE_URL`/`REDIS_SIDEKIQ_URL` are documented in the README.
+- PostgreSQL 18 is the source of truth (`config/database.yml`). Redis backs cache, Action Cable, and Sidekiq queues; Action Cable is mounted at `/cable` (`config/routes.rb`) and env vars such as `REDIS_CACHE_URL`/`REDIS_SIDEKIQ_URL` are documented in the README.
 - Processes are orchestrated via `Procfile.dev` + `bin/dev`, which boot Puma (`web`), Sidekiq (`worker`), and Action Cable (`cable`) together.
 
 ## Core Services & Libraries

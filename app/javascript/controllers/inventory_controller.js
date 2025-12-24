@@ -17,7 +17,7 @@ import { Controller } from "@hotwired/stimulus"
  *   </div>
  */
 export default class extends Controller {
-  static targets = ["contextMenu", "selectedItem", "splitModal", "splitQuantity"]
+  static targets = ["contextMenu", "selectedItem", "splitModal", "splitQuantity", "contextItemId"]
 
   connect() {
     this.selectedItemId = null
@@ -71,6 +71,12 @@ export default class extends Controller {
       menu.style.left = `${event.clientX}px`
       menu.style.top = `${event.clientY}px`
       menu.dataset.itemId = itemId
+
+      if (this.hasContextItemIdTarget) {
+        this.contextItemIdTargets.forEach((input) => {
+          input.value = itemId
+        })
+      }
     }
   }
 
@@ -228,11 +234,20 @@ export default class extends Controller {
    * @param {Event} event - Click event
    */
   clickEquipmentSlot(event) {
+    event.preventDefault()
     const slot = event.currentTarget.dataset.slot
     const hasFilled = event.currentTarget.classList.contains("filled")
 
     if (hasFilled) {
-      // Unequip handled by button in template
+      // Prefer the existing Rails form (keeps CSRF/Turbo behavior consistent).
+      const unequipForm = event.currentTarget.querySelector("form")
+      if (unequipForm) {
+        if (unequipForm.requestSubmit) {
+          unequipForm.requestSubmit()
+        } else {
+          unequipForm.submit()
+        }
+      }
       return
     }
 
@@ -250,6 +265,9 @@ export default class extends Controller {
     form.method = "POST"
     form.action = action
     form.dataset.turbo = "true"
+    form.dataset.turboStream = "true"
+    form.style.display = "none"
+    form.setAttribute("accept-charset", "UTF-8")
 
     // Add CSRF token
     const csrfToken = document.querySelector('meta[name="csrf-token"]').content
@@ -268,9 +286,14 @@ export default class extends Controller {
       form.appendChild(input)
     })
 
+    const submitButton = document.createElement("button")
+    submitButton.type = "submit"
+    submitButton.dataset.turboStream = "true"
+    submitButton.style.display = "none"
+    form.appendChild(submitButton)
+
     document.body.appendChild(form)
-    form.requestSubmit()
-    document.body.removeChild(form)
+    form.addEventListener("turbo:submit-end", () => form.remove(), { once: true })
+    form.requestSubmit(submitButton)
   }
 }
-

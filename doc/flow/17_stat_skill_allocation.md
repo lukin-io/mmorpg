@@ -89,6 +89,7 @@ end
 
 ### Specs
 - `spec/requests/characters_spec.rb`
+- `spec/system/inventory_progression_spec.rb`
 
 ## Usage Examples
 
@@ -158,4 +159,3 @@ params: {
           data-skill-allocation-skill-param="wanderer">−</button>
 </div>
 ```
-
