@@ -482,7 +482,7 @@ DEPENDENCIES
   sidekiq (~> 8.0)
   standard
   stimulus-rails
-  stripe (~> 18.0)
+  stripe (~> 18.1)
   thruster
   turbo-rails
   tzinfo-data
