@@ -3,6 +3,8 @@ require "sidekiq/web"
 Rails.application.routes.draw do
   devise_for :users
 
+  mount ActionCable.server => "/cable"
+
   authenticate :user, ->(user) { user.has_role?(:admin) } do
     mount Sidekiq::Web => "/sidekiq"
   end

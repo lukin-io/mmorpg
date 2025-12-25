@@ -49,9 +49,9 @@ module Arena
       end
 
       def log_movement!(participant)
-        match.combat_log_entries.create!(
+        match.tactical_combat_log_entries.create!(
           round_number: match.turn_number,
-          sequence: match.combat_log_entries.where(round_number: match.turn_number).count + 1,
+          sequence: match.tactical_combat_log_entries.where(round_number: match.turn_number).count + 1,
           log_type: "movement",
           message: "#{character.name} moved to (#{target_x}, #{target_y})",
           payload: {

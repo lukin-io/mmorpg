@@ -27,7 +27,12 @@ class ApplicationController < ActionController::Base
   def user_not_authorized
     respond_to do |format|
       format.html do
-        redirect_to(request.referer || root_path, alert: "You are not authorized to perform this action.")
+        safe_fallback_path = respond_to?(:dashboard_path) ? dashboard_path : root_path
+        redirect_target = request.referer.presence
+
+        redirect_target = nil if redirect_target == request.url
+
+        redirect_to(redirect_target || safe_fallback_path, alert: "You are not authorized to perform this action.")
       end
       format.turbo_stream { head :forbidden }
       format.json { render json: {error: "forbidden"}, status: :forbidden }

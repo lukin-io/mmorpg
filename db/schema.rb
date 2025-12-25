@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_12_22_131711) do
+ActiveRecord::Schema[8.1].define(version: 2025_12_24_140000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -2027,6 +2027,19 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_22_131711) do
     t.index ["region_key", "monster_key"], name: "index_spawn_schedules_on_region_key_and_monster_key", unique: true
   end
 
+  create_table "tactical_combat_log_entries", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "log_type", default: "action", null: false
+    t.text "message", null: false
+    t.jsonb "payload", default: {}, null: false
+    t.integer "round_number", default: 1, null: false
+    t.integer "sequence", default: 1, null: false
+    t.bigint "tactical_match_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["tactical_match_id", "round_number"], name: "idx_on_tactical_match_id_round_number_d3f886a75e"
+    t.index ["tactical_match_id"], name: "index_tactical_combat_log_entries_on_tactical_match_id"
+  end
+
   create_table "tactical_matches", force: :cascade do |t|
     t.integer "actions_remaining", default: 3
     t.bigint "arena_room_id"
@@ -2509,6 +2522,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_22_131711) do
   add_foreign_key "social_hubs", "zones"
   add_foreign_key "spawn_points", "zones"
   add_foreign_key "spawn_schedules", "users", column: "configured_by_id"
+  add_foreign_key "tactical_combat_log_entries", "tactical_matches"
   add_foreign_key "tactical_matches", "arena_rooms"
   add_foreign_key "tactical_matches", "characters", column: "creator_id"
   add_foreign_key "tactical_matches", "characters", column: "opponent_id"

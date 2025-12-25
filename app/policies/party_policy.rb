@@ -6,7 +6,7 @@ class PartyPolicy < ApplicationPolicy
   end
 
   def show?
-    member?
+    user.present?
   end
 
   def create?
@@ -21,15 +21,13 @@ class PartyPolicy < ApplicationPolicy
     def resolve
       return scope.none unless user
 
-      scope.joins(:party_memberships).where(party_memberships: {user_id: user.id}).distinct
+      scope.all
     end
   end
 
   private
 
   def member?
-    return false unless user
-
     record.party_memberships.exists?(user:)
   end
 end

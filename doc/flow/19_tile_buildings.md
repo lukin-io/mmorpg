@@ -34,7 +34,7 @@ The Tile Buildings system allows placing enterable structures (cities, castles, 
 2. Building appears in actions panel with "Enter" button
 3. Player clicks enter → `enter_building` action validates requirements
 4. Character position updated to destination zone
-5. Map and actions refresh via Turbo
+5. On success, Turbo redirects to `/world` so the correct template renders (map vs city view) without partial “Content missing” issues
 
 ### Map Display
 Buildings appear as icons on the world map alongside NPCs and resources:
@@ -55,7 +55,8 @@ Buildings appear as icons on the world map alongside NPCs and resources:
 - Map tiles updated via `game-map` frame
 
 ### Turbo Streams
-- `enter_building` action returns stream response updating map after zone transition
+- On success, `WorldController#enter_building` issues a Turbo redirect (`303 See Other`) to reload `/world` (the destination may require a different world template).
+- On failure, the action returns a Turbo Stream error/flash update.
 
 ### Stimulus
 - Uses existing `nl-world-map` controller for map interactions
@@ -90,6 +91,7 @@ Buildings appear as icons on the world map alongside NPCs and resources:
 - `spec/models/tile_building_spec.rb` - Model validations, scopes, methods, edge cases (105 examples)
 - `spec/services/game/world/tile_building_service_spec.rb` - Service functionality, edge cases (38 examples)
 - `spec/requests/world_spec.rb` - enter_building controller action specs (40+ examples)
+- `spec/system/world_interactions_spec.rb` - building entry UI flow via `/world`
 - `spec/factories/tile_buildings.rb` - Factory definitions with traits
 
 ## Database Schema
@@ -169,4 +171,3 @@ end
 - Building upgrades/customization
 - Time-limited access (events)
 - Building discovery/exploration tracking
-

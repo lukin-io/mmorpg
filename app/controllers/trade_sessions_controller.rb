@@ -18,9 +18,21 @@ class TradeSessionsController < ApplicationController
 
   def update
     trade_session = authorize TradeSession.find(params[:id])
-    Trades::SessionManager
-      .new(initiator: trade_session.initiator, recipient: trade_session.recipient)
-      .confirm!(session: trade_session, actor: current_user)
-    redirect_to trade_session_path(trade_session), notice: "Trade updated."
+
+    if params[:cancel].present?
+      trade_session.update!(status: :cancelled, completed_at: Time.current)
+      return redirect_to trade_session_path(trade_session), notice: "Trade cancelled."
+    end
+
+    if params[:confirm].present?
+      trade_session = Trades::SessionManager
+        .new(initiator: trade_session.initiator, recipient: trade_session.recipient)
+        .confirm!(session: trade_session, actor: current_user)
+
+      notice = trade_session.completed? ? "Trade completed." : "Trade confirmed."
+      return redirect_to trade_session_path(trade_session), notice: notice
+    end
+
+    redirect_to trade_session_path(trade_session), alert: "Unknown trade action."
   end
 end

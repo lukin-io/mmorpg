@@ -24,8 +24,8 @@
         <div class="add-item-form card">
           <%= form_with model: [@trade_session, @trade_item], url: trade_session_trade_items_path(@trade_session), class: "trade-item-form" do |f| %>
             <div class="form-group">
-              <%= f.label :item_key, "Add Item" %>
-              <%= f.select :item_key, inventory_items_for_select(current_user), { include_blank: "Select item..." }, class: "form-control" %>
+              <%= f.label :item_name, "Add Item" %>
+              <%= f.select :item_name, inventory_items_for_select(current_user), { include_blank: "Select item..." }, class: "form-control" %>
             </div>
 
             <div class="form-row">
@@ -42,16 +42,14 @@
         <div class="add-currency-form card">
           <h4>Add Currency</h4>
           <%= form_with model: [@trade_session, @trade_item], url: trade_session_trade_items_path(@trade_session), class: "currency-form" do |f| %>
-            <%= f.hidden_field :item_type, value: "currency" %>
-
             <div class="form-group">
               <%= f.label :currency_type %>
               <%= f.select :currency_type, [["Gold", "gold"], ["Silver", "silver"]], {}, class: "form-control" %>
             </div>
 
             <div class="form-group">
-              <%= f.label :amount %>
-              <%= f.number_field :amount, class: "form-control", min: 1 %>
+              <%= f.label :currency_amount, "Amount" %>
+              <%= f.number_field :currency_amount, class: "form-control", min: 1 %>
             </div>
 
             <%= f.submit "Add Currency", class: "game-btn" %>
@@ -83,55 +81,76 @@
   <div class="trade-summary card">
     <h3>Trade Summary</h3>
 
+    <%
+      you_totals, partner_totals =
+        if @trade_session.initiator == current_user
+          [@preview.initiator_totals, @preview.recipient_totals]
+        else
+          [@preview.recipient_totals, @preview.initiator_totals]
+        end
+    %>
+
     <div class="summary-content">
       <div class="summary-column">
         <h4>You Give:</h4>
         <ul>
-          <% @preview[:you_give].each do |item| %>
-            <li><%= item[:name] %> <% if item[:quantity] > 1 %>x<%= item[:quantity] %><% end %></li>
+          <% you_totals[:items].each do |item| %>
+            <li><%= item.item_name %> <% if item.quantity > 1 %>x<%= item.quantity %><% end %></li>
           <% end %>
         </ul>
-        <% if @preview[:you_give_currency].present? %>
-          <p class="currency-total"><%= @preview[:you_give_currency] %></p>
+        <% if you_totals[:gold].to_i.positive? %>
+          <p class="currency-total">🪙 <%= you_totals[:gold] %> Gold</p>
+        <% end %>
+        <% if you_totals[:silver].to_i.positive? %>
+          <p class="currency-total">🥈 <%= you_totals[:silver] %> Silver</p>
+        <% end %>
+        <% if you_totals[:premium_tokens].to_i.positive? %>
+          <p class="currency-total">⭐ <%= you_totals[:premium_tokens] %> Premium Tokens</p>
         <% end %>
       </div>
 
       <div class="summary-column">
         <h4>You Receive:</h4>
         <ul>
-          <% @preview[:you_receive].each do |item| %>
-            <li><%= item[:name] %> <% if item[:quantity] > 1 %>x<%= item[:quantity] %><% end %></li>
+          <% partner_totals[:items].each do |item| %>
+            <li><%= item.item_name %> <% if item.quantity > 1 %>x<%= item.quantity %><% end %></li>
           <% end %>
         </ul>
-        <% if @preview[:you_receive_currency].present? %>
-          <p class="currency-total"><%= @preview[:you_receive_currency] %></p>
+        <% if partner_totals[:gold].to_i.positive? %>
+          <p class="currency-total">🪙 <%= partner_totals[:gold] %> Gold</p>
+        <% end %>
+        <% if partner_totals[:silver].to_i.positive? %>
+          <p class="currency-total">🥈 <%= partner_totals[:silver] %> Silver</p>
+        <% end %>
+        <% if partner_totals[:premium_tokens].to_i.positive? %>
+          <p class="currency-total">⭐ <%= partner_totals[:premium_tokens] %> Premium Tokens</p>
         <% end %>
       </div>
     </div>
 
-    <% if @preview[:warnings].any? %>
+    <% if @preview.warning? %>
       <div class="trade-warnings">
-        <% @preview[:warnings].each do |warning| %>
-          <p class="warning">⚠️ <%= warning %></p>
-        <% end %>
+        <p class="warning">⚠️ Trade imbalance detected. Double-check the offered currencies and items before confirming.</p>
       </div>
     <% end %>
   </div>
 
   <div class="trade-actions">
-    <% if @trade_session.status == "pending" %>
-      <% if trade_confirmed_by_you?(@trade_session) %>
-        <p class="waiting-notice">Waiting for <%= trade_partner(@trade_session).profile_name %> to confirm...</p>
-      <% else %>
-        <%= button_to "Confirm Trade", trade_session_path(@trade_session, confirm: true), method: :patch, class: "game-btn game-btn--success", data: { confirm: "Are you sure you want to confirm this trade?" } %>
-      <% end %>
-
+    <% if @trade_session.pending? %>
+      <%= button_to "Confirm Trade", trade_session_path(@trade_session, confirm: true), method: :patch, class: "game-btn game-btn--success", data: { confirm: "Are you sure you want to confirm this trade?" } %>
       <%= button_to "Cancel Trade", trade_session_path(@trade_session, cancel: true), method: :patch, class: "game-btn game-btn--danger" %>
-    <% elsif @trade_session.status == "completed" %>
+    <% elsif @trade_session.confirming? %>
+      <p class="waiting-notice">Awaiting final confirmation...</p>
+      <%= button_to "Finalize Trade", trade_session_path(@trade_session, confirm: true), method: :patch, class: "game-btn game-btn--success", data: { confirm: "Finalize this trade?" } %>
+      <%= button_to "Cancel Trade", trade_session_path(@trade_session, cancel: true), method: :patch, class: "game-btn game-btn--danger" %>
+    <% elsif @trade_session.completed? %>
       <p class="trade-complete">✅ Trade completed successfully!</p>
       <%= link_to "Back to Game", root_path, class: "game-btn" %>
-    <% elsif @trade_session.status == "cancelled" %>
+    <% elsif @trade_session.cancelled? %>
       <p class="trade-cancelled">❌ Trade was cancelled.</p>
+      <%= link_to "Back to Game", root_path, class: "game-btn" %>
+    <% elsif @trade_session.expired? %>
+      <p class="trade-cancelled">⌛ Trade expired.</p>
       <%= link_to "Back to Game", root_path, class: "game-btn" %>
     <% end %>
   </div>

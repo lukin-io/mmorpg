@@ -99,6 +99,8 @@
 
 ## Chat & Messaging
 - **Real-Time WebSocket Chat:** Messages are delivered instantly via ActionCable and Turbo Streams. No page reloads required — `ChatMessage#after_create_commit` broadcasts to all channel subscribers, and Turbo automatically appends new messages to the DOM.
+- **Cable Endpoint:** ActionCable is mounted at `/cable` (`mount ActionCable.server => "/cable"` in `config/routes.rb`) so Turbo Stream subscriptions work across environments.
+- **Broadcast Rendering Safety:** Turbo broadcasts often render in a background job without a request/warden context. Broadcast-rendered partials must not assume `current_user` is available; use a nil-safe helper (for example `ChatMessagesHelper#safe_current_user`) when viewer-aware styling is needed.
 - **Channel Model:** `ChatChannel` supports `global`, `local`, `guild`, `clan`, `party`, `arena`, `whisper`, and `system` types. `ChatChannel#membership_required?` gates private channels, while `ChatChannelMembership` enforces uniqueness, mute timers, and GM roles.
 - **Dispatch Pipeline:** `Chat::MessageDispatcher` feeds every post into `Moderation::ChatPipeline`, which validates verification state, applies GM mute bans (`ChatModerationAction`), respects whisper privacy, and executes `/gm` commands via `Chat::Moderation::CommandHandler`. `Chat::SpamThrottler` caps per-user throughput (default 8 msgs/10s, adjustable via `User#social_settings`).
 - **Profanity & Reporting:** `ChatMessage` retains filtered body text, visibility enum, and `moderation_labels`. Inline report buttons POST to `ChatReportsController`, hydrating `ChatReport#source_context` + `#evidence` and scheduling `Moderation::ReportVolumeAlertJob` to escalate spikes.
@@ -121,7 +123,7 @@
 ## Guilds & Player Groups
 - **Ranks & Permissions:** `GuildRank` stores customizable permission hashes (invite/kick/manage_bank/post_bulletins/start_war). `GuildMembership` references a rank and falls back to `Guild#default_rank`. `Guilds::PermissionService` centralizes permission checks across controllers.
 - **Shared Utilities:** Guild bank entries (`GuildBankEntry`) and bulletins (`GuildBulletin`) have dedicated controllers/views, while `Guilds::PerkTracker` unlocks level-based perks and triggers social announcements.
-- **Parties:** `Party`, `PartyMembership`, and `PartyInvitation` handle group lifecycle (ready checks, leadership swaps, invites). `Parties::ReadyCheck` orchestrates Turbo-ready toggles; each party automatically provisions a `ChatChannel` + membership for real-time coordination.
+- **Parties:** `Party`, `PartyMembership`, and `PartyInvitation` handle group lifecycle (invites, leadership swaps, ready checks). `Parties::ReadyCheck` drives the ready-check loop: `PartiesController#ready_check` sets `ready_check_state = running` and resets active member `ready_state` values to `unknown`; members respond via `PartyMembershipsController#update` with `ready_state=ready|not_ready`; once no active membership remains `unknown`, the party transitions to `resolved` and the ready-check panel disappears. Each party automatically provisions a `ChatChannel` + leader membership for coordination.
 - **Social Hubs:** Static + seeded `SocialHub` records capture taverns, arena lobbies, and event plazas. `social_hubs#index/show` surface metadata, upcoming hub events, and links into the broader social economy.
 
 ### Party System UI (✅ Implemented)

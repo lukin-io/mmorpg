@@ -6,8 +6,8 @@
 |-----------|--------|---------|
 | **Quest Models** | ✅ Implemented | `QuestChain`, `QuestChapter`, `Quest`, `QuestStep`, `QuestAssignment` |
 | **QuestsController** | ✅ Implemented | index, show, accept, complete, advance_story |
-| **Quest Dialog Views** | ✅ Implemented | `app/views/quests/_quest_dialog.html.erb` — Full NPC dialog modal |
-| **quest_dialog_controller.js** | ✅ Implemented | `app/javascript/controllers/quest_dialog_controller.js` — Navigation, typewriter, choices |
+| **Quest Dialogue Views** | ✅ Implemented | `app/views/quests/_dialogue_frame.html.erb` — Turbo Frame quest log UI; `app/views/quests/_quest_dialog.html.erb` — optional legacy modal |
+| **quest_dialog_controller.js** | ✅ Implemented | `app/javascript/controllers/quest_dialog_controller.js` — Legacy modal navigation, typewriter, choices |
 | **Quest Dialog CSS** | ✅ Implemented | `app/assets/stylesheets/application.css` — Dark fantasy themed |
 | **StaticQuestBuilder** | ✅ Implemented | Seeds quests from YAML |
 | **StorylineProgression** | ✅ Implemented | Gate enforcement |
@@ -19,35 +19,27 @@
 
 ## Use Cases
 
-### UC-1: Accept Quest from NPC
-**Actor:** Player interacting with NPC
+### UC-1: Accept Quest from Quest Log (Turbo Frame)
+**Actor:** Player viewing the quest log
 **Flow:**
-1. Player clicks NPC or quest marker in world
-2. Quest dialog overlay appears with NPC avatar
-3. Dialog text shows quest description (step 0)
-4. Player navigates through dialog steps (← Prev / Next →)
-5. At final step, "Accept Quest" button appears
-6. Click triggers `QuestsController#accept`
-7. `QuestAssignment` created with `status: :in_progress`
+1. Player opens `/quests` and selects a quest (e.g., “View Details”)
+2. Quest details render inside `turbo-frame#quest-dialogue` (`app/views/quests/_dialogue_frame.html.erb`)
+3. Click **Accept Quest** → `POST /quests/:id/accept` (`QuestsController#accept`) with `data-turbo-frame="quest-dialogue"`
+4. Server creates/updates the `QuestAssignment` and responds with Turbo Streams to refresh the dialogue frame and related quest list UI
 
-### UC-2: Complete Quest
-**Actor:** Player with completed objectives
+### UC-2: Advance Story and Complete Quest (Turbo Streams)
+**Actor:** Player progressing through a quest
 **Flow:**
-1. Player returns to NPC after completing objectives
-2. Quest dialog shows completion text
-3. "Complete Quest" button appears at final step
-4. Click triggers `QuestsController#complete`
-5. `RewardService` grants XP, items, currencies
-6. `QuestAssignment` updated to `status: :completed`
+1. While in progress, dialogue choices render as buttons inside `turbo-frame#quest-dialogue`
+2. Clicking a choice posts `POST /quests/:id/advance_story` (`QuestsController#advance_story`) with `choice_key`
+3. Click **Mark Complete** → `POST /quests/:id/complete` (`QuestsController#complete`)
+4. `Game::Quests::RewardService` grants rewards; the UI updates via Turbo Stream templates (`accept/advance_story/complete.turbo_stream.erb`)
 
-### UC-3: Navigate Branching Story
-**Actor:** Player at decision point
+### UC-3: Handle Requirements and Branch Errors
+**Actor:** Player attempting an invalid action
 **Flow:**
-1. Quest step presents choice (e.g., "Help villagers" vs "Ignore")
-2. Player clicks chosen option
-3. `BranchingChoiceResolver` records decision in progress
-4. Story progresses to appropriate branch
-5. Future steps/rewards may differ based on choice
+1. If gating fails (level/reputation/faction), `QuestsController#accept` keeps the assignment pending and renders an alert via Turbo
+2. If a branching `choice_key` has no defined consequence, `QuestsController#advance_story` renders an alert (e.g., “Unknown choice”) without breaking the frame
 
 ---
 
@@ -60,10 +52,8 @@
 - `prerequisite_quests`: Must complete prior quests
 
 ### Dialog Navigation
-- Multi-step dialogs with Prev/Next buttons
-- Step indicator dots (• ◦ ◦ ◦)
-- NPC avatar (130x130) on left side
-- Action buttons only appear at final step
+- **Quest log UI:** Quest dialogue renders server-side inside `turbo-frame#quest-dialogue` and updates through Turbo Stream templates for accept/advance/complete.
+- **Optional modal UI:** A Neverlands-style step-by-step modal exists (`app/views/quests/_quest_dialog.html.erb` + `quest_dialog_controller.js`) for world/NPC presentation; if used, it should post to the same `QuestsController` endpoints so Turbo updates remain consistent.
 
 ### Reward Types
 - Experience points (XP)
@@ -152,181 +142,39 @@ generator.generate_for_zone!(character, zone)
 - `Admin::GmConsoleController` — GM overrides: spawn/disable quests, adjust timers, compensate players; hits `Game::Quests::GmConsoleService`.
 - `Events::AnnouncementsController` (if present) or Turbo streams that surface scheduled events + quest tie-ins.
 
-### Quest Dialog System (Neverlands-Inspired)
+### Quest Dialogue UI (Turbo Frame + Optional Modal)
 
-The quest dialog system presents NPC conversations as step-by-step modal dialogs with navigation.
+Elselands uses a Hotwire-first quest dialogue experience. The canonical surface is the quest log / quest show
+Turbo Frame, while an optional Neverlands-style modal can be used for “world NPC” presentation.
 
-#### Dialog Flow
+#### Turbo Frame Flow (Quest Log / Quest Show)
+The quest show page renders the dialogue inside `turbo-frame#quest-dialogue` (`app/views/quests/_dialogue_frame.html.erb`).
+
 ```
-Player clicks "Quests" button or NPC
-        ↓
-AJAX/Turbo fetches quest dialog data
-        ↓
-Modal overlay appears with:
-  - NPC avatar (130x130 portrait)
-  - Dialog text (step 0)
-  - Navigation buttons
-        ↓
-Player navigates: ← Prev | Next →
-        ↓
-At final step, action buttons appear:
-  - "Accept Quest" (type 1)
-  - "Complete Quest" (type 2)
-        ↓
-Action triggers server call → rewards/progression
+GET /quests
+  ↓ (select quest)
+GET /quests/:id
+  ↓
+<turbo-frame id="quest-dialogue"> … </turbo-frame>
+  ↓ (Accept / choice / complete)
+POST /quests/:id/accept | /advance_story | /complete  (targets quest-dialogue)
+  ↓
+Turbo Stream templates refresh the dialogue frame + quest list + flash
 ```
 
-#### Stimulus Controller: `quest_dialog_controller.js`
-```javascript
-export default class extends Controller {
-  static targets = ["dialog", "avatar", "navigation", "overlay"]
-  static values = {
-    steps: Array,      // Dialog text steps
-    npcAvatar: String, // NPC portrait URL
-    questId: Number,
-    actionType: Number, // 1=accept, 2=complete
-    actionCode: String
-  }
+**Turbo Stream templates**
+- `app/views/quests/accept.turbo_stream.erb`
+- `app/views/quests/advance_story.turbo_stream.erb`
+- `app/views/quests/complete.turbo_stream.erb`
 
-  currentStep = 0
+#### Error Handling
+- **Requirements not met:** Accept keeps the assignment pending and renders an alert without breaking the frame.
+- **Invalid branching choice:** Advance story renders an alert (e.g., “Unknown choice”) and keeps the dialogue usable.
 
-  connect() {
-    this.showOverlay()
-    this.renderStep()
-  }
-
-  nextStep() {
-    if (this.currentStep < this.stepsValue.length - 1) {
-      this.currentStep++
-      this.renderStep()
-    }
-  }
-
-  prevStep() {
-    if (this.currentStep > 0) {
-      this.currentStep--
-      this.renderStep()
-    }
-  }
-
-  renderStep() {
-    this.dialogTarget.innerHTML = this.stepsValue[this.currentStep]
-    this.renderNavigation()
-  }
-
-  renderNavigation() {
-    let nav = ""
-    if (this.currentStep > 0) {
-      nav += `<button class="quest-nav-btn quest-nav-prev" data-action="click->quest-dialog#prevStep">← Back</button>`
-    }
-    if (this.currentStep < this.stepsValue.length - 1) {
-      nav += `<button class="quest-nav-btn quest-nav-next" data-action="click->quest-dialog#nextStep">Continue →</button>`
-    } else if (this.actionTypeValue) {
-      // Final step - show action button
-      const label = this.actionTypeValue === 1 ? "Accept Quest" : "Complete Quest"
-      const cssClass = this.actionTypeValue === 1 ? "quest-accept-btn" : "quest-complete-btn"
-      nav += `<button class="${cssClass}" data-action="click->quest-dialog#submitAction">${label}</button>`
-    }
-    this.navigationTarget.innerHTML = nav
-  }
-
-  submitAction() {
-    const url = `/quests/${this.questIdValue}/${this.actionTypeValue === 1 ? 'accept' : 'complete'}`
-    fetch(url, {
-      method: 'POST',
-      headers: { 'X-CSRF-Token': document.querySelector('[name="csrf-token"]').content }
-    }).then(response => response.json())
-      .then(data => {
-        this.close()
-        // Show reward notification if applicable
-      })
-  }
-
-  close() {
-    this.overlayTarget.remove()
-  }
-}
-```
-
-#### CSS for Quest Dialog
-```css
-/* Quest dialog modal */
-.quest-dialog-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.8);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-
-.quest-dialog-box {
-  background: url('/assets/quest_dialog_bg.png') no-repeat center;
-  width: 750px;
-  min-height: 350px;
-  padding: 40px 80px;
-  position: relative;
-}
-
-.quest-dialog-close {
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  cursor: pointer;
-}
-
-.quest-dialog-content {
-  display: flex;
-  gap: 20px;
-}
-
-.quest-dialog-text {
-  flex: 1;
-  font-size: 1rem;
-  line-height: 1.6;
-  color: #222;
-}
-
-.quest-dialog-avatar {
-  width: 130px;
-  height: 130px;
-  border: 3px solid var(--nl-gold);
-  border-radius: var(--nl-radius-sm);
-  overflow: hidden;
-}
-
-.quest-dialog-nav {
-  margin-top: 20px;
-  display: flex;
-  justify-content: center;
-  gap: 10px;
-}
-
-.quest-nav-btn {
-  padding: 8px 20px;
-  background: var(--nl-bg-secondary);
-  border: 2px solid var(--nl-border-medium);
-  cursor: pointer;
-  font-weight: bold;
-}
-
-.quest-accept-btn {
-  background: linear-gradient(180deg, #4CAF50 0%, #2E7D32 100%);
-  color: white;
-  padding: 10px 30px;
-  border: 2px solid #1B5E20;
-  font-weight: bold;
-}
-
-.quest-complete-btn {
-  background: linear-gradient(180deg, #FFD700 0%, #FFA000 100%);
-  color: #333;
-  padding: 10px 30px;
-  border: 2px solid #FF8F00;
-  font-weight: bold;
-}
-```
+#### Optional Modal Flow (Legacy)
+The `app/views/quests/_quest_dialog.html.erb` modal + `quest_dialog_controller.js` provide step-by-step narration
+(avatars, typewriter, Prev/Next). If the modal is used, it should submit to the same `QuestsController` endpoints
+so the server remains the single source of truth for assignment state and rewards.
 
 ---
 
@@ -347,6 +195,7 @@ export default class extends Controller {
 ## Testing & Verification
 - Specs: `spec/services/game/quests/storyline_progression_spec.rb`, `story_step_runner_spec.rb`, `dynamic_quest_generator_spec.rb`, `reward_service_spec.rb`, `spec/requests/quests_controller_spec.rb`, `spec/services/game/events/quest_orchestrator_spec.rb`, `spec/services/analytics/quest_snapshot_calculator_spec.rb`.
 - Factory coverage: `quest`, `quest_assignment`, `quest_step`, `event_instance`, `community_objective`.
+- System spec: `spec/system/quests_ui_spec.rb` (accept/advance/complete via Turbo Frames/Streams).
 
 ---
 
@@ -356,4 +205,3 @@ export default class extends Controller {
 - **Controllers & Views:** `app/controllers/quests_controller.rb`, `app/controllers/admin/gm_console_controller.rb`, `app/views/quests/**/*`, `app/views/admin/gm_console/show.html.erb`.
 - **Jobs:** `app/jobs/quest_analytics_job.rb`, `app/jobs/scheduled_event_job.rb`, (any `LiveOps::QuestMonitorJob`).
 - **Docs:** `doc/features/10_quests_story.md`, this flow doc.
-

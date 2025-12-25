@@ -94,6 +94,7 @@
           <%= button_to resource_icon(resource[:type]) + " Gather #{resource[:name]}",
               gather_resource_world_path,
               method: :post,
+              id: "gather_tile_resource_btn",
               class: "btn-gather btn-gather--#{resource[:type]}",
               data: { turbo: true } %>
         <% else %>
@@ -186,4 +187,3 @@
     <% end %>
   </div>
 </div>
-

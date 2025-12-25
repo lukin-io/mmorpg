@@ -4,9 +4,7 @@
     <%= link_to "← Back to Trees", skill_trees_path, class: "back-link" %>
   </div>
 
-  <div class="skill-points-panel card" id="skill_points_display">
-    <%= render "skill_trees/points", points: @available_points %>
-  </div>
+  <%= render "skill_trees/points_panel", points: @available_points %>
 
   <div class="skill-tree-container">
     <div class="skill-tree-canvas" data-skill-tree-target="canvas">
@@ -17,9 +15,7 @@
             <% nodes.each do |node| %>
               <% unlocked = @unlocked_skills[node.id].present? %>
               <% can_unlock = can_unlock_node?(node, @unlocked_skills, @available_points) %>
-              <div id="skill_node_<%= node.id %>">
-                <%= render "skill_trees/node", node: node, unlocked: unlocked, can_unlock: can_unlock %>
-              </div>
+              <%= render "skill_trees/node_frame", node: node, unlocked: unlocked, can_unlock: can_unlock %>
             <% end %>
           </div>
         </div>
@@ -34,4 +30,3 @@
     <div data-skill-tree-target="detailActions"></div>
   </div>
 </div>
-

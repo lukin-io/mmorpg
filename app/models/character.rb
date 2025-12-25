@@ -171,6 +171,12 @@ class Character < ApplicationRecord
   # Passive Skills
   # ===================
 
+  # Skill points available for the skill tree UI.
+  # Currently aliases passive skill points.
+  def available_skill_points
+    skill_points_available
+  end
+
   # Get the level of a passive skill
   #
   # @param skill_key [Symbol, String] the skill identifier (e.g., :wanderer)

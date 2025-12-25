@@ -17,4 +17,8 @@ class TradeSession < ApplicationRecord
   validates :expires_at, presence: true
 
   scope :active, -> { where(status: [:pending, :confirming]).where("expires_at > ?", Time.current) }
+
+  def locked?
+    confirming? || completed? || cancelled? || expired?
+  end
 end

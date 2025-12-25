@@ -26,21 +26,28 @@ class InventoriesController < ApplicationController
       item: item
     ).equip!
 
-    if result[:success]
-      respond_to do |format|
+    respond_to do |format|
+      if result[:success]
         format.turbo_stream do
           @inventory = current_character.inventory.reload
+          items = @inventory.inventory_items.includes(:item_template).order(:slot_index)
+          stats = Characters::VitalsService.new(current_character).stats_summary
+
           render turbo_stream: [
-            turbo_stream.replace("inventory_grid", partial: "inventories/grid", locals: {items: @inventory.inventory_items, inventory: @inventory}),
-            turbo_stream.replace("equipment_panel", partial: "inventories/equipment", locals: {equipment: current_character_equipment}),
-            turbo_stream.replace("stats_panel", partial: "inventories/stats", locals: {stats: Characters::VitalsService.new(current_character).stats_summary})
+            turbo_stream.update("inventory_grid", partial: "inventories/grid", locals: { items: items, inventory: @inventory }),
+            turbo_stream.update("equipment_panel", partial: "inventories/equipment", locals: { equipment: current_character_equipment }),
+            turbo_stream.update("stats_panel", partial: "inventories/stats", locals: { stats: stats })
           ]
         end
         format.html { redirect_to inventory_path, notice: "Item equipped!" }
-      end
-    else
-      respond_to do |format|
-        format.turbo_stream { render turbo_stream: turbo_stream.append("notifications", partial: "shared/notification", locals: {type: :alert, message: result[:error]}) }
+      else
+        format.turbo_stream do
+          render turbo_stream: turbo_stream.append(
+            "notifications",
+            partial: "shared/notification",
+            locals: { type: :alert, message: result[:error] }
+          )
+        end
         format.html { redirect_to inventory_path, alert: result[:error] }
       end
     end
@@ -55,21 +62,28 @@ class InventoriesController < ApplicationController
       slot: slot
     ).unequip!
 
-    if result[:success]
-      respond_to do |format|
+    respond_to do |format|
+      if result[:success]
         format.turbo_stream do
           @inventory = current_character.inventory.reload
+          items = @inventory.inventory_items.includes(:item_template).order(:slot_index)
+          stats = Characters::VitalsService.new(current_character).stats_summary
+
           render turbo_stream: [
-            turbo_stream.replace("inventory_grid", partial: "inventories/grid", locals: {items: @inventory.inventory_items, inventory: @inventory}),
-            turbo_stream.replace("equipment_panel", partial: "inventories/equipment", locals: {equipment: current_character_equipment}),
-            turbo_stream.replace("stats_panel", partial: "inventories/stats", locals: {stats: Characters::VitalsService.new(current_character).stats_summary})
+            turbo_stream.update("inventory_grid", partial: "inventories/grid", locals: { items: items, inventory: @inventory }),
+            turbo_stream.update("equipment_panel", partial: "inventories/equipment", locals: { equipment: current_character_equipment }),
+            turbo_stream.update("stats_panel", partial: "inventories/stats", locals: { stats: stats })
           ]
         end
         format.html { redirect_to inventory_path, notice: "Item unequipped!" }
-      end
-    else
-      respond_to do |format|
-        format.turbo_stream { render turbo_stream: turbo_stream.append("notifications", partial: "shared/notification", locals: {type: :alert, message: result[:error]}) }
+      else
+        format.turbo_stream do
+          render turbo_stream: turbo_stream.append(
+            "notifications",
+            partial: "shared/notification",
+            locals: { type: :alert, message: result[:error] }
+          )
+        end
         format.html { redirect_to inventory_path, alert: result[:error] }
       end
     end
@@ -81,10 +95,30 @@ class InventoriesController < ApplicationController
 
     result = Game::Inventory::Manager.use_item(current_character, item)
 
-    if result[:success]
-      redirect_to inventory_path, notice: result[:message]
-    else
-      redirect_to inventory_path, alert: result[:error]
+    respond_to do |format|
+      if result[:success]
+        format.turbo_stream do
+          @inventory = current_character.inventory.reload
+          items = @inventory.inventory_items.includes(:item_template).order(:slot_index)
+          stats = Characters::VitalsService.new(current_character).stats_summary
+
+          render turbo_stream: [
+            turbo_stream.update("inventory_grid", partial: "inventories/grid", locals: { items: items, inventory: @inventory }),
+            turbo_stream.update("stats_panel", partial: "inventories/stats", locals: { stats: stats }),
+            turbo_stream.update("flash", partial: "shared/flash", locals: { type: "notice", message: result[:message] })
+          ]
+        end
+        format.html { redirect_to inventory_path, notice: result[:message] }
+      else
+        format.turbo_stream do
+          render turbo_stream: turbo_stream.update(
+            "flash",
+            partial: "shared/flash",
+            locals: { type: "alert", message: result[:error] }
+          )
+        end
+        format.html { redirect_to inventory_path, alert: result[:error] }
+      end
     end
   end
 

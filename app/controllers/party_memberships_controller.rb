@@ -11,8 +11,8 @@ class PartyMembershipsController < ApplicationController
       raise Pundit::NotAuthorizedError
     end
 
-    ready = params[:ready_state].present? ? ActiveModel::Type::Boolean.new.cast(params[:ready_state]) : true
-    Parties::ReadyCheck.new(party: @party).mark_ready!(membership, ready:)
+    ready_state = params[:ready_state].presence_in(%w[ready not_ready]) || "ready"
+    Parties::ReadyCheck.new(party: @party).mark_ready!(membership, ready_state:)
 
     redirect_to @party, notice: "Ready state updated."
   end

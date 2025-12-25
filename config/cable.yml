@@ -8,7 +8,7 @@ development:
   channel_prefix: mmorpg_development
 
 test:
-  adapter: test
+  adapter: async
 
 production:
   adapter: redis

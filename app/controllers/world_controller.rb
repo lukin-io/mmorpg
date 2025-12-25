@@ -286,9 +286,9 @@ class WorldController < ApplicationController
       if result.success
         format.html { render "world/dialogue", locals: {result: result, npc: npc_template} }
         format.turbo_stream do
-          render turbo_stream: turbo_stream.replace(
+          render turbo_stream: turbo_stream.update(
             "game-main",
-            partial: "world/dialogue",
+            template: "world/dialogue",
             locals: {result: result, npc: npc_template}
           )
         end
@@ -360,7 +360,11 @@ class WorldController < ApplicationController
 
     # Create initial position in starter zone (city)
     starter_zone = Zone.find_by(biome: "city") || Zone.first
-    return redirect_to root_path, alert: "No zones available." unless starter_zone
+    unless starter_zone
+      flash[:alert] ||= "No zones available."
+      flash.keep(:alert)
+      return redirect_to dashboard_path
+    end
 
     spawn = starter_zone.spawn_points.default_entries.first ||
       starter_zone.spawn_points.first

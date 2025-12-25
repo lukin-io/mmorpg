@@ -49,7 +49,7 @@
               +
             </button>
 
-            <%= hidden_field_tag "allocated_skills[#{skill_key}]", skill_info[:level],
+            <%= hidden_field_tag "allocated_skills[#{skill_key}]", 0,
                                  data: { skill_allocation_target: "skillInput", skill: skill_key } %>
           </div>
 
@@ -84,4 +84,3 @@
     </div>
   <% end %>
 </div>
-
