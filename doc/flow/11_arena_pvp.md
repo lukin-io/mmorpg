@@ -3,6 +3,7 @@
 ## Version History
 - **v1.0** (2025-12-01): Initial arena PvP implementation
 - **v1.1** (2025-12-22): Added NPC arena bots for training, unified NPC architecture integration
+- **v1.2** (2025-12-27): Added reference to open-world PVP via unified combat architecture
 
 ## Implementation Status
 
@@ -824,3 +825,15 @@ training:
 
 ### Related Documentation
 - `doc/flow/22_unified_npc_architecture.md` — NPC architecture overview
+- `doc/flow/23_unified_combat_architecture.md` — Unified combat system (includes open-world PVP)
+
+---
+
+## Open-World PVP
+
+For player-vs-player combat outside the arena (open-world PVP), see the **Unified Combat Architecture** documentation: `doc/flow/23_unified_combat_architecture.md`.
+
+Open-world PVP shares the same core battle system (`Battle`, `BattleParticipant`, `CombatLogEntry`) as arena and PVE combat, with PVP-specific rules handled by:
+- `Game::Pvp::ZoneRules` — Zone-based PVP access control
+- `Game::Pvp::FlagService` — PVP flagging system
+- `Game::Combat::PvpEncounterService` — Open-world PVP combat service

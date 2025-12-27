@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_12_24_140000) do
+ActiveRecord::Schema[8.1].define(version: 2025_12_26_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -1793,6 +1793,19 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_24_140000) do
     t.index ["user_id"], name: "index_purchases_on_user_id"
   end
 
+  create_table "pvp_flags", force: :cascade do |t|
+    t.bigint "character_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "expires_at"
+    t.integer "flag_type", default: 0, null: false
+    t.jsonb "metadata", default: {}, null: false
+    t.string "source", limit: 50
+    t.datetime "updated_at", null: false
+    t.index ["character_id", "flag_type"], name: "index_pvp_flags_on_character_id_and_flag_type"
+    t.index ["character_id"], name: "index_pvp_flags_on_character_id"
+    t.index ["expires_at"], name: "index_pvp_flags_on_expires_at"
+  end
+
   create_table "quest_analytics_snapshots", force: :cascade do |t|
     t.decimal "abandon_rate", precision: 5, scale: 2, default: "0.0", null: false
     t.integer "avg_completion_minutes", default: 0, null: false
@@ -2317,6 +2330,8 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_24_140000) do
     t.integer "height", default: 32, null: false
     t.jsonb "metadata", default: {}, null: false
     t.string "name", null: false
+    t.boolean "pvp_enabled", default: false, null: false
+    t.string "pvp_mode", limit: 20
     t.integer "turn_counter", default: 1, null: false
     t.datetime "updated_at", null: false
     t.integer "width", default: 32, null: false
@@ -2508,6 +2523,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_24_140000) do
   add_foreign_key "profession_tools", "characters"
   add_foreign_key "profession_tools", "professions"
   add_foreign_key "purchases", "users"
+  add_foreign_key "pvp_flags", "characters"
   add_foreign_key "quest_assignments", "characters"
   add_foreign_key "quest_assignments", "quests"
   add_foreign_key "quest_chapters", "quest_chains"

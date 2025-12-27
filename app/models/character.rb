@@ -66,6 +66,7 @@ class Character < ApplicationRecord
     class_name: "Moderation::Ticket",
     foreign_key: :subject_character_id,
     dependent: :nullify
+  has_many :pvp_flags, dependent: :destroy
 
   validates :name, presence: true, uniqueness: true, length: {maximum: MAX_NAME_LENGTH}
   validates :level, numericality: {greater_than: 0}

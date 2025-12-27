@@ -175,7 +175,7 @@ use it as input when making design decisions, but don't overwrite it unless aske
 
 2. **Rails-way + KISS.**
    - Prefer RESTful controllers, standard routing, and ActiveRecord.
-   - Avoid speculative abstractions and “mini-frameworks”.
+   - Avoid speculative abstractions and "mini-frameworks".
    - Extract services/queries only when complexity clearly warrants it.
 
 3. **Respect existing architecture.**
@@ -184,7 +184,20 @@ use it as input when making design decisions, but don't overwrite it unless aske
      (Jbuilder, serializers, simple `render json:`) rather than inventing a new one.
 
 4. **Tests & lint are mandatory.**
-   Any new functionality or bug fix must ship with tests. The test suite and linters should be green when you’re done.
+   Any new functionality or bug fix must ship with tests. The test suite and linters should be green when you're done.
+
+   **Every implementation must include comprehensive tests covering:**
+   - ✅ **Success cases** — Feature works correctly as expected
+   - ✅ **Failure cases** — Validation errors, invalid inputs are handled properly
+   - ✅ **Null/edge cases** — Nil values, blank strings, boundary conditions
+   - ✅ **Authorization cases** — Forbidden access, wrong roles return proper errors
+
+   **Required test coverage by layer:**
+   - **Model specs** — Validations, associations, scopes, domain logic
+   - **Request specs** — Controller actions (success + error responses, auth checks)
+   - **Service specs** — Game engine classes with seeded RNG, edge cases
+   - **System specs** — Critical Hotwire/JS interactions (Turbo Frames, Stimulus)
+   - **Policy specs** — Authorization rules (if using Pundit)
 
 5. **Avoid N+1 and obvious performance bugs.**
    Use `includes`/`preload` for associations rendered in views or JSON; paginate large collections.

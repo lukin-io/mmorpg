@@ -320,6 +320,21 @@ Rails.application.routes.draw do
     get :skills
   end
 
+  # PvP Combat (Open World)
+  resources :pvp_combat, only: [:show, :create] do
+    collection do
+      post :attack
+      get :status
+      post :toggle_pvp
+    end
+    member do
+      post :action
+      post :turn
+      post :flee
+      post :surrender
+    end
+  end
+
   # Resource Gathering
   resources :gathering, only: [:show] do
     member do

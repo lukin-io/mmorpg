@@ -312,7 +312,7 @@ Guidelines:
 
 ## 11) Testing
 
-Support both RSpec and Minitest; follow the project’s choice.
+Support both RSpec and Minitest; follow the project's choice.
 
 **Scope:**
 
@@ -321,6 +321,25 @@ Support both RSpec and Minitest; follow the project’s choice.
 - System tests for end-to-end flows, especially Hotwire interactions.
 - Policy/authorization tests when using Pundit/CanCanCan.
 - Serializer/JSON tests for APIs.
+
+**Comprehensive Test Coverage Requirements:**
+
+Every implementation must include tests covering:
+
+- ✅ **Success cases** — Feature works correctly as expected
+- ✅ **Failure cases** — Validation errors, invalid inputs are handled properly
+- ✅ **Null/edge cases** — Nil values, blank strings, boundary conditions
+- ✅ **Authorization cases** — Forbidden access, wrong roles return proper errors
+
+**Required test coverage by layer:**
+
+| Layer | What to Test |
+|-------|--------------|
+| **Model specs** | Validations, associations, scopes, enums, domain methods |
+| **Request specs** | All controller actions: success + error + auth failures |
+| **Service specs** | Game engine classes with seeded RNG, edge cases |
+| **System specs** | Turbo Frames, Stimulus interactions, form submissions |
+| **Policy specs** | Authorization rules, role-based access |
 
 **Style:**
 

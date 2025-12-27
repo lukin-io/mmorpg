@@ -12,7 +12,12 @@ RSpec.configure do |config|
   end
 
   config.before(:each, type: :system, js: true) do
-    driven_by(:selenium_chrome_headless)
+    # Use HEADLESS=false to run with visible browser for debugging
+    if ENV["HEADLESS"] == "false"
+      driven_by(:selenium_chrome)
+    else
+      driven_by(:selenium_chrome_headless)
+    end
   end
 
   config.around(:each, type: :system, js: true) do |example|

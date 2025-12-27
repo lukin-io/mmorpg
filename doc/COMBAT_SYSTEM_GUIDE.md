@@ -228,7 +228,42 @@ Ensure results match expected numbers.
 
 ---
 
-# 10. Summary
+# 10. PVP Combat
+
+The combat system supports player-vs-player combat using the same core mechanics.
+
+## PVP Services
+- `Game::Combat::PvpEncounterService` — Handles open-world PVP encounters
+- `Game::Pvp::ZoneRules` — Determines if PVP is allowed in a zone
+- `Game::Pvp::FlagService` — Manages PVP flags
+
+## PVP-Specific Rules
+- Zone must have `pvp_enabled: true` or both players must be flagged
+- `pvp_mode` determines rules: `open`, `flagged`, `faction_war`, etc.
+- City biomes are always safe (no PVP)
+- Attackers are automatically flagged for hostile action
+- Losers have their HP set to 0
+- Winners receive XP, gold, and honor rewards
+
+## Example Flow
+```ruby
+# Start PVP encounter
+service = Game::Combat::PvpEncounterService.new(attacker, defender)
+result = service.start_encounter!
+
+# Process combat action
+result = service.process_action!(
+  character: attacker,
+  action_type: :attack,
+  body_part: "head"
+)
+```
+
+For detailed documentation, see: `doc/flow/23_unified_combat_architecture.md`
+
+---
+
+# 11. Summary
 
 Use this guide when implementing:
 - attacks
@@ -238,23 +273,37 @@ Use this guide when implementing:
 - turn flow
 - battle logs
 - AI combat behaviors
+- **PVP combat**
 
 This ensures the entire combat engine remains consistent, extensible, and deterministic.
 
 ---
 
-# 11. Responsible for Implementation Files
+# 12. Responsible for Implementation Files
 
 | File | Purpose |
 |------|---------|
 | `app/models/character.rb` | `max_action_points` method calculating AP from level + agility |
 | `app/models/battle.rb` | Stores `action_points_per_turn` for combat |
-| `app/services/game/combat/pve_encounter_service.rb` | Creates battle with character's AP, validates turn costs |
+| `app/models/pvp_flag.rb` | Tracks PVP flag status |
+| `app/services/game/combat/pve_encounter_service.rb` | Creates PVE battle with character's AP, validates turn costs |
+| `app/services/game/combat/pvp_encounter_service.rb` | Creates PVP battle between players |
 | `app/services/game/combat/turn_based_combat_service.rb` | Validates actions against AP budget |
+| `app/services/game/pvp/zone_rules.rb` | Determines if PVP is allowed in a zone |
+| `app/services/game/pvp/flag_service.rb` | Manages PVP flag creation and expiry |
+| `app/controllers/pvp_combat_controller.rb` | Handles PVP combat UI |
 | `app/views/combat/_battle.html.erb` | Displays AP in combat UI |
 | `app/views/combat/_nl_action_selection.html.erb` | Attack/block selection with AP costs |
+| `app/views/pvp_combat/*.html.erb` | PVP combat views |
 | `app/javascript/controllers/turn_combat_controller.js` | Client-side AP tracking and validation |
 | `config/gameplay/combat_actions.yml` | Action costs, attack penalties, defaults |
 | `db/schema.rb` | `battles.action_points_per_turn` column |
 | `spec/models/character_spec.rb` | Tests for `max_action_points` |
-| `spec/services/game/combat/pve_encounter_service_spec.rb` | Tests for AP validation |
+| `spec/services/game/combat/pve_encounter_service_spec.rb` | Tests for PVE AP validation |
+| `spec/services/game/combat/pvp_encounter_service_spec.rb` | Tests for PVP combat |
+| `spec/services/game/pvp/*_spec.rb` | Tests for PVP rules and flags |
+
+## Related Documentation
+- `doc/flow/16_combat_system.md` — Combat system flow
+- `doc/flow/11_arena_pvp.md` — Arena PVP system
+- `doc/flow/23_unified_combat_architecture.md` — Unified combat architecture

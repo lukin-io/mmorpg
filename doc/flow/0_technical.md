@@ -263,6 +263,9 @@ bundle exec bundler-audit # optional CVE scan
   - `app/services/game/combat/*.rb`, `app/services/game/movement/*.rb`, `app/services/game/economy/loot_generator.rb` — Turn resolution, attack orchestration, skill execution, movement validation/pathfinding, loot generation.
   - `app/services/game/combat/skill_executor.rb` — Combat skill execution (damage, heal, buff, debuff, DOT, HOT, AOE, drain, shield).
   - `app/services/game/combat/turn_based_combat_service.rb` — Neverlands-inspired turn-based combat with body-part targeting, action points, and magic slots.
+  - `app/services/game/combat/pve_encounter_service.rb` — PvE combat encounters with NPCs.
+  - `app/services/game/combat/pvp_encounter_service.rb` — Open-world PvP combat encounters between players.
+  - `app/services/game/pvp/zone_rules.rb`, `app/services/game/pvp/flag_service.rb` — PVP zone access control and flagging system.
   - `app/services/game/npc/dialogue_service.rb` — NPC dialogue orchestration (quest_giver, vendor, trainer, innkeeper, banker, guard, hostile).
   - `app/services/game/quests/dynamic_quest_generator.rb` — Procedural quest generation (daily, zone, trigger-based).
 - combat config:
