@@ -134,9 +134,9 @@ class PvpCombatController < ApplicationController
     authorize @battle, :surrender?, policy_class: PvpCombatPolicy
 
     service = build_service
-    result = service.process_action!(
-      character: current_character,
-      action_type: :surrender
+    service.process_action!(
+      action_type: :surrender,
+      character: current_character
     )
 
     respond_to do |format|

@@ -145,7 +145,7 @@ module Game
 
           # 5 minute revenge window
           Time.parse(last_attack) > 5.minutes.ago
-        rescue StandardError
+        rescue
           false
         end
       end

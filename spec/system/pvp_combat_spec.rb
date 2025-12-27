@@ -71,7 +71,7 @@ RSpec.describe "PVP Combat UI", type: :system do
   describe "performing combat actions", js: true do
     before do
       allow(Game::Pvp::ZoneRules).to receive(:check_pvp_allowed)
-        .and_return({ allowed: true, reason: "Zone allows open PVP" })
+        .and_return({allowed: true, reason: "Zone allows open PVP"})
     end
 
     it "updates combat log after attack" do
@@ -207,7 +207,7 @@ RSpec.describe "PVP Combat UI", type: :system do
   describe "Turbo Frame updates", js: true do
     before do
       allow(Game::Pvp::ZoneRules).to receive(:check_pvp_allowed)
-        .and_return({ allowed: true, reason: "Zone allows open PVP" })
+        .and_return({allowed: true, reason: "Zone allows open PVP"})
     end
 
     it "updates HP bars via Turbo Stream after action" do

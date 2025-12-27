@@ -4,6 +4,7 @@ require "rails_helper"
 
 RSpec.describe Game::Pvp::FlagService do
   include ActiveSupport::Testing::TimeHelpers
+
   let(:character) { create(:character) }
   let(:service) { described_class.new(character) }
 
@@ -230,7 +231,7 @@ RSpec.describe Game::Pvp::FlagService do
 
     context "when flag expires during check" do
       it "handles expiry correctly" do
-        flag = create(:pvp_flag, :expiring_soon, character: character, expires_at: 1.second.from_now)
+        create(:pvp_flag, :expiring_soon, character: character, expires_at: 1.second.from_now)
 
         expect(service.pvp_flagged?).to be true
 

@@ -199,7 +199,7 @@ module Game
           {
             type: "pvp_status_changed",
             pvp_flagged: pvp_flagged?,
-            flags: active_flags.map { |f| { type: f.flag_type, expires_at: f.expires_at&.iso8601 } }
+            flags: active_flags.map { |f| {type: f.flag_type, expires_at: f.expires_at&.iso8601} }
           }
         )
       end

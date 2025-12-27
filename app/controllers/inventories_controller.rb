@@ -34,9 +34,9 @@ class InventoriesController < ApplicationController
           stats = Characters::VitalsService.new(current_character).stats_summary
 
           render turbo_stream: [
-            turbo_stream.update("inventory_grid", partial: "inventories/grid", locals: { items: items, inventory: @inventory }),
-            turbo_stream.update("equipment_panel", partial: "inventories/equipment", locals: { equipment: current_character_equipment }),
-            turbo_stream.update("stats_panel", partial: "inventories/stats", locals: { stats: stats })
+            turbo_stream.update("inventory_grid", partial: "inventories/grid", locals: {items: items, inventory: @inventory}),
+            turbo_stream.update("equipment_panel", partial: "inventories/equipment", locals: {equipment: current_character_equipment}),
+            turbo_stream.update("stats_panel", partial: "inventories/stats", locals: {stats: stats})
           ]
         end
         format.html { redirect_to inventory_path, notice: "Item equipped!" }
@@ -45,7 +45,7 @@ class InventoriesController < ApplicationController
           render turbo_stream: turbo_stream.append(
             "notifications",
             partial: "shared/notification",
-            locals: { type: :alert, message: result[:error] }
+            locals: {type: :alert, message: result[:error]}
           )
         end
         format.html { redirect_to inventory_path, alert: result[:error] }
@@ -70,9 +70,9 @@ class InventoriesController < ApplicationController
           stats = Characters::VitalsService.new(current_character).stats_summary
 
           render turbo_stream: [
-            turbo_stream.update("inventory_grid", partial: "inventories/grid", locals: { items: items, inventory: @inventory }),
-            turbo_stream.update("equipment_panel", partial: "inventories/equipment", locals: { equipment: current_character_equipment }),
-            turbo_stream.update("stats_panel", partial: "inventories/stats", locals: { stats: stats })
+            turbo_stream.update("inventory_grid", partial: "inventories/grid", locals: {items: items, inventory: @inventory}),
+            turbo_stream.update("equipment_panel", partial: "inventories/equipment", locals: {equipment: current_character_equipment}),
+            turbo_stream.update("stats_panel", partial: "inventories/stats", locals: {stats: stats})
           ]
         end
         format.html { redirect_to inventory_path, notice: "Item unequipped!" }
@@ -81,7 +81,7 @@ class InventoriesController < ApplicationController
           render turbo_stream: turbo_stream.append(
             "notifications",
             partial: "shared/notification",
-            locals: { type: :alert, message: result[:error] }
+            locals: {type: :alert, message: result[:error]}
           )
         end
         format.html { redirect_to inventory_path, alert: result[:error] }
@@ -103,9 +103,9 @@ class InventoriesController < ApplicationController
           stats = Characters::VitalsService.new(current_character).stats_summary
 
           render turbo_stream: [
-            turbo_stream.update("inventory_grid", partial: "inventories/grid", locals: { items: items, inventory: @inventory }),
-            turbo_stream.update("stats_panel", partial: "inventories/stats", locals: { stats: stats }),
-            turbo_stream.update("flash", partial: "shared/flash", locals: { type: "notice", message: result[:message] })
+            turbo_stream.update("inventory_grid", partial: "inventories/grid", locals: {items: items, inventory: @inventory}),
+            turbo_stream.update("stats_panel", partial: "inventories/stats", locals: {stats: stats}),
+            turbo_stream.update("flash", partial: "shared/flash", locals: {type: "notice", message: result[:message]})
           ]
         end
         format.html { redirect_to inventory_path, notice: result[:message] }
@@ -114,7 +114,7 @@ class InventoriesController < ApplicationController
           render turbo_stream: turbo_stream.update(
             "flash",
             partial: "shared/flash",
-            locals: { type: "alert", message: result[:error] }
+            locals: {type: "alert", message: result[:error]}
           )
         end
         format.html { redirect_to inventory_path, alert: result[:error] }

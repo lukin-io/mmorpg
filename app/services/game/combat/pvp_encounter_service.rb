@@ -71,7 +71,7 @@ module Game
       # @param action_type [Symbol] :attack, :defend, :skill, :flee, or :surrender
       # @param params [Hash] additional action parameters
       # @return [Result]
-      def process_action!(character: nil, action_type:, **params)
+      def process_action!(action_type:, character: nil, **params)
         character ||= attacker
         @battle ||= find_active_battle(character)
         return failure("Not in combat") unless battle
@@ -376,7 +376,6 @@ module Game
         participant.update!(is_defending: true)
 
         opponent = find_opponent(character)
-        opponent_participant = battle.battle_participants.find_by(character: opponent)
 
         combat_log = ["#{character.name} takes a defensive stance."]
 
@@ -552,7 +551,7 @@ module Game
         # Grant rewards
         rewards = grant_pvp_rewards!(winner, loser)
 
-        outcome = combat_log.any? { |m| m.include?("surrenders") } ? "surrender" : "victory"
+        outcome = (combat_log.any? { |m| m.include?("surrenders") }) ? "surrender" : "victory"
         combat_log << "#{winner.name} wins the battle!"
         persist_log_entry!(combat_log.last)
 
@@ -593,7 +592,7 @@ module Game
         winner.add_currency!(:gold, gold, source: "PVP victory") if winner.respond_to?(:add_currency!)
 
         {xp: xp, gold: gold, honor: honor}
-      rescue StandardError => e
+      rescue => e
         Rails.logger.error("Failed to grant PVP rewards: #{e.message}")
         {}
       end
@@ -659,7 +658,7 @@ module Game
           message: message,
           damage_amount: extract_damage(message)
         )
-      rescue StandardError => e
+      rescue => e
         Rails.logger.error("Failed to persist combat log: #{e.message}")
       end
 

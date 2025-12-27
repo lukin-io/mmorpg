@@ -22,32 +22,32 @@ RSpec.describe "PvpCombat", type: :request do
     context "when PVP is allowed" do
       before do
         allow(Game::Pvp::ZoneRules).to receive(:check_pvp_allowed)
-          .and_return({ allowed: true, reason: "Zone allows open PVP" })
+          .and_return({allowed: true, reason: "Zone allows open PVP"})
       end
 
       it "creates a PVP battle" do
         expect {
-          post attack_pvp_combat_index_path, params: { target_id: defender.id }
+          post attack_pvp_combat_index_path, params: {target_id: defender.id}
         }.to change(Battle, :count).by(1)
 
         expect(response).to have_http_status(:redirect)
       end
 
       it "redirects to the battle page" do
-        post attack_pvp_combat_index_path, params: { target_id: defender.id }
+        post attack_pvp_combat_index_path, params: {target_id: defender.id}
 
         battle = Battle.last
         expect(response).to redirect_to(pvp_combat_path(battle))
       end
 
       it "responds with turbo_stream format" do
-        post attack_pvp_combat_index_path, params: { target_id: defender.id }, as: :turbo_stream
+        post attack_pvp_combat_index_path, params: {target_id: defender.id}, as: :turbo_stream
 
         expect(response.media_type).to eq("text/vnd.turbo-stream.html")
       end
 
       it "responds with JSON format" do
-        post attack_pvp_combat_index_path, params: { target_id: defender.id }, as: :json
+        post attack_pvp_combat_index_path, params: {target_id: defender.id}, as: :json
 
         expect(response).to have_http_status(:ok)
         json = JSON.parse(response.body)
@@ -62,14 +62,14 @@ RSpec.describe "PvpCombat", type: :request do
   describe "POST /pvp_combat/attack - failure cases" do
     context "when target is not found" do
       it "returns not found error" do
-        post attack_pvp_combat_index_path, params: { target_id: 999999 }
+        post attack_pvp_combat_index_path, params: {target_id: 999999}
 
         # Should redirect back with alert
         expect(response).to have_http_status(:redirect)
       end
 
       it "returns JSON error for API requests" do
-        post attack_pvp_combat_index_path, params: { target_id: 999999 }, as: :json
+        post attack_pvp_combat_index_path, params: {target_id: 999999}, as: :json
 
         expect(response).to have_http_status(:not_found)
         json = JSON.parse(response.body)
@@ -80,11 +80,11 @@ RSpec.describe "PvpCombat", type: :request do
     context "when PVP is not allowed" do
       before do
         allow(Game::Pvp::ZoneRules).to receive(:check_pvp_allowed)
-          .and_return({ allowed: false, reason: "PVP not allowed in safe zones" })
+          .and_return({allowed: false, reason: "PVP not allowed in safe zones"})
       end
 
       it "returns error message" do
-        post attack_pvp_combat_index_path, params: { target_id: defender.id }
+        post attack_pvp_combat_index_path, params: {target_id: defender.id}
 
         expect(response).to have_http_status(:redirect)
         expect(flash[:alert]).to eq("PVP not allowed in safe zones")
@@ -92,7 +92,7 @@ RSpec.describe "PvpCombat", type: :request do
 
       it "does not create a battle" do
         expect {
-          post attack_pvp_combat_index_path, params: { target_id: defender.id }
+          post attack_pvp_combat_index_path, params: {target_id: defender.id}
         }.not_to change(Battle, :count)
       end
     end
@@ -101,11 +101,11 @@ RSpec.describe "PvpCombat", type: :request do
       before do
         defender.update!(current_hp: 0)
         allow(Game::Pvp::ZoneRules).to receive(:check_pvp_allowed)
-          .and_return({ allowed: true, reason: "Zone allows open PVP" })
+          .and_return({allowed: true, reason: "Zone allows open PVP"})
       end
 
       it "returns error" do
-        post attack_pvp_combat_index_path, params: { target_id: defender.id }
+        post attack_pvp_combat_index_path, params: {target_id: defender.id}
 
         expect(response).to have_http_status(:redirect)
         expect(flash[:alert]).to include("dead")
@@ -119,7 +119,7 @@ RSpec.describe "PvpCombat", type: :request do
   describe "POST /pvp_combat/attack - edge cases" do
     context "when target_id is nil" do
       it "returns not found" do
-        post attack_pvp_combat_index_path, params: { target_id: nil }
+        post attack_pvp_combat_index_path, params: {target_id: nil}
 
         expect(response).to redirect_to(world_path)
       end
@@ -127,7 +127,7 @@ RSpec.describe "PvpCombat", type: :request do
 
     context "when target_id is blank string" do
       it "returns not found" do
-        post attack_pvp_combat_index_path, params: { target_id: "" }
+        post attack_pvp_combat_index_path, params: {target_id: ""}
 
         expect(response).to redirect_to(world_path)
       end
@@ -136,11 +136,11 @@ RSpec.describe "PvpCombat", type: :request do
     context "when trying to attack self" do
       before do
         allow(Game::Pvp::ZoneRules).to receive(:check_pvp_allowed)
-          .and_return({ allowed: false, reason: "Cannot attack yourself" })
+          .and_return({allowed: false, reason: "Cannot attack yourself"})
       end
 
       it "returns error" do
-        post attack_pvp_combat_index_path, params: { target_id: attacker.id }
+        post attack_pvp_combat_index_path, params: {target_id: attacker.id}
 
         expect(response).to have_http_status(:redirect)
         expect(flash[:alert]).to include("yourself")
@@ -156,7 +156,7 @@ RSpec.describe "PvpCombat", type: :request do
       before { sign_out :user }
 
       it "redirects to login" do
-        post attack_pvp_combat_index_path, params: { target_id: defender.id }
+        post attack_pvp_combat_index_path, params: {target_id: defender.id}
 
         expect(response).to redirect_to(new_user_session_path)
       end
@@ -182,18 +182,18 @@ RSpec.describe "PvpCombat", type: :request do
       create(:battle_participant, battle: battle, character: attacker, team: "alpha")
       create(:battle_participant, battle: battle, character: defender, team: "beta")
       allow(Game::Pvp::ZoneRules).to receive(:check_pvp_allowed)
-        .and_return({ allowed: true, reason: "Zone allows open PVP" })
+        .and_return({allowed: true, reason: "Zone allows open PVP"})
     end
 
     context "success cases" do
       it "processes attack action" do
-        post action_pvp_combat_path(battle), params: { action_type: "attack" }, as: :turbo_stream
+        post action_pvp_combat_path(battle), params: {action_type: "attack"}, as: :turbo_stream
 
         expect(response).to have_http_status(:ok)
       end
 
       it "processes defend action" do
-        post action_pvp_combat_path(battle), params: { action_type: "defend" }, as: :turbo_stream
+        post action_pvp_combat_path(battle), params: {action_type: "defend"}, as: :turbo_stream
 
         expect(response).to have_http_status(:ok)
       end
@@ -201,7 +201,7 @@ RSpec.describe "PvpCombat", type: :request do
 
     context "failure cases" do
       it "returns error for unknown action" do
-        post action_pvp_combat_path(battle), params: { action_type: "invalid" }, as: :turbo_stream
+        post action_pvp_combat_path(battle), params: {action_type: "invalid"}, as: :turbo_stream
 
         expect(response).to have_http_status(:ok)
       end
@@ -216,7 +216,7 @@ RSpec.describe "PvpCombat", type: :request do
       end
 
       it "denies action from non-participant" do
-        post action_pvp_combat_path(battle), params: { action_type: "attack" }
+        post action_pvp_combat_path(battle), params: {action_type: "attack"}
 
         expect(response).to redirect_to(world_path)
         expect(flash[:alert]).to include("not part of this battle")
@@ -303,7 +303,7 @@ RSpec.describe "PvpCombat", type: :request do
       create(:battle_participant, battle: battle, character: attacker, team: "alpha")
       create(:battle_participant, battle: battle, character: defender, team: "beta")
       allow(Game::Pvp::ZoneRules).to receive(:check_pvp_allowed)
-        .and_return({ allowed: true, reason: "Zone allows open PVP" })
+        .and_return({allowed: true, reason: "Zone allows open PVP"})
     end
 
     it "attempts to flee from combat" do
@@ -320,7 +320,7 @@ RSpec.describe "PvpCombat", type: :request do
       create(:battle_participant, battle: battle, character: attacker, team: "alpha")
       create(:battle_participant, battle: battle, character: defender, team: "beta")
       allow(Game::Pvp::ZoneRules).to receive(:check_pvp_allowed)
-        .and_return({ allowed: true, reason: "Zone allows open PVP" })
+        .and_return({allowed: true, reason: "Zone allows open PVP"})
     end
 
     it "surrenders the fight" do

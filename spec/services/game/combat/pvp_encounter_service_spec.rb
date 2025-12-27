@@ -18,7 +18,7 @@ RSpec.describe Game::Combat::PvpEncounterService do
     context "when PVP is allowed" do
       before do
         allow(Game::Pvp::ZoneRules).to receive(:check_pvp_allowed)
-          .and_return({ allowed: true, reason: "Zone allows open PVP" })
+          .and_return({allowed: true, reason: "Zone allows open PVP"})
       end
 
       it "creates a battle" do
@@ -52,7 +52,7 @@ RSpec.describe Game::Combat::PvpEncounterService do
     context "when PVP is not allowed" do
       before do
         allow(Game::Pvp::ZoneRules).to receive(:check_pvp_allowed)
-          .and_return({ allowed: false, reason: "PVP requires mutual flagging" })
+          .and_return({allowed: false, reason: "PVP requires mutual flagging"})
       end
 
       it "returns failure result" do
@@ -70,7 +70,7 @@ RSpec.describe Game::Combat::PvpEncounterService do
     context "when attacker is already in combat" do
       before do
         allow(Game::Pvp::ZoneRules).to receive(:check_pvp_allowed)
-          .and_return({ allowed: true, reason: "Zone allows open PVP" })
+          .and_return({allowed: true, reason: "Zone allows open PVP"})
 
         # Create existing active battle
         existing_battle = create(:battle, :active, initiator: attacker)
@@ -89,7 +89,7 @@ RSpec.describe Game::Combat::PvpEncounterService do
       before do
         defender.update!(current_hp: 0)
         allow(Game::Pvp::ZoneRules).to receive(:check_pvp_allowed)
-          .and_return({ allowed: true, reason: "Zone allows open PVP" })
+          .and_return({allowed: true, reason: "Zone allows open PVP"})
       end
 
       it "returns failure result" do
@@ -106,7 +106,7 @@ RSpec.describe Game::Combat::PvpEncounterService do
 
     before do
       allow(Game::Pvp::ZoneRules).to receive(:check_pvp_allowed)
-        .and_return({ allowed: true, reason: "Zone allows open PVP" })
+        .and_return({allowed: true, reason: "Zone allows open PVP"})
       service.start_encounter!
     end
 
@@ -147,7 +147,7 @@ RSpec.describe Game::Combat::PvpEncounterService do
 
     before do
       allow(Game::Pvp::ZoneRules).to receive(:check_pvp_allowed)
-        .and_return({ allowed: true, reason: "Zone allows open PVP" })
+        .and_return({allowed: true, reason: "Zone allows open PVP"})
       service.start_encounter!
     end
 
