@@ -257,6 +257,15 @@ Rails.application.routes.draw do
   resources :npc_reports, only: [:new, :create]
   resources :combat_logs, only: :show
 
+  # Turn-Based Combat (Unified PvE/PvP/Arena)
+  resources :battles, only: [:show] do
+    member do
+      post :submit_turn
+      post :flee
+      post :surrender
+    end
+  end
+
   namespace :moderation do
     resources :reports, only: [:new, :create]
     resources :tickets, only: [] do

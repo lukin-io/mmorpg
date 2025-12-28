@@ -1,0 +1,37 @@
+<%#
+  Battle Show - Turn-based combat interface
+
+  Displays the full combat interface with body-part targeting,
+  action points, and real-time updates.
+%>
+
+<% content_for :title, "Combat - #{@battle.pvp? ? 'PvP' : 'Battle'}" %>
+
+<div class="nl-battle-page">
+  <% if @battle.completed? %>
+    <%= render partial: "combat/battle_complete", locals: {
+      battle: @battle,
+      player_participant: @player_participant,
+      won: @battle.winning_team == @player_participant&.team
+    } %>
+  <% elsif @player_participant.nil? %>
+    <div class="nl-error-panel">
+      <h2>Not in Combat</h2>
+      <p>You are not a participant in this battle.</p>
+      <%= link_to "Return to World", root_path, class: "nl-btn nl-btn--primary" %>
+    </div>
+  <% elsif !@player_participant.is_alive %>
+    <%= render partial: "combat/battle_defeat", locals: {
+      battle: @battle,
+      player_participant: @player_participant
+    } %>
+  <% else %>
+    <%= render partial: "combat/turn_combat_interface", locals: {
+      battle: @battle,
+      player_participant: @player_participant,
+      opponent_participant: @opponent_participant,
+      combat_config: @combat_config
+    } %>
+  <% end %>
+</div>
+

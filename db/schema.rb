@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_12_28_210000) do
+ActiveRecord::Schema[8.1].define(version: 2025_12_29_000003) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -271,6 +271,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_28_210000) do
 
   create_table "battle_participants", force: :cascade do |t|
     t.integer "action_points_used", default: 0
+    t.jsonb "active_effects", default: [], null: false
     t.bigint "battle_id", null: false
     t.jsonb "body_damage", default: {"head" => 0, "legs" => 0, "torso" => 0, "stomach" => 0}
     t.jsonb "buffs", default: {}, null: false
@@ -299,11 +300,13 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_28_210000) do
     t.string "role", default: "combatant", null: false
     t.jsonb "stat_snapshot", default: {}, null: false
     t.string "team", default: "alpha", null: false
+    t.datetime "turn_submitted_at"
     t.datetime "updated_at", null: false
     t.index ["battle_id", "is_alive"], name: "index_battle_participants_on_battle_id_and_is_alive"
     t.index ["battle_id"], name: "index_battle_participants_on_battle_id"
     t.index ["character_id"], name: "index_battle_participants_on_character_id"
     t.index ["npc_template_id"], name: "index_battle_participants_on_npc_template_id"
+    t.index ["turn_submitted_at"], name: "index_battle_participants_on_turn_submitted", where: "(turn_submitted_at IS NOT NULL)"
   end
 
   create_table "battles", force: :cascade do |t|
@@ -326,12 +329,16 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_28_210000) do
     t.datetime "started_at"
     t.integer "status", default: 0, null: false
     t.integer "turn_number", default: 1, null: false
+    t.integer "turn_timeout_seconds", default: 300, null: false
+    t.datetime "turn_timer_ends_at"
     t.datetime "updated_at", null: false
+    t.string "winning_team"
     t.bigint "zone_id"
     t.index ["initiator_id", "status"], name: "index_battles_on_initiator_active", unique: true, where: "(status = 1)"
     t.index ["initiator_id"], name: "index_battles_on_initiator_id"
     t.index ["share_token"], name: "index_battles_on_share_token", unique: true
     t.index ["status"], name: "index_battles_on_status"
+    t.index ["turn_timer_ends_at"], name: "index_battles_on_turn_timer_ends_at", where: "((turn_timer_ends_at IS NOT NULL) AND (status = 1))"
     t.index ["zone_id"], name: "index_battles_on_zone_id"
   end
 

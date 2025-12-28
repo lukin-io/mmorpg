@@ -1,0 +1,17 @@
+<%#
+  Turbo Stream response for surrender
+%>
+
+<%= turbo_stream.update "flash" do %>
+  <div class="nl-flash nl-flash--info">
+    You have surrendered. The battle is over.
+  </div>
+<% end %>
+
+<%= turbo_stream.replace "combat-interface" do %>
+  <%= render partial: "combat/battle_defeat", locals: {
+    battle: @battle,
+    player_participant: @participant
+  } %>
+<% end %>
+

@@ -5,6 +5,7 @@
 - **v1.1** (2025-12-22): Added NPC arena bots for training, unified NPC architecture integration
 - **v1.2** (2025-12-27): Added reference to open-world PVP via unified combat architecture
 - **v1.3** (2025-12-28): Open-world PVP improvements documented (concurrency, locality, anti-abuse, deterministic RNG)
+- **v1.4** (2025-12-29): Integrated with unified turn-based combat system (see `doc/flow/24_unified_turn_combat.md`)
 
 ## Implementation Status
 
@@ -827,6 +828,8 @@ training:
 ### Related Documentation
 - `doc/flow/22_unified_npc_architecture.md` — NPC architecture overview
 - `doc/flow/23_unified_combat_architecture.md` — Unified combat system (includes open-world PVP)
+- `doc/flow/24_unified_turn_combat.md` — Turn-based combat mechanics (body-part targeting, AP, blocks)
+- `doc/features/neverlands_inspired_combat.md` — Combat mechanics game design inspiration
 
 ---
 

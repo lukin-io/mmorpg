@@ -151,4 +151,67 @@ module ArenaHelper
       "Lvl #{min}-#{max}"
     end
   end
+
+  # ===========================================================================
+  # Participant Data Helpers
+  # ===========================================================================
+
+  # Struct to hold participant display data
+  ParticipantData = Struct.new(
+    :name, :level, :id, :is_npc,
+    :current_hp, :max_hp, :current_mp, :max_mp,
+    :hp_percent, :mp_percent,
+    keyword_init: true
+  )
+
+  # Extract participant display data from arena participation
+  # @param participation [ArenaParticipation] the participation record
+  # @return [ParticipantData] structured participant data
+  def participant_data(participation)
+    character = participation.character
+    npc_template = participation.npc_template
+    is_npc = npc_template.present?
+
+    if is_npc
+      current_hp = participation.metadata&.dig("current_hp") || npc_template.health
+      max_hp = participation.metadata&.dig("max_hp") || npc_template.health
+      current_mp = 0
+      max_mp = 0
+      name = npc_template.name
+      level = npc_template.level
+      participant_id = "npc-#{npc_template.id}"
+    else
+      current_hp = character.current_hp
+      max_hp = character.max_hp
+      current_mp = character.current_mp
+      max_mp = character.max_mp
+      name = character.name
+      level = character.level
+      participant_id = character.id
+    end
+
+    hp_percent = max_hp.zero? ? 0 : ((current_hp.to_f / max_hp) * 100).round(1)
+    mp_percent = max_mp.zero? ? 0 : ((current_mp.to_f / max_mp) * 100).round(1)
+
+    ParticipantData.new(
+      name: name,
+      level: level,
+      id: participant_id,
+      is_npc: is_npc,
+      current_hp: current_hp,
+      max_hp: max_hp,
+      current_mp: current_mp,
+      max_mp: max_mp,
+      hp_percent: hp_percent,
+      mp_percent: mp_percent
+    )
+  end
+
+  # Check if participant is dead
+  # @param participation [ArenaParticipation] the participation record
+  # @return [Boolean]
+  def participant_dead?(participation)
+    data = participant_data(participation)
+    data.current_hp <= 0
+  end
 end

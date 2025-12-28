@@ -1,0 +1,258 @@
+<%#
+  Turn-Based Combat Interface
+
+  A comprehensive combat UI with:
+  - Body part targeting (head, torso, stomach, legs)
+  - Action point budgeting
+  - Multi-attack penalties
+  - Single block rule
+  - Turn timer
+  - Real-time updates via ActionCable
+
+  Required locals:
+  - battle: Battle record
+  - player_participant: BattleParticipant for current player
+  - opponent_participant: BattleParticipant for opponent
+  - combat_config: Combat actions configuration
+%>
+
+<div class="nl-combat-container"
+     data-controller="combat-turn"
+     data-combat-turn-battle-id-value="<%= battle.id %>"
+     data-combat-turn-character-id-value="<%= player_participant.character_id %>"
+     data-combat-turn-ap-limit-value="<%= combat_ap_limit(battle) %>"
+     data-combat-turn-mana-limit-value="<%= combat_mana_limit(battle) %>"
+     <% if combat_timer_end(battle) %>data-combat-turn-timer-end-at-value="<%= combat_timer_end(battle) %>"<% end %>>
+
+  <%# Battle Header %>
+  <div class="nl-combat-header">
+    <h2 class="nl-combat-title">
+      <%= battle.pvp? || battle.arena? ? "⚔️ PvP Combat" : "⚔️ Combat" %>
+    </h2>
+    <div class="nl-combat-meta">
+      <span class="nl-round">Round <%= battle.round_number || 1 %></span>
+      <span class="nl-turn">Turn <%= battle.turn_number %></span>
+      <% if timer_end %>
+        <span class="nl-timer" data-combat-turn-target="turnTimer">5:00</span>
+      <% end %>
+    </div>
+  </div>
+
+  <%# Participants Row %>
+  <div class="nl-combat-participants">
+    <%# Player %>
+    <div class="nl-participant nl-participant--player" data-participant-id="<%= player_participant.id %>">
+      <div class="nl-participant-header">
+        <span class="nl-participant-name"><%= player_participant.combatant_name %></span>
+        <span class="nl-participant-level">Lv.<%= player_participant.character&.level || 1 %></span>
+      </div>
+      <div class="nl-vitals">
+        <div class="nl-hp-bar-container">
+          <div class="nl-hp-fill" style="width: <%= player_participant.hp_percent %>%"></div>
+          <span class="nl-hp-text"><%= player_participant.current_hp %>/<%= player_participant.max_hp %></span>
+        </div>
+        <% if player_participant.max_mp && player_participant.max_mp > 0 %>
+          <div class="nl-mp-bar-container">
+            <div class="nl-mp-fill" style="width: <%= player_participant.mp_percent %>%"></div>
+            <span class="nl-mp-text"><%= player_participant.current_mp %>/<%= player_participant.max_mp %></span>
+          </div>
+        <% end %>
+      </div>
+    </div>
+
+    <div class="nl-vs">VS</div>
+
+    <%# Opponent %>
+    <div class="nl-participant nl-participant--opponent" data-participant-id="<%= opponent_participant.id %>">
+      <div class="nl-participant-header">
+        <span class="nl-participant-name"><%= opponent_participant.combatant_name %></span>
+        <span class="nl-participant-level">Lv.<%= opponent_participant.npc_template&.level || opponent_participant.character&.level || 1 %></span>
+      </div>
+      <div class="nl-vitals">
+        <div class="nl-hp-bar-container">
+          <div class="nl-hp-fill" style="width: <%= opponent_participant.hp_percent %>%"></div>
+          <span class="nl-hp-text"><%= opponent_participant.current_hp %>/<%= opponent_participant.max_hp %></span>
+        </div>
+        <% if opponent_participant.max_mp && opponent_participant.max_mp > 0 %>
+          <div class="nl-mp-bar-container">
+            <div class="nl-mp-fill" style="width: <%= opponent_participant.mp_percent %>%"></div>
+            <span class="nl-mp-text"><%= opponent_participant.current_mp %>/<%= opponent_participant.max_mp %></span>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <%# Action Selection Form %>
+  <%= form_with url: submit_turn_battle_path(battle), method: :post, local: false, class: "nl-combat-form", data: { turbo_stream: true } do |f| %>
+    <%= hidden_field_tag :battle_id, battle.id %>
+    <%= hidden_field_tag :participant_id, player_participant.id %>
+
+    <div class="nl-combat-main">
+      <%# Action Points Display %>
+      <div class="nl-ap-panel">
+        <div class="nl-ap-header">
+          <span class="nl-ap-icon">⚡</span>
+          <span class="nl-ap-label">Action Points</span>
+        </div>
+        <div class="nl-ap-values">
+          <span class="nl-ap-limit">Limit: <%= ap_limit %></span>
+          <span class="nl-ap-used" data-combat-turn-target="apUsed">Used: <strong>0</strong></span>
+        </div>
+        <div class="nl-ap-warning" data-combat-turn-target="apWarning" style="display: none;">
+          ⚠️ Actions exceed AP limit!
+        </div>
+        <div class="nl-penalty-notice" data-combat-turn-target="penaltyNotice" style="display: none;">
+          📊 Multi-attack penalty: +<span id="penalty-amount">0</span> AP
+        </div>
+      </div>
+
+      <%# Attack Section %>
+      <div class="nl-action-section nl-action-section--attacks">
+        <h3 class="nl-section-header">
+          <span class="nl-section-icon">⚔️</span>
+          Attacks
+        </h3>
+        <p class="nl-section-hint">Select attack types for each body part. Cannot attack Head + Legs together.</p>
+
+        <div class="nl-body-parts-grid">
+          <% %w[head torso stomach legs].each do |body_part| %>
+            <div class="nl-body-part">
+              <label class="nl-body-part-label">
+                <span class="nl-body-part-icon">
+                  <% case body_part
+                     when "head" then %><%= "🗣️" %>
+                  <% when "torso" then %><%= "👤" %>
+                  <% when "stomach" then %><%= "🎯" %>
+                  <% when "legs" then %><%= "🦵" %>
+                  <% end %>
+                </span>
+                <%= body_part.titleize %>
+              </label>
+              <select class="nl-select nl-attack-select"
+                      name="attacks[<%= body_part %>]"
+                      data-combat-turn-target="attackSelect"
+                      data-body-part="<%= body_part %>"
+                      data-action="change->combat-turn#updateAttack">
+                <option value="">-- No Attack --</option>
+                <% combat_attack_types(combat_config).each do |key, config| %>
+                  <option value="<%= key %>"
+                          data-cost="<%= config["action_cost"] %>">
+                    <%= config["name"] %> (<%= config["action_cost"] %> AP)
+                  </option>
+                <% end %>
+              </select>
+            </div>
+          <% end %>
+        </div>
+      </div>
+
+      <%# Block Section %>
+      <div class="nl-action-section nl-action-section--blocks">
+        <h3 class="nl-section-header">
+          <span class="nl-section-icon">🛡️</span>
+          Block
+        </h3>
+        <p class="nl-section-hint">Select ONE body part to defend. Blocking reduces incoming damage.</p>
+
+        <div class="nl-body-parts-grid">
+          <% %w[head torso stomach legs].each do |body_part| %>
+            <div class="nl-body-part">
+              <label class="nl-body-part-label">
+                <span class="nl-body-part-icon">🛡️</span>
+                <%= body_part.titleize %>
+              </label>
+              <select class="nl-select nl-block-select"
+                      name="blocks[<%= body_part %>]"
+                      data-combat-turn-target="blockSelect"
+                      data-body-part="<%= body_part %>"
+                      data-action="change->combat-turn#updateBlock">
+                <option value="">-- No Block --</option>
+                <option value="<%= body_part %>_block" data-cost="30">
+                  Block (30 AP)
+                </option>
+              </select>
+            </div>
+          <% end %>
+        </div>
+      </div>
+
+      <%# Skills/Magic Section (if available) %>
+      <% if combat_magic_types(combat_config).any? %>
+        <div class="nl-action-section nl-action-section--skills">
+          <h3 class="nl-section-header">
+            <span class="nl-section-icon">✨</span>
+            Magic / Skills
+          </h3>
+          <p class="nl-section-hint">Mana limit: <%= combat_mana_limit(battle) %> per turn</p>
+
+          <div class="nl-skills-grid">
+            <% combat_magic_types(combat_config).each do |key, config| %>
+              <div class="nl-skill-slot"
+                   data-combat-turn-target="skillSlot"
+                   data-skill-key="<%= key %>"
+                   data-cost="<%= config["action_cost"] || 0 %>"
+                   data-mana="<%= config["mana_cost"] || 0 %>"
+                   data-action="click->combat-turn#toggleSkill">
+                <span class="nl-skill-name"><%= config["name"] %></span>
+                <span class="nl-skill-cost">
+                  <% if config["mana_cost"].to_i > 0 %>
+                    💧 <%= config["mana_cost"] %>
+                  <% end %>
+                  <% if config["action_cost"].to_i > 0 %>
+                    ⚡ <%= config["action_cost"] %>
+                  <% end %>
+                </span>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+    </div>
+
+    <%# Submit Actions %>
+    <div class="nl-combat-actions">
+      <button type="button"
+              class="nl-btn nl-btn--secondary"
+              data-action="click->combat-turn#resetTurn">
+        Reset
+      </button>
+      <button type="submit"
+              class="nl-btn nl-btn--primary nl-btn--disabled"
+              data-combat-turn-target="submitButton"
+              data-action="click->combat-turn#submitTurn"
+              disabled>
+        ⚔️ Execute Turn
+      </button>
+    </div>
+  <% end %>
+
+  <%# Combat Log %>
+  <div class="nl-combat-log-section">
+    <h3 class="nl-section-header">
+      <span class="nl-section-icon">📜</span>
+      Combat Log
+    </h3>
+    <div class="nl-combat-log" data-combat-turn-target="combatLog" id="combat-log">
+      <% battle.combat_log_entries.order(:round_number, :sequence).last(20).each do |entry| %>
+        <div class="nl-log-entry nl-log--<%= entry.event_type %>">
+          <span class="nl-log-time"><%= entry.created_at.strftime("%H:%M:%S") %></span>
+          <span class="nl-log-message"><%= entry.message %></span>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <%# Combat Rules Reference %>
+  <div class="nl-combat-rules">
+    <h4>Combat Rules</h4>
+    <ul>
+      <li><strong>Action Points (AP):</strong> Each turn has a <%= ap_limit %> AP budget</li>
+      <li><strong>Multi-Attack Penalty:</strong> 2nd attack +25 AP, 3rd +75 AP, 4th +150 AP</li>
+      <li><strong>Block Limit:</strong> Only 1 block allowed per turn</li>
+      <li><strong>Exclusivity:</strong> Cannot attack Head + Legs in the same turn</li>
+      <li><strong>Body Parts:</strong> Head deals +30% damage, Stomach +10%, Legs -10%</li>
+    </ul>
+  </div>
+</div>
+

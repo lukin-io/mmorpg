@@ -731,5 +731,243 @@ function StartAct() {
 
 ---
 
-*Last updated: December 2024 (Live server analysis)*
+---
+
+## Live Combat Analysis (Arena Turn)
+
+### Combat Setup
+- **Player**: lukin[0] (Level 0, 20 HP, 7 MP)
+- **Opponent**: Манекен[1] - Mannequin Bot (Level 1, 30 HP, 7 MP)
+- **Arena Type**: Произвольный (Free-form)
+- **Timeout**: 5 minutes
+- **Травматичность (Injury Level)**: средний (medium)
+
+### Action Points Summary
+- **Total AP**: 80
+- **Mana Limit**: 5-8 (for magic attacks)
+
+### Turn 1 Actions Selected
+| Selection | Action | AP Cost |
+|-----------|--------|---------|
+| Attack: Head | Простой (Simple) | 45 |
+| Attack: Torso | Not selected | 0 |
+| Attack: Stomach | Not selected | 0 |
+| Attack: Legs | DISABLED (when head selected) | N/A |
+| Block: Head | Not selected | 0 |
+| Block: Torso | Торс (30) | 30 |
+| Block: Stomach | DISABLED (only 1 block allowed) | N/A |
+| Block: Legs | DISABLED | N/A |
+| **Total Used** | | **75** |
+
+### Turn 1 Results (Combat Log)
+```
+00:42 Манекен[1] критическим ударом (голова) поразил lukin[0] на -13 [7/20].
+      "Mannequin[1] hit lukin[0] with a critical hit (head) for -13 damage [7/20]."
+
+00:42 lukin[0] попытался поразить соперника ударом (голова), но Манекен[1] увернулся.
+      "lukin[0] tried to hit opponent with an attack (head), but Mannequin[1] dodged."
+
+00:35 Бой между lukin[0] и Манекен[1] начался (29.12.2025 00:35:59).
+      "Fight between lukin[0] and Mannequin[1] started (29.12.2025 00:35:59)."
+```
+
+### Key Combat Mechanics Discovered
+
+#### 1. Critical Hits ("критическим ударом")
+- Attacks can critical for bonus damage
+- Indicated by "критическим ударом" in combat log
+- Normal hit ~5-7 damage, Critical hit dealt **13 damage**
+
+#### 2. Dodge/Evasion ("увернулся")
+- Attacks can miss completely if opponent dodges
+- Based on opponent's agility/luck stats
+- Complete miss = 0 damage
+
+#### 3. Body Part Block/Attack Mismatch
+- I blocked **TORSO** but was hit in **HEAD**
+- Block only protects targeted body part
+- Attacker chose unprotected zone
+
+#### 4. Attack Exclusivity
+- Cannot attack HEAD and LEGS in same turn
+- Selecting head attack DISABLES legs dropdown
+- Can attack HEAD+TORSO or STOMACH+LEGS together
+
+#### 5. Single Block Rule
+- Only ONE block per turn
+- Selecting torso block DISABLES all other block dropdowns
+
+### Available Attack Types (from `fight_v10.js`)
+
+| Index | Name | Russian | AP Cost | Mana | Type |
+|-------|------|---------|---------|------|------|
+| 0 | Simple | Простой | 45 | 0 | Physical |
+| 1 | Aimed | Прицельный | 65 | 0 | Physical |
+| 2 | Spirit Arrow | Spirit Arrow | 50 | 5 | Magic |
+| 3 | Mind Blast | Mind Blast | 90 | 5 | Magic |
+
+### Available Block Types
+
+| Index | Name | Russian | AP Cost | Coverage |
+|-------|------|---------|---------|----------|
+| 4 | Head | Голова (35) | 35 | Head only |
+| 5 | Head + Torso | Голова + торс (50) | 50 | Head + Torso |
+| 6 | Head + Stomach | Голова + живот (60) | 60 | Head + Stomach |
+| 7 | Torso | Торс (30) | 30 | Torso only |
+| 8 | Torso + Stomach | Торс + живот (50) | 50 | Torso + Stomach |
+| 9 | Torso + Legs | Торс + ноги (60) | 60 | Torso + Legs |
+| 10 | Stomach | Живот (30) | 30 | Stomach only |
+| 11 | Stomach + Legs | Живот + ноги (50) | 50 | Stomach + Legs |
+| 12 | Legs | Ноги (35) | 35 | Legs only |
+| 13 | Legs + Head | Ноги + голова (80) | 80 | Legs + Head |
+
+### Magic Shield Blocks
+
+| Index | Name | Russian | AP Cost | Mana |
+|-------|------|---------|---------|------|
+| 29 | Magic Shield | Магический Щит | 45 | 20 |
+| 30 | Rainbow Barrier | Радужный Барьер | 60 | 40 |
+| 31 | Crystal Sphere | Кристальная Сфера | 90 | 65 |
+
+### Multi-Attack Penalty System
+
+```javascript
+var shtra_ud = [0, 0, 25, 75, 150, 250];
+```
+
+| Attacks | Penalty |
+|---------|---------|
+| 0 | 0 |
+| 1 | 0 |
+| 2 | +25 AP |
+| 3 | +75 AP |
+| 4 | +150 AP |
+| 5+ | +250 AP |
+
+### Form Submission Data Structure
+
+The combat turn is submitted via POST to `main.php` with:
+
+```
+POST /main.php
+Content-Type: application/x-www-form-urlencoded
+
+post_id=7
+vcode={verification_code}
+enemy={enemy_id}
+group={group_number}
+inf_bot={bot_info}
+inf_zb={zone_info}
+lev_bot={bot_level}
+ftr={fight_type_rules}
+inu=0_0_0@                  # Attacks: position_attackType_mana
+inb=1_7_0                   # Block: position_blockType_mana
+ina=                        # Magic: spellId@spellId@...
+```
+
+### Attack Input Format (`inu`)
+```
+{bodyPart}_{attackType}_{mana}@{bodyPart}_{attackType}_{mana}@...
+
+Example: 0_0_0@ = Head attack, Simple type, 0 mana
+         1_1_0@ = Torso attack, Aimed type, 0 mana
+```
+
+### Block Input Format (`inb`)
+```
+{bodyPart}_{blockType}_{mana}
+
+Example: 1_7_0 = Torso block, type 7 (Торс (30)), 0 mana
+```
+
+### Combat Resolution Order (Inferred)
+1. Both players submit their actions
+2. Server resolves attacks simultaneously
+3. Hit chance calculated (based on stats)
+4. If hit: check for block match
+5. If blocked: reduce/negate damage
+6. If not blocked: apply damage
+7. Check for critical hit
+8. Apply damage to HP
+9. Check for dodge (if not hit)
+10. Generate combat log entries
+11. Update HP/MP bars
+12. Check for victory conditions
+
+---
+
+## Fight Conclusion
+
+### Final Combat Log
+```
+00:41 Бой закончен по таймауту.
+      "Fight ended by timeout."
+
+00:42 Манекен[1] критическим ударом (голова) поразил lukin[0] на -13 [7/20].
+      "Mannequin[1] hit lukin[0] with critical attack (head) for -13 [7/20]."
+
+00:42 lukin[0] попытался поразить соперника ударом (голова), но Манекен[1] увернулся.
+      "lukin[0] tried to hit opponent with attack (head), but Mannequin[1] dodged."
+
+00:35 Бой между lukin[0] и Манекен[1] начался (29.12.2025 00:35:59).
+      "Fight between lukin[0] and Mannequin[1] started (29.12.2025 00:35:59)."
+```
+
+### Post-Fight State
+- **HP**: 0/20 → 3/20 (auto-regenerating)
+- **MP**: 0/7
+- **Warning**: "Восстановитесь для поединков, Вы слишком ослаблены!" (Recover for fights, you are too weak!)
+- **Arena Access**: Disabled until HP recovers
+
+### Key Observations
+
+1. **Timeout Victory**: Fight ended by timeout after ~6 minutes (started 00:35, ended 00:41)
+2. **HP Regeneration**: Automatic HP/MP regen outside of combat (0→3 in seconds)
+3. **Arena Access Control**: Cannot enter arena when HP is too low
+4. **PVP = PVE**: Same combat mechanics for both player and bot opponents
+
+### Arena Fight Types (Tabs)
+| Tab | Russian | Description |
+|-----|---------|-------------|
+| Дуэли | Duels | 1v1 combat |
+| Групповые | Group | Team battles |
+| Жертвенные | Sacrificial | Special mode |
+| Тактические | Tactical | Grid-based tactical combat |
+| Тотализатор | Betting | Spectator betting |
+| Статистика | Statistics | Fight history & rankings |
+
+---
+
+## Critical Architecture Insight
+
+> **PVP and PVE use the SAME combat system.**
+> The only difference is opponent type (real player vs NPC bot).
+
+This means Elselands should have:
+- **ONE unified combat service** (`TurnBasedCombatService`)
+- **Opponent interface** (Character or NPC both implement same combat interface)
+- **Arena service** manages matchmaking, not combat logic
+- **Combat logic** is opponent-agnostic
+
+---
+
+## Elselands Implementation Checklist
+
+Based on live analysis, Elselands should implement:
+
+- [ ] **Body Part Targeting** (4 zones: head, torso, stomach, legs)
+- [ ] **Attack Types** (Simple, Aimed, Magic)
+- [ ] **Block Types** (Single zone, combo zones, magic shields)
+- [ ] **AP System** (80 base, multi-attack penalties)
+- [ ] **Mana System** (for magic attacks/blocks)
+- [ ] **Critical Hits** (bonus damage, stat-based chance)
+- [ ] **Dodge/Evasion** (miss chance, stat-based)
+- [ ] **Block Effectiveness** (match attack location)
+- [ ] **Turn Timer** (5 min timeout)
+- [ ] **Simultaneous Resolution** (both players' actions resolve)
+- [ ] **Combat Log** (timestamped, colored by team/element)
+
+---
+
+*Last updated: December 2024 (Live server analysis with arena turn)*
 
