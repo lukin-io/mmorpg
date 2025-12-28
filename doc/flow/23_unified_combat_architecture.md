@@ -1,6 +1,15 @@
 # Unified Combat Architecture
 
 ## Version History
+- **v1.3** (2025-12-28): Implemented 8 architectural improvements:
+  - #3: Concurrency locks (row-level locking, unique index for active battles)
+  - #4: VitalsService integration for damage/healing
+  - #2: Locality checks (same zone, range, safe buildings)
+  - #6: RNG seed persistence on Battle for deterministic replay
+  - #5: Unified damage formula (`CombatDamageFormula`)
+  - #7: Anti-abuse protections (newbie, level gap, repeat kill farming)
+  - #8: Fixed faction alignment (alliance/rebellion/neutral)
+  - #9: Normalized HP fields (current_hp canonical, hp_remaining synced)
 - **v1.2** (2025-12-27): Simplified architecture - integrated with existing battle system
 - **v1.1** (2025-12-26): Added comprehensive test coverage (request, system, policy specs)
 - **v1.0** (2025-12-26): Initial implementation - unified combat core with PVP support
@@ -205,10 +214,11 @@ POST /pvp_combat/toggle_pvp # Toggle voluntary PVP
 ## Responsible for Implementation Files
 
 ### Models
-- `app/models/battle.rb` - Battle persistence (supports pvp battle_type)
-- `app/models/battle_participant.rb` - Participant tracking
+- `app/models/battle.rb` - Battle persistence (supports pvp battle_type, rng_seed)
+- `app/models/battle_participant.rb` - Participant tracking (current_hp canonical, scopes)
 - `app/models/combat_log_entry.rb` - Combat log persistence
 - `app/models/pvp_flag.rb` - PVP flag tracking
+- `app/models/character.rb` - Combat stats (attack_power, defense, critical_chance, agility)
 
 ### Controllers
 - `app/controllers/pvp_combat_controller.rb` - PVP combat UI
@@ -216,16 +226,23 @@ POST /pvp_combat/toggle_pvp # Toggle voluntary PVP
 ### Views
 - `app/views/pvp_combat/show.html.erb` - Battle view
 - `app/views/pvp_combat/action.turbo_stream.erb` - Action updates
-- `app/views/pvp_combat/attack.turbo_stream.erb` - Attack response
+- `app/views/pvp_combat/turn.turbo_stream.erb` - Turn updates
 - `app/views/pvp_combat/toggle_pvp.turbo_stream.erb` - PVP toggle
 
+### Game Engine
+- `app/lib/game/formulas/combat_damage_formula.rb` - Unified damage formula (PvE/PvP)
+
 ### Services
-- `app/services/game/combat/pvp_encounter_service.rb` - PVP combat service
-- `app/services/game/pvp/zone_rules.rb` - Zone PVP rules
+- `app/services/game/combat/pvp_encounter_service.rb` - PVP combat service (with all improvements)
+- `app/services/game/pvp/zone_rules.rb` - Zone PVP rules (fixed faction alignment)
 - `app/services/game/pvp/flag_service.rb` - PVP flag management
+- `app/services/characters/vitals_service.rb` - Damage/healing application
 
 ### Policies
 - `app/policies/pvp_combat_policy.rb` - PVP authorization
+
+### Migrations
+- `db/migrate/20251228200000_improve_pvp_battle_system.rb` - RNG seed, unique index, HP sync
 
 ### Specs
 - `spec/requests/pvp_combat_spec.rb`
@@ -233,7 +250,9 @@ POST /pvp_combat/toggle_pvp # Toggle voluntary PVP
 - `spec/services/game/pvp/zone_rules_spec.rb`
 - `spec/services/game/pvp/flag_service_spec.rb`
 - `spec/services/game/combat/pvp_encounter_service_spec.rb`
+- `spec/lib/game/formulas/combat_damage_formula_spec.rb`
 - `spec/models/pvp_flag_spec.rb`
+- `spec/models/battle_participant_spec.rb`
 - `spec/system/pvp_combat_spec.rb`
 
 ---

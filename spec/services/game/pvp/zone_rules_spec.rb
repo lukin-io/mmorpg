@@ -97,20 +97,26 @@ RSpec.describe Game::Pvp::ZoneRules do
 
     context "in faction warfare mode" do
       let(:zone) { instance_double(Zone, biome: "plains", pvp_enabled?: true, pvp_mode: "faction_war") }
-      let(:light_char) { create(:character, faction_alignment: "neutral") }
-      let(:dark_char) { create(:character, faction_alignment: "neutral") }
+      let(:alliance_char) { create(:character, faction_alignment: "alliance") }
+      let(:rebellion_char) { create(:character, faction_alignment: "rebellion") }
+      let(:neutral_char) { create(:character, faction_alignment: "neutral") }
 
-      before do
-        allow(light_char).to receive(:faction_alignment).and_return("light")
-        allow(dark_char).to receive(:faction_alignment).and_return("dark")
+      it "allows opposing factions (alliance vs rebellion) to fight" do
+        expect(described_class.pvp_allowed?(zone, attacker: alliance_char, defender: rebellion_char)).to be true
       end
 
-      it "allows opposing factions to fight" do
-        expect(described_class.pvp_allowed?(zone, attacker: light_char, defender: dark_char)).to be true
+      it "allows opposing factions (rebellion vs alliance) to fight" do
+        expect(described_class.pvp_allowed?(zone, attacker: rebellion_char, defender: alliance_char)).to be true
       end
 
-      it "requires flagging for same faction" do
-        expect(described_class.pvp_allowed?(zone, attacker: light_char, defender: light_char)).to be false
+      it "requires flagging for same faction (alliance vs alliance)" do
+        another_alliance = create(:character, faction_alignment: "alliance")
+        expect(described_class.pvp_allowed?(zone, attacker: alliance_char, defender: another_alliance)).to be false
+      end
+
+      it "requires flagging when neutral is involved" do
+        # Neutral is not part of faction war
+        expect(described_class.pvp_allowed?(zone, attacker: alliance_char, defender: neutral_char)).to be false
       end
     end
   end

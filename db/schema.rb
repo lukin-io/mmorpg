@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_12_26_120000) do
+ActiveRecord::Schema[8.1].define(version: 2025_12_28_200000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -320,6 +320,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_26_120000) do
     t.jsonb "metadata", default: {}, null: false
     t.boolean "moderation_override", default: false, null: false
     t.string "pvp_mode"
+    t.bigint "rng_seed"
     t.integer "round_number", default: 1
     t.string "share_token"
     t.datetime "started_at"
@@ -327,6 +328,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_26_120000) do
     t.integer "turn_number", default: 1, null: false
     t.datetime "updated_at", null: false
     t.bigint "zone_id"
+    t.index ["initiator_id", "status"], name: "index_battles_on_initiator_active", unique: true, where: "(status = 1)"
     t.index ["initiator_id"], name: "index_battles_on_initiator_id"
     t.index ["share_token"], name: "index_battles_on_share_token", unique: true
     t.index ["status"], name: "index_battles_on_status"

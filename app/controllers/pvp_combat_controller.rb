@@ -27,11 +27,7 @@ class PvpCombatController < ApplicationController
     respond_to do |format|
       if result.success
         format.html { redirect_to pvp_combat_path(result.battle), notice: result.message }
-        format.turbo_stream do
-          @battle = result.battle
-          setup_battle_view_variables
-          render :attack
-        end
+        format.turbo_stream { redirect_to pvp_combat_path(result.battle), notice: result.message, status: :see_other }
         format.json { render json: {battle_id: result.battle.id, message: result.message} }
       else
         format.html { redirect_back fallback_location: world_path, alert: result.message }

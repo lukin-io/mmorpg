@@ -233,9 +233,10 @@ Ensure results match expected numbers.
 The combat system supports player-vs-player combat using the same core mechanics.
 
 ## PVP Services
-- `Game::Combat::PvpEncounterService` — Handles open-world PVP encounters
+- `Game::Combat::PvpEncounterService` — Handles open-world PVP encounters (v1.3+)
 - `Game::Pvp::ZoneRules` — Determines if PVP is allowed in a zone
 - `Game::Pvp::FlagService` — Manages PVP flags
+- `Game::Formulas::CombatDamageFormula` — Unified damage formula (shared with PvE)
 
 ## PVP-Specific Rules
 - Zone must have `pvp_enabled: true` or both players must be flagged
@@ -243,19 +244,40 @@ The combat system supports player-vs-player combat using the same core mechanics
 - City biomes are always safe (no PVP)
 - Attackers are automatically flagged for hostile action
 - Losers have their HP set to 0
-- Winners receive XP, gold, and honor rewards
+- Winners receive XP, gold, and honor rewards (with diminishing returns)
+
+## v1.3 Improvements (2025-12-28)
+- **Concurrency Protection**: Row-level locking + unique index prevents duplicate active battles
+- **VitalsService Integration**: All damage routed through `Characters::VitalsService`
+- **Locality Checks**: Same zone, attack range (5 tiles), safe building protection
+- **Deterministic RNG**: `rng_seed` persisted on `Battle` for replay/debugging
+- **Unified Damage Formula**: `Game::Formulas::CombatDamageFormula` shared between PvE/PvP
+- **Anti-Abuse Protections**:
+  - Newbie protection (can't attack players below level 10)
+  - Level gap limit (max 20 level difference)
+  - Repeat kill farming (max 3 kills per target per day)
+  - Diminishing XP/gold rewards for repeated kills
+- **Faction Alignment**: `faction_alignment` supports `alliance`, `rebellion`, `neutral`
 
 ## Example Flow
 ```ruby
 # Start PVP encounter
-service = Game::Combat::PvpEncounterService.new(attacker, defender)
+service = Game::Combat::PvpEncounterService.new(attacker, defender, zone: zone)
 result = service.start_encounter!
 
-# Process combat action
+# Process combat action (uses unified damage formula)
 result = service.process_action!(
   character: attacker,
   action_type: :attack,
-  body_part: "head"
+  body_part: "head",
+  action_key: "aimed"  # +30% damage
+)
+
+# Process full turn with multiple attacks
+result = service.process_turn!(
+  character: attacker,
+  attacks: [{body_part: "head", action_key: "aimed"}],
+  blocks: [{body_part: "torso", action_key: "block_torso"}]
 )
 ```
 
@@ -283,27 +305,31 @@ This ensures the entire combat engine remains consistent, extensible, and determ
 
 | File | Purpose |
 |------|---------|
-| `app/models/character.rb` | `max_action_points` method calculating AP from level + agility |
-| `app/models/battle.rb` | Stores `action_points_per_turn` for combat |
+| `app/models/character.rb` | Combat stats: `max_action_points`, `attack_power`, `defense`, `critical_chance`, `agility` |
+| `app/models/battle.rb` | Battle persistence with `rng_seed` for deterministic replay |
+| `app/models/battle_participant.rb` | Participant tracking with HP sync (`current_hp` canonical) |
 | `app/models/pvp_flag.rb` | Tracks PVP flag status |
+| `app/lib/game/formulas/combat_damage_formula.rb` | Unified damage formula (shared PvE/PvP) |
 | `app/services/game/combat/pve_encounter_service.rb` | Creates PVE battle with character's AP, validates turn costs |
-| `app/services/game/combat/pvp_encounter_service.rb` | Creates PVP battle between players |
+| `app/services/game/combat/pvp_encounter_service.rb` | PVP combat with locality, anti-abuse, VitalsService integration |
 | `app/services/game/combat/turn_based_combat_service.rb` | Validates actions against AP budget |
-| `app/services/game/pvp/zone_rules.rb` | Determines if PVP is allowed in a zone |
+| `app/services/game/pvp/zone_rules.rb` | PVP zone rules with faction alignment (alliance/rebellion/neutral) |
 | `app/services/game/pvp/flag_service.rb` | Manages PVP flag creation and expiry |
+| `app/services/characters/vitals_service.rb` | Damage/healing application with death handling |
 | `app/controllers/pvp_combat_controller.rb` | Handles PVP combat UI |
 | `app/views/combat/_battle.html.erb` | Displays AP in combat UI |
 | `app/views/combat/_nl_action_selection.html.erb` | Attack/block selection with AP costs |
 | `app/views/pvp_combat/*.html.erb` | PVP combat views |
 | `app/javascript/controllers/turn_combat_controller.js` | Client-side AP tracking and validation |
 | `config/gameplay/combat_actions.yml` | Action costs, attack penalties, defaults |
-| `db/schema.rb` | `battles.action_points_per_turn` column |
-| `spec/models/character_spec.rb` | Tests for `max_action_points` |
+| `db/migrate/20251228200000_improve_pvp_battle_system.rb` | RNG seed, unique index, HP sync |
+| `spec/models/character_spec.rb` | Tests for combat stats |
 | `spec/services/game/combat/pve_encounter_service_spec.rb` | Tests for PVE AP validation |
-| `spec/services/game/combat/pvp_encounter_service_spec.rb` | Tests for PVP combat |
+| `spec/services/game/combat/pvp_encounter_service_spec.rb` | Tests for PVP combat (122 examples) |
+| `spec/lib/game/formulas/combat_damage_formula_spec.rb` | Tests for unified damage formula |
 | `spec/services/game/pvp/*_spec.rb` | Tests for PVP rules and flags |
 
 ## Related Documentation
 - `doc/flow/16_combat_system.md` — Combat system flow
 - `doc/flow/11_arena_pvp.md` — Arena PVP system
-- `doc/flow/23_unified_combat_architecture.md` — Unified combat architecture
+- `doc/flow/23_unified_combat_architecture.md` — Unified combat architecture (v1.3)

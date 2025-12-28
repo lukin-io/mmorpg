@@ -119,21 +119,38 @@ module Game
         end
 
         # Check if characters are in opposing factions
+        # Uses Character.alignment values: neutral, alliance, rebellion
         def opposing_factions?(attacker, defender)
-          attacker_faction = attacker.respond_to?(:faction_alignment) ? attacker.faction_alignment : nil
-          defender_faction = defender.respond_to?(:faction_alignment) ? defender.faction_alignment : nil
+          attacker_faction = extract_faction(attacker)
+          defender_faction = extract_faction(defender)
 
           return false if attacker_faction.nil? || defender_faction.nil?
 
-          # Define opposing factions
+          # Neutral characters are not in faction war
+          return false if attacker_faction == "neutral" || defender_faction == "neutral"
+
+          # Alliance and Rebellion are opposing factions
           opposites = {
-            "light" => "dark",
-            "dark" => "light",
-            "law" => "chaos",
-            "chaos" => "law"
+            "alliance" => "rebellion",
+            "rebellion" => "alliance"
           }
 
           opposites[attacker_faction.to_s] == defender_faction.to_s
+        end
+
+        # Extract faction/alignment from character
+        def extract_faction(character)
+          # Check for faction_alignment (Character model uses this)
+          if character.respond_to?(:faction_alignment)
+            return character.faction_alignment
+          end
+
+          # Check for alignment (alternative)
+          if character.respond_to?(:alignment)
+            return character.alignment
+          end
+
+          nil
         end
 
         # Check if attacker has a revenge window against defender

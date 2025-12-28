@@ -4,6 +4,7 @@
 - **v1.0** (2025-12-01): Initial arena PvP implementation
 - **v1.1** (2025-12-22): Added NPC arena bots for training, unified NPC architecture integration
 - **v1.2** (2025-12-27): Added reference to open-world PVP via unified combat architecture
+- **v1.3** (2025-12-28): Open-world PVP improvements documented (concurrency, locality, anti-abuse, deterministic RNG)
 
 ## Implementation Status
 

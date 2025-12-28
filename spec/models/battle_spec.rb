@@ -11,8 +11,9 @@ RSpec.describe Battle do
     it "belongs to zone (optional)" do
       expect(battle.zone).to eq(zone)
 
-      # Test optional
-      battle_without_zone = create(:battle, initiator: character, zone: nil)
+      # Test optional - use different initiator to avoid unique constraint
+      other_character = create(:character, :with_position)
+      battle_without_zone = create(:battle, initiator: other_character, zone: nil)
       expect(battle_without_zone).to be_valid
     end
 
@@ -129,7 +130,8 @@ RSpec.describe Battle do
       end
 
       it "generates unique share tokens" do
-        tokens = 5.times.map { create(:battle, initiator: character).share_token }
+        # Use different initiators to avoid unique constraint on active battles
+        tokens = 5.times.map { create(:battle, initiator: create(:character, :with_position)).share_token }
         expect(tokens.uniq.size).to eq(5)
       end
     end

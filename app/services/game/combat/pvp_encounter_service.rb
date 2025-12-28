@@ -5,6 +5,14 @@ module Game
     # Purpose: Handles open-world PVP encounters between players.
     # Uses the same battle system as PvE, adapted for player-vs-player combat.
     #
+    # Features:
+    # - Concurrency protection via row-level locking
+    # - Deterministic combat with persistent RNG seeds
+    # - Unified damage formula shared with PvE
+    # - VitalsService integration for damage/healing
+    # - Locality enforcement (same zone, range checks)
+    # - Anti-abuse protections (level gap, repeat kills)
+    #
     # Inputs:
     #   - attacker: Character initiating the attack
     #   - defender: Character being attacked
@@ -18,27 +26,59 @@ module Game
     #   result = service.start_encounter!
     #   result = service.process_action!(action_type: :attack)
     #
+    #   # Deterministic mode (for testing):
+    #   service = Game::Combat::PvpEncounterService.new(attacker, defender, rng: Random.new(12345))
+    #
     class PvpEncounterService
       Result = Struct.new(:success, :battle, :message, :combat_log, :rewards, :metadata, keyword_init: true)
 
       ACTIONS = %i[attack defend skill flee surrender].freeze
 
-      attr_reader :attacker, :defender, :battle, :zone, :errors
+      # Anti-abuse constants
+      MAX_KILLS_PER_TARGET_PER_DAY = 3
+      NEWBIE_PROTECTION_LEVEL = 10
+      MAX_LEVEL_DIFFERENCE = 20
+      ATTACK_RANGE = 5 # Tiles
 
-      def initialize(attacker, defender, zone: nil)
+      attr_reader :attacker, :defender, :battle, :zone, :errors, :rng, :damage_formula
+
+      def initialize(attacker, defender, zone: nil, rng: nil)
         @attacker = attacker
         @defender = defender
         @zone = zone || attacker.position&.zone
+        @rng = rng
         @errors = []
+        @damage_formula = nil
       end
 
       # Start a new PVP encounter
+      # Uses row-level locking to prevent duplicate battles
       #
       # @return [Result]
       def start_encounter!
+        # Acquire locks on both characters to prevent race conditions
+        # Order by ID to prevent deadlocks
+        locked_characters = Character.where(id: [attacker.id, defender.id])
+          .order(:id)
+          .lock("FOR UPDATE")
+          .to_a
+
+        # Re-fetch to ensure we have latest state
+        @attacker = locked_characters.find { |c| c.id == attacker.id }
+        @defender = locked_characters.find { |c| c.id == defender.id }
+
+        # Validation checks
         return failure("Already in combat") if either_in_combat?
         return failure("Cannot attack dead character") if attacker.current_hp <= 0
         return failure("Target is dead") if defender.current_hp <= 0
+
+        # Locality checks
+        locality_check = check_locality
+        return failure(locality_check[:reason]) unless locality_check[:allowed]
+
+        # Anti-abuse checks
+        abuse_check = check_anti_abuse
+        return failure(abuse_check[:reason]) unless abuse_check[:allowed]
 
         # Check PVP rules
         pvp_check = Game::Pvp::ZoneRules.check_pvp_allowed(zone, attacker, defender)
@@ -63,6 +103,8 @@ module Game
         )
       rescue ActiveRecord::RecordInvalid => e
         failure("Failed to start encounter: #{e.message}")
+      rescue ActiveRecord::RecordNotUnique
+        failure("Already in combat")
       end
 
       # Process a combat action from a character
@@ -75,6 +117,9 @@ module Game
         character ||= attacker
         @battle ||= find_active_battle(character)
         return failure("Not in combat") unless battle
+
+        # Initialize RNG from battle seed
+        initialize_rng_from_battle!
 
         # Ensure we have both participants
         @attacker ||= find_alpha_character
@@ -111,6 +156,9 @@ module Game
         @battle ||= find_active_battle(character)
         return failure("Not in combat") unless battle
 
+        # Initialize RNG from battle seed
+        initialize_rng_from_battle!
+
         participant = battle.battle_participants.find_by(character: character)
         return failure("Character not in this combat") unless participant
         return failure("Character is dead") unless participant.is_alive
@@ -134,55 +182,58 @@ module Game
           combat_log << "#{character.name} defends their #{blocks_set.join(", ")}."
         end
 
-        # Process attacks
+        # Process attacks using unified damage formula
         attacks.each do |attack|
           body_part = attack["body_part"] || attack[:body_part]
           action_key = attack["action_key"] || attack[:action_key]
           next if action_key.blank?
 
-          # Calculate damage
-          damage = calculate_pvp_damage(character, opponent, is_defending: opponent_participant&.is_defending)
-          damage = (damage * 1.3).to_i if action_key == "aimed"
+          # Calculate damage using unified formula
+          is_defending = opponent_participant&.is_defending
+          is_critical = damage_formula.critical_hit?(character)
+          multiplier = (action_key == "aimed") ? 1.3 : 1.0
 
-          # Check for crit
-          is_crit = rand(100) < crit_chance(character)
-          damage = (damage * 1.5).to_i if is_crit
+          damage = damage_formula.call(
+            character,
+            opponent,
+            is_defending: is_defending,
+            is_critical: is_critical,
+            damage_multiplier: multiplier
+          )
 
           total_damage += damage
           attack_name = (action_key == "aimed") ? "aimed attack" : "attack"
-          combat_log << "#{character.name} #{attack_name}s #{opponent.name}'s #{body_part} for #{damage} damage#{" (CRITICAL!)" if is_crit}."
+          combat_log << "#{character.name} #{attack_name}s #{opponent.name}'s #{body_part} for #{damage} damage#{" (CRITICAL!)" if is_critical}."
         end
 
-        # Apply damage to opponent
+        # Apply damage through VitalsService
         if total_damage > 0
-          new_hp = [opponent_participant.current_hp - total_damage, 0].max
-          opponent_participant.update!(current_hp: new_hp, is_defending: false)
-
-          # Sync to character
-          opponent.update!(current_hp: new_hp)
+          apply_damage_via_vitals!(opponent, opponent_participant, total_damage, "PVP: #{character.name}")
 
           # Check if opponent defeated
-          if new_hp <= 0
+          if opponent_participant.reload.current_hp <= 0
             return complete_battle!(winner: character, loser: opponent, combat_log: combat_log)
           end
         end
 
-        # Process opponent's turn (simple AI-like behavior for now - they attack back)
-        # In real PVP, both players submit turns simultaneously
-        # For now, opponent gets an auto-response
-        opponent_target = %w[head torso stomach legs].sample
+        # Process opponent's turn (counterattack)
+        body_parts = %w[head torso stomach legs]
+        opponent_target = body_parts[rng.rand(body_parts.size)]
         blocked = blocks_set.include?(opponent_target)
 
-        opponent_damage = calculate_pvp_damage(opponent, character, is_defending: blocked)
+        opponent_damage = damage_formula.call(
+          opponent,
+          character,
+          is_defending: blocked,
+          is_critical: damage_formula.critical_hit?(opponent)
+        )
         combat_log << "#{opponent.name} attacks #{character.name}'s #{opponent_target} for #{opponent_damage} damage#{" (blocked!)" if blocked}."
 
-        # Apply damage to character
-        new_hp = [participant.current_hp - opponent_damage, 0].max
-        participant.update!(current_hp: new_hp, is_defending: false)
-        character.update!(current_hp: new_hp)
+        # Apply damage through VitalsService
+        apply_damage_via_vitals!(character, participant, opponent_damage, "PVP: #{opponent.name}")
 
         # Check if character defeated
-        if new_hp <= 0
+        if participant.reload.current_hp <= 0
           return complete_battle!(winner: opponent, loser: character, combat_log: combat_log)
         end
 
@@ -223,6 +274,122 @@ module Game
 
       private
 
+      # ==================
+      # Locality Checks
+      # ==================
+
+      def check_locality
+        # No zone = unsafe wilderness, allow PVP
+        return {allowed: true} if zone.nil?
+
+        # Check same zone
+        unless same_zone?
+          return {allowed: false, reason: "Target is not in the same zone"}
+        end
+
+        # Check range (if positions available)
+        unless within_attack_range?
+          return {allowed: false, reason: "Target is out of range"}
+        end
+
+        # Check safe building
+        if in_safe_building?(defender)
+          return {allowed: false, reason: "Target is in a safe building"}
+        end
+
+        {allowed: true}
+      end
+
+      def same_zone?
+        return true if zone.nil?
+
+        attacker_zone = get_character_zone(attacker)
+        defender_zone = get_character_zone(defender)
+
+        attacker_zone&.id == defender_zone&.id
+      end
+
+      def get_character_zone(character)
+        # Get zone from position (the standard way)
+        return character.position.zone if character.respond_to?(:position) && character.position&.zone
+
+        # No position means no zone context
+        nil
+      end
+
+      def within_attack_range?
+        return true unless attacker.respond_to?(:position) && defender.respond_to?(:position)
+        return true if attacker.position.nil? || defender.position.nil?
+
+        distance = calculate_distance(
+          attacker.position.x, attacker.position.y,
+          defender.position.x, defender.position.y
+        )
+
+        distance <= ATTACK_RANGE
+      end
+
+      def calculate_distance(x1, y1, x2, y2)
+        Math.sqrt((x2 - x1)**2 + (y2 - y1)**2)
+      end
+
+      def in_safe_building?(character)
+        return false unless character.respond_to?(:position)
+        return false if character.position.nil?
+
+        # Check if position is in a safe building (shop, bank, etc.)
+        position = character.position
+        return false unless position.respond_to?(:building)
+
+        safe_building_types = %w[shop bank temple hospital inn]
+        safe_building_types.include?(position.building&.building_type)
+      end
+
+      # ==================
+      # Anti-Abuse Checks
+      # ==================
+
+      def check_anti_abuse
+        # Newbie protection
+        if defender.level < NEWBIE_PROTECTION_LEVEL && attacker.level >= NEWBIE_PROTECTION_LEVEL
+          return {allowed: false, reason: "Cannot attack players below level #{NEWBIE_PROTECTION_LEVEL}"}
+        end
+
+        # Level difference cap
+        level_diff = (attacker.level - defender.level).abs
+        if level_diff > MAX_LEVEL_DIFFERENCE
+          return {allowed: false, reason: "Level difference too large (max #{MAX_LEVEL_DIFFERENCE})"}
+        end
+
+        # Check repeat kill farming
+        if repeat_kill_farming?
+          return {allowed: false, reason: "You have killed this player too many times today"}
+        end
+
+        {allowed: true}
+      end
+
+      def repeat_kill_farming?
+        attacker.metadata ||= {}
+        kills_today = attacker.metadata.dig("pvp_kills", defender.id.to_s, Date.current.to_s) || 0
+        kills_today >= MAX_KILLS_PER_TARGET_PER_DAY
+      end
+
+      def record_kill!(winner, loser)
+        winner.metadata ||= {}
+        winner.metadata["pvp_kills"] ||= {}
+        winner.metadata["pvp_kills"][loser.id.to_s] ||= {}
+
+        today = Date.current.to_s
+        current_kills = winner.metadata["pvp_kills"][loser.id.to_s][today] || 0
+        winner.metadata["pvp_kills"][loser.id.to_s][today] = current_kills + 1
+        winner.save!
+      end
+
+      # ==================
+      # Combat Helpers
+      # ==================
+
       def either_in_combat?
         attacker_in_combat? || defender_in_combat?
       end
@@ -253,7 +420,16 @@ module Game
         battle.battle_participants.find_by(team: opponent_team)&.character
       end
 
+      # ==================
+      # Battle Creation
+      # ==================
+
       def create_battle!
+        # Generate deterministic seed for RNG
+        seed = generate_battle_seed
+        @rng = Random.new(seed)
+        @damage_formula = Game::Formulas::CombatDamageFormula.new(rng: @rng)
+
         @battle = Battle.create!(
           battle_type: :pvp,
           status: :active,
@@ -262,8 +438,25 @@ module Game
           turn_number: 1,
           initiative_order: calculate_initiative,
           action_points_per_turn: [attacker.max_action_points, defender.max_action_points].min,
-          pvp_mode: "duel"
+          pvp_mode: "duel",
+          rng_seed: seed
         )
+      end
+
+      def generate_battle_seed
+        # Deterministic seed based on characters and timestamp
+        base = "#{attacker.id}-#{defender.id}-#{Time.current.to_i}"
+        Digest::MD5.hexdigest(base).to_i(16) % (2**31)
+      end
+
+      def initialize_rng_from_battle!
+        return if @rng && @damage_formula
+
+        seed = battle.rng_seed || generate_battle_seed
+        # Advance RNG based on turn number for consistency
+        @rng = Random.new(seed)
+        battle.turn_number.times { @rng.rand }
+        @damage_formula = Game::Formulas::CombatDamageFormula.new(rng: @rng)
       end
 
       def create_participants!
@@ -271,6 +464,7 @@ module Game
         battle.battle_participants.create!(
           character: attacker,
           team: "alpha",
+          role: "combatant",
           initiative: attacker_initiative,
           current_hp: attacker.current_hp,
           max_hp: attacker.max_hp,
@@ -281,6 +475,7 @@ module Game
         battle.battle_participants.create!(
           character: defender,
           team: "beta",
+          role: "combatant",
           initiative: defender_initiative,
           current_hp: defender.current_hp,
           max_hp: defender.max_hp,
@@ -297,13 +492,17 @@ module Game
       end
 
       def attacker_initiative
-        base = attacker.respond_to?(:agility) ? attacker.agility : 10
-        base + rand(1..10)
+        @attacker_initiative ||= begin
+          base = attacker.agility
+          base + rng.rand(1..10)
+        end
       end
 
       def defender_initiative
-        base = defender.respond_to?(:agility) ? defender.agility : 10
-        base + rand(1..10)
+        @defender_initiative ||= begin
+          base = defender.agility
+          base + rng.rand(1..10)
+        end
       end
 
       def flag_attacker_for_pvp!
@@ -320,41 +519,55 @@ module Game
         defender.save!
       end
 
+      # ==================
+      # Action Processing
+      # ==================
+
       def process_attack!(character, params)
         participant = battle.battle_participants.find_by(character: character)
         opponent = find_opponent(character)
         opponent_participant = battle.battle_participants.find_by(character: opponent)
 
         body_part = params[:body_part] || "torso"
+        action_key = params[:action_key]
+        is_aimed = action_key == "aimed"
         combat_log = []
 
-        # Calculate and apply damage
-        damage = calculate_pvp_damage(character, opponent, is_defending: opponent_participant&.is_defending)
+        # Calculate damage using unified formula
+        is_critical = damage_formula.critical_hit?(character)
+        multiplier = is_aimed ? 1.3 : 1.0
 
-        # Check for crit
-        is_crit = rand(100) < crit_chance(character)
-        damage = (damage * 1.5).to_i if is_crit
+        damage = damage_formula.call(
+          character,
+          opponent,
+          is_defending: opponent_participant&.is_defending,
+          is_critical: is_critical,
+          damage_multiplier: multiplier
+        )
 
-        new_hp = [opponent_participant.current_hp - damage, 0].max
-        opponent_participant.update!(current_hp: new_hp, is_defending: false)
-        opponent.update!(current_hp: new_hp)
+        # Apply damage through VitalsService
+        apply_damage_via_vitals!(opponent, opponent_participant, damage, "PVP: #{character.name}")
 
-        combat_log << "#{character.name} attacks #{opponent.name}'s #{body_part} for #{damage} damage#{" (CRITICAL!)" if is_crit}."
+        attack_type = is_aimed ? "🎯 aimed attack" : "attacks"
+        combat_log << "#{character.name} #{attack_type} #{opponent.name}'s #{body_part} for #{damage} damage#{" (CRITICAL!)" if is_critical}."
 
         # Check for defeat
-        if new_hp <= 0
+        if opponent_participant.reload.current_hp <= 0
           return complete_battle!(winner: character, loser: opponent, combat_log: combat_log)
         end
 
         # Opponent counterattack
-        counter_damage = calculate_pvp_damage(opponent, character, is_defending: participant.is_defending)
-        new_char_hp = [participant.current_hp - counter_damage, 0].max
-        participant.update!(current_hp: new_char_hp, is_defending: false)
-        character.update!(current_hp: new_char_hp)
+        counter_damage = damage_formula.call(
+          opponent,
+          character,
+          is_defending: participant.is_defending,
+          is_critical: damage_formula.critical_hit?(opponent)
+        )
+        apply_damage_via_vitals!(character, participant, counter_damage, "PVP: #{opponent.name}")
 
         combat_log << "#{opponent.name} counterattacks for #{counter_damage} damage!"
 
-        if new_char_hp <= 0
+        if participant.reload.current_hp <= 0
           return complete_battle!(winner: opponent, loser: character, combat_log: combat_log)
         end
 
@@ -376,18 +589,15 @@ module Game
         participant.update!(is_defending: true)
 
         opponent = find_opponent(character)
-
         combat_log = ["#{character.name} takes a defensive stance."]
 
         # Opponent attacks (reduced by defense)
-        damage = calculate_pvp_damage(opponent, character, is_defending: true)
-        new_hp = [participant.current_hp - damage, 0].max
-        participant.update!(current_hp: new_hp)
-        character.update!(current_hp: new_hp)
+        damage = damage_formula.call(opponent, character, is_defending: true)
+        apply_damage_via_vitals!(character, participant, damage, "PVP: #{opponent.name}")
 
         combat_log << "#{opponent.name} attacks for #{damage} damage (reduced by defense)."
 
-        if new_hp <= 0
+        if participant.reload.current_hp <= 0
           return complete_battle!(winner: opponent, loser: character, combat_log: combat_log)
         end
 
@@ -433,14 +643,12 @@ module Game
 
         # Opponent counterattack
         participant = battle.battle_participants.find_by(character: character)
-        counter_damage = calculate_pvp_damage(opponent, character, is_defending: false)
-        new_hp = [participant.current_hp - counter_damage, 0].max
-        participant.update!(current_hp: new_hp)
-        character.update!(current_hp: new_hp)
+        counter_damage = damage_formula.call(opponent, character, is_defending: false)
+        apply_damage_via_vitals!(character, participant, counter_damage, "PVP: #{opponent.name}")
 
         combat_log << "#{opponent.name} counterattacks for #{counter_damage} damage!"
 
-        if new_hp <= 0
+        if participant.reload.current_hp <= 0
           return complete_battle!(winner: opponent, loser: character, combat_log: combat_log)
         end
 
@@ -476,15 +684,15 @@ module Game
       def process_flee!(character)
         opponent = find_opponent(character)
 
-        # Flee chance based on agility comparison
-        char_agility = character.respond_to?(:agility) ? character.agility : 10
-        opp_agility = opponent.respond_to?(:agility) ? opponent.agility : 10
+        # Flee chance based on agility comparison using seeded RNG
+        char_agility = character.agility
+        opp_agility = opponent.agility
         flee_chance = 30 + (char_agility - opp_agility) * 2
         flee_chance = flee_chance.clamp(10, 90)
 
         combat_log = []
 
-        if rand(100) < flee_chance
+        if rng.rand(100) < flee_chance
           battle.update!(status: :completed)
           combat_log << "#{character.name} successfully flees from combat!"
           persist_log_entry!(combat_log.first)
@@ -502,14 +710,12 @@ module Game
 
           # Opponent gets free attack
           participant = battle.battle_participants.find_by(character: character)
-          damage = calculate_pvp_damage(opponent, character, is_defending: false)
-          new_hp = [participant.current_hp - damage, 0].max
-          participant.update!(current_hp: new_hp)
-          character.update!(current_hp: new_hp)
+          damage = damage_formula.call(opponent, character, is_defending: false)
+          apply_damage_via_vitals!(character, participant, damage, "PVP: #{opponent.name}")
 
           combat_log << "#{opponent.name} attacks #{character.name} for #{damage} damage as they try to escape!"
 
-          if new_hp <= 0
+          if participant.reload.current_hp <= 0
             return complete_battle!(winner: opponent, loser: character, combat_log: combat_log)
           end
 
@@ -536,6 +742,25 @@ module Game
         complete_battle!(winner: opponent, loser: character, combat_log: combat_log)
       end
 
+      # ==================
+      # Damage Application (VitalsService Integration)
+      # ==================
+
+      def apply_damage_via_vitals!(character, participant, damage, source)
+        # Update battle participant
+        new_hp = [participant.current_hp - damage, 0].max
+        participant.update!(current_hp: new_hp, is_defending: false)
+
+        # Apply through VitalsService for proper side effects
+        # (in_combat flag, last_combat_at, death handling, broadcasts)
+        vitals_service = Characters::VitalsService.new(character)
+        vitals_service.apply_damage(damage, source: source)
+      end
+
+      # ==================
+      # Battle Completion
+      # ==================
+
       def complete_battle!(winner:, loser:, combat_log:)
         battle.update!(status: :completed, ended_at: Time.current)
 
@@ -545,13 +770,19 @@ module Game
           participant.update!(is_alive: is_winner, current_hp: is_winner ? participant.current_hp : 0)
         end
 
-        # Sync loser's character HP to 0
+        # Set loser's character HP to 0
+        # Note: VitalsService handles death (in_combat flag, death handler) during damage application
+        # For surrender, we just set HP to 0 directly
         loser.update!(current_hp: 0)
+        loser.reload
 
-        # Grant rewards
+        # Record kill for anti-abuse tracking
+        record_kill!(winner, loser)
+
+        # Grant rewards (with diminishing returns)
         rewards = grant_pvp_rewards!(winner, loser)
 
-        outcome = (combat_log.any? { |m| m.include?("surrenders") }) ? "surrender" : "victory"
+        outcome = combat_log.any? { |m| m.include?("surrenders") } ? "surrender" : "victory"
         combat_log << "#{winner.name} wins the battle!"
         persist_log_entry!(combat_log.last)
 
@@ -569,6 +800,19 @@ module Game
       def grant_pvp_rewards!(winner, loser)
         return {} unless winner
 
+        # Check diminishing returns
+        kills_today = winner.metadata.dig("pvp_kills", loser.id.to_s, Date.current.to_s) || 0
+
+        # Diminishing returns: 100% first kill, 50% second, 25% third, 0% after
+        reward_multiplier = case kills_today
+        when 0 then 1.0
+        when 1 then 0.5
+        when 2 then 0.25
+        else 0.0
+        end
+
+        return {xp: 0, gold: 0, honor: 0, message: "No rewards (farmed)"} if reward_multiplier.zero?
+
         # XP based on level difference
         level_diff = loser.level - winner.level
         base_xp = 50 + (loser.level * 5)
@@ -579,13 +823,13 @@ module Game
         else
           1.0
         end
-        xp = (base_xp * xp_multiplier).round
+        xp = (base_xp * xp_multiplier * reward_multiplier).round
 
         # Small gold reward
-        gold = rand(10..30)
+        gold = (rng.rand(10..30) * reward_multiplier).round
 
         # Honor/ranking points
-        honor = 10 + level_diff.clamp(-5, 10)
+        honor = ((10 + level_diff.clamp(-5, 10)) * reward_multiplier).round
 
         # Apply rewards
         winner.gain_experience!(xp, source: "PVP victory over #{loser.name}") if winner.respond_to?(:gain_experience!)
@@ -597,22 +841,9 @@ module Game
         {}
       end
 
-      def calculate_pvp_damage(attacker_char, defender_char, is_defending: false)
-        base_attack = attacker_char.respond_to?(:attack_power) ? attacker_char.attack_power : 10
-        base_defense = defender_char.respond_to?(:defense) ? defender_char.defense : 5
-
-        defense_mult = is_defending ? 1.5 : 1.0
-        effective_defense = (base_defense * defense_mult).to_i
-
-        damage = base_attack - (effective_defense / 2)
-        damage += rand(1..5)
-        [damage, 1].max
-      end
-
-      def crit_chance(character)
-        base = character.respond_to?(:critical_chance) ? character.critical_chance : 5
-        [base, 50].min
-      end
+      # ==================
+      # AP Calculation
+      # ==================
 
       def calculate_turn_ap_cost(attacks, blocks, skills)
         attack_costs = load_action_costs("attack_types")
@@ -650,6 +881,10 @@ module Game
         penalties[[attack_count, penalties.size - 1].min]
       end
 
+      # ==================
+      # Combat Logging
+      # ==================
+
       def persist_log_entry!(message)
         battle.combat_log_entries.create!(
           round_number: battle.turn_number,
@@ -680,6 +915,10 @@ module Game
         match = message.match(/for (\d+) damage/)
         match ? match[1].to_i : 0
       end
+
+      # ==================
+      # Broadcasting
+      # ==================
 
       def broadcast_combat_started!
         [attacker, defender].each do |character|
@@ -717,14 +956,15 @@ module Game
 
         alpha = battle.battle_participants.find_by(team: "alpha")
         beta = battle.battle_participants.find_by(team: "beta")
+        current_turn = battle.turn_number
 
         ActionCable.server.broadcast(
           "battle:#{battle.id}",
           {
             type: "round_complete",
             battle_id: battle.id,
-            turn: battle.turn_number,
-            log_entries: combat_log.map { |msg| {message: msg, type: log_type_from_message(msg)} },
+            turn: current_turn,
+            log_entries: combat_log.map { |msg| {message: msg, type: log_type_from_message(msg), turn: current_turn} },
             participants: [
               {id: alpha.id, current_hp: alpha.current_hp, max_hp: alpha.max_hp},
               {id: beta.id, current_hp: beta.current_hp, max_hp: beta.max_hp}

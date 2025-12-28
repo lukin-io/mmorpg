@@ -1,5 +1,5 @@
 <%# PVP Combat View - Real-time battle interface %>
-<div class="pvp-combat-container" data-controller="pvp-combat" data-pvp-combat-battle-id-value="<%= @battle.id %>">
+<div class="pvp-combat-container" data-controller="pvp-combat" data-pvp-combat-battle-id-value="<%= @battle.id %>" data-pvp-combat-character-id-value="<%= current_character.id %>">
   <div class="pvp-combat-header">
     <h2>⚔️ PVP Combat</h2>
     <div class="combat-round">Round <%= @battle.turn_number %></div>

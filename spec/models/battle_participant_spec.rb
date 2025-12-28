@@ -269,4 +269,99 @@ RSpec.describe BattleParticipant do
       expect(participant.mana_used).to eq(75)
     end
   end
+
+  describe "#hp_percent" do
+    let(:participant) { create(:battle_participant, battle: battle, character: character, current_hp: 75, max_hp: 100) }
+
+    it "returns HP as percentage" do
+      expect(participant.hp_percent).to eq(75.0)
+    end
+
+    it "returns 0 when max_hp is zero" do
+      participant.max_hp = 0
+      expect(participant.hp_percent).to eq(0)
+    end
+
+    it "returns 0 when max_hp is nil" do
+      participant.max_hp = nil
+      expect(participant.hp_percent).to eq(0)
+    end
+
+    it "rounds to one decimal place" do
+      participant.current_hp = 33
+      expect(participant.hp_percent).to eq(33.0)
+    end
+  end
+
+  describe "#can_act?" do
+    let(:participant) { create(:battle_participant, battle: battle, character: character, is_alive: true, current_hp: 50) }
+
+    it "returns true when alive and has HP" do
+      expect(participant.can_act?).to be true
+    end
+
+    it "returns false when dead" do
+      participant.is_alive = false
+      expect(participant.can_act?).to be false
+    end
+
+    it "returns false when HP is zero" do
+      participant.current_hp = 0
+      expect(participant.can_act?).to be false
+    end
+
+    it "returns false when HP is nil" do
+      participant.current_hp = nil
+      expect(participant.can_act?).to be false
+    end
+  end
+
+  describe "HP field synchronization" do
+    let(:participant) { create(:battle_participant, battle: battle, character: character, current_hp: 100, hp_remaining: 100) }
+
+    it "syncs hp_remaining when current_hp changes" do
+      participant.current_hp = 50
+      participant.save!
+
+      expect(participant.hp_remaining).to eq(50)
+    end
+
+    it "does not sync when current_hp is nil" do
+      participant.current_hp = nil
+      participant.save!
+
+      expect(participant.hp_remaining).to eq(100)
+    end
+  end
+
+  describe "scopes" do
+    let!(:alive_participant) { create(:battle_participant, battle: battle, character: character, is_alive: true) }
+    let!(:dead_participant) { create(:battle_participant, battle: battle, character: create(:character), is_alive: false) }
+    let!(:alpha_participant) { create(:battle_participant, battle: battle, character: create(:character), team: "alpha") }
+    let!(:beta_participant) { create(:battle_participant, battle: battle, character: create(:character), team: "beta") }
+
+    describe ".alive" do
+      it "returns only alive participants" do
+        expect(described_class.alive).to include(alive_participant)
+        expect(described_class.alive).not_to include(dead_participant)
+      end
+    end
+
+    describe ".dead" do
+      it "returns only dead participants" do
+        expect(described_class.dead).to include(dead_participant)
+        expect(described_class.dead).not_to include(alive_participant)
+      end
+    end
+
+    describe ".by_team" do
+      it "returns participants by team" do
+        expect(described_class.by_team("alpha")).to include(alpha_participant)
+        expect(described_class.by_team("alpha")).not_to include(beta_participant)
+
+        expect(described_class.by_team("beta")).to include(beta_participant)
+        expect(described_class.by_team("beta")).not_to include(alpha_participant)
+      end
+    end
+  end
 end

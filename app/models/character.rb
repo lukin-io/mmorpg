@@ -228,7 +228,90 @@ class Character < ApplicationRecord
     "avatars/#{avatar_name}.png"
   end
 
+  # ===================
+  # PVP Status
+  # ===================
+
+  # Check if character has any active PVP flags
+  #
+  # @return [Boolean] true if character is flagged for PVP
+  def pvp_flagged?
+    pvp_flags.active.exists?
+  end
+
+  # Get timestamp of last attack from a specific character
+  # Stored in metadata for revenge window calculations
+  #
+  # @return [Hash, nil] hash of attacker_id => timestamp
+  def last_attacked_by_at
+    metadata&.dig("last_attacked_by_at")
+  end
+
+  # ===================
+  # Combat Stats (unified for PvE/PvP)
+  # ===================
+
+  # Calculate attack power for combat
+  # Formula: (Strength × 2) + (Dexterity / 2) + equipment bonus
+  #
+  # @return [Integer] attack power value
+  def attack_power
+    base = stats.get(:strength).to_i * 2
+    dex_bonus = stats.get(:dexterity).to_i / 2
+    base + dex_bonus + equipment_attack_bonus
+  end
+
+  # Calculate defense for combat
+  # Formula: Vitality + (Strength / 3) + equipment bonus
+  #
+  # @return [Integer] defense value
+  def defense
+    base = stats.get(:vitality).to_i
+    str_bonus = stats.get(:strength).to_i / 3
+    base + str_bonus + equipment_defense_bonus
+  end
+
+  # Calculate critical hit chance
+  # Formula: Base 5% + (Dexterity / 5) + (Luck / 10), max 50%
+  #
+  # @return [Integer] crit chance percentage (0-50)
+  def critical_chance
+    base = 5
+    dex_bonus = stats.get(:dexterity).to_i / 5
+    luck_bonus = stats.get(:luck).to_i / 10
+    [base + dex_bonus + luck_bonus, 50].min
+  end
+
+  # Get agility stat for initiative and flee calculations
+  #
+  # @return [Integer] agility value
+  def agility
+    stats.get(:agility).to_i
+  end
+
   private
+
+  # Get attack bonus from equipped items
+  #
+  # @return [Integer] total attack bonus from equipment
+  def equipment_attack_bonus
+    return 0 unless inventory
+
+    inventory.inventory_items.equipped.includes(:item_template).sum do |item|
+      item.item_template&.stat_modifiers&.fetch("attack", 0).to_i
+    end
+  end
+
+  # Get defense bonus from equipped items
+  #
+  # @return [Integer] total defense bonus from equipment
+  def equipment_defense_bonus
+    return 0 unless inventory
+
+    inventory.inventory_items.equipped.includes(:item_template).sum do |item|
+      item.item_template&.stat_modifiers&.fetch("defense", 0).to_i
+    end
+  end
 
   def inherit_memberships
     return unless user

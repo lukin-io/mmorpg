@@ -259,13 +259,15 @@ bundle exec bundler-audit # optional CVE scan
   - `app/models/purchase.rb`, `db/migrate/20251121084500_create_purchases.rb`, `app/services/payments/stripe_adapter.rb`, `config/initializers/payments.rb` — Purchase ledger schema, status enums, Stripe adapter wiring (API key), checkout session builder.
 - game engine (lib):
   - `app/lib/game/systems/*.rb`, `app/lib/game/formulas/*.rb`, `app/lib/game/maps/*.rb`, `app/lib/game/utils/rng.rb` — Deterministic stat/effect/turn systems, damage & crit formulas, grid/tile definitions, RNG seeding helper.
+  - `app/lib/game/formulas/combat_damage_formula.rb` — **Unified damage formula** shared between PvE and PvP combat (v1.3+).
 - game services:
   - `app/services/game/combat/*.rb`, `app/services/game/movement/*.rb`, `app/services/game/economy/loot_generator.rb` — Turn resolution, attack orchestration, skill execution, movement validation/pathfinding, loot generation.
   - `app/services/game/combat/skill_executor.rb` — Combat skill execution (damage, heal, buff, debuff, DOT, HOT, AOE, drain, shield).
   - `app/services/game/combat/turn_based_combat_service.rb` — Neverlands-inspired turn-based combat with body-part targeting, action points, and magic slots.
   - `app/services/game/combat/pve_encounter_service.rb` — PvE combat encounters with NPCs.
-  - `app/services/game/combat/pvp_encounter_service.rb` — Open-world PvP combat encounters between players.
-  - `app/services/game/pvp/zone_rules.rb`, `app/services/game/pvp/flag_service.rb` — PVP zone access control and flagging system.
+  - `app/services/game/combat/pvp_encounter_service.rb` — Open-world PvP combat encounters (v1.3: concurrency locks, locality checks, anti-abuse, deterministic RNG, VitalsService integration).
+  - `app/services/game/pvp/zone_rules.rb`, `app/services/game/pvp/flag_service.rb` — PVP zone access control (faction_alignment: alliance/rebellion/neutral) and flagging system.
+  - `app/services/characters/vitals_service.rb` — Centralized HP/MP changes, damage application, death handling.
   - `app/services/game/npc/dialogue_service.rb` — NPC dialogue orchestration (quest_giver, vendor, trainer, innkeeper, banker, guard, hostile).
   - `app/services/game/quests/dynamic_quest_generator.rb` — Procedural quest generation (daily, zone, trigger-based).
 - combat config:
@@ -279,10 +281,12 @@ bundle exec bundler-audit # optional CVE scan
 - hotwire ui:
   - `app/views/layouts/application.html.erb`, `app/assets/stylesheets/application.css`, `app/javascript/application.js`, `app/components/application_component.rb` — Layout with Turbo/Stimulus assets, flash rendering, base styles, ViewComponent base class.
 - alignment & faction:
-  - `app/models/character.rb` — `ALIGNMENT_TIERS`, `CHAOS_TIERS`, tier calculation methods, emoji accessors.
+  - `app/models/character.rb` — `ALIGNMENT_TIERS`, `CHAOS_TIERS`, tier calculation methods, emoji accessors. Combat stats: `attack_power`, `defense`, `critical_chance`, `agility`.
+  - `app/models/character.rb` — `faction_alignment`: alliance, rebellion, neutral (for faction warfare PVP).
   - `app/helpers/alignment_helper.rb` — Faction/tier icons, alignment badges, trauma/timeout badges, character nameplates.
   - `app/helpers/arena_helper.rb` — Fight type/kind icons, room type badges, match status tags.
   - `db/migrate/20251127140000_add_chaos_score_to_characters.rb` — Adds `chaos_score` column.
+  - `db/migrate/20251228200000_improve_pvp_battle_system.rb` — Adds `rng_seed` to battles, unique index for active battles, HP sync.
 - dashboard:
   - `app/controllers/dashboard_controller.rb`, `app/views/dashboard/show.html.erb` — Authenticated landing view summarizing feature flags and welcome copy.
 - docs:
