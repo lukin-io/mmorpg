@@ -15,6 +15,15 @@ updated: 2025-12-28
   - Expanded registry with 25+ skills across 5 categories
   - Updated UI with category sections and progression indicators
   - Comprehensive spec coverage (request + system tests)
+- **v2.1** (2025-12-29): Added combat integration documentation
+  - Documented how combat skills affect formulas
+  - Listed pending skill integrations (resistances, magic)
+  - Reference to `25_skills_combat_integration.md`
+- **v2.2** (2025-12-29): Prerequisites and mana skills
+  - Added skill prerequisites system (AND/OR conditions)
+  - `arcane_power` now applies +30% max MP
+  - `spell_mastery` now applies -25% mana cost reduction
+  - Skills can now require other skills at specific levels to unlock
 
 ## Summary
 
@@ -78,6 +87,41 @@ Used for:
 
 Used for:
 - **Peace Skills**: Herbalism, Mining, Fishing, Blacksmithing, Alchemy, Cooking, First Aid, Trading, Animal Handling
+
+## Skill Prerequisites
+
+Some skills require other skills at certain levels before they can be leveled. This creates skill trees and meaningful progression choices.
+
+### Prerequisites Format
+
+Prerequisites can be defined as:
+- **AND condition** (Hash): All skills must be at required levels
+- **OR condition** (Array of Hashes): Any one set of skills must be at required levels
+
+### Current Prerequisites
+
+| Skill | Requires |
+|-------|----------|
+| Critical Strikes | Melee Combat 30 **OR** Ranged Combat 30 |
+| Block Mastery | Evasion 20 |
+| Healing Arts | Elemental Magic 30 |
+| Spell Mastery | Arcane Power 20 |
+
+### API
+
+```ruby
+# Check if prerequisites are met
+result = Game::Skills::PassiveSkillRegistry.prerequisites_met?(:critical_strikes, character)
+# => { met: true/false, missing: [...] }
+
+# Check if can spend points
+result = Game::Skills::PassiveSkillRegistry.can_spend?(:healing_arts, character)
+# => { allowed: true/false, reason: "Requires: Elemental Magic 30" }
+
+# Get locked skills
+locked = character.locked_skills
+# => [{ skill: :healing_arts, missing: [...] }, ...]
+```
 
 ## Architecture
 
@@ -226,8 +270,10 @@ case "new_skill": {
 
 ### Game Engine
 - `app/lib/game/formulas/skill_progression_formula.rb` — tiered progression calculation
-- `app/lib/game/skills/passive_skill_registry.rb` — skill definitions (25+ skills)
+- `app/lib/game/formulas/resistance_formula.rb` — elemental/physical resistance application
+- `app/lib/game/skills/passive_skill_registry.rb` — skill definitions, prerequisites, effects
 - `app/lib/game/skills/passive_skill_calculator.rb` — effect calculations
+- `app/lib/game/skills/perk_registry.rb` — perk definitions with mutual exclusions
 
 ### Controllers
 - `app/controllers/characters_controller.rb` — skills action and update_skills
@@ -245,6 +291,9 @@ case "new_skill": {
 ### Specs
 - `spec/lib/game/formulas/skill_progression_formula_spec.rb` — formula tests
 - `spec/lib/game/skills/passive_skill_registry_spec.rb` — registry tests
+- `spec/lib/game/skills/passive_skill_registry_prerequisites_spec.rb` — prerequisites tests
+- `spec/lib/game/formulas/resistance_formula_spec.rb` — resistance formula tests
+- `spec/models/character_mana_spec.rb` — mana system tests
 - `spec/requests/characters/skills_spec.rb` — request tests
 - `spec/system/skill_allocation_spec.rb` — system/UI tests
 
@@ -254,12 +303,83 @@ case "new_skill": {
 # Run all passive skill specs
 bundle exec rspec spec/lib/game/skills/
 bundle exec rspec spec/lib/game/formulas/skill_progression_formula_spec.rb
+bundle exec rspec spec/lib/game/formulas/resistance_formula_spec.rb
+bundle exec rspec spec/models/character_mana_spec.rb
 bundle exec rspec spec/requests/characters/skills_spec.rb
 bundle exec rspec spec/system/skill_allocation_spec.rb
 
 # Run movement specs (includes Wanderer tests)
 bundle exec rspec spec/services/game/movement/turn_processor_spec.rb
 ```
+
+## Combat Integration (All Skills Implemented ✅)
+
+> **Full Documentation**: See `doc/flow/25_skills_combat_integration.md` for complete skill-combat integration details.
+
+Passive skills actively affect combat through the formula system.
+
+### Combat Skills
+
+| Skill | Applied In | Combat Effect (Max Level) |
+|-------|------------|---------------|
+| `melee_combat` | HitFormula, TurnResolver | +10% hit chance, +50% damage |
+| `ranged_combat` | HitFormula | +5% hit chance |
+| `critical_strikes` | CriticalFormula | +15% crit chance, +0.5x multiplier |
+| `evasion` | HitFormula, DodgeFormula | -8% enemy hit, +20% dodge |
+| `block_mastery` | BlockFormula | +25% block effectiveness |
+
+### Magic Skills
+
+| Skill | Applied In | Combat Effect (Max Level) |
+|-------|------------|---------------|
+| `elemental_magic` | SkillExecutor | +50% spell damage |
+| `healing_arts` | SkillExecutor | +40% healing effectiveness |
+| `arcane_power` | Character#effective_max_mp | +30% max mana |
+| `spell_mastery` | Character#reduced_mana_cost | -25% mana cost |
+
+### Resistance Skills
+
+| Skill | Applied In | Combat Effect |
+|-------|------------|---------------|
+| `fire_resistance` | ResistanceFormula | Reduces fire damage |
+| `cold_resistance` | ResistanceFormula | Reduces ice/cold damage |
+| `lightning_resistance` | ResistanceFormula | Reduces lightning damage |
+| `physical_fortitude` | ResistanceFormula | Reduces physical damage |
+
+### How Skills Are Applied
+
+```ruby
+# In combat formulas:
+if attacker.respond_to?(:passive_skill_level)
+  melee_skill = attacker.passive_skill_level(:melee_combat)
+  bonus = (melee_skill / 100.0 * 0.10)  # Up to +10% hit at level 100
+  hit_chance += bonus
+end
+
+# In resistance formula:
+resistance_formula = Game::Formulas::ResistanceFormula.new(rng: rng)
+final_damage = resistance_formula.call(
+  defender: target,
+  damage: base_damage,
+  element: "fire"  # or "ice", "lightning", "physical"
+)
+
+# In Character model for mana:
+effective_mp = character.effective_max_mp  # Base + arcane_power bonus
+reduced_cost = character.reduced_mana_cost(20)  # 20 - spell_mastery reduction
+```
+
+### NPC Skills
+
+NPCs now support passive skill levels:
+
+```ruby
+# NpcTemplate model
+npc.passive_skill_level(:melee_combat)
+# => Reads from metadata["passive_skills"] or defaults to (level / 2)
+```
+
+---
 
 ## Future Enhancements
 
@@ -269,7 +389,12 @@ bundle exec rspec spec/services/game/movement/turn_processor_spec.rb
 - Synergies between passive skills
 - Skill respec/reset feature
 - Skill mastery bonuses at level 100
+- ✅ ~~Apply resistance skills to combat damage~~ (Implemented via ResistanceFormula)
+- ✅ ~~Apply magic skills to spell effects~~ (Implemented via SkillExecutor)
+- ✅ ~~Perks system with mutual exclusions~~ (Implemented via PerkRegistry)
+- ✅ ~~Skill prerequisites~~ (Implemented in PassiveSkillRegistry)
+- ✅ ~~Mana skills~~ (arcane_power, spell_mastery in Character model)
 
 ---
 
-*Last updated: December 2025 (v2.0 - Tiered progression with dual skill pools)*
+*Last updated: December 29, 2025 (v2.2 - Prerequisites and mana skills)*

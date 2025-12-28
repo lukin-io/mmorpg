@@ -971,16 +971,83 @@ function Check_form(ft) {
 | Validation | Client-side + server | Server-side primary |
 | Data format | Hidden form fields | JSON API |
 | Persistence | POST form | Rails controller |
+| Skill prerequisites | Unknown | Implemented (AND/OR conditions) |
+| Combat integration | Implicit | Explicit via formulas |
 
 ### Elselands Implementation Files
 
 | Feature | Implementation Files |
 |---------|---------------------|
 | Stats | `stat_allocation_controller.js`, `characters_controller.rb` |
-| Skills | `skill_allocation_controller.js`, `skills_controller.rb` |
-| Perks | `perk_allocation_controller.js`, `perks_controller.rb` |
-| Effects | `effects_controller.js`, `effects_service.rb` |
+| Skills | `skill_allocation_controller.js`, `skills_controller.rb`, `passive_skill_registry.rb` |
+| Perks | `perk_allocation_controller.js`, `perks_controller.rb`, `perk_registry.rb` |
+| Effects | `effects_controller.js`, `effects_service.rb`, `effect.rb` |
 | Arena | `arena_controller.rb`, `matchmaker.rb` |
+| Combat Integration | `hit_formula.rb`, `critical_formula.rb`, `resistance_formula.rb`, `skill_executor.rb` |
+
+### Elselands Skill Combat Integration (Fully Implemented)
+
+| Neverlands Skill Type | Elselands Implementation |
+|-----------------------|--------------------------|
+| Combat skills (0-9) | `melee_combat`, `ranged_combat`, `critical_strikes`, `evasion`, `block_mastery` |
+| Magic skills (10-20) | `elemental_magic`, `healing_arts`, `arcane_power`, `spell_mastery` |
+| Resistance skills | `fire_resistance`, `cold_resistance`, `lightning_resistance`, `physical_fortitude` |
+| Peace skills (21+) | `herbalism`, `mining`, `fishing`, `blacksmithing`, `alchemy`, `cooking`, etc. |
+
+### Combat Formula Integration
+
+```ruby
+# Hit chance includes skill bonuses
+Game::Formulas::HitFormula
+  # +10% from melee_combat at max level
+  # +5% from ranged_combat at max level
+  # -8% from defender's evasion at max level
+
+# Critical hits
+Game::Formulas::CriticalFormula
+  # +15% crit chance from critical_strikes at max level
+  # +0.5x multiplier from critical_strikes at max level
+
+# Damage resistance
+Game::Formulas::ResistanceFormula
+  # Reduces damage based on element type:
+  # - Fire → fire_resistance
+  # - Ice/Cold → cold_resistance
+  # - Lightning → lightning_resistance
+  # - Physical → physical_fortitude
+
+# Mana system
+Character#effective_max_mp    # +30% from arcane_power at max
+Character#reduced_mana_cost   # -25% from spell_mastery at max
+```
+
+### Skill Prerequisites (Elselands Addition)
+
+| Skill | Requirement |
+|-------|-------------|
+| Critical Strikes | Melee Combat 30 OR Ranged Combat 30 |
+| Block Mastery | Evasion 20 |
+| Healing Arts | Elemental Magic 30 |
+| Spell Mastery | Arcane Power 20 |
+
+### NPC Skill Levels (Elselands Addition)
+
+NPCs now have passive skill levels that affect combat:
+
+```ruby
+# NpcTemplate model
+def passive_skill_level(skill_key)
+  metadata&.dig("passive_skills", skill_key.to_s) || (level / 2).to_i
+end
+
+# Example NPC metadata
+{
+  "passive_skills" => {
+    "melee_combat" => 60,
+    "fire_resistance" => 40
+  }
+}
+```
 
 ### Skill Progression Formula
 

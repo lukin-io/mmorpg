@@ -168,15 +168,35 @@ module Game
         base_damage = effects["base_damage"] || effects[:base_damage] || 30
         scaling_stat = effects["scaling_stat"] || effects[:scaling_stat] || "intelligence"
         scaling_factor = effects["scaling_factor"] || effects[:scaling_factor] || 0.5
+        element = effects["element"] || effects[:element] || "arcane"
 
         # Calculate damage with stat scaling
         stat_value = caster_stat(scaling_stat)
         damage = base_damage + (stat_value * scaling_factor).to_i
 
-        # Critical hit check
+        # Apply elemental_magic skill bonus (+50% at max level)
+        if caster.respond_to?(:passive_skill_level)
+          elemental_skill = caster.passive_skill_level(:elemental_magic)
+          magic_bonus = Game::Skills::PassiveSkillRegistry.calculate_effect(:elemental_magic, elemental_skill)
+          damage = (damage * (1.0 + magic_bonus)).to_i
+        end
+
+        # Critical hit check (also affected by critical_strikes skill)
         crit_chance = caster_stat("luck") / 10 + 5
+        if caster.respond_to?(:passive_skill_level)
+          crit_skill = caster.passive_skill_level(:critical_strikes)
+          crit_bonus = Game::Skills::PassiveSkillRegistry.calculate_effect(:critical_strikes, crit_skill)
+          crit_chance += (crit_bonus * 100).to_i
+        end
         is_critical = rand(100) < crit_chance
         damage = (damage * 1.5).to_i if is_critical
+
+        # Apply target's resistance
+        if target.respond_to?(:passive_skill_level)
+          resistance_formula = Game::Formulas::ResistanceFormula.new
+          resistance_result = resistance_formula.call(defender: target, damage: damage, element: element)
+          damage = resistance_result[:final_damage]
+        end
 
         # Apply damage
         apply_damage_to_target(damage)
@@ -202,6 +222,13 @@ module Game
 
         stat_value = caster_stat(scaling_stat)
         healing = base_heal + (stat_value * scaling_factor).to_i
+
+        # Apply healing_arts skill bonus (+40% at max level)
+        if caster.respond_to?(:passive_skill_level)
+          healing_skill = caster.passive_skill_level(:healing_arts)
+          healing_bonus = Game::Skills::PassiveSkillRegistry.calculate_effect(:healing_arts, healing_skill)
+          healing = (healing * (1.0 + healing_bonus)).to_i
+        end
 
         # Apply healing to target (or self if no target)
         heal_target = target || caster

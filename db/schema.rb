@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_12_29_000003) do
+ActiveRecord::Schema[8.1].define(version: 2025_12_29_100000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -408,6 +408,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_29_000003) do
     t.string "name", null: false
     t.jsonb "passive_skills", default: {}, null: false
     t.integer "peace_skill_points", default: 0, null: false
+    t.integer "perk_points_available", default: 0, null: false
     t.jsonb "progression_sources", default: {}, null: false
     t.integer "reputation", default: 0, null: false
     t.jsonb "resource_pools", default: {}, null: false
@@ -422,6 +423,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_29_000003) do
     t.index ["guild_id"], name: "index_characters_on_guild_id"
     t.index ["name"], name: "index_characters_on_name", unique: true
     t.index ["peace_skill_points"], name: "index_characters_on_peace_skill_points", where: "(peace_skill_points > 0)"
+    t.index ["perk_points_available"], name: "index_characters_on_perk_points_available", where: "(perk_points_available > 0)"
     t.index ["secondary_specialization_id"], name: "index_characters_on_secondary_specialization_id"
     t.index ["user_id"], name: "index_characters_on_user_id"
   end

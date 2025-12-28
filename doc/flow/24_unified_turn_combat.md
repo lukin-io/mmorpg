@@ -3,6 +3,14 @@
 ## Version History
 - **v1.0** (2025-12-29): Initial implementation with body-part targeting, action points, and simultaneous turn resolution
 - **v1.1** (2025-12-29): Added PVP integration, magic/skills UI, comprehensive system specs, dual route support (/battles and /pvp_combat)
+- **v1.2** (2025-12-29): Documented passive skill integration with combat formulas, added gap analysis reference
+- **v1.3** (2025-12-29): Complete skills-combat integration:
+  - All resistance skills now apply via ResistanceFormula
+  - Magic skills (elemental_magic, healing_arts) apply in SkillExecutor
+  - Mana skills (arcane_power, spell_mastery) apply via Character model
+  - NPC passive skill levels supported
+  - Skill prerequisites system implemented
+  - Perks system with mutual exclusions
 
 ## Overview
 
@@ -257,17 +265,91 @@ berserker: { type: :buff, duration: 3, stat_changes: { strength: 15, defense: -1
 
 ## Passive Skills Integration
 
-Combat skills from `Game::Skills::PassiveSkillRegistry` affect combat:
+> **Full Documentation**: See `doc/flow/25_skills_combat_integration.md` for complete skill-combat integration details.
 
-| Skill | Effect |
-|-------|--------|
-| melee_combat | +10% hit chance, +50% damage |
-| ranged_combat | +5% hit chance |
-| critical_strikes | +15% crit chance, +0.5x multiplier |
-| evasion | +20% dodge chance |
-| block_mastery | +25% block chance |
-| elemental_magic | +50% spell damage |
-| physical_fortitude | +25% damage reduction |
+Combat formulas actively integrate with the passive skill system from `Game::Skills::PassiveSkillRegistry`.
+
+### Combat Skills (All Implemented ✅)
+
+| Skill | Formula/Service | Effect at Max Level |
+|-------|---------|---------------------|
+| `melee_combat` | HitFormula, TurnResolver | +10% hit, +50% damage |
+| `ranged_combat` | HitFormula | +5% hit chance |
+| `critical_strikes` | CriticalFormula | +15% crit chance, +0.5x multiplier |
+| `evasion` | HitFormula, DodgeFormula | -8% enemy hit, +20% dodge |
+| `block_mastery` | BlockFormula | +25% block chance |
+
+### Magic Skills (All Implemented ✅)
+
+| Skill | Formula/Service | Effect at Max Level |
+|-------|---------|---------------------|
+| `elemental_magic` | SkillExecutor | +50% spell damage |
+| `healing_arts` | SkillExecutor | +40% healing effectiveness |
+| `arcane_power` | Character#effective_max_mp | +30% max mana |
+| `spell_mastery` | Character#reduced_mana_cost | -25% mana cost |
+
+### Resistance Skills (All Implemented ✅)
+
+| Skill | Formula | Effect at Max Level |
+|-------|---------|---------------------|
+| `fire_resistance` | ResistanceFormula | Reduces fire damage |
+| `cold_resistance` | ResistanceFormula | Reduces cold/ice damage |
+| `lightning_resistance` | ResistanceFormula | Reduces lightning damage |
+| `physical_fortitude` | ResistanceFormula | Reduces physical damage |
+
+### Integration Code Flow
+
+```
+Character.passive_skill_level(:melee_combat)
+    │
+    ▼
+PassiveSkillRegistry.calculate_effect(:melee_combat, level)
+    │
+    ▼
+Combat Formulas/Services apply bonus:
+  - HitFormula (accuracy)
+  - CriticalFormula (crit chance)
+  - BlockFormula (block effectiveness)
+  - ResistanceFormula (damage reduction)
+  - SkillExecutor (spell power, healing)
+    │
+    ▼
+TurnResolver logs skill bonuses in combat log
+```
+
+### Mana System Integration
+
+```ruby
+# Character model methods
+character.effective_max_mp       # Base max_mp + arcane_power bonus
+character.reduced_mana_cost(20)  # 20 - spell_mastery reduction
+character.has_mana?(cost)        # Check with reduction applied
+character.spend_mana!(cost)      # Spend with reduction
+character.regenerate_mana!       # 5% of effective_max_mp per tick
+```
+
+### NPC Skill Integration
+
+NPCs support passive skill levels via `NpcTemplate#passive_skill_level`:
+```ruby
+npc_template.passive_skill_level(:melee_combat)
+# => Reads from metadata["passive_skills"] or defaults to (level / 2)
+```
+
+### Skill Prerequisites
+
+Some skills require other skills at certain levels:
+
+| Skill | Prerequisite |
+|-------|--------------|
+| `critical_strikes` | Melee Combat 30 OR Ranged Combat 30 |
+| `block_mastery` | Evasion 20 |
+| `healing_arts` | Elemental Magic 30 |
+| `spell_mastery` | Arcane Power 20 |
+
+Check with `Character#skill_prerequisites_met?(skill)` or `PassiveSkillRegistry.can_spend?(skill, character)`.
+| `physical_fortitude` | ❌ Not applied | Physical damage reduction |
+| `arcane_power` | ❌ Not applied | Max MP calculation |
 
 ---
 

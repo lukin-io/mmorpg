@@ -103,6 +103,74 @@ class NpcTemplate < ApplicationRecord
     metadata&.dig("description") || dialogue
   end
 
+  # Get NPC's passive skill level (for combat formula integration)
+  # NPCs can have passive skills defined in metadata for balanced fights
+  #
+  # @param skill_key [Symbol, String] the skill identifier (e.g., :melee_combat)
+  # @return [Integer] skill level (0-100, defaults to level-based value)
+  def passive_skill_level(skill_key)
+    key = skill_key.to_s
+
+    # First, check explicit passive_skills in metadata
+    if (skills = metadata&.dig("passive_skills"))
+      return (skills[key] || skills[skill_key.to_sym]).to_i if skills[key] || skills[skill_key.to_sym]
+    end
+
+    # Second, calculate default based on NPC level and role
+    calculate_default_skill_level(skill_key)
+  end
+
+  # Get all passive skills for this NPC
+  #
+  # @return [Hash] skill_key => level
+  def passive_skills
+    metadata&.dig("passive_skills") || calculate_default_passive_skills
+  end
+
+  private
+
+  # Calculate default skill level based on NPC level
+  # Higher level NPCs get proportionally higher skill levels
+  # Combat NPCs get higher combat skills, etc.
+  def calculate_default_skill_level(skill_key)
+    key = skill_key.to_sym
+    base_level = (level || 1) * 2  # Level 10 NPC = ~20 skill
+
+    # Combat roles get bonus to combat skills
+    combat_skills = %i[melee_combat ranged_combat critical_strikes evasion block_mastery]
+    magic_skills = %i[elemental_magic healing_arts arcane_power spell_mastery]
+    resistance_skills = %i[fire_resistance cold_resistance lightning_resistance physical_fortitude]
+
+    multiplier = 1.0
+
+    if hostile? || arena_bot?
+      multiplier = 1.2 if combat_skills.include?(key)
+      multiplier = 0.8 if magic_skills.include?(key)
+      multiplier = 1.0 if resistance_skills.include?(key)
+    end
+
+    # Difficulty scaling for arena bots
+    if arena_bot?
+      case difficulty_rating
+      when :easy then multiplier *= 0.6
+      when :medium then multiplier *= 0.85
+      when :hard then multiplier *= 1.1
+      end
+    end
+
+    (base_level * multiplier).to_i.clamp(0, 100)
+  end
+
+  def calculate_default_passive_skills
+    skills = {}
+    %i[melee_combat ranged_combat critical_strikes evasion block_mastery
+       elemental_magic fire_resistance cold_resistance lightning_resistance
+       physical_fortitude].each do |skill|
+      skills[skill.to_s] = calculate_default_skill_level(skill)
+    end
+    skills
+  end
+
   # Legacy method - delegates to combat_stats for backward compatibility
   # @deprecated Use #max_hp instead
   def health

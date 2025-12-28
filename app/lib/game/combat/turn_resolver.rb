@@ -184,6 +184,7 @@ module Game
       def resolve_attack(attacker, defender, attack)
         body_part = attack[:body_part] || attack["body_part"] || "torso"
         action_key = attack[:action_key] || attack["action_key"] || "simple"
+        element = attack[:element] || attack["element"] || :physical
 
         # Get defender's blocks
         blocks = extract_pending_blocks(defender)
@@ -193,6 +194,7 @@ module Game
         block_formula = Game::Formulas::BlockFormula.new(rng: @rng)
         crit_formula = Game::Formulas::CriticalFormula.new(rng: @rng)
         dodge_formula = Game::Formulas::DodgeFormula.new(rng: @rng)
+        resistance_formula = Game::Formulas::ResistanceFormula.new(rng: @rng)
 
         # Get combatants (character or NPC)
         attacker_entity = attacker.character || attacker.npc_template
@@ -235,7 +237,7 @@ module Game
         end
 
         # 3. Calculate base damage
-        base_damage = calculate_base_damage(attacker, attacker_entity, action_key)
+        base_damage = calculate_base_damage(attacker, attacker_entity, action_key, element)
 
         # 4. Apply body part multiplier
         body_multiplier = @config.dig("body_parts", body_part, "damage_multiplier") || 1.0
@@ -261,29 +263,39 @@ module Game
           attacker: attacker_entity
         )
 
-        final_damage = damage
-        blocked = false
+        pre_block_damage = damage
 
         if block_result[:blocked]
-          final_damage = (damage * (1 - block_result[:damage_reduction])).round
-          blocked = true
+          damage = (damage * (1 - block_result[:damage_reduction])).round
         elsif block_result[:partial]
-          final_damage = (damage * (1 - block_result[:damage_reduction])).round
+          damage = (damage * (1 - block_result[:damage_reduction])).round
         end
+
+        # 7. Apply resistance reduction (NEW!)
+        resistance_result = resistance_formula.call(
+          defender: defender_entity,
+          damage: damage,
+          element: element
+        )
+        final_damage = resistance_result[:final_damage]
 
         # Minimum damage of 1
         final_damage = [final_damage, 1].max
 
-        # 7. Apply damage
+        # Track skill bonuses for log
+        skill_bonuses = calculate_skill_bonuses_for_log(attacker_entity, defender_entity, element)
+
+        # 8. Apply damage
         apply_damage(defender, final_damage, body_part)
 
-        # 8. Log the result
+        # 9. Log the result
+        blocked = block_result[:blocked] || block_result[:partial]
         log_type = if crit_result[:critical]
           :critical
         else
           (blocked ? :blocked : :damage)
         end
-        message = build_attack_message(attacker, defender, body_part, final_damage, crit_result[:critical], blocked)
+        message = build_attack_message(attacker, defender, body_part, final_damage, crit_result[:critical], blocked, resistance_result)
 
         @log_entries << create_log_entry(
           log_type,
@@ -292,50 +304,111 @@ module Game
           {
             body_part: body_part,
             action: action_key,
+            element: element,
+            base_damage: base_damage,
+            pre_block_damage: pre_block_damage,
             damage: final_damage,
             critical: crit_result[:critical],
             blocked: blocked,
+            resistance_reduction: resistance_result[:reduction_percent],
+            skill_bonuses: skill_bonuses,
             target_hp: defender.current_hp
           }
         )
 
-        # 9. Check for death
+        # 10. Check for death
         if defender.current_hp <= 0
           handle_defeat(defender)
         end
       end
 
-      def calculate_base_damage(participant, entity, action_key)
+      def calculate_base_damage(participant, entity, action_key, element = :physical)
         if participant.character
           strength = extract_stat(entity, :strength)
           attack_power = extract_stat(entity, :attack) || strength
 
-          # Apply melee combat skill bonus
-          melee_bonus = 0
+          # Apply combat skill bonus based on element/attack type
+          skill_bonus = 0
           if entity.respond_to?(:passive_skill_level)
-            melee_skill = entity.passive_skill_level(:melee_combat)
-            melee_bonus = (attack_power * melee_skill / 100.0 * 0.5).round
+            if elemental_attack?(element)
+              # Apply elemental_magic skill for magic attacks (+50% at max)
+              elemental_skill = entity.passive_skill_level(:elemental_magic)
+              skill_bonus = (attack_power * elemental_skill / 100.0 * 0.5).round
+            else
+              # Apply melee_combat skill for physical attacks (+50% at max)
+              melee_skill = entity.passive_skill_level(:melee_combat)
+              skill_bonus = (attack_power * melee_skill / 100.0 * 0.5).round
+            end
           end
 
-          base = attack_power + melee_bonus + @rng.rand(1..10)
+          base = attack_power + skill_bonus + @rng.rand(1..10)
 
           # Apply aimed attack bonus
           base = (base * 1.3).round if action_key == "aimed"
 
           base
         else
-          # NPC damage
+          # NPC damage - also apply NPC passive skills if present
           npc = participant.npc_template
-          damage_range = npc&.damage_range
-          if damage_range.is_a?(Range)
-            @rng.rand(damage_range)
-          elsif npc&.metadata&.dig("base_damage")
-            npc.metadata["base_damage"] + @rng.rand(1..5)
-          else
-            level = npc&.level || 1
-            (level * 3) + @rng.rand(5..15)
+          base_damage = calculate_npc_base_damage(npc)
+
+          # Apply NPC skill bonuses if they have passive skills
+          if npc&.metadata&.dig("passive_skills")
+            skills = npc.metadata["passive_skills"]
+            if elemental_attack?(element)
+              elemental_skill = (skills["elemental_magic"] || skills[:elemental_magic]).to_i
+              base_damage += (base_damage * elemental_skill / 100.0 * 0.5).round
+            else
+              melee_skill = (skills["melee_combat"] || skills[:melee_combat]).to_i
+              base_damage += (base_damage * melee_skill / 100.0 * 0.5).round
+            end
           end
+
+          base_damage
         end
+      end
+
+      def calculate_npc_base_damage(npc)
+        damage_range = npc&.damage_range
+        if damage_range.is_a?(Range)
+          @rng.rand(damage_range)
+        elsif npc&.metadata&.dig("base_damage")
+          npc.metadata["base_damage"] + @rng.rand(1..5)
+        else
+          level = npc&.level || 1
+          (level * 3) + @rng.rand(5..15)
+        end
+      end
+
+      def elemental_attack?(element)
+        return false if element.nil?
+
+        elemental_types = %i[fire ice cold water lightning air earth arcane dark light nature]
+        elemental_types.include?(element.to_sym)
+      end
+
+      def calculate_skill_bonuses_for_log(attacker_entity, defender_entity, element)
+        bonuses = {}
+
+        if attacker_entity.respond_to?(:passive_skill_level)
+          if elemental_attack?(element)
+            bonuses[:elemental_magic] = attacker_entity.passive_skill_level(:elemental_magic)
+          else
+            bonuses[:melee_combat] = attacker_entity.passive_skill_level(:melee_combat)
+          end
+          bonuses[:critical_strikes] = attacker_entity.passive_skill_level(:critical_strikes)
+        end
+
+        if defender_entity.respond_to?(:passive_skill_level)
+          bonuses[:evasion] = defender_entity.passive_skill_level(:evasion)
+          bonuses[:block_mastery] = defender_entity.passive_skill_level(:block_mastery)
+
+          # Include resistance skill that was applied
+          resistance_skill = Game::Formulas::ResistanceFormula::ELEMENT_TO_SKILL[element.to_sym] || :physical_fortitude
+          bonuses[resistance_skill] = defender_entity.passive_skill_level(resistance_skill)
+        end
+
+        bonuses.compact
       end
 
       def apply_damage(participant, damage, body_part)
@@ -550,11 +623,16 @@ module Game
         end
       end
 
-      def build_attack_message(attacker, defender, body_part, damage, critical, blocked)
+      def build_attack_message(attacker, defender, body_part, damage, critical, blocked, resistance_result = nil)
         prefix = critical ? "💥 CRITICAL! " : ""
         block_text = blocked ? " (BLOCKED)" : ""
+        resist_text = ""
 
-        "#{prefix}#{attacker.combatant_name} hits #{defender.combatant_name}'s #{body_part} for #{damage} damage#{block_text}!"
+        if resistance_result && resistance_result[:reduction_percent].to_f > 0
+          resist_text = " [#{resistance_result[:reduction_percent]}% resisted]"
+        end
+
+        "#{prefix}#{attacker.combatant_name} hits #{defender.combatant_name}'s #{body_part} for #{damage} damage#{block_text}#{resist_text}!"
       end
 
       def create_log_entry(log_type, participant, message, data)

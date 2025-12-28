@@ -48,6 +48,8 @@ module Game
       #   - effect_type: what game mechanic this affects
       #   - effect_formula: lambda that calculates the effect value
       #   - progression_rate: tiered progression "tier0:tier1:tier2:tier3"
+      #   - prerequisites: optional hash of {skill_key => required_level} or
+      #                    array of [{skill_key => level}, ...] for OR conditions
       #
       SKILLS = {
         # ==========================================
@@ -93,14 +95,16 @@ module Game
         critical_strikes: {
           key: :critical_strikes,
           name: "Critical Strikes",
-          description: "Increases critical hit chance in combat.",
+          description: "Increases critical hit chance in combat. Requires Melee Combat 30 or Ranged Combat 30.",
           max_level: MAX_LEVEL,
           category: :combat,
           pool: POOL_COMBAT,
           effect_type: :crit_chance_bonus,
           # At max level: +15% crit chance
           effect_formula: ->(level) { (level.to_f / MAX_LEVEL) * 0.15 },
-          progression_rate: "6:4:4:2"
+          progression_rate: "6:4:4:2",
+          # OR condition: need either melee or ranged at 30
+          prerequisites: [{melee_combat: 30}, {ranged_combat: 30}]
         },
 
         evasion: {
@@ -119,14 +123,15 @@ module Game
         block_mastery: {
           key: :block_mastery,
           name: "Block Mastery",
-          description: "Increases damage blocked when defending.",
+          description: "Increases damage blocked when defending. Requires Evasion 20.",
           max_level: MAX_LEVEL,
           category: :combat,
           pool: POOL_COMBAT,
           effect_type: :block_bonus,
           # At max level: +40% block effectiveness
           effect_formula: ->(level) { (level.to_f / MAX_LEVEL) * 0.40 },
-          progression_rate: "8:6:4:2"
+          progression_rate: "8:6:4:2",
+          prerequisites: {evasion: 20}
         },
 
         # ==========================================
@@ -147,14 +152,15 @@ module Game
         healing_arts: {
           key: :healing_arts,
           name: "Healing Arts",
-          description: "Increases effectiveness of healing spells and potions.",
+          description: "Increases effectiveness of healing spells and potions. Requires Elemental Magic 30.",
           max_level: MAX_LEVEL,
           category: :magic,
           pool: POOL_COMBAT,
           effect_type: :healing_bonus,
           # At max level: +40% healing effectiveness
           effect_formula: ->(level) { (level.to_f / MAX_LEVEL) * 0.40 },
-          progression_rate: "8:6:4:2"
+          progression_rate: "8:6:4:2",
+          prerequisites: {elemental_magic: 30}
         },
 
         arcane_power: {
@@ -173,14 +179,15 @@ module Game
         spell_mastery: {
           key: :spell_mastery,
           name: "Spell Mastery",
-          description: "Reduces mana cost of all spells.",
+          description: "Reduces mana cost of all spells. Requires Arcane Power 20.",
           max_level: MAX_LEVEL,
           category: :magic,
           pool: POOL_COMBAT,
           effect_type: :mana_cost_reduction,
           # At max level: -25% mana cost
           effect_formula: ->(level) { (level.to_f / MAX_LEVEL) * 0.25 },
-          progression_rate: "6:4:4:2"
+          progression_rate: "6:4:4:2",
+          prerequisites: {arcane_power: 20}
         },
 
         # ==========================================
@@ -516,6 +523,128 @@ module Game
         # @return [Hash<Symbol, Array<Symbol>>] category => [skill_keys]
         def grouped_by_category
           SKILLS.values.group_by { |s| s[:category] }.transform_values { |skills| skills.map { |s| s[:key] } }
+        end
+
+        # Get prerequisites for a skill
+        #
+        # @param skill_key [Symbol, String] the skill identifier
+        # @return [Hash, Array, nil] prerequisites definition
+        def prerequisites(skill_key)
+          find(skill_key)&.dig(:prerequisites)
+        end
+
+        # Check if prerequisites are met for a skill
+        #
+        # @param skill_key [Symbol, String] the skill to check
+        # @param character [Character] the character to check against
+        # @return [Hash] { met: Boolean, missing: Array of {skill:, required:, current:} }
+        def prerequisites_met?(skill_key, character)
+          prereqs = prerequisites(skill_key)
+          return {met: true, missing: []} if prereqs.nil?
+
+          missing = []
+
+          case prereqs
+          when Hash
+            # AND condition: all prerequisites must be met
+            prereqs.each do |prereq_skill, required_level|
+              current_level = character.passive_skill_level(prereq_skill)
+              if current_level < required_level
+                missing << {
+                  skill: prereq_skill,
+                  required: required_level,
+                  current: current_level
+                }
+              end
+            end
+          when Array
+            # OR condition: at least one set of prerequisites must be met
+            any_met = prereqs.any? do |prereq_set|
+              prereq_set.all? do |prereq_skill, required_level|
+                character.passive_skill_level(prereq_skill) >= required_level
+              end
+            end
+
+            unless any_met
+              # Show all possible options as missing
+              prereqs.each do |prereq_set|
+                prereq_set.each do |prereq_skill, required_level|
+                  current_level = character.passive_skill_level(prereq_skill)
+                  missing << {
+                    skill: prereq_skill,
+                    required: required_level,
+                    current: current_level,
+                    is_or_condition: true
+                  }
+                end
+              end
+            end
+          end
+
+          {met: missing.empty?, missing: missing}
+        end
+
+        # Check if a character can spend points on a skill
+        #
+        # @param skill_key [Symbol, String] the skill to check
+        # @param character [Character] the character to check
+        # @return [Hash] { allowed: Boolean, reason: String }
+        def can_spend?(skill_key, character)
+          skill = find(skill_key)
+          return {allowed: false, reason: "Skill not found"} unless skill
+
+          # Check skill points
+          pool = skill[:pool]
+          available = character.available_skill_points_for_pool(pool)
+          return {allowed: false, reason: "No #{pool} skill points available"} if available <= 0
+
+          # Check current level
+          current_level = character.passive_skill_level(skill_key)
+          max = skill[:max_level] || MAX_LEVEL
+          return {allowed: false, reason: "Skill is at maximum level"} if current_level >= max
+
+          # Check prerequisites
+          prereq_result = prerequisites_met?(skill_key, character)
+          unless prereq_result[:met]
+            missing_text = prereq_result[:missing].map do |m|
+              "#{m[:skill].to_s.titleize} #{m[:required]}"
+            end.join(" or ")
+            return {allowed: false, reason: "Requires: #{missing_text}"}
+          end
+
+          {allowed: true, reason: nil}
+        end
+
+        # Get all skills available for a character (prerequisites met)
+        #
+        # @param character [Character] the character to check
+        # @return [Array<Symbol>] skill keys that can be leveled
+        def available_for(character)
+          SKILLS.keys.select do |skill_key|
+            result = can_spend?(skill_key, character)
+            result[:allowed]
+          end
+        end
+
+        # Get skills locked by prerequisites for a character
+        #
+        # @param character [Character] the character to check
+        # @return [Array<Hash>] array of {skill:, prerequisites:, missing:}
+        def locked_skills_for(character)
+          SKILLS.map do |key, skill|
+            prereqs = skill[:prerequisites]
+            next nil if prereqs.nil?
+
+            prereq_result = prerequisites_met?(key, character)
+            next nil if prereq_result[:met]
+
+            {
+              skill: key,
+              name: skill[:name],
+              prerequisites: prereqs,
+              missing: prereq_result[:missing]
+            }
+          end.compact
         end
       end
     end

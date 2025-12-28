@@ -219,11 +219,21 @@ class Character < ApplicationRecord
     available_skill_points_for_pool(pool)
   end
 
-  # Get the level of a passive skill
+  # Get the level of a passive skill (base level only, no equipment)
   #
   # @param skill_key [Symbol, String] the skill identifier (e.g., :wanderer)
   # @return [Integer] skill level (0-100, defaults to 0)
   def passive_skill_level(skill_key)
+    base = (passive_skills[skill_key.to_s] || 0).to_i
+    equipment_bonus = equipment_skill_bonus(skill_key)
+    [base + equipment_bonus, 100].min
+  end
+
+  # Get the base level of a passive skill (without equipment bonuses)
+  #
+  # @param skill_key [Symbol, String] the skill identifier
+  # @return [Integer] base skill level (0-100, defaults to 0)
+  def base_passive_skill_level(skill_key)
     (passive_skills[skill_key.to_s] || 0).to_i
   end
 
@@ -256,16 +266,17 @@ class Character < ApplicationRecord
   # @return [Integer, nil] new skill level, or nil if cannot spend
   def spend_skill_point!(skill_key)
     key = skill_key.to_sym
+
+    # Use the comprehensive can_spend? check
+    spend_check = Game::Skills::PassiveSkillRegistry.can_spend?(key, self)
+    unless spend_check[:allowed]
+      errors.add(:base, spend_check[:reason]) if errors
+      return nil
+    end
+
     definition = Game::Skills::PassiveSkillRegistry.find(key)
-    return nil unless definition
-
     pool = definition[:pool]
-    available = available_skill_points_for_pool(pool)
-    return nil if available <= 0
-
-    current_level = passive_skill_level(key)
-    max_level = definition[:max_level] || 100
-    return nil if current_level >= max_level
+    current_level = base_passive_skill_level(key)  # Use base level, not effective
 
     # Calculate new level using tiered progression
     formula = Game::Formulas::SkillProgressionFormula.new
@@ -294,6 +305,21 @@ class Character < ApplicationRecord
 
     clear_passive_skill_cache!
     new_level
+  end
+
+  # Check if prerequisites are met for a skill
+  #
+  # @param skill_key [Symbol, String] the skill identifier
+  # @return [Hash] { met: Boolean, missing: Array }
+  def skill_prerequisites_met?(skill_key)
+    Game::Skills::PassiveSkillRegistry.prerequisites_met?(skill_key, self)
+  end
+
+  # Get skills currently locked by prerequisites
+  #
+  # @return [Array<Hash>] array of locked skill info
+  def locked_skills
+    Game::Skills::PassiveSkillRegistry.locked_skills_for(self)
   end
 
   # Refund a skill point from a skill (undo during allocation)
@@ -384,6 +410,92 @@ class Character < ApplicationRecord
     @passive_skill_calculator = nil
   end
 
+  # ===================
+  # Perks System
+  # ===================
+
+  # Get list of selected perk keys
+  #
+  # @return [Array<String>] array of perk keys
+  def selected_perks
+    perks&.keys || []
+  end
+
+  # Check if a specific perk is selected
+  #
+  # @param perk_key [Symbol, String] the perk identifier
+  # @return [Boolean] true if perk is active
+  def has_perk?(perk_key)
+    selected_perks.include?(perk_key.to_s)
+  end
+
+  # Get perk effect value
+  #
+  # @param perk_key [Symbol, String] the perk to check
+  # @param effect_key [Symbol, String] the effect to get
+  # @return [Float, nil] effect value or nil if perk not selected
+  def perk_effect(perk_key, effect_key)
+    return nil unless has_perk?(perk_key)
+
+    definition = Game::Skills::PerkRegistry.find(perk_key)
+    definition&.dig(:effects, effect_key.to_sym)
+  end
+
+  # Get all active perk effects combined
+  #
+  # @return [Hash] combined effects from all selected perks
+  def all_perk_effects
+    effects = {}
+    selected_perks.each do |key|
+      definition = Game::Skills::PerkRegistry.find(key)
+      next unless definition
+
+      definition[:effects]&.each do |effect_key, value|
+        effects[effect_key] ||= 0
+        effects[effect_key] += value
+      end
+    end
+    effects
+  end
+
+  # Select a perk (spend perk point)
+  #
+  # @param perk_key [Symbol, String] the perk to select
+  # @return [Boolean] true if perk was selected successfully
+  def select_perk!(perk_key)
+    key = perk_key.to_s
+    check = Game::Skills::PerkRegistry.can_select?(self, key)
+
+    unless check[:allowed]
+      errors.add(:base, check[:reason])
+      return false
+    end
+
+    transaction do
+      new_perks = (perks || {}).merge(key => Time.current.iso8601)
+      update!(
+        perks: new_perks,
+        perk_points_available: perk_points_available - 1
+      )
+    end
+
+    true
+  end
+
+  # Get available perks for this character
+  #
+  # @return [Array<Hash>] available perk definitions
+  def available_perks
+    Game::Skills::PerkRegistry.available_for(self)
+  end
+
+  # Award perk points (typically from leveling up)
+  #
+  # @param points [Integer] points to add
+  def award_perk_points!(points)
+    increment!(:perk_points_available, points) if points.positive?
+  end
+
   # Get full asset path for character avatar image
   #
   # @return [String] full asset path (e.g., "avatars/dwarven.png")
@@ -453,6 +565,65 @@ class Character < ApplicationRecord
     stats.get(:agility).to_i
   end
 
+  # ===================
+  # Mana System (with skill bonuses)
+  # ===================
+
+  # Calculate effective maximum MP with arcane_power skill bonus
+  # Formula: Base max_mp × (1 + arcane_power_bonus)
+  # At max skill level: +30% max MP
+  #
+  # @return [Integer] effective maximum mana points
+  def effective_max_mp
+    base = read_attribute(:max_mp) || 50
+    arcane_bonus = Game::Skills::PassiveSkillRegistry.calculate_effect(:arcane_power, passive_skill_level(:arcane_power))
+    (base * (1.0 + arcane_bonus)).round
+  end
+
+  # Calculate mana cost reduction from spell_mastery skill
+  # At max skill level: -25% mana cost
+  #
+  # @param base_cost [Integer] the original mana cost
+  # @return [Integer] reduced mana cost (minimum 1)
+  def reduced_mana_cost(base_cost)
+    spell_mastery_level = passive_skill_level(:spell_mastery)
+    reduction = Game::Skills::PassiveSkillRegistry.calculate_effect(:spell_mastery, spell_mastery_level)
+    reduced = (base_cost * (1.0 - reduction)).round
+    [reduced, 1].max
+  end
+
+  # Check if character has enough mana for a skill
+  #
+  # @param mana_cost [Integer] the mana required
+  # @return [Boolean] true if sufficient mana
+  def has_mana?(mana_cost)
+    current_mp >= reduced_mana_cost(mana_cost)
+  end
+
+  # Spend mana with spell_mastery reduction applied
+  #
+  # @param base_cost [Integer] the base mana cost
+  # @return [Integer] actual mana spent
+  def spend_mana!(base_cost)
+    actual_cost = reduced_mana_cost(base_cost)
+    new_mp = [current_mp - actual_cost, 0].max
+    update!(current_mp: new_mp)
+    actual_cost
+  end
+
+  # Regenerate mana (called at end of turn or on rest)
+  # Base: 5% of effective_max_mp per tick
+  #
+  # @param ticks [Integer] number of regeneration ticks (default 1)
+  # @return [Integer] amount regenerated
+  def regenerate_mana!(ticks = 1)
+    regen_per_tick = (effective_max_mp * 0.05).round
+    total_regen = regen_per_tick * ticks
+    new_mp = [current_mp + total_regen, effective_max_mp].min
+    update!(current_mp: new_mp)
+    total_regen
+  end
+
   private
 
   # Get attack bonus from equipped items
@@ -475,6 +646,52 @@ class Character < ApplicationRecord
     inventory.inventory_items.equipped.includes(:item_template).sum do |item|
       item.item_template&.stat_modifiers&.fetch("defense", 0).to_i
     end
+  end
+
+  # Get skill bonus from equipped items for a specific skill
+  # Equipment can grant +X to passive skills (e.g., +5 melee_combat from a sword)
+  #
+  # @param skill_key [Symbol, String] the skill identifier
+  # @return [Integer] total skill bonus from equipment
+  def equipment_skill_bonus(skill_key)
+    return 0 unless inventory
+
+    key = skill_key.to_s
+    inventory.inventory_items.equipped.includes(:item_template).sum do |item|
+      skill_mods = item.item_template&.stat_modifiers&.dig("skill_bonuses")
+      next 0 unless skill_mods.is_a?(Hash)
+      (skill_mods[key] || skill_mods[skill_key.to_sym]).to_i
+    end
+  end
+
+  # Get elemental resistance bonus from equipped items
+  # Equipment can grant resistance percentages (e.g., +5% fire_resistance from a shield)
+  #
+  # @param element [Symbol, String] the element type (:fire, :cold, :lightning, :physical)
+  # @return [Float] total resistance bonus from equipment (0.0 - 0.15 max)
+  def equipped_items_resistance(element)
+    return 0.0 unless inventory
+
+    key = "#{element}_resistance"
+    total = inventory.inventory_items.equipped.includes(:item_template).sum do |item|
+      resist_mods = item.item_template&.stat_modifiers&.dig("resistances")
+      next 0.0 unless resist_mods.is_a?(Hash)
+      (resist_mods[key] || resist_mods[element.to_s]).to_f
+    end
+
+    # Cap equipment resistance bonus at 15%
+    total.clamp(0.0, 0.15)
+  end
+
+  # Get effective passive skill level (base + equipment bonus)
+  # This is the combined level used in combat formulas
+  #
+  # @param skill_key [Symbol, String] the skill identifier
+  # @return [Integer] effective skill level (capped at 100)
+  def effective_passive_skill_level(skill_key)
+    base = passive_skill_level(skill_key)
+    equipment_bonus = equipment_skill_bonus(skill_key)
+    [base + equipment_bonus, 100].min
   end
 
   def inherit_memberships

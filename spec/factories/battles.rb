@@ -3,6 +3,7 @@ FactoryBot.define do
     association :initiator, factory: :character
     battle_type { :pve }
     status { :active }
+    combat_mode { "simultaneous" }
     turn_number { 1 }
     initiative_order { [] }
     metadata { {} }
