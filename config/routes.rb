@@ -9,13 +9,13 @@ Rails.application.routes.draw do
     mount Sidekiq::Web => "/sidekiq"
   end
 
-  # Public battle logs (shareable URLs like Neverlands' /logs.fcg?fid=xxx)
+  # Public battle logs (shareable URLs)
   get "logs/:share_token", to: "public_battle_logs#show", as: :public_battle_log
 
   resource :session_ping, only: :create
   resources :profiles, only: :show, controller: :public_profiles, param: :profile_name
 
-  # Character Stats & Skills Allocation (Neverlands-inspired)
+  # Character Stats & Skills Allocation
   resources :characters, only: [] do
     member do
       get :stats

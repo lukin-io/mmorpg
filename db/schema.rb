@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_12_28_200000) do
+ActiveRecord::Schema[8.1].define(version: 2025_12_28_210000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -381,6 +381,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_28_200000) do
     t.integer "chaos_score", default: 0, null: false
     t.bigint "character_class_id"
     t.bigint "clan_id"
+    t.integer "combat_skill_points", default: 0, null: false
     t.datetime "created_at", null: false
     t.integer "current_hp", default: 100, null: false
     t.integer "current_mp", default: 50, null: false
@@ -399,6 +400,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_28_200000) do
     t.integer "mp_regen_interval", default: 600, null: false
     t.string "name", null: false
     t.jsonb "passive_skills", default: {}, null: false
+    t.integer "peace_skill_points", default: 0, null: false
     t.jsonb "progression_sources", default: {}, null: false
     t.integer "reputation", default: 0, null: false
     t.jsonb "resource_pools", default: {}, null: false
@@ -409,8 +411,10 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_28_200000) do
     t.bigint "user_id", null: false
     t.index ["character_class_id"], name: "index_characters_on_character_class_id"
     t.index ["clan_id"], name: "index_characters_on_clan_id"
+    t.index ["combat_skill_points"], name: "index_characters_on_combat_skill_points", where: "(combat_skill_points > 0)"
     t.index ["guild_id"], name: "index_characters_on_guild_id"
     t.index ["name"], name: "index_characters_on_name", unique: true
+    t.index ["peace_skill_points"], name: "index_characters_on_peace_skill_points", where: "(peace_skill_points > 0)"
     t.index ["secondary_specialization_id"], name: "index_characters_on_secondary_specialization_id"
     t.index ["user_id"], name: "index_characters_on_user_id"
   end

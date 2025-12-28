@@ -72,7 +72,7 @@ RSpec.describe Game::Formulas::CombatDamageFormula do
         )
 
         # Should be boosted by both crit and multiplier
-        base = 20 - (10 / 2) # 15
+        # 15
         # Plus variance, times 1.3, times 1.5
         expect(damage).to be > 20
       end
@@ -197,4 +197,3 @@ RSpec.describe Game::Formulas::CombatDamageFormula do
     end
   end
 end
-

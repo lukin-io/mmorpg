@@ -2,6 +2,19 @@
 
 This document captures all functionality inspired by the Neverlands MMORPG that has been analyzed and adapted for Elselands. When new Neverlands-inspired features are shared, they should be documented here alongside any implementation notes.
 
+> **Live Code Analysis**: December 2024 - Captured actual JavaScript, CSS, and HTML from `http://www.neverlands.ru`
+
+---
+
+## Detailed Analysis Documents
+
+| Document | Description |
+|----------|-------------|
+| [neverlands_inspired_combat.md](neverlands_inspired_combat.md) | Combat CSS, action points, body parts, magic slots, HP/MP bars |
+| [neverlands_inspired_map.md](neverlands_inspired_map.md) | Map.js complete analysis, tile rendering, movement animation |
+| [neverlands_inspired_chat.md](neverlands_inspired_chat.md) | Chat system, emoji codes, player list, context menus |
+| [neverlands_inspired_skills.md](neverlands_inspired_skills.md) | Stats, skills, perks, effects, arena system, tiered progression, **live skill addition test** |
+
 ---
 
 ## Implementation Status Summary
@@ -45,79 +58,172 @@ This document captures all functionality inspired by the Neverlands MMORPG that 
 
 ## Chat System
 
-### Original Neverlands Examples
+### Original Neverlands Code (LIVE - December 2024)
 
-#### JavaScript Chat Handler
+> **Source**: Captured from `http://www.neverlands.ru/ch/ch_msg_v01.js`
+
+#### JavaScript Chat Message Handler (ch_msg_v01.js)
+
 ```javascript
-// Neverlands chat message processing
-function processChat(data) {
-  var chatArea = document.getElementById('chatMessages');
-  var msg = document.createElement('div');
-  msg.className = 'chat-message';
+// Emoji codes array (170+ smilies)
+var sm = new Array('001','002','003','004','005','007','008','009','006','010',
+  '011','012','013','014','015','016','000','018','021','022','019','023','024',
+  '025','026','027','028','031','032','034','033','037','038','036','040','039',
+  '043','049','052','056','059','057','062','066','068','073','082','080','079',
+  '083','086','085','114','118','119','123','161','158','164','167','166','170',
+  // ... 170+ total emoji codes
+  '950','951','952','953','954','955','956','957','958','959','960');
 
-  // System messages (attacks, fights)
-  if (data.type == 'system') {
-    msg.className += ' system-msg';
-    msg.innerHTML = '<span class="sys-icon">⚔️</span> ' + data.text;
-  }
-  // Whisper messages
-  else if (data.type == 'whisper') {
-    msg.className += ' whisper-msg';
-    msg.innerHTML = '<span class="from">[' + data.from + ' → ' + data.to + ']</span> ' + data.text;
-  }
-  // Regular chat
-  else {
-    var nameSpan = '<span class="username" onclick="insertWhisper(\'' + data.user + '\')" oncontextmenu="showUserMenu(event, \'' + data.user + '\', ' + data.userId + '); return false;">' + data.user + '</span>';
-    msg.innerHTML = nameSpan + ': ' + processEmojis(data.text);
-  }
+var maxsmiles = 3;  // Max smiles per message
+var smilesimgpath = '<img border=0 src=http://image.neverlands.ru/chat/smiles/';
+var smilesimgstyle = ' style="cursor:pointer" onclick="ins_smile(\'';
 
-  chatArea.appendChild(msg);
-  chatArea.scrollTop = chatArea.scrollHeight;
+// User context menu on right-click
+function ch_open_menu(e) {
+  var e = e || window.event;
+  var el, x, y, login, login2;
+  el = document.getElementById('user_menu');
+  var o = e.target || e.srcElement;
+  if (o.tagName != "SPAN") return true;
+
+  x = e.clientX + document.documentElement.scrollLeft + document.body.scrollLeft - 4;
+  y = e.clientY + document.documentElement.scrollTop + document.body.scrollTop;
+  y -= e.clientY + 72 > document.body.clientHeight ? 70 : 2;
+
+  login = o.innerHTML;
+  e.returnValue = false;
+  login2 = login;
+  // URL encode special characters
+  while (login2.indexOf(' ') >= 0) login2 = login2.replace(' ', '%20');
+  while (login2.indexOf('+') >= 0) login2 = login2.replace('+', '%2B');
+  while (login2.indexOf('#') >= 0) login2 = login2.replace('#', '%23');
+  while (login2.indexOf('?') >= 0) login2 = login2.replace('?', '%3F');
+
+  el.innerHTML =
+    '<a class="usermenulink" href="javascript:top.say_private(\'' + login + '\');ch_hmenu()">Приват</a>' +
+    '<a class="usermenulink" href="http://www.neverlands.ru/pinfo.cgi?' + login2 + '" target="_blank" onclick="ch_hmenu();return true;">Информация</a>' +
+    '<a class="usermenulink" href="javascript:ch_copy_nick(\'' + login + '\');ch_hmenu()">Копировать ник</a>' +
+    '<a class="usermenulink" href="javascript:ch_set_ignor(\'' + login + '\');ch_hmenu()">Игнорировать</a>';
+
+  el.style.left = x + "px";
+  el.style.top = y + "px";
+  el.style.visibility = "visible";
+  return false;
 }
 
-// User context menu
-function showUserMenu(event, username, userId) {
-  var menu = document.getElementById('userContextMenu');
-  menu.innerHTML = '<ul>' +
-    '<li onclick="insertWhisper(\'' + username + '\')">📨 Private Message</li>' +
-    '<li onclick="viewProfile(' + userId + ')">👤 View Info</li>' +
-    '<li onclick="copyNick(\'' + username + '\')">📋 Copy Nick</li>' +
-    '<li onclick="ignoreUser(' + userId + ')">🚫 Ignore</li>' +
-    '</ul>';
-  menu.style.left = event.pageX + 'px';
-  menu.style.top = event.pageY + 'px';
-  menu.style.display = 'block';
+// Process and add chat message with emoji replacement
+function add_msg(text) {
+  var myRe = /script/ig;
+  var pr = /^\s(\%\<[^\>]{2,20}\>\s?)+$/;
+  var s = "";
+  text = text.replace(myRe, 'скрипт');  // Filter script tags
+
+  var spl = text.split("<BR>");
+  for (var k = 0; k < spl.length; k++) {
+    var txt = spl[k];
+    if (txt.length > 8) {
+      var re = /\<font\s$/;
+      if (re.test(txt)) continue;
+
+      var i, j = 0;
+      // Replace emoji codes with images (max 3 per message)
+      for (i = 0; i < sm.length; i++) {
+        while (txt.indexOf(':' + sm[i] + ':') >= 0) {
+          txt = txt.replace(':' + sm[i] + ':',
+            smilesimgpath + 'smiles_' + sm[i] + '.gif ' + smilesimgstyle + sm[i] + '\')">');
+          if (++j >= maxsmiles) break;
+        }
+        if (j >= maxsmiles) break;
+      }
+      // ... private message highlighting logic ...
+      s += txt + "<BR>";
+    }
+  }
+
+  e_m = get_by_id('msg');
+  e_m.innerHTML += s;
+  window.scrollBy(0, 65000);  // Scroll to bottom
 }
 
-// Emoji processing
-function processEmojis(text) {
-  // :001: through :040: emoji codes
-  return text.replace(/:(\d{3}):/g, function(match, code) {
-    return '<img src="/images/emoji/' + code + '.gif" class="chat-emoji" />';
-  });
+// Insert smile into chat input
+function ins_smile(smile) {
+  top.frames['ch_buttons'].document.FBT.text.focus();
+  top.frames['ch_buttons'].document.FBT.text.value += ' :' + smile + ': ';
 }
 ```
 
-#### CSS Styling
-```css
-.chat-message { padding: 2px 5px; border-bottom: 1px solid #333; }
-.chat-message .username { color: #4a9eff; cursor: pointer; }
-.chat-message .username:hover { text-decoration: underline; }
-.system-msg { color: #ff9900; font-style: italic; }
-.whisper-msg { color: #ff6b6b; background: rgba(255,107,107,0.1); }
-.chat-emoji { width: 16px; height: 16px; vertical-align: middle; }
+#### CSS Styling (main.css - LIVE)
 
-#userContextMenu {
-  position: absolute;
-  background: #1a1a2e;
-  border: 1px solid #4a4a6a;
-  border-radius: 4px;
-  z-index: 1000;
-  display: none;
+```css
+/* Chat text styles */
+.chattxt {
+  font-family: Verdana, Tahoma, Helvetica;
+  text-decoration: none;
+  color: #000000;
+  font-size: 10pt;
 }
-#userContextMenu ul { list-style: none; margin: 0; padding: 5px 0; }
-#userContextMenu li { padding: 8px 15px; cursor: pointer; }
-#userContextMenu li:hover { background: #2a2a4e; }
+
+.chattime {
+  font-family: Tahoma, Verdana, Arial;
+  font-size: 11px;
+  text-decoration: none;
+  color: #003366;  /* Blue timestamps */
+}
+
+/* Highlighted when message mentions you */
+.yochattime {
+  font-family: Tahoma, Verdana, Arial;
+  font-size: 11px;
+  text-decoration: none;
+  color: #ffffff;
+  background-color: #6699bb;  /* Blue highlight */
+}
+
+/* Private message style */
+.prchattime {
+  font-family: Tahoma, Verdana, Arial;
+  font-size: 11px;
+  text-decoration: none;
+  color: #ffffff;
+  background-color: #D16F67;  /* Red/pink highlight */
+}
+
+/* Mass/system message */
+.massm {
+  font-family: Tahoma, Verdana, Arial;
+  font-size: 11px;
+  text-decoration: none;
+  color: #ffffff;
+  background-color: #EF6B00;  /* Orange highlight */
+}
+
+/* User context menu */
+.usermenu {
+  background-color: #FCFAF3;
+  border-color: #B9A05C #A9904C #A9904C #B9A05C;
+  border-style: solid;
+  border-width: 1px;
+  position: absolute;
+  left: 0px;
+  top: 0px;
+  visibility: hidden;
+}
+
+a.usermenulink {
+  font-family: Tahoma, Arial, Verdana;
+  font-size: 11px;
+  font-weight: bold;
+  color: #222222;
+  border: 0px solid #000000;
+  padding: 2px 12px 2px 12px;
+  display: block;
+  text-decoration: none;
+}
+
+a.usermenulink:hover {
+  background-color: #F3ECD7;
+  color: #336699;
+}
 ```
 
 ### Elselands Implementation
@@ -247,88 +353,143 @@ function renderParticipant(player) {
 
 ## Character Vitals (HP/MP Bars)
 
-### Original Neverlands Examples
+### Original Neverlands Code (LIVE - December 2024)
 
-#### JavaScript HP/MP Update
+> **Source**: Captured from `http://www.neverlands.ru/js/hp.js`
+
+#### JavaScript HP/MP Regeneration (hp.js - COMPLETE)
+
 ```javascript
-// Character vitals state
-var playerVitals = {
-  hp: 100,
-  maxHp: 150,
-  mp: 45,
-  maxMp: 80
-};
+var curHP, maxHP, intHP, curMA, maxMA, intMA, interv;
 
-function updateVitalsDisplay() {
-  var hpPercent = (playerVitals.hp / playerVitals.maxHp) * 100;
-  var mpPercent = (playerVitals.mp / playerVitals.maxMp) * 100;
+// Initialize HP/MP regeneration timer
+// Parameters: currentHP, maxHP, currentMP, maxMP, hpRegenRate, mpRegenRate
+function ins_HP(curh, maxh, curm, maxm, hp_int, ma_int) {
+  intHP = hp_int;  // Ticks to full HP (e.g., 1500 = ~25 min)
+  intMA = ma_int;  // Ticks to full MP (e.g., 9000 = ~2.5 hours)
+  interv = setInterval("cha_HP()", 1000);  // Update every second
 
-  document.getElementById('hpFill').style.width = hpPercent + '%';
-  document.getElementById('hpText').textContent = playerVitals.hp + '/' + playerVitals.maxHp;
+  if (curm < 0) curm = 0;
+  if (maxm <= 0) maxm = 7;  // Minimum 7 MP
 
-  document.getElementById('mpFill').style.width = mpPercent + '%';
-  document.getElementById('mpText').textContent = playerVitals.mp + '/' + playerVitals.maxMp;
+  curHP = curh;
+  curMA = curm;
+  maxHP = maxh;
+  maxMA = maxm;
+  cha_HP();  // Initial render
+}
 
-  // Color coding based on HP percentage
-  var hpFill = document.getElementById('hpFill');
-  if (hpPercent < 25) {
-    hpFill.className = 'hp-fill critical';
-  } else if (hpPercent < 50) {
-    hpFill.className = 'hp-fill low';
-  } else {
-    hpFill.className = 'hp-fill';
+// Update HP/MP bars every second
+function cha_HP() {
+  // Clamp values to max
+  if (curHP > maxHP) curHP = maxHP;
+  if (curMA > maxMA) curMA = maxMA;
+
+  // Stop interval when fully regenerated
+  if (curHP >= maxHP && curMA >= maxMA) clearInterval(interv);
+
+  // Calculate bar widths (160px max width)
+  s_hp_f = Math.round(160 * (curHP / maxHP));
+  s_ma_f = Math.round(160 * (curMA / maxMA));
+  s_hp_s = 160 - s_hp_f;
+  s_ma_s = 160 - s_ma_f;
+
+  // Update image element widths
+  if (document.images['leftp'] && document.images['rightp'] &&
+      document.images['leftm'] && document.images['rightm']) {
+
+    document.images['leftp'].width = s_hp_f;   // HP filled portion
+    document.images['rightp'].width = s_hp_s;  // HP empty portion
+    document.images['leftm'].width = s_ma_f;   // MP filled portion
+    document.images['rightm'].width = s_ma_s;  // MP empty portion
+
+    // Update text display: [5/5 | 7/7]
+    if (document.getElementById("hbar")) {
+      if (curHP < 0) curHP = 0;
+      var s = document.getElementById("hbar").innerHTML;
+      document.getElementById("hbar").innerHTML =
+        s.substring(0, s.lastIndexOf(':') + 1) +
+        "[<font color=#bb0000><b>" + Math.round(curHP) + "</b>/<b>" + maxHP + "</b></font> | " +
+        "<font color=#336699><b>" + Math.round(curMA) + "</b>/<b>" + maxMA + "</b></font>]";
+    }
   }
-}
 
-// Receive vitals update from server
-function onVitalsUpdate(data) {
-  playerVitals.hp = data.hp;
-  playerVitals.maxHp = data.maxHp;
-  playerVitals.mp = data.mp;
-  playerVitals.maxMp = data.maxMp;
-  updateVitalsDisplay();
+  // Regenerate per tick (formula: current += max / rate)
+  curHP = curHP + (maxHP / intHP);
+  curMA = curMA + (maxMA / intMA);
 }
 ```
 
-#### HTML Structure
+#### HTML Structure (from map.js view_build_top)
+
 ```html
-<div id="characterVitals" style="width:160px;">
-  <div class="vital-bar hp-bar">
-    <div id="hpFill" class="hp-fill" style="width:100%"></div>
-    <span id="hpText" class="vital-text">150/150</span>
-  </div>
-  <div class="vital-bar mp-bar">
-    <div id="mpFill" class="mp-fill" style="width:100%"></div>
-    <span id="mpText" class="vital-text">80/80</span>
-  </div>
-</div>
+<!-- HP/MP Bar Layout (160px width, image-based) -->
+<table cellpadding=0 cellspacing=0 border=0>
+  <tr>
+    <td rowspan=3>
+      <font class=nick>
+        <B>lukin</B>[0]&nbsp;
+      </font>
+    </td>
+    <td>
+      <img src=http://image.neverlands.ru/1x1.gif width=1 height=2><br>
+      <!-- HP Bar: Two images side by side -->
+      <img src=http://image.neverlands.ru/gameplay/hp.gif
+           width=0 height=6 border=0 id=fHP name="leftp" align=absmiddle>
+      <img src=http://image.neverlands.ru/gameplay/nohp.gif
+           width=160 height=6 border=0 id=eHP name="rightp" align=absmiddle>
+    </td>
+    <td rowspan=3 class=hpbar>
+      <div id=hbar>:[<font color=#bb0000><b>5</b>/<b>5</b></font> |
+                     <font color=#336699><b>7</b>/<b>7</b></font>]</div>
+    </td>
+  </tr>
+  <tr>
+    <td bgcolor=#ffffff><img src=http://image.neverlands.ru/1x1.gif width=1 height=1></td>
+  </tr>
+  <tr>
+    <td>
+      <!-- MP Bar -->
+      <img src=http://image.neverlands.ru/gameplay/ma.gif
+           width=0 height=6 border=0 id=fMP name="leftm" align=absmiddle>
+      <img src=http://image.neverlands.ru/gameplay/noma.gif
+           width=160 height=6 border=0 id=eMP name="rightm" align=absmiddle>
+    </td>
+  </tr>
+</table>
 ```
 
-#### CSS
+#### CSS (main.css - LIVE)
+
 ```css
-.vital-bar {
-  width: 160px;
-  height: 18px;
-  background: #1a1a1a;
-  border: 1px solid #333;
-  position: relative;
-  margin-bottom: 4px;
-}
-.hp-fill { background: linear-gradient(to bottom, #4a0, #280); height: 100%; }
-.hp-fill.low { background: linear-gradient(to bottom, #a80, #540); }
-.hp-fill.critical { background: linear-gradient(to bottom, #a00, #500); animation: pulse 0.5s infinite; }
-.mp-fill { background: linear-gradient(to bottom, #06a, #035); height: 100%; }
-.vital-text {
-  position: absolute;
-  width: 100%;
-  text-align: center;
-  color: #fff;
+.hpbar {
+  font-family: Verdana, Arial, Tahoma;
   font-size: 11px;
-  line-height: 18px;
-  text-shadow: 1px 1px 1px #000;
+  text-decoration: none;
+  color: #003366;
 }
-@keyframes pulse { 50% { opacity: 0.7; } }
+
+/* Asset URLs */
+/* HP filled: http://image.neverlands.ru/gameplay/hp.gif (red gradient) */
+/* HP empty:  http://image.neverlands.ru/gameplay/nohp.gif (grey) */
+/* MP filled: http://image.neverlands.ru/gameplay/ma.gif (blue gradient) */
+/* MP empty:  http://image.neverlands.ru/gameplay/noma.gif (grey) */
+
+/* Color scheme */
+/* HP text: #bb0000 (dark red) */
+/* MP text: #336699 (blue) */
 ```
+
+#### Key Implementation Details
+
+| Parameter | Purpose | Example Value |
+|-----------|---------|---------------|
+| `intHP` | Ticks to full HP regen | 1500 (~25 min) |
+| `intMA` | Ticks to full MP regen | 9000 (~2.5 hours) |
+| Bar width | Fixed width | 160px |
+| Update interval | Refresh rate | 1000ms (1 second) |
+| HP color | Display color | #bb0000 |
+| MP color | Display color | #336699 |
 
 ### Elselands Implementation
 - **Status:** ✅ Implemented
@@ -349,83 +510,183 @@ function onVitalsUpdate(data) {
 
 ## Quest Dialog System
 
-### Original Neverlands Examples
+### Original Neverlands Code (LIVE - December 2024)
 
-#### JavaScript Quest Dialog
+> **Source**: Captured from `http://www.neverlands.ru/js/quest.js`
+
+#### JavaScript Quest Dialog (quest.js - COMPLETE)
+
 ```javascript
-var currentQuest = null;
-var currentStep = 0;
+var QuestStep = 0;
+var QuestDialogLeng = 0;
+var ND = false;  // Dialog container reference
+var LD, DD;      // Dialog and darkener elements
+var QCODE = '';  // Quest verification code
+var QuestD, QuestP;  // Quest dialog steps and parameters
 
-function openQuestDialog(questId) {
-  fetch('/quests/' + questId + '/dialog')
-    .then(r => r.json())
-    .then(data => {
-      currentQuest = data;
-      currentStep = 0;
-      renderQuestStep();
-      document.getElementById('questOverlay').style.display = 'flex';
-    });
+// Navigate dialog steps
+function StepByStep(cr) {
+  QuestStep += cr;
+  d.getElementById('QuestDia').innerHTML = QuestD[QuestStep];
+  d.getElementById('QuestNav').innerHTML = DialogNav();
 }
 
-function renderQuestStep() {
-  var step = currentQuest.steps[currentStep];
-  var dialog = document.getElementById('questDialog');
+// Generate navigation buttons based on current step
+function DialogNav() {
+  var navt = '';
 
-  document.getElementById('npcAvatar').src = currentQuest.npcAvatar;
-  document.getElementById('npcName').textContent = currentQuest.npcName;
-  document.getElementById('dialogText').textContent = step.text;
+  // Previous button (if not first step)
+  if (QuestStep > 0)
+    navt += '<a class="block_prev" href="javascript: StepByStep(-1);"></a>';
 
-  // Navigation buttons
-  var nav = document.getElementById('dialogNav');
-  nav.innerHTML = '';
+  // Next button (if not last step)
+  if (QuestStep < QuestDialogLeng)
+    navt += '<a class="block_next" href="javascript: StepByStep(1);"></a>';
 
-  if (currentStep > 0) {
-    var prevBtn = document.createElement('button');
-    prevBtn.textContent = '← Prev';
-    prevBtn.onclick = function() { currentStep--; renderQuestStep(); };
-    nav.appendChild(prevBtn);
-  }
-
-  if (currentStep < currentQuest.steps.length - 1) {
-    var nextBtn = document.createElement('button');
-    nextBtn.textContent = 'Next →';
-    nextBtn.onclick = function() { currentStep++; renderQuestStep(); };
-    nav.appendChild(nextBtn);
-  } else {
-    // Final step - show action button
-    var actionBtn = document.createElement('button');
-    actionBtn.className = 'quest-action';
-    if (currentQuest.type == 1) {
-      actionBtn.textContent = 'Accept Quest';
-      actionBtn.onclick = function() { acceptQuest(currentQuest.id); };
-    } else if (currentQuest.type == 2) {
-      actionBtn.textContent = 'Complete Quest';
-      actionBtn.onclick = function() { completeQuest(currentQuest.id); };
+  // Action button on final step
+  if ((QuestStep == QuestDialogLeng) && QuestP[1][0]) {
+    switch (QuestP[1][0]) {
+      case 1:  // Accept quest
+        navt += '<a class="block_get" href="javascript: AjaxGet(\'quest_ajax.php?act=1&qid=' +
+                QuestP[1][2] + '&vcode=' + QuestP[1][1] + '\');"></a>';
+        break;
+      case 2:  // Complete quest
+        navt += '<a class="block_end" href="javascript: AjaxGet(\'quest_ajax.php?act=2&qid=' +
+                QuestP[1][2] + '&vcode=' + QuestP[1][1] + '\');"></a>';
+        break;
     }
-    nav.appendChild(actionBtn);
   }
+  return (navt ? '<BR>' + navt : '');
 }
 
-function closeQuestDialog() {
-  document.getElementById('questOverlay').style.display = 'none';
-  currentQuest = null;
+// Create modal overlay (dark background + dialog)
+function CreateDialogDiv() {
+  ND = d.createElement('div');
+  ND.id = 'darker';
+
+  // Firefox on Mac has different overlay handling
+  var userAgent = navigator.userAgent.toLowerCase();
+  if (userAgent.indexOf('mac') != -1 && userAgent.indexOf('firefox') != -1)
+    ND.className = 'TB_overlayMacFFBGHack';
+  else
+    ND.className = 'TB_overlayBG';
+
+  d.body.appendChild(ND);
+
+  ND = d.createElement('div');
+  ND.id = 'block_uni';
+  ND.className = 'png';
+  d.body.appendChild(ND);
+}
+
+// Remove dialog overlay
+function RemoveDialogDiv() {
+  d.body.removeChild(LD);
+  d.body.removeChild(DD);
+  ND = false;
+}
+
+// Process quest AJAX response and render dialog
+function QuestReady() {
+  if (ND === false) {
+    CreateDialogDiv();
+    LD = d.getElementById('block_uni');
+    DD = d.getElementById('darker');
+    DD.style.display = 'block';
+  }
+
+  // Parse quest data from AJAX response
+  // arr_res[1] = dialog steps array (text for each step)
+  // arr_res[2] = quest parameters [npcAvatar, [actionType, vcode, questId]]
+  QuestD = eval(arr_res[1]);
+  QuestP = eval(arr_res[2]);
+
+  QuestStep = 0;
+  QuestDialogLeng = QuestD.length - 1;
+
+  // Render dialog with NPC avatar
+  LD.innerHTML = '<table border="0" cellpadding="0" cellspacing="0" class="block">' +
+    '<tr>' +
+      '<td height="326" width="56" rowspan="3" class="block_l png"></td>' +
+      '<td height="35" class="block_t png"></td>' +
+      '<td class="block_r png" width="4" rowspan="3"></td>' +
+    '</tr>' +
+    '<tr>' +
+      '<td class="block_bg" width="688" height="262">' +
+        '<table style="margin:0px auto 0 70px; width:595px;">' +
+          '<tr>' +
+            '<td class="text">' +
+              '<a class="block_close" href="javascript: RemoveDialogDiv();">' +
+                '<img src="http://image.neverlands.ru/1x1.gif" width="18" height="18" border=0>' +
+              '</a>' +
+              '<div id="QuestDia">' + QuestD[0] + '</div>' +
+            '</td>' +
+            // NPC Avatar (if provided)
+            (QuestP[0] ? '<td class="ava"><div><div class="ava_img">' +
+              '<img src="http://image.neverlands.ru/gameplay/faces/' + QuestP[0] +
+              '" width="130" height="130" border="0"></div>' +
+              '<div class="ava_border png"></div></div></td>' : '') +
+          '</tr>' +
+          '<tr><td colspan="2" class="buttons"><div id="QuestNav">' +
+            DialogNav() + '</div></td></tr>' +
+        '</table>' +
+      '</td>' +
+    '</tr>' +
+    '<tr><td height="29" class="block_b png">&nbsp;</td></tr>' +
+  '</table>';
+}
+
+// Initiate quest selection
+function QSel(QID) {
+  AjaxGet('quest_ajax.php?vcode=' + QCODE + '&act=1&qid=' + QID + '&r=' + Math.random());
+}
+
+// Activate quest dialog
+function QActive(vcode) {
+  QCODE = vcode;
+  AjaxGet('quest_ajax.php?vcode=' + QCODE + '&act=1&r=' + Math.random());
 }
 ```
 
-#### HTML Structure
-```html
-<div id="questOverlay" class="overlay" style="display:none;">
-  <div id="questDialog">
-    <button class="close-btn" onclick="closeQuestDialog()">×</button>
-    <div class="quest-header">
-      <img id="npcAvatar" class="npc-avatar" src="" />
-      <span id="npcName" class="npc-name"></span>
-    </div>
-    <div id="dialogText" class="dialog-text"></div>
-    <div id="dialogNav" class="dialog-nav"></div>
-  </div>
-</div>
+#### CSS (stl.css - Dialog overlay)
+
+```css
+/* Dark overlay background */
+#darker {
+  position: absolute;
+  display: none;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 100;
+}
+
+.TB_overlayBG {
+  background-color: #000;
+  filter: alpha(opacity=75);
+  opacity: 0.75;
+}
+
+/* Dialog navigation buttons are CSS background images */
+.block_prev { /* Previous step arrow */ }
+.block_next { /* Next step arrow */ }
+.block_get  { /* Accept quest button */ }
+.block_end  { /* Complete quest button */ }
+.block_close { /* Close X button */ }
 ```
+
+#### Key Implementation Details
+
+| Element | Purpose |
+|---------|---------|
+| `QuestD[]` | Array of dialog step HTML strings |
+| `QuestP[0]` | NPC avatar filename |
+| `QuestP[1][0]` | Action type (1=accept, 2=complete) |
+| `QuestP[1][1]` | Verification code (vcode) |
+| `QuestP[1][2]` | Quest ID |
+| `QuestStep` | Current dialog step index |
+| `QuestDialogLeng` | Total steps - 1 |
 
 ### Elselands Implementation
 - **Status:** ✅ Implemented
@@ -560,19 +821,27 @@ if (savedHeight) {
 
 ## Map Movement
 
-### Original Neverlands Examples
+> **📖 Detailed Analysis**: See [neverlands_inspired_map.md](neverlands_inspired_map.md) for complete `map.js` code analysis (1000+ lines)
+
+### Original Neverlands Code (LIVE - December 2024)
+
+> **Source**: Captured from `http://www.neverlands.ru/js/map.js`
 
 The Neverlands map system is a sophisticated tile-based movement system with smooth animations, dynamic tile loading, and real-time HP/MP regeneration display.
 
-#### HTML Structure
-```html
-<SCRIPT language="JavaScript">
+#### Server Data Structure
+```javascript
+// Map initialization data injected by server
 var inshp = [5,5,7,7,1500,9000];  // [currentHP, maxHP, currentMP, maxMP, hpRegenRate, mpRegenRate]
 var mapbt = [["que","Quests","token1",[]],["inf","Character","token2",[]],["inv","Inventory","token3",[]]];
 var build = ["lukin",0,0,"none","","",0,"main","Nature","m_1000_1000",1,0,""];
 var map = [[1000,1000,30,"day",[],""],[[999,1000,"token"],[1000,999,"token"],[999,999,"token"]]];
-view_map();
-</SCRIPT>
+
+// map[0] = [currentX, currentY, moveSpeed, dayNight, transitData, systemMessage]
+// map[1] = [[x, y, antiCheatToken], ...] - available adjacent tiles
+// Each adjacent tile has a unique server-generated verification token
+
+view_map();  // Entry point
 ```
 
 #### HP/MP Regeneration Timer

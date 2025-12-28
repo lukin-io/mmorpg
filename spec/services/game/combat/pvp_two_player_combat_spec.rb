@@ -152,7 +152,7 @@ RSpec.describe "PVP Two-Player Combat Integration" do
         mage.update!(current_hp: 5)
         service.battle.battle_participants.find_by(character: mage).update!(current_hp: 5)
 
-        result = service.process_action!(character: warrior, action_type: :attack, body_part: "head")
+        service.process_action!(character: warrior, action_type: :attack, body_part: "head")
 
         # Battle should be completed with warrior winning
         expect(service.battle.reload.status).to eq("completed")
@@ -194,7 +194,7 @@ RSpec.describe "PVP Two-Player Combat Integration" do
         # Normal attack
         service1 = Game::Combat::PvpEncounterService.new(warrior, mage, zone: pvp_zone, rng: rng1)
         service1.start_encounter!
-        normal_result = service1.process_action!(
+        service1.process_action!(
           character: warrior,
           action_type: :attack,
           body_part: "torso"
@@ -404,7 +404,7 @@ RSpec.describe "PVP Two-Player Combat Integration" do
         fail_service = Game::Combat::PvpEncounterService.new(warrior, mage, zone: pvp_zone, rng: fail_rng)
         fail_service.start_encounter!
 
-        initial_hp = warrior.current_hp
+        warrior.current_hp
         result = fail_service.process_action!(character: warrior, action_type: :flee)
 
         if !result.metadata&.dig(:fled)
@@ -467,7 +467,7 @@ RSpec.describe "PVP Two-Player Combat Integration" do
     end
 
     it "awards victory to opponent" do
-      result = service.process_action!(character: warrior, action_type: :surrender)
+      service.process_action!(character: warrior, action_type: :surrender)
 
       winner_participant = service.battle.battle_participants.find_by(is_alive: true)
       expect(winner_participant.character).to eq(mage)
@@ -746,7 +746,7 @@ RSpec.describe "PVP Two-Player Combat Integration" do
       end
 
       it "correctly identifies defeat" do
-        result = service.process_action!(character: warrior, action_type: :attack)
+        service.process_action!(character: warrior, action_type: :attack)
 
         mage_participant = service.battle.battle_participants.find_by(character: mage)
         expect(mage_participant.current_hp).to eq(0)
@@ -786,7 +786,7 @@ RSpec.describe "PVP Two-Player Combat Integration" do
 
       service1 = Game::Combat::PvpEncounterService.new(char1a, char2a, zone: pvp_zone, rng: Random.new(12345))
       service1.start_encounter!
-      result1 = service1.process_action!(character: char1a, action_type: :attack)
+      service1.process_action!(character: char1a, action_type: :attack)
 
       mage_hp_after_1 = service1.battle.battle_participants.find_by(team: "beta").current_hp
 
@@ -796,7 +796,7 @@ RSpec.describe "PVP Two-Player Combat Integration" do
 
       service2 = Game::Combat::PvpEncounterService.new(char1b, char2b, zone: pvp_zone, rng: Random.new(12345))
       service2.start_encounter!
-      result2 = service2.process_action!(character: char1b, action_type: :attack)
+      service2.process_action!(character: char1b, action_type: :attack)
 
       mage_hp_after_2 = service2.battle.battle_participants.find_by(team: "beta").current_hp
 

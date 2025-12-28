@@ -318,7 +318,7 @@ RSpec.describe Game::Combat::PvpEncounterService do
           # Get baseline damage with normal attack
           service1 = described_class.new(attacker, defender, zone: zone, rng: Random.new(99999))
           service1.start_encounter!
-          result1 = service1.process_action!(character: attacker, action_type: :attack, action_key: "normal")
+          service1.process_action!(character: attacker, action_type: :attack, action_key: "normal")
 
           # Reset defender HP
           defender.update!(current_hp: 100)
@@ -343,17 +343,16 @@ RSpec.describe Game::Combat::PvpEncounterService do
 
       it "reduces incoming damage" do
         # First, get damage without defending
-        initial_hp = attacker.current_hp
+        attacker.current_hp
         service.process_action!(character: attacker, action_type: :attack)
-        damage_taken = initial_hp - attacker.reload.current_hp
+        attacker.reload.current_hp
 
         # Reset and defend - should take less damage
         attacker.update!(current_hp: 100)
         service2 = described_class.new(attacker, defender, zone: zone, rng: Random.new(12345))
         service2.start_encounter!
         service2.process_action!(character: attacker, action_type: :defend)
-
-        defended_damage = initial_hp - attacker.reload.current_hp
+        attacker.reload.current_hp
 
         # Note: Due to RNG variance, we can't guarantee defended_damage < damage_taken
         # but the log should indicate defense was active
@@ -454,10 +453,10 @@ RSpec.describe Game::Combat::PvpEncounterService do
       # Run combat with seed
       service1 = described_class.new(attacker, defender, zone: zone, rng: Random.new(seed))
       result1 = service1.start_encounter!
-      battle1_seed = result1.battle.rng_seed
+      result1.battle.rng_seed
 
       action1 = service1.process_action!(character: attacker, action_type: :attack)
-      log1 = action1.combat_log
+      action1.combat_log
 
       # Reset characters
       attacker.update!(current_hp: 100)
@@ -467,7 +466,7 @@ RSpec.describe Game::Combat::PvpEncounterService do
       # Run combat with same seed
       service2 = described_class.new(attacker, defender, zone: zone, rng: Random.new(seed))
       result2 = service2.start_encounter!
-      battle2_seed = result2.battle.rng_seed
+      result2.battle.rng_seed
 
       # Seeds should be deterministic (based on characters and timestamp, not passed RNG)
       # But combat results should follow the seed

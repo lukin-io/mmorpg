@@ -1,7 +1,7 @@
 import { Controller } from "@hotwired/stimulus"
 
 /**
- * Stat Allocation Controller - Neverlands-style stat point distribution
+ * Stat Allocation Controller - Client-side stat point distribution
  *
  * Allows players to allocate stat points using +/- buttons with real-time
  * UI updates. Changes are tracked client-side and saved via form submission.

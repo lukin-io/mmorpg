@@ -782,7 +782,7 @@ module Game
         # Grant rewards (with diminishing returns)
         rewards = grant_pvp_rewards!(winner, loser)
 
-        outcome = combat_log.any? { |m| m.include?("surrenders") } ? "surrender" : "victory"
+        outcome = (combat_log.any? { |m| m.include?("surrenders") }) ? "surrender" : "victory"
         combat_log << "#{winner.name} wins the battle!"
         persist_log_entry!(combat_log.last)
 

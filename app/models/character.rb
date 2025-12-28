@@ -72,6 +72,7 @@ class Character < ApplicationRecord
   validates :level, numericality: {greater_than: 0}
   validates :experience, numericality: {greater_than_or_equal_to: 0}
   validates :stat_points_available, :skill_points_available, numericality: {greater_than_or_equal_to: 0}
+  validates :combat_skill_points, :peace_skill_points, numericality: {greater_than_or_equal_to: 0}, allow_nil: true
   validates :reputation, numericality: {greater_than_or_equal_to: 0}
   validates :alignment_score, numericality: true
   validates :faction_alignment, inclusion: {in: ALIGNMENTS.values}
@@ -172,10 +173,50 @@ class Character < ApplicationRecord
   # Passive Skills
   # ===================
 
-  # Skill points available for the skill tree UI.
-  # Currently aliases passive skill points.
+  # Get total skill points available (legacy - for backward compatibility)
+  # Now aliases the sum of both pools or uses legacy single pool
+  #
+  # @return [Integer] total available skill points
   def available_skill_points
     skill_points_available
+  end
+
+  # Get available combat skill points (for combat/magic/resistance skills)
+  #
+  # @return [Integer] available combat skill points
+  def available_combat_skill_points
+    combat_skill_points.to_i
+  end
+
+  # Get available peace skill points (for crafting/gathering/social skills)
+  #
+  # @return [Integer] available peace skill points
+  def available_peace_skill_points
+    peace_skill_points.to_i
+  end
+
+  # Get available skill points for a specific pool
+  #
+  # @param pool [Symbol] :combat or :peace
+  # @return [Integer] available points for that pool
+  def available_skill_points_for_pool(pool)
+    case pool.to_sym
+    when :combat
+      available_combat_skill_points
+    when :peace
+      available_peace_skill_points
+    else
+      0
+    end
+  end
+
+  # Get available skill points for a specific skill
+  #
+  # @param skill_key [Symbol, String] the skill identifier
+  # @return [Integer] available points for that skill's pool
+  def available_points_for_skill(skill_key)
+    pool = Game::Skills::PassiveSkillRegistry.pool_for(skill_key)
+    available_skill_points_for_pool(pool)
   end
 
   # Get the level of a passive skill
@@ -206,6 +247,129 @@ class Character < ApplicationRecord
   def increase_passive_skill!(skill_key, amount = 1)
     current = passive_skill_level(skill_key)
     set_passive_skill!(skill_key, current + amount)
+  end
+
+  # Spend a skill point on a skill using tiered progression
+  # Returns the new level achieved
+  #
+  # @param skill_key [Symbol, String] the skill identifier
+  # @return [Integer, nil] new skill level, or nil if cannot spend
+  def spend_skill_point!(skill_key)
+    key = skill_key.to_sym
+    definition = Game::Skills::PassiveSkillRegistry.find(key)
+    return nil unless definition
+
+    pool = definition[:pool]
+    available = available_skill_points_for_pool(pool)
+    return nil if available <= 0
+
+    current_level = passive_skill_level(key)
+    max_level = definition[:max_level] || 100
+    return nil if current_level >= max_level
+
+    # Calculate new level using tiered progression
+    formula = Game::Formulas::SkillProgressionFormula.new
+    new_level = formula.apply_spend(
+      current_level: current_level,
+      progression_rate: definition[:progression_rate]
+    )
+
+    # Apply the changes atomically
+    transaction do
+      new_skills = passive_skills.merge(key.to_s => new_level)
+
+      case pool
+      when :combat
+        update!(
+          passive_skills: new_skills,
+          combat_skill_points: combat_skill_points - 1
+        )
+      when :peace
+        update!(
+          passive_skills: new_skills,
+          peace_skill_points: peace_skill_points - 1
+        )
+      end
+    end
+
+    clear_passive_skill_cache!
+    new_level
+  end
+
+  # Refund a skill point from a skill (undo during allocation)
+  # Only works for points added this session (tracked separately)
+  #
+  # @param skill_key [Symbol, String] the skill identifier
+  # @param base_level [Integer] the level before this session's allocations
+  # @return [Integer, nil] new skill level, or nil if cannot refund
+  def refund_skill_point!(skill_key, base_level:)
+    key = skill_key.to_sym
+    definition = Game::Skills::PassiveSkillRegistry.find(key)
+    return nil unless definition
+
+    current_level = passive_skill_level(key)
+    return nil if current_level <= base_level
+
+    # Calculate previous level using tiered progression
+    formula = Game::Formulas::SkillProgressionFormula.new
+    new_level = formula.remove_spend(
+      current_level: current_level,
+      base_level: base_level,
+      progression_rate: definition[:progression_rate]
+    )
+
+    pool = definition[:pool]
+
+    # Apply the changes atomically
+    transaction do
+      new_skills = passive_skills.merge(key.to_s => new_level)
+
+      case pool
+      when :combat
+        update!(
+          passive_skills: new_skills,
+          combat_skill_points: combat_skill_points + 1
+        )
+      when :peace
+        update!(
+          passive_skills: new_skills,
+          peace_skill_points: peace_skill_points + 1
+        )
+      end
+    end
+
+    clear_passive_skill_cache!
+    new_level
+  end
+
+  # Get points gained per spend for a skill at its current level
+  #
+  # @param skill_key [Symbol, String] the skill identifier
+  # @return [Integer] points that would be gained on next spend
+  def skill_points_per_spend(skill_key)
+    definition = Game::Skills::PassiveSkillRegistry.find(skill_key.to_sym)
+    return 0 unless definition
+
+    current_level = passive_skill_level(skill_key)
+    formula = Game::Formulas::SkillProgressionFormula.new
+    formula.points_per_spend(
+      current_level: current_level,
+      progression_rate: definition[:progression_rate]
+    )
+  end
+
+  # Award skill points (typically from leveling up)
+  #
+  # @param combat_points [Integer] points to add to combat pool
+  # @param peace_points [Integer] points to add to peace pool
+  def award_skill_points!(combat_points: 0, peace_points: 0)
+    updates = {}
+    updates[:combat_skill_points] = combat_skill_points + combat_points if combat_points.positive?
+    updates[:peace_skill_points] = peace_skill_points + peace_points if peace_points.positive?
+    # Also update legacy pool for backward compatibility
+    updates[:skill_points_available] = skill_points_available + combat_points + peace_points
+
+    update!(updates) if updates.present?
   end
 
   # Get a calculator for all passive skill effects

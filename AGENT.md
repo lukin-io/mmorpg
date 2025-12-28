@@ -196,7 +196,7 @@ use it as input when making design decisions, but don't overwrite it unless aske
    - **Model specs** — Validations, associations, scopes, domain logic
    - **Request specs** — Controller actions (success + error responses, auth checks)
    - **Service specs** — Game engine classes with seeded RNG, edge cases
-   - **System specs** — Critical Hotwire/JS interactions (Turbo Frames, Stimulus)
+   - **System specs** — Hotwire/JS interactions (Turbo Frames, Stimulus)
    - **Policy specs** — Authorization rules (if using Pundit)
 
 5. **Avoid N+1 and obvious performance bugs.**

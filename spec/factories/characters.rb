@@ -7,6 +7,8 @@ FactoryBot.define do
     experience { 0 }
     stat_points_available { 0 }
     skill_points_available { 0 }
+    combat_skill_points { 0 }
+    peace_skill_points { 0 }
     allocated_stats { {} }
     reputation { 0 }
     faction_alignment { Character::ALIGNMENTS[:neutral] }
