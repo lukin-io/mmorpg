@@ -94,8 +94,8 @@ module Game
           npc_key: npc_data[:key],
           npc_role: npc_data[:role] || "hostile",
           level: level,
-          current_hp: template.health,
-          max_hp: template.health,
+          current_hp: template.max_hp,
+          max_hp: template.max_hp,
           metadata: npc_data[:metadata] || {}
         )
       rescue ActiveRecord::RecordNotUnique

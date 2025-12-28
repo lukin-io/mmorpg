@@ -49,7 +49,7 @@ RSpec.describe Game::Combat::ActionValidator do
 
         expect(result.valid?).to be true
         expect(result.errors).to be_empty
-        expect(result.total_ap).to eq(45)
+        expect(result.total_ap).to eq(0) # Simple attacks are free
       end
 
       it "validates attack with block" do
@@ -59,7 +59,8 @@ RSpec.describe Game::Combat::ActionValidator do
         result = validator.validate(attacks: attacks, blocks: blocks)
 
         expect(result.valid?).to be true
-        expect(result.total_ap).to eq(75) # 45 + 30
+        # Simple attack is free (0 AP), block cost depends on config (default 30)
+        expect(result.total_ap).to eq(30) # 0 (simple) + 30 (block)
       end
 
       it "validates multiple attacks within limit" do
@@ -71,11 +72,13 @@ RSpec.describe Game::Combat::ActionValidator do
         result = validator.validate(attacks: attacks)
 
         expect(result.valid?).to be true
-        expect(result.total_ap).to eq(115) # 45 + 45 + 25 penalty
+        # Simple attacks are free (0 AP), penalty for 2 attacks is +25
+        expect(result.total_ap).to eq(25) # 0 + 0 + 25 penalty
       end
 
       it "includes warnings for high mana usage" do
-        skills = [{key: "fireball", mana: 25}, {key: "fireball", mana: 30}]
+        # Config has fireball at 25 mana each, so 3 fireballs = 75 mana > 50 limit
+        skills = [{key: "fireball"}, {key: "fireball"}, {key: "fireball"}]
 
         result = validator.validate(skills: skills)
 
@@ -141,11 +144,12 @@ RSpec.describe Game::Combat::ActionValidator do
 
     context "with failure cases - AP limit" do
       it "rejects actions exceeding AP limit" do
+        # 3 aimed attacks: 20+20+20 + 75 penalty = 135 > 80 AP
         attacks = [
           {body_part: "head", action_key: "aimed"},
-          {body_part: "torso", action_key: "aimed"}
+          {body_part: "torso", action_key: "aimed"},
+          {body_part: "stomach", action_key: "aimed"}
         ]
-        # 60 + 60 + 25 penalty = 145 > 80
 
         result = validator.validate(attacks: attacks)
 
@@ -198,10 +202,10 @@ RSpec.describe Game::Combat::ActionValidator do
       it "handles nil participant" do
         validator = described_class.new(nil, config)
 
-        result = validator.validate(attacks: [{body_part: "head", action_key: "simple"}])
+        result = validator.validate(attacks: [{body_part: "head", action_key: "aimed"}])
 
-        # Should still calculate AP even without participant
-        expect(result.total_ap).to be > 0
+        # Should still calculate AP even without participant (aimed = 20 AP)
+        expect(result.total_ap).to eq(20)
       end
 
       it "handles string keys in attacks hash" do

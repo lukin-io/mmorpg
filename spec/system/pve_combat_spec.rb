@@ -168,7 +168,10 @@ RSpec.describe "PvE Combat UI", type: :system do
   # ===========================================================================
 
   describe "without active combat" do
-    before { login_as(user, scope: :user) }
+    before do
+      position # ensure character and position exist
+      login_as(user, scope: :user)
+    end
 
     it "redirects to world map" do
       visit combat_path
@@ -203,7 +206,10 @@ RSpec.describe "PvE Combat UI", type: :system do
         is_alive: true)
     end
 
-    before { login_as(user, scope: :user) }
+    before do
+      position # ensure character position exists for world_path redirect
+      login_as(user, scope: :user)
+    end
 
     it "redirects away from completed battles" do
       visit combat_path
@@ -406,7 +412,10 @@ RSpec.describe "PvE Combat UI", type: :system do
         max_hp: 40)
     end
 
-    before { login_as(user, scope: :user) }
+    before do
+      position # ensure character position exists for world_path redirect
+      login_as(user, scope: :user)
+    end
 
     it "shows victory or redirects appropriately" do
       visit combat_path
@@ -450,7 +459,10 @@ RSpec.describe "PvE Combat UI", type: :system do
         max_hp: 40)
     end
 
-    before { login_as(user, scope: :user) }
+    before do
+      position # ensure character position exists for world_path redirect
+      login_as(user, scope: :user)
+    end
 
     it "shows defeat or redirects appropriately" do
       visit combat_path

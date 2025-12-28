@@ -171,6 +171,11 @@ class NpcTemplate < ApplicationRecord
     skills
   end
 
+  # ============================================================================
+  # Public API (legacy methods and public accessors)
+  # ============================================================================
+  public
+
   # Legacy method - delegates to combat_stats for backward compatibility
   # @deprecated Use #max_hp instead
   def health

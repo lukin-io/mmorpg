@@ -4,7 +4,7 @@ require "rails_helper"
 
 RSpec.describe "Inventory & Progression UI", type: :system, js: true do
   let(:user) { create(:user) }
-  let(:character) { create(:character, user: user, level: 1, stat_points_available: 2, skill_points_available: 2) }
+  let(:character) { create(:character, user: user, level: 1, stat_points_available: 2, skill_points_available: 2, combat_skill_points: 2, peace_skill_points: 1) }
 
   before do
     character
@@ -114,7 +114,7 @@ RSpec.describe "Inventory & Progression UI", type: :system, js: true do
     end
 
     it "rejects skill allocations that exceed available points (server-side validation)" do
-      character.update!(skill_points_available: 0)
+      character.update!(skill_points_available: 0, combat_skill_points: 0, peace_skill_points: 0)
 
       visit skills_character_path(character)
 
@@ -125,7 +125,7 @@ RSpec.describe "Inventory & Progression UI", type: :system, js: true do
 
       click_button "Save Skills"
 
-      expect(page).to have_css("#flash", text: "Not enough skill points available")
+      expect(page).to have_css("#flash", text: "Not enough combat skill points")
     end
   end
 
