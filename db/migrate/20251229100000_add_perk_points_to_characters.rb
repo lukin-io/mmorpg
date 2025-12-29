@@ -8,4 +8,3 @@ class AddPerkPointsToCharacters < ActiveRecord::Migration[8.0]
     add_index :characters, :perk_points_available, where: "perk_points_available > 0"
   end
 end
-

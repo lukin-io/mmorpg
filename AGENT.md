@@ -102,17 +102,22 @@ Depending on whether the project uses Minitest or RSpec:
 
 ## 3. Verification checklist (before pushing / opening a PR)
 
-**Always** run the relevant subset of these before considering a change “done”.
+**Always** run the relevant subset of these before considering a change "done".
 If a command is not available in this project, skip it and note that explicitly.
 
-1. **Tests** (required):
+> ⚠️ **IMPORTANT**: Always run `bundle exec rubocop` locally before pushing.
+> CI will fail on issues like trailing blank lines, missing frozen_string_literal, etc.
+> Catching these locally saves time and avoids failed CI runs.
+
+1. **Linting** (required - run FIRST to catch formatting issues):
+   - `bundle exec rubocop` — catches trailing lines, formatting, style issues
+   - `bundle exec rubocop -a` — auto-fix safe issues
+   - `bundle exec standardrb` (if configured)
+
+2. **Tests** (required):
    - Minitest: `bin/rails test`
    - or RSpec: `bundle exec rspec`
    - Optionally: `bin/rails test:system` or system/feature specs when UI changes are significant.
-
-2. **Linting** (recommended/required where configured):
-   - `bundle exec rubocop`
-   - `bundle exec standardrb`
 
 3. **Security** (where configured):
    - `bundle exec brakeman` or `bin/brakeman`

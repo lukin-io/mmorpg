@@ -425,7 +425,31 @@ A feature or fix is considered **done** when:
 - Manage gems with Bundler; avoid unnecessary dependencies.
 - Keep RuboCop/RuboCop-Rails/RuboCop-RSpec configs reasonable; follow them instead of fighting them.
 - Use Brakeman and Bundler-Audit regularly to catch security issues.
-- CI should run lint + tests; don’t rely only on local runs.
+- CI should run lint + tests; don't rely only on local runs.
+
+### 15.1 Pre-Push Verification (required)
+
+> ⚠️ **ALWAYS run these commands locally before pushing to avoid CI failures:**
+
+```bash
+# 1. Linting FIRST - catches trailing lines, formatting, style issues
+bundle exec rubocop
+
+# 2. Auto-fix safe issues (optional)
+bundle exec rubocop -a
+
+# 3. Tests
+bundle exec rspec  # or bin/rails test
+
+# 4. Security (if configured)
+bundle exec brakeman -q
+```
+
+**Common CI failures caught by rubocop:**
+- `Layout/TrailingEmptyLines` — trailing blank lines at end of file
+- `Style/FrozenStringLiteralComment` — missing frozen_string_literal comment
+- `Layout/EmptyLineAfterMagicComment` — missing blank line after frozen_string_literal
+- `Layout/TrailingWhitespace` — trailing spaces on lines
 
 ---
 
