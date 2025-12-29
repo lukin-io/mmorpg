@@ -245,10 +245,13 @@ bin/rails db:seed
 Use the verification script to catch CI failures locally:
 
 ```bash
-# Full verification (lint + factories + tests) - run before pushing
+# First-time setup: create parallel test databases (2-3x faster tests)
+bin/verify setup
+
+# Full verification with parallel tests - run before pushing
 bin/verify
 
-# Quick check (lint + factories only) - for fast feedback
+# Quick check (lint + model specs only) - for fast feedback
 bin/verify quick
 
 # Linting only
@@ -256,7 +259,14 @@ bin/verify lint
 
 # Combat subsystem tests
 bin/verify combat
+
+# Serial tests (for debugging flaky tests)
+bin/verify serial
 ```
+
+**Parallel Tests Setup:**
+
+The `bin/verify` script uses [parallel_tests](https://github.com/grosser/parallel_tests) to run tests across multiple CPU cores, reducing test time from ~5 minutes to ~2 minutes. Run `bin/verify setup` once to create the parallel databases.
 
 #### Manual Testing Commands
 

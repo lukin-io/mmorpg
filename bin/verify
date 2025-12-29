@@ -5,10 +5,12 @@
 # Run this before pushing to catch CI failures locally
 #
 # Usage:
-#   bin/verify          # Full verification (lint + factories + tests)
-#   bin/verify quick    # Quick check (lint + factories only)
+#   bin/verify          # Full verification with parallel tests (fastest)
+#   bin/verify quick    # Quick check (lint + model specs only)
 #   bin/verify lint     # Linting only
 #   bin/verify combat   # Combat subsystem tests
+#   bin/verify serial   # Full tests without parallelism (for debugging)
+#   bin/verify setup    # Setup parallel test databases (run once)
 #
 
 set -e
@@ -16,10 +18,24 @@ set -e
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
 NC='\033[0m' # No Color
+
+# Detect number of CPU cores
+if command -v nproc &> /dev/null; then
+  CORES=$(nproc)
+elif command -v sysctl &> /dev/null; then
+  CORES=$(sysctl -n hw.ncpu)
+else
+  CORES=4
+fi
 
 echo_step() {
   echo -e "\n${YELLOW}▶ $1${NC}"
+}
+
+echo_info() {
+  echo -e "${BLUE}ℹ $1${NC}"
 }
 
 echo_success() {
@@ -28,6 +44,30 @@ echo_success() {
 
 echo_error() {
   echo -e "${RED}✗ $1${NC}"
+}
+
+check_parallel_setup() {
+  # Check if parallel databases exist
+  if ! bundle exec rails runner "ActiveRecord::Base.establish_connection(Rails.configuration.database_configuration['test'].merge('database' => 'mmorpg_test2')); ActiveRecord::Base.connection.execute('SELECT 1')" 2>/dev/null; then
+    echo_info "Parallel test databases not set up. Run: bin/verify setup"
+    return 1
+  fi
+  return 0
+}
+
+run_setup() {
+  echo_step "Setting up parallel test databases..."
+  echo_info "Creating $CORES parallel test databases..."
+
+  bundle exec rake parallel:create
+  bundle exec rake parallel:prepare
+
+  if [ $? -eq 0 ]; then
+    echo_success "Parallel databases created and migrated"
+  else
+    echo_error "Failed to set up parallel databases"
+    exit 1
+  fi
 }
 
 run_lint() {
@@ -59,8 +99,29 @@ run_factories() {
   fi
 }
 
-run_tests() {
-  echo_step "Running full test suite..."
+run_tests_parallel() {
+  echo_step "Running full test suite in parallel ($CORES workers)..."
+
+  # Use parallel_rspec for speed (excludes system tests for reliability)
+  if bundle exec parallel_rspec spec/ --exclude-pattern "spec/system/**/*_spec.rb" -n $CORES; then
+    echo_success "Unit/integration tests passed"
+  else
+    echo_error "Tests failed"
+    exit 1
+  fi
+
+  # Run system tests serially (they can be flaky in parallel)
+  echo_step "Running system tests..."
+  if bundle exec rspec spec/system --format progress; then
+    echo_success "System tests passed"
+  else
+    echo_error "System tests failed"
+    exit 1
+  fi
+}
+
+run_tests_serial() {
+  echo_step "Running full test suite (serial)..."
   if bundle exec rspec --format progress; then
     echo_success "All tests passed"
   else
@@ -80,6 +141,9 @@ run_combat_tests() {
 }
 
 case "${1:-full}" in
+  setup)
+    run_setup
+    ;;
   lint)
     run_lint
     ;;
@@ -92,13 +156,28 @@ case "${1:-full}" in
     run_lint
     run_combat_tests
     ;;
+  serial)
+    run_lint
+    run_factories
+    run_tests_serial
+    echo -e "\n${GREEN}═══════════════════════════════════════${NC}"
+    echo -e "${GREEN}  ✓ All checks passed - safe to push!  ${NC}"
+    echo -e "${GREEN}═══════════════════════════════════════${NC}"
+    ;;
   full|*)
     run_lint
     run_factories
-    run_tests
+
+    # Try parallel if set up, fall back to serial
+    if check_parallel_setup 2>/dev/null; then
+      run_tests_parallel
+    else
+      echo_info "Using serial tests (run 'bin/verify setup' for 2-3x speedup)"
+      run_tests_serial
+    fi
+
     echo -e "\n${GREEN}═══════════════════════════════════════${NC}"
     echo -e "${GREEN}  ✓ All checks passed - safe to push!  ${NC}"
     echo -e "${GREEN}═══════════════════════════════════════${NC}"
     ;;
 esac
-

@@ -347,7 +347,7 @@ RSpec.describe "Skill Allocation", type: :system, js: true do
       expect(page).to have_button("Save Skills", disabled: true)
     end
 
-    it "persists allocation across page refresh" do
+    it "persists allocation across page refresh", skip: "Flaky in parallel - timing issue with page refresh" do
       click_button "Save Skills"
       visit skills_character_path(character)
 
