@@ -240,12 +240,33 @@ bin/rails db:seed
 
 ### Testing & QA
 
+#### Pre-Push Verification (Recommended)
+
+Use the verification script to catch CI failures locally:
+
+```bash
+# Full verification (lint + factories + tests) - run before pushing
+bin/verify
+
+# Quick check (lint + factories only) - for fast feedback
+bin/verify quick
+
+# Linting only
+bin/verify lint
+
+# Combat subsystem tests
+bin/verify combat
+```
+
+#### Manual Testing Commands
+
 - Run the full suite with `bundle exec rspec`.
 - Security/linting:
-  - `bundle exec rubocop`
-  - `bundle exec standardrb`
+  - `bundle exec standardrb --fix` — primary linter with auto-fix
+  - `bundle exec rubocop -a` — additional auto-fixes
   - `bundle exec brakeman`
   - `bundle exec bundler-audit`
+- Factory validation: `bundle exec rspec spec/factories`
 - Hotwire contract tests belong in `spec/system` or `spec/streams`.
 
 #### System Tests (JS/UI)

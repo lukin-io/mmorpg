@@ -7,7 +7,7 @@ RSpec.describe Game::Combat::UnifiedCombatService do
   let(:zone) { create(:zone, pvp_enabled: true) }
   let(:player) { create(:character, current_hp: 100, max_hp: 100, current_mp: 50, max_mp: 50) }
   let(:opponent) { create(:character, current_hp: 100, max_hp: 100, current_mp: 50, max_mp: 50) }
-  let(:npc) { create(:npc_template, level: 1, metadata: { "stats" => { "hp" => 50, "attack" => 10, "defense" => 5 } }) }
+  let(:npc) { create(:npc_template, level: 1, metadata: {"stats" => {"hp" => 50, "attack" => 10, "defense" => 5}}) }
 
   describe ".start_battle" do
     context "with success cases" do

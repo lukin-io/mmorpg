@@ -47,11 +47,9 @@ module Game
       def resolve_with_battle(battle, attacker, action, rng, ability)
         # Set up pending attack on participant
         participant = battle.battle_participants.find_by(character: attacker)
-        if participant
-          participant.update!(
-            pending_attacks: [{ "body_part" => "torso", "attack_type" => "simple" }]
-          )
-        end
+        participant&.update!(
+          pending_attacks: [{"body_part" => "torso", "attack_type" => "simple"}]
+        )
 
         # Resolve turn
         resolver = turn_resolver_class.new(battle, rng: rng)
@@ -65,7 +63,7 @@ module Game
           message: result.log_entries.first&.dig(:message) || "#{attacker.name} attacks with #{action}",
           actor_id: attacker.id,
           actor_type: "Character",
-          payload: { action: action, ability: ability&.name }
+          payload: {action: action, ability: ability&.name}
         )
 
         # Advance turn
@@ -97,7 +95,7 @@ module Game
 
         LegacyResult.new(
           log: [log_message],
-          hp_changes: { defender: -damage },
+          hp_changes: {defender: -damage},
           effects: extract_ability_effects(ability),
           battle: nil
         )

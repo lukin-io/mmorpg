@@ -20,8 +20,7 @@ RSpec.describe Game::Combat::TurnResolver do
       current_hp: 100,
       max_hp: 100,
       is_alive: true,
-      pending_attacks: [{"body_part" => "torso", "attack_type" => "simple"}]
-    )
+      pending_attacks: [{"body_part" => "torso", "attack_type" => "simple"}])
   end
 
   let!(:defender_participant) do
@@ -33,8 +32,7 @@ RSpec.describe Game::Combat::TurnResolver do
       current_hp: 100,
       max_hp: 100,
       is_alive: true,
-      pending_blocks: []
-    )
+      pending_blocks: [])
   end
 
   describe "#resolve!" do

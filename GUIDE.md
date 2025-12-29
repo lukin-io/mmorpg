@@ -432,24 +432,49 @@ A feature or fix is considered **done** when:
 > ⚠️ **ALWAYS run these commands locally before pushing to avoid CI failures:**
 
 ```bash
-# 1. Linting FIRST - catches trailing lines, formatting, style issues
-bundle exec rubocop
+# 1. Linting FIRST - catches 90% of CI failures
+bundle exec standardrb --fix  # Primary linter with auto-fix
+bundle exec rubocop -a        # Additional auto-fixes
 
-# 2. Auto-fix safe issues (optional)
-bundle exec rubocop -a
+# 2. Factory validation - catches schema/attribute mismatches
+bundle exec rspec spec/factories --format progress
 
-# 3. Tests
-bundle exec rspec  # or bin/rails test
+# 3. Quick test feedback - run changed specs
+bundle exec rspec spec/path/to/your_spec.rb
 
-# 4. Security (if configured)
+# 4. Full test suite - before final push
+bundle exec rspec --format progress
+
+# 5. Security (if configured)
 bundle exec brakeman -q
 ```
 
-**Common CI failures caught by rubocop:**
+**Common CI failures caught by linting:**
 - `Layout/TrailingEmptyLines` — trailing blank lines at end of file
 - `Style/FrozenStringLiteralComment` — missing frozen_string_literal comment
 - `Layout/EmptyLineAfterMagicComment` — missing blank line after frozen_string_literal
 - `Layout/TrailingWhitespace` — trailing spaces on lines
+- `Style/SafeNavigation` — use `&.` instead of checking nil
+- `Layout/ArrayAlignment` — multi-line array alignment
+- `Style/TernaryParentheses` — parentheses in ternary conditions
+
+**Common CI failures caught by factory validation:**
+- `NoMethodError: undefined method 'attribute='` — factory using outdated attribute names
+- `ActiveRecord::RecordInvalid` — missing required attributes or invalid enum values
+- Schema drift after migrations
+
+### 15.2 Verification by change type
+
+| What you changed | Commands to run |
+|------------------|-----------------|
+| Any Ruby file | `bundle exec standardrb --fix && bundle exec rubocop -a` |
+| Models/migrations | Above + `bundle exec rspec spec/factories spec/models` |
+| Controllers | Above + `bundle exec rspec spec/requests spec/controllers` |
+| Services | Above + `bundle exec rspec spec/services` |
+| Game engine | Above + `bundle exec rspec spec/lib/game spec/services/game` |
+| Combat system | Above + `bundle exec rspec spec/services/game/combat` |
+| Views/UI | Above + `bundle exec rspec spec/system` |
+| Full feature | `bundle exec standardrb --fix && bundle exec rspec` |
 
 ---
 
