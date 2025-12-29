@@ -11,8 +11,9 @@ gem "turbo-rails"
 gem "stimulus-rails"
 gem "propshaft"
 gem "redis"
-gem "connection_pool", "~> 2.5" # Rails 8.1.1 passes pool opts as a Hash (positional)
-gem "sidekiq", "~> 8.0"
+# gem "connection_pool", "~> 2.5" # Rails 8.1.1 passes pool opts as a Hash (positional)
+gem "connection_pool", "~> 3.0" # Pin to 2.x for Rails 8.1.1 compatibility
+gem "sidekiq", "~> 8.1"
 gem "devise"
 gem "pundit"
 gem "rolify"
