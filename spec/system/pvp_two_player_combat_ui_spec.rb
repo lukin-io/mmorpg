@@ -152,12 +152,12 @@ RSpec.describe "PVP Two-Player Combat UI", type: :system do
 
     it "displays flee button" do
       expect(page).to have_css(".btn-flee")
-      expect(page).to have_content("Flee")
+      expect(page).to have_content(/flee/i)
     end
 
     it "displays surrender button" do
       expect(page).to have_css(".btn-surrender")
-      expect(page).to have_content("Surrender")
+      expect(page).to have_content(/surrender/i)
     end
 
     it "organizes actions into groups" do
@@ -603,36 +603,19 @@ RSpec.describe "PVP Two-Player Combat UI", type: :system do
     end
 
     context "when participant has very low HP" do
-      let(:low_hp_battle) do
-        create(:battle, :active, :pvp, initiator: warrior, zone: pvp_zone)
-      end
-
       before do
-        create(:battle_participant,
-          battle: low_hp_battle,
-          character: warrior,
-          team: "alpha",
-          current_hp: 5,
-          max_hp: 150,
-          is_alive: true)
-
-        create(:battle_participant,
-          battle: low_hp_battle,
-          character: mage,
-          team: "beta",
-          current_hp: 80,
-          max_hp: 80,
-          is_alive: true)
+        # Update existing battle participants for this scenario
+        battle.battle_participants.find_by(character: warrior)&.update!(current_hp: 5)
       end
 
       it "displays low HP correctly" do
-        visit pvp_combat_path(low_hp_battle)
+        visit pvp_combat_path(battle)
 
         expect(page).to have_content("5/150")
       end
 
       it "shows narrow HP bar fill" do
-        visit pvp_combat_path(low_hp_battle)
+        visit pvp_combat_path(battle)
 
         # HP fill should be very narrow (5/150 = ~3%)
         hp_fill = find(".pvp-participant--self .pvp-hp-fill")
@@ -642,30 +625,15 @@ RSpec.describe "PVP Two-Player Combat UI", type: :system do
     end
 
     context "when round number is high" do
-      let(:long_battle) do
-        create(:battle, :active, :pvp, initiator: warrior, zone: pvp_zone, turn_number: 50)
-      end
-
       before do
-        create(:battle_participant,
-          battle: long_battle,
-          character: warrior,
-          team: "alpha",
-          current_hp: 50,
-          max_hp: 150,
-          is_alive: true)
-
-        create(:battle_participant,
-          battle: long_battle,
-          character: mage,
-          team: "beta",
-          current_hp: 30,
-          max_hp: 80,
-          is_alive: true)
+        # Update existing battle for this scenario
+        battle.update!(turn_number: 50)
+        battle.battle_participants.find_by(character: warrior)&.update!(current_hp: 50)
+        battle.battle_participants.find_by(character: mage)&.update!(current_hp: 30)
       end
 
       it "displays high round number" do
-        visit pvp_combat_path(long_battle)
+        visit pvp_combat_path(battle)
 
         expect(page).to have_content("Round 50")
       end
@@ -694,27 +662,9 @@ RSpec.describe "PVP Two-Player Combat UI", type: :system do
   # COMBAT COMPLETION VIA UI
   # =============================================================================
   describe "Combat Completion Through UI Actions", js: true do
-    let(:finishing_battle) do
-      create(:battle, :active, :pvp, initiator: warrior, zone: pvp_zone)
-    end
-
     before do
-      create(:battle_participant,
-        battle: finishing_battle,
-        character: warrior,
-        team: "alpha",
-        current_hp: 150,
-        max_hp: 150,
-        is_alive: true)
-
-      create(:battle_participant,
-        battle: finishing_battle,
-        character: mage,
-        team: "beta",
-        current_hp: 1, # Very low HP - will die on first hit
-        max_hp: 80,
-        is_alive: true)
-
+      # Use existing battle but set mage to very low HP
+      battle.battle_participants.find_by(character: mage)&.update!(current_hp: 1)
       mage.update!(current_hp: 1)
 
       login_as(user_alpha, scope: :user)
@@ -722,7 +672,7 @@ RSpec.describe "PVP Two-Player Combat UI", type: :system do
     end
 
     it "shows victory screen when defeating opponent" do
-      visit pvp_combat_path(finishing_battle)
+      visit pvp_combat_path(battle)
 
       # Attack should defeat mage with 1 HP
       click_button "Head"

@@ -17,7 +17,7 @@ RSpec.describe Game::Skills::PassiveSkillRegistry, "prerequisites" do
     end
 
     obj.define_singleton_method(:available_skill_points_for_pool) do |pool|
-      pool == :combat ? 5 : 3
+      (pool == :combat) ? 5 : 3
     end
 
     obj.define_singleton_method(:respond_to?) do |method, include_all = false|

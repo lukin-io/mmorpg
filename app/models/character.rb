@@ -270,7 +270,7 @@ class Character < ApplicationRecord
     # Use the comprehensive can_spend? check
     spend_check = Game::Skills::PassiveSkillRegistry.can_spend?(key, self)
     unless spend_check[:allowed]
-      errors.add(:base, spend_check[:reason]) if errors
+      errors&.add(:base, spend_check[:reason])
       return nil
     end
 

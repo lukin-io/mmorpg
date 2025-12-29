@@ -7,14 +7,17 @@ RSpec.describe Game::Combat::UnifiedCombatService do
   let(:zone) { create(:zone, pvp_enabled: true) }
   let(:player) { create(:character, current_hp: 100, max_hp: 100, current_mp: 50, max_mp: 50) }
   let(:opponent) { create(:character, current_hp: 100, max_hp: 100, current_mp: 50, max_mp: 50) }
-  let(:npc) { create(:npc_template, health: 50, level: 1) }
+  let(:npc) { create(:npc_template, level: 1, metadata: { "stats" => { "hp" => 50, "attack" => 10, "defense" => 5 } }) }
 
   describe ".start_battle" do
     context "with success cases" do
       it "creates PvP battle between two players" do
+        initiator = create(:character, current_hp: 100, max_hp: 100, current_mp: 50, max_mp: 50)
+        target = create(:character, current_hp: 100, max_hp: 100, current_mp: 50, max_mp: 50)
+
         result = described_class.start_battle(
-          initiator: player,
-          opponent: opponent,
+          initiator: initiator,
+          opponent: target,
           zone: zone,
           battle_type: :pvp
         )
@@ -25,8 +28,10 @@ RSpec.describe Game::Combat::UnifiedCombatService do
       end
 
       it "creates PvE battle against NPC" do
+        initiator = create(:character, current_hp: 100, max_hp: 100, current_mp: 50, max_mp: 50)
+
         result = described_class.start_battle(
-          initiator: player,
+          initiator: initiator,
           opponent: npc,
           zone: zone,
           battle_type: :pve
@@ -37,9 +42,12 @@ RSpec.describe Game::Combat::UnifiedCombatService do
       end
 
       it "creates participants for both combatants" do
+        initiator = create(:character, current_hp: 100, max_hp: 100, current_mp: 50, max_mp: 50)
+        target = create(:character, current_hp: 100, max_hp: 100, current_mp: 50, max_mp: 50)
+
         result = described_class.start_battle(
-          initiator: player,
-          opponent: opponent,
+          initiator: initiator,
+          opponent: target,
           zone: zone,
           battle_type: :pvp
         )
@@ -51,9 +59,12 @@ RSpec.describe Game::Combat::UnifiedCombatService do
       end
 
       it "sets correct participant types" do
+        player1 = create(:character, current_hp: 100, max_hp: 100, current_mp: 50, max_mp: 50)
+        player2 = create(:character, current_hp: 100, max_hp: 100, current_mp: 50, max_mp: 50)
+
         player_result = described_class.start_battle(
-          initiator: player,
-          opponent: opponent,
+          initiator: player1,
+          opponent: player2,
           zone: zone,
           battle_type: :pvp
         )
@@ -61,8 +72,9 @@ RSpec.describe Game::Combat::UnifiedCombatService do
         expect(player_result[:initiator_participant].participant_type).to eq("player")
         expect(player_result[:opponent_participant].participant_type).to eq("player")
 
+        player3 = create(:character, current_hp: 100, max_hp: 100, current_mp: 50, max_mp: 50)
         npc_result = described_class.start_battle(
-          initiator: player,
+          initiator: player3,
           opponent: npc,
           zone: zone,
           battle_type: :pve
@@ -72,9 +84,12 @@ RSpec.describe Game::Combat::UnifiedCombatService do
       end
 
       it "generates RNG seed" do
+        initiator = create(:character, current_hp: 100, max_hp: 100, current_mp: 50, max_mp: 50)
+        target = create(:character, current_hp: 100, max_hp: 100, current_mp: 50, max_mp: 50)
+
         result = described_class.start_battle(
-          initiator: player,
-          opponent: opponent,
+          initiator: initiator,
+          opponent: target,
           zone: zone,
           battle_type: :pvp
         )
@@ -83,9 +98,12 @@ RSpec.describe Game::Combat::UnifiedCombatService do
       end
 
       it "starts turn timer" do
+        initiator = create(:character, current_hp: 100, max_hp: 100, current_mp: 50, max_mp: 50)
+        target = create(:character, current_hp: 100, max_hp: 100, current_mp: 50, max_mp: 50)
+
         result = described_class.start_battle(
-          initiator: player,
-          opponent: opponent,
+          initiator: initiator,
+          opponent: target,
           zone: zone,
           battle_type: :pvp
         )
@@ -96,12 +114,15 @@ RSpec.describe Game::Combat::UnifiedCombatService do
 
     context "with failure cases" do
       it "fails if initiator already in active battle" do
+        initiator = create(:character, current_hp: 100, max_hp: 100, current_mp: 50, max_mp: 50)
+        target = create(:character, current_hp: 100, max_hp: 100, current_mp: 50, max_mp: 50)
+
         # Create an active battle first
-        create(:battle, initiator: player, status: :active)
+        create(:battle, initiator: initiator, status: :active)
 
         result = described_class.start_battle(
-          initiator: player,
-          opponent: opponent,
+          initiator: initiator,
+          opponent: target,
           zone: zone,
           battle_type: :pvp
         )

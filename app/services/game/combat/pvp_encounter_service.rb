@@ -433,6 +433,7 @@ module Game
         @battle = Battle.create!(
           battle_type: :pvp,
           status: :active,
+          combat_mode: "simultaneous",
           zone: zone,
           initiator: attacker,
           turn_number: 1,

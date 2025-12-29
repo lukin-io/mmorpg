@@ -22,7 +22,12 @@ module Game
         :success, :log_entries, :hp_changes, :mp_changes,
         :effects_applied, :battle_ended, :winner_team, :errors,
         keyword_init: true
-      )
+      ) do
+        # Alias for legacy compatibility
+        def log
+          log_entries&.map { |e| e.is_a?(Hash) ? e[:message] : e.to_s } || []
+        end
+      end
 
       BODY_PARTS = %w[head torso stomach legs].freeze
 

@@ -32,7 +32,7 @@
     <div class="nl-combat-meta">
       <span class="nl-round">Round <%= battle.round_number || 1 %></span>
       <span class="nl-turn">Turn <%= battle.turn_number %></span>
-      <% if timer_end %>
+      <% if local_assigns[:timer_end] %>
         <span class="nl-timer" data-combat-turn-target="turnTimer">5:00</span>
       <% end %>
     </div>
@@ -96,7 +96,7 @@
           <span class="nl-ap-label">Action Points</span>
         </div>
         <div class="nl-ap-values">
-          <span class="nl-ap-limit">Limit: <%= ap_limit %></span>
+          <span class="nl-ap-limit">Limit: <%= local_assigns[:ap_limit] || battle.action_points_per_turn || 80 %></span>
           <span class="nl-ap-used" data-combat-turn-target="apUsed">Used: <strong>0</strong></span>
         </div>
         <div class="nl-ap-warning" data-combat-turn-target="apWarning" style="display: none;">
@@ -247,7 +247,7 @@
   <div class="nl-combat-rules">
     <h4>Combat Rules</h4>
     <ul>
-      <li><strong>Action Points (AP):</strong> Each turn has a <%= ap_limit %> AP budget</li>
+      <li><strong>Action Points (AP):</strong> Each turn has a <%= local_assigns[:ap_limit] || battle.action_points_per_turn || 80 %> AP budget</li>
       <li><strong>Multi-Attack Penalty:</strong> 2nd attack +25 AP, 3rd +75 AP, 4th +150 AP</li>
       <li><strong>Block Limit:</strong> Only 1 block allowed per turn</li>
       <li><strong>Exclusivity:</strong> Cannot attack Head + Legs in the same turn</li>

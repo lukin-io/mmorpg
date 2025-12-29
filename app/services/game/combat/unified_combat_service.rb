@@ -98,6 +98,23 @@ module Game
         )
       end
 
+      # Class methods for initiative calculation
+      def self.calculate_initiative(character)
+        base = 10
+        agility = begin
+          character.stats&.get(:agility).to_i
+        rescue
+          10
+        end
+        base + agility + rand(1..5)
+      end
+
+      def self.calculate_npc_initiative(npc)
+        base = 10
+        level = npc.level || 1
+        base + level + rand(1..5)
+      end
+
       # Start a new battle
       #
       # @param initiator [Character] the character starting the battle
@@ -125,7 +142,7 @@ module Game
             character: initiator,
             team: "alpha",
             role: "attacker",
-            initiative: calculate_initiative(initiator),
+            initiative: self.calculate_initiative(initiator),
             hp_remaining: initiator.current_hp,
             current_hp: initiator.current_hp,
             max_hp: initiator.max_hp,
@@ -141,7 +158,7 @@ module Game
               character: opponent,
               team: "beta",
               role: "defender",
-              initiative: calculate_initiative(opponent),
+              initiative: self.calculate_initiative(opponent),
               hp_remaining: opponent.current_hp,
               current_hp: opponent.current_hp,
               max_hp: opponent.max_hp,
@@ -152,13 +169,13 @@ module Game
             )
           else
             # NPC opponent
-            npc_hp = opponent.health || opponent.metadata&.dig("max_hp") || 50
+            npc_hp = opponent.max_hp
             npc_mp = opponent.metadata&.dig("max_mp") || 0
             opponent_participant = battle.battle_participants.create!(
               npc_template: opponent,
               team: "beta",
               role: "defender",
-              initiative: calculate_npc_initiative(opponent),
+              initiative: self.calculate_npc_initiative(opponent),
               hp_remaining: npc_hp,
               current_hp: npc_hp,
               max_hp: npc_hp,
@@ -270,11 +287,11 @@ module Game
           battle.combat_log_entries.create!(
             round_number: battle.round_number || 1,
             sequence: battle.next_sequence_for(battle.round_number || 1),
-            event_type: entry[:type].to_s,
+            log_type: entry[:type].to_s,
             message: entry[:message],
             actor_id: entry[:actor_id],
-            actor_name: entry[:actor_name],
-            metadata: entry[:data]
+            actor_type: entry[:actor_type] || "Character",
+            payload: entry[:data] || {}
           )
         end
       end
@@ -380,25 +397,6 @@ module Game
         else
           10
         end
-      end
-    end
-
-    # Class methods for initiative calculation
-    class << self
-      def calculate_initiative(character)
-        base = 10
-        agility = begin
-          character.stats&.get(:agility).to_i
-        rescue
-          10
-        end
-        base + agility + rand(1..5)
-      end
-
-      def calculate_npc_initiative(npc)
-        base = 10
-        level = npc.level || 1
-        base + level + rand(1..5)
       end
     end
 

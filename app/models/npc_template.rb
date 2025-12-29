@@ -163,9 +163,11 @@ class NpcTemplate < ApplicationRecord
 
   def calculate_default_passive_skills
     skills = {}
-    %i[melee_combat ranged_combat critical_strikes evasion block_mastery
-       elemental_magic fire_resistance cold_resistance lightning_resistance
-       physical_fortitude].each do |skill|
+    %i[
+      melee_combat ranged_combat critical_strikes evasion block_mastery
+      elemental_magic fire_resistance cold_resistance lightning_resistance
+      physical_fortitude
+    ].each do |skill|
       skills[skill.to_s] = calculate_default_skill_level(skill)
     end
     skills

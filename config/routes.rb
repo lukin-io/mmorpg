@@ -1,6 +1,9 @@
 require "sidekiq/web"
 
 Rails.application.routes.draw do
+  # NOTE: Devise 4.9.x generates deprecation warnings about hash arguments in Rails 8.2
+  # This is a known Devise issue and will be fixed in Devise 4.10+
+  # See: https://github.com/heartcombo/devise/issues/5644
   devise_for :users
 
   mount ActionCable.server => "/cable"
