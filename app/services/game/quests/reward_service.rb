@@ -19,7 +19,7 @@ module Game
       def initialize(
         assignment:,
         experience_pipeline: Players::Progression::ExperiencePipeline,
-        wallet_service: Economy::WalletService,
+        wallet_service: ::Economy::WalletService,
         inventory_expander: Game::Inventory::ExpansionService
       )
         @assignment = assignment

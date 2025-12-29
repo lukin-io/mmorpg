@@ -4,9 +4,7 @@
     <p class="page-subtitle">Unlock abilities and passives to customize your <%= current_character.character_class.name %></p>
   </div>
 
-  <div class="skill-points-panel card" id="skill_points_display">
-    <%= render "skill_trees/points", points: @available_points %>
-  </div>
+  <%= render "skill_trees/points_panel", points: @available_points %>
 
   <div class="skill-trees-grid">
     <% @skill_trees.each do |tree| %>
@@ -37,7 +35,6 @@
   <div class="respec-panel card">
     <h3>Reset Skills</h3>
     <p>Reset all skill points to redistribute them. Costs <%= Players::Progression::RespecService::RESPEC_GOLD_COST %> gold.</p>
-    <%= button_to "Respec Skills", respec_skill_trees_path, method: :post, class: "game-btn game-btn--danger", data: { confirm: "Are you sure? This will reset ALL your skills." } %>
+    <%= button_to "Respec Skills", respec_skill_trees_path, method: :post, class: "game-btn game-btn--danger", data: { turbo_confirm: "Are you sure? This will reset ALL your skills." } %>
   </div>
 </div>
-

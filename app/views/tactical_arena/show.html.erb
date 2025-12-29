@@ -39,11 +39,11 @@
         <% end %>
       </div>
 
-      <% if my_turn? && current_character.abilities.any? %>
+      <% if my_turn? && current_character.character_class&.abilities&.any? %>
         <div class="skills-panel card">
           <h3>Skills</h3>
           <div class="skills-list">
-            <% current_character.abilities.each do |ability| %>
+            <% current_character.character_class.abilities.each do |ability| %>
               <button class="skill-btn"
                       data-action="click->tactical-combat#selectSkill"
                       data-skill-id="<%= ability.id %>"
@@ -76,4 +76,3 @@
     </div>
   <% end %>
 </div>
-

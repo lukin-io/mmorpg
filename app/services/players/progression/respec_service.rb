@@ -166,11 +166,9 @@ module Players
       def remove_skill_granted_abilities!
         return unless character.respond_to?(:abilities)
 
-        # Get all ability keys from skill nodes
-        ability_keys = character.character_skills
-          .joins(:skill_node)
-          .where.not(skill_nodes: {ability_key: nil})
-          .pluck("skill_nodes.ability_key")
+        ability_keys = character.character_skills.includes(:skill_node).filter_map do |character_skill|
+          character_skill.skill_node.effects&.fetch("ability_key", nil)
+        end.compact.uniq
 
         return if ability_keys.empty?
 

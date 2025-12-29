@@ -267,6 +267,7 @@ Resources have rarity tiers affecting spawn weights and respawn times:
 6. TileGatheringService.gather! called
 7. Resource quantity decremented
 8. Item added to player inventory
+   - If the inventory has no free slots/weight capacity, gathering fails with an "Inventory full" message and the harvest is rolled back (resource remains available)
 9. If depleted (qty = 0):
    - Set respawns_at timestamp
    - Schedule TileResourceRespawnJob
@@ -295,6 +296,7 @@ Resources have rarity tiers affecting spawn weights and respawn times:
 - Orchestrates gathering: find/spawn resource, harvest, add to inventory
 - Creates ItemTemplate on-the-fly if not seeded
 - Returns structured result with success/failure, item details, respawn info
+- Rolls back harvesting when inventory insertion fails (e.g., capacity exceeded)
 
 **Game::World::BiomeResourceConfig**
 - Loads `config/gameplay/biome_resources.yml`
@@ -322,6 +324,7 @@ Resources have rarity tiers affecting spawn weights and respawn times:
 - Shows "Gather [Resource]" button when resource available
 - Shows depleted state with respawn countdown when unavailable
 - Uses `resource_icon` helper for visual indicators
+- The tile gather button uses `id="gather_tile_resource_btn"` for deterministic system-spec targeting
 
 ### Configuration
 
@@ -396,6 +399,7 @@ end
 
 ### Specs
 - `spec/models/tile_resource_spec.rb` — Model specs
+- System spec: `spec/system/world_interactions_spec.rb` covers gather UI + inventory-full failure.
 
 ## Testing & QA
 
@@ -543,4 +547,3 @@ Similar to resources, NPCs spawn randomly on tiles based on biome. Hostile NPCs 
 - [ ] Elite/Boss NPC spawn events
 - [ ] NPC loot drops on defeat
 - [ ] Party-based NPC combat
-

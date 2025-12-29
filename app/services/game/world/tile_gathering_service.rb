@@ -185,6 +185,7 @@ module Game
           key: tile_resource.resource_key,
           name: tile_resource.display_name,
           item_type: "material",
+          slot: "none",
           rarity: tile_resource.metadata&.dig("rarity") || "common",
           weight: resource_weight(tile_resource.resource_type),
           stack_limit: 99,

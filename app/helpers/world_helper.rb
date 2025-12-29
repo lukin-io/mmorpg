@@ -33,6 +33,23 @@ module WorldHelper
     icons[type.to_sym] || "🏛️"
   end
 
+  # Get city image path from zone metadata
+  #
+  # @param zone [Zone] the city zone
+  # @return [String] image path or default
+  def city_image(zone)
+    zone.metadata&.dig("image") || "city_default.jpg"
+  end
+
+  # Get city description from zone metadata
+  #
+  # @param zone [Zone] the city zone
+  # @return [String] description text
+  def city_description(zone)
+    zone.metadata&.dig("description") ||
+      "A bustling city full of adventure. The streets are alive with merchants, adventurers, and citizens going about their daily business."
+  end
+
   # Get buildings for a city zone
   #
   # @param zone [Zone] the city zone

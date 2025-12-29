@@ -29,7 +29,7 @@ class TacticalMatch < ApplicationRecord
   belongs_to :arena_room, optional: true
 
   has_many :tactical_participants, dependent: :destroy
-  has_many :combat_log_entries, as: :battle, dependent: :destroy
+  has_many :tactical_combat_log_entries, dependent: :destroy
 
   validates :grid_size, inclusion: {in: GRID_SIZES}
   validates :turn_time_limit, numericality: {greater_than: 0, less_than_or_equal_to: 300}

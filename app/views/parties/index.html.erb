@@ -14,6 +14,22 @@
         </div>
       <% end %>
 
+      <% if @pending_invitations.any? %>
+        <div class="current-party-banner card">
+          <h3>Party Invitations</h3>
+          <% @pending_invitations.each do |invite| %>
+            <p>
+              Invited to <strong><%= invite.party.name %></strong>
+              by <strong><%= invite.sender.profile_name %></strong>
+            </p>
+            <div class="party-actions">
+              <%= button_to "Accept", party_invitation_path(invite, decision: :accept), method: :patch, class: "game-btn game-btn--primary" %>
+              <%= button_to "Decline", party_invitation_path(invite, decision: :decline), method: :patch, class: "game-btn" %>
+            </div>
+          <% end %>
+        </div>
+      <% end %>
+
       <div class="parties-list">
         <h2>Available Parties</h2>
         <% if @parties.any? %>
@@ -43,9 +59,6 @@
 
               <div class="party-actions">
                 <%= link_to "View", party_path(party), class: "game-btn" %>
-                <% if can_join_party?(party) %>
-                  <%= button_to "Request Join", party_invitations_path(party), method: :post, class: "game-btn game-btn--primary" %>
-                <% end %>
               </div>
             </div>
           <% end %>

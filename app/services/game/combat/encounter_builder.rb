@@ -24,6 +24,7 @@ module Game
             battle_type: battle_type_from_mode,
             pvp_mode: pvp_mode_for_mode,
             status: :active,
+            combat_mode: "simultaneous",
             initiator:,
             zone: zone || initiator.position&.zone,
             allow_spectators: allow_spectators,

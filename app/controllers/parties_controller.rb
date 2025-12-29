@@ -7,6 +7,7 @@ class PartiesController < ApplicationController
     current_user.ensure_social_features!
     @parties = policy_scope(Party).includes(:leader).order(updated_at: :desc)
     @party = Party.new
+    @pending_invitations = current_user.party_invitations_received.active.includes(:party, :sender)
   end
 
   def show

@@ -138,6 +138,10 @@ class User < ApplicationRecord
     has_any_role?(:moderator, :gm, :admin)
   end
 
+  def character
+    characters.order(:created_at).first
+  end
+
   def suspended?
     suspended_until.present? && suspended_until.future?
   end

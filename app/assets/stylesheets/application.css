@@ -8848,10 +8848,10 @@ turbo-frame[busy] {
 }
 
 /* ============================================
-   TURN-BASED COMBAT UI - LIGHT NEVERLANDS THEME
+   TURN-BASED COMBAT UI - LIGHT BEIGE THEME
    ============================================ */
 
-/* Combat CSS Variables - Light Theme matching Neverlands */
+/* Combat CSS Variables - Light Beige Theme */
 .nl-combat-container {
   --combat-bg-white: #FFFFFF;
   --combat-bg-light: #FAFAFA;
@@ -9011,7 +9011,7 @@ turbo-frame[busy] {
 
 .nl-bar {
   height: 14px;
-  background: #E0E0E0;  /* Light gray for empty bar - Neverlands style */
+  background: #E0E0E0;  /* Light gray for empty bar */
   position: relative;
   overflow: hidden;
   border-radius: 0;
@@ -9023,7 +9023,7 @@ turbo-frame[busy] {
   transition: width 0.4s ease;
 }
 
-/* HP Bar - Cyan/Turquoise gradient like Neverlands (hpbg1.gif) */
+/* HP Bar - Cyan/Turquoise gradient */
 .nl-bar-fill--hp {
   background: linear-gradient(180deg, #7FD4D4 0%, #4FC8C8 50%, #7FD4D4 100%);
 }
@@ -9037,7 +9037,7 @@ turbo-frame[busy] {
   50% { opacity: 0.7; }
 }
 
-/* MP Bar - Blue gradient like Neverlands (mpbg1.gif) */
+/* MP Bar - Blue gradient */
 .nl-bar-fill--mp {
   background: linear-gradient(180deg, #6699CC 0%, #4477AA 50%, #6699CC 100%);
 }
@@ -9460,7 +9460,7 @@ turbo-frame[busy] {
   margin-top: 8px;
 }
 
-/* Neverlands-style buttons (.fbut class) */
+/* Action buttons */
 .nl-btn {
   font-family: Tahoma, Verdana, Arial, sans-serif;
   font-size: 11px;
@@ -9545,7 +9545,7 @@ turbo-frame[busy] {
 }
 
 .nl-group-member strong {
-  /* No text shadow - clean Neverlands style */
+  /* Clean style - no text shadow */
 }
 
 .nl-group-member--dead {
@@ -10663,7 +10663,7 @@ turbo-frame[busy] {
 }
 
 /* ============================================
-   NEVERLANDS-INSPIRED BEIGE THEME
+   BEIGE THEME
    ============================================ */
 
 /* Beige/Cream theme variables */
@@ -10683,7 +10683,7 @@ turbo-frame[busy] {
 }
 
 /* ============================================
-   NEVERLANDS STATUS BAR - Action Buttons
+   STATUS BAR - Action Buttons
    ============================================ */
 
 .nl-action-buttons {
@@ -10719,7 +10719,7 @@ turbo-frame[busy] {
 }
 
 /* ============================================
-   NEVERLANDS HP/MP VITALS BAR
+   HP/MP VITALS BAR
    ============================================ */
 
 .nl-vitals {
@@ -11568,7 +11568,7 @@ turbo-frame[busy] {
 
 /* ============================================
    NL ALLOCATION UI (Stats & Skills)
-   Neverlands-inspired +/- allocation pattern
+   +/- allocation pattern for stats and skills
    ============================================ */
 
 .nl-allocation-page {
@@ -11886,6 +11886,185 @@ turbo-frame[busy] {
 
 .nl-shake {
   animation: nl-shake 0.3s ease;
+}
+
+/* Dual Skill Point Pools */
+.nl-allocation-pools {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  padding: 12px;
+  margin-bottom: 16px;
+  background: #FFFFFF;
+  border: 1px solid #E8DFC4;
+}
+
+.nl-allocation-pool {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: #F8F5ED;
+  border: 1px solid #DECFA6;
+}
+
+.nl-allocation-pool--combat {
+  border-left: 3px solid #cc0000;
+}
+
+.nl-allocation-pool--peace {
+  border-left: 3px solid #009D29;
+}
+
+.nl-allocation-pool-icon {
+  font-size: 16px;
+}
+
+.nl-allocation-pool-label {
+  font-size: 11px;
+  color: #666666;
+}
+
+.nl-allocation-pool-value {
+  font-size: 14px;
+  font-weight: bold;
+  color: #336699;
+}
+
+/* Skill Category Sections */
+.nl-skill-category-section {
+  margin-bottom: 20px;
+}
+
+.nl-skill-category-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  margin-bottom: 12px;
+  background: #F3ECD7;
+  border-bottom: 2px solid #B9A05C;
+  font-size: 12px;
+  font-weight: bold;
+  color: #333333;
+}
+
+.nl-skill-category-header--combat {
+  border-color: #cc0000;
+  background: #fef5f5;
+}
+
+.nl-skill-category-header--magic {
+  border-color: #9933cc;
+  background: #f8f5ff;
+}
+
+.nl-skill-category-header--resistance {
+  border-color: #0066aa;
+  background: #f5f8ff;
+}
+
+.nl-skill-category-header--survival {
+  border-color: #006600;
+  background: #f5fff5;
+}
+
+.nl-skill-category-header--peace {
+  border-color: #009D29;
+  background: #f0fff0;
+}
+
+.nl-skill-category-icon {
+  font-size: 14px;
+}
+
+.nl-skill-category-pool {
+  font-size: 10px;
+  font-weight: normal;
+  color: #888888;
+  margin-left: auto;
+}
+
+/* Skill Row with Meta Column */
+.nl-skill-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 12px;
+  align-items: center;
+  padding: 12px;
+  background: #FFFFFF;
+  border: 1px solid #E8DFC4;
+}
+
+.nl-skill-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 100px;
+}
+
+.nl-skill-gain {
+  font-size: 11px;
+  font-weight: bold;
+  color: #009D29;
+  background: #e6f2e6;
+  padding: 2px 8px;
+  text-align: center;
+  border: 1px solid #66aa66;
+}
+
+.nl-skill-gain--max {
+  color: #B9A05C;
+  background: #F3ECD7;
+  border-color: #DECFA6;
+}
+
+.nl-skill-effect {
+  font-size: 10px;
+  color: #666666;
+  background: #F8F5ED;
+  padding: 4px 8px;
+  border-left: 2px solid #B9A05C;
+}
+
+/* Skill Legend */
+.nl-skill-legend {
+  margin-top: 20px;
+  padding: 12px;
+  background: #F8F5ED;
+  border: 1px solid #E8DFC4;
+  font-size: 10px;
+  color: #666666;
+}
+
+.nl-skill-legend h4 {
+  font-size: 11px;
+  color: #336699;
+  margin: 0 0 8px 0;
+}
+
+.nl-skill-legend p {
+  margin: 0 0 8px 0;
+}
+
+.nl-skill-legend ul {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.nl-skill-legend li {
+  margin-bottom: 4px;
+}
+
+/* Disabled state for max level skills */
+.nl-stat-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.nl-stat-btn:disabled:hover {
+  background: #FFFFFF;
+  border-color: #DECFA6;
 }
 
 /* ============================================

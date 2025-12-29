@@ -23,7 +23,7 @@ module Arena
 
         participant = match.tactical_participants.find_by(character: character)
         return {success: false, error: "Participant not found"} unless participant
-        return {success: false, error: "Not enough MP"} if participant.current_mp < skill.mp_cost
+        return {success: false, error: "Not enough MP"} if participant.current_mp < skill.mp_cost.to_i
 
         result = execute_skill!(participant, skill)
         match.consume_action! if result[:success]
@@ -67,7 +67,7 @@ module Arena
 
         # Calculate and apply damage
         base_damage = skill.metadata&.fetch("base_damage", 20) || 20
-        damage = base_damage + (character.intelligence / 2)
+        damage = base_damage + (character.stats.get(:intelligence).to_i / 2)
         actual_damage = target.take_damage!(damage)
 
         # Consume MP
@@ -83,7 +83,7 @@ module Arena
         return {success: false, error: "Target not found"} unless target
 
         heal_amount = skill.metadata&.fetch("heal_amount", 30) || 30
-        heal_amount += (character.spirit / 2)
+        heal_amount += (character.stats.get(:spirit).to_i / 2)
         actual_heal = target.heal!(heal_amount)
 
         participant.update!(current_mp: participant.current_mp - skill.mp_cost)
@@ -119,7 +119,7 @@ module Arena
           distance = (target.grid_x - target_x).abs + (target.grid_y - target_y).abs
           next if distance > radius
 
-          damage = base_damage + (character.intelligence / 3)
+          damage = base_damage + (character.stats.get(:intelligence).to_i / 3)
           actual_damage = target.take_damage!(damage)
           targets_hit << {character: target.character.name, damage: actual_damage}
         end
@@ -142,9 +142,9 @@ module Arena
       end
 
       def log_skill!(skill, message)
-        match.combat_log_entries.create!(
+        match.tactical_combat_log_entries.create!(
           round_number: match.turn_number,
-          sequence: match.combat_log_entries.where(round_number: match.turn_number).count + 1,
+          sequence: match.tactical_combat_log_entries.where(round_number: match.turn_number).count + 1,
           log_type: "skill",
           message: "✨ #{message}",
           payload: {

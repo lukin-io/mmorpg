@@ -50,11 +50,20 @@
 
 <div class="item-context-menu" data-inventory-target="contextMenu" style="display: none;">
   <ul>
-    <li data-action="click->inventory#equipItem">Equip</li>
-    <li data-action="click->inventory#useItem">Use</li>
+    <li>
+      <%= form_with url: equip_inventory_path, method: :post, data: {turbo_stream: true}, class: "context-menu-form" do %>
+        <%= hidden_field_tag :item_id, "", data: {inventory_target: "contextItemId"} %>
+        <button type="submit" class="context-menu-btn" data-action="click->inventory#hideContextMenu">Equip</button>
+      <% end %>
+    </li>
+    <li>
+      <%= form_with url: use_inventory_path, method: :post, data: {turbo_stream: true}, class: "context-menu-form" do %>
+        <%= hidden_field_tag :item_id, "", data: {inventory_target: "contextItemId"} %>
+        <button type="submit" class="context-menu-btn" data-action="click->inventory#hideContextMenu">Use</button>
+      <% end %>
+    </li>
     <li data-action="click->inventory#enhanceItem">Enhance</li>
     <li data-action="click->inventory#splitStack">Split Stack</li>
     <li class="danger" data-action="click->inventory#discardItem">Discard</li>
   </ul>
 </div>
-

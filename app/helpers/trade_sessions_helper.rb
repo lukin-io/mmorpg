@@ -15,13 +15,13 @@ module TradeSessionsHelper
   end
 
   def trade_item_icon(item)
-    case item.item_type
-    when "currency"
-      (item.currency_type == "gold") ? "🪙" : "🥈"
-    when "weapon"
+    return currency_icon_for(item) if item.currency?
+
+    item_type = item.item_metadata&.dig("item_type") || ItemTemplate.find_by(name: item.item_name)&.item_type
+
+    case item_type
+    when "equipment"
       "⚔️"
-    when "armor"
-      "🛡️"
     when "consumable"
       "🧪"
     when "material"
@@ -31,11 +31,24 @@ module TradeSessionsHelper
     end
   end
 
+  def currency_icon_for(item)
+    case item.currency_type
+    when "gold"
+      "🪙"
+    when "silver"
+      "🥈"
+    when "premium_tokens"
+      "⭐"
+    else
+      "🪙"
+    end
+  end
+
   def inventory_items_for_select(user)
     return [] unless user.character
 
     user.character.inventory&.inventory_items&.map do |item|
-      ["#{item.item_template.name} (x#{item.quantity})", item.item_template.item_key]
+      ["#{item.item_template.name} (x#{item.quantity})", item.item_template.name]
     end || []
   end
 end

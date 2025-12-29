@@ -4,12 +4,12 @@
   </div>
 
   <div class="item-info">
-    <span class="item-name"><%= item.item_name || item.item_key&.titleize %></span>
+    <span class="item-name"><%= item.currency? ? item.currency_type&.titleize : item.item_name %></span>
     <% if item.quantity > 1 %>
       <span class="item-quantity">x<%= item.quantity %></span>
     <% end %>
-    <% if item.item_type == "currency" %>
-      <span class="currency-badge"><%= item.amount %> <%= item.currency_type&.titleize %></span>
+    <% if item.currency? %>
+      <span class="currency-badge"><%= item.currency_amount %> <%= item.currency_type&.titleize %></span>
     <% end %>
   </div>
 
@@ -19,4 +19,3 @@
     <% end %>
   <% end %>
 </div>
-

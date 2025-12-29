@@ -191,13 +191,13 @@ currentMp += maxMp / mpRegenRate;  // MP regen
 </div>
 ```
 
-### Map Navigation (Mouse-Click Only)
+### Map Navigation (Click + Action Pad)
 
 **File:** `app/javascript/controllers/nl_world_map_controller.js`
 
 **Features:**
-- Click on adjacent tiles to move (no keyboard navigation)
-- Supports all 8 directions: cardinal (N, S, E, W) and diagonal (NE, SE, SW, NW)
+- Click on adjacent tiles to move (supports all 8 directions: cardinal + diagonal)
+- Action panel directional buttons provide an accessible fallback for movement (cardinal only; see `app/views/world/_actions.html.erb`)
 - Red dashed border highlights available tiles
 - Movement countdown timer (red badge with number)
 - Server-side movement validation
@@ -217,6 +217,11 @@ The player can move to any of the 8 adjacent tiles:
 7. Server responds with Turbo Stream to update map
 8. New Stimulus controller connects, reads cooldown from `sessionStorage`
 9. Cursor repositions to new location
+
+**Action Pad Flow (Cardinal Directions):**
+1. Player clicks a direction button (e.g., **East →**) in the actions panel
+2. `POST /world/move` submits `direction=north|south|east|west`
+3. Server responds with the same Turbo Stream map update used by click-to-move
 
 ### Critical: Turbo Stream Update Pattern
 
@@ -433,6 +438,11 @@ cooldown = (base * (1 - wanderer_reduction) * terrain_modifier) / mount_speed
 - Boundary checking (can't move outside zone)
 - Turbo stream responses
 - Zone transitions (enter/exit)
+
+**System Specs:** `spec/system/world_interactions_spec.rb`
+- Movement via action buttons
+- Building entry and friendly NPC interaction
+- Boundary disable states
 
 **Service Specs:** `spec/services/game/movement/turn_processor_spec.rb`
 - Movement in all 4 cardinal directions

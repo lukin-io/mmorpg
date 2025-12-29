@@ -1,12 +1,11 @@
 <%# Turn-based combat UI %>
-<% character_id = defined?(current_character) ? current_character&.id : @player_participant&.character&.id %>
 <div class="nl-combat-container"
      id="nl-combat-container"
      data-controller="turn-combat"
      data-turn-combat-battle-id-value="<%= @battle.id %>"
-     data-turn-combat-character-id-value="<%= character_id %>"
-     data-turn-combat-action-limit-value="<%= @battle.action_points_per_turn || 80 %>"
-     data-turn-combat-mana-limit-value="<%= @battle.max_mana_per_turn || 50 %>">
+     data-turn-combat-character-id-value="<%= combat_character_id(@player_participant) %>"
+     data-turn-combat-action-limit-value="<%= combat_ap_limit(@battle) %>"
+     data-turn-combat-mana-limit-value="<%= combat_mana_limit(@battle) %>">
 
   <%# Top spacer %>
   <div class="nl-combat-spacer"></div>
@@ -34,10 +33,10 @@
       <%# Action selection (attacks + blocks) %>
       <% if @battle.active? && @can_act %>
         <div class="nl-action-panel">
-          <%= render "combat/nl_action_selection",
-                     attacks: @available_attacks,
-                     blocks: @available_blocks,
-                     action_limit: @battle.action_points_per_turn || 80 %>
+        <%= render "combat/nl_action_selection",
+                   attacks: @available_attacks,
+                   blocks: @available_blocks,
+                   action_limit: combat_ap_limit(@battle) %>
         </div>
       <% end %>
 
@@ -46,7 +45,7 @@
         <span class="nl-ap-label">Action Points:</span>
         <span class="nl-ap-value" data-turn-combat-target="actionPointsUsed">0</span>
         <span class="nl-ap-separator">/</span>
-        <span class="nl-ap-max"><%= @battle.action_points_per_turn || 80 %></span>
+        <span class="nl-ap-max"><%= combat_ap_limit(@battle) %></span>
         <span class="nl-ap-penalty" data-turn-combat-target="penalty" style="display: none;">
           [penalty: <span data-turn-combat-target="penaltyValue">0</span>]
         </span>

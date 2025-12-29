@@ -50,26 +50,22 @@ The inventory system provides Neverlands-inspired item management with:
 ### UC-2: Equip Item
 **Actor:** Player equipping an item from inventory
 **Flow:**
-1. Click equip button on inventory item
-2. `POST /inventory/equip` with `item_id` and `slot`
-3. `EquipmentService.equip!` validates:
+1. Right-click an inventory slot to open the context menu
+2. Click **Equip** → Stimulus posts `POST /inventory/equip` with `item_id` (Turbo Stream request)
+3. `Game::Inventory::EquipmentService#equip!` validates:
    - Item is equippable (`item_template.equippable?`)
-   - Slot matches item type
-   - Character meets requirements
-4. Updates `inventory_item.equipment_slot` and `inventory_item.slot_index`
-5. Turbo Stream updates:
-   - Equipment panel (`inventories/equipment`)
-   - Inventory grid (`inventories/grid`)
-   - Stats panel (`inventories/stats`)
+   - Slot is derived from `item_template.equipment_slot`
+4. Updates `inventory_item.equipped` and `inventory_item.equipment_slot` (and unequips an existing item in that slot, if present)
+5. Turbo Stream updates `inventory_grid`, `equipment_panel`, and `stats_panel` (errors append a notification to `#notifications`)
 
 ### UC-3: Unequip Item
 **Actor:** Player removing equipped item
 **Flow:**
-1. Click unequip button on equipment slot
-2. `POST /inventory/unequip` with `slot`
-3. `EquipmentService.unequip!` clears equipment state
+1. Click a filled equipment slot
+2. The slot’s form posts `POST /inventory/unequip` with `slot`
+3. `Game::Inventory::EquipmentService#unequip!` clears equipment state
 4. Item returns to inventory grid
-5. Turbo Stream updates affected panels
+5. Turbo Stream updates `inventory_grid`, `equipment_panel`, and `stats_panel`
 
 ### UC-4: Add Item to Inventory
 **Actor:** System (loot, quest reward, purchase)
@@ -213,9 +209,9 @@ end
 respond_to do |format|
   format.turbo_stream do
     render turbo_stream: [
-      turbo_stream.replace("inventories-equipment", partial: "inventories/equipment", locals: { inventory: @inventory }),
-      turbo_stream.replace("inventories-grid", partial: "inventories/grid", locals: { inventory: @inventory }),
-      turbo_stream.replace("inventories-stats", partial: "inventories/stats", locals: { character: @character })
+      turbo_stream.update("inventory_grid", partial: "inventories/grid", locals: { items: items, inventory: @inventory }),
+      turbo_stream.update("equipment_panel", partial: "inventories/equipment", locals: { equipment: equipment }),
+      turbo_stream.update("stats_panel", partial: "inventories/stats", locals: { stats: stats })
     ]
   end
 end
@@ -258,18 +254,14 @@ Character stats affected by equipment:
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["grid", "equipment", "stats", "tooltip"]
-
-  // Drag and drop
-  dragStart(event)
-  dragOver(event)
-  drop(event)
+  static targets = ["contextMenu", "splitModal", "splitQuantity", "contextItemId"]
 
   // Item interactions
-  showTooltip(event)
-  hideTooltip(event)
-  useItem(event)
-  splitStack(event)
+  showContextMenu(event)  // right-click slot
+  equipItem(event)        // POST /inventory/equip
+  useItem(event)          // POST /inventory/use
+  discardItem(event)      // DELETE /inventory/items/:id
+  clickEquipmentSlot(event) // POST /inventory/unequip (slot form)
 }
 ```
 
@@ -289,6 +281,9 @@ export default class extends Controller {
 
 ### Request Specs
 - `spec/requests/inventories_spec.rb` — controller actions, Turbo Stream responses
+
+### System Specs
+- `spec/system/inventory_progression_spec.rb` — end-to-end inventory + progression UI (equip/unequip/use + allocations + skill tree/respec)
 
 ---
 
@@ -331,4 +326,3 @@ export default class extends Controller {
 - `spec/factories/inventories.rb`
 - `spec/factories/inventory_items.rb`
 - `spec/factories/item_templates.rb`
-

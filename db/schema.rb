@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_12_22_131711) do
+ActiveRecord::Schema[8.1].define(version: 2025_12_29_100000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -271,6 +271,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_22_131711) do
 
   create_table "battle_participants", force: :cascade do |t|
     t.integer "action_points_used", default: 0
+    t.jsonb "active_effects", default: [], null: false
     t.bigint "battle_id", null: false
     t.jsonb "body_damage", default: {"head" => 0, "legs" => 0, "torso" => 0, "stomach" => 0}
     t.jsonb "buffs", default: {}, null: false
@@ -299,11 +300,13 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_22_131711) do
     t.string "role", default: "combatant", null: false
     t.jsonb "stat_snapshot", default: {}, null: false
     t.string "team", default: "alpha", null: false
+    t.datetime "turn_submitted_at"
     t.datetime "updated_at", null: false
     t.index ["battle_id", "is_alive"], name: "index_battle_participants_on_battle_id_and_is_alive"
     t.index ["battle_id"], name: "index_battle_participants_on_battle_id"
     t.index ["character_id"], name: "index_battle_participants_on_character_id"
     t.index ["npc_template_id"], name: "index_battle_participants_on_npc_template_id"
+    t.index ["turn_submitted_at"], name: "index_battle_participants_on_turn_submitted", where: "(turn_submitted_at IS NOT NULL)"
   end
 
   create_table "battles", force: :cascade do |t|
@@ -320,16 +323,22 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_22_131711) do
     t.jsonb "metadata", default: {}, null: false
     t.boolean "moderation_override", default: false, null: false
     t.string "pvp_mode"
+    t.bigint "rng_seed"
     t.integer "round_number", default: 1
     t.string "share_token"
     t.datetime "started_at"
     t.integer "status", default: 0, null: false
     t.integer "turn_number", default: 1, null: false
+    t.integer "turn_timeout_seconds", default: 300, null: false
+    t.datetime "turn_timer_ends_at"
     t.datetime "updated_at", null: false
+    t.string "winning_team"
     t.bigint "zone_id"
+    t.index ["initiator_id", "status"], name: "index_battles_on_initiator_active", unique: true, where: "(status = 1)"
     t.index ["initiator_id"], name: "index_battles_on_initiator_id"
     t.index ["share_token"], name: "index_battles_on_share_token", unique: true
     t.index ["status"], name: "index_battles_on_status"
+    t.index ["turn_timer_ends_at"], name: "index_battles_on_turn_timer_ends_at", where: "((turn_timer_ends_at IS NOT NULL) AND (status = 1))"
     t.index ["zone_id"], name: "index_battles_on_zone_id"
   end
 
@@ -379,6 +388,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_22_131711) do
     t.integer "chaos_score", default: 0, null: false
     t.bigint "character_class_id"
     t.bigint "clan_id"
+    t.integer "combat_skill_points", default: 0, null: false
     t.datetime "created_at", null: false
     t.integer "current_hp", default: 100, null: false
     t.integer "current_mp", default: 50, null: false
@@ -397,6 +407,8 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_22_131711) do
     t.integer "mp_regen_interval", default: 600, null: false
     t.string "name", null: false
     t.jsonb "passive_skills", default: {}, null: false
+    t.integer "peace_skill_points", default: 0, null: false
+    t.integer "perk_points_available", default: 0, null: false
     t.jsonb "progression_sources", default: {}, null: false
     t.integer "reputation", default: 0, null: false
     t.jsonb "resource_pools", default: {}, null: false
@@ -407,8 +419,11 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_22_131711) do
     t.bigint "user_id", null: false
     t.index ["character_class_id"], name: "index_characters_on_character_class_id"
     t.index ["clan_id"], name: "index_characters_on_clan_id"
+    t.index ["combat_skill_points"], name: "index_characters_on_combat_skill_points", where: "(combat_skill_points > 0)"
     t.index ["guild_id"], name: "index_characters_on_guild_id"
     t.index ["name"], name: "index_characters_on_name", unique: true
+    t.index ["peace_skill_points"], name: "index_characters_on_peace_skill_points", where: "(peace_skill_points > 0)"
+    t.index ["perk_points_available"], name: "index_characters_on_perk_points_available", where: "(perk_points_available > 0)"
     t.index ["secondary_specialization_id"], name: "index_characters_on_secondary_specialization_id"
     t.index ["user_id"], name: "index_characters_on_user_id"
   end
@@ -1793,6 +1808,19 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_22_131711) do
     t.index ["user_id"], name: "index_purchases_on_user_id"
   end
 
+  create_table "pvp_flags", force: :cascade do |t|
+    t.bigint "character_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "expires_at"
+    t.integer "flag_type", default: 0, null: false
+    t.jsonb "metadata", default: {}, null: false
+    t.string "source", limit: 50
+    t.datetime "updated_at", null: false
+    t.index ["character_id", "flag_type"], name: "index_pvp_flags_on_character_id_and_flag_type"
+    t.index ["character_id"], name: "index_pvp_flags_on_character_id"
+    t.index ["expires_at"], name: "index_pvp_flags_on_expires_at"
+  end
+
   create_table "quest_analytics_snapshots", force: :cascade do |t|
     t.decimal "abandon_rate", precision: 5, scale: 2, default: "0.0", null: false
     t.integer "avg_completion_minutes", default: 0, null: false
@@ -2025,6 +2053,19 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_22_131711) do
     t.datetime "updated_at", null: false
     t.index ["configured_by_id"], name: "index_spawn_schedules_on_configured_by_id"
     t.index ["region_key", "monster_key"], name: "index_spawn_schedules_on_region_key_and_monster_key", unique: true
+  end
+
+  create_table "tactical_combat_log_entries", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "log_type", default: "action", null: false
+    t.text "message", null: false
+    t.jsonb "payload", default: {}, null: false
+    t.integer "round_number", default: 1, null: false
+    t.integer "sequence", default: 1, null: false
+    t.bigint "tactical_match_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["tactical_match_id", "round_number"], name: "idx_on_tactical_match_id_round_number_d3f886a75e"
+    t.index ["tactical_match_id"], name: "index_tactical_combat_log_entries_on_tactical_match_id"
   end
 
   create_table "tactical_matches", force: :cascade do |t|
@@ -2304,6 +2345,8 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_22_131711) do
     t.integer "height", default: 32, null: false
     t.jsonb "metadata", default: {}, null: false
     t.string "name", null: false
+    t.boolean "pvp_enabled", default: false, null: false
+    t.string "pvp_mode", limit: 20
     t.integer "turn_counter", default: 1, null: false
     t.datetime "updated_at", null: false
     t.integer "width", default: 32, null: false
@@ -2495,6 +2538,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_22_131711) do
   add_foreign_key "profession_tools", "characters"
   add_foreign_key "profession_tools", "professions"
   add_foreign_key "purchases", "users"
+  add_foreign_key "pvp_flags", "characters"
   add_foreign_key "quest_assignments", "characters"
   add_foreign_key "quest_assignments", "quests"
   add_foreign_key "quest_chapters", "quest_chains"
@@ -2509,6 +2553,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_22_131711) do
   add_foreign_key "social_hubs", "zones"
   add_foreign_key "spawn_points", "zones"
   add_foreign_key "spawn_schedules", "users", column: "configured_by_id"
+  add_foreign_key "tactical_combat_log_entries", "tactical_matches"
   add_foreign_key "tactical_matches", "arena_rooms"
   add_foreign_key "tactical_matches", "characters", column: "creator_id"
   add_foreign_key "tactical_matches", "characters", column: "opponent_id"

@@ -24,7 +24,7 @@ module PartiesHelper
   def can_join_party?(party)
     return false if party_member?(party)
     return false if party.active_members.count >= party.max_size
-    return false if party.party_invitations.exists?(user: current_user, status: :pending)
+    return false if party.party_invitations.exists?(recipient: current_user, status: :pending)
 
     true
   end

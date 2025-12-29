@@ -2,23 +2,21 @@
   City View
   Shows a large city image with description and interactive buildings
 
-  Variables:
+  Required locals:
     - zone: Zone model (city)
-    - position: CharacterPosition
+    - position: CharacterPosition (optional, defaults to @position)
 %>
 <% zone ||= @zone %>
-<% buildings ||= city_buildings(zone) rescue [] %>
-<% city_image = zone.metadata&.dig("image") || "city_default.jpg" %>
-<% city_description = zone.metadata&.dig("description") || "A bustling city full of adventure. The streets are alive with merchants, adventurers, and citizens going about their daily business." %>
+<% position ||= @position %>
 
 <div class="nl-city-view"
      data-controller="city"
      data-city-zone-id-value="<%= zone.id %>"
-     data-city-buildings-value="<%= buildings.to_json %>">
+     data-city-buildings-value="<%= city_buildings(zone).to_json %>">
 
   <%# Large city image %>
   <div class="nl-city-image-container">
-    <%= image_tag city_image, class: "nl-city-image", alt: zone.name, onerror: "this.style.display='none'" rescue nil %>
+    <%= image_tag city_image(zone), class: "nl-city-image", alt: zone.name, onerror: "this.style.display='none'" rescue nil %>
     <%# Fallback if no image %>
     <div class="nl-city-placeholder">
       <span class="nl-city-placeholder-icon">🏰</span>
@@ -28,7 +26,7 @@
 
   <%# City description %>
   <div class="nl-city-description">
-    <p><%= city_description %></p>
+    <p><%= city_description(zone) %></p>
     <% if zone.metadata&.dig("warning").present? %>
       <p class="nl-warning"><%= zone.metadata["warning"] %></p>
     <% end %>
@@ -73,7 +71,7 @@
     </div>
 
     <%# Dynamic buildings %>
-    <% buildings.each do |building| %>
+    <% city_buildings(zone).each do |building| %>
       <div class="city-building city-building--<%= building[:type] %>"
            data-building-id="<%= building[:id] %>"
            data-building-name="<%= building[:name] %>"
@@ -88,7 +86,7 @@
     <% end %>
 
     <%# Player marker %>
-    <div class="city-player-marker" style="grid-column: <%= @position.x + 1 %>; grid-row: <%= @position.y + 1 %>;">
+    <div class="city-player-marker" style="grid-column: <%= position.x + 1 %>; grid-row: <%= position.y + 1 %>;">
       <div class="player-avatar">🧙</div>
       <div class="player-name"><%= current_character.name %></div>
     </div>

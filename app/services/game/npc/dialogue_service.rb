@@ -298,11 +298,20 @@ module Game
         zone = character.position&.zone
         return {} unless zone
 
+        level_min = zone.metadata&.dig("level_min")
+        level_max = zone.metadata&.dig("level_max")
+        level_range =
+          if level_min.present? && level_max.present?
+            "#{level_min}-#{level_max}"
+          else
+            "Unknown"
+          end
+
         {
           name: zone.name,
-          level_range: "#{zone.level_min}-#{zone.level_max}",
-          faction: zone.faction,
-          pvp_enabled: zone.pvp_enabled
+          level_range: level_range,
+          faction: zone.metadata&.dig("faction"),
+          pvp_enabled: zone.metadata&.fetch("pvp_enabled", false)
         }
       end
 

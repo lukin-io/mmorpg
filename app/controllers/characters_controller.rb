@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
 # CharactersController handles character profile management including
-# stat and skill allocation. Follows Neverlands-inspired UI/UX patterns
-# with client-side +/- allocation before server submission.
+# stat and skill allocation. Uses client-side +/- allocation UI pattern
+# with server submission for validation and persistence.
 #
 # Usage:
 #   GET /characters/:id/stats       - Show stat allocation page
@@ -64,45 +64,93 @@ class CharactersController < ApplicationController
   def skills
     @skills_data = build_skills_data
     @skill_definitions = Game::Skills::PassiveSkillRegistry.all
+    @skill_categories = Game::Skills::PassiveSkillRegistry.categories
+    @combat_skill_points = @character.available_combat_skill_points
+    @peace_skill_points = @character.available_peace_skill_points
   end
 
   # PATCH /characters/:id/skills
+  # Handles skill point allocation with tiered progression and dual pools.
+  #
+  # Params:
+  #   allocated_skills: Hash of skill_key => spends_count (how many times to spend on this skill)
+  #
+  # Each "spend" uses 1 point from the appropriate pool (combat or peace) and
+  # grants skill levels based on the skill's tiered progression rate.
   def update_skills
     allocated = parse_skill_allocations(params[:allocated_skills])
-    total_requested = allocated.values.sum
 
-    # Validate we have enough points for requested allocation
-    if total_requested > @character.skill_points_available
-      return respond_with_error("Not enough skill points available")
-    end
-
-    if total_requested <= 0
+    if allocated.values.sum <= 0
       return respond_with_error("No skills allocated")
     end
 
-    # Calculate actual points that will be used (considering max levels)
-    actual_spent = 0
+    # Separate allocations by pool type (skip unknown skills)
+    combat_allocations = {}
+    peace_allocations = {}
+
+    allocated.each do |skill_key, spends|
+      next unless spends.positive?
+      # Skip unknown skills entirely - they shouldn't consume points
+      definition = Game::Skills::PassiveSkillRegistry.find(skill_key.to_sym)
+      next unless definition
+
+      pool = definition[:pool] || :combat
+      case pool
+      when :combat
+        combat_allocations[skill_key] = spends
+      when :peace
+        peace_allocations[skill_key] = spends
+      end
+    end
+
+    # Validate we have enough points in each pool
+    combat_spends_total = combat_allocations.values.sum
+    peace_spends_total = peace_allocations.values.sum
+
+    if combat_spends_total > @character.available_combat_skill_points
+      return respond_with_error("Not enough combat skill points (need #{combat_spends_total}, have #{@character.available_combat_skill_points})")
+    end
+
+    if peace_spends_total > @character.available_peace_skill_points
+      return respond_with_error("Not enough peace skill points (need #{peace_spends_total}, have #{@character.available_peace_skill_points})")
+    end
+
+    # Apply tiered progression for each skill spend
+    formula = Game::Formulas::SkillProgressionFormula.new
     skill_updates = {}
 
-    allocated.each do |skill_key, amount|
-      next unless amount.positive?
+    allocated.each do |skill_key, spends|
+      next unless spends.positive?
+      definition = Game::Skills::PassiveSkillRegistry.find(skill_key.to_sym)
+      next unless definition
+
       current_level = @character.passive_skill_level(skill_key)
-      max_level = Game::Skills::PassiveSkillRegistry.max_level(skill_key)
-      new_level = [current_level + amount, max_level].min
-      points_actually_used = new_level - current_level
-      actual_spent += points_actually_used
-      skill_updates[skill_key.to_s] = new_level
+      max_level = definition[:max_level] || 100
+
+      # Apply each spend sequentially (tiered progression changes per tier)
+      spends.times do
+        break if current_level >= max_level
+        current_level = formula.apply_spend(
+          current_level: current_level,
+          progression_rate: definition[:progression_rate]
+        )
+      end
+
+      skill_updates[skill_key.to_s] = [current_level, max_level].min
     end
 
-    # Apply skill updates
-    skill_updates.each do |key, level|
-      @character.passive_skills[key] = level
+    # Apply all updates atomically
+    @character.transaction do
+      new_skills = @character.passive_skills.merge(skill_updates)
+
+      @character.update!(
+        passive_skills: new_skills,
+        combat_skill_points: @character.combat_skill_points - combat_spends_total,
+        peace_skill_points: @character.peace_skill_points - peace_spends_total,
+        skill_points_available: @character.skill_points_available - (combat_spends_total + peace_spends_total)
+      )
     end
 
-    @character.update!(
-      passive_skills: @character.passive_skills,
-      skill_points_available: @character.skill_points_available - actual_spent
-    )
     @character.clear_passive_skill_cache!
 
     respond_to do |format|
@@ -110,6 +158,9 @@ class CharactersController < ApplicationController
       format.turbo_stream do
         @skills_data = build_skills_data
         @skill_definitions = Game::Skills::PassiveSkillRegistry.all
+        @skill_categories = Game::Skills::PassiveSkillRegistry.categories
+        @combat_skill_points = @character.available_combat_skill_points
+        @peace_skill_points = @character.available_peace_skill_points
         render turbo_stream: [
           turbo_stream.replace("skill-allocation", partial: "characters/skill_allocation"),
           turbo_stream.update("flash", partial: "shared/flash", locals: {type: "notice", message: "Skills allocated!"})
@@ -173,14 +224,27 @@ class CharactersController < ApplicationController
   end
 
   def build_skills_data
+    formula = Game::Formulas::SkillProgressionFormula.new
     skills = {}
+
     Game::Skills::PassiveSkillRegistry.all.each do |key, definition|
+      current_level = @character.passive_skill_level(key)
+      max_level = definition[:max_level] || 100
+      points_per_spend = formula.points_per_spend(
+        current_level: current_level,
+        progression_rate: definition[:progression_rate]
+      )
+
       skills[key] = {
-        level: @character.passive_skill_level(key),
-        max_level: definition[:max_level],
+        level: current_level,
+        max_level: max_level,
         name: definition[:name],
         description: definition[:description],
-        category: definition[:category]
+        category: definition[:category],
+        pool: definition[:pool],
+        progression_rate: definition[:progression_rate],
+        points_per_spend: points_per_spend,
+        at_max: current_level >= max_level
       }
     end
     skills

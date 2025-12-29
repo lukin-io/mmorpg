@@ -257,6 +257,146 @@ module CombatHelper
     payload["amount"] || payload[:amount] || 0
   end
 
+  # ===========================================================================
+  # Combat Interface Data Helpers
+  # ===========================================================================
+
+  # Default attack types when config is missing or incomplete
+  DEFAULT_ATTACK_TYPES = {
+    "simple" => {"name" => "Simple", "action_cost" => 45},
+    "aimed" => {"name" => "Aimed", "action_cost" => 60}
+  }.freeze
+
+  # Default block types when config is missing or incomplete
+  DEFAULT_BLOCK_TYPES = {
+    "head_block" => {"name" => "Head Block", "action_cost" => 30, "body_parts" => ["head"]},
+    "torso_block" => {"name" => "Torso Block", "action_cost" => 30, "body_parts" => ["torso"]},
+    "stomach_block" => {"name" => "Stomach Block", "action_cost" => 30, "body_parts" => ["stomach"]},
+    "legs_block" => {"name" => "Legs Block", "action_cost" => 30, "body_parts" => ["legs"]}
+  }.freeze
+
+  DEFAULT_AP_LIMIT = 80
+  DEFAULT_MANA_LIMIT = 50
+
+  # Get action points limit for battle
+  # @param battle [Battle] the battle record
+  # @return [Integer] AP limit per turn
+  def combat_ap_limit(battle)
+    battle.action_points_per_turn || DEFAULT_AP_LIMIT
+  end
+
+  # Get mana limit for battle
+  # @param battle [Battle] the battle record
+  # @return [Integer] mana limit per turn
+  def combat_mana_limit(battle)
+    battle.max_mana_per_turn || DEFAULT_MANA_LIMIT
+  end
+
+  # Get timer end timestamp in ISO8601 format
+  # @param battle [Battle] the battle record
+  # @return [String, nil] ISO8601 timestamp or nil
+  def combat_timer_end(battle)
+    battle.turn_timer_ends_at&.iso8601
+  end
+
+  # Get attack types from config with defaults
+  # @param combat_config [Hash] the combat configuration
+  # @return [Hash] attack types configuration
+  def combat_attack_types(combat_config)
+    combat_config&.dig("attack_types") || DEFAULT_ATTACK_TYPES
+  end
+
+  # Get block types from config with defaults
+  # @param combat_config [Hash] the combat configuration
+  # @return [Hash] block types configuration
+  def combat_block_types(combat_config)
+    combat_config&.dig("block_types") || DEFAULT_BLOCK_TYPES
+  end
+
+  # Get magic/skill types from config
+  # @param combat_config [Hash] the combat configuration
+  # @return [Hash] magic types configuration
+  def combat_magic_types(combat_config)
+    combat_config&.dig("magic_types") || {}
+  end
+
+  # Get character ID for combat UI
+  # @param participant [BattleParticipant, nil] the player's participant
+  # @return [Integer, nil] character ID
+  def combat_character_id(participant)
+    if participant&.character_id
+      participant.character_id
+    elsif defined?(current_character)
+      current_character&.id
+    end
+  end
+
+  # ===========================================================================
+  # Reward Calculation Helpers
+  # ===========================================================================
+
+  # Calculate XP reward for battle
+  # @param battle [Battle] the completed battle
+  # @param player_participant [BattleParticipant, nil] the player's participant record
+  # @return [Integer] XP reward amount
+  def calculate_xp_reward(battle, player_participant = nil)
+    return 0 unless battle.completed?
+
+    base_xp = 50
+    player_char = player_participant&.character
+    opponent = battle.battle_participants.where.not(id: player_participant&.id).first
+
+    opponent_level = opponent&.npc_template&.level || opponent&.character&.level || 1
+    player_level = player_char&.level || 1
+    level_diff = opponent_level - player_level
+
+    (base_xp * (1 + level_diff * 0.1)).round.clamp(10, 500)
+  end
+
+  # Calculate gold reward for battle
+  # @param battle [Battle] the completed battle
+  # @param player_participant [BattleParticipant, nil] the player's participant record
+  # @return [Integer] gold reward amount
+  def calculate_gold_reward(battle, player_participant = nil)
+    return 0 unless battle.completed?
+
+    opponent = battle.battle_participants.where.not(id: player_participant&.id).first
+    opponent_level = opponent&.npc_template&.level || opponent&.character&.level || 1
+
+    (10 + opponent_level * 5).clamp(5, 200)
+  end
+
+  # Calculate arena points reward
+  # @param battle [Battle] the completed battle
+  # @param won [Boolean] whether player won
+  # @return [Integer] arena points reward
+  def calculate_arena_points(battle, won)
+    return 0 unless battle.arena?
+
+    won ? 10 : 0
+  end
+
+  # Format battle duration
+  # @param battle [Battle] the battle record
+  # @return [String] formatted duration string
+  def format_battle_duration(battle)
+    return "0m 0s" unless battle.ended_at
+
+    duration = (battle.ended_at - battle.created_at).to_i
+    "#{duration / 60}m #{duration % 60}s"
+  end
+
+  # Get total damage dealt by participant
+  # @param participant [BattleParticipant] the participant
+  # @return [Integer] total damage dealt
+  def total_damage_dealt(participant)
+    return 0 unless participant.respond_to?(:damage_dealt)
+
+    participant.damage_dealt.values.sum
+  rescue
+    0
+  end
+
   private
 
   # Extract payload from entry object or hash

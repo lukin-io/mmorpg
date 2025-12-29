@@ -496,6 +496,7 @@ Stats are calculated in this order (first match wins):
 - `spec/services/game/events/scheduler_spec.rb` — Event scheduling
 - `spec/services/game/moderation/npc_intake_spec.rb` — NPC moderation
 - `spec/jobs/scheduled_event_job_spec.rb` — Background jobs
+- System spec: `spec/system/world_interactions_spec.rb` covers NPC interaction UI from `/world`.
 
 ### Avatar System Specs
 - `spec/helpers/avatar_helper_spec.rb` — Avatar helper tests
@@ -513,5 +514,4 @@ Stats are calculated in this order (first match wins):
 - World catalog tests ensure YAML coverage
 - Quest services cover sequential unlocks, dailies, and event hooks
 - Avatar tests verify image path resolution and helper output
-
 

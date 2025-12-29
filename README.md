@@ -178,6 +178,7 @@ Load it automatically in Cursor or reference it when using AI assistants.
 | `STRIPE_SECRET_KEY` | Stripe API secret for premium purchases | *(not set)* |
 | `SIDEKIQ_CONCURRENCY` | Override worker threads | `5` |
 | `APP_URL` | Base URL for payment callbacks | `http://localhost:3000` |
+| `HEADLESS` | Run system tests with visible browser (`false` to debug) | `true` |
 
 After preparing the database, run seeds to load the baseline gameplay dataset (classes, items, NPCs, map tiles, feature flags):
 
@@ -239,13 +240,98 @@ bin/rails db:seed
 
 ### Testing & QA
 
+#### Pre-Push Verification (Recommended)
+
+Use the verification script to catch CI failures locally:
+
+```bash
+# First-time setup: create parallel test databases (2-3x faster tests)
+bin/verify setup
+
+# Full verification with parallel tests - run before pushing
+bin/verify
+
+# Quick check (lint + model specs only) - for fast feedback
+bin/verify quick
+
+# Linting only
+bin/verify lint
+
+# Combat subsystem tests
+bin/verify combat
+
+# Serial tests (for debugging flaky tests)
+bin/verify serial
+```
+
+**Parallel Tests Setup:**
+
+The `bin/verify` script uses [parallel_tests](https://github.com/grosser/parallel_tests) to run tests across multiple CPU cores, reducing test time from ~5 minutes to ~2 minutes. Run `bin/verify setup` once to create the parallel databases.
+
+#### Manual Testing Commands
+
 - Run the full suite with `bundle exec rspec`.
 - Security/linting:
-  - `bundle exec rubocop`
-  - `bundle exec standardrb`
+  - `bundle exec standardrb --fix` — primary linter with auto-fix
+  - `bundle exec rubocop -a` — additional auto-fixes
   - `bundle exec brakeman`
   - `bundle exec bundler-audit`
+- Factory validation: `bundle exec rspec spec/factories`
 - Hotwire contract tests belong in `spec/system` or `spec/streams`.
+
+#### System Tests (JS/UI)
+
+System tests use **Selenium with Chrome headless** for JavaScript-driven UI testing (Turbo Frames, Stimulus controllers, confirm dialogs).
+
+**Prerequisites:**
+1. **Google Chrome** — Install Chrome browser (version 120+)
+2. **ChromeDriver** — Must match your Chrome version
+
+**macOS (Homebrew):**
+```bash
+brew install --cask google-chrome
+brew install chromedriver
+```
+
+**Ubuntu/Debian:**
+```bash
+# Install Chrome
+wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+sudo dpkg -i google-chrome-stable_current_amd64.deb
+
+# Install ChromeDriver (match your Chrome version)
+sudo apt-get install chromium-chromedriver
+```
+
+**Verify installation:**
+```bash
+google-chrome --version
+chromedriver --version
+```
+
+**Running system tests:**
+```bash
+# Run all system tests
+bundle exec rspec spec/system
+
+# Run specific system test file
+bundle exec rspec spec/system/pvp_combat_spec.rb
+
+# Run with visible browser (debug mode)
+HEADLESS=false bundle exec rspec spec/system/pvp_combat_spec.rb
+```
+
+**Test configuration:**
+- `spec/support/system.rb` configures `driven_by(:selenium_chrome_headless)` for JS tests
+- Non-JS tests use `driven_by(:rack_test)` for speed
+- Tests tagged with `js: true` automatically use the Chrome driver
+
+**Comprehensive test coverage requirements:**
+All implementations must include tests covering:
+- ✅ **Success cases** — Feature works correctly as expected
+- ✅ **Failure cases** — Validation errors, invalid inputs handled properly
+- ✅ **Null/edge cases** — Nil values, blank strings, boundary conditions
+- ✅ **Authorization cases** — Forbidden access, wrong roles return proper errors
 
 ---
 

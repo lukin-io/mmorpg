@@ -110,12 +110,23 @@
 
 ### Key Components
 - **ActionCable Config**: `config/cable.yml` uses Redis adapter for cross-process broadcasting
+- **ActionCable Mount**: `config/routes.rb` mounts `ActionCable.server` at `/cable` (required for Turbo Stream subscriptions)
 - **Turbo Streams**: `broadcast_append_later_to` in `ChatMessage` model broadcasts via Sidekiq
 - **Stimulus Controller**: `app/javascript/controllers/chat_controller.js` handles:
   - Auto-scrolling to new messages (if user is at bottom)
   - "New messages" indicator when scrolled up
   - Enter key to send (Shift+Enter for newline)
   - Form reset after successful submission
+
+### Turbo Broadcast Rendering Safety (No Request Context)
+Turbo Stream broadcasts are typically rendered in a background job (for example via `broadcast_append_later_to`).
+That render does **not** have a request/warden context, so `current_user` may raise `Devise::MissingWarden`
+and Pundit helpers may not behave as expected.
+
+**Rules of thumb:**
+- Avoid `current_user`-dependent branching in broadcast-rendered partials.
+- If you need viewer-aware styling (e.g., “my message”), use a nil-safe helper that rescues missing warden,
+  like `ChatMessagesHelper#safe_current_user`, and treat “no viewer” as anonymous/read-only.
 
 ### Message Lifecycle
 ```
@@ -252,6 +263,7 @@ Scans channel for accumulated violations and applies penalties to repeat offende
 - Model specs for profanity filtering and friendship validations.
 - Service specs for `Chat::ProfanityFilter` + `Chat::MessageDispatcher`.
 - Request spec for chat posting (success + mute rejection).
+- System spec: `spec/system/social_ui_spec.rb` covers chat send, friends, mail, ignore list, and reporting UI.
 - Factories for every new entity ensure deterministic specs; use `bundle exec rspec` after running migrations.
 
 ### Manual Testing Real-Time Chat

@@ -6,4 +6,8 @@ class SkillTree < ApplicationRecord
   has_many :skill_nodes, dependent: :destroy
 
   validates :name, presence: true
+
+  def tree_type
+    metadata["tree_type"].presence || "combat"
+  end
 end

@@ -102,27 +102,78 @@ Depending on whether the project uses Minitest or RSpec:
 
 ## 3. Verification checklist (before pushing / opening a PR)
 
-**Always** run the relevant subset of these before considering a change “done”.
+**Always** run the relevant subset of these before considering a change "done".
 If a command is not available in this project, skip it and note that explicitly.
 
-1. **Tests** (required):
-   - Minitest: `bin/rails test`
-   - or RSpec: `bundle exec rspec`
-   - Optionally: `bin/rails test:system` or system/feature specs when UI changes are significant.
+> ⚠️ **CRITICAL**: Run these commands IN ORDER before every push.
+> CI failures waste time and block merges. Catch them locally first!
 
-2. **Linting** (recommended/required where configured):
-   - `bundle exec rubocop`
-   - `bundle exec standardrb`
+### Quick verification (minimum required):
 
-3. **Security** (where configured):
+```bash
+# 1. LINTING FIRST - catches 90% of CI failures
+bundle exec standardrb --fix  # Auto-fix + check (this project uses StandardRB)
+bundle exec rubocop -a        # Auto-fix safe issues
+
+# 2. FACTORY VALIDATION - catches attribute/schema mismatches
+bundle exec rspec spec/factories --format progress
+
+# 3. FAST TESTS - run specs for files you changed
+bundle exec rspec spec/path/to/changed_spec.rb
+
+# 4. FULL SUITE - before final push
+bundle exec rspec --format progress
+```
+
+### Detailed verification steps:
+
+1. **Linting** (required - run FIRST):
+   - `bundle exec standardrb` — this project's primary linter
+   - `bundle exec standardrb --fix` — auto-fix issues
+   - `bundle exec rubocop -a` — additional auto-fixes
+
+   **Common CI failures caught here:**
+   - `Layout/TrailingEmptyLines` — trailing blank lines
+   - `Style/SafeNavigation` — use `&.` instead of `if x`
+   - `Layout/ArrayAlignment` — array element alignment
+   - `Style/TernaryParentheses` — ternary expression parens
+
+2. **Factory validation** (required for model/service changes):
+   - `bundle exec rspec spec/factories --format progress`
+   - Catches: outdated attributes, missing associations, schema drift
+
+3. **Tests** (required):
+   - `bundle exec rspec` — full suite
+   - `bundle exec rspec spec/services/game/combat/` — combat subsystem
+   - `bundle exec rspec --tag ~system` — skip slow system tests for quick feedback
+   - `bundle exec rspec spec/system` — system tests when UI changes
+
+4. **Security** (where configured):
    - `bundle exec brakeman` or `bin/brakeman`
    - `bundle exec bundle audit check --update`
 
-4. **JS/Frontend** (if the project uses a JS toolchain):
+5. **JS/Frontend** (if the project uses a JS toolchain):
    - `npm run lint` / `yarn lint`
    - `npm run test` / `yarn test` if applicable.
 
-Only treat the change as ready once these checks are passing (or the project explicitly has no such tooling).
+### Combat/Game-specific verification:
+
+When modifying combat, skills, or game engine code, also run:
+
+```bash
+# Combat subsystem
+bundle exec rspec spec/services/game/combat/ spec/lib/game/
+
+# Encounter services (PvE/PvP)
+bundle exec rspec spec/services/game/combat/pve_encounter_service_spec.rb \
+                  spec/services/game/combat/pvp_encounter_service_spec.rb
+
+# Turn resolution
+bundle exec rspec spec/services/game/combat/turn_resolver_spec.rb \
+                  spec/services/game/combat/unified_combat_service_spec.rb
+```
+
+Only treat the change as ready once these checks are passing.
 
 ### What to report back
 
@@ -175,7 +226,7 @@ use it as input when making design decisions, but don't overwrite it unless aske
 
 2. **Rails-way + KISS.**
    - Prefer RESTful controllers, standard routing, and ActiveRecord.
-   - Avoid speculative abstractions and “mini-frameworks”.
+   - Avoid speculative abstractions and "mini-frameworks".
    - Extract services/queries only when complexity clearly warrants it.
 
 3. **Respect existing architecture.**
@@ -184,7 +235,20 @@ use it as input when making design decisions, but don't overwrite it unless aske
      (Jbuilder, serializers, simple `render json:`) rather than inventing a new one.
 
 4. **Tests & lint are mandatory.**
-   Any new functionality or bug fix must ship with tests. The test suite and linters should be green when you’re done.
+   Any new functionality or bug fix must ship with tests. The test suite and linters should be green when you're done.
+
+   **Every implementation must include comprehensive tests covering:**
+   - ✅ **Success cases** — Feature works correctly as expected
+   - ✅ **Failure cases** — Validation errors, invalid inputs are handled properly
+   - ✅ **Null/edge cases** — Nil values, blank strings, boundary conditions
+   - ✅ **Authorization cases** — Forbidden access, wrong roles return proper errors
+
+   **Required test coverage by layer:**
+   - **Model specs** — Validations, associations, scopes, domain logic
+   - **Request specs** — Controller actions (success + error responses, auth checks)
+   - **Service specs** — Game engine classes with seeded RNG, edge cases
+   - **System specs** — Hotwire/JS interactions (Turbo Frames, Stimulus)
+   - **Policy specs** — Authorization rules (if using Pundit)
 
 5. **Avoid N+1 and obvious performance bugs.**
    Use `includes`/`preload` for associations rendered in views or JSON; paginate large collections.

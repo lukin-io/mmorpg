@@ -28,6 +28,10 @@ class QuestStep < ApplicationRecord
     Array.wrap(branching_outcomes["choices"])
   end
 
+  def requires_confirmation?
+    !step_type?(:objective)
+  end
+
   def consequence_for(choice_key)
     branching_outcomes.fetch("consequences", {}).fetch(choice_key, {})
   end

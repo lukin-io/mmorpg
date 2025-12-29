@@ -64,8 +64,8 @@
       <%# Real-time notifications %>
       <% if current_user %>
         <%= turbo_stream_from ["notifications", current_user.id] %>
-        <div id="<%= dom_id(current_user, :notifications) %>" class="notifications"></div>
       <% end %>
+      <div id="notifications" class="notifications"></div>
 
       <%# Main Content %>
       <div class="game-content">
@@ -75,7 +75,7 @@
           </aside>
         <% end %>
 
-        <main class="game-main">
+        <main class="game-main" id="game-main">
           <%= yield %>
         </main>
       </div>

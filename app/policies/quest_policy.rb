@@ -9,6 +9,10 @@ class QuestPolicy < ApplicationPolicy
     user.present?
   end
 
+  def advance_story?
+    user.present?
+  end
+
   def complete?
     user.present?
   end

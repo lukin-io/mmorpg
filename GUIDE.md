@@ -312,7 +312,7 @@ Guidelines:
 
 ## 11) Testing
 
-Support both RSpec and Minitest; follow the project’s choice.
+Support both RSpec and Minitest; follow the project's choice.
 
 **Scope:**
 
@@ -321,6 +321,25 @@ Support both RSpec and Minitest; follow the project’s choice.
 - System tests for end-to-end flows, especially Hotwire interactions.
 - Policy/authorization tests when using Pundit/CanCanCan.
 - Serializer/JSON tests for APIs.
+
+**Comprehensive Test Coverage Requirements:**
+
+Every implementation must include tests covering:
+
+- ✅ **Success cases** — Feature works correctly as expected
+- ✅ **Failure cases** — Validation errors, invalid inputs are handled properly
+- ✅ **Null/edge cases** — Nil values, blank strings, boundary conditions
+- ✅ **Authorization cases** — Forbidden access, wrong roles return proper errors
+
+**Required test coverage by layer:**
+
+| Layer | What to Test |
+|-------|--------------|
+| **Model specs** | Validations, associations, scopes, enums, domain methods |
+| **Request specs** | All controller actions: success + error + auth failures |
+| **Service specs** | Game engine classes with seeded RNG, edge cases |
+| **System specs** | Turbo Frames, Stimulus interactions, form submissions |
+| **Policy specs** | Authorization rules, role-based access |
 
 **Style:**
 
@@ -406,7 +425,56 @@ A feature or fix is considered **done** when:
 - Manage gems with Bundler; avoid unnecessary dependencies.
 - Keep RuboCop/RuboCop-Rails/RuboCop-RSpec configs reasonable; follow them instead of fighting them.
 - Use Brakeman and Bundler-Audit regularly to catch security issues.
-- CI should run lint + tests; don’t rely only on local runs.
+- CI should run lint + tests; don't rely only on local runs.
+
+### 15.1 Pre-Push Verification (required)
+
+> ⚠️ **ALWAYS run these commands locally before pushing to avoid CI failures:**
+
+```bash
+# 1. Linting FIRST - catches 90% of CI failures
+bundle exec standardrb --fix  # Primary linter with auto-fix
+bundle exec rubocop -a        # Additional auto-fixes
+
+# 2. Factory validation - catches schema/attribute mismatches
+bundle exec rspec spec/factories --format progress
+
+# 3. Quick test feedback - run changed specs
+bundle exec rspec spec/path/to/your_spec.rb
+
+# 4. Full test suite - before final push
+bundle exec rspec --format progress
+
+# 5. Security (if configured)
+bundle exec brakeman -q
+```
+
+**Common CI failures caught by linting:**
+- `Layout/TrailingEmptyLines` — trailing blank lines at end of file
+- `Style/FrozenStringLiteralComment` — missing frozen_string_literal comment
+- `Layout/EmptyLineAfterMagicComment` — missing blank line after frozen_string_literal
+- `Layout/TrailingWhitespace` — trailing spaces on lines
+- `Style/SafeNavigation` — use `&.` instead of checking nil
+- `Layout/ArrayAlignment` — multi-line array alignment
+- `Style/TernaryParentheses` — parentheses in ternary conditions
+
+**Common CI failures caught by factory validation:**
+- `NoMethodError: undefined method 'attribute='` — factory using outdated attribute names
+- `ActiveRecord::RecordInvalid` — missing required attributes or invalid enum values
+- Schema drift after migrations
+
+### 15.2 Verification by change type
+
+| What you changed | Commands to run |
+|------------------|-----------------|
+| Any Ruby file | `bundle exec standardrb --fix && bundle exec rubocop -a` |
+| Models/migrations | Above + `bundle exec rspec spec/factories spec/models` |
+| Controllers | Above + `bundle exec rspec spec/requests spec/controllers` |
+| Services | Above + `bundle exec rspec spec/services` |
+| Game engine | Above + `bundle exec rspec spec/lib/game spec/services/game` |
+| Combat system | Above + `bundle exec rspec spec/services/game/combat` |
+| Views/UI | Above + `bundle exec rspec spec/system` |
+| Full feature | `bundle exec standardrb --fix && bundle exec rspec` |
 
 ---
 

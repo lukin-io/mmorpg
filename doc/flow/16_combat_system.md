@@ -3,10 +3,12 @@
 ## Version History
 - **v1.0** (2024-12-01): Initial implementation
 - **v1.1** (2024-12-15): Added BattleChannel for real-time HP/MP updates, combat log persistence, and battle completion handling
+- **v1.2** (2025-12-27): Added PVP combat support via unified combat architecture
+- **v1.3** (2025-12-28): PVP improvements - concurrency locks, VitalsService, locality checks, unified damage formula, anti-abuse protections, deterministic RNG
 
 ## Overview
 
-The combat system implements Neverlands-inspired turn-based PvE combat with:
+The combat system implements Neverlands-inspired turn-based combat for both PvE and PvP with:
 - Body-part targeting (head, torso, stomach, legs) for attacks and blocks
 - Action point (AP) budgeting per turn
 - Magic/skill slot activation
@@ -300,16 +302,62 @@ CombatLogEntry.create!(
 ### System Specs
 - `spec/system/combat_spec.rb`
 
+## PVP Combat
+
+The same core combat system supports player-vs-player combat in both open-world and arena contexts.
+
+### Open-World PVP (v1.3)
+- **Controller**: `app/controllers/pvp_combat_controller.rb`
+- **Service**: `app/services/game/combat/pvp_encounter_service.rb`
+- **Zone Rules**: `app/services/game/pvp/zone_rules.rb` — Determines if PVP is allowed
+- **Flag System**: `app/services/game/pvp/flag_service.rb` — PVP flagging
+- **Damage Formula**: `app/lib/game/formulas/combat_damage_formula.rb` — Unified (PvE + PvP)
+
+### v1.3 Features
+- **Concurrency Protection**: Row-level locking prevents duplicate active battles
+- **Locality Checks**: Same zone, 5-tile range, safe building protection
+- **VitalsService Integration**: All damage routed through `Characters::VitalsService`
+- **Deterministic RNG**: `rng_seed` on Battle model for replay
+- **Anti-Abuse**: Newbie protection, level gap limits, repeat kill farming limits
+- **Faction Warfare**: `alliance` vs `rebellion` with neutral exemption
+
+### PVP Flow
+1. Player targets another player → `/pvp_combat/attack`
+2. Locality checks (same zone, within range, not in safe building)
+3. Anti-abuse checks (level protection, farming limits)
+4. `ZoneRules.check_pvp_allowed` validates the attack
+5. `PvpEncounterService.start_encounter!` creates battle with RNG seed
+6. Combat proceeds with unified damage formula
+7. Winner receives XP, gold, and honor (with diminishing returns)
+
+For full documentation, see: `doc/flow/23_unified_combat_architecture.md`
+
+---
+
+## Related Documentation
+- `doc/flow/11_arena_pvp.md` — Arena PVP system
+- `doc/flow/23_unified_combat_architecture.md` — Unified combat architecture (PVE + PVP)
+- `doc/COMBAT_SYSTEM_GUIDE.md` — Combat formulas and mechanics
+
+---
+
 ## Responsible Implementation Files
 
 | Type | Path |
 |------|------|
-| Controller | `app/controllers/combat_controller.rb` |
+| Controller (PvE) | `app/controllers/combat_controller.rb` |
+| Controller (PvP) | `app/controllers/pvp_combat_controller.rb` |
 | Channel | `app/channels/battle_channel.rb` |
-| Service | `app/services/game/combat/*.rb` |
-| Model | `app/models/battle.rb`, `app/models/battle_participant.rb`, `app/models/combat_log_entry.rb` |
-| Views | `app/views/combat/_*.html.erb` |
+| Service (PvE) | `app/services/game/combat/pve_encounter_service.rb` |
+| Service (PvP) | `app/services/game/combat/pvp_encounter_service.rb` |
+| PVP Rules | `app/services/game/pvp/zone_rules.rb`, `app/services/game/pvp/flag_service.rb` |
+| Vitals | `app/services/characters/vitals_service.rb` |
+| Damage Formula | `app/lib/game/formulas/combat_damage_formula.rb` |
+| Model | `app/models/battle.rb` (with `rng_seed`), `app/models/battle_participant.rb`, `app/models/combat_log_entry.rb`, `app/models/pvp_flag.rb`, `app/models/character.rb` (combat stats) |
+| Views (PvE) | `app/views/combat/_*.html.erb` |
+| Views (PvP) | `app/views/pvp_combat/*.html.erb` |
 | JavaScript | `app/javascript/controllers/turn_combat_controller.js` |
 | CSS | `app/assets/stylesheets/application.css` (nl-combat-* classes) |
-| Specs | `spec/requests/combat_spec.rb`, `spec/channels/battle_channel_spec.rb`, `spec/services/game/combat/*_spec.rb` |
+| Migration | `db/migrate/20251228200000_improve_pvp_battle_system.rb` |
+| Specs | `spec/requests/combat_spec.rb`, `spec/requests/pvp_combat_spec.rb`, `spec/services/game/combat/*_spec.rb`, `spec/services/game/pvp/*_spec.rb`, `spec/lib/game/formulas/combat_damage_formula_spec.rb` |
 

@@ -47,26 +47,48 @@
               </div>
             <% end %>
           </div>
-          <% if current_membership&.pending? %>
-            <%= button_to "I'm Ready!", party_membership_path(@party, current_membership, ready_state: :ready), method: :patch, class: "game-btn game-btn--success" %>
-            <%= button_to "Not Ready", party_membership_path(@party, current_membership, ready_state: :not_ready), method: :patch, class: "game-btn game-btn--danger" %>
+          <% if current_membership&.ready_state == "unknown" %>
+            <%= button_to "I'm Ready!", party_party_membership_path(@party, current_membership, ready_state: :ready), method: :patch, class: "game-btn game-btn--success" %>
+            <%= button_to "Not Ready", party_party_membership_path(@party, current_membership, ready_state: :not_ready), method: :patch, class: "game-btn game-btn--danger" %>
           <% end %>
         </div>
       <% end %>
 
-      <% if @invitations.any? && party_leader?(@party) %>
+      <% if party_leader?(@party) %>
+        <% @party_invitation ||= PartyInvitation.new %>
+
         <div class="pending-invitations card">
-          <h3>Pending Requests</h3>
-          <% @invitations.each do |invite| %>
-            <div class="invitation-row">
-              <span class="invitee-name"><%= invite.user.profile_name %></span>
-              <div class="invitation-actions">
-                <%= button_to "Accept", party_invitation_path(invite, status: :accepted), method: :patch, class: "game-btn game-btn--success" %>
-                <%= button_to "Decline", party_invitation_path(invite, status: :declined), method: :patch, class: "game-btn game-btn--danger" %>
-              </div>
+          <h3>Invite Player</h3>
+
+          <% if @party_invitation.errors.any? %>
+            <div class="alert alert-warning"><%= @party_invitation.errors.full_messages.to_sentence %></div>
+          <% end %>
+
+          <%= form_with model: [@party, @party_invitation], url: party_party_invitations_path(@party), class: "party-form" do |form| %>
+            <div class="form-group">
+              <%= form.label :recipient_id, "Player" %>
+              <%= form.collection_select :recipient_id,
+                    User.verified.where.not(id: @party.members.select(:id)).order(:profile_name),
+                    :id,
+                    :profile_name,
+                    prompt: "Select player",
+                    class: "form-control" %>
             </div>
+            <%= form.submit "Send Invite", class: "game-btn game-btn--primary" %>
           <% end %>
         </div>
+
+        <% if @invitations.any? %>
+          <div class="pending-invitations card">
+            <h3>Pending Invitations</h3>
+            <% @invitations.each do |invite| %>
+              <div class="invitation-row">
+                <span class="invitee-name"><%= invite.recipient.profile_name %></span>
+                <span class="text-muted">expires <%= time_ago_in_words(invite.expires_at) %></span>
+              </div>
+            <% end %>
+          </div>
+        <% end %>
       <% end %>
     </div>
 
@@ -87,8 +109,7 @@
       <% else %>
         <div class="join-party-card card">
           <h3>Join this Party</h3>
-          <p>Request to join and wait for the leader to accept.</p>
-          <%= button_to "Request to Join", party_invitations_path(@party), method: :post, class: "game-btn game-btn--primary" %>
+          <p>This party is invite-only. Ask the leader for an invite.</p>
         </div>
       <% end %>
 

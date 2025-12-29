@@ -45,6 +45,7 @@ Use this file whenever modifying auth, presence, or premium token logic.
 | Characters & profiles | `app/models/character.rb`, `app/controllers/public_profiles_controller.rb`, `app/services/users/public_profile.rb`, `config/routes.rb` | Users own up to 5 characters. Public profiles available at `/profiles/:profile_name` (JSON). |
 | Privacy toggles | `app/models/user.rb`, `app/models/friendship.rb` | `chat_privacy`, `friend_request_privacy`, `duel_privacy` enums gate inbound interactions; friendships respect receiver preference on create. |
 | Presence | `app/channels/presence_channel.rb`, `app/javascript/channels/presence_channel.js`, `app/jobs/session_presence_job.rb`, `app/javascript/controllers/idle_tracker_controller.js` | Broadcast online/idle/offline statuses. |
+| Action Cable mount | `config/routes.rb` | `mount ActionCable.server => "/cable"` to support Turbo Streams + presence subscriptions. |
 | Audit logs | `app/models/audit_log.rb`, `app/services/audit_logger.rb` | Records moderator/admin actions (premium adjustments, bans, etc.). |
 | Policies | `app/policies/user_policy.rb` | Role-based access (player/moderator/gm/admin). |
 
@@ -53,8 +54,8 @@ Use this file whenever modifying auth, presence, or premium token logic.
 ## Environment & Configuration
 | Key | Purpose | Default |
 | --- | --- | --- |
-| `REDIS_CACHE_URL` | Rack::Attack cache store | `redis://localhost:6379/1` |
-| `REDIS_CABLE_URL` | Presence channel pub/sub | `redis://localhost:6379/3` |
+| `REDIS_CACHE_URL` | Rails cache (and Rack::Attack via `Rails.cache`) | `redis://localhost:6380/0` |
+| `REDIS_CABLE_URL` | Action Cable pub/sub (Turbo Streams + presence) | `redis://localhost:6379/0` |
 | `POSTGRES_*` | DB credentials for Devise + ledger tables | See `.env` |
 | `APP_URL` | Device/session metadata + Stripe redirects | `http://localhost:3000` |
 | `STRIPE_SECRET_KEY` | Credits token ledger on purchase success | none |
@@ -176,6 +177,7 @@ Browser -> Devise Controller -> Warden Hooks -> UserSessionManager -> UserSessio
 | Services (profiles) | `spec/services/users/public_profile_spec.rb` | Ensures serializer hides email and reflects guild/housing state. |
 | Requests | `spec/requests/session_pings_spec.rb` | Ensures presence pings enqueue job. |
 | Requests (profiles) | `spec/requests/public_profiles_spec.rb` | Public profile endpoint JSON contract. |
+| System | `spec/system/onboarding_spec.rb` | Devise sign-in/sign-up UI + world entry boot path. |
 | Policies | `spec/policies/user_policy_spec.rb` | Role-based coverage. |
 
 Before running `bundle exec rspec`, ensure Postgres credentials are set (`POSTGRES_PASSWORD`, etc.) or tests will fail with `fe_sendauth: no password supplied`.
@@ -226,4 +228,3 @@ Before running `bundle exec rspec`, ensure Postgres credentials are set (`POSTGR
 ---
 
 Update this flow whenever auth/presence/token behavior changes (new throttle, new ledger entry type, additional presence states, etc.).***
-

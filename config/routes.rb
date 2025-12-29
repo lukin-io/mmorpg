@@ -1,19 +1,24 @@
 require "sidekiq/web"
 
 Rails.application.routes.draw do
+  # NOTE: Devise 4.9.x generates deprecation warnings about hash arguments in Rails 8.2
+  # This is a known Devise issue and will be fixed in Devise 4.10+
+  # See: https://github.com/heartcombo/devise/issues/5644
   devise_for :users
+
+  mount ActionCable.server => "/cable"
 
   authenticate :user, ->(user) { user.has_role?(:admin) } do
     mount Sidekiq::Web => "/sidekiq"
   end
 
-  # Public battle logs (shareable URLs like Neverlands' /logs.fcg?fid=xxx)
+  # Public battle logs (shareable URLs)
   get "logs/:share_token", to: "public_battle_logs#show", as: :public_battle_log
 
   resource :session_ping, only: :create
   resources :profiles, only: :show, controller: :public_profiles, param: :profile_name
 
-  # Character Stats & Skills Allocation (Neverlands-inspired)
+  # Character Stats & Skills Allocation
   resources :characters, only: [] do
     member do
       get :stats
@@ -255,6 +260,15 @@ Rails.application.routes.draw do
   resources :npc_reports, only: [:new, :create]
   resources :combat_logs, only: :show
 
+  # Turn-Based Combat (Unified PvE/PvP/Arena)
+  resources :battles, only: [:show] do
+    member do
+      post :submit_turn
+      post :flee
+      post :surrender
+    end
+  end
+
   namespace :moderation do
     resources :reports, only: [:new, :create]
     resources :tickets, only: [] do
@@ -316,6 +330,21 @@ Rails.application.routes.draw do
     post :action
     post :flee
     get :skills
+  end
+
+  # PvP Combat (Open World)
+  resources :pvp_combat, only: [:show, :create] do
+    collection do
+      post :attack
+      get :status
+      post :toggle_pvp
+    end
+    member do
+      post :action
+      post :turn
+      post :flee
+      post :surrender
+    end
   end
 
   # Resource Gathering

@@ -14,6 +14,8 @@
 class TacticalArenaController < ApplicationController
   include CurrentCharacterContext
 
+  helper_method :my_turn?
+
   before_action :ensure_active_character!
   before_action :set_tactical_match, only: [:show, :move, :attack, :skill, :end_turn, :forfeit]
 
@@ -31,7 +33,7 @@ class TacticalArenaController < ApplicationController
     @grid = @tactical_match.grid_state
     @current_turn = @tactical_match.current_turn_character
     @valid_moves = calculate_valid_moves if my_turn?
-    @combat_log = @tactical_match.combat_log_entries.order(:created_at).last(20)
+    @combat_log = @tactical_match.tactical_combat_log_entries.order(:created_at).last(20)
   end
 
   # POST /tactical_arena
@@ -169,7 +171,7 @@ class TacticalArenaController < ApplicationController
         format.turbo_stream do
           render turbo_stream: [
             turbo_stream.replace("tactical_grid", partial: "tactical_arena/grid", locals: {match: @tactical_match}),
-            turbo_stream.replace("combat_log", partial: "tactical_arena/combat_log", locals: {entries: @tactical_match.combat_log_entries.last(20)})
+            turbo_stream.replace("combat_log", partial: "tactical_arena/combat_log", locals: {entries: @tactical_match.tactical_combat_log_entries.last(20)})
           ]
         end
         format.html { redirect_to tactical_arena_path(@tactical_match) }

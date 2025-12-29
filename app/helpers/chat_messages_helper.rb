@@ -6,12 +6,18 @@ module ChatMessagesHelper
     classes << "chat-msg--system" if message.system?
     classes << "chat-msg--gm-alert" if message.gm_alert?
     classes << "chat-msg--flagged" if message.flagged?
-    classes << "chat-msg--own" if message.sender == current_user
+    viewer = safe_current_user
+    classes << "chat-msg--own" if viewer && message.sender == viewer
     classes << "chat-msg--whisper" if message.whisper?
-    classes << "chat-msg--clan" if message.clan?
-    classes << "chat-msg--party" if message.party?
-    classes << "chat-msg--shout" if message.shout?
+    classes << "chat-msg--clan" if message.clan_message?
+    classes << "chat-msg--party" if message.party_message?
     classes.join(" ")
+  end
+
+  def safe_current_user
+    current_user
+  rescue Devise::MissingWarden
+    nil
   end
 
   # Format sender name with level and title

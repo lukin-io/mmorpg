@@ -19,16 +19,15 @@ module Parties
       end
     end
 
-    def mark_ready!(membership, ready:)
-      membership.update!(ready_state: ready ? :ready : :not_ready)
+    def mark_ready!(membership, ready_state:)
+      membership.update!(ready_state: ready_state.to_s)
       resolve_if_complete!
     end
 
     def resolve_if_complete!
       return unless party.ready_check_running?
 
-      states = party.party_memberships.active.pluck(:ready_state)
-      return if states.include?(PartyMembership.ready_states[:unknown])
+      return if party.party_memberships.active.where(ready_state: :unknown).exists?
 
       party.update!(ready_check_state: :resolved)
     end

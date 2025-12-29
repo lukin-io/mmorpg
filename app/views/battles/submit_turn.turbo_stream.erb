@@ -1,0 +1,18 @@
+<%#
+  Turbo Stream response for turn submission
+%>
+
+<%# Update the submit button to show waiting state %>
+<%= turbo_stream.update "combat-submit" do %>
+  <button type="button" class="nl-btn nl-btn--disabled" disabled>
+    ⏳ Waiting for opponent...
+  </button>
+<% end %>
+
+<%# Show confirmation message %>
+<%= turbo_stream.update "flash" do %>
+  <div class="nl-flash nl-flash--success">
+    Turn submitted! Waiting for opponent to act...
+  </div>
+<% end %>
+

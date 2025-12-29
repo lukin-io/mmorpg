@@ -1,0 +1,379 @@
+<%# PVP Combat View - Real-time battle interface %>
+<div class="pvp-combat-container" data-controller="pvp-combat" data-pvp-combat-battle-id-value="<%= @battle.id %>" data-pvp-combat-character-id-value="<%= current_character.id %>">
+  <div class="pvp-combat-header">
+    <h2>⚔️ PVP Combat</h2>
+    <div class="combat-round">Round <%= @battle.turn_number %></div>
+  </div>
+
+  <div class="pvp-combat-arena">
+    <%# Participants %>
+    <div class="pvp-participants">
+      <% @participants.each do |participant| %>
+        <div class="pvp-participant <%= participant.character == current_character ? 'pvp-participant--self' : 'pvp-participant--enemy' %>"
+             id="participant-<%= participant.id %>"
+             data-pvp-combat-target="participant">
+          <div class="pvp-participant-avatar">
+            <% if participant.character.respond_to?(:avatar_image_path) && participant.character.avatar_image_path %>
+              <%= image_tag participant.character.avatar_image_path, alt: participant.character.name, class: "avatar-image" %>
+            <% else %>
+              <span class="avatar-emoji"><%= participant.character == current_character ? '🧙' : '⚔️' %></span>
+            <% end %>
+          </div>
+          <div class="pvp-participant-info">
+            <div class="pvp-participant-name">
+              <%= participant.character.name %>
+              <span class="level-badge">Lv.<%= participant.character.level %></span>
+            </div>
+            <div class="pvp-hp-bar">
+              <div class="pvp-hp-fill"
+                   style="width: <%= (participant.current_hp.to_f / participant.max_hp * 100).round %>%"
+                   data-current="<%= participant.current_hp %>"
+                   data-max="<%= participant.max_hp %>">
+              </div>
+              <span class="pvp-hp-text"><%= participant.current_hp %>/<%= participant.max_hp %></span>
+            </div>
+          </div>
+        </div>
+      <% end %>
+    </div>
+
+    <%# Combat Log %>
+    <div class="pvp-combat-log" id="combat-log" data-pvp-combat-target="combatLog">
+      <h3>Combat Log</h3>
+      <div class="combat-log-entries">
+        <% @combat_log.reverse.each do |entry| %>
+          <div class="combat-log-entry combat-log--<%= entry.log_type %>">
+            <span class="combat-time">[R<%= entry.round_number %>]</span>
+            <%= entry.message %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <%# Action Panel %>
+  <% if @battle.active? %>
+    <div class="pvp-action-panel" id="pvp-action-panel" data-pvp-combat-target="actionPanel">
+      <h3>Your Actions</h3>
+
+      <div class="pvp-action-buttons">
+        <%# Attack Actions %>
+        <div class="action-group">
+          <h4>Attack</h4>
+          <div class="body-part-targets">
+            <% %w[head torso stomach legs].each do |part| %>
+              <%= button_to part.titleize,
+                  action_pvp_combat_path(@battle),
+                  method: :post,
+                  params: { action_type: 'attack', body_part: part },
+                  class: "btn btn-attack",
+                  data: { turbo_stream: true } %>
+            <% end %>
+          </div>
+          <%= button_to "🎯 Aimed Attack (20 AP)",
+              action_pvp_combat_path(@battle),
+              method: :post,
+              params: { action_type: 'attack', action_key: 'aimed' },
+              class: "btn btn-attack btn-aimed",
+              data: { turbo_stream: true } %>
+        </div>
+
+        <%# Defend Action %>
+        <div class="action-group">
+          <h4>Defend</h4>
+          <%= button_to "🛡️ Defend",
+              action_pvp_combat_path(@battle),
+              method: :post,
+              params: { action_type: 'defend' },
+              class: "btn btn-defend",
+              data: { turbo_stream: true } %>
+        </div>
+
+        <%# Flee Action %>
+        <div class="action-group">
+          <h4>Escape</h4>
+          <%= button_to "🏃 Flee",
+              flee_pvp_combat_path(@battle),
+              method: :post,
+              class: "btn btn-flee",
+              data: { turbo_confirm: "Are you sure you want to flee?" } %>
+          <%= button_to "🏳️ Surrender",
+              surrender_pvp_combat_path(@battle),
+              method: :post,
+              class: "btn btn-surrender",
+              data: { turbo_confirm: "Are you sure you want to surrender?" } %>
+        </div>
+      </div>
+    </div>
+  <% else %>
+    <%# Battle Ended %>
+    <div class="pvp-result-panel">
+      <% winner = @battle.battle_participants.find_by(is_alive: true)&.character %>
+      <% if winner == current_character %>
+        <h2 class="result-victory">🏆 Victory!</h2>
+        <p>You have defeated your opponent!</p>
+      <% else %>
+        <h2 class="result-defeat">💀 Defeat</h2>
+        <p>You have been defeated in combat.</p>
+      <% end %>
+      <%= link_to "Return to World", world_path, class: "btn btn-primary" %>
+    </div>
+  <% end %>
+</div>
+
+<style>
+.pvp-combat-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: var(--nl-space-md);
+  background: var(--nl-bg-primary);
+  border: 1px solid var(--nl-border-medium);
+}
+
+.pvp-combat-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: var(--nl-space-sm);
+  border-bottom: 2px solid var(--nl-gold);
+  margin-bottom: var(--nl-space-md);
+}
+
+.pvp-combat-header h2 {
+  margin: 0;
+  color: var(--nl-gold);
+}
+
+.combat-round {
+  background: var(--nl-bg-tertiary);
+  padding: var(--nl-space-xs) var(--nl-space-sm);
+  border-radius: 4px;
+  font-weight: bold;
+}
+
+.pvp-participants {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--nl-space-lg);
+  margin-bottom: var(--nl-space-md);
+}
+
+.pvp-participant {
+  display: flex;
+  gap: var(--nl-space-sm);
+  padding: var(--nl-space-sm);
+  background: var(--nl-bg-secondary);
+  border: 2px solid var(--nl-border-medium);
+  border-radius: 8px;
+}
+
+.pvp-participant--self {
+  border-color: #4CAF50;
+  background: rgba(76, 175, 80, 0.1);
+}
+
+.pvp-participant--enemy {
+  border-color: #f44336;
+  background: rgba(244, 67, 54, 0.1);
+}
+
+.pvp-participant-avatar {
+  width: 64px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--nl-bg-tertiary);
+  border-radius: 8px;
+}
+
+.pvp-participant-avatar .avatar-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.pvp-participant-avatar .avatar-emoji {
+  font-size: 2rem;
+}
+
+.pvp-participant-info {
+  flex: 1;
+}
+
+.pvp-participant-name {
+  font-weight: bold;
+  margin-bottom: var(--nl-space-xs);
+}
+
+.level-badge {
+  font-size: 0.8rem;
+  background: var(--nl-bg-tertiary);
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-left: var(--nl-space-xs);
+}
+
+.pvp-hp-bar {
+  position: relative;
+  height: 20px;
+  background: #2a2a2a;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.pvp-hp-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #f44336 0%, #4CAF50 100%);
+  transition: width 0.3s ease;
+}
+
+.pvp-hp-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 0.75rem;
+  font-weight: bold;
+  color: white;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+}
+
+.pvp-combat-log {
+  background: #1a1a1a;
+  border-radius: 8px;
+  padding: var(--nl-space-sm);
+  margin-bottom: var(--nl-space-md);
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.pvp-combat-log h3 {
+  margin: 0 0 var(--nl-space-xs) 0;
+  color: var(--nl-text-secondary);
+  font-size: 0.9rem;
+}
+
+.combat-log-entries {
+  font-family: monospace;
+  font-size: 0.85rem;
+  color: #e0e0e0;
+}
+
+.combat-log-entry {
+  padding: 2px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.combat-log--damage { color: #ff6b6b; }
+.combat-log--critical { color: #ffd43b; font-weight: bold; }
+.combat-log--miss { color: #868e96; font-style: italic; }
+.combat-log--action { color: #74c0fc; }
+.combat-log--defeat { color: #f44336; font-weight: bold; }
+.combat-log--victory { color: #4CAF50; font-weight: bold; }
+.combat-log--system { color: #adb5bd; }
+
+.combat-time {
+  color: #868e96;
+  margin-right: 8px;
+}
+
+.pvp-action-panel {
+  background: var(--nl-bg-secondary);
+  border-radius: 8px;
+  padding: var(--nl-space-md);
+}
+
+.pvp-action-panel h3 {
+  margin: 0 0 var(--nl-space-sm) 0;
+}
+
+.pvp-action-buttons {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--nl-space-md);
+}
+
+.action-group h4 {
+  margin: 0 0 var(--nl-space-xs) 0;
+  font-size: 0.9rem;
+  color: var(--nl-text-secondary);
+}
+
+.body-part-targets {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--nl-space-xs);
+  margin-bottom: var(--nl-space-xs);
+}
+
+.btn {
+  padding: var(--nl-space-xs) var(--nl-space-sm);
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: all 0.2s;
+}
+
+.btn-attack {
+  background: #f44336;
+  color: white;
+}
+
+.btn-attack:hover {
+  background: #d32f2f;
+}
+
+.btn-aimed {
+  width: 100%;
+  background: #ff9800;
+}
+
+.btn-defend {
+  background: #2196F3;
+  color: white;
+  width: 100%;
+}
+
+.btn-defend:hover {
+  background: #1976D2;
+}
+
+.btn-flee {
+  background: #9E9E9E;
+  color: white;
+  width: 100%;
+  margin-bottom: var(--nl-space-xs);
+}
+
+.btn-surrender {
+  background: #607D8B;
+  color: white;
+  width: 100%;
+}
+
+.pvp-result-panel {
+  text-align: center;
+  padding: var(--nl-space-xl);
+}
+
+.result-victory {
+  color: #4CAF50;
+  font-size: 2rem;
+}
+
+.result-defeat {
+  color: #f44336;
+  font-size: 2rem;
+}
+
+.btn-primary {
+  background: var(--nl-gold);
+  color: #1a1a1a;
+  font-weight: bold;
+  padding: var(--nl-space-sm) var(--nl-space-lg);
+}
+</style>
+

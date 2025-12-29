@@ -116,6 +116,13 @@
 
     <%# Right: Status icons %>
     <div class="nl-status-icons">
+      <div id="pvp-status" class="pvp-status-indicator">
+        <% if current_character&.pvp_flagged? %>
+          <span class="pvp-icon" title="PVP Enabled">⚔️</span>
+        <% else %>
+          <span class="pvp-icon" title="PVP Disabled">🛡️</span>
+        <% end %>
+      </div>
       <span class="nl-time-display"><%= Time.current.strftime("%H:%M:%S") %></span>
     </div>
   </footer>
@@ -128,7 +135,7 @@
   </div>
 
   <%# Notification toasts %>
-  <div class="nl-notifications" data-game-layout-target="notifications"></div>
+  <div id="notifications" class="nl-notifications" data-game-layout-target="notifications"></div>
 
 </body>
 </html>
