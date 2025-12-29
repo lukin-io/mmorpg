@@ -197,6 +197,8 @@ module Game
         end
       rescue ActiveRecord::RecordInvalid => e
         Result.failure("Failed to create battle: #{e.message}")
+      rescue ActiveRecord::RecordNotUnique
+        Result.failure("Initiator already in an active battle")
       end
 
       # Flee from combat
