@@ -238,6 +238,143 @@ RSpec.describe Arena::ApplicationHandler do
         expect(result.errors).to include("You cannot accept this application")
       end
     end
+
+    # ============================================
+    # HP Recovery Gate Tests (Bug Fix Coverage)
+    # ============================================
+    # Ensures characters with low HP cannot accept applications
+
+    context "when acceptor has insufficient HP" do
+      before do
+        character.update!(current_hp: 30, max_hp: 100) # 30% HP, below 50% threshold
+      end
+
+      it "returns HP recovery error" do
+        result = handler.accept(
+          application: application,
+          acceptor: character
+        )
+
+        expect(result.success?).to be false
+        expect(result.errors.first).to include("cannot accept this application")
+      end
+    end
+
+    context "when acceptor has exactly minimum HP" do
+      before do
+        character.update!(current_hp: 50, max_hp: 100) # 50% HP, at threshold
+      end
+
+      it "allows acceptance" do
+        result = handler.accept(
+          application: application,
+          acceptor: character
+        )
+
+        expect(result.success?).to be true
+      end
+    end
+
+    context "when acceptor has above minimum HP" do
+      before do
+        character.update!(current_hp: 75, max_hp: 100) # 75% HP
+      end
+
+      it "allows acceptance" do
+        result = handler.accept(
+          application: application,
+          acceptor: character
+        )
+
+        expect(result.success?).to be true
+      end
+    end
+
+    # ============================================
+    # Match Scheduling Tests (Bug Fix Coverage)
+    # ============================================
+    # Ensures MatchStarterJob is properly scheduled
+
+    context "job scheduling" do
+      it "schedules MatchStarterJob on arena queue" do
+        expect {
+          handler.accept(application: application, acceptor: character)
+        }.to have_enqueued_job(Arena::MatchStarterJob).on_queue("arena")
+      end
+
+      it "schedules job with correct wait time" do
+        application.update!(timeout_seconds: 240)
+
+        expect(Arena::MatchStarterJob).to receive(:set)
+          .with(wait: 240.seconds)
+          .and_return(double(perform_later: true))
+
+        handler.accept(application: application, acceptor: character)
+      end
+
+      it "stores starts_at in match metadata" do
+        result = handler.accept(application: application, acceptor: character)
+
+        expect(result.match.metadata["starts_at"]).to be_present
+        starts_at = Time.parse(result.match.metadata["starts_at"])
+        expect(starts_at).to be_within(5.seconds).of(180.seconds.from_now)
+      end
+    end
+
+    # ============================================
+    # NPC Application Tests
+    # ============================================
+
+    context "with NPC application" do
+      let(:npc_template) { create(:npc_template, name: "Training Dummy", level: 5, role: "arena_bot") }
+      let!(:npc_application) do
+        create(:arena_application,
+          applicant: nil,
+          npc_template: npc_template,
+          arena_room: arena_room,
+          status: :open,
+          fight_type: :duel,
+          timeout_seconds: 120)
+      end
+
+      it "accepts NPC application with shorter countdown" do
+        expect(Arena::MatchStarterJob).to receive(:set)
+          .with(wait: 5.seconds) # NPC fights have 5 second countdown
+          .and_return(double(perform_later: true))
+
+        result = handler.accept_npc_application(
+          application: npc_application,
+          acceptor: character
+        )
+
+        expect(result.success?).to be true
+      end
+
+      it "creates NPC participation" do
+        result = handler.accept_npc_application(
+          application: npc_application,
+          acceptor: character
+        )
+
+        match = result.match
+        npc_participation = match.arena_participations.find_by(npc_template: npc_template)
+        expect(npc_participation).to be_present
+        expect(npc_participation.team).to eq("b")
+      end
+
+      it "initializes NPC HP in metadata" do
+        result = handler.accept_npc_application(
+          application: npc_application,
+          acceptor: character
+        )
+
+        npc_participation = result.match.arena_participations.find_by(npc_template: npc_template)
+        # HP is calculated from level via combat_stats, not stored as 'health'
+        expected_hp = npc_template.combat_stats[:hp]
+        expect(npc_participation.metadata["current_hp"]).to eq(expected_hp)
+        expect(npc_participation.metadata["max_hp"]).to eq(expected_hp)
+      end
+    end
   end
 
   describe "#cancel" do

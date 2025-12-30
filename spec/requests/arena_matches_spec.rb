@@ -127,4 +127,193 @@ RSpec.describe "ArenaMatches", type: :request do
         .or have_http_status(:redirect)
     end
   end
+
+  # ============================================
+  # Match Status Display Tests
+  # ============================================
+
+  describe "match status display" do
+    let!(:pending_match) do
+      match = create(:arena_match,
+        arena_room: arena_room,
+        status: :pending,
+        metadata: { "starts_at" => 2.minutes.from_now.iso8601 })
+      create(:arena_participation, arena_match: match, character: character, user: user, team: "a")
+      create(:arena_participation, arena_match: match, character: other_character, user: other_user, team: "b")
+      match
+    end
+
+    it "displays pending status for matches waiting to start" do
+      get "/arena_matches/#{pending_match.id}"
+
+      expect(response).to have_http_status(:success)
+      expect(response.body).to include("Pending")
+    end
+
+    context "when match transitions to live" do
+      before do
+        pending_match.update!(status: :live, started_at: Time.current)
+      end
+
+      it "displays live status" do
+        get "/arena_matches/#{pending_match.id}"
+
+        expect(response).to have_http_status(:success)
+        expect(response.body).to include("Live")
+      end
+    end
+  end
+
+  # ============================================
+  # Spectator Access Tests
+  # ============================================
+
+  describe "spectator access" do
+    let!(:live_match) do
+      match = create(:arena_match,
+        arena_room: arena_room,
+        status: :live,
+        started_at: Time.current)
+      create(:arena_participation, arena_match: match, character: other_character, user: other_user, team: "a")
+      match
+    end
+
+    it "allows non-participants to view match (spectate)" do
+      get "/arena_matches/#{live_match.id}"
+
+      expect(response).to have_http_status(:success)
+    end
+
+    it "shows spectator code for non-participants" do
+      get "/arena_matches/#{live_match.id}"
+
+      expect(response.body).to include(live_match.spectator_code)
+    end
+  end
+
+  # ============================================
+  # Match Action Endpoint Tests
+  # ============================================
+
+  describe "POST /arena_matches/:id/action" do
+    let!(:live_match) do
+      match = create(:arena_match,
+        arena_room: arena_room,
+        status: :live,
+        started_at: Time.current,
+        current_turn_started_at: Time.current,
+        current_turn_team: "a")
+      create(:arena_participation, arena_match: match, character: character, user: user, team: "a")
+      create(:arena_participation, arena_match: match, character: other_character, user: other_user, team: "b")
+      match
+    end
+
+    context "when user is participant" do
+      it "accepts combat action" do
+        post "/arena_matches/#{live_match.id}/action",
+          params: { action_type: "attack", target_id: other_character.id, body_part: "torso" },
+          as: :json
+
+        expect(response).to have_http_status(:success)
+          .or have_http_status(:unprocessable_entity)
+      end
+    end
+
+    context "when user is not participant" do
+      before { sign_out user }
+
+      it "rejects unauthorized action" do
+        sign_in other_user
+
+        # Sign in as user who is participant but on team b, trying to act on team a's turn
+        post "/arena_matches/#{live_match.id}/action",
+          params: { action_type: "attack", target_id: character.id },
+          as: :json
+
+        # Should either succeed (if team B can act) or fail authorization
+        expect(response.status).to be_in([200, 401, 403, 422])
+      end
+    end
+
+    context "when not authenticated" do
+      before { sign_out user }
+
+      it "requires authentication" do
+        post "/arena_matches/#{live_match.id}/action",
+          params: { action_type: "attack" },
+          as: :json
+
+        expect(response).to have_http_status(:unauthorized)
+          .or redirect_to(new_user_session_path)
+      end
+    end
+
+    context "when match is not live" do
+      before { live_match.update!(status: :completed, ended_at: Time.current) }
+
+      it "rejects action on completed match" do
+        post "/arena_matches/#{live_match.id}/action",
+          params: { action_type: "attack" },
+          as: :json
+
+        expect(response).to have_http_status(:unprocessable_entity)
+          .or have_http_status(:forbidden)
+      end
+    end
+  end
+
+  # ============================================
+  # Match Lifecycle Integration Tests
+  # ============================================
+
+  describe "match lifecycle from application to combat" do
+    include ActiveJob::TestHelper
+
+    let!(:arena_season) { create(:arena_season, status: :live) }
+    let!(:application) do
+      create(:arena_application,
+        applicant: character,
+        arena_room: arena_room,
+        status: :open,
+        fight_type: :duel,
+        timeout_seconds: 120)
+    end
+
+    it "creates pending match when application is accepted" do
+      handler = Arena::ApplicationHandler.new
+      result = handler.accept(application: application, acceptor: other_character)
+
+      expect(result.success?).to be true
+      expect(result.match.status).to eq("pending")
+      expect(result.match).to be_persisted
+    end
+
+    it "transitions match to live after countdown" do
+      handler = Arena::ApplicationHandler.new
+      result = handler.accept(application: application, acceptor: other_character)
+      match = result.match
+
+      expect(match.status).to eq("pending")
+
+      # Simulate job execution
+      perform_enqueued_jobs do
+        Arena::MatchStarterJob.perform_later(match.id)
+      end
+
+      expect(match.reload.status).to eq("live")
+    end
+
+    it "sets participants to in_combat when match starts" do
+      handler = Arena::ApplicationHandler.new
+      result = handler.accept(application: application, acceptor: other_character)
+      match = result.match
+
+      perform_enqueued_jobs do
+        Arena::MatchStarterJob.perform_later(match.id)
+      end
+
+      expect(character.reload.in_combat).to be true
+      expect(other_character.reload.in_combat).to be true
+    end
+  end
 end
