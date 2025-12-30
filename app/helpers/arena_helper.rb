@@ -214,4 +214,203 @@ module ArenaHelper
     data = participant_data(participation)
     data.current_hp <= 0
   end
+
+  # ===========================================================================
+  # Avatar Helpers
+  # ===========================================================================
+
+  # Avatar sizes in pixels
+  AVATAR_SIZES = {
+    small: 32,
+    medium: 48,
+    large: 64
+  }.freeze
+
+  # Generate avatar tag for arena participant
+  # @param participation [ArenaParticipation] the participation record
+  # @param size [Symbol] :small, :medium, or :large
+  # @return [ActiveSupport::SafeBuffer] HTML span element with avatar
+  def participation_avatar_tag(participation, size: :medium)
+    size_px = AVATAR_SIZES[size] || AVATAR_SIZES[:medium]
+
+    if participation.npc?
+      npc = participation.npc_template
+      avatar_emoji = npc&.avatar_emoji || "🤖"
+      content_tag(:span, avatar_emoji, class: "avatar avatar--npc avatar--#{size}",
+        style: "font-size: #{size_px}px; line-height: #{size_px}px;",
+        title: npc&.name || "NPC")
+    else
+      character = participation.character
+      avatar_class = character&.avatar || "warrior"
+      # Use character class icon or default
+      avatar_emoji = character_class_emoji(character)
+      content_tag(:span, avatar_emoji, class: "avatar avatar--player avatar--#{size} avatar--#{avatar_class}",
+        style: "font-size: #{size_px}px; line-height: #{size_px}px;",
+        title: character&.name || "Player")
+    end
+  end
+
+  # Get emoji for character class
+  # @param character [Character] the character
+  # @return [String] emoji representing the class
+  def character_class_emoji(character)
+    return "⚔️" unless character&.character_class
+
+    case character.character_class.name.to_s.downcase
+    when "warrior", "knight", "paladin" then "⚔️"
+    when "mage", "wizard", "sorcerer" then "🔮"
+    when "rogue", "thief", "assassin" then "🗡️"
+    when "ranger", "archer", "hunter" then "🏹"
+    when "cleric", "priest", "healer" then "✨"
+    when "necromancer", "warlock" then "💀"
+    else "🛡️"
+    end
+  end
+
+  # ===========================================================================
+  # Opponent Stats Display
+  # ===========================================================================
+
+  # Get current user's team in this match
+  # @return [String, nil] team identifier ("a", "b", etc.) or nil
+  def current_user_team
+    return nil unless @arena_match && current_user
+
+    participation = @arena_match.arena_participations.find_by(user: current_user)
+    participation&.team
+  end
+
+  # Get opponent's combat-relevant stats for display
+  # Shows: Strength, Dexterity, Luck, Knowledge, Wisdom
+  #
+  # @param participation [ArenaParticipation] the participation record
+  # @return [Hash] stats hash with :strength, :dexterity, :luck, :knowledge, :wisdom
+  def opponent_combat_stats(participation)
+    if participation.npc?
+      npc_combat_stats(participation.npc_template)
+    else
+      character_combat_stats(participation.character)
+    end
+  end
+
+  # Extract combat stats from a character
+  # @param character [Character] the character
+  # @return [Hash] stats hash
+  def character_combat_stats(character)
+    return {} unless character
+
+    stats = character.stats
+    return {} unless stats
+
+    {
+      strength: stats.get(:strength) || stats.get(:attack) || character.level * 2,
+      dexterity: stats.get(:dexterity) || stats.get(:agility) || 5,
+      luck: stats.get(:luck) || 5,
+      knowledge: stats.get(:knowledge) || stats.get(:intelligence) || 1,
+      wisdom: stats.get(:wisdom) || 1,
+      attack: stats.get(:attack),
+      defense: stats.get(:defense)
+    }.compact
+  end
+
+  # Extract combat stats from an NPC template
+  # @param npc [NpcTemplate] the NPC template
+  # @return [Hash] stats hash
+  def npc_combat_stats(npc)
+    return {} unless npc
+
+    # Try to get stats from NPC config
+    npc_config = Game::World::ArenaNpcConfig.find_npc(npc.npc_key) if npc.npc_key.present?
+    if npc_config
+      config_stats = Game::World::ArenaNpcConfig.extract_stats(npc_config)
+      return {
+        strength: config_stats[:attack],
+        dexterity: config_stats[:agility],
+        luck: config_stats[:luck] || 5,
+        knowledge: config_stats[:intelligence] || 1,
+        wisdom: config_stats[:wisdom] || 1,
+        attack: config_stats[:attack],
+        defense: config_stats[:defense]
+      }.compact
+    end
+
+    # Fallback to metadata or level-based stats
+    level = npc.level || 1
+    {
+      strength: npc.metadata&.dig("base_damage") || (level * 3 + 5),
+      dexterity: level + 5,
+      luck: 5 + (level / 5),
+      knowledge: 1,
+      wisdom: 1,
+      attack: npc.metadata&.dig("base_damage") || (level * 3 + 5),
+      defense: level * 2 + 3
+    }
+  end
+
+  # ===========================================================================
+  # Turn Timeout Display
+  # ===========================================================================
+
+  # Display turn timeout countdown
+  # @param match [ArenaMatch] the arena match
+  # @return [ActiveSupport::SafeBuffer] HTML for timeout display
+  def turn_timeout_display(match)
+    return "" unless match.live? && match.current_turn_started_at
+
+    remaining = match.seconds_until_timeout
+    return "" unless remaining
+
+    css_class = if remaining <= 10
+      "timeout-critical"
+    elsif remaining <= 30
+      "timeout-warning"
+    else
+      "timeout-normal"
+    end
+
+    minutes = remaining / 60
+    seconds = remaining % 60
+    time_str = format("%d:%02d", minutes, seconds)
+
+    content_tag(:div, class: "turn-timeout #{css_class}") do
+      safe_join([
+        content_tag(:span, "⏱️ Turn timeout: ", class: "timeout-label"),
+        content_tag(:span, time_str, class: "timeout-value",
+          data: {controller: "countdown", countdown_seconds_value: remaining})
+      ])
+    end
+  end
+
+  # ===========================================================================
+  # HP Recovery Gate Display
+  # ===========================================================================
+
+  # Check if character can fight and return reason if not
+  # @param character [Character] the character
+  # @return [String, nil] reason why can't fight, or nil if can
+  def arena_access_reason(character)
+    return "Not logged in" unless character
+
+    hp_percent = (character.current_hp.to_f / character.max_hp * 100).round
+    min_hp = ArenaApplication::MIN_HP_PERCENT_FOR_ARENA
+
+    if hp_percent < min_hp
+      "Recover before fighting - you are too weakened! (#{hp_percent}% HP, need #{min_hp}%)"
+    end
+  end
+
+  # Display HP recovery warning if needed
+  # @param character [Character] the character
+  # @return [ActiveSupport::SafeBuffer, nil] HTML warning or nil
+  def hp_recovery_warning(character)
+    reason = arena_access_reason(character)
+    return nil unless reason
+
+    content_tag(:div, class: "arena-warning arena-warning--hp") do
+      safe_join([
+        content_tag(:span, "⚠️ ", class: "warning-icon"),
+        content_tag(:span, reason, class: "warning-message")
+      ])
+    end
+  end
 end

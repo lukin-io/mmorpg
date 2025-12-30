@@ -154,6 +154,7 @@ Rails.application.routes.draw do
 
   resources :arena_matches, only: [:index, :show, :create] do
     member do
+      post :action
       post :spectate
       get :log
     end

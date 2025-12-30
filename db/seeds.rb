@@ -1,14 +1,14 @@
 lukin_user = nil
 
 if defined?(User)
-  admin = User.find_or_create_by!(email: "admin@elselands.test") do |user|
-    user.password = "password!"
+  admin = User.find_or_create_by!(email: "first@lukin.io") do |user|
+    user.password = "0991"
     user.confirmed_at = Time.current
   end
   admin.add_role(:admin)
 
-  lukin_user = User.find_or_create_by!(email: "lukin.maksim@gmail.com") do |user|
-    user.password = "password!"
+  lukin_user = User.find_or_create_by!(email: "second@lukin.io") do |user|
+    user.password = "0991"
     user.confirmed_at = Time.current
   end
   lukin_user.add_role(:admin)

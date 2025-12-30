@@ -133,18 +133,32 @@ module Arena
     # @param action_type [String] type of action
     # @param target [Character, nil] the target character
     # @param damage [Integer] damage dealt
-    # @param critical [Boolean] whether it was a critical hit
-    def broadcast_combat_action(actor, action_type, target, damage, critical: false)
+    # @param opts [Hash] additional options:
+    #   - critical: Boolean (whether it was a critical hit)
+    #   - body_part: String (targeted body part)
+    #   - attack_type: Symbol (:simple, :aimed)
+    #   - block_parts: Array[String] (body parts being blocked)
+    #   - npc_target: String (NPC name if target is NPC)
+    def broadcast_combat_action(actor, action_type, target, damage, **opts)
+      critical = opts.fetch(:critical, false)
+      body_part = opts[:body_part]
+      attack_type = opts[:attack_type]
+      block_parts = opts[:block_parts]
+      npc_target = opts[:npc_target]
+
       broadcast_action({
         actor_id: actor.id,
         actor_name: actor.name,
         target_id: target&.id,
-        target_name: target&.name,
+        target_name: target&.name || npc_target,
         action_type: action_type,
         damage: damage,
         is_critical: critical,
-        description: format_combat_description(actor, action_type, target, damage)
-      })
+        body_part: body_part,
+        attack_type: attack_type,
+        block_parts: block_parts,
+        description: format_combat_description(actor, action_type, target, damage, body_part:, critical:)
+      }.compact)
     end
 
     # Broadcast character defeat
@@ -162,13 +176,16 @@ module Arena
     # Broadcast match ended
     #
     # @param winning_team [String, nil] the winning team or nil for draw
-    def broadcast_match_ended(winning_team)
+    # @param reason [Symbol] reason for ending (:normal, :timeout, :forfeit)
+    def broadcast_match_ended(winning_team, reason: :normal)
       broadcast_result({
         winning_team: winning_team,
+        reason: reason,
+        timed_out: reason == :timeout,
         participants: match.arena_participations.map do |p|
           {
             character_id: p.character_id,
-            character_name: p.character.name,
+            character_name: p.character&.name,
             team: p.team,
             result: p.result,
             damage_dealt: p.metadata&.dig("damage_dealt") || 0,
@@ -260,14 +277,21 @@ module Arena
       ((character.current_mp.to_f / character.max_mp) * 100).round(1)
     end
 
-    def format_combat_description(actor, action_type, target, damage)
+    def format_combat_description(actor, action_type, target, damage, body_part: nil, critical: false)
+      target_name = target&.name || "opponent"
+
       case action_type.to_s
       when "attack"
-        if target && damage.positive?
-          "#{actor.name} strikes #{target.name} for #{damage} damage!"
+        if damage.positive?
+          part_text = body_part ? " (#{body_part})" : ""
+          crit_text = critical ? " CRITICAL!" : ""
+          "#{actor.name} hits #{target_name}#{part_text} for #{damage} damage!#{crit_text}"
         else
           "#{actor.name} attacks!"
         end
+      when "blocked"
+        part_text = body_part ? " (#{body_part})" : ""
+        "#{target_name} blocked attack#{part_text} from #{actor.name}."
       when "defend"
         "#{actor.name} takes a defensive stance."
       when "skill"

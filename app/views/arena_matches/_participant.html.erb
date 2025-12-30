@@ -1,11 +1,13 @@
 <%#
-  Arena match participant with HP/MP bars
+  Arena match participant with HP/MP bars and stats
   Supports both characters and NPCs
 
   Required locals:
   - participation: ArenaParticipation record
+  - show_stats: boolean (optional, default false) - show combat stats for opponents
 %>
 <% p_data = participant_data(participation) %>
+<% show_stats = local_assigns.fetch(:show_stats, false) %>
 
 <div class="arena-participant <%= 'arena-participant--dead' if p_data.current_hp <= 0 %> <%= 'arena-participant--npc' if p_data.is_npc %>"
      data-character-id="<%= p_data.id %>"
@@ -14,20 +16,29 @@
     <%= participation_avatar_tag(participation, size: :medium) %>
   </div>
   <div class="arena-participant-info">
-    <span class="arena-participant-name"><%= p_data.name %></span>
-    <span class="arena-participant-level">[<%= p_data.level %>]</span>
+    <div class="arena-participant-header">
+      <span class="arena-participant-name"><%= p_data.name %></span>
+      <span class="arena-participant-level">[<%= p_data.level %>]</span>
+      <span class="arena-participant-hp-pct"><%= p_data.hp_percent %>%</span>
+    </div>
 
     <div class="arena-bars">
-      <div class="arena-hp-bar">
+      <div class="arena-hp-bar" title="HP: <%= p_data.current_hp %>/<%= p_data.max_hp %>">
         <div class="arena-hp-fill" style="width: <%= p_data.hp_percent %>%"></div>
         <span class="arena-hp-text"><%= p_data.current_hp %>/<%= p_data.max_hp %></span>
       </div>
       <% unless p_data.is_npc %>
-        <div class="arena-mp-bar">
+        <div class="arena-mp-bar" title="MP: <%= p_data.current_mp %>/<%= p_data.max_mp %>">
           <div class="arena-mp-fill" style="width: <%= p_data.mp_percent %>%"></div>
+          <span class="arena-mp-text"><%= p_data.current_mp %>/<%= p_data.max_mp %></span>
         </div>
       <% end %>
     </div>
+
+    <%# Opponent stats display %>
+    <% if show_stats %>
+      <%= render "arena_matches/opponent_stats", participation: participation %>
+    <% end %>
   </div>
 
   <% if participation.result.present? && participation.result != "pending" %>

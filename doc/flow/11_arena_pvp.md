@@ -6,6 +6,16 @@
 - **v1.2** (2025-12-27): Added reference to open-world PVP via unified combat architecture
 - **v1.3** (2025-12-28): Open-world PVP improvements documented (concurrency, locality, anti-abuse, deterministic RNG)
 - **v1.4** (2025-12-29): Integrated with unified turn-based combat system (see `doc/flow/24_unified_turn_combat.md`)
+- **v1.5** (2025-12-30): PVP fight application system (create/accept) with comprehensive specs
+- **v1.6** (2025-12-30): Tactical combat enhancements:
+  - HP Recovery Gate (50% HP minimum to fight)
+  - Turn Timeout System (5 min default, auto-resolve)
+  - Trauma/Injury System (HP/XP loss % after fight)
+  - Body Part Targeting (head, torso, stomach, legs)
+  - Attack Type Variants (simple 45 AP, aimed 65 AP)
+  - Combo Block Types (multi-body-part coverage)
+  - Standardized Combat Log Messages
+  - Opponent Stats Display (strength, dexterity, luck, knowledge, wisdom)
 
 ## Implementation Status
 
@@ -114,9 +124,9 @@
 ---
 
 ## Overview
-This document describes the Arena PvP system, inspired by Neverlands' classic arena mechanics. The system supports multiple fight types, room-based matchmaking, real-time combat updates, and comprehensive fight logging.
+This document describes the Arena PvP system. The system supports multiple fight types, room-based matchmaking, real-time combat updates, and comprehensive fight logging.
 
-## Arena Concepts (Neverlands-Inspired)
+## Arena Concepts
 
 ### Arena Rooms
 Each arena has multiple rooms with level restrictions and special rules:
@@ -415,7 +425,7 @@ export default class extends Controller {
 }
 ```
 
-### CSS Styles (Neverlands-Inspired)
+### CSS Styles
 
 ```css
 /* Arena room grid */
@@ -787,6 +797,8 @@ training:
 
 ### Jobs
 - `app/jobs/arena/npc_spawner_job.rb` — Periodic NPC bot spawning
+- `app/jobs/arena_turn_timeout_job.rb` — Turn timeout auto-resolve
+- `app/jobs/arena_turn_timeout_warning_job.rb` — Turn timeout warnings (30s, 10s, 5s)
 
 ### Controllers
 - `app/controllers/arena_controller.rb` — Lobby
@@ -824,6 +836,12 @@ training:
 - `db/migrate/20251127100002_create_arena_bets.rb`
 - `db/migrate/20251218174018_add_npc_support_to_arena.rb`
 - `db/migrate/20251218174704_add_metadata_to_arena_participations.rb`
+- `db/migrate/20251230170000_add_arena_combat_enhancements.rb` — Turn timeout, trauma, turn tracking
+
+### Specs
+- `spec/models/arena_application_hp_gate_spec.rb` — HP recovery gate tests
+- `spec/models/arena_match_timeout_spec.rb` — Turn timeout tests
+- `spec/services/arena/combat_processor_features_spec.rb` — Tactical combat features tests
 
 ### Related Documentation
 - `doc/flow/22_unified_npc_architecture.md` — NPC architecture overview

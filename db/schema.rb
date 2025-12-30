@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_12_29_100000) do
+ActiveRecord::Schema[8.1].define(version: 2025_12_30_170000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -127,12 +127,18 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_29_100000) do
     t.bigint "arena_tournament_id"
     t.string "bracket_position"
     t.datetime "created_at", null: false
+    t.integer "current_turn_number", default: 0
+    t.datetime "current_turn_started_at"
+    t.string "current_turn_team"
     t.datetime "ended_at"
     t.integer "match_type", default: 0, null: false
     t.jsonb "metadata", default: {}, null: false
     t.string "spectator_code"
     t.datetime "started_at"
     t.integer "status", default: 0, null: false
+    t.boolean "timed_out", default: false
+    t.integer "trauma_percent", default: 30
+    t.integer "turn_timeout_seconds", default: 300
     t.datetime "updated_at", null: false
     t.string "winning_team"
     t.bigint "zone_id"
@@ -140,6 +146,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_29_100000) do
     t.index ["arena_season_id"], name: "index_arena_matches_on_arena_season_id"
     t.index ["arena_tournament_id"], name: "index_arena_matches_on_arena_tournament_id"
     t.index ["spectator_code"], name: "index_arena_matches_on_spectator_code", unique: true
+    t.index ["status", "current_turn_started_at"], name: "index_arena_matches_on_timeout_check", where: "(status = 2)"
     t.index ["status"], name: "index_arena_matches_on_status"
     t.index ["zone_id"], name: "index_arena_matches_on_zone_id"
   end

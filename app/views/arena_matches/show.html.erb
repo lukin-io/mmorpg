@@ -20,35 +20,76 @@
   <div class="arena-match-layout">
     <%# Left side: Participants %>
     <div class="arena-participants">
-      <%# Team A %>
+      <%# Team A - show stats if current user is on Team B (opponent view) %>
+      <% user_team = current_user_team %>
       <div class="arena-team arena-team--a" data-arena-match-target="teamA">
         <div class="arena-team-header">Team A</div>
         <% @participations.select { |p| p.team == "a" || p.team == "alpha" }.each do |p| %>
-          <%= render "arena_matches/participant", participation: p %>
+          <%= render "arena_matches/participant",
+              participation: p,
+              show_stats: (user_team == "b" || user_team == "beta") %>
         <% end %>
       </div>
 
       <div class="arena-vs">VS</div>
 
-      <%# Team B %>
+      <%# Team B - show stats if current user is on Team A (opponent view) %>
       <div class="arena-team arena-team--b" data-arena-match-target="teamB">
         <div class="arena-team-header">Team B</div>
         <% @participations.select { |p| p.team == "b" || p.team == "beta" }.each do |p| %>
-          <%= render "arena_matches/participant", participation: p %>
+          <%= render "arena_matches/participant",
+              participation: p,
+              show_stats: (user_team == "a" || user_team == "alpha") %>
         <% end %>
       </div>
     </div>
 
     <%# Center: Combat Log %>
     <div class="arena-combat-section">
+      <%# Turn timeout display %>
+      <% if @arena_match.live? %>
+        <%= turn_timeout_display(@arena_match) %>
+      <% end %>
+
       <% if @arena_match.live? && current_user_participating? %>
         <div class="arena-action-bar" data-arena-match-target="actionButtons">
-          <button class="btn-primary" data-action="click->arena-match#submitAction" data-action-type="attack">
-            ⚔️ Attack
-          </button>
-          <button class="btn-secondary" data-action="click->arena-match#submitAction" data-action-type="defend">
-            🛡️ Defend
-          </button>
+          <%# Attack type selection %>
+          <div class="arena-attack-selection">
+            <div class="attack-type-buttons">
+              <button class="btn-primary" data-action="click->arena-match#submitAction"
+                      data-action-type="attack" data-attack-type="simple">
+                ⚔️ Simple [45]
+              </button>
+              <button class="btn-primary btn-outlined" data-action="click->arena-match#submitAction"
+                      data-action-type="attack" data-attack-type="aimed">
+                🎯 Aimed [65]
+              </button>
+            </div>
+
+            <%# Body part targeting %>
+            <div class="body-part-selection">
+              <label>Target:</label>
+              <select data-arena-match-target="bodyPartSelect" class="form-select form-select--sm">
+                <option value="head">🗣️ Head (1.3x)</option>
+                <option value="torso" selected>💪 Torso (1.0x)</option>
+                <option value="stomach">🫃 Stomach (1.1x)</option>
+                <option value="legs">🦵 Legs (0.9x)</option>
+              </select>
+            </div>
+          </div>
+
+          <%# Defense buttons with block options %>
+          <div class="arena-defense-selection">
+            <button class="btn-secondary" data-action="click->arena-match#submitAction"
+                    data-action-type="defend" data-block-parts="torso">
+              🛡️ Block Torso [30]
+            </button>
+            <button class="btn-secondary btn-sm" data-action="click->arena-match#submitAction"
+                    data-action-type="defend" data-block-parts="head,torso">
+              🛡️ Head+Torso [50]
+            </button>
+          </div>
+
           <button class="btn-secondary" data-action="click->arena-match#submitAction" data-action-type="skill">
             ✨ Skill
           </button>
@@ -110,9 +151,20 @@
           <dd><%= @arena_match.duration %>s</dd>
         <% end %>
 
-        <% if @arena_match.metadata["trauma_percent"] %>
+        <% trauma = @arena_match.trauma_percent || @arena_match.metadata&.dig("trauma_percent") %>
+        <% if trauma %>
           <dt>Trauma</dt>
-          <dd><%= @arena_match.metadata["trauma_percent"] %>%</dd>
+          <dd><%= trauma %>%</dd>
+        <% end %>
+
+        <% if @arena_match.turn_timeout_seconds %>
+          <dt>Turn Timeout</dt>
+          <dd><%= @arena_match.turn_timeout_seconds / 60 %> min</dd>
+        <% end %>
+
+        <% if @arena_match.current_turn_number && @arena_match.current_turn_number > 0 %>
+          <dt>Turn</dt>
+          <dd>#<%= @arena_match.current_turn_number %></dd>
         <% end %>
       </dl>
 

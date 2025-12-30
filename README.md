@@ -196,8 +196,8 @@ redis-cli ping  # Should return PONG
 
 **Option A: All services at once (recommended)**
 ```bash
-bin/dev
-```
+   bin/dev
+   ```
 
 This uses [foreman](https://github.com/ddollar/foreman) to start both processes defined in `Procfile.dev`:
 - **web** — Rails server (includes embedded Action Cable)

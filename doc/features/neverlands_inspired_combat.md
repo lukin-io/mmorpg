@@ -679,6 +679,67 @@ function StartAct() {
 
 ---
 
+## HTML Form Element Names (Live Analysis)
+
+> **Source**: JavaScript DOM inspection from live Neverlands combat interface
+
+### Attack Dropdowns (`<select>` elements)
+
+| Element Name | Body Part | Index |
+|--------------|-----------|-------|
+| `u0` | Head (В голову) | 0 |
+| `u1` | Torso (В торс) | 1 |
+| `u2` | Belly (В живот) | 2 |
+| `u3` | Legs (По ногам) | 3 |
+
+### Block Dropdowns (`<select>` elements)
+
+| Element Name | Body Part | Index |
+|--------------|-----------|-------|
+| `b0` | Head (Голова) | 0 |
+| `b1` | Torso (Торс) | 1 |
+| `b2` | Belly (Живот) | 2 |
+| `b3` | Legs (Ноги) | 3 |
+
+### Form Buttons
+
+| Element Name | Purpose | Label |
+|--------------|---------|-------|
+| `btx0` | Submit Turn | ход |
+| `btx1` | Reset Selections | сбросить |
+
+### JavaScript Interaction Examples
+
+```javascript
+// Select "Simple Attack" (option index 1) for Belly attack
+document.querySelector('[name="u2"]').options[1].selected = true;
+
+// Select first block option for Belly
+document.querySelector('[name="b2"]').options[1].selected = true;
+
+// Submit the turn
+document.querySelector("[name='btx0']").click();
+
+// Trigger onchange to update AP counter
+document.querySelector('[name="u0"]').onchange();
+```
+
+### Dropdown Option Structure
+
+Each attack dropdown (`u0`-`u3`) contains:
+
+| Option Index | Value | Label (Russian) | Label (English) | AP Cost |
+|--------------|-------|-----------------|-----------------|---------|
+| 0 | 0 | удар не выбран | no attack selected | 0 |
+| 1 | 1 | Простой | Simple | 45 |
+| 2 | 2 | Прицельный | Aimed | 65 |
+| 3 | (varies) | Spirit Arrow | Spirit Arrow | 50 |
+| 4 | (varies) | Mind Blast | Mind Blast | 90 |
+
+Each block dropdown (`b0`-`b3`) contains various block types with different AP costs and coverage.
+
+---
+
 ## Elselands Implementation Notes
 
 ### Key Differences
@@ -955,19 +1016,287 @@ This means Elselands should have:
 
 Based on live analysis, Elselands should implement:
 
-- [ ] **Body Part Targeting** (4 zones: head, torso, stomach, legs)
-- [ ] **Attack Types** (Simple, Aimed, Magic)
-- [ ] **Block Types** (Single zone, combo zones, magic shields)
-- [ ] **AP System** (80 base, multi-attack penalties)
-- [ ] **Mana System** (for magic attacks/blocks)
-- [ ] **Critical Hits** (bonus damage, stat-based chance)
-- [ ] **Dodge/Evasion** (miss chance, stat-based)
-- [ ] **Block Effectiveness** (match attack location)
-- [ ] **Turn Timer** (5 min timeout)
-- [ ] **Simultaneous Resolution** (both players' actions resolve)
-- [ ] **Combat Log** (timestamped, colored by team/element)
+- [x] **Body Part Targeting** (4 zones: head, torso, stomach, legs) ✅ `TurnBasedCombatService::BODY_PARTS`
+- [x] **Attack Types** (Simple, Aimed, Magic) ✅ `TurnBasedCombatService::ACTION_TYPES`
+- [ ] **Block Types** (Single zone, combo zones, magic shields) 🔴 Missing combo blocks
+- [x] **AP System** (80 base, multi-attack penalties) ✅ `default_config["action_points_per_turn"]`
+- [x] **Mana System** (for magic attacks/blocks) ✅ `mana_limit`, `calculate_mana_cost`
+- [x] **Critical Hits** (bonus damage, stat-based chance) ✅ 10% chance, 1.5x damage
+- [x] **Dodge/Evasion** (miss chance, stat-based) ✅ `hit_chance` roll in `resolve_attack`
+- [x] **Block Effectiveness** (match attack location) ✅ Body part matching
+- [ ] **Turn Timer** (5 min timeout) 🔴 Missing timeout handling
+- [x] **Simultaneous Resolution** (both players' actions resolve) ✅ `resolve_round!`
+- [x] **Combat Log** (timestamped, colored by team/element) ✅ `CombatLogEntry`, `format_log_message`
 
 ---
 
-*Last updated: December 2024 (Live server analysis with arena turn)*
+## Live Combat Session — December 30, 2024
+
+### Session Details
+- **Session Type**: Arena Duel vs Mannequin Bot
+- **Player**: lukin[0] (Level 0, 20 HP, 7 MP)
+- **Opponent**: Манекен[1] (Level 1, 30 HP, 7 MP)
+- **Fight Type**: Произвольный (Freestyle)
+- **Turn Timeout**: 5 minutes
+- **Trauma Level**: средний (30%)
+
+### Combat UI Elements Observed
+
+#### 1. Action Points Display
+```
+Ограничения маны на магический удар: 5-8
+Количество очков действия: 80
+Из них использовано: 0
+```
+- Mana limits for magic attacks: 5-8
+- Total action points per turn: 80
+- Currently used: 0
+
+#### 2. Attack Selection (Left Panel)
+Body part dropdowns with attack type options:
+
+| Body Part | Russian Label | Attack Options |
+|-----------|---------------|----------------|
+| Head | В голову | [удар не выбран], Простой [45], Прицельный [65], Spirit Arrow [50], Mind Blast [90] |
+| Torso | В торс | Same options |
+| Belly | В живот | Same options |
+| Legs | По ногам | Same options |
+
+#### 3. Defense Selection (Right Panel)
+Body part block dropdowns:
+
+| Body Part | Russian Label | Default State |
+|-----------|---------------|---------------|
+| Head | Голова | [блок не выбран] |
+| Torso | Торс | [блок не выбран] |
+| Belly | Живот | [блок не выбран] |
+| Legs | Ноги | [блок не выбран] |
+
+#### 4. Opponent Stats Display
+```
+Сила: 5 (Strength)
+Ловкость: 9 (Dexterity)
+Удача: 6 (Luck)
+Знания: 1 (Knowledge)
+Мудрость: 1 (Wisdom)
+```
+
+#### 5. HP/MP Bars
+- Red HP bar with numeric display: `20/20`
+- Green MP bar with numeric display: `07/07`
+- Percentage indicator: `100%`
+
+#### 6. Combat Log Format
+```
+→ Манекен [30/30] против → lukin [20/20]
+18:28 Бой между lukin[0] и Манекен[1] начался (30.12.2025 18:28:37).
+```
+
+### Attack Types with AP Costs (from UI)
+
+| Attack Type | Russian | AP Cost | Type |
+|-------------|---------|---------|------|
+| No Attack | удар не выбран | 0 | None |
+| Simple | Простой | 45 | Physical |
+| Aimed | Прицельный | 65 | Physical |
+| Spirit Arrow | Spirit Arrow | 50 | Magic |
+| Mind Blast | Mind Blast | 90 | Magic |
+
+### Turn Submission Controls
+- **Submit**: `ход` (turn)
+- **Reset**: `сбросить` (reset)
+
+### Key Observations
+
+1. **Multiple Body Parts Per Turn**: Can attack/defend multiple body parts
+2. **AP Budget Management**: Must stay within 80 AP total
+3. **Mana Constraints**: Magic attacks limited to 5-8 mana range
+4. **Real-time HP Display**: Shows exact HP and percentage
+5. **Opponent Stats Visible**: Can see enemy's base stats
+6. **Equipment Slots**: Visual equipment slots on character portrait
+
+---
+
+## Implementation Status Comparison
+
+### ✅ Implemented in Elselands
+
+| Feature | File | Notes |
+|---------|------|-------|
+| Body Part Targeting (4 zones) | `turn_based_combat_service.rb` | `BODY_PARTS` constant |
+| Action Point System (80 base) | `turn_based_combat_service.rb` | `action_points_per_turn` config |
+| Multi-attack Penalty | `turn_based_combat_service.rb` | `attack_penalties` config |
+| Critical Hits | `arena/combat_processor.rb` | 10% chance, 1.5x damage |
+| Block System | `turn_based_combat_service.rb` | Body part matching |
+| Combat Log | `turn_based_combat_service.rb` | `CombatLogEntry` model |
+| Mana System | `turn_based_combat_service.rb` | `mana_limit` validation |
+| HP/MP Vitals | `vitals_controller.js` | Real-time updates via Stimulus |
+| Turn Submission | `arena_match_channel.rb` | WebSocket turn submission |
+| NPC Combat AI | `npc_combat_ai.rb` | Bot decision making |
+
+### ✅ NEW: Implemented December 30, 2024 (v1.6)
+
+| Feature | File | Notes |
+|---------|------|-------|
+| HP Recovery Gate | `arena_application.rb` | 50% HP minimum to accept fights |
+| Turn Timeout System | `arena_match.rb`, `arena_turn_timeout_job.rb` | 5 min default, auto-resolve, warnings |
+| Trauma/Injury System | `combat_processor.rb#apply_trauma` | HP/XP loss based on trauma % |
+| Attack Type Variants | `combat_processor.rb::ATTACK_TYPES` | Simple (45 AP, 1.0x) vs Aimed (65 AP, 1.2x) |
+| Combo Block Types | `combat_processor.rb#process_defend` | Multi-body-part blocking |
+| Standardized Combat Log | `combat_processor.rb#log_entry` | Neverlands format messages |
+| Opponent Stats Display | `arena_helper.rb#opponent_combat_stats` | Shows Str/Dex/Luck/Knowledge/Wisdom |
+| Body Part Multipliers | `combat_processor.rb::BODY_PART_MULTIPLIERS` | Head 1.3x, Torso 1.0x, Stomach 1.1x, Legs 0.9x |
+| Block Success Messages | `combat_processor.rb` | "{target} blocked attack ({body_part}) from {attacker}" |
+| Critical Hit Format | `combat_processor.rb` | "{attacker} critical hit ({body_part}) {target} for -{damage} [{hp}/{max_hp}]" |
+| Timeout Resolution | `combat_processor.rb#end_match_timeout` | "Бой закончен по таймауту" style |
+
+### 🔴 Still Missing / Needs Enhancement
+
+| Feature | Neverlands Behavior | Priority |
+|---------|---------------------|----------|
+| Magic Shield Blocks | "Магический Щит", "Радужный Барьер", "Кристальная Сфера" | Medium |
+| Fight Type Rules | Different rules for duels vs group vs sacrificial | Medium |
+| Multiple Attack Selection UI | Dropdowns per body part in form (full UI) | Medium |
+
+### 🟡 Partially Implemented
+
+| Feature | Current State | Enhancement Needed |
+|---------|---------------|-------------------|
+| Element Damage | Present in skills | Need elemental color in combat log |
+
+---
+
+## Implementation Summary (v1.6)
+
+All high and low priority Neverlands-inspired features have been implemented:
+
+1. ✅ **HP Recovery Gate** — `ArenaApplication::MIN_HP_PERCENT_FOR_ARENA = 50`
+2. ✅ **Turn Timeout** — `ArenaMatch#turn_timed_out?`, `ArenaTurnTimeoutJob`
+3. ✅ **Trauma System** — Full HP/XP loss in `apply_trauma`
+4. ✅ **Attack Variants** — Simple (1.0x), Aimed (1.2x) damage multipliers
+5. ✅ **Combo Blocks** — `block_parts: ["head", "torso"]` parameter
+6. ✅ **Opponent Stats** — Via `opponent_combat_stats` helper
+7. ✅ **Combat Log Format** — Neverlands-style messages
+
+---
+
+## Live Combat Session #2 — December 30, 2024 (Timeout Analysis)
+
+### Session Details
+- **Fight Started**: 18:51:18
+- **Fight Ended**: 19:03 (timeout)
+- **Duration**: ~12 minutes (5 min turn timeout × 2+ turns)
+- **Outcome**: Timeout (player failed to submit turn)
+
+### Pre-Fight Player Stats
+```
+lukin [0]
+HP: 20/20 (100%)
+MP: 07/07
+```
+
+### Post-Fight Player Stats
+```
+lukin [0] [ 2 / 20 | 0 / 7 ]
+HP: 2/20 (critically low)
+MP: 0/7
+Status: 80% (health percentage display)
+```
+
+### Combat Log Analysis
+
+```
+19:03 Бой закончен по таймауту.
+      "Fight ended by timeout."
+
+18:54 Манекен[1] критическим ударом (торс) поразил lukin[0] на -13 [7/20].
+      "Mannequin[1] hit lukin[0] with critical attack (torso) for -13 [7/20]."
+
+18:54 Манекен[1] заблокировал удар (торс) от lukin[0].
+      "Mannequin[1] BLOCKED attack (torso) from lukin[0]."
+
+18:51 Бой между lukin[0] и Манекен[1] начался (30.12.2025 18:51:18).
+      "Fight between lukin[0] and Mannequin[1] started."
+```
+
+### Key Combat Mechanics Confirmed
+
+#### 1. Block Success Message
+- **Russian**: `заблокировал удар (торс)`
+- **English**: "blocked attack (torso)"
+- **Meaning**: Block successfully negated the attack
+- **No damage dealt** when blocked
+
+#### 2. Timeout Resolution
+- **Message**: `Бой закончен по таймауту`
+- **Behavior**: Fight ends immediately
+- **Result**: Both players stop, no further damage
+- **No winner declared** (draw/timeout state)
+
+#### 3. Critical Hit Mechanics
+- **Message**: `критическим ударом (торс) поразил ... на -13`
+- **Damage**: 13 HP (vs normal ~5-7)
+- **Multiplier**: Approximately 2x normal damage
+- **Body Part**: Specified in parentheses
+
+#### 4. HP Recovery Requirement
+```
+"Восстановитесь для поединков, Вы слишком ослаблены!"
+"Recover for fights, you are too weakened!"
+```
+- **Trigger**: HP below threshold (appears to be <50%)
+- **Effect**: Cannot accept fight applications
+- **Recovery**: Automatic HP regen over time
+
+#### 5. Mannequin Bot Application Pattern
+```
+19:00:02 Манекен [1] против нет соперников
+19:01:01 Манекен [1] против нет соперников
+19:02:01 Манекен [1] против нет соперников
+```
+- **NPC bots create applications every ~1 minute**
+- **"против нет соперников"** = "vs no opponents" (waiting for player)
+- **Applications persist until accepted or timeout**
+
+### Trauma Percentage (травматичность)
+
+| Level | Russian | Percentage | Effect |
+|-------|---------|------------|--------|
+| низкий | low | 10% | Minimal HP loss after fight |
+| средний | medium | 30% | Moderate HP loss |
+| высокий | high | 50% | Significant HP loss |
+| смертельный | deadly | 100% | Can die (lose items?) |
+
+### Fight Application Icons (from snapshot)
+
+Each application row shows icons for:
+- `тип боя: произвольный` — Fight type: freestyle
+- `таймаут: 5 минут` — Timeout: 5 minutes
+- `% травматичности: средний` — Trauma %: medium (30%)
+
+### Arena Sections Visible
+
+| Tab | Russian | Description |
+|-----|---------|-------------|
+| Дуэли | Duels | 1v1 fights |
+| Групповые | Group | Team battles |
+| Жертвенные | Sacrificial | Special sacrifice mode |
+| Тактические | Tactical | Grid-based tactical |
+| Тотализатор | Betting | Spectator gambling |
+| Статистика | Statistics | Rankings & history |
+
+### Elselands Implementation Gaps Identified
+
+| Gap | Neverlands Behavior | Elselands Status |
+|-----|---------------------|------------------|
+| **Turn Timeout** | 5 min per turn, auto-resolve | ❌ Not implemented |
+| **HP Recovery Gate** | Block arena access when HP low | ❌ Not implemented |
+| **Block Log Message** | "заблокировал удар" specific format | ⚠️ Generic message |
+| **NPC Bot Auto-Applications** | Every ~1 minute | ✅ Implemented (job-based) |
+| **Trauma System** | HP loss % after fight | ❌ Not implemented |
+| **Fight Timeout Message** | "Бой закончен по таймауту" | ❌ Not implemented |
+
+---
+
+*Last updated: December 30, 2024 (Live Mannequin fight analysis with timeout)
 

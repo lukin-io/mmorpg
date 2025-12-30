@@ -221,4 +221,3 @@ RSpec.describe "ArenaApplications", type: :request do
     end
   end
 end
-

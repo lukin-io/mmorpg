@@ -155,4 +155,3 @@ RSpec.describe "ArenaRooms", type: :request do
     end
   end
 end
-

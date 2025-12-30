@@ -624,6 +624,32 @@ class Character < ApplicationRecord
     total_regen
   end
 
+  # ===================
+  # Combat Status
+  # ===================
+
+  # Check if character is currently in combat
+  # Convenience method for the in_combat boolean column
+  #
+  # @return [Boolean] true if character is in combat
+  def in_combat?
+    in_combat
+  end
+
+  # Mark character as entering combat
+  #
+  # @return [Boolean] true if update succeeded
+  def enter_combat!
+    update!(in_combat: true, last_combat_at: Time.current)
+  end
+
+  # Mark character as leaving combat
+  #
+  # @return [Boolean] true if update succeeded
+  def exit_combat!
+    update!(in_combat: false)
+  end
+
   private
 
   # Get attack bonus from equipped items
