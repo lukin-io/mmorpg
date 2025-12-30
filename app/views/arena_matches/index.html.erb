@@ -13,7 +13,7 @@
       </div>
       <div class="field">
         <%= form.label :match_type %>
-        <%= form.select :match_type, ArenaMatch::MATCH_TYPES.keys.map { |key| [key.humanize, key] } %>
+        <%= form.select :match_type, ArenaMatch::MATCH_TYPES.keys.map { |key| [key.to_s.humanize, key] } %>
       </div>
       <div class="actions">
         <%= form.submit "Queue" %>

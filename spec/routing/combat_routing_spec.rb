@@ -43,6 +43,41 @@ RSpec.describe "Combat routing", type: :routing do
     it "routes GET /arena_rooms/:id to arena_rooms#show" do
       expect(get: "/arena_rooms/1").to route_to("arena_rooms#show", id: "1")
     end
+
+    # Bug fix regression: JavaScript was using /arena/rooms/:id instead of /arena_rooms/:id
+    it "does NOT route /arena/rooms/:id (incorrect path)" do
+      expect(get: "/arena/rooms/1").not_to be_routable
+    end
+  end
+
+  describe "arena applications routes" do
+    it "routes POST /arena_applications/:id/accept to arena_applications#accept" do
+      expect(post: "/arena_applications/1/accept").to route_to("arena_applications#accept", id: "1")
+    end
+
+    it "routes DELETE /arena_applications/:id/cancel to arena_applications#cancel" do
+      expect(delete: "/arena_applications/1/cancel").to route_to("arena_applications#cancel", id: "1")
+    end
+
+    # Bug fix regression: JavaScript was using /arena/applications/:id/accept
+    it "does NOT route /arena/applications/:id/accept (incorrect path)" do
+      expect(post: "/arena/applications/1/accept").not_to be_routable
+    end
+
+    it "does NOT route DELETE /arena/applications/:id (incorrect path)" do
+      expect(delete: "/arena/applications/1").not_to be_routable
+    end
+  end
+
+  describe "arena matches routes" do
+    it "routes GET /arena_matches/:id to arena_matches#show" do
+      expect(get: "/arena_matches/1").to route_to("arena_matches#show", id: "1")
+    end
+
+    # Bug fix regression: JavaScript was using /arena/matches/:id
+    it "does NOT route /arena/matches/:id (incorrect path)" do
+      expect(get: "/arena/matches/1").not_to be_routable
+    end
   end
 
   describe "tactical arena routes" do

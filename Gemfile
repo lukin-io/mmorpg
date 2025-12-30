@@ -11,8 +11,9 @@ gem "turbo-rails"
 gem "stimulus-rails"
 gem "propshaft"
 gem "redis"
-# gem "connection_pool", "~> 2.5" # Rails 8.1.1 passes pool opts as a Hash (positional)
-gem "connection_pool", "~> 3.0" # Pin to 2.x for Rails 8.1.1 compatibility
+# Note: connection_pool 3.0+ is incompatible with Rails 8.1.1's RedisCacheStore,
+# but Sidekiq 8.1+ requires connection_pool 3.0+. Using memory_store in dev.
+gem "connection_pool", "~> 3.0"
 gem "sidekiq", "~> 8.1"
 gem "devise"
 gem "pundit"

@@ -154,19 +154,67 @@ Load it automatically in Cursor or reference it when using AI assistants.
 
 ## 🛠️ Getting Started
 
-1. **Install dependencies**
+### Prerequisites
+
+Ensure the following services are installed and running:
+
+| Service | Version | Purpose | Install (Ubuntu/Debian) |
+|---------|---------|---------|-------------------------|
+| **Ruby** | 3.4.4 | Runtime | `rvm install 3.4.4` or `rbenv install 3.4.4` |
+| **PostgreSQL** | 16+ | Primary database | `sudo apt install postgresql` |
+| **Redis** | 7+ | Cache, Action Cable, Sidekiq queues | `sudo apt install redis-server` |
+| **Node.js** | 20+ | Asset pipeline (importmaps) | `nvm install 20` |
+| **Chrome** | 120+ | System tests (Selenium) | See [System Tests](#system-tests-jsui) |
+
+**Verify services are running:**
+```bash
+# Check PostgreSQL
+pg_isready
+
+# Check Redis
+redis-cli ping  # Should return PONG
+```
+
+### Setup
+
+1. **Install Ruby dependencies**
    ```bash
    bundle install
    ```
-2. **Prepare the databases**
+
+2. **Prepare the database**
    ```bash
    bin/rails db:prepare
    ```
-3. **Start the full stack (web, Sidekiq, Action Cable)**
+
+3. **Seed gameplay data** (classes, items, NPCs, maps, feature flags)
    ```bash
-   gem install foreman # first time only
-   bin/dev
+   bin/rails db:seed
    ```
+
+### Running the Application
+
+**Option A: All services at once (recommended)**
+```bash
+bin/dev
+```
+
+This uses [foreman](https://github.com/ddollar/foreman) to start both processes defined in `Procfile.dev`:
+- **web** — Rails server (includes embedded Action Cable)
+- **sidekiq** — Background job processor for real-time features
+
+> 💡 First time? Install foreman: `gem install foreman`
+
+**Option B: Run services individually** (useful for debugging)
+```bash
+# Terminal 1: Rails server
+bin/rails server
+
+# Terminal 2: Sidekiq (required for real-time features)
+bundle exec sidekiq
+```
+
+> ⚠️ **Important:** Sidekiq must be running for real-time features (chat messages, combat broadcasts, crafting job notifications) to work. Without it, Turbo Stream broadcasts queue up but never deliver.
 
 ### Required environment variables
 
@@ -180,10 +228,49 @@ Load it automatically in Cursor or reference it when using AI assistants.
 | `APP_URL` | Base URL for payment callbacks | `http://localhost:3000` |
 | `HEADLESS` | Run system tests with visible browser (`false` to debug) | `true` |
 
-After preparing the database, run seeds to load the baseline gameplay dataset (classes, items, NPCs, map tiles, feature flags):
+### Troubleshooting
 
+#### Real-time features not working (chat, combat broadcasts)
+
+**Symptom:** Messages send successfully but don't appear until page reload.
+
+**Cause:** Sidekiq isn't running to process Turbo Stream broadcast jobs.
+
+**Fix:**
 ```bash
-bin/rails db:seed
+# Start Sidekiq
+bundle exec sidekiq
+
+# Or use bin/dev to start all services
+bin/dev
+```
+
+#### Stale jobs in Sidekiq queue
+
+**Symptom:** Sidekiq starts but immediately errors with `ActionView::MissingTemplate` or other stale errors from old jobs.
+
+**Fix:** Clear the retry queue:
+```bash
+redis-cli DEL retry
+redis-cli DEL dead
+```
+
+#### Rails commands fail with `ArgumentError: wrong number of arguments`
+
+**Symptom:** Any `bin/rails` command fails with connection_pool errors.
+
+**Cause:** Known incompatibility between `connection_pool` 3.0+ and Rails 8.1.1's `RedisCacheStore`. Sidekiq 8.1+ requires connection_pool 3.0+.
+
+**Fix:** The app uses `memory_store` for development/test. If you see this error, ensure `config/environments/development.rb` uses:
+```ruby
+config.cache_store = :memory_store, {size: 64.megabytes}
+```
+
+#### Database reset
+
+Full database reset with fresh seeds:
+```bash
+bin/rails db:drop db:create db:migrate db:seed
 ```
 
 ### Social & Meta configuration

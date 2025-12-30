@@ -55,7 +55,7 @@ export default class extends Controller {
     }
 
     // Navigate to room
-    window.location.href = `/arena/rooms/${roomId}`
+    window.location.href = `/arena_rooms/${roomId}`
   }
 
   // === APPLICATION MANAGEMENT ===
@@ -105,7 +105,7 @@ export default class extends Controller {
     const applicationId = event.currentTarget.dataset.applicationId
 
     try {
-      const response = await fetch(`/arena/applications/${applicationId}/accept`, {
+      const response = await fetch(`/arena_applications/${applicationId}/accept`, {
         method: "POST",
         headers: {
           "X-CSRF-Token": document.querySelector('[name="csrf-token"]').content,
@@ -138,7 +138,7 @@ export default class extends Controller {
     }
 
     try {
-      const response = await fetch(`/arena/applications/${applicationId}`, {
+      const response = await fetch(`/arena_applications/${applicationId}/cancel`, {
         method: "DELETE",
         headers: {
           "X-CSRF-Token": document.querySelector('[name="csrf-token"]').content,
@@ -181,7 +181,7 @@ export default class extends Controller {
 
       // Redirect to match after brief delay
       setTimeout(() => {
-        window.location.href = `/arena/matches/${this.countdownMatchId}`
+        window.location.href = `/arena_matches/${this.countdownMatchId}`
       }, 1000)
       return
     }

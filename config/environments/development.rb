@@ -25,8 +25,9 @@ Rails.application.configure do
     config.action_controller.perform_caching = false
   end
 
-  redis_cache_url = ENV.fetch("REDIS_CACHE_URL", "redis://localhost:6380/0")
-  config.cache_store = :redis_cache_store, {url: redis_cache_url, namespace: "mmorpg-cache"}
+  # Note: redis_cache_store is incompatible with connection_pool 3.0+ (required by Sidekiq 8.1+).
+  # Using memory_store for development. Production can use solid_cache or fix the gem conflict.
+  config.cache_store = :memory_store, {size: 64.megabytes}
 
   # Store uploaded files on the local file system (see config/storage.yml for options).
   config.active_storage.service = :local
