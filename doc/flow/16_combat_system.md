@@ -343,6 +343,8 @@ For full documentation, see: `doc/flow/23_unified_combat_architecture.md`
 - `doc/flow/11_arena_pvp.md` — Arena PVP system
 - `doc/flow/23_unified_combat_architecture.md` — Unified combat architecture (PVE + PVP)
 - `doc/COMBAT_SYSTEM_GUIDE.md` — Combat formulas and mechanics
+- `doc/features/neverlands_inspired_combat.md` — **Game design reference** (live combat analysis Dec 30-31, 2024)
+- `doc/features/neverlands_inspired.md` — Full feature reference (arena, chat, vitals, etc.)
 
 ---
 

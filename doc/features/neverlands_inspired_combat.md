@@ -1320,5 +1320,205 @@ Each application row shows icons for:
 
 ---
 
-*Last updated: December 31, 2024 (Arena auto-end and UI improvements)
+---
+
+## Live Combat Session #3 — December 31, 2024 (Complete Fight to Defeat)
+
+### Session Details
+- **Fight Started**: 14:59:18
+- **Fight Ended**: 15:04
+- **Duration**: ~5 minutes
+- **Outcome**: **DEFEAT** (player HP reached 0)
+- **Player**: lukin[0] (Level 0, 20 HP, 7 MP)
+- **Opponent**: Манекен[1] (Mannequin Bot, Level 1)
+
+### Complete Combat Log (Chronological)
+
+```
+14:59 Бой между lukin[0] и Манекен[1] начался (31.12.2025 14:59:18).
+      "Fight between lukin[0] and Mannequin[1] started."
+
+14:59 lukin[0] попытался поразить соперника ударом (торс), но Манекен[1] увернулся.
+      "lukin[0] tried to hit opponent (torso), but Mannequin[1] DODGED."
+
+14:59 Манекен[1] критическим ударом (голова) поразил lukin[0] на -10 [10/20].
+      "Mannequin[1] CRITICAL HIT (head) lukin[0] for -10 [10/20]."
+
+15:00 lukin[0] попытался поразить соперника ударом (торс), но Манекен[1] увернулся.
+      "lukin[0] tried to hit opponent (torso), but Mannequin[1] DODGED."
+
+15:00 Манекен[1] попытался поразить соперника критическим ударом (ноги), но lukin[0] увернулся.
+      "Mannequin[1] tried to hit opponent with CRITICAL (legs), but lukin[0] DODGED."
+
+15:04 lukin[0] попытался поразить соперника ударом (ноги), но Манекен[1] увернулся.
+      "lukin[0] tried to hit opponent (legs), but Mannequin[1] DODGED."
+
+15:04 Манекен[1] критическим ударом (живот) поразил lukin[0] на -12 [0/20].
+      "Mannequin[1] CRITICAL HIT (belly) lukin[0] for -12 [0/20]."
+
+15:04 lukin[0] проиграл бой.
+      "lukin[0] LOST the fight."
+
+15:04 Победа за Манекен[1].
+      "VICTORY for Mannequin[1]."
+```
+
+### Victory/Defeat Message Formats
+
+| Event | Russian | English |
+|-------|---------|---------|
+| Victory Declaration | `Победа за {winner}.` | "Victory for {winner}." |
+| Defeat Declaration | `{loser} проиграл бой.` | "{loser} lost the fight." |
+| Critical Hit | `{attacker} критическим ударом ({body_part}) поразил {defender} на -{damage} [{current_hp}/{max_hp}].` | "{attacker} critical hit ({body_part}) {defender} for -{damage} [{current_hp}/{max_hp}]." |
+| Attack Dodged | `{attacker} попытался поразить соперника ударом ({body_part}), но {defender} увернулся.` | "{attacker} tried to hit opponent ({body_part}), but {defender} dodged." |
+| Critical Dodged | `{attacker} попытался поразить соперника критическим ударом ({body_part}), но {defender} увернулся.` | "{attacker} tried CRITICAL ({body_part}), but {defender} dodged." |
+
+### Final Player State After Defeat
+```
+lukin[0]
+HP: 00/20 (depleted)
+MP: 01/07
+Stamina: 80%
+Status: DEFEATED
+```
+
+### Post-Fight Warning Message
+```
+"Восстановитесь для поединков, Вы слишком ослаблены!"
+"Recover for fights, you are too weakened!"
+```
+
+---
+
+## Complete UI Layout Reference
+
+### 3-Column Horizontal Layout
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ HEADER: lukin[0] | 80% | [Icons] | Завершить бой (End Fight)               │
+├─────────────────────┬────────────────────────────────┬─────────────────────┤
+│   PLAYER PANEL      │      CENTER PANEL              │   ENEMY PANEL       │
+│                     │                                │                     │
+│ [Avatar + Equip]    │  ACTION POINTS:                │ [Enemy Avatar]      │
+│                     │  "Очков действия: 80"          │                     │
+│ HP Bar: ████████    │  "Использовано: 0"             │ HP Bar: ████████    │
+│         20/20       │                                │         30/30       │
+│ MP Bar: ████████    │  ─── ATTACK (4 rows) ───       │                     │
+│         07/07       │  В голову [dropdown] ▼         │ ENEMY STATS:        │
+│                     │  В торс   [dropdown] ▼         │  Сила: 5            │
+│                     │  В живот  [dropdown] ▼         │  Ловкость: 9        │
+│                     │  По ногам [dropdown] ▼         │  Удача: 6           │
+│                     │                                │  Знания: 1          │
+│                     │  ─── BLOCK (4 rows) ───        │  Мудрость: 1        │
+│                     │  Голова [dropdown] ▼           │                     │
+│                     │  Торс   [dropdown] ▼           │                     │
+│                     │  Живот  [dropdown] ▼           │                     │
+│                     │  Ноги   [dropdown] ▼           │                     │
+│                     │                                │                     │
+│                     │  [ход] [сбросить]              │                     │
+│                     │  (Turn) (Reset)                │                     │
+│                     │                                │                     │
+│                     │  ═══════════════════════════   │                     │
+│                     │  COMBAT LOG (scrollable)       │                     │
+│                     │  ─────────────────────────     │                     │
+│                     │  15:04 Победа за Манекен[1].   │                     │
+│                     │  15:04 lukin[0] проиграл бой.  │                     │
+│                     │  15:04 Манекен[1] критическим..│                     │
+│                     │  ...                           │                     │
+└─────────────────────┴────────────────────────────────┴─────────────────────┘
+│                        WORLD/SYSTEM LOG                                    │
+│  [System] Следующий турнир через 20 минут...                               │
+└────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Key UI Elements
+
+| Element | Location | Purpose |
+|---------|----------|---------|
+| Player Avatar | Left Panel | Character portrait with 8 equipment slots around it |
+| HP/MP Bars | Left Panel | Visual health/mana with exact numbers |
+| Stamina % | Header | Shows current stamina (80%) |
+| Attack Dropdowns (×4) | Center | Body part attack selection |
+| Block Dropdowns (×4) | Center | Body part defense selection |
+| AP Counter | Center | "Очков действия: 80, Использовано: X" |
+| Turn/Reset Buttons | Center | Submit turn / Clear selections |
+| Combat Log | Center (bottom) | Timestamped combat events |
+| Enemy Stats | Right Panel | Strength, Dexterity, Luck, Knowledge, Wisdom |
+| "End Fight" Button | Header | "Завершить бой" - leave/forfeit |
+
+### Attack Type Options (from dropdowns)
+
+| Index | Russian | English | AP Cost | Type |
+|-------|---------|---------|---------|------|
+| 0 | удар не выбран | no attack | 0 | - |
+| 1 | Простой | Simple | 45 | Physical |
+| 2 | Прицельный | Aimed | 65 | Physical |
+| 3 | Spirit Arrow | Spirit Arrow | 50 | Magic |
+| 4 | Mind Blast | Mind Blast | 90 | Magic |
+
+### Block Type Options
+
+| Index | Russian | English | AP Cost | Coverage |
+|-------|---------|---------|---------|----------|
+| 0 | блок не выбран | no block | 0 | - |
+| 4 | Голова (35) | Head | 35 | Head |
+| 5 | Голова + торс (50) | Head + Torso | 50 | 2 parts |
+| 6 | Голова + живот (60) | Head + Belly | 60 | 2 parts |
+| 7 | Торс (30) | Torso | 30 | Torso |
+| 8 | Торс + живот (50) | Torso + Belly | 50 | 2 parts |
+| 9 | Торс + ноги (60) | Torso + Legs | 60 | 2 parts |
+| 10 | Живот (30) | Belly | 30 | Belly |
+| 11 | Живот + ноги (50) | Belly + Legs | 50 | 2 parts |
+| 12 | Ноги (35) | Legs | 35 | Legs |
+| 13 | Ноги + голова (80) | Legs + Head | 80 | 2 parts |
+
+### Body Part Damage Multipliers (Confirmed)
+
+| Body Part | Russian | Multiplier | Notes |
+|-----------|---------|------------|-------|
+| Head | голова | 1.3x | Highest damage, often targeted by bots |
+| Torso | торс | 1.0x | Standard, balanced |
+| Belly | живот | 1.1x | Slightly higher damage |
+| Legs | ноги | 0.9x | Lowest damage |
+
+---
+
+## Elselands Implementation Checklist (Updated)
+
+### ✅ All Features Implemented (v1.7)
+
+| Feature | Elselands Implementation |
+|---------|--------------------------|
+| 3-Column Layout | `arena-match-layout` CSS grid |
+| HP/MP Bars | `_fighter_card.html.erb` |
+| HP Color Coding | `hp_color_class` helper (high/medium/low/critical) |
+| Attack Types | `ATTACK_TYPES` constant (simple, aimed) |
+| Block Types (Combo) | `block_parts` array parameter |
+| Body Part Targeting | `BODY_PART_MULTIPLIERS` constant |
+| AP System | `action_points_per_turn` config |
+| Turn Timeout | `ArenaTurnTimeoutJob` (300s default) |
+| HP Recovery Gate | `MIN_HP_PERCENT_FOR_ARENA` (50%) |
+| Trauma System | `apply_trauma` method |
+| Victory/Defeat Messages | Standardized log format |
+| Opponent Stats Display | `opponent_combat_stats` helper |
+| Combat Log (Timestamped) | `metadata["combat_log"]` array |
+| Match Auto-End | `auto_end_if_needed!` method |
+| Critical Hits | 10% chance, 1.5x damage |
+| Dodge/Evasion | Hit chance roll |
+
+### 🟡 UI Enhancements Needed (Phase 2)
+
+| Enhancement | Priority | Notes |
+|-------------|----------|-------|
+| Equipment slots around avatar | Medium | 8 slots visual display |
+| Stamina percentage display | Medium | Header indicator |
+| Full dropdown-based UI | Medium | 4 attack + 4 block dropdowns |
+| Multi-attack penalty display | Low | Show AP penalty for 2+ attacks |
+| Magic shield blocks | Low | Special block types with mana cost |
+| World/System log panel | Low | Below combat area |
+
+---
+
+*Last updated: December 31, 2024 (Complete fight session #3 - defeat analysis, full UI layout documentation)*
 

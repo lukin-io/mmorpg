@@ -10,7 +10,7 @@ This document captures all functionality inspired by the Neverlands MMORPG that 
 
 | Document | Description |
 |----------|-------------|
-| [neverlands_inspired_combat.md](neverlands_inspired_combat.md) | Combat CSS, action points, body parts, magic slots, HP/MP bars, **live Mannequin fight (Dec 30, 2024)** |
+| [neverlands_inspired_combat.md](neverlands_inspired_combat.md) | Combat CSS, action points, body parts, magic slots, HP/MP bars, **live Mannequin fights (Dec 30-31, 2024) — includes complete fight-to-defeat analysis** |
 | [neverlands_inspired_map.md](neverlands_inspired_map.md) | Map.js complete analysis, tile rendering, movement animation |
 | [neverlands_inspired_chat.md](neverlands_inspired_chat.md) | Chat system, emoji codes, player list, context menus |
 | [neverlands_inspired_skills.md](neverlands_inspired_skills.md) | Stats, skills, perks, effects, arena system, tiered progression, **live skill addition test** |
@@ -648,6 +648,104 @@ Based on this analysis, the Elselands implementation should support:
   </td>
 </tr>
 ```
+
+---
+
+### Live Complete Fight Session (December 31, 2024)
+
+> **Source**: Complete fight vs Mannequin Bot analyzed start-to-finish at `http://www.neverlands.ru`
+
+#### Fight Summary
+
+| Field | Value |
+|-------|-------|
+| **Player** | lukin[0] (Level 0, 20 HP, 7 MP) |
+| **Opponent** | Манекен[1] (Mannequin Bot, Level 1) |
+| **Started** | 14:59:18 |
+| **Ended** | 15:04 |
+| **Duration** | ~5 minutes |
+| **Outcome** | **DEFEAT** (player HP reached 0) |
+
+#### Combat Log (Complete)
+
+```
+14:59 Бой между lukin[0] и Манекен[1] начался (31.12.2025 14:59:18).
+      "Fight started"
+
+14:59 lukin[0] попытался поразить соперника ударом (торс), но Манекен[1] увернулся.
+      "lukin attacked torso, Mannequin DODGED"
+
+14:59 Манекен[1] критическим ударом (голова) поразил lukin[0] на -10 [10/20].
+      "Mannequin CRITICAL HIT to HEAD for -10 damage"
+
+15:00 lukin[0] попытался поразить соперника ударом (торс), но Манекен[1] увернулся.
+      "lukin attacked torso, Mannequin DODGED"
+
+15:00 Манекен[1] попытался поразить соперника критическим ударом (ноги), но lukin[0] увернулся.
+      "Mannequin tried CRITICAL to legs, lukin DODGED"
+
+15:04 lukin[0] попытался поразить соперника ударом (ноги), но Манекен[1] увернулся.
+      "lukin attacked legs, Mannequin DODGED"
+
+15:04 Манекен[1] критическим ударом (живот) поразил lukin[0] на -12 [0/20].
+      "Mannequin CRITICAL HIT to BELLY for -12 damage (KO)"
+
+15:04 lukin[0] проиграл бой.
+      "lukin LOST the fight"
+
+15:04 Победа за Манекен[1].
+      "VICTORY for Mannequin"
+```
+
+#### Victory/Defeat Message Formats
+
+| Event | Russian | English |
+|-------|---------|---------|
+| Victory | `Победа за {winner}.` | "Victory for {winner}." |
+| Defeat | `{loser} проиграл бой.` | "{loser} lost the fight." |
+| Critical Hit | `{attacker} критическим ударом ({part}) поразил {target} на -{dmg} [{hp}/{max}].` | "{attacker} critical hit ({part}) {target} for -{dmg} [{hp}/{max}]." |
+| Dodged Attack | `{attacker} попытался поразить соперника ударом ({part}), но {target} увернулся.` | "{attacker} tried ({part}), {target} dodged." |
+
+#### UI Layout (3-Column Horizontal)
+
+```
+┌───────────────────┬──────────────────────────────┬───────────────────┐
+│   PLAYER PANEL    │      CENTER PANEL            │   ENEMY PANEL     │
+│                   │                              │                   │
+│ [Avatar+Equip]    │  AP: "Очков действия: 80"    │ [Enemy Avatar]    │
+│ HP: ████ 20/20    │  Used: "Использовано: 0"     │ HP: ████ 30/30    │
+│ MP: ████ 07/07    │                              │                   │
+│                   │  ATTACK (×4 dropdowns)       │ ENEMY STATS:      │
+│                   │  В голову [▼]                │  Сила: 5          │
+│                   │  В торс   [▼]                │  Ловкость: 9      │
+│                   │  В живот  [▼]                │  Удача: 6         │
+│                   │  По ногам [▼]                │  Знания: 1        │
+│                   │                              │  Мудрость: 1      │
+│                   │  BLOCK (×4 dropdowns)        │                   │
+│                   │  Голова [▼]                  │                   │
+│                   │  Торс   [▼]                  │                   │
+│                   │  Живот  [▼]                  │                   │
+│                   │  Ноги   [▼]                  │                   │
+│                   │                              │                   │
+│                   │  [ход] [сбросить]            │                   │
+│                   │                              │                   │
+│                   │  ──── COMBAT LOG ────        │                   │
+│                   │  (timestamped entries)       │                   │
+└───────────────────┴──────────────────────────────┴───────────────────┘
+```
+
+#### Key Mechanics Confirmed
+
+| Mechanic | Behavior |
+|----------|----------|
+| **Critical Hits** | ~2x damage, indicated by "критическим ударом" |
+| **Dodge/Evasion** | Complete miss (0 damage), "увернулся" |
+| **Body Part Targeting** | Head (1.3x), Torso (1.0x), Belly (1.1x), Legs (0.9x) |
+| **AP Budget** | 80 AP per turn |
+| **Turn Timeout** | 5 minutes default |
+| **HP Recovery Gate** | Cannot fight when HP too low ("Вы слишком ослаблены!") |
+
+---
 
 ### Elselands Implementation
 - **Status:** ✅ Implemented

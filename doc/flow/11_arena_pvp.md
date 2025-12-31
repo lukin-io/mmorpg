@@ -23,6 +23,11 @@
   - **Fighter Card Component**: New `_fighter_card.html.erb` partial with avatar, name, level, HP/MP bars, stats
   - **Helper Methods**: `winner_name`, `format_duration`, `hp_color_class` for UI
   - **Comprehensive Test Coverage**: Model specs for auto-end, helper specs for UI methods, request specs for controller behavior, system specs for layout
+- **v1.8** (2025-12-31): Complete fight-to-defeat analysis documented:
+  - Full combat session captured (live Neverlands Mannequin fight)
+  - Victory/defeat message formats documented
+  - 3-column horizontal UI layout finalized
+  - All combat outcomes captured: hit, critical, dodge, block, victory, defeat
 
 ## Implementation Status
 
@@ -890,7 +895,8 @@ training:
 - `doc/flow/22_unified_npc_architecture.md` — NPC architecture overview
 - `doc/flow/23_unified_combat_architecture.md` — Unified combat system (includes open-world PVP)
 - `doc/flow/24_unified_turn_combat.md` — Turn-based combat mechanics (body-part targeting, AP, blocks)
-- `doc/features/neverlands_inspired_combat.md` — Combat mechanics game design inspiration
+- `doc/features/neverlands_inspired_combat.md` — **Combat mechanics game design** (live Mannequin fights Dec 30-31, 2024)
+- `doc/features/neverlands_inspired.md` — General features reference (arena tabs, fight applications, UI layout)
 
 ---
 
