@@ -49,15 +49,24 @@
       <%# Combat action buttons (only for participants in live match) %>
       <% if @arena_match.live? && current_user_participating? %>
         <div class="arena-action-panel" data-arena-match-target="actionButtons">
+          <%# AP Bar %>
+          <div class="arena-ap-bar" data-arena-match-target="apBar">
+            <span class="ap-label">AP:</span>
+            <div class="ap-bar-container">
+              <div class="ap-bar-fill" style="width: 100%"></div>
+            </div>
+            <span class="ap-value" data-arena-match-target="apValue">100/100</span>
+          </div>
+
           <div class="arena-actions-row">
             <div class="arena-attack-group">
               <button class="btn-attack btn-attack--simple" data-action="click->arena-match#submitAction"
-                      data-action-type="attack" data-attack-type="simple">
-                ⚔️ Attack
+                      data-action-type="attack" data-attack-type="simple" title="45 AP">
+                ⚔️ Attack <span class="ap-cost">45</span>
               </button>
               <button class="btn-attack btn-attack--aimed" data-action="click->arena-match#submitAction"
-                      data-action-type="attack" data-attack-type="aimed">
-                🎯 Aimed
+                      data-action-type="attack" data-attack-type="aimed" title="65 AP">
+                🎯 Aimed <span class="ap-cost">65</span>
               </button>
             </div>
 
@@ -72,12 +81,12 @@
 
             <div class="arena-defend-group">
               <button class="btn-defend" data-action="click->arena-match#submitAction"
-                      data-action-type="defend" data-block-parts="torso">
-                🛡️ Block
+                      data-action-type="defend" data-block-parts="torso" title="30 AP">
+                🛡️ Block <span class="ap-cost">30</span>
               </button>
               <button class="btn-defend btn-defend--combo" data-action="click->arena-match#submitAction"
-                      data-action-type="defend" data-block-parts="head,torso">
-                🛡️🛡️
+                      data-action-type="defend" data-block-parts="head,torso" title="30 AP">
+                🛡️🛡️ <span class="ap-cost">30</span>
               </button>
             </div>
           </div>

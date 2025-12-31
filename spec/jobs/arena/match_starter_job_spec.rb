@@ -16,7 +16,7 @@ RSpec.describe Arena::MatchStarterJob, type: :job do
       arena_room: arena_room,
       status: :pending,
       match_type: :duel,
-      metadata: { "starts_at" => 2.minutes.from_now.iso8601 })
+      metadata: {"starts_at" => 2.minutes.from_now.iso8601})
   end
   let!(:participation1) do
     create(:arena_participation,

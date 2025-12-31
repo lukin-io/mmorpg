@@ -144,7 +144,7 @@ RSpec.describe Arena::ApplicationHandler do
       end
 
       it "updates application status to matched" do
-        result = handler.accept(
+        handler.accept(
           application: application,
           acceptor: character
         )
@@ -321,6 +321,52 @@ RSpec.describe Arena::ApplicationHandler do
         starts_at = Time.parse(result.match.metadata["starts_at"])
         # Match starts in 10 seconds (fixed countdown)
         expect(starts_at).to be_within(5.seconds).of(10.seconds.from_now)
+      end
+    end
+
+    # ============================================
+    # Broadcast Tests (Bug Fix Coverage)
+    # ============================================
+    # Ensures both participants receive match notification
+
+    context "broadcasting match created" do
+      it "broadcasts with participant_ids for client-side detection" do
+        expect(ActionCable.server).to receive(:broadcast).with(
+          "arena:room:#{arena_room.id}",
+          hash_including(
+            type: "match_created",
+            participant_ids: array_including(character.id, other_character.id),
+            countdown: 10,
+            redirect_url: an_instance_of(String)
+          )
+        )
+
+        # Also expect user notifications
+        expect(ActionCable.server).to receive(:broadcast).with(
+          "user:#{user.id}:notifications",
+          hash_including(type: "arena_match_starting")
+        )
+        expect(ActionCable.server).to receive(:broadcast).with(
+          "user:#{other_user.id}:notifications",
+          hash_including(type: "arena_match_starting")
+        )
+
+        handler.accept(application: application, acceptor: character)
+      end
+
+      it "broadcasts acceptor_application_id for removing stale applications" do
+        expect(ActionCable.server).to receive(:broadcast).with(
+          "arena:room:#{arena_room.id}",
+          hash_including(
+            type: "match_created",
+            application_id: application.id,
+            acceptor_application_id: an_instance_of(Integer) # Acceptor's application ID
+          )
+        ).at_least(:once)
+
+        allow(ActionCable.server).to receive(:broadcast) # Allow other broadcasts
+
+        handler.accept(application: application, acceptor: character)
       end
     end
 

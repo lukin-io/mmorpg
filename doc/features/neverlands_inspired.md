@@ -10,7 +10,7 @@ This document captures all functionality inspired by the Neverlands MMORPG that 
 
 | Document | Description |
 |----------|-------------|
-| [neverlands_inspired_combat.md](neverlands_inspired_combat.md) | Combat CSS, action points, body parts, magic slots, HP/MP bars, **live Mannequin fights (Dec 30-31, 2024) — includes complete fight-to-defeat analysis** |
+| [neverlands_inspired_combat.md](neverlands_inspired_combat.md) | Combat CSS, action points, body parts, magic slots, HP/MP bars, **live Mannequin fights (Dec 30-31, 2024)**, **Elselands Combat Formulas Reference (v1.10)** |
 | [neverlands_inspired_map.md](neverlands_inspired_map.md) | Map.js complete analysis, tile rendering, movement animation |
 | [neverlands_inspired_chat.md](neverlands_inspired_chat.md) | Chat system, emoji codes, player list, context menus |
 | [neverlands_inspired_skills.md](neverlands_inspired_skills.md) | Stats, skills, perks, effects, arena system, tiered progression, **live skill addition test** |

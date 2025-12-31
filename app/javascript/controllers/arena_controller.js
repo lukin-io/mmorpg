@@ -243,12 +243,16 @@ export default class extends Controller {
   }
 
   handleMatchCreated(data) {
-    // If we're a participant, start countdown
+    // Remove both applications from the list (original + acceptor's)
+    this.removeApplication(data.application_id)
+    if (data.acceptor_application_id) {
+      this.removeApplication(data.acceptor_application_id)
+    }
+
+    // If we're a participant, start countdown and redirect to match
     if (data.participant_ids?.includes(this.characterIdValue)) {
-      this.startCountdown(30, data.match_id)
-    } else {
-      // Just remove the application from the list
-      this.removeApplication(data.application_id)
+      const countdown = data.countdown || 10
+      this.startCountdown(countdown, data.match_id)
     }
   }
 

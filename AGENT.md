@@ -121,9 +121,12 @@ bundle exec rspec spec/factories --format progress
 # 3. FAST TESTS - run specs for files you changed
 bundle exec rspec spec/path/to/changed_spec.rb
 
-# 4. FULL SUITE - before final push
-bundle exec rspec --format progress
+# 4. FULL SUITE - before final push (parallel tests, 8 workers, ~16 seconds)
+bundle exec parallel_test spec/ -n 8 --type rspec --exclude-pattern "spec/system/**/*"
 ```
+
+> **Note**: System specs (`spec/system/**/*`) are excluded from parallel runs as they require Chrome/Selenium.
+> Run them separately with `bundle exec rspec spec/system` when UI changes are made.
 
 ### Detailed verification steps:
 
@@ -143,10 +146,9 @@ bundle exec rspec --format progress
    - Catches: outdated attributes, missing associations, schema drift
 
 3. **Tests** (required):
-   - `bundle exec rspec` — full suite
-   - `bundle exec rspec spec/services/game/combat/` — combat subsystem
-   - `bundle exec rspec --tag ~system` — skip slow system tests for quick feedback
-   - `bundle exec rspec spec/system` — system tests when UI changes
+   - `bundle exec parallel_test spec/ -n 8 --type rspec --exclude-pattern "spec/system/**/*"` — full suite (8 workers, ~16s)
+   - `bundle exec rspec spec/services/game/combat/` — combat subsystem (sequential)
+   - `bundle exec rspec spec/system` — system tests when UI changes (requires Chrome)
 
 4. **Security** (where configured):
    - `bundle exec brakeman` or `bin/brakeman`
@@ -161,16 +163,14 @@ bundle exec rspec --format progress
 When modifying combat, skills, or game engine code, also run:
 
 ```bash
-# Combat subsystem
-bundle exec rspec spec/services/game/combat/ spec/lib/game/
+# Combat subsystem (parallel)
+bundle exec parallel_test spec/services/game/combat/ spec/lib/game/ -n 8 --type rspec
 
-# Encounter services (PvE/PvP)
-bundle exec rspec spec/services/game/combat/pve_encounter_service_spec.rb \
-                  spec/services/game/combat/pvp_encounter_service_spec.rb
+# Arena subsystem (parallel, ~16s for 361 specs)
+bundle exec parallel_test spec/services/arena/ spec/requests/arena* spec/models/arena* -n 8 --type rspec
 
-# Turn resolution
-bundle exec rspec spec/services/game/combat/turn_resolver_spec.rb \
-                  spec/services/game/combat/unified_combat_service_spec.rb
+# Or run specific files sequentially for debugging
+bundle exec rspec spec/services/game/combat/turn_resolver_spec.rb
 ```
 
 Only treat the change as ready once these checks are passing.
@@ -247,7 +247,7 @@ use it as input when making design decisions, but don't overwrite it unless aske
    - **Model specs** — Validations, associations, scopes, domain logic
    - **Request specs** — Controller actions (success + error responses, auth checks)
    - **Service specs** — Game engine classes with seeded RNG, edge cases
-   - **System specs** — Hotwire/JS interactions (Turbo Frames, Stimulus)
+   - **System specs** — Hotwire/JS/UI interactions (Turbo Frames, Stimulus)
    - **Policy specs** — Authorization rules (if using Pundit)
 
 5. **Avoid N+1 and obvious performance bugs.**

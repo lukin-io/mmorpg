@@ -442,12 +442,18 @@ bundle exec rspec spec/factories --format progress
 # 3. Quick test feedback - run changed specs
 bundle exec rspec spec/path/to/your_spec.rb
 
-# 4. Full test suite - before final push
-bundle exec rspec --format progress
+# 4. Full test suite - before final push (parallel tests, 8 workers, ~16 seconds)
+bundle exec parallel_test spec/ -n 8 --type rspec --exclude-pattern "spec/system/**/*"
 
-# 5. Security (if configured)
+# 5. System tests (when UI changes, requires Chrome)
+bundle exec rspec spec/system
+
+# 6. Security (if configured)
 bundle exec brakeman -q
 ```
+
+> **Note**: Parallel tests exclude system specs as they require Chrome/Selenium.
+> Run `bundle exec rspec spec/system` separately for UI testing.
 
 **Common CI failures caught by linting:**
 - `Layout/TrailingEmptyLines` — trailing blank lines at end of file
@@ -468,13 +474,13 @@ bundle exec brakeman -q
 | What you changed | Commands to run |
 |------------------|-----------------|
 | Any Ruby file | `bundle exec standardrb --fix && bundle exec rubocop -a` |
-| Models/migrations | Above + `bundle exec rspec spec/factories spec/models` |
-| Controllers | Above + `bundle exec rspec spec/requests spec/controllers` |
-| Services | Above + `bundle exec rspec spec/services` |
-| Game engine | Above + `bundle exec rspec spec/lib/game spec/services/game` |
-| Combat system | Above + `bundle exec rspec spec/services/game/combat` |
-| Views/UI | Above + `bundle exec rspec spec/system` |
-| Full feature | `bundle exec standardrb --fix && bundle exec rspec` |
+| Models/migrations | Above + `bundle exec parallel_test spec/factories spec/models -n 8 --type rspec` |
+| Controllers | Above + `bundle exec parallel_test spec/requests -n 8 --type rspec` |
+| Services | Above + `bundle exec parallel_test spec/services -n 8 --type rspec` |
+| Game engine | Above + `bundle exec parallel_test spec/lib/game spec/services/game -n 8 --type rspec` |
+| Combat system | Above + `bundle exec parallel_test spec/services/game/combat spec/services/arena -n 8 --type rspec` |
+| Views/UI | Above + `bundle exec rspec spec/system` (requires Chrome) |
+| Full feature | `bundle exec standardrb --fix && bundle exec parallel_test spec/ -n 8 --type rspec --exclude-pattern "spec/system/**/*"` |
 
 ---
 

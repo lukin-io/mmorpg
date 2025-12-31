@@ -283,23 +283,33 @@ module Arena
     end
 
     def broadcast_match_created(match, application)
+      # Get all participant character IDs for client-side participant detection
+      participant_character_ids = match.arena_participations.players.map(&:character_id)
+      acceptor_application_id = application.matched_with&.id
+
+      # Broadcast to room - notifies all users viewing the room
       ActionCable.server.broadcast(
         "arena:room:#{application.arena_room_id}",
         {
           type: "match_created",
           match_id: match.id,
-          application_id: application.id
+          application_id: application.id,
+          acceptor_application_id: acceptor_application_id,
+          participant_ids: participant_character_ids,
+          countdown: 10,
+          redirect_url: "/arena_matches/#{match.id}"
         }
       )
 
-      # Notify participants (only player participants have user_id)
+      # Also notify participants directly (for when they're not on the room page)
       match.arena_participations.players.each do |participation|
         ActionCable.server.broadcast(
           "user:#{participation.user_id}:notifications",
           {
             type: "arena_match_starting",
             match_id: match.id,
-            countdown: 10 # Short countdown before match starts
+            countdown: 10,
+            redirect_url: "/arena_matches/#{match.id}"
           }
         )
       end

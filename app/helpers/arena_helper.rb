@@ -189,7 +189,7 @@ module ArenaHelper
   # @param seconds [Integer] duration in seconds
   # @return [String] formatted duration
   def format_duration(seconds)
-    return "0s" unless seconds && seconds.positive?
+    return "0s" unless seconds&.positive?
 
     if seconds < 60
       "#{seconds}s"

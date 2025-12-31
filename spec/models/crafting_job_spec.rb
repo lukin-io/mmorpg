@@ -172,4 +172,43 @@ RSpec.describe CraftingJob do
       expect(File.exist?(wrong_partial_path)).to be false
     end
   end
+
+  # Regression test for: NoMethodError - undefined method 'result_quality' for CraftingJob
+  # Bug: The partial called job.result_quality but the column is quality_tier
+  describe "partial rendering with quality_tier" do
+    it "partial uses quality_tier column, not result_quality" do
+      partial_content = File.read(Rails.root.join("app/views/crafting_jobs/_job.html.erb"))
+
+      # Verify the partial does NOT use the incorrect column name
+      expect(partial_content).not_to include("result_quality")
+
+      # Verify it uses the correct column name
+      expect(partial_content).to include("quality_tier")
+    end
+
+    it "CraftingJob responds to quality_tier but not result_quality" do
+      job = build(:crafting_job)
+
+      expect(job).to respond_to(:quality_tier)
+      expect(job).not_to respond_to(:result_quality)
+    end
+
+    it "renders completed jobs without error" do
+      completed_job = create(:crafting_job,
+        user: user,
+        character: character,
+        recipe: recipe,
+        crafting_station: crafting_station,
+        status: :completed,
+        quality_tier: :rare)
+
+      # This should not raise NoMethodError for result_quality
+      expect {
+        ApplicationController.render(
+          partial: "crafting_jobs/job",
+          locals: {job: completed_job}
+        )
+      }.not_to raise_error
+    end
+  end
 end

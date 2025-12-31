@@ -329,35 +329,36 @@ bin/rails db:drop db:create db:migrate db:seed
 
 #### Pre-Push Verification (Recommended)
 
-Use the verification script to catch CI failures locally:
+Use parallel tests for fast verification (8 workers, ~16 seconds for 2,675 specs):
 
 ```bash
-# First-time setup: create parallel test databases (2-3x faster tests)
-bin/verify setup
+# Full test suite (parallel, excludes system specs)
+bundle exec parallel_test spec/ -n 8 --type rspec --exclude-pattern "spec/system/**/*"
 
-# Full verification with parallel tests - run before pushing
-bin/verify
+# Quick lint check
+bundle exec standardrb --fix && bundle exec rubocop -a
 
-# Quick check (lint + model specs only) - for fast feedback
-bin/verify quick
+# Factory validation
+bundle exec rspec spec/factories --format progress
 
-# Linting only
-bin/verify lint
+# Combat/Arena subsystem (parallel)
+bundle exec parallel_test spec/services/arena/ spec/services/game/combat/ -n 8 --type rspec
 
-# Combat subsystem tests
-bin/verify combat
-
-# Serial tests (for debugging flaky tests)
-bin/verify serial
+# System tests (requires Chrome, run separately)
+bundle exec rspec spec/system
 ```
 
-**Parallel Tests Setup:**
-
-The `bin/verify` script uses [parallel_tests](https://github.com/grosser/parallel_tests) to run tests across multiple CPU cores, reducing test time from ~5 minutes to ~2 minutes. Run `bin/verify setup` once to create the parallel databases.
+**First-time setup for parallel tests:**
+```bash
+# Create parallel test databases
+bundle exec rake parallel:create
+bundle exec rake parallel:prepare
+```
 
 #### Manual Testing Commands
 
-- Run the full suite with `bundle exec rspec`.
+- **Full suite (parallel)**: `bundle exec parallel_test spec/ -n 8 --type rspec --exclude-pattern "spec/system/**/*"`
+- **Full suite (serial)**: `bundle exec rspec` — use for debugging flaky tests
 - Security/linting:
   - `bundle exec standardrb --fix` — primary linter with auto-fix
   - `bundle exec rubocop -a` — additional auto-fixes

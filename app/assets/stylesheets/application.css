@@ -3723,6 +3723,52 @@ turbo-frame[busy] {
   padding: var(--nl-space-md);
 }
 
+/* AP (Action Points) Bar */
+.arena-ap-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--nl-space-sm);
+  margin-bottom: var(--nl-space-md);
+  padding-bottom: var(--nl-space-sm);
+  border-bottom: 1px solid var(--nl-border-light);
+}
+
+.ap-label {
+  font-weight: bold;
+  color: var(--nl-text-secondary);
+  font-size: 0.9rem;
+}
+
+.ap-bar-container {
+  flex: 1;
+  height: 12px;
+  background: #2a2a2a;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.ap-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #845ef7, #da77f2);
+  transition: width 0.3s ease-out;
+}
+
+.ap-value {
+  font-weight: bold;
+  color: #da77f2;
+  font-size: 0.9rem;
+  min-width: 60px;
+  text-align: right;
+}
+
+/* AP cost indicators on buttons */
+.ap-cost {
+  font-size: 0.7rem;
+  opacity: 0.8;
+  margin-left: 4px;
+  font-weight: normal;
+}
+
 .arena-actions-row {
   display: flex;
   flex-wrap: wrap;

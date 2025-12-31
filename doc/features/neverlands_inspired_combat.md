@@ -14,6 +14,8 @@
 6. [HP/MP Bar System](#hpmp-bar-system)
 7. [Magic Slots System](#magic-slots-system)
 8. [Team Display](#team-display)
+9. [Elselands Combat Formulas Reference](#elselands-combat-formulas-reference)
+10. [Elselands Implementation Checklist](#elselands-implementation-checklist-updated)
 
 ---
 
@@ -1493,9 +1495,187 @@ Status: DEFEATED
 
 ---
 
+## Elselands Combat Formulas Reference
+
+> **Source**: `app/services/arena/combat_processor.rb`
+> **Last Updated**: December 31, 2024 (v1.10)
+
+This section documents all combat formulas and constants implemented in Elselands based on Neverlands analysis.
+
+### Action Points (AP) System
+
+```ruby
+# Constants
+AP_PER_TURN = 100          # Total AP available per turn
+BLOCK_AP_COST = 30         # Base cost to block
+
+# Attack Type Costs
+ATTACK_TYPES = {
+  simple: { ap_cost: 45, damage_mult: 1.0, hit_bonus: 0 },
+  aimed:  { ap_cost: 65, damage_mult: 1.2, hit_bonus: 10 }
+}
+
+# Multi-Attack Penalty (from Neverlands analysis)
+MULTI_ATTACK_PENALTIES = [0, 0, 25, 75, 150, 250]
+# Index 0: 0 attacks = 0 penalty
+# Index 1: 1 attack  = 0 penalty
+# Index 2: 2 attacks = +25 AP
+# Index 3: 3 attacks = +75 AP
+# Index 4: 4 attacks = +150 AP
+# Index 5: 5+ attacks = +250 AP
+```
+
+### Body Part Targeting
+
+```ruby
+BODY_PART_MULTIPLIERS = {
+  "head"    => 1.3,  # Highest damage zone
+  "torso"   => 1.0,  # Standard damage
+  "stomach" => 1.1,  # Slightly elevated
+  "legs"    => 0.9   # Lowest damage zone
+}
+```
+
+### Damage Calculation
+
+```ruby
+# Base Damage Formula
+def calculate_base_damage(character)
+  base = character.stats.get(:attack) || 10
+  weapon_bonus = character.equipped_weapon_damage || 0
+  base + weapon_bonus + rand(1..5)  # Random variance
+end
+
+# Final Damage Formula
+base_damage = calculate_base_damage(attacker)
+base_damage *= attack_type[:damage_mult]     # Attack type modifier (1.0 or 1.2)
+base_damage *= BODY_PART_MULTIPLIERS[part]   # Body part modifier (0.9-1.3)
+defense = calculate_defense(target)
+damage = [base_damage - defense, 1].max       # Minimum 1 damage
+
+# Critical Hit (10% chance, 2x damage)
+if rand < 0.1
+  damage *= 2
+end
+```
+
+### Defense Calculation
+
+```ruby
+def calculate_defense(character)
+  base = character.stats.get(:defense) || 5
+  armor_bonus = character.equipped_armor_defense || 0
+  defense = base + armor_bonus
+
+  # Defend stance bonus (+50% defense)
+  if character.metadata["defending"]
+    defense *= 1.5
+  end
+
+  defense.round
+end
+```
+
+### HP Recovery Gate
+
+```ruby
+# Constant
+MIN_HP_PERCENT_FOR_ARENA = 50  # 50% of max HP required
+
+# Validation
+def character_hp_sufficient?(character)
+  return true if character.nil?  # NPC fights bypass
+  character.current_hp >= (character.max_hp * MIN_HP_PERCENT_FOR_ARENA / 100.0)
+end
+
+# Error message (from Neverlands)
+# "Восстановитесь для поединков, Вы слишком ослаблены!"
+# "Recover for fights, you are too weakened!"
+```
+
+### Trauma System
+
+```ruby
+VALID_TRAUMA_PERCENTS = [10, 30, 50, 80]  # Low, Medium, High, Very High
+
+def apply_trauma
+  trauma_percent = match.trauma_percent || 30
+
+  match.arena_participations.each do |p|
+    next if p.npc?
+
+    is_loser = p.result == "defeat"
+
+    # Winners: 1/3 trauma, Losers: full trauma
+    effective_trauma = is_loser ? trauma_percent : (trauma_percent / 3.0).round
+
+    # HP Loss Formula
+    hp_loss = (character.max_hp * effective_trauma / 100.0).round
+    new_hp = [character.current_hp - hp_loss, 1].max  # Minimum 1 HP
+
+    # XP Loss (losers only, high trauma)
+    if is_loser && effective_trauma >= 30
+      xp_loss = (character.experience * effective_trauma / 200.0).round
+    end
+  end
+end
+```
+
+### Turn Timeout System
+
+```ruby
+VALID_TIMEOUTS = [120, 180, 240, 300]  # 2, 3, 4, 5 minutes
+
+# Auto-end conditions
+def stale?
+  return false unless live? && started_at
+  elapsed = Time.current - started_at
+  timeout = turn_timeout_seconds || 300
+  elapsed > (timeout * 2)  # 2x timeout = stale
+end
+
+def should_auto_end_defeat?
+  arena_participations.any? { |p| participant_defeated?(p) }
+end
+```
+
+### Combat Log Message Formats
+
+```ruby
+# Attack hit
+"#{attacker.name} hit #{target.name} (#{body_part}) for -#{damage} [#{hp}/#{max_hp}]"
+
+# Critical hit
+"#{attacker.name} critical hit (#{body_part}) #{target.name} for -#{damage} [#{hp}/#{max_hp}]"
+
+# Block
+"#{target.name} blocked attack (#{body_part}) from #{attacker.name}"
+
+# Dodge
+"#{attacker.name} tried to hit opponent (#{body_part}), but #{target.name} dodged"
+
+# Victory
+"Победа за #{winner.name}."  # "Victory for {winner}."
+
+# Defeat
+"#{loser.name} проиграл бой."  # "{loser} lost the fight."
+
+# Timeout
+"Бой закончен по таймауту."  # "Fight ended by timeout."
+```
+
+### Match Start Countdown
+
+```ruby
+MATCH_START_COUNTDOWN = 10  # seconds for player matches
+NPC_MATCH_COUNTDOWN = 5     # seconds for NPC/training matches
+```
+
+---
+
 ## Elselands Implementation Checklist (Updated)
 
-### ✅ All Features Implemented (v1.7)
+### ✅ All Features Implemented (v1.10)
 
 | Feature | Elselands Implementation |
 |---------|--------------------------|
@@ -1505,16 +1685,18 @@ Status: DEFEATED
 | Attack Types | `ATTACK_TYPES` constant (simple, aimed) |
 | Block Types (Combo) | `block_parts` array parameter |
 | Body Part Targeting | `BODY_PART_MULTIPLIERS` constant |
-| AP System | `action_points_per_turn` config |
-| Turn Timeout | `ArenaTurnTimeoutJob` (300s default) |
-| HP Recovery Gate | `MIN_HP_PERCENT_FOR_ARENA` (50%) |
-| Trauma System | `apply_trauma` method |
+| AP System | `AP_PER_TURN = 100`, costs per action |
+| Turn Timeout | `ArenaTurnTimeoutJob` (120-300s configurable) |
+| HP Recovery Gate | `MIN_HP_PERCENT_FOR_ARENA = 50` |
+| Trauma System | `apply_trauma` method with HP/XP loss |
 | Victory/Defeat Messages | Standardized log format |
 | Opponent Stats Display | `opponent_combat_stats` helper |
 | Combat Log (Timestamped) | `metadata["combat_log"]` array |
-| Match Auto-End | `auto_end_if_needed!` method |
-| Critical Hits | 10% chance, 1.5x damage |
+| Match Auto-End | `auto_end_if_needed!` (stale/defeat) |
+| Critical Hits | 10% chance, 2x damage |
 | Dodge/Evasion | Hit chance roll |
+| Match Notifications | Both participants notified |
+| Active Match Redirect | Users redirected to active match |
 
 ### 🟡 UI Enhancements Needed (Phase 2)
 
@@ -1561,5 +1743,5 @@ Combat-specific logging is handled separately in the combat log panel (center of
 
 ---
 
-*Last updated: December 31, 2024 (Complete fight session #3 - defeat analysis, full UI layout documentation)*
+*Last updated: December 31, 2024 (v1.10 - Complete formulas reference, match notifications, comprehensive test coverage)*
 

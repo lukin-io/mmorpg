@@ -1,3 +1,6 @@
+<%# Support both 'job' (manual render) and 'crafting_job' (Turbo broadcast) %>
+<% job = local_assigns[:job] || local_assigns[:crafting_job] %>
+
 <div class="crafting-job crafting-job--<%= job.status %>" id="crafting_job_<%= job.id %>">
   <div class="job-icon">
     <%= crafting_job_icon(job) %>
@@ -22,7 +25,7 @@
         <% end %>
       </p>
     <% elsif job.status == "completed" %>
-      <p class="job-result job-result--success">✅ Complete! <%= job.result_quality %> quality</p>
+      <p class="job-result job-result--success">✅ Complete! <%= job.quality_tier&.humanize || "Normal" %> quality</p>
     <% elsif job.status == "failed" %>
       <p class="job-result job-result--failure">❌ Failed</p>
     <% end %>

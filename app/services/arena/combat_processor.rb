@@ -15,6 +15,10 @@ module Arena
   class CombatProcessor
     attr_reader :match, :broadcaster
 
+    # Action Points per turn
+    AP_PER_TURN = 100
+    BLOCK_AP_COST = 30
+
     # Attack type configurations
     ATTACK_TYPES = {
       simple: {ap_cost: 45, damage_mult: 1.0, hit_bonus: 0, name: "Simple"},
@@ -52,6 +56,14 @@ module Arena
       return failure("Character not in this match") unless participant?(character)
       return failure("Character is dead") if character.current_hp <= 0
 
+      # Check AP cost before processing
+      ap_cost = calculate_ap_cost(action_type, params)
+      current_ap = get_character_ap(character)
+
+      if current_ap < ap_cost
+        return failure("Not enough AP (need #{ap_cost}, have #{current_ap})")
+      end
+
       result = case action_type.to_sym
       when :attack
         process_attack(
@@ -66,9 +78,15 @@ module Arena
       else failure("Unknown action type: #{action_type}")
       end
 
-      # After player action, process NPC turn if this is an NPC fight
-      if result.success? && npc_fight? && !should_end?
-        process_npc_turn_after_delay
+      # After player action, deduct AP and process NPC turn if applicable
+      if result.success?
+        deduct_ap(character, ap_cost)
+        broadcaster.broadcast_ap_update(character, get_character_ap(character), AP_PER_TURN)
+
+        # Process NPC turn if this is an NPC fight
+        if npc_fight? && !should_end?
+          process_npc_turn_after_delay
+        end
       end
 
       result
@@ -698,6 +716,53 @@ module Arena
         "description" => description
       }
       match.save!
+    end
+
+    # Calculate AP cost for an action
+    def calculate_ap_cost(action_type, params)
+      case action_type.to_sym
+      when :attack
+        attack_type = params[:attack_type]&.to_sym || :simple
+        ATTACK_TYPES[attack_type]&.dig(:ap_cost) || 45
+      when :defend
+        BLOCK_AP_COST
+      when :skill
+        50 # Default skill cost
+      when :flee
+        0 # No AP cost for flee
+      else
+        0
+      end
+    end
+
+    # Get character's current AP for this match
+    def get_character_ap(character)
+      participation = match.arena_participations.find_by(character: character)
+      return AP_PER_TURN unless participation
+
+      participation.metadata ||= {}
+      participation.metadata["current_ap"] || AP_PER_TURN
+    end
+
+    # Deduct AP from character
+    def deduct_ap(character, amount)
+      participation = match.arena_participations.find_by(character: character)
+      return unless participation
+
+      participation.metadata ||= {}
+      current = participation.metadata["current_ap"] || AP_PER_TURN
+      participation.metadata["current_ap"] = [current - amount, 0].max
+      participation.save!
+    end
+
+    # Reset AP to full at start of turn
+    def reset_ap(character)
+      participation = match.arena_participations.find_by(character: character)
+      return unless participation
+
+      participation.metadata ||= {}
+      participation.metadata["current_ap"] = AP_PER_TURN
+      participation.save!
     end
 
     def success(**data)

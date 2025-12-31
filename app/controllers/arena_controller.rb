@@ -8,8 +8,20 @@ class ArenaController < ApplicationController
   # GET /arena
   # Arena lobby showing all rooms
   def index
+    # Check if user is already in an active match - redirect them there
+    active_participation = current_character.arena_participations
+      .joins(:arena_match)
+      .where(arena_matches: {status: [:pending, :live]})
+      .first
+
+    if active_participation
+      redirect_to arena_match_path(active_participation.arena_match),
+        notice: "You have an active match!"
+      return
+    end
+
     @rooms = ArenaRoom.active.order(:room_type)
-    @current_application = current_character.arena_applications.active.first
+    @current_application = current_character.arena_applications.open.first
     @recent_matches = current_character.arena_participations
       .includes(:arena_match)
       .order(created_at: :desc)

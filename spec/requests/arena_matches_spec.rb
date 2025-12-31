@@ -137,7 +137,7 @@ RSpec.describe "ArenaMatches", type: :request do
       match = create(:arena_match,
         arena_room: arena_room,
         status: :pending,
-        metadata: { "starts_at" => 2.minutes.from_now.iso8601 })
+        metadata: {"starts_at" => 2.minutes.from_now.iso8601})
       create(:arena_participation, arena_match: match, character: character, user: user, team: "a")
       create(:arena_participation, arena_match: match, character: other_character, user: other_user, team: "b")
       match
@@ -211,7 +211,7 @@ RSpec.describe "ArenaMatches", type: :request do
     context "when user is participant" do
       it "accepts combat action" do
         post "/arena_matches/#{live_match.id}/action",
-          params: { action_type: "attack", target_id: other_character.id, body_part: "torso" },
+          params: {action_type: "attack", target_id: other_character.id, body_part: "torso"},
           as: :json
 
         expect(response).to have_http_status(:success)
@@ -227,7 +227,7 @@ RSpec.describe "ArenaMatches", type: :request do
 
         # Sign in as user who is participant but on team b, trying to act on team a's turn
         post "/arena_matches/#{live_match.id}/action",
-          params: { action_type: "attack", target_id: character.id },
+          params: {action_type: "attack", target_id: character.id},
           as: :json
 
         # Should either succeed (if team B can act) or fail authorization
@@ -240,7 +240,7 @@ RSpec.describe "ArenaMatches", type: :request do
 
       it "requires authentication" do
         post "/arena_matches/#{live_match.id}/action",
-          params: { action_type: "attack" },
+          params: {action_type: "attack"},
           as: :json
 
         expect(response).to have_http_status(:unauthorized)
@@ -253,7 +253,7 @@ RSpec.describe "ArenaMatches", type: :request do
 
       it "rejects action on completed match" do
         post "/arena_matches/#{live_match.id}/action",
-          params: { action_type: "attack" },
+          params: {action_type: "attack"},
           as: :json
 
         expect(response).to have_http_status(:unprocessable_entity)

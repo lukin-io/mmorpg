@@ -9,7 +9,8 @@ import consumer from "channels/consumer"
 export default class extends Controller {
   static targets = [
     "combatLog", "participantList", "actionButtons", "timer",
-    "teamA", "teamB", "resultOverlay", "bodyPartSelect"
+    "teamA", "teamB", "resultOverlay", "bodyPartSelect",
+    "apBar", "apValue", "fighterA", "fighterB"
   ]
 
   static values = {
@@ -65,6 +66,9 @@ export default class extends Controller {
         break
       case "hp_update":
         this.updateParticipantHP(data)
+        break
+      case "ap_update":
+        this.updateAP(data)
         break
       case "match_result":
         this.showResult(data)
@@ -194,6 +198,48 @@ export default class extends Controller {
         is_dead: p.is_dead
       })
     })
+  }
+
+  // === AP UPDATE ===
+
+  updateAP(data) {
+    if (!this.hasApBarTarget) return
+
+    // Update AP bar fill width
+    const apBarFill = this.apBarTarget.querySelector(".ap-bar-fill")
+    if (apBarFill) {
+      apBarFill.style.width = `${data.ap_percent}%`
+    }
+
+    // Update AP text
+    if (this.hasApValueTarget) {
+      this.apValueTarget.textContent = `${data.current_ap}/${data.max_ap}`
+    }
+
+    // Disable buttons if not enough AP
+    this.updateButtonsForAP(data.current_ap)
+  }
+
+  updateButtonsForAP(currentAP) {
+    if (!this.hasActionButtonsTarget) return
+
+    // Check each button's AP cost and disable if not enough
+    this.actionButtonsTarget.querySelectorAll("button").forEach(btn => {
+      const apCost = this.getButtonAPCost(btn)
+      btn.disabled = currentAP < apCost
+    })
+  }
+
+  getButtonAPCost(btn) {
+    const actionType = btn.dataset.actionType
+    const attackType = btn.dataset.attackType
+
+    if (actionType === "attack") {
+      return attackType === "aimed" ? 65 : 45
+    } else if (actionType === "defend") {
+      return 30
+    }
+    return 0
   }
 
   handleMatchStart(data) {

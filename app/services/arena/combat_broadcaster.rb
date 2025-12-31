@@ -200,6 +200,23 @@ module Arena
       })
     end
 
+    # Broadcast AP (Action Points) update for a character
+    #
+    # @param character [Character] the character
+    # @param current_ap [Integer] current AP remaining
+    # @param max_ap [Integer] maximum AP per turn
+    def broadcast_ap_update(character, current_ap, max_ap)
+      broadcast({
+        type: "ap_update",
+        character_id: character.id,
+        character_name: character.name,
+        current_ap: current_ap,
+        max_ap: max_ap,
+        ap_percent: ((current_ap.to_f / max_ap) * 100).round,
+        timestamp: Time.current.strftime("%H:%M:%S")
+      })
+    end
+
     # Broadcast match ended
     #
     # @param winning_team [String, nil] the winning team or nil for draw

@@ -405,18 +405,14 @@ RSpec.describe Arena::CombatProcessor, "Tactical Combat Features" do
             body_part: "head"
           )
 
-          if result[:blocked]
-            expect(result.success?).to be true
-          else
-            expect(result.success?).to be true
-            # Target should be dead or near death
-          end
+          expect(result.success?).to be true
+          # Target should be dead or near death (unless blocked)
         end
       end
 
       context "with empty block_parts array" do
         it "defaults to torso block" do
-          result = processor.process_action(
+          processor.process_action(
             character1,
             :defend,
             block_parts: []
@@ -429,7 +425,7 @@ RSpec.describe Arena::CombatProcessor, "Tactical Combat Features" do
 
       context "with nil block_parts" do
         it "defaults to torso block" do
-          result = processor.process_action(
+          processor.process_action(
             character1,
             :defend,
             block_parts: nil
