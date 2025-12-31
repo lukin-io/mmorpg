@@ -85,12 +85,10 @@ RSpec.describe "Arena Match UI Layout", type: :system do
       expect(page).to have_content("100/100")
     end
 
-    it "applies correct HP color class for high HP", :skip do
-      # HP color classes not yet implemented in the same way
+    it "applies correct HP color class for high HP", skip: "HP color classes not yet implemented" do
     end
 
-    it "applies correct HP color class for critical HP", :skip do
-      # HP color classes not yet implemented in the same way
+    it "applies correct HP color class for critical HP", skip: "HP color classes not yet implemented" do
     end
   end
 

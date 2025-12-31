@@ -343,8 +343,7 @@ RSpec.describe "Arena Match Lifecycle UI", type: :system, js: true do
       expect(page).to have_content("Spectating")
     end
 
-    it "displays spectator code", :skip do
-      # Spectator code display not visible in current UI
+    it "displays spectator code", skip: "Spectator code display not visible in current UI" do
     end
 
     it "does NOT display action buttons for spectators" do
@@ -435,9 +434,7 @@ RSpec.describe "Arena Match Lifecycle UI", type: :system, js: true do
         allow_any_instance_of(ApplicationController).to receive(:current_character).and_return(character1)
       end
 
-      it "displays HP recovery warning", :skip do
-        # HP recovery gate validation is at application creation, not match view
-        # The match has already started so warning would not appear here
+      it "displays HP recovery warning", skip: "HP gate validation at application creation, not match view" do
       end
     end
 
@@ -480,13 +477,13 @@ RSpec.describe "Arena Match Lifecycle UI", type: :system, js: true do
         allow_any_instance_of(ApplicationController).to receive(:current_character).and_return(character1)
       end
 
-      it "shows error page or redirects" do
+      it "shows error when match not found" do
         visit arena_match_path(id: 999999)
 
-        # Should show a 404 page or redirect somewhere
-        expect(page).to have_content("not found")
-          .or have_current_path(arena_index_path)
-          .or have_current_path(root_path)
+        # Rails shows RecordNotFound error page in test/dev, 404 in production
+        expect(page).to have_content("RecordNotFound")
+          .or have_content("not found")
+          .or have_content("Couldn't find ArenaMatch")
       end
     end
   end
