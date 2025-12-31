@@ -767,10 +767,27 @@ Each block dropdown (`b0`-`b3`) contains various block types with different AP c
 | File | Purpose |
 |------|---------|
 | `app/services/game/combat/turn_based_combat_service.rb` | Core turn logic |
+| `app/services/arena/combat_processor.rb` | Arena combat processing |
+| `app/services/arena/combat_broadcaster.rb` | Real-time combat updates |
 | `app/javascript/controllers/turn_combat_controller.js` | Client-side AP tracking |
+| `app/javascript/controllers/arena_match_controller.js` | Arena match UI controller |
 | `config/gameplay/combat_actions.yml` | Action costs, body parts |
 | `app/views/combat/_nl_action_selection.html.erb` | Attack/block dropdowns |
 | `app/views/combat/_nl_combat_log.html.erb` | Combat log display |
+| `app/views/arena_matches/_fighter_card.html.erb` | Fighter card with HP/MP bars |
+| `app/views/arena_matches/_opponent_stats.html.erb` | Opponent stats display |
+| `app/helpers/arena_helper.rb` | Arena UI helpers (winner_name, format_duration, hp_color_class) |
+| `app/models/arena_match.rb` | Match model with auto_end_if_needed! |
+| `app/jobs/arena_turn_timeout_job.rb` | Turn timeout handling |
+
+### Test Files
+
+| File | Purpose |
+|------|---------|
+| `spec/models/arena_match_auto_end_spec.rb` | Auto-end functionality tests |
+| `spec/helpers/arena_helper_pvp_spec.rb` | PVP UI helper tests |
+| `spec/requests/arena_matches_auto_end_spec.rb` | Controller auto-end tests |
+| `spec/system/arena_match_ui_layout_spec.rb` | UI layout tests |
 
 ---
 
@@ -1018,15 +1035,18 @@ Based on live analysis, Elselands should implement:
 
 - [x] **Body Part Targeting** (4 zones: head, torso, stomach, legs) ✅ `TurnBasedCombatService::BODY_PARTS`
 - [x] **Attack Types** (Simple, Aimed, Magic) ✅ `TurnBasedCombatService::ACTION_TYPES`
-- [ ] **Block Types** (Single zone, combo zones, magic shields) 🔴 Missing combo blocks
+- [x] **Block Types** (Single zone, combo zones, magic shields) ✅ v1.6 - Multi-body-part blocking via `block_parts` array
 - [x] **AP System** (80 base, multi-attack penalties) ✅ `default_config["action_points_per_turn"]`
 - [x] **Mana System** (for magic attacks/blocks) ✅ `mana_limit`, `calculate_mana_cost`
 - [x] **Critical Hits** (bonus damage, stat-based chance) ✅ 10% chance, 1.5x damage
 - [x] **Dodge/Evasion** (miss chance, stat-based) ✅ `hit_chance` roll in `resolve_attack`
 - [x] **Block Effectiveness** (match attack location) ✅ Body part matching
-- [ ] **Turn Timer** (5 min timeout) 🔴 Missing timeout handling
+- [x] **Turn Timer** (5 min timeout) ✅ v1.6 - `turn_timeout_seconds`, `ArenaTurnTimeoutJob`, auto-resolve
 - [x] **Simultaneous Resolution** (both players' actions resolve) ✅ `resolve_round!`
 - [x] **Combat Log** (timestamped, colored by team/element) ✅ `CombatLogEntry`, `format_log_message`
+- [x] **HP Recovery Gate** (50% minimum HP to enter arena) ✅ v1.6 - `ArenaApplication#character_hp_sufficient?`
+- [x] **Trauma System** (HP/XP loss % after fight) ✅ v1.6 - `trauma_percent` column, `apply_trauma` method
+- [x] **Match Auto-End** (on page load if stale or defeated) ✅ v1.7 - `ArenaMatch#auto_end_if_needed!`
 
 ---
 
@@ -1289,14 +1309,16 @@ Each application row shows icons for:
 
 | Gap | Neverlands Behavior | Elselands Status |
 |-----|---------------------|------------------|
-| **Turn Timeout** | 5 min per turn, auto-resolve | ❌ Not implemented |
-| **HP Recovery Gate** | Block arena access when HP low | ❌ Not implemented |
-| **Block Log Message** | "заблокировал удар" specific format | ⚠️ Generic message |
+| **Turn Timeout** | 5 min per turn, auto-resolve | ✅ v1.6 - `turn_timeout_seconds`, `ArenaTurnTimeoutJob` |
+| **HP Recovery Gate** | Block arena access when HP low | ✅ v1.6 - `ArenaApplication#character_hp_sufficient?` (50% min) |
+| **Block Log Message** | "заблокировал удар" specific format | ✅ v1.6 - English format "blocked attack" |
 | **NPC Bot Auto-Applications** | Every ~1 minute | ✅ Implemented (job-based) |
-| **Trauma System** | HP loss % after fight | ❌ Not implemented |
-| **Fight Timeout Message** | "Бой закончен по таймауту" | ❌ Not implemented |
+| **Trauma System** | HP loss % after fight | ✅ v1.6 - `trauma_percent` column, `apply_trauma` method |
+| **Fight Timeout Message** | "Бой закончен по таймауту" | ✅ v1.7 - Match auto-ends on page load if stale |
+| **Match Auto-End** | End match on defeat | ✅ v1.7 - `ArenaMatch#auto_end_if_needed!` |
+| **3-Column UI Layout** | Player vs Player horizontal | ✅ v1.7 - `arena-match-layout` grid CSS |
 
 ---
 
-*Last updated: December 30, 2024 (Live Mannequin fight analysis with timeout)
+*Last updated: December 31, 2024 (Arena auto-end and UI improvements)
 

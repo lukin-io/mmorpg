@@ -209,7 +209,8 @@ RSpec.describe Arena::MatchStarterJob, type: :job do
       }.to have_enqueued_job(Arena::MatchStarterJob).on_queue("arena")
     end
 
-    it "schedules job with correct wait time based on timeout_seconds" do
+    it "schedules job with fixed 10 second countdown (not based on turn timeout)" do
+      # Turn timeout (240s) is separate from match start countdown (10s)
       application = create(:arena_application,
         applicant: character1,
         arena_room: arena_room,
@@ -218,7 +219,7 @@ RSpec.describe Arena::MatchStarterJob, type: :job do
         timeout_seconds: 240)
 
       expect(Arena::MatchStarterJob).to receive(:set)
-        .with(wait: 240.seconds)
+        .with(wait: 10.seconds) # Fixed countdown, not turn timeout
         .and_return(double(perform_later: true))
 
       handler.accept(application: application, acceptor: other_character)

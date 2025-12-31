@@ -5,6 +5,11 @@
 - **v1.1** (2024-12-15): Added BattleChannel for real-time HP/MP updates, combat log persistence, and battle completion handling
 - **v1.2** (2025-12-27): Added PVP combat support via unified combat architecture
 - **v1.3** (2025-12-28): PVP improvements - concurrency locks, VitalsService, locality checks, unified damage formula, anti-abuse protections, deterministic RNG
+- **v1.4** (2025-12-31): Arena match auto-end improvements:
+  - Matches auto-end on page load if stale (2x turn timeout) or any participant defeated
+  - 3-column UI layout for arena matches (Player | Actions + Log | Player + Info)
+  - Fighter card component with HP color coding (high/medium/low/critical)
+  - Comprehensive test coverage (model, helper, request, system specs)
 
 ## Overview
 

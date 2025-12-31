@@ -161,8 +161,60 @@ module ArenaHelper
     :name, :level, :id, :is_npc,
     :current_hp, :max_hp, :current_mp, :max_mp,
     :hp_percent, :mp_percent,
+    :strength, :dexterity, :luck, :knowledge, :wisdom,
     keyword_init: true
   )
+
+  # ===========================================================================
+  # Match Display Helpers
+  # ===========================================================================
+
+  # Get winner name for display
+  # @param match [ArenaMatch] the arena match
+  # @return [String] winner's name
+  def winner_name(match)
+    return "Draw" unless match.winning_team
+
+    winner_participation = match.arena_participations.find_by(team: match.winning_team)
+    return "Unknown" unless winner_participation
+
+    if winner_participation.npc?
+      winner_participation.npc_template&.name || "NPC"
+    else
+      winner_participation.character&.name || "Player"
+    end
+  end
+
+  # Format duration in human-readable format
+  # @param seconds [Integer] duration in seconds
+  # @return [String] formatted duration
+  def format_duration(seconds)
+    return "0s" unless seconds && seconds.positive?
+
+    if seconds < 60
+      "#{seconds}s"
+    elsif seconds < 3600
+      minutes = seconds / 60
+      secs = seconds % 60
+      secs.positive? ? "#{minutes}m #{secs}s" : "#{minutes}m"
+    else
+      hours = seconds / 3600
+      minutes = (seconds % 3600) / 60
+      minutes.positive? ? "#{hours}h #{minutes}m" : "#{hours}h"
+    end
+  end
+
+  # Get HP bar color class based on percentage
+  # @param hp_percent [Numeric] HP percentage (0-100)
+  # @return [String] CSS class suffix
+  def hp_color_class(hp_percent)
+    case hp_percent
+    when 0..25 then "critical"
+    when 26..50 then "low"
+    when 51..75 then "medium"
+    else "high"
+    end
+  end
 
   # Extract participant display data from arena participation
   # @param participation [ArenaParticipation] the participation record
@@ -193,6 +245,13 @@ module ArenaHelper
     hp_percent = max_hp.zero? ? 0 : ((current_hp.to_f / max_hp) * 100).round(1)
     mp_percent = max_mp.zero? ? 0 : ((current_mp.to_f / max_mp) * 100).round(1)
 
+    # Get stats (for opponent display)
+    stats = if is_npc
+      npc_combat_stats(npc_template)
+    else
+      character_combat_stats(character)
+    end
+
     ParticipantData.new(
       name: name,
       level: level,
@@ -203,7 +262,12 @@ module ArenaHelper
       current_mp: current_mp,
       max_mp: max_mp,
       hp_percent: hp_percent,
-      mp_percent: mp_percent
+      mp_percent: mp_percent,
+      strength: stats[:strength] || 0,
+      dexterity: stats[:dexterity] || 0,
+      luck: stats[:luck] || 0,
+      knowledge: stats[:knowledge] || 0,
+      wisdom: stats[:wisdom] || 0
     )
   end
 

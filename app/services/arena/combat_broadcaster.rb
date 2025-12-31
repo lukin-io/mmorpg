@@ -99,19 +99,46 @@ module Arena
       broadcast({
         type: "match_start",
         match_id: match.id,
-        participants: match.arena_participations.map do |p|
-          {
-            character_id: p.character_id,
-            character_name: p.character.name,
-            team: p.team,
-            level: p.character.level,
-            current_hp: p.character.current_hp,
-            max_hp: p.character.max_hp,
-            current_mp: p.character.current_mp,
-            max_mp: p.character.max_mp
-          }
+        participants: match.arena_participations.includes(:character, :npc_template).map do |p|
+          participant_data(p)
         end
       })
+    end
+
+    # Build participant data hash for broadcast
+    # Handles both player characters and NPCs
+    #
+    # @param p [ArenaParticipation] participation record
+    # @return [Hash] participant data
+    def participant_data(p)
+      if p.npc?
+        npc = p.npc_template
+        {
+          id: "npc-#{npc.id}",
+          character_id: "npc-#{npc.id}",
+          character_name: npc.name,
+          team: p.team,
+          level: npc.level,
+          current_hp: p.current_hp || npc.health,
+          max_hp: p.max_hp || npc.health,
+          current_mp: 0,
+          max_mp: 0,
+          is_npc: true
+        }
+      else
+        char = p.character
+        {
+          character_id: char.id,
+          character_name: char.name,
+          team: p.team,
+          level: char.level,
+          current_hp: char.current_hp,
+          max_hp: char.max_hp,
+          current_mp: char.current_mp,
+          max_mp: char.max_mp,
+          is_npc: false
+        }
+      end
     end
 
     # Alias for compatibility with CombatProcessor
@@ -182,21 +209,47 @@ module Arena
         winning_team: winning_team,
         reason: reason,
         timed_out: reason == :timeout,
-        participants: match.arena_participations.map do |p|
-          {
-            character_id: p.character_id,
-            character_name: p.character&.name,
-            team: p.team,
-            result: p.result,
-            damage_dealt: p.metadata&.dig("damage_dealt") || 0,
-            damage_taken: p.metadata&.dig("damage_taken") || 0,
-            healing_done: p.metadata&.dig("healing_done") || 0,
-            kills: p.metadata&.dig("kills") || 0,
-            rating_delta: p.rating_delta
-          }
+        participants: match.arena_participations.includes(:character, :npc_template).map do |p|
+          participant_result_data(p)
         end,
         rewards: []
       })
+    end
+
+    # Build participant result data for match end broadcast
+    # Handles both player characters and NPCs
+    #
+    # @param p [ArenaParticipation] participation record
+    # @return [Hash] participant result data
+    def participant_result_data(p)
+      if p.npc?
+        npc = p.npc_template
+        {
+          character_id: "npc-#{npc.id}",
+          character_name: npc.name,
+          team: p.team,
+          result: p.result,
+          damage_dealt: p.metadata&.dig("damage_dealt") || 0,
+          damage_taken: p.metadata&.dig("damage_taken") || 0,
+          healing_done: 0,
+          kills: p.metadata&.dig("kills") || 0,
+          rating_delta: 0,
+          is_npc: true
+        }
+      else
+        {
+          character_id: p.character_id,
+          character_name: p.character&.name,
+          team: p.team,
+          result: p.result,
+          damage_dealt: p.metadata&.dig("damage_dealt") || 0,
+          damage_taken: p.metadata&.dig("damage_taken") || 0,
+          healing_done: p.metadata&.dig("healing_done") || 0,
+          kills: p.metadata&.dig("kills") || 0,
+          rating_delta: p.rating_delta,
+          is_npc: false
+        }
+      end
     end
 
     # Broadcast system message (announcements, warnings)

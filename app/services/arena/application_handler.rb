@@ -107,8 +107,9 @@ module Arena
 
         application.update!(matched_with: acceptor_app)
 
-        # Schedule match start
-        schedule_match_start(match, application.timeout_seconds)
+        # Schedule match start (short countdown, not turn timeout)
+        match_countdown = 10 # 10 seconds countdown before match starts
+        schedule_match_start(match, match_countdown)
 
         broadcast_match_created(match, application)
 
@@ -189,10 +190,10 @@ module Arena
         arena_season: ArenaSeason.current.first,
         match_type: application.fight_type,
         status: :pending,
+        turn_timeout_seconds: application.timeout_seconds,
+        trauma_percent: application.trauma_percent,
         metadata: {
-          fight_kind: application.fight_kind,
-          timeout_seconds: application.timeout_seconds,
-          trauma_percent: application.trauma_percent
+          fight_kind: application.fight_kind
         }
       )
 
@@ -224,10 +225,10 @@ module Arena
         arena_season: ArenaSeason.current.first,
         match_type: application.fight_type,
         status: :pending,
+        turn_timeout_seconds: application.timeout_seconds,
+        trauma_percent: application.trauma_percent,
         metadata: {
           fight_kind: application.fight_kind,
-          timeout_seconds: application.timeout_seconds,
-          trauma_percent: application.trauma_percent,
           is_npc_fight: true,
           npc_template_id: npc.id,
           npc_name: npc.name,
@@ -298,7 +299,7 @@ module Arena
           {
             type: "arena_match_starting",
             match_id: match.id,
-            countdown: application.timeout_seconds
+            countdown: 10 # Short countdown before match starts
           }
         )
       end

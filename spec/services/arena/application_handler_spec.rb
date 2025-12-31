@@ -176,9 +176,10 @@ RSpec.describe Arena::ApplicationHandler do
         expect(teams).to contain_exactly("a", "b")
       end
 
-      it "schedules match starter job" do
+      it "schedules match starter job with fixed countdown" do
+        # Match countdown is fixed at 10 seconds (not the turn timeout)
         expect(Arena::MatchStarterJob).to receive(:set)
-          .with(wait: 180.seconds)
+          .with(wait: 10.seconds)
           .and_return(double(perform_later: true))
 
         handler.accept(
@@ -302,22 +303,24 @@ RSpec.describe Arena::ApplicationHandler do
         }.to have_enqueued_job(Arena::MatchStarterJob).on_queue("arena")
       end
 
-      it "schedules job with correct wait time" do
+      it "schedules job with fixed countdown regardless of turn timeout" do
+        # Turn timeout (240s) is separate from match start countdown (10s)
         application.update!(timeout_seconds: 240)
 
         expect(Arena::MatchStarterJob).to receive(:set)
-          .with(wait: 240.seconds)
+          .with(wait: 10.seconds) # Fixed countdown, not turn timeout
           .and_return(double(perform_later: true))
 
         handler.accept(application: application, acceptor: character)
       end
 
-      it "stores starts_at in match metadata" do
+      it "stores starts_at in match metadata with 10 second countdown" do
         result = handler.accept(application: application, acceptor: character)
 
         expect(result.match.metadata["starts_at"]).to be_present
         starts_at = Time.parse(result.match.metadata["starts_at"])
-        expect(starts_at).to be_within(5.seconds).of(180.seconds.from_now)
+        # Match starts in 10 seconds (fixed countdown)
+        expect(starts_at).to be_within(5.seconds).of(10.seconds.from_now)
       end
     end
 

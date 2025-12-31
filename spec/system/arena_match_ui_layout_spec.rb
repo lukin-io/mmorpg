@@ -1,0 +1,284 @@
+# frozen_string_literal: true
+
+require "rails_helper"
+
+RSpec.describe "Arena Match UI Layout", type: :system do
+  include ActiveSupport::Testing::TimeHelpers
+
+  let(:user1) { create(:user, email: "player1@test.com", password: "password123") }
+  let(:user2) { create(:user, email: "player2@test.com", password: "password123") }
+  let(:character1) { create(:character, user: user1, name: "WarriorAlpha", level: 10, current_hp: 100, max_hp: 100) }
+  let(:character2) { create(:character, user: user2, name: "MageBeta", level: 10, current_hp: 100, max_hp: 100) }
+  let(:arena_room) { create(:arena_room, name: "Test Arena", level_min: 1, level_max: 100, active: true, max_concurrent_matches: 5) }
+  let(:arena_season) { create(:arena_season, status: :live) }
+
+  let!(:match) do
+    create(:arena_match,
+      arena_room: arena_room,
+      arena_season: arena_season,
+      status: :live,
+      match_type: :duel,
+      turn_timeout_seconds: 300,
+      started_at: Time.current)
+  end
+
+  let!(:participation1) { create(:arena_participation, arena_match: match, character: character1, user: user1, team: "a") }
+  let!(:participation2) { create(:arena_participation, arena_match: match, character: character2, user: user2, team: "b") }
+
+  before do
+    create(:character_position, character: character1)
+    create(:character_position, character: character2)
+    login_as(user1, scope: :user)
+    allow_any_instance_of(ApplicationController).to receive(:current_character).and_return(character1)
+  end
+
+  describe "3-Column Layout", js: true do
+    it "displays arena-match-layout container" do
+      visit arena_match_path(match)
+      expect(page).to have_css(".arena-match-layout")
+    end
+
+    it "displays left player section" do
+      visit arena_match_path(match)
+      expect(page).to have_css(".arena-player-left")
+    end
+
+    it "displays center combat section" do
+      visit arena_match_path(match)
+      expect(page).to have_css(".arena-combat-section")
+    end
+
+    it "displays right player section with info" do
+      visit arena_match_path(match)
+      expect(page).to have_css(".arena-player-right")
+    end
+
+    it "shows current user in left column" do
+      visit arena_match_path(match)
+      within(".arena-player-left") do
+        expect(page).to have_content("WarriorAlpha")
+      end
+    end
+
+    it "shows opponent in right column" do
+      visit arena_match_path(match)
+      within(".arena-player-right") do
+        expect(page).to have_content("MageBeta")
+      end
+    end
+  end
+
+  describe "Fighter Cards" do
+    it "displays fighter-card for each participant" do
+      visit arena_match_path(match)
+      expect(page).to have_css(".fighter-card", count: 2)
+    end
+
+    it "shows fighter name and level" do
+      visit arena_match_path(match)
+      expect(page).to have_css(".fighter-name", text: "WarriorAlpha")
+      expect(page).to have_css(".fighter-level", text: "[10]")
+    end
+
+    it "shows HP bar with percentage" do
+      visit arena_match_path(match)
+      expect(page).to have_css(".fighter-hp-bar")
+      expect(page).to have_css(".fighter-hp-text", text: "100/100")
+    end
+
+    it "applies correct HP color class for high HP" do
+      visit arena_match_path(match)
+      expect(page).to have_css(".fighter-hp-fill.hp-high")
+    end
+
+    it "applies correct HP color class for critical HP" do
+      character1.update!(current_hp: 15, max_hp: 100)
+      visit arena_match_path(match)
+      expect(page).to have_css(".fighter-hp-fill.hp-critical")
+    end
+  end
+
+  describe "Combat Action Bar", js: true do
+    it "displays action bar for participants" do
+      visit arena_match_path(match)
+      expect(page).to have_css(".arena-action-bar")
+    end
+
+    it "shows Simple Attack button with AP cost" do
+      visit arena_match_path(match)
+      expect(page).to have_button("⚔️ Simple [45]")
+    end
+
+    it "shows Aimed Attack button with AP cost" do
+      visit arena_match_path(match)
+      expect(page).to have_button("🎯 Aimed [65]")
+    end
+
+    it "shows body part selection dropdown" do
+      visit arena_match_path(match)
+      expect(page).to have_css(".body-part-selection select")
+    end
+
+    it "shows defense/block buttons" do
+      visit arena_match_path(match)
+      expect(page).to have_button("🛡️ Block Torso [30]")
+    end
+  end
+
+  describe "Combat Log" do
+    it "displays combat log container" do
+      visit arena_match_path(match)
+      expect(page).to have_css(".combat-log")
+    end
+
+    it "shows FIGHT STARTED message for live match" do
+      visit arena_match_path(match)
+      expect(page).to have_css(".combat-log-entry", text: "FIGHT STARTED!")
+    end
+  end
+
+  describe "Match Info Panel" do
+    it "displays match info in right column" do
+      visit arena_match_path(match)
+      within(".arena-player-right") do
+        expect(page).to have_css(".arena-match-info")
+      end
+    end
+
+    it "shows match type" do
+      visit arena_match_path(match)
+      within(".arena-match-info") do
+        expect(page).to have_content("Duel")
+      end
+    end
+
+    it "shows match status" do
+      visit arena_match_path(match)
+      within(".arena-match-info") do
+        expect(page).to have_content("Live")
+      end
+    end
+
+    it "shows room name" do
+      visit arena_match_path(match)
+      within(".arena-match-info") do
+        expect(page).to have_content("Test Arena")
+      end
+    end
+  end
+
+  describe "Opponent Stats Display" do
+    it "shows opponent stats in right column" do
+      visit arena_match_path(match)
+      within(".arena-player-right") do
+        expect(page).to have_css(".arena-opponent-stats")
+      end
+    end
+
+    it "displays strength stat" do
+      visit arena_match_path(match)
+      expect(page).to have_content("Strength")
+    end
+
+    it "displays dexterity stat" do
+      visit arena_match_path(match)
+      expect(page).to have_content("Dexterity")
+    end
+  end
+
+  describe "Status Badge" do
+    it "shows Live badge for active match" do
+      visit arena_match_path(match)
+      expect(page).to have_css(".badge--live", text: "Live")
+    end
+
+    it "shows Completed badge when match ends" do
+      character2.update!(current_hp: 0)
+      visit arena_match_path(match)
+      expect(page).to have_css(".badge--completed", text: "Completed")
+    end
+  end
+
+  describe "Victory/Defeat Overlay" do
+    context "when current user wins" do
+      before do
+        character2.update!(current_hp: 0)
+      end
+
+      it "shows VICTORY text" do
+        visit arena_match_path(match)
+        expect(page).to have_css(".arena-result--victory")
+        expect(page).to have_content("VICTORY")
+      end
+
+      it "shows winner name" do
+        visit arena_match_path(match)
+        expect(page).to have_content("WarriorAlpha")
+      end
+
+      it "shows Return to Arena button" do
+        visit arena_match_path(match)
+        expect(page).to have_link("Return to Arena")
+      end
+    end
+
+    context "when current user loses" do
+      before do
+        character1.update!(current_hp: 0)
+      end
+
+      it "shows DEFEAT text" do
+        visit arena_match_path(match)
+        expect(page).to have_css(".arena-result--defeat")
+        expect(page).to have_content("DEFEAT")
+      end
+    end
+  end
+
+  describe "Spectator View" do
+    let(:spectator_user) { create(:user, email: "spectator@test.com", password: "password123") }
+    let(:spectator_character) { create(:character, user: spectator_user, name: "Spectator", level: 5) }
+
+    before do
+      create(:character_position, character: spectator_character)
+      login_as(spectator_user, scope: :user)
+      allow_any_instance_of(ApplicationController).to receive(:current_character).and_return(spectator_character)
+    end
+
+    it "hides action bar for spectators" do
+      visit arena_match_path(match)
+      expect(page).not_to have_css(".arena-action-bar")
+    end
+
+    it "shows spectating text" do
+      visit arena_match_path(match)
+      expect(page).to have_content("spectating")
+    end
+
+    context "when match ends" do
+      before do
+        character2.update!(current_hp: 0)
+      end
+
+      it "shows MATCH ENDED instead of victory/defeat" do
+        visit arena_match_path(match)
+        expect(page).to have_content("MATCH ENDED")
+      end
+    end
+  end
+
+  describe "Responsive Layout" do
+    context "on mobile viewport", js: true do
+      before do
+        page.driver.browser.manage.window.resize_to(375, 667)
+      end
+
+      it "still displays all components" do
+        visit arena_match_path(match)
+        expect(page).to have_css(".arena-match-layout")
+        expect(page).to have_content("WarriorAlpha")
+        expect(page).to have_content("MageBeta")
+      end
+    end
+  end
+end

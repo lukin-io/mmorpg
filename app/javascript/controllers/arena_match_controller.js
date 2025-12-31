@@ -9,7 +9,7 @@ import consumer from "channels/consumer"
 export default class extends Controller {
   static targets = [
     "combatLog", "participantList", "actionButtons", "timer",
-    "teamA", "teamB", "resultOverlay"
+    "teamA", "teamB", "resultOverlay", "bodyPartSelect"
   ]
 
   static values = {
@@ -124,12 +124,8 @@ export default class extends Controller {
   formatAction(action) {
     let html = `<span class="combat-time">${action.timestamp}</span> `
 
-    html += `<span class="combat-actor">${action.actor_name}</span> `
-    html += action.description || "attacks"
-
-    if (action.target_name) {
-      html += ` <span class="combat-actor combat-actor--enemy">${action.target_name}</span>`
-    }
+    // Description already contains actor and target names, don't duplicate
+    html += action.description || `${action.actor_name || "Someone"} attacks`
 
     if (action.result) {
       html += ` <span class="combat-result">(${action.result})</span>`
@@ -329,13 +325,71 @@ export default class extends Controller {
   submitAction(event) {
     if (this.spectatingValue) return
 
-    const actionType = event.currentTarget.dataset.actionType
-    const targetId = event.currentTarget.dataset.targetId
+    const btn = event.currentTarget
+    const actionType = btn.dataset.actionType
+    const attackType = btn.dataset.attackType || "simple"
+    const blockParts = btn.dataset.blockParts
 
-    this.subscription.perform("submit_action", {
+    // Get selected body part from dropdown
+    const bodyPartSelect = this.element.querySelector("[data-arena-match-target='bodyPartSelect']")
+    const bodyPart = bodyPartSelect ? bodyPartSelect.value : "torso"
+
+    // Get target (for now, auto-target first enemy)
+    const targetId = btn.dataset.targetId || this.getFirstEnemyId()
+
+    const data = {
       action_type: actionType,
       target_id: targetId
-    })
+    }
+
+    if (actionType === "attack") {
+      data.attack_type = attackType
+      data.body_part = bodyPart
+    } else if (actionType === "defend" && blockParts) {
+      data.block_parts = blockParts.split(",")
+    }
+
+    console.log("Submitting action:", data)
+    this.subscription.perform("submit_action", data)
+
+    // Disable button temporarily to prevent spam
+    btn.disabled = true
+    setTimeout(() => btn.disabled = false, 1000)
+  }
+
+  getFirstEnemyId() {
+    // Find the first enemy participant (opponent team)
+    // Try team B first, then team A
+    let enemyTeam = this.element.querySelector(".arena-team--b .arena-participant")
+    if (enemyTeam && !this.isOwnTeam("b")) {
+      return enemyTeam.dataset.characterId
+    }
+
+    enemyTeam = this.element.querySelector(".arena-team--a .arena-participant")
+    if (enemyTeam && !this.isOwnTeam("a")) {
+      return enemyTeam.dataset.characterId
+    }
+
+    // Fallback: just pick the first participant that's not dead
+    const allParticipants = this.element.querySelectorAll(".arena-participant:not(.arena-participant--dead)")
+    for (const p of allParticipants) {
+      // Skip if no character ID (might be missing)
+      if (p.dataset.characterId) {
+        return p.dataset.characterId
+      }
+    }
+    return null
+  }
+
+  isOwnTeam(team) {
+    // Check if the logged-in user is on this team
+    // The user's team is determined by where their character appears
+    const teamContainer = this.element.querySelector(`.arena-team--${team}`)
+    if (!teamContainer) return false
+
+    // Check if this team has a participant with data-is-current-user="true"
+    // or if we're on this team based on some other marker
+    return teamContainer.querySelector("[data-is-current-user='true']") !== null
   }
 }
 

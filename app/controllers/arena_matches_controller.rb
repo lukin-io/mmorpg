@@ -13,7 +13,13 @@ class ArenaMatchesController < ApplicationController
 
   def show
     authorize @arena_match
-    @participations = @arena_match.arena_participations.includes(:character)
+
+    # Auto-end stale or finished matches
+    if @arena_match.auto_end_if_needed!
+      flash.now[:notice] = "Match ended due to timeout or completion."
+    end
+
+    @participations = @arena_match.arena_participations.includes(:character, :npc_template)
     @broadcaster = Arena::CombatBroadcaster.new(@arena_match)
 
     respond_to do |format|

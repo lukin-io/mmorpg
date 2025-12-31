@@ -72,6 +72,24 @@ class ArenaRoom < ApplicationRecord
     arena_applications.open.count
   end
 
+  # Get human-readable text explaining why character cannot access this room
+  #
+  # @param character [Character] the character to check
+  # @return [String] explanation of access requirement
+  def access_requirement_text(character)
+    return "Room is inactive" unless active?
+
+    unless character.level.between?(level_min, level_max)
+      return "Requires level #{level_min}-#{level_max} (you are level #{character.level})"
+    end
+
+    if faction_restriction.present? && character.faction_alignment != faction_restriction
+      return "Requires #{faction_restriction.humanize} faction"
+    end
+
+    "Accessible"
+  end
+
   private
 
   def level_range_valid

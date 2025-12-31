@@ -11,23 +11,23 @@
   <div class="arena-opponent-stats">
     <dl class="stats-grid stats-grid--compact">
       <div class="stat-item" title="Affects physical damage">
-        <dt>💪 Сила</dt>
+        <dt>💪 Str</dt>
         <dd><%= stats[:strength] || stats[:attack] || "-" %></dd>
       </div>
       <div class="stat-item" title="Affects hit chance and dodge">
-        <dt>🏃 Ловкость</dt>
+        <dt>🏃 Dex</dt>
         <dd><%= stats[:dexterity] || stats[:agility] || "-" %></dd>
       </div>
       <div class="stat-item" title="Affects critical chance">
-        <dt>🍀 Удача</dt>
+        <dt>🍀 Luck</dt>
         <dd><%= stats[:luck] || "-" %></dd>
       </div>
       <div class="stat-item" title="Affects magic damage">
-        <dt>📚 Знания</dt>
+        <dt>📚 Int</dt>
         <dd><%= stats[:knowledge] || stats[:intelligence] || "-" %></dd>
       </div>
       <div class="stat-item" title="Affects magic defense">
-        <dt>🧠 Мудрость</dt>
+        <dt>🧠 Wis</dt>
         <dd><%= stats[:wisdom] || "-" %></dd>
       </div>
     </dl>

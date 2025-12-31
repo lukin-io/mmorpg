@@ -192,16 +192,18 @@ RSpec.describe ArenaMatch, "Lifecycle and Status Transitions" do
       expect(result.match.metadata["fight_kind"]).to eq("free")
     end
 
-    it "stores trauma_percent from application" do
+    it "stores trauma_percent from application as attribute" do
       result = handler.accept(application: application, acceptor: character2)
 
-      expect(result.match.metadata["trauma_percent"]).to eq(30)
+      # trauma_percent is stored as a column, not in metadata
+      expect(result.match.trauma_percent).to eq(30)
     end
 
-    it "stores timeout_seconds from application" do
+    it "stores turn_timeout_seconds from application as attribute" do
       result = handler.accept(application: application, acceptor: character2)
 
-      expect(result.match.metadata["timeout_seconds"]).to eq(180)
+      # timeout_seconds is stored as turn_timeout_seconds column, not in metadata
+      expect(result.match.turn_timeout_seconds).to eq(180)
     end
   end
 

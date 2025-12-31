@@ -9,9 +9,11 @@
 <% p_data = participant_data(participation) %>
 <% show_stats = local_assigns.fetch(:show_stats, false) %>
 
-<div class="arena-participant <%= 'arena-participant--dead' if p_data.current_hp <= 0 %> <%= 'arena-participant--npc' if p_data.is_npc %>"
+<% is_current_user = !p_data.is_npc && participation.user_id == current_user&.id %>
+<div class="arena-participant <%= 'arena-participant--dead' if p_data.current_hp <= 0 %> <%= 'arena-participant--npc' if p_data.is_npc %> <%= 'arena-participant--self' if is_current_user %>"
      data-character-id="<%= p_data.id %>"
-     data-npc="<%= p_data.is_npc %>">
+     data-npc="<%= p_data.is_npc %>"
+     data-is-current-user="<%= is_current_user %>">
   <div class="arena-participant-avatar">
     <%= participation_avatar_tag(participation, size: :medium) %>
   </div>
