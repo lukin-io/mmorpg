@@ -1,0 +1,59 @@
+<%# Arena Rooms Index - List of available arena rooms %>
+
+<div class="arena-rooms-page" data-controller="arena">
+  <h1 class="arena-title">⚔️ Arena</h1>
+  <p class="arena-subtitle">Choose an arena to fight in</p>
+
+  <div class="arena-rooms-grid">
+    <% @rooms.each do |room| %>
+      <div class="arena-room-card <%= 'arena-room-card--accessible' if room.accessible_by?(current_character) %> <%= 'arena-room-card--locked' unless room.accessible_by?(current_character) %>">
+        <div class="arena-room-header">
+          <h2 class="arena-room-name"><%= room.name %></h2>
+          <span class="arena-room-type badge badge--<%= room.room_type %>">
+            <%= room.room_type.humanize %>
+          </span>
+        </div>
+
+        <div class="arena-room-details">
+          <div class="arena-room-level">
+            <span class="label">Level Range:</span>
+            <span class="value"><%= room.level_min %>-<%= room.level_max %></span>
+          </div>
+
+          <% if room.faction_restriction.present? %>
+            <div class="arena-room-faction">
+              <span class="label">Faction:</span>
+              <span class="value"><%= room.faction_restriction.humanize %></span>
+            </div>
+          <% end %>
+
+          <div class="arena-room-stats">
+            <span class="arena-applications-count">
+              📋 <%= room.open_application_count %> open
+            </span>
+            <span class="arena-matches-count">
+              ⚔️ <%= room.arena_matches.active.count %> active
+            </span>
+          </div>
+        </div>
+
+        <div class="arena-room-actions">
+          <% if room.accessible_by?(current_character) %>
+            <%= link_to "Enter Arena", arena_room_path(room), class: "btn btn-primary" %>
+          <% else %>
+            <span class="btn btn-disabled" title="<%= room.access_requirement_text(current_character) %>">
+              🔒 Locked
+            </span>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+
+  <% if @rooms.empty? %>
+    <div class="arena-empty">
+      <p>No arena rooms are currently available.</p>
+    </div>
+  <% end %>
+</div>
+

@@ -107,8 +107,9 @@ module Arena
 
         application.update!(matched_with: acceptor_app)
 
-        # Schedule match start
-        schedule_match_start(match, application.timeout_seconds)
+        # Schedule match start (short countdown, not turn timeout)
+        match_countdown = 10 # 10 seconds countdown before match starts
+        schedule_match_start(match, match_countdown)
 
         broadcast_match_created(match, application)
 
@@ -189,10 +190,10 @@ module Arena
         arena_season: ArenaSeason.current.first,
         match_type: application.fight_type,
         status: :pending,
+        turn_timeout_seconds: application.timeout_seconds,
+        trauma_percent: application.trauma_percent,
         metadata: {
-          fight_kind: application.fight_kind,
-          timeout_seconds: application.timeout_seconds,
-          trauma_percent: application.trauma_percent
+          fight_kind: application.fight_kind
         }
       )
 
@@ -224,10 +225,10 @@ module Arena
         arena_season: ArenaSeason.current.first,
         match_type: application.fight_type,
         status: :pending,
+        turn_timeout_seconds: application.timeout_seconds,
+        trauma_percent: application.trauma_percent,
         metadata: {
           fight_kind: application.fight_kind,
-          timeout_seconds: application.timeout_seconds,
-          trauma_percent: application.trauma_percent,
           is_npc_fight: true,
           npc_template_id: npc.id,
           npc_name: npc.name,
@@ -282,23 +283,33 @@ module Arena
     end
 
     def broadcast_match_created(match, application)
+      # Get all participant character IDs for client-side participant detection
+      participant_character_ids = match.arena_participations.players.map(&:character_id)
+      acceptor_application_id = application.matched_with&.id
+
+      # Broadcast to room - notifies all users viewing the room
       ActionCable.server.broadcast(
         "arena:room:#{application.arena_room_id}",
         {
           type: "match_created",
           match_id: match.id,
-          application_id: application.id
+          application_id: application.id,
+          acceptor_application_id: acceptor_application_id,
+          participant_ids: participant_character_ids,
+          countdown: 10,
+          redirect_url: "/arena_matches/#{match.id}"
         }
       )
 
-      # Notify participants (only player participants have user_id)
+      # Also notify participants directly (for when they're not on the room page)
       match.arena_participations.players.each do |participation|
         ActionCable.server.broadcast(
           "user:#{participation.user_id}:notifications",
           {
             type: "arena_match_starting",
             match_id: match.id,
-            countdown: application.timeout_seconds
+            countdown: 10,
+            redirect_url: "/arena_matches/#{match.id}"
           }
         )
       end

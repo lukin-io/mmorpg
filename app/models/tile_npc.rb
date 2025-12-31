@@ -168,7 +168,11 @@ class TileNpc < ApplicationRecord
       return template
     end
 
-    # Create new template
+    # Create new template with retry for race condition handling
+    create_npc_template_with_retry(npc_key, npc_name, npc_data)
+  end
+
+  def create_npc_template_with_retry(npc_key, npc_name, npc_data, retries: 3)
     NpcTemplate.create!(
       npc_key: npc_key,
       name: npc_name,
@@ -183,9 +187,20 @@ class TileNpc < ApplicationRecord
         loot_table: npc_data[:loot] || []
       }.merge(npc_data[:metadata] || {})
     )
-  rescue ActiveRecord::RecordInvalid => e
-    Rails.logger.error("Failed to create NPC template for #{npc_key}: #{e.message}")
-    # Try one more time to find by key or name (race condition protection)
-    NpcTemplate.find_by(npc_key: npc_key) || NpcTemplate.find_by(name: npc_name)
+  rescue ActiveRecord::RecordInvalid, ActiveRecord::RecordNotUnique => e
+    Rails.logger.warn("NPC template creation conflict for #{npc_key}: #{e.message}")
+
+    # Try to find existing template (race condition: another process created it)
+    template = NpcTemplate.find_by(npc_key: npc_key) || NpcTemplate.find_by(name: npc_name)
+    return template if template
+
+    # Retry with backoff if template not found yet (transaction not committed)
+    if retries > 0
+      sleep(0.05 * (4 - retries)) # 50ms, 100ms, 150ms backoff
+      return create_npc_template_with_retry(npc_key, npc_name, npc_data, retries: retries - 1)
+    end
+
+    Rails.logger.error("Failed to find or create NPC template for #{npc_key} after retries")
+    nil
   end
 end

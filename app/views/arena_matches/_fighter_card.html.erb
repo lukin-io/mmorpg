@@ -1,0 +1,81 @@
+<%#
+  Fighter card for PVP arena match
+  Shows player/NPC with HP bar, stats, and status
+
+  Required locals:
+  - participation: ArenaParticipation record
+  - show_stats: Boolean, whether to show opponent stats
+  - position: :left or :right (for styling)
+%>
+<% p_data = participant_data(participation) %>
+<% defeated = p_data.current_hp <= 0 %>
+
+<div class="fighter-card fighter-card--<%= position %> <%= 'fighter-card--defeated' if defeated %> <%= 'fighter-card--npc' if p_data.is_npc %>"
+     data-character-id="<%= p_data.id %>"
+     data-npc="<%= p_data.is_npc %>">
+
+  <%# Avatar %>
+  <div class="fighter-avatar">
+    <%= participation_avatar_tag(participation, size: :large) %>
+    <% if defeated %>
+      <div class="fighter-defeated-overlay">💀</div>
+    <% end %>
+  </div>
+
+  <%# Name and Level %>
+  <div class="fighter-header">
+    <span class="fighter-name <%= 'fighter-name--defeated' if defeated %>">
+      <%= p_data.name %>
+    </span>
+    <span class="fighter-level">[Lv.<%= p_data.level %>]</span>
+    <% if p_data.is_npc %>
+      <span class="fighter-badge fighter-badge--npc">🤖</span>
+    <% end %>
+  </div>
+
+  <%# HP Bar %>
+  <div class="fighter-hp">
+    <div class="fighter-hp-bar" title="HP: <%= p_data.current_hp %>/<%= p_data.max_hp %>">
+      <div class="fighter-hp-fill fighter-hp-fill--<%= hp_color_class(p_data.hp_percent) %>"
+           style="width: <%= p_data.hp_percent %>%"></div>
+      <span class="fighter-hp-text"><%= p_data.current_hp %>/<%= p_data.max_hp %></span>
+    </div>
+    <span class="fighter-hp-percent"><%= p_data.hp_percent.round %>%</span>
+  </div>
+
+  <%# MP Bar (players only) %>
+  <% unless p_data.is_npc %>
+    <div class="fighter-mp">
+      <div class="fighter-mp-bar" title="MP: <%= p_data.current_mp %>/<%= p_data.max_mp %>">
+        <div class="fighter-mp-fill" style="width: <%= p_data.mp_percent %>%"></div>
+        <span class="fighter-mp-text"><%= p_data.current_mp %>/<%= p_data.max_mp %></span>
+      </div>
+    </div>
+  <% end %>
+
+  <%# Stats (shown for opponent) %>
+  <% if show_stats %>
+    <div class="fighter-stats">
+      <div class="fighter-stat" title="Strength">
+        <span class="stat-icon">💪</span>
+        <span class="stat-value"><%= p_data.strength %></span>
+      </div>
+      <div class="fighter-stat" title="Dexterity">
+        <span class="stat-icon">🏃</span>
+        <span class="stat-value"><%= p_data.dexterity %></span>
+      </div>
+      <div class="fighter-stat" title="Luck">
+        <span class="stat-icon">🍀</span>
+        <span class="stat-value"><%= p_data.luck %></span>
+      </div>
+    </div>
+  <% end %>
+
+  <%# Result badge (if match completed) %>
+  <% if participation.result.present? && participation.result != "pending" %>
+    <div class="fighter-result fighter-result--<%= participation.result %>">
+      <%= participation.result.humanize %>
+    </div>
+  <% end %>
+</div>
+

@@ -99,19 +99,46 @@ module Arena
       broadcast({
         type: "match_start",
         match_id: match.id,
-        participants: match.arena_participations.map do |p|
-          {
-            character_id: p.character_id,
-            character_name: p.character.name,
-            team: p.team,
-            level: p.character.level,
-            current_hp: p.character.current_hp,
-            max_hp: p.character.max_hp,
-            current_mp: p.character.current_mp,
-            max_mp: p.character.max_mp
-          }
+        participants: match.arena_participations.includes(:character, :npc_template).map do |p|
+          participant_data(p)
         end
       })
+    end
+
+    # Build participant data hash for broadcast
+    # Handles both player characters and NPCs
+    #
+    # @param p [ArenaParticipation] participation record
+    # @return [Hash] participant data
+    def participant_data(p)
+      if p.npc?
+        npc = p.npc_template
+        {
+          id: "npc-#{npc.id}",
+          character_id: "npc-#{npc.id}",
+          character_name: npc.name,
+          team: p.team,
+          level: npc.level,
+          current_hp: p.current_hp || npc.health,
+          max_hp: p.max_hp || npc.health,
+          current_mp: 0,
+          max_mp: 0,
+          is_npc: true
+        }
+      else
+        char = p.character
+        {
+          character_id: char.id,
+          character_name: char.name,
+          team: p.team,
+          level: char.level,
+          current_hp: char.current_hp,
+          max_hp: char.max_hp,
+          current_mp: char.current_mp,
+          max_mp: char.max_mp,
+          is_npc: false
+        }
+      end
     end
 
     # Alias for compatibility with CombatProcessor
@@ -133,18 +160,32 @@ module Arena
     # @param action_type [String] type of action
     # @param target [Character, nil] the target character
     # @param damage [Integer] damage dealt
-    # @param critical [Boolean] whether it was a critical hit
-    def broadcast_combat_action(actor, action_type, target, damage, critical: false)
+    # @param opts [Hash] additional options:
+    #   - critical: Boolean (whether it was a critical hit)
+    #   - body_part: String (targeted body part)
+    #   - attack_type: Symbol (:simple, :aimed)
+    #   - block_parts: Array[String] (body parts being blocked)
+    #   - npc_target: String (NPC name if target is NPC)
+    def broadcast_combat_action(actor, action_type, target, damage, **opts)
+      critical = opts.fetch(:critical, false)
+      body_part = opts[:body_part]
+      attack_type = opts[:attack_type]
+      block_parts = opts[:block_parts]
+      npc_target = opts[:npc_target]
+
       broadcast_action({
         actor_id: actor.id,
         actor_name: actor.name,
         target_id: target&.id,
-        target_name: target&.name,
+        target_name: target&.name || npc_target,
         action_type: action_type,
         damage: damage,
         is_critical: critical,
-        description: format_combat_description(actor, action_type, target, damage)
-      })
+        body_part: body_part,
+        attack_type: attack_type,
+        block_parts: block_parts,
+        description: format_combat_description(actor, action_type, target, damage, body_part:, critical:)
+      }.compact)
     end
 
     # Broadcast character defeat
@@ -159,27 +200,73 @@ module Arena
       })
     end
 
+    # Broadcast AP (Action Points) update for a character
+    #
+    # @param character [Character] the character
+    # @param current_ap [Integer] current AP remaining
+    # @param max_ap [Integer] maximum AP per turn
+    def broadcast_ap_update(character, current_ap, max_ap)
+      broadcast({
+        type: "ap_update",
+        character_id: character.id,
+        character_name: character.name,
+        current_ap: current_ap,
+        max_ap: max_ap,
+        ap_percent: ((current_ap.to_f / max_ap) * 100).round,
+        timestamp: Time.current.strftime("%H:%M:%S")
+      })
+    end
+
     # Broadcast match ended
     #
     # @param winning_team [String, nil] the winning team or nil for draw
-    def broadcast_match_ended(winning_team)
+    # @param reason [Symbol] reason for ending (:normal, :timeout, :forfeit)
+    def broadcast_match_ended(winning_team, reason: :normal)
       broadcast_result({
         winning_team: winning_team,
-        participants: match.arena_participations.map do |p|
-          {
-            character_id: p.character_id,
-            character_name: p.character.name,
-            team: p.team,
-            result: p.result,
-            damage_dealt: p.metadata&.dig("damage_dealt") || 0,
-            damage_taken: p.metadata&.dig("damage_taken") || 0,
-            healing_done: p.metadata&.dig("healing_done") || 0,
-            kills: p.metadata&.dig("kills") || 0,
-            rating_delta: p.rating_delta
-          }
+        reason: reason,
+        timed_out: reason == :timeout,
+        participants: match.arena_participations.includes(:character, :npc_template).map do |p|
+          participant_result_data(p)
         end,
         rewards: []
       })
+    end
+
+    # Build participant result data for match end broadcast
+    # Handles both player characters and NPCs
+    #
+    # @param p [ArenaParticipation] participation record
+    # @return [Hash] participant result data
+    def participant_result_data(p)
+      if p.npc?
+        npc = p.npc_template
+        {
+          character_id: "npc-#{npc.id}",
+          character_name: npc.name,
+          team: p.team,
+          result: p.result,
+          damage_dealt: p.metadata&.dig("damage_dealt") || 0,
+          damage_taken: p.metadata&.dig("damage_taken") || 0,
+          healing_done: 0,
+          kills: p.metadata&.dig("kills") || 0,
+          rating_delta: 0,
+          is_npc: true
+        }
+      else
+        {
+          character_id: p.character_id,
+          character_name: p.character&.name,
+          team: p.team,
+          result: p.result,
+          damage_dealt: p.metadata&.dig("damage_dealt") || 0,
+          damage_taken: p.metadata&.dig("damage_taken") || 0,
+          healing_done: p.metadata&.dig("healing_done") || 0,
+          kills: p.metadata&.dig("kills") || 0,
+          rating_delta: p.rating_delta,
+          is_npc: false
+        }
+      end
     end
 
     # Broadcast system message (announcements, warnings)
@@ -260,14 +347,21 @@ module Arena
       ((character.current_mp.to_f / character.max_mp) * 100).round(1)
     end
 
-    def format_combat_description(actor, action_type, target, damage)
+    def format_combat_description(actor, action_type, target, damage, body_part: nil, critical: false)
+      target_name = target&.name || "opponent"
+
       case action_type.to_s
       when "attack"
-        if target && damage.positive?
-          "#{actor.name} strikes #{target.name} for #{damage} damage!"
+        if damage.positive?
+          part_text = body_part ? " (#{body_part})" : ""
+          crit_text = critical ? " CRITICAL!" : ""
+          "#{actor.name} hits #{target_name}#{part_text} for #{damage} damage!#{crit_text}"
         else
           "#{actor.name} attacks!"
         end
+      when "blocked"
+        part_text = body_part ? " (#{body_part})" : ""
+        "#{target_name} blocked attack#{part_text} from #{actor.name}."
       when "defend"
         "#{actor.name} takes a defensive stance."
       when "skill"

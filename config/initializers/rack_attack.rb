@@ -1,8 +1,9 @@
 # frozen_string_literal: true
 
 class Rack::Attack
-  # Skip Redis cache in test environment to avoid connection issues
-  if Rails.env.test?
+  # Skip Redis cache in test/development environments
+  # Note: RedisCacheStore is incompatible with connection_pool 3.0+ (required by Sidekiq 8.1+)
+  if Rails.env.test? || Rails.env.development?
     cache.store = ActiveSupport::Cache::MemoryStore.new
   else
     redis_cache_url = ENV.fetch("REDIS_CACHE_URL", "redis://localhost:6379/1")

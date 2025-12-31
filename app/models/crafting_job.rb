@@ -28,7 +28,7 @@ class CraftingJob < ApplicationRecord
   scope :active, -> { where(status: [:queued, :in_progress]) }
   scope :for_character, ->(character) { where(character:) }
 
-  broadcasts_to ->(job) { ["crafting_jobs", job.character_id] }, inserts_by: :append
+  broadcasts_to ->(job) { ["crafting_jobs", job.character_id] }, inserts_by: :append, partial: "crafting_jobs/job"
 
   delegate :profession, to: :recipe
 

@@ -6,6 +6,50 @@
 - **v1.2** (2025-12-27): Added reference to open-world PVP via unified combat architecture
 - **v1.3** (2025-12-28): Open-world PVP improvements documented (concurrency, locality, anti-abuse, deterministic RNG)
 - **v1.4** (2025-12-29): Integrated with unified turn-based combat system (see `doc/flow/24_unified_turn_combat.md`)
+- **v1.5** (2025-12-30): PVP fight application system (create/accept) with comprehensive specs
+- **v1.6** (2025-12-30): Tactical combat enhancements:
+  - HP Recovery Gate (50% HP minimum to fight)
+  - Turn Timeout System (5 min default, auto-resolve)
+  - Trauma/Injury System (HP/XP loss % after fight)
+  - Body Part Targeting (head, torso, stomach, legs)
+  - Attack Type Variants (simple 45 AP, aimed 65 AP)
+  - Combo Block Types (multi-body-part coverage)
+  - Standardized Combat Log Messages
+  - Opponent Stats Display (strength, dexterity, luck, knowledge, wisdom)
+- **v1.7** (2025-12-31): Auto-end & UI improvements:
+  - **Auto-End on Page Load**: Matches auto-end when viewing if stale (2x turn timeout exceeded) or defeated (any participant HP ≤ 0)
+  - **3-Column UI Layout**: Player 1 (left) | Actions + Combat Log (center) | Player 2 + Match Info (right)
+  - **PVP Terminology**: Changed "Team A/B" to actual player names for better 1v1 UX
+  - **Fighter Card Component**: New `_fighter_card.html.erb` partial with avatar, name, level, HP/MP bars, stats
+  - **Helper Methods**: `winner_name`, `format_duration`, `hp_color_class` for UI
+  - **Comprehensive Test Coverage**: Model specs for auto-end, helper specs for UI methods, request specs for controller behavior, system specs for layout
+- **v1.8** (2025-12-31): Complete fight-to-defeat analysis documented:
+  - Full combat session captured (live Neverlands Mannequin fight)
+  - Victory/defeat message formats documented
+  - 3-column horizontal UI layout finalized
+  - All combat outcomes captured: hit, critical, dodge, block, victory, defeat
+- **v1.9** (2025-12-31): Action Points (AP) system implementation:
+  - **AP System**: 100 AP per turn, tracked per participation
+  - **Attack Costs**: Simple attack 45 AP, Aimed attack 65 AP
+  - **Block Cost**: 30 AP
+  - **UI Integration**: AP bar above action buttons, AP cost indicators on buttons
+  - **Real-time Updates**: `broadcast_ap_update` pushes AP changes to clients
+  - **Button Disabling**: Buttons auto-disable when insufficient AP
+  - **Comprehensive Specs**: 33 tests for combat processor including AP system
+- **v1.10** (2025-12-31): Match notification and redirect fixes:
+  - **Bug Fix**: Match now starts for BOTH applicant and acceptor
+    - Broadcast includes `participant_ids` for client-side detection
+    - Both users receive countdown and redirect to match
+  - **Bug Fix**: Stale applications now properly removed from UI
+    - Broadcast includes `acceptor_application_id` to remove both applications
+  - **Active Match Redirect**: Users with pending/live matches are redirected from arena pages
+  - **Spec Coverage**:
+    - Request spec: `spec/requests/arena_match_redirect_spec.rb` (6 specs)
+    - Service spec: broadcast tests in `application_handler_spec.rb` (2 specs)
+    - System spec: `spec/system/arena_match_notification_spec.rb` (15 specs)
+      - Match notification, application removal, redirect behavior
+      - Form submission, button visibility, application lifecycle
+  - **Total**: 250+ arena specs passing
 
 ## Implementation Status
 
@@ -79,6 +123,21 @@
 6. 5-second countdown (shorter for training)
 7. Match starts with NPC opponent controlled by `Arena::NpcCombatAi`
 
+### UC-2c: Match Notification System (v1.10)
+**Actor:** Both applicant and acceptor in a match
+**Flow:**
+1. User A creates application → `Arena::ApplicationHandler#create`
+2. User B accepts application → `Arena::ApplicationHandler#accept`
+3. `broadcast_match_created` sends to room channel with:
+   - `match_id`, `participant_ids`, `acceptor_application_id`
+4. `arena_controller.js` receives broadcast:
+   - Checks if current character is in `participant_ids`
+   - Removes both applications from UI
+   - Starts 10-second countdown for both users
+5. Both users see countdown overlay → redirected to match
+6. If either user navigates to `/arena` or `/arena_rooms/*` while in active match:
+   - `redirect_if_in_active_match` redirects to match page
+
 ### UC-3: Arena Combat
 **Actor:** Two matched players
 **Flow:**
@@ -106,17 +165,47 @@
 
 ### Combat System
 - Turn-based with real-time updates
-- Base damage = character attack stat + weapon bonus + random(1-5)
-- Defense reduces damage; defending stance adds 1.5x defense
-- Critical hits (10% chance) deal 1.5x damage
-- Combat lockout: no regeneration during/10s after combat
+- **AP System**: 100 AP per turn, Simple Attack (45 AP), Aimed Attack (65 AP), Block (30 AP)
+- **Damage Formula**: `(attack + weapon + rand(1..5)) × attack_mult × body_part_mult - defense`
+- **Body Part Multipliers**: Head 1.3x, Torso 1.0x, Stomach 1.1x, Legs 0.9x
+- **Defense**: Base + armor; defending stance adds 1.5x
+- **Critical Hits**: 10% chance, 2x damage
+- **HP Recovery Gate**: 50% HP minimum to accept fights
+- **Trauma System**: 10-80% HP/XP loss based on settings
+
+> **Full formulas reference**: See `doc/features/neverlands_inspired_combat.md` → **Elselands Combat Formulas Reference**
+
+### Match Auto-End (v1.7)
+Matches automatically end when viewing (`GET /arena_matches/:id`) if:
+- **Stale**: Match exceeds 2x turn timeout (e.g., 10 min for 5 min timeout)
+- **Defeat**: Any participant has HP ≤ 0
+
+The `ArenaMatch#auto_end_if_needed!` method:
+1. Checks `stale?` (live + started + past 2x timeout)
+2. Checks `should_auto_end_defeat?` (any participant defeated)
+3. Calls `determine_winner` to find surviving team
+4. Sets `status: :completed`, `winning_team`, `ended_at`, `timed_out` flag
+
+### UI Layout (v1.7)
+3-column horizontal layout for PVP matches:
+```
+┌──────────────┬─────────────────────┬──────────────────┐
+│  Player 1    │  Combat Actions +   │  Player 2 +      │
+│  (left)      │  Combat Log         │  Match Info      │
+│              │  (center)           │  (right)         │
+└──────────────┴─────────────────────┴──────────────────┘
+```
+- **Fighter Card**: Avatar, name, level, HP/MP bars with color-coded fill
+- **Action Bar**: Simple Attack [45 AP], Aimed Attack [65 AP], Block buttons, body part dropdown
+- **Combat Log**: Scrollable log with timestamps and formatted messages
+- **Match Info**: Type, status, room, duration, trauma %, turn timeout
 
 ---
 
 ## Overview
-This document describes the Arena PvP system, inspired by Neverlands' classic arena mechanics. The system supports multiple fight types, room-based matchmaking, real-time combat updates, and comprehensive fight logging.
+This document describes the Arena PvP system. The system supports multiple fight types, room-based matchmaking, real-time combat updates, and comprehensive fight logging.
 
-## Arena Concepts (Neverlands-Inspired)
+## Arena Concepts
 
 ### Arena Rooms
 Each arena has multiple rooms with level restrictions and special rules:
@@ -415,7 +504,7 @@ export default class extends Controller {
 }
 ```
 
-### CSS Styles (Neverlands-Inspired)
+### CSS Styles
 
 ```css
 /* Arena room grid */
@@ -787,6 +876,8 @@ training:
 
 ### Jobs
 - `app/jobs/arena/npc_spawner_job.rb` — Periodic NPC bot spawning
+- `app/jobs/arena_turn_timeout_job.rb` — Turn timeout auto-resolve
+- `app/jobs/arena_turn_timeout_warning_job.rb` — Turn timeout warnings (30s, 10s, 5s)
 
 ### Controllers
 - `app/controllers/arena_controller.rb` — Lobby
@@ -809,9 +900,12 @@ training:
 ### Views
 - `app/views/arena/*`
 - `app/views/arena_rooms/*`
-- `app/views/arena_matches/*`
+- `app/views/arena_matches/*` — Including `_fighter_card.html.erb`, `_opponent_stats.html.erb`
 - `app/views/tactical_arena/*`
 - `app/views/arena_bets/*`
+
+### Helpers
+- `app/helpers/arena_helper.rb` — UI helpers (winner_name, format_duration, hp_color_class, participant_data)
 
 ### Configuration
 - `config/routes.rb` — Arena routes
@@ -824,12 +918,30 @@ training:
 - `db/migrate/20251127100002_create_arena_bets.rb`
 - `db/migrate/20251218174018_add_npc_support_to_arena.rb`
 - `db/migrate/20251218174704_add_metadata_to_arena_participations.rb`
+- `db/migrate/20251230170000_add_arena_combat_enhancements.rb` — Turn timeout, trauma, turn tracking
+
+### Specs
+- `spec/models/arena_application_hp_gate_spec.rb` — HP recovery gate tests
+- `spec/models/arena_match_timeout_spec.rb` — Turn timeout tests
+- `spec/models/arena_match_auto_end_spec.rb` — Auto-end functionality (stale, defeat, participant_defeated?, determine_winner)
+- `spec/models/arena_match_lifecycle_spec.rb` — Match status transitions and lifecycle
+- `spec/services/arena/combat_processor_spec.rb` — Combat action processing, AP system, body parts, attack types
+- `spec/services/arena/combat_processor_features_spec.rb` — Tactical combat features tests
+- `spec/services/arena/application_handler_spec.rb` — Application create/accept/cancel lifecycle, broadcast tests
+- `spec/helpers/arena_helper_pvp_spec.rb` — PVP UI helper methods (winner_name, format_duration, hp_color_class)
+- `spec/requests/arena_matches_auto_end_spec.rb` — Controller auto-end behavior on show/action
+- `spec/requests/arena_matches_spec.rb` — Match routes and routing regression tests
+- `spec/requests/arena_match_redirect_spec.rb` — Active match redirect behavior (v1.10)
+- `spec/system/arena_match_ui_layout_spec.rb` — 3-column layout, fighter cards, combat log
+- `spec/system/arena_match_notification_spec.rb` — Match notifications, application removal, redirects (v1.10)
+- `spec/config/sidekiq_queues_spec.rb` — Queue configuration verification
 
 ### Related Documentation
 - `doc/flow/22_unified_npc_architecture.md` — NPC architecture overview
 - `doc/flow/23_unified_combat_architecture.md` — Unified combat system (includes open-world PVP)
 - `doc/flow/24_unified_turn_combat.md` — Turn-based combat mechanics (body-part targeting, AP, blocks)
-- `doc/features/neverlands_inspired_combat.md` — Combat mechanics game design inspiration
+- `doc/features/neverlands_inspired_combat.md` — **Combat mechanics game design** (live Mannequin fights Dec 30-31, 2024)
+- `doc/features/neverlands_inspired.md` — General features reference (arena tabs, fight applications, UI layout)
 
 ---
 

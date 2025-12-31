@@ -3,78 +3,127 @@
 require "rails_helper"
 
 RSpec.describe ArenaHelper, type: :helper do
-  describe "#room_type_icon" do
-    it "returns training icon for training rooms" do
-      expect(helper.room_type_icon("training")).to be_present
-    end
+  let(:user) { create(:user) }
+  let(:character) { create(:character, user: user, level: 10, current_hp: 80, max_hp: 100) }
+  let(:arena_room) do
+    create(:arena_room, name: "Test Arena", level_min: 1, level_max: 100, active: true)
+  end
+  let(:arena_match) do
+    create(:arena_match, arena_room: arena_room, status: :live, match_type: :duel)
+  end
+  let!(:participation) do
+    create(:arena_participation,
+      arena_match: arena_match,
+      character: character,
+      user: user,
+      team: "a")
+  end
 
-    it "returns duel icon for duel rooms" do
-      expect(helper.room_type_icon("duel")).to be_present
-    end
+  before do
+    create(:character_position, character: character)
+  end
 
-    it "returns faction icon for faction rooms" do
-      expect(helper.room_type_icon("faction")).to be_present
-    end
+  describe "#participant_data" do
+    context "with character participation" do
+      it "returns correct name and level" do
+        data = helper.participant_data(participation)
+        expect(data.name).to eq(character.name)
+        expect(data.level).to eq(character.level)
+      end
 
-    it "returns default icon for unknown types" do
-      expect(helper.room_type_icon("unknown")).to be_present
+      it "returns correct HP values" do
+        data = helper.participant_data(participation)
+        expect(data.current_hp).to eq(character.current_hp)
+        expect(data.max_hp).to eq(character.max_hp)
+      end
+
+      it "calculates HP percentage correctly" do
+        data = helper.participant_data(participation)
+        expect(data.hp_percent).to eq(80.0)
+      end
+
+      it "marks as not NPC" do
+        data = helper.participant_data(participation)
+        expect(data.is_npc).to be false
+      end
     end
   end
 
-  describe "#fight_type_label" do
-    it "returns label for duel type" do
-      expect(helper.fight_type_label("duel")).to eq("1v1 Duel")
+  describe "#arena_access_reason" do
+    context "when character has sufficient HP" do
+      before { character.update!(current_hp: 80, max_hp: 100) }
+
+      it "returns nil" do
+        expect(helper.arena_access_reason(character)).to be_nil
+      end
     end
 
-    it "returns label for team_battle type" do
-      expect(helper.fight_type_label("team_battle")).to eq("Team Battle")
+    context "when character has insufficient HP" do
+      before { character.update!(current_hp: 30, max_hp: 100) }
+
+      it "returns HP recovery warning" do
+        reason = helper.arena_access_reason(character)
+        expect(reason).to include("Recover before fighting")
+        expect(reason).to include("30%")
+        expect(reason).to include("50%")
+      end
+    end
+
+    context "when character is nil" do
+      it "returns not logged in message" do
+        expect(helper.arena_access_reason(nil)).to eq("Not logged in")
+      end
     end
   end
 
   describe "#fight_type_with_icon" do
-    it "returns label with icon for duel" do
-      expect(helper.fight_type_with_icon("duel")).to include("⚔️")
+    it "returns icon and label for duel" do
+      result = helper.fight_type_with_icon("duel")
+      expect(result).to include("⚔️")
+      expect(result).to include("Duel")
     end
 
-    it "returns label with icon for team_battle" do
-      expect(helper.fight_type_with_icon("team_battle")).to include("👥")
-    end
-  end
-
-  describe "#arena_room_status_tag" do
-    it "returns open tag when room has capacity" do
-      room = double(has_capacity?: true)
-      result = helper.arena_room_status_tag(room)
-      expect(result).to include("🟢")
-      expect(result).to include("Open")
+    it "returns icon and label for team_battle" do
+      result = helper.fight_type_with_icon("team_battle")
+      expect(result).to include("👥")
+      expect(result).to include("Team Battle")
     end
 
-    it "returns full tag when room is at capacity" do
-      room = double(has_capacity?: false)
-      result = helper.arena_room_status_tag(room)
-      expect(result).to include("🔴")
-      expect(result).to include("Full")
+    it "handles unknown fight types gracefully" do
+      result = helper.fight_type_with_icon("unknown")
+      expect(result).to include("⚔️")
+      expect(result).to include("Unknown")
     end
   end
 
-  describe "#arena_match_status_tag" do
-    it "returns live badge for live matches" do
-      match = double(status: "live")
-      result = helper.arena_match_status_tag(match)
-      expect(result).to include("🔴")
-      expect(result).to include("LIVE")
+  describe "#room_type_badge" do
+    it "returns badge for training room" do
+      badge = helper.room_type_badge(:training)
+      expect(badge).to include("🏋️")
+      expect(badge).to include("Training Hall")
+    end
+
+    it "returns badge for challenge room" do
+      badge = helper.room_type_badge(:challenge)
+      expect(badge).to include("🗡️")
+      expect(badge).to include("Challenge Arena")
     end
   end
 
-  describe "#level_range_display" do
-    it "formats level range" do
-      room = double(min_level: 1, max_level: 10)
-      expect(helper.level_range_display(room)).to eq("Lvl 1-10")
+  describe "#participation_avatar_tag" do
+    context "with player participation" do
+      it "returns avatar element with class" do
+        html = helper.participation_avatar_tag(participation)
+        expect(html).to include("avatar")
+      end
     end
+  end
 
-    it "handles same level" do
-      room = double(min_level: 5, max_level: 5)
-      expect(helper.level_range_display(room)).to eq("Lvl 5")
+  describe "#character_combat_stats" do
+    context "with nil character" do
+      it "returns empty hash" do
+        expect(helper.character_combat_stats(nil)).to eq({})
+      end
     end
   end
 end

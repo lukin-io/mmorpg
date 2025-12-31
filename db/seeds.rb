@@ -1,14 +1,14 @@
 lukin_user = nil
 
 if defined?(User)
-  admin = User.find_or_create_by!(email: "admin@elselands.test") do |user|
-    user.password = "password!"
+  admin = User.find_or_create_by!(email: "first@lukin.io") do |user|
+    user.password = "vxk7mjqjg9"
     user.confirmed_at = Time.current
   end
   admin.add_role(:admin)
 
-  lukin_user = User.find_or_create_by!(email: "lukin.maksim@gmail.com") do |user|
-    user.password = "password!"
+  lukin_user = User.find_or_create_by!(email: "second@lukin.io") do |user|
+    user.password = "vxk7mjqjg9"
     user.confirmed_at = Time.current
   end
   lukin_user.add_role(:admin)
@@ -650,8 +650,10 @@ end
 # ------------------------------------------------------------------
 # Gameplay feature sandboxes used by flow + feature documentation
 # ------------------------------------------------------------------
-admin ||= User.find_by(email: "admin@elselands.test")
-lukin_user ||= User.find_by(email: "lukin.maksim@gmail.com")
+# Use the users created at the top of the file (first@lukin.io, second@lukin.io)
+# Fall back to alternative emails if those don't exist
+admin ||= User.find_by(email: "first@lukin.io") || User.find_by(email: "admin@elselands.test")
+lukin_user ||= User.find_by(email: "second@lukin.io") || User.find_by(email: "lukin.maksim@gmail.com")
 
 main_character = nil
 secondary_character = nil

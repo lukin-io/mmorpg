@@ -1,0 +1,36 @@
+<%#
+  Displays opponent's combat-relevant stats
+  Shows: Strength, Dexterity, Luck, Knowledge, Wisdom
+
+  Required locals:
+  - participation: ArenaParticipation record
+%>
+<% stats = opponent_combat_stats(participation) %>
+
+<% if stats.present? %>
+  <div class="arena-opponent-stats">
+    <dl class="stats-grid stats-grid--compact">
+      <div class="stat-item" title="Affects physical damage">
+        <dt>💪 Str</dt>
+        <dd><%= stats[:strength] || stats[:attack] || "-" %></dd>
+      </div>
+      <div class="stat-item" title="Affects hit chance and dodge">
+        <dt>🏃 Dex</dt>
+        <dd><%= stats[:dexterity] || stats[:agility] || "-" %></dd>
+      </div>
+      <div class="stat-item" title="Affects critical chance">
+        <dt>🍀 Luck</dt>
+        <dd><%= stats[:luck] || "-" %></dd>
+      </div>
+      <div class="stat-item" title="Affects magic damage">
+        <dt>📚 Int</dt>
+        <dd><%= stats[:knowledge] || stats[:intelligence] || "-" %></dd>
+      </div>
+      <div class="stat-item" title="Affects magic defense">
+        <dt>🧠 Wis</dt>
+        <dd><%= stats[:wisdom] || "-" %></dd>
+      </div>
+    </dl>
+  </div>
+<% end %>
+

@@ -1,0 +1,20 @@
+<%#
+  Arena applications list partial
+  Renders a list of fight applications for a room
+
+  Required locals:
+  - applications: ActiveRecord::Relation of ArenaApplication records
+%>
+
+<div class="arena-applications-list">
+  <% if applications.empty? %>
+    <div class="arena-empty">
+      <p class="text-muted">🔍 No open applications. Be the first to submit one!</p>
+    </div>
+  <% else %>
+    <% applications.each do |app| %>
+      <%= render partial: "arena_applications/application", locals: {application: app} %>
+    <% end %>
+  <% end %>
+</div>
+

@@ -1,0 +1,84 @@
+<%#
+  Single arena application card
+  Used in applications list and room show page
+
+  Required locals:
+  - application: ArenaApplication record
+%>
+
+<div class="arena-application <%= 'arena-application--own' if defined?(current_character) && application.applicant == current_character %> <%= 'arena-application--npc' if application.npc_application? %>"
+     data-application-id="<%= application.id %>"
+     data-npc="<%= application.npc_application? %>"
+     data-fight-type="<%= application.fight_type %>">
+
+  <div class="arena-application-header">
+    <span class="arena-application-type arena-application-type--<%= application.fight_type %>">
+      <%= fight_type_with_icon(application.fight_type) %>
+    </span>
+    <span class="arena-application-kind">
+      <%= fight_kind_with_icon(application.fight_kind) %>
+    </span>
+  </div>
+
+  <div class="arena-application-info">
+    <div class="arena-application-players">
+      <% if application.npc_application? %>
+        <span class="npc-nameplate">
+          <span class="npc-avatar"><%= application.npc_template&.avatar_emoji || "🤖" %></span>
+          <strong class="npc-name"><%= application.applicant_name %></strong>
+          <span class="npc-level">[<%= application.applicant_level %>]</span>
+          <span class="npc-badge badge badge--npc">🤖 Bot</span>
+          <% if application.npc_difficulty.present? %>
+            <span class="npc-difficulty badge badge--<%= application.npc_difficulty %>">
+              <%= application.npc_difficulty.humanize %>
+            </span>
+          <% end %>
+        </span>
+      <% else %>
+        <%= character_nameplate(application.applicant, show_level: true) %>
+      <% end %>
+    </div>
+
+    <div class="arena-application-details">
+      <%= application_settings_display(application) %>
+    </div>
+  </div>
+
+  <div class="arena-application-meta">
+    <% if application.expires_at %>
+      <span class="arena-application-timer <%= 'arena-application-timer--urgent' if application.time_until_expiration && application.time_until_expiration < 60 %>"
+            title="Expires at <%= l(application.expires_at, format: :short) %>">
+        ⏰ <%= distance_of_time_in_words_to_now(application.expires_at) %>
+      </span>
+    <% end %>
+
+    <% if application.team_level_min || application.team_level_max %>
+      <span class="arena-application-levels badge">
+        📊 Lvl <%= application.team_level_min || application.arena_room.level_min %>-<%= application.team_level_max || application.arena_room.level_max %>
+      </span>
+    <% end %>
+  </div>
+
+  <div class="arena-application-actions">
+    <% if defined?(current_character) %>
+      <% if application.applicant == current_character %>
+        <span class="text-muted">👤 Your application</span>
+      <% elsif application.acceptable_by?(current_character) %>
+        <%= button_to "✅ Accept",
+            accept_arena_application_path(application),
+            method: :post,
+            class: "btn-primary btn-sm",
+            data: {
+              turbo: false,
+              action: "click->arena#acceptApplication",
+              application_id: application.id
+            } %>
+      <% else %>
+        <span class="text-muted text-sm" title="Level or faction requirements not met">
+          🚫 Not eligible
+        </span>
+      <% end %>
+    <% end %>
+  </div>
+</div>
+

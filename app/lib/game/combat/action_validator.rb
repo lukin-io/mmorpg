@@ -27,7 +27,7 @@ module Game
       Result = Struct.new(:valid?, :errors, :total_ap, :total_mana, :warnings, keyword_init: true)
 
       # Attack exclusivity groups - can't attack body parts from different groups
-      # Based on Neverlands: head+legs combination is banned
+      # Head+legs combination is banned (too far apart)
       ATTACK_EXCLUSIVITY = {
         "diagonal_banned" => [
           %w[head legs],

@@ -46,6 +46,7 @@ class ArenaApplication < ApplicationRecord
 
   VALID_TIMEOUTS = [120, 180, 240, 300].freeze
   VALID_TRAUMA_PERCENTS = [10, 30, 50, 80].freeze
+  MIN_HP_PERCENT_FOR_ARENA = 50 # Minimum HP% required to accept fights
 
   enum :fight_type, FIGHT_TYPES
   enum :fight_kind, FIGHT_KINDS
@@ -111,8 +112,37 @@ class ArenaApplication < ApplicationRecord
     return false unless arena_room.accessible_by?(character)
     return false if faction_restricted? && !faction_matches?(character)
     return false if closed_fight? && !invited?(character)
+    return false unless character_hp_sufficient?(character)
 
     level_matches?(character)
+  end
+
+  # Check if character has enough HP to fight
+  # Message: "Recover before fighting, you are too weakened!"
+  #
+  # @param character [Character] the character to check
+  # @return [Boolean] true if character has enough HP
+  def character_hp_sufficient?(character)
+    return true if character.max_hp.nil? || character.max_hp.zero?
+
+    hp_percent = (character.current_hp.to_f / character.max_hp * 100).round
+    hp_percent >= MIN_HP_PERCENT_FOR_ARENA
+  end
+
+  # Get rejection reason for a character who cannot accept
+  #
+  # @param character [Character] the character to check
+  # @return [String, nil] reason why character cannot accept, or nil if they can
+  def rejection_reason_for(character)
+    return "Application is not open" unless open?
+    return "Cannot accept your own application" if applicant == character
+    return "Cannot access this arena room" unless arena_room.accessible_by?(character)
+    return "Faction restriction not met" if faction_restricted? && !faction_matches?(character)
+    return "Not invited to this closed fight" if closed_fight? && !invited?(character)
+    return "Recover before fighting - you are too weakened! (Need #{MIN_HP_PERCENT_FOR_ARENA}% HP)" unless character_hp_sufficient?(character)
+    return "Level requirement not met" unless level_matches?(character)
+
+    nil
   end
 
   # Check if the fight has level restrictions

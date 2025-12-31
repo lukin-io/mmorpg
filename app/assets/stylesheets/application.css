@@ -3499,13 +3499,529 @@ turbo-frame[busy] {
   50% { transform: scale(1.1); }
 }
 
-/* Participant HP/MP bars */
-.arena-participants {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--nl-space-lg);
+/* Arena Match Page Layout - Horizontal PVP */
+.arena-match-page {
+  padding: var(--nl-space-md);
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.page-header--compact {
+  display: flex;
+  align-items: center;
+  gap: var(--nl-space-md);
   margin-bottom: var(--nl-space-md);
 }
+
+.page-header--compact h1 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+/* Main PVP Layout: Fighter | Center | Fighter */
+.arena-pvp-layout {
+  display: grid;
+  grid-template-columns: 240px 1fr 240px;
+  gap: var(--nl-space-lg);
+  min-height: 500px;
+}
+
+@media (max-width: 900px) {
+  .arena-pvp-layout {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto;
+  }
+  .arena-fighter--left { order: 1; }
+  .arena-center { order: 3; }
+  .arena-fighter--right { order: 2; }
+}
+
+/* Fighter Cards (left/right columns) */
+.arena-fighter {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.arena-fighter-empty {
+  color: var(--nl-text-secondary);
+  padding: var(--nl-space-xl);
+  text-align: center;
+}
+
+.fighter-card {
+  background: var(--nl-bg-secondary);
+  border-radius: var(--nl-radius-md);
+  padding: var(--nl-space-md);
+  width: 100%;
+  text-align: center;
+}
+
+.fighter-card--left {
+  border-left: 4px solid #74c0fc;
+}
+
+.fighter-card--right {
+  border-right: 4px solid #ff6b6b;
+}
+
+.fighter-card--defeated {
+  opacity: 0.6;
+}
+
+.fighter-avatar {
+  position: relative;
+  font-size: 48px;
+  line-height: 1;
+  margin-bottom: var(--nl-space-sm);
+}
+
+.fighter-defeated-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 32px;
+}
+
+.fighter-header {
+  margin-bottom: var(--nl-space-sm);
+}
+
+.fighter-name {
+  font-weight: bold;
+  font-size: 1.1rem;
+  color: var(--nl-text-primary);
+}
+
+.fighter-name--defeated {
+  text-decoration: line-through;
+  color: var(--nl-text-secondary);
+}
+
+.fighter-level {
+  color: var(--nl-text-secondary);
+  font-size: 0.9rem;
+  margin-left: var(--nl-space-xs);
+}
+
+.fighter-badge {
+  font-size: 0.8rem;
+  margin-left: var(--nl-space-xs);
+}
+
+/* Fighter HP/MP bars */
+.fighter-hp, .fighter-mp {
+  margin-bottom: var(--nl-space-xs);
+}
+
+.fighter-hp-bar, .fighter-mp-bar {
+  height: 16px;
+  background: #2a2a2a;
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+}
+
+.fighter-mp-bar {
+  height: 10px;
+}
+
+.fighter-hp-fill {
+  height: 100%;
+  transition: width 0.3s ease-out;
+  position: relative;
+}
+
+.fighter-hp-fill--high { background: linear-gradient(90deg, #40c057, #69db7c); }
+.fighter-hp-fill--medium { background: linear-gradient(90deg, #fab005, #ffd43b); }
+.fighter-hp-fill--low { background: linear-gradient(90deg, #fd7e14, #ff922b); }
+.fighter-hp-fill--critical { background: linear-gradient(90deg, #e03131, #ff6b6b); }
+
+.fighter-mp-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #339af0, #74c0fc);
+  transition: width 0.3s ease-out;
+}
+
+.fighter-hp-text, .fighter-mp-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 0.7rem;
+  font-weight: bold;
+  color: #fff;
+  text-shadow: 0 0 2px #000;
+}
+
+.fighter-hp-percent {
+  font-size: 0.85rem;
+  color: var(--nl-text-secondary);
+  margin-left: var(--nl-space-xs);
+}
+
+/* Fighter stats (for opponent view) */
+.fighter-stats {
+  display: flex;
+  justify-content: center;
+  gap: var(--nl-space-sm);
+  margin-top: var(--nl-space-sm);
+  padding-top: var(--nl-space-sm);
+  border-top: 1px solid var(--nl-border-light);
+}
+
+.fighter-stat {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 0.8rem;
+}
+
+.stat-icon { font-size: 0.9rem; }
+.stat-value { color: var(--nl-text-primary); font-weight: 500; }
+
+.fighter-result {
+  margin-top: var(--nl-space-sm);
+  padding: var(--nl-space-xs) var(--nl-space-sm);
+  border-radius: var(--nl-radius-sm);
+  font-weight: bold;
+  text-transform: uppercase;
+  font-size: 0.8rem;
+}
+
+.fighter-result--victory { background: #2f9e44; color: #fff; }
+.fighter-result--defeat { background: #c92a2a; color: #fff; }
+.fighter-result--draw { background: #f59f00; color: #fff; }
+
+/* Center column: VS + Actions + Log */
+.arena-center {
+  display: flex;
+  flex-direction: column;
+  gap: var(--nl-space-md);
+}
+
+.arena-vs-badge {
+  text-align: center;
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: var(--nl-text-secondary);
+  padding: var(--nl-space-xs);
+}
+
+.arena-timeout-bar {
+  text-align: center;
+  padding: var(--nl-space-xs);
+  background: var(--nl-bg-secondary);
+  border-radius: var(--nl-radius-sm);
+}
+
+/* Action Panel */
+.arena-action-panel {
+  background: var(--nl-bg-secondary);
+  border-radius: var(--nl-radius-md);
+  padding: var(--nl-space-md);
+}
+
+/* AP (Action Points) Bar */
+.arena-ap-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--nl-space-sm);
+  margin-bottom: var(--nl-space-md);
+  padding-bottom: var(--nl-space-sm);
+  border-bottom: 1px solid var(--nl-border-light);
+}
+
+.ap-label {
+  font-weight: bold;
+  color: var(--nl-text-secondary);
+  font-size: 0.9rem;
+}
+
+.ap-bar-container {
+  flex: 1;
+  height: 12px;
+  background: #2a2a2a;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.ap-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #845ef7, #da77f2);
+  transition: width 0.3s ease-out;
+}
+
+.ap-value {
+  font-weight: bold;
+  color: #da77f2;
+  font-size: 0.9rem;
+  min-width: 60px;
+  text-align: right;
+}
+
+/* AP cost indicators on buttons */
+.ap-cost {
+  font-size: 0.7rem;
+  opacity: 0.8;
+  margin-left: 4px;
+  font-weight: normal;
+}
+
+.arena-actions-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--nl-space-sm);
+  align-items: center;
+}
+
+.arena-attack-group,
+.arena-defend-group {
+  display: flex;
+  gap: var(--nl-space-xs);
+}
+
+.arena-target-select select {
+  padding: var(--nl-space-xs) var(--nl-space-sm);
+  font-size: 0.9rem;
+}
+
+/* Combat action buttons */
+.btn-attack, .btn-defend {
+  padding: var(--nl-space-sm) var(--nl-space-md);
+  border: none;
+  border-radius: var(--nl-radius-sm);
+  font-weight: bold;
+  cursor: pointer;
+  transition: transform 0.1s, box-shadow 0.1s;
+}
+
+.btn-attack:hover, .btn-defend:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.btn-attack:active, .btn-defend:active {
+  transform: translateY(0);
+}
+
+.btn-attack {
+  background: linear-gradient(135deg, #c92a2a, #e03131);
+  color: #fff;
+}
+
+.btn-attack--aimed {
+  background: linear-gradient(135deg, #d9480f, #fd7e14);
+}
+
+.btn-defend {
+  background: linear-gradient(135deg, #1864ab, #339af0);
+  color: #fff;
+}
+
+.btn-defend--combo {
+  background: linear-gradient(135deg, #5c940d, #82c91e);
+}
+
+/* Combat Log */
+.arena-combat-log {
+  background: var(--nl-bg-tertiary);
+  border-radius: var(--nl-radius-md);
+  padding: var(--nl-space-md);
+  max-height: 300px;
+  overflow-y: auto;
+  font-family: 'Courier New', monospace;
+  font-size: 0.8rem;
+  flex: 1;
+}
+
+.combat-log-entry {
+  padding: var(--nl-space-xs) 0;
+  border-bottom: 1px solid var(--nl-border-light);
+}
+
+.combat-log-entry:last-child {
+  border-bottom: none;
+}
+
+.combat-time {
+  color: var(--nl-text-secondary);
+  margin-right: var(--nl-space-xs);
+  font-size: 0.75rem;
+}
+
+.combat-log--system {
+  color: #fab005;
+}
+
+.combat-log--highlight {
+  font-weight: bold;
+  font-size: 1rem;
+}
+
+.combat-log--action {
+  color: var(--nl-text-primary);
+}
+
+.combat-log--damage {
+  color: #ff6b6b;
+}
+
+.combat-log--defend, .combat-log--block {
+  color: #74c0fc;
+}
+
+.combat-log--critical {
+  color: #ffd43b;
+  font-weight: bold;
+}
+
+.combat-log--heal {
+  color: #40c057;
+}
+
+.combat-log--victory {
+  color: #40c057;
+  font-weight: bold;
+}
+
+.combat-log--defeat {
+  color: #e03131;
+}
+
+.combat-log--draw {
+  color: #fab005;
+}
+
+/* Match Info Bar (compact, below main layout) */
+.arena-match-bar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--nl-space-md);
+  padding: var(--nl-space-sm) var(--nl-space-md);
+  background: var(--nl-bg-secondary);
+  border-radius: var(--nl-radius-sm);
+  margin-top: var(--nl-space-md);
+  font-size: 0.85rem;
+  color: var(--nl-text-secondary);
+}
+
+.match-bar-item {
+  display: flex;
+  align-items: center;
+  gap: var(--nl-space-xs);
+}
+
+.match-bar-item strong {
+  color: var(--nl-text-primary);
+}
+
+/* Turn Timeout */
+.turn-timeout {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--nl-space-xs);
+}
+
+.timeout-label {
+  color: var(--nl-text-secondary);
+}
+
+.timeout-value {
+  font-weight: bold;
+  font-family: monospace;
+}
+
+.timeout-normal .timeout-value { color: var(--nl-text-primary); }
+.timeout-warning .timeout-value { color: #fab005; }
+.timeout-critical .timeout-value { color: #e03131; animation: pulse 0.5s infinite; }
+
+/* Countdown Overlay */
+.arena-countdown-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.arena-countdown-content {
+  text-align: center;
+}
+
+.arena-countdown-title {
+  font-size: 1.5rem;
+  color: var(--nl-text-secondary);
+  margin-bottom: var(--nl-space-md);
+}
+
+.arena-countdown-timer {
+  font-size: 5rem;
+  font-weight: bold;
+  color: #fff;
+  font-family: monospace;
+}
+
+/* Result Overlay */
+.arena-result-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.arena-result-content {
+  text-align: center;
+  max-width: 400px;
+}
+
+.arena-result-title {
+  font-size: 3rem;
+  font-weight: bold;
+  margin-bottom: var(--nl-space-lg);
+  text-transform: uppercase;
+  letter-spacing: 4px;
+}
+
+.arena-result--victory .arena-result-title {
+  color: #40c057;
+  text-shadow: 0 0 30px rgba(64,192,87,0.5);
+}
+
+.arena-result--defeat .arena-result-title {
+  color: #e03131;
+  text-shadow: 0 0 30px rgba(224,49,49,0.5);
+}
+
+.arena-result--ended .arena-result-title {
+  color: #fab005;
+}
+
+.arena-result-details {
+  color: var(--nl-text-secondary);
+  margin-bottom: var(--nl-space-xl);
+}
+
+.arena-result-details strong {
+  color: var(--nl-text-primary);
+}
+
+/* Participant HP/MP bars */
 
 .arena-team {
   background: var(--nl-bg-secondary);

@@ -1,151 +1,186 @@
 <% content_for :title, "Arena Match ##{@arena_match.id}" %>
 
+<%
+  # Get participants by team (a/alpha vs b/beta)
+  player_a = @participations.find { |p| p.team == "a" || p.team == "alpha" }
+  player_b = @participations.find { |p| p.team == "b" || p.team == "beta" }
+  user_team = current_user_team
+%>
+
 <div class="arena-match-page"
      data-controller="arena-match"
      data-arena-match-match-id-value="<%= @arena_match.id %>"
      data-arena-match-spectating-value="<%= !current_user_participating? %>"
      data-arena-match-spectator-code-value="<%= @arena_match.spectator_code if !current_user_participating? %>">
 
-  <div class="page-header">
+  <div class="page-header page-header--compact">
     <%= link_to "← Back to Arena", arena_index_path, class: "btn-secondary btn-sm" %>
     <h1>
-      <%= @arena_match.match_type.humanize %> Match
+      <%= @arena_match.match_type.humanize %>
       <span class="badge badge--<%= @arena_match.status %>"><%= @arena_match.status.humanize %></span>
     </h1>
-    <% if @arena_match.spectator_code %>
-      <span class="text-muted text-sm">Spectate code: <%= @arena_match.spectator_code %></span>
-    <% end %>
   </div>
 
-  <div class="arena-match-layout">
-    <%# Left side: Participants %>
-    <div class="arena-participants">
-      <%# Team A %>
-      <div class="arena-team arena-team--a" data-arena-match-target="teamA">
-        <div class="arena-team-header">Team A</div>
-        <% @participations.select { |p| p.team == "a" || p.team == "alpha" }.each do |p| %>
-          <%= render "arena_matches/participant", participation: p %>
-        <% end %>
-      </div>
-
-      <div class="arena-vs">VS</div>
-
-      <%# Team B %>
-      <div class="arena-team arena-team--b" data-arena-match-target="teamB">
-        <div class="arena-team-header">Team B</div>
-        <% @participations.select { |p| p.team == "b" || p.team == "beta" }.each do |p| %>
-          <%= render "arena_matches/participant", participation: p %>
-        <% end %>
-      </div>
+  <%# Main combat layout: Player | Actions+Log | Opponent %>
+  <div class="arena-pvp-layout">
+    <%# Left: Player A %>
+    <div class="arena-fighter arena-fighter--left" data-arena-match-target="fighterA">
+      <% if player_a %>
+        <%= render "arena_matches/fighter_card",
+            participation: player_a,
+            show_stats: (user_team == "b" || user_team == "beta"),
+            position: :left %>
+      <% else %>
+        <div class="arena-fighter-empty">Waiting for opponent...</div>
+      <% end %>
     </div>
 
-    <%# Center: Combat Log %>
-    <div class="arena-combat-section">
-      <% if @arena_match.live? && current_user_participating? %>
-        <div class="arena-action-bar" data-arena-match-target="actionButtons">
-          <button class="btn-primary" data-action="click->arena-match#submitAction" data-action-type="attack">
-            ⚔️ Attack
-          </button>
-          <button class="btn-secondary" data-action="click->arena-match#submitAction" data-action-type="defend">
-            🛡️ Defend
-          </button>
-          <button class="btn-secondary" data-action="click->arena-match#submitAction" data-action-type="skill">
-            ✨ Skill
-          </button>
+    <%# Center: VS + Actions + Combat Log %>
+    <div class="arena-center">
+      <div class="arena-vs-badge">⚔️ VS</div>
+
+      <%# Turn timeout display %>
+      <% if @arena_match.live? && @arena_match.current_turn_started_at %>
+        <div class="arena-timeout-bar">
+          <%= turn_timeout_display(@arena_match) %>
         </div>
       <% end %>
 
-      <div class="combat-log" data-arena-match-target="combatLog">
+      <%# Combat action buttons (only for participants in live match) %>
+      <% if @arena_match.live? && current_user_participating? %>
+        <div class="arena-action-panel" data-arena-match-target="actionButtons">
+          <%# AP Bar %>
+          <div class="arena-ap-bar" data-arena-match-target="apBar">
+            <span class="ap-label">AP:</span>
+            <div class="ap-bar-container">
+              <div class="ap-bar-fill" style="width: 100%"></div>
+            </div>
+            <span class="ap-value" data-arena-match-target="apValue">100/100</span>
+          </div>
+
+          <div class="arena-actions-row">
+            <div class="arena-attack-group">
+              <button class="btn-attack btn-attack--simple" data-action="click->arena-match#submitAction"
+                      data-action-type="attack" data-attack-type="simple" title="45 AP">
+                ⚔️ Attack <span class="ap-cost">45</span>
+              </button>
+              <button class="btn-attack btn-attack--aimed" data-action="click->arena-match#submitAction"
+                      data-action-type="attack" data-attack-type="aimed" title="65 AP">
+                🎯 Aimed <span class="ap-cost">65</span>
+              </button>
+            </div>
+
+            <div class="arena-target-select">
+              <select data-arena-match-target="bodyPartSelect" class="form-select form-select--compact">
+                <option value="head">🗣️ Head</option>
+                <option value="torso" selected>💪 Torso</option>
+                <option value="stomach">🫃 Stomach</option>
+                <option value="legs">🦵 Legs</option>
+              </select>
+            </div>
+
+            <div class="arena-defend-group">
+              <button class="btn-defend" data-action="click->arena-match#submitAction"
+                      data-action-type="defend" data-block-parts="torso" title="30 AP">
+                🛡️ Block <span class="ap-cost">30</span>
+              </button>
+              <button class="btn-defend btn-defend--combo" data-action="click->arena-match#submitAction"
+                      data-action-type="defend" data-block-parts="head,torso" title="30 AP">
+                🛡️🛡️ <span class="ap-cost">30</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      <% end %>
+
+      <%# Combat Log %>
+      <div class="arena-combat-log" data-arena-match-target="combatLog">
         <div class="combat-log-entry combat-log--system">
           <span class="combat-time"><%= @arena_match.created_at.strftime("%H:%M:%S") %></span>
-          Match created - <%= @arena_match.match_type.humanize %>
+          Match created
         </div>
         <% if @arena_match.started_at %>
-          <div class="combat-log-entry combat-log--system">
+          <div class="combat-log-entry combat-log--system combat-log--highlight">
             <span class="combat-time"><%= @arena_match.started_at.strftime("%H:%M:%S") %></span>
-            ⚔️ FIGHT STARTED!
+            ⚔️ FIGHT!
           </div>
         <% end %>
         <% (@arena_match.metadata["combat_log"] || []).each do |entry| %>
           <div class="combat-log-entry combat-log--<%= entry['type'] || 'action' %>">
             <span class="combat-time"><%= entry['timestamp'] %></span>
-            <span class="combat-actor"><%= entry['actor_name'] %></span>
             <%= entry['description'] %>
-            <% if entry['result'] %>
-              <span class="combat-result">(<%= entry['result'] %>)</span>
-            <% end %>
           </div>
         <% end %>
         <% if @arena_match.completed? %>
-          <div class="combat-log-entry combat-log--victory">
+          <div class="combat-log-entry combat-log--<%= @arena_match.winning_team ? 'victory' : 'draw' %>">
             <span class="combat-time"><%= @arena_match.ended_at&.strftime("%H:%M:%S") %></span>
-            🏆 Match ended - Winner: <%= @arena_match.winning_team || "Draw" %>
+            🏆 <%= @arena_match.winning_team ? "Winner: #{winner_name(@arena_match)}" : "Draw!" %>
           </div>
         <% end %>
       </div>
     </div>
 
-    <%# Right side: Match Info %>
-    <div class="arena-match-info card">
-      <h3>Match Info</h3>
-      <dl>
-        <dt>Type</dt>
-        <dd><%= @arena_match.match_type.humanize %></dd>
-
-        <dt>Status</dt>
-        <dd><%= @arena_match.status.humanize %></dd>
-
-        <% if @arena_match.arena_room %>
-          <dt>Room</dt>
-          <dd><%= @arena_match.arena_room.name %></dd>
-        <% end %>
-
-        <% if @arena_match.started_at %>
-          <dt>Started</dt>
-          <dd><%= l(@arena_match.started_at, format: :short) %></dd>
-        <% end %>
-
-        <% if @arena_match.duration %>
-          <dt>Duration</dt>
-          <dd><%= @arena_match.duration %>s</dd>
-        <% end %>
-
-        <% if @arena_match.metadata["trauma_percent"] %>
-          <dt>Trauma</dt>
-          <dd><%= @arena_match.metadata["trauma_percent"] %>%</dd>
-        <% end %>
-      </dl>
-
-      <% if @arena_match.active? && !current_user_participating? %>
-        <p class="text-muted text-sm">You are spectating this match</p>
+    <%# Right: Player B %>
+    <div class="arena-fighter arena-fighter--right" data-arena-match-target="fighterB">
+      <% if player_b %>
+        <%= render "arena_matches/fighter_card",
+            participation: player_b,
+            show_stats: (user_team == "a" || user_team == "alpha"),
+            position: :right %>
+      <% else %>
+        <div class="arena-fighter-empty">Waiting for opponent...</div>
       <% end %>
     </div>
   </div>
 
+  <%# Match info bar (compact, below main layout) %>
+  <div class="arena-match-bar">
+    <span class="match-bar-item">
+      <strong><%= @arena_match.match_type.humanize %></strong>
+      <% if @arena_match.arena_room %>
+        in <%= @arena_match.arena_room.name %>
+      <% end %>
+    </span>
+    <% if @arena_match.started_at %>
+      <span class="match-bar-item">Started: <%= l(@arena_match.started_at, format: :short) %></span>
+    <% end %>
+    <% if @arena_match.duration && @arena_match.duration < 3600 %>
+      <span class="match-bar-item">Duration: <%= format_duration(@arena_match.duration) %></span>
+    <% end %>
+    <% if @arena_match.turn_timeout_seconds %>
+      <span class="match-bar-item">Timeout: <%= @arena_match.turn_timeout_seconds / 60 %>m</span>
+    <% end %>
+    <% if @arena_match.spectator_code && !current_user_participating? %>
+      <span class="match-bar-item text-muted">Spectating</span>
+    <% end %>
+  </div>
+
   <%# Countdown timer overlay %>
-  <div class="arena-countdown" data-arena-match-target="timer" style="display: none;">
-    <div class="arena-countdown-title">Match Starting</div>
-    <div class="arena-countdown-timer">--</div>
+  <div class="arena-countdown-overlay" data-arena-match-target="timer" style="display: none;">
+    <div class="arena-countdown-content">
+      <div class="arena-countdown-title">Match Starting</div>
+      <div class="arena-countdown-timer">--</div>
+    </div>
   </div>
 
   <%# Result overlay %>
   <% if @arena_match.completed? %>
-    <div class="arena-result arena-result--<%= current_user_won? ? 'victory' : 'defeat' %>"
+    <div class="arena-result-overlay arena-result--<%= current_user_won? ? 'victory' : (current_user_participating? ? 'defeat' : 'ended') %>"
          data-arena-match-target="resultOverlay">
-      <h1 class="arena-result-title">
-        <%= current_user_won? ? "VICTORY!" : (current_user_participating? ? "DEFEAT" : "MATCH ENDED") %>
-      </h1>
-      <div class="arena-result-stats">
-        <div class="arena-result-stat">
-          <div class="arena-result-stat-value"><%= @arena_match.duration || 0 %>s</div>
-          <div class="arena-result-stat-label">Duration</div>
+      <div class="arena-result-content">
+        <h1 class="arena-result-title">
+          <%= current_user_won? ? "VICTORY!" : (current_user_participating? ? "DEFEAT" : "MATCH ENDED") %>
+        </h1>
+        <div class="arena-result-details">
+          <% if @arena_match.winning_team %>
+            <p>Winner: <strong><%= winner_name(@arena_match) %></strong></p>
+          <% else %>
+            <p>Match ended in a draw</p>
+          <% end %>
+          <p class="text-muted">Duration: <%= format_duration(@arena_match.duration || 0) %></p>
         </div>
-        <div class="arena-result-stat">
-          <div class="arena-result-stat-value"><%= @arena_match.winning_team || "-" %></div>
-          <div class="arena-result-stat-label">Winner</div>
-        </div>
+        <%= link_to "Return to Arena", arena_index_path, class: "btn-primary" %>
       </div>
-      <%= link_to "Return to Arena", arena_index_path, class: "btn-primary" %>
     </div>
   <% end %>
 </div>

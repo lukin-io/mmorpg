@@ -2,6 +2,11 @@
 
 module Arena
   # Processes combat actions during an arena match
+  # Implements tactical combat mechanics with:
+  # - Body part targeting (head, torso, stomach, legs)
+  # - Attack types (simple, aimed) with different AP costs
+  # - Block types (single and combo coverage)
+  # - Standardized combat log messages
   #
   # @example Process an attack action
   #   processor = Arena::CombatProcessor.new(match)
@@ -9,6 +14,24 @@ module Arena
   #
   class CombatProcessor
     attr_reader :match, :broadcaster
+
+    # Action Points per turn
+    AP_PER_TURN = 100
+    BLOCK_AP_COST = 30
+
+    # Attack type configurations
+    ATTACK_TYPES = {
+      simple: {ap_cost: 45, damage_mult: 1.0, hit_bonus: 0, name: "Simple"},
+      aimed: {ap_cost: 65, damage_mult: 1.2, hit_bonus: 10, name: "Aimed"}
+    }.freeze
+
+    # Body part damage multipliers
+    BODY_PART_MULTIPLIERS = {
+      "head" => 1.3,
+      "torso" => 1.0,
+      "stomach" => 1.1,
+      "legs" => 0.9
+    }.freeze
 
     # Initialize the combat processor
     #
@@ -23,23 +46,47 @@ module Arena
     # @param character [Character] the character performing the action
     # @param action_type [Symbol] the type of action (:attack, :defend, :skill, :flee)
     # @param params [Hash] additional parameters for the action
+    #   - target: Character or ArenaParticipation to target
+    #   - attack_type: :simple or :aimed (default :simple)
+    #   - body_part: "head", "torso", "stomach", "legs" (default "torso")
+    #   - block_parts: Array of body parts to block
     # @return [Result] the result of the action
     def process_action(character, action_type, **params)
       return failure("Match is not active") unless match.live?
       return failure("Character not in this match") unless participant?(character)
       return failure("Character is dead") if character.current_hp <= 0
 
+      # Check AP cost before processing
+      ap_cost = calculate_ap_cost(action_type, params)
+      current_ap = get_character_ap(character)
+
+      if current_ap < ap_cost
+        return failure("Not enough AP (need #{ap_cost}, have #{current_ap})")
+      end
+
       result = case action_type.to_sym
-      when :attack then process_attack(character, params[:target])
-      when :defend then process_defend(character)
+      when :attack
+        process_attack(
+          character,
+          params[:target],
+          attack_type: params[:attack_type] || :simple,
+          body_part: params[:body_part] || "torso"
+        )
+      when :defend then process_defend(character, block_parts: params[:block_parts])
       when :skill then process_skill(character, params[:skill_id], params[:target])
       when :flee then process_flee(character)
       else failure("Unknown action type: #{action_type}")
       end
 
-      # After player action, process NPC turn if this is an NPC fight
-      if result.success? && npc_fight? && !should_end?
-        process_npc_turn_after_delay
+      # After player action, deduct AP and process NPC turn if applicable
+      if result.success?
+        deduct_ap(character, ap_cost)
+        broadcaster.broadcast_ap_update(character, get_character_ap(character), AP_PER_TURN)
+
+        # Process NPC turn if this is an NPC fight
+        if npc_fight? && !should_end?
+          process_npc_turn_after_delay
+        end
       end
 
       result
@@ -102,8 +149,9 @@ module Arena
     # End the match and determine winners
     #
     # @param winning_team [String, nil] the winning team or nil for draw
+    # @param reason [Symbol] reason for ending (:normal, :timeout, :forfeit)
     # @return [Boolean] true if match ended successfully
-    def end_match(winning_team = nil)
+    def end_match(winning_team = nil, reason: :normal)
       return false unless match.live?
 
       winning_team ||= determine_winner
@@ -111,14 +159,37 @@ module Arena
       match.update!(
         status: :completed,
         ended_at: Time.current,
-        winning_team: winning_team
+        winning_team: winning_team,
+        timed_out: reason == :timeout
       )
 
       finalize_participations(winning_team)
       apply_trauma
-      log_entry("system", nil, "Match ended! Winner: #{winning_team || "Draw"}")
-      broadcaster.broadcast_match_ended(winning_team)
+
+      # End match messages
+      case reason
+      when :timeout
+        # "Бой закончен по таймауту" - "Fight ended by timeout"
+        log_entry("timeout", nil, "Fight ended by timeout")
+      when :forfeit
+        log_entry("system", nil, "Match ended by forfeit")
+      else
+        if winning_team
+          log_entry("victory", nil, "Match ended! Winner: Team #{winning_team.upcase}")
+        else
+          log_entry("draw", nil, "Match ended in a draw!")
+        end
+      end
+
+      broadcaster.broadcast_match_ended(winning_team, reason:)
       true
+    end
+
+    # End match due to timeout (called by ArenaTurnTimeoutJob)
+    #
+    # @return [Boolean] true if ended successfully
+    def end_match_timeout
+      end_match(nil, reason: :timeout)
     end
 
     # Check if match should end (all opponents defeated)
@@ -150,43 +221,66 @@ module Arena
 
     private
 
-    def process_attack(attacker, target)
+    def process_attack(attacker, target, attack_type: :simple, body_part: "torso")
       # Find target - could be Character or NPC participation
       target_participation = find_target_participation(attacker, target)
       return failure("No valid target") unless target_participation
 
       # Check if target is NPC or player
       if target_participation.npc?
-        process_attack_on_npc(attacker, target_participation)
+        process_attack_on_npc(attacker, target_participation, attack_type:, body_part:)
       else
-        process_attack_on_player(attacker, target_participation.character)
+        process_attack_on_player(attacker, target_participation.character, attack_type:, body_part:)
       end
     end
 
-    def process_attack_on_player(attacker, target)
+    def process_attack_on_player(attacker, target, attack_type: :simple, body_part: "torso")
       return failure("Cannot attack ally") if same_team?(attacker, target)
       return failure("Target is dead") if target.current_hp <= 0
 
-      # Calculate damage (simplified formula)
+      # Get attack type config
+      attack_config = ATTACK_TYPES[attack_type.to_sym] || ATTACK_TYPES[:simple]
+
+      # Check if target is blocking this body part
+      blocked = target_blocking_part?(target, body_part)
+      if blocked
+        # Block message format: "{defender} blocked attack ({body_part}) from {attacker}"
+        log_entry("block", target, "#{target.name} blocked attack (#{body_part}) from #{attacker.name}")
+        broadcaster.broadcast_combat_action(attacker, "blocked", target, 0, body_part:)
+        return success(blocked: true, body_part:, damage: 0)
+      end
+
+      # Calculate damage with attack type and body part modifiers
       base_damage = calculate_base_damage(attacker)
+      base_damage = (base_damage * attack_config[:damage_mult]).round
+      body_mult = BODY_PART_MULTIPLIERS[body_part] || 1.0
+      base_damage = (base_damage * body_mult).round
+
       defense = calculate_defense(target)
       damage = [base_damage - defense, 1].max
 
-      # Apply critical hit chance
+      # Apply critical hit chance (2x damage)
       critical = rand < 0.1
-      damage = (damage * 1.5).round if critical
+      damage = (damage * 2).round if critical
 
       # Apply damage
       target.current_hp = [target.current_hp - damage, 0].max
       target.last_combat_at = Time.current
       target.save!
 
-      # Log and broadcast
-      log_type = critical ? "critical" : "damage"
-      log_entry(log_type, attacker, "attacks #{target.name} for #{damage} damage#{" (CRITICAL!)" if critical}")
+      # Combat log messages
+      if critical
+        # Format: "{attacker} CRITICAL HIT ({body_part}) {defender} for -{damage} [{hp}/{max_hp}]"
+        log_entry("critical", attacker,
+          "#{attacker.name} critical hit (#{body_part}) #{target.name} for -#{damage} [#{target.current_hp}/#{target.max_hp}]")
+      else
+        # Format: "{attacker} hit {defender} ({body_part}) for -{damage} [{hp}/{max_hp}]"
+        log_entry("damage", attacker,
+          "#{attacker.name} hit #{target.name} (#{body_part}) for -#{damage} [#{target.current_hp}/#{target.max_hp}]")
+      end
 
       broadcaster.broadcast_vitals_update(target)
-      broadcaster.broadcast_combat_action(attacker, "attack", target, damage, critical:)
+      broadcaster.broadcast_combat_action(attacker, "attack", target, damage, critical:, body_part:, attack_type:)
 
       # Check for death
       if target.current_hp <= 0
@@ -194,19 +288,41 @@ module Arena
         end_match if should_end?
       end
 
-      success(damage:, critical:, target_hp: target.current_hp)
+      success(damage:, critical:, target_hp: target.current_hp, body_part:, attack_type:)
     end
 
-    def process_attack_on_npc(attacker, npc_participation)
+    # Check if target is blocking a specific body part
+    def target_blocking_part?(character, body_part)
+      return false unless character.metadata&.dig("blocking")
+
+      blocked_parts = character.metadata["blocked_parts"] || []
+      blocked_parts.include?(body_part)
+    end
+
+    def process_attack_on_npc(attacker, npc_participation, attack_type: :simple, body_part: "torso")
       npc = npc_participation.npc_template
       return failure("Target is dead") if npc_participation.current_hp <= 0
 
-      # Calculate damage
+      # Get attack type config
+      attack_config = ATTACK_TYPES[attack_type.to_sym] || ATTACK_TYPES[:simple]
+
+      # Check if NPC is blocking this body part
+      if npc_blocking_part?(npc_participation, body_part)
+        log_entry("block", nil, "#{npc.name} blocked attack (#{body_part}) from #{attacker.name}")
+        broadcast_npc_action(npc, "blocked", nil, 0, body_part:)
+        return success(blocked: true, body_part:, damage: 0)
+      end
+
+      # Calculate damage with attack type and body part modifiers
       base_damage = calculate_base_damage(attacker)
+      base_damage = (base_damage * attack_config[:damage_mult]).round
+      body_mult = BODY_PART_MULTIPLIERS[body_part] || 1.0
+      base_damage = (base_damage * body_mult).round
+
       npc_stats = npc_combat_stats(npc)
       defense = npc_stats[:defense] || 5
 
-      # Check if NPC is defending
+      # Check if NPC is defending (general defense boost)
       if npc_defending?(npc_participation)
         defense = (defense * 1.5).round
         npc_participation.metadata.delete("defending")
@@ -215,21 +331,26 @@ module Arena
 
       damage = [base_damage - defense, 1].max
 
-      # Apply critical hit chance
+      # Apply critical hit chance (2x damage)
       critical = rand < 0.1
-      damage = (damage * 1.5).round if critical
+      damage = (damage * 2).round if critical
 
       # Apply damage to NPC
       new_hp = [npc_participation.current_hp - damage, 0].max
       npc_participation.current_hp = new_hp
       npc_participation.save!
 
-      # Log and broadcast
-      log_type = critical ? "critical" : "damage"
-      log_entry(log_type, attacker, "attacks #{npc.name} for #{damage} damage#{" (CRITICAL!)" if critical}")
+      # Combat log messages
+      if critical
+        log_entry("critical", attacker,
+          "#{attacker.name} critical hit (#{body_part}) #{npc.name} for -#{damage} [#{new_hp}/#{npc_participation.max_hp}]")
+      else
+        log_entry("damage", attacker,
+          "#{attacker.name} hit #{npc.name} (#{body_part}) for -#{damage} [#{new_hp}/#{npc_participation.max_hp}]")
+      end
 
       broadcast_npc_vitals_update(npc_participation)
-      broadcaster.broadcast_combat_action(attacker, "attack", nil, damage, critical:, npc_target: npc.name)
+      broadcaster.broadcast_combat_action(attacker, "attack", nil, damage, critical:, npc_target: npc.name, body_part:, attack_type:)
 
       # Check for NPC defeat
       if new_hp <= 0
@@ -237,7 +358,15 @@ module Arena
         end_match if should_end?
       end
 
-      success(damage:, critical:, target_hp: new_hp)
+      success(damage:, critical:, target_hp: new_hp, body_part:, attack_type:)
+    end
+
+    # Check if NPC is blocking a specific body part
+    def npc_blocking_part?(npc_participation, body_part)
+      return false unless npc_participation.metadata&.dig("blocking")
+
+      blocked_parts = npc_participation.metadata["blocked_parts"] || []
+      blocked_parts.include?(body_part)
     end
 
     def find_target_participation(attacker, target)
@@ -278,7 +407,7 @@ module Arena
 
     def handle_npc_defeat(npc_participation)
       npc = npc_participation.npc_template
-      npc_participation.update!(result: "defeated", ended_at: Time.current)
+      npc_participation.update!(result: "defeat", ended_at: Time.current)
       log_entry("defeat", nil, "#{npc.name} has been defeated!")
 
       ActionCable.server.broadcast(
@@ -291,17 +420,26 @@ module Arena
       )
     end
 
-    def process_defend(character)
+    def process_defend(character, block_parts: nil)
+      # Default to single torso block if no parts specified
+      block_parts ||= ["torso"]
+      block_parts = Array(block_parts)
+
       # Apply defense buff for next incoming attack
       character.metadata ||= {}
+      character.metadata["blocking"] = true
+      character.metadata["blocked_parts"] = block_parts
+      character.metadata["block_until"] = 10.seconds.from_now.iso8601
+      # Legacy support
       character.metadata["defending"] = true
       character.metadata["defend_until"] = 10.seconds.from_now.iso8601
       character.save!
 
-      log_entry("action", character, "takes a defensive stance")
-      broadcaster.broadcast_combat_action(character, "defend", nil, 0)
+      parts_str = block_parts.join(", ")
+      log_entry("action", character, "#{character.name} takes defensive stance (blocking: #{parts_str})")
+      broadcaster.broadcast_combat_action(character, "defend", nil, 0, block_parts:)
 
-      success(defending: true)
+      success(defending: true, block_parts:)
     end
 
     def process_skill(character, skill_id, target)
@@ -381,7 +519,7 @@ module Arena
       match.arena_participations.includes(:character).each do |participation|
         if participation.character.current_hp <= 0
           # Mark as defeated
-          participation.update!(result: "defeated", ended_at: Time.current)
+          participation.update!(result: "defeat", ended_at: Time.current)
         end
       end
 
@@ -456,16 +594,16 @@ module Arena
 
     def calculate_base_damage(character)
       # Base damage = character's attack stat + weapon bonus
-      base = character.stats&.dig("attack") || 10
-      weapon_bonus = character.equipped_weapon_damage || 0
+      base = character.stats&.get(:attack) || 10
+      weapon_bonus = character.try(:equipped_weapon_damage) || 0
       base + weapon_bonus + rand(1..5)
     end
 
     def calculate_defense(character)
       # Defense = character's defense stat + armor bonus
       # Check if defending
-      base = character.stats&.dig("defense") || 5
-      armor_bonus = character.equipped_armor_defense || 0
+      base = character.stats&.get(:defense) || 5
+      armor_bonus = character.try(:equipped_armor_defense) || 0
       defense = base + armor_bonus
 
       if character.metadata&.dig("defending") &&
@@ -502,7 +640,7 @@ module Arena
 
     def handle_defeat(character)
       participation = match.arena_participations.find_by(character:)
-      participation.update!(result: "defeated", ended_at: Time.current)
+      participation.update!(result: "defeat", ended_at: Time.current)
       log_entry("defeat", character, "has been defeated!")
       broadcaster.broadcast_defeat(character)
     end
@@ -532,17 +670,38 @@ module Arena
       end
     end
 
+    # Apply trauma (injury) effects after fight
+    # Trauma affects HP recovery and XP loss based on trauma_percent
     def apply_trauma
-      trauma_percent = match.metadata&.dig("trauma_percent") || 30
+      trauma_percent = match.trauma_percent || match.metadata&.dig("trauma_percent") || 30
       return if trauma_percent.zero?
 
-      match.arena_participations.where(result: "defeat").each do |p|
-        # Apply trauma: temporary stat reduction or XP loss
-        # This is a simplified version
-        trauma_amount = (p.character.experience.to_i * trauma_percent / 100.0).round
-        p.character.update!(
-          experience: [p.character.experience.to_i - trauma_amount, 0].max
-        )
+      match.arena_participations.each do |p|
+        next if p.npc?
+
+        character = p.character
+        is_loser = p.result == "defeat"
+
+        # Winners get minor trauma, losers get full trauma
+        effective_trauma = is_loser ? trauma_percent : (trauma_percent / 3.0).round
+
+        # Apply HP reduction based on trauma
+        # Higher trauma = lower HP after fight
+        hp_loss = (character.max_hp * effective_trauma / 100.0).round
+        new_hp = [character.current_hp - hp_loss, 1].max
+        character.update!(current_hp: new_hp)
+
+        # XP loss for losers based on trauma
+        if is_loser && effective_trauma >= 30
+          xp_loss = (character.experience.to_i * effective_trauma / 200.0).round
+          character.update!(experience: [character.experience.to_i - xp_loss, 0].max)
+
+          log_entry("trauma", character,
+            "#{character.name} suffers trauma: -#{hp_loss} HP, -#{xp_loss} XP")
+        else
+          log_entry("trauma", character,
+            "#{character.name} suffers minor trauma: -#{hp_loss} HP")
+        end
       end
     end
 
@@ -557,6 +716,53 @@ module Arena
         "description" => description
       }
       match.save!
+    end
+
+    # Calculate AP cost for an action
+    def calculate_ap_cost(action_type, params)
+      case action_type.to_sym
+      when :attack
+        attack_type = params[:attack_type]&.to_sym || :simple
+        ATTACK_TYPES[attack_type]&.dig(:ap_cost) || 45
+      when :defend
+        BLOCK_AP_COST
+      when :skill
+        50 # Default skill cost
+      when :flee
+        0 # No AP cost for flee
+      else
+        0
+      end
+    end
+
+    # Get character's current AP for this match
+    def get_character_ap(character)
+      participation = match.arena_participations.find_by(character: character)
+      return AP_PER_TURN unless participation
+
+      participation.metadata ||= {}
+      participation.metadata["current_ap"] || AP_PER_TURN
+    end
+
+    # Deduct AP from character
+    def deduct_ap(character, amount)
+      participation = match.arena_participations.find_by(character: character)
+      return unless participation
+
+      participation.metadata ||= {}
+      current = participation.metadata["current_ap"] || AP_PER_TURN
+      participation.metadata["current_ap"] = [current - amount, 0].max
+      participation.save!
+    end
+
+    # Reset AP to full at start of turn
+    def reset_ap(character)
+      participation = match.arena_participations.find_by(character: character)
+      return unless participation
+
+      participation.metadata ||= {}
+      participation.metadata["current_ap"] = AP_PER_TURN
+      participation.save!
     end
 
     def success(**data)
