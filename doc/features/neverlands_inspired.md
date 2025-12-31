@@ -22,18 +22,20 @@ This document captures all functionality inspired by the Neverlands MMORPG that 
 | # | Feature | Status | Key Files |
 |---|---------|--------|-----------|
 | 1 | [Chat System](#chat-system) | ✅ Implemented | `chat_controller.js`, `realtime_chat_channel.rb`, `moderation_service.rb` |
-| 2 | [Arena/PvP System](#arenapvp-system) | ✅ Implemented | `arena_controller.rb`, `matchmaker.rb`, `combat_processor.rb`, **live fight application analysis** |
+| 2 | [Arena/PvP System](#arenapvp-system) | ✅ Implemented | `arena_controller.rb`, `matchmaker.rb`, `combat_processor.rb`, **live fight analysis** |
 | 3 | [Character Vitals](#character-vitals-hpmp-bars) | ✅ Implemented | `vitals_controller.js`, `vitals_service.rb`, `vitals_channel.rb` |
-| 4 | [Quest Dialog System](#quest-dialog-system) | ✅ Implemented | `quest_dialog_controller.js`, `quests_controller.rb` |
-| 5 | [Game Layout](#game-layout) | ✅ Implemented | `game_layout_controller.js`, CSS Grid layout |
-| 6 | [Map Movement](#map-movement) | ✅ Implemented | `game_world_controller.js`, smooth animation, timers |
-| 7 | [Turn-Based Combat](#turn-based-combat-system) | ✅ Implemented | `turn_based_combat_service.rb`, `turn_combat_controller.js`, **live combat UI analysis** |
-| 8 | [Combat Log System](#combat-log-system) | ✅ Implemented | `log_builder.rb`, `statistics_calculator.rb`, public URLs |
-| 9 | [Alignment & Faction](#alignment--faction-system) | ✅ Implemented | `character.rb`, `alignment_helper.rb`, `arena_helper.rb` |
-| 10 | [Tile Resource Gathering](#tile-resource-gathering) | ✅ Implemented | `tile_resource.rb`, `tile_gathering_service.rb`, biome config |
-| 11 | [Tile NPC Spawning](#tile-npc-spawning) | ✅ Implemented | `tile_npc.rb`, `tile_npc_service.rb`, biome NPC config |
-| 12 | [Character Stats & Skills](#character-stats--skills-allocation) | ✅ Implemented | `characters_controller.rb`, `stat_allocation_controller.js`, `skill_allocation_controller.js` |
-| 13 | [City Hotspots View](#city-hotspots-view) | ✅ Implemented | `city_hotspot.rb`, `city_view_controller.js`, `city_view.html.erb` |
+| 4 | [Stamina/Energy System](#staminaenergy-system) | ❌ Not Started | Separate from HP/MP, header display |
+| 5 | [Equipment Slots Layout](#equipment-slots-layout) | 🔄 Partial | Backend exists, visual grid missing |
+| 6 | [Quest Dialog System](#quest-dialog-system) | ✅ Implemented | `quest_dialog_controller.js`, `quests_controller.rb` |
+| 7 | [Game Layout](#game-layout) | ✅ Implemented | `game_layout_controller.js`, CSS Grid layout |
+| 8 | [Map Movement](#map-movement) | ✅ Implemented | `game_world_controller.js`, smooth animation, timers |
+| 9 | [Turn-Based Combat](#turn-based-combat-system) | ✅ Implemented | `turn_based_combat_service.rb`, `turn_combat_controller.js`, **live combat UI** |
+| 10 | [Combat Log System](#combat-log-system) | ✅ Implemented | `log_builder.rb`, `statistics_calculator.rb`, public URLs |
+| 11 | [Alignment & Faction](#alignment--faction-system) | ✅ Implemented | `character.rb`, `alignment_helper.rb`, `arena_helper.rb` |
+| 12 | [Tile Resource Gathering](#tile-resource-gathering) | ✅ Implemented | `tile_resource.rb`, `tile_gathering_service.rb`, biome config |
+| 13 | [Tile NPC Spawning](#tile-npc-spawning) | ✅ Implemented | `tile_npc.rb`, `tile_npc_service.rb`, biome NPC config |
+| 14 | [Character Stats & Skills](#character-stats--skills-allocation) | ✅ Implemented | `characters_controller.rb`, `stat_allocation_controller.js` |
+| 15 | [City Hotspots View](#city-hotspots-view) | ✅ Implemented | `city_hotspot.rb`, `city_view_controller.js`, `city_view.html.erb` |
 
 **Legend:** ✅ Implemented | 🔄 Partial | ❌ Not Started
 
@@ -43,16 +45,18 @@ This document captures all functionality inspired by the Neverlands MMORPG that 
 1. [Chat System](#chat-system)
 2. [Arena/PvP System](#arenapvp-system)
 3. [Character Vitals (HP/MP Bars)](#character-vitals-hpmp-bars)
-4. [Quest Dialog System](#quest-dialog-system)
-5. [Game Layout](#game-layout)
-6. [Map Movement](#map-movement)
-7. [Turn-Based Combat System](#turn-based-combat-system)
-8. [Combat Log System](#combat-log-system)
-9. [Alignment & Faction System](#alignment--faction-system)
-10. [Tile Resource Gathering](#tile-resource-gathering)
-11. [Tile NPC Spawning](#tile-npc-spawning)
-12. [Character Stats & Skills Allocation](#character-stats--skills-allocation)
-13. [City Hotspots View](#city-hotspots-view)
+4. [Stamina/Energy System](#staminaenergy-system)
+5. [Equipment Slots Layout](#equipment-slots-layout)
+6. [Quest Dialog System](#quest-dialog-system)
+7. [Game Layout](#game-layout)
+8. [Map Movement](#map-movement)
+9. [Turn-Based Combat System](#turn-based-combat-system)
+10. [Combat Log System](#combat-log-system)
+11. [Alignment & Faction System](#alignment--faction-system)
+12. [Tile Resource Gathering](#tile-resource-gathering)
+13. [Tile NPC Spawning](#tile-npc-spawning)
+14. [Character Stats & Skills Allocation](#character-stats--skills-allocation)
+15. [City Hotspots View](#city-hotspots-view)
 
 ---
 
@@ -226,8 +230,63 @@ a.usermenulink:hover {
 }
 ```
 
+### World Events & System Messages (Live Analysis - December 2024)
+
+> **Source**: Observed during live arena sessions at `http://www.neverlands.ru`
+
+The chat system includes **global event broadcasts** beyond player-to-player messaging:
+
+#### Message Types Observed
+
+| Channel | Russian | English | Purpose |
+|---------|---------|---------|---------|
+| **System** | [Система] | [System] | Server announcements, maintenance, tournaments |
+| **World** | [Мир] | [World] | Global events, zone attacks, world bosses |
+| **Private** | [Приват] | [Private] | Player-to-player whispers |
+| **Clan** | [Клан] | [Clan] | Guild/clan chat |
+| **Trade** | [Торговля] | [Trade] | Buy/sell announcements |
+
+#### Example Messages Observed
+
+```
+[System] Следующий турнир через 20 минут...
+         "Next tournament in 20 minutes..."
+
+[World] Аванпост атакован!
+        "Outpost under attack!"
+
+[System] Техническое обслуживание через 30 минут
+         "Server maintenance in 30 minutes"
+```
+
+#### Event Message Format
+
+```
+[Channel] HH:MM Message content
+```
+
+#### UI Location & Behavior
+
+| Aspect | Behavior |
+|--------|----------|
+| **Position** | Bottom panel, below main game area |
+| **Scrollable** | Yes, auto-scrolls to newest |
+| **Persistent** | Messages remain across navigation |
+| **Filtering** | Can filter by channel type |
+| **Timestamps** | HH:MM format for each message |
+
+#### Channel Color Coding (from CSS)
+
+| Channel | Color | Hex |
+|---------|-------|-----|
+| System | Orange highlight | `#EF6B00` |
+| Private | Red/pink highlight | `#D16F67` |
+| Mention (you) | Blue highlight | `#6699BB` |
+| Normal | Black text | `#000000` |
+| Timestamp | Blue | `#003366` |
+
 ### Elselands Implementation
-- **Status:** ✅ Implemented
+- **Status:** ✅ Implemented (chat), ⚠️ Partial (world events)
 - **Files:**
   - `app/javascript/controllers/chat_controller.js` — Stimulus controller with context menu, emoji picker
   - `app/channels/realtime_chat_channel.rb` — WebSocket chat with whisper/clan routing
@@ -240,6 +299,12 @@ a.usermenulink:hover {
 - WebSocket via ActionCable instead of polling
 - Server-side moderation pipeline before broadcast
 - Turbo Streams for real-time message appending
+
+### Missing Features (World Events)
+- ❌ `WorldEventsChannel` — Global event broadcasts
+- ❌ System announcements channel
+- ❌ Zone attack notifications
+- ❌ Tournament countdown broadcasts
 
 ---
 
@@ -743,7 +808,54 @@ Based on this analysis, the Elselands implementation should support:
 | **Body Part Targeting** | Head (1.3x), Torso (1.0x), Belly (1.1x), Legs (0.9x) |
 | **AP Budget** | 80 AP per turn |
 | **Turn Timeout** | 5 minutes default |
-| **HP Recovery Gate** | Cannot fight when HP too low ("Вы слишком ослаблены!") |
+| **HP Recovery Gate** | Cannot fight when HP too low |
+| **Stamina System** | Separate from HP, shows as percentage (e.g., "80%") |
+
+#### HP Recovery Gate Message
+
+When attempting to interact with arena applications while HP is too low:
+
+```
+Russian: "Восстановитесь для поединков, Вы слишком ослаблены!"
+English: "Recover for fights, you are too weakened!"
+```
+
+| Aspect | Value |
+|--------|-------|
+| **Trigger** | HP below ~50% of max |
+| **Effect** | Cannot accept or create fight applications |
+| **UI Behavior** | Warning message displayed, buttons disabled |
+| **Recovery** | Automatic HP regen over time (or hospital) |
+
+#### Stamina/Energy Display
+
+Observed in header during combat sessions:
+
+```
+lukin[0]    80%    [HP Bar] [MP Bar]
+```
+
+- **Separate from HP/MP** — Can be 80% while HP is 0
+- **Affects combat** — Likely impacts effectiveness
+- **Display location** — Header, next to player name
+
+#### Equipment Slots Layout
+
+8 equipment slots arranged around the avatar:
+
+```
+        [Helmet]
+[Weapon]  👤  [Shield]
+ [Ring] [Avatar] [Amulet]
+[Gloves]  👤  [Boots]
+        [Armor]
+```
+
+#### World/Chat Events
+
+> **Full documentation**: See **Chat System** section above
+
+World events and system announcements appear in the main chat panel (not combat-specific).
 
 ---
 
@@ -922,6 +1034,125 @@ function cha_HP() {
 - ActionCable push updates instead of polling
 - CSS custom properties for theming
 - Regeneration handled by background job
+
+---
+
+## Stamina/Energy System
+
+### Live Analysis (December 2024)
+
+> **Source**: Observed during live arena sessions at `http://www.neverlands.ru`
+
+A **stamina percentage** is displayed in the header, separate from HP/MP:
+
+```
+lukin[0]    80%    [HP Bar] [MP Bar]
+```
+
+### Key Observations
+
+| Aspect | Value | Notes |
+|--------|-------|-------|
+| **Display Location** | Header, next to player name | Visible at all times (not just combat) |
+| **Format** | `XX%` | Percentage display |
+| **Post-Fight Value** | 80% | Observed after defeat |
+| **Relationship to HP** | **Separate** | HP can be 0 while stamina is 80% |
+| **Persistence** | Across sessions | Not reset on combat end |
+
+### Inferred Mechanics
+
+Stamina appears to be a **fatigue/energy** system separate from HP/MP:
+
+| May Affect | Description |
+|------------|-------------|
+| **Combat effectiveness** | Lower stamina = reduced damage/accuracy |
+| **Movement speed** | Slower travel when fatigued |
+| **Skill availability** | Some skills may require stamina |
+| **Arena access** | Additional gate beyond HP requirement |
+| **Regeneration** | Recovers over time or via rest/items |
+
+### Elselands Implementation Status
+
+- ❌ **Not implemented** — Current system only has HP/MP
+- 🎯 **Recommendation**: Add `current_stamina` / `max_stamina` to Character model
+- 🎯 **UI**: Add stamina percentage to header/vitals display
+
+---
+
+## Equipment Slots Layout
+
+### Live Analysis (December 2024)
+
+> **Source**: Observed in character panel and combat UI at `http://www.neverlands.ru`
+
+The avatar is surrounded by **8 equipment slots** in a specific visual arrangement:
+
+### Visual Layout
+
+```
+        [Helmet]
+[Weapon]  👤  [Shield]
+ [Ring] [Avatar] [Amulet]
+[Gloves]  👤  [Boots]
+        [Armor]
+```
+
+### Slot Positions
+
+| Position | Slot Type | Icon Location |
+|----------|-----------|---------------|
+| Top | Helmet | Above avatar |
+| Left-Upper | Weapon | Left of avatar |
+| Left-Lower | Ring | Below weapon |
+| Right-Upper | Shield | Right of avatar |
+| Right-Lower | Amulet | Below shield |
+| Bottom-Left | Gloves | Below ring |
+| Bottom | Armor | Below avatar |
+| Bottom-Right | Boots | Below amulet |
+
+### CSS Layout Approach
+
+```css
+.equipment-grid {
+  display: grid;
+  grid-template-areas:
+    ".      helmet  ."
+    "weapon avatar  shield"
+    "ring   .       amulet"
+    "gloves armor   boots";
+  grid-template-columns: 48px 96px 48px;
+  grid-template-rows: 48px 96px 48px 48px;
+  gap: 4px;
+}
+
+.equipment-slot {
+  width: 48px;
+  height: 48px;
+  border: 1px solid #8b7355;
+  background: #2a2a2a;
+  border-radius: 4px;
+}
+
+.equipment-slot:hover {
+  border-color: #d4af37;
+  cursor: pointer;
+}
+
+.equipment-slot img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+```
+
+### Elselands Implementation Status
+
+- ✅ **Backend** — Equipment system exists (`EquippedItem`, `Inventory`)
+- ❌ **Missing** — Visual grid layout around avatar
+- 🎯 **Recommendation**: Add `_equipment_grid.html.erb` partial
+- 🎯 **Files to create**:
+  - `app/views/characters/_equipment_grid.html.erb`
+  - CSS in `application.css` (equipment-grid classes)
 
 ---
 

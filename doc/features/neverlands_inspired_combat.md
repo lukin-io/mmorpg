@@ -1259,14 +1259,23 @@ Status: 80% (health percentage display)
 - **Multiplier**: Approximately 2x normal damage
 - **Body Part**: Specified in parentheses
 
-#### 4. HP Recovery Requirement
+#### 4. HP Recovery Requirement (Arena Access Gate)
+
+When HP is below the threshold, attempting to interact with arena applications shows:
+
 ```
-"Восстановитесь для поединков, Вы слишком ослаблены!"
-"Recover for fights, you are too weakened!"
+Russian: "Восстановитесь для поединков, Вы слишком ослаблены!"
+English: "Recover for fights, you are too weakened!"
 ```
-- **Trigger**: HP below threshold (appears to be <50%)
-- **Effect**: Cannot accept fight applications
-- **Recovery**: Automatic HP regen over time
+
+| Aspect | Value |
+|--------|-------|
+| **Trigger** | HP below ~50% of max |
+| **Effect** | Cannot accept or create fight applications |
+| **UI Behavior** | Message displayed, accept buttons disabled |
+| **Recovery** | Automatic HP regen over time (or hospital) |
+
+**Elselands Implementation**: ✅ `ArenaApplication::MIN_HP_PERCENT_FOR_ARENA = 50`
 
 #### 5. Mannequin Bot Application Pattern
 ```
@@ -1517,6 +1526,38 @@ Status: DEFEATED
 | Multi-attack penalty display | Low | Show AP penalty for 2+ attacks |
 | Magic shield blocks | Low | Special block types with mana cost |
 | World/System log panel | Low | Below combat area |
+
+---
+
+## General Game Systems (References)
+
+The following systems are documented in the main features file as they apply to the entire game, not just combat:
+
+### Stamina/Energy System
+
+> **Full documentation**: See `doc/features/neverlands_inspired.md` → **Stamina/Energy System** section
+
+- Separate from HP/MP (e.g., 80% stamina while HP is 0)
+- Displayed in header next to player name
+- Affects combat effectiveness, movement, skills
+- **Elselands Status**: ❌ Not implemented
+
+### Equipment Slots Layout
+
+> **Full documentation**: See `doc/features/neverlands_inspired.md` → **Equipment Slots Layout** section
+
+- 8 slots arranged around avatar (helmet, weapon, shield, ring, amulet, gloves, armor, boots)
+- CSS grid layout with specific positions
+- **Elselands Status**: ✅ Backend exists, ❌ Visual grid missing
+
+### Chat/World Events System
+
+> **Full documentation**: See `doc/features/neverlands_inspired.md` → **Chat System** section
+
+The chat system includes world events and system broadcasts beyond combat logging.
+Combat-specific logging is handled separately in the combat log panel (center of fight UI).
+
+**Key channels observed**: System, World, Private, Clan, Trade
 
 ---
 
