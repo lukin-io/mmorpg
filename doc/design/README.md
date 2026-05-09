@@ -12,9 +12,10 @@
 
 1. `gdd.md`
 2. `documentation_model.md`
-3. `reference/neverlands.md`
-4. Area docs for the surface being built.
-5. Feature docs for the mechanics involved.
+3. `neverlands_parity_matrix.md`
+4. `reference/neverlands.md`
+5. Area docs for the surface being built.
+6. Feature docs for the mechanics involved.
 
 ## Update Rule
 

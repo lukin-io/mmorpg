@@ -44,6 +44,7 @@ Features:
 Documentation process:
 
 - `doc/design/documentation_model.md`
+- `doc/design/neverlands_parity_matrix.md`
 - `doc/design/reference/neverlands.md`
 - `doc/design/reference/source_material.md`
 
