@@ -6,6 +6,8 @@
 Rails.application.configure do
   # Settings specified here will take precedence over those in config/application.rb.
 
+  config.secret_key_base = "test-secret-key-base-for-mmorpg-ci-and-local-test-suite-only"
+
   # While tests run files are not watched, reloading is not necessary.
   config.enable_reloading = false
 
