@@ -59,6 +59,9 @@ Authoritative state:
   - if no movement is active, the player appears at the finalized coordinate;
   - if movement is active and not due, the countdown resumes from `ends_at`;
   - if movement is due, the server finalizes it before rendering the map.
+- Login with an existing character enters the world screen directly and uses the
+  same persisted position/resume logic. It must not route the player to an
+  unrelated dashboard before the game surface.
 
 Expected player result: if a player walks in the open world, closes the browser,
 and opens the game later, they are still at the same finalized cell or at the
@@ -76,6 +79,8 @@ Current movement implementation is close to the required persistence model:
   start time, end time, completion, and failure fields.
 - The browser submits only server-issued `target_x`, `target_y`, and
   `action_key`.
+- Accepting one movement offer cancels sibling destination offers for the same
+  character and zone so stale movement choices do not remain live in the DB.
 
 World-map contextual action parity now follows the same server-authored shape:
 
@@ -212,6 +217,7 @@ Models:
 
 Controller and routes:
 
+- `app/controllers/application_controller.rb`
 - `app/controllers/world_controller.rb`
 - `config/routes.rb`
 
@@ -274,6 +280,12 @@ Config, seeds, and migrations:
 
 Specs:
 
+- `spec/models/movement_command_spec.rb`
+- `spec/requests/login_resume_spec.rb`
+- `spec/services/game/movement/map_state_spec.rb`
+- `spec/services/game/movement/accept_move_spec.rb`
+- `spec/services/game/movement/complete_move_spec.rb`
+- `spec/services/game/movement/travel_time_spec.rb`
 - `spec/services/game/movement/turn_processor_spec.rb`
 - `spec/services/game/movement/tile_provider_spec.rb`
 - `spec/services/game/movement/command_queue_spec.rb`
@@ -287,5 +299,6 @@ Specs:
 - `spec/requests/world_spec.rb`
 - `spec/system/world_map_spec.rb`
 - `spec/system/world_interactions_spec.rb`
+- `spec/views/world/_actions_spec.rb`
 - `spec/views/world/_map_spec.rb`
 - `spec/views/world/show_spec.rb`

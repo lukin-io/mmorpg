@@ -38,7 +38,10 @@ It should feel like a utilitarian MMORPG client, not a large marketing page.
 ## Entry And Exit
 
 Players enter the world map after login/character selection, after leaving a
-city, after respawn, or after completing travel.
+city, after respawn, or after completing travel. Login is a resume action: when
+the account already has a character, the post-login entry point opens the world
+screen and renders the character's persisted `character_positions` cell. A spawn
+point is only used to bootstrap a character with no position row.
 
 Players leave the world map by:
 
@@ -102,8 +105,10 @@ closed, the server either resumes it or finalizes it from `movement_commands`.
 
 Implemented:
 
+- post-login entry into the world screen for accounts with a character;
 - movement position persistence through `character_positions`;
 - movement offers and accepted travel through `movement_commands`;
+- accepted movement cancels sibling destination offers in the database;
 - reload/resume/finalize behavior through the movement state services;
 - DB-backed resources, NPCs, and buildings for current-tile state;
 - persisted action offers for gather, NPC attack/talk, and building entry;
@@ -211,6 +216,7 @@ Models:
 
 Controller, services, and views:
 
+- `app/controllers/application_controller.rb`
 - `app/controllers/world_controller.rb`
 - `app/services/game/movement/map_state.rb`
 - `app/services/game/movement/accept_move.rb`
@@ -243,9 +249,16 @@ Config and data:
 
 Specs:
 
+- `spec/models/movement_command_spec.rb`
+- `spec/requests/login_resume_spec.rb`
 - `spec/requests/world_spec.rb`
+- `spec/services/game/movement/map_state_spec.rb`
+- `spec/services/game/movement/accept_move_spec.rb`
+- `spec/services/game/movement/complete_move_spec.rb`
+- `spec/services/game/movement/travel_time_spec.rb`
 - `spec/system/world_map_spec.rb`
 - `spec/system/world_interactions_spec.rb`
+- `spec/views/world/_actions_spec.rb`
 - `spec/views/world/_map_spec.rb`
 - `spec/views/world/show_spec.rb`
 - `spec/models/world_action_offer_spec.rb`

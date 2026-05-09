@@ -14,7 +14,19 @@ class ApplicationController < ActionController::Base
 
   helper_method :current_device_id
 
+  protected
+
+  def after_sign_in_path_for(resource)
+    return world_path if playable_account?(resource)
+
+    dashboard_path
+  end
+
   private
+
+  def playable_account?(resource)
+    resource.respond_to?(:characters) && resource.characters.exists?
+  end
 
   def ensure_device_identifier
     current_device_id if user_signed_in?

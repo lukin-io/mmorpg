@@ -248,6 +248,38 @@ RSpec.describe "world/_map.html.erb", type: :view do
       # Tile (8,8) is diagonal, not adjacent - should not be clickable
       expect(rendered).to have_css("td#tile_8_8 .nl-tile-inactive")
     end
+
+    it "does not make tiles clickable unless the server offered them" do
+      render partial: "world/map", locals: {
+        position: position,
+        nearby_tiles: nearby_tiles,
+        zone: zone,
+        tile_data: {},
+        movement_destinations: []
+      }
+
+      expect(rendered).not_to have_css(".nl-tile-clickable--available")
+      expect(rendered).to have_css("td#tile_10_9 .nl-tile-inactive")
+    end
+
+    it "disables offered destinations while movement is active" do
+      active_movement = OpenStruct.new(remaining_seconds: 17, ends_at: 17.seconds.from_now)
+
+      render partial: "world/map", locals: {
+        position: position,
+        nearby_tiles: nearby_tiles,
+        zone: zone,
+        tile_data: {},
+        movement_destinations: movement_destinations,
+        active_movement: active_movement,
+        movement_remaining_seconds: 17
+      }
+
+      expect(rendered).to have_css("[data-nl-world-map-movement-active-value='true']")
+      expect(rendered).to have_css("[data-nl-world-map-movement-remaining-seconds-value='17']")
+      expect(rendered).to have_css(".nl-cursor-img.nl-cursor-img--moving")
+      expect(rendered).not_to have_css(".nl-tile-clickable--available")
+    end
   end
 
   describe "cursor overlay" do
@@ -318,6 +350,22 @@ RSpec.describe "world/_map.html.erb", type: :view do
       }
 
       expect(rendered).to include("display: none")
+    end
+
+    it "shows remaining seconds while movement is active" do
+      active_movement = OpenStruct.new(remaining_seconds: 17, ends_at: 17.seconds.from_now)
+
+      render partial: "world/map", locals: {
+        position: position,
+        nearby_tiles: nearby_tiles,
+        zone: zone,
+        tile_data: {},
+        active_movement: active_movement,
+        movement_remaining_seconds: 17
+      }
+
+      expect(rendered).to include("display: block")
+      expect(rendered).to have_css(".nl-timer-seconds", text: "17", visible: :all)
     end
 
     it "includes stimulus targets for timer" do

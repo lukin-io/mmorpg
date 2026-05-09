@@ -42,4 +42,26 @@ RSpec.describe Game::World::AcceptAction do
       described_class.new(character:, action_key: offer.action_key, action_type: :gather_resource, target: resource).call
     }.to raise_error(Game::World::AcceptAction::ActionViolationError, /position/)
   end
+
+  it "rejects an expired offer" do
+    offer.update!(expires_at: 1.second.ago)
+
+    expect {
+      described_class.new(character:, action_key: offer.action_key, action_type: :gather_resource, target: resource).call
+    }.to raise_error(Game::World::AcceptAction::ActionViolationError, /expired/)
+  end
+
+  it "rejects a mismatched action type" do
+    expect {
+      described_class.new(character:, action_key: offer.action_key, action_type: :enter_building, target: resource).call
+    }.to raise_error(Game::World::AcceptAction::ActionViolationError, /requested action/)
+  end
+
+  it "rejects a mismatched target" do
+    other_resource = create(:tile_resource, zone: zone.name, x: 6, y: 5)
+
+    expect {
+      described_class.new(character:, action_key: offer.action_key, action_type: :gather_resource, target: other_resource).call
+    }.to raise_error(Game::World::AcceptAction::ActionViolationError, /requested target/)
+  end
 end

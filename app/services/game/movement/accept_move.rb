@@ -35,6 +35,7 @@ module Game
             error_message: nil
           )
         end
+        cancel_sibling_offers!(command)
 
         Result.new(command:, position:)
       end
@@ -75,6 +76,18 @@ module Game
         provider = Game::Movement::TileProvider.new(zone: position.zone)
         validator = Game::Movement::MovementValidator.new(provider)
         raise violation("Tile is not passable") unless validator.valid?(command.target_x, command.target_y)
+      end
+
+      def cancel_sibling_offers!(accepted_command)
+        MovementCommand
+          .offered
+          .where(character:, zone: accepted_command.zone)
+          .where.not(id: accepted_command.id)
+          .update_all(
+            status: MovementCommand.statuses.fetch("cancelled"),
+            processed_at: Time.current,
+            updated_at: Time.current
+          )
       end
 
       def violation(message)

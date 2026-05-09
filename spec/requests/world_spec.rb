@@ -3,6 +3,18 @@
 require "rails_helper"
 
 RSpec.describe "World", type: :request do
+  def world_action_offer_for(character:, position:, action_type:, target:)
+    create(
+      :world_action_offer,
+      character:,
+      zone: position.zone,
+      x: position.x,
+      y: position.y,
+      action_type: action_type.to_s,
+      target:
+    )
+  end
+
   describe "Zone model schema" do
     # Regression test: Zone model should not have a description column
     # This covers the bug where city_view.html.erb tried to access zone.description
@@ -44,6 +56,38 @@ RSpec.describe "World", type: :request do
       it "displays the player coordinates" do
         get world_path
         expect(response.body).to include("5")
+      end
+
+      it "uses the persisted position as the resume entry state" do
+        get world_path
+
+        expect(response.body).to include('data-nl-world-map-player-x-value="5"')
+        expect(response.body).to include('data-nl-world-map-player-y-value="5"')
+        expect(response.body).to include("[5, 5]")
+      end
+
+      it "resumes active travel from the movement command without changing coordinates early" do
+        create(
+          :movement_command,
+          :moving,
+          character: character,
+          zone: zone,
+          direction: "north",
+          from_x: 5,
+          from_y: 5,
+          target_x: 5,
+          target_y: 4,
+          ends_at: 20.seconds.from_now
+        )
+
+        get world_path
+
+        expect(response).to have_http_status(:success)
+        expect(response.body).to include('data-nl-world-map-movement-active-value="true"')
+        expect(response.body).to include('data-nl-world-map-player-x-value="5"')
+        expect(response.body).to include('data-nl-world-map-player-y-value="5"')
+        position.reload
+        expect([position.x, position.y]).to eq([5, 5])
       end
 
       it "renders the map partial" do
@@ -185,6 +229,17 @@ RSpec.describe "World", type: :request do
         expect(response).to redirect_to(world_path)
         expect(MovementCommand.moving.count).to eq(1)
         expect(position.reload.y).to eq(5)
+      end
+
+      it "marks the accepted action offer as moving and cancels sibling offers on refresh" do
+        command = movement_offer(:north)
+        sibling = MovementCommand.offered.where(character: character).where.not(id: command.id).first
+
+        post_offer(command)
+        get world_path
+
+        expect(command.reload).to be_moving
+        expect(sibling.reload).to be_cancelled
       end
     end
 
@@ -422,29 +477,68 @@ RSpec.describe "World", type: :request do
       character.inventory.update!(slot_capacity: 20, weight_capacity: 100, current_weight: 0)
     end
 
+    def gather_resource_params(resource = tile_resource)
+      {
+        action_key: world_action_offer_for(
+          character: character,
+          position: position,
+          action_type: :gather_resource,
+          target: resource
+        ).action_key
+      }
+    end
+
+    def post_gather_resource(headers: {}, resource: tile_resource)
+      post gather_resource_world_path,
+        params: gather_resource_params(resource),
+        headers:
+    end
+
     # Regression test: Ensure gather_resource doesn't fail with inventory validation errors
     # Previously failed with "Quantity must be greater than 0" when creating new inventory items
     context "when inventory is empty" do
       it "does not raise validation errors when adding items to inventory" do
         # This should not raise ActiveRecord::RecordInvalid
         expect {
-          post gather_resource_world_path, headers: {"Accept" => "application/json"}
+          post_gather_resource(headers: {"Accept" => "application/json"})
         }.not_to raise_error
       end
 
       it "returns a valid response" do
-        post gather_resource_world_path, headers: {"Accept" => "application/json"}
+        post_gather_resource(headers: {"Accept" => "application/json"})
 
         # Response should be either success or failure message, not 500 error
         expect(response.status).to be_in([200, 422])
         expect(response.content_type).to include("application/json")
       end
+
+      it "completes the accepted action offer on success" do
+        offer = world_action_offer_for(
+          character: character,
+          position: position,
+          action_type: :gather_resource,
+          target: tile_resource
+        )
+
+        post gather_resource_world_path,
+          params: {action_key: offer.action_key},
+          headers: {"Accept" => "application/json"}
+
+        expect(offer.reload).to be_completed
+      end
+
+      it "rejects a gather request without a live action offer" do
+        post gather_resource_world_path,
+          headers: {"Accept" => "application/json"}
+
+        expect(response).to have_http_status(:unprocessable_entity)
+        expect(JSON.parse(response.body)["message"]).to include("Action offer")
+      end
     end
 
     context "with turbo stream format" do
       it "returns turbo stream response" do
-        post gather_resource_world_path,
-          headers: {"Accept" => "text/vnd.turbo-stream.html"}
+        post_gather_resource(headers: {"Accept" => "text/vnd.turbo-stream.html"})
 
         # Should not raise 500 error
         expect(response.status).to be_in([200, 422])
@@ -452,8 +546,7 @@ RSpec.describe "World", type: :request do
 
       # Regression test: Map must update after gathering to show resource state changes
       it "uses update action for game-map" do
-        post gather_resource_world_path,
-          headers: {"Accept" => "text/vnd.turbo-stream.html"}
+        post_gather_resource(headers: {"Accept" => "text/vnd.turbo-stream.html"})
 
         # Must use 'update' not 'replace' to preserve turbo-frame element
         expect(response.body).to include('action="update"')
@@ -461,29 +554,25 @@ RSpec.describe "World", type: :request do
       end
 
       it "includes map container in response" do
-        post gather_resource_world_path,
-          headers: {"Accept" => "text/vnd.turbo-stream.html"}
+        post_gather_resource(headers: {"Accept" => "text/vnd.turbo-stream.html"})
 
         expect(response.body).to include("nl-map-container")
       end
 
       it "updates available-actions" do
-        post gather_resource_world_path,
-          headers: {"Accept" => "text/vnd.turbo-stream.html"}
+        post_gather_resource(headers: {"Accept" => "text/vnd.turbo-stream.html"})
 
         expect(response.body).to include('target="available-actions"')
       end
 
       it "updates location-info" do
-        post gather_resource_world_path,
-          headers: {"Accept" => "text/vnd.turbo-stream.html"}
+        post_gather_resource(headers: {"Accept" => "text/vnd.turbo-stream.html"})
 
         expect(response.body).to include('target="location-info"')
       end
 
       it "includes flash message" do
-        post gather_resource_world_path,
-          headers: {"Accept" => "text/vnd.turbo-stream.html"}
+        post_gather_resource(headers: {"Accept" => "text/vnd.turbo-stream.html"})
 
         expect(response.body).to include('target="flash"')
       end
@@ -531,7 +620,7 @@ RSpec.describe "World", type: :request do
 
     context "with HTML format" do
       it "redirects to world path" do
-        post gather_resource_world_path
+        post_gather_resource
 
         expect(response).to redirect_to(world_path)
       end
@@ -714,7 +803,14 @@ RSpec.describe "World", type: :request do
         expect(response.body).to include("Test Herb")
 
         # Gather the resource (depletes it)
+        offer = world_action_offer_for(
+          character: character,
+          position: position,
+          action_type: :gather_resource,
+          target: gatherable_resource
+        )
         post gather_resource_world_path,
+          params: {action_key: offer.action_key},
           headers: {"Accept" => "text/vnd.turbo-stream.html"}
 
         # Check that map update doesn't include the depleted resource
@@ -785,6 +881,24 @@ RSpec.describe "World", type: :request do
 
     before { sign_in user, scope: :user }
 
+    def building_entry_params(building)
+      {
+        building_id: building.id,
+        action_key: world_action_offer_for(
+          character: character,
+          position: position,
+          action_type: :enter_building,
+          target: building
+        ).action_key
+      }
+    end
+
+    def post_building_entry(building, headers: {})
+      post enter_building_world_path,
+        params: building_entry_params(building),
+        headers:
+    end
+
     # -------------------------------------------------------------------------
     # Success Cases
     # -------------------------------------------------------------------------
@@ -805,14 +919,14 @@ RSpec.describe "World", type: :request do
       end
 
       it "moves character to destination zone" do
-        post enter_building_world_path, params: {building_id: building.id}
+        post_building_entry(building)
 
         position.reload
         expect(position.zone).to eq(destination_zone)
       end
 
       it "moves character to specified destination coordinates" do
-        post enter_building_world_path, params: {building_id: building.id}
+        post_building_entry(building)
 
         position.reload
         expect(position.x).to eq(7)
@@ -820,7 +934,7 @@ RSpec.describe "World", type: :request do
       end
 
       it "redirects to world path with success notice on HTML format" do
-        post enter_building_world_path, params: {building_id: building.id}
+        post_building_entry(building)
 
         expect(response).to redirect_to(world_path)
         follow_redirect!
@@ -828,15 +942,36 @@ RSpec.describe "World", type: :request do
       end
 
       it "redirects on turbo stream format to trigger full page reload" do
-        post enter_building_world_path,
-          params: {building_id: building.id},
-          headers: {"Accept" => "text/vnd.turbo-stream.html"}
+        post_building_entry(building, headers: {"Accept" => "text/vnd.turbo-stream.html"})
 
         # After entering a building, we redirect because:
         # 1. Target zone might be a city which requires city_view.html.erb (not partials)
         # 2. Redirect with see_other status triggers Turbo to do full page navigation
         expect(response).to have_http_status(:see_other)
         expect(response).to redirect_to(world_path)
+      end
+
+      it "completes the accepted building entry offer on success" do
+        offer = world_action_offer_for(
+          character: character,
+          position: position,
+          action_type: :enter_building,
+          target: building
+        )
+
+        post enter_building_world_path,
+          params: {building_id: building.id, action_key: offer.action_key}
+
+        expect(offer.reload).to be_completed
+      end
+
+      it "rejects entry without a live action offer" do
+        post enter_building_world_path, params: {building_id: building.id}
+
+        expect(response).to redirect_to(world_path)
+        follow_redirect!
+        expect(response.body).to include("Action offer")
+        expect(position.reload.zone).to eq(source_zone)
       end
     end
 
@@ -856,7 +991,7 @@ RSpec.describe "World", type: :request do
       end
 
       it "uses destination zone spawn point when no specific coordinates" do
-        post enter_building_world_path, params: {building_id: building.id}
+        post_building_entry(building)
 
         position.reload
         expect(position.zone).to eq(destination_zone)
@@ -901,15 +1036,15 @@ RSpec.describe "World", type: :request do
       end
 
       it "returns alert when not at building location" do
-        post enter_building_world_path, params: {building_id: distant_building.id}
+        post_building_entry(distant_building)
 
         expect(response).to redirect_to(world_path)
         follow_redirect!
-        expect(response.body).to include("must be at the building")
+        expect(response.body).to include("No building found")
       end
 
       it "does not move character" do
-        post enter_building_world_path, params: {building_id: distant_building.id}
+        post_building_entry(distant_building)
 
         position.reload
         expect(position.zone).to eq(source_zone)
@@ -932,7 +1067,7 @@ RSpec.describe "World", type: :request do
       end
 
       it "returns alert for inactive building" do
-        post enter_building_world_path, params: {building_id: inactive_building.id}
+        post_building_entry(inactive_building)
 
         expect(response).to redirect_to(world_path)
         follow_redirect!
@@ -942,10 +1077,19 @@ RSpec.describe "World", type: :request do
       end
 
       it "does not move character" do
-        post enter_building_world_path, params: {building_id: inactive_building.id}
+        offer = world_action_offer_for(
+          character: character,
+          position: position,
+          action_type: :enter_building,
+          target: inactive_building
+        )
+
+        post enter_building_world_path,
+          params: {building_id: inactive_building.id, action_key: offer.action_key}
 
         position.reload
         expect(position.zone).to eq(source_zone)
+        expect(offer.reload).to be_failed
       end
     end
 
@@ -963,7 +1107,7 @@ RSpec.describe "World", type: :request do
       end
 
       it "returns alert with level requirement" do
-        post enter_building_world_path, params: {building_id: high_level_building.id}
+        post_building_entry(high_level_building)
 
         expect(response).to redirect_to(world_path)
         follow_redirect!
@@ -971,16 +1115,14 @@ RSpec.describe "World", type: :request do
       end
 
       it "does not move character" do
-        post enter_building_world_path, params: {building_id: high_level_building.id}
+        post_building_entry(high_level_building)
 
         position.reload
         expect(position.zone).to eq(source_zone)
       end
 
       it "returns turbo stream error with level requirement" do
-        post enter_building_world_path,
-          params: {building_id: high_level_building.id},
-          headers: {"Accept" => "text/vnd.turbo-stream.html"}
+        post_building_entry(high_level_building, headers: {"Accept" => "text/vnd.turbo-stream.html"})
 
         expect(response.body).to include("turbo-stream")
       end
@@ -1000,7 +1142,7 @@ RSpec.describe "World", type: :request do
       end
 
       it "returns alert for inaccessible building" do
-        post enter_building_world_path, params: {building_id: no_dest_building.id}
+        post_building_entry(no_dest_building)
 
         expect(response).to redirect_to(world_path)
         follow_redirect!
@@ -1008,7 +1150,7 @@ RSpec.describe "World", type: :request do
       end
 
       it "does not move character" do
-        post enter_building_world_path, params: {building_id: no_dest_building.id}
+        post_building_entry(no_dest_building)
 
         position.reload
         expect(position.zone).to eq(source_zone)
@@ -1063,11 +1205,11 @@ RSpec.describe "World", type: :request do
       end
 
       it "returns alert when building is in different zone" do
-        post enter_building_world_path, params: {building_id: other_zone_building.id}
+        post_building_entry(other_zone_building)
 
         expect(response).to redirect_to(world_path)
         follow_redirect!
-        expect(response.body).to include("must be at the building")
+        expect(response.body).to include("No building found")
       end
     end
   end

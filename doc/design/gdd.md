@@ -64,7 +64,8 @@ The intended feel is:
 
 ## Core Loop
 
-1. Player logs in and enters the world at a known spawn point.
+1. Player logs in and enters the world at the last persisted cell. A spawn point
+   is used only when the character has no saved position yet.
 2. The world view shows the current location, map tiles, nearby players, and
    tile-local actions.
 3. Player chooses a server-offered destination or local action.
