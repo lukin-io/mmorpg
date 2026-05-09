@@ -1,5 +1,8 @@
 # COMBAT_SYSTEM_GUIDE.md — Combat Architecture for Elselands MMORPG
 
+Status: implementation guide. Canonical combat design lives in
+`doc/design/features/combat.md` and `doc/design/gdd.md`.
+
 This guide defines how to implement combat, turns, skills, crits, buffs,
 and battle flow inside the Rails MMORPG engine.
 

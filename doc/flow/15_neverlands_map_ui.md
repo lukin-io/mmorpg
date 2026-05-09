@@ -8,7 +8,17 @@ related: doc/flow/16_passive_skills.md
 ---
 
 ## Summary
-This document covers the game interface implemented for Elselands, including:
+Status: this is a derived implementation note for the current map UI. The
+design source of truth is `doc/design/gdd.md`. For the live Neverlands movement
+reference and current codebase gap analysis, use:
+
+- `doc/flow/neverlands_live_movement.md`
+- `doc/flow/neverlands_live_city_movement.md`
+- `doc/flow/neverlands_movement_codebase_analysis.md`
+- `doc/design/areas/world_map.md`
+- `doc/design/features/movement.md`
+
+This derived implementation note covers the current game interface, including:
 - Game layout with top bar, main content area, floating players panel, and bottom chat bar
 - Tile-based world map with mouse-click navigation
 - HP/MP vitals bars with client-side regeneration
@@ -24,7 +34,9 @@ Original reference screenshots and source code are stored in `nl/` folder:
 - `nl/profile.jpg` — Character profile with equipment
 - `nl/layout.jpg` — UI wireframe layout
 
-Full analysis in `doc/features/neverlands_inspired.md`.
+Live movement analysis is in `doc/flow/neverlands_live_movement.md`.
+Live city movement analysis is in
+`doc/flow/neverlands_live_city_movement.md`.
 
 ---
 
@@ -424,7 +436,8 @@ cooldown = (base * (1 - wanderer_reduction) * terrain_modifier) / mount_speed
 - `app/views/shared/_nl_players_list.html.erb`
 
 **Documentation:**
-- `doc/features/neverlands_inspired.md` — Feature reference with original source
+- `doc/flow/neverlands_live_movement.md` — live movement reference
+- `doc/flow/neverlands_movement_codebase_analysis.md` — implementation gap analysis
 - `doc/MAP_DESIGN_GUIDE.md` — Map architecture guide
 
 ---

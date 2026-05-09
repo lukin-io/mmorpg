@@ -1,5 +1,9 @@
 # MAP_DESIGN_GUIDE.md — Zone & Grid Architecture for Elselands MMORPG
 
+Status: implementation guide. Canonical map and movement design lives in
+`doc/design/areas/world_map.md`, `doc/design/features/movement.md`, and
+`doc/design/gdd.md`.
+
 This guide explains how maps, zones, tiles, and world layout are implemented
 inside the Rails game engine.
 

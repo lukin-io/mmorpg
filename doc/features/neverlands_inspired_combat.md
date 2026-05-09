@@ -1,5 +1,8 @@
 # Neverlands Combat System — Detailed Analysis
 
+Status: historical Neverlands reference. Canonical combat design lives in
+`doc/design/features/combat.md` and `doc/design/gdd.md`.
+
 > **Source**: Live analysis from `http://www.neverlands.ru` (December 2024)
 > **Purpose**: Reference for implementing Elselands combat mechanics
 
@@ -1744,4 +1747,3 @@ Combat-specific logging is handled separately in the combat log panel (center of
 ---
 
 *Last updated: December 31, 2024 (v1.10 - Complete formulas reference, match notifications, comprehensive test coverage)*
-

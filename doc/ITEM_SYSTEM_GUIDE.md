@@ -1,5 +1,8 @@
 # ITEM_SYSTEM_GUIDE.md — Items, Inventory & Loot Architecture
 
+Status: implementation guide. Canonical item/inventory design lives in
+`doc/design/features/items_inventory_equipment.md` and `doc/design/gdd.md`.
+
 This guide defines the item, inventory, equipment, and loot design
 for the Elselands Rails MMORPG.
 

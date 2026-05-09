@@ -1,5 +1,8 @@
 # Neverlands Chat System — Detailed Analysis
 
+Status: historical Neverlands reference. Canonical social/chat design lives in
+`doc/design/features/social_chat_presence.md` and `doc/design/gdd.md`.
+
 > **Source**: Live analysis from `http://www.neverlands.ru` (December 2024)
 > **Purpose**: Reference for implementing Elselands chat mechanics
 
@@ -710,4 +713,3 @@ a.usermenulink:hover {
 ---
 
 *Last updated: December 2024 (Live server analysis)*
-

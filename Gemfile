@@ -1,7 +1,7 @@
 source "https://rubygems.org"
 
-ruby "3.4.4"
-gem "rails", "~> 8.1.1"
+ruby "4.0.3"
+gem "rails", "~> 8.1.3"
 
 # Core platform
 gem "pg"
@@ -11,7 +11,7 @@ gem "turbo-rails"
 gem "stimulus-rails"
 gem "propshaft"
 gem "redis"
-# Note: connection_pool 3.0+ is incompatible with Rails 8.1.1's RedisCacheStore,
+# Note: connection_pool 3.0+ is incompatible with Rails 8.1's RedisCacheStore,
 # but Sidekiq 8.1+ requires connection_pool 3.0+. Using memory_store in dev.
 gem "connection_pool", "~> 3.0"
 gem "sidekiq", "~> 8.1"

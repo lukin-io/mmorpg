@@ -1090,22 +1090,6 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_30_170000) do
     t.index ["slug"], name: "index_game_events_on_slug", unique: true
   end
 
-  create_table "game_overview_snapshots", force: :cascade do |t|
-    t.integer "active_clans_7d", default: 0, null: false
-    t.integer "active_guilds_7d", default: 0, null: false
-    t.decimal "avg_tokens_per_paying_user", precision: 10, scale: 2, default: "0.0", null: false
-    t.datetime "captured_at", null: false
-    t.integer "chat_senders_7d", default: 0, null: false
-    t.datetime "created_at", null: false
-    t.integer "daily_returning_players", default: 0, null: false
-    t.integer "premium_purchases_30d", default: 0, null: false
-    t.integer "seasonal_events_active", default: 0, null: false
-    t.datetime "updated_at", null: false
-    t.integer "weekly_returning_players", default: 0, null: false
-    t.decimal "whale_share_percent", precision: 5, scale: 2, default: "0.0", null: false
-    t.index ["captured_at"], name: "index_game_overview_snapshots_on_captured_at", unique: true
-  end
-
   create_table "gathering_nodes", force: :cascade do |t|
     t.boolean "contested", default: false, null: false
     t.datetime "created_at", null: false
