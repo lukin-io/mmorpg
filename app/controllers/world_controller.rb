@@ -24,21 +24,12 @@ class WorldController < ApplicationController
   before_action :set_position
 
   def show
-    @zone = @position.zone
-
     # City zones render an interactive illustrated view instead of tile grid
     if city_zone?
+      @zone = @position.zone
       prepare_city_view
     else
-      @tile = current_tile
-      @nearby_tiles = nearby_tiles_with_features
-      @available_actions = available_actions
-      @npcs_here = npcs_at_current_tile
-      @gathering_nodes = gathering_nodes_at_current_tile
-      @tile_resource = tile_resource_at_current_tile
-      @tile_npc = tile_npc_at_current_tile
-      @tile_building = tile_building_at_current_tile
-      @players_here = players_at_current_tile
+      prepare_overworld_view
     end
 
     # Handle both HTML and Turbo Stream requests with full page render
@@ -65,21 +56,22 @@ class WorldController < ApplicationController
   end
 
   def move
-    direction = params[:direction]&.to_sym
-
-    Game::Movement::TurnProcessor.new(
+    result = Game::Movement::AcceptMove.new(
       character: current_character,
-      direction: direction
+      action_key: params[:action_key],
+      target_x: params[:target_x],
+      target_y: params[:target_y],
+      direction: params[:direction]
     ).call
 
-    @position.reload
+    @position = result.position.reload
     respond_to do |format|
       format.turbo_stream { render_map_update }
-      format.html { redirect_to world_path, notice: "Moved #{direction}." }
+      format.html { redirect_to world_path, notice: "Moving #{result.command.direction}." }
     end
   rescue Game::Movement::TurnProcessor::MovementViolationError => e
     respond_to do |format|
-      format.turbo_stream { render_error(e.message) }
+      format.turbo_stream { render_movement_error(e.message) }
       format.html { redirect_to world_path, alert: e.message }
     end
   end
@@ -189,13 +181,7 @@ class WorldController < ApplicationController
       end
     end
 
-    # Verify building is at current position
-    unless building.zone == @position.zone.name && building.x == @position.x && building.y == @position.y
-      return respond_to do |format|
-        format.html { redirect_to world_path, alert: "You must be at the building to enter." }
-        format.turbo_stream { render_error("You must be at the building to enter.") }
-      end
-    end
+    action_offer = accept_world_action!(:enter_building, target: building)
 
     service = Game::World::TileBuildingService.new(
       character: current_character,
@@ -208,6 +194,7 @@ class WorldController < ApplicationController
 
     respond_to do |format|
       if result.success
+        action_offer.complete!
         # Always redirect after entering a building - the target zone may be a city
         # which requires the full city_view template instead of partial updates
         format.html { redirect_to world_path, notice: result.message }
@@ -217,33 +204,51 @@ class WorldController < ApplicationController
           redirect_to world_path, status: :see_other
         end
       else
+        action_offer.fail!(result.message)
         format.html { redirect_to world_path, alert: result.message }
         format.turbo_stream { render_error(result.message) }
       end
     end
+  rescue Game::World::AcceptAction::ActionViolationError => e
+    respond_with_world_action_error(e.message)
   end
 
   def gather
     node = GatheringNode.find(params[:node_id])
+    action_offer = accept_world_action!(:gather_node, target: node)
 
     unless node.zone_id == @position.zone_id
+      action_offer.fail!("Resource is not in your zone.")
       return redirect_to world_path, alert: "Node is not in your zone."
     end
 
     unless node.available?
+      action_offer.fail!("This resource is not available yet.")
       return redirect_to world_path, alert: "This resource is not available yet."
     end
 
     # Mark as harvested and award resources
     node.mark_harvest!
+    action_offer.complete!
     redirect_to world_path, notice: "Gathered #{node.resource_key.titleize}!"
   rescue ActiveRecord::RecordNotFound
     redirect_to world_path, alert: "Resource not found."
+  rescue Game::World::AcceptAction::ActionViolationError => e
+    respond_with_world_action_error(e.message)
   end
 
   # POST /world/gather_resource
   # Gather a resource from the current tile
   def gather_resource
+    resource = TileResource.find_by(id: params[:resource_id]) ||
+      TileResource.at_tile(@position.zone.name, @position.x, @position.y)
+
+    unless resource
+      return respond_with_world_action_error("No resources available at this location.")
+    end
+
+    action_offer = accept_world_action!(:gather_resource, target: resource)
+
     service = Game::World::TileGatheringService.new(
       character: current_character,
       zone: @position.zone.name,
@@ -255,10 +260,12 @@ class WorldController < ApplicationController
 
     respond_to do |format|
       if result.success
+        action_offer.complete!
         format.html { redirect_to world_path, notice: result.message }
         format.turbo_stream { render_gather_update(result.message) }
         format.json { render json: {success: true, item: result.item_name, quantity: result.quantity, message: result.message} }
       else
+        action_offer.fail!(result.message)
         format.html { redirect_to world_path, alert: result.message }
         format.turbo_stream do
           render turbo_stream: turbo_stream.update("flash", partial: "shared/flash", locals: {type: "alert", message: result.message})
@@ -266,13 +273,26 @@ class WorldController < ApplicationController
         format.json { render json: {success: false, message: result.message, respawn_in: result.respawn_in}, status: :unprocessable_entity }
       end
     end
+  rescue Game::World::AcceptAction::ActionViolationError => e
+    respond_with_world_action_error(e.message)
   end
 
   def interact
-    npc_id = params[:npc_id] || params[:npc_key]
-    npc_template = NpcTemplate.find_by(id: npc_id) || NpcTemplate.find_by(npc_key: npc_id)
+    action_offer = nil
+
+    if params[:action_key].present? && params[:tile_npc_id].present?
+      tile_npc = TileNpc.find_by(id: params[:tile_npc_id])
+      return respond_with_world_action_error("NPC not found") unless tile_npc
+
+      action_offer = accept_world_action!(:talk_npc, target: tile_npc)
+      npc_template = tile_npc.npc_template
+    else
+      npc_id = params[:npc_id] || params[:npc_key]
+      npc_template = NpcTemplate.find_by(id: npc_id) || NpcTemplate.find_by(npc_key: npc_id)
+    end
 
     unless npc_template
+      action_offer&.fail!("NPC not found")
       return respond_to do |format|
         format.html { redirect_to world_path, alert: "NPC not found." }
         format.json { render json: {error: "NPC not found"}, status: :not_found }
@@ -284,6 +304,7 @@ class WorldController < ApplicationController
 
     respond_to do |format|
       if result.success
+        action_offer&.complete!
         format.html { render "world/dialogue", locals: {result: result, npc: npc_template} }
         format.turbo_stream do
           render turbo_stream: turbo_stream.update(
@@ -294,10 +315,13 @@ class WorldController < ApplicationController
         end
         format.json { render json: result.to_h }
       else
+        action_offer&.fail!(result.message)
         format.html { redirect_to world_path, alert: result.message }
         format.json { render json: {error: result.message}, status: :unprocessable_entity }
       end
     end
+  rescue Game::World::AcceptAction::ActionViolationError => e
+    respond_with_world_action_error(e.message)
   end
 
   # POST /world/dialogue_action
@@ -355,6 +379,39 @@ class WorldController < ApplicationController
     @hotspots = @city_service.hotspots
   end
 
+  def prepare_overworld_view
+    @movement_state = Game::Movement::MapState.new(character: current_character).call
+    @position = @movement_state.position.reload
+    @zone = @position.zone
+    @active_movement = @movement_state.active_command
+    @movement_destinations = @movement_state.destinations
+    @movement_remaining_seconds = @active_movement&.remaining_seconds || 0
+    @movement_cooldown = @movement_destinations.first&.travel_seconds ||
+      @active_movement&.travel_seconds ||
+      Game::Movement::TravelTime::BASE_TRAVEL_SECONDS
+
+    @tile_state = @active_movement ? nil : Game::World::TileStateResolver.new(
+      character: current_character,
+      position: @position
+    ).call
+    @gathering_nodes = @active_movement ? [] : gathering_nodes_at_current_tile
+    @world_action_offers = @active_movement ? [] : Game::World::ActionOfferBuilder.new(
+      character: current_character,
+      position: @position,
+      tile_state: @tile_state,
+      gathering_nodes: @gathering_nodes
+    ).call
+
+    @tile = current_tile
+    @nearby_tiles = nearby_tiles_with_features
+    @npcs_here = npcs_at_current_tile
+    @tile_resource = tile_resource_at_current_tile
+    @tile_npc = tile_npc_at_current_tile
+    @tile_building = tile_building_at_current_tile
+    @players_here = players_at_current_tile
+    @available_actions = available_actions
+  end
+
   def ensure_character_position!
     return if current_character.position.present?
 
@@ -384,7 +441,7 @@ class WorldController < ApplicationController
 
   def current_tile
     MapTileTemplate.find_by(
-      zone: @position.zone,
+      zone: @position.zone.name,
       x: @position.x,
       y: @position.y
     ) || default_tile
@@ -439,7 +496,7 @@ class WorldController < ApplicationController
         next if x < 0 || y < 0 || x >= zone.width || y >= zone.height
 
         # Get tile template or generate procedural terrain
-        tile_template = MapTileTemplate.find_by(zone: zone, x: x, y: y)
+        tile_template = MapTileTemplate.find_by(zone: zone.name, x: x, y: y)
 
         if tile_template
           # Use tile template but override with actual resource/npc data
@@ -474,10 +531,8 @@ class WorldController < ApplicationController
     tiles
   end
 
-  # Add resource/npc data to tile metadata
-  # Priority: 1) Database records (TileResource/TileNpc)
-  #           2) Procedural features as fallback
-  # Depleted resources (quantity = 0) are hidden
+  # Add DB-backed resource/NPC/building data to tile metadata.
+  # Depleted resources and defeated NPCs are hidden.
   def add_live_tile_features(zone_name, x, y, metadata)
     # Check for TileResource in database
     resource = TileResource.at_tile(zone_name, x, y)
@@ -494,14 +549,6 @@ class WorldController < ApplicationController
         metadata.delete("resource_type")
         metadata.delete("resource_quantity")
       end
-    else
-      # No database record - use procedural features as visual hint
-      # Resource will be created when player attempts to gather
-      procedural = procedural_features(@position.zone, x, y)
-      if procedural["resource"]
-        metadata["resource"] = procedural["resource"]
-        metadata["resource_type"] = procedural["resource_type"]
-      end
     end
 
     # Check for TileNpc in database
@@ -515,12 +562,6 @@ class WorldController < ApplicationController
       else
         metadata.delete("npc")
         metadata.delete("npc_level")
-      end
-    else
-      # No database record - use procedural features as visual hint
-      procedural ||= procedural_features(@position.zone, x, y)
-      if procedural["npc"]
-        metadata["npc"] = procedural["npc"]
       end
     end
 
@@ -568,59 +609,22 @@ class WorldController < ApplicationController
     end
   end
 
-  def procedural_features(zone, x, y)
-    seed = (zone.id * 1000) + (x * 100) + y
-    rng = Random.new(seed + 42)
-    features = {}
-
-    # Don't add features in cities
-    return features if zone.biome == "city"
-
-    roll = rng.rand(100)
-
-    if roll < 8 && zone.biome != "city"
-      # NPC/Monster
-      npcs = ["Goblin Scout", "Wild Boar", "Forest Wolf", "Bandit", "Giant Spider"]
-      features["npc"] = npcs[rng.rand(npcs.size)]
-    elsif roll < 20
-      # Resource node
-      resources = case zone.biome
-      when "forest"
-        [
-          {name: "Moonleaf Herb", type: "herb"},
-          {name: "Oak Wood", type: "wood"},
-          {name: "Wild Berries", type: "herb"}
-        ]
-      when "plains"
-        [
-          {name: "Iron Ore", type: "ore"},
-          {name: "Healing Herb", type: "herb"},
-          {name: "Flax Plant", type: "herb"}
-        ]
-      when "mountain"
-        [
-          {name: "Gold Vein", type: "ore"},
-          {name: "Crystal Formation", type: "ore"},
-          {name: "Mountain Herb", type: "herb"}
-        ]
-      else
-        [{name: "Wild Plant", type: "herb"}]
-      end
-
-      resource = resources[rng.rand(resources.size)]
-      features["resource"] = resource[:name]
-      features["resource_type"] = resource[:type]
-    end
-
-    features
-  end
-
   def available_actions
     actions = []
 
-    # Movement actions (if cooldown allows)
-    if @position.ready_for_action?(cooldown_seconds: movement_cooldown)
-      actions << {type: :move, directions: available_directions}
+    if @active_movement
+      actions << {
+        type: :moving,
+        command: @active_movement,
+        remaining_seconds: @active_movement.remaining_seconds
+      }
+      return actions
+    elsif @movement_destinations&.any?
+      actions << {
+        type: :move,
+        directions: @movement_destinations.map { |destination| destination.direction.to_sym },
+        destinations: @movement_destinations
+      }
     end
 
     # Location-specific actions
@@ -629,48 +633,45 @@ class WorldController < ApplicationController
     end
 
     # Gathering actions (profession-based nodes)
-    if gathering_nodes_at_current_tile.any?
-      actions << {type: :gather, nodes: gathering_nodes_at_current_tile}
+    if @gathering_nodes&.any?
+      actions << {
+        type: :gather,
+        nodes: @gathering_nodes,
+        offers_by_target_id: offers_by_action("gather_node").index_by(&:target_id)
+      }
     end
 
     # Tile resource actions (biome-based, no profession required)
     tile_resource = tile_resource_at_current_tile
     if tile_resource.present?
-      actions << {type: :tile_resource, resource: tile_resource}
+      actions << {
+        type: :tile_resource,
+        resource: tile_resource,
+        offer: offers_by_action("gather_resource").first
+      }
     end
 
     # Tile NPC actions (biome-based random spawns)
     tile_npc = tile_npc_at_current_tile
     if tile_npc.present?
-      actions << {type: :tile_npc, npc: tile_npc}
+      actions << {
+        type: :tile_npc,
+        npc: tile_npc,
+        offer: offers_by_action(tile_npc[:hostile] ? "attack_npc" : "talk_npc").first
+      }
     end
 
     # Tile Building actions (enterable structures)
     tile_building = tile_building_at_current_tile
     if tile_building.present?
-      actions << {type: :tile_building, building: tile_building}
+      actions << {
+        type: :tile_building,
+        building: tile_building,
+        offer: offers_by_action("enter_building").first
+      }
     end
 
     actions
-  end
-
-  def available_directions
-    zone = @position.zone
-    directions = []
-
-    # Check each cardinal direction
-    directions << :north if @position.y > 0
-    directions << :south if @position.y < zone.height - 1
-    directions << :west if @position.x > 0
-    directions << :east if @position.x < zone.width - 1
-
-    # Check each diagonal direction
-    directions << :northeast if @position.y > 0 && @position.x < zone.width - 1
-    directions << :southeast if @position.y < zone.height - 1 && @position.x < zone.width - 1
-    directions << :southwest if @position.y < zone.height - 1 && @position.x > 0
-    directions << :northwest if @position.y > 0 && @position.x > 0
-
-    directions
   end
 
   def npcs_at_current_tile
@@ -700,6 +701,9 @@ class WorldController < ApplicationController
   end
 
   def tile_resource_at_current_tile
+    return @tile_resource if defined?(@tile_resource) && @tile_resource
+    return @tile_state.resource_info if @tile_state
+
     # Get tile resource info at current position (for display)
     service = Game::World::TileGatheringService.new(
       character: current_character,
@@ -711,6 +715,9 @@ class WorldController < ApplicationController
   end
 
   def tile_npc_at_current_tile
+    return @tile_npc if defined?(@tile_npc) && @tile_npc
+    return @tile_state.npc_info if @tile_state
+
     # Get tile NPC info at current position (for display)
     service = Game::World::TileNpcService.new(
       character: current_character,
@@ -722,6 +729,9 @@ class WorldController < ApplicationController
   end
 
   def tile_building_at_current_tile
+    return @tile_building if defined?(@tile_building) && @tile_building
+    return @tile_state.building_info if @tile_state
+
     # Get tile building info at current position (for display)
     service = Game::World::TileBuildingService.new(
       character: current_character,
@@ -741,54 +751,18 @@ class WorldController < ApplicationController
       .limit(10)
   end
 
-  def movement_cooldown
-    # Movement cooldown formula:
-    # 1. Base: 10 seconds
-    # 2. Wanderer skill: reduces by 0-70% based on skill level
-    # 3. Terrain modifier: multiplies based on terrain type
-    # 4. Mount speed: divides by mount travel multiplier
-    base = Game::Skills::PassiveSkillCalculator::BASE_MOVEMENT_COOLDOWN
-
-    # Apply Wanderer skill
-    wanderer_adjusted = current_character.passive_skill_calculator.apply_movement_cooldown(base)
-
-    # Apply terrain modifier
-    terrain_modifier = begin
-      Game::Movement::TerrainModifier.new(zone: @position.zone).speed_multiplier(tile_metadata: current_tile_metadata)
-    rescue
-      1.0
-    end
-
-    # Apply mount speed
-    mount_multiplier = begin
-      active_mount = current_character.user&.mounts&.find_by(summon_state: :summoned)
-      active_mount ? active_mount.travel_multiplier : 1.0
-    rescue
-      1.0
-    end
-
-    ((wanderer_adjusted * terrain_modifier) / mount_multiplier).round.to_i
-  end
-
-  def current_tile_metadata
-    tile = MapTileTemplate.find_by(zone: @position.zone, x: @position.x, y: @position.y)
-    tile&.metadata || {}
-  end
-
   def render_map_update
-    # Set instance variables that partials expect
-    @movement_cooldown = movement_cooldown
-    @tile = current_tile
-    @zone = @position.zone
-    @nearby_tiles = nearby_tiles_with_features
-    @available_actions = available_actions
+    prepare_overworld_view
 
     render turbo_stream: [
       turbo_stream.update("game-map", partial: "world/map", locals: {
         position: @position,
         nearby_tiles: @nearby_tiles,
         zone: @zone,
-        tile_data: {}
+        tile_data: {},
+        movement_destinations: @movement_destinations,
+        active_movement: @active_movement,
+        movement_remaining_seconds: @movement_remaining_seconds
       }),
       turbo_stream.update("location-info", partial: "world/location_info", locals: {
         position: @position,
@@ -810,15 +784,53 @@ class WorldController < ApplicationController
     )
   end
 
+  def offers_by_action(action_type)
+    (@world_action_offers || []).select { |offer| offer.action_type == action_type }
+  end
+
+  def accept_world_action!(action_type, target:)
+    Game::World::AcceptAction.new(
+      character: current_character,
+      action_key: params[:action_key],
+      action_type: action_type,
+      target: target,
+      position: @position
+    ).call
+  end
+
+  def respond_with_world_action_error(message)
+    respond_to do |format|
+      format.html { redirect_to world_path, alert: message }
+      format.turbo_stream { render_movement_error(message) }
+      format.json { render json: {success: false, message: message}, status: :unprocessable_entity }
+    end
+  end
+
+  def render_movement_error(message)
+    prepare_overworld_view
+
+    render turbo_stream: [
+      turbo_stream.update("flash", partial: "shared/flash", locals: {type: :alert, message: message}),
+      turbo_stream.update("game-map", partial: "world/map", locals: {
+        position: @position,
+        nearby_tiles: @nearby_tiles,
+        zone: @zone,
+        tile_data: {},
+        movement_destinations: @movement_destinations,
+        active_movement: @active_movement,
+        movement_remaining_seconds: @movement_remaining_seconds
+      }),
+      turbo_stream.update("available-actions", partial: "world/actions", locals: {
+        available_actions: @available_actions,
+        position: @position
+      })
+    ]
+  end
+
   # Render update after gathering a resource
   # Updates map (to show resource state), location info, actions, and flash message
   def render_gather_update(message)
-    # Set instance variables that partials expect
-    @movement_cooldown = movement_cooldown
-    @tile = current_tile
-    @zone = @position.zone
-    @nearby_tiles = nearby_tiles_with_features
-    @available_actions = available_actions
+    prepare_overworld_view
 
     render turbo_stream: [
       turbo_stream.update("flash", partial: "shared/flash", locals: {type: "notice", message: message}),
@@ -826,7 +838,10 @@ class WorldController < ApplicationController
         position: @position,
         nearby_tiles: @nearby_tiles,
         zone: @zone,
-        tile_data: {}
+        tile_data: {},
+        movement_destinations: @movement_destinations,
+        active_movement: @active_movement,
+        movement_remaining_seconds: @movement_remaining_seconds
       }),
       turbo_stream.update("location-info", partial: "world/location_info", locals: {
         position: @position,

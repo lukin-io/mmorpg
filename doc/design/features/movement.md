@@ -43,6 +43,58 @@ arrives at the new node or building.
 - Completion refreshes available actions and local presence.
 - Passability and travel time are server rules, not browser rules.
 
+## Persistence Contract
+
+Neverlands-style movement is persistent server state, not browser state.
+
+Authoritative state:
+
+- `character_positions` stores the finalized coordinate and zone.
+- `movement_commands` stores each offered, accepted, active, completed, failed,
+  or cancelled movement.
+- An accepted movement does not immediately change `character_positions`.
+- Active movement stores source coordinate, target coordinate, start time,
+  end time, travel duration, and action key.
+- Reopening the browser must load from database state:
+  - if no movement is active, the player appears at the finalized coordinate;
+  - if movement is active and not due, the countdown resumes from `ends_at`;
+  - if movement is due, the server finalizes it before rendering the map.
+
+Expected player result: if a player walks in the open world, closes the browser,
+and opens the game later, they are still at the same finalized cell or at the
+completed destination if the travel timer elapsed while they were away.
+
+## Current Implementation Status
+
+Current movement implementation is close to the required persistence model:
+
+- `Game::Movement::MapState` creates server-authored destination offers.
+- `Game::Movement::AcceptMove` accepts an offer and starts timed travel.
+- `Game::Movement::CompleteMove` finalizes due travel into
+  `character_positions`.
+- `movement_commands` now has source, target, action key, travel seconds,
+  start time, end time, completion, and failure fields.
+- The browser submits only server-issued `target_x`, `target_y`, and
+  `action_key`.
+
+World-map contextual action parity now follows the same server-authored shape:
+
+- `WorldActionOffer` stores short-lived action keys for gather, NPC, and
+  building entry actions;
+- `Game::World::TileStateResolver` materializes current-tile resource/NPC state
+  before the action is rendered;
+- `Game::World::ActionOfferBuilder` issues contextual action offers from the
+  DB-backed tile state;
+- `Game::World::AcceptAction` validates character, zone, coordinate, action
+  type, target, and expiry before dispatching the action.
+
+Remaining parity gaps:
+
+- city image-map hotspots still use the city hotspot service and are not yet
+  backed by `WorldActionOffer`;
+- local presence refresh after movement completion is not yet a separate
+  persisted/refreshable panel like Neverlands `ch_list`.
+
 ## City Rules
 
 - City entry is a contextual action offered by an outside tile.
@@ -91,6 +143,48 @@ near Oktal.
 - `features/items_inventory_equipment.md` can increase travel time through
   carried weight.
 
+## Technical Direction
+
+The open-world map uses one server-authored state-building pipeline:
+
+1. Finalize due movement for the character.
+2. Load `character_positions` as the current authoritative location.
+3. Materialize tile context for the current location:
+   - resource from `TileResource`;
+   - NPC from `TileNpc`;
+   - building/city/dungeon entrance from `TileBuilding`;
+   - terrain/passability from `MapTileTemplate`.
+4. Create short-lived action offers for everything the player can do:
+   - movement offers;
+   - gather offers;
+   - attack/talk offers;
+   - enter city/building/dungeon offers;
+   - inspect/profile/inventory offers when needed by the UI.
+5. Render only those offers to the browser.
+6. Accept an action only when its action key still matches the current
+   character, zone, coordinate, target, and action type.
+
+Implementation objects:
+
+- `Game::World::TileStateResolver`
+  - returns stable DB-backed state for the current tile;
+  - materializes generated NPC/resource records before showing them;
+  - removes display-only procedural resource/NPC hints from map rendering.
+- `WorldActionOffer`
+  - stores `character_id`, `zone_id`, `x`, `y`, `action_type`, `target_type`,
+    `target_id`, `action_key`, `expires_at`, `status`, and metadata;
+  - replaces ad hoc action buttons without action-key persistence.
+- `Game::World::ActionOfferBuilder`
+  - creates movement and contextual action offers from tile state;
+  - invalidates old offers on each authoritative map-state build.
+- `Game::World::AcceptAction`
+  - validates the action key and dispatches to movement, gathering, NPC,
+    combat, or building-entry handlers.
+
+Movement remains in `movement_commands`; non-movement tile actions are tracked
+in `WorldActionOffer` so every current map action has a server-issued key and an
+auditable result.
+
 ## Out Of Scope
 
 - Long-distance pathfinding as the first movement interaction.
@@ -99,8 +193,8 @@ near Oktal.
 
 ## Related Implementation Files
 
-Current codebase movement still needs to be reshaped toward the Neverlands-style
-target in this document. The main gap analysis is
+Current codebase movement uses the server-offered travel lifecycle described
+above. The broader map-action parity gaps are tracked in this document and in
 `doc/flow/neverlands_movement_codebase_analysis.md`.
 
 Models:
@@ -114,6 +208,7 @@ Models:
 - `app/models/tile_building.rb`
 - `app/models/tile_resource.rb`
 - `app/models/tile_npc.rb`
+- `app/models/world_action_offer.rb`
 
 Controller and routes:
 
@@ -123,6 +218,10 @@ Controller and routes:
 Movement services:
 
 - `app/services/game/movement/turn_processor.rb`
+- `app/services/game/movement/map_state.rb`
+- `app/services/game/movement/accept_move.rb`
+- `app/services/game/movement/complete_move.rb`
+- `app/services/game/movement/travel_time.rb`
 - `app/services/game/movement/movement_validator.rb`
 - `app/services/game/movement/tile_provider.rb`
 - `app/services/game/movement/terrain_modifier.rb`
@@ -137,6 +236,9 @@ World feature services connected to movement:
 - `app/services/game/world/tile_building_service.rb`
 - `app/services/game/world/tile_gathering_service.rb`
 - `app/services/game/world/tile_npc_service.rb`
+- `app/services/game/world/tile_state_resolver.rb`
+- `app/services/game/world/action_offer_builder.rb`
+- `app/services/game/world/accept_action.rb`
 - `app/services/game/world/population_directory.rb`
 - `app/services/game/world/region_catalog.rb`
 
@@ -166,6 +268,8 @@ Config, seeds, and migrations:
 - `db/migrate/20251121090004_create_map_tile_templates.rb`
 - `db/migrate/20251122120000_create_world_navigation_systems.rb`
 - `db/migrate/20251124130000_create_movement_commands.rb`
+- `db/migrate/20260509210000_add_neverlands_travel_fields_to_movement_commands.rb`
+- `db/migrate/20260509211000_create_world_action_offers.rb`
 - `db/seeds.rb`
 
 Specs:
@@ -177,6 +281,9 @@ Specs:
 - `spec/models/tile_building_spec.rb`
 - `spec/models/tile_resource_spec.rb`
 - `spec/models/tile_npc_spec.rb`
+- `spec/models/world_action_offer_spec.rb`
+- `spec/services/game/world/action_offer_builder_spec.rb`
+- `spec/services/game/world/accept_action_spec.rb`
 - `spec/requests/world_spec.rb`
 - `spec/system/world_map_spec.rb`
 - `spec/system/world_interactions_spec.rb`

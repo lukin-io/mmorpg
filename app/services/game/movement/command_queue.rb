@@ -1,8 +1,10 @@
 # frozen_string_literal: true
 
+require "securerandom"
+
 module Game
   module Movement
-    # CommandQueue enqueues deterministic movement commands and processes them via TurnProcessor.
+    # CommandQueue creates server-offered movement commands and accepts them in the background.
     #
     # Usage:
     #   queue = Game::Movement::CommandQueue.new(character: character)
@@ -37,9 +39,21 @@ module Game
         command = MovementCommand.create!(
           character:,
           zone: position.zone,
+          status: :offered,
           direction: direction.to_s,
+          from_x: position.x,
+          from_y: position.y,
+          target_x: target_x,
+          target_y: target_y,
           predicted_x: target_x,
           predicted_y: target_y,
+          action_key: SecureRandom.hex(16),
+          travel_seconds: Game::Movement::TravelTime.seconds(
+            character:,
+            zone: position.zone,
+            direction: direction.to_sym,
+            tile_metadata:
+          ),
           metadata: build_metadata(tile_metadata, biome:, terrain_type:)
         )
 
@@ -49,26 +63,20 @@ module Game
 
       def process(command_or_id)
         command = load_command(command_or_id)
-        return command if command.processed? || command.failed?
-
-        command.processing!
+        return command if command.moving? || command.completed? || command.processed? || command.failed?
 
         begin
-          result = Game::Movement::TurnProcessor.new(
+          result = Game::Movement::AcceptMove.new(
             character: command.character,
-            direction: command.direction.to_sym,
-            rng: Random.new(command.id),
+            action_key: command.action_key,
+            target_x: command.target_x,
+            target_y: command.target_y,
+            direction: command.direction,
             respawn_service: Game::Movement::RespawnService.new(character: command.character)
           ).call
 
-          command.update!(
-            status: :processed,
-            processed_at: Time.current,
-            latency_ms: compute_latency(command),
-            metadata: command.metadata.merge("encounter" => result.encounter),
-            error_message: nil
-          )
-          result
+          result.command.update!(latency_ms: compute_latency(result.command))
+          result.command.reload
         rescue Game::Movement::TurnProcessor::MovementViolationError => e
           mark_failed(command, e.message)
           nil

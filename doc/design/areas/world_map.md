@@ -76,6 +76,98 @@ The server decides which actions exist for the current finalized location.
 - The map does not invent passability in the browser.
 - The local player list refreshes after movement completion.
 
+## World State Persistence
+
+The world map must be reproducible from database state on every request. The
+browser may animate and submit choices, but it must not own world state.
+
+Persistent state sources:
+
+- `character_positions`: current finalized zone and coordinate.
+- `movement_commands`: offered and active movement, including action key,
+  source coordinate, target coordinate, and travel timestamps.
+- `map_tile_templates`: terrain, passability, and static map metadata.
+- `tile_resources`: resource node identity, quantity, depletion, respawn, and
+  last harvester.
+- `tile_npcs`: spawned NPC identity, HP, defeated state, respawn, and template.
+- `tile_buildings`: city, castle, dungeon, shop, portal, or other enterable
+  structures attached to a coordinate.
+
+Player-facing persistence rule: closing and reopening the browser must never
+reset the player to a default or browser-held position. The server reloads the
+same `character_positions` row. If a movement was active while the browser was
+closed, the server either resumes it or finalizes it from `movement_commands`.
+
+## Current Parity
+
+Implemented:
+
+- movement position persistence through `character_positions`;
+- movement offers and accepted travel through `movement_commands`;
+- reload/resume/finalize behavior through the movement state services;
+- DB-backed resources, NPCs, and buildings for current-tile state;
+- persisted action offers for gather, NPC attack/talk, and building entry;
+- action-key validation against character, zone, coordinate, action type, and
+  target before dispatch.
+
+Not yet strict Neverlands-style:
+
+- city image-map hotspots are not yet persisted as `WorldActionOffer` rows;
+- local presence refresh is not yet split into a separate Neverlands-style
+  refreshable frame.
+
+## Technical Solution
+
+The world map uses a single authoritative tile-state/action-offer layer.
+
+Pipeline for every world map request:
+
+1. Complete due movement.
+2. Load current `character_positions`.
+3. Resolve current tile state with `Game::World::TileStateResolver`.
+4. Materialize any generated resource/NPC into `tile_resources` or `tile_npcs`
+   before rendering it.
+5. Build movement offers and contextual action offers.
+6. Render only the action offers returned by the server.
+
+Persistence model:
+
+```text
+world_action_offers
+- character_id
+- zone_id
+- x
+- y
+- action_type
+- target_type
+- target_id
+- action_key
+- status
+- expires_at
+- accepted_at
+- completed_at
+- error_message
+- metadata
+```
+
+Action examples:
+
+| Action | Persistent Target | Handler |
+| --- | --- | --- |
+| Move | `MovementCommand` | `Game::Movement::AcceptMove` |
+| Gather | `TileResource` | `Game::World::TileGatheringService` |
+| Attack/Talk | `TileNpc` | combat or dialogue service |
+| Enter city/building/dungeon | `TileBuilding` | building/city transition service |
+
+Validation rules:
+
+- action key must match current character, zone, coordinate, action type, and
+  target;
+- stale offers are rejected;
+- offers are cancelled/reissued when the authoritative map state changes;
+- generated NPC/resource state is materialized before any offer is issued;
+- accepted actions write a result row or status update for audit and replay.
+
 ## Area Graph
 
 The outdoor map is a coordinate graph. In the starter reference area:
@@ -113,14 +205,25 @@ Models:
 - `app/models/tile_resource.rb`
 - `app/models/tile_npc.rb`
 - `app/models/tile_building.rb`
+- `app/models/world_action_offer.rb`
 - `app/models/spawn_point.rb`
 - `app/models/spawn_schedule.rb`
 
 Controller, services, and views:
 
 - `app/controllers/world_controller.rb`
+- `app/services/game/movement/map_state.rb`
+- `app/services/game/movement/accept_move.rb`
+- `app/services/game/movement/complete_move.rb`
+- `app/services/game/movement/travel_time.rb`
 - `app/services/game/movement/tile_provider.rb`
 - `app/services/game/movement/turn_processor.rb`
+- `app/services/game/world/tile_gathering_service.rb`
+- `app/services/game/world/tile_npc_service.rb`
+- `app/services/game/world/tile_building_service.rb`
+- `app/services/game/world/tile_state_resolver.rb`
+- `app/services/game/world/action_offer_builder.rb`
+- `app/services/game/world/accept_action.rb`
 - `app/services/game/world/region_catalog.rb`
 - `app/services/game/world/population_directory.rb`
 - `app/views/world/show.html.erb`
@@ -145,5 +248,8 @@ Specs:
 - `spec/system/world_interactions_spec.rb`
 - `spec/views/world/_map_spec.rb`
 - `spec/views/world/show_spec.rb`
+- `spec/models/world_action_offer_spec.rb`
+- `spec/services/game/world/action_offer_builder_spec.rb`
+- `spec/services/game/world/accept_action_spec.rb`
 - `spec/services/game/world/region_catalog_spec.rb`
 - `spec/services/game/world/population_directory_spec.rb`

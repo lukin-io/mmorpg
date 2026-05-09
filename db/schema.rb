@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_12_30_170000) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_09_211000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -1592,22 +1592,60 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_30_170000) do
   end
 
   create_table "movement_commands", force: :cascade do |t|
+    t.string "action_key"
     t.bigint "character_id", null: false
+    t.datetime "completed_at"
     t.datetime "created_at", null: false
     t.string "direction", null: false
+    t.datetime "ends_at"
     t.string "error_message"
+    t.datetime "failed_at"
+    t.integer "from_x"
+    t.integer "from_y"
     t.integer "latency_ms", default: 0, null: false
     t.jsonb "metadata", default: {}, null: false
     t.integer "predicted_x"
     t.integer "predicted_y"
     t.datetime "processed_at"
+    t.datetime "started_at"
     t.integer "status", default: 0, null: false
+    t.integer "target_x"
+    t.integer "target_y"
+    t.integer "travel_seconds"
     t.datetime "updated_at", null: false
     t.bigint "zone_id", null: false
+    t.index ["action_key"], name: "index_movement_commands_on_action_key", unique: true
     t.index ["character_id"], name: "index_movement_commands_on_character_id"
+    t.index ["character_id", "status", "created_at"], name: "index_movement_commands_on_character_status_created"
+    t.index ["character_id", "status", "ends_at"], name: "index_movement_commands_on_character_status_ends"
     t.index ["created_at"], name: "index_movement_commands_on_created_at"
     t.index ["status"], name: "index_movement_commands_on_status"
     t.index ["zone_id"], name: "index_movement_commands_on_zone_id"
+  end
+
+  create_table "world_action_offers", force: :cascade do |t|
+    t.datetime "accepted_at"
+    t.string "action_key", null: false
+    t.string "action_type", null: false
+    t.bigint "character_id", null: false
+    t.datetime "completed_at"
+    t.datetime "created_at", null: false
+    t.string "error_message"
+    t.datetime "expires_at", null: false
+    t.jsonb "metadata", default: {}, null: false
+    t.integer "status", default: 0, null: false
+    t.bigint "target_id"
+    t.string "target_type"
+    t.datetime "updated_at", null: false
+    t.integer "x", null: false
+    t.integer "y", null: false
+    t.bigint "zone_id", null: false
+    t.index ["action_key"], name: "index_world_action_offers_on_action_key", unique: true
+    t.index ["character_id", "status", "expires_at"], name: "index_world_action_offers_on_character_status_expires"
+    t.index ["character_id", "zone_id", "x", "y", "action_type", "status"], name: "index_world_action_offers_on_character_tile_action_status"
+    t.index ["character_id"], name: "index_world_action_offers_on_character_id"
+    t.index ["target_type", "target_id"], name: "index_world_action_offers_on_target"
+    t.index ["zone_id"], name: "index_world_action_offers_on_zone_id"
   end
 
   create_table "npc_reports", force: :cascade do |t|
@@ -2509,6 +2547,8 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_30_170000) do
   add_foreign_key "mounts", "users"
   add_foreign_key "movement_commands", "characters"
   add_foreign_key "movement_commands", "zones"
+  add_foreign_key "world_action_offers", "characters"
+  add_foreign_key "world_action_offers", "zones"
   add_foreign_key "npc_reports", "characters"
   add_foreign_key "npc_reports", "moderation_tickets"
   add_foreign_key "npc_reports", "users", column: "reporter_id"

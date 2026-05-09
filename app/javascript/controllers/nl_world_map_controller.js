@@ -1,14 +1,7 @@
 import { Controller } from "@hotwired/stimulus"
 
 /**
- * World Map Controller - Simple tile-click movement
- *
- * Features:
- * - Click on adjacent tiles to move
- * - Red dashed border highlights available tiles
- * - Movement countdown timer (red badge)
- * - Server-side movement validation via form submission
- * - Client-side cooldown enforcement
+ * World Map Controller - server-offered, timed wilderness movement.
  */
 export default class extends Controller {
   static targets = [
@@ -29,52 +22,26 @@ export default class extends Controller {
     zoneWidth: Number,
     zoneHeight: Number,
     tileSize: { type: Number, default: 100 },
-    moveCooldown: { type: Number, default: 3 },
-    zoneName: String
+    moveCooldown: { type: Number, default: 30 },
+    zoneName: String,
+    movementActive: { type: Boolean, default: false },
+    movementRemainingSeconds: { type: Number, default: 0 },
+    movementEndsAt: String,
+    completeUrl: String
   }
-
-  // Use sessionStorage to persist cooldown across DOM updates
-  static COOLDOWN_KEY = "elselands_move_cooldown"
 
   connect() {
+    this.timerId = null
     this.positionCursor()
-    this.checkExistingCooldown()
-  }
 
-  disconnect() {
-    // Timer will be recreated on reconnect if needed
-  }
-
-  // =====================
-  // COOLDOWN MANAGEMENT
-  // =====================
-
-  get cooldownUntil() {
-    const stored = sessionStorage.getItem(this.constructor.COOLDOWN_KEY)
-    return stored ? parseInt(stored, 10) : null
-  }
-
-  set cooldownUntil(timestamp) {
-    if (timestamp) {
-      sessionStorage.setItem(this.constructor.COOLDOWN_KEY, timestamp.toString())
-    } else {
-      sessionStorage.removeItem(this.constructor.COOLDOWN_KEY)
+    if (this.movementActiveValue) {
+      this.resumeServerMovement()
     }
   }
 
-  get isOnCooldown() {
-    const until = this.cooldownUntil
-    return until && Date.now() < until
-  }
-
-  checkExistingCooldown() {
-    if (this.isOnCooldown) {
-      const remainingMs = this.cooldownUntil - Date.now()
-      const remainingSec = Math.ceil(remainingMs / 1000)
-      if (remainingSec > 0) {
-        this.showTimerDisplay(remainingSec)
-        this.startTimerCountdown(remainingSec)
-      }
+  disconnect() {
+    if (this.timerId) {
+      clearTimeout(this.timerId)
     }
   }
 
@@ -95,11 +62,7 @@ export default class extends Controller {
       this.cursorTarget.style.height = `${playerTile.offsetHeight}px`
     }
 
-    if (this.hasCursorImgTarget) {
-      this.cursorImgTarget.className = this.isOnCooldown
-        ? "nl-cursor-img nl-cursor-img--moving"
-        : "nl-cursor-img nl-cursor-img--idle"
-    }
+    this.setCursorMoving(this.movementActiveValue)
   }
 
   // =====================
@@ -109,90 +72,74 @@ export default class extends Controller {
   clickTile(event) {
     event.preventDefault()
 
-    if (this.isOnCooldown) {
-      console.log("On cooldown, ignoring click")
-      return
-    }
+    if (this.movementActiveValue) return
 
     const tile = event.currentTarget
-    const td = tile.closest("td")
-    if (!td) return
+    if (tile.dataset.available !== "true") return
 
-    if (tile.dataset.available !== "true") {
-      console.log("Tile not available for movement")
-      return
-    }
+    const targetX = tile.dataset.targetX
+    const targetY = tile.dataset.targetY
+    const actionKey = tile.dataset.actionKey
+    const direction = tile.dataset.direction
 
-    const targetX = parseInt(td.dataset.x)
-    const targetY = parseInt(td.dataset.y)
+    if (!targetX || !targetY || !actionKey || !direction) return
 
-    const direction = this.getDirection(targetX, targetY)
-    if (!direction) {
-      console.log("Invalid direction")
-      return
-    }
-
-    console.log(`Moving ${direction} to (${targetX}, ${targetY})`)
-    this.startMove(direction)
+    this.disableMovementTiles()
+    this.setCursorMoving(true)
+    this.submitMoveForm({ direction, targetX, targetY, actionKey })
   }
 
-  getDirection(toX, toY) {
-    const dx = toX - this.playerXValue
-    const dy = toY - this.playerYValue
+  submitMoveForm({ direction, targetX, targetY, actionKey }) {
+    if (!this.hasMoveFormTarget) return
 
-    // Cardinal directions
-    if (dx === -1 && dy === 0) return "west"
-    if (dx === 1 && dy === 0) return "east"
-    if (dx === 0 && dy === -1) return "north"
-    if (dx === 0 && dy === 1) return "south"
+    this.setInputValue("#movement-direction", direction)
+    this.setInputValue("#movement-target-x", targetX)
+    this.setInputValue("#movement-target-y", targetY)
+    this.setInputValue("#movement-action-key", actionKey)
 
-    // Diagonal directions
-    if (dx === 1 && dy === -1) return "northeast"
-    if (dx === 1 && dy === 1) return "southeast"
-    if (dx === -1 && dy === 1) return "southwest"
-    if (dx === -1 && dy === -1) return "northwest"
-
-    return null
-  }
-
-  startMove(direction) {
-    // Set cooldown BEFORE sending request
-    const cooldownSeconds = this.moveCooldownValue
-    this.cooldownUntil = Date.now() + (cooldownSeconds * 1000)
-
-    // Show moving cursor
-    if (this.hasCursorImgTarget) {
-      this.cursorImgTarget.className = "nl-cursor-img nl-cursor-img--moving"
-    }
-
-    // Start timer display
-    this.showTimerDisplay(cooldownSeconds)
-    this.startTimerCountdown(cooldownSeconds)
-
-    // Submit move via hidden form (Turbo handles the response automatically)
-    this.submitMoveForm(direction)
-  }
-
-  submitMoveForm(direction) {
-    // Use the hidden form in the map partial
-    if (!this.hasMoveFormTarget) {
-      console.error("Move form not found")
-      return
-    }
-
-    // Set direction and submit
-    const dirInput = this.moveFormTarget.querySelector("#movement-direction")
-    if (dirInput) {
-      dirInput.value = direction
-    }
-
-    // Use requestSubmit to trigger Turbo (this submits the form properly)
     this.moveFormTarget.requestSubmit()
   }
 
+  setInputValue(selector, value) {
+    const input = this.moveFormTarget.querySelector(selector)
+    if (input) input.value = value
+  }
+
+  disableMovementTiles() {
+    this.element.querySelectorAll("[data-available='true']").forEach((tile) => {
+      tile.dataset.available = "false"
+      tile.style.cursor = "default"
+    })
+  }
+
+  setCursorMoving(isMoving) {
+    if (!this.hasCursorImgTarget) return
+
+    this.cursorImgTarget.className = isMoving
+      ? "nl-cursor-img nl-cursor-img--moving"
+      : "nl-cursor-img nl-cursor-img--idle"
+  }
+
   // =====================
-  // TIMER (Red badge with countdown)
+  // SERVER TIMER
   // =====================
+
+  resumeServerMovement() {
+    const seconds = this.remainingSecondsFromServer()
+    this.showTimerDisplay(seconds)
+    this.startTimerCountdown(seconds)
+  }
+
+  remainingSecondsFromServer() {
+    if (this.hasMovementEndsAtValue && this.movementEndsAtValue) {
+      const endMs = Date.parse(this.movementEndsAtValue)
+      if (!Number.isNaN(endMs)) {
+        return Math.max(0, Math.ceil((endMs - Date.now()) / 1000))
+      }
+    }
+
+    return Math.max(0, this.movementRemainingSecondsValue)
+  }
 
   showTimerDisplay(seconds) {
     if (this.hasTimerDivTarget) {
@@ -204,35 +151,35 @@ export default class extends Controller {
     }
 
     if (this.hasTimerSecondsTarget) {
-      this.timerSecondsTarget.textContent = seconds
+      this.timerSecondsTarget.textContent = seconds > 0 ? seconds : ""
     }
   }
 
   startTimerCountdown(seconds) {
-    // Store timer ID in sessionStorage key so we can track it
-    let timeLeft = seconds
+    let timeLeft = Math.max(0, Math.ceil(seconds))
+
+    if (this.timerId) {
+      clearTimeout(this.timerId)
+    }
 
     const tick = () => {
-      timeLeft--
-
-      // Re-check targets (they may have changed after DOM update)
       if (this.hasTimerSecondsTarget) {
         this.timerSecondsTarget.textContent = timeLeft > 0 ? timeLeft : ""
       }
 
       if (timeLeft <= 0) {
-        this.finishCooldown()
-      } else {
-        setTimeout(tick, 1000)
+        this.finishServerMovement()
+        return
       }
+
+      timeLeft -= 1
+      this.timerId = setTimeout(tick, 1000)
     }
 
-    setTimeout(tick, 1000)
+    tick()
   }
 
-  finishCooldown() {
-    this.cooldownUntil = null
-
+  finishServerMovement() {
     if (this.hasTimerDivTarget) {
       this.timerDivTarget.style.display = "none"
     }
@@ -241,8 +188,14 @@ export default class extends Controller {
       this.timerSecondsTarget.textContent = ""
     }
 
-    if (this.hasCursorImgTarget) {
-      this.cursorImgTarget.className = "nl-cursor-img nl-cursor-img--idle"
+    this.setCursorMoving(false)
+
+    if (this.completeUrlValue) {
+      if (window.Turbo) {
+        window.Turbo.visit(this.completeUrlValue)
+      } else {
+        window.location.href = this.completeUrlValue
+      }
     }
   }
 }

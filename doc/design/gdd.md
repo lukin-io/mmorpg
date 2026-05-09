@@ -222,8 +222,10 @@ may offer buttons for:
 - attack hostile NPC;
 - quest interaction.
 
-Each action that mutates state should be server-authoritative and validated
-against the current tile.
+Each action that mutates state should be server-authored, persisted, and
+validated against the current tile. The map renders action offers issued by the
+server; each offer has a short-lived action key tied to character, zone,
+coordinate, action type, and target.
 
 ## Combat
 
@@ -283,6 +285,7 @@ The game should always feel populated when other players are nearby:
 - The server is authoritative for movement, actions, inventory, combat, and
   rewards.
 - Browser timers are display of server state, not source of truth.
+- World-map buttons are DB-backed action offers, not ad hoc controller params.
 - Deterministic seeds and fixtures are preferred over random map generation for
   core movement and combat flows.
 - Data model changes are allowed while the app is in development. Prefer clean

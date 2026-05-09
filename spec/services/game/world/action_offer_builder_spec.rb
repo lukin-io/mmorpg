@@ -1,0 +1,36 @@
+# frozen_string_literal: true
+
+require "rails_helper"
+
+RSpec.describe Game::World::ActionOfferBuilder do
+  let(:zone) { create(:zone, name: "Offer Plains", biome: "plains", width: 20, height: 20) }
+  let(:character) { create(:character) }
+  let(:position) { create(:character_position, character:, zone:, x: 5, y: 5) }
+  let(:resource) { create(:tile_resource, zone: zone.name, x: 5, y: 5) }
+  let(:npc) { create(:tile_npc, zone: zone.name, x: 5, y: 5) }
+  let(:building) { create(:tile_building, :with_destination, zone: zone.name, x: 5, y: 5) }
+  let(:tile_state) do
+    OpenStruct.new(
+      resource: resource,
+      npc: npc,
+      building: building
+    )
+  end
+
+  it "creates persisted action offers for current tile targets" do
+    offers = described_class.new(character:, position:, tile_state:).call
+
+    expect(offers.map(&:action_type)).to include("gather_resource", "attack_npc", "enter_building")
+    expect(offers).to all(be_persisted)
+    expect(offers).to all(have_attributes(character: character, zone: zone, x: 5, y: 5))
+    expect(offers.map(&:action_key)).to all(be_present)
+  end
+
+  it "cancels stale open offers before issuing new ones" do
+    old_offer = create(:world_action_offer, character:, zone:, x: 5, y: 5)
+
+    described_class.new(character:, position:, tile_state:).call
+
+    expect(old_offer.reload).to be_cancelled
+  end
+end

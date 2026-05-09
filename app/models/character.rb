@@ -62,6 +62,7 @@ class Character < ApplicationRecord
   has_many :initiated_battles, class_name: "Battle", foreign_key: :initiator_id, dependent: :nullify
   has_many :quest_assignments, dependent: :destroy
   has_many :movement_commands, dependent: :destroy
+  has_many :world_action_offers, dependent: :destroy
   has_many :moderation_tickets_as_subject,
     class_name: "Moderation::Ticket",
     foreign_key: :subject_character_id,

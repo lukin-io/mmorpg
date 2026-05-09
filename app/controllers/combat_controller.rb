@@ -20,13 +20,31 @@ class CombatController < ApplicationController
   # POST /combat/start
   # Start combat with an NPC
   def start
-    npc_template = NpcTemplate.find_by(id: params[:npc_template_id])
+    action_offer = nil
+
+    if params[:tile_npc_id].present?
+      tile_npc = TileNpc.find_by(id: params[:tile_npc_id])
+      return respond_with_error("NPC not found") unless tile_npc
+      return respond_with_error("This NPC is not available") unless tile_npc.alive?
+
+      action_offer = Game::World::AcceptAction.new(
+        character: current_character,
+        action_key: params[:action_key],
+        action_type: :attack_npc,
+        target: tile_npc
+      ).call
+      npc_template = tile_npc.npc_template
+    else
+      npc_template = NpcTemplate.find_by(id: params[:npc_template_id])
+    end
 
     if npc_template.nil?
+      action_offer&.fail!("NPC not found")
       return respond_with_error("NPC not found")
     end
 
     unless npc_template.role == "hostile"
+      action_offer&.fail!("This NPC is not hostile")
       return respond_with_error("This NPC is not hostile")
     end
 
@@ -48,16 +66,20 @@ class CombatController < ApplicationController
 
     respond_to do |format|
       if result.success
+        action_offer&.complete!
         # Redirect to combat page - Turbo Drive will handle the navigation
         format.html { redirect_to combat_path, notice: result.message }
         format.turbo_stream { redirect_to combat_path, status: :see_other }
         format.json { render json: {success: true, battle_id: result.battle.id, message: result.message} }
       else
+        action_offer&.fail!(result.message)
         format.html { redirect_to world_path, alert: result.message }
         format.turbo_stream { render turbo_stream: turbo_stream.replace("flash", partial: "shared/flash", locals: {alert: result.message}) }
         format.json { render json: {success: false, error: result.message}, status: :unprocessable_entity }
       end
     end
+  rescue Game::World::AcceptAction::ActionViolationError => e
+    respond_with_error(e.message)
   end
 
   # POST /combat/action
