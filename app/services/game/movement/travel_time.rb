@@ -43,7 +43,7 @@ module Game
       def mount_speed_multiplier
         active_mount = character.user&.mounts&.find_by(summon_state: :summoned)
         active_mount ? active_mount.travel_multiplier.to_f : 1.0
-      rescue StandardError
+      rescue
         1.0
       end
     end

@@ -4,10 +4,23 @@ on:
   pull_request:
   push:
     branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
 
 jobs:
-  scan_ruby:
+  security:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
 
     steps:
       - name: Checkout code
@@ -18,31 +31,21 @@ jobs:
         with:
           bundler-cache: true
 
-      - name: Scan for common Rails security vulnerabilities using static analysis
-        run: bundle exec brakeman --no-pager
+      - name: Scan for Rails security vulnerabilities
+        run: bundle exec brakeman --quiet --no-pager
 
-      - name: Scan for known security vulnerabilities in gems used
-        run: bundle exec bundler-audit check --update
+      - name: Scan for vulnerable gems
+        run: bin/bundler-audit check --update
 
-  scan_js:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v6
-
-      - name: Set up Ruby
-        uses: ruby/setup-ruby@v1
-        with:
-          bundler-cache: true
-
-      - name: Scan for security vulnerabilities in JavaScript dependencies
+      - name: Scan importmap dependencies
         run: bin/importmap audit
 
   lint:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     env:
       RUBOCOP_CACHE_ROOT: tmp/rubocop
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
@@ -62,14 +65,21 @@ jobs:
           restore-keys: |
             rubocop-${{ runner.os }}-${{ env.DEPENDENCIES_HASH }}-
 
-      - name: Lint code for consistent style
-        run: bundle exec rubocop -f github
-
-      - name: Enforce Ruby community defaults with StandardRB
-        run: bundle exec standardrb
+      - name: Lint Ruby
+        run: bin/rubocop -f github
 
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      RAILS_ENV: test
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_HOST: 127.0.0.1
+      REDIS_CABLE_URL: redis://127.0.0.1:6379/4
+      CI_NODE_TOTAL: ${{ matrix.ci_node_total }}
+      CI_NODE_INDEX: ${{ matrix.ci_node_index }}
+
     strategy:
       fail-fast: false
       matrix:
@@ -78,13 +88,17 @@ jobs:
 
     services:
       postgres:
-        image: postgres
+        image: postgres:17
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
         ports:
           - 5432:5432
-        options: --health-cmd="pg_isready" --health-interval=10s --health-timeout=5s --health-retries=3
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
       redis:
         image: redis:7
@@ -97,33 +111,37 @@ jobs:
           --health-retries 5
 
     steps:
-      - name: Install packages
-        run: sudo apt-get update && sudo apt-get install --no-install-recommends -y libpq-dev
-
       - name: Checkout code
         uses: actions/checkout@v6
+
+      - name: Install packages
+        run: sudo apt-get update && sudo apt-get install --no-install-recommends -y libpq-dev
 
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
           bundler-cache: true
 
-      - name: Run parallel tests (node ${{ matrix.ci_node_index }}/${{ matrix.ci_node_total }})
-        env:
-          RAILS_ENV: test
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_HOST: localhost
-          REDIS_CABLE_URL: redis://localhost:6379/4
-          DATABASE_URL: postgres://postgres:postgres@localhost:5432
-          CI_NODE_TOTAL: ${{ matrix.ci_node_total }}
-          CI_NODE_INDEX: ${{ matrix.ci_node_index }}
+      - name: Prepare parallel test databases
         run: |
-          bin/rails db:prepare
-          bundle exec parallel_test spec/ -n $CI_NODE_TOTAL --only-group $CI_NODE_INDEX --type rspec --exclude-pattern "spec/system/**/*"
+          bundle exec rake "parallel:create[${CI_NODE_TOTAL}]"
+          bundle exec rake "parallel:load_schema[${CI_NODE_TOTAL}]"
+
+      - name: Run RSpec node ${{ matrix.ci_node_index }}/${{ matrix.ci_node_total }}
+        run: bundle exec parallel_test spec/ -n "$CI_NODE_TOTAL" --only-group "$CI_NODE_INDEX" --type rspec --exclude-pattern "spec/system/**/*_spec.rb"
 
   system-test:
     runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      RAILS_ENV: test
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_HOST: 127.0.0.1
+      REDIS_CABLE_URL: redis://127.0.0.1:6379/4
+      CI_NODE_TOTAL: ${{ matrix.ci_node_total }}
+      CI_NODE_INDEX: ${{ matrix.ci_node_index }}
+
     strategy:
       fail-fast: false
       matrix:
@@ -132,13 +150,17 @@ jobs:
 
     services:
       postgres:
-        image: postgres
+        image: postgres:17
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
         ports:
           - 5432:5432
-        options: --health-cmd="pg_isready" --health-interval=10s --health-timeout=5s --health-retries=3
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
       redis:
         image: redis:7
@@ -151,31 +173,26 @@ jobs:
           --health-retries 5
 
     steps:
-      - name: Install packages
-        run: sudo apt-get update && sudo apt-get install --no-install-recommends -y libpq-dev
-
       - name: Checkout code
         uses: actions/checkout@v6
+
+      - name: Install packages
+        run: sudo apt-get update && sudo apt-get install --no-install-recommends -y libpq-dev
 
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
           bundler-cache: true
 
-      - name: Run System Tests (node ${{ matrix.ci_node_index }}/${{ matrix.ci_node_total }})
-        env:
-          RAILS_ENV: test
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_HOST: localhost
-          REDIS_CABLE_URL: redis://localhost:6379/4
-          DATABASE_URL: postgres://postgres:postgres@localhost:5432
-          CI_NODE_TOTAL: ${{ matrix.ci_node_total }}
-          CI_NODE_INDEX: ${{ matrix.ci_node_index }}
+      - name: Prepare parallel test databases
         run: |
-          bin/rails db:prepare
+          bundle exec rake "parallel:create[${CI_NODE_TOTAL}]"
+          bundle exec rake "parallel:load_schema[${CI_NODE_TOTAL}]"
+
+      - name: Run system specs node ${{ matrix.ci_node_index }}/${{ matrix.ci_node_total }}
+        run: |
           if [ -d spec/system ] && [ "$(find spec/system -type f -name '*_spec.rb' | head -n 1)" ]; then
-            bundle exec parallel_test spec/system -n $CI_NODE_TOTAL --only-group $CI_NODE_INDEX --type rspec
+            bundle exec parallel_test spec/system -n "$CI_NODE_TOTAL" --only-group "$CI_NODE_INDEX" --type rspec
           else
             echo "No RSpec system specs to run."
           fi
