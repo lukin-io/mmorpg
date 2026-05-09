@@ -55,6 +55,7 @@ Reference:
 ## Adding New Design Docs
 
 Create new game-design documents under `doc/design/features/` or
-`doc/design/areas/`. Do not add framework, Rails, database, controller, or test
-ownership sections to canonical design docs. Those belong in implementation
-notes.
+`doc/design/areas/`. Keep rules and player-facing behavior above the fold. Put
+current Rails/codebase pointers only in a final `Related Implementation Files`
+section so the design remains portable and implementation links stay easy to
+refresh.

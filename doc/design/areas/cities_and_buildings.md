@@ -93,3 +93,50 @@ should stay close to the reference.
 - City movement as grid movement.
 - Direct `/shop` style primary navigation that bypasses the city node.
 - Marketing-style city landing pages.
+
+## Related Implementation Files
+
+Models:
+
+- `app/models/city_hotspot.rb`
+- `app/models/tile_building.rb`
+- `app/models/zone.rb`
+- `app/models/character_position.rb`
+
+Controller and services:
+
+- `app/controllers/world_controller.rb`
+- `app/services/game/world/city_hotspot_service.rb`
+- `app/services/game/world/tile_building_service.rb`
+- `app/helpers/world_helper.rb`
+
+Views and JavaScript:
+
+- `app/views/world/city_view.html.erb`
+- `app/views/world/_city_view.html.erb`
+- `app/views/world/_city_hotspot.html.erb`
+- `app/views/world/_actions.html.erb`
+- `app/javascript/controllers/city_controller.js`
+- `app/javascript/controllers/city_view_controller.js`
+
+Assets and data:
+
+- `app/assets/images/city.png`
+- `app/assets/images/arena.png`
+- `app/assets/images/workshop.png`
+- `app/assets/images/clinic.png`
+- `app/assets/images/gate.png`
+- `db/migrate/20251216091841_create_tile_buildings.rb`
+- `db/migrate/20251218132823_create_city_hotspots.rb`
+- `db/migrate/20251218155628_add_dimensions_to_city_hotspots.rb`
+- `db/seeds.rb`
+
+Specs:
+
+- `spec/models/city_hotspot_spec.rb`
+- `spec/models/tile_building_spec.rb`
+- `spec/services/game/world/city_hotspot_service_spec.rb`
+- `spec/services/game/world/tile_building_service_spec.rb`
+- `spec/views/world/_city_view_spec.rb`
+- `spec/system/world_map_spec.rb`
+- `spec/requests/world_spec.rb`

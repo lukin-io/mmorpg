@@ -98,3 +98,80 @@ Later:
 - Real-time action combat.
 - Tactical grid positioning as the first combat model.
 - Combat analytics/export as a core design requirement.
+
+## Related Implementation Files
+
+Core models:
+
+- `app/models/battle.rb`
+- `app/models/battle_participant.rb`
+- `app/models/combat_log_entry.rb`
+- `app/models/pvp_flag.rb`
+
+Controllers:
+
+- `app/controllers/combat_controller.rb`
+- `app/controllers/battles_controller.rb`
+- `app/controllers/combat_logs_controller.rb`
+- `app/controllers/pvp_combat_controller.rb`
+
+Combat services and formulas:
+
+- `app/services/game/combat/turn_based_combat_service.rb`
+- `app/services/game/combat/turn_resolver.rb`
+- `app/services/game/combat/attack_service.rb`
+- `app/services/game/combat/pve_encounter_service.rb`
+- `app/services/game/combat/pvp_encounter_service.rb`
+- `app/services/game/combat/skill_executor.rb`
+- `app/services/game/combat/post_battle_processor.rb`
+- `app/services/combat/log_builder.rb`
+- `app/services/combat/statistics_calculator.rb`
+- `app/lib/game/combat/action_validator.rb`
+- `app/lib/game/combat/turn_resolver.rb`
+- `app/lib/game/formulas/hit_formula.rb`
+- `app/lib/game/formulas/block_formula.rb`
+- `app/lib/game/formulas/dodge_formula.rb`
+- `app/lib/game/formulas/critical_formula.rb`
+- `app/lib/game/formulas/combat_damage_formula.rb`
+
+Views and JavaScript:
+
+- `app/views/combat/show.html.erb`
+- `app/views/combat/_battle.html.erb`
+- `app/views/combat/_nl_action_selection.html.erb`
+- `app/views/combat/_nl_magic_slots.html.erb`
+- `app/views/combat/_nl_participant.html.erb`
+- `app/views/combat/_nl_combat_log.html.erb`
+- `app/views/battles/show.html.erb`
+- `app/javascript/controllers/turn_combat_controller.js`
+- `app/javascript/controllers/combat_turn_controller.js`
+- `app/javascript/controllers/pve_combat_controller.js`
+- `app/javascript/controllers/pvp_combat_controller.js`
+
+Realtime and jobs:
+
+- `app/channels/battle_channel.rb`
+- `app/jobs/battle_resolution_job.rb`
+- `app/jobs/arena_turn_timeout_job.rb`
+- `app/jobs/arena_turn_timeout_warning_job.rb`
+
+Config:
+
+- `config/gameplay/combat_actions.yml`
+
+Specs:
+
+- `spec/lib/game/combat/action_validator_spec.rb`
+- `spec/lib/game/combat/turn_resolver_spec.rb`
+- `spec/lib/game/formulas/hit_formula_spec.rb`
+- `spec/lib/game/formulas/block_formula_spec.rb`
+- `spec/lib/game/formulas/dodge_formula_spec.rb`
+- `spec/lib/game/formulas/critical_formula_spec.rb`
+- `spec/lib/game/formulas/combat_damage_formula_spec.rb`
+- `spec/services/game/combat/turn_based_combat_service_spec.rb`
+- `spec/services/game/combat/turn_resolver_spec.rb`
+- `spec/services/game/combat/pve_encounter_service_spec.rb`
+- `spec/services/game/combat/pvp_encounter_service_spec.rb`
+- `spec/requests/combat_spec.rb`
+- `spec/system/combat_turn_interface_spec.rb`
+- `spec/views/combat/_battle_spec.rb`

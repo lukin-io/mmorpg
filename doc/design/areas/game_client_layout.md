@@ -51,3 +51,44 @@ Core shell:
 
 - A separate public product homepage as part of the gameplay shell.
 - Decorative panels that do not carry gameplay information.
+
+## Related Implementation Files
+
+Layouts and shared views:
+
+- `app/views/layouts/game.html.erb`
+- `app/views/layouts/application.html.erb`
+- `app/views/shared/_nl_vitals_bar.html.erb`
+- `app/views/shared/_nl_players_list.html.erb`
+- `app/views/shared/_online_players.html.erb`
+- `app/views/shared/_online_players_compact.html.erb`
+- `app/views/world/_mini_chat.html.erb`
+
+JavaScript and channels:
+
+- `app/javascript/controllers/game_layout_controller.js`
+- `app/javascript/controllers/layout_stack_controller.js`
+- `app/javascript/controllers/nl_vitals_controller.js`
+- `app/javascript/controllers/chat_controller.js`
+- `app/javascript/controllers/presence_panel_controller.js`
+- `app/channels/realtime_chat_channel.rb`
+- `app/channels/presence_channel.rb`
+- `app/channels/vitals_channel.rb`
+
+Controllers and services:
+
+- `app/controllers/world_controller.rb`
+- `app/controllers/session_pings_controller.rb`
+- `app/services/presence/publisher.rb`
+- `app/services/presence/friend_broadcaster.rb`
+- `app/jobs/session_presence_job.rb`
+
+Specs:
+
+- `spec/views/layouts/game_spec.rb`
+- `spec/views/shared/_nl_vitals_bar_spec.rb`
+- `spec/views/shared/_nl_players_list_spec.rb`
+- `spec/views/shared/_online_players_compact_spec.rb`
+- `spec/channels/realtime_chat_channel_spec.rb`
+- `spec/channels/presence_channel_spec.rb`
+- `spec/requests/session_pings_spec.rb`

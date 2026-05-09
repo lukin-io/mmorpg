@@ -77,3 +77,65 @@ stable.
 - Tactical grid combat as a separate core system.
 - Betting as part of first implementation.
 - External tournament/live-ops tooling.
+
+## Related Implementation Files
+
+Models:
+
+- `app/models/arena_room.rb`
+- `app/models/arena_application.rb`
+- `app/models/arena_match.rb`
+- `app/models/arena_participation.rb`
+- `app/models/arena_ranking.rb`
+- `app/models/arena_season.rb`
+- `app/models/battle.rb`
+- `app/models/battle_participant.rb`
+
+Controllers and helpers:
+
+- `app/controllers/arena_controller.rb`
+- `app/controllers/arena_rooms_controller.rb`
+- `app/controllers/arena_applications_controller.rb`
+- `app/controllers/arena_matches_controller.rb`
+- `app/controllers/arena_seasons_controller.rb`
+- `app/helpers/arena_helper.rb`
+
+Services, jobs, and channels:
+
+- `app/services/arena/application_handler.rb`
+- `app/services/arena/matchmaker.rb`
+- `app/services/arena/combat_processor.rb`
+- `app/services/arena/npc_application_service.rb`
+- `app/services/arena/npc_combat_ai.rb`
+- `app/services/arena/rewards_distributor.rb`
+- `app/jobs/arena/match_starter_job.rb`
+- `app/jobs/arena/npc_spawner_job.rb`
+- `app/jobs/arena/reward_job.rb`
+- `app/channels/arena_channel.rb`
+- `app/channels/arena_match_channel.rb`
+
+Views and JavaScript:
+
+- `app/views/arena/index.html.erb`
+- `app/views/arena_rooms/index.html.erb`
+- `app/views/arena_rooms/show.html.erb`
+- `app/views/arena_applications/_application.html.erb`
+- `app/views/arena_applications/_list.html.erb`
+- `app/views/arena_matches/index.html.erb`
+- `app/views/arena_matches/show.html.erb`
+- `app/javascript/controllers/arena_controller.js`
+- `app/javascript/controllers/arena_match_controller.js`
+
+Specs:
+
+- `spec/models/arena_match_lifecycle_spec.rb`
+- `spec/models/arena_match_timeout_spec.rb`
+- `spec/requests/arena_spec.rb`
+- `spec/requests/arena_rooms_spec.rb`
+- `spec/requests/arena_applications_spec.rb`
+- `spec/requests/arena_matches_spec.rb`
+- `spec/services/arena/application_handler_spec.rb`
+- `spec/services/arena/combat_processor_spec.rb`
+- `spec/services/arena/npc_application_service_spec.rb`
+- `spec/system/arena_match_lifecycle_ui_spec.rb`
+- `spec/system/arena_match_ui_layout_spec.rb`

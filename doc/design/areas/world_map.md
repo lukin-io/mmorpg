@@ -102,3 +102,48 @@ encounter tables, but starter implementation should remain deterministic.
 - Procedural world generation for the core map.
 - Pathfinding across many tiles as the first movement experience.
 - Decorative map layers that do not affect available actions.
+
+## Related Implementation Files
+
+Models:
+
+- `app/models/character_position.rb`
+- `app/models/zone.rb`
+- `app/models/map_tile_template.rb`
+- `app/models/tile_resource.rb`
+- `app/models/tile_npc.rb`
+- `app/models/tile_building.rb`
+- `app/models/spawn_point.rb`
+- `app/models/spawn_schedule.rb`
+
+Controller, services, and views:
+
+- `app/controllers/world_controller.rb`
+- `app/services/game/movement/tile_provider.rb`
+- `app/services/game/movement/turn_processor.rb`
+- `app/services/game/world/region_catalog.rb`
+- `app/services/game/world/population_directory.rb`
+- `app/views/world/show.html.erb`
+- `app/views/world/_map.html.erb`
+- `app/views/world/_actions.html.erb`
+- `app/views/world/_location_info.html.erb`
+- `app/views/world/_players_here.html.erb`
+- `app/javascript/controllers/nl_world_map_controller.js`
+
+Config and data:
+
+- `config/gameplay/biomes.yml`
+- `config/gameplay/terrain_modifiers.yml`
+- `config/gameplay/world/regions.yml`
+- `config/gameplay/world/resource_nodes.yml`
+- `db/seeds.rb`
+
+Specs:
+
+- `spec/requests/world_spec.rb`
+- `spec/system/world_map_spec.rb`
+- `spec/system/world_interactions_spec.rb`
+- `spec/views/world/_map_spec.rb`
+- `spec/views/world/show_spec.rb`
+- `spec/services/game/world/region_catalog_spec.rb`
+- `spec/services/game/world/population_directory_spec.rb`

@@ -83,3 +83,49 @@ Later:
 - Premium inventory boosts as a core design dependency.
 - Item enhancement beyond simple durability and requirements before base
   inventory/equipment is stable.
+
+## Related Implementation Files
+
+Models:
+
+- `app/models/item_template.rb`
+- `app/models/inventory.rb`
+- `app/models/inventory_item.rb`
+- `app/models/trade_item.rb`
+
+Controllers and helpers:
+
+- `app/controllers/inventories_controller.rb`
+- `app/controllers/inventory_items_controller.rb`
+- `app/controllers/equipment_enhancements_controller.rb`
+- `app/helpers/inventories_helper.rb`
+- `app/helpers/equipment_enhancements_helper.rb`
+
+Services:
+
+- `app/services/game/inventory/manager.rb`
+- `app/services/game/inventory/equipment_service.rb`
+- `app/services/game/inventory/enhancement_service.rb`
+- `app/services/game/inventory/expansion_service.rb`
+- `app/services/game/economy/loot_generator.rb`
+
+Views and JavaScript:
+
+- `app/views/inventories/show.html.erb`
+- `app/views/inventories/_equipment.html.erb`
+- `app/views/inventories/_equipment_slot.html.erb`
+- `app/views/inventories/_stats.html.erb`
+- `app/views/equipment_enhancements/index.html.erb`
+- `app/views/equipment_enhancements/show.html.erb`
+- `app/views/equipment_enhancements/_preview.html.erb`
+- `app/javascript/controllers/inventory_controller.js`
+
+Specs:
+
+- `spec/models/inventory_spec.rb`
+- `spec/models/item_template_spec.rb`
+- `spec/requests/inventories_spec.rb`
+- `spec/services/game/inventory/manager_spec.rb`
+- `spec/services/game/inventory/enhancement_service_spec.rb`
+- `spec/services/game/inventory/expansion_service_spec.rb`
+- `spec/system/inventory_progression_spec.rb`

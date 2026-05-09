@@ -42,6 +42,10 @@ How this feature connects to movement, combat, economy, social, or areas.
 
 ## Out Of Scope
 Ideas intentionally not in the current core.
+
+## Related Implementation Files
+Current codebase files for implementation and tests. This section is a map, not
+design authority.
 ```
 
 ## Area Document Template
@@ -68,6 +72,10 @@ Named nodes, districts, or routes.
 
 ## Feature Hooks
 Which feature documents this area activates.
+
+## Related Implementation Files
+Current codebase files for implementation and tests. This section is a map, not
+design authority.
 ```
 
 ## Rules
@@ -75,7 +83,9 @@ Which feature documents this area activates.
 - The GDD is the entry point, not a scratchpad.
 - Put stable design rules in `features/` and `areas/`.
 - Put live Neverlands observations in `reference/`.
-- Put codebase-specific implementation details in `doc/flow/`.
+- Put implementation explanations in `doc/flow/`.
+- Put concise current file maps at the bottom of design docs under
+  `Related Implementation Files`.
 - If an old doc conflicts with the Neverlands-style target, rewrite the new
   design doc and leave the old doc as historical support only.
 - Avoid broad product ideas unless they directly support the core loop.

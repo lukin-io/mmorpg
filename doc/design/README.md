@@ -21,3 +21,6 @@
 When implementation reveals a better design fact, update the feature or area
 doc first, then update implementation notes. Do not hide new rules only in code
 or test files.
+
+Each feature and area doc ends with `Related Implementation Files`. Keep that
+section current when models, controllers, views, services, or specs move.
