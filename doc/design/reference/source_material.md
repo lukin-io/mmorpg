@@ -9,6 +9,7 @@ design hierarchy.
 | --- | --- |
 | `doc/flow/neverlands_live_movement.md` | `features/movement.md`, `areas/world_map.md`, `reference/neverlands.md` |
 | `doc/flow/neverlands_live_city_movement.md` | `areas/cities_and_buildings.md`, `features/economy_trading_shops.md` |
+| `doc/design/reference/neverlands_arena_combat.md` | `areas/arena.md`, `features/combat.md`, `reference/neverlands.md` |
 | `doc/features/neverlands_inspired_chat.md` | `features/social_chat_presence.md` |
 | `doc/features/neverlands_inspired_combat.md` | `features/combat.md`, `areas/arena.md` |
 | `doc/features/neverlands_inspired_skills.md` | `features/progression_stats_skills.md`, `features/character_vitals.md` |

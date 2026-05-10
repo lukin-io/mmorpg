@@ -11,7 +11,7 @@ RSpec.describe Game::Combat::ActionValidator do
       },
       "attack_types" => {
         "simple" => {"name" => "Simple", "action_cost" => 45},
-        "aimed" => {"name" => "Aimed", "action_cost" => 60}
+        "aimed" => {"name" => "Aimed", "action_cost" => 65}
       },
       "block_types" => {
         "head_block" => {"name" => "Head Block", "action_cost" => 30},
@@ -49,7 +49,7 @@ RSpec.describe Game::Combat::ActionValidator do
 
         expect(result.valid?).to be true
         expect(result.errors).to be_empty
-        expect(result.total_ap).to eq(0) # Simple attacks are free
+        expect(result.total_ap).to eq(45)
       end
 
       it "validates attack with block" do
@@ -59,11 +59,11 @@ RSpec.describe Game::Combat::ActionValidator do
         result = validator.validate(attacks: attacks, blocks: blocks)
 
         expect(result.valid?).to be true
-        # Simple attack is free (0 AP), block cost depends on config (default 30)
-        expect(result.total_ap).to eq(30) # 0 (simple) + 30 (block)
+        expect(result.total_ap).to eq(75)
       end
 
       it "validates multiple attacks within limit" do
+        battle.update!(action_points_per_turn: 120)
         attacks = [
           {body_part: "head", action_key: "simple"},
           {body_part: "torso", action_key: "simple"}
@@ -72,8 +72,7 @@ RSpec.describe Game::Combat::ActionValidator do
         result = validator.validate(attacks: attacks)
 
         expect(result.valid?).to be true
-        # Simple attacks are free (0 AP), penalty for 2 attacks is +25
-        expect(result.total_ap).to eq(25) # 0 + 0 + 25 penalty
+        expect(result.total_ap).to eq(115)
       end
 
       it "includes warnings for high mana usage" do
@@ -144,7 +143,7 @@ RSpec.describe Game::Combat::ActionValidator do
 
     context "with failure cases - AP limit" do
       it "rejects actions exceeding AP limit" do
-        # 3 aimed attacks: 20+20+20 + 75 penalty = 135 > 80 AP
+        # 3 aimed attacks: 65+65+65 + 75 penalty = 270 > 80 AP
         attacks = [
           {body_part: "head", action_key: "aimed"},
           {body_part: "torso", action_key: "aimed"},
@@ -204,8 +203,7 @@ RSpec.describe Game::Combat::ActionValidator do
 
         result = validator.validate(attacks: [{body_part: "head", action_key: "aimed"}])
 
-        # Should still calculate AP even without participant (aimed = 20 AP)
-        expect(result.total_ap).to eq(20)
+        expect(result.total_ap).to eq(65)
       end
 
       it "handles string keys in attacks hash" do

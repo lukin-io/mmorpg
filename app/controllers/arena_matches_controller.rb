@@ -65,6 +65,14 @@ class ArenaMatchesController < ApplicationController
     action_params = {}
     action_params[:target] = find_action_target if params[:target_id].present?
     action_params[:skill_id] = params[:skill_id] if params[:skill_id].present?
+    action_params[:attack_type] = params[:attack_type]&.to_sym if params[:attack_type].present?
+    action_params[:body_part] = params[:body_part] if params[:body_part].present?
+    if params[:block_parts].present?
+      action_params[:block_parts] = params[:block_parts].is_a?(String) ? params[:block_parts].split(",") : Array(params[:block_parts])
+    end
+    action_params[:attacks] = turn_action_array(:attacks) if params[:attacks].present?
+    action_params[:blocks] = turn_action_array(:blocks) if params[:blocks].present?
+    action_params[:skills] = turn_action_array(:skills) if params[:skills].present?
 
     result = processor.process_action(
       current_character,
@@ -169,6 +177,12 @@ class ArenaMatchesController < ApplicationController
         user: character.user,
         team: (index.even? ? "alpha" : "beta")
       }
+    end
+  end
+
+  def turn_action_array(key)
+    Array(params[key]).map do |entry|
+      entry.respond_to?(:to_unsafe_h) ? entry.to_unsafe_h : entry
     end
   end
 end

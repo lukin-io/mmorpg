@@ -53,6 +53,9 @@ class ArenaMatchChannel < ApplicationCable::Channel
     action_params[:attack_type] = data["attack_type"]&.to_sym if data["attack_type"].present?
     action_params[:body_part] = data["body_part"] if data["body_part"].present?
     action_params[:block_parts] = data["block_parts"] if data["block_parts"].present?
+    action_params[:attacks] = data["attacks"] if data["attacks"].present?
+    action_params[:blocks] = data["blocks"] if data["blocks"].present?
+    action_params[:skills] = data["skills"] if data["skills"].present?
 
     # Process the combat action (positional: character, action_type, **params)
     result = processor.process_action(

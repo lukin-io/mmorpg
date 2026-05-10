@@ -162,6 +162,7 @@ module ArenaHelper
     :current_hp, :max_hp, :current_mp, :max_mp,
     :hp_percent, :mp_percent,
     :strength, :dexterity, :luck, :knowledge, :wisdom,
+    :attack_power, :defense,
     keyword_init: true
   )
 
@@ -267,7 +268,9 @@ module ArenaHelper
       dexterity: stats[:dexterity] || 0,
       luck: stats[:luck] || 0,
       knowledge: stats[:knowledge] || 0,
-      wisdom: stats[:wisdom] || 0
+      wisdom: stats[:wisdom] || 0,
+      attack_power: stats[:attack_power] || stats[:attack] || 0,
+      defense: stats[:defense] || 0
     )
   end
 
@@ -372,8 +375,9 @@ module ArenaHelper
       luck: stats.get(:luck) || 5,
       knowledge: stats.get(:knowledge) || stats.get(:intelligence) || 1,
       wisdom: stats.get(:wisdom) || 1,
-      attack: stats.get(:attack),
-      defense: stats.get(:defense)
+      attack: character.attack_power,
+      attack_power: character.attack_power,
+      defense: character.defense
     }.compact
   end
 
@@ -394,6 +398,7 @@ module ArenaHelper
         knowledge: config_stats[:intelligence] || 1,
         wisdom: config_stats[:wisdom] || 1,
         attack: config_stats[:attack],
+        attack_power: config_stats[:attack],
         defense: config_stats[:defense]
       }.compact
     end
@@ -407,6 +412,7 @@ module ArenaHelper
       knowledge: 1,
       wisdom: 1,
       attack: npc.metadata&.dig("base_damage") || (level * 3 + 5),
+      attack_power: npc.metadata&.dig("base_damage") || (level * 3 + 5),
       defense: level * 2 + 3
     }
   end

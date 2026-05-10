@@ -165,7 +165,7 @@ module Game
 
         # Validate action points
         total_ap = calculate_turn_ap_cost(attacks, blocks, skills)
-        max_ap = battle.action_points_per_turn || character.max_action_points
+        max_ap = battle.action_points_per_turn || Game::Combat::ActionCatalog::DEFAULT_AP_PER_TURN
         return failure("Exceeds action points (#{total_ap}/#{max_ap})") if total_ap > max_ap
 
         opponent = find_opponent(character)
@@ -438,7 +438,7 @@ module Game
           initiator: attacker,
           turn_number: 1,
           initiative_order: calculate_initiative,
-          action_points_per_turn: [attacker.max_action_points, defender.max_action_points].min,
+          action_points_per_turn: Game::Combat::ActionCatalog::DEFAULT_AP_PER_TURN,
           pvp_mode: "duel",
           rng_seed: seed
         )

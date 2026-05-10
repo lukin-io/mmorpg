@@ -60,7 +60,7 @@ RSpec.describe Arena::CombatProcessor, "Tactical Combat Features" do
     end
 
     it "aimed attack has hit bonus" do
-      expect(Arena::CombatProcessor::ATTACK_TYPES[:aimed][:hit_bonus]).to eq(10)
+      expect(Arena::CombatProcessor::ATTACK_TYPES[:aimed][:hit_bonus]).to eq(15)
     end
   end
 
@@ -419,7 +419,7 @@ RSpec.describe Arena::CombatProcessor, "Tactical Combat Features" do
           )
 
           character1.reload
-          expect(character1.metadata["blocked_parts"]).to eq([])
+          expect(character1.metadata["blocked_parts"]).to eq(["torso"])
         end
       end
 

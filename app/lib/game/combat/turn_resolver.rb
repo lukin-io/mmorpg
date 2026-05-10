@@ -329,8 +329,7 @@ module Game
 
       def calculate_base_damage(participant, entity, action_key, element = :physical)
         if participant.character
-          strength = extract_stat(entity, :strength)
-          attack_power = extract_stat(entity, :attack) || strength
+          attack_power = entity.respond_to?(:attack_power) ? entity.attack_power : extract_stat(entity, :attack)
 
           # Apply combat skill bonus based on element/attack type
           skill_bonus = 0
@@ -349,7 +348,8 @@ module Game
           base = attack_power + skill_bonus + @rng.rand(1..10)
 
           # Apply aimed attack bonus
-          base = (base * 1.3).round if action_key == "aimed"
+          attack_multiplier = @config.dig("attack_types", action_key.to_s, "damage_multiplier") || 1.0
+          base = (base * attack_multiplier).round
 
           base
         else
@@ -613,13 +613,21 @@ module Game
       end
 
       def generate_block(body_part)
-        {body_part: body_part, action_key: "basic_block"}
+        {body_part: body_part, action_key: "#{body_part}_block"}
       end
 
       def extract_stat(entity, stat_name)
         return 0 unless entity
 
-        if entity.respond_to?(:stats) && entity.stats.respond_to?(:get)
+        if stat_name.to_sym == :attack && entity.respond_to?(:attack_power)
+          entity.attack_power.to_i
+        elsif stat_name.to_sym == :defense && entity.respond_to?(:defense)
+          entity.defense.to_i
+        elsif stat_name.to_sym == :defense && entity.respond_to?(:defense_value)
+          entity.defense_value.to_i
+        elsif entity.respond_to?(:combat_stat)
+          entity.combat_stat(stat_name).to_i
+        elsif entity.respond_to?(:stats) && entity.stats.respond_to?(:get)
           entity.stats.get(stat_name).to_i
         elsif entity.respond_to?(stat_name)
           entity.public_send(stat_name).to_i

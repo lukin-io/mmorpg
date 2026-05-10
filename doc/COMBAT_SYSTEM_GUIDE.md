@@ -1,10 +1,15 @@
 # COMBAT_SYSTEM_GUIDE.md — Combat Architecture for Elselands MMORPG
 
-Status: implementation guide. Canonical combat design lives in
-`doc/design/features/combat.md` and `doc/design/gdd.md`.
+Status: legacy implementation guide. Canonical combat design lives in
+`doc/design/features/combat.md` and `doc/design/gdd.md`; the live Neverlands
+arena/combat observation lives in
+`doc/design/reference/neverlands_arena_combat.md`.
 
-This guide defines how to implement combat, turns, skills, crits, buffs,
-and battle flow inside the Rails MMORPG engine.
+This guide contains older implementation notes for combat, turns, skills,
+crits, buffs, and battle flow inside the Rails MMORPG engine. Do not use it as
+a source of new gameplay rules. If a section below conflicts with the GDD or
+the live Neverlands reference, update code toward the canonical design and trim
+or delete the stale guide section.
 
 ---
 
@@ -26,22 +31,16 @@ All math stays in formulas & services.
 # 2. Action Points System
 
 Action Points (AP) determine how many attacks, blocks, and skills a character
-can perform per turn. AP is a **character-based stat** that scales with level and agility.
+can perform per turn.
 
-## Formula
+The current design target is a per-combat AP budget supplied by the combat
+instance, with action costs and multi-attack penalties matching the
+Neverlands-style reference. Character-derived AP formulas are legacy
+implementation guidance, not canonical design.
 
-```ruby
-Max AP = Base AP (50) + (Level × 3) + (Agility × 2)
-```
+## Turn Budget
 
-### Examples
-
-| Level | Agility | Max AP | Description |
-|-------|---------|--------|-------------|
-| 1     | 5       | 63     | New character with balanced stats |
-| 10    | 8       | 96     | Mid-level hunter |
-| 20    | 10      | 130    | High-level rogue |
-| 30    | 15      | 170    | Endgame agility build |
+Current Neverlands-style arena and turn combat use an 80 AP turn budget.
 
 ## Action Costs
 
@@ -49,10 +48,11 @@ Each combat action has an AP cost:
 
 | Action | AP Cost | Notes |
 |--------|---------|-------|
-| Simple Attack | 0 | Free basic attack |
-| Aimed Attack | 20 | More accurate, bonus damage |
-| Basic Block | 30 | Block one body part |
-| Shield Block | 40 | Better block with shield |
+| Simple Attack | 45 | Standard attack type |
+| Aimed Attack | 65 | More accurate, bonus damage |
+| Head / Legs Block | 35 | Block a harder-to-cover body part |
+| Torso / Stomach Block | 30 | Block a central body part |
+| Two-Part Block | 50-80 | Depends on covered body-part pair |
 | Full Body Block | 130 | Block all body parts |
 | Magic Spells | 45-150 | Varies by spell power |
 
@@ -70,28 +70,15 @@ Players can make multiple attacks per turn, but each additional attack adds a pe
 
 ## Implementation
 
-```ruby
-# app/models/character.rb
-def max_action_points
-  base_ap = 50
-  level_bonus = level * 3
-  agility_bonus = stats.get(:agility).to_i * 2
-  base_ap + level_bonus + agility_bonus
-end
-
-# app/services/game/combat/pve_encounter_service.rb
-# Battle stores character's AP at creation
-Battle.create!(
-  action_points_per_turn: character.max_action_points,
-  # ...
-)
-```
+Implementation constants and costs are loaded through
+`Game::Combat::ActionCatalog` and `config/gameplay/combat_actions.yml`.
 
 ---
 
 # 3. Combat Flow
 
-1. Player selects action
+1. Player builds a turn package: attack type, target body part, optional block
+   coverage, and optional magic/item action.
 2. Controller passes to:
    ```
    Game::Combat::TurnResolver

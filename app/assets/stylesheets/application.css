@@ -3259,6 +3259,23 @@ turbo-frame[busy] {
   margin-left: var(--nl-space-xs);
 }
 
+.fighter-combat-power {
+  display: flex;
+  justify-content: center;
+  gap: var(--nl-space-xs);
+  margin-top: var(--nl-space-sm);
+  font-size: 0.78rem;
+}
+
+.fighter-power {
+  min-width: 48px;
+  padding: 2px var(--nl-space-xs);
+  border: 1px solid var(--nl-border-light);
+  border-radius: var(--nl-radius-sm);
+  color: var(--nl-text-primary);
+  background: var(--nl-bg-tertiary);
+}
+
 /* Fighter stats (for opponent view) */
 .fighter-stats {
   display: flex;
@@ -3375,9 +3392,63 @@ turbo-frame[busy] {
   align-items: center;
 }
 
+.arena-turn-composer {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(140px, 1fr)) auto;
+  gap: var(--nl-space-sm);
+  align-items: end;
+}
+
+.arena-turn-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.arena-turn-field label {
+  color: var(--nl-text-secondary);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.arena-turn-field select {
+  width: 100%;
+  min-height: 36px;
+}
+
+.arena-turn-submit {
+  display: flex;
+  align-items: center;
+  gap: var(--nl-space-sm);
+}
+
+.arena-turn-cost {
+  color: var(--nl-text-secondary);
+  font-size: 0.86rem;
+  white-space: nowrap;
+}
+
+.arena-turn-cost--invalid {
+  color: #ff6b6b;
+  font-weight: 700;
+}
+
+@media (max-width: 760px) {
+  .arena-turn-composer {
+    grid-template-columns: 1fr;
+  }
+
+  .arena-turn-submit {
+    justify-content: space-between;
+  }
+}
+
 .arena-attack-group,
 .arena-defend-group {
   display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
   gap: var(--nl-space-xs);
 }
 
@@ -3412,6 +3483,10 @@ turbo-frame[busy] {
 
 .btn-attack--aimed {
   background: linear-gradient(135deg, #d9480f, #fd7e14);
+}
+
+.btn-attack--submit {
+  min-width: 120px;
 }
 
 .btn-defend {

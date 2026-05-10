@@ -16,13 +16,14 @@ module Arena
     attr_reader :match, :broadcaster
 
     # Action Points per turn
-    AP_PER_TURN = 100
+    AP_PER_TURN = Game::Combat::ActionCatalog::DEFAULT_AP_PER_TURN
     BLOCK_AP_COST = 30
+    BODY_PARTS = Game::Combat::ActionCatalog::BODY_PARTS
 
     # Attack type configurations
     ATTACK_TYPES = {
       simple: {ap_cost: 45, damage_mult: 1.0, hit_bonus: 0, name: "Simple"},
-      aimed: {ap_cost: 65, damage_mult: 1.2, hit_bonus: 10, name: "Aimed"}
+      aimed: {ap_cost: 65, damage_mult: 1.2, hit_bonus: 15, name: "Aimed"}
     }.freeze
 
     # Body part damage multipliers
@@ -65,6 +66,14 @@ module Arena
       end
 
       result = case action_type.to_sym
+      when :turn
+        process_turn(
+          character,
+          target: params[:target],
+          attacks: params[:attacks],
+          blocks: params[:blocks],
+          skills: params[:skills]
+        )
       when :attack
         process_attack(
           character,
@@ -199,7 +208,7 @@ module Arena
       teams = match.arena_participations.includes(:character).group_by(&:team)
 
       teams.values.any? do |team_participations|
-        team_participations.all? { |p| p.character.current_hp <= 0 }
+        team_participations.all? { |p| participation_hp(p) <= 0 }
       end
     end
 
@@ -210,7 +219,7 @@ module Arena
       teams = match.arena_participations.includes(:character).group_by(&:team)
 
       team_health = teams.transform_values do |participations|
-        participations.sum { |p| [p.character.current_hp, 0].max }
+        participations.sum { |p| [participation_hp(p), 0].max }
       end
 
       max_health = team_health.values.max
@@ -220,6 +229,42 @@ module Arena
     end
 
     private
+
+    def process_turn(character, target: nil, attacks: [], blocks: [], skills: [])
+      normalized_attacks = normalize_turn_attacks(attacks)
+      normalized_blocks = normalize_turn_blocks(blocks)
+      normalized_skills = Array(skills).reject(&:blank?)
+
+      validation_errors = validate_turn_actions(normalized_attacks, normalized_blocks, normalized_skills)
+      return failure(validation_errors.join(", ")) if validation_errors.any?
+
+      turn_results = {
+        attacks: [],
+        blocks: normalized_blocks,
+        skills: normalized_skills,
+        total_ap: calculate_turn_ap_cost(normalized_attacks, normalized_blocks, normalized_skills)
+      }
+
+      if normalized_blocks.any?
+        block_result = process_defend(character, block_parts: normalized_blocks.first[:body_parts])
+        return block_result unless block_result.success?
+      end
+
+      normalized_attacks.each do |attack|
+        attack_result = process_attack(
+          character,
+          target,
+          attack_type: attack[:action_key].to_sym,
+          body_part: attack[:body_part]
+        )
+        return attack_result unless attack_result.success?
+
+        turn_results[:attacks] << attack_result.data
+        break if should_end?
+      end
+
+      success(turn: true, **turn_results)
+    end
 
     def process_attack(attacker, target, attack_type: :simple, body_part: "torso")
       # Find target - could be Character or NPC participation
@@ -296,7 +341,11 @@ module Arena
       return false unless character.metadata&.dig("blocking")
 
       blocked_parts = character.metadata["blocked_parts"] || []
-      blocked_parts.include?(body_part)
+      return false unless block_still_active?(character.metadata["block_until"])
+
+      blocked = blocked_parts.include?(body_part)
+      clear_blocking_state(character) if blocked
+      blocked
     end
 
     def process_attack_on_npc(attacker, npc_participation, attack_type: :simple, body_part: "torso")
@@ -321,13 +370,6 @@ module Arena
 
       npc_stats = npc_combat_stats(npc)
       defense = npc_stats[:defense] || 5
-
-      # Check if NPC is defending (general defense boost)
-      if npc_defending?(npc_participation)
-        defense = (defense * 1.5).round
-        npc_participation.metadata.delete("defending")
-        npc_participation.metadata.delete("defend_until")
-      end
 
       damage = [base_damage - defense, 1].max
 
@@ -366,7 +408,11 @@ module Arena
       return false unless npc_participation.metadata&.dig("blocking")
 
       blocked_parts = npc_participation.metadata["blocked_parts"] || []
-      blocked_parts.include?(body_part)
+      return false unless block_still_active?(npc_participation.metadata["block_until"])
+
+      blocked = blocked_parts.include?(body_part)
+      clear_npc_blocking_state(npc_participation) if blocked
+      blocked
     end
 
     def find_target_participation(attacker, target)
@@ -424,15 +470,13 @@ module Arena
       # Default to single torso block if no parts specified
       block_parts ||= ["torso"]
       block_parts = Array(block_parts)
+      block_parts = ["torso"] if block_parts.empty?
 
       # Apply defense buff for next incoming attack
       character.metadata ||= {}
       character.metadata["blocking"] = true
       character.metadata["blocked_parts"] = block_parts
-      character.metadata["block_until"] = 10.seconds.from_now.iso8601
-      # Legacy support
-      character.metadata["defending"] = true
-      character.metadata["defend_until"] = 10.seconds.from_now.iso8601
+      character.metadata["block_until"] = block_expires_at.iso8601
       character.save!
 
       parts_str = block_parts.join(", ")
@@ -593,28 +637,11 @@ module Arena
     end
 
     def calculate_base_damage(character)
-      # Base damage = character's attack stat + weapon bonus
-      base = character.stats&.get(:attack) || 10
-      weapon_bonus = character.try(:equipped_weapon_damage) || 0
-      base + weapon_bonus + rand(1..5)
+      character.attack_power + rand(1..5)
     end
 
     def calculate_defense(character)
-      # Defense = character's defense stat + armor bonus
-      # Check if defending
-      base = character.stats&.get(:defense) || 5
-      armor_bonus = character.try(:equipped_armor_defense) || 0
-      defense = base + armor_bonus
-
-      if character.metadata&.dig("defending") &&
-          Time.parse(character.metadata["defend_until"]) > Time.current
-        defense = (defense * 1.5).round
-        character.metadata.delete("defending")
-        character.metadata.delete("defend_until")
-        character.save!
-      end
-
-      defense
+      character.defense
     end
 
     def find_default_target(attacker)
@@ -721,11 +748,19 @@ module Arena
     # Calculate AP cost for an action
     def calculate_ap_cost(action_type, params)
       case action_type.to_sym
+      when :turn
+        calculate_turn_ap_cost(
+          normalize_turn_attacks(params[:attacks]),
+          normalize_turn_blocks(params[:blocks]),
+          Array(params[:skills]).reject(&:blank?)
+        )
       when :attack
         attack_type = params[:attack_type]&.to_sym || :simple
         ATTACK_TYPES[attack_type]&.dig(:ap_cost) || 45
       when :defend
-        BLOCK_AP_COST
+        block_parts = Array(params[:block_parts].presence || ["torso"])
+        cost = Game::Combat::ActionCatalog.block_cost(body_parts: block_parts)
+        cost.positive? ? cost : BLOCK_AP_COST
       when :skill
         50 # Default skill cost
       when :flee
@@ -735,13 +770,113 @@ module Arena
       end
     end
 
+    def calculate_turn_ap_cost(attacks, blocks, skills)
+      attack_cost = attacks.sum { |attack| attack_ap_cost(attack[:action_key]) }
+      block_cost = blocks.sum { |block| block_ap_cost(block) }
+      skill_cost = skills.sum { 50 }
+      attack_cost + block_cost + attack_penalty(attacks.size) + skill_cost
+    end
+
+    def attack_ap_cost(action_key)
+      Game::Combat::ActionCatalog.attack_cost(action_key) ||
+        ATTACK_TYPES[action_key.to_sym]&.dig(:ap_cost) ||
+        0
+    end
+
+    def block_ap_cost(block)
+      cost = Game::Combat::ActionCatalog.block_cost(
+        action_key: block[:action_key],
+        body_parts: block[:body_parts]
+      )
+      cost.positive? ? cost : BLOCK_AP_COST
+    end
+
+    def attack_penalty(attack_count)
+      penalties = Game::Combat::ActionCatalog.config["attack_penalties"] || []
+      penalty_entry = penalties.find { |entry| entry["attacks"].to_i == attack_count }
+      penalty_entry&.dig("penalty").to_i
+    end
+
+    def validate_turn_actions(attacks, blocks, skills)
+      errors = []
+
+      errors << "Choose at least one attack, block, or skill" if attacks.empty? && blocks.empty? && skills.empty?
+      errors << "Only one block can be selected per turn" if blocks.size > 1
+      errors << "Maximum 4 attacks per turn" if attacks.size > 4
+      errors << "Magic/actions are not enabled for arena turn package yet" if skills.present?
+
+      attack_parts = attacks.map { |attack| attack[:body_part] }
+      if attack_parts.include?("head") && attack_parts.include?("legs")
+        errors << "Cannot attack head and legs in the same turn"
+      end
+
+      attacks.each_with_index do |attack, index|
+        unless BODY_PARTS.include?(attack[:body_part])
+          errors << "Invalid body part for attack #{index + 1}: #{attack[:body_part]}"
+        end
+
+        unless ATTACK_TYPES.key?(attack[:action_key].to_sym)
+          errors << "Invalid attack type for attack #{index + 1}: #{attack[:action_key]}"
+        end
+      end
+
+      blocks.each_with_index do |block, index|
+        if block[:body_parts].blank?
+          errors << "Block #{index + 1} must cover at least one body part"
+          next
+        end
+
+        block[:body_parts].each do |part|
+          errors << "Invalid body part in block #{index + 1}: #{part}" unless BODY_PARTS.include?(part)
+        end
+      end
+
+      total_ap = calculate_turn_ap_cost(attacks, blocks, skills)
+      errors << "Actions exceed AP limit (#{total_ap}/#{AP_PER_TURN})" if total_ap > AP_PER_TURN
+
+      errors
+    end
+
+    def normalize_turn_attacks(attacks)
+      Array(attacks).filter_map do |attack|
+        data = normalized_hash(attack)
+        action_key = (data[:action_key] || data[:attack_type] || "simple").to_s
+        body_part = (data[:body_part] || "torso").to_s
+        next if action_key.blank? || action_key == "none" || body_part.blank? || body_part == "none"
+
+        {action_key:, body_part:}
+      end
+    end
+
+    def normalize_turn_blocks(blocks)
+      Array(blocks).filter_map do |block|
+        data = normalized_hash(block)
+        body_parts = data[:body_parts] || data[:block_parts] || data[:parts] || data[:body_part]
+        body_parts = body_parts.to_s.split(",") if body_parts.is_a?(String)
+        body_parts = Game::Combat::ActionCatalog.canonical_parts(body_parts)
+        next if body_parts.empty?
+
+        action_key = data[:action_key] || Game::Combat::ActionCatalog.standard_block_for_parts(body_parts)&.fetch(:key)
+        {action_key:, body_parts:}
+      end
+    end
+
+    def normalized_hash(value)
+      return {} if value.blank?
+      return {body_parts: value.split(",")} if value.is_a?(String)
+
+      value = value.to_unsafe_h if value.respond_to?(:to_unsafe_h)
+      value = value.to_h if value.respond_to?(:to_h)
+      value.each_with_object({}) { |(key, item), memo| memo[key.to_sym] = item }
+    end
+
     # Get character's current AP for this match
     def get_character_ap(character)
       participation = match.arena_participations.find_by(character: character)
       return AP_PER_TURN unless participation
 
       participation.metadata ||= {}
-      participation.metadata["current_ap"] || AP_PER_TURN
+      [participation.metadata["current_ap"] || AP_PER_TURN, AP_PER_TURN].min
     end
 
     # Deduct AP from character
@@ -750,7 +885,7 @@ module Arena
       return unless participation
 
       participation.metadata ||= {}
-      current = participation.metadata["current_ap"] || AP_PER_TURN
+      current = [participation.metadata["current_ap"] || AP_PER_TURN, AP_PER_TURN].min
       participation.metadata["current_ap"] = [current - amount, 0].max
       participation.save!
     end
@@ -790,6 +925,14 @@ module Arena
 
       # Calculate NPC damage
       npc_stats = npc_combat_stats(npc)
+      body_part = params[:body_part] || "torso"
+
+      if target_blocking_part?(target, body_part)
+        log_entry("block", target, "#{target.name} blocked attack (#{body_part}) from #{npc.name}")
+        broadcast_npc_action(npc, "blocked", target, 0, body_part:)
+        return success(blocked: true, body_part:, damage: 0)
+      end
+
       base_damage = npc_stats[:attack] + rand(1..5)
       defense = calculate_defense(target)
       damage = [base_damage - defense, 1].max
@@ -806,7 +949,6 @@ module Arena
 
       # Log and broadcast
       log_type = critical ? "critical" : "damage"
-      body_part = params[:body_part] || "torso"
       log_entry(log_type, nil, "#{npc.name} attacks #{target.name}'s #{body_part} for #{damage} damage#{" (CRITICAL!)" if critical}")
 
       broadcaster.broadcast_vitals_update(target)
@@ -827,8 +969,9 @@ module Arena
 
       # Store defend state in participation metadata
       npc_participation.metadata ||= {}
-      npc_participation.metadata["defending"] = true
-      npc_participation.metadata["defend_until"] = 10.seconds.from_now.iso8601
+      npc_participation.metadata["blocking"] = true
+      npc_participation.metadata["blocked_parts"] = ["torso"]
+      npc_participation.metadata["block_until"] = block_expires_at.iso8601
       npc_participation.save!
 
       log_entry("action", nil, "#{npc.name} takes a defensive stance")
@@ -884,16 +1027,39 @@ module Arena
       )
     end
 
-    # Check if an NPC participation is defending
-    def npc_defending?(npc_participation)
-      return false unless npc_participation.metadata&.dig("defending")
+    def participation_hp(participation)
+      participation.npc? ? participation.current_hp : participation.character&.current_hp.to_i
+    end
 
-      defend_until = npc_participation.metadata["defend_until"]
-      return false unless defend_until
+    def block_still_active?(timestamp)
+      return true if timestamp.blank?
 
-      Time.parse(defend_until) > Time.current
-    rescue
+      Time.parse(timestamp) > Time.current
+    rescue ArgumentError, TypeError
       false
+    end
+
+    def block_expires_at
+      timeout = match.turn_timeout_seconds || 120
+      timeout.seconds.from_now
+    end
+
+    def clear_blocking_state(character)
+      character.metadata.delete("blocking")
+      character.metadata.delete("blocked_parts")
+      character.metadata.delete("block_until")
+      character.metadata.delete("defending")
+      character.metadata.delete("defend_until")
+      character.save!
+    end
+
+    def clear_npc_blocking_state(npc_participation)
+      npc_participation.metadata.delete("blocking")
+      npc_participation.metadata.delete("blocked_parts")
+      npc_participation.metadata.delete("block_until")
+      npc_participation.metadata.delete("defending")
+      npc_participation.metadata.delete("defend_until")
+      npc_participation.save!
     end
 
     # Simple result object for action outcomes

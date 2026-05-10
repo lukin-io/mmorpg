@@ -12,7 +12,8 @@
 
 <div class="fighter-card fighter-card--<%= position %> <%= 'fighter-card--defeated' if defeated %> <%= 'fighter-card--npc' if p_data.is_npc %>"
      data-character-id="<%= p_data.id %>"
-     data-npc="<%= p_data.is_npc %>">
+     data-npc="<%= p_data.is_npc %>"
+     data-current-user="<%= !p_data.is_npc && participation.user_id == current_user&.id %>">
 
   <%# Avatar %>
   <div class="fighter-avatar">
@@ -53,6 +54,15 @@
     </div>
   <% end %>
 
+  <div class="fighter-combat-power">
+    <span class="fighter-power" title="Attack power includes strength, dexterity, level, and equipped weapon bonuses">
+      Atk <%= p_data.attack_power %>
+    </span>
+    <span class="fighter-power" title="Defense includes vitality, strength, level, and equipped armor bonuses">
+      Def <%= p_data.defense %>
+    </span>
+  </div>
+
   <%# Stats (shown for opponent) %>
   <% if show_stats %>
     <div class="fighter-stats">
@@ -78,4 +88,3 @@
     </div>
   <% end %>
 </div>
-

@@ -83,6 +83,7 @@ module Game
       # @return [Integer]
       def attack_power(entity)
         return entity.attack_power if entity.respond_to?(:attack_power)
+        return entity.combat_stat(:attack) if entity.respond_to?(:combat_stat)
         return entity.stats.get(:attack_power) if entity.respond_to?(:stats)
 
         # Default for entities without stats
@@ -95,6 +96,8 @@ module Game
       # @return [Integer]
       def defense_power(entity)
         return entity.defense if entity.respond_to?(:defense)
+        return entity.defense_value if entity.respond_to?(:defense_value)
+        return entity.combat_stat(:defense) if entity.respond_to?(:combat_stat)
         return entity.stats.get(:defense) if entity.respond_to?(:stats)
 
         # Default for entities without stats
@@ -107,6 +110,7 @@ module Game
       # @return [Integer] percentage (0-100)
       def crit_chance(entity)
         return entity.critical_chance if entity.respond_to?(:critical_chance)
+        return entity.combat_stat(:crit_chance) if entity.respond_to?(:combat_stat)
         return entity.stats.get(:critical_chance) if entity.respond_to?(:stats)
 
         # Default crit chance

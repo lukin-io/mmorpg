@@ -211,6 +211,34 @@ RSpec.describe Character, type: :model do
     end
   end
 
+  describe "combat power formulas" do
+    let(:character_class) do
+      create(:character_class, base_stats: {
+        strength: 10, dexterity: 8, vitality: 12, luck: 5
+      })
+    end
+    let(:character) { create(:character, character_class:, level: 3) }
+
+    it "includes level in attack power and defense" do
+      expect(character.attack_power).to eq(25) # 20 strength + 4 dexterity + 1 level
+      expect(character.defense).to eq(16) # 12 vitality + 3 strength + 1 level
+    end
+
+    it "includes equipped item bonuses in the combat breakdown" do
+      sword = create(:item_template, item_type: "equipment", slot: "main_hand", stat_modifiers: {"attack" => 7})
+      armor = create(:item_template, item_type: "equipment", slot: "chest", stat_modifiers: {"defense" => 5})
+      create(:inventory_item, inventory: character.inventory, item_template: sword, equipped: true)
+      create(:inventory_item, inventory: character.inventory, item_template: armor, equipped: true)
+
+      breakdown = character.combat_power_breakdown
+
+      expect(breakdown[:attack_power][:equipment]).to eq(7)
+      expect(breakdown[:attack_power][:total]).to eq(32)
+      expect(breakdown[:defense][:equipment]).to eq(5)
+      expect(breakdown[:defense][:total]).to eq(21)
+    end
+  end
+
   # ============================================
   # Passive Skills
   # ============================================

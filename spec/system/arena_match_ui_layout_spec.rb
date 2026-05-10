@@ -98,14 +98,14 @@ RSpec.describe "Arena Match UI Layout", type: :system do
       expect(page).to have_css(".arena-action-panel")
     end
 
-    it "shows Attack button" do
+    it "shows attack type selector" do
       visit arena_match_path(match)
-      expect(page).to have_button("⚔️ Attack")
+      expect(page).to have_select("Attack", with_options: ["Simple Attack (45)", "Aimed Attack (65)"])
     end
 
-    it "shows Aimed Attack button" do
+    it "shows turn submit button" do
       visit arena_match_path(match)
-      expect(page).to have_button("🎯 Aimed")
+      expect(page).to have_button("Submit Turn")
     end
 
     it "shows body part selection dropdown" do
@@ -113,9 +113,9 @@ RSpec.describe "Arena Match UI Layout", type: :system do
       expect(page).to have_css(".arena-target-select select")
     end
 
-    it "shows defense/block buttons" do
+    it "shows defense/block selector" do
       visit arena_match_path(match)
-      expect(page).to have_button("🛡️ Block")
+      expect(page).to have_select("Block", with_options: ["Torso Block (30)", "Head Block (35)"])
     end
   end
 

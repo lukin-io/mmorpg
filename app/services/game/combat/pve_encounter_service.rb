@@ -91,7 +91,7 @@ module Game
 
         # Validate action points
         total_ap_cost = calculate_turn_ap_cost(attacks, blocks, skills)
-        max_ap = battle.action_points_per_turn || character.max_action_points
+        max_ap = battle.action_points_per_turn || Game::Combat::ActionCatalog::DEFAULT_AP_PER_TURN
         return failure("Exceeds action points (#{total_ap_cost}/#{max_ap})") if total_ap_cost > max_ap
 
         player_participant = battle.battle_participants.find_by(team: "player")
@@ -185,7 +185,7 @@ module Game
           initiator: character,
           turn_number: 1,
           initiative_order: calculate_initiative,
-          action_points_per_turn: character.max_action_points
+          action_points_per_turn: Game::Combat::ActionCatalog::DEFAULT_AP_PER_TURN
         )
       end
 

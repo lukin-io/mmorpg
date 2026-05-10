@@ -7,6 +7,9 @@
   body_parts = %w[head torso stomach legs]
   attack_labels = ["Head", "Torso", "Stomach", "Legs"]
   block_labels = ["Head", "Torso", "Stomach", "Legs"]
+  simple_attack_cost = attacks.find { |a| a[:key].to_s == "simple" }&.dig(:cost) || Game::Combat::ActionCatalog.attack_cost("simple")
+  aimed_attack_cost = attacks.find { |a| a[:key].to_s == "aimed" }&.dig(:cost) || Game::Combat::ActionCatalog.attack_cost("aimed")
+  extra_attacks = attacks.reject { |a| %w[simple aimed].include?(a[:key].to_s) }
 %>
 
 <div class="nl-action-selection">
@@ -32,15 +35,15 @@
             </option>
 
             <%# Basic attack options %>
-            <option value="simple" data-cost="0">
-              Simple Attack [0]
+            <option value="simple" data-cost="<%= simple_attack_cost %>">
+              Simple Attack [<%= simple_attack_cost %>]
             </option>
-            <option value="aimed" data-cost="20">
-              Aimed Attack [20]
+            <option value="aimed" data-cost="<%= aimed_attack_cost %>">
+              Aimed Attack [<%= aimed_attack_cost %>]
             </option>
 
             <%# Targeted attacks for this body part %>
-            <% attacks.select { |a| a[:body_part] == part || a[:body_parts]&.include?(part) }.each do |attack| %>
+            <% extra_attacks.select { |a| a[:body_part] == part || a[:body_parts]&.include?(part) }.each do |attack| %>
               <option value="<%= attack[:key] %>" data-cost="<%= attack[:cost] %>">
                 <%= attack[:name] %> [<%= attack[:cost] %>]
               </option>
@@ -66,18 +69,8 @@
               <%= block_labels[index] %> [no block selected]
             </option>
 
-            <%# Basic block %>
-            <option value="basic_block" data-cost="30">
-              Basic Block [30]
-            </option>
-
-            <%# Shield blocks %>
-            <option value="shield_block" data-cost="40">
-              Shield Block [40]
-            </option>
-
             <%# Targeted blocks %>
-            <% blocks.select { |b| b[:body_part] == part }.each do |block| %>
+            <% blocks.select { |b| Array(b[:body_parts] || b[:body_part]).include?(part) }.each do |block| %>
               <option value="<%= block[:key] %>" data-cost="<%= block[:cost] %>">
                 <%= block[:name] %> [<%= block[:cost] %>]
               </option>
@@ -96,4 +89,3 @@
     </span>
   </div>
 </div>
-

@@ -10,6 +10,7 @@ export default class extends Controller {
   static targets = [
     "combatLog", "participantList", "actionButtons", "timer",
     "teamA", "teamB", "resultOverlay", "bodyPartSelect",
+    "attackTypeSelect", "blockSelect", "turnCostValue",
     "apBar", "apValue", "fighterA", "fighterB"
   ]
 
@@ -21,6 +22,7 @@ export default class extends Controller {
 
   connect() {
     this.subscribeToMatch()
+    this.updateTurnCost()
   }
 
   disconnect() {
@@ -64,8 +66,14 @@ export default class extends Controller {
       case "combat_action":
         this.appendCombatLog(data)
         break
+      case "npc_combat_action":
+        this.appendNpcCombatLog(data)
+        break
       case "hp_update":
         this.updateParticipantHP(data)
+        break
+      case "npc_vitals_update":
+        this.updateNpcHP(data)
         break
       case "ap_update":
         this.updateAP(data)
@@ -78,6 +86,9 @@ export default class extends Controller {
         break
       case "match_state":
         this.updateMatchState(data)
+        break
+      case "action_result":
+        this.handleActionResult(data)
         break
     }
   }
@@ -114,6 +125,18 @@ export default class extends Controller {
     this.scrollCombatLog()
   }
 
+  appendNpcCombatLog(action) {
+    this.appendCombatLog({
+      timestamp: action.timestamp,
+      actor_name: action.npc_name,
+      target_name: action.target_name,
+      damage: action.damage,
+      is_critical: action.critical,
+      body_part: action.body_part,
+      description: this.formatNpcAction(action)
+    })
+  }
+
   appendSystemMessage(data) {
     if (!this.hasCombatLogTarget) return
 
@@ -123,6 +146,16 @@ export default class extends Controller {
 
     this.combatLogTarget.appendChild(entry)
     this.scrollCombatLog()
+  }
+
+  handleActionResult(data) {
+    if (data.success) return
+
+    this.appendSystemMessage({
+      timestamp: new Date().toLocaleTimeString(),
+      message: data.error || "Action failed",
+      severity: "error"
+    })
   }
 
   formatAction(action) {
@@ -136,6 +169,22 @@ export default class extends Controller {
     }
 
     return html
+  }
+
+  formatNpcAction(action) {
+    const target = action.target_name || "opponent"
+    const bodyPart = action.body_part ? ` (${action.body_part})` : ""
+
+    switch (action.action) {
+      case "attack":
+        return `${action.npc_name} hits ${target}${bodyPart} for ${action.damage} damage${action.critical ? " CRITICAL" : ""}`
+      case "blocked":
+        return `${target} blocked attack${bodyPart} from ${action.npc_name}`
+      case "defend":
+        return `${action.npc_name} takes a defensive stance`
+      default:
+        return `${action.npc_name} acts`
+    }
   }
 
   getActionClass(action) {
@@ -161,34 +210,53 @@ export default class extends Controller {
     if (!participant) return
 
     // Update HP bar
-    const hpFill = participant.querySelector(".arena-hp-fill")
+    const hpFill = participant.querySelector(".arena-hp-fill, .fighter-hp-fill")
     if (hpFill) {
       hpFill.style.width = `${data.hp_percent}%`
     }
 
     // Update MP bar
-    const mpFill = participant.querySelector(".arena-mp-fill")
+    const mpFill = participant.querySelector(".arena-mp-fill, .fighter-mp-fill")
     if (mpFill) {
       mpFill.style.width = `${data.mp_percent}%`
     }
 
     // Update HP text
-    const hpText = participant.querySelector(".arena-hp-text")
+    const hpText = participant.querySelector(".arena-hp-text, .fighter-hp-text")
     if (hpText) {
       hpText.textContent = `${data.current_hp}/${data.max_hp}`
+    }
+
+    const hpPercent = participant.querySelector(".fighter-hp-percent")
+    if (hpPercent) {
+      hpPercent.textContent = `${Math.round(data.hp_percent)}%`
     }
 
     // Handle death
     if (data.is_dead) {
       participant.classList.add("arena-participant--dead")
+      participant.classList.add("fighter-card--defeated")
     }
+  }
+
+  updateNpcHP(data) {
+    this.updateParticipantHP({
+      character_id: `npc-${data.npc_id}`,
+      current_hp: data.current_hp,
+      max_hp: data.max_hp,
+      current_mp: 0,
+      max_mp: 0,
+      hp_percent: data.hp_percent,
+      mp_percent: 0,
+      is_dead: data.current_hp <= 0
+    })
   }
 
   updateMatchState(data) {
     // Update all participants from state
     data.participants.forEach(p => {
       this.updateParticipantHP({
-        character_id: p.character_id,
+        character_id: p.character_id || p.id,
         current_hp: p.current_hp,
         max_hp: p.max_hp,
         current_mp: p.current_mp,
@@ -231,6 +299,10 @@ export default class extends Controller {
   }
 
   getButtonAPCost(btn) {
+    if (btn.dataset.apCost) {
+      return Number.parseInt(btn.dataset.apCost, 10)
+    }
+
     const actionType = btn.dataset.actionType
     const attackType = btn.dataset.attackType
 
@@ -240,6 +312,33 @@ export default class extends Controller {
       return 30
     }
     return 0
+  }
+
+  updateTurnCost() {
+    if (!this.hasTurnCostValueTarget) return
+
+    const cost = this.selectedAttackCost() + this.selectedBlockCost()
+    this.turnCostValueTarget.textContent = `${cost}/80`
+    this.turnCostValueTarget.classList.toggle("arena-turn-cost--invalid", cost > 80)
+
+    const submitButton = this.element.querySelector(".btn-attack--submit")
+    if (submitButton) {
+      submitButton.disabled = cost > 80
+    }
+  }
+
+  selectedAttackCost() {
+    if (!this.hasAttackTypeSelectTarget) return 45
+
+    const option = this.attackTypeSelectTarget.selectedOptions[0]
+    return Number.parseInt(option?.dataset.apCost || "0", 10)
+  }
+
+  selectedBlockCost() {
+    if (!this.hasBlockSelectTarget) return 0
+
+    const option = this.blockSelectTarget.selectedOptions[0]
+    return Number.parseInt(option?.dataset.apCost || "0", 10)
   }
 
   handleMatchStart(data) {
@@ -263,8 +362,8 @@ export default class extends Controller {
 
   renderParticipants(participants) {
     // Group by team
-    const teamA = participants.filter(p => p.team === "a")
-    const teamB = participants.filter(p => p.team === "b")
+    const teamA = participants.filter(p => ["a", "alpha"].includes(p.team))
+    const teamB = participants.filter(p => ["b", "beta"].includes(p.team))
 
     if (this.hasTeamATarget) {
       this.teamATarget.innerHTML = teamA.map(p => this.renderParticipant(p)).join("")
@@ -278,10 +377,12 @@ export default class extends Controller {
   renderParticipant(p) {
     const hpPercent = (p.current_hp / p.max_hp) * 100
     const mpPercent = (p.current_mp / p.max_mp) * 100
+    const participantId = p.character_id || p.id
+    const participantName = p.character_name || p.name
 
     return `
-      <div class="arena-participant" data-character-id="${p.character_id}">
-        <span class="arena-participant-name">${p.character_name}</span>
+      <div class="arena-participant" data-character-id="${participantId}">
+        <span class="arena-participant-name">${participantName}</span>
         <span class="arena-participant-level">[${p.level}]</span>
         <div class="arena-bars">
           <div class="arena-hp-bar">
@@ -395,35 +496,70 @@ export default class extends Controller {
       data.block_parts = blockParts.split(",")
     }
 
-    console.log("Submitting action:", data)
     this.subscription.perform("submit_action", data)
 
     // Disable button temporarily to prevent spam
     btn.disabled = true
-    setTimeout(() => btn.disabled = false, 1000)
+    setTimeout(() => {
+      btn.disabled = false
+      this.updateTurnCost()
+    }, 1000)
+  }
+
+  submitTurn(event) {
+    if (this.spectatingValue) return
+
+    const btn = event.currentTarget
+    const attackType = this.hasAttackTypeSelectTarget ? this.attackTypeSelectTarget.value : "simple"
+    const bodyPart = this.hasBodyPartSelectTarget ? this.bodyPartSelectTarget.value : "torso"
+    const blockOption = this.hasBlockSelectTarget ? this.blockSelectTarget.selectedOptions[0] : null
+    const blockKey = blockOption?.value
+    const blockParts = blockOption?.dataset.bodyParts
+    const targetId = this.getFirstEnemyId()
+
+    const attacks = []
+    if (attackType && attackType !== "none") {
+      attacks.push({
+        action_key: attackType,
+        body_part: bodyPart
+      })
+    }
+
+    const blocks = []
+    if (blockKey && blockKey !== "none" && blockParts) {
+      blocks.push({
+        action_key: blockKey,
+        body_parts: blockParts.split(",")
+      })
+    }
+
+    const data = {
+      action_type: "turn",
+      target_id: targetId,
+      attacks: attacks,
+      blocks: blocks
+    }
+
+    this.subscription.perform("submit_action", data)
+
+    btn.disabled = true
+    setTimeout(() => {
+      btn.disabled = false
+      this.updateTurnCost()
+    }, 1000)
   }
 
   getFirstEnemyId() {
-    // Find the first enemy participant (opponent team)
-    // Try team B first, then team A
-    let enemyTeam = this.element.querySelector(".arena-team--b .arena-participant")
-    if (enemyTeam && !this.isOwnTeam("b")) {
-      return enemyTeam.dataset.characterId
-    }
+    const fighters = this.element.querySelectorAll(".fighter-card:not(.fighter-card--defeated), .arena-participant:not(.arena-participant--dead)")
+    const enemy = Array.from(fighters).find(p =>
+      p.dataset.characterId && p.dataset.currentUser !== "true"
+    )
 
-    enemyTeam = this.element.querySelector(".arena-team--a .arena-participant")
-    if (enemyTeam && !this.isOwnTeam("a")) {
-      return enemyTeam.dataset.characterId
-    }
+    if (enemy) return enemy.dataset.characterId
 
-    // Fallback: just pick the first participant that's not dead
-    const allParticipants = this.element.querySelectorAll(".arena-participant:not(.arena-participant--dead)")
-    for (const p of allParticipants) {
-      // Skip if no character ID (might be missing)
-      if (p.dataset.characterId) {
-        return p.dataset.characterId
-      }
-    }
+    const fallback = Array.from(fighters).find(p => p.dataset.characterId)
+    if (fallback) return fallback.dataset.characterId
+
     return null
   }
 
@@ -438,4 +574,3 @@ export default class extends Controller {
     return teamContainer.querySelector("[data-is-current-user='true']") !== null
   }
 }
-

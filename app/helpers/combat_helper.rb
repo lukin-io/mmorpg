@@ -264,15 +264,15 @@ module CombatHelper
   # Default attack types when config is missing or incomplete
   DEFAULT_ATTACK_TYPES = {
     "simple" => {"name" => "Simple", "action_cost" => 45},
-    "aimed" => {"name" => "Aimed", "action_cost" => 60}
+    "aimed" => {"name" => "Aimed", "action_cost" => 65}
   }.freeze
 
   # Default block types when config is missing or incomplete
   DEFAULT_BLOCK_TYPES = {
-    "head_block" => {"name" => "Head Block", "action_cost" => 30, "body_parts" => ["head"]},
+    "head_block" => {"name" => "Head Block", "action_cost" => 35, "body_parts" => ["head"]},
     "torso_block" => {"name" => "Torso Block", "action_cost" => 30, "body_parts" => ["torso"]},
     "stomach_block" => {"name" => "Stomach Block", "action_cost" => 30, "body_parts" => ["stomach"]},
-    "legs_block" => {"name" => "Legs Block", "action_cost" => 30, "body_parts" => ["legs"]}
+    "legs_block" => {"name" => "Legs Block", "action_cost" => 35, "body_parts" => ["legs"]}
   }.freeze
 
   DEFAULT_AP_LIMIT = 80

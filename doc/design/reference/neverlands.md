@@ -11,6 +11,7 @@ presence, turn combat, inventory weight, shops, and social chat.
 | --- | --- |
 | `doc/flow/neverlands_live_movement.md` | Wilderness movement timing, map state, available destination model |
 | `doc/flow/neverlands_live_city_movement.md` | City entry, city node navigation, shop entry, building return flow |
+| `doc/design/reference/neverlands_arena_combat.md` | Arena rooms, fight applications, AP/body-part combat, fight states |
 | `doc/features/neverlands_inspired_chat.md` | Chat frame, player list, message styles, context menu |
 | `doc/features/neverlands_inspired_combat.md` | Turn combat, action points, body targeting, combat log |
 | `doc/features/neverlands_inspired_skills.md` | Stat and skill allocation, perks, effects |

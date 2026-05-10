@@ -529,23 +529,25 @@ class Character < ApplicationRecord
   # ===================
 
   # Calculate attack power for combat
-  # Formula: (Strength × 2) + (Dexterity / 2) + equipment bonus
+  # Formula: (Strength × 2) + (Dexterity / 2) + (Level / 2) + equipment bonus
   #
   # @return [Integer] attack power value
   def attack_power
     base = stats.get(:strength).to_i * 2
     dex_bonus = stats.get(:dexterity).to_i / 2
-    base + dex_bonus + equipment_attack_bonus
+    level_bonus = level.to_i / 2
+    base + dex_bonus + level_bonus + equipment_attack_bonus
   end
 
   # Calculate defense for combat
-  # Formula: Vitality + (Strength / 3) + equipment bonus
+  # Formula: Vitality + (Strength / 3) + (Level / 2) + equipment bonus
   #
   # @return [Integer] defense value
   def defense
     base = stats.get(:vitality).to_i
     str_bonus = stats.get(:strength).to_i / 3
-    base + str_bonus + equipment_defense_bonus
+    level_bonus = level.to_i / 2
+    base + str_bonus + level_bonus + equipment_defense_bonus
   end
 
   # Calculate critical hit chance
@@ -557,6 +559,49 @@ class Character < ApplicationRecord
     dex_bonus = stats.get(:dexterity).to_i / 5
     luck_bonus = stats.get(:luck).to_i / 10
     [base + dex_bonus + luck_bonus, 50].min
+  end
+
+  # Break down combat-relevant derived stats for UI and balancing.
+  #
+  # @return [Hash] attack, defense, and critical components
+  def combat_power_breakdown
+    current_stats = stats
+    attack_strength = current_stats.get(:strength).to_i * 2
+    attack_dexterity = current_stats.get(:dexterity).to_i / 2
+    attack_level = level.to_i / 2
+    attack_equipment = equipment_attack_bonus
+
+    defense_vitality = current_stats.get(:vitality).to_i
+    defense_strength = current_stats.get(:strength).to_i / 3
+    defense_level = level.to_i / 2
+    defense_equipment = equipment_defense_bonus
+
+    critical_base = 5
+    critical_dexterity = current_stats.get(:dexterity).to_i / 5
+    critical_luck = current_stats.get(:luck).to_i / 10
+
+    {
+      attack_power: {
+        strength: attack_strength,
+        dexterity: attack_dexterity,
+        level: attack_level,
+        equipment: attack_equipment,
+        total: attack_strength + attack_dexterity + attack_level + attack_equipment
+      },
+      defense: {
+        vitality: defense_vitality,
+        strength: defense_strength,
+        level: defense_level,
+        equipment: defense_equipment,
+        total: defense_vitality + defense_strength + defense_level + defense_equipment
+      },
+      critical_chance: {
+        base: critical_base,
+        dexterity: critical_dexterity,
+        luck: critical_luck,
+        total: [critical_base + critical_dexterity + critical_luck, 50].min
+      }
+    }
   end
 
   # Get agility stat for initiative and flee calculations

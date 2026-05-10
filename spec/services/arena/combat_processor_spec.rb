@@ -242,7 +242,7 @@ RSpec.describe Arena::CombatProcessor do
         )
 
         # Check AP was deducted
-        expect(participation1.reload.metadata["current_ap"]).to eq(55) # 100 - 45
+        expect(participation1.reload.metadata["current_ap"]).to eq(35) # 80 - 45
       end
 
       it "deducts AP for aimed attack (65 AP)" do
@@ -258,7 +258,7 @@ RSpec.describe Arena::CombatProcessor do
           body_part: "head"
         )
 
-        expect(participation1.reload.metadata["current_ap"]).to eq(35) # 100 - 65
+        expect(participation1.reload.metadata["current_ap"]).to eq(15) # 80 - 65
       end
 
       it "deducts AP for defend action (30 AP)" do
@@ -271,7 +271,7 @@ RSpec.describe Arena::CombatProcessor do
           block_parts: ["torso"]
         )
 
-        expect(participation1.reload.metadata["current_ap"]).to eq(70) # 100 - 30
+        expect(participation1.reload.metadata["current_ap"]).to eq(50) # 80 - 30
       end
 
       it "fails when not enough AP" do
@@ -289,9 +289,43 @@ RSpec.describe Arena::CombatProcessor do
         expect(result.error).to include("Not enough AP")
       end
 
+      it "processes a Neverlands-style turn package with attack and block" do
+        allow(processor.broadcaster).to receive(:broadcast_ap_update)
+        allow(processor.broadcaster).to receive(:broadcast_combat_action)
+        allow(processor.broadcaster).to receive(:broadcast_vitals_update)
+
+        result = processor.process_action(
+          character1,
+          :turn,
+          target: character2,
+          attacks: [{action_key: "simple", body_part: "torso"}],
+          blocks: [{action_key: "torso_block", body_parts: ["torso"]}]
+        )
+
+        expect(result.success?).to be true
+        expect(result[:turn]).to be true
+        expect(result[:total_ap]).to eq(75)
+        expect(participation1.reload.metadata["current_ap"]).to eq(5)
+        expect(character1.reload.metadata["blocked_parts"]).to eq(["torso"])
+      end
+
+      it "rejects a turn package that exceeds the 80 AP budget" do
+        result = processor.process_action(
+          character1,
+          :turn,
+          target: character2,
+          attacks: [{action_key: "aimed", body_part: "head"}],
+          blocks: [{action_key: "torso_block", body_parts: ["torso"]}]
+        )
+
+        expect(result.success?).to be false
+        expect(result.error).to include("Not enough AP")
+        expect(result.error).to include("95")
+      end
+
       it "broadcasts AP update after action" do
         expect(processor.broadcaster).to receive(:broadcast_ap_update)
-          .with(character1, 55, described_class::AP_PER_TURN)
+          .with(character1, 35, described_class::AP_PER_TURN)
         allow(processor.broadcaster).to receive(:broadcast_combat_action)
         allow(processor.broadcaster).to receive(:broadcast_vitals_update)
 
@@ -306,8 +340,8 @@ RSpec.describe Arena::CombatProcessor do
     end
 
     describe "AP constants" do
-      it "defines AP_PER_TURN as 100" do
-        expect(described_class::AP_PER_TURN).to eq(100)
+      it "defines AP_PER_TURN as 80" do
+        expect(described_class::AP_PER_TURN).to eq(80)
       end
 
       it "defines BLOCK_AP_COST as 30" do
@@ -351,8 +385,8 @@ RSpec.describe Arena::CombatProcessor do
       expect(described_class::ATTACK_TYPES[:aimed][:damage_mult]).to eq(1.2)
     end
 
-    it "defines aimed attack with hit_bonus 10" do
-      expect(described_class::ATTACK_TYPES[:aimed][:hit_bonus]).to eq(10)
+    it "defines aimed attack with hit_bonus 15" do
+      expect(described_class::ATTACK_TYPES[:aimed][:hit_bonus]).to eq(15)
     end
   end
 

@@ -13,7 +13,7 @@ module Game
     class TurnBasedCombatService
       Result = Struct.new(:success, :battle, :log_entries, :message, :round_complete, keyword_init: true)
 
-      BODY_PARTS = %w[head torso stomach legs].freeze
+      BODY_PARTS = Game::Combat::ActionCatalog::BODY_PARTS
       ELEMENTS = %w[normal fire water earth air arcane].freeze
 
       # Attack type mapping
@@ -131,37 +131,29 @@ module Game
           skills: []
         }
 
-        # Basic attacks for each body part
+        # Neverlands-style body-part attacks: one attack type selected for one target part.
         BODY_PARTS.each do |part|
-          actions[:attacks] << {
-            key: "#{part}_strike",
-            name: "Strike #{part.titleize}",
-            body_part: part,
-            cost: body_part_config(part)["block_difficulty"],
-            type: :targeted
-          }
+          %w[simple aimed].each do |attack_key|
+            attack = config.dig("attack_types", attack_key) || {}
+            actions[:attacks] << {
+              key: attack_key,
+              action_key: attack_key,
+              name: "#{attack["name"] || attack_key.titleize} - #{part.titleize}",
+              body_part: part,
+              cost: action_cost(attack_key, "attack_types"),
+              type: :targeted
+            }
+          end
         end
 
-        # Add combo attacks
-        config["attack_types"]&.each do |key, attack|
-          next unless attack["type"] == 2
-
-          actions[:attacks] << {
-            key: key,
-            name: attack["name"],
-            body_parts: attack["body_parts"] || [attack["body_part"]],
-            cost: attack["action_cost"],
-            type: :combo
-          }
-        end
-
-        # Blocks
-        BODY_PARTS.each do |part|
+        # Blocks are selected separately from attacks and can cover one or more body parts.
+        (config["block_types"] || {}).each do |key, block|
           actions[:blocks] << {
-            key: "block_#{part}",
-            name: "Block #{part.titleize}",
-            body_part: part,
-            cost: body_part_config(part)["block_difficulty"]
+            key: key,
+            name: block["name"],
+            body_part: block["body_part"],
+            body_parts: block["body_parts"] || [block["body_part"]].compact,
+            cost: action_cost(key, "block_types", body_parts: block["body_parts"] || [block["body_part"]].compact)
           }
         end
 
@@ -194,27 +186,11 @@ module Game
       private
 
       def load_combat_config
-        config_path = Rails.root.join("config/gameplay/combat_actions.yml")
-        if File.exist?(config_path)
-          YAML.load_file(config_path)
-        else
-          default_config
-        end
+        Game::Combat::ActionCatalog.config
       end
 
       def default_config
-        {
-          "defaults" => {
-            "action_points_per_turn" => 80,
-            "max_mana_per_attack" => 50
-          },
-          "attack_penalties" => [
-            {"attacks" => 0, "penalty" => 0},
-            {"attacks" => 1, "penalty" => 0},
-            {"attacks" => 2, "penalty" => 25},
-            {"attacks" => 3, "penalty" => 75}
-          ]
-        }
+        Game::Combat::ActionCatalog.default_config
       end
 
       def body_part_config(part)
@@ -242,9 +218,11 @@ module Game
       end
 
       def calculate_total_cost(attacks, blocks, skills)
-        attack_cost = attacks.sum { |a| action_cost(a[:action_key] || a["action_key"]) }
-        block_cost = blocks.sum { |b| action_cost(b[:action_key] || b["action_key"]) }
-        skill_cost = skills.sum { |s| action_cost(s[:key] || s["key"]) }
+        attack_cost = attacks.sum { |a| action_cost(a[:action_key] || a["action_key"], "attack_types") }
+        block_cost = blocks.sum do |b|
+          action_cost(b[:action_key] || b["action_key"], "block_types", body_parts: block_body_parts(b))
+        end
+        skill_cost = skills.sum { |s| action_cost(s[:key] || s["key"], "magic_types") }
 
         # Add penalty for multiple attacks
         penalty = attack_penalty(attacks.size)
@@ -256,12 +234,24 @@ module Game
         skills.sum { |s| mana_cost(s[:key] || s["key"]) }
       end
 
-      def action_cost(action_key)
+      def action_cost(action_key, config_section = nil, body_parts: nil)
+        if config_section == "block_types"
+          return Game::Combat::ActionCatalog.block_cost(
+            action_key: action_key,
+            body_parts: body_parts,
+            combat_config: config
+          )
+        end
+
         return 0 unless action_key
 
-        config.dig("attack_types", action_key, "action_cost") ||
-          config.dig("block_types", action_key, "action_cost") ||
-          config.dig("magic_types", action_key, "action_cost") ||
+        if config_section
+          return config.dig(config_section, action_key.to_s, "action_cost").to_i
+        end
+
+        config.dig("attack_types", action_key.to_s, "action_cost") ||
+          config.dig("block_types", action_key.to_s, "action_cost") ||
+          config.dig("magic_types", action_key.to_s, "action_cost") ||
           0
       end
 
@@ -346,32 +336,31 @@ module Game
 
       def resolve_attack(attacker, defender, attack)
         body_part = attack[:body_part] || attack["body_part"] || BODY_PARTS.sample
-        action_key = attack[:action_key] || attack["action_key"]
+        action_key = (attack[:action_key] || attack["action_key"] || "simple").to_s
 
         # Check if defender is blocking this body part
         blocked = defender.pending_blocks&.any? do |block|
-          block[:body_part] == body_part || block["body_part"] == body_part
+          block_body_parts(block).include?(body_part)
         end
 
         # Calculate damage
         base_damage = calculate_base_damage(attacker)
         multiplier = body_part_config(body_part)["damage_multiplier"] || 1.0
-        damage = (base_damage * multiplier).round
+        attack_multiplier = Game::Combat::ActionCatalog.attack_damage_multiplier(action_key, config)
+        damage = (base_damage * multiplier * attack_multiplier).round
+        damage = [damage - (calculate_defense(defender) / 2), 1].max
 
         # Apply critical hit
-        critical = rand(100) < (config.dig("defaults", "critical_hit_chance") || 10)
+        critical = rand(100) < critical_chance(attacker)
         damage = (damage * 1.5).round if critical
 
         # Check hit/block
         hit_chance = config.dig("defaults", "base_hit_chance") || 85
-        block_chance = blocked ? (config.dig("defaults", "base_block_chance") || 50) : 0
+        hit_chance += Game::Combat::ActionCatalog.attack_hit_bonus(action_key, config)
 
         hit_roll = rand(100)
-        blocked_hit = hit_roll < block_chance
-
-        if blocked_hit
-          # Blocked - reduced or no damage
-          damage = (damage * 0.2).round
+        if blocked
+          damage = 0
           defender.increment!(:hits_blocked)
           result_type = :blocked
         elsif hit_roll < hit_chance
@@ -399,14 +388,32 @@ module Game
 
       def calculate_base_damage(participant)
         if participant.character
-          stats = participant.character.stats
-          strength = stats.respond_to?(:strength) ? stats.strength : 10
-          (strength * 2) + rand(1..10)
+          participant.character.attack_power + rand(1..5)
         else
           # NPC damage
           npc = participant.npc_template
-          npc&.damage_range&.to_a&.sample || rand(10..20)
+          (npc&.attack_power || 10) + rand(1..5)
         end
+      end
+
+      def calculate_defense(participant)
+        if participant.character
+          participant.character.defense
+        else
+          participant.npc_template&.defense_value || 5
+        end
+      end
+
+      def critical_chance(participant)
+        if participant.character
+          participant.character.critical_chance
+        else
+          participant.npc_template&.combat_stat(:crit_chance) || 5
+        end
+      end
+
+      def block_body_parts(block)
+        block[:body_parts] || block["body_parts"] || [block[:body_part] || block["body_part"]]
       end
 
       def apply_damage(participant, damage, body_part)

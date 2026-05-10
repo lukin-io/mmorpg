@@ -117,6 +117,7 @@
 
         <div class="nl-body-parts-grid">
           <% %w[head torso stomach legs].each do |body_part| %>
+            <% block_cost = Game::Combat::ActionCatalog.block_cost(body_parts: [body_part]) %>
             <div class="nl-body-part">
               <label class="nl-body-part-label">
                 <span class="nl-body-part-icon">
@@ -168,8 +169,8 @@
                       data-body-part="<%= body_part %>"
                       data-action="change->combat-turn#updateBlock">
                 <option value="">-- No Block --</option>
-                <option value="<%= body_part %>_block" data-cost="30">
-                  Block (30 AP)
+                <option value="<%= body_part %>_block" data-cost="<%= block_cost %>">
+                  Block (<%= block_cost %> AP)
                 </option>
               </select>
             </div>
@@ -255,4 +256,3 @@
     </ul>
   </div>
 </div>
-
