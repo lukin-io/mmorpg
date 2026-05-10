@@ -1,5 +1,8 @@
 # Neverlands Skill System — Detailed Analysis
 
+Status: historical Neverlands reference. Canonical progression design lives in
+`doc/design/features/progression_stats_skills.md` and `doc/design/gdd.md`.
+
 > **Source**: Live analysis from `http://www.neverlands.ru` (December 2024)
 > **Purpose**: Reference for implementing Elselands character progression mechanics
 
@@ -1071,4 +1074,3 @@ end
 ---
 
 *Last updated: December 2024 (Live server analysis)*
-

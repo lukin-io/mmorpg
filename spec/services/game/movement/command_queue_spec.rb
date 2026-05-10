@@ -17,12 +17,17 @@ RSpec.describe Game::Movement::CommandQueue do
   after { ActiveJob::Base.queue_adapter = @previous_adapter }
 
   describe "#enqueue" do
-    it "records predicted coordinates and enqueues the processor job" do
+    it "records a server movement offer and enqueues the processor job" do
       expect { queue.enqueue(direction: :east) }.to change(MovementCommand, :count).by(1)
 
       command = MovementCommand.last
+      expect(command).to be_offered
+      expect(command.source_position).to eq([0, 0])
+      expect(command.target_position).to eq([1, 0])
       expect(command.predicted_x).to eq(1)
       expect(command.predicted_y).to eq(0)
+      expect(command.action_key).to be_present
+      expect(command.travel_seconds).to eq(30)
       expect(command.metadata["terrain_type"]).to eq("road")
 
       job = ActiveJob::Base.queue_adapter.enqueued_jobs.last
@@ -32,13 +37,26 @@ RSpec.describe Game::Movement::CommandQueue do
   end
 
   describe "#process" do
-    it "executes the authoritative move and marks the command processed" do
+    it "accepts the authoritative move without finalizing coordinates immediately" do
       command = queue.enqueue(direction: :east)
 
       queue.process(command.id)
       command.reload
 
-      expect(command).to be_processed
+      expect(command).to be_moving
+      expect(command.started_at).to be_present
+      expect(command.ends_at).to be > command.started_at
+      expect(character.reload.position.x).to eq(0)
+    end
+
+    it "finalizes queued travel through the completion service after its timer" do
+      command = queue.enqueue(direction: :east)
+      queue.process(command.id)
+      command.reload.update!(ends_at: 1.second.ago)
+
+      Game::Movement::CompleteMove.new(character:).call
+
+      expect(command.reload).to be_completed
       expect(character.reload.position.x).to eq(1)
     end
   end

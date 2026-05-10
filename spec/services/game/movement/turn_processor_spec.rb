@@ -46,13 +46,13 @@ RSpec.describe Game::Movement::TurnProcessor do
     travel_to(Time.current) do
       described_class.new(character:, direction: :east, rng: Random.new(1)).call
 
-      # With 10s base cooldown and swamp terrain (1.5x modifier), need ~15 seconds
+      # With 30s base cooldown and swamp terrain (1.5x modifier), need ~45 seconds
       expect do
         described_class.new(character:, direction: :west, rng: Random.new(2)).call
       end.to raise_error(Game::Movement::TurnProcessor::MovementViolationError)
 
       # Travel past the terrain-modified cooldown
-      travel 16.seconds
+      travel 46.seconds
 
       expect do
         described_class.new(character:, direction: :west, rng: Random.new(3)).call
@@ -134,17 +134,17 @@ RSpec.describe Game::Movement::TurnProcessor do
         create(:character_position, character: slow_char, zone: wanderer_zone, x: 2, y: 2)
       end
 
-      it "uses 10 second base cooldown" do
+      it "uses 30 second base cooldown" do
         travel_to(Time.current) do
           described_class.new(character: slow_char, direction: :east, rng: Random.new(1)).call
 
-          # Should NOT be able to move again before 10 seconds
-          travel 9.seconds
+          # Should NOT be able to move again before 30 seconds
+          travel 29.seconds
           expect do
             described_class.new(character: slow_char, direction: :west, rng: Random.new(2)).call
           end.to raise_error(Game::Movement::TurnProcessor::MovementViolationError)
 
-          # Should be able to move after 10 seconds
+          # Should be able to move after 30 seconds
           travel 2.seconds
           expect do
             described_class.new(character: slow_char, direction: :west, rng: Random.new(3)).call
@@ -162,17 +162,17 @@ RSpec.describe Game::Movement::TurnProcessor do
         create(:character_position, character: fast_char, zone: wanderer_zone, x: 2, y: 2)
       end
 
-      it "uses reduced cooldown (3 seconds at max level)" do
+      it "uses reduced cooldown (9 seconds at max level)" do
         travel_to(Time.current) do
           described_class.new(character: fast_char, direction: :east, rng: Random.new(1)).call
 
-          # Should NOT be able to move again before 3 seconds
-          travel 2.seconds
+          # Should NOT be able to move again before 9 seconds
+          travel 8.seconds
           expect do
             described_class.new(character: fast_char, direction: :west, rng: Random.new(2)).call
           end.to raise_error(Game::Movement::TurnProcessor::MovementViolationError)
 
-          # Should be able to move after 3 seconds
+          # Should be able to move after 9 seconds
           travel 2.seconds
           expect do
             described_class.new(character: fast_char, direction: :west, rng: Random.new(3)).call
@@ -190,17 +190,17 @@ RSpec.describe Game::Movement::TurnProcessor do
         create(:character_position, character: mid_char, zone: wanderer_zone, x: 2, y: 2)
       end
 
-      it "uses partially reduced cooldown (6.5 seconds)" do
+      it "uses partially reduced cooldown (19.5 seconds)" do
         travel_to(Time.current) do
           described_class.new(character: mid_char, direction: :east, rng: Random.new(1)).call
 
-          # Should NOT be able to move again before 6.5 seconds
-          travel 6.seconds
+          # Should NOT be able to move again before 19.5 seconds
+          travel 19.seconds
           expect do
             described_class.new(character: mid_char, direction: :west, rng: Random.new(2)).call
           end.to raise_error(Game::Movement::TurnProcessor::MovementViolationError)
 
-          # Should be able to move after 7 seconds
+          # Should be able to move after 20 seconds
           travel 2.seconds
           expect do
             described_class.new(character: mid_char, direction: :west, rng: Random.new(3)).call

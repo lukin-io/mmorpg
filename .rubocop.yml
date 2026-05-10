@@ -1,6 +1,11 @@
 # Omakase Ruby styling for Rails
 inherit_gem: { rubocop-rails-omakase: rubocop.yml }
 
+AllCops:
+  # Runtime Ruby is 4.0.3, but the current RuboCop parser supports up to 3.5.
+  # Remove this override after RuboCop supports Ruby 4.0 targets.
+  TargetRubyVersion: 3.5
+
 # Overwrite or add rules to create your own house style
 #
 # # Use `[a, [b, c]]` not `[ a, [ b, c ] ]`

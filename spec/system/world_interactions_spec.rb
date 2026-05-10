@@ -13,12 +13,19 @@ RSpec.describe "World Interactions", type: :system, js: true do
   end
 
   describe "success cases" do
-    it "moves via the action buttons and updates coordinates via Turbo" do
+    it "starts timed movement, then resumes at the destination after completion" do
       visit world_path
 
       expect(page).to have_css(".nl-location-coords", text: "[5, 5]")
 
       click_button "East →"
+
+      expect(page).to have_css(".movement-cooldown", text: /Moving/i)
+      expect(page).to have_css(".nl-location-coords", text: "[5, 5]")
+      expect(position.reload.x).to eq(5)
+
+      MovementCommand.moving.last.update!(ends_at: 1.second.ago)
+      visit world_path
 
       expect(page).to have_css(".nl-location-coords", text: "[6, 5]")
     end

@@ -6,6 +6,14 @@ RSpec.describe "world/_map.html.erb", type: :view do
   let(:zone) { create(:zone, name: "Test Zone", biome: "forest", width: 20, height: 20) }
   let(:character) { create(:character) }
   let(:position) { create(:character_position, character: character, zone: zone, x: 10, y: 10) }
+  let(:movement_destinations) do
+    [
+      OpenStruct.new(direction: "north", target_x: 10, target_y: 9, action_key: "north-key", travel_seconds: 30),
+      OpenStruct.new(direction: "south", target_x: 10, target_y: 11, action_key: "south-key", travel_seconds: 30),
+      OpenStruct.new(direction: "east", target_x: 11, target_y: 10, action_key: "east-key", travel_seconds: 30),
+      OpenStruct.new(direction: "west", target_x: 9, target_y: 10, action_key: "west-key", travel_seconds: 30)
+    ]
+  end
 
   let(:nearby_tiles) do
     # Generate a 5x5 grid of tiles
@@ -26,6 +34,9 @@ RSpec.describe "world/_map.html.erb", type: :view do
     assign(:position, position)
     assign(:zone, zone)
     assign(:movement_cooldown, 3)
+    assign(:movement_destinations, movement_destinations)
+    assign(:active_movement, nil)
+    assign(:movement_remaining_seconds, 0)
 
     # Stub helper methods
     without_partial_double_verification do
@@ -178,6 +189,19 @@ RSpec.describe "world/_map.html.erb", type: :view do
       expect(rendered).to have_css(".nl-tile-clickable[data-available='true']", minimum: 4)
     end
 
+    it "includes server offer fields on clickable tiles" do
+      render partial: "world/map", locals: {
+        position: position,
+        nearby_tiles: nearby_tiles,
+        zone: zone,
+        tile_data: {}
+      }
+
+      expect(rendered).to have_css("[data-action-key='north-key']")
+      expect(rendered).to have_css("[data-target-x='10'][data-target-y='9']")
+      expect(rendered).to have_css("[data-travel-seconds='30']")
+    end
+
     it "includes click action binding for available tiles" do
       render partial: "world/map", locals: {
         position: position,
@@ -223,6 +247,38 @@ RSpec.describe "world/_map.html.erb", type: :view do
 
       # Tile (8,8) is diagonal, not adjacent - should not be clickable
       expect(rendered).to have_css("td#tile_8_8 .nl-tile-inactive")
+    end
+
+    it "does not make tiles clickable unless the server offered them" do
+      render partial: "world/map", locals: {
+        position: position,
+        nearby_tiles: nearby_tiles,
+        zone: zone,
+        tile_data: {},
+        movement_destinations: []
+      }
+
+      expect(rendered).not_to have_css(".nl-tile-clickable--available")
+      expect(rendered).to have_css("td#tile_10_9 .nl-tile-inactive")
+    end
+
+    it "disables offered destinations while movement is active" do
+      active_movement = OpenStruct.new(remaining_seconds: 17, ends_at: 17.seconds.from_now)
+
+      render partial: "world/map", locals: {
+        position: position,
+        nearby_tiles: nearby_tiles,
+        zone: zone,
+        tile_data: {},
+        movement_destinations: movement_destinations,
+        active_movement: active_movement,
+        movement_remaining_seconds: 17
+      }
+
+      expect(rendered).to have_css("[data-nl-world-map-movement-active-value='true']")
+      expect(rendered).to have_css("[data-nl-world-map-movement-remaining-seconds-value='17']")
+      expect(rendered).to have_css(".nl-cursor-img.nl-cursor-img--moving")
+      expect(rendered).not_to have_css(".nl-tile-clickable--available")
     end
   end
 
@@ -296,6 +352,22 @@ RSpec.describe "world/_map.html.erb", type: :view do
       expect(rendered).to include("display: none")
     end
 
+    it "shows remaining seconds while movement is active" do
+      active_movement = OpenStruct.new(remaining_seconds: 17, ends_at: 17.seconds.from_now)
+
+      render partial: "world/map", locals: {
+        position: position,
+        nearby_tiles: nearby_tiles,
+        zone: zone,
+        tile_data: {},
+        active_movement: active_movement,
+        movement_remaining_seconds: 17
+      }
+
+      expect(rendered).to include("display: block")
+      expect(rendered).to have_css(".nl-timer-seconds", text: "17", visible: :all)
+    end
+
     it "includes stimulus targets for timer" do
       render partial: "world/map", locals: {
         position: position,
@@ -366,6 +438,19 @@ RSpec.describe "world/_map.html.erb", type: :view do
       }
 
       expect(rendered).to have_css("form#movement-form input#movement-direction", visible: :all)
+    end
+
+    it "movement form has server offer inputs" do
+      render partial: "world/map", locals: {
+        position: position,
+        nearby_tiles: nearby_tiles,
+        zone: zone,
+        tile_data: {}
+      }
+
+      expect(rendered).to have_css("form#movement-form input#movement-target-x", visible: :all)
+      expect(rendered).to have_css("form#movement-form input#movement-target-y", visible: :all)
+      expect(rendered).to have_css("form#movement-form input#movement-action-key", visible: :all)
     end
 
     it "movement form has data-turbo attribute" do

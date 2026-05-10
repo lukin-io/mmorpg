@@ -30,7 +30,7 @@ RSpec.describe "Onboarding", type: :system, js: true do
       fill_in "Password", with: "WrongPassword!"
       click_button "Enter the Realm"
 
-      expect(page).to have_content("Invalid Email or password")
+      expect(page).to have_content(I18n.t("devise.failure.invalid", authentication_keys: "email"))
     end
   end
 

@@ -84,23 +84,23 @@ module Game
         resource&.available? || can_spawn_resource?
       end
 
+      # Materialize and return the tile's DB-backed resource, when this tile can
+      # offer one.
+      def tile_resource
+        find_or_spawn_resource
+      end
+
       # Get info about resource at tile (for display)
       def resource_info
-        resource = TileResource.at_tile(@zone, @x, @y)
+        resource = tile_resource
 
         if resource
           {
             name: resource.display_name,
+            id: resource.id,
             type: resource.resource_type,
             available: resource.available?,
             respawn_in: resource.time_until_respawn
-          }
-        elsif can_spawn_resource?
-          {
-            name: "Unknown Resource",
-            type: "unknown",
-            available: true,
-            respawn_in: 0
           }
         end
       end

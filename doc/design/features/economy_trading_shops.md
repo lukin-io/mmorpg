@@ -1,0 +1,150 @@
+# Economy, Trading, And Shops
+
+## Purpose
+
+The economy lets players turn combat, gathering, crafting, and exploration into
+practical choices. Shops are city buildings first; market systems grow from
+that city flow.
+
+## Neverlands Reference
+
+Primary reference: `doc/flow/neverlands_live_city_movement.md`.
+
+Observed shop flow:
+
+```text
+outside tile -> city -> trading quarter -> Лавка -> shop tabs/items
+```
+
+The shop page renders a building shell, then category/item content is loaded
+inside the shop UI. Items show price, stock, properties, requirements, and buy
+availability.
+
+## Player Experience
+
+The player enters a shop from a city hotspot, chooses a tab/category, sees item
+listings, checks requirements, buys available goods, sells inventory, then
+returns to the city via `Город`.
+
+## Currency
+
+Core currency:
+
+- normal money for shops/trade;
+- optional premium currency only if it stays outside core power progression.
+
+Currency should be visible in inventory/shop contexts and recorded as part of
+economy state.
+
+## Shop Rules
+
+- Shops are buildings attached to city nodes.
+- Shops can have category tabs.
+- Shop inventory can have stock counts.
+- Items show price, requirements, and properties.
+- Buying checks money, stock, item requirements, and inventory capacity.
+- Selling checks ownership and whether the item can be sold.
+- Shop actions refresh the visible item list and current action keys.
+
+## Market And Trading Rules
+
+Core:
+
+- direct player trade;
+- market or auction building in the city;
+- vendor/shop buy and sell.
+
+Later:
+
+- advanced auctions;
+- territory taxes;
+- demand analytics.
+
+## State Concepts
+
+- wallet;
+- transaction;
+- shop;
+- shop stock;
+- listing;
+- direct trade session;
+- buy order/sell order later if needed.
+
+## Interactions
+
+- `areas/cities_and_buildings.md`: shops and market are entered through city
+  hotspots.
+- `features/items_inventory_equipment.md`: all goods are inventory items.
+- `features/gathering_professions.md`: crafted/gathered goods enter economy.
+- `features/social_chat_presence.md`: local trade chatter and party/clan trade
+  can build on chat.
+
+## Out Of Scope
+
+- Standalone global shop route as the primary player path.
+- Premium store as a core GDD requirement.
+- Economy dashboards in the first playable loop.
+
+## Related Implementation Files
+
+Models:
+
+- `app/models/currency_wallet.rb`
+- `app/models/currency_transaction.rb`
+- `app/models/auction_listing.rb`
+- `app/models/auction_bid.rb`
+- `app/models/trade_session.rb`
+- `app/models/trade_item.rb`
+- `app/models/marketplace_kiosk.rb`
+- `app/models/item_template.rb`
+- `app/models/inventory_item.rb`
+
+Controllers and helpers:
+
+- `app/controllers/auction_listings_controller.rb`
+- `app/controllers/auction_bids_controller.rb`
+- `app/controllers/trade_sessions_controller.rb`
+- `app/controllers/trade_items_controller.rb`
+- `app/controllers/marketplace_kiosks_controller.rb`
+- `app/controllers/premium_store_controller.rb`
+- `app/helpers/auction_listings_helper.rb`
+- `app/helpers/trade_sessions_helper.rb`
+- `app/helpers/premium_store_helper.rb`
+
+Services and jobs:
+
+- `app/services/economy/wallet_service.rb`
+- `app/services/economy/listing_fee_calculator.rb`
+- `app/services/economy/listing_cap_enforcer.rb`
+- `app/services/economy/demand_tracker.rb`
+- `app/services/economy/medical_supply_sink.rb`
+- `app/services/economy/tax_calculator.rb`
+- `app/services/game/economy/loot_generator.rb`
+- `app/services/marketplace/listing_engine.rb`
+- `app/services/marketplace/listing_filter.rb`
+- `app/services/trades/session_manager.rb`
+- `app/services/trades/preview_builder.rb`
+- `app/services/trades/settlement_service.rb`
+- `app/jobs/economy_analytics_job.rb`
+
+Views:
+
+- `app/views/auction_listings/index.html.erb`
+- `app/views/auction_listings/show.html.erb`
+- `app/views/auction_listings/new.html.erb`
+- `app/views/auction_listings/_listing_card.html.erb`
+- `app/views/trade_sessions/show.html.erb`
+- `app/views/trade_sessions/_trade_item.html.erb`
+- `app/views/marketplace_kiosks/index.html.erb`
+- `app/views/marketplace_kiosks/show.html.erb`
+
+Specs:
+
+- `spec/requests/auction_listings_spec.rb`
+- `spec/services/economy/wallet_service_spec.rb`
+- `spec/services/economy/medical_supply_sink_spec.rb`
+- `spec/services/marketplace/listing_engine_spec.rb`
+- `spec/services/trades/session_manager_spec.rb`
+- `spec/services/trades/preview_builder_spec.rb`
+- `spec/services/trades/settlement_service_spec.rb`
+- `spec/system/economy_group_loops_spec.rb`

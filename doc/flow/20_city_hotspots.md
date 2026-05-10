@@ -1,5 +1,11 @@
 # City Hotspots System
 
+Status: derived implementation note. The design source of truth is
+`doc/design/gdd.md`. The live Neverlands city movement reference is
+`doc/flow/neverlands_live_city_movement.md`. The canonical city design file is
+`doc/design/areas/cities_and_buildings.md`; when this file disagrees with that
+reference, update or delete this implementation note.
+
 ## Version History
 - **v1.0** (2024-12-18): Initial implementation - interactive illustrated city view with building hotspots
 - **v1.1** (2025-12-18): Fixed FEATURE_ROUTES mapping - `workshop` and `crafting` now route to `/crafting_jobs`. Fixed hitbox clickability and full-area forms. Updated request specs in `spec/requests/world_spec.rb`.
@@ -83,7 +89,6 @@ The `CityHotspot::FEATURE_ROUTES` constant maps feature keys to their actual Rai
 | Workshop | `workshop.png` | Crafting feature |
 | Clinic | `clinic.png` | Healing feature |
 | Gate | `gate.png` | Exit to world map |
-| House | `house.png` | Player housing |
 | Tree | `tree.png` | Decoration (no action) |
 
 **Note:** Each overlay image must be:
@@ -101,7 +106,6 @@ These are the current hotspot positions for `city.png` (1536 x 1024):
 | Arena | `arena` | (1050, 200) | 300 x 250 | PvP battles |
 | Workshop | `workshop` | (100, 350) | 250 x 200 | Crafting |
 | Clinic | `clinic` | (1150, 500) | 200 x 180 | Healing |
-| Housing District | `house` | (550, 300) | 200 x 180 | Player housing |
 | Ancient Oak | `tree_center` | (750, 550) | 150 x 200 | Decoration (no action) |
 
 ## Hotwire Integration
@@ -259,4 +263,3 @@ end
 - Quest markers on buildings
 - Multiple city layouts per zone (seasonal)
 - Hotspot sounds on hover/click
-

@@ -4,18 +4,21 @@ module Game
   module Movement
     # TurnProcessor enforces server-side, turn-based movement and resolves encounters.
     #
+    # Legacy synchronous movement processor used by low-level services/specs.
+    # Runtime wilderness movement uses MapState, AcceptMove, and CompleteMove.
+    #
     # Movement cooldown formula:
-    #   1. Base: 10 seconds
+    #   1. Base: 30 seconds
     #   2. Wanderer skill: reduces by 0-70% based on skill level (0-100)
     #   3. Terrain modifier: multiplies based on terrain type
     #   4. Mount speed: divides by mount travel multiplier
     #
     # Examples:
-    #   - Wanderer 0, no mount, normal terrain:  10 * 1.0 / 1.0 = 10.0s
-    #   - Wanderer 50, no mount, normal terrain: 6.5 * 1.0 / 1.0 = 6.5s
-    #   - Wanderer 100, no mount, normal terrain: 3.0 * 1.0 / 1.0 = 3.0s
-    #   - Wanderer 100, no mount, swamp terrain: 3.0 * 1.5 / 1.0 = 4.5s
-    #   - Wanderer 100, fast mount, normal terrain: 3.0 * 1.0 / 1.5 = 2.0s
+    #   - Wanderer 0, no mount, normal terrain:  30 * 1.0 / 1.0 = 30.0s
+    #   - Wanderer 50, no mount, normal terrain: 19.5 * 1.0 / 1.0 = 19.5s
+    #   - Wanderer 100, no mount, normal terrain: 9.0 * 1.0 / 1.0 = 9.0s
+    #   - Wanderer 100, no mount, swamp terrain: 9.0 * 1.5 / 1.0 = 13.5s
+    #   - Wanderer 100, fast mount, normal terrain: 9.0 * 1.0 / 1.5 = 6.0s
     #
     # Usage:
     #   result = Game::Movement::TurnProcessor.new(character:, direction: :north).call
@@ -25,7 +28,7 @@ module Game
     class TurnProcessor
       Result = Struct.new(:position, :encounter, keyword_init: true)
 
-      BASE_MOVEMENT_COOLDOWN_SECONDS = 10
+      BASE_MOVEMENT_COOLDOWN_SECONDS = Game::Movement::TravelTime::BASE_TRAVEL_SECONDS
       OFFSETS = {
         north: [0, -1],
         south: [0, 1],

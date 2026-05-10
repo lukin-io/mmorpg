@@ -1,5 +1,8 @@
 # MMO_TESTING_GUIDE.md — Testing Guide for the Elselands MMORPG
 
+Status: implementation/testing guide. It is not part of the canonical GDD.
+Use `doc/design/gdd.md` for game-design authority.
+
 This guide defines how to test the MMORPG game engine inside a Rails monolith.
 The focus is **determinism**, **repeatability**, **clarity**, and **gameplay correctness**.
 
