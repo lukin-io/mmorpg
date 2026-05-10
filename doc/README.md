@@ -11,10 +11,11 @@ Start here:
 
 Other folders are supporting material:
 
+- `doc/engineering/` contains current Rails and gameplay implementation guidance.
 - `doc/flow/` contains implementation notes and live-analysis captures.
-- `doc/features/` contains older reference notes and historical deep dives.
-- root guide files such as `MAP_DESIGN_GUIDE.md` and `ITEM_SYSTEM_GUIDE.md`
-  are implementation guides, not GDD authority.
+- `doc/features/` contains supporting Neverlands reference notes and deep dives.
+- implementation guides such as `doc/MAP_DESIGN_GUIDE.md` and
+  `doc/ITEM_SYSTEM_GUIDE.md` are not GDD authority.
 
 When documents disagree, use this order:
 
@@ -22,8 +23,8 @@ When documents disagree, use this order:
 doc/design/gdd.md
 -> doc/design/features/* and doc/design/areas/*
 -> doc/design/reference/*
+-> doc/engineering/*
 -> doc/flow/* and doc/features/*
--> root implementation guides
 ```
 
 ## Current Design Structure
@@ -51,6 +52,12 @@ Reference:
 
 - `doc/design/reference/neverlands.md`
 - `doc/design/reference/source_material.md`
+
+Engineering:
+
+- `doc/engineering/README.md`
+- `doc/engineering/rails_guide.md`
+- `doc/engineering/gameplay_architecture.md`
 
 ## Adding New Design Docs
 

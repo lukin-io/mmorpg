@@ -15,8 +15,10 @@ wins and the derived material should be updated.
 4. `doc/flow/neverlands_live_movement.md` and
    `doc/flow/neverlands_live_city_movement.md` are the captured live references
    for movement and city movement feel.
-5. Other `doc/flow/*`, `doc/features/*`, and root guide files are supporting or
-   implementation notes. They are not allowed to override this GDD.
+5. `doc/engineering/*` explains how to implement the design in Rails. It is not
+   allowed to override this GDD.
+6. Other `doc/flow/*` and `doc/features/*` files are supporting notes. They
+   are not allowed to override this GDD.
 
 ## Design Library
 

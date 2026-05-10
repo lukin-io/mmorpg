@@ -10,6 +10,8 @@ timers, chat/social presence, and tactical turn-based play.
 Use these files first:
 
 - `doc/design/gdd.md` - product and mechanics source of truth.
+- `doc/engineering/rails_guide.md` - active Rails engineering guide.
+- `doc/engineering/gameplay_architecture.md` - active gameplay architecture guide.
 - `doc/flow/neverlands_live_movement.md` - live Neverlands movement observation
   from 2026-05-09.
 - `doc/flow/neverlands_movement_codebase_analysis.md` - current movement gaps
@@ -31,8 +33,9 @@ The target movement model is:
 7. Reload resumes movement from server state.
 8. Completion finalizes position and returns next tiles/buttons.
 
-The current implementation still has immediate position mutation in parts of
-the Rails code. Treat that as legacy until the movement rewrite is complete.
+Current movement work should continue from the DB-backed movement command and
+world action-offer model documented in `doc/design/features/movement.md` and
+`doc/engineering/gameplay_architecture.md`.
 
 ## Stack
 

@@ -3,18 +3,17 @@
 This project includes several domain-specific guides that MUST be loaded and followed by the AI assistant.
 
 ### Project Guides
-- [GUIDE.md](GUIDE.md)
-- [MMO_ADDITIONAL_GUIDE.md](MMO_ADDITIONAL_GUIDE.md)
-- [MMO_ENGINE_SKELETON.md](MMO_ENGINE_SKELETON.md)
+- [Rails Engineering Guide](doc/engineering/rails_guide.md)
+- [Gameplay Architecture Guide](doc/engineering/gameplay_architecture.md)
 - [MMO_TESTING_GUIDE.md](doc/MMO_TESTING_GUIDE.md)
 - [MAP_DESIGN_GUIDE.md](doc/MAP_DESIGN_GUIDE.md)
 - [ITEM_SYSTEM_GUIDE.md](doc/ITEM_SYSTEM_GUIDE.md)
 - [COMBAT_SYSTEM_GUIDE.md](doc/COMBAT_SYSTEM_GUIDE.md)
 
 ### When to use each guide
-- Use **GUIDE.md** for all normal Rails coding tasks.
-- Use **MMO_ADDITIONAL_GUIDE.md** when implementing or modifying ANY gameplay systems.
-- Use **MMO_ENGINE_SKELETON.md** when creating new engine classes or folders.
+- Use **doc/design/gdd.md** first for game design and player-facing behavior.
+- Use **Rails Engineering Guide** for normal Rails coding tasks.
+- Use **Gameplay Architecture Guide** when implementing or modifying gameplay systems.
 - Use **MMO_TESTING_GUIDE.md** when writing or updating tests for game logic.
 - Use **MAP_DESIGN_GUIDE.md** for any work related to zones, maps, tiles, or movement.
 - Use **ITEM_SYSTEM_GUIDE.md** for items, inventory, equipment, loot, or crafting.
@@ -112,17 +111,15 @@ If a command is not available in this project, skip it and note that explicitly.
 
 ```bash
 # 1. LINTING FIRST - catches 90% of CI failures
-bundle exec standardrb --fix  # Auto-fix + check (this project uses StandardRB)
-bundle exec rubocop -a        # Auto-fix safe issues
+bin/rubocop -f simple
 
-# 2. FACTORY VALIDATION - catches attribute/schema mismatches
-bundle exec rspec spec/factories --format progress
-
-# 3. FAST TESTS - run specs for files you changed
+# 2. FAST TESTS - run specs for files you changed
 bundle exec rspec spec/path/to/changed_spec.rb
 
-# 4. FULL SUITE - before final push (parallel tests, 8 workers, ~16 seconds)
-bundle exec parallel_test spec/ -n 8 --type rspec --exclude-pattern "spec/system/**/*"
+# 3. FULL NON-SYSTEM SUITE - before final push
+RAILS_ENV=test bundle exec rake "parallel:create[4]"
+RAILS_ENV=test bundle exec rake "parallel:load_schema[4]"
+bundle exec parallel_test spec/ -n 4 --type rspec --exclude-pattern "spec/system/**/*_spec.rb"
 ```
 
 > **Note**: System specs (`spec/system/**/*`) are excluded from parallel runs as they require Chrome/Selenium.
@@ -131,9 +128,7 @@ bundle exec parallel_test spec/ -n 8 --type rspec --exclude-pattern "spec/system
 ### Detailed verification steps:
 
 1. **Linting** (required - run FIRST):
-   - `bundle exec standardrb` — this project's primary linter
-   - `bundle exec standardrb --fix` — auto-fix issues
-   - `bundle exec rubocop -a` — additional auto-fixes
+   - `bin/rubocop -f simple` — this project's primary CI linter
 
    **Common CI failures caught here:**
    - `Layout/TrailingEmptyLines` — trailing blank lines
@@ -146,7 +141,7 @@ bundle exec parallel_test spec/ -n 8 --type rspec --exclude-pattern "spec/system
    - Catches: outdated attributes, missing associations, schema drift
 
 3. **Tests** (required):
-   - `bundle exec parallel_test spec/ -n 8 --type rspec --exclude-pattern "spec/system/**/*"` — full suite (8 workers, ~16s)
+   - `bundle exec parallel_test spec/ -n 4 --type rspec --exclude-pattern "spec/system/**/*_spec.rb"` — full non-system suite
    - `bundle exec rspec spec/services/game/combat/` — combat subsystem (sequential)
    - `bundle exec rspec spec/system` — system tests when UI changes (requires Chrome)
 
@@ -357,7 +352,8 @@ use it as input when making design decisions, but don't overwrite it unless aske
 
 ## 9. Development guidelines (agent-specific)
 
-- Read the project’s own conventions (`README`, `GUIDE.md`, etc.) before generating code.
+- Read the project’s own conventions (`README`, `doc/README.md`, `doc/design/gdd.md`,
+  and `doc/engineering/*`) before generating code.
 - Do **not** suggest running long-lived processes (e.g. `rails server`) inside responses; just mention the commands.
 - Do **not** run `rails credentials` or manipulate secrets in examples.
 - Do **not** automatically run migrations on behalf of the user; show the commands instead.
