@@ -98,24 +98,26 @@ RSpec.describe "Arena Match UI Layout", type: :system do
       expect(page).to have_css(".arena-action-panel")
     end
 
-    it "shows attack type selector" do
+    it "shows attack selectors with dynamic physical costs" do
       visit arena_match_path(match)
-      expect(page).to have_select("Attack", with_options: ["Simple Attack (45)", "Aimed Attack (65)"])
+      expect(page).to have_css(".nl-fight-selector-table option", text: "Simple Attack [ 45 ]")
+      expect(page).to have_css(".nl-fight-selector-table option", text: "Aimed Attack [ 65 ]")
     end
 
     it "shows turn submit button" do
       visit arena_match_path(match)
-      expect(page).to have_button("Submit Turn")
+      expect(page).to have_button("ход")
     end
 
     it "shows body part selection dropdown" do
       visit arena_match_path(match)
-      expect(page).to have_css(".arena-target-select select")
+      expect(page).to have_css(".nl-fight-selector-table select", minimum: 4)
     end
 
     it "shows defense/block selector" do
       visit arena_match_path(match)
-      expect(page).to have_select("Block", with_options: ["Torso Block (30)", "Head Block (35)"])
+      expect(page).to have_css(".nl-fight-selector-table option", text: "Torso Block [ 30 ]")
+      expect(page).to have_css(".nl-fight-selector-table option", text: "Head Block [ 35 ]")
     end
   end
 

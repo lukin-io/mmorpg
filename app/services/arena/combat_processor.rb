@@ -44,6 +44,36 @@ module Arena
       @broadcaster = Arena::CombatBroadcaster.new(match)
     end
 
+    # Persist combat AP/cost profiles for every participant at match start.
+    def prepare_combat_profiles!
+      match.arena_participations.includes(:character, :npc_template).find_each do |participation|
+        profile = Arena::CombatProfile.persist!(participation)
+        participation.reload
+        participation.metadata ||= {}
+        next if participation.metadata.key?("current_ap")
+
+        participation.update!(metadata: participation.metadata.merge("current_ap" => profile["ap_limit"]))
+      end
+    end
+
+    def combat_profile_for(character_or_participation)
+      participation = participation_from(character_or_participation)
+      return {} unless participation
+
+      Arena::CombatProfile.for_participation(participation, persist: true)
+    end
+
+    def combat_ap_limit_for(character_or_participation)
+      combat_profile_for(character_or_participation).fetch("ap_limit", AP_PER_TURN)
+    end
+
+    def combat_attack_cost_for(character_or_participation, action_key)
+      participation = participation_from(character_or_participation)
+      return Game::Combat::ActionCatalog.attack_cost(action_key) unless participation
+
+      Arena::CombatProfile.attack_cost(participation, action_key)
+    end
+
     # Process a combat action from a character
     #
     # @param character [Character] the character performing the action
@@ -59,6 +89,8 @@ module Arena
       return failure("Character not in this match") unless participant?(character)
       return failure("Character is dead") if character.current_hp <= 0
 
+      combat_profile_for(character)
+
       if action_type.to_sym == :turn && !npc_fight?
         return process_player_turn_submission(
           character,
@@ -70,7 +102,7 @@ module Arena
       end
 
       # Check AP cost before processing
-      ap_cost = calculate_ap_cost(action_type, params)
+      ap_cost = calculate_ap_cost(action_type, params, actor: character)
       current_ap = get_character_ap(character)
 
       if current_ap < ap_cost
@@ -102,7 +134,7 @@ module Arena
       # After player action, deduct AP and process NPC turn if applicable
       if result.success?
         deduct_ap(character, ap_cost)
-        broadcaster.broadcast_ap_update(character, get_character_ap(character), AP_PER_TURN)
+        broadcaster.broadcast_ap_update(character, get_character_ap(character), combat_ap_limit_for(character))
 
         # Process NPC turn if this is an NPC fight
         if npc_fight? && !should_end?
@@ -159,7 +191,9 @@ module Arena
     #
     # @return [Boolean] true if match started successfully
     def start_match
-      return false unless match.matching?
+      return false unless match.pending? || match.matching?
+
+      prepare_combat_profiles!
 
       match.update!(
         status: :live,
@@ -291,7 +325,7 @@ module Arena
       normalized_blocks = normalize_turn_blocks(blocks)
       normalized_skills = normalize_turn_skills(skills)
 
-      validation_errors = validate_turn_actions(normalized_attacks, normalized_blocks, normalized_skills)
+      validation_errors = validate_turn_actions(normalized_attacks, normalized_blocks, normalized_skills, actor: character)
       return failure(validation_errors.join(", ")) if validation_errors.any?
       mana_errors = validate_turn_mana(character, normalized_attacks, normalized_skills)
       return failure(mana_errors.join(", ")) if mana_errors.any?
@@ -300,7 +334,7 @@ module Arena
         attacks: [],
         blocks: normalized_blocks,
         skills: [],
-        total_ap: calculate_turn_ap_cost(normalized_attacks, normalized_blocks, normalized_skills)
+        total_ap: calculate_turn_ap_cost(normalized_attacks, normalized_blocks, normalized_skills, actor: character)
       }
 
       spend_turn_mana!(character, normalized_attacks, normalized_skills)
@@ -342,13 +376,14 @@ module Arena
       normalized_blocks = normalize_turn_blocks(blocks)
       normalized_skills = normalize_turn_skills(skills)
 
-      validation_errors = validate_turn_actions(normalized_attacks, normalized_blocks, normalized_skills)
+      validation_errors = validate_turn_actions(normalized_attacks, normalized_blocks, normalized_skills, actor: character)
       return failure(validation_errors.join(", ")) if validation_errors.any?
 
       mana_errors = validate_turn_mana(character, normalized_attacks, normalized_skills)
       return failure(mana_errors.join(", ")) if mana_errors.any?
 
-      total_ap = calculate_turn_ap_cost(normalized_attacks, normalized_blocks, normalized_skills)
+      ap_limit = combat_ap_limit_for(character)
+      total_ap = calculate_turn_ap_cost(normalized_attacks, normalized_blocks, normalized_skills, actor: character)
       pending_turn = {
         "turn_number" => match.current_turn_number || 1,
         "target_participation_id" => target_participation_id(target),
@@ -356,6 +391,7 @@ module Arena
         "blocks" => normalized_blocks.map { |block| stringify_hash(block) },
         "skills" => normalized_skills.map { |skill| stringify_hash(skill) },
         "total_ap" => total_ap,
+        "ap_limit" => ap_limit,
         "submitted_at" => Time.current.iso8601
       }
 
@@ -368,11 +404,11 @@ module Arena
 
         participation.metadata ||= {}
         participation.metadata["pending_turn"] = pending_turn
-        participation.metadata["current_ap"] = [AP_PER_TURN - total_ap, 0].max
+        participation.metadata["current_ap"] = [ap_limit - total_ap, 0].max
         participation.save!
 
         log_entry("action", character, "#{character.name} submitted a turn and waits for the opponent.")
-        broadcaster.broadcast_ap_update(character, participation.metadata["current_ap"], AP_PER_TURN)
+        broadcaster.broadcast_ap_update(character, participation.metadata["current_ap"], ap_limit)
         broadcaster.broadcast_system_message("#{character.name} submitted a turn. Waiting for opponent.")
 
         resolved = resolve_pending_player_turns! if all_player_turns_ready?
@@ -1011,17 +1047,18 @@ module Arena
     end
 
     # Calculate AP cost for an action
-    def calculate_ap_cost(action_type, params)
+    def calculate_ap_cost(action_type, params, actor: nil)
       case action_type.to_sym
       when :turn
         calculate_turn_ap_cost(
           normalize_turn_attacks(params[:attacks]),
           normalize_turn_blocks(params[:blocks]),
-          normalize_turn_skills(params[:skills])
+          normalize_turn_skills(params[:skills]),
+          actor:
         )
       when :attack
         attack_type = params[:attack_type]&.to_sym || :simple
-        attack_ap_cost(attack_type)
+        attack_ap_cost(attack_type, actor:)
       when :defend
         block_parts = Array(params[:block_parts].presence || ["torso"])
         cost = Game::Combat::ActionCatalog.block_cost(body_parts: block_parts)
@@ -1035,14 +1072,18 @@ module Arena
       end
     end
 
-    def calculate_turn_ap_cost(attacks, blocks, skills)
-      attack_cost = attacks.sum { |attack| attack_ap_cost(attack[:action_key]) }
+    def calculate_turn_ap_cost(attacks, blocks, skills, actor: nil)
+      attack_cost = attacks.sum { |attack| attack_ap_cost(attack[:action_key], actor:) }
       block_cost = blocks.sum { |block| block_ap_cost(block) }
       skill_cost = skills.sum { |skill| magic_action_ap_cost(skill[:key]) }
       attack_cost + block_cost + attack_penalty(attacks.size) + skill_cost
     end
 
-    def attack_ap_cost(action_key)
+    def attack_ap_cost(action_key, actor: nil)
+      if %w[simple aimed].include?(action_key.to_s) && actor.present?
+        return combat_attack_cost_for(actor, action_key)
+      end
+
       configured = Game::Combat::ActionCatalog.attack_cost(action_key)
       return configured if configured.positive?
 
@@ -1083,7 +1124,7 @@ module Arena
       penalty_entry&.dig("penalty").to_i
     end
 
-    def validate_turn_actions(attacks, blocks, skills)
+    def validate_turn_actions(attacks, blocks, skills, actor: nil)
       errors = []
 
       errors << "Choose at least one attack, block, or skill" if attacks.empty? && blocks.empty? && skills.empty?
@@ -1124,8 +1165,9 @@ module Arena
         end
       end
 
-      total_ap = calculate_turn_ap_cost(attacks, blocks, skills)
-      errors << "Actions exceed AP limit (#{total_ap}/#{AP_PER_TURN})" if total_ap > AP_PER_TURN
+      total_ap = calculate_turn_ap_cost(attacks, blocks, skills, actor:)
+      ap_limit = actor.present? ? combat_ap_limit_for(actor) : AP_PER_TURN
+      errors << "Actions exceed AP limit (#{total_ap}/#{ap_limit})" if total_ap > ap_limit
 
       errors
     end
@@ -1232,12 +1274,13 @@ module Arena
 
     def clear_pending_player_turns!(participations)
       participations.each do |participation|
+        ap_limit = combat_ap_limit_for(participation)
         participation.metadata ||= {}
         participation.metadata.delete("pending_turn")
-        participation.metadata["current_ap"] = AP_PER_TURN
+        participation.metadata["current_ap"] = ap_limit
         participation.save!
 
-        broadcaster.broadcast_ap_update(participation.character, AP_PER_TURN, AP_PER_TURN)
+        broadcaster.broadcast_ap_update(participation.character, ap_limit, ap_limit)
       end
     end
 
@@ -1264,8 +1307,9 @@ module Arena
       participation = match.arena_participations.find_by(character: character)
       return AP_PER_TURN unless participation
 
+      ap_limit = combat_ap_limit_for(participation)
       participation.metadata ||= {}
-      [participation.metadata["current_ap"] || AP_PER_TURN, AP_PER_TURN].min
+      [participation.metadata["current_ap"] || ap_limit, ap_limit].min
     end
 
     # Deduct AP from character
@@ -1273,8 +1317,9 @@ module Arena
       participation = match.arena_participations.find_by(character: character)
       return unless participation
 
+      ap_limit = combat_ap_limit_for(participation)
       participation.metadata ||= {}
-      current = [participation.metadata["current_ap"] || AP_PER_TURN, AP_PER_TURN].min
+      current = [participation.metadata["current_ap"] || ap_limit, ap_limit].min
       participation.metadata["current_ap"] = [current - amount, 0].max
       participation.save!
     end
@@ -1284,9 +1329,17 @@ module Arena
       participation = match.arena_participations.find_by(character: character)
       return unless participation
 
+      ap_limit = combat_ap_limit_for(participation)
       participation.metadata ||= {}
-      participation.metadata["current_ap"] = AP_PER_TURN
+      participation.metadata["current_ap"] = ap_limit
       participation.save!
+    end
+
+    def participation_from(character_or_participation)
+      case character_or_participation
+      when ArenaParticipation then character_or_participation
+      when Character then match.arena_participations.find_by(character: character_or_participation)
+      end
     end
 
     def success(**data)

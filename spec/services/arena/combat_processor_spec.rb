@@ -228,7 +228,7 @@ RSpec.describe Arena::CombatProcessor do
 
   describe "AP (Action Points) system" do
     describe "#process_action with AP" do
-      it "deducts AP for simple attack (45 AP)" do
+      it "deducts AP for simple attack from the participant AP budget" do
         allow(processor.broadcaster).to receive(:broadcast_ap_update)
         allow(processor.broadcaster).to receive(:broadcast_combat_action)
         allow(processor.broadcaster).to receive(:broadcast_vitals_update)
@@ -242,10 +242,10 @@ RSpec.describe Arena::CombatProcessor do
         )
 
         # Check AP was deducted
-        expect(participation1.reload.metadata["current_ap"]).to eq(35) # 80 - 45
+        expect(participation1.reload.metadata["current_ap"]).to eq(55) # 100 - 45
       end
 
-      it "deducts AP for aimed attack (65 AP)" do
+      it "deducts AP for aimed attack from the participant AP budget" do
         allow(processor.broadcaster).to receive(:broadcast_ap_update)
         allow(processor.broadcaster).to receive(:broadcast_combat_action)
         allow(processor.broadcaster).to receive(:broadcast_vitals_update)
@@ -258,7 +258,7 @@ RSpec.describe Arena::CombatProcessor do
           body_part: "head"
         )
 
-        expect(participation1.reload.metadata["current_ap"]).to eq(15) # 80 - 65
+        expect(participation1.reload.metadata["current_ap"]).to eq(35) # 100 - 65
       end
 
       it "deducts AP for defend action (30 AP)" do
@@ -271,7 +271,7 @@ RSpec.describe Arena::CombatProcessor do
           block_parts: ["torso"]
         )
 
-        expect(participation1.reload.metadata["current_ap"]).to eq(50) # 80 - 30
+        expect(participation1.reload.metadata["current_ap"]).to eq(70) # 100 - 30
       end
 
       it "fails when not enough AP" do
@@ -307,7 +307,7 @@ RSpec.describe Arena::CombatProcessor do
         expect(result[:waiting]).to be true
         expect(result[:resolved]).to be false
         expect(result[:total_ap]).to eq(75)
-        expect(participation1.reload.metadata["current_ap"]).to eq(5)
+        expect(participation1.reload.metadata["current_ap"]).to eq(25)
         expect(participation1.metadata["pending_turn"]).to be_present
         expect(character1.reload.metadata["blocked_parts"]).to be_blank
       end
@@ -343,8 +343,41 @@ RSpec.describe Arena::CombatProcessor do
         expect(second[:resolved]).to be true
         expect(participation1.reload.metadata["pending_turn"]).to be_blank
         expect(participation2.reload.metadata["pending_turn"]).to be_blank
-        expect(participation1.metadata["current_ap"]).to eq(80)
-        expect(participation2.metadata["current_ap"]).to eq(80)
+        expect(participation1.metadata["current_ap"]).to eq(100)
+        expect(participation2.metadata["current_ap"]).to eq(100)
+      end
+
+      it "uses captured Neverlands fight profile values when present" do
+        participation1.update!(
+          metadata: {
+            "combat_profile" => {
+              "ap_limit" => 140,
+              "physical_attack_cost_seed" => 67,
+              "simple_attack_cost" => 67,
+              "aimed_attack_cost" => 87,
+              "max_magic_mana" => 52,
+              "block_table" => "normal"
+            }
+          }
+        )
+
+        allow(processor.broadcaster).to receive(:broadcast_ap_update)
+        allow(processor.broadcaster).to receive(:broadcast_combat_action)
+        allow(processor.broadcaster).to receive(:broadcast_vitals_update)
+        allow(processor.broadcaster).to receive(:broadcast_system_message)
+
+        result = processor.process_action(
+          character1,
+          :turn,
+          target: character2,
+          attacks: [{action_key: "simple", body_part: "torso"}],
+          blocks: [{action_key: "torso_block", body_parts: ["torso"]}]
+        )
+
+        expect(result.success?).to be true
+        expect(result[:total_ap]).to eq(97)
+        expect(participation1.reload.metadata["current_ap"]).to eq(43)
+        expect(participation1.metadata.dig("pending_turn", "ap_limit")).to eq(140)
       end
 
       it "lets a waiting player claim victory after the turn timer expires" do
@@ -397,23 +430,26 @@ RSpec.describe Arena::CombatProcessor do
         expect(participation2.reload.result).to eq("draw")
       end
 
-      it "rejects a turn package that exceeds the 80 AP budget" do
+      it "rejects a turn package that exceeds the dynamic AP budget" do
         result = processor.process_action(
           character1,
           :turn,
           target: character2,
-          attacks: [{action_key: "aimed", body_part: "head"}],
-          blocks: [{action_key: "torso_block", body_parts: ["torso"]}]
+          attacks: [
+            {action_key: "aimed", body_part: "head"},
+            {action_key: "aimed", body_part: "torso"}
+          ],
+          blocks: []
         )
 
         expect(result.success?).to be false
         expect(result.error).to include("Actions exceed AP limit")
-        expect(result.error).to include("95")
+        expect(result.error).to include("155/100")
       end
 
       it "broadcasts AP update after action" do
         expect(processor.broadcaster).to receive(:broadcast_ap_update)
-          .with(character1, 35, described_class::AP_PER_TURN)
+          .with(character1, 55, 100)
         allow(processor.broadcaster).to receive(:broadcast_combat_action)
         allow(processor.broadcaster).to receive(:broadcast_vitals_update)
 

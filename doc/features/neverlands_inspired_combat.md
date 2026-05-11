@@ -3,6 +3,12 @@
 Status: historical Neverlands reference. Canonical combat design lives in
 `doc/design/features/combat.md` and `doc/design/gdd.md`.
 
+2026 update: this file contains older captures where the fight UI showed
+`80` AP and physical attacks at `45/65`. A later live fight capture
+(`lukin[6]` vs `Гоблин[3]`) showed `140` AP and dynamic physical costs
+`67/87` from the fight payload. Treat the older constants in this file as
+capture-specific examples, not canonical formulas.
+
 > **Source**: Live analysis from `http://www.neverlands.ru` (December 2024)
 > **Purpose**: Reference for implementing Elselands combat mechanics
 
@@ -1134,7 +1140,9 @@ Body part block dropdowns:
 ### Key Observations
 
 1. **Multiple Body Parts Per Turn**: Can attack/defend multiple body parts
-2. **AP Budget Management**: Must stay within 80 AP total
+2. **AP Budget Management**: Must stay within the server-supplied AP total;
+   this older capture showed 80 AP, while the later `lukin[6]` vs `Гоблин[3]`
+   capture showed 140 AP.
 3. **Mana Constraints**: Magic attacks limited to 5-8 mana range
 4. **Real-time HP Display**: Shows exact HP and percentage
 5. **Opponent Stats Visible**: Can see enemy's base stats
@@ -1149,7 +1157,7 @@ Body part block dropdowns:
 | Feature | File | Notes |
 |---------|------|-------|
 | Body Part Targeting (4 zones) | `turn_based_combat_service.rb` | `BODY_PARTS` constant |
-| Action Point System (80 base) | `turn_based_combat_service.rb` | `action_points_per_turn` config |
+| Action Point System | `arena/combat_profile.rb`, `arena/combat_processor.rb` | Arena stores per-participant AP/cost profiles; older 80 AP captures are examples, not universal rules |
 | Multi-attack Penalty | `turn_based_combat_service.rb` | `attack_penalties` config |
 | Critical Hits | `arena/combat_processor.rb` | 10% chance, 1.5x damage |
 | Block System | `turn_based_combat_service.rb` | Body part matching |
@@ -1166,7 +1174,7 @@ Body part block dropdowns:
 | HP Recovery Gate | `arena_application.rb` | 50% HP minimum to accept fights |
 | Turn Timeout System | `arena_match.rb`, `arena_turn_timeout_job.rb` | 5 min default, auto-resolve, warnings |
 | Trauma/Injury System | `combat_processor.rb#apply_trauma` | HP/XP loss based on trauma % |
-| Attack Type Variants | `combat_processor.rb::ATTACK_TYPES` | Simple (45 AP, 1.0x) vs Aimed (65 AP, 1.2x) |
+| Attack Type Variants | `arena/combat_profile.rb`, `combat_processor.rb::ATTACK_TYPES` | Simple/aimed AP comes from the participant profile seed plus 20 for aimed; older 45/65 captures are fallback examples |
 | Combo Block Types | `combat_processor.rb#process_defend` | Multi-body-part blocking |
 | Standardized Combat Log | `combat_processor.rb#log_entry` | Neverlands format messages |
 | Opponent Stats Display | `arena_helper.rb#opponent_combat_stats` | Shows Str/Dex/Luck/Knowledge/Wisdom |

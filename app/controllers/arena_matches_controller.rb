@@ -153,6 +153,7 @@ class ArenaMatchesController < ApplicationController
       started_at: @arena_match.started_at&.iso8601,
       ended_at: @arena_match.ended_at&.iso8601,
       duration: @arena_match.duration,
+      current_user_combat: current_user_combat_payload,
       participants: @participations.map do |p|
         {
           character_id: p.npc? ? "npc-#{p.npc_template_id}" : p.character_id,
@@ -163,6 +164,19 @@ class ArenaMatchesController < ApplicationController
           is_npc: p.npc?
         }
       end
+    }
+  end
+
+  def current_user_combat_payload
+    participation = @arena_match.arena_participations.find_by(user: current_user)
+    return nil unless participation
+
+    profile = Arena::CombatProfile.for_participation(participation, persist: true)
+    {
+      current_ap: [participation.metadata&.dig("current_ap") || profile["ap_limit"], profile["ap_limit"]].min,
+      max_ap: profile["ap_limit"],
+      simple_attack_cost: profile["simple_attack_cost"],
+      aimed_attack_cost: profile["aimed_attack_cost"]
     }
   end
 

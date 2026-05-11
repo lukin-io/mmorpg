@@ -5,8 +5,11 @@
   player_a = @participations.find { |p| p.team == "a" || p.team == "alpha" }
   player_b = @participations.find { |p| p.team == "b" || p.team == "beta" }
   user_team = current_user_team
+  current_participation = current_user_arena_participation
+  combat_profile = arena_combat_profile(current_participation)
+  ap_limit = combat_profile["ap_limit"]
   combat_config = Game::Combat::ActionCatalog.config
-  attack_options = combat_config["attack_types"] || {}
+  attack_options = arena_attack_options(current_participation, combat_config)
   block_options = combat_config["block_types"] || {}
   magic_options = combat_config["magic_types"] || {}
   body_parts = [["head", "В голову"], ["torso", "В торс"], ["stomach", "В живот"], ["legs", "По ногам"]]
@@ -16,6 +19,7 @@
 <div class="arena-match-page"
      data-controller="arena-match"
      data-arena-match-match-id-value="<%= @arena_match.id %>"
+     data-arena-match-ap-limit-value="<%= ap_limit %>"
      data-arena-match-spectating-value="<%= !current_user_participating? %>"
      data-arena-match-spectator-code-value="<%= @arena_match.spectator_code if !current_user_participating? %>">
 
@@ -82,7 +86,7 @@
             <div class="ap-bar-container">
               <div class="ap-bar-fill" style="width: 100%"></div>
             </div>
-            <span class="ap-value" data-arena-match-target="apValue">80/80</span>
+            <span class="ap-value" data-arena-match-target="apValue"><%= ap_limit %>/<%= ap_limit %></span>
           </div>
 
           <div class="nl-fight-controls">
@@ -91,8 +95,8 @@
           </div>
 
           <div class="nl-fight-budget">
-            Количество очков действия: <b><%= Game::Combat::ActionCatalog::DEFAULT_AP_PER_TURN %></b>
-            <span>Из них использовано: <b data-arena-match-target="turnCostValue">0/80</b></span>
+            Количество очков действия: <b><%= ap_limit %></b>
+            <span>Из них использовано: <b data-arena-match-target="turnCostValue">0/<%= ap_limit %></b></span>
           </div>
 
           <div class="nl-fight-magic-slots">
@@ -151,7 +155,7 @@
                         <% covered_parts = config["body_parts"] || [config["body_part"]].compact %>
                         <% next unless covered_parts.include?(block_part_key) %>
                         <% next if covered_parts.length > 2 %>
-                        <% next if config["action_cost"].to_i > Game::Combat::ActionCatalog::DEFAULT_AP_PER_TURN %>
+                        <% next if config["action_cost"].to_i > ap_limit %>
                         <option value="<%= key %>"
                                 data-ap-cost="<%= config['action_cost'] %>"
                                 data-body-parts="<%= covered_parts.join(',') %>"

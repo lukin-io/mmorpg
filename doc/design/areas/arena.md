@@ -124,9 +124,12 @@ first playable loop:
   controls, filter/status row, NL tab labels, room scheme, and dense room rows.
 - The room screen uses inline application controls and side-based application
   rows (`side one` vs `no opponents`) instead of card-heavy lobby rows.
-- `Arena::CombatProcessor` uses the shared 80 AP turn budget.
-- Arena simple and aimed attacks cost 45/65 AP and apply body-part damage
-  multipliers.
+- `Arena::CombatProcessor` now reads a per-participant combat profile instead
+  of validating every arena fight against the old shared 80 AP budget.
+- Arena physical attack costs now follow the captured `fight_pm[2]` shape:
+  simple equals the participant physical attack seed and aimed equals that seed
+  plus 20. A stored profile can reproduce the goblin capture with 140 AP and
+  67/87 physical attack costs.
 - Starter magic attack entries include `Spirit Arrow` and `Mind Blast`, matching
   the captured fight selector costs.
 - Arena block actions use body-part coverage with the captured 30/35/50/60/80
@@ -159,6 +162,29 @@ first playable loop:
 - The old `/arena_matches` queue/create page is removed. Arena matches are
   created by accepting room applications, while match show/action/log routes
   remain available for active participants and spectators.
+
+## Remaining Mechanics To Implement
+
+The next implementation passes should close these arena/combat gaps before
+adding new modes:
+
+- Keep the captured block cost table as the physical baseline: torso and stomach
+  single blocks cost 30, head and legs cost 35, two-zone blocks cost 50/60/80,
+  and shield/magic defenses use their own higher-cost tables.
+- Replace the provisional local AP/physical-cost derivation with exact
+  Neverlands item-family formulas when more item captures are available. The
+  current implementation supports explicit stored profile values plus
+  item-family hooks for local balancing.
+- Capture or implement non-critical hit, miss/dodge, successful block, shield
+  block table, and multi-attack examples. The goblin fight only captured one
+  NPC round: goblin hit for `-0`, `lukin` landed a critical torso hit for `-58`,
+  and the NPC was defeated.
+- Capture a real PvP wait/resolve round when possible. Current simultaneous
+  waiting behavior matches the observed UI shape, but the live resolved example
+  is NPC-only.
+- Preserve the completed-fight screen model. Neverlands requires `Завершить бой`
+  after victory and may gate it behind an anti-autobattle code; local UX should
+  still have a clear result/finish step, without copying that protection.
 
 Still not first-loop canonical:
 

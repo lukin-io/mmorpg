@@ -369,6 +369,31 @@ module ArenaHelper
     pending_turn["turn_number"].to_i == (match.current_turn_number || 1).to_i
   end
 
+  def arena_combat_profile(participation = current_user_arena_participation)
+    return default_arena_combat_profile unless participation
+
+    Arena::CombatProfile.for_participation(participation, persist: true)
+  end
+
+  def arena_action_point_limit(participation = current_user_arena_participation)
+    arena_combat_profile(participation).fetch("ap_limit")
+  end
+
+  def arena_attack_options(participation = current_user_arena_participation, combat_config = Game::Combat::ActionCatalog.config)
+    profile = arena_combat_profile(participation)
+
+    (combat_config["attack_types"] || {}).each_with_object({}) do |(key, config), options|
+      option_config = config.deep_dup
+      case key.to_s
+      when "simple"
+        option_config["action_cost"] = profile["simple_attack_cost"]
+      when "aimed"
+        option_config["action_cost"] = profile["aimed_attack_cost"]
+      end
+      options[key] = option_config
+    end
+  end
+
   def arena_timeout_claim_available?(match = @arena_match)
     match&.live? && match.turn_timed_out? && current_user_pending_arena_turn?(match)
   end
@@ -511,6 +536,18 @@ module ArenaHelper
     if hp_percent < min_hp
       "Recover before fighting - you are too weakened! (#{hp_percent}% HP, need #{min_hp}%)"
     end
+  end
+
+  def default_arena_combat_profile
+    seed = Arena::CombatProfile::DEFAULT_PHYSICAL_ATTACK_SEED
+    {
+      "ap_limit" => Arena::CombatProfile::DEFAULT_AP_LIMIT,
+      "physical_attack_cost_seed" => seed,
+      "simple_attack_cost" => seed,
+      "aimed_attack_cost" => seed + Arena::CombatProfile::AIMED_ATTACK_SURCHARGE,
+      "max_magic_mana" => 0,
+      "block_table" => "normal"
+    }
   end
 
   # Display HP recovery warning if needed

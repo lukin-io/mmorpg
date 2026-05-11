@@ -83,7 +83,8 @@ class ArenaMatchChannel < ApplicationCable::Channel
       status: @match.status,
       started_at: @match.started_at&.iso8601,
       duration: @match.duration,
-      participants: build_participants_data
+      participants: build_participants_data,
+      current_user_combat: current_user_combat_data
     })
   end
 
@@ -95,6 +96,10 @@ class ArenaMatchChannel < ApplicationCable::Channel
 
   def current_character
     @match.arena_participations.find_by(user: current_user)&.character
+  end
+
+  def current_user_participation
+    @match.arena_participations.find_by(user: current_user)
   end
 
   def find_target(target_id)
@@ -145,5 +150,19 @@ class ArenaMatchChannel < ApplicationCable::Channel
         }
       end
     end
+  end
+
+  def current_user_combat_data
+    participation = current_user_participation
+    return nil unless participation
+
+    profile = Arena::CombatProfile.for_participation(participation, persist: true)
+    {
+      current_ap: [participation.metadata&.dig("current_ap") || profile["ap_limit"], profile["ap_limit"]].min,
+      max_ap: profile["ap_limit"],
+      simple_attack_cost: profile["simple_attack_cost"],
+      aimed_attack_cost: profile["aimed_attack_cost"],
+      physical_attack_cost_seed: profile["physical_attack_cost_seed"]
+    }
   end
 end

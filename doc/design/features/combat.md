@@ -97,16 +97,30 @@ The current implementation has been aligned around the first Neverlands-style
 turn loop:
 
 - `Game::Combat::ActionCatalog` and `config/gameplay/combat_actions.yml` are
-  the shared source for AP budget, attack costs, block costs, and multi-attack
-  penalties.
-- The active AP budget is 80 per turn.
-- Simple attack costs 45 AP, aimed attack costs 65 AP, Spirit Arrow costs
-  50 AP and 5 MP, and Mind Blast costs 90 AP and 5 MP.
+  the shared source for fallback AP budget, block costs, starter magic costs,
+  and multi-attack penalties.
+- Arena combat now stores a per-participant combat profile in
+  `ArenaParticipation#metadata["combat_profile"]`. This local profile mirrors
+  the Neverlands payload shape: AP limit, physical attack cost seed, simple
+  attack cost, aimed attack cost, max magic mana, and block table.
+- The arena processor, controller payloads, ActionCable match state, view
+  labels, turn-cost preview, and server AP validation all read the same combat
+  profile.
+- The live `lukin[6]` vs `Гоблин[3]` capture can be represented exactly by a
+  stored profile with 140 AP from `fight_pm[1]`, physical seed 67 from
+  `fight_pm[2]`, simple attack 67, and aimed attack 87.
+- New matches derive a provisional local profile from character AP,
+  level/equipment state, and item-family hooks when no captured/stored profile
+  exists. This derivation is a balancing placeholder until exact Neverlands item
+  formulas are captured.
+- Spirit Arrow costs 50 AP and 5 MP, and Mind Blast costs 90 AP and 5 MP in the
+  captured starter selector.
 - Single-part blocks cost 30 or 35 AP depending on body part; two-part blocks
   use the captured 50/60/80 AP costs.
 - Arena, PvE, PvP, and shared turn-combat entry points now create/read combat
-  instances with the shared 80 AP budget instead of deriving AP from character
-  level/agility.
+  instances with the shared body-part/AP/log contract. Legacy non-arena entry
+  points may still use their own orchestration wrappers, but they are not the
+  canonical source for arena AP.
 - Character attack and defense formulas now include base stats, level,
   enhancement-aware equipped item modifiers, and item-family multipliers;
   `Character#combat_power_breakdown` exposes the calculation for UI and
@@ -124,14 +138,25 @@ turn loop:
   with NPC AI response.
 - Waiting PvP turns follow the captured timeout state: after the turn timer
   expires, the waiting player can claim victory by timeout or record a draw.
-- The active 80 AP starter package is simple attack plus a single torso block
-  for 75 AP. Aimed attack plus even the cheapest physical block exceeds the
-  starter AP budget and is rejected server-side.
+- The old 80 AP starter package allowed simple attack plus a single torso block
+  for 75 AP. After the goblin capture, this is treated only as one captured
+  fight-state variant. In the live goblin fight, simple torso attack plus torso
+  block cost 97 out of 140 AP.
 
 Remaining parity gaps:
 
 - exact Neverlands item-class formulas for every weapon/armor family still need
-  dedicated item captures beyond client-visible data;
+  dedicated item captures beyond client-visible data, especially how weapon
+  family and equipped items affect AP and physical attack cost;
+- the damage formula is still approximate. The live goblin capture only proves
+  one resolved round: goblin hit `lukin` for `-0`, then `lukin` landed a
+  critical torso hit for `-58` against `Гоблин[3]`;
+- miss, dodge, successful block, non-critical damage, shield blocks,
+  multi-attack resolution, magic damage, consumables, and status effects still
+  need live captures or explicitly documented local formulas;
+- a real PvP simultaneous round is still missing. Current arena waiting
+  behavior matches the Neverlands UI state, but the captured resolved turn was
+  NPC-only;
 - most magic/special effects beyond the starter shield, restoration, and direct
   damage subset still need live effect captures;
 - older PvE/PvP services still exist as orchestration layers and should keep
@@ -239,7 +264,9 @@ Neverlands-style GDD.
 
 Not canonical for the first combat loop:
 
-- character-derived AP as the primary design rule instead of per-combat AP;
+- fixed global 80 AP and fixed 45/65 physical attack costs as primary rules;
+- character-derived AP that ignores fight payload, level/equipment state, and
+  weapon/item family;
 - separate arena, PvE, and PvP engines with different turn semantics;
 - action systems that bypass body-part attacks, one block assignment, AP, mana,
   and combat logs;

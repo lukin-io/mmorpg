@@ -17,6 +17,7 @@ export default class extends Controller {
 
   static values = {
     matchId: Number,
+    apLimit: { type: Number, default: 80 },
     spectating: { type: Boolean, default: false },
     spectatorCode: String
   }
@@ -298,16 +299,29 @@ export default class extends Controller {
   }
 
   updateMatchState(data) {
+    if (data.current_user_combat) {
+      const combat = data.current_user_combat
+      const maxAP = combat.max_ap || this.apLimitValue
+      this.updateAP({
+        current_ap: combat.current_ap,
+        max_ap: maxAP,
+        ap_percent: maxAP ? Math.round((combat.current_ap / maxAP) * 100) : 0
+      })
+    }
+
     // Update all participants from state
     data.participants.forEach(p => {
+      const hpPercent = p.max_hp ? (p.current_hp / p.max_hp) * 100 : 0
+      const mpPercent = p.max_mp ? (p.current_mp / p.max_mp) * 100 : 0
+
       this.updateParticipantHP({
         character_id: p.character_id || p.id,
         current_hp: p.current_hp,
         max_hp: p.max_hp,
         current_mp: p.current_mp,
         max_mp: p.max_mp,
-        hp_percent: (p.current_hp / p.max_hp) * 100,
-        mp_percent: (p.current_mp / p.max_mp) * 100,
+        hp_percent: hpPercent,
+        mp_percent: mpPercent,
         is_dead: p.is_dead
       })
     })
@@ -327,6 +341,9 @@ export default class extends Controller {
     // Update AP text
     if (this.hasApValueTarget) {
       this.apValueTarget.textContent = `${data.current_ap}/${data.max_ap}`
+    }
+    if (data.max_ap) {
+      this.apLimitValue = data.max_ap
     }
 
     // Disable buttons if not enough AP
@@ -369,12 +386,13 @@ export default class extends Controller {
 
     this.enforceSingleBlock(event?.currentTarget)
     const cost = this.selectedAttackCost() + this.selectedBlockCost() + this.selectedMagicCost()
-    this.turnCostValueTarget.textContent = `${cost}/80`
-    this.turnCostValueTarget.classList.toggle("arena-turn-cost--invalid", cost > 80)
+    const apLimit = this.apLimitValue || 80
+    this.turnCostValueTarget.textContent = `${cost}/${apLimit}`
+    this.turnCostValueTarget.classList.toggle("arena-turn-cost--invalid", cost > apLimit)
 
     const submitButton = this.element.querySelector(".btn-attack--submit")
     if (submitButton) {
-      submitButton.disabled = cost > 80
+      submitButton.disabled = cost > apLimit
     }
   }
 

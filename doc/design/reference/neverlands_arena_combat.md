@@ -23,6 +23,9 @@ This file is source observation, not a product roadmap. Translate it through
   one mannequin accept was attempted from the live duel list, then the character
   exited the arena and city, moved one wilderness cell north, and waited for a
   passive NPC attack.
+- A later walk in the same session moved from the wilderness around
+  `m_994_1000` and captured a live NPC ambush fight:
+  `lukin[6]` versus `Гоблин[3]`.
 
 ## Controlled Live Pass Notes
 
@@ -81,9 +84,71 @@ build = ["lukin",6,0,"none","","",0,"main","Природа","m_1000_999",1,0,""]
 ```
 
 No `fight_v*` script, `fight_ty`, `fight_pm`, `param_ow`, `param_en`,
-`Крыса`, or `Напад` payload appeared during that window. Treat passive rat/NPC
-ambush timing as stochastic live-server behavior until a later capture produces
-an actual fight frame.
+`Крыса`, or `Напад` payload appeared during that first window. A later walk
+and wait did produce an NPC fight frame, confirming passive NPC ambush timing
+is stochastic live-server behavior.
+
+The later route moved five cells west from the outside-city position and then
+south until the server stopped offering another south step. The last map frame
+before combat was:
+
+```text
+build = ["lukin",6,0,"none","","",0,"main","Природа","m_994_1000",1,0,""]
+map = [[994,1000,40,"night",...], [[994,999,...],[993,999,...],[995,999,...]]]
+```
+
+The next gameplay frame was a fight screen:
+
+```text
+fight_ty = [1,300,30,1,1,...,"2","738608800",...,4]
+param_ow = ["lukin","170","170","7","7","6",...]
+param_en = ["Гоблин","55","55","7","7","3",...]
+fight_pm = [52,140,67,0,{fight token},{enemy id},2,14,0,"",0]
+logs = [... "Бой между", "Гоблин", "и", "lukin", "начался (нападение бота)."]
+```
+
+Observed meanings for the fields relevant to implementation:
+
+- `fight_ty[1]` was `300`: the fight timeout shown by the UI;
+- `fight_ty[2]` was `30`: the fight trauma/rules value passed back as `ftr`;
+- `fight_pm[0]` was `52`: max mana shown as `5-52` for a magical hit;
+- `fight_pm[1]` was `140`: action points available in this fight;
+- `fight_pm[2]` was `67`: dynamic physical attack cost seed;
+- `fight_pm[3]` was `0`: normal block table, no shield block table selected;
+- `param_ow` and `param_en` carried visible HP/MP/level for the two sides.
+
+The important correction to the earlier mannequin UI capture is that physical
+attack costs are not globally fixed at `45/65`. `fight_v10.js` starts simple
+and aimed at `0`, then adds `fight_pm[2]` to simple and `fight_pm[2] + 20` to
+aimed. In this goblin fight that made:
+
+| Action | Cost |
+| --- | --- |
+| Simple physical attack | 67 |
+| Aimed physical attack | 87 |
+| Torso block | 30 |
+
+The submitted test turn used one torso simple attack plus one torso block:
+
+```text
+inu=1_0_0@
+inb=1_7_0
+ina=
+```
+
+The turn resolved immediately because the opponent was an NPC:
+
+```text
+22:31 Гоблин ударом поразил lukin на -0 [170/170].
+22:31 lukin пробил критическим ударом в торс и поразил Гоблин на -58 [0/55].
+22:31 Гоблин проиграл бой.
+22:31 Победа за lukin.
+```
+
+After the result, `fexp` was present and the fight screen rendered
+`Завершить бой` behind the Neverlands anti-autobattle completion code. Until
+that screen is completed manually in the game UI, the session remains on the
+completed fight screen and cannot continue walking to the cemetery.
 
 ## Game Shell
 
@@ -271,8 +336,9 @@ Visible enemy stats include:
 
 ## Action Points
 
-The server provides the per-fight AP budget through `fight_pm[1]`; older
-captured mannequin fights used `80` AP.
+The server provides the per-fight AP budget through `fight_pm[1]`. Older
+captured mannequin fight UI used `80` AP, while the live goblin fight used
+`140` AP. Do not treat `80` as a universal combat constant.
 
 The client calculates used AP from:
 
@@ -327,7 +393,7 @@ Basic attack labels from the script:
 | 2 | `Spirit Arrow` | magic attack |
 | 3 | `Mind Blast` | magic attack |
 
-Observed starter action costs in the captured fight UI:
+Observed starter action costs from the first static fight UI capture:
 
 | Action | Base Cost |
 | --- | --- |
@@ -335,6 +401,18 @@ Observed starter action costs in the captured fight UI:
 | Aimed physical attack | 65 |
 | Spirit Arrow | 50 |
 | Mind Blast | 90 |
+
+The live goblin fight changed the physical costs through `fight_pm[2]`:
+
+```text
+simple = fight_pm[2]
+aimed  = fight_pm[2] + 20
+```
+
+For `lukin[6]` in that fight, `fight_pm[2] = 67`, so simple was `67` and aimed
+was `87`. This strongly implies physical attack cost depends on server-side
+participant/fight state, likely including level, weapon family, and equipped
+items. That formula is not yet captured exactly.
 
 Block labels include single and multi-zone coverage:
 
