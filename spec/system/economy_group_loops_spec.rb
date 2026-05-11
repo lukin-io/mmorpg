@@ -3,6 +3,13 @@
 require "rails_helper"
 
 RSpec.describe "Economy & Group Loops", type: :system, js: true do
+  def switch_to_user(user)
+    Capybara.reset_sessions!
+    Warden.test_reset!
+    Warden.test_mode!
+    login_as(user, scope: :user)
+  end
+
   describe "success cases" do
     it "places a bid on an auction listing" do
       seller = create(:user)
@@ -44,8 +51,7 @@ RSpec.describe "Economy & Group Loops", type: :system, js: true do
 
       expect(page).to have_css("#flash", text: "Invitation sent")
 
-      logout(:user)
-      login_as(invitee, scope: :user)
+      switch_to_user(invitee)
 
       visit parties_path
       click_button "Accept"
@@ -53,8 +59,7 @@ RSpec.describe "Economy & Group Loops", type: :system, js: true do
       expect(page).to have_css("#flash", text: "Invitation accepted")
       expect(page).to have_content("Your Current Party")
 
-      logout(:user)
-      login_as(leader, scope: :user)
+      switch_to_user(leader)
 
       visit party_path(party)
       click_button "Start Ready Check"
@@ -65,8 +70,7 @@ RSpec.describe "Economy & Group Loops", type: :system, js: true do
       click_button "I'm Ready!"
       expect(page).to have_css("#flash", text: "Ready state updated")
 
-      logout(:user)
-      login_as(invitee, scope: :user)
+      switch_to_user(invitee)
 
       visit party_path(party)
       click_button "I'm Ready!"

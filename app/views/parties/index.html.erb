@@ -79,7 +79,10 @@
     <div class="parties-sidebar">
       <div class="create-party-panel card">
         <h3>Create Party</h3>
-        <%= form_with model: @party, local: true, class: "party-form" do |f| %>
+        <%= form_with model: @party,
+              local: true,
+              class: "party-form",
+              data: { turbo: false } do |f| %>
           <div class="form-group">
             <%= f.label :name, "Party Name" %>
             <%= f.text_field :name, class: "form-control", placeholder: "Epic Dungeon Run" %>
