@@ -228,6 +228,31 @@ RSpec.describe Arena::NpcCombatAi do
       end
     end
 
+    it "builds a multi-attack package when the captured AP budget can pay for it" do
+      npc_participation = arena_match.arena_participations.npcs.first
+      npc_participation.update!(
+        metadata: {
+          "current_hp" => 100,
+          "max_hp" => 100,
+          "combat_profile" => {
+            "ap_limit" => 140,
+            "physical_attack_cost_seed" => 47,
+            "simple_attack_cost" => 47,
+            "aimed_attack_cost" => 67,
+            "max_magic_mana" => 7,
+            "block_table" => "normal"
+          }
+        }
+      )
+
+      decision = ai.decide_action
+
+      expect(decision.action_type).to eq(:attack)
+      expect(decision.params[:attacks].size).to be >= 2
+      expect(decision.params[:body_part]).to eq(decision.params[:attacks].first[:body_part])
+      expect(decision.params[:attacks]).to all(include(action_key: "simple"))
+    end
+
     it "defend decision has nil target" do
       # Create a defensive NPC with low HP to trigger defend
       defensive_npc = create(:npc_template,

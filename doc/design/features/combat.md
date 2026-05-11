@@ -106,7 +106,7 @@ turn loop:
 - The arena processor, controller payloads, ActionCable match state, view
   labels, turn-cost preview, and server AP validation all read the same combat
   profile.
-- The live `lukin[6]` vs `Гоблин[3]` capture can be represented exactly by a
+- The live `lukin[6]` vs `Goblin[3]` capture can be represented exactly by a
   stored profile with 140 AP from `fight_pm[1]`, physical seed 67 from
   `fight_pm[2]`, simple attack 67, and aimed attack 87.
 - New matches derive a local canonical profile from character AP,
@@ -141,6 +141,12 @@ turn loop:
   for 75 AP. After the goblin capture, this is treated only as one captured
   fight-state variant. In the live goblin fight, simple torso attack plus torso
   block cost 97 out of 140 AP.
+- A later live bot fight capture (`lukin[6]` versus Bandit[5]) confirmed the
+  same 140 AP and 67/87 physical attack costs, and added stronger evidence for
+  the resolver: successful block, failed block against a covered body part,
+  enemy block, dodge, zero-damage hit, multi-attack NPC rounds, critical dodge,
+  critical hit, bot defeat, automatic loot search, and the finish-code result
+  step.
 
 Current local parity coverage:
 
@@ -162,6 +168,29 @@ Remaining source-capture work is tuning, not missing local behavior: more live
 Neverlands fights are needed to calibrate hidden item-family coefficients and
 to compare local miss, dodge, block, magic, status, and PvP constants against
 external outcomes.
+
+Implementation implications from the May 11 bot fight:
+
+- block coverage is not deterministic immunity; coverage selects the defended
+  body part set, then the resolver still needs a block success roll;
+- NPC AI must be able to submit more than one physical attack per round when
+  its AP budget and penalties allow it;
+- hit logs should preserve zero-damage hits as hits, not convert them to
+  misses;
+- the result step should remain separate from active-turn state because active
+  `fight_pm` disappears and `fexp` becomes the result/finish payload.
+
+Adjacent docs that should move with the next combat pass:
+
+- `doc/design/areas/arena.md` for room/application UI, active arena match UI,
+  PvP waiting, and arena result return behavior;
+- `doc/design/features/movement.md` and
+  `doc/flow/neverlands_live_movement.md` for wilderness movement, ambush
+  triggers, and returning from non-arena fights;
+- `doc/design/features/npcs_quests.md` for NPC templates, bot behavior,
+  loot-check expectations, and training opponents;
+- `doc/design/features/items_inventory_equipment.md` for equipment family
+  coefficients, shield block tables, and combat-stat breakdowns.
 
 ## Body Parts
 

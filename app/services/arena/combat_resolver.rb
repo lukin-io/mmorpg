@@ -22,6 +22,13 @@ module Arena
       "legs" => -5
     }.freeze
 
+    BODY_PART_BLOCK_MODIFIERS = {
+      "head" => -5,
+      "torso" => 5,
+      "stomach" => 2,
+      "legs" => -3
+    }.freeze
+
     BODY_PART_DAMAGE_MULTIPLIERS = {
       "head" => 1.3,
       "torso" => 1.0,
@@ -31,6 +38,7 @@ module Arena
 
     BASE_HIT_CHANCE = 85
     BASE_DODGE_CHANCE = 5
+    BASE_BLOCK_CHANCE = 45
     BASE_CRIT_CHANCE = 10
     CRITICAL_MULTIPLIER = 1.5
     DEFENSE_DIVISOR = 2
@@ -53,21 +61,38 @@ module Arena
       dodge = dodge_result(attacker_participation, defender_participation, action_key, body_part)
       return outcome(:dodge, action_key:, body_part:, hit:, dodge:) if dodge[:dodged]
 
+      block_result_data = {}
       if block_covers?(block, body_part)
-        return outcome(
-          :blocked,
-          action_key:,
-          body_part:,
-          hit:,
-          dodge:,
-          block: block.merge("blocked" => true, "damage_reduction" => 1.0)
-        )
+        block_result_data = block_result(attacker_participation, defender_participation, block, body_part)
+        if block_result_data[:blocked]
+          return outcome(
+            :blocked,
+            action_key:,
+            body_part:,
+            hit:,
+            dodge:,
+            block: block.merge(
+              "attempted" => true,
+              "blocked" => true,
+              "damage_reduction" => 1.0,
+              "roll" => block_result_data[:roll],
+              "chance" => block_result_data[:chance]
+            )
+          )
+        end
       end
 
       critical = critical_result(attacker_participation, defender_participation, action_key, body_part)
       damage = damage_amount(attacker_participation, defender_participation, action_key, body_part, critical:)
 
-      outcome(:hit, action_key:, body_part:, hit:, dodge:, critical:, damage:)
+      block_data = block_result_data.present? ? block.merge(
+        "attempted" => true,
+        "blocked" => false,
+        "roll" => block_result_data[:roll],
+        "chance" => block_result_data[:chance]
+      ) : {}
+
+      outcome(:hit, action_key:, body_part:, hit:, dodge:, block: block_data, critical:, damage:)
     end
 
     def attack_power(participation)
@@ -106,7 +131,11 @@ module Arena
         crit_roll: critical[:roll],
         crit_chance: critical[:chance],
         block_key: block["action_key"],
-        block_table: block["block_table"]
+        block_table: block["block_table"],
+        block_attempted: block["attempted"] == true,
+        block_success: block["blocked"] == true,
+        block_roll: block["roll"],
+        block_chance: block["chance"]
       }
     end
 
@@ -152,6 +181,25 @@ module Arena
 
       roll = rng.rand(100)
       {critical: roll < chance, roll:, chance: chance.round(1)}
+    end
+
+    def block_result(attacker, defender, block, body_part)
+      covered_parts = Array(block["body_parts"]).map(&:to_s)
+      chance = BASE_BLOCK_CHANCE
+      chance += defense_power(defender) * 0.4
+      chance += stat(defender, :agility) * 0.2
+      chance += stat(defender, :dexterity) * 0.15
+      chance += stat(defender, :block_mastery) * 0.25
+      chance += BODY_PART_BLOCK_MODIFIERS.fetch(body_part, 0)
+      chance -= stat(attacker, :accuracy) * 0.2
+      chance -= stat(attacker, :dexterity) * 0.1
+      chance -= [covered_parts.size - 1, 0].max * 4
+      chance += 10 if block["block_table"].to_s == "shield"
+      chance += 20 if block["block_table"].to_s == "magic"
+      chance = chance.clamp(5.0, 95.0)
+
+      roll = rng.rand(100)
+      {blocked: roll < chance, roll:, chance: chance.round(1)}
     end
 
     def damage_amount(attacker, defender, action_key, body_part, critical:)

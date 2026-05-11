@@ -116,6 +116,12 @@ module Game
         attack_config(action_key, combat_config).fetch("mana_cost", 0).to_i
       end
 
+      def attack_penalty(attack_count, combat_config = config)
+        penalties = combat_config["attack_penalties"] || []
+        penalty_entry = penalties.find { |entry| entry["attacks"].to_i == attack_count.to_i }
+        penalty_entry&.dig("penalty").to_i
+      end
+
       def block_cost(action_key: nil, body_parts: nil, combat_config: config)
         configured = block_config(action_key, combat_config)
         return configured["action_cost"].to_i if configured.present?

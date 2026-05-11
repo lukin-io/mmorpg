@@ -60,7 +60,7 @@ RSpec.describe Arena::CombatResolver do
   end
 
   it "resolves a successful selected block before critical and damage" do
-    allow(rng).to receive(:rand).with(100).and_return(0, 99)
+    allow(rng).to receive(:rand).with(100).and_return(0, 99, 0)
 
     result = resolver.resolve_physical_attack(
       attacker_participation:,
@@ -81,6 +81,29 @@ RSpec.describe Arena::CombatResolver do
       block_key: "torso_block",
       block_table: "normal"
     )
+    expect(result[:block_attempted]).to be true
+    expect(result[:block_success]).to be true
+    expect(result[:block_roll]).to eq(0)
+  end
+
+  it "allows a selected block to fail before critical and damage" do
+    allow(rng).to receive(:rand).with(100).and_return(0, 99, 99, 99)
+    allow(rng).to receive(:rand).with(1..5).and_return(3)
+
+    result = resolver.resolve_physical_attack(
+      attacker_participation:,
+      defender_participation:,
+      action_key: "simple",
+      body_part: "torso",
+      block: {
+        "action_key" => "torso_block",
+        "body_parts" => ["torso"],
+        "block_table" => "normal"
+      }
+    )
+
+    expect(result).to include(outcome: :hit, blocked: false, block_attempted: true, block_success: false)
+    expect(result[:damage]).to be >= 0
   end
 
   it "marks critical hits and applies critical damage multiplier" do

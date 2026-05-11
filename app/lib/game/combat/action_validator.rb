@@ -287,9 +287,7 @@ module Game
       end
 
       def attack_penalty(attack_count)
-        penalties = @config["attack_penalties"] || []
-        penalty_entry = penalties.find { |p| p["attacks"] == attack_count }
-        penalty_entry&.dig("penalty").to_i
+        Game::Combat::ActionCatalog.attack_penalty(attack_count, @config)
       end
 
       def ap_limit

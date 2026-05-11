@@ -82,9 +82,9 @@ module Game
       # @param entity [Character, NPC] the entity
       # @return [Integer]
       def attack_power(entity)
-        return entity.attack_power if entity.respond_to?(:attack_power)
-        return entity.combat_stat(:attack) if entity.respond_to?(:combat_stat)
-        return entity.stats.get(:attack_power) if entity.respond_to?(:stats)
+        return entity.attack_power if supports_method?(entity, :attack_power)
+        return entity.stats.get(:attack_power) if supports_method?(entity, :stats)
+        return entity.combat_stat(:attack) if supports_method?(entity, :combat_stat)
 
         # Default for entities without stats
         10
@@ -95,10 +95,10 @@ module Game
       # @param entity [Character, NPC] the entity
       # @return [Integer]
       def defense_power(entity)
-        return entity.defense if entity.respond_to?(:defense)
-        return entity.defense_value if entity.respond_to?(:defense_value)
-        return entity.combat_stat(:defense) if entity.respond_to?(:combat_stat)
-        return entity.stats.get(:defense) if entity.respond_to?(:stats)
+        return entity.defense if supports_method?(entity, :defense)
+        return entity.defense_value if supports_method?(entity, :defense_value)
+        return entity.stats.get(:defense) if supports_method?(entity, :stats)
+        return entity.combat_stat(:defense) if supports_method?(entity, :combat_stat)
 
         # Default for entities without stats
         5
@@ -109,12 +109,18 @@ module Game
       # @param entity [Character, NPC] the entity
       # @return [Integer] percentage (0-100)
       def crit_chance(entity)
-        return entity.critical_chance if entity.respond_to?(:critical_chance)
-        return entity.combat_stat(:crit_chance) if entity.respond_to?(:combat_stat)
-        return entity.stats.get(:critical_chance) if entity.respond_to?(:stats)
+        return entity.critical_chance if supports_method?(entity, :critical_chance)
+        return entity.stats.get(:critical_chance) if supports_method?(entity, :stats)
+        return entity.combat_stat(:crit_chance) if supports_method?(entity, :combat_stat)
 
         # Default crit chance
         5
+      end
+
+      private
+
+      def supports_method?(entity, method_name)
+        entity.public_methods.include?(method_name.to_sym)
       end
     end
   end

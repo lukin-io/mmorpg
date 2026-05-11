@@ -60,4 +60,28 @@ RSpec.describe Arena::CombatProfile do
 
     expect(described_class.for_participation(participation)["block_table"]).to eq("shield")
   end
+
+  it "lets NPCs inherit captured fight AP while keeping level-derived physical attack cost" do
+    arena_match.update!(
+      metadata: {
+        "combat_profile" => {
+          "ap_limit" => 140,
+          "physical_attack_cost_seed" => 67,
+          "simple_attack_cost" => 67,
+          "aimed_attack_cost" => 87,
+          "max_magic_mana" => 52,
+          "block_table" => "normal"
+        }
+      }
+    )
+    npc = create(:npc_template, role: "arena_bot", level: 5)
+    npc_participation = create(:arena_participation, :npc, arena_match:, npc_template: npc, team: "b")
+
+    profile = described_class.for_participation(npc_participation)
+
+    expect(profile["ap_limit"]).to eq(140)
+    expect(profile["physical_attack_cost_seed"]).to eq(47)
+    expect(profile["simple_attack_cost"]).to eq(47)
+    expect(profile["aimed_attack_cost"]).to eq(67)
+  end
 end

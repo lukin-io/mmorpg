@@ -168,7 +168,7 @@ RSpec.describe Arena::CombatProcessor, "Neverlands-style combat features" do
       end
 
       it "blocks the attack" do
-        result = processor.process_action(
+        result = deterministic_processor(0, 99, 0).process_action(
           character1,
           :attack,
           target: character2,
@@ -177,6 +177,23 @@ RSpec.describe Arena::CombatProcessor, "Neverlands-style combat features" do
 
         expect(result[:blocked]).to be true
         expect(result[:damage]).to eq(0)
+      end
+
+      it "can fail a covered block and still resolve the hit" do
+        result = deterministic_processor(0, 99, 99, 99, 3).process_action(
+          character1,
+          :attack,
+          target: character2,
+          body_part: "torso"
+        )
+
+        expect(result[:blocked]).to be_falsey
+        expect(result[:block_attempted]).to be true
+        expect(result[:body_part]).to eq("torso")
+
+        log = arena_match.reload.metadata["combat_log"]
+        failed_block_entries = log.select { |entry| entry["type"] == "block_failed" }
+        expect(failed_block_entries.last["description"]).to include("tried to block")
       end
     end
 
@@ -210,7 +227,7 @@ RSpec.describe Arena::CombatProcessor, "Neverlands-style combat features" do
     end
 
     it "logs attacks with body part" do
-      processor.process_action(
+      deterministic_processor(0, 99, 0).process_action(
         character1,
         :attack,
         target: character2,

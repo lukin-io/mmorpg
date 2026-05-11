@@ -226,6 +226,111 @@ RSpec.describe Arena::CombatProcessor do
     end
   end
 
+  describe "NPC fight capture behavior" do
+    let(:npc_template) do
+      create(:npc_template,
+        role: "arena_bot",
+        name: "Captured Bandit",
+        level: 5,
+        metadata: {"base_damage" => 15, "ai_behavior" => "balanced"})
+    end
+
+    let(:npc_match) do
+      create(:arena_match,
+        arena_room: arena_room,
+        status: :live,
+        match_type: :duel,
+        started_at: Time.current,
+        metadata: {
+          "is_npc_fight" => true,
+          "combat_log" => [],
+          "combat_profile" => {
+            "ap_limit" => 140,
+            "physical_attack_cost_seed" => 67,
+            "simple_attack_cost" => 67,
+            "aimed_attack_cost" => 87,
+            "max_magic_mana" => 52,
+            "block_table" => "normal"
+          }
+        })
+    end
+
+    let!(:npc_player_participation) do
+      create(:arena_participation,
+        arena_match: npc_match,
+        character: character1,
+        user: user1,
+        team: "a")
+    end
+
+    let!(:npc_participation) do
+      create(:arena_participation, :npc,
+        arena_match: npc_match,
+        npc_template: npc_template,
+        team: "b",
+        metadata: {"current_hp" => 105, "max_hp" => 105})
+    end
+
+    def deterministic_arena_processor(match, *rolls)
+      rng = instance_double(Random)
+      allow(rng).to receive(:rand) do |range_or_limit = nil|
+        value = rolls.shift || 99
+        range_or_limit.is_a?(Range) ? value.clamp(range_or_limit.min, range_or_limit.max) : value
+      end
+      described_class.new(match, rng:)
+    end
+
+    it "processes a captured-style NPC response with multiple physical attacks" do
+      captured_processor = deterministic_arena_processor(npc_match, 0, 99, 99, 3, 0, 99, 99, 3)
+      allow(captured_processor.broadcaster).to receive(:broadcast_vitals_update)
+      allow(captured_processor.broadcaster).to receive(:broadcast_combat_action)
+
+      decision = Arena::NpcCombatAi::Decision.new(
+        action_type: :attack,
+        target: character1,
+        params: {
+          body_part: "stomach",
+          attack_type: "simple",
+          attacks: [
+            {action_key: "simple", body_part: "stomach"},
+            {action_key: "simple", body_part: "legs"}
+          ]
+        }
+      )
+      allow(Arena::NpcCombatAi).to receive(:new).and_return(instance_double(Arena::NpcCombatAi, decide_action: decision))
+
+      result = captured_processor.process_npc_turn
+
+      expect(result).to be_success
+      expect(result[:attacks].size).to eq(2)
+      log = npc_match.reload.metadata["combat_log"]
+      damage_entries = log.select { |entry| entry["type"] == "damage" && entry["description"].include?("Captured Bandit attacks") }
+      expect(damage_entries.map { |entry| entry["description"] }.join(" ")).to include("stomach", "legs")
+    end
+
+    it "logs the automatic loot check after an NPC defeat" do
+      npc_participation.update!(metadata: {"current_hp" => 1, "max_hp" => 105})
+      captured_processor = deterministic_arena_processor(npc_match, 0, 99, 99, 5)
+      allow(captured_processor.broadcaster).to receive(:broadcast_ap_update)
+      allow(captured_processor.broadcaster).to receive(:broadcast_vitals_update)
+      allow(captured_processor.broadcaster).to receive(:broadcast_combat_action)
+      allow(captured_processor.broadcaster).to receive(:broadcast_match_ended)
+
+      result = captured_processor.process_action(
+        character1,
+        :attack,
+        target: npc_participation,
+        attack_type: :simple,
+        body_part: "torso"
+      )
+
+      expect(result).to be_success
+      log = npc_match.reload.metadata["combat_log"]
+      expect(log.map { |entry| entry["type"] }).to include("defeat", "loot", "victory")
+      expect(log.find { |entry| entry["type"] == "loot" }["description"]).to include("searched Captured Bandit")
+    end
+  end
+
   describe "AP (Action Points) system" do
     describe "#process_action with AP" do
       it "deducts AP for simple attack from the participant AP budget" do

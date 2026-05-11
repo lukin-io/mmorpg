@@ -26,6 +26,238 @@ This file is source observation, not a product roadmap. Translate it through
 - A later walk in the same session moved from the wilderness around
   `m_994_1000` and captured a live NPC ambush fight:
   `lukin[6]` versus `Гоблин[3]`.
+- A 2026-05-11 authenticated pass found the same character already in an
+  active wilderness NPC fight. One login was used, the same cookie jar was
+  reused for every turn, and no finish-code challenge was submitted
+  automatically.
+
+## Live Bot Fight Capture 2026-05-11
+
+Captured artifacts:
+
+- `tmp/nl_main.html`: first active fight payload after login;
+- `tmp/nl_after_turn.html`: first controlled submitted turn;
+- `tmp/nl_turn_2.html` through `tmp/nl_turn_16.html`: subsequent controlled
+  turn responses;
+- matching `.utf8.html` files contain decoded source text for analysis.
+
+The fight was already active on entry:
+
+```text
+player: lukin[6], 160/170 HP, 0/7 MP
+opponent: Bandit[5], 105/105 HP, 7/7 MP
+start reason: NPC attack
+timeout: 300 seconds
+fight rules/trauma value: 30
+```
+
+The initial active payload was:
+
+```text
+fight_ty = [1,300,30,1,1,...,"2","738749364",...,4]
+param_ow = ["lukin","160","170","0","7","6",...]
+param_en = ["Bandit","105","105","7","7","5",...]
+fight_pm = [52,140,67,0,{fight_token},{enemy_id},2,36,0,"",0]
+magic_in = []
+```
+
+Observed field meanings:
+
+| Field | Observed Value | Design Meaning |
+| --- | ---: | --- |
+| `fight_ty[1]` | `300` | turn/fight timeout seconds |
+| `fight_ty[2]` | `30` | fight rule/trauma value, posted back as `ftr` |
+| `fight_pm[0]` | `52` | magic mana limit shown as `5-52` |
+| `fight_pm[1]` | `140` | action point budget for the turn |
+| `fight_pm[2]` | `67` | physical attack cost seed |
+| `fight_pm[3]` | `0` | standard block table, not shield table |
+| `fight_pm[4]` | token | server turn token, posted as `vcode` |
+| `fight_pm[5]` | id | target/enemy id, posted as `enemy` |
+| `fight_pm[6]` | `2` | player group side |
+| `fight_pm[7]` | `36` | bot/fight context value, posted as `inf_bot` |
+
+The source client starts simple and aimed physical attacks at zero, then adds
+the live fight seed:
+
+```text
+simple physical attack = fight_pm[2]
+aimed physical attack = fight_pm[2] + 20
+```
+
+For this fight:
+
+| Action | AP |
+| --- | ---: |
+| Simple physical attack | 67 |
+| Aimed physical attack | 87 |
+| Torso block | 30 |
+| Simple attack plus torso block | 97 / 140 |
+| Aimed attack plus torso block | 117 / 140 |
+
+### Fight UI/UX Shape
+
+The active fight screen is generated from compact JavaScript arrays, then
+rendered into a dense three-zone frame:
+
+- left participant panel: current character name, level, HP/MP bars, equipment
+  slots, and avatar;
+- center tactical panel: fight controls, magic slots, AP/mana constraints,
+  four attack selectors, four block selectors, submit/reset buttons, and the
+  combat log;
+- right participant panel: opponent name, level, HP/MP bars, equipment/avatar
+  slots, and visible combat stats.
+
+The center panel shows:
+
+- magic mana constraint: `5-52`;
+- action point budget: `140`;
+- live used-AP counter;
+- empty magic slots for this fight (`magic_in = []`);
+- attack rows for head, torso, stomach, and legs;
+- block rows for head, torso, stomach, and legs;
+- one submit button and one reset button.
+
+Attack selector behavior:
+
+- every body-part row offers `no attack selected`, `simple`, and `aimed`;
+- this fight had no extra physical or magic attacks injected into the attack
+  selectors;
+- selecting a head attack disables legs, and selecting a legs attack disables
+  head;
+- multiple selected attacks add an escalating AP penalty.
+
+Block selector behavior:
+
+- block rows are body-part-positioned, but each block option can cover one or
+  more body parts;
+- selecting one block disables the other block selectors;
+- coverage does not guarantee success: the logs show both successful blocks and
+  failed block attempts against the covered body part.
+
+Standard block table observed with `fight_pm[3] = 0`:
+
+| Selector Row | Options |
+| --- | --- |
+| Head | Head 35, Head+Torso 50, Head+Stomach 60 |
+| Torso | Torso 30, Torso+Stomach 50, Torso+Legs 60 |
+| Stomach | Stomach 30, Stomach+Legs 50 |
+| Legs | Legs 35, Legs+Head 80 |
+
+The client does not submit a single plain attack by itself. The submit function
+posts only when the selection has one of these shapes:
+
+- attack plus block;
+- attack plus magic/action;
+- block plus magic/action;
+- more than one attack.
+
+### Turn Submit Contract
+
+The source UI submits a normal turn with `POST main.php`:
+
+```text
+post_id=7
+vcode={fight_pm[4]}
+enemy={fight_pm[5]}
+group={fight_pm[6]}
+inf_bot={fight_pm[7]}
+inf_zb={fight_pm[10]}
+lev_bot={param_en[5]}
+ftr={fight_ty[2]}
+inu={attack_index}_{action_code}_{mana}@...
+inb={block_index}_{block_code}_{mana}
+ina={magic_or_action_payload}
+```
+
+Examples from this capture:
+
+```text
+torso simple attack + torso block:
+inu=1_0_0@
+inb=1_7_0
+ina=
+
+legs aimed attack + torso block:
+inu=3_1_0@
+inb=1_7_0
+ina=
+```
+
+Body-part indexes:
+
+| Index | Body Part |
+| ---: | --- |
+| `0` | head |
+| `1` | torso |
+| `2` | stomach |
+| `3` | legs |
+
+Action codes:
+
+| Code | Meaning |
+| ---: | --- |
+| `0` | simple physical attack |
+| `1` | aimed physical attack |
+| `7` | torso block |
+
+### Controlled Turn Results
+
+The following table translates the live logs into English. Each row used a
+torso block, because that is the cheapest central defensive option in this
+fight.
+
+| Turn | Submitted Action | Result Summary |
+| ---: | --- | --- |
+| 1 | torso simple + torso block | Bandit hit stomach for 13; Bandit blocked lukin torso attack. |
+| 2 | legs simple + torso block | Bandit hit legs for 0; Bandit blocked lukin legs attack. |
+| 3 | stomach simple + torso block | lukin blocked one torso hit; Bandit hit legs for 10; lukin critical stomach attempt was dodged. |
+| 4 | head simple + torso block | Bandit hit stomach for 0 and legs for 10; lukin critical head attempt was dodged. |
+| 5 | torso aimed + torso block | Bandit hit legs for 11; lukin critical torso attempt was dodged. |
+| 6 | legs aimed + torso block | Bandit hit head for 0 and stomach for 16; lukin critical legs hit for 50, Bandit to 55/105. |
+| 7 | stomach aimed + torso block | lukin blocked a torso hit; lukin critical stomach attempt was dodged. |
+| 8 | legs simple + torso block | Bandit hit stomach for 9; Bandit blocked lukin legs attack. |
+| 9 | stomach simple + torso block | Bandit hit stomach for 6; Bandit blocked lukin stomach attack. |
+| 10 | head simple + torso block | Bandit hit stomach for 0 and legs for 0; lukin critical head attempt was dodged. |
+| 11 | torso aimed + torso block | lukin blocked one torso hit; Bandit hit legs for 0; lukin critical torso attempt was dodged. |
+| 12 | legs aimed + torso block | Bandit hit stomach for 0; lukin critical legs hit for 34, Bandit to 21/105. |
+| 13 | stomach aimed + torso block | lukin attempted to block torso but the hit still resolved for 0; Bandit hit legs for 12; lukin critical stomach attempt was dodged. |
+| 14 | torso aimed + torso block | Bandit hit head for 2; lukin attempted to block torso but Bandit hit torso for 16; lukin critical torso attempt was dodged. |
+| 15 | head aimed + torso block | Bandit hit stomach for 3 and legs for 16; lukin critical head attempt was dodged. |
+| 16 | legs aimed + torso block | Bandit hit head for 8; lukin critical legs hit for 35; Bandit dropped to 0/105 and lost. |
+
+Observed mechanics from this one fight:
+
+- NPCs may resolve multiple physical attacks in one round.
+- A selected block may fully block a covered body part.
+- A selected block may also fail against a covered body part.
+- Damage can resolve as zero and still produce a hit log entry.
+- The player's displayed attack can become a critical attempt even when the
+  selected action is simple or aimed physical attack.
+- Critical attempts can be dodged.
+- Critical hits use highlighted damage and update the target's exact HP.
+- Victory triggers an automatic bot-loot check before the result step.
+
+The final result payload:
+
+```text
+fight_ty = [1,300,30,0,2,...]
+param_ow = ["lukin","28","170","0","7","6",...]
+list = [[1,2,"lukin",6,0,"n",105,0,0,0,0,1,0,0,0,0,75]]
+fexp = ["75","1",0,{finish_token},"","4",0,"",99,0,6,6,0,6]
+```
+
+Translated final log:
+
+```text
+Victory for lukin.
+lukin searched the bot. Result: nothing found.
+Bandit lost the fight.
+```
+
+The result screen no longer exposes `fight_pm`, which is the active-turn
+payload. It exposes `fexp` instead and renders the finish-fight step with a
+code image and code input. That completion challenge is part of the source
+anti-autobattle flow and was not automated in this capture.
 
 ## Controlled Live Pass Notes
 

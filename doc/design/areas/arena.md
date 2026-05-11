@@ -164,15 +164,40 @@ first playable loop:
   magic guards body parts, healing/restoration updates vitals, direct damage
   spells damage targets, chain/area spells fan out to opponents, and status
   effects are stored on arena participation metadata for turn processing.
-- Completed fights show a `Завершить бой` result step before returning the
+- Completed fights show a `Finish Fight` result step before returning the
   participant to the arena, matching the observed Neverlands result-screen
   shape without copying its anti-autobattle challenge.
+- The May 11 live bot-fight capture adds a completed wilderness fight path:
+  one active fight payload, repeated turn submissions through the same selector
+  contract, victory log, automatic bot-loot check, and a separate result
+  payload. Arena and wilderness combat should therefore share the same active
+  turn UI, but the arena return action should remain contextual: arena fights
+  return to arena, wilderness ambushes return to the world/city flow after the
+  finish step.
 - Tactical grid and totalizator routes, views, controllers, models, styles, and
   tables are removed from the player-facing arena surface; their NL tabs remain
   disabled labels until those modes are implemented from live references.
 - The old `/arena_matches` queue/create page is removed. Arena matches are
   created by accepting room applications, while match show/action/log routes
   remain available for active participants and spectators.
+
+## Adjacent Next Work
+
+The current arena implementation is no longer isolated from the rest of the
+game loop. The next passes should keep these side systems in sync:
+
+- NPC training fights now use the shared arena combat resolver. Continue
+  tuning them through `features/combat.md` and `features/npcs_quests.md`
+  instead of creating a separate bot-combat ruleset.
+- Wilderness ambushes should enter the same active fight UI and result flow,
+  then return to world/city movement rather than arena. Keep that handoff
+  documented in `features/movement.md` and `doc/flow/neverlands_live_movement.md`.
+- Equipment-driven AP, attack-cost, defense, and shield-block changes belong in
+  `features/items_inventory_equipment.md` and should feed `Arena::CombatProfile`
+  rather than hard-coded arena constants.
+- Arena room/application UX remains the city-building path. Global/dev arena
+  routes are implementation affordances only, not the primary game-design
+  path.
 
 ## Remaining Source Capture Work
 

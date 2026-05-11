@@ -71,7 +71,18 @@ module Arena
 
     def attack_decision
       target = find_best_target
-      Decision.new(action_type: :attack, target: target, params: select_body_part)
+      attacks = select_attack_package
+      first_attack = attacks.first || {body_part: "torso", action_key: "simple"}
+
+      Decision.new(
+        action_type: :attack,
+        target: target,
+        params: {
+          body_part: first_attack[:body_part],
+          attack_type: first_attack[:action_key],
+          attacks:
+        }
+      )
     end
 
     def find_best_target
@@ -107,10 +118,50 @@ module Arena
       current / max
     end
 
-    def select_body_part
-      # Randomly select body part to target
+    def select_attack_package
+      participation = find_npc_participation
+      profile = participation ? Arena::CombatProfile.for_participation(participation, persist: true) : {}
+      ap_limit = profile.fetch("ap_limit", Game::Combat::ActionCatalog::DEFAULT_AP_PER_TURN).to_i
+      simple_cost = profile.fetch("simple_attack_cost", Game::Combat::ActionCatalog.attack_cost("simple")).to_i
+      max_attacks = configured_max_attacks
+
+      attacks = []
+      max_attacks.times do
+        body_part = select_body_part(excluding_parts: attacks.map { |attack| attack[:body_part] })
+        candidate = attacks + [{action_key: "simple", body_part:}]
+        break if candidate.size > 1 && attack_package_cost(candidate, simple_cost) > ap_limit
+
+        attacks = candidate
+      end
+
+      attacks.presence || [{action_key: "simple", body_part: "torso"}]
+    end
+
+    def configured_max_attacks
+      configured = npc_template.metadata&.dig("max_attacks_per_turn").to_i
+      return configured.clamp(1, 4) if configured.positive?
+
+      case behavior
+      when :aggressive then 3
+      when :defensive then 1
+      else 2
+      end
+    end
+
+    def attack_package_cost(attacks, simple_cost)
+      attacks.size * simple_cost + Game::Combat::ActionCatalog.attack_penalty(attacks.size)
+    end
+
+    def select_body_part(excluding_parts: [])
+      # The source UI allows multiple attacks, except a head+legs combination.
       body_parts = %w[head torso stomach legs]
-      {body_part: body_parts.sample(random: rng)}
+      excluded = Array(excluding_parts).map(&:to_s)
+      candidates = body_parts.reject do |part|
+        (part == "head" && excluded.include?("legs")) ||
+          (part == "legs" && excluded.include?("head"))
+      end
+
+      candidates.sample(random: rng) || "torso"
     end
   end
 end

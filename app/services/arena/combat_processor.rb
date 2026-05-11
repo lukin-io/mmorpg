@@ -177,14 +177,20 @@ module Arena
       )
 
       decision = ai.decide_action
+      decision_params = decision.params || {}
 
       case decision.action_type
       when :attack
-        process_npc_attack(npc_participation, decision.target, decision.params)
+        attacks = Array(decision_params[:attacks]).presence
+        if attacks
+          process_npc_attack_sequence(npc_participation, decision.target, attacks, decision_params)
+        else
+          process_npc_attack(npc_participation, decision.target, decision_params)
+        end
       when :defend
         process_npc_defend(npc_participation)
       else
-        process_npc_attack(npc_participation, decision.target, decision.params)
+        process_npc_attack(npc_participation, decision.target, decision_params)
       end
     end
 
@@ -232,12 +238,15 @@ module Arena
       # End match messages
       case reason
       when :timeout
-        # "Бой закончен по таймауту" - "Fight ended by timeout"
         log_entry("timeout", nil, "Fight ended by timeout")
       when :forfeit
         log_entry("system", nil, "Match ended by forfeit")
       else
         if winning_team
+          if npc_fight?
+            winner_name = match.arena_participations.find_by(team: winning_team)&.participant_name
+            log_entry("victory", nil, "Victory for #{winner_name}.") if winner_name.present?
+          end
           log_entry("victory", nil, "Match ended! Winner: Team #{winning_team.upcase}")
         else
           log_entry("draw", nil, "Match ended in a draw!")
@@ -527,6 +536,10 @@ module Arena
 
       damage = resolution[:damage]
       critical = resolution[:critical]
+      if resolution[:block_attempted]
+        clear_blocking_state(target)
+        log_entry("block_failed", target, "#{target.name} tried to block attack (#{body_part}) from #{attacker.name}, but it broke through")
+      end
 
       # Apply damage
       target.current_hp = [target.current_hp - damage, 0].max
@@ -589,6 +602,10 @@ module Arena
 
       damage = resolution[:damage]
       critical = resolution[:critical]
+      if resolution[:block_attempted]
+        clear_npc_blocking_state(npc_participation)
+        log_entry("block_failed", nil, "#{npc.name} tried to block attack (#{body_part}) from #{attacker.name}, but it broke through")
+      end
 
       # Apply damage to NPC
       new_hp = [npc_participation.current_hp - damage, 0].max
@@ -609,7 +626,7 @@ module Arena
 
       # Check for NPC defeat
       if new_hp <= 0
-        handle_npc_defeat(npc_participation)
+        handle_npc_defeat(npc_participation, defeated_by: attacker)
         end_match if should_end?
       end
 
@@ -699,10 +716,11 @@ module Arena
       )
     end
 
-    def handle_npc_defeat(npc_participation)
+    def handle_npc_defeat(npc_participation, defeated_by: nil)
       npc = npc_participation.npc_template
       npc_participation.update!(result: "defeat", ended_at: Time.current)
       log_entry("defeat", nil, "#{npc.name} has been defeated!")
+      log_entry("loot", defeated_by, npc_loot_result_message(npc, defeated_by)) if defeated_by
 
       ActionCable.server.broadcast(
         match.broadcast_channel,
@@ -712,6 +730,13 @@ module Arena
           npc_id: npc.id
         }
       )
+    end
+
+    def npc_loot_result_message(npc, defeated_by)
+      loot_table = Array(npc.loot_table)
+      return "#{defeated_by.name} searched #{npc.name}. Result: nothing found." if loot_table.empty?
+
+      "#{defeated_by.name} searched #{npc.name}. Loot check completed."
     end
 
     def process_defend(character, block_parts: nil, block_key: nil)
@@ -865,7 +890,7 @@ module Arena
         log_entry("damage", character, "#{character.name} uses #{config['name']} on #{npc.name} for -#{damage} [#{target_participation.current_hp}/#{target_participation.max_hp}]")
         broadcast_npc_vitals_update(target_participation)
         broadcaster.broadcast_combat_action(character, "skill", nil, damage, skill_name: config["name"], npc_target: npc.name)
-        handle_npc_defeat(target_participation) if target_participation.current_hp <= 0
+        handle_npc_defeat(target_participation, defeated_by: character) if target_participation.current_hp <= 0
       else
         target = target_participation.character
         return failure("Cannot attack ally") if same_team?(character, target)
@@ -1260,9 +1285,7 @@ module Arena
     end
 
     def attack_penalty(attack_count)
-      penalties = Game::Combat::ActionCatalog.config["attack_penalties"] || []
-      penalty_entry = penalties.find { |entry| entry["attacks"].to_i == attack_count }
-      penalty_entry&.dig("penalty").to_i
+      Game::Combat::ActionCatalog.attack_penalty(attack_count)
     end
 
     def validate_turn_actions(attacks, blocks, skills, actor: nil)
@@ -1506,6 +1529,30 @@ module Arena
       process_npc_turn
     end
 
+    def process_npc_attack_sequence(npc_participation, target, attacks, base_params = {})
+      results = []
+
+      Array(attacks).each do |attack|
+        break if should_end?
+        break if npc_participation.reload.current_hp <= 0
+
+        attack_data = normalized_hash(attack)
+        params = base_params.merge(
+          body_part: attack_data[:body_part] || base_params[:body_part] || "torso",
+          attack_type: attack_data[:action_key] || attack_data[:attack_type] || base_params[:attack_type] || "simple"
+        )
+
+        result = process_npc_attack(npc_participation, target, params)
+        break unless result&.success?
+
+        results << result.data
+        target.reload if target.respond_to?(:reload)
+        break if target.respond_to?(:current_hp) && target.current_hp <= 0
+      end
+
+      success(npc_turn: true, attacks: results)
+    end
+
     # Process NPC attack action
     def process_npc_attack(npc_participation, target, params)
       npc = npc_participation.npc_template
@@ -1542,6 +1589,10 @@ module Arena
 
       damage = resolution[:damage]
       critical = resolution[:critical]
+      if resolution[:block_attempted]
+        clear_blocking_state(target)
+        log_entry("block_failed", target, "#{target.name} tried to block attack (#{body_part}) from #{npc.name}, but it broke through")
+      end
 
       # Apply damage to player
       target.current_hp = [target.current_hp - damage, 0].max

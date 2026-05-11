@@ -68,6 +68,29 @@ Engineering:
 - `doc/engineering/rails_guide.md`
 - `doc/engineering/gameplay_architecture.md`
 
+## Active Follow-Up Threads
+
+The arena/combat first loop now has enough local implementation to support NPC
+training fights and captured-style bot responses. The next design and
+implementation passes should keep these documents aligned:
+
+- `doc/design/features/combat.md` - canonical AP, target, block, NPC response,
+  combat log, and result-step rules.
+- `doc/design/areas/arena.md` - room/application UX, NPC training rows,
+  PvP waiting, and return-to-arena behavior.
+- `doc/design/features/movement.md` plus
+  `doc/flow/neverlands_live_movement.md` - city/world movement and wilderness
+  ambush handoff into the shared combat screen.
+- `doc/design/features/npcs_quests.md` - NPC templates, arena bots, wilderness
+  attackers, loot checks, and behavior tuning.
+- `doc/design/features/items_inventory_equipment.md` - equipment family effects
+  on AP, attack cost, defense, shield block tables, and visible stat
+  breakdowns.
+
+When adding live-analysis notes, keep reusable mechanics in `doc/design/` and
+raw observation details in `doc/flow/` or `doc/design/reference/`. Do not store
+live session tokens, passwords, or finish/challenge codes in tracked docs.
+
 ## Adding New Design Docs
 
 Create new game-design documents under `doc/design/features/` or

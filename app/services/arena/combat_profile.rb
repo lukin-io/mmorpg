@@ -81,7 +81,7 @@ module Arena
         "simple_attack_cost" => seed,
         "aimed_attack_cost" => seed + AIMED_ATTACK_SURCHARGE,
         "max_magic_mana" => magic_limit,
-        "block_table" => stored_profile["block_table"].presence || derived_block_table
+        "block_table" => stored_profile["block_table"].presence || match_profile["block_table"].presence || derived_block_table
       }
     end
 
@@ -93,12 +93,23 @@ module Arena
       @stored_profile ||= (participation&.metadata || {}).fetch(METADATA_KEY, {})
     end
 
+    def match_profile
+      @match_profile ||= (participation&.arena_match&.metadata || {}).fetch(METADATA_KEY, {})
+    end
+
     def explicit_integer(key)
       value = stored_profile[key.to_s]
       value = participation&.metadata&.dig(key.to_s) if value.blank?
+      value = match_profile[key.to_s] if value.blank? && match_profile_applies_to_key?(key)
       value = participant_character&.metadata&.dig(METADATA_KEY, key.to_s) if value.blank?
       value = participant_character&.metadata&.dig(key.to_s) if value.blank?
       integer_value(value)
+    end
+
+    def match_profile_applies_to_key?(key)
+      return true unless participation&.npc?
+
+      %w[ap_limit action_points_per_turn max_magic_mana magic_mana_limit].include?(key.to_s)
     end
 
     def integer_value(value)
