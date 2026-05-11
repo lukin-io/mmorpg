@@ -65,19 +65,18 @@
 
   <%# Stats (shown for opponent) %>
   <% if show_stats %>
-    <div class="fighter-stats">
-      <div class="fighter-stat" title="Strength">
-        <span class="stat-icon">💪</span>
-        <span class="stat-value"><%= p_data.strength %></span>
-      </div>
-      <div class="fighter-stat" title="Dexterity">
-        <span class="stat-icon">🏃</span>
-        <span class="stat-value"><%= p_data.dexterity %></span>
-      </div>
-      <div class="fighter-stat" title="Luck">
-        <span class="stat-icon">🍀</span>
-        <span class="stat-value"><%= p_data.luck %></span>
-      </div>
+    <div class="fighter-stats fighter-stats--nl">
+      <div>Сила: <b><%= p_data.strength %></b></div>
+      <div>Ловкость: <b><%= p_data.dexterity %></b></div>
+      <div>Удача: <b><%= p_data.luck %></b></div>
+      <div>Знания: <b><%= p_data.knowledge %></b></div>
+      <div>Мудрость: <b><%= p_data.wisdom %></b></div>
+      <div>Класс брони: <b><%= p_data.armor_class %></b></div>
+      <div>Уворот: <b><%= p_data.evasion %></b></div>
+      <div>Точность: <b><%= p_data.accuracy %></b></div>
+      <div>Сокрушение: <b><%= p_data.crushing %></b></div>
+      <div>Стойкость: <b><%= p_data.endurance %></b></div>
+      <div>Пробой брони: <b><%= p_data.armor_penetration %></b></div>
     </div>
   <% end %>
 

@@ -40,7 +40,6 @@ module AlignmentHelper
     duel: "⚔️",
     group: "👥",
     sacrifice: "💀",
-    tactical: "🎯",
     unarmed: "🥊",
     clan_vs_clan: "🏰",
     faction_vs_faction: "⚔️"

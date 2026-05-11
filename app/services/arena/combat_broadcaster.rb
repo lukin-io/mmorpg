@@ -282,6 +282,15 @@ module Arena
       })
     end
 
+    def broadcast_timeout_claim_available
+      broadcast({
+        type: "timeout_claim_available",
+        message: "Timeout controls are available.",
+        turn_number: match.current_turn_number,
+        timestamp: Time.current.strftime("%H:%M:%S")
+      })
+    end
+
     # Broadcast to spectators only
     #
     # @param data [Hash] the data to broadcast

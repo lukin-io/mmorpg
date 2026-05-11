@@ -600,8 +600,31 @@ class Character < ApplicationRecord
         dexterity: critical_dexterity,
         luck: critical_luck,
         total: [critical_base + critical_dexterity + critical_luck, 50].min
-      }
+      },
+      equipment_items: equipment_family_breakdown
     }
+  end
+
+  # Item-family combat contribution used by the arena combat UI and formulas.
+  #
+  # The family is taken from item metadata when present and inferred from the
+  # item name/slot otherwise, so seeded items and captured item templates can
+  # both participate in combat calculations.
+  def equipment_family_breakdown
+    return [] unless inventory
+
+    inventory.inventory_items.equipped.includes(:item_template).map do |item|
+      template = item.item_template
+      family = equipment_item_family(item)
+
+      {
+        name: template&.name,
+        slot: template&.slot,
+        family:,
+        attack: equipment_combat_component(item, "attack"),
+        defense: equipment_combat_component(item, "defense")
+      }
+    end
   end
 
   # Get agility stat for initiative and flee calculations
@@ -705,7 +728,7 @@ class Character < ApplicationRecord
     return 0 unless inventory
 
     inventory.inventory_items.equipped.includes(:item_template).sum do |item|
-      item.item_template&.stat_modifiers&.fetch("attack", 0).to_i
+      equipment_combat_component(item, "attack")
     end
   end
 
@@ -716,8 +739,63 @@ class Character < ApplicationRecord
     return 0 unless inventory
 
     inventory.inventory_items.equipped.includes(:item_template).sum do |item|
-      item.item_template&.stat_modifiers&.fetch("defense", 0).to_i
+      equipment_combat_component(item, "defense")
     end
+  end
+
+  def equipment_combat_component(item, stat_key)
+    template = item.item_template
+    stats = template&.stat_modifiers.to_h
+    base = (stats[stat_key.to_s] || stats[stat_key.to_sym]).to_i
+    return 0 if base.zero?
+
+    enhancement_bonus = item.enhancement_level.to_i
+    multiplier = equipment_family_multiplier(equipment_item_family(item), stat_key)
+    ((base + enhancement_bonus) * multiplier).round
+  end
+
+  def equipment_item_family(item)
+    template = item.item_template
+    stats = template&.stat_modifiers.to_h
+    explicit = stats["family"] || stats[:family] || stats["weapon_family"] || stats[:weapon_family] ||
+      item.properties&.dig("family") || item.properties&.dig("weapon_family")
+    return explicit.to_s if explicit.present?
+
+    name = template&.name.to_s.downcase
+    return "axe" if name.include?("axe")
+    return "mace" if name.include?("mace") || name.include?("hammer")
+    return "dagger" if name.include?("dagger") || name.include?("knife")
+    return "bow" if name.include?("bow")
+    return "staff" if name.include?("staff") || name.include?("wand")
+    return "sword" if name.include?("sword") || name.include?("blade")
+    return "shield" if template&.slot == "off_hand"
+    return "armor" if %w[head chest legs feet hands].include?(template&.slot)
+
+    "generic"
+  end
+
+  def equipment_family_multiplier(family, stat_key)
+    multipliers = {
+      "attack" => {
+        "axe" => 1.15,
+        "mace" => 1.1,
+        "sword" => 1.0,
+        "bow" => 0.95,
+        "dagger" => 0.9,
+        "staff" => 0.75,
+        "shield" => 0.35,
+        "armor" => 0.0,
+        "generic" => 1.0
+      },
+      "defense" => {
+        "armor" => 1.15,
+        "shield" => 1.2,
+        "staff" => 0.4,
+        "generic" => 1.0
+      }
+    }
+
+    multipliers.fetch(stat_key.to_s, {}).fetch(family.to_s, 1.0)
   end
 
   # Get skill bonus from equipped items for a specific skill

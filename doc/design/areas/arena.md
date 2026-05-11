@@ -117,33 +117,55 @@ JSON action keys if they preserve the same authorization contract.
 Implemented arena combat now follows the captured Neverlands shape for the
 first playable loop:
 
+- The primary arena entry is the city hotspot/building path. Direct arena room
+  and application screens require that city entry session unless the character
+  is already in an active arena match.
+- The arena lobby uses a compact frame model: character/vitals strip, frame
+  controls, filter/status row, NL tab labels, room scheme, and dense room rows.
+- The room screen uses inline application controls and side-based application
+  rows (`side one` vs `no opponents`) instead of card-heavy lobby rows.
 - `Arena::CombatProcessor` uses the shared 80 AP turn budget.
 - Arena simple and aimed attacks cost 45/65 AP and apply body-part damage
   multipliers.
+- Starter magic attack entries include `Spirit Arrow` and `Mind Blast`, matching
+  the captured fight selector costs.
 - Arena block actions use body-part coverage with the captured 30/35/50/60/80
   AP costs and consume the block when it catches an incoming hit.
 - Player damage and defense use `Character#attack_power` and
   `Character#defense`, so level and equipped item modifiers affect the fight.
+- Character combat-power breakdown now includes equipped item-family
+  contributions so weapons, shields, and armor can be balanced separately.
 - NPC training fights use the same target/block/damage path.
 - The match screen uses a three-zone combat frame: current fighter, center
-  turn composer plus log, and opponent. It shows AP, attack type, body target,
-  one block selector, participant HP/MP, attack/defense totals, and live log
-  entries.
-- The active match UI now submits a single turn package instead of isolated
-  instant buttons: selected attack, selected target body part, optional block
-  coverage, target id, and server-side AP validation.
+  turn composer plus log, and opponent. It shows AP, four attack selectors,
+  four block selectors with one active block, magic/action slots, participant
+  HP/MP, attack/defense totals, and live log entries.
+- The active match UI now submits a single turn package: up to four body-part
+  attack selectors, one active block selector, magic/action slots, target id,
+  server-side AP/MP validation, and NL turn-shape validation.
+- Player-vs-player arena turns wait after submission. The server stores each
+  live player's pending turn package, broadcasts the waiting state, and resolves
+  the round only after all live player participants have submitted.
+- If a player has submitted the current round and the opponent misses the turn
+  timer, the match stays in the waiting state and exposes timeout resolution:
+  victory by timeout or draw.
 - Arena fallback controller actions and ActionCable submissions both preserve
   attack type, body part, block coverage, and full turn packages.
 - NPC training fight broadcasts update the same center log and fighter HP
   panels as player-vs-player actions.
+- Tactical grid and totalizator routes, views, controllers, models, styles, and
+  tables are removed from the player-facing arena surface; their NL tabs remain
+  disabled labels until those modes are implemented from live references.
+- The old `/arena_matches` queue/create page is removed. Arena matches are
+  created by accepting room applications, while match show/action/log routes
+  remain available for active participants and spectators.
 
 Still not first-loop canonical:
 
-- tactical grid arena UI;
-- betting/totalizator;
 - tournament/live-ops screens;
-- exact Neverlands item-family formulas beyond the current level/equipment
-  combat-power breakdown.
+- exact Neverlands item-family formulas beyond captured visible stat categories;
+  current item-family metadata hooks are provisional until dedicated item
+  captures expose the hidden server formulas.
 
 ## Fight Types
 
@@ -229,7 +251,6 @@ Services, jobs, and channels:
 Views and JavaScript:
 
 - `app/views/arena/index.html.erb`
-- `app/views/arena_rooms/index.html.erb`
 - `app/views/arena_rooms/show.html.erb`
 - `app/views/arena_applications/_application.html.erb`
 - `app/views/arena_applications/_list.html.erb`

@@ -1015,8 +1015,8 @@ Example: 1_7_0 = Torso block, type 7 (Торс (30)), 0 mana
 | Дуэли | Duels | 1v1 combat |
 | Групповые | Group | Team battles |
 | Жертвенные | Sacrificial | Special mode |
-| Тактические | Tactical | Grid-based tactical combat |
-| Тотализатор | Betting | Spectator betting |
+| Тактические | Tactical | Disabled label only in the captured arena frame |
+| Тотализатор | Betting | Disabled label only in the captured arena frame |
 | Статистика | Statistics | Fight history & rankings |
 
 ---
@@ -1315,8 +1315,8 @@ Each application row shows icons for:
 | Дуэли | Duels | 1v1 fights |
 | Групповые | Group | Team battles |
 | Жертвенные | Sacrificial | Special sacrifice mode |
-| Тактические | Tactical | Grid-based tactical |
-| Тотализатор | Betting | Spectator gambling |
+| Тактические | Tactical | Disabled label only in the captured arena frame |
+| Тотализатор | Betting | Disabled label only in the captured arena frame |
 | Статистика | Statistics | Rankings & history |
 
 ### Elselands Implementation Gaps Identified

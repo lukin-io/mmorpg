@@ -36,9 +36,17 @@ module Game
           "defaults" => {"action_points_per_turn" => DEFAULT_AP_PER_TURN, "max_mana_per_attack" => 50},
           "attack_types" => {
             "simple" => {"name" => "Simple Attack", "action_cost" => 45, "damage_multiplier" => 1.0, "hit_bonus" => 0},
-            "aimed" => {"name" => "Aimed Attack", "action_cost" => 65, "damage_multiplier" => 1.2, "hit_bonus" => 15}
+            "aimed" => {"name" => "Aimed Attack", "action_cost" => 65, "damage_multiplier" => 1.2, "hit_bonus" => 15},
+            "spirit_arrow" => {"name" => "Spirit Arrow", "action_cost" => 50, "mana_cost" => 5, "damage_multiplier" => 1.05, "hit_bonus" => 5, "element" => "arcane"},
+            "mind_blast" => {"name" => "Mind Blast", "action_cost" => 90, "mana_cost" => 5, "damage_multiplier" => 1.35, "hit_bonus" => 10, "element" => "mind"}
           },
           "block_types" => standard_blocks_config,
+          "magic_types" => {
+            "magic_shield" => {"name" => "Magic Shield", "action_cost" => 45, "mana_cost" => 20, "type" => 3, "effect" => "shield"},
+            "rainbow_barrier" => {"name" => "Rainbow Barrier", "action_cost" => 60, "mana_cost" => 40, "type" => 3, "effect" => "barrier"},
+            "hp_restore" => {"name" => "HP Restoration", "action_cost" => 30, "mana_cost" => 0, "type" => 4, "effect" => "heal_hp", "amount" => 30},
+            "mp_restore" => {"name" => "MP Restoration", "action_cost" => 30, "mana_cost" => 0, "type" => 4, "effect" => "heal_mp", "amount" => 20}
+          },
           "attack_penalties" => [
             {"attacks" => 0, "penalty" => 0},
             {"attacks" => 1, "penalty" => 0},
@@ -81,6 +89,10 @@ module Game
         attack_config(action_key, combat_config).fetch("hit_bonus", 0).to_i
       end
 
+      def attack_mana_cost(action_key, combat_config = config)
+        attack_config(action_key, combat_config).fetch("mana_cost", 0).to_i
+      end
+
       def block_cost(action_key: nil, body_parts: nil, combat_config: config)
         configured = block_config(action_key, combat_config)
         return configured["action_cost"].to_i if configured.present?
@@ -94,6 +106,20 @@ module Game
         combat_config.dig("block_types", action_key.to_s) ||
           combat_config.dig("attack_types", action_key.to_s) ||
           {}
+      end
+
+      def magic_config(action_key, combat_config = config)
+        return {} if action_key.blank?
+
+        combat_config.dig("magic_types", action_key.to_s) || {}
+      end
+
+      def magic_cost(action_key, combat_config = config)
+        magic_config(action_key, combat_config).fetch("action_cost", 0).to_i
+      end
+
+      def magic_mana_cost(action_key, combat_config = config)
+        magic_config(action_key, combat_config).fetch("mana_cost", 0).to_i
       end
 
       def standard_block_for_parts(parts)

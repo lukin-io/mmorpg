@@ -7690,301 +7690,6 @@ turbo-frame[busy] {
 }
 
 /* ==========================================================================
-   TACTICAL ARENA STYLES
-   ========================================================================== */
-
-.tactical-arena-lobby {
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-.tactical-layout {
-  display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: var(--nl-space-lg);
-}
-
-.tactical-grid-container {
-  background: var(--nl-bg-dark);
-  border: 2px solid var(--nl-border);
-  border-radius: var(--nl-radius);
-  padding: var(--nl-space-md);
-  overflow: auto;
-}
-
-.tactical-grid {
-  display: grid;
-  grid-template-columns: repeat(var(--grid-size, 8), 50px);
-  gap: 2px;
-  margin: 0 auto;
-}
-
-.grid-row {
-  display: contents;
-}
-
-.grid-tile {
-  width: 50px;
-  height: 50px;
-  background: var(--nl-bg);
-  border: 1px solid var(--nl-border);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.grid-tile:hover {
-  background: rgba(212, 175, 55, 0.1);
-  border-color: var(--nl-gold);
-}
-
-.grid-tile.obstacle {
-  background: #2a1a0a;
-  cursor: not-allowed;
-}
-
-.grid-tile.cover {
-  background: rgba(0, 100, 0, 0.3);
-}
-
-.grid-tile.valid-move {
-  background: rgba(212, 175, 55, 0.2);
-  border-color: var(--nl-gold);
-}
-
-.grid-tile.valid-move::after {
-  content: "";
-  position: absolute;
-  width: 20px;
-  height: 20px;
-  border: 2px solid var(--nl-gold);
-  border-radius: 50%;
-  animation: pulse 1s infinite;
-}
-
-.character-marker {
-  font-size: 1.5rem;
-  position: relative;
-}
-
-.character-marker.own {
-  filter: drop-shadow(0 0 4px #4a9);
-}
-
-.character-marker.enemy {
-  filter: drop-shadow(0 0 4px #a44);
-}
-
-.character-marker.defeated {
-  opacity: 0.3;
-}
-
-.mini-hp-bar {
-  position: absolute;
-  bottom: -8px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 30px;
-  height: 4px;
-  background: #333;
-  border-radius: 2px;
-  overflow: hidden;
-}
-
-.mini-hp-bar .hp-fill {
-  height: 100%;
-  background: linear-gradient(90deg, #a33, #e44);
-}
-
-.move-indicator {
-  font-size: 0.8rem;
-  color: var(--nl-gold);
-  opacity: 0.8;
-}
-
-.participant-card {
-  padding: var(--nl-space-md);
-  margin-bottom: var(--nl-space-sm);
-  border-radius: var(--nl-radius);
-  border: 1px solid var(--nl-border);
-}
-
-.participant-card.own {
-  border-color: #4a9;
-  background: rgba(68, 170, 153, 0.1);
-}
-
-.participant-card.enemy {
-  border-color: #a44;
-  background: rgba(170, 68, 68, 0.1);
-}
-
-.participant-card.defeated {
-  opacity: 0.5;
-}
-
-.participant-buffs {
-  display: flex;
-  gap: var(--nl-space-xs);
-  flex-wrap: wrap;
-  margin-top: var(--nl-space-sm);
-}
-
-.buff-badge {
-  font-size: 0.7rem;
-  padding: 2px 6px;
-  background: rgba(212, 175, 55, 0.2);
-  border-radius: 3px;
-  color: var(--nl-gold);
-}
-
-.combat-log-panel {
-  max-height: 300px;
-  overflow-y: auto;
-}
-
-.log-entry {
-  padding: var(--nl-space-xs) var(--nl-space-sm);
-  font-size: 0.85rem;
-  border-bottom: 1px solid var(--nl-border);
-}
-
-.log-entry--attack {
-  color: #f88;
-}
-
-.log-entry--skill {
-  color: #8af;
-}
-
-.log-entry--movement {
-  color: var(--nl-text-muted);
-}
-
-.turn-info {
-  display: flex;
-  gap: var(--nl-space-md);
-  align-items: center;
-}
-
-.current-turn.my-turn {
-  color: var(--nl-gold);
-  font-weight: bold;
-}
-
-.match-result-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.85);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-
-.match-result {
-  text-align: center;
-  padding: var(--nl-space-xl);
-}
-
-.match-result .victory {
-  color: var(--nl-gold);
-  font-size: 2rem;
-}
-
-.match-result .defeat {
-  color: #a44;
-  font-size: 2rem;
-}
-
-/* ==========================================================================
-   BETTING/TOTALIZATOR STYLES
-   ========================================================================== */
-
-.arena-betting {
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-.betting-layout {
-  display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: var(--nl-space-lg);
-}
-
-.pool-overview h2 {
-  color: var(--nl-gold);
-  font-size: 1.5rem;
-}
-
-.odds-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: var(--nl-space-md);
-  margin-top: var(--nl-space-lg);
-}
-
-.odds-card {
-  background: var(--nl-bg-dark);
-  padding: var(--nl-space-lg);
-  border-radius: var(--nl-radius);
-  text-align: center;
-}
-
-.odds-display {
-  margin: var(--nl-space-md) 0;
-}
-
-.odds-value {
-  font-size: 2rem;
-  font-weight: bold;
-  color: var(--nl-gold);
-}
-
-.odds-label {
-  display: block;
-  font-size: 0.8rem;
-  color: var(--nl-text-muted);
-}
-
-.bets-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.9rem;
-}
-
-.bets-table th,
-.bets-table td {
-  padding: var(--nl-space-sm);
-  border-bottom: 1px solid var(--nl-border);
-  text-align: left;
-}
-
-.bets-table .my-bet {
-  background: rgba(212, 175, 55, 0.1);
-}
-
-.betting-panel .bet-form {
-  display: flex;
-  flex-direction: column;
-  gap: var(--nl-space-md);
-}
-
-.betting-rules ul {
-  list-style: none;
-  padding: 0;
-  font-size: 0.85rem;
-}
-
-.betting-rules li {
-  padding: var(--nl-space-xs) 0;
-  color: var(--nl-text-muted);
-}
-
-/* ==========================================================================
    DUNGEON STYLES
    ========================================================================== */
 
@@ -12467,4 +12172,246 @@ turbo-frame[busy] {
   padding: 2px 6px;
   border-radius: 4px;
   font-weight: bold;
+}
+
+/* ==========================================================================
+   NEVERLANDS-STYLE ARENA FRAME
+   ========================================================================== */
+
+.nl-arena-frame {
+  font-family: var(--nl-font-primary);
+  font-size: 12px;
+  color: var(--nl-text);
+  background: var(--nl-bg-primary);
+  border: 1px solid var(--nl-border-dark);
+}
+
+.nl-arena-topline,
+.nl-arena-status-row,
+.nl-arena-room-heading,
+.nl-arena-current-row,
+.nl-arena-application-form,
+.nl-fight-budget,
+.nl-fight-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 5px 8px;
+  background: var(--nl-bg-tertiary);
+  border-bottom: 1px solid var(--nl-border);
+}
+
+.nl-arena-character {
+  font-weight: 700;
+}
+
+.nl-arena-vitals {
+  margin-left: 8px;
+  color: var(--nl-text-muted);
+  font-weight: 400;
+}
+
+.nl-arena-controls,
+.nl-arena-tabs {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.nl-arena-link,
+.nl-arena-filter,
+.nl-arena-small-button,
+.nl-arena-tab {
+  color: var(--nl-text-link);
+  text-decoration: none;
+}
+
+.nl-arena-link,
+.nl-arena-small-button,
+.nl-arena-tab,
+.nl-arena-select,
+.nl-arena-mini-input,
+.nl-fight-select {
+  border: 1px solid var(--nl-border-medium);
+  background: var(--nl-bg-primary);
+  font: inherit;
+  padding: 2px 5px;
+}
+
+.nl-arena-link--button,
+.nl-arena-small-button,
+.nl-arena-tab {
+  cursor: pointer;
+}
+
+.nl-arena-link--current,
+.nl-arena-tab--active {
+  background: var(--nl-bg-tertiary);
+  color: var(--nl-text-primary);
+  font-weight: 700;
+}
+
+.nl-arena-tab--disabled,
+.nl-arena-muted {
+  color: var(--nl-text-muted);
+}
+
+.nl-arena-tabs {
+  padding: 4px 8px;
+  background: var(--nl-bg-secondary);
+  border-bottom: 1px solid var(--nl-border);
+}
+
+.nl-arena-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--nl-bg-primary);
+}
+
+.nl-arena-table th,
+.nl-arena-table td {
+  border: 1px solid var(--nl-border-light);
+  padding: 4px 5px;
+  vertical-align: middle;
+}
+
+.nl-arena-table th {
+  background: var(--nl-bg-tertiary);
+  font-weight: 700;
+}
+
+.nl-arena-room-scheme.hidden {
+  display: none;
+}
+
+.nl-arena-room-cell {
+  width: 20%;
+  text-align: center;
+}
+
+.nl-arena-room-cell--locked,
+.nl-arena-row--locked {
+  opacity: 0.62;
+}
+
+.nl-arena-row--own {
+  background: var(--nl-info-bg);
+}
+
+.nl-arena-row--npc {
+  background: var(--nl-bg-secondary);
+}
+
+.nl-arena-inline-form {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px;
+  width: 100%;
+}
+
+.nl-arena-mini-input {
+  width: 44px;
+}
+
+.nl-arena-empty,
+.nl-arena-search,
+.nl-arena-recent,
+.nl-arena-active-matches {
+  padding: 8px;
+}
+
+.nl-arena-recent-row {
+  padding: 3px 0;
+  border-top: 1px solid var(--nl-border-light);
+}
+
+.nl-fight-controls {
+  justify-content: flex-start;
+}
+
+.nl-fight-budget {
+  justify-content: flex-start;
+}
+
+.nl-fight-budget span {
+  margin-left: 16px;
+}
+
+.nl-fight-magic-slots {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
+  gap: 4px;
+  padding: 6px;
+  background: var(--nl-bg-secondary);
+  border-bottom: 1px solid var(--nl-border);
+}
+
+.nl-fight-magic-slot {
+  min-height: 42px;
+  border: 1px solid var(--nl-border-medium);
+  background: var(--nl-bg-primary);
+  color: var(--nl-text);
+  font: inherit;
+  text-align: left;
+  padding: 3px 5px;
+  cursor: pointer;
+}
+
+.nl-fight-magic-slot small {
+  display: block;
+  color: var(--nl-text-muted);
+}
+
+.nl-fight-magic-slot--active {
+  background: var(--nl-warning-bg);
+  border-color: var(--nl-warning);
+}
+
+.nl-fight-selector-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 6px;
+}
+
+.nl-fight-selector-table th,
+.nl-fight-selector-table td {
+  border: 1px solid var(--nl-border-light);
+  padding: 3px;
+}
+
+.nl-fight-select {
+  width: 100%;
+}
+
+.nl-fight-turn-composer {
+  display: block;
+  padding: 6px;
+}
+
+.nl-fight-wait-panel {
+  padding: 8px;
+  text-align: center;
+}
+
+.nl-fight-wait-state {
+  color: #cc0000;
+  margin-bottom: 6px;
+}
+
+.nl-fight-wait-actions {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.fighter-stats--nl {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px 6px;
+  text-align: left;
+  font-size: 11px;
 }

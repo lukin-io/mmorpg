@@ -20,8 +20,7 @@ class ArenaApplication < ApplicationRecord
   FIGHT_TYPES = {
     duel: 0,        # 1v1 combat
     team_battle: 1, # Team vs Team (renamed from 'group' to avoid ActiveRecord conflict)
-    sacrifice: 2,   # Free-for-all melee
-    tactical: 3     # Strategy-based with positioning
+    sacrifice: 2    # Free-for-all melee
   }.freeze
 
   FIGHT_KINDS = {

@@ -21,8 +21,7 @@ module ArenaHelper
   FIGHT_TYPE_CONFIG = {
     duel: {emoji: "⚔️", label: "1v1 Duel"},
     team_battle: {emoji: "👥", label: "Team Battle"},
-    sacrifice: {emoji: "💀", label: "Free-for-All"},
-    tactical: {emoji: "🎯", label: "Tactical Grid"}
+    sacrifice: {emoji: "💀", label: "Free-for-All"}
   }.freeze
 
   # Fight kind configuration with icons
@@ -162,7 +161,8 @@ module ArenaHelper
     :current_hp, :max_hp, :current_mp, :max_mp,
     :hp_percent, :mp_percent,
     :strength, :dexterity, :luck, :knowledge, :wisdom,
-    :attack_power, :defense,
+    :attack_power, :defense, :armor_class, :evasion,
+    :accuracy, :crushing, :endurance, :armor_penetration,
     keyword_init: true
   )
 
@@ -270,7 +270,13 @@ module ArenaHelper
       knowledge: stats[:knowledge] || 0,
       wisdom: stats[:wisdom] || 0,
       attack_power: stats[:attack_power] || stats[:attack] || 0,
-      defense: stats[:defense] || 0
+      defense: stats[:defense] || 0,
+      armor_class: stats[:armor_class] || stats[:defense] || 0,
+      evasion: stats[:evasion] || stats[:dexterity].to_i / 2,
+      accuracy: stats[:accuracy] || stats[:dexterity].to_i,
+      crushing: stats[:crushing] || stats[:luck].to_i,
+      endurance: stats[:endurance] || stats[:vitality].to_i,
+      armor_penetration: stats[:armor_penetration] || 0
     )
   end
 
@@ -347,6 +353,26 @@ module ArenaHelper
     participation&.team
   end
 
+  def current_user_arena_participation(match = @arena_match)
+    return nil unless match && current_user
+
+    match.arena_participations.find_by(user: current_user)
+  end
+
+  def current_user_pending_arena_turn?(match = @arena_match)
+    participation = current_user_arena_participation(match)
+    return false unless participation
+
+    pending_turn = participation.metadata&.dig("pending_turn")
+    return false unless pending_turn.present?
+
+    pending_turn["turn_number"].to_i == (match.current_turn_number || 1).to_i
+  end
+
+  def arena_timeout_claim_available?(match = @arena_match)
+    match&.live? && match.turn_timed_out? && current_user_pending_arena_turn?(match)
+  end
+
   # Get opponent's combat-relevant stats for display
   # Shows: Strength, Dexterity, Luck, Knowledge, Wisdom
   #
@@ -377,7 +403,13 @@ module ArenaHelper
       wisdom: stats.get(:wisdom) || 1,
       attack: character.attack_power,
       attack_power: character.attack_power,
-      defense: character.defense
+      defense: character.defense,
+      armor_class: character.defense,
+      evasion: character.agility / 2,
+      accuracy: stats.get(:dexterity).to_i,
+      crushing: character.critical_chance,
+      endurance: stats.get(:vitality).to_i,
+      armor_penetration: character.equipment_family_breakdown.sum { |item| item[:family] == "axe" ? item[:attack] / 5 : 0 }
     }.compact
   end
 
@@ -399,7 +431,13 @@ module ArenaHelper
         wisdom: config_stats[:wisdom] || 1,
         attack: config_stats[:attack],
         attack_power: config_stats[:attack],
-        defense: config_stats[:defense]
+        defense: config_stats[:defense],
+        armor_class: config_stats[:defense],
+        evasion: config_stats[:agility].to_i / 2,
+        accuracy: config_stats[:agility],
+        crushing: config_stats[:crit_chance] || 5,
+        endurance: config_stats[:hp],
+        armor_penetration: config_stats[:armor_penetration] || 0
       }.compact
     end
 
@@ -413,7 +451,13 @@ module ArenaHelper
       wisdom: 1,
       attack: npc.metadata&.dig("base_damage") || (level * 3 + 5),
       attack_power: npc.metadata&.dig("base_damage") || (level * 3 + 5),
-      defense: level * 2 + 3
+      defense: level * 2 + 3,
+      armor_class: level * 2 + 3,
+      evasion: level / 2,
+      accuracy: level + 5,
+      crushing: 5 + (level / 5),
+      endurance: npc.health,
+      armor_penetration: 0
     }
   end
 

@@ -4,6 +4,7 @@
 class ArenaController < ApplicationController
   before_action :authenticate_user!
   before_action :require_character
+  before_action :require_city_arena_entry!
 
   # GET /arena
   # Arena lobby showing all rooms
@@ -11,7 +12,7 @@ class ArenaController < ApplicationController
     # Check if user is already in an active match - redirect them there
     active_participation = current_character.arena_participations
       .joins(:arena_match)
-      .where(arena_matches: {status: [:pending, :live]})
+      .where(arena_matches: {status: [:pending, :matching, :live]})
       .first
 
     if active_participation

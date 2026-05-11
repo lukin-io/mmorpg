@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_09_211000) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_10_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -102,23 +102,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_09_211000) do
     t.index ["matched_with_id"], name: "index_arena_applications_on_matched_with_id"
     t.index ["npc_template_id"], name: "index_arena_applications_on_npc_template_id"
     t.index ["status"], name: "index_arena_applications_on_status"
-  end
-
-  create_table "arena_bets", force: :cascade do |t|
-    t.integer "amount", null: false
-    t.bigint "arena_match_id", null: false
-    t.datetime "created_at", null: false
-    t.integer "currency_type", default: 0, null: false
-    t.integer "payout_amount", default: 0
-    t.bigint "predicted_winner_id", null: false
-    t.integer "status", default: 0, null: false
-    t.datetime "updated_at", null: false
-    t.bigint "user_id", null: false
-    t.index ["arena_match_id", "status"], name: "index_arena_bets_on_arena_match_id_and_status"
-    t.index ["arena_match_id"], name: "index_arena_bets_on_arena_match_id"
-    t.index ["predicted_winner_id"], name: "index_arena_bets_on_predicted_winner_id"
-    t.index ["user_id", "arena_match_id"], name: "index_arena_bets_on_user_id_and_arena_match_id", unique: true
-    t.index ["user_id"], name: "index_arena_bets_on_user_id"
   end
 
   create_table "arena_matches", force: :cascade do |t|
@@ -2084,66 +2067,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_09_211000) do
     t.index ["region_key", "monster_key"], name: "index_spawn_schedules_on_region_key_and_monster_key", unique: true
   end
 
-  create_table "tactical_combat_log_entries", force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.string "log_type", default: "action", null: false
-    t.text "message", null: false
-    t.jsonb "payload", default: {}, null: false
-    t.integer "round_number", default: 1, null: false
-    t.integer "sequence", default: 1, null: false
-    t.bigint "tactical_match_id", null: false
-    t.datetime "updated_at", null: false
-    t.index ["tactical_match_id", "round_number"], name: "idx_on_tactical_match_id_round_number_d3f886a75e"
-    t.index ["tactical_match_id"], name: "index_tactical_combat_log_entries_on_tactical_match_id"
-  end
-
-  create_table "tactical_matches", force: :cascade do |t|
-    t.integer "actions_remaining", default: 3
-    t.bigint "arena_room_id"
-    t.datetime "created_at", null: false
-    t.bigint "creator_id", null: false
-    t.bigint "current_turn_character_id"
-    t.datetime "ended_at"
-    t.datetime "expires_at"
-    t.integer "grid_size", default: 8, null: false
-    t.jsonb "grid_state", default: {}
-    t.string "instance_key"
-    t.bigint "opponent_id"
-    t.datetime "started_at"
-    t.integer "status", default: 0, null: false
-    t.integer "turn_number", default: 1
-    t.datetime "turn_started_at"
-    t.integer "turn_time_limit", default: 60, null: false
-    t.datetime "updated_at", null: false
-    t.bigint "winner_id"
-    t.index ["arena_room_id"], name: "index_tactical_matches_on_arena_room_id"
-    t.index ["creator_id"], name: "index_tactical_matches_on_creator_id"
-    t.index ["instance_key"], name: "index_tactical_matches_on_instance_key", unique: true
-    t.index ["opponent_id"], name: "index_tactical_matches_on_opponent_id"
-    t.index ["status"], name: "index_tactical_matches_on_status"
-    t.index ["winner_id"], name: "index_tactical_matches_on_winner_id"
-  end
-
-  create_table "tactical_participants", force: :cascade do |t|
-    t.boolean "alive", default: true, null: false
-    t.integer "attack_range", default: 1
-    t.jsonb "buff_durations", default: {}
-    t.jsonb "buffs", default: {}
-    t.bigint "character_id", null: false
-    t.datetime "created_at", null: false
-    t.integer "current_hp", null: false
-    t.integer "current_mp", default: 0
-    t.integer "grid_x", default: 0, null: false
-    t.integer "grid_y", default: 0, null: false
-    t.integer "movement_range", default: 3
-    t.bigint "tactical_match_id", null: false
-    t.datetime "updated_at", null: false
-    t.index ["character_id"], name: "index_tactical_participants_on_character_id"
-    t.index ["tactical_match_id", "alive"], name: "index_tactical_participants_on_tactical_match_id_and_alive"
-    t.index ["tactical_match_id", "character_id"], name: "idx_on_tactical_match_id_character_id_7b7c3cb512", unique: true
-    t.index ["tactical_match_id"], name: "index_tactical_participants_on_tactical_match_id"
-  end
-
   create_table "tile_buildings", force: :cascade do |t|
     t.boolean "active", default: true, null: false
     t.string "building_key", null: false
@@ -2391,9 +2314,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_09_211000) do
   add_foreign_key "arena_applications", "arena_rooms"
   add_foreign_key "arena_applications", "characters", column: "applicant_id"
   add_foreign_key "arena_applications", "npc_templates"
-  add_foreign_key "arena_bets", "arena_matches"
-  add_foreign_key "arena_bets", "characters", column: "predicted_winner_id"
-  add_foreign_key "arena_bets", "users"
   add_foreign_key "arena_matches", "arena_rooms"
   add_foreign_key "arena_matches", "arena_seasons"
   add_foreign_key "arena_matches", "arena_tournaments"
@@ -2584,13 +2504,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_09_211000) do
   add_foreign_key "social_hubs", "zones"
   add_foreign_key "spawn_points", "zones"
   add_foreign_key "spawn_schedules", "users", column: "configured_by_id"
-  add_foreign_key "tactical_combat_log_entries", "tactical_matches"
-  add_foreign_key "tactical_matches", "arena_rooms"
-  add_foreign_key "tactical_matches", "characters", column: "creator_id"
-  add_foreign_key "tactical_matches", "characters", column: "opponent_id"
-  add_foreign_key "tactical_matches", "characters", column: "winner_id"
-  add_foreign_key "tactical_participants", "characters"
-  add_foreign_key "tactical_participants", "tactical_matches"
   add_foreign_key "tile_buildings", "zones", column: "destination_zone_id"
   add_foreign_key "tile_npcs", "characters", column: "defeated_by_id"
   add_foreign_key "tile_npcs", "npc_templates"

@@ -2,6 +2,7 @@
 
 class ApplicationController < ActionController::Base
   include CurrentCharacterContext
+  include ArenaEntryGate
   include Pundit::Authorization
 
   before_action :authenticate_user!

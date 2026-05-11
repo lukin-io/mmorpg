@@ -2,7 +2,7 @@
 
 require "rails_helper"
 
-RSpec.describe Arena::CombatProcessor, "Tactical Combat Features" do
+RSpec.describe Arena::CombatProcessor, "Neverlands-style combat features" do
   let(:user1) { create(:user) }
   let(:user2) { create(:user) }
   let(:character1) { create(:character, user: user1, level: 10, current_hp: 100, max_hp: 100) }

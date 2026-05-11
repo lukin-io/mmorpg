@@ -293,6 +293,7 @@ RSpec.describe Arena::CombatProcessor do
         allow(processor.broadcaster).to receive(:broadcast_ap_update)
         allow(processor.broadcaster).to receive(:broadcast_combat_action)
         allow(processor.broadcaster).to receive(:broadcast_vitals_update)
+        allow(processor.broadcaster).to receive(:broadcast_system_message)
 
         result = processor.process_action(
           character1,
@@ -303,10 +304,97 @@ RSpec.describe Arena::CombatProcessor do
         )
 
         expect(result.success?).to be true
-        expect(result[:turn]).to be true
+        expect(result[:waiting]).to be true
+        expect(result[:resolved]).to be false
         expect(result[:total_ap]).to eq(75)
         expect(participation1.reload.metadata["current_ap"]).to eq(5)
-        expect(character1.reload.metadata["blocked_parts"]).to eq(["torso"])
+        expect(participation1.metadata["pending_turn"]).to be_present
+        expect(character1.reload.metadata["blocked_parts"]).to be_blank
+      end
+
+      it "waits for both players before resolving the committed round" do
+        allow(processor.broadcaster).to receive(:broadcast_ap_update)
+        allow(processor.broadcaster).to receive(:broadcast_combat_action)
+        allow(processor.broadcaster).to receive(:broadcast_vitals_update)
+        allow(processor.broadcaster).to receive(:broadcast_system_message)
+
+        first = processor.process_action(
+          character1,
+          :turn,
+          target: character2,
+          attacks: [{action_key: "simple", body_part: "torso"}],
+          blocks: [{action_key: "torso_block", body_parts: ["torso"]}]
+        )
+
+        expect(first.success?).to be true
+        expect(first[:waiting]).to be true
+        expect(character2.reload.current_hp).to eq(100)
+
+        second = processor.process_action(
+          character2,
+          :turn,
+          target: character1,
+          attacks: [{action_key: "simple", body_part: "torso"}],
+          blocks: [{action_key: "torso_block", body_parts: ["torso"]}]
+        )
+
+        expect(second.success?).to be true
+        expect(second[:waiting]).to be false
+        expect(second[:resolved]).to be true
+        expect(participation1.reload.metadata["pending_turn"]).to be_blank
+        expect(participation2.reload.metadata["pending_turn"]).to be_blank
+        expect(participation1.metadata["current_ap"]).to eq(80)
+        expect(participation2.metadata["current_ap"]).to eq(80)
+      end
+
+      it "lets a waiting player claim victory after the turn timer expires" do
+        arena_match.update!(current_turn_started_at: 6.minutes.ago, turn_timeout_seconds: 300)
+
+        allow(processor.broadcaster).to receive(:broadcast_match_ended)
+
+        participation1.metadata ||= {}
+        participation1.metadata["pending_turn"] = {
+          "turn_number" => arena_match.current_turn_number || 1,
+          "attacks" => [{"action_key" => "simple", "body_part" => "torso"}],
+          "blocks" => [{"action_key" => "torso_block", "body_parts" => ["torso"]}],
+          "skills" => [],
+          "total_ap" => 75
+        }
+        participation1.save!
+
+        result = processor.claim_timeout(character1, mode: "victory")
+
+        expect(result.success?).to be true
+        expect(result[:mode]).to eq("victory")
+        expect(arena_match.reload).to be_completed
+        expect(arena_match.winning_team).to eq(participation1.team)
+        expect(participation1.reload.result).to eq("victory")
+        expect(participation2.reload.result).to eq("defeat")
+      end
+
+      it "records a draw when a waiting player accepts timeout draw" do
+        arena_match.update!(current_turn_started_at: 6.minutes.ago, turn_timeout_seconds: 300)
+
+        allow(processor.broadcaster).to receive(:broadcast_match_ended)
+
+        participation1.metadata ||= {}
+        participation1.metadata["pending_turn"] = {
+          "turn_number" => arena_match.current_turn_number || 1,
+          "attacks" => [{"action_key" => "simple", "body_part" => "torso"}],
+          "blocks" => [{"action_key" => "torso_block", "body_parts" => ["torso"]}],
+          "skills" => [],
+          "total_ap" => 75
+        }
+        participation1.save!
+
+        result = processor.claim_timeout(character1, mode: "draw")
+
+        expect(result.success?).to be true
+        expect(result[:mode]).to eq("draw")
+        expect(arena_match.reload).to be_completed
+        expect(arena_match.winning_team).to be_nil
+        expect(participation1.reload.result).to eq("draw")
+        expect(participation2.reload.result).to eq("draw")
       end
 
       it "rejects a turn package that exceeds the 80 AP budget" do
@@ -319,7 +407,7 @@ RSpec.describe Arena::CombatProcessor do
         )
 
         expect(result.success?).to be false
-        expect(result.error).to include("Not enough AP")
+        expect(result.error).to include("Actions exceed AP limit")
         expect(result.error).to include("95")
       end
 

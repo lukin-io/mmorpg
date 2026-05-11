@@ -50,6 +50,28 @@ attack_types:
     hit_bonus: 15
     description: "A more precise attack"
 
+  spirit_arrow:
+    key: "spirit_arrow"
+    name: "Spirit Arrow"
+    action_cost: 50
+    mana_cost: 5
+    type: 1
+    element: "arcane"
+    damage_multiplier: 1.05
+    hit_bonus: 5
+    description: "Starter magic attack from the Neverlands fight selector"
+
+  mind_blast:
+    key: "mind_blast"
+    name: "Mind Blast"
+    action_cost: 90
+    mana_cost: 5
+    type: 1
+    element: "mind"
+    damage_multiplier: 1.35
+    hit_bonus: 10
+    description: "High-cost starter magic attack from the Neverlands fight selector"
+
 # Physical block selectors
 block_types:
   head_block:

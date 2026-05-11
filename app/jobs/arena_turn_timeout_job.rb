@@ -41,6 +41,12 @@ class ArenaTurnTimeoutJob < ApplicationJob
   def process_timeout(match)
     processor = Arena::CombatProcessor.new(match)
 
+    if processor.pending_player_turns?
+      processor.mark_timeout_claim_available!
+      broadcast_timeout(match, claim_available: true)
+      return
+    end
+
     # Log the timeout
     match.metadata ||= {}
     match.metadata["combat_log"] ||= []
@@ -54,7 +60,7 @@ class ArenaTurnTimeoutJob < ApplicationJob
     match.advance_turn!(timed_out: true)
 
     # Broadcast timeout to all participants
-    broadcast_timeout(match)
+    broadcast_timeout(match, claim_available: false)
 
     # If NPC fight, process NPC turn
     if processor.npc_fight?
@@ -68,14 +74,21 @@ class ArenaTurnTimeoutJob < ApplicationJob
     schedule_next_check(match)
   end
 
-  def broadcast_timeout(match)
+  def broadcast_timeout(match, claim_available:)
+    message = if claim_available
+      "Turn timer expired. Timeout controls are available."
+    else
+      "Turn ended by timeout"
+    end
+
     ActionCable.server.broadcast(
       match.broadcast_channel,
       {
         type: "turn_timeout",
-        message: "Turn ended by timeout",
+        message: message,
         turn_number: match.current_turn_number,
         current_team: match.current_turn_team,
+        claim_available: claim_available,
         timestamp: Time.current.strftime("%H:%M:%S")
       }
     )

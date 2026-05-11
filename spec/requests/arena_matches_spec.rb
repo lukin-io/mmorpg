@@ -46,26 +46,11 @@ RSpec.describe "ArenaMatches", type: :request do
       expect(path).to eq("/arena_matches/123")
       expect(path).not_to include("/arena/matches/")
     end
-
-    it "arena_matches_path uses underscore format /arena_matches" do
-      path = "/arena_matches"
-      expect(path).to eq("/arena_matches")
-      expect(path).not_to include("/arena/matches")
-    end
   end
 
   # ============================================
   # Success Cases
   # ============================================
-
-  describe "GET /arena_matches" do
-    it "responds to arena_matches index" do
-      get "/arena_matches"
-
-      expect(response).to have_http_status(:success)
-        .or have_http_status(:redirect)
-    end
-  end
 
   describe "GET /arena_matches/:id" do
     let!(:arena_match) do
@@ -91,9 +76,11 @@ RSpec.describe "ArenaMatches", type: :request do
   describe "authentication required" do
     before { sign_out user }
 
-    it "redirects to login for arena_matches index" do
-      get "/arena_matches"
+    it "redirects to login for arena_match show" do
+      arena_match = create(:arena_match, arena_room: arena_room, status: :live)
+      create(:arena_participation, arena_match: arena_match, character: character, team: "a")
 
+      get "/arena_matches/#{arena_match.id}"
       expect(response).to redirect_to(new_user_session_path)
     end
   end
@@ -259,6 +246,48 @@ RSpec.describe "ArenaMatches", type: :request do
         expect(response).to have_http_status(:unprocessable_entity)
           .or have_http_status(:forbidden)
       end
+    end
+  end
+
+  describe "POST /arena_matches/:id/claim_timeout" do
+    let!(:live_match) do
+      match = create(:arena_match,
+        arena_room: arena_room,
+        status: :live,
+        started_at: Time.current,
+        current_turn_started_at: 6.minutes.ago,
+        current_turn_number: 1,
+        turn_timeout_seconds: 300)
+      create(:arena_participation,
+        arena_match: match,
+        character: character,
+        user: user,
+        team: "a",
+        metadata: {
+          "pending_turn" => {
+            "turn_number" => 1,
+            "attacks" => [{"action_key" => "simple", "body_part" => "torso"}],
+            "blocks" => [{"action_key" => "torso_block", "body_parts" => ["torso"]}],
+            "skills" => [],
+            "total_ap" => 75
+          }
+        })
+      create(:arena_participation,
+        arena_match: match,
+        character: other_character,
+        user: other_user,
+        team: "b")
+      match
+    end
+
+    it "records victory by timeout for a waiting participant" do
+      post "/arena_matches/#{live_match.id}/claim_timeout",
+        params: {mode: "victory"},
+        as: :json
+
+      expect(response).to have_http_status(:success)
+      expect(live_match.reload.winning_team).to eq("a")
+      expect(live_match).to be_completed
     end
   end
 

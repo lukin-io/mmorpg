@@ -16,6 +16,74 @@ This file is source observation, not a product roadmap. Translate it through
 - Fight screens use `js/fight_v10.js` and `css/fight.css`.
 - Arena tabs were inspected with `main.php`, `main.php?ft=1`,
   `main.php?ft=2`, and `main.php?ft=3`.
+- A second read-only pull of the same session captured live tab payloads:
+  duels had mannequin rows, group fights were empty, sacrifice had waiting
+  rows, and statistics listed completed fights.
+- A controlled follow-up on 2026-05-10 used the same cookie-backed session:
+  one mannequin accept was attempted from the live duel list, then the character
+  exited the arena and city, moved one wilderness cell north, and waited for a
+  passive NPC attack.
+
+## Controlled Live Pass Notes
+
+The live duel rows in `Зал Испытаний` showed `Манекен[1]` on side one and an
+empty opponent side. The accept form was confirmed as:
+
+```text
+post_id=19
+act=2
+vcode={arena token}
+bonus={server value}
+mhp={max hp}
+pza=2:{application_id}
+```
+
+The account character was `lukin[6]`. The open side on those mannequin rows was
+level-gated `0-5`, so the server left the character out of the application:
+`arpar[10]` stayed `0`, no matched row appeared, and no fight frame loaded.
+This confirms that the client-side disabled-radio rule is also enforced by the
+server.
+
+The fallback route out of the arena was:
+
+```text
+arena -> up/return -> Forpost city scene -> city exit -> wilderness map
+```
+
+The city scene used image hotspots. The arena building was the hotspot
+`go=arena`; the city exit was `go=up`.
+
+The wilderness page at `1000,1000` emitted `map.js?v=6` with:
+
+```text
+build = ["lukin",6,0,"none","","",0,"main","Природа","m_1000_1000",1,1,""]
+map = [[1000,1000,30,"night",...], offered_cells]
+```
+
+Movement is not a direct request to `/map_ajax.php`. The browser helper wraps
+AJAX paths under `/gameplay/ajax/`. The one-cell north movement used:
+
+```text
+/gameplay/ajax/map_ajax.php?act=1&mx=1000&my=999&gti=30&vcode={cell token}
+```
+
+The server accepted the move and returned:
+
+```text
+GO@1000@999@{new offered cells}@{new buttons}@[30,"night",""]
+```
+
+The character then waited on `1000,999`. Reloads after about 35 seconds, about
+95 seconds, and a sparse 10-minute polling window still returned the map frame:
+
+```text
+build = ["lukin",6,0,"none","","",0,"main","Природа","m_1000_999",1,0,""]
+```
+
+No `fight_v*` script, `fight_ty`, `fight_pm`, `param_ow`, `param_en`,
+`Крыса`, or `Напад` payload appeared during that window. Treat passive rat/NPC
+ambush timing as stochastic live-server behavior until a later capture produces
+an actual fight frame.
 
 ## Game Shell
 
@@ -138,6 +206,23 @@ mhp={max hp}
 The row itself renders participant side(s) and `нет соперников` when a side is
 waiting. NPC applicants use participant type `3`; live duel rows showed
 `Манекен[1]` waiting for opponents.
+
+Observed duel tab payload:
+
+- two `Манекен[1]` applications in `Зал Испытаний`;
+- each row had fight kind `10`, timeout `300`, trauma `30`, level range `0-33`
+  vs `0-5`, and the mannequin on side one with side two waiting.
+
+Observed sacrifice tab payload:
+
+- repeated waiting rows with no participants yet;
+- timeout `120`, trauma `80`, broad `0-33` level range.
+
+Observed statistics payload:
+
+- many completed fight rows;
+- one row showed two player names on one side and multiple crypt guards on the
+  other, confirming statistics reuses the same side-list data shape.
 
 The client disables acceptance when:
 
@@ -318,6 +403,39 @@ The script renders these states:
 - timeout resolution buttons: `Победа по таймауту` and sometimes `Ничья`;
 - completed fight screen with `Завершить бой`;
 - optional anti-autobattle code before finishing a fight;
+
+## Magic And Special Slots
+
+The fight script keeps a large action catalog split by `pos_type`:
+
+- `1`: attack selector entries;
+- `2`: block selector entries;
+- `3`: instant magic/effect slot;
+- `4`: item or potion slot;
+- `5`: targeted ally/participant action;
+- `6`: text action, such as a fight phrase;
+- `7`: group or area effect.
+
+Magic/action slots render as icon cells. Clicking an active slot marks it red,
+adds its AP cost to the turn, and may open a small dynamic form for target or
+text parameters. The serialized action payload uses `ina` entries such as:
+
+- `{magic_id}@` for simple instant magic;
+- `{magic_id}_{item_or_amount}@` for item-like actions;
+- `{magic_id}_{item_or_amount}_{target_or_text}@` for targeted/text actions;
+- `{magic_id}__{target}@` for group effects.
+
+The first implementation should expose the same slot category behavior, even if
+only the starter subset has effects wired server-side.
+
+## Formula Visibility
+
+The browser source exposes client-side AP/mana costs, turn serialization, body
+part choices, room/application state, and displayed stats. Exact weapon-family,
+armor-family, and item-affix combat formulas are not present in the client
+JavaScript; those are server-side. Implementation should therefore calculate
+from our item family metadata and captured visible stat categories, then revise
+when dedicated item captures expose more precise formulas.
 - `Ожидаем окончания боя` for observer/waiting states;
 - surrender where fight rules allow it;
 - external fight log link through `logs.fcg?fid=...`.

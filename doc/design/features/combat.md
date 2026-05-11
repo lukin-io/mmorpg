@@ -100,22 +100,30 @@ turn loop:
   the shared source for AP budget, attack costs, block costs, and multi-attack
   penalties.
 - The active AP budget is 80 per turn.
-- Simple attack costs 45 AP and aimed attack costs 65 AP.
+- Simple attack costs 45 AP, aimed attack costs 65 AP, Spirit Arrow costs
+  50 AP and 5 MP, and Mind Blast costs 90 AP and 5 MP.
 - Single-part blocks cost 30 or 35 AP depending on body part; two-part blocks
   use the captured 50/60/80 AP costs.
 - Arena, PvE, PvP, and shared turn-combat entry points now create/read combat
   instances with the shared 80 AP budget instead of deriving AP from character
   level/agility.
-- Character attack and defense formulas now include base stats, level, and
-  equipped item modifiers; `Character#combat_power_breakdown` exposes the
-  calculation for UI and balancing.
+- Character attack and defense formulas now include base stats, level,
+  enhancement-aware equipped item modifiers, and item-family multipliers;
+  `Character#combat_power_breakdown` exposes the calculation for UI and
+  balancing.
 - Arena fight UI shows the Neverlands-shaped participant panels, AP bar,
-  attack type/body-part selector, one block selector, turn cost preview, submit
-  turn control, and timestamped combat log.
-- Arena turn submission now accepts a package with attacks and blocks. The
-  server validates body parts, one-block-per-turn, head/legs attack
-  exclusivity, AP budget, and unsupported magic/action payloads before applying
-  damage or block state.
+  four attack selectors, four block selectors, magic/action slots, turn cost
+  preview, submit turn control, and timestamped combat log.
+- Arena turn submission now accepts a package with attacks, one block, and
+  magic/action slots. The server validates body parts, one-block-per-turn,
+  head/legs attack exclusivity, NL turn shape, AP budget, MP budget, target,
+  and participant state before applying damage or block state.
+- PvP arena turns are simultaneous at the waiting layer: a submitted turn is
+  stored as pending and the round resolves only after all live player
+  participants have submitted. NPC training fights still resolve immediately
+  with NPC AI response.
+- Waiting PvP turns follow the captured timeout state: after the turn timer
+  expires, the waiting player can claim victory by timeout or record a draw.
 - The active 80 AP starter package is simple attack plus a single torso block
   for 75 AP. Aimed attack plus even the cheapest physical block exceeds the
   starter AP budget and is rejected server-side.
@@ -123,10 +131,9 @@ turn loop:
 Remaining parity gaps:
 
 - exact Neverlands item-class formulas for every weapon/armor family still need
-  dedicated item captures;
-- magic action costs and special actions are only partially captured;
-- simultaneous wait-state resolution for player-vs-player arena turns still
-  needs to replace the current action-by-action arena processor;
+  dedicated item captures beyond client-visible data;
+- most magic/special effects beyond the starter shield, restoration, and direct
+  damage subset still need live effect captures;
 - older PvE/PvP services still exist as orchestration layers and should keep
   being folded toward the shared body-part/AP/log contract.
 

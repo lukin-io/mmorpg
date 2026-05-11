@@ -11,7 +11,8 @@ export default class extends Controller {
     "combatLog", "participantList", "actionButtons", "timer",
     "teamA", "teamB", "resultOverlay", "bodyPartSelect",
     "attackTypeSelect", "blockSelect", "turnCostValue",
-    "apBar", "apValue", "fighterA", "fighterB"
+    "apBar", "apValue", "fighterA", "fighterB",
+    "attackSelect", "magicSlot"
   ]
 
   static values = {
@@ -84,6 +85,19 @@ export default class extends Controller {
       case "system_message":
         this.appendSystemMessage(data)
         break
+      case "turn_timeout":
+        this.handleTurnTimeout(data)
+        break
+      case "turn_timeout_warning":
+        this.appendSystemMessage({
+          timestamp: data.timestamp,
+          message: data.message,
+          severity: "warning"
+        })
+        break
+      case "timeout_claim_available":
+        this.handleTimeoutClaimAvailable(data)
+        break
       case "match_state":
         this.updateMatchState(data)
         break
@@ -148,8 +162,39 @@ export default class extends Controller {
     this.scrollCombatLog()
   }
 
+  handleTurnTimeout(data) {
+    this.appendSystemMessage({
+      timestamp: data.timestamp,
+      message: data.message || "Turn ended by timeout",
+      severity: data.claim_available ? "warning" : "info"
+    })
+
+    if (data.claim_available) {
+      this.disableTurnComposer()
+    }
+  }
+
+  handleTimeoutClaimAvailable(data) {
+    this.appendSystemMessage({
+      timestamp: data.timestamp,
+      message: data.message || "Timeout controls are available.",
+      severity: "warning"
+    })
+    this.disableTurnComposer()
+  }
+
   handleActionResult(data) {
-    if (data.success) return
+    if (data.success) {
+      if (data.data?.waiting) {
+        this.disableTurnComposer()
+        this.appendSystemMessage({
+          timestamp: new Date().toLocaleTimeString(),
+          message: "Ожидаем хода противника",
+          severity: "info"
+        })
+      }
+      return
+    }
 
     this.appendSystemMessage({
       timestamp: new Date().toLocaleTimeString(),
@@ -286,6 +331,11 @@ export default class extends Controller {
 
     // Disable buttons if not enough AP
     this.updateButtonsForAP(data.current_ap)
+
+    if (data.current_ap >= data.max_ap) {
+      this.enableTurnComposer()
+      this.resetTurn()
+    }
   }
 
   updateButtonsForAP(currentAP) {
@@ -314,10 +364,11 @@ export default class extends Controller {
     return 0
   }
 
-  updateTurnCost() {
+  updateTurnCost(event) {
     if (!this.hasTurnCostValueTarget) return
 
-    const cost = this.selectedAttackCost() + this.selectedBlockCost()
+    this.enforceSingleBlock(event?.currentTarget)
+    const cost = this.selectedAttackCost() + this.selectedBlockCost() + this.selectedMagicCost()
     this.turnCostValueTarget.textContent = `${cost}/80`
     this.turnCostValueTarget.classList.toggle("arena-turn-cost--invalid", cost > 80)
 
@@ -328,6 +379,13 @@ export default class extends Controller {
   }
 
   selectedAttackCost() {
+    if (this.hasAttackSelectTarget) {
+      return this.attackSelectTargets.reduce((sum, select) => {
+        const option = select.selectedOptions[0]
+        return sum + Number.parseInt(option?.dataset.apCost || "0", 10)
+      }, 0)
+    }
+
     if (!this.hasAttackTypeSelectTarget) return 45
 
     const option = this.attackTypeSelectTarget.selectedOptions[0]
@@ -337,8 +395,38 @@ export default class extends Controller {
   selectedBlockCost() {
     if (!this.hasBlockSelectTarget) return 0
 
-    const option = this.blockSelectTarget.selectedOptions[0]
-    return Number.parseInt(option?.dataset.apCost || "0", 10)
+    return this.blockSelectTargets.reduce((sum, select) => {
+      const option = select.selectedOptions[0]
+      return sum + Number.parseInt(option?.dataset.apCost || "0", 10)
+    }, 0)
+  }
+
+  selectedMagicCost() {
+    if (!this.hasMagicSlotTarget) return 0
+
+    return this.magicSlotTargets.reduce((sum, slot) => {
+      if (!slot.classList.contains("nl-fight-magic-slot--active")) return sum
+      return sum + Number.parseInt(slot.dataset.apCost || "0", 10)
+    }, 0)
+  }
+
+  enforceSingleBlock(changedSelect = null) {
+    if (!this.hasBlockSelectTarget) return
+
+    if (changedSelect && changedSelect.dataset.arenaMatchTarget === "blockSelect" && changedSelect.value !== "none") {
+      this.blockSelectTargets.forEach(select => {
+        if (select !== changedSelect) select.value = "none"
+      })
+      return
+    }
+
+    const activeBlocks = this.blockSelectTargets.filter(select => select.value && select.value !== "none")
+    if (activeBlocks.length <= 1) return
+
+    const lastChanged = activeBlocks[activeBlocks.length - 1]
+    this.blockSelectTargets.forEach(select => {
+      if (select !== lastChanged) select.value = "none"
+    })
   }
 
   handleMatchStart(data) {
@@ -510,34 +598,50 @@ export default class extends Controller {
     if (this.spectatingValue) return
 
     const btn = event.currentTarget
-    const attackType = this.hasAttackTypeSelectTarget ? this.attackTypeSelectTarget.value : "simple"
-    const bodyPart = this.hasBodyPartSelectTarget ? this.bodyPartSelectTarget.value : "torso"
-    const blockOption = this.hasBlockSelectTarget ? this.blockSelectTarget.selectedOptions[0] : null
-    const blockKey = blockOption?.value
-    const blockParts = blockOption?.dataset.bodyParts
     const targetId = this.getFirstEnemyId()
 
-    const attacks = []
-    if (attackType && attackType !== "none") {
-      attacks.push({
-        action_key: attackType,
-        body_part: bodyPart
-      })
+    let attacks = []
+    if (this.hasAttackSelectTarget) {
+      attacks = this.attackSelectTargets
+        .filter(select => select.value && select.value !== "none")
+        .map(select => ({
+          action_key: select.value,
+          body_part: select.dataset.bodyPart
+        }))
+    } else {
+      const attackType = this.hasAttackTypeSelectTarget ? this.attackTypeSelectTarget.value : "simple"
+      const bodyPart = this.hasBodyPartSelectTarget ? this.bodyPartSelectTarget.value : "torso"
+      if (attackType && attackType !== "none") {
+        attacks.push({
+          action_key: attackType,
+          body_part: bodyPart
+        })
+      }
     }
 
     const blocks = []
-    if (blockKey && blockKey !== "none" && blockParts) {
-      blocks.push({
-        action_key: blockKey,
-        body_parts: blockParts.split(",")
+    if (this.hasBlockSelectTarget) {
+      this.blockSelectTargets.forEach(select => {
+        const option = select.selectedOptions[0]
+        const blockKey = option?.value
+        const blockParts = option?.dataset.bodyParts
+        if (blockKey && blockKey !== "none" && blockParts) {
+          blocks.push({
+            action_key: blockKey,
+            body_parts: blockParts.split(",")
+          })
+        }
       })
     }
+
+    const skills = this.selectedMagicSkills()
 
     const data = {
       action_type: "turn",
       target_id: targetId,
       attacks: attacks,
-      blocks: blocks
+      blocks: blocks,
+      skills: skills
     }
 
     this.subscription.perform("submit_action", data)
@@ -547,6 +651,62 @@ export default class extends Controller {
       btn.disabled = false
       this.updateTurnCost()
     }, 1000)
+  }
+
+  toggleMagicSlot(event) {
+    const slot = event.currentTarget
+    slot.classList.toggle("nl-fight-magic-slot--active")
+    this.updateTurnCost()
+  }
+
+  selectedMagicSkills() {
+    if (!this.hasMagicSlotTarget) return []
+
+    return this.magicSlotTargets
+      .filter(slot => slot.classList.contains("nl-fight-magic-slot--active"))
+      .map(slot => ({
+        key: slot.dataset.skillKey,
+        target_id: this.getFirstEnemyId()
+      }))
+  }
+
+  resetTurn() {
+    if (this.hasAttackSelectTarget) {
+      this.attackSelectTargets.forEach(select => {
+        const defaultValue = select.dataset.bodyPart === "torso" ? "simple" : "none"
+        select.value = defaultValue
+      })
+    }
+
+    if (this.hasBlockSelectTarget) {
+      this.blockSelectTargets.forEach(select => {
+        const defaultValue = select.dataset.bodyPart === "torso" ? "torso_block" : "none"
+        select.value = defaultValue
+      })
+    }
+
+    if (this.hasMagicSlotTarget) {
+      this.magicSlotTargets.forEach(slot => slot.classList.remove("nl-fight-magic-slot--active"))
+    }
+
+    this.updateTurnCost()
+  }
+
+  disableTurnComposer() {
+    if (!this.hasActionButtonsTarget) return
+
+    this.actionButtonsTarget.querySelectorAll("button, select").forEach(el => {
+      el.disabled = true
+    })
+  }
+
+  enableTurnComposer() {
+    if (!this.hasActionButtonsTarget || this.spectatingValue) return
+
+    this.actionButtonsTarget.querySelectorAll("button, select").forEach(el => {
+      el.disabled = false
+    })
+    this.updateTurnCost()
   }
 
   getFirstEnemyId() {

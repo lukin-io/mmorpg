@@ -117,7 +117,6 @@
 
         <div class="nl-body-parts-grid">
           <% %w[head torso stomach legs].each do |body_part| %>
-            <% block_cost = Game::Combat::ActionCatalog.block_cost(body_parts: [body_part]) %>
             <div class="nl-body-part">
               <label class="nl-body-part-label">
                 <span class="nl-body-part-icon">
@@ -158,6 +157,7 @@
 
         <div class="nl-body-parts-grid">
           <% %w[head torso stomach legs].each do |body_part| %>
+            <% block_cost = Game::Combat::ActionCatalog.block_cost(body_parts: [body_part]) %>
             <div class="nl-body-part">
               <label class="nl-body-part-label">
                 <span class="nl-body-part-icon">🛡️</span>

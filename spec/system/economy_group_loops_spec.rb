@@ -95,26 +95,6 @@ RSpec.describe "Economy & Group Loops", type: :system, js: true do
       expect(page).to have_content("Wolf Pelt")
     end
 
-    it "moves in a tactical arena match via the grid UI" do
-      user = create(:user)
-      opponent_user = create(:user)
-      creator = create(:character, user: user, level: 1)
-      opponent = create(:character, user: opponent_user, level: 1)
-
-      match = TacticalMatch.create!(creator: creator, grid_size: 6, turn_time_limit: 60, status: :pending)
-      match.initialize_grid!
-      match.add_opponent!(opponent)
-
-      login_as(user, scope: :user)
-      visit tactical_arena_path(match)
-
-      expect(page).to have_content("🎯 Your Turn")
-      expect(page).to have_content("(3, 0)")
-
-      find(".grid-tile[data-x='2'][data-y='0']").click
-
-      expect(page).to have_content("(2, 0)")
-    end
   end
 
   describe "failure cases" do
@@ -167,23 +147,6 @@ RSpec.describe "Economy & Group Loops", type: :system, js: true do
       expect(page).not_to have_button("Place Bid")
     end
 
-    it "shows an in-page warning when attempting a move out of turn" do
-      user = create(:user)
-      opponent_user = create(:user)
-      creator = create(:character, user: user, level: 1)
-      opponent = create(:character, user: opponent_user, level: 1)
-
-      match = TacticalMatch.create!(creator: creator, grid_size: 6, turn_time_limit: 60, status: :pending)
-      match.initialize_grid!
-      match.add_opponent!(opponent)
-
-      login_as(opponent_user, scope: :user)
-      visit tactical_arena_path(match)
-
-      find(".grid-tile[data-x='2'][data-y='0']").click
-
-      expect(page).to have_css("#notifications", text: "Not your turn")
-    end
   end
 
   describe "authorization cases" do

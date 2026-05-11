@@ -102,7 +102,9 @@ export default class extends Controller {
    * Accept an existing application
    */
   async acceptApplication(event) {
+    event.preventDefault()
     const applicationId = event.currentTarget.dataset.applicationId
+    event.currentTarget.disabled = true
 
     try {
       const response = await fetch(`/arena_applications/${applicationId}/accept`, {
@@ -119,9 +121,11 @@ export default class extends Controller {
         // Match created, show countdown
         this.startCountdown(data.countdown || 30, data.match_id)
       } else {
+        event.currentTarget.disabled = false
         this.showError(data.errors?.join(", ") || "Failed to accept application")
       }
     } catch (error) {
+      event.currentTarget.disabled = false
       this.showError("Network error. Please try again.")
       console.error("Accept application error:", error)
     }
@@ -131,6 +135,7 @@ export default class extends Controller {
    * Cancel own application
    */
   async cancelApplication(event) {
+    event.preventDefault()
     const applicationId = event.currentTarget.dataset.applicationId
 
     if (!confirm("Cancel your fight application?")) {
@@ -282,9 +287,8 @@ export default class extends Controller {
   fightTypeLabel(type) {
     const labels = {
       duel: "Duel",
-      group: "Group",
-      sacrifice: "FFA",
-      tactical: "Tactical"
+      team_battle: "Group",
+      sacrifice: "FFA"
     }
     return labels[type] || type
   }
@@ -343,4 +347,3 @@ export default class extends Controller {
     }
   }
 }
-

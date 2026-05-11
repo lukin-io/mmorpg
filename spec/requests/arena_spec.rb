@@ -27,7 +27,25 @@ RSpec.describe "Arena", type: :request do
       sign_in user, scope: :user
     end
 
+    def enter_arena_from_city!(character)
+      zone = character.position.zone
+      zone.update!(biome: "city")
+      hotspot = create(:city_hotspot, :arena, zone: zone, active: true, required_level: 1)
+
+      post interact_hotspot_world_path, params: {hotspot_id: hotspot.id}
+    end
+
+    context "direct route access" do
+      it "redirects to the city when arena was not entered through the building" do
+        get arena_index_path
+
+        expect(response).to redirect_to(world_path)
+      end
+    end
+
     context "successful page load" do
+      before { enter_arena_from_city!(character) }
+
       it "renders arena page successfully" do
         get arena_index_path
 
@@ -37,25 +55,27 @@ RSpec.describe "Arena", type: :request do
       it "displays arena title" do
         get arena_index_path
 
-        expect(response.body).to include("Arena")
+        expect(response.body).to include("Арена")
       end
 
       it "shows arena rooms section" do
         get arena_index_path
 
-        expect(response.body).to include("Arena Room").or include("Room")
+        expect(response.body).to include("Показать схему здания")
       end
 
       it "shows fight type tabs" do
         get arena_index_path
 
-        expect(response.body).to include("Duel")
-        expect(response.body).to include("Team Battle")
-        expect(response.body).to include("Sacrifice")
+        expect(response.body).to include("Дуэли")
+        expect(response.body).to include("Групповые")
+        expect(response.body).to include("Жертвенные")
       end
     end
 
     context "with arena rooms" do
+      before { enter_arena_from_city!(character) }
+
       let!(:arena_room) do
         create(:arena_room,
           name: "Test Arena Room",
@@ -75,7 +95,7 @@ RSpec.describe "Arena", type: :request do
       it "shows enter button for accessible rooms" do
         get arena_index_path
 
-        expect(response.body).to include("Enter")
+        expect(response.body).to include("Перейти")
       end
 
       it "includes room level range" do
@@ -86,6 +106,8 @@ RSpec.describe "Arena", type: :request do
     end
 
     context "with active application" do
+      before { enter_arena_from_city!(character) }
+
       let!(:arena_room) { create(:arena_room) }
       let!(:application) do
         create(:arena_application,
@@ -97,13 +119,13 @@ RSpec.describe "Arena", type: :request do
       it "displays current application status" do
         get arena_index_path
 
-        expect(response.body).to include("Active Application").or include("Application")
+        expect(response.body).to include("Ваша заявка")
       end
 
       it "shows cancel button for active application" do
         get arena_index_path
 
-        expect(response.body).to include("Cancel")
+        expect(response.body).to include("отозвать")
       end
     end
 
@@ -118,6 +140,8 @@ RSpec.describe "Arena", type: :request do
     end
 
     context "character level checks" do
+      before { enter_arena_from_city!(character) }
+
       let!(:high_level_room) do
         create(:arena_room,
           name: "High Level Arena",
@@ -129,7 +153,7 @@ RSpec.describe "Arena", type: :request do
       it "shows room as unavailable when level too low" do
         get arena_index_path
 
-        expect(response.body).to include("unavailable").or include("level")
+        expect(response.body).to include("Недоступно").or include("уровень не подходит")
       end
     end
   end
@@ -157,6 +181,15 @@ RSpec.describe "Arena", type: :request do
     before do
       create(:character_position, character: character)
       sign_in user, scope: :user
+      enter_arena_from_city!(character)
+    end
+
+    def enter_arena_from_city!(character)
+      zone = character.position.zone
+      zone.update!(biome: "city")
+      hotspot = create(:city_hotspot, :arena, zone: zone, active: true, required_level: 1)
+
+      post interact_hotspot_world_path, params: {hotspot_id: hotspot.id}
     end
 
     it "shows correct active tab for duels" do

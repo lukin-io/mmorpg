@@ -2,14 +2,9 @@
 
 class ArenaMatchesController < ApplicationController
   before_action :authenticate_user!
-  before_action :set_arena_match, only: [:show, :action, :spectate, :log]
-  before_action :require_character, only: [:action]
-  before_action :require_participant, only: [:action]
-
-  def index
-    @arena_matches = policy_scope(ArenaMatch).recent.includes(arena_participations: :character)
-    @arena_match = ArenaMatch.new
-  end
+  before_action :set_arena_match, only: [:show, :action, :claim_timeout, :spectate, :log]
+  before_action :require_character, only: [:action, :claim_timeout]
+  before_action :require_participant, only: [:action, :claim_timeout]
 
   def show
     authorize @arena_match
@@ -37,21 +32,6 @@ class ArenaMatchesController < ApplicationController
       format.html { render partial: "arena_matches/combat_log", locals: {log: @combat_log} }
       format.json { render json: {log: @combat_log} }
     end
-  end
-
-  def create
-    current_user.ensure_social_features!
-    authorize ArenaMatch
-
-    participants = build_participants
-    match = Arena::Matchmaker.new.queue!(
-      participants: participants,
-      match_type: params[:arena_match][:match_type] || :duel
-    )
-
-    redirect_to match, notice: "Arena match queued."
-  rescue ArgumentError => e
-    redirect_to arena_matches_path, alert: e.message
   end
 
   # POST /arena_matches/:id/action
@@ -89,6 +69,27 @@ class ArenaMatchesController < ApplicationController
         format.html { redirect_to @arena_match, alert: result.error }
         format.json { render json: {success: false, error: result.error}, status: :unprocessable_entity }
         format.turbo_stream { head :unprocessable_entity }
+      end
+    end
+  end
+
+  # POST /arena_matches/:id/claim_timeout
+  def claim_timeout
+    authorize @arena_match
+
+    result = Arena::CombatProcessor.new(@arena_match).claim_timeout(
+      current_character,
+      mode: params[:mode]
+    )
+
+    respond_to do |format|
+      if result.success?
+        message = result[:mode] == "draw" ? "Timeout draw recorded." : "Victory by timeout recorded."
+        format.html { redirect_to @arena_match, notice: message }
+        format.json { render json: {success: true, data: result.data} }
+      else
+        format.html { redirect_to @arena_match, alert: result.error }
+        format.json { render json: {success: false, error: result.error}, status: :unprocessable_entity }
       end
     end
   end
@@ -154,30 +155,15 @@ class ArenaMatchesController < ApplicationController
       duration: @arena_match.duration,
       participants: @participations.map do |p|
         {
-          character_id: p.character_id,
-          character_name: p.character.name,
+          character_id: p.npc? ? "npc-#{p.npc_template_id}" : p.character_id,
+          character_name: p.participant_name,
           team: p.team,
           result: p.result,
-          rating_delta: p.rating_delta
+          rating_delta: p.npc? ? 0 : p.rating_delta,
+          is_npc: p.npc?
         }
       end
     }
-  end
-
-  def build_participants
-    character_ids = Array(params[:arena_match][:character_ids]).reject(&:blank?)
-    raise ArgumentError, "Select at least two characters." if character_ids.size < 2
-
-    characters = Character.includes(:user).where(id: character_ids)
-    raise ArgumentError, "Characters not found." if characters.size < 2
-
-    characters.each_with_index.map do |character, index|
-      {
-        character: character,
-        user: character.user,
-        team: (index.even? ? "alpha" : "beta")
-      }
-    end
   end
 
   def turn_action_array(key)

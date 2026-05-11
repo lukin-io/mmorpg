@@ -137,7 +137,7 @@ Rails.application.routes.draw do
     end
   end
 
-  resources :arena_rooms, only: [:index, :show] do
+  resources :arena_rooms, only: [:show] do
     resources :arena_applications, only: [:index, :create, :destroy] do
       member do
         post :accept
@@ -152,32 +152,16 @@ Rails.application.routes.draw do
     end
   end
 
-  resources :arena_matches, only: [:index, :show, :create] do
+  resources :arena_matches, only: [:show] do
     member do
       post :action
+      post :claim_timeout
       post :spectate
       get :log
     end
   end
 
   resources :arena_seasons, only: [:index, :show]
-
-  # Tactical Arena - Grid-based combat
-  resources :tactical_arena, only: [:index, :show, :create] do
-    member do
-      post :join
-      post :move
-      post :attack
-      post :skill
-      post :end_turn
-      post :forfeit
-    end
-  end
-
-  # Arena Betting
-  resources :arena_matches do
-    resources :arena_bets, only: [:index, :create, :destroy]
-  end
 
   # Dungeons
   resources :dungeons, only: [:index, :show] do

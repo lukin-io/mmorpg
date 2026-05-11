@@ -1,129 +1,131 @@
 <% content_for :title, "Arena - Elselands" %>
 
-<div class="arena-page" data-controller="arena" data-arena-character-level-value="<%= current_character.level %>">
-  <div class="page-header">
-    <div class="page-header-top">
-      <%= link_to "← Exit to City", world_path, class: "btn-secondary btn-sm back-to-city" %>
+<% active_tab = (params[:ft].presence || "1").to_s %>
+<% total_applications = @rooms.sum(&:open_application_count) %>
+
+<div class="nl-arena-frame"
+     data-controller="arena"
+     data-arena-character-level-value="<%= current_character.level %>">
+  <div class="nl-arena-topline">
+    <div class="nl-arena-character">
+      <%= current_character.name %>[<%= current_character.level %>]
+      <span class="nl-arena-vitals"><%= current_character.current_hp %>/<%= current_character.max_hp %> | <%= current_character.current_mp %>/<%= current_character.max_mp %></span>
     </div>
-    <h1>⚔️ Arena</h1>
-    <p class="text-muted">Battle other players for glory and rewards!</p>
+    <div class="nl-arena-controls">
+      <%= link_to "Ваш персонаж", profile_path(profile_name: current_character.name), class: "nl-arena-link" %>
+      <%= link_to "Инвентарь", inventory_path, class: "nl-arena-link" %>
+      <span class="nl-arena-link nl-arena-link--current">Арена</span>
+      <%= link_to "В город", world_path, class: "nl-arena-link" %>
+    </div>
   </div>
 
-  <%# Current Application Status %>
+  <div class="nl-arena-status-row">
+    <span>Фильтр заявок: <%= link_to "Ваш уровень", arena_index_path(ft: active_tab, level: current_character.level), class: "nl-arena-filter" %> | <%= link_to "Все", arena_index_path(ft: active_tab), class: "nl-arena-filter" %></span>
+    <span>Количество заявок: <b><%= total_applications %></b></span>
+    <%= link_to "Обновить", arena_index_path(ft: active_tab), class: "nl-arena-link" %>
+    <button type="button" class="nl-arena-link nl-arena-link--button" data-action="click->arena#showRooms">Показать схему здания</button>
+  </div>
+
+  <div class="nl-arena-tabs">
+    <%= link_to "Дуэли", arena_index_path(ft: 1), class: "nl-arena-tab #{'nl-arena-tab--active' if active_tab == '1'}" %>
+    <%= link_to "Групповые", arena_index_path(ft: 2), class: "nl-arena-tab #{'nl-arena-tab--active' if active_tab == '2'}" %>
+    <%= link_to "Жертвенные", arena_index_path(ft: 3), class: "nl-arena-tab #{'nl-arena-tab--active' if active_tab == '3'}" %>
+    <span class="nl-arena-tab nl-arena-tab--disabled">Тактические</span>
+    <span class="nl-arena-tab nl-arena-tab--disabled">Тотализатор</span>
+    <%= link_to "Статистика", arena_index_path(ft: 4), class: "nl-arena-tab #{'nl-arena-tab--active' if active_tab == '4'}" %>
+  </div>
+
   <% if @current_application %>
-    <div class="arena-current-app card">
-      <h3>⏳ Your Active Application</h3>
-      <p>
-        <strong><%= fight_type_with_icon(@current_application.fight_type) %></strong>
-        in <%= room_type_icon(@current_application.arena_room.room_type) %> <%= @current_application.arena_room.name %>
-      </p>
-      <p class="application-settings-row">
-        <%= application_settings_display(@current_application) %>
-      </p>
-      <p class="text-muted">
-        Expires in <%= distance_of_time_in_words_to_now(@current_application.expires_at) %>
-      </p>
-      <%= button_to "❌ Cancel Application",
+    <div class="nl-arena-current-row">
+      <b>Ваша заявка:</b>
+      <%= fight_type_label(@current_application.fight_type) %>,
+      <%= fight_kind_label(@current_application.fight_kind) %>,
+      таймаут <%= @current_application.timeout_seconds / 60 %> мин,
+      травматичность <%= @current_application.trauma_percent %>%,
+      зал <%= @current_application.arena_room.name %>.
+      <%= button_to "отозвать заявку",
           cancel_arena_application_path(@current_application),
           method: :delete,
-          class: "btn-danger btn-sm",
+          class: "nl-arena-small-button",
           data: { turbo_confirm: "Cancel your fight application?" } %>
     </div>
   <% end %>
 
-  <%# Room Grid %>
-  <div class="arena-section">
-    <div class="section-header">
-      <h2>Arena Rooms</h2>
-      <button class="btn-secondary btn-sm" data-action="click->arena#showRooms">
-        Toggle Building View
-      </button>
-    </div>
-
-    <div class="arena-rooms" data-arena-target="roomGrid">
-      <% @rooms.each do |room| %>
-        <% accessible = room.accessible_by?(current_character) %>
-        <div class="arena-room arena-room--<%= accessible ? 'available' : 'unavailable' %> arena-room--faction-<%= room.faction_restriction || 'none' %>"
-             data-room-id="<%= room.id %>"
-             data-level-min="<%= room.level_min %>"
-             data-level-max="<%= room.level_max %>"
-             <% if accessible %>
-               data-action="click->arena#selectRoom"
-             <% end %>>
-          <div class="arena-room-name">
-            <%= room_type_badge(room.room_type) %>
-          </div>
-          <div class="arena-room-level">📊 Levels <%= room.level_min %>-<%= room.level_max %></div>
-          <div class="arena-room-count">
-            <span title="Open applications">👥 <%= room.open_application_count %> waiting</span>
-          </div>
-          <%= arena_room_status_tag(room) %>
-          <% if accessible %>
-            <%= link_to "🚪 Enter", arena_room_path(room), class: "btn-primary btn-sm" %>
-          <% else %>
-            <span class="text-muted text-sm">
-              <% if room.level_min > current_character.level %>
-                🔒 Level <%= room.level_min %> required
-              <% elsif room.level_max < current_character.level %>
-                ⬆️ Max level <%= room.level_max %>
-              <% elsif room.faction_restriction %>
-                <%= faction_icon(room.faction_restriction) %> <%= room.faction_restriction.humanize %> only
+  <div class="nl-arena-room-scheme" data-arena-target="roomGrid">
+    <table class="nl-arena-table nl-arena-rooms-table">
+      <% @rooms.each_slice(5) do |row| %>
+        <tr>
+          <% row.each do |room| %>
+            <% accessible = room.accessible_by?(current_character) %>
+            <td class="nl-arena-room-cell <%= accessible ? 'nl-arena-room-cell--open' : 'nl-arena-room-cell--locked' %>">
+              <b><%= room_type_badge(room.room_type) %></b> [ <%= room.open_application_count %> ]<br>
+              <span><%= room.level_min %>-<%= room.level_max %></span><br>
+              <% if accessible %>
+                <%= link_to "Перейти", arena_room_path(room), class: "nl-arena-small-button" %>
+              <% else %>
+                <span class="nl-arena-muted">Недоступно</span>
               <% end %>
-            </span>
+            </td>
           <% end %>
+        </tr>
+      <% end %>
+    </table>
+  </div>
+
+  <% if active_tab == "4" %>
+    <div class="nl-arena-search">
+      <b>Статистика боев</b>
+      <span class="nl-arena-muted">Current and completed fight search will stay in this frame.</span>
+    </div>
+  <% else %>
+    <table class="nl-arena-table nl-arena-summary-table">
+      <thead>
+        <tr>
+          <th>Зал</th>
+          <th>Уровни</th>
+          <th>Заявки</th>
+          <th>Бои</th>
+          <th>Действие</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @rooms.each do |room| %>
+          <% accessible = room.accessible_by?(current_character) %>
+          <tr class="<%= accessible ? '' : 'nl-arena-row--locked' %>">
+            <td><%= room_type_badge(room.room_type) %></td>
+            <td><%= room.level_min %>-<%= room.level_max %></td>
+            <td><%= room.open_application_count %></td>
+            <td><%= room.current_match_count %></td>
+            <td>
+              <% if accessible %>
+                <%= link_to "Перейти", arena_room_path(room), class: "nl-arena-small-button" %>
+              <% else %>
+                <span class="nl-arena-muted">уровень не подходит</span>
+              <% end %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% end %>
+
+  <% if @recent_matches.any? %>
+    <div class="nl-arena-recent">
+      <b>Последние бои</b>
+      <% @recent_matches.each do |participation| %>
+        <% match = participation.arena_match %>
+        <div class="nl-arena-recent-row">
+          <%= match.match_type.humanize %> -
+          <%= participation.result.humanize %>,
+          <%= time_ago_in_words(match.created_at) %> ago.
+          <%= link_to "лог", arena_match_path(match), class: "nl-arena-filter" %>
         </div>
       <% end %>
     </div>
-  </div>
-
-  <%# Recent Matches %>
-  <% if @recent_matches.any? %>
-    <div class="arena-section">
-      <h2>Recent Matches</h2>
-      <div class="arena-recent-matches">
-        <% @recent_matches.each do |participation| %>
-          <% match = participation.arena_match %>
-          <div class="arena-match-card">
-            <div class="match-info">
-              <span class="match-type"><%= fight_type_with_icon(match.match_type) %></span>
-              <span class="match-result match-result--<%= participation.result %>">
-                <%= case participation.result.to_sym
-                    when :win then "🏆 Victory"
-                    when :loss then "💀 Defeat"
-                    when :draw then "🤝 Draw"
-                    else participation.result.humanize
-                    end %>
-              </span>
-            </div>
-            <div class="match-meta">
-              🕐 <%= time_ago_in_words(match.created_at) %> ago
-              <% if participation.rating_delta != 0 %>
-                <span class="rating-delta rating-delta--<%= participation.rating_delta > 0 ? 'positive' : 'negative' %>">
-                  <%= participation.rating_delta > 0 ? '📈 +' : '📉 ' %><%= participation.rating_delta %>
-                </span>
-              <% end %>
-            </div>
-            <%= link_to "📜 View Log", arena_match_path(match), class: "arena-log-link" %>
-          </div>
-        <% end %>
-      </div>
-    </div>
   <% end %>
-
-  <%# Fight Type Tabs %>
-  <div class="arena-tabs">
-    <%= link_to "⚔️ Duels", arena_index_path(ft: 1), class: "arena-tab #{'arena-tab--active' if params[:ft] == '1' || params[:ft].nil?}" %>
-    <%= link_to "👥 Team Battle", arena_index_path(ft: 2), class: "arena-tab #{'arena-tab--active' if params[:ft] == '2'}" %>
-    <%= link_to "💀 Sacrifice", arena_index_path(ft: 3), class: "arena-tab #{'arena-tab--active' if params[:ft] == '3'}" %>
-    <span class="arena-tab arena-tab--disabled">🎯 Tactical</span>
-    <span class="arena-tab arena-tab--disabled">🎰 Betting</span>
-    <%= link_to "📊 Statistics", arena_index_path(ft: 4), class: "arena-tab #{'arena-tab--active' if params[:ft] == '4'}" %>
-  </div>
 </div>
 
-<%# Countdown overlay (hidden by default) %>
 <div class="arena-countdown" data-arena-target="countdown" style="display: none;">
   <div class="arena-countdown-title">Match Starting</div>
   <div class="arena-countdown-timer">--</div>
 </div>
-
