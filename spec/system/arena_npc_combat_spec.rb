@@ -95,13 +95,13 @@ RSpec.describe "Arena NPC Combat UI", type: :system do
     it "displays accept button for NPC application" do
       visit arena_room_path(arena_room)
 
-      expect(page).to have_button("принять").or have_link("принять")
+      expect(page).to have_button("Accept").or have_link("Accept")
     end
 
     it "shows fight type for NPC application" do
       visit arena_room_path(arena_room)
 
-      expect(page).to have_content("Дуэли").or have_content("Bare Hands")
+      expect(page).to have_content("Duels").or have_content("Bare Hands")
     end
   end
 
@@ -129,7 +129,7 @@ RSpec.describe "Arena NPC Combat UI", type: :system do
     it "redirects to match page after accepting" do
       visit arena_room_path(arena_room)
 
-      click_button "принять"
+      click_button "Accept"
 
       expect(page).to have_current_path(/arena_matches/)
     end
@@ -137,7 +137,7 @@ RSpec.describe "Arena NPC Combat UI", type: :system do
     it "shows both participants after accepting" do
       visit arena_room_path(arena_room)
 
-      click_button "принять"
+      click_button "Accept"
 
       expect(page).to have_content("TestHero")
       expect(page).to have_content("Training Dummy")
@@ -146,7 +146,7 @@ RSpec.describe "Arena NPC Combat UI", type: :system do
     it "displays NPC avatar image on match page" do
       visit arena_room_path(arena_room)
 
-      click_button "принять"
+      click_button "Accept"
 
       # Now uses avatar images instead of emoji
       expect(page).to have_css("img.avatar").or have_css(".avatar")
@@ -155,7 +155,7 @@ RSpec.describe "Arena NPC Combat UI", type: :system do
     it "shows HP bars for both participants" do
       visit arena_room_path(arena_room)
 
-      click_button "принять"
+      click_button "Accept"
 
       # Both player and NPC should have HP displays
       expect(page).to have_css(".arena-hp-bar", minimum: 2).or have_content("/")
@@ -186,7 +186,7 @@ RSpec.describe "Arena NPC Combat UI", type: :system do
       visit arena_room_path(arena_room)
 
       # Matched applications should not appear in open applications list
-      expect(page).not_to have_button("принять")
+      expect(page).not_to have_button("Accept")
     end
   end
 
@@ -215,7 +215,7 @@ RSpec.describe "Arena NPC Combat UI", type: :system do
       visit arena_room_path(arena_room)
 
       # Expired applications should not appear in open applications list
-      expect(page).not_to have_button("принять")
+      expect(page).not_to have_button("Accept")
     end
   end
 
@@ -232,13 +232,13 @@ RSpec.describe "Arena NPC Combat UI", type: :system do
     it "shows empty message when no applications exist" do
       visit arena_room_path(arena_room)
 
-      expect(page).to have_content("Заявок не найдено")
+      expect(page).to have_content("No open applications")
     end
 
     it "shows application form" do
       visit arena_room_path(arena_room)
 
-      expect(page).to have_button("подать заявку")
+      expect(page).to have_button("Submit Application")
     end
   end
 
@@ -268,7 +268,7 @@ RSpec.describe "Arena NPC Combat UI", type: :system do
       visit arena_room_path(restricted_room)
 
       # Should redirect away from restricted room (not show the room contents)
-      expect(page).not_to have_button("подать заявку")
+      expect(page).not_to have_button("Submit Application")
     end
   end
 
@@ -389,7 +389,7 @@ RSpec.describe "Arena NPC Combat UI", type: :system do
     it "can accept application with minimal NPC" do
       visit arena_room_path(arena_room)
 
-      click_button "принять"
+      click_button "Accept"
 
       expect(page).to have_current_path(/arena_matches/)
     end
@@ -408,7 +408,7 @@ RSpec.describe "Arena NPC Combat UI", type: :system do
     it "displays arena page" do
       visit arena_index_path
 
-      expect(page).to have_content("Арена")
+      expect(page).to have_content("Arena")
     end
 
     it "shows available rooms" do

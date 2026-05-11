@@ -41,6 +41,15 @@ RSpec.describe Arena::CombatProcessor, "Neverlands-style combat features" do
 
   let(:processor) { described_class.new(arena_match) }
 
+  def deterministic_processor(*rolls)
+    rng = instance_double(Random)
+    allow(rng).to receive(:rand) do |range_or_limit = nil|
+      value = rolls.shift || 99
+      range_or_limit.is_a?(Range) ? value.clamp(range_or_limit.min, range_or_limit.max) : value
+    end
+    described_class.new(arena_match, rng:)
+  end
+
   before do
     create(:character_position, character: character1)
     create(:character_position, character: character2)
@@ -181,7 +190,7 @@ RSpec.describe Arena::CombatProcessor, "Neverlands-style combat features" do
       end
 
       it "does not block attack to unblocked part" do
-        result = processor.process_action(
+        result = deterministic_processor(0, 99, 99, 3).process_action(
           character1,
           :attack,
           target: character2,
@@ -189,7 +198,8 @@ RSpec.describe Arena::CombatProcessor, "Neverlands-style combat features" do
         )
 
         expect(result[:blocked]).to be_falsey
-        expect(result[:damage]).to be > 0
+        expect(result[:body_part]).to eq("legs")
+        expect(result[:outcome]).not_to eq(:blocked)
       end
     end
   end
@@ -217,7 +227,7 @@ RSpec.describe Arena::CombatProcessor, "Neverlands-style combat features" do
       # Force a critical hit by stubbing
       allow_any_instance_of(Object).to receive(:rand).and_return(0)
 
-      processor.process_action(
+      deterministic_processor(0, 99).process_action(
         character1,
         :attack,
         target: character2,

@@ -106,7 +106,7 @@ RSpec.describe "Arena Match UI Layout", type: :system do
 
     it "shows turn submit button" do
       visit arena_match_path(match)
-      expect(page).to have_button("ход")
+      expect(page).to have_button("Submit Turn")
     end
 
     it "shows body part selection dropdown" do
@@ -216,7 +216,7 @@ RSpec.describe "Arena Match UI Layout", type: :system do
 
       it "shows finish fight button before returning to arena" do
         visit arena_match_path(match)
-        expect(page).to have_button("Завершить бой")
+        expect(page).to have_button("Finish Fight")
       end
 
       it "shows Return to Arena after the result screen is finished" do

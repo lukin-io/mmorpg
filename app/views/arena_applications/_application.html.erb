@@ -64,7 +64,7 @@
       <% if application.applicant == current_character %>
         <span class="text-muted">👤 Your application</span>
       <% elsif application.acceptable_by?(current_character) %>
-        <%= button_to "✅ Accept",
+        <%= button_to "Accept",
             accept_arena_application_path(application),
             method: :post,
             class: "btn-primary btn-sm",
@@ -81,4 +81,3 @@
     <% end %>
   </div>
 </div>
-

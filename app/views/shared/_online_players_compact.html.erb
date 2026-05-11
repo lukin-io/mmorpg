@@ -27,7 +27,7 @@
 
 <%# Sorting options %>
 <div class="nl-players-sort-bar">
-  <span class="nl-sort-label">Сортировка:</span>
+  <span class="nl-sort-label">Sort:</span>
   <span class="nl-players-sort">
     <a href="#" data-action="click->game-layout#sortPlayers" data-sort="az">a-z</a>
     <a href="#" data-action="click->game-layout#sortPlayers" data-sort="za">z-a</a>
@@ -36,14 +36,14 @@
   </span>
   <label class="nl-refresh-toggle">
     <input type="checkbox" checked data-action="change->game-layout#toggleAutoRefresh">
-    обновить
+    refresh
   </label>
 </div>
 
 <%# Location header %>
 <div class="nl-players-header">
   <div class="nl-players-location"><%= location_name %></div>
-  <div class="nl-players-total">Всего [ <%= total_online %> ]</div>
+  <div class="nl-players-total">Total [ <%= total_online %> ]</div>
 </div>
 
 <%# Players list %>
@@ -65,8 +65,8 @@
 
       # Status icon
       status_icon = case status
-                    when 'active' then "в"
-                    else "я"
+                    when 'active' then "A"
+                    else "I"
                     end
     %>
     <div class="nl-player-entry"
@@ -84,7 +84,7 @@
   <% end %>
 
   <% if online_users.empty? %>
-    <div class="nl-players-empty">Никого нет</div>
+    <div class="nl-players-empty">No players online</div>
   <% end %>
 </div>
 
@@ -96,4 +96,3 @@
   <button data-action="click->game-layout#inviteToParty">🤝 Invite</button>
   <button data-action="click->game-layout#ignorePlayer">🚫 Ignore</button>
 </div>
-

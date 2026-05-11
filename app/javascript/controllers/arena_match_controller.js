@@ -190,7 +190,7 @@ export default class extends Controller {
         this.disableTurnComposer()
         this.appendSystemMessage({
           timestamp: new Date().toLocaleTimeString(),
-          message: "Ожидаем хода противника",
+          message: "Waiting for the opponent's turn",
           severity: "info"
         })
       }

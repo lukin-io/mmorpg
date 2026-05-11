@@ -12,8 +12,8 @@
   attack_options = arena_attack_options(current_participation, combat_config)
   block_options = arena_block_options(current_participation, combat_config)
   magic_options = combat_config["magic_types"] || {}
-  body_parts = [["head", "В голову"], ["torso", "В торс"], ["stomach", "В живот"], ["legs", "По ногам"]]
-  block_parts = [["head", "Голова"], ["torso", "Торс"], ["stomach", "Живот"], ["legs", "Ноги"]]
+  body_parts = [["head", "Head"], ["torso", "Torso"], ["stomach", "Stomach"], ["legs", "Legs"]]
+  block_parts = body_parts
 %>
 
 <div class="arena-match-page"
@@ -60,17 +60,17 @@
       <% if @arena_match.live? && current_user_participating? && current_user_pending_arena_turn? %>
         <div class="arena-action-panel nl-fight-wait-panel">
           <div class="nl-fight-wait-state">
-            <b>Ожидаем хода противника</b>
+            <b>Waiting for the opponent's turn</b>
           </div>
 
           <% if arena_timeout_claim_available? %>
             <div class="nl-fight-wait-actions">
-              <%= button_to "Победа по таймауту",
+              <%= button_to "Claim timeout victory",
                   claim_timeout_arena_match_path(@arena_match),
                   method: :post,
                   params: {mode: "victory"},
                   class: "nl-arena-small-button" %>
-              <%= button_to "Ничья",
+              <%= button_to "Accept draw",
                   claim_timeout_arena_match_path(@arena_match),
                   method: :post,
                   params: {mode: "draw"},
@@ -90,13 +90,13 @@
           </div>
 
           <div class="nl-fight-controls">
-            <%= link_to "Инвентарь", inventory_path, class: "nl-arena-small-button" %>
-            <button type="button" class="nl-arena-small-button" data-action="click->arena-match#requestMatchState">Обновить</button>
+            <%= link_to "Inventory", inventory_path, class: "nl-arena-small-button" %>
+            <button type="button" class="nl-arena-small-button" data-action="click->arena-match#requestMatchState">Refresh</button>
           </div>
 
           <div class="nl-fight-budget">
-            Количество очков действия: <b><%= ap_limit %></b>
-            <span>Из них использовано: <b data-arena-match-target="turnCostValue">0/<%= ap_limit %></b></span>
+            Action points: <b><%= ap_limit %></b>
+            <span>Used: <b data-arena-match-target="turnCostValue">0/<%= ap_limit %></b></span>
           </div>
 
           <div class="nl-fight-magic-slots">
@@ -119,10 +119,10 @@
           <div class="arena-turn-composer nl-fight-turn-composer">
             <table class="nl-fight-selector-table">
               <tr>
-                <th>Удар</th>
-                <th>Действие</th>
-                <th>Блок</th>
-                <th>Действие</th>
+                <th>Attack</th>
+                <th>Action</th>
+                <th>Block</th>
+                <th>Action</th>
               </tr>
               <% body_parts.each_with_index do |(part, attack_label), idx| %>
                 <% block_part_key, block_label = block_parts[idx] %>
@@ -133,7 +133,7 @@
                             data-action="change->arena-match#updateTurnCost"
                             data-body-part="<%= part %>"
                             class="form-select form-select--compact nl-fight-select">
-                      <option value="none" data-ap-cost="0" data-mana-cost="0">нет</option>
+                      <option value="none" data-ap-cost="0" data-mana-cost="0">none</option>
                       <% attack_options.each do |key, config| %>
                         <option value="<%= key %>"
                                 data-ap-cost="<%= config['action_cost'] %>"
@@ -150,7 +150,7 @@
                             data-action="change->arena-match#updateTurnCost"
                             data-body-part="<%= block_part_key %>"
                             class="form-select form-select--compact nl-fight-select">
-                      <option value="none" data-ap-cost="0" data-body-parts="">нет</option>
+                      <option value="none" data-ap-cost="0" data-body-parts="">none</option>
                       <% block_options.each do |key, config| %>
                         <% covered_parts = config["body_parts"] || [config["body_part"]].compact %>
                         <% next unless covered_parts.include?(block_part_key) %>
@@ -172,10 +172,10 @@
             <div class="arena-turn-submit">
               <button class="btn-attack btn-attack--submit nl-arena-small-button"
                       data-action="click->arena-match#submitTurn">
-                ход
+                Submit Turn
               </button>
               <button type="button" class="nl-arena-small-button" data-action="click->arena-match#resetTurn">
-                сбросить
+                Reset
               </button>
             </div>
           </div>
@@ -269,7 +269,7 @@
           <p class="text-muted">Duration: <%= format_duration(@arena_match.duration || 0) %></p>
         </div>
         <% if current_user_participating? && !current_user_finished_arena_match? %>
-          <%= button_to "Завершить бой", finish_arena_match_path(@arena_match), method: :post, class: "btn-primary" %>
+          <%= button_to "Finish Fight", finish_arena_match_path(@arena_match), method: :post, class: "btn-primary" %>
         <% else %>
           <%= link_to "Return to Arena", arena_index_path, class: "btn-primary" %>
         <% end %>
