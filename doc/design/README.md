@@ -11,11 +11,12 @@
 ## Reading Order
 
 1. `gdd.md`
-2. `documentation_model.md`
-3. `neverlands_parity_matrix.md`
-4. `reference/neverlands.md`
-5. Area docs for the surface being built.
-6. Feature docs for the mechanics involved.
+2. `launch_mvp_plan.md`
+3. `documentation_model.md`
+4. `neverlands_parity_matrix.md`
+5. `reference/neverlands.md`
+6. Area docs for the surface being built.
+7. Feature docs for the mechanics involved.
 
 ## Update Rule
 

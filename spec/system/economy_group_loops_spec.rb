@@ -89,7 +89,7 @@ RSpec.describe "Economy & Group Loops", type: :system, js: true do
 
       select "Wolf Pelt (x1)", from: "Add Item"
       fill_in "Quantity", with: 1
-      click_button "Add to Trade"
+      find_button("Add to Trade").scroll_to(:center).click
 
       expect(page).to have_css("#flash", text: "Contribution added")
       expect(page).to have_content("Wolf Pelt")

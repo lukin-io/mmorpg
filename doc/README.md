@@ -15,9 +15,11 @@ product language for this project.
 Start here:
 
 1. `doc/design/gdd.md` - entry point and source of truth.
-2. `doc/design/features/` - mechanics, one feature per file.
-3. `doc/design/areas/` - places and major play spaces.
-4. `doc/design/reference/` - external observations and source-material map.
+2. `doc/design/launch_mvp_plan.md` - current launch MVP scope, status, and
+   in-progress work.
+3. `doc/design/features/` - mechanics, one feature per file.
+4. `doc/design/areas/` - places and major play spaces.
+5. `doc/design/reference/` - external observations and source-material map.
 
 Other folders are supporting material:
 
@@ -31,6 +33,7 @@ When documents disagree, use this order:
 
 ```text
 doc/design/gdd.md
+-> doc/design/launch_mvp_plan.md
 -> doc/design/features/* and doc/design/areas/*
 -> doc/design/reference/*
 -> doc/engineering/*
@@ -38,6 +41,10 @@ doc/design/gdd.md
 ```
 
 ## Current Design Structure
+
+Launch scope:
+
+- `doc/design/launch_mvp_plan.md`
 
 Areas:
 

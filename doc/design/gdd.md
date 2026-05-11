@@ -24,6 +24,10 @@ wins and the derived material should be updated.
 
 Use these documents when implementing or extending the game design:
 
+Launch scope:
+
+- `doc/design/launch_mvp_plan.md`
+
 Areas:
 
 - `doc/design/areas/world_map.md`
@@ -113,7 +117,7 @@ movement:
 - city node transitions do not use the wilderness movement countdown;
 - every city page refreshes the available outgoing actions;
 - entering a building immediately loads a building page;
-- building pages provide feature-specific UI and a `Город` return action;
+- building pages provide feature-specific UI and a `City` return action;
 - returning from a building goes back to its parent city node;
 - local player/location presence refreshes after city navigation.
 

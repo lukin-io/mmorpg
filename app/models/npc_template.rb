@@ -26,7 +26,7 @@ class NpcTemplate < ApplicationRecord
   include Npc::CombatStats
   include Npc::Combatable
 
-  ROLES = %w[quest_giver vendor trainer guard innkeeper banker auctioneer crafter hostile lore arena_bot].freeze
+  ROLES = %w[quest_giver vendor trainer guard innkeeper banker auctioneer crafter hostile lore arena_bot friendly].freeze
 
   validates :name, presence: true, uniqueness: true
   validates :level, numericality: {greater_than: 0}
