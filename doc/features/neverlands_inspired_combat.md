@@ -1516,15 +1516,17 @@ This section documents all combat formulas and constants implemented in Elseland
 ### Action Points (AP) System
 
 ```ruby
-# Constants
-AP_PER_TURN = 100          # Total AP available per turn
-BLOCK_AP_COST = 30         # Base cost to block
-
-# Attack Type Costs
-ATTACK_TYPES = {
-  simple: { ap_cost: 45, damage_mult: 1.0, hit_bonus: 0 },
-  aimed:  { ap_cost: 65, damage_mult: 1.2, hit_bonus: 10 }
+# Per-participant profile, stored on ArenaParticipation metadata.
+profile = {
+  "ap_limit" => 140,                    # captured fight_pm[1]
+  "physical_attack_cost_seed" => 67,    # captured fight_pm[2]
+  "simple_attack_cost" => 67,
+  "aimed_attack_cost" => 87,            # seed + 20
+  "block_table" => "normal"
 }
+
+# New local fights derive the same shape from character AP, level/equipment,
+# and item-family hooks when no captured profile exists.
 
 # Multi-Attack Penalty (from Neverlands analysis)
 MULTI_ATTACK_PENALTIES = [0, 0, 25, 75, 150, 250]
@@ -1550,41 +1552,27 @@ BODY_PART_MULTIPLIERS = {
 ### Damage Calculation
 
 ```ruby
-# Base Damage Formula
-def calculate_base_damage(character)
-  base = character.stats.get(:attack) || 10
-  weapon_bonus = character.equipped_weapon_damage || 0
-  base + weapon_bonus + rand(1..5)  # Random variance
-end
-
-# Final Damage Formula
-base_damage = calculate_base_damage(attacker)
-base_damage *= attack_type[:damage_mult]     # Attack type modifier (1.0 or 1.2)
-base_damage *= BODY_PART_MULTIPLIERS[part]   # Body part modifier (0.9-1.3)
-defense = calculate_defense(target)
-damage = [base_damage - defense, 1].max       # Minimum 1 damage
-
-# Critical Hit (10% chance, 2x damage)
-if rand < 0.1
-  damage *= 2
-end
+# Arena::CombatResolver sequence:
+# 1. hit roll
+# 2. dodge roll
+# 3. selected block coverage check
+# 4. critical roll
+# 5. damage formula
+attack = attacker.attack_power + variance(1..5)
+attack *= attack_type_damage_multiplier
+attack *= BODY_PART_MULTIPLIERS[part]
+damage = attack.round - (defender.defense / 2)
+damage *= 1.5 if critical
+damage = [damage, 0].max
 ```
 
 ### Defense Calculation
 
 ```ruby
-def calculate_defense(character)
-  base = character.stats.get(:defense) || 5
-  armor_bonus = character.equipped_armor_defense || 0
-  defense = base + armor_bonus
-
-  # Defend stance bonus (+50% defense)
-  if character.metadata["defending"]
-    defense *= 1.5
-  end
-
-  defense.round
-end
+defense = character.defense
+# Character#defense = vitality + strength / 3 + level / 2 + equipped armor/shield
+# Selected blocks are not passive defense multipliers; they are explicit
+# body-part coverage actions resolved before damage.
 ```
 
 ### HP Recovery Gate
@@ -1696,7 +1684,7 @@ NPC_MATCH_COUNTDOWN = 5     # seconds for NPC/training matches
 | Attack Types | `ATTACK_TYPES` constant (simple, aimed) |
 | Block Types (Combo) | `block_parts` array parameter |
 | Body Part Targeting | `BODY_PART_MULTIPLIERS` constant |
-| AP System | `AP_PER_TURN = 100`, costs per action |
+| AP System | `Arena::CombatProfile` per-participant AP/cost profile |
 | Turn Timeout | `ArenaTurnTimeoutJob` (120-300s configurable) |
 | HP Recovery Gate | `MIN_HP_PERCENT_FOR_ARENA = 50` |
 | Trauma System | `apply_trauma` method with HP/XP loss |
@@ -1704,20 +1692,19 @@ NPC_MATCH_COUNTDOWN = 5     # seconds for NPC/training matches
 | Opponent Stats Display | `opponent_combat_stats` helper |
 | Combat Log (Timestamped) | `metadata["combat_log"]` array |
 | Match Auto-End | `auto_end_if_needed!` (stale/defeat) |
-| Critical Hits | 10% chance, 2x damage |
-| Dodge/Evasion | Hit chance roll |
+| Critical Hits | `Arena::CombatResolver` critical roll and multiplier |
+| Dodge/Evasion | `Arena::CombatResolver` hit and dodge rolls |
 | Match Notifications | Both participants notified |
 | Active Match Redirect | Users redirected to active match |
 
-### 🟡 UI Enhancements Needed (Phase 2)
+### 🟡 Source Capture / Tuning Work
 
 | Enhancement | Priority | Notes |
 |-------------|----------|-------|
 | Equipment slots around avatar | Medium | 8 slots visual display |
 | Stamina percentage display | Medium | Header indicator |
-| Full dropdown-based UI | Medium | 4 attack + 4 block dropdowns |
-| Multi-attack penalty display | Low | Show AP penalty for 2+ attacks |
-| Magic shield blocks | Low | Special block types with mana cost |
+| Live item-family coefficient captures | Medium | Local AP/cost formula exists; more live captures tune constants |
+| Live PvP fight capture | Medium | Local simultaneous PvP resolution is implemented; external parity evidence still needs a real opponent |
 | World/System log panel | Low | Below combat area |
 
 ---

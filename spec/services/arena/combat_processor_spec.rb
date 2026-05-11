@@ -380,6 +380,118 @@ RSpec.describe Arena::CombatProcessor do
         expect(participation1.metadata.dig("pending_turn", "ap_limit")).to eq(140)
       end
 
+      it "validates a captured-profile PvP round and resolves only after both turns arrive" do
+        captured_profile = {
+          "ap_limit" => 140,
+          "physical_attack_cost_seed" => 67,
+          "simple_attack_cost" => 67,
+          "aimed_attack_cost" => 87,
+          "max_magic_mana" => 52,
+          "block_table" => "normal"
+        }
+        participation1.update!(metadata: {"combat_profile" => captured_profile})
+        participation2.update!(metadata: {"combat_profile" => captured_profile})
+
+        rng = instance_double(Random)
+        allow(rng).to receive(:rand).with(100).and_return(0, 99, 0, 99)
+        captured_processor = described_class.new(arena_match, rng:)
+
+        allow(captured_processor.broadcaster).to receive(:broadcast_ap_update)
+        allow(captured_processor.broadcaster).to receive(:broadcast_combat_action)
+        allow(captured_processor.broadcaster).to receive(:broadcast_vitals_update)
+        allow(captured_processor.broadcaster).to receive(:broadcast_system_message)
+
+        first = captured_processor.process_action(
+          character1,
+          :turn,
+          target: character2,
+          attacks: [{action_key: "simple", body_part: "torso"}],
+          blocks: [{action_key: "torso_block", body_parts: ["torso"]}]
+        )
+        second = captured_processor.process_action(
+          character2,
+          :turn,
+          target: character1,
+          attacks: [{action_key: "simple", body_part: "torso"}],
+          blocks: [{action_key: "torso_block", body_parts: ["torso"]}]
+        )
+
+        expect(first).to be_success
+        expect(first[:total_ap]).to eq(97)
+        expect(first[:waiting]).to be true
+        expect(second).to be_success
+        expect(second[:resolved]).to be true
+        expect(participation1.reload.metadata["current_ap"]).to eq(140)
+        expect(participation2.reload.metadata["current_ap"]).to eq(140)
+        expect(arena_match.reload.metadata["combat_log"].map { |entry| entry["type"] }).to include("block")
+      end
+
+      it "allows a magic/action slot as the only submitted action" do
+        errors = processor.send(
+          :validate_turn_actions,
+          [],
+          [],
+          [{key: "hp_restore"}],
+          actor: character1
+        )
+
+        expect(errors).to be_empty
+      end
+
+      it "applies direct magic damage and tracks arena damage totals" do
+        allow(processor.broadcaster).to receive(:broadcast_vitals_update)
+        allow(processor.broadcaster).to receive(:broadcast_combat_action)
+
+        result = processor.send(
+          :process_turn_skill,
+          character1,
+          {key: "fire_arrow", target_id: character2.id},
+          character2
+        )
+
+        expect(result).to be_success
+        expect(character2.reload.current_hp).to be < 100
+        expect(participation1.reload.metadata["damage_dealt"]).to eq(result[:damage])
+        expect(participation2.reload.metadata["damage_taken"]).to eq(result[:damage])
+      end
+
+      it "rejects magic actions above the fight mana ceiling" do
+        character1.update!(current_mp: 200, max_mp: 200)
+        participation1.update!(
+          metadata: {
+            "combat_profile" => {
+              "ap_limit" => 200,
+              "physical_attack_cost_seed" => 67,
+              "max_magic_mana" => 52
+            }
+          }
+        )
+
+        errors = processor.send(
+          :validate_turn_mana,
+          character1,
+          [],
+          [{key: "crystal_sphere"}]
+        )
+
+        expect(errors).to include("Magic/action mana exceeds fight limit (65/52)")
+      end
+
+      it "stores status effects from special magic actions" do
+        allow(processor.broadcaster).to receive(:broadcast_combat_action)
+
+        result = processor.send(
+          :process_turn_skill,
+          character1,
+          {key: "freeze", target_id: character2.id},
+          character2
+        )
+
+        expect(result).to be_success
+        effect = participation2.reload.metadata["effects"].last
+        expect(effect).to include("key" => "freeze", "effect" => "stun", "duration" => 1)
+      end
+
       it "lets a waiting player claim victory after the turn timer expires" do
         arena_match.update!(current_turn_started_at: 6.minutes.ago, turn_timeout_seconds: 300)
 

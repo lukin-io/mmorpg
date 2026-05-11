@@ -81,7 +81,7 @@ module Arena
         "simple_attack_cost" => seed,
         "aimed_attack_cost" => seed + AIMED_ATTACK_SURCHARGE,
         "max_magic_mana" => magic_limit,
-        "block_table" => stored_profile["block_table"].presence || "normal"
+        "block_table" => stored_profile["block_table"].presence || derived_block_table
       }
     end
 
@@ -155,6 +155,10 @@ module Arena
           item.properties&.dig("attack_cost_seed")
         )
       end.max
+    end
+
+    def derived_block_table
+      equipped_items.any? { |item| equipment_family(item) == "shield" } ? "shield" : "normal"
     end
 
     def equipment_attack_cost_bonus

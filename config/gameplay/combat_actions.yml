@@ -162,6 +162,80 @@ block_types:
     type: 2
     body_parts: ["head", "torso", "stomach", "legs"]
 
+  # Shield block selectors - available when the participant profile uses the
+  # shield block table.
+  shield_head_block:
+    key: "shield_head_block"
+    name: "Shield Head Block"
+    action_cost: 45
+    mana_cost: 0
+    type: 2
+    block_table: "shield"
+    body_part: "head"
+
+  shield_torso_block:
+    key: "shield_torso_block"
+    name: "Shield Torso Block"
+    action_cost: 40
+    mana_cost: 0
+    type: 2
+    block_table: "shield"
+    body_part: "torso"
+
+  shield_stomach_block:
+    key: "shield_stomach_block"
+    name: "Shield Stomach Block"
+    action_cost: 40
+    mana_cost: 0
+    type: 2
+    block_table: "shield"
+    body_part: "stomach"
+
+  shield_legs_block:
+    key: "shield_legs_block"
+    name: "Shield Legs Block"
+    action_cost: 45
+    mana_cost: 0
+    type: 2
+    block_table: "shield"
+    body_part: "legs"
+
+  shield_head_torso_block:
+    key: "shield_head_torso_block"
+    name: "Shield Head + Torso Block"
+    action_cost: 65
+    mana_cost: 0
+    type: 2
+    block_table: "shield"
+    body_parts: ["head", "torso"]
+
+  shield_torso_stomach_block:
+    key: "shield_torso_stomach_block"
+    name: "Shield Torso + Stomach Block"
+    action_cost: 60
+    mana_cost: 0
+    type: 2
+    block_table: "shield"
+    body_parts: ["torso", "stomach"]
+
+  shield_stomach_legs_block:
+    key: "shield_stomach_legs_block"
+    name: "Shield Stomach + Legs Block"
+    action_cost: 65
+    mana_cost: 0
+    type: 2
+    block_table: "shield"
+    body_parts: ["stomach", "legs"]
+
+  shield_full_block:
+    key: "shield_full_block"
+    name: "Shield Full Block"
+    action_cost: 100
+    mana_cost: 0
+    type: 2
+    block_table: "shield"
+    body_parts: ["head", "torso", "stomach", "legs"]
+
 # Magic spells
 magic_types:
   # Defensive magic

@@ -156,6 +156,7 @@ Rails.application.routes.draw do
     member do
       post :action
       post :claim_timeout
+      post :finish
       post :spectate
       get :log
     end

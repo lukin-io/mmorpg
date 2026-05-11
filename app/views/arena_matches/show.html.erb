@@ -10,7 +10,7 @@
   ap_limit = combat_profile["ap_limit"]
   combat_config = Game::Combat::ActionCatalog.config
   attack_options = arena_attack_options(current_participation, combat_config)
-  block_options = combat_config["block_types"] || {}
+  block_options = arena_block_options(current_participation, combat_config)
   magic_options = combat_config["magic_types"] || {}
   body_parts = [["head", "В голову"], ["torso", "В торс"], ["stomach", "В живот"], ["legs", "По ногам"]]
   block_parts = [["head", "Голова"], ["torso", "Торс"], ["stomach", "Живот"], ["legs", "Ноги"]]
@@ -268,7 +268,11 @@
           <% end %>
           <p class="text-muted">Duration: <%= format_duration(@arena_match.duration || 0) %></p>
         </div>
-        <%= link_to "Return to Arena", arena_index_path, class: "btn-primary" %>
+        <% if current_user_participating? && !current_user_finished_arena_match? %>
+          <%= button_to "Завершить бой", finish_arena_match_path(@arena_match), method: :post, class: "btn-primary" %>
+        <% else %>
+          <%= link_to "Return to Arena", arena_index_path, class: "btn-primary" %>
+        <% end %>
       </div>
     </div>
   <% end %>

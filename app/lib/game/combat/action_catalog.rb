@@ -22,6 +22,17 @@ module Game
         %w[head legs] => {key: "legs_head_block", name: "Legs + Head Block", action_cost: 80}
       }.freeze
 
+      SHIELD_BLOCKS = {
+        %w[head] => {key: "shield_head_block", name: "Shield Head Block", action_cost: 45},
+        %w[torso] => {key: "shield_torso_block", name: "Shield Torso Block", action_cost: 40},
+        %w[stomach] => {key: "shield_stomach_block", name: "Shield Stomach Block", action_cost: 40},
+        %w[legs] => {key: "shield_legs_block", name: "Shield Legs Block", action_cost: 45},
+        %w[head torso] => {key: "shield_head_torso_block", name: "Shield Head + Torso Block", action_cost: 65},
+        %w[torso stomach] => {key: "shield_torso_stomach_block", name: "Shield Torso + Stomach Block", action_cost: 60},
+        %w[stomach legs] => {key: "shield_stomach_legs_block", name: "Shield Stomach + Legs Block", action_cost: 65},
+        %w[head torso stomach legs] => {key: "shield_full_block", name: "Shield Full Block", action_cost: 100}
+      }.freeze
+
       module_function
 
       def config
@@ -40,7 +51,7 @@ module Game
             "spirit_arrow" => {"name" => "Spirit Arrow", "action_cost" => 50, "mana_cost" => 5, "damage_multiplier" => 1.05, "hit_bonus" => 5, "element" => "arcane"},
             "mind_blast" => {"name" => "Mind Blast", "action_cost" => 90, "mana_cost" => 5, "damage_multiplier" => 1.35, "hit_bonus" => 10, "element" => "mind"}
           },
-          "block_types" => standard_blocks_config,
+          "block_types" => standard_blocks_config.merge(shield_blocks_config),
           "magic_types" => {
             "magic_shield" => {"name" => "Magic Shield", "action_cost" => 45, "mana_cost" => 20, "type" => 3, "effect" => "shield"},
             "rainbow_barrier" => {"name" => "Rainbow Barrier", "action_cost" => 60, "mana_cost" => 40, "type" => 3, "effect" => "barrier"},
@@ -65,6 +76,18 @@ module Game
             "name" => entry[:name],
             "action_cost" => entry[:action_cost],
             "body_parts" => body_parts_for_block_key(entry[:key])
+          }
+        end
+      end
+
+      def shield_blocks_config
+        SHIELD_BLOCKS.values.index_by { |entry| entry[:key] }.transform_values do |entry|
+          {
+            "key" => entry[:key],
+            "name" => entry[:name],
+            "action_cost" => entry[:action_cost],
+            "body_parts" => body_parts_for_shield_block_key(entry[:key]),
+            "block_table" => "shield"
           }
         end
       end
@@ -132,6 +155,10 @@ module Game
 
       def body_parts_for_block_key(key)
         STANDARD_BLOCKS.find { |_parts, config| config[:key] == key }&.first || []
+      end
+
+      def body_parts_for_shield_block_key(key)
+        SHIELD_BLOCKS.find { |_parts, config| config[:key] == key }&.first || []
       end
 
       def canonical_parts(parts)

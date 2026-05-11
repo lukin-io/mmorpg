@@ -2,9 +2,9 @@
 
 class ArenaMatchesController < ApplicationController
   before_action :authenticate_user!
-  before_action :set_arena_match, only: [:show, :action, :claim_timeout, :spectate, :log]
-  before_action :require_character, only: [:action, :claim_timeout]
-  before_action :require_participant, only: [:action, :claim_timeout]
+  before_action :set_arena_match, only: [:show, :action, :claim_timeout, :finish, :spectate, :log]
+  before_action :require_character, only: [:action, :claim_timeout, :finish]
+  before_action :require_participant, only: [:action, :claim_timeout, :finish]
 
   def show
     authorize @arena_match
@@ -92,6 +92,24 @@ class ArenaMatchesController < ApplicationController
         format.json { render json: {success: false, error: result.error}, status: :unprocessable_entity }
       end
     end
+  end
+
+  # POST /arena_matches/:id/finish
+  def finish
+    authorize @arena_match
+
+    unless @arena_match.completed?
+      redirect_to @arena_match, alert: "Fight is still active."
+      return
+    end
+
+    participation = @arena_match.arena_participations.find_by(user: current_user)
+    participation.metadata ||= {}
+    participation.metadata["finished_at"] = Time.current.iso8601
+    participation.save!
+    current_character.exit_combat! if current_character.in_combat?
+
+    redirect_to arena_index_path, notice: "Fight finished."
   end
 
   def spectate

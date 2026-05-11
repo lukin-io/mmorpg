@@ -134,8 +134,12 @@ first playable loop:
   the captured fight selector costs.
 - Arena block actions use body-part coverage with the captured 30/35/50/60/80
   AP costs and consume the block when it catches an incoming hit.
-- Player damage and defense use `Character#attack_power` and
-  `Character#defense`, so level and equipped item modifiers affect the fight.
+- Arena also exposes a shield block table when the participant combat profile
+  detects an equipped shield. Shield blocks use higher AP costs and preserve
+  the same body-part coverage semantics.
+- Player damage and defense use the arena combat resolver, which combines
+  hit chance, dodge chance, selected block coverage, critical chance, body-part
+  multiplier, attack power, defense, and deterministic damage variance.
 - Character combat-power breakdown now includes equipped item-family
   contributions so weapons, shields, and armor can be balanced separately.
 - NPC training fights use the same target/block/damage path.
@@ -156,6 +160,13 @@ first playable loop:
   attack type, body part, block coverage, and full turn packages.
 - NPC training fight broadcasts update the same center log and fighter HP
   panels as player-vs-player actions.
+- Magic/action slots can be submitted without a physical attack. Defensive
+  magic guards body parts, healing/restoration updates vitals, direct damage
+  spells damage targets, chain/area spells fan out to opponents, and status
+  effects are stored on arena participation metadata for turn processing.
+- Completed fights show a `Завершить бой` result step before returning the
+  participant to the arena, matching the observed Neverlands result-screen
+  shape without copying its anti-autobattle challenge.
 - Tactical grid and totalizator routes, views, controllers, models, styles, and
   tables are removed from the player-facing arena surface; their NL tabs remain
   disabled labels until those modes are implemented from live references.
@@ -163,35 +174,23 @@ first playable loop:
   created by accepting room applications, while match show/action/log routes
   remain available for active participants and spectators.
 
-## Remaining Mechanics To Implement
+## Remaining Source Capture Work
 
-The next implementation passes should close these arena/combat gaps before
-adding new modes:
+The implemented local mechanics now cover the first-loop arena/combat behavior.
+Further live Neverlands capture is still useful for tuning hidden constants:
 
-- Keep the captured block cost table as the physical baseline: torso and stomach
-  single blocks cost 30, head and legs cost 35, two-zone blocks cost 50/60/80,
-  and shield/magic defenses use their own higher-cost tables.
-- Replace the provisional local AP/physical-cost derivation with exact
-  Neverlands item-family formulas when more item captures are available. The
-  current implementation supports explicit stored profile values plus
-  item-family hooks for local balancing.
-- Capture or implement non-critical hit, miss/dodge, successful block, shield
-  block table, and multi-attack examples. The goblin fight only captured one
-  NPC round: goblin hit for `-0`, `lukin` landed a critical torso hit for `-58`,
-  and the NPC was defeated.
-- Capture a real PvP wait/resolve round when possible. Current simultaneous
-  waiting behavior matches the observed UI shape, but the live resolved example
-  is NPC-only.
-- Preserve the completed-fight screen model. Neverlands requires `Завершить бой`
-  after victory and may gate it behind an anti-autobattle code; local UX should
-  still have a clear result/finish step, without copying that protection.
+- more item captures can tune the local item-family AP and physical-cost
+  coefficients beyond the captured 140/67/87 profile;
+- more resolved fights can tune miss, dodge, block, non-critical, critical,
+  magic, status, chain, and area constants against live outcomes;
+- a real live PvP fight capture is still needed for external parity evidence.
+  The local implementation has coverage for simultaneous PvP waiting and
+  round resolution, but the only live resolved example remains NPC-only.
 
 Still not first-loop canonical:
 
 - tournament/live-ops screens;
-- exact Neverlands item-family formulas beyond captured visible stat categories;
-  current item-family metadata hooks are provisional until dedicated item
-  captures expose the hidden server formulas.
+- betting/totalizator as a player-facing core mode.
 
 ## Fight Types
 

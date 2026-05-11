@@ -345,4 +345,29 @@ RSpec.describe "ArenaMatches", type: :request do
       expect(other_character.reload.in_combat).to be true
     end
   end
+
+  describe "POST /arena_matches/:id/finish" do
+    let!(:completed_match) do
+      match = create(:arena_match,
+        arena_room: arena_room,
+        status: :completed,
+        started_at: 5.minutes.ago,
+        ended_at: Time.current,
+        winning_team: "a")
+      create(:arena_participation, arena_match: match, character: character, user: user, team: "a", result: :victory)
+      create(:arena_participation, arena_match: match, character: other_character, user: other_user, team: "b", result: :defeat)
+      match
+    end
+
+    it "marks the participant result screen as finished and returns to arena" do
+      character.update!(in_combat: true)
+
+      post finish_arena_match_path(completed_match)
+
+      expect(response).to redirect_to(arena_index_path)
+      participation = completed_match.arena_participations.find_by(user: user)
+      expect(participation.reload.metadata["finished_at"]).to be_present
+      expect(character.reload).not_to be_in_combat
+    end
+  end
 end

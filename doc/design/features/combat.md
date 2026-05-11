@@ -109,10 +109,9 @@ turn loop:
 - The live `lukin[6]` vs `Гоблин[3]` capture can be represented exactly by a
   stored profile with 140 AP from `fight_pm[1]`, physical seed 67 from
   `fight_pm[2]`, simple attack 67, and aimed attack 87.
-- New matches derive a provisional local profile from character AP,
+- New matches derive a local canonical profile from character AP,
   level/equipment state, and item-family hooks when no captured/stored profile
-  exists. This derivation is a balancing placeholder until exact Neverlands item
-  formulas are captured.
+  exists. Stored live captures still override the formula exactly.
 - Spirit Arrow costs 50 AP and 5 MP, and Mind Blast costs 90 AP and 5 MP in the
   captured starter selector.
 - Single-part blocks cost 30 or 35 AP depending on body part; two-part blocks
@@ -143,24 +142,26 @@ turn loop:
   fight-state variant. In the live goblin fight, simple torso attack plus torso
   block cost 97 out of 140 AP.
 
-Remaining parity gaps:
+Current local parity coverage:
 
-- exact Neverlands item-class formulas for every weapon/armor family still need
-  dedicated item captures beyond client-visible data, especially how weapon
-  family and equipped items affect AP and physical attack cost;
-- the damage formula is still approximate. The live goblin capture only proves
-  one resolved round: goblin hit `lukin` for `-0`, then `lukin` landed a
-  critical torso hit for `-58` against `Гоблин[3]`;
-- miss, dodge, successful block, non-critical damage, shield blocks,
-  multi-attack resolution, magic damage, consumables, and status effects still
-  need live captures or explicitly documented local formulas;
-- a real PvP simultaneous round is still missing. Current arena waiting
-  behavior matches the Neverlands UI state, but the captured resolved turn was
-  NPC-only;
-- most magic/special effects beyond the starter shield, restoration, and direct
-  damage subset still need live effect captures;
-- older PvE/PvP services still exist as orchestration layers and should keep
-  being folded toward the shared body-part/AP/log contract.
+- item-family AP and physical-cost formulas are explicit in
+  `Arena::CombatProfile`, with stored profile overrides for live captures;
+- `Arena::CombatResolver` resolves hit, miss, dodge, successful block,
+  non-critical hit, critical hit, body-part multiplier, defense, and damage
+  variance through one arena path for players and NPCs;
+- physical, shield, and magic block tables all use body-part coverage and AP
+  validation;
+- magic/action slots support defensive guards, HP/MP restoration, direct
+  damage, area damage, chain damage, and persisted status effects;
+- simultaneous PvP turn waiting is covered by local tests with the captured
+  140/67/87 profile shape;
+- completed arena fights require a result-screen finish action before returning
+  to the arena.
+
+Remaining source-capture work is tuning, not missing local behavior: more live
+Neverlands fights are needed to calibrate hidden item-family coefficients and
+to compare local miss, dodge, block, magic, status, and PvP constants against
+external outcomes.
 
 ## Body Parts
 

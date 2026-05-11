@@ -224,6 +224,10 @@ export default class extends Controller {
     switch (action.action) {
       case "attack":
         return `${action.npc_name} hits ${target}${bodyPart} for ${action.damage} damage${action.critical ? " CRITICAL" : ""}`
+      case "miss":
+        return `${action.npc_name} misses ${target}${bodyPart}`
+      case "dodge":
+        return `${target} dodges ${action.npc_name}${bodyPart}`
       case "blocked":
         return `${target} blocked attack${bodyPart} from ${action.npc_name}`
       case "defend":

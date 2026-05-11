@@ -369,6 +369,11 @@ module ArenaHelper
     pending_turn["turn_number"].to_i == (match.current_turn_number || 1).to_i
   end
 
+  def current_user_finished_arena_match?(match = @arena_match)
+    participation = current_user_arena_participation(match)
+    participation&.metadata&.dig("finished_at").present?
+  end
+
   def arena_combat_profile(participation = current_user_arena_participation)
     return default_arena_combat_profile unless participation
 
@@ -391,6 +396,16 @@ module ArenaHelper
         option_config["action_cost"] = profile["aimed_attack_cost"]
       end
       options[key] = option_config
+    end
+  end
+
+  def arena_block_options(participation = current_user_arena_participation, combat_config = Game::Combat::ActionCatalog.config)
+    profile = arena_combat_profile(participation)
+    allowed_tables = ["normal"]
+    allowed_tables << "shield" if profile["block_table"] == "shield"
+
+    (combat_config["block_types"] || {}).select do |_key, config|
+      allowed_tables.include?(config["block_table"].presence || "normal")
     end
   end
 

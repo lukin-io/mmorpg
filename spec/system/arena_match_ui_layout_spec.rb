@@ -119,6 +119,17 @@ RSpec.describe "Arena Match UI Layout", type: :system do
       expect(page).to have_css(".nl-fight-selector-table option", text: "Torso Block [ 30 ]")
       expect(page).to have_css(".nl-fight-selector-table option", text: "Head Block [ 35 ]")
     end
+
+    it "shows shield block table when current fighter has a shield equipped" do
+      shield = create(:item_template,
+        name: "Arena Shield",
+        slot: "off_hand",
+        stat_modifiers: {"defense" => 8, "weapon_family" => "shield"})
+      create(:inventory_item, inventory: character1.inventory, item_template: shield, equipped: true)
+
+      visit arena_match_path(match)
+      expect(page).to have_css(".nl-fight-selector-table option", text: "Shield Torso Block [ 40 ]")
+    end
   end
 
   describe "Combat Log" do
@@ -203,7 +214,14 @@ RSpec.describe "Arena Match UI Layout", type: :system do
         expect(page).to have_content("WarriorAlpha")
       end
 
-      it "shows Return to Arena button" do
+      it "shows finish fight button before returning to arena" do
+        visit arena_match_path(match)
+        expect(page).to have_button("Завершить бой")
+      end
+
+      it "shows Return to Arena after the result screen is finished" do
+        participation1.update!(metadata: {"finished_at" => Time.current.iso8601})
+
         visit arena_match_path(match)
         expect(page).to have_link("Return to Arena")
       end
