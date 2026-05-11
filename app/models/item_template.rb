@@ -28,7 +28,7 @@ class ItemTemplate < ApplicationRecord
   validates :name, presence: true, uniqueness: true
   validates :slot, presence: true
   validates :rarity, presence: true, inclusion: {in: RARITIES}
-  validates :stat_modifiers, presence: true, unless: :material?
+  validates :stat_modifiers, presence: true, if: :equipment?
   validates :weight, numericality: {greater_than: 0}
   validates :base_price, :durability_max, numericality: {greater_than_or_equal_to: 0}
   validates :stack_limit, numericality: {greater_than: 0}
@@ -43,7 +43,7 @@ class ItemTemplate < ApplicationRecord
   #
   # @return [Boolean] true if item_type is "material"
   def material?
-    item_type == "material"
+    %w[material resource].include?(item_type)
   end
 
   # Check if this item is equipment
@@ -58,6 +58,25 @@ class ItemTemplate < ApplicationRecord
   # @return [Boolean] true if item_type is "consumable"
   def consumable?
     item_type == "consumable"
+  end
+
+  def quest?
+    item_type == "quest"
+  end
+
+  def inventory_category
+    case item_type
+    when "equipment"
+      "equipment"
+    when "consumable"
+      "consumables"
+    when "material", "resource"
+      "materials"
+    when "quest"
+      "quest"
+    else
+      "other"
+    end
   end
 
   # Check if this item can be equipped
@@ -82,7 +101,7 @@ class ItemTemplate < ApplicationRecord
 
   def premium_stat_cap
     return unless premium?
-    return if material? # Materials don't have stats to cap
+    return unless equipment?
 
     total = stat_modifiers.to_h.values.compact.map(&:to_i).sum
     errors.add(:stat_modifiers, "premium artifacts must stay cosmetic-balanced") if total > 10

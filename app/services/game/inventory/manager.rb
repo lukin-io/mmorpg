@@ -29,18 +29,43 @@ module Game
           return {success: false, error: "This item cannot be used"}
         end
 
-        result = apply_item_effect(character, template)
+        requirements = Game::Inventory::RequirementChecker.call(character:, item: inventory_item)
+        return {success: false, error: requirements[:error]} unless requirements[:allowed]
+
+        result = apply_item_effect(character, inventory_item)
         return result unless result[:success]
 
-        # Decrease quantity or remove item
-        if inventory_item.quantity > 1
-          inventory_item.decrement!(:quantity)
-        else
-          inventory_item.destroy!
-        end
-
+        consume_item_unit!(inventory_item)
         result
       end
+
+      def self.discard_item(inventory_item)
+        if inventory_item.protected_from_discard?
+          return {success: false, error: "This item cannot be discarded"}
+        end
+
+        decrement_inventory_weight!(inventory_item.inventory, inventory_item.weight * inventory_item.quantity)
+        inventory_item.destroy!
+        {success: true, message: "Item discarded."}
+      end
+
+      def self.consume_item_unit!(inventory_item)
+        if inventory_item.durable?
+          remaining_durability = inventory_item.decrement_durability!
+          return if remaining_durability.positive?
+        end
+
+        if inventory_item.quantity > 1
+          inventory_item.decrement!(:quantity)
+          decrement_inventory_weight!(inventory_item.inventory, inventory_item.weight)
+          inventory_item.reset_durability!
+        else
+          decrement_inventory_weight!(inventory_item.inventory, inventory_item.weight)
+          inventory_item.destroy!
+        end
+      end
+
+      private_class_method :consume_item_unit!
 
       # Sort inventory items by specified criteria
       #
@@ -72,8 +97,9 @@ module Game
       # @param character [Character] the character to apply effect to
       # @param template [ItemTemplate] the item template with effect data
       # @return [Hash] result with :success and :message or :error
-      def self.apply_item_effect(character, template)
-        stats = template.stat_modifiers || {}
+      def self.apply_item_effect(character, inventory_item)
+        template = inventory_item.item_template
+        stats = inventory_item.effect_modifiers
 
         if stats["heal_hp"]
           amount = stats["heal_hp"].to_i
@@ -98,7 +124,13 @@ module Game
         {success: false, error: "Item has no usable effect"}
       end
 
-      private_class_method :apply_item_effect
+      def self.decrement_inventory_weight!(inventory, delta)
+        return unless delta.to_i.positive?
+
+        inventory.update!(current_weight: [inventory.current_weight - delta.to_i, 0].max)
+      end
+
+      private_class_method :apply_item_effect, :decrement_inventory_weight!
 
       def initialize(inventory:)
         @inventory = inventory

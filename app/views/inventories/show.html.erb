@@ -40,8 +40,8 @@
           </div>
 
           <div class="nl-inventory-sort">
-            <%= button_to "Sort Type", sort_inventory_path(sort_type: :type), method: :post, class: "lbut" %>
-            <%= button_to "Sort Rarity", sort_inventory_path(sort_type: :rarity), method: :post, class: "lbut" %>
+            <%= button_to "Sort Type", sort_inventory_path(sort_type: :type, category: @category), method: :post, class: "lbut" %>
+            <%= button_to "Sort Rarity", sort_inventory_path(sort_type: :rarity, category: @category), method: :post, class: "lbut" %>
           </div>
         </div>
 
@@ -52,7 +52,7 @@
           </div>
 
           <div id="inventory_grid">
-            <%= render "inventories/grid", items: @items, inventory: @inventory %>
+            <%= render "inventories/grid", items: @items, inventory: @inventory, category: @category %>
           </div>
         </div>
       </main>

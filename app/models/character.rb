@@ -40,6 +40,20 @@ class Character < ApplicationRecord
     absolute_chaos: {range: 800..1000, text: "Absolute Chaos", name: "Absolute Chaos"}
   }.freeze
 
+  EQUIPMENT_STAT_ALIASES = {
+    "strength" => :strength,
+    "dexterity" => :dexterity,
+    "luck" => :luck,
+    "knowledge" => :intelligence,
+    "intelligence" => :intelligence,
+    "health" => :vitality,
+    "vitality" => :vitality,
+    "constitution" => :constitution,
+    "wisdom" => :spirit,
+    "spirit" => :spirit,
+    "agility" => :agility
+  }.freeze
+
   belongs_to :user
   belongs_to :character_class, optional: true
   belongs_to :guild, optional: true
@@ -90,6 +104,9 @@ class Character < ApplicationRecord
     allocated_stats.each do |stat, value|
       key = stat.to_sym
       base[key] = base.fetch(key, 0) + value.to_i
+    end
+    equipment_stat_modifiers.each do |stat, value|
+      base[stat] = base.fetch(stat, 0) + value.to_i
     end
     Game::Systems::StatBlock.new(base:)
   end
@@ -561,6 +578,56 @@ class Character < ApplicationRecord
     [base + dex_bonus + luck_bonus, 50].min
   end
 
+  def effective_max_hp
+    read_attribute(:max_hp).to_i + equipment_effect_value("hp", "max_hp").to_i
+  end
+
+  def armor_pierce_percent
+    equipment_effect_value("armor_pierce", "armor_piercing")
+  end
+
+  def fortitude_percent
+    equipment_effect_value("fortitude", "physical_resistance")
+  end
+
+  def accuracy_bonus
+    equipment_effect_value("accuracy")
+  end
+
+  def dodge_bonus
+    equipment_effect_value("dodge", "evasion")
+  end
+
+  def elemental_resistance_percent(element)
+    equipment_effect_value("#{element}_resistance", "all_resistances", "elemental_resistance")
+  end
+
+  def equipment_effect_value(*keys)
+    return 0 unless inventory
+
+    normalized_keys = keys.flatten.map { |key| normalize_equipment_effect_key(key) }
+    inventory.inventory_items.equipped.includes(:item_template).sum do |item|
+      next 0 if item.broken?
+
+      normalized_effects = item.effect_modifiers.transform_keys { |key| normalize_equipment_effect_key(key) }
+      normalized_keys.sum { |key| numeric_equipment_effect(normalized_effects[key]) }
+    end
+  end
+
+  def degrade_equipped_items!(*slots, amount: 1)
+    return [] unless inventory
+
+    slot_keys = slots.flatten.compact.map(&:to_s)
+    scope = inventory.inventory_items.equipped
+    scope = scope.where(equipment_slot: slot_keys) if slot_keys.any?
+    scope.filter_map do |item|
+      next unless item.durable?
+
+      item.decrement_durability!(amount)
+      item
+    end
+  end
+
   # Break down combat-relevant derived stats for UI and balancing.
   #
   # @return [Hash] attack, defense, and critical components
@@ -728,6 +795,8 @@ class Character < ApplicationRecord
     return 0 unless inventory
 
     inventory.inventory_items.equipped.includes(:item_template).sum do |item|
+      next 0 if item.broken?
+
       equipment_combat_component(item, "attack")
     end
   end
@@ -739,14 +808,15 @@ class Character < ApplicationRecord
     return 0 unless inventory
 
     inventory.inventory_items.equipped.includes(:item_template).sum do |item|
+      next 0 if item.broken?
+
       equipment_combat_component(item, "defense")
     end
   end
 
   def equipment_combat_component(item, stat_key)
-    template = item.item_template
-    stats = template&.stat_modifiers.to_h
-    base = (stats[stat_key.to_s] || stats[stat_key.to_sym]).to_i
+    stats = item.effect_modifiers.transform_keys { |key| normalize_equipment_effect_key(key) }
+    base = combat_component_base(stats, stat_key)
     return 0 if base.zero?
 
     enhancement_bonus = item.enhancement_level.to_i
@@ -756,7 +826,7 @@ class Character < ApplicationRecord
 
   def equipment_item_family(item)
     template = item.item_template
-    stats = template&.stat_modifiers.to_h
+    stats = item.effect_modifiers
     explicit = stats["family"] || stats[:family] || stats["weapon_family"] || stats[:weapon_family] ||
       item.properties&.dig("family") || item.properties&.dig("weapon_family")
     return explicit.to_s if explicit.present?
@@ -808,7 +878,9 @@ class Character < ApplicationRecord
 
     key = skill_key.to_s
     inventory.inventory_items.equipped.includes(:item_template).sum do |item|
-      skill_mods = item.item_template&.stat_modifiers&.dig("skill_bonuses")
+      next 0 if item.broken?
+
+      skill_mods = item.effect_modifiers&.dig("skill_bonuses")
       next 0 unless skill_mods.is_a?(Hash)
       (skill_mods[key] || skill_mods[skill_key.to_sym]).to_i
     end
@@ -824,7 +896,9 @@ class Character < ApplicationRecord
 
     key = "#{element}_resistance"
     total = inventory.inventory_items.equipped.includes(:item_template).sum do |item|
-      resist_mods = item.item_template&.stat_modifiers&.dig("resistances")
+      next 0.0 if item.broken?
+
+      resist_mods = item.effect_modifiers&.dig("resistances")
       next 0.0 unless resist_mods.is_a?(Hash)
       (resist_mods[key] || resist_mods[element.to_s]).to_f
     end
@@ -842,6 +916,52 @@ class Character < ApplicationRecord
     base = passive_skill_level(skill_key)
     equipment_bonus = equipment_skill_bonus(skill_key)
     [base + equipment_bonus, 100].min
+  end
+
+  def equipment_stat_modifiers
+    return {} unless inventory
+
+    inventory.inventory_items.equipped.includes(:item_template).each_with_object(Hash.new(0)) do |item, totals|
+      next if item.broken?
+
+      item.effect_modifiers.each do |key, value|
+        stat_key = EQUIPMENT_STAT_ALIASES[normalize_equipment_effect_key(key)]
+        totals[stat_key] += numeric_equipment_effect(value) if stat_key
+      end
+    end
+  end
+
+  def combat_component_base(stats, stat_key)
+    case stat_key.to_s
+    when "attack"
+      numeric_equipment_effect(stats["attack"]) +
+        numeric_equipment_effect(stats["attack_power"]) +
+        weapon_damage_average(stats)
+    when "defense"
+      numeric_equipment_effect(stats["defense"]) +
+        numeric_equipment_effect(stats["armor"]) +
+        numeric_equipment_effect(stats["armor_class"])
+    else
+      numeric_equipment_effect(stats[normalize_equipment_effect_key(stat_key)])
+    end
+  end
+
+  def weapon_damage_average(stats)
+    min = stats["damage_min"] || stats["min_damage"]
+    max = stats["damage_max"] || stats["max_damage"]
+    return 0 if min.blank? || max.blank?
+
+    ((numeric_equipment_effect(min) + numeric_equipment_effect(max)) / 2.0).round
+  end
+
+  def normalize_equipment_effect_key(key)
+    key.to_s.strip.downcase.tr(" -", "_")
+  end
+
+  def numeric_equipment_effect(value)
+    return 0 if value.blank?
+
+    value.to_s.delete("%+").to_f
   end
 
   def inherit_memberships

@@ -6,7 +6,11 @@ module InventoriesHelper
     ["all", "All"],
     ["equipment", "Things"],
     ["consumables", "Elixirs"],
+    ["alchemy", "Alchemy"],
+    ["fishing", "Fishing"],
+    ["hunting", "Hunting & Food"],
     ["materials", "Resources"],
+    ["wood", "Wood"],
     ["quest", "Quest Journal"]
   ].freeze
 
@@ -106,7 +110,8 @@ module InventoriesHelper
   def inventory_item_durability_percent(item)
     current = (item.properties["durability"] || item.properties["current_durability"]).to_f
     maximum = (item.properties["max_durability"] || item.item_template.durability_max).to_f
-    return 100 if current <= 0 || maximum <= 0
+    return 100 if maximum <= 0
+    return 0 if current <= 0
 
     ((current / maximum) * 100).clamp(0, 100)
   end

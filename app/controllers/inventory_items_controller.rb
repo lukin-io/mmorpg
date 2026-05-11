@@ -9,11 +9,12 @@ class InventoryItemsController < ApplicationController
   # DELETE /inventory/items/:id
   def destroy
     item = current_character.inventory.inventory_items.find(params[:id])
+    result = Game::Inventory::Manager.discard_item(item)
 
-    if item.destroy
-      redirect_to inventory_path, notice: "Item discarded."
+    if result[:success]
+      redirect_to inventory_path(category: params[:category].presence), notice: result[:message]
     else
-      redirect_to inventory_path, alert: "Cannot discard item."
+      redirect_to inventory_path(category: params[:category].presence), alert: result[:error]
     end
   end
 end

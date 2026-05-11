@@ -209,6 +209,7 @@ module Game
         # Apply damage through VitalsService
         if total_damage > 0
           apply_damage_via_vitals!(opponent, opponent_participant, total_damage, "PVP: #{character.name}")
+          degrade_combat_equipment!(attacker: character, defender: opponent)
 
           # Check if opponent defeated
           if opponent_participant.reload.current_hp <= 0
@@ -231,6 +232,7 @@ module Game
 
         # Apply damage through VitalsService
         apply_damage_via_vitals!(character, participant, opponent_damage, "PVP: #{opponent.name}")
+        degrade_combat_equipment!(attacker: opponent, defender: character)
 
         # Check if character defeated
         if participant.reload.current_hp <= 0
@@ -548,6 +550,7 @@ module Game
 
         # Apply damage through VitalsService
         apply_damage_via_vitals!(opponent, opponent_participant, damage, "PVP: #{character.name}")
+        degrade_combat_equipment!(attacker: character, defender: opponent)
 
         attack_type = is_aimed ? "aimed attack" : "attacks"
         combat_log << "#{character.name} #{attack_type} #{opponent.name}'s #{body_part} for #{damage} damage#{" (CRITICAL!)" if is_critical}."
@@ -565,6 +568,7 @@ module Game
           is_critical: damage_formula.critical_hit?(opponent)
         )
         apply_damage_via_vitals!(character, participant, counter_damage, "PVP: #{opponent.name}")
+        degrade_combat_equipment!(attacker: opponent, defender: character)
 
         combat_log << "#{opponent.name} counterattacks for #{counter_damage} damage!"
 
@@ -594,6 +598,7 @@ module Game
         # Opponent attacks (reduced by defense)
         damage = damage_formula.call(opponent, character, is_defending: true)
         apply_damage_via_vitals!(character, participant, damage, "PVP: #{opponent.name}")
+        degrade_combat_equipment!(attacker: opponent, defender: character)
 
         combat_log << "#{opponent.name} attacks for #{damage} damage (reduced by defense)."
 
@@ -645,6 +650,7 @@ module Game
         participant = battle.battle_participants.find_by(character: character)
         counter_damage = damage_formula.call(opponent, character, is_defending: false)
         apply_damage_via_vitals!(character, participant, counter_damage, "PVP: #{opponent.name}")
+        degrade_combat_equipment!(attacker: opponent, defender: character)
 
         combat_log << "#{opponent.name} counterattacks for #{counter_damage} damage!"
 
@@ -712,6 +718,7 @@ module Game
           participant = battle.battle_participants.find_by(character: character)
           damage = damage_formula.call(opponent, character, is_defending: false)
           apply_damage_via_vitals!(character, participant, damage, "PVP: #{opponent.name}")
+          degrade_combat_equipment!(attacker: opponent, defender: character)
 
           combat_log << "#{opponent.name} attacks #{character.name} for #{damage} damage as they try to escape!"
 
@@ -753,6 +760,11 @@ module Game
         # (in_combat flag, last_combat_at, death handling, broadcasts)
         vitals_service = Characters::VitalsService.new(character)
         vitals_service.apply_damage(damage, source: source)
+      end
+
+      def degrade_combat_equipment!(attacker:, defender:)
+        attacker.degrade_equipped_items!("main_hand", amount: 1)
+        defender.degrade_equipped_items!("head", "chest", "legs", "feet", "hands", "bracers", "off_hand", amount: 1)
       end
 
       # ==================

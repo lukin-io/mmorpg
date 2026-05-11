@@ -15,16 +15,20 @@ module Game
       def equip!
         return {success: false, error: "Item not found"} unless item
         return {success: false, error: "Item is not equipment"} unless item.item_template.equippable?
+        return {success: false, error: "Item is already equipped"} if item.equipped?
 
         target_slot = item.item_template.equipment_slot.to_sym
         return {success: false, error: "Invalid equipment slot"} unless valid_slot?(target_slot)
 
-        # Unequip existing item in slot
-        existing = equipped_in_slot(target_slot)
-        existing&.update!(equipped: false, equipment_slot: nil)
+        requirements = Game::Inventory::RequirementChecker.call(character:, item:)
+        return {success: false, error: requirements[:error]} unless requirements[:allowed]
 
-        # Equip new item
-        item.update!(equipped: true, equipment_slot: target_slot)
+        existing = nil
+        ActiveRecord::Base.transaction do
+          existing = equipped_in_slot(target_slot)
+          existing&.update!(equipped: false, equipment_slot: nil)
+          item.update!(equipped: true, equipment_slot: target_slot)
+        end
 
         {success: true, equipped_item: item, unequipped_item: existing}
       end

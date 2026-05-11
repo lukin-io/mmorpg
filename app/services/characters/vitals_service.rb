@@ -48,7 +48,7 @@ module Characters
     # @return [Integer] actual amount healed
     def apply_healing(amount, source:)
       character.with_lock do
-        healed = [amount, character.max_hp - character.current_hp].min
+        healed = [amount, effective_max_hp - character.current_hp].min
         character.current_hp += healed
         character.save!
 
@@ -99,7 +99,7 @@ module Characters
         hp_gain = hp_per_tick
         mp_gain = mp_per_tick
 
-        character.current_hp = [character.current_hp + hp_gain, character.max_hp].min
+        character.current_hp = [character.current_hp + hp_gain, effective_max_hp].min
         character.current_mp = [character.current_mp + mp_gain, character.max_mp].min
         character.last_regen_tick_at = Time.current
         character.save!
@@ -128,7 +128,7 @@ module Characters
     #
     # @return [Boolean] true if HP or MP below max
     def needs_regen?
-      character.current_hp < character.max_hp || character.current_mp < character.max_mp
+      character.current_hp < effective_max_hp || character.current_mp < character.max_mp
     end
 
     # Calculate HP regen per tick (formula: maxHP / interval)
@@ -136,7 +136,7 @@ module Characters
     # @return [Float] HP to regenerate per tick
     def hp_per_tick
       return 0 if character.hp_regen_interval.nil? || character.hp_regen_interval.zero?
-      (character.max_hp.to_f / character.hp_regen_interval).round(2)
+      (effective_max_hp.to_f / character.hp_regen_interval).round(2)
     end
 
     # Calculate MP regen per tick
@@ -151,8 +151,8 @@ module Characters
     #
     # @return [Float] HP as percentage (0-100)
     def hp_percent
-      return 0 if character.max_hp.zero?
-      ((character.current_hp.to_f / character.max_hp) * 100).round(1)
+      return 0 if effective_max_hp.zero?
+      ((character.current_hp.to_f / effective_max_hp) * 100).round(1)
     end
 
     # Calculate MP percentage
@@ -171,7 +171,7 @@ module Characters
 
       {
         current_hp: character.current_hp,
-        max_hp: character.max_hp,
+        max_hp: effective_max_hp,
         current_mp: character.current_mp,
         max_mp: character.max_mp,
         strength: stats.get(:strength),
@@ -188,6 +188,12 @@ module Characters
 
     private
 
+    def effective_max_hp
+      return character.effective_max_hp if character.respond_to?(:effective_max_hp)
+
+      character.max_hp
+    end
+
     def broadcast_vital_update(type, amount, source)
       ActionCable.server.broadcast(
         "character:#{character.id}:vitals",
@@ -196,7 +202,7 @@ module Characters
           amount: amount,
           source: source,
           current_hp: character.current_hp,
-          max_hp: character.max_hp,
+          max_hp: effective_max_hp,
           current_mp: character.current_mp,
           max_mp: character.max_mp,
           hp_percent: hp_percent,
