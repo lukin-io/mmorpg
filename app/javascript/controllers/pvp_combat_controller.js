@@ -176,8 +176,16 @@ export default class extends Controller {
     this.submitAction("defend", {})
   }
 
-  flee(event) {
-    if (!confirm("Are you sure you want to flee?")) {
+  confirmFlee(event) {
+    this.confirmFinalAction(event, "Are you sure you want to flee?")
+  }
+
+  confirmSurrender(event) {
+    this.confirmFinalAction(event, "Are you sure you want to surrender?")
+  }
+
+  confirmFinalAction(event, message) {
+    if (!window.confirm(message)) {
       event.preventDefault()
     }
   }
