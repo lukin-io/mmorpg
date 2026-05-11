@@ -97,13 +97,13 @@
               method: :post,
               class: "btn btn-flee",
               form: { data: { turbo: false } },
-              data: { action: "click->pvp-combat#confirmFlee" } %>
+              onclick: "return window.confirm('Are you sure you want to flee?')" %>
           <%= button_to "Surrender",
               surrender_pvp_combat_path(@battle),
               method: :post,
               class: "btn btn-surrender",
               form: { data: { turbo: false } },
-              data: { action: "click->pvp-combat#confirmSurrender" } %>
+              onclick: "return window.confirm('Are you sure you want to surrender?')" %>
         </div>
       </div>
     </div>

@@ -176,20 +176,6 @@ export default class extends Controller {
     this.submitAction("defend", {})
   }
 
-  confirmFlee(event) {
-    this.confirmFinalAction(event, "Are you sure you want to flee?")
-  }
-
-  confirmSurrender(event) {
-    this.confirmFinalAction(event, "Are you sure you want to surrender?")
-  }
-
-  confirmFinalAction(event, message) {
-    if (!window.confirm(message)) {
-      event.preventDefault()
-    }
-  }
-
   submitAction(actionType, params = {}) {
     // Let Turbo handle form submission
     // This is just for custom JS interactions
