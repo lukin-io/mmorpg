@@ -77,14 +77,6 @@ jobs:
       POSTGRES_PASSWORD: postgres
       POSTGRES_HOST: 127.0.0.1
       REDIS_CABLE_URL: redis://127.0.0.1:6379/4
-      CI_NODE_TOTAL: ${{ matrix.ci_node_total }}
-      CI_NODE_INDEX: ${{ matrix.ci_node_index }}
-
-    strategy:
-      fail-fast: false
-      matrix:
-        ci_node_total: [4]
-        ci_node_index: [0, 1, 2, 3]
 
     services:
       postgres:
@@ -122,13 +114,11 @@ jobs:
         with:
           bundler-cache: true
 
-      - name: Prepare parallel test databases
-        run: |
-          bundle exec rake "parallel:create[${CI_NODE_TOTAL}]"
-          bundle exec rake "parallel:load_schema[${CI_NODE_TOTAL}]"
+      - name: Prepare test database
+        run: bin/rails db:prepare
 
-      - name: Run RSpec node ${{ matrix.ci_node_index }}/${{ matrix.ci_node_total }}
-        run: bundle exec parallel_test spec/ -n "$CI_NODE_TOTAL" --only-group "$CI_NODE_INDEX" --type rspec --exclude-pattern "spec/system/**/*_spec.rb"
+      - name: Run RSpec
+        run: bundle exec rspec --exclude-pattern "spec/system/**/*_spec.rb"
 
   system-test:
     runs-on: ubuntu-latest
@@ -139,14 +129,6 @@ jobs:
       POSTGRES_PASSWORD: postgres
       POSTGRES_HOST: 127.0.0.1
       REDIS_CABLE_URL: redis://127.0.0.1:6379/4
-      CI_NODE_TOTAL: ${{ matrix.ci_node_total }}
-      CI_NODE_INDEX: ${{ matrix.ci_node_index }}
-
-    strategy:
-      fail-fast: false
-      matrix:
-        ci_node_total: [2]
-        ci_node_index: [0, 1]
 
     services:
       postgres:
@@ -184,18 +166,11 @@ jobs:
         with:
           bundler-cache: true
 
-      - name: Prepare parallel test databases
-        run: |
-          bundle exec rake "parallel:create[${CI_NODE_TOTAL}]"
-          bundle exec rake "parallel:load_schema[${CI_NODE_TOTAL}]"
+      - name: Prepare test database
+        run: bin/rails db:prepare
 
-      - name: Run system specs node ${{ matrix.ci_node_index }}/${{ matrix.ci_node_total }}
-        run: |
-          if [ -d spec/system ] && [ "$(find spec/system -type f -name '*_spec.rb' | head -n 1)" ]; then
-            bundle exec parallel_test spec/system -n "$CI_NODE_TOTAL" --only-group "$CI_NODE_INDEX" --type rspec
-          else
-            echo "No RSpec system specs to run."
-          fi
+      - name: Run system specs
+        run: bundle exec rspec spec/system
 
       - name: Keep screenshots from failed system tests
         uses: actions/upload-artifact@v6
