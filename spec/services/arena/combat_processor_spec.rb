@@ -58,12 +58,12 @@ RSpec.describe Arena::CombatProcessor do
           body_part: "torso"
         )
 
-        # Could be blocked, so check for success or blocked
+        # The resolver can block, miss, dodge, or land a zero-damage hit.
         expect(result.success?).to be true
-        if result[:blocked]
-          expect(character2.reload.current_hp).to eq(initial_hp)
-        else
+        if result[:damage].to_i.positive?
           expect(character2.reload.current_hp).to be < initial_hp
+        else
+          expect(character2.reload.current_hp).to eq(initial_hp)
         end
       end
 
@@ -76,12 +76,8 @@ RSpec.describe Arena::CombatProcessor do
           body_part: "torso"
         )
 
-        if result[:blocked]
-          expect(result[:damage]).to eq(0)
-        else
-          expect(result[:damage]).to be_a(Integer)
-          expect(result[:damage]).to be > 0
-        end
+        expect(result[:damage]).to be_a(Integer)
+        expect(result[:damage]).to be >= 0
       end
 
       it "broadcasts combat action" do

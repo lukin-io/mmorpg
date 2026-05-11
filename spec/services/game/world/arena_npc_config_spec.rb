@@ -136,9 +136,10 @@ RSpec.describe Game::World::ArenaNpcConfig do
     it "returns difficulty descriptions" do
       info = described_class.difficulty_info
 
-      expect(info[:easy][:emoji]).to eq("⭐")
-      expect(info[:medium][:emoji]).to eq("⭐⭐")
-      expect(info[:hard][:emoji]).to eq("⭐⭐⭐")
+      expect(info[:easy][:label]).to eq("Easy")
+      expect(info[:medium][:label]).to eq("Medium")
+      expect(info[:hard][:label]).to eq("Hard")
+      expect(info[:easy]).not_to have_key(:emoji)
     end
   end
 

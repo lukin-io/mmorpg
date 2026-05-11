@@ -59,19 +59,19 @@ RSpec.describe Character, type: :model do
     end
 
     describe "#alignment_emoji" do
-      it "returns angel emoji for celestial tier" do
+      it "returns label for celestial tier" do
         character.update!(alignment_score: 900)
-        expect(character.alignment_emoji).to eq("👼")
+        expect(character.alignment_emoji).to eq("Celestial")
       end
 
-      it "returns yin-yang for neutral tier" do
+      it "returns label for neutral tier" do
         character.update!(alignment_score: 0)
-        expect(character.alignment_emoji).to eq("☯️")
+        expect(character.alignment_emoji).to eq("Neutral")
       end
 
-      it "returns black heart for absolute darkness" do
+      it "returns label for absolute darkness" do
         character.update!(alignment_score: -900)
-        expect(character.alignment_emoji).to eq("🖤")
+        expect(character.alignment_emoji).to eq("Absolute Darkness")
       end
     end
 
@@ -116,13 +116,13 @@ RSpec.describe Character, type: :model do
     end
 
     describe "#chaos_emoji" do
-      it "returns scales for lawful" do
-        expect(character.chaos_emoji).to eq("⚖️")
+      it "returns label for lawful" do
+        expect(character.chaos_emoji).to eq("Lawful")
       end
 
-      it "returns explosion for absolute chaos" do
+      it "returns label for absolute chaos" do
         character.update!(chaos_score: 900)
-        expect(character.chaos_emoji).to eq("💥")
+        expect(character.chaos_emoji).to eq("Absolute Chaos")
       end
     end
 
@@ -150,19 +150,19 @@ RSpec.describe Character, type: :model do
     let(:character) { create(:character) }
 
     describe "#faction_emoji" do
-      it "returns shield for alliance" do
+      it "returns label for alliance" do
         character.update!(faction_alignment: "alliance")
-        expect(character.faction_emoji).to eq("🛡️")
+        expect(character.faction_emoji).to eq("Alliance")
       end
 
-      it "returns sword for rebellion" do
+      it "returns label for rebellion" do
         character.update!(faction_alignment: "rebellion")
-        expect(character.faction_emoji).to eq("⚔️")
+        expect(character.faction_emoji).to eq("Rebellion")
       end
 
-      it "returns flag for neutral" do
+      it "returns label for neutral" do
         character.update!(faction_alignment: "neutral")
-        expect(character.faction_emoji).to eq("🏳️")
+        expect(character.faction_emoji).to eq("Neutral")
       end
     end
 
@@ -170,8 +170,7 @@ RSpec.describe Character, type: :model do
       it "combines faction and tier information" do
         character.update!(faction_alignment: "alliance", alignment_score: 600)
         display = character.alignment_display
-        expect(display).to include("🛡️")  # faction
-        expect(display).to include("✨")   # true light
+        expect(display).to include("Alliance")
         expect(display).to include("True Light")
       end
     end

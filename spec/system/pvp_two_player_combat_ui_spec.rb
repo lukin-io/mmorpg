@@ -51,6 +51,12 @@ RSpec.describe "PVP Two-Player Combat UI", type: :system do
       action_points_per_turn: 100)
   end
 
+  def click_attack_button(label)
+    find_button(label, wait: 5).click
+  rescue Selenium::WebDriver::Error::StaleElementReferenceError
+    find_button(label, wait: 5).click
+  end
+
   before do
     create(:battle_participant,
       battle: battle,
@@ -490,13 +496,13 @@ RSpec.describe "PVP Two-Player Combat UI", type: :system do
     end
 
     it "allows multiple consecutive attacks" do
-      click_button "Head"
+      click_attack_button "Head"
       expect(page).to have_css(".pvp-combat-log", wait: 5)
 
-      click_button "Torso"
+      click_attack_button "Torso"
       expect(page).to have_css(".pvp-combat-log", wait: 5)
 
-      click_button "Stomach"
+      click_attack_button "Stomach"
       expect(page).to have_css(".pvp-combat-log", wait: 5)
     end
 

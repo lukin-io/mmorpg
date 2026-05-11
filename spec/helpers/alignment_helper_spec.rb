@@ -4,76 +4,73 @@ require "rails_helper"
 
 RSpec.describe AlignmentHelper, type: :helper do
   describe "#faction_icon" do
-    it "returns shield for alliance" do
-      expect(helper.faction_icon(:alliance)).to eq("🛡️")
+    it "returns label for alliance" do
+      expect(helper.faction_icon(:alliance)).to eq("Alliance")
     end
 
-    it "returns sword for rebellion" do
-      expect(helper.faction_icon(:rebellion)).to eq("⚔️")
+    it "returns label for rebellion" do
+      expect(helper.faction_icon(:rebellion)).to eq("Rebellion")
     end
 
-    it "returns flag for neutral" do
-      expect(helper.faction_icon(:neutral)).to eq("🏳️")
+    it "returns label for neutral" do
+      expect(helper.faction_icon(:neutral)).to eq("Neutral")
     end
   end
 
   describe "#alignment_tier_icon" do
-    it "returns celestial icon for celestial tier" do
-      expect(helper.alignment_tier_icon(:celestial)).to eq("👼")
+    it "returns celestial label for celestial tier" do
+      expect(helper.alignment_tier_icon(:celestial)).to eq("Celestial")
     end
 
-    it "returns yin-yang for neutral tier" do
-      expect(helper.alignment_tier_icon(:neutral)).to eq("☯️")
+    it "returns label for neutral tier" do
+      expect(helper.alignment_tier_icon(:neutral)).to eq("Neutral")
     end
 
-    it "returns black heart for absolute_darkness" do
-      expect(helper.alignment_tier_icon(:absolute_darkness)).to eq("🖤")
+    it "returns label for absolute_darkness" do
+      expect(helper.alignment_tier_icon(:absolute_darkness)).to eq("Absolute Darkness")
     end
   end
 
   describe "#chaos_tier_icon" do
-    it "returns scales for lawful" do
-      expect(helper.chaos_tier_icon(:lawful)).to eq("⚖️")
+    it "returns label for lawful" do
+      expect(helper.chaos_tier_icon(:lawful)).to eq("Lawful")
     end
 
-    it "returns explosion for absolute_chaos" do
-      expect(helper.chaos_tier_icon(:absolute_chaos)).to eq("💥")
+    it "returns label for absolute_chaos" do
+      expect(helper.chaos_tier_icon(:absolute_chaos)).to eq("Absolute Chaos")
     end
   end
 
   describe "#trauma_badge" do
-    it "returns green heart for low trauma" do
+    it "returns label for low trauma" do
       result = helper.trauma_badge(10)
-      expect(result).to include("💚")
       expect(result).to include("Low")
     end
 
-    it "returns red heart for very high trauma" do
+    it "returns label for very high trauma" do
       result = helper.trauma_badge(80)
-      expect(result).to include("❤️")
       expect(result).to include("Very High")
     end
   end
 
   describe "#timeout_badge" do
-    it "displays timeout with icon" do
+    it "displays timeout label" do
       result = helper.timeout_badge(180)
-      expect(result).to include("⏱️")
-      expect(result).to include("3min")
+      expect(result).to include("3m")
     end
   end
 
   describe "#location_icon" do
-    it "returns castle for city" do
-      expect(helper.location_icon(:city)).to eq("🏰")
+    it "returns label for city" do
+      expect(helper.location_icon(:city)).to eq("City")
     end
 
-    it "returns tree for nature" do
-      expect(helper.location_icon(:nature)).to eq("🌲")
+    it "returns label for nature" do
+      expect(helper.location_icon(:nature)).to eq("Nature")
     end
 
-    it "returns stadium for arena" do
-      expect(helper.location_icon(:arena)).to eq("🏟️")
+    it "returns label for arena" do
+      expect(helper.location_icon(:arena)).to eq("Arena")
     end
   end
 
@@ -82,10 +79,9 @@ RSpec.describe AlignmentHelper, type: :helper do
       build(:character, faction_alignment: "alliance", alignment_score: 600)
     end
 
-    it "returns alignment badge with icons" do
+    it "returns alignment badge with labels" do
       result = helper.alignment_badge(character)
-      expect(result).to include("🛡️") # faction
-      expect(result).to include("✨")  # true light tier
+      expect(result).to include("Alliance")
       expect(result).to include("True Light")
     end
 
@@ -109,9 +105,9 @@ RSpec.describe AlignmentHelper, type: :helper do
       expect(result).to include("[10]")
     end
 
-    it "includes alignment icons" do
+    it "includes alignment labels" do
       result = helper.character_nameplate(character)
-      expect(result).to include("⚔️") # rebellion faction
+      expect(result).to include("Rebellion")
     end
   end
 end

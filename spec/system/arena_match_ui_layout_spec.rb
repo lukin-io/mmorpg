@@ -169,18 +169,17 @@ RSpec.describe "Arena Match UI Layout", type: :system do
   describe "Opponent Stats Display" do
     it "shows opponent stats" do
       visit arena_match_path(match)
-      # Stats use emoji shorthand: 💪 for strength, 🏃 for dex, 🍀 for luck
-      expect(page).to have_content("💪")
+      expect(page).to have_content("Strength:")
     end
 
-    it "displays strength emoji" do
+    it "displays strength label" do
       visit arena_match_path(match)
-      expect(page).to have_content("💪")
+      expect(page).to have_content("Strength: 10")
     end
 
-    it "displays dexterity emoji" do
+    it "displays dexterity label" do
       visit arena_match_path(match)
-      expect(page).to have_content("🏃")
+      expect(page).to have_content("Dexterity: 0")
     end
   end
 

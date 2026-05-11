@@ -637,7 +637,7 @@ module Game
       end
 
       def build_attack_message(attacker, defender, body_part, damage, critical, blocked, resistance_result = nil)
-        prefix = critical ? "💥 CRITICAL! " : ""
+        prefix = critical ? "CRITICAL! " : ""
         block_text = blocked ? " (BLOCKED)" : ""
         resist_text = ""
 

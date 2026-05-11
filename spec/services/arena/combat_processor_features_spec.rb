@@ -266,7 +266,7 @@ RSpec.describe Arena::CombatProcessor, "Neverlands-style combat features" do
         "block_until" => 10.seconds.from_now.iso8601
       })
 
-      processor.process_action(
+      deterministic_processor(0, 99, 0).process_action(
         character1,
         :attack,
         target: character2,
