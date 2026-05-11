@@ -386,7 +386,7 @@ RSpec.describe CharactersController, type: :request do
         get skills_character_path(character)
 
         expect(response).to have_http_status(:success)
-        expect(response.body).to include("Passive Skills")
+        expect(response.body).to include("Abilities")
         expect(response.body).to include("Combat/Magic Points:")
         expect(response.body).to include("Peace Points:")
       end
@@ -739,6 +739,37 @@ RSpec.describe CharactersController, type: :request do
 
         expect(response).to redirect_to(root_path)
       end
+    end
+  end
+
+  describe "GET /characters/:id/perks" do
+    it "renders the perks page" do
+      get perks_character_path(character)
+
+      expect(response).to have_http_status(:success)
+      expect(response.body).to include("Perks")
+      expect(response.body).to include("Available Perks")
+    end
+  end
+
+  describe "PATCH /characters/:id/perks" do
+    before do
+      character.update!(level: 5, perk_points_available: 1, perks: {})
+    end
+
+    it "selects a perk" do
+      patch perks_character_path(character), params: {perk_key: "berserker"}
+
+      expect(response).to redirect_to(perks_character_path(character))
+      expect(character.reload.selected_perks).to include("berserker")
+      expect(character.perk_points_available).to eq(0)
+    end
+
+    it "rejects missing perk selection" do
+      patch perks_character_path(character), params: {}
+
+      expect(response).to redirect_to(root_path)
+      expect(character.reload.selected_perks).to be_empty
     end
   end
 

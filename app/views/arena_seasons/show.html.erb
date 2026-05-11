@@ -39,7 +39,7 @@
                   </span>
                 </td>
                 <td class="player-cell">
-                  <%= link_to ranking.character.name, profile_path(ranking.character.user.profile_name) %>
+                  <%= link_to ranking.character.name, profile_path(profile_name: ranking.character.name) %>
                   <span class="player-level">[<%= ranking.character.level %>]</span>
                 </td>
                 <td class="rating-cell"><%= ranking.rating %></td>

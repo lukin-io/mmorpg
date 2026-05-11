@@ -10,15 +10,21 @@ movement, combat, professions, and social/economy access.
 
 Reference material:
 
+- `doc/flow/neverlands_live_player.md`
 - `doc/features/neverlands_inspired_skills.md`
 - `doc/features/neverlands_inspired_combat.md`
 
 Important borrowed ideas:
 
 - stat allocation is explicit;
-- skill allocation is explicit;
-- skills have categories;
+- `Умения` are explicit 0-100 numeric skills;
+- `Навыки` are explicit yes/no perks and remain separate from numeric skills;
+- skill points are split between combat/magic/resistance and peace/world pools;
+- numeric skills use tiered 25-point bands where one spend can add a different
+  amount depending on current level;
+- skills and perks have categories;
 - skills can unlock or improve combat and non-combat mechanics;
+- perks can have mutual exclusions;
 - the UI should show available points, current values, and missing
   requirements.
 
@@ -78,6 +84,10 @@ Social/progression extensions:
 
 - Points are earned through level-up and relevant gameplay.
 - Spending points is server-authoritative.
+- Numeric skills are stored and displayed as 0-100 values.
+- Boolean perks are stored and displayed as selected/unselected values.
+- Numeric skill allocation can preview client-side, but the final save must be
+  validated server-side.
 - Skills may have prerequisites.
 - Skills may use tiered progression, where later ranks cost more effort.
 - Equipment and effects can modify effective skill, but base skill remains
@@ -97,6 +107,8 @@ Social/progression extensions:
 ## Out Of Scope
 
 - Large class trees before basic stats and passive skills are stable.
+- Class-node progression as the primary launch path unless reduced to the
+  Neverlands-style `Умения`/`Навыки` model.
 - Unlimited free respec.
 - Skills that only exist as UI decoration.
 

@@ -49,6 +49,9 @@ Required behavior:
 - character has level, experience, stat points, skill points, HP, MP, AP, and
   equipment;
 - HP and MP are visible and persist across movement and combat;
+- profile/player summary is reachable inside the gameplay shell and shows
+  vitals, stats, equipment slots, experience, fatigue, attack cost, and fight
+  record;
 - AP, attack cost, defense, hit, dodge, block, and critical formulas read from
   character state and equipment state;
 - level-up and stat/skill allocation change derived combat and movement
@@ -67,6 +70,8 @@ Required behavior:
   `doc/design/features/progression_stats_skills.md`.
 - Equipment and inventory are documented in
   `doc/design/features/items_inventory_equipment.md`.
+- Live Neverlands player/profile observations are captured in
+  `doc/flow/neverlands_live_player.md`.
 
 ### In Progress
 
@@ -74,6 +79,9 @@ Required behavior:
   equipment families, and UI previews.
 - Level-up UX and allocation UX need to be treated as part of the main
   character loop, not an admin/debug sidebar.
+- Numeric `Умения` and boolean `Навыки` should be modeled as the main launch
+  progression surfaces; broad class-tree or node-graph progression is deferred
+  unless it maps back to that player-profile loop.
 - Recovery and defeat states need a launch-level path that is consistent for
   arena and wild fights.
 - Specs should assert that the same character/equipment data feeds vitals,

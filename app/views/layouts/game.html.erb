@@ -25,9 +25,10 @@
     <%# Right: Navigation text links (like original) %>
     <nav class="nl-top-nav">
       <% if current_character %>
-        <%= link_to "Quests", quests_path, class: "nl-nav-link", data: { turbo_frame: "main_content" } %>
         <%= link_to "Character", profile_path(profile_name: current_character.name), class: "nl-nav-link", data: { turbo_frame: "main_content" } %>
         <%= link_to "Inventory", inventory_path, class: "nl-nav-link", data: { turbo_frame: "main_content" } %>
+        <%= link_to "Abilities", skills_character_path(current_character), class: "nl-nav-link", data: { turbo_frame: "main_content" } %>
+        <%= link_to "Perks", perks_character_path(current_character), class: "nl-nav-link", data: { turbo_frame: "main_content" } %>
         <% if @position&.zone&.biome == "city" %>
           <%= link_to "Exit", exit_location_world_path, class: "nl-nav-link", data: { turbo_method: :post } %>
         <% else %>

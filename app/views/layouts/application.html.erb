@@ -31,6 +31,8 @@
       <header class="game-header">
         <div class="game-header-inner">
           <%= link_to "Elselands", root_path, class: "game-logo" %>
+          <% player_character = current_user&.character %>
+          <% player_profile_name = player_character&.name || current_user&.profile_name %>
 
           <nav class="game-nav">
             <% if current_user %>
@@ -38,7 +40,7 @@
               <%= link_to "Quests", quests_path, class: ("active" if controller_name == "quests") %>
               <%= link_to "Chat", chat_channels_path, class: ("active" if controller_name == "chat_channels") %>
               <%= link_to "Guilds", guilds_path, class: ("active" if controller_name == "guilds") %>
-              <%= link_to "Profile", profile_path(current_user.profile_name), class: ("active" if controller_name == "public_profiles") %>
+              <%= link_to "Profile", profile_path(profile_name: player_profile_name), class: ("active" if controller_name == "public_profiles") %>
             <% end %>
           </nav>
 
@@ -105,7 +107,7 @@
               <span class="icon">Guild</span>
               <span>Guild</span>
             <% end %>
-            <%= link_to profile_path(current_user.profile_name), class: "mobile-hud-btn" do %>
+            <%= link_to profile_path(profile_name: player_profile_name), class: "mobile-hud-btn" do %>
               <span class="icon">Profile</span>
               <span>Profile</span>
             <% end %>

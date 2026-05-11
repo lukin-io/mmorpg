@@ -239,9 +239,9 @@ RSpec.describe Character, type: :model do
   end
 
   # ============================================
-  # Passive Skills
+  # Abilities
   # ============================================
-  describe "passive skills" do
+  describe "abilities" do
     let(:character) { create(:character, passive_skills: {}) }
 
     describe "#passive_skill_level" do

@@ -16,6 +16,7 @@ Rails.application.routes.draw do
   get "logs/:share_token", to: "public_battle_logs#show", as: :public_battle_log
 
   resource :session_ping, only: :create
+  get "pinfo.cgi", to: "public_profiles#pinfo", as: :pinfo
   resources :profiles, only: :show, controller: :public_profiles, param: :profile_name
 
   # Character Stats & Skills Allocation
@@ -25,6 +26,8 @@ Rails.application.routes.draw do
       patch :stats, action: :update_stats
       get :skills
       patch :skills, action: :update_skills
+      get :perks
+      patch :perks, action: :update_perks
     end
   end
 

@@ -11,6 +11,7 @@ presence, turn combat, inventory weight, shops, and social chat.
 | --- | --- |
 | `doc/flow/neverlands_live_movement.md` | Wilderness movement timing, map state, available destination model |
 | `doc/flow/neverlands_live_city_movement.md` | City entry, city node navigation, shop entry, building return flow |
+| `doc/flow/neverlands_live_player.md` | Player profile shell, vitals strip, equipment slots, trainable `Умения`, boolean `Навыки` |
 | `doc/design/reference/neverlands_arena_combat.md` | Arena rooms, fight applications, AP/body-part combat, fight states |
 | `doc/features/neverlands_inspired_chat.md` | Chat frame, player list, message styles, context menu |
 | `doc/features/neverlands_inspired_combat.md` | Turn combat, action points, body targeting, combat log |
@@ -26,6 +27,9 @@ presence, turn combat, inventory weight, shops, and social chat.
 - Combat is turn-based and explicit: attacks, blocks, body parts, AP, logs.
 - Shops are entered through city buildings, then render category/item lists.
 - Inventory and equipment are practical constraints, not only collection UI.
+- The player profile is an in-game surface: vitals, equipment, stats,
+  experience, numeric skills, and boolean perks all hang off the active
+  character rather than a separate account dashboard.
 
 ## Not Borrowed By Default
 

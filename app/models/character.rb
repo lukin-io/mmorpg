@@ -171,7 +171,7 @@ class Character < ApplicationRecord
   end
 
   # ===================
-  # Passive Skills
+  # Abilities
   # ===================
 
   # Get total skill points available (legacy - for backward compatibility)

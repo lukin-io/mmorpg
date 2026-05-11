@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_10_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_11_130000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -399,6 +399,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_120000) do
     t.jsonb "passive_skills", default: {}, null: false
     t.integer "peace_skill_points", default: 0, null: false
     t.integer "perk_points_available", default: 0, null: false
+    t.jsonb "perks", default: {}, null: false
     t.jsonb "progression_sources", default: {}, null: false
     t.integer "reputation", default: 0, null: false
     t.jsonb "resource_pools", default: {}, null: false

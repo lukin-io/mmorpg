@@ -10,6 +10,7 @@ combat systems practical constraints.
 
 Inputs:
 
+- `doc/flow/neverlands_live_player.md`
 - `doc/ITEM_SYSTEM_GUIDE.md`
 - `doc/flow/18_inventory_system.md`
 - deleted `doc/features/8_gameplay_mechanics.md`
@@ -48,6 +49,26 @@ Later:
 - Equipment affects combat formulas, vitals, carrying capacity, and possibly
   movement cost.
 - Durability can degrade through combat or use.
+- The player profile should show an equipment doll/slot summary even when the
+  full inventory action is separate or contextually disabled.
+
+Baseline visible slots from the Neverlands player capture:
+
+- helmet;
+- necklace;
+- weapon;
+- belt;
+- belt contents;
+- boots;
+- pocket;
+- pocket contents;
+- bracers;
+- gloves;
+- weapon/shield;
+- rings;
+- armor;
+- pants;
+- relic.
 
 ## Inventory Rules
 
