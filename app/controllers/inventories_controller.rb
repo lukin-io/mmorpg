@@ -40,7 +40,7 @@ class InventoriesController < ApplicationController
             turbo_stream.update("stats_panel", partial: "inventories/stats", locals: {stats: stats})
           ]
         end
-        format.html { redirect_to inventory_path(category: current_category), notice: "Item equipped!" }
+        format.html { redirect_to inventory_redirect_path, notice: "Item equipped!" }
       else
         format.turbo_stream do
           render turbo_stream: turbo_stream.append(
@@ -49,7 +49,7 @@ class InventoriesController < ApplicationController
             locals: {type: :alert, message: result[:error]}
           )
         end
-        format.html { redirect_to inventory_path(category: current_category), alert: result[:error] }
+        format.html { redirect_to inventory_redirect_path, alert: result[:error] }
       end
     end
   end
@@ -76,7 +76,7 @@ class InventoriesController < ApplicationController
             turbo_stream.update("stats_panel", partial: "inventories/stats", locals: {stats: stats})
           ]
         end
-        format.html { redirect_to inventory_path(category: current_category), notice: "Item unequipped!" }
+        format.html { redirect_to inventory_redirect_path, notice: "Item unequipped!" }
       else
         format.turbo_stream do
           render turbo_stream: turbo_stream.append(
@@ -85,7 +85,7 @@ class InventoriesController < ApplicationController
             locals: {type: :alert, message: result[:error]}
           )
         end
-        format.html { redirect_to inventory_path(category: current_category), alert: result[:error] }
+        format.html { redirect_to inventory_redirect_path, alert: result[:error] }
       end
     end
   end
@@ -109,7 +109,7 @@ class InventoriesController < ApplicationController
             turbo_stream.update("flash", partial: "shared/flash", locals: {type: "notice", message: result[:message]})
           ]
         end
-        format.html { redirect_to inventory_path(category: current_category), notice: result[:message] }
+        format.html { redirect_to inventory_redirect_path, notice: result[:message] }
       else
         format.turbo_stream do
           render turbo_stream: turbo_stream.update(
@@ -118,7 +118,7 @@ class InventoriesController < ApplicationController
             locals: {type: "alert", message: result[:error]}
           )
         end
-        format.html { redirect_to inventory_path(category: current_category), alert: result[:error] }
+        format.html { redirect_to inventory_redirect_path, alert: result[:error] }
       end
     end
   end
@@ -130,9 +130,9 @@ class InventoriesController < ApplicationController
     result = Game::Inventory::Manager.discard_item(item)
 
     if result[:success]
-      redirect_to inventory_path(category: current_category), notice: result[:message]
+      redirect_to inventory_redirect_path, notice: result[:message]
     else
-      redirect_to inventory_path(category: current_category), alert: result[:error]
+      redirect_to inventory_redirect_path, alert: result[:error]
     end
   end
 
@@ -142,7 +142,7 @@ class InventoriesController < ApplicationController
 
     Game::Inventory::Manager.sort_inventory!(current_character.inventory, by: sort_type.to_sym)
 
-    redirect_to inventory_path(category: current_category), notice: "Inventory sorted."
+    redirect_to inventory_redirect_path, notice: "Inventory sorted."
   end
 
   private
@@ -161,6 +161,13 @@ class InventoriesController < ApplicationController
 
   def current_category
     params[:category].presence || "all"
+  end
+
+  def inventory_redirect_path
+    category = current_category
+    return inventory_path if category == "all"
+
+    inventory_path(category: category)
   end
 
   def inventory_category_item_types(category)

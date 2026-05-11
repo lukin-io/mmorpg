@@ -12,9 +12,18 @@ class InventoryItemsController < ApplicationController
     result = Game::Inventory::Manager.discard_item(item)
 
     if result[:success]
-      redirect_to inventory_path(category: params[:category].presence), notice: result[:message]
+      redirect_to inventory_redirect_path, notice: result[:message]
     else
-      redirect_to inventory_path(category: params[:category].presence), alert: result[:error]
+      redirect_to inventory_redirect_path, alert: result[:error]
     end
+  end
+
+  private
+
+  def inventory_redirect_path
+    category = params[:category].presence
+    return inventory_path if category.blank? || category == "all"
+
+    inventory_path(category: category)
   end
 end
