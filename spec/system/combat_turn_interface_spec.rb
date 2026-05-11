@@ -122,7 +122,7 @@ RSpec.describe "Combat Turn Interface", type: :system do
     it "disables other blocks when one is selected", skip: "Stimulus controller behavior not yet implemented" do
       visit battle_path(battle)
 
-      select "Block (35 AP)", from: "blocks[head]"
+      select "Head Block (35 AP)", from: "blocks[head]"
 
       # Other block dropdowns should be disabled
       expect(page).to have_css('[data-body-part="torso"].nl-block-select[disabled]')
@@ -176,7 +176,7 @@ RSpec.describe "Combat Turn Interface", type: :system do
       visit battle_path(battle)
 
       select "Simple Attack (45 AP)", from: "attacks[head]"
-      select "Block (30 AP)", from: "blocks[torso]"
+      select "Torso Block (30 AP)", from: "blocks[torso]"
 
       click_button "Reset"
 

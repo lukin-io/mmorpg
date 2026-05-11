@@ -9,7 +9,18 @@ module ArenaEntryGate
     return if current_character_has_active_arena_match?
     return if session[:arena_city_character_id].to_i == current_character&.id.to_i
 
-    redirect_to world_path, alert: "Enter the arena through the city building."
+    respond_to do |format|
+      format.html { redirect_to world_path, alert: "Enter the arena through the city building." }
+      format.turbo_stream { redirect_to world_path, status: :see_other, alert: "Enter the arena through the city building." }
+      format.json do
+        render json: {
+          success: false,
+          error: "arena_city_entry_required",
+          errors: ["Enter the arena through the city building."]
+        }, status: :forbidden
+      end
+      format.any { redirect_to world_path, alert: "Enter the arena through the city building." }
+    end
   end
 
   def mark_city_arena_entry!(hotspot)
