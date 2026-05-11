@@ -42,7 +42,7 @@ module Game
       private
 
       def valid_slot?(slot)
-        %i[head chest legs feet hands main_hand off_hand ring_1 ring_2 amulet].include?(slot)
+        ItemTemplate::EQUIPMENT_SLOTS.include?(slot.to_s)
       end
 
       def equipped_in_slot(slot)

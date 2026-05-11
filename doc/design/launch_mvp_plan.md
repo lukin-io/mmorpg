@@ -52,6 +52,9 @@ Required behavior:
 - profile/player summary is reachable inside the gameplay shell and shows
   vitals, stats, equipment slots, experience, fatigue, attack cost, and fight
   record;
+- inventory is reachable from the player shell and shows equipment slots,
+  inventory mass, category filters, item properties, item requirements,
+  durability, and compact equip/use/delete actions;
 - AP, attack cost, defense, hit, dodge, block, and critical formulas read from
   character state and equipment state;
 - level-up and stat/skill allocation change derived combat and movement

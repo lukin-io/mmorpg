@@ -70,6 +70,27 @@ Baseline visible slots from the Neverlands player capture:
 - pants;
 - relic.
 
+The live inventory capture adds these launch requirements:
+
+- inventory opens from the same player shell as the character profile;
+- the current page's context button is disabled, while `Ваш персонаж` and
+  `Вернуться` remain active;
+- inventory shows an equipment doll plus carried item rows;
+- carried item rows show icon, durability bar, compact action buttons,
+  properties, and requirements;
+- item properties can include price, durability, damage range, armor class,
+  HP, primary stat modifiers, accuracy/dodge/fortitude/crushing percentages,
+  armor pierce, elemental resistances, expiry time, engraving, and free-text
+  descriptions;
+- item requirements can include mass, level, primary stats, action-point cost,
+  and numeric skill requirements;
+- stable item requirements, base price, and max durability belong on the item
+  template; current durability and per-instance overrides belong on the
+  inventory item;
+- transfer, gift, sale, and delete are tokenized/server-authorized actions;
+  launch MVP needs equip/use/delete first, with transfer/gift/sale deferred
+  unless the economy loop explicitly needs them.
+
 ## Inventory Rules
 
 - Characters have finite carry capacity.

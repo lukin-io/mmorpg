@@ -12716,3 +12716,237 @@ turbo-frame[busy] {
     flex-direction: column;
   }
 }
+
+/* Neverlands-style inventory surface */
+
+.nl-inventory-head,
+.nl-inventory-list-head,
+.nl-inventory-toolbar,
+.nl-inventory-balance,
+.nl-inventory-categories,
+.nl-inventory-sort,
+.nl-inventory-item-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.nl-inventory-head,
+.nl-inventory-toolbar {
+  justify-content: space-between;
+  margin-bottom: 6px;
+  padding: 5px 6px;
+  border: 1px solid var(--nl-border);
+  background: var(--nl-bg-secondary);
+}
+
+.nl-inventory-head h1,
+.nl-inventory-list-head h2 {
+  margin: 0;
+  font-size: 14px;
+}
+
+.nl-inventory-balance {
+  color: var(--nl-text-muted);
+  font-size: 11px;
+}
+
+.nl-inventory-layout {
+  display: grid;
+  grid-template-columns: 360px minmax(0, 1fr);
+  gap: 8px;
+}
+
+.nl-inventory-side,
+.nl-inventory-main {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.nl-inventory-equipment {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  gap: 6px;
+}
+
+.nl-inventory-equipment-slots {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3px;
+}
+
+.equipment-slot {
+  position: relative;
+  min-height: 38px;
+  padding: 3px;
+  border: 1px solid var(--nl-border-light);
+  background: #ffffff;
+  font-size: 10px;
+}
+
+.equipment-slot.filled {
+  border-color: var(--nl-gold-dark);
+  background: #fffdf5;
+}
+
+.equipment-slot .slot-label,
+.equipment-slot .slot-placeholder,
+.equipment-slot .slot-durability,
+.equipped-item strong {
+  display: block;
+}
+
+.equipment-slot .slot-label,
+.equipment-slot .slot-placeholder,
+.equipment-slot .slot-durability {
+  color: var(--nl-text-muted);
+}
+
+.equipped-item strong {
+  color: var(--nl-text);
+}
+
+.unequip-btn {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  border: 1px solid var(--nl-border-medium);
+  background: #ffffff;
+  color: var(--nl-danger);
+  font-size: 10px;
+  line-height: 1;
+}
+
+.nl-inventory-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.nl-inventory-item {
+  display: grid;
+  grid-template-columns: 74px minmax(0, 1fr);
+  gap: 6px;
+  padding: 5px;
+  border: 1px solid var(--nl-border);
+  background: #ffffff;
+}
+
+.nl-inventory-item.selected {
+  outline: 2px solid var(--nl-gold-dark);
+}
+
+.nl-inventory-item-icon {
+  min-height: 74px;
+  padding: 5px;
+  border: 1px solid var(--nl-border-light);
+  background: var(--nl-bg-secondary);
+  text-align: center;
+  font-weight: bold;
+}
+
+.nl-inventory-item-icon > span {
+  display: block;
+  margin: 14px 0 10px;
+  font-size: 17px;
+}
+
+.nl-durability-bar {
+  height: 3px;
+  border: 1px solid var(--nl-border-light);
+  background: var(--nl-bg-dark);
+}
+
+.nl-durability-bar span {
+  display: block;
+  height: 100%;
+  background: var(--nl-success);
+}
+
+.nl-inventory-item-body {
+  min-width: 0;
+}
+
+.nl-inventory-item-actions {
+  margin-bottom: 4px;
+}
+
+.invbut {
+  min-height: 20px;
+  padding: 1px 7px;
+  border: 1px solid var(--nl-border-medium);
+  background: #ffffff;
+  color: var(--nl-text-link);
+  font-family: var(--nl-font-secondary);
+  font-size: 11px;
+  line-height: 1.2;
+  text-decoration: none;
+}
+
+.invbut--disabled {
+  color: var(--nl-text-muted);
+  background: var(--nl-bg-dark);
+}
+
+.invbut--danger {
+  color: var(--nl-danger);
+}
+
+.nl-inventory-item-details {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+}
+
+.nl-inventory-item-details h3 {
+  margin: 0;
+  padding: 2px;
+  background: var(--nl-bg-tertiary);
+  border: 1px solid var(--nl-border-light);
+  font-size: 11px;
+  text-align: center;
+}
+
+.nl-inventory-empty-slot {
+  min-height: 24px;
+  padding: 4px;
+  border: 1px solid var(--nl-border-light);
+  background: var(--nl-bg-secondary);
+  color: var(--nl-text-muted);
+  font-size: 10px;
+  text-align: center;
+}
+
+.item-context-menu {
+  position: fixed;
+  z-index: 1000;
+  min-width: 120px;
+  border: 1px solid var(--nl-border-medium);
+  background: #ffffff;
+  box-shadow: var(--nl-shadow-sm);
+}
+
+.item-context-menu ul {
+  margin: 0;
+  padding: 3px;
+  list-style: none;
+}
+
+.context-menu-btn {
+  width: 100%;
+  border: 0;
+  background: #ffffff;
+  color: var(--nl-text-link);
+  text-align: left;
+}
+
+@media (max-width: 900px) {
+  .nl-inventory-layout,
+  .nl-inventory-equipment,
+  .nl-inventory-item,
+  .nl-inventory-item-details {
+    grid-template-columns: 1fr;
+  }
+}

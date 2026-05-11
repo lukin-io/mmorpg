@@ -12,7 +12,8 @@ class InventoriesController < ApplicationController
   # GET /inventory
   def show
     @inventory = current_character.inventory || current_character.create_inventory!
-    @items = @inventory.inventory_items.includes(:item_template).order(:slot_index)
+    @category = params[:category].presence || "all"
+    @items = filtered_inventory_items(@inventory, @category)
     @equipment = current_character_equipment
     @stats = Characters::VitalsService.new(current_character).stats_summary
   end
@@ -144,19 +145,35 @@ class InventoriesController < ApplicationController
 
   private
 
+  def filtered_inventory_items(inventory, category)
+    items = inventory.inventory_items.includes(:item_template).order(:slot_index)
+    return items if category == "all"
+
+    item_types = inventory_category_item_types(category)
+    return items if item_types.empty?
+
+    items.where(item_templates: {item_type: item_types})
+  end
+
+  def inventory_category_item_types(category)
+    case category
+    when "equipment"
+      ["equipment"]
+    when "consumables"
+      ["consumable"]
+    when "materials"
+      ["material", "resource"]
+    when "quest"
+      ["quest"]
+    else
+      []
+    end
+  end
+
   def current_character_equipment
-    {
-      head: equipped_item(:head),
-      chest: equipped_item(:chest),
-      legs: equipped_item(:legs),
-      feet: equipped_item(:feet),
-      hands: equipped_item(:hands),
-      main_hand: equipped_item(:main_hand),
-      off_hand: equipped_item(:off_hand),
-      ring_1: equipped_item(:ring_1),
-      ring_2: equipped_item(:ring_2),
-      amulet: equipped_item(:amulet)
-    }
+    PlayerProfileHelper::PROFILE_EQUIPMENT_SLOTS.to_h do |slot_key, _label|
+      [slot_key.to_sym, equipped_item(slot_key)]
+    end
   end
 
   def equipped_item(slot)

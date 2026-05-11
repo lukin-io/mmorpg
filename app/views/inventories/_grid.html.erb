@@ -1,49 +1,78 @@
-<div class="inventory-grid">
+<% inventory ||= @inventory %>
+
+<div class="nl-inventory-list">
   <% items.each do |item| %>
-    <div class="inventory-slot filled"
+    <div class="inventory-slot filled nl-inventory-item"
          data-item-id="<%= item.id %>"
          data-action="click->inventory#selectItem contextmenu->inventory#showContextMenu">
-      <div class="item-icon item-rarity--<%= item.item_template.rarity %>">
-        <%= item_slot_icon(item.item_template) %>
+      <div class="nl-inventory-item-icon item-rarity--<%= item.item_template.rarity %>">
+        <span><%= item_slot_icon(item.item_template) %></span>
         <% if item.quantity > 1 %>
-          <span class="item-quantity"><%= item.quantity %></span>
+          <strong><%= item.quantity %></strong>
         <% end %>
-        <% if item.enhancement_level.to_i > 0 %>
-          <span class="item-enhancement">+<%= item.enhancement_level %></span>
-        <% end %>
+        <div class="nl-durability-bar">
+          <span style="width: <%= inventory_item_durability_percent(item) %>%"></span>
+        </div>
       </div>
 
-      <div class="item-tooltip">
-        <div class="tooltip-header">
-          <strong class="item-name"><%= item.item_template.name %></strong>
-          <% if item.enhancement_level.to_i > 0 %>
-            <span class="enhancement-badge">+<%= item.enhancement_level %></span>
+      <div class="nl-inventory-item-body">
+        <div class="nl-inventory-item-actions">
+          <% if item.item_template.equippable? && !item.equipped? %>
+            <%= button_to "Equip", equip_inventory_path(item_id: item.id), method: :post, class: "invbut", data: {turbo: true} %>
           <% end %>
+          <% if item.item_template.consumable? %>
+            <%= button_to "Use", use_inventory_path(item_id: item.id), method: :post, class: "invbut", data: {turbo: true} %>
+          <% end %>
+          <span class="invbut invbut--disabled">Transfer</span>
+          <span class="invbut invbut--disabled">Gift</span>
+          <span class="invbut invbut--disabled">Sell</span>
+          <%= button_to "Delete",
+            inventory_item_path(item),
+            method: :delete,
+            class: "invbut invbut--danger",
+            form: {data: {turbo_confirm: "Delete #{item.item_template.name}?"}} %>
         </div>
-        <p class="item-rarity rarity--<%= item.item_template.rarity %>"><%= item.item_template.rarity.titleize %></p>
-        <p class="item-type"><%= item.item_template.item_type.titleize %></p>
 
-        <% if item.item_template.stat_modifiers.present? %>
-          <div class="item-stats">
-            <% item.item_template.stat_modifiers.each do |stat, value| %>
-              <span class="stat-line">+<%= value %> <%= stat.titleize %></span>
-            <% end %>
-          </div>
-        <% end %>
+        <div class="nl-inventory-item-details">
+          <section>
+            <h3>Properties</h3>
+            <table class="nl-profile-table">
+              <tr>
+                <th>Name</th>
+                <td><%= item.item_template.name %></td>
+              </tr>
+              <% inventory_item_properties(item).each do |label, value| %>
+                <tr>
+                  <th><%= label %></th>
+                  <td><%= value %></td>
+                </tr>
+              <% end %>
+            </table>
+          </section>
 
-        <%# Description is not in current schema - skip for now %>
-
-        <div class="item-actions-hint">
-          <span>Left-click: Select</span>
-          <span>Right-click: Options</span>
+          <section>
+            <h3>Requirements</h3>
+            <table class="nl-profile-table">
+              <% inventory_item_requirements(item).each do |label, value| %>
+                <tr>
+                  <th><%= label %></th>
+                  <td><%= value %></td>
+                </tr>
+              <% end %>
+            </table>
+          </section>
         </div>
       </div>
     </div>
   <% end %>
 
-  <% (@inventory.max_slots - items.count).times do |i| %>
-    <div class="inventory-slot empty" data-slot-index="<%= items.count + i %>">
-      <span class="empty-slot-icon">+</span>
+  <% if items.empty? %>
+    <p class="nl-profile-empty">No items in this category.</p>
+  <% end %>
+
+  <% [inventory.max_slots - inventory.inventory_items.count, 0].max.times do |i| %>
+    <div class="inventory-slot empty nl-inventory-empty-slot" data-slot-index="<%= inventory.inventory_items.count + i %>">
+      empty
     </div>
   <% end %>
 </div>
@@ -62,8 +91,5 @@
         <button type="submit" class="context-menu-btn" data-action="click->inventory#hideContextMenu">Use</button>
       <% end %>
     </li>
-    <li data-action="click->inventory#enhanceItem">Enhance</li>
-    <li data-action="click->inventory#splitStack">Split Stack</li>
-    <li class="danger" data-action="click->inventory#discardItem">Discard</li>
   </ul>
 </div>
