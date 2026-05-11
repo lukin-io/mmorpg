@@ -105,7 +105,7 @@ export default class extends Controller {
     if (actionPanel) {
       actionPanel.innerHTML = `
         <div class="nl-battle-result nl-battle-result--defeat">
-          <h2>💀 You Have Fallen!</h2>
+          <h2>You Have Fallen!</h2>
           <p>${data.message || "You have been defeated."}</p>
           <a href="/world" class="nl-btn nl-btn-primary">Return to World</a>
         </div>
@@ -498,7 +498,7 @@ export default class extends Controller {
       const isVictory = data.winner_team === 'alpha' // Assuming player is alpha
       actionPanel.innerHTML = `
         <div class="nl-battle-result nl-battle-result--${isVictory ? 'victory' : 'defeat'}">
-          <h2>${isVictory ? '🎉 Victory!' : '💀 Defeat'}</h2>
+          <h2>${isVictory ? 'Victory!' : 'Defeat'}</h2>
           <p>${data.message || (isVictory ? 'You have won the battle!' : 'You have been defeated.')}</p>
           ${data.rewards ? `
             <div class="nl-rewards">
@@ -515,4 +515,3 @@ export default class extends Controller {
     }
   }
 }
-

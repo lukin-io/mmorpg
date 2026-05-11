@@ -153,14 +153,14 @@ export default class extends Controller {
       case "miss":
         return `
           <span class="actor team-${actorTeam}">${actorName}</span>
-          <span class="action miss">💨 misses</span>
+          <span class="action miss">misses</span>
           <span class="target team-${targetTeam}">${targetName}</span>
           ${entry.payload?.body_part ? `<span class="body-part">(${entry.payload.body_part})</span>` : ""}
         `
       case "death":
         return `
           <span class="actor dead team-${actorTeam}">${actorName}</span>
-          <span class="action death">💀 has been defeated!</span>
+          <span class="action death">has been defeated!</span>
         `
       case "system":
         return `<span class="system-message">${entry.message}</span>`
@@ -176,9 +176,9 @@ export default class extends Controller {
     const critical = entry.payload?.critical
     const blocked = entry.payload?.blocked
 
-    let action = "⚔️ hits"
-    if (critical) action = "💥 CRITICAL!"
-    if (blocked) action = "🛡️ blocked"
+    let action = "hits"
+    if (critical) action = "CRITICAL!"
+    if (blocked) action = "blocked"
 
     return `
       <span class="actor team-${actorTeam}">${actorName}</span>
@@ -197,7 +197,7 @@ export default class extends Controller {
 
     return `
       <span class="actor team-${actorTeam}">${actorName}</span>
-      <span class="action">✨ casts</span>
+      <span class="action">casts</span>
       <span class="skill-name element-${element}">«${skillName}»</span>
       ${targetName ? `<span class="action">on</span><span class="target team-${targetTeam}">${targetName}</span>` : ""}
       ${damage > 0 ? `<span class="damage element-${element}">${damage} dmg</span>` : ""}
@@ -212,7 +212,7 @@ export default class extends Controller {
 
     return `
       <span class="actor team-${actorTeam}">${actorName}</span>
-      <span class="action">💚 restored</span>
+      <span class="action">restored</span>
       <span class="restoration">«${amount} ${resource.toUpperCase()}»</span>
       ${source ? `<span class="source">from «${source}»</span>` : ""}
     `
@@ -329,4 +329,3 @@ export default class extends Controller {
     return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })
   }
 }
-

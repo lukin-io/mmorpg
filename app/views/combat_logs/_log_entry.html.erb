@@ -22,12 +22,12 @@
     <% when "attack" %>
       <span class="actor team-<%= actor_team %>"><%= entry.payload["actor_name"] %></span>
       <% if entry.payload["critical"] %>
-        <span class="action critical-hit">💥 CRITICAL!</span>
+        <span class="action critical-hit">CRITICAL!</span>
       <% elsif entry.payload["blocked"] %>
-        <span class="action blocked">🛡️ blocked by</span>
+        <span class="action blocked">blocked by</span>
         <span class="target team-<%= target_team %>"><%= entry.payload["target_name"] %></span>
       <% else %>
-        <span class="action">⚔️ hits</span>
+        <span class="action">hits</span>
         <span class="target team-<%= target_team %>"><%= entry.payload["target_name"] %></span>
       <% end %>
 
@@ -43,7 +43,7 @@
 
     <% when "skill" %>
       <span class="actor team-<%= actor_team %>"><%= entry.payload["actor_name"] %></span>
-      <span class="action">✨ casts</span>
+      <span class="action">casts</span>
       <span class="skill-name element-<%= entry.payload['element'] || 'arcane' %>">
         «<%= entry.payload["skill_name"] %>»
       </span>
@@ -62,7 +62,7 @@
 
     <% when "restoration" %>
       <span class="actor team-<%= actor_team %>"><%= entry.payload["actor_name"] %></span>
-      <span class="action">💚 restored</span>
+      <span class="action">restored</span>
       <span class="restoration">
         «<%= entry.payload["amount"] %> <%= entry.payload["resource"]&.upcase %>»
       </span>
@@ -72,7 +72,7 @@
 
     <% when "miss" %>
       <span class="actor team-<%= actor_team %>"><%= entry.payload["actor_name"] %></span>
-      <span class="action miss">💨 misses</span>
+      <span class="action miss">misses</span>
       <span class="target team-<%= target_team %>"><%= entry.payload["target_name"] %></span>
       <% if entry.payload["body_part"] %>
         <span class="body-part">(<%= entry.payload["body_part"] %>)</span>
@@ -80,7 +80,7 @@
 
     <% when "block" %>
       <span class="actor team-<%= actor_team %>"><%= entry.payload["actor_name"] %></span>
-      <span class="action blocked">🛡️ blocks attack on</span>
+      <span class="action blocked">blocks attack on</span>
       <span class="body-part">(<%= entry.payload["body_part"] %>)</span>
       <% if entry.payload["damage_reduced"] %>
         <span class="reduction">(<%= entry.payload["damage_reduced"] %> reduced)</span>
@@ -88,7 +88,7 @@
 
     <% when "status" %>
       <span class="actor team-<%= actor_team %>"><%= entry.payload["actor_name"] %></span>
-      <span class="action">✨ applies</span>
+      <span class="action">applies</span>
       <span class="status-effect">«<%= entry.payload["effect_name"] %>»</span>
       <% if entry.payload["target_name"] && entry.payload["target_name"] != entry.payload["actor_name"] %>
         <span class="action">to</span>
@@ -98,11 +98,11 @@
 
     <% when "death" %>
       <span class="actor dead team-<%= actor_team %>"><%= entry.payload["actor_name"] %></span>
-      <span class="action death">💀 has been defeated!</span>
+      <span class="action death">has been defeated!</span>
 
     <% when "loot" %>
       <span class="actor team-<%= actor_team %>"><%= entry.payload["actor_name"] %></span>
-      <span class="action">🎁 obtained</span>
+      <span class="action">obtained</span>
       <span class="loot-item">«<%= entry.payload["item_name"] %>»</span>
       <% if entry.payload["quantity"].to_i > 1 %>
         <span class="quantity">x<%= entry.payload["quantity"] %></span>
@@ -128,4 +128,3 @@
     </div>
   <% end %>
 </div>
-

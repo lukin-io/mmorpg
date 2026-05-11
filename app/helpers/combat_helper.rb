@@ -3,19 +3,19 @@
 # Helpers for combat views
 module CombatHelper
   SKILL_ICONS = {
-    "damage" => "⚔️",
-    "heal" => "💚",
-    "buff" => "⬆️",
-    "debuff" => "⬇️",
-    "dot" => "🔥",
-    "hot" => "💖",
-    "aoe" => "💥",
-    "drain" => "🩸",
-    "shield" => "🛡️"
+    "damage" => "Damage",
+    "heal" => "Heal",
+    "buff" => "Buff",
+    "debuff" => "Debuff",
+    "dot" => "Damage Over Time",
+    "hot" => "Heal Over Time",
+    "aoe" => "Area",
+    "drain" => "Drain",
+    "shield" => "Shield"
   }.freeze
 
   def skill_icon(skill_type)
-    SKILL_ICONS[skill_type.to_s] || "✨"
+    SKILL_ICONS[skill_type.to_s] || "Skill"
   end
 
   def skill_tooltip(skill)
@@ -80,12 +80,12 @@ module CombatHelper
   # Return icon for combat action type
   def combat_action_icon(action_type)
     case action_type.to_sym
-    when :attack then "⚔️"
-    when :block then "🛡️"
-    when :skill then "✨"
-    when :flee then "🏃"
-    when :surrender then "🏳️"
-    else "❓"
+    when :attack then "Attack"
+    when :block then "Block"
+    when :skill then "Skill"
+    when :flee then "Flee"
+    when :surrender then "Surrender"
+    else "Action"
     end
   end
 
@@ -106,26 +106,26 @@ module CombatHelper
     end
   end
 
-  # Return icon for magic/skill element type
+  # Return label for magic/skill element type
   # @param element [String, Symbol] the element or skill type
-  # @return [String] emoji icon
+  # @return [String] label
   def magic_icon(element)
     case element.to_s
-    when "fire" then "🔥"
-    when "water", "ice" then "❄️"
-    when "earth" then "🪨"
-    when "air", "lightning" then "⚡"
-    when "arcane" then "✨"
-    when "heal" then "💚"
-    when "shield" then "🛡️"
-    when "buff" then "⬆️"
-    when "debuff" then "⬇️"
-    when "damage" then "⚔️"
-    when "dot" then "🔥"
-    when "hot" then "💖"
-    when "aoe" then "💥"
-    when "drain" then "🩸"
-    else "🔮"
+    when "fire" then "Fire"
+    when "water", "ice" then "Water"
+    when "earth" then "Earth"
+    when "air", "lightning" then "Air"
+    when "arcane" then "Arcane"
+    when "heal" then "Heal"
+    when "shield" then "Shield"
+    when "buff" then "Buff"
+    when "debuff" then "Debuff"
+    when "damage" then "Damage"
+    when "dot" then "Damage Over Time"
+    when "hot" then "Heal Over Time"
+    when "aoe" then "Area"
+    when "drain" then "Drain"
+    else "Magic"
     end
   end
 

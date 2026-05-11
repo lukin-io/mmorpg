@@ -1,100 +1,88 @@
 # frozen_string_literal: true
 
-# Helper for displaying alignment icons and labels throughout the game.
-#
-# Usage:
-#   alignment_badge(character) # => "<span class='alignment-badge'>🛡️ ✨ True Light</span>"
-#   faction_icon(:alliance)    # => "🛡️"
+# Helper for displaying alignment labels throughout the game.
 #
 module AlignmentHelper
-  # Faction icons (base alignment choice)
   FACTION_ICONS = {
-    alliance: "🛡️",
-    rebellion: "⚔️",
-    neutral: "🏳️"
+    alliance: "Alliance",
+    rebellion: "Rebellion",
+    neutral: "Neutral"
   }.freeze
 
-  # Alignment tier icons (based on alignment_score)
   ALIGNMENT_TIER_ICONS = {
-    absolute_darkness: "🖤",
-    true_darkness: "⬛",
-    child_of_darkness: "🌑",
-    twilight_walker: "🌘",
-    neutral: "☯️",
-    dawn_seeker: "🌒",
-    child_of_light: "🌕",
-    true_light: "✨",
-    celestial: "👼"
+    absolute_darkness: "Absolute Darkness",
+    true_darkness: "True Darkness",
+    child_of_darkness: "Child of Darkness",
+    twilight_walker: "Twilight Walker",
+    neutral: "Neutral",
+    dawn_seeker: "Dawn Seeker",
+    child_of_light: "Child of Light",
+    true_light: "True Light",
+    celestial: "Celestial"
   }.freeze
 
-  # Chaos tier icons
   CHAOS_TIER_ICONS = {
-    lawful: "⚖️",
-    balanced: "🔄",
-    chaotic: "🔥",
-    absolute_chaos: "💥"
+    lawful: "Lawful",
+    balanced: "Balanced",
+    chaotic: "Chaotic",
+    absolute_chaos: "Absolute Chaos"
   }.freeze
 
-  # Fight type icons
   FIGHT_TYPE_ICONS = {
-    duel: "⚔️",
-    group: "👥",
-    sacrifice: "💀",
-    unarmed: "🥊",
-    clan_vs_clan: "🏰",
-    faction_vs_faction: "⚔️"
+    duel: "Duel",
+    group: "Group",
+    sacrifice: "Free-for-All",
+    unarmed: "Unarmed",
+    clan_vs_clan: "Clan vs Clan",
+    faction_vs_faction: "Faction vs Faction"
   }.freeze
 
-  # Fight kind icons
   FIGHT_KIND_ICONS = {
-    no_weapons: "🥊",
-    no_artifacts: "🚫",
-    limited_artifacts: "⚠️",
-    free: "✅",
-    clan_vs_clan: "🏰",
-    faction_vs_faction: "🎌"
+    no_weapons: "Bare Hands",
+    no_artifacts: "No Magic Items",
+    limited_artifacts: "Limited Equipment",
+    free: "All Equipment",
+    clan_vs_clan: "Clan vs Clan",
+    faction_vs_faction: "Faction vs Faction"
   }.freeze
 
-  # Timeout icons (duration in seconds)
   TIMEOUT_ICONS = {
-    120 => "⏱️2️⃣",
-    180 => "⏱️3️⃣",
-    240 => "⏱️4️⃣",
-    300 => "⏱️5️⃣"
+    120 => "2m",
+    180 => "3m",
+    240 => "4m",
+    300 => "5m"
   }.freeze
 
-  # Trauma level icons
   TRAUMA_ICONS = {
-    10 => {emoji: "💚", label: "Low"},
-    30 => {emoji: "💛", label: "Medium"},
-    50 => {emoji: "🧡", label: "High"},
-    80 => {emoji: "❤️", label: "Very High"},
-    100 => {emoji: "💔", label: "Extreme"}
+    10 => {text: "Low", label: "Low"},
+    30 => {text: "Medium", label: "Medium"},
+    50 => {text: "High", label: "High"},
+    80 => {text: "Very High", label: "Very High"},
+    100 => {text: "Extreme", label: "Extreme"}
   }.freeze
 
-  # Location type icons
   LOCATION_ICONS = {
-    city: "🏰",
-    village: "🏘️",
-    nature: "🌲",
-    dungeon: "🗝️",
-    arena: "🏟️",
-    guild_hall: "🏛️"
+    city: "City",
+    village: "Village",
+    nature: "Nature",
+    dungeon: "Dungeon",
+    arena: "Arena",
+    guild_hall: "Guild Hall"
   }.freeze
 
   # Get faction icon
   def faction_icon(faction)
-    FACTION_ICONS[faction.to_sym] || "🏳️"
+    FACTION_ICONS[faction.to_sym] || "Neutral"
   end
 
   # Get alignment tier icon
   def alignment_tier_icon(tier)
-    ALIGNMENT_TIER_ICONS[tier.to_sym] || "☯️"
+    ALIGNMENT_TIER_ICONS[tier.to_sym] || "Neutral"
   end
 
   # Get chaos tier icon
   def chaos_tier_icon(tier)
-    CHAOS_TIER_ICONS[tier.to_sym] || "⚖️"
+    CHAOS_TIER_ICONS[tier.to_sym] || "Lawful"
   end
 
   # Full alignment badge for a character
@@ -103,11 +91,10 @@ module AlignmentHelper
 
     parts = [
       faction_icon(character.faction_alignment),
-      character.alignment_emoji,
       character.alignment_tier_name
     ]
 
-    parts << "(#{character.chaos_emoji})" if show_chaos && character.chaos_score.to_i > 0
+    parts << "(#{character.chaos_tier_data[:name]})" if show_chaos && character.chaos_score.to_i > 0
 
     content_tag(:span, parts.join(" "), class: "alignment-badge alignment-#{character.alignment_tier}")
   end
@@ -119,40 +106,38 @@ module AlignmentHelper
     content_tag(:span, class: "alignment-icons") do
       safe_join([
         content_tag(:span, faction_icon(character.faction_alignment), title: character.faction_alignment.humanize, class: "faction-icon"),
-        content_tag(:span, character.alignment_emoji, title: character.alignment_tier_name, class: "tier-icon")
+        content_tag(:span, character.alignment_tier_name, title: character.alignment_tier_name, class: "tier-icon")
       ])
     end
   end
 
   # Fight type icon and label
   def fight_type_badge(fight_type)
-    icon = FIGHT_TYPE_ICONS[fight_type.to_sym] || "⚔️"
     label = fight_type.to_s.humanize
-    content_tag(:span, "#{icon} #{label}", class: "fight-type-badge fight-type-#{fight_type}")
+    content_tag(:span, label, class: "fight-type-badge fight-type-#{fight_type}")
   end
 
   # Fight kind icon and label
   def fight_kind_badge(fight_kind)
-    icon = FIGHT_KIND_ICONS[fight_kind.to_sym] || "⚔️"
     label = fight_kind.to_s.humanize
-    content_tag(:span, "#{icon} #{label}", class: "fight-kind-badge fight-kind-#{fight_kind}")
+    content_tag(:span, label, class: "fight-kind-badge fight-kind-#{fight_kind}")
   end
 
   # Timeout display with icon
   def timeout_badge(seconds)
-    icon = TIMEOUT_ICONS[seconds.to_i] || "⏱️"
-    content_tag(:span, "#{icon} #{seconds / 60}min", class: "timeout-badge", title: "Turn timeout: #{seconds} seconds")
+    label = TIMEOUT_ICONS[seconds.to_i] || "#{seconds / 60}m"
+    content_tag(:span, label, class: "timeout-badge", title: "Turn timeout: #{seconds} seconds")
   end
 
   # Trauma level display with icon
   def trauma_badge(percent)
-    data = TRAUMA_ICONS[percent.to_i] || {emoji: "💚", label: "Low"}
-    content_tag(:span, "#{data[:emoji]} #{data[:label]}", class: "trauma-badge trauma-#{data[:label].downcase.tr(" ", "-")}", title: "Trauma: #{percent}%")
+    data = TRAUMA_ICONS[percent.to_i] || {text: "Low", label: "Low"}
+    content_tag(:span, data[:label], class: "trauma-badge trauma-#{data[:label].downcase.tr(" ", "-")}", title: "Trauma: #{percent}%")
   end
 
   # Location type icon
   def location_icon(location_type)
-    LOCATION_ICONS[location_type.to_sym] || "📍"
+    LOCATION_ICONS[location_type.to_sym] || "Location"
   end
 
   # Full fight settings display
@@ -168,24 +153,23 @@ module AlignmentHelper
 
   # Icon-only versions for compact display
   def fight_type_icon_only(fight_type)
-    icon = FIGHT_TYPE_ICONS[fight_type.to_sym] || "⚔️"
-    content_tag(:span, icon, class: "fight-icon", title: fight_type.to_s.humanize)
+    label = FIGHT_TYPE_ICONS[fight_type.to_sym] || fight_type.to_s.humanize
+    content_tag(:span, label, class: "fight-icon", title: fight_type.to_s.humanize)
   end
 
   def fight_kind_icon_only(fight_kind)
-    icon = FIGHT_KIND_ICONS[fight_kind.to_sym] || "⚔️"
-    content_tag(:span, icon, class: "fight-icon", title: fight_kind.to_s.humanize)
+    label = FIGHT_KIND_ICONS[fight_kind.to_sym] || fight_kind.to_s.humanize
+    content_tag(:span, label, class: "fight-icon", title: fight_kind.to_s.humanize)
   end
 
   def timeout_icon_only(seconds)
     minutes = (seconds.to_i / 60)
-    emoji = ["0️⃣", "1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣"][minutes] || "⏱️"
-    content_tag(:span, "⏱️#{emoji}", class: "timeout-icon", title: "#{minutes} minutes")
+    content_tag(:span, "#{minutes}m", class: "timeout-icon", title: "#{minutes} minutes")
   end
 
   def trauma_icon_only(percent)
-    data = TRAUMA_ICONS[percent.to_i] || {emoji: "💚", label: "Low"}
-    content_tag(:span, data[:emoji], class: "trauma-icon", title: "#{data[:label]} trauma (#{percent}%)")
+    data = TRAUMA_ICONS[percent.to_i] || {text: "Low", label: "Low"}
+    content_tag(:span, data[:label], class: "trauma-icon", title: "#{data[:label]} trauma (#{percent}%)")
   end
 
   # Character nameplate with alignment icons
@@ -198,7 +182,7 @@ module AlignmentHelper
     parts << content_tag(:span, "[#{character.level}]", class: "character-level") if show_level
 
     if show_clan && character.clan.present?
-      parts << content_tag(:span, " 🏰#{character.clan.name}", class: "character-clan")
+      parts << content_tag(:span, " #{character.clan.name}", class: "character-clan")
     end
 
     content_tag(:span, safe_join(parts), class: "character-nameplate")

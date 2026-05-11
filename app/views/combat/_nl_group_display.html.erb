@@ -8,7 +8,7 @@
   <%# Team Alpha (Player's team) %>
   <span class="nl-group nl-group--alpha">
     <a href="#" class="nl-group-private" title="Private message to team">
-      📨
+      Private
     </a>
     <% team_alpha.each_with_index do |participant, index| %>
       <%
@@ -25,7 +25,7 @@
         <a href="<%= participant.character ? profile_path(participant.character) : '#' %>"
            target="_blank"
            class="nl-info-link">
-          ℹ️
+          Info
         </a>
         [<%= hp %>/<%= max_hp %>]
       </span>
@@ -38,7 +38,7 @@
   <%# Team Beta (Enemy team) %>
   <span class="nl-group nl-group--beta">
     <a href="#" class="nl-group-private" title="Private message to team">
-      📨
+      Private
     </a>
     <% team_beta.each_with_index do |participant, index| %>
       <%
@@ -56,13 +56,13 @@
           <a href="<%= profile_path(participant.character) %>"
              target="_blank"
              class="nl-info-link">
-            ℹ️
+            Info
           </a>
         <% elsif participant.npc_template %>
           <a href="#"
              class="nl-info-link"
              title="NPC Info">
-            ℹ️
+            Info
           </a>
         <% end %>
         [<%= hp %>/<%= max_hp %>]
@@ -71,4 +71,3 @@
     <% end %>
   </span>
 </div>
-

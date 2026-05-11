@@ -228,17 +228,17 @@ export default class extends Controller {
   }
 
   showVictory() {
-    this.showNotification("⚔️ Victory! ⚔️", "victory")
+    this.showNotification("Victory!", "victory")
     this.addLogEntry("You are victorious!", "log-victory")
   }
 
   showDefeat() {
-    this.showNotification("💀 Defeat 💀", "defeat")
+    this.showNotification("Defeat", "defeat")
     this.addLogEntry("You have been defeated.", "log-defeat")
   }
 
   showFled() {
-    this.showNotification("🏃 Escaped!", "flee")
+    this.showNotification("Escaped!", "flee")
     this.addLogEntry("You escaped from combat.", "log-flee")
   }
 
@@ -259,4 +259,3 @@ export default class extends Controller {
     }, 2000)
   }
 }
-

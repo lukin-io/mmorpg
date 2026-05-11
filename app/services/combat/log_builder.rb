@@ -125,7 +125,7 @@ module Combat
 
       # Create a miss entry
       def miss(battle:, actor:, target:, body_part:)
-        message = "💨 #{actor_name(actor)}'s attack on #{actor_name(target)}'s #{body_part} misses!"
+        message = "#{actor_name(actor)}'s attack on #{actor_name(target)}'s #{body_part} misses!"
 
         create_entry(
           battle: battle,
@@ -140,7 +140,7 @@ module Combat
 
       # Create a block entry
       def block(battle:, actor:, attacker:, body_part:, damage_reduced:)
-        message = "🛡️ #{actor_name(actor)} blocks #{actor_name(attacker)}'s attack on #{body_part}! (#{damage_reduced} damage reduced)"
+        message = "#{actor_name(actor)} blocks #{actor_name(attacker)}'s attack on #{body_part}! (#{damage_reduced} damage reduced)"
 
         create_entry(
           battle: battle,
@@ -159,7 +159,7 @@ module Combat
       # Create a status effect entry
       def status(battle:, actor:, effect_name:, duration:, target: nil)
         affected = target || actor
-        message = "✨ #{actor_name(actor)} applies «#{effect_name}» to #{actor_name(affected)} (#{duration} rounds)"
+        message = "#{actor_name(actor)} applies «#{effect_name}» to #{actor_name(affected)} (#{duration} rounds)"
 
         create_entry(
           battle: battle,
@@ -178,9 +178,9 @@ module Combat
       # Create a death entry
       def death(battle:, actor:, killer: nil)
         message = if killer
-          "💀 #{actor_name(actor)} has been defeated by #{actor_name(killer)}!"
+          "#{actor_name(actor)} has been defeated by #{actor_name(killer)}!"
         else
-          "💀 #{actor_name(actor)} has been defeated!"
+          "#{actor_name(actor)} has been defeated!"
         end
 
         create_entry(
@@ -196,7 +196,7 @@ module Combat
 
       # Create a loot entry
       def loot(battle:, actor:, item_name:, quantity: 1, skill_increased: nil)
-        message = "🎁 #{actor_name(actor)} obtained «#{item_name}»"
+        message = "#{actor_name(actor)} obtained «#{item_name}»"
         message += " x#{quantity}" if quantity > 1
         message += ". Skill «#{skill_increased}» increased!" if skill_increased
 
@@ -318,11 +318,11 @@ module Combat
 
         case result_type
         when "critical"
-          "💥 CRITICAL! #{actor_str} strikes #{target_str}'s #{body_part} for #{damage} damage#{element_str}!"
+          "CRITICAL! #{actor_str} strikes #{target_str}'s #{body_part} for #{damage} damage#{element_str}!"
         when "blocked"
-          "🛡️ #{target_str} blocks #{actor_str}'s attack on #{body_part}! (#{damage} reduced damage)"
+          "#{target_str} blocks #{actor_str}'s attack on #{body_part}! (#{damage} reduced damage)"
         else
-          "⚔️ #{actor_str} hits #{target_str}'s #{body_part} for #{damage} damage#{element_str}."
+          "#{actor_str} hits #{target_str}'s #{body_part} for #{damage} damage#{element_str}."
         end
       end
 
@@ -331,12 +331,12 @@ module Combat
         ELEMENT_COLORS[element] || ELEMENT_COLORS["arcane"]
 
         if healing > 0
-          "✨ #{actor_str} casts «#{skill_name}» — heals for #{healing} HP"
+          "#{actor_str} casts «#{skill_name}» — heals for #{healing} HP"
         elsif damage > 0
           target_str = target ? " on #{actor_name(target)}" : ""
-          "✨ #{actor_str} casts «#{skill_name}»#{target_str} — #{damage} #{element} damage"
+          "#{actor_str} casts «#{skill_name}»#{target_str} — #{damage} #{element} damage"
         else
-          "✨ #{actor_str} uses «#{skill_name}»"
+          "#{actor_str} uses «#{skill_name}»"
         end
       end
 
@@ -345,7 +345,7 @@ module Combat
         resource_label = (resource == "hp") ? "HP" : "MP"
         source_str = source ? " from «#{source}»" : ""
 
-        "💚 #{actor_str} restored #{amount} #{resource_label}#{source_str}"
+        "#{actor_str} restored #{amount} #{resource_label}#{source_str}"
       end
 
       def broadcast_log_entry(battle, entry)

@@ -1,7 +1,7 @@
 <%# PVP Combat View - Real-time battle interface %>
 <div class="pvp-combat-container" data-controller="pvp-combat" data-pvp-combat-battle-id-value="<%= @battle.id %>" data-pvp-combat-character-id-value="<%= current_character.id %>">
   <div class="pvp-combat-header">
-    <h2>⚔️ PVP Combat</h2>
+    <h2>PVP Combat</h2>
     <div class="combat-round">Round <%= @battle.turn_number %></div>
   </div>
 
@@ -16,7 +16,7 @@
             <% if participant.character.respond_to?(:avatar_image_path) && participant.character.avatar_image_path %>
               <%= image_tag participant.character.avatar_image_path, alt: participant.character.name, class: "avatar-image" %>
             <% else %>
-              <span class="avatar-emoji"><%= participant.character == current_character ? '🧙' : '⚔️' %></span>
+              <span class="avatar-emoji"><%= participant.character == current_character ? 'Player' : 'Opponent' %></span>
             <% end %>
           </div>
           <div class="pvp-participant-info">
@@ -70,7 +70,7 @@
                   data: { turbo_stream: true } %>
             <% end %>
           </div>
-          <%= button_to "🎯 Aimed Attack (65 AP)",
+          <%= button_to "Aimed Attack (65 AP)",
               action_pvp_combat_path(@battle),
               method: :post,
               params: { action_type: 'attack', action_key: 'aimed' },
@@ -81,7 +81,7 @@
         <%# Defend Action %>
         <div class="action-group">
           <h4>Defend</h4>
-          <%= button_to "🛡️ Defend",
+          <%= button_to "Defend",
               action_pvp_combat_path(@battle),
               method: :post,
               params: { action_type: 'defend' },
@@ -92,12 +92,12 @@
         <%# Flee Action %>
         <div class="action-group">
           <h4>Escape</h4>
-          <%= button_to "🏃 Flee",
+          <%= button_to "Flee",
               flee_pvp_combat_path(@battle),
               method: :post,
               class: "btn btn-flee",
               data: { turbo_confirm: "Are you sure you want to flee?" } %>
-          <%= button_to "🏳️ Surrender",
+          <%= button_to "Surrender",
               surrender_pvp_combat_path(@battle),
               method: :post,
               class: "btn btn-surrender",
@@ -110,10 +110,10 @@
     <div class="pvp-result-panel">
       <% winner = @battle.battle_participants.find_by(is_alive: true)&.character %>
       <% if winner == current_character %>
-        <h2 class="result-victory">🏆 Victory!</h2>
+        <h2 class="result-victory">Victory!</h2>
         <p>You have defeated your opponent!</p>
       <% else %>
-        <h2 class="result-defeat">💀 Defeat</h2>
+        <h2 class="result-defeat">Defeat</h2>
         <p>You have been defeated in combat.</p>
       <% end %>
       <%= link_to "Return to World", world_path, class: "btn btn-primary" %>

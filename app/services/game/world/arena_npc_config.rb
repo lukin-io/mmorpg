@@ -151,9 +151,9 @@ module Game
         # @return [Hash] difficulty level descriptions
         def difficulty_info
           {
-            easy: {emoji: "⭐", label: "Easy", description: "For beginners learning combat"},
-            medium: {emoji: "⭐⭐", label: "Medium", description: "Balanced challenge"},
-            hard: {emoji: "⭐⭐⭐", label: "Hard", description: "For experienced fighters"}
+            easy: {label: "Easy", description: "For beginners learning combat"},
+            medium: {label: "Medium", description: "Balanced challenge"},
+            hard: {label: "Hard", description: "For experienced fighters"}
           }
         end
 

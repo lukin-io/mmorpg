@@ -6,7 +6,7 @@
 
   body_parts = %w[head torso stomach legs]
   attack_labels = ["Head", "Torso", "Stomach", "Legs"]
-  block_labels = ["Head", "Torso", "Stomach", "Legs"]
+  block_labels = ["Head Block", "Torso Block", "Stomach Block", "Legs Block"]
   action_value = ->(action, key) { action[key] || action[key.to_s] }
   action_parts = lambda do |action|
     parts = action_value.call(action, :body_parts) || action_value.call(action, :body_part)

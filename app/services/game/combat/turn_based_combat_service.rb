@@ -592,18 +592,18 @@ module Game
         when :attack
           case data[:result]
           when :critical
-            "💥 CRITICAL! #{data[:attacker]} strikes #{data[:defender]}'s #{data[:body_part]} for #{data[:damage]} damage!"
+            "CRITICAL! #{data[:attacker]} strikes #{data[:defender]}'s #{data[:body_part]} for #{data[:damage]} damage!"
           when :hit
-            "⚔️ #{data[:attacker]} hits #{data[:defender]}'s #{data[:body_part]} for #{data[:damage]} damage."
+            "#{data[:attacker]} hits #{data[:defender]}'s #{data[:body_part]} for #{data[:damage]} damage."
           when :blocked
-            "🛡️ #{data[:defender]} blocks #{data[:attacker]}'s attack on #{data[:body_part]}! (#{data[:damage]} reduced damage)"
+            "#{data[:defender]} blocks #{data[:attacker]}'s attack on #{data[:body_part]}! (#{data[:damage]} reduced damage)"
           when :miss
-            "💨 #{data[:attacker]}'s attack on #{data[:defender]}'s #{data[:body_part]} misses!"
+            "#{data[:attacker]}'s attack on #{data[:defender]}'s #{data[:body_part]} misses!"
           end
         when :skill
-          "✨ #{participant.combatant_name} uses «#{data[:skill]}» — #{data[:effect]}#{" (#{data[:amount]})" if data[:amount]}"
+          "#{participant.combatant_name} uses «#{data[:skill]}» — #{data[:effect]}#{" (#{data[:amount]})" if data[:amount]}"
         when :dot
-          "🔥 #{participant.combatant_name} takes #{data[:damage]} damage from #{data[:source]}!"
+          "#{participant.combatant_name} takes #{data[:damage]} damage from #{data[:source]}!"
         else
           "#{participant.combatant_name} performs an action"
         end

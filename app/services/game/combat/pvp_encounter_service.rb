@@ -549,7 +549,7 @@ module Game
         # Apply damage through VitalsService
         apply_damage_via_vitals!(opponent, opponent_participant, damage, "PVP: #{character.name}")
 
-        attack_type = is_aimed ? "🎯 aimed attack" : "attacks"
+        attack_type = is_aimed ? "aimed attack" : "attacks"
         combat_log << "#{character.name} #{attack_type} #{opponent.name}'s #{body_part} for #{damage} damage#{" (CRITICAL!)" if is_critical}."
 
         # Check for defeat

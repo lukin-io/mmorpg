@@ -2,7 +2,7 @@
 <div class="combat-statistics">
   <%# Element Damage Breakdown %>
   <div class="stats-section element-breakdown">
-    <h2>⚡ Element Breakdown</h2>
+    <h2>Element Breakdown</h2>
     <div class="element-bars">
       <% @element_breakdown.each do |element, data| %>
         <div class="element-bar element-<%= element %>">
@@ -20,29 +20,29 @@
 
   <%# Participant Statistics Table %>
   <div class="stats-section participant-stats">
-    <h2>👥 Participant Statistics</h2>
+    <h2>Participant Statistics</h2>
     <div class="stats-table-container">
       <table class="stats-table">
         <thead>
           <tr>
             <th>Character</th>
             <th class="element-col">
-              <span class="element-icon element-normal" title="Normal">⚔️</span>
+              <span class="element-icon element-normal" title="Normal">Normal</span>
             </th>
             <th class="element-col">
-              <span class="element-icon element-fire" title="Fire">🔥</span>
+              <span class="element-icon element-fire" title="Fire">Fire</span>
             </th>
             <th class="element-col">
-              <span class="element-icon element-water" title="Water">💧</span>
+              <span class="element-icon element-water" title="Water">Water</span>
             </th>
             <th class="element-col">
-              <span class="element-icon element-earth" title="Earth">🌍</span>
+              <span class="element-icon element-earth" title="Earth">Earth</span>
             </th>
             <th class="element-col">
-              <span class="element-icon element-air" title="Air">💨</span>
+              <span class="element-icon element-air" title="Air">Air</span>
             </th>
             <th class="element-col">
-              <span class="element-icon element-arcane" title="Arcane">✨</span>
+              <span class="element-icon element-arcane" title="Arcane">Arcane</span>
             </th>
             <th>Total</th>
             <th>XP</th>
@@ -59,7 +59,7 @@
                 <% if participant[:visible] %>
                   <span class="name"><%= participant[:name] %></span>
                   <span class="level">[<%= participant[:level] %>]</span>
-                  <%= link_to "ℹ️", "#", class: "info-link", title: "View profile" %>
+                  <%= link_to "Info", "#", class: "info-link", title: "View profile" %>
                 <% else %>
                   <span class="name invisible"><i>invisible</i></span>
                 <% end %>
@@ -100,11 +100,11 @@
 
   <%# Team Summary %>
   <div class="stats-section team-summary">
-    <h2>⚔️ Team Summary</h2>
+    <h2>Team Summary</h2>
     <div class="team-cards">
       <% @statistics.by_team.each do |team, stats| %>
         <div class="team-card team-<%= team %>">
-          <h3><%= team == :alpha ? "🔵 Team Alpha" : "🟢 Team Beta" %></h3>
+          <h3><%= team == :alpha ? "Team Alpha" : "Team Beta" %></h3>
           <div class="team-stats">
             <div class="stat">
               <span class="stat-label">Members</span>
@@ -130,7 +130,7 @@
 
   <%# Body Part Breakdown %>
   <div class="stats-section body-part-stats">
-    <h2>🎯 Body Part Targeting</h2>
+    <h2>Body Part Targeting</h2>
     <div class="body-parts-grid">
       <% @statistics.body_part_breakdown.each do |part, data| %>
         <div class="body-part-card">
@@ -148,7 +148,7 @@
 
   <%# Round Summary %>
   <div class="stats-section round-summary">
-    <h2>📈 Round Summary</h2>
+    <h2>Round Summary</h2>
     <div class="round-chart">
       <% @statistics.round_summary.each do |round_data| %>
         <div class="round-bar">
@@ -184,24 +184,23 @@
 <%
   def element_icon(element)
     case element
-    when "normal" then "⚔️"
-    when "fire" then "🔥"
-    when "water" then "💧"
-    when "earth" then "🌍"
-    when "air" then "💨"
-    when "arcane" then "✨"
-    else "❓"
+    when "normal" then "Normal"
+    when "fire" then "Fire"
+    when "water" then "Water"
+    when "earth" then "Earth"
+    when "air" then "Air"
+    when "arcane" then "Arcane"
+    else "Unknown"
     end
   end
 
   def body_part_icon(part)
     case part
-    when "head" then "🎯"
-    when "torso" then "👕"
-    when "stomach" then "🫃"
-    when "legs" then "🦵"
-    else "❓"
+    when "head" then "Head"
+    when "torso" then "Torso"
+    when "stomach" then "Stomach"
+    when "legs" then "Legs"
+    else "Unknown"
     end
   end
 %>
-

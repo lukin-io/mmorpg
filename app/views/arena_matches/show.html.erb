@@ -47,7 +47,7 @@
 
     <%# Center: VS + Actions + Combat Log %>
     <div class="arena-center">
-      <div class="arena-vs-badge">⚔️ VS</div>
+      <div class="arena-vs-badge">VS</div>
 
       <%# Turn timeout display %>
       <% if @arena_match.live? && @arena_match.current_turn_started_at %>
@@ -191,7 +191,7 @@
         <% if @arena_match.started_at %>
           <div class="combat-log-entry combat-log--system combat-log--highlight">
             <span class="combat-time"><%= @arena_match.started_at.strftime("%H:%M:%S") %></span>
-            ⚔️ FIGHT!
+            FIGHT!
           </div>
         <% end %>
         <% (@arena_match.metadata["combat_log"] || []).each do |entry| %>
@@ -203,7 +203,7 @@
         <% if @arena_match.completed? %>
           <div class="combat-log-entry combat-log--<%= @arena_match.winning_team ? 'victory' : 'draw' %>">
             <span class="combat-time"><%= @arena_match.ended_at&.strftime("%H:%M:%S") %></span>
-            🏆 <%= @arena_match.winning_team ? "Winner: #{winner_name(@arena_match)}" : "Draw!" %>
+            <%= @arena_match.winning_team ? "Winner: #{winner_name(@arena_match)}" : "Draw!" %>
           </div>
         <% end %>
       </div>

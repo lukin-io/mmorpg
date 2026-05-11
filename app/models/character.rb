@@ -17,27 +17,27 @@ class Character < ApplicationRecord
   # Score ranges: -1000 to +1000
   ALIGNMENT_TIERS = {
     # Negative scores (Dark path)
-    absolute_darkness: {range: -1000..-800, emoji: "🖤", name: "Absolute Darkness"},
-    true_darkness: {range: -799..-500, emoji: "⬛", name: "True Darkness"},
-    child_of_darkness: {range: -499..-200, emoji: "🌑", name: "Child of Darkness"},
+    absolute_darkness: {range: -1000..-800, text: "Absolute Darkness", name: "Absolute Darkness"},
+    true_darkness: {range: -799..-500, text: "True Darkness", name: "True Darkness"},
+    child_of_darkness: {range: -499..-200, text: "Child of Darkness", name: "Child of Darkness"},
 
     # Neutral zone
-    twilight_walker: {range: -199..-50, emoji: "🌘", name: "Twilight Walker"},
-    neutral: {range: -49..49, emoji: "☯️", name: "Neutral"},
-    dawn_seeker: {range: 50..199, emoji: "🌒", name: "Dawn Seeker"},
+    twilight_walker: {range: -199..-50, text: "Twilight Walker", name: "Twilight Walker"},
+    neutral: {range: -49..49, text: "Neutral", name: "Neutral"},
+    dawn_seeker: {range: 50..199, text: "Dawn Seeker", name: "Dawn Seeker"},
 
     # Positive scores (Light path)
-    child_of_light: {range: 200..499, emoji: "🌕", name: "Child of Light"},
-    true_light: {range: 500..799, emoji: "✨", name: "True Light"},
-    celestial: {range: 800..1000, emoji: "👼", name: "Celestial"}
+    child_of_light: {range: 200..499, text: "Child of Light", name: "Child of Light"},
+    true_light: {range: 500..799, text: "True Light", name: "True Light"},
+    celestial: {range: 800..1000, text: "Celestial", name: "Celestial"}
   }.freeze
 
   # Chaos alignment (separate axis, based on karma/actions)
   CHAOS_TIERS = {
-    lawful: {range: 0..199, emoji: "⚖️", name: "Lawful"},
-    balanced: {range: 200..499, emoji: "🔄", name: "Balanced"},
-    chaotic: {range: 500..799, emoji: "🔥", name: "Chaotic"},
-    absolute_chaos: {range: 800..1000, emoji: "💥", name: "Absolute Chaos"}
+    lawful: {range: 0..199, text: "Lawful", name: "Lawful"},
+    balanced: {range: 200..499, text: "Balanced", name: "Balanced"},
+    chaotic: {range: 500..799, text: "Chaotic", name: "Chaotic"},
+    absolute_chaos: {range: 800..1000, text: "Absolute Chaos", name: "Absolute Chaos"}
   }.freeze
 
   belongs_to :user
@@ -118,9 +118,9 @@ class Character < ApplicationRecord
     ALIGNMENT_TIERS[alignment_tier] || ALIGNMENT_TIERS[:neutral]
   end
 
-  # Get alignment emoji icon
+  # Get alignment display text
   def alignment_emoji
-    alignment_tier_data[:emoji]
+    alignment_tier_data[:text]
   end
 
   # Get alignment tier display name
@@ -139,21 +139,21 @@ class Character < ApplicationRecord
     CHAOS_TIERS[chaos_tier] || CHAOS_TIERS[:lawful]
   end
 
-  # Get chaos emoji
+  # Get chaos display text
   def chaos_emoji
-    chaos_tier_data[:emoji]
+    chaos_tier_data[:text]
   end
 
-  # Get faction emoji based on faction_alignment
+  # Get faction label based on faction_alignment
   def faction_emoji
     case faction_alignment
-    when "alliance" then "🛡️"
-    when "rebellion" then "⚔️"
-    else "🏳️"
+    when "alliance" then "Alliance"
+    when "rebellion" then "Rebellion"
+    else "Neutral"
     end
   end
 
-  # Full alignment display with emojis
+  # Full alignment display
   def alignment_display
     "#{faction_emoji} #{alignment_emoji} #{alignment_tier_name}"
   end

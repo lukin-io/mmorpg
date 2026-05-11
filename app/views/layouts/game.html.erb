@@ -41,7 +41,7 @@
       <% if user_signed_in? %>
         <%= link_to destroy_user_session_path,
             data: { turbo_method: :delete, turbo_confirm: "Leave game?" },
-            class: "nl-close-btn", title: "Exit" do %>✕<% end %>
+            class: "nl-close-btn", title: "Exit" do %>X<% end %>
       <% end %>
     </div>
   </header>
@@ -118,9 +118,9 @@
     <div class="nl-status-icons">
       <div id="pvp-status" class="pvp-status-indicator">
         <% if current_character&.pvp_flagged? %>
-          <span class="pvp-icon" title="PVP Enabled">⚔️</span>
+          <span class="pvp-icon" title="PVP Enabled">PVP</span>
         <% else %>
-          <span class="pvp-icon" title="PVP Disabled">🛡️</span>
+          <span class="pvp-icon" title="PVP Disabled">PVP</span>
         <% end %>
       </div>
       <span class="nl-time-display"><%= Time.current.strftime("%H:%M:%S") %></span>

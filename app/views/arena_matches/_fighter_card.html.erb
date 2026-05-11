@@ -19,7 +19,7 @@
   <div class="fighter-avatar">
     <%= participation_avatar_tag(participation, size: :large) %>
     <% if defeated %>
-      <div class="fighter-defeated-overlay">💀</div>
+      <div class="fighter-defeated-overlay">Defeated</div>
     <% end %>
   </div>
 
@@ -30,7 +30,7 @@
     </span>
     <span class="fighter-level">[Lv.<%= p_data.level %>]</span>
     <% if p_data.is_npc %>
-      <span class="fighter-badge fighter-badge--npc">🤖</span>
+      <span class="fighter-badge fighter-badge--npc">NPC</span>
     <% end %>
   </div>
 
@@ -66,17 +66,17 @@
   <%# Stats (shown for opponent) %>
   <% if show_stats %>
     <div class="fighter-stats fighter-stats--nl">
-      <div>💪 Strength: <b><%= p_data.strength %></b></div>
-      <div>🏃 Dexterity: <b><%= p_data.dexterity %></b></div>
-      <div>🍀 Luck: <b><%= p_data.luck %></b></div>
-      <div>📘 Knowledge: <b><%= p_data.knowledge %></b></div>
-      <div>🧠 Wisdom: <b><%= p_data.wisdom %></b></div>
-      <div>🛡️ Armor Class: <b><%= p_data.armor_class %></b></div>
-      <div>🌀 Evasion: <b><%= p_data.evasion %></b></div>
-      <div>🎯 Accuracy: <b><%= p_data.accuracy %></b></div>
-      <div>💥 Crushing: <b><%= p_data.crushing %></b></div>
-      <div>🧱 Endurance: <b><%= p_data.endurance %></b></div>
-      <div>🗡️ Armor Penetration: <b><%= p_data.armor_penetration %></b></div>
+      <div>Strength: <b><%= p_data.strength %></b></div>
+      <div>Dexterity: <b><%= p_data.dexterity %></b></div>
+      <div>Luck: <b><%= p_data.luck %></b></div>
+      <div>Knowledge: <b><%= p_data.knowledge %></b></div>
+      <div>Wisdom: <b><%= p_data.wisdom %></b></div>
+      <div>Armor Class: <b><%= p_data.armor_class %></b></div>
+      <div>Evasion: <b><%= p_data.evasion %></b></div>
+      <div>Accuracy: <b><%= p_data.accuracy %></b></div>
+      <div>Crushing: <b><%= p_data.crushing %></b></div>
+      <div>Endurance: <b><%= p_data.endurance %></b></div>
+      <div>Armor Penetration: <b><%= p_data.armor_penetration %></b></div>
     </div>
   <% end %>
 

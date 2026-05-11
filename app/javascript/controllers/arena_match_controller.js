@@ -454,7 +454,7 @@ export default class extends Controller {
     // Log match start
     this.appendSystemMessage({
       timestamp: new Date().toLocaleTimeString(),
-      message: "⚔️ FIGHT STARTED! ⚔️",
+      message: "FIGHT STARTED!",
       severity: "info"
     })
   }

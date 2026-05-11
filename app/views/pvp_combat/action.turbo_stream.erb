@@ -35,7 +35,7 @@
         <% if participant.character.respond_to?(:avatar_image_path) && participant.character.avatar_image_path %>
           <%= image_tag participant.character.avatar_image_path, alt: participant.character.name, class: "avatar-image" %>
         <% else %>
-          <span class="avatar-emoji"><%= participant.character == current_character ? '🧙' : '⚔️' %></span>
+          <span class="avatar-emoji"><%= participant.character == current_character ? 'Player' : 'Opponent' %></span>
         <% end %>
       </div>
       <div class="pvp-participant-info">
@@ -60,10 +60,10 @@
     <div class="pvp-result-panel">
       <% winner = @battle.battle_participants.find_by(is_alive: true)&.character %>
       <% if winner == current_character %>
-        <h2 class="result-victory">🏆 Victory!</h2>
+        <h2 class="result-victory">Victory!</h2>
         <p>You have defeated your opponent!</p>
       <% else %>
-        <h2 class="result-defeat">💀 Defeat</h2>
+        <h2 class="result-defeat">Defeat</h2>
         <p>You have been defeated in combat.</p>
       <% end %>
       <%= link_to "Return to World", world_path, class: "btn btn-primary" %>
