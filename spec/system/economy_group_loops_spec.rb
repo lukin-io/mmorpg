@@ -94,7 +94,6 @@ RSpec.describe "Economy & Group Loops", type: :system, js: true do
       expect(page).to have_css("#flash", text: "Contribution added")
       expect(page).to have_content("Wolf Pelt")
     end
-
   end
 
   describe "failure cases" do
@@ -146,7 +145,6 @@ RSpec.describe "Economy & Group Loops", type: :system, js: true do
       expect(page).to have_content("This auction has ended")
       expect(page).not_to have_button("Place Bid")
     end
-
   end
 
   describe "authorization cases" do

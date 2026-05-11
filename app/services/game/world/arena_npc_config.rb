@@ -101,6 +101,8 @@ module Game
         # @param key [String, Symbol] the NPC key
         # @return [Hash, nil] NPC configuration or nil if not found
         def find_npc(key)
+          return nil if key.blank?
+
           key = key.to_sym
           config.each_value do |section_config|
             next unless section_config[:npcs]
