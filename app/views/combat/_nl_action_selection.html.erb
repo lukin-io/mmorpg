@@ -7,9 +7,17 @@
   body_parts = %w[head torso stomach legs]
   attack_labels = ["Head", "Torso", "Stomach", "Legs"]
   block_labels = ["Head", "Torso", "Stomach", "Legs"]
-  simple_attack_cost = attacks.find { |a| a[:key].to_s == "simple" }&.dig(:cost) || Game::Combat::ActionCatalog.attack_cost("simple")
-  aimed_attack_cost = attacks.find { |a| a[:key].to_s == "aimed" }&.dig(:cost) || Game::Combat::ActionCatalog.attack_cost("aimed")
-  extra_attacks = attacks.reject { |a| %w[simple aimed].include?(a[:key].to_s) }
+  action_value = ->(action, key) { action[key] || action[key.to_s] }
+  action_parts = lambda do |action|
+    parts = action_value.call(action, :body_parts) || action_value.call(action, :body_part)
+    Array(parts).map(&:to_s)
+  end
+
+  simple_attack = attacks.find { |a| action_value.call(a, :key).to_s == "simple" }
+  aimed_attack = attacks.find { |a| action_value.call(a, :key).to_s == "aimed" }
+  simple_attack_cost = action_value.call(simple_attack || {}, :cost) || Game::Combat::ActionCatalog.attack_cost("simple")
+  aimed_attack_cost = action_value.call(aimed_attack || {}, :cost) || Game::Combat::ActionCatalog.attack_cost("aimed")
+  extra_attacks = attacks.reject { |a| %w[simple aimed].include?(action_value.call(a, :key).to_s) }
 %>
 
 <div class="nl-action-selection">
@@ -43,9 +51,11 @@
             </option>
 
             <%# Targeted attacks for this body part %>
-            <% extra_attacks.select { |a| a[:body_part] == part || a[:body_parts]&.include?(part) }.each do |attack| %>
-              <option value="<%= attack[:key] %>" data-cost="<%= attack[:cost] %>">
-                <%= attack[:name] %> [<%= attack[:cost] %>]
+            <% extra_attacks.select { |a| action_parts.call(a).include?(part) }.each do |attack| %>
+              <% key = action_value.call(attack, :key) %>
+              <% cost = action_value.call(attack, :cost) %>
+              <option value="<%= key %>" data-cost="<%= cost %>">
+                <%= action_value.call(attack, :name) %> [<%= cost %>]
               </option>
             <% end %>
           </select>
@@ -70,9 +80,11 @@
             </option>
 
             <%# Targeted blocks %>
-            <% blocks.select { |b| Array(b[:body_parts] || b[:body_part]).include?(part) }.each do |block| %>
-              <option value="<%= block[:key] %>" data-cost="<%= block[:cost] %>">
-                <%= block[:name] %> [<%= block[:cost] %>]
+            <% blocks.select { |b| action_parts.call(b).include?(part) }.each do |block| %>
+              <% key = action_value.call(block, :key) %>
+              <% cost = action_value.call(block, :cost) %>
+              <option value="<%= key %>" data-cost="<%= cost %>">
+                <%= action_value.call(block, :name) %> [<%= cost %>]
               </option>
             <% end %>
           </select>

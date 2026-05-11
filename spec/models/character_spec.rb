@@ -234,8 +234,8 @@ RSpec.describe Character, type: :model do
 
       expect(breakdown[:attack_power][:equipment]).to eq(7)
       expect(breakdown[:attack_power][:total]).to eq(32)
-      expect(breakdown[:defense][:equipment]).to eq(5)
-      expect(breakdown[:defense][:total]).to eq(21)
+      expect(breakdown[:defense][:equipment]).to eq(6)
+      expect(breakdown[:defense][:total]).to eq(22)
     end
   end
 

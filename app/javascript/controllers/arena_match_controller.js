@@ -9,8 +9,8 @@ import consumer from "channels/consumer"
 export default class extends Controller {
   static targets = [
     "combatLog", "participantList", "actionButtons", "timer",
-    "teamA", "teamB", "resultOverlay", "bodyPartSelect",
-    "attackTypeSelect", "blockSelect", "turnCostValue",
+    "teamA", "teamB", "resultOverlay",
+    "blockSelect", "turnCostValue",
     "apBar", "apValue", "fighterA", "fighterB",
     "attackSelect", "magicSlot"
   ]
@@ -374,14 +374,6 @@ export default class extends Controller {
       return Number.parseInt(btn.dataset.apCost, 10)
     }
 
-    const actionType = btn.dataset.actionType
-    const attackType = btn.dataset.attackType
-
-    if (actionType === "attack") {
-      return attackType === "aimed" ? 65 : 45
-    } else if (actionType === "defend") {
-      return 30
-    }
     return 0
   }
 
@@ -408,10 +400,7 @@ export default class extends Controller {
       }, 0)
     }
 
-    if (!this.hasAttackTypeSelectTarget) return 45
-
-    const option = this.attackTypeSelectTarget.selectedOptions[0]
-    return Number.parseInt(option?.dataset.apCost || "0", 10)
+    return 0
   }
 
   selectedBlockCost() {
@@ -579,43 +568,6 @@ export default class extends Controller {
 
   // === COMBAT ACTIONS ===
 
-  submitAction(event) {
-    if (this.spectatingValue) return
-
-    const btn = event.currentTarget
-    const actionType = btn.dataset.actionType
-    const attackType = btn.dataset.attackType || "simple"
-    const blockParts = btn.dataset.blockParts
-
-    // Get selected body part from dropdown
-    const bodyPartSelect = this.element.querySelector("[data-arena-match-target='bodyPartSelect']")
-    const bodyPart = bodyPartSelect ? bodyPartSelect.value : "torso"
-
-    // Get target (for now, auto-target first enemy)
-    const targetId = btn.dataset.targetId || this.getFirstEnemyId()
-
-    const data = {
-      action_type: actionType,
-      target_id: targetId
-    }
-
-    if (actionType === "attack") {
-      data.attack_type = attackType
-      data.body_part = bodyPart
-    } else if (actionType === "defend" && blockParts) {
-      data.block_parts = blockParts.split(",")
-    }
-
-    this.subscription.perform("submit_action", data)
-
-    // Disable button temporarily to prevent spam
-    btn.disabled = true
-    setTimeout(() => {
-      btn.disabled = false
-      this.updateTurnCost()
-    }, 1000)
-  }
-
   submitTurn(event) {
     if (this.spectatingValue) return
 
@@ -630,15 +582,6 @@ export default class extends Controller {
           action_key: select.value,
           body_part: select.dataset.bodyPart
         }))
-    } else {
-      const attackType = this.hasAttackTypeSelectTarget ? this.attackTypeSelectTarget.value : "simple"
-      const bodyPart = this.hasBodyPartSelectTarget ? this.bodyPartSelectTarget.value : "torso"
-      if (attackType && attackType !== "none") {
-        attacks.push({
-          action_key: attackType,
-          body_part: bodyPart
-        })
-      }
     }
 
     const blocks = []
