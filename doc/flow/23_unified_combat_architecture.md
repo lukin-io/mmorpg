@@ -24,7 +24,15 @@ The Elselands MMORPG uses a **unified combat architecture** built on the existin
 | Open World PVP | Character | Character | `PvpEncounterService` |
 | Arena PVE | Character | Arena Bot | `Arena::CombatProcessor` |
 | Arena PVP | Character | Character | `Arena::CombatProcessor` |
-| Tactical Fights | Character | Character/NPC | `TacticalMatch` processors |
+
+Removed legacy:
+
+- `TacticalMatch` grid combat processors were removed from the mounted/player
+  arena surface because the live Neverlands capture showed `Тактические` as a
+  disabled arena tab, not a separate grid route.
+- Arena betting/totalizator code was removed for the same reason: the captured
+  `Тотализатор` tab is a disabled label in the arena frame, not a first-loop
+  player feature.
 
 ## GDD Reference
 - Section: Combat System

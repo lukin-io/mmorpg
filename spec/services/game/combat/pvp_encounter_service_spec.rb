@@ -422,8 +422,8 @@ RSpec.describe Game::Combat::PvpEncounterService do
     it "processes a full turn with attacks and blocks" do
       result = service.process_turn!(
         character: attacker,
-        attacks: [{body_part: "torso", action_key: "aimed"}],
-        blocks: [{body_part: "head", action_key: "block_head"}]
+        attacks: [{body_part: "torso", action_key: "simple"}],
+        blocks: [{body_part: "head", action_key: "head_block"}]
       )
 
       expect(result.success).to be true

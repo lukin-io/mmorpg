@@ -116,7 +116,7 @@ RSpec.describe "PvE Combat UI", type: :system do
     it "shows block options" do
       visit combat_path
 
-      expect(page).to have_content("Basic Block").or have_content("Shield Block")
+      expect(page).to have_content("Torso Block").or have_content("Head Block")
     end
 
     it "shows submit turn button" do

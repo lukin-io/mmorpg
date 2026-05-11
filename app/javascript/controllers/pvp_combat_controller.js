@@ -131,7 +131,7 @@ export default class extends Controller {
       this.actionPanelTarget.innerHTML = `
         <div class="pvp-result-panel">
           <h2 class="${isWinner ? 'result-victory' : 'result-defeat'}">
-            ${isWinner ? '🏆 Victory!' : '💀 Defeat'}
+            ${isWinner ? 'Victory!' : 'Defeat'}
           </h2>
           <p>${isWinner ? 'You have defeated your opponent!' : 'You have been defeated in combat.'}</p>
           <a href="/world" class="btn btn-primary">Return to World</a>
@@ -149,7 +149,7 @@ export default class extends Controller {
       if (!this.subscription || !this.subscription.consumer.connection.isOpen()) {
         this.refreshBattle()
       }
-    }, 5000)
+    }, 30000)
   }
 
   stopPolling() {
@@ -176,15 +176,8 @@ export default class extends Controller {
     this.submitAction("defend", {})
   }
 
-  flee(event) {
-    if (!confirm("Are you sure you want to flee?")) {
-      event.preventDefault()
-    }
-  }
-
   submitAction(actionType, params = {}) {
     // Let Turbo handle form submission
     // This is just for custom JS interactions
   }
 }
-

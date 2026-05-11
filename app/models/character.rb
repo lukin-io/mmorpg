@@ -17,27 +17,27 @@ class Character < ApplicationRecord
   # Score ranges: -1000 to +1000
   ALIGNMENT_TIERS = {
     # Negative scores (Dark path)
-    absolute_darkness: {range: -1000..-800, emoji: "🖤", name: "Absolute Darkness"},
-    true_darkness: {range: -799..-500, emoji: "⬛", name: "True Darkness"},
-    child_of_darkness: {range: -499..-200, emoji: "🌑", name: "Child of Darkness"},
+    absolute_darkness: {range: -1000..-800, text: "Absolute Darkness", name: "Absolute Darkness"},
+    true_darkness: {range: -799..-500, text: "True Darkness", name: "True Darkness"},
+    child_of_darkness: {range: -499..-200, text: "Child of Darkness", name: "Child of Darkness"},
 
     # Neutral zone
-    twilight_walker: {range: -199..-50, emoji: "🌘", name: "Twilight Walker"},
-    neutral: {range: -49..49, emoji: "☯️", name: "Neutral"},
-    dawn_seeker: {range: 50..199, emoji: "🌒", name: "Dawn Seeker"},
+    twilight_walker: {range: -199..-50, text: "Twilight Walker", name: "Twilight Walker"},
+    neutral: {range: -49..49, text: "Neutral", name: "Neutral"},
+    dawn_seeker: {range: 50..199, text: "Dawn Seeker", name: "Dawn Seeker"},
 
     # Positive scores (Light path)
-    child_of_light: {range: 200..499, emoji: "🌕", name: "Child of Light"},
-    true_light: {range: 500..799, emoji: "✨", name: "True Light"},
-    celestial: {range: 800..1000, emoji: "👼", name: "Celestial"}
+    child_of_light: {range: 200..499, text: "Child of Light", name: "Child of Light"},
+    true_light: {range: 500..799, text: "True Light", name: "True Light"},
+    celestial: {range: 800..1000, text: "Celestial", name: "Celestial"}
   }.freeze
 
   # Chaos alignment (separate axis, based on karma/actions)
   CHAOS_TIERS = {
-    lawful: {range: 0..199, emoji: "⚖️", name: "Lawful"},
-    balanced: {range: 200..499, emoji: "🔄", name: "Balanced"},
-    chaotic: {range: 500..799, emoji: "🔥", name: "Chaotic"},
-    absolute_chaos: {range: 800..1000, emoji: "💥", name: "Absolute Chaos"}
+    lawful: {range: 0..199, text: "Lawful", name: "Lawful"},
+    balanced: {range: 200..499, text: "Balanced", name: "Balanced"},
+    chaotic: {range: 500..799, text: "Chaotic", name: "Chaotic"},
+    absolute_chaos: {range: 800..1000, text: "Absolute Chaos", name: "Absolute Chaos"}
   }.freeze
 
   belongs_to :user
@@ -118,9 +118,9 @@ class Character < ApplicationRecord
     ALIGNMENT_TIERS[alignment_tier] || ALIGNMENT_TIERS[:neutral]
   end
 
-  # Get alignment emoji icon
+  # Get alignment display text
   def alignment_emoji
-    alignment_tier_data[:emoji]
+    alignment_tier_data[:text]
   end
 
   # Get alignment tier display name
@@ -139,21 +139,21 @@ class Character < ApplicationRecord
     CHAOS_TIERS[chaos_tier] || CHAOS_TIERS[:lawful]
   end
 
-  # Get chaos emoji
+  # Get chaos display text
   def chaos_emoji
-    chaos_tier_data[:emoji]
+    chaos_tier_data[:text]
   end
 
-  # Get faction emoji based on faction_alignment
+  # Get faction label based on faction_alignment
   def faction_emoji
     case faction_alignment
-    when "alliance" then "🛡️"
-    when "rebellion" then "⚔️"
-    else "🏳️"
+    when "alliance" then "Alliance"
+    when "rebellion" then "Rebellion"
+    else "Neutral"
     end
   end
 
-  # Full alignment display with emojis
+  # Full alignment display
   def alignment_display
     "#{faction_emoji} #{alignment_emoji} #{alignment_tier_name}"
   end
@@ -529,23 +529,25 @@ class Character < ApplicationRecord
   # ===================
 
   # Calculate attack power for combat
-  # Formula: (Strength × 2) + (Dexterity / 2) + equipment bonus
+  # Formula: (Strength × 2) + (Dexterity / 2) + (Level / 2) + equipment bonus
   #
   # @return [Integer] attack power value
   def attack_power
     base = stats.get(:strength).to_i * 2
     dex_bonus = stats.get(:dexterity).to_i / 2
-    base + dex_bonus + equipment_attack_bonus
+    level_bonus = level.to_i / 2
+    base + dex_bonus + level_bonus + equipment_attack_bonus
   end
 
   # Calculate defense for combat
-  # Formula: Vitality + (Strength / 3) + equipment bonus
+  # Formula: Vitality + (Strength / 3) + (Level / 2) + equipment bonus
   #
   # @return [Integer] defense value
   def defense
     base = stats.get(:vitality).to_i
     str_bonus = stats.get(:strength).to_i / 3
-    base + str_bonus + equipment_defense_bonus
+    level_bonus = level.to_i / 2
+    base + str_bonus + level_bonus + equipment_defense_bonus
   end
 
   # Calculate critical hit chance
@@ -557,6 +559,72 @@ class Character < ApplicationRecord
     dex_bonus = stats.get(:dexterity).to_i / 5
     luck_bonus = stats.get(:luck).to_i / 10
     [base + dex_bonus + luck_bonus, 50].min
+  end
+
+  # Break down combat-relevant derived stats for UI and balancing.
+  #
+  # @return [Hash] attack, defense, and critical components
+  def combat_power_breakdown
+    current_stats = stats
+    attack_strength = current_stats.get(:strength).to_i * 2
+    attack_dexterity = current_stats.get(:dexterity).to_i / 2
+    attack_level = level.to_i / 2
+    attack_equipment = equipment_attack_bonus
+
+    defense_vitality = current_stats.get(:vitality).to_i
+    defense_strength = current_stats.get(:strength).to_i / 3
+    defense_level = level.to_i / 2
+    defense_equipment = equipment_defense_bonus
+
+    critical_base = 5
+    critical_dexterity = current_stats.get(:dexterity).to_i / 5
+    critical_luck = current_stats.get(:luck).to_i / 10
+
+    {
+      attack_power: {
+        strength: attack_strength,
+        dexterity: attack_dexterity,
+        level: attack_level,
+        equipment: attack_equipment,
+        total: attack_strength + attack_dexterity + attack_level + attack_equipment
+      },
+      defense: {
+        vitality: defense_vitality,
+        strength: defense_strength,
+        level: defense_level,
+        equipment: defense_equipment,
+        total: defense_vitality + defense_strength + defense_level + defense_equipment
+      },
+      critical_chance: {
+        base: critical_base,
+        dexterity: critical_dexterity,
+        luck: critical_luck,
+        total: [critical_base + critical_dexterity + critical_luck, 50].min
+      },
+      equipment_items: equipment_family_breakdown
+    }
+  end
+
+  # Item-family combat contribution used by the arena combat UI and formulas.
+  #
+  # The family is taken from item metadata when present and inferred from the
+  # item name/slot otherwise, so seeded items and captured item templates can
+  # both participate in combat calculations.
+  def equipment_family_breakdown
+    return [] unless inventory
+
+    inventory.inventory_items.equipped.includes(:item_template).map do |item|
+      template = item.item_template
+      family = equipment_item_family(item)
+
+      {
+        name: template&.name,
+        slot: template&.slot,
+        family:,
+        attack: equipment_combat_component(item, "attack"),
+        defense: equipment_combat_component(item, "defense")
+      }
+    end
   end
 
   # Get agility stat for initiative and flee calculations
@@ -660,7 +728,7 @@ class Character < ApplicationRecord
     return 0 unless inventory
 
     inventory.inventory_items.equipped.includes(:item_template).sum do |item|
-      item.item_template&.stat_modifiers&.fetch("attack", 0).to_i
+      equipment_combat_component(item, "attack")
     end
   end
 
@@ -671,8 +739,63 @@ class Character < ApplicationRecord
     return 0 unless inventory
 
     inventory.inventory_items.equipped.includes(:item_template).sum do |item|
-      item.item_template&.stat_modifiers&.fetch("defense", 0).to_i
+      equipment_combat_component(item, "defense")
     end
+  end
+
+  def equipment_combat_component(item, stat_key)
+    template = item.item_template
+    stats = template&.stat_modifiers.to_h
+    base = (stats[stat_key.to_s] || stats[stat_key.to_sym]).to_i
+    return 0 if base.zero?
+
+    enhancement_bonus = item.enhancement_level.to_i
+    multiplier = equipment_family_multiplier(equipment_item_family(item), stat_key)
+    ((base + enhancement_bonus) * multiplier).round
+  end
+
+  def equipment_item_family(item)
+    template = item.item_template
+    stats = template&.stat_modifiers.to_h
+    explicit = stats["family"] || stats[:family] || stats["weapon_family"] || stats[:weapon_family] ||
+      item.properties&.dig("family") || item.properties&.dig("weapon_family")
+    return explicit.to_s if explicit.present?
+
+    name = template&.name.to_s.downcase
+    return "axe" if name.include?("axe")
+    return "mace" if name.include?("mace") || name.include?("hammer")
+    return "dagger" if name.include?("dagger") || name.include?("knife")
+    return "bow" if name.include?("bow")
+    return "staff" if name.include?("staff") || name.include?("wand")
+    return "sword" if name.include?("sword") || name.include?("blade")
+    return "shield" if template&.slot == "off_hand"
+    return "armor" if %w[head chest legs feet hands].include?(template&.slot)
+
+    "generic"
+  end
+
+  def equipment_family_multiplier(family, stat_key)
+    multipliers = {
+      "attack" => {
+        "axe" => 1.15,
+        "mace" => 1.1,
+        "sword" => 1.0,
+        "bow" => 0.95,
+        "dagger" => 0.9,
+        "staff" => 0.75,
+        "shield" => 0.35,
+        "armor" => 0.0,
+        "generic" => 1.0
+      },
+      "defense" => {
+        "armor" => 1.15,
+        "shield" => 1.2,
+        "staff" => 0.4,
+        "generic" => 1.0
+      }
+    }
+
+    multipliers.fetch(stat_key.to_s, {}).fetch(family.to_s, 1.0)
   end
 
   # Get skill bonus from equipped items for a specific skill

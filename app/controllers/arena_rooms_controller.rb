@@ -4,29 +4,20 @@
 class ArenaRoomsController < ApplicationController
   before_action :authenticate_user!
   before_action :require_character
+  before_action :require_city_arena_entry!
   before_action :set_room, only: :show
-
-  # GET /arena_rooms
-  def index
-    @rooms = ArenaRoom.active.order(:room_type)
-
-    respond_to do |format|
-      format.html
-      format.json { render json: rooms_payload }
-    end
-  end
 
   # GET /arena_rooms/:id
   def show
     unless @room.accessible_by?(current_character)
-      redirect_to arena_rooms_path, alert: "You cannot access this arena room"
+      redirect_to arena_index_path, alert: "You cannot access this arena room"
       return
     end
 
     # Check if user is already in an active match - redirect them there
     active_participation = current_character.arena_participations
       .joins(:arena_match)
-      .where(arena_matches: {status: [:pending, :live]})
+      .where(arena_matches: {status: [:pending, :matching, :live]})
       .first
 
     if active_participation
@@ -37,7 +28,7 @@ class ArenaRoomsController < ApplicationController
 
     @applications = @room.arena_applications
       .open
-      .includes(:applicant)
+      .includes(:applicant, :npc_template)
       .order(created_at: :asc)
 
     # Only show open applications as "my application", not matched ones
@@ -67,21 +58,6 @@ class ArenaRoomsController < ApplicationController
   end
   helper_method :current_character
 
-  def rooms_payload
-    @rooms.map do |room|
-      {
-        id: room.id,
-        name: room.name,
-        slug: room.slug,
-        room_type: room.room_type,
-        level_range: "#{room.level_min}-#{room.level_max}",
-        faction: room.faction_restriction,
-        accessible: room.accessible_by?(current_character),
-        open_applications: room.open_application_count
-      }
-    end
-  end
-
   def room_payload
     {
       room: {
@@ -96,9 +72,9 @@ class ArenaRoomsController < ApplicationController
           fight_type: app.fight_type,
           fight_kind: app.fight_kind,
           applicant: {
-            id: app.applicant.id,
-            name: app.applicant.name,
-            level: app.applicant.level
+            id: app.npc_application? ? "npc-#{app.npc_template_id}" : app.applicant.id,
+            name: app.npc_application? ? app.npc_template.name : app.applicant.name,
+            level: app.npc_application? ? app.npc_template.level : app.applicant.level
           },
           timeout_seconds: app.timeout_seconds,
           trauma_percent: app.trauma_percent,

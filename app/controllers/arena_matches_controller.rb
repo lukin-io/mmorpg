@@ -2,14 +2,9 @@
 
 class ArenaMatchesController < ApplicationController
   before_action :authenticate_user!
-  before_action :set_arena_match, only: [:show, :action, :spectate, :log]
-  before_action :require_character, only: [:action]
-  before_action :require_participant, only: [:action]
-
-  def index
-    @arena_matches = policy_scope(ArenaMatch).recent.includes(arena_participations: :character)
-    @arena_match = ArenaMatch.new
-  end
+  before_action :set_arena_match, only: [:show, :action, :claim_timeout, :finish, :spectate, :log]
+  before_action :require_character, only: [:action, :claim_timeout, :finish]
+  before_action :require_participant, only: [:action, :claim_timeout, :finish]
 
   def show
     authorize @arena_match
@@ -39,21 +34,6 @@ class ArenaMatchesController < ApplicationController
     end
   end
 
-  def create
-    current_user.ensure_social_features!
-    authorize ArenaMatch
-
-    participants = build_participants
-    match = Arena::Matchmaker.new.queue!(
-      participants: participants,
-      match_type: params[:arena_match][:match_type] || :duel
-    )
-
-    redirect_to match, notice: "Arena match queued."
-  rescue ArgumentError => e
-    redirect_to arena_matches_path, alert: e.message
-  end
-
   # POST /arena_matches/:id/action
   # Submit a combat action (attack, defend, skill, flee)
   def action
@@ -65,6 +45,14 @@ class ArenaMatchesController < ApplicationController
     action_params = {}
     action_params[:target] = find_action_target if params[:target_id].present?
     action_params[:skill_id] = params[:skill_id] if params[:skill_id].present?
+    action_params[:attack_type] = params[:attack_type]&.to_sym if params[:attack_type].present?
+    action_params[:body_part] = params[:body_part] if params[:body_part].present?
+    if params[:block_parts].present?
+      action_params[:block_parts] = params[:block_parts].is_a?(String) ? params[:block_parts].split(",") : Array(params[:block_parts])
+    end
+    action_params[:attacks] = turn_action_array(:attacks) if params[:attacks].present?
+    action_params[:blocks] = turn_action_array(:blocks) if params[:blocks].present?
+    action_params[:skills] = turn_action_array(:skills) if params[:skills].present?
 
     result = processor.process_action(
       current_character,
@@ -83,6 +71,45 @@ class ArenaMatchesController < ApplicationController
         format.turbo_stream { head :unprocessable_entity }
       end
     end
+  end
+
+  # POST /arena_matches/:id/claim_timeout
+  def claim_timeout
+    authorize @arena_match
+
+    result = Arena::CombatProcessor.new(@arena_match).claim_timeout(
+      current_character,
+      mode: params[:mode]
+    )
+
+    respond_to do |format|
+      if result.success?
+        message = result[:mode] == "draw" ? "Timeout draw recorded." : "Victory by timeout recorded."
+        format.html { redirect_to @arena_match, notice: message }
+        format.json { render json: {success: true, data: result.data} }
+      else
+        format.html { redirect_to @arena_match, alert: result.error }
+        format.json { render json: {success: false, error: result.error}, status: :unprocessable_entity }
+      end
+    end
+  end
+
+  # POST /arena_matches/:id/finish
+  def finish
+    authorize @arena_match
+
+    unless @arena_match.completed?
+      redirect_to @arena_match, alert: "Fight is still active."
+      return
+    end
+
+    participation = @arena_match.arena_participations.find_by(user: current_user)
+    participation.metadata ||= {}
+    participation.metadata["finished_at"] = Time.current.iso8601
+    participation.save!
+    current_character.exit_combat! if current_character.in_combat?
+
+    redirect_to arena_index_path, notice: "Fight finished."
   end
 
   def spectate
@@ -144,31 +171,36 @@ class ArenaMatchesController < ApplicationController
       started_at: @arena_match.started_at&.iso8601,
       ended_at: @arena_match.ended_at&.iso8601,
       duration: @arena_match.duration,
+      current_user_combat: current_user_combat_payload,
       participants: @participations.map do |p|
         {
-          character_id: p.character_id,
-          character_name: p.character.name,
+          character_id: p.npc? ? "npc-#{p.npc_template_id}" : p.character_id,
+          character_name: p.participant_name,
           team: p.team,
           result: p.result,
-          rating_delta: p.rating_delta
+          rating_delta: p.npc? ? 0 : p.rating_delta,
+          is_npc: p.npc?
         }
       end
     }
   end
 
-  def build_participants
-    character_ids = Array(params[:arena_match][:character_ids]).reject(&:blank?)
-    raise ArgumentError, "Select at least two characters." if character_ids.size < 2
+  def current_user_combat_payload
+    participation = @arena_match.arena_participations.find_by(user: current_user)
+    return nil unless participation
 
-    characters = Character.includes(:user).where(id: character_ids)
-    raise ArgumentError, "Characters not found." if characters.size < 2
+    profile = Arena::CombatProfile.for_participation(participation, persist: true)
+    {
+      current_ap: [participation.metadata&.dig("current_ap") || profile["ap_limit"], profile["ap_limit"]].min,
+      max_ap: profile["ap_limit"],
+      simple_attack_cost: profile["simple_attack_cost"],
+      aimed_attack_cost: profile["aimed_attack_cost"]
+    }
+  end
 
-    characters.each_with_index.map do |character, index|
-      {
-        character: character,
-        user: character.user,
-        team: (index.even? ? "alpha" : "beta")
-      }
+  def turn_action_array(key)
+    Array(params[key]).map do |entry|
+      entry.respond_to?(:to_unsafe_h) ? entry.to_unsafe_h : entry
     end
   end
 end

@@ -77,35 +77,30 @@ RSpec.describe ArenaHelper, type: :helper do
   end
 
   describe "#fight_type_with_icon" do
-    it "returns icon and label for duel" do
+    it "returns label for duel" do
       result = helper.fight_type_with_icon("duel")
-      expect(result).to include("⚔️")
-      expect(result).to include("Duel")
+      expect(result).to eq("1v1 Duel")
     end
 
-    it "returns icon and label for team_battle" do
+    it "returns label for team_battle" do
       result = helper.fight_type_with_icon("team_battle")
-      expect(result).to include("👥")
-      expect(result).to include("Team Battle")
+      expect(result).to eq("Team Battle")
     end
 
     it "handles unknown fight types gracefully" do
       result = helper.fight_type_with_icon("unknown")
-      expect(result).to include("⚔️")
-      expect(result).to include("Unknown")
+      expect(result).to eq("Unknown")
     end
   end
 
   describe "#room_type_badge" do
     it "returns badge for training room" do
       badge = helper.room_type_badge(:training)
-      expect(badge).to include("🏋️")
       expect(badge).to include("Training Hall")
     end
 
     it "returns badge for challenge room" do
       badge = helper.room_type_badge(:challenge)
-      expect(badge).to include("🗡️")
       expect(badge).to include("Challenge Arena")
     end
   end

@@ -3,6 +3,13 @@
 require "rails_helper"
 
 RSpec.describe "Economy & Group Loops", type: :system, js: true do
+  def switch_to_user(user)
+    Capybara.reset_sessions!
+    Warden.test_reset!
+    Warden.test_mode!
+    login_as(user, scope: :user)
+  end
+
   describe "success cases" do
     it "places a bid on an auction listing" do
       seller = create(:user)
@@ -44,8 +51,7 @@ RSpec.describe "Economy & Group Loops", type: :system, js: true do
 
       expect(page).to have_css("#flash", text: "Invitation sent")
 
-      logout(:user)
-      login_as(invitee, scope: :user)
+      switch_to_user(invitee)
 
       visit parties_path
       click_button "Accept"
@@ -53,8 +59,7 @@ RSpec.describe "Economy & Group Loops", type: :system, js: true do
       expect(page).to have_css("#flash", text: "Invitation accepted")
       expect(page).to have_content("Your Current Party")
 
-      logout(:user)
-      login_as(leader, scope: :user)
+      switch_to_user(leader)
 
       visit party_path(party)
       click_button "Start Ready Check"
@@ -65,8 +70,7 @@ RSpec.describe "Economy & Group Loops", type: :system, js: true do
       click_button "I'm Ready!"
       expect(page).to have_css("#flash", text: "Ready state updated")
 
-      logout(:user)
-      login_as(invitee, scope: :user)
+      switch_to_user(invitee)
 
       visit party_path(party)
       click_button "I'm Ready!"
@@ -89,31 +93,10 @@ RSpec.describe "Economy & Group Loops", type: :system, js: true do
 
       select "Wolf Pelt (x1)", from: "Add Item"
       fill_in "Quantity", with: 1
-      click_button "Add to Trade"
+      find_button("Add to Trade").scroll_to(:center).click
 
       expect(page).to have_css("#flash", text: "Contribution added")
       expect(page).to have_content("Wolf Pelt")
-    end
-
-    it "moves in a tactical arena match via the grid UI" do
-      user = create(:user)
-      opponent_user = create(:user)
-      creator = create(:character, user: user, level: 1)
-      opponent = create(:character, user: opponent_user, level: 1)
-
-      match = TacticalMatch.create!(creator: creator, grid_size: 6, turn_time_limit: 60, status: :pending)
-      match.initialize_grid!
-      match.add_opponent!(opponent)
-
-      login_as(user, scope: :user)
-      visit tactical_arena_path(match)
-
-      expect(page).to have_content("🎯 Your Turn")
-      expect(page).to have_content("(3, 0)")
-
-      find(".grid-tile[data-x='2'][data-y='0']").click
-
-      expect(page).to have_content("(2, 0)")
     end
   end
 
@@ -165,24 +148,6 @@ RSpec.describe "Economy & Group Loops", type: :system, js: true do
 
       expect(page).to have_content("This auction has ended")
       expect(page).not_to have_button("Place Bid")
-    end
-
-    it "shows an in-page warning when attempting a move out of turn" do
-      user = create(:user)
-      opponent_user = create(:user)
-      creator = create(:character, user: user, level: 1)
-      opponent = create(:character, user: opponent_user, level: 1)
-
-      match = TacticalMatch.create!(creator: creator, grid_size: 6, turn_time_limit: 60, status: :pending)
-      match.initialize_grid!
-      match.add_opponent!(opponent)
-
-      login_as(opponent_user, scope: :user)
-      visit tactical_arena_path(match)
-
-      find(".grid-tile[data-x='2'][data-y='0']").click
-
-      expect(page).to have_css("#notifications", text: "Not your turn")
     end
   end
 

@@ -140,8 +140,7 @@ class BattlesController < ApplicationController
   end
 
   def load_combat_config
-    config_path = Rails.root.join("config/gameplay/combat_actions.yml")
-    File.exist?(config_path) ? YAML.load_file(config_path) : {}
+    Game::Combat::ActionCatalog.config
   end
 
   def parse_attacks(attacks_params)

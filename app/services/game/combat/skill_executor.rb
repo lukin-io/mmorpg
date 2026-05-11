@@ -472,14 +472,14 @@ module Game
         case action_type
         when "damage", "aoe", "drain"
           if critical
-            "💥 CRITICAL! #{caster.name} uses #{skill_name} on #{target&.name} for #{amount} damage!"
+            "CRITICAL! #{caster.name} uses #{skill_name} on #{target&.name} for #{amount} damage!"
           else
-            "✨ #{caster.name} uses #{skill_name} on #{target&.name} for #{amount} damage!"
+            "#{caster.name} uses #{skill_name} on #{target&.name} for #{amount} damage!"
           end
         when "heal"
-          "💚 #{caster.name} uses #{skill_name}, healing for #{amount} HP!"
+          "#{caster.name} uses #{skill_name}, healing for #{amount} HP!"
         else
-          "✨ #{caster.name} uses #{skill_name}!"
+          "#{caster.name} uses #{skill_name}!"
         end
       end
 

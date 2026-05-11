@@ -46,26 +46,11 @@ RSpec.describe "ArenaMatches", type: :request do
       expect(path).to eq("/arena_matches/123")
       expect(path).not_to include("/arena/matches/")
     end
-
-    it "arena_matches_path uses underscore format /arena_matches" do
-      path = "/arena_matches"
-      expect(path).to eq("/arena_matches")
-      expect(path).not_to include("/arena/matches")
-    end
   end
 
   # ============================================
   # Success Cases
   # ============================================
-
-  describe "GET /arena_matches" do
-    it "responds to arena_matches index" do
-      get "/arena_matches"
-
-      expect(response).to have_http_status(:success)
-        .or have_http_status(:redirect)
-    end
-  end
 
   describe "GET /arena_matches/:id" do
     let!(:arena_match) do
@@ -91,9 +76,11 @@ RSpec.describe "ArenaMatches", type: :request do
   describe "authentication required" do
     before { sign_out user }
 
-    it "redirects to login for arena_matches index" do
-      get "/arena_matches"
+    it "redirects to login for arena_match show" do
+      arena_match = create(:arena_match, arena_room: arena_room, status: :live)
+      create(:arena_participation, arena_match: arena_match, character: character, team: "a")
 
+      get "/arena_matches/#{arena_match.id}"
       expect(response).to redirect_to(new_user_session_path)
     end
   end
@@ -262,6 +249,48 @@ RSpec.describe "ArenaMatches", type: :request do
     end
   end
 
+  describe "POST /arena_matches/:id/claim_timeout" do
+    let!(:live_match) do
+      match = create(:arena_match,
+        arena_room: arena_room,
+        status: :live,
+        started_at: Time.current,
+        current_turn_started_at: 6.minutes.ago,
+        current_turn_number: 1,
+        turn_timeout_seconds: 300)
+      create(:arena_participation,
+        arena_match: match,
+        character: character,
+        user: user,
+        team: "a",
+        metadata: {
+          "pending_turn" => {
+            "turn_number" => 1,
+            "attacks" => [{"action_key" => "simple", "body_part" => "torso"}],
+            "blocks" => [{"action_key" => "torso_block", "body_parts" => ["torso"]}],
+            "skills" => [],
+            "total_ap" => 75
+          }
+        })
+      create(:arena_participation,
+        arena_match: match,
+        character: other_character,
+        user: other_user,
+        team: "b")
+      match
+    end
+
+    it "records victory by timeout for a waiting participant" do
+      post "/arena_matches/#{live_match.id}/claim_timeout",
+        params: {mode: "victory"},
+        as: :json
+
+      expect(response).to have_http_status(:success)
+      expect(live_match.reload.winning_team).to eq("a")
+      expect(live_match).to be_completed
+    end
+  end
+
   # ============================================
   # Match Lifecycle Integration Tests
   # ============================================
@@ -314,6 +343,31 @@ RSpec.describe "ArenaMatches", type: :request do
 
       expect(character.reload.in_combat).to be true
       expect(other_character.reload.in_combat).to be true
+    end
+  end
+
+  describe "POST /arena_matches/:id/finish" do
+    let!(:completed_match) do
+      match = create(:arena_match,
+        arena_room: arena_room,
+        status: :completed,
+        started_at: 5.minutes.ago,
+        ended_at: Time.current,
+        winning_team: "a")
+      create(:arena_participation, arena_match: match, character: character, user: user, team: "a", result: :victory)
+      create(:arena_participation, arena_match: match, character: other_character, user: other_user, team: "b", result: :defeat)
+      match
+    end
+
+    it "marks the participant result screen as finished and returns to arena" do
+      character.update!(in_combat: true)
+
+      post finish_arena_match_path(completed_match)
+
+      expect(response).to redirect_to(arena_index_path)
+      participation = completed_match.arena_participations.find_by(user: user)
+      expect(participation.reload.metadata["finished_at"]).to be_present
+      expect(character.reload).not_to be_in_combat
     end
   end
 end

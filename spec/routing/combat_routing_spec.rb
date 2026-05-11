@@ -36,8 +36,8 @@ RSpec.describe "Combat routing", type: :routing do
   end
 
   describe "arena rooms routes" do
-    it "routes GET /arena_rooms to arena_rooms#index" do
-      expect(get: "/arena_rooms").to route_to("arena_rooms#index")
+    it "does not route the removed legacy arena rooms index" do
+      expect(get: "/arena_rooms").not_to be_routable
     end
 
     it "routes GET /arena_rooms/:id to arena_rooms#show" do
@@ -70,6 +70,14 @@ RSpec.describe "Combat routing", type: :routing do
   end
 
   describe "arena matches routes" do
+    it "does not route the removed legacy arena match queue index" do
+      expect(get: "/arena_matches").not_to be_routable
+    end
+
+    it "does not route the removed legacy arena match queue create endpoint" do
+      expect(post: "/arena_matches").not_to be_routable
+    end
+
     it "routes GET /arena_matches/:id to arena_matches#show" do
       expect(get: "/arena_matches/1").to route_to("arena_matches#show", id: "1")
     end
@@ -81,20 +89,20 @@ RSpec.describe "Combat routing", type: :routing do
   end
 
   describe "tactical arena routes" do
-    it "routes GET /tactical_arena to tactical_arena#index" do
-      expect(get: "/tactical_arena").to route_to("tactical_arena#index")
+    it "does not route the removed legacy tactical arena lobby" do
+      expect(get: "/tactical_arena").not_to be_routable
     end
 
-    it "routes GET /tactical_arena/:id to tactical_arena#show" do
-      expect(get: "/tactical_arena/1").to route_to("tactical_arena#show", id: "1")
+    it "does not route removed legacy tactical arena matches" do
+      expect(get: "/tactical_arena/1").not_to be_routable
     end
 
-    it "routes POST /tactical_arena/:id/move to tactical_arena#move" do
-      expect(post: "/tactical_arena/1/move").to route_to("tactical_arena#move", id: "1")
+    it "does not route removed legacy tactical movement" do
+      expect(post: "/tactical_arena/1/move").not_to be_routable
     end
 
-    it "routes POST /tactical_arena/:id/attack to tactical_arena#attack" do
-      expect(post: "/tactical_arena/1/attack").to route_to("tactical_arena#attack", id: "1")
+    it "does not route removed legacy tactical attacks" do
+      expect(post: "/tactical_arena/1/attack").not_to be_routable
     end
   end
 

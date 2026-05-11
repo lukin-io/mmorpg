@@ -2,12 +2,11 @@
 <%= turbo_stream.update "pvp-status" do %>
   <div class="pvp-status-indicator <%= @pvp_enabled ? 'pvp-enabled' : 'pvp-disabled' %>">
     <% if @pvp_enabled %>
-      <span class="pvp-icon">⚔️</span>
+      <span class="pvp-icon">PVP</span>
       <span class="pvp-label">PVP Enabled</span>
     <% else %>
-      <span class="pvp-icon">🛡️</span>
+      <span class="pvp-icon">PVP</span>
       <span class="pvp-label">PVP Disabled</span>
     <% end %>
   </div>
 <% end %>
-

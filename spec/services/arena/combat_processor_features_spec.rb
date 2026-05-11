@@ -2,7 +2,7 @@
 
 require "rails_helper"
 
-RSpec.describe Arena::CombatProcessor, "Tactical Combat Features" do
+RSpec.describe Arena::CombatProcessor, "Neverlands-style combat features" do
   let(:user1) { create(:user) }
   let(:user2) { create(:user) }
   let(:character1) { create(:character, user: user1, level: 10, current_hp: 100, max_hp: 100) }
@@ -41,6 +41,15 @@ RSpec.describe Arena::CombatProcessor, "Tactical Combat Features" do
 
   let(:processor) { described_class.new(arena_match) }
 
+  def deterministic_processor(*rolls)
+    rng = instance_double(Random)
+    allow(rng).to receive(:rand) do |range_or_limit = nil|
+      value = rolls.shift || 99
+      range_or_limit.is_a?(Range) ? value.clamp(range_or_limit.min, range_or_limit.max) : value
+    end
+    described_class.new(arena_match, rng:)
+  end
+
   before do
     create(:character_position, character: character1)
     create(:character_position, character: character2)
@@ -60,7 +69,7 @@ RSpec.describe Arena::CombatProcessor, "Tactical Combat Features" do
     end
 
     it "aimed attack has hit bonus" do
-      expect(Arena::CombatProcessor::ATTACK_TYPES[:aimed][:hit_bonus]).to eq(10)
+      expect(Arena::CombatProcessor::ATTACK_TYPES[:aimed][:hit_bonus]).to eq(15)
     end
   end
 
@@ -159,7 +168,7 @@ RSpec.describe Arena::CombatProcessor, "Tactical Combat Features" do
       end
 
       it "blocks the attack" do
-        result = processor.process_action(
+        result = deterministic_processor(0, 99, 0).process_action(
           character1,
           :attack,
           target: character2,
@@ -168,6 +177,23 @@ RSpec.describe Arena::CombatProcessor, "Tactical Combat Features" do
 
         expect(result[:blocked]).to be true
         expect(result[:damage]).to eq(0)
+      end
+
+      it "can fail a covered block and still resolve the hit" do
+        result = deterministic_processor(0, 99, 99, 99, 3).process_action(
+          character1,
+          :attack,
+          target: character2,
+          body_part: "torso"
+        )
+
+        expect(result[:blocked]).to be_falsey
+        expect(result[:block_attempted]).to be true
+        expect(result[:body_part]).to eq("torso")
+
+        log = arena_match.reload.metadata["combat_log"]
+        failed_block_entries = log.select { |entry| entry["type"] == "block_failed" }
+        expect(failed_block_entries.last["description"]).to include("tried to block")
       end
     end
 
@@ -181,7 +207,7 @@ RSpec.describe Arena::CombatProcessor, "Tactical Combat Features" do
       end
 
       it "does not block attack to unblocked part" do
-        result = processor.process_action(
+        result = deterministic_processor(0, 99, 99, 3).process_action(
           character1,
           :attack,
           target: character2,
@@ -189,7 +215,8 @@ RSpec.describe Arena::CombatProcessor, "Tactical Combat Features" do
         )
 
         expect(result[:blocked]).to be_falsey
-        expect(result[:damage]).to be > 0
+        expect(result[:body_part]).to eq("legs")
+        expect(result[:outcome]).not_to eq(:blocked)
       end
     end
   end
@@ -200,7 +227,7 @@ RSpec.describe Arena::CombatProcessor, "Tactical Combat Features" do
     end
 
     it "logs attacks with body part" do
-      processor.process_action(
+      deterministic_processor(0, 99, 0).process_action(
         character1,
         :attack,
         target: character2,
@@ -217,7 +244,7 @@ RSpec.describe Arena::CombatProcessor, "Tactical Combat Features" do
       # Force a critical hit by stubbing
       allow_any_instance_of(Object).to receive(:rand).and_return(0)
 
-      processor.process_action(
+      deterministic_processor(0, 99).process_action(
         character1,
         :attack,
         target: character2,
@@ -239,7 +266,7 @@ RSpec.describe Arena::CombatProcessor, "Tactical Combat Features" do
         "block_until" => 10.seconds.from_now.iso8601
       })
 
-      processor.process_action(
+      deterministic_processor(0, 99, 0).process_action(
         character1,
         :attack,
         target: character2,
@@ -419,7 +446,7 @@ RSpec.describe Arena::CombatProcessor, "Tactical Combat Features" do
           )
 
           character1.reload
-          expect(character1.metadata["blocked_parts"]).to eq([])
+          expect(character1.metadata["blocked_parts"]).to eq(["torso"])
         end
       end
 

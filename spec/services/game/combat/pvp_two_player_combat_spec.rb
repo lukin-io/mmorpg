@@ -295,6 +295,8 @@ RSpec.describe "PVP Two-Player Combat Integration" do
 
     context "when action points are sufficient" do
       it "processes a full turn with multiple attacks" do
+        service.battle.update!(action_points_per_turn: 120)
+
         result = service.process_turn!(
           character: warrior,
           attacks: [
@@ -355,7 +357,7 @@ RSpec.describe "PVP Two-Player Combat Integration" do
         # With 3 attacks: +75 AP penalty
         # With 4 attacks: +150 AP penalty
 
-        service.battle.update!(action_points_per_turn: 50)
+        service.battle.update!(action_points_per_turn: 120)
 
         # 2 simple attacks should work with penalty
         result = service.process_turn!(

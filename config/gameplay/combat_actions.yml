@@ -33,164 +33,207 @@ attack_types:
   simple:
     key: "simple"
     name: "Simple Attack"
-    action_cost: 0
+    action_cost: 45
     mana_cost: 0
     type: 1
+    damage_multiplier: 1.0
+    hit_bonus: 0
     description: "A basic attack with no special targeting"
 
   aimed:
     key: "aimed"
     name: "Aimed Attack"
-    action_cost: 0
+    action_cost: 65
     mana_cost: 0
     type: 1
+    damage_multiplier: 1.2
+    hit_bonus: 15
     description: "A more precise attack"
 
-  # Targeted attacks (by body part)
-  head_strike:
-    key: "head_strike"
-    name: "Head Strike"
-    action_cost: 35
-    mana_cost: 0
-    type: 2
-    body_part: "head"
-    description: "Target the head"
-
-  head_torso:
-    key: "head_torso"
-    name: "Head + Torso"
+  spirit_arrow:
+    key: "spirit_arrow"
+    name: "Spirit Arrow"
     action_cost: 50
-    mana_cost: 0
-    type: 2
-    body_parts: ["head", "torso"]
-    description: "Target head and torso"
+    mana_cost: 5
+    type: 1
+    element: "arcane"
+    damage_multiplier: 1.05
+    hit_bonus: 5
+    description: "Starter magic attack from the Neverlands fight selector"
 
-  head_stomach:
-    key: "head_stomach"
-    name: "Head + Stomach"
-    action_cost: 60
-    mana_cost: 0
-    type: 2
-    body_parts: ["head", "stomach"]
-    description: "Target head and stomach"
+  mind_blast:
+    key: "mind_blast"
+    name: "Mind Blast"
+    action_cost: 90
+    mana_cost: 5
+    type: 1
+    element: "mind"
+    damage_multiplier: 1.35
+    hit_bonus: 10
+    description: "High-cost starter magic attack from the Neverlands fight selector"
 
-  torso_strike:
-    key: "torso_strike"
-    name: "Torso Strike"
-    action_cost: 30
-    mana_cost: 0
-    type: 2
-    body_part: "torso"
-    description: "Target the torso"
-
-  torso_stomach:
-    key: "torso_stomach"
-    name: "Torso + Stomach"
-    action_cost: 50
-    mana_cost: 0
-    type: 2
-    body_parts: ["torso", "stomach"]
-    description: "Target torso and stomach"
-
-  torso_legs:
-    key: "torso_legs"
-    name: "Torso + Legs"
-    action_cost: 60
-    mana_cost: 0
-    type: 2
-    body_parts: ["torso", "legs"]
-    description: "Target torso and legs"
-
-  stomach_strike:
-    key: "stomach_strike"
-    name: "Stomach Strike"
-    action_cost: 30
-    mana_cost: 0
-    type: 2
-    body_part: "stomach"
-    description: "Target the stomach"
-
-  stomach_legs:
-    key: "stomach_legs"
-    name: "Stomach + Legs"
-    action_cost: 50
-    mana_cost: 0
-    type: 2
-    body_parts: ["stomach", "legs"]
-    description: "Target stomach and legs"
-
-  legs_strike:
-    key: "legs_strike"
-    name: "Leg Strike"
-    action_cost: 35
-    mana_cost: 0
-    type: 2
-    body_part: "legs"
-    description: "Target the legs"
-
-  legs_head:
-    key: "legs_head"
-    name: "Legs + Head"
-    action_cost: 80
-    mana_cost: 0
-    type: 2
-    body_parts: ["legs", "head"]
-    description: "Sweep to legs then strike head"
-
-# Shield blocks (higher cost, better protection)
+# Physical block selectors
 block_types:
   head_block:
     key: "head_block"
-    name: "Head Block [Shield]"
-    action_cost: 40
+    name: "Head Block"
+    action_cost: 35
     mana_cost: 0
     type: 2
-    requires_shield: true
     body_part: "head"
 
   head_torso_block:
     key: "head_torso_block"
-    name: "Head + Torso Block [Shield]"
-    action_cost: 85
+    name: "Head + Torso Block"
+    action_cost: 50
     mana_cost: 0
     type: 2
-    requires_shield: true
     body_parts: ["head", "torso"]
+
+  head_stomach_block:
+    key: "head_stomach_block"
+    name: "Head + Stomach Block"
+    action_cost: 60
+    mana_cost: 0
+    type: 2
+    body_parts: ["head", "stomach"]
 
   torso_block:
     key: "torso_block"
-    name: "Torso Block [Shield]"
-    action_cost: 40
+    name: "Torso Block"
+    action_cost: 30
     mana_cost: 0
     type: 2
-    requires_shield: true
     body_part: "torso"
+
+  torso_stomach_block:
+    key: "torso_stomach_block"
+    name: "Torso + Stomach Block"
+    action_cost: 50
+    mana_cost: 0
+    type: 2
+    body_parts: ["torso", "stomach"]
+
+  torso_legs_block:
+    key: "torso_legs_block"
+    name: "Torso + Legs Block"
+    action_cost: 60
+    mana_cost: 0
+    type: 2
+    body_parts: ["torso", "legs"]
 
   stomach_block:
     key: "stomach_block"
-    name: "Stomach Block [Shield]"
-    action_cost: 40
+    name: "Stomach Block"
+    action_cost: 30
     mana_cost: 0
     type: 2
-    requires_shield: true
     body_part: "stomach"
+
+  stomach_legs_block:
+    key: "stomach_legs_block"
+    name: "Stomach + Legs Block"
+    action_cost: 50
+    mana_cost: 0
+    type: 2
+    body_parts: ["stomach", "legs"]
 
   legs_block:
     key: "legs_block"
-    name: "Legs Block [Shield]"
-    action_cost: 40
+    name: "Legs Block"
+    action_cost: 35
     mana_cost: 0
     type: 2
-    requires_shield: true
     body_part: "legs"
+
+  legs_head_block:
+    key: "legs_head_block"
+    name: "Legs + Head Block"
+    action_cost: 80
+    mana_cost: 0
+    type: 2
+    body_parts: ["legs", "head"]
 
   full_block:
     key: "full_block"
-    name: "Full Body Block [Shield]"
+    name: "Full Body Block"
     action_cost: 130
     mana_cost: 0
     type: 2
-    requires_shield: true
+    body_parts: ["head", "torso", "stomach", "legs"]
+
+  # Shield block selectors - available when the participant profile uses the
+  # shield block table.
+  shield_head_block:
+    key: "shield_head_block"
+    name: "Shield Head Block"
+    action_cost: 45
+    mana_cost: 0
+    type: 2
+    block_table: "shield"
+    body_part: "head"
+
+  shield_torso_block:
+    key: "shield_torso_block"
+    name: "Shield Torso Block"
+    action_cost: 40
+    mana_cost: 0
+    type: 2
+    block_table: "shield"
+    body_part: "torso"
+
+  shield_stomach_block:
+    key: "shield_stomach_block"
+    name: "Shield Stomach Block"
+    action_cost: 40
+    mana_cost: 0
+    type: 2
+    block_table: "shield"
+    body_part: "stomach"
+
+  shield_legs_block:
+    key: "shield_legs_block"
+    name: "Shield Legs Block"
+    action_cost: 45
+    mana_cost: 0
+    type: 2
+    block_table: "shield"
+    body_part: "legs"
+
+  shield_head_torso_block:
+    key: "shield_head_torso_block"
+    name: "Shield Head + Torso Block"
+    action_cost: 65
+    mana_cost: 0
+    type: 2
+    block_table: "shield"
+    body_parts: ["head", "torso"]
+
+  shield_torso_stomach_block:
+    key: "shield_torso_stomach_block"
+    name: "Shield Torso + Stomach Block"
+    action_cost: 60
+    mana_cost: 0
+    type: 2
+    block_table: "shield"
+    body_parts: ["torso", "stomach"]
+
+  shield_stomach_legs_block:
+    key: "shield_stomach_legs_block"
+    name: "Shield Stomach + Legs Block"
+    action_cost: 65
+    mana_cost: 0
+    type: 2
+    block_table: "shield"
+    body_parts: ["stomach", "legs"]
+
+  shield_full_block:
+    key: "shield_full_block"
+    name: "Shield Full Block"
+    action_cost: 100
+    mana_cost: 0
+    type: 2
+    block_table: "shield"
     body_parts: ["head", "torso", "stomach", "legs"]
 
 # Magic spells
@@ -382,4 +425,3 @@ defaults:
   base_block_chance: 50
   critical_hit_chance: 10
   critical_hit_multiplier: 1.5
-

@@ -10,12 +10,17 @@ and a route into the shared turn-based combat system.
 
 The Neverlands-inspired arena docs and combat captures show:
 
+- a persistent game shell where arena replaces only the main gameplay frame;
 - multiple rooms with access restrictions;
-- fight applications;
-- configurable fight kind and timeout;
+- fight applications with visible sides and no-opponent waiting rows;
+- configurable fight kind, timeout, trauma, wait time, and group limits;
 - AP-based turn combat after a match starts;
 - public waiting-room social context;
 - combat logs as part of the fight experience.
+
+Primary live reference:
+
+- `doc/design/reference/neverlands_arena_combat.md`
 
 ## Entry And Exit
 
@@ -39,14 +44,178 @@ Arena screens:
 - active battle screen;
 - post-fight result/log.
 
+## UX Model
+
+Arena is a dense game-frame screen inside the persistent gameplay shell. It
+should not feel like a standalone dashboard or marketing page.
+
+The arena main frame should read in this order:
+
+- character/vitals strip with character, inventory, return, arena marker, and
+  exit controls;
+- filter/status row showing application filter, application count, refresh, and
+  room-scheme toggle;
+- compact horizontal tabs for duels, groups, sacrifice, tactical, betting, and
+  statistics, with later modes visibly inactive until implemented;
+- current tab form or state message;
+- pending application list;
+- footer/status time.
+
+The optional room scheme is a compact two-row grid of room cells. Each room cell
+shows room name, live count, access state, level gate, a `go` action when
+available, and a small room-preview/help affordance.
+
+Application rows should be scannable rather than card-heavy:
+
+- applicant side;
+- opponent side or `no opponents` state;
+- level or team requirements;
+- fight kind, timeout, trauma, wait/start timer;
+- one clear action: join, withdraw, decline, start, or view log.
+
+Match transition keeps the arena context: application row -> matched/waiting
+state -> combat screen -> result/log -> return to arena or parent city node.
+
+## Available Actions
+
+Arena may offer these actions when the character is eligible:
+
+- switch arena room;
+- filter applications by own level or all visible rows;
+- create duel application;
+- create group/team application;
+- join an open side of an application;
+- withdraw own application;
+- decline a matched application before start;
+- start a matched duel or group fight;
+- resolve timeout when the opponent fails to act;
+- view fight statistics or logs;
+- return to the parent city node/building context.
+
+Every mutating action must be server-authored and token validated. Neverlands
+uses compact `vcode` parameters; this project can use Rails forms, Turbo, or
+JSON action keys if they preserve the same authorization contract.
+
 ## Room Rules
 
 - Rooms can restrict level range, faction/alignment, or fight type.
-- Applications define fight type, equipment rule, timeout, trauma/risk, and
-  team constraints.
+- The core room ladder is: help/new-player, training, trial/challenge,
+  initiation, patron, and faction halls for Law, Light, Balance, Chaos, and
+  Dark.
+- Applications define fight type, equipment rule, timeout, trauma/risk, wait
+  time, and team constraints.
 - Another eligible player may accept an application.
 - NPC bot applications may exist for training rooms.
 - Match start creates a combat instance using `features/combat.md`.
+- Application rows show each side of the fight and whether that side is waiting
+  for an opponent.
+- Characters below the arena HP threshold cannot create or accept fights until
+  they recover.
+
+## Current Implementation Status
+
+Implemented arena combat now follows the captured Neverlands shape for the
+first playable loop:
+
+- The primary arena entry is the city hotspot/building path. Direct arena room
+  and application screens require that city entry session unless the character
+  is already in an active arena match.
+- The arena lobby uses a compact frame model: character/vitals strip, frame
+  controls, filter/status row, NL tab labels, room scheme, and dense room rows.
+- The room screen uses inline application controls and side-based application
+  rows (`side one` vs `no opponents`) instead of card-heavy lobby rows.
+- `Arena::CombatProcessor` now reads a per-participant combat profile instead
+  of validating every arena fight against the old shared 80 AP budget.
+- Arena physical attack costs now follow the captured `fight_pm[2]` shape:
+  simple equals the participant physical attack seed and aimed equals that seed
+  plus 20. A stored profile can reproduce the goblin capture with 140 AP and
+  67/87 physical attack costs.
+- Starter magic attack entries include `Spirit Arrow` and `Mind Blast`, matching
+  the captured fight selector costs.
+- Arena block actions use body-part coverage with the captured 30/35/50/60/80
+  AP costs and consume the block when it catches an incoming hit.
+- Arena also exposes a shield block table when the participant combat profile
+  detects an equipped shield. Shield blocks use higher AP costs and preserve
+  the same body-part coverage semantics.
+- Player damage and defense use the arena combat resolver, which combines
+  hit chance, dodge chance, selected block coverage, critical chance, body-part
+  multiplier, attack power, defense, and deterministic damage variance.
+- Character combat-power breakdown now includes equipped item-family
+  contributions so weapons, shields, and armor can be balanced separately.
+- NPC training fights use the same target/block/damage path.
+- The match screen uses a three-zone combat frame: current fighter, center
+  turn composer plus log, and opponent. It shows AP, four attack selectors,
+  four block selectors with one active block, magic/action slots, participant
+  HP/MP, attack/defense totals, and live log entries.
+- The active match UI now submits a single turn package: up to four body-part
+  attack selectors, one active block selector, magic/action slots, target id,
+  server-side AP/MP validation, and NL turn-shape validation.
+- Player-vs-player arena turns wait after submission. The server stores each
+  live player's pending turn package, broadcasts the waiting state, and resolves
+  the round only after all live player participants have submitted.
+- If a player has submitted the current round and the opponent misses the turn
+  timer, the match stays in the waiting state and exposes timeout resolution:
+  victory by timeout or draw.
+- Arena fallback controller actions and ActionCable submissions both preserve
+  attack type, body part, block coverage, and full turn packages.
+- NPC training fight broadcasts update the same center log and fighter HP
+  panels as player-vs-player actions.
+- Magic/action slots can be submitted without a physical attack. Defensive
+  magic guards body parts, healing/restoration updates vitals, direct damage
+  spells damage targets, chain/area spells fan out to opponents, and status
+  effects are stored on arena participation metadata for turn processing.
+- Completed fights show a `Finish Fight` result step before returning the
+  participant to the arena, matching the observed Neverlands result-screen
+  shape without copying its anti-autobattle challenge.
+- The May 11 live bot-fight capture adds a completed wilderness fight path:
+  one active fight payload, repeated turn submissions through the same selector
+  contract, victory log, automatic bot-loot check, and a separate result
+  payload. Arena and wilderness combat should therefore share the same active
+  turn UI, but the arena return action should remain contextual: arena fights
+  return to arena, wilderness ambushes return to the world/city flow after the
+  finish step.
+- Tactical grid and totalizator routes, views, controllers, models, styles, and
+  tables are removed from the player-facing arena surface; their NL tabs remain
+  disabled labels until those modes are implemented from live references.
+- The old `/arena_matches` queue/create page is removed. Arena matches are
+  created by accepting room applications, while match show/action/log routes
+  remain available for active participants and spectators.
+
+## Adjacent Next Work
+
+The current arena implementation is no longer isolated from the rest of the
+game loop. The next passes should keep these side systems in sync:
+
+- NPC training fights now use the shared arena combat resolver. Continue
+  tuning them through `features/combat.md` and `features/npcs_quests.md`
+  instead of creating a separate bot-combat ruleset.
+- Wilderness ambushes should enter the same active fight UI and result flow,
+  then return to world/city movement rather than arena. Keep that handoff
+  documented in `features/movement.md` and `doc/flow/neverlands_live_movement.md`.
+- Equipment-driven AP, attack-cost, defense, and shield-block changes belong in
+  `features/items_inventory_equipment.md` and should feed `Arena::CombatProfile`
+  rather than hard-coded arena constants.
+- Arena room/application UX remains the city-building path. Global/dev arena
+  routes are implementation affordances only, not the primary game-design
+  path.
+
+## Remaining Source Capture Work
+
+The implemented local mechanics now cover the first-loop arena/combat behavior.
+Further live Neverlands capture is still useful for tuning hidden constants:
+
+- more item captures can tune the local item-family AP and physical-cost
+  coefficients beyond the captured 140/67/87 profile;
+- more resolved fights can tune miss, dodge, block, non-critical, critical,
+  magic, status, chain, and area constants against live outcomes;
+- a real live PvP fight capture is still needed for external parity evidence.
+  The local implementation has coverage for simultaneous PvP waiting and
+  round resolution, but the only live resolved example remains NPC-only.
+
+Still not first-loop canonical:
+
+- tournament/live-ops screens;
+- betting/totalizator as a player-facing core mode.
 
 ## Fight Types
 
@@ -54,11 +223,12 @@ Core:
 
 - duel;
 - group/team battle;
-- training against NPC.
+- training against NPC;
+- sacrifice/free-for-all.
 
 Later:
 
-- free-for-all/sacrifice;
+- tactical grid fights;
 - tournament bracket;
 - spectator betting.
 
@@ -77,6 +247,20 @@ stable.
 - Tactical grid combat as a separate core system.
 - Betting as part of first implementation.
 - External tournament/live-ops tooling.
+
+## Legacy Cleanup Direction
+
+No legacy implementation is canonical just because it exists. Remove or demote
+arena code, routes, UI, and docs when they pull the first playable arena away
+from the Neverlands-style loop.
+
+Specifically non-core until the room/application/turn-combat loop is stable:
+
+- global arena entry as the primary path instead of city-building entry;
+- tactical grid fights as the default arena combat;
+- betting/totalizator as first-pass arena functionality;
+- tournament/live-ops/admin tooling as player-facing core;
+- separate arena combat rules that drift from `features/combat.md`.
 
 ## Related Implementation Files
 
@@ -117,7 +301,6 @@ Services, jobs, and channels:
 Views and JavaScript:
 
 - `app/views/arena/index.html.erb`
-- `app/views/arena_rooms/index.html.erb`
 - `app/views/arena_rooms/show.html.erb`
 - `app/views/arena_applications/_application.html.erb`
 - `app/views/arena_applications/_list.html.erb`

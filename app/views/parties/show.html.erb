@@ -48,8 +48,16 @@
             <% end %>
           </div>
           <% if current_membership&.ready_state == "unknown" %>
-            <%= button_to "I'm Ready!", party_party_membership_path(@party, current_membership, ready_state: :ready), method: :patch, class: "game-btn game-btn--success" %>
-            <%= button_to "Not Ready", party_party_membership_path(@party, current_membership, ready_state: :not_ready), method: :patch, class: "game-btn game-btn--danger" %>
+            <%= button_to "I'm Ready!",
+                  party_party_membership_path(@party, current_membership, ready_state: :ready),
+                  method: :patch,
+                  class: "game-btn game-btn--success",
+                  form: { data: { turbo: false } } %>
+            <%= button_to "Not Ready",
+                  party_party_membership_path(@party, current_membership, ready_state: :not_ready),
+                  method: :patch,
+                  class: "game-btn game-btn--danger",
+                  form: { data: { turbo: false } } %>
           <% end %>
         </div>
       <% end %>
@@ -64,7 +72,10 @@
             <div class="alert alert-warning"><%= @party_invitation.errors.full_messages.to_sentence %></div>
           <% end %>
 
-          <%= form_with model: [@party, @party_invitation], url: party_party_invitations_path(@party), class: "party-form" do |form| %>
+          <%= form_with model: [@party, @party_invitation],
+                url: party_party_invitations_path(@party),
+                class: "party-form",
+                data: { turbo: false } do |form| %>
             <div class="form-group">
               <%= form.label :recipient_id, "Player" %>
               <%= form.collection_select :recipient_id,
@@ -98,7 +109,12 @@
           <h3>Actions</h3>
 
           <% if party_leader?(@party) %>
-            <%= button_to "Start Ready Check", ready_check_party_path(@party), method: :post, class: "game-btn game-btn--primary", disabled: @party.ready_check_running? %>
+            <%= button_to "Start Ready Check",
+                  ready_check_party_path(@party),
+                  method: :post,
+                  class: "game-btn game-btn--primary",
+                  disabled: @party.ready_check_running?,
+                  form: { data: { turbo: false } } %>
 
             <hr>
             <%= button_to "Disband Party", disband_party_path(@party), method: :post, class: "game-btn game-btn--danger", data: { confirm: "Disband this party?" } %>

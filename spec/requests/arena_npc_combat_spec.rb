@@ -53,6 +53,15 @@ RSpec.describe "Arena NPC Combat", type: :request do
   before do
     sign_in user, scope: :user
     allow_any_instance_of(ApplicationController).to receive(:current_character).and_return(character)
+    enter_arena_from_city!(character)
+  end
+
+  def enter_arena_from_city!(character)
+    zone = character.position.zone
+    zone.update!(biome: "city")
+    hotspot = create(:city_hotspot, :arena, zone: zone, active: true, required_level: 1)
+
+    post interact_hotspot_world_path, params: {hotspot_id: hotspot.id}
   end
 
   # ===========================================================================

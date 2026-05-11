@@ -104,7 +104,6 @@ RSpec.describe Game::Combat::TurnBasedCombatService do
       end
 
       it "returns failure when exceeding action point limit" do
-        pending "Action point validation not yet implemented"
         result = service.submit_turn(character1, attacks: attacks)
 
         expect(result.success).to be false

@@ -21,6 +21,7 @@ RSpec.describe "Arena NPC Combat UI", type: :system do
   let(:zone) { create(:zone, name: "Test Zone", biome: "plains") }
   let(:character) { create(:character, user: user, name: "TestHero", level: 5, current_hp: 100, max_hp: 100) }
   let!(:position) { create(:character_position, character: character, zone: zone, x: 5, y: 5) }
+  let!(:arena_hotspot) { create(:city_hotspot, :arena, zone: zone, active: true, required_level: 1) }
 
   let(:arena_room) { create(:arena_room, name: "Training Grounds", slug: "training", level_min: 1, level_max: 10, active: true, room_type: :training) }
   let!(:arena_season) { create(:arena_season, :live) }
@@ -47,6 +48,11 @@ RSpec.describe "Arena NPC Combat UI", type: :system do
     driven_by(:rack_test)
   end
 
+  def enter_arena_from_city!
+    zone.update!(biome: "city")
+    page.driver.submit :post, interact_hotspot_world_path, {hotspot_id: arena_hotspot.id}
+  end
+
   # ===========================================================================
   # SUCCESS CASES: Arena Room with NPC Applications
   # ===========================================================================
@@ -63,7 +69,10 @@ RSpec.describe "Arena NPC Combat UI", type: :system do
         timeout_seconds: 120)
     end
 
-    before { login_as(user, scope: :user) }
+    before do
+      login_as(user, scope: :user)
+      enter_arena_from_city!
+    end
 
     it "displays NPC bot application in the room" do
       visit arena_room_path(arena_room)
@@ -77,10 +86,10 @@ RSpec.describe "Arena NPC Combat UI", type: :system do
       expect(page).to have_content("[3]")
     end
 
-    it "displays NPC bot badge" do
+    it "marks NPC applications as NPC rows" do
       visit arena_room_path(arena_room)
 
-      expect(page).to have_content("Bot").or have_content("🤖")
+      expect(page).to have_css(".nl-arena-row--npc")
     end
 
     it "displays accept button for NPC application" do
@@ -92,7 +101,7 @@ RSpec.describe "Arena NPC Combat UI", type: :system do
     it "shows fight type for NPC application" do
       visit arena_room_path(arena_room)
 
-      expect(page).to have_content("Duel").or have_content("1v1")
+      expect(page).to have_content("Duels").or have_content("Bare Hands")
     end
   end
 
@@ -112,7 +121,10 @@ RSpec.describe "Arena NPC Combat UI", type: :system do
         timeout_seconds: 120)
     end
 
-    before { login_as(user, scope: :user) }
+    before do
+      login_as(user, scope: :user)
+      enter_arena_from_city!
+    end
 
     it "redirects to match page after accepting" do
       visit arena_room_path(arena_room)
@@ -165,7 +177,10 @@ RSpec.describe "Arena NPC Combat UI", type: :system do
         fight_kind: :no_weapons)
     end
 
-    before { login_as(user, scope: :user) }
+    before do
+      login_as(user, scope: :user)
+      enter_arena_from_city!
+    end
 
     it "does not show accept button for matched applications" do
       visit arena_room_path(arena_room)
@@ -191,7 +206,10 @@ RSpec.describe "Arena NPC Combat UI", type: :system do
         expires_at: 1.hour.ago)
     end
 
-    before { login_as(user, scope: :user) }
+    before do
+      login_as(user, scope: :user)
+      enter_arena_from_city!
+    end
 
     it "does not show accept button for expired applications" do
       visit arena_room_path(arena_room)
@@ -206,18 +224,21 @@ RSpec.describe "Arena NPC Combat UI", type: :system do
   # ===========================================================================
 
   describe "arena room with no applications" do
-    before { login_as(user, scope: :user) }
+    before do
+      login_as(user, scope: :user)
+      enter_arena_from_city!
+    end
 
     it "shows empty message when no applications exist" do
       visit arena_room_path(arena_room)
 
-      expect(page).to have_content("No open applications").or have_content("Be the first")
+      expect(page).to have_content("No open applications")
     end
 
     it "shows application form" do
       visit arena_room_path(arena_room)
 
-      expect(page).to have_content("Submit Application")
+      expect(page).to have_button("Submit Application")
     end
   end
 
@@ -237,14 +258,17 @@ RSpec.describe "Arena NPC Combat UI", type: :system do
         room_type: :patron)
     end
 
-    before { login_as(user, scope: :user) }
+    before do
+      login_as(user, scope: :user)
+      enter_arena_from_city!
+    end
 
     it "cannot access level-restricted arena room" do
       # Character is level 5, room requires 16-33
       visit arena_room_path(restricted_room)
 
       # Should redirect away from restricted room (not show the room contents)
-      expect(page).not_to have_content("Submit Application")
+      expect(page).not_to have_button("Submit Application")
     end
   end
 
@@ -301,7 +325,10 @@ RSpec.describe "Arena NPC Combat UI", type: :system do
         metadata: {"current_hp" => 0, "max_hp" => 60})
     end
 
-    before { login_as(user, scope: :user) }
+    before do
+      login_as(user, scope: :user)
+      enter_arena_from_city!
+    end
 
     it "shows match result" do
       visit arena_match_path(completed_match)
@@ -347,13 +374,16 @@ RSpec.describe "Arena NPC Combat UI", type: :system do
         fight_kind: :no_weapons)
     end
 
-    before { login_as(user, scope: :user) }
+    before do
+      login_as(user, scope: :user)
+      enter_arena_from_city!
+    end
 
-    it "displays NPC with fallback avatar" do
+    it "displays NPC with the fallback arena row styling" do
       visit arena_room_path(arena_room)
 
       expect(page).to have_content("Basic Bot")
-      expect(page).to have_content("🤖").or have_css(".npc-avatar")
+      expect(page).to have_css(".nl-arena-row--npc")
     end
 
     it "can accept application with minimal NPC" do
@@ -370,7 +400,10 @@ RSpec.describe "Arena NPC Combat UI", type: :system do
   # ===========================================================================
 
   describe "arena index page" do
-    before { login_as(user, scope: :user) }
+    before do
+      login_as(user, scope: :user)
+      enter_arena_from_city!
+    end
 
     it "displays arena page" do
       visit arena_index_path
@@ -416,7 +449,10 @@ RSpec.describe "Arena NPC Combat UI", type: :system do
         metadata: {"current_hp" => 45, "max_hp" => 60})
     end
 
-    before { login_as(user, scope: :user) }
+    before do
+      login_as(user, scope: :user)
+      enter_arena_from_city!
+    end
 
     it "shows both participants with current HP" do
       visit arena_match_path(live_match)

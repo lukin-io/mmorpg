@@ -59,19 +59,19 @@ RSpec.describe Character, type: :model do
     end
 
     describe "#alignment_emoji" do
-      it "returns angel emoji for celestial tier" do
+      it "returns label for celestial tier" do
         character.update!(alignment_score: 900)
-        expect(character.alignment_emoji).to eq("👼")
+        expect(character.alignment_emoji).to eq("Celestial")
       end
 
-      it "returns yin-yang for neutral tier" do
+      it "returns label for neutral tier" do
         character.update!(alignment_score: 0)
-        expect(character.alignment_emoji).to eq("☯️")
+        expect(character.alignment_emoji).to eq("Neutral")
       end
 
-      it "returns black heart for absolute darkness" do
+      it "returns label for absolute darkness" do
         character.update!(alignment_score: -900)
-        expect(character.alignment_emoji).to eq("🖤")
+        expect(character.alignment_emoji).to eq("Absolute Darkness")
       end
     end
 
@@ -116,13 +116,13 @@ RSpec.describe Character, type: :model do
     end
 
     describe "#chaos_emoji" do
-      it "returns scales for lawful" do
-        expect(character.chaos_emoji).to eq("⚖️")
+      it "returns label for lawful" do
+        expect(character.chaos_emoji).to eq("Lawful")
       end
 
-      it "returns explosion for absolute chaos" do
+      it "returns label for absolute chaos" do
         character.update!(chaos_score: 900)
-        expect(character.chaos_emoji).to eq("💥")
+        expect(character.chaos_emoji).to eq("Absolute Chaos")
       end
     end
 
@@ -150,19 +150,19 @@ RSpec.describe Character, type: :model do
     let(:character) { create(:character) }
 
     describe "#faction_emoji" do
-      it "returns shield for alliance" do
+      it "returns label for alliance" do
         character.update!(faction_alignment: "alliance")
-        expect(character.faction_emoji).to eq("🛡️")
+        expect(character.faction_emoji).to eq("Alliance")
       end
 
-      it "returns sword for rebellion" do
+      it "returns label for rebellion" do
         character.update!(faction_alignment: "rebellion")
-        expect(character.faction_emoji).to eq("⚔️")
+        expect(character.faction_emoji).to eq("Rebellion")
       end
 
-      it "returns flag for neutral" do
+      it "returns label for neutral" do
         character.update!(faction_alignment: "neutral")
-        expect(character.faction_emoji).to eq("🏳️")
+        expect(character.faction_emoji).to eq("Neutral")
       end
     end
 
@@ -170,8 +170,7 @@ RSpec.describe Character, type: :model do
       it "combines faction and tier information" do
         character.update!(faction_alignment: "alliance", alignment_score: 600)
         display = character.alignment_display
-        expect(display).to include("🛡️")  # faction
-        expect(display).to include("✨")   # true light
+        expect(display).to include("Alliance")
         expect(display).to include("True Light")
       end
     end
@@ -208,6 +207,34 @@ RSpec.describe Character, type: :model do
       low_char = create(:character, level: 1, character_class: low_class)
       # = 50 + (1 * 3) + (5 * 2) = 50 + 3 + 10 = 63
       expect(low_char.max_action_points).to eq(63)
+    end
+  end
+
+  describe "combat power formulas" do
+    let(:character_class) do
+      create(:character_class, base_stats: {
+        strength: 10, dexterity: 8, vitality: 12, luck: 5
+      })
+    end
+    let(:character) { create(:character, character_class:, level: 3) }
+
+    it "includes level in attack power and defense" do
+      expect(character.attack_power).to eq(25) # 20 strength + 4 dexterity + 1 level
+      expect(character.defense).to eq(16) # 12 vitality + 3 strength + 1 level
+    end
+
+    it "includes equipped item bonuses in the combat breakdown" do
+      sword = create(:item_template, item_type: "equipment", slot: "main_hand", stat_modifiers: {"attack" => 7})
+      armor = create(:item_template, item_type: "equipment", slot: "chest", stat_modifiers: {"defense" => 5})
+      create(:inventory_item, inventory: character.inventory, item_template: sword, equipped: true)
+      create(:inventory_item, inventory: character.inventory, item_template: armor, equipped: true)
+
+      breakdown = character.combat_power_breakdown
+
+      expect(breakdown[:attack_power][:equipment]).to eq(7)
+      expect(breakdown[:attack_power][:total]).to eq(32)
+      expect(breakdown[:defense][:equipment]).to eq(6)
+      expect(breakdown[:defense][:total]).to eq(22)
     end
   end
 

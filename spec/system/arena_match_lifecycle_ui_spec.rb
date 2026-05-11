@@ -151,26 +151,28 @@ RSpec.describe "Arena Match Lifecycle UI", type: :system, js: true do
       visit arena_match_path(live_match)
 
       expect(page).to have_css(".arena-action-panel")
-      expect(page).to have_css("[data-action-type='attack']")
+      expect(page).to have_css(".nl-fight-selector-table")
+      expect(page).to have_css("[data-arena-match-target='attackSelect']")
     end
 
-    it "displays attack type buttons (Attack, Aimed)" do
+    it "displays attack type choices" do
       visit arena_match_path(live_match)
 
-      expect(page).to have_content("Attack")
-      expect(page).to have_content("Aimed")
+      expect(page).to have_content("Simple Attack")
+      expect(page).to have_content("Aimed Attack")
     end
 
-    it "displays body part targeting dropdown" do
+    it "displays body part targeting selectors" do
       visit arena_match_path(live_match)
 
-      expect(page).to have_css("[data-arena-match-target='bodyPartSelect']")
+      expect(page).to have_css("[data-arena-match-target='attackSelect'][data-body-part='head']")
     end
 
-    it "displays defend button" do
+    it "displays block selectors" do
       visit arena_match_path(live_match)
 
-      expect(page).to have_css("[data-action-type='defend']")
+      expect(page).to have_css("[data-arena-match-target='blockSelect']")
+      expect(page).to have_content("Torso Block").or have_content("Head Block")
     end
 
     it "displays HP info for both participants" do
@@ -403,11 +405,14 @@ RSpec.describe "Arena Match Lifecycle UI", type: :system, js: true do
       expect(controller_element["data-arena-match-spectating-value"]).to eq("false")
     end
 
-    it "displays action buttons with correct data attributes" do
+    it "displays turn controls with correct data attributes" do
       visit arena_match_path(live_match)
 
-      attack_button = find("[data-action-type='attack']", match: :first)
-      expect(attack_button["data-action"]).to include("arena-match#submitAction")
+      attack_select = find("[data-arena-match-target='attackSelect']", match: :first)
+      expect(attack_select["data-action"]).to include("arena-match#updateTurnCost")
+
+      submit_button = find(".btn-attack--submit", match: :first)
+      expect(submit_button["data-action"]).to include("arena-match#submitTurn")
     end
   end
 

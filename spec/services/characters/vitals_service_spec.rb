@@ -23,7 +23,7 @@ RSpec.describe Characters::VitalsService do
       expect(summary.keys).to include(
         :current_hp, :max_hp, :current_mp, :max_mp,
         :strength, :dexterity, :intelligence, :vitality, :spirit,
-        :attack_power, :defense, :crit_rate
+        :attack_power, :defense, :crit_rate, :combat_power_breakdown
       )
     end
 
@@ -49,14 +49,14 @@ RSpec.describe Characters::VitalsService do
     it "calculates attack power from strength and dexterity" do
       summary = service.stats_summary
 
-      # Base: strength * 2 + dexterity / 2 = 10 * 2 + 8 / 2 = 24
+      # Base: strength * 2 + dexterity / 2 + level / 2 = 10 * 2 + 8 / 2 + 1 / 2 = 24
       expect(summary[:attack_power]).to eq(24)
     end
 
     it "calculates defense from vitality and strength" do
       summary = service.stats_summary
 
-      # Base: vitality + strength / 3 = 12 + 10 / 3 = 15
+      # Base: vitality + strength / 3 + level / 2 = 12 + 10 / 3 + 1 / 2 = 15
       expect(summary[:defense]).to eq(15)
     end
 
@@ -93,8 +93,8 @@ RSpec.describe Characters::VitalsService do
       it "includes equipment defense bonus in defense" do
         summary = service.stats_summary
 
-        # Base (15) + armor defense bonus (10) = 25
-        expect(summary[:defense]).to eq(25)
+        # Base (15) + armor-family defense bonus (10 * 1.15, rounded to 12) = 27
+        expect(summary[:defense]).to eq(27)
       end
     end
   end

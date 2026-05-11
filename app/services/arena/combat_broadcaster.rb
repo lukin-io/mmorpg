@@ -168,6 +168,8 @@ module Arena
     #   - npc_target: String (NPC name if target is NPC)
     def broadcast_combat_action(actor, action_type, target, damage, **opts)
       critical = opts.fetch(:critical, false)
+      miss = opts.fetch(:miss, false)
+      dodge = opts.fetch(:dodge, false)
       body_part = opts[:body_part]
       attack_type = opts[:attack_type]
       block_parts = opts[:block_parts]
@@ -181,10 +183,11 @@ module Arena
         action_type: action_type,
         damage: damage,
         is_critical: critical,
+        is_miss: miss || dodge,
         body_part: body_part,
         attack_type: attack_type,
         block_parts: block_parts,
-        description: format_combat_description(actor, action_type, target, damage, body_part:, critical:)
+        description: format_combat_description(actor, action_type, target, damage, body_part:, critical:, miss:, dodge:)
       }.compact)
     end
 
@@ -282,6 +285,15 @@ module Arena
       })
     end
 
+    def broadcast_timeout_claim_available
+      broadcast({
+        type: "timeout_claim_available",
+        message: "Timeout controls are available.",
+        turn_number: match.current_turn_number,
+        timestamp: Time.current.strftime("%H:%M:%S")
+      })
+    end
+
     # Broadcast to spectators only
     #
     # @param data [Hash] the data to broadcast
@@ -347,12 +359,23 @@ module Arena
       ((character.current_mp.to_f / character.max_mp) * 100).round(1)
     end
 
-    def format_combat_description(actor, action_type, target, damage, body_part: nil, critical: false)
+    def format_combat_description(actor, action_type, target, damage, body_part: nil, critical: false, miss: false, dodge: false)
       target_name = target&.name || "opponent"
 
       case action_type.to_s
+      when "miss"
+        part_text = body_part ? " (#{body_part})" : ""
+        "#{actor.name} misses #{target_name}#{part_text}."
+      when "dodge"
+        part_text = body_part ? " (#{body_part})" : ""
+        "#{target_name} dodges #{actor.name}'s attack#{part_text}."
       when "attack"
-        if damage.positive?
+        if miss || dodge
+          part_text = body_part ? " (#{body_part})" : ""
+          return dodge ? "#{target_name} dodges #{actor.name}'s attack#{part_text}." : "#{actor.name} misses #{target_name}#{part_text}."
+        end
+
+        if damage
           part_text = body_part ? " (#{body_part})" : ""
           crit_text = critical ? " CRITICAL!" : ""
           "#{actor.name} hits #{target_name}#{part_text} for #{damage} damage!#{crit_text}"

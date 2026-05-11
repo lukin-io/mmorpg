@@ -32,16 +32,16 @@ RSpec.describe CombatHelper, type: :helper do
   end
 
   describe "#combat_action_icon" do
-    it "returns sword icon for attack" do
-      expect(helper.combat_action_icon(:attack)).to include("⚔")
+    it "returns label for attack" do
+      expect(helper.combat_action_icon(:attack)).to eq("Attack")
     end
 
-    it "returns shield icon for block" do
-      expect(helper.combat_action_icon(:block)).to include("🛡")
+    it "returns label for block" do
+      expect(helper.combat_action_icon(:block)).to eq("Block")
     end
 
-    it "returns magic icon for skill" do
-      expect(helper.combat_action_icon(:skill)).to include("✨")
+    it "returns label for skill" do
+      expect(helper.combat_action_icon(:skill)).to eq("Skill")
     end
   end
 
@@ -70,44 +70,44 @@ RSpec.describe CombatHelper, type: :helper do
   end
 
   describe "#magic_icon" do
-    it "returns fire icon for fire element" do
-      expect(helper.magic_icon("fire")).to eq("🔥")
+    it "returns fire label for fire element" do
+      expect(helper.magic_icon("fire")).to eq("Fire")
     end
 
-    it "returns ice icon for water element" do
-      expect(helper.magic_icon("water")).to eq("❄️")
+    it "returns water label for water element" do
+      expect(helper.magic_icon("water")).to eq("Water")
     end
 
-    it "returns ice icon for ice element" do
-      expect(helper.magic_icon("ice")).to eq("❄️")
+    it "returns water label for ice element" do
+      expect(helper.magic_icon("ice")).to eq("Water")
     end
 
-    it "returns earth icon for earth element" do
-      expect(helper.magic_icon("earth")).to eq("🪨")
+    it "returns earth label for earth element" do
+      expect(helper.magic_icon("earth")).to eq("Earth")
     end
 
-    it "returns lightning icon for air element" do
-      expect(helper.magic_icon("air")).to eq("⚡")
+    it "returns air label for air element" do
+      expect(helper.magic_icon("air")).to eq("Air")
     end
 
-    it "returns heal icon for heal type" do
-      expect(helper.magic_icon("heal")).to eq("💚")
+    it "returns heal label for heal type" do
+      expect(helper.magic_icon("heal")).to eq("Heal")
     end
 
-    it "returns shield icon for shield type" do
-      expect(helper.magic_icon("shield")).to eq("🛡️")
+    it "returns shield label for shield type" do
+      expect(helper.magic_icon("shield")).to eq("Shield")
     end
 
-    it "returns damage icon for damage type" do
-      expect(helper.magic_icon("damage")).to eq("⚔️")
+    it "returns damage label for damage type" do
+      expect(helper.magic_icon("damage")).to eq("Damage")
     end
 
-    it "returns default icon for unknown element" do
-      expect(helper.magic_icon("unknown")).to eq("🔮")
+    it "returns default label for unknown element" do
+      expect(helper.magic_icon("unknown")).to eq("Magic")
     end
 
     it "handles symbol input" do
-      expect(helper.magic_icon(:fire)).to eq("🔥")
+      expect(helper.magic_icon(:fire)).to eq("Fire")
     end
   end
 

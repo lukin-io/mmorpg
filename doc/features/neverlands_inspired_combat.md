@@ -3,6 +3,12 @@
 Status: historical Neverlands reference. Canonical combat design lives in
 `doc/design/features/combat.md` and `doc/design/gdd.md`.
 
+2026 update: this file contains older captures where the fight UI showed
+`80` AP and physical attacks at `45/65`. A later live fight capture
+(`lukin[6]` vs `Гоблин[3]`) showed `140` AP and dynamic physical costs
+`67/87` from the fight payload. Treat the older constants in this file as
+capture-specific examples, not canonical formulas.
+
 > **Source**: Live analysis from `http://www.neverlands.ru` (December 2024)
 > **Purpose**: Reference for implementing Elselands combat mechanics
 
@@ -1015,8 +1021,8 @@ Example: 1_7_0 = Torso block, type 7 (Торс (30)), 0 mana
 | Дуэли | Duels | 1v1 combat |
 | Групповые | Group | Team battles |
 | Жертвенные | Sacrificial | Special mode |
-| Тактические | Tactical | Grid-based tactical combat |
-| Тотализатор | Betting | Spectator betting |
+| Тактические | Tactical | Disabled label only in the captured arena frame |
+| Тотализатор | Betting | Disabled label only in the captured arena frame |
 | Статистика | Statistics | Fight history & rankings |
 
 ---
@@ -1134,7 +1140,9 @@ Body part block dropdowns:
 ### Key Observations
 
 1. **Multiple Body Parts Per Turn**: Can attack/defend multiple body parts
-2. **AP Budget Management**: Must stay within 80 AP total
+2. **AP Budget Management**: Must stay within the server-supplied AP total;
+   this older capture showed 80 AP, while the later `lukin[6]` vs `Гоблин[3]`
+   capture showed 140 AP.
 3. **Mana Constraints**: Magic attacks limited to 5-8 mana range
 4. **Real-time HP Display**: Shows exact HP and percentage
 5. **Opponent Stats Visible**: Can see enemy's base stats
@@ -1149,7 +1157,7 @@ Body part block dropdowns:
 | Feature | File | Notes |
 |---------|------|-------|
 | Body Part Targeting (4 zones) | `turn_based_combat_service.rb` | `BODY_PARTS` constant |
-| Action Point System (80 base) | `turn_based_combat_service.rb` | `action_points_per_turn` config |
+| Action Point System | `arena/combat_profile.rb`, `arena/combat_processor.rb` | Arena stores per-participant AP/cost profiles; older 80 AP captures are examples, not universal rules |
 | Multi-attack Penalty | `turn_based_combat_service.rb` | `attack_penalties` config |
 | Critical Hits | `arena/combat_processor.rb` | 10% chance, 1.5x damage |
 | Block System | `turn_based_combat_service.rb` | Body part matching |
@@ -1166,7 +1174,7 @@ Body part block dropdowns:
 | HP Recovery Gate | `arena_application.rb` | 50% HP minimum to accept fights |
 | Turn Timeout System | `arena_match.rb`, `arena_turn_timeout_job.rb` | 5 min default, auto-resolve, warnings |
 | Trauma/Injury System | `combat_processor.rb#apply_trauma` | HP/XP loss based on trauma % |
-| Attack Type Variants | `combat_processor.rb::ATTACK_TYPES` | Simple (45 AP, 1.0x) vs Aimed (65 AP, 1.2x) |
+| Attack Type Variants | `arena/combat_profile.rb`, `combat_processor.rb::ATTACK_TYPES` | Simple/aimed AP comes from the participant profile seed plus 20 for aimed; older 45/65 captures are fallback examples |
 | Combo Block Types | `combat_processor.rb#process_defend` | Multi-body-part blocking |
 | Standardized Combat Log | `combat_processor.rb#log_entry` | Neverlands format messages |
 | Opponent Stats Display | `arena_helper.rb#opponent_combat_stats` | Shows Str/Dex/Luck/Knowledge/Wisdom |
@@ -1315,8 +1323,8 @@ Each application row shows icons for:
 | Дуэли | Duels | 1v1 fights |
 | Групповые | Group | Team battles |
 | Жертвенные | Sacrificial | Special sacrifice mode |
-| Тактические | Tactical | Grid-based tactical |
-| Тотализатор | Betting | Spectator gambling |
+| Тактические | Tactical | Disabled label only in the captured arena frame |
+| Тотализатор | Betting | Disabled label only in the captured arena frame |
 | Статистика | Statistics | Rankings & history |
 
 ### Elselands Implementation Gaps Identified
@@ -1508,15 +1516,17 @@ This section documents all combat formulas and constants implemented in Elseland
 ### Action Points (AP) System
 
 ```ruby
-# Constants
-AP_PER_TURN = 100          # Total AP available per turn
-BLOCK_AP_COST = 30         # Base cost to block
-
-# Attack Type Costs
-ATTACK_TYPES = {
-  simple: { ap_cost: 45, damage_mult: 1.0, hit_bonus: 0 },
-  aimed:  { ap_cost: 65, damage_mult: 1.2, hit_bonus: 10 }
+# Per-participant profile, stored on ArenaParticipation metadata.
+profile = {
+  "ap_limit" => 140,                    # captured fight_pm[1]
+  "physical_attack_cost_seed" => 67,    # captured fight_pm[2]
+  "simple_attack_cost" => 67,
+  "aimed_attack_cost" => 87,            # seed + 20
+  "block_table" => "normal"
 }
+
+# New local fights derive the same shape from character AP, level/equipment,
+# and item-family hooks when no captured profile exists.
 
 # Multi-Attack Penalty (from Neverlands analysis)
 MULTI_ATTACK_PENALTIES = [0, 0, 25, 75, 150, 250]
@@ -1542,41 +1552,27 @@ BODY_PART_MULTIPLIERS = {
 ### Damage Calculation
 
 ```ruby
-# Base Damage Formula
-def calculate_base_damage(character)
-  base = character.stats.get(:attack) || 10
-  weapon_bonus = character.equipped_weapon_damage || 0
-  base + weapon_bonus + rand(1..5)  # Random variance
-end
-
-# Final Damage Formula
-base_damage = calculate_base_damage(attacker)
-base_damage *= attack_type[:damage_mult]     # Attack type modifier (1.0 or 1.2)
-base_damage *= BODY_PART_MULTIPLIERS[part]   # Body part modifier (0.9-1.3)
-defense = calculate_defense(target)
-damage = [base_damage - defense, 1].max       # Minimum 1 damage
-
-# Critical Hit (10% chance, 2x damage)
-if rand < 0.1
-  damage *= 2
-end
+# Arena::CombatResolver sequence:
+# 1. hit roll
+# 2. dodge roll
+# 3. selected block coverage check
+# 4. critical roll
+# 5. damage formula
+attack = attacker.attack_power + variance(1..5)
+attack *= attack_type_damage_multiplier
+attack *= BODY_PART_MULTIPLIERS[part]
+damage = attack.round - (defender.defense / 2)
+damage *= 1.5 if critical
+damage = [damage, 0].max
 ```
 
 ### Defense Calculation
 
 ```ruby
-def calculate_defense(character)
-  base = character.stats.get(:defense) || 5
-  armor_bonus = character.equipped_armor_defense || 0
-  defense = base + armor_bonus
-
-  # Defend stance bonus (+50% defense)
-  if character.metadata["defending"]
-    defense *= 1.5
-  end
-
-  defense.round
-end
+defense = character.defense
+# Character#defense = vitality + strength / 3 + level / 2 + equipped armor/shield
+# Selected blocks are not passive defense multipliers; they are explicit
+# body-part coverage actions resolved before damage.
 ```
 
 ### HP Recovery Gate
@@ -1688,7 +1684,7 @@ NPC_MATCH_COUNTDOWN = 5     # seconds for NPC/training matches
 | Attack Types | `ATTACK_TYPES` constant (simple, aimed) |
 | Block Types (Combo) | `block_parts` array parameter |
 | Body Part Targeting | `BODY_PART_MULTIPLIERS` constant |
-| AP System | `AP_PER_TURN = 100`, costs per action |
+| AP System | `Arena::CombatProfile` per-participant AP/cost profile |
 | Turn Timeout | `ArenaTurnTimeoutJob` (120-300s configurable) |
 | HP Recovery Gate | `MIN_HP_PERCENT_FOR_ARENA = 50` |
 | Trauma System | `apply_trauma` method with HP/XP loss |
@@ -1696,20 +1692,19 @@ NPC_MATCH_COUNTDOWN = 5     # seconds for NPC/training matches
 | Opponent Stats Display | `opponent_combat_stats` helper |
 | Combat Log (Timestamped) | `metadata["combat_log"]` array |
 | Match Auto-End | `auto_end_if_needed!` (stale/defeat) |
-| Critical Hits | 10% chance, 2x damage |
-| Dodge/Evasion | Hit chance roll |
+| Critical Hits | `Arena::CombatResolver` critical roll and multiplier |
+| Dodge/Evasion | `Arena::CombatResolver` hit and dodge rolls |
 | Match Notifications | Both participants notified |
 | Active Match Redirect | Users redirected to active match |
 
-### 🟡 UI Enhancements Needed (Phase 2)
+### 🟡 Source Capture / Tuning Work
 
 | Enhancement | Priority | Notes |
 |-------------|----------|-------|
 | Equipment slots around avatar | Medium | 8 slots visual display |
 | Stamina percentage display | Medium | Header indicator |
-| Full dropdown-based UI | Medium | 4 attack + 4 block dropdowns |
-| Multi-attack penalty display | Low | Show AP penalty for 2+ attacks |
-| Magic shield blocks | Low | Special block types with mana cost |
+| Live item-family coefficient captures | Medium | Local AP/cost formula exists; more live captures tune constants |
+| Live PvP fight capture | Medium | Local simultaneous PvP resolution is implemented; external parity evidence still needs a real opponent |
 | World/System log panel | Low | Below combat area |
 
 ---

@@ -98,24 +98,37 @@ RSpec.describe "Arena Match UI Layout", type: :system do
       expect(page).to have_css(".arena-action-panel")
     end
 
-    it "shows Attack button" do
+    it "shows attack selectors with dynamic physical costs" do
       visit arena_match_path(match)
-      expect(page).to have_button("⚔️ Attack")
+      expect(page).to have_css(".nl-fight-selector-table option", text: "Simple Attack [ 45 ]")
+      expect(page).to have_css(".nl-fight-selector-table option", text: "Aimed Attack [ 65 ]")
     end
 
-    it "shows Aimed Attack button" do
+    it "shows turn submit button" do
       visit arena_match_path(match)
-      expect(page).to have_button("🎯 Aimed")
+      expect(page).to have_button("Submit Turn")
     end
 
     it "shows body part selection dropdown" do
       visit arena_match_path(match)
-      expect(page).to have_css(".arena-target-select select")
+      expect(page).to have_css(".nl-fight-selector-table select", minimum: 4)
     end
 
-    it "shows defense/block buttons" do
+    it "shows defense/block selector" do
       visit arena_match_path(match)
-      expect(page).to have_button("🛡️ Block")
+      expect(page).to have_css(".nl-fight-selector-table option", text: "Torso Block [ 30 ]")
+      expect(page).to have_css(".nl-fight-selector-table option", text: "Head Block [ 35 ]")
+    end
+
+    it "shows shield block table when current fighter has a shield equipped" do
+      shield = create(:item_template,
+        name: "Arena Shield",
+        slot: "off_hand",
+        stat_modifiers: {"defense" => 8, "weapon_family" => "shield"})
+      create(:inventory_item, inventory: character1.inventory, item_template: shield, equipped: true)
+
+      visit arena_match_path(match)
+      expect(page).to have_css(".nl-fight-selector-table option", text: "Shield Torso Block [ 40 ]")
     end
   end
 
@@ -156,18 +169,17 @@ RSpec.describe "Arena Match UI Layout", type: :system do
   describe "Opponent Stats Display" do
     it "shows opponent stats" do
       visit arena_match_path(match)
-      # Stats use emoji shorthand: 💪 for strength, 🏃 for dex, 🍀 for luck
-      expect(page).to have_content("💪")
+      expect(page).to have_content("Strength:")
     end
 
-    it "displays strength emoji" do
+    it "displays strength label" do
       visit arena_match_path(match)
-      expect(page).to have_content("💪")
+      expect(page).to have_content("Strength: 10")
     end
 
-    it "displays dexterity emoji" do
+    it "displays dexterity label" do
       visit arena_match_path(match)
-      expect(page).to have_content("🏃")
+      expect(page).to have_content("Dexterity: 0")
     end
   end
 
@@ -201,7 +213,14 @@ RSpec.describe "Arena Match UI Layout", type: :system do
         expect(page).to have_content("WarriorAlpha")
       end
 
-      it "shows Return to Arena button" do
+      it "shows finish fight button before returning to arena" do
+        visit arena_match_path(match)
+        expect(page).to have_button("Finish Fight")
+      end
+
+      it "shows Return to Arena after the result screen is finished" do
+        participation1.update!(metadata: {"finished_at" => Time.current.iso8601})
+
         visit arena_match_path(match)
         expect(page).to have_link("Return to Arena")
       end

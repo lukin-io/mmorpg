@@ -24,10 +24,10 @@
     <div class="arena-application-players">
       <% if application.npc_application? %>
         <span class="npc-nameplate">
-          <span class="npc-avatar"><%= application.npc_template&.avatar_emoji || "🤖" %></span>
+          <span class="npc-avatar"><%= application.applicant_name.to_s.first || "N" %></span>
           <strong class="npc-name"><%= application.applicant_name %></strong>
           <span class="npc-level">[<%= application.applicant_level %>]</span>
-          <span class="npc-badge badge badge--npc">🤖 Bot</span>
+          <span class="npc-badge badge badge--npc">Bot</span>
           <% if application.npc_difficulty.present? %>
             <span class="npc-difficulty badge badge--<%= application.npc_difficulty %>">
               <%= application.npc_difficulty.humanize %>
@@ -46,15 +46,15 @@
 
   <div class="arena-application-meta">
     <% if application.expires_at %>
-      <span class="arena-application-timer <%= 'arena-application-timer--urgent' if application.time_until_expiration && application.time_until_expiration < 60 %>"
+        <span class="arena-application-timer <%= 'arena-application-timer--urgent' if application.time_until_expiration && application.time_until_expiration < 60 %>"
             title="Expires at <%= l(application.expires_at, format: :short) %>">
-        ⏰ <%= distance_of_time_in_words_to_now(application.expires_at) %>
+        Expires in <%= distance_of_time_in_words_to_now(application.expires_at) %>
       </span>
     <% end %>
 
     <% if application.team_level_min || application.team_level_max %>
       <span class="arena-application-levels badge">
-        📊 Lvl <%= application.team_level_min || application.arena_room.level_min %>-<%= application.team_level_max || application.arena_room.level_max %>
+        Lvl <%= application.team_level_min || application.arena_room.level_min %>-<%= application.team_level_max || application.arena_room.level_max %>
       </span>
     <% end %>
   </div>
@@ -62,9 +62,9 @@
   <div class="arena-application-actions">
     <% if defined?(current_character) %>
       <% if application.applicant == current_character %>
-        <span class="text-muted">👤 Your application</span>
+        <span class="text-muted">Your application</span>
       <% elsif application.acceptable_by?(current_character) %>
-        <%= button_to "✅ Accept",
+        <%= button_to "Accept",
             accept_arena_application_path(application),
             method: :post,
             class: "btn-primary btn-sm",
@@ -75,10 +75,9 @@
             } %>
       <% else %>
         <span class="text-muted text-sm" title="Level or faction requirements not met">
-          🚫 Not eligible
+          Not eligible
         </span>
       <% end %>
     <% end %>
   </div>
 </div>
-

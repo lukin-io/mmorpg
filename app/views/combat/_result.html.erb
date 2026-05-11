@@ -2,9 +2,9 @@
 <div class="combat-result <%= result.success ? 'combat-result--victory' : 'combat-result--defeat' %>">
   <h2 class="combat-result-title">
     <% if result.success %>
-      ⚔️ Victory! ⚔️
+      Victory!
     <% else %>
-      💀 Defeat 💀
+      Defeat
     <% end %>
   </h2>
 
@@ -13,13 +13,13 @@
       <h3>Rewards</h3>
       <ul class="rewards-list">
         <% if result.rewards[:xp].to_i > 0 %>
-          <li class="reward-item reward-xp">✨ <%= result.rewards[:xp] %> XP</li>
+          <li class="reward-item reward-xp"><%= result.rewards[:xp] %> XP</li>
         <% end %>
         <% if result.rewards[:gold].to_i > 0 %>
-          <li class="reward-item reward-gold">💰 <%= result.rewards[:gold] %> Gold</li>
+          <li class="reward-item reward-gold"><%= result.rewards[:gold] %> Gold</li>
         <% end %>
         <% if result.rewards[:item].present? %>
-          <li class="reward-item reward-item">📦 <%= result.rewards[:item] %></li>
+          <li class="reward-item reward-item"><%= result.rewards[:item] %></li>
         <% end %>
       </ul>
     </div>
@@ -29,4 +29,3 @@
     <%= link_to "Return to World", world_path, class: "game-btn btn-primary" %>
   </div>
 </div>
-

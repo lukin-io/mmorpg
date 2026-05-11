@@ -1,14 +1,15 @@
 lukin_user = nil
+seed_admin_password = ENV.fetch("SEED_ADMIN_PASSWORD", "Password123!")
 
 if defined?(User)
   admin = User.find_or_create_by!(email: "first@lukin.io") do |user|
-    user.password = "vxk7mjqjg9"
+    user.password = seed_admin_password
     user.confirmed_at = Time.current
   end
   admin.add_role(:admin)
 
   lukin_user = User.find_or_create_by!(email: "second@lukin.io") do |user|
-    user.password = "vxk7mjqjg9"
+    user.password = seed_admin_password
     user.confirmed_at = Time.current
   end
   lukin_user.add_role(:admin)

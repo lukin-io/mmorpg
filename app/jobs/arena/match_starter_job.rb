@@ -12,17 +12,23 @@ module Arena
       return unless match
       return unless match.pending?
 
+      processor = Arena::CombatProcessor.new(match)
+      processor.prepare_combat_profiles!
+
       match.update!(
         status: :live,
-        started_at: Time.current
+        started_at: Time.current,
+        current_turn_started_at: Time.current,
+        current_turn_number: match.current_turn_number.presence || 1,
+        current_turn_team: nil
       )
+      match.schedule_timeout_check
 
       # Set all participants to in-combat
       match.characters.update_all(in_combat: true, last_combat_at: Time.current)
 
       # Broadcast match start
-      broadcaster = Arena::CombatBroadcaster.new(match)
-      broadcaster.broadcast_match_start
+      processor.broadcaster.broadcast_match_start
     end
   end
 end

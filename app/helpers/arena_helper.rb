@@ -3,57 +3,54 @@
 module ArenaHelper
   include AlignmentHelper
 
-  # Room type icons and labels
+  # Room type labels
   ROOM_TYPE_CONFIG = {
-    training: {emoji: "🏋️", label: "Training Hall", description: "Levels 0-5, reduced penalties"},
-    trial: {emoji: "⚔️", label: "Trial Hall", description: "Levels 5-10, beginner competitive"},
-    challenge: {emoji: "🗡️", label: "Challenge Arena", description: "Levels 5-33, open range duels"},
-    initiation: {emoji: "🎖️", label: "Initiation Ring", description: "Levels 9-33, mid-level"},
-    patron: {emoji: "👑", label: "Patron's Arena", description: "Levels 16-33, high-level"},
-    law: {emoji: "⚖️", label: "Hall of Law", description: "Lawful faction only"},
-    light: {emoji: "☀️", label: "Sanctum of Light", description: "Light alignment only"},
-    balance: {emoji: "☯️", label: "Twilight Arena", description: "Neutral alignment only"},
-    chaos: {emoji: "🔥", label: "Chaos Pit", description: "Chaotic faction only"},
-    dark: {emoji: "🌑", label: "Shadow Arena", description: "Dark alignment only"}
+    training: {label: "Training Hall", description: "Levels 0-5, reduced penalties"},
+    trial: {label: "Trial Hall", description: "Levels 5-10, beginner competitive"},
+    challenge: {label: "Challenge Arena", description: "Levels 5-33, open range duels"},
+    initiation: {label: "Initiation Ring", description: "Levels 9-33, mid-level"},
+    patron: {label: "Patron's Arena", description: "Levels 16-33, high-level"},
+    law: {label: "Hall of Law", description: "Lawful faction only"},
+    light: {label: "Sanctum of Light", description: "Light alignment only"},
+    balance: {label: "Twilight Arena", description: "Neutral alignment only"},
+    chaos: {label: "Chaos Pit", description: "Chaotic faction only"},
+    dark: {label: "Shadow Arena", description: "Dark alignment only"}
   }.freeze
 
-  # Fight type configuration with icons
+  # Fight type configuration
   FIGHT_TYPE_CONFIG = {
-    duel: {emoji: "⚔️", label: "1v1 Duel"},
-    team_battle: {emoji: "👥", label: "Team Battle"},
-    sacrifice: {emoji: "💀", label: "Free-for-All"},
-    tactical: {emoji: "🎯", label: "Tactical Grid"}
+    duel: {label: "1v1 Duel"},
+    team_battle: {label: "Team Battle"},
+    sacrifice: {label: "Free-for-All"}
   }.freeze
 
-  # Fight kind configuration with icons
+  # Fight kind configuration
   FIGHT_KIND_CONFIG = {
-    no_weapons: {emoji: "🥊", label: "Bare Hands"},
-    no_artifacts: {emoji: "🚫", label: "No Magic Items"},
-    limited_artifacts: {emoji: "⚠️", label: "Limited Equipment"},
-    free: {emoji: "✅", label: "All Equipment"},
-    clan_vs_clan: {emoji: "🏰", label: "Clan vs Clan"},
-    faction_vs_faction: {emoji: "🎌", label: "Faction vs Faction"}
+    no_weapons: {label: "Bare Hands"},
+    no_artifacts: {label: "No Magic Items"},
+    limited_artifacts: {label: "Limited Equipment"},
+    free: {label: "All Equipment"},
+    clan_vs_clan: {label: "Clan vs Clan"},
+    faction_vs_faction: {label: "Faction vs Faction"}
   }.freeze
 
-  # Match status icons
+  # Match status labels
   MATCH_STATUS_CONFIG = {
-    pending: {emoji: "⏳", label: "Pending", css: "pending"},
-    matching: {emoji: "🔍", label: "Finding Opponent", css: "matching"},
-    countdown: {emoji: "⏰", label: "Starting Soon", css: "countdown"},
-    live: {emoji: "🔴", label: "LIVE", css: "live"},
-    completed: {emoji: "✅", label: "Completed", css: "completed"},
-    cancelled: {emoji: "❌", label: "Cancelled", css: "cancelled"}
+    pending: {label: "Pending", css: "pending"},
+    matching: {label: "Finding Opponent", css: "matching"},
+    countdown: {label: "Starting Soon", css: "countdown"},
+    live: {label: "LIVE", css: "live"},
+    completed: {label: "Completed", css: "completed"},
+    cancelled: {label: "Cancelled", css: "cancelled"}
   }.freeze
 
-  # Get icon for room type
   def room_type_icon(room_type)
-    ROOM_TYPE_CONFIG.dig(room_type.to_sym, :emoji) || "🏟️"
+    ROOM_TYPE_CONFIG.dig(room_type.to_sym, :label) || "Arena"
   end
 
-  # Get room type badge with icon and label
   def room_type_badge(room_type)
-    config = ROOM_TYPE_CONFIG[room_type.to_sym] || {emoji: "🏟️", label: room_type.to_s.humanize}
-    content_tag(:span, "#{config[:emoji]} #{config[:label]}", class: "room-type-badge room-type-#{room_type}", title: config[:description])
+    config = ROOM_TYPE_CONFIG[room_type.to_sym] || {label: room_type.to_s.humanize}
+    content_tag(:span, config[:label], class: "room-type-badge room-type-#{room_type}", title: config[:description])
   end
 
   # Check if current user is participating in the match
@@ -80,8 +77,8 @@ module ArenaHelper
   end
 
   def fight_type_with_icon(fight_type)
-    config = FIGHT_TYPE_CONFIG[fight_type.to_sym] || {emoji: "⚔️", label: fight_type.to_s.humanize}
-    "#{config[:emoji]} #{config[:label]}"
+    config = FIGHT_TYPE_CONFIG[fight_type.to_sym] || {label: fight_type.to_s.humanize}
+    config[:label]
   end
 
   # Format fight kind for display with icon
@@ -91,22 +88,22 @@ module ArenaHelper
   end
 
   def fight_kind_with_icon(fight_kind)
-    config = FIGHT_KIND_CONFIG[fight_kind.to_sym] || {emoji: "⚔️", label: fight_kind.to_s.humanize}
-    "#{config[:emoji]} #{config[:label]}"
+    config = FIGHT_KIND_CONFIG[fight_kind.to_sym] || {label: fight_kind.to_s.humanize}
+    config[:label]
   end
 
   # Match status badge
   def arena_match_status_badge(status)
-    config = MATCH_STATUS_CONFIG[status.to_sym] || {emoji: "❓", label: status.to_s.humanize, css: "unknown"}
-    content_tag(:span, "#{config[:emoji]} #{config[:label]}", class: "match-status match-status--#{config[:css]}")
+    config = MATCH_STATUS_CONFIG[status.to_sym] || {label: status.to_s.humanize, css: "unknown"}
+    content_tag(:span, config[:label], class: "match-status match-status--#{config[:css]}")
   end
 
   # Application status tag
   def arena_room_status_tag(room)
     if room.has_capacity?
-      content_tag(:span, "🟢 Open", class: "room-status room-status--open")
+      content_tag(:span, "Open", class: "room-status room-status--open")
     else
-      content_tag(:span, "🔴 Full", class: "room-status room-status--full")
+      content_tag(:span, "Full", class: "room-status room-status--full")
     end
   end
 
@@ -162,6 +159,8 @@ module ArenaHelper
     :current_hp, :max_hp, :current_mp, :max_mp,
     :hp_percent, :mp_percent,
     :strength, :dexterity, :luck, :knowledge, :wisdom,
+    :attack_power, :defense, :armor_class, :evasion,
+    :accuracy, :crushing, :endurance, :armor_penetration,
     keyword_init: true
   )
 
@@ -267,7 +266,15 @@ module ArenaHelper
       dexterity: stats[:dexterity] || 0,
       luck: stats[:luck] || 0,
       knowledge: stats[:knowledge] || 0,
-      wisdom: stats[:wisdom] || 0
+      wisdom: stats[:wisdom] || 0,
+      attack_power: stats[:attack_power] || stats[:attack] || 0,
+      defense: stats[:defense] || 0,
+      armor_class: stats[:armor_class] || stats[:defense] || 0,
+      evasion: stats[:evasion] || stats[:dexterity].to_i / 2,
+      accuracy: stats[:accuracy] || stats[:dexterity].to_i,
+      crushing: stats[:crushing] || stats[:luck].to_i,
+      endurance: stats[:endurance] || stats[:vitality].to_i,
+      armor_penetration: stats[:armor_penetration] || 0
     )
   end
 
@@ -299,35 +306,34 @@ module ArenaHelper
 
     if participation.npc?
       npc = participation.npc_template
-      avatar_emoji = npc&.avatar_emoji || "🤖"
-      content_tag(:span, avatar_emoji, class: "avatar avatar--npc avatar--#{size}",
+      avatar_text = npc&.name&.first || "N"
+      content_tag(:span, avatar_text, class: "avatar avatar--npc avatar--#{size}",
         style: "font-size: #{size_px}px; line-height: #{size_px}px;",
         title: npc&.name || "NPC")
     else
       character = participation.character
       avatar_class = character&.avatar || "warrior"
-      # Use character class icon or default
-      avatar_emoji = character_class_emoji(character)
-      content_tag(:span, avatar_emoji, class: "avatar avatar--player avatar--#{size} avatar--#{avatar_class}",
+      avatar_text = character_class_emoji(character)
+      content_tag(:span, avatar_text, class: "avatar avatar--player avatar--#{size} avatar--#{avatar_class}",
         style: "font-size: #{size_px}px; line-height: #{size_px}px;",
         title: character&.name || "Player")
     end
   end
 
-  # Get emoji for character class
+  # Get text label for character class
   # @param character [Character] the character
-  # @return [String] emoji representing the class
+  # @return [String] label representing the class
   def character_class_emoji(character)
-    return "⚔️" unless character&.character_class
+    return "Fighter" unless character&.character_class
 
     case character.character_class.name.to_s.downcase
-    when "warrior", "knight", "paladin" then "⚔️"
-    when "mage", "wizard", "sorcerer" then "🔮"
-    when "rogue", "thief", "assassin" then "🗡️"
-    when "ranger", "archer", "hunter" then "🏹"
-    when "cleric", "priest", "healer" then "✨"
-    when "necromancer", "warlock" then "💀"
-    else "🛡️"
+    when "warrior", "knight", "paladin" then "Fighter"
+    when "mage", "wizard", "sorcerer" then "Mage"
+    when "rogue", "thief", "assassin" then "Rogue"
+    when "ranger", "archer", "hunter" then "Ranger"
+    when "cleric", "priest", "healer" then "Healer"
+    when "necromancer", "warlock" then "Warlock"
+    else "Fighter"
     end
   end
 
@@ -342,6 +348,66 @@ module ArenaHelper
 
     participation = @arena_match.arena_participations.find_by(user: current_user)
     participation&.team
+  end
+
+  def current_user_arena_participation(match = @arena_match)
+    return nil unless match && current_user
+
+    match.arena_participations.find_by(user: current_user)
+  end
+
+  def current_user_pending_arena_turn?(match = @arena_match)
+    participation = current_user_arena_participation(match)
+    return false unless participation
+
+    pending_turn = participation.metadata&.dig("pending_turn")
+    return false unless pending_turn.present?
+
+    pending_turn["turn_number"].to_i == (match.current_turn_number || 1).to_i
+  end
+
+  def current_user_finished_arena_match?(match = @arena_match)
+    participation = current_user_arena_participation(match)
+    participation&.metadata&.dig("finished_at").present?
+  end
+
+  def arena_combat_profile(participation = current_user_arena_participation)
+    return default_arena_combat_profile unless participation
+
+    Arena::CombatProfile.for_participation(participation, persist: true)
+  end
+
+  def arena_action_point_limit(participation = current_user_arena_participation)
+    arena_combat_profile(participation).fetch("ap_limit")
+  end
+
+  def arena_attack_options(participation = current_user_arena_participation, combat_config = Game::Combat::ActionCatalog.config)
+    profile = arena_combat_profile(participation)
+
+    (combat_config["attack_types"] || {}).each_with_object({}) do |(key, config), options|
+      option_config = config.deep_dup
+      case key.to_s
+      when "simple"
+        option_config["action_cost"] = profile["simple_attack_cost"]
+      when "aimed"
+        option_config["action_cost"] = profile["aimed_attack_cost"]
+      end
+      options[key] = option_config
+    end
+  end
+
+  def arena_block_options(participation = current_user_arena_participation, combat_config = Game::Combat::ActionCatalog.config)
+    profile = arena_combat_profile(participation)
+    allowed_tables = ["normal"]
+    allowed_tables << "shield" if profile["block_table"] == "shield"
+
+    (combat_config["block_types"] || {}).select do |_key, config|
+      allowed_tables.include?(config["block_table"].presence || "normal")
+    end
+  end
+
+  def arena_timeout_claim_available?(match = @arena_match)
+    match&.live? && match.turn_timed_out? && current_user_pending_arena_turn?(match)
   end
 
   # Get opponent's combat-relevant stats for display
@@ -372,8 +438,15 @@ module ArenaHelper
       luck: stats.get(:luck) || 5,
       knowledge: stats.get(:knowledge) || stats.get(:intelligence) || 1,
       wisdom: stats.get(:wisdom) || 1,
-      attack: stats.get(:attack),
-      defense: stats.get(:defense)
+      attack: character.attack_power,
+      attack_power: character.attack_power,
+      defense: character.defense,
+      armor_class: character.defense,
+      evasion: character.agility / 2,
+      accuracy: stats.get(:dexterity).to_i,
+      crushing: character.critical_chance,
+      endurance: stats.get(:vitality).to_i,
+      armor_penetration: character.equipment_family_breakdown.sum { |item| item[:family] == "axe" ? item[:attack] / 5 : 0 }
     }.compact
   end
 
@@ -394,7 +467,14 @@ module ArenaHelper
         knowledge: config_stats[:intelligence] || 1,
         wisdom: config_stats[:wisdom] || 1,
         attack: config_stats[:attack],
-        defense: config_stats[:defense]
+        attack_power: config_stats[:attack],
+        defense: config_stats[:defense],
+        armor_class: config_stats[:defense],
+        evasion: config_stats[:agility].to_i / 2,
+        accuracy: config_stats[:agility],
+        crushing: config_stats[:crit_chance] || 5,
+        endurance: config_stats[:hp],
+        armor_penetration: config_stats[:armor_penetration] || 0
       }.compact
     end
 
@@ -407,7 +487,14 @@ module ArenaHelper
       knowledge: 1,
       wisdom: 1,
       attack: npc.metadata&.dig("base_damage") || (level * 3 + 5),
-      defense: level * 2 + 3
+      attack_power: npc.metadata&.dig("base_damage") || (level * 3 + 5),
+      defense: level * 2 + 3,
+      armor_class: level * 2 + 3,
+      evasion: level / 2,
+      accuracy: level + 5,
+      crushing: 5 + (level / 5),
+      endurance: npc.health,
+      armor_penetration: 0
     }
   end
 
@@ -463,6 +550,18 @@ module ArenaHelper
     end
   end
 
+  def default_arena_combat_profile
+    seed = Arena::CombatProfile::DEFAULT_PHYSICAL_ATTACK_SEED
+    {
+      "ap_limit" => Arena::CombatProfile::DEFAULT_AP_LIMIT,
+      "physical_attack_cost_seed" => seed,
+      "simple_attack_cost" => seed,
+      "aimed_attack_cost" => seed + Arena::CombatProfile::AIMED_ATTACK_SURCHARGE,
+      "max_magic_mana" => 0,
+      "block_table" => "normal"
+    }
+  end
+
   # Display HP recovery warning if needed
   # @param character [Character] the character
   # @return [ActiveSupport::SafeBuffer, nil] HTML warning or nil
@@ -472,7 +571,7 @@ module ArenaHelper
 
     content_tag(:div, class: "arena-warning arena-warning--hp") do
       safe_join([
-        content_tag(:span, "⚠️ ", class: "warning-icon"),
+        content_tag(:span, "Warning: ", class: "warning-icon"),
         content_tag(:span, reason, class: "warning-message")
       ])
     end

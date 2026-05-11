@@ -58,12 +58,12 @@ RSpec.describe Arena::CombatProcessor do
           body_part: "torso"
         )
 
-        # Could be blocked, so check for success or blocked
+        # The resolver can block, miss, dodge, or land a zero-damage hit.
         expect(result.success?).to be true
-        if result[:blocked]
-          expect(character2.reload.current_hp).to eq(initial_hp)
-        else
+        if result[:damage].to_i.positive?
           expect(character2.reload.current_hp).to be < initial_hp
+        else
+          expect(character2.reload.current_hp).to eq(initial_hp)
         end
       end
 
@@ -76,12 +76,8 @@ RSpec.describe Arena::CombatProcessor do
           body_part: "torso"
         )
 
-        if result[:blocked]
-          expect(result[:damage]).to eq(0)
-        else
-          expect(result[:damage]).to be_a(Integer)
-          expect(result[:damage]).to be > 0
-        end
+        expect(result[:damage]).to be_a(Integer)
+        expect(result[:damage]).to be >= 0
       end
 
       it "broadcasts combat action" do
@@ -226,9 +222,114 @@ RSpec.describe Arena::CombatProcessor do
     end
   end
 
+  describe "NPC fight capture behavior" do
+    let(:npc_template) do
+      create(:npc_template,
+        role: "arena_bot",
+        name: "Captured Bandit",
+        level: 5,
+        metadata: {"base_damage" => 15, "ai_behavior" => "balanced"})
+    end
+
+    let(:npc_match) do
+      create(:arena_match,
+        arena_room: arena_room,
+        status: :live,
+        match_type: :duel,
+        started_at: Time.current,
+        metadata: {
+          "is_npc_fight" => true,
+          "combat_log" => [],
+          "combat_profile" => {
+            "ap_limit" => 140,
+            "physical_attack_cost_seed" => 67,
+            "simple_attack_cost" => 67,
+            "aimed_attack_cost" => 87,
+            "max_magic_mana" => 52,
+            "block_table" => "normal"
+          }
+        })
+    end
+
+    let!(:npc_player_participation) do
+      create(:arena_participation,
+        arena_match: npc_match,
+        character: character1,
+        user: user1,
+        team: "a")
+    end
+
+    let!(:npc_participation) do
+      create(:arena_participation, :npc,
+        arena_match: npc_match,
+        npc_template: npc_template,
+        team: "b",
+        metadata: {"current_hp" => 105, "max_hp" => 105})
+    end
+
+    def deterministic_arena_processor(match, *rolls)
+      rng = instance_double(Random)
+      allow(rng).to receive(:rand) do |range_or_limit = nil|
+        value = rolls.shift || 99
+        range_or_limit.is_a?(Range) ? value.clamp(range_or_limit.min, range_or_limit.max) : value
+      end
+      described_class.new(match, rng:)
+    end
+
+    it "processes a captured-style NPC response with multiple physical attacks" do
+      captured_processor = deterministic_arena_processor(npc_match, 0, 99, 99, 3, 0, 99, 99, 3)
+      allow(captured_processor.broadcaster).to receive(:broadcast_vitals_update)
+      allow(captured_processor.broadcaster).to receive(:broadcast_combat_action)
+
+      decision = Arena::NpcCombatAi::Decision.new(
+        action_type: :attack,
+        target: character1,
+        params: {
+          body_part: "stomach",
+          attack_type: "simple",
+          attacks: [
+            {action_key: "simple", body_part: "stomach"},
+            {action_key: "simple", body_part: "legs"}
+          ]
+        }
+      )
+      allow(Arena::NpcCombatAi).to receive(:new).and_return(instance_double(Arena::NpcCombatAi, decide_action: decision))
+
+      result = captured_processor.process_npc_turn
+
+      expect(result).to be_success
+      expect(result[:attacks].size).to eq(2)
+      log = npc_match.reload.metadata["combat_log"]
+      damage_entries = log.select { |entry| entry["type"] == "damage" && entry["description"].include?("Captured Bandit attacks") }
+      expect(damage_entries.map { |entry| entry["description"] }.join(" ")).to include("stomach", "legs")
+    end
+
+    it "logs the automatic loot check after an NPC defeat" do
+      npc_participation.update!(metadata: {"current_hp" => 1, "max_hp" => 105})
+      captured_processor = deterministic_arena_processor(npc_match, 0, 99, 99, 5)
+      allow(captured_processor.broadcaster).to receive(:broadcast_ap_update)
+      allow(captured_processor.broadcaster).to receive(:broadcast_vitals_update)
+      allow(captured_processor.broadcaster).to receive(:broadcast_combat_action)
+      allow(captured_processor.broadcaster).to receive(:broadcast_match_ended)
+
+      result = captured_processor.process_action(
+        character1,
+        :attack,
+        target: npc_participation,
+        attack_type: :simple,
+        body_part: "torso"
+      )
+
+      expect(result).to be_success
+      log = npc_match.reload.metadata["combat_log"]
+      expect(log.map { |entry| entry["type"] }).to include("defeat", "loot", "victory")
+      expect(log.find { |entry| entry["type"] == "loot" }["description"]).to include("searched Captured Bandit")
+    end
+  end
+
   describe "AP (Action Points) system" do
     describe "#process_action with AP" do
-      it "deducts AP for simple attack (45 AP)" do
+      it "deducts AP for simple attack from the participant AP budget" do
         allow(processor.broadcaster).to receive(:broadcast_ap_update)
         allow(processor.broadcaster).to receive(:broadcast_combat_action)
         allow(processor.broadcaster).to receive(:broadcast_vitals_update)
@@ -245,7 +346,7 @@ RSpec.describe Arena::CombatProcessor do
         expect(participation1.reload.metadata["current_ap"]).to eq(55) # 100 - 45
       end
 
-      it "deducts AP for aimed attack (65 AP)" do
+      it "deducts AP for aimed attack from the participant AP budget" do
         allow(processor.broadcaster).to receive(:broadcast_ap_update)
         allow(processor.broadcaster).to receive(:broadcast_combat_action)
         allow(processor.broadcaster).to receive(:broadcast_vitals_update)
@@ -289,9 +390,279 @@ RSpec.describe Arena::CombatProcessor do
         expect(result.error).to include("Not enough AP")
       end
 
+      it "processes a Neverlands-style turn package with attack and block" do
+        allow(processor.broadcaster).to receive(:broadcast_ap_update)
+        allow(processor.broadcaster).to receive(:broadcast_combat_action)
+        allow(processor.broadcaster).to receive(:broadcast_vitals_update)
+        allow(processor.broadcaster).to receive(:broadcast_system_message)
+
+        result = processor.process_action(
+          character1,
+          :turn,
+          target: character2,
+          attacks: [{action_key: "simple", body_part: "torso"}],
+          blocks: [{action_key: "torso_block", body_parts: ["torso"]}]
+        )
+
+        expect(result.success?).to be true
+        expect(result[:waiting]).to be true
+        expect(result[:resolved]).to be false
+        expect(result[:total_ap]).to eq(75)
+        expect(participation1.reload.metadata["current_ap"]).to eq(25)
+        expect(participation1.metadata["pending_turn"]).to be_present
+        expect(character1.reload.metadata["blocked_parts"]).to be_blank
+      end
+
+      it "waits for both players before resolving the committed round" do
+        allow(processor.broadcaster).to receive(:broadcast_ap_update)
+        allow(processor.broadcaster).to receive(:broadcast_combat_action)
+        allow(processor.broadcaster).to receive(:broadcast_vitals_update)
+        allow(processor.broadcaster).to receive(:broadcast_system_message)
+
+        first = processor.process_action(
+          character1,
+          :turn,
+          target: character2,
+          attacks: [{action_key: "simple", body_part: "torso"}],
+          blocks: [{action_key: "torso_block", body_parts: ["torso"]}]
+        )
+
+        expect(first.success?).to be true
+        expect(first[:waiting]).to be true
+        expect(character2.reload.current_hp).to eq(100)
+
+        second = processor.process_action(
+          character2,
+          :turn,
+          target: character1,
+          attacks: [{action_key: "simple", body_part: "torso"}],
+          blocks: [{action_key: "torso_block", body_parts: ["torso"]}]
+        )
+
+        expect(second.success?).to be true
+        expect(second[:waiting]).to be false
+        expect(second[:resolved]).to be true
+        expect(participation1.reload.metadata["pending_turn"]).to be_blank
+        expect(participation2.reload.metadata["pending_turn"]).to be_blank
+        expect(participation1.metadata["current_ap"]).to eq(100)
+        expect(participation2.metadata["current_ap"]).to eq(100)
+      end
+
+      it "uses captured Neverlands fight profile values when present" do
+        participation1.update!(
+          metadata: {
+            "combat_profile" => {
+              "ap_limit" => 140,
+              "physical_attack_cost_seed" => 67,
+              "simple_attack_cost" => 67,
+              "aimed_attack_cost" => 87,
+              "max_magic_mana" => 52,
+              "block_table" => "normal"
+            }
+          }
+        )
+
+        allow(processor.broadcaster).to receive(:broadcast_ap_update)
+        allow(processor.broadcaster).to receive(:broadcast_combat_action)
+        allow(processor.broadcaster).to receive(:broadcast_vitals_update)
+        allow(processor.broadcaster).to receive(:broadcast_system_message)
+
+        result = processor.process_action(
+          character1,
+          :turn,
+          target: character2,
+          attacks: [{action_key: "simple", body_part: "torso"}],
+          blocks: [{action_key: "torso_block", body_parts: ["torso"]}]
+        )
+
+        expect(result.success?).to be true
+        expect(result[:total_ap]).to eq(97)
+        expect(participation1.reload.metadata["current_ap"]).to eq(43)
+        expect(participation1.metadata.dig("pending_turn", "ap_limit")).to eq(140)
+      end
+
+      it "validates a captured-profile PvP round and resolves only after both turns arrive" do
+        captured_profile = {
+          "ap_limit" => 140,
+          "physical_attack_cost_seed" => 67,
+          "simple_attack_cost" => 67,
+          "aimed_attack_cost" => 87,
+          "max_magic_mana" => 52,
+          "block_table" => "normal"
+        }
+        participation1.update!(metadata: {"combat_profile" => captured_profile})
+        participation2.update!(metadata: {"combat_profile" => captured_profile})
+
+        rng = instance_double(Random)
+        allow(rng).to receive(:rand).with(100).and_return(0, 99, 0, 99)
+        captured_processor = described_class.new(arena_match, rng:)
+
+        allow(captured_processor.broadcaster).to receive(:broadcast_ap_update)
+        allow(captured_processor.broadcaster).to receive(:broadcast_combat_action)
+        allow(captured_processor.broadcaster).to receive(:broadcast_vitals_update)
+        allow(captured_processor.broadcaster).to receive(:broadcast_system_message)
+
+        first = captured_processor.process_action(
+          character1,
+          :turn,
+          target: character2,
+          attacks: [{action_key: "simple", body_part: "torso"}],
+          blocks: [{action_key: "torso_block", body_parts: ["torso"]}]
+        )
+        second = captured_processor.process_action(
+          character2,
+          :turn,
+          target: character1,
+          attacks: [{action_key: "simple", body_part: "torso"}],
+          blocks: [{action_key: "torso_block", body_parts: ["torso"]}]
+        )
+
+        expect(first).to be_success
+        expect(first[:total_ap]).to eq(97)
+        expect(first[:waiting]).to be true
+        expect(second).to be_success
+        expect(second[:resolved]).to be true
+        expect(participation1.reload.metadata["current_ap"]).to eq(140)
+        expect(participation2.reload.metadata["current_ap"]).to eq(140)
+        expect(arena_match.reload.metadata["combat_log"].map { |entry| entry["type"] }).to include("block")
+      end
+
+      it "allows a magic/action slot as the only submitted action" do
+        errors = processor.send(
+          :validate_turn_actions,
+          [],
+          [],
+          [{key: "hp_restore"}],
+          actor: character1
+        )
+
+        expect(errors).to be_empty
+      end
+
+      it "applies direct magic damage and tracks arena damage totals" do
+        allow(processor.broadcaster).to receive(:broadcast_vitals_update)
+        allow(processor.broadcaster).to receive(:broadcast_combat_action)
+
+        result = processor.send(
+          :process_turn_skill,
+          character1,
+          {key: "fire_arrow", target_id: character2.id},
+          character2
+        )
+
+        expect(result).to be_success
+        expect(character2.reload.current_hp).to be < 100
+        expect(participation1.reload.metadata["damage_dealt"]).to eq(result[:damage])
+        expect(participation2.reload.metadata["damage_taken"]).to eq(result[:damage])
+      end
+
+      it "rejects magic actions above the fight mana ceiling" do
+        character1.update!(current_mp: 200, max_mp: 200)
+        participation1.update!(
+          metadata: {
+            "combat_profile" => {
+              "ap_limit" => 200,
+              "physical_attack_cost_seed" => 67,
+              "max_magic_mana" => 52
+            }
+          }
+        )
+
+        errors = processor.send(
+          :validate_turn_mana,
+          character1,
+          [],
+          [{key: "crystal_sphere"}]
+        )
+
+        expect(errors).to include("Magic/action mana exceeds fight limit (65/52)")
+      end
+
+      it "stores status effects from special magic actions" do
+        allow(processor.broadcaster).to receive(:broadcast_combat_action)
+
+        result = processor.send(
+          :process_turn_skill,
+          character1,
+          {key: "freeze", target_id: character2.id},
+          character2
+        )
+
+        expect(result).to be_success
+        effect = participation2.reload.metadata["effects"].last
+        expect(effect).to include("key" => "freeze", "effect" => "stun", "duration" => 1)
+      end
+
+      it "lets a waiting player claim victory after the turn timer expires" do
+        arena_match.update!(current_turn_started_at: 6.minutes.ago, turn_timeout_seconds: 300)
+
+        allow(processor.broadcaster).to receive(:broadcast_match_ended)
+
+        participation1.metadata ||= {}
+        participation1.metadata["pending_turn"] = {
+          "turn_number" => arena_match.current_turn_number || 1,
+          "attacks" => [{"action_key" => "simple", "body_part" => "torso"}],
+          "blocks" => [{"action_key" => "torso_block", "body_parts" => ["torso"]}],
+          "skills" => [],
+          "total_ap" => 75
+        }
+        participation1.save!
+
+        result = processor.claim_timeout(character1, mode: "victory")
+
+        expect(result.success?).to be true
+        expect(result[:mode]).to eq("victory")
+        expect(arena_match.reload).to be_completed
+        expect(arena_match.winning_team).to eq(participation1.team)
+        expect(participation1.reload.result).to eq("victory")
+        expect(participation2.reload.result).to eq("defeat")
+      end
+
+      it "records a draw when a waiting player accepts timeout draw" do
+        arena_match.update!(current_turn_started_at: 6.minutes.ago, turn_timeout_seconds: 300)
+
+        allow(processor.broadcaster).to receive(:broadcast_match_ended)
+
+        participation1.metadata ||= {}
+        participation1.metadata["pending_turn"] = {
+          "turn_number" => arena_match.current_turn_number || 1,
+          "attacks" => [{"action_key" => "simple", "body_part" => "torso"}],
+          "blocks" => [{"action_key" => "torso_block", "body_parts" => ["torso"]}],
+          "skills" => [],
+          "total_ap" => 75
+        }
+        participation1.save!
+
+        result = processor.claim_timeout(character1, mode: "draw")
+
+        expect(result.success?).to be true
+        expect(result[:mode]).to eq("draw")
+        expect(arena_match.reload).to be_completed
+        expect(arena_match.winning_team).to be_nil
+        expect(participation1.reload.result).to eq("draw")
+        expect(participation2.reload.result).to eq("draw")
+      end
+
+      it "rejects a turn package that exceeds the dynamic AP budget" do
+        result = processor.process_action(
+          character1,
+          :turn,
+          target: character2,
+          attacks: [
+            {action_key: "aimed", body_part: "head"},
+            {action_key: "aimed", body_part: "torso"}
+          ],
+          blocks: []
+        )
+
+        expect(result.success?).to be false
+        expect(result.error).to include("Actions exceed AP limit")
+        expect(result.error).to include("155/100")
+      end
+
       it "broadcasts AP update after action" do
         expect(processor.broadcaster).to receive(:broadcast_ap_update)
-          .with(character1, 55, described_class::AP_PER_TURN)
+          .with(character1, 55, 100)
         allow(processor.broadcaster).to receive(:broadcast_combat_action)
         allow(processor.broadcaster).to receive(:broadcast_vitals_update)
 
@@ -306,8 +677,8 @@ RSpec.describe Arena::CombatProcessor do
     end
 
     describe "AP constants" do
-      it "defines AP_PER_TURN as 100" do
-        expect(described_class::AP_PER_TURN).to eq(100)
+      it "defines AP_PER_TURN as 80" do
+        expect(described_class::AP_PER_TURN).to eq(80)
       end
 
       it "defines BLOCK_AP_COST as 30" do
@@ -351,8 +722,8 @@ RSpec.describe Arena::CombatProcessor do
       expect(described_class::ATTACK_TYPES[:aimed][:damage_mult]).to eq(1.2)
     end
 
-    it "defines aimed attack with hit_bonus 10" do
-      expect(described_class::ATTACK_TYPES[:aimed][:hit_bonus]).to eq(10)
+    it "defines aimed attack with hit_bonus 15" do
+      expect(described_class::ATTACK_TYPES[:aimed][:hit_bonus]).to eq(15)
     end
   end
 

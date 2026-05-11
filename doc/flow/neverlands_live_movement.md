@@ -3,6 +3,21 @@
 Observed on 2026-05-09 from the live Neverlands client after logging in as
 `lukin`. This note documents only the basic overworld movement flow.
 
+## Related Follow-Up Docs
+
+This movement capture is now relevant beyond walking. Wilderness movement can
+lead into NPC ambush fights, and those fights should reuse the same active
+combat/result loop documented elsewhere instead of growing a separate combat
+screen.
+
+- Canonical movement rules: `doc/design/features/movement.md`
+- Canonical combat rules: `doc/design/features/combat.md`
+- Arena and NPC training combat entry: `doc/design/areas/arena.md`
+- NPC behavior and loot expectations: `doc/design/features/npcs_quests.md`
+
+Keep this file as an observation log. Move reusable rules into `doc/design/`,
+and do not store live movement tokens or session values in tracked text.
+
 ## Starting Context
 
 - Entry page: `http://www.neverlands.ru/game.php`
@@ -140,7 +155,7 @@ build = [
 
 map = [
   [1019, 1025, 30, "night", [], ""],
-  [[1018, 1025, "b803ddc70383034b5415de9b1d50ff97"]]
+  [[1018, 1025, "<movement_token>"]]
 ]
 
 current_x = 1019
@@ -243,7 +258,7 @@ AjaxGet(
   "&mx=1018" +
   "&my=1025" +
   "&gti=30" +
-  "&vcode=b803ddc70383034b5415de9b1d50ff97" +
+  "&vcode=<movement_token>" +
   "&r=<random>"
 )
 ```
@@ -252,7 +267,7 @@ Because `AjaxGet` prefixes requests with `./gameplay/ajax/`, the actual
 request URL was:
 
 ```text
-http://www.neverlands.ru/gameplay/ajax/map_ajax.php?act=1&mx=1018&my=1025&gti=30&vcode=b803ddc70383034b5415de9b1d50ff97&r=...
+http://www.neverlands.ru/gameplay/ajax/map_ajax.php?act=1&mx=1018&my=1025&gti=30&vcode=<movement_token>&r=...
 ```
 
 `moveMapTo` has one duplicate-submit guard:

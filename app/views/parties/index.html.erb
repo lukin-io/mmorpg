@@ -23,8 +23,16 @@
               by <strong><%= invite.sender.profile_name %></strong>
             </p>
             <div class="party-actions">
-              <%= button_to "Accept", party_invitation_path(invite, decision: :accept), method: :patch, class: "game-btn game-btn--primary" %>
-              <%= button_to "Decline", party_invitation_path(invite, decision: :decline), method: :patch, class: "game-btn" %>
+              <%= button_to "Accept",
+                    party_invitation_path(invite, decision: :accept),
+                    method: :patch,
+                    class: "game-btn game-btn--primary",
+                    form: { data: { turbo: false } } %>
+              <%= button_to "Decline",
+                    party_invitation_path(invite, decision: :decline),
+                    method: :patch,
+                    class: "game-btn",
+                    form: { data: { turbo: false } } %>
             </div>
           <% end %>
         </div>
@@ -71,7 +79,10 @@
     <div class="parties-sidebar">
       <div class="create-party-panel card">
         <h3>Create Party</h3>
-        <%= form_with model: @party, local: true, class: "party-form" do |f| %>
+        <%= form_with model: @party,
+              local: true,
+              class: "party-form",
+              data: { turbo: false } do |f| %>
           <div class="form-group">
             <%= f.label :name, "Party Name" %>
             <%= f.text_field :name, class: "form-control", placeholder: "Epic Dungeon Run" %>

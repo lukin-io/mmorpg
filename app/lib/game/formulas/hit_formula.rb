@@ -106,6 +106,8 @@ module Game
 
         if combatant.respond_to?(:stats) && combatant.stats.respond_to?(:get)
           combatant.stats.get(stat_name).to_i
+        elsif combatant.respond_to?(:combat_stat)
+          combatant.combat_stat(stat_name).to_i
         elsif combatant.respond_to?(stat_name)
           combatant.public_send(stat_name).to_i
         elsif combatant.respond_to?(:metadata) && combatant.metadata.is_a?(Hash)

@@ -94,17 +94,17 @@ RSpec.describe "Combat Turn Interface", type: :system do
     it "updates AP display when selecting attack" do
       visit battle_path(battle)
 
-      select "Simple Attack (0 AP)", from: "attacks[head]"
+      select "Simple Attack (45 AP)", from: "attacks[head]"
 
-      # Simple attacks cost 0 AP
+      # Simple attacks cost 45 AP
       expect(page).to have_content("Used:")
     end
 
     it "shows multi-attack penalty when selecting multiple attacks", skip: "Stimulus controller behavior not yet implemented" do
       visit battle_path(battle)
 
-      select "Simple Attack (0 AP)", from: "attacks[head]"
-      select "Simple Attack (0 AP)", from: "attacks[torso]"
+      select "Simple Attack (45 AP)", from: "attacks[head]"
+      select "Simple Attack (45 AP)", from: "attacks[torso]"
 
       # Should show penalty notice (25 AP penalty for 2 attacks)
       expect(page).to have_css(".nl-penalty-notice:not([style*='display: none'])")
@@ -113,7 +113,7 @@ RSpec.describe "Combat Turn Interface", type: :system do
     it "disables legs when head is selected (exclusivity rule)", skip: "Stimulus controller behavior not yet implemented" do
       visit battle_path(battle)
 
-      select "Simple Attack (0 AP)", from: "attacks[head]"
+      select "Simple Attack (45 AP)", from: "attacks[head]"
 
       # Legs dropdown should be disabled
       expect(page).to have_css('[data-body-part="legs"][disabled]')
@@ -122,7 +122,7 @@ RSpec.describe "Combat Turn Interface", type: :system do
     it "disables other blocks when one is selected", skip: "Stimulus controller behavior not yet implemented" do
       visit battle_path(battle)
 
-      select "Block (30 AP)", from: "blocks[head]"
+      select "Head Block (35 AP)", from: "blocks[head]"
 
       # Other block dropdowns should be disabled
       expect(page).to have_css('[data-body-part="torso"].nl-block-select[disabled]')
@@ -133,7 +133,7 @@ RSpec.describe "Combat Turn Interface", type: :system do
 
       expect(page).to have_button("Execute Turn", disabled: true)
 
-      select "Simple Attack (0 AP)", from: "attacks[head]"
+      select "Simple Attack (45 AP)", from: "attacks[head]"
 
       expect(page).to have_button("Execute Turn", disabled: false)
     end
@@ -141,11 +141,10 @@ RSpec.describe "Combat Turn Interface", type: :system do
     it "shows warning when AP limit exceeded", skip: "Stimulus controller behavior not yet implemented" do
       visit battle_path(battle)
 
-      # Select multiple high-cost targeted attacks to exceed 80 AP
-      # Head Strike (35) + Torso Strike (30) + Stomach Strike (30) + penalty = over 80
-      select "Head Strike (35 AP)", from: "attacks[head]"
-      select "Torso Strike (30 AP)", from: "attacks[torso]"
-      select "Stomach Strike (30 AP)", from: "attacks[stomach]"
+      # Select multiple attacks to exceed 80 AP.
+      select "Simple Attack (45 AP)", from: "attacks[head]"
+      select "Aimed Attack (65 AP)", from: "attacks[torso]"
+      select "Aimed Attack (65 AP)", from: "attacks[stomach]"
 
       expect(page).to have_css(".nl-ap-warning:not([style*='display: none'])")
     end
@@ -155,7 +154,7 @@ RSpec.describe "Combat Turn Interface", type: :system do
     it "submits turn and shows waiting state", skip: "Stimulus controller behavior not yet implemented" do
       visit battle_path(battle)
 
-      select "Simple Attack (0 AP)", from: "attacks[head]"
+      select "Simple Attack (45 AP)", from: "attacks[head]"
       click_button "Execute Turn"
 
       # Should show waiting state
@@ -165,7 +164,7 @@ RSpec.describe "Combat Turn Interface", type: :system do
     it "shows confirmation flash message", skip: "Stimulus controller behavior not yet implemented" do
       visit battle_path(battle)
 
-      select "Simple Attack (0 AP)", from: "attacks[head]"
+      select "Simple Attack (45 AP)", from: "attacks[head]"
       click_button "Execute Turn"
 
       expect(page).to have_css(".nl-flash--success")
@@ -176,8 +175,8 @@ RSpec.describe "Combat Turn Interface", type: :system do
     it "resets all selections when clicking reset", skip: "Stimulus controller behavior not yet implemented" do
       visit battle_path(battle)
 
-      select "Simple Attack (0 AP)", from: "attacks[head]"
-      select "Block (30 AP)", from: "blocks[torso]"
+      select "Simple Attack (45 AP)", from: "attacks[head]"
+      select "Torso Block (30 AP)", from: "blocks[torso]"
 
       click_button "Reset"
 
@@ -189,7 +188,7 @@ RSpec.describe "Combat Turn Interface", type: :system do
     it "re-enables all disabled dropdowns on reset", skip: "Stimulus controller behavior not yet implemented" do
       visit battle_path(battle)
 
-      select "Simple Attack (0 AP)", from: "attacks[head]"
+      select "Simple Attack (45 AP)", from: "attacks[head]"
       # Legs should be disabled
 
       click_button "Reset"

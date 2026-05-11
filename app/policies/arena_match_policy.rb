@@ -22,6 +22,17 @@ class ArenaMatchPolicy < ApplicationPolicy
     record.arena_participations.exists?(user: user)
   end
 
+  def claim_timeout?
+    action?
+  end
+
+  def finish?
+    return false unless user.present?
+    return false unless record.completed?
+
+    record.arena_participations.exists?(user: user)
+  end
+
   class Scope < Scope
     def resolve
       scope.all

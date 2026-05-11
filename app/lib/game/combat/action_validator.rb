@@ -132,28 +132,11 @@ module Game
       private
 
       def load_default_config
-        config_path = Rails.root.join("config/gameplay/combat_actions.yml")
-        if File.exist?(config_path)
-          YAML.load_file(config_path)
-        else
-          default_config
-        end
+        Game::Combat::ActionCatalog.config
       end
 
       def default_config
-        {
-          "defaults" => {
-            "action_points_per_turn" => 80,
-            "max_mana_per_attack" => 50
-          },
-          "attack_penalties" => [
-            {"attacks" => 0, "penalty" => 0},
-            {"attacks" => 1, "penalty" => 0},
-            {"attacks" => 2, "penalty" => 25},
-            {"attacks" => 3, "penalty" => 75},
-            {"attacks" => 4, "penalty" => 150}
-          ]
-        }
+        Game::Combat::ActionCatalog.default_config
       end
 
       def validate_can_act
@@ -194,7 +177,13 @@ module Game
 
       def calculate_total_ap(attacks, blocks, skills)
         attack_cost = attacks.sum { |a| action_cost(a[:action_key] || a["action_key"], "attack_types") }
-        block_cost = blocks.sum { |b| action_cost(b[:action_key] || b["action_key"], "block_types") }
+        block_cost = blocks.sum do |b|
+          action_cost(
+            b[:action_key] || b["action_key"],
+            "block_types",
+            body_parts: block_body_parts(b)
+          )
+        end
         skill_cost = skills.sum { |s| action_cost(s[:key] || s["key"], "magic_types") }
 
         # Add multi-attack penalty
@@ -283,20 +272,22 @@ module Game
         end
       end
 
-      def action_cost(action_key, config_section)
+      def action_cost(action_key, config_section, body_parts: nil)
+        if config_section == "block_types"
+          return Game::Combat::ActionCatalog.block_cost(
+            action_key: action_key,
+            body_parts: body_parts,
+            combat_config: @config
+          )
+        end
+
         return 0 unless action_key
 
-        # Check simple/aimed attacks (no cost)
-        return 0 if action_key == "simple"
-        return 20 if action_key == "aimed" # Aimed has 20 AP cost
-
-        @config.dig(config_section, action_key, "action_cost").to_i
+        @config.dig(config_section, action_key.to_s, "action_cost").to_i
       end
 
       def attack_penalty(attack_count)
-        penalties = @config["attack_penalties"] || []
-        penalty_entry = penalties.find { |p| p["attacks"] == attack_count }
-        penalty_entry&.dig("penalty").to_i
+        Game::Combat::ActionCatalog.attack_penalty(attack_count, @config)
       end
 
       def ap_limit
@@ -307,6 +298,10 @@ module Game
         else
           @config.dig("defaults", "action_points_per_turn") || 80
         end
+      end
+
+      def block_body_parts(block)
+        block[:body_parts] || block["body_parts"] || [block[:body_part] || block["body_part"]]
       end
     end
   end

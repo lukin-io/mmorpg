@@ -77,6 +77,25 @@ RSpec.describe ArenaTurnTimeoutJob do
           # The next check is scheduled via match.schedule_timeout_check
           # Just verify the job can run without error
         end
+
+        it "keeps the round waiting when one player has a pending turn" do
+          participation1.update!(
+            metadata: {
+              "pending_turn" => {
+                "turn_number" => arena_match.current_turn_number,
+                "attacks" => [{"action_key" => "simple", "body_part" => "torso"}],
+                "blocks" => [{"action_key" => "torso_block", "body_parts" => ["torso"]}],
+                "skills" => [],
+                "total_ap" => 75
+              }
+            }
+          )
+
+          expect {
+            described_class.new.perform(match_id: arena_match.id)
+          }.not_to change { arena_match.reload.current_turn_number }
+          expect(arena_match.metadata["timeout_claim_available"]).to be true
+        end
       end
 
       context "when match turn has not timed out" do

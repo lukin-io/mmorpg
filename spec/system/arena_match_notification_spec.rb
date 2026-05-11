@@ -15,6 +15,14 @@ RSpec.describe "Arena Match Notification System", type: :system do
     create(:character_position, character: character_b)
   end
 
+  def enter_arena_from_city!(character)
+    zone = character.position.zone
+    zone.update!(biome: "city")
+    hotspot = create(:city_hotspot, :arena, zone:, active: true, required_level: 1)
+
+    page.driver.submit :post, interact_hotspot_world_path, {hotspot_id: hotspot.id}
+  end
+
   # ===========================================================================
   # BUG FIX: Match starts for BOTH applicant and acceptor
   # ===========================================================================
@@ -36,22 +44,24 @@ RSpec.describe "Arena Match Notification System", type: :system do
     context "when acceptor accepts the application" do
       it "shows the application in the list before acceptance" do
         login_as user_b, scope: :user
+        enter_arena_from_city!(character_b)
 
         visit arena_room_path(arena_room)
 
         within ".arena-applications" do
           expect(page).to have_content("Fighter A")
-          expect(page).to have_button("✅ Accept")
+          expect(page).to have_button("Accept")
         end
       end
 
       it "redirects acceptor to the match page after acceptance" do
         login_as user_b, scope: :user
+        enter_arena_from_city!(character_b)
 
         visit arena_room_path(arena_room)
 
         # Accept the application (via form submission, no JS needed)
-        click_button "✅ Accept"
+        click_button "Accept"
 
         # Should be redirected to match page
         expect(page).to have_current_path(%r{/arena_matches/\d+})
@@ -59,9 +69,10 @@ RSpec.describe "Arena Match Notification System", type: :system do
 
       it "changes application status to matched" do
         login_as user_b, scope: :user
+        enter_arena_from_city!(character_b)
 
         visit arena_room_path(arena_room)
-        click_button "✅ Accept"
+        click_button "Accept"
 
         expect(application.reload.status).to eq("matched")
       end
@@ -88,6 +99,7 @@ RSpec.describe "Arena Match Notification System", type: :system do
 
     it "application is visible before acceptance" do
       login_as user_b, scope: :user
+      enter_arena_from_city!(character_b)
 
       visit arena_room_path(arena_room)
 
@@ -97,9 +109,10 @@ RSpec.describe "Arena Match Notification System", type: :system do
 
     it "redirects to active match when revisiting arena room" do
       login_as user_b, scope: :user
+      enter_arena_from_city!(character_b)
 
       visit arena_room_path(arena_room)
-      click_button "✅ Accept"
+      click_button "Accept"
 
       # Should be on match page
       expect(page).to have_current_path(%r{/arena_matches/\d+})
@@ -111,9 +124,10 @@ RSpec.describe "Arena Match Notification System", type: :system do
 
     it "application status changes to matched after acceptance" do
       login_as user_b, scope: :user
+      enter_arena_from_city!(character_b)
 
       visit arena_room_path(arena_room)
-      click_button "✅ Accept"
+      click_button "Accept"
 
       # Verify application status
       expect(application.reload.status).to eq("matched")
@@ -171,6 +185,7 @@ RSpec.describe "Arena Match Notification System", type: :system do
       create(:character_position, character: character_c)
 
       login_as user_c, scope: :user
+      enter_arena_from_city!(character_c)
 
       visit arena_index_path
 
@@ -197,9 +212,10 @@ RSpec.describe "Arena Match Notification System", type: :system do
 
     it "shows countdown overlay when match is accepted", skip: "Requires Chrome/Selenium with display" do
       login_as user_b, scope: :user
+      enter_arena_from_city!(character_b)
 
       visit arena_room_path(arena_room)
-      click_button "✅ Accept"
+      click_button "Accept"
 
       # Should see countdown or be redirected
       expect(page).to have_css(".arena-countdown", visible: true, wait: 3).or(
@@ -215,16 +231,16 @@ RSpec.describe "Arena Match Notification System", type: :system do
   describe "application form submission" do
     it "submits application successfully" do
       login_as user_a, scope: :user
+      enter_arena_from_city!(character_a)
 
       visit arena_room_path(arena_room)
 
       # Fill out application form
-      select "⚔️ Duel (1v1)", from: "fight_type"
-      select "✅ Free (All Equipment)", from: "fight_kind"
-      select "⏱️3️⃣ 3 min", from: "timeout_seconds"
-      select "💛 Medium (30%)", from: "trauma_percent"
+      select "Free", from: "fight_kind"
+      select "3 min", from: "timeout_seconds"
+      select "medium (30%)", from: "trauma_percent"
 
-      click_button "🎯 Submit Application"
+      click_button "Submit Application"
 
       # Should show success message
       expect(page).to have_content("Application submitted")
@@ -232,16 +248,16 @@ RSpec.describe "Arena Match Notification System", type: :system do
 
     it "creates application record after form submission" do
       login_as user_a, scope: :user
+      enter_arena_from_city!(character_a)
 
       visit arena_room_path(arena_room)
 
-      select "⚔️ Duel (1v1)", from: "fight_type"
-      select "✅ Free (All Equipment)", from: "fight_kind"
-      select "⏱️3️⃣ 3 min", from: "timeout_seconds"
-      select "💛 Medium (30%)", from: "trauma_percent"
+      select "Free", from: "fight_kind"
+      select "3 min", from: "timeout_seconds"
+      select "medium (30%)", from: "trauma_percent"
 
       expect {
-        click_button "🎯 Submit Application"
+        click_button "Submit Application"
       }.to change(ArenaApplication, :count).by(1)
 
       expect(ArenaApplication.last.applicant).to eq(character_a)
@@ -256,13 +272,14 @@ RSpec.describe "Arena Match Notification System", type: :system do
         status: :open)
 
       login_as user_a, scope: :user
+      enter_arena_from_city!(character_a)
 
       visit arena_room_path(arena_room)
 
       # Should see their own application without accept button
       within "[data-application-id='#{application.id}']" do
         expect(page).to have_content("Your application")
-        expect(page).not_to have_button("✅ Accept")
+        expect(page).not_to have_button("Accept")
       end
     end
 
@@ -275,12 +292,13 @@ RSpec.describe "Arena Match Notification System", type: :system do
 
       # Login as user B
       login_as user_b, scope: :user
+      enter_arena_from_city!(character_b)
 
       visit arena_room_path(arena_room)
 
       # Should see accept button (use first match since there might be duplicate elements)
       within ".arena-applications [data-application-id='#{application.id}']", match: :first do
-        expect(page).to have_button("✅ Accept")
+        expect(page).to have_button("Accept")
         expect(page).not_to have_content("Your application")
       end
     end

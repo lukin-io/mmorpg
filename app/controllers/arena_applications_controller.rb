@@ -4,6 +4,7 @@
 class ArenaApplicationsController < ApplicationController
   before_action :authenticate_user!
   before_action :require_character
+  before_action :require_city_arena_entry!
   before_action :set_room, only: [:index, :create]
   before_action :set_application, only: [:accept, :destroy, :cancel]
 
@@ -11,7 +12,7 @@ class ArenaApplicationsController < ApplicationController
   def index
     @applications = @room.arena_applications
       .open
-      .includes(:applicant)
+      .includes(:applicant, :npc_template)
       .order(created_at: :asc)
 
     respond_to do |format|
@@ -56,7 +57,7 @@ class ArenaApplicationsController < ApplicationController
           render json: {
             success: true,
             match_id: result.match.id,
-            countdown: @application.timeout_seconds
+            countdown: 10
           }
         end
       else
@@ -134,9 +135,9 @@ class ArenaApplicationsController < ApplicationController
         fight_type: app.fight_type,
         fight_kind: app.fight_kind,
         applicant: {
-          id: app.applicant.id,
-          name: app.applicant.name,
-          level: app.applicant.level
+          id: app.npc_application? ? "npc-#{app.npc_template_id}" : app.applicant.id,
+          name: app.applicant_name,
+          level: app.applicant_level
         },
         expires_in: app.time_until_expiration,
         acceptable: app.acceptable_by?(current_character)

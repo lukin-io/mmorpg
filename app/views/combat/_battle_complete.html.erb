@@ -11,7 +11,7 @@
 
 <div class="nl-battle-complete" id="combat-interface">
   <div class="nl-result-banner nl-result-banner--<%= won ? 'victory' : 'defeat' %>">
-    <h1><%= won ? "🏆 Victory!" : "💀 Defeat" %></h1>
+    <h1><%= won ? "Victory!" : "Defeat" %></h1>
     <p class="nl-result-subtitle">
       <% if won %>
         You have emerged victorious!
@@ -23,21 +23,18 @@
 
   <% if won %>
     <div class="nl-rewards-panel">
-      <h3>📦 Rewards</h3>
+      <h3>Rewards</h3>
       <ul class="nl-rewards-list">
         <li>
-          <span class="nl-reward-icon">⭐</span>
           <span class="nl-reward-label">Experience:</span>
           <span class="nl-reward-value">+<%= calculate_xp_reward(battle, player_participant) %> XP</span>
         </li>
         <li>
-          <span class="nl-reward-icon">💰</span>
           <span class="nl-reward-label">Gold:</span>
           <span class="nl-reward-value">+<%= calculate_gold_reward(battle, player_participant) %></span>
         </li>
         <% if battle.arena? %>
           <li>
-            <span class="nl-reward-icon">🏅</span>
             <span class="nl-reward-label">Arena Points:</span>
             <span class="nl-reward-value">+<%= calculate_arena_points(battle, won) %></span>
           </li>
@@ -47,7 +44,7 @@
   <% end %>
 
   <div class="nl-battle-stats">
-    <h3>📊 Combat Statistics</h3>
+    <h3>Combat Statistics</h3>
     <div class="nl-stats-grid">
       <div class="nl-stat">
         <span class="nl-stat-label">Turns:</span>
@@ -76,4 +73,3 @@
     <% end %>
   </div>
 </div>
-

@@ -30,22 +30,20 @@ RSpec.describe "ArenaRooms", type: :request do
   before do
     create(:character_position, character: character)
     sign_in user, scope: :user
+    enter_arena_from_city!(character)
+  end
+
+  def enter_arena_from_city!(character)
+    zone = character.position.zone
+    zone.update!(biome: "city")
+    hotspot = create(:city_hotspot, :arena, zone: zone, active: true, required_level: 1)
+
+    post interact_hotspot_world_path, params: {hotspot_id: hotspot.id}
   end
 
   # ============================================
   # Success Cases
   # ============================================
-
-  describe "GET /arena_rooms" do
-    it "returns arena rooms index or redirects to arena" do
-      get arena_rooms_path, headers: {"Accept" => "text/html"}
-
-      # Index may redirect to main arena page or return success
-      expect(response).to have_http_status(:success)
-        .or have_http_status(:redirect)
-        .or have_http_status(:not_acceptable)
-    end
-  end
 
   describe "GET /arena_rooms/:id" do
     it "returns arena room show page successfully" do
@@ -73,10 +71,6 @@ RSpec.describe "ArenaRooms", type: :request do
   # Verify the correct route helpers are available after bug fix
 
   describe "route helpers" do
-    it "arena_rooms_path returns /arena_rooms" do
-      expect(arena_rooms_path).to eq("/arena_rooms")
-    end
-
     it "arena_room_path returns /arena_rooms/:id" do
       expect(arena_room_path(arena_room)).to eq("/arena_rooms/#{arena_room.id}")
     end
@@ -93,12 +87,6 @@ RSpec.describe "ArenaRooms", type: :request do
 
   describe "authentication required" do
     before { sign_out user }
-
-    it "redirects to login for arena_rooms index" do
-      get arena_rooms_path
-
-      expect(response).to redirect_to(new_user_session_path)
-    end
 
     it "redirects to login for arena_room show" do
       get arena_room_path(arena_room)

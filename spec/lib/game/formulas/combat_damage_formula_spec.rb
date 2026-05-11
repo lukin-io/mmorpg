@@ -113,6 +113,7 @@ RSpec.describe Game::Formulas::CombatDamageFormula do
       stats = double("Stats")
       allow(stats).to receive(:get).with(:attack_power).and_return(30)
       entity = double("Entity", stats: stats)
+      allow(entity).to receive(:respond_to?).and_return(false)
       allow(entity).to receive(:respond_to?).with(:attack_power).and_return(false)
       allow(entity).to receive(:respond_to?).with(:stats).and_return(true)
 
@@ -121,6 +122,7 @@ RSpec.describe Game::Formulas::CombatDamageFormula do
 
     it "returns default 10 if no stats available" do
       entity = double("Entity")
+      allow(entity).to receive(:respond_to?).and_return(false)
       allow(entity).to receive(:respond_to?).with(:attack_power).and_return(false)
       allow(entity).to receive(:respond_to?).with(:stats).and_return(false)
 
@@ -138,6 +140,7 @@ RSpec.describe Game::Formulas::CombatDamageFormula do
       stats = double("Stats")
       allow(stats).to receive(:get).with(:defense).and_return(20)
       entity = double("Entity", stats: stats)
+      allow(entity).to receive(:respond_to?).and_return(false)
       allow(entity).to receive(:respond_to?).with(:defense).and_return(false)
       allow(entity).to receive(:respond_to?).with(:stats).and_return(true)
 
@@ -146,6 +149,7 @@ RSpec.describe Game::Formulas::CombatDamageFormula do
 
     it "returns default 5 if no stats available" do
       entity = double("Entity")
+      allow(entity).to receive(:respond_to?).and_return(false)
       allow(entity).to receive(:respond_to?).with(:defense).and_return(false)
       allow(entity).to receive(:respond_to?).with(:stats).and_return(false)
 
@@ -161,6 +165,7 @@ RSpec.describe Game::Formulas::CombatDamageFormula do
 
     it "returns default 5 if no critical_chance available" do
       entity = double("Entity")
+      allow(entity).to receive(:respond_to?).and_return(false)
       allow(entity).to receive(:respond_to?).with(:critical_chance).and_return(false)
       allow(entity).to receive(:respond_to?).with(:stats).and_return(false)
 

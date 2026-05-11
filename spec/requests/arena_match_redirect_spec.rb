@@ -10,6 +10,14 @@ RSpec.describe "Arena Match Redirect", type: :request do
   let(:arena_room) { create(:arena_room, level_min: 10, level_max: 25, max_concurrent_matches: 5) }
   let!(:arena_season) { create(:arena_season, status: :live) }
 
+  def enter_arena_from_city!(character)
+    zone = create(:zone, biome: "city")
+    create(:character_position, character: character, zone: zone)
+    hotspot = create(:city_hotspot, :arena, zone: zone, active: true, required_level: 1)
+
+    post interact_hotspot_world_path, params: {hotspot_id: hotspot.id}
+  end
+
   describe "GET /arena" do
     context "when user has an active match" do
       let(:arena_match) do
@@ -55,6 +63,7 @@ RSpec.describe "Arena Match Redirect", type: :request do
 
       it "shows the arena lobby" do
         sign_in user_a, scope: :user
+        enter_arena_from_city!(character_a)
         get arena_index_path
         expect(response).to have_http_status(:ok)
       end
@@ -83,6 +92,7 @@ RSpec.describe "Arena Match Redirect", type: :request do
 
       it "shows the room page" do
         sign_in user_a, scope: :user
+        enter_arena_from_city!(character_a)
         get arena_room_path(arena_room)
         expect(response).to have_http_status(:ok)
       end

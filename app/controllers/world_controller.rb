@@ -141,6 +141,7 @@ class WorldController < ApplicationController
 
     if result.success
       if result.redirect_url.present?
+        mark_city_arena_entry!(result.hotspot)
         # Navigate to feature page (arena, crafting, etc.)
         respond_to do |format|
           format.html { redirect_to result.redirect_url, notice: result.message }

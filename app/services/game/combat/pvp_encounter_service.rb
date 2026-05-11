@@ -165,7 +165,7 @@ module Game
 
         # Validate action points
         total_ap = calculate_turn_ap_cost(attacks, blocks, skills)
-        max_ap = battle.action_points_per_turn || character.max_action_points
+        max_ap = battle.action_points_per_turn || Game::Combat::ActionCatalog::DEFAULT_AP_PER_TURN
         return failure("Exceeds action points (#{total_ap}/#{max_ap})") if total_ap > max_ap
 
         opponent = find_opponent(character)
@@ -438,7 +438,7 @@ module Game
           initiator: attacker,
           turn_number: 1,
           initiative_order: calculate_initiative,
-          action_points_per_turn: [attacker.max_action_points, defender.max_action_points].min,
+          action_points_per_turn: Game::Combat::ActionCatalog::DEFAULT_AP_PER_TURN,
           pvp_mode: "duel",
           rng_seed: seed
         )
@@ -549,7 +549,7 @@ module Game
         # Apply damage through VitalsService
         apply_damage_via_vitals!(opponent, opponent_participant, damage, "PVP: #{character.name}")
 
-        attack_type = is_aimed ? "🎯 aimed attack" : "attacks"
+        attack_type = is_aimed ? "aimed attack" : "attacks"
         combat_log << "#{character.name} #{attack_type} #{opponent.name}'s #{body_part} for #{damage} damage#{" (CRITICAL!)" if is_critical}."
 
         # Check for defeat
@@ -572,10 +572,9 @@ module Game
           return complete_battle!(winner: opponent, loser: character, combat_log: combat_log)
         end
 
-        # Advance turn
-        battle.update!(turn_number: battle.turn_number + 1)
-        combat_log.each { |msg| persist_log_entry!(msg) }
+        persist_log_entries!(combat_log)
         broadcast_combat_update!(combat_log)
+        advance_turn!
 
         Result.new(
           success: true,
@@ -602,9 +601,9 @@ module Game
           return complete_battle!(winner: opponent, loser: character, combat_log: combat_log)
         end
 
-        battle.update!(turn_number: battle.turn_number + 1)
-        combat_log.each { |msg| persist_log_entry!(msg) }
+        persist_log_entries!(combat_log)
         broadcast_combat_update!(combat_log)
+        advance_turn!
 
         Result.new(
           success: true,
@@ -653,9 +652,9 @@ module Game
           return complete_battle!(winner: opponent, loser: character, combat_log: combat_log)
         end
 
-        battle.update!(turn_number: battle.turn_number + 1)
-        combat_log.each { |msg| persist_log_entry!(msg) }
+        persist_log_entries!(combat_log)
         broadcast_combat_update!(combat_log)
+        advance_turn!
 
         Result.new(
           success: true,
@@ -720,9 +719,9 @@ module Game
             return complete_battle!(winner: opponent, loser: character, combat_log: combat_log)
           end
 
-          battle.update!(turn_number: battle.turn_number + 1)
-          combat_log.each { |msg| persist_log_entry!(msg) }
+          persist_log_entries!(combat_log)
           broadcast_combat_update!(combat_log)
+          advance_turn!
 
           Result.new(
             success: false,
@@ -738,8 +737,6 @@ module Game
         opponent = find_opponent(character)
 
         combat_log = ["#{character.name} surrenders!"]
-        persist_log_entry!(combat_log.first)
-
         complete_battle!(winner: opponent, loser: character, combat_log: combat_log)
       end
 
@@ -785,8 +782,9 @@ module Game
 
         outcome = (combat_log.any? { |m| m.include?("surrenders") }) ? "surrender" : "victory"
         combat_log << "#{winner.name} wins the battle!"
-        persist_log_entry!(combat_log.last)
 
+        persist_log_entries!(combat_log)
+        broadcast_combat_update!(combat_log)
         broadcast_combat_ended!(outcome)
 
         Result.new(
@@ -886,6 +884,10 @@ module Game
       # Combat Logging
       # ==================
 
+      def persist_log_entries!(messages)
+        messages.each { |message| persist_log_entry!(message) }
+      end
+
       def persist_log_entry!(message)
         battle.combat_log_entries.create!(
           round_number: battle.turn_number,
@@ -915,6 +917,10 @@ module Game
       def extract_damage(message)
         match = message.match(/for (\d+) damage/)
         match ? match[1].to_i : 0
+      end
+
+      def advance_turn!
+        battle.update!(turn_number: battle.turn_number + 1)
       end
 
       # ==================
