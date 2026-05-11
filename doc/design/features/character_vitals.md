@@ -10,7 +10,15 @@ and drive combat readiness.
 
 Neverlands displays HP/MP in the top game frame and regenerates them over time.
 The live captures show vitals passed into page scripts as current/max values and
-regen timing values.
+regen timing values. The player capture in
+`doc/flow/neverlands_live_player.md` observed the call shape:
+
+```js
+ins_HP(currentHp, maxHp, currentMp, maxMp, hpFullRegenTicks, mpFullRegenTicks)
+```
+
+The client redraws the bars every second, but the durable values still belong to
+the server-side character.
 
 ## Player Experience
 

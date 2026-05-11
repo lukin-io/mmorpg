@@ -1,4 +1,7 @@
 <% content_for :sidebar do %>
+  <% player_character = current_user.character %>
+  <% player_profile_name = player_character&.name || current_user.profile_name %>
+
   <div class="sidebar-panel">
     <div class="sidebar-panel-header">Character</div>
     <div class="sidebar-panel-body">
@@ -23,9 +26,12 @@
   <div class="sidebar-panel">
     <div class="sidebar-panel-header">Quick Menu</div>
     <ul class="sidebar-menu">
-      <li><%= link_to "My Profile", profile_path(current_user.profile_name) %></li>
-      <li><%= link_to "Inventory", "#" %></li>
-      <li><%= link_to "Skills", "#" %></li>
+      <li><%= link_to "My Profile", profile_path(profile_name: player_profile_name) %></li>
+      <li><%= link_to "Inventory", inventory_path %></li>
+      <% if player_character %>
+        <li><%= link_to "Abilities", skills_character_path(player_character) %></li>
+        <li><%= link_to "Perks", perks_character_path(player_character) %></li>
+      <% end %>
       <li><%= link_to "Game World", world_path %></li>
     </ul>
   </div>

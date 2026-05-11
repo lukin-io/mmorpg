@@ -1,53 +1,40 @@
-<div class="stats-panel card">
-  <h3>Character Stats</h3>
+<h2>Parameters</h2>
 
-  <div class="stats-grid">
-    <div class="stat-row">
-      <span class="stat-name">❤️ HP</span>
-      <span class="stat-value"><%= stats[:current_hp] %>/<%= stats[:max_hp] %></span>
-    </div>
-    <div class="stat-row">
-      <span class="stat-name">💙 MP</span>
-      <span class="stat-value"><%= stats[:current_mp] %>/<%= stats[:max_mp] %></span>
-    </div>
-
-    <hr>
-
-    <div class="stat-row">
-      <span class="stat-name">💪 Strength</span>
-      <span class="stat-value"><%= stats[:strength] %></span>
-    </div>
-    <div class="stat-row">
-      <span class="stat-name">🏃 Dexterity</span>
-      <span class="stat-value"><%= stats[:dexterity] %></span>
-    </div>
-    <div class="stat-row">
-      <span class="stat-name">🧠 Intelligence</span>
-      <span class="stat-value"><%= stats[:intelligence] %></span>
-    </div>
-    <div class="stat-row">
-      <span class="stat-name">❤️‍🔥 Vitality</span>
-      <span class="stat-value"><%= stats[:vitality] %></span>
-    </div>
-    <div class="stat-row">
-      <span class="stat-name">✨ Spirit</span>
-      <span class="stat-value"><%= stats[:spirit] %></span>
-    </div>
-
-    <hr>
-
-    <div class="stat-row">
-      <span class="stat-name">⚔️ Attack</span>
-      <span class="stat-value"><%= stats[:attack_power] %></span>
-    </div>
-    <div class="stat-row">
-      <span class="stat-name">🛡️ Defense</span>
-      <span class="stat-value"><%= stats[:defense] %></span>
-    </div>
-    <div class="stat-row">
-      <span class="stat-name">💫 Crit Rate</span>
-      <span class="stat-value"><%= stats[:crit_rate] %>%</span>
-    </div>
-  </div>
-</div>
-
+<table class="nl-profile-table">
+  <tr>
+    <th>HP</th>
+    <td><%= stats[:current_hp] %>/<%= stats[:max_hp] %></td>
+  </tr>
+  <tr>
+    <th>MP</th>
+    <td><%= stats[:current_mp] %>/<%= stats[:max_mp] %></td>
+  </tr>
+  <tr>
+    <th>Strength</th>
+    <td><%= stats[:strength] %></td>
+  </tr>
+  <tr>
+    <th>Dexterity</th>
+    <td><%= stats[:dexterity] %></td>
+  </tr>
+  <tr>
+    <th>Knowledge</th>
+    <td><%= stats[:intelligence] %></td>
+  </tr>
+  <tr>
+    <th>Health</th>
+    <td><%= stats[:vitality] %></td>
+  </tr>
+  <tr>
+    <th>Wisdom</th>
+    <td><%= stats[:spirit] %></td>
+  </tr>
+  <tr>
+    <th>Attack</th>
+    <td><%= stats[:attack_power] %></td>
+  </tr>
+  <tr>
+    <th>Defense</th>
+    <td><%= stats[:defense] %></td>
+  </tr>
+</table>

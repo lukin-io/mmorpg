@@ -1,0 +1,33 @@
+<% character ||= nil %>
+<% viewer_character ||= current_user&.character if user_signed_in? %>
+<% current_section ||= :profile %>
+
+<% if viewer_character %>
+  <div class="nl-player-context-buttons">
+    <% profile_target = profile_path(profile_name: viewer_character.name) %>
+    <% if current_section.to_sym == :profile && character == viewer_character %>
+      <span class="lbutdis">Your Character</span>
+    <% else %>
+      <%= link_to "Your Character", profile_target, class: "lbut" %>
+    <% end %>
+
+    <% if current_section.to_sym == :inventory %>
+      <span class="lbutdis">Inventory</span>
+    <% else %>
+      <%= link_to "Inventory", inventory_path, class: "lbut" %>
+    <% end %>
+
+    <% if current_section.to_sym == :skills %>
+      <span class="lbutdis">Abilities</span>
+    <% else %>
+      <%= link_to "Abilities", skills_character_path(viewer_character), class: "lbut" %>
+    <% end %>
+
+    <% if current_section.to_sym == :perks %>
+      <span class="lbutdis">Perks</span>
+    <% else %>
+      <%= link_to "Perks", perks_character_path(viewer_character), class: "lbut" %>
+    <% end %>
+    <%= link_to "Return", world_path, class: "lbut" %>
+  </div>
+<% end %>

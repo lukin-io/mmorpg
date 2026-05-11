@@ -56,6 +56,15 @@ RSpec.describe "Inventories", type: :request do
       expect(inventory_item.reload.equipped).to be true
     end
 
+    it "rejects equipment when item requirements are not met" do
+      item_template.update!(requirements: {"level" => character.level + 1})
+
+      post equip_inventory_path, params: {item_id: inventory_item.id}
+
+      expect(response).to redirect_to(inventory_path)
+      expect(inventory_item.reload.equipped).to be false
+    end
+
     context "with turbo_stream format" do
       it "returns turbo stream response" do
         post equip_inventory_path, params: {item_id: inventory_item.id},
@@ -110,6 +119,17 @@ RSpec.describe "Inventories", type: :request do
 
       expect(character.reload.current_hp).to be > 50
     end
+
+    it "uses durability charges before removing a consumable" do
+      item_template.update!(durability_max: 2)
+      inventory_item.update!(quantity: 1, properties: {"current_durability" => 2})
+
+      expect {
+        post use_inventory_path, params: {item_id: inventory_item.id}
+      }.not_to change { inventory.inventory_items.count }
+
+      expect(inventory_item.reload.current_durability).to eq(1)
+    end
   end
 
   describe "POST /inventory/sort" do
@@ -139,6 +159,26 @@ RSpec.describe "Inventories", type: :request do
       expect {
         delete inventory_item_path(inventory_item)
       }.to change { inventory.inventory_items.count }.by(-1)
+
+      expect(response).to redirect_to(inventory_path)
+    end
+
+    it "does not remove equipped items" do
+      inventory_item.update!(equipped: true, equipment_slot: "main_hand")
+
+      expect {
+        delete inventory_item_path(inventory_item)
+      }.not_to change { inventory.inventory_items.count }
+
+      expect(response).to redirect_to(inventory_path)
+    end
+
+    it "does not remove quest items" do
+      item_template.update!(item_type: "quest", slot: "none", stat_modifiers: {})
+
+      expect {
+        delete inventory_item_path(inventory_item)
+      }.not_to change { inventory.inventory_items.count }
 
       expect(response).to redirect_to(inventory_path)
     end

@@ -7,7 +7,7 @@
 #
 # Inputs:
 #   - name: unique item name
-#   - item_type: equipment, material, or consumable
+#   - item_type: equipment, material/resource, consumable, quest, or misc
 #   - slot: equipment slot (head, chest, main_hand, etc.) or "none" for non-equipment
 #   - rarity: common, uncommon, rare, epic, legendary
 #
@@ -18,15 +18,19 @@
 #   template.equipment_slot  # => "main_hand"
 #
 class ItemTemplate < ApplicationRecord
-  ITEM_TYPES = %w[equipment material consumable].freeze
-  EQUIPMENT_SLOTS = %w[head chest legs feet hands main_hand off_hand ring_1 ring_2 amulet].freeze
+  ITEM_TYPES = %w[equipment material resource consumable quest misc].freeze
+  EQUIPMENT_SLOTS = %w[
+    head amulet main_hand belt belt_1 belt_2 belt_3 feet pocket pocket_1
+    bracers hands off_hand ring_1 ring_2 ring_3 ring_4 chest legs relic
+  ].freeze
   RARITIES = %w[common uncommon rare epic legendary].freeze
 
   validates :name, presence: true, uniqueness: true
   validates :slot, presence: true
   validates :rarity, presence: true, inclusion: {in: RARITIES}
-  validates :stat_modifiers, presence: true, unless: :material?
+  validates :stat_modifiers, presence: true, if: :equipment?
   validates :weight, numericality: {greater_than: 0}
+  validates :base_price, :durability_max, numericality: {greater_than_or_equal_to: 0}
   validates :stack_limit, numericality: {greater_than: 0}
   validate :premium_stat_cap
   validate :equipment_slot_validity
@@ -39,7 +43,7 @@ class ItemTemplate < ApplicationRecord
   #
   # @return [Boolean] true if item_type is "material"
   def material?
-    item_type == "material"
+    %w[material resource].include?(item_type)
   end
 
   # Check if this item is equipment
@@ -54,6 +58,25 @@ class ItemTemplate < ApplicationRecord
   # @return [Boolean] true if item_type is "consumable"
   def consumable?
     item_type == "consumable"
+  end
+
+  def quest?
+    item_type == "quest"
+  end
+
+  def inventory_category
+    case item_type
+    when "equipment"
+      "equipment"
+    when "consumable"
+      "consumables"
+    when "material", "resource"
+      "materials"
+    when "quest"
+      "quest"
+    else
+      "other"
+    end
   end
 
   # Check if this item can be equipped
@@ -78,7 +101,7 @@ class ItemTemplate < ApplicationRecord
 
   def premium_stat_cap
     return unless premium?
-    return if material? # Materials don't have stats to cap
+    return unless equipment?
 
     total = stat_modifiers.to_h.values.compact.map(&:to_i).sum
     errors.add(:stat_modifiers, "premium artifacts must stay cosmetic-balanced") if total > 10

@@ -1,0 +1,21 @@
+<% character ||= nil %>
+<% equipment ||= {} %>
+
+<div class="nl-equipment-summary">
+  <div class="nl-equipment-paperdoll">
+    <div class="nl-equipment-avatar">
+      <span class="nl-equipment-avatar-name"><%= character&.name || "Unknown" %></span>
+      <span class="nl-equipment-avatar-kind"><%= character&.character_class&.name || "Novice" %></span>
+    </div>
+  </div>
+
+  <div class="nl-equipment-slot-grid">
+    <% PlayerProfileHelper::PROFILE_EQUIPMENT_SLOTS.each do |slot_key, label| %>
+      <% item = equipment[slot_key] || equipment[slot_key.to_sym] %>
+      <div class="nl-profile-slot <%= 'nl-profile-slot--filled' if item %>">
+        <span class="nl-profile-slot-label"><%= label %></span>
+        <span class="nl-profile-slot-value"><%= item&.item_template&.name || "empty" %></span>
+      </div>
+    <% end %>
+  </div>
+</div>

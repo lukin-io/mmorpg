@@ -236,12 +236,22 @@ RSpec.describe Character, type: :model do
       expect(breakdown[:defense][:equipment]).to eq(6)
       expect(breakdown[:defense][:total]).to eq(22)
     end
+
+    it "applies equipped primary stat and vitality effects" do
+      ring = create(:item_template, item_type: "equipment", slot: "ring_1",
+        stat_modifiers: {"strength" => 3, "hp" => 20})
+      create(:inventory_item, inventory: character.inventory, item_template: ring, equipped: true)
+
+      expect(character.stats.get(:strength)).to eq(13)
+      expect(character.attack_power).to eq(31)
+      expect(character.effective_max_hp).to eq(character.read_attribute(:max_hp) + 20)
+    end
   end
 
   # ============================================
-  # Passive Skills
+  # Abilities
   # ============================================
-  describe "passive skills" do
+  describe "abilities" do
     let(:character) { create(:character, passive_skills: {}) }
 
     describe "#passive_skill_level" do

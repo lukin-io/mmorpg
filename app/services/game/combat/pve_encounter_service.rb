@@ -134,6 +134,7 @@ module Game
           npc_participant.current_hp = [npc_participant.current_hp - total_player_damage, 0].max
           npc_participant.is_defending = false
           npc_participant.save!
+          degrade_player_attack_equipment!
 
           # Check if NPC defeated
           if npc_participant.current_hp <= 0
@@ -152,6 +153,7 @@ module Game
 
         # Apply NPC damage to player
         vitals_service.apply_damage(total_npc_damage, source: npc_template.name)
+        degrade_player_defense_equipment!
         character.reload # Reload to get updated HP from vitals_service
         player_participant.current_hp = character.current_hp
         player_participant.is_defending = false
@@ -256,6 +258,7 @@ module Game
         npc_participant.current_hp = [npc_participant.current_hp - player_damage, 0].max
         npc_participant.is_defending = false
         npc_participant.save!
+        degrade_player_attack_equipment!
 
         combat_log << "You attack #{npc_template.name} for #{player_damage} damage#{" (CRITICAL!)" if is_crit}."
 
@@ -269,6 +272,7 @@ module Game
 
         # Apply damage to character
         vitals_service.apply_damage(npc_damage, source: npc_template.name)
+        degrade_player_defense_equipment!
         character.reload # Reload to get updated HP from vitals_service
         player_participant.current_hp = character.current_hp
         player_participant.is_defending = false
@@ -304,6 +308,7 @@ module Game
         # NPC still attacks
         npc_damage = calculate_npc_damage(npc_stats, character, is_defending: true)
         vitals_service.apply_damage(npc_damage, source: npc_template.name)
+        degrade_player_defense_equipment!
         character.reload # Reload to get updated HP from vitals_service
         player_participant.update!(current_hp: character.current_hp)
         combat_log << "#{npc_template.name} attacks you for #{npc_damage} damage (reduced by defense)."
@@ -358,6 +363,7 @@ module Game
         # NPC counterattack
         npc_damage = calculate_npc_damage(npc_stats, character, is_defending: false)
         vitals_service.apply_damage(npc_damage, source: npc_template.name)
+        degrade_player_defense_equipment!
         character.reload # Reload to get updated HP from vitals_service
         player_participant = battle.battle_participants.find_by(team: "player")
         player_participant&.update!(current_hp: character.current_hp)
@@ -452,6 +458,7 @@ module Game
           # NPC gets a free attack
           npc_damage = calculate_npc_damage(npc_stats, character, is_defending: false)
           vitals_service.apply_damage(npc_damage, source: npc_template.name)
+          degrade_player_defense_equipment!
           character.reload # Reload to get updated HP from vitals_service
           player_participant = battle.battle_participants.find_by(team: "player")
           player_participant&.update!(current_hp: character.current_hp)
@@ -498,6 +505,14 @@ module Game
           combat_log: combat_log,
           rewards: rewards
         )
+      end
+
+      def degrade_player_attack_equipment!
+        character.degrade_equipped_items!("main_hand", amount: 1)
+      end
+
+      def degrade_player_defense_equipment!
+        character.degrade_equipped_items!("head", "chest", "legs", "feet", "hands", "bracers", "off_hand", amount: 1)
       end
 
       def grant_rewards!

@@ -10,7 +10,7 @@
             <span class="player-level">Lv.<%= pos.character.level %></span>
           </div>
           <div class="player-actions">
-            <%= link_to "👁️", profile_path(pos.character.user.profile_name), title: "View Profile" %>
+            <%= link_to "Info", profile_path(profile_name: pos.character.name), title: "View Profile" %>
           </div>
         </li>
       <% end %>
@@ -19,4 +19,3 @@
     <p class="text-muted text-sm">No other players nearby.</p>
   <% end %>
 </div>
-

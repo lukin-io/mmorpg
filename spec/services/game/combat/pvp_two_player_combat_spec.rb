@@ -878,6 +878,9 @@ RSpec.describe "PVP Two-Player Combat Integration" do
     end
 
     it "records round numbers correctly" do
+      mage.update!(current_hp: 500, max_hp: 500)
+      service.battle.battle_participants.find_by(character: mage).update!(current_hp: 500, max_hp: 500)
+
       service.process_action!(character: warrior, action_type: :attack)
       service.process_action!(character: warrior, action_type: :attack)
 

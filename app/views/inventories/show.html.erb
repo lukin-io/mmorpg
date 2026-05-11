@@ -1,48 +1,61 @@
-<div class="inventory-page" data-controller="inventory">
-  <div class="page-header">
-    <h1 class="page-title">Inventory</h1>
-    <div class="inventory-actions">
-      <%= button_to "Sort by Type", sort_inventory_path(sort_type: :type), method: :post, class: "game-btn" %>
-      <%= button_to "Sort by Rarity", sort_inventory_path(sort_type: :rarity), method: :post, class: "game-btn" %>
+<%= turbo_frame_tag "main_content" do %>
+  <div class="inventory-page nl-player-subpage nl-inventory-page" data-controller="inventory">
+    <%= render "shared/player_context_buttons",
+      character: current_character,
+      viewer_character: current_character,
+      current_section: :inventory %>
+
+    <div class="nl-inventory-head">
+      <h1>Inventory</h1>
+      <div class="nl-inventory-balance">
+        <span><%= number_with_delimiter(current_character.user&.currency_wallet&.gold_balance || 0) %> Gold</span>
+        <span>Weight <%= @inventory.current_weight %>/<%= @inventory.max_weight %></span>
+      </div>
+    </div>
+
+    <div class="nl-inventory-layout">
+      <aside class="nl-inventory-side">
+        <div class="nl-profile-panel">
+          <h2><%= current_character.name %> [<%= current_character.level %>]</h2>
+          <div id="equipment_panel">
+            <%= render "inventories/equipment", equipment: @equipment, character: current_character %>
+          </div>
+        </div>
+
+        <div id="stats_panel" class="nl-profile-panel">
+          <%= render "inventories/stats", stats: @stats %>
+        </div>
+      </aside>
+
+      <main class="nl-inventory-main">
+        <div class="nl-inventory-toolbar">
+          <div class="nl-inventory-categories">
+            <% inventory_category_options.each do |key, label| %>
+              <% if @category == key %>
+                <span class="lbutdis"><%= label %></span>
+              <% else %>
+                <%= link_to label, inventory_path(category: key), class: "lbut" %>
+              <% end %>
+            <% end %>
+          </div>
+
+          <div class="nl-inventory-sort">
+            <%= button_to "Sort Type", sort_inventory_path(sort_type: :type, category: @category), method: :post, class: "lbut" %>
+            <%= button_to "Sort Rarity", sort_inventory_path(sort_type: :rarity, category: @category), method: :post, class: "lbut" %>
+          </div>
+        </div>
+
+        <div class="nl-profile-panel">
+          <div class="nl-inventory-list-head">
+            <h2>Bag</h2>
+            <span><%= @items.count %>/<%= @inventory.max_slots %> slots</span>
+          </div>
+
+          <div id="inventory_grid">
+            <%= render "inventories/grid", items: @items, inventory: @inventory, category: @category %>
+          </div>
+        </div>
+      </main>
     </div>
   </div>
-
-  <div class="inventory-layout">
-    <div class="character-panel">
-      <div class="character-model card">
-        <div class="character-avatar">
-          <span class="avatar-icon">🧙</span>
-          <span class="character-name"><%= current_character.name %></span>
-          <span class="character-level">Level <%= current_character.level %></span>
-        </div>
-
-        <div id="equipment_panel">
-          <%= render "inventories/equipment", equipment: @equipment %>
-        </div>
-      </div>
-
-      <div id="stats_panel">
-        <%= render "inventories/stats", stats: @stats %>
-      </div>
-    </div>
-
-    <div class="inventory-main">
-      <div class="bag-panel card">
-        <div class="bag-header">
-          <h2>Bag</h2>
-          <span class="bag-capacity"><%= @items.count %>/<%= @inventory.max_slots %> slots</span>
-        </div>
-
-        <div id="inventory_grid">
-          <%= render "inventories/grid", items: @items %>
-        </div>
-      </div>
-
-      <div class="inventory-footer">
-        <span class="gold-display">🪙 <%= number_with_delimiter(current_character.user&.currency_wallet&.gold_balance || 0) %> Gold</span>
-        <span class="weight-display">⚖️ <%= @inventory.current_weight %>/<%= @inventory.max_weight %> weight</span>
-      </div>
-    </div>
-  </div>
-</div>
-
+<% end %>

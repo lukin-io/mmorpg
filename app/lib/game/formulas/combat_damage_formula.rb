@@ -51,6 +51,7 @@ module Game
         # Defense is more effective when actively defending
         defense_mult = is_defending ? DEFENSE_MULTIPLIER_DEFENDING : 1.0
         effective_defense = (base_defense * defense_mult).to_i
+        effective_defense = (effective_defense * (1.0 - percent_to_fraction(armor_pierce(attacker)))).to_i
 
         # Base damage = attack - (defense / 2)
         damage = base_attack - (effective_defense / DEFENSE_DIVISOR)
@@ -63,6 +64,7 @@ module Game
 
         # Apply critical hit multiplier
         damage = (damage * CRITICAL_MULTIPLIER).to_i if is_critical
+        damage = (damage * (1.0 - percent_to_fraction(fortitude(defender)))).to_i
 
         # Minimum damage
         [damage, MIN_DAMAGE].max
@@ -117,7 +119,25 @@ module Game
         5
       end
 
+      def armor_pierce(entity)
+        return entity.armor_pierce_percent if supports_method?(entity, :armor_pierce_percent)
+
+        0
+      end
+
+      def fortitude(entity)
+        return entity.fortitude_percent if supports_method?(entity, :fortitude_percent)
+
+        0
+      end
+
       private
+
+      def percent_to_fraction(value)
+        numeric = value.to_f
+        numeric = numeric / 100.0 if numeric > 1.0
+        numeric.clamp(0.0, 0.75)
+      end
 
       def supports_method?(entity, method_name)
         entity.public_methods.include?(method_name.to_sym)

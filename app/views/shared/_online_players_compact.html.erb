@@ -75,7 +75,7 @@
          data-level="<%= char_level %>"
          data-action="click->game-layout#whisperPlayer contextmenu->game-layout#showPlayerMenu">
       <span class="nl-player-arrow"><%= alignment_icon %></span>
-      <a href="<%= profile_path(user.profile_name) rescue '#' %>"
+      <a href="<%= profile_path(profile_name: character&.name || user.profile_name) rescue '#' %>"
          class="nl-player-name-link"
          data-turbo-frame="main_content"><%= truncate(char_name, length: 15) %></a>
       <span class="nl-player-level">[<%= char_level %>]</span>

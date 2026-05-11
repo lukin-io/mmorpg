@@ -1,19 +1,26 @@
-<%# Character Passive Skills Allocation Page %>
-<% content_for :title, "Skills - #{@character.name}" %>
+<% content_for :title, "Abilities - #{@character.name}" %>
 
-<div class="nl-allocation-page">
-  <div class="nl-allocation-header">
-    <h1 class="nl-allocation-title">Passive Skills</h1>
-    <p class="nl-allocation-subtitle"><%= @character.name %> - Level <%= @character.level %> <%= @character.character_class&.name || "Novice" %></p>
+<%= turbo_frame_tag "main_content" do %>
+  <div class="nl-allocation-page nl-player-subpage">
+    <%= render "shared/player_context_buttons",
+      character: @character,
+      viewer_character: current_character,
+      current_section: :skills %>
+
+    <div class="nl-allocation-header">
+      <h1 class="nl-allocation-title">Abilities</h1>
+      <p class="nl-allocation-subtitle"><%= @character.name %> [<%= @character.level %>] numeric 0-100 training</p>
+    </div>
+
+    <turbo-frame id="skill-allocation">
+      <%= render "characters/skill_allocation" %>
+    </turbo-frame>
+
+    <div class="nl-allocation-footer">
+      <%= link_to "Back to World", world_path, class: "nl-btn nl-btn--secondary" %>
+      <%= link_to "Character", profile_path(profile_name: @character.name), class: "nl-btn nl-btn--secondary" %>
+      <%= link_to "Character Stats", stats_character_path(@character), class: "nl-btn nl-btn--secondary" %>
+      <%= link_to "Perks", perks_character_path(@character), class: "nl-btn nl-btn--secondary" %>
+    </div>
   </div>
-
-  <turbo-frame id="skill-allocation">
-    <%= render "characters/skill_allocation" %>
-  </turbo-frame>
-
-  <div class="nl-allocation-footer">
-    <%= link_to "Back to World", world_path, class: "nl-btn nl-btn--secondary" %>
-    <%= link_to "Character Stats", stats_character_path(@character), class: "nl-btn nl-btn--secondary" %>
-  </div>
-</div>
-
+<% end %>

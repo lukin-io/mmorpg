@@ -12,7 +12,8 @@ class InventoriesController < ApplicationController
   # GET /inventory
   def show
     @inventory = current_character.inventory || current_character.create_inventory!
-    @items = @inventory.inventory_items.includes(:item_template).order(:slot_index)
+    @category = params[:category].presence || "all"
+    @items = filtered_inventory_items(@inventory, @category)
     @equipment = current_character_equipment
     @stats = Characters::VitalsService.new(current_character).stats_summary
   end
@@ -30,16 +31,16 @@ class InventoriesController < ApplicationController
       if result[:success]
         format.turbo_stream do
           @inventory = current_character.inventory.reload
-          items = @inventory.inventory_items.includes(:item_template).order(:slot_index)
+          items = filtered_inventory_items(@inventory, current_category)
           stats = Characters::VitalsService.new(current_character).stats_summary
 
           render turbo_stream: [
-            turbo_stream.update("inventory_grid", partial: "inventories/grid", locals: {items: items, inventory: @inventory}),
+            turbo_stream.update("inventory_grid", partial: "inventories/grid", locals: {items:, inventory: @inventory, category: current_category}),
             turbo_stream.update("equipment_panel", partial: "inventories/equipment", locals: {equipment: current_character_equipment}),
             turbo_stream.update("stats_panel", partial: "inventories/stats", locals: {stats: stats})
           ]
         end
-        format.html { redirect_to inventory_path, notice: "Item equipped!" }
+        format.html { redirect_to inventory_redirect_path, notice: "Item equipped!" }
       else
         format.turbo_stream do
           render turbo_stream: turbo_stream.append(
@@ -48,7 +49,7 @@ class InventoriesController < ApplicationController
             locals: {type: :alert, message: result[:error]}
           )
         end
-        format.html { redirect_to inventory_path, alert: result[:error] }
+        format.html { redirect_to inventory_redirect_path, alert: result[:error] }
       end
     end
   end
@@ -66,16 +67,16 @@ class InventoriesController < ApplicationController
       if result[:success]
         format.turbo_stream do
           @inventory = current_character.inventory.reload
-          items = @inventory.inventory_items.includes(:item_template).order(:slot_index)
+          items = filtered_inventory_items(@inventory, current_category)
           stats = Characters::VitalsService.new(current_character).stats_summary
 
           render turbo_stream: [
-            turbo_stream.update("inventory_grid", partial: "inventories/grid", locals: {items: items, inventory: @inventory}),
+            turbo_stream.update("inventory_grid", partial: "inventories/grid", locals: {items:, inventory: @inventory, category: current_category}),
             turbo_stream.update("equipment_panel", partial: "inventories/equipment", locals: {equipment: current_character_equipment}),
             turbo_stream.update("stats_panel", partial: "inventories/stats", locals: {stats: stats})
           ]
         end
-        format.html { redirect_to inventory_path, notice: "Item unequipped!" }
+        format.html { redirect_to inventory_redirect_path, notice: "Item unequipped!" }
       else
         format.turbo_stream do
           render turbo_stream: turbo_stream.append(
@@ -84,7 +85,7 @@ class InventoriesController < ApplicationController
             locals: {type: :alert, message: result[:error]}
           )
         end
-        format.html { redirect_to inventory_path, alert: result[:error] }
+        format.html { redirect_to inventory_redirect_path, alert: result[:error] }
       end
     end
   end
@@ -99,16 +100,16 @@ class InventoriesController < ApplicationController
       if result[:success]
         format.turbo_stream do
           @inventory = current_character.inventory.reload
-          items = @inventory.inventory_items.includes(:item_template).order(:slot_index)
+          items = filtered_inventory_items(@inventory, current_category)
           stats = Characters::VitalsService.new(current_character).stats_summary
 
           render turbo_stream: [
-            turbo_stream.update("inventory_grid", partial: "inventories/grid", locals: {items: items, inventory: @inventory}),
+            turbo_stream.update("inventory_grid", partial: "inventories/grid", locals: {items:, inventory: @inventory, category: current_category}),
             turbo_stream.update("stats_panel", partial: "inventories/stats", locals: {stats: stats}),
             turbo_stream.update("flash", partial: "shared/flash", locals: {type: "notice", message: result[:message]})
           ]
         end
-        format.html { redirect_to inventory_path, notice: result[:message] }
+        format.html { redirect_to inventory_redirect_path, notice: result[:message] }
       else
         format.turbo_stream do
           render turbo_stream: turbo_stream.update(
@@ -117,7 +118,7 @@ class InventoriesController < ApplicationController
             locals: {type: "alert", message: result[:error]}
           )
         end
-        format.html { redirect_to inventory_path, alert: result[:error] }
+        format.html { redirect_to inventory_redirect_path, alert: result[:error] }
       end
     end
   end
@@ -126,10 +127,12 @@ class InventoriesController < ApplicationController
   def destroy
     item = current_character.inventory.inventory_items.find(params[:id])
 
-    if item.destroy
-      redirect_to inventory_path, notice: "Item discarded."
+    result = Game::Inventory::Manager.discard_item(item)
+
+    if result[:success]
+      redirect_to inventory_redirect_path, notice: result[:message]
     else
-      redirect_to inventory_path, alert: "Cannot discard item."
+      redirect_to inventory_redirect_path, alert: result[:error]
     end
   end
 
@@ -139,24 +142,68 @@ class InventoriesController < ApplicationController
 
     Game::Inventory::Manager.sort_inventory!(current_character.inventory, by: sort_type.to_sym)
 
-    redirect_to inventory_path, notice: "Inventory sorted."
+    redirect_to inventory_redirect_path, notice: "Inventory sorted."
   end
 
   private
 
+  def filtered_inventory_items(inventory, category)
+    items = inventory.inventory_items.joins(:item_template).includes(:item_template).order(:slot_index)
+    return items if category == "all"
+
+    item_types = inventory_category_item_types(category)
+    property_categories = inventory_category_property_values(category)
+    return items.where("inventory_items.properties ->> 'category' IN (?)", property_categories) if property_categories.any?
+    return items if item_types.empty?
+
+    items.where(item_templates: {item_type: item_types})
+  end
+
+  def current_category
+    params[:category].presence || "all"
+  end
+
+  def inventory_redirect_path
+    category = current_category
+    return inventory_path if category == "all"
+
+    inventory_path(category: category)
+  end
+
+  def inventory_category_item_types(category)
+    case category
+    when "equipment"
+      ["equipment"]
+    when "consumables"
+      ["consumable"]
+    when "materials"
+      ["material", "resource"]
+    when "quest"
+      ["quest"]
+    else
+      []
+    end
+  end
+
+  def inventory_category_property_values(category)
+    case category
+    when "alchemy"
+      ["alchemy"]
+    when "fishing"
+      ["fishing"]
+    when "hunting"
+      ["hunting", "food", "products"]
+    when "wood"
+      ["wood", "tree"]
+    else
+      []
+    end
+  end
+
   def current_character_equipment
-    {
-      head: equipped_item(:head),
-      chest: equipped_item(:chest),
-      legs: equipped_item(:legs),
-      feet: equipped_item(:feet),
-      hands: equipped_item(:hands),
-      main_hand: equipped_item(:main_hand),
-      off_hand: equipped_item(:off_hand),
-      ring_1: equipped_item(:ring_1),
-      ring_2: equipped_item(:ring_2),
-      amulet: equipped_item(:amulet)
-    }
+    PlayerProfileHelper::PROFILE_EQUIPMENT_SLOTS.to_h do |slot_key, _label|
+      [slot_key.to_sym, equipped_item(slot_key)]
+    end
   end
 
   def equipped_item(slot)
