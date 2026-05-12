@@ -68,6 +68,11 @@ Required behavior:
   MP, AP, and passive skill fields exist.
 - `Character#combat_power_breakdown` exposes attack, defense, critical, and
   equipment contribution data.
+- Inventory now has Neverlands-inspired category filters, visible item
+  properties/requirements/durability, equip/use/discard actions, requirement
+  validation, discard protection, and combat durability degradation.
+- Equipped item effects feed primary stats, effective max HP, attack, defense,
+  accuracy, dodge, armor pierce, fortitude, resistances, and skill bonuses.
 - Vitals are documented in `doc/design/features/character_vitals.md`.
 - Progression and skills are documented in
   `doc/design/features/progression_stats_skills.md`.
@@ -80,6 +85,9 @@ Required behavior:
 
 - Formula consolidation across character vitals, combat profile generation,
   equipment families, and UI previews.
+- Inventory still needs canonical item seeds/templates based on the captured
+  live items, complete slot rules, repair/breakage UX, capacity enforcement
+  across pickup/loot/trade/shop flows, and system coverage.
 - Level-up UX and allocation UX need to be treated as part of the main
   character loop, not an admin/debug sidebar.
 - Numeric `Умения` and boolean `Навыки` should be modeled as the main launch
@@ -235,7 +243,7 @@ login
 
 | Area | Started | In Progress |
 | --- | --- | --- |
-| Person | Character, vitals, stats, skills, inventory, equipment, combat breakdown | formula consolidation, level-up UX, recovery, cross-system specs |
+| Person | Character, vitals, stats, skills, inventory/equipment actions, requirements, durability, combat breakdown | item seeds, slot rules, repair/breakage UX, level-up UX, recovery, cross-system specs |
 | Movement | persisted wilderness travel, movement commands, world action offers, tile resolver | city-hotspot action unification, presence refresh, lock polish |
 | Arena | city entry, room/application UX, NPC training, PvP waiting, finish result | formula tuning, route cleanup, magic/special balancing |
 | Combat | shared arena resolver, AP/body parts/blocks/logs, NPC AI response | one resolver across all fight entry points, more balance coverage |
@@ -270,6 +278,7 @@ Canonical design:
 
 Implementation and capture notes:
 
+- `doc/flow/neverlands_live_player.md`
 - `doc/flow/neverlands_live_movement.md`
 - `doc/flow/22_arena_npc_bots.md`
 - `doc/flow/23_unified_combat_architecture.md`

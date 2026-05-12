@@ -99,6 +99,46 @@ The live inventory capture adds these launch requirements:
 - Quest items can be protected from normal sale/discard.
 - Inventory actions are server-authoritative.
 
+## Current Implementation Status
+
+Last updated: 2026-05-11.
+
+Implemented:
+
+- inventory page inside the player shell with equipment panel, stats panel,
+  category filters, sort actions, inventory mass, item rows, and empty slots;
+- item template support for equipment, consumable, material, resource, quest,
+  and misc item types;
+- item instance support for quantity, equipped slot, current durability,
+  requirement overrides, effect overrides, expiry metadata, bound/protected
+  state, and per-item properties;
+- equip, unequip, use, sort, and discard actions through Rails controllers and
+  inventory services;
+- requirement validation for level, AP/action points, primary stats, and mapped
+  numeric skills before equip/use;
+- equipment effects feeding character stats, effective max HP, attack, defense,
+  accuracy, dodge, armor pierce, fortitude, elemental resistances, and skill
+  bonuses;
+- combat durability degradation for PvE and PvP equipment;
+- consumable durability charges before quantity consumption;
+- discard protection for equipped, bound, protected, locked, and quest items;
+- Brakeman, RuboCop, and Zeitwerk checks pass for the current implementation.
+
+Missing before launch MVP is complete:
+
+- canonical item seeds/templates matching the captured Neverlands inventory;
+- full label normalization for all captured effects and requirements;
+- complete slot rules for two-handed weapons, layered armor, rings, belt
+  contents, pocket contents, and relics;
+- repair and breakage UX, including player-visible messages when gear breaks;
+- capacity enforcement across loot, pickup, trade, shop purchase, and quest
+  reward flows;
+- server-issued inventory action keys if Rails CSRF forms are not enough for
+  the final gameplay action model;
+- transfer, gift, sale, dealer, and equipment-set saving flows;
+- system/browser coverage for the inventory page after local PostgreSQL test
+  setup is fixed.
+
 ## State Concepts
 
 - item template;
@@ -147,6 +187,7 @@ Services:
 
 - `app/services/game/inventory/manager.rb`
 - `app/services/game/inventory/equipment_service.rb`
+- `app/services/game/inventory/requirement_checker.rb`
 - `app/services/game/inventory/enhancement_service.rb`
 - `app/services/game/inventory/expansion_service.rb`
 - `app/services/game/economy/loot_generator.rb`

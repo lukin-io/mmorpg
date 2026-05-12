@@ -590,3 +590,58 @@ Implementation consequence:
   they are reduced to the same player-profile skill/perk model;
 - all player-page mutations should use server-issued action keys or CSRF-backed
   form submission, never client-invented state.
+
+## Current Implementation Progress
+
+Last updated: 2026-05-11.
+
+This pass moved inventory from a mostly visual page toward the Neverlands-style
+player loop documented above.
+
+Done:
+
+- inventory and profile use the same character/equipment slot model;
+- inventory has Neverlands-inspired category filters for things, elixirs,
+  alchemy, fishing, hunting/food, resources, wood, and quest journal;
+- carried item rows expose compact actions, properties, requirements, mass, and
+  durability;
+- item instances can carry requirements, effect overrides, current durability,
+  expiry metadata, and discard-protection flags;
+- equipment and consumable use now validate item requirements before mutating
+  character state;
+- equipped item effects contribute to primary stats, max HP, attack, defense,
+  skill bonuses, resistances, armor pierce, fortitude, accuracy, and dodge;
+- broken or expired items cannot be equipped or used;
+- combat now degrades equipped weapon/armor durability and unequips broken
+  items;
+- consumable charges use durability before stack quantity is reduced;
+- equipped, bound, protected, locked, and quest items are blocked from normal
+  discard;
+- profile/vitals summaries read effective max HP from equipment;
+- request/model coverage was added for requirement rejection, consumable
+  charges, discard protection, and equipped stat effects.
+
+Missing or incomplete:
+
+- seed data does not yet recreate the captured live inventory items and their
+  exact requirements/effects;
+- item effect taxonomy still needs normalization for all observed live labels,
+  including crushing, engraving, production helper effects, PvE experience,
+  and "can be worn over chainmail";
+- the inventory equipment doll is functional but not yet a full Neverlands-style
+  `slots_inv` equivalent with slot-button affordances and set saving;
+- slot-specific rules need more work: two-handed weapons, layered armor,
+  ring limits, belt/pocket contents, and relic behavior;
+- repair, full durability recovery, item break messaging, and sell/delete
+  confirmation flows need launch-level UX;
+- transfer, gift, sale, dealer, and remembered equipment sets remain deferred
+  unless the economy loop becomes MVP-critical;
+- server-issued action keys are represented by Rails CSRF/forms, but there is
+  not yet a domain-level short-lived inventory action key model;
+- weight/capacity is displayed and adjusted on discard/use, but capacity should
+  also block pickup, trade acceptance, and loot collection;
+- `Умения` and `Навыки` still need a player-profile shaped launch UX pass so
+  numeric skills and boolean perks become the main progression surfaces rather
+  than separate legacy trees;
+- system-level browser coverage is still needed after the local test database
+  role issue is fixed.
