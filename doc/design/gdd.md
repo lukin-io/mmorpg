@@ -46,6 +46,7 @@ Features:
 - `doc/design/features/gathering_professions.md`
 - `doc/design/features/npcs_quests.md`
 - `doc/design/features/social_chat_presence.md`
+- `doc/design/features/dungeons.md`
 
 Documentation process:
 
@@ -244,6 +245,30 @@ Combat is turn-based and tactical. Core expectations:
 - combat uses explicit turns, action points, body-part targeting, blocks,
   skills, logs, rewards, and death/respawn consequences;
 - combat state must be resumable and auditable.
+
+## Dungeons
+
+Dungeons are deferred until after the launch MVP, but their design target is
+defined by the Neverlands wiki and forum sources listed in
+`doc/design/features/dungeons.md`.
+
+Core expectations:
+
+- a leader starts a solo or party run with a source-style key/unlock;
+- eligible players can join another leader's application;
+- entry requirements include source-style level, equipment, party, active-run,
+  and cooldown restrictions;
+- floors are generated room graphs with floor timers and finite depth;
+- room movement spends lamp oil;
+- hostile room NPCs block movement and object interaction until resolved;
+- dungeon NPC and boss fights follow the source combat behavior;
+- floor descent requires five activated seals and current wiki portal rules;
+- hidden rooms create an individual risk/reward branch through a floor key,
+  chest, or boss;
+- dungeon inventory forbids equipment changes and exposes only allowed
+  consumables;
+- deepest-floor and weekly progress can feed ratings and specialist-shop
+  rewards.
 
 ## Character Progression
 

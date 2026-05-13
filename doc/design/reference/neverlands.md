@@ -16,6 +16,13 @@ presence, turn combat, inventory weight, shops, and social chat.
 | `doc/features/neverlands_inspired_chat.md` | Chat frame, player list, message styles, context menu |
 | `doc/features/neverlands_inspired_combat.md` | Turn combat, action points, body targeting, combat log |
 | `doc/features/neverlands_inspired_skills.md` | Stat and skill allocation, perks, effects |
+| Neverlands wiki dungeon page | Dungeon floor objectives, movement resource, hidden rooms, bosses/chests, portal seals, timers, ratings |
+| Neverlands forum dungeon launch post | Original dungeon module structure, party entry, room blockers, dungeon inventory, effects, specialist shop |
+
+For dungeons, the wiki and forum pages are the point of truth. Do not add
+dungeon mechanics from generic MMO assumptions, the current legacy code
+scaffold, or old local docs unless they map back to those sources. When the
+current wiki and older forum launch post differ, prefer the current wiki.
 
 ## Borrowed Design Principles
 
@@ -30,6 +37,9 @@ presence, turn combat, inventory weight, shops, and social chat.
 - The player profile is an in-game surface: vitals, equipment, stats,
   experience, numeric skills, and boolean perks all hang off the active
   character rather than a separate account dashboard.
+- Dungeons are entered from the world, then become a separate room/floor
+  exploration mode with party objectives, resource-constrained movement,
+  blocking NPCs, hidden-room risk, and source-style PvE combat.
 
 ## Not Borrowed By Default
 

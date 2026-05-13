@@ -18,6 +18,10 @@
 6. Area docs for the surface being built.
 7. Feature docs for the mechanics involved.
 
+Deferred canonical feature docs, such as `features/dungeons.md`, are still
+design authority for their feature even when they are explicitly outside launch
+MVP scope.
+
 ## Update Rule
 
 When implementation reveals a better design fact, update the feature or area

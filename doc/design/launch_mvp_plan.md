@@ -253,6 +253,9 @@ login
 
 Deferred until the four pillars are launch-stable:
 
+- Neverlands-inspired dungeons. The post-MVP design source of truth is
+  `doc/design/features/dungeons.md`; existing dungeon routes/code are legacy
+  until rebuilt against that document;
 - tournaments and seasonal live-ops screens;
 - betting or totalizator systems;
 - tactical grid combat modes;
@@ -272,6 +275,7 @@ Canonical design:
 - `doc/design/features/movement.md`
 - `doc/design/features/combat.md`
 - `doc/design/features/npcs_quests.md`
+- `doc/design/features/dungeons.md`
 - `doc/design/areas/arena.md`
 - `doc/design/areas/world_map.md`
 - `doc/design/areas/cities_and_buildings.md`

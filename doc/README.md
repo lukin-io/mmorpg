@@ -28,6 +28,8 @@ Other folders are supporting material:
 - `doc/features/` contains supporting external reference notes and deep dives.
 - implementation guides such as `doc/MAP_DESIGN_GUIDE.md` and
   `doc/ITEM_SYSTEM_GUIDE.md` are not GDD authority.
+- current dungeon implementation notes/code are legacy until they are rebuilt
+  against `doc/design/features/dungeons.md`.
 
 When documents disagree, use this order:
 
@@ -64,6 +66,8 @@ Features:
 - `doc/design/features/gathering_professions.md`
 - `doc/design/features/npcs_quests.md`
 - `doc/design/features/social_chat_presence.md`
+- `doc/design/features/dungeons.md` - post-MVP Neverlands-inspired dungeon
+  mechanics.
 
 Reference:
 
