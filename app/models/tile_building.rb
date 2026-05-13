@@ -2,7 +2,7 @@
 
 # TileBuilding tracks enterable structures at specific map tiles.
 # Buildings allow players to transition between zones (e.g., entering a castle,
-# dungeon, inn, or portal).
+# inn, shop, or portal).
 #
 # Usage:
 #   TileBuilding.at_tile(zone_name, x, y) # Find building at tile
@@ -11,7 +11,7 @@
 #   building.enter!(character)             # Move character to destination zone
 #
 class TileBuilding < ApplicationRecord
-  BUILDING_TYPES = %w[city castle fort inn shop dungeon_entrance portal guild_hall tavern temple].freeze
+  BUILDING_TYPES = %w[city castle fort inn shop portal guild_hall tavern temple].freeze
 
   BUILDING_ICONS = {
     "city" => "🏙️",
@@ -19,7 +19,6 @@ class TileBuilding < ApplicationRecord
     "fort" => "🏯",
     "inn" => "🏨",
     "shop" => "🏪",
-    "dungeon_entrance" => "⚔️",
     "portal" => "🌀",
     "guild_hall" => "🏛️",
     "tavern" => "🍺",

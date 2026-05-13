@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Parties
-  # ReadyCheck resets per-member ready states and tracks completion for dungeon prep.
+  # ReadyCheck resets per-member ready states and tracks completion for party prep.
   # Usage:
   #   Parties::ReadyCheck.new(party: party).start!
   #   Parties::ReadyCheck.new(party: party).resolve_if_complete!

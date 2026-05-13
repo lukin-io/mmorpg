@@ -65,7 +65,6 @@ module AlignmentHelper
     city: "City",
     village: "Village",
     nature: "Nature",
-    dungeon: "Dungeon",
     arena: "Arena",
     guild_hall: "Guild Hall"
   }.freeze

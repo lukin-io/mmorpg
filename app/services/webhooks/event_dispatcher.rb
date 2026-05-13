@@ -18,7 +18,6 @@ module Webhooks
       player.death
       achievement.unlocked
       arena.match_complete
-      dungeon.complete
       auction.sale
       clan.war_declared
       clan.war_result

@@ -12,7 +12,7 @@ require "ostruct"
 # Usage:
 #   GET /world              - Show current location
 #   POST /world/move        - Move to adjacent tile
-#   POST /world/enter       - Enter a building/dungeon
+#   POST /world/enter       - Enter a building
 #   POST /world/exit        - Exit to overworld
 #   POST /world/gather      - Gather resources at current tile
 #   POST /world/interact    - Interact with NPC/object

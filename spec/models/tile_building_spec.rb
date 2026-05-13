@@ -610,12 +610,6 @@ RSpec.describe TileBuilding, type: :model do
       expect(building.building_type).to eq("inn")
     end
 
-    it "creates valid dungeon_entrance" do
-      building = build(:tile_building, :dungeon_entrance)
-      expect(building).to be_valid
-      expect(building.building_type).to eq("dungeon_entrance")
-    end
-
     it "creates valid portal" do
       building = build(:tile_building, :portal)
       expect(building).to be_valid

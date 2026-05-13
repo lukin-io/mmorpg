@@ -23,7 +23,6 @@ class ExpandClanSystems < ActiveRecord::Migration[8.1]
 
     change_table :clan_territories, bulk: true do |t|
       t.string :world_region_key
-      t.string :exclusive_dungeon_key
       t.string :fast_travel_node_key
       t.jsonb :benefits, null: false, default: {}
     end

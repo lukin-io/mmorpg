@@ -629,8 +629,8 @@ if defined?(GroupListing) && defined?(Guild)
   owner = User.first
   guild = Guild.first
   if owner && guild
-    GroupListing.find_or_create_by!(owner:, title: "Evening Dungeon Run") do |listing|
-      listing.description = "Looking for healers and ranged DPS for Frost Peaks delve."
+    GroupListing.find_or_create_by!(owner:, title: "Evening Hunt") do |listing|
+      listing.description = "Looking for allies for a wilderness patrol."
       listing.listing_type = :party
       listing.status = :open
       listing.guild = guild
@@ -1306,26 +1306,6 @@ if defined?(TileBuilding) && defined?(Zone)
       required_level: 1,
       metadata: {
         "description" => "A cozy inn for weary travelers. Rest here to restore vitality."
-      }
-    }
-  end
-
-  # Forest dungeon entrance in Whispering Woods
-  if whispering_woods
-    tile_buildings << {
-      zone: whispering_woods.name,
-      x: 6,
-      y: 6,
-      building_key: "shadow_cave_entrance",
-      building_type: "dungeon_entrance",
-      name: "Shadow Cave",
-      destination_zone: nil,  # Dungeon system would handle this
-      icon: "⚔️",
-      required_level: 10,
-      metadata: {
-        "description" => "A dark cave entrance shrouded in mist. Dangerous creatures lurk within.",
-        "dungeon_key" => "shadow_cave",
-        "difficulty" => "normal"
       }
     }
   end

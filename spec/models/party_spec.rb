@@ -4,7 +4,7 @@ RSpec.describe Party do
   it "boots with leader membership and chat channel" do
     leader = create(:user)
 
-    party = described_class.create!(name: "Alpha Squad", purpose: "Dungeon run", leader: leader)
+    party = described_class.create!(name: "Alpha Squad", purpose: "Wilderness patrol", leader: leader)
 
     expect(party.chat_channel).to be_present
     expect(party.chat_channel.metadata["party_id"]).to eq(party.id)

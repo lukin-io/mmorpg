@@ -122,7 +122,6 @@ module WorldHelper
       "snow" => "❄️",
       "swamp" => "🌿",
       "city" => "🏙️",
-      "dungeon" => "🕳️",
       "cave" => "🕳️",
       "road" => "🛤️"
     }

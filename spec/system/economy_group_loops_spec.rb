@@ -36,7 +36,7 @@ RSpec.describe "Economy & Group Loops", type: :system, js: true do
       login_as(leader, scope: :user)
       visit parties_path
 
-      fill_in "Party Name", with: "Dungeon Prep"
+      fill_in "Party Name", with: "Patrol Prep"
       fill_in "Purpose", with: "Ready check"
       select "2", from: "Max Size"
       click_button "Create Party"

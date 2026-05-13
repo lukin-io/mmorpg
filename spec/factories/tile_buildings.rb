@@ -43,11 +43,6 @@ FactoryBot.define do
       icon { "🏪" }
     end
 
-    trait :dungeon_entrance do
-      building_type { "dungeon_entrance" }
-      icon { "⚔️" }
-    end
-
     trait :portal do
       building_type { "portal" }
       icon { "🌀" }

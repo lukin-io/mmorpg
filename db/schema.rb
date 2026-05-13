@@ -679,7 +679,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_11_133000) do
     t.jsonb "benefits", default: {}, null: false
     t.bigint "clan_id", null: false
     t.datetime "created_at", null: false
-    t.string "exclusive_dungeon_key"
     t.string "fast_travel_node_key"
     t.datetime "last_claimed_at"
     t.integer "tax_rate_basis_points", default: 0, null: false
@@ -913,72 +912,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_11_133000) do
     t.datetime "updated_at", null: false
     t.index ["key"], name: "index_cutscene_events_on_key", unique: true
     t.index ["quest_id"], name: "index_cutscene_events_on_quest_id"
-  end
-
-  create_table "dungeon_encounters", force: :cascade do |t|
-    t.datetime "completed_at"
-    t.datetime "created_at", null: false
-    t.decimal "difficulty_modifier", precision: 4, scale: 2, default: "1.0"
-    t.bigint "dungeon_instance_id", null: false
-    t.integer "encounter_index", null: false
-    t.integer "encounter_template_id"
-    t.datetime "started_at"
-    t.integer "status", default: 0, null: false
-    t.datetime "updated_at", null: false
-    t.index ["dungeon_instance_id", "encounter_index"], name: "idx_encounters_on_instance_and_index", unique: true
-    t.index ["dungeon_instance_id"], name: "index_dungeon_encounters_on_dungeon_instance_id"
-  end
-
-  create_table "dungeon_instances", force: :cascade do |t|
-    t.integer "attempts_remaining", default: 3
-    t.integer "completion_time_seconds"
-    t.datetime "created_at", null: false
-    t.integer "current_encounter_index", default: 0
-    t.integer "difficulty", default: 1, null: false
-    t.bigint "dungeon_template_id", null: false
-    t.datetime "ended_at"
-    t.datetime "expires_at"
-    t.string "instance_key", null: false
-    t.bigint "leader_id", null: false
-    t.bigint "party_id", null: false
-    t.datetime "started_at"
-    t.integer "status", default: 0, null: false
-    t.datetime "updated_at", null: false
-    t.index ["dungeon_template_id"], name: "index_dungeon_instances_on_dungeon_template_id"
-    t.index ["instance_key"], name: "index_dungeon_instances_on_instance_key", unique: true
-    t.index ["leader_id"], name: "index_dungeon_instances_on_leader_id"
-    t.index ["party_id", "status"], name: "index_dungeon_instances_on_party_id_and_status"
-    t.index ["party_id"], name: "index_dungeon_instances_on_party_id"
-  end
-
-  create_table "dungeon_progress_checkpoints", force: :cascade do |t|
-    t.integer "checkpoint_index", null: false
-    t.datetime "created_at", null: false
-    t.bigint "dungeon_instance_id", null: false
-    t.integer "encounter_index", null: false
-    t.jsonb "party_state", default: []
-    t.datetime "updated_at", null: false
-    t.index ["dungeon_instance_id", "checkpoint_index"], name: "idx_checkpoints_on_instance_and_index", unique: true
-    t.index ["dungeon_instance_id"], name: "index_dungeon_progress_checkpoints_on_dungeon_instance_id"
-  end
-
-  create_table "dungeon_templates", force: :cascade do |t|
-    t.string "biome"
-    t.datetime "created_at", null: false
-    t.text "description"
-    t.integer "duration_minutes", default: 120, null: false
-    t.jsonb "encounters", default: [], null: false
-    t.string "key", null: false
-    t.integer "max_level", default: 100, null: false
-    t.integer "max_party_size", default: 5, null: false
-    t.jsonb "metadata", default: {}, null: false
-    t.integer "min_level", default: 1, null: false
-    t.integer "min_party_size", default: 1, null: false
-    t.string "name", null: false
-    t.jsonb "rewards", default: {}, null: false
-    t.datetime "updated_at", null: false
-    t.index ["key"], name: "index_dungeon_templates_on_key", unique: true
-    t.index ["min_level", "max_level"], name: "index_dungeon_templates_on_min_level_and_max_level"
   end
 
   create_table "economic_snapshots", force: :cascade do |t|
@@ -1602,37 +1535,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_11_133000) do
     t.datetime "updated_at", null: false
     t.bigint "zone_id", null: false
     t.index ["action_key"], name: "index_movement_commands_on_action_key", unique: true
-    t.index ["character_id"], name: "index_movement_commands_on_character_id"
     t.index ["character_id", "status", "created_at"], name: "index_movement_commands_on_character_status_created"
     t.index ["character_id", "status", "ends_at"], name: "index_movement_commands_on_character_status_ends"
+    t.index ["character_id"], name: "index_movement_commands_on_character_id"
     t.index ["created_at"], name: "index_movement_commands_on_created_at"
     t.index ["status"], name: "index_movement_commands_on_status"
     t.index ["zone_id"], name: "index_movement_commands_on_zone_id"
-  end
-
-  create_table "world_action_offers", force: :cascade do |t|
-    t.datetime "accepted_at"
-    t.string "action_key", null: false
-    t.string "action_type", null: false
-    t.bigint "character_id", null: false
-    t.datetime "completed_at"
-    t.datetime "created_at", null: false
-    t.string "error_message"
-    t.datetime "expires_at", null: false
-    t.jsonb "metadata", default: {}, null: false
-    t.integer "status", default: 0, null: false
-    t.bigint "target_id"
-    t.string "target_type"
-    t.datetime "updated_at", null: false
-    t.integer "x", null: false
-    t.integer "y", null: false
-    t.bigint "zone_id", null: false
-    t.index ["action_key"], name: "index_world_action_offers_on_action_key", unique: true
-    t.index ["character_id", "status", "expires_at"], name: "index_world_action_offers_on_character_status_expires"
-    t.index ["character_id", "zone_id", "x", "y", "action_type", "status"], name: "index_world_action_offers_on_character_tile_action_status"
-    t.index ["character_id"], name: "index_world_action_offers_on_character_id"
-    t.index ["target_type", "target_id"], name: "index_world_action_offers_on_target"
-    t.index ["zone_id"], name: "index_world_action_offers_on_zone_id"
   end
 
   create_table "npc_reports", force: :cascade do |t|
@@ -2294,6 +2202,31 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_11_133000) do
     t.index ["webhook_endpoint_id"], name: "index_webhook_events_on_webhook_endpoint_id"
   end
 
+  create_table "world_action_offers", force: :cascade do |t|
+    t.datetime "accepted_at"
+    t.string "action_key", null: false
+    t.string "action_type", null: false
+    t.bigint "character_id", null: false
+    t.datetime "completed_at"
+    t.datetime "created_at", null: false
+    t.string "error_message"
+    t.datetime "expires_at", null: false
+    t.jsonb "metadata", default: {}, null: false
+    t.integer "status", default: 0, null: false
+    t.bigint "target_id"
+    t.string "target_type"
+    t.datetime "updated_at", null: false
+    t.integer "x", null: false
+    t.integer "y", null: false
+    t.bigint "zone_id", null: false
+    t.index ["action_key"], name: "index_world_action_offers_on_action_key", unique: true
+    t.index ["character_id", "status", "expires_at"], name: "index_world_action_offers_on_character_status_expires"
+    t.index ["character_id", "zone_id", "x", "y", "action_type", "status"], name: "index_world_action_offers_on_character_tile_action_status"
+    t.index ["character_id"], name: "index_world_action_offers_on_character_id"
+    t.index ["target_type", "target_id"], name: "index_world_action_offers_on_target"
+    t.index ["zone_id"], name: "index_world_action_offers_on_zone_id"
+  end
+
   create_table "zones", force: :cascade do |t|
     t.string "biome", null: false
     t.datetime "created_at", null: false
@@ -2405,11 +2338,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_11_133000) do
   add_foreign_key "currency_transactions", "currency_wallets"
   add_foreign_key "currency_wallets", "users"
   add_foreign_key "cutscene_events", "quests"
-  add_foreign_key "dungeon_encounters", "dungeon_instances"
-  add_foreign_key "dungeon_instances", "characters", column: "leader_id"
-  add_foreign_key "dungeon_instances", "dungeon_templates"
-  add_foreign_key "dungeon_instances", "parties"
-  add_foreign_key "dungeon_progress_checkpoints", "dungeon_instances"
   add_foreign_key "economy_alerts", "trade_sessions"
   add_foreign_key "event_instances", "game_events"
   add_foreign_key "event_schedules", "game_events"
@@ -2471,8 +2399,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_11_133000) do
   add_foreign_key "mounts", "users"
   add_foreign_key "movement_commands", "characters"
   add_foreign_key "movement_commands", "zones"
-  add_foreign_key "world_action_offers", "characters"
-  add_foreign_key "world_action_offers", "zones"
   add_foreign_key "npc_reports", "characters"
   add_foreign_key "npc_reports", "moderation_tickets"
   add_foreign_key "npc_reports", "users", column: "reporter_id"
@@ -2524,4 +2450,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_11_133000) do
   add_foreign_key "users_roles", "users"
   add_foreign_key "webhook_endpoints", "integration_tokens"
   add_foreign_key "webhook_events", "webhook_endpoints"
+  add_foreign_key "world_action_offers", "characters"
+  add_foreign_key "world_action_offers", "zones"
 end

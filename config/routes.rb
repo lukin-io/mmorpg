@@ -167,24 +167,6 @@ Rails.application.routes.draw do
 
   resources :arena_seasons, only: [:index, :show]
 
-  # Dungeons
-  resources :dungeons, only: [:index, :show] do
-    resources :instances, controller: "dungeon_instances", only: [:create, :show] do
-      member do
-        post :enter_encounter
-        post :complete_encounter
-        post :leave
-      end
-    end
-  end
-  resources :dungeon_instances, only: [:show] do
-    member do
-      post :enter_encounter
-      post :complete_encounter
-      post :leave
-    end
-  end
-
   # Inventory Management
   resource :inventory, only: [:show] do
     post :equip
