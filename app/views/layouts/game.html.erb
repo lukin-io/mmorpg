@@ -16,7 +16,7 @@
     <%# Left: Character name + level + HP/MP bars %>
     <div class="nl-top-left">
       <% if current_character %>
-        <a href="<%= profile_path(profile_name: current_character.name) %>" class="nl-player-link">
+        <a href="<%= player_path(name: current_character.name) %>" class="nl-player-link">
           <%= current_character.name %></a><span class="nl-player-level">[<%= current_character.level %>]</span>
         <%= render "shared/nl_vitals_bar", character: current_character %>
       <% end %>
@@ -25,7 +25,7 @@
     <%# Right: Navigation text links (like original) %>
     <nav class="nl-top-nav">
       <% if current_character %>
-        <%= link_to "Character", profile_path(profile_name: current_character.name), class: "nl-nav-link", data: { turbo_frame: "main_content" } %>
+        <%= link_to "Character", player_path(name: current_character.name), class: "nl-nav-link", data: { turbo_frame: "main_content" } %>
         <%= link_to "Inventory", inventory_path, class: "nl-nav-link", data: { turbo_frame: "main_content" } %>
         <%= link_to "Quests", quests_path, class: "nl-nav-link", data: { turbo_frame: "main_content" } %>
         <%= link_to "Abilities", skills_character_path(current_character), class: "nl-nav-link", data: { turbo_frame: "main_content" } %>

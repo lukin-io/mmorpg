@@ -1,6 +1,6 @@
 <%#
   Displays opponent's combat-relevant stats
-  Shows: Strength, Dexterity, Luck, Knowledge, Wisdom
+  Shows: Strength, Dexterity, Luck, and Knowledge
 
   Required locals:
   - participation: ArenaParticipation record
@@ -25,10 +25,6 @@
       <div class="stat-item" title="Affects magic damage">
         <dt>Int</dt>
         <dd><%= stats[:knowledge] || stats[:intelligence] || "-" %></dd>
-      </div>
-      <div class="stat-item" title="Affects magic defense">
-        <dt>Wis</dt>
-        <dd><%= stats[:wisdom] || "-" %></dd>
       </div>
     </dl>
   </div>

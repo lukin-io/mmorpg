@@ -177,46 +177,36 @@ RSpec.describe Character, type: :model do
   end
 
   describe "#max_action_points" do
-    let(:character_class) { create(:character_class, base_stats: {strength: 5, vitality: 5, agility: 8, intellect: 3}) }
-    let(:character) { create(:character, character_class: character_class, level: 10) }
+    let(:character) { create(:character, level: 10) }
 
-    it "calculates AP based on level and agility" do
-      # Formula: 50 (base) + (level * 3) + (agility * 2)
-      # = 50 + (10 * 3) + (8 * 2)
-      # = 50 + 30 + 16 = 96
-      expect(character.max_action_points).to eq(96)
+    it "calculates AP based on level and dexterity" do
+      # Formula: 50 (base) + (level * 3) + (dexterity * 2)
+      # = 50 + (10 * 3) + (1 * 2)
+      expect(character.max_action_points).to eq(82)
     end
 
     it "increases AP with higher level" do
       character.update!(level: 20)
-      # = 50 + (20 * 3) + (8 * 2)
-      # = 50 + 60 + 16 = 126
-      expect(character.max_action_points).to eq(126)
+      expect(character.max_action_points).to eq(112)
     end
 
-    it "increases AP with allocated agility" do
-      character.update!(allocated_stats: {"agility" => 5})
-      # Base agility: 8, Allocated: 5, Total: 13
-      # = 50 + (10 * 3) + (13 * 2)
-      # = 50 + 30 + 26 = 106
-      expect(character.max_action_points).to eq(106)
+    it "increases AP with allocated dexterity" do
+      character.update!(allocated_stats: {"dexterity" => 5})
+      expect(character.max_action_points).to eq(92)
     end
 
     it "returns appropriate AP for level 1 character" do
-      low_class = create(:character_class, base_stats: {strength: 5, vitality: 5, agility: 5, intellect: 5})
-      low_char = create(:character, level: 1, character_class: low_class)
-      # = 50 + (1 * 3) + (5 * 2) = 50 + 3 + 10 = 63
-      expect(low_char.max_action_points).to eq(63)
+      low_char = create(:character, level: 1)
+      expect(low_char.max_action_points).to eq(55)
     end
   end
 
   describe "combat power formulas" do
-    let(:character_class) do
-      create(:character_class, base_stats: {
-        strength: 10, dexterity: 8, vitality: 12, luck: 5
+    let(:character) do
+      create(:character, level: 3, allocated_stats: {
+        "strength" => 9, "dexterity" => 7, "vitality" => 11, "luck" => 4
       })
     end
-    let(:character) { create(:character, character_class:, level: 3) }
 
     it "includes level in attack power and defense" do
       expect(character.attack_power).to eq(25) # 20 strength + 4 dexterity + 1 level
@@ -387,39 +377,37 @@ RSpec.describe Character, type: :model do
   # Stats Allocation
   # ============================================
   describe "stats allocation" do
-    let(:character_class) { create(:character_class, base_stats: {"strength" => 10, "dexterity" => 10}) }
-    let(:character) { create(:character, character_class: character_class, allocated_stats: {}) }
+    let(:character) { create(:character, allocated_stats: {}) }
 
     describe "#stats" do
-      it "returns StatBlock with base stats" do
+      it "returns StatBlock with Neverlands starter base stats" do
         stats = character.stats
-        expect(stats.get(:strength)).to eq(10)
-        expect(stats.get(:dexterity)).to eq(10)
+        expect(stats.get(:strength)).to eq(1)
+        expect(stats.get(:dexterity)).to eq(1)
+        expect(stats.get(:luck)).to eq(1)
+        expect(stats.get(:vitality)).to eq(1)
+        expect(stats.get(:intelligence)).to eq(1)
       end
 
       it "includes allocated stats" do
         character.update!(allocated_stats: {"strength" => 5})
         stats = character.stats
-        expect(stats.get(:strength)).to eq(15) # 10 base + 5 allocated
+        expect(stats.get(:strength)).to eq(6)
       end
 
       it "handles multiple allocations" do
         character.update!(allocated_stats: {"strength" => 3, "dexterity" => 2})
         stats = character.stats
-        expect(stats.get(:strength)).to eq(13)
-        expect(stats.get(:dexterity)).to eq(12)
+        expect(stats.get(:strength)).to eq(4)
+        expect(stats.get(:dexterity)).to eq(3)
       end
 
-      it "handles nil character class" do
-        character.update!(character_class: nil)
+      it "normalizes legacy stat aliases into canonical primary stats" do
+        character.update!(allocated_stats: {"agility" => 5, "intellect" => 4, "constitution" => 3})
         stats = character.stats
-        expect(stats).to be_a(Game::Systems::StatBlock)
-      end
-
-      it "adds allocated stats to missing base stats" do
-        character.update!(allocated_stats: {"luck" => 5})
-        stats = character.stats
-        expect(stats.get(:luck)).to eq(5)
+        expect(stats.get(:dexterity)).to eq(6)
+        expect(stats.get(:intelligence)).to eq(5)
+        expect(stats.get(:vitality)).to eq(4)
       end
     end
   end

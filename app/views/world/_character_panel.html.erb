@@ -3,7 +3,7 @@
     <div class="char-avatar"></div>
     <div class="char-identity">
       <h2 class="char-name"><%= character.name %></h2>
-      <p class="char-class"><%= character.character_class&.name || "Novice" %> Lv.<%= character.level %></p>
+      <p class="char-class">Lv.<%= character.level %></p>
     </div>
   </div>
 
@@ -33,12 +33,16 @@
       <span class="char-stat-value"><%= character.stats.get(:dexterity) %></span>
     </div>
     <div class="char-stat">
-      <span class="char-stat-label">INT</span>
-      <span class="char-stat-value"><%= character.stats.get(:intelligence) %></span>
+      <span class="char-stat-label">LCK</span>
+      <span class="char-stat-value"><%= character.stats.get(:luck) %></span>
     </div>
     <div class="char-stat">
-      <span class="char-stat-label">CON</span>
-      <span class="char-stat-value"><%= character.stats.get(:constitution) %></span>
+      <span class="char-stat-label">HP</span>
+      <span class="char-stat-value"><%= character.stats.get(:vitality) %></span>
+    </div>
+    <div class="char-stat">
+      <span class="char-stat-label">KNW</span>
+      <span class="char-stat-value"><%= character.stats.get(:intelligence) %></span>
     </div>
   </div>
 
@@ -49,4 +53,3 @@
     </div>
   </div>
 </div>
-

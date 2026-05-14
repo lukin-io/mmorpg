@@ -4,13 +4,14 @@ module Game
   module Combat
     # Executes skills in combat, handling damage, healing, buffs, and effects.
     #
-    # Works with both SkillNode (from skill trees) and Ability (from class).
+    # Works with explicit combat skill records. The launch player path uses
+    # passive numeric skills and shared combat actions rather than class trees.
     #
     # @example Execute a skill
     #   executor = Game::Combat::SkillExecutor.new(
     #     caster: character,
     #     target: enemy,
-    #     skill: skill_node_or_ability,
+    #     skill: skill_record,
     #     battle: battle
     #   )
     #   result = executor.execute!
@@ -61,40 +62,8 @@ module Game
       end
 
       # Get character's available combat skills
-      def self.available_skills(character)
-        skills = []
-
-        # Add class abilities (if character_class has abilities association)
-        if character.character_class.respond_to?(:abilities)
-          character.character_class.abilities.where(kind: "active").each do |ability|
-            skills << {
-              id: "ability_#{ability.id}",
-              source: :ability,
-              record: ability,
-              name: ability.name,
-              type: ability.effects["type"] || "damage",
-              cost: ability.resource_cost,
-              cooldown: ability.cooldown_seconds,
-              effects: ability.effects
-            }
-          end
-        end
-
-        # Add unlocked skill tree nodes (active type only)
-        character.skill_nodes.where(node_type: "active").each do |node|
-          skills << {
-            id: "skill_#{node.id}",
-            source: :skill_node,
-            record: node,
-            name: node.name,
-            type: node.effects["type"] || "damage",
-            cost: node.resource_cost,
-            cooldown: node.cooldown_seconds,
-            effects: node.effects
-          }
-        end
-
-        skills
+      def self.available_skills(_character)
+        []
       end
 
       private
@@ -217,7 +186,7 @@ module Game
       def execute_heal
         effects = skill_effects
         base_heal = effects["base_heal"] || effects[:base_heal] || 40
-        scaling_stat = effects["scaling_stat"] || effects[:scaling_stat] || "spirit"
+        scaling_stat = effects["scaling_stat"] || effects[:scaling_stat] || "intelligence"
         scaling_factor = effects["scaling_factor"] || effects[:scaling_factor] || 0.6
 
         stat_value = caster_stat(scaling_stat)

@@ -7,7 +7,6 @@ class ExtendCombatLogs < ActiveRecord::Migration[8.1]
       t.string :actor_type
       t.bigint :target_id
       t.string :target_type
-      t.references :ability, foreign_key: true
       t.integer :damage_amount, null: false, default: 0
       t.integer :healing_amount, null: false, default: 0
       t.string :tags, array: true, default: []

@@ -9,15 +9,15 @@ module Game
         "str" => :strength,
         "dexterity" => :dexterity,
         "dex" => :dexterity,
-        "agility" => :agility,
+        "agility" => :dexterity,
         "luck" => :luck,
         "knowledge" => :intelligence,
         "intelligence" => :intelligence,
-        "wisdom" => :spirit,
-        "spirit" => :spirit,
+        "intellect" => :intelligence,
         "health" => :vitality,
         "vitality" => :vitality,
-        "constitution" => :constitution
+        "constitution" => :vitality,
+        "stamina" => :vitality
       }.freeze
 
       SKILL_ALIASES = {

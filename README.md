@@ -10,15 +10,18 @@ timers, chat/social presence, and tactical turn-based play.
 Use these files first:
 
 - `doc/design/gdd.md` - product and mechanics source of truth.
-- `doc/engineering/rails_guide.md` - active Rails engineering guide.
-- `doc/engineering/gameplay_architecture.md` - active gameplay architecture guide.
+- `doc/design/launch_mvp_plan.md` - active launch scope.
+- `doc/design/features/` and `doc/design/areas/` - canonical mechanics and
+  play spaces.
+- `doc/design/reference/neverlands.md` - how live Neverlands observations map
+  into this game's design language.
 - `doc/flow/neverlands_live_movement.md` - live Neverlands movement observation
   from 2026-05-09.
 - `doc/flow/neverlands_movement_codebase_analysis.md` - current movement gaps
   and implementation plan.
 
-Older feature lists and generated planning docs are not canonical. If they
-conflict with the GDD or the live movement observation, update or delete them.
+Non-Neverlands docs are legacy and should be removed, not treated as alternate
+guidance.
 
 ## Current Movement Direction
 
@@ -34,8 +37,7 @@ The target movement model is:
 8. Completion finalizes position and returns next tiles/buttons.
 
 Current movement work should continue from the DB-backed movement command and
-world action-offer model documented in `doc/design/features/movement.md` and
-`doc/engineering/gameplay_architecture.md`.
+world action-offer model documented in `doc/design/features/movement.md`.
 
 ## Stack
 

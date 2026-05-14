@@ -11,16 +11,16 @@ combat systems practical constraints.
 Inputs:
 
 - `doc/flow/neverlands_live_player.md`
-- `doc/ITEM_SYSTEM_GUIDE.md`
-- `doc/flow/18_inventory_system.md`
-- deleted `doc/features/8_gameplay_mechanics.md`
-- deleted `doc/features/9_economy.md`
 
 ## Player Experience
 
 The player opens inventory, sees equipped gear and carried items, compares item
 requirements, equips usable gear, sells or buys goods in shops, and feels weight
 or capacity as a real travel/economy constraint.
+
+Inventory is player-related functionality. It belongs beside the character
+profile, stats, skills, perks, vitals, and equipment formula, not in a separate
+account dashboard.
 
 ## Item Categories
 
@@ -52,6 +52,42 @@ Later:
 - The player profile should show an equipment doll/slot summary even when the
   full inventory action is separate or contextually disabled.
 
+## Wear And Remove Flow
+
+Neverlands-style wearing is an inventory action, not drag-and-drop.
+
+Design rules:
+
+- opening inventory shows the equipment doll and carried item list in the same
+  player shell;
+- empty slots are visible even when no item is equipped;
+- carried wearable items expose a compact `Wear` action in their item row;
+- clicking `Wear` submits a server-authorized item action with the item id,
+  target wear direction, and action token;
+- the server chooses or validates the destination slot from the item template;
+- requirements are validated before the item is worn;
+- if wearing succeeds, the item becomes equipped and its effects immediately
+  feed the profile, vitals, combat profile, movement/capacity calculations, and
+  visible equipment doll;
+- if wearing fails, the item remains carried and the player sees the reason;
+- clicking an occupied equipment slot removes that item through the same
+  server-authorized equipment action family;
+- removing an item returns it to carried inventory if capacity and state allow;
+- equipped, broken, protected, locked, or quest-bound items can have restricted
+  actions and must be handled server-side.
+
+Observed Neverlands action semantics:
+
+```text
+wear item from bag:      main.php?get_id=57&uid=<item-id>&s=1&vcode=<token>
+remove item from slot:   main.php?get_id=57&uid=<item-id>&s=0&vcode=<token>
+```
+
+The exact URL shape does not need to be copied, but the game must preserve the
+semantic contract: the server offers the action, the browser submits it, and the
+server validates item ownership, item state, slot compatibility, requirements,
+and action token before mutating equipment state.
+
 Baseline visible slots from the Neverlands player capture:
 
 - helmet;
@@ -76,6 +112,11 @@ The live inventory capture adds these launch requirements:
 - the current page's context button is disabled, while `Ваш персонаж` and
   `Вернуться` remain active;
 - inventory shows an equipment doll plus carried item rows;
+- an empty inventory still shows the equipment doll, money/stat/experience
+  side panel, category filters, and an explicit empty-state message;
+- category filters are visible above the item list, including top-level item
+  families, equipment subcategories, a full/short information toggle, and a
+  reset-filter action;
 - carried item rows show icon, durability bar, compact action buttons,
   properties, and requirements;
 - item properties can include price, durability, damage range, armor class,
@@ -87,6 +128,7 @@ The live inventory capture adds these launch requirements:
 - stable item requirements, base price, and max durability belong on the item
   template; current durability and per-instance overrides belong on the
   inventory item;
+- wearing and removing are tokenized/server-authorized equipment actions;
 - transfer, gift, sale, and delete are tokenized/server-authorized actions;
   launch MVP needs equip/use/delete first, with transfer/gift/sale deferred
   unless the economy loop explicitly needs them.
@@ -98,6 +140,8 @@ The live inventory capture adds these launch requirements:
 - Stackable items stack only with matching item identity and state.
 - Quest items can be protected from normal sale/discard.
 - Inventory actions are server-authoritative.
+- Wearing, removing, using, deleting, selling, transferring, and gifting are
+  separate actions and should not share client-invented state.
 
 ## Current Implementation Status
 
@@ -163,8 +207,6 @@ Missing before launch MVP is complete:
 ## Out Of Scope
 
 - Premium inventory boosts as a core design dependency.
-- Item enhancement beyond simple durability and requirements before base
-  inventory/equipment is stable.
 
 ## Related Implementation Files
 
@@ -179,16 +221,13 @@ Controllers and helpers:
 
 - `app/controllers/inventories_controller.rb`
 - `app/controllers/inventory_items_controller.rb`
-- `app/controllers/equipment_enhancements_controller.rb`
 - `app/helpers/inventories_helper.rb`
-- `app/helpers/equipment_enhancements_helper.rb`
 
 Services:
 
 - `app/services/game/inventory/manager.rb`
 - `app/services/game/inventory/equipment_service.rb`
 - `app/services/game/inventory/requirement_checker.rb`
-- `app/services/game/inventory/enhancement_service.rb`
 - `app/services/game/inventory/expansion_service.rb`
 - `app/services/game/economy/loot_generator.rb`
 
@@ -198,9 +237,6 @@ Views and JavaScript:
 - `app/views/inventories/_equipment.html.erb`
 - `app/views/inventories/_equipment_slot.html.erb`
 - `app/views/inventories/_stats.html.erb`
-- `app/views/equipment_enhancements/index.html.erb`
-- `app/views/equipment_enhancements/show.html.erb`
-- `app/views/equipment_enhancements/_preview.html.erb`
 - `app/javascript/controllers/inventory_controller.js`
 
 Specs:
@@ -209,6 +245,5 @@ Specs:
 - `spec/models/item_template_spec.rb`
 - `spec/requests/inventories_spec.rb`
 - `spec/services/game/inventory/manager_spec.rb`
-- `spec/services/game/inventory/enhancement_service_spec.rb`
 - `spec/services/game/inventory/expansion_service_spec.rb`
 - `spec/system/inventory_progression_spec.rb`

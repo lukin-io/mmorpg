@@ -23,63 +23,9 @@ RSpec.describe Game::Combat::SkillExecutor do
   end
 
   describe ".available_skills" do
-    context "with class abilities" do
-      let(:ability) do
-        create(:ability,
-          character_class: character.character_class,
-          name: "Fireball",
-          kind: "active",
-          effects: {"type" => "damage", "base_damage" => 50},
-          resource_cost: {"mp" => 20},
-          cooldown_seconds: 5)
-      end
-
-      before { ability }
-
-      it "returns class abilities" do
-        skills = described_class.available_skills(character)
-
-        fireball = skills.find { |s| s[:name] == "Fireball" }
-        expect(fireball).to be_present
-        expect(fireball[:source]).to eq(:ability)
-        expect(fireball[:cost]).to eq({"mp" => 20})
-      end
-    end
-
-    context "with skill tree nodes" do
-      let(:skill_tree) { create(:skill_tree, character_class: character.character_class) }
-      let(:skill_node) do
-        create(:skill_node,
-          skill_tree: skill_tree,
-          name: "Power Strike",
-          node_type: "active",
-          effects: {"type" => "damage", "base_damage" => 30},
-          resource_cost: {"mp" => 10},
-          cooldown_seconds: 3)
-      end
-
-      before do
-        # Associate skill node with character using the join table
-        CharacterSkill.create!(
-          character: character,
-          skill_node: skill_node,
-          unlocked_at: Time.current
-        )
-      end
-
-      it "returns unlocked skill nodes" do
-        skills = described_class.available_skills(character)
-
-        power_strike = skills.find { |s| s[:name] == "Power Strike" }
-        expect(power_strike).to be_present
-        expect(power_strike[:source]).to eq(:skill_node)
-        expect(power_strike[:type]).to eq("damage")
-      end
-    end
-
-    it "returns empty array for character without skills" do
+    it "returns no legacy class or skill-tree active skills" do
       skills = described_class.available_skills(character)
-      expect(skills).to be_an(Array)
+      expect(skills).to eq([])
     end
   end
 
@@ -128,7 +74,7 @@ RSpec.describe Game::Combat::SkillExecutor do
         OpenStruct.new(
           id: 2,
           name: "Healing Light",
-          effects: {"type" => "heal", "base_heal" => 40, "scaling_stat" => "spirit", "scaling_factor" => 0.6},
+          effects: {"type" => "heal", "base_heal" => 40, "scaling_stat" => "intelligence", "scaling_factor" => 0.6},
           resource_cost: {},
           cooldown_seconds: 0
         )

@@ -72,7 +72,7 @@ module Game
         when "sell_item"
           sell_item(params[:item_id], params[:quantity])
         when "learn_skill"
-          learn_skill(params[:skill_id])
+          failure("Skill training is handled from the character skills page")
         when "rest"
           rest_at_inn(params[:room_type])
         when "deposit"
@@ -187,45 +187,13 @@ module Game
           data: {
             npc: npc_data,
             greeting: npc_greeting,
-            available_skills: trainable_skills,
-            learned_skills: character.skill_nodes.pluck(:id),
+            available_skills: [],
+            learned_skills: character.passive_skills.keys,
             player_gold: character.gold,
             skill_points: character.skill_points_available
           },
           message: npc_greeting
         )
-      end
-
-      def trainable_skills
-        return [] unless npc_template.metadata&.dig("teaches")
-
-        trainer_class = npc_template.metadata["teaches"]["class"]
-        return [] unless trainer_class
-
-        SkillTree.where(character_class_id: trainer_class)
-          .flat_map(&:skill_nodes)
-          .select { |node| can_learn_skill?(node) }
-          .map { |node| skill_node_data(node) }
-      end
-
-      def can_learn_skill?(skill_node)
-        return false if character.skill_nodes.include?(skill_node)
-
-        # Check requirements
-        requirements = skill_node.requirements || {}
-
-        # Level requirement
-        if requirements["level"]
-          return false if character.level < requirements["level"]
-        end
-
-        # Prerequisite skills
-        if requirements["prerequisite_skills"]
-          prereqs = requirements["prerequisite_skills"]
-          return false unless prereqs.all? { |key| character.skill_nodes.exists?(key: key) }
-        end
-
-        true
       end
 
       # Innkeeper handling
@@ -473,26 +441,6 @@ module Game
         )
       end
 
-      def learn_skill(skill_id)
-        skill_node = SkillNode.find_by(id: skill_id)
-        return failure("Skill not found") unless skill_node
-        return failure("Cannot learn this skill") unless can_learn_skill?(skill_node)
-
-        cost = skill_node.resource_cost&.dig("gold") || 100
-        return failure("Not enough gold") if character.gold < cost
-
-        character.gold -= cost
-        character.character_skills.create!(skill_node: skill_node, unlocked_at: Time.current)
-        character.save!
-
-        Result.new(
-          success: true,
-          dialogue_type: :skill_learned,
-          data: {skill: skill_node_data(skill_node)},
-          message: "Learned #{skill_node.name}!"
-        )
-      end
-
       def rest_at_inn(room_type)
         room = inn_rooms.find { |r| r[:key] == room_type }
         return failure("Invalid room type") unless room
@@ -584,19 +532,6 @@ module Game
           status: quest_assignment.status,
           progress: quest_assignment.progress,
           completable: quest_complete?(quest_assignment)
-        }
-      end
-
-      def skill_node_data(node)
-        {
-          id: node.id,
-          key: node.key,
-          name: node.name,
-          type: node.node_type,
-          tier: node.tier,
-          effects: node.effects,
-          cost: node.resource_cost&.dig("gold") || 100,
-          requirements: node.requirements
         }
       end
 

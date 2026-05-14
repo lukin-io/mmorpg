@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
-# InventoryItem tracks stack counts, equipment state, and enhancement metadata.
+# InventoryItem tracks stack counts, equipment state, durability, and per-item
+# overrides.
 class InventoryItem < ApplicationRecord
   belongs_to :inventory
   belongs_to :item_template
@@ -8,7 +9,7 @@ class InventoryItem < ApplicationRecord
   scope :equipped, -> { where(equipped: true) }
 
   validates :quantity, numericality: {greater_than: 0}
-  validates :weight, :enhancement_level, numericality: {greater_than_or_equal_to: 0}
+  validates :weight, numericality: {greater_than_or_equal_to: 0}
 
   def requirements
     item_template.requirements.to_h.merge(properties.to_h.fetch("requirements", {}))

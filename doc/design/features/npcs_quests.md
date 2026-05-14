@@ -9,9 +9,8 @@ gathering, and city visits a structured purpose.
 
 Inputs:
 
-- `doc/flow/4_world_npc_systems.md`
-- deleted `doc/features/4_npc.md`
-- deleted `doc/features/10_quests_story.md`
+- Neverlands-derived NPC, trainer, shopkeeper, quest, and tile-action rules
+  folded into this file.
 
 ## Player Experience
 

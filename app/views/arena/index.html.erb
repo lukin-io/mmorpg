@@ -12,7 +12,7 @@
       <span class="nl-arena-vitals"><%= current_character.current_hp %>/<%= current_character.max_hp %> | <%= current_character.current_mp %>/<%= current_character.max_mp %></span>
     </div>
     <div class="nl-arena-controls">
-      <%= link_to "Character", profile_path(profile_name: current_character.name), class: "nl-arena-link" %>
+      <%= link_to "Character", player_path(name: current_character.name), class: "nl-arena-link" %>
       <%= link_to "Inventory", inventory_path, class: "nl-arena-link" %>
       <span class="nl-arena-link nl-arena-link--current">Arena</span>
       <%= link_to "City", world_path, class: "nl-arena-link" %>

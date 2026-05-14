@@ -6,6 +6,31 @@ class Character < ApplicationRecord
   # Available player avatars (randomly assigned on character creation)
   AVATARS = %w[dwarven nightveil lightbearer pathfinder arcanist ironbound].freeze
 
+  PRIMARY_STATS = %i[strength dexterity luck vitality intelligence].freeze
+  BASE_PRIMARY_STATS = PRIMARY_STATS.index_with { 1 }.freeze
+  STAT_LABELS = {
+    strength: "Strength",
+    dexterity: "Dexterity",
+    luck: "Luck",
+    vitality: "Health",
+    intelligence: "Knowledge"
+  }.freeze
+  STAT_ALIASES = {
+    "strength" => :strength,
+    "str" => :strength,
+    "dexterity" => :dexterity,
+    "dex" => :dexterity,
+    "agility" => :dexterity,
+    "luck" => :luck,
+    "knowledge" => :intelligence,
+    "intelligence" => :intelligence,
+    "intellect" => :intelligence,
+    "health" => :vitality,
+    "vitality" => :vitality,
+    "constitution" => :vitality,
+    "stamina" => :vitality
+  }.freeze
+
   # Base faction alignments (player chooses one)
   ALIGNMENTS = {
     neutral: "neutral",
@@ -46,19 +71,17 @@ class Character < ApplicationRecord
     "luck" => :luck,
     "knowledge" => :intelligence,
     "intelligence" => :intelligence,
+    "intellect" => :intelligence,
     "health" => :vitality,
     "vitality" => :vitality,
-    "constitution" => :constitution,
-    "wisdom" => :spirit,
-    "spirit" => :spirit,
-    "agility" => :agility
+    "constitution" => :vitality,
+    "stamina" => :vitality,
+    "agility" => :dexterity
   }.freeze
 
   belongs_to :user
-  belongs_to :character_class, optional: true
   belongs_to :guild, optional: true
   belongs_to :clan, optional: true
-  belongs_to :secondary_specialization, class_name: "ClassSpecialization", optional: true
 
   has_one :position, class_name: "CharacterPosition", dependent: :destroy
   has_one :inventory, dependent: :destroy
@@ -67,8 +90,6 @@ class Character < ApplicationRecord
   has_many :arena_applications, foreign_key: :applicant_id, dependent: :destroy
   has_many :arena_participations, dependent: :destroy
 
-  has_many :character_skills, dependent: :destroy
-  has_many :skill_nodes, through: :character_skills
   has_many :profession_progresses, dependent: :destroy
   has_many :profession_tools, dependent: :destroy
   has_many :battle_participants, dependent: :destroy
@@ -100,9 +121,11 @@ class Character < ApplicationRecord
   after_create_commit :ensure_tutorial_assignments
 
   def stats
-    base = (character_class&.base_stats || {}).transform_keys(&:to_sym)
+    base = BASE_PRIMARY_STATS.dup
     allocated_stats.each do |stat, value|
-      key = stat.to_sym
+      key = self.class.normalize_stat_key(stat)
+      next unless key
+
       base[key] = base.fetch(key, 0) + value.to_i
     end
     equipment_stat_modifiers.each do |stat, value|
@@ -111,17 +134,36 @@ class Character < ApplicationRecord
     Game::Systems::StatBlock.new(base:)
   end
 
+  def self.normalize_stat_key(key)
+    STAT_ALIASES[key.to_s.strip.downcase.tr(" -", "_")]
+  end
+
+  def self.stat_label(key)
+    STAT_LABELS.fetch(key.to_sym)
+  end
+
+  def self.xp_required_for_level(level)
+    target = level.to_i
+    return 0 if target <= 1
+
+    ((target - 1)**2) * 100
+  end
+
+  def experience_to_next_level
+    [self.class.xp_required_for_level(level + 1) - experience.to_i, 0].max
+  end
+
   # Calculate maximum action points for combat
-  # Formula: Base AP (50) + (Level × 3) + (Agility × 2)
+  # Formula: Base AP (50) + (Level × 3) + (Dexterity × 2)
   # This determines how many attacks/blocks a character can perform per turn
   #
   # @return [Integer] the character's maximum action points
   def max_action_points
     base_ap = 50
     level_bonus = level * 3
-    agility_bonus = stats.get(:agility).to_i * 2
+    dexterity_bonus = stats.get(:dexterity).to_i * 2
 
-    base_ap + level_bonus + agility_bonus
+    base_ap + level_bonus + dexterity_bonus
   end
 
   # Get current alignment tier based on alignment_score
@@ -656,7 +698,7 @@ class Character < ApplicationRecord
         total: attack_strength + attack_dexterity + attack_level + attack_equipment
       },
       defense: {
-        vitality: defense_vitality,
+        health: defense_vitality,
         strength: defense_strength,
         level: defense_level,
         equipment: defense_equipment,
@@ -698,7 +740,7 @@ class Character < ApplicationRecord
   #
   # @return [Integer] agility value
   def agility
-    stats.get(:agility).to_i
+    stats.get(:dexterity).to_i
   end
 
   # ===================
@@ -819,9 +861,8 @@ class Character < ApplicationRecord
     base = combat_component_base(stats, stat_key)
     return 0 if base.zero?
 
-    enhancement_bonus = item.enhancement_level.to_i
     multiplier = equipment_family_multiplier(equipment_item_family(item), stat_key)
-    ((base + enhancement_bonus) * multiplier).round
+    (base * multiplier).round
   end
 
   def equipment_item_family(item)

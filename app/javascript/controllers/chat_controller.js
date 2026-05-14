@@ -151,11 +151,13 @@ export default class extends Controller {
   }
 
   buildUserMenuHTML(username, userId) {
+    const encodedUsername = encodeURIComponent(username)
+
     return `
       <a class="user-menu-link" data-action="click->chat#whisperTo" data-username="${username}">
         💬 Whisper
       </a>
-      <a class="user-menu-link" href="/profiles/${username}" target="_blank">
+      <a class="user-menu-link" href="/player/${encodedUsername}" target="_blank">
         👤 View Profile
       </a>
       <a class="user-menu-link" data-action="click->chat#mentionUser" data-username="${username}">

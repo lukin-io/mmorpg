@@ -12,14 +12,9 @@ RSpec.describe CombatLogEntry do
       expect(entry.battle).to eq(battle)
     end
 
-    it "belongs to ability (optional)" do
-      ability = create(:ability, character_class: character.character_class)
-      entry = create(:combat_log_entry, battle: battle, ability: ability)
-      expect(entry.ability).to eq(ability)
-
-      # Test optional
-      entry_without = create(:combat_log_entry, battle: battle, ability: nil)
-      expect(entry_without).to be_valid
+    it "allows entries without actor metadata" do
+      entry = create(:combat_log_entry, battle: battle, actor_id: nil, actor_type: nil)
+      expect(entry).to be_valid
     end
   end
 

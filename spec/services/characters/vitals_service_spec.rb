@@ -3,14 +3,11 @@
 require "rails_helper"
 
 RSpec.describe Characters::VitalsService do
-  let(:character_class) do
-    create(:character_class, base_stats: {
-      strength: 10, dexterity: 8, intelligence: 5, vitality: 12, spirit: 6, luck: 3
-    })
-  end
   let(:character) do
-    create(:character, character_class: character_class, current_hp: 80, max_hp: 100,
-      current_mp: 30, max_mp: 50, hp_regen_interval: 100, mp_regen_interval: 60)
+    create(:character,
+      allocated_stats: {"strength" => 9, "dexterity" => 7, "intelligence" => 4, "vitality" => 11, "luck" => 2},
+      current_hp: 80, max_hp: 100, current_mp: 30, max_mp: 50,
+      hp_regen_interval: 100, mp_regen_interval: 60)
   end
 
   subject(:service) { described_class.new(character) }
@@ -22,7 +19,7 @@ RSpec.describe Characters::VitalsService do
       expect(summary).to be_a(Hash)
       expect(summary.keys).to include(
         :current_hp, :max_hp, :current_mp, :max_mp,
-        :strength, :dexterity, :intelligence, :vitality, :spirit,
+        :strength, :dexterity, :luck, :intelligence, :vitality,
         :attack_power, :defense, :crit_rate, :combat_power_breakdown
       )
     end
@@ -36,14 +33,14 @@ RSpec.describe Characters::VitalsService do
       expect(summary[:max_mp]).to eq(50)
     end
 
-    it "returns base stat values from character class" do
+    it "returns effective primary stat values" do
       summary = service.stats_summary
 
       expect(summary[:strength]).to eq(10)
       expect(summary[:dexterity]).to eq(8)
+      expect(summary[:luck]).to eq(3)
       expect(summary[:intelligence]).to eq(5)
       expect(summary[:vitality]).to eq(12)
-      expect(summary[:spirit]).to eq(6)
     end
 
     it "calculates attack power from strength and dexterity" do

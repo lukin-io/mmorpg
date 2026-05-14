@@ -3,19 +3,53 @@
 
 <div class="nl-equipment-summary">
   <div class="nl-equipment-paperdoll">
-    <div class="nl-equipment-avatar">
-      <span class="nl-equipment-avatar-name"><%= character&.name || "Unknown" %></span>
-      <span class="nl-equipment-avatar-kind"><%= character&.character_class&.name || "Novice" %></span>
+    <div class="nl-equipment-side nl-equipment-side--left">
+      <% EquipmentSlots::LEFT.each do |slot_key, label| %>
+        <% item = equipment[slot_key] || equipment[slot_key.to_sym] %>
+        <div class="nl-profile-slot <%= 'nl-profile-slot--filled' if item %>">
+          <span class="nl-profile-slot-label"><%= label %></span>
+          <span class="nl-profile-slot-value"><%= item&.item_template&.name || "empty" %></span>
+        </div>
+      <% end %>
+    </div>
+
+    <div class="nl-equipment-portrait">
+      <% if character %>
+        <%= image_tag character.avatar_image_path, alt: character.name, class: "nl-equipment-character-image", loading: "lazy" %>
+      <% end %>
+    </div>
+
+    <div class="nl-equipment-side nl-equipment-side--right">
+      <% EquipmentSlots::RIGHT.each do |slot_key, label| %>
+        <% item = equipment[slot_key] || equipment[slot_key.to_sym] %>
+        <div class="nl-profile-slot <%= 'nl-profile-slot--filled' if item %>">
+          <span class="nl-profile-slot-label"><%= label %></span>
+          <span class="nl-profile-slot-value"><%= item&.item_template&.name || "empty" %></span>
+        </div>
+      <% end %>
+    </div>
+
+    <div class="nl-equipment-lower-slots">
+      <% EquipmentSlots::LOWER.each do |slot_key, label| %>
+        <% item = equipment[slot_key] || equipment[slot_key.to_sym] %>
+        <div class="nl-profile-slot nl-profile-slot--compact <%= 'nl-profile-slot--filled' if item %>">
+          <span class="nl-profile-slot-label"><%= label %></span>
+          <span class="nl-profile-slot-value"><%= item&.item_template&.name || "empty" %></span>
+        </div>
+      <% end %>
     </div>
   </div>
-
-  <div class="nl-equipment-slot-grid">
-    <% PlayerProfileHelper::PROFILE_EQUIPMENT_SLOTS.each do |slot_key, label| %>
-      <% item = equipment[slot_key] || equipment[slot_key.to_sym] %>
-      <div class="nl-profile-slot <%= 'nl-profile-slot--filled' if item %>">
-        <span class="nl-profile-slot-label"><%= label %></span>
-        <span class="nl-profile-slot-value"><%= item&.item_template&.name || "empty" %></span>
-      </div>
-    <% end %>
+  <div class="nl-equipment-location">
+    <span>Location</span>
+    <strong><%= profile_location(character) %></strong>
   </div>
+  <% if equipment.empty? %>
+    <div class="nl-profile-empty">No equipped items.</div>
+  <% else %>
+    <div class="nl-equipped-items-list">
+      <% equipment.values.each do |item| %>
+        <span><%= item.item_template&.name %></span>
+      <% end %>
+    </div>
+  <% end %>
 </div>

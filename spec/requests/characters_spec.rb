@@ -4,15 +4,13 @@ require "rails_helper"
 
 RSpec.describe CharactersController, type: :request do
   let(:user) { create(:user) }
-  let(:character_class) { create(:character_class, base_stats: {"strength" => 10, "dexterity" => 10}) }
   let!(:character) do
     create(:character,
       user: user,
-      character_class: character_class,
       stat_points_available: 10,
-      skill_points_available: 5,     # Legacy, kept for backward compatibility
-      combat_skill_points: 5,        # New: used for combat/magic/resistance skills
-      peace_skill_points: 5,         # New: used for peace/crafting/social skills
+      skill_points_available: 5,
+      combat_skill_points: 5,
+      peace_skill_points: 5,
       allocated_stats: {},
       passive_skills: {})
   end
@@ -39,7 +37,7 @@ RSpec.describe CharactersController, type: :request do
       it "shows all allocatable stats" do
         get stats_character_path(character)
 
-        %w[Strength Dexterity Intelligence Constitution Agility Luck].each do |stat|
+        %w[Strength Dexterity Luck Health Knowledge].each do |stat|
           expect(response.body).to include(stat)
         end
       end
@@ -50,10 +48,10 @@ RSpec.describe CharactersController, type: :request do
         expect(response.body).to include("10") # stat_points_available
       end
 
-      it "shows base stats from character class" do
+      it "shows Neverlands starter base stats" do
         get stats_character_path(character)
 
-        expect(response.body).to include("(base: 10)")
+        expect(response.body).to include("(base: 1)")
       end
     end
 
@@ -66,29 +64,8 @@ RSpec.describe CharactersController, type: :request do
         get stats_character_path(character)
 
         expect(response).to have_http_status(:success)
-        # Base 10 + allocated 5 = 15
-        expect(response.body).to include("15")
-      end
-    end
-
-    context "without character class (nil base stats)" do
-      let!(:character_without_class) do
-        create(:character,
-          user: user,
-          character_class: nil,
-          stat_points_available: 10,
-          skill_points_available: 5)
-      end
-
-      before do
-        character_without_class.create_position!(zone: zone, x: 1, y: 1)
-      end
-
-      it "handles nil character class gracefully" do
-        get stats_character_path(character_without_class)
-
-        expect(response).to have_http_status(:success)
-        expect(response.body).to include("Strength")
+        # Base 1 + allocated 5 = 6
+        expect(response.body).to include("6")
       end
     end
 
@@ -139,7 +116,7 @@ RSpec.describe CharactersController, type: :request do
 
       it "allocates multiple stats successfully" do
         patch stats_character_path(character), params: {
-          allocated_stats: {strength: 3, dexterity: 2, intelligence: 1}
+          allocated_stats: {strength: 3, dexterity: 2, vitality: 1}
         }
 
         expect(response).to redirect_to(stats_character_path(character))
@@ -147,7 +124,7 @@ RSpec.describe CharactersController, type: :request do
         expect(character.stat_points_available).to eq(4) # 10 - 3 - 2 - 1
         expect(character.allocated_stats["strength"]).to eq(3)
         expect(character.allocated_stats["dexterity"]).to eq(2)
-        expect(character.allocated_stats["intelligence"]).to eq(1)
+        expect(character.allocated_stats["vitality"]).to eq(1)
       end
 
       it "allocates all available points" do
@@ -218,7 +195,7 @@ RSpec.describe CharactersController, type: :request do
 
       it "rejects all-zero allocation" do
         patch stats_character_path(character), params: {
-          allocated_stats: {strength: 0, dexterity: 0, intelligence: 0}
+          allocated_stats: {strength: 0, dexterity: 0, vitality: 0}
         }
 
         expect(response).to redirect_to(root_path)
@@ -309,8 +286,8 @@ RSpec.describe CharactersController, type: :request do
 
         expect(response).to redirect_to(stats_character_path(character))
         character.reload
-        expect(character.stat_points_available).to eq(3) # Only counts valid strength: 2 + unknown: 5
-        # The unknown stat is stored but won't affect gameplay
+        expect(character.stat_points_available).to eq(8)
+        expect(character.allocated_stats).to eq({"strength" => 2})
       end
     end
 
@@ -386,7 +363,7 @@ RSpec.describe CharactersController, type: :request do
         get skills_character_path(character)
 
         expect(response).to have_http_status(:success)
-        expect(response.body).to include("Abilities")
+        expect(response.body).to include("Skills")
         expect(response.body).to include("Combat/Magic Points:")
         expect(response.body).to include("Peace Points:")
       end

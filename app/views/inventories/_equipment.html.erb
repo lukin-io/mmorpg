@@ -3,11 +3,11 @@
 <div class="nl-inventory-equipment">
   <div class="nl-equipment-paperdoll">
     <span class="nl-equipment-avatar-name"><%= character.name %></span>
-    <span class="nl-equipment-avatar-kind"><%= character.character_class&.name || "Novice" %></span>
+    <span class="nl-equipment-avatar-kind">Level <%= character.level %></span>
   </div>
 
   <div class="equipment-slots nl-inventory-equipment-slots">
-    <% PlayerProfileHelper::PROFILE_EQUIPMENT_SLOTS.each do |slot_key, label| %>
+    <% EquipmentSlots::ORDERED.each do |slot_key, label| %>
       <%= render "inventories/equipment_slot",
         slot: slot_key.to_sym,
         item: equipment[slot_key.to_sym],

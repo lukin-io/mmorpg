@@ -22,7 +22,7 @@ module Combat
 
     def initialize(battle)
       @battle = battle
-      @entries = battle.combat_log_entries.includes(:ability)
+      @entries = battle.combat_log_entries
     end
 
     # Get statistics grouped by participant

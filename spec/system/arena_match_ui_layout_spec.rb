@@ -174,12 +174,12 @@ RSpec.describe "Arena Match UI Layout", type: :system do
 
     it "displays strength label" do
       visit arena_match_path(match)
-      expect(page).to have_content("Strength: 10")
+      expect(page).to have_content("Strength: 1")
     end
 
     it "displays dexterity label" do
       visit arena_match_path(match)
-      expect(page).to have_content("Dexterity: 0")
+      expect(page).to have_content("Dexterity: 1")
     end
   end
 

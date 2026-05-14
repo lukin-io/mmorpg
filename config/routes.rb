@@ -16,8 +16,7 @@ Rails.application.routes.draw do
   get "logs/:share_token", to: "public_battle_logs#show", as: :public_battle_log
 
   resource :session_ping, only: :create
-  get "pinfo.cgi", to: "public_profiles#pinfo", as: :pinfo
-  resources :profiles, only: :show, controller: :public_profiles, param: :profile_name
+  get "player/:name", to: "players#show", as: :player
 
   # Character Stats & Skills Allocation
   resources :characters, only: [] do
@@ -81,15 +80,6 @@ Rails.application.routes.draw do
     end
   end
 
-  # Skill Trees & Abilities
-  resources :skill_trees, only: [:index, :show] do
-    member do
-      post :unlock
-    end
-    collection do
-      post :respec
-    end
-  end
   resources :crafting_jobs, only: [:index, :create] do
     collection do
       post :preview
@@ -175,14 +165,6 @@ Rails.application.routes.draw do
     post :sort
   end
   resources :inventory_items, only: [:destroy], path: "inventory/items"
-
-  # Equipment Enhancement
-  resources :equipment_enhancements, only: [:index, :show] do
-    member do
-      post :enhance
-      post :preview
-    end
-  end
 
   # Premium Store
   resources :premium_store, only: [:index, :show] do

@@ -52,6 +52,11 @@ Required behavior:
 - profile/player summary is reachable inside the gameplay shell and shows
   vitals, stats, equipment slots, experience, fatigue, attack cost, and fight
   record;
+- every character has a public Neverlands-style info URL at
+  `/player/<character-name>`;
+- profile/player summary owns the launch allocation loop: available stat
+  increases, numeric skill increases, and boolean perk unlocks are visible
+  there and saved explicitly;
 - inventory is reachable from the player shell and shows equipment slots,
   inventory mass, category filters, item properties, item requirements,
   durability, and compact equip/use/delete actions;
@@ -80,6 +85,12 @@ Required behavior:
   `doc/design/features/items_inventory_equipment.md`.
 - Live Neverlands player/profile observations are captured in
   `doc/flow/neverlands_live_player.md`.
+- Public character lookup uses `/player/<character-name>` as the canonical
+  local route.
+- The 2026-05-14 starter-account capture confirms the launch player formula
+  surfaces: primary stat allocation, `Умения` numeric skills, `Навыки` boolean
+  perks, separate point pools, explicit save actions, and next-level experience
+  display.
 
 ### In Progress
 
@@ -90,9 +101,9 @@ Required behavior:
   across pickup/loot/trade/shop flows, and system coverage.
 - Level-up UX and allocation UX need to be treated as part of the main
   character loop, not an admin/debug sidebar.
-- Numeric `Умения` and boolean `Навыки` should be modeled as the main launch
-  progression surfaces; broad class-tree or node-graph progression is deferred
-  unless it maps back to that player-profile loop.
+- Numeric `Умения` and boolean `Навыки` are the main launch progression
+  surfaces. Broad node-graph progression is deferred unless it
+  maps back to the player-profile allocation loop.
 - Recovery and defeat states need a launch-level path that is consistent for
   arena and wild fights.
 - Specs should assert that the same character/equipment data feeds vitals,
@@ -284,6 +295,5 @@ Implementation and capture notes:
 
 - `doc/flow/neverlands_live_player.md`
 - `doc/flow/neverlands_live_movement.md`
-- `doc/flow/22_arena_npc_bots.md`
-- `doc/flow/23_unified_combat_architecture.md`
-- `doc/flow/24_unified_turn_combat.md`
+- `doc/flow/neverlands_live_city_movement.md`
+- `doc/design/reference/neverlands_arena_combat.md`

@@ -19,10 +19,7 @@
 #
 class ItemTemplate < ApplicationRecord
   ITEM_TYPES = %w[equipment material resource consumable quest misc].freeze
-  EQUIPMENT_SLOTS = %w[
-    head amulet main_hand belt belt_1 belt_2 belt_3 feet pocket pocket_1
-    bracers hands off_hand ring_1 ring_2 ring_3 ring_4 chest legs relic
-  ].freeze
+  EQUIPMENT_SLOTS = EquipmentSlots::KEYS
   RARITIES = %w[common uncommon rare epic legendary].freeze
 
   validates :name, presence: true, uniqueness: true

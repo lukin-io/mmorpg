@@ -44,7 +44,7 @@ class CombatLogsController < ApplicationController
   end
 
   def filtered_entries
-    scope = @battle.combat_log_entries.includes(:ability)
+    scope = @battle.combat_log_entries
     scope = scope.where(log_type: "attack") if params[:filter] == "damage"
     scope = scope.where("healing_amount > 0") if params[:filter] == "healing"
     scope = scope.where("? = ANY(tags)", params[:element]) if params[:element].present?

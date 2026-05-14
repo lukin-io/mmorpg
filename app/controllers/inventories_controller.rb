@@ -2,7 +2,8 @@
 
 # Controller for inventory management.
 #
-# Full equipment/bag interface with drag-drop support.
+# Neverlands-style equipment/bag interface with server-authorized wear/remove
+# actions.
 #
 class InventoriesController < ApplicationController
   include CurrentCharacterContext
@@ -40,7 +41,7 @@ class InventoriesController < ApplicationController
             turbo_stream.update("stats_panel", partial: "inventories/stats", locals: {stats: stats})
           ]
         end
-        format.html { redirect_to inventory_redirect_path, notice: "Item equipped!" }
+        format.html { redirect_to inventory_redirect_path, notice: "Item worn!" }
       else
         format.turbo_stream do
           render turbo_stream: turbo_stream.append(
@@ -76,7 +77,7 @@ class InventoriesController < ApplicationController
             turbo_stream.update("stats_panel", partial: "inventories/stats", locals: {stats: stats})
           ]
         end
-        format.html { redirect_to inventory_redirect_path, notice: "Item unequipped!" }
+        format.html { redirect_to inventory_redirect_path, notice: "Item removed!" }
       else
         format.turbo_stream do
           render turbo_stream: turbo_stream.append(
@@ -201,7 +202,7 @@ class InventoriesController < ApplicationController
   end
 
   def current_character_equipment
-    PlayerProfileHelper::PROFILE_EQUIPMENT_SLOTS.to_h do |slot_key, _label|
+    EquipmentSlots::ORDERED.to_h do |slot_key, _label|
       [slot_key.to_sym, equipped_item(slot_key)]
     end
   end

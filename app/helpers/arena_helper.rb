@@ -158,7 +158,7 @@ module ArenaHelper
     :name, :level, :id, :is_npc,
     :current_hp, :max_hp, :current_mp, :max_mp,
     :hp_percent, :mp_percent,
-    :strength, :dexterity, :luck, :knowledge, :wisdom,
+    :strength, :dexterity, :luck, :knowledge,
     :attack_power, :defense, :armor_class, :evasion,
     :accuracy, :crushing, :endurance, :armor_penetration,
     keyword_init: true
@@ -266,7 +266,6 @@ module ArenaHelper
       dexterity: stats[:dexterity] || 0,
       luck: stats[:luck] || 0,
       knowledge: stats[:knowledge] || 0,
-      wisdom: stats[:wisdom] || 0,
       attack_power: stats[:attack_power] || stats[:attack] || 0,
       defense: stats[:defense] || 0,
       armor_class: stats[:armor_class] || stats[:defense] || 0,
@@ -313,27 +312,10 @@ module ArenaHelper
     else
       character = participation.character
       avatar_class = character&.avatar || "warrior"
-      avatar_text = character_class_emoji(character)
+      avatar_text = character&.name.to_s.first.presence || "P"
       content_tag(:span, avatar_text, class: "avatar avatar--player avatar--#{size} avatar--#{avatar_class}",
         style: "font-size: #{size_px}px; line-height: #{size_px}px;",
         title: character&.name || "Player")
-    end
-  end
-
-  # Get text label for character class
-  # @param character [Character] the character
-  # @return [String] label representing the class
-  def character_class_emoji(character)
-    return "Fighter" unless character&.character_class
-
-    case character.character_class.name.to_s.downcase
-    when "warrior", "knight", "paladin" then "Fighter"
-    when "mage", "wizard", "sorcerer" then "Mage"
-    when "rogue", "thief", "assassin" then "Rogue"
-    when "ranger", "archer", "hunter" then "Ranger"
-    when "cleric", "priest", "healer" then "Healer"
-    when "necromancer", "warlock" then "Warlock"
-    else "Fighter"
     end
   end
 
@@ -411,10 +393,10 @@ module ArenaHelper
   end
 
   # Get opponent's combat-relevant stats for display
-  # Shows: Strength, Dexterity, Luck, Knowledge, Wisdom
+  # Shows: Strength, Dexterity, Luck, and Knowledge.
   #
   # @param participation [ArenaParticipation] the participation record
-  # @return [Hash] stats hash with :strength, :dexterity, :luck, :knowledge, :wisdom
+  # @return [Hash] stats hash with :strength, :dexterity, :luck, and :knowledge
   def opponent_combat_stats(participation)
     if participation.npc?
       npc_combat_stats(participation.npc_template)
@@ -437,7 +419,6 @@ module ArenaHelper
       dexterity: stats.get(:dexterity) || stats.get(:agility) || 5,
       luck: stats.get(:luck) || 5,
       knowledge: stats.get(:knowledge) || stats.get(:intelligence) || 1,
-      wisdom: stats.get(:wisdom) || 1,
       attack: character.attack_power,
       attack_power: character.attack_power,
       defense: character.defense,
@@ -465,7 +446,6 @@ module ArenaHelper
         dexterity: config_stats[:agility],
         luck: config_stats[:luck] || 5,
         knowledge: config_stats[:intelligence] || 1,
-        wisdom: config_stats[:wisdom] || 1,
         attack: config_stats[:attack],
         attack_power: config_stats[:attack],
         defense: config_stats[:defense],
@@ -485,7 +465,6 @@ module ArenaHelper
       dexterity: level + 5,
       luck: 5 + (level / 5),
       knowledge: 1,
-      wisdom: 1,
       attack: npc.metadata&.dig("base_damage") || (level * 3 + 5),
       attack_power: npc.metadata&.dig("base_damage") || (level * 3 + 5),
       defense: level * 2 + 3,

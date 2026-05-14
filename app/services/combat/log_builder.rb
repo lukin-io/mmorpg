@@ -6,7 +6,7 @@ module Combat
   # Log entry types mirror the combat log system:
   # - timestamp: Round/turn marker
   # - attack: Physical attack with body part
-  # - skill: Ability/spell usage
+  # - skill: Combat skill or spell usage
   # - restoration: HP/MP recovery
   # - damage: Damage dealt (with element)
   # - block: Successful block

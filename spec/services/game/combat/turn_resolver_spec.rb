@@ -72,11 +72,11 @@ RSpec.describe Game::Combat::TurnResolver do
     end
   end
 
-  context "with ability effects" do
-    let(:ability) do
-      create(
-        :ability,
-        character_class: character.character_class,
+  context "with skill effects" do
+    let(:skill) do
+      OpenStruct.new(
+        id: 1,
+        name: "Shield Bash",
         effects: {
           "status" => "shield",
           "buffs" => [{"name" => "Fury", "duration" => 2, "stat_changes" => {"attack" => 3}}],
@@ -90,11 +90,11 @@ RSpec.describe Game::Combat::TurnResolver do
       # Set up skill usage
       attacker_participant.update!(
         pending_attacks: [],
-        pending_skills: [{"skill_key" => ability.name, "target_id" => enemy_character.id}]
+        pending_skills: [{"skill_key" => skill.name, "target_id" => enemy_character.id}]
       )
     end
 
-    it "applies effects from abilities" do
+    it "applies effects from skills" do
       resolver = described_class.new(battle, rng: Random.new(200))
       result = resolver.resolve!
 

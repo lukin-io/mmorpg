@@ -113,7 +113,6 @@ function SaveStats() {
 | 3 | Интуиция | Intuition |
 | 4 | Выносливость | Endurance |
 | 5 | Интеллект | Intelligence |
-| 6 | Мудрость | Wisdom |
 
 ---
 

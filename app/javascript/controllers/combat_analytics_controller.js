@@ -28,7 +28,7 @@ export default class extends Controller {
       totalHealing: 0,
       damageBySource: {},
       healingBySource: {},
-      damageByAbility: {},
+      damageByAction: {},
       damageOverTime: [],
       healingOverTime: [],
       duration: 0,
@@ -40,7 +40,7 @@ export default class extends Controller {
       if (entry.damage) {
         this.analytics.totalDamage += entry.damage
         this.analytics.damageBySource[entry.actor] = (this.analytics.damageBySource[entry.actor] || 0) + entry.damage
-        this.analytics.damageByAbility[entry.ability || "Basic Attack"] = (this.analytics.damageByAbility[entry.ability || "Basic Attack"] || 0) + entry.damage
+        this.analytics.damageByAction[entry.action || entry.skill || "Basic Attack"] = (this.analytics.damageByAction[entry.action || entry.skill || "Basic Attack"] || 0) + entry.damage
         this.analytics.damageOverTime.push({ time: entry.timestamp, value: entry.damage })
         this.analytics.hitCount++
         if (entry.critical) this.analytics.critCount++
@@ -86,19 +86,19 @@ export default class extends Controller {
   }
 
   /**
-   * Render damage/ability breakdown
+   * Render damage/action breakdown
    */
   renderBreakdown() {
     const breakdown = this.breakdownTarget
-    const abilities = Object.entries(this.analytics.damageByAbility)
+    const actions = Object.entries(this.analytics.damageByAction)
       .sort((a, b) => b[1] - a[1])
 
-    let html = '<table class="breakdown-table"><thead><tr><th>Ability</th><th>Damage</th><th>%</th></tr></thead><tbody>'
+    let html = '<table class="breakdown-table"><thead><tr><th>Action</th><th>Damage</th><th>%</th></tr></thead><tbody>'
 
-    abilities.forEach(([ability, damage]) => {
+    actions.forEach(([action, damage]) => {
       const percent = ((damage / this.analytics.totalDamage) * 100).toFixed(1)
       html += `<tr>
-        <td>${ability}</td>
+        <td>${action}</td>
         <td>${damage.toLocaleString()}</td>
         <td>${percent}%</td>
       </tr>`
@@ -165,7 +165,7 @@ export default class extends Controller {
    */
   exportCsv() {
     const entries = this.entriesValue || []
-    const headers = ["Timestamp", "Actor", "Target", "Ability", "Damage", "Healing", "Critical"]
+    const headers = ["Timestamp", "Actor", "Target", "Action", "Damage", "Healing", "Critical"]
 
     let csv = headers.join(",") + "\n"
 
@@ -174,7 +174,7 @@ export default class extends Controller {
         entry.timestamp,
         entry.actor || "",
         entry.target || "",
-        entry.ability || "",
+        entry.action || entry.skill || "",
         entry.damage || 0,
         entry.healing || 0,
         entry.critical ? "Yes" : "No"
@@ -215,4 +215,3 @@ export default class extends Controller {
     })
   }
 }
-

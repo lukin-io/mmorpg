@@ -3,7 +3,6 @@
 # CombatLogEntry persists deterministic battle logs for later review or moderation.
 class CombatLogEntry < ApplicationRecord
   belongs_to :battle
-  belongs_to :ability, optional: true
 
   default_scope { order(:round_number, :sequence) }
 

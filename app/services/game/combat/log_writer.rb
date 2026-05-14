@@ -15,7 +15,7 @@ module Game
       end
 
       def append!(message:, payload: {}, round_number: battle.turn_number, sequence_offset: 0, actor: nil, target: nil,
-        ability: nil, damage: 0, healing: 0, tags: [])
+        damage: 0, healing: 0, tags: [])
         CombatLogEntry.create!(
           battle:,
           round_number:,
@@ -26,7 +26,6 @@ module Game
           actor_type: actor&.class&.name,
           target_id: target&.id,
           target_type: target&.class&.name,
-          ability: ability,
           damage_amount: damage,
           healing_amount: healing,
           tags:

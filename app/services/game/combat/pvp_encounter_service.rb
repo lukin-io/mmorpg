@@ -670,21 +670,8 @@ module Game
         )
       end
 
-      def find_skill(character, skill_id)
-        skill_id = skill_id.to_s
-
-        if skill_id.start_with?("ability_")
-          ability_id = skill_id.sub("ability_", "").to_i
-          return character.character_class&.abilities&.find_by(id: ability_id, kind: "active")
-        end
-
-        if skill_id.start_with?("skill_")
-          node_id = skill_id.sub("skill_", "").to_i
-          return character.skill_nodes.where(node_type: "active").find_by(id: node_id)
-        end
-
-        character.skill_nodes.where(node_type: "active").find_by(id: skill_id) ||
-          character.character_class&.abilities&.find_by(id: skill_id, kind: "active")
+      def find_skill(_character, _skill_id)
+        nil
       end
 
       def process_flee!(character)

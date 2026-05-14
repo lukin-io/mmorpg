@@ -10,9 +10,7 @@ crafting, trade, quests, and recovery.
 
 Inputs:
 
-- `doc/flow/14_tile_resource_gathering.md`
-- deleted `doc/features/6_crafting_professions.md`
-- deleted `doc/TODO.md`
+- Neverlands-derived world action and profession notes folded into this file.
 
 ## Player Experience
 

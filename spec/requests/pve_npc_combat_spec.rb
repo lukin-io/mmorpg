@@ -10,9 +10,8 @@ require "rails_helper"
 # and Turbo Stream integration.
 #
 # Related docs:
-#   - doc/flow/16_combat_system.md
-#   - doc/flow/4_world_npc_systems.md
-#   - doc/flow/22_unified_npc_architecture.md
+#   - doc/design/features/combat.md
+#   - doc/design/features/npcs_quests.md
 # =============================================================================
 
 RSpec.describe "PvE NPC Combat", type: :request do
@@ -386,21 +385,11 @@ RSpec.describe "PvE NPC Combat", type: :request do
       expect(json["skills"]).to be_an(Array)
     end
 
-    context "with character abilities" do
-      let!(:ability) do
-        create(:ability,
-          character_class: character.character_class,
-          name: "Power Strike",
-          kind: "active")
-      end
+    it "does not expose legacy class abilities" do
+      get skills_combat_path, as: :json
 
-      it "includes class abilities" do
-        get skills_combat_path, as: :json
-
-        json = JSON.parse(response.body)
-        skill_names = json["skills"].map { |s| s["name"] }
-        expect(skill_names).to include("Power Strike")
-      end
+      json = JSON.parse(response.body)
+      expect(json["skills"]).to eq([])
     end
   end
 

@@ -1109,7 +1109,6 @@ Body part block dropdowns:
 Ловкость: 9 (Dexterity)
 Удача: 6 (Luck)
 Знания: 1 (Knowledge)
-Мудрость: 1 (Wisdom)
 ```
 
 #### 5. HP/MP Bars
@@ -1177,7 +1176,7 @@ Body part block dropdowns:
 | Attack Type Variants | `arena/combat_profile.rb`, `combat_processor.rb::ATTACK_TYPES` | Simple/aimed AP comes from the participant profile seed plus 20 for aimed; older 45/65 captures are fallback examples |
 | Combo Block Types | `combat_processor.rb#process_defend` | Multi-body-part blocking |
 | Standardized Combat Log | `combat_processor.rb#log_entry` | Neverlands format messages |
-| Opponent Stats Display | `arena_helper.rb#opponent_combat_stats` | Shows Str/Dex/Luck/Knowledge/Wisdom |
+| Opponent Stats Display | `arena_helper.rb#opponent_combat_stats` | Shows Str/Dex/Luck/Knowledge |
 | Body Part Multipliers | `combat_processor.rb::BODY_PART_MULTIPLIERS` | Head 1.3x, Torso 1.0x, Stomach 1.1x, Legs 0.9x |
 | Block Success Messages | `combat_processor.rb` | "{target} blocked attack ({body_part}) from {attacker}" |
 | Critical Hit Format | `combat_processor.rb` | "{attacker} critical hit ({body_part}) {target} for -{damage} [{hp}/{max_hp}]" |
@@ -1432,7 +1431,7 @@ Status: DEFEATED
 │                     │  В живот  [dropdown] ▼         │  Ловкость: 9        │
 │                     │  По ногам [dropdown] ▼         │  Удача: 6           │
 │                     │                                │  Знания: 1          │
-│                     │  ─── BLOCK (4 rows) ───        │  Мудрость: 1        │
+│                     │  ─── BLOCK (4 rows) ───        │                     │
 │                     │  Голова [dropdown] ▼           │                     │
 │                     │  Торс   [dropdown] ▼           │                     │
 │                     │  Живот  [dropdown] ▼           │                     │
@@ -1466,7 +1465,7 @@ Status: DEFEATED
 | AP Counter | Center | "Очков действия: 80, Использовано: X" |
 | Turn/Reset Buttons | Center | Submit turn / Clear selections |
 | Combat Log | Center (bottom) | Timestamped combat events |
-| Enemy Stats | Right Panel | Strength, Dexterity, Luck, Knowledge, Wisdom |
+| Enemy Stats | Right Panel | Strength, Dexterity, Luck, Knowledge |
 | "End Fight" Button | Header | "Завершить бой" - leave/forfeit |
 
 ### Attack Type Options (from dropdowns)

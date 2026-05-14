@@ -4,11 +4,17 @@
 
 <% if viewer_character %>
   <div class="nl-player-context-buttons">
-    <% profile_target = profile_path(profile_name: viewer_character.name) %>
+    <% profile_target = player_path(name: viewer_character.name) %>
     <% if current_section.to_sym == :profile && character == viewer_character %>
       <span class="lbutdis">Your Character</span>
     <% else %>
       <%= link_to "Your Character", profile_target, class: "lbut" %>
+    <% end %>
+
+    <% if current_section.to_sym == :stats %>
+      <span class="lbutdis">Stats</span>
+    <% else %>
+      <%= link_to "Stats", stats_character_path(viewer_character), class: "lbut" %>
     <% end %>
 
     <% if current_section.to_sym == :inventory %>
@@ -18,9 +24,9 @@
     <% end %>
 
     <% if current_section.to_sym == :skills %>
-      <span class="lbutdis">Abilities</span>
+      <span class="lbutdis">Skills</span>
     <% else %>
-      <%= link_to "Abilities", skills_character_path(viewer_character), class: "lbut" %>
+      <%= link_to "Skills", skills_character_path(viewer_character), class: "lbut" %>
     <% end %>
 
     <% if current_section.to_sym == :perks %>

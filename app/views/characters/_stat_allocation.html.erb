@@ -21,7 +21,7 @@
         <% stat_info = @stats_data[stat_key] %>
         <div class="nl-stat-row">
           <div class="nl-stat-name">
-            <span class="nl-stat-label"><%= stat_key.to_s.humanize %></span>
+            <span class="nl-stat-label"><%= stat_info[:label] %></span>
             <span class="nl-stat-base">(base: <%= stat_info[:base] %>)</span>
           </div>
 
@@ -68,4 +68,3 @@
     </div>
   <% end %>
 </div>
-

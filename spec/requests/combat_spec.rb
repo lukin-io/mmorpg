@@ -429,22 +429,10 @@ RSpec.describe "Combat", type: :request do
       expect(json["skills"]).to be_an(Array)
     end
 
-    context "with character abilities" do
-      let(:ability) do
-        create(:ability,
-          character_class: character.character_class,
-          name: "Power Strike",
-          kind: "active")
-      end
-
-      before { ability }
-
-      it "includes class abilities" do
-        get skills_combat_path, as: :json
-        json = JSON.parse(response.body)
-        skill_names = json["skills"].map { |s| s["name"] }
-        expect(skill_names).to include("Power Strike")
-      end
+    it "does not expose legacy class abilities" do
+      get skills_combat_path, as: :json
+      json = JSON.parse(response.body)
+      expect(json["skills"]).to eq([])
     end
   end
 
