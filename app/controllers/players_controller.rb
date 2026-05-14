@@ -43,7 +43,6 @@ class PlayersController < ApplicationController
         experience: @character.experience,
         experience_to_next_level: @character.experience_to_next_level,
         location: location_payload,
-        stats: primary_stats_payload,
         equipment: equipment_payload,
         current_hp: @character.current_hp,
         max_hp: @character.max_hp,
@@ -64,12 +63,6 @@ class PlayersController < ApplicationController
       x: position.x,
       y: position.y
     }
-  end
-
-  def primary_stats_payload
-    Character::PRIMARY_STATS.to_h do |stat|
-      [stat, @character.stats.get(stat).to_i]
-    end
   end
 
   def equipment_payload

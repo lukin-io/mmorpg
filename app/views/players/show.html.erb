@@ -9,9 +9,6 @@
 
     <div class="nl-player-profile-head">
       <div class="nl-player-profile-identity">
-        <div class="nl-player-profile-avatar">
-          <%= character_avatar_tag(@character, size: :xlarge, class: "nl-player-profile-avatar-image") %>
-        </div>
         <div>
           <h1><%= @character.name %> [<%= @character.level %>]</h1>
           <div class="nl-profile-subline">
@@ -27,30 +24,6 @@
     <div class="nl-player-profile-grid">
       <aside class="nl-player-profile-left">
         <%= render "shared/player_equipment_summary", character: @character, equipment: @equipment %>
-
-        <div class="nl-profile-panel">
-          <h2>Primary Stats</h2>
-          <table class="nl-profile-table">
-            <% profile_stat_rows(@character).each do |label, value| %>
-              <tr>
-                <th><%= label %></th>
-                <td><%= value %></td>
-              </tr>
-            <% end %>
-          </table>
-        </div>
-
-        <div class="nl-profile-panel">
-          <h2>Combat Parameters</h2>
-          <table class="nl-profile-table">
-            <% profile_combat_rows(@character).each do |label, value| %>
-              <tr>
-                <th><%= label %></th>
-                <td><%= value %></td>
-              </tr>
-            <% end %>
-          </table>
-        </div>
       </aside>
 
       <main class="nl-player-profile-main">

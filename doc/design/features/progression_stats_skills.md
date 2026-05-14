@@ -94,8 +94,11 @@ Rules:
 - account-profile routes are not part of player info;
 - source-era CGI routes are not part of the Rails implementation;
 - public HTML and JSON expose only public player facts: avatar, name, level,
-  location, HP/MP, primary stats, equipped items, experience, skills, perks,
-  fatigue, attack cost, and fight record;
+  location, HP/MP, equipped items, experience, skills, perks, fatigue, attack
+  cost, and fight record;
+- public HTML uses a paper-doll equipment layout: large avatar centered with
+  item slots around the avatar;
+- formula/detail stat panels are hidden from public player info;
 - public payloads must not expose account email, credentials, private session
   state, or non-canonical primary stats.
 

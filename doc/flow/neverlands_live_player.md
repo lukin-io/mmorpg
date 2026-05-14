@@ -101,8 +101,11 @@ Design translation:
 - character-facing gameplay links use `/player/<character-name>`;
 - do not implement source CGI routes or account-profile routes;
 - public character JSON should expose the same public character facts:
-  public links, avatar, level, HP/MP, location, primary stats, equipped items,
-  experience, and experience remaining to next level;
+  public links, avatar, level, HP/MP, location, equipped items, experience, and
+  experience remaining to next level;
+- public character HTML should use a paper-doll layout with the character image
+  in the center and equipment slots around it;
+- formula/detail stats are not part of the public player page;
 - public character info should not leak account email or credential-side
   metadata.
 
