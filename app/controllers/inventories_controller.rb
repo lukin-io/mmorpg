@@ -202,7 +202,7 @@ class InventoriesController < ApplicationController
   end
 
   def current_character_equipment
-    PlayerProfileHelper::PROFILE_EQUIPMENT_SLOTS.to_h do |slot_key, _label|
+    EquipmentSlots::ORDERED.to_h do |slot_key, _label|
       [slot_key.to_sym, equipped_item(slot_key)]
     end
   end

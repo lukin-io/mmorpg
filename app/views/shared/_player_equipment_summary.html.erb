@@ -1,36 +1,10 @@
 <% character ||= nil %>
 <% equipment ||= {} %>
-<% left_slots = [
-  ["head", "Helmet"],
-  ["amulet", "Necklace"],
-  ["main_hand", "Weapon"],
-  ["belt", "Belt"],
-  ["legs", "Pants"],
-  ["feet", "Boots"]
-] %>
-<% right_slots = [
-  ["off_hand", "Weapon/Shield"],
-  ["chest", "Armor"],
-  ["hands", "Gloves"],
-  ["bracers", "Bracers"],
-  ["pocket", "Pocket"],
-  ["relic", "Relic"]
-] %>
-<% lower_slots = [
-  ["ring_1", "Ring"],
-  ["ring_2", "Ring"],
-  ["ring_3", "Ring"],
-  ["ring_4", "Ring"],
-  ["belt_1", "Belt Item"],
-  ["belt_2", "Belt Item"],
-  ["belt_3", "Belt Item"],
-  ["pocket_1", "Pocket Item"]
-] %>
 
 <div class="nl-equipment-summary">
   <div class="nl-equipment-paperdoll">
     <div class="nl-equipment-side nl-equipment-side--left">
-      <% left_slots.each do |slot_key, label| %>
+      <% EquipmentSlots::LEFT.each do |slot_key, label| %>
         <% item = equipment[slot_key] || equipment[slot_key.to_sym] %>
         <div class="nl-profile-slot <%= 'nl-profile-slot--filled' if item %>">
           <span class="nl-profile-slot-label"><%= label %></span>
@@ -43,14 +17,10 @@
       <% if character %>
         <%= image_tag character.avatar_image_path, alt: character.name, class: "nl-equipment-character-image", loading: "lazy" %>
       <% end %>
-      <div class="nl-equipment-avatar-caption">
-        <strong><%= character&.name || "Unknown" %></strong>
-        <span>Level <%= character&.level || "-" %></span>
-      </div>
     </div>
 
     <div class="nl-equipment-side nl-equipment-side--right">
-      <% right_slots.each do |slot_key, label| %>
+      <% EquipmentSlots::RIGHT.each do |slot_key, label| %>
         <% item = equipment[slot_key] || equipment[slot_key.to_sym] %>
         <div class="nl-profile-slot <%= 'nl-profile-slot--filled' if item %>">
           <span class="nl-profile-slot-label"><%= label %></span>
@@ -60,7 +30,7 @@
     </div>
 
     <div class="nl-equipment-lower-slots">
-      <% lower_slots.each do |slot_key, label| %>
+      <% EquipmentSlots::LOWER.each do |slot_key, label| %>
         <% item = equipment[slot_key] || equipment[slot_key.to_sym] %>
         <div class="nl-profile-slot nl-profile-slot--compact <%= 'nl-profile-slot--filled' if item %>">
           <span class="nl-profile-slot-label"><%= label %></span>

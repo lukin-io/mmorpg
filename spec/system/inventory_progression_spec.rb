@@ -57,7 +57,6 @@ RSpec.describe "Inventory & Progression UI", type: :system, js: true do
 
       expect(page).to have_css("#flash", text: "Skills allocated!")
     end
-
   end
 
   describe "failure cases" do

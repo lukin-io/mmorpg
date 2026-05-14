@@ -7,7 +7,7 @@
   </div>
 
   <div class="equipment-slots nl-inventory-equipment-slots">
-    <% PlayerProfileHelper::PROFILE_EQUIPMENT_SLOTS.each do |slot_key, label| %>
+    <% EquipmentSlots::ORDERED.each do |slot_key, label| %>
       <%= render "inventories/equipment_slot",
         slot: slot_key.to_sym,
         item: equipment[slot_key.to_sym],

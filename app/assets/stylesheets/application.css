@@ -12346,10 +12346,9 @@ turbo-frame[busy] {
   display: flex;
   min-height: 330px;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: center;
   flex-direction: column;
-  gap: 6px;
-  padding: 8px 6px 6px;
+  padding: 8px 6px;
   border: 1px solid var(--nl-border-light);
   background:
     radial-gradient(circle at center 38%, rgba(204, 187, 128, 0.22), rgba(255, 255, 255, 0) 58%),
@@ -12359,29 +12358,9 @@ turbo-frame[busy] {
 .nl-equipment-character-image {
   display: block;
   width: min(100%, 210px);
-  height: 292px;
+  height: 320px;
   object-fit: contain;
   object-position: center bottom;
-}
-
-.nl-equipment-avatar-caption {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  width: 100%;
-  padding: 3px 5px;
-  border: 1px solid var(--nl-border-light);
-  background: rgba(255, 255, 255, 0.86);
-  font-size: 11px;
-}
-
-.nl-equipment-avatar-caption strong {
-  color: var(--nl-text);
-}
-
-.nl-equipment-avatar-caption span {
-  color: var(--nl-text-muted);
 }
 
 .nl-equipment-lower-slots {
