@@ -245,7 +245,7 @@ function ch_open_menu(e) {
   // Build menu HTML
   el.innerHTML =
     '<a class="usermenulink" href="javascript:top.say_private(\'' + login + '\');ch_hmenu()">Приват</a>' +
-    '<a class="usermenulink" href="http://www.neverlands.ru/pinfo.cgi?' + login2 +
+    '<a class="usermenulink" href="' + SOURCE_PUBLIC_CHARACTER_INFO_URL + login2 +
       '" target="_blank" onclick="ch_hmenu();return true;">Информация</a>' +
     '<a class="usermenulink" href="javascript:ch_copy_nick(\'' + login + '\');ch_hmenu()">Копировать ник</a>' +
     '<a class="usermenulink" href="javascript:ch_set_ignor(\'' + login + '\');ch_hmenu()">Игнорировать</a>';
@@ -488,7 +488,7 @@ function chatlist_build(sort_type) {
       psg + align + ss +
       "<a href=\"javascript:top.say_to('" + login + "')\">" +
         "<font class=nickname><b>" + str_array[1] + "</b></a>[" + str_array[2] + "]</font>" +
-      "<a href=\"/pinfo.cgi?" + nn_sec + "\" target=_blank>" +
+      "<a href=\"" + SOURCE_PUBLIC_CHARACTER_INFO_URL + nn_sec + "\" target=_blank>" +
         "<img src=http://image.neverlands.ru/chat/info.gif width=11 height=12 border=0 align=absmiddle></a>" +
       sleeps + "&nbsp;" + ign + "&nbsp;" + inj + "<br>"
     );

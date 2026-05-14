@@ -9,8 +9,8 @@ require "rails_helper"
 # Tests cover: UI rendering, Turbo Frames, arena room navigation.
 #
 # Related docs:
-#   - doc/flow/11_arena_pvp.md
-#   - doc/flow/22_arena_npc_bots.md
+#   - doc/design/areas/arena.md
+#   - doc/design/features/combat.md
 # =============================================================================
 
 RSpec.describe "Arena NPC Combat UI", type: :system do

@@ -2,7 +2,7 @@
 
 module Players
   module Progression
-    # Distributes available stat points across primary attributes with validation.
+    # Distributes available stat points across Neverlands-style primary attributes.
     #
     # Usage:
     #   Players::Progression::StatAllocationService.new(character:).allocate!(strength: 2)
@@ -10,28 +10,22 @@ module Players
     # Returns:
     #   Character after allocation.
     class StatAllocationService
-      PERMITTED_STATS = %w[strength agility intellect stamina spirit].freeze
-
       def initialize(character:)
         @character = character
       end
 
       def allocate!(allocations)
-        allocations.symbolize_keys!
-        total_requested = allocations.values.sum
+        normalized_allocations = normalize_allocations(allocations)
+        total_requested = normalized_allocations.values.sum
         raise ArgumentError, "Not enough stat points" if total_requested > character.stat_points_available
 
-        allocations.each_key do |stat|
-          raise ArgumentError, "Unknown stat #{stat}" unless PERMITTED_STATS.include?(stat.to_s)
-        end
-
         character.stat_points_available -= total_requested
-        allocations.each do |stat, value|
+        normalized_allocations.each do |stat, value|
           next if value.zero?
 
           character.allocated_stats_will_change!
-          current = character.allocated_stats.fetch(stat.to_s, 0)
-          character.allocated_stats[stat.to_s] = current + value
+          current = character.allocated_stats.fetch(stat, 0)
+          character.allocated_stats[stat] = current + value
         end
 
         character.save!
@@ -41,6 +35,15 @@ module Players
       private
 
       attr_reader :character
+
+      def normalize_allocations(allocations)
+        allocations.each_with_object(Hash.new(0)) do |(stat, value), result|
+          key = Character.normalize_stat_key(stat)
+          raise ArgumentError, "Unknown stat #{stat}" unless key
+
+          result[key.to_s] += value.to_i
+        end.to_h
+      end
     end
   end
 end

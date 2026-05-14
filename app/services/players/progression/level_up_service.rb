@@ -24,7 +24,7 @@ module Players
     #
     class LevelUpService
       STAT_POINTS_PER_LEVEL = 5
-      SKILL_POINTS_PER_LEVEL = 1          # Legacy pool (for backwards compatibility)
+      SKILL_POINTS_PER_LEVEL = 1          # Mirrors total unspent numeric skill points
       COMBAT_SKILL_POINTS_PER_LEVEL = 1   # Combat/magic/resistance skills
       PEACE_SKILL_POINTS_START_LEVEL = 5  # Peace skills unlock at level 5
       PEACE_SKILL_POINTS_PER_LEVEL = 1    # Peace/crafting skills
@@ -107,7 +107,7 @@ module Players
         character.increment!(:stat_points_available, STAT_POINTS_PER_LEVEL)
         @stat_points_gained += STAT_POINTS_PER_LEVEL
 
-        # Grant legacy skill points (backwards compatibility)
+        # Maintain the aggregate skill-point counter alongside split pools.
         character.increment!(:skill_points_available, SKILL_POINTS_PER_LEVEL)
 
         # Grant combat skill points (every level)
@@ -136,13 +136,10 @@ module Players
         end
       end
 
-      # XP required to reach a given level
-      # Formula: level^2 * 100
-      # Level 2: 400 XP
-      # Level 10: 10,000 XP
-      # Level 50: 250,000 XP
+      # XP required to reach a given level.
+      # Level 2 starts at 100 total XP, matching the observed starter profile.
       def xp_required_for(level)
-        (level**2) * 100
+        Character.xp_required_for_level(level)
       end
     end
   end

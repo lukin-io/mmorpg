@@ -18,8 +18,7 @@ RSpec.describe "Inventory & Progression UI", type: :system, js: true do
 
       visit inventory_path
 
-      find(".inventory-slot.filled[data-item-id='#{sword.id}']").right_click
-      within(find(".item-context-menu", visible: true)) { click_button "Equip" }
+      within(".inventory-slot.filled[data-item-id='#{sword.id}']") { click_button "Wear" }
 
       expect(page).to have_css(".equipment-slot--main_hand.filled", wait: 5)
 
@@ -35,8 +34,7 @@ RSpec.describe "Inventory & Progression UI", type: :system, js: true do
 
       visit inventory_path
 
-      find(".inventory-slot.filled[data-item-id='#{potion.id}']").right_click
-      within(find(".item-context-menu", visible: true)) { click_button "Use" }
+      within(".inventory-slot.filled[data-item-id='#{potion.id}']") { click_button "Use" }
 
       expect(page).to have_css("#flash", text: "Restored", wait: 5)
       expect(page).to have_no_css(".inventory-slot.filled[data-item-id='#{potion.id}']", wait: 5)
@@ -60,29 +58,6 @@ RSpec.describe "Inventory & Progression UI", type: :system, js: true do
       expect(page).to have_css("#flash", text: "Skills allocated!")
     end
 
-    it "unlocks a skill tree node and respecs back to available points" do
-      character.update!(skill_points_available: 2)
-
-      tree = create(:skill_tree, character_class: character.character_class, name: "Combat Mastery", metadata: {"tree_type" => "combat"})
-      node = create(:skill_node,
-        skill_tree: tree,
-        name: "Power Strike",
-        requirements: {"level" => 1},
-        resource_cost: {"skill_points" => 1})
-
-      visit skill_tree_path(tree)
-
-      click_button "Unlock (1 pts)"
-
-      expect(page).to have_css("#skill_node_#{node.id} .skill-node--unlocked")
-      expect(page).to have_css("#skill_points_display", text: "1")
-
-      visit skill_trees_path
-
-      accept_confirm { click_button "Respec Skills" }
-
-      expect(page).to have_css("#skill_points_display", text: "2")
-    end
   end
 
   describe "failure cases" do
@@ -92,10 +67,9 @@ RSpec.describe "Inventory & Progression UI", type: :system, js: true do
 
       visit inventory_path
 
-      find(".inventory-slot.filled[data-item-id='#{item.id}']").right_click
-      within(find(".item-context-menu", visible: true)) { click_button "Equip" }
+      expect(page).to have_no_button("Wear", disabled: false)
 
-      expect(page).to have_css("#notifications", text: "Item is not equipment", wait: 5)
+      expect(page).to have_css(".inventory-slot.filled[data-item-id='#{item.id}']", wait: 5)
     end
 
     it "rejects stat allocations that exceed available points (server-side validation)" do
@@ -136,22 +110,9 @@ RSpec.describe "Inventory & Progression UI", type: :system, js: true do
 
       visit inventory_path
 
-      find(".inventory-slot.filled[data-item-id='#{item.id}']").right_click
-      within(find(".item-context-menu", visible: true)) { click_button "Use" }
+      within(".inventory-slot.filled[data-item-id='#{item.id}']") { click_button "Use" }
 
       expect(page).to have_css("#flash", text: "Item has no usable effect", wait: 5)
-    end
-
-    it "renders skill nodes as locked when level requirements are not met" do
-      character.update!(skill_points_available: 10, level: 1)
-
-      tree = create(:skill_tree, character_class: character.character_class, name: "Advanced Combat", metadata: {"tree_type" => "combat"})
-      create(:skill_node, skill_tree: tree, name: "Elite Technique", requirements: {"level" => 5}, resource_cost: {"skill_points" => 1})
-
-      visit skill_tree_path(tree)
-
-      expect(page).to have_css(".skill-node .node-badge--locked")
-      expect(page).not_to have_css(".node-unlock-btn")
     end
   end
 

@@ -10,7 +10,7 @@
             <span class="player-level">Lv.<%= pos.character.level %></span>
           </div>
           <div class="player-actions">
-            <%= link_to "Info", profile_path(profile_name: pos.character.name), title: "View Profile" %>
+            <%= link_to "Info", player_path(name: pos.character.name), title: "View Profile" %>
           </div>
         </li>
       <% end %>

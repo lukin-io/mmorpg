@@ -11,8 +11,6 @@ Reference material:
 
 - `doc/design/reference/neverlands_arena_combat.md`
 - `doc/features/neverlands_inspired_combat.md`
-- `doc/flow/24_unified_turn_combat.md`
-- `doc/flow/16_combat_system.md`
 
 Borrowed feel:
 
@@ -121,7 +119,7 @@ turn loop:
   points may still use their own orchestration wrappers, but they are not the
   canonical source for arena AP.
 - Character attack and defense formulas now include base stats, level,
-  enhancement-aware equipped item modifiers, and item-family multipliers;
+  equipped item modifiers, and item-family multipliers;
   `Character#combat_power_breakdown` exposes the calculation for UI and
   balancing.
 - Arena fight UI shows the Neverlands-shaped participant panels, AP bar,

@@ -2,6 +2,30 @@
 
 The canonical game-design material lives in `doc/design/`.
 
+## Neverlands-Based Design Authority
+
+The active game design is the Neverlands-inspired design documented under
+`doc/design/`. Treat those documents as the single point of truth for current
+mechanics, UI structure, progression, movement, combat, inventory, economy, and
+MVP scope.
+
+Anything in this repository that does not support the Neverlands-inspired game
+design is legacy and should be removed rather than treated as a competing
+reference.
+
+## Technical Translation Rule
+
+Neverlands is the mechanics and UX reference, not a technical target. Borrow
+player-facing behavior, formulas, page structure, and game rules, but implement
+them with modern Rails routes, controllers, models, services, views, and JSON
+payloads.
+
+Do not keep source-era technical shapes. That means no CGI routes, no frameset
+URL mirroring, no account-profile route for character pages, and no legacy
+endpoints beside the current Rails implementation. For example, public player
+info is `/player/<character-name>` because the product needs a character
+resource, even though the source game used older URL machinery.
+
 ## Language Policy
 
 The current RPG implementation is English-only. Player-facing UI text,
@@ -21,15 +45,13 @@ Start here:
 4. `doc/design/areas/` - places and major play spaces.
 5. `doc/design/reference/` - external observations and source-material map.
 
-Other folders are supporting material:
+Other folders are source/reference material only:
 
-- `doc/engineering/` contains current Rails and gameplay implementation guidance.
-- `doc/flow/` contains implementation notes and live-analysis captures.
-- `doc/features/` contains supporting external reference notes and deep dives.
-- implementation guides such as `doc/MAP_DESIGN_GUIDE.md` and
-  `doc/ITEM_SYSTEM_GUIDE.md` are not GDD authority.
-- current dungeon implementation notes/code are legacy until they are rebuilt
-  against `doc/design/features/dungeons.md`.
+- `doc/flow/` contains Neverlands live-analysis captures and source-oriented
+  notes.
+- `doc/features/` contains historical Neverlands reference notes only.
+- non-Neverlands guides, broad implementation notes, and generic MMO planning
+  docs are legacy and should not remain in `doc/`.
 
 When documents disagree, use this order:
 
@@ -38,8 +60,7 @@ doc/design/gdd.md
 -> doc/design/launch_mvp_plan.md
 -> doc/design/features/* and doc/design/areas/*
 -> doc/design/reference/*
--> doc/engineering/*
--> doc/flow/* and doc/features/*
+-> Neverlands source captures in doc/flow/* and doc/features/*
 ```
 
 ## Current Design Structure
@@ -72,12 +93,6 @@ Features:
 Reference:
 
 - `doc/design/reference/` - external source observations and source-material map.
-
-Engineering:
-
-- `doc/engineering/README.md`
-- `doc/engineering/rails_guide.md`
-- `doc/engineering/gameplay_architecture.md`
 
 ## Active Follow-Up Threads
 

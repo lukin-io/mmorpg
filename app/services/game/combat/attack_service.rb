@@ -2,15 +2,12 @@
 
 module Game
   module Combat
-    # Purpose: Legacy service for simple attack resolution.
-    # Now delegates to TurnResolver with battle context.
+    # Purpose: Simple attack resolution with optional battle persistence.
     #
     # Note: For full combat, use TurnResolver directly with a battle.
-    # This service provides backward compatibility for simple attacks.
     #
     class AttackService
-      # Result struct compatible with legacy expectations
-      LegacyResult = Struct.new(
+      Result = Struct.new(
         :log, :hp_changes, :effects, :battle,
         keyword_init: true
       )
@@ -26,25 +23,25 @@ module Game
       # @param action [String] the action name
       # @param rng_seed [Integer] seed for deterministic results
       # @param battle [Battle, nil] optional battle context
-      # @param ability [Ability, nil] optional ability being used
-      # @return [LegacyResult] attack result
-      def call(attacker:, defender:, action:, rng_seed: 1, battle: nil, ability: nil)
+      # @param skill [#name, #effects, nil] optional active skill data
+      # @return [Result] attack result
+      def call(attacker:, defender:, action:, rng_seed: 1, battle: nil, skill: nil)
         rng = Random.new(rng_seed)
 
         # If we have a real battle, use TurnResolver
         if battle&.is_a?(Battle)
-          return resolve_with_battle(battle, attacker, action, rng, ability)
+          return resolve_with_battle(battle, attacker, action, rng, skill)
         end
 
-        # For legacy/mock usage without real battle, calculate damage directly
-        resolve_without_battle(attacker, defender, action, rng, ability)
+        # For direct usage without a persisted battle, calculate damage directly.
+        resolve_without_battle(attacker, defender, action, rng, skill)
       end
 
       private
 
       attr_reader :turn_resolver_class
 
-      def resolve_with_battle(battle, attacker, action, rng, ability)
+      def resolve_with_battle(battle, attacker, action, rng, skill)
         # Set up pending attack on participant
         participant = battle.battle_participants.find_by(character: attacker)
         participant&.update!(
@@ -63,21 +60,21 @@ module Game
           message: result.log_entries.first&.dig(:message) || "#{attacker.name} attacks with #{action}",
           actor_id: attacker.id,
           actor_type: "Character",
-          payload: {action: action, ability: ability&.name}
+          payload: {action: action, skill: skill&.name}
         )
 
         # Advance turn
         battle.increment!(:turn_number)
 
-        LegacyResult.new(
+        Result.new(
           log: result.log_entries.map { |e| e[:message] },
           hp_changes: result.hp_changes,
-          effects: extract_ability_effects(ability),
+          effects: extract_skill_effects(skill),
           battle: battle
         )
       end
 
-      def resolve_without_battle(attacker, defender, action, rng, ability)
+      def resolve_without_battle(attacker, defender, action, rng, skill)
         # Calculate damage using formulas
         damage = calculate_damage(attacker, defender, rng)
         is_crit = check_critical(attacker, rng)
@@ -86,17 +83,16 @@ module Game
           damage = (damage * 1.5).to_i
         end
 
-        # Apply ability bonus
-        if ability
-          damage += ability.effects&.dig("damage").to_i
+        if skill
+          damage += skill.effects&.dig("damage").to_i
         end
 
         log_message = build_log_message(attacker, defender, action, damage, is_crit)
 
-        LegacyResult.new(
+        Result.new(
           log: [log_message],
           hp_changes: {defender: -damage},
-          effects: extract_ability_effects(ability),
+          effects: extract_skill_effects(skill),
           battle: nil
         )
       end
@@ -130,14 +126,14 @@ module Game
         "#{attacker.name} uses #{action} on #{defender.name} for #{damage} damage#{crit_text}"
       end
 
-      def extract_ability_effects(ability)
-        return {} unless ability
+      def extract_skill_effects(skill)
+        return {} unless skill
 
         {
-          damage_bonus: ability.effects&.dig("damage").to_i,
-          status: ability.effects&.dig("status"),
-          buffs: ability.effects&.dig("buffs") || [],
-          debuffs: ability.effects&.dig("debuffs") || []
+          damage_bonus: skill.effects&.dig("damage").to_i,
+          status: skill.effects&.dig("status"),
+          buffs: skill.effects&.dig("buffs") || [],
+          debuffs: skill.effects&.dig("debuffs") || []
         }
       end
     end

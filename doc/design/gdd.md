@@ -13,12 +13,13 @@ wins and the derived material should be updated.
 3. `doc/design/reference/neverlands.md` explains how Neverlands observations
    should be translated into this project's design language.
 4. `doc/flow/neverlands_live_movement.md` and
-   `doc/flow/neverlands_live_city_movement.md` are the captured live references
-   for movement and city movement feel.
-5. `doc/engineering/*` explains how to implement the design in Rails. It is not
-   allowed to override this GDD.
-6. Other `doc/flow/*` and `doc/features/*` files are supporting notes. They
-   are not allowed to override this GDD.
+   `doc/flow/neverlands_live_city_movement.md`,
+   `doc/flow/neverlands_live_player.md`, and Neverlands-specific reference
+   notes are captured source material. They are not allowed to override this
+   GDD.
+
+Non-Neverlands docs are not part of the design hierarchy and should be removed
+instead of preserved as alternate guidance.
 
 ## Design Library
 
@@ -277,7 +278,6 @@ Characters grow through:
 - experience and levels;
 - stat allocation;
 - passive skills;
-- class or specialization choices;
 - profession progress;
 - reputation and alignment;
 - equipment and inventory growth.

@@ -188,10 +188,9 @@ module Arena
         family = equipment_family(item)
         family_bonus = WEAPON_FAMILY_COSTS.fetch(family, WEAPON_FAMILY_COSTS["generic"])
         attack_bonus = stats.fetch("attack", stats.fetch(:attack, 0)).to_i
-        enhancement_bonus = item.enhancement_level.to_i
         next 0 if family == "armor"
 
-        family_bonus + (attack_bonus / 2) + enhancement_bonus
+        family_bonus + (attack_bonus / 2)
       end
     end
 

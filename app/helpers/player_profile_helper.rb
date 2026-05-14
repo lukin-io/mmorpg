@@ -30,15 +30,14 @@ module PlayerProfileHelper
       ["Dexterity", stat_value(character, :dexterity)],
       ["Luck", stat_value(character, :luck)],
       ["Knowledge", stat_value(character, :intelligence)],
-      ["Health", stat_value(character, :constitution, :vitality)],
-      ["Wisdom", stat_value(character, :wisdom, :spirit)]
+      ["Health", stat_value(character, :vitality)]
     ]
   end
 
   def profile_combat_rows(character)
     [
       ["Armor class", character.defense],
-      ["Dodge", stat_value(character, :agility)],
+      ["Dodge", stat_value(character, :dexterity)],
       ["Accuracy", stat_value(character, :dexterity)],
       ["Crushing", character.attack_power],
       ["Fortitude", character.max_hp],

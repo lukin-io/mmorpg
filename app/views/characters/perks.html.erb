@@ -15,9 +15,9 @@
     <%= render "characters/perk_allocation" %>
 
     <div class="nl-allocation-footer">
-      <%= link_to "Character", profile_path(profile_name: @character.name), class: "nl-btn nl-btn--secondary" %>
+      <%= link_to "Character", player_path(name: @character.name), class: "nl-btn nl-btn--secondary" %>
       <%= link_to "Stats", stats_character_path(@character), class: "nl-btn nl-btn--secondary" %>
-      <%= link_to "Abilities", skills_character_path(@character), class: "nl-btn nl-btn--secondary" %>
+      <%= link_to "Skills", skills_character_path(@character), class: "nl-btn nl-btn--secondary" %>
     </div>
   </div>
 <% end %>

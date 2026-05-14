@@ -9,38 +9,26 @@ RSpec.describe "PVP Two-Player Combat UI", type: :system do
   let(:user_alpha) { create(:user) }
   let(:user_beta) { create(:user) }
 
-  let(:warrior_class) do
-    create(:character_class,
-      name: "Warrior",
-      base_stats: {strength: 15, agility: 10, intellect: 5})
-  end
-
-  let(:mage_class) do
-    create(:character_class,
-      name: "Mage",
-      base_stats: {strength: 5, agility: 8, intellect: 18})
-  end
-
   let(:pvp_zone) { create(:zone, name: "Battleground", pvp_enabled: true) }
 
   let(:warrior) do
     create(:character,
       user: user_alpha,
       name: "BrutalWarrior",
-      character_class: warrior_class,
       level: 10,
       current_hp: 150,
-      max_hp: 150)
+      max_hp: 150,
+      allocated_stats: {strength: 14, dexterity: 9, intelligence: 4})
   end
 
   let(:mage) do
     create(:character,
       user: user_beta,
       name: "ArcaneBlaster",
-      character_class: mage_class,
       level: 10,
       current_hp: 80,
-      max_hp: 80)
+      max_hp: 80,
+      allocated_stats: {strength: 4, dexterity: 7, intelligence: 17})
   end
 
   let(:battle) do
@@ -728,7 +716,7 @@ RSpec.describe "PVP Two-Player Combat UI", type: :system do
   end
 
   # =============================================================================
-  # ACTION POINT UI (Draft specs for turn-based enhancements)
+  # ACTION POINT UI
   # =============================================================================
   describe "Action Point UI" do
     xit "displays current action points remaining" do

@@ -9,8 +9,8 @@ require "rails_helper"
 # Tests cover: combat UI rendering, action buttons, HP bars, combat log.
 #
 # Related docs:
-#   - doc/flow/16_combat_system.md
-#   - doc/flow/4_world_npc_systems.md
+#   - doc/design/features/combat.md
+#   - doc/design/features/npcs_quests.md
 # =============================================================================
 
 RSpec.describe "PvE Combat UI", type: :system do

@@ -20,7 +20,7 @@ RSpec.describe "Skill Allocation", type: :system, js: true do
     before { visit skills_character_path(character) }
 
     it "displays the skill allocation page" do
-      expect(page).to have_content("Abilities")
+      expect(page).to have_content("Skills")
       expect(page).to have_content(character.name)
     end
 

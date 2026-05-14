@@ -2,6 +2,16 @@
 
 `gdd.md` is the entry point. Everything else in this folder supports it.
 
+## Authority Boundary
+
+This folder is the portable design source of truth. New implementation should
+use the Neverlands-inspired rules in this folder before using source captures
+or current code behavior.
+
+If a legacy document describes behavior that is not mapped into this folder, it
+should be removed. Promote any still-valid Neverlands-based rule into a feature
+or area doc before implementing from it.
+
 ## Folders
 
 - `areas/` - where gameplay happens.

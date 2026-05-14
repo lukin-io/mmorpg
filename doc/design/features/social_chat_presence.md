@@ -11,7 +11,6 @@ than separated into a modern social dashboard.
 Reference material:
 
 - `doc/features/neverlands_inspired_chat.md`
-- `doc/flow/13_game_layout.md`
 - `doc/flow/neverlands_live_movement.md`
 - `doc/flow/neverlands_live_city_movement.md`
 

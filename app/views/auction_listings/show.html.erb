@@ -66,7 +66,13 @@
 
       <div class="seller-info">
         <span class="label">Seller:</span>
-        <%= link_to @auction_listing.seller.profile_name, profile_path(@auction_listing.seller.profile_name), class: "seller-link" %>
+        <% seller_character = @auction_listing.seller.character %>
+        <% seller_label = seller_character&.name || @auction_listing.seller.profile_name %>
+        <% if seller_character %>
+          <%= link_to seller_label, player_path(name: seller_character.name), class: "seller-link" %>
+        <% else %>
+          <span class="seller-link"><%= seller_label %></span>
+        <% end %>
         <span class="seller-location">Location: <%= @auction_listing.location_key.titleize %></span>
       </div>
 

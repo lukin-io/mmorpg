@@ -1,14 +1,13 @@
 # frozen_string_literal: true
 
-# CharactersController handles character profile management including
-# stat, ability, and perk allocation. Uses client-side +/- allocation UI pattern
-# with server submission for validation and persistence.
+# CharactersController handles the Neverlands-style character profile allocation
+# surfaces: primary stats, numeric skills, and boolean perks.
 #
 # Usage:
 #   GET /characters/:id/stats       - Show stat allocation page
 #   PATCH /characters/:id/stats     - Save stat allocations
-#   GET /characters/:id/skills      - Show numeric ability allocation page
-#   PATCH /characters/:id/skills    - Save numeric ability allocations
+#   GET /characters/:id/skills      - Show numeric skill allocation page
+#   PATCH /characters/:id/skills    - Save numeric skill allocations
 #   GET /characters/:id/perks       - Show boolean perk allocation page
 #   PATCH /characters/:id/perks     - Save one selected perk
 class CharactersController < ApplicationController
@@ -204,45 +203,21 @@ class CharactersController < ApplicationController
   end
 
   def build_stats_data
-    base_stats = @character.character_class&.base_stats || {}
     allocated = @character.allocated_stats || {}
+    effective_stats = @character.stats
 
-    {
-      strength: {
-        base: base_stats["strength"] || 10,
-        allocated: allocated["strength"] || 0,
-        total: @character.stats.get(:strength)
-      },
-      dexterity: {
-        base: base_stats["dexterity"] || 10,
-        allocated: allocated["dexterity"] || 0,
-        total: @character.stats.get(:dexterity)
-      },
-      intelligence: {
-        base: base_stats["intelligence"] || 10,
-        allocated: allocated["intelligence"] || 0,
-        total: @character.stats.get(:intelligence)
-      },
-      constitution: {
-        base: base_stats["constitution"] || 10,
-        allocated: allocated["constitution"] || 0,
-        total: @character.stats.get(:constitution)
-      },
-      agility: {
-        base: base_stats["agility"] || 10,
-        allocated: allocated["agility"] || 0,
-        total: @character.stats.get(:agility)
-      },
-      luck: {
-        base: base_stats["luck"] || 10,
-        allocated: allocated["luck"] || 0,
-        total: @character.stats.get(:luck)
+    Character::PRIMARY_STATS.index_with do |stat_key|
+      {
+        label: Character.stat_label(stat_key),
+        base: Character::BASE_PRIMARY_STATS.fetch(stat_key),
+        allocated: allocated.sum { |key, value| (Character.normalize_stat_key(key) == stat_key) ? value.to_i : 0 },
+        total: effective_stats.get(stat_key)
       }
-    }
+    end
   end
 
   def allocatable_stat_keys
-    %i[strength dexterity intelligence constitution agility luck]
+    Character::PRIMARY_STATS
   end
 
   def build_skills_data
@@ -282,11 +257,14 @@ class CharactersController < ApplicationController
   def parse_stat_allocations(stat_params)
     return {} unless stat_params.is_a?(ActionController::Parameters) || stat_params.is_a?(Hash)
 
-    result = {}
+    result = Hash.new(0)
     stat_params.each do |key, value|
-      result[key.to_s] = value.to_i.clamp(0, 100)
+      normalized = Character.normalize_stat_key(key)
+      next unless normalized
+
+      result[normalized.to_s] += value.to_i.clamp(0, 100)
     end
-    result
+    result.to_h
   end
 
   def parse_skill_allocations(skill_params)

@@ -68,6 +68,12 @@
                     when 'active' then "A"
                     else "I"
                     end
+
+      profile_href = if character
+                       player_path(name: character.name)
+                     else
+                       "#"
+                     end
     %>
     <div class="nl-player-entry"
          data-user-id="<%= user.id %>"
@@ -75,7 +81,7 @@
          data-level="<%= char_level %>"
          data-action="click->game-layout#whisperPlayer contextmenu->game-layout#showPlayerMenu">
       <span class="nl-player-arrow"><%= alignment_icon %></span>
-      <a href="<%= profile_path(profile_name: character&.name || user.profile_name) rescue '#' %>"
+      <a href="<%= profile_href rescue '#' %>"
          class="nl-player-name-link"
          data-turbo-frame="main_content"><%= truncate(char_name, length: 15) %></a>
       <span class="nl-player-level">[<%= char_level %>]</span>

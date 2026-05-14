@@ -140,14 +140,7 @@ module Game
         node_keys = Array(rewards_hash(payload)["class_abilities"])
         return [] if node_keys.empty?
 
-        unlocked = []
-        SkillNode.where(key: node_keys).find_each do |node|
-          CharacterSkill.find_or_create_by!(character:, skill_node: node) do |record|
-            record.unlocked_at = Time.current
-          end
-          unlocked << node.key
-        end
-        unlocked
+        []
       end
 
       def unlock_professions!(payload)

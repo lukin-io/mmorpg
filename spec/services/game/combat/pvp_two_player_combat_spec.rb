@@ -9,18 +9,6 @@ RSpec.describe "PVP Two-Player Combat Integration" do
   let(:user_alpha) { create(:user) }
   let(:user_beta) { create(:user) }
 
-  let(:warrior_class) do
-    create(:character_class,
-      name: "Warrior",
-      base_stats: {strength: 15, agility: 10, intellect: 5, defense: 12, attack_power: 20})
-  end
-
-  let(:mage_class) do
-    create(:character_class,
-      name: "Mage",
-      base_stats: {strength: 5, agility: 8, intellect: 18, defense: 6, attack_power: 12})
-  end
-
   let(:pvp_zone) { create(:zone, name: "Arena District", pvp_enabled: true, pvp_mode: "open") }
   let(:safe_zone) { create(:zone, name: "Town Square", pvp_enabled: false) }
 
@@ -29,22 +17,20 @@ RSpec.describe "PVP Two-Player Combat Integration" do
     create(:character,
       user: user_alpha,
       name: "BrutalWarrior",
-      character_class: warrior_class,
       level: 10,
       current_hp: 150,
       max_hp: 150,
-      allocated_stats: {strength: 20, agility: 15, defense: 10, attack_power: 25})
+      allocated_stats: {strength: 20, dexterity: 15, vitality: 10, luck: 4})
   end
 
   let(:mage) do
     create(:character,
       user: user_beta,
       name: "ArcaneBlaster",
-      character_class: mage_class,
       level: 10,
       current_hp: 80,
       max_hp: 80,
-      allocated_stats: {intellect: 25, agility: 12, defense: 5, attack_power: 15})
+      allocated_stats: {intelligence: 25, dexterity: 12, vitality: 5, luck: 4})
   end
 
   # Seeded RNG for deterministic combat results

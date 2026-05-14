@@ -1,23 +1,21 @@
 # AGENT.md — General Ruby on Rails Engineering Agent
 
-This project includes several domain-specific guides that MUST be loaded and followed by the AI assistant.
+This project uses Neverlands-based design as the source of truth. Non-Neverlands
+guides are legacy and should not be used as alternate product guidance.
 
 ### Project Guides
-- [Rails Engineering Guide](doc/engineering/rails_guide.md)
-- [Gameplay Architecture Guide](doc/engineering/gameplay_architecture.md)
-- [MMO_TESTING_GUIDE.md](doc/MMO_TESTING_GUIDE.md)
-- [MAP_DESIGN_GUIDE.md](doc/MAP_DESIGN_GUIDE.md)
-- [ITEM_SYSTEM_GUIDE.md](doc/ITEM_SYSTEM_GUIDE.md)
-- [COMBAT_SYSTEM_GUIDE.md](doc/COMBAT_SYSTEM_GUIDE.md)
+- [Game Design Document](doc/design/gdd.md)
+- [Launch MVP Plan](doc/design/launch_mvp_plan.md)
+- [Design Feature Specs](doc/design/features/)
+- [Design Area Specs](doc/design/areas/)
+- [Neverlands Reference](doc/design/reference/neverlands.md)
 
 ### When to use each guide
 - Use **doc/design/gdd.md** first for game design and player-facing behavior.
-- Use **Rails Engineering Guide** for normal Rails coding tasks.
-- Use **Gameplay Architecture Guide** when implementing or modifying gameplay systems.
-- Use **MMO_TESTING_GUIDE.md** when writing or updating tests for game logic.
-- Use **MAP_DESIGN_GUIDE.md** for any work related to zones, maps, tiles, or movement.
-- Use **ITEM_SYSTEM_GUIDE.md** for items, inventory, equipment, loot, or crafting.
-- Use **COMBAT_SYSTEM_GUIDE.md** for combat, skills, buffs/debuffs, turn resolution, and battle flow.
+- Use feature and area docs under **doc/design/** for implementation behavior.
+- Use Neverlands live/reference notes only as source material for updating
+  **doc/design/**.
+- Remove non-Neverlands docs instead of preserving them as historical guidance.
 
 This repository is a **Ruby on Rails application** (HTML + Hotwire and optionally JSON APIs).
 This file defines how the engineering agent should behave when making changes.
@@ -352,8 +350,8 @@ use it as input when making design decisions, but don't overwrite it unless aske
 
 ## 9. Development guidelines (agent-specific)
 
-- Read the project’s own conventions (`README`, `doc/README.md`, `doc/design/gdd.md`,
-  and `doc/engineering/*`) before generating code.
+- Read the project’s own conventions (`README`, `doc/README.md`, and
+  `doc/design/gdd.md`) before generating code.
 - Do **not** suggest running long-lived processes (e.g. `rails server`) inside responses; just mention the commands.
 - Do **not** run `rails credentials` or manipulate secrets in examples.
 - Do **not** automatically run migrations on behalf of the user; show the commands instead.

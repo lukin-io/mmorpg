@@ -4,7 +4,6 @@ require "rails_helper"
 
 RSpec.describe Game::Quests::RewardService do
   let(:character) { create(:character, reputation: 0) }
-  let(:skill_node) { create(:skill_node, key: "luminous_strike") }
   let(:profession) { create(:profession, name: "Armorsmith") }
   let(:rewards) do
     {
@@ -14,7 +13,7 @@ RSpec.describe Game::Quests::RewardService do
       "recipes" => ["sunsteel_ingot"],
       "cosmetics" => ["heroic_cloak"],
       "premium_tokens" => 3,
-      "class_abilities" => [skill_node.key],
+      "class_abilities" => ["luminous_strike"],
       "profession_unlocks" => [profession.name],
       "housing_upgrades" => 2
     }
@@ -46,7 +45,7 @@ RSpec.describe Game::Quests::RewardService do
       expect(character.reload.reputation).to eq(15)
       expect(character.metadata["recipe_keys"]).to include("sunsteel_ingot")
       expect(character.metadata["cosmetic_keys"]).to include("heroic_cloak")
-      expect(character.character_skills.exists?(skill_node:)).to be(true)
+      expect(result.applied[:class_abilities]).to eq([])
       expect(character.profession_progresses.exists?(profession:)).to be(true)
       expect(expander_instance).to have_received(:expand!).twice
       expect(assignment.reload.rewards_claimed_at).to be_present

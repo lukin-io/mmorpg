@@ -38,6 +38,8 @@ RSpec.describe Arena::CombatProcessor do
       team: "b")
   end
 
+  let(:character1_ap_limit) { character1.max_action_points }
+  let(:character2_ap_limit) { character2.max_action_points }
   let(:processor) { described_class.new(arena_match) }
 
   before do
@@ -342,8 +344,7 @@ RSpec.describe Arena::CombatProcessor do
           body_part: "torso"
         )
 
-        # Check AP was deducted
-        expect(participation1.reload.metadata["current_ap"]).to eq(55) # 100 - 45
+        expect(participation1.reload.metadata["current_ap"]).to eq(character1_ap_limit - 45)
       end
 
       it "deducts AP for aimed attack from the participant AP budget" do
@@ -359,7 +360,7 @@ RSpec.describe Arena::CombatProcessor do
           body_part: "head"
         )
 
-        expect(participation1.reload.metadata["current_ap"]).to eq(35) # 100 - 65
+        expect(participation1.reload.metadata["current_ap"]).to eq(character1_ap_limit - 65)
       end
 
       it "deducts AP for defend action (30 AP)" do
@@ -372,7 +373,7 @@ RSpec.describe Arena::CombatProcessor do
           block_parts: ["torso"]
         )
 
-        expect(participation1.reload.metadata["current_ap"]).to eq(70) # 100 - 30
+        expect(participation1.reload.metadata["current_ap"]).to eq(character1_ap_limit - 30)
       end
 
       it "fails when not enough AP" do
@@ -408,7 +409,7 @@ RSpec.describe Arena::CombatProcessor do
         expect(result[:waiting]).to be true
         expect(result[:resolved]).to be false
         expect(result[:total_ap]).to eq(75)
-        expect(participation1.reload.metadata["current_ap"]).to eq(25)
+        expect(participation1.reload.metadata["current_ap"]).to eq(character1_ap_limit - 75)
         expect(participation1.metadata["pending_turn"]).to be_present
         expect(character1.reload.metadata["blocked_parts"]).to be_blank
       end
@@ -444,8 +445,8 @@ RSpec.describe Arena::CombatProcessor do
         expect(second[:resolved]).to be true
         expect(participation1.reload.metadata["pending_turn"]).to be_blank
         expect(participation2.reload.metadata["pending_turn"]).to be_blank
-        expect(participation1.metadata["current_ap"]).to eq(100)
-        expect(participation2.metadata["current_ap"]).to eq(100)
+        expect(participation1.metadata["current_ap"]).to eq(character1_ap_limit)
+        expect(participation2.metadata["current_ap"]).to eq(character2_ap_limit)
       end
 
       it "uses captured Neverlands fight profile values when present" do
@@ -657,12 +658,12 @@ RSpec.describe Arena::CombatProcessor do
 
         expect(result.success?).to be false
         expect(result.error).to include("Actions exceed AP limit")
-        expect(result.error).to include("155/100")
+        expect(result.error).to include("155/#{character1_ap_limit}")
       end
 
       it "broadcasts AP update after action" do
         expect(processor.broadcaster).to receive(:broadcast_ap_update)
-          .with(character1, 55, 100)
+          .with(character1, character1_ap_limit - 45, character1_ap_limit)
         allow(processor.broadcaster).to receive(:broadcast_combat_action)
         allow(processor.broadcaster).to receive(:broadcast_vitals_update)
 

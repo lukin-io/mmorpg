@@ -83,9 +83,10 @@ design authority.
 - The GDD is the entry point, not a scratchpad.
 - Put stable design rules in `features/` and `areas/`.
 - Put live Neverlands observations in `reference/`.
-- Put implementation explanations in `doc/flow/`.
+- Put live Neverlands observations in `doc/flow/` when they are raw captures
+  that are too detailed for `doc/design/reference/`.
 - Put concise current file maps at the bottom of design docs under
   `Related Implementation Files`.
-- If an old doc conflicts with the Neverlands-style target, rewrite the new
-  design doc and leave the old doc as historical support only.
+- If an old doc is not Neverlands-based, remove it after any valid rule has
+  been promoted into `doc/design/`.
 - Avoid broad product ideas unless they directly support the core loop.

@@ -27,7 +27,6 @@ RSpec.describe Game::Combat::AttackService do
         rng_seed: 42
       )
 
-      # Returns LegacyResult with log, hp_changes, effects
       expect(result.log).to be_present
       expect(result.hp_changes[:defender]).to be_negative
       expect(result.effects).to be_a(Hash)
@@ -132,10 +131,11 @@ RSpec.describe Game::Combat::AttackService do
       end
     end
 
-    context "with ability" do
-      let(:ability) do
-        create(:ability,
-          character_class: create(:character_class),
+    context "with active skill data" do
+      let(:skill) do
+        OpenStruct.new(
+          id: 1,
+          name: "Power Strike",
           effects: {
             "damage" => 10,
             "status" => "bleed",
@@ -144,35 +144,34 @@ RSpec.describe Game::Combat::AttackService do
           })
       end
 
-      it "applies ability damage bonus" do
-        result_without_ability = service.call(
+      it "applies skill damage bonus" do
+        result_without_skill = service.call(
           attacker: attacker,
           defender: defender,
           action: "Attack",
           rng_seed: 1
         )
 
-        result_with_ability = service.call(
+        result_with_skill = service.call(
           attacker: attacker,
           defender: defender,
-          action: ability.name,
+          action: skill.name,
           rng_seed: 1,
-          ability: ability
+          skill: skill
         )
 
-        # Ability should add 10 damage
-        base_damage = result_without_ability.hp_changes[:defender].abs
-        ability_damage = result_with_ability.hp_changes[:defender].abs
-        expect(ability_damage).to be >= base_damage
+        base_damage = result_without_skill.hp_changes[:defender].abs
+        skill_damage = result_with_skill.hp_changes[:defender].abs
+        expect(skill_damage).to be >= base_damage
       end
 
-      it "includes ability effects in result" do
+      it "includes skill effects in result" do
         result = service.call(
           attacker: attacker,
           defender: defender,
-          action: ability.name,
+          action: skill.name,
           rng_seed: 1,
-          ability: ability
+          skill: skill
         )
 
         expect(result.effects[:damage_bonus]).to eq(10)
@@ -229,7 +228,7 @@ RSpec.describe Game::Combat::AttackService do
 
       service_with_custom = described_class.new(turn_resolver: custom_resolver)
 
-      # Without a real battle, the custom resolver is not used - test legacy path
+      # Without a real battle, the service resolves the direct calculation path.
       result = service_with_custom.call(
         attacker: attacker,
         defender: defender,
@@ -237,7 +236,6 @@ RSpec.describe Game::Combat::AttackService do
         rng_seed: 1
       )
 
-      # Should still return valid result from legacy path
       expect(result.log).to be_present
       expect(result.hp_changes[:defender]).to be_negative
     end

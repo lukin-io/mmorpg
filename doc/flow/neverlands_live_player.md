@@ -37,6 +37,25 @@ No inventory item action was executed. Item buttons such as `Надеть`,
 `Передать`, `Подарить`, `Продать`, and delete are mutating actions, so they were
 recorded but not clicked.
 
+### Third Capture Pass
+
+On 2026-05-14, a starter-account pass inspected and exercised the live player
+allocation loop requested for the MVP design. The pass used the same credential
+discipline: one login, one cookie jar, no automated retry loop, and no tracked
+passwords, session cookies, or live `vcode` values.
+
+Mutating actions performed:
+
+1. Opened `Ваш персонаж` from the gameplay shell.
+2. Added one point to each trainable primary stat shown on the profile:
+   `Сила`, `Ловкость`, `Удача`, `Здоровье`, and `Знания`.
+3. Clicked the profile stat `Сохранить` action.
+4. Opened `Умения`, added `Рукопашный бой`, `Владение мечами`, and
+   `Осторожность`, then clicked `Сохранить`.
+5. Opened `Навыки`, added `Больше силы`, then clicked `Сохранить`.
+
+The exact tokenized URLs and form tokens are intentionally omitted.
+
 ## Authenticated Shell
 
 The public entry page first sets a `watermark` cookie, then serves the actual
@@ -63,31 +82,27 @@ ch_refr    -> ./ch/refr.html
 
 The player/profile surface lives in `main_top`.
 
-## Public Character Info URL
+## Public Character Info
 
-Neverlands also exposes a direct public character info URL:
-
-```text
-/pinfo.cgi?<character-login>
-```
-
-Observed example shape:
-
-```text
-/pinfo.cgi?lukin
-```
+Neverlands exposes direct public character info by character login. The source
+implementation uses old CGI-era URL machinery, but the important design fact is
+the public character-info behavior, not the source transport.
 
 The response is not an account-dashboard page. It is a character info payload
 that sets JavaScript variables such as `hpmp`, `parameters`, `slots`,
-`ability`, `eff`, and `info`, then renders the profile with
-`view_pinfo_top()`/`view_pinfo_bottom()`.
+`ability`, `eff`, and `info`, then renders the profile with source-side profile
+rendering helpers.
 
 Design translation:
 
-- profile lookup should accept the active character name, not only an account
-  profile slug;
-- the public profile route can keep Rails HTML/JSON responses, but the stable
-  Neverlands-compatible entry point is `/pinfo.cgi?<character-name>`;
+- profile lookup accepts the active character name only;
+- the local character URL is `/player/<character-name>`, for example
+  `/player/max_kerby`;
+- character-facing gameplay links use `/player/<character-name>`;
+- do not implement source CGI routes or account-profile routes;
+- public character JSON should expose the same public character facts:
+  public links, avatar, level, HP/MP, location, primary stats, equipped items,
+  experience, and experience remaining to next level;
 - public character info should not leak account email or credential-side
   metadata.
 
@@ -214,7 +229,6 @@ Observed primary stat labels:
 | `Удача` | 11 | luck |
 | `Здоровье` | 20 | health/endurance |
 | `Знания` | 1 | knowledge/intelligence |
-| `Мудрость` | 1 | wisdom/will/magic |
 
 Observed progression and combat rows:
 
@@ -233,7 +247,7 @@ profile and inventory surfaces:
 - money: `26311.87 NV`;
 - premium/cash currency: `1 $`;
 - primary stats: Strength `10`, Dexterity `11`, Luck `11`, Health `20`,
-  Knowledge `1`, Wisdom `1`;
+  Knowledge `1`;
 - inventory mass after opening the inventory: `108.00/310`.
 
 ## Player Subnavigation
@@ -412,6 +426,188 @@ Design translation:
 - for MVP, only implement them if they directly support combat, movement,
   recovery, or equipment requirements.
 
+## Starter Allocation Capture: 2026-05-14
+
+This pass used a level-0 starter character to capture the initial player formula
+surface and the exact allocation/save behavior.
+
+### Entry Path
+
+Initial authenticated shell state:
+
+- character strip showed the starter character at level `0`;
+- HP/MP script call before allocation was `ins_HP(5,5,7,7,1500,9000)`;
+- the shell showed context buttons for quests, `Ваш персонаж`, `Инвентарь`,
+  and a disabled `Город`;
+- the city scene was loaded in the main frame and included image hotspots such
+  as tavern, arena, shop, city exit, workshop, hospital, and district arrows.
+
+Clicking `Ваш персонаж` followed a tokenized URL shape:
+
+```text
+main.php?get_id=56&act=10&go=inf&vcode=<token>
+```
+
+The profile then rendered `Ваш персонаж` as disabled, with active
+`Инвентарь` and `Вернуться` buttons.
+
+### Primary Stats
+
+Observed starter stats before allocation:
+
+| Label | HTML Display ID | Base Hidden Field | Pending Hidden Field | Value | Control |
+| --- | --- | --- | --- | ---: | --- |
+| `Сила` | `st0` | `h0` | `f0` | 1 | plus/minus |
+| `Ловкость` | `st1` | `h1` | `f1` | 1 | plus/minus |
+| `Удача` | `st2` | `h2` | `f2` | 1 | plus/minus |
+| `Здоровье` | `st4` | `h4` | `f4` | 1 | plus/minus |
+| `Знания` | `st3` | `h3` | `f3` | 1 | plus/minus |
+
+The stat form posts to `main.php` and includes:
+
+```text
+post_id=15
+act_id=0
+vcode=<token>
+freestats=<remaining stat increases>
+h0..h4=<saved base stat values>
+f0..f4=<pending additions in the current edit session>
+```
+
+`AddStats(statId)` decrements `freestats`, increments `f<statId>`, and updates
+the displayed stat with a pending `+N` marker. `RemStats(statId)` only undoes
+pending additions. `SaveStats()` submits the form.
+
+Observed save:
+
+- clicked plus once for `Сила`, `Ловкость`, `Удача`, `Здоровье`, and
+  `Знания`;
+- `freestats` moved from `15` to `10`;
+- after `Сохранить`, saved values became Strength `2`, Dexterity `2`, Luck
+  `2`, Health `2`, and Knowledge `2`;
+- hidden base values then became `h0=2`, `h1=2`, `h2=2`, `h3=2`, `h4=2`, and
+  pending fields reset to `0`;
+- HP/MP changed from `ins_HP(5,5,7,7,1500,9000)` before allocation to
+  `ins_HP(5,10,0,14,1500,9000)` immediately after save, and later observed as
+  `ins_HP(6,10,0,14,1500,9000)` as HP regeneration ticked.
+
+Design translation:
+
+- the profile stat panel must show saved values, pending additions, and
+  remaining stat increases in one dense surface;
+- saved stat allocations are not reversible by the normal minus control;
+- changing stats can affect max HP/MP while current HP/MP remain independent
+  resource values.
+
+### Experience Block
+
+The starter profile showed:
+
+| Row | Value |
+| --- | ---: |
+| `Боевой` | 0 |
+| `Слава` | 0 |
+| `Доблесть` | 0 |
+| `До уровня` | 100 |
+
+Design translation:
+
+- level progression should be visible on the profile next to allocation;
+- combat experience is the starter level threshold driver in this capture;
+- fame and valor are separate progression currencies, not replacements for
+  combat experience.
+
+### Numeric Skills Save
+
+Opening `Умения` uses:
+
+```text
+main.php?mselect=1
+```
+
+The page renders `name=saveskill` and posts to `main.php` with:
+
+```text
+post_id=16
+vcode=<token>
+freeskills=<remaining combat/magic/resistance increases>
+maxfsk=<maximum combat/magic/resistance increases for this save>
+freeskillsmir=<remaining peace increases>
+maxfskm=<maximum peace increases for this save>
+h<skillId>=<saved base value>
+f<skillId>=<edited value>
+```
+
+Observed starter pools:
+
+- combat, magic, and resistance increases: `10`;
+- peace increases: `2`.
+
+Observed save:
+
+| Skill ID | Label | Pool | Before | One Click Result |
+| ---: | --- | --- | ---: | ---: |
+| 0 | `Рукопашный бой` | combat/magic/resistance | 0 | 10 |
+| 1 | `Владение мечами` | combat/magic/resistance | 0 | 8 |
+| 22 | `Осторожность` | peace | 0 | 2 |
+
+After save:
+
+- `Рукопашный бой` displayed `[010/100]`;
+- `Владение мечами` displayed `[008/100]`;
+- `Осторожность` displayed `[002/100]`;
+- combat/magic/resistance increases moved from `10` to `8`;
+- peace increases moved from `2` to `1`;
+- saved base hidden values matched the new totals, so these spends were no
+  longer undoable as pending edits.
+
+Design translation:
+
+- MVP numeric skills must support separate point pools and tiered per-click
+  gains;
+- the same visible plus/minus/save pattern should be used for every trainable
+  numeric skill;
+- profession rows may display as progress values without direct plus/minus
+  controls in the starter state.
+
+### Boolean Perk Save
+
+Opening `Навыки` uses:
+
+```text
+main.php?mselect=2
+```
+
+The page renders `name=saveperk`, a `currnav` hidden counter, and one hidden
+`fid<perkId>` field per perk. The visible counter is:
+
+```text
+Возможные новые навыки: <count>
+```
+
+Observed starter state:
+
+- `Возможные новые навыки: 1`;
+- every displayed perk was `нет`;
+- every unsaved selectable perk had plus/minus controls.
+
+Observed save:
+
+- clicked plus for `Больше силы` (`perkId=7`);
+- local preview changed `pid7` from `нет` to `да`;
+- `currnav` moved from `1` to `0`;
+- after `Сохранить`, `Больше силы` displayed `<b>да</b>`;
+- rows no longer rendered plus/minus controls once no new perk points remained.
+
+Design translation:
+
+- `Навыки` are binary saved choices, not numeric ranks;
+- the UI needs a separate new-perk pool;
+- after a perk is saved, it should render as an owned choice and not as a
+  pending toggle;
+- mutually exclusive perk branches should be hidden or disabled while the
+  current pending selection makes them incompatible.
+
 ## `Инвентарь`: Inventory
 
 The inventory page is entered from the player context strip:
@@ -467,12 +663,30 @@ Bag item equip buttons use the same endpoint with `s=1`:
 main.php?get_id=57&uid=<item-id>&s=1&vcode=<token>
 ```
 
+The live `slots_v02.js` script confirms the equipment-slot behavior:
+
+- `slots_inv(image, nick, slotDefinitions, slotUids, slotVcodes,
+  slotDurability, width)` splits slot definitions, equipped item ids, per-slot
+  action tokens, and current durability/status payloads;
+- every inventory slot is rendered through `sl_butt(...)`;
+- if a slot has an action token, the slot image becomes clickable and navigates
+  to `get_id=57` with `s=0`;
+- if a slot has no token, the image is still rendered but uses a default cursor
+  and does not mutate state;
+- inventory slots therefore double as the remove/unequip controls;
+- the profile view uses `slots_pla(...)`, which renders the same slot layout as
+  a read-only profile summary instead of an inventory action surface.
+
 Design translation:
 
 - equipment slots and bag item equip actions are both server-token actions;
 - inventory and profile should share the same character/equipment slot model;
 - the inventory view needs to show empty equipment slots, equipped item
   summaries, and bag items in the same player shell.
+- wearing is not drag-and-drop in the captured UI: item rows offer `Надеть`,
+  and equipped slots offer click-to-remove behavior;
+- the project can use Rails forms/buttons instead of the exact URL protocol,
+  but the action must remain server-authorized and item-specific.
 
 ### Inventory Categories
 
@@ -493,6 +707,62 @@ The observed category strip is image-based:
 
 MVP does not need the exact image strip, but it should keep category filtering
 near the item list and keep full item information visible when needed.
+
+The 2026-05-14 starter-account pass also showed that the `Вещи` category can
+expand into equipment subcategory filters even when the inventory is empty:
+
+| Query | Label |
+| --- | --- |
+| `?wca=4` | `Ножи` |
+| `?wca=1` | `Мечи` |
+| `?wca=2` | `Топоры` |
+| `?wca=3` | `Дробящие` |
+| `?wca=6` | `Алебарды и копья` |
+| `?wca=7` | `Посохи` |
+| `?wca=20` | `Щиты` |
+| `?wca=19` | `Доспехи` |
+| `?wca=23` | `Шлемы` |
+| `?wca=21` | `Сапоги` |
+| `?wca=17` | `Штаны` |
+| `?wca=26` | `Пояса` |
+| `?wca=24` | `Перчатки` |
+| `?wca=80` | `Наручи` |
+| `?wca=22` | `Ювелирные украшения` |
+| `?wca=16` | `Реликвии` |
+| `?wca=28` | `Свитки` |
+| `?wca=27` | `Зелья` |
+| `?wca=60` | `Квестовые предметы` |
+| `?wca=30` | `Магические книги` |
+| `?wca=85` | `Аптечки` |
+| `?wca=29` | `Руны` |
+
+### Empty Starter Inventory
+
+The 2026-05-14 starter-account inventory pass was read-only. No item action was
+clicked.
+
+Observed behavior:
+
+- inventory was entered with the same tokenized player-shell action shape:
+  `main.php?get_id=56&act=10&go=inv&vcode=<token>`;
+- the top strip changed to active `Ваш персонаж`, disabled `Инвентарь`, and
+  active `Вернуться`;
+- inventory used `slots_inv(...)` with empty slot payloads, so the equipment
+  doll still rendered even though nothing was equipped;
+- the side panel still showed money, trainable profile stats, experience,
+  fight record, fatigue, attack cost, and the stat save form;
+- the right panel showed category filters and equipment subcategory filters;
+- the carried-item area showed the empty-state text `У Вас с собой нет вещей.`;
+- because no carried item rows existed, there were no equip/use/transfer/gift/
+  sale/delete buttons to click.
+
+Design translation:
+
+- an empty inventory is still a full inventory page, not a blank screen;
+- filter controls should remain visible even when no items match;
+- empty state should be explicit and centered in the item-list area;
+- equipment slots and carried items should be separate surfaces that share the
+  same inventory shell.
 
 ### Inventory Item Row Shape
 
@@ -518,6 +788,35 @@ Observed item actions:
 Transfer, gift, sale, and delete are all server-authorized actions. Transfer,
 gift, and sale are not required for the first inventory MVP unless the economy
 loop needs them; equip/use/delete and clear item information are required.
+
+### Wearing Items
+
+The captured row and slot scripts define the Neverlands-style wearing loop:
+
+1. Player opens `Инвентарь` from the top character strip.
+2. The inventory page shows the current equipment doll and carried item rows.
+3. A wearable carried item can render `Надеть`.
+4. Clicking `Надеть` submits a tokenized action with the carried item id and
+   `s=1`.
+5. The server validates ownership, item state, requirements, and slot rules.
+6. On success, the item is moved into the appropriate equipment slot and the
+   inventory page refreshes.
+7. The equipped slot image can then be clicked in the equipment doll.
+8. Clicking an occupied slot submits a tokenized action with the equipped item
+   id and `s=0`.
+9. On success, the item is removed from the slot and returned to carried
+   inventory.
+
+Design translation:
+
+- wearing/removing are inverse actions over one equipment state model;
+- the action direction is explicit (`wear` versus `remove`) and cannot be
+  inferred only from item id;
+- slot compatibility and requirements must be server-side checks;
+- equipment changes should immediately update visible stats, requirements,
+  HP/MP maximums, attack cost, combat formulas, item mass/capacity, and
+  available item actions;
+- the player should not need to open a separate character editor to wear gear.
 
 ### Captured Inventory Contents
 
@@ -574,8 +873,8 @@ Person remains the basic persistent unit:
 - `Умения` are numeric 0-100 skills with explicit point pools;
 - `Навыки` are boolean perks and can be deferred unless they serve the MVP
   loop;
-- class trees, mentoring, paid services, postcards, lotteries, and similar
-  account-side pages are not launch MVP dependencies.
+- mentoring, paid services, postcards, lotteries, and similar account-side
+  pages are not launch MVP dependencies.
 
 Implementation consequence:
 
@@ -586,8 +885,8 @@ Implementation consequence:
 - inventory should use `ItemTemplate` for stable item properties and
   `InventoryItem` for quantity, equipped slot, durability, and per-item
   properties;
-- broad `SkillTree`/class-node flows should not be the main launch path unless
-  they are reduced to the same player-profile skill/perk model;
+- broad node-graph flows are legacy and should stay out of the launch player
+  progression path;
 - all player-page mutations should use server-issued action keys or CSRF-backed
   form submission, never client-invented state.
 

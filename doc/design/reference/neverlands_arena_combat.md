@@ -558,7 +558,6 @@ Visible enemy stats include:
 - dexterity;
 - luck;
 - knowledge;
-- wisdom;
 - armor class;
 - evasion;
 - accuracy;

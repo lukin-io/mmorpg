@@ -8,7 +8,6 @@ FactoryBot.define do
     weight { 2 }
     stack_limit { 10 }
     premium { false }
-    enhancement_rules { {"base_success_chance" => 60, "required_skill_level" => 1} }
 
     trait :material do
       item_type { "material" }

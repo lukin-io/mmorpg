@@ -9,9 +9,9 @@ require "rails_helper"
 # Tests cover: accepting NPC applications, NPC fights, combat actions.
 #
 # Related docs:
-#   - doc/flow/11_arena_pvp.md
-#   - doc/flow/22_arena_npc_bots.md
-#   - doc/flow/22_unified_npc_architecture.md
+#   - doc/design/areas/arena.md
+#   - doc/design/features/combat.md
+#   - doc/design/features/npcs_quests.md
 # =============================================================================
 
 RSpec.describe "Arena NPC Combat", type: :request do

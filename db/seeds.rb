@@ -15,79 +15,6 @@ if defined?(User)
   lukin_user.add_role(:admin)
 end
 
-if defined?(ClassSpecialization) && defined?(CharacterClass)
-  {
-    "Warrior" => [
-      {name: "Paladin", description: "Shielded crusader", unlock_requirements: {quest: "holy_trial"}}
-    ],
-    "Thief" => [
-      {name: "Assassin", description: "Shadow finisher", unlock_requirements: {quest: "daggerfall"}}
-    ]
-  }.each do |class_name, specs|
-    klass = CharacterClass.find_by(name: class_name)
-    next unless klass
-
-    specs.each do |spec_attrs|
-      ClassSpecialization.find_or_create_by!(character_class: klass, name: spec_attrs[:name]) do |spec|
-        spec.description = spec_attrs[:description]
-        spec.unlock_requirements = spec_attrs[:unlock_requirements]
-      end
-    end
-  end
-end
-
-if defined?(SkillTree) && defined?(SkillNode)
-  CharacterClass.find_each do |klass|
-    tree = SkillTree.find_or_create_by!(character_class: klass, name: "#{klass.name} Core") do |skill_tree|
-      skill_tree.description = "Signature abilities for #{klass.name}"
-    end
-
-    [
-      {key: "#{klass.name.parameterize}_tier1", name: "#{klass.name} Training", node_type: "passive", tier: 1, effects: {attack: 2}},
-      {key: "#{klass.name.parameterize}_ultimate", name: "#{klass.name} Ultimate", node_type: "ultimate", tier: 3, effects: {special: true}, requirements: {level: 30}}
-    ].each do |node_attrs|
-      SkillNode.find_or_create_by!(skill_tree: tree, key: node_attrs[:key]) do |node|
-        node.name = node_attrs[:name]
-        node.node_type = node_attrs[:node_type]
-        node.tier = node_attrs[:tier]
-        node.effects = node_attrs[:effects]
-        node.requirements = node_attrs[:requirements] || {}
-      end
-    end
-  end
-end
-
-if defined?(Ability)
-  CharacterClass.find_each do |klass|
-    [
-      {
-        name: "#{klass.name} Signature",
-        kind: "active",
-        resource_cost: {klass.resource_type => 20},
-        effects: {
-          damage: 25,
-          debuffs: [{name: "Shattered Armor", duration: 2, stat_changes: {"defense" => -2}}]
-        }
-      },
-      {
-        name: "#{klass.name} Guard",
-        kind: "reaction",
-        resource_cost: {},
-        effects: {
-          status: "shield",
-          buffs: [{name: "Guarding Stance", duration: 2, stat_changes: {"defense" => 5}}]
-        }
-      }
-    ].each do |ability_attrs|
-      Ability.find_or_create_by!(character_class: klass, name: ability_attrs[:name]) do |ability|
-        ability.kind = ability_attrs[:kind]
-        ability.resource_cost = ability_attrs[:resource_cost]
-        ability.effects = ability_attrs[:effects]
-      end
-    end
-  end
-end
-
 if defined?(Role)
   %i[player moderator gm admin].each do |role_name|
     Role.find_or_create_by!(name: role_name)
@@ -302,7 +229,7 @@ if defined?(Quest)
     {key: "stat_allocation_tutorial", title: "Forging Your Build", sequence: 3, quest_type: :main_story, chapter: 0,
      summary: "Explains stat allocation and respec options."},
     {key: "gear_upgrade_tutorial", title: "Dress for Battle", sequence: 4, quest_type: :main_story, chapter: 0,
-     summary: "Introduces equipment slots, weight, and enhancements."}
+     summary: "Introduces equipment slots, weight, and wear/remove actions."}
   ].each do |attrs|
     Quest.find_or_create_by!(key: attrs[:key]) do |quest|
       quest.title = attrs[:title]
@@ -326,54 +253,6 @@ if defined?(GuildMission)
   end
 end
 
-if defined?(CharacterClass)
-  [
-    {
-      name: "Warrior",
-      description: "Front-line fighter with high vitality and shield combos.",
-      resource_type: "rage",
-      equipment_tags: %w[weapon shield armor],
-      base_stats: {strength: 8, vitality: 7, agility: 4, intellect: 2}
-    },
-    {
-      name: "Mage",
-      description: "Arcane caster wielding mana-fueled spells.",
-      resource_type: "mana",
-      equipment_tags: %w[weapon robe accessory],
-      base_stats: {strength: 2, vitality: 3, agility: 4, intellect: 9}
-    },
-    {
-      name: "Hunter",
-      description: "Ranged specialist with traps and companions.",
-      resource_type: "focus",
-      equipment_tags: %w[weapon offhand leather],
-      base_stats: {strength: 5, vitality: 4, agility: 8, intellect: 3}
-    },
-    {
-      name: "Priest",
-      description: "Support caster balancing heals and wards.",
-      resource_type: "faith",
-      equipment_tags: %w[weapon accessory robe],
-      base_stats: {strength: 3, vitality: 5, agility: 3, intellect: 8}
-    },
-    {
-      name: "Thief",
-      description: "Stealth assassin chaining combo finishers.",
-      resource_type: "energy",
-      equipment_tags: %w[weapon offhand leather],
-      base_stats: {strength: 6, vitality: 4, agility: 9, intellect: 2}
-    }
-  ].each do |attrs|
-    CharacterClass.find_or_create_by!(name: attrs[:name]) do |klass|
-      klass.description = attrs[:description]
-      klass.base_stats = attrs[:base_stats]
-      klass.resource_type = attrs[:resource_type]
-      klass.equipment_tags = attrs[:equipment_tags]
-      klass.combo_rules = {max_chain: 3}
-    end
-  end
-end
-
 if defined?(ItemTemplate)
   [
     {
@@ -389,7 +268,7 @@ if defined?(ItemTemplate)
       item_type: "equipment",
       slot: "main_hand",
       rarity: "uncommon",
-      stat_modifiers: {attack: 5, agility: 2},
+      stat_modifiers: {attack: 5, dexterity: 2},
       weight: 3
     },
     {
@@ -397,7 +276,7 @@ if defined?(ItemTemplate)
       item_type: "equipment",
       slot: "chest",
       rarity: "rare",
-      stat_modifiers: {intellect: 4, vitality: 2},
+      stat_modifiers: {intelligence: 4, vitality: 2},
       weight: 1,
       premium: true
     }
@@ -410,7 +289,6 @@ if defined?(ItemTemplate)
       item.weight = attrs[:weight] || 2
       item.stack_limit = attrs[:stack_limit] || 1
       item.premium = attrs.fetch(:premium, false)
-      item.enhancement_rules = {"base_success_chance" => 55, "required_skill_level" => 5, "failure_penalty" => "downgrade"}
     end
   end
 end
@@ -661,52 +539,41 @@ secondary_character = nil
 lukin_character = nil
 
 if defined?(Character) && admin
-  warrior = CharacterClass.find_by(name: "Warrior")
-  mage = CharacterClass.find_by(name: "Mage")
-  hunter = CharacterClass.find_by(name: "Hunter")
-
-  if warrior
-    main_character = Character.find_or_create_by!(user: admin, name: "Aldric Stormguard") do |char|
-      char.character_class = warrior
-      char.level = 22
-      char.experience = 125_000
-      char.faction_alignment = "alliance"
-      char.alignment_score = 15
-      char.reputation = 1_200
-      char.allocated_stats = {"strength" => 16, "vitality" => 12, "agility" => 5}
-      char.resource_pools = {"rage" => {"current" => 70, "max" => 110}}
-      char.metadata = {"battlefield_roles" => %w[tank leader]}
-    end
-    main_character.reload
-    main_character.inventory || main_character.create_inventory!(slot_capacity: 48, weight_capacity: 160)
+  main_character = Character.find_or_create_by!(user: admin, name: "Aldric Stormguard") do |char|
+    char.level = 22
+    char.experience = 125_000
+    char.faction_alignment = "alliance"
+    char.alignment_score = 15
+    char.reputation = 1_200
+    char.allocated_stats = {"strength" => 16, "vitality" => 12, "dexterity" => 5}
+    char.resource_pools = {"fatigue" => 0}
+    char.metadata = {"battlefield_roles" => %w[frontline leader]}
   end
+  main_character.reload
+  main_character.inventory || main_character.create_inventory!(slot_capacity: 48, weight_capacity: 160)
 
-  if mage
-    secondary_character = Character.find_or_create_by!(user: admin, name: "Lyra Dawnsong") do |char|
-      char.character_class = mage
-      char.level = 18
-      char.experience = 82_000
-      char.faction_alignment = "alliance"
-      char.alignment_score = 6
-      char.reputation = 640
-      char.allocated_stats = {"intellect" => 18, "vitality" => 6, "agility" => 4}
-      char.resource_pools = {"mana" => {"current" => 125, "max" => 150}}
-      char.metadata = {"battlefield_roles" => %w[burst support]}
-    end
-    secondary_character.reload
-    secondary_character.inventory || secondary_character.create_inventory!(slot_capacity: 42, weight_capacity: 130)
+  secondary_character = Character.find_or_create_by!(user: admin, name: "Lyra Dawnsong") do |char|
+    char.level = 18
+    char.experience = 82_000
+    char.faction_alignment = "alliance"
+    char.alignment_score = 6
+    char.reputation = 640
+    char.allocated_stats = {"intelligence" => 18, "vitality" => 6, "dexterity" => 4}
+    char.resource_pools = {"fatigue" => 0}
+    char.metadata = {"battlefield_roles" => %w[magic support]}
   end
+  secondary_character.reload
+  secondary_character.inventory || secondary_character.create_inventory!(slot_capacity: 42, weight_capacity: 130)
 
-  if hunter && lukin_user
+  if lukin_user
     lukin_character = Character.find_or_create_by!(user: lukin_user, name: "Rovan Emberfall") do |char|
-      char.character_class = hunter
       char.level = 16
       char.experience = 61_000
       char.faction_alignment = "rebellion"
       char.alignment_score = 2
       char.reputation = 480
-      char.allocated_stats = {"agility" => 14, "strength" => 7, "vitality" => 5}
-      char.resource_pools = {"focus" => {"current" => 90, "max" => 120}}
+      char.allocated_stats = {"dexterity" => 14, "strength" => 7, "vitality" => 5}
+      char.resource_pools = {"fatigue" => 0}
       char.metadata = {"battlefield_roles" => %w[scout archer]}
     end
     lukin_character.reload
@@ -747,17 +614,15 @@ if defined?(ItemTemplate)
     item.stat_modifiers = {"attack" => 18, "crit" => 5}
     item.weight = 5
     item.stack_limit = 1
-    item.enhancement_rules = {"base_success_chance" => 60, "required_skill_level" => 6}
   end
 
   elixir_template = ItemTemplate.find_or_create_by!(name: "Aetheric Elixir") do |item|
     item.item_type = "consumable"
     item.slot = "none"
     item.rarity = "epic"
-    item.stat_modifiers = {"intellect" => 6}
+    item.stat_modifiers = {"intelligence" => 6}
     item.weight = 1
     item.stack_limit = 99
-    item.enhancement_rules = {"consumable" => true}
   end
 
   # Resource/Material Item Templates (for gathering)
@@ -810,46 +675,48 @@ if defined?(ItemTemplate)
 end
 
 if defined?(CraftingJob) && main_character
-  smith_recipe = Recipe.find_by(name: "Tempered Longsword")
-  forge = CraftingStation.find_by(name: "Castleton Forge")
-  if smith_recipe && forge
-    active_job = CraftingJob.find_or_initialize_by(
-      character: main_character,
-      recipe: smith_recipe,
-      status: :in_progress
-    )
-    active_job.user = admin
-    active_job.crafting_station = forge
-    active_job.batch_quantity = 2
-    active_job.started_at ||= 10.minutes.ago
-    active_job.completes_at = 5.minutes.from_now
-    active_job.success_chance = 82
-    active_job.quality_score = 84
-    active_job.quality_tier = :rare
-    active_job.result_payload = {"preview" => {"items" => [{"name" => "Tempered Longsword", "quantity" => 2, "quality" => "rare"}]}}
-    active_job.portable_penalty_applied = false
-    active_job.save!
-  end
+  CraftingJob.suppressing_turbo_broadcasts do
+    smith_recipe = Recipe.find_by(name: "Tempered Longsword")
+    forge = CraftingStation.find_by(name: "Castleton Forge")
+    if smith_recipe && forge
+      active_job = CraftingJob.find_or_initialize_by(
+        character: main_character,
+        recipe: smith_recipe,
+        status: :in_progress
+      )
+      active_job.user = admin
+      active_job.crafting_station = forge
+      active_job.batch_quantity = 2
+      active_job.started_at ||= 10.minutes.ago
+      active_job.completes_at = 5.minutes.from_now
+      active_job.success_chance = 82
+      active_job.quality_score = 84
+      active_job.quality_tier = :rare
+      active_job.result_payload = {"preview" => {"items" => [{"name" => "Tempered Longsword", "quantity" => 2, "quality" => "rare"}]}}
+      active_job.portable_penalty_applied = false
+      active_job.save!
+    end
 
-  alchemy_recipe = Recipe.find_by(name: "Aetheric Elixir")
-  guild_station = CraftingStation.find_by(name: "Guild Hall Loom")
-  if alchemy_recipe && guild_station && secondary_character
-    completed_job = CraftingJob.find_or_initialize_by(
-      character: secondary_character,
-      recipe: alchemy_recipe,
-      status: :completed
-    )
-    completed_job.user = admin
-    completed_job.crafting_station = guild_station
-    completed_job.batch_quantity = 1
-    completed_job.started_at ||= 50.minutes.ago
-    completed_job.completes_at ||= 35.minutes.ago
-    completed_job.success_chance = 76
-    completed_job.quality_score = 91
-    completed_job.quality_tier = :epic
-    completed_job.result_payload = {"items" => [{"name" => "Aetheric Elixir", "quantity" => 1, "quality" => "epic"}]}
-    completed_job.portable_penalty_applied = false
-    completed_job.save!
+    alchemy_recipe = Recipe.find_by(name: "Aetheric Elixir")
+    guild_station = CraftingStation.find_by(name: "Guild Hall Loom")
+    if alchemy_recipe && guild_station && secondary_character
+      completed_job = CraftingJob.find_or_initialize_by(
+        character: secondary_character,
+        recipe: alchemy_recipe,
+        status: :completed
+      )
+      completed_job.user = admin
+      completed_job.crafting_station = guild_station
+      completed_job.batch_quantity = 1
+      completed_job.started_at ||= 50.minutes.ago
+      completed_job.completes_at ||= 35.minutes.ago
+      completed_job.success_chance = 76
+      completed_job.quality_score = 91
+      completed_job.quality_tier = :epic
+      completed_job.result_payload = {"items" => [{"name" => "Aetheric Elixir", "quantity" => 1, "quality" => "epic"}]}
+      completed_job.portable_penalty_applied = false
+      completed_job.save!
+    end
   end
 end
 
@@ -858,7 +725,6 @@ if defined?(InventoryItem)
     InventoryItem.find_or_create_by!(inventory: main_character.inventory, item_template: longsword_template) do |item|
       item.quantity = 1
       item.weight = longsword_template.weight
-      item.enhancement_level = 2
       item.properties = {"crafted_by" => "Aldric", "quality_score" => 84}
       item.slot_kind = "weapon"
     end

@@ -22,7 +22,7 @@ module Game
             duration_seconds: battle_duration(entries),
             total_damage: entries.sum(:damage_amount),
             total_healing: entries.sum(:healing_amount),
-            ability_usage: ability_usage(entries),
+            action_usage: action_usage(entries),
             generated_at: Time.current
           }
         end
@@ -37,8 +37,8 @@ module Game
           (entries.maximum(:created_at) - entries.minimum(:created_at)).to_i
         end
 
-        def ability_usage(entries)
-          entries.group(:ability_id).where.not(ability_id: nil).count
+        def action_usage(entries)
+          entries.group("payload ->> 'action'").where("payload ? 'action'").count
         end
       end
     end

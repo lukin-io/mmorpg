@@ -229,10 +229,6 @@ class User < ApplicationRecord
     end
   end
 
-  def public_profile
-    Users::PublicProfile.new(user: self).as_json
-  end
-
   private
 
   def ensure_profile_name

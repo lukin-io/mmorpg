@@ -6,47 +6,47 @@ module Game
       Result = Struct.new(:log, :hp_changes, :effects, :battle, keyword_init: true)
       CombatantSnapshot = Struct.new(:stats)
 
-      def initialize(attacker:, defender:, action:, rng: Random.new(1), battle: nil, ability: nil,
+      def initialize(attacker:, defender:, action:, rng: Random.new(1), battle: nil, skill: nil,
         log_writer: nil)
         @attacker = attacker
         @defender = defender
         @action = action
         @rng = rng
         @battle = battle
-        @ability = ability
+        @skill = skill
         @log_writer = log_writer || Game::Combat::LogWriter.new(battle:) if battle
       end
 
       def call
-        ability_effects = parsed_ability_effects
+        skill_effects = parsed_skill_effects
         attacker_snapshot = combatant_snapshot(attacker)
         defender_snapshot = combatant_snapshot(defender)
 
-        base_damage = damage_formula.call(attacker_snapshot, defender_snapshot) + ability_effects[:damage_bonus]
+        base_damage = damage_formula.call(attacker_snapshot, defender_snapshot) + skill_effects[:damage_bonus]
         crit_multiplier = crit_formula.call(attacker_snapshot, defender_snapshot)
         total_damage = [(base_damage * crit_multiplier).to_i, 1].max
 
         crit_suffix = ""
         crit_suffix = " (CRIT)" if crit_multiplier > 1
         log_entries = ["#{attacker.name} used #{action} for #{total_damage} damage#{crit_suffix}"]
-        log_entries << "#{defender.name} suffered #{ability_effects[:status]}" if ability_effects[:status]
+        log_entries << "#{defender.name} suffered #{skill_effects[:status]}" if skill_effects[:status]
 
-        apply_combat_effects(ability_effects)
+        apply_combat_effects(skill_effects)
 
-        persist_logs(log_entries, total_damage:, effects: ability_effects)
+        persist_logs(log_entries, total_damage:, effects: skill_effects)
         advance_battle_turn if battle
 
         Result.new(
           log: log_entries,
           hp_changes: {defender: -total_damage},
-          effects: ability_effects,
+          effects: skill_effects,
           battle:
         )
       end
 
       private
 
-      attr_reader :attacker, :defender, :action, :rng, :battle, :ability, :log_writer
+      attr_reader :attacker, :defender, :action, :rng, :battle, :skill, :log_writer
 
       def damage_formula
         @damage_formula ||= Game::Formulas::DamageFormula.new(rng:)
@@ -71,8 +71,7 @@ module Game
               total_damage:,
               effects:,
               battle_type: battle&.battle_type,
-              pvp_mode: battle&.pvp_mode,
-              ability_id: ability&.id
+              pvp_mode: battle&.pvp_mode
             },
             round_number: battle.turn_number,
             sequence_offset: index
@@ -88,15 +87,15 @@ module Game
         @participants_by_character = nil
       end
 
-      def apply_combat_effects(ability_effects)
-        return unless battle && ability
+      def apply_combat_effects(skill_effects)
+        return unless battle && skill
 
-        if ability_effects[:buffs].present?
-          effect_bookkeeper.apply!(participant: participant_for(attacker), definitions: ability_effects[:buffs])
+        if skill_effects[:buffs].present?
+          effect_bookkeeper.apply!(participant: participant_for(attacker), definitions: skill_effects[:buffs])
         end
 
-        if ability_effects[:debuffs].present?
-          effect_bookkeeper.apply!(participant: participant_for(defender), definitions: ability_effects[:debuffs])
+        if skill_effects[:debuffs].present?
+          effect_bookkeeper.apply!(participant: participant_for(defender), definitions: skill_effects[:debuffs])
         end
       end
 
@@ -135,10 +134,10 @@ module Game
         defender.respond_to?(:id) ? defender.id : nil
       end
 
-      def parsed_ability_effects
-        return empty_ability_effects unless ability&.effects.present?
+      def parsed_skill_effects
+        return empty_skill_effects unless skill&.effects.present?
 
-        effects = ability.effects.deep_stringify_keys
+        effects = skill.effects.deep_stringify_keys
         {
           damage_bonus: effects["damage"].to_i,
           buffs: Array.wrap(effects["buffs"]),
@@ -147,7 +146,7 @@ module Game
         }
       end
 
-      def empty_ability_effects
+      def empty_skill_effects
         {damage_bonus: 0, buffs: [], debuffs: [], status: nil}
       end
 

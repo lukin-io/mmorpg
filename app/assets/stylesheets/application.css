@@ -7848,15 +7848,6 @@ turbo-frame[busy] {
   border-radius: 3px;
 }
 
-.item-enhancement {
-  position: absolute;
-  top: 2px;
-  right: 2px;
-  font-size: 0.7rem;
-  color: var(--nl-gold);
-  font-weight: bold;
-}
-
 .item-rarity--common { border-color: #888; }
 .item-rarity--uncommon { border-color: #2a2; }
 .item-rarity--rare { border-color: #44f; }
@@ -7885,36 +7876,6 @@ turbo-frame[busy] {
   opacity: 1;
 }
 
-.item-context-menu {
-  position: fixed;
-  background: var(--nl-bg);
-  border: 1px solid var(--nl-border);
-  border-radius: var(--nl-radius);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
-  z-index: 1000;
-  min-width: 150px;
-}
-
-.item-context-menu ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.item-context-menu li {
-  padding: var(--nl-space-sm) var(--nl-space-md);
-  cursor: pointer;
-  transition: background 0.1s;
-}
-
-.item-context-menu li:hover {
-  background: var(--nl-bg-dark);
-}
-
-.item-context-menu li.danger {
-  color: #f44;
-}
-
 .stats-panel .stats-grid {
   display: flex;
   flex-direction: column;
@@ -7939,110 +7900,6 @@ turbo-frame[busy] {
   margin-top: var(--nl-space-md);
   font-size: 0.9rem;
 }
-
-/* ==========================================================================
-   EQUIPMENT ENHANCEMENT STYLES
-   ========================================================================== */
-
-.enhancement-workshop {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--nl-space-lg);
-}
-
-.item-showcase {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--nl-space-lg);
-  padding: var(--nl-space-xl);
-}
-
-.item-icon-large {
-  width: 80px;
-  height: 80px;
-  background: var(--nl-bg-dark);
-  border: 3px solid var(--nl-border);
-  border-radius: var(--nl-radius);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 2.5rem;
-  position: relative;
-}
-
-.item-icon-large.preview {
-  border-color: var(--nl-gold);
-  box-shadow: 0 0 16px rgba(212, 175, 55, 0.3);
-}
-
-.current-enhancement,
-.next-enhancement {
-  position: absolute;
-  top: -10px;
-  right: -10px;
-  background: var(--nl-bg);
-  border: 2px solid var(--nl-gold);
-  border-radius: 50%;
-  width: 28px;
-  height: 28px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.8rem;
-  font-weight: bold;
-  color: var(--nl-gold);
-}
-
-.enhancement-arrow {
-  font-size: 2rem;
-  color: var(--nl-gold);
-}
-
-.stats-comparison {
-  display: flex;
-  flex-direction: column;
-  gap: var(--nl-space-sm);
-}
-
-.stats-comparison .stat-row {
-  display: grid;
-  grid-template-columns: 1fr auto auto auto auto;
-  gap: var(--nl-space-sm);
-  align-items: center;
-}
-
-.stat-arrow {
-  color: var(--nl-text-muted);
-}
-
-.stat-new {
-  color: var(--nl-gold);
-}
-
-.stat-change.positive {
-  color: #4a9;
-}
-
-.stat-change.negative {
-  color: #a44;
-}
-
-.requirement-row {
-  display: flex;
-  align-items: center;
-  gap: var(--nl-space-sm);
-  padding: var(--nl-space-sm) 0;
-}
-
-.req-value.met {
-  color: #4a9;
-}
-
-.success-rate--high { color: #4a9; }
-.success-rate--medium { color: var(--nl-gold); }
-.success-rate--low { color: #fa0; }
-.success-rate--very-low { color: #f44; }
 
 /* ==========================================================================
    PREMIUM STORE STYLES
@@ -12368,6 +12225,29 @@ turbo-frame[busy] {
   border: 1px solid var(--nl-border);
 }
 
+.nl-player-profile-identity {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.nl-player-profile-avatar {
+  width: 72px;
+  height: 72px;
+  flex: 0 0 72px;
+  overflow: hidden;
+  border: 1px solid var(--nl-border-medium);
+  background: #ffffff;
+}
+
+.nl-player-profile-avatar-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 .nl-player-profile-head h1 {
   border: 0;
   margin: 0 0 2px;
@@ -12606,6 +12486,10 @@ turbo-frame[busy] {
   .nl-player-profile-head {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .nl-player-profile-identity {
+    align-items: flex-start;
   }
 }
 

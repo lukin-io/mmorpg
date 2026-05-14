@@ -4,7 +4,7 @@ title: WEB-115 — Game Map & Layout Flow
 description: Documents the game layout, tile-based world map, HP/MP vitals system, movement mechanics, and UI components inspired by classic browser MMORPGs.
 date: 2025-12-06
 updated: 2025-12-11
-related: doc/flow/16_passive_skills.md
+related: doc/design/features/movement.md
 ---
 
 ## Summary
@@ -282,7 +282,8 @@ This ensures:
 - `zoneName` — Current zone name
 
 **Movement Cooldown Formula:**
-See `doc/flow/16_passive_skills.md` for full details.
+See `doc/design/features/progression_stats_skills.md` for current progression
+rules.
 ```
 cooldown = (base * (1 - wanderer_reduction) * terrain_modifier) / mount_speed
 ```
@@ -438,7 +439,7 @@ cooldown = (base * (1 - wanderer_reduction) * terrain_modifier) / mount_speed
 **Documentation:**
 - `doc/flow/neverlands_live_movement.md` — live movement reference
 - `doc/flow/neverlands_movement_codebase_analysis.md` — implementation gap analysis
-- `doc/MAP_DESIGN_GUIDE.md` — Map architecture guide
+- `doc/design/features/movement.md` — canonical movement rules
 
 ---
 
