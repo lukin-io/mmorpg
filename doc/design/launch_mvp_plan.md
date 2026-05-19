@@ -165,6 +165,8 @@ Required behavior:
   submitting actions;
 - combat UI supports AP, body-part attacks, one active block, magic/action
   slots, HP/MP, combat log, waiting state, timeout, and finish result;
+- training NPC drops, such as mannequin wood chips, use the same NPC loot-check
+  and inventory award rules as wild NPC drops;
 - completed fights require an explicit finish action before returning to arena
   or world.
 
@@ -228,6 +230,8 @@ Required behavior:
 - after a wild fight, the player returns to the world/city movement context,
   not the arena;
 - loot checks and resource state updates are visible after the result step.
+- NPC drops are defined by the NPC/quest design and awarded through inventory,
+  not hard-coded into the combat screen.
 
 ### Build Guidance
 

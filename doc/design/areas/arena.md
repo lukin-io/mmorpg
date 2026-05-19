@@ -162,6 +162,38 @@ Design translation:
 - Accepting a valid NPC training application immediately enters the shared
   combat screen described in `features/combat.md`.
 
+### Public Profile During Arena Fights
+
+The public player info URL exposes arena fight participation as part of the
+location surface. During the May 19 captures, `pinfo.cgi?max_kerby` emitted:
+
+```text
+location payload: Форпост [Тренировочный Зал]
+fight id while idle: 0
+fight id during fight: <arena_fight_id>
+```
+
+The source profile renderer splits the location payload into city and
+sublocation. When the fight id is nonzero, it inserts a red `[ в бою ]` link to
+`logs.fcg?fid=<arena_fight_id>` between the city and sublocation. The visual
+result is:
+
+```text
+Форпост [ в бою ]
+Тренировочный Зал
+```
+
+After the fight result is finished, the same profile returns to fight id `0`
+and the battle link disappears while the location remains the training hall.
+
+Design translation:
+
+- public player info should show current city/sublocation even during combat;
+- public player info should expose a public fight/log link only when the
+  character is in an active or unfinished fight;
+- the arena fight id doubles as the profile's public battle link target;
+- finishing the result step clears the profile battle link.
+
 ## Launch Arena Contract
 
 The first playable arena loop should follow the captured Neverlands shape:
@@ -175,6 +207,8 @@ The first playable arena loop should follow the captured Neverlands shape:
   modal;
 - accepting an eligible open side immediately creates the fight and enters the
   shared combat screen;
+- public profile state shows the arena fight link while the fight or result is
+  unfinished, then clears it after the finish action;
 - arena and wilderness combat share the same active turn UI and result-finish
   step;
 - arena fights return to arena context, while wilderness fights return to
@@ -195,6 +229,11 @@ Arena combat uses the shared combat contract from `features/combat.md`:
 - NPC AI response for training fights;
 - automatic bot-loot check before the finish-result step when the fight is
   against a bot/NPC.
+
+Arena training drops are still NPC drops. If a mannequin drops wood chips, the
+wood chips belong to the mannequin NPC loot table and then flow through the
+shared combat result and inventory rules. Arena room/application rules should
+not special-case that reward outside the NPC/combat contract.
 
 ## Adjacent Next Work
 

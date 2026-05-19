@@ -13,6 +13,7 @@ should be removed after any valid rule is promoted into `doc/design/`.
 | Chat and presence reference | `features/social_chat_presence.md`, `areas/game_client_layout.md` |
 | Skill and perk reference | `features/progression_stats_skills.md`, `features/character_vitals.md` |
 | Player profile capture | `features/progression_stats_skills.md`, `features/items_inventory_equipment.md`, `features/character_vitals.md` |
+| Arena mannequin combat captures | `areas/arena.md`, `features/combat.md`, `features/items_inventory_equipment.md`, `features/npcs_quests.md` |
 | Neverlands wiki dungeon page | `features/dungeons.md`, `reference/neverlands.md` |
 | Neverlands forum dungeon launch post | `features/dungeons.md`, `reference/neverlands.md` |
 

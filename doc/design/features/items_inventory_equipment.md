@@ -109,6 +109,50 @@ equipped items coincided with the captured starter combat profile of 114 AP and
 the same equipment state must feed profile, inventory, and combat formula
 surfaces.
 
+## Weapon Effects On Combat
+
+Weapons change the combat profile, not only the damage number shown in an item
+row.
+
+Design rules:
+
+- equipped weapons can change AP budget, physical attack cost seed, simple
+  attack cost, aimed attack cost, hit range, accuracy, dodge, armor pierce,
+  critical chance, skill requirements, and durability loss;
+- not every equipment change must alter every combat-profile field; AP, attack
+  cost, damage, accuracy, and armor pierce are separate outputs of the formula;
+- dual-wield or weapon-plus-shield states must be explicit slot states, not
+  inferred from item names;
+- removing an equipped weapon through the inventory equipment doll must affect
+  the next generated combat profile;
+- fighting with no equipped weapon should fall back to the unarmed profile:
+  no weapon-family modifiers, no weapon durability loss, and damage/stat output
+  based on unarmed rules;
+- weapon-family skills, such as knife mastery, should affect only matching
+  weapon families unless a source capture proves a broader rule;
+- the combat screen should display the resulting AP and attack costs from the
+  generated profile so the player can see that equipment changed the fight.
+
+The live starter account wearing two knives is the verification case for this
+rule. The May 19 capture compared:
+
+1. regular mannequin fight with both knives equipped;
+2. mannequin fight using `Spirit Arrow` while both knives remained equipped;
+3. mannequin fight after both knives were removed from the inventory equipment
+   doll.
+
+Observed equipment deltas:
+
+| State | Equipped Weapon Slots | Visible Armor Pierce | Starter Fight AP/Costs |
+| --- | ---: | ---: | --- |
+| Two starter knives | 2 | 2 | 114 AP, 45/65 physical |
+| No equipped weapon | 0 | 0 | 114 AP, 45/65 physical |
+
+The two starter knives therefore affected visible armor pierce and observed
+damage output in this capture, while the AP budget and physical attack costs
+stayed stable. Treat `114` AP and `45/65` attack costs as captured starter
+profile values, not universal knife constants.
+
 The live inventory capture adds these launch requirements:
 
 - inventory opens from the same player shell as the character profile;

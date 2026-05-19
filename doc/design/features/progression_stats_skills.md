@@ -97,9 +97,23 @@ Rules:
   cost, and fight record;
 - public HTML uses a paper-doll equipment layout: large avatar centered with
   item slots around the avatar;
+- location can include city and sublocation, and an active fight id can turn
+  the location display into a public battle-log link;
 - formula/detail stat panels are hidden from public player info;
 - public payloads must not expose account email, credentials, private session
   state, or non-canonical primary stats.
+
+Observed May 19 public profile behavior:
+
+- idle in the training hall produced location `Форпост [Тренировочный Зал]`
+  with fight id `0`;
+- during mannequin fights, the same location carried a nonzero fight id;
+- the source renderer displayed that nonzero id as `[ в бою ]` linking to the
+  fight log between `Форпост` and `Тренировочный Зал`;
+- after the fight result was finished, the fight id returned to `0`;
+- removing both starter knives removed the public equipment-slot entries and
+  changed visible `Пробой брони` from `2` to `0`; restoring the knives restored
+  the public armor-pierce value.
 
 ## Player Experience
 

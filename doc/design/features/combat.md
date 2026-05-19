@@ -90,11 +90,12 @@ critical, dodge, block, timeout, defeat, victory, and current HP after damage.
 
 ## Observed Fight Payload And Turn Flow
 
-The 2026-05-19 live starter arena fight captured the active fight screen,
-selector behavior, two submitted turns, victory, loot check, and finish state.
-It used `max_kerby[2]` against an arena NPC training opponent.
+The 2026-05-19 live starter arena pass captured three mannequin fights with
+`max_kerby[2]`: a regular physical fight with two knives equipped, a fight that
+opened with `Spirit Arrow`, and a fight after both equipped knives were removed.
+All three used the same arena NPC training opponent shape.
 
-Initial active fight state:
+Initial active fight state with two knives equipped:
 
 ```text
 player: max_kerby[2], 25/25 HP, 7/7 MP
@@ -135,8 +136,29 @@ For this starter fight, the profile was:
 | Aimed physical attack | 65 AP |
 | Magic-hit mana range | 5-16 |
 
-The same semantic profile shape also covers higher-level live bot captures
-with 140 AP, physical seed 67, simple physical 67, and aimed physical 87.
+The same semantic profile shape also covers the no-weapon starter capture and
+higher-level live bot captures. The no-weapon starter capture kept 114 AP and a
+45 physical seed, while the higher-level bot capture used 140 AP and a 67
+physical seed.
+
+### Captured Mannequin Fight Variants
+
+All captured variants were duel-tab arena NPC applications against
+`Манекен[1]` with 30 HP, 300-second timeout, and result-state `fexp` after
+victory.
+
+| Variant | Equipment State | First-Order Profile | Notable Result |
+| --- | --- | --- | --- |
+| Regular | two `Перочинный Нож` equipped | 114 AP, 45/65 physical costs, armor pierce 2 | physical critical hits defeated the mannequin; loot check found `Щепки` |
+| Magic opener | two `Перочинный Нож` equipped | 114 AP, 45/65 physical costs, 7/7 MP | `Spirit Arrow` spent 5 MP, logged as a critical magical hit for 7 damage, then physical hits finished the fight; loot check found `Щепки` |
+| No weapon | both knife slots empty | 114 AP, 45/65 physical costs, armor pierce 0 | same turn contract, lower observed physical damage over more rounds; loot check found `Щепки` |
+
+Design implication: AP and physical attack cost are generated profile fields,
+but they are not the only weapon-sensitive fields. In the starter capture,
+removing both knives did not change the 114 AP budget or 45/65 physical costs,
+but it did remove the visible armor-pierce bonus and changed observed damage.
+The resolver must therefore treat weapon state as formula input rather than
+assuming a single hard-coded AP or damage effect.
 
 ### Selector Rules
 
@@ -281,11 +303,34 @@ training, wild NPC encounters, and later dungeon fights:
 - completed fights require a result-screen finish action before returning to
   arena, city, or world context.
 
+## Combat Rewards And Loot Checks
+
+Combat victory can produce two different reward classes:
+
+- fight rewards, such as experience, money, rating, trauma/injury outcome, or
+  arena/dungeon progression;
+- NPC drops, such as materials, consumables, equipment, quest items, or
+  dungeon-specific currency.
+
+NPC drops are owned by the NPC/quest design, but combat owns the timing:
+
+1. resolve the final turn and write defeat/victory log entries;
+2. run the NPC loot check for each defeated loot-bearing NPC;
+3. show the search/drop result in the combat log or result payload;
+4. apply inventory/capacity/binding rules before awarding items;
+5. require the finish-result action before returning the player to arena, city,
+   world, or dungeon context.
+
+Training mannequins should follow the same rule. If the source shows a
+mannequin dropping wood chips, the fight result should treat wood chips as a
+normal NPC material drop, not as a special arena reward.
+
 Captured AP profiles:
 
 - `140` AP with physical attack costs `67/87` is a captured live fight profile.
 - `114` AP with physical attack costs `45/65` is a captured starter arena
-  training profile.
+  training profile observed both with two starter knives and with no equipped
+  weapon.
 - These values are profile variants, not global constants.
 
 Captured magic/action selector behavior:
@@ -335,8 +380,13 @@ Implementation implications from the May 19 arena fight:
 - per-fight AP and physical attack cost profiles need to support starter
   `114/45/65` and higher-level `140/67/87` captures;
 - simple physical attacks may resolve as critical hits;
+- starter `Spirit Arrow` is a body-part attack option that costs `50` AP and
+  `5` MP, and successful magic hits must be logged distinctly from physical
+  hits;
 - NPC dodge, player dodge, exact HP-after-damage logging, bot loot search, and
   the result `fexp` payload are part of the starter training loop;
+- equipment changes can alter combat stats even when AP and physical attack
+  cost stay stable in a specific capture;
 - the browser may render options that the player cannot currently afford in
   MP, so server validation must remain authoritative.
 

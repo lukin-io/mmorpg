@@ -26,6 +26,7 @@ Core:
 
 - hostile monster;
 - arena training opponent;
+- loot-bearing combatant;
 - quest giver;
 - vendor/shopkeeper;
 - trainer;
@@ -45,6 +46,36 @@ Core:
   open side.
 - Vendor NPCs should use the shop/economy rules.
 - Trainers interact with stats/skills/professions.
+
+## NPC Loot And Drops
+
+NPC drops are part of NPC design, even when the NPC appears inside the arena.
+Arena training opponents, wilderness monsters, dungeon blockers, and bosses can
+all own loot rules.
+
+Design rules:
+
+- an NPC can define a loot table with item entries, drop chances, quantity, and
+  optional conditions;
+- loot is rolled after combat victory and before or during the result-finish
+  step;
+- the combat log/result should show whether the NPC was searched and whether
+  anything was found;
+- dropped items enter the same inventory/capacity rules as gathered resources,
+  shop purchases, and quest rewards;
+- capacity, protected-item rules, binding, and quest-item restrictions must be
+  enforced before the item becomes carried inventory;
+- arena rewards and NPC drops are separate concepts: a mannequin dropping wood
+  chips is an NPC loot-table result, not a generic arena payout;
+- NPC templates can share a loot table, but individual spawned NPCs can also
+  override it for events, quests, or tutorial fights.
+
+The mannequin/wood-chips case belongs here: `Манекен` is an arena training NPC,
+and wood chips are a low-value material drop from that NPC role. The May 19
+starter capture won three mannequin fights and each result log included a bot
+search result of `Вещь «Щепки»`; inventory then showed `Щепки` as carried item
+rows. The drop should flow through combat result -> loot check -> inventory
+item/resource, then feed crafting or shop economy rules.
 
 ## Quest Rules
 
@@ -72,6 +103,8 @@ Starter quests should teach:
 
 - NPC template;
 - NPC instance/location;
+- loot table;
+- drop result;
 - dialogue node;
 - quest;
 - quest step;
