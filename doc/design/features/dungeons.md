@@ -225,7 +225,7 @@ When the launch MVP is complete, implement only the source-backed path:
 
 ## Legacy Until Proven By Source
 
-The current local dungeon scaffold is legacy for design purposes if it cannot be
-mapped back to the wiki or forum sources. Generic difficulty modes, encounter
-checkpoints, attempt counts, abstract raid-like instance flow, or reward rules
-not present in those sources should not be treated as canonical dungeon design.
+Any dungeon scaffold is legacy for design purposes if it cannot be mapped back
+to the wiki or forum sources. Generic difficulty modes, encounter checkpoints,
+attempt counts, abstract raid-like instance flow, or reward rules not present
+in those sources should not be treated as canonical dungeon design.

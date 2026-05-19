@@ -17,7 +17,6 @@ Canonical sources:
 
 Supporting historical references that may still be useful:
 
-- `doc/features/neverlands_inspired_combat.md`
 - `doc/features/neverlands_inspired_chat.md`
 - `doc/features/neverlands_inspired_skills.md`
 

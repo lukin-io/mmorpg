@@ -7,22 +7,21 @@ presence, turn combat, inventory weight, shops, and social chat.
 
 ## Canonical Observations
 
-| Reference | Design Use |
+| Observation Area | Design Use |
 | --- | --- |
-| `doc/flow/neverlands_live_movement.md` | Wilderness movement timing, map state, available destination model |
-| `doc/flow/neverlands_live_city_movement.md` | City entry, city node navigation, shop entry, building return flow |
-| `doc/flow/neverlands_live_player.md` | Player profile shell, vitals strip, equipment slots, trainable `Умения`, boolean `Навыки` |
-| `doc/design/reference/neverlands_arena_combat.md` | Arena rooms, fight applications, AP/body-part combat, fight states |
-| `doc/features/neverlands_inspired_chat.md` | Chat frame, player list, message styles, context menu |
-| `doc/features/neverlands_inspired_combat.md` | Turn combat, action points, body targeting, combat log |
-| `doc/features/neverlands_inspired_skills.md` | Stat and skill allocation, perks, effects |
+| Wilderness movement capture | Movement timing, map state, available destination model |
+| City movement capture | City entry, city node navigation, shop entry, building return flow |
+| Player profile capture | Player shell, vitals strip, equipment slots, trainable `Умения`, boolean `Навыки` |
+| Arena and combat captures | Arena rooms, applications, NPC training rows, city-entry context, AP/body-part combat, turn submit contract, logs, result step |
+| Chat and presence reference | Chat frame, player list, message styles, username actions |
+| Skill and perk reference | Stat allocation, numeric skills, boolean perks, effects |
 | Neverlands wiki dungeon page | Dungeon floor objectives, movement resource, hidden rooms, bosses/chests, portal seals, timers, ratings |
 | Neverlands forum dungeon launch post | Original dungeon module structure, party entry, room blockers, dungeon inventory, effects, specialist shop |
 
 For dungeons, the wiki and forum pages are the point of truth. Do not add
-dungeon mechanics from generic MMO assumptions, the current legacy code
-scaffold, or old local docs unless they map back to those sources. When the
-current wiki and older forum launch post differ, prefer the current wiki.
+dungeon mechanics from generic MMO assumptions or old local docs unless they
+map back to those sources. When the current wiki and older forum launch post
+differ, prefer the current wiki.
 
 ## Borrowed Design Principles
 
@@ -54,7 +53,7 @@ When a Neverlands capture shows a concrete behavior, translate it into this
 project's domain language:
 
 ```text
-live observation -> design rule -> implementation note
+live observation -> design rule -> Rails implementation
 ```
 
 Do not let implementation convenience rewrite the design rule without updating

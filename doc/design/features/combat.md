@@ -7,10 +7,9 @@ attacks, blocks, action points, body-part targeting, skills, and readable logs.
 
 ## Neverlands Reference
 
-Reference material:
-
-- `doc/design/reference/neverlands_arena_combat.md`
-- `doc/features/neverlands_inspired_combat.md`
+Neverlands combat observations are folded into this document. Arena room and
+application behavior is folded into `doc/design/areas/arena.md`. These two
+files are the arena/fight source of truth.
 
 Borrowed feel:
 
@@ -89,83 +88,234 @@ critical, dodge, block, timeout, defeat, victory, and current HP after damage.
 - Combat state is resumable.
 - Combat log entries are part of the player-facing result.
 
-## Current Implementation Status
+## Observed Fight Payload And Turn Flow
 
-The current implementation has been aligned around the first Neverlands-style
-turn loop:
+The 2026-05-19 live starter arena fight captured the active fight screen,
+selector behavior, two submitted turns, victory, loot check, and finish state.
+It used `max_kerby[2]` against an arena NPC training opponent.
 
-- `Game::Combat::ActionCatalog` and `config/gameplay/combat_actions.yml` are
-  the shared source for fallback AP budget, block costs, starter magic costs,
-  and multi-attack penalties.
-- Arena combat now stores a per-participant combat profile in
-  `ArenaParticipation#metadata["combat_profile"]`. This local profile mirrors
-  the Neverlands payload shape: AP limit, physical attack cost seed, simple
-  attack cost, aimed attack cost, max magic mana, and block table.
-- The arena processor, controller payloads, ActionCable match state, view
-  labels, turn-cost preview, and server AP validation all read the same combat
-  profile.
-- The live `lukin[6]` vs `Goblin[3]` capture can be represented exactly by a
-  stored profile with 140 AP from `fight_pm[1]`, physical seed 67 from
-  `fight_pm[2]`, simple attack 67, and aimed attack 87.
-- New matches derive a local canonical profile from character AP,
-  level/equipment state, and item-family hooks when no captured/stored profile
-  exists. Stored live captures still override the formula exactly.
-- Spirit Arrow costs 50 AP and 5 MP, and Mind Blast costs 90 AP and 5 MP in the
-  captured starter selector.
-- Single-part blocks cost 30 or 35 AP depending on body part; two-part blocks
-  use the captured 50/60/80 AP costs.
-- Arena, PvE, PvP, and shared turn-combat entry points now create/read combat
-  instances with the shared body-part/AP/log contract. Legacy non-arena entry
-  points may still use their own orchestration wrappers, but they are not the
-  canonical source for arena AP.
-- Character attack and defense formulas now include base stats, level,
-  equipped item modifiers, and item-family multipliers;
-  `Character#combat_power_breakdown` exposes the calculation for UI and
-  balancing.
-- Arena fight UI shows the Neverlands-shaped participant panels, AP bar,
-  four attack selectors, four block selectors, magic/action slots, turn cost
-  preview, submit turn control, and timestamped combat log.
-- Arena turn submission now accepts a package with attacks, one block, and
-  magic/action slots. The server validates body parts, one-block-per-turn,
-  head/legs attack exclusivity, NL turn shape, AP budget, MP budget, target,
-  and participant state before applying damage or block state.
-- PvP arena turns are simultaneous at the waiting layer: a submitted turn is
-  stored as pending and the round resolves only after all live player
-  participants have submitted. NPC training fights still resolve immediately
-  with NPC AI response.
-- Waiting PvP turns follow the captured timeout state: after the turn timer
-  expires, the waiting player can claim victory by timeout or record a draw.
-- The old 80 AP starter package allowed simple attack plus a single torso block
-  for 75 AP. After the goblin capture, this is treated only as one captured
-  fight-state variant. In the live goblin fight, simple torso attack plus torso
-  block cost 97 out of 140 AP.
-- A later live bot fight capture (`lukin[6]` versus Bandit[5]) confirmed the
-  same 140 AP and 67/87 physical attack costs, and added stronger evidence for
-  the resolver: successful block, failed block against a covered body part,
-  enemy block, dodge, zero-damage hit, multi-attack NPC rounds, critical dodge,
-  critical hit, bot defeat, automatic loot search, and the finish-code result
-  step.
+Initial active fight state:
 
-Current local parity coverage:
+```text
+player: max_kerby[2], 25/25 HP, 7/7 MP
+opponent: Манекен[1], 30/30 HP, 7/7 MP
+timeout: 300 seconds
+trauma/rule value posted as ftr: 30
+fight_ty = [10,300,30,1,1,"","","2",<fight_id>,[],[],1]
+fight_pm = [16,114,45,0,<turn_token>,<enemy_id>,2,121,0,"",0]
+stand_in = [2,3,29,30,31]
+magic_in = []
+```
 
-- item-family AP and physical-cost formulas are explicit in
-  `Arena::CombatProfile`, with stored profile overrides for live captures;
-- `Arena::CombatResolver` resolves hit, miss, dodge, successful block,
-  non-critical hit, critical hit, body-part multiplier, defense, and damage
-  variance through one arena path for players and NPCs;
+Observed payload meanings:
+
+| Field | Meaning |
+| --- | --- |
+| `fight_ty[1]` | turn timeout seconds |
+| `fight_ty[2]` | fight rule/trauma value, posted back as `ftr` |
+| `fight_ty[3]` | whether active turn controls are available |
+| `fight_ty[4]` | active/waiting/result fight state |
+| `fight_ty[8]` | fight log/source fight id |
+| `fight_pm[0]` | magic-hit mana upper bound, displayed as `5-N` |
+| `fight_pm[1]` | AP budget for the turn |
+| `fight_pm[2]` | physical attack cost seed |
+| `fight_pm[3]` | standard or shield block-table selector |
+| `fight_pm[4]` | turn token, posted as `vcode` |
+| `fight_pm[5]` | current target id, posted as `enemy` |
+| `fight_pm[6]` | player group side |
+| `fight_pm[7]` | bot/fight context value, posted as `inf_bot` |
+
+For this starter fight, the profile was:
+
+| Value | Captured Number |
+| --- | ---: |
+| AP budget | 114 |
+| Physical seed | 45 |
+| Simple physical attack | 45 AP |
+| Aimed physical attack | 65 AP |
+| Magic-hit mana range | 5-16 |
+
+The same semantic profile shape also covers higher-level live bot captures
+with 140 AP, physical seed 67, simple physical 67, and aimed physical 87.
+
+### Selector Rules
+
+The active fight screen renders four attack rows and four block rows for head,
+torso, stomach, and legs.
+
+Starter attack options:
+
+| Attack | AP | Mana |
+| --- | ---: | ---: |
+| Simple physical | profile seed | 0 |
+| Aimed physical | profile seed + 20 | 0 |
+| Spirit Arrow | 50 | 5 |
+| Mind Blast | 90 | 5 |
+
+Standard block options:
+
+| Selector Row | Options |
+| --- | --- |
+| Head | Head 35, Head+Torso 50, Head+Stomach 60 |
+| Torso | Torso 30, Torso+Stomach 50, Torso+Legs 60 |
+| Stomach | Stomach 30, Stomach+Legs 50 |
+| Legs | Legs 35, Legs+Head 80 |
+
+Captured injected magic block options:
+
+| Block | AP | Mana |
+| --- | ---: | ---: |
+| Magical Shield | 45 | 20 |
+| Rainbow Barrier | 60 | 40 |
+| Crystal Sphere | 90 | 65 |
+
+Selector behavior:
+
+- selecting one block disables the other block dropdowns;
+- selecting a head attack disables the legs attack dropdown;
+- selecting a legs attack disables the head attack dropdown;
+- every selected attack increments the multi-attack count;
+- multi-attack penalty is `[0, 0, 25, 75, 150, 250]`;
+- AP over-budget shows an explicit `ПРЕВЫШЕНИЕ!` warning;
+- reset returns every attack and block selector to its default state.
+
+The browser may render actions the current character cannot afford in MP or
+AP. Rendering is not permission. The server validates AP, MP, requirements,
+target, participant state, and fight state on submit.
+
+### Turn Submit Contract
+
+The Neverlands client submits the turn as:
+
+```text
+POST main.php
+post_id=7
+vcode=<fight_pm[4]>
+enemy=<fight_pm[5]>
+group=<fight_pm[6]>
+inf_bot=<fight_pm[7]>
+inf_zb=<fight_pm[10]>
+lev_bot=<param_en[5]>
+ftr=<fight_ty[2]>
+inu=<attack_payload>
+inb=<block_payload>
+ina=<magic_or_action_payload>
+```
+
+Body-part indexes:
+
+| Index | Body Part |
+| ---: | --- |
+| `0` | head |
+| `1` | torso |
+| `2` | stomach |
+| `3` | legs |
+
+The captured starter turn used torso simple attack plus torso block:
+
+```text
+selected AP = 45 + 30 = 75 / 114
+inu=1_0_0@
+inb=1_7_0
+ina=
+```
+
+The source client only submits a normal turn when the selection contains one
+of these shapes:
+
+- attack plus block;
+- attack plus magic/action;
+- block plus magic/action;
+- more than one attack.
+
+A single plain attack or a single plain block keeps the turn editable instead
+of submitting.
+
+### Resolution And Finish
+
+The controlled starter fight resolved immediately after each player submit
+because the opponent was an NPC. The two captured turns showed:
+
+| Turn | Result Summary |
+| ---: | --- |
+| 1 | NPC attempted a stomach hit; player dodged. Player critical torso hit for 16; NPC to 14/30. |
+| 2 | NPC attempted a head hit; player dodged. Player critical torso hit for 15; NPC to 0/30 and lost. |
+
+Stable design facts:
+
+- NPC training fights resolve immediately with an NPC response.
+- Non-final turns return a fresh turn token and target id.
+- A simple physical attack can resolve as a critical hit.
+- Dodge logs are attempted hits that fail because the defender dodged.
+- Combat logs include exact HP after damage.
+- Victory triggers an automatic bot-loot check before the finish step.
+- Active-turn state uses `fight_pm`; result state uses `fexp`.
+- Completed fights require a separate finish action before return routing.
+
+The source anti-autobattle code challenge is not a local product rule. The
+local design preserves the explicit `Finish Fight` step without copying that
+challenge.
+
+## Launch Combat Contract
+
+Combat should be built around one shared turn contract for arena PvP, arena NPC
+training, wild NPC encounters, and later dungeon fights:
+
+- each participant has an AP budget, physical attack costs, max magic mana, and
+  a block table for the fight;
+- captured fights can override derived formulas with an exact per-fight combat
+  profile;
+- normal fights derive AP, attack costs, defense, and block options from level,
+  stats, equipment, item family, skills, and status effects;
+- the combat screen renders participant panels, AP/MP, up to four attack
+  selectors, one active block, magic/action slots, a turn-cost preview, submit
+  control, waiting state, and timestamped combat log;
+- the submitted turn package contains selected attacks, one block, optional
+  magic/action slots, target, and the server-issued fight token;
+- the server validates body parts, one-block-per-turn, head/legs attack
+  exclusivity, AP budget, MP budget, target legality, participant state, and
+  fight token before resolving the turn;
+- PvP turns wait until all live player participants submit, then resolve
+  together;
+- NPC fights may resolve immediately with NPC AI response;
+- completed fights require a result-screen finish action before returning to
+  arena, city, or world context.
+
+Captured AP profiles:
+
+- `140` AP with physical attack costs `67/87` is a captured live fight profile.
+- `114` AP with physical attack costs `45/65` is a captured starter arena
+  training profile.
+- These values are profile variants, not global constants.
+
+Captured magic/action selector behavior:
+
+- Spirit Arrow costs `50` AP and `5` MP in the starter selector.
+- Mind Blast costs `90` AP and `5` MP in the starter selector.
+- The source can inject magic attacks and magic blocks into body-part
+  dropdowns even when no magic icon slots are present.
+- Captured injected block options include Magical Shield `45` AP / `20` MP,
+  Rainbow Barrier `60` AP / `40` MP, and Crystal Sphere `90` AP / `65` MP.
+- Server-side MP, requirement, and fight-state validation still decides whether
+  the action is legal.
+
+Captured block behavior:
+
+- single-part blocks cost `30` or `35` AP depending on body part;
+- two-part blocks use captured `50`, `60`, or `80` AP costs;
 - physical, shield, and magic block tables all use body-part coverage and AP
   validation;
-- magic/action slots support defensive guards, HP/MP restoration, direct
-  damage, area damage, chain damage, and persisted status effects;
-- simultaneous PvP turn waiting is covered by local tests with the captured
-  140/67/87 profile shape;
-- completed arena fights require a result-screen finish action before returning
-  to the arena.
+- a block can succeed, fail against an uncovered body part, or be consumed by
+  an incoming hit.
 
-Remaining source-capture work is tuning, not missing local behavior: more live
-Neverlands fights are needed to calibrate hidden item-family coefficients and
-to compare local miss, dodge, block, magic, status, and PvP constants against
-external outcomes.
+The combat resolver must support hit, miss, dodge, successful block,
+non-critical hit, critical hit, body-part multiplier, defense, damage variance,
+multi-attack NPC rounds, HP/MP restoration, direct damage, area damage, chain
+damage, and persisted status effects.
+
+Remaining source-capture work is tuning: more live Neverlands fights are needed
+to calibrate hidden item-family coefficients and compare local miss, dodge,
+block, magic, status, and PvP constants against external outcomes.
 
 Implementation implications from the May 11 bot fight:
 
@@ -178,13 +328,24 @@ Implementation implications from the May 11 bot fight:
 - the result step should remain separate from active-turn state because active
   `fight_pm` disappears and `fexp` becomes the result/finish payload.
 
+Implementation implications from the May 19 arena fight:
+
+- NPC training applications should be treated as normal arena applications,
+  not a separate tutorial-only shortcut;
+- per-fight AP and physical attack cost profiles need to support starter
+  `114/45/65` and higher-level `140/67/87` captures;
+- simple physical attacks may resolve as critical hits;
+- NPC dodge, player dodge, exact HP-after-damage logging, bot loot search, and
+  the result `fexp` payload are part of the starter training loop;
+- the browser may render options that the player cannot currently afford in
+  MP, so server validation must remain authoritative.
+
 Adjacent docs that should move with the next combat pass:
 
 - `doc/design/areas/arena.md` for room/application UI, active arena match UI,
   PvP waiting, and arena result return behavior;
-- `doc/design/features/movement.md` and
-  `doc/flow/neverlands_live_movement.md` for wilderness movement, ambush
-  triggers, and returning from non-arena fights;
+- `doc/design/features/movement.md` for wilderness movement, ambush triggers,
+  and returning from non-arena fights;
 - `doc/design/features/npcs_quests.md` for NPC templates, bot behavior,
   loot-check expectations, and training opponents;
 - `doc/design/features/items_inventory_equipment.md` for equipment family
@@ -218,13 +379,21 @@ Starter attack names:
 
 - simple;
 - aimed;
-- magic attack.
+- Spirit Arrow;
+- Mind Blast;
+- later magic attacks injected by skills, items, or fight profile.
 
 Starter block coverage:
 
 - single body part;
 - adjacent/two-part coverage;
 - higher-cost shield or magic coverage.
+
+Captured starter magic block options:
+
+- Magical Shield;
+- Rainbow Barrier;
+- Crystal Sphere.
 
 Multi-attack penalty baseline:
 
@@ -246,13 +415,6 @@ Core:
 - arena group fight;
 - NPC training fight;
 - sacrifice/free-for-all fight.
-
-Later:
-
-- open-world PvP;
-- clan war;
-- tournament bracket;
-- special event fights.
 
 ## State Concepts
 
@@ -281,14 +443,12 @@ Later:
 ## Out Of Scope
 
 - Real-time action combat.
-- Tactical grid positioning as the first combat model.
-- Combat analytics/export as a core design requirement.
 - Separate arena-only and PvE-only combat engines with different turn rules.
 
 ## Legacy Cleanup Direction
 
-Combat code and docs should be removed or demoted when they conflict with the
-Neverlands-style GDD.
+Combat implementation and docs should be removed or demoted when they conflict
+with the Neverlands-style GDD.
 
 Not canonical for the first combat loop:
 
@@ -298,88 +458,5 @@ Not canonical for the first combat loop:
 - separate arena, PvE, and PvP engines with different turn semantics;
 - action systems that bypass body-part attacks, one block assignment, AP, mana,
   and combat logs;
-- tactical grid positioning as the default model;
-- analytics/export/reporting as core gameplay;
 - UI that hides the action choices behind broad action buttons without the
   body-part/AP/log surface.
-
-## Related Implementation Files
-
-Core models:
-
-- `app/models/battle.rb`
-- `app/models/battle_participant.rb`
-- `app/models/combat_log_entry.rb`
-- `app/models/pvp_flag.rb`
-
-Controllers:
-
-- `app/controllers/combat_controller.rb`
-- `app/controllers/battles_controller.rb`
-- `app/controllers/combat_logs_controller.rb`
-- `app/controllers/pvp_combat_controller.rb`
-
-Combat services and formulas:
-
-- `app/lib/game/combat/action_catalog.rb`
-- `app/services/game/combat/turn_based_combat_service.rb`
-- `app/services/game/combat/turn_resolver.rb`
-- `app/services/game/combat/attack_service.rb`
-- `app/services/game/combat/pve_encounter_service.rb`
-- `app/services/game/combat/pvp_encounter_service.rb`
-- `app/services/game/combat/skill_executor.rb`
-- `app/services/game/combat/post_battle_processor.rb`
-- `app/services/combat/log_builder.rb`
-- `app/services/combat/statistics_calculator.rb`
-- `app/lib/game/combat/action_validator.rb`
-- `app/lib/game/combat/turn_resolver.rb`
-- `app/lib/game/formulas/hit_formula.rb`
-- `app/lib/game/formulas/block_formula.rb`
-- `app/lib/game/formulas/dodge_formula.rb`
-- `app/lib/game/formulas/critical_formula.rb`
-- `app/lib/game/formulas/combat_damage_formula.rb`
-- `config/gameplay/combat_actions.yml`
-- `app/models/character.rb`
-- `app/services/characters/vitals_service.rb`
-
-Views and JavaScript:
-
-- `app/views/combat/show.html.erb`
-- `app/views/combat/_battle.html.erb`
-- `app/views/combat/_nl_action_selection.html.erb`
-- `app/views/combat/_nl_magic_slots.html.erb`
-- `app/views/combat/_nl_participant.html.erb`
-- `app/views/combat/_nl_combat_log.html.erb`
-- `app/views/battles/show.html.erb`
-- `app/javascript/controllers/turn_combat_controller.js`
-- `app/javascript/controllers/combat_turn_controller.js`
-- `app/javascript/controllers/pve_combat_controller.js`
-- `app/javascript/controllers/pvp_combat_controller.js`
-
-Realtime and jobs:
-
-- `app/channels/battle_channel.rb`
-- `app/jobs/battle_resolution_job.rb`
-- `app/jobs/arena_turn_timeout_job.rb`
-- `app/jobs/arena_turn_timeout_warning_job.rb`
-
-Config:
-
-- `config/gameplay/combat_actions.yml`
-
-Specs:
-
-- `spec/lib/game/combat/action_validator_spec.rb`
-- `spec/lib/game/combat/turn_resolver_spec.rb`
-- `spec/lib/game/formulas/hit_formula_spec.rb`
-- `spec/lib/game/formulas/block_formula_spec.rb`
-- `spec/lib/game/formulas/dodge_formula_spec.rb`
-- `spec/lib/game/formulas/critical_formula_spec.rb`
-- `spec/lib/game/formulas/combat_damage_formula_spec.rb`
-- `spec/services/game/combat/turn_based_combat_service_spec.rb`
-- `spec/services/game/combat/turn_resolver_spec.rb`
-- `spec/services/game/combat/pve_encounter_service_spec.rb`
-- `spec/services/game/combat/pvp_encounter_service_spec.rb`
-- `spec/requests/combat_spec.rb`
-- `spec/system/combat_turn_interface_spec.rb`
-- `spec/views/combat/_battle_spec.rb`

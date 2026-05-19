@@ -10,8 +10,7 @@ and drive combat readiness.
 
 Neverlands displays HP/MP in the top game frame and regenerates them over time.
 The live captures show vitals passed into page scripts as current/max values and
-regen timing values. The player capture in
-`doc/flow/neverlands_live_player.md` observed the call shape:
+regen timing values. The player-profile reference observed the call shape:
 
 ```js
 ins_HP(currentHp, maxHp, currentMp, maxMp, hpFullRegenTicks, mpFullRegenTicks)
@@ -75,42 +74,3 @@ services such as an inn or infirmary.
 
 - Complex food/thirst/sleep survival vitals for the core game.
 - Client-authoritative regeneration.
-
-## Related Implementation Files
-
-Models:
-
-- `app/models/character.rb`
-- `app/models/battle_participant.rb`
-- `app/models/character_position.rb`
-
-Services and jobs:
-
-- `app/services/characters/vitals_service.rb`
-- `app/services/characters/death_handler.rb`
-- `app/services/game/recovery/infirmary_service.rb`
-- `app/services/professions/doctor/trauma_response.rb`
-- `app/jobs/characters/regen_ticker_job.rb`
-
-Views and JavaScript:
-
-- `app/views/shared/_nl_vitals_bar.html.erb`
-- `app/views/shared/_vitals_bar.html.erb`
-- `app/views/layouts/game.html.erb`
-- `app/javascript/controllers/nl_vitals_controller.js`
-- `app/javascript/controllers/vitals_controller.js`
-
-Realtime:
-
-- `app/channels/vitals_channel.rb`
-
-Specs:
-
-- `spec/services/characters/vitals_service_spec.rb`
-- `spec/services/characters/death_handler_spec.rb`
-- `spec/services/game/recovery/infirmary_service_spec.rb`
-- `spec/services/professions/doctor/trauma_response_spec.rb`
-- `spec/models/battle_participant_spec.rb`
-- `spec/models/character_mana_spec.rb`
-- `spec/views/shared/_nl_vitals_bar_spec.rb`
-- `spec/views/layouts/game_spec.rb`

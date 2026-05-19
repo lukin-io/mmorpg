@@ -2,8 +2,8 @@
 
 This is the design source of truth for the project. The game is a
 Neverlands-inspired browser MMORPG, not a one-to-one asset or content clone.
-When implementation docs, tests, or code disagree with this file, this file
-wins and the derived material should be updated.
+When implementation docs, tests, or code disagree with this file, this file wins
+and the derived material should be updated.
 
 ## Reference Hierarchy
 
@@ -12,10 +12,8 @@ wins and the derived material should be updated.
    buildable feature and area documents.
 3. `doc/design/reference/neverlands.md` explains how Neverlands observations
    should be translated into this project's design language.
-4. `doc/flow/neverlands_live_movement.md` and
-   `doc/flow/neverlands_live_city_movement.md`,
-   `doc/flow/neverlands_live_player.md`, and Neverlands-specific reference
-   notes are captured source material. They are not allowed to override this
+4. `doc/design/reference/*` holds Neverlands observations and source-material
+   mapping. Reference notes explain provenance, but they do not override this
    GDD.
 
 Non-Neverlands docs are not part of the design hierarchy and should be removed
@@ -69,7 +67,8 @@ The intended feel is:
 - readable location state and visible nearby player presence;
 - movement that has weight, travel time, and contextual consequences;
 - deterministic world data suitable for testing and iteration;
-- mechanics that are inspired by Neverlands but adapted for this codebase.
+- mechanics that are inspired by Neverlands and adapted for a clean Rails
+  implementation.
 
 ## Core Loop
 
@@ -180,16 +179,15 @@ The GDD must explicitly choose one policy:
 - cardinal-only movement; or
 - eight-direction movement with diagonals.
 
-Until changed, the target policy is eight-direction movement because the current
-map and `TurnProcessor` already expose diagonals. All layers must follow the
-same policy: service, model validation, pathfinding, map rendering, JS, action
-buttons, and tests.
+Until changed, the target policy is eight-direction movement. All layers must
+follow the same policy: movement rules, persistence validation, pathfinding, map
+rendering, client controls, and tests.
 
 ### Passability Policy
 
-One server service owns passability. Views and browser controllers do not invent
-movement availability. Missing tile data must have a deterministic rule and
-must render the same way it validates.
+One authoritative movement rule owns passability. Views and browser controllers
+do not invent movement availability. Missing tile data must have a
+deterministic rule and must render the same way it validates.
 
 ### Movement Completion
 
@@ -242,7 +240,8 @@ coordinate, action type, and target.
 Combat is turn-based and tactical. Core expectations:
 
 - PvE encounters can trigger from map movement or tile-local hostile actions;
-- PvP supports duels, group battles, arena rooms, and clan conflict;
+- PvP supports Neverlands-style arena duels, group battles, and room-based
+  applications;
 - combat uses explicit turns, action points, body-part targeting, blocks,
   skills, logs, rewards, and death/respawn consequences;
 - combat state must be resumable and auditable.
@@ -291,11 +290,10 @@ The economy supports:
 
 - gold and premium currency;
 - inventory weight/slots;
-- marketplace and auction flows;
+- city shop buy/sell flows;
 - direct trade;
 - crafting professions;
 - gathering and resource respawn;
-- equipment upgrades and item sinks.
 
 Profession actions may lock movement with timers, matching the same lock/resume
 model as movement.
@@ -307,18 +305,14 @@ The game should always feel populated when other players are nearby:
 - location/player list;
 - chat;
 - private messages;
-- friends;
-- guilds/clans;
-- moderation tools;
 - local player refresh after movement completion.
 
-## Technical Design Principles
+## Rails-Friendly Design Principles
 
-- Rails monolith with Hotwire/Stimulus remains the default architecture.
 - The server is authoritative for movement, actions, inventory, combat, and
   rewards.
 - Browser timers are display of server state, not source of truth.
-- World-map buttons are DB-backed action offers, not ad hoc controller params.
+- World-map buttons are persisted action offers, not ad hoc controller params.
 - Deterministic seeds and fixtures are preferred over random map generation for
   core movement and combat flows.
 - Data model changes are allowed while the app is in development. Prefer clean

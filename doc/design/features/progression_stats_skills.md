@@ -10,9 +10,8 @@ movement, combat, professions, and social/economy access.
 
 Reference material:
 
-- `doc/flow/neverlands_live_player.md`
-- `doc/features/neverlands_inspired_skills.md`
-- `doc/features/neverlands_inspired_combat.md`
+- `doc/design/reference/neverlands.md`
+- `doc/design/reference/source_material.md`
 
 Important borrowed ideas:
 
@@ -92,7 +91,7 @@ Rules:
 - lookup is by active character name, not by account email;
 - gameplay links that point to a character should use `/player/<character-name>`;
 - account-profile routes are not part of player info;
-- source-era CGI routes are not part of the Rails implementation;
+- source-era CGI routes are not part of the local Rails route shape;
 - public HTML and JSON expose only public player facts: avatar, name, level,
   location, HP/MP, equipped items, experience, skills, perks, fatigue, attack
   cost, and fight record;
@@ -151,8 +150,7 @@ Peace/world:
 Social/progression extensions:
 
 - reputation;
-- faction alignment;
-- clan/guild privileges.
+- faction alignment.
 
 ## Rules
 
@@ -188,58 +186,5 @@ Social/progression extensions:
 
 ## Out Of Scope
 
-- Large node trees before basic stats and passive skills are stable.
-- Node progression as the primary launch path unless reduced to the
-  Neverlands-style `Умения`/`Навыки` model.
 - Unlimited free respec.
 - Skills that only exist as UI decoration.
-
-## Related Implementation Files
-
-Models:
-
-- `app/models/character.rb`
-
-Controllers and helpers:
-
-- `app/controllers/characters_controller.rb`
-- `app/controllers/players_controller.rb`
-- `app/helpers/player_profile_helper.rb`
-
-Progression and skill services:
-
-- `app/services/players/progression/experience_pipeline.rb`
-- `app/services/players/progression/level_up_service.rb`
-- `app/services/players/progression/stat_allocation_service.rb`
-- `app/lib/game/skills/passive_skill_calculator.rb`
-- `app/lib/game/skills/passive_skill_registry.rb`
-- `app/lib/game/skills/perk_registry.rb`
-- `app/lib/game/formulas/skill_progression_formula.rb`
-- `app/lib/game/systems/stat_block.rb`
-
-Views and JavaScript:
-
-- `app/views/players/show.html.erb`
-- `app/views/characters/stats.html.erb`
-- `app/views/characters/skills.html.erb`
-- `app/views/characters/_stat_allocation.html.erb`
-- `app/views/characters/_skill_allocation.html.erb`
-- `app/javascript/controllers/stat_allocation_controller.js`
-- `app/javascript/controllers/skill_allocation_controller.js`
-
-Specs:
-
-- `spec/models/character_spec.rb`
-- `spec/models/character_mana_spec.rb`
-- `spec/requests/players_spec.rb`
-- `spec/requests/characters_spec.rb`
-- `spec/requests/characters/skills_spec.rb`
-- `spec/lib/game/skills/passive_skill_calculator_spec.rb`
-- `spec/lib/game/skills/passive_skill_registry_spec.rb`
-- `spec/lib/game/skills/passive_skill_registry_prerequisites_spec.rb`
-- `spec/lib/game/skills/perk_registry_spec.rb`
-- `spec/lib/game/formulas/skill_progression_formula_spec.rb`
-- `spec/services/players/progression/experience_pipeline_spec.rb`
-- `spec/services/players/progression/level_up_service_spec.rb`
-- `spec/services/players/alignment/access_gate_spec.rb`
-- `spec/system/skill_allocation_spec.rb`

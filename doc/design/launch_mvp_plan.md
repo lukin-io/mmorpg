@@ -3,7 +3,7 @@
 ## Purpose
 
 The launch MVP is the smallest coherent browser RPG loop that should feel like
-the current game, not a collection of isolated prototypes.
+a Neverlands-based game, not a collection of isolated prototypes.
 
 The MVP is built around four connected pillars:
 
@@ -28,12 +28,11 @@ server-authoritative action model.
 - Legacy or unrelated systems should not be part of the MVP path unless they
   directly support one of the four pillars.
 
-## Status Legend
+## Scope Terms
 
-- `Started`: code and docs exist, but the feature is not launch-complete.
-- `In progress`: active implementation exists and needs consolidation,
-  coverage, or UX finishing.
 - `MVP target`: required behavior for launch readiness.
+- `Build guidance`: Rails-friendly shape for the first implementation.
+- `Remaining design detail`: known design work before launch is complete.
 - `Deferred`: useful later, but not required for the launch MVP.
 
 ## Pillar 1: Person
@@ -67,13 +66,13 @@ Required behavior:
 - equipment contributes to visible combat breakdowns;
 - defeat routes into a recovery/result state instead of silently resetting.
 
-### Started
+### Build Guidance
 
-- Character persistence, level, experience, stats, inventory, equipment, HP,
-  MP, AP, and passive skill fields exist.
-- `Character#combat_power_breakdown` exposes attack, defense, critical, and
-  equipment contribution data.
-- Inventory now has Neverlands-inspired category filters, visible item
+- Model character persistence, level, experience, stats, inventory, equipment,
+  HP, MP, AP, and passive skills as first-class state.
+- Expose attack, defense, critical, and equipment contribution breakdowns for
+  UI and balancing.
+- Inventory needs Neverlands-inspired category filters, visible item
   properties/requirements/durability, equip/use/discard actions, requirement
   validation, discard protection, and combat durability degradation.
 - Equipped item effects feed primary stats, effective max HP, attack, defense,
@@ -83,16 +82,14 @@ Required behavior:
   `doc/design/features/progression_stats_skills.md`.
 - Equipment and inventory are documented in
   `doc/design/features/items_inventory_equipment.md`.
-- Live Neverlands player/profile observations are captured in
-  `doc/flow/neverlands_live_player.md`.
 - Public character lookup uses `/player/<character-name>` as the canonical
-  local route.
+  Rails route shape.
 - The 2026-05-14 starter-account capture confirms the launch player formula
   surfaces: primary stat allocation, `Умения` numeric skills, `Навыки` boolean
   perks, separate point pools, explicit save actions, and next-level experience
   display.
 
-### In Progress
+### Remaining Design Detail
 
 - Formula consolidation across character vitals, combat profile generation,
   equipment families, and UI previews.
@@ -106,7 +103,7 @@ Required behavior:
   maps back to the player-profile allocation loop.
 - Recovery and defeat states need a launch-level path that is consistent for
   arena and wild fights.
-- Specs should assert that the same character/equipment data feeds vitals,
+- Tests should assert that the same character/equipment data feeds vitals,
   combat profile, arena UI, and wild combat.
 
 ## Pillar 2: Movement
@@ -128,23 +125,24 @@ Required behavior:
   new cell;
 - movement locks conflicting actions while travel is active.
 
-### Started
+### Build Guidance
 
-- `Game::Movement::MapState`, `AcceptMove`, and `CompleteMove` implement the
-  main server-authored wilderness movement lifecycle.
-- `movement_commands` persists accepted movement state.
-- `WorldActionOffer` exists for server-issued contextual actions.
-- Tile state is materialized through `Game::World::TileStateResolver`.
-- Current movement design is documented in
-  `doc/design/features/movement.md`.
+- Use a server-authored wilderness movement lifecycle: build offers, accept a
+  selected offer, start timed travel, and finalize due travel.
+- Persist accepted movement state with source, target, action key, start time,
+  end time, completion, and failure state.
+- Use short-lived contextual action offers for movement, gathering, NPC, and
+  building/city actions.
+- Materialize current tile state before rendering available actions.
+- Movement design is documented in `doc/design/features/movement.md`.
 
-### In Progress
+### Remaining Design Detail
 
 - City hotspots still need to be fully aligned with the same action-offer
   discipline used by wilderness cells.
 - Local presence refresh after movement completion is not yet launch-polished.
 - Movement locks and action locks need to be consistently visible in the UI.
-- Wild action refresh after movement should be verified with system coverage.
+- Wild action refresh after movement should be verified with end-to-end tests.
 
 ## Pillar 3: Arena And Combat
 
@@ -170,26 +168,45 @@ Required behavior:
 - completed fights require an explicit finish action before returning to arena
   or world.
 
-### Started
+### Build Guidance
 
 - Arena area design is documented in `doc/design/areas/arena.md`.
 - Combat design is documented in `doc/design/features/combat.md`.
-- Arena application, NPC training, match show, turn submit, waiting, timeout,
-  and finish-result flows exist.
-- Arena combat profiles support per-participant AP and dynamic physical attack
-  costs.
+- Build arena application, NPC training, match show, turn submit, waiting,
+  timeout, and finish-result flows as one loop.
+- Combat profiles support per-participant AP and dynamic physical attack costs.
 - The active combat screen follows a compact three-zone fight UI.
-- NPC training fights use the shared arena combat resolver path.
+- NPC training fights use the shared combat resolver path.
+- The 2026-05-19 starter arena combat capture confirms the launch training
+  loop: duel-tab NPC row, eligible open side, immediate NPC fight, `114` AP
+  starter profile, `45/65` physical costs, injected magic selector options,
+  automatic loot check, and explicit finish/result step.
 
-### In Progress
+### Remaining Design Detail
 
 - Combat formulas need continued consolidation around item-family AP,
-  physical cost, defense, shield block, and magic coefficients.
-- More specs are needed around cross-entry consistency: arena PvP, arena NPC,
-  wild NPC, and legacy PvE wrappers must not diverge.
-- Magic and special action behavior exists, but needs launch-level balancing
-  and UI clarity.
-- Arena should keep dev/global route affordances out of the primary UX path.
+  physical cost, defense, shield block, injected magic selector options, and
+  magic coefficients.
+- More tests are needed around cross-entry consistency: arena PvP, arena NPC,
+  and wild NPC must use the same shared combat contract. Any old PvE wrapper
+  that cannot follow that contract should be removed.
+- Magic and special action behavior needs launch-level balancing and UI
+  clarity.
+- Arena should keep global route shortcuts out of the primary UX path.
+
+### Arena And Combat Task Order
+
+Build and verify the launch loop in this order:
+
+1. City arena entry and return context.
+2. Arena room/application rows, including NPC training rows and open-side
+   acceptance.
+3. Per-participant combat profile from character, equipment, and captured
+   fight payload shape.
+4. Shared turn UI with AP preview, body-part attacks, one block, injected magic
+   selector options, reset, and server validation.
+5. Shared resolver and result pipeline for arena PvP, arena NPC, and wild NPC
+   fights, including combat log, loot check, finish step, and contextual return.
 
 ## Pillar 4: Wild Cells
 
@@ -212,19 +229,15 @@ Required behavior:
   not the arena;
 - loot checks and resource state updates are visible after the result step.
 
-### Started
+### Build Guidance
 
-- Tile resources, tile NPCs, world action offers, and tile state resolution are
-  present in the codebase.
-- Movement docs already treat resources, NPCs, and buildings as tile-local
-  context.
+- Treat resources, NPCs, buildings, and action offers as tile-local context.
 - NPC and quest design is documented in
   `doc/design/features/npcs_quests.md`.
-- Live movement notes are captured in `doc/flow/neverlands_live_movement.md`.
-- Recent combat work established that NPC fights should use the same resolver
-  as PvP rather than a separate wild-combat engine.
+- NPC fights should use the same resolver as PvP rather than a separate
+  wild-combat engine.
 
-### In Progress
+### Remaining Design Detail
 
 - Wild NPC ambush and manual attack should be wired through the same active
   combat UI and finish-result contract as arena NPC fights.
@@ -250,14 +263,14 @@ login
 -> return to arena, city, or world context
 ```
 
-## Started And In Progress Summary
+## Launch Build Summary
 
-| Area | Started | In Progress |
+| Area | Build Target | Remaining Detail |
 | --- | --- | --- |
-| Person | Character, vitals, stats, skills, inventory/equipment actions, requirements, durability, combat breakdown | item seeds, slot rules, repair/breakage UX, level-up UX, recovery, cross-system specs |
-| Movement | persisted wilderness travel, movement commands, world action offers, tile resolver | city-hotspot action unification, presence refresh, lock polish |
-| Arena | city entry, room/application UX, NPC training, PvP waiting, finish result | formula tuning, route cleanup, magic/special balancing |
-| Combat | shared arena resolver, AP/body parts/blocks/logs, NPC AI response | one resolver across all fight entry points, more balance coverage |
+| Person | Character, vitals, stats, skills, inventory/equipment actions, requirements, durability, combat breakdown | item seeds, slot rules, repair/breakage UX, level-up UX, recovery, cross-system tests |
+| Movement | persisted wilderness travel, movement commands, action offers, tile state resolver | city-hotspot action unification, presence refresh, lock polish |
+| Arena | city entry, room/application UX, NPC training, PvP waiting, finish result | formula tuning, navigation cleanup, magic/special balancing |
+| Combat | shared resolver, AP/body parts/blocks/logs, NPC AI response | one resolver across all fight entry points, more balance coverage |
 | Wild cells | tile resources, tile NPCs, contextual action offers | shared combat handoff, loot result step, return routing |
 
 ## Not MVP
@@ -265,15 +278,10 @@ login
 Deferred until the four pillars are launch-stable:
 
 - Neverlands-inspired dungeons. The post-MVP design source of truth is
-  `doc/design/features/dungeons.md`; existing dungeon routes/code are legacy
-  until rebuilt against that document;
-- tournaments and seasonal live-ops screens;
-- betting or totalizator systems;
-- tactical grid combat modes;
-- procedural quest generator;
-- complex clan war systems;
-- long-distance pathfinding;
-- advanced market/economy layers beyond starter trade/shop needs.
+  `doc/design/features/dungeons.md`.
+
+Any other deferred idea needs a Neverlands source capture or source-material
+mapping before it belongs in the design docs.
 
 ## Documentation Links
 
@@ -291,9 +299,7 @@ Canonical design:
 - `doc/design/areas/world_map.md`
 - `doc/design/areas/cities_and_buildings.md`
 
-Implementation and capture notes:
+Reference:
 
-- `doc/flow/neverlands_live_player.md`
-- `doc/flow/neverlands_live_movement.md`
-- `doc/flow/neverlands_live_city_movement.md`
-- `doc/design/reference/neverlands_arena_combat.md`
+- `doc/design/reference/neverlands.md`
+- `doc/design/reference/source_material.md`

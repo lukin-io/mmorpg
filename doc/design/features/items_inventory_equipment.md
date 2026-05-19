@@ -10,7 +10,8 @@ combat systems practical constraints.
 
 Inputs:
 
-- `doc/flow/neverlands_live_player.md`
+- `doc/design/reference/neverlands.md`
+- `doc/design/features/combat.md`
 
 ## Player Experience
 
@@ -33,12 +34,6 @@ Core:
 - quest items;
 - crafting resources;
 - tools.
-
-Later:
-
-- cosmetics;
-- mounts;
-- housing decor.
 
 ## Equipment Rules
 
@@ -106,6 +101,14 @@ Baseline visible slots from the Neverlands player capture:
 - pants;
 - relic.
 
+The 2026-05-19 starter arena fight confirmed that equipped items are also
+embedded in the active fight payload. The starter character rendered
+`Перочинный Нож` in the weapon slot and in the weapon/shield slot, and those
+equipped items coincided with the captured starter combat profile of 114 AP and
+45/65 physical attack costs. Do not treat equipment as profile-only decoration:
+the same equipment state must feed profile, inventory, and combat formula
+surfaces.
+
 The live inventory capture adds these launch requirements:
 
 - inventory opens from the same player shell as the character profile;
@@ -143,21 +146,18 @@ The live inventory capture adds these launch requirements:
 - Wearing, removing, using, deleting, selling, transferring, and gifting are
   separate actions and should not share client-invented state.
 
-## Current Implementation Status
+## Launch Design Target
 
-Last updated: 2026-05-11.
+The launch inventory should support:
 
-Implemented:
-
-- inventory page inside the player shell with equipment panel, stats panel,
+- inventory page inside the game shell with equipment panel, stats panel,
   category filters, sort actions, inventory mass, item rows, and empty slots;
-- item template support for equipment, consumable, material, resource, quest,
-  and misc item types;
-- item instance support for quantity, equipped slot, current durability,
-  requirement overrides, effect overrides, expiry metadata, bound/protected
-  state, and per-item properties;
-- equip, unequip, use, sort, and discard actions through Rails controllers and
-  inventory services;
+- item templates for equipment, consumables, materials, resources, quest items,
+  and miscellaneous items;
+- item instances with quantity, equipped slot, current durability, requirement
+  overrides, effect overrides, expiry metadata, bound/protected state, and
+  per-item properties;
+- equip, unequip, use, sort, and discard as server-authorized actions;
 - requirement validation for level, AP/action points, primary stats, and mapped
   numeric skills before equip/use;
 - equipment effects feeding character stats, effective max HP, attack, defense,
@@ -165,10 +165,9 @@ Implemented:
   bonuses;
 - combat durability degradation for PvE and PvP equipment;
 - consumable durability charges before quantity consumption;
-- discard protection for equipped, bound, protected, locked, and quest items;
-- Brakeman, RuboCop, and Zeitwerk checks pass for the current implementation.
+- discard protection for equipped, bound, protected, locked, and quest items.
 
-Missing before launch MVP is complete:
+Remaining design detail before launch:
 
 - canonical item seeds/templates matching the captured Neverlands inventory;
 - full label normalization for all captured effects and requirements;
@@ -177,11 +176,9 @@ Missing before launch MVP is complete:
 - repair and breakage UX, including player-visible messages when gear breaks;
 - capacity enforcement across loot, pickup, trade, shop purchase, and quest
   reward flows;
-- server-issued inventory action keys if Rails CSRF forms are not enough for
-  the final gameplay action model;
-- transfer, gift, sale, dealer, and equipment-set saving flows;
-- system/browser coverage for the inventory page after local PostgreSQL test
-  setup is fixed.
+- server-issued inventory action keys when normal Rails form protection is not
+  enough for the final gameplay action model;
+- transfer, gift, sale, dealer, and equipment-set saving flows.
 
 ## State Concepts
 
@@ -203,47 +200,3 @@ Missing before launch MVP is complete:
 - `features/economy_trading_shops.md`: shops and market trade items.
 - `features/gathering_professions.md`: resources and tools live in inventory.
 - `features/npcs_quests.md`: quests can grant or require items.
-
-## Out Of Scope
-
-- Premium inventory boosts as a core design dependency.
-
-## Related Implementation Files
-
-Models:
-
-- `app/models/item_template.rb`
-- `app/models/inventory.rb`
-- `app/models/inventory_item.rb`
-- `app/models/trade_item.rb`
-
-Controllers and helpers:
-
-- `app/controllers/inventories_controller.rb`
-- `app/controllers/inventory_items_controller.rb`
-- `app/helpers/inventories_helper.rb`
-
-Services:
-
-- `app/services/game/inventory/manager.rb`
-- `app/services/game/inventory/equipment_service.rb`
-- `app/services/game/inventory/requirement_checker.rb`
-- `app/services/game/inventory/expansion_service.rb`
-- `app/services/game/economy/loot_generator.rb`
-
-Views and JavaScript:
-
-- `app/views/inventories/show.html.erb`
-- `app/views/inventories/_equipment.html.erb`
-- `app/views/inventories/_equipment_slot.html.erb`
-- `app/views/inventories/_stats.html.erb`
-- `app/javascript/controllers/inventory_controller.js`
-
-Specs:
-
-- `spec/models/inventory_spec.rb`
-- `spec/models/item_template_spec.rb`
-- `spec/requests/inventories_spec.rb`
-- `spec/services/game/inventory/manager_spec.rb`
-- `spec/services/game/inventory/expansion_service_spec.rb`
-- `spec/system/inventory_progression_spec.rb`

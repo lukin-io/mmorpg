@@ -12,7 +12,6 @@ build.
 | Feature spec | `doc/design/features/` | One mechanic or system per file |
 | Area spec | `doc/design/areas/` | One world area, screen family, or place type |
 | Reference | `doc/design/reference/` | Observations and provenance, not new rules |
-| Implementation note | `doc/flow/` | Framework/code-specific notes |
 
 ## Feature Document Template
 
@@ -42,10 +41,6 @@ How this feature connects to movement, combat, economy, social, or areas.
 
 ## Out Of Scope
 Ideas intentionally not in the current core.
-
-## Related Implementation Files
-Current codebase files for implementation and tests. This section is a map, not
-design authority.
 ```
 
 ## Area Document Template
@@ -72,10 +67,6 @@ Named nodes, districts, or routes.
 
 ## Feature Hooks
 Which feature documents this area activates.
-
-## Related Implementation Files
-Current codebase files for implementation and tests. This section is a map, not
-design authority.
 ```
 
 ## Rules
@@ -83,10 +74,8 @@ design authority.
 - The GDD is the entry point, not a scratchpad.
 - Put stable design rules in `features/` and `areas/`.
 - Put live Neverlands observations in `reference/`.
-- Put live Neverlands observations in `doc/flow/` when they are raw captures
-  that are too detailed for `doc/design/reference/`.
-- Put concise current file maps at the bottom of design docs under
-  `Related Implementation Files`.
+- Do not put current-app file maps, class names, route names, migration notes,
+  or test paths in design docs.
 - If an old doc is not Neverlands-based, remove it after any valid rule has
   been promoted into `doc/design/`.
 - Avoid broad product ideas unless they directly support the core loop.
