@@ -325,6 +325,138 @@ Training mannequins should follow the same rule. If the source shows a
 mannequin dropping wood chips, the fight result should treat wood chips as a
 normal NPC material drop, not as a special arena reward.
 
+## Public Fight Logs And Statistics
+
+Neverlands exposes completed and active fights through `logs.fcg?fid=<fight_id>`.
+The profile fight link points at this same public log URL while the character is
+in combat. The May 20, 2026 source checks used:
+
+| URL | Observation |
+| --- | --- |
+| `logs.fcg?fid=741230166&p=1` | NPC/dungeon fight log against `Архилич`; page one of a three-page log. |
+| `logs.fcg?fid=741228850` | PvP sacrifice/group fight log; page one of a four-page log. |
+| `logs.fcg?fid=741228850&stat=1` | Aggregate statistics for the same PvP fight. |
+
+The source page is not pre-rendered combat text. It returns a compact
+Windows-1251 HTML shell with JavaScript data arrays and calls `viewlog()` from
+`/js/vlogs.js`. That means the source separates persisted fight data from
+presentation:
+
+```text
+var logs = [[started_at_unix, fight_type_or_rule], entry, entry, ...]
+var params = [page_count, view_type, fight_id, current_page, flags]
+var show = 1
+var off = 0|1
+viewlog()
+```
+
+The statistics page uses the same fight id and renderer, but switches to a
+`list` payload and `show = 2`:
+
+```text
+var list = [[started_at_unix, fight_type_or_rule], participant_row, ...,
+            "@22@26@22@26@95@117"]
+var params = [1, 2, fight_id, 1, flags]
+var show = 2
+viewlog()
+```
+
+Design implications:
+
+- combat logs are durable fight records, not only transient ActionCable
+  messages;
+- the public profile fight link, active combat UI, completed fight page, and
+  statistics view should all resolve from the same fight id;
+- the log renderer can be a presentation layer over structured event records;
+- a fight may be paginated, so the log model must not assume one small text
+  blob;
+- PvE/NPC and PvP logs use the same mechanism;
+- statistics are an aggregate view derived from the same fight, not a separate
+  reward screen;
+- public logs should be readable without exposing private turn tokens or
+  submit payloads.
+
+### Captured Log Token Shape
+
+The `vlogs.js` renderer maps compact tokens into display fragments. The exact
+source wire format does not need to be copied, but the semantic model is useful
+for the local event schema.
+
+| Token Shape | Meaning In Renderer |
+| --- | --- |
+| `[0, "11:27"]` | timestamp shown before one log paragraph |
+| `[1, side, name, level, align, sign]` | visible player participant, colored by side and linked in statistics |
+| `[4, side]` | hidden/invisible participant marker |
+| `[5, name, level, align, sign]` | named combatant without the full player token shape |
+| `[6, body_part_index]` | body part label: `0` head, `1` torso, `2` stomach, `3` legs |
+| `[7, name, feminine_flag]` | applied ability/effect text |
+| `[9, name, feminine_flag, magic_color]` | applied spell text |
+| `[10, name, magic_color]` | inline spell/magic name |
+
+Rendered entries are assembled from tokens and text fragments. One paragraph
+can contain several resolved actions from the same timestamp, for example three
+attacks, a block, an injury, or a defeat line. The local model should therefore
+store either one event per resolved action with a shared timestamp/round, or a
+round entry with child actions. A single unstructured string per round will make
+statistics, replay, and filtering harder.
+
+Observed event phrases include:
+
+- fight start with full side rosters;
+- attempted hit where defender dodged;
+- successful physical hit;
+- successful critical hit with red damage;
+- defender blocked a body-part hit;
+- defender tried to block but the hit landed;
+- magical hit with a named spell;
+- critical magical hit;
+- applied ability/effect such as `Призыв нежити`;
+- heavy injury text after a participant reaches zero HP;
+- participant lost the fight;
+- final winner side.
+
+All damage entries include exact damage and target HP after the hit:
+
+```text
+на -30 [855/885]
+на -537 [0/500]
+```
+
+Zero-damage hits are still logged as hits when the resolver says the hit
+landed:
+
+```text
+на -0 [14975/14975]
+```
+
+### Captured Statistics Shape
+
+The PvP statistics page for fight `741228850` rendered a table from `list`.
+Each row includes participant identity, side, level, alignment/sign, several
+numeric damage buckets with superscript counts, total damage/count, and
+experience.
+
+Example row shape:
+
+```text
+[1, side, name, level, align, sign,
+ normal_damage, bucket_1_damage, bucket_2_damage, bucket_4_damage,
+ bucket_3_damage,
+ normal_count, bucket_1_count, bucket_2_count, bucket_4_count,
+ bucket_3_count,
+ experience]
+```
+
+Design implication: local combat should store enough structured resolution data
+to derive per-participant totals after the fight:
+
+- damage dealt by participant;
+- count of successful damage events;
+- target or damage bucket dimensions used by the ruleset;
+- experience awarded;
+- team/side identity;
+- final win/loss state.
+
 Captured AP profiles:
 
 - `140` AP with physical attack costs `67/87` is a captured live fight profile.
