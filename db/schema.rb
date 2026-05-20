@@ -1107,36 +1107,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_120000) do
     t.index ["user_id"], name: "index_party_memberships_on_user_id"
   end
 
-  create_table "pet_companions", force: :cascade do |t|
-    t.string "affinity_stage", default: "neutral", null: false
-    t.integer "bonding_experience", default: 0, null: false
-    t.jsonb "care_state", default: {}, null: false
-    t.datetime "care_task_available_at"
-    t.datetime "created_at", null: false
-    t.integer "gathering_bonus", default: 0, null: false
-    t.datetime "last_care_performed_at"
-    t.integer "level", default: 1, null: false
-    t.string "nickname"
-    t.string "passive_bonus_type"
-    t.integer "passive_bonus_value", default: 0, null: false
-    t.bigint "pet_species_id", null: false
-    t.jsonb "stats", default: {}, null: false
-    t.datetime "updated_at", null: false
-    t.bigint "user_id", null: false
-    t.index ["affinity_stage"], name: "index_pet_companions_on_affinity_stage"
-    t.index ["pet_species_id"], name: "index_pet_companions_on_pet_species_id"
-    t.index ["user_id"], name: "index_pet_companions_on_user_id"
-  end
-
-  create_table "pet_species", force: :cascade do |t|
-    t.jsonb "ability_payload", default: {}, null: false
-    t.string "ability_type", null: false
-    t.datetime "created_at", null: false
-    t.string "name", null: false
-    t.string "rarity", default: "common", null: false
-    t.datetime "updated_at", null: false
-  end
-
   create_table "premium_token_ledger_entries", force: :cascade do |t|
     t.integer "balance_after", null: false
     t.datetime "created_at", null: false
@@ -1711,8 +1681,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_120000) do
   add_foreign_key "party_invitations", "users", column: "sender_id"
   add_foreign_key "party_memberships", "parties"
   add_foreign_key "party_memberships", "users"
-  add_foreign_key "pet_companions", "pet_species", column: "pet_species_id"
-  add_foreign_key "pet_companions", "users"
   add_foreign_key "premium_token_ledger_entries", "users"
   add_foreign_key "profession_progresses", "characters"
   add_foreign_key "profession_progresses", "profession_tools", column: "equipped_tool_id"

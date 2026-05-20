@@ -105,14 +105,6 @@ if defined?(Recipe)
   end
 end
 
-if defined?(PetSpecies)
-  PetSpecies.find_or_create_by!(name: "Silver Fox") do |species|
-    species.ability_type = "gathering_bonus"
-    species.rarity = "rare"
-    species.ability_payload = {"gather_bonus" => 0.05}
-  end
-end
-
 if defined?(GameEvent)
   GameEvent.find_or_create_by!(slug: "winter_festival") do |event|
     event.name = "Winter Festival"
@@ -743,23 +735,6 @@ if defined?(HousingDecorItem) && housing_plot
     decor.placement = {"room" => "workshop", "x" => 0, "y" => 0}
     decor.metadata = {"buff_key" => "crafting_speed", "bonus_percent" => 8}
     decor.utility_slot = 1
-  end
-end
-
-if defined?(PetCompanion) && admin
-  fox_species = PetSpecies.find_by(name: "Silver Fox")
-  if fox_species
-    PetCompanion.find_or_create_by!(user: admin, pet_species: fox_species) do |pet|
-      pet.nickname = "Ember"
-      pet.level = 7
-      pet.bonding_experience = 360
-      pet.affinity_stage = :friendly
-      pet.gathering_bonus = 12
-      pet.passive_bonus_type = "herbalism_speed"
-      pet.passive_bonus_value = 5
-      pet.care_state = {"last_task" => "moonlit-run"}
-      pet.care_task_available_at = 1.hour.from_now
-    end
   end
 end
 

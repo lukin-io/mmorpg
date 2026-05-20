@@ -2,7 +2,7 @@
 
 require "rails_helper"
 
-RSpec.describe "Onboarding", type: :system, js: true do
+RSpec.describe "Onboarding", type: :system do
   describe "success cases" do
     it "signs in via Devise UI and lands on the world page" do
       user = create(:user, password: "Password123!", password_confirmation: "Password123!")

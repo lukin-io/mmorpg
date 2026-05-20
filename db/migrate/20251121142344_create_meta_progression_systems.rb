@@ -79,32 +79,6 @@ class CreateMetaProgressionSystems < ActiveRecord::Migration[8.1]
     end
     add_index :housing_decor_items, :decor_type
 
-    create_table :pet_species do |t|
-      t.string :name, null: false
-      t.string :ability_type, null: false
-      t.string :rarity, null: false, default: "common"
-      t.jsonb :ability_payload, null: false, default: {}
-      t.timestamps
-    end
-
-    create_table :pet_companions do |t|
-      t.references :user, null: false, foreign_key: true
-      t.references :pet_species, null: false, foreign_key: true
-      t.string :nickname
-      t.integer :level, null: false, default: 1
-      t.integer :bonding_experience, null: false, default: 0
-      t.string :affinity_stage, null: false, default: "neutral"
-      t.jsonb :care_state, null: false, default: {}
-      t.datetime :last_care_performed_at
-      t.datetime :care_task_available_at
-      t.string :passive_bonus_type
-      t.integer :passive_bonus_value, null: false, default: 0
-      t.integer :gathering_bonus, null: false, default: 0
-      t.jsonb :stats, null: false, default: {}
-      t.timestamps
-    end
-    add_index :pet_companions, :affinity_stage
-
     create_table :mounts do |t|
       t.references :user, null: false, foreign_key: true
       t.string :name, null: false

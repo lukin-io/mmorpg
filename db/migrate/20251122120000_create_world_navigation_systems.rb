@@ -39,6 +39,5 @@ class CreateWorldNavigationSystems < ActiveRecord::Migration[8.1]
       t.timestamps
     end
     add_index :character_positions, [:zone_id, :x, :y]
-
   end
 end

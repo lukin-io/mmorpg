@@ -912,7 +912,6 @@ textarea {
 .chat-channel-list,
 .public-profile,
 .housing-panel,
-.pets-panel,
 .mounts-panel,
 .quest-dialogue {
   background: var(--nl-bg-secondary);
@@ -999,7 +998,6 @@ textarea {
 }
 
 .housing-plot,
-.pet-card,
 .mount-card {
   background: var(--nl-bg-accent);
   border: 1px solid var(--nl-border-light);

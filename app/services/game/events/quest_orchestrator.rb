@@ -40,7 +40,6 @@ module Game
 
         event_instance.update!(metadata: event_instance.metadata.merge(reskin_payload))
       end
-
     end
   end
 end

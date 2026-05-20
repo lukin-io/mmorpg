@@ -162,11 +162,6 @@ Rails.application.routes.draw do
       delete "decorate/:decor_id", action: :remove_decor, as: :remove_decor
     end
   end
-  resources :pet_companions, only: [:index, :create] do
-    member do
-      post :care
-    end
-  end
   resources :mounts, only: [:index, :create] do
     collection do
       post :unlock_slot

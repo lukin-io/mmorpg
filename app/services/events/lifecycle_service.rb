@@ -25,6 +25,5 @@ module Events
     def update_state!(state, metadata: event.metadata)
       event.update!(status: state, metadata:)
     end
-
   end
 end

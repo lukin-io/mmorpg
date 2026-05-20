@@ -7,5 +7,4 @@ class ClanMessageBoardPost < ApplicationRecord
   validates :title, :body, :published_at, presence: true
 
   scope :recent, -> { order(pinned: :desc, published_at: :desc) }
-
 end

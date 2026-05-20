@@ -62,7 +62,6 @@ RSpec.describe "Social UI", type: :system, js: true do
       expect(page).to have_content("Player ignored")
       expect(page).to have_content(other_user.profile_name)
     end
-
   end
 
   describe "failure cases" do
@@ -111,6 +110,5 @@ RSpec.describe "Social UI", type: :system, js: true do
 
       expect(page).to have_css("#flash", text: "confirm your email address")
     end
-
   end
 end

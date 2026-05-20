@@ -46,7 +46,6 @@ class User < ApplicationRecord
   has_many :achievement_grants, dependent: :destroy
   has_many :title_grants, dependent: :destroy
   has_many :housing_plots, dependent: :destroy
-  has_many :pet_companions, dependent: :destroy
   has_many :mounts, dependent: :destroy
   has_many :mount_stable_slots, dependent: :destroy
   has_many :group_listings, foreign_key: :owner_id, dependent: :destroy

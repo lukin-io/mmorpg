@@ -21,6 +21,5 @@ class CreateMarketDemandAndMedicalSupply < ActiveRecord::Migration[8.1]
       t.timestamps
     end
     add_index :medical_supply_pools, [:zone_id, :item_name], unique: true, name: "index_medical_supply_pools_on_zone_and_item"
-
   end
 end

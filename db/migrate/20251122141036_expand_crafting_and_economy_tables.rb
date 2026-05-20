@@ -45,7 +45,6 @@ class ExpandCraftingAndEconomyTables < ActiveRecord::Migration[8.1]
       t.integer :required_skill_level, null: false, default: 0
       t.string :commission_scope, null: false, default: "personal"
     end
-
   end
 
   def down

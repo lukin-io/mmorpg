@@ -46,7 +46,6 @@ module Game
       def hostile?(reputation:)
         reaction_for(reputation:) == :hostile
       end
-
     end
   end
 end
