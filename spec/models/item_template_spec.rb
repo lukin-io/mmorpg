@@ -3,6 +3,24 @@
 require "rails_helper"
 
 RSpec.describe ItemTemplate, type: :model do
+  describe "resource timing metadata" do
+    it "reads resource respawn timing from template rules" do
+      template = build(
+        :item_template,
+        :material,
+        enhancement_rules: {
+          "resource" => {
+            "respawn_seconds" => "43200",
+            "spawn_chance" => "3"
+          }
+        }
+      )
+
+      expect(template.resource_respawn_seconds).to eq(43200)
+      expect(template.resource_spawn_weight).to eq(3)
+    end
+  end
+
   describe "validations" do
     it "requires name to be present" do
       template = build(:item_template, name: nil)

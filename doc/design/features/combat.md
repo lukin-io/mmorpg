@@ -141,6 +141,59 @@ higher-level live bot captures. The no-weapon starter capture kept 114 AP and a
 45 physical seed, while the higher-level bot capture used 140 AP and a 67
 physical seed.
 
+### Captured Outdoor Bot Ambush
+
+The 2026-05-20 outdoor capture near `Окрестность Форпоста` entered a bot fight
+after an outdoor `Оглядеться` resource-search action returned a forced refresh.
+A later `Инвентарь` outdoor action was also interrupted by a new bot attack.
+
+The first outdoor fight was:
+
+```text
+fight id: 741334066
+player: max_kerby[4], 52/52 HP, 7/7 MP
+opponents: Чумная крыса[4], Чумная крыса[4], each 100/100 HP
+fight_ty = [1,300,30,1,1,"","","2",741334066,[],[],4]
+fight_pm = [24,124,66,0,<turn_token>,<enemy_id>,2,117,1,<switch_token>,0]
+```
+
+Observed profile:
+
+| Value | Captured Number |
+| --- | ---: |
+| AP budget | 124 |
+| Physical seed | 66 |
+| Simple physical attack | 66 AP |
+| Aimed physical attack | 86 AP |
+| Torso block | 30 AP |
+| Magic-hit mana range | 5-24 |
+
+The repeated legal turn was the same semantic turn package as arena combat:
+
+```text
+POST main.php
+post_id=7
+inu=1_0_0@
+inb=1_7_0
+ina=
+```
+
+The fight log started with:
+
+```text
+Бой между Чумная крыса, Чумная крыса и max_kerby начался (нападение бота).
+```
+
+Design implications:
+
+- outdoor NPC ambushes use the same combat screen, participant fields, turn
+  submit contract, `fight_pm` active state, `fexp` result state, and explicit
+  finish action as arena fights;
+- one fight can contain multiple NPC opponents on the same side;
+- NPC AI can produce more than one attack entry in the same timestamped round;
+- target switching happens inside the same fight after one NPC is defeated;
+- finishing the result routes back to the saved world coordinate.
+
 ### Captured Mannequin Fight Variants
 
 All captured variants were duel-tab arena NPC applications against
@@ -274,6 +327,11 @@ Stable design facts:
 - Active-turn state uses `fight_pm`; result state uses `fexp`.
 - Completed fights require a separate finish action before return routing.
 
+The outdoor rat capture adds one more stable fact: loot checks can be per
+defeated NPC, not only per completed fight. The first rat in a two-rat fight was
+searched before the second rat was defeated; in that capture its random
+bot-specific loot check awarded `Крысиный хвост`.
+
 The source anti-autobattle code challenge is not a local product rule. The
 local design preserves the explicit `Finish Fight` step without copying that
 challenge.
@@ -329,17 +387,19 @@ normal NPC material drop, not as a special arena reward.
 
 ## Public Fight Logs And Statistics
 
-Neverlands exposes completed and active fights through `logs.fcg?fid=<fight_id>`.
-The profile fight link points at this same public log URL while the character is
-in combat. Rails should translate that design into a normal route shape such as
-`/log/<fight_id>`; the PHP URL is only source evidence. The May 20, 2026 source
-checks used:
+Neverlands exposes completed and active fights through
+`logs.fcg?fid=<fight_id>`. The profile fight link can point at this same public
+log URL while the character is in combat. Rails should translate that design
+into a normal route shape such as `/log/<fight_id>`; the PHP URL is only source
+evidence. The May 20, 2026 source checks used:
 
 | URL | Observation |
 | --- | --- |
 | `logs.fcg?fid=741230166&p=1` | NPC/dungeon fight log against `Архилич`; page one of a three-page log. |
 | `logs.fcg?fid=741228850` | player sacrifice/group fight log; page one of a four-page log. |
 | `logs.fcg?fid=741228850&stat=1` | Aggregate statistics for the same player/group fight. |
+| `logs.fcg?fid=741334066&p=1` | Low-level outdoor rat bot fight from the active account; returned `logs = []` after finish even though the in-frame fight log had full entries. Treat as a source bug, not a product rule. |
+| `logs.fcg?fid=741337214&p=1` | Second low-level outdoor rat bot fight; same empty public response bug. |
 
 The source page is not pre-rendered combat text. It returns a compact
 Windows-1251 HTML shell with JavaScript data arrays and calls `viewlog()` from
@@ -379,6 +439,9 @@ Design implications:
   reward screen;
 - public logs should be readable without exposing private turn tokens or
   submit payloads.
+- the local model should keep one structured fight event stream and render
+  public log/stat views from it instead of creating separate combat-log
+  mechanisms.
 
 ### Captured Log Token Shape
 
@@ -526,6 +589,18 @@ Implementation implications from the May 19 arena fight:
   cost stay stable in a specific capture;
 - the browser may render options that the player cannot currently afford in
   MP, so server validation must remain authoritative.
+
+Implementation implications from the May 20 outdoor bot capture:
+
+- wild NPC combat must use the same turn/resolution/result pipeline as arena
+  NPC and player/team fights;
+- outdoor local actions such as `Оглядеться` or `Инвентарь` can be interrupted
+  before completion and replaced by a bot-attack fight state;
+- multi-NPC fights need participant-level defeat and loot checks before the
+  fight-level victory result;
+- empty public log responses in the rat capture should be handled as a source
+  bug; the expected product behavior remains a fight-id keyed public log fed by
+  the shared fight event stream.
 
 Adjacent docs that should move with the next combat pass:
 

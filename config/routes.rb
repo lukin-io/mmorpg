@@ -198,7 +198,6 @@ Rails.application.routes.draw do
     post :recalculate, on: :member
   end
   resources :competition_brackets, only: [:show, :update]
-  resources :spawn_schedules, only: [:index, :create, :update]
 
   get "up" => "rails/health#show", :as => :rails_health_check
 end

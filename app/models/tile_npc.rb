@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
 # TileNpc tracks NPC spawns at specific map tiles.
-# NPCs respawn after being defeated (~30 minutes +/- 5 minutes randomness).
-# Different biomes spawn different NPC types.
+# Template metadata defines spawn timing; tile instances store concrete
+# defeated/respawn state.
 #
 # Usage:
 #   TileNpc.at_tile(zone_name, x, y) # Find NPC at tile
@@ -119,22 +119,13 @@ class TileNpc < ApplicationRecord
   private
 
   def calculate_respawn_time
-    # Base 30 min +/- 5 min random variance
-    variance = rand(-RESPAWN_VARIANCE..RESPAWN_VARIANCE)
-    base = BASE_RESPAWN_SECONDS + variance
-
-    # Biome modifiers
-    case biome
-    when "forest"
-      base -= 3.minutes.to_i # Faster in forests (wildlife)
-    when "mountain"
-      base += 5.minutes.to_i # Slower in mountains
-    when "swamp"
-      base -= 2.minutes.to_i # Faster in swamps
-    end
+    variance_seconds = template_respawn_variance_seconds
+    variance = variance_seconds.positive? ? rand(-variance_seconds..variance_seconds) : 0
+    base = template_respawn_seconds + variance
+    base += Game::World::BiomeNpcConfig.respawn_modifier(biome || "plains").to_i
 
     # Rarity modifiers
-    case metadata&.dig("rarity")
+    case spawn_rarity
     when "rare"
       base += 10.minutes.to_i
     when "elite"
@@ -143,7 +134,36 @@ class TileNpc < ApplicationRecord
       base += 60.minutes.to_i
     end
 
-    base.clamp(10.minutes.to_i, 3.hours.to_i)
+    base.clamp(1, 24.hours.to_i)
+  end
+
+  def template_respawn_seconds
+    metadata_respawn_seconds ||
+      npc_template&.respawn_seconds ||
+      BASE_RESPAWN_SECONDS
+  end
+
+  def template_respawn_variance_seconds
+    metadata_respawn_variance_seconds ||
+      npc_template&.respawn_variance_seconds ||
+      RESPAWN_VARIANCE
+  end
+
+  def metadata_respawn_seconds
+    positive_metadata_integer("respawn_seconds") ||
+      positive_metadata_integer("spawn_respawn_seconds")
+  end
+
+  def metadata_respawn_variance_seconds
+    value = metadata_integer("respawn_variance_seconds") ||
+      metadata_integer("spawn_respawn_variance_seconds")
+    value if value && value >= 0
+  end
+
+  def spawn_rarity
+    metadata&.dig("spawn_rarity").presence ||
+      metadata&.dig("rarity").presence ||
+      npc_template&.spawn_rarity
   end
 
   def calculate_spawn_level(npc_data)
@@ -165,6 +185,7 @@ class TileNpc < ApplicationRecord
     if template
       # Update npc_key if missing (for templates created by factory)
       template.update!(npc_key: npc_key) if template.npc_key.blank?
+      sync_template_spawn_metadata(template, npc_data)
       return template
     end
 
@@ -179,13 +200,7 @@ class TileNpc < ApplicationRecord
       role: npc_data[:role]&.to_s || "hostile",
       level: npc_data[:level] || 1,
       dialogue: npc_data[:dialogue]&.to_s || "...",
-      metadata: {
-        biome: biome,
-        health: npc_data[:hp] || 100,
-        base_damage: npc_data[:damage] || 10,
-        xp_reward: npc_data[:xp] || 10,
-        loot_table: npc_data[:loot] || []
-      }.merge(npc_data[:metadata] || {})
+      metadata: template_spawn_metadata(npc_data)
     )
   rescue ActiveRecord::RecordInvalid, ActiveRecord::RecordNotUnique => e
     Rails.logger.warn("NPC template creation conflict for #{npc_key}: #{e.message}")
@@ -201,6 +216,41 @@ class TileNpc < ApplicationRecord
     end
 
     Rails.logger.error("Failed to find or create NPC template for #{npc_key} after retries")
+    nil
+  end
+
+  def sync_template_spawn_metadata(template, npc_data)
+    additions = template_spawn_metadata(npc_data).compact
+    missing = additions.except(*template.metadata.keys)
+    return if missing.empty?
+
+    template.update!(metadata: template.metadata.merge(missing))
+  end
+
+  def template_spawn_metadata(npc_data)
+    {
+      "biome" => biome,
+      "health" => npc_data[:hp] || 100,
+      "base_damage" => npc_data[:damage] || 10,
+      "xp_reward" => npc_data[:xp] || 10,
+      "loot_table" => npc_data[:loot] || [],
+      "spawn_chance" => npc_data[:spawn_chance],
+      "respawn_seconds" => npc_data[:respawn_seconds],
+      "respawn_variance_seconds" => npc_data[:respawn_variance_seconds]
+    }.merge((npc_data[:metadata] || {}).deep_stringify_keys)
+  end
+
+  def positive_metadata_integer(key)
+    value = metadata_integer(key)
+    value if value&.positive?
+  end
+
+  def metadata_integer(key)
+    value = metadata&.dig(key)
+    return if value.blank?
+
+    Integer(value)
+  rescue ArgumentError, TypeError
     nil
   end
 end

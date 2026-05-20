@@ -26,6 +26,8 @@ class NpcTemplate < ApplicationRecord
   include Npc::CombatStats
   include Npc::Combatable
 
+  DEFAULT_RESPAWN_SECONDS = 30.minutes.to_i
+  DEFAULT_RESPAWN_VARIANCE_SECONDS = 5.minutes.to_i
   ROLES = %w[quest_giver vendor trainer guard innkeeper banker auctioneer crafter hostile lore arena_bot friendly].freeze
 
   validates :name, presence: true, uniqueness: true
@@ -218,6 +220,42 @@ class NpcTemplate < ApplicationRecord
     metadata&.dig("arena_rooms") || []
   end
 
+  def spawn_rarity
+    configured_spawn_rarity ||
+      difficulty_rating.to_s
+  end
+
+  def configured_spawn_rarity
+    metadata&.dig("spawn_rarity").presence ||
+      metadata&.dig("rarity").presence
+  end
+
+  def spawn_weight
+    configured_spawn_weight ||
+      1
+  end
+
+  def configured_spawn_weight
+    positive_metadata_integer("spawn_weight") ||
+      positive_metadata_integer("spawn_chance")
+  end
+
+  def respawn_seconds
+    configured_respawn_seconds ||
+      DEFAULT_RESPAWN_SECONDS
+  end
+
+  def configured_respawn_seconds
+    positive_metadata_integer("respawn_seconds") ||
+      positive_metadata_integer("spawn_respawn_seconds")
+  end
+
+  def respawn_variance_seconds
+    metadata_integer("respawn_variance_seconds") ||
+      metadata_integer("spawn_respawn_variance_seconds") ||
+      DEFAULT_RESPAWN_VARIANCE_SECONDS
+  end
+
   # Get NPC avatar emoji for display (legacy, for backward compatibility)
   #
   # @return [String] emoji avatar
@@ -255,5 +293,21 @@ class NpcTemplate < ApplicationRecord
   # @return [String] full asset path
   def avatar_image_path
     "npc/#{avatar_image}"
+  end
+
+  private
+
+  def positive_metadata_integer(key)
+    value = metadata_integer(key)
+    value if value&.positive?
+  end
+
+  def metadata_integer(key)
+    value = metadata&.dig(key)
+    return if value.blank?
+
+    Integer(value)
+  rescue ArgumentError, TypeError
+    nil
   end
 end

@@ -128,7 +128,10 @@ module Game
       def find_or_create_template(npc_data)
         # Try to find existing template
         template = NpcTemplate.find_by(npc_key: npc_data[:key])
-        return template if template
+        if template
+          sync_template_spawn_metadata(template, npc_data)
+          return template
+        end
 
         # Create new template
         NpcTemplate.create!(
@@ -137,18 +140,33 @@ module Game
           role: npc_data[:role] || "hostile",
           level: npc_data[:level] || 1,
           dialogue: npc_data[:dialogue] || "...",
-          metadata: {
-            biome: determine_biome,
-            health: npc_data[:hp] || 100,
-            base_damage: npc_data[:damage] || 10,
-            xp_reward: npc_data[:xp] || 10,
-            loot_table: npc_data[:loot] || [],
-            description: npc_data.dig(:metadata, :description)
-          }.merge(npc_data[:metadata] || {})
+          metadata: template_spawn_metadata(npc_data)
         )
       rescue ActiveRecord::RecordInvalid => e
         Rails.logger.error("Failed to create NPC template for #{npc_data[:key]}: #{e.message}")
         nil
+      end
+
+      def sync_template_spawn_metadata(template, npc_data)
+        additions = template_spawn_metadata(npc_data).compact
+        missing = additions.except(*template.metadata.keys)
+        return if missing.empty?
+
+        template.update!(metadata: template.metadata.merge(missing))
+      end
+
+      def template_spawn_metadata(npc_data)
+        {
+          "biome" => determine_biome,
+          "health" => npc_data[:hp] || 100,
+          "base_damage" => npc_data[:damage] || 10,
+          "xp_reward" => npc_data[:xp] || 10,
+          "loot_table" => npc_data[:loot] || [],
+          "spawn_chance" => npc_data[:spawn_chance],
+          "respawn_seconds" => npc_data[:respawn_seconds],
+          "respawn_variance_seconds" => npc_data[:respawn_variance_seconds],
+          "description" => npc_data.dig(:metadata, :description)
+        }.merge((npc_data[:metadata] || {}).deep_stringify_keys)
       end
     end
   end

@@ -112,6 +112,22 @@ RSpec.describe TileResource, type: :model do
       expect(resource.respawns_at).to be > Time.current
     end
 
+    it "uses resource template respawn timing when present" do
+      create(
+        :item_template,
+        :material,
+        key: resource.resource_key,
+        name: resource.display_name,
+        enhancement_rules: {"resource_respawn_seconds" => 120}
+      )
+      resource.update!(quantity: 1)
+
+      travel_to Time.zone.local(2025, 1, 15, 12, 0, 0) do
+        resource.harvest!(character)
+        expect(resource.respawns_at).to eq(120.seconds.from_now)
+      end
+    end
+
     it "returns 0 for unavailable resources" do
       resource = create(:tile_resource, :depleted)
       expect(resource.harvest!(character)).to eq(0)

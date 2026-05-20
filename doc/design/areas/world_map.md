@@ -20,6 +20,12 @@ Observed Neverlands behavior:
 - the browser shows a cursor animation and countdown during movement;
 - local presence refreshes after movement completion;
 - contextual buttons such as `Войти` appear from the current tile state.
+- outdoor tiles can offer `Оглядеться`, which is a local herb/resource search
+  action backed by the alchemy/resource AJAX path;
+- local outdoor actions can be interrupted by bot ambushes and hand the player
+  into the normal fight screen;
+- after outdoor bot combat is finished, the player returns to the same outdoor
+  coordinate with fresh action tokens.
 
 ## Screen Model
 
@@ -58,7 +64,7 @@ The map can offer:
 - character profile;
 - inventory;
 - enter city/building;
-- look around;
+- look for herbs/local resources (`Оглядеться`);
 - gather;
 - fish;
 - dig;
@@ -68,6 +74,9 @@ The map can offer:
 - local NPC dialogue.
 
 The server decides which actions exist for the current finalized location.
+`Оглядеться` should not be implemented as generic flavor text. In the source it
+calls the resource/alchemy action pipeline and may return a resource result,
+timer/message state, forced refresh, or bot-combat handoff.
 
 ## Rules
 
@@ -113,7 +122,10 @@ Pipeline for every world map request:
 3. Resolve current tile state.
 4. Materialize any generated resource or NPC before rendering it.
 5. Build movement offers and contextual action offers.
-6. Render only the action offers returned by the server.
+6. Before completing a mutating outdoor action, evaluate source-backed hostile
+   encounter rules for the current tile.
+7. Render only the action offers returned by the server, or hand off to combat
+   if the accepted action triggered an ambush.
 
 Suggested action-offer fields:
 
@@ -150,6 +162,25 @@ Validation rules:
 - offers are cancelled/reissued when the authoritative map state changes;
 - generated NPC/resource state is materialized before any offer is issued;
 - accepted actions write a result row or status update for audit and replay.
+- if an accepted outdoor action triggers a hostile NPC attack, the original
+  action does not silently complete; the response becomes a combat state and
+  return context points back to the same world coordinate.
+
+## Outdoor Ambush Handoff
+
+The May 20, 2026 outdoor capture near `Окрестность Форпоста` showed both
+`Оглядеться` and `Инвентарь` requests returning or refreshing into bot combat
+against two `Чумная крыса` NPCs. The fight used the same combat client and
+finish-result step as arena fights, then returned to `m_1001_999`.
+
+Design rules:
+
+- hostile NPC checks belong in the server-side outdoor action pipeline;
+- ambushes are not a separate mini-game or modal;
+- the fight stores the source context needed to return to the same world cell;
+- profile/location state should show the active fight while combat is active
+  and clear it after the finish action;
+- local presence remains the current outdoor room after return.
 
 ## Area Graph
 

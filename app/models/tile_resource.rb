@@ -1,10 +1,8 @@
 # frozen_string_literal: true
 
 # TileResource tracks resource spawns at specific map tiles.
-# Resources respawn after a cooldown period (default 30 minutes).
-# Different biomes spawn different resource types.
-# Biome modifiers: forest −5m, mountain +10m, swamp −2m.
-# Rarity modifiers from metadata["rarity"]: rare +15m, epic +30m.
+# Resource/item template metadata defines spawn timing; tile instances store
+# concrete depleted/respawn state.
 #
 # Usage:
 #   TileResource.at_tile(zone_name, x, y) # Find resource at tile
@@ -80,7 +78,7 @@ class TileResource < ApplicationRecord
       base_quantity: new_resource[:quantity] || 1,
       respawns_at: nil,
       harvested_by: nil,
-      metadata: new_resource[:metadata] || {}
+      metadata: resource_metadata(new_resource)
     )
   end
 
@@ -98,17 +96,8 @@ class TileResource < ApplicationRecord
   private
 
   def respawn_duration
-    base = RESPAWN_SECONDS
-
-    # Biome modifiers
-    case biome
-    when "forest"
-      base -= 5.minutes.to_i # Faster in forests
-    when "mountain"
-      base += 10.minutes.to_i # Slower in mountains
-    when "swamp"
-      base -= 2.minutes.to_i
-    end
+    base = template_respawn_seconds
+    base += Game::World::BiomeResourceConfig.respawn_modifier(biome || "plains").to_i
 
     # Rarity modifiers (from metadata)
     case metadata&.dig("rarity")
@@ -118,6 +107,38 @@ class TileResource < ApplicationRecord
       base += 30.minutes.to_i
     end
 
-    base.clamp(10.minutes.to_i, 2.hours.to_i)
+    base.clamp(1, 24.hours.to_i)
+  end
+
+  def template_respawn_seconds
+    metadata_respawn_seconds ||
+      item_template&.resource_respawn_seconds ||
+      RESPAWN_SECONDS
+  end
+
+  def metadata_respawn_seconds
+    positive_metadata_integer("respawn_seconds") ||
+      positive_metadata_integer("resource_respawn_seconds")
+  end
+
+  def resource_metadata(resource_data)
+    {
+      "respawn_seconds" => resource_data[:respawn_seconds],
+      "spawn_chance" => resource_data[:spawn_chance]
+    }.compact.merge((resource_data[:metadata] || {}).deep_stringify_keys)
+  end
+
+  def positive_metadata_integer(key)
+    value = metadata_integer(key)
+    value if value&.positive?
+  end
+
+  def metadata_integer(key)
+    value = metadata&.dig(key)
+    return if value.blank?
+
+    Integer(value)
+  rescue ArgumentError, TypeError
+    nil
   end
 end

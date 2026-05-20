@@ -100,7 +100,8 @@ Movement follows the Neverlands-style contract:
 - reload during travel resumes from server state;
 - completion updates authoritative position and returns the next map state;
 - completion also refreshes context buttons such as character, inventory,
-  enter, look around, gather, fish, dig, drink, quest, or combat actions.
+  enter, `Оглядеться` resource search, gather, fish, dig, drink, quest, or
+  combat actions.
 
 The first implementation does not need to copy Neverlands' exact `GO@...`
 string protocol. JSON or Turbo Streams are acceptable if they preserve the same
@@ -221,7 +222,7 @@ may offer buttons for:
 - character/profile;
 - inventory;
 - enter/exit building or location;
-- look around;
+- `Оглядеться` herb/local resource search;
 - gather resource;
 - fish;
 - dig;

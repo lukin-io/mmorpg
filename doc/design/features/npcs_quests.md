@@ -41,6 +41,8 @@ Core:
 - NPC role defines default actions.
 - Dialogue can branch but should stay functional and concise.
 - Hostile NPCs can start PvE combat.
+- Outdoor hostile NPCs can interrupt normal tile actions and hand the player
+  into combat from the current coordinate.
 - Arena training NPCs can appear as normal arena application participants and
   resolve through the same combat rules as player and team fights after the
   player accepts the open side.
@@ -77,6 +79,33 @@ search result of `Вещь «Щепки»`; inventory then showed `Щепки` a
 rows. The drop should flow through combat result -> loot check -> inventory
 item/resource, then feed crafting or shop economy rules.
 
+The outdoor rat-tail case belongs here as well. The May 20 capture near
+`Окрестность Форпоста` entered two bot-ambush fights against paired
+`Чумная крыса` NPCs. In that capture, each defeated rat passed its random
+bot-specific loot roll and produced a separate search result line of
+`Вещь «Крысиный хвост»`. In the first fight, the first rat was searched before
+the second rat was defeated, proving that per-NPC loot checks can happen during
+a multi-NPC fight and not only after the fight-level victory line.
+
+## Outdoor Hostile NPCs
+
+Outdoor hostile NPCs are tile-local combatants. They can be presented as
+visible actions later, but the captured source behavior also allows them to
+attack as an interruption during normal outdoor actions.
+
+Design rules:
+
+- NPC availability and hostile attack eligibility are resolved from current
+  tile state;
+- a hostile check can run before a mutating outdoor action completes;
+- a bot attack creates a normal fight with side/team membership, not a special
+  wild-combat shortcut;
+- a fight can include multiple NPCs on one side;
+- when one NPC in a multi-NPC fight loses, the fight can continue against the
+  remaining NPCs;
+- each defeated loot-bearing NPC can run its own bot-specific random loot-table
+  check.
+
 ## Quest Rules
 
 - Quests have objective, current progress, completion condition, and reward.
@@ -103,6 +132,8 @@ Starter quests should teach:
 
 - NPC template;
 - NPC instance/location;
+- hostile encounter rule;
+- spawned tile NPC;
 - loot table;
 - drop result;
 - dialogue node;

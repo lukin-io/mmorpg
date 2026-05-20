@@ -3,6 +3,25 @@
 require "rails_helper"
 
 RSpec.describe NpcTemplate, type: :model do
+  describe "spawn timing metadata" do
+    it "exposes respawn timing from template metadata" do
+      npc = build(
+        :npc_template,
+        metadata: {
+          "rarity" => "rare",
+          "spawn_chance" => "7",
+          "respawn_seconds" => "7200",
+          "respawn_variance_seconds" => "0"
+        }
+      )
+
+      expect(npc.spawn_rarity).to eq("rare")
+      expect(npc.spawn_weight).to eq(7)
+      expect(npc.respawn_seconds).to eq(7200)
+      expect(npc.respawn_variance_seconds).to eq(0)
+    end
+  end
+
   describe "concerns integration" do
     let(:hostile_npc) { create(:npc_template, level: 10, role: "hostile") }
     let(:arena_bot) { create(:npc_template, level: 10, role: "arena_bot") }

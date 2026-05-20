@@ -118,6 +118,20 @@ RSpec.describe TileNpc, type: :model do
       expect(npc.respawns_at).to be_between(25.minutes.from_now, 35.minutes.from_now)
     end
 
+    it "uses NPC template respawn timing when present" do
+      npc.npc_template.update!(
+        metadata: {
+          "respawn_seconds" => 120,
+          "respawn_variance_seconds" => 0
+        }
+      )
+
+      travel_to Time.zone.local(2025, 1, 15, 12, 0, 0) do
+        npc.defeat!(character)
+        expect(npc.respawns_at).to eq(120.seconds.from_now)
+      end
+    end
+
     it "returns false for already defeated NPCs" do
       npc = create(:tile_npc, :defeated)
       expect(npc.defeat!(character)).to be false

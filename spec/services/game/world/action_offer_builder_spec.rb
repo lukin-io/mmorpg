@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "rails_helper"
+require "ostruct"
 
 RSpec.describe Game::World::ActionOfferBuilder do
   let(:zone) { create(:zone, name: "Offer Plains", biome: "plains", width: 20, height: 20) }

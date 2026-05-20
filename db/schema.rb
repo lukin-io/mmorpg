@@ -1325,20 +1325,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_120000) do
     t.index ["zone_id"], name: "index_spawn_points_on_zone_id"
   end
 
-  create_table "spawn_schedules", force: :cascade do |t|
-    t.boolean "active", default: true, null: false
-    t.bigint "configured_by_id", null: false
-    t.datetime "created_at", null: false
-    t.jsonb "metadata", default: {}, null: false
-    t.string "monster_key", null: false
-    t.string "rarity_override"
-    t.string "region_key", null: false
-    t.integer "respawn_seconds", default: 60, null: false
-    t.datetime "updated_at", null: false
-    t.index ["configured_by_id"], name: "index_spawn_schedules_on_configured_by_id"
-    t.index ["region_key", "monster_key"], name: "index_spawn_schedules_on_region_key_and_monster_key", unique: true
-  end
-
   create_table "tile_buildings", force: :cascade do |t|
     t.boolean "active", default: true, null: false
     t.string "building_key", null: false
@@ -1697,7 +1683,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_120000) do
   add_foreign_key "quests", "quest_chapters"
   add_foreign_key "recipes", "professions"
   add_foreign_key "spawn_points", "zones"
-  add_foreign_key "spawn_schedules", "users", column: "configured_by_id"
   add_foreign_key "tile_buildings", "zones", column: "destination_zone_id"
   add_foreign_key "tile_npcs", "characters", column: "defeated_by_id"
   add_foreign_key "tile_npcs", "npc_templates"

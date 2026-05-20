@@ -83,6 +83,17 @@ class ItemTemplate < ApplicationRecord
     equipment? && EQUIPMENT_SLOTS.include?(equipment_slot)
   end
 
+  def resource_respawn_seconds
+    positive_template_integer("resource_respawn_seconds") ||
+      positive_template_integer("respawn_seconds")
+  end
+
+  def resource_spawn_weight
+    positive_template_integer("resource_spawn_weight") ||
+      positive_template_integer("spawn_weight") ||
+      positive_template_integer("spawn_chance")
+  end
+
   # Get the equipment slot for this item
   # Maps the `slot` column to standard equipment slot names
   #
@@ -95,6 +106,23 @@ class ItemTemplate < ApplicationRecord
   end
 
   private
+
+  def positive_template_integer(key)
+    value = template_integer(key)
+    value if value&.positive?
+  end
+
+  def template_integer(key)
+    value = enhancement_rules&.dig(key) ||
+      enhancement_rules&.dig("resource", key) ||
+      requirements&.dig(key) ||
+      requirements&.dig("resource", key)
+    return if value.blank?
+
+    Integer(value)
+  rescue ArgumentError, TypeError
+    nil
+  end
 
   def premium_stat_cap
     return unless premium?

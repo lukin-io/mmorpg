@@ -132,7 +132,7 @@ module Game
           resource_type: resource_data[:type],
           quantity: resource_data[:quantity] || 1,
           base_quantity: resource_data[:quantity] || 1,
-          metadata: resource_data[:metadata] || {}
+          metadata: resource_metadata(resource_data)
         )
       rescue ActiveRecord::RecordNotUnique
         # Race condition - another process created the resource
@@ -152,6 +152,13 @@ module Game
         # Fall back to zone biome
         zone_record = Zone.find_by(name: @zone)
         zone_record&.biome || "plains"
+      end
+
+      def resource_metadata(resource_data)
+        {
+          "respawn_seconds" => resource_data[:respawn_seconds],
+          "spawn_chance" => resource_data[:spawn_chance]
+        }.compact.merge((resource_data[:metadata] || {}).deep_stringify_keys)
       end
 
       def add_to_inventory(tile_resource, quantity)
@@ -174,11 +181,11 @@ module Game
       def find_or_create_item_template(tile_resource)
         # First try to find by key
         template = ItemTemplate.find_by(key: tile_resource.resource_key)
-        return template if template
+        return sync_resource_template_rules(template, tile_resource) if template
 
         # Try by name
         template = ItemTemplate.find_by(name: tile_resource.display_name)
-        return template if template
+        return sync_resource_template_rules(template, tile_resource) if template
 
         # Create a new item template for this resource
         ItemTemplate.create!(
@@ -189,11 +196,28 @@ module Game
           rarity: tile_resource.metadata&.dig("rarity") || "common",
           weight: resource_weight(tile_resource.resource_type),
           stack_limit: 99,
-          stat_modifiers: {}
+          stat_modifiers: {},
+          enhancement_rules: resource_template_rules(tile_resource)
         )
       rescue ActiveRecord::RecordInvalid => e
         Rails.logger.error("Failed to create item template for #{tile_resource.resource_key}: #{e.message}")
         nil
+      end
+
+      def sync_resource_template_rules(template, tile_resource)
+        rules = resource_template_rules(tile_resource)
+        missing = rules.except(*template.enhancement_rules.keys)
+        return template if missing.empty?
+
+        template.update!(enhancement_rules: template.enhancement_rules.merge(missing))
+        template
+      end
+
+      def resource_template_rules(tile_resource)
+        {
+          "resource_respawn_seconds" => tile_resource.metadata&.dig("respawn_seconds"),
+          "resource_spawn_weight" => tile_resource.metadata&.dig("spawn_chance")
+        }.compact
       end
 
       def resource_weight(resource_type)

@@ -15,6 +15,7 @@ presence, turn combat, inventory weight, shops, and social chat.
 | Player profile capture | Player shell, vitals strip, equipment slots, trainable `Умения`, boolean `Навыки` |
 | Arena and combat captures | Arena rooms, applications, NPC training rows, city-entry context, public `[ в бою ]` profile link, AP/body-part combat, magic opener, equipment deltas, turn submit contract, logs, result step, NPC drop check |
 | Public fight log captures | `logs.fcg?fid=<id>` pages, JavaScript log arrays, shared participant renderer, paginated public logs, aggregate statistics view |
+| Outdoor NPC/resource capture | Outdoor `Оглядеться` resource search, bot ambush handoff, multi-NPC rat fights, per-NPC loot checks, outdoor return routing |
 | Chat and presence reference | Chat frame, player list, message styles, username actions |
 | Skill and perk reference | Stat allocation, numeric skills, boolean perks, effects |
 | Neverlands wiki dungeon page | Dungeon floor objectives, movement resource, hidden rooms, bosses/chests, portal seals, timers, ratings |
@@ -30,14 +31,19 @@ differ, prefer the current wiki.
 - The server offers the current actions. The browser renders those actions.
 - Movement is contextual. Wilderness movement is timed; city movement is
   immediate node navigation.
+- Outdoor `Оглядеться` is a local herb/resource search action. It can return a
+  forced refresh that hands the player into another state such as bot combat.
 - Local presence matters. Movement and city navigation refresh nearby players.
 - The UI is dense and utilitarian, not a landing page.
 - Combat is turn-based and explicit: attacks, blocks, body parts, AP, logs.
-- Fight logs are durable public fight artifacts keyed by fight id; NPC, player,
-  and team fights use the same log mechanism, with a separate statistics view
-  derived from the same fight id.
+- Fight logs are fight-id keyed artifacts. Public `logs.fcg` pages and
+  statistics are the expected behavior for completed NPC, player, and team
+  fights; an empty response from a low-level rat capture is treated as a
+  source-side bug, not a separate local design rule.
 - Arena training opponents are normal NPC application participants; their drops
   are NPC loot-table results, not special arena payouts.
+- Outdoor hostile NPCs use the same combat screen and result/finish loop as
+  arena NPC fights. Local actions can be interrupted by bot ambushes.
 - Public player info can show a current fight/log link while keeping the
   character's city and sublocation visible.
 - Shops are entered through city buildings, then render category/item lists.

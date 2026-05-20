@@ -42,19 +42,20 @@ module Game
       end
 
       def spawn_entries_for(region_key)
-        overrides = SpawnSchedule.active.where(region_key: region_key.to_s).index_by(&:monster_key)
+        profiles = monster_tables.fetch(region_key.to_s, [])
+        templates = NpcTemplate.where(npc_key: profiles.map(&:key)).index_by(&:npc_key)
 
-        monster_tables.fetch(region_key.to_s, []).map do |profile|
-          schedule = overrides[profile.key]
+        profiles.map do |profile|
+          template = templates[profile.key]
           {
             "monster_key" => profile.key,
-            "name" => profile.name,
+            "name" => template&.name || profile.name,
             "kind" => "monster",
-            "rarity" => schedule&.rarity_override || profile.rarity,
-            "loot_table" => profile.loot_table,
-            "difficulty" => profile.rarity,
-            "weight" => profile.weight,
-            "respawn_seconds" => schedule&.respawn_seconds || profile.respawn_seconds
+            "rarity" => template&.configured_spawn_rarity || profile.rarity,
+            "loot_table" => template&.loot_table.presence || profile.loot_table,
+            "difficulty" => template&.configured_spawn_rarity || profile.rarity,
+            "weight" => template&.configured_spawn_weight || profile.weight,
+            "respawn_seconds" => template&.configured_respawn_seconds || profile.respawn_seconds
           }
         end
       end

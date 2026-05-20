@@ -14,6 +14,8 @@ screen.
 - Canonical combat rules: `doc/design/features/combat.md`
 - Arena and NPC training combat entry: `doc/design/areas/arena.md`
 - NPC behavior and loot expectations: `doc/design/features/npcs_quests.md`
+- Outdoor resource and bot-ambush follow-up:
+  `doc/design/reference/neverlands_live_outdoor_npc_resource.md`
 
 Keep this file as an observation log. Move reusable rules into `doc/design/`,
 and do not store live movement tokens or session values in tracked text.
@@ -558,6 +560,12 @@ Movement can change `mapbt`. In the observed move:
 
 This means movement is also the context-refresh boundary for tile-local
 actions.
+
+The May 20, 2026 outdoor follow-up confirmed that `look` / `Оглядеться` means
+looking for herbs or local resources. In that capture, the resource-search
+request returned `F5`, which forced a `main.php` reload into a bot-attack fight.
+So `Оглядеться` belongs to the resource/action pipeline, not a generic
+description popup.
 
 ## Other AJAX Response Cases Affecting Movement
 

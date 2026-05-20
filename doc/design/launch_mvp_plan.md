@@ -25,6 +25,8 @@ server-authoritative action model.
   surface.
 - Wild cell actions are tied to the current coordinate and expire when the
   player moves or context changes.
+- Outdoor `Оглядеться` is a resource-search action, and any outdoor local
+  action can be interrupted by source-backed hostile NPC rules.
 - Legacy or unrelated systems should not be part of the MVP path unless they
   directly support one of the four pillars.
 
@@ -166,8 +168,9 @@ Required behavior:
   same combat resolver and turn package, with NPC AI submitting actions;
 - combat UI supports AP, body-part attacks, one active block, magic/action
   slots, HP/MP, combat log, waiting state, timeout, and finish result;
-- every fight writes a durable public log keyed by the fight id, with paginated
-  event pages and a `stat=1` aggregate statistics view;
+- every fight writes a durable event stream keyed by the fight id, with public
+  paginated log pages and `stat=1` aggregate statistics rendered from that same
+  stream;
 - public profile fight links, active fight screens, completed result screens,
   and spectator/log pages all resolve through the same fight-log identity;
 - training NPC drops, such as mannequin wood chips, use the same NPC loot-check
@@ -197,8 +200,10 @@ Required behavior:
   starter profile, `45/65` physical costs, injected magic selector options,
   automatic loot check, and explicit finish/result step.
 - The 2026-05-20 public log captures confirm the log/statistics contract:
-  fight id URL, paginated log events, shared participant renderer, and a separate
-  aggregate stats view from the same fight.
+  fight id URL, paginated log events, shared participant renderer, and a
+  separate aggregate stats view from the same fight. The empty public response
+  from the outdoor rat capture is treated as a source bug because the in-frame
+  fight log had the complete event stream.
 
 ### Remaining Design Detail
 
@@ -210,9 +215,9 @@ Required behavior:
   old wrapper that cannot follow that contract should be removed.
 - Magic and special action behavior needs launch-level balancing and UI
   clarity.
-- Public combat logs now use the canonical event schema for arena fights.
-  Expand coverage only by adding missing structured fields to this layer, not
-  by creating a second log format.
+- Combat logs now use the canonical event schema for arena fights. Expand
+  coverage only by adding missing structured fields to this layer, not by
+  creating a second log format.
 - Fight statistics should continue to be derived from structured events and
   cached only as an optimization.
 - Arena should keep global route shortcuts out of the primary UX path.
@@ -249,6 +254,8 @@ Required behavior:
 - resource actions are tied to the current cell and action key;
 - NPC actions are tied to the current cell and action key;
 - hostile NPCs can attack or be attacked from the wild cell;
+- hostile NPC checks can interrupt normal outdoor actions before those actions
+  complete;
 - wild NPC combat uses the shared turn package, body-part rules, AP, blocks,
   magic/action slots, combat log, and result-finish step;
 - after a wild fight, the player returns to the world/city movement context,
@@ -260,6 +267,8 @@ Required behavior:
 ### Build Guidance
 
 - Treat resources, NPCs, buildings, and action offers as tile-local context.
+- Treat `Оглядеться` as the source-backed herb/resource search action.
+- Evaluate hostile NPC interruption before completing mutating outdoor actions.
 - NPC and quest design is documented in
   `doc/design/features/npcs_quests.md`.
 - NPC fights should use the same resolver as player/team fights rather than a
@@ -270,6 +279,8 @@ Required behavior:
 - Wild NPC ambush and manual attack should be wired through the same active
   combat UI and finish-result contract as arena NPC fights.
 - Per-cell resource and NPC action offers need complete system coverage.
+- Resource-search response shapes need coverage for resource result, timer or
+  message state, forced refresh, and bot-combat handoff.
 - Loot checks after wild NPC defeat need to be documented and implemented as a
   normal result step.
 - Wild return routing needs to preserve the exact movement/city context the
@@ -298,7 +309,7 @@ login
 | Person | Character, vitals, stats, skills, inventory/equipment actions, requirements, durability, combat breakdown | item seeds, slot rules, repair/breakage UX, level-up UX, recovery, cross-system tests |
 | Movement | persisted wilderness travel, movement commands, action offers, tile state resolver | city-hotspot action unification, presence refresh, lock polish |
 | Arena | city entry, room/application UX, NPC training, live player-side waiting, finish result | formula tuning, navigation cleanup, magic/special balancing |
-| Combat | shared resolver, AP/body parts/blocks, durable public logs/statistics, NPC AI response | one resolver across all fight entry points, canonical log event schema, more balance coverage |
+| Combat | shared resolver, AP/body parts/blocks, durable fight events, public logs/statistics, NPC AI response | one resolver across all fight entry points, canonical log event schema, more balance coverage |
 | Wild cells | tile resources, tile NPCs, contextual action offers | shared combat handoff, loot result step, return routing |
 
 ## Neverlands Coverage Checklist
@@ -323,8 +334,8 @@ without maintaining a second planning document.
 | Wilderness movement | Server-authored destination offers, short-lived action keys, accepted travel state, starter adjacent travel timing, diagonal cost, reload/finalize behavior, and local presence refresh. | Implement movement offers, accepted travel, completion, stale-offer cancellation, and encumbrance-aware travel time. |
 | City movement | Immediate node-to-node city navigation through hotspots and building entry/return actions. | Build city action offers parallel to world tile offers. |
 | Tile-local action offers | Every mutating world/city/building action is offered by the server and accepted by action key. | Use the same offer discipline for movement, gather, NPC, building, shop, quest, trainer, buy, sell, and timed local actions. |
-| Gathering and resource nodes | Timed resource actions, movement locks, tool/skill/terrain/quest requirements, visible depletion, and deterministic respawn. | Add gather/fish/dig/drink as first-class local offers with action timers and visible requirements. |
-| NPCs and quests | NPCs can belong to tiles, city nodes, buildings, or arena applications; tutorial and story objectives are tied to real action offers; loot tables define NPC drops. | Author a starter chain teaching move, enter city, enter shop, inventory, combat, skill allocation, gather, and mannequin wood-chip drops. |
+| Gathering and resource nodes | `Оглядеться` herb/resource search, timed resource actions, movement locks, tool/skill/terrain/quest requirements, visible depletion, and deterministic respawn. | Add look/gather/fish/dig/drink as first-class local offers with action timers, visible requirements, and hostile-interrupt handoff. |
+| NPCs and quests | NPCs can belong to tiles, city nodes, buildings, or arena applications; hostile outdoor NPCs can interrupt local actions; tutorial and story objectives are tied to real action offers; loot tables define NPC drops. | Author a starter chain teaching move, enter city, enter shop, inventory, combat, skill allocation, gather, mannequin wood-chip drops, and wild rat-tail drops. |
 | Combat | One AP/body-part/block/log/result contract for player, team, arena NPC, wild NPC, and later dungeon fights, including physical and magic action variants. | Build the shared turn UI, combat profile, resolver, combat log, NPC response, live-player waiting, timeout, NPC loot check, and finish-result step. |
 | Arena combat | Room/application lifecycle feeds the shared combat contract and returns to arena/city context after finish. | Bind NPC training, player, and team applications to the same combat profile and result flow. |
 | Character vitals | Persistent HP/MP/AP values visible in the gameplay shell, with regen timing and defeat/recovery consequences. | Make vitals a shell-level component and document exact regen formulas. |
