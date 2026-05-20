@@ -11,7 +11,7 @@ module PlayerProfileHelper
       return safe_join([
         ERB::Util.html_escape(position.zone&.name || "Unknown"),
         " [ ",
-        link_to("in combat", arena_match_path(active_match), class: "nl-profile-fight-link"),
+        link_to("in combat", public_fight_log_path(active_match), class: "nl-profile-fight-link"),
         " ]",
         tag.br,
         ERB::Util.html_escape(sublocation)

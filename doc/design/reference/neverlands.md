@@ -1,7 +1,8 @@
 # Neverlands Reference
 
-Neverlands is the design inspiration for this project. The goal is not a
-one-to-one clone. The goal is to preserve the browser MMORPG feel: compact UI,
+Neverlands is the design source for this project. The goal is not to copy
+source code, URLs, assets, names, or copyrighted content; the goal is to keep
+the observed game mechanics and browser MMORPG feel: compact UI,
 server-authored actions, deliberate map movement, city image hotspots, local
 presence, turn combat, inventory weight, shops, and social chat.
 
@@ -13,7 +14,7 @@ presence, turn combat, inventory weight, shops, and social chat.
 | City movement capture | City entry, city node navigation, shop entry, building return flow |
 | Player profile capture | Player shell, vitals strip, equipment slots, trainable `Умения`, boolean `Навыки` |
 | Arena and combat captures | Arena rooms, applications, NPC training rows, city-entry context, public `[ в бою ]` profile link, AP/body-part combat, magic opener, equipment deltas, turn submit contract, logs, result step, NPC drop check |
-| Public fight log captures | `logs.fcg?fid=<id>` pages, JavaScript log arrays, shared NPC/PvP renderer, paginated public logs, aggregate statistics view |
+| Public fight log captures | `logs.fcg?fid=<id>` pages, JavaScript log arrays, shared participant renderer, paginated public logs, aggregate statistics view |
 | Chat and presence reference | Chat frame, player list, message styles, username actions |
 | Skill and perk reference | Stat allocation, numeric skills, boolean perks, effects |
 | Neverlands wiki dungeon page | Dungeon floor objectives, movement resource, hidden rooms, bosses/chests, portal seals, timers, ratings |
@@ -32,9 +33,9 @@ differ, prefer the current wiki.
 - Local presence matters. Movement and city navigation refresh nearby players.
 - The UI is dense and utilitarian, not a landing page.
 - Combat is turn-based and explicit: attacks, blocks, body parts, AP, logs.
-- Fight logs are durable public fight artifacts keyed by fight id; NPC/PvE and
-  PvP use the same log mechanism, with a separate statistics view derived from
-  the same fight id.
+- Fight logs are durable public fight artifacts keyed by fight id; NPC, player,
+  and team fights use the same log mechanism, with a separate statistics view
+  derived from the same fight id.
 - Arena training opponents are normal NPC application participants; their drops
   are NPC loot-table results, not special arena payouts.
 - Public player info can show a current fight/log link while keeping the
@@ -58,7 +59,7 @@ differ, prefer the current wiki.
 ## Translation Rule
 
 When a Neverlands capture shows a concrete behavior, translate it into this
-project's domain language:
+project's Rails domain language without changing the mechanic:
 
 ```text
 live observation -> design rule -> Rails implementation

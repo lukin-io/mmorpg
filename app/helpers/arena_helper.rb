@@ -133,6 +133,10 @@ module ArenaHelper
     arena_match_status_badge(match.status)
   end
 
+  def arena_match_combat_log(match)
+    Arena::CombatLogPresenter.rows_for(match)
+  end
+
   # Full application display with all settings
   def application_settings_display(application)
     parts = []

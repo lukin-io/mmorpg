@@ -26,7 +26,7 @@ class ArenaMatchesController < ApplicationController
   # GET /arena_matches/:id/log
   def log
     authorize @arena_match, :show?
-    @combat_log = @arena_match.metadata["combat_log"] || []
+    @combat_log = Arena::CombatLogPresenter.rows_for(@arena_match)
 
     respond_to do |format|
       format.html { render partial: "arena_matches/combat_log", locals: {log: @combat_log} }
@@ -172,6 +172,7 @@ class ArenaMatchesController < ApplicationController
       ended_at: @arena_match.ended_at&.iso8601,
       duration: @arena_match.duration,
       current_user_combat: current_user_combat_payload,
+      public_log_path: @arena_match.public_log_path,
       participants: @participations.map do |p|
         {
           character_id: p.npc? ? "npc-#{p.npc_template_id}" : p.character_id,

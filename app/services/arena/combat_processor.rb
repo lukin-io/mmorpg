@@ -92,7 +92,7 @@ module Arena
 
       combat_profile_for(character)
 
-      if action_type.to_sym == :turn && !npc_fight?
+      if action_type.to_sym == :turn && player_turn_commit_required?
         return process_player_turn_submission(
           character,
           target: params[:target],
@@ -137,16 +137,15 @@ module Arena
         deduct_ap(character, ap_cost)
         broadcaster.broadcast_ap_update(character, get_character_ap(character), combat_ap_limit_for(character))
 
-        # Process NPC turn if this is an NPC fight
-        if npc_fight? && !should_end?
-          process_npc_turn_after_delay
+        if npc_response_required_for?(character) && !should_end?
+          process_npc_turn_after_delay(character)
         end
       end
 
       result
     end
 
-    # Check if this match involves an NPC opponent
+    # Check if this match involves any NPC participant.
     #
     # @return [Boolean] true if match has NPC participant
     def npc_fight?
@@ -154,11 +153,18 @@ module Arena
         match.arena_participations.npcs.exists?
     end
 
+    # Neverlands treats player, team, and NPC fights as the same fight
+    # mechanism. Waiting is required when live player-controlled participants
+    # exist on more than one side, regardless of whether NPCs are also present.
+    def player_turn_commit_required?
+      live_player_participations.map(&:team).uniq.size > 1
+    end
+
     # Process the NPC's turn (called after player action)
     #
     # @return [Result, nil] result of NPC action or nil if no NPC
-    def process_npc_turn
-      npc_participation = match.arena_participations.npcs.first
+    def process_npc_turn(opposing_team: nil)
+      npc_participation = npc_turn_participations(opposing_team:).first
       return nil unless npc_participation
 
       npc = npc_participation.npc_template
@@ -587,12 +593,12 @@ module Arena
         broadcast_npc_action(npc, "miss", nil, 0, body_part:)
         return success(**resolution)
       when :dodge
-        log_entry("dodge", nil, "#{npc.name} dodged #{attacker.name}'s attack (#{body_part})")
+        log_entry("dodge", npc_participation, "#{npc.name} dodged #{attacker.name}'s attack (#{body_part})")
         broadcast_npc_action(npc, "dodge", nil, 0, body_part:)
         return success(**resolution)
       when :blocked
         clear_npc_blocking_state(npc_participation)
-        log_entry("block", nil, "#{npc.name} blocked attack (#{body_part}) from #{attacker.name}")
+        log_entry("block", npc_participation, "#{npc.name} blocked attack (#{body_part}) from #{attacker.name}")
         broadcast_npc_action(npc, "blocked", nil, 0, body_part:)
         return success(**resolution)
       end
@@ -601,7 +607,7 @@ module Arena
       critical = resolution[:critical]
       if resolution[:block_attempted]
         clear_npc_blocking_state(npc_participation)
-        log_entry("block_failed", nil, "#{npc.name} tried to block attack (#{body_part}) from #{attacker.name}, but it broke through")
+        log_entry("block_failed", npc_participation, "#{npc.name} tried to block attack (#{body_part}) from #{attacker.name}, but it broke through")
       end
 
       # Apply damage to NPC
@@ -714,7 +720,7 @@ module Arena
     def handle_npc_defeat(npc_participation, defeated_by: nil)
       npc = npc_participation.npc_template
       npc_participation.update!(result: "defeat", ended_at: Time.current)
-      log_entry("defeat", nil, "#{npc.name} has been defeated!")
+      log_entry("defeat", npc_participation, "#{npc.name} has been defeated!")
       award_npc_loot!(npc, defeated_by) if defeated_by
 
       ActionCable.server.broadcast(
@@ -1263,16 +1269,15 @@ module Arena
     end
 
     def log_entry(entry_type, actor, description)
-      match.metadata ||= {}
-      match.metadata["combat_log"] ||= []
-      match.metadata["combat_log"] << {
-        "type" => entry_type,
-        "timestamp" => Time.current.strftime("%H:%M:%S"),
-        "actor_id" => actor&.id,
-        "actor_name" => actor&.name,
-        "description" => description
-      }
-      match.save!
+      combat_log_recorder.record!(
+        entry_type:,
+        actor:,
+        description:
+      )
+    end
+
+    def combat_log_recorder
+      @combat_log_recorder ||= Arena::CombatLogRecorder.new(match)
     end
 
     # Calculate AP cost for an action
@@ -1593,10 +1598,23 @@ module Arena
     end
 
     # Schedule NPC turn after a brief delay (for UI feedback)
-    def process_npc_turn_after_delay
+    def process_npc_turn_after_delay(character)
       # Process immediately for now, could be async with job
       # Small delay could be added with ActionCable streaming
-      process_npc_turn
+      process_npc_turn(opposing_team: match.arena_participations.find_by(character:)&.team)
+    end
+
+    def npc_response_required_for?(character)
+      return false if player_turn_commit_required?
+
+      team = match.arena_participations.find_by(character:)&.team
+      npc_turn_participations(opposing_team: team).any?
+    end
+
+    def npc_turn_participations(opposing_team: nil)
+      scope = match.arena_participations.npcs.includes(:npc_template)
+      scope = scope.where.not(team: opposing_team) if opposing_team.present?
+      scope.select { |participation| participation.current_hp.positive? }
     end
 
     def process_npc_attack_sequence(npc_participation, target, attacks, base_params = {})
@@ -1643,7 +1661,7 @@ module Arena
 
       case resolution[:outcome]
       when :miss
-        log_entry("miss", nil, "#{npc.name} missed #{target.name} (#{body_part})")
+        log_entry("miss", npc_participation, "#{npc.name} missed #{target.name} (#{body_part})")
         broadcast_npc_action(npc, "miss", target, 0, body_part:)
         return success(**resolution)
       when :dodge
@@ -1671,7 +1689,7 @@ module Arena
 
       # Log and broadcast
       log_type = critical ? "critical" : "damage"
-      log_entry(log_type, nil, "#{npc.name} attacks #{target.name}'s #{body_part} for #{damage} damage#{" (CRITICAL!)" if critical}")
+      log_entry(log_type, npc_participation, "#{npc.name} attacks #{target.name}'s #{body_part} for #{damage} damage#{" (CRITICAL!)" if critical}")
 
       broadcaster.broadcast_vitals_update(target)
       broadcast_npc_action(npc, "attack", target, damage, critical: critical, body_part: body_part)
@@ -1699,7 +1717,7 @@ module Arena
       npc_participation.metadata["block_until"] = block_expires_at.iso8601
       npc_participation.save!
 
-      log_entry("action", nil, "#{npc.name} takes a defensive stance")
+      log_entry("action", npc_participation, "#{npc.name} takes a defensive stance")
       broadcast_npc_action(npc, "defend", nil, 0)
 
       success(defending: true)

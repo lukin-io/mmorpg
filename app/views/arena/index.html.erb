@@ -116,7 +116,7 @@
           <%= match.match_type.humanize %> -
           <%= participation.result.humanize %>,
           <%= time_ago_in_words(match.created_at) %> ago.
-          <%= link_to "log", arena_match_path(match), class: "nl-arena-filter" %>
+          <%= link_to "log", public_fight_log_path(match), class: "nl-arena-filter" %>
         </div>
       <% end %>
     </div>

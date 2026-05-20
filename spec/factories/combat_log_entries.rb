@@ -5,5 +5,10 @@ FactoryBot.define do
     sequence(:sequence) { |n| n }
     message { "Attack landed" }
     payload { {damage: 10} }
+
+    trait :for_arena_match do
+      battle { nil }
+      association :arena_match
+    end
   end
 end

@@ -47,14 +47,11 @@ class ArenaTurnTimeoutJob < ApplicationJob
       return
     end
 
-    # Log the timeout
-    match.metadata ||= {}
-    match.metadata["combat_log"] ||= []
-    match.metadata["combat_log"] << {
-      "type" => "timeout",
-      "timestamp" => Time.current.strftime("%H:%M:%S"),
-      "description" => "Turn #{match.current_turn_number} ended by timeout"
-    }
+    Arena::CombatLogRecorder.new(match).record!(
+      entry_type: "timeout",
+      actor: nil,
+      description: "Turn #{match.current_turn_number} ended by timeout"
+    )
 
     # Mark turn as timed out and advance to next turn
     match.advance_turn!(timed_out: true)
@@ -62,8 +59,9 @@ class ArenaTurnTimeoutJob < ApplicationJob
     # Broadcast timeout to all participants
     broadcast_timeout(match, claim_available: false)
 
-    # If NPC fight, process NPC turn
-    if processor.npc_fight?
+    # NPC-only opposing sides act immediately. Fights with live players on
+    # multiple sides stay in the player turn-commit flow.
+    if processor.npc_fight? && !processor.player_turn_commit_required?
       processor.process_npc_turn
     end
 

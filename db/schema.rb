@@ -727,22 +727,32 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_11_133000) do
   end
 
   create_table "combat_log_entries", force: :cascade do |t|
+    t.string "action_key"
     t.bigint "actor_id"
+    t.string "actor_team"
     t.string "actor_type"
-    t.bigint "battle_id", null: false
+    t.bigint "arena_match_id"
+    t.bigint "battle_id"
+    t.string "body_part"
     t.datetime "created_at", null: false
     t.integer "damage_amount", default: 0, null: false
     t.integer "healing_amount", default: 0, null: false
     t.string "log_type", default: "action"
     t.text "message", null: false
+    t.datetime "occurred_at"
+    t.string "outcome"
     t.jsonb "payload", default: {}, null: false
     t.integer "round_number", default: 1, null: false
     t.integer "sequence", default: 1, null: false
     t.string "tags", default: [], array: true
     t.bigint "target_id"
+    t.string "target_team"
     t.string "target_type"
     t.datetime "updated_at", null: false
     t.index ["actor_id"], name: "index_combat_log_entries_on_actor_id"
+    t.index ["arena_match_id", "log_type"], name: "index_combat_logs_on_arena_match_and_log_type"
+    t.index ["arena_match_id", "round_number", "sequence"], name: "index_combat_logs_on_arena_match_round_sequence"
+    t.index ["arena_match_id"], name: "index_combat_log_entries_on_arena_match_id"
     t.index ["battle_id", "round_number"], name: "index_combat_log_entries_on_battle_id_and_round_number"
     t.index ["battle_id"], name: "index_combat_log_entries_on_battle_id"
     t.index ["log_type"], name: "index_combat_log_entries_on_log_type"
@@ -2240,6 +2250,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_11_133000) do
   add_foreign_key "clan_xp_events", "clans"
   add_foreign_key "clans", "users", column: "leader_id"
   add_foreign_key "combat_analytics_reports", "battles"
+  add_foreign_key "combat_log_entries", "arena_matches"
   add_foreign_key "combat_log_entries", "battles"
   add_foreign_key "community_objectives", "event_instances"
   add_foreign_key "competition_brackets", "game_events"

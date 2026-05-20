@@ -1,0 +1,139 @@
+<% content_for :title, "Fight Log ##{@arena_match.id}" %>
+
+<section class="combat-log-viewer nl-public-fight-log">
+  <div class="combat-log-header">
+    <div class="header-content">
+      <h1>Fight Log #<%= @arena_match.id %></h1>
+      <p class="battle-meta">
+        <span class="zone"><%= @arena_match.arena_room&.name || "Arena" %></span>
+        <span class="separator">/</span>
+        <span class="type"><%= @arena_match.match_type.humanize %></span>
+        <span class="separator">/</span>
+        <span class="status <%= @arena_match.status %>"><%= @arena_match.status.humanize %></span>
+      </p>
+    </div>
+  </div>
+
+  <div class="combat-log-tabs">
+    <%= link_to "Combat Log",
+      public_fight_log_path(@arena_match, p: 1),
+      class: "tab #{@view_mode == :log ? 'active' : ''}" %>
+    <%= link_to "Statistics",
+      public_fight_log_path(@arena_match, stat: 1),
+      class: "tab #{@view_mode == :statistics ? 'active' : ''}" %>
+    <div class="tab-spacer"></div>
+    <div class="export-buttons">
+      <%= link_to "JSON", public_fight_log_path(@arena_match, format: :json), class: "export-btn" %>
+    </div>
+  </div>
+
+  <div class="battle-participants">
+    <div class="teams-display">
+      <div class="team team-alpha">
+        <% @team_a.each_with_index do |participant, index| %>
+          <span class="participant <%= participant.current_hp.positive? ? 'alive' : 'dead' %>">
+            <%= participant.participant_name %>
+            <span class="vitals">[<%= participant.current_hp %>/<%= participant.max_hp %>]</span>
+          </span><%= index < @team_a.length - 1 ? ", " : "" %>
+        <% end %>
+      </div>
+      <span class="vs">vs</span>
+      <div class="team team-beta">
+        <% @team_b.each_with_index do |participant, index| %>
+          <span class="participant <%= participant.current_hp.positive? ? 'alive' : 'dead' %>">
+            <%= participant.participant_name %>
+            <span class="vitals">[<%= participant.current_hp %>/<%= participant.max_hp %>]</span>
+          </span><%= index < @team_b.length - 1 ? ", " : "" %>
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <% if @view_mode == :statistics %>
+    <div class="combat-log-content">
+      <table class="nl-table nl-fight-stat-table">
+        <thead>
+          <tr>
+            <th>Participant</th>
+            <th>Team</th>
+            <th>Damage</th>
+            <th>Hits</th>
+            <th>Healing</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @statistics.by_participant.each do |row| %>
+            <tr>
+              <td><%= row[:name] %></td>
+              <td><%= row[:team] %></td>
+              <td><%= row[:total_damage] %></td>
+              <td><%= row[:total_hits] %></td>
+              <td><%= row[:total_healing] %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+
+      <table class="nl-table nl-fight-stat-table">
+        <thead>
+          <tr>
+            <th>Body Part</th>
+            <th>Attacks</th>
+            <th>Damage</th>
+            <th>Blocks</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @statistics.body_part_breakdown.each do |part, row| %>
+            <tr>
+              <td><%= part.humanize %></td>
+              <td><%= row[:attacks] %></td>
+              <td><%= row[:damage] %></td>
+              <td><%= row[:blocked] %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% else %>
+    <div class="combat-log-content">
+      <div class="log-entries">
+        <% @combat_log_entries.group_by(&:round_number).each do |round, entries| %>
+          <div class="round-group">
+            <div class="round-header">Round <%= round %></div>
+            <% entries.each do |entry| %>
+              <div class="log-entry log-type-<%= entry.log_type %>" data-log-id="<%= entry.id %>">
+                <div class="entry-header">
+                  <span class="entry-time"><%= entry.occurred_at_or_created_at.strftime("%H:%M:%S") %></span>
+                  <span class="entry-sequence">#<%= entry.sequence %></span>
+                </div>
+                <div class="entry-content">
+                  <span class="raw-message"><%= entry.message %></span>
+                  <% if entry.damage_amount.positive? %>
+                    <span class="damage"><%= entry.damage_amount %> dmg</span>
+                  <% end %>
+                  <% if entry.healing_amount.positive? %>
+                    <span class="healing">+<%= entry.healing_amount %> HP</span>
+                  <% end %>
+                </div>
+              </div>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+
+      <% if @total_pages && @total_pages > 1 %>
+        <div class="log-pagination">
+          <span class="page-label">Pages:</span>
+          <% (1..@total_pages).each do |page| %>
+            <% if page == @page %>
+              <span class="current-page"><%= page %></span>
+            <% else %>
+              <%= link_to page, public_fight_log_path(@arena_match, p: page), class: "page-link" %>
+            <% end %>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+</section>

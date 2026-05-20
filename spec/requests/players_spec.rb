@@ -69,7 +69,7 @@ RSpec.describe "Players", type: :request do
       expect(response.body).to include("Форпост")
       expect(response.body).to include("in combat")
       expect(response.body).to include("Тренировочный Зал")
-      expect(response.body).to include(arena_match_path(match))
+      expect(response.body).to include(public_fight_log_path(match))
     end
 
     it "does not resolve account profile names without a character" do

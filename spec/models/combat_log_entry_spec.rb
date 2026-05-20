@@ -5,6 +5,7 @@ require "rails_helper"
 RSpec.describe CombatLogEntry do
   let(:character) { create(:character, :with_position) }
   let(:battle) { create(:battle, initiator: character) }
+  let(:arena_match) { create(:arena_match, :live) }
 
   describe "associations" do
     it "belongs to battle" do
@@ -15,6 +16,12 @@ RSpec.describe CombatLogEntry do
     it "allows entries without actor metadata" do
       entry = create(:combat_log_entry, battle: battle, actor_id: nil, actor_type: nil)
       expect(entry).to be_valid
+    end
+
+    it "can belong to an arena match" do
+      entry = create(:combat_log_entry, :for_arena_match, arena_match: arena_match)
+      expect(entry.arena_match).to eq(arena_match)
+      expect(entry.battle).to be_nil
     end
   end
 
@@ -28,6 +35,19 @@ RSpec.describe CombatLogEntry do
     it "accepts valid entry" do
       entry = build(:combat_log_entry, battle: battle, message: "Attack!")
       expect(entry).to be_valid
+    end
+
+    it "requires exactly one fight owner" do
+      without_owner = build(:combat_log_entry, battle: nil, arena_match: nil)
+      with_two_owners = build(:combat_log_entry, battle: battle, arena_match: arena_match)
+
+      expect(without_owner).not_to be_valid
+      expect(with_two_owners).not_to be_valid
+    end
+
+    it "sets occurrence time" do
+      entry = create(:combat_log_entry, battle: battle)
+      expect(entry.occurred_at).to be_present
     end
   end
 

@@ -97,6 +97,24 @@ RSpec.describe Arena::CombatProcessor do
         expect(processor.broadcaster).to have_received(:broadcast_combat_action)
           .with(character1, anything, anything, kind_of(Integer), hash_including(:body_part))
       end
+
+      it "persists durable fight log entries while keeping metadata compatibility" do
+        expect {
+          processor.process_action(
+            character1,
+            :attack,
+            target: character2,
+            attack_type: :simple,
+            body_part: "torso"
+          )
+        }.to change { arena_match.combat_log_entries.count }.by_at_least(1)
+
+        entry = arena_match.combat_log_entries.last
+        expect(entry.arena_match).to eq(arena_match)
+        expect(entry.battle).to be_nil
+        expect(entry.tags).to include("arena")
+        expect(arena_match.reload.metadata["combat_log"]).not_to be_empty
+      end
     end
 
     context "with defend action" do
@@ -533,7 +551,7 @@ RSpec.describe Arena::CombatProcessor do
         expect(participation1.metadata.dig("pending_turn", "ap_limit")).to eq(140)
       end
 
-      it "validates a captured-profile PvP round and resolves only after both turns arrive" do
+      it "validates a captured-profile live player round and resolves only after both turns arrive" do
         captured_profile = {
           "ap_limit" => 140,
           "physical_attack_cost_seed" => 67,
@@ -577,6 +595,29 @@ RSpec.describe Arena::CombatProcessor do
         expect(participation1.reload.metadata["current_ap"]).to eq(140)
         expect(participation2.reload.metadata["current_ap"]).to eq(140)
         expect(arena_match.reload.metadata["combat_log"].map { |entry| entry["type"] }).to include("block")
+      end
+
+      it "keeps team/player fights in the player turn-commit flow even when an NPC is present" do
+        npc_template = create(:npc_template, name: "Observer Bot", npc_key: "observer_bot")
+        create(:arena_participation,
+          :npc,
+          arena_match: arena_match,
+          npc_template: npc_template,
+          team: "b")
+
+        expect(Arena::NpcCombatAi).not_to receive(:new)
+
+        result = processor.process_action(
+          character1,
+          :turn,
+          target: character2,
+          attacks: [{action_key: "simple", body_part: "torso"}],
+          blocks: [{action_key: "torso_block", body_parts: ["torso"]}]
+        )
+
+        expect(result).to be_success
+        expect(result[:waiting]).to be true
+        expect(participation1.reload.metadata["pending_turn"]).to be_present
       end
 
       it "allows a magic/action slot as the only submitted action" do

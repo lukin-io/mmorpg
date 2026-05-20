@@ -12,7 +12,10 @@ Rails.application.routes.draw do
     mount Sidekiq::Web => "/sidekiq"
   end
 
-  # Public battle logs (shareable URLs)
+  # Public fight logs translate Neverlands fight-id logs into Rails routes.
+  get "log/:id", to: "public_fight_logs#show", as: :public_fight_log
+
+  # Existing Battle-backed public logs.
   get "logs/:share_token", to: "public_battle_logs#show", as: :public_battle_log
 
   resource :session_ping, only: :create
@@ -213,7 +216,7 @@ Rails.application.routes.draw do
   resources :npc_reports, only: [:new, :create]
   resources :combat_logs, only: :show
 
-  # Turn-Based Combat (Unified PvE/PvP/Arena)
+  # Legacy turn-based combat
   resources :battles, only: [:show] do
     member do
       post :submit_turn
@@ -283,7 +286,7 @@ Rails.application.routes.draw do
     get :skills
   end
 
-  # PvP Combat (Open World)
+  # Legacy open-world player combat
   resources :pvp_combat, only: [:show, :create] do
     collection do
       post :attack

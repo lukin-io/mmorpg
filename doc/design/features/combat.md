@@ -19,7 +19,7 @@ Borrowed feel:
 - one block assignment that can cover one or more body parts;
 - chance to miss, dodge, block, or critically hit;
 - rich combat log;
-- arena and PvE share the same core resolution style.
+- player, team, and NPC fights share the same core resolution style.
 
 ## Player Experience
 
@@ -280,8 +280,9 @@ challenge.
 
 ## Launch Combat Contract
 
-Combat should be built around one shared turn contract for arena PvP, arena NPC
-training, wild NPC encounters, and later dungeon fights:
+Combat should be built around one shared turn contract for every fight shape:
+player vs player, team vs team, player/team vs NPC, wild NPC encounters, and
+later dungeon fights:
 
 - each participant has an AP budget, physical attack costs, max magic mana, and
   a block table for the fight;
@@ -297,9 +298,10 @@ training, wild NPC encounters, and later dungeon fights:
 - the server validates body parts, one-block-per-turn, head/legs attack
   exclusivity, AP budget, MP budget, target legality, participant state, and
   fight token before resolving the turn;
-- PvP turns wait until all live player participants submit, then resolve
-  together;
-- NPC fights may resolve immediately with NPC AI response;
+- fights with live player-controlled participants on more than one side wait
+  until all live player participants submit, then resolve together;
+- fights with only one live player-controlled side and NPC opponents may
+  resolve immediately with NPC AI response;
 - completed fights require a result-screen finish action before returning to
   arena, city, or world context.
 
@@ -329,13 +331,15 @@ normal NPC material drop, not as a special arena reward.
 
 Neverlands exposes completed and active fights through `logs.fcg?fid=<fight_id>`.
 The profile fight link points at this same public log URL while the character is
-in combat. The May 20, 2026 source checks used:
+in combat. Rails should translate that design into a normal route shape such as
+`/log/<fight_id>`; the PHP URL is only source evidence. The May 20, 2026 source
+checks used:
 
 | URL | Observation |
 | --- | --- |
 | `logs.fcg?fid=741230166&p=1` | NPC/dungeon fight log against `Архилич`; page one of a three-page log. |
-| `logs.fcg?fid=741228850` | PvP sacrifice/group fight log; page one of a four-page log. |
-| `logs.fcg?fid=741228850&stat=1` | Aggregate statistics for the same PvP fight. |
+| `logs.fcg?fid=741228850` | player sacrifice/group fight log; page one of a four-page log. |
+| `logs.fcg?fid=741228850&stat=1` | Aggregate statistics for the same player/group fight. |
 
 The source page is not pre-rendered combat text. It returns a compact
 Windows-1251 HTML shell with JavaScript data arrays and calls `viewlog()` from
@@ -370,7 +374,7 @@ Design implications:
 - the log renderer can be a presentation layer over structured event records;
 - a fight may be paginated, so the log model must not assume one small text
   blob;
-- PvE/NPC and PvP logs use the same mechanism;
+- NPC, player, and team fight logs use the same mechanism;
 - statistics are an aggregate view derived from the same fight, not a separate
   reward screen;
 - public logs should be readable without exposing private turn tokens or
@@ -431,8 +435,8 @@ landed:
 
 ### Captured Statistics Shape
 
-The PvP statistics page for fight `741228850` rendered a table from `list`.
-Each row includes participant identity, side, level, alignment/sign, several
+The group fight statistics page for fight `741228850` rendered a table from
+`list`. Each row includes participant identity, side, level, alignment/sign, several
 numeric damage buckets with superscript counts, total damage/count, and
 experience.
 
@@ -492,7 +496,8 @@ damage, and persisted status effects.
 
 Remaining source-capture work is tuning: more live Neverlands fights are needed
 to calibrate hidden item-family coefficients and compare local miss, dodge,
-block, magic, status, and PvP constants against external outcomes.
+block, magic, status, and player/team fight constants against external
+outcomes.
 
 Implementation implications from the May 11 bot fight:
 
@@ -525,7 +530,7 @@ Implementation implications from the May 19 arena fight:
 Adjacent docs that should move with the next combat pass:
 
 - `doc/design/areas/arena.md` for room/application UI, active arena match UI,
-  PvP waiting, and arena result return behavior;
+  live player-side waiting, and arena result return behavior;
 - `doc/design/features/movement.md` for wilderness movement, ambush triggers,
   and returning from non-arena fights;
 - `doc/design/features/npcs_quests.md` for NPC templates, bot behavior,
@@ -590,13 +595,13 @@ Multi-attack penalty baseline:
 
 ## Combat Modes
 
-Core:
+Core fight shapes:
 
-- PvE encounter;
-- arena duel;
-- arena group fight;
-- NPC training fight;
-- sacrifice/free-for-all fight.
+- player vs player;
+- team vs team;
+- player/team vs NPC;
+- sacrifice/free-for-all fight;
+- dungeon or wild NPC encounter.
 
 ## State Concepts
 
@@ -614,7 +619,7 @@ Core:
 
 ## Interactions
 
-- `areas/arena.md` starts structured PvP/training combat.
+- `areas/arena.md` starts structured player/team/NPC combat.
 - `areas/world_map.md` can trigger PvE encounters.
 - `features/progression_stats_skills.md` modifies formulas and unlocks
   abilities.
@@ -637,7 +642,8 @@ Not canonical for the first combat loop:
 - fixed global 80 AP and fixed 45/65 physical attack costs as primary rules;
 - character-derived AP that ignores fight payload, level/equipment state, and
   weapon/item family;
-- separate arena, PvE, and PvP engines with different turn semantics;
+- separate arena, NPC, and player/team fight engines with different turn
+  semantics;
 - action systems that bypass body-part attacks, one block assignment, AP, mana,
   and combat logs;
 - UI that hides the action choices behind broad action buttons without the

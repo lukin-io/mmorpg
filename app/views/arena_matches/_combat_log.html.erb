@@ -1,0 +1,6 @@
+<% Array(log).each do |entry| %>
+  <div class="combat-log-entry combat-log--<%= entry["type"] || "action" %>">
+    <span class="combat-time"><%= entry["timestamp"] %></span>
+    <%= entry["description"] %>
+  </div>
+<% end %>

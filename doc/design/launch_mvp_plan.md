@@ -20,7 +20,7 @@ server-authoritative action model.
 - Player-facing implementation is English-only.
 - Server state is authoritative; browser state previews and submits choices.
 - Every mutating world action is issued by the server and validated on submit.
-- PvP, arena NPC fights, and wild NPC fights use the same combat mechanics.
+- Player, team, and NPC fights use the same combat mechanics.
 - Arena is entered through the city/gameplay path, not as a standalone product
   surface.
 - Wild cell actions are tied to the current coordinate and expire when the
@@ -72,7 +72,7 @@ Required behavior:
   HP, MP, AP, and passive skills as first-class state.
 - Expose attack, defense, critical, and equipment contribution breakdowns for
   UI and balancing.
-- Inventory needs Neverlands-inspired category filters, visible item
+- Inventory needs Neverlands-based category filters, visible item
   properties/requirements/durability, equip/use/discard actions, requirement
   validation, discard protection, and combat durability degradation.
 - Equipped item effects feed primary stats, effective max HP, attack, defense,
@@ -158,13 +158,18 @@ Required behavior:
 - arena rooms show dense application rows with fight type, side state, timeout,
   trauma/risk, and waiting opponent state;
 - a player can create and cancel an application;
-- another player can accept and enter a live PvP match;
+- another player can accept and enter a live player-controlled fight;
 - NPC training applications can be accepted for solo testing and tutorial use;
-- PvP turns wait until all live players submit, then resolve together;
-- NPC fights use the same combat resolver and turn package, with NPC AI
-  submitting actions;
+- fights with live player-controlled participants on more than one side wait
+  until all live players submit, then resolve together;
+- fights with only one live player-controlled side and NPC opponents use the
+  same combat resolver and turn package, with NPC AI submitting actions;
 - combat UI supports AP, body-part attacks, one active block, magic/action
   slots, HP/MP, combat log, waiting state, timeout, and finish result;
+- every fight writes a durable public log keyed by the fight id, with paginated
+  event pages and a `stat=1` aggregate statistics view;
+- public profile fight links, active fight screens, completed result screens,
+  and spectator/log pages all resolve through the same fight-log identity;
 - training NPC drops, such as mannequin wood chips, use the same NPC loot-check
   and inventory award rules as wild NPC drops;
 - completed fights require an explicit finish action before returning to arena
@@ -179,21 +184,38 @@ Required behavior:
 - Combat profiles support per-participant AP and dynamic physical attack costs.
 - The active combat screen follows a compact three-zone fight UI.
 - NPC training fights use the shared combat resolver path.
+- Treat the Neverlands `logs.fcg?fid=<id>` shape as a product contract, not a
+  literal Rails route requirement: persist structured fight events, render them
+  into Rails-style public paths such as `/log/<id>`, and derive statistics from
+  the same records.
+- `CombatLogEntry` is the canonical durable fight-log layer. `ArenaMatch`,
+  arena NPC fights, and arena player/team fights write through the shared log
+  writer, while arena match metadata logs are compatibility output for older UI
+  consumers. Wild NPC fights should keep using the same layer instead of adding
+  a separate transcript store.
 - The 2026-05-19 starter arena combat capture confirms the launch training
   loop: duel-tab NPC row, eligible open side, immediate NPC fight, `114` AP
   starter profile, `45/65` physical costs, injected magic selector options,
   automatic loot check, and explicit finish/result step.
+- The 2026-05-20 public log captures confirm the log/statistics contract:
+  fight id URL, paginated log events, shared participant renderer, and a separate
+  aggregate stats view from the same fight.
 
 ### Remaining Design Detail
 
 - Combat formulas need continued consolidation around item-family AP,
   physical cost, defense, shield block, injected magic selector options, and
   magic coefficients.
-- More tests are needed around cross-entry consistency: arena PvP, arena NPC,
-  and wild NPC must use the same shared combat contract. Any old PvE wrapper
-  that cannot follow that contract should be removed.
+- More tests are needed around cross-entry consistency: arena player/team
+  fights, arena NPC, and wild NPC must use the same shared combat contract. Any
+  old wrapper that cannot follow that contract should be removed.
 - Magic and special action behavior needs launch-level balancing and UI
   clarity.
+- Public combat logs now use the canonical event schema for arena fights.
+  Expand coverage only by adding missing structured fields to this layer, not
+  by creating a second log format.
+- Fight statistics should continue to be derived from structured events and
+  cached only as an optimization.
 - Arena should keep global route shortcuts out of the primary UX path.
 
 ### Arena And Combat Task Order
@@ -207,8 +229,11 @@ Build and verify the launch loop in this order:
    fight payload shape.
 4. Shared turn UI with AP preview, body-part attacks, one block, injected magic
    selector options, reset, and server validation.
-5. Shared resolver and result pipeline for arena PvP, arena NPC, and wild NPC
-   fights, including combat log, loot check, finish step, and contextual return.
+5. Durable fight-log writer and public log/stat routes shared by arena
+   player/team fights, arena NPC, and wild NPC fights.
+6. Shared resolver and result pipeline for arena player/team fights, arena NPC,
+   and wild NPC fights, including structured combat events, loot check, finish
+   step, and contextual return.
 
 ## Pillar 4: Wild Cells
 
@@ -216,7 +241,7 @@ Build and verify the launch loop in this order:
 
 Wild cells are the open-world counterpart to arena. Each cell can expose local
 resources, NPCs, buildings, and actions. Hostile NPCs and manual NPC attacks
-enter the same combat mechanics used by arena PvP and arena NPC fights.
+enter the same combat mechanics used by arena player/team and arena NPC fights.
 
 Required behavior:
 
@@ -238,8 +263,8 @@ Required behavior:
 - Treat resources, NPCs, buildings, and action offers as tile-local context.
 - NPC and quest design is documented in
   `doc/design/features/npcs_quests.md`.
-- NPC fights should use the same resolver as PvP rather than a separate
-  wild-combat engine.
+- NPC fights should use the same resolver as player/team fights rather than a
+  separate wild-combat engine.
 
 ### Remaining Design Detail
 
@@ -273,15 +298,15 @@ login
 | --- | --- | --- |
 | Person | Character, vitals, stats, skills, inventory/equipment actions, requirements, durability, combat breakdown | item seeds, slot rules, repair/breakage UX, level-up UX, recovery, cross-system tests |
 | Movement | persisted wilderness travel, movement commands, action offers, tile state resolver | city-hotspot action unification, presence refresh, lock polish |
-| Arena | city entry, room/application UX, NPC training, PvP waiting, finish result | formula tuning, navigation cleanup, magic/special balancing |
-| Combat | shared resolver, AP/body parts/blocks/logs, NPC AI response | one resolver across all fight entry points, more balance coverage |
+| Arena | city entry, room/application UX, NPC training, live player-side waiting, finish result | formula tuning, navigation cleanup, magic/special balancing |
+| Combat | shared resolver, AP/body parts/blocks, durable public logs/statistics, NPC AI response | one resolver across all fight entry points, canonical log event schema, more balance coverage |
 | Wild cells | tile resources, tile NPCs, contextual action offers | shared combat handoff, loot result step, return routing |
 
 ## Not MVP
 
 Deferred until the four pillars are launch-stable:
 
-- Neverlands-inspired dungeons. The post-MVP design source of truth is
+- Neverlands-based dungeons. The post-MVP design source of truth is
   `doc/design/features/dungeons.md`.
 
 Any other deferred idea needs a Neverlands source capture or source-material

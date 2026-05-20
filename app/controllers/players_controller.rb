@@ -66,7 +66,7 @@ class PlayersController < ApplicationController
         sublocation: sublocation,
         active_fight: {
           id: match.id,
-          path: arena_match_path(match),
+          path: public_fight_log_path(match),
           status: match.status
         }
       }

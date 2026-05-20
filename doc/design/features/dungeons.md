@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Dungeons are a post-MVP Neverlands-inspired feature. They are not part of the
+Dungeons are a post-MVP Neverlands-based feature. They are not part of the
 launch MVP in `doc/design/launch_mvp_plan.md`.
 
 The dungeon feature exists around two source-defined goals:

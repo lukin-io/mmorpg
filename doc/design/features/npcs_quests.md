@@ -42,8 +42,8 @@ Core:
 - Dialogue can branch but should stay functional and concise.
 - Hostile NPCs can start PvE combat.
 - Arena training NPCs can appear as normal arena application participants and
-  resolve through the same combat rules as PvP after the player accepts the
-  open side.
+  resolve through the same combat rules as player and team fights after the
+  player accepts the open side.
 - Vendor NPCs should use the shop/economy rules.
 - Trainers interact with stats/skills/professions.
 

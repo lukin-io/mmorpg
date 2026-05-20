@@ -1,7 +1,7 @@
 # Game Design Document
 
 This is the design source of truth for the project. The game is a
-Neverlands-inspired browser MMORPG, not a one-to-one asset or content clone.
+Neverlands-based browser MMORPG, not a one-to-one asset or content clone.
 When implementation docs, tests, or code disagree with this file, this file wins
 and the derived material should be updated.
 
@@ -67,7 +67,7 @@ The intended feel is:
 - readable location state and visible nearby player presence;
 - movement that has weight, travel time, and contextual consequences;
 - deterministic world data suitable for testing and iteration;
-- mechanics that are inspired by Neverlands and adapted for a clean Rails
+- mechanics that follow observed Neverlands behavior and are implemented with clean Rails
   implementation.
 
 ## Core Loop
@@ -210,7 +210,7 @@ The world is a tile grid split into zones or regions. Zones define:
 - allowed local action types.
 
 Starter world data should be deterministic. The first canonical movement test
-area should use a Neverlands-inspired coordinate neighborhood around
+area should use a Neverlands-based coordinate neighborhood around
 `1019,1025` so docs, seeds, tests, and UI examples talk about the same place.
 
 ## Tile-Local Actions
@@ -240,8 +240,8 @@ coordinate, action type, and target.
 Combat is turn-based and tactical. Core expectations:
 
 - PvE encounters can trigger from map movement or tile-local hostile actions;
-- PvP supports Neverlands-style arena duels, group battles, and room-based
-  applications;
+- player, team, and NPC fights support Neverlands-style arena duels, group
+  battles, and room-based applications;
 - combat uses explicit turns, action points, body-part targeting, blocks,
   skills, logs, rewards, and death/respawn consequences;
 - combat state must be resumable and auditable.

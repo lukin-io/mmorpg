@@ -39,6 +39,7 @@ class ArenaMatch < ApplicationRecord
   has_many :arena_participations, dependent: :destroy
   has_many :arena_applications, dependent: :nullify
   has_many :characters, through: :arena_participations
+  has_many :combat_log_entries, dependent: :destroy
 
   validates :match_type, presence: true
 
@@ -219,6 +220,21 @@ class ArenaMatch < ApplicationRecord
     true
   end
 
+  def next_sequence_for(round_number)
+    combat_log_entries.where(round_number:).maximum(:sequence).to_i + 1
+  end
+
+  def public_log_path(page: nil, statistics: false)
+    params = {}
+    params[:p] = page if page
+    params[:stat] = 1 if statistics
+    Rails.application.routes.url_helpers.public_fight_log_path(id, params)
+  end
+
+  def public_log_url(host: default_host)
+    Rails.application.routes.url_helpers.public_fight_log_url(id, host:)
+  end
+
   # Schedule a job to check for turn timeout
   #
   # @return [void]
@@ -237,5 +253,9 @@ class ArenaMatch < ApplicationRecord
 
   def assign_spectator_code
     self.spectator_code ||= SecureRandom.alphanumeric(8).upcase
+  end
+
+  def default_host
+    Rails.application.config.action_mailer.default_url_options&.dig(:host) || "localhost:3000"
   end
 end

@@ -207,7 +207,7 @@ The launch inventory should support:
 - equipment effects feeding character stats, effective max HP, attack, defense,
   accuracy, dodge, armor pierce, fortitude, elemental resistances, and skill
   bonuses;
-- combat durability degradation for PvE and PvP equipment;
+- combat durability degradation for player, team, and NPC fight equipment;
 - consumable durability charges before quantity consumption;
 - discard protection for equipped, bound, protected, locked, and quest items.
 

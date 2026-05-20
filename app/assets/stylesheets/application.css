@@ -2777,7 +2777,7 @@ turbo-frame[busy] {
 }
 
 /* ============================================
-   ARENA / PVP SYSTEM
+   ARENA FIGHT SYSTEM
    ============================================ */
 
 /* Arena room grid */
@@ -3097,7 +3097,7 @@ turbo-frame[busy] {
   50% { transform: scale(1.1); }
 }
 
-/* Arena Match Page Layout - Horizontal PVP */
+/* Arena Match Page Layout - Horizontal Fight */
 .arena-match-page {
   padding: var(--nl-space-md);
   max-width: 1200px;
@@ -3116,8 +3116,8 @@ turbo-frame[busy] {
   font-size: 1.25rem;
 }
 
-/* Main PVP Layout: Fighter | Center | Fighter */
-.arena-pvp-layout {
+/* Main Fight Layout: Fighter | Center | Fighter */
+.arena-fight-layout {
   display: grid;
   grid-template-columns: 240px 1fr 240px;
   gap: var(--nl-space-lg);
@@ -3125,7 +3125,7 @@ turbo-frame[busy] {
 }
 
 @media (max-width: 900px) {
-  .arena-pvp-layout {
+  .arena-fight-layout {
     grid-template-columns: 1fr;
     grid-template-rows: auto auto auto;
   }

@@ -33,9 +33,9 @@ RSpec.describe "Arena Match UI Layout", type: :system do
   end
 
   describe "3-Column Layout", js: true do
-    it "displays arena-pvp-layout container" do
+    it "displays arena-fight-layout container" do
       visit arena_match_path(match)
-      expect(page).to have_css(".arena-pvp-layout")
+      expect(page).to have_css(".arena-fight-layout")
     end
 
     it "displays left player section" do
@@ -279,7 +279,7 @@ RSpec.describe "Arena Match UI Layout", type: :system do
 
       it "still displays all components" do
         visit arena_match_path(match)
-        expect(page).to have_css(".arena-pvp-layout")
+        expect(page).to have_css(".arena-fight-layout")
         expect(page).to have_content("WarriorAlpha")
         expect(page).to have_content("MageBeta")
       end

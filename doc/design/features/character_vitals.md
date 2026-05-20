@@ -42,7 +42,7 @@ The player sees:
 
 ## Baseline Regeneration
 
-Initial Neverlands-inspired baseline:
+Initial Neverlands-based baseline:
 
 ```text
 hp_full_regen_ticks = 1119

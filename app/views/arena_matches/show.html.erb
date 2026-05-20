@@ -32,7 +32,7 @@
   </div>
 
   <%# Main combat layout: Player | Actions+Log | Opponent %>
-  <div class="arena-pvp-layout">
+  <div class="arena-fight-layout">
     <%# Left: Player A %>
     <div class="arena-fighter arena-fighter--left" data-arena-match-target="fighterA">
       <% if player_a %>
@@ -194,7 +194,7 @@
             FIGHT!
           </div>
         <% end %>
-        <% (@arena_match.metadata["combat_log"] || []).each do |entry| %>
+        <% arena_match_combat_log(@arena_match).each do |entry| %>
           <div class="combat-log-entry combat-log--<%= entry['type'] || 'action' %>">
             <span class="combat-time"><%= entry['timestamp'] %></span>
             <%= entry['description'] %>

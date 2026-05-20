@@ -2,9 +2,9 @@
 
 ## Purpose
 
-The arena is the structured PvP and training combat hub. It provides room-based
-fight applications, duel/group/special modes, optional NPC training opponents,
-and a route into the shared turn-based combat system.
+The arena is the structured fight hub. It provides room-based fight
+applications, duel/group/special modes, optional NPC training opponents, and a
+route into the shared turn-based combat system.
 
 ## Neverlands Reference
 
@@ -175,8 +175,9 @@ fight id during fight: <arena_fight_id>
 
 The source profile renderer splits the location payload into city and
 sublocation. When the fight id is nonzero, it inserts a red `[ в бою ]` link to
-`logs.fcg?fid=<arena_fight_id>` between the city and sublocation. The visual
-result is:
+`logs.fcg?fid=<arena_fight_id>` between the city and sublocation. The local
+Rails translation should be a normal route such as `/log/<arena_fight_id>`.
+The visual result is:
 
 ```text
 Форпост [ в бою ]
@@ -224,7 +225,8 @@ Arena combat uses the shared combat contract from `features/combat.md`:
   profile variants;
 - body-part attacks, one active block, magic/action slots, participant HP/MP,
   attack/defense totals, and live log entries;
-- simultaneous PvP waiting until all live player participants submit;
+- simultaneous waiting when live player-controlled participants exist on more
+  than one side;
 - timeout resolution when an opponent misses the turn timer;
 - NPC AI response for training fights;
 - automatic bot-loot check before the finish-result step when the fight is
@@ -259,9 +261,9 @@ Further live Neverlands capture is still useful for tuning hidden constants:
   coefficients beyond the captured 114/45/65 and 140/67/87 profiles;
 - more resolved fights can tune miss, dodge, block, non-critical, critical,
   magic, status, chain, and area constants against live outcomes;
-- a real live PvP fight capture is still needed for external parity evidence;
-  the design supports simultaneous PvP waiting and round resolution, but the
-  resolved live examples remain NPC-only.
+- a real live player/team fight capture is still needed for external parity
+  evidence; the design supports simultaneous live player-side waiting and round
+  resolution, but the resolved live examples remain NPC-only.
 
 ## Fight Types
 

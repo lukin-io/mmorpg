@@ -5,7 +5,7 @@
 ## Authority Boundary
 
 This folder is the portable design source of truth. New implementation should
-use the Neverlands-inspired rules in this folder before using source captures
+use the Neverlands-based rules in this folder before using source captures
 or prior app behavior.
 
 If a legacy document describes behavior that is not mapped into this folder, it

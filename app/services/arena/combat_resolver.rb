@@ -5,8 +5,8 @@ module Arena
   #
   # The captured client flow makes AP/cost data fight-specific, then resolves a
   # submitted turn into clear outcomes: miss, dodge, block, hit, critical hit,
-  # and damage. This service keeps that result shape explicit so arena PvP and
-  # NPC fights do not drift into separate combat engines.
+  # and damage. This service keeps that result shape explicit so player, team,
+  # and NPC fights do not drift into separate combat engines.
   class CombatResolver
     BODY_PART_HIT_MODIFIERS = {
       "head" => -10,
