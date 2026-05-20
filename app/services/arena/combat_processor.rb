@@ -217,7 +217,7 @@ module Arena
       )
       match.characters.update_all(in_combat: true, last_combat_at: Time.current)
       match.schedule_timeout_check
-      log_entry("system", nil, "The battle begins!")
+      log_entry("system", nil, "The fight begins!")
       broadcaster.broadcast_match_started
       true
     end
@@ -722,6 +722,7 @@ module Arena
       npc_participation.update!(result: "defeat", ended_at: Time.current)
       log_entry("defeat", npc_participation, "#{npc.name} has been defeated!")
       award_npc_loot!(npc, defeated_by) if defeated_by
+      mark_world_tile_npc_defeated!(defeated_by) if defeated_by
 
       ActionCable.server.broadcast(
         match.broadcast_channel,
@@ -731,6 +732,13 @@ module Arena
           npc_id: npc.id
         }
       )
+    end
+
+    def mark_world_tile_npc_defeated!(defeated_by)
+      return unless match.metadata&.dig("source") == "world_npc"
+
+      tile_npc = TileNpc.find_by(id: match.metadata["tile_npc_id"])
+      tile_npc&.defeat!(defeated_by)
     end
 
     def award_npc_loot!(npc, defeated_by)
@@ -843,15 +851,12 @@ module Arena
       target_char = find_target(target)
       return failure("Target not found") unless target_char
 
-      # Create a battle wrapper for the arena match
-      battle_wrapper = ArenaBattleWrapper.new(match)
-
       # Execute the skill
       executor = Game::Combat::SkillExecutor.new(
         caster: character,
         target: target_char,
         skill: skill,
-        battle: battle_wrapper
+        fight: match
       )
 
       result = executor.execute!
@@ -1046,36 +1051,6 @@ module Arena
       Arena::RewardsDistributor.new(match).distribute!
 
       broadcaster.broadcast_match_ended(winner)
-    end
-
-    # Wrapper to make ArenaMatch work with SkillExecutor
-    class ArenaBattleWrapper
-      attr_accessor :metadata
-
-      def initialize(match)
-        @match = match
-        @metadata = match.metadata || {}
-      end
-
-      def id
-        @match.id
-      end
-
-      def round_number
-        @match.current_round || 1
-      end
-
-      def battle_participants
-        @match.arena_participations
-      end
-
-      def combat_log_entries
-        @match.combat_log_entries
-      end
-
-      def save!
-        @match.update!(metadata: @metadata)
-      end
     end
 
     def process_flee(character)

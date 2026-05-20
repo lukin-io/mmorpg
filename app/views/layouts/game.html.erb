@@ -118,13 +118,6 @@
 
     <%# Right: Status icons %>
     <div class="nl-status-icons">
-      <div id="pvp-status" class="pvp-status-indicator">
-        <% if current_character&.pvp_flagged? %>
-          <span class="pvp-icon" title="PVP Enabled">PVP</span>
-        <% else %>
-          <span class="pvp-icon" title="PVP Disabled">PVP</span>
-        <% end %>
-      </div>
       <span class="nl-time-display"><%= Time.current.strftime("%H:%M:%S") %></span>
     </div>
   </footer>

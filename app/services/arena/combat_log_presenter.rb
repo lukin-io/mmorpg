@@ -5,9 +5,7 @@ module Arena
     class << self
       def rows_for(match)
         entries = match.combat_log_entries.order(round_number: :asc, sequence: :asc).to_a
-        return entries.map { |entry| row_for_entry(entry) } if entries.any?
-
-        Array(match.metadata.to_h["combat_log"])
+        entries.map { |entry| row_for_entry(entry) }
       end
 
       def row_for_entry(entry)

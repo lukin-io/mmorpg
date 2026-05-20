@@ -98,7 +98,7 @@ Rules:
 - public HTML uses a paper-doll equipment layout: large avatar centered with
   item slots around the avatar;
 - location can include city and sublocation, and an active fight id can turn
-  the location display into a public battle-log link;
+  the location display into a public fight-log link;
 - formula/detail stat panels are hidden from public player info;
 - public payloads must not expose account email, credentials, private session
   state, or non-canonical primary stats.

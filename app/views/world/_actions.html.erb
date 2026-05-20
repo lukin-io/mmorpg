@@ -177,7 +177,7 @@
                 <div class="npc-hp-fill" style="width: <%= npc[:hp_percentage] %>%"></div>
                 <span class="npc-hp-text"><%= npc[:hp] %>/<%= npc[:max_hp] %></span>
               </div>
-              <%= form_with url: start_combat_path, method: :post, data: { turbo_frame: "_top" } do |f| %>
+              <%= form_with url: world_npc_fights_path, method: :post, data: { turbo_frame: "_top" } do |f| %>
                 <%= f.hidden_field :npc_template_id, value: npc[:npc_template_id] %>
                 <%= f.hidden_field :tile_npc_id, value: npc[:id] %>
                 <%= f.hidden_field :action_key, value: offer.action_key %>

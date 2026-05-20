@@ -34,11 +34,7 @@ module Combat
     def by_team
       participants.group_by { |participant| participant_team(participant) }.transform_values do |team_participants|
         ids = team_participants.map(&:id)
-        team_entries = if arena_match?
-          entries.where(actor_type: "ArenaParticipation", actor_id: ids)
-        else
-          entries.where(actor_id: ids)
-        end
+        team_entries = entries.where(actor_type: "ArenaParticipation", actor_id: ids)
         {
           members: team_participants.count,
           alive: team_participants.count { |participant| participant_alive?(participant) },
@@ -118,16 +114,10 @@ module Combat
     private
 
     def participants
-      @participants ||= if arena_match?
-        fight.arena_participations.includes(:character, :npc_template).to_a
-      else
-        fight.battle_participants.includes(:character, :npc_template).to_a
-      end
+      @participants ||= fight.arena_participations.includes(:character, :npc_template).to_a
     end
 
     def entries_for(participant)
-      return entries.where(actor_id: participant.id) unless arena_match?
-
       if participant.character_id.present?
         entries.where(
           "(actor_type = ? AND actor_id = ?) OR (actor_type = ? AND actor_id = ?)",
@@ -148,16 +138,12 @@ module Combat
       end
     end
 
-    def arena_match?
-      fight.is_a?(ArenaMatch)
-    end
-
     def fight_type
-      arena_match? ? fight.match_type : fight.battle_type
+      fight.match_type
     end
 
     def participant_name(participant)
-      arena_match? ? participant.participant_name : participant.combatant_name
+      participant.participant_name
     end
 
     def participant_team(participant)
@@ -165,19 +151,11 @@ module Combat
     end
 
     def participant_level(participant)
-      if arena_match?
-        participant.participant_level
-      else
-        participant.character&.level || participant.npc_template&.level || 1
-      end
+      participant.participant_level
     end
 
     def participant_alive?(participant)
-      if arena_match?
-        participant.current_hp.positive?
-      else
-        participant.is_alive
-      end
+      participant.current_hp.positive?
     end
 
     def percentage(value, total)

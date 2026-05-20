@@ -722,20 +722,20 @@ RSpec.describe "Skill Allocation", type: :system, js: true do
   # FUTURE INTEGRATION TESTS (DRAFTS)
   # ============================================
   describe "combat system integration", :skip_ci do
-    xit "allocated combat skills affect damage dealt in battle" do
+    xit "allocated combat skills affect damage dealt in fights" do
       # When combat system is integrated:
       # 1. Allocate melee_combat to 100
-      # 2. Start a battle
+      # 2. Start a fight
       # 3. Verify damage is increased by 50%
     end
 
-    xit "allocated critical_strikes affects crit rate in battle" do
+    xit "allocated critical_strikes affects crit rate in fights" do
       # When combat system is integrated:
       # 1. Allocate critical_strikes
       # 2. Verify crit chance increases
     end
 
-    xit "allocated evasion affects dodge rate in battle" do
+    xit "allocated evasion affects dodge rate in fights" do
       # When combat system is integrated:
       # 1. Allocate evasion
       # 2. Verify dodge chance increases

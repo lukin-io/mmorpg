@@ -191,9 +191,8 @@ RSpec.describe Arena::CombatProcessor, "Neverlands-style combat features" do
         expect(result[:block_attempted]).to be true
         expect(result[:body_part]).to eq("torso")
 
-        log = arena_match.reload.metadata["combat_log"]
-        failed_block_entries = log.select { |entry| entry["type"] == "block_failed" }
-        expect(failed_block_entries.last["description"]).to include("tried to block")
+        failed_block_entries = arena_match.reload.combat_log_entries.select { |entry| entry.log_type == "block_failed" }
+        expect(failed_block_entries.last.message).to include("tried to block")
       end
     end
 
@@ -222,10 +221,6 @@ RSpec.describe Arena::CombatProcessor, "Neverlands-style combat features" do
   end
 
   describe "Combat Log Messages" do
-    before do
-      arena_match.update!(metadata: {"combat_log" => []})
-    end
-
     it "logs attacks with body part" do
       deterministic_processor(0, 99, 0).process_action(
         character1,
@@ -234,10 +229,9 @@ RSpec.describe Arena::CombatProcessor, "Neverlands-style combat features" do
         body_part: "head"
       )
 
-      log = arena_match.reload.metadata["combat_log"]
-      last_entry = log.last
+      last_entry = arena_match.reload.combat_log_entries.last
 
-      expect(last_entry["description"]).to include("head")
+      expect(last_entry.message).to include("head")
     end
 
     it "logs critical hits with proper format" do
@@ -251,11 +245,10 @@ RSpec.describe Arena::CombatProcessor, "Neverlands-style combat features" do
         body_part: "torso"
       )
 
-      log = arena_match.reload.metadata["combat_log"]
-      crit_entries = log.select { |e| e["type"] == "critical" }
+      crit_entries = arena_match.reload.combat_log_entries.select { |entry| entry.log_type == "critical" }
 
       if crit_entries.any?
-        expect(crit_entries.last["description"]).to include("critical hit")
+        expect(crit_entries.last.message).to include("critical hit")
       end
     end
 
@@ -273,12 +266,11 @@ RSpec.describe Arena::CombatProcessor, "Neverlands-style combat features" do
         body_part: "torso"
       )
 
-      log = arena_match.reload.metadata["combat_log"]
-      block_entries = log.select { |e| e["type"] == "block" }
+      block_entries = arena_match.reload.combat_log_entries.select { |entry| entry.log_type == "block" }
 
       expect(block_entries).not_to be_empty
-      expect(block_entries.last["description"]).to include("blocked")
-      expect(block_entries.last["description"]).to include("torso")
+      expect(block_entries.last.message).to include("blocked")
+      expect(block_entries.last.message).to include("torso")
     end
   end
 
@@ -319,8 +311,7 @@ RSpec.describe Arena::CombatProcessor, "Neverlands-style combat features" do
     it "logs trauma effects" do
       processor.end_match("a")
 
-      log = arena_match.reload.metadata["combat_log"]
-      trauma_entries = log.select { |e| e["type"] == "trauma" }
+      trauma_entries = arena_match.reload.combat_log_entries.select { |entry| entry.log_type == "trauma" }
 
       expect(trauma_entries).not_to be_empty
     end
@@ -333,27 +324,24 @@ RSpec.describe Arena::CombatProcessor, "Neverlands-style combat features" do
       arena_match.reload
       expect(arena_match.timed_out).to be true
 
-      log = arena_match.metadata["combat_log"]
-      timeout_entry = log.find { |e| e["type"] == "timeout" }
-      expect(timeout_entry["description"]).to include("timeout")
+      timeout_entry = arena_match.combat_log_entries.find { |entry| entry.log_type == "timeout" }
+      expect(timeout_entry.message).to include("timeout")
     end
 
     it "handles normal victory" do
       processor.end_match("a", reason: :normal)
 
       arena_match.reload
-      log = arena_match.metadata["combat_log"]
-      victory_entry = log.find { |e| e["type"] == "victory" }
-      expect(victory_entry["description"]).to include("Winner")
+      victory_entry = arena_match.combat_log_entries.find { |entry| entry.log_type == "victory" }
+      expect(victory_entry.message).to include("Winner")
     end
 
     it "handles draw" do
       processor.end_match(nil, reason: :normal)
 
       arena_match.reload
-      log = arena_match.metadata["combat_log"]
-      draw_entry = log.find { |e| e["type"] == "draw" }
-      expect(draw_entry["description"]).to include("draw")
+      draw_entry = arena_match.combat_log_entries.find { |entry| entry.log_type == "draw" }
+      expect(draw_entry.message).to include("draw")
     end
   end
 

@@ -120,8 +120,7 @@ RSpec.describe "Arena Match Lifecycle UI", type: :system, js: true do
         turn_timeout_seconds: 300,
         metadata: {
           "fight_kind" => "free",
-          "trauma_percent" => 30,
-          "combat_log" => []
+          "trauma_percent" => 30
         })
       create(:arena_participation, arena_match: match, character: character1, user: user1, team: "a")
       create(:arena_participation, arena_match: match, character: character2, user: user2, team: "b")
@@ -258,13 +257,17 @@ RSpec.describe "Arena Match Lifecycle UI", type: :system, js: true do
         ended_at: 5.minutes.ago,
         winning_team: "a",
         metadata: {
-          "fight_kind" => "free",
-          "combat_log" => [
-            {"type" => "action", "actor_name" => "TestWarrior", "description" => "attacks TestMage"}
-          ]
+          "fight_kind" => "free"
         })
-      create(:arena_participation, arena_match: match, character: character1, user: user1, team: "a", result: :victory)
-      create(:arena_participation, arena_match: match, character: character2, user: user2, team: "b", result: :defeat)
+      winner = create(:arena_participation, arena_match: match, character: character1, user: user1, team: "a", result: :victory)
+      loser = create(:arena_participation, arena_match: match, character: character2, user: user2, team: "b", result: :defeat)
+      create(:combat_log_entry,
+        arena_match: match,
+        actor: winner,
+        target: loser,
+        log_type: "action",
+        message: "attacks TestMage",
+        payload: {"actor_name" => "TestWarrior", "description" => "attacks TestMage"})
       match
     end
 
@@ -374,7 +377,7 @@ RSpec.describe "Arena Match Lifecycle UI", type: :system, js: true do
         started_at: Time.current,
         current_turn_started_at: Time.current,
         current_turn_team: "a",
-        metadata: {"fight_kind" => "free", "combat_log" => []})
+        metadata: {"fight_kind" => "free"})
       create(:arena_participation, arena_match: match, character: character1, user: user1, team: "a")
       create(:arena_participation, arena_match: match, character: character2, user: user2, team: "b")
       match
@@ -503,7 +506,7 @@ RSpec.describe "Arena Match Lifecycle UI", type: :system, js: true do
         status: :live,
         match_type: :duel,
         started_at: Time.current,
-        metadata: {"combat_log" => []})
+        metadata: {})
       create(:arena_participation, arena_match: match, character: character1, user: user1, team: "a")
       create(:arena_participation, arena_match: match, character: character2, user: user2, team: "b")
       match

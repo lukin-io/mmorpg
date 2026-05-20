@@ -140,11 +140,7 @@ RSpec.describe "Arena NPC Combat", type: :request do
         arena_season: arena_season,
         match_type: :duel,
         metadata: {
-          "is_npc_fight" => true,
-          "combat_log" => [
-            {"type" => "damage", "actor_name" => character.name, "description" => "attacks Training Dummy for 15 damage"},
-            {"type" => "action", "actor_name" => "Training Dummy", "description" => "takes a defensive stance"}
-          ]
+          "is_npc_fight" => true
         })
     end
 
@@ -164,6 +160,30 @@ RSpec.describe "Arena NPC Combat", type: :request do
         team: "b",
         result: :pending,
         metadata: {"current_hp" => 60, "max_hp" => 60})
+    end
+
+    let!(:player_log_entry) do
+      create(:combat_log_entry,
+        arena_match: arena_match,
+        actor: player_participation,
+        target: npc_participation,
+        log_type: "damage",
+        message: "attacks Training Dummy for 15 damage",
+        payload: {"actor_name" => character.name, "description" => "attacks Training Dummy for 15 damage"},
+        round_number: 1,
+        sequence: 1,
+        damage_amount: 15)
+    end
+
+    let!(:npc_log_entry) do
+      create(:combat_log_entry,
+        arena_match: arena_match,
+        actor: npc_participation,
+        log_type: "action",
+        message: "takes a defensive stance",
+        payload: {"actor_name" => "Training Dummy", "description" => "takes a defensive stance"},
+        round_number: 1,
+        sequence: 2)
     end
 
     describe "GET /arena_matches/:id/log (combat log with NPC)" do
@@ -188,7 +208,7 @@ RSpec.describe "Arena NPC Combat", type: :request do
         arena_room: arena_room,
         arena_season: arena_season,
         match_type: :duel,
-        metadata: {"is_npc_fight" => true, "combat_log" => []})
+        metadata: {"is_npc_fight" => true})
     end
 
     let!(:player_participation) do
@@ -230,7 +250,7 @@ RSpec.describe "Arena NPC Combat", type: :request do
       create(:arena_match, :live,
         arena_room: arena_room,
         arena_season: arena_season,
-        metadata: {"is_npc_fight" => true, "combat_log" => []})
+        metadata: {"is_npc_fight" => true})
     end
 
     let!(:player_participation) do

@@ -500,7 +500,7 @@ module Game
           metadata: {
             "dynamic" => true,
             "territory" => territory.to_s,
-            "pvp_enabled" => true,
+            "fight_type" => "team",
             "generated_at" => Time.current.iso8601
           }
         }

@@ -41,7 +41,7 @@ Arena screens:
 - room detail with pending applications;
 - fight setup form;
 - pending application row;
-- active battle screen;
+- active fight screen;
 - post-fight result/log.
 
 ## UX Model
@@ -185,15 +185,15 @@ The visual result is:
 ```
 
 After the fight result is finished, the same profile returns to fight id `0`
-and the battle link disappears while the location remains the training hall.
+and the fight link disappears while the location remains the training hall.
 
 Design translation:
 
 - public player info should show current city/sublocation even during combat;
 - public player info should expose a public fight/log link only when the
   character is in an active or unfinished fight;
-- the arena fight id doubles as the profile's public battle link target;
-- finishing the result step clears the profile battle link.
+- the arena fight id doubles as the profile's public fight link target;
+- finishing the result step clears the profile fight link.
 
 ## Launch Arena Contract
 
@@ -270,7 +270,7 @@ Further live Neverlands capture is still useful for tuning hidden constants:
 Core:
 
 - duel;
-- group/team battle;
+- group/team fight;
 - training against NPC;
 - sacrifice/free-for-all.
 

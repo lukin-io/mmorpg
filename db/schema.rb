@@ -245,79 +245,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_11_133000) do
     t.index ["target_type", "target_id"], name: "index_audit_logs_on_target"
   end
 
-  create_table "battle_participants", force: :cascade do |t|
-    t.integer "action_points_used", default: 0
-    t.jsonb "active_effects", default: [], null: false
-    t.bigint "battle_id", null: false
-    t.jsonb "body_damage", default: {"head" => 0, "legs" => 0, "torso" => 0, "stomach" => 0}
-    t.jsonb "buffs", default: {}, null: false
-    t.bigint "character_id"
-    t.jsonb "combat_buffs", default: []
-    t.datetime "created_at", null: false
-    t.integer "current_hp", default: 100
-    t.integer "current_mp", default: 50
-    t.jsonb "damage_dealt", default: {"air" => 0, "fire" => 0, "earth" => 0, "total" => 0, "water" => 0, "normal" => 0}
-    t.jsonb "damage_received", default: {"air" => 0, "fire" => 0, "earth" => 0, "total" => 0, "water" => 0, "normal" => 0}
-    t.decimal "fatigue", precision: 5, scale: 2, default: "100.0"
-    t.integer "hits_blocked", default: 0
-    t.integer "hits_landed", default: 0
-    t.integer "hp_remaining", default: 0, null: false
-    t.integer "initiative", default: 0, null: false
-    t.boolean "is_alive", default: true
-    t.boolean "is_defending", default: false
-    t.integer "mana_used", default: 0
-    t.integer "max_hp", default: 100
-    t.integer "max_mp", default: 50
-    t.bigint "npc_template_id"
-    t.string "participant_type", default: "player"
-    t.jsonb "pending_attacks", default: []
-    t.jsonb "pending_blocks", default: []
-    t.jsonb "pending_skills", default: []
-    t.string "role", default: "combatant", null: false
-    t.jsonb "stat_snapshot", default: {}, null: false
-    t.string "team", default: "alpha", null: false
-    t.datetime "turn_submitted_at"
-    t.datetime "updated_at", null: false
-    t.index ["battle_id", "is_alive"], name: "index_battle_participants_on_battle_id_and_is_alive"
-    t.index ["battle_id"], name: "index_battle_participants_on_battle_id"
-    t.index ["character_id"], name: "index_battle_participants_on_character_id"
-    t.index ["npc_template_id"], name: "index_battle_participants_on_npc_template_id"
-    t.index ["turn_submitted_at"], name: "index_battle_participants_on_turn_submitted", where: "(turn_submitted_at IS NOT NULL)"
-  end
-
-  create_table "battles", force: :cascade do |t|
-    t.integer "action_points_per_turn", default: 80
-    t.boolean "allow_spectators", default: true, null: false
-    t.integer "battle_type", default: 0, null: false
-    t.string "combat_mode", default: "standard"
-    t.datetime "created_at", null: false
-    t.integer "current_turn_character_id"
-    t.datetime "ended_at"
-    t.jsonb "initiative_order", default: [], null: false
-    t.bigint "initiator_id", null: false
-    t.integer "max_mana_per_turn", default: 50
-    t.jsonb "metadata", default: {}, null: false
-    t.boolean "moderation_override", default: false, null: false
-    t.string "pvp_mode"
-    t.bigint "rng_seed"
-    t.integer "round_number", default: 1
-    t.string "share_token"
-    t.datetime "started_at"
-    t.integer "status", default: 0, null: false
-    t.integer "turn_number", default: 1, null: false
-    t.integer "turn_timeout_seconds", default: 300, null: false
-    t.datetime "turn_timer_ends_at"
-    t.datetime "updated_at", null: false
-    t.string "winning_team"
-    t.bigint "zone_id"
-    t.index ["initiator_id", "status"], name: "index_battles_on_initiator_active", unique: true, where: "(status = 1)"
-    t.index ["initiator_id"], name: "index_battles_on_initiator_id"
-    t.index ["share_token"], name: "index_battles_on_share_token", unique: true
-    t.index ["status"], name: "index_battles_on_status"
-    t.index ["turn_timer_ends_at"], name: "index_battles_on_turn_timer_ends_at", where: "((turn_timer_ends_at IS NOT NULL) AND (status = 1))"
-    t.index ["zone_id"], name: "index_battles_on_zone_id"
-  end
-
   create_table "character_positions", force: :cascade do |t|
     t.bigint "character_id", null: false
     t.datetime "created_at", null: false
@@ -662,8 +589,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_11_133000) do
   end
 
   create_table "clan_wars", force: :cascade do |t|
+    t.bigint "arena_match_id"
     t.bigint "attacker_clan_id", null: false
-    t.bigint "battle_id"
     t.datetime "created_at", null: false
     t.datetime "declaration_made_at"
     t.bigint "defender_clan_id", null: false
@@ -675,9 +602,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_11_133000) do
     t.jsonb "support_objectives", default: [], null: false
     t.string "territory_key", null: false
     t.datetime "updated_at", null: false
+    t.index ["arena_match_id"], name: "index_clan_wars_on_arena_match_id"
     t.index ["attacker_clan_id", "defender_clan_id", "territory_key"], name: "index_clan_wars_on_participants_and_territory"
     t.index ["attacker_clan_id"], name: "index_clan_wars_on_attacker_clan_id"
-    t.index ["battle_id"], name: "index_clan_wars_on_battle_id"
     t.index ["defender_clan_id"], name: "index_clan_wars_on_defender_clan_id"
   end
 
@@ -716,28 +643,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_11_133000) do
     t.index ["slug"], name: "index_clans_on_slug", unique: true
   end
 
-  create_table "combat_analytics_reports", force: :cascade do |t|
-    t.bigint "battle_id", null: false
-    t.datetime "created_at", null: false
-    t.datetime "generated_at", null: false
-    t.jsonb "payload", default: {}, null: false
-    t.datetime "updated_at", null: false
-    t.index ["battle_id"], name: "index_combat_analytics_reports_on_battle_id"
-    t.index ["generated_at"], name: "index_combat_analytics_reports_on_generated_at"
-  end
-
   create_table "combat_log_entries", force: :cascade do |t|
     t.string "action_key"
     t.bigint "actor_id"
     t.string "actor_team"
     t.string "actor_type"
-    t.bigint "arena_match_id"
-    t.bigint "battle_id"
+    t.bigint "arena_match_id", null: false
     t.string "body_part"
     t.datetime "created_at", null: false
     t.integer "damage_amount", default: 0, null: false
     t.integer "healing_amount", default: 0, null: false
-    t.string "log_type", default: "action"
+    t.string "log_type", default: "action", null: false
     t.text "message", null: false
     t.datetime "occurred_at"
     t.string "outcome"
@@ -753,8 +669,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_11_133000) do
     t.index ["arena_match_id", "log_type"], name: "index_combat_logs_on_arena_match_and_log_type"
     t.index ["arena_match_id", "round_number", "sequence"], name: "index_combat_logs_on_arena_match_round_sequence"
     t.index ["arena_match_id"], name: "index_combat_log_entries_on_arena_match_id"
-    t.index ["battle_id", "round_number"], name: "index_combat_log_entries_on_battle_id_and_round_number"
-    t.index ["battle_id"], name: "index_combat_log_entries_on_battle_id"
     t.index ["log_type"], name: "index_combat_log_entries_on_log_type"
     t.index ["tags"], name: "index_combat_log_entries_on_tags", using: :gin
     t.index ["target_id"], name: "index_combat_log_entries_on_target_id"
@@ -1688,19 +1602,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_11_133000) do
     t.index ["user_id"], name: "index_purchases_on_user_id"
   end
 
-  create_table "pvp_flags", force: :cascade do |t|
-    t.bigint "character_id", null: false
-    t.datetime "created_at", null: false
-    t.datetime "expires_at"
-    t.integer "flag_type", default: 0, null: false
-    t.jsonb "metadata", default: {}, null: false
-    t.string "source", limit: 50
-    t.datetime "updated_at", null: false
-    t.index ["character_id", "flag_type"], name: "index_pvp_flags_on_character_id_and_flag_type"
-    t.index ["character_id"], name: "index_pvp_flags_on_character_id"
-    t.index ["expires_at"], name: "index_pvp_flags_on_expires_at"
-  end
-
   create_table "quest_analytics_snapshots", force: :cascade do |t|
     t.decimal "abandon_rate", precision: 5, scale: 2, default: "0.0", null: false
     t.integer "avg_completion_minutes", default: 0, null: false
@@ -2164,8 +2065,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_11_133000) do
     t.integer "height", default: 32, null: false
     t.jsonb "metadata", default: {}, null: false
     t.string "name", null: false
-    t.boolean "pvp_enabled", default: false, null: false
-    t.string "pvp_mode", limit: 20
     t.integer "turn_counter", default: 1, null: false
     t.datetime "updated_at", null: false
     t.integer "width", default: 32, null: false
@@ -2197,11 +2096,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_11_133000) do
   add_foreign_key "auction_listings", "professions", column: "required_profession_id"
   add_foreign_key "auction_listings", "users", column: "seller_id"
   add_foreign_key "audit_logs", "users", column: "actor_id"
-  add_foreign_key "battle_participants", "battles"
-  add_foreign_key "battle_participants", "characters"
-  add_foreign_key "battle_participants", "npc_templates"
-  add_foreign_key "battles", "characters", column: "initiator_id"
-  add_foreign_key "battles", "zones"
   add_foreign_key "character_positions", "characters"
   add_foreign_key "character_positions", "zones"
   add_foreign_key "characters", "clans"
@@ -2244,14 +2138,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_11_133000) do
   add_foreign_key "clan_territories", "clans"
   add_foreign_key "clan_treasury_transactions", "clans"
   add_foreign_key "clan_treasury_transactions", "users", column: "actor_id"
-  add_foreign_key "clan_wars", "battles"
+  add_foreign_key "clan_wars", "arena_matches"
   add_foreign_key "clan_wars", "clans", column: "attacker_clan_id"
   add_foreign_key "clan_wars", "clans", column: "defender_clan_id"
   add_foreign_key "clan_xp_events", "clans"
   add_foreign_key "clans", "users", column: "leader_id"
-  add_foreign_key "combat_analytics_reports", "battles"
   add_foreign_key "combat_log_entries", "arena_matches"
-  add_foreign_key "combat_log_entries", "battles"
   add_foreign_key "community_objectives", "event_instances"
   add_foreign_key "competition_brackets", "game_events"
   add_foreign_key "competition_matches", "competition_brackets"
@@ -2343,7 +2235,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_11_133000) do
   add_foreign_key "profession_tools", "characters"
   add_foreign_key "profession_tools", "professions"
   add_foreign_key "purchases", "users"
-  add_foreign_key "pvp_flags", "characters"
   add_foreign_key "quest_assignments", "characters"
   add_foreign_key "quest_assignments", "quests"
   add_foreign_key "quest_chapters", "quest_chains"

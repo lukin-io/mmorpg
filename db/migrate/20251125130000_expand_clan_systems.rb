@@ -18,7 +18,7 @@ class ExpandClanSystems < ActiveRecord::Migration[8.1]
       t.datetime :declaration_made_at
       t.datetime :preparation_begins_at
       t.jsonb :support_objectives, null: false, default: []
-      t.references :battle, foreign_key: true
+      t.references :arena_match, foreign_key: true
     end
 
     change_table :clan_territories, bulk: true do |t|

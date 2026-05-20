@@ -17,12 +17,6 @@
             <span class="info-value"><%= result.data[:zone_info][:faction].titleize %></span>
           </div>
         <% end %>
-        <div class="info-item">
-          <span class="info-label">PvP Status:</span>
-          <span class="info-value pvp-<%= result.data[:zone_info][:pvp_enabled] ? 'enabled' : 'disabled' %>">
-            <%= result.data[:zone_info][:pvp_enabled] ? "⚔️ Enabled" : "🛡️ Disabled" %>
-          </span>
-        </div>
       </div>
     </div>
   <% end %>
@@ -41,4 +35,3 @@
     </div>
   <% end %>
 </div>
-

@@ -301,10 +301,7 @@ RSpec.describe "Arena NPC Combat UI", type: :system do
         arena_season: arena_season,
         match_type: :duel,
         winning_team: "a",
-        metadata: {"is_npc_fight" => true, "combat_log" => [
-          {"type" => "damage", "description" => "TestHero attacks Training Dummy for 25 damage"},
-          {"type" => "defeat", "description" => "Training Dummy has been defeated!"}
-        ]})
+        metadata: {"is_npc_fight" => true})
     end
 
     let!(:player_participation) do
@@ -323,6 +320,27 @@ RSpec.describe "Arena NPC Combat UI", type: :system do
         team: "b",
         result: :defeat,
         metadata: {"current_hp" => 0, "max_hp" => 60})
+    end
+
+    let!(:damage_log_entry) do
+      create(:combat_log_entry,
+        arena_match: completed_match,
+        actor: player_participation,
+        target: npc_participation,
+        log_type: "damage",
+        message: "TestHero attacks Training Dummy for 25 damage",
+        payload: {"description" => "TestHero attacks Training Dummy for 25 damage"},
+        damage_amount: 25)
+    end
+
+    let!(:defeat_log_entry) do
+      create(:combat_log_entry,
+        arena_match: completed_match,
+        actor: npc_participation,
+        log_type: "defeat",
+        message: "Training Dummy has been defeated!",
+        payload: {"description" => "Training Dummy has been defeated!"},
+        sequence: 2)
     end
 
     before do

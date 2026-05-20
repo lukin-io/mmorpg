@@ -10,7 +10,7 @@ class ClanWar < ApplicationRecord
 
   belongs_to :attacker_clan, class_name: "Clan"
   belongs_to :defender_clan, class_name: "Clan"
-  belongs_to :battle, optional: true
+  belongs_to :arena_match, optional: true
 
   validates :territory_key, presence: true
   validates :scheduled_at, presence: true
@@ -19,11 +19,11 @@ class ClanWar < ApplicationRecord
     Game::World::RegionCatalog.instance.region_for_territory(territory_key)
   end
 
-  def resolve!(winner_clan:, battle_record: nil, result_metadata: {})
+  def resolve!(winner_clan:, fight_record: nil, result_metadata: {})
     update!(
       status: :resolved,
       resolved_at: Time.current,
-      battle: battle_record || battle,
+      arena_match: fight_record || arena_match,
       result_payload: result_payload.merge(result_metadata)
     )
     Clans::TerritoryManager.new(territory_key: territory_key).assign!(clan: winner_clan)

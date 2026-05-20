@@ -2,7 +2,7 @@
 
 module Professions
   module Doctor
-    # TraumaResponse shortens post-battle downtime using the Doctor profession bonus.
+    # TraumaResponse shortens post-fight downtime using the Doctor profession bonus.
     #
     # Usage:
     #   Professions::Doctor::TraumaResponse.new(doctor_progress:).apply!(character_position:)

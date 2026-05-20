@@ -1,36 +1,95 @@
 # Design Folder
 
-`gdd.md` is the entry point. Everything else in this folder supports it.
+`doc/design/` is the portable Neverlands-based design library. It should be
+possible to copy this folder into a fresh Rails app and still understand what to
+build.
 
-## Authority Boundary
+## Authority
 
-This folder is the portable design source of truth. New implementation should
-use the Neverlands-based rules in this folder before using source captures
-or prior app behavior.
+The active game design is the Neverlands-based design documented here. Treat
+this folder as the single point of truth for current mechanics, UI structure,
+progression, movement, combat, inventory, economy, and MVP scope.
 
-If a legacy document describes behavior that is not mapped into this folder, it
-should be removed. Promote any still-valid Neverlands-based rule into a feature
-or area doc before implementing from it.
+Anything that does not support the Neverlands-based game design is legacy and
+should be removed rather than treated as a competing reference. If a legacy doc
+contains a still-valid Neverlands-based rule, promote that rule into a feature
+or area doc first.
 
-## Folders
+When documents disagree, use this order:
 
-- `areas/` - where gameplay happens.
-- `features/` - what the player can do and the rules behind it.
-- `reference/` - observed Neverlands behavior and source-material mapping.
+```text
+gdd.md
+-> launch_mvp_plan.md
+-> features/* and areas/*
+-> reference/*
+```
+
+## Translation Rule
+
+Neverlands is the mechanics and UX reference, not a technical target. Preserve
+player-facing behavior, formulas, page structure, and game rules, but implement
+them with clean Ruby on Rails routes, controllers, models, services, views, and
+JSON or Turbo payloads.
+
+Do not keep source-era technical shapes. That means no CGI route mirroring, no
+frameset URL mirroring, no account-profile route shape for character pages, and
+no legacy endpoints beside the Rails implementation. Preserve the game
+contract, not the old protocol.
+
+The target RPG is English-only. Russian-language source material affects
+mechanics and UX structure only; it does not make Russian a product language.
 
 ## Reading Order
 
 1. `gdd.md`
 2. `launch_mvp_plan.md`
-3. `documentation_model.md`
-4. `neverlands_parity_matrix.md`
-5. `reference/neverlands.md`
-6. Area docs for the surface being built.
-7. Feature docs for the mechanics involved.
+3. `reference/neverlands.md`
+4. Area docs for the surface being built.
+5. Feature docs for the mechanics involved.
 
 Deferred canonical feature docs, such as `features/dungeons.md`, are still
 design authority for their feature even when they are explicitly outside launch
 MVP scope.
+
+## Structure
+
+Launch scope:
+
+- `launch_mvp_plan.md`
+
+Areas:
+
+- `areas/world_map.md`
+- `areas/game_client_layout.md`
+- `areas/cities_and_buildings.md`
+- `areas/arena.md`
+
+Features:
+
+- `features/movement.md`
+- `features/character_vitals.md`
+- `features/progression_stats_skills.md`
+- `features/combat.md`
+- `features/items_inventory_equipment.md`
+- `features/economy_trading_shops.md`
+- `features/gathering_professions.md`
+- `features/npcs_quests.md`
+- `features/social_chat_presence.md`
+- `features/dungeons.md`
+
+Reference:
+
+- `reference/` - observed Neverlands behavior and source-material mapping.
+
+## Document Types
+
+| Type | Folder | Purpose |
+| --- | --- | --- |
+| Entry point | `gdd.md` | Whole-game source of truth |
+| Launch plan | `launch_mvp_plan.md` | MVP scope, order, and coverage checklist |
+| Feature spec | `features/` | One mechanic or system per file |
+| Area spec | `areas/` | One world area, screen family, or place type |
+| Reference | `reference/` | Observations and provenance, not new rules |
 
 ## Update Rule
 
@@ -39,12 +98,65 @@ doc first, then update code and tests. Do not hide new rules only in code or
 test files.
 
 Do not put current-app file maps, class names, route names, migration notes, or
-test paths in this folder. `doc/design` should remain copyable into a fresh
-Rails app.
+test paths in this folder. Keep `doc/design/` copyable.
+
+When adding live-analysis notes, keep reusable mechanics in `features/` or
+`areas/`, and raw observation details in `reference/`. Do not store live session
+tokens, passwords, or finish/challenge codes in tracked docs.
+
+## Feature Template
+
+```md
+# Feature Name
+
+## Purpose
+What player need this feature serves.
+
+## Neverlands Reference
+Observed behavior or reference docs that define the intended feel.
+
+## Player Experience
+What the player sees and does.
+
+## Rules
+Authoritative game rules.
+
+## State Concepts
+Game-design nouns and lifecycle. Avoid framework or table names unless the
+design truly depends on the noun.
+
+## Interactions
+How this feature connects to movement, combat, economy, social, or areas.
+
+## Out Of Scope
+Ideas intentionally not in the current core.
+```
+
+## Area Template
+
+```md
+# Area Name
+
+## Purpose
+Why this area exists in the game.
+
+## Entry And Exit
+How players arrive, leave, and return.
+
+## Screen Model
+What kind of surface the player sees.
+
+## Available Actions
+The actions this area can offer.
+
+## Area Graph
+Named nodes, districts, or routes.
+
+## Feature Hooks
+Which feature documents this area activates.
+```
 
 ## Rails-Friendly Guidelines
-
-New gameplay implementation should follow these design rules:
 
 - Keep the GDD and feature/area docs as the source of truth.
 - Prefer Rails conventions before custom framework code.
@@ -59,5 +171,3 @@ New gameplay implementation should follow these design rules:
 - Write focused tests for every new model/service/controller path and update
   affected tests with the new design contract.
 - Prefer deterministic data in tests and starter content.
-- When a Neverlands-based mechanic is implemented, document durable design
-  rules here and keep transient implementation status out.

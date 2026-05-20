@@ -605,7 +605,7 @@ Core fight shapes:
 
 ## State Concepts
 
-- battle;
+- fight;
 - participant;
 - team;
 - round;

@@ -4,7 +4,7 @@
   <div class="combat-log-header">
     <div class="header-content">
       <h1>Fight Log #<%= @arena_match.id %></h1>
-      <p class="battle-meta">
+      <p class="fight-meta">
         <span class="zone"><%= @arena_match.arena_room&.name || "Arena" %></span>
         <span class="separator">/</span>
         <span class="type"><%= @arena_match.match_type.humanize %></span>
@@ -27,7 +27,7 @@
     </div>
   </div>
 
-  <div class="battle-participants">
+  <div class="fight-participants">
     <div class="teams-display">
       <div class="team team-alpha">
         <% @team_a.each_with_index do |participant, index| %>

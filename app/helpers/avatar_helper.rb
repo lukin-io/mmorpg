@@ -89,24 +89,6 @@ module AvatarHelper
     end
   end
 
-  # Renders avatar for a BattleParticipant (handles both character and NPC)
-  #
-  # @param participant [BattleParticipant] the battle participant record
-  # @param size [Symbol] :small, :medium, :large, :xlarge
-  # @param options [Hash] additional options passed to image_tag
-  # @return [ActiveSupport::SafeBuffer] the image tag HTML
-  def battle_participant_avatar_tag(participant, size: :medium, **options)
-    return fallback_avatar_tag(size:, **options) unless participant
-
-    if participant.npc_template.present?
-      npc_avatar_tag(participant.npc_template, size:, **options)
-    elsif participant.character.present?
-      character_avatar_tag(participant.character, size:, **options)
-    else
-      fallback_avatar_tag(size:, **options)
-    end
-  end
-
   # Get a random player avatar name
   #
   # @return [String] random avatar filename (without extension)

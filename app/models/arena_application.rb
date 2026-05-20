@@ -28,7 +28,7 @@ class ArenaApplication < ApplicationRecord
     no_artifacts: 1,      # No magical items
     limited_artifacts: 2, # Restricted equipment tiers
     free: 3,              # All equipment allowed
-    clan_vs_clan: 4,      # Guild team battles
+    clan_vs_clan: 4,      # Guild team fights
     faction_vs_faction: 5, # Alignment-based teams
     clan_vs_all: 6,       # Guild vs random players
     faction_vs_all: 7,    # Alignment vs random

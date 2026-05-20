@@ -98,7 +98,7 @@ RSpec.describe Arena::CombatProcessor do
           .with(character1, anything, anything, kind_of(Integer), hash_including(:body_part))
       end
 
-      it "persists durable fight log entries while keeping metadata compatibility" do
+      it "persists durable fight log entries" do
         expect {
           processor.process_action(
             character1,
@@ -111,9 +111,8 @@ RSpec.describe Arena::CombatProcessor do
 
         entry = arena_match.combat_log_entries.last
         expect(entry.arena_match).to eq(arena_match)
-        expect(entry.battle).to be_nil
         expect(entry.tags).to include("arena")
-        expect(arena_match.reload.metadata["combat_log"]).not_to be_empty
+        expect(arena_match.reload.metadata).not_to have_key("combat_log")
       end
     end
 
@@ -274,7 +273,6 @@ RSpec.describe Arena::CombatProcessor do
         started_at: Time.current,
         metadata: {
           "is_npc_fight" => true,
-          "combat_log" => [],
           "combat_profile" => {
             "ap_limit" => 140,
             "physical_attack_cost_seed" => 67,
@@ -334,9 +332,8 @@ RSpec.describe Arena::CombatProcessor do
 
       expect(result).to be_success
       expect(result[:attacks].size).to eq(2)
-      log = npc_match.reload.metadata["combat_log"]
-      damage_entries = log.select { |entry| entry["type"] == "damage" && entry["description"].include?("Captured Bandit attacks") }
-      expect(damage_entries.map { |entry| entry["description"] }.join(" ")).to include("stomach", "legs")
+      damage_entries = npc_match.reload.combat_log_entries.select { |entry| entry.log_type == "damage" && entry.message.include?("Captured Bandit attacks") }
+      expect(damage_entries.map(&:message).join(" ")).to include("stomach", "legs")
     end
 
     it "logs the automatic loot check after an NPC defeat" do
@@ -356,10 +353,11 @@ RSpec.describe Arena::CombatProcessor do
       )
 
       expect(result).to be_success
-      log = npc_match.reload.metadata["combat_log"]
-      expect(log.map { |entry| entry["type"] }).to include("defeat", "loot", "victory")
-      expect(log.find { |entry| entry["type"] == "loot" }["description"]).to include("searched Captured Bandit")
-      expect(log.find { |entry| entry["type"] == "loot" }["description"]).to include("Вещь «Щепки»")
+      log_entries = npc_match.reload.combat_log_entries
+      expect(log_entries.map(&:log_type)).to include("defeat", "loot", "victory")
+      loot_entry = log_entries.find { |entry| entry.log_type == "loot" }
+      expect(loot_entry.message).to include("searched Captured Bandit")
+      expect(loot_entry.message).to include("Вещь «Щепки»")
       expect(character1.inventory.inventory_items.find_by(item_template: wood_chips).quantity).to eq(1)
       expect(npc_player_participation.reload.metadata["loot_drops"].last).to include(
         "item_key" => "wood_chips",
@@ -594,7 +592,7 @@ RSpec.describe Arena::CombatProcessor do
         expect(second[:resolved]).to be true
         expect(participation1.reload.metadata["current_ap"]).to eq(140)
         expect(participation2.reload.metadata["current_ap"]).to eq(140)
-        expect(arena_match.reload.metadata["combat_log"].map { |entry| entry["type"] }).to include("block")
+        expect(arena_match.reload.combat_log_entries.map(&:log_type)).to include("block")
       end
 
       it "keeps team/player fights in the player turn-commit flow even when an NPC is present" do

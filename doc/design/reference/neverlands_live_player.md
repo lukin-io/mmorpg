@@ -903,7 +903,7 @@ player loop documented above.
 Done:
 
 - inventory and profile use the same character/equipment slot model;
-- inventory has Neverlands-inspired category filters for things, elixirs,
+- inventory has Neverlands-based category filters for things, elixirs,
   alchemy, fishing, hunting/food, resources, wood, and quest journal;
 - carried item rows expose compact actions, properties, requirements, mass, and
   durability;

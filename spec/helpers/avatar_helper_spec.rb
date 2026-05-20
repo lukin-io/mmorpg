@@ -157,30 +157,6 @@ RSpec.describe AvatarHelper, type: :helper do
     end
   end
 
-  describe "#battle_participant_avatar_tag" do
-    context "with character participant" do
-      let(:character) { create(:character, avatar: "arcanist") }
-      let(:battle) { create(:battle) }
-      let(:participant) { create(:battle_participant, battle: battle, character: character) }
-
-      it "renders character avatar" do
-        result = helper.battle_participant_avatar_tag(participant)
-        expect(result).to match(/avatars\/arcanist/)
-      end
-    end
-
-    context "with NPC participant" do
-      let(:npc) { create(:npc_template, role: "hostile", npc_key: "forest_wolf") }
-      let(:battle) { create(:battle) }
-      let(:participant) { create(:battle_participant, battle: battle, npc_template: npc, character: nil) }
-
-      it "renders NPC avatar" do
-        result = helper.battle_participant_avatar_tag(participant)
-        expect(result).to match(/npc\/wolf/)
-      end
-    end
-  end
-
   describe "#random_player_avatar" do
     it "returns one of the available avatars" do
       expect(AvatarHelper::PLAYER_AVATARS).to include(helper.random_player_avatar)

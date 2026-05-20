@@ -52,26 +52,12 @@ module Arena
         target_team: target_participation&.team
       )
 
-      append_compatibility_log!(canonical_payload)
       entry
     end
 
     private
 
     attr_reader :match, :writer
-
-    def append_compatibility_log!(payload)
-      match.metadata ||= {}
-      match.metadata["combat_log"] ||= []
-      match.metadata["combat_log"] << {
-        "type" => payload["type"],
-        "timestamp" => payload["timestamp"],
-        "actor_id" => payload["actor_id"],
-        "actor_name" => payload["actor_name"],
-        "description" => payload["description"]
-      }.compact
-      match.save!
-    end
 
     def participation_for(record)
       case record

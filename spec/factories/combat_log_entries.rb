@@ -1,14 +1,10 @@
 FactoryBot.define do
   factory :combat_log_entry do
-    association :battle
+    association :arena_match
     round_number { 1 }
     sequence(:sequence) { |n| n }
+    log_type { "action" }
     message { "Attack landed" }
     payload { {damage: 10} }
-
-    trait :for_arena_match do
-      battle { nil }
-      association :arena_match
-    end
   end
 end

@@ -3,7 +3,6 @@
 :queues:
   - default
   - arena
-  - combat
   - chat
   - payments
   - moderation
@@ -15,4 +14,3 @@
   - webhooks
   - low
 :logfile: ./log/sidekiq.log
-

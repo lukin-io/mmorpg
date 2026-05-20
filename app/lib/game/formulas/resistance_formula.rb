@@ -59,7 +59,7 @@ module Game
 
       # Calculate damage after applying resistance
       #
-      # @param defender [Character, NpcTemplate, BattleParticipant] the defender
+      # @param defender [Character, NpcTemplate, ArenaParticipation] the defender
       # @param damage [Integer] raw damage before resistance
       # @param element [String, Symbol] the damage element type
       # @return [Hash] result with damage values and reduction info

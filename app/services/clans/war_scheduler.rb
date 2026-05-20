@@ -2,7 +2,7 @@
 
 module Clans
   # WarScheduler coordinates declarations, prep windows, and support objectives
-  # when clans schedule territory battles.
+  # when clans schedule territory wars.
   #
   # Usage:
   #   Clans::WarScheduler.new(attacker: clan_a, defender: clan_b).schedule!(

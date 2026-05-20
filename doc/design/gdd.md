@@ -49,8 +49,8 @@ Features:
 
 Documentation process:
 
-- `doc/design/documentation_model.md`
-- `doc/design/neverlands_parity_matrix.md`
+- `doc/design/README.md`
+- `doc/design/launch_mvp_plan.md`
 - `doc/design/reference/neverlands.md`
 - `doc/design/reference/source_material.md`
 
@@ -241,7 +241,7 @@ Combat is turn-based and tactical. Core expectations:
 
 - PvE encounters can trigger from map movement or tile-local hostile actions;
 - player, team, and NPC fights support Neverlands-style arena duels, group
-  battles, and room-based applications;
+  fights, and room-based applications;
 - combat uses explicit turns, action points, body-part targeting, blocks,
   skills, logs, rewards, and death/respawn consequences;
 - combat state must be resumable and auditable.

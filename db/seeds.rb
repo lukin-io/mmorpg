@@ -854,7 +854,7 @@ if defined?(CurrencyWallet)
 
   if lukin_user
     wallet = lukin_user.currency_wallet || CurrencyWallet.create!(user: lukin_user)
-    wallet.adjust!(currency: :gold, amount: 4_200, reason: "seed.pvp_rewards")
+    wallet.adjust!(currency: :gold, amount: 4_200, reason: "seed.arena_rewards")
     wallet.adjust!(currency: :gold, amount: -600, reason: "sink.auction_bid", metadata: {"item" => "Tempered Longsword"})
     wallet.adjust!(currency: :silver, amount: 800, reason: "seed.trade_posting")
   end
@@ -1248,7 +1248,7 @@ if castleton
     z_index: 10
   }
 
-  # Arena - for PvP battles
+  # Arena - for player, team, and NPC fights
   # TODO: Adjust position to match arena location on city.png
   city_hotspots << {
     zone: castleton,

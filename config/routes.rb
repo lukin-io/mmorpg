@@ -1,27 +1,13 @@
 require "sidekiq/web"
 
 Rails.application.routes.draw do
-  # NOTE: Devise 4.9.x generates deprecation warnings about hash arguments in Rails 8.2
-  # This is a known Devise issue and will be fixed in Devise 4.10+
-  # See: https://github.com/heartcombo/devise/issues/5644
-  devise_for :users
+  # Already implemented MVP Neverlands-based game-design routes.
+  # These are the canonical player-facing routes for features already promoted
+  # into doc/design.
+  root "world#show"
 
-  mount ActionCable.server => "/cable"
-
-  authenticate :user, ->(user) { user.has_role?(:admin) } do
-    mount Sidekiq::Web => "/sidekiq"
-  end
-
-  # Public fight logs translate Neverlands fight-id logs into Rails routes.
-  get "log/:id", to: "public_fight_logs#show", as: :public_fight_log
-
-  # Existing Battle-backed public logs.
-  get "logs/:share_token", to: "public_battle_logs#show", as: :public_battle_log
-
-  resource :session_ping, only: :create
   get "player/:name", to: "players#show", as: :player
 
-  # Character Stats & Skills Allocation
   resources :characters, only: [] do
     member do
       get :stats
@@ -33,9 +19,124 @@ Rails.application.routes.draw do
     end
   end
 
+  resource :world, only: :show, controller: "world" do
+    post :move
+    post :enter
+    post :enter_building
+    post :interact_hotspot
+    post :exit_location
+    post :gather
+    post :gather_resource
+    post :interact
+    post :dialogue_action
+  end
+
+  resources :gathering, only: [:show] do
+    member do
+      post :harvest
+    end
+    collection do
+      get :nodes
+    end
+  end
+
+  resource :inventory, only: [:show] do
+    post :equip
+    post :unequip
+    post :use
+    post :sort
+  end
+  resources :inventory_items, only: [:destroy], path: "inventory/items"
+
+  resources :arena, only: [:index], controller: "arena" do
+    collection do
+      get :lobby
+    end
+  end
+
+  resources :arena_rooms, only: [:show] do
+    resources :arena_applications, only: [:index, :create, :destroy] do
+      member do
+        post :accept
+      end
+    end
+  end
+
+  resources :arena_applications, only: [] do
+    member do
+      post :accept
+      delete :cancel
+    end
+  end
+
+  resources :arena_matches, only: [:show] do
+    member do
+      post :action
+      post :claim_timeout
+      post :finish
+      post :spectate
+      get :log
+    end
+  end
+
+  resources :arena_seasons, only: [:index, :show]
+
+  get "log/:id", to: "public_fight_logs#show", as: :public_fight_log
+  post "fight/npc", to: "world_npc_fights#create", as: :world_npc_fights
+
+  resources :quests, only: [:index, :show] do
+    member do
+      post :accept
+      post :complete
+      post :advance_story
+    end
+    collection do
+      post :daily
+    end
+  end
+  resources :npc_reports, only: [:new, :create]
+
   resources :chat_channels, only: [:index, :show] do
     resources :chat_messages, only: :create
   end
+
+  resources :professions, only: :index do
+    member do
+      post :enroll
+      post :reset_progress
+    end
+  end
+
+  resources :crafting_jobs, only: [:index, :create] do
+    collection do
+      post :preview
+    end
+  end
+  resources :profession_tools, only: [] do
+    post :repair, on: :member
+  end
+
+  resources :marketplace_kiosks, only: [:index, :show, :create] do
+    member do
+      post :quick_buy
+      post :quick_sell
+    end
+  end
+
+  # UNCLARIFIED YET
+
+  # NOTE: Devise 4.9.x generates deprecation warnings about hash arguments in Rails 8.2
+  # This is a known Devise issue and will be fixed in Devise 4.10+
+  # See: https://github.com/heartcombo/devise/issues/5644
+  devise_for :users
+
+  mount ActionCable.server => "/cable"
+
+  authenticate :user, ->(user) { user.has_role?(:admin) } do
+    mount Sidekiq::Web => "/sidekiq"
+  end
+
+  resource :session_ping, only: :create
 
   resources :friendships, only: [:index, :create, :update, :destroy]
   resources :mail_messages, only: [:index, :show, :new, :create]
@@ -70,27 +171,10 @@ Rails.application.routes.draw do
   resources :auction_listings do
     resources :auction_bids, only: :create
   end
-  resources :marketplace_kiosks, only: [:index, :create]
   resources :trade_sessions, only: [:create, :show, :update] do
     resources :trade_items, only: :create
   end
   resources :trade_items, only: :destroy
-
-  resources :professions, only: :index do
-    member do
-      post :enroll
-      post :reset_progress
-    end
-  end
-
-  resources :crafting_jobs, only: [:index, :create] do
-    collection do
-      post :preview
-    end
-  end
-  resources :profession_tools, only: [] do
-    post :repair, on: :member
-  end
 
   resources :achievements, only: [:index, :create]
   resources :housing_plots, only: [:index, :create, :update] do
@@ -126,50 +210,7 @@ Rails.application.routes.draw do
     resources :party_memberships, only: [:update, :destroy]
   end
   resources :party_invitations, only: :update
-  # Arena System
-  resources :arena, only: [:index], controller: "arena" do
-    collection do
-      get :lobby
-    end
-  end
 
-  resources :arena_rooms, only: [:show] do
-    resources :arena_applications, only: [:index, :create, :destroy] do
-      member do
-        post :accept
-      end
-    end
-  end
-
-  resources :arena_applications, only: [] do
-    member do
-      post :accept
-      delete :cancel
-    end
-  end
-
-  resources :arena_matches, only: [:show] do
-    member do
-      post :action
-      post :claim_timeout
-      post :finish
-      post :spectate
-      get :log
-    end
-  end
-
-  resources :arena_seasons, only: [:index, :show]
-
-  # Inventory Management
-  resource :inventory, only: [:show] do
-    post :equip
-    post :unequip
-    post :use
-    post :sort
-  end
-  resources :inventory_items, only: [:destroy], path: "inventory/items"
-
-  # Premium Store
   resources :premium_store, only: [:index, :show] do
     member do
       post :purchase
@@ -177,15 +218,6 @@ Rails.application.routes.draw do
     end
   end
 
-  # Marketplace Kiosks
-  resources :marketplace_kiosks, only: [:show] do
-    member do
-      post :quick_buy
-      post :quick_sell
-    end
-  end
-
-  # Titles
   resources :titles, only: [:index] do
     member do
       post :equip
@@ -202,28 +234,7 @@ Rails.application.routes.draw do
     post :recalculate, on: :member
   end
   resources :competition_brackets, only: [:show, :update]
-  resources :quests, only: [:index, :show] do
-    member do
-      post :accept
-      post :complete
-      post :advance_story
-    end
-    collection do
-      post :daily
-    end
-  end
   resources :spawn_schedules, only: [:index, :create, :update]
-  resources :npc_reports, only: [:new, :create]
-  resources :combat_logs, only: :show
-
-  # Legacy turn-based combat
-  resources :battles, only: [:show] do
-    member do
-      post :submit_turn
-      post :flee
-      post :surrender
-    end
-  end
 
   namespace :moderation do
     resources :reports, only: [:new, :create]
@@ -255,68 +266,9 @@ Rails.application.routes.draw do
     end
   end
 
-  # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
-
-  # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
-  # Can be used by load balancers and uptime monitors to verify that the app is live.
   get "up" => "rails/health#show", :as => :rails_health_check
 
-  # Render dynamic PWA files from app/views/pwa/* (remember to link manifest in application.html.erb)
-  # get "manifest" => "rails/pwa#manifest", as: :pwa_manifest
-  # get "service-worker" => "rails/pwa#service_worker", as: :pwa_service_worker
-
-  # Game World - Main gameplay area
-  resource :world, only: :show, controller: "world" do
-    post :move
-    post :enter
-    post :enter_building
-    post :interact_hotspot
-    post :exit_location
-    post :gather
-    post :gather_resource
-    post :interact
-    post :dialogue_action
-  end
-
-  # PvE Combat
-  resource :combat, only: :show, controller: "combat" do
-    post :start
-    post :action
-    post :flee
-    get :skills
-  end
-
-  # Legacy open-world player combat
-  resources :pvp_combat, only: [:show, :create] do
-    collection do
-      post :attack
-      get :status
-      post :toggle_pvp
-    end
-    member do
-      post :action
-      post :turn
-      post :flee
-      post :surrender
-    end
-  end
-
-  # Resource Gathering
-  resources :gathering, only: [:show] do
-    member do
-      post :harvest
-    end
-    collection do
-      get :nodes
-    end
-  end
-
-  # Dashboard - Admin/feature flag view
   resource :dashboard, only: :show, controller: "dashboard"
-
-  # Root redirects to world (player's last location - map cell or city)
-  # WorldController handles position persistence and renders appropriate view
-  root "world#show"
 
   namespace :api do
     namespace :v1 do

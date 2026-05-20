@@ -9,7 +9,7 @@ class Zone < ApplicationRecord
   has_many :character_positions, dependent: :restrict_with_exception
   has_many :gathering_nodes, dependent: :destroy
   has_many :world_action_offers, dependent: :destroy
-  has_many :battles, dependent: :nullify
+  has_many :arena_matches, dependent: :nullify
 
   validates :name, presence: true, uniqueness: true
   validates :biome, presence: true, inclusion: {in: BIOMES}

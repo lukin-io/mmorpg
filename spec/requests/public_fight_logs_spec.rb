@@ -17,7 +17,6 @@ RSpec.describe "Public fight logs", type: :request do
 
   before do
     create(:combat_log_entry,
-      :for_arena_match,
       arena_match: match,
       actor: player_participation,
       target: npc_participation,

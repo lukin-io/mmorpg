@@ -12,7 +12,7 @@ module Game
     #     caster: character,
     #     target: enemy,
     #     skill: skill_record,
-    #     battle: battle
+    #     fight: arena_match
     #   )
     #   result = executor.execute!
     #
@@ -31,13 +31,13 @@ module Game
         "shield" => :execute_shield
       }.freeze
 
-      attr_reader :caster, :target, :skill, :battle, :errors
+      attr_reader :caster, :target, :skill, :fight, :errors
 
-      def initialize(caster:, target:, skill:, battle:)
+      def initialize(caster:, target:, skill:, fight:)
         @caster = caster
         @target = target
         @skill = skill
-        @battle = battle
+        @fight = fight
         @errors = []
       end
 
@@ -84,7 +84,7 @@ module Game
 
       def on_cooldown?
         cooldown_key = "skill_#{skill.id}_cooldown"
-        last_used = battle.metadata&.dig("cooldowns", cooldown_key)
+        last_used = fight.metadata&.dig("cooldowns", cooldown_key)
         return false unless last_used
 
         Time.parse(last_used) + skill_cooldown > Time.current
@@ -104,10 +104,10 @@ module Game
         return if skill_cooldown.zero?
 
         cooldown_key = "skill_#{skill.id}_cooldown"
-        battle.metadata ||= {}
-        battle.metadata["cooldowns"] ||= {}
-        battle.metadata["cooldowns"][cooldown_key] = Time.current.iso8601
-        battle.save!
+        fight.metadata ||= {}
+        fight.metadata["cooldowns"] ||= {}
+        fight.metadata["cooldowns"][cooldown_key] = Time.current.iso8601
+        fight.save!
       end
 
       def skill_cost
@@ -402,11 +402,12 @@ module Game
       end
 
       def apply_effect(effect_target, effect_type, data, duration)
-        participant = battle.battle_participants.find_by(character: effect_target)
+        participant = fight.arena_participations.find_by(character: effect_target)
         return unless participant
 
-        participant.combat_buffs ||= []
-        participant.combat_buffs << {
+        participant.metadata ||= {}
+        participant.metadata["combat_buffs"] ||= []
+        participant.metadata["combat_buffs"] << {
           type: effect_type,
           data: data,
           duration: duration,
@@ -416,9 +417,7 @@ module Game
       end
 
       def log_skill_use(amount, critical, action_type)
-        battle.combat_log_entries.create!(
-          round_number: battle.round_number || 1,
-          sequence: next_log_sequence,
+        writer.append!(
           log_type: "skill",
           message: skill_message(amount, critical, action_type),
           payload: {
@@ -429,12 +428,29 @@ module Game
             amount: amount,
             critical: critical,
             action_type: action_type
-          }
+          },
+          actor: caster_participation,
+          target: target_participation,
+          damage: %w[damage aoe drain].include?(action_type) ? amount : 0,
+          healing: (action_type == "heal") ? amount : 0,
+          tags: ["skill", action_type],
+          action_key: skill.id.to_s,
+          outcome: action_type
         )
       end
 
-      def next_log_sequence
-        (battle.combat_log_entries.maximum(:sequence) || 0) + 1
+      def writer
+        @writer ||= Game::Combat::LogWriter.new(arena_match: fight)
+      end
+
+      def caster_participation
+        @caster_participation ||= fight.arena_participations.find_by(character: caster)
+      end
+
+      def target_participation
+        return nil unless target
+
+        @target_participation ||= fight.arena_participations.find_by(character: target)
       end
 
       def skill_message(amount, critical, action_type)

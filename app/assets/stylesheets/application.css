@@ -8801,7 +8801,6 @@ turbo-frame[busy] {
   text-align: right;
 }
 
-/* Battle header */
 .nl-combat-header {
   background: var(--combat-bg-white);
   padding: 8px;
@@ -8816,16 +8815,6 @@ turbo-frame[busy] {
   justify-content: center;
   gap: 15px;
   flex-wrap: wrap;
-}
-
-.nl-battle-type {
-  font-family: 'Cinzel', 'Times New Roman', serif;
-  font-weight: 600;
-  font-size: 15px;
-  color: var(--combat-gold);
-  text-shadow: 0 0 10px rgba(196, 163, 90, 0.5);
-  letter-spacing: 2px;
-  text-transform: uppercase;
 }
 
 .nl-round-counter {
@@ -9342,28 +9331,6 @@ turbo-frame[busy] {
   background: #f5f5f5;
 }
 
-/* Battle result */
-.nl-battle-result {
-  text-align: center;
-  padding: 20px;
-  border-radius: 8px;
-}
-
-.nl-battle-result--victory {
-  background: linear-gradient(135deg, #e8ffe8, #c8ffc8);
-  border: 2px solid #4a9900;
-}
-
-.nl-battle-result--defeat {
-  background: linear-gradient(135deg, #ffe8e8, #ffc8c8);
-  border: 2px solid #cc0000;
-}
-
-.nl-battle-result h2 {
-  margin: 0 0 10px;
-  font-size: 24px;
-}
-
 .nl-rewards {
   margin-top: 15px;
   text-align: left;
@@ -9445,7 +9412,7 @@ turbo-frame[busy] {
   margin: 0;
 }
 
-.combat-log-header .battle-meta {
+.combat-log-header .fight-meta {
   font-size: 14px;
   color: #888;
   margin-top: 5px;
@@ -9849,14 +9816,14 @@ turbo-frame[busy] {
   font-weight: bold;
 }
 
-/* Battle Participants Panel */
-.battle-participants {
+/* Fight Participants Panel */
+.fight-participants {
   margin-top: 20px;
   padding-top: 15px;
   border-top: 1px solid #333;
 }
 
-.battle-participants hr {
+.fight-participants hr {
   border: none;
   border-top: 1px dashed #444;
   margin-bottom: 10px;
@@ -10249,22 +10216,6 @@ turbo-frame[busy] {
 
 .footer-link:hover {
   color: #d4af37;
-}
-
-/* Battle End Marker */
-.battle-end-marker {
-  text-align: center;
-  padding: 20px;
-  margin-top: 20px;
-  background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.2), transparent);
-  color: #d4af37;
-}
-
-.battle-end-marker .winner {
-  display: block;
-  margin-top: 10px;
-  font-size: 18px;
-  font-weight: bold;
 }
 
 /* Responsive */

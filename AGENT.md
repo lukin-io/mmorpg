@@ -193,22 +193,21 @@ CHECKS
 ### ✅ You MAY edit:
 - `app/**` (models, controllers, views, lib, services, jobs)
 - `config/**` (routes, initializers, locales)
-- `db/migrate/**` (new migrations only—don't edit committed ones)
+- `db/migrate/**` (this app is unreleased; keep migration history clean when schema resets are expected)
 - `db/seeds.rb`
 - `lib/**`
 - `spec/**`
 - `.env.example`
 
 ### ❌ Do NOT edit (unless explicitly asked):
-- `doc/gdd.md` (treat as read-only requirements)
-- `doc/features/**` (treat as specs, not code)
+- `doc/design/**` (portable Neverlands-based design authority; edit when implementation changes design facts)
 - Secrets/credentials
 - Production/deployment configs
 - CI/workflow files
 - Docker/Kubernetes manifests
 
-For this MMORPG project, the **Game Design Document (GDD)** is the primary source of gameplay/domain rules;
-use it as input when making design decisions, but don't overwrite it unless asked.
+For this MMORPG project, `doc/design/gdd.md` is the primary source of gameplay/domain rules;
+use it as input when making design decisions and keep it aligned with implemented Neverlands-based behavior.
 
 ---
 
@@ -350,7 +349,7 @@ use it as input when making design decisions, but don't overwrite it unless aske
 
 ## 9. Development guidelines (agent-specific)
 
-- Read the project’s own conventions (`README`, `doc/README.md`, and
+- Read the project’s own conventions (`README`, `doc/design/README.md`, and
   `doc/design/gdd.md`) before generating code.
 - Do **not** suggest running long-lived processes (e.g. `rails server`) inside responses; just mention the commands.
 - Do **not** run `rails credentials` or manipulate secrets in examples.

@@ -92,9 +92,6 @@ class Character < ApplicationRecord
 
   has_many :profession_progresses, dependent: :destroy
   has_many :profession_tools, dependent: :destroy
-  has_many :battle_participants, dependent: :destroy
-  has_many :battles, through: :battle_participants
-  has_many :initiated_battles, class_name: "Battle", foreign_key: :initiator_id, dependent: :nullify
   has_many :quest_assignments, dependent: :destroy
   has_many :movement_commands, dependent: :destroy
   has_many :world_action_offers, dependent: :destroy
@@ -102,7 +99,6 @@ class Character < ApplicationRecord
     class_name: "Moderation::Ticket",
     foreign_key: :subject_character_id,
     dependent: :nullify
-  has_many :pvp_flags, dependent: :destroy
 
   validates :name, presence: true, uniqueness: true, length: {maximum: MAX_NAME_LENGTH}
   validates :level, numericality: {greater_than: 0}
@@ -565,26 +561,7 @@ class Character < ApplicationRecord
   end
 
   # ===================
-  # PVP Status
-  # ===================
-
-  # Check if character has any active PVP flags
-  #
-  # @return [Boolean] true if character is flagged for PVP
-  def pvp_flagged?
-    pvp_flags.active.exists?
-  end
-
-  # Get timestamp of last attack from a specific character
-  # Stored in metadata for revenge window calculations
-  #
-  # @return [Hash, nil] hash of attacker_id => timestamp
-  def last_attacked_by_at
-    metadata&.dig("last_attacked_by_at")
-  end
-
-  # ===================
-  # Combat Stats (unified for PvE/PvP)
+  # Combat Stats
   # ===================
 
   # Calculate attack power for combat

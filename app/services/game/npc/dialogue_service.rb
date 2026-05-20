@@ -278,8 +278,7 @@ module Game
         {
           name: zone.name,
           level_range: level_range,
-          faction: zone.metadata&.dig("faction"),
-          pvp_enabled: zone.metadata&.fetch("pvp_enabled", false)
+          faction: zone.metadata&.dig("faction")
         }
       end
 

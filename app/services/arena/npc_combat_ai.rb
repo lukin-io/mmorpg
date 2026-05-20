@@ -2,7 +2,7 @@
 
 module Arena
   # Deterministic AI decision-making for NPC arena combat
-  # Makes combat decisions based on AI behavior type and current battle state
+  # Makes combat decisions based on AI behavior type and current fight state
   #
   # Purpose: Control NPC actions during arena fights
   #

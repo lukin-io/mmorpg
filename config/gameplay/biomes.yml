@@ -23,7 +23,7 @@ river:
     weight: 50
 city:
   - name: "Pickpocket"
-    kind: "pvp"
+    kind: "hostile_npc"
     difficulty: "dynamic"
     loot_table: "city_guard"
     weight: 20
