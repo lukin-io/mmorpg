@@ -134,8 +134,6 @@ Rails.application.routes.draw do
   resources :mail_messages, only: [:index, :show, :new, :create]
   resources :ignore_list_entries, only: [:index, :create, :destroy]
   resources :group_listings
-  resources :social_hubs, only: [:index, :show]
-
   resources :clans do
     resources :clan_applications, only: [:create, :update], path: "applications"
     resources :clan_message_board_posts, only: [:create, :update, :destroy], path: "messages"

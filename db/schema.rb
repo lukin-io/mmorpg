@@ -1340,34 +1340,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_120000) do
     t.index ["resource_type", "resource_id"], name: "index_roles_on_resource"
   end
 
-  create_table "social_hub_events", force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.text "description"
-    t.datetime "ends_at"
-    t.string "host_npc_name"
-    t.jsonb "metadata", default: {}, null: false
-    t.bigint "social_hub_id", null: false
-    t.datetime "starts_at", null: false
-    t.integer "status", default: 0, null: false
-    t.string "title", null: false
-    t.datetime "updated_at", null: false
-    t.index ["social_hub_id"], name: "index_social_hub_events_on_social_hub_id"
-    t.index ["starts_at"], name: "index_social_hub_events_on_starts_at"
-    t.index ["status"], name: "index_social_hub_events_on_status"
-  end
-
-  create_table "social_hubs", force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.string "hub_type", null: false
-    t.jsonb "metadata", default: {}, null: false
-    t.string "name", null: false
-    t.string "slug", null: false
-    t.datetime "updated_at", null: false
-    t.bigint "zone_id"
-    t.index ["slug"], name: "index_social_hubs_on_slug", unique: true
-    t.index ["zone_id"], name: "index_social_hubs_on_zone_id"
-  end
-
   create_table "spawn_points", force: :cascade do |t|
     t.string "city_key"
     t.datetime "created_at", null: false
@@ -1756,8 +1728,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_120000) do
   add_foreign_key "quests", "quest_chains"
   add_foreign_key "quests", "quest_chapters"
   add_foreign_key "recipes", "professions"
-  add_foreign_key "social_hub_events", "social_hubs"
-  add_foreign_key "social_hubs", "zones"
   add_foreign_key "spawn_points", "zones"
   add_foreign_key "spawn_schedules", "users", column: "configured_by_id"
   add_foreign_key "tile_buildings", "zones", column: "destination_zone_id"

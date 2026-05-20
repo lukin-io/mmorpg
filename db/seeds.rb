@@ -475,15 +475,6 @@ if defined?(MapTileTemplate)
   end
 end
 
-if defined?(SocialHub)
-  SocialHub.find_or_create_by!(slug: "castle-tavern") do |hub|
-    hub.name = "Castleton Tavern"
-    hub.hub_type = "tavern"
-    hub.zone = Zone.find_by(name: "Castleton Keep")
-    hub.metadata = {"description" => "Central hangout with notice board and minigames."}
-  end
-end
-
 if defined?(GroupListing) && defined?(Clan)
   owner = User.first
   clan = Clan.first
