@@ -92,6 +92,28 @@ module ArenaHelper
     config[:label]
   end
 
+  def arena_application_rule_label(application)
+    rule_value = application.metadata.to_h["neverlands_rule_value"]
+    return "rule #{rule_value}" if rule_value.present?
+
+    fight_kind_label(application.fight_kind)
+  end
+
+  def arena_application_applicant_level_gate(application)
+    min = application.metadata.to_h["npc_side_level_min"] || application.enemy_level_min
+    max = application.metadata.to_h["npc_side_level_max"] || application.enemy_level_max
+    return "" if min.blank? && max.blank?
+
+    "levels #{min || 0}-#{max || 33}"
+  end
+
+  def arena_application_open_side_level_gate(application)
+    min = application.team_level_min || application.arena_room.level_min
+    max = application.team_level_max || application.arena_room.level_max
+
+    "levels #{min}-#{max}"
+  end
+
   # Match status badge
   def arena_match_status_badge(status)
     config = MATCH_STATUS_CONFIG[status.to_sym] || {label: status.to_s.humanize, css: "unknown"}

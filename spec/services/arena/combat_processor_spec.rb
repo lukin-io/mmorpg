@@ -230,7 +230,22 @@ RSpec.describe Arena::CombatProcessor do
         role: "arena_bot",
         name: "Captured Bandit",
         level: 5,
-        metadata: {"base_damage" => 15, "ai_behavior" => "balanced"})
+        metadata: {
+          "base_damage" => 15,
+          "ai_behavior" => "balanced",
+          "loot_table" => [
+            {"item_key" => "wood_chips", "item_name" => "Щепки", "chance" => 1.0, "quantity" => 1}
+          ]
+        })
+    end
+
+    let!(:wood_chips) do
+      create(:item_template,
+        :material,
+        key: "wood_chips",
+        name: "Щепки",
+        weight: 1,
+        stack_limit: 99)
     end
 
     let(:npc_match) do
@@ -326,6 +341,13 @@ RSpec.describe Arena::CombatProcessor do
       log = npc_match.reload.metadata["combat_log"]
       expect(log.map { |entry| entry["type"] }).to include("defeat", "loot", "victory")
       expect(log.find { |entry| entry["type"] == "loot" }["description"]).to include("searched Captured Bandit")
+      expect(log.find { |entry| entry["type"] == "loot" }["description"]).to include("Вещь «Щепки»")
+      expect(character1.inventory.inventory_items.find_by(item_template: wood_chips).quantity).to eq(1)
+      expect(npc_player_participation.reload.metadata["loot_drops"].last).to include(
+        "item_key" => "wood_chips",
+        "item_name" => "Щепки",
+        "quantity" => 1
+      )
     end
   end
 
@@ -412,6 +434,35 @@ RSpec.describe Arena::CombatProcessor do
         expect(participation1.reload.metadata["current_ap"]).to eq(character1_ap_limit - 75)
         expect(participation1.metadata["pending_turn"]).to be_present
         expect(character1.reload.metadata["blocked_parts"]).to be_blank
+      end
+
+      it "rejects a single plain attack turn without a block or action slot" do
+        result = processor.process_action(
+          character1,
+          :turn,
+          target: character2,
+          attacks: [{action_key: "simple", body_part: "torso"}]
+        )
+
+        expect(result.success?).to be false
+        expect(result.error).to include("valid attack")
+      end
+
+      it "allows a single mana attack such as Spirit Arrow from the captured selector" do
+        allow(processor.broadcaster).to receive(:broadcast_ap_update)
+        allow(processor.broadcaster).to receive(:broadcast_combat_action)
+        allow(processor.broadcaster).to receive(:broadcast_vitals_update)
+        allow(processor.broadcaster).to receive(:broadcast_system_message)
+
+        result = processor.process_action(
+          character1,
+          :turn,
+          target: character2,
+          attacks: [{action_key: "spirit_arrow", body_part: "torso"}]
+        )
+
+        expect(result.success?).to be true
+        expect(result[:waiting]).to be true
       end
 
       it "waits for both players before resolving the committed round" do

@@ -55,6 +55,23 @@ RSpec.describe "Players", type: :request do
       expect(body).not_to have_key("email")
     end
 
+    it "shows an unfinished arena fight link in the public location" do
+      zone = create(:zone, name: "Форпост")
+      room = create(:arena_room, name: "Тренировочный Зал", slug: "training")
+      character = create(:character, user: user, name: "max_kerby")
+      create(:character_position, character: character, zone: zone, x: 3, y: 4)
+      match = create(:arena_match, :live, arena_room: room)
+      create(:arena_participation, arena_match: match, character: character, user: user, team: "a")
+
+      get player_path(name: character.name)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("Форпост")
+      expect(response.body).to include("in combat")
+      expect(response.body).to include("Тренировочный Зал")
+      expect(response.body).to include(arena_match_path(match))
+    end
+
     it "does not resolve account profile names without a character" do
       get player_path(name: user.profile_name)
 

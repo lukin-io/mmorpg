@@ -17,12 +17,12 @@ module Arena
     queue_as :default
 
     # Configuration
-    MIN_NPCS_PER_ROOM = 2
+    MIN_NPCS_PER_ROOM = 1
     MAX_NPCS_PER_ROOM = 5
     RESPAWN_INTERVAL = 60.seconds # Re-check every minute
 
     # Rooms that support NPC spawning
-    NPC_ENABLED_ROOMS = %w[training trial challenge].freeze
+    NPC_ENABLED_ROOMS = %w[training].freeze
 
     def perform(room_slug: nil)
       if room_slug

@@ -43,8 +43,6 @@
     <%= link_to "Duels", arena_room_path(@room, ft: 1), class: "nl-arena-tab #{'nl-arena-tab--active' if active_tab == '1'}" %>
     <%= link_to "Group Fights", arena_room_path(@room, ft: 2), class: "nl-arena-tab #{'nl-arena-tab--active' if active_tab == '2'}" %>
     <%= link_to "Sacrifice", arena_room_path(@room, ft: 3), class: "nl-arena-tab #{'nl-arena-tab--active' if active_tab == '3'}" %>
-    <span class="nl-arena-tab nl-arena-tab--disabled">Tactical</span>
-    <span class="nl-arena-tab nl-arena-tab--disabled">Betting</span>
     <%= link_to "Statistics", arena_index_path(ft: 4), class: "nl-arena-tab" %>
   </div>
 
@@ -134,15 +132,17 @@
             <td><%= app.created_at.strftime("%H:%M:%S") %></td>
             <td>
               <b><%= applicant_name %>[<%= applicant_level %>]</b>
+              <span class="nl-arena-muted"><%= arena_application_applicant_level_gate(app) %></span>
             </td>
             <td>
-              <%= fight_kind_label(app.fight_kind) %>,
-              <%= app.timeout_seconds / 60 %> min,
-              trauma <%= app.trauma_percent %>%,
+              <%= arena_application_rule_label(app) %>,
+              timeout <%= app.timeout_seconds %>s,
+              trauma <%= app.trauma_percent %>,
               waits <%= distance_of_time_in_words_to_now(app.expires_at) %>
             </td>
             <td>
               <b>no opponents</b>
+              <span class="nl-arena-muted"><%= arena_application_open_side_level_gate(app) %></span>
             </td>
             <td>
               <% if own_app %>

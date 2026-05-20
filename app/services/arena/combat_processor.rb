@@ -209,6 +209,7 @@ module Arena
         current_turn_number: match.current_turn_number.presence || 1,
         current_turn_team: nil
       )
+      match.characters.update_all(in_combat: true, last_combat_at: Time.current)
       match.schedule_timeout_check
       log_entry("system", nil, "The battle begins!")
       broadcaster.broadcast_match_started
@@ -548,13 +549,9 @@ module Arena
 
       # Combat log messages
       if critical
-        # Format: "{attacker} CRITICAL HIT ({body_part}) {defender} for -{damage} [{hp}/{max_hp}]"
-        log_entry("critical", attacker,
-          "#{attacker.name} critical hit (#{body_part}) #{target.name} for -#{damage} [#{target.current_hp}/#{target.max_hp}]")
+        log_entry("critical", attacker, physical_hit_log(attacker.name, target.name, attack_type, body_part, damage, target.current_hp, target.max_hp, critical: true))
       else
-        # Format: "{attacker} hit {defender} ({body_part}) for -{damage} [{hp}/{max_hp}]"
-        log_entry("damage", attacker,
-          "#{attacker.name} hit #{target.name} (#{body_part}) for -#{damage} [#{target.current_hp}/#{target.max_hp}]")
+        log_entry("damage", attacker, physical_hit_log(attacker.name, target.name, attack_type, body_part, damage, target.current_hp, target.max_hp))
       end
 
       broadcaster.broadcast_vitals_update(target)
@@ -614,11 +611,9 @@ module Arena
 
       # Combat log messages
       if critical
-        log_entry("critical", attacker,
-          "#{attacker.name} critical hit (#{body_part}) #{npc.name} for -#{damage} [#{new_hp}/#{npc_participation.max_hp}]")
+        log_entry("critical", attacker, physical_hit_log(attacker.name, npc.name, attack_type, body_part, damage, new_hp, npc_participation.max_hp, critical: true))
       else
-        log_entry("damage", attacker,
-          "#{attacker.name} hit #{npc.name} (#{body_part}) for -#{damage} [#{new_hp}/#{npc_participation.max_hp}]")
+        log_entry("damage", attacker, physical_hit_log(attacker.name, npc.name, attack_type, body_part, damage, new_hp, npc_participation.max_hp))
       end
 
       broadcast_npc_vitals_update(npc_participation)
@@ -720,7 +715,7 @@ module Arena
       npc = npc_participation.npc_template
       npc_participation.update!(result: "defeat", ended_at: Time.current)
       log_entry("defeat", nil, "#{npc.name} has been defeated!")
-      log_entry("loot", defeated_by, npc_loot_result_message(npc, defeated_by)) if defeated_by
+      award_npc_loot!(npc, defeated_by) if defeated_by
 
       ActionCable.server.broadcast(
         match.broadcast_channel,
@@ -732,11 +727,81 @@ module Arena
       )
     end
 
-    def npc_loot_result_message(npc, defeated_by)
+    def award_npc_loot!(npc, defeated_by)
       loot_table = Array(npc.loot_table)
-      return "#{defeated_by.name} searched #{npc.name}. Result: nothing found." if loot_table.empty?
+      if loot_table.empty?
+        log_entry("loot", defeated_by, "#{defeated_by.name} searched #{npc.name}. Result: nothing found.")
+        return []
+      end
 
-      "#{defeated_by.name} searched #{npc.name}. Loot check completed."
+      drops = roll_npc_loot(loot_table).filter_map do |entry|
+        item_template = loot_item_template(entry)
+        next unless item_template
+
+        quantity = [entry.fetch("quantity", entry.fetch(:quantity, 1)).to_i, 1].max
+        Game::Inventory::Manager.new(inventory: defeated_by.inventory).add_item!(item_template:, quantity:)
+        {item: item_template, quantity:}
+      rescue Game::Inventory::Manager::CapacityExceededError => e
+        log_entry("loot", defeated_by, "#{defeated_by.name} searched #{npc.name}. #{e.message}.")
+        nil
+      end
+
+      record_loot_drops!(defeated_by, npc, drops)
+
+      if drops.empty?
+        log_entry("loot", defeated_by, "#{defeated_by.name} searched #{npc.name}. Result: nothing found.")
+      else
+        found = drops.map do |drop|
+          quantity = drop[:quantity] > 1 ? " x#{drop[:quantity]}" : ""
+          "Вещь «#{drop[:item].name}»#{quantity}"
+        end.join(", ")
+        log_entry("loot", defeated_by, "#{defeated_by.name} searched #{npc.name}. Found #{found}.")
+      end
+
+      drops
+    end
+
+    def roll_npc_loot(loot_table)
+      loot_table.select do |entry|
+        chance = entry.fetch("chance", entry.fetch(:chance, 0)).to_f
+        chance_percent = chance <= 1 ? chance * 100 : chance
+        rng.rand(100) < chance_percent
+      end
+    end
+
+    def loot_item_template(entry)
+      key = entry["item_key"] || entry[:item_key] || entry["key"] || entry[:key]
+      name = entry["item_name"] || entry[:item_name] || entry["name"] || entry[:name] || key.to_s.humanize
+      return nil if key.blank? && name.blank?
+
+      ItemTemplate.find_by(key:) || ItemTemplate.find_by(name:) || ItemTemplate.create!(
+        key: key.presence || name.parameterize(separator: "_"),
+        name:,
+        item_type: entry["item_type"] || entry[:item_type] || "material",
+        slot: "none",
+        rarity: entry["rarity"] || entry[:rarity] || "common",
+        stat_modifiers: {},
+        weight: [entry.fetch("weight", entry.fetch(:weight, 1)).to_i, 1].max,
+        stack_limit: [entry.fetch("stack_limit", entry.fetch(:stack_limit, 99)).to_i, 1].max
+      )
+    end
+
+    def record_loot_drops!(character, npc, drops)
+      participation = match.arena_participations.find_by(character:)
+      return unless participation
+
+      participation.metadata ||= {}
+      participation.metadata["loot_drops"] ||= []
+      participation.metadata["loot_drops"] += drops.map do |drop|
+        {
+          "npc_key" => npc.npc_key,
+          "item_key" => drop[:item].key,
+          "item_name" => drop[:item].name,
+          "quantity" => drop[:quantity],
+          "awarded_at" => Time.current.iso8601
+        }
+      end
+      participation.save!
     end
 
     def process_defend(character, block_parts: nil, block_key: nil)
@@ -1077,15 +1142,29 @@ module Arena
       return if damage.to_i <= 0
 
       if attacker_participation
+        attacker_participation.reload
         attacker_participation.metadata ||= {}
         attacker_participation.metadata["damage_dealt"] = attacker_participation.metadata["damage_dealt"].to_i + damage.to_i
         attacker_participation.save!
       end
 
       if defender_participation
+        defender_participation.reload
         defender_participation.metadata ||= {}
         defender_participation.metadata["damage_taken"] = defender_participation.metadata["damage_taken"].to_i + damage.to_i
         defender_participation.save!
+      end
+    end
+
+    def physical_hit_log(attacker_name, target_name, attack_type, body_part, damage, current_hp, max_hp, critical: false)
+      action_name = Game::Combat::ActionCatalog.attack_config(attack_type)["name"].presence
+      if action_name.present? && !%w[simple aimed].include?(attack_type.to_s)
+        verb = critical ? "critical #{action_name}" : "uses #{action_name}"
+        "#{attacker_name} #{verb} (#{body_part}) #{target_name} for -#{damage} [#{current_hp}/#{max_hp}]"
+      elsif critical
+        "#{attacker_name} critical hit (#{body_part}) #{target_name} for -#{damage} [#{current_hp}/#{max_hp}]"
+      else
+        "#{attacker_name} hit #{target_name} (#{body_part}) for -#{damage} [#{current_hp}/#{max_hp}]"
       end
     end
 
@@ -1321,7 +1400,14 @@ module Arena
     end
 
     def valid_neverlands_turn_shape?(attacks, blocks, skills)
-      attacks.any? || blocks.any? || skills.any?
+      return true if attacks.size > 1
+      return true if attacks.any? && blocks.any?
+      return true if attacks.any? && skills.any?
+      return true if blocks.any? && skills.any?
+      return true if skills.any? && attacks.empty? && blocks.empty?
+      return true if attacks.one? && blocks.empty? && skills.empty? && attack_mana_cost(attacks.first[:action_key]).positive?
+
+      false
     end
 
     def validate_turn_mana(character, attacks, skills)

@@ -130,6 +130,10 @@ module Arena
         return Result.new(success?: false, errors: ["You cannot access this arena room"])
       end
 
+      unless application.acceptable_by?(acceptor)
+        return Result.new(success?: false, errors: [application.rejection_reason_for(acceptor) || "You cannot accept this application"])
+      end
+
       # Check if player already in combat
       if acceptor.in_combat?
         return Result.new(success?: false, errors: ["You are already in combat"])
@@ -146,9 +150,9 @@ module Arena
           arena_match: match
         )
 
-        # NPC fights start immediately (shorter countdown for training)
-        npc_countdown = 5 # 5 seconds for NPC fights
-        schedule_match_start(match, npc_countdown)
+        # NPC training fights enter the captured active combat screen
+        # immediately after accepting the open side.
+        Arena::CombatProcessor.new(match).start_match
 
         broadcast_npc_match_created(match, application, acceptor)
 
@@ -323,6 +327,8 @@ module Arena
           type: "npc_match_created",
           match_id: match.id,
           application_id: application.id,
+          countdown: 0,
+          redirect_url: "/arena_matches/#{match.id}",
           npc_name: application.npc_template&.name,
           player_name: acceptor.name
         }
@@ -334,7 +340,8 @@ module Arena
         {
           type: "arena_npc_match_starting",
           match_id: match.id,
-          countdown: 5,
+          countdown: 0,
+          redirect_url: "/arena_matches/#{match.id}",
           npc_name: application.npc_template&.name,
           npc_level: application.npc_template&.level,
           npc_difficulty: application.npc_template&.arena_difficulty

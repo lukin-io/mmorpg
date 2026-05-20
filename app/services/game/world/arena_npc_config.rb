@@ -12,10 +12,10 @@ module Game
     #   # => [{key: "arena_training_dummy", role: "arena_bot", ...}, ...]
     #
     #   ArenaNpcConfig.sample_npc("training", difficulty: :easy)
-    #   # => {key: "arena_novice_fighter", role: "arena_bot", ...}
+    #   # => {key: "arena_training_dummy", role: "arena_bot", ...}
     #
     #   ArenaNpcConfig.find_npc("arena_training_dummy")
-    #   # => {key: "arena_training_dummy", name: "Sparring Dummy", ...}
+    #   # => {key: "arena_training_dummy", name: "Манекен", ...}
     #
     # Returns:
     #   Hash or Array of NPC configuration hashes
@@ -151,9 +151,7 @@ module Game
         # @return [Hash] difficulty level descriptions
         def difficulty_info
           {
-            easy: {label: "Easy", description: "For beginners learning combat"},
-            medium: {label: "Medium", description: "Balanced challenge"},
-            hard: {label: "Hard", description: "For experienced fighters"}
+            easy: {label: "Манекен", description: "Captured Neverlands training mannequin"}
           }
         end
 

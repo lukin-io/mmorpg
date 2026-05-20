@@ -11,18 +11,16 @@ RSpec.describe Game::World::ArenaNpcConfig do
       expect(npcs.all? { |n| n[:role] == "arena_bot" }).to be true
     end
 
-    it "includes NPCs from other sections that list the room" do
+    it "does not invent NPCs for uncaptured arena rooms" do
       npcs = described_class.for_room("trial")
 
-      # Should include some NPCs from training section that list trial
-      npc_keys = npcs.map { |n| n[:key].to_s }
-      expect(npc_keys).to include("arena_apprentice_warrior")
+      expect(npcs).to be_empty
     end
 
-    it "returns default NPCs for unknown rooms" do
+    it "returns no fallback NPCs for unknown rooms" do
       npcs = described_class.for_room("unknown_room")
 
-      expect(npcs).not_to be_empty
+      expect(npcs).to be_empty
     end
   end
 
@@ -34,11 +32,10 @@ RSpec.describe Game::World::ArenaNpcConfig do
       expect(npcs.all? { |n| n.dig(:metadata, :difficulty) == "easy" }).to be true
     end
 
-    it "filters NPCs by medium difficulty" do
+    it "returns empty for uncaptured difficulty filters" do
       npcs = described_class.for_room_by_difficulty("training", :medium)
 
-      expect(npcs).not_to be_empty
-      expect(npcs.all? { |n| n.dig(:metadata, :difficulty) == "medium" }).to be true
+      expect(npcs).to be_empty
     end
   end
 
@@ -81,7 +78,7 @@ RSpec.describe Game::World::ArenaNpcConfig do
       npc = described_class.find_npc(:arena_training_dummy)
 
       expect(npc).to be_present
-      expect(npc[:name]).to eq("Sparring Dummy")
+      expect(npc[:name]).to eq("Манекен")
     end
 
     it "returns nil for unknown key" do
@@ -136,9 +133,8 @@ RSpec.describe Game::World::ArenaNpcConfig do
     it "returns difficulty descriptions" do
       info = described_class.difficulty_info
 
-      expect(info[:easy][:label]).to eq("Easy")
-      expect(info[:medium][:label]).to eq("Medium")
-      expect(info[:hard][:label]).to eq("Hard")
+      expect(info[:easy][:label]).to eq("Манекен")
+      expect(info.keys).to eq([:easy])
       expect(info[:easy]).not_to have_key(:emoji)
     end
   end

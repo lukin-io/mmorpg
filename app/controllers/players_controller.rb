@@ -56,6 +56,22 @@ class PlayersController < ApplicationController
     position = @character.position
     return {label: "Unknown"} unless position
 
+    if (match = active_arena_match_for(@character))
+      sublocation = match.arena_room&.name || "Arena"
+      return {
+        label: "#{position.zone&.name} [in combat] #{sublocation}",
+        zone: position.zone&.name,
+        x: position.x,
+        y: position.y,
+        sublocation: sublocation,
+        active_fight: {
+          id: match.id,
+          path: arena_match_path(match),
+          status: match.status
+        }
+      }
+    end
+
     label = [position.zone&.name, "[#{position.x}, #{position.y}]"].compact.join(" ")
     {
       label: label,
@@ -79,5 +95,14 @@ class PlayersController < ApplicationController
         max_durability: item.max_durability
       }
     end
+  end
+
+  def active_arena_match_for(character)
+    character.arena_participations.includes(arena_match: :arena_room).order(created_at: :desc).detect do |participation|
+      match = participation.arena_match
+      next false unless match
+
+      match.live? || match.pending? || match.matching? || (match.completed? && participation.metadata.to_h["finished_at"].blank?)
+    end&.arena_match
   end
 end

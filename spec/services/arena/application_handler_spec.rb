@@ -386,10 +386,8 @@ RSpec.describe Arena::ApplicationHandler do
           timeout_seconds: 120)
       end
 
-      it "accepts NPC application with shorter countdown" do
-        expect(Arena::MatchStarterJob).to receive(:set)
-          .with(wait: 5.seconds) # NPC fights have 5 second countdown
-          .and_return(double(perform_later: true))
+      it "accepts NPC application and starts the fight immediately" do
+        expect(Arena::MatchStarterJob).not_to receive(:set)
 
         result = handler.accept_npc_application(
           application: npc_application,
@@ -397,6 +395,8 @@ RSpec.describe Arena::ApplicationHandler do
         )
 
         expect(result.success?).to be true
+        expect(result.match).to be_live
+        expect(character.reload.in_combat?).to be true
       end
 
       it "creates NPC participation" do

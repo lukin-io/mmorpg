@@ -4,7 +4,7 @@ require "rails_helper"
 
 RSpec.describe Arena::NpcApplicationService do
   let(:service) { described_class.new }
-  let(:arena_room) { create(:arena_room, slug: "training", level_min: 1, level_max: 10) }
+  let(:arena_room) { create(:arena_room, slug: "training", level_min: 0, level_max: 5) }
 
   describe "#create_for_room" do
     context "with valid room" do
@@ -15,6 +15,21 @@ RSpec.describe Arena::NpcApplicationService do
         expect(result.application).to be_persisted
         expect(result.application.npc_application?).to be true
         expect(result.application.status).to eq("open")
+      end
+
+      it "uses the captured mannequin application contract in the training room" do
+        result = service.create_for_room(room: arena_room)
+
+        expect(result.application.applicant_name).to eq("Манекен")
+        expect(result.application.applicant_level).to eq(1)
+        expect(result.application.fight_kind).to eq("free")
+        expect(result.application.timeout_seconds).to eq(300)
+        expect(result.application.trauma_percent).to eq(30)
+        expect(result.application.team_level_min).to eq(0)
+        expect(result.application.team_level_max).to eq(5)
+        expect(result.application.enemy_level_min).to eq(0)
+        expect(result.application.enemy_level_max).to eq(33)
+        expect(result.application.metadata["neverlands_rule_value"]).to eq(10)
       end
 
       it "uses seeded RNG for determinism" do
@@ -29,6 +44,7 @@ RSpec.describe Arena::NpcApplicationService do
         result = service.create_for_room(room: arena_room, difficulty: :easy)
 
         expect(result.success?).to be true
+        expect(result.application.applicant_name).to eq("Манекен")
         expect(result.application.npc_difficulty).to eq("easy")
       end
 
@@ -104,15 +120,14 @@ RSpec.describe Arena::NpcApplicationService do
 
       expect(results.length).to eq(3)
       successful = results.select(&:success?)
-      expect(successful.length).to be >= 1 # At least some should succeed
+      expect(successful.length).to eq(1)
     end
 
-    it "varies difficulty across batch" do
+    it "keeps training batch focused on the captured mannequin" do
       results = service.spawn_batch(room: arena_room, count: 3)
-      difficulties = results.map { |r| r.application&.npc_difficulty }.compact
+      names = results.map { |r| r.application&.applicant_name }.compact
 
-      # Should have variety in difficulties
-      expect(difficulties).not_to be_empty
+      expect(names).to eq(["Манекен"])
     end
   end
 end

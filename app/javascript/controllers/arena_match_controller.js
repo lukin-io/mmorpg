@@ -381,26 +381,37 @@ export default class extends Controller {
     if (!this.hasTurnCostValueTarget) return
 
     this.enforceSingleBlock(event?.currentTarget)
-    const cost = this.selectedAttackCost() + this.selectedBlockCost() + this.selectedMagicCost()
+    this.enforceHeadLegAttackRule(event?.currentTarget)
+    const cost = this.selectedAttackCost() + this.selectedAttackPenalty() + this.selectedBlockCost() + this.selectedMagicCost()
     const apLimit = this.apLimitValue || 80
     this.turnCostValueTarget.textContent = `${cost}/${apLimit}`
     this.turnCostValueTarget.classList.toggle("arena-turn-cost--invalid", cost > apLimit)
 
     const submitButton = this.element.querySelector(".btn-attack--submit")
     if (submitButton) {
-      submitButton.disabled = cost > apLimit
+      submitButton.disabled = cost > apLimit || !this.selectedTurnValid()
     }
   }
 
   selectedAttackCost() {
     if (this.hasAttackSelectTarget) {
-      return this.attackSelectTargets.reduce((sum, select) => {
-        const option = select.selectedOptions[0]
-        return sum + Number.parseInt(option?.dataset.apCost || "0", 10)
-      }, 0)
+      return this.selectedAttackOptions().reduce((sum, option) => sum + Number.parseInt(option?.dataset.apCost || "0", 10), 0)
     }
 
     return 0
+  }
+
+  selectedAttackPenalty() {
+    const penalties = [0, 0, 25, 75, 150, 250]
+    return penalties[this.selectedAttackOptions().length] ?? penalties[penalties.length - 1]
+  }
+
+  selectedAttackOptions() {
+    if (!this.hasAttackSelectTarget) return []
+
+    return this.attackSelectTargets
+      .filter(select => select.value && select.value !== "none")
+      .map(select => select.selectedOptions[0])
   }
 
   selectedBlockCost() {
@@ -421,6 +432,34 @@ export default class extends Controller {
     }, 0)
   }
 
+  selectedTurnValid() {
+    const attackOptions = this.selectedAttackOptions()
+    const attackCount = attackOptions.length
+    const blockCount = this.selectedBlockCount()
+    const magicCount = this.selectedMagicCount()
+
+    if (attackCount > 1) return true
+    if (attackCount > 0 && blockCount > 0) return true
+    if (attackCount > 0 && magicCount > 0) return true
+    if (blockCount > 0 && magicCount > 0) return true
+    if (magicCount > 0 && attackCount === 0 && blockCount === 0) return true
+
+    return attackCount === 1 && blockCount === 0 && magicCount === 0 &&
+      Number.parseInt(attackOptions[0]?.dataset.manaCost || "0", 10) > 0
+  }
+
+  selectedBlockCount() {
+    if (!this.hasBlockSelectTarget) return 0
+
+    return this.blockSelectTargets.filter(select => select.value && select.value !== "none").length
+  }
+
+  selectedMagicCount() {
+    if (!this.hasMagicSlotTarget) return 0
+
+    return this.magicSlotTargets.filter(slot => slot.classList.contains("nl-fight-magic-slot--active")).length
+  }
+
   enforceSingleBlock(changedSelect = null) {
     if (!this.hasBlockSelectTarget) return
 
@@ -438,6 +477,29 @@ export default class extends Controller {
     this.blockSelectTargets.forEach(select => {
       if (select !== lastChanged) select.value = "none"
     })
+  }
+
+  enforceHeadLegAttackRule(changedSelect = null) {
+    if (!this.hasAttackSelectTarget) return
+    if (changedSelect && changedSelect.dataset.arenaMatchTarget !== "attackSelect") return
+
+    const headSelect = this.attackSelectTargets.find(select => select.dataset.bodyPart === "head")
+    const legsSelect = this.attackSelectTargets.find(select => select.dataset.bodyPart === "legs")
+    if (!headSelect || !legsSelect) return
+
+    const headActive = headSelect.value && headSelect.value !== "none"
+    const legsActive = legsSelect.value && legsSelect.value !== "none"
+
+    if (changedSelect === headSelect && headActive) {
+      legsSelect.value = "none"
+    } else if (changedSelect === legsSelect && legsActive) {
+      headSelect.value = "none"
+    } else if (headActive && legsActive) {
+      legsSelect.value = "none"
+    }
+
+    legsSelect.disabled = headSelect.value && headSelect.value !== "none"
+    headSelect.disabled = legsSelect.value && legsSelect.value !== "none"
   }
 
   handleMatchStart(data) {

@@ -25,10 +25,13 @@ module Arena
   class NpcApplicationService
     Result = Struct.new(:success?, :application, :errors, keyword_init: true)
 
-    # NPC applications have shorter timeouts than player applications
-    NPC_TIMEOUT_SECONDS = 120
-    NPC_TRAUMA_PERCENT = 10 # Low trauma for training fights
+    # Captured Neverlands starter mannequin applications use 300 second turns
+    # and the same posted fight rule/trauma value of 30 as normal arena rows.
+    NPC_TIMEOUT_SECONDS = 300
+    NPC_TRAUMA_PERCENT = 30
     NPC_WAIT_MINUTES = 5
+    NPC_SIDE_LEVEL_RANGE = (0..33)
+    NEVERLANDS_TRAINING_RULE_VALUE = 10
 
     # Create an application for a random NPC appropriate for the room
     #
@@ -37,11 +40,15 @@ module Arena
     # @param rng [Random] random number generator for determinism
     # @return [Result] result with application or errors
     def create_for_room(room:, difficulty: nil, rng: Random.new)
-      npc_config = Game::World::ArenaNpcConfig.sample_npc(
-        room.slug,
-        difficulty: difficulty,
-        rng: rng
-      )
+      npc_config = if room.slug == "training"
+        Game::World::ArenaNpcConfig.find_npc("arena_training_dummy")
+      else
+        Game::World::ArenaNpcConfig.sample_npc(
+          room.slug,
+          difficulty: difficulty,
+          rng: rng
+        )
+      end
 
       if npc_config.nil?
         return Result.new(success?: false, errors: ["No NPC available for this room"])
@@ -103,6 +110,10 @@ module Arena
         fight_kind: determine_fight_kind(npc_template),
         timeout_seconds: NPC_TIMEOUT_SECONDS,
         trauma_percent: NPC_TRAUMA_PERCENT,
+        team_level_min: room.level_min,
+        team_level_max: room.level_max,
+        enemy_level_min: NPC_SIDE_LEVEL_RANGE.begin,
+        enemy_level_max: NPC_SIDE_LEVEL_RANGE.end,
         wait_minutes: NPC_WAIT_MINUTES,
         metadata: build_npc_metadata(npc_template)
       )
@@ -119,7 +130,15 @@ module Arena
       key = npc_config[:key].to_s
 
       template = NpcTemplate.find_by(npc_key: key)
-      return template if template
+      if template
+        template.update!(
+          name: npc_config[:name] || template.name,
+          level: npc_config[:level] || template.level,
+          dialogue: npc_config[:dialogue] || template.dialogue,
+          metadata: template.metadata.to_h.merge(template_metadata_from_config(npc_config))
+        )
+        return template
+      end
 
       # Create new template from config
       NpcTemplate.create!(
@@ -128,31 +147,28 @@ module Arena
         role: "arena_bot",
         level: npc_config[:level] || 1,
         dialogue: npc_config[:dialogue] || "...",
-        metadata: {
-          health: npc_config[:hp],
-          base_damage: npc_config[:damage],
-          xp_reward: npc_config[:xp] || 10,
-          difficulty: npc_config.dig(:metadata, :difficulty),
-          ai_behavior: npc_config.dig(:metadata, :ai_behavior),
-          arena_rooms: npc_config.dig(:metadata, :arena_rooms),
-          description: npc_config.dig(:metadata, :description),
-          avatar: npc_config.dig(:metadata, :avatar)
-        }.compact
+        metadata: template_metadata_from_config(npc_config)
       )
     end
 
-    def determine_fight_kind(npc_template)
-      # Training fights are typically no_weapons for beginners
-      difficulty = npc_template.arena_difficulty
+    def template_metadata_from_config(npc_config)
+      {
+        health: npc_config[:hp],
+        base_damage: npc_config[:damage],
+        xp_reward: npc_config[:xp] || 10,
+        loot_table: npc_config[:loot_table] || npc_config[:loot] || [],
+        difficulty: npc_config.dig(:metadata, :difficulty),
+        ai_behavior: npc_config.dig(:metadata, :ai_behavior),
+        arena_rooms: npc_config.dig(:metadata, :arena_rooms),
+        description: npc_config.dig(:metadata, :description),
+        avatar: npc_config.dig(:metadata, :avatar),
+        avatar_image: npc_config.dig(:metadata, :avatar_image),
+        stats: npc_config.dig(:metadata, :stats)
+      }.compact
+    end
 
-      case difficulty
-      when "easy"
-        :no_weapons
-      when "medium"
-        :no_artifacts
-      else
-        :free
-      end
+    def determine_fight_kind(_npc_template)
+      :free
     end
 
     def build_npc_metadata(npc_template)
@@ -162,7 +178,10 @@ module Arena
         "npc_level" => npc_template.level,
         "difficulty" => npc_template.arena_difficulty,
         "ai_behavior" => npc_template.ai_behavior,
-        "avatar" => npc_template.avatar_emoji
+        "avatar" => npc_template.avatar_emoji,
+        "neverlands_rule_value" => NEVERLANDS_TRAINING_RULE_VALUE,
+        "npc_side_level_min" => NPC_SIDE_LEVEL_RANGE.begin,
+        "npc_side_level_max" => NPC_SIDE_LEVEL_RANGE.end
       }
     end
 

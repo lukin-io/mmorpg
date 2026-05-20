@@ -57,7 +57,8 @@ class ArenaApplicationsController < ApplicationController
           render json: {
             success: true,
             match_id: result.match.id,
-            countdown: 10
+            countdown: result.match.live? ? 0 : 10,
+            redirect_url: arena_match_path(result.match)
           }
         end
       else

@@ -636,6 +636,7 @@ if defined?(ItemTemplate)
     {key: "bog_iron", name: "Bog Iron", item_type: "material", rarity: "common", weight: 3},
     {key: "river_stone", name: "River Stone", item_type: "material", rarity: "common", weight: 2},
     # Wood resources
+    {key: "wood_chips", name: "Щепки", item_type: "material", rarity: "common", weight: 1},
     {key: "oak_wood", name: "Oak Wood", item_type: "material", rarity: "common", weight: 2},
     {key: "birch_wood", name: "Birch Wood", item_type: "material", rarity: "common", weight: 2},
     {key: "ancient_oak", name: "Ancient Oak", item_type: "material", rarity: "rare", weight: 3},
