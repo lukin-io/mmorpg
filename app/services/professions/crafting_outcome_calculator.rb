@@ -96,7 +96,7 @@ module Professions
     def station_bonus
       case station.station_archetype
       when "city" then 5
-      when "guild_hall" then 10
+      when "clan_hall" then 10
       when "field_kit" then -15
       else
         0

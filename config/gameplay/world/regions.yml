@@ -76,7 +76,7 @@ regions:
     metadata:
       difficulty: "standard"
       recommended_level: 12
-      lore_hook: "Nexus of artisan guild trade routes."
+      lore_hook: "Nexus of artisan trade routes."
 
   everfall_capital:
     name: "Everfall Capital"
@@ -127,4 +127,3 @@ regions:
       difficulty: "raid"
       recommended_level: 35
       lore_hook: "Final bastion against the invading dark."
-

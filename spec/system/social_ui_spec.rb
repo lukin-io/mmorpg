@@ -63,22 +63,6 @@ RSpec.describe "Social UI", type: :system, js: true do
       expect(page).to have_content(other_user.profile_name)
     end
 
-    it "reports a chat message and shows the moderation panel" do
-      channel = create(:chat_channel, name: "Global")
-      message = create(:chat_message, chat_channel: channel, sender: other_user, body: "Buy gold", filtered_body: "Buy gold")
-
-      visit chat_channel_path(channel)
-
-      expect(page).to have_css("##{ActionView::RecordIdentifier.dom_id(message)}")
-
-      find("##{ActionView::RecordIdentifier.dom_id(message)}").hover
-      accept_confirm { find("form .chat-msg-report-btn", match: :first).click }
-
-      expect(page).to have_css("#flash", text: "Report submitted")
-
-      visit moderation_panel_path
-      expect(page).to have_content("Moderation Panel")
-    end
   end
 
   describe "failure cases" do
@@ -128,10 +112,5 @@ RSpec.describe "Social UI", type: :system, js: true do
       expect(page).to have_css("#flash", text: "confirm your email address")
     end
 
-    it "blocks non-moderators from the chat reports index" do
-      visit chat_reports_path
-
-      expect(page).to have_css("#flash", text: "not authorized")
-    end
   end
 end

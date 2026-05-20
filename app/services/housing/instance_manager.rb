@@ -57,11 +57,10 @@ module Housing
       plot
     end
 
-    def update_access!(access_rules:, visit_scope: nil, visit_guild: nil, showcase_enabled: nil)
+    def update_access!(access_rules:, visit_scope: nil, showcase_enabled: nil)
       ensure_plot_present!
       attrs = {access_rules: access_rules || plot.access_rules}
       attrs[:visit_scope] = visit_scope if visit_scope.present?
-      attrs[:visit_guild] = visit_guild if visit_scope == "guild"
       attrs[:showcase_enabled] = showcase_enabled unless showcase_enabled.nil?
       plot.update!(attrs.compact)
     end

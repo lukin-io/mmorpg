@@ -10,7 +10,7 @@ RSpec.describe Game::World::PopulationDirectory do
       npc = directory.npc("magistrate_serra")
 
       expect(npc).to be_present
-      expect(npc.roles).to include("report_intake")
+      expect(npc.roles).to include("quest_giver")
       expect(npc.reaction_for(reputation: 50)).to eq(:friendly)
     end
   end

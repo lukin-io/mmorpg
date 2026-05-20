@@ -15,7 +15,6 @@ class Clan < ApplicationRecord
   has_many :clan_quests, dependent: :destroy
   has_many :clan_message_board_posts, dependent: :destroy
   has_many :clan_log_entries, dependent: :destroy
-  has_many :clan_moderation_actions, dependent: :destroy
 
   belongs_to :leader, class_name: "User"
 

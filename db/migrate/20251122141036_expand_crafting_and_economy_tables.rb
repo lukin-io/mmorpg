@@ -46,22 +46,9 @@ class ExpandCraftingAndEconomyTables < ActiveRecord::Migration[8.1]
       t.string :commission_scope, null: false, default: "personal"
     end
 
-    create_table :guild_missions do |t|
-      t.references :guild, null: false, foreign_key: true
-      t.references :required_profession, null: false, foreign_key: {to_table: :professions}
-      t.string :required_item_name, null: false
-      t.integer :required_quantity, null: false, default: 0
-      t.integer :progress_quantity, null: false, default: 0
-      t.integer :status, null: false, default: 0
-      t.jsonb :metadata, null: false, default: {}
-      t.timestamps
-    end
-    add_index :guild_missions, [:guild_id, :status]
   end
 
   def down
-    drop_table :guild_missions
-
     remove_reference :auction_listings, :required_profession, foreign_key: true
     remove_column :auction_listings, :required_skill_level
     remove_column :auction_listings, :commission_scope

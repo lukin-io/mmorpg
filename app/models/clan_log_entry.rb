@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-# ClanLogEntry is the immutable audit log for treasury transfers, promotions,
-# war declarations, and moderation rollbacks. Entries are created via
-# Clans::LogWriter and surfaced to leaders/GMs for dispute resolution.
+# ClanLogEntry is the immutable clan history for treasury transfers, promotions,
+# and war declarations. Entries are created via Clans::LogWriter and surfaced to
+# clan leaders.
 #
 # Usage:
 #   Clans::LogWriter.new(clan: clan).record!(action: "treasury.withdraw", actor: user, metadata: {...})

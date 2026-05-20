@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Chat
-  # Resolves the correct ChatChannel for a given context (global, local, guild, etc.)
+  # Resolves the correct ChatChannel for a given context (global, local, clan, etc.)
   # and takes care of creating system-owned channels when necessary.
   #
   # Usage:
@@ -20,8 +20,6 @@ module Chat
         global_channel
       when :local
         local_channel(context)
-      when :guild
-        scoped_channel(:guild, context.fetch(:guild_id))
       when :clan
         scoped_channel(:clan, context.fetch(:clan_id))
       when :party

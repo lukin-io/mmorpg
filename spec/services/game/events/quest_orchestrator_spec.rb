@@ -11,13 +11,11 @@ RSpec.describe Game::Events::QuestOrchestrator do
       temporary_npc_keys: ["npc_herald"])
   end
   let(:dynamic_generator) { instance_double(Game::Quests::DynamicQuestGenerator, generate!: []) }
-  let(:announcement_service) { instance_double(Events::AnnouncementService, broadcast!: nil) }
   let(:orchestrator) do
-    described_class.new(event_instance, dynamic_generator:, announcement_service:)
+    described_class.new(event_instance, dynamic_generator:)
   end
 
-  it "assigns dynamic quests, annotates world state, and broadcasts objectives" do
-    objective = event_instance.community_objectives.create!(title: "Gather Ore", resource_key: "ashen_ore", goal_amount: 200)
+  it "assigns dynamic quests and annotates world state" do
     character = create(:character)
 
     orchestrator.prepare!(characters: Character.where(id: character.id))
@@ -31,8 +29,5 @@ RSpec.describe Game::Events::QuestOrchestrator do
       )
     )
     expect(event_instance.reload.metadata["temporary_npc_keys"]).to include("npc_herald")
-    expect(announcement_service).to have_received(:broadcast!).with(
-      a_string_including(objective.title)
-    )
   end
 end

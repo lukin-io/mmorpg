@@ -5,12 +5,8 @@
   - arena
   - chat
   - payments
-  - moderation
-  - live_ops
   - presence
   - movement
   - vitals
-  - social
-  - webhooks
   - low
 :logfile: ./log/sidekiq.log

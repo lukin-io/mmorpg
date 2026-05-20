@@ -15,12 +15,6 @@
         <%= chat_message.sender.profile_name || "Anonymous" %>
       </span>
 
-      <% if chat_message.metadata&.dig("sender_role")&.include?("admin") %>
-        <span class="badge badge--admin">Admin</span>
-      <% elsif chat_message.metadata&.dig("sender_role")&.include?("moderator") %>
-        <span class="badge badge--mod">Mod</span>
-      <% end %>
-
       <time class="chat-msg-time"
             datetime="<%= chat_message.created_at.iso8601 %>"
             title="<%= l(chat_message.created_at, format: :long) %>">
@@ -41,30 +35,4 @@
     </div>
   </div>
 
-  <% viewer = safe_current_user %>
-  <% if viewer&.verified_for_social_features? && chat_message.sender_id != viewer.id %>
-    <div class="chat-msg-actions">
-      <%= button_to chat_reports_path(
-            chat_report: {
-              chat_message_id: chat_message.id,
-              reason: "Inappropriate content",
-              source: "chat",
-              source_context: {
-                channel_id: chat_message.chat_channel_id,
-                sender_id: chat_message.sender_id
-              },
-              evidence: {
-                location: chat_message.chat_channel.name,
-                message_body: chat_message.body.truncate(100)
-              }
-            }
-          ),
-          method: :post,
-          form: { data: { turbo_confirm: "Report this message for moderation?" } },
-          class: "chat-msg-report-btn",
-          title: "Report message" do %>
-        🚩
-      <% end %>
-    </div>
-  <% end %>
 <% end %>

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module MailMessages
-  # SystemNotifier sends automated mail (rewards, announcements) with optional attachments.
+  # SystemNotifier sends automated mail with optional attachments.
   # Usage:
   #   MailMessages::SystemNotifier.new.deliver!(recipients: [user], subject: "...", body: "...")
   class SystemNotifier

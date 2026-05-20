@@ -109,7 +109,6 @@ class ExpandClanSystems < ActiveRecord::Migration[8.1]
       t.text :body, null: false
       t.boolean :pinned, null: false, default: false
       t.datetime :published_at, null: false
-      t.datetime :broadcasted_at
       t.jsonb :metadata, null: false, default: {}
       t.timestamps
     end
@@ -123,15 +122,5 @@ class ExpandClanSystems < ActiveRecord::Migration[8.1]
       t.timestamps
     end
     add_index :clan_log_entries, [:clan_id, :created_at]
-
-    create_table :clan_moderation_actions do |t|
-      t.references :clan, null: false, foreign_key: true
-      t.references :gm_user, null: false, foreign_key: {to_table: :users}
-      t.string :action_type, null: false
-      t.references :target, polymorphic: true
-      t.text :notes
-      t.datetime :rolled_back_at
-      t.timestamps
-    end
   end
 end

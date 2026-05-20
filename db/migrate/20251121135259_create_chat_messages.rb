@@ -7,8 +7,6 @@ class CreateChatMessages < ActiveRecord::Migration[8.1]
       t.text :filtered_body, null: false
       t.integer :visibility, null: false, default: 0
       t.boolean :flagged, null: false, default: false
-      t.integer :reported_count, null: false, default: 0
-      t.jsonb :moderation_labels, null: false, default: []
       t.jsonb :metadata, null: false, default: {}
       t.timestamps
     end

@@ -3,9 +3,9 @@
   <p>Choose a channel to join real-time conversations.</p>
 </div>
 
-<div class="dashboard-grid">
+<div class="panel-grid">
   <% @channel_groups.each do |type, channels| %>
-    <section class="dashboard-card">
+    <section class="panel-card">
       <h2><%= type.to_s.humanize %></h2>
       <ul>
         <% channels.each do |channel| %>

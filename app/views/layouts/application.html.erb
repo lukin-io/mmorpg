@@ -38,10 +38,10 @@
 
           <nav class="game-nav">
             <% if current_user %>
-              <%= link_to "Dashboard", root_path, class: ("active" if controller_name == "dashboard") %>
+              <%= link_to "World", root_path, class: ("active" if controller_name == "world") %>
               <%= link_to "Quests", quests_path, class: ("active" if controller_name == "quests") %>
               <%= link_to "Chat", chat_channels_path, class: ("active" if controller_name == "chat_channels") %>
-              <%= link_to "Guilds", guilds_path, class: ("active" if controller_name == "guilds") %>
+              <%= link_to "Clans", clans_path, class: ("active" if controller_name == "clans") %>
               <% if player_profile_path %>
                 <%= link_to "Profile", player_profile_path, class: ("active" if controller_name == "players") %>
               <% end %>
@@ -107,10 +107,10 @@
               <span class="icon">Chat</span>
               <span>Chat</span>
             <% end %>
-            <%= link_to guilds_path, class: "mobile-hud-btn" do %>
-              <span class="icon">Guild</span>
-              <span>Guild</span>
-            <% end %>
+              <%= link_to clans_path, class: "mobile-hud-btn" do %>
+                <span class="icon">Clan</span>
+                <span>Clan</span>
+              <% end %>
             <% if player_profile_path %>
               <%= link_to player_profile_path, class: "mobile-hud-btn" do %>
                 <span class="icon">Profile</span>

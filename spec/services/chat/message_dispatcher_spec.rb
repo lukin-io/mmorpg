@@ -12,16 +12,14 @@ RSpec.describe Chat::MessageDispatcher do
       expect(result).not_to be_command_executed
     end
 
-    it "handles GM mute commands" do
+    it "keeps slash-prefixed text as regular chat content" do
       channel = create(:chat_channel, channel_type: :global)
-      gm = create(:user)
-      gm.add_role(:gm)
-      target = create(:user)
+      user = create(:user)
 
-      result = described_class.new(user: gm, channel:, body: "/gm mute #{target.id} 5 test").call
+      result = described_class.new(user:, channel:, body: "/w target hello").call
 
-      expect(result).to be_command_executed
-      expect(ChatModerationAction.muting?(user: target, channel: channel)).to be(true)
+      expect(result.message.body).to eq("/w target hello")
+      expect(result).not_to be_command_executed
     end
   end
 end

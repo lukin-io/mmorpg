@@ -1,4 +1,4 @@
-<section class="housing-dashboard" data-controller="layout-stack">
+<section class="housing-panel" data-controller="layout-stack">
   <div class="page-header flex justify-between items-center">
     <div>
       <h1>Player Housing</h1>
@@ -23,10 +23,6 @@
               <div class="field">
                 <%= form.label :visit_scope, "Visit Scope" %>
                 <%= form.select :visit_scope, HousingPlot.visit_scopes.keys.map { |scope| [scope.titleize, scope] }, {}, class: "w-full" %>
-              </div>
-              <div class="field">
-                <%= form.label :visit_guild_id, "Guild Access" %>
-                <%= form.number_field :visit_guild_id, value: plot.visit_guild_id, placeholder: "Guild ID" %>
               </div>
               <div class="field">
                 <%= form.label :showcase_enabled, "Showcase achievements at entrance" %>

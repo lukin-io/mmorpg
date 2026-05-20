@@ -272,7 +272,7 @@ module Arena
       end
     end
 
-    # Broadcast system message (announcements, warnings)
+    # Broadcast system message for combat warnings or status changes.
     #
     # @param message [String] the message text
     # @param severity [Symbol] :info, :warning, :error

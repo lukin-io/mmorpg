@@ -4,7 +4,7 @@ class HousingPlotsController < ApplicationController
   before_action :set_plot, only: [:update, :upgrade, :decorate, :remove_decor]
 
   def index
-    @housing_plots = policy_scope(HousingPlot).where(user: current_user).includes(:housing_decor_items, :visit_guild)
+    @housing_plots = policy_scope(HousingPlot).where(user: current_user).includes(:housing_decor_items)
     @housing_plots.each { |plot| Housing::UpkeepService.new(plot: plot).collect! }
     @decor_item = HousingDecorItem.new
   end
@@ -27,7 +27,6 @@ class HousingPlotsController < ApplicationController
     Housing::InstanceManager.new(plot: @plot, user: current_user).update_access!(
       access_rules: normalized_access_rules,
       visit_scope: housing_params[:visit_scope],
-      visit_guild: visit_guild_for_params,
       showcase_enabled: housing_params[:showcase_enabled]
     )
     redirect_to housing_plots_path, notice: "Housing preferences updated."
@@ -72,7 +71,6 @@ class HousingPlotsController < ApplicationController
       :plot_tier,
       :exterior_style,
       :visit_scope,
-      :visit_guild_id,
       :showcase_enabled,
       access_rules: {}
     )
@@ -87,13 +85,6 @@ class HousingPlotsController < ApplicationController
     attrs[:placement] = parse_json_field(attrs[:placement])
     attrs[:metadata] = parse_json_field(attrs[:metadata])
     attrs
-  end
-
-  def visit_guild_for_params
-    guild_id = housing_params[:visit_guild_id]
-    return unless guild_id.present?
-
-    current_user.guild_memberships.find_by(guild_id: guild_id)&.guild || Guild.find_by(id: guild_id)
   end
 
   def normalized_access_rules

@@ -599,8 +599,7 @@ RSpec.describe "Skill Allocation", type: :system, js: true do
 
     it "redirects when accessing other user's character" do
       visit skills_character_path(other_character)
-      # May redirect to dashboard or root depending on auth config
-      expect(page).to have_current_path(root_path).or have_current_path(dashboard_path)
+      expect(page).to have_current_path(root_path)
     end
 
     context "unauthenticated user" do

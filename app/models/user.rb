@@ -19,10 +19,8 @@ class User < ApplicationRecord
     :recoverable, :rememberable, :validatable,
     :confirmable, :trackable, :timeoutable
 
-  has_many :purchases, dependent: :nullify
   has_many :user_sessions, dependent: :destroy
   has_many :premium_token_ledger_entries, dependent: :destroy
-  has_many :audit_logs, foreign_key: :actor_id, dependent: :nullify
   has_many :characters, dependent: :destroy
   has_many :chat_channel_memberships, dependent: :destroy
   has_many :chat_channels, through: :chat_channel_memberships
@@ -31,42 +29,6 @@ class User < ApplicationRecord
   has_many :incoming_friendships, class_name: "Friendship", foreign_key: :receiver_id, dependent: :destroy
   has_many :mail_messages, foreign_key: :sender_id, dependent: :nullify
   has_many :received_mail_messages, class_name: "MailMessage", foreign_key: :recipient_id, dependent: :destroy
-  has_many :chat_reports, foreign_key: :reporter_id, dependent: :nullify
-  has_many :chat_moderation_actions, foreign_key: :target_user_id, dependent: :destroy
-  has_many :moderation_actions_as_actor,
-    class_name: "ChatModerationAction",
-    foreign_key: :actor_id,
-    dependent: :nullify
-  has_many :moderation_tickets_reported,
-    class_name: "Moderation::Ticket",
-    foreign_key: :reporter_id,
-    dependent: :nullify
-  has_many :moderation_tickets_assigned,
-    class_name: "Moderation::Ticket",
-    foreign_key: :assigned_moderator_id,
-    dependent: :nullify
-  has_many :moderation_actions_taken,
-    class_name: "Moderation::Action",
-    foreign_key: :actor_id,
-    dependent: :nullify
-  has_many :moderation_actions_received,
-    class_name: "Moderation::Action",
-    foreign_key: :target_user_id,
-    dependent: :destroy
-  has_many :moderation_appeals,
-    class_name: "Moderation::Appeal",
-    foreign_key: :appellant_id,
-    dependent: :nullify
-  has_many :live_ops_events_requested,
-    class_name: "LiveOps::Event",
-    foreign_key: :requested_by_id,
-    dependent: :nullify
-  has_many :guild_memberships, dependent: :destroy
-  has_many :guilds, through: :guild_memberships
-  has_many :guild_applications, foreign_key: :applicant_id, dependent: :destroy
-  has_many :guilds_led, class_name: "Guild", foreign_key: :leader_id, dependent: :nullify
-  has_many :guild_bank_entries, foreign_key: :actor_id, dependent: :nullify
-  has_many :guild_bulletins, foreign_key: :author_id, dependent: :nullify
   has_many :clan_memberships, dependent: :destroy
   has_many :clans, through: :clan_memberships
   has_many :clans_led, class_name: "Clan", foreign_key: :leader_id, dependent: :nullify
@@ -78,7 +40,6 @@ class User < ApplicationRecord
   has_many :clan_treasury_transactions, foreign_key: :actor_id, dependent: :nullify
   has_many :clan_message_board_posts, foreign_key: :author_id, dependent: :nullify
   has_many :clan_log_entries, foreign_key: :actor_id, dependent: :nullify
-  has_many :clan_moderation_actions, foreign_key: :gm_user_id, dependent: :nullify
   has_one :currency_wallet, dependent: :destroy
   has_many :profession_progresses, dependent: :destroy
   has_many :crafting_jobs, dependent: :nullify
@@ -109,8 +70,6 @@ class User < ApplicationRecord
     dependent: :destroy
   has_many :arena_participations, dependent: :destroy
   has_many :arena_matches, through: :arena_participations
-  has_many :integration_tokens, foreign_key: :created_by_id, dependent: :destroy
-
   belongs_to :active_title, class_name: "Title", optional: true
   after_create :assign_default_role
   after_create :ensure_currency_wallet!
@@ -140,6 +99,10 @@ class User < ApplicationRecord
 
   def character
     characters.order(:created_at).first
+  end
+
+  def ensure_playable_character!
+    character || characters.create!(name: next_character_name)
   end
 
   def suspended?
@@ -212,11 +175,7 @@ class User < ApplicationRecord
     return false if other_user.blank?
     return true if friends_with?(other_user)
 
-    shared_guild_with?(other_user) || shared_clan_with?(other_user)
-  end
-
-  def primary_guild
-    guild_memberships.active.order(created_at: :desc).first&.guild || guild_memberships.order(created_at: :desc).first&.guild
+    shared_clan_with?(other_user)
   end
 
   def primary_clan
@@ -225,7 +184,7 @@ class User < ApplicationRecord
 
   def sync_character_memberships!
     characters.find_each do |character|
-      character.update!(guild: primary_guild, clan: primary_clan)
+      character.update!(clan: primary_clan)
     end
   end
 
@@ -254,6 +213,23 @@ class User < ApplicationRecord
     create_currency_wallet!(gold_balance: 0, silver_balance: 0, premium_tokens_balance: premium_tokens_balance) unless currency_wallet
   end
 
+  def next_character_name
+    base = profile_name.presence || email.to_s.split("@").first.presence || "Hero"
+    normalized = base.to_s.gsub(/[^a-zA-Z0-9_]/, "_").squeeze("_").delete_prefix("_").delete_suffix("_")
+    normalized = "Hero" if normalized.blank?
+    normalized = normalized.first(Character::MAX_NAME_LENGTH)
+    candidate = normalized
+    suffix = 1
+
+    while Character.exists?(name: candidate)
+      suffix += 1
+      suffix_text = suffix.to_s
+      candidate = "#{normalized.first(Character::MAX_NAME_LENGTH - suffix_text.length)}#{suffix_text}"
+    end
+
+    candidate
+  end
+
   def privacy_allows?(setting, other_user)
     return true if other_user == self
 
@@ -267,12 +243,6 @@ class User < ApplicationRecord
     else
       true
     end
-  end
-
-  def shared_guild_with?(other_user)
-    user_guild_ids = guild_memberships.active.pluck(:guild_id)
-    other_guild_ids = other_user.guild_memberships.active.pluck(:guild_id)
-    (user_guild_ids & other_guild_ids).any?
   end
 
   def shared_clan_with?(other_user)

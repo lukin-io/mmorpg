@@ -21,13 +21,6 @@ if defined?(Role)
   end
 end
 
-if defined?(Flipper)
-  %i[combat_system guilds housing].each do |feature|
-    Flipper.add(feature)
-    Flipper.enable(feature)
-  end
-end
-
 if defined?(ChatChannel)
   ChatChannel.find_or_create_by!(slug: "global") do |channel|
     channel.name = "Global"
@@ -59,7 +52,7 @@ if defined?(CraftingStation)
   [
     {name: "Castleton Forge", city: "Castleton Keep", station_type: "forge", capacity: 4, station_archetype: :city},
     {name: "Whispering Woods Field Kit", city: "Whispering Woods", station_type: "field_kit", capacity: 1, station_archetype: :field_kit, portable: true, time_penalty_multiplier: 1.4, success_penalty: 10},
-    {name: "Guild Hall Loom", city: "Castleton Keep", station_type: "loom", capacity: 3, station_archetype: :guild_hall, success_penalty: 0}
+    {name: "Clan Hall Loom", city: "Castleton Keep", station_type: "loom", capacity: 3, station_archetype: :clan_hall, success_penalty: 0}
   ].each do |attrs|
     CraftingStation.find_or_create_by!(name: attrs[:name]) do |station|
       station.city = attrs[:city]
@@ -102,12 +95,12 @@ if defined?(Recipe)
         "success_penalty" => 5
       }
       recipe.rewards = {"items" => [{"name" => "Aetheric Elixir", "quantity" => 1}]}
-      recipe.source_kind = :guild_research
+      recipe.source_kind = :clan_research
       recipe.risk_level = :risky
       recipe.premium_token_cost = 5
-      recipe.required_station_archetype = :guild_hall
+      recipe.required_station_archetype = :clan_hall
       recipe.quality_modifiers = {"legendary_threshold" => 95}
-      recipe.guild_bound = true
+      recipe.clan_bound = true
     end
   end
 end
@@ -241,18 +234,6 @@ if defined?(Quest)
   end
 end
 
-if defined?(GuildMission)
-  guild = Guild.first
-  profession = Profession.find_by(name: "Blacksmithing")
-  if guild && profession
-    GuildMission.find_or_create_by!(guild:, required_profession: profession, required_item_name: "Tempered Longsword") do |mission|
-      mission.required_quantity = 10
-      mission.status = :active
-      mission.metadata = {"reward" => "guild_xp"}
-    end
-  end
-end
-
 if defined?(ItemTemplate)
   [
     {
@@ -337,7 +318,7 @@ if defined?(MapTileTemplate)
     city_tiles << {zone: zone_name, x: 4, y: 5, terrain_type: "city", biome: "city", metadata: {"building" => "Blacksmith", "npc" => "Smith Gorn"}}
     city_tiles << {zone: zone_name, x: 6, y: 5, terrain_type: "city", biome: "city", metadata: {"building" => "General Store", "npc" => "Merchant Elara"}}
     city_tiles << {zone: zone_name, x: 5, y: 4, terrain_type: "city", biome: "city", metadata: {"building" => "Tavern", "npc" => "Innkeeper Bram"}}
-    city_tiles << {zone: zone_name, x: 5, y: 6, terrain_type: "city", biome: "city", metadata: {"building" => "Guild Hall"}}
+    city_tiles << {zone: zone_name, x: 5, y: 6, terrain_type: "city", biome: "city", metadata: {"building" => "Clan Hall"}}
     city_tiles << {zone: zone_name, x: 4, y: 4, terrain_type: "city", biome: "city", metadata: {"npc" => "Guard Captain"}}
     city_tiles << {zone: zone_name, x: 6, y: 4, terrain_type: "city", biome: "city", metadata: {"building" => "Bank"}}
     city_tiles << {zone: zone_name, x: 4, y: 6, terrain_type: "city", biome: "city", metadata: {"building" => "Auction House"}}
@@ -503,15 +484,15 @@ if defined?(SocialHub)
   end
 end
 
-if defined?(GroupListing) && defined?(Guild)
+if defined?(GroupListing) && defined?(Clan)
   owner = User.first
-  guild = Guild.first
-  if owner && guild
+  clan = Clan.first
+  if owner && clan
     GroupListing.find_or_create_by!(owner:, title: "Evening Hunt") do |listing|
       listing.description = "Looking for allies for a wilderness patrol."
       listing.listing_type = :party
       listing.status = :open
-      listing.guild = guild
+      listing.clan = clan
     end
   end
 end
@@ -699,15 +680,15 @@ if defined?(CraftingJob) && main_character
     end
 
     alchemy_recipe = Recipe.find_by(name: "Aetheric Elixir")
-    guild_station = CraftingStation.find_by(name: "Guild Hall Loom")
-    if alchemy_recipe && guild_station && secondary_character
+    clan_station = CraftingStation.find_by(name: "Clan Hall Loom")
+    if alchemy_recipe && clan_station && secondary_character
       completed_job = CraftingJob.find_or_initialize_by(
         character: secondary_character,
         recipe: alchemy_recipe,
         status: :completed
       )
       completed_job.user = admin
-      completed_job.crafting_station = guild_station
+      completed_job.crafting_station = clan_station
       completed_job.batch_quantity = 1
       completed_job.started_at ||= 50.minutes.ago
       completed_job.completes_at ||= 35.minutes.ago
@@ -744,7 +725,6 @@ end
 housing_plot = nil
 
 if defined?(HousingPlot) && admin
-  guild_id = admin.primary_guild&.id
   housing_plot = HousingPlot.find_or_create_by!(user: admin, location_key: "castleton_upper", plot_type: "townhome") do |plot|
     plot.plot_tier = "deluxe"
     plot.exterior_style = "aurora"
@@ -752,8 +732,8 @@ if defined?(HousingPlot) && admin
     plot.utility_slots = 2
     plot.storage_slots = 60
     plot.showcase_enabled = true
-    plot.visit_scope = guild_id ? "guild" : "friends"
-    plot.access_rules = {"friends_can_decorate" => true, "guild_ids" => Array(guild_id)}
+    plot.visit_scope = "friends"
+    plot.access_rules = {"friends_can_decorate" => true}
     plot.upkeep_gold_cost = 450
     plot.next_upkeep_due_at = 3.days.from_now
   end
@@ -922,15 +902,6 @@ if defined?(CommunityObjective) && event_instance
   end
 end
 
-if defined?(Announcement) && event_instance
-  Announcement.find_or_create_by!(title: "Winter Festival Live!") do |announcement|
-    announcement.body = <<~BODY
-      The Winter Festival event instance #{event_instance.id} is now active in Castleton Keep.
-      Donate ice shards to reinforce the sculptures, chase limited quests, and unlock the Stormglide gryphon cosmetic variant.
-    BODY
-  end
-end
-
 if defined?(QuestAssignment) && main_character
   in_progress_quest = Quest.find_by(key: "movement_tutorial")
   completed_quest = Quest.find_by(key: "combat_tutorial")
@@ -977,21 +948,6 @@ if defined?(QuestAssignment) && main_character
   end
 end
 
-if defined?(QuestAnalyticsSnapshot)
-  QuestAnalyticsSnapshot.find_or_create_by!(captured_on: Date.current, quest_chain_key: "main_story") do |snapshot|
-    snapshot.completion_rate = 82.5
-    snapshot.abandon_rate = 12.0
-    snapshot.avg_completion_minutes = 26
-    snapshot.bottleneck_step_key = "gear_upgrade_tutorial.step2"
-    snapshot.bottleneck_step_position = 2
-    snapshot.metadata = {
-      "event_instance_id" => event_instance&.id,
-      "top_branches" => {"valor" => 58, "shadow_path" => 31},
-      "failure_examples" => [{"quest_key" => "gear_upgrade_tutorial", "reason" => "timed_out"}]
-    }
-  end
-end
-
 # ==============================================================================
 # Arena Rooms
 # ==============================================================================
@@ -1033,7 +989,7 @@ if defined?(ArenaRoom)
       level_min: 10,
       level_max: 25,
       faction_restriction: nil,
-      description: "Initiation rites for guilds and clans."
+      description: "Initiation rites for clans."
     },
     {
       name: "Hall of Light",

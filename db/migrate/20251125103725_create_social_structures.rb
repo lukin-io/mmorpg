@@ -6,7 +6,7 @@ class CreateSocialStructures < ActiveRecord::Migration[8.1]
       t.integer :listing_type, null: false, default: 0
       t.integer :status, null: false, default: 0
       t.references :owner, null: false, foreign_key: {to_table: :users}
-      t.references :guild, foreign_key: true
+      t.references :clan, foreign_key: true
       t.references :profession, foreign_key: true
       t.jsonb :requirements, default: {}, null: false
       t.jsonb :metadata, default: {}, null: false

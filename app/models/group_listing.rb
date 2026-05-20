@@ -3,7 +3,7 @@
 class GroupListing < ApplicationRecord
   LISTING_TYPES = {
     party: 0,
-    guild: 1,
+    clan: 1,
     profession_commission: 2
   }.freeze
 
@@ -17,7 +17,7 @@ class GroupListing < ApplicationRecord
   enum :status, STATUSES
 
   belongs_to :owner, class_name: "User"
-  belongs_to :guild, optional: true
+  belongs_to :clan, optional: true
   belongs_to :profession, optional: true
   belongs_to :party, optional: true
 

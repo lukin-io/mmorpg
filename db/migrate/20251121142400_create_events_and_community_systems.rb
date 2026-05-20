@@ -7,7 +7,6 @@ class CreateEventsAndCommunitySystems < ActiveRecord::Migration[8.1]
       t.integer :status, null: false, default: 0
       t.datetime :starts_at, null: false
       t.datetime :ends_at, null: false
-      t.string :feature_flag_key
       t.jsonb :metadata, null: false, default: {}
       t.timestamps
     end

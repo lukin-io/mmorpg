@@ -441,7 +441,7 @@ function chatlist_build(sort_type) {
       nn_sec = nn_sec.replace('<i>', '').replace('</i>', '');
     }
 
-    // Clan/guild sign
+    // Clan sign
     if (str_array[3].length > 1) {
       sign_array = str_array[3].split(";");
       if (sign_array[2].length > 1) altadd = " (" + sign_array[2] + ")";

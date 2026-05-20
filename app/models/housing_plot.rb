@@ -12,19 +12,16 @@ class HousingPlot < ApplicationRecord
   enum :visit_scope, {
     private: "private",
     friends: "friends",
-    guild: "guild",
     public: "public"
   }, prefix: :visit_scope
 
   belongs_to :user
-  belongs_to :visit_guild, class_name: "Guild", optional: true
 
   has_many :housing_decor_items, dependent: :destroy
 
   validates :plot_type, :location_key, :plot_tier, :exterior_style, :visit_scope, presence: true
   validates :upkeep_gold_cost, numericality: {greater_than: 0}
   validates :room_slots, :utility_slots, numericality: {greater_than: 0}
-  validate :visit_guild_presence
 
   scope :showcased, -> { where(showcase_enabled: true) }
 
@@ -47,11 +44,6 @@ class HousingPlot < ApplicationRecord
   end
 
   private
-
-  def visit_guild_presence
-    return unless visit_scope == "guild"
-    errors.add(:visit_guild, "must be selected for guild visibility") unless visit_guild.present?
-  end
 
   def apply_tier_defaults
     config = PLOT_TIERS[plot_tier] || PLOT_TIERS["starter"]

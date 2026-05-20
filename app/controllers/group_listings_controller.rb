@@ -5,7 +5,7 @@ class GroupListingsController < ApplicationController
 
   def index
     current_user.ensure_social_features!
-    @group_listings = policy_scope(GroupListing).includes(:owner, :guild).order(updated_at: :desc)
+    @group_listings = policy_scope(GroupListing).includes(:owner, :clan).order(updated_at: :desc)
     @group_listing = GroupListing.new
   end
 
@@ -58,7 +58,7 @@ class GroupListingsController < ApplicationController
       :description,
       :listing_type,
       :status,
-      :guild_id,
+      :clan_id,
       :profession_id,
       :party_id,
       requirements: {},

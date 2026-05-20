@@ -6,7 +6,7 @@ npcs:
     region: "everfall_capital"
     location: "Hall of Magistrates"
     faction_alignment: "crownwatch"
-    roles: ["report_intake", "quest_giver"]
+    roles: ["quest_giver"]
     dialogue:
       friendly:
         - "Justice favors the vigilant. How may the Crown assist you?"
@@ -21,8 +21,6 @@ npcs:
     quests:
       main_story: ["chapter_1_prologue", "chapter_2_conclave"]
       daily: ["city_watch_patrol"]
-    moderation_categories: ["chat_abuse", "botting", "griefing", "exploit_reports"]
-
   storyteller_ivarn:
     name: "Ivárn the Chronicler"
     archetype: "storyteller"
@@ -98,4 +96,3 @@ npcs:
         - "Champions, the arena awaits your glory!"
     event_hooks:
       seasonal_keys: ["wintertide", "sunblossom"]
-

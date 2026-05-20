@@ -25,17 +25,6 @@ class ChatMessage < ApplicationRecord
 
   after_create_commit :broadcast_new_message
 
-  def register_report!(label: nil)
-    labels = moderation_labels
-    labels |= [label] if label.present?
-
-    update_columns(
-      reported_count: reported_count + 1,
-      moderation_labels: labels,
-      updated_at: Time.current
-    )
-  end
-
   # Check if this is a whisper/private message
   def whisper?
     metadata&.dig("whisper") == true || chat_channel&.channel_type == "whisper"

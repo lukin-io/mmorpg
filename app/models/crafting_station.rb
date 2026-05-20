@@ -3,7 +3,7 @@
 class CraftingStation < ApplicationRecord
   ARCHETYPES = {
     city: "city",
-    guild_hall: "guild_hall",
+    clan_hall: "clan_hall",
     field_kit: "field_kit"
   }.freeze
 

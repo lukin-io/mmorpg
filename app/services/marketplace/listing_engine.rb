@@ -44,7 +44,6 @@ module Marketplace
         commission_scope: params[:commission_scope] || "personal"
       )
       listing.save!
-      log_override!(listing) if guardrail_override
       listing
     end
 
@@ -82,16 +81,5 @@ module Marketplace
       user.has_any_role?(:gm, :admin)
     end
 
-    def log_override!(listing)
-      AuditLogger.log(
-        actor: user,
-        action: "economy.override",
-        target: listing,
-        metadata: {
-          location_key: listing.location_key,
-          listing_id: listing.id
-        }
-      )
-    end
   end
 end

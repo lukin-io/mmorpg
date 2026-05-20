@@ -15,8 +15,4 @@ class GameEvent < ApplicationRecord
 
   validates :name, :slug, :starts_at, :ends_at, presence: true
   validates :slug, uniqueness: true
-
-  def feature_flag
-    feature_flag_key.presence || "events:#{slug}"
-  end
 end

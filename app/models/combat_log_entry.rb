@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # CombatLogEntry persists deterministic Neverlands-style fight events for
-# public logs, statistics, and moderation review.
+# public logs and fight statistics.
 class CombatLogEntry < ApplicationRecord
   belongs_to :arena_match
   belongs_to :actor, polymorphic: true, optional: true

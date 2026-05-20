@@ -92,7 +92,7 @@ export default class extends Controller {
       blacksmith: "⚒️ Blacksmith",
       bank: "🏦 Bank",
       arena: "⚔️ Arena",
-      guild: "🏰 Guild Hall",
+      clan: "🏰 Clan Hall",
       temple: "⛪ Temple",
       academy: "📚 Academy",
       market: "🛒 Market",
@@ -189,7 +189,7 @@ export default class extends Controller {
   }
 
   isEnterable(type) {
-    const enterableTypes = ['shop', 'tavern', 'blacksmith', 'arena', 'guild', 'temple', 'academy', 'bank', 'gate']
+    const enterableTypes = ['shop', 'tavern', 'blacksmith', 'arena', 'clan', 'temple', 'academy', 'bank', 'gate']
     return enterableTypes.includes(type)
   }
 
@@ -324,7 +324,7 @@ export default class extends Controller {
       blacksmith: "⚒️",
       bank: "🏦",
       arena: "⚔️",
-      guild: "🏰",
+      clan: "🏰",
       temple: "⛪",
       academy: "📚",
       market: "🛒",
@@ -382,4 +382,3 @@ export default class extends Controller {
     document.body.removeChild(form)
   }
 }
-

@@ -27,24 +27,8 @@ RSpec.describe "Sidekiq Queue Configuration" do
       expect(configured_queues).to include("vitals")
     end
 
-    it "includes the social queue" do
-      expect(configured_queues).to include("social")
-    end
-
-    it "includes the webhooks queue" do
-      expect(configured_queues).to include("webhooks")
-    end
-
     it "includes the chat queue" do
       expect(configured_queues).to include("chat")
-    end
-
-    it "includes the moderation queue" do
-      expect(configured_queues).to include("moderation")
-    end
-
-    it "includes the live_ops queue" do
-      expect(configured_queues).to include("live_ops")
     end
 
     it "includes the low priority queue" do

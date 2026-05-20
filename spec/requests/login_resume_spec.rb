@@ -32,11 +32,18 @@ RSpec.describe "Login resume", type: :request do
     expect(response.body).to include("[7, 9]")
   end
 
-  it "keeps accounts without a character on the dashboard" do
+  it "boots accounts without a character into the world" do
     user = create(:user, password: "Password123!", password_confirmation: "Password123!")
+    create(:zone, name: "Starter City", biome: "city", width: 20, height: 20)
 
     log_in(user)
 
-    expect(response).to redirect_to(dashboard_path)
+    expect(response).to redirect_to(world_path)
+
+    follow_redirect!
+
+    expect(response).to have_http_status(:ok)
+    expect(user.characters.reload.count).to eq(1)
+    expect(user.character.position.zone.name).to eq("Starter City")
   end
 end

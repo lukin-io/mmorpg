@@ -13,7 +13,7 @@ module Game
     class NpcArchetype
       attr_reader :key, :name, :archetype, :region, :location, :roles,
         :dialogue, :reputation_thresholds, :quests, :faction_alignment,
-        :moderation_categories, :training_offers, :inventory_tags, :event_hooks
+        :training_offers, :inventory_tags, :event_hooks
 
       def initialize(key, config)
         @key = key.to_s
@@ -26,7 +26,6 @@ module Game
         @reputation_thresholds = config.fetch("reputation_thresholds", {})
         @quests = config.fetch("quests", {})
         @faction_alignment = config["faction_alignment"]
-        @moderation_categories = config.fetch("moderation_categories", [])
         @training_offers = config.fetch("training_offers", {})
         @inventory_tags = config.fetch("inventory_tags", [])
         @event_hooks = config.fetch("event_hooks", {})
@@ -48,9 +47,6 @@ module Game
         reaction_for(reputation:) == :hostile
       end
 
-      def offers_reports?
-        roles.include?("report_intake") && moderation_categories.any?
-      end
     end
   end
 end

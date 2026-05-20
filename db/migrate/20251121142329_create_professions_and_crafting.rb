@@ -32,7 +32,7 @@ class CreateProfessionsAndCrafting < ActiveRecord::Migration[8.1]
       t.string :source_reference
       t.string :risk_level, null: false, default: "safe"
       t.integer :premium_token_cost, null: false, default: 0
-      t.boolean :guild_bound, null: false, default: false
+      t.boolean :clan_bound, null: false, default: false
       t.jsonb :quality_modifiers, null: false, default: {}
       t.string :required_station_archetype, null: false, default: "city"
       t.jsonb :requirements, null: false, default: {}

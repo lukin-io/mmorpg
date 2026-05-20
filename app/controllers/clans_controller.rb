@@ -84,7 +84,6 @@ class ClansController < ApplicationController
     params.require(:clan).permit(
       :name,
       :description,
-      :discord_webhook_url,
       banner_data: {},
       recruitment_settings: {},
       treasury_rules: {},

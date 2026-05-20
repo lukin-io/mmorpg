@@ -10,9 +10,8 @@ module Professions
     # Returns:
     #   CharacterPosition after downtime adjustment.
     class TraumaResponse
-      def initialize(doctor_progress:, detector: Moderation::Detectors::HealingExploit.new)
-        @doctor_progress = doctor_progress
-        @detector = detector
+    def initialize(doctor_progress:)
+      @doctor_progress = doctor_progress
       end
 
       def apply!(character_position:)
@@ -26,17 +25,12 @@ module Professions
         ].max
 
         character_position.update!(respawn_available_at: new_time)
-        detector.call(
-          character: character_position.character,
-          reporter: doctor_progress.user,
-          delta_seconds: (previous_time - new_time).to_i
-        )
         character_position
       end
 
       private
 
-      attr_reader :doctor_progress, :detector
+      attr_reader :doctor_progress
     end
   end
 end

@@ -16,7 +16,7 @@ class AuctionListing < ApplicationRecord
   validates :item_name, :currency_type, :starting_bid, :ends_at, presence: true
   validates :currency_type, inclusion: {in: %w[gold silver premium_tokens]}
   validates :required_skill_level, numericality: {greater_than_or_equal_to: 0}
-  validates :commission_scope, inclusion: {in: %w[personal guild public]}
+  validates :commission_scope, inclusion: {in: %w[personal clan public]}
   validates :location_key, presence: true
 
   scope :live, -> { active.where("ends_at > ?", Time.current) }

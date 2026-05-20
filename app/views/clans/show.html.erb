@@ -128,7 +128,7 @@
 
   <section class="mb-8">
     <h2>Message Board</h2>
-    <% if clan_permission_matrix.allows?(:post_announcements) %>
+    <% if clan_permission_matrix.allows?(:post_messages) %>
       <%= form_with url: clan_clan_message_board_posts_path(@clan), method: :post do |form| %>
         <div class="field">
           <%= form.label :title %>
@@ -142,11 +142,7 @@
           <%= form.check_box :pinned %>
           <%= form.label :pinned, "Pin to top" %>
         </div>
-        <div class="field">
-          <%= form.check_box :broadcast %>
-          <%= form.label :broadcast, "Broadcast to Discord" %>
-        </div>
-        <%= form.submit "Post Announcement", class: "button" %>
+        <%= form.submit "Post Message", class: "button" %>
       <% end %>
     <% end %>
 

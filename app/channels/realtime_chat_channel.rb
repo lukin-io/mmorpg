@@ -264,9 +264,6 @@ class RealtimeChatChannel < ApplicationCable::Channel
     when "arena"
       # Arena chat is accessible to all authenticated users
       true
-    when "guild"
-      # Guild chat requires guild membership
-      user_in_guild?(channel)
     when "clan"
       # Clan chat requires clan membership
       user_in_clan?(channel)
@@ -289,15 +286,6 @@ class RealtimeChatChannel < ApplicationCable::Channel
     return false unless current_user.respond_to?(:chat_muted_until)
 
     current_user.chat_muted_until.present? && current_user.chat_muted_until > Time.current
-  end
-
-  def user_in_guild?(channel)
-    # Extract guild ID from channel metadata or name
-    guild_id = channel.metadata&.dig("guild_id")
-    return false unless guild_id
-
-    # Check if user has a character in this guild
-    current_user.characters.exists?(guild_id: guild_id)
   end
 
   def user_in_clan?(channel)

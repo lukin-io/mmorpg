@@ -80,7 +80,6 @@ class Character < ApplicationRecord
   }.freeze
 
   belongs_to :user
-  belongs_to :guild, optional: true
   belongs_to :clan, optional: true
 
   has_one :position, class_name: "CharacterPosition", dependent: :destroy
@@ -95,10 +94,6 @@ class Character < ApplicationRecord
   has_many :quest_assignments, dependent: :destroy
   has_many :movement_commands, dependent: :destroy
   has_many :world_action_offers, dependent: :destroy
-  has_many :moderation_tickets_as_subject,
-    class_name: "Moderation::Ticket",
-    foreign_key: :subject_character_id,
-    dependent: :nullify
 
   validates :name, presence: true, uniqueness: true, length: {maximum: MAX_NAME_LENGTH}
   validates :level, numericality: {greater_than: 0}
@@ -985,7 +980,6 @@ class Character < ApplicationRecord
   def inherit_memberships
     return unless user
 
-    self.guild ||= user.primary_guild
     self.clan ||= user.primary_clan
   end
 

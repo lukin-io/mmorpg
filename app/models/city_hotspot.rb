@@ -22,7 +22,7 @@ class CityHotspot < ApplicationRecord
     "clinic" => "/world",   # TODO: Implement clinic feature
     "shop" => "/shop",
     "tavern" => "/tavern",
-    "guild" => "/guilds",
+    "clan" => "/clans",
     "housing" => "/world"   # TODO: Implement housing feature
   }.freeze
 

@@ -32,7 +32,7 @@ resource_nodes:
 
   everfall_capital:
     - kind: "artisan_request"
-      resource_key: "guild_contract"
+      resource_key: "clan_contract"
       coordinates: {x: 110, y: 28}
       respawn_seconds: 3600
       rewards:
@@ -45,4 +45,3 @@ resource_nodes:
       respawn_seconds: 1200
       rewards:
         materials: {"Obsidian Powder": 3}
-

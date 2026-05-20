@@ -59,7 +59,7 @@ RSpec.describe Recipe, type: :model do
         "quest" => "quest",
         "drop" => "drop",
         "vendor" => "vendor",
-        "guild_research" => "guild_research",
+        "clan_research" => "clan_research",
         "tutorial" => "tutorial"
       )
     end
@@ -242,20 +242,20 @@ RSpec.describe Recipe, type: :model do
     end
   end
 
-  describe "#guild_locked?" do
-    context "when guild_bound is true" do
-      let(:recipe) { create(:recipe, guild_bound: true) }
+  describe "#clan_locked?" do
+    context "when clan_bound is true" do
+      let(:recipe) { create(:recipe, clan_bound: true) }
 
       it "returns true" do
-        expect(recipe.guild_locked?).to be true
+        expect(recipe.clan_locked?).to be true
       end
     end
 
-    context "when guild_bound is false" do
-      let(:recipe) { create(:recipe, guild_bound: false) }
+    context "when clan_bound is false" do
+      let(:recipe) { create(:recipe, clan_bound: false) }
 
       it "returns false" do
-        expect(recipe.guild_locked?).to be false
+        expect(recipe.clan_locked?).to be false
       end
     end
   end

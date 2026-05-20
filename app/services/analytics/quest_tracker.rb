@@ -2,7 +2,7 @@
 
 module Analytics
   # QuestTracker emits lightweight ActiveSupport::Notifications events so
-  # analytics jobs and dashboards can aggregate quest performance without
+  # game systems can observe quest performance without
   # coupling gameplay services to a specific persistence layer.
   #
   # Usage:

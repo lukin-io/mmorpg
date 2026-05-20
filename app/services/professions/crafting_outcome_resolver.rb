@@ -56,7 +56,6 @@ module Professions
       end
 
       apply_tool_wear!
-      update_guild_missions!(outcome) if outcome.success
       grant_achievements!(outcome) if outcome.success
     end
 
@@ -84,18 +83,6 @@ module Professions
     def apply_tool_wear!
       wear = recipe.requirements.fetch("tool_wear", 5).to_i
       Professions::ToolMaintenance.degrade!(tool: progress.best_tool, amount: wear)
-    end
-
-    def update_guild_missions!(outcome)
-      guild = job.character.guild
-      return unless guild
-
-      guild.guild_missions.incomplete.where(required_profession: job.profession).find_each do |mission|
-        crafted_item_names = recipe.rewards.fetch("items", []).map { |reward| reward["name"] }
-        next unless crafted_item_names.include?(mission.required_item_name)
-
-        mission.apply_progress!(1)
-      end
     end
 
     def grant_achievements!(outcome)

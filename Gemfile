@@ -19,10 +19,7 @@ gem "devise"
 gem "pundit"
 gem "rolify"
 gem "rack-attack"
-gem "flipper"
-gem "flipper-active_record"
 gem "jbuilder"
-gem "stripe", "~> 18.1"
 gem "csv"
 
 # Windows does not include zoneinfo files, so bundle the tzinfo-data gem

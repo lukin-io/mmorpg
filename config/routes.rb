@@ -1,5 +1,3 @@
-require "sidekiq/web"
-
 Rails.application.routes.draw do
   # Already implemented MVP Neverlands-based game-design routes.
   # These are the canonical player-facing routes for features already promoted
@@ -94,8 +92,6 @@ Rails.application.routes.draw do
       post :daily
     end
   end
-  resources :npc_reports, only: [:new, :create]
-
   resources :chat_channels, only: [:index, :show] do
     resources :chat_messages, only: :create
   end
@@ -132,29 +128,13 @@ Rails.application.routes.draw do
 
   mount ActionCable.server => "/cable"
 
-  authenticate :user, ->(user) { user.has_role?(:admin) } do
-    mount Sidekiq::Web => "/sidekiq"
-  end
-
   resource :session_ping, only: :create
 
   resources :friendships, only: [:index, :create, :update, :destroy]
   resources :mail_messages, only: [:index, :show, :new, :create]
-  resources :chat_reports, only: [:index, :create]
   resources :ignore_list_entries, only: [:index, :create, :destroy]
   resources :group_listings
   resources :social_hubs, only: [:index, :show]
-
-  resources :guilds do
-    resources :guild_applications, only: :create
-    resources :guild_bank_entries, only: [:index, :create]
-    resources :guild_bulletins, only: [:index, :create]
-    resources :guild_ranks, only: [:index, :update, :create]
-  end
-  resources :guild_applications, only: :update
-  resources :guild_memberships, only: [:update, :destroy]
-  resources :guild_bulletins, only: :destroy
-  resources :guild_ranks, only: :destroy
 
   resources :clans do
     resources :clan_applications, only: [:create, :update], path: "applications"
@@ -211,13 +191,6 @@ Rails.application.routes.draw do
   end
   resources :party_invitations, only: :update
 
-  resources :premium_store, only: [:index, :show] do
-    member do
-      post :purchase
-      post :gift
-    end
-  end
-
   resources :titles, only: [:index] do
     member do
       post :equip
@@ -227,8 +200,6 @@ Rails.application.routes.draw do
     end
   end
 
-  resources :announcements, only: [:index, :create]
-
   resources :game_events, only: [:index, :show, :update]
   resources :leaderboards, only: [:index, :show] do
     post :recalculate, on: :member
@@ -236,43 +207,5 @@ Rails.application.routes.draw do
   resources :competition_brackets, only: [:show, :update]
   resources :spawn_schedules, only: [:index, :create, :update]
 
-  namespace :moderation do
-    resources :reports, only: [:new, :create]
-    resources :tickets, only: [] do
-      resources :appeals, only: [:new, :create]
-    end
-    resource :panel, only: :show
-  end
-
-  namespace :admin do
-    namespace :moderation do
-      resources :tickets, only: [:index, :show, :update] do
-        resources :actions, only: :create
-        resource :appeal, only: :update
-      end
-    end
-
-    namespace :live_ops do
-      resources :events, only: [:index, :create, :update]
-    end
-
-    resources :clan_moderations, only: [:index, :create]
-
-    resource :gm_console, only: :show, controller: "gm_console" do
-      post :spawn
-      post :disable
-      post :adjust_timers
-      post :compensate
-    end
-  end
-
   get "up" => "rails/health#show", :as => :rails_health_check
-
-  resource :dashboard, only: :show, controller: "dashboard"
-
-  namespace :api do
-    namespace :v1 do
-      resources :fan_tools, only: :index
-    end
-  end
 end

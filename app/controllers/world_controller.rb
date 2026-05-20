@@ -419,9 +419,7 @@ class WorldController < ApplicationController
     # Create initial position in starter zone (city)
     starter_zone = Zone.find_by(biome: "city") || Zone.first
     unless starter_zone
-      flash[:alert] ||= "No zones available."
-      flash.keep(:alert)
-      return redirect_to dashboard_path
+      return render "world/no_zones", status: :service_unavailable
     end
 
     spawn = starter_zone.spawn_points.default_entries.first ||

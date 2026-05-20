@@ -29,18 +29,18 @@ default: &default
       - manage_treasury
       - declare_war
       - manage_infrastructure
-      - post_announcements
+      - post_messages
       - coordinate_quests
       - manage_permissions
     defaults:
       member:
-        post_announcements: false
+        post_messages: false
       recruiter:
         manage_recruitment: true
-        post_announcements: true
+        post_messages: true
       quartermaster:
         manage_treasury: true
-        post_announcements: true
+        post_messages: true
       warlord:
         declare_war: true
         coordinate_quests: true
@@ -48,14 +48,14 @@ default: &default
         manage_recruitment: true
         manage_treasury: true
         coordinate_quests: true
-        post_announcements: true
+        post_messages: true
         manage_permissions: true
       leader:
         manage_recruitment: true
         manage_treasury: true
         declare_war: true
         manage_infrastructure: true
-        post_announcements: true
+        post_messages: true
         coordinate_quests: true
         manage_permissions: true
   treasury:

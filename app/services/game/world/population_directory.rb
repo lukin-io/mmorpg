@@ -35,10 +35,6 @@ module Game
         npcs.values.select { |npc| npc.region == region_key.to_s }
       end
 
-      def report_intake_npcs
-        npcs.values.select(&:offers_reports?)
-      end
-
       def announcer_for_event(event_key)
         npcs.values.find do |npc|
           npc.event_hooks.fetch("seasonal_keys", []).include?(event_key)
@@ -66,13 +62,6 @@ module Game
       def spawn_ephemeral(npc_key:, zone_key:, location:)
         npc = npc(npc_key)
         raise ArgumentError, "Unknown NPC #{npc_key}" unless npc
-
-        Moderation::Instrumentation.track(
-          "live_ops.spawn_npc",
-          npc_key: npc_key,
-          zone_key: zone_key,
-          location: location
-        )
 
         {
           npc:,

@@ -74,18 +74,6 @@ module Payments
           metadata: metadata
         )
 
-        AuditLogger.log(
-          actor: actor || user,
-          action: "premium_tokens.#{entry_type}",
-          target: reference || user,
-          metadata: metadata.merge(
-            user_id: user.id,
-            delta: amount,
-            balance_after: new_balance,
-            reason: reason
-          )
-        )
-
         entry
       end
     end

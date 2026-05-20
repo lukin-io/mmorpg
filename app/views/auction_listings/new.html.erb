@@ -22,7 +22,7 @@
 
           <div class="form-group">
             <%= f.label :location_key, "Auction Location" %>
-            <%= f.select :location_key, [["Central Market", "central_market"], ["Guild Hall", "guild_hall"], ["Frontier Post", "frontier_post"]], {}, class: "form-control", required: true %>
+            <%= f.select :location_key, [["Central Market", "central_market"], ["Clan Hall", "clan_hall"], ["Frontier Post", "frontier_post"]], {}, class: "form-control", required: true %>
           </div>
         </div>
       </div>
@@ -74,7 +74,7 @@
 
         <div class="form-group">
           <%= f.label :commission_scope, "Visibility" %>
-          <%= f.select :commission_scope, [["Public", "public"], ["Guild Only", "guild"], ["Personal", "personal"]], {}, class: "form-control" %>
+          <%= f.select :commission_scope, [["Public", "public"], ["Clan Only", "clan"], ["Personal", "personal"]], {}, class: "form-control" %>
         </div>
       </div>
 

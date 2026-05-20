@@ -46,14 +46,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_120000) do
     t.index ["title_reward_id"], name: "index_achievements_on_title_reward_id"
   end
 
-  create_table "announcements", force: :cascade do |t|
-    t.text "body", null: false
-    t.datetime "created_at", null: false
-    t.string "title", null: false
-    t.datetime "updated_at", null: false
-    t.index ["created_at"], name: "index_announcements_on_created_at"
-  end
-
   create_table "arena_applications", force: :cascade do |t|
     t.bigint "applicant_id"
     t.bigint "arena_match_id"
@@ -231,20 +223,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_120000) do
     t.index ["status"], name: "index_auction_listings_on_status"
   end
 
-  create_table "audit_logs", force: :cascade do |t|
-    t.string "action", null: false
-    t.bigint "actor_id", null: false
-    t.datetime "created_at", null: false
-    t.jsonb "metadata", default: {}, null: false
-    t.bigint "target_id"
-    t.string "target_type"
-    t.datetime "updated_at", null: false
-    t.index ["action"], name: "index_audit_logs_on_action"
-    t.index ["actor_id"], name: "index_audit_logs_on_actor_id"
-    t.index ["created_at"], name: "index_audit_logs_on_created_at"
-    t.index ["target_type", "target_id"], name: "index_audit_logs_on_target"
-  end
-
   create_table "character_positions", force: :cascade do |t|
     t.bigint "character_id", null: false
     t.datetime "created_at", null: false
@@ -273,7 +251,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_120000) do
     t.integer "current_mp", default: 50, null: false
     t.bigint "experience", default: 0, null: false
     t.string "faction_alignment", default: "neutral", null: false
-    t.bigint "guild_id"
     t.integer "hp_regen_interval", default: 300, null: false
     t.boolean "in_combat", default: false, null: false
     t.datetime "last_combat_at"
@@ -298,7 +275,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_120000) do
     t.bigint "user_id", null: false
     t.index ["clan_id"], name: "index_characters_on_clan_id"
     t.index ["combat_skill_points"], name: "index_characters_on_combat_skill_points", where: "(combat_skill_points > 0)"
-    t.index ["guild_id"], name: "index_characters_on_guild_id"
     t.index ["name"], name: "index_characters_on_name", unique: true
     t.index ["peace_skill_points"], name: "index_characters_on_peace_skill_points", where: "(peace_skill_points > 0)"
     t.index ["perk_points_available"], name: "index_characters_on_perk_points_available", where: "(perk_points_available > 0)"
@@ -338,8 +314,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_120000) do
     t.text "filtered_body", null: false
     t.boolean "flagged", default: false, null: false
     t.jsonb "metadata", default: {}, null: false
-    t.jsonb "moderation_labels", default: [], null: false
-    t.integer "reported_count", default: 0, null: false
     t.bigint "sender_id", null: false
     t.datetime "updated_at", null: false
     t.integer "visibility", default: 0, null: false
@@ -347,51 +321,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_120000) do
     t.index ["chat_channel_id"], name: "index_chat_messages_on_chat_channel_id"
     t.index ["flagged"], name: "index_chat_messages_on_flagged"
     t.index ["sender_id"], name: "index_chat_messages_on_sender_id"
-  end
-
-  create_table "chat_moderation_actions", force: :cascade do |t|
-    t.integer "action_type", default: 0, null: false
-    t.bigint "actor_id", null: false
-    t.jsonb "context", default: {}, null: false
-    t.datetime "created_at", null: false
-    t.datetime "expires_at"
-    t.bigint "target_user_id", null: false
-    t.datetime "updated_at", null: false
-    t.index ["actor_id"], name: "index_chat_moderation_actions_on_actor_id"
-    t.index ["target_user_id", "expires_at"], name: "index_chat_moderation_actions_on_target_and_expiration"
-    t.index ["target_user_id"], name: "index_chat_moderation_actions_on_target_user_id"
-  end
-
-  create_table "chat_reports", force: :cascade do |t|
-    t.bigint "chat_message_id"
-    t.datetime "created_at", null: false
-    t.jsonb "evidence", default: {}, null: false
-    t.bigint "moderation_ticket_id"
-    t.text "reason", null: false
-    t.bigint "reporter_id", null: false
-    t.jsonb "source_context", default: {}, null: false
-    t.integer "status", default: 0, null: false
-    t.datetime "updated_at", null: false
-    t.index ["chat_message_id"], name: "index_chat_reports_on_chat_message_id"
-    t.index ["moderation_ticket_id"], name: "index_chat_reports_on_moderation_ticket_id"
-    t.index ["reporter_id"], name: "index_chat_reports_on_reporter_id"
-    t.index ["status"], name: "index_chat_reports_on_status"
-  end
-
-  create_table "chat_violations", force: :cascade do |t|
-    t.bigint "chat_message_id"
-    t.datetime "created_at", null: false
-    t.jsonb "metadata", default: {}, null: false
-    t.string "reason"
-    t.string "severity", null: false
-    t.integer "severity_points", default: 1, null: false
-    t.datetime "updated_at", null: false
-    t.bigint "user_id", null: false
-    t.string "violation_type", null: false
-    t.index ["chat_message_id"], name: "index_chat_violations_on_chat_message_id"
-    t.index ["user_id", "created_at"], name: "index_chat_violations_on_user_id_and_created_at"
-    t.index ["user_id"], name: "index_chat_violations_on_user_id"
-    t.index ["violation_type"], name: "index_chat_violations_on_violation_type"
   end
 
   create_table "city_hotspots", force: :cascade do |t|
@@ -467,7 +396,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_120000) do
   create_table "clan_message_board_posts", force: :cascade do |t|
     t.bigint "author_id", null: false
     t.text "body", null: false
-    t.datetime "broadcasted_at"
     t.bigint "clan_id", null: false
     t.datetime "created_at", null: false
     t.jsonb "metadata", default: {}, null: false
@@ -478,21 +406,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_120000) do
     t.index ["author_id"], name: "index_clan_message_board_posts_on_author_id"
     t.index ["clan_id", "pinned"], name: "index_clan_message_board_posts_on_clan_id_and_pinned"
     t.index ["clan_id"], name: "index_clan_message_board_posts_on_clan_id"
-  end
-
-  create_table "clan_moderation_actions", force: :cascade do |t|
-    t.string "action_type", null: false
-    t.bigint "clan_id", null: false
-    t.datetime "created_at", null: false
-    t.bigint "gm_user_id", null: false
-    t.text "notes"
-    t.datetime "rolled_back_at"
-    t.bigint "target_id"
-    t.string "target_type"
-    t.datetime "updated_at", null: false
-    t.index ["clan_id"], name: "index_clan_moderation_actions_on_clan_id"
-    t.index ["gm_user_id"], name: "index_clan_moderation_actions_on_gm_user_id"
-    t.index ["target_type", "target_id"], name: "index_clan_moderation_actions_on_target"
   end
 
   create_table "clan_quest_contributions", force: :cascade do |t|
@@ -623,7 +536,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_120000) do
     t.jsonb "banner_data", default: {}, null: false
     t.datetime "created_at", null: false
     t.text "description"
-    t.string "discord_webhook_url"
     t.integer "experience", default: 0, null: false
     t.jsonb "fast_travel_nodes", default: [], null: false
     t.jsonb "infrastructure_state", default: {}, null: false
@@ -784,34 +696,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_120000) do
     t.index ["quest_id"], name: "index_cutscene_events_on_quest_id"
   end
 
-  create_table "economic_snapshots", force: :cascade do |t|
-    t.integer "active_listings", default: 0, null: false
-    t.date "captured_on", null: false
-    t.datetime "created_at", null: false
-    t.decimal "currency_velocity_gold", precision: 10, scale: 2, default: "0.0", null: false
-    t.decimal "currency_velocity_premium_tokens", precision: 10, scale: 2, default: "0.0", null: false
-    t.decimal "currency_velocity_silver", precision: 10, scale: 2, default: "0.0", null: false
-    t.integer "daily_trade_volume_gold", default: 0, null: false
-    t.integer "daily_trade_volume_premium_tokens", default: 0, null: false
-    t.jsonb "item_price_index", default: {}, null: false
-    t.jsonb "metadata", default: {}, null: false
-    t.integer "suspicious_trade_count", default: 0, null: false
-    t.datetime "updated_at", null: false
-    t.index ["captured_on"], name: "index_economic_snapshots_on_captured_on", unique: true
-  end
-
-  create_table "economy_alerts", force: :cascade do |t|
-    t.string "alert_type", null: false
-    t.datetime "created_at", null: false
-    t.datetime "flagged_at", null: false
-    t.jsonb "payload", default: {}, null: false
-    t.string "status", default: "open", null: false
-    t.bigint "trade_session_id"
-    t.datetime "updated_at", null: false
-    t.index ["status"], name: "index_economy_alerts_on_status"
-    t.index ["trade_session_id"], name: "index_economy_alerts_on_trade_session_id"
-  end
-
   create_table "event_instances", force: :cascade do |t|
     t.string "announcer_npc_key"
     t.datetime "created_at", null: false
@@ -835,22 +719,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_120000) do
     t.index ["game_event_id"], name: "index_event_schedules_on_game_event_id"
   end
 
-  create_table "flipper_features", force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.string "key", null: false
-    t.datetime "updated_at", null: false
-    t.index ["key"], name: "index_flipper_features_on_key", unique: true
-  end
-
-  create_table "flipper_gates", force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.string "feature_key", null: false
-    t.string "key", null: false
-    t.datetime "updated_at", null: false
-    t.text "value"
-    t.index ["feature_key", "key", "value"], name: "index_flipper_gates_on_feature_key_and_key_and_value", unique: true
-  end
-
   create_table "friendships", force: :cascade do |t|
     t.datetime "accepted_at"
     t.datetime "created_at", null: false
@@ -867,7 +735,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_120000) do
     t.datetime "created_at", null: false
     t.text "description"
     t.datetime "ends_at", null: false
-    t.string "feature_flag_key"
     t.jsonb "metadata", default: {}, null: false
     t.string "name", null: false
     t.string "slug", null: false
@@ -897,9 +764,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_120000) do
   end
 
   create_table "group_listings", force: :cascade do |t|
+    t.bigint "clan_id"
     t.datetime "created_at", null: false
     t.text "description"
-    t.bigint "guild_id"
     t.integer "listing_type", default: 0, null: false
     t.jsonb "metadata", default: {}, null: false
     t.bigint "owner_id", null: false
@@ -909,128 +776,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_120000) do
     t.integer "status", default: 0, null: false
     t.string "title", null: false
     t.datetime "updated_at", null: false
-    t.index ["guild_id"], name: "index_group_listings_on_guild_id"
+    t.index ["clan_id"], name: "index_group_listings_on_clan_id"
     t.index ["listing_type"], name: "index_group_listings_on_listing_type"
     t.index ["owner_id"], name: "index_group_listings_on_owner_id"
     t.index ["party_id"], name: "index_group_listings_on_party_id"
     t.index ["profession_id"], name: "index_group_listings_on_profession_id"
     t.index ["status"], name: "index_group_listings_on_status"
-  end
-
-  create_table "guild_applications", force: :cascade do |t|
-    t.jsonb "answers", default: {}, null: false
-    t.bigint "applicant_id", null: false
-    t.datetime "created_at", null: false
-    t.bigint "guild_id", null: false
-    t.datetime "reviewed_at"
-    t.bigint "reviewed_by_id"
-    t.integer "status", default: 0, null: false
-    t.datetime "updated_at", null: false
-    t.index ["applicant_id"], name: "index_guild_applications_on_applicant_id"
-    t.index ["guild_id", "applicant_id"], name: "index_guild_applications_on_guild_and_applicant", unique: true
-    t.index ["guild_id"], name: "index_guild_applications_on_guild_id"
-    t.index ["reviewed_by_id"], name: "index_guild_applications_on_reviewed_by_id"
-  end
-
-  create_table "guild_bank_entries", force: :cascade do |t|
-    t.bigint "actor_id", null: false
-    t.integer "amount", null: false
-    t.datetime "created_at", null: false
-    t.string "currency_type", null: false
-    t.integer "entry_type", default: 0, null: false
-    t.bigint "guild_id", null: false
-    t.jsonb "metadata", default: {}, null: false
-    t.datetime "updated_at", null: false
-    t.index ["actor_id"], name: "index_guild_bank_entries_on_actor_id"
-    t.index ["guild_id"], name: "index_guild_bank_entries_on_guild_id"
-  end
-
-  create_table "guild_bulletins", force: :cascade do |t|
-    t.bigint "author_id", null: false
-    t.text "body", null: false
-    t.datetime "created_at", null: false
-    t.bigint "guild_id", null: false
-    t.boolean "pinned", default: false, null: false
-    t.datetime "published_at", null: false
-    t.string "title", null: false
-    t.datetime "updated_at", null: false
-    t.index ["author_id"], name: "index_guild_bulletins_on_author_id"
-    t.index ["guild_id", "pinned"], name: "index_guild_bulletins_on_guild_id_and_pinned"
-    t.index ["guild_id"], name: "index_guild_bulletins_on_guild_id"
-  end
-
-  create_table "guild_memberships", force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.bigint "guild_id", null: false
-    t.bigint "guild_rank_id"
-    t.datetime "joined_at"
-    t.jsonb "permissions", default: {}, null: false
-    t.integer "role", default: 0, null: false
-    t.integer "status", default: 0, null: false
-    t.datetime "updated_at", null: false
-    t.bigint "user_id", null: false
-    t.index ["guild_id", "user_id"], name: "index_guild_memberships_on_guild_id_and_user_id", unique: true
-    t.index ["guild_id"], name: "index_guild_memberships_on_guild_id"
-    t.index ["guild_rank_id"], name: "index_guild_memberships_on_guild_rank_id"
-    t.index ["user_id"], name: "index_guild_memberships_on_user_id"
-  end
-
-  create_table "guild_missions", force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.bigint "guild_id", null: false
-    t.jsonb "metadata", default: {}, null: false
-    t.integer "progress_quantity", default: 0, null: false
-    t.string "required_item_name", null: false
-    t.bigint "required_profession_id", null: false
-    t.integer "required_quantity", default: 0, null: false
-    t.integer "status", default: 0, null: false
-    t.datetime "updated_at", null: false
-    t.index ["guild_id", "status"], name: "index_guild_missions_on_guild_id_and_status"
-    t.index ["guild_id"], name: "index_guild_missions_on_guild_id"
-    t.index ["required_profession_id"], name: "index_guild_missions_on_required_profession_id"
-  end
-
-  create_table "guild_perks", force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.bigint "granted_by_id"
-    t.bigint "guild_id", null: false
-    t.jsonb "metadata", default: {}, null: false
-    t.string "perk_key", null: false
-    t.integer "source_level", default: 1, null: false
-    t.datetime "unlocked_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["granted_by_id"], name: "index_guild_perks_on_granted_by_id"
-    t.index ["guild_id", "perk_key"], name: "index_guild_perks_on_guild_id_and_perk_key", unique: true
-    t.index ["guild_id"], name: "index_guild_perks_on_guild_id"
-  end
-
-  create_table "guild_ranks", force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.bigint "guild_id", null: false
-    t.string "name", null: false
-    t.jsonb "permissions", default: {}, null: false
-    t.integer "position", default: 0, null: false
-    t.datetime "updated_at", null: false
-    t.index ["guild_id", "name"], name: "index_guild_ranks_on_guild_id_and_name", unique: true
-    t.index ["guild_id"], name: "index_guild_ranks_on_guild_id"
-  end
-
-  create_table "guilds", force: :cascade do |t|
-    t.jsonb "banner_data", default: {}, null: false
-    t.datetime "created_at", null: false
-    t.bigint "experience", default: 0, null: false
-    t.bigint "leader_id", null: false
-    t.integer "level", default: 1, null: false
-    t.text "motto"
-    t.string "name", null: false
-    t.jsonb "recruitment_settings", default: {}, null: false
-    t.string "slug", null: false
-    t.integer "treasury_gold", default: 0, null: false
-    t.integer "treasury_premium_tokens", default: 0, null: false
-    t.integer "treasury_silver", default: 0, null: false
-    t.datetime "updated_at", null: false
-    t.index ["leader_id"], name: "index_guilds_on_leader_id"
-    t.index ["slug"], name: "index_guilds_on_slug", unique: true
   end
 
   create_table "housing_decor_items", force: :cascade do |t|
@@ -1062,11 +813,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_120000) do
     t.integer "upkeep_gold_cost", default: 200, null: false
     t.bigint "user_id", null: false
     t.integer "utility_slots", default: 1, null: false
-    t.bigint "visit_guild_id"
     t.string "visit_scope", default: "friends", null: false
     t.index ["plot_tier"], name: "index_housing_plots_on_plot_tier"
     t.index ["user_id"], name: "index_housing_plots_on_user_id"
-    t.index ["visit_guild_id"], name: "index_housing_plots_on_visit_guild_id"
     t.index ["visit_scope"], name: "index_housing_plots_on_visit_scope"
   end
 
@@ -1080,19 +829,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_120000) do
     t.index ["ignored_user_id"], name: "index_ignore_list_entries_on_ignored_user_id"
     t.index ["user_id", "ignored_user_id"], name: "index_ignore_entries_on_user_and_target", unique: true
     t.index ["user_id"], name: "index_ignore_list_entries_on_user_id"
-  end
-
-  create_table "integration_tokens", force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.bigint "created_by_id", null: false
-    t.datetime "last_used_at"
-    t.jsonb "metadata", default: {}, null: false
-    t.string "name", null: false
-    t.string "scopes", default: [], array: true
-    t.string "token", null: false
-    t.datetime "updated_at", null: false
-    t.index ["created_by_id"], name: "index_integration_tokens_on_created_by_id"
-    t.index ["token"], name: "index_integration_tokens_on_token", unique: true
   end
 
   create_table "inventories", force: :cascade do |t|
@@ -1127,18 +863,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_120000) do
     t.index ["inventory_id", "slot_kind"], name: "index_inventory_items_on_inventory_id_and_slot_kind"
     t.index ["inventory_id"], name: "index_inventory_items_on_inventory_id"
     t.index ["item_template_id"], name: "index_inventory_items_on_item_template_id"
-  end
-
-  create_table "item_price_points", force: :cascade do |t|
-    t.integer "average_price", default: 0, null: false
-    t.datetime "created_at", null: false
-    t.string "currency_type", null: false
-    t.string "item_name", null: false
-    t.integer "median_price", default: 0, null: false
-    t.date "sampled_on", null: false
-    t.datetime "updated_at", null: false
-    t.integer "volume", default: 0, null: false
-    t.index ["item_name", "sampled_on", "currency_type"], name: "index_item_price_points_on_item_and_sample"
   end
 
   create_table "item_templates", force: :cascade do |t|
@@ -1185,22 +909,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_120000) do
     t.string "season", null: false
     t.datetime "starts_at", null: false
     t.datetime "updated_at", null: false
-  end
-
-  create_table "live_ops_events", force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.string "event_type", null: false
-    t.datetime "executed_at"
-    t.text "notes"
-    t.jsonb "payload", default: {}, null: false
-    t.bigint "requested_by_id", null: false
-    t.string "severity", default: "normal", null: false
-    t.string "status", default: "pending", null: false
-    t.datetime "updated_at", null: false
-    t.index ["event_type"], name: "index_live_ops_events_on_event_type"
-    t.index ["requested_by_id"], name: "index_live_ops_events_on_requested_by_id"
-    t.index ["severity"], name: "index_live_ops_events_on_severity"
-    t.index ["status"], name: "index_live_ops_events_on_status"
   end
 
   create_table "mail_messages", force: :cascade do |t|
@@ -1273,81 +981,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_120000) do
     t.index ["zone_id"], name: "index_medical_supply_pools_on_zone_id"
   end
 
-  create_table "moderation_actions", force: :cascade do |t|
-    t.string "action_type", null: false
-    t.bigint "actor_id", null: false
-    t.jsonb "context", default: {}, null: false
-    t.datetime "created_at", null: false
-    t.integer "duration_seconds"
-    t.datetime "expires_at"
-    t.jsonb "metadata", default: {}, null: false
-    t.text "reason", null: false
-    t.bigint "target_character_id"
-    t.bigint "target_user_id"
-    t.bigint "ticket_id", null: false
-    t.datetime "updated_at", null: false
-    t.index ["action_type"], name: "index_moderation_actions_on_action_type"
-    t.index ["actor_id"], name: "index_moderation_actions_on_actor_id"
-    t.index ["expires_at"], name: "index_moderation_actions_on_expires_at"
-    t.index ["target_character_id"], name: "index_moderation_actions_on_target_character_id"
-    t.index ["target_user_id"], name: "index_moderation_actions_on_target_user_id"
-    t.index ["ticket_id"], name: "index_moderation_actions_on_ticket_id"
-  end
-
-  create_table "moderation_appeals", force: :cascade do |t|
-    t.bigint "appellant_id", null: false
-    t.text "body", null: false
-    t.datetime "created_at", null: false
-    t.text "resolution_notes"
-    t.bigint "reviewer_id"
-    t.datetime "sla_due_at"
-    t.string "status", default: "submitted", null: false
-    t.bigint "ticket_id", null: false
-    t.datetime "updated_at", null: false
-    t.index ["appellant_id"], name: "index_moderation_appeals_on_appellant_id"
-    t.index ["reviewer_id"], name: "index_moderation_appeals_on_reviewer_id"
-    t.index ["sla_due_at"], name: "index_moderation_appeals_on_sla_due_at"
-    t.index ["status"], name: "index_moderation_appeals_on_status"
-    t.index ["ticket_id"], name: "index_moderation_appeals_on_ticket_id"
-  end
-
-  create_table "moderation_tickets", force: :cascade do |t|
-    t.string "appeal_status", default: "not_requested", null: false
-    t.bigint "assigned_moderator_id"
-    t.string "category", null: false
-    t.datetime "created_at", null: false
-    t.text "description", null: false
-    t.jsonb "evidence", default: {}, null: false
-    t.jsonb "metadata", default: {}, null: false
-    t.string "origin_reference"
-    t.datetime "penalty_expires_at"
-    t.string "penalty_state", default: "none", null: false
-    t.string "policy_key"
-    t.text "policy_summary"
-    t.string "priority", default: "normal", null: false
-    t.bigint "reporter_id", null: false
-    t.datetime "resolved_at"
-    t.datetime "responded_at"
-    t.string "source", null: false
-    t.string "status", default: "open", null: false
-    t.bigint "subject_character_id"
-    t.bigint "subject_user_id"
-    t.datetime "updated_at", null: false
-    t.string "zone_key"
-    t.index ["appeal_status"], name: "index_moderation_tickets_on_appeal_status"
-    t.index ["assigned_moderator_id"], name: "index_moderation_tickets_on_assigned_moderator_id"
-    t.index ["category"], name: "index_moderation_tickets_on_category"
-    t.index ["created_at"], name: "index_moderation_tickets_on_created_at"
-    t.index ["penalty_state"], name: "index_moderation_tickets_on_penalty_state"
-    t.index ["policy_key"], name: "index_moderation_tickets_on_policy_key"
-    t.index ["priority"], name: "index_moderation_tickets_on_priority"
-    t.index ["reporter_id"], name: "index_moderation_tickets_on_reporter_id"
-    t.index ["status"], name: "index_moderation_tickets_on_status"
-    t.index ["subject_character_id"], name: "index_moderation_tickets_on_subject_character_id"
-    t.index ["subject_user_id"], name: "index_moderation_tickets_on_subject_user_id"
-    t.index ["zone_key"], name: "index_moderation_tickets_on_zone_key"
-  end
-
   create_table "mount_stable_slots", force: :cascade do |t|
     t.jsonb "cosmetics", default: {}, null: false
     t.datetime "created_at", null: false
@@ -1411,24 +1044,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_120000) do
     t.index ["created_at"], name: "index_movement_commands_on_created_at"
     t.index ["status"], name: "index_movement_commands_on_status"
     t.index ["zone_id"], name: "index_movement_commands_on_zone_id"
-  end
-
-  create_table "npc_reports", force: :cascade do |t|
-    t.integer "category", default: 0, null: false
-    t.bigint "character_id"
-    t.datetime "created_at", null: false
-    t.text "description", null: false
-    t.jsonb "evidence", default: {}, null: false
-    t.jsonb "metadata", default: {}, null: false
-    t.bigint "moderation_ticket_id"
-    t.string "npc_key", null: false
-    t.bigint "reporter_id", null: false
-    t.integer "status", default: 0, null: false
-    t.datetime "updated_at", null: false
-    t.index ["character_id"], name: "index_npc_reports_on_character_id"
-    t.index ["moderation_ticket_id"], name: "index_npc_reports_on_moderation_ticket_id"
-    t.index ["npc_key", "status"], name: "index_npc_reports_on_npc_key_and_status"
-    t.index ["reporter_id"], name: "index_npc_reports_on_reporter_id"
   end
 
   create_table "npc_templates", force: :cascade do |t|
@@ -1588,34 +1203,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_120000) do
     t.index ["name"], name: "index_professions_on_name", unique: true
   end
 
-  create_table "purchases", force: :cascade do |t|
-    t.integer "amount_cents", null: false
-    t.datetime "created_at", null: false
-    t.string "currency", default: "USD", null: false
-    t.string "external_id", null: false
-    t.jsonb "metadata", default: {}, null: false
-    t.string "provider", null: false
-    t.string "status", null: false
-    t.datetime "updated_at", null: false
-    t.bigint "user_id", null: false
-    t.index ["external_id"], name: "index_purchases_on_external_id", unique: true
-    t.index ["user_id"], name: "index_purchases_on_user_id"
-  end
-
-  create_table "quest_analytics_snapshots", force: :cascade do |t|
-    t.decimal "abandon_rate", precision: 5, scale: 2, default: "0.0", null: false
-    t.integer "avg_completion_minutes", default: 0, null: false
-    t.string "bottleneck_step_key"
-    t.integer "bottleneck_step_position"
-    t.date "captured_on", null: false
-    t.decimal "completion_rate", precision: 5, scale: 2, default: "0.0", null: false
-    t.datetime "created_at", null: false
-    t.jsonb "metadata", default: {}, null: false
-    t.string "quest_chain_key", null: false
-    t.datetime "updated_at", null: false
-    t.index ["captured_on", "quest_chain_key"], name: "index_quest_analytics_snapshots_on_date_and_chain", unique: true
-  end
-
   create_table "quest_assignments", force: :cascade do |t|
     t.string "abandon_reason"
     t.datetime "abandoned_at"
@@ -1724,9 +1311,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_120000) do
   end
 
   create_table "recipes", force: :cascade do |t|
+    t.boolean "clan_bound", default: false, null: false
     t.datetime "created_at", null: false
     t.integer "duration_seconds", default: 60, null: false
-    t.boolean "guild_bound", default: false, null: false
     t.string "name", null: false
     t.string "output_item_name", null: false
     t.integer "premium_token_cost", default: 0, null: false
@@ -2005,34 +1592,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_120000) do
     t.index ["user_id"], name: "index_users_roles_on_user_id"
   end
 
-  create_table "webhook_endpoints", force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.boolean "enabled", default: true, null: false
-    t.string "event_types", default: [], array: true
-    t.bigint "integration_token_id", null: false
-    t.datetime "last_error_at"
-    t.datetime "last_success_at"
-    t.string "name", null: false
-    t.string "secret", null: false
-    t.string "target_url", null: false
-    t.datetime "updated_at", null: false
-    t.index ["integration_token_id"], name: "index_webhook_endpoints_on_integration_token_id"
-  end
-
-  create_table "webhook_events", force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.integer "delivery_attempts", default: 0, null: false
-    t.string "event_type", null: false
-    t.datetime "last_attempted_at"
-    t.jsonb "payload", default: {}, null: false
-    t.string "status", default: "pending", null: false
-    t.datetime "updated_at", null: false
-    t.bigint "webhook_endpoint_id", null: false
-    t.index ["event_type"], name: "index_webhook_events_on_event_type"
-    t.index ["status"], name: "index_webhook_events_on_status"
-    t.index ["webhook_endpoint_id"], name: "index_webhook_events_on_webhook_endpoint_id"
-  end
-
   create_table "world_action_offers", force: :cascade do |t|
     t.datetime "accepted_at"
     t.string "action_key", null: false
@@ -2095,24 +1654,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_120000) do
   add_foreign_key "auction_bids", "users", column: "bidder_id"
   add_foreign_key "auction_listings", "professions", column: "required_profession_id"
   add_foreign_key "auction_listings", "users", column: "seller_id"
-  add_foreign_key "audit_logs", "users", column: "actor_id"
   add_foreign_key "character_positions", "characters"
   add_foreign_key "character_positions", "zones"
   add_foreign_key "characters", "clans"
-  add_foreign_key "characters", "guilds"
   add_foreign_key "characters", "users"
   add_foreign_key "chat_channel_memberships", "chat_channels"
   add_foreign_key "chat_channel_memberships", "users"
   add_foreign_key "chat_channels", "users", column: "creator_id"
   add_foreign_key "chat_messages", "chat_channels"
   add_foreign_key "chat_messages", "users", column: "sender_id"
-  add_foreign_key "chat_moderation_actions", "users", column: "actor_id"
-  add_foreign_key "chat_moderation_actions", "users", column: "target_user_id"
-  add_foreign_key "chat_reports", "chat_messages"
-  add_foreign_key "chat_reports", "moderation_tickets"
-  add_foreign_key "chat_reports", "users", column: "reporter_id"
-  add_foreign_key "chat_violations", "chat_messages"
-  add_foreign_key "chat_violations", "users"
   add_foreign_key "city_hotspots", "zones"
   add_foreign_key "city_hotspots", "zones", column: "destination_zone_id"
   add_foreign_key "clan_applications", "characters"
@@ -2126,8 +1676,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_120000) do
   add_foreign_key "clan_memberships", "users"
   add_foreign_key "clan_message_board_posts", "clans"
   add_foreign_key "clan_message_board_posts", "users", column: "author_id"
-  add_foreign_key "clan_moderation_actions", "clans"
-  add_foreign_key "clan_moderation_actions", "users", column: "gm_user_id"
   add_foreign_key "clan_quest_contributions", "characters"
   add_foreign_key "clan_quest_contributions", "clan_quests"
   add_foreign_key "clan_quests", "clans"
@@ -2154,70 +1702,36 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_120000) do
   add_foreign_key "currency_transactions", "currency_wallets"
   add_foreign_key "currency_wallets", "users"
   add_foreign_key "cutscene_events", "quests"
-  add_foreign_key "economy_alerts", "trade_sessions"
   add_foreign_key "event_instances", "game_events"
   add_foreign_key "event_schedules", "game_events"
   add_foreign_key "friendships", "users", column: "receiver_id"
   add_foreign_key "friendships", "users", column: "requester_id"
   add_foreign_key "gathering_nodes", "professions"
   add_foreign_key "gathering_nodes", "zones"
-  add_foreign_key "group_listings", "guilds"
+  add_foreign_key "group_listings", "clans"
   add_foreign_key "group_listings", "parties"
   add_foreign_key "group_listings", "professions"
   add_foreign_key "group_listings", "users", column: "owner_id"
-  add_foreign_key "guild_applications", "guilds"
-  add_foreign_key "guild_applications", "users", column: "applicant_id"
-  add_foreign_key "guild_applications", "users", column: "reviewed_by_id"
-  add_foreign_key "guild_bank_entries", "guilds"
-  add_foreign_key "guild_bank_entries", "users", column: "actor_id"
-  add_foreign_key "guild_bulletins", "guilds"
-  add_foreign_key "guild_bulletins", "users", column: "author_id"
-  add_foreign_key "guild_memberships", "guild_ranks"
-  add_foreign_key "guild_memberships", "guilds"
-  add_foreign_key "guild_memberships", "users"
-  add_foreign_key "guild_missions", "guilds"
-  add_foreign_key "guild_missions", "professions", column: "required_profession_id"
-  add_foreign_key "guild_perks", "guilds"
-  add_foreign_key "guild_perks", "users", column: "granted_by_id"
-  add_foreign_key "guild_ranks", "guilds"
-  add_foreign_key "guilds", "users", column: "leader_id"
   add_foreign_key "housing_decor_items", "housing_plots"
-  add_foreign_key "housing_plots", "guilds", column: "visit_guild_id"
   add_foreign_key "housing_plots", "users"
   add_foreign_key "ignore_list_entries", "users"
   add_foreign_key "ignore_list_entries", "users", column: "ignored_user_id"
-  add_foreign_key "integration_tokens", "users", column: "created_by_id"
   add_foreign_key "inventories", "characters"
   add_foreign_key "inventory_items", "inventories"
   add_foreign_key "inventory_items", "item_templates"
   add_foreign_key "leaderboard_entries", "leaderboards"
-  add_foreign_key "live_ops_events", "users", column: "requested_by_id"
   add_foreign_key "mail_messages", "users", column: "recipient_id"
   add_foreign_key "mail_messages", "users", column: "sender_id"
   add_foreign_key "market_demand_signals", "professions"
   add_foreign_key "market_demand_signals", "zones"
   add_foreign_key "marketplace_kiosks", "users", column: "seller_id"
   add_foreign_key "medical_supply_pools", "zones"
-  add_foreign_key "moderation_actions", "characters", column: "target_character_id"
-  add_foreign_key "moderation_actions", "moderation_tickets", column: "ticket_id"
-  add_foreign_key "moderation_actions", "users", column: "actor_id"
-  add_foreign_key "moderation_actions", "users", column: "target_user_id"
-  add_foreign_key "moderation_appeals", "moderation_tickets", column: "ticket_id"
-  add_foreign_key "moderation_appeals", "users", column: "appellant_id"
-  add_foreign_key "moderation_appeals", "users", column: "reviewer_id"
-  add_foreign_key "moderation_tickets", "characters", column: "subject_character_id"
-  add_foreign_key "moderation_tickets", "users", column: "assigned_moderator_id"
-  add_foreign_key "moderation_tickets", "users", column: "reporter_id"
-  add_foreign_key "moderation_tickets", "users", column: "subject_user_id"
   add_foreign_key "mount_stable_slots", "mounts", column: "current_mount_id"
   add_foreign_key "mount_stable_slots", "users"
   add_foreign_key "mounts", "mount_stable_slots"
   add_foreign_key "mounts", "users"
   add_foreign_key "movement_commands", "characters"
   add_foreign_key "movement_commands", "zones"
-  add_foreign_key "npc_reports", "characters"
-  add_foreign_key "npc_reports", "moderation_tickets"
-  add_foreign_key "npc_reports", "users", column: "reporter_id"
   add_foreign_key "parties", "chat_channels"
   add_foreign_key "parties", "users", column: "leader_id"
   add_foreign_key "party_invitations", "parties"
@@ -2234,7 +1748,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_120000) do
   add_foreign_key "profession_progresses", "users"
   add_foreign_key "profession_tools", "characters"
   add_foreign_key "profession_tools", "professions"
-  add_foreign_key "purchases", "users"
   add_foreign_key "quest_assignments", "characters"
   add_foreign_key "quest_assignments", "quests"
   add_foreign_key "quest_chapters", "quest_chains"
@@ -2261,8 +1774,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_120000) do
   add_foreign_key "users", "titles", column: "active_title_id"
   add_foreign_key "users_roles", "roles"
   add_foreign_key "users_roles", "users"
-  add_foreign_key "webhook_endpoints", "integration_tokens"
-  add_foreign_key "webhook_events", "webhook_endpoints"
   add_foreign_key "world_action_offers", "characters"
   add_foreign_key "world_action_offers", "zones"
 end

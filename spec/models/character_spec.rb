@@ -2,16 +2,13 @@ require "rails_helper"
 
 RSpec.describe Character, type: :model do
   describe "inheritance" do
-    it "inherits guild and clan membership from the owner" do
+    it "inherits clan membership from the owner" do
       user = create(:user)
-      guild = create(:guild, leader: user)
       clan = create(:clan, leader: user)
-      create(:guild_membership, guild: guild, user: user, status: :active)
       create(:clan_membership, clan: clan, user: user)
 
       character = create(:character, user: user)
 
-      expect(character.guild).to eq(user.primary_guild)
       expect(character.clan).to eq(user.primary_clan)
     end
   end

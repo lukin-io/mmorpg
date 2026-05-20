@@ -37,8 +37,8 @@ class ClanPolicy < ApplicationPolicy
     gm_or_admin? || permission_matrix.allows?(:coordinate_quests)
   end
 
-  def post_announcements?
-    gm_or_admin? || permission_matrix.allows?(:post_announcements)
+  def post_messages?
+    gm_or_admin? || permission_matrix.allows?(:post_messages)
   end
 
   def manage_permissions?

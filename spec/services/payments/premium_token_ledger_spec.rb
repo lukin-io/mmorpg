@@ -8,7 +8,7 @@ RSpec.describe Payments::PremiumTokenLedger do
       entry = described_class.credit(
         user: user,
         amount: 25,
-        reason: "purchase:stripe",
+        reason: "quest.reward",
         metadata: {"receipt" => "123"}
       )
 

@@ -856,41 +856,41 @@ textarea {
 }
 
 /* ============================================
-   DASHBOARD
+   PANEL GROUPS
    ============================================ */
 
-.dashboard-grid {
+.panel-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: var(--nl-space-md);
 }
 
-.dashboard-card {
+.panel-card {
   background: var(--nl-bg-secondary);
   border: 1px solid var(--nl-border-light);
   border-radius: var(--nl-radius-md);
   padding: var(--nl-space-md);
 }
 
-.dashboard-card h2 {
+.panel-card h2 {
   font-size: 1.1rem;
   margin-bottom: var(--nl-space-sm);
   padding-bottom: var(--nl-space-xs);
   border-bottom: 1px solid var(--nl-border-light);
 }
 
-.dashboard-card ul {
+.panel-card ul {
   list-style: none;
   padding: 0;
   margin: 0;
 }
 
-.dashboard-card li {
+.panel-card li {
   padding: var(--nl-space-xs) 0;
   border-bottom: 1px solid var(--nl-border-light);
 }
 
-.dashboard-card li:last-child { border-bottom: none; }
+.panel-card li:last-child { border-bottom: none; }
 
 /* ============================================
    NOTIFICATIONS
@@ -911,10 +911,9 @@ textarea {
 .chat-channel,
 .chat-channel-list,
 .public-profile,
-.housing-dashboard,
+.housing-panel,
 .pets-panel,
-.mounts-dashboard,
-.guild-card,
+.mounts-panel,
 .quest-dialogue {
   background: var(--nl-bg-secondary);
   border: 1px solid var(--nl-border-light);
@@ -1052,28 +1051,6 @@ textarea {
   color: var(--nl-text-muted);
   font-size: 0.9rem;
 }
-
-.guild-banner {
-  width: 64px;
-  height: 64px;
-  border: 2px solid var(--nl-border-medium);
-  border-radius: var(--nl-radius-sm);
-  background: var(--nl-bg-tertiary);
-}
-
-.guild-members-list {
-  max-height: 300px;
-  overflow-y: auto;
-}
-
-.guild-member {
-  display: flex;
-  justify-content: space-between;
-  padding: var(--nl-space-xs) var(--nl-space-sm);
-  border-bottom: 1px solid var(--nl-border-light);
-}
-
-.guild-member:hover { background: var(--nl-bg-tertiary); }
 
 .decor-item {
   background: var(--nl-bg-tertiary);
@@ -2738,19 +2715,8 @@ textarea {
   font-size: 0.75rem;
 }
 
-/* Badge variants for roles */
-.badge--admin {
-  background: #cc0000;
-  color: white;
-}
-
-.badge--mod {
-  background: #0066cc;
-  color: white;
-}
-
 .badge--global { background: #228b22; }
-.badge--guild { background: #4169e1; }
+.badge--clan { background: #4169e1; }
 .badge--party { background: #9932cc; }
 .badge--whisper { background: #666; }
 
@@ -5626,7 +5592,7 @@ turbo-frame[busy] {
 .city-building--blacksmith { border-color: #666; }
 .city-building--bank { border-color: #d4af37; }
 .city-building--arena { border-color: #8b0000; }
-.city-building--guild { border-color: #4a4a8a; }
+.city-building--clan { border-color: #4a4a8a; }
 .city-building--temple { border-color: #90c0e0; }
 .city-building--gate { border-color: #7a5230; }
 
@@ -8236,24 +8202,6 @@ turbo-frame[busy] {
   .quick-action-btn:active {
     background: var(--nl-primary);
   }
-}
-
-/* ==========================================================================
-   COMBAT ANALYTICS STYLES
-   ========================================================================== */
-
-.analytics-dashboard {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: var(--nl-space-md);
-  margin-bottom: var(--nl-space-lg);
-}
-
-.analytics-card {
-  background: var(--nl-bg-dark);
-  padding: var(--nl-space-lg);
-  border-radius: var(--nl-radius);
-  text-align: center;
 }
 
 .analytics-value {

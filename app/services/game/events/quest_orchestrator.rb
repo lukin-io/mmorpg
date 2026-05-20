@@ -2,26 +2,22 @@
 
 module Game
   module Events
-    # QuestOrchestrator links scheduled event instances with seasonal quests,
-    # announcers, leaderboards, and broadcasts so events feel alive.
+    # QuestOrchestrator links scheduled event instances with seasonal quests.
     class QuestOrchestrator
       def initialize(event_instance,
-        dynamic_generator: Game::Quests::DynamicQuestGenerator.new,
-        announcement_service: ::Events::AnnouncementService.new(event_instance.game_event))
+        dynamic_generator: Game::Quests::DynamicQuestGenerator.new)
         @event_instance = event_instance
         @dynamic_generator = dynamic_generator
-        @announcement_service = announcement_service
       end
 
       def prepare!(characters: Character.all)
         assign_event_quests!(characters)
         annotate_world_state!
-        broadcast_objectives!
       end
 
       private
 
-      attr_reader :event_instance, :dynamic_generator, :announcement_service
+      attr_reader :event_instance, :dynamic_generator
 
       def assign_event_quests!(characters)
         triggers = {
@@ -45,15 +41,6 @@ module Game
         event_instance.update!(metadata: event_instance.metadata.merge(reskin_payload))
       end
 
-      def broadcast_objectives!
-        objectives = event_instance.community_objectives
-        return if objectives.blank?
-
-        summary = objectives.map do |objective|
-          "#{objective.title} (#{objective.goal_amount} #{objective.resource_key})"
-        end.join(", ")
-        announcement_service.broadcast!("Community objectives active: #{summary}")
-      end
     end
   end
 end

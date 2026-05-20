@@ -58,7 +58,6 @@ class CreateMetaProgressionSystems < ActiveRecord::Migration[8.1]
       t.integer :room_slots, null: false, default: 1
       t.integer :utility_slots, null: false, default: 1
       t.string :visit_scope, null: false, default: "friends"
-      t.references :visit_guild, foreign_key: {to_table: :guilds}, index: false
       t.boolean :showcase_enabled, null: false, default: false
       t.integer :upkeep_gold_cost, null: false, default: 200
       t.datetime :next_upkeep_due_at
@@ -67,7 +66,6 @@ class CreateMetaProgressionSystems < ActiveRecord::Migration[8.1]
     end
     add_index :housing_plots, :plot_tier
     add_index :housing_plots, :visit_scope
-    add_index :housing_plots, :visit_guild_id
 
     create_table :housing_decor_items do |t|
       t.references :housing_plot, null: false, foreign_key: true

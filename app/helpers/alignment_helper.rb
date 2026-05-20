@@ -66,7 +66,7 @@ module AlignmentHelper
     village: "Village",
     nature: "Nature",
     arena: "Arena",
-    guild_hall: "Guild Hall"
+    clan_hall: "Clan Hall"
   }.freeze
 
   # Get faction icon
