@@ -1,6 +1,7 @@
 class CreateNpcTemplates < ActiveRecord::Migration[8.1]
   def change
     create_table :npc_templates do |t|
+      t.string :npc_key
       t.string :name, null: false
       t.integer :level, null: false, default: 1
       t.string :role, null: false
@@ -11,6 +12,7 @@ class CreateNpcTemplates < ActiveRecord::Migration[8.1]
     end
 
     add_index :npc_templates, :name, unique: true
+    add_index :npc_templates, :npc_key, unique: true
     add_index :npc_templates, :role
   end
 end

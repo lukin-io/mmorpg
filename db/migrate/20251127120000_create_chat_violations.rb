@@ -15,11 +15,5 @@ class CreateChatViolations < ActiveRecord::Migration[7.1]
 
     add_index :chat_violations, [:user_id, :created_at]
     add_index :chat_violations, :violation_type
-
-    # Add chat mute columns to users if not present
-    unless column_exists?(:users, :chat_muted_until)
-      add_column :users, :chat_muted_until, :datetime
-      add_column :users, :chat_mute_reason, :string
-    end
   end
 end

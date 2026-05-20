@@ -5,6 +5,9 @@ class CreateProfessionsAndCrafting < ActiveRecord::Migration[8.1]
       t.string :category, null: false
       t.text :description
       t.boolean :gathering, null: false, default: false
+      t.integer :healing_bonus, null: false, default: 0
+      t.string :gathering_resource
+      t.jsonb :metadata, null: false, default: {}
       t.timestamps
     end
     add_index :professions, :name, unique: true
@@ -25,6 +28,13 @@ class CreateProfessionsAndCrafting < ActiveRecord::Migration[8.1]
       t.integer :tier, null: false, default: 1
       t.integer :duration_seconds, null: false, default: 60
       t.string :output_item_name, null: false
+      t.string :source_kind, null: false, default: "quest"
+      t.string :source_reference
+      t.string :risk_level, null: false, default: "safe"
+      t.integer :premium_token_cost, null: false, default: 0
+      t.boolean :guild_bound, null: false, default: false
+      t.jsonb :quality_modifiers, null: false, default: {}
+      t.string :required_station_archetype, null: false, default: "city"
       t.jsonb :requirements, null: false, default: {}
       t.jsonb :rewards, null: false, default: {}
       t.timestamps
@@ -34,7 +44,11 @@ class CreateProfessionsAndCrafting < ActiveRecord::Migration[8.1]
       t.string :name, null: false
       t.string :city, null: false
       t.string :station_type, null: false
+      t.string :station_archetype, null: false, default: "city"
       t.integer :capacity, null: false, default: 5
+      t.decimal :time_penalty_multiplier, precision: 5, scale: 2, null: false, default: 1.0
+      t.integer :success_penalty, null: false, default: 0
+      t.boolean :portable, null: false, default: false
       t.jsonb :metadata, null: false, default: {}
       t.timestamps
     end
@@ -46,6 +60,11 @@ class CreateProfessionsAndCrafting < ActiveRecord::Migration[8.1]
       t.integer :status, null: false, default: 0
       t.datetime :started_at, null: false
       t.datetime :completes_at, null: false
+      t.string :quality_tier, null: false, default: "common"
+      t.integer :quality_score, null: false, default: 0
+      t.integer :success_chance, null: false, default: 0
+      t.boolean :portable_penalty_applied, null: false, default: false
+      t.integer :batch_quantity, null: false, default: 1
       t.jsonb :result_payload, null: false, default: {}
       t.timestamps
     end

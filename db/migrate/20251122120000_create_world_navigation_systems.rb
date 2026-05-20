@@ -40,6 +40,5 @@ class CreateWorldNavigationSystems < ActiveRecord::Migration[8.1]
     end
     add_index :character_positions, [:zone_id, :x, :y]
 
-    add_column :map_tile_templates, :biome, :string, null: false, default: "plains"
   end
 end

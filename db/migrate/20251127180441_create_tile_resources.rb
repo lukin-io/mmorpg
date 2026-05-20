@@ -23,17 +23,5 @@ class CreateTileResources < ActiveRecord::Migration[8.1]
     add_index :tile_resources, :respawns_at
     add_index :tile_resources, :resource_type
     add_index :tile_resources, :biome
-
-    # Add key column to item_templates for resource matching
-    unless column_exists?(:item_templates, :key)
-      add_column :item_templates, :key, :string
-      add_index :item_templates, :key, unique: true
-    end
-
-    # Add item_type to distinguish resources from equipment
-    unless column_exists?(:item_templates, :item_type)
-      add_column :item_templates, :item_type, :string, default: "equipment"
-      add_index :item_templates, :item_type
-    end
   end
 end

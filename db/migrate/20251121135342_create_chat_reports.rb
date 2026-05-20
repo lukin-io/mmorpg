@@ -5,6 +5,7 @@ class CreateChatReports < ActiveRecord::Migration[8.1]
       t.references :reporter, null: false, foreign_key: {to_table: :users}
       t.text :reason, null: false
       t.jsonb :evidence, null: false, default: {}
+      t.jsonb :source_context, null: false, default: {}
       t.integer :status, null: false, default: 0
       t.timestamps
     end

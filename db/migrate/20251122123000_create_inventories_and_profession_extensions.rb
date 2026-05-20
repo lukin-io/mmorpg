@@ -17,6 +17,8 @@ class CreateInventoriesAndProfessionExtensions < ActiveRecord::Migration[8.1]
       t.references :item_template, null: false, foreign_key: true
       t.integer :quantity, null: false, default: 1
       t.string :slot_kind
+      t.string :equipment_slot
+      t.integer :slot_index
       t.boolean :equipped, null: false, default: false
       t.integer :weight, null: false, default: 0
       t.integer :enhancement_level, null: false, default: 0
@@ -27,22 +29,20 @@ class CreateInventoriesAndProfessionExtensions < ActiveRecord::Migration[8.1]
       t.timestamps
     end
     add_index :inventory_items, [:inventory_id, :slot_kind]
-
-    add_column :item_templates, :weight, :integer, null: false, default: 1
-    add_column :item_templates, :stack_limit, :integer, null: false, default: 99
-    add_column :item_templates, :premium, :boolean, null: false, default: false
-    add_column :item_templates, :enhancement_rules, :jsonb, null: false, default: {}
-
-    add_column :professions, :healing_bonus, :integer, null: false, default: 0
-    add_column :professions, :gathering_resource, :string
-    add_column :professions, :metadata, :jsonb, null: false, default: {}
+    add_index :inventory_items, [:inventory_id, :equipped, :equipment_slot],
+      name: "idx_inventory_equipped_slot"
 
     create_table :gathering_nodes do |t|
       t.references :profession, null: false, foreign_key: true
       t.references :zone, null: false, foreign_key: true
       t.string :resource_key, null: false
+      t.string :rarity_tier, null: false, default: "common"
+      t.boolean :contested, null: false, default: false
       t.integer :difficulty, null: false, default: 1
       t.integer :respawn_seconds, null: false, default: 60
+      t.datetime :last_harvested_at
+      t.datetime :next_available_at
+      t.integer :group_bonus_percent, null: false, default: 0
       t.jsonb :rewards, null: false, default: {}
       t.timestamps
     end

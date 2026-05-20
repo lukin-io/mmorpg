@@ -9,24 +9,51 @@ class CreateQuestingSystem < ActiveRecord::Migration[8.1]
     end
     add_index :quest_chains, :key, unique: true
 
+    create_table :quest_chapters do |t|
+      t.references :quest_chain, null: false, foreign_key: true
+      t.string :key, null: false
+      t.string :title, null: false
+      t.text :synopsis
+      t.integer :position, null: false, default: 1
+      t.integer :level_gate, null: false, default: 1
+      t.integer :reputation_gate, null: false, default: 0
+      t.string :faction_alignment
+      t.string :unlock_cutscene_key
+      t.jsonb :metadata, null: false, default: {}
+      t.timestamps
+    end
+    add_index :quest_chapters, [:quest_chain_id, :position], unique: true
+    add_index :quest_chapters, :key, unique: true
+
     create_table :quests do |t|
       t.string :key, null: false
       t.string :title, null: false
       t.text :summary
       t.integer :quest_type, null: false, default: 0
       t.references :quest_chain, foreign_key: true
+      t.references :quest_chapter, foreign_key: true
       t.integer :sequence, null: false, default: 1
       t.integer :chapter, null: false, default: 1
+      t.integer :difficulty_tier, null: false, default: 0
+      t.integer :recommended_party_size, null: false, default: 1
+      t.integer :min_level, null: false, default: 1
+      t.integer :min_reputation, null: false, default: 0
       t.boolean :repeatable, null: false, default: false
       t.integer :cooldown_seconds, null: false, default: 0
       t.string :daily_reset_slot
       t.jsonb :requirements, null: false, default: {}
       t.jsonb :rewards, null: false, default: {}
+      t.jsonb :failure_consequence, null: false, default: {}
+      t.jsonb :map_overlays, null: false, default: {}
+      t.boolean :active, null: false, default: true
       t.jsonb :metadata, null: false, default: {}
       t.timestamps
     end
     add_index :quests, :key, unique: true
     add_index :quests, [:quest_chain_id, :sequence]
+    add_index :quests, :difficulty_tier
+    add_index :quests, :recommended_party_size
+    add_index :quests, :min_level
 
     create_table :quest_objectives do |t|
       t.references :quest, null: false, foreign_key: true
@@ -48,9 +75,24 @@ class CreateQuestingSystem < ActiveRecord::Migration[8.1]
       t.datetime :completed_at
       t.datetime :expires_at
       t.datetime :next_available_at
+      t.datetime :rewards_claimed_at
+      t.datetime :abandoned_at
+      t.string :abandon_reason
       t.timestamps
     end
     add_index :quest_assignments, [:quest_id, :character_id], unique: true
+
+    create_table :quest_steps do |t|
+      t.references :quest, null: false, foreign_key: true
+      t.integer :position, null: false, default: 1
+      t.string :step_type, null: false
+      t.string :npc_key
+      t.jsonb :content, null: false, default: {}
+      t.jsonb :branching_outcomes, null: false, default: {}
+      t.boolean :requires_confirmation, null: false, default: false
+      t.timestamps
+    end
+    add_index :quest_steps, [:quest_id, :position], unique: true
 
     create_table :cutscene_events do |t|
       t.string :key, null: false

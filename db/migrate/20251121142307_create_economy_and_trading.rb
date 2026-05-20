@@ -5,6 +5,10 @@ class CreateEconomyAndTrading < ActiveRecord::Migration[8.1]
       t.integer :gold_balance, null: false, default: 0
       t.integer :silver_balance, null: false, default: 0
       t.integer :premium_tokens_balance, null: false, default: 0
+      t.integer :gold_soft_cap, null: false, default: 2_000_000
+      t.integer :silver_soft_cap, null: false, default: 150_000
+      t.integer :premium_tokens_soft_cap, null: false, default: 5_000
+      t.jsonb :sink_totals, null: false, default: {}
       t.timestamps
     end
 
@@ -13,14 +17,18 @@ class CreateEconomyAndTrading < ActiveRecord::Migration[8.1]
       t.string :currency_type, null: false
       t.integer :amount, null: false
       t.string :reason, null: false
+      t.integer :balance_after, null: false, default: 0
       t.jsonb :metadata, null: false, default: {}
       t.timestamps
     end
+    add_index :currency_transactions, :created_at
+    add_index :currency_transactions, [:currency_type, :created_at], name: "index_currency_transactions_on_type_and_created_at"
 
     create_table :auction_listings do |t|
       t.references :seller, null: false, foreign_key: {to_table: :users}
       t.string :item_name, null: false
       t.jsonb :item_metadata, null: false, default: {}
+      t.string :location_key, null: false, default: "capital"
       t.integer :quantity, null: false, default: 1
       t.string :currency_type, null: false
       t.integer :starting_bid, null: false
@@ -45,6 +53,7 @@ class CreateEconomyAndTrading < ActiveRecord::Migration[8.1]
       t.references :recipient, null: false, foreign_key: {to_table: :users}
       t.integer :status, null: false, default: 0
       t.datetime :expires_at, null: false
+      t.datetime :completed_at
       t.jsonb :metadata, null: false, default: {}
       t.timestamps
     end
@@ -56,6 +65,7 @@ class CreateEconomyAndTrading < ActiveRecord::Migration[8.1]
       t.string :item_name
       t.jsonb :item_metadata, null: false, default: {}
       t.integer :quantity, null: false, default: 1
+      t.string :item_quality
       t.string :currency_type
       t.integer :currency_amount
       t.timestamps

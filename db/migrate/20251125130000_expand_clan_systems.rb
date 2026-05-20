@@ -2,29 +2,8 @@
 
 class ExpandClanSystems < ActiveRecord::Migration[8.1]
   def change
-    change_table :clans, bulk: true do |t|
-      t.integer :level, null: false, default: 1
-      t.integer :experience, null: false, default: 0
-      t.jsonb :banner_data, null: false, default: {}
-      t.jsonb :unlocked_buffs, null: false, default: []
-      t.jsonb :recruitment_settings, null: false, default: {}
-      t.jsonb :treasury_rules, null: false, default: {}
-      t.jsonb :infrastructure_state, null: false, default: {}
-      t.jsonb :fast_travel_nodes, null: false, default: []
-      t.string :discord_webhook_url
-    end
-
     change_table :clan_wars, bulk: true do |t|
-      t.datetime :declaration_made_at
-      t.datetime :preparation_begins_at
-      t.jsonb :support_objectives, null: false, default: []
       t.references :arena_match, foreign_key: true
-    end
-
-    change_table :clan_territories, bulk: true do |t|
-      t.string :world_region_key
-      t.string :fast_travel_node_key
-      t.jsonb :benefits, null: false, default: {}
     end
 
     create_table :clan_role_permissions do |t|

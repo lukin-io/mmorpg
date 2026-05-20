@@ -18,10 +18,5 @@ class CreateQuestAnalyticsSnapshots < ActiveRecord::Migration[8.1]
       [:captured_on, :quest_chain_key],
       unique: true,
       name: "index_quest_analytics_snapshots_on_date_and_chain"
-
-    change_table :quest_assignments, bulk: true do |t|
-      t.datetime :abandoned_at
-      t.string :abandon_reason
-    end
   end
 end

@@ -6,8 +6,11 @@ class CreateMailMessages < ActiveRecord::Migration[8.1]
       t.string :subject, null: false
       t.text :body, null: false
       t.jsonb :attachment_payload, null: false, default: {}
+      t.boolean :system_notification, null: false, default: false
+      t.jsonb :origin_metadata, null: false, default: {}
       t.datetime :delivered_at, null: false, default: -> { "CURRENT_TIMESTAMP" }
       t.datetime :read_at
+      t.datetime :attachments_claimed_at
       t.timestamps
     end
 
