@@ -6,7 +6,6 @@ class Recipe < ApplicationRecord
       quest: "quest",
       drop: "drop",
       vendor: "vendor",
-      clan_research: "clan_research",
       tutorial: "tutorial"
     }.freeze
   end
@@ -48,10 +47,6 @@ class Recipe < ApplicationRecord
 
   def risky?
     risk_level == "risky"
-  end
-
-  def clan_locked?
-    clan_bound?
   end
 
   def success_penalty

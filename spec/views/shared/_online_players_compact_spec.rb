@@ -59,7 +59,6 @@ RSpec.describe "shared/_online_players_compact.html.erb", type: :view do
     expect(rendered).to have_css(".nl-player-menu", visible: :all)
     expect(rendered).to include("Private Message")
     expect(rendered).to include("View Info")
-    expect(rendered).to include("Invite")
     expect(rendered).to include("Ignore")
   end
 
@@ -95,12 +94,6 @@ RSpec.describe "shared/_online_players_compact.html.erb", type: :view do
       render partial: "shared/online_players_compact"
 
       expect(rendered).to have_css("button[data-action='click->game-layout#copyNickname']", visible: :all)
-    end
-
-    it "has invite to party button" do
-      render partial: "shared/online_players_compact"
-
-      expect(rendered).to have_css("button[data-action='click->game-layout#inviteToParty']", visible: :all)
     end
 
     it "has ignore player button" do

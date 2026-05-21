@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Trades
-  # Orchestrates the lifecycle of a trade session, ensuring both parties confirm.
+  # Orchestrates the lifecycle of a trade session, ensuring both traders confirm.
   #
   # Usage:
   #   Trades::SessionManager.new(initiator: user, recipient: other_user).start!

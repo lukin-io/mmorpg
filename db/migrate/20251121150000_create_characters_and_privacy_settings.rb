@@ -4,7 +4,6 @@ class CreateCharactersAndPrivacySettings < ActiveRecord::Migration[8.1]
   def change
     create_table :characters do |t|
       t.references :user, null: false, foreign_key: true
-      t.references :clan, foreign_key: true
       t.string :name, null: false
       t.integer :level, null: false, default: 1
       t.bigint :experience, null: false, default: 0

@@ -12,7 +12,7 @@ module Game
     # @example Generate quests from triggers
     #   Game::Quests::DynamicQuestGenerator.new.generate!(
     #     character:,
-    #     triggers: {resource_shortage: "ashen_ore", clan_controlled: "rebellion"}
+    #     triggers: {resource_shortage: "ashen_ore", character_level: 3}
     #   )
     #
     # @example Generate daily quests
@@ -190,10 +190,6 @@ module Game
           case key.to_s
           when "resource_shortage"
             Array(value).map(&:to_s).include?(triggers["resource_shortage"].to_s)
-          when "clan_controlled"
-            Array(value).map(&:to_s).include?(triggers["clan_controlled"].to_s)
-          when "event_key"
-            Array(value).map(&:to_s).include?(triggers["event_key"].to_s)
           when "min_level"
             triggers["character_level"].to_i >= value.to_i
           when "max_level"
@@ -231,11 +227,6 @@ module Game
         # Territory conflict -> kill quest
         if triggers["territory_contested"]
           quests << generate_territory_quest(character, triggers["territory_contested"])
-        end
-
-        # World event -> event quest
-        if triggers["event_key"]
-          quests << generate_event_quest(character, triggers["event_key"])
         end
 
         quests.compact
@@ -501,29 +492,6 @@ module Game
             "dynamic" => true,
             "territory" => territory.to_s,
             "fight_type" => "team",
-            "generated_at" => Time.current.iso8601
-          }
-        }
-      end
-
-      def generate_event_quest(character, event_key)
-        {
-          name: "World Event: #{event_key.to_s.titleize}",
-          description: "A world event is underway. Participate to earn rewards!",
-          quest_type: "dynamic",
-          level_required: 1,
-          objectives: [
-            {
-              "key" => "participate_#{event_key.to_s.parameterize}",
-              "description" => "Participate in the #{event_key.to_s.titleize} event",
-              "target" => 1,
-              "type" => "event"
-            }
-          ],
-          rewards: calculate_rewards(character.level, "hard"),
-          metadata: {
-            "dynamic" => true,
-            "event_key" => event_key.to_s,
             "generated_at" => Time.current.iso8601
           }
         }

@@ -7,7 +7,7 @@ RSpec.describe Game::Quests::DynamicQuestGenerator do
   let!(:matching_quest) do
     create(:quest,
       quest_type: :dynamic,
-      metadata: {"dynamic_triggers" => {"resource_shortage" => ["ashen_ore"], "event_key" => ["festival"]}})
+      metadata: {"dynamic_triggers" => {"resource_shortage" => ["ashen_ore"]}})
   end
   let!(:non_matching_quest) do
     create(:quest,
@@ -19,7 +19,7 @@ RSpec.describe Game::Quests::DynamicQuestGenerator do
     it "assigns quests whose triggers match the provided world state" do
       result = described_class.new.generate!(
         character:,
-        triggers: {resource_shortage: "ashen_ore", event_key: "festival"}
+        triggers: {resource_shortage: "ashen_ore"}
       )
 
       expect(result.success).to be(true)

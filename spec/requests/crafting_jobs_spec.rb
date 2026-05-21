@@ -162,20 +162,17 @@ RSpec.describe "CraftingJobs", type: :request do
     end
 
     context "with multiple stations" do
-      let!(:clan_station) { create(:crafting_station, name: "Clan Hall Loom", station_archetype: "clan_hall") }
       let!(:field_station) { create(:crafting_station, name: "Portable Kit", station_archetype: "field_kit") }
 
       it "displays all stations in dropdown" do
         get crafting_jobs_path
         expect(response.body).to include("Castleton Forge")
-        expect(response.body).to include("Clan Hall Loom")
         expect(response.body).to include("Portable Kit")
       end
 
       it "displays station archetypes correctly" do
         get crafting_jobs_path
         expect(response.body).to include("(city)")
-        expect(response.body).to include("(clan_hall)")
         expect(response.body).to include("(field_kit)")
       end
     end

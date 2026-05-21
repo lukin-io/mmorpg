@@ -171,3 +171,26 @@ Which feature documents this area activates.
 - Write focused tests for every new model/service/controller path and update
   affected tests with the new design contract.
 - Prefer deterministic data in tests and starter content.
+
+## Removed
+
+The following generic or non-Neverlands-based implementation surfaces were
+removed during cleanup. Re-add any of these only after documenting the
+Neverlands-based behavior first.
+
+- generic achievements, titles, and profile showcase;
+- generic guilds;
+- generic pets;
+- generic mounts and stables;
+- generic housing, decor, and storage expansion;
+- generic spawn schedules;
+- generic game events, community objectives, leaderboards, competition
+  brackets, and arena tournaments;
+- generic party finder, group listings, ready checks, and party chat;
+- generic clan implementation, including clan XP, strongholds, research,
+  treasury, applications, message boards, permissions, quest boards, wars, and
+  clan-locked crafting;
+- standalone auction house, auction listings, auction bids, and auctioneer
+  dialogue.
+- generic marketplace kiosks, quick buy/sell kiosk actions, and market demand
+  signals.

@@ -19,7 +19,7 @@ class PlayersController < ApplicationController
 
   def set_character
     @character = Character
-      .includes(:user, :clan, {inventory: {inventory_items: :item_template}}, {position: :zone})
+      .includes(:user, {inventory: {inventory_items: :item_template}}, {position: :zone})
       .find_by!("LOWER(characters.name) = ?", params[:name].to_s.downcase)
   end
 

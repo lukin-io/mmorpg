@@ -6,6 +6,5 @@ FactoryBot.define do
     difficulty { 1 }
     respawn_seconds { 30 }
     rewards { {"herb" => 1} }
-    group_bonus_percent { 5 }
   end
 end

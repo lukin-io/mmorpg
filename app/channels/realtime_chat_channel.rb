@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Global chat channel for real-time messaging
-# Supports multiple chat channels (global, local, clan, party)
+# Supports multiple chat channels (global, local, whisper)
 #
 # @example Subscribe to global chat
 #   consumer.subscriptions.create({ channel: "RealtimeChatChannel", chat_type: "global" })
@@ -10,7 +10,7 @@
 #   consumer.subscriptions.create({ channel: "RealtimeChatChannel", chat_channel_id: 1 })
 #
 class RealtimeChatChannel < ApplicationCable::Channel
-  CHAT_TYPES = %w[global local clan party whisper].freeze
+  CHAT_TYPES = %w[global local whisper].freeze
 
   def subscribed
     reject unless current_user
@@ -55,10 +55,6 @@ class RealtimeChatChannel < ApplicationCable::Channel
     case parsed[:type]
     when :whisper
       send_whisper(parsed[:target], parsed[:content])
-    when :clan
-      send_clan_message(parsed[:content])
-    when :party
-      send_party_message(parsed[:content])
     when :shout
       send_shout(parsed[:content])
     else
@@ -143,34 +139,6 @@ class RealtimeChatChannel < ApplicationCable::Channel
     })
   end
 
-  def send_clan_message(content)
-    character = current_user.characters.first
-    return transmit_error("You are not in a clan") unless character&.clan
-
-    content = process_emoji(content)
-    message = create_message(content, chat_type: "clan", clan: character.clan)
-    return unless message
-
-    ActionCable.server.broadcast("chat:clan:#{character.clan.id}", {
-      type: "clan_message",
-      message: format_message(message)
-    })
-  end
-
-  def send_party_message(content)
-    character = current_user.characters.first
-    return transmit_error("You are not in a party") unless character&.current_party
-
-    content = process_emoji(content)
-    message = create_message(content, chat_type: "party", party: character.current_party)
-    return unless message
-
-    ActionCable.server.broadcast("chat:party:#{character.current_party.id}", {
-      type: "party_message",
-      message: format_message(message)
-    })
-  end
-
   def send_shout(content)
     character = current_user.characters.first
     return transmit_error("You need level 5 to shout") unless character&.level.to_i >= 5
@@ -229,10 +197,6 @@ class RealtimeChatChannel < ApplicationCable::Channel
     case content
     when /^\/w\s+(\S+)\s+(.+)$/i, /^%(\S+)%\s*(.+)$/i
       {type: :whisper, target: ::Regexp.last_match(1), content: ::Regexp.last_match(2)}
-    when /^%clan%\s*(.+)$/i, /^\/clan\s+(.+)$/i
-      {type: :clan, content: ::Regexp.last_match(1)}
-    when /^%party%\s*(.+)$/i, /^\/party\s+(.+)$/i
-      {type: :party, content: ::Regexp.last_match(1)}
     when /^\/shout\s+(.+)$/i, /^!(.+)$/
       {type: :shout, content: ::Regexp.last_match(1)}
     else
@@ -262,12 +226,6 @@ class RealtimeChatChannel < ApplicationCable::Channel
     when "arena"
       # Arena chat is accessible to all authenticated users
       true
-    when "clan"
-      # Clan chat requires clan membership
-      user_in_clan?(channel)
-    when "party"
-      # Party chat requires party membership
-      user_in_party?(channel)
     when "whisper"
       # Whisper channels require being a participant
       user_in_whisper?(channel)
@@ -284,27 +242,6 @@ class RealtimeChatChannel < ApplicationCable::Channel
     return false unless current_user.respond_to?(:chat_muted_until)
 
     current_user.chat_muted_until.present? && current_user.chat_muted_until > Time.current
-  end
-
-  def user_in_clan?(channel)
-    # Extract clan ID from channel metadata
-    clan_id = channel.metadata&.dig("clan_id")
-    return false unless clan_id
-
-    # Check if user has a character in this clan
-    current_user.characters.exists?(clan_id: clan_id)
-  end
-
-  def user_in_party?(channel)
-    # Extract party ID from channel metadata
-    party_id = channel.metadata&.dig("party_id")
-    return false unless party_id
-
-    # Check if user's active character is in this party
-    active_character = current_user.characters.find_by(active: true)
-    return false unless active_character
-
-    PartyMembership.exists?(party_id: party_id, character: active_character)
   end
 
   def user_in_whisper?(channel)

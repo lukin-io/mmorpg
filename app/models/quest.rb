@@ -28,7 +28,6 @@ class Quest < ApplicationRecord
   validates :key, presence: true, uniqueness: true
   validates :title, presence: true
   validates :sequence, numericality: {greater_than: 0}
-  validates :recommended_party_size, numericality: {greater_than: 0}
   validates :min_level, numericality: {greater_than: 0}
   validates :min_reputation, numericality: {greater_than_or_equal_to: 0}
 
@@ -37,7 +36,7 @@ class Quest < ApplicationRecord
       .order(Arel.sql("COALESCE(quest_chapters.position, quests.chapter) ASC"))
       .order(:sequence)
   }
-  scope :by_difficulty, -> { order(:difficulty_tier, :recommended_party_size) }
+  scope :by_difficulty, -> { order(:difficulty_tier, :min_level) }
   scope :active, -> { where(active: true) }
 
   def next_in_chain

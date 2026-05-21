@@ -28,7 +28,7 @@ class NpcTemplate < ApplicationRecord
 
   DEFAULT_RESPAWN_SECONDS = 30.minutes.to_i
   DEFAULT_RESPAWN_VARIANCE_SECONDS = 5.minutes.to_i
-  ROLES = %w[quest_giver vendor trainer guard innkeeper banker auctioneer crafter hostile lore arena_bot friendly].freeze
+  ROLES = %w[quest_giver vendor trainer guard innkeeper banker crafter hostile lore arena_bot friendly].freeze
 
   validates :name, presence: true, uniqueness: true
   validates :level, numericality: {greater_than: 0}

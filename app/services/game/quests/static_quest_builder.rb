@@ -44,7 +44,6 @@ module Game
           quest_chain: find_chain(definition["quest_chain_key"]),
           quest_chapter: find_chapter(definition["quest_chapter_key"]),
           difficulty_tier: definition.fetch("difficulty_tier", "story"),
-          recommended_party_size: definition.fetch("recommended_party_size", 1),
           min_level: definition.fetch("min_level", 1),
           min_reputation: definition.fetch("min_reputation", 0),
           rewards: definition.fetch("rewards", {}),

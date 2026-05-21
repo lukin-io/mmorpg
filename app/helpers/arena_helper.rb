@@ -30,7 +30,6 @@ module ArenaHelper
     no_artifacts: {label: "No Magic Items"},
     limited_artifacts: {label: "Limited Equipment"},
     free: {label: "All Equipment"},
-    clan_vs_clan: {label: "Clan vs Clan"},
     faction_vs_faction: {label: "Faction vs Faction"}
   }.freeze
 

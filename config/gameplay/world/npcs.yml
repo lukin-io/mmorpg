@@ -61,7 +61,7 @@ npcs:
     region: "obsidian_castle"
     location: "Midnight Gate"
     faction_alignment: "vigil"
-    roles: ["event_host", "quest_giver"]
+    roles: ["quest_giver"]
     dialogue:
       friendly:
         - "Hold the line and the realm survives."
@@ -72,9 +72,6 @@ npcs:
       trusted: 30
     quests:
       raids: ["obsidian_siege_prep"]
-    event_hooks:
-      tournament_announcer: true
-
   vendor_luthe:
     name: "Luthe"
     archetype: "vendor"
@@ -82,17 +79,4 @@ npcs:
     location: "Grand Bazaar"
     faction_alignment: "crownwatch"
     roles: ["vendor"]
-    inventory_tags: ["festival", "cosmetics"]
-
-  event_host_samira:
-    name: "Samira of Seasons"
-    archetype: "event_host"
-    region: "everfall_capital"
-    location: "Arena of Crowns"
-    faction_alignment: "crownwatch"
-    roles: ["event_host", "announcer"]
-    dialogue:
-      friendly:
-        - "Champions, the arena awaits your glory!"
-    event_hooks:
-      seasonal_keys: ["wintertide", "sunblossom"]
+    inventory_tags: ["cosmetics"]

@@ -24,30 +24,6 @@ class CreateEconomyAndTrading < ActiveRecord::Migration[8.1]
     add_index :currency_transactions, :created_at
     add_index :currency_transactions, [:currency_type, :created_at], name: "index_currency_transactions_on_type_and_created_at"
 
-    create_table :auction_listings do |t|
-      t.references :seller, null: false, foreign_key: {to_table: :users}
-      t.string :item_name, null: false
-      t.jsonb :item_metadata, null: false, default: {}
-      t.string :location_key, null: false, default: "capital"
-      t.integer :quantity, null: false, default: 1
-      t.string :currency_type, null: false
-      t.integer :starting_bid, null: false
-      t.integer :buyout_price
-      t.integer :status, null: false, default: 0
-      t.float :tax_rate, null: false, default: 0.0
-      t.datetime :ends_at, null: false
-      t.timestamps
-    end
-    add_index :auction_listings, :status
-    add_index :auction_listings, :ends_at
-
-    create_table :auction_bids do |t|
-      t.references :auction_listing, null: false, foreign_key: true
-      t.references :bidder, null: false, foreign_key: {to_table: :users}
-      t.integer :amount, null: false
-      t.timestamps
-    end
-
     create_table :trade_sessions do |t|
       t.references :initiator, null: false, foreign_key: {to_table: :users}
       t.references :recipient, null: false, foreign_key: {to_table: :users}
@@ -57,7 +33,7 @@ class CreateEconomyAndTrading < ActiveRecord::Migration[8.1]
       t.jsonb :metadata, null: false, default: {}
       t.timestamps
     end
-    add_index :trade_sessions, [:initiator_id, :recipient_id, :status], name: "index_trade_sessions_on_parties_and_status"
+    add_index :trade_sessions, [:initiator_id, :recipient_id, :status], name: "index_trade_sessions_on_participants"
 
     create_table :trade_items do |t|
       t.references :trade_session, null: false, foreign_key: true
@@ -68,16 +44,6 @@ class CreateEconomyAndTrading < ActiveRecord::Migration[8.1]
       t.string :item_quality
       t.string :currency_type
       t.integer :currency_amount
-      t.timestamps
-    end
-
-    create_table :marketplace_kiosks do |t|
-      t.string :city, null: false
-      t.references :seller, null: false, foreign_key: {to_table: :users}
-      t.string :item_name, null: false
-      t.integer :quantity, null: false
-      t.integer :price, null: false
-      t.datetime :expires_at, null: false
       t.timestamps
     end
   end

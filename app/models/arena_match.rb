@@ -23,7 +23,6 @@ class ArenaMatch < ApplicationRecord
   MATCH_TYPES = {
     duel: 0,
     skirmish: 1,
-    tournament: 2,
     team_battle: 3, # renamed from 'group' to avoid ActiveRecord conflict
     sacrifice: 4
   }.freeze
@@ -32,7 +31,6 @@ class ArenaMatch < ApplicationRecord
   enum :match_type, MATCH_TYPES
 
   belongs_to :arena_season, optional: true
-  belongs_to :arena_tournament, optional: true
   belongs_to :arena_room, optional: true
   belongs_to :zone, optional: true
 

@@ -6,13 +6,13 @@ module Game
     #
     # Usage:
     #   region = Game::World::Region.new("ashen_forest", config_hash)
-    #   region.tax_bonus_rate # => 0.0075
+    #   region.territory?("ashen_forest") # => true
     #
     # Returns:
     #   Plain Ruby object exposing helper methods for region-specific lookups.
     class Region
       attr_reader :key, :name, :biome, :territory_key, :landmarks, :hidden_areas,
-        :zones, :metadata, :clan_bonuses
+        :zones, :metadata
 
       def initialize(key, attributes)
         @key = key.to_s
@@ -23,7 +23,6 @@ module Game
         @landmarks = attributes.fetch("landmarks", [])
         @hidden_areas = attributes.fetch("hidden_areas", [])
         @metadata = attributes.fetch("metadata", {})
-        @clan_bonuses = attributes.fetch("clan_bonuses", {})
         @bounds = attributes.fetch("coordinates", nil)
       end
 
@@ -41,14 +40,6 @@ module Game
 
       def zone?(zone_name)
         zones.include?(zone_name)
-      end
-
-      def tax_bonus_rate
-        clan_bonuses.fetch("tax_bonus_basis_points", 0).to_i / 10_000.0
-      end
-
-      def buff_value(key)
-        clan_bonuses[key.to_s]
       end
     end
   end

@@ -7,7 +7,10 @@ practical choices. Shops are city buildings first.
 
 ## Neverlands Reference
 
-Primary reference: `doc/design/reference/neverlands.md`.
+Primary references:
+
+- `doc/design/reference/neverlands.md`
+- `doc/design/reference/neverlands_live_lavka_shop.md`
 
 Observed shop flow:
 
@@ -18,6 +21,10 @@ outside tile -> city -> trading quarter -> Лавка -> shop tabs/items
 The shop page renders a building shell, then category/item content is loaded
 inside the shop UI. Items show price, stock, properties, requirements, and buy
 availability.
+
+Do not model this as a global marketplace/kiosk route. The Neverlands-shaped
+surface is a city building with tabs for buying goods, licenses, selling goods,
+and novice goods.
 
 ## Player Experience
 
@@ -56,8 +63,10 @@ Core:
 
 - wallet;
 - transaction;
-- shop;
-- shop stock;
+- city building shop;
+- shop category;
+- shop stock with current and maximum counts;
+- shop license good;
 - direct trade session.
 
 ## Interactions

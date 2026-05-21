@@ -20,7 +20,6 @@ module Game
         "guard" => :handle_guard,
         "innkeeper" => :handle_innkeeper,
         "banker" => :handle_banker,
-        "auctioneer" => :handle_auctioneer,
         "crafter" => :handle_crafter,
         "hostile" => :handle_hostile
       }.freeze
@@ -288,20 +287,6 @@ module Game
 
         # Return nearby zones or points of interest
         zone.metadata&.dig("landmarks") || []
-      end
-
-      # Auctioneer handling
-      def handle_auctioneer
-        Result.new(
-          success: true,
-          dialogue_type: :auctioneer,
-          data: {
-            npc: npc_data,
-            greeting: npc_greeting,
-            redirect_to: "/auction_listings"
-          },
-          message: "Welcome to the Auction House! Browse our listings or create your own."
-        )
       end
 
       # Crafter handling

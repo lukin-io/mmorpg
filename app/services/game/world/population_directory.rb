@@ -35,12 +35,6 @@ module Game
         npcs.values.select { |npc| npc.region == region_key.to_s }
       end
 
-      def announcer_for_event(event_key)
-        npcs.values.find do |npc|
-          npc.event_hooks.fetch("seasonal_keys", []).include?(event_key)
-        end
-      end
-
       def spawn_entries_for(region_key)
         profiles = monster_tables.fetch(region_key.to_s, [])
         templates = NpcTemplate.where(npc_key: profiles.map(&:key)).index_by(&:npc_key)

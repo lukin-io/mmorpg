@@ -12,6 +12,5 @@ FactoryBot.define do
     required_station_archetype { "city" }
     premium_token_cost { 0 }
     quality_modifiers { {} }
-    clan_bound { false }
   end
 end

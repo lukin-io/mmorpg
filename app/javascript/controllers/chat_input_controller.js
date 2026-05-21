@@ -47,7 +47,7 @@ export default class extends Controller {
     input.focus()
   }
 
-  // Prepend text (for whispers, clan chat, etc.)
+  // Prepend text (for whispers, mentions, etc.)
   prependText(text) {
     if (!this.hasInputTarget) return
 
@@ -59,4 +59,3 @@ export default class extends Controller {
     return this.element.offsetParent !== null
   }
 }
-

@@ -2,9 +2,9 @@
 
 ## Purpose
 
-Social systems make the world feel populated. Chat, local player lists, and
-party coordination should be integrated into the compact game frame rather than
-separated into a modern social dashboard.
+Social systems make the world feel populated. Chat and local player lists
+should stay integrated into the compact game frame rather than separated into a
+modern social dashboard.
 
 ## Neverlands Reference
 
@@ -24,8 +24,7 @@ Borrowed feel:
 ## Player Experience
 
 The player can read chat while travelling, see who is nearby, click a player
-name for common actions, whisper, join local conversation, and coordinate with
-a party.
+name for common actions, whisper, and join local conversation.
 
 ## Chat Channels
 
@@ -34,7 +33,6 @@ Core:
 - local;
 - global;
 - whisper;
-- party;
 - arena room;
 - system.
 
@@ -46,33 +44,16 @@ Core:
 - Player list should show name, level, and basic status/signs.
 - Away/offline state should be simple and understandable.
 
-## Party Rules
-
-Core party behavior:
-
-- invite;
-- accept/decline;
-- leave;
-- leader;
-- member list;
-- party chat.
-
-Parties should support combat and quest coordination, but not become a full
-separate product area in the first pass.
-
 ## State Concepts
 
 - chat message;
 - channel;
 - whisper thread;
 - local presence entry;
-- party;
-- party member.
+- arena room participant.
 
 ## Interactions
 
 - `areas/world_map.md`: local presence after movement.
 - `areas/cities_and_buildings.md`: city hubs concentrate social activity.
 - `areas/arena.md`: arena applications and rooms are social surfaces.
-- `features/npcs_quests.md`: party questing can build on this when source
-  material requires it.

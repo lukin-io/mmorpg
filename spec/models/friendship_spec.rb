@@ -20,10 +20,8 @@ RSpec.describe Friendship, type: :model do
 
     it "allows requests when users are allies" do
       receiver = create(:user, friend_request_privacy: :allies_only)
-      clan = create(:clan)
-      create(:clan_membership, clan: clan, user: receiver)
       requester = create(:user)
-      create(:clan_membership, clan: clan, user: requester)
+      create(:friendship, requester: receiver, receiver: requester, status: :accepted, accepted_at: Time.current)
 
       friendship = build(:friendship, receiver: receiver, requester: requester)
 

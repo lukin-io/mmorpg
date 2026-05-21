@@ -6,11 +6,9 @@ class ChatChannel < ApplicationRecord
   CHANNEL_TYPES = {
     global: 0,
     local: 1,
-    clan: 2,
-    party: 3,
-    whisper: 4,
-    system: 5,
-    arena: 6
+    whisper: 2,
+    system: 3,
+    arena: 4
   }.freeze
 
   enum :channel_type, CHANNEL_TYPES

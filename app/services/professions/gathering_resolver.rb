@@ -4,15 +4,14 @@ module Professions
   # GatheringResolver determines whether a gathering attempt succeeds and rewards items.
   #
   # Usage:
-  #   Professions::GatheringResolver.new(progress:, node:, party_size:).harvest!
+  #   Professions::GatheringResolver.new(progress:, node:).harvest!
   #
   # Returns:
   #   Hash with :success boolean, :rewards payload, and respawn timing metadata.
   class GatheringResolver
-    def initialize(progress:, node:, party_size: 1, rng: Random.new(1))
+    def initialize(progress:, node:, rng: Random.new(1))
       @progress = progress
       @node = node
-      @party_size = [party_size.to_i, 1].max
       @rng = rng
     end
 
@@ -22,7 +21,7 @@ module Professions
 
       if rng.rand(100) < success_rate
         progress.gain_experience!(node.difficulty * 5)
-        node.mark_harvest!(party_size:)
+        node.mark_harvest!
         {
           success: true,
           rewards: node.rewards,
@@ -30,30 +29,23 @@ module Professions
         }
       else
         progress.gain_experience!(node.difficulty)
-        cooldown = node.effective_respawn_seconds(party_size: party_size)
+        cooldown = node.effective_respawn_seconds
         {success: false, cooldown: cooldown}
       end
     end
 
     private
 
-    attr_reader :progress, :node, :party_size, :rng
+    attr_reader :progress, :node, :rng
 
     def success_rate
       base = 45
       skill_gap = progress.skill_level - node.difficulty
-      bonuses = location_bonus + group_bonus
-      (base + (skill_gap * 4) + bonuses).clamp(10, 95)
+      (base + (skill_gap * 4) + location_bonus).clamp(10, 95)
     end
 
     def location_bonus
       progress.location_bonus_for(node.zone)
-    end
-
-    def group_bonus
-      return 0 if party_size <= 1
-
-      (party_size - 1) * node.group_bonus_percent
     end
 
     def ensure_profession_match!

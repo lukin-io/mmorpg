@@ -92,7 +92,6 @@ export default class extends Controller {
       blacksmith: "⚒️ Blacksmith",
       bank: "🏦 Bank",
       arena: "⚔️ Arena",
-      clan: "🏰 Clan Hall",
       temple: "⛪ Temple",
       academy: "📚 Academy",
       market: "🛒 Market",
@@ -189,7 +188,7 @@ export default class extends Controller {
   }
 
   isEnterable(type) {
-    const enterableTypes = ['shop', 'tavern', 'blacksmith', 'arena', 'clan', 'temple', 'academy', 'bank', 'gate']
+    const enterableTypes = ['shop', 'tavern', 'blacksmith', 'arena', 'temple', 'academy', 'bank', 'gate']
     return enterableTypes.includes(type)
   }
 
@@ -324,7 +323,6 @@ export default class extends Controller {
       blacksmith: "⚒️",
       bank: "🏦",
       arena: "⚔️",
-      clan: "🏰",
       temple: "⛪",
       academy: "📚",
       market: "🛒",

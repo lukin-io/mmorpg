@@ -58,7 +58,7 @@ class ChatEmoji
     "036" => {unicode: "💔", name: "heartbreak"},
     "037" => {unicode: "💰", name: "money"},
     "038" => {unicode: "⭐", name: "star"},
-    "039" => {unicode: "🎉", name: "party"},
+    "039" => {unicode: "🎉", name: "celebration"},
     "040" => {unicode: "💤", name: "sleep"},
 
     # Text shortcuts (common patterns)

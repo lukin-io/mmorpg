@@ -42,7 +42,6 @@ class CreateInventoriesAndProfessionExtensions < ActiveRecord::Migration[8.1]
       t.integer :respawn_seconds, null: false, default: 60
       t.datetime :last_harvested_at
       t.datetime :next_available_at
-      t.integer :group_bonus_percent, null: false, default: 0
       t.jsonb :rewards, null: false, default: {}
       t.timestamps
     end

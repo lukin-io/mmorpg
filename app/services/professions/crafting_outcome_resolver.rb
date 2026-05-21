@@ -64,12 +64,6 @@ module Professions
         qty = reward["quantity"].to_i
         item_name = reward["name"]
         job.character.inventory.add_item_by_name!(item_name, quantity: qty)
-        Economy::DemandTracker.record_crafting!(
-          recipe: recipe,
-          item_name: item_name,
-          quantity: qty,
-          zone: job.character.position&.zone
-        )
       end
 
       {"items" => rewards}

@@ -15,10 +15,6 @@
       <dd><%= assignment.quest.difficulty_tier.humanize %></dd>
     </div>
     <div>
-      <dt>Party</dt>
-      <dd><%= assignment.quest.recommended_party_size %> Adventurer<%= "s" if assignment.quest.recommended_party_size > 1 %></dd>
-    </div>
-    <div>
       <dt>Status</dt>
       <dd><strong><%= assignment.status.humanize %></strong></dd>
     </div>
@@ -44,4 +40,3 @@
       class: "btn" %>
   </div>
 </div>
-

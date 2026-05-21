@@ -1,47 +1,5 @@
-class CreatePartyArenaSystems < ActiveRecord::Migration[8.1]
+class CreateArenaSystems < ActiveRecord::Migration[8.1]
   def change
-    create_table :parties do |t|
-      t.string :name, null: false
-      t.text :purpose
-      t.integer :status, null: false, default: 0
-      t.references :leader, null: false, foreign_key: {to_table: :users}
-      t.references :chat_channel, foreign_key: true
-      t.integer :ready_check_state, null: false, default: 0
-      t.datetime :ready_check_started_at
-      t.integer :max_size, null: false, default: 5
-      t.jsonb :activity_metadata, default: {}, null: false
-      t.timestamps
-    end
-
-    add_index :parties, :status
-
-    create_table :party_memberships do |t|
-      t.references :party, null: false, foreign_key: true
-      t.references :user, null: false, foreign_key: true
-      t.integer :role, null: false, default: 0
-      t.integer :ready_state, null: false, default: 0
-      t.integer :status, null: false, default: 0
-      t.datetime :joined_at, null: false
-      t.datetime :left_at
-      t.timestamps
-    end
-
-    add_index :party_memberships, [:party_id, :user_id], unique: true
-
-    create_table :party_invitations do |t|
-      t.references :party, null: false, foreign_key: true
-      t.references :sender, null: false, foreign_key: {to_table: :users}
-      t.references :recipient, null: false, foreign_key: {to_table: :users}
-      t.integer :status, null: false, default: 0
-      t.string :token, null: false
-      t.datetime :expires_at, null: false
-      t.timestamps
-    end
-
-    add_index :party_invitations, :token, unique: true
-
-    add_reference :group_listings, :party, foreign_key: true
-
     create_table :arena_seasons do |t|
       t.string :name, null: false
       t.string :slug, null: false
@@ -56,7 +14,6 @@ class CreatePartyArenaSystems < ActiveRecord::Migration[8.1]
 
     create_table :arena_matches do |t|
       t.references :arena_season, foreign_key: true
-      t.references :arena_tournament, foreign_key: true
       t.references :zone, foreign_key: true
       t.integer :status, null: false, default: 0
       t.integer :match_type, null: false, default: 0

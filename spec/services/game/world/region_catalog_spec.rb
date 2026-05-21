@@ -11,7 +11,7 @@ RSpec.describe Game::World::RegionCatalog do
 
       expect(region).to be_present
       expect(region.name).to eq("Everfall Capital")
-      expect(region.tax_bonus_rate).to be_positive
+      expect(region.territory?("everfall_core")).to be(true)
     end
   end
 

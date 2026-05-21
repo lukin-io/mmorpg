@@ -31,15 +31,6 @@ module Arena
         loser_rating_base: -15,
         item_drop_chance: 0.20
       },
-      tournament: {
-        winner_xp_base: 150,
-        winner_gold_base: 100,
-        winner_rating_base: 50,
-        loser_xp_base: 50,
-        loser_gold_base: 20,
-        loser_rating_base: -25,
-        item_drop_chance: 0.35
-      },
       group: {
         winner_xp_base: 100,
         winner_gold_base: 60,

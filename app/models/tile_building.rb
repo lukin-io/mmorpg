@@ -11,7 +11,7 @@
 #   building.enter!(character)             # Move character to destination zone
 #
 class TileBuilding < ApplicationRecord
-  BUILDING_TYPES = %w[city castle fort inn shop portal clan_hall tavern temple].freeze
+  BUILDING_TYPES = %w[city castle fort inn shop portal tavern temple].freeze
 
   BUILDING_ICONS = {
     "city" => "🏙️",
@@ -20,7 +20,6 @@ class TileBuilding < ApplicationRecord
     "inn" => "🏨",
     "shop" => "🏪",
     "portal" => "🌀",
-    "clan_hall" => "🏛️",
     "tavern" => "🍺",
     "temple" => "⛪"
   }.freeze
@@ -144,7 +143,6 @@ class TileBuilding < ApplicationRecord
   private
 
   def character_faction(character)
-    # Get character's faction from clan or other source
     character.respond_to?(:faction_key) ? character.faction_key : nil
   end
 

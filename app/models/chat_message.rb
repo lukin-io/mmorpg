@@ -30,16 +30,6 @@ class ChatMessage < ApplicationRecord
     metadata&.dig("whisper") == true || chat_channel&.channel_type == "whisper"
   end
 
-  # Check if this is a clan message
-  def clan_message?
-    chat_channel&.channel_type == "clan"
-  end
-
-  # Check if this is a party message
-  def party_message?
-    chat_channel&.channel_type == "party"
-  end
-
   # Check if this is an arena-related message
   def arena_message?
     metadata&.dig("arena") == true

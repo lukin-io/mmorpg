@@ -17,7 +17,6 @@ class GatheringNode < ApplicationRecord
 
   validates :resource_key, presence: true
   validates :difficulty, :respawn_seconds, numericality: {greater_than: 0}
-  validates :group_bonus_percent, numericality: {greater_than_or_equal_to: 0}
 
   scope :available, -> { where("next_available_at IS NULL OR next_available_at <= ?", Time.current) }
   scope :contested, -> { where(contested: true) }
@@ -27,7 +26,7 @@ class GatheringNode < ApplicationRecord
     next_available_at.nil? || next_available_at <= Time.current
   end
 
-  def effective_respawn_seconds(party_size: 1)
+  def effective_respawn_seconds
     base = respawn_seconds
     biome_modifier =
       case zone.biome
@@ -37,22 +36,16 @@ class GatheringNode < ApplicationRecord
       else
         0
       end
-    party_bonus =
-      if party_size > 1
-        -(party_size * group_bonus_percent / 100.0 * base)
-      else
-        0
-      end
     rarity_penalty = (rarity_multiplier - 1) * base
     contested_bonus = contested? ? -(base * 0.15) : 0
-    (base + biome_modifier + party_bonus + rarity_penalty + contested_bonus).clamp(10, base * 2.5)
+    (base + biome_modifier + rarity_penalty + contested_bonus).clamp(10, base * 2.5)
   end
 
-  def mark_harvest!(party_size: 1)
+  def mark_harvest!
     now = Time.current
     update!(
       last_harvested_at: now,
-      next_available_at: now + effective_respawn_seconds(party_size: party_size).seconds
+      next_available_at: now + effective_respawn_seconds.seconds
     )
   end
 

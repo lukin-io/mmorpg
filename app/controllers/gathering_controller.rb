@@ -33,12 +33,9 @@ class GatheringController < ApplicationController
       return respond_with_error("This resource is not available. Check back later.")
     end
 
-    party_size = current_character.current_party&.members&.count || 1
-
     resolver = Professions::GatheringResolver.new(
       progress: profession_progress,
       node: @gathering_node,
-      party_size: party_size,
       rng: Random.new
     )
 
@@ -126,10 +123,8 @@ class GatheringController < ApplicationController
     base = 45
     skill_gap = profession_progress.skill_level - @gathering_node.difficulty
     location_bonus = profession_progress.location_bonus_for(@gathering_node.zone)
-    party_size = current_character.current_party&.members&.count || 1
-    group_bonus = (party_size > 1) ? (party_size - 1) * @gathering_node.group_bonus_percent : 0
 
-    (base + (skill_gap * 4) + location_bonus + group_bonus).clamp(10, 95)
+    (base + (skill_gap * 4) + location_bonus).clamp(10, 95)
   end
 
   def add_rewards_to_inventory(rewards)

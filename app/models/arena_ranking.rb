@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-# ArenaRanking tracks per-character ladder progress for arena tournaments/duels.
+# ArenaRanking tracks per-character ladder progress for arena fights.
 class ArenaRanking < ApplicationRecord
-  LADDER_TYPES = %w[arena duel skirmish clan].freeze
+  LADDER_TYPES = %w[arena duel skirmish].freeze
 
   belongs_to :character
 

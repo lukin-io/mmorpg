@@ -1,18 +1,6 @@
 require "rails_helper"
 
 RSpec.describe Character, type: :model do
-  describe "inheritance" do
-    it "inherits clan membership from the owner" do
-      user = create(:user)
-      clan = create(:clan, leader: user)
-      create(:clan_membership, clan: clan, user: user)
-
-      character = create(:character, user: user)
-
-      expect(character.clan).to eq(user.primary_clan)
-    end
-  end
-
   describe "limits" do
     it "prevents creating more than the allowed number of characters" do
       user = create(:user)

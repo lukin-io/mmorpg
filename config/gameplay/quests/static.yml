@@ -9,7 +9,6 @@ quests:
     sequence: 1
     chapter: 1
     difficulty_tier: "story"
-    recommended_party_size: 1
     min_level: 1
     min_reputation: 0
     rewards:
@@ -26,7 +25,6 @@ quests:
     sequence: 5
     chapter: 1
     difficulty_tier: "veteran"
-    recommended_party_size: 3
     min_level: 20
     rewards:
       xp: 1200
@@ -36,5 +34,4 @@ quests:
         - "reinforced_plate"
       profession_unlocks:
         - "Armorsmith"
-
 

@@ -33,7 +33,6 @@ module AlignmentHelper
     group: "Group",
     sacrifice: "Free-for-All",
     unarmed: "Unarmed",
-    clan_vs_clan: "Clan vs Clan",
     faction_vs_faction: "Faction vs Faction"
   }.freeze
 
@@ -42,7 +41,6 @@ module AlignmentHelper
     no_artifacts: "No Magic Items",
     limited_artifacts: "Limited Equipment",
     free: "All Equipment",
-    clan_vs_clan: "Clan vs Clan",
     faction_vs_faction: "Faction vs Faction"
   }.freeze
 
@@ -65,8 +63,7 @@ module AlignmentHelper
     city: "City",
     village: "Village",
     nature: "Nature",
-    arena: "Arena",
-    clan_hall: "Clan Hall"
+    arena: "Arena"
   }.freeze
 
   # Get faction icon
@@ -172,17 +169,13 @@ module AlignmentHelper
   end
 
   # Character nameplate with alignment icons
-  def character_nameplate(character, show_level: true, show_clan: false)
+  def character_nameplate(character, show_level: true)
     return "" unless character
 
     parts = []
     parts << alignment_icons(character)
     parts << content_tag(:strong, character.name, class: "character-name")
     parts << content_tag(:span, "[#{character.level}]", class: "character-level") if show_level
-
-    if show_clan && character.clan.present?
-      parts << content_tag(:span, " #{character.clan.name}", class: "character-clan")
-    end
 
     content_tag(:span, safe_join(parts), class: "character-nameplate")
   end

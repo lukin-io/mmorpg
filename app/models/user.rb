@@ -29,21 +29,9 @@ class User < ApplicationRecord
   has_many :incoming_friendships, class_name: "Friendship", foreign_key: :receiver_id, dependent: :destroy
   has_many :mail_messages, foreign_key: :sender_id, dependent: :nullify
   has_many :received_mail_messages, class_name: "MailMessage", foreign_key: :recipient_id, dependent: :destroy
-  has_many :clan_memberships, dependent: :destroy
-  has_many :clans, through: :clan_memberships
-  has_many :clans_led, class_name: "Clan", foreign_key: :leader_id, dependent: :nullify
-  has_many :clan_applications, foreign_key: :applicant_id, dependent: :destroy
-  has_many :reviewed_clan_applications,
-    class_name: "ClanApplication",
-    foreign_key: :reviewed_by_id,
-    dependent: :nullify
-  has_many :clan_treasury_transactions, foreign_key: :actor_id, dependent: :nullify
-  has_many :clan_message_board_posts, foreign_key: :author_id, dependent: :nullify
-  has_many :clan_log_entries, foreign_key: :actor_id, dependent: :nullify
   has_one :currency_wallet, dependent: :destroy
   has_many :profession_progresses, dependent: :destroy
   has_many :crafting_jobs, dependent: :nullify
-  has_many :group_listings, foreign_key: :owner_id, dependent: :destroy
   has_many :ignore_list_entries, dependent: :destroy
   has_many :ignored_users, through: :ignore_list_entries, source: :ignored_user
   has_many :ignored_by_entries,
@@ -51,17 +39,6 @@ class User < ApplicationRecord
     foreign_key: :ignored_user_id,
     dependent: :destroy
   has_many :ignored_by_users, through: :ignored_by_entries, source: :user
-  has_many :party_memberships, dependent: :destroy
-  has_many :parties, through: :party_memberships
-  has_many :parties_led, class_name: "Party", foreign_key: :leader_id, dependent: :destroy
-  has_many :party_invitations_sent,
-    class_name: "PartyInvitation",
-    foreign_key: :sender_id,
-    dependent: :nullify
-  has_many :party_invitations_received,
-    class_name: "PartyInvitation",
-    foreign_key: :recipient_id,
-    dependent: :destroy
   has_many :arena_participations, dependent: :destroy
   has_many :arena_matches, through: :arena_participations
   after_create :assign_default_role
@@ -166,19 +143,8 @@ class User < ApplicationRecord
 
   def allied_with?(other_user)
     return false if other_user.blank?
-    return true if friends_with?(other_user)
 
-    shared_clan_with?(other_user)
-  end
-
-  def primary_clan
-    clan_memberships.order(created_at: :desc).first&.clan
-  end
-
-  def sync_character_memberships!
-    characters.find_each do |character|
-      character.update!(clan: primary_clan)
-    end
+    friends_with?(other_user)
   end
 
   private
@@ -236,11 +202,5 @@ class User < ApplicationRecord
     else
       true
     end
-  end
-
-  def shared_clan_with?(other_user)
-    user_clan_ids = clan_memberships.pluck(:clan_id)
-    other_clan_ids = other_user.clan_memberships.pluck(:clan_id)
-    (user_clan_ids & other_clan_ids).any?
   end
 end

@@ -9,7 +9,6 @@ FactoryBot.define do
     sequence(:sequence) { |n| n }
     chapter { 1 }
     difficulty_tier { :story }
-    recommended_party_size { 1 }
     min_level { 1 }
     min_reputation { 0 }
     requirements { {} }

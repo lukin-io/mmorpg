@@ -112,13 +112,6 @@ Rails.application.routes.draw do
     post :repair, on: :member
   end
 
-  resources :marketplace_kiosks, only: [:index, :show, :create] do
-    member do
-      post :quick_buy
-      post :quick_sell
-    end
-  end
-
   # UNCLARIFIED YET
 
   # NOTE: Devise 4.9.x generates deprecation warnings about hash arguments in Rails 8.2
@@ -133,45 +126,11 @@ Rails.application.routes.draw do
   resources :friendships, only: [:index, :create, :update, :destroy]
   resources :mail_messages, only: [:index, :show, :new, :create]
   resources :ignore_list_entries, only: [:index, :create, :destroy]
-  resources :group_listings
-  resources :clans do
-    resources :clan_applications, only: [:create, :update], path: "applications"
-    resources :clan_message_board_posts, only: [:create, :update, :destroy], path: "messages"
-    resources :clan_treasury_transactions, only: :create, path: "treasury"
-    resources :clan_stronghold_upgrades, only: [:create, :update], path: "stronghold_upgrades"
-    resources :clan_research_projects, only: [:create, :update], path: "research_projects"
-    resources :clan_quests, only: [:create, :update], path: "quests"
-    resource :clan_role_permissions, only: :update, path: "role_permissions"
-    resources :clan_wars, only: :create
-  end
-  resources :clan_memberships, only: [:update, :destroy]
 
-  resources :auction_listings do
-    resources :auction_bids, only: :create
-  end
   resources :trade_sessions, only: [:create, :show, :update] do
     resources :trade_items, only: :create
   end
   resources :trade_items, only: :destroy
-
-  resources :parties do
-    member do
-      post :ready_check
-      post :leave
-      post :promote
-      post :disband
-    end
-
-    resources :party_invitations, only: :create
-    resources :party_memberships, only: [:update, :destroy]
-  end
-  resources :party_invitations, only: :update
-
-  resources :game_events, only: [:index, :show, :update]
-  resources :leaderboards, only: [:index, :show] do
-    post :recalculate, on: :member
-  end
-  resources :competition_brackets, only: [:show, :update]
 
   get "up" => "rails/health#show", :as => :rails_health_check
 end

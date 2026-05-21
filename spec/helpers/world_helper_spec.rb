@@ -73,7 +73,7 @@ RSpec.describe WorldHelper, type: :helper do
     it "returns an array of buildings" do
       buildings = helper.default_city_buildings
       expect(buildings).to be_an(Array)
-      expect(buildings.length).to eq(8)
+      expect(buildings.length).to eq(7)
     end
 
     it "includes required building types" do

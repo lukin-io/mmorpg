@@ -35,7 +35,6 @@ class CreateQuestingSystem < ActiveRecord::Migration[8.1]
       t.integer :sequence, null: false, default: 1
       t.integer :chapter, null: false, default: 1
       t.integer :difficulty_tier, null: false, default: 0
-      t.integer :recommended_party_size, null: false, default: 1
       t.integer :min_level, null: false, default: 1
       t.integer :min_reputation, null: false, default: 0
       t.boolean :repeatable, null: false, default: false
@@ -52,7 +51,6 @@ class CreateQuestingSystem < ActiveRecord::Migration[8.1]
     add_index :quests, :key, unique: true
     add_index :quests, [:quest_chain_id, :sequence]
     add_index :quests, :difficulty_tier
-    add_index :quests, :recommended_party_size
     add_index :quests, :min_level
 
     create_table :quest_objectives do |t|

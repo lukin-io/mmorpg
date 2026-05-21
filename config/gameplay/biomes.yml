@@ -30,7 +30,7 @@ city:
 castle:
   - name: "Arena Herald"
     kind: "arena"
-    difficulty: "tournament"
+    difficulty: "arena"
     loot_table: "arena_rewards"
     weight: 30
 plains:

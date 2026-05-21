@@ -48,11 +48,6 @@ RSpec.describe Npc::Combatable do
         expect(banker.can_engage_combat?).to be false
       end
 
-      it "returns false for auctioneer" do
-        auctioneer = create(:npc_template, role: "auctioneer")
-        expect(auctioneer.can_engage_combat?).to be false
-      end
-
       it "returns false for crafter" do
         crafter = create(:npc_template, role: "crafter")
         expect(crafter.can_engage_combat?).to be false

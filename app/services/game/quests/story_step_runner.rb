@@ -9,7 +9,7 @@ module Game
     #
     # Usage:
     #   Game::Quests::StoryStepRunner.new(assignment: assignment)
-    #     .call(choice_key: "support_clan")
+    #     .call(choice_key: "support_guard")
     #
     # Returns:
     #   Result object responding to #completed?, #failed?, and exposing the

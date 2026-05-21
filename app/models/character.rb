@@ -80,7 +80,6 @@ class Character < ApplicationRecord
   }.freeze
 
   belongs_to :user
-  belongs_to :clan, optional: true
 
   has_one :position, class_name: "CharacterPosition", dependent: :destroy
   has_one :inventory, dependent: :destroy
@@ -106,7 +105,6 @@ class Character < ApplicationRecord
 
   validate :respect_character_limit, on: :create
 
-  before_validation :inherit_memberships, on: :create
   before_validation :assign_random_avatar, on: :create
   after_create :ensure_inventory!
   after_create_commit :ensure_tutorial_assignments
@@ -975,12 +973,6 @@ class Character < ApplicationRecord
     return 0 if value.blank?
 
     value.to_s.delete("%+").to_f
-  end
-
-  def inherit_memberships
-    return unless user
-
-    self.clan ||= user.primary_clan
   end
 
   def respect_character_limit

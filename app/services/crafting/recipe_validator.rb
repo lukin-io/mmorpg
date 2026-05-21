@@ -19,7 +19,6 @@ module Crafting
       ensure_progress!
       ensure_skill_level!
       ensure_station_match!
-      ensure_clan_unlock!
       ensure_materials!
       ensure_tool_available!
       true
@@ -49,13 +48,6 @@ module Crafting
       return if station.portable? && recipe.tier <= 2
 
       raise Pundit::NotAuthorizedError, "Crafting station not compatible"
-    end
-
-    def ensure_clan_unlock!
-      return unless recipe.clan_locked?
-      return if character.clan.present?
-
-      raise Pundit::NotAuthorizedError, "Clan membership required"
     end
 
     def ensure_materials!

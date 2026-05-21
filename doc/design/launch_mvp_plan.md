@@ -15,6 +15,12 @@ The MVP is built around four connected pillars:
 All four pillars must use one gameplay shell, one character state, and one
 server-authoritative action model.
 
+The Neverlands-based marketplace/shop loop is also required for MVP. It is not
+a separate pillar because it depends on person, city movement, inventory, and
+server-authored actions, but the launch loop is incomplete without a
+city-building shop path. Current status: documented from live `Лавка` capture,
+not implemented.
+
 ## Launch Principles
 
 - Player-facing implementation is English-only.
@@ -23,6 +29,8 @@ server-authoritative action model.
 - Player, team, and NPC fights use the same combat mechanics.
 - Arena is entered through the city/gameplay path, not as a standalone product
   surface.
+- Marketplace/shop access is entered through a city building such as `Лавка`,
+  not through a generic global marketplace or kiosk route.
 - Wild cell actions are tied to the current coordinate and expire when the
   player moves or context changes.
 - Outdoor `Оглядеться` is a resource-search action, and any outdoor local
@@ -295,55 +303,64 @@ login
 -> active character
 -> persisted world or city location
 -> movement or city hotspot
--> cell actions: resource, NPC, building, arena
+-> cell actions: resource, NPC, building, arena, shop
+-> city building shop: buy, licenses, sell, novice goods
 -> arena application or wild NPC encounter
 -> shared combat turn UI
 -> result finish step
 -> return to arena, city, or world context
 ```
 
+The shop step is required for MVP, but it is currently design-only. The
+implementation should follow the documented Neverlands `Лавка` behavior before
+adding any Rails shop code.
+
 ## Launch Build Summary
 
-| Area | Build Target | Remaining Detail |
-| --- | --- | --- |
-| Person | Character, vitals, stats, skills, inventory/equipment actions, requirements, durability, combat breakdown | item seeds, slot rules, repair/breakage UX, level-up UX, recovery, cross-system tests |
-| Movement | persisted wilderness travel, movement commands, action offers, tile state resolver | city-hotspot action unification, presence refresh, lock polish |
-| Arena | city entry, room/application UX, NPC training, live player-side waiting, finish result | formula tuning, navigation cleanup, magic/special balancing |
-| Combat | shared resolver, AP/body parts/blocks, durable fight events, public logs/statistics, NPC AI response | one resolver across all fight entry points, canonical log event schema, more balance coverage |
-| Wild cells | tile resources, tile NPCs, contextual action offers | shared combat handoff, loot result step, return routing |
+| Area | Documentation Status | Implementation Status | Next Step |
+| --- | --- | --- | --- |
+| Person | Documented across vitals, progression, inventory/equipment, and live player captures. | Partially implemented. | Consolidate formulas, item seeds, slot rules, capacity, durability, recovery, and cross-system tests. |
+| Movement | Documented across movement and live movement/city captures. | Partially implemented. | Unify city hotspots with server-authored action offers, polish presence refresh and locks. |
+| Arena | Documented across arena, combat, live arena captures, and public log captures. | Partially implemented. | Finish city entry/return cleanup, formula tuning, magic/special balancing, and shared fight coverage. |
+| Combat | Documented across combat reference captures, arena observations, logs, and equipment effects. | Partially implemented. | Keep one resolver/log contract across arena player/team, arena NPC, and wild NPC fights. |
+| Wild cells | Documented across outdoor movement, hostile NPC/resource capture, and tile-action notes. | Partially implemented. | Wire wild NPC handoff to shared combat, loot result step, and exact return routing. |
+| Neverlands marketplace/shop | `Лавка` documented in `doc/design/reference/neverlands_live_lavka_shop.md`; feature guidance in `doc/design/features/economy_trading_shops.md`. | Not implemented after generic kiosk cleanup. | Build `Лавка` as a city building with buy goods, licenses, sell goods, novice goods, category filters, stock, requirements, and action-key validation. |
 
 ## Neverlands Coverage Checklist
 
 Use this checklist to keep the launch MVP tied to Neverlands-based behavior
-without maintaining a second planning document.
+without maintaining a second planning document. Each row tracks whether the
+feature is source-documented, how much of it exists in the Rails app, and what
+the next implementation step is.
 
 ### Areas
 
-| Area | Neverlands-Based Target | Launch Focus |
-| --- | --- | --- |
-| Game client layout | Persistent gameplay shell where main content changes but vitals, chat, local players, and context buttons stay visible. | Make the game shell the default authenticated surface across world, city, building, arena, and combat screens. |
-| World map | Coordinate grid with server-offered destinations, timed movement, persisted location, local player refresh, and tile-local actions. | Build deterministic starter coordinates and make every current-tile action a persisted server offer. |
-| Cities and buildings | City node graph as the primary hub flow: outside tile entry, immediate hotspot navigation, building pages, and parent-city return. | Build the starter city graph with city hotspots, shop entry, arena entry, and local presence refresh. |
-| Arena | Room/application hub for duels, group fights, NPC training rows, public fight-log profile link, social waiting context, and shared tactical combat. | Route arena entry/return through city buildings and keep application rows compact, side-based, and action-key validated. |
+| Area | Documented | Implemented | Next Step |
+| --- | --- | --- | --- |
+| Game client layout | Yes: gameplay shell docs and live player capture. | Partial. | Make the game shell the default authenticated surface across world, city, building, arena, shop, and combat screens. |
+| World map | Yes: coordinate movement and outdoor captures. | Partial. | Build deterministic starter coordinates and make every current-tile action a persisted server offer. |
+| Cities and buildings | Yes: live city movement and building captures. | Partial. | Build the starter city graph with city hotspots, `Лавка` entry, arena entry, and local presence refresh. |
+| Arena | Yes: arena docs, live combat captures, public log captures. | Partial. | Route arena entry/return through city buildings and keep application rows compact, side-based, and action-key validated. |
 
 ### Features
 
-| Feature | Neverlands-Based Target | Launch Focus |
-| --- | --- | --- |
-| Login and resume | Reopening the game returns the player to the same persisted cell, active travel timer, completed destination, or active fight. | Login enters the selected character's current gameplay location, not an unrelated dashboard. |
-| Wilderness movement | Server-authored destination offers, short-lived action keys, accepted travel state, starter adjacent travel timing, diagonal cost, reload/finalize behavior, and local presence refresh. | Implement movement offers, accepted travel, completion, stale-offer cancellation, and encumbrance-aware travel time. |
-| City movement | Immediate node-to-node city navigation through hotspots and building entry/return actions. | Build city action offers parallel to world tile offers. |
-| Tile-local action offers | Every mutating world/city/building action is offered by the server and accepted by action key. | Use the same offer discipline for movement, gather, NPC, building, shop, quest, trainer, buy, sell, and timed local actions. |
-| Gathering and resource nodes | `Оглядеться` herb/resource search, timed resource actions, movement locks, tool/skill/terrain/quest requirements, visible depletion, and deterministic respawn. | Add look/gather/fish/dig/drink as first-class local offers with action timers, visible requirements, and hostile-interrupt handoff. |
-| NPCs and quests | NPCs can belong to tiles, city nodes, buildings, or arena applications; hostile outdoor NPCs can interrupt local actions; tutorial and story objectives are tied to real action offers; loot tables define NPC drops. | Author a starter chain teaching move, enter city, enter shop, inventory, combat, skill allocation, gather, mannequin wood-chip drops, and wild rat-tail drops. |
-| Combat | One AP/body-part/block/log/result contract for player, team, arena NPC, wild NPC, and later dungeon fights, including physical and magic action variants. | Build the shared turn UI, combat profile, resolver, combat log, NPC response, live-player waiting, timeout, NPC loot check, and finish-result step. |
-| Arena combat | Room/application lifecycle feeds the shared combat contract and returns to arena/city context after finish. | Bind NPC training, player, and team applications to the same combat profile and result flow. |
-| Character vitals | Persistent HP/MP/AP values visible in the gameplay shell, with regen timing and defeat/recovery consequences. | Make vitals a shell-level component and document exact regen formulas. |
-| Progression, stats, and skills | Profile allocation loop with base vs pending values, numeric skills, boolean perks, public location/fight state, explicit save actions, prerequisites, and limited respec. | Make the player profile the primary allocation surface and expose movement/combat effects. |
-| Items, inventory, equipment | Item rows show properties, requirements, mass, durability, compact actions, and equipment slot effects; weapons alter generated combat stats and profile outputs. | Connect equipment to combat/vitals/movement, enforce capacity, persist durability, award NPC drops through inventory, and share item-row behavior with shops. |
-| Economy, trading, shops | Shops are city buildings with category tabs, stock, prices, requirements, properties, buy/sell action keys, and city return. | Build the starter shop as a city building with server-authorized buy/sell actions. |
-| Social chat and presence | Persistent chat/player frame with local, global, whisper, party, and arena-room context. | Make local presence location-aware for both coordinate cells and city nodes. |
-| Dungeons | Post-MVP source-backed solo/party runs with keys, eligibility, room floors, lamp oil, blocking NPCs, seals, portal descent, dungeon inventory, ratings, currency, and specialist shop. | Keep deferred until launch movement, city, combat, inventory, and social loops are stable. |
+| Feature | Documented | Implemented | Next Step |
+| --- | --- | --- | --- |
+| Login and resume | Yes: live player/location behavior and dashboard-removal decision. | Partial. | Login enters the selected character's current gameplay location, not an unrelated dashboard. |
+| Wilderness movement | Yes: live movement capture and movement feature doc. | Partial. | Implement movement offers, accepted travel, completion, stale-offer cancellation, and encumbrance-aware travel time. |
+| City movement | Yes: live city node/building capture. | Partial. | Build city action offers parallel to world tile offers. |
+| Tile-local action offers | Yes: movement, outdoor NPC/resource, and action-key observations. | Partial. | Use the same offer discipline for movement, gather, NPC, building, shop, quest, trainer, buy, sell, and timed local actions. |
+| Gathering and resource nodes | Yes: `Оглядеться` and outdoor resource capture. | Partial. | Add look/gather/fish/dig/drink as first-class local offers with action timers, visible requirements, and hostile-interrupt handoff. |
+| NPCs and quests | Yes: NPC roles, wild hostile behavior, mannequin/wild drops, and quest docs. | Partial. | Author a starter chain teaching move, enter city, enter shop, inventory, combat, skill allocation, gather, mannequin wood-chip drops, and wild rat-tail drops. |
+| Combat | Yes: combat captures, public logs, magic, equipment effects, and result flow. | Partial. | Build the shared turn UI, combat profile, resolver, combat log, NPC response, live-player waiting, timeout, NPC loot check, and finish-result step. |
+| Arena combat | Yes: arena rooms/applications and NPC training captures. | Partial. | Bind NPC training, player, and team applications to the same combat profile and result flow. |
+| Character vitals | Yes: live player capture and vitals doc. | Partial. | Make vitals a shell-level component and document exact regen formulas. |
+| Progression, stats, and skills | Yes: profile allocation and skills captures. | Partial. | Make the player profile the primary allocation surface and expose movement/combat effects. |
+| Items, inventory, equipment | Yes: inventory/equipment, weapon formula, and shop item-row captures. | Partial. | Connect equipment to combat/vitals/movement, enforce capacity, persist durability, award NPC drops through inventory, and share item-row behavior with shops. |
+| Neverlands marketplace/shop | Yes: `Лавка` tabs, categories, filters, stock, item rows, licenses, sell/novice modes captured. | Not implemented. | Build the starter `Лавка` city building with server-authorized buy/sell/license/novice actions and no generic marketplace/kiosk route. |
+| Direct player trading | Partially: direct trade is accepted as economy-adjacent, but source parity needs more capture. | Partial. | Keep lean and ensure it does not substitute for the required `Лавка` shop loop. |
+| Social chat and presence | Yes: chat and player-list captures. | Partial. | Make local presence location-aware for both coordinate cells and city nodes. |
+| Dungeons | Yes from source material, but post-MVP. | Not implemented for MVP. | Keep deferred until launch movement, city, combat, inventory, and social loops are stable. |
 
 ### Cross-Feature Rules
 
@@ -376,6 +393,7 @@ Canonical design:
 - `doc/design/features/movement.md`
 - `doc/design/features/combat.md`
 - `doc/design/features/npcs_quests.md`
+- `doc/design/features/economy_trading_shops.md`
 - `doc/design/features/dungeons.md`
 - `doc/design/areas/arena.md`
 - `doc/design/areas/world_map.md`
@@ -384,4 +402,5 @@ Canonical design:
 Reference:
 
 - `doc/design/reference/neverlands.md`
+- `doc/design/reference/neverlands_live_lavka_shop.md`
 - `doc/design/reference/source_material.md`

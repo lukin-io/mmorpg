@@ -23,7 +23,7 @@ module Trades
     def settle_currency_items!
       trade_session.trade_items.select(&:currency?).each do |item|
         sender = item.owner
-        receiver = counterparty_for(sender)
+        receiver = receiver_for(sender)
         next unless receiver
 
         if item.currency_type == "premium_tokens"
@@ -78,7 +78,7 @@ module Trades
       }
     end
 
-    def counterparty_for(user)
+    def receiver_for(user)
       if trade_session.initiator == user
         trade_session.recipient
       elsif trade_session.recipient == user

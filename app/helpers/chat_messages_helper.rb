@@ -9,8 +9,6 @@ module ChatMessagesHelper
     viewer = safe_current_user
     classes << "chat-msg--own" if viewer && message.sender == viewer
     classes << "chat-msg--whisper" if message.whisper?
-    classes << "chat-msg--clan" if message.clan_message?
-    classes << "chat-msg--party" if message.party_message?
     classes.join(" ")
   end
 

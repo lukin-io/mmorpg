@@ -19,10 +19,6 @@ regions:
         description: "Hidden alcove filled with rare wolves; opens during dusk turns."
       - key: "spirit_hollow"
         description: "Quest-only access once players cleanse the blight."
-    clan_bonuses:
-      tax_bonus_basis_points: 75
-      gathering_yield: 0.1
-      travel_buff: "forest_stride"
     metadata:
       difficulty: "standard"
       recommended_level: 5
@@ -44,10 +40,6 @@ regions:
     hidden_areas:
       - key: "stormforge"
         description: "Mythic anvil for crafting legendary weapons."
-    clan_bonuses:
-      tax_bonus_basis_points: 120
-      crafting_speed: 0.15
-      travel_buff: "mountain_resolve"
     metadata:
       difficulty: "hard"
       recommended_level: 25
@@ -69,10 +61,6 @@ regions:
     hidden_areas:
       - key: "sunken_archive"
         description: "Ancient ruins accessible with diving gear quest reward."
-    clan_bonuses:
-      tax_bonus_basis_points: 50
-      fishing_yield: 0.2
-      travel_buff: "river_stride"
     metadata:
       difficulty: "standard"
       recommended_level: 12
@@ -94,10 +82,6 @@ regions:
     hidden_areas:
       - key: "council_vault"
         description: "Triggered during chapter quests; holds royal archives."
-    clan_bonuses:
-      tax_bonus_basis_points: 200
-      marketplace_fee_discount: 0.03
-      travel_buff: "city_stride"
     metadata:
       difficulty: "social"
       recommended_level: 1
@@ -117,12 +101,6 @@ regions:
       - "Midnight Gate"
       - "Siegeworks"
     hidden_areas:
-      - key: "shadow_vault"
-        description: "Raid instance unlocked through clan warfare victory."
-    clan_bonuses:
-      tax_bonus_basis_points: 250
-      siege_damage_bonus: 0.15
-      travel_buff: "castle_stride"
     metadata:
       difficulty: "raid"
       recommended_level: 35

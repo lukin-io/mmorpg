@@ -21,8 +21,7 @@ class CityHotspot < ApplicationRecord
     "healing" => "/world",  # TODO: Implement healing feature
     "clinic" => "/world",   # TODO: Implement clinic feature
     "shop" => "/shop",
-    "tavern" => "/tavern",
-    "clan" => "/clans"
+    "tavern" => "/tavern"
   }.freeze
 
   belongs_to :zone

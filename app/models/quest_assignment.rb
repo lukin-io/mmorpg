@@ -24,7 +24,7 @@ class QuestAssignment < ApplicationRecord
     )
   }
 
-  delegate :quest_type, :difficulty_tier, :recommended_party_size, :repeatable_template?, to: :quest
+  delegate :quest_type, :difficulty_tier, :repeatable_template?, to: :quest
 
   def expired?
     expires_at.present? && expires_at < Time.current

@@ -51,8 +51,7 @@ end
 if defined?(CraftingStation)
   [
     {name: "Castleton Forge", city: "Castleton Keep", station_type: "forge", capacity: 4, station_archetype: :city},
-    {name: "Whispering Woods Field Kit", city: "Whispering Woods", station_type: "field_kit", capacity: 1, station_archetype: :field_kit, portable: true, time_penalty_multiplier: 1.4, success_penalty: 10},
-    {name: "Clan Hall Loom", city: "Castleton Keep", station_type: "loom", capacity: 3, station_archetype: :clan_hall, success_penalty: 0}
+    {name: "Whispering Woods Field Kit", city: "Whispering Woods", station_type: "field_kit", capacity: 1, station_archetype: :field_kit, portable: true, time_penalty_multiplier: 1.4, success_penalty: 10}
   ].each do |attrs|
     CraftingStation.find_or_create_by!(name: attrs[:name]) do |station|
       station.city = attrs[:city]
@@ -69,7 +68,6 @@ end
 
 if defined?(Recipe)
   smith = Profession.find_by(name: "Blacksmithing")
-  alchemy = Profession.find_by(name: "Alchemy")
   if smith
     Recipe.find_or_create_by!(profession: smith, name: "Tempered Longsword") do |recipe|
       recipe.tier = 2
@@ -82,36 +80,6 @@ if defined?(Recipe)
       recipe.required_station_archetype = :city
       recipe.quality_modifiers = {"city_bonus" => 5}
     end
-  end
-  if alchemy
-    Recipe.find_or_create_by!(profession: alchemy, name: "Aetheric Elixir") do |recipe|
-      recipe.tier = 3
-      recipe.duration_seconds = 240
-      recipe.output_item_name = "Aetheric Elixir"
-      recipe.requirements = {
-        "skill_level" => 8,
-        "materials" => {"Moonleaf" => 2, "Riverwater" => 1},
-        "tool_wear" => 5,
-        "success_penalty" => 5
-      }
-      recipe.rewards = {"items" => [{"name" => "Aetheric Elixir", "quantity" => 1}]}
-      recipe.source_kind = :clan_research
-      recipe.risk_level = :risky
-      recipe.premium_token_cost = 5
-      recipe.required_station_archetype = :clan_hall
-      recipe.quality_modifiers = {"legendary_threshold" => 95}
-      recipe.clan_bound = true
-    end
-  end
-end
-
-if defined?(GameEvent)
-  GameEvent.find_or_create_by!(slug: "winter_festival") do |event|
-    event.name = "Winter Festival"
-    event.description = "Seasonal quests and cosmetics."
-    event.status = :upcoming
-    event.starts_at = 1.month.from_now
-    event.ends_at = 1.month.from_now + 2.weeks
   end
 end
 
@@ -295,10 +263,8 @@ if defined?(MapTileTemplate)
     city_tiles << {zone: zone_name, x: 4, y: 5, terrain_type: "city", biome: "city", metadata: {"building" => "Blacksmith", "npc" => "Smith Gorn"}}
     city_tiles << {zone: zone_name, x: 6, y: 5, terrain_type: "city", biome: "city", metadata: {"building" => "General Store", "npc" => "Merchant Elara"}}
     city_tiles << {zone: zone_name, x: 5, y: 4, terrain_type: "city", biome: "city", metadata: {"building" => "Tavern", "npc" => "Innkeeper Bram"}}
-    city_tiles << {zone: zone_name, x: 5, y: 6, terrain_type: "city", biome: "city", metadata: {"building" => "Clan Hall"}}
     city_tiles << {zone: zone_name, x: 4, y: 4, terrain_type: "city", biome: "city", metadata: {"npc" => "Guard Captain"}}
     city_tiles << {zone: zone_name, x: 6, y: 4, terrain_type: "city", biome: "city", metadata: {"building" => "Bank"}}
-    city_tiles << {zone: zone_name, x: 4, y: 6, terrain_type: "city", biome: "city", metadata: {"building" => "Auction House"}}
     city_tiles << {zone: zone_name, x: 6, y: 6, terrain_type: "city", biome: "city", metadata: {"building" => "Quest Board", "npc" => "Quest Master"}}
     # Walls and gates
     city_tiles << {zone: zone_name, x: 5, y: 9, terrain_type: "city", biome: "city", metadata: {"building" => "South Gate"}}
@@ -448,19 +414,6 @@ if defined?(MapTileTemplate)
       tile.passable = attrs.fetch(:passable, true)
       tile.metadata = attrs.fetch(:metadata, {})
       tile.biome = attrs.fetch(:biome, "plains")
-    end
-  end
-end
-
-if defined?(GroupListing) && defined?(Clan)
-  owner = User.first
-  clan = Clan.first
-  if owner && clan
-    GroupListing.find_or_create_by!(owner:, title: "Evening Hunt") do |listing|
-      listing.description = "Looking for allies for a wilderness patrol."
-      listing.listing_type = :party
-      listing.status = :open
-      listing.clan = clan
     end
   end
 end
@@ -646,27 +599,6 @@ if defined?(CraftingJob) && main_character
       active_job.portable_penalty_applied = false
       active_job.save!
     end
-
-    alchemy_recipe = Recipe.find_by(name: "Aetheric Elixir")
-    clan_station = CraftingStation.find_by(name: "Clan Hall Loom")
-    if alchemy_recipe && clan_station && secondary_character
-      completed_job = CraftingJob.find_or_initialize_by(
-        character: secondary_character,
-        recipe: alchemy_recipe,
-        status: :completed
-      )
-      completed_job.user = admin
-      completed_job.crafting_station = clan_station
-      completed_job.batch_quantity = 1
-      completed_job.started_at ||= 50.minutes.ago
-      completed_job.completes_at ||= 35.minutes.ago
-      completed_job.success_chance = 76
-      completed_job.quality_score = 91
-      completed_job.quality_tier = :epic
-      completed_job.result_payload = {"items" => [{"name" => "Aetheric Elixir", "quantity" => 1, "quality" => "epic"}]}
-      completed_job.portable_penalty_applied = false
-      completed_job.save!
-    end
   end
 end
 
@@ -703,7 +635,6 @@ if defined?(CurrencyWallet)
   if lukin_user
     wallet = lukin_user.currency_wallet || CurrencyWallet.create!(user: lukin_user)
     wallet.adjust!(currency: :gold, amount: 4_200, reason: "seed.arena_rewards")
-    wallet.adjust!(currency: :gold, amount: -600, reason: "sink.auction_bid", metadata: {"item" => "Tempered Longsword"})
     wallet.adjust!(currency: :silver, amount: 800, reason: "seed.trade_posting")
   end
 end
@@ -713,60 +644,6 @@ if defined?(PremiumTokenLedgerEntry) && admin_wallet
     entry.delta = 40
     entry.balance_after = admin_wallet.premium_tokens_balance
     entry.metadata = {"source" => "seed"}
-  end
-end
-
-if defined?(AuctionListing) && defined?(AuctionBid) && admin && lukin_user
-  listing = AuctionListing.find_or_create_by!(seller: admin, item_name: "Tempered Longsword") do |auction|
-    auction.currency_type = "gold"
-    auction.status = :active
-    auction.location_key = "castleton_market"
-    auction.quantity = 1
-    auction.starting_bid = 1_200
-    auction.buyout_price = 2_200
-    auction.ends_at = 6.hours.from_now
-    auction.item_metadata = {"rarity" => "rare", "item_type" => "weapon", "stats" => {"attack" => 18}}
-  end
-
-  AuctionBid.find_or_create_by!(auction_listing: listing, bidder: lukin_user) do |bid|
-    bid.amount = 1_500
-  end
-end
-
-event_instance = nil
-
-if defined?(EventInstance) && defined?(GameEvent)
-  festival_event = GameEvent.find_by(slug: "winter_festival")
-  if festival_event
-    event_instance = EventInstance.find_or_create_by!(game_event: festival_event, status: :active) do |instance|
-      instance.starts_at = 1.day.ago
-      instance.ends_at = 6.days.from_now
-      instance.announcer_npc_key = "captain_elara"
-      instance.metadata = {"featured_quest_key" => "movement_tutorial", "bonus_rewards" => ["winter_token"]}
-    end
-    unless event_instance.starts_at
-      event_instance.update!(
-        starts_at: 1.day.ago,
-        ends_at: 6.days.from_now,
-        metadata: event_instance.metadata.merge("featured_quest_key" => "movement_tutorial")
-      )
-    end
-  end
-end
-
-if defined?(CommunityObjective) && event_instance
-  CommunityObjective.find_or_create_by!(event_instance:, resource_key: "donated_ice_shards") do |objective|
-    objective.title = "Reinforce the Ice Sculptures"
-    objective.goal_amount = 10_000
-    objective.current_amount = 6_450
-    objective.status = :tracking
-    objective.metadata = {
-      "top_contributors" => [
-        {"user" => admin&.email, "amount" => 1_200},
-        {"user" => lukin_user&.email, "amount" => 640}
-      ],
-      "checkpoint_rewards" => {"2500" => "festival_fireworks", "7500" => "festival_banner"}
-    }
   end
 end
 
@@ -809,7 +686,6 @@ if defined?(QuestAssignment) && main_character
       metadata: {
         "story_flags" => ["missed_patrol"],
         "branch" => "reckless",
-        "event_instance_id" => event_instance&.id,
         "failure_report" => {"cause" => "breach", "npc" => "Captain Elara"}
       }
     )
@@ -857,7 +733,7 @@ if defined?(ArenaRoom)
       level_min: 10,
       level_max: 25,
       faction_restriction: nil,
-      description: "Initiation rites for clans."
+      description: "Initiation rites for combatants."
     },
     {
       name: "Hall of Light",
