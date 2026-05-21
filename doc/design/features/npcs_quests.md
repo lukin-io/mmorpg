@@ -15,9 +15,13 @@ Inputs:
 
 ## Player Experience
 
-The player encounters NPCs on tiles, in city nodes, or inside buildings. NPCs
-can talk, trade through documented shop/building flows, train, guard, heal,
-bank, or start combat once those behaviors are source-backed.
+The player encounters NPCs as source-backed combatants: outdoor hostile NPCs
+on world tiles and arena training opponents inside the arena flow.
+
+Building services are not NPC dialogue yet. `Лавка` is a documented shop
+building, not a generic town vendor NPC. Any future building NPC, service NPC,
+or quest NPC must be captured from Neverlands before adding tables, routes, or
+UI.
 
 Quest interaction is intentionally not implemented right now. It should be
 documented from Neverlands before adding tables, routes, or UI.
@@ -28,13 +32,14 @@ Core:
 
 - hostile monster;
 - arena training opponent;
-- loot-bearing combatant;
-- vendor/shopkeeper;
-- trainer;
-- guard;
-- banker;
-- innkeeper/healer;
-- arena announcer.
+- loot-bearing combatant.
+
+Deferred until capture:
+
+- building/service NPCs;
+- quest NPCs;
+- dialogue/action entry points;
+- training, recovery, storage, banking, transport, or other town services.
 
 ## NPC Rules
 
@@ -46,8 +51,8 @@ Core:
 - Arena training NPCs can appear as normal arena application participants and
   resolve through the same combat rules as player and team fights after the
   player accepts the open side.
-- Vendor NPCs should use the shop/economy rules.
-- Trainers interact with stats/skills/professions.
+- No town service role may create an action until its Neverlands behavior is
+  documented.
 
 ## NPC Loot And Drops
 
@@ -63,8 +68,8 @@ Design rules:
   step;
 - the combat log/result should show whether the NPC was searched and whether
   anything was found;
-- dropped items enter the same inventory/capacity rules as gathered resources
-  and shop purchases;
+- dropped items enter the same inventory/capacity rules as loot and shop
+  purchases;
 - capacity, protected-item rules, and binding rules must be enforced before the
   item becomes carried inventory;
 - arena rewards and NPC drops are separate concepts: a mannequin dropping wood
@@ -77,7 +82,7 @@ and wood chips are a low-value material drop from that NPC role. The May 19
 starter capture won three mannequin fights and each result log included a bot
 search result of `Вещь «Щепки»`; inventory then showed `Щепки` as carried item
 rows. The drop should flow through combat result -> loot check -> inventory
-item/resource, then feed crafting or shop economy rules.
+item/material, then feed shop economy rules.
 
 The outdoor rat-tail case belongs here as well. The May 20 capture near
 `Окрестность Форпоста` entered two bot-ambush fights against paired
@@ -118,8 +123,7 @@ Required future capture:
 - where quest entry points appear in the UI;
 - how NPC dialogue or action links start a quest;
 - how active tasks/journal state is displayed;
-- how progress is updated through movement, combat, gathering, shop, or NPC
-  actions;
+- how progress is updated through movement, combat, shop, or NPC actions;
 - how completion, turn-in, reward, cancel, failure, and repeatability behave;
 - whether quest items exist and how they are protected from sale/discard.
 
@@ -131,13 +135,11 @@ Required future capture:
 - spawned tile NPC;
 - loot table;
 - drop result;
-- dialogue node;
-- reputation/faction state.
+- future captured quest/action state.
 
 ## Interactions
 
 - `areas/world_map.md`: outdoor NPCs and tile-local actions.
-- `areas/cities_and_buildings.md`: city NPCs and service buildings.
-- `areas/arena.md`: arena announcers and training fights.
+- `areas/cities_and_buildings.md`: building entry points.
+- `areas/arena.md`: arena training fights.
 - `features/combat.md`: hostile and training combat.
-- `features/gathering_professions.md`: resource actions and trainers.

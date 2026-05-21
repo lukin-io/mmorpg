@@ -174,7 +174,7 @@ RSpec.describe NpcTemplate, type: :model do
       end
 
       let!(:npc_multi_zone) do
-        create(:npc_template, name: "Wandering Merchant", metadata: {"zones" => ["dark_forest", "crystal_caves", "sunlit_plains"]})
+        create(:npc_template, name: "Roaming Rat", metadata: {"zones" => ["dark_forest", "crystal_caves", "sunlit_plains"]})
       end
 
       let!(:npc_other_zone) do

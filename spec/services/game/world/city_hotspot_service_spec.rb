@@ -228,43 +228,23 @@ RSpec.describe Game::World::CityHotspotService do
       end
     end
 
-    context "with unimplemented feature (clinic)" do
-      let!(:clinic_hotspot) do
+    context "with documented pending shop feature" do
+      let!(:shop_hotspot) do
         create(:city_hotspot,
           zone: city_zone,
-          key: "clinic",
-          name: "Clinic",
-          hotspot_type: "feature",
+          key: "shop",
+          name: "Лавка",
+          hotspot_type: "building",
           action_type: "open_feature",
-          action_params: {"feature" => "clinic"},
+          action_params: {"feature" => "shop"},
           required_level: 1,
           active: true)
       end
 
-      it "returns failure with 'coming soon' message" do
-        result = subject.interact!(clinic_hotspot.id)
+      it "returns failure until the Neverlands shop is implemented" do
+        result = subject.interact!(shop_hotspot.id)
         expect(result.success).to be false
-        expect(result.message).to include("coming soon")
-      end
-    end
-
-    context "with unimplemented feature (healing)" do
-      let!(:healing_hotspot) do
-        create(:city_hotspot,
-          zone: city_zone,
-          key: "healing",
-          name: "Healing",
-          hotspot_type: "feature",
-          action_type: "open_feature",
-          action_params: {"feature" => "healing"},
-          required_level: 1,
-          active: true)
-      end
-
-      it "returns failure with 'coming soon' message" do
-        result = subject.interact!(healing_hotspot.id)
-        expect(result.success).to be false
-        expect(result.message).to include("coming soon")
+        expect(result.message).to include("pending implementation")
       end
     end
   end

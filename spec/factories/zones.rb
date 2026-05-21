@@ -4,7 +4,6 @@ FactoryBot.define do
     biome { "plains" }
     width { 10 }
     height { 10 }
-    encounter_table { {} }
     metadata { {} }
   end
 end

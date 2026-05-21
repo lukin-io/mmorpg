@@ -1,14 +1,11 @@
 # frozen_string_literal: true
 
 module Npc
-  # Shared combat interface for all NPC types
-  # Provides common methods for determining combat behavior and capabilities
+  # Shared combat interface for source-backed combat NPC types.
   #
   # Purpose: Standardize the combat interface across NPC types:
   #   - Hostile NPCs in the outside world
   #   - Arena bots for training
-  #   - Guards who may attack trespassers
-  #   - Trainers for sparring
   #
   # Usage:
   #   class NpcTemplate < ApplicationRecord
@@ -23,7 +20,7 @@ module Npc
   module Combatable
     extend ActiveSupport::Concern
 
-    COMBAT_ROLES = %w[hostile arena_bot guard trainer].freeze
+    COMBAT_ROLES = %w[hostile arena_bot].freeze
     BEHAVIOR_TYPES = %i[aggressive balanced defensive passive].freeze
 
     # Check if this NPC can engage in combat
@@ -60,8 +57,6 @@ module Npc
         :aggressive
       when "arena_bot"
         :balanced
-      when "guard", "trainer"
-        :defensive
       else
         :passive
       end
@@ -88,7 +83,7 @@ module Npc
     #
     # @return [Boolean]
     def can_flee?
-      !%w[arena_bot guard].include?(role) && metadata&.dig("can_flee") != false
+      role != "arena_bot" && metadata&.dig("can_flee") != false
     end
 
     # Get the HP threshold at which NPC considers fleeing

@@ -3,18 +3,16 @@
 
   <div class="location-description">
     <% if zone.biome == "city" %>
-      <p>You are standing in the bustling streets of <strong><%= zone.name %></strong>.
-         Merchants call out their wares, guards patrol the cobblestone roads, and
-         adventurers gather to share tales of their exploits.</p>
-      <p class="location-hint">💡 You can visit shops, talk to NPCs, or exit to the wilderness.</p>
+      <p>You are in <strong><%= zone.name %></strong>, a compact city node with
+         source-backed hotspots.</p>
+      <p class="location-hint">Use the city scene to enter documented buildings such as Arena or Лавка.</p>
     <% elsif zone.biome == "plains" %>
       <p>The open <strong><%= zone.name %></strong> stretch before you. Tall grass sways
          in the breeze, and the road leads to distant settlements.</p>
       <p class="location-hint">⚠️ Wild creatures may attack travelers here.</p>
     <% elsif zone.biome == "forest" %>
       <p>Dense trees surround you in the <strong><%= zone.name %></strong>. Sunlight
-         filters through the canopy, and you can hear wildlife moving in the underbrush.</p>
-      <p class="location-hint">🌿 Herbs and wood can be gathered here.</p>
+         filters through the canopy.</p>
     <% else %>
       <p>You are at <strong><%= zone.name %></strong> [<%= position.x %>, <%= position.y %>].</p>
     <% end %>

@@ -69,7 +69,7 @@ RSpec.describe Game::Skills::PassiveSkillRegistry do
     it "returns array of all skill keys" do
       keys = described_class.all_keys
       expect(keys).to be_an(Array)
-      expect(keys).to include(:wanderer, :melee_combat, :herbalism)
+      expect(keys).to include(:wanderer, :melee_combat, :first_aid)
     end
   end
 
@@ -154,7 +154,7 @@ RSpec.describe Game::Skills::PassiveSkillRegistry do
   describe ".progression_rate" do
     it "returns skill progression rate string" do
       expect(described_class.progression_rate(:wanderer)).to eq("10:8:6:4")
-      expect(described_class.progression_rate(:herbalism)).to eq("2:2:2:2")
+      expect(described_class.progression_rate(:first_aid)).to eq("2:2:2:2")
     end
 
     it "returns default rate for unknown skill" do
@@ -170,8 +170,7 @@ RSpec.describe Game::Skills::PassiveSkillRegistry do
     end
 
     it "returns peace pool for peace skills" do
-      expect(described_class.pool_for(:herbalism)).to eq(:peace)
-      expect(described_class.pool_for(:fishing)).to eq(:peace)
+      expect(described_class.pool_for(:first_aid)).to eq(:peace)
       expect(described_class.pool_for(:trading)).to eq(:peace)
     end
   end
@@ -188,7 +187,7 @@ RSpec.describe Game::Skills::PassiveSkillRegistry do
       expect(grouped).to be_a(Hash)
       expect(grouped.keys).to include(:combat, :magic, :peace)
       expect(grouped[:combat]).to include(:melee_combat, :ranged_combat)
-      expect(grouped[:peace]).to include(:herbalism, :fishing)
+      expect(grouped[:peace]).to include(:first_aid, :trading)
     end
   end
 

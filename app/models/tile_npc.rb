@@ -12,7 +12,7 @@
 class TileNpc < ApplicationRecord
   BASE_RESPAWN_SECONDS = 30.minutes.to_i
   RESPAWN_VARIANCE = 5.minutes.to_i # +/- 5 minutes randomness
-  NPC_ROLES = %w[hostile friendly vendor trainer guard].freeze
+  NPC_ROLES = %w[hostile].freeze
 
   belongs_to :npc_template
   belongs_to :defeated_by, class_name: "Character", optional: true
@@ -31,7 +31,6 @@ class TileNpc < ApplicationRecord
   scope :defeated, -> { where.not(defeated_at: nil) }
   scope :needs_respawn, -> { where("respawns_at IS NOT NULL AND respawns_at <= ?", Time.current).where.not(defeated_at: nil) }
   scope :hostile, -> { where(npc_role: "hostile") }
-  scope :friendly, -> { where.not(npc_role: "hostile") }
 
   # Check if NPC is alive and interactable
   def alive?
@@ -102,11 +101,6 @@ class TileNpc < ApplicationRecord
   # Check if hostile (can be attacked)
   def hostile?
     npc_role == "hostile"
-  end
-
-  # Check if friendly (can interact)
-  def friendly?
-    !hostile?
   end
 
   # HP percentage for display

@@ -16,7 +16,7 @@ RSpec.describe CityHotspot, type: :model do
       position_y: 200,
       image_normal: "building.png",
       action_type: "open_feature",
-      action_params: {"feature" => "test"},
+      action_params: {"feature" => "arena"},
       required_level: 1,
       active: true
     }
@@ -189,6 +189,12 @@ RSpec.describe CityHotspot, type: :model do
       expect(hotspot.navigate_url).to eq("/arena")
     end
 
+    it "returns nil for documented but unimplemented feature routes" do
+      hotspot.update!(action_type: "open_feature", action_params: {"feature" => "shop"})
+
+      expect(hotspot.navigate_url).to be_nil
+    end
+
     it "returns nil for none action" do
       hotspot.update!(action_type: "none")
       expect(hotspot.navigate_url).to be_nil
@@ -273,7 +279,7 @@ RSpec.describe CityHotspot, type: :model do
 
   describe "constants" do
     it "defines HOTSPOT_TYPES" do
-      expect(described_class::HOTSPOT_TYPES).to include("building", "exit", "decoration", "feature")
+      expect(described_class::HOTSPOT_TYPES).to contain_exactly("building", "exit", "decoration")
     end
 
     it "defines ACTION_TYPES" do
@@ -282,7 +288,7 @@ RSpec.describe CityHotspot, type: :model do
 
     it "defines FEATURE_ROUTES" do
       expect(described_class::FEATURE_ROUTES["arena"]).to eq("/arena")
-      expect(described_class::FEATURE_ROUTES["crafting"]).to eq("/crafting_jobs")
+      expect(described_class::FEATURE_ROUTES).not_to have_key("bank")
     end
   end
 end

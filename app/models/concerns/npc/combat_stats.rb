@@ -14,7 +14,7 @@ module Npc
   #     include Npc::CombatStats
   #   end
   #
-  #   npc = NpcTemplate.find_by(key: "forest_wolf")
+  #   npc = NpcTemplate.find_by(npc_key: "plague_rat")
   #   npc.combat_stats  # => { attack: 15, defense: 8, agility: 10, hp: 100, ... }
   #
   module CombatStats
@@ -33,10 +33,7 @@ module Npc
     # Role-specific stat modifiers (multipliers)
     ROLE_MODIFIERS = {
       "hostile" => {attack: 1.0, defense: 1.0, hp: 1.0},
-      "arena_bot" => {attack: 0.9, defense: 0.9, hp: 0.95},  # Slightly weaker for training
-      "guard" => {attack: 1.2, defense: 1.5, hp: 1.3},
-      "trainer" => {attack: 1.1, defense: 1.1, hp: 1.0},
-      "vendor" => {attack: 0.3, defense: 0.3, hp: 0.5}
+      "arena_bot" => {attack: 0.9, defense: 0.9, hp: 0.95}
     }.freeze
 
     # Get all combat stats as a unified hash

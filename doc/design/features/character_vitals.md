@@ -49,8 +49,8 @@ hp_full_regen_ticks = 1119
 mp_full_regen_ticks = 9000
 ```
 
-These values can be tuned by character stats, effects, equipment, or building
-services such as an inn or infirmary.
+These values can be tuned by character stats, effects, equipment, or future
+source-backed recovery services after they are captured.
 
 ## State Concepts
 

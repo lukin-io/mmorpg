@@ -72,7 +72,6 @@ Features:
 - `features/combat.md`
 - `features/items_inventory_equipment.md`
 - `features/economy_trading_shops.md`
-- `features/gathering_professions.md`
 - `features/npcs_quests.md`
 - `features/social_chat_presence.md`
 - `features/dungeons.md`
@@ -203,9 +202,20 @@ Neverlands-based behavior first.
 - generic friendship/friend-request system, including accepted-friend graph,
   friend-request privacy, friend-only presence broadcasts, and friends UI;
 - generic in-game mailbox and message attachments, including player mail,
-  system notifier mail, mailbox UI, and attachment payload delivery.
+  system notifier mail, mailbox UI, and attachment payload delivery;
 - generic quest/story implementation, including quest chains, chapters,
   objectives, assignments, branching story steps, dynamic/daily/repeatable
   quest generators, cutscenes, tutorial bootstrapping, quest board UI, generic
   quest-giver role handling, quest item/category hooks, quest rewards, and
-  profession reset through quest completion.
+  profession reset through quest completion;
+- generic town NPC service and building layer, including vendor/trainer/guard/
+  banker/innkeeper/crafter/lore roles, generic building dialogue screens,
+  fantasy default city buildings, workshop/clinic/bank/inn shortcuts, and
+  `talk_npc` action offers;
+- generic static world-region and biome encounter catalog, including fantasy
+  regions, landmarks, region monster tables, region resource tables, global
+  biome encounter tables, and movement-time random encounter resolution;
+- generic profession, crafting, gathering-node, tile-resource, and resource
+  respawn implementation, including crafting jobs, crafting stations, recipes,
+  profession tools/progress, generic resource action UI, and placeholder
+  mining/fishing/herbalism skill effects.

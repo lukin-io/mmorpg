@@ -41,7 +41,7 @@ module Game
         medium: "8:6:4:2",     # Magic skills - balanced
         balanced: "6:4:4:2",   # Resistance skills
         slow: "4:4:2:2",       # Specialized skills
-        very_slow: "2:2:2:2"   # Peace/crafting skills - slowest
+        very_slow: "2:2:2:2"   # Peace skills - slowest
       }.freeze
 
       # Calculate points gained for a single skill spend

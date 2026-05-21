@@ -70,14 +70,4 @@ RSpec.describe "World NPC fights", type: :request do
     expect(ArenaMatch.count).to eq(0)
     expect(action_offer.reload).to be_offered
   end
-
-  it "rejects non-hostile NPCs" do
-    tile_npc.update!(npc_role: "vendor")
-
-    post world_npc_fights_path, params: {tile_npc_id: tile_npc.id, action_key: action_offer.action_key}
-
-    expect(response).to redirect_to(world_path)
-    expect(ArenaMatch.count).to eq(0)
-    expect(action_offer.reload).to be_offered
-  end
 end

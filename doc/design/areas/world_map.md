@@ -4,8 +4,7 @@
 
 The world map is the outdoor exploration surface. It is where players travel
 between coordinates, discover local actions, meet nearby players, encounter
-hostile NPCs, gather resources, and enter cities or buildings offered by the
-current tile.
+hostile NPCs, and enter cities or buildings offered by the current tile.
 
 ## Neverlands Reference
 
@@ -20,8 +19,6 @@ Observed Neverlands behavior:
 - the browser shows a cursor animation and countdown during movement;
 - local presence refreshes after movement completion;
 - contextual buttons such as `Войти` appear from the current tile state.
-- outdoor tiles can offer `Оглядеться`, which is a local herb/resource search
-  action backed by the alchemy/resource AJAX path;
 - local outdoor actions can be interrupted by bot ambushes and hand the player
   into the normal fight screen;
 - after outdoor bot combat is finished, the player returns to the same outdoor
@@ -64,18 +61,11 @@ The map can offer:
 - character profile;
 - inventory;
 - enter city/building;
-- look for herbs/local resources (`Оглядеться`);
-- gather;
-- fish;
-- dig;
-- drink/use terrain feature;
 - hostile encounter or attack;
-- local NPC dialogue.
+- city or building entry.
 
 The server decides which actions exist for the current finalized location.
-`Оглядеться` should not be implemented as generic flavor text. In the source it
-calls the resource/alchemy action pipeline and may return a resource result,
-timer/message state, forced refresh, or bot-combat handoff.
+Future local actions must be documented from Neverlands before implementation.
 
 ## Rules
 
@@ -98,11 +88,9 @@ Persistent state sources:
 - movement commands: offered and active movement, including action key, source
   coordinate, target coordinate, and travel timestamps;
 - map tile templates: terrain, passability, and static map metadata;
-- tile resources: resource node identity, quantity, depletion, respawn, and
-  last harvester;
 - tile NPCs: spawned NPC identity, HP, defeated state, respawn, and template;
-- tile entrances: city, castle, dungeon, shop, portal, or other enterable
-  structures attached to a coordinate.
+- tile entrances: city gates and other source-backed enterable structures
+  attached to a coordinate.
 
 Player-facing persistence rule: closing and reopening the browser must never
 reset the player to a default or browser-held position. The server reloads the
@@ -119,7 +107,7 @@ Pipeline for every world map request:
 1. Complete due movement.
 2. Load current finalized character location.
 3. Resolve current tile state.
-4. Materialize any generated resource or NPC before rendering it.
+4. Materialize any generated NPC before rendering it.
 5. Build movement offers and contextual action offers.
 6. Before completing a mutating outdoor action, evaluate source-backed hostile
    encounter rules for the current tile.
@@ -149,7 +137,6 @@ Action examples:
 | Action | Persistent Target | Handler |
 | --- | --- | --- |
 | Move | movement command | movement acceptance service |
-| Gather | tile resource | gathering service |
 | Attack/Talk | tile NPC | combat or dialogue service |
 | Enter city/building/dungeon | tile entrance | building or city transition service |
 
@@ -159,7 +146,7 @@ Validation rules:
   target;
 - stale offers are rejected;
 - offers are cancelled/reissued when the authoritative map state changes;
-- generated NPC/resource state is materialized before any offer is issued;
+- generated NPC state is materialized before any offer is issued;
 - accepted actions write a result row or status update for audit and replay.
 - if an accepted outdoor action triggers a hostile NPC attack, the original
   action does not silently complete; the response becomes a combat state and
@@ -168,9 +155,9 @@ Validation rules:
 ## Outdoor Ambush Handoff
 
 The May 20, 2026 outdoor capture near `Окрестность Форпоста` showed both
-`Оглядеться` and `Инвентарь` requests returning or refreshing into bot combat
-against two `Чумная крыса` NPCs. The fight used the same combat client and
-finish-result step as arena fights, then returned to `m_1001_999`.
+outdoor local requests returning or refreshing into bot combat against two
+`Чумная крыса` NPCs. The fight used the same combat client and finish-result
+step as arena fights, then returned to `m_1001_999`.
 
 Design rules:
 
@@ -190,14 +177,13 @@ The outdoor map is a coordinate graph. In the starter reference area:
 1019,1025 -> Oktal city entry action
 ```
 
-The graph may later expand to more coordinates, roads, terrain costs, and
-encounter tables, but starter implementation should remain deterministic.
+The graph may later expand to more coordinates, roads, and terrain costs, but
+starter implementation should remain deterministic and source-backed.
 
 ## Feature Hooks
 
 - `features/movement.md`
 - `features/social_chat_presence.md`
-- `features/gathering_professions.md`
 - `features/npcs_quests.md`
 - `areas/cities_and_buildings.md`
 - `features/combat.md`

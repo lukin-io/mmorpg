@@ -109,8 +109,6 @@ near Oktal.
 
 - `areas/world_map.md` owns the outdoor screen.
 - `areas/cities_and_buildings.md` owns city and building movement.
-- `features/gathering_professions.md` can lock movement while an action timer
-  runs.
 - `features/progression_stats_skills.md` can reduce travel time through skills.
 - `features/items_inventory_equipment.md` can increase travel time through
   carried weight.
@@ -122,13 +120,11 @@ The open-world map should use one server-authored state-building pipeline:
 1. Finalize due movement for the character.
 2. Load the current authoritative character location.
 3. Materialize tile context for the current location:
-   - resources;
    - NPCs;
    - building, city, dungeon, or portal entrances;
    - terrain and passability.
 4. Create short-lived action offers for everything the player can do:
    - movement offers;
-   - gather offers;
    - attack/talk offers;
    - enter city/building/dungeon offers;
    - inspect/profile/inventory offers when needed by the UI.
@@ -143,7 +139,7 @@ Suggested Rails shape:
 - one model for short-lived contextual action offers;
 - one service that builds tile state and offers from persisted state;
 - one service that accepts an action key and dispatches to movement,
-  gathering, NPC, combat, or building-entry rules.
+  NPC, combat, or building-entry rules.
 
 Movement and non-movement tile actions should both produce auditable server
 state. The browser should submit choices, not decide what choices exist.

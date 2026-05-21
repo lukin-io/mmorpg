@@ -2,15 +2,15 @@
 
 module Players
   module Progression
-    # ExperiencePipeline standardizes XP rewards from combat and gathering while tracking contribution mix.
+    # ExperiencePipeline standardizes XP rewards while tracking contribution mix.
     #
     # Usage:
-    #   Players::Progression::ExperiencePipeline.new(character:).grant!(combat: 80, gathering: 20)
+    #   Players::Progression::ExperiencePipeline.new(character:).grant!(combat: 80)
     #
     # Returns:
     #   Character after XP + source ledger updates.
     class ExperiencePipeline
-      SOURCE_KEYS = %w[combat gathering].freeze
+      SOURCE_KEYS = %w[combat].freeze
 
       def initialize(character:, level_up_service: Players::Progression::LevelUpService.new(character:))
         @character = character

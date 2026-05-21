@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # MapTileTemplate defines terrain, passability, and metadata for each tile in a zone.
-# Tiles can have NPCs, resources, buildings, and special terrain features.
+# Tiles can have NPCs, buildings, and special terrain features.
 # Note: `zone` is stored as a string (zone name), not a foreign key.
 class MapTileTemplate < ApplicationRecord
   validates :zone, presence: true
@@ -43,10 +43,6 @@ class MapTileTemplate < ApplicationRecord
 
   def has_npc?
     metadata&.dig("npc").present?
-  end
-
-  def has_resource?
-    metadata&.dig("resource").present?
   end
 
   def has_building?

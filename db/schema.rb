@@ -298,43 +298,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_120000) do
     t.index ["target_id"], name: "index_combat_log_entries_on_target_id"
   end
 
-  create_table "crafting_jobs", force: :cascade do |t|
-    t.integer "batch_quantity", default: 1, null: false
-    t.bigint "character_id", null: false
-    t.datetime "completes_at", null: false
-    t.bigint "crafting_station_id", null: false
-    t.datetime "created_at", null: false
-    t.boolean "portable_penalty_applied", default: false, null: false
-    t.integer "quality_score", default: 0, null: false
-    t.string "quality_tier", default: "common", null: false
-    t.bigint "recipe_id", null: false
-    t.jsonb "result_payload", default: {}, null: false
-    t.datetime "started_at", null: false
-    t.integer "status", default: 0, null: false
-    t.integer "success_chance", default: 0, null: false
-    t.datetime "updated_at", null: false
-    t.bigint "user_id", null: false
-    t.index ["character_id", "status"], name: "index_crafting_jobs_on_character_id_and_status"
-    t.index ["character_id"], name: "index_crafting_jobs_on_character_id"
-    t.index ["crafting_station_id"], name: "index_crafting_jobs_on_crafting_station_id"
-    t.index ["recipe_id"], name: "index_crafting_jobs_on_recipe_id"
-    t.index ["user_id"], name: "index_crafting_jobs_on_user_id"
-  end
-
-  create_table "crafting_stations", force: :cascade do |t|
-    t.integer "capacity", default: 5, null: false
-    t.string "city", null: false
-    t.datetime "created_at", null: false
-    t.jsonb "metadata", default: {}, null: false
-    t.string "name", null: false
-    t.boolean "portable", default: false, null: false
-    t.string "station_archetype", default: "city", null: false
-    t.string "station_type", null: false
-    t.integer "success_penalty", default: 0, null: false
-    t.decimal "time_penalty_multiplier", precision: 5, scale: 2, default: "1.0", null: false
-    t.datetime "updated_at", null: false
-  end
-
   create_table "currency_transactions", force: :cascade do |t|
     t.integer "amount", null: false
     t.integer "balance_after", default: 0, null: false
@@ -359,24 +322,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_120000) do
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
     t.index ["user_id"], name: "index_currency_wallets_on_user_id", unique: true
-  end
-
-  create_table "gathering_nodes", force: :cascade do |t|
-    t.boolean "contested", default: false, null: false
-    t.datetime "created_at", null: false
-    t.integer "difficulty", default: 1, null: false
-    t.datetime "last_harvested_at"
-    t.datetime "next_available_at"
-    t.bigint "profession_id", null: false
-    t.string "rarity_tier", default: "common", null: false
-    t.string "resource_key", null: false
-    t.integer "respawn_seconds", default: 60, null: false
-    t.jsonb "rewards", default: {}, null: false
-    t.datetime "updated_at", null: false
-    t.bigint "zone_id", null: false
-    t.index ["profession_id", "resource_key"], name: "index_gathering_nodes_on_profession_id_and_resource_key"
-    t.index ["profession_id"], name: "index_gathering_nodes_on_profession_id"
-    t.index ["zone_id"], name: "index_gathering_nodes_on_zone_id"
   end
 
   create_table "ignore_list_entries", force: :cascade do |t|
@@ -516,73 +461,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_120000) do
     t.index ["role"], name: "index_npc_templates_on_role"
   end
 
-  create_table "profession_progresses", force: :cascade do |t|
-    t.bigint "character_id", null: false
-    t.datetime "created_at", null: false
-    t.bigint "equipped_tool_id"
-    t.bigint "experience", default: 0, null: false
-    t.integer "mastery_tier", default: 0, null: false
-    t.jsonb "metadata", default: {}, null: false
-    t.bigint "profession_id", null: false
-    t.integer "skill_level", default: 1, null: false
-    t.string "slot_kind", default: "primary", null: false
-    t.datetime "updated_at", null: false
-    t.bigint "user_id", null: false
-    t.index ["character_id", "profession_id"], name: "idx_profession_progresses_on_character_and_profession", unique: true
-    t.index ["character_id"], name: "index_profession_progresses_on_character_id"
-    t.index ["equipped_tool_id"], name: "index_profession_progresses_on_equipped_tool_id"
-    t.index ["profession_id"], name: "index_profession_progresses_on_profession_id"
-    t.index ["user_id", "profession_id"], name: "index_profession_progresses_on_user_and_profession", unique: true
-    t.index ["user_id"], name: "index_profession_progresses_on_user_id"
-  end
-
-  create_table "profession_tools", force: :cascade do |t|
-    t.bigint "character_id", null: false
-    t.datetime "created_at", null: false
-    t.integer "durability", default: 100, null: false
-    t.boolean "equipped", default: true, null: false
-    t.integer "max_durability", default: 100, null: false
-    t.jsonb "metadata", default: {}, null: false
-    t.bigint "profession_id", null: false
-    t.integer "quality_rating", default: 0, null: false
-    t.string "tool_type", null: false
-    t.datetime "updated_at", null: false
-    t.index ["character_id", "tool_type"], name: "index_profession_tools_on_character_id_and_tool_type"
-    t.index ["character_id"], name: "index_profession_tools_on_character_id"
-    t.index ["profession_id"], name: "index_profession_tools_on_profession_id"
-  end
-
-  create_table "professions", force: :cascade do |t|
-    t.string "category", null: false
-    t.datetime "created_at", null: false
-    t.text "description"
-    t.boolean "gathering", default: false, null: false
-    t.string "gathering_resource"
-    t.integer "healing_bonus", default: 0, null: false
-    t.jsonb "metadata", default: {}, null: false
-    t.string "name", null: false
-    t.datetime "updated_at", null: false
-    t.index ["name"], name: "index_professions_on_name", unique: true
-  end
-
-  create_table "recipes", force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.integer "duration_seconds", default: 60, null: false
-    t.string "name", null: false
-    t.string "output_item_name", null: false
-    t.bigint "profession_id", null: false
-    t.jsonb "quality_modifiers", default: {}, null: false
-    t.string "required_station_archetype", default: "city", null: false
-    t.jsonb "requirements", default: {}, null: false
-    t.jsonb "rewards", default: {}, null: false
-    t.string "risk_level", default: "safe", null: false
-    t.string "source_kind", default: "vendor", null: false
-    t.string "source_reference"
-    t.integer "tier", default: 1, null: false
-    t.datetime "updated_at", null: false
-    t.index ["profession_id"], name: "index_recipes_on_profession_id"
-  end
-
   create_table "roles", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "name", null: false
@@ -611,13 +489,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_120000) do
   create_table "tile_buildings", force: :cascade do |t|
     t.boolean "active", default: true, null: false
     t.string "building_key", null: false
-    t.string "building_type", default: "castle", null: false
+    t.string "building_type", default: "city", null: false
     t.datetime "created_at", null: false
     t.integer "destination_x"
     t.integer "destination_y"
     t.bigint "destination_zone_id"
     t.string "faction_key"
-    t.string "icon", default: "🏰"
+    t.string "icon", default: "🏙️"
     t.jsonb "metadata", default: {}, null: false
     t.string "name", null: false
     t.integer "required_level", default: 1, null: false
@@ -655,28 +533,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_120000) do
     t.index ["npc_template_id"], name: "index_tile_npcs_on_npc_template_id"
     t.index ["respawns_at"], name: "index_tile_npcs_on_respawns_at"
     t.index ["zone", "x", "y"], name: "index_tile_npcs_on_zone_and_x_and_y", unique: true
-  end
-
-  create_table "tile_resources", force: :cascade do |t|
-    t.integer "base_quantity", default: 1, null: false
-    t.string "biome"
-    t.datetime "created_at", null: false
-    t.bigint "harvested_by_id"
-    t.datetime "last_harvested_at"
-    t.jsonb "metadata", default: {}, null: false
-    t.integer "quantity", default: 1, null: false
-    t.string "resource_key", null: false
-    t.string "resource_type", default: "material", null: false
-    t.datetime "respawns_at"
-    t.datetime "updated_at", null: false
-    t.integer "x", null: false
-    t.integer "y", null: false
-    t.string "zone", null: false
-    t.index ["biome"], name: "index_tile_resources_on_biome"
-    t.index ["harvested_by_id"], name: "index_tile_resources_on_harvested_by_id"
-    t.index ["resource_type"], name: "index_tile_resources_on_resource_type"
-    t.index ["respawns_at"], name: "index_tile_resources_on_respawns_at"
-    t.index ["zone", "x", "y"], name: "index_tile_resources_on_zone_and_x_and_y", unique: true
   end
 
   create_table "user_sessions", force: :cascade do |t|
@@ -773,7 +629,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_120000) do
   create_table "zones", force: :cascade do |t|
     t.string "biome", null: false
     t.datetime "created_at", null: false
-    t.jsonb "encounter_table", default: {}, null: false
     t.integer "height", default: 32, null: false
     t.jsonb "metadata", default: {}, null: false
     t.string "name", null: false
@@ -808,14 +663,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_120000) do
   add_foreign_key "city_hotspots", "zones"
   add_foreign_key "city_hotspots", "zones", column: "destination_zone_id"
   add_foreign_key "combat_log_entries", "arena_matches"
-  add_foreign_key "crafting_jobs", "characters"
-  add_foreign_key "crafting_jobs", "crafting_stations"
-  add_foreign_key "crafting_jobs", "recipes"
-  add_foreign_key "crafting_jobs", "users"
   add_foreign_key "currency_transactions", "currency_wallets"
   add_foreign_key "currency_wallets", "users"
-  add_foreign_key "gathering_nodes", "professions"
-  add_foreign_key "gathering_nodes", "zones"
   add_foreign_key "ignore_list_entries", "users"
   add_foreign_key "ignore_list_entries", "users", column: "ignored_user_id"
   add_foreign_key "inventories", "characters"
@@ -824,18 +673,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_120000) do
   add_foreign_key "medical_supply_pools", "zones"
   add_foreign_key "movement_commands", "characters"
   add_foreign_key "movement_commands", "zones"
-  add_foreign_key "profession_progresses", "characters"
-  add_foreign_key "profession_progresses", "profession_tools", column: "equipped_tool_id"
-  add_foreign_key "profession_progresses", "professions"
-  add_foreign_key "profession_progresses", "users"
-  add_foreign_key "profession_tools", "characters"
-  add_foreign_key "profession_tools", "professions"
-  add_foreign_key "recipes", "professions"
   add_foreign_key "spawn_points", "zones"
   add_foreign_key "tile_buildings", "zones", column: "destination_zone_id"
   add_foreign_key "tile_npcs", "characters", column: "defeated_by_id"
   add_foreign_key "tile_npcs", "npc_templates"
-  add_foreign_key "tile_resources", "characters", column: "harvested_by_id"
   add_foreign_key "user_sessions", "users"
   add_foreign_key "users_roles", "roles"
   add_foreign_key "users_roles", "users"

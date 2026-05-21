@@ -10,7 +10,7 @@ The MVP is built around four connected pillars:
 1. Person as the basic persistent unit.
 2. Movement as the world navigation layer.
 3. Arena and combat as the structured fight loop.
-4. Wild cells as the open-world loop with NPCs, resources, and local actions.
+4. Wild cells as the open-world loop with NPCs, buildings, and local actions.
 
 All four pillars must use one gameplay shell, one character state, and one
 server-authoritative action model.
@@ -33,8 +33,7 @@ not implemented.
   not through a generic global marketplace or kiosk route.
 - Wild cell actions are tied to the current coordinate and expire when the
   player moves or context changes.
-- Outdoor `Оглядеться` is a resource-search action, and any outdoor local
-  action can be interrupted by source-backed hostile NPC rules.
+- Outdoor local actions can be interrupted by source-backed hostile NPC rules.
 - Legacy or unrelated systems should not be part of the MVP path unless they
   directly support one of the four pillars.
 
@@ -132,7 +131,7 @@ Required behavior:
 - position changes only when movement completes;
 - reload resumes active movement or finalizes completed movement;
 - city navigation uses hotspot/building transitions;
-- moving refreshes resources, NPCs, buildings, and local action offers for the
+- moving refreshes NPCs, buildings, and local action offers for the
   new cell;
 - movement locks conflicting actions while travel is active.
 
@@ -142,7 +141,7 @@ Required behavior:
   selected offer, start timed travel, and finalize due travel.
 - Persist accepted movement state with source, target, action key, start time,
   end time, completion, and failure state.
-- Use short-lived contextual action offers for movement, gathering, NPC, and
+- Use short-lived contextual action offers for movement, NPC, and
   building/city actions.
 - Materialize current tile state before rendering available actions.
 - Movement design is documented in `doc/design/features/movement.md`.
@@ -253,14 +252,13 @@ Build and verify the launch loop in this order:
 ### MVP Target
 
 Wild cells are the open-world counterpart to arena. Each cell can expose local
-resources, NPCs, buildings, and actions. Hostile NPCs and manual NPC attacks
+NPCs, buildings, and actions. Hostile NPCs and manual NPC attacks
 enter the same combat mechanics used by arena player/team and arena NPC fights.
 
 Required behavior:
 
-- each cell resolves resources, NPCs, buildings, and action offers from
+- each cell resolves NPCs, buildings, and action offers from
   server-side tile state;
-- resource actions are tied to the current cell and action key;
 - NPC actions are tied to the current cell and action key;
 - hostile NPCs can attack or be attacked from the wild cell;
 - hostile NPC checks can interrupt normal outdoor actions before those actions
@@ -269,14 +267,13 @@ Required behavior:
   magic/action slots, combat log, and result-finish step;
 - after a wild fight, the player returns to the world/city movement context,
   not the arena;
-- loot checks and resource state updates are visible after the result step.
+- loot checks are visible after the result step.
 - NPC drops are defined by the NPC loot design and awarded through inventory,
   not hard-coded into the combat screen.
 
 ### Build Guidance
 
-- Treat resources, NPCs, buildings, and action offers as tile-local context.
-- Treat `Оглядеться` as the source-backed herb/resource search action.
+- Treat NPCs, buildings, and action offers as tile-local context.
 - Evaluate hostile NPC interruption before completing mutating outdoor actions.
 - NPC combat and loot design is documented in
   `doc/design/features/npcs_quests.md`.
@@ -289,9 +286,7 @@ Required behavior:
 
 - Wild NPC ambush and manual attack should be wired through the same active
   combat UI and finish-result contract as arena NPC fights.
-- Per-cell resource and NPC action offers need complete system coverage.
-- Resource-search response shapes need coverage for resource result, timer or
-  message state, forced refresh, and bot-combat handoff.
+- Per-cell NPC and building action offers need complete system coverage.
 - Loot checks after wild NPC defeat need to be documented and implemented as a
   normal result step.
 - Wild return routing needs to preserve the exact movement/city context the
@@ -306,7 +301,7 @@ login
 -> active character
 -> persisted world or city location
 -> movement or city hotspot
--> cell actions: resource, NPC, building, arena, shop
+-> cell actions: NPC, building, arena, shop
 -> city building shop: buy, licenses, sell, novice goods
 -> arena application or wild NPC encounter
 -> shared combat turn UI
@@ -326,7 +321,7 @@ adding any Rails shop code.
 | Movement | Documented across movement and live movement/city captures. | Partially implemented. | Unify city hotspots with server-authored action offers, polish presence refresh and locks. |
 | Arena | Documented across arena, combat, live arena captures, and public log captures. | Partially implemented. | Finish city entry/return cleanup, formula tuning, magic/special balancing, and shared fight coverage. |
 | Combat | Documented across combat reference captures, arena observations, logs, and equipment effects. | Partially implemented. | Keep one resolver/log contract across arena player/team, arena NPC, and wild NPC fights. |
-| Wild cells | Documented across outdoor movement, hostile NPC/resource capture, and tile-action notes. | Partially implemented. | Wire wild NPC handoff to shared combat, loot result step, and exact return routing. |
+| Wild cells | Documented across outdoor movement, hostile NPC capture, and tile-action notes. | Partially implemented. | Wire wild NPC handoff to shared combat, loot result step, and exact return routing. |
 | Neverlands marketplace/shop | `Лавка` documented in `doc/design/reference/neverlands_live_lavka_shop.md`; feature guidance in `doc/design/features/economy_trading_shops.md`. | Not implemented after generic kiosk cleanup. | Build `Лавка` as a city building with buy goods, licenses, sell goods, novice goods, category filters, stock, requirements, and action-key validation. |
 | Neverlands NPC quest interactions | Needs dedicated Neverlands capture. | Not implemented; generic quest/story stack removed. | Capture exact NPC quest entry points, dialogue/action states, journal/task display, reward/turn-in rules, location gates, and failure/cancel states before rebuilding. |
 
@@ -353,8 +348,7 @@ the next implementation step is.
 | Login and resume | Yes: live player/location behavior and dashboard-removal decision. | Partial. | Login enters the selected character's current gameplay location, not an unrelated dashboard. |
 | Wilderness movement | Yes: live movement capture and movement feature doc. | Partial. | Implement movement offers, accepted travel, completion, stale-offer cancellation, and encumbrance-aware travel time. |
 | City movement | Yes: live city node/building capture. | Partial. | Build city action offers parallel to world tile offers. |
-| Tile-local action offers | Yes: movement, outdoor NPC/resource, and action-key observations. | Partial. | Use the same offer discipline for movement, gather, NPC, building, shop, trainer, buy, sell, timed local actions, and future captured quest actions. |
-| Gathering and resource nodes | Yes: `Оглядеться` and outdoor resource capture. | Partial. | Add look/gather/fish/dig/drink as first-class local offers with action timers, visible requirements, and hostile-interrupt handoff. |
+| Tile-local action offers | Yes: movement, outdoor NPC, and action-key observations. | Partial. | Use the same offer discipline for movement, hostile NPC, city/building entry, shop, buy, sell, timed local actions, and future captured quest actions. |
 | NPCs and drops | Yes: hostile behavior, arena mannequin drops, wild rat-tail drops, and source-backed combat handoff. | Partial. | Keep NPCs tied to tile/arena context, combat handoff, per-NPC loot checks, inventory capacity, and exact return routing. |
 | NPC quest interactions | Needs dedicated Neverlands capture. | Not implemented; generic quest/story stack removed. | Capture exact quest UI, NPC dialogue flow, task/journal state, reward/turn-in rules, and location gating before implementation. |
 | Combat | Yes: combat captures, public logs, magic, equipment effects, and result flow. | Partial. | Build the shared turn UI, combat profile, resolver, combat log, NPC response, live-player waiting, timeout, NPC loot check, and finish-result step. |
@@ -372,7 +366,7 @@ the next implementation step is.
 | Rule | Design Direction |
 | --- | --- |
 | Server-authored actions | Every mutating action in world, city, building, combat, shop, and future captured quest flows should be offered by the server and accepted by action key. |
-| Persistence after reload | Apply resume rules to location, active movement, combat, gathering timers, city/building state, and shop state where needed. |
+| Persistence after reload | Apply resume rules to location, active movement, combat, city/building state, and shop state where needed. |
 | Context-first navigation | Features should be reached through current location actions first. Global shortcuts can exist for development, but they are not the primary player flow. |
 | Compact game UI | Keep dense operational screens; avoid landing-page layouts inside authenticated gameplay. |
 | Starter content | Create one canonical starter path: outside tile -> city gate -> city node -> trading quarter -> shop -> city -> outside. |

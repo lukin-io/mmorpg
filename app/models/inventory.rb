@@ -7,14 +7,14 @@
 # Key Features:
 #   - Slot-based storage with configurable capacity
 #   - Weight-based limits for encumbrance
-#   - Material tracking and consumption for crafting
+#   - Material stack checks for loot and item requirements
 #   - Item stacking support
 #
 # Usage:
 #   inventory = character.inventory
-#   inventory.add_item_by_name!("Iron Ore", quantity: 5)
-#   inventory.materials_available?({ "Iron Ore" => 3 })
-#   inventory.consume_materials!({ "Iron Ore" => 3 })
+#   inventory.add_item_by_name!("Крысиный хвост", quantity: 5)
+#   inventory.materials_available?({ "Крысиный хвост" => 3 })
+#   inventory.consume_materials!({ "Крысиный хвост" => 3 })
 #
 class Inventory < ApplicationRecord
   class InsufficientMaterialsError < StandardError; end

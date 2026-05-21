@@ -24,7 +24,7 @@ module Game
     #     x: 5,
     #     y: 5
     #   )
-    #   info = service.building_info  # => { id: 1, name: "Castle", ... }
+    #   info = service.building_info  # => { id: 1, name: "City Gates", ... }
     #   result = service.enter!       # => Result(success: true, ...)
     #
     class TileBuildingService

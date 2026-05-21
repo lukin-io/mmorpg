@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
 # TileBuilding tracks enterable structures at specific map tiles.
-# Buildings allow players to transition between zones (e.g., entering a castle,
-# inn, shop, or portal).
+# Buildings allow players to transition between source-backed city/building
+# contexts.
 #
 # Usage:
 #   TileBuilding.at_tile(zone_name, x, y) # Find building at tile
@@ -11,17 +11,12 @@
 #   building.enter!(character)             # Move character to destination zone
 #
 class TileBuilding < ApplicationRecord
-  BUILDING_TYPES = %w[city castle fort inn shop portal tavern temple].freeze
+  BUILDING_TYPES = %w[city arena shop].freeze
 
   BUILDING_ICONS = {
     "city" => "🏙️",
-    "castle" => "🏰",
-    "fort" => "🏯",
-    "inn" => "🏨",
-    "shop" => "🏪",
-    "portal" => "🌀",
-    "tavern" => "🍺",
-    "temple" => "⛪"
+    "arena" => "⚔️",
+    "shop" => "🏪"
   }.freeze
 
   belongs_to :destination_zone, class_name: "Zone", optional: true
@@ -57,7 +52,7 @@ class TileBuilding < ApplicationRecord
   #
   # @return [String] emoji icon
   def display_icon
-    icon.presence || BUILDING_ICONS[building_type] || "🏰"
+    icon.presence || BUILDING_ICONS[building_type] || "🏙️"
   end
 
   # Check if building is accessible (active and destination exists)

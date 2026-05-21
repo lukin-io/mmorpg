@@ -355,24 +355,6 @@ export default class extends Controller {
         const bonus = Math.round((level / 100) * 25)
         return `Loot: +${bonus}%`
       }
-      case "herbalism":
-      case "mining":
-      case "fishing": {
-        const bonus = Math.round((level / 100) * 100)
-        return `Yield: +${bonus}%`
-      }
-      case "blacksmithing": {
-        const tier = Math.floor(level / 25)
-        return `Crafting Tier: ${tier}`
-      }
-      case "alchemy": {
-        const bonus = Math.round((level / 100) * 50)
-        return `Potions: +${bonus}%`
-      }
-      case "cooking": {
-        const bonus = Math.round((level / 100) * 100)
-        return `Buff Duration: +${bonus}%`
-      }
       case "first_aid": {
         const bonus = Math.round((level / 100) * 75)
         return `Regen: +${bonus}%`

@@ -6,7 +6,7 @@ module Characters
   #
   # @example Apply damage
   #   service = Characters::VitalsService.new(character)
-  #   service.apply_damage(50, source: "Wild Wolf")
+  #   service.apply_damage(50, source: "Plague Rat")
   #
   # @example Tick regeneration
   #   service.tick_regeneration

@@ -144,8 +144,8 @@ physical seed.
 ### Captured Outdoor Bot Ambush
 
 The 2026-05-20 outdoor capture near `Окрестность Форпоста` entered a bot fight
-after an outdoor `Оглядеться` resource-search action returned a forced refresh.
-A later `Инвентарь` outdoor action was also interrupted by a new bot attack.
+after an outdoor local action returned a forced refresh. A later `Инвентарь`
+outdoor action was also interrupted by a new bot attack.
 
 The first outdoor fight was:
 
@@ -594,8 +594,8 @@ Implementation implications from the May 20 outdoor bot capture:
 
 - wild NPC combat must use the same turn/resolution/result pipeline as arena
   NPC and player/team fights;
-- outdoor local actions such as `Оглядеться` or `Инвентарь` can be interrupted
-  before completion and replaced by a bot-attack fight state;
+- outdoor local actions can be interrupted before completion and replaced by a
+  bot-attack fight state;
 - multi-NPC fights need participant-level defeat and loot checks before the
   fight-level victory result;
 - empty public log responses in the rat capture should be handled as a source

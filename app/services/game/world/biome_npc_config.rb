@@ -2,18 +2,18 @@
 
 module Game
   module World
-    # BiomeNpcConfig loads and provides access to biome-specific NPC spawns.
-    # Configuration is loaded from config/gameplay/biome_npcs.yml
+    # BiomeNpcConfig loads source-backed outdoor NPC spawns.
+    # Configuration is loaded from config/gameplay/biome_npcs.yml.
     #
     # Usage:
-    #   BiomeNpcConfig.for_biome("forest")
-    #   # => [{key: "forest_wolf", role: "hostile", ...}, ...]
+    #   BiomeNpcConfig.for_biome("plains")
+    #   # => [{key: "plague_rat", role: "hostile", ...}, ...]
     #
-    #   BiomeNpcConfig.sample_npc("forest")
-    #   # => {key: "giant_spider", role: "hostile", ...}
+    #   BiomeNpcConfig.sample_npc("plains")
+    #   # => {key: "plague_rat", role: "hostile", ...}
     #
-    #   BiomeNpcConfig.respawn_modifier("mountain")
-    #   # => 300 (seconds)
+    #   BiomeNpcConfig.respawn_modifier("plains")
+    #   # => 0
     #
     class BiomeNpcConfig
       CONFIG_PATH = Rails.root.join("config/gameplay/biome_npcs.yml")
@@ -83,11 +83,6 @@ module Game
         # Get all hostile NPCs for a biome
         def hostile_npcs(biome)
           for_biome(biome).select { |n| n[:role] == "hostile" }
-        end
-
-        # Get all friendly NPCs for a biome
-        def friendly_npcs(biome)
-          for_biome(biome).reject { |n| n[:role] == "hostile" }
         end
 
         # Get all unique NPCs across all biomes

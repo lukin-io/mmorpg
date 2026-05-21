@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-# CityHotspot represents a clickable building/area in a city zone view.
-# Instead of a tile-based map, city zones display an illustrated view with
-# interactive hotspots for buildings like arena, workshop, clinic, etc.
+# CityHotspot represents a clickable area in a city zone view.
+# City hotspots are source-backed navigation points such as Arena, Shop, or
+# a city exit.
 #
 # Usage:
 #   CityHotspot.for_zone(zone)           # Get all active hotspots for a zone
@@ -10,18 +10,15 @@
 #   hotspot.navigate_url                 # Get the destination URL for the hotspot
 #
 class CityHotspot < ApplicationRecord
-  HOTSPOT_TYPES = %w[building exit decoration feature].freeze
+  HOTSPOT_TYPES = %w[building exit decoration].freeze
   ACTION_TYPES = %w[enter_zone open_feature none].freeze
 
-  # Feature routes mapping - maps feature keys to their route paths
   FEATURE_ROUTES = {
-    "arena" => "/arena",
-    "crafting" => "/crafting_jobs",
-    "workshop" => "/crafting_jobs",
-    "healing" => "/world",  # TODO: Implement healing feature
-    "clinic" => "/world",   # TODO: Implement clinic feature
-    "shop" => "/shop",
-    "tavern" => "/tavern"
+    "arena" => "/arena"
+  }.freeze
+
+  PENDING_FEATURES = {
+    "shop" => "Shop is documented from Neverlands and pending implementation."
   }.freeze
 
   belongs_to :zone
@@ -75,7 +72,7 @@ class CityHotspot < ApplicationRecord
       nil # Handled by controller to update character position
     when "open_feature"
       feature_key = action_params["feature"] || key
-      FEATURE_ROUTES[feature_key] || "/#{feature_key}"
+      FEATURE_ROUTES[feature_key]
     end
   end
 
@@ -94,7 +91,6 @@ class CityHotspot < ApplicationRecord
     when "building" then "🏛️"
     when "exit" then "🚪"
     when "decoration" then "🌳"
-    when "feature" then "⚙️"
     else "📍"
     end
   end

@@ -2,7 +2,7 @@
 
 module Game
   module Movement
-    # TurnProcessor enforces server-side, turn-based movement and resolves encounters.
+    # TurnProcessor enforces server-side, turn-based movement.
     #
     # Legacy synchronous movement processor used by low-level services/specs.
     # Runtime wilderness movement uses MapState, AcceptMove, and CompleteMove.
@@ -22,9 +22,9 @@ module Game
     #   result = Game::Movement::TurnProcessor.new(character:, direction: :north).call
     #
     # Returns:
-    #   Result struct with updated position + optional encounter data.
+    #   Result struct with updated position.
     class TurnProcessor
-      Result = Struct.new(:position, :encounter, keyword_init: true)
+      Result = Struct.new(:position, keyword_init: true)
 
       BASE_MOVEMENT_COOLDOWN_SECONDS = Game::Movement::TravelTime::BASE_TRAVEL_SECONDS
       OFFSETS = {
@@ -39,13 +39,12 @@ module Game
       }.freeze
 
       def initialize(character:, direction:, rng: Random.new(1), movement_validator: MovementValidator,
-        respawn_service: nil, encounter_resolver: Game::Exploration::EncounterResolver.new)
+        respawn_service: nil)
         @character = character
         @direction = direction.to_sym
         @rng = rng
         @movement_validator_class = movement_validator
         @respawn_service = respawn_service || RespawnService.new(character:)
-        @encounter_resolver = encounter_resolver
       end
 
       def call
@@ -62,8 +61,6 @@ module Game
         cooldown_seconds = environment_cooldown(zone: position.zone, tile_metadata:)
         ensure_ready!(position, cooldown_seconds:)
 
-        encounter = resolve_encounter(provider:, zone: position.zone, x: target_x, y: target_y, tile_metadata:)
-
         position.update!(
           x: target_x,
           y: target_y,
@@ -71,14 +68,14 @@ module Game
           last_turn_number: position.last_turn_number + 1
         )
 
-        Result.new(position:, encounter:)
+        Result.new(position:)
       end
 
       private
 
       class MovementViolationError < StandardError; end
 
-      attr_reader :character, :direction, :rng, :movement_validator_class, :respawn_service, :encounter_resolver
+      attr_reader :character, :direction, :rng, :movement_validator_class, :respawn_service
 
       def ensure_ready?(position, cooldown_seconds:)
         position.ready_for_action?(cooldown_seconds:)
@@ -92,15 +89,6 @@ module Game
 
       def fetch_offset
         OFFSETS.fetch(direction) { raise MovementViolationError, "Unknown direction #{direction}" }
-      end
-
-      def resolve_encounter(provider:, zone:, x:, y:, tile_metadata:)
-        encounter_resolver.resolve(
-          zone:,
-          biome: provider.biome_at(x, y),
-          tile_metadata: tile_metadata,
-          rng:
-        )
       end
 
       def environment_cooldown(zone:, tile_metadata:)

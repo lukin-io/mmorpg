@@ -27,7 +27,7 @@ module Players
       SKILL_POINTS_PER_LEVEL = 1          # Mirrors total unspent numeric skill points
       COMBAT_SKILL_POINTS_PER_LEVEL = 1   # Combat/magic/resistance skills
       PEACE_SKILL_POINTS_START_LEVEL = 5  # Peace skills unlock at level 5
-      PEACE_SKILL_POINTS_PER_LEVEL = 1    # Peace/crafting skills
+      PEACE_SKILL_POINTS_PER_LEVEL = 1    # Peace skills
       PERK_POINTS_LEVEL_INTERVAL = 5      # Earn 1 perk point every 5 levels
 
       Result = Struct.new(:character, :levels_gained, :stat_points_gained,

@@ -42,7 +42,6 @@ Features:
 - `doc/design/features/combat.md`
 - `doc/design/features/items_inventory_equipment.md`
 - `doc/design/features/economy_trading_shops.md`
-- `doc/design/features/gathering_professions.md`
 - `doc/design/features/npcs_quests.md`
 - `doc/design/features/social_chat_presence.md`
 - `doc/design/features/dungeons.md`
@@ -58,7 +57,7 @@ Documentation process:
 
 Build a classic, persistent, browser-first fantasy MMORPG with slow, deliberate
 map movement, tile-local actions, social presence, tactical combat, character
-growth, player economy, and profession systems.
+growth, and player economy.
 
 The intended feel is:
 
@@ -79,9 +78,9 @@ The intended feel is:
 3. Player chooses a server-offered destination or local action.
 4. Movement/actions lock relevant buttons and show a timer when they take time.
 5. Completion refreshes current location, available movement, tile actions,
-   resources, NPCs, buildings, encounters, and nearby player list.
-6. Player gains resources, combat progress, reputation, skill
-   growth, or economy opportunities.
+   NPCs, buildings, encounters, and nearby player list.
+6. Player gains combat progress, reputation, skill growth, or economy
+   opportunities.
 
 ## Movement GDD
 
@@ -100,8 +99,7 @@ Movement follows the Neverlands-style contract:
 - reload during travel resumes from server state;
 - completion updates authoritative position and returns the next map state;
 - completion also refreshes context buttons such as character, inventory,
-  enter, `Оглядеться` resource search, gather, fish, dig, drink, or combat
-  actions.
+  enter, NPC, building, or combat actions.
 
 The first implementation does not need to copy Neverlands' exact `GO@...`
 string protocol. JSON or Turbo Streams are acceptable if they preserve the same
@@ -221,11 +219,6 @@ may offer buttons for:
 - character/profile;
 - inventory;
 - enter/exit building or location;
-- `Оглядеться` herb/local resource search;
-- gather resource;
-- fish;
-- dig;
-- drink/use terrain feature;
 - talk to NPC;
 - attack hostile NPC;
 - future captured quest interaction.
@@ -277,28 +270,22 @@ Characters grow through:
 - experience and levels;
 - stat allocation;
 - passive skills;
-- profession progress;
 - reputation and alignment;
 - equipment and inventory growth.
 
 Movement-affecting progression, such as Wanderer skill, encumbrance, or terrain
 mastery, must feed the canonical travel-time formula.
 
-## Economy And Professions
+## Economy
 
 The economy supports:
 
 - normal shop currency;
 - inventory weight/slots;
 - city shop buy/sell flows;
-- crafting professions;
-- gathering and resource respawn;
 
 Direct player trade exists in Neverlands, but it is deferred until its exact
 flow and constraints are captured.
-
-Profession actions may lock movement with timers, matching the same lock/resume
-model as movement.
 
 ## Social Presence
 

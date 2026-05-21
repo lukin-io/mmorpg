@@ -25,8 +25,6 @@ class User < ApplicationRecord
   has_many :chat_channels, through: :chat_channel_memberships
   has_many :chat_messages, foreign_key: :sender_id, dependent: :nullify
   has_one :currency_wallet, dependent: :destroy
-  has_many :profession_progresses, dependent: :destroy
-  has_many :crafting_jobs, dependent: :nullify
   has_many :ignore_list_entries, dependent: :destroy
   has_many :ignored_users, through: :ignore_list_entries, source: :ignored_user
   has_many :ignored_by_entries,

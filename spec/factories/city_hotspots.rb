@@ -13,7 +13,7 @@ FactoryBot.define do
     image_normal { "test_building.png" }
     image_hover { "test_building_hl.png" }
     action_type { "open_feature" }
-    action_params { {"feature" => "test"} }
+    action_params { {"feature" => "arena"} }
     required_level { 1 }
     active { true }
     z_index { 0 }
@@ -35,11 +35,6 @@ FactoryBot.define do
       image_hover { nil }
     end
 
-    trait :feature do
-      hotspot_type { "feature" }
-      action_type { "open_feature" }
-    end
-
     trait :inactive do
       active { false }
     end
@@ -57,13 +52,13 @@ FactoryBot.define do
       image_normal { "arena.png" }
     end
 
-    trait :workshop do
-      key { "workshop" }
-      name { "Workshop" }
+    trait :shop do
+      key { "shop" }
+      name { "Лавка" }
       hotspot_type { "building" }
       action_type { "open_feature" }
-      action_params { {"feature" => "crafting"} }
-      image_normal { "workshop.png" }
+      action_params { {"feature" => "shop"} }
+      image_normal { "shop.png" }
     end
 
     trait :city_gate do

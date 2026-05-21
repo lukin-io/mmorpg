@@ -2,18 +2,17 @@
 
 module Game
   module World
-    # TileNpcService handles NPC spawning and interaction at map tiles.
-    # Spawns random NPCs based on biome when players visit tiles.
+    # TileNpcService handles source-backed hostile NPC spawns at map tiles.
     #
     # Usage:
     #   service = Game::World::TileNpcService.new(
     #     character: current_character,
-    #     zone: "Starter Plains",
+    #     zone: "Outpost Surroundings",
     #     x: 5,
     #     y: 7
     #   )
     #   npc_info = service.npc_info
-    #   # => { name: "Wild Boar", role: "hostile", level: 2, ... }
+    #   # => { name: "Plague Rat", role: "hostile", level: 4, ... }
     #
     class TileNpcService
       def initialize(character:, zone:, x:, y:)

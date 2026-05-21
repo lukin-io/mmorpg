@@ -400,15 +400,8 @@ RSpec.describe "Skill Allocation", type: :system, js: true do
     end
 
     context "peace skills" do
-      it "herbalism uses peace points" do
-        within_skill_row(:herbalism) { click_button "+" }
-
-        within(".nl-allocation-pool--combat") { expect(page).to have_content("10") }
-        within(".nl-allocation-pool--peace") { expect(page).to have_content("4") }
-      end
-
-      it "mining uses peace points" do
-        within_skill_row(:mining) { click_button "+" }
+      it "first_aid uses peace points" do
+        within_skill_row(:first_aid) { click_button "+" }
 
         within(".nl-allocation-pool--combat") { expect(page).to have_content("10") }
         within(".nl-allocation-pool--peace") { expect(page).to have_content("4") }
@@ -417,6 +410,7 @@ RSpec.describe "Skill Allocation", type: :system, js: true do
       it "trading uses peace points" do
         within_skill_row(:trading) { click_button "+" }
 
+        within(".nl-allocation-pool--combat") { expect(page).to have_content("10") }
         within(".nl-allocation-pool--peace") { expect(page).to have_content("4") }
       end
     end
@@ -424,7 +418,7 @@ RSpec.describe "Skill Allocation", type: :system, js: true do
     context "mixed allocations" do
       it "can allocate from both pools in same session" do
         within_skill_row(:melee_combat) { click_button "+" } # combat
-        within_skill_row(:herbalism) { click_button "+" }    # peace
+        within_skill_row(:first_aid) { click_button "+" }    # peace
 
         within(".nl-allocation-pool--combat") { expect(page).to have_content("9") }
         within(".nl-allocation-pool--peace") { expect(page).to have_content("4") }
@@ -432,7 +426,7 @@ RSpec.describe "Skill Allocation", type: :system, js: true do
 
       it "saves allocations from both pools" do
         within_skill_row(:melee_combat) { click_button "+" }
-        within_skill_row(:herbalism) { click_button "+" }
+        within_skill_row(:first_aid) { click_button "+" }
 
         click_button "Save Skills"
         expect(page).to have_content("Skills allocated", wait: 5)
@@ -560,7 +554,7 @@ RSpec.describe "Skill Allocation", type: :system, js: true do
       end
 
       it "blocks peace skill allocation" do
-        within_skill_row(:herbalism) do
+        within_skill_row(:first_aid) do
           click_button "+"
           expect(page).to have_content("[000/100]")
         end
@@ -580,8 +574,8 @@ RSpec.describe "Skill Allocation", type: :system, js: true do
       end
 
       it "allows peace skill allocation" do
-        within_skill_row(:herbalism) { click_button "+" }
-        within_skill_row(:herbalism) { expect(page).to have_content("[002/100]") } # Peace rate is 2:2:2:2
+        within_skill_row(:first_aid) { click_button "+" }
+        within_skill_row(:first_aid) { expect(page).to have_content("[002/100]") } # Peace rate is 2:2:2:2
       end
     end
   end
@@ -694,27 +688,6 @@ RSpec.describe "Skill Allocation", type: :system, js: true do
       end
       expect(page).to have_content("Prices:")
     end
-
-    it "displays herbalism yield bonus" do
-      within_skill_row(:herbalism) do
-        click_button "+"
-      end
-      expect(page).to have_content("Yield:")
-    end
-
-    it "displays alchemy potion bonus" do
-      within_skill_row(:alchemy) do
-        click_button "+"
-      end
-      expect(page).to have_content("Potions:")
-    end
-
-    it "displays cooking buff duration bonus" do
-      within_skill_row(:cooking) do
-        click_button "+"
-      end
-      expect(page).to have_content("Buff Duration:")
-    end
   end
 
   # ============================================
@@ -745,34 +718,6 @@ RSpec.describe "Skill Allocation", type: :system, js: true do
       # 1. Allocate fire_resistance
       # 2. Take fire damage
       # 3. Verify damage is reduced
-    end
-  end
-
-  describe "crafting system integration", :skip_ci do
-    xit "allocated blacksmithing unlocks higher tier recipes" do
-      # When crafting system is integrated
-    end
-
-    xit "allocated alchemy increases potion effectiveness" do
-      # When alchemy system is integrated
-    end
-
-    xit "allocated cooking increases buff duration" do
-      # When cooking system is integrated
-    end
-  end
-
-  describe "gathering system integration", :skip_ci do
-    xit "allocated herbalism increases herb yield" do
-      # When gathering system is integrated
-    end
-
-    xit "allocated mining increases ore quality" do
-      # When gathering system is integrated
-    end
-
-    xit "allocated fishing increases rare fish chance" do
-      # When gathering system is integrated
     end
   end
 

@@ -6,7 +6,7 @@ FactoryBot.define do
     sequence(:y) { |n| n }
     zone { "Starter Plains" }
     biome { "plains" }
-    npc_key { "wild_boar" }
+    npc_key { "plague_rat" }
     npc_role { "hostile" }
     level { 2 }
     current_hp { 80 }
@@ -28,22 +28,16 @@ FactoryBot.define do
       association :defeated_by, factory: :character
     end
 
-    trait :friendly do
-      npc_key { "wandering_merchant" }
-      npc_role { "vendor" }
-      level { 5 }
-    end
-
     trait :forest do
       biome { "forest" }
-      npc_key { "forest_wolf" }
+      npc_key { "plague_rat" }
       level { 3 }
       current_hp { 70 }
       max_hp { 70 }
     end
 
     trait :elite do
-      npc_key { "mountain_troll" }
+      npc_key { "plague_rat" }
       npc_role { "hostile" }
       level { 10 }
       current_hp { 300 }

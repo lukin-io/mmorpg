@@ -8,7 +8,6 @@ class CreateWorldNavigationSystems < ActiveRecord::Migration[8.1]
       t.integer :width, null: false, default: 32
       t.integer :height, null: false, default: 32
       t.integer :turn_counter, null: false, default: 1
-      t.jsonb :encounter_table, null: false, default: {}
       t.jsonb :metadata, null: false, default: {}
       t.timestamps
     end

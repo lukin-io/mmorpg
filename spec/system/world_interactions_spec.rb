@@ -48,44 +48,6 @@ RSpec.describe "World Interactions", type: :system, js: true do
 
       expect(page).to have_content("Hidden Hamlet")
     end
-
-    it "talks to a friendly NPC from the tile action panel" do
-      create(:tile_npc,
-        :friendly,
-        zone: zone.name,
-        x: position.x,
-        y: position.y,
-        npc_template: create(:npc_template, name: "Gate Guard", role: "guard"))
-
-      visit world_path
-
-      click_button "💬 Talk"
-
-      expect(page).to have_content("Gate Guard")
-      expect(page).to have_link("Leave")
-    end
-  end
-
-  describe "failure cases" do
-    it "shows an error when gathering but the inventory has no free slots" do
-      character.inventory.update!(slot_capacity: 1)
-      create(:inventory_item, inventory: character.inventory, item_template: create(:item_template, :material))
-      create(:tile_resource,
-        zone: zone.name,
-        x: position.x,
-        y: position.y,
-        resource_key: "iron_ore",
-        resource_type: "ore",
-        quantity: 1,
-        base_quantity: 1)
-
-      visit world_path
-
-      expect(page).to have_css(".tile-resource-actions", text: /Iron Ore/i, wait: 5)
-      find("#gather_tile_resource_btn", wait: 5).click
-
-      expect(page).to have_css("#flash", text: "Inventory full")
-    end
   end
 
   describe "null/edge cases" do

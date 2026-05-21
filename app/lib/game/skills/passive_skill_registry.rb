@@ -35,7 +35,7 @@ module Game
 
       # Skill pool types - determines which skill point pool is used
       POOL_COMBAT = :combat   # Combat/Magic/Resistance skills
-      POOL_PEACE = :peace     # Peace/Crafting skills
+      POOL_PEACE = :peace
 
       # Skill definitions with their effects and formulas
       # Each skill has:
@@ -276,7 +276,7 @@ module Game
         perception: {
           key: :perception,
           name: "Perception",
-          description: "Increases chance to find rare resources and hidden paths.",
+          description: "Increases chance to notice hidden paths and local details.",
           max_level: MAX_LEVEL,
           category: :survival,
           pool: POOL_COMBAT,
@@ -302,82 +302,6 @@ module Game
         # ==========================================
         # PEACE SKILLS (use peace_skill_points)
         # ==========================================
-        herbalism: {
-          key: :herbalism,
-          name: "Herbalism",
-          description: "Increases yield and quality of gathered herbs and plants.",
-          max_level: MAX_LEVEL,
-          category: :peace,
-          pool: POOL_PEACE,
-          effect_type: :herb_gathering_bonus,
-          # At max level: +100% herb yield
-          effect_formula: ->(level) { (level.to_f / MAX_LEVEL) * 1.0 },
-          progression_rate: "2:2:2:2"
-        },
-
-        mining: {
-          key: :mining,
-          name: "Mining",
-          description: "Increases yield and quality of mined ores and gems.",
-          max_level: MAX_LEVEL,
-          category: :peace,
-          pool: POOL_PEACE,
-          effect_type: :mining_bonus,
-          effect_formula: ->(level) { (level.to_f / MAX_LEVEL) * 1.0 },
-          progression_rate: "2:2:2:2"
-        },
-
-        fishing: {
-          key: :fishing,
-          name: "Fishing",
-          description: "Increases catch rate and chance for rare fish.",
-          max_level: MAX_LEVEL,
-          category: :peace,
-          pool: POOL_PEACE,
-          effect_type: :fishing_bonus,
-          effect_formula: ->(level) { (level.to_f / MAX_LEVEL) * 1.0 },
-          progression_rate: "2:2:2:2"
-        },
-
-        blacksmithing: {
-          key: :blacksmithing,
-          name: "Blacksmithing",
-          description: "Unlocks higher tier crafting recipes for weapons and armor.",
-          max_level: MAX_LEVEL,
-          category: :peace,
-          pool: POOL_PEACE,
-          effect_type: :crafting_tier,
-          # Tier unlocks at 25, 50, 75, 100
-          effect_formula: ->(level) { (level / 25).floor },
-          progression_rate: "2:2:2:2"
-        },
-
-        alchemy: {
-          key: :alchemy,
-          name: "Alchemy",
-          description: "Increases potion effectiveness and unlocks advanced recipes.",
-          max_level: MAX_LEVEL,
-          category: :peace,
-          pool: POOL_PEACE,
-          effect_type: :alchemy_bonus,
-          # At max level: +50% potion effectiveness
-          effect_formula: ->(level) { (level.to_f / MAX_LEVEL) * 0.50 },
-          progression_rate: "2:2:2:2"
-        },
-
-        cooking: {
-          key: :cooking,
-          name: "Cooking",
-          description: "Increases food buff duration and unlocks advanced recipes.",
-          max_level: MAX_LEVEL,
-          category: :peace,
-          pool: POOL_PEACE,
-          effect_type: :cooking_bonus,
-          # At max level: +100% food buff duration
-          effect_formula: ->(level) { (level.to_f / MAX_LEVEL) * 1.0 },
-          progression_rate: "2:2:2:2"
-        },
-
         first_aid: {
           key: :first_aid,
           name: "First Aid",

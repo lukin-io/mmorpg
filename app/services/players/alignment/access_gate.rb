@@ -44,7 +44,7 @@ module Players
         end
 
         evaluate_gate(requirements[:city], :city, reasons)
-        evaluate_gate(requirements[:vendor], :vendor, reasons)
+        evaluate_gate(requirements[:shop], :shop, reasons)
         evaluate_gate(requirements[:storyline], :storyline, reasons)
 
         Result.new(allowed: reasons.empty?, reasons:)

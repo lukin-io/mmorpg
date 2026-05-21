@@ -23,19 +23,6 @@ Rails.application.routes.draw do
     post :enter_building
     post :interact_hotspot
     post :exit_location
-    post :gather
-    post :gather_resource
-    post :interact
-    post :dialogue_action
-  end
-
-  resources :gathering, only: [:show] do
-    member do
-      post :harvest
-    end
-    collection do
-      get :nodes
-    end
   end
 
   resource :inventory, only: [:show] do
@@ -84,21 +71,6 @@ Rails.application.routes.draw do
 
   resources :chat_channels, only: [:index, :show] do
     resources :chat_messages, only: :create
-  end
-
-  resources :professions, only: :index do
-    member do
-      post :enroll
-    end
-  end
-
-  resources :crafting_jobs, only: [:index, :create] do
-    collection do
-      post :preview
-    end
-  end
-  resources :profession_tools, only: [] do
-    post :repair, on: :member
   end
 
   # UNCLARIFIED YET

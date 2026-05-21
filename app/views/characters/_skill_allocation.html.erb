@@ -160,18 +160,6 @@
                   <% when :luck
                        bonus = (skill_info[:level] / 100.0 * 25).round %>
                     Loot: +<%= bonus %>%
-                  <% when :herbalism, :mining, :fishing
-                       bonus = (skill_info[:level] / 100.0 * 100).round %>
-                    Yield: +<%= bonus %>%
-                  <% when :blacksmithing
-                       tier = (skill_info[:level] / 25).floor %>
-                    Crafting Tier: <%= tier %>
-                  <% when :alchemy
-                       bonus = (skill_info[:level] / 100.0 * 50).round %>
-                    Potions: +<%= bonus %>%
-                  <% when :cooking
-                       bonus = (skill_info[:level] / 100.0 * 100).round %>
-                    Buff Duration: +<%= bonus %>%
                   <% when :first_aid
                        bonus = (skill_info[:level] / 100.0 * 75).round %>
                     Regen: +<%= bonus %>%

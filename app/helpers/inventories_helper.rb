@@ -6,11 +6,7 @@ module InventoriesHelper
     ["all", "All"],
     ["equipment", "Things"],
     ["consumables", "Elixirs"],
-    ["alchemy", "Alchemy"],
-    ["fishing", "Fishing"],
-    ["hunting", "Hunting & Food"],
-    ["materials", "Resources"],
-    ["wood", "Wood"]
+    ["materials", "Materials"]
   ].freeze
 
   SLOT_ICONS = {
@@ -43,7 +39,6 @@ module InventoriesHelper
     "accessory" => "AC",
     "consumable" => "EL",
     "material" => "RS",
-    "resource" => "RS",
     "misc" => "IT"
   }.freeze
 

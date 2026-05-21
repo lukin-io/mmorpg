@@ -68,8 +68,7 @@
                     data-x="<%= tile.x %>"
                     data-y="<%= tile.y %>"
                     data-terrain="<%= terrain %>"
-                    <%= "data-npc=\"#{tile_meta['npc']}\"".html_safe if tile_meta["npc"].present? %>
-                    <%= "data-resource=\"#{tile_meta['resource']}\"".html_safe if tile_meta["resource"].present? %>>
+                    <%= "data-npc=\"#{tile_meta['npc']}\"".html_safe if tile_meta["npc"].present? %>>
 
                   <% if is_available %>
                     <%# Clickable tile - available for movement %>
@@ -98,24 +97,10 @@
                     </div>
                   <% end %>
 
-                  <%# Resource marker %>
-                  <% if tile_meta["resource"].present? %>
-                    <% resource_icon = case tile_meta["resource_type"]
-                                       when "herb" then "🌿"
-                                       when "ore" then "⛏️"
-                                       when "fish" then "🐟"
-                                       when "wood" then "🪵"
-                                       else "✨"
-                                       end %>
-                    <div class="nl-tile-entity nl-tile-resource" title="<%= tile_meta['resource'] %>">
-                      <span class="nl-entity-icon"><%= resource_icon %></span>
-                    </div>
-                  <% end %>
-
                   <%# Building marker %>
                   <% if tile_meta["building"].present? %>
                     <div class="nl-tile-entity nl-tile-building nl-tile-building--<%= tile_meta['building_type'] %>" title="<%= tile_meta['building'] %>">
-                      <span class="nl-entity-icon"><%= tile_meta['building_icon'] || '🏰' %></span>
+                      <span class="nl-entity-icon"><%= tile_meta['building_icon'] || '🏙️' %></span>
                     </div>
                   <% end %>
                 </td>

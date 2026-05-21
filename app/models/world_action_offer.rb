@@ -3,10 +3,7 @@
 # Server-authored, short-lived action key for tile-local world actions.
 class WorldActionOffer < ApplicationRecord
   ACTION_TYPES = %w[
-    gather_node
-    gather_resource
     attack_npc
-    talk_npc
     enter_building
   ].freeze
 

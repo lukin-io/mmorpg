@@ -2,8 +2,8 @@
 
 ## Purpose
 
-The economy lets players turn combat, gathering, crafting, and exploration into
-practical choices. Shops are city buildings first.
+The economy lets combat rewards, inventory, and city shops become practical
+choices. Shops are city buildings first.
 
 ## Neverlands Reference
 
@@ -69,7 +69,6 @@ economy state.
 - `areas/cities_and_buildings.md`: shops are entered through city
   hotspots.
 - `features/items_inventory_equipment.md`: all goods are inventory items.
-- `features/gathering_professions.md`: crafted/gathered goods enter economy.
 - `features/social_chat_presence.md`: future direct trade capture should account
   for player identity and local presence.
 

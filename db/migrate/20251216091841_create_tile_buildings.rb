@@ -7,12 +7,12 @@ class CreateTileBuildings < ActiveRecord::Migration[8.1]
       t.integer :x, null: false
       t.integer :y, null: false
       t.string :building_key, null: false
-      t.string :building_type, null: false, default: "castle"
+      t.string :building_type, null: false, default: "city"
       t.string :name, null: false
       t.references :destination_zone, null: true, foreign_key: {to_table: :zones}
       t.integer :destination_x
       t.integer :destination_y
-      t.string :icon, default: "🏰"
+      t.string :icon, default: "🏙️"
       t.integer :required_level, default: 1, null: false
       t.string :faction_key
       t.jsonb :metadata, default: {}, null: false

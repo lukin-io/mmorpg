@@ -437,198 +437,7 @@ RSpec.describe "World", type: :request do
     end
   end
 
-  describe "JSON API responses" do
-    let(:user) { create(:user) }
-    let(:zone) { create(:zone, name: "API Zone", biome: "plains", width: 20, height: 20) }
-    let(:character) { create(:character, user: user) }
-    let!(:position) { create(:character_position, character: character, zone: zone, x: 5, y: 5, last_action_at: 10.seconds.ago) }
-
-    before { sign_in user, scope: :user }
-
-    it "returns JSON for gather_resource action" do
-      post gather_resource_world_path,
-        headers: {"Accept" => "application/json"}
-
-      expect(response.content_type).to include("application/json")
-    end
-  end
-
-  describe "POST /world/gather_resource" do
-    let(:user) { create(:user) }
-    let(:zone) { create(:zone, name: "Resource Zone", biome: "forest", width: 20, height: 20) }
-    let(:character) { create(:character, user: user) }
-    let!(:position) { create(:character_position, character: character, zone: zone, x: 5, y: 5) }
-    let!(:item_template) { create(:item_template, name: "Oak Wood", key: "oak_wood", item_type: "resource", stack_limit: 99, weight: 1) }
-    let!(:tile_resource) do
-      create(:tile_resource,
-        zone: zone.name,
-        biome: "forest",
-        x: 5,
-        y: 5,
-        resource_key: "oak_wood",
-        resource_type: "wood",
-        quantity: 10,
-        base_quantity: 10)
-    end
-
-    before do
-      sign_in user, scope: :user
-      # Use the inventory created by the character factory
-      character.inventory.update!(slot_capacity: 20, weight_capacity: 100, current_weight: 0)
-    end
-
-    def gather_resource_params(resource = tile_resource)
-      {
-        action_key: world_action_offer_for(
-          character: character,
-          position: position,
-          action_type: :gather_resource,
-          target: resource
-        ).action_key
-      }
-    end
-
-    def post_gather_resource(headers: {}, resource: tile_resource)
-      post gather_resource_world_path,
-        params: gather_resource_params(resource),
-        headers:
-    end
-
-    # Regression test: Ensure gather_resource doesn't fail with inventory validation errors
-    # Previously failed with "Quantity must be greater than 0" when creating new inventory items
-    context "when inventory is empty" do
-      it "does not raise validation errors when adding items to inventory" do
-        # This should not raise ActiveRecord::RecordInvalid
-        expect {
-          post_gather_resource(headers: {"Accept" => "application/json"})
-        }.not_to raise_error
-      end
-
-      it "returns a valid response" do
-        post_gather_resource(headers: {"Accept" => "application/json"})
-
-        # Response should be either success or failure message, not 500 error
-        expect(response.status).to be_in([200, 422])
-        expect(response.content_type).to include("application/json")
-      end
-
-      it "completes the accepted action offer on success" do
-        offer = world_action_offer_for(
-          character: character,
-          position: position,
-          action_type: :gather_resource,
-          target: tile_resource
-        )
-
-        post gather_resource_world_path,
-          params: {action_key: offer.action_key},
-          headers: {"Accept" => "application/json"}
-
-        expect(offer.reload).to be_completed
-      end
-
-      it "rejects a gather request without a live action offer" do
-        post gather_resource_world_path,
-          headers: {"Accept" => "application/json"}
-
-        expect(response).to have_http_status(:unprocessable_entity)
-        expect(JSON.parse(response.body)["message"]).to include("Action offer")
-      end
-    end
-
-    context "with turbo stream format" do
-      it "returns turbo stream response" do
-        post_gather_resource(headers: {"Accept" => "text/vnd.turbo-stream.html"})
-
-        # Should not raise 500 error
-        expect(response.status).to be_in([200, 422])
-      end
-
-      # Regression test: Map must update after gathering to show resource state changes
-      it "uses update action for game-map" do
-        post_gather_resource(headers: {"Accept" => "text/vnd.turbo-stream.html"})
-
-        # Must use 'update' not 'replace' to preserve turbo-frame element
-        expect(response.body).to include('action="update"')
-        expect(response.body).to include('target="game-map"')
-      end
-
-      it "includes map container in response" do
-        post_gather_resource(headers: {"Accept" => "text/vnd.turbo-stream.html"})
-
-        expect(response.body).to include("nl-map-container")
-      end
-
-      it "updates available-actions" do
-        post_gather_resource(headers: {"Accept" => "text/vnd.turbo-stream.html"})
-
-        expect(response.body).to include('target="available-actions"')
-      end
-
-      it "updates location-info" do
-        post_gather_resource(headers: {"Accept" => "text/vnd.turbo-stream.html"})
-
-        expect(response.body).to include('target="location-info"')
-      end
-
-      it "includes flash message" do
-        post_gather_resource(headers: {"Accept" => "text/vnd.turbo-stream.html"})
-
-        expect(response.body).to include('target="flash"')
-      end
-    end
-
-    # Regression test: Depleted resources should not show on map
-    context "when resource is depleted" do
-      before do
-        # Update the existing tile_resource to be depleted
-        tile_resource.update!(quantity: 0, respawns_at: 30.minutes.from_now)
-      end
-
-      it "does not show resource data attribute for depleted resource" do
-        get world_path
-
-        # Verify tile exists
-        expect(response.body).to include('id="tile_5_5"')
-        # Depleted resources should not show resource data attribute
-        # Note: The attribute should not be present, checking exact behavior
-        tile_html = response.body[/tile_5_5.*?<\/td>/m]
-        expect(tile_html).not_to include("data-resource=")
-      end
-    end
-
-    context "when resource is available" do
-      let!(:available_resource) do
-        create(:tile_resource,
-          zone: zone.name,
-          x: position.x + 1, # Adjacent tile
-          y: position.y,
-          resource_key: "healing_herb",
-          resource_type: "herb",
-          quantity: 2,
-          base_quantity: 2,
-          respawns_at: nil)
-      end
-
-      it "includes available resource in map" do
-        get world_path
-
-        # Available resources should show
-        expect(response.body).to include("Healing Herb")
-      end
-    end
-
-    context "with HTML format" do
-      it "redirects to world path" do
-        post_gather_resource
-
-        expect(response).to redirect_to(world_path)
-      end
-    end
-  end
-
   # Tests for add_live_tile_features logic
-  # This tests the priority system: database records > procedural features
   describe "map tile feature display" do
     let(:user) { create(:user) }
     let(:zone) { create(:zone, name: "Feature Test Zone", biome: "plains", width: 20, height: 20) }
@@ -636,75 +445,6 @@ RSpec.describe "World", type: :request do
     let!(:position) { create(:character_position, character: character, zone: zone, x: 10, y: 10) }
 
     before { sign_in user, scope: :user }
-
-    describe "TileResource display" do
-      context "when database TileResource exists and is available" do
-        let!(:db_resource) do
-          create(:tile_resource,
-            zone: zone.name,
-            x: 11, # Adjacent tile (east)
-            y: 10,
-            resource_key: "iron_ore",
-            resource_type: "ore",
-            quantity: 3,
-            base_quantity: 3,
-            respawns_at: nil)
-        end
-
-        it "shows the database resource on the map" do
-          get world_path
-
-          expect(response.body).to include("Iron Ore")
-          expect(response.body).to include("nl-tile-resource")
-        end
-
-        it "shows correct resource icon for ore type" do
-          get world_path
-
-          # Ore resources should show pickaxe icon
-          expect(response.body).to include("⛏️")
-        end
-      end
-
-      context "when database TileResource exists but is depleted" do
-        let!(:depleted_db_resource) do
-          create(:tile_resource,
-            zone: zone.name,
-            x: 11, # Adjacent tile (east)
-            y: 10,
-            resource_key: "depleted_ore",
-            resource_type: "ore",
-            quantity: 0,
-            base_quantity: 3,
-            respawns_at: 30.minutes.from_now)
-        end
-
-        it "does not show the depleted resource on the map" do
-          get world_path
-
-          expect(response.body).not_to include("Depleted Ore")
-        end
-
-        it "hides resource until respawn time passes" do
-          get world_path
-
-          # The depleted resource tile should not have resource marker
-          expect(response.body).not_to include('data-resource="Depleted Ore"')
-        end
-      end
-
-      context "when no database TileResource exists (procedural fallback)" do
-        # No TileResource created - relies on procedural_features
-
-        it "shows procedural resources based on zone biome" do
-          get world_path
-
-          # Procedural features should still generate some resources
-          # The exact resources depend on seeded random, but plains should have some
-          expect(response).to have_http_status(:success)
-        end
-      end
-    end
 
     describe "TileNpc display" do
       context "when database TileNpc exists and is alive" do
@@ -778,78 +518,6 @@ RSpec.describe "World", type: :request do
         end
       end
     end
-
-    describe "resource depletion after gathering" do
-      let!(:gatherable_resource) do
-        create(:tile_resource,
-          zone: zone.name,
-          x: position.x,
-          y: position.y,
-          resource_key: "test_herb",
-          resource_type: "herb",
-          quantity: 1, # Will deplete after one gather
-          base_quantity: 1,
-          respawns_at: nil)
-      end
-
-      before do
-        # Use the inventory created by the character factory
-        character.inventory.update!(slot_capacity: 20, weight_capacity: 100)
-      end
-
-      it "hides resource from map after it's fully depleted" do
-        # First verify resource is visible
-        get world_path
-        expect(response.body).to include("Test Herb")
-
-        # Gather the resource (depletes it)
-        offer = world_action_offer_for(
-          character: character,
-          position: position,
-          action_type: :gather_resource,
-          target: gatherable_resource
-        )
-        post gather_resource_world_path,
-          params: {action_key: offer.action_key},
-          headers: {"Accept" => "text/vnd.turbo-stream.html"}
-
-        # Check that map update doesn't include the depleted resource
-        expect(response.body).not_to include('title="Test Herb"')
-      end
-    end
-
-    describe "priority: database records over procedural" do
-      # When a database record exists, it takes precedence over procedural generation
-      let!(:db_resource_at_procedural_location) do
-        # Place a specific database resource at coordinates that would have procedural content
-        create(:tile_resource,
-          zone: zone.name,
-          x: 10,
-          y: 9, # North of player
-          resource_key: "special_crystal",
-          resource_type: "crystal",
-          quantity: 5,
-          base_quantity: 5,
-          respawns_at: nil)
-      end
-
-      it "shows database resource instead of procedural" do
-        get world_path
-
-        # Should show our specific database resource
-        expect(response.body).to include("Special Crystal")
-      end
-
-      it "shows depleted status even if procedural would generate resource" do
-        # Deplete the resource
-        db_resource_at_procedural_location.update!(quantity: 0, respawns_at: 30.minutes.from_now)
-
-        get world_path
-
-        # Should NOT show any resource at this tile (even if procedural would generate one)
-        expect(response.body).not_to include("Special Crystal")
-      end
-    end
   end
 
   describe "authentication requirements" do
@@ -874,7 +542,7 @@ RSpec.describe "World", type: :request do
   describe "POST /world/enter_building" do
     let(:user) { create(:user) }
     let(:source_zone) { create(:zone, name: "Starter Plains", biome: "plains", width: 20, height: 20) }
-    let(:destination_zone) { create(:zone, name: "Castleton Keep", biome: "city", width: 10, height: 10) }
+    let(:destination_zone) { create(:zone, name: "Outpost", biome: "city", width: 10, height: 10) }
     let(:character) { create(:character, user: user, level: 10) }
     let!(:position) { create(:character_position, character: character, zone: source_zone, x: 5, y: 5) }
     let!(:spawn_point) { create(:spawn_point, zone: destination_zone, x: 3, y: 3, default_entry: true) }
@@ -908,9 +576,9 @@ RSpec.describe "World", type: :request do
           zone: source_zone.name,
           x: 5,
           y: 5,
-          building_key: "test_castle",
-          name: "Test Castle",
-          building_type: "castle",
+          building_key: "test_city_gate",
+          name: "City Gates",
+          building_type: "city",
           destination_zone: destination_zone,
           destination_x: 7,
           destination_y: 7,
@@ -938,7 +606,7 @@ RSpec.describe "World", type: :request do
 
         expect(response).to redirect_to(world_path)
         follow_redirect!
-        expect(response.body).to include("Test Castle").or include("enter")
+        expect(response.body).to include("City Gates").or include("enter")
       end
 
       it "redirects on turbo stream format to trigger full page reload" do
@@ -981,8 +649,8 @@ RSpec.describe "World", type: :request do
           zone: source_zone.name,
           x: 5,
           y: 5,
-          building_key: "spawn_test_castle",
-          name: "Spawn Test Castle",
+          building_key: "spawn_test_city_gate",
+          name: "Spawn Test Gate",
           destination_zone: destination_zone,
           destination_x: nil,
           destination_y: nil,
@@ -1028,8 +696,8 @@ RSpec.describe "World", type: :request do
           zone: source_zone.name,
           x: 10,
           y: 10,
-          building_key: "distant_castle",
-          name: "Distant Castle",
+          building_key: "distant_city_gate",
+          name: "Distant City Gate",
           destination_zone: destination_zone,
           required_level: 1,
           active: true)
@@ -1059,8 +727,8 @@ RSpec.describe "World", type: :request do
           zone: source_zone.name,
           x: 5,
           y: 5,
-          building_key: "inactive_castle",
-          name: "Inactive Castle",
+          building_key: "inactive_city_gate",
+          name: "Inactive City Gate",
           destination_zone: destination_zone,
           required_level: 1,
           active: false)
@@ -1099,8 +767,8 @@ RSpec.describe "World", type: :request do
           zone: source_zone.name,
           x: 5,
           y: 5,
-          building_key: "high_level_castle",
-          name: "High Level Castle",
+          building_key: "high_level_city_gate",
+          name: "High Level City Gate",
           destination_zone: destination_zone,
           required_level: 50,
           active: true)
@@ -1134,8 +802,8 @@ RSpec.describe "World", type: :request do
           zone: source_zone.name,
           x: 5,
           y: 5,
-          building_key: "no_dest_castle",
-          name: "No Destination Castle",
+          building_key: "no_dest_city_gate",
+          name: "No Destination City Gate",
           destination_zone: nil,
           required_level: 1,
           active: true)
@@ -1197,8 +865,8 @@ RSpec.describe "World", type: :request do
           zone: other_zone.name,
           x: 5,
           y: 5,
-          building_key: "other_zone_castle",
-          name: "Other Zone Castle",
+          building_key: "other_zone_city_gate",
+          name: "Other Zone City Gate",
           destination_zone: destination_zone,
           required_level: 1,
           active: true)
@@ -1229,10 +897,10 @@ RSpec.describe "World", type: :request do
           zone: zone.name,
           x: 11, # Adjacent tile (east)
           y: 10,
-          building_key: "map_test_castle",
-          name: "Map Test Castle",
-          building_type: "castle",
-          icon: "🏰",
+          building_key: "map_test_city_gate",
+          name: "Map Test City Gate",
+          building_type: "city",
+          icon: "🏙️",
           destination_zone: destination_zone,
           active: true)
       end
@@ -1246,13 +914,13 @@ RSpec.describe "World", type: :request do
       it "shows building icon on map" do
         get world_path
 
-        expect(response.body).to include("🏰")
+        expect(response.body).to include("🏙️")
       end
 
       it "shows building name in title attribute" do
         get world_path
 
-        expect(response.body).to include("Map Test Castle")
+        expect(response.body).to include("Map Test City Gate")
       end
     end
 
@@ -1262,9 +930,9 @@ RSpec.describe "World", type: :request do
           zone: zone.name,
           x: 10,
           y: 10,
-          building_key: "current_position_castle",
-          name: "Current Position Castle",
-          building_type: "castle",
+          building_key: "current_position_city_gate",
+          name: "Current Position City Gate",
+          building_type: "city",
           destination_zone: destination_zone,
           active: true)
       end
@@ -1272,7 +940,7 @@ RSpec.describe "World", type: :request do
       it "shows building in actions panel" do
         get world_path
 
-        expect(response.body).to include("Current Position Castle")
+        expect(response.body).to include("Current Position City Gate")
         expect(response.body).to include("Enter")
       end
     end
@@ -1283,8 +951,8 @@ RSpec.describe "World", type: :request do
           zone: zone.name,
           x: 11,
           y: 10,
-          building_key: "inactive_map_castle",
-          name: "Inactive Map Castle",
+          building_key: "inactive_map_city_gate",
+          name: "Inactive Map City Gate",
           destination_zone: destination_zone,
           active: false)
       end
@@ -1292,42 +960,42 @@ RSpec.describe "World", type: :request do
       it "does not show inactive building on map" do
         get world_path
 
-        expect(response.body).not_to include("Inactive Map Castle")
+        expect(response.body).not_to include("Inactive Map City Gate")
       end
     end
 
     context "with different building types" do
-      let!(:inn) do
+      let!(:shop) do
         create(:tile_building,
           zone: zone.name,
           x: 9,
           y: 10,
-          building_key: "test_inn",
-          name: "Cozy Inn",
-          building_type: "inn",
-          icon: "🏨",
+          building_key: "test_shop",
+          name: "Лавка",
+          building_type: "shop",
+          icon: "🏪",
           destination_zone: destination_zone,
           active: true)
       end
 
-      let!(:portal) do
+      let!(:arena) do
         create(:tile_building,
           zone: zone.name,
           x: 10,
           y: 9,
-          building_key: "test_portal",
-          name: "Magic Portal",
-          building_type: "portal",
-          icon: "🌀",
+          building_key: "test_arena",
+          name: "Arena",
+          building_type: "arena",
+          icon: "⚔️",
           destination_zone: destination_zone,
           active: true)
       end
 
-      it "shows different icons for different building types" do
+      it "shows documented icons for different building types" do
         get world_path
 
-        expect(response.body).to include("🏨") # Inn icon
-        expect(response.body).to include("🌀") # Portal icon
+        expect(response.body).to include("🏪")
+        expect(response.body).to include("⚔️")
       end
     end
   end
@@ -1412,7 +1080,7 @@ RSpec.describe "World", type: :request do
   # ============================================
   # Regression tests for the interact_hotspot action handling.
   #
-  # Bug: Feature hotspots (Arena, Workshop, etc.) weren't navigating properly
+  # Bug: Feature hotspots such as Arena weren't navigating properly
   #      because only enter_zone had proper respond_to block with status: :see_other
   # Fix: Added proper respond_to block for open_feature hotspots
 
@@ -1475,27 +1143,28 @@ RSpec.describe "World", type: :request do
       end
     end
 
-    context "with open_feature hotspot (Workshop/Crafting)" do
-      let!(:workshop_hotspot) do
-        create(:city_hotspot, :workshop,
+    context "with documented pending shop hotspot" do
+      let!(:shop_hotspot) do
+        create(:city_hotspot, :shop,
           zone: city_zone,
           required_level: 1,
           active: true)
       end
 
-      it "redirects to crafting jobs page (HTML)" do
-        post interact_hotspot_world_path, params: {hotspot_id: workshop_hotspot.id}
+      it "redirects back to world with pending message on HTML" do
+        post interact_hotspot_world_path, params: {hotspot_id: shop_hotspot.id}
 
-        expect(response).to redirect_to("/crafting_jobs")
+        expect(response).to redirect_to(world_path)
+        expect(flash[:alert]).to include("pending implementation")
       end
 
-      it "redirects to crafting jobs page (Turbo Stream)" do
+      it "returns a turbo stream error while pending" do
         post interact_hotspot_world_path,
-          params: {hotspot_id: workshop_hotspot.id},
+          params: {hotspot_id: shop_hotspot.id},
           headers: {"Accept" => "text/vnd.turbo-stream.html"}
 
-        expect(response).to redirect_to("/crafting_jobs")
-        expect(response).to have_http_status(:see_other)
+        expect(response.media_type).to eq("text/vnd.turbo-stream.html")
+        expect(response.body).to include("pending implementation")
       end
     end
 
@@ -1674,7 +1343,7 @@ RSpec.describe "World", type: :request do
 
     context "with multiple hotspots" do
       let!(:arena) { create(:city_hotspot, :arena, zone: city_zone, active: true, required_level: 1) }
-      let!(:workshop) { create(:city_hotspot, :workshop, zone: city_zone, active: true, required_level: 1) }
+      let!(:shop) { create(:city_hotspot, :shop, zone: city_zone, active: true, required_level: 1) }
       let!(:exit_gate) do
         dest = create(:zone, name: "Exit Dest", biome: "plains")
         create(:spawn_point, zone: dest, default_entry: true)
@@ -1687,7 +1356,7 @@ RSpec.describe "World", type: :request do
 
         expect(response).to have_http_status(:success)
         expect(response.body).to include("Arena")
-        expect(response.body).to include("Workshop")
+        expect(response.body).to include("Лавка")
         expect(response.body).to include("City Gates")
       end
 
@@ -1696,7 +1365,7 @@ RSpec.describe "World", type: :request do
 
         expect(response.body).to include("interact_hotspot")
         expect(response.body).to include(arena.id.to_s)
-        expect(response.body).to include(workshop.id.to_s)
+        expect(response.body).to include(shop.id.to_s)
       end
 
       it "arena hotspot navigates to arena page" do
@@ -1705,10 +1374,11 @@ RSpec.describe "World", type: :request do
         expect(response).to redirect_to("/arena")
       end
 
-      it "workshop hotspot navigates to crafting page" do
-        post interact_hotspot_world_path, params: {hotspot_id: workshop.id}
+      it "shop hotspot stays pending until the Neverlands shop is implemented" do
+        post interact_hotspot_world_path, params: {hotspot_id: shop.id}
 
-        expect(response).to redirect_to("/crafting_jobs")
+        expect(response).to redirect_to(world_path)
+        expect(flash[:alert]).to include("pending implementation")
       end
 
       it "exit gate transitions to destination zone" do

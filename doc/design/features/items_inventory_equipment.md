@@ -31,8 +31,7 @@ Core:
 - armor;
 - jewelry/accessories;
 - consumables;
-- crafting resources;
-- tools.
+- materials.
 
 ## Equipment Rules
 
@@ -194,8 +193,7 @@ The launch inventory should support:
 
 - inventory page inside the game shell with equipment panel, stats panel,
   category filters, sort actions, inventory mass, item rows, and empty slots;
-- item templates for equipment, consumables, materials, resources, and
-  miscellaneous items;
+- item templates for equipment, consumables, materials, and miscellaneous items;
 - item instances with quantity, equipped slot, current durability, requirement
   overrides, effect overrides, expiry metadata, bound/protected state, and
   per-item properties;
@@ -241,6 +239,5 @@ Remaining design detail before launch:
 - `features/movement.md`: carried weight can modify travel time.
 - `features/economy_trading_shops.md`: shops buy and sell inventory items;
   future player trade needs source capture first.
-- `features/gathering_professions.md`: resources and tools live in inventory.
 - `features/npcs_quests.md`: future quest-item behavior needs source capture
   before implementation.

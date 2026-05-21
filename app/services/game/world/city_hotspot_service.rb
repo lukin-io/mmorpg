@@ -151,13 +151,21 @@ module Game
       end
 
       def handle_feature_navigation(hotspot)
-        url = hotspot.navigate_url
-
-        # If the URL is /world, the feature is not implemented yet
-        if url == "/world"
+        feature_key = hotspot.action_params["feature"] || hotspot.key
+        pending_message = CityHotspot::PENDING_FEATURES[feature_key]
+        if pending_message
           return Result.new(
             success: false,
-            message: "#{hotspot.name} is coming soon!",
+            message: pending_message,
+            hotspot: hotspot
+          )
+        end
+
+        url = hotspot.navigate_url
+        unless url
+          return Result.new(
+            success: false,
+            message: "#{hotspot.name} is not available.",
             hotspot: hotspot
           )
         end

@@ -79,19 +79,19 @@ RSpec.describe AvatarHelper, type: :helper do
     end
 
     context "with hostile NPC matching key" do
-      let(:wolf) { create(:npc_template, role: "hostile", npc_key: "forest_wolf") }
-      let(:boar) { create(:npc_template, role: "hostile", npc_key: "wild_boar") }
+      let(:wolf) { create(:npc_template, role: "hostile", npc_key: "plague_rat", metadata: {"avatar_image" => "skeleton.png"}) }
+      let(:boar) { create(:npc_template, role: "hostile", npc_key: "plague_rat_alpha", metadata: {"avatar_image" => "zombie.png"}) }
       let(:zombie) { create(:npc_template, role: "hostile", npc_key: "bog_zombie") }
       let(:skeleton) { create(:npc_template, role: "hostile", npc_key: "ancient_skeleton") }
 
-      it "matches wolf to wolf image" do
+      it "uses explicit captured NPC image metadata" do
         result = helper.npc_avatar_tag(wolf)
-        expect(result).to match(/npc\/wolf/)
+        expect(result).to match(/npc\/skeleton/)
       end
 
-      it "matches boar to boar image" do
+      it "supports another explicit hostile NPC image" do
         result = helper.npc_avatar_tag(boar)
-        expect(result).to match(/npc\/boar/)
+        expect(result).to match(/npc\/zombie/)
       end
 
       it "matches zombie to zombie image" do

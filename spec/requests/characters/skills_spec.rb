@@ -24,7 +24,7 @@ RSpec.describe "Characters Skills", type: :request do
         get skills_character_path(character)
         expect(response.body).to include("Wanderer")
         expect(response.body).to include("Melee Combat")
-        expect(response.body).to include("Herbalism")
+        expect(response.body).to include("First Aid")
       end
 
       it "displays combat skill points" do
@@ -108,23 +108,23 @@ RSpec.describe "Characters Skills", type: :request do
     context "success cases - peace skills" do
       it "allocates peace skill points" do
         patch skills_character_path(character), params: {
-          allocated_skills: {herbalism: 1}
+          allocated_skills: {first_aid: 1}
         }
 
         character.reload
         # Peace skills have "2:2:2:2" rate - 2 points per spend
-        expect(character.passive_skill_level(:herbalism)).to eq(2)
+        expect(character.passive_skill_level(:first_aid)).to eq(2)
         expect(character.peace_skill_points).to eq(4)
       end
 
       it "supports multiple peace skill allocations" do
         patch skills_character_path(character), params: {
-          allocated_skills: {herbalism: 2, fishing: 1}
+          allocated_skills: {first_aid: 2, trading: 1}
         }
 
         character.reload
-        expect(character.passive_skill_level(:herbalism)).to eq(4)
-        expect(character.passive_skill_level(:fishing)).to eq(2)
+        expect(character.passive_skill_level(:first_aid)).to eq(4)
+        expect(character.passive_skill_level(:trading)).to eq(2)
         expect(character.peace_skill_points).to eq(2)
       end
     end
@@ -132,12 +132,12 @@ RSpec.describe "Characters Skills", type: :request do
     context "success cases - mixed pools" do
       it "allocates from both pools simultaneously" do
         patch skills_character_path(character), params: {
-          allocated_skills: {melee_combat: 1, herbalism: 1}
+          allocated_skills: {melee_combat: 1, first_aid: 1}
         }
 
         character.reload
         expect(character.passive_skill_level(:melee_combat)).to eq(10)
-        expect(character.passive_skill_level(:herbalism)).to eq(2)
+        expect(character.passive_skill_level(:first_aid)).to eq(2)
         expect(character.combat_skill_points).to eq(9)
         expect(character.peace_skill_points).to eq(4)
       end
@@ -170,11 +170,11 @@ RSpec.describe "Characters Skills", type: :request do
         character.update!(peace_skill_points: 0)
 
         patch skills_character_path(character), params: {
-          allocated_skills: {herbalism: 1}
+          allocated_skills: {first_aid: 1}
         }
 
         expect(response).to redirect_to(root_path)
-        expect(character.reload.passive_skill_level(:herbalism)).to eq(0)
+        expect(character.reload.passive_skill_level(:first_aid)).to eq(0)
       end
 
       it "rejects when requesting more combat points than available" do
@@ -197,7 +197,7 @@ RSpec.describe "Characters Skills", type: :request do
 
       it "rejects when all allocations are zero" do
         patch skills_character_path(character), params: {
-          allocated_skills: {melee_combat: 0, herbalism: 0}
+          allocated_skills: {melee_combat: 0, first_aid: 0}
         }
 
         expect(response).to redirect_to(root_path)

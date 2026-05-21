@@ -153,8 +153,6 @@ class InventoriesController < ApplicationController
     return items if category == "all"
 
     item_types = inventory_category_item_types(category)
-    property_categories = inventory_category_property_values(category)
-    return items.where("inventory_items.properties ->> 'category' IN (?)", property_categories) if property_categories.any?
     return items if item_types.empty?
 
     items.where(item_templates: {item_type: item_types})
@@ -178,22 +176,7 @@ class InventoriesController < ApplicationController
     when "consumables"
       ["consumable"]
     when "materials"
-      ["material", "resource"]
-    else
-      []
-    end
-  end
-
-  def inventory_category_property_values(category)
-    case category
-    when "alchemy"
-      ["alchemy"]
-    when "fishing"
-      ["fishing"]
-    when "hunting"
-      ["hunting", "food", "products"]
-    when "wood"
-      ["wood", "tree"]
+      ["material"]
     else
       []
     end

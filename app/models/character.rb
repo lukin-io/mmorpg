@@ -88,8 +88,6 @@ class Character < ApplicationRecord
   has_many :arena_applications, foreign_key: :applicant_id, dependent: :destroy
   has_many :arena_participations, dependent: :destroy
 
-  has_many :profession_progresses, dependent: :destroy
-  has_many :profession_tools, dependent: :destroy
   has_many :movement_commands, dependent: :destroy
   has_many :world_action_offers, dependent: :destroy
 
@@ -235,7 +233,7 @@ class Character < ApplicationRecord
     combat_skill_points.to_i
   end
 
-  # Get available peace skill points (for crafting/gathering/social skills)
+  # Get available peace skill points
   #
   # @return [Integer] available peace skill points
   def available_peace_skill_points

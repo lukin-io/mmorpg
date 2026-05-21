@@ -3,103 +3,6 @@
 require "rails_helper"
 
 RSpec.describe WorldHelper, type: :helper do
-  describe "#building_icon" do
-    it "returns correct icon for shop" do
-      expect(helper.building_icon(:shop)).to eq("🏪")
-    end
-
-    it "returns correct icon for tavern" do
-      expect(helper.building_icon(:tavern)).to eq("🍺")
-    end
-
-    it "returns correct icon for blacksmith" do
-      expect(helper.building_icon(:blacksmith)).to eq("⚒️")
-    end
-
-    it "returns correct icon for bank" do
-      expect(helper.building_icon(:bank)).to eq("🏦")
-    end
-
-    it "returns correct icon for arena" do
-      expect(helper.building_icon(:arena)).to eq("⚔️")
-    end
-
-    it "returns correct icon for inn" do
-      expect(helper.building_icon(:inn)).to eq("🏨")
-    end
-
-    it "returns default icon for unknown type" do
-      expect(helper.building_icon(:unknown)).to eq("🏛️")
-    end
-
-    it "handles string input" do
-      expect(helper.building_icon("shop")).to eq("🏪")
-    end
-  end
-
-  describe "#city_buildings" do
-    let(:zone) { create(:zone, name: "Test City", biome: "city") }
-
-    context "when zone has buildings in metadata" do
-      let(:zone_with_buildings) do
-        create(:zone,
-          name: "City with Buildings",
-          biome: "city",
-          metadata: {
-            "buildings" => [
-              {name: "Test Shop", type: "shop", key: "test_shop", grid_x: 1, grid_y: 1}
-            ]
-          })
-      end
-
-      it "returns buildings from metadata" do
-        buildings = helper.city_buildings(zone_with_buildings)
-        expect(buildings).to be_an(Array)
-        expect(buildings.first[:name]).to eq("Test Shop")
-      end
-    end
-
-    context "when zone has no buildings" do
-      it "returns default city buildings" do
-        buildings = helper.city_buildings(zone)
-        expect(buildings).to be_an(Array)
-        expect(buildings).not_to be_empty
-        expect(buildings.first[:name]).to eq("General Store")
-      end
-    end
-  end
-
-  describe "#default_city_buildings" do
-    it "returns an array of buildings" do
-      buildings = helper.default_city_buildings
-      expect(buildings).to be_an(Array)
-      expect(buildings.length).to eq(7)
-    end
-
-    it "includes required building types" do
-      buildings = helper.default_city_buildings
-      types = buildings.map { |b| b[:type] }
-
-      expect(types).to include("shop")
-      expect(types).to include("tavern")
-      expect(types).to include("blacksmith")
-      expect(types).to include("bank")
-      expect(types).to include("arena")
-    end
-
-    it "each building has required keys" do
-      buildings = helper.default_city_buildings
-      buildings.each do |building|
-        expect(building).to have_key(:id)
-        expect(building).to have_key(:name)
-        expect(building).to have_key(:type)
-        expect(building).to have_key(:key)
-        expect(building).to have_key(:grid_x)
-        expect(building).to have_key(:grid_y)
-      end
-    end
-  end
-
   describe "#terrain_icon" do
     it "returns correct icon for plains" do
       expect(helper.terrain_icon("plains")).to eq("🌾")
@@ -145,28 +48,6 @@ RSpec.describe WorldHelper, type: :helper do
 
     it "returns default icon for unknown NPC" do
       expect(helper.npc_icon("Unknown Entity")).to eq("👤")
-    end
-  end
-
-  describe "#resource_icon" do
-    it "returns correct icon for herb" do
-      expect(helper.resource_icon("herb")).to eq("🌿")
-    end
-
-    it "returns correct icon for ore" do
-      expect(helper.resource_icon("ore")).to eq("⛏️")
-    end
-
-    it "returns correct icon for wood" do
-      expect(helper.resource_icon("wood")).to eq("🪵")
-    end
-
-    it "returns correct icon for fish" do
-      expect(helper.resource_icon("fish")).to eq("🐟")
-    end
-
-    it "returns default icon for unknown resource" do
-      expect(helper.resource_icon("unknown")).to eq("📦")
     end
   end
 

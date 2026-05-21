@@ -4,7 +4,7 @@
 
 Progression turns repeated play into long-term character growth. Stats define
 base capability. Skills express trained expertise and should visibly affect
-movement, combat, professions, and social/economy access.
+movement, combat, and source-backed social/economy access.
 
 ## Neverlands Reference
 
@@ -75,7 +75,7 @@ Design translation:
 - the UI must distinguish base saved values from pending unsaved additions;
 - the server must validate every save against the current available point pool;
 - spending health/knowledge can change max HP/MP without simply refilling the
-  current resource.
+  current HP/MP values.
 
 ## Public Player Info
 
@@ -155,10 +155,7 @@ Combat:
 Peace/world:
 
 - wanderer/travel;
-- gathering;
-- fishing;
-- digging/mining;
-- crafting professions.
+- trade-related skills, only after dedicated source capture.
 
 Trade-related peace skills or licenses need dedicated source capture before
 being treated as launch progression.
@@ -180,8 +177,6 @@ Social/progression extensions:
   validated server-side.
 - Numeric skill point pools are separate: combat/magic/resistance and
   peace/world.
-- Profession rows can display progress without being directly trainable from
-  the starter `Умения` form.
 - Skills may have prerequisites.
 - Skills may use tiered progression, where later ranks cost more effort.
 - Boolean perks spend a separate new-perk pool and can remove incompatible
@@ -196,10 +191,8 @@ Social/progression extensions:
 - `features/combat.md`: weapon, defense, magic, and resistance skills affect
   formulas.
 - `features/items_inventory_equipment.md`: item requirements use stats/skills.
-- `features/gathering_professions.md`: profession skills determine gathering
-  and craft outcomes.
 - `features/npcs_quests.md`: future quest interactions need source capture
-  before granting skill points or unlocking trainers.
+  before granting skill points or unlocking future source-backed training.
 
 ## Out Of Scope
 

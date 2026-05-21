@@ -1,20 +1,19 @@
 # frozen_string_literal: true
 
 # NpcTemplate is the central model for all NPC definitions in the game.
-# It uses a unified architecture where all NPCs share common attributes and behaviors,
-# with role-specific extensions via metadata and concerns.
+# It stores source-backed combat NPC definitions.
 #
 # Architecture (similar to STI but using role + metadata):
 #   - Base attributes: name, level, role, dialogue, metadata (JSONB)
 #   - Shared behaviors: Npc::CombatStats (stat calculation), Npc::Combatable (combat interface)
-#   - Role determines behavior: hostile, arena_bot, vendor, guard, etc.
-#   - Metadata stores role-specific data (AI behavior, loot tables, shop inventory, etc.)
+#   - Role determines combat context: hostile outdoor NPC or arena_bot.
+#   - Metadata stores combat, loot, and spawn data captured from Neverlands.
 #
 # Usage:
 #   # Outside world hostile NPC
-#   wolf = NpcTemplate.find_by(npc_key: "forest_wolf")
-#   wolf.hostile?           # => true
-#   wolf.combat_stats       # => { attack: 15, defense: 8, hp: 100, ... }
+#   rat = NpcTemplate.find_by(npc_key: "plague_rat")
+#   rat.hostile?           # => true
+#   rat.combat_stats       # => { attack: 15, defense: 8, hp: 100, ... }
 #
 #   # Arena training bot
 #   bot = NpcTemplate.find_by(npc_key: "arena_training_dummy")
@@ -28,7 +27,7 @@ class NpcTemplate < ApplicationRecord
 
   DEFAULT_RESPAWN_SECONDS = 30.minutes.to_i
   DEFAULT_RESPAWN_VARIANCE_SECONDS = 5.minutes.to_i
-  ROLES = %w[vendor trainer guard innkeeper banker crafter hostile lore arena_bot friendly].freeze
+  ROLES = %w[hostile arena_bot].freeze
 
   validates :name, presence: true, uniqueness: true
   validates :level, numericality: {greater_than: 0}
@@ -46,9 +45,6 @@ class NpcTemplate < ApplicationRecord
 
   # Scope for hostile NPCs only
   scope :hostile, -> { where(role: "hostile") }
-
-  # Scope for non-hostile NPCs
-  scope :friendly, -> { where.not(role: "hostile") }
 
   # Scope for arena bot NPCs
   scope :arena_bots, -> { where(role: "arena_bot") }
@@ -83,16 +79,6 @@ class NpcTemplate < ApplicationRecord
   def greeting
     greetings = metadata&.dig("greetings") || []
     greetings.sample || dialogue
-  end
-
-  # Check if NPC has shop inventory
-  def vendor?
-    role == "vendor" && metadata&.dig("inventory").present?
-  end
-
-  # Check if NPC can train skills
-  def trainer?
-    role == "trainer" && metadata&.dig("teaches").present?
   end
 
   # Get NPC's faction

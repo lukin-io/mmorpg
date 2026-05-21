@@ -46,8 +46,6 @@ RSpec.describe "world/show.html.erb", type: :view do
     assign(:available_actions, [])
     assign(:tile_data, {})
     assign(:npcs_here, [])
-    assign(:gathering_nodes, [])
-    assign(:tile_resource, nil)
     assign(:tile_npc, nil)
     assign(:players_here, [])
   end

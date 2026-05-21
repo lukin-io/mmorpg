@@ -5,7 +5,7 @@ RSpec.describe "Players", type: :request do
 
   describe "GET /player/:name" do
     it "renders a Neverlands-style public character page by character name" do
-      zone = create(:zone, name: "Castle Gate")
+      zone = create(:zone, name: "Outpost Gate")
       character = create(:character, user: user, name: "max_kerby", avatar: "dwarven")
       create(:character_position, character: character, zone: zone, x: 7, y: 9)
       sword = create(:item_template, name: "Training Sword", slot: "main_hand", rarity: "common")
@@ -19,7 +19,7 @@ RSpec.describe "Players", type: :request do
 
       expect(response).to have_http_status(:ok)
       expect(response.body).to include("max_kerby [#{character.level}]")
-      expect(response.body).to include("Castle Gate [7, 9]")
+      expect(response.body).to include("Outpost Gate [7, 9]")
       expect(response.body).to include("avatars/dwarven")
       expect(response.body).to include("Training Sword")
       expect(response.body).not_to include("Primary Stats")

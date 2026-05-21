@@ -1,24 +1,24 @@
 # frozen_string_literal: true
 
 # ItemTemplate defines the base attributes for all game items.
-# Equipment items have stat modifiers, while materials are used for crafting.
+# Equipment items have stat modifiers, while materials cover observed loot.
 #
 # Purpose: Define base item properties and behaviors.
 #
 # Inputs:
 #   - name: unique item name
-#   - item_type: equipment, material/resource, consumable, or misc
+#   - item_type: equipment, material, consumable, or misc
 #   - slot: equipment slot (head, chest, main_hand, etc.) or "none" for non-equipment
 #   - rarity: common, uncommon, rare, epic, legendary
 #
 # Usage:
-#   ItemTemplate.find_by(key: "iron_ore")
+#   ItemTemplate.find_by(key: "rat_tail")
 #   ItemTemplate.where(item_type: "material")
 #   template.equippable?  # => true for equipment items
 #   template.equipment_slot  # => "main_hand"
 #
 class ItemTemplate < ApplicationRecord
-  ITEM_TYPES = %w[equipment material resource consumable misc].freeze
+  ITEM_TYPES = %w[equipment material consumable misc].freeze
   EQUIPMENT_SLOTS = EquipmentSlots::KEYS
   RARITIES = %w[common uncommon rare epic legendary].freeze
 
@@ -39,7 +39,7 @@ class ItemTemplate < ApplicationRecord
   #
   # @return [Boolean] true if item_type is "material"
   def material?
-    %w[material resource].include?(item_type)
+    item_type == "material"
   end
 
   # Check if this item is equipment
@@ -62,7 +62,7 @@ class ItemTemplate < ApplicationRecord
       "equipment"
     when "consumable"
       "consumables"
-    when "material", "resource"
+    when "material"
       "materials"
     else
       "other"
@@ -74,17 +74,6 @@ class ItemTemplate < ApplicationRecord
   # @return [Boolean] true if item is equipment with a valid slot
   def equippable?
     equipment? && EQUIPMENT_SLOTS.include?(equipment_slot)
-  end
-
-  def resource_respawn_seconds
-    positive_template_integer("resource_respawn_seconds") ||
-      positive_template_integer("respawn_seconds")
-  end
-
-  def resource_spawn_weight
-    positive_template_integer("resource_spawn_weight") ||
-      positive_template_integer("spawn_weight") ||
-      positive_template_integer("spawn_chance")
   end
 
   # Get the equipment slot for this item
@@ -99,23 +88,6 @@ class ItemTemplate < ApplicationRecord
   end
 
   private
-
-  def positive_template_integer(key)
-    value = template_integer(key)
-    value if value&.positive?
-  end
-
-  def template_integer(key)
-    value = enhancement_rules&.dig(key) ||
-      enhancement_rules&.dig("resource", key) ||
-      requirements&.dig(key) ||
-      requirements&.dig("resource", key)
-    return if value.blank?
-
-    Integer(value)
-  rescue ArgumentError, TypeError
-    nil
-  end
 
   def equipment_slot_validity
     return unless equipment?

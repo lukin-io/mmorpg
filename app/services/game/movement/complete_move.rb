@@ -4,9 +4,8 @@ module Game
   module Movement
     # Finalizes due timed movement commands into authoritative coordinates.
     class CompleteMove
-      def initialize(character:, encounter_resolver: Game::Exploration::EncounterResolver.new)
+      def initialize(character:)
         @character = character
-        @encounter_resolver = encounter_resolver
       end
 
       def call
@@ -17,7 +16,7 @@ module Game
 
       private
 
-      attr_reader :character, :encounter_resolver
+      attr_reader :character
 
       def due_commands
         MovementCommand
@@ -48,8 +47,6 @@ module Game
             return
           end
 
-          tile_metadata = provider.metadata_at(command.target_x, command.target_y) || {}
-          encounter = resolve_encounter(command, provider, tile_metadata)
           now = Time.current
 
           position.update!(
@@ -65,7 +62,6 @@ module Game
             completed_at: now,
             processed_at: now,
             latency_ms: compute_latency(command),
-            metadata: (command.metadata || {}).merge("encounter" => encounter).compact,
             error_message: nil
           )
         end
@@ -75,15 +71,6 @@ module Game
         position.zone_id == command.zone_id &&
           position.x == command.from_x &&
           position.y == command.from_y
-      end
-
-      def resolve_encounter(command, provider, tile_metadata)
-        encounter_resolver.resolve(
-          zone: command.zone,
-          biome: provider.biome_at(command.target_x, command.target_y),
-          tile_metadata:,
-          rng: Random.new(command.id)
-        )
       end
 
       def compute_latency(command)
