@@ -21,34 +21,6 @@ RSpec.describe "Social UI", type: :system, js: true do
       expect(page).to have_content("Hello from system spec")
     end
 
-    it "creates a friend request from the friends UI" do
-      create(:character, user: user)
-      create(:character, user: other_user)
-
-      visit friendships_path
-
-      select other_user.email, from: "Select player"
-      click_button "Send Request"
-
-      expect(page).to have_content("Friend request sent")
-      expect(page).to have_content(other_user.email)
-    end
-
-    it "sends in-game mail from the mailbox UI" do
-      create(:character, user: user)
-      create(:character, user: other_user)
-
-      visit new_mail_message_path
-
-      fill_in "Recipient Email", with: other_user.email
-      fill_in "Subject", with: "Hello"
-      fill_in "Body", with: "Meet me in town."
-      click_button "Send"
-
-      expect(page).to have_content("Mail sent")
-      expect(page).to have_content("Hello")
-    end
-
     it "adds a player to the ignore list" do
       create(:character, user: user)
       create(:character, user: other_user)
@@ -74,29 +46,6 @@ RSpec.describe "Social UI", type: :system, js: true do
       click_button "Send"
 
       expect(page).to have_content("message cannot be blank")
-    end
-
-    it "shows a validation error when mailing an unknown recipient" do
-      create(:character, user: user)
-
-      visit new_mail_message_path
-
-      fill_in "Recipient Email", with: "missing@elselands.test"
-      fill_in "Subject", with: "Hello"
-      fill_in "Body", with: "Test"
-      click_button "Send"
-
-      expect(page).to have_content("Recipient not found")
-    end
-  end
-
-  describe "null/edge cases" do
-    it "shows an empty state for a new mailbox" do
-      create(:character, user: user)
-
-      visit mail_messages_path
-
-      expect(page).to have_content("No messages yet")
     end
   end
 

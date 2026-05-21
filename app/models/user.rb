@@ -20,15 +20,10 @@ class User < ApplicationRecord
     :confirmable, :trackable, :timeoutable
 
   has_many :user_sessions, dependent: :destroy
-  has_many :premium_token_ledger_entries, dependent: :destroy
   has_many :characters, dependent: :destroy
   has_many :chat_channel_memberships, dependent: :destroy
   has_many :chat_channels, through: :chat_channel_memberships
   has_many :chat_messages, foreign_key: :sender_id, dependent: :nullify
-  has_many :friendships, foreign_key: :requester_id, dependent: :destroy
-  has_many :incoming_friendships, class_name: "Friendship", foreign_key: :receiver_id, dependent: :destroy
-  has_many :mail_messages, foreign_key: :sender_id, dependent: :nullify
-  has_many :received_mail_messages, class_name: "MailMessage", foreign_key: :recipient_id, dependent: :destroy
   has_one :currency_wallet, dependent: :destroy
   has_many :profession_progresses, dependent: :destroy
   has_many :crafting_jobs, dependent: :nullify
@@ -48,7 +43,6 @@ class User < ApplicationRecord
   scope :verified, -> { where.not(confirmed_at: nil) }
 
   enum :chat_privacy, PRIVACY_LEVELS, prefix: :chat_privacy
-  enum :friend_request_privacy, PRIVACY_LEVELS, prefix: :friend_privacy
   enum :duel_privacy, PRIVACY_LEVELS, prefix: :duel_privacy
 
   validates :profile_name, presence: true, uniqueness: true, length: {maximum: 32}
@@ -79,10 +73,6 @@ class User < ApplicationRecord
     suspended_until.present? && suspended_until.future?
   end
 
-  def trade_locked?
-    trade_locked_until.present? && trade_locked_until.future?
-  end
-
   def timeout_in
     30.minutes
   end
@@ -101,25 +91,8 @@ class User < ApplicationRecord
     privacy_allows?(chat_privacy, other_user)
   end
 
-  def allows_friend_request_from?(other_user)
-    privacy_allows?(friend_request_privacy, other_user)
-  end
-
   def allows_duel_from?(other_user)
     privacy_allows?(duel_privacy, other_user)
-  end
-
-  def friends_with?(other_user)
-    return false if other_user.blank?
-
-    Friendship.accepted_between(self, other_user).exists?
-  end
-
-  def friends
-    Friendship
-      .for_user(self)
-      .accepted
-      .map { |friendship| (friendship.requester == self) ? friendship.receiver : friendship.requester }
   end
 
   def ignoring?(other_user)
@@ -139,12 +112,6 @@ class User < ApplicationRecord
     return limit if limit.positive?
 
     8
-  end
-
-  def allied_with?(other_user)
-    return false if other_user.blank?
-
-    friends_with?(other_user)
   end
 
   private
@@ -169,7 +136,7 @@ class User < ApplicationRecord
   end
 
   def ensure_currency_wallet!
-    create_currency_wallet!(gold_balance: 0, silver_balance: 0, premium_tokens_balance: premium_tokens_balance) unless currency_wallet
+    create_currency_wallet!(gold_balance: 0, silver_balance: 0) unless currency_wallet
   end
 
   def next_character_name
@@ -196,7 +163,7 @@ class User < ApplicationRecord
     when :everyone
       true
     when :allies_only
-      allied_with?(other_user)
+      false
     when :nobody
       false
     else

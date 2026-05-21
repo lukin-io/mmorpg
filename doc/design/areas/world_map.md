@@ -69,7 +69,6 @@ The map can offer:
 - fish;
 - dig;
 - drink/use terrain feature;
-- quest interaction;
 - hostile encounter or attack;
 - local NPC dialogue.
 

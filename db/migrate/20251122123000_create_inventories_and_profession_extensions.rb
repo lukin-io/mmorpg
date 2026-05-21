@@ -22,7 +22,6 @@ class CreateInventoriesAndProfessionExtensions < ActiveRecord::Migration[8.1]
       t.boolean :equipped, null: false, default: false
       t.integer :weight, null: false, default: 0
       t.integer :enhancement_level, null: false, default: 0
-      t.boolean :premium, null: false, default: false
       t.boolean :bound, null: false, default: false
       t.jsonb :properties, null: false, default: {}
       t.datetime :last_enhanced_at

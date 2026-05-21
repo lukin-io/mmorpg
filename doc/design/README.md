@@ -191,6 +191,21 @@ Neverlands-based behavior first.
   treasury, applications, message boards, permissions, quest boards, wars, and
   clan-locked crafting;
 - standalone auction house, auction listings, auction bids, and auctioneer
-  dialogue.
+  dialogue;
 - generic marketplace kiosks, quick buy/sell kiosk actions, and market demand
-  signals.
+  signals;
+- generic premium token/payment layer, including token ledger, premium wallet
+  balances, premium recipe costs, premium profession resets, premium item flags,
+  and premium transfers;
+- generic direct player trading stack, including trade sessions, trade items,
+  two-panel trade UI, generic confirmation/finalization flow, and trade
+  settlement services;
+- generic friendship/friend-request system, including accepted-friend graph,
+  friend-request privacy, friend-only presence broadcasts, and friends UI;
+- generic in-game mailbox and message attachments, including player mail,
+  system notifier mail, mailbox UI, and attachment payload delivery.
+- generic quest/story implementation, including quest chains, chapters,
+  objectives, assignments, branching story steps, dynamic/daily/repeatable
+  quest generators, cutscenes, tutorial bootstrapping, quest board UI, generic
+  quest-giver role handling, quest item/category hooks, quest rewards, and
+  profession reset through quest completion.

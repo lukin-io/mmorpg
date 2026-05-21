@@ -34,10 +34,7 @@ returns to the city via `Город`.
 
 ## Currency
 
-Core currency:
-
-- normal money for shops/trade;
-- optional premium currency only if it stays outside core power progression.
+Core currency is normal money for shops.
 
 Currency should be visible in inventory/shop contexts and recorded as part of
 economy state.
@@ -52,12 +49,11 @@ economy state.
 - Selling checks ownership and whether the item can be sold.
 - Shop actions refresh the visible item list and current action keys.
 
-## Trading Rules
+## Known But Deferred
 
-Core:
-
-- direct player trade;
-- vendor/shop buy and sell.
+- Neverlands has direct player trading, but the exact flow, licenses,
+  restrictions, UI states, and settlement rules still need source capture.
+- Do not keep or rebuild a generic two-panel trade session before that capture.
 
 ## State Concepts
 
@@ -66,8 +62,7 @@ Core:
 - city building shop;
 - shop category;
 - shop stock with current and maximum counts;
-- shop license good;
-- direct trade session.
+- shop license good.
 
 ## Interactions
 
@@ -75,10 +70,13 @@ Core:
   hotspots.
 - `features/items_inventory_equipment.md`: all goods are inventory items.
 - `features/gathering_professions.md`: crafted/gathered goods enter economy.
-- `features/social_chat_presence.md`: direct trade can use player identity and
-  local presence.
+- `features/social_chat_presence.md`: future direct trade capture should account
+  for player identity and local presence.
 
 ## Out Of Scope
 
 - Standalone global shop route as the primary player path.
-- Premium store as a core GDD requirement.
+- Cash or premium currency until it has a dedicated Neverlands source capture
+  and an approved scope.
+- Direct player trading until it has a dedicated Neverlands source capture and
+  approved implementation shape.

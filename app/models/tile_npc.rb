@@ -12,7 +12,7 @@
 class TileNpc < ApplicationRecord
   BASE_RESPAWN_SECONDS = 30.minutes.to_i
   RESPAWN_VARIANCE = 5.minutes.to_i # +/- 5 minutes randomness
-  NPC_ROLES = %w[hostile friendly vendor quest_giver trainer guard].freeze
+  NPC_ROLES = %w[hostile friendly vendor trainer guard].freeze
 
   belongs_to :npc_template
   belongs_to :defeated_by, class_name: "Character", optional: true

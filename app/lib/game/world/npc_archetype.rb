@@ -12,7 +12,7 @@ module Game
     #   PORO exposing helper predicates for dialogue and feature gating.
     class NpcArchetype
       attr_reader :key, :name, :archetype, :region, :location, :roles,
-        :dialogue, :reputation_thresholds, :quests, :faction_alignment,
+        :dialogue, :reputation_thresholds, :faction_alignment,
         :training_offers, :inventory_tags
 
       def initialize(key, config)
@@ -24,7 +24,6 @@ module Game
         @roles = config.fetch("roles", [])
         @dialogue = config.fetch("dialogue", {})
         @reputation_thresholds = config.fetch("reputation_thresholds", {})
-        @quests = config.fetch("quests", {})
         @faction_alignment = config["faction_alignment"]
         @training_offers = config.fetch("training_offers", {})
         @inventory_tags = config.fetch("inventory_tags", [])

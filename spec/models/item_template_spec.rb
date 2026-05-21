@@ -175,29 +175,4 @@ RSpec.describe ItemTemplate, type: :model do
       expect(template.equipment_slot).to be_nil
     end
   end
-
-  describe "premium stat cap validation" do
-    context "when item is premium" do
-      it "allows total stats up to 10" do
-        template = build(:item_template, premium: true, slot: "main_hand",
-          stat_modifiers: {"attack" => 5, "defense" => 5})
-        expect(template).to be_valid
-      end
-
-      it "rejects total stats over 10" do
-        template = build(:item_template, premium: true, slot: "main_hand",
-          stat_modifiers: {"attack" => 10, "defense" => 5})
-        expect(template).not_to be_valid
-        expect(template.errors[:stat_modifiers]).to include("premium artifacts must stay cosmetic-balanced")
-      end
-    end
-
-    context "when item is not premium" do
-      it "allows any stat totals" do
-        template = build(:item_template, premium: false, slot: "main_hand",
-          stat_modifiers: {"attack" => 50, "defense" => 30})
-        expect(template).to be_valid
-      end
-    end
-  end
 end

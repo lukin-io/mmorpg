@@ -30,9 +30,6 @@
     <% if zone.metadata&.dig("warning").present? %>
       <p class="nl-warning"><%= zone.metadata["warning"] %></p>
     <% end %>
-    <% if zone.metadata&.dig("quest_hint").present? %>
-      <p><span class="nl-highlight" data-action="click->city#showQuestDialog"><%= zone.metadata["quest_hint"] %></span></p>
-    <% end %>
   </div>
 
   <%# City header %>
@@ -107,4 +104,3 @@
   <%# Tooltip (hidden by default) %>
   <div class="city-tooltip" data-city-target="tooltip" style="display: none;"></div>
 </div>
-

@@ -1,7 +1,7 @@
 require "rails_helper"
 
 RSpec.describe Crafting::JobScheduler do
-  let(:user) { create(:user, premium_tokens_balance: 100) }
+  let(:user) { create(:user) }
   let(:character) { create(:character, user:) }
   let(:profession) { create(:profession) }
   let!(:progress) { create(:profession_progress, character:, profession:, skill_level: 5) }

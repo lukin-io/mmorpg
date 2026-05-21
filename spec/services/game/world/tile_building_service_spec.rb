@@ -305,48 +305,6 @@ RSpec.describe Game::World::TileBuildingService do
       end
     end
 
-    describe "entry with quest requirements" do
-      let!(:quest_building) do
-        create(:tile_building,
-          zone: source_zone.name,
-          x: 21,
-          y: 21,
-          building_key: "quest_building",
-          name: "Quest Building",
-          destination_zone: destination_zone,
-          required_level: 1,
-          active: true,
-          metadata: {"required_quest" => "test_quest", "requirement_message" => "Complete the test quest first!"})
-      end
-
-      let(:quest_service) do
-        described_class.new(
-          character: character,
-          zone: source_zone.name,
-          x: 21,
-          y: 21
-        )
-      end
-
-      context "when character hasn't completed quest" do
-        it "returns blocked reason from metadata" do
-          info = quest_service.building_info
-          expect(info[:blocked_reason]).to eq("Complete the test quest first!")
-        end
-
-        it "shows can_enter as false" do
-          info = quest_service.building_info
-          expect(info[:can_enter]).to be false
-        end
-
-        it "enter! returns failure with custom message" do
-          result = quest_service.enter!
-          expect(result.success).to be false
-          expect(result.message).to eq("Complete the test quest first!")
-        end
-      end
-    end
-
     describe "character at edge of zone" do
       let!(:edge_building) do
         create(:tile_building,
@@ -514,7 +472,7 @@ RSpec.describe Game::World::TileBuildingService do
           required_level: 100,
           faction_key: "horde",
           active: true,
-          metadata: {"required_quest" => "impossible_quest"})
+          metadata: {})
       end
 
       it "returns first blocking reason (level)" do

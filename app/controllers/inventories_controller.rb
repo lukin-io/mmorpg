@@ -179,8 +179,6 @@ class InventoriesController < ApplicationController
       ["consumable"]
     when "materials"
       ["material", "resource"]
-    when "quest"
-      ["quest"]
     else
       []
     end

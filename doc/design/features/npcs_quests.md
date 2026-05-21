@@ -2,23 +2,25 @@
 
 ## Purpose
 
-NPCs make locations readable and useful. Quests give movement, combat,
-gathering, and city visits a structured purpose.
+NPCs make locations readable and useful. Source-backed quest behavior still
+needs a dedicated Neverlands capture before Rails implementation.
 
 ## Source Material
 
 Inputs:
 
-- Neverlands-derived NPC, trainer, shopkeeper, quest, and tile-action rules
-  folded into this file.
+- live arena mannequin and outdoor hostile-NPC captures;
+- observed NPC drop/result behavior;
+- documented movement, tile-action, and shop captures.
 
 ## Player Experience
 
 The player encounters NPCs on tiles, in city nodes, or inside buildings. NPCs
-can talk, offer quests, trade, train, guard, heal, bank, or start combat.
+can talk, trade through documented shop/building flows, train, guard, heal,
+bank, or start combat once those behaviors are source-backed.
 
-Quests appear as clear tasks with current objective, location hint, reward, and
-completion state.
+Quest interaction is intentionally not implemented right now. It should be
+documented from Neverlands before adding tables, routes, or UI.
 
 ## NPC Roles
 
@@ -27,7 +29,6 @@ Core:
 - hostile monster;
 - arena training opponent;
 - loot-bearing combatant;
-- quest giver;
 - vendor/shopkeeper;
 - trainer;
 - guard;
@@ -39,7 +40,6 @@ Core:
 
 - NPC availability is tied to location.
 - NPC role defines default actions.
-- Dialogue can branch but should stay functional and concise.
 - Hostile NPCs can start PvE combat.
 - Outdoor hostile NPCs can interrupt normal tile actions and hand the player
   into combat from the current coordinate.
@@ -63,14 +63,14 @@ Design rules:
   step;
 - the combat log/result should show whether the NPC was searched and whether
   anything was found;
-- dropped items enter the same inventory/capacity rules as gathered resources,
-  shop purchases, and quest rewards;
-- capacity, protected-item rules, binding, and quest-item restrictions must be
-  enforced before the item becomes carried inventory;
+- dropped items enter the same inventory/capacity rules as gathered resources
+  and shop purchases;
+- capacity, protected-item rules, and binding rules must be enforced before the
+  item becomes carried inventory;
 - arena rewards and NPC drops are separate concepts: a mannequin dropping wood
   chips is an NPC loot-table result, not a generic arena payout;
 - NPC templates can share a loot table, but individual spawned NPCs can also
-  override it for events, quests, or tutorial fights.
+  override it when a source-backed capture proves that behavior.
 
 The mannequin/wood-chips case belongs here: `Манекен` is an arena training NPC,
 and wood chips are a low-value material drop from that NPC role. The May 19
@@ -106,27 +106,22 @@ Design rules:
 - each defeated loot-bearing NPC can run its own bot-specific random loot-table
   check.
 
-## Quest Rules
+## Quest Behavior Status
 
-- Quests have objective, current progress, completion condition, and reward.
-- Quest objectives should point back into existing core actions:
-  movement, combat, gathering, shop, NPC dialogue, or arena.
-- Quest progress is server-authoritative.
-- Quest rewards can include XP, money, items, reputation, skill points, recipes,
-  or access unlocks.
-- Repeatable quests are allowed, but authored starter quests come first.
+Quest behavior is required for the final Neverlands-based design, but the old
+generic quest/story implementation was removed. Do not rebuild quest chains,
+daily tasks, repeatable tasks, cutscenes, branching story steps, quest boards,
+or quest-giver roles until a Neverlands capture documents the exact behavior.
 
-## Starter Quest Shape
+Required future capture:
 
-Starter quests should teach:
-
-1. move on the world map;
-2. enter the city;
-3. enter a shop;
-4. inspect inventory/equipment;
-5. fight a training NPC;
-6. allocate a stat or skill point;
-7. gather a resource.
+- where quest entry points appear in the UI;
+- how NPC dialogue or action links start a quest;
+- how active tasks/journal state is displayed;
+- how progress is updated through movement, combat, gathering, shop, or NPC
+  actions;
+- how completion, turn-in, reward, cancel, failure, and repeatability behave;
+- whether quest items exist and how they are protected from sale/discard.
 
 ## State Concepts
 
@@ -137,17 +132,12 @@ Starter quests should teach:
 - loot table;
 - drop result;
 - dialogue node;
-- quest;
-- quest step;
-- quest assignment;
-- objective progress;
-- reward;
 - reputation/faction state.
 
 ## Interactions
 
-- `areas/world_map.md`: outdoor NPCs and quest objectives.
+- `areas/world_map.md`: outdoor NPCs and tile-local actions.
 - `areas/cities_and_buildings.md`: city NPCs and service buildings.
 - `areas/arena.md`: arena announcers and training fights.
 - `features/combat.md`: hostile and training combat.
-- `features/gathering_professions.md`: resource objectives and trainers.
+- `features/gathering_professions.md`: resource actions and trainers.

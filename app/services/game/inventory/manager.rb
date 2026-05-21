@@ -136,12 +136,12 @@ module Game
         @inventory = inventory
       end
 
-      def add_item!(item_template:, quantity: 1, premium: false)
+      def add_item!(item_template:, quantity: 1)
         remaining = quantity
         last_stack = nil
 
         while remaining.positive?
-          stack = find_or_build_stack(item_template:, premium:)
+          stack = find_or_build_stack(item_template:)
           capacity = item_template.stack_limit - stack.quantity
           raise CapacityExceededError, "Stack limit reached" if capacity <= 0
 
@@ -186,8 +186,8 @@ module Game
 
       attr_reader :inventory
 
-      def find_or_build_stack(item_template:, premium:)
-        stack = inventory.inventory_items.where(item_template:, equipped: false, premium:).order(:created_at).detect do |existing|
+      def find_or_build_stack(item_template:)
+        stack = inventory.inventory_items.where(item_template:, equipped: false).order(:created_at).detect do |existing|
           existing.quantity < item_template.stack_limit
         end
         return stack if stack
@@ -197,8 +197,7 @@ module Game
         inventory.inventory_items.build(
           item_template:,
           quantity: 0,
-          weight: item_template.weight,
-          premium:
+          weight: item_template.weight
         )
       end
 

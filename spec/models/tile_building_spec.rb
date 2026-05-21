@@ -368,46 +368,10 @@ RSpec.describe TileBuilding, type: :model do
       it "handles complex nested metadata" do
         subject.metadata = {
           "description" => "Test",
-          "required_quest" => "quest_key",
           "required_item" => "item_key",
           "nested" => {"key" => "value"}
         }
         expect(subject).to be_valid
-      end
-    end
-
-    describe "quest requirement checking" do
-      let(:character) { create(:character, level: 10) }
-      let(:building) do
-        create(
-          :tile_building,
-          destination_zone: destination_zone,
-          required_level: 1,
-          active: true,
-          metadata: {"required_quest" => "test_quest"}
-        )
-      end
-
-      context "when character has not completed required quest" do
-        it "cannot enter building" do
-          expect(building.can_enter?(character)).to be false
-        end
-
-        it "returns quest requirement reason" do
-          reason = building.entry_blocked_reason(character)
-          expect(reason).to include("requirements")
-        end
-      end
-
-      context "when character has completed required quest" do
-        before do
-          quest = create(:quest, key: "test_quest")
-          create(:quest_assignment, quest: quest, character: character, status: :completed)
-        end
-
-        it "can enter building" do
-          expect(building.can_enter?(character)).to be true
-        end
       end
     end
 
@@ -458,7 +422,7 @@ RSpec.describe TileBuilding, type: :model do
           destination_zone: destination_zone,
           required_level: 10,
           active: true,
-          metadata: {"required_quest" => "test_quest"}
+          metadata: {}
         )
       end
 

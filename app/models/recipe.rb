@@ -3,10 +3,8 @@
 class Recipe < ApplicationRecord
   unless defined?(SOURCE_KINDS)
     SOURCE_KINDS = {
-      quest: "quest",
       drop: "drop",
-      vendor: "vendor",
-      tutorial: "tutorial"
+      vendor: "vendor"
     }.freeze
   end
 
@@ -31,7 +29,6 @@ class Recipe < ApplicationRecord
   validates :source_kind, inclusion: {in: SOURCE_KINDS.values}
   validates :risk_level, inclusion: {in: RISK_LEVELS.values}
   validates :required_station_archetype, inclusion: {in: STATION_ARCHETYPES.values}
-  validates :premium_token_cost, numericality: {greater_than_or_equal_to: 0}
 
   def materials
     requirements.fetch("materials", {})
@@ -39,10 +36,6 @@ class Recipe < ApplicationRecord
 
   def required_skill_level
     requirements.fetch("skill_level", tier * 10)
-  end
-
-  def requires_premium_tokens?
-    premium_token_cost.positive?
   end
 
   def risky?

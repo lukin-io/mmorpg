@@ -7,7 +7,7 @@
 # Architecture (similar to STI but using role + metadata):
 #   - Base attributes: name, level, role, dialogue, metadata (JSONB)
 #   - Shared behaviors: Npc::CombatStats (stat calculation), Npc::Combatable (combat interface)
-#   - Role determines behavior: hostile, arena_bot, quest_giver, vendor, guard, etc.
+#   - Role determines behavior: hostile, arena_bot, vendor, guard, etc.
 #   - Metadata stores role-specific data (AI behavior, loot tables, shop inventory, etc.)
 #
 # Usage:
@@ -28,7 +28,7 @@ class NpcTemplate < ApplicationRecord
 
   DEFAULT_RESPAWN_SECONDS = 30.minutes.to_i
   DEFAULT_RESPAWN_VARIANCE_SECONDS = 5.minutes.to_i
-  ROLES = %w[quest_giver vendor trainer guard innkeeper banker crafter hostile lore arena_bot friendly].freeze
+  ROLES = %w[vendor trainer guard innkeeper banker crafter hostile lore arena_bot friendly].freeze
 
   validates :name, presence: true, uniqueness: true
   validates :level, numericality: {greater_than: 0}

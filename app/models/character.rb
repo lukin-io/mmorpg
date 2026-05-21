@@ -90,7 +90,6 @@ class Character < ApplicationRecord
 
   has_many :profession_progresses, dependent: :destroy
   has_many :profession_tools, dependent: :destroy
-  has_many :quest_assignments, dependent: :destroy
   has_many :movement_commands, dependent: :destroy
   has_many :world_action_offers, dependent: :destroy
 
@@ -107,7 +106,6 @@ class Character < ApplicationRecord
 
   before_validation :assign_random_avatar, on: :create
   after_create :ensure_inventory!
-  after_create_commit :ensure_tutorial_assignments
 
   def stats
     base = BASE_PRIMARY_STATS.dup
@@ -985,12 +983,6 @@ class Character < ApplicationRecord
 
   def ensure_inventory!
     create_inventory!(slot_capacity: 30, weight_capacity: 100) unless inventory
-  end
-
-  def ensure_tutorial_assignments
-    Game::Quests::TutorialBootstrapper.new(character: self).call
-  rescue ActiveRecord::RecordNotFound
-    true
   end
 
   def assign_random_avatar

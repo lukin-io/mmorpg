@@ -18,7 +18,7 @@ regions:
       - key: "wolf_den"
         description: "Hidden alcove filled with rare wolves; opens during dusk turns."
       - key: "spirit_hollow"
-        description: "Quest-only access once players cleanse the blight."
+        description: "Hidden alcove reserved for future source-backed access rules."
     metadata:
       difficulty: "standard"
       recommended_level: 5
@@ -60,7 +60,7 @@ regions:
       - "Fisher's Commune"
     hidden_areas:
       - key: "sunken_archive"
-        description: "Ancient ruins accessible with diving gear quest reward."
+        description: "Ancient ruins reserved for future source-backed access rules."
     metadata:
       difficulty: "standard"
       recommended_level: 12
@@ -81,7 +81,7 @@ regions:
       - "Arena of Crowns"
     hidden_areas:
       - key: "council_vault"
-        description: "Triggered during chapter quests; holds royal archives."
+        description: "Royal archive area reserved for future source-backed access rules."
     metadata:
       difficulty: "social"
       recommended_level: 1

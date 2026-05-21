@@ -9,7 +9,7 @@ RSpec.describe Economy::WalletService do
       service = described_class.new(wallet: wallet)
 
       expect do
-        service.adjust!(currency: :gold, amount: 100, reason: "quest.reward")
+        service.adjust!(currency: :gold, amount: 100, reason: "combat.reward")
       end.to change { wallet.reload.gold_balance }.by(100)
 
       transaction = wallet.currency_transactions.recent.first

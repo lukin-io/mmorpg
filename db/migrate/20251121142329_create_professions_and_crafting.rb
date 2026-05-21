@@ -28,10 +28,9 @@ class CreateProfessionsAndCrafting < ActiveRecord::Migration[8.1]
       t.integer :tier, null: false, default: 1
       t.integer :duration_seconds, null: false, default: 60
       t.string :output_item_name, null: false
-      t.string :source_kind, null: false, default: "quest"
+      t.string :source_kind, null: false, default: "vendor"
       t.string :source_reference
       t.string :risk_level, null: false, default: "safe"
-      t.integer :premium_token_cost, null: false, default: 0
       t.jsonb :quality_modifiers, null: false, default: {}
       t.string :required_station_archetype, null: false, default: "city"
       t.jsonb :requirements, null: false, default: {}

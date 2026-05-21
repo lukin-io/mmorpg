@@ -45,21 +45,13 @@ RSpec.describe Recipe, type: :model do
       expect(subject).not_to be_valid
       expect(subject.errors[:output_item_name]).to include("can't be blank")
     end
-
-    it "requires premium_token_cost to be non-negative" do
-      subject.premium_token_cost = -1
-      expect(subject).not_to be_valid
-      expect(subject.errors[:premium_token_cost]).to include("must be greater than or equal to 0")
-    end
   end
 
   describe "enums" do
     it "defines source_kind enum" do
       expect(described_class.source_kinds).to include(
-        "quest" => "quest",
         "drop" => "drop",
-        "vendor" => "vendor",
-        "tutorial" => "tutorial"
+        "vendor" => "vendor"
       )
     end
 
@@ -193,24 +185,6 @@ RSpec.describe Recipe, type: :model do
           recipe = create(:recipe, tier: tier, requirements: {})
           expect(recipe.required_skill_level).to eq(tier * 10)
         end
-      end
-    end
-  end
-
-  describe "#requires_premium_tokens?" do
-    context "when premium_token_cost is positive" do
-      let(:recipe) { create(:recipe, premium_token_cost: 5) }
-
-      it "returns true" do
-        expect(recipe.requires_premium_tokens?).to be true
-      end
-    end
-
-    context "when premium_token_cost is zero" do
-      let(:recipe) { create(:recipe, premium_token_cost: 0) }
-
-      it "returns false" do
-        expect(recipe.requires_premium_tokens?).to be false
       end
     end
   end

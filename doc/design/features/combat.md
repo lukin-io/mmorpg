@@ -369,10 +369,10 @@ Combat victory can produce two different reward classes:
 
 - fight rewards, such as experience, money, rating, trauma/injury outcome, or
   arena/dungeon progression;
-- NPC drops, such as materials, consumables, equipment, quest items, or
+- NPC drops, such as materials, consumables, equipment, or
   dungeon-specific currency.
 
-NPC drops are owned by the NPC/quest design, but combat owns the timing:
+NPC drops are owned by the NPC loot design, but combat owns the timing:
 
 1. resolve the final turn and write defeat/victory log entries;
 2. run the NPC loot check for each defeated loot-bearing NPC;

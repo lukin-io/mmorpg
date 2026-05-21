@@ -52,8 +52,6 @@ class InventoryItem < ApplicationRecord
   def protected_from_discard?
     equipped? ||
       bound? ||
-      item_template.item_type == "quest" ||
-      truthy_property?("quest_item") ||
       truthy_property?("protected") ||
       truthy_property?("locked")
   end

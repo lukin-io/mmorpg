@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class CurrencyTransaction < ApplicationRecord
-  CURRENCY_TYPES = %w[gold silver premium_tokens].freeze
+  CURRENCY_TYPES = %w[gold silver].freeze
 
   belongs_to :currency_wallet
 

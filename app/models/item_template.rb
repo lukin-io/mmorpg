@@ -7,7 +7,7 @@
 #
 # Inputs:
 #   - name: unique item name
-#   - item_type: equipment, material/resource, consumable, quest, or misc
+#   - item_type: equipment, material/resource, consumable, or misc
 #   - slot: equipment slot (head, chest, main_hand, etc.) or "none" for non-equipment
 #   - rarity: common, uncommon, rare, epic, legendary
 #
@@ -18,7 +18,7 @@
 #   template.equipment_slot  # => "main_hand"
 #
 class ItemTemplate < ApplicationRecord
-  ITEM_TYPES = %w[equipment material resource consumable quest misc].freeze
+  ITEM_TYPES = %w[equipment material resource consumable misc].freeze
   EQUIPMENT_SLOTS = EquipmentSlots::KEYS
   RARITIES = %w[common uncommon rare epic legendary].freeze
 
@@ -29,7 +29,6 @@ class ItemTemplate < ApplicationRecord
   validates :weight, numericality: {greater_than: 0}
   validates :base_price, :durability_max, numericality: {greater_than_or_equal_to: 0}
   validates :stack_limit, numericality: {greater_than: 0}
-  validate :premium_stat_cap
   validate :equipment_slot_validity
 
   scope :materials, -> { where(item_type: "material") }
@@ -57,10 +56,6 @@ class ItemTemplate < ApplicationRecord
     item_type == "consumable"
   end
 
-  def quest?
-    item_type == "quest"
-  end
-
   def inventory_category
     case item_type
     when "equipment"
@@ -69,8 +64,6 @@ class ItemTemplate < ApplicationRecord
       "consumables"
     when "material", "resource"
       "materials"
-    when "quest"
-      "quest"
     else
       "other"
     end
@@ -122,14 +115,6 @@ class ItemTemplate < ApplicationRecord
     Integer(value)
   rescue ArgumentError, TypeError
     nil
-  end
-
-  def premium_stat_cap
-    return unless premium?
-    return unless equipment?
-
-    total = stat_modifiers.to_h.values.compact.map(&:to_i).sum
-    errors.add(:stat_modifiers, "premium artifacts must stay cosmetic-balanced") if total > 10
   end
 
   def equipment_slot_validity

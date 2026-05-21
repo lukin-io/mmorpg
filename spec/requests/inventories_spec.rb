@@ -173,8 +173,8 @@ RSpec.describe "Inventories", type: :request do
       expect(response).to redirect_to(inventory_path)
     end
 
-    it "does not remove quest items" do
-      item_template.update!(item_type: "quest", slot: "none", stat_modifiers: {})
+    it "does not remove protected items" do
+      inventory_item.update!(properties: {"protected" => true})
 
       expect {
         delete inventory_item_path(inventory_item)

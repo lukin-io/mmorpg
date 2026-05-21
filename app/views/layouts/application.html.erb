@@ -39,7 +39,6 @@
           <nav class="game-nav">
             <% if current_user %>
               <%= link_to "World", root_path, class: ("active" if controller_name == "world") %>
-              <%= link_to "Quests", quests_path, class: ("active" if controller_name == "quests") %>
               <%= link_to "Chat", chat_channels_path, class: ("active" if controller_name == "chat_channels") %>
               <% if player_profile_path %>
                 <%= link_to "Profile", player_profile_path, class: ("active" if controller_name == "players") %>
@@ -97,10 +96,6 @@
             <%= link_to root_path, class: "mobile-hud-btn" do %>
               <span class="icon">Home</span>
               <span>Home</span>
-            <% end %>
-            <%= link_to quests_path, class: "mobile-hud-btn" do %>
-              <span class="icon">Quests</span>
-              <span>Quests</span>
             <% end %>
             <%= link_to chat_channels_path, class: "mobile-hud-btn" do %>
               <span class="icon">Chat</span>

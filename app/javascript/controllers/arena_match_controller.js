@@ -619,10 +619,10 @@ export default class extends Controller {
     return `
       <div class="arena-result-rewards">
         <h3>Rewards</h3>
-        <div class="quest-rewards-list">
-          ${rewards.xp ? `<span class="quest-reward-item quest-reward-item--xp">+${rewards.xp} XP</span>` : ""}
-          ${rewards.gold ? `<span class="quest-reward-item quest-reward-item--gold">+${rewards.gold} Gold</span>` : ""}
-          ${rewards.rating ? `<span class="quest-reward-item">+${rewards.rating} Rating</span>` : ""}
+        <div class="rewards-list">
+          ${rewards.xp ? `<span class="reward-item">+${rewards.xp} XP</span>` : ""}
+          ${rewards.gold ? `<span class="reward-item">+${rewards.gold} Gold</span>` : ""}
+          ${rewards.rating ? `<span class="reward-item">+${rewards.rating} Rating</span>` : ""}
         </div>
       </div>
     `

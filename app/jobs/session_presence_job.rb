@@ -29,7 +29,5 @@ class SessionPresenceJob < ApplicationJob
       session.mark_offline!(timestamp: timestamp)
       publisher.offline!(user: user, session: session)
     end
-
-    Presence::FriendBroadcaster.new.broadcast_for(user)
   end
 end

@@ -25,14 +25,4 @@ class ProfessionsController < ApplicationController
   rescue => e
     redirect_to professions_path, alert: e.message
   end
-
-  def reset_progress
-    progress = current_character.profession_progresses.find_by!(profession_id: params[:id])
-    authorize progress, :reset?
-
-    Professions::ResetService.new(progress: progress, actor: current_user).reset!(mode: params[:mode])
-    redirect_to professions_path, notice: "Profession progress reset."
-  rescue => e
-    redirect_to professions_path, alert: e.message
-  end
 end

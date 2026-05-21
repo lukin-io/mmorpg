@@ -31,11 +31,11 @@ end
 
 if defined?(Profession)
   [
-    {name: "Blacksmithing", category: "production", metadata: {reset_cost_tokens: 200}},
-    {name: "Alchemy", category: "production", metadata: {reset_cost_tokens: 150}},
-    {name: "Herbalism", category: "gathering", gathering: true, gathering_resource: "herb", metadata: {reset_cost_tokens: 100}},
-    {name: "Fishing", category: "gathering", gathering: true, gathering_resource: "fish", metadata: {reset_cost_tokens: 100}},
-    {name: "Doctor", category: "support", description: "Battlefield medic", healing_bonus: 20, metadata: {reset_cost_tokens: 250}}
+    {name: "Blacksmithing", category: "production"},
+    {name: "Alchemy", category: "production"},
+    {name: "Herbalism", category: "gathering", gathering: true, gathering_resource: "herb"},
+    {name: "Fishing", category: "gathering", gathering: true, gathering_resource: "fish"},
+    {name: "Doctor", category: "support", description: "Battlefield medic", healing_bonus: 20}
   ].each do |attrs|
     Profession.find_or_create_by!(name: attrs[:name]) do |profession|
       profession.category = attrs[:category]
@@ -75,7 +75,7 @@ if defined?(Recipe)
       recipe.output_item_name = "Tempered Longsword"
       recipe.requirements = {"skill_level" => 5, "materials" => {"Iron Ingot" => 4, "Coal Chunk" => 1}, "tool_wear" => 8}
       recipe.rewards = {"items" => [{"name" => "Tempered Longsword", "quantity" => 1}]}
-      recipe.source_kind = :quest
+      recipe.source_kind = :vendor
       recipe.risk_level = :moderate
       recipe.required_station_archetype = :city
       recipe.quality_modifiers = {"city_bonus" => 5}
@@ -154,31 +154,6 @@ if defined?(GatheringNode) && defined?(Profession)
   end
 end
 
-if defined?(Quest)
-  [
-    {key: "starter_crafting_tools", title: "Tools of the Trade", sequence: 1, quest_type: :side, chapter: 1,
-     summary: "Tutorial quest for crafting systems."},
-    {key: "profession_reset", title: "Reforge Your Path", sequence: 2, quest_type: :side, chapter: 1,
-     summary: "Walkthrough for resetting profession choices."},
-    {key: "movement_tutorial", title: "First Steps", sequence: 1, quest_type: :main_story, chapter: 0,
-     summary: "Learn tile-based movement and turn actions."},
-    {key: "combat_tutorial", title: "Trial by Combat", sequence: 2, quest_type: :main_story, chapter: 0,
-     summary: "Covers initiative, PvE fights, and combat logs."},
-    {key: "stat_allocation_tutorial", title: "Forging Your Build", sequence: 3, quest_type: :main_story, chapter: 0,
-     summary: "Explains stat allocation and respec options."},
-    {key: "gear_upgrade_tutorial", title: "Dress for Battle", sequence: 4, quest_type: :main_story, chapter: 0,
-     summary: "Introduces equipment slots, weight, and wear/remove actions."}
-  ].each do |attrs|
-    Quest.find_or_create_by!(key: attrs[:key]) do |quest|
-      quest.title = attrs[:title]
-      quest.sequence = attrs[:sequence]
-      quest.quest_type = attrs[:quest_type]
-      quest.chapter = attrs[:chapter]
-      quest.summary = attrs[:summary]
-    end
-  end
-end
-
 if defined?(ItemTemplate)
   [
     {
@@ -203,8 +178,7 @@ if defined?(ItemTemplate)
       slot: "chest",
       rarity: "rare",
       stat_modifiers: {intelligence: 4, vitality: 2},
-      weight: 1,
-      premium: true
+      weight: 1
     }
   ].each do |attrs|
     ItemTemplate.find_or_create_by!(name: attrs[:name]) do |item|
@@ -214,7 +188,6 @@ if defined?(ItemTemplate)
       item.stat_modifiers = attrs[:stat_modifiers]
       item.weight = attrs[:weight] || 2
       item.stack_limit = attrs[:stack_limit] || 1
-      item.premium = attrs.fetch(:premium, false)
     end
   end
 end
@@ -224,7 +197,7 @@ if defined?(NpcTemplate)
     {
       name: "Captain Elara",
       level: 20,
-      role: "quest_giver",
+      role: "guard",
       dialogue: "Elselands needs defenders. Will you answer the call?",
       metadata: {zone: "Castleton Keep"}
     },
@@ -265,7 +238,6 @@ if defined?(MapTileTemplate)
     city_tiles << {zone: zone_name, x: 5, y: 4, terrain_type: "city", biome: "city", metadata: {"building" => "Tavern", "npc" => "Innkeeper Bram"}}
     city_tiles << {zone: zone_name, x: 4, y: 4, terrain_type: "city", biome: "city", metadata: {"npc" => "Guard Captain"}}
     city_tiles << {zone: zone_name, x: 6, y: 4, terrain_type: "city", biome: "city", metadata: {"building" => "Bank"}}
-    city_tiles << {zone: zone_name, x: 6, y: 6, terrain_type: "city", biome: "city", metadata: {"building" => "Quest Board", "npc" => "Quest Master"}}
     # Walls and gates
     city_tiles << {zone: zone_name, x: 5, y: 9, terrain_type: "city", biome: "city", metadata: {"building" => "South Gate"}}
     city_tiles << {zone: zone_name, x: 5, y: 0, terrain_type: "city", biome: "city", metadata: {"building" => "North Gate"}}
@@ -622,73 +594,17 @@ if defined?(InventoryItem)
   end
 end
 
-admin_wallet = nil
-
 if defined?(CurrencyWallet)
   if admin
-    admin_wallet = admin.currency_wallet || CurrencyWallet.create!(user: admin)
-    admin_wallet.adjust!(currency: :gold, amount: 7_500, reason: "seed.story_reward", metadata: {"source" => "winter_festival"})
-    admin_wallet.adjust!(currency: :silver, amount: 1_200, reason: "seed.market_sale", metadata: {"item" => "Tempered Longsword"})
-    admin_wallet.adjust!(currency: :premium_tokens, amount: 40, reason: "seed.founders_pack")
+    wallet = admin.currency_wallet || CurrencyWallet.create!(user: admin)
+    wallet.adjust!(currency: :gold, amount: 7_500, reason: "seed.initial_gold", metadata: {"source" => "starter_content"})
+    wallet.adjust!(currency: :silver, amount: 1_200, reason: "seed.shop_sale", metadata: {"item" => "Tempered Longsword"})
   end
 
   if lukin_user
     wallet = lukin_user.currency_wallet || CurrencyWallet.create!(user: lukin_user)
     wallet.adjust!(currency: :gold, amount: 4_200, reason: "seed.arena_rewards")
-    wallet.adjust!(currency: :silver, amount: 800, reason: "seed.trade_posting")
-  end
-end
-
-if defined?(PremiumTokenLedgerEntry) && admin_wallet
-  PremiumTokenLedgerEntry.find_or_create_by!(user: admin, entry_type: :purchase, reason: "founders.pack") do |entry|
-    entry.delta = 40
-    entry.balance_after = admin_wallet.premium_tokens_balance
-    entry.metadata = {"source" => "seed"}
-  end
-end
-
-if defined?(QuestAssignment) && main_character
-  in_progress_quest = Quest.find_by(key: "movement_tutorial")
-  completed_quest = Quest.find_by(key: "combat_tutorial")
-  failed_quest = Quest.find_by(key: "gear_upgrade_tutorial")
-
-  if in_progress_quest
-    assignment = QuestAssignment.find_or_create_by!(quest: in_progress_quest, character: main_character)
-    assignment.update!(
-      status: :in_progress,
-      started_at: 2.hours.ago,
-      expires_at: 1.day.from_now,
-      progress: {"current_step_position" => 3, "decisions" => {"bridge" => "ambush-route"}},
-      metadata: {"story_flags" => ["met_scout"], "branch" => "shadow_path"}
-    )
-  end
-
-  if completed_quest
-    completed_assignment = QuestAssignment.find_or_create_by!(quest: completed_quest, character: main_character)
-    completed_assignment.update!(
-      status: :completed,
-      started_at: 5.hours.ago,
-      completed_at: 2.hours.ago,
-      rewards_claimed_at: 90.minutes.ago,
-      progress: {"current_step_position" => 5, "completed" => true, "decisions" => {"arena" => "parley"}},
-      metadata: {"story_flags" => ["trained_with_captain"], "branch" => "valor"}
-    )
-  end
-
-  if failed_quest
-    failed_assignment = QuestAssignment.find_or_create_by!(quest: failed_quest, character: main_character)
-    failed_assignment.update!(
-      status: :failed,
-      started_at: 1.day.ago,
-      abandoned_at: 12.hours.ago,
-      abandon_reason: "timed_out",
-      progress: {"current_step_position" => 2, "failure_step" => 2, "decisions" => {"forge" => "delay"}},
-      metadata: {
-        "story_flags" => ["missed_patrol"],
-        "branch" => "reckless",
-        "failure_report" => {"cause" => "breach", "npc" => "Captain Elara"}
-      }
-    )
+    wallet.adjust!(currency: :silver, amount: 800, reason: "seed.shop_sale")
   end
 end
 

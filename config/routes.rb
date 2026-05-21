@@ -82,16 +82,6 @@ Rails.application.routes.draw do
   get "log/:id", to: "public_fight_logs#show", as: :public_fight_log
   post "fight/npc", to: "world_npc_fights#create", as: :world_npc_fights
 
-  resources :quests, only: [:index, :show] do
-    member do
-      post :accept
-      post :complete
-      post :advance_story
-    end
-    collection do
-      post :daily
-    end
-  end
   resources :chat_channels, only: [:index, :show] do
     resources :chat_messages, only: :create
   end
@@ -99,7 +89,6 @@ Rails.application.routes.draw do
   resources :professions, only: :index do
     member do
       post :enroll
-      post :reset_progress
     end
   end
 
@@ -123,14 +112,7 @@ Rails.application.routes.draw do
 
   resource :session_ping, only: :create
 
-  resources :friendships, only: [:index, :create, :update, :destroy]
-  resources :mail_messages, only: [:index, :show, :new, :create]
   resources :ignore_list_entries, only: [:index, :create, :destroy]
-
-  resources :trade_sessions, only: [:create, :show, :update] do
-    resources :trade_items, only: :create
-  end
-  resources :trade_items, only: :destroy
 
   get "up" => "rails/health#show", :as => :rails_health_check
 end

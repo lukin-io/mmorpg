@@ -11,8 +11,7 @@ RSpec.describe "world/_city_view.html.erb", type: :view do
       height: 15,
       metadata: {
         "description" => "A magnificent capital full of wonder.",
-        "warning" => "Beware of pickpockets!",
-        "quest_hint" => "Talk to the guard captain for your first quest."
+        "warning" => "Beware of pickpockets!"
       })
   end
   let(:character) { create(:character) }
@@ -61,13 +60,6 @@ RSpec.describe "world/_city_view.html.erb", type: :view do
 
     expect(rendered).to have_css(".nl-warning")
     expect(rendered).to include("Beware of pickpockets")
-  end
-
-  it "displays quest hint as clickable highlight when present" do
-    render partial: "world/city_view", locals: {zone: zone, position: position}
-
-    expect(rendered).to have_css(".nl-highlight")
-    expect(rendered).to include("Talk to the guard captain")
   end
 
   it "includes stimulus controller data attributes" do

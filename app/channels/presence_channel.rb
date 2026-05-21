@@ -17,7 +17,6 @@ class PresenceChannel < ApplicationCable::Channel
     reject unless current_user
 
     stream_from Presence::Publisher::CHANNEL
-    stream_from friend_channel_name
     stream_from GLOBAL_CHANNEL
     stream_from ONLINE_PLAYERS_CHANNEL
 
@@ -29,7 +28,6 @@ class PresenceChannel < ApplicationCable::Channel
 
     # Mark user as online and broadcast
     mark_online
-    Presence::FriendBroadcaster.new.broadcast_for(current_user)
   end
 
   def unsubscribed
@@ -88,10 +86,6 @@ class PresenceChannel < ApplicationCable::Channel
   end
 
   private
-
-  def friend_channel_name
-    "#{Presence::FriendBroadcaster::CHANNEL_PREFIX}#{current_user.id}"
-  end
 
   def mark_online
     # Mark session online if the method exists

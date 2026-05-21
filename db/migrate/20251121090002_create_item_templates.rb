@@ -9,7 +9,6 @@ class CreateItemTemplates < ActiveRecord::Migration[8.1]
       t.jsonb :stat_modifiers, null: false, default: {}
       t.integer :weight, null: false, default: 1
       t.integer :stack_limit, null: false, default: 99
-      t.boolean :premium, null: false, default: false
       t.jsonb :enhancement_rules, null: false, default: {}
       t.jsonb :requirements, null: false, default: {}
       t.integer :base_price, null: false, default: 0

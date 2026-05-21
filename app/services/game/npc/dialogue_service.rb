@@ -4,7 +4,8 @@ module Game
   module Npc
     # Handles NPC dialogue and interactions.
     #
-    # Supports different NPC roles: quest_giver, vendor, trainer, guard, hostile.
+    # Supports different NPC roles: vendor, trainer, guard, hostile, and local
+    # service NPCs.
     #
     # @example Start dialogue with an NPC
     #   service = Game::Npc::DialogueService.new(character: char, npc_template: npc)
@@ -14,7 +15,6 @@ module Game
       Result = Struct.new(:success, :dialogue_type, :data, :message, keyword_init: true)
 
       NPC_ROLES = {
-        "quest_giver" => :handle_quest_giver,
         "vendor" => :handle_vendor,
         "trainer" => :handle_trainer,
         "guard" => :handle_guard,
@@ -44,8 +44,6 @@ module Game
       # Get available options for current NPC
       def available_options
         case npc_template.role
-        when "quest_giver"
-          quest_options
         when "vendor"
           vendor_options
         when "trainer"
@@ -62,10 +60,6 @@ module Game
       # Process a dialogue choice
       def process_choice!(choice_key, params = {})
         case choice_key.to_s
-        when "accept_quest"
-          accept_quest(params[:quest_id])
-        when "complete_quest"
-          complete_quest(params[:quest_id])
         when "buy_item"
           buy_item(params[:item_id], params[:quantity])
         when "sell_item"
@@ -84,64 +78,6 @@ module Game
       end
 
       private
-
-      # Quest Giver handling
-      def handle_quest_giver
-        quests = available_quests
-        active_quests = character_active_quests
-
-        Result.new(
-          success: true,
-          dialogue_type: :quest_giver,
-          data: {
-            npc: npc_data,
-            greeting: npc_greeting,
-            available_quests: quests.map { |q| quest_data(q) },
-            active_quests: active_quests.map { |qa| quest_assignment_data(qa) },
-            completable_quests: completable_quests.map { |qa| quest_assignment_data(qa) }
-          },
-          message: npc_greeting
-        )
-      end
-
-      def available_quests
-        Quest.joins(:quest_assignments)
-          .where(quest_giver_npc_id: npc_template.id)
-          .where.not(quest_assignments: {character_id: character.id})
-          .or(
-            Quest.where(quest_giver_npc_id: npc_template.id)
-              .where.not(id: character.quest_assignments.select(:quest_id))
-          )
-          .where("level_required <= ?", character.level)
-          .distinct
-          .limit(5)
-      end
-
-      def character_active_quests
-        character.quest_assignments
-          .includes(:quest)
-          .where(quests: {quest_giver_npc_id: npc_template.id})
-          .where(status: :in_progress)
-      end
-
-      def completable_quests
-        character.quest_assignments
-          .includes(:quest)
-          .where(quests: {turn_in_npc_id: npc_template.id})
-          .where(status: :in_progress)
-          .select { |qa| quest_complete?(qa) }
-      end
-
-      def quest_complete?(quest_assignment)
-        # Check if all objectives are completed
-        quest = quest_assignment.quest
-        progress = quest_assignment.progress || {}
-
-        quest.objectives.all? do |objective|
-          current = progress[objective["key"]] || 0
-          current >= (objective["target"] || 1)
-        end
-      end
 
       # Vendor handling
       def handle_vendor
@@ -331,50 +267,6 @@ module Game
       end
 
       # Action handlers
-      def accept_quest(quest_id)
-        quest = Quest.find_by(id: quest_id)
-        return failure("Quest not found") unless quest
-
-        assignment = character.quest_assignments.create!(
-          quest: quest,
-          status: :in_progress,
-          progress: {},
-          started_at: Time.current
-        )
-
-        Result.new(
-          success: true,
-          dialogue_type: :quest_accepted,
-          data: {quest: quest_data(quest), assignment: quest_assignment_data(assignment)},
-          message: "Quest accepted: #{quest.name}"
-        )
-      rescue ActiveRecord::RecordInvalid => e
-        failure("Could not accept quest: #{e.message}")
-      end
-
-      def complete_quest(quest_id)
-        assignment = character.quest_assignments.find_by(quest_id: quest_id, status: :in_progress)
-        return failure("Quest not found") unless assignment
-        return failure("Quest not complete") unless quest_complete?(assignment)
-
-        quest = assignment.quest
-        rewards = quest.rewards || {}
-
-        # Grant rewards
-        character.experience += rewards["xp"].to_i
-        character.gold += rewards["gold"].to_i
-        character.save!
-
-        assignment.update!(status: :completed, completed_at: Time.current)
-
-        Result.new(
-          success: true,
-          dialogue_type: :quest_completed,
-          data: {quest: quest_data(quest), rewards: rewards},
-          message: "Quest completed: #{quest.name}! You received #{rewards["xp"]} XP and #{rewards["gold"]} gold."
-        )
-      end
-
       def buy_item(item_id, quantity = 1)
         item = ItemTemplate.find_by(id: item_id)
         return failure("Item not found") unless item
@@ -496,35 +388,6 @@ module Game
       def npc_greeting
         greetings = npc_template.metadata&.dig("greetings") || []
         greetings.sample || "Greetings, traveler."
-      end
-
-      def quest_data(quest)
-        {
-          id: quest.id,
-          name: quest.name,
-          description: quest.description,
-          level_required: quest.level_required,
-          objectives: quest.objectives,
-          rewards: quest.rewards
-        }
-      end
-
-      def quest_assignment_data(quest_assignment)
-        {
-          id: quest_assignment.id,
-          quest: quest_data(quest_assignment.quest),
-          status: quest_assignment.status,
-          progress: quest_assignment.progress,
-          completable: quest_complete?(quest_assignment)
-        }
-      end
-
-      def quest_options
-        [
-          {key: "view_quests", label: "What quests do you have?"},
-          {key: "turn_in", label: "I've completed a quest."},
-          {key: "goodbye", label: "Goodbye."}
-        ]
       end
 
       def vendor_options

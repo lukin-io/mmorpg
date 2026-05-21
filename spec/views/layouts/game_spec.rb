@@ -79,12 +79,6 @@ RSpec.describe "layouts/game.html.erb", type: :view do
       expect(rendered).to have_css(".nl-top-nav")
     end
 
-    it "includes Quests link" do
-      render template: "layouts/game", layout: false
-
-      expect(rendered).to have_link("Quests", class: "nl-nav-link")
-    end
-
     it "includes Character link" do
       render template: "layouts/game", layout: false
 

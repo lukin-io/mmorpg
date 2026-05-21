@@ -147,25 +147,11 @@ class TileBuilding < ApplicationRecord
   end
 
   def check_metadata_requirements(character)
-    # Check quest requirements
-    if metadata["required_quest"].present?
-      return false unless character_has_completed_quest?(character, metadata["required_quest"])
-    end
-
-    # Check item requirements
     if metadata["required_item"].present?
       return false unless character_has_item?(character, metadata["required_item"])
     end
 
     true
-  end
-
-  def character_has_completed_quest?(character, quest_key)
-    return false unless character.respond_to?(:quest_assignments)
-
-    character.quest_assignments.joins(:quest)
-      .where(quests: {key: quest_key}, status: "completed")
-      .exists?
   end
 
   def character_has_item?(character, item_key)

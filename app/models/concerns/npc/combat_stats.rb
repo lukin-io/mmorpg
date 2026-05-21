@@ -36,7 +36,6 @@ module Npc
       "arena_bot" => {attack: 0.9, defense: 0.9, hp: 0.95},  # Slightly weaker for training
       "guard" => {attack: 1.2, defense: 1.5, hp: 1.3},
       "trainer" => {attack: 1.1, defense: 1.1, hp: 1.0},
-      "quest_giver" => {attack: 0.5, defense: 0.5, hp: 0.8},
       "vendor" => {attack: 0.3, defense: 0.3, hp: 0.5}
     }.freeze
 

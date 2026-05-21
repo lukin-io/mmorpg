@@ -6,7 +6,7 @@ module Economy
   #
   # Usage:
   #   Economy::WalletService.new(wallet: current_user.currency_wallet)
-  #     .adjust!(currency: :gold, amount: 500, reason: "quest.reward")
+  #     .adjust!(currency: :gold, amount: 500, reason: "combat.reward")
   #
   #   Economy::WalletService.new(wallet: wallet)
   #     .sink!(currency: :gold, amount: 25, sink_reason: :equipment_repair)
@@ -95,9 +95,6 @@ module Economy
 
     def set_balance!(currency, value)
       wallet.update!("#{currency}_balance" => value)
-      return unless currency == :premium_tokens
-
-      wallet.user.update!(premium_tokens_balance: value)
     end
 
     def record_transaction!(currency:, amount:, reason:, balance_after:, metadata:)

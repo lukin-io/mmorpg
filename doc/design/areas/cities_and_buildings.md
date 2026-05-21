@@ -3,8 +3,8 @@
 ## Purpose
 
 Cities are compact illustrated hubs. They organize shops, banks, taverns,
-arenas, transport stations, trainers, quest NPCs, and social presence without
-using the outdoor movement timer.
+arenas, transport stations, trainers, future captured quest NPCs, and social
+presence without using the outdoor movement timer.
 
 Buildings are entered from city hotspots and expose feature-specific screens.
 

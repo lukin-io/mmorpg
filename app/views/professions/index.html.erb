@@ -23,16 +23,6 @@
             <p><%= profession.description.presence || "No description yet." %></p>
             <% if progress %>
               <p>Level <%= progress.skill_level %> — XP <%= progress.experience %></p>
-              <div class="actions">
-                <%= button_to "Reset (Premium)",
-                    reset_progress_profession_path(profession, mode: :premium),
-                    method: :post,
-                    data: {turbo_confirm: "Spend premium tokens to reset #{profession.name}?"} %>
-                <%= button_to "Reset (Quest)",
-                    reset_progress_profession_path(profession, mode: :quest),
-                    method: :post,
-                    form: {data: {turbo_confirm: "Have you finished the reset quest?"}} %>
-              </div>
             <% else %>
               <%= button_to "Enroll",
                   enroll_profession_path(profession),

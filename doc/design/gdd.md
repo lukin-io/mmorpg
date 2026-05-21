@@ -80,7 +80,7 @@ The intended feel is:
 4. Movement/actions lock relevant buttons and show a timer when they take time.
 5. Completion refreshes current location, available movement, tile actions,
    resources, NPCs, buildings, encounters, and nearby player list.
-6. Player gains resources, combat progress, quest progress, reputation, skill
+6. Player gains resources, combat progress, reputation, skill
    growth, or economy opportunities.
 
 ## Movement GDD
@@ -100,8 +100,8 @@ Movement follows the Neverlands-style contract:
 - reload during travel resumes from server state;
 - completion updates authoritative position and returns the next map state;
 - completion also refreshes context buttons such as character, inventory,
-  enter, `Оглядеться` resource search, gather, fish, dig, drink, quest, or
-  combat actions.
+  enter, `Оглядеться` resource search, gather, fish, dig, drink, or combat
+  actions.
 
 The first implementation does not need to copy Neverlands' exact `GO@...`
 string protocol. JSON or Turbo Streams are acceptable if they preserve the same
@@ -228,7 +228,7 @@ may offer buttons for:
 - drink/use terrain feature;
 - talk to NPC;
 - attack hostile NPC;
-- quest interaction.
+- future captured quest interaction.
 
 Each action that mutates state should be server-authored, persisted, and
 validated against the current tile. The map renders action offers issued by the
@@ -288,12 +288,14 @@ mastery, must feed the canonical travel-time formula.
 
 The economy supports:
 
-- gold and premium currency;
+- normal shop currency;
 - inventory weight/slots;
 - city shop buy/sell flows;
-- direct trade;
 - crafting professions;
 - gathering and resource respawn;
+
+Direct player trade exists in Neverlands, but it is deferred until its exact
+flow and constraints are captured.
 
 Profession actions may lock movement with timers, matching the same lock/resume
 model as movement.

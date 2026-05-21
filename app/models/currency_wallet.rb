@@ -1,16 +1,14 @@
 # frozen_string_literal: true
 
 class CurrencyWallet < ApplicationRecord
-  CURRENCIES = %i[gold silver premium_tokens].freeze
+  CURRENCIES = %i[gold silver].freeze
 
   belongs_to :user
   has_many :currency_transactions, dependent: :destroy
 
   validates :user_id, uniqueness: true
-  validates :gold_balance, :silver_balance, :premium_tokens_balance,
-    numericality: {greater_than_or_equal_to: 0}
-  validates :gold_soft_cap, :silver_soft_cap, :premium_tokens_soft_cap,
-    numericality: {greater_than: 0}
+  validates :gold_balance, :silver_balance, numericality: {greater_than_or_equal_to: 0}
+  validates :gold_soft_cap, :silver_soft_cap, numericality: {greater_than: 0}
 
   def adjust!(currency:, amount:, reason: "manual.adjustment", metadata: {})
     Economy::WalletService.new(wallet: self).adjust!(

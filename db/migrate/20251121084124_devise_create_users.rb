@@ -31,14 +31,11 @@ class DeviseCreateUsers < ActiveRecord::Migration[7.1]
       t.string :profile_name, null: false
       t.integer :reputation_score, null: false, default: 0
       t.integer :chat_privacy, null: false, default: 0
-      t.integer :friend_request_privacy, null: false, default: 0
       t.integer :duel_privacy, null: false, default: 0
       t.datetime :last_seen_at
-      t.integer :premium_tokens_balance, null: false, default: 0
       t.jsonb :session_metadata, null: false, default: {}
       t.jsonb :social_settings, null: false, default: {}
       t.datetime :suspended_until
-      t.datetime :trade_locked_until
       t.datetime :chat_muted_until
       t.string :chat_mute_reason
 
@@ -55,7 +52,6 @@ class DeviseCreateUsers < ActiveRecord::Migration[7.1]
     add_index :users, :confirmation_token, unique: true
     add_index :users, :profile_name, unique: true
     add_index :users, :suspended_until
-    add_index :users, :trade_locked_until
     # add_index :users, :unlock_token,         unique: true
   end
 end

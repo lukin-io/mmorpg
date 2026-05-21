@@ -72,7 +72,7 @@ plains:
             price: 5
     - key: lost_traveler
       name: Lost Traveler
-      role: quest_giver
+      role: friendly
       level: 1
       spawn_chance: 5
       dialogue: "Oh thank goodness! Can you help me find my way?"
@@ -386,7 +386,7 @@ lake:
           chance: 80
     - key: fisherman
       name: Old Fisherman
-      role: quest_giver
+      role: friendly
       level: 3
       spawn_chance: 8
       dialogue: "The fish aren't biting today... say, could you help me with something?"
@@ -467,4 +467,3 @@ default:
       loot:
         - item: animal_hide
           chance: 50
-

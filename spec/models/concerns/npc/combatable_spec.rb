@@ -33,11 +33,6 @@ RSpec.describe Npc::Combatable do
         expect(vendor.can_engage_combat?).to be false
       end
 
-      it "returns false for quest_giver" do
-        quest_giver = create(:npc_template, role: "quest_giver")
-        expect(quest_giver.can_engage_combat?).to be false
-      end
-
       it "returns false for innkeeper" do
         innkeeper = create(:npc_template, role: "innkeeper")
         expect(innkeeper.can_engage_combat?).to be false
@@ -112,7 +107,6 @@ RSpec.describe Npc::Combatable do
 
       it "returns :passive for non-combat roles" do
         expect(vendor.combat_behavior).to eq(:passive)
-        expect(create(:npc_template, role: "quest_giver").combat_behavior).to eq(:passive)
         expect(create(:npc_template, role: "innkeeper").combat_behavior).to eq(:passive)
       end
     end

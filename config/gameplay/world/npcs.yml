@@ -6,7 +6,7 @@ npcs:
     region: "everfall_capital"
     location: "Hall of Magistrates"
     faction_alignment: "crownwatch"
-    roles: ["quest_giver"]
+    roles: ["guard"]
     dialogue:
       friendly:
         - "Justice favors the vigilant. How may the Crown assist you?"
@@ -18,16 +18,13 @@ npcs:
       hostile: -25
       guarded: 0
       friendly: 40
-    quests:
-      main_story: ["chapter_1_prologue", "chapter_2_conclave"]
-      daily: ["city_watch_patrol"]
   storyteller_ivarn:
     name: "Ivárn the Chronicler"
     archetype: "storyteller"
     region: "ashen_forest"
     location: "Rootbound Shrine"
     faction_alignment: "wardens"
-    roles: ["lore", "quest_giver"]
+    roles: ["lore"]
     dialogue:
       friendly:
         - "Listen close; the trees remember every oath."
@@ -35,9 +32,6 @@ npcs:
         - "The forest watches all travelers."
     reputation_thresholds:
       friendly: 10
-    quests:
-      side: ["forest_memory", "warden_trials"]
-
   trainer_maela:
     name: "Maela Emberstrike"
     archetype: "trainer"
@@ -61,7 +55,7 @@ npcs:
     region: "obsidian_castle"
     location: "Midnight Gate"
     faction_alignment: "vigil"
-    roles: ["quest_giver"]
+    roles: ["guard"]
     dialogue:
       friendly:
         - "Hold the line and the realm survives."
@@ -70,8 +64,6 @@ npcs:
     reputation_thresholds:
       hostile: -10
       trusted: 30
-    quests:
-      raids: ["obsidian_siege_prep"]
   vendor_luthe:
     name: "Luthe"
     archetype: "vendor"

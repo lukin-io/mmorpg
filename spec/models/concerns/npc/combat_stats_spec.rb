@@ -133,15 +133,6 @@ RSpec.describe Npc::CombatStats do
         expect(stats[:hp]).to eq(60) # 120 * 0.5
       end
 
-      it "applies quest_giver modifier (0.5 attack/defense, 0.8 hp)" do
-        quest_giver = create(:npc_template, level: 10, role: "quest_giver")
-        stats = quest_giver.combat_stats
-
-        expect(stats[:attack]).to eq(17) # 35 * 0.5
-        expect(stats[:defense]).to eq(11) # 23 * 0.5
-        expect(stats[:hp]).to eq(96) # 120 * 0.8
-      end
-
       it "defaults to hostile modifier for unknown roles" do
         # Hostile has 1.0 modifiers (no change)
         expect(npc_template.combat_stats[:attack]).to eq(35)

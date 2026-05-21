@@ -49,8 +49,8 @@ enter dungeon
 
 - Starting a dungeon run as leader requires a special dungeon key or equivalent
   unlock described by the source.
-- The source describes key acquisition through crafting and through random-event
-  quest rewards.
+- The source describes key acquisition through crafting and through
+  source-backed random-event rewards.
 - A character without the starter key can join another player's application.
 - Join eligibility is tied to the leader: party members can differ from the
   leader by no more than two levels.
@@ -98,8 +98,7 @@ Patterns to preserve:
   visited the room.
 - A character with no oil cannot move.
 - The source grants some oil at dungeon start.
-- More oil can come from normal NPC drops, boss drops, chest rewards, or source
-  premium refill rules.
+- More oil can come from normal NPC drops, boss drops, or chest rewards.
 - Oil scarcity is a dungeon pacing mechanic. The design should make oil
   spending visible and meaningful.
 
@@ -127,7 +126,6 @@ Patterns to preserve:
 - Source recovery options are:
   - the dead player leaves the dungeon and party;
   - another party member resurrects them with a resurrection scroll;
-  - the player self-resurrects through the source premium rule.
 
 ## Seals And Portal Descent
 

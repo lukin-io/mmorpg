@@ -82,15 +82,6 @@ module Crafting
     def consume_resources!(job)
       inventory = character.inventory
       inventory.consume_materials!(recipe.materials) if recipe.materials.present?
-      if recipe.requires_premium_tokens?
-        Payments::PremiumTokenLedger.debit(
-          user: user,
-          amount: recipe.premium_token_cost,
-          reason: "crafting.premium_recipe",
-          actor: user,
-          reference: job
-        )
-      end
     end
 
     def schedule_completion(job)

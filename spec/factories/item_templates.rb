@@ -7,7 +7,6 @@ FactoryBot.define do
     stat_modifiers { {"attack" => 5} }
     weight { 2 }
     stack_limit { 10 }
-    premium { false }
 
     trait :material do
       item_type { "material" }

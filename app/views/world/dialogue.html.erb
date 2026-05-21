@@ -22,8 +22,6 @@
     </div>
 
     <% case result.dialogue_type %>
-    <% when :quest_giver %>
-      <%= render "world/dialogue_quests", result: result %>
     <% when :vendor %>
       <%= render "world/dialogue_vendor", result: result, npc: npc %>
     <% when :trainer %>

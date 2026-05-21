@@ -31,7 +31,6 @@ Core:
 - armor;
 - jewelry/accessories;
 - consumables;
-- quest items;
 - crafting resources;
 - tools.
 
@@ -68,7 +67,7 @@ Design rules:
 - clicking an occupied equipment slot removes that item through the same
   server-authorized equipment action family;
 - removing an item returns it to carried inventory if capacity and state allow;
-- equipped, broken, protected, locked, or quest-bound items can have restricted
+- equipped, broken, protected, or locked items can have restricted
   actions and must be handled server-side.
 
 Observed Neverlands action semantics:
@@ -185,7 +184,6 @@ The live inventory capture adds these launch requirements:
 - Characters have finite carry capacity.
 - Capacity can be weight-based, slot-based, or both.
 - Stackable items stack only with matching item identity and state.
-- Quest items can be protected from normal sale/discard.
 - Inventory actions are server-authoritative.
 - Wearing, removing, using, deleting, selling, transferring, and gifting are
   separate actions and should not share client-invented state.
@@ -196,8 +194,8 @@ The launch inventory should support:
 
 - inventory page inside the game shell with equipment panel, stats panel,
   category filters, sort actions, inventory mass, item rows, and empty slots;
-- item templates for equipment, consumables, materials, resources, quest items,
-  and miscellaneous items;
+- item templates for equipment, consumables, materials, resources, and
+  miscellaneous items;
 - item instances with quantity, equipped slot, current durability, requirement
   overrides, effect overrides, expiry metadata, bound/protected state, and
   per-item properties;
@@ -209,7 +207,7 @@ The launch inventory should support:
   bonuses;
 - combat durability degradation for player, team, and NPC fight equipment;
 - consumable durability charges before quantity consumption;
-- discard protection for equipped, bound, protected, locked, and quest items.
+- discard protection for equipped, bound, protected, and locked items.
 
 Remaining design detail before launch:
 
@@ -218,11 +216,11 @@ Remaining design detail before launch:
 - complete slot rules for two-handed weapons, layered armor, rings, belt
   contents, pocket contents, and relics;
 - repair and breakage UX, including player-visible messages when gear breaks;
-- capacity enforcement across loot, pickup, trade, shop purchase, and quest
-  reward flows;
+- capacity enforcement across loot, pickup, and shop purchase flows;
 - server-issued inventory action keys when normal Rails form protection is not
   enough for the final gameplay action model;
-- transfer, gift, sale, dealer, and equipment-set saving flows.
+- future transfer, gift, direct trade, dealer, and equipment-set saving flows
+  need source capture before implementation.
 
 ## State Concepts
 
@@ -241,6 +239,8 @@ Remaining design detail before launch:
 
 - `features/combat.md`: weapons and armor affect turns.
 - `features/movement.md`: carried weight can modify travel time.
-- `features/economy_trading_shops.md`: shops and market trade items.
+- `features/economy_trading_shops.md`: shops buy and sell inventory items;
+  future player trade needs source capture first.
 - `features/gathering_professions.md`: resources and tools live in inventory.
-- `features/npcs_quests.md`: quests can grant or require items.
+- `features/npcs_quests.md`: future quest-item behavior needs source capture
+  before implementation.

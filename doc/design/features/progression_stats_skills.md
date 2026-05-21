@@ -158,8 +158,10 @@ Peace/world:
 - gathering;
 - fishing;
 - digging/mining;
-- trade;
 - crafting professions.
+
+Trade-related peace skills or licenses need dedicated source capture before
+being treated as launch progression.
 
 Social/progression extensions:
 
@@ -196,7 +198,8 @@ Social/progression extensions:
 - `features/items_inventory_equipment.md`: item requirements use stats/skills.
 - `features/gathering_professions.md`: profession skills determine gathering
   and craft outcomes.
-- `features/npcs_quests.md`: quests can grant skill points or unlock trainers.
+- `features/npcs_quests.md`: future quest interactions need source capture
+  before granting skill points or unlocking trainers.
 
 ## Out Of Scope
 

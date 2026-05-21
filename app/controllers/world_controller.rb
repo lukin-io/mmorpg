@@ -343,11 +343,6 @@ class WorldController < ApplicationController
       format.turbo_stream do
         if result.success
           case result.dialogue_type
-          when :quest_accepted, :quest_completed
-            render turbo_stream: [
-              turbo_stream.replace("dialogue-content", partial: "world/dialogue_result", locals: {result: result}),
-              turbo_stream.replace("flash", partial: "shared/flash", locals: {notice: result.message})
-            ]
           when :purchase_complete, :sale_complete, :skill_learned, :rested
             render turbo_stream: [
               turbo_stream.replace("dialogue-content", partial: "world/dialogue_result", locals: {result: result}),
