@@ -911,8 +911,6 @@ textarea {
 .chat-channel,
 .chat-channel-list,
 .public-profile,
-.housing-panel,
-.mounts-panel,
 .quest-dialogue {
   background: var(--nl-bg-secondary);
   border: 1px solid var(--nl-border-light);
@@ -997,15 +995,6 @@ textarea {
   font-style: italic;
 }
 
-.housing-plot,
-.mount-card {
-  background: var(--nl-bg-accent);
-  border: 1px solid var(--nl-border-light);
-  border-radius: var(--nl-radius-md);
-  padding: var(--nl-space-md);
-  margin-bottom: var(--nl-space-md);
-}
-
 /* Enter World Panel */
 .enter-world-panel {
   margin-bottom: var(--nl-space-lg);
@@ -1048,21 +1037,6 @@ textarea {
 .enter-world-text small {
   color: var(--nl-text-muted);
   font-size: 0.9rem;
-}
-
-.decor-item {
-  background: var(--nl-bg-tertiary);
-  border: 1px solid var(--nl-border-light);
-  border-radius: var(--nl-radius-sm);
-  padding: var(--nl-space-sm);
-  display: inline-flex;
-  align-items: center;
-  gap: var(--nl-space-sm);
-}
-
-.mount-speed {
-  color: var(--nl-success);
-  font-weight: bold;
 }
 
 .empty-state {
@@ -7972,7 +7946,6 @@ turbo-frame[busy] {
 }
 
 .item-icon--cosmetic { color: #f8a; }
-.item-icon--mount { color: #8af; }
 .item-icon--pet { color: #fa8; }
 .item-icon--boost { color: #ff0; }
 .item-icon--convenience { color: #8f8; }
@@ -8003,112 +7976,11 @@ turbo-frame[busy] {
   font-size: 0.85rem;
 }
 
-/* ==========================================================================
-   TITLES STYLES
-   ========================================================================== */
-
-.titles-page {
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-.titles-layout {
-  display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: var(--nl-space-lg);
-}
-
-.equipped-title-panel {
-  text-align: center;
-  margin-bottom: var(--nl-space-lg);
-}
-
-.equipped-display {
-  font-size: 1.5rem;
-  margin: var(--nl-space-lg) 0;
-}
-
-.title-prefix {
-  color: var(--nl-gold);
-  font-style: italic;
-}
-
-.title-suffix {
-  color: var(--nl-gold);
-  font-style: italic;
-}
-
-.titles-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: var(--nl-space-md);
-}
-
-.title-card {
-  padding: var(--nl-space-md);
-  background: var(--nl-bg);
-  border: 1px solid var(--nl-border);
-  border-radius: var(--nl-radius);
-  transition: all 0.15s;
-}
-
-.title-card:hover {
-  border-color: var(--nl-gold);
-}
-
-.title-card.equipped {
-  border-color: var(--nl-gold);
-  background: rgba(212, 175, 55, 0.1);
-}
-
-.title-preview {
-  padding: var(--nl-space-sm);
-  background: var(--nl-bg-dark);
-  border-radius: var(--nl-radius);
-  text-align: center;
-  margin: var(--nl-space-sm) 0;
-}
-
-.preview-prefix,
-.preview-suffix {
-  color: var(--nl-gold);
-  font-style: italic;
-}
-
 .rarity--common { color: #888; }
 .rarity--uncommon { color: #4a9; }
 .rarity--rare { color: #48f; }
 .rarity--epic { color: #a4a; }
 .rarity--legendary { color: var(--nl-gold); }
-
-.titles-catalog {
-  max-height: 400px;
-  overflow-y: auto;
-}
-
-.rarity-group {
-  margin-bottom: var(--nl-space-md);
-}
-
-.rarity-header {
-  font-size: 0.9rem;
-  margin-bottom: var(--nl-space-sm);
-}
-
-.catalog-title {
-  display: flex;
-  justify-content: space-between;
-  padding: var(--nl-space-xs) 0;
-  font-size: 0.85rem;
-}
-
-.catalog-title.earned .title-name {
-  color: var(--nl-text);
-}
-
-.catalog-title:not(.earned) .title-name {
-  color: var(--nl-text-muted);
-}
 
 /* ==========================================================================
    MOBILE HUD STYLES

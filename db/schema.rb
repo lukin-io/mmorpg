@@ -14,38 +14,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
-  create_table "achievement_grants", force: :cascade do |t|
-    t.bigint "achievement_id", null: false
-    t.datetime "created_at", null: false
-    t.datetime "granted_at", null: false
-    t.string "source", null: false
-    t.datetime "updated_at", null: false
-    t.bigint "user_id", null: false
-    t.index ["achievement_id"], name: "index_achievement_grants_on_achievement_id"
-    t.index ["user_id", "achievement_id"], name: "index_achievement_grants_on_user_and_achievement", unique: true
-    t.index ["user_id"], name: "index_achievement_grants_on_user_id"
-  end
-
-  create_table "achievements", force: :cascade do |t|
-    t.boolean "account_wide", default: true, null: false
-    t.string "category", default: "general", null: false
-    t.datetime "created_at", null: false
-    t.text "description"
-    t.integer "display_priority", default: 0, null: false
-    t.string "key", null: false
-    t.string "name", null: false
-    t.integer "points", default: 0, null: false
-    t.jsonb "reward_payload", default: {}, null: false
-    t.string "reward_type"
-    t.jsonb "share_payload", default: {}, null: false
-    t.bigint "title_reward_id"
-    t.datetime "updated_at", null: false
-    t.index ["category"], name: "index_achievements_on_category"
-    t.index ["display_priority"], name: "index_achievements_on_display_priority"
-    t.index ["key"], name: "index_achievements_on_key", unique: true
-    t.index ["title_reward_id"], name: "index_achievements_on_title_reward_id"
-  end
-
   create_table "arena_applications", force: :cascade do |t|
     t.bigint "applicant_id"
     t.bigint "arena_match_id"
@@ -784,41 +752,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_120000) do
     t.index ["status"], name: "index_group_listings_on_status"
   end
 
-  create_table "housing_decor_items", force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.string "decor_type", default: "furniture", null: false
-    t.bigint "housing_plot_id", null: false
-    t.jsonb "metadata", default: {}, null: false
-    t.string "name", null: false
-    t.jsonb "placement", default: {}, null: false
-    t.boolean "trophy", default: false, null: false
-    t.datetime "updated_at", null: false
-    t.integer "utility_slot"
-    t.index ["decor_type"], name: "index_housing_decor_items_on_decor_type"
-    t.index ["housing_plot_id"], name: "index_housing_decor_items_on_housing_plot_id"
-  end
-
-  create_table "housing_plots", force: :cascade do |t|
-    t.jsonb "access_rules", default: {}, null: false
-    t.datetime "created_at", null: false
-    t.string "exterior_style", default: "classic", null: false
-    t.string "location_key", null: false
-    t.datetime "next_upkeep_due_at"
-    t.string "plot_tier", default: "starter", null: false
-    t.string "plot_type", null: false
-    t.integer "room_slots", default: 1, null: false
-    t.boolean "showcase_enabled", default: false, null: false
-    t.integer "storage_slots", default: 20, null: false
-    t.datetime "updated_at", null: false
-    t.integer "upkeep_gold_cost", default: 200, null: false
-    t.bigint "user_id", null: false
-    t.integer "utility_slots", default: 1, null: false
-    t.string "visit_scope", default: "friends", null: false
-    t.index ["plot_tier"], name: "index_housing_plots_on_plot_tier"
-    t.index ["user_id"], name: "index_housing_plots_on_user_id"
-    t.index ["visit_scope"], name: "index_housing_plots_on_visit_scope"
-  end
-
   create_table "ignore_list_entries", force: :cascade do |t|
     t.string "context"
     t.datetime "created_at", null: false
@@ -979,39 +912,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_120000) do
     t.bigint "zone_id", null: false
     t.index ["zone_id", "item_name"], name: "index_medical_supply_pools_on_zone_and_item", unique: true
     t.index ["zone_id"], name: "index_medical_supply_pools_on_zone_id"
-  end
-
-  create_table "mount_stable_slots", force: :cascade do |t|
-    t.jsonb "cosmetics", default: {}, null: false
-    t.datetime "created_at", null: false
-    t.bigint "current_mount_id"
-    t.integer "slot_index", null: false
-    t.string "status", default: "locked", null: false
-    t.datetime "unlocked_at"
-    t.datetime "updated_at", null: false
-    t.bigint "user_id", null: false
-    t.index ["current_mount_id"], name: "index_mount_stable_slots_on_current_mount_id"
-    t.index ["user_id", "slot_index"], name: "index_mount_stable_slots_on_user_id_and_slot_index", unique: true
-    t.index ["user_id"], name: "index_mount_stable_slots_on_user_id"
-  end
-
-  create_table "mounts", force: :cascade do |t|
-    t.jsonb "appearance", default: {}, null: false
-    t.string "cosmetic_variant", default: "default", null: false
-    t.datetime "created_at", null: false
-    t.string "faction_key", default: "neutral", null: false
-    t.bigint "mount_stable_slot_id"
-    t.string "mount_type", null: false
-    t.string "name", null: false
-    t.string "rarity", default: "common", null: false
-    t.integer "speed_bonus", default: 0, null: false
-    t.string "summon_state", default: "stabled", null: false
-    t.datetime "updated_at", null: false
-    t.bigint "user_id", null: false
-    t.index ["faction_key"], name: "index_mounts_on_faction_key"
-    t.index ["mount_stable_slot_id"], name: "index_mounts_on_mount_stable_slot_id"
-    t.index ["rarity"], name: "index_mounts_on_rarity"
-    t.index ["user_id"], name: "index_mounts_on_user_id"
   end
 
   create_table "movement_commands", force: :cascade do |t|
@@ -1396,29 +1296,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_120000) do
     t.index ["zone", "x", "y"], name: "index_tile_resources_on_zone_and_x_and_y", unique: true
   end
 
-  create_table "title_grants", force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.boolean "equipped", default: false, null: false
-    t.datetime "granted_at", null: false
-    t.string "source", null: false
-    t.bigint "title_id", null: false
-    t.datetime "updated_at", null: false
-    t.bigint "user_id", null: false
-    t.index ["title_id"], name: "index_title_grants_on_title_id"
-    t.index ["user_id", "title_id"], name: "index_title_grants_on_user_id_and_title_id", unique: true
-    t.index ["user_id"], name: "index_title_grants_on_user_id"
-  end
-
-  create_table "titles", force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.string "name", null: false
-    t.jsonb "perks", default: {}, null: false
-    t.boolean "premium_only", default: false, null: false
-    t.boolean "priority_party_finder", default: false, null: false
-    t.string "requirement_key", null: false
-    t.datetime "updated_at", null: false
-  end
-
   create_table "trade_items", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "currency_amount"
@@ -1473,7 +1350,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_120000) do
   end
 
   create_table "users", force: :cascade do |t|
-    t.bigint "active_title_id"
     t.string "chat_mute_reason"
     t.datetime "chat_muted_until"
     t.integer "chat_privacy", default: 0, null: false
@@ -1503,7 +1379,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_120000) do
     t.datetime "trade_locked_until"
     t.string "unconfirmed_email"
     t.datetime "updated_at", null: false
-    t.index ["active_title_id"], name: "index_users_on_active_title_id"
     t.index ["confirmation_token"], name: "index_users_on_confirmation_token", unique: true
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["profile_name"], name: "index_users_on_profile_name", unique: true
@@ -1558,9 +1433,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_120000) do
     t.index ["name"], name: "index_zones_on_name", unique: true
   end
 
-  add_foreign_key "achievement_grants", "achievements"
-  add_foreign_key "achievement_grants", "users"
-  add_foreign_key "achievements", "titles", column: "title_reward_id"
   add_foreign_key "arena_applications", "arena_applications", column: "matched_with_id"
   add_foreign_key "arena_applications", "arena_matches"
   add_foreign_key "arena_applications", "arena_rooms"
@@ -1640,8 +1512,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_120000) do
   add_foreign_key "group_listings", "parties"
   add_foreign_key "group_listings", "professions"
   add_foreign_key "group_listings", "users", column: "owner_id"
-  add_foreign_key "housing_decor_items", "housing_plots"
-  add_foreign_key "housing_plots", "users"
   add_foreign_key "ignore_list_entries", "users"
   add_foreign_key "ignore_list_entries", "users", column: "ignored_user_id"
   add_foreign_key "inventories", "characters"
@@ -1654,10 +1524,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_120000) do
   add_foreign_key "market_demand_signals", "zones"
   add_foreign_key "marketplace_kiosks", "users", column: "seller_id"
   add_foreign_key "medical_supply_pools", "zones"
-  add_foreign_key "mount_stable_slots", "mounts", column: "current_mount_id"
-  add_foreign_key "mount_stable_slots", "users"
-  add_foreign_key "mounts", "mount_stable_slots"
-  add_foreign_key "mounts", "users"
   add_foreign_key "movement_commands", "characters"
   add_foreign_key "movement_commands", "zones"
   add_foreign_key "parties", "chat_channels"
@@ -1687,14 +1553,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_120000) do
   add_foreign_key "tile_npcs", "characters", column: "defeated_by_id"
   add_foreign_key "tile_npcs", "npc_templates"
   add_foreign_key "tile_resources", "characters", column: "harvested_by_id"
-  add_foreign_key "title_grants", "titles"
-  add_foreign_key "title_grants", "users"
   add_foreign_key "trade_items", "trade_sessions"
   add_foreign_key "trade_items", "users", column: "owner_id"
   add_foreign_key "trade_sessions", "users", column: "initiator_id"
   add_foreign_key "trade_sessions", "users", column: "recipient_id"
   add_foreign_key "user_sessions", "users"
-  add_foreign_key "users", "titles", column: "active_title_id"
   add_foreign_key "users_roles", "roles"
   add_foreign_key "users_roles", "users"
   add_foreign_key "world_action_offers", "characters"

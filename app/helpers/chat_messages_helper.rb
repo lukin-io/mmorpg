@@ -20,7 +20,7 @@ module ChatMessagesHelper
     nil
   end
 
-  # Format sender name with level and title
+  # Format sender name with level
   #
   # @param message [ChatMessage] the chat message
   # @return [String] formatted sender name
@@ -31,7 +31,6 @@ module ChatMessagesHelper
     return message.metadata&.dig("sender_name") || "Unknown" unless sender
 
     parts = []
-    parts << sender.current_title if sender.respond_to?(:current_title) && sender.current_title.present?
     parts << sender.name
     parts << "[#{sender.level}]" if sender.respond_to?(:level)
 

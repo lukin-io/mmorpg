@@ -154,23 +154,6 @@ Rails.application.routes.draw do
   end
   resources :trade_items, only: :destroy
 
-  resources :achievements, only: [:index, :create]
-  resources :housing_plots, only: [:index, :create, :update] do
-    member do
-      post :upgrade
-      post :decorate
-      delete "decorate/:decor_id", action: :remove_decor, as: :remove_decor
-    end
-  end
-  resources :mounts, only: [:index, :create] do
-    collection do
-      post :unlock_slot
-    end
-    member do
-      post :assign_to_slot
-      post :summon
-    end
-  end
   resources :parties do
     member do
       post :ready_check
@@ -183,15 +166,6 @@ Rails.application.routes.draw do
     resources :party_memberships, only: [:update, :destroy]
   end
   resources :party_invitations, only: :update
-
-  resources :titles, only: [:index] do
-    member do
-      post :equip
-    end
-    collection do
-      delete :unequip
-    end
-  end
 
   resources :game_events, only: [:index, :show, :update]
   resources :leaderboards, only: [:index, :show] do

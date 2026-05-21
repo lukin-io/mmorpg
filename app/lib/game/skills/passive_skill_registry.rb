@@ -402,19 +402,6 @@ module Game
           # At max level: 20% better prices
           effect_formula: ->(level) { (level.to_f / MAX_LEVEL) * 0.20 },
           progression_rate: "2:2:2:2"
-        },
-
-        animal_handling: {
-          key: :animal_handling,
-          name: "Animal Handling",
-          description: "Improves mount speed and unlocks mount taming.",
-          max_level: MAX_LEVEL,
-          category: :peace,
-          pool: POOL_PEACE,
-          effect_type: :mount_bonus,
-          # At max level: +30% mount speed
-          effect_formula: ->(level) { (level.to_f / MAX_LEVEL) * 0.30 },
-          progression_rate: "2:2:2:2"
         }
       }.freeze
 

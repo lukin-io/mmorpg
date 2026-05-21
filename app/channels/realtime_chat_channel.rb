@@ -195,8 +195,7 @@ class RealtimeChatChannel < ApplicationCable::Channel
       chat_type: options[:chat_type] || @chat_type,
       recipient: options[:recipient],
       metadata: {
-        sender_level: character&.level,
-        sender_title: nil # Character doesn't have current_title
+        sender_level: character&.level
       }
     )
   rescue ActiveRecord::RecordInvalid => e
@@ -220,7 +219,6 @@ class RealtimeChatChannel < ApplicationCable::Channel
       sender_id: message.user_id,
       sender_name: message.sender&.name || "System",
       sender_level: message.metadata&.dig("sender_level"),
-      sender_title: message.metadata&.dig("sender_title"),
       chat_type: message.chat_type,
       timestamp: message.created_at.strftime("%H:%M"),
       full_timestamp: message.created_at.iso8601

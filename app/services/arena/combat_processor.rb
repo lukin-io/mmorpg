@@ -529,16 +529,16 @@ module Arena
       when :miss
         log_entry("miss", attacker, "#{attacker.name} missed #{target.name} (#{body_part})")
         broadcaster.broadcast_combat_action(attacker, "miss", target, 0, body_part:, miss: true)
-        return success(**resolution)
+        return success(**attack_result_payload(resolution, attack_type:, body_part:))
       when :dodge
         log_entry("dodge", target, "#{target.name} dodged #{attacker.name}'s attack (#{body_part})")
         broadcaster.broadcast_combat_action(attacker, "dodge", target, 0, body_part:, dodge: true)
-        return success(**resolution)
+        return success(**attack_result_payload(resolution, attack_type:, body_part:))
       when :blocked
         clear_blocking_state(target)
         log_entry("block", target, "#{target.name} blocked attack (#{body_part}) from #{attacker.name}")
         broadcaster.broadcast_combat_action(attacker, "blocked", target, 0, body_part:)
-        return success(**resolution)
+        return success(**attack_result_payload(resolution, attack_type:, body_part:))
       end
 
       damage = resolution[:damage]
@@ -571,7 +571,7 @@ module Arena
 
       track_damage!(attacker_participation, target_participation, damage)
 
-      success(**resolution.merge(target_hp: target.current_hp, attack_type:))
+      success(**attack_result_payload(resolution, attack_type:, body_part:, target_hp: target.current_hp))
     end
 
     def process_attack_on_npc(attacker, npc_participation, attack_type: :simple, body_part: "torso")
@@ -591,16 +591,16 @@ module Arena
       when :miss
         log_entry("miss", attacker, "#{attacker.name} missed #{npc.name} (#{body_part})")
         broadcast_npc_action(npc, "miss", nil, 0, body_part:)
-        return success(**resolution)
+        return success(**attack_result_payload(resolution, attack_type:, body_part:))
       when :dodge
         log_entry("dodge", npc_participation, "#{npc.name} dodged #{attacker.name}'s attack (#{body_part})")
         broadcast_npc_action(npc, "dodge", nil, 0, body_part:)
-        return success(**resolution)
+        return success(**attack_result_payload(resolution, attack_type:, body_part:))
       when :blocked
         clear_npc_blocking_state(npc_participation)
         log_entry("block", npc_participation, "#{npc.name} blocked attack (#{body_part}) from #{attacker.name}")
         broadcast_npc_action(npc, "blocked", nil, 0, body_part:)
-        return success(**resolution)
+        return success(**attack_result_payload(resolution, attack_type:, body_part:))
       end
 
       damage = resolution[:damage]
@@ -633,7 +633,7 @@ module Arena
 
       track_damage!(attacker_participation, npc_participation, damage)
 
-      success(**resolution.merge(target_hp: new_hp, attack_type:))
+      success(**attack_result_payload(resolution, attack_type:, body_part:, target_hp: new_hp))
     end
 
     def find_target_participation(attacker, target)
@@ -1087,6 +1087,10 @@ module Arena
         body_part:,
         block:
       )
+    end
+
+    def attack_result_payload(resolution, attack_type:, body_part:, **extra)
+      resolution.merge(attack_type:, body_part:, **extra)
     end
 
     def blocking_data_for_character(character, body_part = nil)
@@ -1625,11 +1629,12 @@ module Arena
       return failure("Target is dead") if target.current_hp <= 0
 
       body_part = params[:body_part] || "torso"
+      attack_type = params[:attack_type] || "simple"
       target_participation = match.arena_participations.find_by(character: target)
       resolution = resolve_physical_attack(
         attacker_participation: npc_participation,
         defender_participation: target_participation,
-        action_key: params[:attack_type] || "simple",
+        action_key: attack_type,
         body_part:,
         block: blocking_data_for_character(target, body_part)
       )
@@ -1638,16 +1643,16 @@ module Arena
       when :miss
         log_entry("miss", npc_participation, "#{npc.name} missed #{target.name} (#{body_part})")
         broadcast_npc_action(npc, "miss", target, 0, body_part:)
-        return success(**resolution)
+        return success(**attack_result_payload(resolution, attack_type:, body_part:))
       when :dodge
         log_entry("dodge", target, "#{target.name} dodged #{npc.name}'s attack (#{body_part})")
         broadcast_npc_action(npc, "dodge", target, 0, body_part:)
-        return success(**resolution)
+        return success(**attack_result_payload(resolution, attack_type:, body_part:))
       when :blocked
         clear_blocking_state(target)
         log_entry("block", target, "#{target.name} blocked attack (#{body_part}) from #{npc.name}")
         broadcast_npc_action(npc, "blocked", target, 0, body_part:)
-        return success(**resolution)
+        return success(**attack_result_payload(resolution, attack_type:, body_part:))
       end
 
       damage = resolution[:damage]
@@ -1676,7 +1681,7 @@ module Arena
         end_match if should_end?
       end
 
-      success(**resolution.merge(target_hp: target.current_hp))
+      success(**attack_result_payload(resolution, attack_type:, body_part:, target_hp: target.current_hp))
     end
 
     # Process NPC defend action

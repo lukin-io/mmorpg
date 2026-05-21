@@ -381,10 +381,6 @@ export default class extends Controller {
         const bonus = Math.round((level / 100) * 20)
         return `Prices: ${bonus}% better`
       }
-      case "animal_handling": {
-        const bonus = Math.round((level / 100) * 30)
-        return `Mount Speed: +${bonus}%`
-      }
       default:
         return `Effect: ${level}%`
     }

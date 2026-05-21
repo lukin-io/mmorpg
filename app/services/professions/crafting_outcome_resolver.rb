@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Professions
-  # Resolves a crafting job, applying rewards, XP, tool wear, and achievements.
+  # Resolves a crafting job, applying rewards, XP, and tool wear.
   #
   # Usage:
   #   Professions::CraftingOutcomeResolver.new(job:).call
@@ -56,7 +56,6 @@ module Professions
       end
 
       apply_tool_wear!
-      grant_achievements!(outcome) if outcome.success
     end
 
     def grant_rewards!
@@ -83,23 +82,6 @@ module Professions
     def apply_tool_wear!
       wear = recipe.requirements.fetch("tool_wear", 5).to_i
       Professions::ToolMaintenance.degrade!(tool: progress.best_tool, amount: wear)
-    end
-
-    def grant_achievements!(outcome)
-      achievement_key =
-        case outcome.quality_tier
-        when "legendary"
-          "legendary_artisan"
-        when "epic"
-          "master_artisan"
-        end
-
-      return unless achievement_key
-
-      achievement = Achievement.find_by(key: achievement_key)
-      return unless achievement
-
-      Achievements::GrantService.new(user: job.user, achievement: achievement).call(source: "crafting")
     end
 
     def recipe

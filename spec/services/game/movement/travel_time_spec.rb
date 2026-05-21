@@ -22,23 +22,16 @@ RSpec.describe Game::Movement::TravelTime do
     expect(travel_seconds(tile_metadata: {"movement_modifier" => "swamp"})).to eq(48)
   end
 
-  it "applies wanderer passive skill reduction before terrain and mounts" do
+  it "applies wanderer passive skill reduction before terrain" do
     character.update!(passive_skills: {"wanderer" => 100})
     character.clear_passive_skill_cache!
 
     expect(travel_seconds).to eq(9)
   end
 
-  it "applies the active summoned mount speed multiplier" do
-    create(:mount, user: character.user, speed_bonus: 50, summon_state: "summoned")
-
-    expect(travel_seconds).to eq(20)
-  end
-
   it "clamps very fast movement to the configured minimum" do
-    character.update!(passive_skills: {"wanderer" => 100})
-    character.clear_passive_skill_cache!
-    create(:mount, user: character.user, speed_bonus: 500, summon_state: "summoned")
+    calculator = instance_double(Game::Skills::PassiveSkillCalculator, apply_movement_cooldown: 1)
+    allow(character).to receive(:passive_skill_calculator).and_return(calculator)
 
     expect(travel_seconds(tile_metadata: {"movement_modifier" => "road"})).to eq(3)
   end

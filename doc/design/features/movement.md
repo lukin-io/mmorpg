@@ -87,7 +87,6 @@ travel_seconds =
   * terrain_modifier
   * diagonal_modifier
   * encumbrance_modifier
-  / mount_multiplier
   * skill_modifier
 ```
 

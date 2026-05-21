@@ -9,7 +9,7 @@ module Economy
   #     .adjust!(currency: :gold, amount: 500, reason: "quest.reward")
   #
   #   Economy::WalletService.new(wallet: wallet)
-  #     .sink!(currency: :gold, amount: 25, sink_reason: :housing_upkeep)
+  #     .sink!(currency: :gold, amount: 25, sink_reason: :equipment_repair)
   class WalletService
     class InsufficientFundsError < StandardError; end
 

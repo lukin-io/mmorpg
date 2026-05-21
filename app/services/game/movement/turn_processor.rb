@@ -11,14 +11,12 @@ module Game
     #   1. Base: 30 seconds
     #   2. Wanderer skill: reduces by 0-70% based on skill level (0-100)
     #   3. Terrain modifier: multiplies based on terrain type
-    #   4. Mount speed: divides by mount travel multiplier
     #
     # Examples:
-    #   - Wanderer 0, no mount, normal terrain:  30 * 1.0 / 1.0 = 30.0s
-    #   - Wanderer 50, no mount, normal terrain: 19.5 * 1.0 / 1.0 = 19.5s
-    #   - Wanderer 100, no mount, normal terrain: 9.0 * 1.0 / 1.0 = 9.0s
-    #   - Wanderer 100, no mount, swamp terrain: 9.0 * 1.5 / 1.0 = 13.5s
-    #   - Wanderer 100, fast mount, normal terrain: 9.0 * 1.0 / 1.5 = 6.0s
+    #   - Wanderer 0, normal terrain:  30 * 1.0 = 30.0s
+    #   - Wanderer 50, normal terrain: 19.5 * 1.0 = 19.5s
+    #   - Wanderer 100, normal terrain: 9.0 * 1.0 = 9.0s
+    #   - Wanderer 100, swamp terrain: 9.0 * 1.5 = 13.5s
     #
     # Usage:
     #   result = Game::Movement::TurnProcessor.new(character:, direction: :north).call
@@ -114,19 +112,11 @@ module Game
           .new(zone:)
           .cooldown_seconds(base_seconds: base_with_wanderer, tile_metadata:)
 
-        # 3. Apply mount speed multiplier
-        (terrain_adjusted / mount_speed_multiplier).round(2)
+        terrain_adjusted.round(2)
       end
 
       def wanderer_adjusted_cooldown
         character.passive_skill_calculator.apply_movement_cooldown(BASE_MOVEMENT_COOLDOWN_SECONDS)
-      end
-
-      def mount_speed_multiplier
-        @mount_speed_multiplier ||= begin
-          active_mount = character.user&.mounts&.find_by(summon_state: :summoned)
-          active_mount ? active_mount.travel_multiplier : 1.0
-        end
       end
     end
   end

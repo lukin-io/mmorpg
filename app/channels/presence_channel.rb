@@ -168,7 +168,6 @@ class PresenceChannel < ApplicationCable::Channel
       character_name: character&.name || user.profile_name,
       level: character&.level,
       faction: character&.try(:faction_alignment),
-      title: nil, # Character doesn't have current_title
       status: user_status(user),
       zone_id: character&.position&.zone_id,
       zone_name: character&.position&.zone&.name

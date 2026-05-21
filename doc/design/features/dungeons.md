@@ -202,8 +202,6 @@ an object, other characters cannot repeat that same interaction.
 - The source defines a permanent deepest-floor rating.
 - The source defines a weekly rating based on total floors completed during the
   week.
-- Source updates include dungeon achievements tied to floor depth and weekly
-  ranking.
 - Hidden chests and bosses are the main floor prize hooks.
 - Bosses can drop dungeon currency.
 - Dungeon currency is spent in the source specialist shop.
@@ -220,8 +218,8 @@ When the launch MVP is complete, implement only the source-backed path:
 4. Seal activation and portal descent with current wiki party-at-portal rules.
 5. Hidden-room key, hidden-room door, boss/chest branch, and one-time object
    interactions.
-6. Dungeon inventory, claustrophobia, magical disturbances, ratings,
-   achievements, dungeon currency, and specialist shop.
+6. Dungeon inventory, claustrophobia, magical disturbances, ratings, dungeon
+   currency, and specialist shop.
 
 ## Legacy Until Proven By Source
 

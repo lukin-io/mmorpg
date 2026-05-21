@@ -186,21 +186,6 @@ if defined?(GatheringNode) && defined?(Profession)
   end
 end
 
-if defined?(Achievement)
-  [
-    {key: "master_artisan", name: "Master Artisan", reward_type: "housing_trophy", reward_payload: {"trophy_name" => "Forgemaster Bust"}, category: "crafting"},
-    {key: "legendary_artisan", name: "Legendary Artisan", reward_type: "title", reward_payload: {"title_key" => "legendary_artisan_title"}, category: "crafting"}
-  ].each do |attrs|
-    achievement = Achievement.find_or_initialize_by(key: attrs[:key])
-    achievement.name = attrs[:name]
-    achievement.reward_type = attrs[:reward_type]
-    achievement.reward_payload = attrs[:reward_payload]
-    achievement.category = attrs[:category] || "general"
-    achievement.display_priority = attrs[:display_priority] || 0
-    achievement.save!
-  end
-end
-
 if defined?(Quest)
   [
     {key: "starter_crafting_tools", title: "Tools of the Trade", sequence: 1, quest_type: :side, chapter: 1,
@@ -705,95 +690,12 @@ if defined?(InventoryItem)
   end
 end
 
-housing_plot = nil
-
-if defined?(HousingPlot) && admin
-  housing_plot = HousingPlot.find_or_create_by!(user: admin, location_key: "castleton_upper", plot_type: "townhome") do |plot|
-    plot.plot_tier = "deluxe"
-    plot.exterior_style = "aurora"
-    plot.room_slots = 4
-    plot.utility_slots = 2
-    plot.storage_slots = 60
-    plot.showcase_enabled = true
-    plot.visit_scope = "friends"
-    plot.access_rules = {"friends_can_decorate" => true}
-    plot.upkeep_gold_cost = 450
-    plot.next_upkeep_due_at = 3.days.from_now
-  end
-end
-
-if defined?(HousingDecorItem) && housing_plot
-  HousingDecorItem.find_or_create_by!(housing_plot:, name: "Forgemaster Bust Trophy") do |decor|
-    decor.decor_type = :trophy
-    decor.trophy = true
-    decor.placement = {"room" => "atrium", "x" => 2, "y" => 1}
-    decor.metadata = {"achievement_key" => "master_artisan", "lighting" => "ember"}
-  end
-
-  HousingDecorItem.find_or_create_by!(housing_plot:, name: "Arcane Anvil") do |decor|
-    decor.decor_type = :utility
-    decor.placement = {"room" => "workshop", "x" => 0, "y" => 0}
-    decor.metadata = {"buff_key" => "crafting_speed", "bonus_percent" => 8}
-    decor.utility_slot = 1
-  end
-end
-
-if defined?(MountStableSlot) && defined?(Mount) && admin
-  slot = MountStableSlot.find_or_create_by!(user: admin, slot_index: 0) do |stable_slot|
-    stable_slot.status = :active
-    stable_slot.unlocked_at = 5.days.ago
-    stable_slot.cosmetics = {"banners" => ["winter_festival"]}
-  end
-
-  mount = Mount.find_or_create_by!(user: admin, name: "Stormglide") do |m|
-    m.mount_type = "gryphon"
-    m.faction_key = "alliance"
-    m.rarity = "epic"
-    m.speed_bonus = 35
-    m.summon_state = :summoned
-    m.cosmetic_variant = "frostfeather"
-    m.appearance = {"armour" => "silver", "trail" => "aurora"}
-  end
-
-  mount.update!(mount_stable_slot: slot)
-  slot.update!(current_mount: mount) unless slot.current_mount_id == mount.id
-end
-
-if defined?(AchievementGrant) && admin
-  %w[master_artisan legendary_artisan].each_with_index do |key, index|
-    achievement = Achievement.find_by(key:)
-    next unless achievement
-
-    AchievementGrant.find_or_create_by!(user: admin, achievement:) do |grant|
-      grant.source = "seed.story_reward"
-      grant.granted_at = (index + 1).days.ago
-    end
-  end
-end
-
-if defined?(Title) && defined?(TitleGrant) && admin
-  artisan_title = Title.find_or_create_by!(requirement_key: "legendary_artisan_title") do |title|
-    title.name = "Legendary Artisan"
-    title.perks = {"housing_storage_bonus" => 10, "crafting_quality_bonus" => 3}
-    title.priority_party_finder = true
-  end
-
-  TitleGrant.find_or_create_by!(user: admin, title: artisan_title) do |grant|
-    grant.source = "achievement.legendary_artisan"
-    grant.granted_at = 1.day.ago
-    grant.equipped = true
-  end
-
-  admin.update!(active_title: artisan_title) if admin.respond_to?(:active_title=)
-end
-
 admin_wallet = nil
 
 if defined?(CurrencyWallet)
   if admin
     admin_wallet = admin.currency_wallet || CurrencyWallet.create!(user: admin)
     admin_wallet.adjust!(currency: :gold, amount: 7_500, reason: "seed.story_reward", metadata: {"source" => "winter_festival"})
-    admin_wallet.adjust!(currency: :gold, amount: -350, reason: "sink.housing_upkeep", metadata: {"housing_plot_id" => housing_plot&.id})
     admin_wallet.adjust!(currency: :silver, amount: 1_200, reason: "seed.market_sale", metadata: {"item" => "Tempered Longsword"})
     admin_wallet.adjust!(currency: :premium_tokens, amount: 40, reason: "seed.founders_pack")
   end
@@ -863,7 +765,7 @@ if defined?(CommunityObjective) && event_instance
         {"user" => admin&.email, "amount" => 1_200},
         {"user" => lukin_user&.email, "amount" => 640}
       ],
-      "checkpoint_rewards" => {"2500" => "festival_fireworks", "7500" => "housing_banner"}
+      "checkpoint_rewards" => {"2500" => "festival_fireworks", "7500" => "festival_banner"}
     }
   end
 end
@@ -1221,24 +1123,6 @@ if castleton
     action_type: "open_feature",
     action_params: {"feature" => "healing"},
     required_level: 1,
-    z_index: 20
-  }
-
-  # House - player housing
-  # TODO: Adjust position to match house location on city.png
-  city_hotspots << {
-    zone: castleton,
-    key: "house",
-    name: "Housing District",
-    hotspot_type: "building",
-    position_x: 550,    # Center area (adjust to match your city.png)
-    position_y: 300,
-    width: 200,
-    height: 180,
-    image_hover: "house.png",
-    action_type: "open_feature",
-    action_params: {"feature" => "housing"},
-    required_level: 10,
     z_index: 20
   }
 

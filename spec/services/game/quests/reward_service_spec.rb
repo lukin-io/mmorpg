@@ -14,8 +14,7 @@ RSpec.describe Game::Quests::RewardService do
       "cosmetics" => ["heroic_cloak"],
       "premium_tokens" => 3,
       "class_abilities" => ["luminous_strike"],
-      "profession_unlocks" => [profession.name],
-      "housing_upgrades" => 2
+      "profession_unlocks" => [profession.name]
     }
   end
   let(:quest) { create(:quest, rewards:) }
@@ -25,16 +24,13 @@ RSpec.describe Game::Quests::RewardService do
   let(:xp_class) { double("Players::Progression::ExperiencePipeline", new: xp_instance) }
   let(:wallet_instance) { instance_double("Economy::WalletService", adjust!: nil) }
   let(:wallet_class) { double("Economy::WalletService", new: wallet_instance) }
-  let(:expander_instance) { instance_double("Game::Inventory::ExpansionService", expand!: nil) }
-  let(:expander_class) { double("Game::Inventory::ExpansionService", new: expander_instance) }
 
   describe "#claim!" do
     it "applies the structured reward payload and records metadata" do
       result = described_class.new(
         assignment:,
         experience_pipeline: xp_class,
-        wallet_service: wallet_class,
-        inventory_expander: expander_class
+        wallet_service: wallet_class
       ).claim!
 
       expect(result.assignment).to eq(assignment)
@@ -47,7 +43,6 @@ RSpec.describe Game::Quests::RewardService do
       expect(character.metadata["cosmetic_keys"]).to include("heroic_cloak")
       expect(result.applied[:class_abilities]).to eq([])
       expect(character.profession_progresses.exists?(profession:)).to be(true)
-      expect(expander_instance).to have_received(:expand!).twice
       expect(assignment.reload.rewards_claimed_at).to be_present
       expect(assignment.metadata["last_reward"]["xp"]).to eq(500)
     end
@@ -58,8 +53,7 @@ RSpec.describe Game::Quests::RewardService do
       service = described_class.new(
         assignment:,
         experience_pipeline: xp_class,
-        wallet_service: wallet_class,
-        inventory_expander: expander_class
+        wallet_service: wallet_class
       )
 
       expect { service.claim! }.to raise_error(described_class::AlreadyClaimedError)

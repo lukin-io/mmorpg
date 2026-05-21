@@ -4,8 +4,7 @@ module Game
   module Quests
     # RewardService applies the structured rewards stored on a quest when an
     # assignment is completed. It handles XP, currency, reputation, cosmetic
-    # unlocks, profession unlocks, class abilities, housing upgrades, and
-    # premium token fragments.
+    # unlocks, profession unlocks, class abilities, and premium token fragments.
     #
     # Usage:
     #   Game::Quests::RewardService.new(assignment: assignment).claim!
@@ -19,13 +18,11 @@ module Game
       def initialize(
         assignment:,
         experience_pipeline: Players::Progression::ExperiencePipeline,
-        wallet_service: ::Economy::WalletService,
-        inventory_expander: Game::Inventory::ExpansionService
+        wallet_service: ::Economy::WalletService
       )
         @assignment = assignment
         @experience_pipeline_class = experience_pipeline
         @wallet_service_class = wallet_service
-        @inventory_expander_class = inventory_expander
       end
 
       def claim!
@@ -43,7 +40,6 @@ module Game
           applied[:premium_tokens] = grant_premium_tokens!(rewards)
           applied[:class_abilities] = unlock_class_abilities!(rewards)
           applied[:professions] = unlock_professions!(rewards)
-          applied[:housing_upgrades] = grant_housing_upgrades!(rewards)
 
           assignment.update!(
             rewards_claimed_at: Time.current,
@@ -56,7 +52,7 @@ module Game
 
       private
 
-      attr_reader :assignment, :experience_pipeline_class, :wallet_service_class, :inventory_expander_class
+      attr_reader :assignment, :experience_pipeline_class, :wallet_service_class
 
       delegate :character, to: :assignment
 
@@ -162,19 +158,6 @@ module Game
           next
         end
         unlocked
-      end
-
-      def grant_housing_upgrades!(payload)
-        count = rewards_hash(payload).fetch("housing_upgrades", 0).to_i
-        return 0 if count <= 0
-
-        expander = inventory_expander_class.new(character:)
-        count.times do
-          expander.expand!(source: :housing)
-        rescue Pundit::NotAuthorizedError
-          break
-        end
-        count
       end
     end
   end

@@ -165,7 +165,6 @@ travel_seconds =
   * terrain_modifier(target tile)
   * diagonal_modifier
   * encumbrance_modifier
-  / mount_multiplier
   * skill_modifier
 ```
 
@@ -282,8 +281,8 @@ Characters grow through:
 - reputation and alignment;
 - equipment and inventory growth.
 
-Movement-affecting progression, such as Wanderer skill, mounts, encumbrance, or
-terrain mastery, must feed the canonical travel-time formula.
+Movement-affecting progression, such as Wanderer skill, encumbrance, or terrain
+mastery, must feed the canonical travel-time formula.
 
 ## Economy And Professions
 

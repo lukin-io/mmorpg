@@ -29,7 +29,7 @@ module Game
           .cooldown_seconds(base_seconds: base_with_skills, tile_metadata:)
         diagonal_adjusted = diagonal? ? (terrain_adjusted * DIAGONAL_MULTIPLIER) : terrain_adjusted
 
-        (diagonal_adjusted / mount_speed_multiplier).ceil.clamp(MIN_TRAVEL_SECONDS, MAX_TRAVEL_SECONDS)
+        diagonal_adjusted.ceil.clamp(MIN_TRAVEL_SECONDS, MAX_TRAVEL_SECONDS)
       end
 
       private
@@ -38,13 +38,6 @@ module Game
 
       def diagonal?
         DIAGONAL_DIRECTIONS.include?(direction)
-      end
-
-      def mount_speed_multiplier
-        active_mount = character.user&.mounts&.find_by(summon_state: :summoned)
-        active_mount ? active_mount.travel_multiplier.to_f : 1.0
-      rescue
-        1.0
       end
     end
   end

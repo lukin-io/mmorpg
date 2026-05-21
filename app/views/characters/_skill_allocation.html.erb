@@ -178,9 +178,6 @@
                   <% when :trading
                        bonus = (skill_info[:level] / 100.0 * 20).round %>
                     Prices: <%= bonus %>% better
-                  <% when :animal_handling
-                       bonus = (skill_info[:level] / 100.0 * 30).round %>
-                    Mount Speed: +<%= bonus %>%
                   <% else %>
                     Effect: <%= skill_info[:level] %>%
                   <% end %>
