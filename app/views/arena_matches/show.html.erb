@@ -20,8 +20,7 @@
      data-controller="arena-match"
      data-arena-match-match-id-value="<%= @arena_match.id %>"
      data-arena-match-ap-limit-value="<%= ap_limit %>"
-     data-arena-match-spectating-value="<%= !current_user_participating? %>"
-     data-arena-match-spectator-code-value="<%= @arena_match.spectator_code if !current_user_participating? %>">
+     data-arena-match-read-only-value="<%= !current_user_participating? %>">
 
   <div class="page-header page-header--compact">
     <%= link_to "← К арене", arena_index_path, class: "btn-secondary btn-sm" %>
@@ -60,7 +59,7 @@
       <% if @arena_match.live? && current_user_participating? && current_user_pending_arena_turn? %>
         <div class="arena-action-panel nl-fight-wait-panel">
           <div class="nl-fight-wait-state">
-            <b>Waiting for the opponent's turn</b>
+            <b>Ожидание хода противника</b>
           </div>
 
           <% if arena_timeout_claim_available? %>
@@ -90,13 +89,13 @@
           </div>
 
           <div class="nl-fight-controls">
-            <%= link_to "Inventory", inventory_path, class: "nl-arena-small-button" %>
-            <button type="button" class="nl-arena-small-button" data-action="click->arena-match#requestMatchState">Refresh</button>
+            <%= link_to "Инвентарь", inventory_path, class: "nl-arena-small-button" %>
+            <button type="button" class="nl-arena-small-button" data-action="click->arena-match#requestMatchState">Обновить</button>
           </div>
 
           <div class="nl-fight-budget">
-            Action points: <b><%= ap_limit %></b>
-            <span>Used: <b data-arena-match-target="turnCostValue">0/<%= ap_limit %></b></span>
+            Действия: <b><%= ap_limit %></b>
+            <span>Выбрано: <b data-arena-match-target="turnCostValue">0/<%= ap_limit %></b></span>
           </div>
 
           <div class="nl-fight-magic-slots">
@@ -119,10 +118,10 @@
           <div class="arena-turn-composer nl-fight-turn-composer">
             <table class="nl-fight-selector-table">
               <tr>
-                <th>Attack</th>
-                <th>Action</th>
-                <th>Block</th>
-                <th>Action</th>
+                <th>Удар</th>
+                <th>Действие</th>
+                <th>Блок</th>
+                <th>Действие</th>
               </tr>
               <% body_parts.each_with_index do |(part, attack_label), idx| %>
                 <% block_part_key, block_label = block_parts[idx] %>
@@ -133,7 +132,7 @@
                             data-action="change->arena-match#updateTurnCost"
                             data-body-part="<%= part %>"
                             class="form-select form-select--compact nl-fight-select">
-                      <option value="none" data-ap-cost="0" data-mana-cost="0">none</option>
+                      <option value="none" data-ap-cost="0" data-mana-cost="0">нет</option>
                       <% attack_options.each do |key, config| %>
                         <option value="<%= key %>"
                                 data-ap-cost="<%= config['action_cost'] %>"
@@ -150,7 +149,7 @@
                             data-action="change->arena-match#updateTurnCost"
                             data-body-part="<%= block_part_key %>"
                             class="form-select form-select--compact nl-fight-select">
-                      <option value="none" data-ap-cost="0" data-body-parts="">none</option>
+                      <option value="none" data-ap-cost="0" data-body-parts="">нет</option>
                       <% block_options.each do |key, config| %>
                         <% covered_parts = config["body_parts"] || [config["body_part"]].compact %>
                         <% next unless covered_parts.include?(block_part_key) %>
@@ -172,10 +171,10 @@
             <div class="arena-turn-submit">
               <button class="btn-attack btn-attack--submit nl-arena-small-button"
                       data-action="click->arena-match#submitTurn">
-                Submit Turn
+                Сделать ход
               </button>
               <button type="button" class="nl-arena-small-button" data-action="click->arena-match#resetTurn">
-                Reset
+                Сброс
               </button>
             </div>
           </div>
@@ -186,12 +185,12 @@
       <div class="arena-combat-log" data-arena-match-target="combatLog">
         <div class="combat-log-entry combat-log--system">
           <span class="combat-time"><%= @arena_match.created_at.strftime("%H:%M:%S") %></span>
-          Match created
+          Бой создан
         </div>
         <% if @arena_match.started_at %>
           <div class="combat-log-entry combat-log--system combat-log--highlight">
             <span class="combat-time"><%= @arena_match.started_at.strftime("%H:%M:%S") %></span>
-            FIGHT!
+            Бой начался
           </div>
         <% end %>
         <% arena_match_combat_log(@arena_match).each do |entry| %>
@@ -203,7 +202,7 @@
         <% if @arena_match.completed? %>
           <div class="combat-log-entry combat-log--<%= @arena_match.winning_team ? 'victory' : 'draw' %>">
             <span class="combat-time"><%= @arena_match.ended_at&.strftime("%H:%M:%S") %></span>
-            <%= @arena_match.winning_team ? "Winner: #{winner_name(@arena_match)}" : "Draw!" %>
+            <%= @arena_match.winning_team ? "Победитель: #{winner_name(@arena_match)}" : "Ничья" %>
           </div>
         <% end %>
       </div>
@@ -217,7 +216,7 @@
             show_stats: (user_team == "a" || user_team == "alpha"),
             position: :right %>
       <% else %>
-        <div class="arena-fighter-empty">Waiting for opponent...</div>
+        <div class="arena-fighter-empty">Ожидание противника...</div>
       <% end %>
     </div>
   </div>
@@ -239,7 +238,7 @@
     <% if @arena_match.turn_timeout_seconds %>
       <span class="match-bar-item">Таймаут: <%= @arena_match.turn_timeout_seconds / 60 %> мин</span>
     <% end %>
-    <% if @arena_match.spectator_code && !current_user_participating? %>
+    <% unless current_user_participating? %>
       <span class="match-bar-item text-muted">Просмотр</span>
     <% end %>
   </div>
@@ -258,20 +257,20 @@
          data-arena-match-target="resultOverlay">
       <div class="arena-result-content">
         <h1 class="arena-result-title">
-          <%= current_user_won? ? "VICTORY!" : (current_user_participating? ? "DEFEAT" : "MATCH ENDED") %>
+          <%= current_user_won? ? "Победа" : (current_user_participating? ? "Поражение" : "Бой завершен") %>
         </h1>
         <div class="arena-result-details">
           <% if @arena_match.winning_team %>
-            <p>Winner: <strong><%= winner_name(@arena_match) %></strong></p>
+            <p>Победитель: <strong><%= winner_name(@arena_match) %></strong></p>
           <% else %>
-            <p>Match ended in a draw</p>
+            <p>Бой завершился ничьей</p>
           <% end %>
-          <p class="text-muted">Duration: <%= format_duration(@arena_match.duration || 0) %></p>
+          <p class="text-muted">Длительность: <%= format_duration(@arena_match.duration || 0) %></p>
         </div>
         <% if current_user_participating? && !current_user_finished_arena_match? %>
-          <%= button_to "Finish Fight", finish_arena_match_path(@arena_match), method: :post, class: "btn-primary" %>
+          <%= button_to "Завершить бой", finish_arena_match_path(@arena_match), method: :post, class: "btn-primary" %>
         <% else %>
-          <%= link_to "Return to Arena", arena_index_path, class: "btn-primary" %>
+          <%= link_to "К арене", arena_index_path, class: "btn-primary" %>
         <% end %>
       </div>
     </div>

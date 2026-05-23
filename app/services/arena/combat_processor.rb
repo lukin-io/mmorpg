@@ -78,9 +78,9 @@ module Arena
     #   - block_parts: Array of body parts to block
     # @return [Result] the result of the action
     def process_action(character, action_type, **params)
-      return failure("Match is not active") unless match.live?
-      return failure("Character not in this match") unless participant?(character)
-      return failure("Character is dead") if character.current_hp <= 0
+      return failure("Бой не активен") unless match.live?
+      return failure("Персонаж не участвует в этом бою") unless participant?(character)
+      return failure("Персонаж повержен") if character.current_hp <= 0
 
       combat_profile_for(character)
 
@@ -99,7 +99,7 @@ module Arena
       current_ap = get_character_ap(character)
 
       if current_ap < ap_cost
-        return failure("Not enough AP (need #{ap_cost}, have #{current_ap})")
+        return failure("Недостаточно ОД (нужно #{ap_cost}, есть #{current_ap})")
       end
 
       result = case action_type.to_sym
@@ -235,18 +235,18 @@ module Arena
       # End match messages
       case reason
       when :timeout
-        log_entry("timeout", nil, "Fight ended by timeout")
+        log_entry("timeout", nil, "Бой завершен по таймауту")
       when :forfeit
-        log_entry("system", nil, "Match ended by forfeit")
+        log_entry("system", nil, "Бой завершен сдачей")
       else
         if winning_team
           if npc_fight?
             winner_name = match.arena_participations.find_by(team: winning_team)&.participant_name
-            log_entry("victory", nil, "Victory for #{winner_name}.") if winner_name.present?
+            log_entry("victory", nil, "Победа: #{winner_name}.") if winner_name.present?
           end
-          log_entry("victory", nil, "Match ended! Winner: Team #{winning_team.upcase}")
+          log_entry("victory", nil, "Бой завершен. Победитель: сторона #{winning_team.upcase}")
         else
-          log_entry("draw", nil, "Match ended in a draw!")
+          log_entry("draw", nil, "Бой завершился ничьей")
         end
       end
 
@@ -264,8 +264,8 @@ module Arena
     # Resolve a Neverlands-style waiting timeout. The claimant must have
     # already submitted the current turn and be waiting for the opponent.
     def claim_timeout(character, mode: nil)
-      return failure("Match is not active") unless match.live?
-      return failure("Character not in this match") unless participant?(character)
+      return failure("Бой не активен") unless match.live?
+      return failure("Персонаж не участвует в этом бою") unless participant?(character)
       return failure("Turn timer has not expired") unless match.turn_timed_out?
 
       participation = match.arena_participations.find_by(character:)
@@ -381,7 +381,7 @@ module Arena
 
     def process_player_turn_submission(character, target: nil, attacks: [], blocks: [], skills: [])
       participation = match.arena_participations.find_by(character:)
-      return failure("Character not in this match") unless participation
+      return failure("Персонаж не участвует в этом бою") unless participation
 
       normalized_attacks = normalize_turn_attacks(attacks)
       normalized_blocks = normalize_turn_blocks(blocks)
@@ -1124,7 +1124,7 @@ module Arena
       errors = []
 
       if total_mana > character.current_mp.to_i
-        errors << "Not enough MP (need #{total_mana}, have #{character.current_mp.to_i})"
+        errors << "Недостаточно MP (нужно #{total_mana}, есть #{character.current_mp.to_i})"
       end
 
       magic_limit = combat_profile_for(character).fetch("max_magic_mana", character.max_mp.to_i).to_i

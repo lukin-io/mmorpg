@@ -38,7 +38,7 @@ module ArenaHelper
     pending: {label: "Ожидание", css: "pending"},
     matching: {label: "Поиск противника", css: "matching"},
     countdown: {label: "Скоро начало", css: "countdown"},
-    live: {label: "LIVE", css: "live"},
+    live: {label: "Идет", css: "live"},
     completed: {label: "Завершен", css: "completed"},
     cancelled: {label: "Отменен", css: "cancelled"}
   }.freeze
@@ -93,7 +93,7 @@ module ArenaHelper
 
   def arena_application_rule_label(application)
     rule_value = application.metadata.to_h["neverlands_rule_value"]
-    return "rule #{rule_value}" if rule_value.present?
+    return "правило #{rule_value}" if rule_value.present?
 
     fight_kind_label(application.fight_kind)
   end

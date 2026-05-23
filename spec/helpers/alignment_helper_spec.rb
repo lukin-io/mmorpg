@@ -5,9 +5,9 @@ require "rails_helper"
 RSpec.describe AlignmentHelper, type: :helper do
   describe "#alignment_icon" do
     it "returns source-backed Neverlands alignment labels" do
-      expect(helper.alignment_icon(:light)).to eq("Light")
-      expect(helper.alignment_icon(:dark)).to eq("Dark")
-      expect(helper.alignment_icon(:balance)).to eq("Balance")
+      expect(helper.alignment_icon(:light)).to eq("Свет")
+      expect(helper.alignment_icon(:dark)).to eq("Тьма")
+      expect(helper.alignment_icon(:balance)).to eq("Равновесие")
     end
   end
 
@@ -18,7 +18,7 @@ RSpec.describe AlignmentHelper, type: :helper do
 
     it "returns alignment badge with labels" do
       result = helper.alignment_badge(character)
-      expect(result).to include("Light")
+      expect(result).to include("Свет")
     end
 
     it "returns empty string for nil character" do
@@ -43,7 +43,7 @@ RSpec.describe AlignmentHelper, type: :helper do
 
     it "includes alignment labels" do
       result = helper.character_nameplate(character)
-      expect(result).to include("Dark")
+      expect(result).to include("Тьма")
     end
   end
 end

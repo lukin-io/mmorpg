@@ -10,34 +10,34 @@ module Game
       BODY_PARTS = %w[head torso stomach legs].freeze
 
       STANDARD_BLOCKS = {
-        %w[head] => {key: "head_block", name: "Head Block", action_cost: 35},
-        %w[head torso] => {key: "head_torso_block", name: "Head + Torso Block", action_cost: 50},
-        %w[head stomach] => {key: "head_stomach_block", name: "Head + Stomach Block", action_cost: 60},
-        %w[torso] => {key: "torso_block", name: "Torso Block", action_cost: 30},
-        %w[torso stomach] => {key: "torso_stomach_block", name: "Torso + Stomach Block", action_cost: 50},
-        %w[torso legs] => {key: "torso_legs_block", name: "Torso + Legs Block", action_cost: 60},
-        %w[stomach] => {key: "stomach_block", name: "Stomach Block", action_cost: 30},
-        %w[stomach legs] => {key: "stomach_legs_block", name: "Stomach + Legs Block", action_cost: 50},
-        %w[legs] => {key: "legs_block", name: "Legs Block", action_cost: 35},
-        %w[head legs] => {key: "legs_head_block", name: "Legs + Head Block", action_cost: 80}
+        %w[head] => {key: "head_block", name: "Блок головы", action_cost: 35},
+        %w[head torso] => {key: "head_torso_block", name: "Блок головы и корпуса", action_cost: 50},
+        %w[head stomach] => {key: "head_stomach_block", name: "Блок головы и живота", action_cost: 60},
+        %w[torso] => {key: "torso_block", name: "Блок корпуса", action_cost: 30},
+        %w[torso stomach] => {key: "torso_stomach_block", name: "Блок корпуса и живота", action_cost: 50},
+        %w[torso legs] => {key: "torso_legs_block", name: "Блок корпуса и ног", action_cost: 60},
+        %w[stomach] => {key: "stomach_block", name: "Блок живота", action_cost: 30},
+        %w[stomach legs] => {key: "stomach_legs_block", name: "Блок живота и ног", action_cost: 50},
+        %w[legs] => {key: "legs_block", name: "Блок ног", action_cost: 35},
+        %w[head legs] => {key: "legs_head_block", name: "Блок ног и головы", action_cost: 80}
       }.freeze
 
       SHIELD_BLOCKS = {
-        %w[head] => {key: "shield_head_block", name: "Shield Head Block", action_cost: 45},
-        %w[torso] => {key: "shield_torso_block", name: "Shield Torso Block", action_cost: 40},
-        %w[stomach] => {key: "shield_stomach_block", name: "Shield Stomach Block", action_cost: 40},
-        %w[legs] => {key: "shield_legs_block", name: "Shield Legs Block", action_cost: 45},
-        %w[head torso] => {key: "shield_head_torso_block", name: "Shield Head + Torso Block", action_cost: 65},
-        %w[torso stomach] => {key: "shield_torso_stomach_block", name: "Shield Torso + Stomach Block", action_cost: 60},
-        %w[stomach legs] => {key: "shield_stomach_legs_block", name: "Shield Stomach + Legs Block", action_cost: 65},
-        %w[head torso stomach legs] => {key: "shield_full_block", name: "Shield Full Block", action_cost: 100}
+        %w[head] => {key: "shield_head_block", name: "Блок щитом: голова", action_cost: 45},
+        %w[torso] => {key: "shield_torso_block", name: "Блок щитом: корпус", action_cost: 40},
+        %w[stomach] => {key: "shield_stomach_block", name: "Блок щитом: живот", action_cost: 40},
+        %w[legs] => {key: "shield_legs_block", name: "Блок щитом: ноги", action_cost: 45},
+        %w[head torso] => {key: "shield_head_torso_block", name: "Блок щитом: голова и корпус", action_cost: 65},
+        %w[torso stomach] => {key: "shield_torso_stomach_block", name: "Блок щитом: корпус и живот", action_cost: 60},
+        %w[stomach legs] => {key: "shield_stomach_legs_block", name: "Блок щитом: живот и ноги", action_cost: 65},
+        %w[head torso stomach legs] => {key: "shield_full_block", name: "Полный блок щитом", action_cost: 100}
       }.freeze
 
       MAGIC_BLOCKS = {
         %w[head torso stomach legs] => [
-          {key: "magic_shield", name: "Magical Shield", action_cost: 45, mana_cost: 20},
-          {key: "rainbow_barrier", name: "Rainbow Barrier", action_cost: 60, mana_cost: 40},
-          {key: "crystal_sphere", name: "Crystal Sphere", action_cost: 90, mana_cost: 65}
+          {key: "magic_shield", name: "Магический щит", action_cost: 45, mana_cost: 20},
+          {key: "rainbow_barrier", name: "Радужный барьер", action_cost: 60, mana_cost: 40},
+          {key: "crystal_sphere", name: "Кристальная сфера", action_cost: 90, mana_cost: 65}
         ]
       }.freeze
 
@@ -45,31 +45,9 @@ module Game
 
       def config
         config_path = Rails.root.join("config/gameplay/combat_actions.yml")
-        return YAML.load_file(config_path) if File.exist?(config_path)
+        raise "Missing source-backed combat action catalog: #{config_path}" unless File.exist?(config_path)
 
-        default_config
-      end
-
-      def default_config
-        {
-          "defaults" => {"action_points_per_turn" => DEFAULT_AP_PER_TURN, "max_mana_per_attack" => 50},
-          "attack_types" => {
-            "simple" => {"name" => "Simple Attack", "action_cost" => 45, "damage_multiplier" => 1.0, "hit_bonus" => 0},
-            "aimed" => {"name" => "Aimed Attack", "action_cost" => 65, "damage_multiplier" => 1.2, "hit_bonus" => 15},
-            "spirit_arrow" => {"name" => "Spirit Arrow", "action_cost" => 50, "mana_cost" => 5, "damage_multiplier" => 1.05, "hit_bonus" => 5, "element" => "arcane"},
-            "mind_blast" => {"name" => "Mind Blast", "action_cost" => 90, "mana_cost" => 5, "damage_multiplier" => 1.35, "hit_bonus" => 10, "element" => "mind"}
-          },
-          "block_types" => standard_blocks_config.merge(shield_blocks_config).merge(magic_blocks_config),
-          "magic_types" => {},
-          "attack_penalties" => [
-            {"attacks" => 0, "penalty" => 0},
-            {"attacks" => 1, "penalty" => 0},
-            {"attacks" => 2, "penalty" => 25},
-            {"attacks" => 3, "penalty" => 75},
-            {"attacks" => 4, "penalty" => 150},
-            {"attacks" => 5, "penalty" => 250}
-          ]
-        }
+        YAML.load_file(config_path)
       end
 
       def standard_blocks_config

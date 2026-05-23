@@ -6,11 +6,11 @@ class Character < ApplicationRecord
   PRIMARY_STATS = %i[strength dexterity luck vitality intelligence].freeze
   BASE_PRIMARY_STATS = PRIMARY_STATS.index_with { 1 }.freeze
   STAT_LABELS = {
-    strength: "Strength",
-    dexterity: "Dexterity",
-    luck: "Luck",
-    vitality: "Health",
-    intelligence: "Knowledge"
+    strength: "Сила",
+    dexterity: "Ловкость",
+    luck: "Удача",
+    vitality: "Здоровье",
+    intelligence: "Знания"
   }.freeze
   STAT_ALIASES = {
     "strength" => :strength,
@@ -29,12 +29,12 @@ class Character < ApplicationRecord
     dark: "dark"
   }.freeze
   ALIGNMENT_LABELS = {
-    "none" => "None",
-    "law" => "Law",
-    "light" => "Light",
-    "balance" => "Balance",
-    "chaos" => "Chaos",
-    "dark" => "Dark"
+    "none" => "Нет",
+    "law" => "Закон",
+    "light" => "Свет",
+    "balance" => "Равновесие",
+    "chaos" => "Хаос",
+    "dark" => "Тьма"
   }.freeze
 
   EQUIPMENT_STAT_ALIASES = {
@@ -114,7 +114,7 @@ class Character < ApplicationRecord
   end
 
   def alignment_label
-    ALIGNMENT_LABELS.fetch(alignment, "None")
+    ALIGNMENT_LABELS.fetch(alignment, "Нет")
   end
 
   def alignment_display

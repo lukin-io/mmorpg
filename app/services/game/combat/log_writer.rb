@@ -2,7 +2,7 @@
 
 module Game
   module Combat
-    # LogWriter centralizes persistence of combat log entries for spectators/moderators.
+    # LogWriter centralizes persistence of fight events for public log/stat pages.
     #
     # Usage:
     #   Game::Combat::LogWriter.new(arena_match:).append!(message: \"...\")

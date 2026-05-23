@@ -18,8 +18,7 @@ export default class extends Controller {
   static values = {
     matchId: Number,
     apLimit: { type: Number, default: 80 },
-    spectating: { type: Boolean, default: false },
-    spectatorCode: String
+    readOnly: { type: Boolean, default: false }
   }
 
   connect() {
@@ -39,10 +38,6 @@ export default class extends Controller {
     const params = {
       channel: "ArenaMatchChannel",
       match_id: this.matchIdValue
-    }
-
-    if (this.spectatorCodeValue) {
-      params.spectator_code = this.spectatorCodeValue
     }
 
     this.subscription = consumer.subscriptions.create(params, {
@@ -116,7 +111,7 @@ export default class extends Controller {
     this.timerTarget.classList.add("visible")
 
     if (seconds <= 0) {
-      this.timerTarget.textContent = "FIGHT!"
+      this.timerTarget.textContent = "Бой начался"
       this.timerTarget.classList.add("arena-countdown-timer--final")
       setTimeout(() => this.timerTarget.classList.remove("visible"), 2000)
     } else if (seconds <= 3) {
@@ -190,7 +185,7 @@ export default class extends Controller {
         this.disableTurnComposer()
         this.appendSystemMessage({
           timestamp: new Date().toLocaleTimeString(),
-          message: "Waiting for the opponent's turn",
+          message: "Ожидание хода противника",
           severity: "info"
         })
       }
@@ -199,7 +194,7 @@ export default class extends Controller {
 
     this.appendSystemMessage({
       timestamp: new Date().toLocaleTimeString(),
-      message: data.error || "Action failed",
+      message: data.error || "Действие не принято",
       severity: "error"
     })
   }
@@ -503,7 +498,7 @@ export default class extends Controller {
 
   handleMatchStart(data) {
     // Enable action buttons
-    if (this.hasActionButtonsTarget && !this.spectatingValue) {
+    if (this.hasActionButtonsTarget && !this.readOnlyValue) {
       this.actionButtonsTarget.querySelectorAll("button").forEach(btn => {
         btn.disabled = false
       })
@@ -515,7 +510,7 @@ export default class extends Controller {
     // Log match start
     this.appendSystemMessage({
       timestamp: new Date().toLocaleTimeString(),
-      message: "FIGHT STARTED!",
+      message: "Бой начался",
       severity: "info"
     })
   }
@@ -575,22 +570,22 @@ export default class extends Controller {
       <div class="arena-result-stats">
         <div class="arena-result-stat">
           <div class="arena-result-stat-value">${data.duration}s</div>
-          <div class="arena-result-stat-label">Duration</div>
+          <div class="arena-result-stat-label">Длительность</div>
         </div>
         <div class="arena-result-stat">
           <div class="arena-result-stat-value">${this.totalDamage(data.participants)}</div>
-          <div class="arena-result-stat-label">Total Damage</div>
+          <div class="arena-result-stat-label">Урон</div>
         </div>
         <div class="arena-result-stat">
           <div class="arena-result-stat-value">${data.winning_team}</div>
-          <div class="arena-result-stat-label">Winner</div>
+          <div class="arena-result-stat-label">Победитель</div>
         </div>
       </div>
 
       ${data.rewards ? this.renderRewards(data.rewards) : ""}
 
       <button class="btn-primary" onclick="window.location.href='/arena'">
-        Return to Arena
+        К арене
       </button>
     `
   }
@@ -603,10 +598,10 @@ export default class extends Controller {
 
   resultTitle(resultClass) {
     switch (resultClass) {
-      case "victory": return "VICTORY!"
-      case "defeat": return "DEFEAT"
-      case "draw": return "DRAW"
-      default: return "MATCH ENDED"
+      case "victory": return "Победа"
+      case "defeat": return "Поражение"
+      case "draw": return "Ничья"
+      default: return "Бой завершен"
     }
   }
 
@@ -629,7 +624,7 @@ export default class extends Controller {
   // === COMBAT ACTIONS ===
 
   submitTurn(event) {
-    if (this.spectatingValue) return
+    if (this.readOnlyValue) return
 
     const btn = event.currentTarget
     const targetId = this.getFirstEnemyId()
@@ -726,7 +721,7 @@ export default class extends Controller {
   }
 
   enableTurnComposer() {
-    if (!this.hasActionButtonsTarget || this.spectatingValue) return
+    if (!this.hasActionButtonsTarget || this.readOnlyValue) return
 
     this.actionButtonsTarget.querySelectorAll("button, select").forEach(el => {
       el.disabled = false

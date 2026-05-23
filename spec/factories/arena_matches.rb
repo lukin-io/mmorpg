@@ -4,7 +4,6 @@ FactoryBot.define do
   factory :arena_match do
     match_type { :duel }
     status { :pending }
-    spectator_code { SecureRandom.alphanumeric(8).upcase }
 
     trait :duel do
       match_type { :duel }

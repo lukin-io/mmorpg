@@ -118,7 +118,7 @@ RSpec.describe "World Map Navigation", type: :system do
     it "shows navigation links" do
       visit world_path
 
-      expect(page).to have_link("Profile")
+      expect(page).to have_link("Персонаж")
     end
 
     it "shows zone name" do

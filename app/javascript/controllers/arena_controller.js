@@ -181,7 +181,7 @@ export default class extends Controller {
     if (!this.hasCountdownTarget) return
 
     if (seconds <= 0) {
-      this.countdownTarget.querySelector(".arena-countdown-timer").textContent = "FIGHT!"
+      this.countdownTarget.querySelector(".arena-countdown-timer").textContent = "Бой начался"
       this.countdownTarget.querySelector(".arena-countdown-timer").classList.add("arena-countdown-timer--final")
 
       // Redirect to match after brief delay

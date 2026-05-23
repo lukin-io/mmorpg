@@ -6,10 +6,10 @@
       current_section: :inventory %>
 
     <div class="nl-inventory-head">
-      <h1>Inventory</h1>
+      <h1>Инвентарь</h1>
       <div class="nl-inventory-balance">
         <span><%= number_with_delimiter(current_character.user&.currency_wallet&.nv_balance || 0) %> NV</span>
-        <span>Weight <%= @inventory.current_weight %>/<%= @inventory.max_weight %></span>
+        <span>Масса <%= @inventory.current_weight %>/<%= @inventory.max_weight %></span>
       </div>
     </div>
 

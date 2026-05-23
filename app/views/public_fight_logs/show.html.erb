@@ -1,24 +1,24 @@
-<% content_for :title, "Fight Log ##{@arena_match.id}" %>
+<% content_for :title, "Лог боя ##{@arena_match.id}" %>
 
 <section class="combat-log-viewer nl-public-fight-log">
   <div class="combat-log-header">
     <div class="header-content">
-      <h1>Fight Log #<%= @arena_match.id %></h1>
+      <h1>Лог боя #<%= @arena_match.id %></h1>
       <p class="fight-meta">
-        <span class="zone"><%= @arena_match.arena_room&.name || "Arena" %></span>
+        <span class="zone"><%= @arena_match.arena_room&.name || "Арена" %></span>
         <span class="separator">/</span>
-        <span class="type"><%= @arena_match.match_type.humanize %></span>
+        <span class="type"><%= fight_type_label(@arena_match.match_type) %></span>
         <span class="separator">/</span>
-        <span class="status <%= @arena_match.status %>"><%= @arena_match.status.humanize %></span>
+        <span class="status <%= @arena_match.status %>"><%= arena_match_status_badge(@arena_match.status) %></span>
       </p>
     </div>
   </div>
 
   <div class="combat-log-tabs">
-    <%= link_to "Combat Log",
+    <%= link_to "Ход боя",
       public_fight_log_path(@arena_match, p: 1),
       class: "tab #{@view_mode == :log ? 'active' : ''}" %>
-    <%= link_to "Statistics",
+    <%= link_to "Статистика",
       public_fight_log_path(@arena_match, stat: 1),
       class: "tab #{@view_mode == :statistics ? 'active' : ''}" %>
     <div class="tab-spacer"></div>
@@ -37,7 +37,7 @@
           </span><%= index < @team_a.length - 1 ? ", " : "" %>
         <% end %>
       </div>
-      <span class="vs">vs</span>
+      <span class="vs">против</span>
       <div class="team team-beta">
         <% @team_b.each_with_index do |participant, index| %>
           <span class="participant <%= participant.current_hp.positive? ? 'alive' : 'dead' %>">
@@ -50,14 +50,15 @@
   </div>
 
   <% if @view_mode == :statistics %>
+    <% part_labels = {"head" => "Голова", "torso" => "Корпус", "stomach" => "Живот", "legs" => "Ноги"} %>
     <div class="combat-log-content">
       <table class="nl-table nl-fight-stat-table">
         <thead>
           <tr>
-            <th>Participant</th>
-            <th>Team</th>
-            <th>Damage</th>
-            <th>Hits</th>
+            <th>Участник</th>
+            <th>Сторона</th>
+            <th>Урон</th>
+            <th>Попадания</th>
           </tr>
         </thead>
         <tbody>
@@ -75,16 +76,16 @@
       <table class="nl-table nl-fight-stat-table">
         <thead>
           <tr>
-            <th>Body Part</th>
-            <th>Attacks</th>
-            <th>Damage</th>
-            <th>Blocks</th>
+            <th>Зона</th>
+            <th>Удары</th>
+            <th>Урон</th>
+            <th>Блоки</th>
           </tr>
         </thead>
         <tbody>
           <% @statistics.body_part_breakdown.each do |part, row| %>
             <tr>
-              <td><%= part.humanize %></td>
+              <td><%= part_labels.fetch(part.to_s, part.to_s) %></td>
               <td><%= row[:attacks] %></td>
               <td><%= row[:damage] %></td>
               <td><%= row[:blocked] %></td>
@@ -98,7 +99,7 @@
       <div class="log-entries">
         <% @combat_log_entries.group_by(&:round_number).each do |round, entries| %>
           <div class="round-group">
-            <div class="round-header">Round <%= round %></div>
+            <div class="round-header">Раунд <%= round %></div>
             <% entries.each do |entry| %>
               <div class="log-entry log-type-<%= entry.log_type %>" data-log-id="<%= entry.id %>">
                 <div class="entry-header">
@@ -108,7 +109,7 @@
                 <div class="entry-content">
                   <span class="raw-message"><%= entry.message %></span>
                   <% if entry.damage_amount.positive? %>
-                    <span class="damage"><%= entry.damage_amount %> dmg</span>
+                    <span class="damage"><%= entry.damage_amount %> урон</span>
                   <% end %>
                 </div>
               </div>
@@ -119,7 +120,7 @@
 
       <% if @total_pages && @total_pages > 1 %>
         <div class="log-pagination">
-          <span class="page-label">Pages:</span>
+          <span class="page-label">Страницы:</span>
           <% (1..@total_pages).each do |page| %>
             <% if page == @page %>
               <span class="current-page"><%= page %></span>

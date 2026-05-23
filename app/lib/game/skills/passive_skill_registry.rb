@@ -58,7 +58,7 @@ module Game
           key:,
           source_id:,
           name:,
-          description: "Neverlands numeric skill ##{source_id}.",
+          description: "Умение Neverlands ##{source_id}.",
           max_level: MAX_LEVEL,
           category:,
           pool: CATEGORIES.fetch(category).fetch(:pool),

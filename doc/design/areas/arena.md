@@ -216,8 +216,9 @@ The first playable arena loop should follow the captured Neverlands shape:
 - arena fights return to arena context, while wilderness fights return to
   world/city context;
 - completed fights show a finish-result step before routing back;
-- direct match screens may exist for active participants and spectators, but
-  creating arena matches should happen by accepting room applications.
+- direct match screens may exist for active participants and public fight-link
+  viewers, but creating arena matches should happen by accepting room
+  applications.
 
 Arena combat uses the shared combat contract from `features/combat.md`:
 

@@ -24,7 +24,7 @@ RSpec.describe "Inventories", type: :request do
     it "displays inventory slots and weight" do
       get inventory_path
 
-      expect(response.body).to include("Inventory")
+      expect(response.body).to include("Инвентарь")
       expect(response.body).to include("Bag")
     end
 

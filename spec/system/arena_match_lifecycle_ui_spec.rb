@@ -83,11 +83,11 @@ RSpec.describe "Arena Match Lifecycle UI", type: :system, js: true do
       expect(page).to have_content("Test Arena")
     end
 
-    it "displays 'Match created' in combat log" do
+    it "displays fight-created message in combat log" do
       visit arena_match_path(pending_match)
 
       within(".arena-combat-log") do
-        expect(page).to have_content("Match created")
+        expect(page).to have_content("Бой создан")
       end
     end
 
@@ -132,17 +132,17 @@ RSpec.describe "Arena Match Lifecycle UI", type: :system, js: true do
       allow_any_instance_of(ApplicationController).to receive(:current_character).and_return(character1)
     end
 
-    it "displays 'Live' status badge" do
+    it "displays active status badge" do
       visit arena_match_path(live_match)
 
-      expect(page).to have_css(".badge", text: "LIVE")
+      expect(page).to have_css(".badge", text: "Идет")
     end
 
-    it "displays 'FIGHT' in combat log" do
+    it "displays fight-start message in combat log" do
       visit arena_match_path(live_match)
 
       within(".arena-combat-log") do
-        expect(page).to have_content("FIGHT!")
+        expect(page).to have_content("Бой начался")
       end
     end
 
@@ -157,8 +157,8 @@ RSpec.describe "Arena Match Lifecycle UI", type: :system, js: true do
     it "displays attack type choices" do
       visit arena_match_path(live_match)
 
-      expect(page).to have_content("Simple Attack")
-      expect(page).to have_content("Aimed Attack")
+      expect(page).to have_content("Простой удар")
+      expect(page).to have_content("Прицельный удар")
     end
 
     it "displays body part targeting selectors" do
@@ -171,7 +171,7 @@ RSpec.describe "Arena Match Lifecycle UI", type: :system, js: true do
       visit arena_match_path(live_match)
 
       expect(page).to have_css("[data-arena-match-target='blockSelect']")
-      expect(page).to have_content("Torso Block").or have_content("Head Block")
+      expect(page).to have_content("Блок корпуса").or have_content("Блок головы")
     end
 
     it "displays HP info for both participants" do
@@ -240,7 +240,7 @@ RSpec.describe "Arena Match Lifecycle UI", type: :system, js: true do
       # Refresh page
       visit arena_match_path(transitioning_match)
 
-      expect(page).to have_content("LIVE")
+      expect(page).to have_content("Идет")
     end
   end
 
@@ -285,7 +285,7 @@ RSpec.describe "Arena Match Lifecycle UI", type: :system, js: true do
     it "displays victory overlay for winner" do
       visit arena_match_path(completed_match)
 
-      expect(page).to have_content("VICTORY")
+      expect(page).to have_content("Победа")
         .or have_css(".arena-result--victory")
     end
 
@@ -293,7 +293,7 @@ RSpec.describe "Arena Match Lifecycle UI", type: :system, js: true do
       visit arena_match_path(completed_match)
 
       within(".arena-combat-log") do
-        expect(page).to have_content("Winner")
+        expect(page).to have_content("Победитель")
       end
     end
 
@@ -313,14 +313,11 @@ RSpec.describe "Arena Match Lifecycle UI", type: :system, js: true do
       visit arena_match_path(completed_match)
 
       expect(page).to have_css(".arena-match-bar")
-      expect(page).to have_content("Duration")
+      expect(page).to have_content("Длительность")
     end
   end
 
-  # =============================================================================
-  # SPECTATOR VIEW
-  # =============================================================================
-  describe "Spectator View" do
+  describe "public fight-link view" do
     let!(:live_match) do
       match = create(:arena_match,
         arena_room: arena_room,
@@ -333,25 +330,22 @@ RSpec.describe "Arena Match Lifecycle UI", type: :system, js: true do
       match
     end
 
-    let(:spectator_user) { create(:user) }
-    let(:spectator_char) { create(:character, user: spectator_user, name: "Spectator", level: 10) }
+    let(:viewer_user) { create(:user) }
+    let(:viewer_character) { create(:character, user: viewer_user, name: "Viewer", level: 10) }
 
     before do
-      create(:character_position, character: spectator_char)
-      login_as(spectator_user, scope: :user)
-      allow_any_instance_of(ApplicationController).to receive(:current_character).and_return(spectator_char)
+      create(:character_position, character: viewer_character)
+      login_as(viewer_user, scope: :user)
+      allow_any_instance_of(ApplicationController).to receive(:current_character).and_return(viewer_character)
     end
 
-    it "displays spectator message for non-participants" do
+    it "displays viewing state for non-participants" do
       visit arena_match_path(live_match)
 
       expect(page).to have_content("Просмотр")
     end
 
-    it "displays spectator code", skip: "Spectator code display not visible in current UI" do
-    end
-
-    it "does NOT display action buttons for spectators" do
+    it "does NOT display action buttons for non-participants" do
       visit arena_match_path(live_match)
 
       expect(page).not_to have_css(".arena-action-panel")
@@ -401,11 +395,11 @@ RSpec.describe "Arena Match Lifecycle UI", type: :system, js: true do
       expect(controller_element["data-arena-match-match-id-value"]).to eq(live_match.id.to_s)
     end
 
-    it "has spectating value set correctly for participant" do
+    it "has read-only value set correctly for participant" do
       visit arena_match_path(live_match)
 
       controller_element = find("[data-controller='arena-match']")
-      expect(controller_element["data-arena-match-spectating-value"]).to eq("false")
+      expect(controller_element["data-arena-match-read-only-value"]).to eq("false")
     end
 
     it "displays turn controls with correct data attributes" do

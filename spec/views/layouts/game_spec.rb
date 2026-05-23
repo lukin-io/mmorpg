@@ -79,22 +79,21 @@ RSpec.describe "layouts/game.html.erb", type: :view do
       expect(rendered).to have_css(".nl-top-nav")
     end
 
-    it "includes Character link" do
+    it "includes character link" do
       render template: "layouts/game", layout: false
 
-      expect(rendered).to have_link("Character", class: "nl-nav-link")
+      expect(rendered).to have_link("Персонаж", class: "nl-nav-link")
     end
 
-    it "includes Inventory link" do
+    it "includes inventory link" do
       render template: "layouts/game", layout: false
 
-      expect(rendered).to have_link("Inventory", class: "nl-nav-link")
+      expect(rendered).to have_link("Инвентарь", class: "nl-nav-link")
     end
 
-    it "includes Enter/Exit link" do
+    it "includes return/exit link" do
       render template: "layouts/game", layout: false
 
-      # Either "Enter" (for outdoor) or "Exit" (for city)
       expect(rendered).to have_css(".nl-nav-link", minimum: 4)
     end
   end
@@ -156,7 +155,7 @@ RSpec.describe "layouts/game.html.erb", type: :view do
       render template: "layouts/game", layout: false
 
       expect(rendered).to have_css(".nl-action-area")
-      expect(rendered).to have_css(".nl-action-btn-small", text: "Say")
+      expect(rendered).to have_css(".nl-action-btn-small", text: "Сказать")
     end
 
     it "includes chat area" do
@@ -209,10 +208,10 @@ RSpec.describe "layouts/game.html.erb", type: :view do
       assign(:position, position)
     end
 
-    it "shows Exit link instead of Enter" do
+    it "shows city exit link" do
       render template: "layouts/game", layout: false
 
-      expect(rendered).to have_link("Exit", class: "nl-nav-link")
+      expect(rendered).to have_link("Выход", class: "nl-nav-link")
     end
   end
 

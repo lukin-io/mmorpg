@@ -40,8 +40,6 @@ class ArenaMatch < ApplicationRecord
 
   validates :match_type, presence: true
 
-  before_create :assign_spectator_code
-
   scope :recent, -> { order(created_at: :desc) }
   scope :active, -> { where(status: [:pending, :matching, :live]) }
   scope :timed_out, -> {
@@ -247,10 +245,6 @@ class ArenaMatch < ApplicationRecord
   end
 
   private
-
-  def assign_spectator_code
-    self.spectator_code ||= SecureRandom.alphanumeric(8).upcase
-  end
 
   def default_host
     Rails.application.config.action_mailer.default_url_options&.dig(:host) || "localhost:3000"

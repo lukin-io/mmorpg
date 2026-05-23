@@ -143,7 +143,7 @@ RSpec.describe Arena::CombatProcessor do
         )
 
         expect(result.success?).to be false
-        expect(result.error).to eq("Match is not active")
+        expect(result.error).to eq("Бой не активен")
       end
     end
 
@@ -162,7 +162,7 @@ RSpec.describe Arena::CombatProcessor do
         )
 
         expect(result.success?).to be false
-        expect(result.error).to eq("Character not in this match")
+        expect(result.error).to eq("Персонаж не участвует в этом бою")
       end
     end
 
@@ -179,7 +179,7 @@ RSpec.describe Arena::CombatProcessor do
         )
 
         expect(result.success?).to be false
-        expect(result.error).to eq("Character is dead")
+        expect(result.error).to eq("Персонаж повержен")
       end
     end
   end
@@ -426,7 +426,7 @@ RSpec.describe Arena::CombatProcessor do
         )
 
         expect(result.success?).to be false
-        expect(result.error).to include("Not enough AP")
+        expect(result.error).to include("Недостаточно ОД")
       end
 
       it "processes a Neverlands-style turn package with attack and block" do

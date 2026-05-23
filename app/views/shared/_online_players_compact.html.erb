@@ -20,13 +20,13 @@
 
   # Current zone info for location display
   current_zone = @position&.zone || @zone
-  location_name = current_zone&.name || "Unknown Location"
+  location_name = current_zone&.name || "Неизвестно"
   total_online = online_users.size
 %>
 
 <%# Sorting options %>
 <div class="nl-players-sort-bar">
-  <span class="nl-sort-label">Sort:</span>
+  <span class="nl-sort-label">Сортировка:</span>
   <span class="nl-players-sort">
     <a href="#" data-action="click->game-layout#sortPlayers" data-sort="az">a-z</a>
     <a href="#" data-action="click->game-layout#sortPlayers" data-sort="za">z-a</a>
@@ -35,14 +35,14 @@
   </span>
   <label class="nl-refresh-toggle">
     <input type="checkbox" checked data-action="change->game-layout#toggleAutoRefresh">
-    refresh
+    обновлять
   </label>
 </div>
 
 <%# Location header %>
 <div class="nl-players-header">
   <div class="nl-players-location"><%= location_name %></div>
-  <div class="nl-players-total">Total [ <%= total_online %> ]</div>
+  <div class="nl-players-total">Всего [ <%= total_online %> ]</div>
 </div>
 
 <%# Players list %>
@@ -82,13 +82,13 @@
   <% end %>
 
   <% if online_users.empty? %>
-    <div class="nl-players-empty">No players online</div>
+    <div class="nl-players-empty">Нет игроков</div>
   <% end %>
 </div>
 
 <%# Context menu for player interactions %>
 <div class="nl-player-menu" data-game-layout-target="playerMenu" style="display: none;">
-  <button data-action="click->game-layout#whisperPlayer">📨 Private Message</button>
-  <button data-action="click->game-layout#viewProfile">👤 View Info</button>
-  <button data-action="click->game-layout#copyNickname">📋 Copy Nick</button>
+  <button data-action="click->game-layout#whisperPlayer">Приватно</button>
+  <button data-action="click->game-layout#viewProfile">Инфо</button>
+  <button data-action="click->game-layout#copyNickname">Копировать ник</button>
 </div>

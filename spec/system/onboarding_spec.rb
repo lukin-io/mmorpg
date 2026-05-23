@@ -14,7 +14,7 @@ RSpec.describe "Onboarding", type: :system do
 
       fill_in "Email", with: user.email
       fill_in "Password", with: "Password123!"
-      click_button "Enter the Realm"
+      click_button "Войти"
 
       expect(page).to have_css(".nl-map-container")
       expect(page).to have_content("Окрестность Форпоста")
@@ -28,7 +28,7 @@ RSpec.describe "Onboarding", type: :system do
       visit new_user_session_path
       fill_in "Email", with: user.email
       fill_in "Password", with: "WrongPassword!"
-      click_button "Enter the Realm"
+      click_button "Войти"
 
       expect(page).to have_content(I18n.t("devise.failure.invalid", authentication_keys: "email"))
     end
@@ -44,7 +44,7 @@ RSpec.describe "Onboarding", type: :system do
       visit new_user_session_path
       fill_in "Email", with: user.email
       fill_in "Password", with: "Password123!"
-      click_button "Enter the Realm"
+      click_button "Войти"
 
       expect(page).to have_css(".city-view-container")
       expect(page).to have_content("Форпост")
@@ -56,7 +56,7 @@ RSpec.describe "Onboarding", type: :system do
       fill_in "Email", with: ""
       fill_in "Password", with: ""
       fill_in "Password confirmation", with: ""
-      click_button "Create Account"
+      click_button "Создать аккаунт"
 
       expect(page).to have_content("can't be blank")
     end
@@ -69,7 +69,7 @@ RSpec.describe "Onboarding", type: :system do
       visit new_user_session_path
       fill_in "Email", with: user.email
       fill_in "Password", with: "Password123!"
-      click_button "Enter the Realm"
+      click_button "Войти"
 
       expect(page).to have_content("confirm your email address")
     end

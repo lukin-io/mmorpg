@@ -101,17 +101,17 @@ module Game
         if stats["heal_hp"]
           amount = stats["heal_hp"].to_i
           actual_healed = Characters::VitalsService.new(character).apply_healing(amount, source: template.name)
-          return {success: true, message: "Restored #{actual_healed} HP"}
+          return {success: true, message: "Восстановлено #{actual_healed} HP"}
         end
 
         if stats["restore_mp"]
           amount = stats["restore_mp"].to_i
           actual_restored = Characters::VitalsService.new(character).restore_mana(amount, source: template.name)
-          return {success: true, message: "Restored #{actual_restored} MP"}
+          return {success: true, message: "Восстановлено #{actual_restored} MP"}
         end
 
         # Default case - item has no known effect
-        {success: false, error: "Item has no usable effect"}
+        {success: false, error: "Нет подходящего эффекта"}
       end
 
       def self.decrement_inventory_weight!(inventory, delta)
@@ -166,7 +166,7 @@ module Game
           stack.destroy if stack.quantity.zero?
         end
 
-        raise InventoryUnderflowError, "Not enough items" if remaining.positive?
+        raise InventoryUnderflowError, "Недостаточно предметов" if remaining.positive?
       end
 
       private
@@ -193,12 +193,12 @@ module Game
 
       def ensure_slot_capacity!
         used_slots = inventory.inventory_items.count
-        raise CapacityExceededError, "No inventory slots available" if used_slots >= inventory.slot_capacity
+        raise CapacityExceededError, "Нет свободных мест в инвентаре" if used_slots >= inventory.slot_capacity
       end
 
       def ensure_weight_capacity!(delta)
         projected = inventory.current_weight + delta
-        raise CapacityExceededError, "Inventory overweight" if projected > inventory.weight_capacity
+        raise CapacityExceededError, "Инвентарь перегружен" if projected > inventory.weight_capacity
       end
 
       def increment_weight!(delta)

@@ -312,7 +312,7 @@ RSpec.describe Arena::CombatProcessor, "Neverlands-style combat features" do
       expect(arena_match.timed_out).to be true
 
       timeout_entry = arena_match.combat_log_entries.find { |entry| entry.log_type == "timeout" }
-      expect(timeout_entry.message).to include("timeout")
+      expect(timeout_entry.message).to include("таймаут")
     end
 
     it "handles normal victory" do
@@ -320,7 +320,7 @@ RSpec.describe Arena::CombatProcessor, "Neverlands-style combat features" do
 
       arena_match.reload
       victory_entry = arena_match.combat_log_entries.find { |entry| entry.log_type == "victory" }
-      expect(victory_entry.message).to include("Winner")
+      expect(victory_entry.message).to include("Победитель")
     end
 
     it "handles draw" do
@@ -328,7 +328,7 @@ RSpec.describe Arena::CombatProcessor, "Neverlands-style combat features" do
 
       arena_match.reload
       draw_entry = arena_match.combat_log_entries.find { |entry| entry.log_type == "draw" }
-      expect(draw_entry.message).to include("draw")
+      expect(draw_entry.message).to include("ничь")
     end
   end
 
@@ -484,7 +484,7 @@ RSpec.describe Arena::CombatProcessor, "Neverlands-style combat features" do
         it "returns failure with error message" do
           result = processor.process_action(non_participant, :attack, target: character2)
           expect(result.success?).to be false
-          expect(result.error).to eq("Character not in this match")
+          expect(result.error).to eq("Персонаж не участвует в этом бою")
         end
       end
 

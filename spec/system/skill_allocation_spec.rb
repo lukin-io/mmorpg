@@ -17,7 +17,7 @@ RSpec.describe "Skill Allocation", type: :system, js: true do
     before { visit skills_character_path(character) }
 
     it "displays the skill allocation page" do
-      expect(page).to have_content("Skills")
+      expect(page).to have_content("Умения")
       expect(page).to have_content(character.name)
     end
 
@@ -175,7 +175,7 @@ RSpec.describe "Skill Allocation", type: :system, js: true do
     it "saves skill allocation to database" do
       click_button "Сохранить"
 
-      expect(page).to have_content("Skills allocated")
+      expect(page).to have_content("Умения сохранены")
       character.reload
       expect(character.passive_skill_level(:unarmed_combat)).to eq(10)
       expect(character.combat_skill_points).to eq(9)
@@ -185,7 +185,7 @@ RSpec.describe "Skill Allocation", type: :system, js: true do
       within_skill_row(:self_healing) { click_button "+" }
 
       click_button "Сохранить"
-      expect(page).to have_content("Skills allocated", wait: 5)
+      expect(page).to have_content("Умения сохранены", wait: 5)
 
       character.reload
       expect(character.passive_skill_level(:unarmed_combat)).to eq(10)
@@ -336,7 +336,7 @@ RSpec.describe "Skill Allocation", type: :system, js: true do
       click_button "Сохранить"
 
       expect(page).to have_css("#skill-allocation")
-      expect(page).to have_content("Skills allocated")
+      expect(page).to have_content("Умения сохранены")
     end
   end
 

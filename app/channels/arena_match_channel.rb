@@ -15,13 +15,7 @@ class ArenaMatchChannel < ApplicationCable::Channel
       return
     end
 
-    # Allow participants and spectators
     stream_from @match.broadcast_channel
-
-    # If spectating via code, also stream spectator channel
-    if params[:spectator_code] == @match.spectator_code
-      stream_from "arena:spectate:#{@match.spectator_code}"
-    end
   end
 
   def unsubscribed

@@ -59,7 +59,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_120000) do
     t.datetime "ended_at"
     t.integer "match_type", default: 0, null: false
     t.jsonb "metadata", default: {}, null: false
-    t.string "spectator_code"
     t.datetime "started_at"
     t.integer "status", default: 0, null: false
     t.boolean "timed_out", default: false
@@ -69,7 +68,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_120000) do
     t.string "winning_team"
     t.bigint "zone_id"
     t.index ["arena_room_id"], name: "index_arena_matches_on_arena_room_id"
-    t.index ["spectator_code"], name: "index_arena_matches_on_spectator_code", unique: true
     t.index ["status", "current_turn_started_at"], name: "index_arena_matches_on_timeout_check", where: "(status = 2)"
     t.index ["status"], name: "index_arena_matches_on_status"
     t.index ["zone_id"], name: "index_arena_matches_on_zone_id"

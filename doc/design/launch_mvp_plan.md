@@ -181,7 +181,7 @@ Required behavior:
   paginated log pages and `stat=1` aggregate statistics rendered from that same
   stream;
 - public profile fight links, active fight screens, completed result screens,
-  and spectator/log pages all resolve through the same fight-log identity;
+  and public log/stat pages all resolve through the same fight-log identity;
 - training NPC drops, such as mannequin wood chips, use the same NPC loot-check
   and inventory award rules as wild NPC drops;
 - completed fights require an explicit finish action before returning to arena

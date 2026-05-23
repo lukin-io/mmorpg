@@ -67,7 +67,7 @@ RSpec.describe "World Interactions", type: :system, js: true do
 
       visit world_path
 
-      expect(page).to have_current_path(/sign_in/).or have_content("Log in")
+      expect(page).to have_current_path(/sign_in/).or have_content("Вход")
     end
   end
 end

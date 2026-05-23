@@ -29,14 +29,14 @@ RSpec.describe CharactersController, type: :request do
         get stats_character_path(character)
 
         expect(response).to have_http_status(:success)
-        expect(response.body).to include("Character Stats")
-        expect(response.body).to include("Available Points")
+        expect(response.body).to include("Характеристики")
+        expect(response.body).to include("Свободные очки")
       end
 
       it "shows all allocatable stats" do
         get stats_character_path(character)
 
-        %w[Strength Dexterity Luck Health Knowledge].each do |stat|
+        %w[Сила Ловкость Удача Здоровье Знания].each do |stat|
           expect(response.body).to include(stat)
         end
       end
@@ -50,7 +50,7 @@ RSpec.describe CharactersController, type: :request do
       it "shows Neverlands starter base stats" do
         get stats_character_path(character)
 
-        expect(response.body).to include("(base: 1)")
+        expect(response.body).to include("(база: 1)")
       end
     end
 
@@ -155,7 +155,7 @@ RSpec.describe CharactersController, type: :request do
         }
 
         follow_redirect!
-        expect(response.body).to include("Stats allocated successfully")
+        expect(response.body).to include("Характеристики сохранены")
       end
     end
 
@@ -167,7 +167,7 @@ RSpec.describe CharactersController, type: :request do
 
         expect(response).to redirect_to(root_path)
         follow_redirect!
-        expect(response.body).to include("Not enough stat points available")
+        expect(response.body).to include("Недостаточно свободных очков характеристик")
         character.reload
         expect(character.stat_points_available).to eq(10) # unchanged
       end
@@ -179,7 +179,7 @@ RSpec.describe CharactersController, type: :request do
 
         expect(response).to redirect_to(root_path)
         follow_redirect!
-        expect(response.body).to include("Not enough stat points available")
+        expect(response.body).to include("Недостаточно свободных очков характеристик")
       end
 
       it "rejects zero allocation" do
@@ -189,7 +189,7 @@ RSpec.describe CharactersController, type: :request do
 
         expect(response).to redirect_to(root_path)
         follow_redirect!
-        expect(response.body).to include("No stats allocated")
+        expect(response.body).to include("Характеристики не выбраны")
       end
 
       it "rejects all-zero allocation" do
@@ -199,7 +199,7 @@ RSpec.describe CharactersController, type: :request do
 
         expect(response).to redirect_to(root_path)
         follow_redirect!
-        expect(response.body).to include("No stats allocated")
+        expect(response.body).to include("Характеристики не выбраны")
       end
     end
 
@@ -211,7 +211,7 @@ RSpec.describe CharactersController, type: :request do
 
         expect(response).to redirect_to(root_path)
         follow_redirect!
-        expect(response.body).to include("No stats allocated")
+        expect(response.body).to include("Характеристики не выбраны")
         character.reload
         expect(character.stat_points_available).to eq(10) # unchanged
       end
@@ -223,7 +223,7 @@ RSpec.describe CharactersController, type: :request do
 
         expect(response).to redirect_to(root_path)
         follow_redirect!
-        expect(response.body).to include("Not enough stat points available")
+        expect(response.body).to include("Недостаточно свободных очков характеристик")
       end
 
       it "handles string values by converting to integer" do
@@ -255,7 +255,7 @@ RSpec.describe CharactersController, type: :request do
 
         expect(response).to redirect_to(root_path)
         follow_redirect!
-        expect(response.body).to include("No stats allocated")
+        expect(response.body).to include("Характеристики не выбраны")
       end
 
       it "handles empty allocated_stats hash" do
@@ -265,7 +265,7 @@ RSpec.describe CharactersController, type: :request do
 
         expect(response).to redirect_to(root_path)
         follow_redirect!
-        expect(response.body).to include("No stats allocated")
+        expect(response.body).to include("Характеристики не выбраны")
       end
 
       it "handles missing allocated_stats param" do
@@ -273,7 +273,7 @@ RSpec.describe CharactersController, type: :request do
 
         expect(response).to redirect_to(root_path)
         follow_redirect!
-        expect(response.body).to include("No stats allocated")
+        expect(response.body).to include("Характеристики не выбраны")
       end
     end
 
@@ -302,7 +302,7 @@ RSpec.describe CharactersController, type: :request do
 
         expect(response).to redirect_to(root_path)
         follow_redirect!
-        expect(response.body).to include("Not enough stat points available")
+        expect(response.body).to include("Недостаточно свободных очков характеристик")
       end
     end
 
@@ -362,7 +362,7 @@ RSpec.describe CharactersController, type: :request do
         get skills_character_path(character)
 
         expect(response).to have_http_status(:success)
-        expect(response.body).to include("Skills")
+        expect(response.body).to include("Умения")
         expect(response.body).to include("Боевые очки:")
         expect(response.body).to include("Мирные очки:")
       end
@@ -472,7 +472,7 @@ RSpec.describe CharactersController, type: :request do
         }
 
         follow_redirect!
-        expect(response.body).to include("Skills allocated successfully")
+        expect(response.body).to include("Умения сохранены")
       end
 
       it "clears passive skill calculator cache" do
@@ -537,7 +537,7 @@ RSpec.describe CharactersController, type: :request do
 
         expect(response).to redirect_to(root_path)
         follow_redirect!
-        expect(response.body).to include("Not enough combat skill points")
+        expect(response.body).to include("Недостаточно боевых очков")
         character.reload
         expect(character.combat_skill_points).to eq(1)  # unchanged
       end
@@ -549,7 +549,7 @@ RSpec.describe CharactersController, type: :request do
 
         expect(response).to redirect_to(root_path)
         follow_redirect!
-        expect(response.body).to include("No skills allocated")
+        expect(response.body).to include("Умения не выбраны")
       end
     end
 
@@ -565,7 +565,7 @@ RSpec.describe CharactersController, type: :request do
 
         expect(response).to redirect_to(root_path)
         follow_redirect!
-        expect(response.body).to include("No skills allocated")
+        expect(response.body).to include("Умения не выбраны")
       end
 
       it "handles string values by converting to integer" do
@@ -597,7 +597,7 @@ RSpec.describe CharactersController, type: :request do
 
         expect(response).to redirect_to(root_path)
         follow_redirect!
-        expect(response.body).to include("No skills allocated")
+        expect(response.body).to include("Умения не выбраны")
       end
 
       it "handles empty allocated_skills hash" do
@@ -607,7 +607,7 @@ RSpec.describe CharactersController, type: :request do
 
         expect(response).to redirect_to(root_path)
         follow_redirect!
-        expect(response.body).to include("No skills allocated")
+        expect(response.body).to include("Умения не выбраны")
       end
 
       it "handles missing allocated_skills param" do
@@ -615,7 +615,7 @@ RSpec.describe CharactersController, type: :request do
 
         expect(response).to redirect_to(root_path)
         follow_redirect!
-        expect(response.body).to include("No skills allocated")
+        expect(response.body).to include("Умения не выбраны")
       end
     end
 
@@ -662,7 +662,7 @@ RSpec.describe CharactersController, type: :request do
 
         expect(response).to redirect_to(root_path)
         follow_redirect!
-        expect(response.body).to include("Not enough combat skill points")
+        expect(response.body).to include("Недостаточно боевых очков")
       end
     end
 

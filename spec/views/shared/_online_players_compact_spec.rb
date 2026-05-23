@@ -57,8 +57,8 @@ RSpec.describe "shared/_online_players_compact.html.erb", type: :view do
     render partial: "shared/online_players_compact"
 
     expect(rendered).to have_css(".nl-player-menu", visible: :all)
-    expect(rendered).to include("Private Message")
-    expect(rendered).to include("View Info")
+    expect(rendered).to include("Приватно")
+    expect(rendered).to include("Инфо")
   end
 
   context "with online users" do
@@ -98,7 +98,7 @@ RSpec.describe "shared/_online_players_compact.html.erb", type: :view do
     it "shows empty message" do
       render partial: "shared/online_players_compact"
 
-      expect(rendered).to include("No players online")
+      expect(rendered).to include("Нет игроков")
     end
   end
 

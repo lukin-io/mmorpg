@@ -9,7 +9,7 @@
      data-stat-allocation-added-value="{}">
 
   <div class="nl-allocation-points">
-    <span class="nl-allocation-points-label">Available Points:</span>
+    <span class="nl-allocation-points-label">Свободные очки:</span>
     <span class="nl-allocation-points-value" data-stat-allocation-target="freePoints">
       <%= @character.stat_points_available %>
     </span>
@@ -22,7 +22,7 @@
         <div class="nl-stat-row">
           <div class="nl-stat-name">
             <span class="nl-stat-label"><%= stat_info[:label] %></span>
-            <span class="nl-stat-base">(base: <%= stat_info[:base] %>)</span>
+            <span class="nl-stat-base">(база: <%= stat_info[:base] %>)</span>
           </div>
 
           <div class="nl-stat-controls">
@@ -57,13 +57,13 @@
       <button type="button"
               class="nl-btn nl-btn--secondary"
               data-action="click->stat-allocation#reset">
-        Reset
+        Сброс
       </button>
       <button type="submit"
               class="nl-btn nl-btn--primary nl-btn--disabled"
               data-stat-allocation-target="saveButton"
               disabled>
-        Save Stats
+        Сохранить
       </button>
     </div>
   <% end %>

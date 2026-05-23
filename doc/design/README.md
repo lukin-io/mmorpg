@@ -353,3 +353,6 @@ Neverlands-based behavior first.
 - unused generic random loot generator and XP source-ledger pipeline. Combat
   loot and experience now stay on the shared fight result/inventory path until
   more exact Neverlands reward accounting is captured.
+- uncaptured arena spectator-code layer, including a separate live spectator
+  channel, generated spectator access code, and spectator join broadcast.
+  Public fight visibility now stays on the source-backed fight-id/log path.

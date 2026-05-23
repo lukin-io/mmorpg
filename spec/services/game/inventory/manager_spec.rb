@@ -125,7 +125,7 @@ RSpec.describe Game::Inventory::Manager do
       it "raises CapacityExceededError" do
         expect {
           manager.add_item!(item_template: heavy_item, quantity: 1)
-        }.to raise_error(Game::Inventory::Manager::CapacityExceededError, "Inventory overweight")
+        }.to raise_error(Game::Inventory::Manager::CapacityExceededError, "Инвентарь перегружен")
       end
     end
   end

@@ -120,23 +120,6 @@ RSpec.describe ArenaMatch, "Lifecycle and Status Transitions" do
     end
   end
 
-  describe "spectator_code" do
-    it "is automatically assigned on create" do
-      match = ArenaMatch.create!(match_type: :duel, arena_room: arena_room)
-      expect(match.spectator_code).to be_present
-    end
-
-    it "generates an 8-character alphanumeric code" do
-      match = ArenaMatch.create!(match_type: :duel, arena_room: arena_room)
-      expect(match.spectator_code).to match(/\A[A-Z0-9]{8}\z/)
-    end
-
-    it "generates unique codes for different matches" do
-      codes = 5.times.map { ArenaMatch.create!(match_type: :duel, arena_room: arena_room).spectator_code }
-      expect(codes.uniq.size).to eq(5)
-    end
-  end
-
   describe "scopes" do
     let!(:pending_match) { create(:arena_match, status: :pending, arena_room: arena_room) }
     let!(:live_match) { create(:arena_match, status: :live, started_at: Time.current, arena_room: arena_room) }

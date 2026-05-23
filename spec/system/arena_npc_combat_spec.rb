@@ -349,7 +349,7 @@ RSpec.describe "Arena NPC Combat UI", type: :system do
     it "shows match result" do
       visit arena_match_path(completed_match)
 
-      expect(page).to have_content("Victory").or have_content("Completed").or have_content("Winner")
+      expect(page).to have_content("Победа").or have_content("Завершен").or have_content("Победитель")
     end
 
     it "shows NPC participant with 0 HP" do

@@ -2,7 +2,7 @@
 
 class ArenaMatchesController < ApplicationController
   before_action :authenticate_user!
-  before_action :set_arena_match, only: [:show, :action, :claim_timeout, :finish, :spectate, :log]
+  before_action :set_arena_match, only: [:show, :action, :claim_timeout, :finish, :log]
   before_action :require_character, only: [:action, :claim_timeout, :finish]
   before_action :require_participant, only: [:action, :claim_timeout, :finish]
 
@@ -111,16 +111,6 @@ class ArenaMatchesController < ApplicationController
     redirect_to arena_index_path, notice: "Бой завершен."
   end
 
-  def spectate
-    authorize @arena_match, :show?
-    Arena::SpectatorBroadcaster.new(match: @arena_match).broadcast!(
-      event: "spectator_joined",
-      payload: {user_id: current_user.id, profile_name: current_user.profile_name}
-    )
-
-    redirect_to @arena_match, notice: "Spectator mode engaged."
-  end
-
   private
 
   def require_character
@@ -166,7 +156,6 @@ class ArenaMatchesController < ApplicationController
       id: @arena_match.id,
       status: @arena_match.status,
       match_type: @arena_match.match_type,
-      spectator_code: @arena_match.spectator_code,
       started_at: @arena_match.started_at&.iso8601,
       ended_at: @arena_match.ended_at&.iso8601,
       duration: @arena_match.duration,

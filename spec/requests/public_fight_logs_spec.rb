@@ -23,7 +23,7 @@ RSpec.describe "Public fight logs", type: :request do
       log_type: "damage",
       round_number: 1,
       sequence: 1,
-      message: "max_kerby hit Манекен (torso) for -6 [14/20]",
+      message: "max_kerby бьет Манекен (Корпус): 6 урона [14/20]",
       damage_amount: 6,
       body_part: "torso",
       tags: %w[damage arena torso])
@@ -33,8 +33,8 @@ RSpec.describe "Public fight logs", type: :request do
     get public_fight_log_path(match)
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("Fight Log ##{match.id}")
-    expect(response.body).to include("max_kerby hit Манекен")
+    expect(response.body).to include("Лог боя ##{match.id}")
+    expect(response.body).to include("max_kerby бьет Манекен")
   end
 
   it "exports log entries as JSON" do

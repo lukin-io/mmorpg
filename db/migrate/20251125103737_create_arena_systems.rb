@@ -13,14 +13,12 @@ class CreateArenaSystems < ActiveRecord::Migration[8.1]
       t.boolean :timed_out, default: false
       t.integer :trauma_percent, default: 30
       t.string :current_turn_team
-      t.string :spectator_code
       t.string :winning_team
       t.jsonb :metadata, default: {}, null: false
       t.timestamps
     end
 
     add_index :arena_matches, :status
-    add_index :arena_matches, :spectator_code, unique: true
     add_index :arena_matches, [:status, :current_turn_started_at],
       name: "index_arena_matches_on_timeout_check",
       where: "status = 2"
