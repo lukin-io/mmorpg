@@ -149,12 +149,12 @@ RSpec.describe "Arena Match UI Layout", type: :system do
 
     it "shows match type" do
       visit arena_match_path(match)
-      expect(page).to have_content("Duel")
+      expect(page).to have_content("Дуэли")
     end
 
     it "shows match status" do
       visit arena_match_path(match)
-      expect(page).to have_css(".badge", text: "Live")
+      expect(page).to have_css(".badge", text: "LIVE")
     end
 
     it "shows room name" do
@@ -183,13 +183,13 @@ RSpec.describe "Arena Match UI Layout", type: :system do
   describe "Status Badge" do
     it "shows Live badge for active match" do
       visit arena_match_path(match)
-      expect(page).to have_css(".badge--live", text: "Live")
+      expect(page).to have_css(".badge--live", text: "LIVE")
     end
 
     it "shows Completed badge when match ends" do
       character2.update!(current_hp: 0)
       visit arena_match_path(match)
-      expect(page).to have_css(".badge--completed", text: "Completed")
+      expect(page).to have_css(".badge--completed", text: "Завершен")
     end
   end
 
@@ -251,9 +251,9 @@ RSpec.describe "Arena Match UI Layout", type: :system do
       expect(page).not_to have_css(".arena-action-panel")
     end
 
-    it "shows Spectating text" do
+    it "shows Просмотр text" do
       visit arena_match_path(match)
-      expect(page).to have_content("Spectating")
+      expect(page).to have_content("Просмотр")
     end
 
     context "when match ends" do

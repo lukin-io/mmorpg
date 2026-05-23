@@ -240,7 +240,6 @@ export default class extends Controller {
   getActionClass(action) {
     if (action.is_miss) return "miss"
     if (action.is_critical) return "critical"
-    if (action.healing) return "heal"
     if (action.damage) return "damage"
     return "action"
   }
@@ -621,7 +620,7 @@ export default class extends Controller {
         <h3>Rewards</h3>
         <div class="rewards-list">
           ${rewards.xp ? `<span class="reward-item">+${rewards.xp} XP</span>` : ""}
-          ${rewards.nv ? `<span class="reward-item">+${rewards.nv} NV</span>` : ""}
+          ${rewards.nv ? `<span class="reward-item reward-nv">+${rewards.nv} NV</span>` : ""}
         </div>
       </div>
     `
@@ -742,9 +741,6 @@ export default class extends Controller {
     )
 
     if (enemy) return enemy.dataset.characterId
-
-    const fallback = Array.from(fighters).find(p => p.dataset.characterId)
-    if (fallback) return fallback.dataset.characterId
 
     return null
   }

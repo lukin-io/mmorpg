@@ -7,14 +7,14 @@ class CreateMovementCommands < ActiveRecord::Migration[8.1]
       t.references :zone, null: false, foreign_key: true
       t.string :direction, null: false
       t.integer :status, null: false, default: 0
-      t.integer :from_x
-      t.integer :from_y
+      t.integer :from_x, null: false
+      t.integer :from_y, null: false
       t.integer :predicted_x
       t.integer :predicted_y
-      t.integer :target_x
-      t.integer :target_y
-      t.string :action_key
-      t.integer :travel_seconds
+      t.integer :target_x, null: false
+      t.integer :target_y, null: false
+      t.string :action_key, null: false
+      t.integer :travel_seconds, null: false
       t.integer :latency_ms, null: false, default: 0
       t.jsonb :metadata, null: false, default: {}
       t.datetime :started_at

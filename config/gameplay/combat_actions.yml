@@ -24,9 +24,7 @@ body_parts:
     block_difficulty: 35
 
 # Attack types
-# type 1 = melee attack, type 2 = block, type 3 = instant magic
-# type 4 = potion/item, type 5 = targeted ally spell, type 6 = text action
-# type 7 = area effect
+# type 1 = attack, type 2 = block/guard
 
 attack_types:
   # Basic attacks
@@ -154,14 +152,6 @@ block_types:
     type: 2
     body_parts: ["legs", "head"]
 
-  full_block:
-    key: "full_block"
-    name: "Full Body Block"
-    action_cost: 130
-    mana_cost: 0
-    type: 2
-    body_parts: ["head", "torso", "stomach", "legs"]
-
   # Shield block selectors - available when the participant profile uses the
   # shield block table.
   shield_head_block:
@@ -236,18 +226,14 @@ block_types:
     block_table: "shield"
     body_parts: ["head", "torso", "stomach", "legs"]
 
-# Magic spells
-magic_types:
-  # Defensive magic
   magic_shield:
     key: "magic_shield"
-    name: "Magic Shield"
+    name: "Magical Shield"
     action_cost: 45
     mana_cost: 20
     type: 3
-    element: "arcane"
-    effect: "shield"
-    description: "Create a magical barrier"
+    block_table: "magic"
+    body_parts: ["head", "torso", "stomach", "legs"]
 
   rainbow_barrier:
     key: "rainbow_barrier"
@@ -255,9 +241,8 @@ magic_types:
     action_cost: 60
     mana_cost: 40
     type: 3
-    element: "arcane"
-    effect: "barrier"
-    description: "Multi-element protection"
+    block_table: "magic"
+    body_parts: ["head", "torso", "stomach", "legs"]
 
   crystal_sphere:
     key: "crystal_sphere"
@@ -265,142 +250,10 @@ magic_types:
     action_cost: 90
     mana_cost: 65
     type: 3
-    element: "earth"
-    effect: "immunity"
-    description: "Complete damage immunity for one attack"
+    block_table: "magic"
+    body_parts: ["head", "torso", "stomach", "legs"]
 
-  # Healing
-  hp_restore:
-    key: "hp_restore"
-    name: "HP Restoration"
-    action_cost: 30
-    mana_cost: 0
-    type: 4
-    effect: "heal_hp"
-    amount: 30
-    description: "Restore HP"
-
-  mp_restore:
-    key: "mp_restore"
-    name: "MP Restoration"
-    action_cost: 30
-    mana_cost: 0
-    type: 4
-    effect: "heal_mp"
-    amount: 20
-    description: "Restore MP"
-
-  # Fire magic
-  fire_arrow:
-    key: "fire_arrow"
-    name: "Fire Arrow"
-    action_cost: 100
-    mana_cost: 50
-    type: 3
-    element: "fire"
-    damage: 30
-    description: "Launch a flaming arrow"
-
-  fire_wall:
-    key: "fire_wall"
-    name: "Fire Wall"
-    action_cost: 150
-    mana_cost: 300
-    type: 3
-    element: "fire"
-    damage: 50
-    effect: "dot"
-    description: "Create a wall of flames"
-
-  # Water/Ice magic
-  ice_arrow:
-    key: "ice_arrow"
-    name: "Ice Arrow"
-    action_cost: 100
-    mana_cost: 50
-    type: 3
-    element: "water"
-    damage: 25
-    effect: "slow"
-    description: "Frozen projectile that slows target"
-
-  freeze:
-    key: "freeze"
-    name: "Freeze"
-    action_cost: 150
-    mana_cost: 150
-    type: 3
-    element: "water"
-    effect: "stun"
-    duration: 1
-    description: "Freeze target in place"
-
-  # Earth magic
-  stone_arrow:
-    key: "stone_arrow"
-    name: "Stone Arrow"
-    action_cost: 100
-    mana_cost: 75
-    type: 3
-    element: "earth"
-    damage: 35
-    description: "Heavy stone projectile"
-
-  meteor:
-    key: "meteor"
-    name: "Meteor Rain"
-    action_cost: 125
-    mana_cost: 150
-    type: 7
-    element: "earth"
-    damage: 40
-    aoe: true
-    description: "Rain meteors on all enemies"
-
-  # Air/Lightning magic
-  lightning:
-    key: "lightning"
-    name: "Lightning"
-    action_cost: 100
-    mana_cost: 50
-    type: 3
-    element: "air"
-    damage: 28
-    description: "Strike with lightning"
-
-  chain_lightning:
-    key: "chain_lightning"
-    name: "Chain Lightning"
-    action_cost: 150
-    mana_cost: 125
-    type: 7
-    element: "air"
-    damage: 25
-    chain: 3
-    description: "Lightning that jumps between targets"
-
-  # Support spells
-  healing:
-    key: "healing"
-    name: "Healing"
-    action_cost: 100
-    mana_cost: 100
-    type: 5
-    effect: "heal"
-    amount: 50
-    target: "ally"
-    description: "Heal an ally"
-
-  greater_healing:
-    key: "greater_healing"
-    name: "Greater Healing"
-    action_cost: 100
-    mana_cost: 100
-    type: 5
-    effect: "heal"
-    amount: 100
-    target: "ally"
-    description: "Powerful healing spell"
+magic_types: {}
 
 # Action point penalties for multiple attacks
 attack_penalties:

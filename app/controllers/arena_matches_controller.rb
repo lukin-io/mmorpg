@@ -11,7 +11,7 @@ class ArenaMatchesController < ApplicationController
 
     # Auto-end stale or finished matches
     if @arena_match.auto_end_if_needed!
-      flash.now[:notice] = "Match ended due to timeout or completion."
+      flash.now[:notice] = "Бой завершен."
     end
 
     @participations = @arena_match.arena_participations.includes(:character, :npc_template)
@@ -61,7 +61,7 @@ class ArenaMatchesController < ApplicationController
 
     respond_to do |format|
       if result.success?
-        format.html { redirect_to @arena_match, notice: "Action submitted!" }
+        format.html { redirect_to @arena_match, notice: "Ход отправлен." }
         format.json { render json: {success: true, data: result.data} }
         format.turbo_stream { head :ok }
       else
@@ -83,7 +83,7 @@ class ArenaMatchesController < ApplicationController
 
     respond_to do |format|
       if result.success?
-        message = result[:mode] == "draw" ? "Timeout draw recorded." : "Victory by timeout recorded."
+        message = result[:mode] == "draw" ? "Ничья по таймауту зафиксирована." : "Победа по таймауту зафиксирована."
         format.html { redirect_to @arena_match, notice: message }
         format.json { render json: {success: true, data: result.data} }
       else
@@ -98,7 +98,7 @@ class ArenaMatchesController < ApplicationController
     authorize @arena_match
 
     unless @arena_match.completed?
-      redirect_to @arena_match, alert: "Fight is still active."
+      redirect_to @arena_match, alert: "Бой еще идет."
       return
     end
 
@@ -108,7 +108,7 @@ class ArenaMatchesController < ApplicationController
     participation.save!
     current_character.exit_combat! if current_character.in_combat?
 
-    redirect_to arena_index_path, notice: "Fight finished."
+    redirect_to arena_index_path, notice: "Бой завершен."
   end
 
   def spectate

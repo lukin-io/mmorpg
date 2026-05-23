@@ -32,7 +32,7 @@ class ArenaApplicationsController < ApplicationController
 
     respond_to do |format|
       if result.success?
-        format.html { redirect_to arena_room_path(@room), notice: "Application submitted!" }
+        format.html { redirect_to arena_room_path(@room), notice: "Заявка подана." }
         format.json { render json: {success: true, application: result.application}, status: :created }
       else
         format.html { redirect_to arena_room_path(@room), alert: result.errors.join(", ") }
@@ -52,7 +52,7 @@ class ArenaApplicationsController < ApplicationController
 
     respond_to do |format|
       if result.success?
-        format.html { redirect_to arena_match_path(result.match), notice: "Fight accepted! Get ready!" }
+        format.html { redirect_to arena_match_path(result.match), notice: "Заявка принята." }
         format.json do
           render json: {
             success: true,
@@ -83,7 +83,7 @@ class ArenaApplicationsController < ApplicationController
 
     respond_to do |format|
       if result.success?
-        format.html { redirect_to arena_room_path(@application.arena_room), notice: "Application cancelled" }
+        format.html { redirect_to arena_room_path(@application.arena_room), notice: "Заявка снята." }
         format.json { render json: {success: true} }
       else
         format.html { redirect_back fallback_location: arena_index_path, alert: result.errors.join(", ") }
@@ -104,7 +104,7 @@ class ArenaApplicationsController < ApplicationController
 
   def require_character
     unless current_character
-      redirect_to root_path, alert: "You need a character to enter the arena"
+      redirect_to root_path, alert: "Для входа на арену нужен персонаж."
     end
   end
 

@@ -19,11 +19,11 @@ RSpec.describe "Arena NPC Combat", type: :request do
 
   let(:user) { create(:user) }
   let(:character) { create(:character, :with_position, user: user, level: 5, current_hp: 100, max_hp: 100) }
-  let(:arena_room) { create(:arena_room, name: "Training Grounds", slug: "training", level_min: 1, level_max: 10, active: true) }
+  let(:arena_room) { create(:arena_room, name: "Тренировочный Зал", slug: "training", level_min: 1, level_max: 10, active: true) }
   let(:arena_bot) do
     create(:npc_template,
       npc_key: "arena_training_dummy",
-      name: "Training Dummy",
+      name: "Манекен",
       role: "arena_bot",
       level: 3,
       dialogue: "*creaks*",
@@ -166,8 +166,8 @@ RSpec.describe "Arena NPC Combat", type: :request do
         actor: player_participation,
         target: npc_participation,
         log_type: "damage",
-        message: "attacks Training Dummy for 15 damage",
-        payload: {"actor_name" => character.name, "description" => "attacks Training Dummy for 15 damage"},
+        message: "attacks Манекен for 15 damage",
+        payload: {"actor_name" => character.name, "description" => "attacks Манекен for 15 damage"},
         round_number: 1,
         sequence: 1,
         damage_amount: 15)
@@ -179,7 +179,7 @@ RSpec.describe "Arena NPC Combat", type: :request do
         actor: npc_participation,
         log_type: "action",
         message: "takes a defensive stance",
-        payload: {"actor_name" => "Training Dummy", "description" => "takes a defensive stance"},
+        payload: {"actor_name" => "Манекен", "description" => "takes a defensive stance"},
         round_number: 1,
         sequence: 2)
     end

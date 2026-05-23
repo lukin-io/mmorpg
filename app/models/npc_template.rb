@@ -94,7 +94,7 @@ class NpcTemplate < ApplicationRecord
   end
 
   def avatar_emoji
-    metadata&.dig("avatar").presence || name.to_s.first.presence || "N"
+    metadata&.dig("avatar").presence
   end
 
   private

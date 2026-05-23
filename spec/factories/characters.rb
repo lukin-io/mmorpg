@@ -5,12 +5,11 @@ FactoryBot.define do
     level { 1 }
     experience { 0 }
     stat_points_available { 0 }
-    skill_points_available { 0 }
     combat_skill_points { 0 }
     peace_skill_points { 0 }
     allocated_stats { {} }
     alignment { Character::ALIGNMENTS[:none] }
-    resource_pools { {"stamina" => 100} }
+    fatigue_percent { 0 }
 
     after(:create) do |character|
       create(:inventory, character:) unless character.inventory

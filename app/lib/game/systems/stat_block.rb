@@ -3,16 +3,6 @@
 module Game
   module Systems
     class StatBlock
-      STAT_ALIASES = {
-        agility: :dexterity,
-        dex: :dexterity,
-        knowledge: :intelligence,
-        intellect: :intelligence,
-        health: :vitality,
-        constitution: :vitality,
-        stamina: :vitality
-      }.freeze
-
       attr_reader :base, :mods
 
       def initialize(base:, mods: {})
@@ -34,8 +24,7 @@ module Game
       private
 
       def canonical_stat(stat)
-        key = stat.to_sym
-        STAT_ALIASES.fetch(key, key)
+        stat.to_sym
       end
     end
   end

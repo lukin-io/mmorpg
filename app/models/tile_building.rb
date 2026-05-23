@@ -102,6 +102,7 @@ class TileBuilding < ApplicationRecord
     # Determine spawn coordinates in destination
     spawn_x = destination_x || default_spawn_x
     spawn_y = destination_y || default_spawn_y
+    return false if spawn_x.nil? || spawn_y.nil?
 
     position.update!(
       zone: destination_zone,
@@ -148,16 +149,14 @@ class TileBuilding < ApplicationRecord
   end
 
   def default_spawn_x
-    spawn_point = destination_zone&.spawn_points&.default_entries&.first ||
-      destination_zone&.spawn_points&.first
-
-    spawn_point&.x || (destination_zone&.width || 10) / 2
+    default_spawn_point&.x
   end
 
   def default_spawn_y
-    spawn_point = destination_zone&.spawn_points&.default_entries&.first ||
-      destination_zone&.spawn_points&.first
+    default_spawn_point&.y
+  end
 
-    spawn_point&.y || (destination_zone&.height || 10) / 2
+  def default_spawn_point
+    destination_zone&.spawn_points&.default_entries&.first
   end
 end

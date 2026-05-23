@@ -3,7 +3,7 @@
 # Чумная крыса NPCs and the normal shared fight pipeline.
 
 outpost_surroundings:
-  zone_name: "Outpost Surroundings"
+  zone_name: "Окрестность Форпоста"
   source_map: "m_1001_999"
   npcs:
     - key: plague_rat

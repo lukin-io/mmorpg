@@ -61,7 +61,7 @@ RSpec.describe "Arena Match Lifecycle UI", type: :system, js: true do
     it "displays 'Pending' status badge" do
       visit arena_match_path(pending_match)
 
-      expect(page).to have_css(".badge", text: "Pending")
+      expect(page).to have_css(".badge", text: "Ожидание")
     end
 
     it "displays both participants" do
@@ -74,7 +74,7 @@ RSpec.describe "Arena Match Lifecycle UI", type: :system, js: true do
     it "displays match type" do
       visit arena_match_path(pending_match)
 
-      expect(page).to have_content("Duel")
+      expect(page).to have_content("Дуэли")
     end
 
     it "displays arena room name" do
@@ -135,7 +135,7 @@ RSpec.describe "Arena Match Lifecycle UI", type: :system, js: true do
     it "displays 'Live' status badge" do
       visit arena_match_path(live_match)
 
-      expect(page).to have_css(".badge", text: "Live")
+      expect(page).to have_css(".badge", text: "LIVE")
     end
 
     it "displays 'FIGHT' in combat log" do
@@ -191,7 +191,7 @@ RSpec.describe "Arena Match Lifecycle UI", type: :system, js: true do
       visit arena_match_path(live_match)
 
       expect(page).to have_css(".arena-match-bar")
-      expect(page).to have_content("Duel")
+      expect(page).to have_content("Дуэли")
     end
   end
 
@@ -232,7 +232,7 @@ RSpec.describe "Arena Match Lifecycle UI", type: :system, js: true do
     it "page shows updated status after refresh when match goes live" do
       visit arena_match_path(transitioning_match)
 
-      expect(page).to have_content("Pending")
+      expect(page).to have_content("Ожидание")
 
       # Simulate job execution
       Arena::MatchStarterJob.new.perform(transitioning_match.id)
@@ -240,7 +240,7 @@ RSpec.describe "Arena Match Lifecycle UI", type: :system, js: true do
       # Refresh page
       visit arena_match_path(transitioning_match)
 
-      expect(page).to have_content("Live")
+      expect(page).to have_content("LIVE")
     end
   end
 
@@ -279,7 +279,7 @@ RSpec.describe "Arena Match Lifecycle UI", type: :system, js: true do
     it "displays 'Completed' status badge" do
       visit arena_match_path(completed_match)
 
-      expect(page).to have_css(".badge", text: "Completed")
+      expect(page).to have_css(".badge", text: "Завершен")
     end
 
     it "displays victory overlay for winner" do
@@ -300,7 +300,7 @@ RSpec.describe "Arena Match Lifecycle UI", type: :system, js: true do
     it "displays return to arena link" do
       visit arena_match_path(completed_match)
 
-      expect(page).to have_link("Back to Arena")
+      expect(page).to have_link("К арене")
     end
 
     it "does NOT display action buttons" do
@@ -345,7 +345,7 @@ RSpec.describe "Arena Match Lifecycle UI", type: :system, js: true do
     it "displays spectator message for non-participants" do
       visit arena_match_path(live_match)
 
-      expect(page).to have_content("Spectating")
+      expect(page).to have_content("Просмотр")
     end
 
     it "displays spectator code", skip: "Spectator code display not visible in current UI" do

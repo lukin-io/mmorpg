@@ -16,7 +16,7 @@ module Game
       end
 
       def append!(message:, payload: {}, round_number: current_round_number, sequence_offset: 0, actor: nil, target: nil,
-        damage: 0, healing: 0, tags: [], log_type: "action", occurred_at: Time.current,
+        damage: 0, tags: [], log_type: "action", occurred_at: Time.current,
         action_key: nil, body_part: nil, outcome: nil, actor_team: nil, target_team: nil)
         CombatLogEntry.create!(
           arena_match:,
@@ -31,7 +31,6 @@ module Game
           target_id: target&.id,
           target_type: target&.class&.name,
           damage_amount: damage,
-          healing_amount: healing,
           action_key:,
           body_part:,
           outcome:,

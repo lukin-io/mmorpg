@@ -28,18 +28,4 @@ RSpec.describe Game::Movement::TravelTime do
 
     expect(travel_seconds).to eq(30)
   end
-
-  it "clamps very fast movement to the configured minimum" do
-    calculator = instance_double(Game::Skills::PassiveSkillCalculator, apply_movement_cooldown: 1)
-    allow(character).to receive(:passive_skill_calculator).and_return(calculator)
-
-    expect(travel_seconds).to eq(3)
-  end
-
-  it "clamps extremely slow movement to the configured maximum" do
-    calculator = instance_double(Game::Skills::PassiveSkillCalculator, apply_movement_cooldown: 100_000)
-    allow(character).to receive(:passive_skill_calculator).and_return(calculator)
-
-    expect(travel_seconds).to eq(86_400)
-  end
 end

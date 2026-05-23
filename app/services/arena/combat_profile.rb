@@ -4,7 +4,7 @@ module Arena
   # Builds the per-participant combat budget used by Neverlands-style fights.
   #
   # Neverlands sends these numbers in the fight payload (`fight_pm[1]` for AP
-  # and `fight_pm[2]` for the physical attack seed). Elselands stores the local
+  # and `fight_pm[2]` for the physical attack seed). Rails stores the local
   # equivalent in ArenaParticipation metadata so every turn submission validates
   # against the same profile after reloads and ActionCable reconnects.
   class CombatProfile

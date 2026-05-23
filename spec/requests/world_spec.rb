@@ -15,6 +15,18 @@ RSpec.describe "World", type: :request do
     )
   end
 
+  def create_explicit_tiles(zone, x_range:, y_range:, terrain_type: zone.location_type)
+    x_range.each do |x|
+      y_range.each do |y|
+        MapTileTemplate.find_or_create_by!(zone: zone.name, x:, y:) do |tile|
+          tile.terrain_type = terrain_type
+          tile.passable = true
+          tile.metadata = {}
+        end
+      end
+    end
+  end
+
   describe "Zone model schema" do
     # Regression test: Zone model should not have a description column
     # This covers the bug where city_view.html.erb tried to access zone.description
@@ -36,11 +48,14 @@ RSpec.describe "World", type: :request do
 
   describe "GET /world" do
     let(:user) { create(:user) }
-    let(:zone) { create(:zone, name: "Test Plains", location_type: "outdoor", width: 20, height: 20) }
+    let(:zone) { create(:zone, name: "Окрестность Форпоста", location_type: "outdoor", width: 20, height: 20) }
     let(:character) { create(:character, user: user) }
     let!(:position) { create(:character_position, character: character, zone: zone, x: 5, y: 5) }
 
-    before { sign_in user, scope: :user }
+    before do
+      sign_in user, scope: :user
+      create_explicit_tiles(zone, x_range: 3..7, y_range: 3..7)
+    end
 
     context "when character has a position" do
       it "renders the world view successfully" do
@@ -50,7 +65,7 @@ RSpec.describe "World", type: :request do
 
       it "displays the zone name" do
         get world_path
-        expect(response.body).to include("Test Plains")
+        expect(response.body).to include("Окрестность Форпоста")
       end
 
       it "displays the player coordinates" do
@@ -105,11 +120,11 @@ RSpec.describe "World", type: :request do
     context "when in a city zone" do
       let(:city_zone) do
         create(:zone,
-          name: "Capital City",
+          name: "Форпост",
           location_type: "city",
           width: 15,
           height: 15,
-          metadata: {"description" => "A bustling city"})
+          metadata: {"description" => "Форпост"})
       end
 
       before do
@@ -124,7 +139,7 @@ RSpec.describe "World", type: :request do
 
       it "includes the city description from metadata" do
         get world_path
-        expect(response.body).to include("bustling city")
+        expect(response.body).to include("Форпост")
       end
     end
 
@@ -132,22 +147,28 @@ RSpec.describe "World", type: :request do
       before { position.destroy }
 
       it "creates a default position and renders successfully" do
-        # Ensure a starter zone exists
-        create(:zone, location_type: "city", name: "Starter City")
+        starter_zone = create(:zone, location_type: "city", name: "Форпост")
+        create(:spawn_point, zone: starter_zone, x: 3, y: 4, default_entry: true)
+
         get world_path
+
         expect(response).to have_http_status(:success)
         expect(character.reload.position).to be_present
+        expect(character.position.x).to eq(3)
+        expect(character.position.y).to eq(4)
       end
     end
   end
 
   describe "POST /world/move" do
     let(:user) { create(:user) }
-    let(:zone) { create(:zone, name: "Plains", location_type: "outdoor", width: 20, height: 20) }
+    let(:zone) { create(:zone, name: "Окрестность Форпоста", location_type: "outdoor", width: 20, height: 20) }
     let(:character) { create(:character, user: user) }
     let!(:position) { create(:character_position, character: character, zone: zone, x: 5, y: 5) }
 
-    before { sign_in user, scope: :user }
+    before do
+      sign_in user, scope: :user
+    end
 
     def movement_offer(direction)
       state = Game::Movement::MapState.new(character: character).call
@@ -293,8 +314,8 @@ RSpec.describe "World", type: :request do
 
   describe "POST /world/enter" do
     let(:user) { create(:user) }
-    let(:outdoor_zone) { create(:zone, name: "Plains", location_type: "outdoor", width: 20, height: 20) }
-    let(:city_zone) { create(:zone, name: "Capital", location_type: "city", width: 10, height: 10) }
+    let(:outdoor_zone) { create(:zone, name: "Окрестность Форпоста", location_type: "outdoor", width: 20, height: 20) }
+    let(:city_zone) { create(:zone, name: "Форпост", location_type: "city", width: 10, height: 10) }
     let(:character) { create(:character, user: user) }
     let!(:position) { create(:character_position, character: character, zone: outdoor_zone, x: 5, y: 5) }
     let!(:spawn_point) { create(:spawn_point, zone: city_zone, x: 3, y: 3, default_entry: true) }
@@ -303,7 +324,7 @@ RSpec.describe "World", type: :request do
 
     context "with valid location" do
       it "moves character to the new zone" do
-        post enter_world_path, params: {location_key: "capital"}
+        post enter_world_path, params: {location_key: city_zone.name}
 
         position.reload
         expect(position.zone).to eq(city_zone)
@@ -312,11 +333,11 @@ RSpec.describe "World", type: :request do
       end
 
       it "redirects with success notice" do
-        post enter_world_path, params: {location_key: "capital"}
+        post enter_world_path, params: {location_key: city_zone.name}
 
         expect(response).to redirect_to(world_path)
         follow_redirect!
-        expect(response.body).to include("Entered").or include("Capital")
+        expect(response.body).to include("Entered").or include("Форпост")
       end
     end
 
@@ -335,13 +356,13 @@ RSpec.describe "World", type: :request do
     let(:user) { create(:user) }
     let(:city_zone) do
       create(:zone,
-        name: "Capital",
+        name: "Форпост",
         location_type: "city",
         width: 10,
         height: 10,
-        metadata: {"exit_to" => "Outpost Surroundings"})
+        metadata: {"exit_to" => "Окрестность Форпоста"})
     end
-    let(:outdoor_zone) { create(:zone, name: "Outpost Surroundings", location_type: "outdoor", width: 20, height: 20) }
+    let(:outdoor_zone) { create(:zone, name: "Окрестность Форпоста", location_type: "outdoor", width: 20, height: 20) }
     let(:character) { create(:character, user: user) }
     let!(:position) { create(:character_position, character: character, zone: city_zone, x: 3, y: 3) }
     let!(:spawn_point) { create(:spawn_point, zone: outdoor_zone, x: 10, y: 10, default_entry: true) }
@@ -360,7 +381,7 @@ RSpec.describe "World", type: :request do
 
       expect(response).to redirect_to(world_path)
       follow_redirect!
-      expect(response.body).to include("Exited").or include("Outpost Surroundings")
+      expect(response.body).to include("Exited").or include("Окрестность Форпоста")
     end
   end
 
@@ -370,7 +391,10 @@ RSpec.describe "World", type: :request do
     let(:character) { create(:character, user: user) }
     let!(:position) { create(:character_position, character: character, zone: zone, x: 10, y: 10) }
 
-    before { sign_in user, scope: :user }
+    before do
+      sign_in user, scope: :user
+      create_explicit_tiles(zone, x_range: 8..12, y_range: 8..12)
+    end
 
     it "renders a 5x5 grid of tiles around the player" do
       get world_path
@@ -387,7 +411,7 @@ RSpec.describe "World", type: :request do
       expect(response.body).to include("nl-cursor")
     end
 
-    it "shows fallback outdoor terrain classes" do
+    it "uses explicit tile terrain classes" do
       get world_path
 
       expect(response.body).to include("nl-tile-bg--outdoor")
@@ -412,7 +436,10 @@ RSpec.describe "World", type: :request do
     let(:character) { create(:character, user: user) }
     let!(:position) { create(:character_position, character: character, zone: zone, x: 25, y: 25) }
 
-    before { sign_in user, scope: :user }
+    before do
+      sign_in user, scope: :user
+      create_explicit_tiles(zone, x_range: 23..27, y_range: 23..27)
+    end
 
     it "renders map with tile coordinates" do
       get world_path
@@ -443,7 +470,10 @@ RSpec.describe "World", type: :request do
     let(:character) { create(:character, user: user) }
     let!(:position) { create(:character_position, character: character, zone: zone, x: 10, y: 10) }
 
-    before { sign_in user, scope: :user }
+    before do
+      sign_in user, scope: :user
+      create_explicit_tiles(zone, x_range: 8..12, y_range: 8..12)
+    end
 
     describe "TileNpc display" do
       context "when database TileNpc exists and is alive" do
@@ -540,7 +570,7 @@ RSpec.describe "World", type: :request do
   # ===========================================================================
   describe "POST /world/enter_building" do
     let(:user) { create(:user) }
-    let(:source_zone) { create(:zone, name: "Outpost Surroundings", location_type: "outdoor", width: 20, height: 20) }
+    let(:source_zone) { create(:zone, name: "Окрестность Форпоста", location_type: "outdoor", width: 20, height: 20) }
     let(:destination_zone) { create(:zone, name: "Outpost", location_type: "city", width: 10, height: 10) }
     let(:character) { create(:character, user: user, level: 10) }
     let!(:position) { create(:character_position, character: character, zone: source_zone, x: 5, y: 5) }
@@ -575,8 +605,8 @@ RSpec.describe "World", type: :request do
           zone: source_zone.name,
           x: 5,
           y: 5,
-          building_key: "test_city_gate",
-          name: "City Gates",
+          building_key: "outpost_gate",
+          name: "Ворота Форпоста",
           building_type: "city",
           destination_zone: destination_zone,
           destination_x: 7,
@@ -605,7 +635,7 @@ RSpec.describe "World", type: :request do
 
         expect(response).to redirect_to(world_path)
         follow_redirect!
-        expect(response.body).to include("City Gates").or include("enter")
+        expect(response.body).to include("Ворота Форпоста").or include("enter")
       end
 
       it "redirects on turbo stream format to trigger full page reload" do
@@ -1086,7 +1116,7 @@ RSpec.describe "World", type: :request do
   describe "POST /world/interact_hotspot" do
     let(:user) { create(:user) }
     let(:city_zone) { create(:zone, name: "Hotspot Test City", location_type: "city", width: 20, height: 20) }
-    let(:destination_zone) { create(:zone, name: "Destination Plains", location_type: "outdoor", width: 20, height: 20) }
+    let(:destination_zone) { create(:zone, name: "Окрестность Форпоста", location_type: "outdoor", width: 20, height: 20) }
     let(:character) { create(:character, user: user, level: 10) }
     let!(:position) { create(:character_position, character: character, zone: city_zone, x: 5, y: 5) }
     let!(:spawn_point) { create(:spawn_point, zone: destination_zone, x: 5, y: 5, default_entry: true) }
@@ -1336,7 +1366,7 @@ RSpec.describe "World", type: :request do
         expect(response).to have_http_status(:success)
         expect(response.body).to include("Arena")
         expect(response.body).to include("Лавка")
-        expect(response.body).to include("City Gates")
+        expect(response.body).to include("Ворота Форпоста")
       end
 
       it "includes form for each interactive hotspot" do

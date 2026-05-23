@@ -7,7 +7,7 @@ class CurrencyWallet < ApplicationRecord
   validates :user_id, uniqueness: true
   validates :nv_balance, numericality: {greater_than_or_equal_to: 0}
 
-  def adjust!(amount:, reason: "manual.adjustment", metadata: {})
+  def adjust!(amount:, reason:, metadata: {})
     Economy::WalletService.new(wallet: self).adjust!(
       amount: amount,
       reason: reason,

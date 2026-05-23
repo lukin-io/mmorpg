@@ -15,7 +15,6 @@ class CombatLogEntry < ApplicationRecord
   validates :log_type, presence: true
 
   scope :damage, -> { where("damage_amount > 0") }
-  scope :healing, -> { where("healing_amount > 0") }
   scope :by_actor, ->(actor_id) { where(actor_id:) if actor_id.present? }
   scope :for_fight, ->(fight) { fight.is_a?(ArenaMatch) ? where(arena_match: fight) : none }
 

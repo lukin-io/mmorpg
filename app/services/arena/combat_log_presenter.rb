@@ -19,7 +19,6 @@ module Arena
           "round_number" => entry.round_number,
           "sequence" => entry.sequence,
           "damage_amount" => entry.damage_amount,
-          "healing_amount" => entry.healing_amount,
           "body_part" => entry.body_part,
           "action_key" => entry.action_key,
           "outcome" => entry.outcome,

@@ -7,7 +7,7 @@ class CreateArenaRoomsAndApplications < ActiveRecord::Migration[8.1]
       t.references :zone, foreign_key: true
       t.string :name, null: false
       t.string :slug, null: false
-      t.integer :room_type, null: false, default: 0
+      t.integer :room_type, null: false, default: 1
       t.integer :level_min, null: false, default: 0
       t.integer :level_max, null: false, default: 100
       t.string :alignment_restriction

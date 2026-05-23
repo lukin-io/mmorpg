@@ -6,13 +6,26 @@ RSpec.describe "World Map Navigation", type: :system do
   include Warden::Test::Helpers
 
   let(:user) { create(:user) }
-  let(:zone) { create(:zone, name: "Adventure Plains", location_type: "outdoor", width: 50, height: 50) }
+  let(:zone) { create(:zone, name: "Окрестность Форпоста", location_type: "outdoor", width: 50, height: 50) }
   let(:character) { create(:character, user: user, name: "max_kerby_world", level: 5) }
   let!(:position) { create(:character_position, character: character, zone: zone, x: 25, y: 25) }
+
+  def create_explicit_tiles(zone, x_range:, y_range:, terrain_type: zone.location_type)
+    x_range.each do |x|
+      y_range.each do |y|
+        MapTileTemplate.find_or_create_by!(zone: zone.name, x:, y:) do |tile|
+          tile.terrain_type = terrain_type
+          tile.passable = true
+          tile.metadata = {}
+        end
+      end
+    end
+  end
 
   before do
     driven_by(:rack_test)
     login_as(user, scope: :user)
+    create_explicit_tiles(zone, x_range: 23..27, y_range: 23..27)
   end
 
   describe "viewing the world map" do
@@ -25,7 +38,7 @@ RSpec.describe "World Map Navigation", type: :system do
     it "displays the current zone name" do
       visit world_path
 
-      expect(page).to have_content("Adventure Plains")
+      expect(page).to have_content("Окрестность Форпоста")
     end
 
     it "displays the current coordinates" do
@@ -77,11 +90,11 @@ RSpec.describe "World Map Navigation", type: :system do
   describe "city view" do
     let(:city_zone) do
       create(:zone,
-        name: "Capital City",
+        name: "Форпост",
         location_type: "city",
         width: 15,
         height: 15,
-        metadata: {"description" => "The grand capital of the realm."})
+        metadata: {"description" => "Форпост"})
     end
 
     before do
@@ -97,7 +110,7 @@ RSpec.describe "World Map Navigation", type: :system do
     it "shows city description" do
       visit world_path
 
-      expect(page).to have_content("grand capital")
+      expect(page).to have_content("Форпост")
     end
   end
 
@@ -111,7 +124,7 @@ RSpec.describe "World Map Navigation", type: :system do
     it "shows zone name" do
       visit world_path
 
-      expect(page).to have_content("Adventure Plains")
+      expect(page).to have_content("Окрестность Форпоста")
     end
 
     it "shows location info" do

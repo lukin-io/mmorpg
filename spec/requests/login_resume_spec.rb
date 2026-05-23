@@ -15,7 +15,7 @@ RSpec.describe "Login resume", type: :request do
 
   it "sends playable accounts directly to the world at their persisted cell" do
     user = create(:user, password: "Password123!", password_confirmation: "Password123!")
-    zone = create(:zone, name: "Resume Plains", location_type: "outdoor", width: 20, height: 20)
+    zone = create(:zone, name: "Окрестность Форпоста", location_type: "outdoor", width: 20, height: 20)
     character = create(:character, user: user)
 
     create(:character_position, character: character, zone: zone, x: 7, y: 9)
@@ -26,7 +26,7 @@ RSpec.describe "Login resume", type: :request do
 
     follow_redirect!
 
-    expect(response.body).to include("Resume Plains")
+    expect(response.body).to include("Окрестность Форпоста")
     expect(response.body).to include('data-nl-world-map-player-x-value="7"')
     expect(response.body).to include('data-nl-world-map-player-y-value="9"')
     expect(response.body).to include("[7, 9]")
@@ -34,7 +34,8 @@ RSpec.describe "Login resume", type: :request do
 
   it "boots accounts without a character into the world" do
     user = create(:user, password: "Password123!", password_confirmation: "Password123!")
-    create(:zone, name: "Starter City", location_type: "city", width: 20, height: 20)
+    zone = create(:zone, name: "Форпост", location_type: "city", width: 20, height: 20)
+    create(:spawn_point, zone: zone, x: 5, y: 5, default_entry: true)
 
     log_in(user)
 
@@ -44,6 +45,6 @@ RSpec.describe "Login resume", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(user.characters.reload.count).to eq(1)
-    expect(user.character.position.zone.name).to eq("Starter City")
+    expect(user.character.position.zone.name).to eq("Форпост")
   end
 end

@@ -5,7 +5,7 @@ require "rails_helper"
 RSpec.describe "Characters Skills", type: :request do
   let(:user) { create(:user) }
   let(:character) do
-    create(:character, user: user, combat_skill_points: 10, peace_skill_points: 5, skill_points_available: 15)
+    create(:character, user: user, combat_skill_points: 10, peace_skill_points: 5)
   end
 
   before do
@@ -22,26 +22,26 @@ RSpec.describe "Characters Skills", type: :request do
 
       it "displays skill names" do
         get skills_character_path(character)
-        expect(response.body).to include("Wanderer")
-        expect(response.body).to include("Unarmed Combat")
-        expect(response.body).to include("Self-Healing")
+        expect(response.body).to include("Странник")
+        expect(response.body).to include("Рукопашный бой")
+        expect(response.body).to include("Самолечение")
       end
 
       it "displays combat skill points" do
         get skills_character_path(character)
-        expect(response.body).to include("Combat/Magic Points:")
+        expect(response.body).to include("Боевые очки:")
       end
 
       it "displays peace skill points" do
         get skills_character_path(character)
-        expect(response.body).to include("Peace Points:")
+        expect(response.body).to include("Мирные очки:")
       end
 
       it "displays skill categories" do
         get skills_character_path(character)
-        expect(response.body).to include("Combat Skills")
-        expect(response.body).to include("Magic Skills")
-        expect(response.body).to include("Peace/World Skills")
+        expect(response.body).to include("Боевые умения")
+        expect(response.body).to include("Магия")
+        expect(response.body).to include("Мирные умения")
       end
 
       it "displays skill level format" do

@@ -27,31 +27,6 @@ RSpec.describe Game::Skills::PassiveSkillCalculator do
     end
   end
 
-  describe "#movement_cooldown_modifier" do
-    let(:passive_skills) { {"wanderer" => 100} }
-
-    it "returns zero until the Neverlands movement formula is captured" do
-      expect(calculator.movement_cooldown_modifier).to eq(0.0)
-    end
-  end
-
-  describe "#apply_movement_cooldown" do
-    let(:passive_skills) { {"wanderer" => 100} }
-
-    it "returns base cooldown unchanged" do
-      expect(calculator.apply_movement_cooldown).to eq(10.0)
-      expect(calculator.apply_movement_cooldown(20)).to eq(20.0)
-    end
-  end
-
-  describe "#all_modifiers" do
-    let(:passive_skills) { {"wanderer" => 50} }
-
-    it "returns only source-backed modifier values" do
-      expect(calculator.all_modifiers).to eq({movement_cooldown_reduction: 0.0})
-    end
-  end
-
   describe "#skill_summary" do
     let(:passive_skills) { {"wanderer" => 25} }
 
@@ -61,7 +36,7 @@ RSpec.describe Game::Skills::PassiveSkillCalculator do
 
       expect(wanderer).to include(
         source_id: 26,
-        name: "Wanderer",
+        name: "Странник",
         level: 25,
         max_level: 100,
         progression_rate: "2:2:2:2",
@@ -78,7 +53,6 @@ RSpec.describe Game::Skills::PassiveSkillCalculator do
 
     it "handles nil gracefully" do
       expect(calculator.skill_level(:wanderer)).to eq(0)
-      expect(calculator.apply_movement_cooldown).to eq(10.0)
     end
   end
 end

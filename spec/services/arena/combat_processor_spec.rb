@@ -618,36 +618,19 @@ RSpec.describe Arena::CombatProcessor do
         expect(participation1.reload.metadata["pending_turn"]).to be_present
       end
 
-      it "allows a magic/action slot as the only submitted action" do
+      it "rejects uncaptured magic/action slots" do
         errors = processor.send(
           :validate_turn_actions,
           [],
           [],
-          [{key: "hp_restore"}],
+          [{key: "unknown_action"}],
           actor: character1
         )
 
-        expect(errors).to be_empty
+        expect(errors).to include("Invalid magic/action slot 1: unknown_action")
       end
 
-      it "applies direct magic damage and tracks arena damage totals" do
-        allow(processor.broadcaster).to receive(:broadcast_vitals_update)
-        allow(processor.broadcaster).to receive(:broadcast_combat_action)
-
-        result = processor.send(
-          :process_turn_skill,
-          character1,
-          {key: "fire_arrow", target_id: character2.id},
-          character2
-        )
-
-        expect(result).to be_success
-        expect(character2.reload.current_hp).to be < 100
-        expect(participation1.reload.metadata["damage_dealt"]).to eq(result[:damage])
-        expect(participation2.reload.metadata["damage_taken"]).to eq(result[:damage])
-      end
-
-      it "rejects magic actions above the fight mana ceiling" do
+      it "rejects captured magic blocks above the fight mana ceiling" do
         character1.update!(current_mp: 200, max_mp: 200)
         participation1.update!(
           metadata: {
@@ -663,25 +646,11 @@ RSpec.describe Arena::CombatProcessor do
           :validate_turn_mana,
           character1,
           [],
-          [{key: "crystal_sphere"}]
+          [{action_key: "crystal_sphere", body_parts: %w[head torso stomach legs]}],
+          []
         )
 
         expect(errors).to include("Magic/action mana exceeds fight limit (65/52)")
-      end
-
-      it "stores status effects from special magic actions" do
-        allow(processor.broadcaster).to receive(:broadcast_combat_action)
-
-        result = processor.send(
-          :process_turn_skill,
-          character1,
-          {key: "freeze", target_id: character2.id},
-          character2
-        )
-
-        expect(result).to be_success
-        effect = participation2.reload.metadata["effects"].last
-        expect(effect).to include("key" => "freeze", "effect" => "stun", "duration" => 1)
       end
 
       it "lets a waiting player claim victory after the turn timer expires" do
@@ -777,11 +746,11 @@ RSpec.describe Arena::CombatProcessor do
       end
 
       it "defines simple attack AP cost as 45" do
-        expect(described_class::ATTACK_TYPES[:simple][:ap_cost]).to eq(45)
+        expect(Game::Combat::ActionCatalog.attack_cost(:simple)).to eq(45)
       end
 
       it "defines aimed attack AP cost as 65" do
-        expect(described_class::ATTACK_TYPES[:aimed][:ap_cost]).to eq(65)
+        expect(Game::Combat::ActionCatalog.attack_cost(:aimed)).to eq(65)
       end
     end
   end
@@ -806,42 +775,29 @@ RSpec.describe Arena::CombatProcessor do
 
   describe "Attack types" do
     it "defines simple attack with damage_mult 1.0" do
-      expect(described_class::ATTACK_TYPES[:simple][:damage_mult]).to eq(1.0)
+      expect(Game::Combat::ActionCatalog.attack_damage_multiplier(:simple)).to eq(1.0)
     end
 
     it "defines aimed attack with damage_mult 1.2" do
-      expect(described_class::ATTACK_TYPES[:aimed][:damage_mult]).to eq(1.2)
+      expect(Game::Combat::ActionCatalog.attack_damage_multiplier(:aimed)).to eq(1.2)
     end
 
     it "defines aimed attack with hit_bonus 15" do
-      expect(described_class::ATTACK_TYPES[:aimed][:hit_bonus]).to eq(15)
+      expect(Game::Combat::ActionCatalog.attack_hit_bonus(:aimed)).to eq(15)
     end
   end
 
-  describe "#apply_trauma" do
-    before do
+  describe "trauma/risk value" do
+    it "does not invent HP or XP penalties before Neverlands formula capture" do
       arena_match.update!(trauma_percent: 30)
-    end
-
-    it "applies HP loss to losers based on trauma percent" do
-      character2.update!(current_hp: 0)
-      participation2.update!(result: "defeat")
-      initial_hp = character1.current_hp
-
-      processor.send(:apply_trauma)
-
-      # Winner gets minor trauma (trauma_percent / 3)
-      expect(character1.reload.current_hp).to be < initial_hp
-    end
-
-    it "applies XP loss to losers with high trauma" do
+      character1.update!(current_hp: 80, experience: 1000)
       character2.update!(current_hp: 0, experience: 1000)
-      participation2.update!(result: "defeat")
 
-      processor.send(:apply_trauma)
+      processor.end_match("a")
 
-      # Loser should lose XP
-      expect(character2.reload.experience).to be < 1000
+      expect(character1.reload.current_hp).to eq(80)
+      expect(character1.experience).to eq(1000)
+      expect(character2.reload.experience).to eq(1000)
     end
   end
 end

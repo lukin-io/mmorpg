@@ -10,13 +10,12 @@ module Arena
     end
 
     def record!(entry_type:, actor:, description:, target: nil, payload: {}, action_key: nil,
-      body_part: nil, outcome: nil, damage: nil, healing: nil, tags: [])
+      body_part: nil, outcome: nil, damage: nil, tags: [])
       occurred_at = Time.current
       actor_participation = participation_for(actor)
       target_participation = participation_for(target)
       body_part ||= infer_body_part(description)
       damage = damage.nil? ? infer_damage(description) : damage
-      healing = healing.nil? ? infer_healing(description) : healing
       outcome ||= entry_type
 
       canonical_payload = payload.to_h.stringify_keys.merge(
@@ -42,7 +41,6 @@ module Arena
         actor: actor_participation || actor,
         target: target_participation || target,
         damage: damage,
-        healing: healing,
         tags: canonical_tags(entry_type, tags, action_key, body_part, outcome, canonical_payload),
         occurred_at:,
         action_key:,
@@ -90,10 +88,6 @@ module Arena
         text[/for (\d+) damage/i, 1] ||
         text[/lost (\d+) HP/i, 1]
       value.to_i
-    end
-
-    def infer_healing(description)
-      description.to_s[/restores? (\d+) HP/i, 1].to_i
     end
 
     def canonical_tags(entry_type, tags, action_key, body_part, outcome, payload)

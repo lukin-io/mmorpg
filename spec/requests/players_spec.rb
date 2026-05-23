@@ -8,7 +8,7 @@ RSpec.describe "Players", type: :request do
       zone = create(:zone, name: "Окрестность Форпоста")
       character = create(:character, user: user, name: "max_kerby")
       create(:character_position, character: character, zone: zone, x: 7, y: 9)
-      sword = create(:item_template, name: "Нож", slot: "main_hand", rarity: "common")
+      sword = create(:item_template, name: "Нож", slot: "main_hand")
       create(:inventory_item,
         inventory: character.inventory,
         item_template: sword,
@@ -32,7 +32,7 @@ RSpec.describe "Players", type: :request do
       character = create(:character, user: user, name: "max_kerby")
       create(:character_position, character: character, zone: zone, x: 3, y: 4)
 
-      sword = create(:item_template, name: "Нож", slot: "main_hand", rarity: "common")
+      sword = create(:item_template, name: "Нож", slot: "main_hand")
       create(:inventory_item,
         inventory: character.inventory,
         item_template: sword,

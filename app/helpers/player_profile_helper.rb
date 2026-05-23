@@ -32,7 +32,7 @@ module PlayerProfileHelper
   end
 
   def profile_fatigue(character)
-    character.resource_pools.to_h.fetch("fatigue", 0).to_i
+    character.fatigue_percent.to_i
   end
 
   private

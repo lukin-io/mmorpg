@@ -5,23 +5,23 @@ require "rails_helper"
 RSpec.describe Game::World::TileBuildingService do
   let(:user) { create(:user) }
   let(:character) { create(:character, user: user, level: 10) }
-  let(:source_zone) { create(:zone, name: "Outpost Surroundings", location_type: "outdoor") }
-  let(:destination_zone) { create(:zone, name: "Starter City", location_type: "city") }
+  let(:source_zone) { create(:zone, name: "Окрестность Форпоста", location_type: "outdoor") }
+  let(:destination_zone) { create(:zone, name: "Форпост", location_type: "city") }
   let!(:building) do
     create(
       :tile_building,
       zone: source_zone.name,
       x: 3,
       y: 3,
-      building_key: "starter_city_gate",
+      building_key: "outpost_gate",
       building_type: "city",
-      name: "City Gates",
+      name: "Ворота Форпоста",
       destination_zone: destination_zone,
       destination_x: 7,
       destination_y: 7,
       required_level: 5,
       active: true,
-      metadata: {"description" => "Enter the starter city node."}
+      metadata: {"description" => "Enter Форпост."}
     )
   end
 
@@ -35,12 +35,12 @@ RSpec.describe Game::World::TileBuildingService do
     it "returns source-backed building display data" do
       expect(service.building_info).to include(
         id: building.id,
-        name: "City Gates",
+        name: "Ворота Форпоста",
         building_type: "city",
         icon: "🏙️",
-        destination: "Starter City",
+        destination: "Форпост",
         required_level: 5,
-        description: "Enter the starter city node.",
+        description: "Enter Форпост.",
         active: true
       )
     end
@@ -65,7 +65,7 @@ RSpec.describe Game::World::TileBuildingService do
       result = service.enter!
 
       expect(result.success).to be true
-      expect(result.message).to include("City Gates")
+      expect(result.message).to include("Ворота Форпоста")
       expect(character.position.reload.zone).to eq(destination_zone)
       expect(character.position.x).to eq(7)
       expect(character.position.y).to eq(7)

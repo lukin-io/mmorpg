@@ -24,7 +24,7 @@ RSpec.describe "ArenaMatches", type: :request do
       name: "Test Arena",
       level_min: 1,
       level_max: 100,
-      room_type: :challenge,
+      room_type: :trial,
       active: true)
   end
 
@@ -134,7 +134,7 @@ RSpec.describe "ArenaMatches", type: :request do
       get "/arena_matches/#{pending_match.id}"
 
       expect(response).to have_http_status(:success)
-      expect(response.body).to include("Pending")
+      expect(response.body).to include("Ожидание")
     end
 
     context "when match transitions to live" do
@@ -146,7 +146,7 @@ RSpec.describe "ArenaMatches", type: :request do
         get "/arena_matches/#{pending_match.id}"
 
         expect(response).to have_http_status(:success)
-        expect(response.body).to include("Live")
+        expect(response.body).to include("LIVE")
       end
     end
   end

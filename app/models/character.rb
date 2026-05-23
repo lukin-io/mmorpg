@@ -14,18 +14,10 @@ class Character < ApplicationRecord
   }.freeze
   STAT_ALIASES = {
     "strength" => :strength,
-    "str" => :strength,
     "dexterity" => :dexterity,
-    "dex" => :dexterity,
-    "agility" => :dexterity,
     "luck" => :luck,
-    "knowledge" => :intelligence,
     "intelligence" => :intelligence,
-    "intellect" => :intelligence,
-    "health" => :vitality,
-    "vitality" => :vitality,
-    "constitution" => :vitality,
-    "stamina" => :vitality
+    "vitality" => :vitality
   }.freeze
 
   ALIGNMENTS = {
@@ -49,14 +41,8 @@ class Character < ApplicationRecord
     "strength" => :strength,
     "dexterity" => :dexterity,
     "luck" => :luck,
-    "knowledge" => :intelligence,
     "intelligence" => :intelligence,
-    "intellect" => :intelligence,
-    "health" => :vitality,
-    "vitality" => :vitality,
-    "constitution" => :vitality,
-    "stamina" => :vitality,
-    "agility" => :dexterity
+    "vitality" => :vitality
   }.freeze
 
   belongs_to :user
@@ -72,8 +58,9 @@ class Character < ApplicationRecord
   validates :name, presence: true, uniqueness: true, length: {maximum: MAX_NAME_LENGTH}
   validates :level, numericality: {greater_than: 0}
   validates :experience, numericality: {greater_than_or_equal_to: 0}
-  validates :stat_points_available, :skill_points_available, numericality: {greater_than_or_equal_to: 0}
+  validates :stat_points_available, numericality: {greater_than_or_equal_to: 0}
   validates :combat_skill_points, :peace_skill_points, numericality: {greater_than_or_equal_to: 0}, allow_nil: true
+  validates :fatigue_percent, numericality: {greater_than_or_equal_to: 0, less_than_or_equal_to: 100}
   validates :alignment, inclusion: {in: ALIGNMENTS.values}
 
   validate :respect_character_limit, on: :create
@@ -137,14 +124,6 @@ class Character < ApplicationRecord
   # ===================
   # Abilities
   # ===================
-
-  # Get total skill points available (legacy - for backward compatibility)
-  # Now aliases the sum of both pools or uses legacy single pool
-  #
-  # @return [Integer] total available skill points
-  def available_skill_points
-    skill_points_available
-  end
 
   # Get available combat skill points (for combat/magic/resistance skills)
   #
@@ -357,9 +336,6 @@ class Character < ApplicationRecord
     updates = {}
     updates[:combat_skill_points] = combat_skill_points + combat_points if combat_points.positive?
     updates[:peace_skill_points] = peace_skill_points + peace_points if peace_points.positive?
-    # Also update legacy pool for backward compatibility
-    updates[:skill_points_available] = skill_points_available + combat_points + peace_points
-
     update!(updates) if updates.present?
   end
 
@@ -539,7 +515,7 @@ class Character < ApplicationRecord
   # ===================
 
   # Calculate effective maximum MP.
-  # Neverlands exposes Fast Mana Regeneration as an allocatable skill, but the
+  # Neverlands exposes `Быстрое восстановление маны` as an allocatable skill, but the
   # exact MP max/cost formulas are not source-captured yet.
   #
   # @return [Integer] effective maximum mana points

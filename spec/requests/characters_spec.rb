@@ -8,7 +8,6 @@ RSpec.describe CharactersController, type: :request do
     create(:character,
       user: user,
       stat_points_available: 10,
-      skill_points_available: 5,
       combat_skill_points: 5,
       peace_skill_points: 5,
       allocated_stats: {},
@@ -364,29 +363,29 @@ RSpec.describe CharactersController, type: :request do
 
         expect(response).to have_http_status(:success)
         expect(response.body).to include("Skills")
-        expect(response.body).to include("Combat/Magic Points:")
-        expect(response.body).to include("Peace Points:")
+        expect(response.body).to include("Боевые очки:")
+        expect(response.body).to include("Мирные очки:")
       end
 
       it "shows source-backed skills" do
         get skills_character_path(character)
 
-        expect(response.body).to include("Wanderer")
-        expect(response.body).to include("Unarmed Combat")
+        expect(response.body).to include("Странник")
+        expect(response.body).to include("Рукопашный бой")
       end
 
       it "shows available skill points count" do
         get skills_character_path(character)
 
         # Default character has combat_skill_points: 5 and peace_skill_points: 5
-        expect(response.body).to include("Combat/Magic Points:")
+        expect(response.body).to include("Боевые очки:")
       end
 
       it "shows skill categories" do
         get skills_character_path(character)
 
-        expect(response.body).to include("Combat Skills")
-        expect(response.body).to include("Peace/World Skills")
+        expect(response.body).to include("Боевые умения")
+        expect(response.body).to include("Мирные умения")
       end
     end
 
@@ -435,13 +434,13 @@ RSpec.describe CharactersController, type: :request do
   # ============================================
   describe "PATCH /characters/:id/skills" do
     # Note: This uses the new tiered progression system
-    # - Unarmed Combat is a combat skill using the combat pool
+    # - Рукопашный бой is a combat skill using the combat pool
     # - Each "spend" costs 1 combat_skill_point
     # - Progression rate "10:8:6:4" means: +10 at tier 0 (0-24), +8 at tier 1 (25-49), etc.
 
     context "with valid allocation" do
       before do
-        character.update!(combat_skill_points: 5, skill_points_available: 5)
+        character.update!(combat_skill_points: 5)
       end
 
       it "allocates skill points successfully with tiered progression" do
@@ -456,7 +455,7 @@ RSpec.describe CharactersController, type: :request do
       end
 
       it "adds to existing skill levels with tiered progression" do
-        character.update!(passive_skills: {"unarmed_combat" => 20}, combat_skill_points: 10, skill_points_available: 10)
+        character.update!(passive_skills: {"unarmed_combat" => 20}, combat_skill_points: 10)
 
         patch skills_character_path(character), params: {
           allocated_skills: {unarmed_combat: 1}  # 1 spend at level 20 = +10 (still tier 0)
@@ -492,7 +491,7 @@ RSpec.describe CharactersController, type: :request do
 
     context "with max skill level handling" do
       it "respects max skill level of 100" do
-        character.update!(combat_skill_points: 20, skill_points_available: 20)
+        character.update!(combat_skill_points: 20)
 
         patch skills_character_path(character), params: {
           allocated_skills: {unarmed_combat: 20}  # Would be 160+ if not capped
@@ -503,7 +502,7 @@ RSpec.describe CharactersController, type: :request do
       end
 
       it "caps at max when adding to existing level" do
-        character.update!(passive_skills: {"unarmed_combat" => 95}, combat_skill_points: 10, skill_points_available: 10)
+        character.update!(passive_skills: {"unarmed_combat" => 95}, combat_skill_points: 10)
 
         patch skills_character_path(character), params: {
           allocated_skills: {unarmed_combat: 2}  # At tier 3, +4 per spend
@@ -515,7 +514,7 @@ RSpec.describe CharactersController, type: :request do
       end
 
       it "handles already at max level" do
-        character.update!(passive_skills: {"unarmed_combat" => 100}, combat_skill_points: 10, skill_points_available: 10)
+        character.update!(passive_skills: {"unarmed_combat" => 100}, combat_skill_points: 10)
 
         patch skills_character_path(character), params: {
           allocated_skills: {unarmed_combat: 2}
@@ -530,7 +529,7 @@ RSpec.describe CharactersController, type: :request do
 
     context "with invalid allocation" do
       it "rejects over-allocation" do
-        character.update!(combat_skill_points: 1, skill_points_available: 1)
+        character.update!(combat_skill_points: 1)
 
         patch skills_character_path(character), params: {
           allocated_skills: {unarmed_combat: 10}  # Requesting 10 spends but only have 1
@@ -556,7 +555,7 @@ RSpec.describe CharactersController, type: :request do
 
     context "with edge case values" do
       before do
-        character.update!(combat_skill_points: 5, skill_points_available: 5)
+        character.update!(combat_skill_points: 5)
       end
 
       it "clamps negative values to zero" do
@@ -622,7 +621,7 @@ RSpec.describe CharactersController, type: :request do
 
     context "with invalid skill keys" do
       before do
-        character.update!(combat_skill_points: 5, skill_points_available: 5)
+        character.update!(combat_skill_points: 5)
       end
 
       it "ignores unknown skill keys and processes valid ones" do
@@ -653,7 +652,7 @@ RSpec.describe CharactersController, type: :request do
 
     context "with zero available points" do
       before do
-        character.update!(combat_skill_points: 0, skill_points_available: 0)
+        character.update!(combat_skill_points: 0)
       end
 
       it "rejects any allocation" do
@@ -669,7 +668,7 @@ RSpec.describe CharactersController, type: :request do
 
     context "with turbo_stream format" do
       before do
-        character.update!(combat_skill_points: 5, skill_points_available: 5)
+        character.update!(combat_skill_points: 5)
       end
 
       it "returns turbo_stream response on success" do

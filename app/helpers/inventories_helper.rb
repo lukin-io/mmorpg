@@ -82,7 +82,6 @@ module InventoriesHelper
     requirements = template.requirements.to_h.merge(item.properties.to_h.fetch("requirements", {}))
     weight = item.weight.to_i.positive? ? item.weight : template.weight
     lines = [["Weight", weight]]
-    lines << ["Level", item.properties["level_required"]] if item.properties["level_required"].present?
 
     requirements.each do |label, value|
       lines << [label.to_s.titleize, value]

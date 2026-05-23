@@ -127,8 +127,8 @@ RSpec.describe NpcTemplate, type: :model do
         expect(arena_bot.avatar_emoji).to eq("🎯")
       end
 
-      it "uses a technical name initial when not specified" do
-        expect(hostile.avatar_emoji).to eq(hostile.name.first)
+      it "does not invent an avatar when not specified" do
+        expect(hostile.avatar_emoji).to be_nil
       end
     end
   end

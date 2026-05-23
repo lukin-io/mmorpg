@@ -89,8 +89,8 @@ class User < ApplicationRecord
   def ensure_profile_name
     return if profile_name.present?
 
-    base = email.to_s.split("@").first.presence || "adventurer"
-    candidate = base.parameterize.presence || "adventurer"
+    base = email.to_s.split("@").first.presence || "player"
+    candidate = base.parameterize.presence || "player"
     suffix = 1
 
     while User.where.not(id: id).exists?(profile_name: candidate)
@@ -110,9 +110,9 @@ class User < ApplicationRecord
   end
 
   def next_character_name
-    base = profile_name.presence || email.to_s.split("@").first.presence || "Hero"
+    base = profile_name.presence || email.to_s.split("@").first.presence || "player"
     normalized = base.to_s.gsub(/[^a-zA-Z0-9_]/, "_").squeeze("_").delete_prefix("_").delete_suffix("_")
-    normalized = "Hero" if normalized.blank?
+    normalized = "player" if normalized.blank?
     normalized = normalized.first(Character::MAX_NAME_LENGTH)
     candidate = normalized
     suffix = 1

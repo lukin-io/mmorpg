@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <title><%= content_for(:title) || "Elselands" %></title>
+  <title><%= content_for(:title) || "Browser RPG" %></title>
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <%= csrf_meta_tags %>
@@ -84,7 +84,6 @@
   <footer class="nl-bottom-bar" data-game-layout-target="bottomBar">
     <%# Left: Action buttons %>
     <div class="nl-action-area">
-      <button class="nl-action-btn-small" data-action="click->game-layout#showActionMenu">Action</button>
       <button class="nl-action-btn-small" data-action="click->game-layout#focusChat">Say</button>
     </div>
 

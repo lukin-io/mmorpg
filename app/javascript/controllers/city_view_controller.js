@@ -12,11 +12,6 @@ export default class extends Controller {
   }
 
   showOverlay(event) {
-    // TODO: Uncomment when work with overlap
-    // const key = event.currentTarget.dataset.hotspotKey
-    // const overlay = this.element.querySelector(`[data-overlay-key="${key}"]`)
-    // if (overlay) overlay.classList.add("city-overlay--visible")
-
     if (this.hasTooltipTarget) {
       this.tooltipTarget.textContent = event.currentTarget.dataset.tooltip
       this.tooltipTarget.style.display = "block"
@@ -24,11 +19,6 @@ export default class extends Controller {
   }
 
   hideOverlay(event) {
-    // TODO: Uncomment when work with overlap
-    // const key = event.currentTarget.dataset.hotspotKey
-    // const overlay = this.element.querySelector(`[data-overlay-key="${key}"]`)
-    // if (overlay) overlay.classList.remove("city-overlay--visible")
-
     if (this.hasTooltipTarget) this.tooltipTarget.style.display = "none"
   }
 

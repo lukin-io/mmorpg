@@ -3,19 +3,19 @@ FactoryBot.define do
     association :character
     association :zone
     direction { "north" }
-    status { :queued }
+    status { :offered }
+    from_x { 5 }
+    from_y { 5 }
+    target_x { 5 }
+    target_y { 4 }
+    predicted_x { target_x }
+    predicted_y { target_y }
+    action_key { SecureRandom.hex(16) }
+    travel_seconds { 30 }
     metadata { {} }
 
     trait :offered do
       status { :offered }
-      from_x { 5 }
-      from_y { 5 }
-      target_x { 5 }
-      target_y { 4 }
-      predicted_x { target_x }
-      predicted_y { target_y }
-      action_key { SecureRandom.hex(16) }
-      travel_seconds { 30 }
     end
 
     trait :moving do

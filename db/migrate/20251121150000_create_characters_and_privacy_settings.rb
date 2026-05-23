@@ -8,14 +8,12 @@ class CreateCharactersAndPrivacySettings < ActiveRecord::Migration[8.1]
       t.integer :level, null: false, default: 1
       t.bigint :experience, null: false, default: 0
       t.integer :stat_points_available, null: false, default: 0
-      t.integer :skill_points_available, null: false, default: 0
       t.integer :combat_skill_points, null: false, default: 0
       t.integer :peace_skill_points, null: false, default: 0
       t.jsonb :allocated_stats, null: false, default: {}
       t.jsonb :passive_skills, null: false, default: {}
-      t.jsonb :progression_sources, null: false, default: {}
       t.string :alignment, null: false, default: "none"
-      t.jsonb :resource_pools, null: false, default: {}
+      t.integer :fatigue_percent, null: false, default: 0
       t.datetime :last_level_up_at
       t.integer :current_hp, null: false, default: 100
       t.integer :max_hp, null: false, default: 100

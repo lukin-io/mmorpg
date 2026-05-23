@@ -70,7 +70,7 @@ module Game
       # Sort inventory items by specified criteria
       #
       # @param inventory [Inventory] the inventory to sort
-      # @param by [Symbol] sort criteria (:type, :rarity, :name)
+      # @param by [Symbol] sort criteria (:type, :name)
       # @return [void]
       def self.sort_inventory!(inventory, by: :type)
         items = inventory.inventory_items.includes(:item_template).to_a
@@ -78,9 +78,6 @@ module Game
         sorted = case by
         when :type
           items.sort_by { |i| [i.item_template.item_type || "", i.item_template.name] }
-        when :rarity
-          rarity_order = %w[legendary epic rare uncommon common]
-          items.sort_by { |i| [rarity_order.index(i.item_template.rarity) || 99, i.item_template.name] }
         when :name
           items.sort_by { |i| i.item_template.name }
         else
@@ -111,13 +108,6 @@ module Game
           amount = stats["restore_mp"].to_i
           actual_restored = Characters::VitalsService.new(character).restore_mana(amount, source: template.name)
           return {success: true, message: "Restored #{actual_restored} MP"}
-        end
-
-        if stats["heal_hp_percent"]
-          percent = stats["heal_hp_percent"].to_f / 100.0
-          amount = (character.max_hp * percent).to_i
-          actual_healed = Characters::VitalsService.new(character).apply_healing(amount, source: template.name)
-          return {success: true, message: "Restored #{actual_healed} HP"}
         end
 
         # Default case - item has no known effect

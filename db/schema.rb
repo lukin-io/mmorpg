@@ -103,7 +103,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_120000) do
     t.integer "max_concurrent_matches", default: 10, null: false
     t.jsonb "metadata", default: {}, null: false
     t.string "name", null: false
-    t.integer "room_type", default: 0, null: false
+    t.integer "room_type", default: 1, null: false
     t.string "slug", null: false
     t.datetime "updated_at", null: false
     t.bigint "zone_id"
@@ -118,7 +118,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_120000) do
     t.datetime "created_at", null: false
     t.datetime "last_action_at"
     t.integer "last_turn_number", default: 0, null: false
-    t.datetime "respawn_available_at"
     t.integer "state", default: 0, null: false
     t.datetime "updated_at", null: false
     t.integer "x", null: false
@@ -137,6 +136,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_120000) do
     t.integer "current_hp", default: 100, null: false
     t.integer "current_mp", default: 50, null: false
     t.bigint "experience", default: 0, null: false
+    t.integer "fatigue_percent", default: 0, null: false
     t.integer "hp_regen_interval", default: 300, null: false
     t.boolean "in_combat", default: false, null: false
     t.datetime "last_combat_at"
@@ -150,9 +150,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_120000) do
     t.string "name", null: false
     t.jsonb "passive_skills", default: {}, null: false
     t.integer "peace_skill_points", default: 0, null: false
-    t.jsonb "progression_sources", default: {}, null: false
-    t.jsonb "resource_pools", default: {}, null: false
-    t.integer "skill_points_available", default: 0, null: false
     t.integer "stat_points_available", default: 0, null: false
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
@@ -234,7 +231,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_120000) do
     t.string "body_part"
     t.datetime "created_at", null: false
     t.integer "damage_amount", default: 0, null: false
-    t.integer "healing_amount", default: 0, null: false
     t.string "log_type", default: "action", null: false
     t.text "message", null: false
     t.datetime "occurred_at"
@@ -277,10 +273,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_120000) do
   end
 
   create_table "ignore_list_entries", force: :cascade do |t|
-    t.string "context"
     t.datetime "created_at", null: false
     t.bigint "ignored_user_id", null: false
-    t.string "notes"
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
     t.index ["ignored_user_id"], name: "index_ignore_list_entries_on_ignored_user_id"
@@ -329,7 +323,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_120000) do
     t.string "item_type", default: "equipment"
     t.string "key"
     t.string "name", null: false
-    t.string "rarity", null: false
     t.jsonb "requirements", default: {}, null: false
     t.string "slot", null: false
     t.integer "stack_limit", default: 99, null: false
@@ -339,7 +332,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_120000) do
     t.index ["item_type"], name: "index_item_templates_on_item_type"
     t.index ["key"], name: "index_item_templates_on_key", unique: true
     t.index ["name"], name: "index_item_templates_on_name", unique: true
-    t.index ["rarity"], name: "index_item_templates_on_rarity"
     t.index ["slot"], name: "index_item_templates_on_slot"
   end
 
@@ -364,8 +356,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_120000) do
     t.datetime "ends_at"
     t.string "error_message"
     t.datetime "failed_at"
-    t.integer "from_x"
-    t.integer "from_y"
+    t.integer "from_x", null: false
+    t.integer "from_y", null: false
     t.integer "latency_ms", default: 0, null: false
     t.jsonb "metadata", default: {}, null: false
     t.integer "predicted_x"
@@ -373,9 +365,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_120000) do
     t.datetime "processed_at"
     t.datetime "started_at"
     t.integer "status", default: 0, null: false
-    t.integer "target_x"
-    t.integer "target_y"
-    t.integer "travel_seconds"
+    t.integer "target_x", null: false
+    t.integer "target_y", null: false
+    t.integer "travel_seconds", null: false
     t.datetime "updated_at", null: false
     t.bigint "zone_id", null: false
     t.index ["action_key"], name: "index_movement_commands_on_action_key", unique: true
@@ -416,7 +408,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_120000) do
     t.datetime "created_at", null: false
     t.boolean "default_entry", default: false, null: false
     t.jsonb "metadata", default: {}, null: false
-    t.integer "respawn_seconds", default: 60, null: false
     t.datetime "updated_at", null: false
     t.integer "x", null: false
     t.integer "y", null: false

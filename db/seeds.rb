@@ -33,9 +33,9 @@ def zone_metadata_for(name)
   case name
   when "Outpost"
     {
-      "exit_to" => "Outpost Surroundings"
+      "exit_to" => "Окрестность Форпоста"
     }
-  when "Outpost Surroundings"
+  when "Окрестность Форпоста"
     {
       "source_map" => "m_1001_999"
     }
@@ -47,7 +47,7 @@ end
 if defined?(Zone)
   [
     {name: "Outpost", location_type: "city", width: 10, height: 10},
-    {name: "Outpost Surroundings", location_type: "outdoor", width: 15, height: 15}
+    {name: "Окрестность Форпоста", location_type: "outdoor", width: 15, height: 15}
   ].each do |attrs|
     Zone.find_or_create_by!(name: attrs[:name]) do |zone|
       zone.location_type = attrs[:location_type]
@@ -61,7 +61,7 @@ end
 if defined?(SpawnPoint) && defined?(Zone)
   {
     "Outpost" => [{x: 5, y: 5, default_entry: true}],
-    "Outpost Surroundings" => [{x: 7, y: 7, default_entry: true}]
+    "Окрестность Форпоста" => [{x: 7, y: 7, default_entry: true}]
   }.each do |zone_name, points|
     zone = Zone.find_by(name: zone_name)
     next unless zone
@@ -69,7 +69,6 @@ if defined?(SpawnPoint) && defined?(Zone)
     points.each do |point|
       SpawnPoint.find_or_create_by!(zone:, x: point[:x], y: point[:y]) do |spawn|
         spawn.city_key = zone_name.parameterize
-        spawn.respawn_seconds = point[:respawn_seconds] || 60
         spawn.default_entry = point.fetch(:default_entry, false)
       end
     end
@@ -89,8 +88,8 @@ if defined?(MapTileTemplate)
     city_tiles << {zone: zone_name, x: 5, y: 9, terrain_type: "city", metadata: {"building" => "South Gate"}}
   end
 
-  # Outpost Surroundings - captured outdoor map area with city return.
-  outpost_surroundings = Zone.find_by(name: "Outpost Surroundings")
+  # Окрестность Форпоста - captured outdoor map area with city return.
+  outpost_surroundings = Zone.find_by(name: "Окрестность Форпоста")
   outdoor_tiles = []
   if outpost_surroundings
     outdoor_zone_name = outpost_surroundings.name  # Store zone name as string, not the Zone object
@@ -132,7 +131,7 @@ end
 # ------------------------------------------------------------------
 # Use the users created at the top of the file (first@lukin.io, second@lukin.io)
 # Fall back to alternative emails if those don't exist
-admin ||= User.find_by(email: "first@lukin.io") || User.find_by(email: "admin@elselands.test")
+admin ||= User.find_by(email: "first@lukin.io") || User.find_by(email: "admin@browser-rpg.test")
 lukin_user ||= User.find_by(email: "second@lukin.io") || User.find_by(email: "lukin.maksim@gmail.com")
 
 main_character = nil
@@ -145,7 +144,7 @@ if defined?(Character) && admin
     char.experience = 125_000
     char.alignment = "light"
     char.allocated_stats = {"strength" => 16, "vitality" => 12, "dexterity" => 5}
-    char.resource_pools = {"fatigue" => 0}
+    char.fatigue_percent = 0
     char.metadata = {}
   end
   main_character.reload
@@ -156,7 +155,7 @@ if defined?(Character) && admin
     char.experience = 82_000
     char.alignment = "balance"
     char.allocated_stats = {"intelligence" => 18, "vitality" => 6, "dexterity" => 4}
-    char.resource_pools = {"fatigue" => 0}
+    char.fatigue_percent = 0
     char.metadata = {}
   end
   secondary_character.reload
@@ -168,7 +167,7 @@ if defined?(Character) && admin
       char.experience = 61_000
       char.alignment = "dark"
       char.allocated_stats = {"dexterity" => 14, "strength" => 7, "vitality" => 5}
-      char.resource_pools = {"fatigue" => 0}
+      char.fatigue_percent = 0
       char.metadata = {}
     end
     lukin_character.reload
@@ -179,8 +178,8 @@ end
 if defined?(ItemTemplate)
   # Source-backed NPC material item templates.
   material_items = [
-    {key: "wood_chips", name: "Щепки", item_type: "material", rarity: "common", weight: 1},
-    {key: "rat_tail", name: "Крысиный хвост", item_type: "material", rarity: "common", weight: 1}
+    {key: "wood_chips", name: "Щепки", item_type: "material", weight: 1},
+    {key: "rat_tail", name: "Крысиный хвост", item_type: "material", weight: 1}
   ]
 
   material_items.each do |attrs|
@@ -188,7 +187,6 @@ if defined?(ItemTemplate)
       item.name = attrs[:name]
       item.item_type = attrs[:item_type]
       item.slot = "material"
-      item.rarity = attrs[:rarity]
       item.weight = attrs[:weight]
       item.stack_limit = 99
       item.stat_modifiers = {}
@@ -217,94 +215,13 @@ puts "Seeding Arena Rooms..."
 if defined?(ArenaRoom)
   arena_rooms = [
     {
-      name: "Training Grounds",
+      name: "Тренировочный Зал",
       slug: "training",
       room_type: :training,
-      level_min: 1,
+      level_min: 0,
       level_max: 10,
       alignment_restriction: nil,
-      description: "Practice arena for new combatants. Low stakes, all welcome."
-    },
-    {
-      name: "Trial Hall",
-      slug: "trial",
-      room_type: :trial,
-      level_min: 5,
-      level_max: 20,
-      alignment_restriction: nil,
-      description: "Prove your worth in serious combat. Medium trauma fights."
-    },
-    {
-      name: "Challenge Arena",
-      slug: "challenge",
-      room_type: :challenge,
-      level_min: 15,
-      level_max: 40,
-      alignment_restriction: nil,
-      description: "Level-restricted arena room placeholder pending exact source copy."
-    },
-    {
-      name: "Initiation Chamber",
-      slug: "initiation",
-      room_type: :initiation,
-      level_min: 10,
-      level_max: 25,
-      alignment_restriction: nil,
-      description: "Initiation rites for combatants."
-    },
-    {
-      name: "Hall of Light",
-      slug: "light",
-      room_type: :light,
-      level_min: 20,
-      level_max: 60,
-      alignment_restriction: "light",
-      description: "Champions of Light fight for honor and justice."
-    },
-    {
-      name: "Shadow Pit",
-      slug: "dark",
-      room_type: :dark,
-      level_min: 20,
-      level_max: 60,
-      alignment_restriction: "dark",
-      description: "The forces of Darkness test their strength here."
-    },
-    {
-      name: "Balance Sanctum",
-      slug: "balance",
-      room_type: :balance,
-      level_min: 20,
-      level_max: 60,
-      alignment_restriction: "balance",
-      description: "Balance-aligned arena room placeholder pending exact source copy."
-    },
-    {
-      name: "Chaos Coliseum",
-      slug: "chaos",
-      room_type: :chaos,
-      level_min: 30,
-      level_max: 80,
-      alignment_restriction: "chaos",
-      description: "Free-for-all mayhem. Anything goes. High trauma!"
-    },
-    {
-      name: "Patron's Throne Room",
-      slug: "patron",
-      room_type: :patron,
-      level_min: 50,
-      level_max: 100,
-      alignment_restriction: nil,
-      description: "High-level arena room placeholder pending exact source copy."
-    },
-    {
-      name: "Hall of Law",
-      slug: "law",
-      room_type: :law,
-      level_min: 25,
-      level_max: 70,
-      alignment_restriction: "law",
-      description: "Judicial combat to settle disputes and honor duels."
+      description: "Source-backed starter arena room for training fights."
     }
   ]
 
@@ -330,12 +247,12 @@ puts "Arena rooms seeding complete!"
 puts "Seeding Tile Buildings..."
 
 if defined?(TileBuilding) && defined?(Zone)
-  outpost_surroundings = Zone.find_by(name: "Outpost Surroundings")
+  outpost_surroundings = Zone.find_by(name: "Окрестность Форпоста")
   outpost = Zone.find_by(name: "Outpost")
 
   tile_buildings = []
 
-  # City entrance from Outpost Surroundings to Outpost
+  # City entrance from Окрестность Форпоста to Outpost
   if outpost_surroundings && outpost
     tile_buildings << {
       zone: outpost_surroundings.name,
@@ -343,14 +260,14 @@ if defined?(TileBuilding) && defined?(Zone)
       y: 0,
       building_key: "outpost_gate",
       building_type: "city",
-      name: "City Gates",
+      name: "Ворота Форпоста",
       destination_zone: outpost,
       destination_x: 5,
       destination_y: 9,
       icon: "🏙️",
       required_level: 1,
       metadata: {
-        "description" => "Enter the starter city node."
+        "description" => "Enter Форпост."
       }
     }
   end
@@ -383,7 +300,7 @@ puts "Tile buildings seeding complete!"
 puts "\n=== Seeding City Hotspots ==="
 
 outpost = Zone.find_by(name: "Outpost")
-outpost_surroundings = Zone.find_by(name: "Outpost Surroundings")
+outpost_surroundings = Zone.find_by(name: "Окрестность Форпоста")
 
 if outpost
   city_hotspots = []
@@ -406,14 +323,13 @@ if outpost
   # 4. Measure the building's width and height in pixels
   # ==========================================================================
 
-  # City Gates / Exit - leads back to Outpost Surroundings.
-  # TODO: Adjust position to match gate location on city.png
+  # Outpost gate / Exit - leads back to Окрестность Форпоста.
   city_hotspots << {
     zone: outpost,
     key: "city_gate",
-    name: "City Gates",
+    name: "Ворота Форпоста",
     hotspot_type: "exit",
-    position_x: 680,    # Center-bottom area (adjust to match your city.png)
+    position_x: 680,
     position_y: 850,
     width: 180,
     height: 150,
@@ -426,13 +342,12 @@ if outpost
   }
 
   # Arena - for player, team, and NPC fights
-  # TODO: Adjust position to match arena location on city.png
   city_hotspots << {
     zone: outpost,
     key: "arena",
     name: "Arena",
     hotspot_type: "building",
-    position_x: 1050,   # Right side (adjust to match your city.png)
+    position_x: 1050,
     position_y: 200,
     width: 300,
     height: 250,
@@ -444,13 +359,12 @@ if outpost
   }
 
   # Лавка - documented Neverlands shop, pending Rails implementation
-  # TODO: Adjust position to match shop location on city.png
   city_hotspots << {
     zone: outpost,
     key: "shop",
     name: "Лавка",
     hotspot_type: "building",
-    position_x: 100,    # Left side (adjust to match your city.png)
+    position_x: 100,
     position_y: 350,
     width: 250,
     height: 200,

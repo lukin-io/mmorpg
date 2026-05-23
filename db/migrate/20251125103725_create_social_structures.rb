@@ -3,8 +3,6 @@ class CreateSocialStructures < ActiveRecord::Migration[8.1]
     create_table :ignore_list_entries do |t|
       t.references :user, null: false, foreign_key: true
       t.references :ignored_user, null: false, foreign_key: {to_table: :users}
-      t.string :context
-      t.string :notes
       t.timestamps
     end
 

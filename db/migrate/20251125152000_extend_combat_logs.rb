@@ -20,7 +20,6 @@ class ExtendCombatLogs < ActiveRecord::Migration[8.1]
       t.string :actor_team
       t.string :target_team
       t.integer :damage_amount, null: false, default: 0
-      t.integer :healing_amount, null: false, default: 0
       t.string :tags, array: true, default: []
       t.timestamps
     end

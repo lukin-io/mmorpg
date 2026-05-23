@@ -10,7 +10,6 @@ RSpec.describe Players::Progression::LevelUpService do
       level: 1,
       experience: 0,
       stat_points_available: 0,
-      skill_points_available: 0,
       combat_skill_points: 0,
       peace_skill_points: 0)
   end
@@ -90,26 +89,6 @@ RSpec.describe Players::Progression::LevelUpService do
         expect(result.combat_skill_points_gained).to eq(4)  # 4 levels * 1 point
         expect(result.peace_skill_points_gained).to eq(1)  # Only level 5 grants peace points
       end
-    end
-  end
-
-  describe "#force_level_up!" do
-    it "grants one level worth of rewards" do
-      service = described_class.new(character: character)
-      result = service.force_level_up!
-
-      expect(result.character.level).to eq(2)
-      expect(result.levels_gained).to eq(1)
-      expect(result.stat_points_gained).to eq(5)
-    end
-
-    it "grants multiple levels worth of rewards" do
-      service = described_class.new(character: character)
-      result = service.force_level_up!(levels: 5)
-
-      expect(result.character.level).to eq(6)
-      expect(result.levels_gained).to eq(5)
-      expect(result.stat_points_gained).to eq(25)
     end
   end
 

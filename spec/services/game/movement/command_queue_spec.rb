@@ -49,7 +49,7 @@ RSpec.describe Game::Movement::CommandQueue do
       expect(character.reload.position.x).to eq(0)
     end
 
-    it "finalizes queued travel through the completion service after its timer" do
+    it "finalizes accepted travel through the completion service after its timer" do
       command = queue.enqueue(direction: :east)
       queue.process(command.id)
       command.reload.update!(ends_at: 1.second.ago)

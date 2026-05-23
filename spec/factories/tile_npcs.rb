@@ -4,7 +4,7 @@ FactoryBot.define do
   factory :tile_npc do
     sequence(:x) { |n| n }
     sequence(:y) { |n| n }
-    zone { "Outpost Surroundings" }
+    zone { "Окрестность Форпоста" }
     npc_key { "plague_rat" }
     npc_role { "hostile" }
     level { 2 }

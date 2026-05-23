@@ -20,11 +20,11 @@ module Game
     # Usage:
     #   service = Game::World::TileBuildingService.new(
     #     character: current_character,
-    #     zone: "Outpost Surroundings",
+    #     zone: "Окрестность Форпоста",
     #     x: 5,
     #     y: 5
     #   )
-    #   info = service.building_info  # => { id: 1, name: "City Gates", ... }
+    #   info = service.building_info  # => { id: 1, name: "Ворота Форпоста", ... }
     #   result = service.enter!       # => Result(success: true, ...)
     #
     class TileBuildingService

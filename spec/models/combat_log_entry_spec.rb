@@ -56,20 +56,10 @@ RSpec.describe CombatLogEntry do
     describe ".damage" do
       it "returns entries with damage" do
         damage_entry = create(:combat_log_entry, arena_match: arena_match, damage_amount: 50, message: "Attack")
-        create(:combat_log_entry, arena_match: arena_match, damage_amount: 0, message: "Buff")
+        create(:combat_log_entry, arena_match: arena_match, damage_amount: 0, message: "Block")
 
         expect(described_class.damage).to include(damage_entry)
         expect(described_class.damage.count).to eq(1)
-      end
-    end
-
-    describe ".healing" do
-      it "returns entries with healing" do
-        healing_entry = create(:combat_log_entry, arena_match: arena_match, healing_amount: 30, message: "Heal")
-        create(:combat_log_entry, arena_match: arena_match, healing_amount: 0, message: "Attack")
-
-        expect(described_class.healing).to include(healing_entry)
-        expect(described_class.healing.count).to eq(1)
       end
     end
 
@@ -95,36 +85,36 @@ RSpec.describe CombatLogEntry do
     it "stores structured payload data" do
       entry = create(:combat_log_entry,
         arena_match: arena_match,
-        message: "Attack landed",
+        message: "max_kerby hit Чумная крыса (torso) for -3 [7/10]",
         payload: {
           "attacker" => "max_kerby",
           "defender" => "Чумная крыса",
           "damage" => 25,
-          "critical" => true,
-          "effects" => [{"type" => "bleed", "duration" => 3}]
+          "body_part" => "torso",
+          "outcome" => "damage"
         })
 
       entry.reload
       expect(entry.payload["attacker"]).to eq("max_kerby")
-      expect(entry.payload["critical"]).to be true
-      expect(entry.payload["effects"]).to be_an(Array)
+      expect(entry.payload["body_part"]).to eq("torso")
+      expect(entry.payload["outcome"]).to eq("damage")
     end
   end
 
   describe "log types" do
     it "stores log type" do
-      entry = create(:combat_log_entry, arena_match: arena_match, log_type: "skill", message: "Fireball cast")
-      expect(entry.log_type).to eq("skill")
+      entry = create(:combat_log_entry, arena_match: arena_match, log_type: "block", message: "max_kerby blocks head")
+      expect(entry.log_type).to eq("block")
     end
 
-    it "can distinguish action types" do
+    it "can distinguish captured fight action types" do
       attack = create(:combat_log_entry, arena_match: arena_match, log_type: "attack", message: "Attack")
-      skill = create(:combat_log_entry, arena_match: arena_match, log_type: "skill", message: "Skill")
-      heal = create(:combat_log_entry, arena_match: arena_match, log_type: "heal", message: "Heal")
+      block = create(:combat_log_entry, arena_match: arena_match, log_type: "block", message: "Block")
+      loot = create(:combat_log_entry, arena_match: arena_match, log_type: "loot", message: "Крысиный хвост")
 
       expect(attack.log_type).to eq("attack")
-      expect(skill.log_type).to eq("skill")
-      expect(heal.log_type).to eq("heal")
+      expect(block.log_type).to eq("block")
+      expect(loot.log_type).to eq("loot")
     end
   end
 
@@ -144,21 +134,15 @@ RSpec.describe CombatLogEntry do
     end
   end
 
-  describe "damage and healing amounts" do
+  describe "damage amounts" do
     it "tracks damage amount" do
       entry = create(:combat_log_entry, arena_match: arena_match, damage_amount: 50, message: "Critical hit!")
       expect(entry.damage_amount).to eq(50)
     end
 
-    it "tracks healing amount" do
-      entry = create(:combat_log_entry, arena_match: arena_match, healing_amount: 30, message: "Healed!")
-      expect(entry.healing_amount).to eq(30)
-    end
-
-    it "defaults amounts to 0" do
-      entry = create(:combat_log_entry, arena_match: arena_match, message: "Buff applied")
+    it "defaults damage amount to 0" do
+      entry = create(:combat_log_entry, arena_match: arena_match, message: "Block")
       expect(entry.damage_amount).to eq(0).or be_nil
-      expect(entry.healing_amount).to eq(0).or be_nil
     end
   end
 end

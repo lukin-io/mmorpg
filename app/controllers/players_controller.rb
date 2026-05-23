@@ -86,7 +86,6 @@ class PlayersController < ApplicationController
         id: item.id,
         name: template&.name,
         slot: item.equipment_slot.to_s.presence || template&.slot.to_s,
-        rarity: template&.rarity,
         item_type: template&.item_type,
         quantity: item.quantity,
         current_durability: item.current_durability,

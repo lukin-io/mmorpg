@@ -56,20 +56,20 @@ RSpec.describe Arena::CombatProcessor, "Neverlands-style combat features" do
   end
 
   describe "Attack Types" do
-    it "defines ATTACK_TYPES constant" do
-      expect(Arena::CombatProcessor::ATTACK_TYPES).to include(:simple, :aimed)
+    it "exposes captured attacks through the action catalog" do
+      expect(Game::Combat::ActionCatalog.config["attack_types"].keys).to include("simple", "aimed")
     end
 
     it "simple attack has base damage multiplier" do
-      expect(Arena::CombatProcessor::ATTACK_TYPES[:simple][:damage_mult]).to eq(1.0)
+      expect(Game::Combat::ActionCatalog.attack_damage_multiplier(:simple)).to eq(1.0)
     end
 
     it "aimed attack has higher damage multiplier" do
-      expect(Arena::CombatProcessor::ATTACK_TYPES[:aimed][:damage_mult]).to eq(1.2)
+      expect(Game::Combat::ActionCatalog.attack_damage_multiplier(:aimed)).to eq(1.2)
     end
 
     it "aimed attack has hit bonus" do
-      expect(Arena::CombatProcessor::ATTACK_TYPES[:aimed][:hit_bonus]).to eq(15)
+      expect(Game::Combat::ActionCatalog.attack_hit_bonus(:aimed)).to eq(15)
     end
   end
 
@@ -274,46 +274,33 @@ RSpec.describe Arena::CombatProcessor, "Neverlands-style combat features" do
     end
   end
 
-  describe "#end_match with trauma" do
+  describe "#end_match with trauma/risk value" do
     before do
       character1.update!(current_hp: 80)
       character2.update!(current_hp: 0, experience: 1000)
     end
 
-    it "applies trauma to losers (sets HP to minimum)" do
+    it "does not invent loser HP penalties before formula capture" do
       processor.end_match("a")
 
-      character2.reload
-      # Trauma applies HP loss, but minimum is 1
-      expect(character2.current_hp).to be >= 0
-      expect(character2.current_hp).to be <= 1 # Minimum after trauma
+      expect(character2.reload.current_hp).to eq(0)
     end
 
-    it "reduces XP for losers with high trauma" do
+    it "does not invent XP loss before formula capture" do
       arena_match.update!(trauma_percent: 50)
       original_xp = character2.experience
 
       processor.end_match("a")
 
-      character2.reload
-      expect(character2.experience).to be < original_xp
+      expect(character2.reload.experience).to eq(original_xp)
     end
 
-    it "applies minor trauma to winners" do
+    it "does not invent winner HP penalties before formula capture" do
       original_hp = character1.current_hp
 
       processor.end_match("a")
 
-      character1.reload
-      expect(character1.current_hp).to be <= original_hp
-    end
-
-    it "logs trauma effects" do
-      processor.end_match("a")
-
-      trauma_entries = arena_match.reload.combat_log_entries.select { |entry| entry.log_type == "trauma" }
-
-      expect(trauma_entries).not_to be_empty
+      expect(character1.reload.current_hp).to eq(original_hp)
     end
   end
 
@@ -367,28 +354,30 @@ RSpec.describe Arena::CombatProcessor, "Neverlands-style combat features" do
       end
 
       context "with invalid body part" do
-        it "uses default body part multiplier" do
+        it "rejects the attack" do
           result = processor.process_action(
             character1,
             :attack,
             target: character2,
             body_part: "invalid_part"
           )
-          # Should still work, just use default multiplier
-          expect(result.success?).to be true
+
+          expect(result.success?).to be false
+          expect(result.error).to include("Invalid body part")
         end
       end
 
       context "with invalid attack type" do
-        it "uses default attack type" do
+        it "rejects the attack" do
           result = processor.process_action(
             character1,
             :attack,
             target: character2,
             attack_type: :invalid_type
           )
-          # Should still work, uses simple attack
-          expect(result.success?).to be true
+
+          expect(result.success?).to be false
+          expect(result.error).to include("Invalid attack type")
         end
       end
     end
@@ -452,7 +441,7 @@ RSpec.describe Arena::CombatProcessor, "Neverlands-style combat features" do
       end
     end
 
-    describe "#apply_trauma" do
+    describe "uncaptured trauma consequences" do
       context "with 0% trauma" do
         before { arena_match.update!(trauma_percent: 0) }
 
@@ -469,15 +458,13 @@ RSpec.describe Arena::CombatProcessor, "Neverlands-style combat features" do
       context "with nil trauma_percent" do
         before { arena_match.update!(trauma_percent: nil) }
 
-        it "uses default 30% trauma" do
+        it "does not default into invented trauma penalties" do
           character2.update!(current_hp: 0)
           original_hp = character1.current_hp
 
           processor.end_match("a")
 
-          character1.reload
-          # Should have minor trauma applied
-          expect(character1.current_hp).to be <= original_hp
+          expect(character1.reload.current_hp).to eq(original_hp)
         end
       end
     end

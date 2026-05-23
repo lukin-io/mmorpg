@@ -11,13 +11,6 @@
   </div>
 
   <div class="city-view" data-controller="city-view" data-city-view-background-value="<%= asset_path('city.png') %>">
-
-    <%#
-      TODO: Add overlay images when ready to work on hover highlights.
-      Each hotspot.image_hover should be rendered as a full-size overlay at position 0,0.
-      See city_view_controller.js for showOverlay/hideOverlay methods.
-    %>
-
     <%# Invisible hitboxes at source-backed building positions %>
     <% hotspots.each do |hotspot| %>
       <%= render "world/city_hotspot", hotspot: hotspot %>

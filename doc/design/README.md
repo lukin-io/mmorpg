@@ -196,6 +196,9 @@ Neverlands-based behavior first.
 - generic premium token/payment layer, including token ledger, premium wallet
   balances, premium recipe costs, premium profession resets, premium item flags,
   and premium transfers;
+- generic currency manual-adjustment default reason; NV wallet changes now
+  require an explicit source reason such as shop purchase, shop sale, or
+  captured reward;
 - generic direct player trading stack, including trade sessions, trade items,
   two-panel trade UI, generic confirmation/finalization flow, and trade
   settlement services;
@@ -223,8 +226,16 @@ Neverlands-based behavior first.
 - generic medical supply and infirmary recovery stack, including zone medical
   stock pools, field-bandage supply depletion, infirmary fees, and metadata-based
   respawn timer reduction;
+- generic death/respawn handler, including fixed XP loss, 25% HP/MP respawn,
+  zone death broadcasts, and automatic spawn-point relocation outside the
+  captured fight result/trauma/finish flow;
+- generic trauma consequence formula, including invented winner/loser HP loss
+  and XP loss based only on the captured trauma percentage value;
 - generic arena seasons, rankings, leaderboard pages, rank badges, ELO-like
   rating deltas, and season reward tiers;
+- generic arena room seed copy, including fantasy room names, placeholder
+  descriptions, and broad pre-seeded alignment halls not captured as starter
+  implementation data;
 - generic faction/reputation/alignment-score layer, including
   Alliance/Rebellion factions, reputation gates, chaos score tiers, alignment
   score ladders, faction-specific spawn/building access, and invite-only arena
@@ -240,6 +251,8 @@ Neverlands-based behavior first.
   presence broadcasts, presence queue/job/publisher, busy/idle/offline session
   states, device metadata, session security history, and standalone ignore-list
   management UI;
+- generic ignore-list metadata fields, including per-ignore context and notes
+  columns not observed in the Neverlands chat behavior;
 - generic modern chat extras, including standalone chat-channel dashboards,
   `RealtimeChatChannel`, slash-command whispers/shouts, Unicode emoji picker
   mappings, profanity dictionary filtering, product spam throttles, GM-alert/
@@ -253,7 +266,13 @@ Neverlands-based behavior first.
 - generic active combat skill executor, including arbitrary damage/heal/buff/
   debuff/dot/hot/aoe/drain/shield effect records, per-record cooldown metadata,
   and generic `combat_buffs` storage. Source-backed arena magic/action slots
-  remain implemented through the shared turn processor and action catalog.
+  remain implemented through the shared turn processor and action catalog. The
+  remaining generic combat action catalog spells were removed; the launch
+  catalog keeps captured physical attacks, mana attacks, physical blocks,
+  shield blocks, and captured magic guard/block rows only.
+- generic elemental fight-log statistics and styling, including
+  fire/water/earth/air/arcane damage breakdowns, generic skill/restoration log
+  classes, and status-effect presentation not captured from Neverlands logs;
 - generic NPC gameplay fallbacks, including level-derived NPC stats, role-based
   stat modifiers, flee logic, arena difficulty tiers, weighted NPC selection,
   zone-wide outdoor NPC spawning, uncaptured NPC respawn defaults, and NPC image
@@ -262,6 +281,9 @@ Neverlands-based behavior first.
 - generic equipment/weapon fallbacks, including item-name/slot weapon-family
   inference, `"generic"` family multipliers, uncaptured family attack-cost
   bonuses, and NPC level-derived physical attack costs.
+- generic item rarity tiers, including common/uncommon/rare/epic/legendary
+  metadata, rarity indexes, rarity sort mode, and rarity-colored inventory
+  styling not captured from Neverlands item screens;
 - generic random player avatars, including fantasy avatar names, automatic
   assignment, public avatar image paths, and the character `avatar` column.
 - generic fantasy seed/test content names, including starter fantasy equipment,
@@ -269,3 +291,65 @@ Neverlands-based behavior first.
 - generic terrain-label design concepts, including road/plaza/grass/water tile
   labels for world rendering. Map tiles now use source-backed location types
   such as `outdoor` and `city`.
+- generic spawn/entry coordinate fallbacks, including first-spawn selection,
+  zone-center placement, and starter-position defaults when source-backed entry
+  coordinates are missing.
+- generic world navigation fallbacks, including choosing any outdoor zone when a
+  city lacks explicit `exit_to` metadata and rendering missing map templates as
+  passable source-like terrain.
+- generic player/spawn-point respawn timer fields, including spawn-point
+  respawn seconds, character respawn availability timestamps, and unused
+  downed/respawning position states. Source-backed outdoor NPC respawn remains
+  separate and template-driven.
+- generic admin/test level-up shortcut from progression service; XP-driven
+  progression remains the only implemented level-up path.
+- unused generic fight-log CSS surfaces, including old `.fight-*` text classes,
+  standalone `.nl-log-*` classes, generic buff/debuff log coloring, and unused
+  reward/waiting-message blocks not emitted by the current Neverlands-based
+  fight log views.
+- generic combat-log healing telemetry, including `healing_amount`, healing
+  scopes/stat totals, healing ActionCable payloads, and public-log healing
+  badges. Source-backed `Самолечение` skill IDs remain documented separately;
+  combat-use behavior must be captured before adding fight-log healing.
+- unused generic combat broadcast placeholders, including NPC `skill_name`
+  payloads and generic `"skill"` action text outside the captured
+  magic/action-slot path.
+- generic percent-based consumable HP formula (`heal_hp_percent`); direct HP/MP
+  consumable restoration remains as the source-backed consumable path until
+  exact item rows/effects are captured.
+- English placeholder labels for source-backed `Умения`; numeric skill labels
+  now use the captured Neverlands Russian names while local keys remain stable.
+- legacy aggregate numeric-skill point pool (`skill_points_available`); the
+  implementation now keeps only the captured combat and peace point pools.
+- legacy item requirement compatibility, including per-item `level_required`
+  properties and generic stat/skill aliases. Item requirements now use the
+  normalized template/item requirement hashes only.
+- legacy queued/processed movement-command states. Wilderness movement now uses
+  only server-offered destination commands, active travel, completion,
+  cancellation, and failure states.
+- generic character `resource_pools` storage. The implemented source-backed
+  player resource is the profile fatigue percentage, now stored directly as
+  `fatigue_percent`.
+- generic primary-stat alias normalization. Character stats and equipment stat
+  modifiers now use only the canonical stored primary stat keys.
+- direction-only movement acceptance. Movement mutations now require a
+  server-authored action key tied to a concrete offered destination.
+- invented NPC/player avatar initials in arena helpers. NPC visual identity now
+  comes only from explicit NPC image/avatar metadata; players use the neutral
+  paper-doll placeholder until a source-backed portrait system is captured.
+- dead generic shell action-menu button and TODO-only city overlay scaffolding.
+  Available controls now map to implemented chat, movement, city, building, and
+  fight actions.
+- arena target-selection self fallback in JavaScript. Client-side target
+  discovery now returns an explicit opponent or no target; server validation
+  remains authoritative.
+- legacy direct movement processor and passive-skill movement formula hooks.
+  Wilderness movement now uses only server-offered movement actions with the
+  captured 30-second travel duration until exact Neverlands timing formulas are
+  captured.
+- unused generic movement pathfinder. Outdoor movement remains adjacent
+  server-offered cell travel; multi-cell path planning needs source capture
+  before implementation.
+- unused generic random loot generator and XP source-ledger pipeline. Combat
+  loot and experience now stay on the shared fight result/inventory path until
+  more exact Neverlands reward accounting is captured.

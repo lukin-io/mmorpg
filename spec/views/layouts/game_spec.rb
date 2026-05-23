@@ -152,11 +152,11 @@ RSpec.describe "layouts/game.html.erb", type: :view do
       expect(rendered).to have_css(".nl-bottom-bar")
     end
 
-    it "includes action buttons" do
+    it "includes the captured chat action button" do
       render template: "layouts/game", layout: false
 
       expect(rendered).to have_css(".nl-action-area")
-      expect(rendered).to have_css(".nl-action-btn-small", minimum: 2)
+      expect(rendered).to have_css(".nl-action-btn-small", text: "Say")
     end
 
     it "includes chat area" do

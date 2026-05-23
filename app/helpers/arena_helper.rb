@@ -5,46 +5,46 @@ module ArenaHelper
 
   # Room type labels
   ROOM_TYPE_CONFIG = {
-    training: {label: "Training Hall", description: "Levels 0-5, reduced penalties"},
-    trial: {label: "Trial Hall", description: "Levels 5-10, beginner competitive"},
-    challenge: {label: "Challenge Arena", description: "Levels 5-33, open range duels"},
-    initiation: {label: "Initiation Ring", description: "Levels 9-33, mid-level"},
-    patron: {label: "Patron's Arena", description: "Levels 16-33, high-level"},
-    law: {label: "Hall of Law", description: "Law alignment only"},
-    light: {label: "Sanctum of Light", description: "Light alignment only"},
-    balance: {label: "Twilight Arena", description: "Balance alignment only"},
-    chaos: {label: "Chaos Pit", description: "Chaos alignment only"},
-    dark: {label: "Shadow Arena", description: "Dark alignment only"}
+    help: {label: "Зал Помощи", description: "0-5"},
+    training: {label: "Тренировочный Зал", description: "Тренировочный зал"},
+    trial: {label: "Зал Испытаний", description: "5-33"},
+    initiation: {label: "Зал Посвящения", description: "9-33"},
+    patron: {label: "Зал Покровителей", description: "16-33"},
+    law: {label: "Зал Закона", description: "Склонность: Закон"},
+    light: {label: "Зал Света", description: "Склонность: Свет"},
+    balance: {label: "Зал Равновесия", description: "Склонность: Равновесие"},
+    chaos: {label: "Зал Хаоса", description: "Склонность: Хаос"},
+    dark: {label: "Зал Тьмы", description: "Склонность: Тьма"}
   }.freeze
 
   # Fight type configuration
   FIGHT_TYPE_CONFIG = {
-    duel: {label: "1v1 Duel"},
-    team_battle: {label: "Team Battle"},
-    sacrifice: {label: "Free-for-All"}
+    duel: {label: "Дуэли"},
+    team_battle: {label: "Групповые"},
+    sacrifice: {label: "Жертвенные"}
   }.freeze
 
   # Fight kind configuration
   FIGHT_KIND_CONFIG = {
-    no_weapons: {label: "Bare Hands"},
-    no_artifacts: {label: "No Magic Items"},
-    limited_artifacts: {label: "Limited Equipment"},
-    free: {label: "Freestyle"},
-    alignment_vs_alignment: {label: "Alignment vs Alignment"}
+    no_weapons: {label: "Без вооружения"},
+    free: {label: "Произвольный"},
+    alignment_vs_alignment: {label: "Склонность на склонность"},
+    no_artifacts: {label: "Без артефактов"},
+    limited_artifacts: {label: "Ограниченные артефакты"}
   }.freeze
 
   # Match status labels
   MATCH_STATUS_CONFIG = {
-    pending: {label: "Pending", css: "pending"},
-    matching: {label: "Finding Opponent", css: "matching"},
-    countdown: {label: "Starting Soon", css: "countdown"},
+    pending: {label: "Ожидание", css: "pending"},
+    matching: {label: "Поиск противника", css: "matching"},
+    countdown: {label: "Скоро начало", css: "countdown"},
     live: {label: "LIVE", css: "live"},
-    completed: {label: "Completed", css: "completed"},
-    cancelled: {label: "Cancelled", css: "cancelled"}
+    completed: {label: "Завершен", css: "completed"},
+    cancelled: {label: "Отменен", css: "cancelled"}
   }.freeze
 
   def room_type_icon(room_type)
-    ROOM_TYPE_CONFIG.dig(room_type.to_sym, :label) || "Arena"
+    ROOM_TYPE_CONFIG.dig(room_type.to_sym, :label) || "Арена"
   end
 
   def room_type_badge(room_type)
@@ -103,14 +103,14 @@ module ArenaHelper
     max = application.metadata.to_h["npc_side_level_max"] || application.enemy_level_max
     return "" if min.blank? && max.blank?
 
-    "levels #{min || 0}-#{max || 33}"
+    "уровни #{min || 0}-#{max || 33}"
   end
 
   def arena_application_open_side_level_gate(application)
     min = application.team_level_min || application.arena_room.level_min
     max = application.team_level_max || application.arena_room.level_max
 
-    "levels #{min}-#{max}"
+    "уровни #{min}-#{max}"
   end
 
   # Match status badge
@@ -122,9 +122,9 @@ module ArenaHelper
   # Application status tag
   def arena_room_status_tag(room)
     if room.has_capacity?
-      content_tag(:span, "Open", class: "room-status room-status--open")
+      content_tag(:span, "Открыт", class: "room-status room-status--open")
     else
-      content_tag(:span, "Full", class: "room-status room-status--full")
+      content_tag(:span, "Заполнен", class: "room-status room-status--full")
     end
   end
 
@@ -149,7 +149,7 @@ module ArenaHelper
 
   # Opponent display with alignment
   def opponent_display(character, current_character)
-    return "Waiting for opponent..." unless character
+    return "Ожидание противника..." unless character
 
     alignment_class = (character.alignment == current_character&.alignment) ? "ally" : "enemy"
 
@@ -168,9 +168,9 @@ module ArenaHelper
     max = room.respond_to?(:level_max) ? room.level_max : room.max_level
 
     if min == max
-      "Lvl #{min}"
+      "Ур. #{min}"
     else
-      "Lvl #{min}-#{max}"
+      "Ур. #{min}-#{max}"
     end
   end
 
@@ -197,15 +197,15 @@ module ArenaHelper
   # @param match [ArenaMatch] the arena match
   # @return [String] winner's name
   def winner_name(match)
-    return "Draw" unless match.winning_team
+    return "Ничья" unless match.winning_team
 
     winner_participation = match.arena_participations.find_by(team: match.winning_team)
-    return "Unknown" unless winner_participation
+    return "Неизвестно" unless winner_participation
 
     if winner_participation.npc?
       winner_participation.npc_template&.name || "NPC"
     else
-      winner_participation.character&.name || "Player"
+      winner_participation.character&.name || "Персонаж"
     end
   end
 
@@ -310,37 +310,17 @@ module ArenaHelper
     data.current_hp <= 0
   end
 
-  # ===========================================================================
-  # Avatar Helpers
-  # ===========================================================================
-
-  # Avatar sizes in pixels
-  AVATAR_SIZES = {
-    small: 32,
-    medium: 48,
-    large: 64
-  }.freeze
-
-  # Generate avatar tag for arena participant
+  # Generate avatar tag for arena participant.
+  # NPC images come only from explicit NPC metadata; player portraits use the
+  # neutral paper-doll placeholder until a source-backed portrait system exists.
+  #
   # @param participation [ArenaParticipation] the participation record
   # @param size [Symbol] :small, :medium, or :large
   # @return [ActiveSupport::SafeBuffer] HTML span element with avatar
   def participation_avatar_tag(participation, size: :medium)
-    size_px = AVATAR_SIZES[size] || AVATAR_SIZES[:medium]
+    return npc_avatar_tag(participation.npc_template, size:) if participation.npc?
 
-    if participation.npc?
-      npc = participation.npc_template
-      avatar_text = npc&.name&.first || "N"
-      content_tag(:span, avatar_text, class: "avatar avatar--npc avatar--#{size}",
-        style: "font-size: #{size_px}px; line-height: #{size_px}px;",
-        title: npc&.name || "NPC")
-    else
-      character = participation.character
-      avatar_text = character&.name.to_s.first.presence || "P"
-      content_tag(:span, avatar_text, class: "avatar avatar--player avatar--#{size}",
-        style: "font-size: #{size_px}px; line-height: #{size_px}px;",
-        title: character&.name || "Player")
-    end
+    character_avatar_tag(participation.character, size:)
   end
 
   # ===========================================================================
@@ -404,7 +384,7 @@ module ArenaHelper
 
   def arena_block_options(participation = current_user_arena_participation, combat_config = Game::Combat::ActionCatalog.config)
     profile = arena_combat_profile(participation)
-    allowed_tables = ["normal"]
+    allowed_tables = ["normal", "magic"]
     allowed_tables << "shield" if profile["block_table"] == "shield"
 
     (combat_config["block_types"] || {}).select do |_key, config|
@@ -439,10 +419,10 @@ module ArenaHelper
     return {} unless stats
 
     {
-      strength: stats.get(:strength) || stats.get(:attack) || character.level * 2,
-      dexterity: stats.get(:dexterity) || stats.get(:agility) || 5,
-      luck: stats.get(:luck) || 5,
-      knowledge: stats.get(:knowledge) || stats.get(:intelligence) || 1,
+      strength: stats.get(:strength),
+      dexterity: stats.get(:dexterity),
+      luck: stats.get(:luck),
+      knowledge: stats.get(:intelligence),
       attack: character.attack_power,
       attack_power: character.attack_power,
       defense: character.defense,
@@ -526,7 +506,7 @@ module ArenaHelper
 
     content_tag(:div, class: "turn-timeout #{css_class}") do
       safe_join([
-        content_tag(:span, "⏱️ Turn timeout: ", class: "timeout-label"),
+        content_tag(:span, "⏱️ Таймаут хода: ", class: "timeout-label"),
         content_tag(:span, time_str, class: "timeout-value",
           data: {controller: "countdown", countdown_seconds_value: remaining})
       ])
@@ -541,13 +521,13 @@ module ArenaHelper
   # @param character [Character] the character
   # @return [String, nil] reason why can't fight, or nil if can
   def arena_access_reason(character)
-    return "Not logged in" unless character
+    return "Нет персонажа" unless character
 
     hp_percent = (character.current_hp.to_f / character.max_hp * 100).round
     min_hp = ArenaApplication::MIN_HP_PERCENT_FOR_ARENA
 
     if hp_percent < min_hp
-      "Recover before fighting - you are too weakened! (#{hp_percent}% HP, need #{min_hp}%)"
+      "Восстановитесь перед боем: #{hp_percent}% HP, нужно #{min_hp}%"
     end
   end
 
@@ -572,7 +552,7 @@ module ArenaHelper
 
     content_tag(:div, class: "arena-warning arena-warning--hp") do
       safe_join([
-        content_tag(:span, "Warning: ", class: "warning-icon"),
+        content_tag(:span, "Внимание: ", class: "warning-icon"),
         content_tag(:span, reason, class: "warning-message")
       ])
     end

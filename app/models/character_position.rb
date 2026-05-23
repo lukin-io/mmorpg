@@ -3,9 +3,7 @@
 # Tracks the authoritative tile location/state for a character inside a zone.
 class CharacterPosition < ApplicationRecord
   enum :state, {
-    active: 0,
-    downed: 1,
-    respawning: 2
+    active: 0
   }
 
   belongs_to :character

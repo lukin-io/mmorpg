@@ -23,7 +23,7 @@ export default class extends Controller {
   static values = {
     playersSort: { type: String, default: "az" },
     autoRefresh: { type: Boolean, default: true },
-    persistKey: { type: String, default: "elselands_layout" }
+    persistKey: { type: String, default: "browser_rpg_layout" }
   }
 
   // Auto-refresh interval
@@ -110,11 +110,6 @@ export default class extends Controller {
   focusChat() {
     const input = document.querySelector(".nl-chat-input-field")
     input?.focus()
-  }
-
-  showActionMenu(event) {
-    // TODO: Show action menu popup
-    console.log("Show action menu")
   }
 
   // =====================

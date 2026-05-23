@@ -24,7 +24,6 @@ module Players
     #
     class LevelUpService
       STAT_POINTS_PER_LEVEL = 5
-      SKILL_POINTS_PER_LEVEL = 1          # Mirrors total unspent numeric skill points
       COMBAT_SKILL_POINTS_PER_LEVEL = 1   # Combat/magic/resistance skills
       PEACE_SKILL_POINTS_START_LEVEL = 5  # Peace skills unlock at level 5
       PEACE_SKILL_POINTS_PER_LEVEL = 1    # Peace skills
@@ -59,27 +58,6 @@ module Players
         )
       end
 
-      # Force a level up (for testing or admin purposes)
-      #
-      # @param levels [Integer] number of levels to grant (default 1)
-      # @return [Result] result with character and points gained
-      def force_level_up!(levels: 1)
-        Character.transaction do
-          levels.times do
-            grant_level_up_rewards
-          end
-          character.update!(last_level_up_at: Time.current)
-        end
-
-        Result.new(
-          character: character,
-          levels_gained: @levels_gained,
-          stat_points_gained: @stat_points_gained,
-          combat_skill_points_gained: @combat_skill_points_gained,
-          peace_skill_points_gained: @peace_skill_points_gained
-        )
-      end
-
       private
 
       attr_reader :character
@@ -102,9 +80,6 @@ module Players
         # Grant stat points
         character.increment!(:stat_points_available, STAT_POINTS_PER_LEVEL)
         @stat_points_gained += STAT_POINTS_PER_LEVEL
-
-        # Maintain the aggregate skill-point counter alongside split pools.
-        character.increment!(:skill_points_available, SKILL_POINTS_PER_LEVEL)
 
         # Grant combat skill points (every level)
         character.increment!(:combat_skill_points, COMBAT_SKILL_POINTS_PER_LEVEL)

@@ -29,7 +29,7 @@ module Arena
       })
     end
 
-    # Broadcast a combat action (attack, skill, etc.)
+    # Broadcast a combat action.
     #
     # @param action [Hash] action details
     def broadcast_action(action)
@@ -43,7 +43,6 @@ module Arena
         action_type: action[:action_type],
         description: action[:description],
         damage: action[:damage],
-        healing: action[:healing],
         is_critical: action[:is_critical],
         is_miss: action[:is_miss],
         result: format_action_result(action)
@@ -85,7 +84,6 @@ module Arena
             result: p[:result],
             damage_dealt: p[:damage_dealt],
             damage_taken: p[:damage_taken],
-            healing_done: p[:healing_done],
             kills: p[:kills]
           }
         end,
@@ -250,7 +248,6 @@ module Arena
           result: p.result,
           damage_dealt: p.metadata&.dig("damage_dealt") || 0,
           damage_taken: p.metadata&.dig("damage_taken") || 0,
-          healing_done: 0,
           kills: p.metadata&.dig("kills") || 0,
           is_npc: true
         }
@@ -262,7 +259,6 @@ module Arena
           result: p.result,
           damage_dealt: p.metadata&.dig("damage_dealt") || 0,
           damage_taken: p.metadata&.dig("damage_taken") || 0,
-          healing_done: p.metadata&.dig("healing_done") || 0,
           kills: p.metadata&.dig("kills") || 0,
           is_npc: false
         }
@@ -339,10 +335,6 @@ module Arena
         parts << "-#{action[:damage]} HP"
       end
 
-      if action[:healing]
-        parts << "+#{action[:healing]} HP"
-      end
-
       parts.join(" ")
     end
 
@@ -384,8 +376,6 @@ module Arena
         "#{target_name} blocked attack#{part_text} from #{actor.name}."
       when "defend"
         "#{actor.name} takes a defensive stance."
-      when "skill"
-        "#{actor.name} uses a skill!"
       else
         "#{actor.name} performs #{action_type}."
       end

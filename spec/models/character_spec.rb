@@ -201,27 +201,6 @@ RSpec.describe Character, type: :model do
         expect(calc1).not_to equal(calc2)
       end
     end
-
-    describe "integration with calculator" do
-      it "keeps movement cooldown unchanged until a source formula is captured" do
-        character.set_passive_skill!(:wanderer, 0)
-        cooldown_at_0 = character.passive_skill_calculator.apply_movement_cooldown(10)
-
-        character.set_passive_skill!(:wanderer, 100)
-        character.clear_passive_skill_cache!
-        cooldown_at_100 = character.passive_skill_calculator.apply_movement_cooldown(10)
-
-        expect(cooldown_at_0).to eq(10)
-        expect(cooldown_at_100).to eq(10)
-      end
-
-      it "does not apply invented intermediate scaling" do
-        character.set_passive_skill!(:wanderer, 50)
-        cooldown = character.passive_skill_calculator.apply_movement_cooldown(10)
-
-        expect(cooldown).to eq(10)
-      end
-    end
   end
 
   # ============================================
@@ -253,12 +232,12 @@ RSpec.describe Character, type: :model do
         expect(stats.get(:dexterity)).to eq(3)
       end
 
-      it "normalizes legacy stat aliases into canonical primary stats" do
+      it "ignores uncaptured stat aliases" do
         character.update!(allocated_stats: {"agility" => 5, "intellect" => 4, "constitution" => 3})
         stats = character.stats
-        expect(stats.get(:dexterity)).to eq(6)
-        expect(stats.get(:intelligence)).to eq(5)
-        expect(stats.get(:vitality)).to eq(4)
+        expect(stats.get(:dexterity)).to eq(1)
+        expect(stats.get(:intelligence)).to eq(1)
+        expect(stats.get(:vitality)).to eq(1)
       end
     end
   end

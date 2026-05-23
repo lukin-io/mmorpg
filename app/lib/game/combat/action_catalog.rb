@@ -33,6 +33,14 @@ module Game
         %w[head torso stomach legs] => {key: "shield_full_block", name: "Shield Full Block", action_cost: 100}
       }.freeze
 
+      MAGIC_BLOCKS = {
+        %w[head torso stomach legs] => [
+          {key: "magic_shield", name: "Magical Shield", action_cost: 45, mana_cost: 20},
+          {key: "rainbow_barrier", name: "Rainbow Barrier", action_cost: 60, mana_cost: 40},
+          {key: "crystal_sphere", name: "Crystal Sphere", action_cost: 90, mana_cost: 65}
+        ]
+      }.freeze
+
       module_function
 
       def config
@@ -51,13 +59,8 @@ module Game
             "spirit_arrow" => {"name" => "Spirit Arrow", "action_cost" => 50, "mana_cost" => 5, "damage_multiplier" => 1.05, "hit_bonus" => 5, "element" => "arcane"},
             "mind_blast" => {"name" => "Mind Blast", "action_cost" => 90, "mana_cost" => 5, "damage_multiplier" => 1.35, "hit_bonus" => 10, "element" => "mind"}
           },
-          "block_types" => standard_blocks_config.merge(shield_blocks_config),
-          "magic_types" => {
-            "magic_shield" => {"name" => "Magic Shield", "action_cost" => 45, "mana_cost" => 20, "type" => 3, "effect" => "shield"},
-            "rainbow_barrier" => {"name" => "Rainbow Barrier", "action_cost" => 60, "mana_cost" => 40, "type" => 3, "effect" => "barrier"},
-            "hp_restore" => {"name" => "HP Restoration", "action_cost" => 30, "mana_cost" => 0, "type" => 4, "effect" => "heal_hp", "amount" => 30},
-            "mp_restore" => {"name" => "MP Restoration", "action_cost" => 30, "mana_cost" => 0, "type" => 4, "effect" => "heal_mp", "amount" => 20}
-          },
+          "block_types" => standard_blocks_config.merge(shield_blocks_config).merge(magic_blocks_config),
+          "magic_types" => {},
           "attack_penalties" => [
             {"attacks" => 0, "penalty" => 0},
             {"attacks" => 1, "penalty" => 0},
@@ -89,6 +92,21 @@ module Game
             "body_parts" => body_parts_for_shield_block_key(entry[:key]),
             "block_table" => "shield"
           }
+        end
+      end
+
+      def magic_blocks_config
+        MAGIC_BLOCKS.each_with_object({}) do |(parts, entries), memo|
+          entries.each do |entry|
+            memo[entry[:key]] = {
+              "key" => entry[:key],
+              "name" => entry[:name],
+              "action_cost" => entry[:action_cost],
+              "mana_cost" => entry[:mana_cost],
+              "body_parts" => parts,
+              "block_table" => "magic"
+            }
+          end
         end
       end
 
@@ -132,9 +150,7 @@ module Game
       def block_config(action_key, combat_config = config)
         return {} if action_key.blank?
 
-        combat_config.dig("block_types", action_key.to_s) ||
-          combat_config.dig("attack_types", action_key.to_s) ||
-          {}
+        combat_config.dig("block_types", action_key.to_s) || {}
       end
 
       def magic_config(action_key, combat_config = config)

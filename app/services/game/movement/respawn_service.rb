@@ -17,8 +17,7 @@ module Game
 
       def ensure_position!
         position = character.position
-        return position if position&.active?
-        return revive(position) if position&.respawn_available_at&.past?
+        return position if position
 
         create_fresh_position!
       end
@@ -35,27 +34,14 @@ module Game
           x: spawn.x,
           y: spawn.y,
           state: :active,
-          last_action_at: nil,
-          respawn_available_at: nil
+          last_action_at: nil
         )
-      end
-
-      def revive(position)
-        spawn = resolve_spawn_point!(zone: position.zone)
-        position.update!(
-          zone: spawn.zone,
-          x: spawn.x,
-          y: spawn.y,
-          state: :active,
-          respawn_available_at: nil
-        )
-        position
       end
 
       def resolve_spawn_point!(zone: nil)
         scope = spawn_scope
         scope = scope.where(zone:) if zone
-        scope.default_entries.first || scope.first!
+        scope.default_entries.first || raise(ActiveRecord::RecordNotFound, "Default spawn point is not configured")
       end
     end
   end

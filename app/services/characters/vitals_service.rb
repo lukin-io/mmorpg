@@ -34,8 +34,6 @@ module Characters
         character.last_combat_at = Time.current
         character.save!
 
-        check_death if character.current_hp <= 0
-
         actual_damage
       end
     end
@@ -43,7 +41,7 @@ module Characters
     # Apply healing to character
     #
     # @param amount [Integer] healing amount
-    # @param source [String] healing source (potion, skill, etc.)
+    # @param source [String] healing source (item name or captured source)
     # @return [Integer] actual amount healed
     def apply_healing(amount, source:)
       character.with_lock do
@@ -55,7 +53,7 @@ module Characters
       end
     end
 
-    # Consume mana for skill/spell use
+    # Consume mana for captured magic/action use
     #
     # @param amount [Integer] mana cost
     # @return [Boolean] true if mana was consumed, false if insufficient
@@ -72,7 +70,7 @@ module Characters
     # Restore mana
     #
     # @param amount [Integer] mana amount
-    # @param source [String] source (potion, skill, etc.)
+    # @param source [String] source (item name or captured source)
     # @return [Integer] actual amount restored
     def restore_mana(amount, source:)
       character.with_lock do
@@ -186,10 +184,6 @@ module Characters
       return character.effective_max_hp if character.respond_to?(:effective_max_hp)
 
       character.max_hp
-    end
-
-    def check_death
-      Characters::DeathHandler.call(character)
     end
   end
 end

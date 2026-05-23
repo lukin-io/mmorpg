@@ -552,10 +552,13 @@ Captured block behavior:
 - a block can succeed, fail against an uncovered body part, or be consumed by
   an incoming hit.
 
-The combat resolver must support hit, miss, dodge, successful block,
-non-critical hit, critical hit, body-part multiplier, defense, damage variance,
-multi-attack NPC rounds, HP/MP restoration, direct damage, area damage, chain
-damage, and persisted status effects.
+The combat resolver must support the source-backed starter outcomes first:
+hit, miss, dodge, successful block, non-critical hit, critical hit, body-part
+multiplier, defense, damage variance, multi-attack NPC rounds, magic attack
+rows such as `Spirit Arrow`, and captured magic guard/block rows. HP/MP
+restoration, direct spell damage outside captured attack rows, area damage,
+chain damage, and persisted status effects require dedicated Neverlands capture
+before implementation.
 
 Remaining source-capture work is tuning: more live Neverlands fights are needed
 to calibrate hidden item-family coefficients and compare local miss, dodge,

@@ -18,7 +18,6 @@ class CreateWorldNavigationSystems < ActiveRecord::Migration[8.1]
       t.integer :x, null: false
       t.integer :y, null: false
       t.string :city_key
-      t.integer :respawn_seconds, null: false, default: 60
       t.boolean :default_entry, null: false, default: false
       t.jsonb :metadata, null: false, default: {}
       t.timestamps
@@ -31,7 +30,6 @@ class CreateWorldNavigationSystems < ActiveRecord::Migration[8.1]
       t.integer :state, null: false, default: 0
       t.integer :last_turn_number, null: false, default: 0
       t.datetime :last_action_at
-      t.datetime :respawn_available_at
       t.timestamps
     end
     add_index :character_positions, [:zone_id, :x, :y]

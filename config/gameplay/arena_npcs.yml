@@ -2,7 +2,7 @@
 # Captured Neverlands-based arena NPC applications only.
 
 training:
-  description: "Training Hall NPC applications for new players (levels 0-5)"
+  description: "Тренировочный Зал NPC applications for new players"
   npcs:
     - key: arena_training_dummy
       name: Манекен

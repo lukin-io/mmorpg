@@ -4,7 +4,7 @@ require "rails_helper"
 
 RSpec.describe "Inventory & Progression UI", type: :system, js: true do
   let(:user) { create(:user) }
-  let(:character) { create(:character, user: user, level: 1, stat_points_available: 2, skill_points_available: 2, combat_skill_points: 2, peace_skill_points: 1) }
+  let(:character) { create(:character, user: user, level: 1, stat_points_available: 2, combat_skill_points: 2, peace_skill_points: 1) }
 
   before do
     character
@@ -32,7 +32,7 @@ RSpec.describe "Inventory & Progression UI", type: :system, js: true do
 
   describe "success cases" do
     it "equips and unequips an item from the inventory UI" do
-      sword_template = create(:item_template, name: "Training Sword", item_type: "equipment", slot: "main_hand", rarity: "common")
+      sword_template = create(:item_template, name: "Перочинный Нож", item_type: "equipment", slot: "main_hand")
       sword = create(:inventory_item, inventory: character.inventory, item_template: sword_template)
 
       visit inventory_path
@@ -49,7 +49,7 @@ RSpec.describe "Inventory & Progression UI", type: :system, js: true do
     end
 
     it "uses a consumable item from the inventory UI" do
-      potion_template = create(:item_template, :consumable, name: "Minor Potion", stat_modifiers: {"heal_hp" => 10})
+      potion_template = create(:item_template, :consumable, name: "Зелье жизни", stat_modifiers: {"heal_hp" => 10})
       potion = create(:inventory_item, inventory: character.inventory, item_template: potion_template)
       character.update!(current_hp: 50, max_hp: 100)
 
@@ -74,7 +74,7 @@ RSpec.describe "Inventory & Progression UI", type: :system, js: true do
       visit skills_character_path(character)
 
       click_visible("button[data-skill-allocation-skill-param='unarmed_combat'].nl-stat-btn--plus")
-      click_visible_button("Save Skills")
+      click_visible_button("Сохранить")
 
       expect(page).to have_css("#flash", text: "Skills allocated!")
     end
@@ -82,7 +82,7 @@ RSpec.describe "Inventory & Progression UI", type: :system, js: true do
 
   describe "failure cases" do
     it "shows a notification when attempting to equip a non-equipment item" do
-      consumable_template = create(:item_template, :consumable, name: "Apple")
+      consumable_template = create(:item_template, :consumable, name: "Зелье")
       item = create(:inventory_item, inventory: character.inventory, item_template: consumable_template)
 
       visit inventory_path
@@ -108,7 +108,7 @@ RSpec.describe "Inventory & Progression UI", type: :system, js: true do
     end
 
     it "rejects skill allocations that exceed available points (server-side validation)" do
-      character.update!(skill_points_available: 0, combat_skill_points: 0, peace_skill_points: 0)
+      character.update!(combat_skill_points: 0, peace_skill_points: 0)
 
       visit skills_character_path(character)
 
@@ -117,7 +117,7 @@ RSpec.describe "Inventory & Progression UI", type: :system, js: true do
         document.querySelector('[data-skill-allocation-target="saveButton"]').removeAttribute("disabled")
       JS
 
-      click_visible_button("Save Skills")
+      click_visible_button("Сохранить")
 
       expect(page).to have_css("#flash", text: "Not enough combat skill points")
     end
@@ -125,7 +125,7 @@ RSpec.describe "Inventory & Progression UI", type: :system, js: true do
 
   describe "null/edge cases" do
     it "shows an error when using a consumable with no effect" do
-      empty_consumable = create(:item_template, item_type: "consumable", slot: "none", stat_modifiers: {"mystery" => 1}, name: "Strange Candy")
+      empty_consumable = create(:item_template, item_type: "consumable", slot: "none", stat_modifiers: {"mystery" => 1}, name: "Неизвестное зелье")
       item = create(:inventory_item, inventory: character.inventory, item_template: empty_consumable)
 
       visit inventory_path

@@ -17,8 +17,8 @@ module Game
         end
 
         def for_zone(zone_name)
-          zone_key = zone_name.to_s.parameterize(separator: "_").to_sym
-          zone_config = config[zone_key]
+          zone_config = config.values.find { |entry| entry[:zone_name] == zone_name.to_s }
+          zone_config ||= config[zone_name.to_s.parameterize(separator: "_").to_sym]
           return [] unless zone_config
 
           zone_config[:npcs] || []

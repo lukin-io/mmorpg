@@ -86,7 +86,7 @@ export default class extends Controller {
       const data = await response.json()
 
       if (data.success) {
-        this.showSuccess("Application submitted!")
+        this.showSuccess("Заявка подана.")
         form.reset()
         this.disableForm()
       } else {
@@ -138,7 +138,7 @@ export default class extends Controller {
     event.preventDefault()
     const applicationId = event.currentTarget.dataset.applicationId
 
-    if (!confirm("Cancel your fight application?")) {
+    if (!confirm("Снять заявку?")) {
       return
     }
 
@@ -154,7 +154,7 @@ export default class extends Controller {
       const data = await response.json()
 
       if (data.success) {
-        this.showSuccess("Application cancelled")
+        this.showSuccess("Заявка снята.")
         this.enableForm()
       } else {
         this.showError(data.errors?.join(", ") || "Failed to cancel application")
@@ -270,14 +270,14 @@ export default class extends Controller {
         <div class="arena-application-info">
           <strong>${app.applicant_name}</strong> [${app.applicant_level}]
           <span class="arena-application-timer">
-            Expires in ${Math.floor(app.expires_in / 60)}m
+            Осталось ${Math.floor(app.expires_in / 60)} мин
           </span>
         </div>
         <div class="arena-application-actions">
           <button class="btn-primary btn-sm"
                   data-action="click->arena#acceptApplication"
                   data-application-id="${app.id}">
-            Accept
+            Принять
           </button>
         </div>
       </div>
@@ -286,9 +286,9 @@ export default class extends Controller {
 
   fightTypeLabel(type) {
     const labels = {
-      duel: "Duel",
-      team_battle: "Group",
-      sacrifice: "FFA"
+      duel: "Дуэли",
+      team_battle: "Групповые",
+      sacrifice: "Жертвенные"
     }
     return labels[type] || type
   }
@@ -300,12 +300,12 @@ export default class extends Controller {
     const timeout = formData.get("timeout_seconds")
 
     if (!fightType) {
-      this.showError("Please select a fight type")
+      this.showError("Выберите тип боя")
       return false
     }
 
     if (!timeout) {
-      this.showError("Please select a timeout")
+      this.showError("Выберите таймаут")
       return false
     }
 

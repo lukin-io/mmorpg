@@ -110,16 +110,22 @@ module Game
           )
         end
 
-        # Use explicit destination coordinates from action_params if provided,
-        # otherwise fall back to spawn point
         dest_x = hotspot.action_params["destination_x"]
         dest_y = hotspot.action_params["destination_y"]
 
         unless dest_x && dest_y
-          spawn_point = hotspot.destination_zone.spawn_points.find_by(default_entry: true) ||
-            hotspot.destination_zone.spawn_points.first
-          dest_x ||= spawn_point&.x || (hotspot.destination_zone.width / 2)
-          dest_y ||= spawn_point&.y || (hotspot.destination_zone.height / 2)
+          spawn_point = hotspot.destination_zone.spawn_points.find_by(default_entry: true)
+
+          unless spawn_point
+            return Result.new(
+              success: false,
+              message: "This exit has no configured entry point.",
+              hotspot: hotspot
+            )
+          end
+
+          dest_x ||= spawn_point.x
+          dest_y ||= spawn_point.y
         end
 
         spawn_x = dest_x

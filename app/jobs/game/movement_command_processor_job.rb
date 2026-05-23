@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Game
-  # MovementCommandProcessorJob drains queued movement commands through the authoritative queue.
+  # MovementCommandProcessorJob accepts server-offered movement commands.
   class MovementCommandProcessorJob < ApplicationJob
     queue_as :movement
 

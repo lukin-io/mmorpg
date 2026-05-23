@@ -57,7 +57,7 @@ FactoryBot.define do
 
     trait :city_gate do
       key { "city_gate" }
-      name { "City Gates" }
+      name { "Ворота Форпоста" }
       hotspot_type { "exit" }
       action_type { "enter_zone" }
       association :destination_zone, factory: :zone

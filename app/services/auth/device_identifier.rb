@@ -2,8 +2,8 @@
 
 module Auth
   class DeviceIdentifier
-    COOKIE_KEY = :elselands_device_id
-    SESSION_KEY = :elselands_device_id
+    COOKIE_KEY = :browser_rpg_device_id
+    SESSION_KEY = :browser_rpg_device_id
 
     def self.resolve(request)
       new(request).resolve

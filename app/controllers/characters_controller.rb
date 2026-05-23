@@ -145,8 +145,7 @@ class CharactersController < ApplicationController
       @character.update!(
         passive_skills: new_skills,
         combat_skill_points: @character.combat_skill_points - combat_spends_total,
-        peace_skill_points: @character.peace_skill_points - peace_spends_total,
-        skill_points_available: @character.skill_points_available - (combat_spends_total + peace_spends_total)
+        peace_skill_points: @character.peace_skill_points - peace_spends_total
       )
     end
 

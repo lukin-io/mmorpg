@@ -26,14 +26,14 @@
   <div class="nl-allocation-pools">
     <div class="nl-allocation-pool nl-allocation-pool--combat">
       <span class="nl-allocation-pool-icon">⚔️</span>
-      <span class="nl-allocation-pool-label">Combat/Magic Points:</span>
+      <span class="nl-allocation-pool-label">Боевые очки:</span>
       <span class="nl-allocation-pool-value" data-skill-allocation-target="combatPoints">
         <%= @combat_skill_points %>
       </span>
     </div>
     <div class="nl-allocation-pool nl-allocation-pool--peace">
       <span class="nl-allocation-pool-icon">🕊️</span>
-      <span class="nl-allocation-pool-label">Peace Points:</span>
+      <span class="nl-allocation-pool-label">Мирные очки:</span>
       <span class="nl-allocation-pool-value" data-skill-allocation-target="peacePoints">
         <%= @peace_skill_points %>
       </span>
@@ -56,9 +56,6 @@
             <% end %>
           </span>
           <%= category_info[:name] %>
-          <span class="nl-skill-category-pool">
-            (uses <%= category_info[:pool] == :peace ? "Peace" : "Combat" %> points)
-          </span>
         </h3>
 
         <div class="nl-skills-grid">
@@ -121,26 +118,15 @@
       <button type="button"
               class="nl-btn nl-btn--secondary"
               data-action="click->skill-allocation#reset">
-        Reset
+        Сброс
       </button>
       <button type="submit"
               class="nl-btn nl-btn--primary nl-btn--disabled"
               data-skill-allocation-target="saveButton"
               disabled>
-        Save Skills
+        Сохранить
       </button>
     </div>
   <% end %>
 
-  <%# Tiered Progression Legend %>
-  <div class="nl-skill-legend">
-    <h4>Tiered Progression</h4>
-    <p>Skills gain more points at lower levels:</p>
-    <ul>
-      <li><strong>Level 0-24:</strong> Higher gains (e.g., +10 per spend)</li>
-      <li><strong>Level 25-49:</strong> Medium gains (e.g., +8 per spend)</li>
-      <li><strong>Level 50-74:</strong> Lower gains (e.g., +6 per spend)</li>
-      <li><strong>Level 75-99:</strong> Lowest gains (e.g., +4 per spend)</li>
-    </ul>
-  </div>
 </div>

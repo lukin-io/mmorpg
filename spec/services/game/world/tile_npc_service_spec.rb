@@ -12,7 +12,7 @@ RSpec.describe Game::World::TileNpcService do
   it "materializes the captured Neverlands rat on the captured tile" do
     service = described_class.new(
       character:,
-      zone: "Outpost Surroundings",
+      zone: "Окрестность Форпоста",
       x: 1001,
       y: 999
     )
@@ -33,7 +33,7 @@ RSpec.describe Game::World::TileNpcService do
   it "does not spawn generic NPCs on uncaptured coordinates" do
     service = described_class.new(
       character:,
-      zone: "Outpost Surroundings",
+      zone: "Окрестность Форпоста",
       x: 1002,
       y: 999
     )

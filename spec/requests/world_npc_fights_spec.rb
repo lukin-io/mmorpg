@@ -6,7 +6,7 @@ RSpec.describe "World NPC fights", type: :request do
   include Devise::Test::IntegrationHelpers
 
   let(:user) { create(:user) }
-  let(:zone) { create(:zone, name: "Outpost Surroundings") }
+  let(:zone) { create(:zone, name: "Окрестность Форпоста") }
   let(:character) { create(:character, user:, level: 3, current_hp: 100, max_hp: 100) }
   let!(:position) { create(:character_position, character:, zone:, x: 5, y: 5) }
   let(:npc_template) do

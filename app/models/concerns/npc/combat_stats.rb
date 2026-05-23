@@ -2,7 +2,7 @@
 
 module Npc
   # Shared stat access for source-backed NPCs. Stats are read from captured
-  # metadata only; no level-derived fantasy formulas are invented here.
+  # metadata only; no level-derived generic formulas are invented here.
   module CombatStats
     extend ActiveSupport::Concern
 

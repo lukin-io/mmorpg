@@ -98,9 +98,10 @@ JSON action keys if they preserve the same authorization contract.
 ## Room Rules
 
 - Rooms can restrict level range, alignment/sign, or fight type.
-- The core room ladder is: help/new-player, training, trial/challenge,
-  initiation, patron, and alignment halls for Law, Light, Balance, Chaos, and
-  Dark.
+- The core room ladder is: `Зал Помощи`, `Тренировочный зал`,
+  `Зал Испытаний`, `Зал Посвящения`, `Зал Покровителей`, and alignment halls
+  for `Зал Закона`, `Зал Света`, `Зал Равновесия`, `Зал Хаоса`, and
+  `Зал Тьмы`.
 - Applications define fight type, equipment rule, timeout, trauma/risk, wait
   time, and team constraints.
 - Another eligible player may accept an application.

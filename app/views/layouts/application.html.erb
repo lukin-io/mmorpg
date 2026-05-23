@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <title><%= content_for(:title) || "Elselands" %></title>
+    <title><%= content_for(:title) || "Browser RPG" %></title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="application-name" content="Elselands">
+    <meta name="application-name" content="Browser RPG">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#3D3929">
     <%= csrf_meta_tags %>
@@ -30,7 +30,7 @@
       <%# Game Header with navigation %>
       <header class="game-header">
         <div class="game-header-inner">
-          <%= link_to "Elselands", root_path, class: "game-logo" %>
+          <%= link_to "Browser RPG", root_path, class: "game-logo" %>
           <% player_character = current_user&.character %>
           <% player_profile_path = if player_character
                player_path(name: player_character.name)
@@ -85,7 +85,7 @@
 
       <%# Footer %>
       <footer class="game-footer">
-        <p class="copy">© <%= Time.current.year %> Elselands • Ruby on Rails MMORPG</p>
+        <p class="copy">© <%= Time.current.year %> Browser RPG • Ruby on Rails MMORPG</p>
       </footer>
 
       <%# Mobile Bottom Navigation %>

@@ -67,7 +67,7 @@ module Game
         provider = Game::Movement::TileProvider.new(zone: position.zone)
         validator = Game::Movement::MovementValidator.new(provider)
 
-        Game::Movement::TurnProcessor::OFFSETS.filter_map do |direction, (dx, dy)|
+        Game::Movement::Directions::OFFSETS.filter_map do |direction, (dx, dy)|
           target_x = position.x + dx
           target_y = position.y + dy
           next unless validator.valid?(target_x, target_y)

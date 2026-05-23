@@ -38,8 +38,8 @@ RSpec.describe WorldHelper, type: :helper do
   end
 
   describe "#in_city?" do
-    let(:city_zone) { create(:zone, name: "Capital", location_type: "city") }
-    let(:outdoor_zone) { create(:zone, name: "Outpost Surroundings", location_type: "outdoor") }
+    let(:city_zone) { create(:zone, name: "Форпост", location_type: "city") }
+    let(:outdoor_zone) { create(:zone, name: "Окрестность Форпоста", location_type: "outdoor") }
     let(:character) { create(:character) }
 
     it "returns true for city location type" do

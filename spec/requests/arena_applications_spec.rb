@@ -23,7 +23,7 @@ RSpec.describe "ArenaApplications", type: :request do
       name: "Test Arena",
       level_min: 1,
       level_max: 100,
-      room_type: :challenge,
+      room_type: :trial,
       active: true)
   end
 

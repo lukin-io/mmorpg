@@ -3,7 +3,7 @@
 # Arena room within arena complex with level/alignment restrictions.
 #
 # @example Check if character can access room
-#   room = ArenaRoom.find_by(slug: "training-hall")
+#   room = ArenaRoom.find_by(slug: "training")
 #   room.accessible_by?(character) # => true/false
 #
 # @example Get active applications for a room
@@ -11,9 +11,9 @@
 #
 class ArenaRoom < ApplicationRecord
   ROOM_TYPES = {
-    training: 0,    # Levels 0-5, reduced penalties
-    trial: 1,       # Levels 5-10, beginner competitive
-    challenge: 2,   # Levels 5-33, open range duels
+    help: 0,
+    training: 1,
+    trial: 2,
     initiation: 3,  # Levels 9-33, mid-level progression
     patron: 4,      # Levels 16-33, high-level competitive
     law: 5,

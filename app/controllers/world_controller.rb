@@ -68,7 +68,7 @@ class WorldController < ApplicationController
       format.turbo_stream { render_map_update }
       format.html { redirect_to world_path, notice: "Moving #{result.command.direction}." }
     end
-  rescue Game::Movement::TurnProcessor::MovementViolationError => e
+  rescue Game::Movement::MovementViolationError => e
     respond_to do |format|
       format.turbo_stream { render_movement_error(e.message) }
       format.html { redirect_to world_path, alert: e.message }
@@ -85,9 +85,7 @@ class WorldController < ApplicationController
       return redirect_to world_path, alert: "Location not found."
     end
 
-    # Find spawn point in target zone
-    spawn_point = target_zone.spawn_points.default_entries.first ||
-      target_zone.spawn_points.first
+    spawn_point = target_zone.spawn_points.default_entries.first
 
     if spawn_point.nil?
       return redirect_to world_path, alert: "No entry point available."
@@ -105,17 +103,19 @@ class WorldController < ApplicationController
   end
 
   def exit_location
-    # Find the parent/outdoor zone
     current_zone = @position.zone
-    exit_zone = Zone.find_by(name: current_zone.metadata&.dig("exit_to")) ||
-      Zone.find_by(location_type: "outdoor")
+    exit_zone_name = current_zone.metadata&.dig("exit_to")
+    exit_zone = Zone.find_by(name: exit_zone_name) if exit_zone_name.present?
 
     if exit_zone.nil?
       return redirect_to world_path, alert: "No exit available."
     end
 
-    spawn_point = exit_zone.spawn_points.default_entries.first ||
-      exit_zone.spawn_points.first
+    spawn_point = exit_zone.spawn_points.default_entries.first
+
+    if spawn_point.nil?
+      return redirect_to world_path, alert: "No exit entry point available."
+    end
 
     @position.update!(
       zone: exit_zone,
@@ -261,18 +261,20 @@ class WorldController < ApplicationController
     return if current_character.position.present?
 
     # Create initial position in starter city zone.
-    starter_zone = Zone.find_by(location_type: "city") || Zone.first
+    starter_zone = Zone.find_by(location_type: "city")
     unless starter_zone
       return render "world/no_zones", status: :service_unavailable
     end
 
-    spawn = starter_zone.spawn_points.default_entries.first ||
-      starter_zone.spawn_points.first
+    spawn = starter_zone.spawn_points.default_entries.first
+    unless spawn
+      return render "world/no_zones", status: :service_unavailable
+    end
 
     current_character.create_position!(
       zone: starter_zone,
-      x: spawn&.x || 5,
-      y: spawn&.y || 5,
+      x: spawn.x,
+      y: spawn.y,
       state: :active,
       last_turn_number: 0
     )
@@ -287,14 +289,17 @@ class WorldController < ApplicationController
       zone: @position.zone.name,
       x: @position.x,
       y: @position.y
-    ) || default_tile
+    ) || missing_tile(@position.x, @position.y)
   end
 
-  def default_tile
+  def missing_tile(x, y)
     OpenStruct.new(
-      terrain_type: @position.zone.location_type,
-      walkable: true,
-      metadata: {}
+      x:,
+      y:,
+      terrain_type: "unconfigured",
+      walkable: false,
+      passable: false,
+      metadata: {"missing_template" => true}
     )
   end
 
@@ -312,14 +317,7 @@ class WorldController < ApplicationController
     y_range.each do |y|
       row = []
       x_range.each do |x|
-        tile = db_tiles[[x, y]] || OpenStruct.new(
-          x: x,
-          y: y,
-          terrain_type: zone.location_type,
-          walkable: true,
-          passable: true,
-          metadata: {}
-        )
+        tile = db_tiles[[x, y]] || missing_tile(x, y)
         row << tile
       end
       tiles << row unless row.empty?
@@ -338,7 +336,6 @@ class WorldController < ApplicationController
       ((@position.x - 2)..(@position.x + 2)).each do |x|
         next if x < 0 || y < 0 || x >= zone.width || y >= zone.height
 
-        # Get explicit tile template or use the zone type fallback.
         tile_template = MapTileTemplate.find_by(zone: zone.name, x: x, y: y)
 
         if tile_template
@@ -354,17 +351,10 @@ class WorldController < ApplicationController
             metadata: metadata
           )
         else
-          # Missing templates fall back to the zone type. Do not generate
-          # fantasy terrain/resource assumptions without Neverlands capture.
           metadata = add_live_tile_features(zone.name, x, y, {})
-
-          row << OpenStruct.new(
-            x: x,
-            y: y,
-            terrain_type: zone.location_type,
-            walkable: true,
-            metadata: metadata
-          )
+          tile = missing_tile(x, y)
+          tile.metadata = tile.metadata.merge(metadata)
+          row << tile
         end
       end
       tiles << row unless row.empty?
@@ -421,7 +411,7 @@ class WorldController < ApplicationController
     end
 
     # Location-specific actions
-    if @position.zone.city?
+    if @position.zone.city? && @position.zone.metadata&.dig("exit_to").present?
       actions << {type: :exit, label: "Exit City"}
     end
 

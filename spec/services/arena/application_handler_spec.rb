@@ -14,7 +14,7 @@ RSpec.describe Arena::ApplicationHandler do
       slug: "test-arena",
       level_min: 1,
       level_max: 100,
-      room_type: :challenge,
+      room_type: :trial,
       active: true,
       max_concurrent_matches: 10)
   end
@@ -371,7 +371,7 @@ RSpec.describe Arena::ApplicationHandler do
     # ============================================
 
     context "with NPC application" do
-      let(:npc_template) { create(:npc_template, name: "Training Dummy", level: 5, role: "arena_bot") }
+      let(:npc_template) { create(:npc_template, name: "Манекен", level: 5, role: "arena_bot") }
       let!(:npc_application) do
         create(:arena_application,
           applicant: nil,

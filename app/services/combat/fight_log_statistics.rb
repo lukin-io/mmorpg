@@ -2,7 +2,6 @@
 
 module Combat
   class FightLogStatistics
-    ELEMENTS = %w[normal fire water earth air arcane mind].freeze
     HIT_TYPES = %w[attack damage critical].freeze
 
     attr_reader :fight, :entries
@@ -24,9 +23,7 @@ module Combat
           visible: true,
           total_damage: participant_entries.sum(:damage_amount),
           total_hits: participant_entries.where(log_type: HIT_TYPES).count,
-          total_healing: participant_entries.sum(:healing_amount),
-          xp_earned: 0,
-          element_damages: element_damages(participant_entries)
+          xp_earned: 0
         }
       end
     end
@@ -39,7 +36,6 @@ module Combat
           members: team_participants.count,
           alive: team_participants.count { |participant| participant_alive?(participant) },
           total_damage: team_entries.sum(:damage_amount),
-          total_healing: team_entries.sum(:healing_amount),
           total_hits: team_entries.where(log_type: HIT_TYPES).count
         }
       end
@@ -47,22 +43,6 @@ module Combat
 
     def total_damage
       entries.sum(:damage_amount)
-    end
-
-    def total_healing
-      entries.sum(:healing_amount)
-    end
-
-    def element_breakdown
-      ELEMENTS.each_with_object({}) do |element, hash|
-        element_entries = entries.where("? = ANY(tags)", element)
-        damage = element_entries.sum(:damage_amount)
-        hash[element] = {
-          damage:,
-          hits: element_entries.where(log_type: HIT_TYPES).count,
-          percentage: percentage(damage, total_damage)
-        }
-      end
     end
 
     def body_part_breakdown
@@ -83,7 +63,6 @@ module Combat
         {
           round:,
           total_damage: round_entries.sum(:damage_amount),
-          total_healing: round_entries.sum(:healing_amount),
           events: round_entries.count
         }
       end
@@ -102,8 +81,6 @@ module Combat
         status: fight.status,
         duration_seconds: duration&.to_i,
         total_damage:,
-        total_healing:,
-        element_breakdown:,
         body_part_breakdown:,
         participants: by_participant,
         teams: by_team,
@@ -128,16 +105,6 @@ module Combat
       end
     end
 
-    def element_damages(scope)
-      ELEMENTS.each_with_object({}) do |element, hash|
-        element_entries = scope.where("? = ANY(tags)", element)
-        hash[element] = {
-          damage: element_entries.sum(:damage_amount),
-          hits: element_entries.where(log_type: HIT_TYPES).count
-        }
-      end
-    end
-
     def fight_type
       fight.match_type
     end
@@ -156,12 +123,6 @@ module Combat
 
     def participant_alive?(participant)
       participant.current_hp.positive?
-    end
-
-    def percentage(value, total)
-      return 0 if total.zero?
-
-      ((value.to_f / total) * 100).round(1)
     end
   end
 end

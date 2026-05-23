@@ -2,8 +2,8 @@
 
 FactoryBot.define do
   factory :arena_room do
-    sequence(:name) { |n| "Arena Room #{n}" }
-    sequence(:slug) { |n| "arena-room-#{n}" }
+    sequence(:name) { |n| "Тренировочный Зал #{n}" }
+    sequence(:slug) { |n| "training-room-#{n}" }
     room_type { :training }
     level_min { 1 }
     level_max { 100 }
@@ -24,7 +24,7 @@ FactoryBot.define do
     end
 
     trait :standard do
-      room_type { :challenge }
+      room_type { :trial }
       level_min { 1 }
       level_max { 100 }
     end

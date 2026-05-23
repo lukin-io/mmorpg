@@ -71,15 +71,6 @@
   --nl-chat-whisper: #D16F67;
   --nl-chat-system: #EF6B00;
 
-  /* Rarity colors */
-  --nl-rarity-common: #666666;
-  --nl-rarity-uncommon: #087C20;
-  --nl-rarity-rare: #0052A6;
-  --nl-rarity-epic: #9933CC;
-  --nl-rarity-legendary: #FF6600;
-  --nl-rarity-artifact: #CC9900;
-  --nl-rarity-heirloom: #0099CC;
-
   /* Team/alignment colors */
   --nl-alignment-light: #0052A6;
   --nl-alignment-dark: #990000;
@@ -1660,40 +1651,6 @@ textarea {
    GAME UI ELEMENTS
    ============================================ */
 
-/* Combat/Fight text styles */
-.fight-text {
-  font-family: var(--nl-font-primary);
-  font-size: 0.9rem;
-  color: var(--nl-text-primary);
-}
-
-.fight-damage { color: #cc0000; font-weight: bold; }
-.fight-heal { color: #00cc00; font-weight: bold; }
-.fight-miss { color: #888888; font-style: italic; }
-.fight-critical { color: #ff6600; font-weight: bold; text-shadow: 0 0 5px #ff6600; }
-
-.fight-time {
-  font-size: 0.8rem;
-  color: var(--nl-text-muted);
-}
-
-.fight-log {
-  font-size: 0.85rem;
-  line-height: 1.6;
-  max-height: 300px;
-  overflow-y: auto;
-  padding: var(--nl-space-sm);
-  background: var(--nl-bg-dark);
-  border-radius: var(--nl-radius-sm);
-}
-
-.fight-log-entry {
-  padding: var(--nl-space-xs) 0;
-  border-bottom: 1px solid var(--nl-border-light);
-}
-
-.fight-log-entry:last-child { border-bottom: none; }
-
 /* Place/Location name styling */
 .place-name {
   font-size: 1.1rem;
@@ -2575,9 +2532,6 @@ turbo-frame[busy] {
 }
 
 .combat-log--damage { color: #ff6b6b; }
-.combat-log--heal { color: #69db7c; }
-.combat-log--buff { color: #74c0fc; }
-.combat-log--debuff { color: #da77f2; }
 .combat-log--critical { color: #ffd43b; font-weight: bold; text-shadow: 0 0 4px rgba(255,212,59,0.5); }
 .combat-log--miss { color: #868e96; font-style: italic; }
 .combat-log--dodge { color: #adb5bd; }
@@ -3108,10 +3062,6 @@ turbo-frame[busy] {
 .combat-log--critical {
   color: #ffd43b;
   font-weight: bold;
-}
-
-.combat-log--heal {
-  color: #40c057;
 }
 
 .combat-log--victory {
@@ -4530,15 +4480,6 @@ turbo-frame[busy] {
   animation: low-hp-pulse 1s infinite;
 }
 
-.combat-status-effect {
-  padding: var(--nl-space-xs) var(--nl-space-sm);
-  background: rgba(74, 139, 179, 0.2);
-  border: 1px solid var(--nl-info);
-  border-radius: var(--nl-radius);
-  color: var(--nl-info);
-  font-size: 0.85rem;
-}
-
 /* Combat Log */
 .combat-log-container {
   max-height: 200px;
@@ -5141,12 +5082,6 @@ turbo-frame[busy] {
   border-radius: 3px;
 }
 
-.item-rarity--common { border-color: #888; }
-.item-rarity--uncommon { border-color: #2a2; }
-.item-rarity--rare { border-color: #44f; }
-.item-rarity--epic { border-color: #a4a; }
-.item-rarity--legendary { border-color: var(--nl-gold); }
-
 .item-tooltip {
   position: absolute;
   bottom: 100%;
@@ -5197,12 +5132,6 @@ turbo-frame[busy] {
 .item-price {
   margin: var(--nl-space-md) 0;
 }
-
-.rarity--common { color: #888; }
-.rarity--uncommon { color: #4a9; }
-.rarity--rare { color: #48f; }
-.rarity--epic { color: #a4a; }
-.rarity--legendary { color: var(--nl-gold); }
 
 /* ==========================================================================
    MOBILE HUD STYLES
@@ -6104,144 +6033,6 @@ turbo-frame[busy] {
   opacity: 1;
 }
 
-/* Combat log */
-.nl-combat-log {
-  max-height: 200px;
-  overflow-y: auto;
-  background: var(--combat-bg-white);
-  border: 1px solid var(--combat-border);
-  border-radius: 0;
-  margin-top: 8px;
-}
-
-/* Custom scrollbar for combat log */
-.nl-combat-log::-webkit-scrollbar {
-  width: 8px;
-}
-
-.nl-combat-log::-webkit-scrollbar-track {
-  background: var(--combat-bg-gray);
-}
-
-.nl-combat-log::-webkit-scrollbar-thumb {
-  background: var(--combat-border);
-  border-radius: 2px;
-}
-
-.nl-combat-log::-webkit-scrollbar-thumb:hover {
-  background: var(--combat-text-dim);
-}
-
-.nl-log-container {
-  padding: 4px;
-}
-
-.nl-log-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.nl-log-entry {
-  padding: 5px 8px;
-  border-bottom: 1px solid var(--combat-border);
-  line-height: 1.5;
-  font-size: 11px;
-}
-
-.nl-log-entry:last-child {
-  border-bottom: none;
-}
-
-.nl-log-time {
-  color: var(--combat-text-dim);
-  font-size: 10px;
-  margin-right: 6px;
-  font-family: monospace;
-}
-
-.nl-log-system {
-  color: var(--combat-text-dim);
-  font-style: italic;
-}
-
-.nl-log-attack {
-  color: var(--combat-text);
-}
-
-.nl-log-skill {
-  color: var(--combat-blue-bright);
-}
-
-.nl-log-heal {
-  color: var(--combat-green);
-}
-
-.nl-log-defeat {
-  color: var(--combat-red);
-  font-weight: bold;
-}
-
-.nl-log-victory {
-  color: var(--combat-green);
-  font-weight: bold;
-}
-
-.nl-log-bodypart {
-  color: var(--combat-gold-dim);
-  font-style: italic;
-}
-
-.nl-log-damage {
-  color: var(--combat-red-bright);
-  font-weight: bold;
-}
-
-.nl-log-miss {
-  color: var(--combat-text-dim);
-  font-style: italic;
-}
-
-.nl-log-critical {
-  color: #CC0000;
-  font-weight: bold;
-}
-
-/* New log entry animation */
-.nl-log-new {
-  animation: log-entry-highlight 1.5s ease-out;
-}
-
-@keyframes log-entry-highlight {
-  0% {
-    background: rgba(196, 163, 90, 0.3);
-  }
-  100% {
-    background: transparent;
-  }
-}
-
-.nl-log-buff {
-  color: #0066aa;
-}
-
-/* Waiting message */
-.nl-waiting-message {
-  text-align: center;
-  padding: 20px;
-  background: #f5f5f5;
-}
-
-.nl-rewards {
-  margin-top: 15px;
-  text-align: left;
-  display: inline-block;
-}
-
-.nl-rewards ul {
-  margin: 5px 0;
-  padding-left: 20px;
-}
-
 /* Stats table */
 .nl-stats-table {
   width: 100%;
@@ -6609,37 +6400,6 @@ turbo-frame[busy] {
   margin-left: 4px;
 }
 
-.entry-content .damage.element-normal { color: #ccc; }
-.entry-content .damage.element-fire { color: #E80005; background: rgba(232, 0, 5, 0.2); }
-.entry-content .damage.element-water { color: #1C60C6; background: rgba(28, 96, 198, 0.2); }
-.entry-content .damage.element-earth { color: #8B4513; background: rgba(139, 69, 19, 0.2); }
-.entry-content .damage.element-air { color: #14BCE0; background: rgba(20, 188, 224, 0.2); }
-.entry-content .damage.element-arcane { color: #9932CC; background: rgba(153, 50, 204, 0.2); }
-
-.entry-content .healing {
-  color: #4a9900;
-  font-weight: bold;
-}
-
-.entry-content .skill-name {
-  font-weight: bold;
-}
-
-.entry-content .skill-name.element-fire { color: #E80005; }
-.entry-content .skill-name.element-water { color: #1C60C6; }
-.entry-content .skill-name.element-earth { color: #8B4513; }
-.entry-content .skill-name.element-air { color: #14BCE0; }
-.entry-content .skill-name.element-arcane { color: #9932CC; }
-
-.entry-content .restoration {
-  color: #4a9900;
-}
-
-.entry-content .status-effect {
-  color: #ff9900;
-  font-weight: bold;
-}
-
 .entry-content .duration {
   color: #888;
   font-size: 11px;
@@ -6668,8 +6428,6 @@ turbo-frame[busy] {
 
 /* Log type-specific border colors */
 .log-entry.log-type-attack { border-left-color: #cc4444; }
-.log-entry.log-type-skill { border-left-color: #9932CC; }
-.log-entry.log-type-restoration { border-left-color: #4a9900; }
 .log-entry.log-type-block { border-left-color: #4a9eff; }
 .log-entry.log-type-miss { border-left-color: #666; }
 .log-entry.log-type-death { border-left-color: #cc0000; }
@@ -6794,56 +6552,6 @@ turbo-frame[busy] {
   border-bottom: 1px solid #3a3a5a;
 }
 
-/* Element Breakdown */
-.element-bars {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.element-bar {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-}
-
-.element-label {
-  width: 100px;
-  font-size: 13px;
-}
-
-.bar-container {
-  flex: 1;
-  height: 24px;
-  background: rgba(0, 0, 0, 0.4);
-  border-radius: 4px;
-  position: relative;
-  overflow: hidden;
-}
-
-.bar-fill {
-  height: 100%;
-  border-radius: 4px;
-  transition: width 0.5s ease;
-}
-
-.element-bar.element-normal .bar-fill { background: linear-gradient(90deg, #666, #888); }
-.element-bar.element-fire .bar-fill { background: linear-gradient(90deg, #E80005, #ff4444); }
-.element-bar.element-water .bar-fill { background: linear-gradient(90deg, #1C60C6, #4a9eff); }
-.element-bar.element-earth .bar-fill { background: linear-gradient(90deg, #8B4513, #a67c52); }
-.element-bar.element-air .bar-fill { background: linear-gradient(90deg, #14BCE0, #66ddff); }
-.element-bar.element-arcane .bar-fill { background: linear-gradient(90deg, #9932CC, #cc66ff); }
-
-.bar-value {
-  position: absolute;
-  right: 10px;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 11px;
-  color: #fff;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
-}
-
 /* Stats Table */
 .stats-table-container {
   overflow-x: auto;
@@ -6894,16 +6602,6 @@ turbo-frame[busy] {
 .stats-table tr.team-alpha td { background: rgba(0, 82, 166, 0.1); }
 .stats-table tr.team-beta td { background: rgba(8, 124, 32, 0.1); }
 .stats-table tr.dead td { opacity: 0.5; }
-
-.stats-table .damage-cell {
-  font-weight: bold;
-}
-
-.stats-table .damage-cell.element-fire { color: #E80005; }
-.stats-table .damage-cell.element-water { color: #1C60C6; }
-.stats-table .damage-cell.element-earth { color: #8B4513; }
-.stats-table .damage-cell.element-air { color: #14BCE0; }
-.stats-table .damage-cell.element-arcane { color: #9932CC; }
 
 .stats-table .hits-count {
   font-size: 10px;
@@ -7045,11 +6743,6 @@ turbo-frame[busy] {
   width: 100%;
 }
 
-.round-bar .healing-bar {
-  background: #4a9900;
-  width: 100%;
-}
-
 .round-bar .round-events {
   font-size: 9px;
   color: #666;
@@ -7064,8 +6757,6 @@ turbo-frame[busy] {
 }
 
 .legend-item.damage { color: #cc4444; }
-.legend-item.healing { color: #4a9900; }
-
 /* Stats Footer */
 .stats-footer {
   text-align: center;

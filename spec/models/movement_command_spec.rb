@@ -11,10 +11,13 @@ RSpec.describe MovementCommand, type: :model do
       expect(command.errors[:action_key]).to include("can't be blank")
     end
 
-    it "allows legacy queued commands without travel fields" do
-      command = build(:movement_command, status: :queued, action_key: nil, travel_seconds: nil)
+    it "requires server-authored travel fields" do
+      command = build(:movement_command, action_key: nil, travel_seconds: nil, from_x: nil)
 
-      expect(command).to be_valid
+      expect(command).not_to be_valid
+      expect(command.errors[:action_key]).to include("can't be blank")
+      expect(command.errors[:travel_seconds]).to include("is not a number")
+      expect(command.errors[:from_x]).to include("is not a number")
     end
   end
 

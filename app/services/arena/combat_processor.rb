@@ -20,14 +20,6 @@ module Arena
     BLOCK_AP_COST = 30
     BODY_PARTS = Game::Combat::ActionCatalog::BODY_PARTS
 
-    # Attack type configurations
-    ATTACK_TYPES = {
-      simple: {ap_cost: 45, damage_mult: 1.0, hit_bonus: 0, name: "Simple"},
-      aimed: {ap_cost: 65, damage_mult: 1.2, hit_bonus: 15, name: "Aimed"},
-      spirit_arrow: {ap_cost: 50, mana_cost: 5, damage_mult: 1.05, hit_bonus: 5, name: "Spirit Arrow", element: "arcane"},
-      mind_blast: {ap_cost: 90, mana_cost: 5, damage_mult: 1.35, hit_bonus: 10, name: "Mind Blast", element: "mind"}
-    }.freeze
-
     # Body part damage multipliers
     BODY_PART_MULTIPLIERS = {
       "head" => 1.3,
@@ -239,7 +231,6 @@ module Arena
       )
 
       finalize_participations(winning_team)
-      apply_trauma
 
       # End match messages
       case reason
@@ -343,7 +334,7 @@ module Arena
 
       validation_errors = validate_turn_actions(normalized_attacks, normalized_blocks, normalized_skills, actor: character)
       return failure(validation_errors.join(", ")) if validation_errors.any?
-      mana_errors = validate_turn_mana(character, normalized_attacks, normalized_skills)
+      mana_errors = validate_turn_mana(character, normalized_attacks, normalized_blocks, normalized_skills)
       return failure(mana_errors.join(", ")) if mana_errors.any?
 
       turn_results = {
@@ -353,7 +344,7 @@ module Arena
         total_ap: calculate_turn_ap_cost(normalized_attacks, normalized_blocks, normalized_skills, actor: character)
       }
 
-      spend_turn_mana!(character, normalized_attacks, normalized_skills)
+      spend_turn_mana!(character, normalized_attacks, normalized_blocks, normalized_skills)
 
       normalized_skills.each do |skill|
         skill_result = process_turn_skill(character, skill, target)
@@ -399,7 +390,7 @@ module Arena
       validation_errors = validate_turn_actions(normalized_attacks, normalized_blocks, normalized_skills, actor: character)
       return failure(validation_errors.join(", ")) if validation_errors.any?
 
-      mana_errors = validate_turn_mana(character, normalized_attacks, normalized_skills)
+      mana_errors = validate_turn_mana(character, normalized_attacks, normalized_blocks, normalized_skills)
       return failure(mana_errors.join(", ")) if mana_errors.any?
 
       ap_limit = combat_ap_limit_for(character)
@@ -420,7 +411,7 @@ module Arena
         participation.reload
         return failure("Turn already submitted; waiting for opponent") if pending_turn_current?(participation)
 
-        spend_turn_mana!(character, normalized_attacks, normalized_skills)
+        spend_turn_mana!(character, normalized_attacks, normalized_blocks, normalized_skills)
 
         participation.metadata ||= {}
         participation.metadata["pending_turn"] = pending_turn
@@ -498,6 +489,9 @@ module Arena
     end
 
     def process_attack(attacker, target, attack_type: :simple, body_part: "torso")
+      return failure("Invalid attack type: #{attack_type}") if Game::Combat::ActionCatalog.attack_config(attack_type).blank?
+      return failure("Invalid body part: #{body_part}") unless BODY_PARTS.include?(body_part.to_s)
+
       # Find target - could be Character or NPC participation
       target_participation = find_target_participation(attacker, target)
       return failure("No valid target") unless target_participation
@@ -656,51 +650,6 @@ module Arena
       end
     end
 
-    def skill_target_participation(character, skill, fallback_target)
-      data = normalized_hash(skill)
-      if data[:target_participation_id].present?
-        found = match.arena_participations.find_by(id: data[:target_participation_id])
-        return found if found
-      end
-
-      if data[:target_id].present?
-        found = match.arena_participations.find_by(character_id: data[:target_id])
-        return found if found
-
-        if data[:target_id].to_s.start_with?("npc-")
-          npc_id = data[:target_id].to_s.sub("npc-", "").to_i
-          found = match.arena_participations.find_by(npc_template_id: npc_id)
-          return found if found
-        end
-      end
-
-      fallback_target.is_a?(ArenaParticipation) ? fallback_target : find_target_participation(character, fallback_target)
-    end
-
-    def opponent_participations_for(character)
-      team = match.arena_participations.find_by(character:)&.team
-      match.arena_participations.includes(:character, :npc_template).where.not(team:).select do |participation|
-        participation_hp(participation).positive?
-      end
-    end
-
-    def apply_arena_effect!(target_participation, key, effect, config)
-      return unless target_participation
-      return if effect.blank? || effect == "damage"
-
-      target_participation.metadata ||= {}
-      target_participation.metadata["effects"] ||= []
-      target_participation.metadata["effects"] << {
-        "key" => key,
-        "effect" => effect,
-        "duration" => config["duration"].to_i.positive? ? config["duration"].to_i : 1,
-        "amount" => config["amount"].to_i,
-        "applied_turn" => match.current_turn_number || 1,
-        "applied_at" => Time.current.iso8601
-      }
-      target_participation.save!
-    end
-
     def broadcast_npc_vitals_update(npc_participation)
       npc = npc_participation.npc_template
       ActionCable.server.broadcast(
@@ -792,7 +741,6 @@ module Arena
         name:,
         item_type: entry["item_type"] || entry[:item_type] || "material",
         slot: "none",
-        rarity: entry["rarity"] || entry[:rarity] || "common",
         stat_modifiers: {},
         weight: [entry.fetch("weight", entry.fetch(:weight, 1)).to_i, 1].max,
         stack_limit: [entry.fetch("stack_limit", entry.fetch(:stack_limit, 99)).to_i, 1].max
@@ -823,12 +771,13 @@ module Arena
       block_parts = Array(block_parts)
       block_parts = ["torso"] if block_parts.empty?
 
-      # Apply defense buff for next incoming attack
+      # Persist the selected block until the next incoming attack resolves.
       character.metadata ||= {}
       character.metadata["blocking"] = true
       character.metadata["blocked_parts"] = block_parts
       character.metadata["block_key"] = block_key || Game::Combat::ActionCatalog.standard_block_for_parts(block_parts)&.fetch(:key)
-      character.metadata["block_table"] = "shield" if character.metadata["block_key"].to_s.start_with?("shield_")
+      block_config = Game::Combat::ActionCatalog.block_config(character.metadata["block_key"])
+      character.metadata["block_table"] = block_config["block_table"].presence || "normal"
       character.metadata["block_until"] = block_expires_at.iso8601
       character.save!
 
@@ -839,134 +788,12 @@ module Arena
       success(defending: true, block_parts:)
     end
 
-    def process_turn_skill(character, skill, target)
+    def process_turn_skill(_character, skill, _target)
       key = skill[:key].to_s
       config = Game::Combat::ActionCatalog.magic_config(key)
       return failure("Magic/action not found: #{key}") if config.blank?
 
-      effect = config["effect"].to_s
-      target_participation = skill_target_participation(character, skill, target)
-      target_character = target_participation&.character
-      amount = config["amount"].to_i
-
-      case effect
-      when "shield", "barrier", "immunity"
-        covered_parts = Game::Combat::ActionCatalog::BODY_PARTS
-        character.metadata ||= {}
-        character.metadata["blocking"] = true
-        character.metadata["blocked_parts"] = covered_parts
-        character.metadata["block_key"] = key
-        character.metadata["block_table"] = "magic"
-        character.metadata["block_until"] = block_expires_at.iso8601
-        character.metadata["magic_guard"] = key
-        character.save!
-
-        log_entry("skill", character, "#{character.name} uses #{config['name']} and guards all body parts.")
-        broadcaster.broadcast_combat_action(character, "skill", nil, 0, skill_name: config["name"], block_parts: covered_parts)
-        success(skill: key, effect:, block_parts: covered_parts)
-      when "heal_hp", "heal"
-        recipient = if config["target"] == "ally" && target_character
-          target_character
-        else
-          character
-        end
-        healed = [amount.positive? ? amount : 30, recipient.max_hp - recipient.current_hp].min
-        recipient.update!(current_hp: recipient.current_hp + healed)
-
-        log_entry("heal", character, "#{character.name} uses #{config['name']} and restores #{healed} HP to #{recipient.name}.")
-        broadcaster.broadcast_vitals_update(recipient)
-        broadcaster.broadcast_combat_action(character, "skill", recipient, 0, skill_name: config["name"])
-        success(skill: key, effect:, healing: healed)
-      when "heal_mp"
-        restored = [amount.positive? ? amount : 20, character.max_mp - character.current_mp].min
-        character.update!(current_mp: character.current_mp + restored)
-
-        log_entry("skill", character, "#{character.name} uses #{config['name']} and restores #{restored} MP.")
-        broadcaster.broadcast_vitals_update(character)
-        broadcaster.broadcast_combat_action(character, "skill", character, 0, skill_name: config["name"])
-        success(skill: key, effect:, mana_restored: restored)
-      else
-        if config["aoe"]
-          process_magic_area_damage(character, config, key)
-        elsif config["chain"].to_i.positive?
-          process_magic_chain_damage(character, config, key, target_participation)
-        elsif config["damage"].to_i.positive?
-          result = process_magic_damage(character, target_participation, config, key)
-          apply_arena_effect!(target_participation, key, effect, config) if result.success? && effect.present?
-          result
-        elsif effect.present? && target_participation
-          apply_arena_effect!(target_participation, key, effect, config)
-          log_entry("skill", character, "#{character.name} uses #{config['name']} on #{target_participation.participant_name}.")
-          broadcaster.broadcast_combat_action(character, "skill", target_character, 0, skill_name: config["name"])
-          success(skill: key, effect:)
-        else
-          log_entry("skill", character, "#{character.name} uses #{config['name']}.")
-          broadcaster.broadcast_combat_action(character, "skill", target_character, 0, skill_name: config["name"])
-          success(skill: key, effect: effect.presence || "action")
-        end
-      end
-    end
-
-    def process_magic_damage(character, target_participation, config, key)
-      return failure("No valid target") unless target_participation
-
-      caster_participation = match.arena_participations.find_by(character:)
-
-      if target_participation.npc?
-        npc = target_participation.npc_template
-        damage = [config["damage"].to_i + (character.stats.get(:knowledge).to_i / 3), 1].max
-        target_participation.current_hp = [target_participation.current_hp - damage, 0].max
-        target_participation.save!
-        track_damage!(caster_participation, target_participation, damage)
-
-        log_entry("damage", character, "#{character.name} uses #{config['name']} on #{npc.name} for -#{damage} [#{target_participation.current_hp}/#{target_participation.max_hp}]")
-        broadcast_npc_vitals_update(target_participation)
-        broadcaster.broadcast_combat_action(character, "skill", nil, damage, skill_name: config["name"], npc_target: npc.name)
-        handle_npc_defeat(target_participation, defeated_by: character) if target_participation.current_hp <= 0
-      else
-        target = target_participation.character
-        return failure("Cannot attack ally") if same_team?(character, target)
-
-        damage = [config["damage"].to_i + (character.stats.get(:knowledge).to_i / 3) - (target.defense / 4), 1].max
-        target.update!(current_hp: [target.current_hp - damage, 0].max, last_combat_at: Time.current)
-        track_damage!(caster_participation, target_participation, damage)
-
-        log_entry("damage", character, "#{character.name} uses #{config['name']} on #{target.name} for -#{damage} [#{target.current_hp}/#{target.max_hp}]")
-        broadcaster.broadcast_vitals_update(target)
-        broadcaster.broadcast_combat_action(character, "skill", target, damage, skill_name: config["name"])
-        handle_defeat(target) if target.current_hp <= 0
-      end
-
-      end_match if should_end?
-      success(skill: key, effect: "damage", damage:)
-    end
-
-    def process_magic_area_damage(character, config, key)
-      results = []
-      opponent_participations_for(character).each do |target_participation|
-        break if should_end?
-
-        result = process_magic_damage(character, target_participation, config, key)
-        apply_arena_effect!(target_participation, key, config["effect"].to_s, config) if result.success? && config["effect"].present?
-        results << result.data if result.success?
-      end
-
-      success(skill: key, effect: config["effect"].presence || "area_damage", targets: results)
-    end
-
-    def process_magic_chain_damage(character, config, key, first_target)
-      targets = opponent_participations_for(character)
-      targets = [first_target, *(targets - [first_target])].compact.uniq.first(config["chain"].to_i)
-
-      results = []
-      targets.each do |target_participation|
-        break if should_end?
-
-        result = process_magic_damage(character, target_participation, config, key)
-        results << result.data if result.success?
-      end
-
-      success(skill: key, effect: "chain_damage", targets: results)
+      failure("Magic/action slot requires source-captured resolver: #{config['name'] || key}")
     end
 
     def find_target(target_id)
@@ -1148,41 +975,6 @@ module Arena
       end
     end
 
-    # Apply trauma (injury) effects after fight
-    # Trauma affects HP recovery and XP loss based on trauma_percent
-    def apply_trauma
-      trauma_percent = match.trauma_percent || match.metadata&.dig("trauma_percent") || 30
-      return if trauma_percent.zero?
-
-      match.arena_participations.each do |p|
-        next if p.npc?
-
-        character = p.character
-        is_loser = p.result == "defeat"
-
-        # Winners get minor trauma, losers get full trauma
-        effective_trauma = is_loser ? trauma_percent : (trauma_percent / 3.0).round
-
-        # Apply HP reduction based on trauma
-        # Higher trauma = lower HP after fight
-        hp_loss = (character.max_hp * effective_trauma / 100.0).round
-        new_hp = [character.current_hp - hp_loss, 1].max
-        character.update!(current_hp: new_hp)
-
-        # XP loss for losers based on trauma
-        if is_loser && effective_trauma >= 30
-          xp_loss = (character.experience.to_i * effective_trauma / 200.0).round
-          character.update!(experience: [character.experience.to_i - xp_loss, 0].max)
-
-          log_entry("trauma", character,
-            "#{character.name} suffers trauma: -#{hp_loss} HP, -#{xp_loss} XP")
-        else
-          log_entry("trauma", character,
-            "#{character.name} suffers minor trauma: -#{hp_loss} HP")
-        end
-      end
-    end
-
     def log_entry(entry_type, actor, description)
       combat_log_recorder.record!(
         entry_type:,
@@ -1231,17 +1023,11 @@ module Arena
         return combat_attack_cost_for(actor, action_key)
       end
 
-      configured = Game::Combat::ActionCatalog.attack_cost(action_key)
-      return configured if configured.positive?
-
-      ATTACK_TYPES[action_key.to_sym]&.dig(:ap_cost) || 0
+      Game::Combat::ActionCatalog.attack_cost(action_key)
     end
 
     def attack_mana_cost(action_key)
-      configured = Game::Combat::ActionCatalog.attack_mana_cost(action_key)
-      return configured if configured.positive?
-
-      ATTACK_TYPES[action_key.to_sym]&.dig(:mana_cost).to_i || 0
+      Game::Combat::ActionCatalog.attack_mana_cost(action_key)
     end
 
     def block_ap_cost(block)
@@ -1260,8 +1046,13 @@ module Arena
       Game::Combat::ActionCatalog.magic_mana_cost(action_key)
     end
 
-    def calculate_turn_mana_cost(attacks, skills)
+    def block_mana_cost(block)
+      Game::Combat::ActionCatalog.block_config(block[:action_key]).fetch("mana_cost", 0).to_i
+    end
+
+    def calculate_turn_mana_cost(attacks, blocks, skills)
       attacks.sum { |attack| attack_mana_cost(attack[:action_key]) } +
+        blocks.sum { |block| block_mana_cost(block) } +
         skills.sum { |skill| magic_action_mana_cost(skill[:key]) }
     end
 
@@ -1288,7 +1079,7 @@ module Arena
           errors << "Invalid body part for attack #{index + 1}: #{attack[:body_part]}"
         end
 
-        unless Game::Combat::ActionCatalog.attack_config(attack[:action_key]).present? || ATTACK_TYPES.key?(attack[:action_key].to_sym)
+        unless Game::Combat::ActionCatalog.attack_config(attack[:action_key]).present?
           errors << "Invalid attack type for attack #{index + 1}: #{attack[:action_key]}"
         end
       end
@@ -1328,8 +1119,8 @@ module Arena
       false
     end
 
-    def validate_turn_mana(character, attacks, skills)
-      total_mana = calculate_turn_mana_cost(attacks, skills)
+    def validate_turn_mana(character, attacks, blocks, skills)
+      total_mana = calculate_turn_mana_cost(attacks, blocks, skills)
       errors = []
 
       if total_mana > character.current_mp.to_i
@@ -1339,6 +1130,7 @@ module Arena
       magic_limit = combat_profile_for(character).fetch("max_magic_mana", character.max_mp.to_i).to_i
       expensive_actions = [
         *attacks.filter_map { |attack| attack_mana_cost(attack[:action_key]) },
+        *blocks.filter_map { |block| block_mana_cost(block) },
         *skills.filter_map { |skill| magic_action_mana_cost(skill[:key]) }
       ].select { |cost| cost.to_i > magic_limit }
       if expensive_actions.any?
@@ -1348,8 +1140,8 @@ module Arena
       errors
     end
 
-    def spend_turn_mana!(character, attacks, skills)
-      total_mana = calculate_turn_mana_cost(attacks, skills)
+    def spend_turn_mana!(character, attacks, blocks, skills)
+      total_mana = calculate_turn_mana_cost(attacks, blocks, skills)
       return if total_mana.zero?
 
       character.update!(current_mp: [character.current_mp.to_i - total_mana, 0].max)
@@ -1658,7 +1450,7 @@ module Arena
     end
 
     # Broadcast NPC combat action
-    def broadcast_npc_action(npc, action_type, target, damage, critical: false, body_part: nil, skill_name: nil)
+    def broadcast_npc_action(npc, action_type, target, damage, critical: false, body_part: nil)
       ActionCable.server.broadcast(
         match.broadcast_channel,
         {
@@ -1671,7 +1463,6 @@ module Arena
           damage: damage,
           critical: critical,
           body_part: body_part,
-          skill_name: skill_name,
           timestamp: Time.current.strftime("%H:%M:%S")
         }
       )

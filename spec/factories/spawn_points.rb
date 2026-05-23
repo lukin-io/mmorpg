@@ -4,7 +4,6 @@ FactoryBot.define do
     x { 0 }
     y { 0 }
     city_key { "starter" }
-    respawn_seconds { 30 }
     default_entry { true }
     metadata { {} }
   end

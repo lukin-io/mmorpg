@@ -164,7 +164,7 @@ RSpec.describe Arena::MatchStarterJob, type: :job do
     end
 
     context "when match has NPC participants" do
-      let(:npc_template) { create(:npc_template, name: "Training Dummy", level: 5, role: "arena_bot") }
+      let(:npc_template) { create(:npc_template, name: "Манекен", level: 5, role: "arena_bot") }
 
       before do
         participation2.update!(character: nil, npc_template: npc_template, user: nil)

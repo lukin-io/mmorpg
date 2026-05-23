@@ -55,9 +55,9 @@ Documentation process:
 
 ## Vision
 
-Build a classic, persistent, browser-first fantasy MMORPG with slow, deliberate
-map movement, tile-local actions, social presence, tactical combat, character
-growth, and player economy.
+Build a classic, persistent, browser-first Neverlands-based MMORPG with slow,
+deliberate map movement, tile-local actions, social presence, tactical combat,
+character growth, and player economy.
 
 The intended feel is:
 
