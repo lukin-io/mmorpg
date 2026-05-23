@@ -25,27 +25,27 @@ RSpec.describe Npc::Combatable do
       expect(hostile_npc.combat_behavior).to eq(:aggressive)
     end
 
-    it "defaults arena bots to balanced behavior" do
-      expect(arena_bot.combat_behavior).to eq(:balanced)
+    it "defaults arena bots to passive behavior without captured metadata" do
+      expect(arena_bot.combat_behavior).to eq(:passive)
     end
 
     it "uses a source-backed metadata override when present" do
-      hostile_npc.update!(metadata: {"ai_behavior" => "defensive"})
+      hostile_npc.update!(metadata: {"ai_behavior" => "passive"})
 
-      expect(hostile_npc.combat_behavior).to eq(:defensive)
+      expect(hostile_npc.combat_behavior).to eq(:passive)
     end
   end
 
-  describe "#can_flee?" do
-    it "prevents arena bots from fleeing" do
-      expect(arena_bot.can_flee?).to be false
+  describe "#should_defend?" do
+    it "does not invent defensive behavior without source-backed metadata" do
+      expect(hostile_npc.should_defend?(current_hp_ratio: 0.01, rng: Random.new(1))).to be false
     end
 
-    it "allows hostile NPCs to flee unless metadata disables it" do
-      expect(hostile_npc.can_flee?).to be true
+    it "uses explicit source-backed defense metadata when present" do
+      hostile_npc.update!(metadata: {"defend_hp_below" => 0.5, "defend_chance" => 1.0})
 
-      hostile_npc.update!(metadata: {"can_flee" => false})
-      expect(hostile_npc.can_flee?).to be false
+      expect(hostile_npc.should_defend?(current_hp_ratio: 0.25, rng: Random.new(1))).to be true
+      expect(hostile_npc.should_defend?(current_hp_ratio: 0.75, rng: Random.new(1))).to be false
     end
   end
 end

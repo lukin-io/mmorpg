@@ -8,8 +8,7 @@ module Arena
   #
   # Inputs:
   #   - room: ArenaRoom where the NPC will create an application
-  #   - npc_template: NpcTemplate for the arena bot (optional, will sample if not provided)
-  #   - difficulty: Filter for NPC difficulty (optional)
+  #   - npc_template: NpcTemplate for the arena bot
   #
   # Returns:
   #   Result struct with success status and application or errors
@@ -33,21 +32,15 @@ module Arena
     NPC_SIDE_LEVEL_RANGE = (0..33)
     NEVERLANDS_TRAINING_RULE_VALUE = 10
 
-    # Create an application for a random NPC appropriate for the room
+    # Create an application for the captured NPC appropriate for the room.
     #
     # @param room [ArenaRoom] the arena room
-    # @param difficulty [Symbol, nil] optional difficulty filter (:easy, :medium, :hard)
-    # @param rng [Random] random number generator for determinism
     # @return [Result] result with application or errors
-    def create_for_room(room:, difficulty: nil, rng: Random.new)
+    def create_for_room(room:)
       npc_config = if room.slug == "training"
         Game::World::ArenaNpcConfig.find_npc("arena_training_dummy")
       else
-        Game::World::ArenaNpcConfig.sample_npc(
-          room.slug,
-          difficulty: difficulty,
-          rng: rng
-        )
+        Game::World::ArenaNpcConfig.sample_npc(room.slug)
       end
 
       if npc_config.nil?
@@ -75,16 +68,12 @@ module Arena
     #
     # @param room [ArenaRoom] the arena room
     # @param count [Integer] number of applications to create
-    # @param rng [Random] random number generator for determinism
     # @return [Array<Result>] array of results
-    def spawn_batch(room:, count:, rng: Random.new)
+    def spawn_batch(room:, count:)
       results = []
-      difficulties = [:easy, :medium, :hard]
 
-      count.times do |i|
-        # Rotate through difficulties
-        difficulty = difficulties[i % difficulties.length]
-        results << create_for_room(room: room, difficulty: difficulty, rng: rng)
+      count.times do
+        results << create_for_room(room: room)
       end
 
       results
@@ -145,7 +134,7 @@ module Arena
         npc_key: key,
         name: npc_config[:name],
         role: "arena_bot",
-        level: npc_config[:level] || 1,
+        level: npc_config.fetch(:level),
         dialogue: npc_config[:dialogue] || "...",
         metadata: template_metadata_from_config(npc_config)
       )
@@ -155,9 +144,8 @@ module Arena
       {
         health: npc_config[:hp],
         base_damage: npc_config[:damage],
-        xp_reward: npc_config[:xp] || 10,
+        xp_reward: npc_config[:xp],
         loot_table: npc_config[:loot_table] || npc_config[:loot] || [],
-        difficulty: npc_config.dig(:metadata, :difficulty),
         ai_behavior: npc_config.dig(:metadata, :ai_behavior),
         arena_rooms: npc_config.dig(:metadata, :arena_rooms),
         description: npc_config.dig(:metadata, :description),
@@ -176,7 +164,6 @@ module Arena
         "is_npc" => true,
         "npc_name" => npc_template.name,
         "npc_level" => npc_template.level,
-        "difficulty" => npc_template.arena_difficulty,
         "ai_behavior" => npc_template.ai_behavior,
         "avatar" => npc_template.avatar_emoji,
         "neverlands_rule_value" => NEVERLANDS_TRAINING_RULE_VALUE,
@@ -206,7 +193,6 @@ module Arena
         trauma_percent: application.trauma_percent,
         expires_at: application.expires_at&.iso8601,
         is_npc: true,
-        npc_difficulty: application.npc_difficulty,
         npc_avatar: application.npc_template&.avatar_emoji
       }
     end

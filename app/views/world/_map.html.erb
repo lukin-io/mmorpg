@@ -53,7 +53,7 @@
                 <%
                   is_player = tile.x == position.x && tile.y == position.y
                   destination = destinations_by_coord[[tile.x, tile.y]]
-                  terrain = tile.respond_to?(:terrain_type) ? tile.terrain_type : zone.biome
+                  terrain = tile.respond_to?(:terrain_type) ? tile.terrain_type : zone.location_type
                   tile_meta = tile.respond_to?(:metadata) ? (tile.metadata || {}) : {}
                   is_walkable = tile.respond_to?(:walkable) ? tile.walkable : !tile_meta["blocked"]
 

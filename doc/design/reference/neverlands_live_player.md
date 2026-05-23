@@ -389,6 +389,48 @@ Professions:
 - steelworking;
 - herbalism.
 
+The profession rows were visible as counters on the captured source page, but
+they were not emitted through the same allocatable `id=skNN`/hidden field
+controls as the numeric `Умения` list above. Treat professions as a separate
+future capture, not as launch numeric-skill allocations.
+
+Captured `SkillAr` tier rates from `/js/addskill_v02.js`:
+
+| Source ID | Local Key | Name | Pool | Rate |
+| ---: | --- | --- | --- | --- |
+| 0 | `unarmed_combat` | Рукопашный бой | combat | `10:8:6:4` |
+| 1 | `sword_mastery` | Владение мечами | combat | `8:6:4:2` |
+| 2 | `axe_mastery` | Владение топорами | combat | `8:6:4:2` |
+| 3 | `bludgeoning_mastery` | Владение дробящим оружием | combat | `8:6:4:2` |
+| 4 | `knife_mastery` | Владение ножами | combat | `8:6:4:2` |
+| 5 | `throwing_mastery` | Владение метательным оружием | combat | `8:6:4:2` |
+| 6 | `polearm_mastery` | Владение алебардами и копьями | combat | `8:6:4:2` |
+| 7 | `staff_mastery` | Владение посохами | combat | `8:6:4:2` |
+| 8 | `exotic_weapon_mastery` | Владение экзотическим оружием | combat | `6:4:4:2` |
+| 9 | `two_handed_mastery` | Владение двуручным оружием | combat | `10:8:6:4` |
+| 10 | `dual_wielding` | Владение двумя руками | combat | `4:4:2:2` |
+| 11 | `extra_action_points` | Доп. очки действия | combat | `2:2:2:2` |
+| 12 | `fire_magic` | Магия огня | combat | `8:6:4:2` |
+| 13 | `water_magic` | Магия воды | combat | `8:6:4:2` |
+| 14 | `air_magic` | Магия воздуха | combat | `8:6:4:2` |
+| 15 | `earth_magic` | Магия земли | combat | `8:6:4:2` |
+| 16 | `fire_magic_resistance` | Сопротивление магии огня | combat | `6:4:2:2` |
+| 17 | `water_magic_resistance` | Сопротивление магии воды | combat | `6:4:2:2` |
+| 18 | `air_magic_resistance` | Сопротивление магии воздуха | combat | `6:4:2:2` |
+| 19 | `earth_magic_resistance` | Сопротивление магии земли | combat | `6:4:2:2` |
+| 20 | `physical_damage_resistance` | Сопротивление физ. поврежд. | combat | `6:4:2:2` |
+| 22 | `caution` | Осторожность | peace | `2:2:2:2` |
+| 23 | `stealth` | Скрытность | peace | `2:2:2:2` |
+| 24 | `observation` | Наблюдательность | peace | `2:2:2:2` |
+| 26 | `wanderer` | Странник | peace | `2:2:2:2` |
+| 27 | `linguistics` | Языковедение | peace | `2:2:2:2` |
+| 30 | `self_healing` | Самолечение | peace | `2:2:2:2` |
+| 33 | `fast_mana_regeneration` | Быстрое восстановление маны | peace | `2:2:2:2` |
+| 34 | `leadership` | Лидерство | peace | `6:4:3:2` |
+
+Runtime formulas and prerequisite gates were not captured from this page and
+must not be invented.
+
 ## `Навыки`: Boolean Perks
 
 `main.php?mselect=2` renders "Ваши игровые навыки". These are not 0-100

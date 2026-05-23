@@ -3,7 +3,7 @@
 require "rails_helper"
 
 RSpec.describe Game::World::AcceptAction do
-  let(:zone) { create(:zone, name: "Action Plains", biome: "plains") }
+  let(:zone) { create(:zone, name: "Action Plains", location_type: "outdoor") }
   let(:character) { create(:character) }
   let!(:position) { create(:character_position, character:, zone:, x: 5, y: 5) }
   let(:npc) { create(:tile_npc, zone: zone.name, x: 5, y: 5) }

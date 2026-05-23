@@ -35,7 +35,7 @@ class ArenaMatchesController < ApplicationController
   end
 
   # POST /arena_matches/:id/action
-  # Submit a combat action (attack, defend, skill, flee)
+  # Submit a combat action (attack, defend, turn, flee)
   def action
     authorize @arena_match
 
@@ -44,7 +44,6 @@ class ArenaMatchesController < ApplicationController
     # Build params hash for the action
     action_params = {}
     action_params[:target] = find_action_target if params[:target_id].present?
-    action_params[:skill_id] = params[:skill_id] if params[:skill_id].present?
     action_params[:attack_type] = params[:attack_type]&.to_sym if params[:attack_type].present?
     action_params[:body_part] = params[:body_part] if params[:body_part].present?
     if params[:block_parts].present?
@@ -179,7 +178,6 @@ class ArenaMatchesController < ApplicationController
           character_name: p.participant_name,
           team: p.team,
           result: p.result,
-          rating_delta: p.npc? ? 0 : p.rating_delta,
           is_npc: p.npc?
         }
       end

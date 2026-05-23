@@ -190,8 +190,6 @@ RSpec.describe Arena::MatchStarterJob, type: :job do
   describe "job scheduling via ApplicationHandler" do
     let(:handler) { Arena::ApplicationHandler.new }
     let(:other_character) { create(:character, user: create(:user), level: 10, current_hp: 100, max_hp: 100) }
-    let!(:season) { create(:arena_season, status: :live) }
-
     before do
       create(:character_position, character: other_character)
     end

@@ -79,19 +79,18 @@ completed destination if the travel timer elapsed while they were away.
 
 ## Travel Time
 
-Baseline formula:
+Captured starter formula:
 
 ```text
-travel_seconds =
-  base_zone_seconds
-  * terrain_modifier
-  * diagonal_modifier
-  * encumbrance_modifier
-  * skill_modifier
+travel_seconds = 30
 ```
 
 Initial starter reference: `30` seconds for a normal adjacent wilderness step
 near Oktal.
+
+No terrain, diagonal, encumbrance, or skill timing modifier is implemented until
+the exact Neverlands rule is captured. Terrain labels may identify a tile, but
+they must not alter movement duration by themselves.
 
 ## State Concepts
 

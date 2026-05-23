@@ -2,24 +2,7 @@
 
 module Game
   module World
-    # ArenaNpcConfig loads and provides access to arena-specific NPC configurations.
-    # Configuration is loaded from config/gameplay/arena_npcs.yml
-    #
-    # Purpose: Manage arena bot definitions for training fights
-    #
-    # Usage:
-    #   ArenaNpcConfig.for_room("training")
-    #   # => [{key: "arena_training_dummy", role: "arena_bot", ...}, ...]
-    #
-    #   ArenaNpcConfig.sample_npc("training", difficulty: :easy)
-    #   # => {key: "arena_training_dummy", role: "arena_bot", ...}
-    #
-    #   ArenaNpcConfig.find_npc("arena_training_dummy")
-    #   # => {key: "arena_training_dummy", name: "Манекен", ...}
-    #
-    # Returns:
-    #   Hash or Array of NPC configuration hashes
-    #
+    # ArenaNpcConfig loads captured Neverlands arena NPC definitions.
     class ArenaNpcConfig
       CONFIG_PATH = Rails.root.join("config/gameplay/arena_npcs.yml")
 
@@ -56,44 +39,12 @@ module Game
           npcs.uniq { |n| n[:key] }
         end
 
-        # Get NPCs filtered by difficulty
+        # Return the captured NPC for a room. There is no generic weighting or
+        # tier selection until captured source behavior requires it.
         #
-        # @param room_slug [String] the arena room slug
-        # @param difficulty [Symbol] :easy, :medium, or :hard
-        # @return [Array<Hash>] filtered NPC configurations
-        def for_room_by_difficulty(room_slug, difficulty)
-          for_room(room_slug).select do |npc|
-            npc.dig(:metadata, :difficulty)&.to_sym == difficulty.to_sym
-          end
-        end
-
-        # Sample a random NPC from a room, optionally filtered by difficulty
-        #
-        # @param room_slug [String] the arena room slug
-        # @param difficulty [Symbol, nil] optional difficulty filter
-        # @param rng [Random] random number generator for determinism
         # @return [Hash, nil] selected NPC configuration or nil if none available
-        def sample_npc(room_slug, difficulty: nil, rng: Random.new)
-          npcs = if difficulty
-            for_room_by_difficulty(room_slug, difficulty)
-          else
-            for_room(room_slug)
-          end
-
-          return nil if npcs.empty?
-
-          # Weighted random selection based on spawn_chance
-          total_weight = npcs.sum { |n| n[:spawn_chance] || 1 }
-          roll = rng.rand(total_weight)
-
-          cumulative = 0
-          npcs.each do |npc|
-            cumulative += npc[:spawn_chance] || 1
-            return npc if roll < cumulative
-          end
-
-          # Fallback to first NPC
-          npcs.first
+        def sample_npc(room_slug)
+          for_room(room_slug).first
         end
 
         # Find a specific NPC by key across all sections
@@ -136,44 +87,17 @@ module Game
           config.flat_map { |_, section| section[:npcs] || [] }.uniq { |n| n[:key] }
         end
 
-        # Get all NPCs with a specific AI behavior
+        # Extract explicit stats from NPC config.
         #
-        # @param behavior [String, Symbol] the AI behavior type
-        # @return [Array<Hash>] NPCs with that behavior
-        def by_ai_behavior(behavior)
-          all_npcs.select do |npc|
-            npc.dig(:metadata, :ai_behavior)&.to_sym == behavior.to_sym
-          end
-        end
-
-        # Get difficulty descriptions for UI
-        #
-        # @return [Hash] difficulty level descriptions
-        def difficulty_info
-          {
-            easy: {label: "Манекен", description: "Captured Neverlands training mannequin"}
-          }
-        end
-
-        # Extract stats from NPC config (following PveEncounterService pattern)
-        #
-        # @param npc_config [Hash] the NPC configuration hash
         # @return [Hash] stats hash with attack, defense, agility, hp
         def extract_stats(npc_config)
-          metadata_stats = npc_config.dig(:metadata, :stats)
+          stats = (npc_config.dig(:metadata, :stats) || {}).to_h.symbolize_keys
+          stats[:attack] ||= npc_config[:damage]
+          stats[:hp] ||= npc_config[:hp]
 
-          if metadata_stats.present?
-            metadata_stats.with_indifferent_access
-          else
-            level = npc_config[:level] || 1
-            {
-              attack: npc_config[:damage] || (level * 3 + 5),
-              defense: level * 2 + 3,
-              agility: level + 5,
-              hp: npc_config[:hp] || (level * 10 + 20),
-              crit_chance: npc_config.dig(:metadata, :stats, :crit_chance) || 10
-            }.with_indifferent_access
-          end
+          Npc::CombatStats::STAT_KEYS.each_with_object({}) do |key, result|
+            result[key] = (stats[key] || stats[key.to_s] || 0).to_i
+          end.with_indifferent_access
         end
       end
     end

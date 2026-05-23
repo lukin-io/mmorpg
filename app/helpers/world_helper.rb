@@ -18,51 +18,6 @@ module WorldHelper
       "A Neverlands-style city node with source-backed hotspots."
   end
 
-  # Get terrain icon for map tile
-  #
-  # @param terrain_type [String] the terrain type
-  # @return [String] emoji icon
-  def terrain_icon(terrain_type)
-    icons = {
-      "plains" => "🌾",
-      "forest" => "🌲",
-      "mountain" => "⛰️",
-      "river" => "🌊",
-      "lake" => "💧",
-      "desert" => "🏜️",
-      "snow" => "❄️",
-      "swamp" => "🌿",
-      "city" => "🏙️",
-      "cave" => "🕳️",
-      "road" => "🛤️"
-    }
-    icons[terrain_type.to_s] || "🗺️"
-  end
-
-  # Get NPC icon
-  #
-  # @param npc_type [String] the NPC type or name
-  # @return [String] emoji icon
-  def npc_icon(npc_type)
-    type = npc_type.to_s.downcase
-    icons = {
-      "wolf" => "🐺",
-      "boar" => "🐗",
-      "spider" => "🕷️",
-      "goblin" => "👺",
-      "bandit" => "🥷",
-      "skeleton" => "💀",
-      "zombie" => "🧟",
-      "dragon" => "🐉"
-    }
-
-    icons.each do |key, icon|
-      return icon if type.include?(key)
-    end
-
-    "👤"
-  end
-
   # Format time remaining in human-readable format
   #
   # @param seconds [Integer] seconds remaining
@@ -90,7 +45,7 @@ module WorldHelper
   # @return [Boolean] true if in a city
   def in_city?(position)
     zone = position.zone
-    zone.biome == "city" || zone.metadata&.dig("zone_type") == "city"
+    zone.city?
   end
 
   # Format coordinates for display

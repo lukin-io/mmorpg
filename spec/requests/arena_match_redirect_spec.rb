@@ -8,10 +8,8 @@ RSpec.describe "Arena Match Redirect", type: :request do
   let(:character_a) { create(:character, user: user_a, level: 15) }
   let(:character_b) { create(:character, user: user_b, level: 15) }
   let(:arena_room) { create(:arena_room, level_min: 10, level_max: 25, max_concurrent_matches: 5) }
-  let!(:arena_season) { create(:arena_season, status: :live) }
-
   def enter_arena_from_city!(character)
-    zone = create(:zone, biome: "city")
+    zone = create(:zone, location_type: "city")
     create(:character_position, character: character, zone: zone)
     hotspot = create(:city_hotspot, :arena, zone: zone, active: true, required_level: 1)
 
@@ -21,7 +19,7 @@ RSpec.describe "Arena Match Redirect", type: :request do
   describe "GET /arena" do
     context "when user has an active match" do
       let(:arena_match) do
-        create(:arena_match, arena_room: arena_room, status: :live, arena_season: arena_season)
+        create(:arena_match, arena_room: arena_room, status: :live)
       end
 
       before do
@@ -44,7 +42,7 @@ RSpec.describe "Arena Match Redirect", type: :request do
 
     context "when user has a pending match" do
       let(:arena_match) do
-        create(:arena_match, arena_room: arena_room, status: :pending, arena_season: arena_season)
+        create(:arena_match, arena_room: arena_room, status: :pending)
       end
 
       before do
@@ -73,7 +71,7 @@ RSpec.describe "Arena Match Redirect", type: :request do
   describe "GET /arena_rooms/:id" do
     context "when user has an active match in any room" do
       let(:arena_match) do
-        create(:arena_match, arena_room: arena_room, status: :live, arena_season: arena_season)
+        create(:arena_match, arena_room: arena_room, status: :live)
       end
 
       before do

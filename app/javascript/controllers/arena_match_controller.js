@@ -621,8 +621,7 @@ export default class extends Controller {
         <h3>Rewards</h3>
         <div class="rewards-list">
           ${rewards.xp ? `<span class="reward-item">+${rewards.xp} XP</span>` : ""}
-          ${rewards.gold ? `<span class="reward-item">+${rewards.gold} Gold</span>` : ""}
-          ${rewards.rating ? `<span class="reward-item">+${rewards.rating} Rating</span>` : ""}
+          ${rewards.nv ? `<span class="reward-item">+${rewards.nv} NV</span>` : ""}
         </div>
       </div>
     `

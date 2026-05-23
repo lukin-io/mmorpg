@@ -55,11 +55,7 @@ module Game
       def resolve_spawn_point!(zone: nil)
         scope = spawn_scope
         scope = scope.where(zone:) if zone
-        scope.matching_faction(faction_alignment).first || scope.default_entries.first || scope.first!
-      end
-
-      def faction_alignment
-        character.faction_alignment.presence || Character::ALIGNMENTS[:neutral]
+        scope.default_entries.first || scope.first!
       end
     end
   end

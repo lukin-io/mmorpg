@@ -34,7 +34,6 @@ module Game
         end
         tile_metadata = tile_provider.metadata_at(target_x, target_y) || {}
         terrain_type = tile_provider.terrain_type_at(target_x, target_y)
-        biome = tile_provider.biome_at(target_x, target_y)
 
         command = MovementCommand.create!(
           character:,
@@ -54,7 +53,7 @@ module Game
             direction: direction.to_sym,
             tile_metadata:
           ),
-          metadata: build_metadata(tile_metadata, biome:, terrain_type:)
+          metadata: build_metadata(tile_metadata, terrain_type:)
         )
 
         Game::MovementCommandProcessorJob.perform_later(command.id)
@@ -94,11 +93,9 @@ module Game
         command_or_id.is_a?(MovementCommand) ? command_or_id : MovementCommand.lock.find(command_or_id)
       end
 
-      def build_metadata(tile_metadata, biome:, terrain_type:)
+      def build_metadata(tile_metadata, terrain_type:)
         {
-          "terrain_modifier" => tile_metadata["movement_modifier"],
-          "terrain_type" => terrain_type || tile_metadata["terrain_type"],
-          "biome" => biome
+          "terrain_type" => terrain_type || tile_metadata["terrain_type"]
         }.compact
       end
 

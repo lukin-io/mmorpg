@@ -1,39 +1,14 @@
 # frozen_string_literal: true
 
-# Helper for displaying alignment labels throughout the game.
-#
 module AlignmentHelper
-  FACTION_ICONS = {
-    alliance: "Alliance",
-    rebellion: "Rebellion",
-    neutral: "Neutral"
-  }.freeze
-
-  ALIGNMENT_TIER_ICONS = {
-    absolute_darkness: "Absolute Darkness",
-    true_darkness: "True Darkness",
-    child_of_darkness: "Child of Darkness",
-    twilight_walker: "Twilight Walker",
-    neutral: "Neutral",
-    dawn_seeker: "Dawn Seeker",
-    child_of_light: "Child of Light",
-    true_light: "True Light",
-    celestial: "Celestial"
-  }.freeze
-
-  CHAOS_TIER_ICONS = {
-    lawful: "Lawful",
-    balanced: "Balanced",
-    chaotic: "Chaotic",
-    absolute_chaos: "Absolute Chaos"
-  }.freeze
+  ALIGNMENT_ICONS = Character::ALIGNMENT_LABELS.transform_keys(&:to_sym).freeze
 
   FIGHT_TYPE_ICONS = {
     duel: "Duel",
     group: "Group",
     sacrifice: "Free-for-All",
     unarmed: "Unarmed",
-    faction_vs_faction: "Faction vs Faction"
+    alignment_vs_alignment: "Alignment vs Alignment"
   }.freeze
 
   FIGHT_KIND_ICONS = {
@@ -41,7 +16,8 @@ module AlignmentHelper
     no_artifacts: "No Magic Items",
     limited_artifacts: "Limited Equipment",
     free: "All Equipment",
-    faction_vs_faction: "Faction vs Faction"
+    clan_vs_clan: "Clan vs Clan",
+    alignment_vs_alignment: "Alignment vs Alignment"
   }.freeze
 
   TIMEOUT_ICONS = {
@@ -66,33 +42,15 @@ module AlignmentHelper
     arena: "Arena"
   }.freeze
 
-  # Get faction icon
-  def faction_icon(faction)
-    FACTION_ICONS[faction.to_sym] || "Neutral"
-  end
-
-  # Get alignment tier icon
-  def alignment_tier_icon(tier)
-    ALIGNMENT_TIER_ICONS[tier.to_sym] || "Neutral"
-  end
-
-  # Get chaos tier icon
-  def chaos_tier_icon(tier)
-    CHAOS_TIER_ICONS[tier.to_sym] || "Lawful"
+  def alignment_icon(alignment)
+    ALIGNMENT_ICONS[alignment.to_sym] || "None"
   end
 
   # Full alignment badge for a character
-  def alignment_badge(character, show_chaos: false)
+  def alignment_badge(character, _show_chaos: false)
     return "" unless character
 
-    parts = [
-      faction_icon(character.faction_alignment),
-      character.alignment_tier_name
-    ]
-
-    parts << "(#{character.chaos_tier_data[:name]})" if show_chaos && character.chaos_score.to_i > 0
-
-    content_tag(:span, parts.join(" "), class: "alignment-badge alignment-#{character.alignment_tier}")
+    content_tag(:span, character.alignment_label, class: "alignment-badge alignment-#{character.alignment}")
   end
 
   # Compact alignment display (just icons)
@@ -100,10 +58,7 @@ module AlignmentHelper
     return "" unless character
 
     content_tag(:span, class: "alignment-icons") do
-      safe_join([
-        content_tag(:span, faction_icon(character.faction_alignment), title: character.faction_alignment.humanize, class: "faction-icon"),
-        content_tag(:span, character.alignment_tier_name, title: character.alignment_tier_name, class: "tier-icon")
-      ])
+      content_tag(:span, alignment_icon(character.alignment), title: character.alignment_label, class: "alignment-icon")
     end
   end
 

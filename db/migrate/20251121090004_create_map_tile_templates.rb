@@ -5,7 +5,6 @@ class CreateMapTileTemplates < ActiveRecord::Migration[8.1]
       t.integer :x, null: false
       t.integer :y, null: false
       t.string :terrain_type, null: false
-      t.string :biome, null: false, default: "plains"
       t.boolean :passable, null: false, default: true
       t.jsonb :metadata, null: false, default: {}
 

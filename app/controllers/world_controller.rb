@@ -108,7 +108,7 @@ class WorldController < ApplicationController
     # Find the parent/outdoor zone
     current_zone = @position.zone
     exit_zone = Zone.find_by(name: current_zone.metadata&.dig("exit_to")) ||
-      Zone.find_by(biome: "plains")
+      Zone.find_by(location_type: "outdoor")
 
     if exit_zone.nil?
       return redirect_to world_path, alert: "No exit available."
@@ -216,7 +216,7 @@ class WorldController < ApplicationController
 
   # Check if current zone is a city (renders illustrated view)
   def city_zone?
-    @position.zone.biome == "city"
+    @position.zone.city?
   end
 
   # Set up data for city view rendering
@@ -251,7 +251,6 @@ class WorldController < ApplicationController
 
     @tile = current_tile
     @nearby_tiles = nearby_tiles_with_features
-    @npcs_here = npcs_at_current_tile
     @tile_npc = tile_npc_at_current_tile
     @tile_building = tile_building_at_current_tile
     @players_here = players_at_current_tile
@@ -261,8 +260,8 @@ class WorldController < ApplicationController
   def ensure_character_position!
     return if current_character.position.present?
 
-    # Create initial position in starter zone (city)
-    starter_zone = Zone.find_by(biome: "city") || Zone.first
+    # Create initial position in starter city zone.
+    starter_zone = Zone.find_by(location_type: "city") || Zone.first
     unless starter_zone
       return render "world/no_zones", status: :service_unavailable
     end
@@ -293,7 +292,7 @@ class WorldController < ApplicationController
 
   def default_tile
     OpenStruct.new(
-      terrain_type: @position.zone.biome,
+      terrain_type: @position.zone.location_type,
       walkable: true,
       metadata: {}
     )
@@ -316,7 +315,7 @@ class WorldController < ApplicationController
         tile = db_tiles[[x, y]] || OpenStruct.new(
           x: x,
           y: y,
-          terrain_type: zone.biome,
+          terrain_type: zone.location_type,
           walkable: true,
           passable: true,
           metadata: {}
@@ -339,7 +338,7 @@ class WorldController < ApplicationController
       ((@position.x - 2)..(@position.x + 2)).each do |x|
         next if x < 0 || y < 0 || x >= zone.width || y >= zone.height
 
-        # Get tile template or generate procedural terrain
+        # Get explicit tile template or use the zone type fallback.
         tile_template = MapTileTemplate.find_by(zone: zone.name, x: x, y: y)
 
         if tile_template
@@ -350,21 +349,20 @@ class WorldController < ApplicationController
           row << OpenStruct.new(
             x: x,
             y: y,
-            terrain_type: tile_template.respond_to?(:terrain_type) ? tile_template.terrain_type : zone.biome,
+            terrain_type: tile_template.respond_to?(:terrain_type) ? tile_template.terrain_type : zone.location_type,
             walkable: tile_template.respond_to?(:walkable) ? tile_template.walkable : true,
             metadata: metadata
           )
         else
-          # Generate procedural terrain based on position
-          terrain = procedural_terrain(zone, x, y)
-          # Start with empty metadata and add live features
+          # Missing templates fall back to the zone type. Do not generate
+          # fantasy terrain/resource assumptions without Neverlands capture.
           metadata = add_live_tile_features(zone.name, x, y, {})
 
           row << OpenStruct.new(
             x: x,
             y: y,
-            terrain_type: terrain,
-            walkable: terrain != "mountain" && terrain != "river",
+            terrain_type: zone.location_type,
+            walkable: true,
             metadata: metadata
           )
         end
@@ -404,38 +402,6 @@ class WorldController < ApplicationController
     metadata
   end
 
-  def procedural_terrain(zone, x, y)
-    # Use deterministic pseudo-random based on coordinates
-    seed = (zone.id * 1000) + (x * 100) + y
-    rng = Random.new(seed)
-
-    case zone.biome
-    when "city"
-      "city"
-    when "plains"
-      # Plains with occasional features
-      roll = rng.rand(100)
-      if roll < 5
-        "river"
-      elsif roll < 15
-        "forest"
-      else
-        "plains"
-      end
-    when "forest"
-      roll = rng.rand(100)
-      if roll < 10
-        "river"
-      elsif roll < 20
-        "plains"
-      else
-        "forest"
-      end
-    else
-      zone.biome
-    end
-  end
-
   def available_actions
     actions = []
 
@@ -455,11 +421,11 @@ class WorldController < ApplicationController
     end
 
     # Location-specific actions
-    if @position.zone.biome == "city"
+    if @position.zone.city?
       actions << {type: :exit, label: "Exit City"}
     end
 
-    # Tile NPC actions (biome-based random spawns)
+    # Tile NPC actions
     tile_npc = tile_npc_at_current_tile
     if tile_npc.present?
       actions << {
@@ -480,19 +446,6 @@ class WorldController < ApplicationController
     end
 
     actions
-  end
-
-  def npcs_at_current_tile
-    zone = @position.zone
-    return [] unless zone
-
-    # Get NPCs that can spawn in this zone
-    zone_npcs = NpcTemplate.in_zone(zone.name)
-
-    # Filter by position if NPC has spawn area restrictions
-    zone_npcs.select do |npc|
-      npc.can_spawn_at?(zone: zone, x: @position.x, y: @position.y)
-    end
   end
 
   def tile_npc_at_current_tile

@@ -6,13 +6,13 @@ RSpec.describe "World NPC fights", type: :request do
   include Devise::Test::IntegrationHelpers
 
   let(:user) { create(:user) }
-  let(:zone) { create(:zone, name: "Starter Plains") }
+  let(:zone) { create(:zone, name: "Outpost Surroundings") }
   let(:character) { create(:character, user:, level: 3, current_hp: 100, max_hp: 100) }
   let!(:position) { create(:character_position, character:, zone:, x: 5, y: 5) }
   let(:npc_template) do
     create(:npc_template,
-      npc_key: "captured_bandit",
-      name: "Captured Bandit",
+      npc_key: "plague_rat",
+      name: "Чумная крыса",
       role: "hostile",
       level: 2,
       metadata: {"health" => 40, "base_damage" => 4})
@@ -55,7 +55,7 @@ RSpec.describe "World NPC fights", type: :request do
       "source" => "world_npc",
       "tile_npc_id" => tile_npc.id,
       "npc_template_id" => npc_template.id,
-      "npc_name" => "Captured Bandit"
+      "npc_name" => "Чумная крыса"
     )
     expect(match.arena_participations.find_by(character:)).to be_present
     expect(match.arena_participations.find_by(npc_template:)).to be_present

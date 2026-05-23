@@ -11,15 +11,10 @@ class CreateCharactersAndPrivacySettings < ActiveRecord::Migration[8.1]
       t.integer :skill_points_available, null: false, default: 0
       t.integer :combat_skill_points, null: false, default: 0
       t.integer :peace_skill_points, null: false, default: 0
-      t.integer :perk_points_available, null: false, default: 0
       t.jsonb :allocated_stats, null: false, default: {}
       t.jsonb :passive_skills, null: false, default: {}
-      t.jsonb :perks, null: false, default: {}
       t.jsonb :progression_sources, null: false, default: {}
-      t.integer :reputation, null: false, default: 0
-      t.string :faction_alignment, null: false, default: "neutral"
-      t.integer :alignment_score, null: false, default: 0
-      t.integer :chaos_score, null: false, default: 0
+      t.string :alignment, null: false, default: "none"
       t.jsonb :resource_pools, null: false, default: {}
       t.datetime :last_level_up_at
       t.integer :current_hp, null: false, default: 100
@@ -31,7 +26,6 @@ class CreateCharactersAndPrivacySettings < ActiveRecord::Migration[8.1]
       t.boolean :in_combat, null: false, default: false
       t.datetime :last_combat_at
       t.datetime :last_regen_tick_at
-      t.string :avatar
       t.jsonb :metadata, null: false, default: {}
       t.timestamps
     end
@@ -39,6 +33,5 @@ class CreateCharactersAndPrivacySettings < ActiveRecord::Migration[8.1]
     add_index :characters, :name, unique: true
     add_index :characters, :combat_skill_points, where: "combat_skill_points > 0"
     add_index :characters, :peace_skill_points, where: "peace_skill_points > 0"
-    add_index :characters, :perk_points_available, where: "perk_points_available > 0"
   end
 end

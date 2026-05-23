@@ -1,38 +1,26 @@
 # frozen_string_literal: true
 
 module Chat
-  # Coordinates validations and side-effects when a user posts a chat message.
-  #
-  # Usage:
-  #   Chat::MessageDispatcher.new(user: current_user, channel: channel, body: params[:body]).call
-  #
-  # Returns:
-  #   Chat::MessageDispatcher::Result with:
-  #     - message: ChatMessage that was persisted
-  #     - command_executed?: always false; retained for callers that render a
-  #       shared result shape
+  # Coordinates the compact Neverlands-style chat post path.
   class MessageDispatcher
     Result = Struct.new(:message, :command_executed?, keyword_init: true)
 
-    def initialize(user:, channel:, body:, spam_throttler: nil)
+    def initialize(user:, channel:, body:)
       @user = user
       @channel = channel
       @body = body.to_s.strip
-      @spam_throttler = spam_throttler
     end
 
     def call
       raise ArgumentError, "message cannot be blank" if body.blank?
 
       ensure_player_can_post!
-      spam_throttler.check!
       ensure_privacy_respected!
       channel.ensure_membership!(user)
 
       message = channel.chat_messages.create!(
         sender: user,
         body: body,
-        visibility: :normal,
         metadata: default_metadata
       )
 
@@ -45,9 +33,12 @@ module Chat
 
     def ensure_player_can_post!
       user.ensure_social_features!
+      raise Chat::Errors::MutedError, "System chat is read-only." if channel.system?
 
-      membership = channel.memberships.find_by(user:)
-      raise Chat::Errors::MutedError, "Muted in this channel" if membership&.muted?
+      return unless user.respond_to?(:chat_muted_until)
+      return unless user.chat_muted_until.present? && user.chat_muted_until.future?
+
+      raise Chat::Errors::MutedError, "You are silenced in chat."
     end
 
     def ensure_privacy_respected!
@@ -58,7 +49,7 @@ module Chat
 
       target = User.find_by(id: target_id)
       return unless target
-      return if target.allows_chat_from?(user)
+      return if Chat::IgnoreFilter.can_view_messages?(target, user)
 
       raise Chat::Errors::PrivacyBlockedError, "#{target.profile_name} is not accepting whispers."
     end
@@ -72,10 +63,6 @@ module Chat
       {
         "channel_type" => channel.channel_type
       }
-    end
-
-    def spam_throttler
-      @spam_throttler ||= Chat::SpamThrottler.new(user:, channel:)
     end
   end
 end

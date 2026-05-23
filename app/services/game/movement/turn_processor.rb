@@ -7,16 +7,9 @@ module Game
     # Legacy synchronous movement processor used by low-level services/specs.
     # Runtime wilderness movement uses MapState, AcceptMove, and CompleteMove.
     #
-    # Movement cooldown formula:
-    #   1. Base: 30 seconds
-    #   2. Wanderer skill: reduces by 0-70% based on skill level (0-100)
-    #   3. Terrain modifier: multiplies based on terrain type
-    #
-    # Examples:
-    #   - Wanderer 0, normal terrain:  30 * 1.0 = 30.0s
-    #   - Wanderer 50, normal terrain: 19.5 * 1.0 = 19.5s
-    #   - Wanderer 100, normal terrain: 9.0 * 1.0 = 9.0s
-    #   - Wanderer 100, swamp terrain: 9.0 * 1.5 = 13.5s
+    # Movement cooldown uses the captured starter movement duration: 30 seconds.
+    # Skill, terrain, and encumbrance timing changes must be source-captured
+    # before they become runtime formulas.
     #
     # Usage:
     #   result = Game::Movement::TurnProcessor.new(character:, direction: :north).call
@@ -91,20 +84,10 @@ module Game
         OFFSETS.fetch(direction) { raise MovementViolationError, "Unknown direction #{direction}" }
       end
 
-      def environment_cooldown(zone:, tile_metadata:)
-        # 1. Apply Wanderer skill to base cooldown
-        base_with_wanderer = wanderer_adjusted_cooldown
-
-        # 2. Apply terrain modifiers
-        terrain_adjusted = Game::Movement::TerrainModifier
-          .new(zone:)
-          .cooldown_seconds(base_seconds: base_with_wanderer, tile_metadata:)
-
-        terrain_adjusted.round(2)
-      end
-
-      def wanderer_adjusted_cooldown
-        character.passive_skill_calculator.apply_movement_cooldown(BASE_MOVEMENT_COOLDOWN_SECONDS)
+      def environment_cooldown(**)
+        character.passive_skill_calculator
+          .apply_movement_cooldown(BASE_MOVEMENT_COOLDOWN_SECONDS)
+          .round(2)
       end
     end
   end

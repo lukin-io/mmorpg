@@ -49,7 +49,7 @@ not implemented.
 ### MVP Target
 
 The player has one persistent character that is the source for combat,
-movement, recovery, progression, and equipment calculations.
+movement, vitals, progression, and equipment calculations.
 
 Required behavior:
 
@@ -62,9 +62,9 @@ Required behavior:
   record;
 - every character has a public Neverlands-style info URL at
   `/player/<character-name>`;
-- profile/player summary owns the launch allocation loop: available stat
-  increases, numeric skill increases, and boolean perk unlocks are visible
-  there and saved explicitly;
+- profile/player summary owns the implemented launch allocation loop: available
+  stat increases and numeric skill increases are visible there and saved
+  explicitly;
 - inventory is reachable from the player shell and shows equipment slots,
   inventory mass, category filters, item properties, item requirements,
   durability, and compact equip/use/delete actions;
@@ -73,7 +73,7 @@ Required behavior:
 - level-up and stat/skill allocation change derived combat and movement
   values;
 - equipment contributes to visible combat breakdowns;
-- defeat routes into a recovery/result state instead of silently resetting.
+- defeat routes into a source-backed result state instead of silently resetting.
 
 ### Build Guidance
 
@@ -93,10 +93,11 @@ Required behavior:
   `doc/design/features/items_inventory_equipment.md`.
 - Public character lookup uses `/player/<character-name>` as the canonical
   Rails route shape.
-- The 2026-05-14 starter-account capture confirms the launch player formula
-  surfaces: primary stat allocation, `Умения` numeric skills, `Навыки` boolean
-  perks, separate point pools, explicit save actions, and next-level experience
-  display.
+- The 2026-05-14 starter-account capture confirms the player formula surfaces:
+  primary stat allocation, `Умения` numeric skills, `Навыки` boolean perks,
+  separate point pools, explicit save actions, and next-level experience
+  display. The generic perk registry/UI was removed; rebuild `Навыки` only from
+  the source-backed captured perk IDs, point pool, and exclusion rules.
 
 ### Remaining Design Detail
 
@@ -195,6 +196,9 @@ Required behavior:
 - Combat profiles support per-participant AP and dynamic physical attack costs.
 - The active combat screen follows a compact three-zone fight UI.
 - NPC training fights use the shared combat resolver path.
+- Magic/action slots are resolved through `Game::Combat::ActionCatalog` and the
+  shared turn processor. Do not reintroduce a separate generic active-skill
+  executor or arbitrary combat effect records.
 - Treat the Neverlands `logs.fcg?fid=<id>` shape as a product contract, not a
   literal Rails route requirement: persist structured fight events, render them
   into Rails-style public paths such as `/log/<id>`, and derive statistics from
@@ -317,7 +321,8 @@ adding any Rails shop code.
 
 | Area | Documentation Status | Implementation Status | Next Step |
 | --- | --- | --- | --- |
-| Person | Documented across vitals, progression, inventory/equipment, and live player captures. | Partially implemented. | Consolidate formulas, item seeds, slot rules, capacity, durability, recovery, and cross-system tests. |
+| Person | Documented across vitals, progression, inventory/equipment, and live player captures. | Partially implemented. | Consolidate formulas, item seeds, slot rules, capacity, durability, vitals, and cross-system tests. |
+| Neverlands `Навыки` boolean perks | Documented in live player/skills captures. | Not implemented after generic perk cleanup. | Rebuild exact yes/no perk allocation from captured source IDs, point counter, and mutual-exclusion rules; no generic perk catalog. |
 | Movement | Documented across movement and live movement/city captures. | Partially implemented. | Unify city hotspots with server-authored action offers, polish presence refresh and locks. |
 | Arena | Documented across arena, combat, live arena captures, and public log captures. | Partially implemented. | Finish city entry/return cleanup, formula tuning, magic/special balancing, and shared fight coverage. |
 | Combat | Documented across combat reference captures, arena observations, logs, and equipment effects. | Partially implemented. | Keep one resolver/log contract across arena player/team, arena NPC, and wild NPC fights. |
@@ -354,7 +359,7 @@ the next implementation step is.
 | Combat | Yes: combat captures, public logs, magic, equipment effects, and result flow. | Partial. | Build the shared turn UI, combat profile, resolver, combat log, NPC response, live-player waiting, timeout, NPC loot check, and finish-result step. |
 | Arena combat | Yes: arena rooms/applications and NPC training captures. | Partial. | Bind NPC training, player, and team applications to the same combat profile and result flow. |
 | Character vitals | Yes: live player capture and vitals doc. | Partial. | Make vitals a shell-level component and document exact regen formulas. |
-| Progression, stats, and skills | Yes: profile allocation and skills captures. | Partial. | Make the player profile the primary allocation surface and expose movement/combat effects. |
+| Progression, stats, and skills | Yes: profile allocation, exact numeric skill IDs, and captured tier rates. | Partial: stat allocation and source-backed numeric skill allocation exist; generic formulas/prereqs were removed. | Make the player profile the primary allocation surface, then capture exact movement/combat/recovery formulas before wiring skill effects. |
 | Items, inventory, equipment | Yes: inventory/equipment, weapon formula, and shop item-row captures. | Partial. | Connect equipment to combat/vitals/movement, enforce capacity, persist durability, award NPC drops through inventory, and share item-row behavior with shops. |
 | Neverlands marketplace/shop | Yes: `Лавка` tabs, categories, filters, stock, item rows, licenses, sell/novice modes captured. | Not implemented. | Build the starter `Лавка` city building with server-authorized buy/sell/license/novice actions and no generic marketplace/kiosk route. |
 | Direct player trading | Needs dedicated Neverlands capture. | Not implemented; generic trade sessions removed. | Capture exact player-to-player trade entry, license requirements, UI states, cancellation/timeout, currency/item transfer, and settlement rules before implementation. |

@@ -11,8 +11,8 @@
             data-action="click->chat#clickUsername contextmenu->chat#showUserMenu"
             data-username="<%= chat_message.sender.profile_name %>"
             data-user-id="<%= chat_message.sender_id %>"
-            title="Click to whisper, Ctrl+Click to mention">
-        <%= chat_message.sender.profile_name || "Anonymous" %>
+            title="Private message">
+        <%= chat_message_sender_name(chat_message) %>
       </span>
 
       <time class="chat-msg-time"
@@ -21,16 +21,13 @@
         <%= time_ago_in_words(chat_message.created_at) %> ago
       </time>
 
-      <% if chat_message.flagged? %>
-        <span class="badge badge--warning" title="This message was filtered">⚠️</span>
-      <% end %>
     </header>
 
     <div class="chat-msg-content">
       <% if chat_message.system? %>
-        <em><%= chat_message.filtered_body %></em>
+        <em><%= chat_message.display_body %></em>
       <% else %>
-        <%= simple_format(h(chat_message.filtered_body), {}, wrapper_tag: "span") %>
+        <%= simple_format(h(chat_message.display_body), {}, wrapper_tag: "span") %>
       <% end %>
     </div>
   </div>

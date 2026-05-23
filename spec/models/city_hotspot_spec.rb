@@ -3,8 +3,8 @@
 require "rails_helper"
 
 RSpec.describe CityHotspot, type: :model do
-  let(:city_zone) { create(:zone, name: "Test City", biome: "city") }
-  let(:destination_zone) { create(:zone, name: "Destination Zone", biome: "plains") }
+  let(:city_zone) { create(:zone, name: "Test City", location_type: "city") }
+  let(:destination_zone) { create(:zone, name: "Destination Zone", location_type: "outdoor") }
 
   let(:valid_attributes) do
     {
@@ -146,11 +146,6 @@ RSpec.describe CityHotspot, type: :model do
       expect(hotspot.can_interact?(character)).to be false
     end
 
-    it "returns false when action_type is none" do
-      hotspot.update!(action_type: "none")
-      expect(hotspot.can_interact?(character)).to be false
-    end
-
     it "returns false when character level is too low" do
       hotspot.update!(required_level: 50)
       expect(hotspot.can_interact?(character)).to be false
@@ -195,10 +190,6 @@ RSpec.describe CityHotspot, type: :model do
       expect(hotspot.navigate_url).to be_nil
     end
 
-    it "returns nil for none action" do
-      hotspot.update!(action_type: "none")
-      expect(hotspot.navigate_url).to be_nil
-    end
   end
 
   describe "#clickable?" do
@@ -212,11 +203,6 @@ RSpec.describe CityHotspot, type: :model do
     it "returns true for enter_zone action" do
       hotspot.update!(action_type: "enter_zone", active: true)
       expect(hotspot.clickable?).to be true
-    end
-
-    it "returns false for none action" do
-      hotspot.update!(action_type: "none", active: true)
-      expect(hotspot.clickable?).to be false
     end
 
     it "returns false when inactive" do
@@ -238,10 +224,6 @@ RSpec.describe CityHotspot, type: :model do
       expect(hotspot.display_icon).to eq("🚪")
     end
 
-    it "returns tree icon for decoration type" do
-      hotspot.hotspot_type = "decoration"
-      expect(hotspot.display_icon).to eq("🌳")
-    end
   end
 
   describe "#css_class" do
@@ -279,11 +261,11 @@ RSpec.describe CityHotspot, type: :model do
 
   describe "constants" do
     it "defines HOTSPOT_TYPES" do
-      expect(described_class::HOTSPOT_TYPES).to contain_exactly("building", "exit", "decoration")
+      expect(described_class::HOTSPOT_TYPES).to contain_exactly("building", "exit")
     end
 
     it "defines ACTION_TYPES" do
-      expect(described_class::ACTION_TYPES).to include("enter_zone", "open_feature", "none")
+      expect(described_class::ACTION_TYPES).to contain_exactly("enter_zone", "open_feature")
     end
 
     it "defines FEATURE_ROUTES" do

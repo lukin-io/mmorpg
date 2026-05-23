@@ -4,7 +4,7 @@ class CreateWorldNavigationSystems < ActiveRecord::Migration[8.1]
   def change
     create_table :zones do |t|
       t.string :name, null: false
-      t.string :biome, null: false
+      t.string :location_type, null: false, default: "outdoor"
       t.integer :width, null: false, default: 32
       t.integer :height, null: false, default: 32
       t.integer :turn_counter, null: false, default: 1
@@ -17,15 +17,12 @@ class CreateWorldNavigationSystems < ActiveRecord::Migration[8.1]
       t.references :zone, null: false, foreign_key: true
       t.integer :x, null: false
       t.integer :y, null: false
-      t.string :faction_key, null: false
       t.string :city_key
       t.integer :respawn_seconds, null: false, default: 60
       t.boolean :default_entry, null: false, default: false
       t.jsonb :metadata, null: false, default: {}
       t.timestamps
     end
-    add_index :spawn_points, [:zone_id, :faction_key]
-
     create_table :character_positions do |t|
       t.references :character, null: false, foreign_key: true, index: {unique: true}
       t.references :zone, null: false, foreign_key: true

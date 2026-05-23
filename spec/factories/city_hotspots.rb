@@ -29,12 +29,6 @@ FactoryBot.define do
       association :destination_zone, factory: :zone
     end
 
-    trait :decoration do
-      hotspot_type { "decoration" }
-      action_type { "none" }
-      image_hover { nil }
-    end
-
     trait :inactive do
       active { false }
     end

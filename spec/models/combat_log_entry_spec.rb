@@ -97,15 +97,15 @@ RSpec.describe CombatLogEntry do
         arena_match: arena_match,
         message: "Attack landed",
         payload: {
-          "attacker" => "Hero",
-          "defender" => "Goblin",
+          "attacker" => "max_kerby",
+          "defender" => "Чумная крыса",
           "damage" => 25,
           "critical" => true,
           "effects" => [{"type" => "bleed", "duration" => 3}]
         })
 
       entry.reload
-      expect(entry.payload["attacker"]).to eq("Hero")
+      expect(entry.payload["attacker"]).to eq("max_kerby")
       expect(entry.payload["critical"]).to be true
       expect(entry.payload["effects"]).to be_an(Array)
     end

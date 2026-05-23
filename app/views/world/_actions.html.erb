@@ -90,7 +90,7 @@
           method: :post, class: "btn-secondary w-full" %>
     <% end %>
 
-    <%# Tile NPC (biome-based random spawns) %>
+    <%# Tile NPC actions from explicit outdoor NPC records %>
     <% tile_npc_action = available_actions.find { |a| a[:type] == :tile_npc } %>
     <% if tile_npc_action && tile_npc_action[:npc] %>
       <% npc = tile_npc_action[:npc] %>

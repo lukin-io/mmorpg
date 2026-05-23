@@ -22,7 +22,8 @@ Important borrowed ideas:
 - numeric skills use tiered 25-point bands where one spend can add a different
   amount depending on current level;
 - skills and perks have categories;
-- skills can unlock or improve combat and non-combat mechanics;
+- skills can unlock or improve combat and non-combat mechanics only after the
+  exact Neverlands formulas or gates are captured;
 - perks can have mutual exclusions;
 - the UI should show available points, current values, and missing
   requirements.
@@ -142,28 +143,53 @@ Stats affect:
 - carried weight;
 - item requirements.
 
-## Skill Categories
+## Numeric Skills
 
-Combat:
+The implemented numeric registry stores only captured `Умения` ids and tier
+rates. It intentionally does not contain effect formulas, prerequisite gates, or
+generic skill families.
 
-- weapon mastery;
-- defense;
-- critical/accuracy;
-- magic schools;
-- resistances.
+Combat and weapon skills:
 
-Peace/world:
+- `0` unarmed combat, rate `10:8:6:4`;
+- `1` sword mastery, rate `8:6:4:2`;
+- `2` axe mastery, rate `8:6:4:2`;
+- `3` bludgeoning weapon mastery, rate `8:6:4:2`;
+- `4` knife mastery, rate `8:6:4:2`;
+- `5` throwing weapon mastery, rate `8:6:4:2`;
+- `6` halberd/spear mastery, rate `8:6:4:2`;
+- `7` staff mastery, rate `8:6:4:2`;
+- `8` exotic weapon mastery, rate `6:4:4:2`;
+- `9` two-handed weapon mastery, rate `10:8:6:4`;
+- `10` dual-wielding, rate `4:4:2:2`;
+- `11` extra action points, rate `2:2:2:2`.
 
-- wanderer/travel;
-- trade-related skills, only after dedicated source capture.
+Magic and resistance skills:
 
-Trade-related peace skills or licenses need dedicated source capture before
-being treated as launch progression.
+- `12` fire magic, rate `8:6:4:2`;
+- `13` water magic, rate `8:6:4:2`;
+- `14` air magic, rate `8:6:4:2`;
+- `15` earth magic, rate `8:6:4:2`;
+- `16` fire magic resistance, rate `6:4:2:2`;
+- `17` water magic resistance, rate `6:4:2:2`;
+- `18` air magic resistance, rate `6:4:2:2`;
+- `19` earth magic resistance, rate `6:4:2:2`;
+- `20` physical damage resistance, rate `6:4:2:2`.
 
-Social/progression extensions:
+Peace/world skills:
 
-- reputation;
-- faction alignment.
+- `22` caution, rate `2:2:2:2`;
+- `23` stealth, rate `2:2:2:2`;
+- `24` observation, rate `2:2:2:2`;
+- `26` wanderer, rate `2:2:2:2`;
+- `27` linguistics, rate `2:2:2:2`;
+- `30` self-healing, rate `2:2:2:2`;
+- `33` fast mana regeneration, rate `2:2:2:2`;
+- `34` leadership, rate `6:4:3:2`.
+
+Profession counters such as trading, herbalism, mining, and fishing were visible
+in the source page, but not as the current allocatable numeric skill controls.
+They need dedicated capture before implementation.
 
 ## Rules
 
@@ -177,7 +203,7 @@ Social/progression extensions:
   validated server-side.
 - Numeric skill point pools are separate: combat/magic/resistance and
   peace/world.
-- Skills may have prerequisites.
+- Skill prerequisites are not implemented until captured from Neverlands.
 - Skills may use tiered progression, where later ranks cost more effort.
 - Boolean perks spend a separate new-perk pool and can remove incompatible
   options from the current selection UI.
@@ -187,9 +213,10 @@ Social/progression extensions:
 
 ## Interactions
 
-- `features/movement.md`: wanderer/travel skill can reduce travel time.
-- `features/combat.md`: weapon, defense, magic, and resistance skills affect
-  formulas.
+- `features/movement.md`: wanderer/travel effects need exact formula capture
+  before changing movement time.
+- `features/combat.md`: weapon, defense, magic, and resistance skills need
+  exact formula capture before changing combat formulas.
 - `features/items_inventory_equipment.md`: item requirements use stats/skills.
 - `features/npcs_quests.md`: future quest interactions need source capture
   before granting skill points or unlocking future source-backed training.

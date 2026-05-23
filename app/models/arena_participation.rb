@@ -60,7 +60,7 @@ class ArenaParticipation < ApplicationRecord
   # @return [Integer] the participant's level
   def participant_level
     if npc?
-      npc_template&.level || 1
+      npc_template&.level || 0
     else
       character&.level || 1
     end
@@ -95,7 +95,7 @@ class ArenaParticipation < ApplicationRecord
   # @return [Integer] max HP
   def max_hp
     if npc?
-      npc_template&.health || 100
+      (metadata || {})["max_hp"] || npc_template&.health || 0
     else
       character&.max_hp || 100
     end
@@ -123,20 +123,18 @@ class ArenaParticipation < ApplicationRecord
     end
   end
 
-  # Get NPC config hash from ArenaNpcConfig (if available) or build from template
+  # Get NPC config hash from ArenaNpcConfig, falling back only to explicit
+  # template metadata.
   def npc_config_hash
     return {} unless npc_template
 
     config = Game::World::ArenaNpcConfig.find_npc(npc_template.npc_key)
     return config if config
 
-    # Fallback to building from NpcTemplate
     {
       key: npc_template.npc_key,
       name: npc_template.name,
       level: npc_template.level,
-      hp: npc_template.health,
-      damage: npc_template.metadata&.dig("base_damage"),
       metadata: npc_template.metadata
     }
   end

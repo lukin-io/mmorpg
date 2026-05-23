@@ -18,14 +18,12 @@ RSpec.describe "Arena NPC Combat UI", type: :system do
 
   # Setup pattern matching world_map_spec.rb - character belongs to user
   let(:user) { create(:user) }
-  let(:zone) { create(:zone, name: "Test Zone", biome: "plains") }
-  let(:character) { create(:character, user: user, name: "TestHero", level: 5, current_hp: 100, max_hp: 100) }
+  let(:zone) { create(:zone, name: "Окрестность Форпоста", location_type: "outdoor") }
+  let(:character) { create(:character, user: user, name: "max_kerby_arena", level: 5, current_hp: 100, max_hp: 100) }
   let!(:position) { create(:character_position, character: character, zone: zone, x: 5, y: 5) }
   let!(:arena_hotspot) { create(:city_hotspot, :arena, zone: zone, active: true, required_level: 1) }
 
   let(:arena_room) { create(:arena_room, name: "Training Grounds", slug: "training", level_min: 1, level_max: 10, active: true, room_type: :training) }
-  let!(:arena_season) { create(:arena_season, :live) }
-
   let(:arena_bot) do
     create(:npc_template,
       npc_key: "arena_training_dummy",
@@ -36,8 +34,9 @@ RSpec.describe "Arena NPC Combat UI", type: :system do
       metadata: {
         "health" => 60,
         "base_damage" => 5,
-        "difficulty" => "easy",
-        "ai_behavior" => "defensive",
+        "ai_behavior" => "passive",
+        "defend_hp_below" => 0.7,
+        "defend_chance" => 0.5,
         "arena_rooms" => ["training"],
         "avatar" => "🎯",
         "stats" => {"attack" => 8, "defense" => 4, "hp" => 60}
@@ -49,7 +48,7 @@ RSpec.describe "Arena NPC Combat UI", type: :system do
   end
 
   def enter_arena_from_city!
-    zone.update!(biome: "city")
+    zone.update!(location_type: "city")
     page.driver.submit :post, interact_hotspot_world_path, {hotspot_id: arena_hotspot.id}
   end
 
@@ -139,7 +138,7 @@ RSpec.describe "Arena NPC Combat UI", type: :system do
 
       click_button "Accept"
 
-      expect(page).to have_content("TestHero")
+      expect(page).to have_content("max_kerby_arena")
       expect(page).to have_content("Training Dummy")
     end
 
@@ -250,7 +249,7 @@ RSpec.describe "Arena NPC Combat UI", type: :system do
     # Use existing user/character but with a level-restricted arena room
     let(:restricted_room) do
       create(:arena_room,
-        name: "Elite Arena",
+        name: "Restricted Arena Room",
         slug: "elite",
         level_min: 16,
         level_max: 33,
@@ -298,7 +297,6 @@ RSpec.describe "Arena NPC Combat UI", type: :system do
     let!(:completed_match) do
       create(:arena_match, :completed,
         arena_room: arena_room,
-        arena_season: arena_season,
         match_type: :duel,
         winning_team: "a",
         metadata: {"is_npc_fight" => true})
@@ -328,8 +326,8 @@ RSpec.describe "Arena NPC Combat UI", type: :system do
         actor: player_participation,
         target: npc_participation,
         log_type: "damage",
-        message: "TestHero attacks Training Dummy for 25 damage",
-        payload: {"description" => "TestHero attacks Training Dummy for 25 damage"},
+        message: "max_kerby_arena attacks Training Dummy for 25 damage",
+        payload: {"description" => "max_kerby_arena attacks Training Dummy for 25 damage"},
         damage_amount: 25)
     end
 
@@ -445,7 +443,6 @@ RSpec.describe "Arena NPC Combat UI", type: :system do
     let!(:live_match) do
       create(:arena_match, :live,
         arena_room: arena_room,
-        arena_season: arena_season,
         match_type: :duel,
         metadata: {"is_npc_fight" => true})
     end
@@ -475,7 +472,7 @@ RSpec.describe "Arena NPC Combat UI", type: :system do
     it "shows both participants with current HP" do
       visit arena_match_path(live_match)
 
-      expect(page).to have_content("TestHero")
+      expect(page).to have_content("max_kerby_arena")
       expect(page).to have_content("Training Dummy")
     end
 

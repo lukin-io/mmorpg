@@ -706,9 +706,9 @@ a.usermenulink:hover {
 |---------|------------|-----------|
 | Transport | iframes | ActionCable WebSocket |
 | Refresh | Polling (10-60s) | Real-time push |
-| Emoji | :CODE: → img | :CODE: → Unicode/img |
+| Emoji | :CODE: → img | Source-backed smile assets, not Unicode shortcut maps |
 | Context menu | onclick/oncontextmenu | Stimulus controller |
-| Private messages | %<user> prefix | /whisper command |
+| Private messages | %<user> prefix | %<user> addressing shape |
 
 ---
 

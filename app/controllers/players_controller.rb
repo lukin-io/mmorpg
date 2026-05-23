@@ -37,8 +37,6 @@ class PlayersController < ApplicationController
       character: {
         id: @character.id,
         name: @character.name,
-        avatar: @character.avatar,
-        avatar_path: @character.avatar_image_path,
         level: @character.level,
         experience: @character.experience,
         experience_to_next_level: @character.experience_to_next_level,

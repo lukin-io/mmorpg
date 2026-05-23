@@ -7,9 +7,9 @@ RSpec.describe "shared/_nl_players_list.html.erb", type: :view do
     let(:player1) do
       double("Character",
         id: 1,
-        name: "HeroPlayer",
+        name: "max_kerby_list",
         level: 15,
-        faction: "light",
+        alignment: "light",
         to_param: "1")
     end
 
@@ -18,7 +18,7 @@ RSpec.describe "shared/_nl_players_list.html.erb", type: :view do
         id: 2,
         name: "DarkKnight",
         level: 20,
-        faction: "dark",
+        alignment: "dark",
         to_param: "2")
     end
 
@@ -27,17 +27,16 @@ RSpec.describe "shared/_nl_players_list.html.erb", type: :view do
         id: 3,
         name: "NeutralGuy",
         level: 5,
-        faction: nil,
+        alignment: nil,
         to_param: "3")
     end
 
     before do
       assign(:players_here, [player1, player2, player3])
 
-      # Stub respond_to? for faction check
-      allow(player1).to receive(:respond_to?).with(:faction).and_return(true)
-      allow(player2).to receive(:respond_to?).with(:faction).and_return(true)
-      allow(player3).to receive(:respond_to?).with(:faction).and_return(true)
+      allow(player1).to receive(:respond_to?).with(:alignment).and_return(true)
+      allow(player2).to receive(:respond_to?).with(:alignment).and_return(true)
+      allow(player3).to receive(:respond_to?).with(:alignment).and_return(true)
     end
 
     it "renders player entries" do
@@ -49,7 +48,7 @@ RSpec.describe "shared/_nl_players_list.html.erb", type: :view do
     it "displays player names as links" do
       render partial: "shared/nl_players_list"
 
-      expect(rendered).to have_link("HeroPlayer")
+      expect(rendered).to have_link("max_kerby_list")
       expect(rendered).to have_link("DarkKnight")
       expect(rendered).to have_link("NeutralGuy")
     end
@@ -68,16 +67,16 @@ RSpec.describe "shared/_nl_players_list.html.erb", type: :view do
       expect(rendered).to have_css(".nl-player-arrow", count: 3)
     end
 
-    it "includes faction icon with correct class for light faction" do
+    it "includes alignment icon with correct class for light alignment" do
       render partial: "shared/nl_players_list"
 
-      expect(rendered).to have_css(".nl-faction-light")
+      expect(rendered).to have_css(".nl-alignment-light")
     end
 
-    it "includes faction icon with correct class for dark faction" do
+    it "includes alignment icon with correct class for dark alignment" do
       render partial: "shared/nl_players_list"
 
-      expect(rendered).to have_css(".nl-faction-dark")
+      expect(rendered).to have_css(".nl-alignment-dark")
     end
 
     it "includes status indicator" do
@@ -89,7 +88,7 @@ RSpec.describe "shared/_nl_players_list.html.erb", type: :view do
     it "links to character profile" do
       render partial: "shared/nl_players_list"
 
-      expect(rendered).to have_link("HeroPlayer", href: player_path(name: "HeroPlayer"))
+      expect(rendered).to have_link("max_kerby_list", href: player_path(name: "max_kerby_list"))
     end
   end
 
@@ -124,27 +123,27 @@ RSpec.describe "shared/_nl_players_list.html.erb", type: :view do
     end
   end
 
-  describe "player without faction" do
-    let(:player_no_faction) do
+  describe "player without alignment" do
+    let(:player_no_alignment) do
       double("Character",
         id: 1,
-        name: "NoFaction",
+        name: "NoAlignment",
         level: 10,
-        faction: nil,
+        alignment: nil,
         to_param: "1")
     end
 
     before do
-      assign(:players_here, [player_no_faction])
-      allow(player_no_faction).to receive(:respond_to?).with(:faction).and_return(true)
+      assign(:players_here, [player_no_alignment])
+      allow(player_no_alignment).to receive(:respond_to?).with(:alignment).and_return(true)
     end
 
-    it "shows default icon for players without faction" do
+    it "shows default icon for players without alignment" do
       render partial: "shared/nl_players_list"
 
       expect(rendered).to have_css(".nl-player-icon")
-      expect(rendered).not_to have_css(".nl-faction-light")
-      expect(rendered).not_to have_css(".nl-faction-dark")
+      expect(rendered).not_to have_css(".nl-alignment-light")
+      expect(rendered).not_to have_css(".nl-alignment-dark")
     end
   end
 end

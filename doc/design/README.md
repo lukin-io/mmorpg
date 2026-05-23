@@ -214,8 +214,58 @@ Neverlands-based behavior first.
   `talk_npc` action offers;
 - generic static world-region and biome encounter catalog, including fantasy
   regions, landmarks, region monster tables, region resource tables, global
-  biome encounter tables, and movement-time random encounter resolution;
+  biome encounter tables, biome-backed NPC/spawn fields, and movement-time
+  random encounter resolution;
 - generic profession, crafting, gathering-node, tile-resource, and resource
   respawn implementation, including crafting jobs, crafting stations, recipes,
   profession tools/progress, generic resource action UI, and placeholder
-  mining/fishing/herbalism skill effects.
+  mining/fishing/herbalism skill effects;
+- generic medical supply and infirmary recovery stack, including zone medical
+  stock pools, field-bandage supply depletion, infirmary fees, and metadata-based
+  respawn timer reduction;
+- generic arena seasons, rankings, leaderboard pages, rank badges, ELO-like
+  rating deltas, and season reward tiers;
+- generic faction/reputation/alignment-score layer, including
+  Alliance/Rebellion factions, reputation gates, chaos score tiers, alignment
+  score ladders, faction-specific spawn/building access, and invite-only arena
+  fight-kind handling not captured from Neverlands;
+- generic passive-skill formula layer, including invented skill effects,
+  prerequisite gates, UI effect previews, level-guessed NPC passive skills, and
+  unused hit/dodge/block/critical/damage/resistance formula classes not tied to
+  captured Neverlands combat behavior;
+- generic movement timing modifiers, including terrain speed YAML, swamp/forest/
+  mountain/road multipliers, diagonal movement duration multipliers, and
+  procedural terrain generation for uncaptured map tiles;
+- generic realtime presence/session-status layer, including `PresenceChannel`,
+  presence broadcasts, presence queue/job/publisher, busy/idle/offline session
+  states, device metadata, session security history, and standalone ignore-list
+  management UI;
+- generic modern chat extras, including standalone chat-channel dashboards,
+  `RealtimeChatChannel`, slash-command whispers/shouts, Unicode emoji picker
+  mappings, profanity dictionary filtering, product spam throttles, GM-alert/
+  flagged message state, per-channel chat roles/mutes, and generic selective
+  chat broadcast job plumbing;
+- generic perk implementation, including berserker/guardian/assassin/
+  pyromancer-style perk catalog, perk routes/UI/profile panel, level-up perk
+  point awards, and generic perk storage. Source-backed `Навыки` remains
+  documented and should be rebuilt only from captured Neverlands perk IDs and
+  exclusion rules.
+- generic active combat skill executor, including arbitrary damage/heal/buff/
+  debuff/dot/hot/aoe/drain/shield effect records, per-record cooldown metadata,
+  and generic `combat_buffs` storage. Source-backed arena magic/action slots
+  remain implemented through the shared turn processor and action catalog.
+- generic NPC gameplay fallbacks, including level-derived NPC stats, role-based
+  stat modifiers, flee logic, arena difficulty tiers, weighted NPC selection,
+  zone-wide outdoor NPC spawning, uncaptured NPC respawn defaults, and NPC image
+  selection from names or keys. Captured NPC templates now drive behavior
+  explicitly; wolf/boar/skeleton/zombie assets remain image assets only.
+- generic equipment/weapon fallbacks, including item-name/slot weapon-family
+  inference, `"generic"` family multipliers, uncaptured family attack-cost
+  bonuses, and NPC level-derived physical attack costs.
+- generic random player avatars, including fantasy avatar names, automatic
+  assignment, public avatar image paths, and the character `avatar` column.
+- generic fantasy seed/test content names, including starter fantasy equipment,
+  fantasy player names, goblin/bandit test NPCs, and elite/champion copy.
+- generic terrain-label design concepts, including road/plaza/grass/water tile
+  labels for world rendering. Map tiles now use source-backed location types
+  such as `outdoor` and `city`.

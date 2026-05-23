@@ -3,7 +3,7 @@
 require "rails_helper"
 
 RSpec.describe Game::Movement::MapState do
-  let(:zone) { create(:zone, name: "Map State Plains", biome: "plains", width: 10, height: 10) }
+  let(:zone) { create(:zone, name: "Map State Plains", location_type: "outdoor", width: 10, height: 10) }
   let(:character) { create(:character) }
   let!(:position) { create(:character_position, character:, zone:, x: 5, y: 5) }
 
@@ -21,7 +21,7 @@ RSpec.describe Game::Movement::MapState do
 
   it "does not offer blocked or out-of-bounds destinations" do
     position.update!(x: 0, y: 0)
-    MapTileTemplate.create!(zone: zone.name, x: 1, y: 0, terrain_type: "mountain", passable: false, biome: "plains")
+    MapTileTemplate.create!(zone: zone.name, x: 1, y: 0, terrain_type: "outdoor", passable: false)
 
     state = described_class.new(character:).call
 

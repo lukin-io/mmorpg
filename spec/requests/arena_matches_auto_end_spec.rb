@@ -11,12 +11,9 @@ RSpec.describe "ArenaMatches Auto-End on View", type: :request do
   let(:character1) { create(:character, user: user1, name: "Fighter1", level: 10, current_hp: 100, max_hp: 100) }
   let(:character2) { create(:character, user: user2, name: "Fighter2", level: 10, current_hp: 100, max_hp: 100) }
   let(:arena_room) { create(:arena_room, name: "Test Arena", level_min: 1, level_max: 100, active: true, max_concurrent_matches: 5) }
-  let(:arena_season) { create(:arena_season, status: :live) }
-
   let!(:match) do
     create(:arena_match,
       arena_room: arena_room,
-      arena_season: arena_season,
       status: :live,
       match_type: :duel,
       turn_timeout_seconds: 300,

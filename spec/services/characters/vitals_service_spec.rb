@@ -90,8 +90,8 @@ RSpec.describe Characters::VitalsService do
       it "includes equipment defense bonus in defense" do
         summary = service.stats_summary
 
-        # Base (15) + armor-family defense bonus (10 * 1.15, rounded to 12) = 27
-        expect(summary[:defense]).to eq(27)
+        # Base (15) + explicit defense bonus (10) = 25
+        expect(summary[:defense]).to eq(25)
       end
     end
   end

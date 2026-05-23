@@ -3,21 +3,19 @@ require "rails_helper"
 RSpec.describe Game::Movement::TurnProcessor do
   include ActiveSupport::Testing::TimeHelpers
 
-  let(:zone) { create(:zone, name: "Outpost", width: 3, height: 3, biome: "city") }
+  let(:zone) { create(:zone, name: "Outpost", width: 3, height: 3, location_type: "city") }
   let!(:spawn_point) { create(:spawn_point, zone:, x: 0, y: 0, default_entry: true) }
-  let!(:tile_origin) { MapTileTemplate.create!(zone: zone.name, x: 0, y: 0, terrain_type: "plaza", passable: true, biome: "city") }
+  let!(:tile_origin) { MapTileTemplate.create!(zone: zone.name, x: 0, y: 0, terrain_type: "city", passable: true) }
   let!(:tile_east) do
     MapTileTemplate.create!(
       zone: zone.name,
       x: 1,
       y: 0,
-      terrain_type: "street",
-      passable: true,
-      biome: "city",
-      metadata: {"movement_modifier" => "swamp"}
+      terrain_type: "city",
+      passable: true
     )
   end
-  let(:character) { create(:character, faction_alignment: "neutral") }
+  let(:character) { create(:character, alignment: "none") }
 
   before do
     create(:character_position, character:, zone:, x: 0, y: 0)
@@ -41,17 +39,15 @@ RSpec.describe Game::Movement::TurnProcessor do
     end.to raise_error(Game::Movement::TurnProcessor::MovementViolationError)
   end
 
-  it "applies terrain modifiers to action cooldowns" do
+  it "uses source-backed base action cooldown" do
     travel_to(Time.current) do
       described_class.new(character:, direction: :east, rng: Random.new(1)).call
 
-      # With 30s base cooldown and swamp terrain (1.5x modifier), need ~45 seconds
       expect do
         described_class.new(character:, direction: :west, rng: Random.new(2)).call
       end.to raise_error(Game::Movement::TurnProcessor::MovementViolationError)
 
-      # Travel past the terrain-modified cooldown
-      travel 46.seconds
+      travel 31.seconds
 
       expect do
         described_class.new(character:, direction: :west, rng: Random.new(3)).call
@@ -60,14 +56,14 @@ RSpec.describe Game::Movement::TurnProcessor do
   end
 
   describe "diagonal movement" do
-    let(:diag_zone) { create(:zone, name: "DiagonalTest", width: 5, height: 5, biome: "city") }
+    let(:diag_zone) { create(:zone, name: "DiagonalTest", width: 5, height: 5, location_type: "city") }
     let!(:diag_spawn_point) { create(:spawn_point, zone: diag_zone, x: 2, y: 2, default_entry: true) }
-    let(:diag_character) { create(:character, faction_alignment: "neutral") }
+    let(:diag_character) { create(:character, alignment: "none") }
 
     before do
       # Create tiles for all 8 directions around center (2,2)
       [[2, 2], [1, 2], [3, 2], [2, 1], [2, 3], [3, 1], [3, 3], [1, 3], [1, 1]].each do |x, y|
-        MapTileTemplate.create!(zone: diag_zone.name, x: x, y: y, terrain_type: "plaza", passable: true, biome: "city")
+        MapTileTemplate.create!(zone: diag_zone.name, x: x, y: y, terrain_type: "city", passable: true)
       end
 
       # Remove any existing position and create at center
@@ -114,18 +110,18 @@ RSpec.describe Game::Movement::TurnProcessor do
   end
 
   describe "wanderer skill cooldown reduction" do
-    let(:wanderer_zone) { create(:zone, name: "WandererTest", width: 5, height: 5, biome: "plains") }
+    let(:wanderer_zone) { create(:zone, name: "WandererTest", width: 5, height: 5, location_type: "outdoor") }
     let!(:wanderer_spawn) { create(:spawn_point, zone: wanderer_zone, x: 2, y: 2, default_entry: true) }
 
     before do
       # Create tiles for movement
       [[2, 2], [3, 2], [1, 2]].each do |x, y|
-        MapTileTemplate.create!(zone: wanderer_zone.name, x: x, y: y, terrain_type: "grass", passable: true, biome: "plains")
+        MapTileTemplate.create!(zone: wanderer_zone.name, x: x, y: y, terrain_type: "outdoor", passable: true)
       end
     end
 
     context "with wanderer at 0" do
-      let(:slow_char) { create(:character, faction_alignment: "neutral", passive_skills: {"wanderer" => 0}) }
+      let(:slow_char) { create(:character, alignment: "none", passive_skills: {"wanderer" => 0}) }
 
       before do
         slow_char.position&.destroy
@@ -153,7 +149,7 @@ RSpec.describe Game::Movement::TurnProcessor do
     end
 
     context "with wanderer at 100" do
-      let(:fast_char) { create(:character, faction_alignment: "neutral", passive_skills: {"wanderer" => 100}) }
+      let(:fast_char) { create(:character, alignment: "none", passive_skills: {"wanderer" => 100}) }
 
       before do
         fast_char.position&.destroy
@@ -161,17 +157,17 @@ RSpec.describe Game::Movement::TurnProcessor do
         create(:character_position, character: fast_char, zone: wanderer_zone, x: 2, y: 2)
       end
 
-      it "uses reduced cooldown (9 seconds at max level)" do
+      it "uses base cooldown until the Neverlands formula is captured" do
         travel_to(Time.current) do
           described_class.new(character: fast_char, direction: :east, rng: Random.new(1)).call
 
-          # Should NOT be able to move again before 9 seconds
-          travel 8.seconds
+          # Should NOT be able to move again before 30 seconds
+          travel 29.seconds
           expect do
             described_class.new(character: fast_char, direction: :west, rng: Random.new(2)).call
           end.to raise_error(Game::Movement::TurnProcessor::MovementViolationError)
 
-          # Should be able to move after 9 seconds
+          # Should be able to move after 30 seconds
           travel 2.seconds
           expect do
             described_class.new(character: fast_char, direction: :west, rng: Random.new(3)).call
@@ -181,7 +177,7 @@ RSpec.describe Game::Movement::TurnProcessor do
     end
 
     context "with wanderer at 50" do
-      let(:mid_char) { create(:character, faction_alignment: "neutral", passive_skills: {"wanderer" => 50}) }
+      let(:mid_char) { create(:character, alignment: "none", passive_skills: {"wanderer" => 50}) }
 
       before do
         mid_char.position&.destroy
@@ -189,17 +185,17 @@ RSpec.describe Game::Movement::TurnProcessor do
         create(:character_position, character: mid_char, zone: wanderer_zone, x: 2, y: 2)
       end
 
-      it "uses partially reduced cooldown (19.5 seconds)" do
+      it "uses base cooldown until the Neverlands formula is captured" do
         travel_to(Time.current) do
           described_class.new(character: mid_char, direction: :east, rng: Random.new(1)).call
 
-          # Should NOT be able to move again before 19.5 seconds
-          travel 19.seconds
+          # Should NOT be able to move again before 30 seconds
+          travel 29.seconds
           expect do
             described_class.new(character: mid_char, direction: :west, rng: Random.new(2)).call
           end.to raise_error(Game::Movement::TurnProcessor::MovementViolationError)
 
-          # Should be able to move after 20 seconds
+          # Should be able to move after 30 seconds
           travel 2.seconds
           expect do
             described_class.new(character: mid_char, direction: :west, rng: Random.new(3)).call

@@ -53,8 +53,7 @@ module Arena
         enemy_count: params[:enemy_count],
         enemy_level_min: params[:enemy_level_min],
         enemy_level_max: params[:enemy_level_max],
-        wait_minutes: params[:wait_minutes] || 10,
-        closed_fight: params[:closed_fight] || false
+        wait_minutes: params[:wait_minutes] || 10
       )
 
       if application.save
@@ -191,7 +190,6 @@ module Arena
     def create_match_from_applications(application, acceptor)
       match = ArenaMatch.create!(
         arena_room: application.arena_room,
-        arena_season: ArenaSeason.current.first,
         match_type: application.fight_type,
         status: :pending,
         turn_timeout_seconds: application.timeout_seconds,
@@ -226,7 +224,6 @@ module Arena
 
       match = ArenaMatch.create!(
         arena_room: application.arena_room,
-        arena_season: ArenaSeason.current.first,
         match_type: application.fight_type,
         status: :pending,
         turn_timeout_seconds: application.timeout_seconds,
@@ -236,7 +233,6 @@ module Arena
           is_npc_fight: true,
           npc_template_id: npc.id,
           npc_name: npc.name,
-          npc_difficulty: npc.arena_difficulty,
           npc_ai_behavior: npc.ai_behavior
         }
       )
@@ -343,8 +339,7 @@ module Arena
           countdown: 0,
           redirect_url: "/arena_matches/#{match.id}",
           npc_name: application.npc_template&.name,
-          npc_level: application.npc_template&.level,
-          npc_difficulty: application.npc_template&.arena_difficulty
+          npc_level: application.npc_template&.level
         }
       )
     end
@@ -375,7 +370,6 @@ module Arena
       if application.npc_application?
         payload.merge!(
           is_npc: true,
-          npc_difficulty: application.npc_difficulty,
           npc_avatar: application.npc_template&.avatar_emoji
         )
       end

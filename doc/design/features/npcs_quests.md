@@ -39,7 +39,7 @@ Deferred until capture:
 - building/service NPCs;
 - quest NPCs;
 - dialogue/action entry points;
-- training, recovery, storage, banking, transport, or other town services.
+- training, storage, banking, transport, or other town services.
 
 ## NPC Rules
 

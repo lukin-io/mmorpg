@@ -22,7 +22,6 @@ class ChatMessagesController < ApplicationController
       format.json { head :created }
     end
   rescue Chat::Errors::MutedError,
-    Chat::Errors::SpamThrottledError,
     Chat::Errors::PrivacyBlockedError,
     ActiveRecord::RecordInvalid,
     ArgumentError => e
@@ -54,7 +53,8 @@ class ChatMessagesController < ApplicationController
       format.html do
         flash.now[:alert] = message
         @chat_message = chat_message
-        @chat_messages = @chat_channel.chat_messages.order(created_at: :desc).limit(200).reverse
+        messages = @chat_channel.chat_messages.order(created_at: :desc).limit(200).reverse
+        @chat_messages = Chat::IgnoreFilter.filter_for_user(messages, current_user)
         render "chat_channels/show", status: :unprocessable_entity
       end
       format.json { render json: {error: message}, status: :unprocessable_entity }

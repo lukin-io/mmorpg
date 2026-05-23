@@ -3,8 +3,8 @@
 require "rails_helper"
 
 RSpec.describe TileBuilding, type: :model do
-  let(:source_zone) { create(:zone, name: "Starter Plains", biome: "plains") }
-  let(:destination_zone) { create(:zone, name: "Starter City", biome: "city") }
+  let(:source_zone) { create(:zone, name: "Outpost Surroundings", location_type: "outdoor") }
+  let(:destination_zone) { create(:zone, name: "Starter City", location_type: "city") }
 
   let(:valid_attributes) do
     {

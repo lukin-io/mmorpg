@@ -14,7 +14,6 @@ class CreateTileBuildings < ActiveRecord::Migration[8.1]
       t.integer :destination_y
       t.string :icon, default: "🏙️"
       t.integer :required_level, default: 1, null: false
-      t.string :faction_key
       t.jsonb :metadata, default: {}, null: false
       t.boolean :active, default: true, null: false
 

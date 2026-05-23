@@ -8,8 +8,6 @@ RSpec.describe "Arena Match Notification System", type: :system do
   let!(:character_a) { create(:character, user: user_a, name: "Fighter A", level: 15, current_hp: 100, max_hp: 100) }
   let!(:character_b) { create(:character, user: user_b, name: "Fighter B", level: 15, current_hp: 100, max_hp: 100) }
   let!(:arena_room) { create(:arena_room, name: "Test Arena", level_min: 10, level_max: 25, max_concurrent_matches: 5, active: true) }
-  let!(:arena_season) { create(:arena_season, status: :live) }
-
   before do
     create(:character_position, character: character_a)
     create(:character_position, character: character_b)
@@ -17,7 +15,7 @@ RSpec.describe "Arena Match Notification System", type: :system do
 
   def enter_arena_from_city!(character)
     zone = character.position.zone
-    zone.update!(biome: "city")
+    zone.update!(location_type: "city")
     hotspot = create(:city_hotspot, :arena, zone:, active: true, required_level: 1)
 
     page.driver.submit :post, interact_hotspot_world_path, {hotspot_id: hotspot.id}
@@ -142,7 +140,7 @@ RSpec.describe "Arena Match Notification System", type: :system do
 
   describe "active match redirect" do
     let(:arena_match) do
-      create(:arena_match, arena_room: arena_room, status: :live, arena_season: arena_season)
+      create(:arena_match, arena_room: arena_room, status: :live)
     end
 
     before do

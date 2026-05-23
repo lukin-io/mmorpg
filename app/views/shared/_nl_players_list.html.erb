@@ -3,8 +3,8 @@
 <% players.each do |player| %>
   <div class="nl-player-entry">
     <span class="nl-player-arrow">→</span>
-    <% if player.respond_to?(:faction) && player.faction.present? %>
-      <span class="nl-player-icon nl-faction-<%= player.faction.downcase %>">☠</span>
+    <% if player.respond_to?(:alignment) && player.alignment.present? %>
+      <span class="nl-player-icon nl-alignment-<%= player.alignment.downcase %>">☠</span>
     <% else %>
       <span class="nl-player-icon">→</span>
     <% end %>

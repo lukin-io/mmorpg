@@ -28,8 +28,7 @@
         <%= link_to "Character", player_path(name: current_character.name), class: "nl-nav-link", data: { turbo_frame: "main_content" } %>
         <%= link_to "Inventory", inventory_path, class: "nl-nav-link", data: { turbo_frame: "main_content" } %>
         <%= link_to "Abilities", skills_character_path(current_character), class: "nl-nav-link", data: { turbo_frame: "main_content" } %>
-        <%= link_to "Perks", perks_character_path(current_character), class: "nl-nav-link", data: { turbo_frame: "main_content" } %>
-        <% if @position&.zone&.biome == "city" %>
+        <% if @position&.zone&.city? %>
           <%= link_to "Exit", exit_location_world_path, class: "nl-nav-link", data: { turbo_method: :post } %>
         <% else %>
           <%= link_to "Enter", world_path, class: "nl-nav-link", data: { turbo_frame: "main_content" } %>
@@ -73,7 +72,7 @@
       </div>
       <div class="nl-players-location">
         <span class="nl-location-text"><%= @position&.zone&.name || "Unknown" %> [ <%= @players_here&.count || 0 %> ]</span>
-        <span class="nl-total-online">Total [ <%= User.joins(:user_sessions).where(user_sessions: { signed_out_at: nil }).where("user_sessions.last_seen_at > ?", 5.minutes.ago).distinct.count rescue 0 %> ]</span>
+        <span class="nl-total-online">Total [ <%= User.joins(:user_sessions).merge(UserSession.recent).distinct.count rescue 0 %> ]</span>
       </div>
       <div class="nl-players-list-float" data-game-layout-target="playersList">
         <%= render "shared/nl_players_list" %>
@@ -103,6 +102,7 @@
         <% if chat_channel %>
           <%= form_with url: chat_channel_chat_messages_path(chat_channel),
                         method: :post,
+                        scope: :chat_message,
                         class: "nl-chat-form-inline",
                         data: { controller: "chat-input", action: "turbo:submit-end->chat-input#reset" } do |f| %>
             <%= f.text_field :body,

@@ -5,7 +5,7 @@ require "rails_helper"
 RSpec.describe Game::Movement::AcceptMove do
   include ActiveSupport::Testing::TimeHelpers
 
-  let(:zone) { create(:zone, name: "Accept Move Plains", biome: "plains", width: 10, height: 10) }
+  let(:zone) { create(:zone, name: "Accept Move Plains", location_type: "outdoor", width: 10, height: 10) }
   let(:character) { create(:character) }
   let!(:position) { create(:character_position, character:, zone:, x: 5, y: 5) }
 
@@ -97,7 +97,7 @@ RSpec.describe Game::Movement::AcceptMove do
 
   it "rejects offers whose target is no longer passable" do
     command = offered_move
-    MapTileTemplate.create!(zone: zone.name, x: 5, y: 4, terrain_type: "mountain", passable: false, biome: "plains")
+    MapTileTemplate.create!(zone: zone.name, x: 5, y: 4, terrain_type: "outdoor", passable: false)
 
     expect {
       described_class.new(character:, action_key: command.action_key).call

@@ -86,8 +86,7 @@ module Arena
             damage_dealt: p[:damage_dealt],
             damage_taken: p[:damage_taken],
             healing_done: p[:healing_done],
-            kills: p[:kills],
-            rating_delta: p[:rating_delta]
+            kills: p[:kills]
           }
         end,
         rewards: result[:rewards]
@@ -253,7 +252,6 @@ module Arena
           damage_taken: p.metadata&.dig("damage_taken") || 0,
           healing_done: 0,
           kills: p.metadata&.dig("kills") || 0,
-          rating_delta: 0,
           is_npc: true
         }
       else
@@ -266,7 +264,6 @@ module Arena
           damage_taken: p.metadata&.dig("damage_taken") || 0,
           healing_done: p.metadata&.dig("healing_done") || 0,
           kills: p.metadata&.dig("kills") || 0,
-          rating_delta: p.rating_delta,
           is_npc: false
         }
       end

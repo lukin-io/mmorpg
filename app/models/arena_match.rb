@@ -30,7 +30,6 @@ class ArenaMatch < ApplicationRecord
   enum :status, STATUSES
   enum :match_type, MATCH_TYPES
 
-  belongs_to :arena_season, optional: true
   belongs_to :arena_room, optional: true
   belongs_to :zone, optional: true
 

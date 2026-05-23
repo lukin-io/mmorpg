@@ -15,10 +15,6 @@ RSpec.describe "Sidekiq Queue Configuration" do
       expect(configured_queues).to include("default")
     end
 
-    it "includes the presence queue for session tracking" do
-      expect(configured_queues).to include("presence")
-    end
-
     it "includes the movement queue" do
       expect(configured_queues).to include("movement")
     end
@@ -73,8 +69,7 @@ RSpec.describe "Sidekiq Queue Configuration" do
       {
         "Arena::MatchStarterJob" => "arena",
         "ArenaTurnTimeoutJob" => "arena",
-        "ArenaTurnTimeoutWarningJob" => "arena",
-        "SessionPresenceJob" => "presence"
+        "ArenaTurnTimeoutWarningJob" => "arena"
       }
     end
 

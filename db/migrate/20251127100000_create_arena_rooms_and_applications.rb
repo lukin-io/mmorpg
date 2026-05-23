@@ -2,7 +2,7 @@
 
 class CreateArenaRoomsAndApplications < ActiveRecord::Migration[8.1]
   def change
-    # Arena rooms with level/faction restrictions
+    # Arena rooms with level/alignment restrictions
     create_table :arena_rooms do |t|
       t.references :zone, foreign_key: true
       t.string :name, null: false
@@ -10,7 +10,7 @@ class CreateArenaRoomsAndApplications < ActiveRecord::Migration[8.1]
       t.integer :room_type, null: false, default: 0
       t.integer :level_min, null: false, default: 0
       t.integer :level_max, null: false, default: 100
-      t.string :faction_restriction
+      t.string :alignment_restriction
       t.integer :max_concurrent_matches, null: false, default: 10
       t.boolean :active, null: false, default: true
       t.jsonb :metadata, default: {}, null: false
@@ -44,7 +44,6 @@ class CreateArenaRoomsAndApplications < ActiveRecord::Migration[8.1]
       t.integer :enemy_level_max
       t.integer :wait_minutes, default: 10
 
-      t.boolean :closed_fight, null: false, default: false
       t.datetime :expires_at
       t.datetime :matched_at
       t.datetime :starts_at

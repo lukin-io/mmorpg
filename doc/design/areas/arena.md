@@ -97,9 +97,9 @@ JSON action keys if they preserve the same authorization contract.
 
 ## Room Rules
 
-- Rooms can restrict level range, faction/alignment, or fight type.
+- Rooms can restrict level range, alignment/sign, or fight type.
 - The core room ladder is: help/new-player, training, trial/challenge,
-  initiation, patron, and faction halls for Law, Light, Balance, Chaos, and
+  initiation, patron, and alignment halls for Law, Light, Balance, Chaos, and
   Dark.
 - Applications define fight type, equipment rule, timeout, trauma/risk, wait
   time, and team constraints.

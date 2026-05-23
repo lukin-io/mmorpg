@@ -13,17 +13,6 @@ module Arena
     DEFAULT_PHYSICAL_ATTACK_SEED = Game::Combat::ActionCatalog.attack_cost(:simple)
     AIMED_ATTACK_SURCHARGE = 20
 
-    WEAPON_FAMILY_COSTS = {
-      "axe" => 8,
-      "mace" => 7,
-      "sword" => 5,
-      "bow" => 6,
-      "dagger" => 3,
-      "staff" => 6,
-      "shield" => 2,
-      "generic" => 4
-    }.freeze
-
     class << self
       def for_participation(participation, persist: false)
         profile = new(participation).to_h
@@ -124,7 +113,7 @@ module Arena
       if participant_character
         [participant_character.max_action_points.to_i, DEFAULT_AP_LIMIT, seed + 30].max
       elsif participation&.npc?
-        [DEFAULT_AP_LIMIT, npc_level * 20, seed + 30].max
+        [DEFAULT_AP_LIMIT, seed + 30].max
       else
         DEFAULT_AP_LIMIT
       end
@@ -134,7 +123,7 @@ module Arena
       if participant_character
         explicit_item_seed || [DEFAULT_PHYSICAL_ATTACK_SEED + equipment_attack_cost_bonus, 1].max
       elsif participation&.npc?
-        [DEFAULT_PHYSICAL_ATTACK_SEED + (npc_level / 2), 1].max
+        DEFAULT_PHYSICAL_ATTACK_SEED
       else
         DEFAULT_PHYSICAL_ATTACK_SEED
       end
@@ -148,10 +137,6 @@ module Arena
 
     def participant_character
       @participant_character ||= participation&.character
-    end
-
-    def npc_level
-      participation&.npc_template&.level.to_i.positive? ? participation.npc_template.level.to_i : 1
     end
 
     def explicit_item_seed
@@ -175,22 +160,14 @@ module Arena
     def equipment_attack_cost_bonus
       equipped_items.sum do |item|
         stats = item.item_template&.stat_modifiers.to_h
-        explicit_bonus = item_value(
+        item_value(
           stats["physical_attack_cost_bonus"] ||
           stats[:physical_attack_cost_bonus] ||
           stats["attack_cost_bonus"] ||
           stats[:attack_cost_bonus] ||
           item.properties&.dig("physical_attack_cost_bonus") ||
           item.properties&.dig("attack_cost_bonus")
-        )
-        next explicit_bonus if explicit_bonus
-
-        family = equipment_family(item)
-        family_bonus = WEAPON_FAMILY_COSTS.fetch(family, WEAPON_FAMILY_COSTS["generic"])
-        attack_bonus = stats.fetch("attack", stats.fetch(:attack, 0)).to_i
-        next 0 if family == "armor"
-
-        family_bonus + (attack_bonus / 2)
+        ).to_i
       end
     end
 
@@ -208,19 +185,8 @@ module Arena
       stats = item.item_template&.stat_modifiers.to_h
       explicit = stats["family"] || stats[:family] || stats["weapon_family"] || stats[:weapon_family] ||
         item.properties&.dig("family") || item.properties&.dig("weapon_family")
-      return explicit.to_s.downcase if explicit.present?
 
-      name = item.item_template&.name.to_s.downcase
-      return "axe" if name.include?("axe")
-      return "mace" if name.include?("mace") || name.include?("hammer")
-      return "dagger" if name.include?("dagger") || name.include?("knife")
-      return "bow" if name.include?("bow")
-      return "staff" if name.include?("staff") || name.include?("wand")
-      return "sword" if name.include?("sword") || name.include?("blade")
-      return "shield" if item.item_template&.slot == "off_hand"
-      return "armor" if %w[head chest legs feet hands].include?(item.item_template&.slot)
-
-      "generic"
+      explicit.to_s.downcase.presence
     end
   end
 end

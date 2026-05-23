@@ -245,11 +245,11 @@ RSpec.describe Arena::CombatProcessor do
     let(:npc_template) do
       create(:npc_template,
         role: "arena_bot",
-        name: "Captured Bandit",
+        name: "Манекен",
         level: 5,
         metadata: {
           "base_damage" => 15,
-          "ai_behavior" => "balanced",
+          "ai_behavior" => "passive",
           "loot_table" => [
             {"item_key" => "wood_chips", "item_name" => "Щепки", "chance" => 1.0, "quantity" => 1}
           ]
@@ -332,7 +332,7 @@ RSpec.describe Arena::CombatProcessor do
 
       expect(result).to be_success
       expect(result[:attacks].size).to eq(2)
-      damage_entries = npc_match.reload.combat_log_entries.select { |entry| entry.log_type == "damage" && entry.message.include?("Captured Bandit attacks") }
+      damage_entries = npc_match.reload.combat_log_entries.select { |entry| entry.log_type == "damage" && entry.message.include?("Манекен attacks") }
       expect(damage_entries.map(&:message).join(" ")).to include("stomach", "legs")
     end
 
@@ -356,7 +356,7 @@ RSpec.describe Arena::CombatProcessor do
       log_entries = npc_match.reload.combat_log_entries
       expect(log_entries.map(&:log_type)).to include("defeat", "loot", "victory")
       loot_entry = log_entries.find { |entry| entry.log_type == "loot" }
-      expect(loot_entry.message).to include("searched Captured Bandit")
+      expect(loot_entry.message).to include("searched Манекен")
       expect(loot_entry.message).to include("Вещь «Щепки»")
       expect(character1.inventory.inventory_items.find_by(item_template: wood_chips).quantity).to eq(1)
       expect(npc_player_participation.reload.metadata["loot_drops"].last).to include(

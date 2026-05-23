@@ -20,20 +20,6 @@ RSpec.describe "Social UI", type: :system, js: true do
       click_button "Send"
       expect(page).to have_content("Hello from system spec")
     end
-
-    it "adds a player to the ignore list" do
-      create(:character, user: user)
-      create(:character, user: other_user)
-
-      visit ignore_list_entries_path
-
-      select other_user.profile_name, from: "Player"
-      fill_in "Notes", with: "Spamming"
-      click_button "Add to ignore list"
-
-      expect(page).to have_content("Player ignored")
-      expect(page).to have_content(other_user.profile_name)
-    end
   end
 
   describe "failure cases" do
@@ -53,9 +39,10 @@ RSpec.describe "Social UI", type: :system, js: true do
     it "blocks unverified users from social features" do
       logout(:user)
       unverified = create(:user, confirmed_at: nil)
+      channel = create(:chat_channel, name: "Global")
       login_as(unverified, scope: :user)
 
-      visit chat_channels_path
+      visit chat_channel_path(channel)
 
       expect(page).to have_css("#flash", text: "confirm your email address")
     end

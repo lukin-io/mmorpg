@@ -2,26 +2,11 @@
 
 module Npc
   # Shared combat interface for source-backed combat NPC types.
-  #
-  # Purpose: Standardize the combat interface across NPC types:
-  #   - Hostile NPCs in the outside world
-  #   - Arena bots for training
-  #
-  # Usage:
-  #   class NpcTemplate < ApplicationRecord
-  #     include Npc::CombatStats
-  #     include Npc::Combatable
-  #   end
-  #
-  #   npc = NpcTemplate.find_by(key: "arena_training_dummy")
-  #   npc.can_engage_combat?  # => true
-  #   npc.combat_behavior     # => :defensive
-  #
   module Combatable
     extend ActiveSupport::Concern
 
     COMBAT_ROLES = %w[hostile arena_bot].freeze
-    BEHAVIOR_TYPES = %i[aggressive balanced defensive passive].freeze
+    BEHAVIOR_TYPES = %i[aggressive passive].freeze
 
     # Check if this NPC can engage in combat
     #
@@ -51,46 +36,14 @@ module Npc
       behavior = metadata&.dig("ai_behavior") || metadata&.dig("behavior")
       return behavior.to_sym if behavior.present? && BEHAVIOR_TYPES.include?(behavior.to_sym)
 
-      # Default behaviors based on role
+      # Hostile outdoor NPC attacks are source-backed; arena NPC behavior should
+      # come from captured metadata and otherwise remains passive.
       case role
       when "hostile"
         :aggressive
-      when "arena_bot"
-        :balanced
       else
         :passive
       end
-    end
-
-    # Get difficulty rating for this NPC
-    #
-    # @return [Symbol] :easy, :medium, :hard, :elite, :boss
-    def difficulty_rating
-      difficulty = metadata&.dig("difficulty") || metadata&.dig("rarity")
-      return difficulty.to_sym if difficulty.present?
-
-      # Calculate difficulty from level
-      case level
-      when 1..5 then :easy
-      when 6..15 then :medium
-      when 16..30 then :hard
-      when 31..50 then :elite
-      else :boss
-      end
-    end
-
-    # Check if NPC should flee when HP is low
-    #
-    # @return [Boolean]
-    def can_flee?
-      role != "arena_bot" && metadata&.dig("can_flee") != false
-    end
-
-    # Get the HP threshold at which NPC considers fleeing
-    #
-    # @return [Float] percentage (0.0 - 1.0)
-    def flee_threshold
-      metadata&.dig("flee_threshold")&.to_f || 0.15
     end
 
     # Get loot table for drops
@@ -104,14 +57,7 @@ module Npc
     #
     # @return [Integer]
     def xp_reward
-      metadata&.dig("xp_reward") || metadata&.dig("xp") || (level * 10)
-    end
-
-    # Get gold reward for defeating this NPC
-    #
-    # @return [Integer]
-    def gold_reward
-      metadata&.dig("gold_reward") || metadata&.dig("gold") || (level * 2 + 5)
+      (metadata&.dig("xp_reward") || metadata&.dig("xp") || 0).to_i
     end
 
     # Generate combat initiative for turn order
@@ -129,16 +75,11 @@ module Npc
     # @param rng [Random] seeded random for determinism
     # @return [Boolean]
     def should_defend?(current_hp_ratio:, rng: Random.new)
-      thresholds = {
-        defensive: {hp: 0.7, chance: 0.4},
-        balanced: {hp: 0.4, chance: 0.2},
-        aggressive: {hp: 0.2, chance: 0.1},
-        passive: {hp: 1.0, chance: 0.8}
-      }
+      hp_threshold = metadata&.dig("defend_hp_below")
+      chance = metadata&.dig("defend_chance")
+      return false if hp_threshold.blank? || chance.blank?
 
-      config = thresholds[combat_behavior] || thresholds[:balanced]
-
-      current_hp_ratio < config[:hp] && rng.rand < config[:chance]
+      current_hp_ratio < hp_threshold.to_f && rng.rand < chance.to_f
     end
   end
 end

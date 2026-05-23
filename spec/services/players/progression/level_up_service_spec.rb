@@ -12,8 +12,7 @@ RSpec.describe Players::Progression::LevelUpService do
       stat_points_available: 0,
       skill_points_available: 0,
       combat_skill_points: 0,
-      peace_skill_points: 0,
-      perk_points_available: 0)
+      peace_skill_points: 0)
   end
 
   describe "#apply_experience!" do
@@ -55,14 +54,6 @@ RSpec.describe Players::Progression::LevelUpService do
         expect(result.peace_skill_points_gained).to eq(0)
         expect(result.character.peace_skill_points).to eq(0)
       end
-
-      it "does not grant perk points before level 5" do
-        service = described_class.new(character: character)
-        result = service.apply_experience!(100)
-
-        expect(result.perk_points_gained).to eq(0)
-        expect(result.character.perk_points_available).to eq(0)
-      end
     end
 
     context "when leveling to level 5" do
@@ -73,8 +64,7 @@ RSpec.describe Players::Progression::LevelUpService do
           experience: 900,  # Level 5 requires 1600
           stat_points_available: 0,
           combat_skill_points: 0,
-          peace_skill_points: 0,
-          perk_points_available: 0)
+          peace_skill_points: 0)
       end
 
       it "grants peace skill points at level 5" do
@@ -84,14 +74,6 @@ RSpec.describe Players::Progression::LevelUpService do
         expect(result.character.level).to eq(5)
         expect(result.peace_skill_points_gained).to eq(1)
         expect(result.character.peace_skill_points).to eq(1)
-      end
-
-      it "grants a perk point at level 5" do
-        service = described_class.new(character: character)
-        result = service.apply_experience!(700)
-
-        expect(result.perk_points_gained).to eq(1)
-        expect(result.character.perk_points_available).to eq(1)
       end
     end
 
@@ -107,29 +89,6 @@ RSpec.describe Players::Progression::LevelUpService do
         expect(result.stat_points_gained).to eq(20)  # 4 levels * 5 points
         expect(result.combat_skill_points_gained).to eq(4)  # 4 levels * 1 point
         expect(result.peace_skill_points_gained).to eq(1)  # Only level 5 grants peace points
-        expect(result.perk_points_gained).to eq(1)  # Only level 5 grants perk point
-      end
-    end
-
-    context "when leveling to level 10" do
-      let(:character) do
-        create(:character,
-          user: user,
-          level: 9,
-          experience: 6400,  # Level 10 requires 8100
-          stat_points_available: 0,
-          combat_skill_points: 0,
-          peace_skill_points: 0,
-          perk_points_available: 0)
-      end
-
-      it "grants perk point at level 10" do
-        service = described_class.new(character: character)
-        result = service.apply_experience!(1700)
-
-        expect(result.character.level).to eq(10)
-        expect(result.perk_points_gained).to eq(1)
-        expect(result.character.perk_points_available).to eq(1)
       end
     end
   end
@@ -151,7 +110,6 @@ RSpec.describe Players::Progression::LevelUpService do
       expect(result.character.level).to eq(6)
       expect(result.levels_gained).to eq(5)
       expect(result.stat_points_gained).to eq(25)
-      expect(result.perk_points_gained).to eq(1)  # Level 5 grants perk point
     end
   end
 

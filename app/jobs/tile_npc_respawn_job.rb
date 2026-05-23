@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
-# TileNpcRespawnJob respawns a defeated tile NPC with a new random NPC.
+# TileNpcRespawnJob respawns a defeated tile NPC only when the tile has an
+# explicit source-backed respawn rule.
 # Scheduled automatically when an NPC is defeated.
 #
 # Usage:

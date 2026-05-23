@@ -3,41 +3,11 @@
 require "rails_helper"
 
 RSpec.describe AlignmentHelper, type: :helper do
-  describe "#faction_icon" do
-    it "returns label for alliance" do
-      expect(helper.faction_icon(:alliance)).to eq("Alliance")
-    end
-
-    it "returns label for rebellion" do
-      expect(helper.faction_icon(:rebellion)).to eq("Rebellion")
-    end
-
-    it "returns label for neutral" do
-      expect(helper.faction_icon(:neutral)).to eq("Neutral")
-    end
-  end
-
-  describe "#alignment_tier_icon" do
-    it "returns celestial label for celestial tier" do
-      expect(helper.alignment_tier_icon(:celestial)).to eq("Celestial")
-    end
-
-    it "returns label for neutral tier" do
-      expect(helper.alignment_tier_icon(:neutral)).to eq("Neutral")
-    end
-
-    it "returns label for absolute_darkness" do
-      expect(helper.alignment_tier_icon(:absolute_darkness)).to eq("Absolute Darkness")
-    end
-  end
-
-  describe "#chaos_tier_icon" do
-    it "returns label for lawful" do
-      expect(helper.chaos_tier_icon(:lawful)).to eq("Lawful")
-    end
-
-    it "returns label for absolute_chaos" do
-      expect(helper.chaos_tier_icon(:absolute_chaos)).to eq("Absolute Chaos")
+  describe "#alignment_icon" do
+    it "returns source-backed Neverlands alignment labels" do
+      expect(helper.alignment_icon(:light)).to eq("Light")
+      expect(helper.alignment_icon(:dark)).to eq("Dark")
+      expect(helper.alignment_icon(:balance)).to eq("Balance")
     end
   end
 
@@ -76,13 +46,12 @@ RSpec.describe AlignmentHelper, type: :helper do
 
   describe "#alignment_badge" do
     let(:character) do
-      build(:character, faction_alignment: "alliance", alignment_score: 600)
+      build(:character, alignment: "light")
     end
 
     it "returns alignment badge with labels" do
       result = helper.alignment_badge(character)
-      expect(result).to include("Alliance")
-      expect(result).to include("True Light")
+      expect(result).to include("Light")
     end
 
     it "returns empty string for nil character" do
@@ -92,12 +61,12 @@ RSpec.describe AlignmentHelper, type: :helper do
 
   describe "#character_nameplate" do
     let(:character) do
-      build(:character, name: "TestHero", level: 10, faction_alignment: "rebellion", alignment_score: 0)
+      build(:character, name: "max_kerby_alignment", level: 10, alignment: "dark")
     end
 
     it "includes character name" do
       result = helper.character_nameplate(character)
-      expect(result).to include("TestHero")
+      expect(result).to include("max_kerby_alignment")
     end
 
     it "includes level when show_level is true" do
@@ -107,7 +76,7 @@ RSpec.describe AlignmentHelper, type: :helper do
 
     it "includes alignment labels" do
       result = helper.character_nameplate(character)
-      expect(result).to include("Rebellion")
+      expect(result).to include("Dark")
     end
   end
 end

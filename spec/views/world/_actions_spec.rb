@@ -3,7 +3,7 @@
 require "rails_helper"
 
 RSpec.describe "world/_actions.html.erb", type: :view do
-  let(:zone) { create(:zone, name: "Action Plains", biome: "plains") }
+  let(:zone) { create(:zone, name: "Action Plains", location_type: "outdoor") }
   let(:position) { create(:character_position, zone:, x: 5, y: 5) }
   let(:north_offer) do
     OpenStruct.new(direction: "north", target_x: 5, target_y: 4, action_key: "north-action-key")

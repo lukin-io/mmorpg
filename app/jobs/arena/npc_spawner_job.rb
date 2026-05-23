@@ -61,21 +61,9 @@ module Arena
 
     def spawn_npcs(room, count)
       service = Arena::NpcApplicationService.new
-      rng = Random.new(Time.current.to_i)
 
-      count.times do |i|
-        # Alternate difficulties for variety
-        difficulty = case i % 3
-        when 0 then :easy
-        when 1 then :medium
-        else :hard
-        end
-
-        result = service.create_for_room(
-          room: room,
-          difficulty: difficulty,
-          rng: rng
-        )
+      count.times do
+        result = service.create_for_room(room: room)
 
         if result.success?
           Rails.logger.info("[ArenaNpcSpawner] Spawned NPC application in #{room.slug}: #{result.application.applicant_name}")

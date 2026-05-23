@@ -40,7 +40,7 @@ The combat frame should use a three-zone layout:
 
 Participant panels show:
 
-- name, level, alignment/faction marker;
+- name, level, alignment/sign marker;
 - HP/MP bars with exact values;
 - equipment/totem/avatar slots where relevant;
 - visible combat stats for the opponent when rules allow it;

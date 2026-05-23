@@ -12,8 +12,6 @@ Rails.application.routes.draw do
       patch :stats, action: :update_stats
       get :skills
       patch :skills, action: :update_skills
-      get :perks
-      patch :perks, action: :update_perks
     end
   end
 
@@ -64,12 +62,10 @@ Rails.application.routes.draw do
     end
   end
 
-  resources :arena_seasons, only: [:index, :show]
-
   get "log/:id", to: "public_fight_logs#show", as: :public_fight_log
   post "fight/npc", to: "world_npc_fights#create", as: :world_npc_fights
 
-  resources :chat_channels, only: [:index, :show] do
+  resources :chat_channels, only: [:show] do
     resources :chat_messages, only: :create
   end
 
@@ -83,8 +79,6 @@ Rails.application.routes.draw do
   mount ActionCable.server => "/cable"
 
   resource :session_ping, only: :create
-
-  resources :ignore_list_entries, only: [:index, :create, :destroy]
 
   get "up" => "rails/health#show", :as => :rails_health_check
 end

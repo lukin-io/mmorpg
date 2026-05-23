@@ -110,9 +110,7 @@ module Game
 
       def build_metadata(provider, target_x, target_y, tile_metadata)
         {
-          "biome" => provider.biome_at(target_x, target_y),
-          "terrain_type" => provider.terrain_type_at(target_x, target_y) || tile_metadata["terrain_type"],
-          "terrain_modifier" => tile_metadata["movement_modifier"]
+          "terrain_type" => provider.terrain_type_at(target_x, target_y) || tile_metadata["terrain_type"]
         }.compact
       end
     end

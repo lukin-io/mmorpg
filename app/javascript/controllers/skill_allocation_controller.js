@@ -19,7 +19,7 @@ import { Controller } from "@hotwired/stimulus"
  * - Peace skills use peace_skill_points
  *
  * Data attributes:
- * - data-skill-allocation-skill-param: skill key (wanderer, melee_combat, etc.)
+ * - data-skill-allocation-skill-param: skill key (wanderer, sword_mastery, etc.)
  * - data-skill-allocation-pool-param: which pool to use (combat or peace)
  * - data-skill-allocation-rate-param: progression rate string (e.g., "10:8:6:4")
  */
@@ -29,7 +29,6 @@ export default class extends Controller {
     "peacePoints",     // Display element for peace skill points
     "skillValue",      // Skill level display elements [XXX/100]
     "skillInput",      // Hidden inputs for form submission
-    "skillEffect",     // Effect preview elements
     "skillGain",       // Points per spend preview
     "saveButton"       // Save button
   ]
@@ -60,9 +59,9 @@ export default class extends Controller {
    */
   addSkill(event) {
     const skill = event.currentTarget.dataset.skillAllocationSkillParam
-    const pool = event.currentTarget.dataset.skillAllocationPoolParam || "combat"
-    const rate = event.currentTarget.dataset.skillAllocationRateParam || "8:6:4:2"
-    if (!skill) return
+    const pool = event.currentTarget.dataset.skillAllocationPoolParam
+    const rate = event.currentTarget.dataset.skillAllocationRateParam
+    if (!skill || !pool || !rate) return
 
     // Check pool availability
     const available = pool === "peace" ? this.peaceFreeValue : this.combatFreeValue
@@ -104,9 +103,9 @@ export default class extends Controller {
    */
   removeSkill(event) {
     const skill = event.currentTarget.dataset.skillAllocationSkillParam
-    const pool = event.currentTarget.dataset.skillAllocationPoolParam || "combat"
-    const rate = event.currentTarget.dataset.skillAllocationRateParam || "8:6:4:2"
-    if (!skill) return
+    const pool = event.currentTarget.dataset.skillAllocationPoolParam
+    const rate = event.currentTarget.dataset.skillAllocationRateParam
+    if (!skill || !pool || !rate) return
 
     const spends = this.spendsValue[skill] || 0
     if (spends <= 0) {
@@ -153,8 +152,10 @@ export default class extends Controller {
    */
   calculatePointsPerSpend(currentLevel, rateString) {
     const rates = this.parseRates(rateString)
+    if (!rates) return 0
+
     const tier = this.calculateTier(currentLevel)
-    const points = rates[tier] || rates[rates.length - 1] || 2
+    const points = rates[tier]
 
     // Don't exceed max level
     const remaining = this.maxLevelValue - currentLevel
@@ -169,11 +170,12 @@ export default class extends Controller {
     if (currentLevel <= baseLevel) return currentLevel
 
     const rates = this.parseRates(rateString)
+    if (!rates) return currentLevel
 
     // Try each tier's rate to find the correct previous level
     for (let tier = 3; tier >= 0; tier--) {
       const tierStart = tier * 25
-      const rate = rates[tier] || rates[rates.length - 1] || 2
+      const rate = rates[tier]
 
       const potentialPrevious = currentLevel - rate
       if (potentialPrevious >= baseLevel && potentialPrevious >= tierStart) {
@@ -191,9 +193,8 @@ export default class extends Controller {
       }
     }
 
-    // Fallback
     const tier = this.calculateTier(currentLevel)
-    const rate = rates[tier] || 2
+    const rate = rates[tier]
     return Math.max(currentLevel - rate, baseLevel)
   }
 
@@ -211,11 +212,13 @@ export default class extends Controller {
    * Parse rate string into array of integers
    */
   parseRates(rateString) {
-    if (Array.isArray(rateString)) return rateString
-    if (typeof rateString === "string") {
-      return rateString.split(":").map(r => parseInt(r, 10))
-    }
-    return [8, 6, 4, 2]
+    if (typeof rateString !== "string") return null
+
+    const parts = rateString.split(":")
+    if (parts.length !== 4) return null
+
+    const rates = parts.map(r => parseInt(r, 10))
+    return rates.every(Number.isInteger) ? rates : null
   }
 
   /**
@@ -249,25 +252,8 @@ export default class extends Controller {
       inputEl.value = spends
     }
 
-    // Update effect preview
-    this.updateSkillEffect(skill, current)
-
     // Update points-per-spend preview
     this.updateSkillGain(skill, current, rate)
-  }
-
-  /**
-   * Update skill effect preview
-   */
-  updateSkillEffect(skill, level) {
-    const effectEl = this.skillEffectTargets.find(
-      el => el.dataset.skill === skill
-    )
-    if (!effectEl) return
-
-    // Calculate effect based on skill type
-    const effectText = this.calculateEffectText(skill, level)
-    effectEl.textContent = effectText
   }
 
   /**
@@ -290,85 +276,6 @@ export default class extends Controller {
   }
 
   /**
-   * Calculate effect text for a skill
-   */
-  calculateEffectText(skill, level) {
-    switch (skill) {
-      case "wanderer": {
-        const reduction = Math.round((level / 100) * 70)
-        const cooldown = (10 * (1 - reduction / 100)).toFixed(1)
-        return `Movement: ${cooldown}s (-${reduction}%)`
-      }
-      case "melee_combat":
-      case "ranged_combat":
-      case "unarmed_combat": {
-        const bonus = Math.round((level / 100) * 50)
-        return `Damage: +${bonus}%`
-      }
-      case "elemental_magic": {
-        const bonus = Math.round((level / 100) * 50)
-        return `Spell Damage: +${bonus}%`
-      }
-      case "healing_arts": {
-        const bonus = Math.round((level / 100) * 40)
-        return `Healing: +${bonus}%`
-      }
-      case "critical_strikes": {
-        const bonus = Math.round((level / 100) * 15)
-        return `Crit Chance: +${bonus}%`
-      }
-      case "evasion": {
-        const bonus = Math.round((level / 100) * 20)
-        return `Dodge: +${bonus}%`
-      }
-      case "block_mastery": {
-        const bonus = Math.round((level / 100) * 40)
-        return `Block: +${bonus}%`
-      }
-      case "arcane_power": {
-        const bonus = Math.round((level / 100) * 30)
-        return `Max Mana: +${bonus}%`
-      }
-      case "spell_mastery": {
-        const bonus = Math.round((level / 100) * 25)
-        return `Mana Cost: -${bonus}%`
-      }
-      case "fire_resistance":
-      case "cold_resistance":
-      case "lightning_resistance": {
-        const bonus = Math.round((level / 100) * 40)
-        return `Resist: ${bonus}%`
-      }
-      case "physical_fortitude": {
-        const bonus = Math.round((level / 100) * 25)
-        return `Phys Resist: ${bonus}%`
-      }
-      case "endurance": {
-        const bonus = Math.round((level / 100) * 50)
-        return `Max HP: +${bonus}%`
-      }
-      case "perception": {
-        const bonus = Math.round((level / 100) * 30)
-        return `Discovery: +${bonus}%`
-      }
-      case "luck": {
-        const bonus = Math.round((level / 100) * 25)
-        return `Loot: +${bonus}%`
-      }
-      case "first_aid": {
-        const bonus = Math.round((level / 100) * 75)
-        return `Regen: +${bonus}%`
-      }
-      case "trading": {
-        const bonus = Math.round((level / 100) * 20)
-        return `Prices: ${bonus}% better`
-      }
-      default:
-        return `Effect: ${level}%`
-    }
-  }
-
-  /**
    * Update all skill displays
    */
   updateAllDisplays() {
@@ -379,7 +286,9 @@ export default class extends Controller {
     ])
 
     allSkills.forEach(skill => {
-      const rate = this.ratesValue[skill] || "8:6:4:2"
+      const rate = this.ratesValue[skill]
+      if (!rate) return
+
       this.updateSkillDisplay(skill, rate)
     })
     this.updatePoolDisplays()

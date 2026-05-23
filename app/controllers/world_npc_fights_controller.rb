@@ -39,7 +39,10 @@ class WorldNpcFightsController < ApplicationController
   def create_match!(tile_npc)
     npc = tile_npc.npc_template
     zone = Zone.find_by(name: tile_npc.zone) || current_character.position&.zone
-    npc_hp = [tile_npc.current_hp.to_i, npc.health.to_i].select(&:positive?).first || 100
+    npc_hp = [tile_npc.current_hp.to_i, npc.health.to_i].find(&:positive?)
+    unless npc_hp
+      raise Game::World::AcceptAction::ActionViolationError, "NPC combat stats are not captured"
+    end
 
     match = ArenaMatch.create!(
       zone:,

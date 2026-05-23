@@ -32,11 +32,11 @@ RSpec.describe Arena::CombatProfile do
     )
   end
 
-  it "derives physical attack seed from equipped item family when no capture exists" do
+  it "uses explicit physical attack cost metadata without family fallbacks" do
     axe = create(:item_template,
       name: "Training Axe",
       slot: "main_hand",
-      stat_modifiers: {"attack" => 10, "weapon_family" => "axe"})
+      stat_modifiers: {"attack" => 10, "weapon_family" => "axe", "physical_attack_cost_bonus" => 13})
     armor = create(:item_template,
       :armor,
       name: "Training Armor",
@@ -51,6 +51,20 @@ RSpec.describe Arena::CombatProfile do
     expect(profile["aimed_attack_cost"]).to eq(78)
   end
 
+  it "does not infer physical attack cost from item family or attack stat" do
+    axe = create(:item_template,
+      name: "Training Axe",
+      slot: "main_hand",
+      stat_modifiers: {"attack" => 10, "weapon_family" => "axe"})
+    create(:inventory_item, inventory: character.inventory, item_template: axe, equipped: true)
+
+    profile = described_class.for_participation(participation)
+
+    expect(profile["physical_attack_cost_seed"]).to eq(45)
+    expect(profile["simple_attack_cost"]).to eq(45)
+    expect(profile["aimed_attack_cost"]).to eq(65)
+  end
+
   it "switches to shield block table when a shield is equipped" do
     shield = create(:item_template,
       name: "Round Shield",
@@ -61,7 +75,7 @@ RSpec.describe Arena::CombatProfile do
     expect(described_class.for_participation(participation)["block_table"]).to eq("shield")
   end
 
-  it "lets NPCs inherit captured fight AP while keeping level-derived physical attack cost" do
+  it "lets NPCs inherit captured fight AP without level-derived physical attack cost" do
     arena_match.update!(
       metadata: {
         "combat_profile" => {
@@ -80,8 +94,8 @@ RSpec.describe Arena::CombatProfile do
     profile = described_class.for_participation(npc_participation)
 
     expect(profile["ap_limit"]).to eq(140)
-    expect(profile["physical_attack_cost_seed"]).to eq(47)
-    expect(profile["simple_attack_cost"]).to eq(47)
-    expect(profile["aimed_attack_cost"]).to eq(67)
+    expect(profile["physical_attack_cost_seed"]).to eq(45)
+    expect(profile["simple_attack_cost"]).to eq(45)
+    expect(profile["aimed_attack_cost"]).to eq(65)
   end
 end

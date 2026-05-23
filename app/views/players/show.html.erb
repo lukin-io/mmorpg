@@ -39,8 +39,8 @@
               <td><%= number_with_delimiter(@character.experience_to_next_level) %></td>
             </tr>
             <tr>
-              <th>Fame</th>
-              <td><%= number_with_delimiter(@character.reputation) %></td>
+              <th>Alignment</th>
+              <td><%= @character.alignment_label %></td>
             </tr>
             <tr>
               <th>Valor</th>
@@ -85,20 +85,6 @@
               </div>
             <% end %>
           </div>
-        </div>
-
-        <div class="nl-profile-panel">
-          <h2>Perks</h2>
-          <% if @character.selected_perks.any? %>
-            <div class="nl-profile-perks">
-              <% @character.selected_perks.each do |key| %>
-                <% definition = Game::Skills::PerkRegistry.find(key) %>
-                <span><%= definition&.dig(:name) || key.to_s.humanize %></span>
-              <% end %>
-            </div>
-          <% else %>
-            <p class="nl-profile-empty">No perks selected.</p>
-          <% end %>
         </div>
       </main>
     </div>

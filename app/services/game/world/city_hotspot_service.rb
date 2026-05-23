@@ -37,7 +37,7 @@ module Game
       #
       # @return [Boolean]
       def city_zone?
-        zone&.biome == "city"
+        zone&.city? || false
       end
 
       # Get all hotspots for display in the city view

@@ -1,15 +1,13 @@
 # frozen_string_literal: true
 
 # CharactersController handles the Neverlands-style character profile allocation
-# surfaces: primary stats, numeric skills, and boolean perks.
+# surfaces currently implemented: primary stats and numeric skills.
 #
 # Usage:
 #   GET /characters/:id/stats       - Show stat allocation page
 #   PATCH /characters/:id/stats     - Save stat allocations
 #   GET /characters/:id/skills      - Show numeric skill allocation page
 #   PATCH /characters/:id/skills    - Save numeric skill allocations
-#   GET /characters/:id/perks       - Show boolean perk allocation page
-#   PATCH /characters/:id/perks     - Save one selected perk
 class CharactersController < ApplicationController
   include CurrentCharacterContext
 
@@ -68,11 +66,6 @@ class CharactersController < ApplicationController
     @skill_categories = Game::Skills::PassiveSkillRegistry.categories
     @combat_skill_points = @character.available_combat_skill_points
     @peace_skill_points = @character.available_peace_skill_points
-  end
-
-  # GET /characters/:id/perks
-  def perks
-    build_perks_data
   end
 
   # PATCH /characters/:id/skills
@@ -175,21 +168,6 @@ class CharactersController < ApplicationController
     end
   end
 
-  # PATCH /characters/:id/perks
-  def update_perks
-    perk_key = params[:perk_key].presence
-
-    if perk_key.blank?
-      return respond_with_error("No perk selected")
-    end
-
-    if @character.select_perk!(perk_key)
-      redirect_to perks_character_path(@character), notice: "Perk selected successfully!"
-    else
-      respond_with_error(@character.errors.full_messages.to_sentence.presence || "Perk cannot be selected")
-    end
-  end
-
   private
 
   def set_character
@@ -245,13 +223,6 @@ class CharactersController < ApplicationController
       }
     end
     skills
-  end
-
-  def build_perks_data
-    @perk_categories = Game::Skills::PerkRegistry.categories
-    @perks_by_category = Game::Skills::PerkRegistry.grouped_by_category
-    @selected_perks = @character.selected_perks
-    @excluded_perks = @selected_perks.flat_map { |key| Game::Skills::PerkRegistry.excluded_by(key) }.map(&:to_s).uniq
   end
 
   def parse_stat_allocations(stat_params)

@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
-# Arena room within arena complex with level/faction restrictions
-# Room types: Training Hall, Trial Hall, faction halls, etc.
+# Arena room within arena complex with level/alignment restrictions.
 #
 # @example Check if character can access room
 #   room = ArenaRoom.find_by(slug: "training-hall")
@@ -17,11 +16,11 @@ class ArenaRoom < ApplicationRecord
     challenge: 2,   # Levels 5-33, open range duels
     initiation: 3,  # Levels 9-33, mid-level progression
     patron: 4,      # Levels 16-33, high-level competitive
-    law: 5,         # Faction: Law alignment only
-    light: 6,       # Faction: Light alignment only
-    balance: 7,     # Faction: Neutral alignment only
-    chaos: 8,       # Faction: Chaos alignment only
-    dark: 9         # Faction: Dark alignment only
+    law: 5,
+    light: 6,
+    balance: 7,
+    chaos: 8,
+    dark: 9
   }.freeze
 
   enum :room_type, ROOM_TYPES
@@ -42,11 +41,11 @@ class ArenaRoom < ApplicationRecord
   # Check if a character can access this room
   #
   # @param character [Character] the character to check
-  # @return [Boolean] true if character meets level and faction requirements
+  # @return [Boolean] true if character meets level and alignment requirements
   def accessible_by?(character)
     return false unless active?
     return false unless character.level.between?(level_min, level_max)
-    return false if faction_restriction.present? && character.faction_alignment != faction_restriction
+    return false if alignment_restriction.present? && character.alignment != alignment_restriction
 
     true
   end
@@ -83,8 +82,8 @@ class ArenaRoom < ApplicationRecord
       return "Requires level #{level_min}-#{level_max} (you are level #{character.level})"
     end
 
-    if faction_restriction.present? && character.faction_alignment != faction_restriction
-      return "Requires #{faction_restriction.humanize} faction"
+    if alignment_restriction.present? && character.alignment != alignment_restriction
+      return "Requires #{alignment_restriction.humanize} alignment"
     end
 
     "Accessible"

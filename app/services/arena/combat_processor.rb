@@ -78,7 +78,7 @@ module Arena
     # Process a combat action from a character
     #
     # @param character [Character] the character performing the action
-    # @param action_type [Symbol] the type of action (:attack, :defend, :skill, :flee)
+    # @param action_type [Symbol] the type of action (:attack, :defend, :turn, :flee)
     # @param params [Hash] additional parameters for the action
     #   - target: Character or ArenaParticipation to target
     #   - attack_type: :simple or :aimed (default :simple)
@@ -127,7 +127,6 @@ module Arena
           body_part: params[:body_part] || "torso"
         )
       when :defend then process_defend(character, block_parts: params[:block_parts])
-      when :skill then process_skill(character, params[:skill_id], params[:target])
       when :flee then process_flee(character)
       else failure("Unknown action type: #{action_type}")
       end
@@ -840,49 +839,6 @@ module Arena
       success(defending: true, block_parts:)
     end
 
-    def process_skill(character, skill_id, target)
-      return failure("No skill specified") unless skill_id
-
-      # Find the skill
-      skill = find_skill(character, skill_id)
-      return failure("Skill not found or not unlocked") unless skill
-
-      # Find target character
-      target_char = find_target(target)
-      return failure("Target not found") unless target_char
-
-      # Execute the skill
-      executor = Game::Combat::SkillExecutor.new(
-        caster: character,
-        target: target_char,
-        skill: skill,
-        fight: match
-      )
-
-      result = executor.execute!
-      return failure(result.message) unless result.success
-
-      # Log the skill use
-      log_entry("skill", character, "uses #{skill.name} on #{target_char.name}")
-
-      # Broadcast skill effects
-      broadcaster.broadcast_combat_action(character, "skill", target_char, result.damage, skill_name: skill.name)
-
-      # Update vitals
-      broadcaster.broadcast_vitals_update(character)
-      broadcaster.broadcast_vitals_update(target_char)
-
-      # Check for victory
-      check_match_end!
-
-      success(
-        damage: result.damage,
-        healing: result.healing,
-        critical: result.critical,
-        effects: result.effects_applied
-      )
-    end
-
     def process_turn_skill(character, skill, target)
       key = skill[:key].to_s
       config = Game::Combat::ActionCatalog.magic_config(key)
@@ -1013,10 +969,6 @@ module Arena
       success(skill: key, effect: "chain_damage", targets: results)
     end
 
-    def find_skill(_character, _skill_id)
-      nil
-    end
-
     def find_target(target_id)
       return nil unless target_id
 
@@ -1046,9 +998,6 @@ module Arena
         ended_at: Time.current,
         winner_id: winner&.id
       )
-
-      # Distribute rewards
-      Arena::RewardsDistributor.new(match).distribute!
 
       broadcaster.broadcast_match_ended(winner)
     end
@@ -1191,24 +1140,11 @@ module Arena
           else
             "defeat"
           end
-          rating_delta = calculate_rating_delta(participation, winning_team)
           participation.update!(
             result:,
-            rating_delta:,
             ended_at: Time.current
           )
         end
-      end
-    end
-
-    def calculate_rating_delta(participation, winning_team)
-      # Simple ELO-like rating change
-      if participation.team == winning_team
-        rand(11..15)
-      elsif winning_team.nil?
-        0 # Draw
-      else
-        -rand(11..15)
       end
     end
 
@@ -1276,8 +1212,6 @@ module Arena
         block_parts = Array(params[:block_parts].presence || ["torso"])
         cost = Game::Combat::ActionCatalog.block_cost(body_parts: block_parts)
         cost.positive? ? cost : BLOCK_AP_COST
-      when :skill
-        magic_action_ap_cost(params[:skill_id])
       when :flee
         0 # No AP cost for flee
       else
@@ -1449,7 +1383,7 @@ module Arena
     def normalize_turn_skills(skills)
       Array(skills).filter_map do |skill|
         data = normalized_hash(skill)
-        key = (data[:key] || data[:action_key] || data[:skill_id]).to_s
+        key = (data[:key] || data[:action_key]).to_s
         next if key.blank? || key == "none"
 
         {
@@ -1719,14 +1653,7 @@ module Arena
       if npc_config
         Game::World::ArenaNpcConfig.extract_stats(npc_config)
       else
-        level = npc.level || 1
-        {
-          attack: npc.metadata&.dig("base_damage") || (level * 3 + 5),
-          defense: level * 2 + 3,
-          agility: level + 5,
-          hp: npc.health || (level * 10 + 20),
-          crit_chance: 10
-        }.with_indifferent_access
+        npc.combat_stats
       end
     end
 

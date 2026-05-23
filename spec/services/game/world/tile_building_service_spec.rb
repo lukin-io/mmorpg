@@ -5,8 +5,8 @@ require "rails_helper"
 RSpec.describe Game::World::TileBuildingService do
   let(:user) { create(:user) }
   let(:character) { create(:character, user: user, level: 10) }
-  let(:source_zone) { create(:zone, name: "Starter Plains", biome: "plains") }
-  let(:destination_zone) { create(:zone, name: "Starter City", biome: "city") }
+  let(:source_zone) { create(:zone, name: "Outpost Surroundings", location_type: "outdoor") }
+  let(:destination_zone) { create(:zone, name: "Starter City", location_type: "city") }
   let!(:building) do
     create(
       :tile_building,

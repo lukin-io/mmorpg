@@ -10,8 +10,8 @@
 #   hotspot.navigate_url                 # Get the destination URL for the hotspot
 #
 class CityHotspot < ApplicationRecord
-  HOTSPOT_TYPES = %w[building exit decoration].freeze
-  ACTION_TYPES = %w[enter_zone open_feature none].freeze
+  HOTSPOT_TYPES = %w[building exit].freeze
+  ACTION_TYPES = %w[enter_zone open_feature].freeze
 
   FEATURE_ROUTES = {
     "arena" => "/arena"
@@ -45,7 +45,6 @@ class CityHotspot < ApplicationRecord
   # @return [Boolean]
   def can_interact?(character)
     return false unless active?
-    return false if action_type == "none"
     return false if character.level < required_level
 
     true
@@ -57,7 +56,6 @@ class CityHotspot < ApplicationRecord
   # @return [String, nil] error message or nil if can interact
   def interaction_blocked_reason(character)
     return "This location is currently unavailable." unless active?
-    return nil if action_type == "none"
     return "You must be level #{required_level} to enter." if character.level < required_level
 
     nil
@@ -80,7 +78,7 @@ class CityHotspot < ApplicationRecord
   #
   # @return [Boolean]
   def clickable?
-    action_type != "none" && active?
+    active?
   end
 
   # Get display icon based on hotspot type
@@ -90,7 +88,6 @@ class CityHotspot < ApplicationRecord
     case hotspot_type
     when "building" then "🏛️"
     when "exit" then "🚪"
-    when "decoration" then "🌳"
     else "📍"
     end
   end

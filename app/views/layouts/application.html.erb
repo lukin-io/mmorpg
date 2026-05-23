@@ -25,7 +25,7 @@
     <%= javascript_importmap_tags %>
   </head>
 
-  <body <%= idle_tracker_attributes %> data-controller="mobile-hud">
+  <body <%= online_reload_attributes %> data-controller="<%= ["mobile-hud", ("online-reload" if user_signed_in?)].compact.join(" ") %>">
     <div class="game-wrapper">
       <%# Game Header with navigation %>
       <header class="game-header">
@@ -39,7 +39,6 @@
           <nav class="game-nav">
             <% if current_user %>
               <%= link_to "World", root_path, class: ("active" if controller_name == "world") %>
-              <%= link_to "Chat", chat_channels_path, class: ("active" if controller_name == "chat_channels") %>
               <% if player_profile_path %>
                 <%= link_to "Profile", player_profile_path, class: ("active" if controller_name == "players") %>
               <% end %>
@@ -96,10 +95,6 @@
             <%= link_to root_path, class: "mobile-hud-btn" do %>
               <span class="icon">Home</span>
               <span>Home</span>
-            <% end %>
-            <%= link_to chat_channels_path, class: "mobile-hud-btn" do %>
-              <span class="icon">Chat</span>
-              <span>Chat</span>
             <% end %>
             <% if player_profile_path %>
               <%= link_to player_profile_path, class: "mobile-hud-btn" do %>

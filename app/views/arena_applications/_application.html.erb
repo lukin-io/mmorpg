@@ -28,11 +28,6 @@
           <strong class="npc-name"><%= application.applicant_name %></strong>
           <span class="npc-level">[<%= application.applicant_level %>]</span>
           <span class="npc-badge badge badge--npc">Bot</span>
-          <% if application.npc_difficulty.present? %>
-            <span class="npc-difficulty badge badge--<%= application.npc_difficulty %>">
-              <%= application.npc_difficulty.humanize %>
-            </span>
-          <% end %>
         </span>
       <% else %>
         <%= character_nameplate(application.applicant, show_level: true) %>
@@ -74,7 +69,7 @@
               application_id: application.id
             } %>
       <% else %>
-        <span class="text-muted text-sm" title="Level or faction requirements not met">
+        <span class="text-muted text-sm" title="Level or alignment requirements not met">
           Not eligible
         </span>
       <% end %>

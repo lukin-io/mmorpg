@@ -4,8 +4,7 @@ FactoryBot.define do
   factory :tile_npc do
     sequence(:x) { |n| n }
     sequence(:y) { |n| n }
-    zone { "Starter Plains" }
-    biome { "plains" }
+    zone { "Outpost Surroundings" }
     npc_key { "plague_rat" }
     npc_role { "hostile" }
     level { 2 }
@@ -28,21 +27,11 @@ FactoryBot.define do
       association :defeated_by, factory: :character
     end
 
-    trait :forest do
-      biome { "forest" }
+    trait :outdoor do
       npc_key { "plague_rat" }
-      level { 3 }
-      current_hp { 70 }
-      max_hp { 70 }
-    end
-
-    trait :elite do
-      npc_key { "plague_rat" }
-      npc_role { "hostile" }
-      level { 10 }
-      current_hp { 300 }
-      max_hp { 300 }
-      metadata { {"rarity" => "rare"} }
+      level { 4 }
+      current_hp { 100 }
+      max_hp { 100 }
     end
   end
 end

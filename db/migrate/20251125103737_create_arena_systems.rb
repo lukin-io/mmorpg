@@ -1,19 +1,6 @@
 class CreateArenaSystems < ActiveRecord::Migration[8.1]
   def change
-    create_table :arena_seasons do |t|
-      t.string :name, null: false
-      t.string :slug, null: false
-      t.integer :status, null: false, default: 0
-      t.datetime :starts_at, null: false
-      t.datetime :ends_at
-      t.jsonb :metadata, default: {}, null: false
-      t.timestamps
-    end
-
-    add_index :arena_seasons, :slug, unique: true
-
     create_table :arena_matches do |t|
-      t.references :arena_season, foreign_key: true
       t.references :zone, foreign_key: true
       t.integer :status, null: false, default: 0
       t.integer :match_type, null: false, default: 0
@@ -45,8 +32,6 @@ class CreateArenaSystems < ActiveRecord::Migration[8.1]
       t.references :npc_template, foreign_key: true
       t.string :team, null: false
       t.integer :result, null: false, default: 0
-      t.integer :rating_delta, null: false, default: 0
-      t.jsonb :reward_payload, default: {}, null: false
       t.jsonb :metadata, default: {}, null: false
       t.datetime :joined_at, null: false
       t.datetime :ended_at

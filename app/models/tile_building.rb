@@ -69,7 +69,6 @@ class TileBuilding < ApplicationRecord
   def can_enter?(character)
     return false unless accessible?
     return false if character.level < required_level
-    return false if faction_key.present? && character_faction(character) != faction_key
 
     # Check additional requirements from metadata
     check_metadata_requirements(character)
@@ -82,10 +81,6 @@ class TileBuilding < ApplicationRecord
   def entry_blocked_reason(character)
     return "This building is currently inaccessible." unless accessible?
     return "You must be level #{required_level} to enter." if character.level < required_level
-
-    if faction_key.present? && character_faction(character) != faction_key
-      return "Only members of the #{faction_key.titleize} faction may enter."
-    end
 
     unless check_metadata_requirements(character)
       return metadata["requirement_message"] || "You do not meet the requirements to enter."
@@ -129,17 +124,12 @@ class TileBuilding < ApplicationRecord
       icon: display_icon,
       destination: destination_zone&.name,
       required_level: required_level,
-      faction_key: faction_key,
       active: active?,
       description: metadata["description"]
     }
   end
 
   private
-
-  def character_faction(character)
-    character.respond_to?(:faction_key) ? character.faction_key : nil
-  end
 
   def check_metadata_requirements(character)
     if metadata["required_item"].present?

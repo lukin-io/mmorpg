@@ -3,54 +3,6 @@
 require "rails_helper"
 
 RSpec.describe WorldHelper, type: :helper do
-  describe "#terrain_icon" do
-    it "returns correct icon for plains" do
-      expect(helper.terrain_icon("plains")).to eq("🌾")
-    end
-
-    it "returns correct icon for forest" do
-      expect(helper.terrain_icon("forest")).to eq("🌲")
-    end
-
-    it "returns correct icon for mountain" do
-      expect(helper.terrain_icon("mountain")).to eq("⛰️")
-    end
-
-    it "returns correct icon for river" do
-      expect(helper.terrain_icon("river")).to eq("🌊")
-    end
-
-    it "returns correct icon for city" do
-      expect(helper.terrain_icon("city")).to eq("🏙️")
-    end
-
-    it "returns default icon for unknown terrain" do
-      expect(helper.terrain_icon("unknown")).to eq("🗺️")
-    end
-  end
-
-  describe "#npc_icon" do
-    it "returns wolf icon for wolf NPC" do
-      expect(helper.npc_icon("Forest Wolf")).to eq("🐺")
-    end
-
-    it "returns goblin icon for goblin NPC" do
-      expect(helper.npc_icon("Goblin Scout")).to eq("👺")
-    end
-
-    it "returns spider icon for spider NPC" do
-      expect(helper.npc_icon("Giant Spider")).to eq("🕷️")
-    end
-
-    it "returns bandit icon for bandit NPC" do
-      expect(helper.npc_icon("Bandit Leader")).to eq("🥷")
-    end
-
-    it "returns default icon for unknown NPC" do
-      expect(helper.npc_icon("Unknown Entity")).to eq("👤")
-    end
-  end
-
   describe "#format_time_remaining" do
     it "returns 'now' for nil" do
       expect(helper.format_time_remaining(nil)).to eq("now")
@@ -86,24 +38,18 @@ RSpec.describe WorldHelper, type: :helper do
   end
 
   describe "#in_city?" do
-    let(:city_zone) { create(:zone, name: "Capital", biome: "city") }
-    let(:plains_zone) { create(:zone, name: "Plains", biome: "plains") }
+    let(:city_zone) { create(:zone, name: "Capital", location_type: "city") }
+    let(:outdoor_zone) { create(:zone, name: "Outpost Surroundings", location_type: "outdoor") }
     let(:character) { create(:character) }
 
-    it "returns true for city biome" do
+    it "returns true for city location type" do
       position = create(:character_position, character: character, zone: city_zone)
       expect(helper.in_city?(position)).to be true
     end
 
-    it "returns false for non-city biome" do
-      position = create(:character_position, character: character, zone: plains_zone)
+    it "returns false for outdoor location type" do
+      position = create(:character_position, character: character, zone: outdoor_zone)
       expect(helper.in_city?(position)).to be false
-    end
-
-    it "returns true when metadata zone_type is city" do
-      zone_with_meta = create(:zone, biome: "forest", metadata: {"zone_type" => "city"})
-      position = create(:character_position, character: character, zone: zone_with_meta)
-      expect(helper.in_city?(position)).to be true
     end
   end
 

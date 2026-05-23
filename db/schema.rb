@@ -18,7 +18,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_120000) do
     t.bigint "applicant_id"
     t.bigint "arena_match_id"
     t.bigint "arena_room_id", null: false
-    t.boolean "closed_fight", default: false, null: false
     t.datetime "created_at", null: false
     t.integer "enemy_count"
     t.integer "enemy_level_max"
@@ -52,7 +51,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_120000) do
 
   create_table "arena_matches", force: :cascade do |t|
     t.bigint "arena_room_id"
-    t.bigint "arena_season_id"
     t.string "bracket_position"
     t.datetime "created_at", null: false
     t.integer "current_turn_number", default: 0
@@ -71,7 +69,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_120000) do
     t.string "winning_team"
     t.bigint "zone_id"
     t.index ["arena_room_id"], name: "index_arena_matches_on_arena_room_id"
-    t.index ["arena_season_id"], name: "index_arena_matches_on_arena_season_id"
     t.index ["spectator_code"], name: "index_arena_matches_on_spectator_code", unique: true
     t.index ["status", "current_turn_started_at"], name: "index_arena_matches_on_timeout_check", where: "(status = 2)"
     t.index ["status"], name: "index_arena_matches_on_status"
@@ -86,9 +83,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_120000) do
     t.datetime "joined_at", null: false
     t.jsonb "metadata", default: {}, null: false
     t.bigint "npc_template_id"
-    t.integer "rating_delta", default: 0, null: false
     t.integer "result", default: 0, null: false
-    t.jsonb "reward_payload", default: {}, null: false
     t.string "team", null: false
     t.datetime "updated_at", null: false
     t.bigint "user_id"
@@ -99,23 +94,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_120000) do
     t.index ["user_id"], name: "index_arena_participations_on_user_id"
   end
 
-  create_table "arena_rankings", force: :cascade do |t|
-    t.bigint "character_id", null: false
-    t.datetime "created_at", null: false
-    t.jsonb "ladder_metadata", default: {}, null: false
-    t.string "ladder_type", default: "arena", null: false
-    t.integer "losses", default: 0, null: false
-    t.integer "rating", default: 1200, null: false
-    t.integer "streak", default: 0, null: false
-    t.datetime "updated_at", null: false
-    t.integer "wins", default: 0, null: false
-    t.index ["character_id", "ladder_type"], name: "index_arena_rankings_on_character_id_and_ladder_type", unique: true
-  end
-
   create_table "arena_rooms", force: :cascade do |t|
     t.boolean "active", default: true, null: false
+    t.string "alignment_restriction"
     t.datetime "created_at", null: false
-    t.string "faction_restriction"
     t.integer "level_max", default: 100, null: false
     t.integer "level_min", default: 0, null: false
     t.integer "max_concurrent_matches", default: 10, null: false
@@ -129,18 +111,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_120000) do
     t.index ["room_type"], name: "index_arena_rooms_on_room_type"
     t.index ["slug"], name: "index_arena_rooms_on_slug", unique: true
     t.index ["zone_id"], name: "index_arena_rooms_on_zone_id"
-  end
-
-  create_table "arena_seasons", force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.datetime "ends_at"
-    t.jsonb "metadata", default: {}, null: false
-    t.string "name", null: false
-    t.string "slug", null: false
-    t.datetime "starts_at", null: false
-    t.integer "status", default: 0, null: false
-    t.datetime "updated_at", null: false
-    t.index ["slug"], name: "index_arena_seasons_on_slug", unique: true
   end
 
   create_table "character_positions", force: :cascade do |t|
@@ -160,16 +130,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_120000) do
   end
 
   create_table "characters", force: :cascade do |t|
-    t.integer "alignment_score", default: 0, null: false
+    t.string "alignment", default: "none", null: false
     t.jsonb "allocated_stats", default: {}, null: false
-    t.string "avatar"
-    t.integer "chaos_score", default: 0, null: false
     t.integer "combat_skill_points", default: 0, null: false
     t.datetime "created_at", null: false
     t.integer "current_hp", default: 100, null: false
     t.integer "current_mp", default: 50, null: false
     t.bigint "experience", default: 0, null: false
-    t.string "faction_alignment", default: "neutral", null: false
     t.integer "hp_regen_interval", default: 300, null: false
     t.boolean "in_combat", default: false, null: false
     t.datetime "last_combat_at"
@@ -183,10 +150,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_120000) do
     t.string "name", null: false
     t.jsonb "passive_skills", default: {}, null: false
     t.integer "peace_skill_points", default: 0, null: false
-    t.integer "perk_points_available", default: 0, null: false
-    t.jsonb "perks", default: {}, null: false
     t.jsonb "progression_sources", default: {}, null: false
-    t.integer "reputation", default: 0, null: false
     t.jsonb "resource_pools", default: {}, null: false
     t.integer "skill_points_available", default: 0, null: false
     t.integer "stat_points_available", default: 0, null: false
@@ -195,15 +159,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_120000) do
     t.index ["combat_skill_points"], name: "index_characters_on_combat_skill_points", where: "(combat_skill_points > 0)"
     t.index ["name"], name: "index_characters_on_name", unique: true
     t.index ["peace_skill_points"], name: "index_characters_on_peace_skill_points", where: "(peace_skill_points > 0)"
-    t.index ["perk_points_available"], name: "index_characters_on_perk_points_available", where: "(perk_points_available > 0)"
     t.index ["user_id"], name: "index_characters_on_user_id"
   end
 
   create_table "chat_channel_memberships", force: :cascade do |t|
     t.bigint "chat_channel_id", null: false
     t.datetime "created_at", null: false
-    t.datetime "muted_until"
-    t.integer "role", default: 0, null: false
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
     t.index ["chat_channel_id", "user_id"], name: "index_chat_memberships_on_channel_and_user", unique: true
@@ -229,15 +190,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_120000) do
     t.text "body", null: false
     t.bigint "chat_channel_id", null: false
     t.datetime "created_at", null: false
-    t.text "filtered_body", null: false
-    t.boolean "flagged", default: false, null: false
     t.jsonb "metadata", default: {}, null: false
     t.bigint "sender_id", null: false
     t.datetime "updated_at", null: false
     t.integer "visibility", default: 0, null: false
     t.index ["chat_channel_id", "created_at"], name: "index_chat_messages_on_chat_channel_id_and_created_at"
     t.index ["chat_channel_id"], name: "index_chat_messages_on_chat_channel_id"
-    t.index ["flagged"], name: "index_chat_messages_on_flagged"
     t.index ["sender_id"], name: "index_chat_messages_on_sender_id"
   end
 
@@ -302,23 +260,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_120000) do
     t.integer "amount", null: false
     t.integer "balance_after", default: 0, null: false
     t.datetime "created_at", null: false
-    t.string "currency_type", null: false
     t.bigint "currency_wallet_id", null: false
     t.jsonb "metadata", default: {}, null: false
     t.string "reason", null: false
     t.datetime "updated_at", null: false
     t.index ["created_at"], name: "index_currency_transactions_on_created_at"
-    t.index ["currency_type", "created_at"], name: "index_currency_transactions_on_type_and_created_at"
     t.index ["currency_wallet_id"], name: "index_currency_transactions_on_currency_wallet_id"
   end
 
   create_table "currency_wallets", force: :cascade do |t|
     t.datetime "created_at", null: false
-    t.integer "gold_balance", default: 0, null: false
-    t.integer "gold_soft_cap", default: 2000000, null: false
-    t.integer "silver_balance", default: 0, null: false
-    t.integer "silver_soft_cap", default: 150000, null: false
-    t.jsonb "sink_totals", default: {}, null: false
+    t.integer "nv_balance", default: 0, null: false
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
     t.index ["user_id"], name: "index_currency_wallets_on_user_id", unique: true
@@ -392,7 +344,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_120000) do
   end
 
   create_table "map_tile_templates", force: :cascade do |t|
-    t.string "biome", default: "plains", null: false
     t.datetime "created_at", null: false
     t.jsonb "metadata", default: {}, null: false
     t.boolean "passable", default: true, null: false
@@ -402,17 +353,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_120000) do
     t.integer "y", null: false
     t.string "zone", null: false
     t.index ["zone", "x", "y"], name: "index_map_tile_templates_on_zone_and_x_and_y", unique: true
-  end
-
-  create_table "medical_supply_pools", force: :cascade do |t|
-    t.integer "available_quantity", default: 0, null: false
-    t.datetime "created_at", null: false
-    t.string "item_name", null: false
-    t.datetime "last_restocked_at"
-    t.datetime "updated_at", null: false
-    t.bigint "zone_id", null: false
-    t.index ["zone_id", "item_name"], name: "index_medical_supply_pools_on_zone_and_item", unique: true
-    t.index ["zone_id"], name: "index_medical_supply_pools_on_zone_id"
   end
 
   create_table "movement_commands", force: :cascade do |t|
@@ -475,14 +415,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_120000) do
     t.string "city_key"
     t.datetime "created_at", null: false
     t.boolean "default_entry", default: false, null: false
-    t.string "faction_key", null: false
     t.jsonb "metadata", default: {}, null: false
     t.integer "respawn_seconds", default: 60, null: false
     t.datetime "updated_at", null: false
     t.integer "x", null: false
     t.integer "y", null: false
     t.bigint "zone_id", null: false
-    t.index ["zone_id", "faction_key"], name: "index_spawn_points_on_zone_id_and_faction_key"
     t.index ["zone_id"], name: "index_spawn_points_on_zone_id"
   end
 
@@ -494,7 +432,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_120000) do
     t.integer "destination_x"
     t.integer "destination_y"
     t.bigint "destination_zone_id"
-    t.string "faction_key"
     t.string "icon", default: "🏙️"
     t.jsonb "metadata", default: {}, null: false
     t.string "name", null: false
@@ -511,7 +448,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_120000) do
   end
 
   create_table "tile_npcs", force: :cascade do |t|
-    t.string "biome"
     t.datetime "created_at", null: false
     t.integer "current_hp"
     t.datetime "defeated_at"
@@ -527,7 +463,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_120000) do
     t.integer "x", null: false
     t.integer "y", null: false
     t.string "zone", null: false
-    t.index ["biome"], name: "index_tile_npcs_on_biome"
     t.index ["defeated_by_id"], name: "index_tile_npcs_on_defeated_by_id"
     t.index ["npc_role"], name: "index_tile_npcs_on_npc_role"
     t.index ["npc_template_id"], name: "index_tile_npcs_on_npc_template_id"
@@ -537,24 +472,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_120000) do
 
   create_table "user_sessions", force: :cascade do |t|
     t.datetime "created_at", null: false
-    t.string "current_location_label"
-    t.bigint "current_zone_id"
-    t.string "current_zone_name"
     t.string "device_id", null: false
-    t.string "ip_address"
-    t.datetime "last_activity_at"
-    t.bigint "last_character_id"
-    t.string "last_character_name"
     t.datetime "last_seen_at"
-    t.jsonb "metadata", default: {}, null: false
-    t.datetime "revoked_at"
     t.datetime "signed_in_at", null: false
     t.datetime "signed_out_at"
-    t.string "status", default: "online", null: false
     t.datetime "updated_at", null: false
-    t.string "user_agent"
     t.bigint "user_id", null: false
-    t.index ["status"], name: "index_user_sessions_on_status"
     t.index ["user_id", "device_id"], name: "index_user_sessions_on_user_id_and_device_id", unique: true
     t.index ["user_id"], name: "index_user_sessions_on_user_id"
   end
@@ -562,14 +485,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_120000) do
   create_table "users", force: :cascade do |t|
     t.string "chat_mute_reason"
     t.datetime "chat_muted_until"
-    t.integer "chat_privacy", default: 0, null: false
     t.datetime "confirmation_sent_at"
     t.string "confirmation_token"
     t.datetime "confirmed_at"
     t.datetime "created_at", null: false
     t.datetime "current_sign_in_at"
     t.inet "current_sign_in_ip"
-    t.integer "duel_privacy", default: 0, null: false
     t.string "email", default: "", null: false
     t.string "encrypted_password", default: "", null: false
     t.datetime "last_seen_at"
@@ -577,12 +498,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_120000) do
     t.inet "last_sign_in_ip"
     t.string "profile_name", null: false
     t.datetime "remember_created_at"
-    t.integer "reputation_score", default: 0, null: false
     t.datetime "reset_password_sent_at"
     t.string "reset_password_token"
-    t.jsonb "session_metadata", default: {}, null: false
     t.integer "sign_in_count", default: 0, null: false
-    t.jsonb "social_settings", default: {}, null: false
     t.datetime "suspended_until"
     t.string "unconfirmed_email"
     t.datetime "updated_at", null: false
@@ -627,9 +545,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_120000) do
   end
 
   create_table "zones", force: :cascade do |t|
-    t.string "biome", null: false
     t.datetime "created_at", null: false
     t.integer "height", default: 32, null: false
+    t.string "location_type", default: "outdoor", null: false
     t.jsonb "metadata", default: {}, null: false
     t.string "name", null: false
     t.integer "turn_counter", default: 1, null: false
@@ -644,13 +562,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_120000) do
   add_foreign_key "arena_applications", "characters", column: "applicant_id"
   add_foreign_key "arena_applications", "npc_templates"
   add_foreign_key "arena_matches", "arena_rooms"
-  add_foreign_key "arena_matches", "arena_seasons"
   add_foreign_key "arena_matches", "zones"
   add_foreign_key "arena_participations", "arena_matches"
   add_foreign_key "arena_participations", "characters"
   add_foreign_key "arena_participations", "npc_templates"
   add_foreign_key "arena_participations", "users"
-  add_foreign_key "arena_rankings", "characters"
   add_foreign_key "arena_rooms", "zones"
   add_foreign_key "character_positions", "characters"
   add_foreign_key "character_positions", "zones"
@@ -670,7 +586,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_120000) do
   add_foreign_key "inventories", "characters"
   add_foreign_key "inventory_items", "inventories"
   add_foreign_key "inventory_items", "item_templates"
-  add_foreign_key "medical_supply_pools", "zones"
   add_foreign_key "movement_commands", "characters"
   add_foreign_key "movement_commands", "zones"
   add_foreign_key "spawn_points", "zones"

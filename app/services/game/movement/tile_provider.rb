@@ -22,16 +22,8 @@ module Game
         if record
           Game::Maps::Tile.new(x:, y:, passable: record.passable)
         else
-          # No tile record - generate a default passable tile based on zone
-          # Tiles without records are assumed passable unless the biome is impassable
-          biome = zone.biome
-          passable = !%w[mountain water ocean].include?(biome)
-          Game::Maps::Tile.new(x:, y:, passable: passable)
+          Game::Maps::Tile.new(x:, y:, passable: true)
         end
-      end
-
-      def biome_at(x, y)
-        tiles[[x, y]]&.biome || zone.biome
       end
 
       def metadata_at(x, y)

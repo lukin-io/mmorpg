@@ -6,7 +6,7 @@ RSpec.describe "Onboarding", type: :system do
   describe "success cases" do
     it "signs in via Devise UI and lands on the world page" do
       user = create(:user, password: "Password123!", password_confirmation: "Password123!")
-      zone = create(:zone, name: "Starter Plains", biome: "plains", width: 10, height: 10)
+      zone = create(:zone, name: "Outpost Surroundings", location_type: "outdoor", width: 10, height: 10)
       character = create(:character, user: user)
       create(:character_position, character: character, zone: zone, x: 5, y: 5)
 
@@ -17,7 +17,7 @@ RSpec.describe "Onboarding", type: :system do
       click_button "Enter the Realm"
 
       expect(page).to have_css(".nl-map-container")
-      expect(page).to have_content("Starter Plains")
+      expect(page).to have_content("Outpost Surroundings")
     end
   end
 
@@ -37,7 +37,7 @@ RSpec.describe "Onboarding", type: :system do
   describe "null/edge cases" do
     it "boots a character with no position by auto-creating a starter position" do
       user = create(:user, password: "Password123!", password_confirmation: "Password123!")
-      create(:zone, name: "Starter Plains", biome: "plains", width: 10, height: 10)
+      create(:zone, name: "Outpost Surroundings", location_type: "outdoor", width: 10, height: 10)
       create(:character, user: user)
 
       visit new_user_session_path
@@ -46,7 +46,7 @@ RSpec.describe "Onboarding", type: :system do
       click_button "Enter the Realm"
 
       expect(page).to have_css(".nl-map-container")
-      expect(page).to have_content("Starter Plains")
+      expect(page).to have_content("Outpost Surroundings")
     end
 
     it "shows validation errors when signing up with blank fields" do

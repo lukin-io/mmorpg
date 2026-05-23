@@ -2,7 +2,7 @@
 
 FactoryBot.define do
   factory :tile_building do
-    zone { "Starter Plains" }
+    zone { "Outpost Surroundings" }
     sequence(:x) { |n| n % 100 }
     sequence(:y) { |n| (n / 100) % 100 }
     sequence(:building_key) { |n| "building_#{n}" }
@@ -13,7 +13,6 @@ FactoryBot.define do
     destination_y { nil }
     icon { "🏙️" }
     required_level { 1 }
-    faction_key { nil }
     metadata { {} }
     active { true }
 
@@ -39,10 +38,6 @@ FactoryBot.define do
 
     trait :high_level do
       required_level { 50 }
-    end
-
-    trait :faction_restricted do
-      faction_key { "alliance" }
     end
   end
 end

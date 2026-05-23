@@ -9,7 +9,7 @@ FactoryBot.define do
     level_max { 100 }
     max_concurrent_matches { 10 }
     active { true }
-    faction_restriction { nil }
+    alignment_restriction { nil }
 
     trait :training do
       room_type { :training }
@@ -39,9 +39,9 @@ FactoryBot.define do
       active { false }
     end
 
-    trait :law_faction do
+    trait :law_alignment do
       room_type { :law }
-      faction_restriction { "alliance" }
+      alignment_restriction { "law" }
     end
   end
 end

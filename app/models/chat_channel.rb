@@ -25,12 +25,12 @@ class ChatChannel < ApplicationRecord
   validates :slug, uniqueness: true
 
   scope :system_owned, -> { where(system_owned: true) }
-  scope :public_channels, -> { where(channel_type: [channel_types[:global], channel_types[:local]]) }
+  scope :public_channels, -> { where(channel_type: [channel_types[:global], channel_types[:local], channel_types[:system]]) }
 
   before_validation :assign_slug, on: :create
 
   def membership_required?
-    !(global? || local? || arena?)
+    !(global? || local? || arena? || system?)
   end
 
   def ensure_membership!(user)

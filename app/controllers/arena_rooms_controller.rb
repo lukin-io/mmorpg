@@ -64,7 +64,7 @@ class ArenaRoomsController < ApplicationController
         id: @room.id,
         name: @room.name,
         level_range: "#{@room.level_min}-#{@room.level_max}",
-        faction: @room.faction_restriction
+        alignment: @room.alignment_restriction
       },
       applications: @applications.map do |app|
         {

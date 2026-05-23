@@ -63,7 +63,7 @@ class ArenaController < ApplicationController
           slug: room.slug,
           room_type: room.room_type,
           level_range: "#{room.level_min}-#{room.level_max}",
-          faction: room.faction_restriction,
+          alignment: room.alignment_restriction,
           accessible: room.accessible_by?(current_character),
           open_applications: room.open_application_count,
           active_matches: room.current_match_count

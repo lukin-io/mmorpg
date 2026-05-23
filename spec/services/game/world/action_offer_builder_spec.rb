@@ -4,7 +4,7 @@ require "rails_helper"
 require "ostruct"
 
 RSpec.describe Game::World::ActionOfferBuilder do
-  let(:zone) { create(:zone, name: "Offer Plains", biome: "plains", width: 20, height: 20) }
+  let(:zone) { create(:zone, name: "Offer Plains", location_type: "outdoor", width: 20, height: 20) }
   let(:character) { create(:character) }
   let(:position) { create(:character_position, character:, zone:, x: 5, y: 5) }
   let(:npc) { create(:tile_npc, zone: zone.name, x: 5, y: 5) }

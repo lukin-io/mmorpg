@@ -9,4 +9,3 @@ pin "@rails/actioncable", to: "actioncable.esm.js"
 # Explicitly pin channels entry point and all channel files
 pin "channels", to: "channels/index.js"
 pin "channels/consumer", to: "channels/consumer.js"
-pin "channels/presence_channel", to: "channels/presence_channel.js"

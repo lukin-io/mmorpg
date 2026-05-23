@@ -29,12 +29,7 @@ class DeviseCreateUsers < ActiveRecord::Migration[7.1]
 
       ## Game account metadata
       t.string :profile_name, null: false
-      t.integer :reputation_score, null: false, default: 0
-      t.integer :chat_privacy, null: false, default: 0
-      t.integer :duel_privacy, null: false, default: 0
       t.datetime :last_seen_at
-      t.jsonb :session_metadata, null: false, default: {}
-      t.jsonb :social_settings, null: false, default: {}
       t.datetime :suspended_until
       t.datetime :chat_muted_until
       t.string :chat_mute_reason

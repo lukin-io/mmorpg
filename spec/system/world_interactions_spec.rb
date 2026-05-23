@@ -4,7 +4,7 @@ require "rails_helper"
 
 RSpec.describe "World Interactions", type: :system, js: true do
   let(:user) { create(:user) }
-  let(:zone) { create(:zone, name: "Adventure Plains", biome: "plains", width: 10, height: 10) }
+  let(:zone) { create(:zone, name: "Adventure Plains", location_type: "outdoor", width: 10, height: 10) }
   let(:character) { create(:character, user: user) }
   let!(:position) { create(:character_position, character: character, zone: zone, x: 5, y: 5) }
 
@@ -31,7 +31,7 @@ RSpec.describe "World Interactions", type: :system, js: true do
     end
 
     it "enters a tile building and transitions zones" do
-      destination_zone = create(:zone, name: "Hidden Hamlet", biome: "plains", width: 10, height: 10)
+      destination_zone = create(:zone, name: "Hidden Hamlet", location_type: "outdoor", width: 10, height: 10)
       create(:tile_building,
         :with_destination,
         zone: zone.name,

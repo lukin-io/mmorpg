@@ -6,7 +6,6 @@
   - Dual skill point pools (Combat and Peace)
   - Tiered progression (more points at low levels, fewer at high)
   - Skills grouped by category
-  - Real-time effect preview
 %>
 <%
   # Build data structures for the Stimulus controller
@@ -53,8 +52,7 @@
                when :combat then %><%= "⚔️" %>
             <% when :magic then %><%= "✨" %>
             <% when :resistance then %><%= "🛡️" %>
-            <% when :survival then %><%= "🏕️" %>
-            <% when :peace then %><%= "🕊️" %>
+            <% when :peace_world then %><%= "🕊️" %>
             <% end %>
           </span>
           <%= category_info[:name] %>
@@ -110,64 +108,6 @@
                     MAX
                   <% else %>
                     +<%= skill_info[:points_per_spend] %>
-                  <% end %>
-                </div>
-                <div class="nl-skill-effect"
-                     data-skill-allocation-target="skillEffect"
-                     data-skill="<%= skill_key %>">
-                  <%# Effect preview - updated by JS %>
-                  <% case skill_key.to_sym
-                     when :wanderer
-                       reduction = (skill_info[:level] / 100.0 * 70).round
-                       cooldown = (10 * (1 - reduction / 100.0)).round(1) %>
-                    Movement: <%= cooldown %>s (-<%= reduction %>%)
-                  <% when :melee_combat, :ranged_combat, :unarmed_combat
-                       bonus = (skill_info[:level] / 100.0 * 50).round %>
-                    Damage: +<%= bonus %>%
-                  <% when :elemental_magic
-                       bonus = (skill_info[:level] / 100.0 * 50).round %>
-                    Spell Damage: +<%= bonus %>%
-                  <% when :healing_arts
-                       bonus = (skill_info[:level] / 100.0 * 40).round %>
-                    Healing: +<%= bonus %>%
-                  <% when :critical_strikes
-                       bonus = (skill_info[:level] / 100.0 * 15).round %>
-                    Crit Chance: +<%= bonus %>%
-                  <% when :evasion
-                       bonus = (skill_info[:level] / 100.0 * 20).round %>
-                    Dodge: +<%= bonus %>%
-                  <% when :block_mastery
-                       bonus = (skill_info[:level] / 100.0 * 40).round %>
-                    Block: +<%= bonus %>%
-                  <% when :arcane_power
-                       bonus = (skill_info[:level] / 100.0 * 30).round %>
-                    Max Mana: +<%= bonus %>%
-                  <% when :spell_mastery
-                       bonus = (skill_info[:level] / 100.0 * 25).round %>
-                    Mana Cost: -<%= bonus %>%
-                  <% when :fire_resistance, :cold_resistance, :lightning_resistance
-                       bonus = (skill_info[:level] / 100.0 * 40).round %>
-                    Resist: <%= bonus %>%
-                  <% when :physical_fortitude
-                       bonus = (skill_info[:level] / 100.0 * 25).round %>
-                    Phys Resist: <%= bonus %>%
-                  <% when :endurance
-                       bonus = (skill_info[:level] / 100.0 * 50).round %>
-                    Max HP: +<%= bonus %>%
-                  <% when :perception
-                       bonus = (skill_info[:level] / 100.0 * 30).round %>
-                    Discovery: +<%= bonus %>%
-                  <% when :luck
-                       bonus = (skill_info[:level] / 100.0 * 25).round %>
-                    Loot: +<%= bonus %>%
-                  <% when :first_aid
-                       bonus = (skill_info[:level] / 100.0 * 75).round %>
-                    Regen: +<%= bonus %>%
-                  <% when :trading
-                       bonus = (skill_info[:level] / 100.0 * 20).round %>
-                    Prices: <%= bonus %>% better
-                  <% else %>
-                    Effect: <%= skill_info[:level] %>%
                   <% end %>
                 </div>
               </div>

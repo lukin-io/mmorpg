@@ -12,14 +12,22 @@ RSpec.describe Chat::MessageDispatcher do
       expect(result).not_to be_command_executed
     end
 
-    it "keeps slash-prefixed text as regular chat content" do
+    it "blocks users silenced in chat" do
       channel = create(:chat_channel, channel_type: :global)
+      user = create(:user, chat_muted_until: 1.hour.from_now)
+
+      expect do
+        described_class.new(user:, channel:, body: "Hello world").call
+      end.to raise_error(Chat::Errors::MutedError)
+    end
+
+    it "blocks player posts to system channels" do
+      channel = create(:chat_channel, channel_type: :system)
       user = create(:user)
 
-      result = described_class.new(user:, channel:, body: "/w target hello").call
-
-      expect(result.message.body).to eq("/w target hello")
-      expect(result).not_to be_command_executed
+      expect do
+        described_class.new(user:, channel:, body: "Hello world").call
+      end.to raise_error(Chat::Errors::MutedError)
     end
   end
 end

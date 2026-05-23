@@ -9,6 +9,25 @@ RSpec.describe "Inventory & Progression UI", type: :system, js: true do
   before do
     character
     login_as(user, scope: :user)
+    page.current_window.resize_to(1440, 1200)
+  end
+
+  def click_visible(selector)
+    element = find(selector, wait: 5)
+    scroll_to(element, align: :center)
+    element.click
+  end
+
+  def click_visible_button_in(selector, button_text)
+    container = find(selector, wait: 5)
+    scroll_to(container, align: :center)
+    within(container) { click_button button_text }
+  end
+
+  def click_visible_button(button_text)
+    button = find_button(button_text, wait: 5)
+    scroll_to(button, align: :center)
+    button.click
   end
 
   describe "success cases" do
@@ -18,11 +37,13 @@ RSpec.describe "Inventory & Progression UI", type: :system, js: true do
 
       visit inventory_path
 
-      within(".inventory-slot.filled[data-item-id='#{sword.id}']") { click_button "Wear" }
+      click_visible_button_in(".inventory-slot.filled[data-item-id='#{sword.id}']", "Wear")
 
       expect(page).to have_css(".equipment-slot--main_hand.filled", wait: 5)
 
-      find(".equipment-slot--main_hand").click
+      equipment_slot = find(".equipment-slot--main_hand", wait: 5)
+      scroll_to(equipment_slot, align: :center)
+      equipment_slot.click
 
       expect(page).to have_css(".equipment-slot--main_hand:not(.filled)", wait: 5)
     end
@@ -34,7 +55,7 @@ RSpec.describe "Inventory & Progression UI", type: :system, js: true do
 
       visit inventory_path
 
-      within(".inventory-slot.filled[data-item-id='#{potion.id}']") { click_button "Use" }
+      click_visible_button_in(".inventory-slot.filled[data-item-id='#{potion.id}']", "Use")
 
       expect(page).to have_css("#flash", text: "Restored", wait: 5)
       expect(page).to have_no_css(".inventory-slot.filled[data-item-id='#{potion.id}']", wait: 5)
@@ -43,8 +64,8 @@ RSpec.describe "Inventory & Progression UI", type: :system, js: true do
     it "allocates stat points with client-side +/- and saves via Turbo" do
       visit stats_character_path(character)
 
-      find("button[data-stat-allocation-stat-param='strength'].nl-stat-btn--plus").click
-      click_button "Save Stats"
+      click_visible("button[data-stat-allocation-stat-param='strength'].nl-stat-btn--plus")
+      click_visible_button("Save Stats")
 
       expect(page).to have_css("#flash", text: "Stats allocated!")
     end
@@ -52,8 +73,8 @@ RSpec.describe "Inventory & Progression UI", type: :system, js: true do
     it "allocates passive skill points with client-side +/- and saves via Turbo" do
       visit skills_character_path(character)
 
-      find("button[data-skill-allocation-skill-param='wanderer'].nl-stat-btn--plus").click
-      click_button "Save Skills"
+      click_visible("button[data-skill-allocation-skill-param='unarmed_combat'].nl-stat-btn--plus")
+      click_visible_button("Save Skills")
 
       expect(page).to have_css("#flash", text: "Skills allocated!")
     end
@@ -81,7 +102,7 @@ RSpec.describe "Inventory & Progression UI", type: :system, js: true do
         document.querySelector('[data-stat-allocation-target="saveButton"]').removeAttribute("disabled")
       JS
 
-      click_button "Save Stats"
+      click_visible_button("Save Stats")
 
       expect(page).to have_css("#flash", text: "Not enough stat points available")
     end
@@ -92,11 +113,11 @@ RSpec.describe "Inventory & Progression UI", type: :system, js: true do
       visit skills_character_path(character)
 
       page.execute_script <<~JS
-        document.querySelector('input[name="allocated_skills[wanderer]"]').value = "1"
+        document.querySelector('input[name="allocated_skills[unarmed_combat]"]').value = "1"
         document.querySelector('[data-skill-allocation-target="saveButton"]').removeAttribute("disabled")
       JS
 
-      click_button "Save Skills"
+      click_visible_button("Save Skills")
 
       expect(page).to have_css("#flash", text: "Not enough combat skill points")
     end
@@ -109,7 +130,7 @@ RSpec.describe "Inventory & Progression UI", type: :system, js: true do
 
       visit inventory_path
 
-      within(".inventory-slot.filled[data-item-id='#{item.id}']") { click_button "Use" }
+      click_visible_button_in(".inventory-slot.filled[data-item-id='#{item.id}']", "Use")
 
       expect(page).to have_css("#flash", text: "Item has no usable effect", wait: 5)
     end

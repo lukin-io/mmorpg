@@ -25,12 +25,10 @@ class ArenaApplication < ApplicationRecord
 
   FIGHT_KINDS = {
     no_weapons: 0,        # Bare-handed combat only
-    no_artifacts: 1,      # No magical items
-    limited_artifacts: 2, # Restricted equipment tiers
-    free: 3,              # All equipment allowed
-    faction_vs_faction: 4, # Alignment-based teams
-    faction_vs_all: 5,    # Alignment vs random
-    closed: 6             # Invite-only (up to 10v10)
+    free: 1,              # Freestyle
+    alignment_vs_alignment: 3,
+    no_artifacts: 7,
+    limited_artifacts: 8
   }.freeze
 
   STATUSES = {
@@ -107,8 +105,7 @@ class ArenaApplication < ApplicationRecord
     return false unless open?
     return false if applicant == character
     return false unless arena_room.accessible_by?(character)
-    return false if faction_restricted? && !faction_matches?(character)
-    return false if closed_fight? && !invited?(character)
+    return false if alignment_restricted? && !alignment_matches?(character)
     return false unless character_hp_sufficient?(character)
 
     level_matches?(character)
@@ -134,8 +131,7 @@ class ArenaApplication < ApplicationRecord
     return "Application is not open" unless open?
     return "Cannot accept your own application" if applicant == character
     return "Cannot access this arena room" unless arena_room.accessible_by?(character)
-    return "Faction restriction not met" if faction_restricted? && !faction_matches?(character)
-    return "Not invited to this closed fight" if closed_fight? && !invited?(character)
+    return "Alignment restriction not met" if alignment_restricted? && !alignment_matches?(character)
     return "Recover before fighting - you are too weakened! (Need #{MIN_HP_PERCENT_FOR_ARENA}% HP)" unless character_hp_sufficient?(character)
     return "Level requirement not met" unless level_matches?(character)
 
@@ -152,37 +148,16 @@ class ArenaApplication < ApplicationRecord
     character.level.between?(min, max)
   end
 
-  # Check if fight is faction-restricted
-  #
-  # @return [Boolean] true if fight requires specific faction
-  def faction_restricted?
-    faction_vs_faction? || faction_vs_all?
+  def alignment_restricted?
+    alignment_vs_alignment?
   end
 
-  # Check if character's faction matches the fight requirements
-  #
-  # @param character [Character] the character to check
-  # @return [Boolean] true if faction matches
-  def faction_matches?(character)
-    return true unless faction_restricted?
-    # For faction fights, opponent must be different faction (vs) or same faction (with)
-    applicant.faction_alignment != character.faction_alignment
-  end
+  def alignment_matches?(character)
+    return true unless alignment_restricted?
+    return false if applicant.alignment == Character::ALIGNMENTS[:none]
+    return false if character.alignment == Character::ALIGNMENTS[:none]
 
-  # Check if character is invited to a closed fight
-  #
-  # @param character [Character] the character to check
-  # @return [Boolean] true if character is invited
-  def invited?(character)
-    return true unless closed_fight?
-    invited_character_ids.include?(character.id)
-  end
-
-  # Get list of invited character IDs for closed fights
-  #
-  # @return [Array<Integer>] array of character IDs
-  def invited_character_ids
-    metadata["invited_character_ids"] || []
+    applicant.alignment != character.alignment
   end
 
   # Check if this is an NPC-created application
@@ -215,19 +190,10 @@ class ArenaApplication < ApplicationRecord
   # @return [Integer] the applicant's level
   def applicant_level
     if npc_application?
-      npc_template&.level || 1
+      npc_template&.level || 0
     else
       applicant&.level || 1
     end
-  end
-
-  # Get difficulty indicator for NPC applications
-  #
-  # @return [String, nil] difficulty level or nil for player applications
-  def npc_difficulty
-    return nil unless npc_application?
-
-    npc_template&.arena_difficulty || "medium"
   end
 
   # Get AI behavior for NPC applications
@@ -236,7 +202,7 @@ class ArenaApplication < ApplicationRecord
   def npc_ai_behavior
     return nil unless npc_application?
 
-    npc_template&.ai_behavior || "balanced"
+    npc_template&.ai_behavior
   end
 
   private

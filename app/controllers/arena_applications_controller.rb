@@ -118,14 +118,14 @@ class ArenaApplicationsController < ApplicationController
       :fight_type, :fight_kind, :timeout_seconds, :trauma_percent,
       :team_count, :team_level_min, :team_level_max,
       :enemy_count, :enemy_level_min, :enemy_level_max,
-      :wait_minutes, :closed_fight
+      :wait_minutes
     )
   rescue ActionController::ParameterMissing
     params.permit(
       :fight_type, :fight_kind, :timeout_seconds, :trauma_percent,
       :team_count, :team_level_min, :team_level_max,
       :enemy_count, :enemy_level_min, :enemy_level_max,
-      :wait_minutes, :closed_fight
+      :wait_minutes
     )
   end
 

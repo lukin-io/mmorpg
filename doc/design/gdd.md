@@ -79,8 +79,7 @@ The intended feel is:
 4. Movement/actions lock relevant buttons and show a timer when they take time.
 5. Completion refreshes current location, available movement, tile actions,
    NPCs, buildings, encounters, and nearby player list.
-6. Player gains combat progress, reputation, skill growth, or economy
-   opportunities.
+6. Player gains combat progress, skill growth, or economy opportunities.
 
 ## Movement GDD
 
@@ -155,20 +154,16 @@ Travel time is a GDD-level value, not a browser-only cooldown. The same formula
 must be used for destination offers, accepted movement validation, countdown
 display, and action readiness.
 
-Baseline formula:
+Captured starter formula:
 
 ```text
-travel_seconds =
-  base_zone_seconds
-  * terrain_modifier(target tile)
-  * diagonal_modifier
-  * encumbrance_modifier
-  * skill_modifier
+travel_seconds = 30
 ```
 
 The observed Neverlands reference move from `1019,1025` to `1018,1025` used
 `30` seconds. Use that as the initial starter-area reference unless a specific
-developer-mode override is intentionally added.
+developer-mode override is intentionally added. Do not add terrain, diagonal,
+encumbrance, or skill timing modifiers until they are source-captured.
 
 ### Direction Policy
 
@@ -201,8 +196,8 @@ The world is a tile grid split into zones or regions. Zones define:
 - dimensions or coordinate bounds;
 - visual map variant;
 - base travel seconds;
-- biome;
-- encounter table;
+- location type (`city` or `outdoor`);
+- explicit outdoor NPC/resource records;
 - spawn points;
 - tile templates;
 - allowed local action types.
@@ -270,7 +265,7 @@ Characters grow through:
 - experience and levels;
 - stat allocation;
 - passive skills;
-- reputation and alignment;
+- Neverlands alignment/sign markers where source-backed;
 - equipment and inventory growth.
 
 Movement-affecting progression, such as Wanderer skill, encumbrance, or terrain

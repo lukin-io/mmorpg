@@ -4,8 +4,8 @@ require "rails_helper"
 
 RSpec.describe "layouts/game.html.erb", type: :view do
   let(:user) { create(:user) }
-  let(:character) { create(:character, user: user, name: "TestHero", level: 10) }
-  let(:zone) { create(:zone, name: "Test Zone", biome: "plains") }
+  let(:character) { create(:character, user: user, name: "max_kerby_layout", level: 10) }
+  let(:zone) { create(:zone, name: "Окрестность Форпоста", location_type: "outdoor") }
   let(:position) { create(:character_position, character: character, zone: zone) }
   let(:chat_channel) { create(:chat_channel, name: "Global", channel_type: :global) }
 
@@ -49,7 +49,7 @@ RSpec.describe "layouts/game.html.erb", type: :view do
       render template: "layouts/game", layout: false
 
       expect(rendered).to have_css(".nl-player-link")
-      expect(rendered).to include("TestHero")
+      expect(rendered).to include("max_kerby_layout")
     end
 
     it "displays character level in brackets" do
@@ -201,7 +201,7 @@ RSpec.describe "layouts/game.html.erb", type: :view do
   end
 
   describe "when in city zone" do
-    let(:city_zone) { create(:zone, name: "City", biome: "city") }
+    let(:city_zone) { create(:zone, name: "City", location_type: "city") }
 
     before do
       # Update existing position to city zone instead of creating duplicate

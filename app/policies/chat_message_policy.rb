@@ -14,6 +14,6 @@ class ChatMessagePolicy < ApplicationPolicy
   def channel_accessible?
     return false unless channel
 
-    channel.global? || channel.local? || channel.users.exists?(user.id)
+    channel.global? || channel.local? || channel.arena? || channel.users.exists?(user.id)
   end
 end

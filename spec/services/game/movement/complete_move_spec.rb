@@ -3,7 +3,7 @@
 require "rails_helper"
 
 RSpec.describe Game::Movement::CompleteMove do
-  let(:zone) { create(:zone, name: "Complete Move Plains", biome: "plains", width: 10, height: 10) }
+  let(:zone) { create(:zone, name: "Complete Move Plains", location_type: "outdoor", width: 10, height: 10) }
   let(:character) { create(:character) }
   let!(:position) { create(:character_position, character:, zone:, x: 5, y: 5, last_turn_number: 2) }
 
@@ -62,7 +62,7 @@ RSpec.describe Game::Movement::CompleteMove do
 
   it "marks movement failed when the destination becomes impassable" do
     command = moving_command
-    MapTileTemplate.create!(zone: zone.name, x: 6, y: 5, terrain_type: "mountain", passable: false, biome: "plains")
+    MapTileTemplate.create!(zone: zone.name, x: 6, y: 5, terrain_type: "outdoor", passable: false)
 
     described_class.new(character:).call
 

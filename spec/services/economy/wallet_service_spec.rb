@@ -5,35 +5,37 @@ RSpec.describe Economy::WalletService do
   let(:wallet) { user.currency_wallet }
 
   describe "#adjust!" do
-    it "credits within soft cap and records transaction" do
+    it "credits NV and records transaction" do
       service = described_class.new(wallet: wallet)
 
       expect do
-        service.adjust!(currency: :gold, amount: 100, reason: "combat.reward")
-      end.to change { wallet.reload.gold_balance }.by(100)
+        service.adjust!(amount: 100, reason: "combat.reward")
+      end.to change { wallet.reload.nv_balance }.by(100)
 
       transaction = wallet.currency_transactions.recent.first
-      expect(transaction.currency_type).to eq("gold")
       expect(transaction.amount).to eq(100)
       expect(transaction.balance_after).to eq(100)
+      expect(transaction.reason).to eq("combat.reward")
     end
 
-    it "routes overflow into a sink when soft cap reached" do
-      wallet.update!(gold_balance: wallet.gold_soft_cap - 10)
+    it "debits NV when enough balance exists" do
+      wallet.update!(nv_balance: 100)
       service = described_class.new(wallet: wallet)
 
-      service.adjust!(currency: :gold, amount: 50, reason: "event.reward")
+      expect do
+        service.adjust!(amount: -40, reason: "shop.buy")
+      end.to change { wallet.reload.nv_balance }.from(100).to(60)
 
-      wallet.reload
-      expect(wallet.gold_balance).to eq(wallet.gold_soft_cap)
-      expect(wallet.sink_totals_for(:gold)).to eq(40)
+      transaction = wallet.currency_transactions.recent.first
+      expect(transaction.amount).to eq(-40)
+      expect(transaction.balance_after).to eq(60)
     end
 
     it "raises when attempting to overspend" do
       service = described_class.new(wallet: wallet)
 
       expect do
-        service.adjust!(currency: :gold, amount: -5, reason: "test")
+        service.adjust!(amount: -5, reason: "shop.buy")
       end.to raise_error(Economy::WalletService::InsufficientFundsError)
     end
   end

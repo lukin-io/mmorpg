@@ -4,7 +4,7 @@ Status: historical Neverlands reference. Canonical progression design lives in
 `doc/design/features/progression_stats_skills.md` and `doc/design/gdd.md`.
 
 > **Source**: Live analysis from `http://www.neverlands.ru` (December 2024)
-> **Purpose**: Reference for implementing Elselands character progression mechanics
+> **Purpose**: Reference for implementing Neverlands-based character progression mechanics in Rails
 
 ---
 
@@ -962,113 +962,28 @@ function Check_form(ft) {
 
 ---
 
-## Implementation Notes
+## Rails Implementation Alignment
 
-### Key Differences: Neverlands vs Elselands
+### Source-Backed Surfaces
 
-| Feature | Neverlands | Elselands |
-|---------|------------|-----------|
-| Form handling | `document.form.submit()` | Turbo Form |
-| State updates | Direct DOM manipulation | Stimulus controller |
-| Validation | Client-side + server | Server-side primary |
-| Data format | Hidden form fields | JSON API |
-| Persistence | POST form | Rails controller |
-| Skill prerequisites | Unknown | Implemented (AND/OR conditions) |
-| Combat integration | Implicit | Explicit via formulas |
+| Feature | Rails Status |
+|---------|--------------|
+| Primary stats | Implemented through character allocation and visible profile values |
+| Numeric `Умения` | Implemented as the launch skill allocation surface |
+| Boolean `Навыки` | Documented only; rebuild from captured IDs and exclusion rules before implementation |
+| Arena magic/action selectors | Implemented through `Game::Combat::ActionCatalog` and `Arena::CombatProcessor#process_turn_skill` |
 
-### Elselands Implementation Files
+### Removed Generic Surfaces
 
-| Feature | Implementation Files |
-|---------|---------------------|
-| Stats | `stat_allocation_controller.js`, `characters_controller.rb` |
-| Skills | `skill_allocation_controller.js`, `skills_controller.rb`, `passive_skill_registry.rb` |
-| Perks | `perk_allocation_controller.js`, `perks_controller.rb`, `perk_registry.rb` |
-| Effects | `effects_controller.js`, `effects_service.rb`, `effect.rb` |
-| Arena | `arena_controller.rb`, `matchmaker.rb` |
-| Combat Integration | `hit_formula.rb`, `critical_formula.rb`, `resistance_formula.rb`, `skill_executor.rb` |
+The old active-skill executor was removed. Neverlands combat does not use an
+arbitrary record-driven skill framework with generic `damage`, `heal`, `buff`,
+`debuff`, `dot`, `hot`, `aoe`, `drain`, and `shield` effect records,
+per-record cooldowns, or generic `combat_buffs` metadata.
 
-### Elselands Skill Combat Integration (Fully Implemented)
-
-| Neverlands Skill Type | Elselands Implementation |
-|-----------------------|--------------------------|
-| Combat skills (0-9) | `melee_combat`, `ranged_combat`, `critical_strikes`, `evasion`, `block_mastery` |
-| Magic skills (10-20) | `elemental_magic`, `healing_arts`, `arcane_power`, `spell_mastery` |
-| Resistance skills | `fire_resistance`, `cold_resistance`, `lightning_resistance`, `physical_fortitude` |
-| Peace skills (21+) | `herbalism`, `mining`, `fishing`, `blacksmithing`, `alchemy`, `cooking`, etc. |
-
-### Combat Formula Integration
-
-```ruby
-# Hit chance includes skill bonuses
-Game::Formulas::HitFormula
-  # +10% from melee_combat at max level
-  # +5% from ranged_combat at max level
-  # -8% from defender's evasion at max level
-
-# Critical hits
-Game::Formulas::CriticalFormula
-  # +15% crit chance from critical_strikes at max level
-  # +0.5x multiplier from critical_strikes at max level
-
-# Damage resistance
-Game::Formulas::ResistanceFormula
-  # Reduces damage based on element type:
-  # - Fire → fire_resistance
-  # - Ice/Cold → cold_resistance
-  # - Lightning → lightning_resistance
-  # - Physical → physical_fortitude
-
-# Mana system
-Character#effective_max_mp    # +30% from arcane_power at max
-Character#reduced_mana_cost   # -25% from spell_mastery at max
-```
-
-### Skill Prerequisites (Elselands Addition)
-
-| Skill | Requirement |
-|-------|-------------|
-| Critical Strikes | Melee Combat 30 OR Ranged Combat 30 |
-| Block Mastery | Evasion 20 |
-| Healing Arts | Elemental Magic 30 |
-| Spell Mastery | Arcane Power 20 |
-
-### NPC Skill Levels (Elselands Addition)
-
-NPCs now have passive skill levels that affect combat:
-
-```ruby
-# NpcTemplate model
-def passive_skill_level(skill_key)
-  metadata&.dig("passive_skills", skill_key.to_s) || (level / 2).to_i
-end
-
-# Example NPC metadata
-{
-  "passive_skills" => {
-    "melee_combat" => 60,
-    "fire_resistance" => 40
-  }
-}
-```
-
-### Skill Progression Formula
-
-```ruby
-# Elselands implementation of tiered skill progression
-class Game::Formulas::SkillProgressionFormula
-  SKILL_RATES = {
-    combat: [10, 8, 6, 4],      # Fast progression
-    magic: [8, 6, 4, 2],        # Medium progression
-    resistance: [6, 4, 4, 2],   # Balanced
-    peace: [2, 2, 2, 2]         # Slow progression
-  }
-
-  def points_per_spend(current_level, skill_type)
-    tier = current_level / 25  # 0-24=0, 25-49=1, 50-74=2, 75-99=3
-    SKILL_RATES[skill_type][tier] || 2
-  end
-end
-```
+Fight actions must enter the shared turn payload as source-backed attack,
+block, or magic/action keys. Unknown active-skill trees, prerequisites, NPC
+skill-level guessing, and generic effect records should be documented from
+Neverlands before any implementation is added.
 
 ---
 

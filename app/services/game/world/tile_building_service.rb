@@ -20,7 +20,7 @@ module Game
     # Usage:
     #   service = Game::World::TileBuildingService.new(
     #     character: current_character,
-    #     zone: "Starter Plains",
+    #     zone: "Outpost Surroundings",
     #     x: 5,
     #     y: 5
     #   )
@@ -53,7 +53,6 @@ module Game
           icon: active_building.display_icon,
           destination: active_building.destination_zone&.name,
           required_level: active_building.required_level,
-          faction_key: active_building.faction_key,
           can_enter: active_building.can_enter?(character),
           blocked_reason: active_building.entry_blocked_reason(character),
           description: active_building.metadata&.dig("description"),

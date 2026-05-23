@@ -2,7 +2,8 @@
 
 ## Purpose
 
-Vitals make the character feel persistent across travel, combat, and recovery.
+Vitals make the character feel persistent across travel, combat, and
+regeneration.
 The core vitals are HP and MP. They are visible in the compact game interface
 and drive combat readiness.
 
@@ -38,7 +39,7 @@ The player sees:
 - Spending magic or abilities reduces MP.
 - Regeneration is time-based and derived from character state.
 - Combat can pause or alter normal regeneration.
-- Death or defeat routes to the relevant recovery flow.
+- Death or defeat routes to a source-backed result state.
 
 ## Baseline Regeneration
 
@@ -50,7 +51,7 @@ mp_full_regen_ticks = 9000
 ```
 
 These values can be tuned by character stats, effects, equipment, or future
-source-backed recovery services after they are captured.
+source-backed rules after they are captured.
 
 ## State Concepts
 
@@ -68,7 +69,6 @@ source-backed recovery services after they are captured.
 - `features/combat.md` consumes and mutates HP/MP.
 - `features/progression_stats_skills.md` defines stat-derived max values.
 - `features/items_inventory_equipment.md` can modify max values or regen.
-- `areas/cities_and_buildings.md` can expose recovery buildings.
 
 ## Out Of Scope
 

@@ -36,7 +36,7 @@ RSpec.describe "World", type: :request do
 
   describe "GET /world" do
     let(:user) { create(:user) }
-    let(:zone) { create(:zone, name: "Test Plains", biome: "plains", width: 20, height: 20) }
+    let(:zone) { create(:zone, name: "Test Plains", location_type: "outdoor", width: 20, height: 20) }
     let(:character) { create(:character, user: user) }
     let!(:position) { create(:character_position, character: character, zone: zone, x: 5, y: 5) }
 
@@ -106,7 +106,7 @@ RSpec.describe "World", type: :request do
       let(:city_zone) do
         create(:zone,
           name: "Capital City",
-          biome: "city",
+          location_type: "city",
           width: 15,
           height: 15,
           metadata: {"description" => "A bustling city"})
@@ -133,7 +133,7 @@ RSpec.describe "World", type: :request do
 
       it "creates a default position and renders successfully" do
         # Ensure a starter zone exists
-        create(:zone, biome: "city", name: "Starter City")
+        create(:zone, location_type: "city", name: "Starter City")
         get world_path
         expect(response).to have_http_status(:success)
         expect(character.reload.position).to be_present
@@ -143,7 +143,7 @@ RSpec.describe "World", type: :request do
 
   describe "POST /world/move" do
     let(:user) { create(:user) }
-    let(:zone) { create(:zone, name: "Plains", biome: "plains", width: 20, height: 20) }
+    let(:zone) { create(:zone, name: "Plains", location_type: "outdoor", width: 20, height: 20) }
     let(:character) { create(:character, user: user) }
     let!(:position) { create(:character_position, character: character, zone: zone, x: 5, y: 5) }
 
@@ -293,8 +293,8 @@ RSpec.describe "World", type: :request do
 
   describe "POST /world/enter" do
     let(:user) { create(:user) }
-    let(:outdoor_zone) { create(:zone, name: "Plains", biome: "plains", width: 20, height: 20) }
-    let(:city_zone) { create(:zone, name: "Capital", biome: "city", width: 10, height: 10) }
+    let(:outdoor_zone) { create(:zone, name: "Plains", location_type: "outdoor", width: 20, height: 20) }
+    let(:city_zone) { create(:zone, name: "Capital", location_type: "city", width: 10, height: 10) }
     let(:character) { create(:character, user: user) }
     let!(:position) { create(:character_position, character: character, zone: outdoor_zone, x: 5, y: 5) }
     let!(:spawn_point) { create(:spawn_point, zone: city_zone, x: 3, y: 3, default_entry: true) }
@@ -336,12 +336,12 @@ RSpec.describe "World", type: :request do
     let(:city_zone) do
       create(:zone,
         name: "Capital",
-        biome: "city",
+        location_type: "city",
         width: 10,
         height: 10,
-        metadata: {"exit_to" => "Wild Plains"})
+        metadata: {"exit_to" => "Outpost Surroundings"})
     end
-    let(:outdoor_zone) { create(:zone, name: "Wild Plains", biome: "plains", width: 20, height: 20) }
+    let(:outdoor_zone) { create(:zone, name: "Outpost Surroundings", location_type: "outdoor", width: 20, height: 20) }
     let(:character) { create(:character, user: user) }
     let!(:position) { create(:character_position, character: character, zone: city_zone, x: 3, y: 3) }
     let!(:spawn_point) { create(:spawn_point, zone: outdoor_zone, x: 10, y: 10, default_entry: true) }
@@ -360,13 +360,13 @@ RSpec.describe "World", type: :request do
 
       expect(response).to redirect_to(world_path)
       follow_redirect!
-      expect(response.body).to include("Exited").or include("Wild Plains")
+      expect(response.body).to include("Exited").or include("Outpost Surroundings")
     end
   end
 
   describe "map rendering" do
     let(:user) { create(:user) }
-    let(:zone) { create(:zone, name: "Test Zone", biome: "forest", width: 20, height: 20) }
+    let(:zone) { create(:zone, name: "Test Zone", location_type: "outdoor", width: 20, height: 20) }
     let(:character) { create(:character, user: user) }
     let!(:position) { create(:character_position, character: character, zone: zone, x: 10, y: 10) }
 
@@ -387,10 +387,10 @@ RSpec.describe "World", type: :request do
       expect(response.body).to include("nl-cursor")
     end
 
-    it "shows terrain type classes based on biome" do
+    it "shows fallback outdoor terrain classes" do
       get world_path
 
-      expect(response.body).to include("nl-tile-bg--forest")
+      expect(response.body).to include("nl-tile-bg--outdoor")
     end
 
     it "includes movement timer elements" do
@@ -406,9 +406,9 @@ RSpec.describe "World", type: :request do
     end
   end
 
-  describe "procedural terrain generation" do
+  describe "outdoor terrain rendering" do
     let(:user) { create(:user) }
-    let(:zone) { create(:zone, name: "Mixed Zone", biome: "plains", width: 50, height: 50) }
+    let(:zone) { create(:zone, name: "Mixed Zone", location_type: "outdoor", width: 50, height: 50) }
     let(:character) { create(:character, user: user) }
     let!(:position) { create(:character_position, character: character, zone: zone, x: 25, y: 25) }
 
@@ -426,21 +426,20 @@ RSpec.describe "World", type: :request do
       get world_path
 
       # Verify terrain types are rendered
-      expect(response.body).to include('data-terrain="plains"')
+      expect(response.body).to include('data-terrain="outdoor"')
     end
 
-    it "generates consistent terrain types for biome" do
+    it "renders outdoor terrain classes" do
       get world_path
 
-      # Plains biome should have plains terrain tiles
-      expect(response.body).to match(/nl-tile-bg--plains/)
+      expect(response.body).to match(/nl-tile-bg--outdoor/)
     end
   end
 
   # Tests for add_live_tile_features logic
   describe "map tile feature display" do
     let(:user) { create(:user) }
-    let(:zone) { create(:zone, name: "Feature Test Zone", biome: "plains", width: 20, height: 20) }
+    let(:zone) { create(:zone, name: "Feature Test Zone", location_type: "outdoor", width: 20, height: 20) }
     let(:character) { create(:character, user: user) }
     let!(:position) { create(:character_position, character: character, zone: zone, x: 10, y: 10) }
 
@@ -448,7 +447,7 @@ RSpec.describe "World", type: :request do
 
     describe "TileNpc display" do
       context "when database TileNpc exists and is alive" do
-        let(:npc_template) { create(:npc_template, name: "Test Goblin", npc_key: "test_goblin") }
+        let(:npc_template) { create(:npc_template, name: "Чумная крыса", npc_key: "plague_rat_visible") }
         let!(:db_npc) do
           create(:tile_npc,
             zone: zone.name,
@@ -463,7 +462,7 @@ RSpec.describe "World", type: :request do
         it "shows the database NPC on the map" do
           get world_path
 
-          expect(response.body).to include("Test Goblin")
+          expect(response.body).to include("Чумная крыса")
         end
 
         it "shows NPC marker" do
@@ -474,7 +473,7 @@ RSpec.describe "World", type: :request do
       end
 
       context "when database TileNpc exists but is dead (defeated)" do
-        let(:npc_template) { create(:npc_template, name: "Dead Goblin", npc_key: "dead_goblin") }
+        let(:npc_template) { create(:npc_template, name: "Побежденная крыса", npc_key: "plague_rat_defeated") }
         let(:defeated_by_character) { create(:character) }
         let!(:dead_db_npc) do
           create(:tile_npc, :defeated,
@@ -488,19 +487,19 @@ RSpec.describe "World", type: :request do
         it "does not show the defeated NPC on the map" do
           get world_path
 
-          expect(response.body).not_to include("Dead Goblin")
+          expect(response.body).not_to include("Побежденная крыса")
         end
 
         it "hides NPC until respawn time passes" do
           get world_path
 
           # The defeated NPC tile should not have NPC marker
-          expect(response.body).not_to include('title="Dead Goblin"')
+          expect(response.body).not_to include('title="Побежденная крыса"')
         end
       end
 
       context "when database TileNpc is alive" do
-        let(:npc_template) { create(:npc_template, name: "Alive Goblin", npc_key: "alive_goblin") }
+        let(:npc_template) { create(:npc_template, name: "Живая крыса", npc_key: "plague_rat_alive") }
         let!(:alive_npc) do
           create(:tile_npc,
             zone: zone.name,
@@ -514,14 +513,14 @@ RSpec.describe "World", type: :request do
         it "shows the alive NPC on the map" do
           get world_path
 
-          expect(response.body).to include("Alive Goblin")
+          expect(response.body).to include("Живая крыса")
         end
       end
     end
   end
 
   describe "authentication requirements" do
-    let(:zone) { create(:zone, name: "Auth Zone", biome: "plains") }
+    let(:zone) { create(:zone, name: "Auth Zone", location_type: "outdoor") }
 
     it "redirects to login when not authenticated" do
       get world_path
@@ -541,8 +540,8 @@ RSpec.describe "World", type: :request do
   # ===========================================================================
   describe "POST /world/enter_building" do
     let(:user) { create(:user) }
-    let(:source_zone) { create(:zone, name: "Starter Plains", biome: "plains", width: 20, height: 20) }
-    let(:destination_zone) { create(:zone, name: "Outpost", biome: "city", width: 10, height: 10) }
+    let(:source_zone) { create(:zone, name: "Outpost Surroundings", location_type: "outdoor", width: 20, height: 20) }
+    let(:destination_zone) { create(:zone, name: "Outpost", location_type: "city", width: 10, height: 10) }
     let(:character) { create(:character, user: user, level: 10) }
     let!(:position) { create(:character_position, character: character, zone: source_zone, x: 5, y: 5) }
     let!(:spawn_point) { create(:spawn_point, zone: destination_zone, x: 3, y: 3, default_entry: true) }
@@ -859,7 +858,7 @@ RSpec.describe "World", type: :request do
     end
 
     context "when building is in different zone" do
-      let(:other_zone) { create(:zone, name: "Other Zone", biome: "forest") }
+      let(:other_zone) { create(:zone, name: "Other Zone", location_type: "outdoor") }
       let!(:other_zone_building) do
         create(:tile_building,
           zone: other_zone.name,
@@ -884,8 +883,8 @@ RSpec.describe "World", type: :request do
 
   describe "TileBuilding display on map" do
     let(:user) { create(:user) }
-    let(:zone) { create(:zone, name: "Building Display Zone", biome: "plains", width: 20, height: 20) }
-    let(:destination_zone) { create(:zone, name: "Destination", biome: "city") }
+    let(:zone) { create(:zone, name: "Building Display Zone", location_type: "outdoor", width: 20, height: 20) }
+    let(:destination_zone) { create(:zone, name: "Destination", location_type: "city") }
     let(:character) { create(:character, user: user) }
     let!(:position) { create(:character_position, character: character, zone: zone, x: 10, y: 10) }
 
@@ -1002,8 +1001,8 @@ RSpec.describe "World", type: :request do
 
   describe "TileBuilding actions panel display" do
     let(:user) { create(:user) }
-    let(:zone) { create(:zone, name: "Actions Panel Zone", biome: "plains", width: 20, height: 20) }
-    let(:destination_zone) { create(:zone, name: "Actions Destination", biome: "city") }
+    let(:zone) { create(:zone, name: "Actions Panel Zone", location_type: "outdoor", width: 20, height: 20) }
+    let(:destination_zone) { create(:zone, name: "Actions Destination", location_type: "city") }
     let(:character) { create(:character, user: user, level: 5) }
     let!(:position) { create(:character_position, character: character, zone: zone, x: 5, y: 5) }
 
@@ -1065,7 +1064,7 @@ RSpec.describe "World", type: :request do
   end
 
   describe "authentication requirements for enter_building" do
-    let(:zone) { create(:zone, name: "Auth Building Zone", biome: "plains") }
+    let(:zone) { create(:zone, name: "Auth Building Zone", location_type: "outdoor") }
     let(:building) { create(:tile_building, zone: zone.name, x: 5, y: 5) }
 
     it "redirects to login when not authenticated" do
@@ -1086,8 +1085,8 @@ RSpec.describe "World", type: :request do
 
   describe "POST /world/interact_hotspot" do
     let(:user) { create(:user) }
-    let(:city_zone) { create(:zone, name: "Hotspot Test City", biome: "city", width: 20, height: 20) }
-    let(:destination_zone) { create(:zone, name: "Destination Plains", biome: "plains", width: 20, height: 20) }
+    let(:city_zone) { create(:zone, name: "Hotspot Test City", location_type: "city", width: 20, height: 20) }
+    let(:destination_zone) { create(:zone, name: "Destination Plains", location_type: "outdoor", width: 20, height: 20) }
     let(:character) { create(:character, user: user, level: 10) }
     let!(:position) { create(:character_position, character: character, zone: city_zone, x: 5, y: 5) }
     let!(:spawn_point) { create(:spawn_point, zone: destination_zone, x: 5, y: 5, default_entry: true) }
@@ -1282,24 +1281,6 @@ RSpec.describe "World", type: :request do
       end
     end
 
-    context "with decoration hotspot (null interaction case)" do
-      let!(:decoration_hotspot) do
-        create(:city_hotspot,
-          zone: city_zone,
-          action_type: "none",
-          hotspot_type: "decoration",
-          active: true)
-      end
-
-      it "returns failure for decoration hotspots" do
-        post interact_hotspot_world_path, params: {hotspot_id: decoration_hotspot.id}
-
-        expect(response).to redirect_to(world_path)
-        follow_redirect!
-        expect(response.body).to include("cannot").or include("no interaction")
-      end
-    end
-
     context "without authentication" do
       before { sign_out user }
 
@@ -1313,7 +1294,7 @@ RSpec.describe "World", type: :request do
     end
 
     context "when hotspot belongs to different zone" do
-      let(:other_zone) { create(:zone, name: "Other City", biome: "city") }
+      let(:other_zone) { create(:zone, name: "Other City", location_type: "city") }
       let!(:other_hotspot) do
         create(:city_hotspot, :arena, zone: other_zone, active: true)
       end
@@ -1335,7 +1316,7 @@ RSpec.describe "World", type: :request do
 
   describe "city view integration" do
     let(:user) { create(:user) }
-    let(:city_zone) { create(:zone, name: "Integration Test City", biome: "city", width: 20, height: 20) }
+    let(:city_zone) { create(:zone, name: "Integration Test City", location_type: "city", width: 20, height: 20) }
     let(:character) { create(:character, user: user, level: 10) }
     let!(:position) { create(:character_position, character: character, zone: city_zone, x: 5, y: 5) }
 
@@ -1345,12 +1326,10 @@ RSpec.describe "World", type: :request do
       let!(:arena) { create(:city_hotspot, :arena, zone: city_zone, active: true, required_level: 1) }
       let!(:shop) { create(:city_hotspot, :shop, zone: city_zone, active: true, required_level: 1) }
       let!(:exit_gate) do
-        dest = create(:zone, name: "Exit Dest", biome: "plains")
+        dest = create(:zone, name: "Exit Dest", location_type: "outdoor")
         create(:spawn_point, zone: dest, default_entry: true)
         create(:city_hotspot, :city_gate, zone: city_zone, destination_zone: dest, active: true)
       end
-      let!(:decoration) { create(:city_hotspot, :decoration, zone: city_zone, active: true) }
-
       it "renders city view with all active hotspots" do
         get world_path
 
@@ -1386,7 +1365,7 @@ RSpec.describe "World", type: :request do
 
         expect(response).to redirect_to(world_path)
         position.reload
-        expect(position.zone.biome).to eq("plains")
+        expect(position.zone.location_type).to eq("outdoor")
       end
     end
   end

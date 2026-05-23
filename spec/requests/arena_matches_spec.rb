@@ -297,8 +297,6 @@ RSpec.describe "ArenaMatches", type: :request do
 
   describe "match lifecycle from application to combat" do
     include ActiveJob::TestHelper
-
-    let!(:arena_season) { create(:arena_season, status: :live) }
     let!(:application) do
       create(:arena_application,
         applicant: character,

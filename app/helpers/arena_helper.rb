@@ -10,10 +10,10 @@ module ArenaHelper
     challenge: {label: "Challenge Arena", description: "Levels 5-33, open range duels"},
     initiation: {label: "Initiation Ring", description: "Levels 9-33, mid-level"},
     patron: {label: "Patron's Arena", description: "Levels 16-33, high-level"},
-    law: {label: "Hall of Law", description: "Lawful faction only"},
+    law: {label: "Hall of Law", description: "Law alignment only"},
     light: {label: "Sanctum of Light", description: "Light alignment only"},
-    balance: {label: "Twilight Arena", description: "Neutral alignment only"},
-    chaos: {label: "Chaos Pit", description: "Chaotic faction only"},
+    balance: {label: "Twilight Arena", description: "Balance alignment only"},
+    chaos: {label: "Chaos Pit", description: "Chaos alignment only"},
     dark: {label: "Shadow Arena", description: "Dark alignment only"}
   }.freeze
 
@@ -29,8 +29,8 @@ module ArenaHelper
     no_weapons: {label: "Bare Hands"},
     no_artifacts: {label: "No Magic Items"},
     limited_artifacts: {label: "Limited Equipment"},
-    free: {label: "All Equipment"},
-    faction_vs_faction: {label: "Faction vs Faction"}
+    free: {label: "Freestyle"},
+    alignment_vs_alignment: {label: "Alignment vs Alignment"}
   }.freeze
 
   # Match status labels
@@ -151,7 +151,7 @@ module ArenaHelper
   def opponent_display(character, current_character)
     return "Waiting for opponent..." unless character
 
-    alignment_class = (character.faction_alignment == current_character&.faction_alignment) ? "ally" : "enemy"
+    alignment_class = (character.alignment == current_character&.alignment) ? "ally" : "enemy"
 
     content_tag(:div, class: "opponent-display opponent-display--#{alignment_class}") do
       safe_join([
@@ -336,9 +336,8 @@ module ArenaHelper
         title: npc&.name || "NPC")
     else
       character = participation.character
-      avatar_class = character&.avatar || "warrior"
       avatar_text = character&.name.to_s.first.presence || "P"
-      content_tag(:span, avatar_text, class: "avatar avatar--player avatar--#{size} avatar--#{avatar_class}",
+      content_tag(:span, avatar_text, class: "avatar avatar--player avatar--#{size}",
         style: "font-size: #{size_px}px; line-height: #{size_px}px;",
         title: character&.name || "Player")
     end
@@ -483,20 +482,18 @@ module ArenaHelper
       }.compact
     end
 
-    # Fallback to metadata or level-based stats
-    level = npc.level || 1
     {
-      strength: npc.metadata&.dig("base_damage") || (level * 3 + 5),
-      dexterity: level + 5,
-      luck: 5 + (level / 5),
-      knowledge: 1,
-      attack: npc.metadata&.dig("base_damage") || (level * 3 + 5),
-      attack_power: npc.metadata&.dig("base_damage") || (level * 3 + 5),
-      defense: level * 2 + 3,
-      armor_class: level * 2 + 3,
-      evasion: level / 2,
-      accuracy: level + 5,
-      crushing: 5 + (level / 5),
+      strength: npc.combat_stat(:attack),
+      dexterity: npc.combat_stat(:agility),
+      luck: npc.combat_stat(:luck),
+      knowledge: 0,
+      attack: npc.combat_stat(:attack),
+      attack_power: npc.combat_stat(:attack),
+      defense: npc.combat_stat(:defense),
+      armor_class: npc.combat_stat(:defense),
+      evasion: npc.combat_stat(:evasion),
+      accuracy: npc.combat_stat(:accuracy),
+      crushing: npc.combat_stat(:crit_chance),
       endurance: npc.health,
       armor_penetration: 0
     }

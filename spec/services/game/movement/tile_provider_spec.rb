@@ -9,13 +9,13 @@ RSpec.describe Game::Movement::TileProvider do
   #
   # Fix: MapTileTemplate.zone= setter converts Zone objects to names
 
-  let(:zone) { create(:zone, name: "Test Zone") }
+  let(:zone) { create(:zone, name: "Окрестность Форпоста") }
 
   before do
     # Create tiles with proper zone name strings
-    create(:map_tile_template, zone: zone.name, x: 0, y: 0, terrain_type: "plains", passable: true)
-    create(:map_tile_template, zone: zone.name, x: 1, y: 0, terrain_type: "plains", passable: true)
-    create(:map_tile_template, zone: zone.name, x: 0, y: 1, terrain_type: "water", passable: false)
+    create(:map_tile_template, zone: zone.name, x: 0, y: 0, terrain_type: "outdoor", passable: true)
+    create(:map_tile_template, zone: zone.name, x: 1, y: 0, terrain_type: "outdoor", passable: true)
+    create(:map_tile_template, zone: zone.name, x: 0, y: 1, terrain_type: "outdoor", passable: false)
   end
 
   describe "#tile_at" do
@@ -44,19 +44,19 @@ RSpec.describe Game::Movement::TileProvider do
     end
   end
 
-  describe "#biome_at" do
+  describe "#terrain_type_at" do
     subject(:provider) { described_class.new(zone: zone) }
 
-    it "returns tile biome" do
-      biome = provider.biome_at(0, 0)
+    it "returns explicit tile terrain type" do
+      terrain_type = provider.terrain_type_at(0, 0)
 
-      expect(biome).to eq("plains")
+      expect(terrain_type).to eq("outdoor")
     end
 
-    it "returns zone biome for non-existent tiles" do
-      biome = provider.biome_at(99, 99)
+    it "returns nil for non-existent tiles" do
+      terrain_type = provider.terrain_type_at(99, 99)
 
-      expect(biome).to eq(zone.biome)
+      expect(terrain_type).to be_nil
     end
   end
 

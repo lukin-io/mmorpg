@@ -5,20 +5,20 @@ require "rails_helper"
 RSpec.describe Game::World::CityHotspotService do
   let(:user) { create(:user) }
   let(:character) { create(:character, user: user, level: 10) }
-  let(:city_zone) { create(:zone, name: "Test City", biome: "city", width: 20, height: 20) }
-  let(:destination_zone) { create(:zone, name: "Destination", biome: "plains", width: 20, height: 20) }
+  let(:city_zone) { create(:zone, name: "Test City", location_type: "city", width: 20, height: 20) }
+  let(:destination_zone) { create(:zone, name: "Destination", location_type: "outdoor", width: 20, height: 20) }
   let!(:spawn_point) { create(:spawn_point, zone: destination_zone, x: 5, y: 5, default_entry: true) }
   let!(:position) { create(:character_position, character: character, zone: city_zone, x: 5, y: 5) }
 
   subject { described_class.new(character: character, zone: city_zone) }
 
   describe "#city_zone?" do
-    it "returns true for city biome" do
+    it "returns true for city location type" do
       expect(subject.city_zone?).to be true
     end
 
-    it "returns false for non-city biome" do
-      plains_zone = create(:zone, biome: "plains")
+    it "returns false for outdoor location type" do
+      plains_zone = create(:zone, location_type: "outdoor")
       service = described_class.new(character: character, zone: plains_zone)
       expect(service.city_zone?).to be false
     end
@@ -54,7 +54,7 @@ RSpec.describe Game::World::CityHotspotService do
     end
 
     it "returns empty array for non-city zone" do
-      plains_zone = create(:zone, biome: "plains")
+      plains_zone = create(:zone, location_type: "outdoor")
       service = described_class.new(character: character, zone: plains_zone)
       expect(service.hotspots_for_display).to eq([])
     end
@@ -208,23 +208,6 @@ RSpec.describe Game::World::CityHotspotService do
         result = subject.interact!(exit_hotspot.id)
         expect(result.success).to be false
         expect(result.message).to include("position")
-      end
-    end
-
-    context "with decoration hotspot (action_type: none)" do
-      let!(:decoration) do
-        create(:city_hotspot,
-          zone: city_zone,
-          action_type: "none",
-          hotspot_type: "decoration",
-          required_level: 1,
-          active: true)
-      end
-
-      it "returns failure result" do
-        result = subject.interact!(decoration.id)
-        expect(result.success).to be false
-        expect(result.message).to include("cannot interact")
       end
     end
 

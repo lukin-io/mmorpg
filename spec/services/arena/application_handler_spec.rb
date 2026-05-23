@@ -18,10 +18,6 @@ RSpec.describe Arena::ApplicationHandler do
       active: true,
       max_concurrent_matches: 10)
   end
-  let!(:arena_season) do
-    create(:arena_season, status: :live)
-  end
-
   before do
     create(:character_position, character: character)
     create(:character_position, character: other_character)

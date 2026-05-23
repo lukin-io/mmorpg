@@ -42,14 +42,24 @@ RSpec.describe TileNpc, type: :model do
     let(:character) { create(:character) }
     let(:npc) { create(:tile_npc) }
 
-    it "marks the NPC defeated and schedules respawn state" do
+    it "marks the NPC defeated without inventing a respawn timer" do
       travel_to Time.zone.local(2026, 5, 21, 12, 0, 0) do
         expect(npc.defeat!(character)).to be true
 
         expect(npc.defeated_at).to eq(Time.current)
         expect(npc.defeated_by).to eq(character)
         expect(npc.current_hp).to eq(0)
-        expect(npc.respawns_at).to be_between(25.minutes.from_now, 35.minutes.from_now)
+        expect(npc.respawns_at).to be_nil
+      end
+    end
+
+    it "uses explicit source-backed respawn timing when present" do
+      npc.npc_template.update!(metadata: {"respawn_seconds" => 7200, "respawn_variance_seconds" => 0})
+
+      travel_to Time.zone.local(2026, 5, 21, 12, 0, 0) do
+        expect(npc.defeat!(character)).to be true
+
+        expect(npc.respawns_at).to eq(2.hours.from_now)
       end
     end
   end

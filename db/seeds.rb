@@ -29,92 +29,49 @@ if defined?(ChatChannel)
   end
 end
 
-def zone_metadata_for(name, biome)
+def zone_metadata_for(name)
   case name
   when "Outpost"
     {
-      "default_movement_modifier" => "road",
       "exit_to" => "Outpost Surroundings"
     }
   when "Outpost Surroundings"
     {
-      "default_movement_modifier" => "road",
       "source_map" => "m_1001_999"
     }
   else
-    {
-      "default_movement_modifier" => biome
-    }
+    {}
   end
 end
 
 if defined?(Zone)
   [
-    {name: "Outpost", biome: "city", width: 10, height: 10},
-    {name: "Outpost Surroundings", biome: "plains", width: 15, height: 15}
+    {name: "Outpost", location_type: "city", width: 10, height: 10},
+    {name: "Outpost Surroundings", location_type: "outdoor", width: 15, height: 15}
   ].each do |attrs|
     Zone.find_or_create_by!(name: attrs[:name]) do |zone|
-      zone.biome = attrs[:biome]
+      zone.location_type = attrs[:location_type]
       zone.width = attrs[:width]
       zone.height = attrs[:height]
-      zone.metadata = zone_metadata_for(attrs[:name], attrs[:biome])
+      zone.metadata = zone_metadata_for(attrs[:name])
     end
   end
 end
 
 if defined?(SpawnPoint) && defined?(Zone)
   {
-    "Outpost" => [{x: 5, y: 5, faction_key: "neutral", default_entry: true}],
-    "Outpost Surroundings" => [{x: 7, y: 7, faction_key: "neutral", default_entry: true}]
+    "Outpost" => [{x: 5, y: 5, default_entry: true}],
+    "Outpost Surroundings" => [{x: 7, y: 7, default_entry: true}]
   }.each do |zone_name, points|
     zone = Zone.find_by(name: zone_name)
     next unless zone
 
     points.each do |point|
       SpawnPoint.find_or_create_by!(zone:, x: point[:x], y: point[:y]) do |spawn|
-        spawn.faction_key = point[:faction_key]
         spawn.city_key = zone_name.parameterize
         spawn.respawn_seconds = point[:respawn_seconds] || 60
         spawn.default_entry = point.fetch(:default_entry, false)
       end
-    end
-  end
-end
-
-if defined?(ItemTemplate)
-  [
-    {
-      name: "Iron Longsword",
-      item_type: "equipment",
-      slot: "main_hand",
-      rarity: "common",
-      stat_modifiers: {attack: 6},
-      weight: 4
-    },
-    {
-      name: "Oak Longbow",
-      item_type: "equipment",
-      slot: "main_hand",
-      rarity: "uncommon",
-      stat_modifiers: {attack: 5, dexterity: 2},
-      weight: 3
-    },
-    {
-      name: "Mystic Robes",
-      item_type: "equipment",
-      slot: "chest",
-      rarity: "rare",
-      stat_modifiers: {intelligence: 4, vitality: 2},
-      weight: 1
-    }
-  ].each do |attrs|
-    ItemTemplate.find_or_create_by!(name: attrs[:name]) do |item|
-      item.item_type = attrs[:item_type]
-      item.slot = attrs[:slot]
-      item.rarity = attrs[:rarity]
-      item.stat_modifiers = attrs[:stat_modifiers]
-      item.weight = attrs[:weight] || 2
-      item.stack_limit = attrs[:stack_limit] || 1
     end
   end
 end
@@ -126,33 +83,32 @@ if defined?(MapTileTemplate)
   outpost = Zone.find_by(name: "Outpost")
   if outpost
     zone_name = outpost.name  # Store zone name as string, not the Zone object
-    city_tiles << {zone: zone_name, x: 5, y: 5, terrain_type: "city", biome: "city", metadata: {"building" => "Town Square"}}
-    city_tiles << {zone: zone_name, x: 6, y: 5, terrain_type: "city", biome: "city", metadata: {"building" => "Лавка"}}
-    city_tiles << {zone: zone_name, x: 4, y: 5, terrain_type: "city", biome: "city", metadata: {"building" => "Arena"}}
-    city_tiles << {zone: zone_name, x: 5, y: 9, terrain_type: "city", biome: "city", metadata: {"building" => "South Gate"}}
+    city_tiles << {zone: zone_name, x: 5, y: 5, terrain_type: "city", metadata: {"building" => "Town Square"}}
+    city_tiles << {zone: zone_name, x: 6, y: 5, terrain_type: "city", metadata: {"building" => "Лавка"}}
+    city_tiles << {zone: zone_name, x: 4, y: 5, terrain_type: "city", metadata: {"building" => "Arena"}}
+    city_tiles << {zone: zone_name, x: 5, y: 9, terrain_type: "city", metadata: {"building" => "South Gate"}}
   end
 
   # Outpost Surroundings - captured outdoor map area with city return.
-  plains = Zone.find_by(name: "Outpost Surroundings")
-  plains_tiles = []
-  if plains
-    plains_name = plains.name  # Store zone name as string, not the Zone object
+  outpost_surroundings = Zone.find_by(name: "Outpost Surroundings")
+  outdoor_tiles = []
+  if outpost_surroundings
+    outdoor_zone_name = outpost_surroundings.name  # Store zone name as string, not the Zone object
     (0..14).each do |x|
       (0..14).each do |y|
         tile_meta = {}
-        terrain = "plains"
+        terrain = "outdoor"
 
         # City entrance marker
         if x == 7 && y == 0
           tile_meta["building"] = "Road to Outpost"
         end
 
-        plains_tiles << {
-          zone: plains_name,
+        outdoor_tiles << {
+          zone: outdoor_zone_name,
           x: x,
           y: y,
           terrain_type: terrain,
-          biome: terrain,
           passable: !tile_meta["blocked"],
           metadata: tile_meta
         }
@@ -161,24 +117,13 @@ if defined?(MapTileTemplate)
   end
 
   # Insert all tiles
-  (city_tiles + plains_tiles).each do |attrs|
+  (city_tiles + outdoor_tiles).each do |attrs|
     next unless attrs[:zone]
     MapTileTemplate.find_or_create_by!(zone: attrs[:zone], x: attrs[:x], y: attrs[:y]) do |tile|
       tile.terrain_type = attrs[:terrain_type]
       tile.passable = attrs.fetch(:passable, true)
       tile.metadata = attrs.fetch(:metadata, {})
-      tile.biome = attrs.fetch(:biome, "plains")
     end
-  end
-end
-
-if defined?(ArenaSeason)
-  ArenaSeason.find_or_create_by!(slug: "founders-season") do |season|
-    season.name = "Founders Season"
-    season.status = :live
-    season.starts_at = 1.week.ago
-    season.ends_at = 1.month.from_now
-    season.metadata = {"description" => "Launch window ranked play."}
   end
 end
 
@@ -195,42 +140,36 @@ secondary_character = nil
 lukin_character = nil
 
 if defined?(Character) && admin
-  main_character = Character.find_or_create_by!(user: admin, name: "Aldric Stormguard") do |char|
+  main_character = Character.find_or_create_by!(user: admin, name: "max_kerby") do |char|
     char.level = 22
     char.experience = 125_000
-    char.faction_alignment = "alliance"
-    char.alignment_score = 15
-    char.reputation = 1_200
+    char.alignment = "light"
     char.allocated_stats = {"strength" => 16, "vitality" => 12, "dexterity" => 5}
     char.resource_pools = {"fatigue" => 0}
-    char.metadata = {"battlefield_roles" => %w[frontline leader]}
+    char.metadata = {}
   end
   main_character.reload
   main_character.inventory || main_character.create_inventory!(slot_capacity: 48, weight_capacity: 160)
 
-  secondary_character = Character.find_or_create_by!(user: admin, name: "Lyra Dawnsong") do |char|
+  secondary_character = Character.find_or_create_by!(user: admin, name: "max_kerby_balance") do |char|
     char.level = 18
     char.experience = 82_000
-    char.faction_alignment = "alliance"
-    char.alignment_score = 6
-    char.reputation = 640
+    char.alignment = "balance"
     char.allocated_stats = {"intelligence" => 18, "vitality" => 6, "dexterity" => 4}
     char.resource_pools = {"fatigue" => 0}
-    char.metadata = {"battlefield_roles" => %w[magic support]}
+    char.metadata = {}
   end
   secondary_character.reload
   secondary_character.inventory || secondary_character.create_inventory!(slot_capacity: 42, weight_capacity: 130)
 
   if lukin_user
-    lukin_character = Character.find_or_create_by!(user: lukin_user, name: "Rovan Emberfall") do |char|
+    lukin_character = Character.find_or_create_by!(user: lukin_user, name: "max_kerby_dark") do |char|
       char.level = 16
       char.experience = 61_000
-      char.faction_alignment = "rebellion"
-      char.alignment_score = 2
-      char.reputation = 480
+      char.alignment = "dark"
       char.allocated_stats = {"dexterity" => 14, "strength" => 7, "vitality" => 5}
       char.resource_pools = {"fatigue" => 0}
-      char.metadata = {"battlefield_roles" => %w[scout archer]}
+      char.metadata = {}
     end
     lukin_character.reload
     lukin_character.inventory || lukin_character.create_inventory!(slot_capacity: 36, weight_capacity: 140)
@@ -261,14 +200,12 @@ end
 if defined?(CurrencyWallet)
   if admin
     wallet = admin.currency_wallet || CurrencyWallet.create!(user: admin)
-    wallet.adjust!(currency: :gold, amount: 7_500, reason: "seed.initial_gold", metadata: {"source" => "starter_content"})
-    wallet.adjust!(currency: :silver, amount: 1_200, reason: "seed.shop_sale")
+    wallet.adjust!(amount: 7_500, reason: "seed.initial_nv", metadata: {"source" => "starter_content"})
   end
 
   if lukin_user
     wallet = lukin_user.currency_wallet || CurrencyWallet.create!(user: lukin_user)
-    wallet.adjust!(currency: :gold, amount: 4_200, reason: "seed.arena_rewards")
-    wallet.adjust!(currency: :silver, amount: 800, reason: "seed.shop_sale")
+    wallet.adjust!(amount: 4_200, reason: "seed.initial_nv")
   end
 end
 
@@ -285,7 +222,7 @@ if defined?(ArenaRoom)
       room_type: :training,
       level_min: 1,
       level_max: 10,
-      faction_restriction: nil,
+      alignment_restriction: nil,
       description: "Practice arena for new combatants. Low stakes, all welcome."
     },
     {
@@ -294,7 +231,7 @@ if defined?(ArenaRoom)
       room_type: :trial,
       level_min: 5,
       level_max: 20,
-      faction_restriction: nil,
+      alignment_restriction: nil,
       description: "Prove your worth in serious combat. Medium trauma fights."
     },
     {
@@ -303,8 +240,8 @@ if defined?(ArenaRoom)
       room_type: :challenge,
       level_min: 15,
       level_max: 40,
-      faction_restriction: nil,
-      description: "For seasoned warriors. High stakes combat."
+      alignment_restriction: nil,
+      description: "Level-restricted arena room placeholder pending exact source copy."
     },
     {
       name: "Initiation Chamber",
@@ -312,7 +249,7 @@ if defined?(ArenaRoom)
       room_type: :initiation,
       level_min: 10,
       level_max: 25,
-      faction_restriction: nil,
+      alignment_restriction: nil,
       description: "Initiation rites for combatants."
     },
     {
@@ -321,7 +258,7 @@ if defined?(ArenaRoom)
       room_type: :light,
       level_min: 20,
       level_max: 60,
-      faction_restriction: "light",
+      alignment_restriction: "light",
       description: "Champions of Light fight for honor and justice."
     },
     {
@@ -330,7 +267,7 @@ if defined?(ArenaRoom)
       room_type: :dark,
       level_min: 20,
       level_max: 60,
-      faction_restriction: "dark",
+      alignment_restriction: "dark",
       description: "The forces of Darkness test their strength here."
     },
     {
@@ -339,8 +276,8 @@ if defined?(ArenaRoom)
       room_type: :balance,
       level_min: 20,
       level_max: 60,
-      faction_restriction: "neutral",
-      description: "Neutral warriors maintain equilibrium through combat."
+      alignment_restriction: "balance",
+      description: "Balance-aligned arena room placeholder pending exact source copy."
     },
     {
       name: "Chaos Coliseum",
@@ -348,7 +285,7 @@ if defined?(ArenaRoom)
       room_type: :chaos,
       level_min: 30,
       level_max: 80,
-      faction_restriction: nil,
+      alignment_restriction: "chaos",
       description: "Free-for-all mayhem. Anything goes. High trauma!"
     },
     {
@@ -357,8 +294,8 @@ if defined?(ArenaRoom)
       room_type: :patron,
       level_min: 50,
       level_max: 100,
-      faction_restriction: nil,
-      description: "Elite arena for high-level patrons and champions."
+      alignment_restriction: nil,
+      description: "High-level arena room placeholder pending exact source copy."
     },
     {
       name: "Hall of Law",
@@ -366,7 +303,7 @@ if defined?(ArenaRoom)
       room_type: :law,
       level_min: 25,
       level_max: 70,
-      faction_restriction: nil,
+      alignment_restriction: "law",
       description: "Judicial combat to settle disputes and honor duels."
     }
   ]
@@ -377,7 +314,7 @@ if defined?(ArenaRoom)
       room.room_type = room_data[:room_type]
       room.level_min = room_data[:level_min]
       room.level_max = room_data[:level_max]
-      room.faction_restriction = room_data[:faction_restriction]
+      room.alignment_restriction = room_data[:alignment_restriction]
       room.active = true
       room.metadata = {description: room_data[:description]}
     end
@@ -393,15 +330,15 @@ puts "Arena rooms seeding complete!"
 puts "Seeding Tile Buildings..."
 
 if defined?(TileBuilding) && defined?(Zone)
-  starter_plains = Zone.find_by(name: "Starter Plains")
+  outpost_surroundings = Zone.find_by(name: "Outpost Surroundings")
   outpost = Zone.find_by(name: "Outpost")
 
   tile_buildings = []
 
-  # City entrance from Starter Plains to Outpost
-  if starter_plains && outpost
+  # City entrance from Outpost Surroundings to Outpost
+  if outpost_surroundings && outpost
     tile_buildings << {
-      zone: starter_plains.name,
+      zone: outpost_surroundings.name,
       x: 7,
       y: 0,
       building_key: "outpost_gate",
@@ -445,9 +382,8 @@ puts "Tile buildings seeding complete!"
 # ============================================================
 puts "\n=== Seeding City Hotspots ==="
 
-# Find existing zones
 outpost = Zone.find_by(name: "Outpost")
-starter_plains = Zone.find_by(name: "Starter Plains")
+outpost_surroundings = Zone.find_by(name: "Outpost Surroundings")
 
 if outpost
   city_hotspots = []
@@ -470,7 +406,7 @@ if outpost
   # 4. Measure the building's width and height in pixels
   # ==========================================================================
 
-  # City Gates / Exit - leads back to Starter Plains
+  # City Gates / Exit - leads back to Outpost Surroundings.
   # TODO: Adjust position to match gate location on city.png
   city_hotspots << {
     zone: outpost,
@@ -483,7 +419,7 @@ if outpost
     height: 150,
     image_hover: "gate.png",
     action_type: "enter_zone",
-    destination_zone: starter_plains,
+    destination_zone: outpost_surroundings,
     action_params: {"destination_x" => 7, "destination_y" => 0},
     required_level: 1,
     z_index: 10

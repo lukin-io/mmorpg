@@ -13,8 +13,7 @@
 <%
   # Get online users
   online_users = User.joins(:user_sessions)
-       .where(user_sessions: { signed_out_at: nil })
-       .where("user_sessions.last_seen_at > ?", 5.minutes.ago)
+       .merge(UserSession.recent)
        .includes(:characters)
        .distinct
        .limit(50) rescue []
@@ -50,24 +49,18 @@
 <div class="nl-players-list" data-game-layout-target="playersList">
   <% online_users.each do |user| %>
     <%
-      session = user.user_sessions.where(signed_out_at: nil).order(last_seen_at: :desc).first
-      status = session&.last_seen_at&.> 2.minutes.ago ? 'active' : 'idle'
       character = user.characters.first
       char_level = character&.level || 0
       char_name = character&.name || user.profile_name || user.email.split('@').first
 
-      # Alignment icon (simplified)
-      alignment_icon = case character&.faction_alignment
-                       when "alliance" then "🛡️"
-                       when "rebellion" then "⚔️"
+      alignment_icon = case character&.alignment
+                       when "light" then "L"
+                       when "dark" then "D"
+                       when "balance" then "B"
+                       when "chaos" then "C"
+                       when "law" then "W"
                        else "→"
                        end
-
-      # Status icon
-      status_icon = case status
-                    when 'active' then "A"
-                    else "I"
-                    end
 
       profile_href = if character
                        player_path(name: character.name)
@@ -85,7 +78,6 @@
          class="nl-player-name-link"
          data-turbo-frame="main_content"><%= truncate(char_name, length: 15) %></a>
       <span class="nl-player-level">[<%= char_level %>]</span>
-      <span class="nl-player-status-icon" title="<%= status == 'active' ? 'Active' : 'Idle' %>"><%= status_icon %></span>
     </div>
   <% end %>
 
@@ -99,5 +91,4 @@
   <button data-action="click->game-layout#whisperPlayer">📨 Private Message</button>
   <button data-action="click->game-layout#viewProfile">👤 View Info</button>
   <button data-action="click->game-layout#copyNickname">📋 Copy Nick</button>
-  <button data-action="click->game-layout#ignorePlayer">🚫 Ignore</button>
 </div>

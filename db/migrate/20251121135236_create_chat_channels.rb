@@ -16,8 +16,6 @@ class CreateChatChannels < ActiveRecord::Migration[8.1]
     create_table :chat_channel_memberships do |t|
       t.references :chat_channel, null: false, foreign_key: true
       t.references :user, null: false, foreign_key: true
-      t.integer :role, null: false, default: 0
-      t.datetime :muted_until
       t.timestamps
     end
 

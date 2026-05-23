@@ -21,13 +21,16 @@ module Game
       }.freeze
 
       SKILL_ALIASES = {
-        "bludgeoning_mastery" => :melee_combat,
-        "mace_mastery" => :melee_combat,
-        "knife_mastery" => :melee_combat,
-        "sword_mastery" => :melee_combat,
-        "bow_mastery" => :ranged_combat,
-        "observation" => :perception,
-        "linguistics" => :trading
+        "bludgeoning_mastery" => :bludgeoning_mastery,
+        "mace_mastery" => :bludgeoning_mastery,
+        "knife_mastery" => :knife_mastery,
+        "sword_mastery" => :sword_mastery,
+        "bow_mastery" => :throwing_mastery,
+        "throwing_weapon_mastery" => :throwing_mastery,
+        "halberd_mastery" => :polearm_mastery,
+        "spear_mastery" => :polearm_mastery,
+        "observation" => :observation,
+        "linguistics" => :linguistics
       }.freeze
 
       IGNORED_KEYS = %w[mass weight price durability].freeze

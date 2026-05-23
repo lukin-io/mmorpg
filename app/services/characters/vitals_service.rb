@@ -34,7 +34,6 @@ module Characters
         character.last_combat_at = Time.current
         character.save!
 
-        broadcast_vital_update(:damage, actual_damage, source)
         check_death if character.current_hp <= 0
 
         actual_damage
@@ -52,7 +51,6 @@ module Characters
         character.current_hp += healed
         character.save!
 
-        broadcast_vital_update(:heal, healed, source)
         healed
       end
     end
@@ -67,7 +65,6 @@ module Characters
       character.with_lock do
         character.current_mp -= amount
         character.save!
-        broadcast_vital_update(:mana_use, amount, nil)
       end
       true
     end
@@ -83,7 +80,6 @@ module Characters
         character.current_mp += restored
         character.save!
 
-        broadcast_vital_update(:mana_restore, restored, source)
         restored
       end
     end
@@ -103,8 +99,6 @@ module Characters
         character.current_mp = [character.current_mp + mp_gain, character.max_mp].min
         character.last_regen_tick_at = Time.current
         character.save!
-
-        broadcast_regen_update(hp_gain, mp_gain)
       end
 
       true
@@ -192,38 +186,6 @@ module Characters
       return character.effective_max_hp if character.respond_to?(:effective_max_hp)
 
       character.max_hp
-    end
-
-    def broadcast_vital_update(type, amount, source)
-      ActionCable.server.broadcast(
-        "character:#{character.id}:vitals",
-        {
-          type: type,
-          amount: amount,
-          source: source,
-          current_hp: character.current_hp,
-          max_hp: effective_max_hp,
-          current_mp: character.current_mp,
-          max_mp: character.max_mp,
-          hp_percent: hp_percent,
-          mp_percent: mp_percent
-        }
-      )
-    end
-
-    def broadcast_regen_update(hp_gain, mp_gain)
-      ActionCable.server.broadcast(
-        "character:#{character.id}:vitals",
-        {
-          type: :regen,
-          hp_gain: hp_gain.round(1),
-          mp_gain: mp_gain.round(1),
-          current_hp: character.current_hp,
-          current_mp: character.current_mp,
-          hp_percent: hp_percent,
-          mp_percent: mp_percent
-        }
-      )
     end
 
     def check_death

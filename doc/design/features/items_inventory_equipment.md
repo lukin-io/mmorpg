@@ -38,7 +38,7 @@ Core:
 - Items define allowed slot.
 - A character can equip only one item per slot unless a slot supports pairs.
 - Two-handed weapons occupy both hand capacity.
-- Items can require level, stats, skills, or reputation.
+- Items can require level, stats, skills, or other source-backed gates.
 - Equipment affects combat formulas, vitals, carrying capacity, and possibly
   movement cost.
 - Durability can degrade through combat or use.

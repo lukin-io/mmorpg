@@ -2,17 +2,13 @@
   <h3>Current Location</h3>
 
   <div class="location-description">
-    <% if zone.biome == "city" %>
+    <% if zone.city? %>
       <p>You are in <strong><%= zone.name %></strong>, a compact city node with
          source-backed hotspots.</p>
       <p class="location-hint">Use the city scene to enter documented buildings such as Arena or Лавка.</p>
-    <% elsif zone.biome == "plains" %>
-      <p>The open <strong><%= zone.name %></strong> stretch before you. Tall grass sways
-         in the breeze, and the road leads to distant settlements.</p>
+    <% elsif zone.outdoor? %>
+      <p>You are outside at <strong><%= zone.name %></strong>.</p>
       <p class="location-hint">⚠️ Wild creatures may attack travelers here.</p>
-    <% elsif zone.biome == "forest" %>
-      <p>Dense trees surround you in the <strong><%= zone.name %></strong>. Sunlight
-         filters through the canopy.</p>
     <% else %>
       <p>You are at <strong><%= zone.name %></strong> [<%= position.x %>, <%= position.y %>].</p>
     <% end %>

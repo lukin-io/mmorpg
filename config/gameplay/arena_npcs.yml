@@ -12,7 +12,6 @@ training:
       damage: 1
       xp: 5
       dialogue: "*скрипит и покачивается*"
-      spawn_chance: 30
       loot_table:
         - item_key: wood_chips
           item_name: Щепки
@@ -21,7 +20,6 @@ training:
           item_type: material
           weight: 1
       metadata:
-        difficulty: easy
         ai_behavior: passive
         arena_rooms:
           - training

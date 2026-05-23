@@ -13,26 +13,26 @@ RSpec.describe MapTileTemplate, type: :model do
     let(:zone) { create(:zone, name: "Test Zone") }
 
     it "stores zone as a string name, not an object reference" do
-      tile = create(:map_tile_template, zone: zone.name, x: 0, y: 0, terrain_type: "plains")
+      tile = create(:map_tile_template, zone: zone.name, x: 0, y: 0, terrain_type: "outdoor")
 
       expect(tile.zone).to eq("Test Zone")
       expect(tile.zone).not_to start_with("#<Zone:")
     end
 
     it "converts Zone object to name in setter" do
-      tile = MapTileTemplate.new(zone: zone, x: 0, y: 0, terrain_type: "plains")
+      tile = MapTileTemplate.new(zone: zone, x: 0, y: 0, terrain_type: "outdoor")
 
       expect(tile.zone).to eq("Test Zone")
     end
 
     it "accepts string zone name directly" do
-      tile = MapTileTemplate.new(zone: "Direct Name", x: 0, y: 0, terrain_type: "plains")
+      tile = MapTileTemplate.new(zone: "Direct Name", x: 0, y: 0, terrain_type: "outdoor")
 
       expect(tile.zone).to eq("Direct Name")
     end
 
     it "validates against corrupted zone values" do
-      tile = MapTileTemplate.new(x: 0, y: 0, terrain_type: "plains")
+      tile = MapTileTemplate.new(x: 0, y: 0, terrain_type: "outdoor")
       tile[:zone] = "#<Zone:0x000012345>"  # Bypass setter to simulate corrupted data
 
       expect(tile).not_to be_valid
@@ -44,25 +44,25 @@ RSpec.describe MapTileTemplate, type: :model do
     let(:zone_name) { "Test Zone" }
 
     it "defaults to passable" do
-      tile = create(:map_tile_template, zone: zone_name, x: 0, y: 0, terrain_type: "plains")
+      tile = create(:map_tile_template, zone: zone_name, x: 0, y: 0, terrain_type: "outdoor")
 
       expect(tile.passable).to be true
     end
 
     it "can be marked as impassable" do
-      tile = create(:map_tile_template, zone: zone_name, x: 0, y: 0, terrain_type: "water", passable: false)
+      tile = create(:map_tile_template, zone: zone_name, x: 0, y: 0, terrain_type: "outdoor", passable: false)
 
       expect(tile.passable).to be false
     end
 
     it "blocked? returns true when passable is false" do
-      tile = create(:map_tile_template, zone: zone_name, x: 0, y: 0, terrain_type: "water", passable: false)
+      tile = create(:map_tile_template, zone: zone_name, x: 0, y: 0, terrain_type: "outdoor", passable: false)
 
       expect(tile.blocked?).to be true
     end
 
     it "blocked? returns true when metadata has blocked flag" do
-      tile = create(:map_tile_template, zone: zone_name, x: 0, y: 0, terrain_type: "plains", metadata: {"blocked" => true})
+      tile = create(:map_tile_template, zone: zone_name, x: 0, y: 0, terrain_type: "outdoor", metadata: {"blocked" => true})
 
       expect(tile.blocked?).to be true
     end
@@ -72,9 +72,9 @@ RSpec.describe MapTileTemplate, type: :model do
     let(:zone_name) { "Test Zone" }
 
     before do
-      create(:map_tile_template, zone: zone_name, x: 0, y: 0, terrain_type: "plains", passable: true)
-      create(:map_tile_template, zone: zone_name, x: 1, y: 0, terrain_type: "water", passable: false)
-      create(:map_tile_template, zone: "Other Zone", x: 0, y: 0, terrain_type: "plains")
+      create(:map_tile_template, zone: zone_name, x: 0, y: 0, terrain_type: "outdoor", passable: true)
+      create(:map_tile_template, zone: zone_name, x: 1, y: 0, terrain_type: "outdoor", passable: false)
+      create(:map_tile_template, zone: "Other Zone", x: 0, y: 0, terrain_type: "outdoor")
     end
 
     describe ".in_zone" do

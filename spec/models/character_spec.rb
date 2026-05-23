@@ -13,151 +13,18 @@ RSpec.describe Character, type: :model do
     end
   end
 
-  describe "alignment tiers" do
+  describe "Neverlands alignment marker" do
     let(:character) { create(:character) }
 
-    describe "#alignment_tier" do
-      it "returns celestial for high positive score" do
-        character.update!(alignment_score: 900)
-        expect(character.alignment_tier).to eq(:celestial)
-      end
-
-      it "returns neutral for scores near zero" do
-        character.update!(alignment_score: 0)
-        expect(character.alignment_tier).to eq(:neutral)
-      end
-
-      it "returns absolute_darkness for very low score" do
-        character.update!(alignment_score: -900)
-        expect(character.alignment_tier).to eq(:absolute_darkness)
-      end
-
-      it "returns true_light for high-mid positive score" do
-        character.update!(alignment_score: 600)
-        expect(character.alignment_tier).to eq(:true_light)
-      end
-
-      it "returns child_of_darkness for mid-range negative score" do
-        character.update!(alignment_score: -300)
-        expect(character.alignment_tier).to eq(:child_of_darkness)
-      end
+    it "defaults to no alignment" do
+      expect(character.alignment).to eq("none")
+      expect(character.alignment_label).to eq("None")
     end
 
-    describe "#alignment_emoji" do
-      it "returns label for celestial tier" do
-        character.update!(alignment_score: 900)
-        expect(character.alignment_emoji).to eq("Celestial")
-      end
+    it "uses source-backed alignment labels" do
+      character.update!(alignment: "light")
 
-      it "returns label for neutral tier" do
-        character.update!(alignment_score: 0)
-        expect(character.alignment_emoji).to eq("Neutral")
-      end
-
-      it "returns label for absolute darkness" do
-        character.update!(alignment_score: -900)
-        expect(character.alignment_emoji).to eq("Absolute Darkness")
-      end
-    end
-
-    describe "#adjust_alignment!" do
-      it "increases alignment score" do
-        character.update!(alignment_score: 0)
-        character.adjust_alignment!(100)
-        expect(character.alignment_score).to eq(100)
-      end
-
-      it "clamps to maximum of 1000" do
-        character.update!(alignment_score: 950)
-        character.adjust_alignment!(100)
-        expect(character.alignment_score).to eq(1000)
-      end
-
-      it "clamps to minimum of -1000" do
-        character.update!(alignment_score: -950)
-        character.adjust_alignment!(-100)
-        expect(character.alignment_score).to eq(-1000)
-      end
-    end
-  end
-
-  describe "chaos tiers" do
-    let(:character) { create(:character, chaos_score: 0) }
-
-    describe "#chaos_tier" do
-      it "returns lawful for low score" do
-        expect(character.chaos_tier).to eq(:lawful)
-      end
-
-      it "returns absolute_chaos for high score" do
-        character.update!(chaos_score: 900)
-        expect(character.chaos_tier).to eq(:absolute_chaos)
-      end
-
-      it "returns chaotic for mid-high score" do
-        character.update!(chaos_score: 600)
-        expect(character.chaos_tier).to eq(:chaotic)
-      end
-    end
-
-    describe "#chaos_emoji" do
-      it "returns label for lawful" do
-        expect(character.chaos_emoji).to eq("Lawful")
-      end
-
-      it "returns label for absolute chaos" do
-        character.update!(chaos_score: 900)
-        expect(character.chaos_emoji).to eq("Absolute Chaos")
-      end
-    end
-
-    describe "#adjust_chaos!" do
-      it "increases chaos score" do
-        character.adjust_chaos!(50)
-        expect(character.chaos_score).to eq(50)
-      end
-
-      it "clamps to maximum of 1000" do
-        character.update!(chaos_score: 980)
-        character.adjust_chaos!(50)
-        expect(character.chaos_score).to eq(1000)
-      end
-
-      it "clamps to minimum of 0" do
-        character.update!(chaos_score: 10)
-        character.adjust_chaos!(-50)
-        expect(character.chaos_score).to eq(0)
-      end
-    end
-  end
-
-  describe "faction display" do
-    let(:character) { create(:character) }
-
-    describe "#faction_emoji" do
-      it "returns label for alliance" do
-        character.update!(faction_alignment: "alliance")
-        expect(character.faction_emoji).to eq("Alliance")
-      end
-
-      it "returns label for rebellion" do
-        character.update!(faction_alignment: "rebellion")
-        expect(character.faction_emoji).to eq("Rebellion")
-      end
-
-      it "returns label for neutral" do
-        character.update!(faction_alignment: "neutral")
-        expect(character.faction_emoji).to eq("Neutral")
-      end
-    end
-
-    describe "#alignment_display" do
-      it "combines faction and tier information" do
-        character.update!(faction_alignment: "alliance", alignment_score: 600)
-        display = character.alignment_display
-        expect(display).to include("Alliance")
-        expect(display).to include("True Light")
-      end
+      expect(character.alignment_display).to eq("Light")
     end
   end
 
@@ -208,8 +75,8 @@ RSpec.describe Character, type: :model do
 
       expect(breakdown[:attack_power][:equipment]).to eq(7)
       expect(breakdown[:attack_power][:total]).to eq(32)
-      expect(breakdown[:defense][:equipment]).to eq(6)
-      expect(breakdown[:defense][:total]).to eq(22)
+      expect(breakdown[:defense][:equipment]).to eq(5)
+      expect(breakdown[:defense][:total]).to eq(21)
     end
 
     it "applies equipped primary stat and vitality effects" do
@@ -336,7 +203,7 @@ RSpec.describe Character, type: :model do
     end
 
     describe "integration with calculator" do
-      it "calculates movement cooldown based on wanderer skill" do
+      it "keeps movement cooldown unchanged until a source formula is captured" do
         character.set_passive_skill!(:wanderer, 0)
         cooldown_at_0 = character.passive_skill_calculator.apply_movement_cooldown(10)
 
@@ -344,16 +211,15 @@ RSpec.describe Character, type: :model do
         character.clear_passive_skill_cache!
         cooldown_at_100 = character.passive_skill_calculator.apply_movement_cooldown(10)
 
-        expect(cooldown_at_0).to eq(10) # No reduction at level 0
-        expect(cooldown_at_100).to eq(3) # 70% reduction at level 100
+        expect(cooldown_at_0).to eq(10)
+        expect(cooldown_at_100).to eq(10)
       end
 
-      it "provides smooth scaling between levels" do
+      it "does not apply invented intermediate scaling" do
         character.set_passive_skill!(:wanderer, 50)
         cooldown = character.passive_skill_calculator.apply_movement_cooldown(10)
 
-        # At level 50: 35% reduction -> 10 * 0.65 = 6.5
-        expect(cooldown).to eq(6.5)
+        expect(cooldown).to eq(10)
       end
     end
   end
@@ -496,71 +362,6 @@ RSpec.describe Character, type: :model do
 
       it "returns nil when no active applications exist" do
         expect(character.arena_applications.active.first).to be_nil
-      end
-    end
-  end
-
-  # ============================================
-  # Avatar Assignment
-  # ============================================
-  describe "avatar" do
-    describe "AVATARS constant" do
-      it "contains all available player avatars" do
-        expect(Character::AVATARS).to contain_exactly(
-          "dwarven", "nightveil", "lightbearer", "pathfinder", "arcanist", "ironbound"
-        )
-      end
-
-      it "is frozen" do
-        expect(Character::AVATARS).to be_frozen
-      end
-    end
-
-    describe "automatic avatar assignment on create" do
-      it "assigns a random avatar on character creation" do
-        user = create(:user)
-        character = create(:character, user: user)
-
-        expect(character.avatar).to be_present
-        expect(Character::AVATARS).to include(character.avatar)
-      end
-
-      it "does not override explicitly set avatar" do
-        user = create(:user)
-        character = create(:character, user: user, avatar: "nightveil")
-
-        expect(character.avatar).to eq("nightveil")
-      end
-
-      it "assigns different avatars randomly (statistical test)" do
-        # Create multiple users to avoid character limit
-        avatars = 10.times.map do
-          user = create(:user)
-          create(:character, user: user).avatar
-        end
-
-        # With 6 avatars and 10 characters, we should see at least 2 different avatars
-        expect(avatars.uniq.size).to be > 1
-      end
-    end
-
-    describe "#avatar_image_path" do
-      it "returns the full asset path for the avatar" do
-        user = create(:user)
-        character = create(:character, user: user, avatar: "dwarven")
-
-        expect(character.avatar_image_path).to eq("avatars/dwarven.png")
-      end
-
-      it "returns fallback path when avatar is nil" do
-        user = create(:user)
-        character = build(:character, user: user, avatar: nil)
-        # Skip validation to test nil avatar case
-        character.save!(validate: false)
-        character.update_column(:avatar, nil)
-        character.reload
-
-        expect(character.avatar_image_path).to eq("avatars/dwarven.png")
       end
     end
   end

@@ -6,8 +6,8 @@ RSpec.describe "World Map Navigation", type: :system do
   include Warden::Test::Helpers
 
   let(:user) { create(:user) }
-  let(:zone) { create(:zone, name: "Adventure Plains", biome: "plains", width: 50, height: 50) }
-  let(:character) { create(:character, user: user, name: "TestHero", level: 5) }
+  let(:zone) { create(:zone, name: "Adventure Plains", location_type: "outdoor", width: 50, height: 50) }
+  let(:character) { create(:character, user: user, name: "max_kerby_world", level: 5) }
   let!(:position) { create(:character_position, character: character, zone: zone, x: 25, y: 25) }
 
   before do
@@ -34,10 +34,10 @@ RSpec.describe "World Map Navigation", type: :system do
       expect(page).to have_content("25")
     end
 
-    it "displays the biome type" do
+    it "displays the outdoor location context" do
       visit world_path
 
-      expect(page).to have_content("Plains")
+      expect(page).to have_content("outside")
     end
 
     it "shows the map viewport" do
@@ -67,10 +67,10 @@ RSpec.describe "World Map Navigation", type: :system do
       expect(page).to have_css("[data-y]")
     end
 
-    it "renders terrain-based tile classes" do
+    it "renders outdoor tile classes" do
       visit world_path
 
-      expect(page).to have_css(".nl-tile-bg--plains")
+      expect(page).to have_css(".nl-tile-bg--outdoor")
     end
   end
 
@@ -78,7 +78,7 @@ RSpec.describe "World Map Navigation", type: :system do
     let(:city_zone) do
       create(:zone,
         name: "Capital City",
-        biome: "city",
+        location_type: "city",
         width: 15,
         height: 15,
         metadata: {"description" => "The grand capital of the realm."})

@@ -32,20 +32,19 @@ RSpec.describe Arena::NpcApplicationService do
         expect(result.application.metadata["neverlands_rule_value"]).to eq(10)
       end
 
-      it "uses seeded RNG for determinism" do
-        # Same seed should pick same NPC type
-        npc1 = Game::World::ArenaNpcConfig.sample_npc("training", rng: Random.new(123))
-        npc2 = Game::World::ArenaNpcConfig.sample_npc("training", rng: Random.new(123))
+      it "uses the captured NPC without random selection" do
+        npc1 = Game::World::ArenaNpcConfig.sample_npc("training")
+        npc2 = Game::World::ArenaNpcConfig.sample_npc("training")
 
         expect(npc1[:key]).to eq(npc2[:key])
       end
 
-      it "filters by difficulty when specified" do
-        result = service.create_for_room(room: arena_room, difficulty: :easy)
+      it "does not attach generic difficulty metadata" do
+        result = service.create_for_room(room: arena_room)
 
         expect(result.success?).to be true
         expect(result.application.applicant_name).to eq("Манекен")
-        expect(result.application.npc_difficulty).to eq("easy")
+        expect(result.application.metadata).not_to have_key("difficulty")
       end
 
       it "broadcasts new application" do
@@ -62,7 +61,7 @@ RSpec.describe Arena::NpcApplicationService do
       it "fails when room has no NPC config" do
         # Stub the config to return empty for this specific room
         allow(Game::World::ArenaNpcConfig).to receive(:sample_npc)
-          .with("empty_room", anything)
+          .with("empty_room")
           .and_return(nil)
 
         empty_room = create(:arena_room, slug: "empty_room", level_min: 50, level_max: 100)
@@ -76,7 +75,7 @@ RSpec.describe Arena::NpcApplicationService do
     context "when NPC already has open application" do
       it "prevents duplicate applications" do
         # Create first application
-        result1 = service.create_for_room(room: arena_room, difficulty: :easy)
+        result1 = service.create_for_room(room: arena_room)
         expect(result1.success?).to be true
 
         # Try to create another with same NPC
@@ -95,7 +94,7 @@ RSpec.describe Arena::NpcApplicationService do
         role: "arena_bot",
         name: "Test Bot",
         level: 5,
-        metadata: {"difficulty" => "medium", "ai_behavior" => "balanced"})
+        metadata: {"ai_behavior" => "passive"})
     end
 
     it "creates application for specific NPC" do
@@ -106,7 +105,7 @@ RSpec.describe Arena::NpcApplicationService do
     end
 
     it "fails for non-arena-bot NPCs" do
-      hostile_npc = create(:npc_template, role: "hostile", name: "Wolf")
+      hostile_npc = create(:npc_template, role: "hostile", name: "Plague Rat")
       result = service.create_with_template(room: arena_room, npc_template: hostile_npc)
 
       expect(result.success?).to be false
