@@ -3,7 +3,7 @@
 require "rails_helper"
 
 RSpec.describe Game::Movement::TravelTime do
-  let(:zone) { create(:zone, biome: "plains") }
+  let(:zone) { create(:zone, location_type: "outdoor") }
   let(:character) { create(:character, passive_skills: {}) }
 
   def travel_seconds(direction: :north, tile_metadata: {})
@@ -14,39 +14,18 @@ RSpec.describe Game::Movement::TravelTime do
     expect(travel_seconds).to eq(30)
   end
 
-  it "applies diagonal travel cost" do
-    expect(travel_seconds(direction: :northeast)).to eq(42)
+  it "does not apply uncaptured diagonal travel cost" do
+    expect(travel_seconds(direction: :northeast)).to eq(30)
   end
 
-  it "applies terrain slowdown from tile metadata" do
-    expect(travel_seconds(tile_metadata: {"movement_modifier" => "swamp"})).to eq(48)
+  it "does not apply uncaptured terrain slowdown from tile metadata" do
+    expect(travel_seconds(tile_metadata: {"terrain_type" => "outdoor"})).to eq(30)
   end
 
-  it "applies wanderer passive skill reduction before terrain and mounts" do
+  it "does not apply uncaptured wanderer passive skill reduction" do
     character.update!(passive_skills: {"wanderer" => 100})
     character.clear_passive_skill_cache!
 
-    expect(travel_seconds).to eq(9)
-  end
-
-  it "applies the active summoned mount speed multiplier" do
-    create(:mount, user: character.user, speed_bonus: 50, summon_state: "summoned")
-
-    expect(travel_seconds).to eq(20)
-  end
-
-  it "clamps very fast movement to the configured minimum" do
-    character.update!(passive_skills: {"wanderer" => 100})
-    character.clear_passive_skill_cache!
-    create(:mount, user: character.user, speed_bonus: 500, summon_state: "summoned")
-
-    expect(travel_seconds(tile_metadata: {"movement_modifier" => "road"})).to eq(3)
-  end
-
-  it "clamps extremely slow movement to the configured maximum" do
-    calculator = instance_double(Game::Skills::PassiveSkillCalculator, apply_movement_cooldown: 100_000)
-    allow(character).to receive(:passive_skill_calculator).and_return(calculator)
-
-    expect(travel_seconds(tile_metadata: {"movement_modifier" => "swamp"})).to eq(86_400)
+    expect(travel_seconds).to eq(30)
   end
 end

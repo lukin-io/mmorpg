@@ -18,8 +18,7 @@ export default class extends Controller {
   static values = {
     matchId: Number,
     apLimit: { type: Number, default: 80 },
-    spectating: { type: Boolean, default: false },
-    spectatorCode: String
+    readOnly: { type: Boolean, default: false }
   }
 
   connect() {
@@ -39,10 +38,6 @@ export default class extends Controller {
     const params = {
       channel: "ArenaMatchChannel",
       match_id: this.matchIdValue
-    }
-
-    if (this.spectatorCodeValue) {
-      params.spectator_code = this.spectatorCodeValue
     }
 
     this.subscription = consumer.subscriptions.create(params, {
@@ -116,7 +111,7 @@ export default class extends Controller {
     this.timerTarget.classList.add("visible")
 
     if (seconds <= 0) {
-      this.timerTarget.textContent = "FIGHT!"
+      this.timerTarget.textContent = "Бой начался"
       this.timerTarget.classList.add("arena-countdown-timer--final")
       setTimeout(() => this.timerTarget.classList.remove("visible"), 2000)
     } else if (seconds <= 3) {
@@ -166,7 +161,7 @@ export default class extends Controller {
   handleTurnTimeout(data) {
     this.appendSystemMessage({
       timestamp: data.timestamp,
-      message: data.message || "Turn ended by timeout",
+      message: data.message || "Ход завершен по таймауту",
       severity: data.claim_available ? "warning" : "info"
     })
 
@@ -190,7 +185,7 @@ export default class extends Controller {
         this.disableTurnComposer()
         this.appendSystemMessage({
           timestamp: new Date().toLocaleTimeString(),
-          message: "Waiting for the opponent's turn",
+          message: "Ожидание хода противника",
           severity: "info"
         })
       }
@@ -199,7 +194,7 @@ export default class extends Controller {
 
     this.appendSystemMessage({
       timestamp: new Date().toLocaleTimeString(),
-      message: data.error || "Action failed",
+      message: data.error || "Действие не принято",
       severity: "error"
     })
   }
@@ -240,7 +235,6 @@ export default class extends Controller {
   getActionClass(action) {
     if (action.is_miss) return "miss"
     if (action.is_critical) return "critical"
-    if (action.healing) return "heal"
     if (action.damage) return "damage"
     return "action"
   }
@@ -381,26 +375,37 @@ export default class extends Controller {
     if (!this.hasTurnCostValueTarget) return
 
     this.enforceSingleBlock(event?.currentTarget)
-    const cost = this.selectedAttackCost() + this.selectedBlockCost() + this.selectedMagicCost()
+    this.enforceHeadLegAttackRule(event?.currentTarget)
+    const cost = this.selectedAttackCost() + this.selectedAttackPenalty() + this.selectedBlockCost() + this.selectedMagicCost()
     const apLimit = this.apLimitValue || 80
     this.turnCostValueTarget.textContent = `${cost}/${apLimit}`
     this.turnCostValueTarget.classList.toggle("arena-turn-cost--invalid", cost > apLimit)
 
     const submitButton = this.element.querySelector(".btn-attack--submit")
     if (submitButton) {
-      submitButton.disabled = cost > apLimit
+      submitButton.disabled = cost > apLimit || !this.selectedTurnValid()
     }
   }
 
   selectedAttackCost() {
     if (this.hasAttackSelectTarget) {
-      return this.attackSelectTargets.reduce((sum, select) => {
-        const option = select.selectedOptions[0]
-        return sum + Number.parseInt(option?.dataset.apCost || "0", 10)
-      }, 0)
+      return this.selectedAttackOptions().reduce((sum, option) => sum + Number.parseInt(option?.dataset.apCost || "0", 10), 0)
     }
 
     return 0
+  }
+
+  selectedAttackPenalty() {
+    const penalties = [0, 0, 25, 75, 150, 250]
+    return penalties[this.selectedAttackOptions().length] ?? penalties[penalties.length - 1]
+  }
+
+  selectedAttackOptions() {
+    if (!this.hasAttackSelectTarget) return []
+
+    return this.attackSelectTargets
+      .filter(select => select.value && select.value !== "none")
+      .map(select => select.selectedOptions[0])
   }
 
   selectedBlockCost() {
@@ -419,6 +424,34 @@ export default class extends Controller {
       if (!slot.classList.contains("nl-fight-magic-slot--active")) return sum
       return sum + Number.parseInt(slot.dataset.apCost || "0", 10)
     }, 0)
+  }
+
+  selectedTurnValid() {
+    const attackOptions = this.selectedAttackOptions()
+    const attackCount = attackOptions.length
+    const blockCount = this.selectedBlockCount()
+    const magicCount = this.selectedMagicCount()
+
+    if (attackCount > 1) return true
+    if (attackCount > 0 && blockCount > 0) return true
+    if (attackCount > 0 && magicCount > 0) return true
+    if (blockCount > 0 && magicCount > 0) return true
+    if (magicCount > 0 && attackCount === 0 && blockCount === 0) return true
+
+    return attackCount === 1 && blockCount === 0 && magicCount === 0 &&
+      Number.parseInt(attackOptions[0]?.dataset.manaCost || "0", 10) > 0
+  }
+
+  selectedBlockCount() {
+    if (!this.hasBlockSelectTarget) return 0
+
+    return this.blockSelectTargets.filter(select => select.value && select.value !== "none").length
+  }
+
+  selectedMagicCount() {
+    if (!this.hasMagicSlotTarget) return 0
+
+    return this.magicSlotTargets.filter(slot => slot.classList.contains("nl-fight-magic-slot--active")).length
   }
 
   enforceSingleBlock(changedSelect = null) {
@@ -440,9 +473,32 @@ export default class extends Controller {
     })
   }
 
+  enforceHeadLegAttackRule(changedSelect = null) {
+    if (!this.hasAttackSelectTarget) return
+    if (changedSelect && changedSelect.dataset.arenaMatchTarget !== "attackSelect") return
+
+    const headSelect = this.attackSelectTargets.find(select => select.dataset.bodyPart === "head")
+    const legsSelect = this.attackSelectTargets.find(select => select.dataset.bodyPart === "legs")
+    if (!headSelect || !legsSelect) return
+
+    const headActive = headSelect.value && headSelect.value !== "none"
+    const legsActive = legsSelect.value && legsSelect.value !== "none"
+
+    if (changedSelect === headSelect && headActive) {
+      legsSelect.value = "none"
+    } else if (changedSelect === legsSelect && legsActive) {
+      headSelect.value = "none"
+    } else if (headActive && legsActive) {
+      legsSelect.value = "none"
+    }
+
+    legsSelect.disabled = headSelect.value && headSelect.value !== "none"
+    headSelect.disabled = legsSelect.value && legsSelect.value !== "none"
+  }
+
   handleMatchStart(data) {
     // Enable action buttons
-    if (this.hasActionButtonsTarget && !this.spectatingValue) {
+    if (this.hasActionButtonsTarget && !this.readOnlyValue) {
       this.actionButtonsTarget.querySelectorAll("button").forEach(btn => {
         btn.disabled = false
       })
@@ -454,7 +510,7 @@ export default class extends Controller {
     // Log match start
     this.appendSystemMessage({
       timestamp: new Date().toLocaleTimeString(),
-      message: "FIGHT STARTED!",
+      message: "Бой начался",
       severity: "info"
     })
   }
@@ -514,22 +570,22 @@ export default class extends Controller {
       <div class="arena-result-stats">
         <div class="arena-result-stat">
           <div class="arena-result-stat-value">${data.duration}s</div>
-          <div class="arena-result-stat-label">Duration</div>
+          <div class="arena-result-stat-label">Длительность</div>
         </div>
         <div class="arena-result-stat">
           <div class="arena-result-stat-value">${this.totalDamage(data.participants)}</div>
-          <div class="arena-result-stat-label">Total Damage</div>
+          <div class="arena-result-stat-label">Урон</div>
         </div>
         <div class="arena-result-stat">
           <div class="arena-result-stat-value">${data.winning_team}</div>
-          <div class="arena-result-stat-label">Winner</div>
+          <div class="arena-result-stat-label">Победитель</div>
         </div>
       </div>
 
       ${data.rewards ? this.renderRewards(data.rewards) : ""}
 
       <button class="btn-primary" onclick="window.location.href='/arena'">
-        Return to Arena
+        К арене
       </button>
     `
   }
@@ -542,10 +598,10 @@ export default class extends Controller {
 
   resultTitle(resultClass) {
     switch (resultClass) {
-      case "victory": return "VICTORY!"
-      case "defeat": return "DEFEAT"
-      case "draw": return "DRAW"
-      default: return "MATCH ENDED"
+      case "victory": return "Победа"
+      case "defeat": return "Поражение"
+      case "draw": return "Ничья"
+      default: return "Бой завершен"
     }
   }
 
@@ -557,10 +613,9 @@ export default class extends Controller {
     return `
       <div class="arena-result-rewards">
         <h3>Rewards</h3>
-        <div class="quest-rewards-list">
-          ${rewards.xp ? `<span class="quest-reward-item quest-reward-item--xp">+${rewards.xp} XP</span>` : ""}
-          ${rewards.gold ? `<span class="quest-reward-item quest-reward-item--gold">+${rewards.gold} Gold</span>` : ""}
-          ${rewards.rating ? `<span class="quest-reward-item">+${rewards.rating} Rating</span>` : ""}
+        <div class="rewards-list">
+          ${rewards.xp ? `<span class="reward-item">+${rewards.xp} XP</span>` : ""}
+          ${rewards.nv ? `<span class="reward-item reward-nv">+${rewards.nv} NV</span>` : ""}
         </div>
       </div>
     `
@@ -569,7 +624,7 @@ export default class extends Controller {
   // === COMBAT ACTIONS ===
 
   submitTurn(event) {
-    if (this.spectatingValue) return
+    if (this.readOnlyValue) return
 
     const btn = event.currentTarget
     const targetId = this.getFirstEnemyId()
@@ -666,7 +721,7 @@ export default class extends Controller {
   }
 
   enableTurnComposer() {
-    if (!this.hasActionButtonsTarget || this.spectatingValue) return
+    if (!this.hasActionButtonsTarget || this.readOnlyValue) return
 
     this.actionButtonsTarget.querySelectorAll("button, select").forEach(el => {
       el.disabled = false
@@ -681,9 +736,6 @@ export default class extends Controller {
     )
 
     if (enemy) return enemy.dataset.characterId
-
-    const fallback = Array.from(fighters).find(p => p.dataset.characterId)
-    if (fallback) return fallback.dataset.characterId
 
     return null
   }

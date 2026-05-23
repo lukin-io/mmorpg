@@ -2,11 +2,11 @@
 
 require "rails_helper"
 
-RSpec.describe "Onboarding", type: :system, js: true do
+RSpec.describe "Onboarding", type: :system do
   describe "success cases" do
     it "signs in via Devise UI and lands on the world page" do
       user = create(:user, password: "Password123!", password_confirmation: "Password123!")
-      zone = create(:zone, name: "Starter Plains", biome: "plains", width: 10, height: 10)
+      zone = create(:zone, name: "Окрестность Форпоста", location_type: "outdoor", width: 10, height: 10)
       character = create(:character, user: user)
       create(:character_position, character: character, zone: zone, x: 5, y: 5)
 
@@ -14,10 +14,10 @@ RSpec.describe "Onboarding", type: :system, js: true do
 
       fill_in "Email", with: user.email
       fill_in "Password", with: "Password123!"
-      click_button "Enter the Realm"
+      click_button "Войти"
 
       expect(page).to have_css(".nl-map-container")
-      expect(page).to have_content("Starter Plains")
+      expect(page).to have_content("Окрестность Форпоста")
     end
   end
 
@@ -28,25 +28,26 @@ RSpec.describe "Onboarding", type: :system, js: true do
       visit new_user_session_path
       fill_in "Email", with: user.email
       fill_in "Password", with: "WrongPassword!"
-      click_button "Enter the Realm"
+      click_button "Войти"
 
       expect(page).to have_content(I18n.t("devise.failure.invalid", authentication_keys: "email"))
     end
   end
 
   describe "null/edge cases" do
-    it "boots a character with no position by auto-creating a starter position" do
+    it "boots a character with no position from the configured starter spawn" do
       user = create(:user, password: "Password123!", password_confirmation: "Password123!")
-      create(:zone, name: "Starter Plains", biome: "plains", width: 10, height: 10)
+      zone = create(:zone, name: "Форпост", location_type: "city", width: 10, height: 10)
+      create(:spawn_point, zone: zone, x: 5, y: 5, default_entry: true)
       create(:character, user: user)
 
       visit new_user_session_path
       fill_in "Email", with: user.email
       fill_in "Password", with: "Password123!"
-      click_button "Enter the Realm"
+      click_button "Войти"
 
-      expect(page).to have_css(".nl-map-container")
-      expect(page).to have_content("Starter Plains")
+      expect(page).to have_css(".city-view-container")
+      expect(page).to have_content("Форпост")
     end
 
     it "shows validation errors when signing up with blank fields" do
@@ -55,7 +56,7 @@ RSpec.describe "Onboarding", type: :system, js: true do
       fill_in "Email", with: ""
       fill_in "Password", with: ""
       fill_in "Password confirmation", with: ""
-      click_button "Create Account"
+      click_button "Создать аккаунт"
 
       expect(page).to have_content("can't be blank")
     end
@@ -68,7 +69,7 @@ RSpec.describe "Onboarding", type: :system, js: true do
       visit new_user_session_path
       fill_in "Email", with: user.email
       fill_in "Password", with: "Password123!"
-      click_button "Enter the Realm"
+      click_button "Войти"
 
       expect(page).to have_content("confirm your email address")
     end

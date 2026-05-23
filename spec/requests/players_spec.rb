@@ -5,10 +5,10 @@ RSpec.describe "Players", type: :request do
 
   describe "GET /player/:name" do
     it "renders a Neverlands-style public character page by character name" do
-      zone = create(:zone, name: "Castle Gate")
-      character = create(:character, user: user, name: "max_kerby", avatar: "dwarven")
+      zone = create(:zone, name: "Окрестность Форпоста")
+      character = create(:character, user: user, name: "max_kerby")
       create(:character_position, character: character, zone: zone, x: 7, y: 9)
-      sword = create(:item_template, name: "Training Sword", slot: "main_hand", rarity: "common")
+      sword = create(:item_template, name: "Нож", slot: "main_hand")
       create(:inventory_item,
         inventory: character.inventory,
         item_template: sword,
@@ -19,20 +19,20 @@ RSpec.describe "Players", type: :request do
 
       expect(response).to have_http_status(:ok)
       expect(response.body).to include("max_kerby [#{character.level}]")
-      expect(response.body).to include("Castle Gate [7, 9]")
-      expect(response.body).to include("avatars/dwarven")
-      expect(response.body).to include("Training Sword")
+      expect(response.body).to include("Окрестность Форпоста [7, 9]")
+      expect(response.body).to include("avatar--fallback")
+      expect(response.body).to include("Нож")
       expect(response.body).not_to include("Primary Stats")
       expect(response.body).not_to include("Combat Parameters")
       expect(response.body).not_to include(user.email)
     end
 
-    it "returns location, avatar, equipment, and public player path in JSON" do
-      zone = create(:zone, name: "Trade Square")
-      character = create(:character, user: user, name: "max_kerby", avatar: "pathfinder")
+    it "returns location, equipment, and public player path in JSON" do
+      zone = create(:zone, name: "Форпост")
+      character = create(:character, user: user, name: "max_kerby")
       create(:character_position, character: character, zone: zone, x: 3, y: 4)
 
-      sword = create(:item_template, name: "Training Sword", slot: "main_hand", rarity: "common")
+      sword = create(:item_template, name: "Нож", slot: "main_hand")
       create(:inventory_item,
         inventory: character.inventory,
         item_template: sword,
@@ -48,11 +48,29 @@ RSpec.describe "Players", type: :request do
 
       expect(body["public_player_path"]).to eq("/player/max_kerby")
       expect(body).not_to have_key("profile_name")
-      expect(character_payload["avatar_path"]).to eq("avatars/pathfinder.png")
-      expect(character_payload.dig("location", "label")).to eq("Trade Square [3, 4]")
+      expect(character_payload).not_to have_key("avatar_path")
+      expect(character_payload).not_to have_key("avatar")
+      expect(character_payload.dig("location", "label")).to eq("Форпост [3, 4]")
       expect(character_payload).not_to have_key("stats")
-      expect(character_payload.dig("equipment", "main_hand", "name")).to eq("Training Sword")
+      expect(character_payload.dig("equipment", "main_hand", "name")).to eq("Нож")
       expect(body).not_to have_key("email")
+    end
+
+    it "shows an unfinished arena fight link in the public location" do
+      zone = create(:zone, name: "Форпост")
+      room = create(:arena_room, name: "Тренировочный Зал", slug: "training")
+      character = create(:character, user: user, name: "max_kerby")
+      create(:character_position, character: character, zone: zone, x: 3, y: 4)
+      match = create(:arena_match, :live, arena_room: room)
+      create(:arena_participation, arena_match: match, character: character, user: user, team: "a")
+
+      get player_path(name: character.name)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("Форпост")
+      expect(response.body).to include("in combat")
+      expect(response.body).to include("Тренировочный Зал")
+      expect(response.body).to include(public_fight_log_path(match))
     end
 
     it "does not resolve account profile names without a character" do

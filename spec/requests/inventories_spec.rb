@@ -24,25 +24,25 @@ RSpec.describe "Inventories", type: :request do
     it "displays inventory slots and weight" do
       get inventory_path
 
-      expect(response.body).to include("Inventory")
+      expect(response.body).to include("Инвентарь")
       expect(response.body).to include("Bag")
     end
 
     context "with items in inventory" do
-      let(:item_template) { create(:item_template, name: "Test Sword", item_type: "equipment", slot: "main_hand") }
+      let(:item_template) { create(:item_template, name: "Перочинный Нож", item_type: "equipment", slot: "main_hand") }
       let!(:inventory_item) { create(:inventory_item, inventory: inventory, item_template: item_template) }
 
       it "displays items in the grid" do
         get inventory_path
 
-        expect(response.body).to include("Test Sword")
+        expect(response.body).to include("Перочинный Нож")
       end
     end
   end
 
   describe "POST /inventory/equip" do
     let(:item_template) do
-      create(:item_template, name: "Iron Sword", item_type: "equipment", slot: "main_hand",
+      create(:item_template, name: "Перочинный Нож", item_type: "equipment", slot: "main_hand",
         stat_modifiers: {attack: 10})
     end
     let!(:inventory_item) do
@@ -78,7 +78,7 @@ RSpec.describe "Inventories", type: :request do
 
   describe "POST /inventory/unequip" do
     let(:item_template) do
-      create(:item_template, name: "Iron Sword", item_type: "equipment", slot: "main_hand")
+      create(:item_template, name: "Перочинный Нож", item_type: "equipment", slot: "main_hand")
     end
     let!(:inventory_item) do
       create(:inventory_item, inventory: inventory, item_template: item_template,
@@ -95,7 +95,7 @@ RSpec.describe "Inventories", type: :request do
 
   describe "POST /inventory/use" do
     let(:item_template) do
-      create(:item_template, name: "Health Potion", item_type: "consumable", slot: "none",
+      create(:item_template, name: "Зелье жизни", item_type: "consumable", slot: "none",
         stat_modifiers: {"heal_hp" => 50}, stack_limit: 99)
     end
     let!(:inventory_item) do
@@ -133,8 +133,8 @@ RSpec.describe "Inventories", type: :request do
   end
 
   describe "POST /inventory/sort" do
-    let(:sword_template) { create(:item_template, name: "Sword", item_type: "equipment", slot: "main_hand") }
-    let(:potion_template) { create(:item_template, name: "Potion", item_type: "consumable", slot: "none", stat_modifiers: {"heal_hp" => 10}) }
+    let(:sword_template) { create(:item_template, name: "Перочинный Нож", item_type: "equipment", slot: "main_hand") }
+    let(:potion_template) { create(:item_template, name: "Зелье жизни", item_type: "consumable", slot: "none", stat_modifiers: {"heal_hp" => 10}) }
     let!(:item1) { create(:inventory_item, inventory: inventory, item_template: potion_template) }
     let!(:item2) { create(:inventory_item, inventory: inventory, item_template: sword_template) }
 
@@ -144,15 +144,15 @@ RSpec.describe "Inventories", type: :request do
       expect(response).to redirect_to(inventory_path)
     end
 
-    it "sorts inventory by rarity" do
-      post sort_inventory_path, params: {sort_type: "rarity"}
+    it "sorts inventory by name" do
+      post sort_inventory_path, params: {sort_type: "name"}
 
       expect(response).to redirect_to(inventory_path)
     end
   end
 
   describe "DELETE /inventory/items/:id" do
-    let(:item_template) { create(:item_template, name: "Junk Item") }
+    let(:item_template) { create(:item_template, :material, name: "Крысиный хвост") }
     let!(:inventory_item) { create(:inventory_item, inventory: inventory, item_template: item_template) }
 
     it "removes the item from inventory" do
@@ -173,8 +173,8 @@ RSpec.describe "Inventories", type: :request do
       expect(response).to redirect_to(inventory_path)
     end
 
-    it "does not remove quest items" do
-      item_template.update!(item_type: "quest", slot: "none", stat_modifiers: {})
+    it "does not remove protected items" do
+      inventory_item.update!(properties: {"protected" => true})
 
       expect {
         delete inventory_item_path(inventory_item)

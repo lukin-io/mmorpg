@@ -11,12 +11,9 @@ RSpec.describe "ArenaMatches Auto-End on View", type: :request do
   let(:character1) { create(:character, user: user1, name: "Fighter1", level: 10, current_hp: 100, max_hp: 100) }
   let(:character2) { create(:character, user: user2, name: "Fighter2", level: 10, current_hp: 100, max_hp: 100) }
   let(:arena_room) { create(:arena_room, name: "Test Arena", level_min: 1, level_max: 100, active: true, max_concurrent_matches: 5) }
-  let(:arena_season) { create(:arena_season, status: :live) }
-
   let!(:match) do
     create(:arena_match,
       arena_room: arena_room,
-      arena_season: arena_season,
       status: :live,
       match_type: :duel,
       turn_timeout_seconds: 300,
@@ -48,7 +45,7 @@ RSpec.describe "ArenaMatches Auto-End on View", type: :request do
 
       it "displays live status" do
         get arena_match_path(match)
-        expect(response.body).to include("Live")
+        expect(response.body).to include("Идет")
       end
     end
 
@@ -70,12 +67,12 @@ RSpec.describe "ArenaMatches Auto-End on View", type: :request do
 
       it "displays completed status" do
         get arena_match_path(match)
-        expect(response.body).to include("Completed")
+        expect(response.body).to include("Завершен")
       end
 
       it "displays victory overlay for winner" do
         get arena_match_path(match)
-        expect(response.body).to include("VICTORY")
+        expect(response.body).to include("Победа")
       end
     end
 
@@ -97,7 +94,7 @@ RSpec.describe "ArenaMatches Auto-End on View", type: :request do
 
       it "displays defeat overlay for loser" do
         get arena_match_path(match)
-        expect(response.body).to include("DEFEAT")
+        expect(response.body).to include("Поражение")
       end
     end
 
@@ -120,7 +117,7 @@ RSpec.describe "ArenaMatches Auto-End on View", type: :request do
       it "displays completed status after timeout" do
         travel_to(match.started_at + 15.minutes) do
           get arena_match_path(match)
-          expect(response.body).to include("Completed")
+          expect(response.body).to include("Завершен")
         end
       end
     end
@@ -142,18 +139,18 @@ RSpec.describe "ArenaMatches Auto-End on View", type: :request do
       end
     end
 
-    context "when viewing as spectator" do
-      let(:spectator_user) { create(:user) }
-      let(:spectator_character) { create(:character, user: spectator_user, name: "Spectator", level: 5) }
+    context "when viewing from a public fight link" do
+      let(:viewer_user) { create(:user) }
+      let(:viewer_character) { create(:character, user: viewer_user, name: "Viewer", level: 5) }
 
       before do
-        create(:character_position, character: spectator_character)
-        sign_in spectator_user, scope: :user
-        allow_any_instance_of(ApplicationController).to receive(:current_character).and_return(spectator_character)
+        create(:character_position, character: viewer_character)
+        sign_in viewer_user, scope: :user
+        allow_any_instance_of(ApplicationController).to receive(:current_character).and_return(viewer_character)
         character2.update!(current_hp: 0)
       end
 
-      it "auto-ends the match even for spectators" do
+      it "auto-ends the match from a public fight-link view" do
         expect {
           get arena_match_path(match)
         }.to change { match.reload.status }.from("live").to("completed")
@@ -161,7 +158,7 @@ RSpec.describe "ArenaMatches Auto-End on View", type: :request do
 
       it "displays match ended instead of victory/defeat" do
         get arena_match_path(match)
-        expect(response.body).to include("MATCH ENDED")
+        expect(response.body).to include("Бой завершен")
       end
     end
   end

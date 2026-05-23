@@ -5,20 +5,20 @@ require "rails_helper"
 RSpec.describe Game::World::CityHotspotService do
   let(:user) { create(:user) }
   let(:character) { create(:character, user: user, level: 10) }
-  let(:city_zone) { create(:zone, name: "Test City", biome: "city", width: 20, height: 20) }
-  let(:destination_zone) { create(:zone, name: "Destination", biome: "plains", width: 20, height: 20) }
+  let(:city_zone) { create(:zone, name: "Test City", location_type: "city", width: 20, height: 20) }
+  let(:destination_zone) { create(:zone, name: "Destination", location_type: "outdoor", width: 20, height: 20) }
   let!(:spawn_point) { create(:spawn_point, zone: destination_zone, x: 5, y: 5, default_entry: true) }
   let!(:position) { create(:character_position, character: character, zone: city_zone, x: 5, y: 5) }
 
   subject { described_class.new(character: character, zone: city_zone) }
 
   describe "#city_zone?" do
-    it "returns true for city biome" do
+    it "returns true for city location type" do
       expect(subject.city_zone?).to be true
     end
 
-    it "returns false for non-city biome" do
-      plains_zone = create(:zone, biome: "plains")
+    it "returns false for outdoor location type" do
+      plains_zone = create(:zone, location_type: "outdoor")
       service = described_class.new(character: character, zone: plains_zone)
       expect(service.city_zone?).to be false
     end
@@ -54,7 +54,7 @@ RSpec.describe Game::World::CityHotspotService do
     end
 
     it "returns empty array for non-city zone" do
-      plains_zone = create(:zone, biome: "plains")
+      plains_zone = create(:zone, location_type: "outdoor")
       service = described_class.new(character: character, zone: plains_zone)
       expect(service.hotspots_for_display).to eq([])
     end
@@ -141,7 +141,7 @@ RSpec.describe Game::World::CityHotspotService do
       it "returns failure result" do
         result = subject.interact!(99999)
         expect(result.success).to be false
-        expect(result.message).to include("not found")
+        expect(result.message).to include("не найдена")
       end
     end
 
@@ -156,7 +156,7 @@ RSpec.describe Game::World::CityHotspotService do
       it "returns failure result" do
         result = subject.interact!(high_level_hotspot.id)
         expect(result.success).to be false
-        expect(result.message).to include("level 50")
+        expect(result.message).to include("уровень 50")
       end
     end
 
@@ -170,7 +170,7 @@ RSpec.describe Game::World::CityHotspotService do
       it "returns failure result" do
         result = subject.interact!(inactive_hotspot.id)
         expect(result.success).to be false
-        expect(result.message).to include("unavailable")
+        expect(result.message).to include("недоступна")
       end
     end
 
@@ -187,7 +187,7 @@ RSpec.describe Game::World::CityHotspotService do
       it "returns failure result" do
         result = subject.interact!(broken_exit.id)
         expect(result.success).to be false
-        expect(result.message).to include("nowhere")
+        expect(result.message).to include("не настроен")
       end
     end
 
@@ -207,85 +207,27 @@ RSpec.describe Game::World::CityHotspotService do
         character.reload
         result = subject.interact!(exit_hotspot.id)
         expect(result.success).to be false
-        expect(result.message).to include("position")
+        expect(result.message).to include("позиция")
       end
     end
 
-    context "with decoration hotspot (action_type: none)" do
-      let!(:decoration) do
+    context "with documented pending shop feature" do
+      let!(:shop_hotspot) do
         create(:city_hotspot,
           zone: city_zone,
-          action_type: "none",
-          hotspot_type: "decoration",
-          required_level: 1,
-          active: true)
-      end
-
-      it "returns failure result" do
-        result = subject.interact!(decoration.id)
-        expect(result.success).to be false
-        expect(result.message).to include("cannot interact")
-      end
-    end
-
-    context "with unimplemented feature (housing)" do
-      let!(:housing_hotspot) do
-        create(:city_hotspot,
-          zone: city_zone,
-          key: "housing",
-          name: "Housing District",
-          hotspot_type: "feature",
+          key: "shop",
+          name: "Лавка",
+          hotspot_type: "building",
           action_type: "open_feature",
-          action_params: {"feature" => "housing"},
+          action_params: {"feature" => "shop"},
           required_level: 1,
           active: true)
       end
 
-      it "returns failure with 'coming soon' message" do
-        result = subject.interact!(housing_hotspot.id)
+      it "returns failure until the Neverlands shop is implemented" do
+        result = subject.interact!(shop_hotspot.id)
         expect(result.success).to be false
-        expect(result.message).to include("coming soon")
-        expect(result.redirect_url).to be_nil
-      end
-    end
-
-    context "with unimplemented feature (clinic)" do
-      let!(:clinic_hotspot) do
-        create(:city_hotspot,
-          zone: city_zone,
-          key: "clinic",
-          name: "Clinic",
-          hotspot_type: "feature",
-          action_type: "open_feature",
-          action_params: {"feature" => "clinic"},
-          required_level: 1,
-          active: true)
-      end
-
-      it "returns failure with 'coming soon' message" do
-        result = subject.interact!(clinic_hotspot.id)
-        expect(result.success).to be false
-        expect(result.message).to include("coming soon")
-      end
-    end
-
-    context "with unimplemented feature (healing)" do
-      let!(:healing_hotspot) do
-        create(:city_hotspot,
-          zone: city_zone,
-          key: "healing",
-          name: "Healing",
-          hotspot_type: "feature",
-          action_type: "open_feature",
-          action_params: {"feature" => "healing"},
-          required_level: 1,
-          active: true)
-      end
-
-      it "returns failure with 'coming soon' message" do
-        result = subject.interact!(healing_hotspot.id)
-        expect(result.success).to be false
-        expect(result.message).to include("coming soon")
+        expect(result.message).to include("ожидает реализации")
       end
     end
   end

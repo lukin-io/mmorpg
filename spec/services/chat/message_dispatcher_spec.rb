@@ -12,16 +12,22 @@ RSpec.describe Chat::MessageDispatcher do
       expect(result).not_to be_command_executed
     end
 
-    it "handles GM mute commands" do
+    it "blocks users silenced in chat" do
       channel = create(:chat_channel, channel_type: :global)
-      gm = create(:user)
-      gm.add_role(:gm)
-      target = create(:user)
+      user = create(:user, chat_muted_until: 1.hour.from_now)
 
-      result = described_class.new(user: gm, channel:, body: "/gm mute #{target.id} 5 test").call
+      expect do
+        described_class.new(user:, channel:, body: "Hello world").call
+      end.to raise_error(Chat::Errors::MutedError)
+    end
 
-      expect(result).to be_command_executed
-      expect(ChatModerationAction.muting?(user: target, channel: channel)).to be(true)
+    it "blocks player posts to system channels" do
+      channel = create(:chat_channel, channel_type: :system)
+      user = create(:user)
+
+      expect do
+        described_class.new(user:, channel:, body: "Hello world").call
+      end.to raise_error(Chat::Errors::MutedError)
     end
   end
 end

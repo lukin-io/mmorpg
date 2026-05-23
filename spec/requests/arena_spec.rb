@@ -29,7 +29,7 @@ RSpec.describe "Arena", type: :request do
 
     def enter_arena_from_city!(character)
       zone = character.position.zone
-      zone.update!(biome: "city")
+      zone.update!(location_type: "city")
       hotspot = create(:city_hotspot, :arena, zone: zone, active: true, required_level: 1)
 
       post interact_hotspot_world_path, params: {hotspot_id: hotspot.id}
@@ -61,15 +61,15 @@ RSpec.describe "Arena", type: :request do
       it "shows arena rooms section" do
         get arena_index_path
 
-        expect(response.body).to include("Show building layout")
+        expect(response.body).to include("Схема залов")
       end
 
       it "shows fight type tabs" do
         get arena_index_path
 
-        expect(response.body).to include("Duels")
-        expect(response.body).to include("Group Fights")
-        expect(response.body).to include("Sacrifice")
+        expect(response.body).to include("Дуэли")
+        expect(response.body).to include("Групповые")
+        expect(response.body).to include("Жертвенные")
       end
     end
 
@@ -81,7 +81,7 @@ RSpec.describe "Arena", type: :request do
           name: "Test Arena Room",
           level_min: 1,
           level_max: 100,
-          room_type: :challenge,
+          room_type: :trial,
           active: true)
       end
 
@@ -89,13 +89,13 @@ RSpec.describe "Arena", type: :request do
         get arena_index_path
 
         # Rooms are displayed by room type badge, not name
-        expect(response.body).to include("Challenge Arena").or include("arena-room")
+        expect(response.body).to include("Trial").or include("arena-room")
       end
 
       it "shows enter button for accessible rooms" do
         get arena_index_path
 
-        expect(response.body).to include("Enter")
+        expect(response.body).to include("Войти")
       end
 
       it "includes room level range" do
@@ -119,13 +119,13 @@ RSpec.describe "Arena", type: :request do
       it "displays current application status" do
         get arena_index_path
 
-        expect(response.body).to include("Your application")
+        expect(response.body).to include("Ваша заявка")
       end
 
       it "shows cancel button for active application" do
         get arena_index_path
 
-        expect(response.body).to include("Cancel application")
+        expect(response.body).to include("Снять заявку")
       end
     end
 
@@ -153,7 +153,7 @@ RSpec.describe "Arena", type: :request do
       it "shows room as unavailable when level too low" do
         get arena_index_path
 
-        expect(response.body).to include("Unavailable").or include("level mismatch")
+        expect(response.body).to include("Недоступно").or include("неподходящий уровень")
       end
     end
   end
@@ -186,7 +186,7 @@ RSpec.describe "Arena", type: :request do
 
     def enter_arena_from_city!(character)
       zone = character.position.zone
-      zone.update!(biome: "city")
+      zone.update!(location_type: "city")
       hotspot = create(:city_hotspot, :arena, zone: zone, active: true, required_level: 1)
 
       post interact_hotspot_world_path, params: {hotspot_id: hotspot.id}
@@ -224,7 +224,7 @@ RSpec.describe "Arena", type: :request do
 
   describe "navigation from city hotspot" do
     let(:user) { create(:user) }
-    let(:city_zone) { create(:zone, biome: "city") }
+    let(:city_zone) { create(:zone, location_type: "city") }
     let(:character) { create(:character, user: user, level: 10) }
     let!(:position) { create(:character_position, character: character, zone: city_zone) }
     let!(:arena_hotspot) do

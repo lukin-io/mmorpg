@@ -3,7 +3,7 @@
 require "rails_helper"
 
 RSpec.describe "world/_map.html.erb", type: :view do
-  let(:zone) { create(:zone, name: "Test Zone", biome: "forest", width: 20, height: 20) }
+  let(:zone) { create(:zone, name: "Test Zone", location_type: "outdoor", width: 20, height: 20) }
   let(:character) { create(:character) }
   let(:position) { create(:character_position, character: character, zone: zone, x: 10, y: 10) }
   let(:movement_destinations) do
@@ -22,7 +22,7 @@ RSpec.describe "world/_map.html.erb", type: :view do
         OpenStruct.new(
           x: x,
           y: y,
-          terrain_type: "forest",
+          terrain_type: "outdoor",
           walkable: true,
           metadata: {}
         )
@@ -172,7 +172,7 @@ RSpec.describe "world/_map.html.erb", type: :view do
         tile_data: {}
       }
 
-      expect(rendered).to have_css(".nl-tile-bg--forest")
+      expect(rendered).to have_css(".nl-tile-bg--outdoor")
     end
   end
 
@@ -483,9 +483,9 @@ RSpec.describe "world/_map.html.erb", type: :view do
         tiles[1][1] = OpenStruct.new(
           x: 9,
           y: 9,
-          terrain_type: "forest",
+          terrain_type: "outdoor",
           walkable: true,
-          metadata: {"npc" => "Goblin Scout"}
+          metadata: {"npc" => "Plague Rat"}
         )
         tiles
       end
@@ -509,93 +509,7 @@ RSpec.describe "world/_map.html.erb", type: :view do
           tile_data: {}
         }
 
-        expect(rendered).to include("Goblin Scout")
-      end
-    end
-
-    context "with resource on a tile" do
-      let(:nearby_tiles_with_resource) do
-        tiles = nearby_tiles
-        tiles[2][2] = OpenStruct.new(
-          x: 10,
-          y: 10,
-          terrain_type: "forest",
-          walkable: true,
-          metadata: {"resource" => "Oak Wood", "resource_type" => "wood"}
-        )
-        tiles
-      end
-
-      it "renders resource marker" do
-        render partial: "world/map", locals: {
-          position: position,
-          nearby_tiles: nearby_tiles_with_resource,
-          zone: zone,
-          tile_data: {}
-        }
-
-        expect(rendered).to have_css(".nl-tile-resource")
-      end
-
-      it "displays wood icon for wood resource" do
-        render partial: "world/map", locals: {
-          position: position,
-          nearby_tiles: nearby_tiles_with_resource,
-          zone: zone,
-          tile_data: {}
-        }
-
-        expect(rendered).to include("🪵")
-      end
-    end
-
-    context "with herb resource" do
-      let(:nearby_tiles_with_herb) do
-        tiles = nearby_tiles
-        tiles[2][2] = OpenStruct.new(
-          x: 10,
-          y: 10,
-          terrain_type: "forest",
-          walkable: true,
-          metadata: {"resource" => "Moonleaf", "resource_type" => "herb"}
-        )
-        tiles
-      end
-
-      it "displays herb icon" do
-        render partial: "world/map", locals: {
-          position: position,
-          nearby_tiles: nearby_tiles_with_herb,
-          zone: zone,
-          tile_data: {}
-        }
-
-        expect(rendered).to include("🌿")
-      end
-    end
-
-    context "with ore resource" do
-      let(:nearby_tiles_with_ore) do
-        tiles = nearby_tiles
-        tiles[2][2] = OpenStruct.new(
-          x: 10,
-          y: 10,
-          terrain_type: "mountain",
-          walkable: true,
-          metadata: {"resource" => "Iron Ore", "resource_type" => "ore"}
-        )
-        tiles
-      end
-
-      it "displays ore icon" do
-        render partial: "world/map", locals: {
-          position: position,
-          nearby_tiles: nearby_tiles_with_ore,
-          zone: zone,
-          tile_data: {}
-        }
-
-        expect(rendered).to include("⛏️")
+        expect(rendered).to include("Plague Rat")
       end
     end
   end
@@ -604,19 +518,19 @@ RSpec.describe "world/_map.html.erb", type: :view do
     let(:mixed_terrain_tiles) do
       [
         [
-          OpenStruct.new(x: 8, y: 8, terrain_type: "plains", walkable: true, metadata: {}),
-          OpenStruct.new(x: 9, y: 8, terrain_type: "forest", walkable: true, metadata: {}),
-          OpenStruct.new(x: 10, y: 8, terrain_type: "mountain", walkable: false, metadata: {})
+          OpenStruct.new(x: 8, y: 8, terrain_type: "outdoor", walkable: true, metadata: {}),
+          OpenStruct.new(x: 9, y: 8, terrain_type: "outdoor", walkable: true, metadata: {}),
+          OpenStruct.new(x: 10, y: 8, terrain_type: "city", walkable: false, metadata: {})
         ],
         [
-          OpenStruct.new(x: 8, y: 9, terrain_type: "river", walkable: false, metadata: {}),
+          OpenStruct.new(x: 8, y: 9, terrain_type: "outdoor", walkable: false, metadata: {}),
           OpenStruct.new(x: 9, y: 9, terrain_type: "city", walkable: true, metadata: {}),
-          OpenStruct.new(x: 10, y: 9, terrain_type: "desert", walkable: true, metadata: {})
+          OpenStruct.new(x: 10, y: 9, terrain_type: "city", walkable: true, metadata: {})
         ]
       ]
     end
 
-    it "renders different terrain classes" do
+    it "renders only source-backed location classes" do
       render partial: "world/map", locals: {
         position: position,
         nearby_tiles: mixed_terrain_tiles,
@@ -624,12 +538,10 @@ RSpec.describe "world/_map.html.erb", type: :view do
         tile_data: {}
       }
 
-      expect(rendered).to have_css(".nl-tile-bg--plains")
-      expect(rendered).to have_css(".nl-tile-bg--forest")
-      expect(rendered).to have_css(".nl-tile-bg--mountain")
-      expect(rendered).to have_css(".nl-tile-bg--river")
+      expect(rendered).to have_css(".nl-tile-bg--outdoor")
       expect(rendered).to have_css(".nl-tile-bg--city")
-      expect(rendered).to have_css(".nl-tile-bg--desert")
+      expect(rendered).not_to have_css(".nl-tile-bg--road")
+      expect(rendered).not_to have_css(".nl-tile-bg--plaza")
     end
   end
 
@@ -641,7 +553,7 @@ RSpec.describe "world/_map.html.erb", type: :view do
           OpenStruct.new(
             x: x,
             y: y,
-            terrain_type: walkable ? "forest" : "mountain",
+            terrain_type: "outdoor",
             walkable: walkable,
             metadata: walkable ? {} : {"blocked" => true}
           )

@@ -10,16 +10,16 @@ module ArenaEntryGate
     return if session[:arena_city_character_id].to_i == current_character&.id.to_i
 
     respond_to do |format|
-      format.html { redirect_to world_path, alert: "Enter the arena through the city building." }
-      format.turbo_stream { redirect_to world_path, status: :see_other, alert: "Enter the arena through the city building." }
+      format.html { redirect_to world_path, alert: "Войдите на арену через городское здание." }
+      format.turbo_stream { redirect_to world_path, status: :see_other, alert: "Войдите на арену через городское здание." }
       format.json do
         render json: {
           success: false,
           error: "arena_city_entry_required",
-          errors: ["Enter the arena through the city building."]
+          errors: ["Войдите на арену через городское здание."]
         }, status: :forbidden
       end
-      format.any { redirect_to world_path, alert: "Enter the arena through the city building." }
+      format.any { redirect_to world_path, alert: "Войдите на арену через городское здание." }
     end
   end
 

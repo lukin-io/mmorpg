@@ -21,7 +21,7 @@ module Game
 
       def enqueue(direction:)
         position = respawn_service.ensure_position!
-        offsets = Game::Movement::TurnProcessor::OFFSETS
+        offsets = Game::Movement::Directions::OFFSETS
         offset = offsets.fetch(direction.to_sym) { raise ArgumentError, "Unknown direction #{direction}" }
 
         target_x = position.x + offset.first
@@ -30,11 +30,10 @@ module Game
         tile_provider = Game::Movement::TileProvider.new(zone: position.zone)
         validator = Game::Movement::MovementValidator.new(tile_provider)
         unless validator.valid?(target_x, target_y)
-          raise Game::Movement::TurnProcessor::MovementViolationError, "Tile is not passable"
+          raise Game::Movement::MovementViolationError, "Tile is not passable"
         end
         tile_metadata = tile_provider.metadata_at(target_x, target_y) || {}
         terrain_type = tile_provider.terrain_type_at(target_x, target_y)
-        biome = tile_provider.biome_at(target_x, target_y)
 
         command = MovementCommand.create!(
           character:,
@@ -54,7 +53,7 @@ module Game
             direction: direction.to_sym,
             tile_metadata:
           ),
-          metadata: build_metadata(tile_metadata, biome:, terrain_type:)
+          metadata: build_metadata(tile_metadata, terrain_type:)
         )
 
         Game::MovementCommandProcessorJob.perform_later(command.id)
@@ -63,7 +62,7 @@ module Game
 
       def process(command_or_id)
         command = load_command(command_or_id)
-        return command if command.moving? || command.completed? || command.processed? || command.failed?
+        return command if command.moving? || command.completed? || command.failed?
 
         begin
           result = Game::Movement::AcceptMove.new(
@@ -77,7 +76,7 @@ module Game
 
           result.command.update!(latency_ms: compute_latency(result.command))
           result.command.reload
-        rescue Game::Movement::TurnProcessor::MovementViolationError => e
+        rescue Game::Movement::MovementViolationError => e
           mark_failed(command, e.message)
           nil
         rescue => e
@@ -94,11 +93,9 @@ module Game
         command_or_id.is_a?(MovementCommand) ? command_or_id : MovementCommand.lock.find(command_or_id)
       end
 
-      def build_metadata(tile_metadata, biome:, terrain_type:)
+      def build_metadata(tile_metadata, terrain_type:)
         {
-          "terrain_modifier" => tile_metadata["movement_modifier"],
-          "terrain_type" => terrain_type || tile_metadata["terrain_type"],
-          "biome" => biome
+          "terrain_type" => terrain_type || tile_metadata["terrain_type"]
         }.compact
       end
 

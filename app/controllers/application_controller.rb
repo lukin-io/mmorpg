@@ -18,16 +18,11 @@ class ApplicationController < ActionController::Base
   protected
 
   def after_sign_in_path_for(resource)
-    return world_path if playable_account?(resource)
-
-    dashboard_path
+    resource.ensure_playable_character! if resource.respond_to?(:ensure_playable_character!)
+    world_path
   end
 
   private
-
-  def playable_account?(resource)
-    resource.respond_to?(:characters) && resource.characters.exists?
-  end
 
   def ensure_device_identifier
     current_device_id if user_signed_in?
@@ -40,12 +35,11 @@ class ApplicationController < ActionController::Base
   def user_not_authorized
     respond_to do |format|
       format.html do
-        safe_fallback_path = respond_to?(:dashboard_path) ? dashboard_path : root_path
         redirect_target = request.referer.presence
 
         redirect_target = nil if redirect_target == request.url
 
-        redirect_to(redirect_target || safe_fallback_path, alert: "You are not authorized to perform this action.")
+        redirect_to(redirect_target || root_path, alert: "Нет доступа к этому действию.")
       end
       format.turbo_stream { head :forbidden }
       format.json { render json: {error: "forbidden"}, status: :forbidden }

@@ -1,18 +1,15 @@
 FactoryBot.define do
   factory :character do
     association :user
-    sequence(:name) { |n| "Hero#{n}" }
+    sequence(:name) { |n| "player_#{n}" }
     level { 1 }
     experience { 0 }
     stat_points_available { 0 }
-    skill_points_available { 0 }
     combat_skill_points { 0 }
     peace_skill_points { 0 }
     allocated_stats { {} }
-    reputation { 0 }
-    faction_alignment { Character::ALIGNMENTS[:neutral] }
-    alignment_score { 0 }
-    resource_pools { {"stamina" => 100} }
+    alignment { Character::ALIGNMENTS[:none] }
+    fatigue_percent { 0 }
 
     after(:create) do |character|
       create(:inventory, character:) unless character.inventory

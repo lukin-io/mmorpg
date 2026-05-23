@@ -97,6 +97,23 @@ RSpec.describe Arena::CombatProcessor do
         expect(processor.broadcaster).to have_received(:broadcast_combat_action)
           .with(character1, anything, anything, kind_of(Integer), hash_including(:body_part))
       end
+
+      it "persists durable fight log entries" do
+        expect {
+          processor.process_action(
+            character1,
+            :attack,
+            target: character2,
+            attack_type: :simple,
+            body_part: "torso"
+          )
+        }.to change { arena_match.combat_log_entries.count }.by_at_least(1)
+
+        entry = arena_match.combat_log_entries.last
+        expect(entry.arena_match).to eq(arena_match)
+        expect(entry.tags).to include("arena")
+        expect(arena_match.reload.metadata).not_to have_key("combat_log")
+      end
     end
 
     context "with defend action" do
@@ -126,7 +143,7 @@ RSpec.describe Arena::CombatProcessor do
         )
 
         expect(result.success?).to be false
-        expect(result.error).to eq("Match is not active")
+        expect(result.error).to eq("Бой не активен")
       end
     end
 
@@ -145,7 +162,7 @@ RSpec.describe Arena::CombatProcessor do
         )
 
         expect(result.success?).to be false
-        expect(result.error).to eq("Character not in this match")
+        expect(result.error).to eq("Персонаж не участвует в этом бою")
       end
     end
 
@@ -162,7 +179,7 @@ RSpec.describe Arena::CombatProcessor do
         )
 
         expect(result.success?).to be false
-        expect(result.error).to eq("Character is dead")
+        expect(result.error).to eq("Персонаж повержен")
       end
     end
   end
@@ -228,9 +245,24 @@ RSpec.describe Arena::CombatProcessor do
     let(:npc_template) do
       create(:npc_template,
         role: "arena_bot",
-        name: "Captured Bandit",
+        name: "Манекен",
         level: 5,
-        metadata: {"base_damage" => 15, "ai_behavior" => "balanced"})
+        metadata: {
+          "base_damage" => 15,
+          "ai_behavior" => "passive",
+          "loot_table" => [
+            {"item_key" => "wood_chips", "item_name" => "Щепки", "chance" => 1.0, "quantity" => 1}
+          ]
+        })
+    end
+
+    let!(:wood_chips) do
+      create(:item_template,
+        :material,
+        key: "wood_chips",
+        name: "Щепки",
+        weight: 1,
+        stack_limit: 99)
     end
 
     let(:npc_match) do
@@ -241,7 +273,6 @@ RSpec.describe Arena::CombatProcessor do
         started_at: Time.current,
         metadata: {
           "is_npc_fight" => true,
-          "combat_log" => [],
           "combat_profile" => {
             "ap_limit" => 140,
             "physical_attack_cost_seed" => 67,
@@ -301,9 +332,8 @@ RSpec.describe Arena::CombatProcessor do
 
       expect(result).to be_success
       expect(result[:attacks].size).to eq(2)
-      log = npc_match.reload.metadata["combat_log"]
-      damage_entries = log.select { |entry| entry["type"] == "damage" && entry["description"].include?("Captured Bandit attacks") }
-      expect(damage_entries.map { |entry| entry["description"] }.join(" ")).to include("stomach", "legs")
+      damage_entries = npc_match.reload.combat_log_entries.select { |entry| entry.log_type == "damage" && entry.message.include?("Манекен attacks") }
+      expect(damage_entries.map(&:message).join(" ")).to include("stomach", "legs")
     end
 
     it "logs the automatic loot check after an NPC defeat" do
@@ -323,9 +353,17 @@ RSpec.describe Arena::CombatProcessor do
       )
 
       expect(result).to be_success
-      log = npc_match.reload.metadata["combat_log"]
-      expect(log.map { |entry| entry["type"] }).to include("defeat", "loot", "victory")
-      expect(log.find { |entry| entry["type"] == "loot" }["description"]).to include("searched Captured Bandit")
+      log_entries = npc_match.reload.combat_log_entries
+      expect(log_entries.map(&:log_type)).to include("defeat", "loot", "victory")
+      loot_entry = log_entries.find { |entry| entry.log_type == "loot" }
+      expect(loot_entry.message).to include("searched Манекен")
+      expect(loot_entry.message).to include("Вещь «Щепки»")
+      expect(character1.inventory.inventory_items.find_by(item_template: wood_chips).quantity).to eq(1)
+      expect(npc_player_participation.reload.metadata["loot_drops"].last).to include(
+        "item_key" => "wood_chips",
+        "item_name" => "Щепки",
+        "quantity" => 1
+      )
     end
   end
 
@@ -388,7 +426,7 @@ RSpec.describe Arena::CombatProcessor do
         )
 
         expect(result.success?).to be false
-        expect(result.error).to include("Not enough AP")
+        expect(result.error).to include("Недостаточно ОД")
       end
 
       it "processes a Neverlands-style turn package with attack and block" do
@@ -412,6 +450,35 @@ RSpec.describe Arena::CombatProcessor do
         expect(participation1.reload.metadata["current_ap"]).to eq(character1_ap_limit - 75)
         expect(participation1.metadata["pending_turn"]).to be_present
         expect(character1.reload.metadata["blocked_parts"]).to be_blank
+      end
+
+      it "rejects a single plain attack turn without a block or action slot" do
+        result = processor.process_action(
+          character1,
+          :turn,
+          target: character2,
+          attacks: [{action_key: "simple", body_part: "torso"}]
+        )
+
+        expect(result.success?).to be false
+        expect(result.error).to include("valid attack")
+      end
+
+      it "allows a single mana attack such as Spirit Arrow from the captured selector" do
+        allow(processor.broadcaster).to receive(:broadcast_ap_update)
+        allow(processor.broadcaster).to receive(:broadcast_combat_action)
+        allow(processor.broadcaster).to receive(:broadcast_vitals_update)
+        allow(processor.broadcaster).to receive(:broadcast_system_message)
+
+        result = processor.process_action(
+          character1,
+          :turn,
+          target: character2,
+          attacks: [{action_key: "spirit_arrow", body_part: "torso"}]
+        )
+
+        expect(result.success?).to be true
+        expect(result[:waiting]).to be true
       end
 
       it "waits for both players before resolving the committed round" do
@@ -482,7 +549,7 @@ RSpec.describe Arena::CombatProcessor do
         expect(participation1.metadata.dig("pending_turn", "ap_limit")).to eq(140)
       end
 
-      it "validates a captured-profile PvP round and resolves only after both turns arrive" do
+      it "validates a captured-profile live player round and resolves only after both turns arrive" do
         captured_profile = {
           "ap_limit" => 140,
           "physical_attack_cost_seed" => 67,
@@ -525,39 +592,45 @@ RSpec.describe Arena::CombatProcessor do
         expect(second[:resolved]).to be true
         expect(participation1.reload.metadata["current_ap"]).to eq(140)
         expect(participation2.reload.metadata["current_ap"]).to eq(140)
-        expect(arena_match.reload.metadata["combat_log"].map { |entry| entry["type"] }).to include("block")
+        expect(arena_match.reload.combat_log_entries.map(&:log_type)).to include("block")
       end
 
-      it "allows a magic/action slot as the only submitted action" do
+      it "keeps team/player fights in the player turn-commit flow even when an NPC is present" do
+        npc_template = create(:npc_template, name: "Observer Bot", npc_key: "observer_bot")
+        create(:arena_participation,
+          :npc,
+          arena_match: arena_match,
+          npc_template: npc_template,
+          team: "b")
+
+        expect(Arena::NpcCombatAi).not_to receive(:new)
+
+        result = processor.process_action(
+          character1,
+          :turn,
+          target: character2,
+          attacks: [{action_key: "simple", body_part: "torso"}],
+          blocks: [{action_key: "torso_block", body_parts: ["torso"]}]
+        )
+
+        expect(result).to be_success
+        expect(result[:waiting]).to be true
+        expect(participation1.reload.metadata["pending_turn"]).to be_present
+      end
+
+      it "rejects uncaptured magic/action slots" do
         errors = processor.send(
           :validate_turn_actions,
           [],
           [],
-          [{key: "hp_restore"}],
+          [{key: "unknown_action"}],
           actor: character1
         )
 
-        expect(errors).to be_empty
+        expect(errors).to include("Недопустимая магия 1: unknown_action")
       end
 
-      it "applies direct magic damage and tracks arena damage totals" do
-        allow(processor.broadcaster).to receive(:broadcast_vitals_update)
-        allow(processor.broadcaster).to receive(:broadcast_combat_action)
-
-        result = processor.send(
-          :process_turn_skill,
-          character1,
-          {key: "fire_arrow", target_id: character2.id},
-          character2
-        )
-
-        expect(result).to be_success
-        expect(character2.reload.current_hp).to be < 100
-        expect(participation1.reload.metadata["damage_dealt"]).to eq(result[:damage])
-        expect(participation2.reload.metadata["damage_taken"]).to eq(result[:damage])
-      end
-
-      it "rejects magic actions above the fight mana ceiling" do
+      it "rejects captured magic blocks above the fight mana ceiling" do
         character1.update!(current_mp: 200, max_mp: 200)
         participation1.update!(
           metadata: {
@@ -573,25 +646,11 @@ RSpec.describe Arena::CombatProcessor do
           :validate_turn_mana,
           character1,
           [],
-          [{key: "crystal_sphere"}]
+          [{action_key: "crystal_sphere", body_parts: %w[head torso stomach legs]}],
+          []
         )
 
         expect(errors).to include("Magic/action mana exceeds fight limit (65/52)")
-      end
-
-      it "stores status effects from special magic actions" do
-        allow(processor.broadcaster).to receive(:broadcast_combat_action)
-
-        result = processor.send(
-          :process_turn_skill,
-          character1,
-          {key: "freeze", target_id: character2.id},
-          character2
-        )
-
-        expect(result).to be_success
-        effect = participation2.reload.metadata["effects"].last
-        expect(effect).to include("key" => "freeze", "effect" => "stun", "duration" => 1)
       end
 
       it "lets a waiting player claim victory after the turn timer expires" do
@@ -657,7 +716,7 @@ RSpec.describe Arena::CombatProcessor do
         )
 
         expect(result.success?).to be false
-        expect(result.error).to include("Actions exceed AP limit")
+        expect(result.error).to include("Превышен лимит ОД")
         expect(result.error).to include("155/#{character1_ap_limit}")
       end
 
@@ -687,11 +746,11 @@ RSpec.describe Arena::CombatProcessor do
       end
 
       it "defines simple attack AP cost as 45" do
-        expect(described_class::ATTACK_TYPES[:simple][:ap_cost]).to eq(45)
+        expect(Game::Combat::ActionCatalog.attack_cost(:simple)).to eq(45)
       end
 
       it "defines aimed attack AP cost as 65" do
-        expect(described_class::ATTACK_TYPES[:aimed][:ap_cost]).to eq(65)
+        expect(Game::Combat::ActionCatalog.attack_cost(:aimed)).to eq(65)
       end
     end
   end
@@ -716,42 +775,29 @@ RSpec.describe Arena::CombatProcessor do
 
   describe "Attack types" do
     it "defines simple attack with damage_mult 1.0" do
-      expect(described_class::ATTACK_TYPES[:simple][:damage_mult]).to eq(1.0)
+      expect(Game::Combat::ActionCatalog.attack_damage_multiplier(:simple)).to eq(1.0)
     end
 
     it "defines aimed attack with damage_mult 1.2" do
-      expect(described_class::ATTACK_TYPES[:aimed][:damage_mult]).to eq(1.2)
+      expect(Game::Combat::ActionCatalog.attack_damage_multiplier(:aimed)).to eq(1.2)
     end
 
     it "defines aimed attack with hit_bonus 15" do
-      expect(described_class::ATTACK_TYPES[:aimed][:hit_bonus]).to eq(15)
+      expect(Game::Combat::ActionCatalog.attack_hit_bonus(:aimed)).to eq(15)
     end
   end
 
-  describe "#apply_trauma" do
-    before do
+  describe "trauma/risk value" do
+    it "does not invent HP or XP penalties before Neverlands formula capture" do
       arena_match.update!(trauma_percent: 30)
-    end
-
-    it "applies HP loss to losers based on trauma percent" do
-      character2.update!(current_hp: 0)
-      participation2.update!(result: "defeat")
-      initial_hp = character1.current_hp
-
-      processor.send(:apply_trauma)
-
-      # Winner gets minor trauma (trauma_percent / 3)
-      expect(character1.reload.current_hp).to be < initial_hp
-    end
-
-    it "applies XP loss to losers with high trauma" do
+      character1.update!(current_hp: 80, experience: 1000)
       character2.update!(current_hp: 0, experience: 1000)
-      participation2.update!(result: "defeat")
 
-      processor.send(:apply_trauma)
+      processor.end_match("a")
 
-      # Loser should lose XP
-      expect(character2.reload.experience).to be < 1000
+      expect(character1.reload.current_hp).to eq(80)
+      expect(character1.experience).to eq(1000)
+      expect(character2.reload.experience).to eq(1000)
     end
   end
 end

@@ -37,7 +37,7 @@ module Game
       #
       # @return [Boolean]
       def city_zone?
-        zone&.biome == "city"
+        zone&.city? || false
       end
 
       # Get all hotspots for display in the city view
@@ -73,14 +73,14 @@ module Game
         unless hotspot
           return Result.new(
             success: false,
-            message: "Location not found."
+            message: "Локация не найдена."
           )
         end
 
         unless hotspot.can_interact?(character)
           return Result.new(
             success: false,
-            message: hotspot.interaction_blocked_reason(character) || "You cannot interact with this location.",
+            message: hotspot.interaction_blocked_reason(character) || "Сюда нельзя перейти.",
             hotspot: hotspot
           )
         end
@@ -93,7 +93,7 @@ module Game
         else
           Result.new(
             success: false,
-            message: "This location has no interaction.",
+            message: "У этой области нет действия.",
             hotspot: hotspot
           )
         end
@@ -105,21 +105,27 @@ module Game
         unless hotspot.destination_zone
           return Result.new(
             success: false,
-            message: "This exit leads nowhere.",
+            message: "Переход не настроен.",
             hotspot: hotspot
           )
         end
 
-        # Use explicit destination coordinates from action_params if provided,
-        # otherwise fall back to spawn point
         dest_x = hotspot.action_params["destination_x"]
         dest_y = hotspot.action_params["destination_y"]
 
         unless dest_x && dest_y
-          spawn_point = hotspot.destination_zone.spawn_points.find_by(default_entry: true) ||
-            hotspot.destination_zone.spawn_points.first
-          dest_x ||= spawn_point&.x || (hotspot.destination_zone.width / 2)
-          dest_y ||= spawn_point&.y || (hotspot.destination_zone.height / 2)
+          spawn_point = hotspot.destination_zone.spawn_points.find_by(default_entry: true)
+
+          unless spawn_point
+            return Result.new(
+              success: false,
+              message: "Точка входа не настроена.",
+              hotspot: hotspot
+            )
+          end
+
+          dest_x ||= spawn_point.x
+          dest_y ||= spawn_point.y
         end
 
         spawn_x = dest_x
@@ -137,34 +143,42 @@ module Game
 
           Result.new(
             success: true,
-            message: "You exit to #{hotspot.destination_zone.name}.",
+            message: "Переход: #{hotspot.destination_zone.name}.",
             hotspot: hotspot,
             destination_zone: hotspot.destination_zone
           )
         else
           Result.new(
             success: false,
-            message: "Unable to move - position not found.",
+            message: "Переход невозможен: позиция не найдена.",
             hotspot: hotspot
           )
         end
       end
 
       def handle_feature_navigation(hotspot)
-        url = hotspot.navigate_url
-
-        # If the URL is /world, the feature is not implemented yet
-        if url == "/world"
+        feature_key = hotspot.action_params["feature"] || hotspot.key
+        pending_message = CityHotspot::PENDING_FEATURES[feature_key]
+        if pending_message
           return Result.new(
             success: false,
-            message: "#{hotspot.name} is coming soon!",
+            message: pending_message,
+            hotspot: hotspot
+          )
+        end
+
+        url = hotspot.navigate_url
+        unless url
+          return Result.new(
+            success: false,
+            message: "#{hotspot.name} недоступно.",
             hotspot: hotspot
           )
         end
 
         Result.new(
           success: true,
-          message: "Entering #{hotspot.name}...",
+          message: "Вход: #{hotspot.name}.",
           hotspot: hotspot,
           redirect_url: url
         )

@@ -28,7 +28,6 @@ module Chat
     # @return [Boolean] true if message should be shown
     def visible?
       return true if system_message?
-      return true if gm_message?
       return true if same_user?
       return false if sender_ignored?
       return false if recipient_ignored_by_sender?
@@ -63,15 +62,13 @@ module Chat
       def filter_for_user(messages, user)
         return messages if user.nil?
 
-        # Preload ignore lists for efficiency
         ignored_user_ids = user.ignore_list_entries.pluck(:ignored_user_id)
         ignored_by_user_ids = IgnoreListEntry.where(ignored_user_id: user.id).pluck(:user_id)
 
         messages.reject do |message|
-          next false if message.system? || message.gm_alert?
+          next false if message.system?
           next false if message.sender_id == user.id
 
-          # Check if sender is in either ignore list
           ignored_user_ids.include?(message.sender_id) ||
             ignored_by_user_ids.include?(message.sender_id)
         end
@@ -110,10 +107,6 @@ module Chat
 
     def system_message?
       message.system? || message.visibility.to_s == "system"
-    end
-
-    def gm_message?
-      message.gm_alert? || message.visibility.to_s == "gm_alert"
     end
 
     def same_user?

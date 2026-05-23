@@ -3,7 +3,7 @@
 require "rails_helper"
 
 RSpec.describe Game::Skills::PassiveSkillCalculator do
-  let(:character) { create(:character, passive_skills: passive_skills) }
+  let(:character) { create(:character, passive_skills:) }
   let(:passive_skills) { {} }
   let(:calculator) { described_class.new(character) }
 
@@ -21,106 +21,30 @@ RSpec.describe Game::Skills::PassiveSkillCalculator do
         expect(calculator.skill_level(:wanderer)).to eq(50)
       end
 
-      it "accepts symbol keys" do
-        expect(calculator.skill_level(:wanderer)).to eq(50)
-      end
-
       it "accepts string keys" do
         expect(calculator.skill_level("wanderer")).to eq(50)
       end
     end
   end
 
-  describe "#movement_cooldown_modifier" do
-    context "with wanderer at 0" do
-      let(:passive_skills) { {"wanderer" => 0} }
-
-      it "returns 0 reduction" do
-        expect(calculator.movement_cooldown_modifier).to eq(0.0)
-      end
-    end
-
-    context "with wanderer at 50" do
-      let(:passive_skills) { {"wanderer" => 50} }
-
-      it "returns 35% reduction" do
-        expect(calculator.movement_cooldown_modifier).to eq(0.35)
-      end
-    end
-
-    context "with wanderer at 100" do
-      let(:passive_skills) { {"wanderer" => 100} }
-
-      it "returns 70% reduction" do
-        expect(calculator.movement_cooldown_modifier).to eq(0.70)
-      end
-    end
-  end
-
-  describe "#apply_movement_cooldown" do
-    context "with wanderer at 0" do
-      let(:passive_skills) { {"wanderer" => 0} }
-
-      it "returns base cooldown of 10 seconds" do
-        expect(calculator.apply_movement_cooldown).to eq(10.0)
-      end
-
-      it "accepts custom base cooldown" do
-        expect(calculator.apply_movement_cooldown(20)).to eq(20.0)
-      end
-    end
-
-    context "with wanderer at 50" do
-      let(:passive_skills) { {"wanderer" => 50} }
-
-      it "returns 6.5 seconds (35% reduction)" do
-        expect(calculator.apply_movement_cooldown).to eq(6.5)
-      end
-    end
-
-    context "with wanderer at 100" do
-      let(:passive_skills) { {"wanderer" => 100} }
-
-      it "returns 3.0 seconds (70% reduction)" do
-        expect(calculator.apply_movement_cooldown).to eq(3.0)
-      end
-    end
-
-    context "with no wanderer skill" do
-      let(:passive_skills) { {} }
-
-      it "returns base cooldown" do
-        expect(calculator.apply_movement_cooldown).to eq(10.0)
-      end
-    end
-  end
-
-  describe "#all_modifiers" do
-    let(:passive_skills) { {"wanderer" => 50} }
-
-    it "returns hash with all modifier values" do
-      modifiers = calculator.all_modifiers
-
-      expect(modifiers).to be_a(Hash)
-      expect(modifiers[:movement_cooldown_reduction]).to eq(0.35)
-    end
-  end
-
   describe "#skill_summary" do
     let(:passive_skills) { {"wanderer" => 25} }
 
-    it "returns array of skill summaries" do
+    it "returns captured skill metadata without invented effect data" do
       summary = calculator.skill_summary
+      wanderer = summary.find { |skill| skill[:key] == :wanderer }
 
-      expect(summary).to be_an(Array)
-
-      wanderer = summary.find { |s| s[:key] == :wanderer }
-      expect(wanderer).to be_present
-      expect(wanderer[:name]).to eq("Wanderer")
-      expect(wanderer[:level]).to eq(25)
-      expect(wanderer[:max_level]).to eq(100)
-      expect(wanderer[:effect_value]).to eq(0.175)
-      expect(wanderer[:effect_type]).to eq(:movement_cooldown_reduction)
+      expect(wanderer).to include(
+        source_id: 26,
+        name: "Странник",
+        level: 25,
+        max_level: 100,
+        progression_rate: "2:2:2:2",
+        pool: :peace,
+        category: :peace_world
+      )
+      expect(wanderer).not_to have_key(:effect_value)
+      expect(wanderer).not_to have_key(:effect_type)
     end
   end
 
@@ -129,7 +53,6 @@ RSpec.describe Game::Skills::PassiveSkillCalculator do
 
     it "handles nil gracefully" do
       expect(calculator.skill_level(:wanderer)).to eq(0)
-      expect(calculator.apply_movement_cooldown).to eq(10.0)
     end
   end
 end

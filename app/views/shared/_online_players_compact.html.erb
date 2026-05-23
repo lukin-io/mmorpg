@@ -5,7 +5,7 @@
   Features:
   - Sorting options: a-z, z-a, level up, level down
   - Location name and total count
-  - Player list with alignment icons, clan signs, names, levels
+  - Player list with alignment icons, names, levels
 
   @example
     <%= render "shared/online_players_compact" %>
@@ -13,21 +13,20 @@
 <%
   # Get online users
   online_users = User.joins(:user_sessions)
-       .where(user_sessions: { signed_out_at: nil })
-       .where("user_sessions.last_seen_at > ?", 5.minutes.ago)
+       .merge(UserSession.recent)
        .includes(:characters)
        .distinct
        .limit(50) rescue []
 
   # Current zone info for location display
   current_zone = @position&.zone || @zone
-  location_name = current_zone&.name || "Unknown Location"
+  location_name = current_zone&.name || "Неизвестно"
   total_online = online_users.size
 %>
 
 <%# Sorting options %>
 <div class="nl-players-sort-bar">
-  <span class="nl-sort-label">Sort:</span>
+  <span class="nl-sort-label">Сортировка:</span>
   <span class="nl-players-sort">
     <a href="#" data-action="click->game-layout#sortPlayers" data-sort="az">a-z</a>
     <a href="#" data-action="click->game-layout#sortPlayers" data-sort="za">z-a</a>
@@ -36,38 +35,32 @@
   </span>
   <label class="nl-refresh-toggle">
     <input type="checkbox" checked data-action="change->game-layout#toggleAutoRefresh">
-    refresh
+    обновлять
   </label>
 </div>
 
 <%# Location header %>
 <div class="nl-players-header">
   <div class="nl-players-location"><%= location_name %></div>
-  <div class="nl-players-total">Total [ <%= total_online %> ]</div>
+  <div class="nl-players-total">Всего [ <%= total_online %> ]</div>
 </div>
 
 <%# Players list %>
 <div class="nl-players-list" data-game-layout-target="playersList">
   <% online_users.each do |user| %>
     <%
-      session = user.user_sessions.where(signed_out_at: nil).order(last_seen_at: :desc).first
-      status = session&.last_seen_at&.> 2.minutes.ago ? 'active' : 'idle'
       character = user.characters.first
       char_level = character&.level || 0
       char_name = character&.name || user.profile_name || user.email.split('@').first
 
-      # Alignment icon (simplified)
-      alignment_icon = case character&.faction_alignment
-                       when "alliance" then "🛡️"
-                       when "rebellion" then "⚔️"
+      alignment_icon = case character&.alignment
+                       when "light" then "L"
+                       when "dark" then "D"
+                       when "balance" then "B"
+                       when "chaos" then "C"
+                       when "law" then "W"
                        else "→"
                        end
-
-      # Status icon
-      status_icon = case status
-                    when 'active' then "A"
-                    else "I"
-                    end
 
       profile_href = if character
                        player_path(name: character.name)
@@ -85,20 +78,17 @@
          class="nl-player-name-link"
          data-turbo-frame="main_content"><%= truncate(char_name, length: 15) %></a>
       <span class="nl-player-level">[<%= char_level %>]</span>
-      <span class="nl-player-status-icon" title="<%= status == 'active' ? 'Active' : 'Idle' %>"><%= status_icon %></span>
     </div>
   <% end %>
 
   <% if online_users.empty? %>
-    <div class="nl-players-empty">No players online</div>
+    <div class="nl-players-empty">Нет игроков</div>
   <% end %>
 </div>
 
 <%# Context menu for player interactions %>
 <div class="nl-player-menu" data-game-layout-target="playerMenu" style="display: none;">
-  <button data-action="click->game-layout#whisperPlayer">📨 Private Message</button>
-  <button data-action="click->game-layout#viewProfile">👤 View Info</button>
-  <button data-action="click->game-layout#copyNickname">📋 Copy Nick</button>
-  <button data-action="click->game-layout#inviteToParty">🤝 Invite</button>
-  <button data-action="click->game-layout#ignorePlayer">🚫 Ignore</button>
+  <button data-action="click->game-layout#whisperPlayer">Приватно</button>
+  <button data-action="click->game-layout#viewProfile">Инфо</button>
+  <button data-action="click->game-layout#copyNickname">Копировать ник</button>
 </div>

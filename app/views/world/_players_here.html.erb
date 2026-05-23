@@ -1,21 +1,21 @@
 <div class="players-panel">
-  <h3>Players Here</h3>
+  <h3>Игроки на клетке</h3>
   <% if players.any? %>
     <ul class="players-list">
       <% players.each do |pos| %>
         <li class="player-item">
-          <span class="player-avatar">👤</span>
+          <span class="player-avatar">»</span>
           <div class="player-info">
             <span class="player-name"><%= pos.character.name %></span>
-            <span class="player-level">Lv.<%= pos.character.level %></span>
+            <span class="player-level">[<%= pos.character.level %>]</span>
           </div>
           <div class="player-actions">
-            <%= link_to "Info", player_path(name: pos.character.name), title: "View Profile" %>
+            <%= link_to "Инфо", player_path(name: pos.character.name), title: "Персонаж" %>
           </div>
         </li>
       <% end %>
     </ul>
   <% else %>
-    <p class="text-muted text-sm">No other players nearby.</p>
+    <p class="text-muted text-sm">Нет игроков рядом.</p>
   <% end %>
 </div>

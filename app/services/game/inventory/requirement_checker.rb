@@ -6,28 +6,10 @@ module Game
     class RequirementChecker
       STAT_ALIASES = {
         "strength" => :strength,
-        "str" => :strength,
         "dexterity" => :dexterity,
-        "dex" => :dexterity,
-        "agility" => :dexterity,
         "luck" => :luck,
-        "knowledge" => :intelligence,
         "intelligence" => :intelligence,
-        "intellect" => :intelligence,
-        "health" => :vitality,
-        "vitality" => :vitality,
-        "constitution" => :vitality,
-        "stamina" => :vitality
-      }.freeze
-
-      SKILL_ALIASES = {
-        "bludgeoning_mastery" => :melee_combat,
-        "mace_mastery" => :melee_combat,
-        "knife_mastery" => :melee_combat,
-        "sword_mastery" => :melee_combat,
-        "bow_mastery" => :ranged_combat,
-        "observation" => :perception,
-        "linguistics" => :trading
+        "vitality" => :vitality
       }.freeze
 
       IGNORED_KEYS = %w[mass weight price durability].freeze
@@ -87,20 +69,18 @@ module Game
           end
         end
 
-        legacy_level = item.properties.to_h["level_required"]
-        flat["level"] ||= legacy_level if legacy_level.present?
         flat
       end
 
       def current_value_for(key)
         normalized = normalize_key(key)
-        return character.level.to_i if %w[level min_level level_required].include?(normalized)
-        return character.max_action_points.to_i if %w[ap action_points action_point_cost].include?(normalized)
+        return character.level.to_i if normalized == "level"
+        return character.max_action_points.to_i if %w[ap action_points].include?(normalized)
 
         stat_key = STAT_ALIASES[normalized]
         return character.stats.get(stat_key).to_i if stat_key
 
-        skill_key = SKILL_ALIASES.fetch(normalized, normalized.to_sym)
+        skill_key = normalized.to_sym
         return character.passive_skill_level(skill_key).to_i if Game::Skills::PassiveSkillRegistry.valid?(skill_key)
 
         nil

@@ -20,11 +20,11 @@ module Game
     # Usage:
     #   service = Game::World::TileBuildingService.new(
     #     character: current_character,
-    #     zone: "Starter Plains",
+    #     zone: "Окрестность Форпоста",
     #     x: 5,
     #     y: 5
     #   )
-    #   info = service.building_info  # => { id: 1, name: "Castle", ... }
+    #   info = service.building_info  # => { id: 1, name: "Ворота Форпоста", ... }
     #   result = service.enter!       # => Result(success: true, ...)
     #
     class TileBuildingService
@@ -53,7 +53,6 @@ module Game
           icon: active_building.display_icon,
           destination: active_building.destination_zone&.name,
           required_level: active_building.required_level,
-          faction_key: active_building.faction_key,
           can_enter: active_building.can_enter?(character),
           blocked_reason: active_building.entry_blocked_reason(character),
           description: active_building.metadata&.dig("description"),
@@ -68,14 +67,14 @@ module Game
         unless building
           return Result.new(
             success: false,
-            message: "No building found at this location."
+            message: "На этой клетке нет здания."
           )
         end
 
         unless building.active?
           return Result.new(
             success: false,
-            message: "This building is currently inaccessible.",
+            message: "Здание сейчас недоступно.",
             building: building
           )
         end
@@ -92,14 +91,14 @@ module Game
         if building.enter!(character)
           Result.new(
             success: true,
-            message: "You enter #{building.display_name}.",
+            message: "Вход: #{building.display_name}.",
             building: building,
             destination_zone: building.destination_zone
           )
         else
           Result.new(
             success: false,
-            message: "Failed to enter #{building.display_name}.",
+            message: "Не удалось войти: #{building.display_name}.",
             building: building
           )
         end

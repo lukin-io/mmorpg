@@ -12,8 +12,7 @@ RSpec.describe Arena::NpcCombatAi do
       metadata: {
         "health" => 100,
         "base_damage" => 15,
-        "difficulty" => "medium",
-        "ai_behavior" => "balanced"
+        "ai_behavior" => "passive"
       })
   end
 
@@ -50,7 +49,7 @@ RSpec.describe Arena::NpcCombatAi do
     end
 
     it "extracts behavior from npc_template's combat_behavior" do
-      expect(ai.behavior).to eq(:balanced)
+      expect(ai.behavior).to eq(:passive)
     end
 
     it "uses default RNG when not provided" do
@@ -77,16 +76,18 @@ RSpec.describe Arena::NpcCombatAi do
       end
     end
 
-    context "with defensive AI" do
+    context "with explicit defense metadata" do
       let(:npc_template) do
         create(:npc_template,
-          npc_key: "defensive_bot",
+          npc_key: "defense_metadata_bot",
           role: "arena_bot",
-          name: "Defensive Bot",
+          name: "Defense Metadata Bot",
           level: 5,
           metadata: {
             "health" => 100,
-            "ai_behavior" => "defensive"
+            "ai_behavior" => "passive",
+            "defend_hp_below" => 0.7,
+            "defend_chance" => 0.5
           })
       end
 
@@ -110,7 +111,7 @@ RSpec.describe Arena::NpcCombatAi do
       end
     end
 
-    context "with balanced AI" do
+    context "with passive/default AI" do
       it "usually attacks when HP is high" do
         decision = ai.decide_action
 
@@ -128,8 +129,7 @@ RSpec.describe Arena::NpcCombatAi do
       expect(stats[:hp]).to be_present
     end
 
-    it "uses level-based fallback when config not found" do
-      # Create NPC without matching config
+    it "does not use level-based fallback when config is not captured" do
       custom_npc = create(:npc_template,
         npc_key: "custom_bot_#{SecureRandom.hex(4)}",
         role: "arena_bot",
@@ -144,11 +144,8 @@ RSpec.describe Arena::NpcCombatAi do
 
       stats = custom_ai.stats
 
-      # Base formulas with arena_bot role modifier (0.9 for attack/defense)
-      # attack: (10 * 3 + 5) * 0.9 = 35 * 0.9 = 31.5 -> 31
-      # defense: (10 * 2 + 3) * 0.9 = 23 * 0.9 = 20.7 -> 20
-      expect(stats[:attack]).to eq(31)
-      expect(stats[:defense]).to eq(20)
+      expect(stats[:attack]).to eq(0)
+      expect(stats[:defense]).to eq(0)
     end
   end
 
@@ -254,13 +251,12 @@ RSpec.describe Arena::NpcCombatAi do
     end
 
     it "defend decision has nil target" do
-      # Create a defensive NPC with low HP to trigger defend
       defensive_npc = create(:npc_template,
-        npc_key: "test_defensive",
+        npc_key: "test_explicit_defense",
         role: "arena_bot",
-        name: "Defensive Test",
+        name: "Explicit Defense Test",
         level: 5,
-        metadata: {"ai_behavior" => "defensive"})
+        metadata: {"ai_behavior" => "passive", "defend_hp_below" => 0.7, "defend_chance" => 1.0})
 
       match = create(:arena_match, arena_room: arena_room, status: :live)
       create(:arena_participation, arena_match: match, character: character, user: character.user, team: "a")
@@ -339,15 +335,15 @@ RSpec.describe Arena::NpcCombatAi do
   end
 
   describe "role modifier integration" do
-    it "arena_bot stats are weaker than hostile" do
+    it "does not apply generic role modifiers" do
       hostile_npc = create(:npc_template, level: 10, role: "hostile")
       arena_npc = create(:npc_template, level: 10, role: "arena_bot")
 
       hostile_ai = described_class.new(npc_template: hostile_npc, match: arena_match, rng: rng)
       arena_ai = described_class.new(npc_template: arena_npc, match: arena_match, rng: rng)
 
-      # Arena bots should have lower stats due to 0.9 modifier
-      expect(arena_ai.stats[:attack]).to be < hostile_ai.stats[:attack]
+      expect(arena_ai.stats[:attack]).to eq(0)
+      expect(hostile_ai.stats[:attack]).to eq(0)
     end
   end
 end

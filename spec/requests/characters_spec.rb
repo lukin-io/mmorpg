@@ -8,7 +8,6 @@ RSpec.describe CharactersController, type: :request do
     create(:character,
       user: user,
       stat_points_available: 10,
-      skill_points_available: 5,
       combat_skill_points: 5,
       peace_skill_points: 5,
       allocated_stats: {},
@@ -30,14 +29,14 @@ RSpec.describe CharactersController, type: :request do
         get stats_character_path(character)
 
         expect(response).to have_http_status(:success)
-        expect(response.body).to include("Character Stats")
-        expect(response.body).to include("Available Points")
+        expect(response.body).to include("Характеристики")
+        expect(response.body).to include("Свободные очки")
       end
 
       it "shows all allocatable stats" do
         get stats_character_path(character)
 
-        %w[Strength Dexterity Luck Health Knowledge].each do |stat|
+        %w[Сила Ловкость Удача Здоровье Знания].each do |stat|
           expect(response.body).to include(stat)
         end
       end
@@ -51,7 +50,7 @@ RSpec.describe CharactersController, type: :request do
       it "shows Neverlands starter base stats" do
         get stats_character_path(character)
 
-        expect(response.body).to include("(base: 1)")
+        expect(response.body).to include("(база: 1)")
       end
     end
 
@@ -156,7 +155,7 @@ RSpec.describe CharactersController, type: :request do
         }
 
         follow_redirect!
-        expect(response.body).to include("Stats allocated successfully")
+        expect(response.body).to include("Характеристики сохранены")
       end
     end
 
@@ -168,7 +167,7 @@ RSpec.describe CharactersController, type: :request do
 
         expect(response).to redirect_to(root_path)
         follow_redirect!
-        expect(response.body).to include("Not enough stat points available")
+        expect(response.body).to include("Недостаточно свободных очков характеристик")
         character.reload
         expect(character.stat_points_available).to eq(10) # unchanged
       end
@@ -180,7 +179,7 @@ RSpec.describe CharactersController, type: :request do
 
         expect(response).to redirect_to(root_path)
         follow_redirect!
-        expect(response.body).to include("Not enough stat points available")
+        expect(response.body).to include("Недостаточно свободных очков характеристик")
       end
 
       it "rejects zero allocation" do
@@ -190,7 +189,7 @@ RSpec.describe CharactersController, type: :request do
 
         expect(response).to redirect_to(root_path)
         follow_redirect!
-        expect(response.body).to include("No stats allocated")
+        expect(response.body).to include("Характеристики не выбраны")
       end
 
       it "rejects all-zero allocation" do
@@ -200,7 +199,7 @@ RSpec.describe CharactersController, type: :request do
 
         expect(response).to redirect_to(root_path)
         follow_redirect!
-        expect(response.body).to include("No stats allocated")
+        expect(response.body).to include("Характеристики не выбраны")
       end
     end
 
@@ -212,7 +211,7 @@ RSpec.describe CharactersController, type: :request do
 
         expect(response).to redirect_to(root_path)
         follow_redirect!
-        expect(response.body).to include("No stats allocated")
+        expect(response.body).to include("Характеристики не выбраны")
         character.reload
         expect(character.stat_points_available).to eq(10) # unchanged
       end
@@ -224,7 +223,7 @@ RSpec.describe CharactersController, type: :request do
 
         expect(response).to redirect_to(root_path)
         follow_redirect!
-        expect(response.body).to include("Not enough stat points available")
+        expect(response.body).to include("Недостаточно свободных очков характеристик")
       end
 
       it "handles string values by converting to integer" do
@@ -256,7 +255,7 @@ RSpec.describe CharactersController, type: :request do
 
         expect(response).to redirect_to(root_path)
         follow_redirect!
-        expect(response.body).to include("No stats allocated")
+        expect(response.body).to include("Характеристики не выбраны")
       end
 
       it "handles empty allocated_stats hash" do
@@ -266,7 +265,7 @@ RSpec.describe CharactersController, type: :request do
 
         expect(response).to redirect_to(root_path)
         follow_redirect!
-        expect(response.body).to include("No stats allocated")
+        expect(response.body).to include("Характеристики не выбраны")
       end
 
       it "handles missing allocated_stats param" do
@@ -274,7 +273,7 @@ RSpec.describe CharactersController, type: :request do
 
         expect(response).to redirect_to(root_path)
         follow_redirect!
-        expect(response.body).to include("No stats allocated")
+        expect(response.body).to include("Характеристики не выбраны")
       end
     end
 
@@ -303,7 +302,7 @@ RSpec.describe CharactersController, type: :request do
 
         expect(response).to redirect_to(root_path)
         follow_redirect!
-        expect(response.body).to include("Not enough stat points available")
+        expect(response.body).to include("Недостаточно свободных очков характеристик")
       end
     end
 
@@ -363,30 +362,30 @@ RSpec.describe CharactersController, type: :request do
         get skills_character_path(character)
 
         expect(response).to have_http_status(:success)
-        expect(response.body).to include("Skills")
-        expect(response.body).to include("Combat/Magic Points:")
-        expect(response.body).to include("Peace Points:")
+        expect(response.body).to include("Умения")
+        expect(response.body).to include("Боевые очки:")
+        expect(response.body).to include("Мирные очки:")
       end
 
-      it "shows wanderer skill" do
+      it "shows source-backed skills" do
         get skills_character_path(character)
 
-        expect(response.body).to include("Wanderer")
-        expect(response.body).to include("movement speed")
+        expect(response.body).to include("Странник")
+        expect(response.body).to include("Рукопашный бой")
       end
 
       it "shows available skill points count" do
         get skills_character_path(character)
 
         # Default character has combat_skill_points: 5 and peace_skill_points: 5
-        expect(response.body).to include("Combat/Magic Points:")
+        expect(response.body).to include("Боевые очки:")
       end
 
       it "shows skill categories" do
         get skills_character_path(character)
 
-        expect(response.body).to include("Combat Skills")
-        expect(response.body).to include("Peace Skills")
+        expect(response.body).to include("Боевые умения")
+        expect(response.body).to include("Мирные умения")
       end
     end
 
@@ -402,11 +401,10 @@ RSpec.describe CharactersController, type: :request do
         expect(response.body).to include("[050/100]")
       end
 
-      it "shows skill effect based on level" do
+      it "does not show uncaptured effect formulas" do
         get skills_character_path(character)
 
-        # At level 50: 35% reduction, 6.5s cooldown
-        expect(response.body).to include("-35%")
+        expect(response.body).not_to include("-35%")
       end
     end
 
@@ -436,45 +434,45 @@ RSpec.describe CharactersController, type: :request do
   # ============================================
   describe "PATCH /characters/:id/skills" do
     # Note: This uses the new tiered progression system
-    # - Wanderer is a survival skill using the combat pool
+    # - Рукопашный бой is a combat skill using the combat pool
     # - Each "spend" costs 1 combat_skill_point
     # - Progression rate "10:8:6:4" means: +10 at tier 0 (0-24), +8 at tier 1 (25-49), etc.
 
     context "with valid allocation" do
       before do
-        character.update!(combat_skill_points: 5, skill_points_available: 5)
+        character.update!(combat_skill_points: 5)
       end
 
       it "allocates skill points successfully with tiered progression" do
         patch skills_character_path(character), params: {
-          allocated_skills: {wanderer: 1}  # 1 spend = +10 at tier 0
+          allocated_skills: {unarmed_combat: 1}  # 1 spend = +10 at tier 0
         }
 
         expect(response).to redirect_to(skills_character_path(character))
         character.reload
         expect(character.combat_skill_points).to eq(4)  # 5 - 1
-        expect(character.passive_skill_level(:wanderer)).to eq(10)  # 0 + 10 (tier 0 rate)
+        expect(character.passive_skill_level(:unarmed_combat)).to eq(10)  # 0 + 10 (tier 0 rate)
       end
 
       it "adds to existing skill levels with tiered progression" do
-        character.update!(passive_skills: {"wanderer" => 20}, combat_skill_points: 10, skill_points_available: 10)
+        character.update!(passive_skills: {"unarmed_combat" => 20}, combat_skill_points: 10)
 
         patch skills_character_path(character), params: {
-          allocated_skills: {wanderer: 1}  # 1 spend at level 20 = +10 (still tier 0)
+          allocated_skills: {unarmed_combat: 1}  # 1 spend at level 20 = +10 (still tier 0)
         }
 
         character.reload
-        expect(character.passive_skill_level(:wanderer)).to eq(30)  # 20 + 10
+        expect(character.passive_skill_level(:unarmed_combat)).to eq(30)  # 20 + 10
         expect(character.combat_skill_points).to eq(9)
       end
 
       it "shows success flash message" do
         patch skills_character_path(character), params: {
-          allocated_skills: {wanderer: 1}
+          allocated_skills: {unarmed_combat: 1}
         }
 
         follow_redirect!
-        expect(response.body).to include("Skills allocated successfully")
+        expect(response.body).to include("Умения сохранены")
       end
 
       it "clears passive skill calculator cache" do
@@ -482,48 +480,48 @@ RSpec.describe CharactersController, type: :request do
         character.passive_skill_calculator
 
         patch skills_character_path(character), params: {
-          allocated_skills: {wanderer: 1}
+          allocated_skills: {unarmed_combat: 1}
         }
 
         character.reload
         # After allocation, cache should be cleared
-        expect(character.passive_skill_level(:wanderer)).to eq(10)  # +10 at tier 0
+        expect(character.passive_skill_level(:unarmed_combat)).to eq(10)  # +10 at tier 0
       end
     end
 
     context "with max skill level handling" do
       it "respects max skill level of 100" do
-        character.update!(combat_skill_points: 20, skill_points_available: 20)
+        character.update!(combat_skill_points: 20)
 
         patch skills_character_path(character), params: {
-          allocated_skills: {wanderer: 20}  # Would be 160+ if not capped
+          allocated_skills: {unarmed_combat: 20}  # Would be 160+ if not capped
         }
 
         character.reload
-        expect(character.passive_skill_level(:wanderer)).to eq(100)  # Capped at max
+        expect(character.passive_skill_level(:unarmed_combat)).to eq(100)  # Capped at max
       end
 
       it "caps at max when adding to existing level" do
-        character.update!(passive_skills: {"wanderer" => 95}, combat_skill_points: 10, skill_points_available: 10)
+        character.update!(passive_skills: {"unarmed_combat" => 95}, combat_skill_points: 10)
 
         patch skills_character_path(character), params: {
-          allocated_skills: {wanderer: 2}  # At tier 3, +4 per spend
+          allocated_skills: {unarmed_combat: 2}  # At tier 3, +4 per spend
         }
 
         character.reload
         # 95 + 4 = 99, then 99 + 1 (capped) = 100
-        expect(character.passive_skill_level(:wanderer)).to eq(100)
+        expect(character.passive_skill_level(:unarmed_combat)).to eq(100)
       end
 
       it "handles already at max level" do
-        character.update!(passive_skills: {"wanderer" => 100}, combat_skill_points: 10, skill_points_available: 10)
+        character.update!(passive_skills: {"unarmed_combat" => 100}, combat_skill_points: 10)
 
         patch skills_character_path(character), params: {
-          allocated_skills: {wanderer: 2}
+          allocated_skills: {unarmed_combat: 2}
         }
 
         character.reload
-        expect(character.passive_skill_level(:wanderer)).to eq(100)
+        expect(character.passive_skill_level(:unarmed_combat)).to eq(100)
         # Points are still spent even though skill is at max
         # Each spend at max level adds 0 points
       end
@@ -531,63 +529,63 @@ RSpec.describe CharactersController, type: :request do
 
     context "with invalid allocation" do
       it "rejects over-allocation" do
-        character.update!(combat_skill_points: 1, skill_points_available: 1)
+        character.update!(combat_skill_points: 1)
 
         patch skills_character_path(character), params: {
-          allocated_skills: {wanderer: 10}  # Requesting 10 spends but only have 1
+          allocated_skills: {unarmed_combat: 10}  # Requesting 10 spends but only have 1
         }
 
         expect(response).to redirect_to(root_path)
         follow_redirect!
-        expect(response.body).to include("Not enough combat skill points")
+        expect(response.body).to include("Недостаточно боевых очков")
         character.reload
         expect(character.combat_skill_points).to eq(1)  # unchanged
       end
 
       it "rejects zero allocation" do
         patch skills_character_path(character), params: {
-          allocated_skills: {wanderer: 0}
+          allocated_skills: {unarmed_combat: 0}
         }
 
         expect(response).to redirect_to(root_path)
         follow_redirect!
-        expect(response.body).to include("No skills allocated")
+        expect(response.body).to include("Умения не выбраны")
       end
     end
 
     context "with edge case values" do
       before do
-        character.update!(combat_skill_points: 5, skill_points_available: 5)
+        character.update!(combat_skill_points: 5)
       end
 
       it "clamps negative values to zero" do
         patch skills_character_path(character), params: {
-          allocated_skills: {wanderer: -10}
+          allocated_skills: {unarmed_combat: -10}
         }
 
         expect(response).to redirect_to(root_path)
         follow_redirect!
-        expect(response.body).to include("No skills allocated")
+        expect(response.body).to include("Умения не выбраны")
       end
 
       it "handles string values by converting to integer" do
         patch skills_character_path(character), params: {
-          allocated_skills: {wanderer: "1"}
+          allocated_skills: {unarmed_combat: "1"}
         }
 
         expect(response).to redirect_to(skills_character_path(character))
         character.reload
-        expect(character.passive_skill_level(:wanderer)).to eq(10)  # 1 spend = +10
+        expect(character.passive_skill_level(:unarmed_combat)).to eq(10)  # 1 spend = +10
       end
 
       it "handles float values by truncating" do
         patch skills_character_path(character), params: {
-          allocated_skills: {wanderer: 1.9}
+          allocated_skills: {unarmed_combat: 1.9}
         }
 
         expect(response).to redirect_to(skills_character_path(character))
         character.reload
-        expect(character.passive_skill_level(:wanderer)).to eq(10)  # 1 spend = +10
+        expect(character.passive_skill_level(:unarmed_combat)).to eq(10)  # 1 spend = +10
       end
     end
 
@@ -599,7 +597,7 @@ RSpec.describe CharactersController, type: :request do
 
         expect(response).to redirect_to(root_path)
         follow_redirect!
-        expect(response.body).to include("No skills allocated")
+        expect(response.body).to include("Умения не выбраны")
       end
 
       it "handles empty allocated_skills hash" do
@@ -609,7 +607,7 @@ RSpec.describe CharactersController, type: :request do
 
         expect(response).to redirect_to(root_path)
         follow_redirect!
-        expect(response.body).to include("No skills allocated")
+        expect(response.body).to include("Умения не выбраны")
       end
 
       it "handles missing allocated_skills param" do
@@ -617,65 +615,65 @@ RSpec.describe CharactersController, type: :request do
 
         expect(response).to redirect_to(root_path)
         follow_redirect!
-        expect(response.body).to include("No skills allocated")
+        expect(response.body).to include("Умения не выбраны")
       end
     end
 
     context "with invalid skill keys" do
       before do
-        character.update!(combat_skill_points: 5, skill_points_available: 5)
+        character.update!(combat_skill_points: 5)
       end
 
       it "ignores unknown skill keys and processes valid ones" do
         patch skills_character_path(character), params: {
-          allocated_skills: {unknown_skill: 1, wanderer: 1}
+          allocated_skills: {unknown_skill: 1, unarmed_combat: 1}
         }
 
-        # unknown_skill is ignored, only wanderer (1 spend) is processed
+        # unknown_skill is ignored, only unarmed_combat (1 spend) is processed
         expect(response).to redirect_to(skills_character_path(character))
         character.reload
-        expect(character.passive_skill_level(:wanderer)).to eq(10)
+        expect(character.passive_skill_level(:unarmed_combat)).to eq(10)
       end
 
       it "processes only valid skills when within budget" do
         character.update!(combat_skill_points: 10)
 
         patch skills_character_path(character), params: {
-          allocated_skills: {unknown_skill: 3, wanderer: 2}
+          allocated_skills: {unknown_skill: 3, unarmed_combat: 2}
         }
 
-        # unknown_skill is ignored, wanderer (2 spends) is processed
+        # unknown_skill is ignored, unarmed_combat (2 spends) is processed
         expect(response).to redirect_to(skills_character_path(character))
         character.reload
-        expect(character.passive_skill_level(:wanderer)).to eq(20)  # 2 spends = 10 + 10
+        expect(character.passive_skill_level(:unarmed_combat)).to eq(20)  # 2 spends = 10 + 10
         expect(character.combat_skill_points).to eq(8)  # 10 - 2
       end
     end
 
     context "with zero available points" do
       before do
-        character.update!(combat_skill_points: 0, skill_points_available: 0)
+        character.update!(combat_skill_points: 0)
       end
 
       it "rejects any allocation" do
         patch skills_character_path(character), params: {
-          allocated_skills: {wanderer: 1}
+          allocated_skills: {unarmed_combat: 1}
         }
 
         expect(response).to redirect_to(root_path)
         follow_redirect!
-        expect(response.body).to include("Not enough combat skill points")
+        expect(response.body).to include("Недостаточно боевых очков")
       end
     end
 
     context "with turbo_stream format" do
       before do
-        character.update!(combat_skill_points: 5, skill_points_available: 5)
+        character.update!(combat_skill_points: 5)
       end
 
       it "returns turbo_stream response on success" do
         patch skills_character_path(character), params: {
-          allocated_skills: {wanderer: 1}
+          allocated_skills: {unarmed_combat: 1}
         }, headers: {"Accept" => "text/vnd.turbo-stream.html"}
 
         expect(response.media_type).to eq("text/vnd.turbo-stream.html")
@@ -685,7 +683,7 @@ RSpec.describe CharactersController, type: :request do
 
       it "returns turbo_stream response on failure" do
         patch skills_character_path(character), params: {
-          allocated_skills: {wanderer: 100}  # Too many
+          allocated_skills: {unarmed_combat: 100}  # Too many
         }, headers: {"Accept" => "text/vnd.turbo-stream.html"}
 
         expect(response.media_type).to eq("text/vnd.turbo-stream.html")
@@ -698,7 +696,7 @@ RSpec.describe CharactersController, type: :request do
       it "redirects to sign in" do
         sign_out :user
         patch skills_character_path(character), params: {
-          allocated_skills: {wanderer: 1}
+          allocated_skills: {unarmed_combat: 1}
         }
 
         expect(response).to redirect_to(new_user_session_path)
@@ -711,42 +709,11 @@ RSpec.describe CharactersController, type: :request do
 
       it "redirects to root" do
         patch skills_character_path(other_character), params: {
-          allocated_skills: {wanderer: 1}
+          allocated_skills: {unarmed_combat: 1}
         }
 
         expect(response).to redirect_to(root_path)
       end
-    end
-  end
-
-  describe "GET /characters/:id/perks" do
-    it "renders the perks page" do
-      get perks_character_path(character)
-
-      expect(response).to have_http_status(:success)
-      expect(response.body).to include("Perks")
-      expect(response.body).to include("Available Perks")
-    end
-  end
-
-  describe "PATCH /characters/:id/perks" do
-    before do
-      character.update!(level: 5, perk_points_available: 1, perks: {})
-    end
-
-    it "selects a perk" do
-      patch perks_character_path(character), params: {perk_key: "berserker"}
-
-      expect(response).to redirect_to(perks_character_path(character))
-      expect(character.reload.selected_perks).to include("berserker")
-      expect(character.perk_points_available).to eq(0)
-    end
-
-    it "rejects missing perk selection" do
-      patch perks_character_path(character), params: {}
-
-      expect(response).to redirect_to(root_path)
-      expect(character.reload.selected_perks).to be_empty
     end
   end
 
@@ -771,7 +738,7 @@ RSpec.describe CharactersController, type: :request do
 
         # Then allocate skills (1 spend at tier 0 = +10 skill levels)
         patch skills_character_path(character), params: {
-          allocated_skills: {wanderer: 1}
+          allocated_skills: {unarmed_combat: 1}
         }
         expect(response).to redirect_to(skills_character_path(character))
         character.reload
@@ -779,7 +746,7 @@ RSpec.describe CharactersController, type: :request do
 
         # Verify final state
         expect(character.allocated_stats).to eq({"strength" => 5, "dexterity" => 5})
-        expect(character.passive_skill_level(:wanderer)).to eq(10)  # 1 spend = +10 at tier 0
+        expect(character.passive_skill_level(:unarmed_combat)).to eq(10)  # 1 spend = +10 at tier 0
       end
     end
 

@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Dungeons are a post-MVP Neverlands-inspired feature. They are not part of the
+Dungeons are a post-MVP Neverlands-based feature. They are not part of the
 launch MVP in `doc/design/launch_mvp_plan.md`.
 
 The dungeon feature exists around two source-defined goals:
@@ -49,8 +49,8 @@ enter dungeon
 
 - Starting a dungeon run as leader requires a special dungeon key or equivalent
   unlock described by the source.
-- The source describes key acquisition through crafting and through random-event
-  quest rewards.
+- The source describes key acquisition through crafting and through
+  source-backed random-event rewards.
 - A character without the starter key can join another player's application.
 - Join eligibility is tied to the leader: party members can differ from the
   leader by no more than two levels.
@@ -98,8 +98,7 @@ Patterns to preserve:
   visited the room.
 - A character with no oil cannot move.
 - The source grants some oil at dungeon start.
-- More oil can come from normal NPC drops, boss drops, chest rewards, or source
-  premium refill rules.
+- More oil can come from normal NPC drops, boss drops, or chest rewards.
 - Oil scarcity is a dungeon pacing mechanic. The design should make oil
   spending visible and meaningful.
 
@@ -127,7 +126,6 @@ Patterns to preserve:
 - Source recovery options are:
   - the dead player leaves the dungeon and party;
   - another party member resurrects them with a resurrection scroll;
-  - the player self-resurrects through the source premium rule.
 
 ## Seals And Portal Descent
 
@@ -202,8 +200,6 @@ an object, other characters cannot repeat that same interaction.
 - The source defines a permanent deepest-floor rating.
 - The source defines a weekly rating based on total floors completed during the
   week.
-- Source updates include dungeon achievements tied to floor depth and weekly
-  ranking.
 - Hidden chests and bosses are the main floor prize hooks.
 - Bosses can drop dungeon currency.
 - Dungeon currency is spent in the source specialist shop.
@@ -220,12 +216,12 @@ When the launch MVP is complete, implement only the source-backed path:
 4. Seal activation and portal descent with current wiki party-at-portal rules.
 5. Hidden-room key, hidden-room door, boss/chest branch, and one-time object
    interactions.
-6. Dungeon inventory, claustrophobia, magical disturbances, ratings,
-   achievements, dungeon currency, and specialist shop.
+6. Dungeon inventory, claustrophobia, magical disturbances, ratings, dungeon
+   currency, and specialist shop.
 
 ## Legacy Until Proven By Source
 
-The current local dungeon scaffold is legacy for design purposes if it cannot be
-mapped back to the wiki or forum sources. Generic difficulty modes, encounter
-checkpoints, attempt counts, abstract raid-like instance flow, or reward rules
-not present in those sources should not be treated as canonical dungeon design.
+Any dungeon scaffold is legacy for design purposes if it cannot be mapped back
+to the wiki or forum sources. Generic difficulty modes, encounter checkpoints,
+attempt counts, abstract raid-like instance flow, or reward rules not present
+in those sources should not be treated as canonical dungeon design.

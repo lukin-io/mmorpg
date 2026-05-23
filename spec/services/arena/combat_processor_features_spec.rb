@@ -56,20 +56,20 @@ RSpec.describe Arena::CombatProcessor, "Neverlands-style combat features" do
   end
 
   describe "Attack Types" do
-    it "defines ATTACK_TYPES constant" do
-      expect(Arena::CombatProcessor::ATTACK_TYPES).to include(:simple, :aimed)
+    it "exposes captured attacks through the action catalog" do
+      expect(Game::Combat::ActionCatalog.config["attack_types"].keys).to include("simple", "aimed")
     end
 
     it "simple attack has base damage multiplier" do
-      expect(Arena::CombatProcessor::ATTACK_TYPES[:simple][:damage_mult]).to eq(1.0)
+      expect(Game::Combat::ActionCatalog.attack_damage_multiplier(:simple)).to eq(1.0)
     end
 
     it "aimed attack has higher damage multiplier" do
-      expect(Arena::CombatProcessor::ATTACK_TYPES[:aimed][:damage_mult]).to eq(1.2)
+      expect(Game::Combat::ActionCatalog.attack_damage_multiplier(:aimed)).to eq(1.2)
     end
 
     it "aimed attack has hit bonus" do
-      expect(Arena::CombatProcessor::ATTACK_TYPES[:aimed][:hit_bonus]).to eq(15)
+      expect(Game::Combat::ActionCatalog.attack_hit_bonus(:aimed)).to eq(15)
     end
   end
 
@@ -191,9 +191,8 @@ RSpec.describe Arena::CombatProcessor, "Neverlands-style combat features" do
         expect(result[:block_attempted]).to be true
         expect(result[:body_part]).to eq("torso")
 
-        log = arena_match.reload.metadata["combat_log"]
-        failed_block_entries = log.select { |entry| entry["type"] == "block_failed" }
-        expect(failed_block_entries.last["description"]).to include("tried to block")
+        failed_block_entries = arena_match.reload.combat_log_entries.select { |entry| entry.log_type == "block_failed" }
+        expect(failed_block_entries.last.message).to include("tried to block")
       end
     end
 
@@ -222,10 +221,6 @@ RSpec.describe Arena::CombatProcessor, "Neverlands-style combat features" do
   end
 
   describe "Combat Log Messages" do
-    before do
-      arena_match.update!(metadata: {"combat_log" => []})
-    end
-
     it "logs attacks with body part" do
       deterministic_processor(0, 99, 0).process_action(
         character1,
@@ -234,10 +229,9 @@ RSpec.describe Arena::CombatProcessor, "Neverlands-style combat features" do
         body_part: "head"
       )
 
-      log = arena_match.reload.metadata["combat_log"]
-      last_entry = log.last
+      last_entry = arena_match.reload.combat_log_entries.last
 
-      expect(last_entry["description"]).to include("head")
+      expect(last_entry.message).to include("head")
     end
 
     it "logs critical hits with proper format" do
@@ -251,11 +245,10 @@ RSpec.describe Arena::CombatProcessor, "Neverlands-style combat features" do
         body_part: "torso"
       )
 
-      log = arena_match.reload.metadata["combat_log"]
-      crit_entries = log.select { |e| e["type"] == "critical" }
+      crit_entries = arena_match.reload.combat_log_entries.select { |entry| entry.log_type == "critical" }
 
       if crit_entries.any?
-        expect(crit_entries.last["description"]).to include("critical hit")
+        expect(crit_entries.last.message).to include("critical hit")
       end
     end
 
@@ -273,56 +266,41 @@ RSpec.describe Arena::CombatProcessor, "Neverlands-style combat features" do
         body_part: "torso"
       )
 
-      log = arena_match.reload.metadata["combat_log"]
-      block_entries = log.select { |e| e["type"] == "block" }
+      block_entries = arena_match.reload.combat_log_entries.select { |entry| entry.log_type == "block" }
 
       expect(block_entries).not_to be_empty
-      expect(block_entries.last["description"]).to include("blocked")
-      expect(block_entries.last["description"]).to include("torso")
+      expect(block_entries.last.message).to include("blocked")
+      expect(block_entries.last.message).to include("torso")
     end
   end
 
-  describe "#end_match with trauma" do
+  describe "#end_match with trauma/risk value" do
     before do
       character1.update!(current_hp: 80)
       character2.update!(current_hp: 0, experience: 1000)
     end
 
-    it "applies trauma to losers (sets HP to minimum)" do
+    it "does not invent loser HP penalties before formula capture" do
       processor.end_match("a")
 
-      character2.reload
-      # Trauma applies HP loss, but minimum is 1
-      expect(character2.current_hp).to be >= 0
-      expect(character2.current_hp).to be <= 1 # Minimum after trauma
+      expect(character2.reload.current_hp).to eq(0)
     end
 
-    it "reduces XP for losers with high trauma" do
+    it "does not invent XP loss before formula capture" do
       arena_match.update!(trauma_percent: 50)
       original_xp = character2.experience
 
       processor.end_match("a")
 
-      character2.reload
-      expect(character2.experience).to be < original_xp
+      expect(character2.reload.experience).to eq(original_xp)
     end
 
-    it "applies minor trauma to winners" do
+    it "does not invent winner HP penalties before formula capture" do
       original_hp = character1.current_hp
 
       processor.end_match("a")
 
-      character1.reload
-      expect(character1.current_hp).to be <= original_hp
-    end
-
-    it "logs trauma effects" do
-      processor.end_match("a")
-
-      log = arena_match.reload.metadata["combat_log"]
-      trauma_entries = log.select { |e| e["type"] == "trauma" }
-
-      expect(trauma_entries).not_to be_empty
+      expect(character1.reload.current_hp).to eq(original_hp)
     end
   end
 
@@ -333,27 +311,24 @@ RSpec.describe Arena::CombatProcessor, "Neverlands-style combat features" do
       arena_match.reload
       expect(arena_match.timed_out).to be true
 
-      log = arena_match.metadata["combat_log"]
-      timeout_entry = log.find { |e| e["type"] == "timeout" }
-      expect(timeout_entry["description"]).to include("timeout")
+      timeout_entry = arena_match.combat_log_entries.find { |entry| entry.log_type == "timeout" }
+      expect(timeout_entry.message).to include("таймаут")
     end
 
     it "handles normal victory" do
       processor.end_match("a", reason: :normal)
 
       arena_match.reload
-      log = arena_match.metadata["combat_log"]
-      victory_entry = log.find { |e| e["type"] == "victory" }
-      expect(victory_entry["description"]).to include("Winner")
+      victory_entry = arena_match.combat_log_entries.find { |entry| entry.log_type == "victory" }
+      expect(victory_entry.message).to include("Победитель")
     end
 
     it "handles draw" do
       processor.end_match(nil, reason: :normal)
 
       arena_match.reload
-      log = arena_match.metadata["combat_log"]
-      draw_entry = log.find { |e| e["type"] == "draw" }
-      expect(draw_entry["description"]).to include("draw")
+      draw_entry = arena_match.combat_log_entries.find { |entry| entry.log_type == "draw" }
+      expect(draw_entry.message).to include("ничь")
     end
   end
 
@@ -379,28 +354,30 @@ RSpec.describe Arena::CombatProcessor, "Neverlands-style combat features" do
       end
 
       context "with invalid body part" do
-        it "uses default body part multiplier" do
+        it "rejects the attack" do
           result = processor.process_action(
             character1,
             :attack,
             target: character2,
             body_part: "invalid_part"
           )
-          # Should still work, just use default multiplier
-          expect(result.success?).to be true
+
+          expect(result.success?).to be false
+          expect(result.error).to include("Недопустимая зона удара")
         end
       end
 
       context "with invalid attack type" do
-        it "uses default attack type" do
+        it "rejects the attack" do
           result = processor.process_action(
             character1,
             :attack,
             target: character2,
             attack_type: :invalid_type
           )
-          # Should still work, uses simple attack
-          expect(result.success?).to be true
+
+          expect(result.success?).to be false
+          expect(result.error).to include("Недопустимый тип удара")
         end
       end
     end
@@ -464,7 +441,7 @@ RSpec.describe Arena::CombatProcessor, "Neverlands-style combat features" do
       end
     end
 
-    describe "#apply_trauma" do
+    describe "uncaptured trauma consequences" do
       context "with 0% trauma" do
         before { arena_match.update!(trauma_percent: 0) }
 
@@ -481,15 +458,13 @@ RSpec.describe Arena::CombatProcessor, "Neverlands-style combat features" do
       context "with nil trauma_percent" do
         before { arena_match.update!(trauma_percent: nil) }
 
-        it "uses default 30% trauma" do
+        it "does not default into invented trauma penalties" do
           character2.update!(current_hp: 0)
           original_hp = character1.current_hp
 
           processor.end_match("a")
 
-          character1.reload
-          # Should have minor trauma applied
-          expect(character1.current_hp).to be <= original_hp
+          expect(character1.reload.current_hp).to eq(original_hp)
         end
       end
     end
@@ -509,7 +484,7 @@ RSpec.describe Arena::CombatProcessor, "Neverlands-style combat features" do
         it "returns failure with error message" do
           result = processor.process_action(non_participant, :attack, target: character2)
           expect(result.success?).to be false
-          expect(result.error).to eq("Character not in this match")
+          expect(result.error).to eq("Персонаж не участвует в этом бою")
         end
       end
 
@@ -532,7 +507,7 @@ RSpec.describe Arena::CombatProcessor, "Neverlands-style combat features" do
             target: teammate
           )
           expect(result.success?).to be false
-          expect(result.error).to eq("Cannot attack ally")
+          expect(result.error).to eq("Нельзя атаковать союзника")
         end
       end
 
@@ -540,7 +515,7 @@ RSpec.describe Arena::CombatProcessor, "Neverlands-style combat features" do
         it "returns failure" do
           result = processor.process_action(character1, :flee)
           expect(result.success?).to be false
-          expect(result.error).to include("Cannot flee")
+          expect(result.error).to include("Нельзя сбежать")
         end
       end
     end

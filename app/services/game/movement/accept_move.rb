@@ -51,23 +51,16 @@ module Game
       end
 
       def find_offer!(position)
-        return find_offer_by_direction!(position) if action_key.blank? && direction
-
         scope = MovementCommand.offered.where(character:, zone: position.zone, action_key:)
         scope = scope.where(target_x:, target_y:) if target_x && target_y
         scope.order(created_at: :desc).first || raise(violation("Movement offer is no longer available"))
       end
 
-      def find_offer_by_direction!(position)
-        state = Game::Movement::MapState.new(character:, respawn_service:).call
-        destination = state.destinations.find { |offer| offer.direction == direction.to_s }
-        raise violation("Movement offer is no longer available") unless destination
-
-        MovementCommand.offered.find(destination.id)
-      end
-
       def validate_offer!(command, position)
         raise violation("Movement offer has expired") if command.expired_offer?
+        if direction.present? && command.direction != direction.to_s
+          raise violation("Movement offer does not match requested direction")
+        end
 
         unless command.zone_id == position.zone_id && command.from_x == position.x && command.from_y == position.y
           raise violation("Movement offer does not match current position")
@@ -91,7 +84,7 @@ module Game
       end
 
       def violation(message)
-        Game::Movement::TurnProcessor::MovementViolationError.new(message)
+        Game::Movement::MovementViolationError.new(message)
       end
     end
   end

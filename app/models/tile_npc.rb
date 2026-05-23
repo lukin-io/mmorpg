@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-# TileNpc tracks NPC spawns at specific map tiles.
-# NPCs respawn after being defeated (~30 minutes +/- 5 minutes randomness).
-# Different biomes spawn different NPC types.
+# TileNpc tracks NPCs materialized at captured source-backed map tiles.
+# Template metadata may define observed respawn timing; otherwise a defeated
+# NPC remains defeated until a source-backed timing rule exists.
 #
 # Usage:
 #   TileNpc.at_tile(zone_name, x, y) # Find NPC at tile
@@ -10,9 +10,7 @@
 #   npc.defeat!(character)            # Mark defeated and start respawn timer
 #
 class TileNpc < ApplicationRecord
-  BASE_RESPAWN_SECONDS = 30.minutes.to_i
-  RESPAWN_VARIANCE = 5.minutes.to_i # +/- 5 minutes randomness
-  NPC_ROLES = %w[hostile friendly vendor quest_giver trainer guard].freeze
+  NPC_ROLES = %w[hostile].freeze
 
   belongs_to :npc_template
   belongs_to :defeated_by, class_name: "Character", optional: true
@@ -31,7 +29,6 @@ class TileNpc < ApplicationRecord
   scope :defeated, -> { where.not(defeated_at: nil) }
   scope :needs_respawn, -> { where("respawns_at IS NOT NULL AND respawns_at <= ?", Time.current).where.not(defeated_at: nil) }
   scope :hostile, -> { where(npc_role: "hostile") }
-  scope :friendly, -> { where.not(npc_role: "hostile") }
 
   # Check if NPC is alive and interactable
   def alive?
@@ -60,30 +57,28 @@ class TileNpc < ApplicationRecord
     update!(
       defeated_at: Time.current,
       defeated_by: character,
-      respawns_at: Time.current + respawn_time,
+      respawns_at: respawn_time ? Time.current + respawn_time : nil,
       current_hp: 0
     )
 
-    # Schedule respawn job
-    TileNpcRespawnJob.set(wait: respawn_time).perform_later(id)
+    TileNpcRespawnJob.set(wait: respawn_time).perform_later(id) if respawn_time
 
     true
   end
 
-  # Respawn the NPC with a new random NPC from the biome
+  # Respawn the NPC using the explicit source-backed zone definition.
   def respawn!
-    new_npc_data = Game::World::BiomeNpcConfig.sample_npc(biome || "plains")
+    new_npc_data = Game::World::OutdoorNpcConfig.source_npc_for_tile(zone, x, y)
     return false unless new_npc_data
 
-    # Find or create NPC template
     template = find_or_create_template(new_npc_data)
     return false unless template
 
     update!(
       npc_template: template,
       npc_key: new_npc_data[:key].to_s,
-      npc_role: (new_npc_data[:role] || "hostile").to_s,
-      level: calculate_spawn_level(new_npc_data),
+      npc_role: new_npc_data[:role].to_s,
+      level: new_npc_data[:level],
       current_hp: template.health,
       max_hp: template.health,
       respawns_at: nil,
@@ -104,11 +99,6 @@ class TileNpc < ApplicationRecord
     npc_role == "hostile"
   end
 
-  # Check if friendly (can interact)
-  def friendly?
-    !hostile?
-  end
-
   # HP percentage for display
   def hp_percentage
     return 100 if max_hp.nil? || max_hp.zero?
@@ -119,38 +109,35 @@ class TileNpc < ApplicationRecord
   private
 
   def calculate_respawn_time
-    # Base 30 min +/- 5 min random variance
-    variance = rand(-RESPAWN_VARIANCE..RESPAWN_VARIANCE)
-    base = BASE_RESPAWN_SECONDS + variance
+    return unless template_respawn_seconds
 
-    # Biome modifiers
-    case biome
-    when "forest"
-      base -= 3.minutes.to_i # Faster in forests (wildlife)
-    when "mountain"
-      base += 5.minutes.to_i # Slower in mountains
-    when "swamp"
-      base -= 2.minutes.to_i # Faster in swamps
-    end
+    variance_seconds = template_respawn_variance_seconds
+    variance = variance_seconds.to_i.positive? ? rand(-variance_seconds..variance_seconds) : 0
+    base = template_respawn_seconds + variance
 
-    # Rarity modifiers
-    case metadata&.dig("rarity")
-    when "rare"
-      base += 10.minutes.to_i
-    when "elite"
-      base += 20.minutes.to_i
-    when "boss"
-      base += 60.minutes.to_i
-    end
-
-    base.clamp(10.minutes.to_i, 3.hours.to_i)
+    base.clamp(1, 24.hours.to_i)
   end
 
-  def calculate_spawn_level(npc_data)
-    base_level = npc_data[:level] || 1
-    variance = npc_data[:level_variance] || 2
+  def template_respawn_seconds
+    metadata_respawn_seconds ||
+      npc_template&.respawn_seconds
+  end
 
-    (base_level + rand(-variance..variance)).clamp(1, 100)
+  def template_respawn_variance_seconds
+    metadata_respawn_variance_seconds ||
+      npc_template&.respawn_variance_seconds ||
+      0
+  end
+
+  def metadata_respawn_seconds
+    positive_metadata_integer("respawn_seconds") ||
+      positive_metadata_integer("spawn_respawn_seconds")
+  end
+
+  def metadata_respawn_variance_seconds
+    value = metadata_integer("respawn_variance_seconds") ||
+      metadata_integer("spawn_respawn_variance_seconds")
+    value if value && value >= 0
   end
 
   def find_or_create_template(npc_data)
@@ -165,6 +152,7 @@ class TileNpc < ApplicationRecord
     if template
       # Update npc_key if missing (for templates created by factory)
       template.update!(npc_key: npc_key) if template.npc_key.blank?
+      sync_template_spawn_metadata(template, npc_data)
       return template
     end
 
@@ -176,16 +164,10 @@ class TileNpc < ApplicationRecord
     NpcTemplate.create!(
       npc_key: npc_key,
       name: npc_name,
-      role: npc_data[:role]&.to_s || "hostile",
-      level: npc_data[:level] || 1,
+      role: npc_data[:role].to_s,
+      level: npc_data[:level],
       dialogue: npc_data[:dialogue]&.to_s || "...",
-      metadata: {
-        biome: biome,
-        health: npc_data[:hp] || 100,
-        base_damage: npc_data[:damage] || 10,
-        xp_reward: npc_data[:xp] || 10,
-        loot_table: npc_data[:loot] || []
-      }.merge(npc_data[:metadata] || {})
+      metadata: template_spawn_metadata(npc_data)
     )
   rescue ActiveRecord::RecordInvalid, ActiveRecord::RecordNotUnique => e
     Rails.logger.warn("NPC template creation conflict for #{npc_key}: #{e.message}")
@@ -201,6 +183,39 @@ class TileNpc < ApplicationRecord
     end
 
     Rails.logger.error("Failed to find or create NPC template for #{npc_key} after retries")
+    nil
+  end
+
+  def sync_template_spawn_metadata(template, npc_data)
+    additions = template_spawn_metadata(npc_data).compact
+    missing = additions.except(*template.metadata.keys)
+    return if missing.empty?
+
+    template.update!(metadata: template.metadata.merge(missing))
+  end
+
+  def template_spawn_metadata(npc_data)
+    {
+      "health" => npc_data[:hp],
+      "base_damage" => npc_data[:damage],
+      "xp_reward" => npc_data[:xp],
+      "loot_table" => npc_data[:loot] || [],
+      "respawn_seconds" => npc_data[:respawn_seconds],
+      "respawn_variance_seconds" => npc_data[:respawn_variance_seconds]
+    }.compact.merge((npc_data[:metadata] || {}).deep_stringify_keys)
+  end
+
+  def positive_metadata_integer(key)
+    value = metadata_integer(key)
+    value if value&.positive?
+  end
+
+  def metadata_integer(key)
+    value = metadata&.dig(key)
+    return if value.blank?
+
+    Integer(value)
+  rescue ArgumentError, TypeError
     nil
   end
 end

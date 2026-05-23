@@ -6,12 +6,7 @@ module InventoriesHelper
     ["all", "All"],
     ["equipment", "Things"],
     ["consumables", "Elixirs"],
-    ["alchemy", "Alchemy"],
-    ["fishing", "Fishing"],
-    ["hunting", "Hunting & Food"],
-    ["materials", "Resources"],
-    ["wood", "Wood"],
-    ["quest", "Quest Journal"]
+    ["materials", "Materials"]
   ].freeze
 
   SLOT_ICONS = {
@@ -44,8 +39,6 @@ module InventoriesHelper
     "accessory" => "AC",
     "consumable" => "EL",
     "material" => "RS",
-    "resource" => "RS",
-    "quest" => "Q",
     "misc" => "IT"
   }.freeze
 
@@ -81,15 +74,14 @@ module InventoriesHelper
       lines << [label.to_s.titleize, value]
     end
 
-    lines.presence || [["Description", template.item_type.to_s.titleize]]
+    lines.presence || [["Описание", template.item_type.to_s.titleize]]
   end
 
   def inventory_item_requirements(item)
     template = item.item_template
     requirements = template.requirements.to_h.merge(item.properties.to_h.fetch("requirements", {}))
     weight = item.weight.to_i.positive? ? item.weight : template.weight
-    lines = [["Weight", weight]]
-    lines << ["Level", item.properties["level_required"]] if item.properties["level_required"].present?
+    lines = [["Масса", weight]]
 
     requirements.each do |label, value|
       lines << [label.to_s.titleize, value]

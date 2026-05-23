@@ -9,6 +9,8 @@ class CreateCityHotspots < ActiveRecord::Migration[8.0]
       t.string :hotspot_type, null: false, default: "building"
       t.integer :position_x, null: false
       t.integer :position_y, null: false
+      t.integer :width
+      t.integer :height
       t.string :image_normal
       t.string :image_hover
       t.string :action_type, null: false, default: "open_feature"

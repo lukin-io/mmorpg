@@ -1,9 +1,9 @@
 # Game Design Document
 
 This is the design source of truth for the project. The game is a
-Neverlands-inspired browser MMORPG, not a one-to-one asset or content clone.
-When implementation docs, tests, or code disagree with this file, this file
-wins and the derived material should be updated.
+Neverlands-based browser MMORPG, not a one-to-one asset or content clone.
+When implementation docs, tests, or code disagree with this file, this file wins
+and the derived material should be updated.
 
 ## Reference Hierarchy
 
@@ -12,10 +12,8 @@ wins and the derived material should be updated.
    buildable feature and area documents.
 3. `doc/design/reference/neverlands.md` explains how Neverlands observations
    should be translated into this project's design language.
-4. `doc/flow/neverlands_live_movement.md` and
-   `doc/flow/neverlands_live_city_movement.md`,
-   `doc/flow/neverlands_live_player.md`, and Neverlands-specific reference
-   notes are captured source material. They are not allowed to override this
+4. `doc/design/reference/*` holds Neverlands observations and source-material
+   mapping. Reference notes explain provenance, but they do not override this
    GDD.
 
 Non-Neverlands docs are not part of the design hierarchy and should be removed
@@ -44,23 +42,22 @@ Features:
 - `doc/design/features/combat.md`
 - `doc/design/features/items_inventory_equipment.md`
 - `doc/design/features/economy_trading_shops.md`
-- `doc/design/features/gathering_professions.md`
 - `doc/design/features/npcs_quests.md`
 - `doc/design/features/social_chat_presence.md`
 - `doc/design/features/dungeons.md`
 
 Documentation process:
 
-- `doc/design/documentation_model.md`
-- `doc/design/neverlands_parity_matrix.md`
+- `doc/design/README.md`
+- `doc/design/launch_mvp_plan.md`
 - `doc/design/reference/neverlands.md`
 - `doc/design/reference/source_material.md`
 
 ## Vision
 
-Build a classic, persistent, browser-first fantasy MMORPG with slow, deliberate
-map movement, tile-local actions, social presence, tactical combat, character
-growth, player economy, and profession systems.
+Build a classic, persistent, browser-first Neverlands-based MMORPG with slow,
+deliberate map movement, tile-local actions, social presence, tactical combat,
+character growth, and player economy.
 
 The intended feel is:
 
@@ -69,7 +66,8 @@ The intended feel is:
 - readable location state and visible nearby player presence;
 - movement that has weight, travel time, and contextual consequences;
 - deterministic world data suitable for testing and iteration;
-- mechanics that are inspired by Neverlands but adapted for this codebase.
+- mechanics that follow observed Neverlands behavior and are implemented with clean Rails
+  implementation.
 
 ## Core Loop
 
@@ -80,9 +78,8 @@ The intended feel is:
 3. Player chooses a server-offered destination or local action.
 4. Movement/actions lock relevant buttons and show a timer when they take time.
 5. Completion refreshes current location, available movement, tile actions,
-   resources, NPCs, buildings, encounters, and nearby player list.
-6. Player gains resources, combat progress, quest progress, reputation, skill
-   growth, or economy opportunities.
+   NPCs, buildings, encounters, and nearby player list.
+6. Player gains combat progress, skill growth, or economy opportunities.
 
 ## Movement GDD
 
@@ -101,7 +98,7 @@ Movement follows the Neverlands-style contract:
 - reload during travel resumes from server state;
 - completion updates authoritative position and returns the next map state;
 - completion also refreshes context buttons such as character, inventory,
-  enter, look around, gather, fish, dig, drink, quest, or combat actions.
+  enter, NPC, building, or combat actions.
 
 The first implementation does not need to copy Neverlands' exact `GO@...`
 string protocol. JSON or Turbo Streams are acceptable if they preserve the same
@@ -157,21 +154,16 @@ Travel time is a GDD-level value, not a browser-only cooldown. The same formula
 must be used for destination offers, accepted movement validation, countdown
 display, and action readiness.
 
-Baseline formula:
+Captured starter formula:
 
 ```text
-travel_seconds =
-  base_zone_seconds
-  * terrain_modifier(target tile)
-  * diagonal_modifier
-  * encumbrance_modifier
-  / mount_multiplier
-  * skill_modifier
+travel_seconds = 30
 ```
 
 The observed Neverlands reference move from `1019,1025` to `1018,1025` used
 `30` seconds. Use that as the initial starter-area reference unless a specific
-developer-mode override is intentionally added.
+developer-mode override is intentionally added. Do not add terrain, diagonal,
+encumbrance, or skill timing modifiers until they are source-captured.
 
 ### Direction Policy
 
@@ -180,16 +172,15 @@ The GDD must explicitly choose one policy:
 - cardinal-only movement; or
 - eight-direction movement with diagonals.
 
-Until changed, the target policy is eight-direction movement because the current
-map and `TurnProcessor` already expose diagonals. All layers must follow the
-same policy: service, model validation, pathfinding, map rendering, JS, action
-buttons, and tests.
+Until changed, the target policy is eight-direction movement. All layers must
+follow the same policy: movement rules, persistence validation, pathfinding, map
+rendering, client controls, and tests.
 
 ### Passability Policy
 
-One server service owns passability. Views and browser controllers do not invent
-movement availability. Missing tile data must have a deterministic rule and
-must render the same way it validates.
+One authoritative movement rule owns passability. Views and browser controllers
+do not invent movement availability. Missing tile data must have a
+deterministic rule and must render the same way it validates.
 
 ### Movement Completion
 
@@ -205,14 +196,14 @@ The world is a tile grid split into zones or regions. Zones define:
 - dimensions or coordinate bounds;
 - visual map variant;
 - base travel seconds;
-- biome;
-- encounter table;
+- location type (`city` or `outdoor`);
+- explicit outdoor NPC/resource records;
 - spawn points;
 - tile templates;
 - allowed local action types.
 
 Starter world data should be deterministic. The first canonical movement test
-area should use a Neverlands-inspired coordinate neighborhood around
+area should use a Neverlands-based coordinate neighborhood around
 `1019,1025` so docs, seeds, tests, and UI examples talk about the same place.
 
 ## Tile-Local Actions
@@ -223,14 +214,9 @@ may offer buttons for:
 - character/profile;
 - inventory;
 - enter/exit building or location;
-- look around;
-- gather resource;
-- fish;
-- dig;
-- drink/use terrain feature;
 - talk to NPC;
 - attack hostile NPC;
-- quest interaction.
+- future captured quest interaction.
 
 Each action that mutates state should be server-authored, persisted, and
 validated against the current tile. The map renders action offers issued by the
@@ -242,7 +228,8 @@ coordinate, action type, and target.
 Combat is turn-based and tactical. Core expectations:
 
 - PvE encounters can trigger from map movement or tile-local hostile actions;
-- PvP supports duels, group battles, arena rooms, and clan conflict;
+- player, team, and NPC fights support Neverlands-style arena duels, group
+  fights, and room-based applications;
 - combat uses explicit turns, action points, body-part targeting, blocks,
   skills, logs, rewards, and death/respawn consequences;
 - combat state must be resumable and auditable.
@@ -278,27 +265,22 @@ Characters grow through:
 - experience and levels;
 - stat allocation;
 - passive skills;
-- profession progress;
-- reputation and alignment;
+- Neverlands alignment/sign markers where source-backed;
 - equipment and inventory growth.
 
-Movement-affecting progression, such as Wanderer skill, mounts, encumbrance, or
-terrain mastery, must feed the canonical travel-time formula.
+Movement-affecting progression, such as Wanderer skill, encumbrance, or terrain
+mastery, must feed the canonical travel-time formula.
 
-## Economy And Professions
+## Economy
 
 The economy supports:
 
-- gold and premium currency;
+- normal shop currency;
 - inventory weight/slots;
-- marketplace and auction flows;
-- direct trade;
-- crafting professions;
-- gathering and resource respawn;
-- equipment upgrades and item sinks.
+- city shop buy/sell flows;
 
-Profession actions may lock movement with timers, matching the same lock/resume
-model as movement.
+Direct player trade exists in Neverlands, but it is deferred until its exact
+flow and constraints are captured.
 
 ## Social Presence
 
@@ -307,18 +289,14 @@ The game should always feel populated when other players are nearby:
 - location/player list;
 - chat;
 - private messages;
-- friends;
-- guilds/clans;
-- moderation tools;
 - local player refresh after movement completion.
 
-## Technical Design Principles
+## Rails-Friendly Design Principles
 
-- Rails monolith with Hotwire/Stimulus remains the default architecture.
 - The server is authoritative for movement, actions, inventory, combat, and
   rewards.
 - Browser timers are display of server state, not source of truth.
-- World-map buttons are DB-backed action offers, not ad hoc controller params.
+- World-map buttons are persisted action offers, not ad hoc controller params.
 - Deterministic seeds and fixtures are preferred over random map generation for
   core movement and combat flows.
 - Data model changes are allowed while the app is in development. Prefer clean

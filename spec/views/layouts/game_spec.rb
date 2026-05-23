@@ -4,8 +4,8 @@ require "rails_helper"
 
 RSpec.describe "layouts/game.html.erb", type: :view do
   let(:user) { create(:user) }
-  let(:character) { create(:character, user: user, name: "TestHero", level: 10) }
-  let(:zone) { create(:zone, name: "Test Zone", biome: "plains") }
+  let(:character) { create(:character, user: user, name: "max_kerby_layout", level: 10) }
+  let(:zone) { create(:zone, name: "Окрестность Форпоста", location_type: "outdoor") }
   let(:position) { create(:character_position, character: character, zone: zone) }
   let(:chat_channel) { create(:chat_channel, name: "Global", channel_type: :global) }
 
@@ -49,7 +49,7 @@ RSpec.describe "layouts/game.html.erb", type: :view do
       render template: "layouts/game", layout: false
 
       expect(rendered).to have_css(".nl-player-link")
-      expect(rendered).to include("TestHero")
+      expect(rendered).to include("max_kerby_layout")
     end
 
     it "displays character level in brackets" do
@@ -79,28 +79,21 @@ RSpec.describe "layouts/game.html.erb", type: :view do
       expect(rendered).to have_css(".nl-top-nav")
     end
 
-    it "includes Quests link" do
+    it "includes character link" do
       render template: "layouts/game", layout: false
 
-      expect(rendered).to have_link("Quests", class: "nl-nav-link")
+      expect(rendered).to have_link("Персонаж", class: "nl-nav-link")
     end
 
-    it "includes Character link" do
+    it "includes inventory link" do
       render template: "layouts/game", layout: false
 
-      expect(rendered).to have_link("Character", class: "nl-nav-link")
+      expect(rendered).to have_link("Инвентарь", class: "nl-nav-link")
     end
 
-    it "includes Inventory link" do
+    it "includes return/exit link" do
       render template: "layouts/game", layout: false
 
-      expect(rendered).to have_link("Inventory", class: "nl-nav-link")
-    end
-
-    it "includes Enter/Exit link" do
-      render template: "layouts/game", layout: false
-
-      # Either "Enter" (for outdoor) or "Exit" (for city)
       expect(rendered).to have_css(".nl-nav-link", minimum: 4)
     end
   end
@@ -158,11 +151,11 @@ RSpec.describe "layouts/game.html.erb", type: :view do
       expect(rendered).to have_css(".nl-bottom-bar")
     end
 
-    it "includes action buttons" do
+    it "includes the captured chat action button" do
       render template: "layouts/game", layout: false
 
       expect(rendered).to have_css(".nl-action-area")
-      expect(rendered).to have_css(".nl-action-btn-small", minimum: 2)
+      expect(rendered).to have_css(".nl-action-btn-small", text: "Сказать")
     end
 
     it "includes chat area" do
@@ -207,7 +200,7 @@ RSpec.describe "layouts/game.html.erb", type: :view do
   end
 
   describe "when in city zone" do
-    let(:city_zone) { create(:zone, name: "City", biome: "city") }
+    let(:city_zone) { create(:zone, name: "City", location_type: "city") }
 
     before do
       # Update existing position to city zone instead of creating duplicate
@@ -215,10 +208,10 @@ RSpec.describe "layouts/game.html.erb", type: :view do
       assign(:position, position)
     end
 
-    it "shows Exit link instead of Enter" do
+    it "shows city exit link" do
       render template: "layouts/game", layout: false
 
-      expect(rendered).to have_link("Exit", class: "nl-nav-link")
+      expect(rendered).to have_link("Выход", class: "nl-nav-link")
     end
   end
 

@@ -15,14 +15,13 @@ RSpec.describe "ChatMessages", type: :request do
       expect(response).to have_http_status(:found)
     end
 
-    it "rejects muted players" do
+    it "rejects blank messages" do
       user = create(:user)
       channel = create(:chat_channel)
-      create(:chat_moderation_action, target_user: user, actor: create(:user), action_type: :mute_global)
 
       sign_in user, scope: :user
 
-      post chat_channel_chat_messages_path(channel), params: {chat_message: {body: "Hello"}}
+      post chat_channel_chat_messages_path(channel), params: {chat_message: {body: ""}}
 
       expect(response).to have_http_status(:unprocessable_entity)
     end

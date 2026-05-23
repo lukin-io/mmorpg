@@ -10,8 +10,8 @@ it is node-to-node navigation through illustrated hotspots.
 
 Primary references:
 
-- `doc/flow/neverlands_live_movement.md`
-- `doc/flow/neverlands_live_city_movement.md`
+- `doc/design/reference/neverlands.md`
+- `doc/design/reference/source_material.md`
 
 Observed split:
 
@@ -49,10 +49,11 @@ Neverlands-style movement is persistent server state, not browser state.
 
 Authoritative state:
 
-- `character_positions` stores the finalized coordinate and zone.
-- `movement_commands` stores each offered, accepted, active, completed, failed,
-  or cancelled movement.
-- An accepted movement does not immediately change `character_positions`.
+- a character location record stores the finalized coordinate and zone;
+- a movement command record stores each offered, accepted, active, completed,
+  failed, or cancelled movement;
+- an accepted movement does not immediately change the finalized character
+  location.
 - Active movement stores source coordinate, target coordinate, start time,
   end time, travel duration, and action key.
 - Reopening the browser must load from database state:
@@ -67,39 +68,6 @@ Expected player result: if a player walks in the open world, closes the browser,
 and opens the game later, they are still at the same finalized cell or at the
 completed destination if the travel timer elapsed while they were away.
 
-## Current Implementation Status
-
-Current movement implementation is close to the required persistence model:
-
-- `Game::Movement::MapState` creates server-authored destination offers.
-- `Game::Movement::AcceptMove` accepts an offer and starts timed travel.
-- `Game::Movement::CompleteMove` finalizes due travel into
-  `character_positions`.
-- `movement_commands` now has source, target, action key, travel seconds,
-  start time, end time, completion, and failure fields.
-- The browser submits only server-issued `target_x`, `target_y`, and
-  `action_key`.
-- Accepting one movement offer cancels sibling destination offers for the same
-  character and zone so stale movement choices do not remain live in the DB.
-
-World-map contextual action parity now follows the same server-authored shape:
-
-- `WorldActionOffer` stores short-lived action keys for gather, NPC, and
-  building entry actions;
-- `Game::World::TileStateResolver` materializes current-tile resource/NPC state
-  before the action is rendered;
-- `Game::World::ActionOfferBuilder` issues contextual action offers from the
-  DB-backed tile state;
-- `Game::World::AcceptAction` validates character, zone, coordinate, action
-  type, target, and expiry before dispatching the action.
-
-Remaining parity gaps:
-
-- city image-map hotspots still use the city hotspot service and are not yet
-  backed by `WorldActionOffer`;
-- local presence refresh after movement completion is not yet a separate
-  persisted/refreshable panel like Neverlands `ch_list`.
-
 ## City Rules
 
 - City entry is a contextual action offered by an outside tile.
@@ -111,20 +79,18 @@ Remaining parity gaps:
 
 ## Travel Time
 
-Baseline formula:
+Captured starter formula:
 
 ```text
-travel_seconds =
-  base_zone_seconds
-  * terrain_modifier
-  * diagonal_modifier
-  * encumbrance_modifier
-  / mount_multiplier
-  * skill_modifier
+travel_seconds = 30
 ```
 
 Initial starter reference: `30` seconds for a normal adjacent wilderness step
 near Oktal.
+
+No terrain, diagonal, encumbrance, or skill timing modifier is implemented until
+the exact Neverlands rule is captured. Terrain labels may identify a tile, but
+they must not alter movement duration by themselves.
 
 ## State Concepts
 
@@ -142,26 +108,22 @@ near Oktal.
 
 - `areas/world_map.md` owns the outdoor screen.
 - `areas/cities_and_buildings.md` owns city and building movement.
-- `features/gathering_professions.md` can lock movement while an action timer
-  runs.
 - `features/progression_stats_skills.md` can reduce travel time through skills.
 - `features/items_inventory_equipment.md` can increase travel time through
   carried weight.
 
-## Technical Direction
+## Rails-Friendly Direction
 
-The open-world map uses one server-authored state-building pipeline:
+The open-world map should use one server-authored state-building pipeline:
 
 1. Finalize due movement for the character.
-2. Load `character_positions` as the current authoritative location.
+2. Load the current authoritative character location.
 3. Materialize tile context for the current location:
-   - resource from `TileResource`;
-   - NPC from `TileNpc`;
-   - building/city/dungeon entrance from `TileBuilding`;
-   - terrain/passability from `MapTileTemplate`.
+   - NPCs;
+   - building, city, dungeon, or portal entrances;
+   - terrain and passability.
 4. Create short-lived action offers for everything the player can do:
    - movement offers;
-   - gather offers;
    - attack/talk offers;
    - enter city/building/dungeon offers;
    - inspect/profile/inventory offers when needed by the UI.
@@ -169,136 +131,20 @@ The open-world map uses one server-authored state-building pipeline:
 6. Accept an action only when its action key still matches the current
    character, zone, coordinate, target, and action type.
 
-Implementation objects:
+Suggested Rails shape:
 
-- `Game::World::TileStateResolver`
-  - returns stable DB-backed state for the current tile;
-  - materializes generated NPC/resource records before showing them;
-  - removes display-only procedural resource/NPC hints from map rendering.
-- `WorldActionOffer`
-  - stores `character_id`, `zone_id`, `x`, `y`, `action_type`, `target_type`,
-    `target_id`, `action_key`, `expires_at`, `status`, and metadata;
-  - replaces ad hoc action buttons without action-key persistence.
-- `Game::World::ActionOfferBuilder`
-  - creates movement and contextual action offers from tile state;
-  - invalidates old offers on each authoritative map-state build.
-- `Game::World::AcceptAction`
-  - validates the action key and dispatches to movement, gathering, NPC,
-    combat, or building-entry handlers.
+- one model for finalized character location;
+- one model for movement commands and their lifecycle;
+- one model for short-lived contextual action offers;
+- one service that builds tile state and offers from persisted state;
+- one service that accepts an action key and dispatches to movement,
+  NPC, combat, or building-entry rules.
 
-Movement remains in `movement_commands`; non-movement tile actions are tracked
-in `WorldActionOffer` so every current map action has a server-issued key and an
-auditable result.
+Movement and non-movement tile actions should both produce auditable server
+state. The browser should submit choices, not decide what choices exist.
 
 ## Out Of Scope
 
 - Long-distance pathfinding as the first movement interaction.
 - Browser-only cooldowns.
 - City travel countdowns for the starter city.
-
-## Related Implementation Files
-
-Current codebase movement uses the server-offered travel lifecycle described
-above. The broader map-action parity gaps are tracked in this document and in
-`doc/flow/neverlands_movement_codebase_analysis.md`.
-
-Models:
-
-- `app/models/character_position.rb`
-- `app/models/movement_command.rb`
-- `app/models/map_tile_template.rb`
-- `app/models/zone.rb`
-- `app/models/spawn_point.rb`
-- `app/models/spawn_schedule.rb`
-- `app/models/tile_building.rb`
-- `app/models/tile_resource.rb`
-- `app/models/tile_npc.rb`
-- `app/models/world_action_offer.rb`
-
-Controller and routes:
-
-- `app/controllers/application_controller.rb`
-- `app/controllers/world_controller.rb`
-- `config/routes.rb`
-
-Movement services:
-
-- `app/services/game/movement/turn_processor.rb`
-- `app/services/game/movement/map_state.rb`
-- `app/services/game/movement/accept_move.rb`
-- `app/services/game/movement/complete_move.rb`
-- `app/services/game/movement/travel_time.rb`
-- `app/services/game/movement/movement_validator.rb`
-- `app/services/game/movement/tile_provider.rb`
-- `app/services/game/movement/terrain_modifier.rb`
-- `app/services/game/movement/pathfinder.rb`
-- `app/services/game/movement/command_queue.rb`
-- `app/services/game/movement/respawn_service.rb`
-- `app/services/game/movement/teleport_service.rb`
-- `app/services/game/exploration/encounter_resolver.rb`
-
-World feature services connected to movement:
-
-- `app/services/game/world/tile_building_service.rb`
-- `app/services/game/world/tile_gathering_service.rb`
-- `app/services/game/world/tile_npc_service.rb`
-- `app/services/game/world/tile_state_resolver.rb`
-- `app/services/game/world/action_offer_builder.rb`
-- `app/services/game/world/accept_action.rb`
-- `app/services/game/world/population_directory.rb`
-- `app/services/game/world/region_catalog.rb`
-
-Views:
-
-- `app/views/world/show.html.erb`
-- `app/views/world/_map.html.erb`
-- `app/views/world/_actions.html.erb`
-- `app/views/world/_location_info.html.erb`
-- `app/views/world/_players_here.html.erb`
-- `app/views/world/_quick_actions.html.erb`
-- `app/views/world/_character_panel.html.erb`
-
-JavaScript:
-
-- `app/javascript/controllers/nl_world_map_controller.js`
-
-Jobs:
-
-- `app/jobs/game/movement_command_processor_job.rb`
-
-Config, seeds, and migrations:
-
-- `config/gameplay/terrain_modifiers.yml`
-- `config/gameplay/biomes.yml`
-- `config/gameplay/world/regions.yml`
-- `db/migrate/20251121090004_create_map_tile_templates.rb`
-- `db/migrate/20251122120000_create_world_navigation_systems.rb`
-- `db/migrate/20251124130000_create_movement_commands.rb`
-- `db/migrate/20260509210000_add_neverlands_travel_fields_to_movement_commands.rb`
-- `db/migrate/20260509211000_create_world_action_offers.rb`
-- `db/seeds.rb`
-
-Specs:
-
-- `spec/models/movement_command_spec.rb`
-- `spec/requests/login_resume_spec.rb`
-- `spec/services/game/movement/map_state_spec.rb`
-- `spec/services/game/movement/accept_move_spec.rb`
-- `spec/services/game/movement/complete_move_spec.rb`
-- `spec/services/game/movement/travel_time_spec.rb`
-- `spec/services/game/movement/turn_processor_spec.rb`
-- `spec/services/game/movement/tile_provider_spec.rb`
-- `spec/services/game/movement/command_queue_spec.rb`
-- `spec/models/map_tile_template_spec.rb`
-- `spec/models/tile_building_spec.rb`
-- `spec/models/tile_resource_spec.rb`
-- `spec/models/tile_npc_spec.rb`
-- `spec/models/world_action_offer_spec.rb`
-- `spec/services/game/world/action_offer_builder_spec.rb`
-- `spec/services/game/world/accept_action_spec.rb`
-- `spec/requests/world_spec.rb`
-- `spec/system/world_map_spec.rb`
-- `spec/system/world_interactions_spec.rb`
-- `spec/views/world/_actions_spec.rb`
-- `spec/views/world/_map_spec.rb`
-- `spec/views/world/show_spec.rb`

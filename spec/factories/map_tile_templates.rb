@@ -5,8 +5,7 @@ FactoryBot.define do
     sequence(:zone) { |n| "Zone #{n}" }
     sequence(:x) { |n| n % 10 }
     sequence(:y) { |n| n / 10 }
-    terrain_type { "plains" }
-    biome { "plains" }
+    terrain_type { "outdoor" }
     passable { true }
     metadata { {} }
   end

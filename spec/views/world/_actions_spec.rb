@@ -3,54 +3,82 @@
 require "rails_helper"
 
 RSpec.describe "world/_actions.html.erb", type: :view do
-  let(:zone) { create(:zone, name: "Action Plains", biome: "plains") }
+  let(:zone) { create(:zone, name: "Окрестность Форпоста", location_type: "outdoor") }
   let(:position) { create(:character_position, zone:, x: 5, y: 5) }
-  let(:north_offer) do
-    OpenStruct.new(direction: "north", target_x: 5, target_y: 4, action_key: "north-action-key")
-  end
-  let(:east_offer) do
-    OpenStruct.new(direction: "east", target_x: 6, target_y: 5, action_key: "east-action-key")
-  end
+  let(:offer) { OpenStruct.new(action_key: "attack-action-key") }
 
-  before do
-    without_partial_double_verification do
-      allow(view).to receive(:move_world_path).and_return("/world/move")
-    end
-  end
-
-  it "renders movement buttons with server-issued target coordinates and action keys" do
+  it "does not render a generic direction pad for map movement offers" do
     render partial: "world/actions", locals: {
-      available_actions: [{type: :move, destinations: [north_offer, east_offer]}],
+      available_actions: [{type: :move, destinations: []}],
       position:
     }
 
-    expect(rendered).to have_css("form[action='/world/move']", count: 2)
-    expect(rendered).to have_css("input[name='direction'][value='north']", visible: :all)
-    expect(rendered).to have_css("input[name='target_x'][value='5']", visible: :all)
-    expect(rendered).to have_css("input[name='target_y'][value='4']", visible: :all)
-    expect(rendered).to have_css("input[name='action_key'][value='north-action-key']", visible: :all)
-    expect(rendered).to have_css("input[name='direction'][value='east']", visible: :all)
-    expect(rendered).to have_css("input[name='action_key'][value='east-action-key']", visible: :all)
+    expect(rendered).not_to have_css(".direction-btn")
+    expect(rendered).not_to include("North")
+    expect(rendered).not_to include("Move")
   end
 
-  it "renders disabled directions when the server did not offer them" do
-    render partial: "world/actions", locals: {
-      available_actions: [{type: :move, destinations: [north_offer]}],
-      position:
-    }
-
-    expect(rendered).to have_css(".direction-btn--north")
-    expect(rendered).to have_css(".direction-btn--disabled", minimum: 3)
-    expect(rendered).not_to have_css("input[name='action_key'][value='east-action-key']", visible: :all)
-  end
-
-  it "shows the moving state instead of movement forms during travel" do
+  it "does not render duplicate moving-state text outside the map timer" do
     render partial: "world/actions", locals: {
       available_actions: [{type: :moving, remaining_seconds: 17}],
       position:
     }
 
-    expect(rendered).to include("Moving... 17s")
-    expect(rendered).not_to have_css("form[action='/world/move']")
+    expect(rendered).not_to include("Moving")
+    expect(rendered).not_to have_css(".movement-cooldown")
+  end
+
+  it "renders source-backed NPC fight action without generic creature labels" do
+    render partial: "world/actions", locals: {
+      available_actions: [
+        {
+          type: :tile_npc,
+          npc: {
+            id: 1,
+            npc_template_id: 2,
+            alive: true,
+            hostile: true,
+            name: "Крыса",
+            level: 1,
+            hp: 10,
+            max_hp: 10,
+            hp_percentage: 100
+          },
+          offer:
+        }
+      ],
+      position:
+    }
+
+    expect(rendered).to have_button("Напасть")
+    expect(rendered).to have_css("input[name='action_key'][value='attack-action-key']", visible: :all)
+    expect(rendered).not_to include("Creature Here")
+    expect(rendered).not_to include("Attack")
+  end
+
+  it "renders source-backed building entry without generic structure labels" do
+    render partial: "world/actions", locals: {
+      available_actions: [
+        {
+          type: :tile_building,
+          building: {
+            id: 1,
+            name: "Ворота Форпоста",
+            icon: ">",
+            building_type: "city_gate",
+            destination: "Форпост",
+            can_enter: true
+          },
+          offer: OpenStruct.new(action_key: "building-action-key")
+        }
+      ],
+      position:
+    }
+
+    expect(rendered).to have_content("Ворота Форпоста")
+    expect(rendered).to have_button("Войти")
+    expect(rendered).to have_css("input[name='action_key'][value='building-action-key']", visible: :all)
+    expect(rendered).not_to include("Structure Here")
+    expect(rendered).not_to include("Enter")
   end
 end

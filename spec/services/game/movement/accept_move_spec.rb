@@ -5,7 +5,7 @@ require "rails_helper"
 RSpec.describe Game::Movement::AcceptMove do
   include ActiveSupport::Testing::TimeHelpers
 
-  let(:zone) { create(:zone, name: "Accept Move Plains", biome: "plains", width: 10, height: 10) }
+  let(:zone) { create(:zone, name: "Окрестность Форпоста", location_type: "outdoor", width: 10, height: 10) }
   let(:character) { create(:character) }
   let!(:position) { create(:character_position, character:, zone:, x: 5, y: 5) }
 
@@ -47,12 +47,18 @@ RSpec.describe Game::Movement::AcceptMove do
     end
   end
 
-  it "can issue and accept a fresh offer from direction fallback" do
-    result = described_class.new(character:, direction: :east).call
+  it "rejects direction-only movement without a server action key" do
+    expect {
+      described_class.new(character:, direction: :east).call
+    }.to raise_error(Game::Movement::MovementViolationError, /no longer available/)
+  end
 
-    expect(result.command).to be_moving
-    expect(result.command.direction).to eq("east")
-    expect(result.command.target_position).to eq([6, 5])
+  it "rejects a direction that does not match the offered action key" do
+    command = offered_move(direction: "north", target_x: 5, target_y: 4)
+
+    expect {
+      described_class.new(character:, action_key: command.action_key, direction: :east).call
+    }.to raise_error(Game::Movement::MovementViolationError, /requested direction/)
   end
 
   it "cancels sibling destination offers when one move is accepted" do
@@ -72,7 +78,7 @@ RSpec.describe Game::Movement::AcceptMove do
 
     expect {
       described_class.new(character:, action_key: command.action_key).call
-    }.to raise_error(Game::Movement::TurnProcessor::MovementViolationError, /expired/)
+    }.to raise_error(Game::Movement::MovementViolationError, /expired/)
 
     expect(command.reload).to be_offered
   end
@@ -83,7 +89,7 @@ RSpec.describe Game::Movement::AcceptMove do
 
     expect {
       described_class.new(character:, action_key: command.action_key).call
-    }.to raise_error(Game::Movement::TurnProcessor::MovementViolationError, /current position/)
+    }.to raise_error(Game::Movement::MovementViolationError, /current position/)
   end
 
   it "rejects movement while another travel command is active" do
@@ -92,15 +98,15 @@ RSpec.describe Game::Movement::AcceptMove do
 
     expect {
       described_class.new(character:, action_key: command.action_key).call
-    }.to raise_error(Game::Movement::TurnProcessor::MovementViolationError, /already in progress/)
+    }.to raise_error(Game::Movement::MovementViolationError, /already in progress/)
   end
 
   it "rejects offers whose target is no longer passable" do
     command = offered_move
-    MapTileTemplate.create!(zone: zone.name, x: 5, y: 4, terrain_type: "mountain", passable: false, biome: "plains")
+    MapTileTemplate.create!(zone: zone.name, x: 5, y: 4, terrain_type: "outdoor", passable: false)
 
     expect {
       described_class.new(character:, action_key: command.action_key).call
-    }.to raise_error(Game::Movement::TurnProcessor::MovementViolationError, /passable/)
+    }.to raise_error(Game::Movement::MovementViolationError, /passable/)
   end
 end

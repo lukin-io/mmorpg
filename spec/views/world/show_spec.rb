@@ -5,7 +5,7 @@ require "rails_helper"
 RSpec.describe "world/show.html.erb", type: :view do
   let(:user) { create(:user) }
   let(:character) { create(:character, user: user) }
-  let(:zone) { create(:zone, name: "Test Zone", biome: "plains", width: 20, height: 20) }
+  let(:zone) { create(:zone, name: "Test Zone", location_type: "outdoor", width: 20, height: 20) }
   let(:position) { create(:character_position, character: character, zone: zone, x: 10, y: 10) }
 
   let(:nearby_tiles) do
@@ -14,7 +14,7 @@ RSpec.describe "world/show.html.erb", type: :view do
         OpenStruct.new(
           x: x,
           y: y,
-          terrain_type: "plains",
+          terrain_type: "outdoor",
           walkable: true,
           metadata: {}
         )
@@ -26,7 +26,7 @@ RSpec.describe "world/show.html.erb", type: :view do
     OpenStruct.new(
       x: 10,
       y: 10,
-      terrain_type: "plains",
+      terrain_type: "outdoor",
       walkable: true,
       metadata: {}
     )
@@ -46,8 +46,6 @@ RSpec.describe "world/show.html.erb", type: :view do
     assign(:available_actions, [])
     assign(:tile_data, {})
     assign(:npcs_here, [])
-    assign(:gathering_nodes, [])
-    assign(:tile_resource, nil)
     assign(:tile_npc, nil)
     assign(:players_here, [])
   end
@@ -87,7 +85,7 @@ RSpec.describe "world/show.html.erb", type: :view do
   end
 
   describe "city view" do
-    let(:city_zone) { create(:zone, name: "City Zone", biome: "city", width: 10, height: 10) }
+    let(:city_zone) { create(:zone, name: "City Zone", location_type: "city", width: 10, height: 10) }
 
     before do
       without_partial_double_verification do

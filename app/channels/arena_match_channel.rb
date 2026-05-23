@@ -15,13 +15,7 @@ class ArenaMatchChannel < ApplicationCable::Channel
       return
     end
 
-    # Allow participants and spectators
     stream_from @match.broadcast_channel
-
-    # If spectating via code, also stream spectator channel
-    if params[:spectator_code] == @match.spectator_code
-      stream_from "arena:spectate:#{@match.spectator_code}"
-    end
   end
 
   def unsubscribed
@@ -31,9 +25,8 @@ class ArenaMatchChannel < ApplicationCable::Channel
   # Submit a combat action (only for participants)
   #
   # @param data [Hash] action data
-  #   - action_type [String] "attack", "defend", "skill", "flee"
+  #   - action_type [String] "attack", "defend", "turn", "flee"
   #   - target_id [Integer, nil] target character/NPC ID
-  #   - skill_id [Integer, nil] skill ID for skill actions
   #   - attack_type [String] "simple" or "aimed" for attacks
   #   - body_part [String] target body part (head/torso/stomach/legs)
   #   - block_parts [Array<String>] body parts to block
@@ -49,7 +42,6 @@ class ArenaMatchChannel < ApplicationCable::Channel
     # Build params hash for the action
     action_params = {}
     action_params[:target] = find_target(data["target_id"]) if data["target_id"].present?
-    action_params[:skill_id] = data["skill_id"] if data["skill_id"].present?
     action_params[:attack_type] = data["attack_type"]&.to_sym if data["attack_type"].present?
     action_params[:body_part] = data["body_part"] if data["body_part"].present?
     action_params[:block_parts] = data["block_parts"] if data["block_parts"].present?

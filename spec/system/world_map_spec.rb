@@ -6,13 +6,26 @@ RSpec.describe "World Map Navigation", type: :system do
   include Warden::Test::Helpers
 
   let(:user) { create(:user) }
-  let(:zone) { create(:zone, name: "Adventure Plains", biome: "plains", width: 50, height: 50) }
-  let(:character) { create(:character, user: user, name: "TestHero", level: 5) }
+  let(:zone) { create(:zone, name: "Окрестность Форпоста", location_type: "outdoor", width: 50, height: 50) }
+  let(:character) { create(:character, user: user, name: "max_kerby_world", level: 5) }
   let!(:position) { create(:character_position, character: character, zone: zone, x: 25, y: 25) }
+
+  def create_explicit_tiles(zone, x_range:, y_range:, terrain_type: zone.location_type)
+    x_range.each do |x|
+      y_range.each do |y|
+        MapTileTemplate.find_or_create_by!(zone: zone.name, x:, y:) do |tile|
+          tile.terrain_type = terrain_type
+          tile.passable = true
+          tile.metadata = {}
+        end
+      end
+    end
+  end
 
   before do
     driven_by(:rack_test)
     login_as(user, scope: :user)
+    create_explicit_tiles(zone, x_range: 23..27, y_range: 23..27)
   end
 
   describe "viewing the world map" do
@@ -25,7 +38,7 @@ RSpec.describe "World Map Navigation", type: :system do
     it "displays the current zone name" do
       visit world_path
 
-      expect(page).to have_content("Adventure Plains")
+      expect(page).to have_content("Окрестность Форпоста")
     end
 
     it "displays the current coordinates" do
@@ -34,10 +47,10 @@ RSpec.describe "World Map Navigation", type: :system do
       expect(page).to have_content("25")
     end
 
-    it "displays the biome type" do
+    it "displays the outdoor location context" do
       visit world_path
 
-      expect(page).to have_content("Plains")
+      expect(page).to have_content("На этой местности возможны нападения ботов.")
     end
 
     it "shows the map viewport" do
@@ -67,21 +80,21 @@ RSpec.describe "World Map Navigation", type: :system do
       expect(page).to have_css("[data-y]")
     end
 
-    it "renders terrain-based tile classes" do
+    it "renders outdoor tile classes" do
       visit world_path
 
-      expect(page).to have_css(".nl-tile-bg--plains")
+      expect(page).to have_css(".nl-tile-bg--outdoor")
     end
   end
 
   describe "city view" do
     let(:city_zone) do
       create(:zone,
-        name: "Capital City",
-        biome: "city",
+        name: "Форпост",
+        location_type: "city",
         width: 15,
         height: 15,
-        metadata: {"description" => "The grand capital of the realm."})
+        metadata: {"description" => "Форпост"})
     end
 
     before do
@@ -97,7 +110,7 @@ RSpec.describe "World Map Navigation", type: :system do
     it "shows city description" do
       visit world_path
 
-      expect(page).to have_content("grand capital")
+      expect(page).to have_content("Форпост")
     end
   end
 
@@ -105,26 +118,27 @@ RSpec.describe "World Map Navigation", type: :system do
     it "shows navigation links" do
       visit world_path
 
-      expect(page).to have_link("Quests")
-      expect(page).to have_link("Profile")
+      expect(page).to have_link("Персонаж")
     end
 
     it "shows zone name" do
       visit world_path
 
-      expect(page).to have_content("Adventure Plains")
+      expect(page).to have_content("Окрестность Форпоста")
     end
 
     it "shows location info" do
       visit world_path
 
-      expect(page).to have_css(".location-info-panel").or have_content("Current Location")
+      expect(page).to have_css(".location-info-panel")
+      expect(page).to have_content("Местность")
     end
 
-    it "shows available actions" do
+    it "does not show duplicate generic movement actions" do
       visit world_path
 
-      expect(page).to have_css(".actions-panel").or have_content("Actions")
+      expect(page).not_to have_content("Actions")
+      expect(page).not_to have_css(".direction-btn")
     end
   end
 
@@ -135,10 +149,10 @@ RSpec.describe "World Map Navigation", type: :system do
       expect(page).to have_css("#movement-form", visible: :all)
     end
 
-    it "displays movement buttons" do
+    it "offers movement through clickable map tiles" do
       visit world_path
 
-      expect(page).to have_button("↑ North").or have_css(".direction-btn")
+      expect(page).to have_css(".nl-tile-clickable--available")
     end
   end
 end

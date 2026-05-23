@@ -3,122 +3,69 @@
 class Character < ApplicationRecord
   MAX_NAME_LENGTH = 30
 
-  # Available player avatars (randomly assigned on character creation)
-  AVATARS = %w[dwarven nightveil lightbearer pathfinder arcanist ironbound].freeze
-
   PRIMARY_STATS = %i[strength dexterity luck vitality intelligence].freeze
   BASE_PRIMARY_STATS = PRIMARY_STATS.index_with { 1 }.freeze
   STAT_LABELS = {
-    strength: "Strength",
-    dexterity: "Dexterity",
-    luck: "Luck",
-    vitality: "Health",
-    intelligence: "Knowledge"
+    strength: "Сила",
+    dexterity: "Ловкость",
+    luck: "Удача",
+    vitality: "Здоровье",
+    intelligence: "Знания"
   }.freeze
   STAT_ALIASES = {
     "strength" => :strength,
-    "str" => :strength,
     "dexterity" => :dexterity,
-    "dex" => :dexterity,
-    "agility" => :dexterity,
     "luck" => :luck,
-    "knowledge" => :intelligence,
     "intelligence" => :intelligence,
-    "intellect" => :intelligence,
-    "health" => :vitality,
-    "vitality" => :vitality,
-    "constitution" => :vitality,
-    "stamina" => :vitality
+    "vitality" => :vitality
   }.freeze
 
-  # Base faction alignments (player chooses one)
   ALIGNMENTS = {
-    neutral: "neutral",
-    alliance: "alliance",
-    rebellion: "rebellion"
+    none: "none",
+    law: "law",
+    light: "light",
+    balance: "balance",
+    chaos: "chaos",
+    dark: "dark"
   }.freeze
-
-  # Alignment score thresholds for tier progression
-  # Score ranges: -1000 to +1000
-  ALIGNMENT_TIERS = {
-    # Negative scores (Dark path)
-    absolute_darkness: {range: -1000..-800, text: "Absolute Darkness", name: "Absolute Darkness"},
-    true_darkness: {range: -799..-500, text: "True Darkness", name: "True Darkness"},
-    child_of_darkness: {range: -499..-200, text: "Child of Darkness", name: "Child of Darkness"},
-
-    # Neutral zone
-    twilight_walker: {range: -199..-50, text: "Twilight Walker", name: "Twilight Walker"},
-    neutral: {range: -49..49, text: "Neutral", name: "Neutral"},
-    dawn_seeker: {range: 50..199, text: "Dawn Seeker", name: "Dawn Seeker"},
-
-    # Positive scores (Light path)
-    child_of_light: {range: 200..499, text: "Child of Light", name: "Child of Light"},
-    true_light: {range: 500..799, text: "True Light", name: "True Light"},
-    celestial: {range: 800..1000, text: "Celestial", name: "Celestial"}
-  }.freeze
-
-  # Chaos alignment (separate axis, based on karma/actions)
-  CHAOS_TIERS = {
-    lawful: {range: 0..199, text: "Lawful", name: "Lawful"},
-    balanced: {range: 200..499, text: "Balanced", name: "Balanced"},
-    chaotic: {range: 500..799, text: "Chaotic", name: "Chaotic"},
-    absolute_chaos: {range: 800..1000, text: "Absolute Chaos", name: "Absolute Chaos"}
+  ALIGNMENT_LABELS = {
+    "none" => "Нет",
+    "law" => "Закон",
+    "light" => "Свет",
+    "balance" => "Равновесие",
+    "chaos" => "Хаос",
+    "dark" => "Тьма"
   }.freeze
 
   EQUIPMENT_STAT_ALIASES = {
     "strength" => :strength,
     "dexterity" => :dexterity,
     "luck" => :luck,
-    "knowledge" => :intelligence,
     "intelligence" => :intelligence,
-    "intellect" => :intelligence,
-    "health" => :vitality,
-    "vitality" => :vitality,
-    "constitution" => :vitality,
-    "stamina" => :vitality,
-    "agility" => :dexterity
+    "vitality" => :vitality
   }.freeze
 
   belongs_to :user
-  belongs_to :guild, optional: true
-  belongs_to :clan, optional: true
 
   has_one :position, class_name: "CharacterPosition", dependent: :destroy
   has_one :inventory, dependent: :destroy
-  has_many :arena_rankings, dependent: :destroy
-  has_one :arena_ranking, -> { where(ladder_type: "arena") }, class_name: "ArenaRanking", dependent: :destroy
   has_many :arena_applications, foreign_key: :applicant_id, dependent: :destroy
   has_many :arena_participations, dependent: :destroy
 
-  has_many :profession_progresses, dependent: :destroy
-  has_many :profession_tools, dependent: :destroy
-  has_many :battle_participants, dependent: :destroy
-  has_many :battles, through: :battle_participants
-  has_many :initiated_battles, class_name: "Battle", foreign_key: :initiator_id, dependent: :nullify
-  has_many :quest_assignments, dependent: :destroy
   has_many :movement_commands, dependent: :destroy
   has_many :world_action_offers, dependent: :destroy
-  has_many :moderation_tickets_as_subject,
-    class_name: "Moderation::Ticket",
-    foreign_key: :subject_character_id,
-    dependent: :nullify
-  has_many :pvp_flags, dependent: :destroy
 
   validates :name, presence: true, uniqueness: true, length: {maximum: MAX_NAME_LENGTH}
   validates :level, numericality: {greater_than: 0}
   validates :experience, numericality: {greater_than_or_equal_to: 0}
-  validates :stat_points_available, :skill_points_available, numericality: {greater_than_or_equal_to: 0}
+  validates :stat_points_available, numericality: {greater_than_or_equal_to: 0}
   validates :combat_skill_points, :peace_skill_points, numericality: {greater_than_or_equal_to: 0}, allow_nil: true
-  validates :reputation, numericality: {greater_than_or_equal_to: 0}
-  validates :alignment_score, numericality: true
-  validates :faction_alignment, inclusion: {in: ALIGNMENTS.values}
+  validates :fatigue_percent, numericality: {greater_than_or_equal_to: 0, less_than_or_equal_to: 100}
+  validates :alignment, inclusion: {in: ALIGNMENTS.values}
 
   validate :respect_character_limit, on: :create
 
-  before_validation :inherit_memberships, on: :create
-  before_validation :assign_random_avatar, on: :create
   after_create :ensure_inventory!
-  after_create_commit :ensure_tutorial_assignments
 
   def stats
     base = BASE_PRIMARY_STATS.dup
@@ -166,80 +113,17 @@ class Character < ApplicationRecord
     base_ap + level_bonus + dexterity_bonus
   end
 
-  # Get current alignment tier based on alignment_score
-  def alignment_tier
-    score = alignment_score.to_i.clamp(-1000, 1000)
-    ALIGNMENT_TIERS.find { |_, data| data[:range].include?(score) }&.first || :neutral
+  def alignment_label
+    ALIGNMENT_LABELS.fetch(alignment, "Нет")
   end
 
-  # Get alignment tier data (emoji, name)
-  def alignment_tier_data
-    ALIGNMENT_TIERS[alignment_tier] || ALIGNMENT_TIERS[:neutral]
-  end
-
-  # Get alignment display text
-  def alignment_emoji
-    alignment_tier_data[:text]
-  end
-
-  # Get alignment tier display name
-  def alignment_tier_name
-    alignment_tier_data[:name]
-  end
-
-  # Get chaos tier based on chaos_score (defaults to 0 if not set)
-  def chaos_tier
-    score = (chaos_score || 0).to_i.clamp(0, 1000)
-    CHAOS_TIERS.find { |_, data| data[:range].include?(score) }&.first || :lawful
-  end
-
-  # Get chaos tier data
-  def chaos_tier_data
-    CHAOS_TIERS[chaos_tier] || CHAOS_TIERS[:lawful]
-  end
-
-  # Get chaos display text
-  def chaos_emoji
-    chaos_tier_data[:text]
-  end
-
-  # Get faction label based on faction_alignment
-  def faction_emoji
-    case faction_alignment
-    when "alliance" then "Alliance"
-    when "rebellion" then "Rebellion"
-    else "Neutral"
-    end
-  end
-
-  # Full alignment display
   def alignment_display
-    "#{faction_emoji} #{alignment_emoji} #{alignment_tier_name}"
-  end
-
-  # Adjust alignment score (clamped to valid range)
-  def adjust_alignment!(delta)
-    new_score = (alignment_score + delta).clamp(-1000, 1000)
-    update!(alignment_score: new_score)
-  end
-
-  # Adjust chaos score
-  def adjust_chaos!(delta)
-    new_score = ((chaos_score || 0) + delta).clamp(0, 1000)
-    update!(chaos_score: new_score)
+    alignment_label
   end
 
   # ===================
   # Abilities
   # ===================
-
-  # Get total skill points available (legacy - for backward compatibility)
-  # Now aliases the sum of both pools or uses legacy single pool
-  #
-  # @return [Integer] total available skill points
-  def available_skill_points
-    skill_points_available
-  end
 
   # Get available combat skill points (for combat/magic/resistance skills)
   #
@@ -248,7 +132,7 @@ class Character < ApplicationRecord
     combat_skill_points.to_i
   end
 
-  # Get available peace skill points (for crafting/gathering/social skills)
+  # Get available peace skill points
   #
   # @return [Integer] available peace skill points
   def available_peace_skill_points
@@ -452,9 +336,6 @@ class Character < ApplicationRecord
     updates = {}
     updates[:combat_skill_points] = combat_skill_points + combat_points if combat_points.positive?
     updates[:peace_skill_points] = peace_skill_points + peace_points if peace_points.positive?
-    # Also update legacy pool for backward compatibility
-    updates[:skill_points_available] = skill_points_available + combat_points + peace_points
-
     update!(updates) if updates.present?
   end
 
@@ -471,120 +352,7 @@ class Character < ApplicationRecord
   end
 
   # ===================
-  # Perks System
-  # ===================
-
-  # Get list of selected perk keys
-  #
-  # @return [Array<String>] array of perk keys
-  def selected_perks
-    perks&.keys || []
-  end
-
-  # Check if a specific perk is selected
-  #
-  # @param perk_key [Symbol, String] the perk identifier
-  # @return [Boolean] true if perk is active
-  def has_perk?(perk_key)
-    selected_perks.include?(perk_key.to_s)
-  end
-
-  # Get perk effect value
-  #
-  # @param perk_key [Symbol, String] the perk to check
-  # @param effect_key [Symbol, String] the effect to get
-  # @return [Float, nil] effect value or nil if perk not selected
-  def perk_effect(perk_key, effect_key)
-    return nil unless has_perk?(perk_key)
-
-    definition = Game::Skills::PerkRegistry.find(perk_key)
-    definition&.dig(:effects, effect_key.to_sym)
-  end
-
-  # Get all active perk effects combined
-  #
-  # @return [Hash] combined effects from all selected perks
-  def all_perk_effects
-    effects = {}
-    selected_perks.each do |key|
-      definition = Game::Skills::PerkRegistry.find(key)
-      next unless definition
-
-      definition[:effects]&.each do |effect_key, value|
-        effects[effect_key] ||= 0
-        effects[effect_key] += value
-      end
-    end
-    effects
-  end
-
-  # Select a perk (spend perk point)
-  #
-  # @param perk_key [Symbol, String] the perk to select
-  # @return [Boolean] true if perk was selected successfully
-  def select_perk!(perk_key)
-    key = perk_key.to_s
-    check = Game::Skills::PerkRegistry.can_select?(self, key)
-
-    unless check[:allowed]
-      errors.add(:base, check[:reason])
-      return false
-    end
-
-    transaction do
-      new_perks = (perks || {}).merge(key => Time.current.iso8601)
-      update!(
-        perks: new_perks,
-        perk_points_available: perk_points_available - 1
-      )
-    end
-
-    true
-  end
-
-  # Get available perks for this character
-  #
-  # @return [Array<Hash>] available perk definitions
-  def available_perks
-    Game::Skills::PerkRegistry.available_for(self)
-  end
-
-  # Award perk points (typically from leveling up)
-  #
-  # @param points [Integer] points to add
-  def award_perk_points!(points)
-    increment!(:perk_points_available, points) if points.positive?
-  end
-
-  # Get full asset path for character avatar image
-  #
-  # @return [String] full asset path (e.g., "avatars/dwarven.png")
-  def avatar_image_path
-    avatar_name = avatar.presence || AVATARS.first
-    "avatars/#{avatar_name}.png"
-  end
-
-  # ===================
-  # PVP Status
-  # ===================
-
-  # Check if character has any active PVP flags
-  #
-  # @return [Boolean] true if character is flagged for PVP
-  def pvp_flagged?
-    pvp_flags.active.exists?
-  end
-
-  # Get timestamp of last attack from a specific character
-  # Stored in metadata for revenge window calculations
-  #
-  # @return [Hash, nil] hash of attacker_id => timestamp
-  def last_attacked_by_at
-    metadata&.dig("last_attacked_by_at")
-  end
-
-  # ===================
-  # Combat Stats (unified for PvE/PvP)
+  # Combat Stats
   # ===================
 
   # Calculate attack power for combat
@@ -716,9 +484,8 @@ class Character < ApplicationRecord
 
   # Item-family combat contribution used by the arena combat UI and formulas.
   #
-  # The family is taken from item metadata when present and inferred from the
-  # item name/slot otherwise, so seeded items and captured item templates can
-  # both participate in combat calculations.
+  # The family is taken only from explicit item metadata. Item names/slots do
+  # not imply combat formula behavior.
   def equipment_family_breakdown
     return [] unless inventory
 
@@ -744,30 +511,24 @@ class Character < ApplicationRecord
   end
 
   # ===================
-  # Mana System (with skill bonuses)
+  # Mana System
   # ===================
 
-  # Calculate effective maximum MP with arcane_power skill bonus
-  # Formula: Base max_mp × (1 + arcane_power_bonus)
-  # At max skill level: +30% max MP
+  # Calculate effective maximum MP.
+  # Neverlands exposes `Быстрое восстановление маны` as an allocatable skill, but the
+  # exact MP max/cost formulas are not source-captured yet.
   #
   # @return [Integer] effective maximum mana points
   def effective_max_mp
-    base = read_attribute(:max_mp) || 50
-    arcane_bonus = Game::Skills::PassiveSkillRegistry.calculate_effect(:arcane_power, passive_skill_level(:arcane_power))
-    (base * (1.0 + arcane_bonus)).round
+    read_attribute(:max_mp) || 50
   end
 
-  # Calculate mana cost reduction from spell_mastery skill
-  # At max skill level: -25% mana cost
+  # Return base mana cost until a Neverlands mana-cost formula is captured.
   #
   # @param base_cost [Integer] the original mana cost
-  # @return [Integer] reduced mana cost (minimum 1)
+  # @return [Integer] mana cost (minimum 1)
   def reduced_mana_cost(base_cost)
-    spell_mastery_level = passive_skill_level(:spell_mastery)
-    reduction = Game::Skills::PassiveSkillRegistry.calculate_effect(:spell_mastery, spell_mastery_level)
-    reduced = (base_cost * (1.0 - reduction)).round
-    [reduced, 1].max
+    [base_cost.to_i, 1].max
   end
 
   # Check if character has enough mana for a skill
@@ -778,7 +539,7 @@ class Character < ApplicationRecord
     current_mp >= reduced_mana_cost(mana_cost)
   end
 
-  # Spend mana with spell_mastery reduction applied
+  # Spend mana with the current source-backed base cost.
   #
   # @param base_cost [Integer] the base mana cost
   # @return [Integer] actual mana spent
@@ -861,56 +622,19 @@ class Character < ApplicationRecord
     base = combat_component_base(stats, stat_key)
     return 0 if base.zero?
 
-    multiplier = equipment_family_multiplier(equipment_item_family(item), stat_key)
-    (base * multiplier).round
+    base
   end
 
   def equipment_item_family(item)
-    template = item.item_template
     stats = item.effect_modifiers
     explicit = stats["family"] || stats[:family] || stats["weapon_family"] || stats[:weapon_family] ||
       item.properties&.dig("family") || item.properties&.dig("weapon_family")
-    return explicit.to_s if explicit.present?
 
-    name = template&.name.to_s.downcase
-    return "axe" if name.include?("axe")
-    return "mace" if name.include?("mace") || name.include?("hammer")
-    return "dagger" if name.include?("dagger") || name.include?("knife")
-    return "bow" if name.include?("bow")
-    return "staff" if name.include?("staff") || name.include?("wand")
-    return "sword" if name.include?("sword") || name.include?("blade")
-    return "shield" if template&.slot == "off_hand"
-    return "armor" if %w[head chest legs feet hands].include?(template&.slot)
-
-    "generic"
-  end
-
-  def equipment_family_multiplier(family, stat_key)
-    multipliers = {
-      "attack" => {
-        "axe" => 1.15,
-        "mace" => 1.1,
-        "sword" => 1.0,
-        "bow" => 0.95,
-        "dagger" => 0.9,
-        "staff" => 0.75,
-        "shield" => 0.35,
-        "armor" => 0.0,
-        "generic" => 1.0
-      },
-      "defense" => {
-        "armor" => 1.15,
-        "shield" => 1.2,
-        "staff" => 0.4,
-        "generic" => 1.0
-      }
-    }
-
-    multipliers.fetch(stat_key.to_s, {}).fetch(family.to_s, 1.0)
+    explicit.to_s.presence
   end
 
   # Get skill bonus from equipped items for a specific skill
-  # Equipment can grant +X to passive skills (e.g., +5 melee_combat from a sword)
+  # Equipment can grant +X to passive skills (e.g., +5 sword_mastery from a sword)
   #
   # @param skill_key [Symbol, String] the skill identifier
   # @return [Integer] total skill bonus from equipment
@@ -928,7 +652,7 @@ class Character < ApplicationRecord
   end
 
   # Get elemental resistance bonus from equipped items
-  # Equipment can grant resistance percentages (e.g., +5% fire_resistance from a shield)
+  # Equipment can grant resistance percentages (e.g., +5% fire_magic_resistance from a shield)
   #
   # @param element [Symbol, String] the element type (:fire, :cold, :lightning, :physical)
   # @return [Float] total resistance bonus from equipment (0.0 - 0.15 max)
@@ -1005,13 +729,6 @@ class Character < ApplicationRecord
     value.to_s.delete("%+").to_f
   end
 
-  def inherit_memberships
-    return unless user
-
-    self.guild ||= user.primary_guild
-    self.clan ||= user.primary_clan
-  end
-
   def respect_character_limit
     return unless user
 
@@ -1022,17 +739,5 @@ class Character < ApplicationRecord
 
   def ensure_inventory!
     create_inventory!(slot_capacity: 30, weight_capacity: 100) unless inventory
-  end
-
-  def ensure_tutorial_assignments
-    Game::Quests::TutorialBootstrapper.new(character: self).call
-  rescue ActiveRecord::RecordNotFound
-    true
-  end
-
-  def assign_random_avatar
-    return if avatar.present?
-
-    self.avatar = AVATARS.sample
   end
 end

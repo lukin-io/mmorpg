@@ -10,18 +10,13 @@ RSpec.describe ItemTemplate, type: :model do
     end
 
     it "requires name to be unique" do
-      create(:item_template, name: "Unique Sword")
-      template = build(:item_template, name: "Unique Sword")
+      create(:item_template, name: "Перочинный Нож")
+      template = build(:item_template, name: "Перочинный Нож")
       expect(template).not_to be_valid
     end
 
     it "requires slot to be present" do
       template = build(:item_template, slot: nil)
-      expect(template).not_to be_valid
-    end
-
-    it "requires rarity to be present" do
-      template = build(:item_template, rarity: nil)
       expect(template).not_to be_valid
     end
 
@@ -33,12 +28,6 @@ RSpec.describe ItemTemplate, type: :model do
     it "requires stack_limit to be greater than 0" do
       template = build(:item_template, stack_limit: 0)
       expect(template).not_to be_valid
-    end
-
-    it "validates rarity is in allowed list" do
-      template = build(:item_template, rarity: "mythic")
-      expect(template).not_to be_valid
-      expect(template.errors[:rarity]).to include("is not included in the list")
     end
 
     it "validates stat_modifiers presence for equipment items" do
@@ -54,8 +43,8 @@ RSpec.describe ItemTemplate, type: :model do
 
   describe "scopes" do
     let!(:equipment) { create(:item_template, item_type: "equipment") }
-    let!(:material) { create(:item_template, :material, name: "Iron Ore") }
-    let!(:consumable) { create(:item_template, :consumable, name: "Potion") }
+    let!(:material) { create(:item_template, :material, name: "Щепки") }
+    let!(:consumable) { create(:item_template, :consumable, name: "Зелье") }
 
     describe ".materials" do
       it "returns only materials" do
@@ -94,9 +83,9 @@ RSpec.describe ItemTemplate, type: :model do
       expect(template.equipment?).to be true
     end
 
-    it "returns true when item_type is nil" do
+    it "returns false when item_type is nil" do
       template = build(:item_template, item_type: nil)
-      expect(template.equipment?).to be true
+      expect(template.equipment?).to be false
     end
 
     it "returns false for materials" do
@@ -155,31 +144,6 @@ RSpec.describe ItemTemplate, type: :model do
     it "returns nil for non-equipment" do
       template = build(:item_template, :material)
       expect(template.equipment_slot).to be_nil
-    end
-  end
-
-  describe "premium stat cap validation" do
-    context "when item is premium" do
-      it "allows total stats up to 10" do
-        template = build(:item_template, premium: true, slot: "main_hand",
-          stat_modifiers: {"attack" => 5, "defense" => 5})
-        expect(template).to be_valid
-      end
-
-      it "rejects total stats over 10" do
-        template = build(:item_template, premium: true, slot: "main_hand",
-          stat_modifiers: {"attack" => 10, "defense" => 5})
-        expect(template).not_to be_valid
-        expect(template.errors[:stat_modifiers]).to include("premium artifacts must stay cosmetic-balanced")
-      end
-    end
-
-    context "when item is not premium" do
-      it "allows any stat totals" do
-        template = build(:item_template, premium: false, slot: "main_hand",
-          stat_modifiers: {"attack" => 50, "defense" => 30})
-        expect(template).to be_valid
-      end
     end
   end
 end

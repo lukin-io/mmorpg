@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-# CityHotspot represents a clickable building/area in a city zone view.
-# Instead of a tile-based map, city zones display an illustrated view with
-# interactive hotspots for buildings like arena, workshop, clinic, etc.
+# CityHotspot represents a clickable area in a city zone view.
+# City hotspots are source-backed navigation points such as Arena, Shop, or
+# a city exit.
 #
 # Usage:
 #   CityHotspot.for_zone(zone)           # Get all active hotspots for a zone
@@ -10,20 +10,15 @@
 #   hotspot.navigate_url                 # Get the destination URL for the hotspot
 #
 class CityHotspot < ApplicationRecord
-  HOTSPOT_TYPES = %w[building exit decoration feature].freeze
-  ACTION_TYPES = %w[enter_zone open_feature none].freeze
+  HOTSPOT_TYPES = %w[building exit].freeze
+  ACTION_TYPES = %w[enter_zone open_feature].freeze
 
-  # Feature routes mapping - maps feature keys to their route paths
   FEATURE_ROUTES = {
-    "arena" => "/arena",
-    "crafting" => "/crafting_jobs",
-    "workshop" => "/crafting_jobs",
-    "healing" => "/world",  # TODO: Implement healing feature
-    "clinic" => "/world",   # TODO: Implement clinic feature
-    "shop" => "/shop",
-    "tavern" => "/tavern",
-    "guild" => "/guilds",
-    "housing" => "/world"   # TODO: Implement housing feature
+    "arena" => "/arena"
+  }.freeze
+
+  PENDING_FEATURES = {
+    "shop" => "Лавка задокументирована по Neverlands и ожидает реализации."
   }.freeze
 
   belongs_to :zone
@@ -50,7 +45,6 @@ class CityHotspot < ApplicationRecord
   # @return [Boolean]
   def can_interact?(character)
     return false unless active?
-    return false if action_type == "none"
     return false if character.level < required_level
 
     true
@@ -61,9 +55,8 @@ class CityHotspot < ApplicationRecord
   # @param character [Character] the character trying to interact
   # @return [String, nil] error message or nil if can interact
   def interaction_blocked_reason(character)
-    return "This location is currently unavailable." unless active?
-    return nil if action_type == "none"
-    return "You must be level #{required_level} to enter." if character.level < required_level
+    return "Локация сейчас недоступна." unless active?
+    return "Нужен уровень #{required_level}." if character.level < required_level
 
     nil
   end
@@ -77,7 +70,7 @@ class CityHotspot < ApplicationRecord
       nil # Handled by controller to update character position
     when "open_feature"
       feature_key = action_params["feature"] || key
-      FEATURE_ROUTES[feature_key] || "/#{feature_key}"
+      FEATURE_ROUTES[feature_key]
     end
   end
 
@@ -85,7 +78,7 @@ class CityHotspot < ApplicationRecord
   #
   # @return [Boolean]
   def clickable?
-    action_type != "none" && active?
+    active?
   end
 
   # Get display icon based on hotspot type
@@ -95,8 +88,6 @@ class CityHotspot < ApplicationRecord
     case hotspot_type
     when "building" then "🏛️"
     when "exit" then "🚪"
-    when "decoration" then "🌳"
-    when "feature" then "⚙️"
     else "📍"
     end
   end

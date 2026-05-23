@@ -1,4 +1,4 @@
-<% content_for :title, "#{@character.name} - Character" %>
+<% content_for :title, "#{@character.name} - Персонаж" %>
 
 <%= turbo_frame_tag "main_content" do %>
   <section class="nl-player-profile">
@@ -12,9 +12,9 @@
         <div>
           <h1><%= @character.name %> [<%= @character.level %>]</h1>
           <div class="nl-profile-subline">
-            <span>Player</span>
+            <span>Игрок</span>
             <span><%= profile_location(@character) %></span>
-            <span>Created <%= l(@character.created_at.to_date, format: :default) %></span>
+            <span>Создан <%= l(@character.created_at.to_date, format: :default) %></span>
           </div>
         </div>
       </div>
@@ -28,55 +28,55 @@
 
       <main class="nl-player-profile-main">
         <div class="nl-profile-panel">
-          <h2>Progression</h2>
+          <h2>Развитие</h2>
           <table class="nl-profile-table nl-profile-table--wide">
             <tr>
-              <th>Combat experience</th>
+              <th>Боевой опыт</th>
               <td><%= number_with_delimiter(@character.experience) %></td>
             </tr>
             <tr>
-              <th>To next level</th>
+              <th>До следующего уровня</th>
               <td><%= number_with_delimiter(@character.experience_to_next_level) %></td>
             </tr>
             <tr>
-              <th>Fame</th>
-              <td><%= number_with_delimiter(@character.reputation) %></td>
+              <th>Склонность</th>
+              <td><%= @character.alignment_label %></td>
             </tr>
             <tr>
-              <th>Valor</th>
+              <th>Доблесть</th>
               <td><%= number_with_delimiter(@character.metadata.to_h.fetch("valor", 0)) %></td>
             </tr>
             <tr>
-              <th>Fatigue</th>
+              <th>Усталость</th>
               <td><%= profile_fatigue(@character) %>%</td>
             </tr>
             <tr>
-              <th>AP per attack</th>
+              <th>ОД удара</th>
               <td><%= profile_attack_cost %></td>
             </tr>
           </table>
         </div>
 
         <div class="nl-profile-panel">
-          <h2>Fight Record</h2>
+          <h2>Боевая статистика</h2>
           <table class="nl-profile-table nl-profile-table--wide">
             <tr>
-              <th>Player wins</th>
+              <th>Победы над игроками</th>
               <td><%= @character.metadata.to_h.fetch("player_wins", 0) %></td>
-              <th>Player losses</th>
+              <th>Поражения от игроков</th>
               <td><%= @character.metadata.to_h.fetch("player_losses", 0) %></td>
             </tr>
             <tr>
-              <th>NPC wins</th>
+              <th>Победы над NPC</th>
               <td><%= @character.metadata.to_h.fetch("npc_wins", 0) %></td>
-              <th>NPC losses</th>
+              <th>Поражения от NPC</th>
               <td><%= @character.metadata.to_h.fetch("npc_losses", 0) %></td>
             </tr>
           </table>
         </div>
 
         <div class="nl-profile-panel">
-          <h2>Skills</h2>
+          <h2>Умения</h2>
           <div class="nl-profile-skill-list">
             <% Game::Skills::PassiveSkillRegistry.all.first(12).each do |key, definition| %>
               <div class="nl-profile-skill-row">
@@ -85,20 +85,6 @@
               </div>
             <% end %>
           </div>
-        </div>
-
-        <div class="nl-profile-panel">
-          <h2>Perks</h2>
-          <% if @character.selected_perks.any? %>
-            <div class="nl-profile-perks">
-              <% @character.selected_perks.each do |key| %>
-                <% definition = Game::Skills::PerkRegistry.find(key) %>
-                <span><%= definition&.dig(:name) || key.to_s.humanize %></span>
-              <% end %>
-            </div>
-          <% else %>
-            <p class="nl-profile-empty">No perks selected.</p>
-          <% end %>
         </div>
       </main>
     </div>

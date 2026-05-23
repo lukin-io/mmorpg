@@ -57,24 +57,49 @@ RSpec.describe "shared/_online_players_compact.html.erb", type: :view do
     render partial: "shared/online_players_compact"
 
     expect(rendered).to have_css(".nl-player-menu", visible: :all)
-    expect(rendered).to include("Private Message")
-    expect(rendered).to include("View Info")
-    expect(rendered).to include("Invite")
-    expect(rendered).to include("Ignore")
+    expect(rendered).to include("Приватно")
+    expect(rendered).to include("Инфо")
   end
 
-  # These tests require UserSession model/factory which doesn't exist
-  # The online_players_compact partial queries user_sessions table
-  context "with online users", skip: "UserSession model not implemented" do
-    it "displays online players"
-    it "shows player name as link"
-    it "shows player level in brackets"
-    it "shows activity status indicator"
-    it "includes click actions for whisper and context menu"
+  context "with online users" do
+    let(:user) { create(:user, profile_name: "online-user") }
+    let!(:character) { create(:character, user:, name: "max_kerby_on", level: 7) }
+
+    before do
+      create(:user_session, user:, last_seen_at: Time.current)
+    end
+
+    it "displays online players" do
+      render partial: "shared/online_players_compact"
+
+      expect(rendered).to include("max_kerby_on")
+    end
+
+    it "shows player name as link" do
+      render partial: "shared/online_players_compact"
+
+      expect(rendered).to have_link("max_kerby_on", href: player_path(name: character.name))
+    end
+
+    it "shows player level in brackets" do
+      render partial: "shared/online_players_compact"
+
+      expect(rendered).to include("[7]")
+    end
+
+    it "includes click actions for whisper and context menu" do
+      render partial: "shared/online_players_compact"
+
+      expect(rendered).to have_css("[data-action='click->game-layout#whisperPlayer contextmenu->game-layout#showPlayerMenu']")
+    end
   end
 
-  context "with no online users", skip: "UserSession model not implemented" do
-    it "shows empty message"
+  context "with no online users" do
+    it "shows empty message" do
+      render partial: "shared/online_players_compact"
+
+      expect(rendered).to include("Нет игроков")
+    end
   end
 
   context "context menu buttons" do
@@ -95,18 +120,6 @@ RSpec.describe "shared/_online_players_compact.html.erb", type: :view do
       render partial: "shared/online_players_compact"
 
       expect(rendered).to have_css("button[data-action='click->game-layout#copyNickname']", visible: :all)
-    end
-
-    it "has invite to party button" do
-      render partial: "shared/online_players_compact"
-
-      expect(rendered).to have_css("button[data-action='click->game-layout#inviteToParty']", visible: :all)
-    end
-
-    it "has ignore player button" do
-      render partial: "shared/online_players_compact"
-
-      expect(rendered).to have_css("button[data-action='click->game-layout#ignorePlayer']", visible: :all)
     end
   end
 end

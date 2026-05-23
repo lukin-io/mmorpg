@@ -3,8 +3,8 @@
 require "rails_helper"
 
 RSpec.describe CityHotspot, type: :model do
-  let(:city_zone) { create(:zone, name: "Test City", biome: "city") }
-  let(:destination_zone) { create(:zone, name: "Destination Zone", biome: "plains") }
+  let(:city_zone) { create(:zone, name: "Test City", location_type: "city") }
+  let(:destination_zone) { create(:zone, name: "Destination Zone", location_type: "outdoor") }
 
   let(:valid_attributes) do
     {
@@ -16,7 +16,7 @@ RSpec.describe CityHotspot, type: :model do
       position_y: 200,
       image_normal: "building.png",
       action_type: "open_feature",
-      action_params: {"feature" => "test"},
+      action_params: {"feature" => "arena"},
       required_level: 1,
       active: true
     }
@@ -146,11 +146,6 @@ RSpec.describe CityHotspot, type: :model do
       expect(hotspot.can_interact?(character)).to be false
     end
 
-    it "returns false when action_type is none" do
-      hotspot.update!(action_type: "none")
-      expect(hotspot.can_interact?(character)).to be false
-    end
-
     it "returns false when character level is too low" do
       hotspot.update!(required_level: 50)
       expect(hotspot.can_interact?(character)).to be false
@@ -167,12 +162,12 @@ RSpec.describe CityHotspot, type: :model do
 
     it "returns unavailable message when inactive" do
       hotspot.update!(active: false)
-      expect(hotspot.interaction_blocked_reason(character)).to include("unavailable")
+      expect(hotspot.interaction_blocked_reason(character)).to include("недоступна")
     end
 
     it "returns level message when level too low" do
       hotspot.update!(required_level: 20)
-      expect(hotspot.interaction_blocked_reason(character)).to include("level 20")
+      expect(hotspot.interaction_blocked_reason(character)).to include("уровень 20")
     end
   end
 
@@ -189,8 +184,9 @@ RSpec.describe CityHotspot, type: :model do
       expect(hotspot.navigate_url).to eq("/arena")
     end
 
-    it "returns nil for none action" do
-      hotspot.update!(action_type: "none")
+    it "returns nil for documented but unimplemented feature routes" do
+      hotspot.update!(action_type: "open_feature", action_params: {"feature" => "shop"})
+
       expect(hotspot.navigate_url).to be_nil
     end
   end
@@ -206,11 +202,6 @@ RSpec.describe CityHotspot, type: :model do
     it "returns true for enter_zone action" do
       hotspot.update!(action_type: "enter_zone", active: true)
       expect(hotspot.clickable?).to be true
-    end
-
-    it "returns false for none action" do
-      hotspot.update!(action_type: "none", active: true)
-      expect(hotspot.clickable?).to be false
     end
 
     it "returns false when inactive" do
@@ -230,11 +221,6 @@ RSpec.describe CityHotspot, type: :model do
     it "returns exit icon for exit type" do
       hotspot.hotspot_type = "exit"
       expect(hotspot.display_icon).to eq("🚪")
-    end
-
-    it "returns tree icon for decoration type" do
-      hotspot.hotspot_type = "decoration"
-      expect(hotspot.display_icon).to eq("🌳")
     end
   end
 
@@ -273,16 +259,16 @@ RSpec.describe CityHotspot, type: :model do
 
   describe "constants" do
     it "defines HOTSPOT_TYPES" do
-      expect(described_class::HOTSPOT_TYPES).to include("building", "exit", "decoration", "feature")
+      expect(described_class::HOTSPOT_TYPES).to contain_exactly("building", "exit")
     end
 
     it "defines ACTION_TYPES" do
-      expect(described_class::ACTION_TYPES).to include("enter_zone", "open_feature", "none")
+      expect(described_class::ACTION_TYPES).to contain_exactly("enter_zone", "open_feature")
     end
 
     it "defines FEATURE_ROUTES" do
       expect(described_class::FEATURE_ROUTES["arena"]).to eq("/arena")
-      expect(described_class::FEATURE_ROUTES["crafting"]).to eq("/crafting_jobs")
+      expect(described_class::FEATURE_ROUTES).not_to have_key("bank")
     end
   end
 end

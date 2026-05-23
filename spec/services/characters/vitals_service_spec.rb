@@ -66,11 +66,11 @@ RSpec.describe Characters::VitalsService do
 
     context "with equipped items" do
       let(:sword_template) do
-        create(:item_template, name: "Iron Sword", item_type: "equipment", slot: "main_hand",
+        create(:item_template, name: "Перочинный Нож", item_type: "equipment", slot: "main_hand",
           stat_modifiers: {"attack" => 15})
       end
       let(:armor_template) do
-        create(:item_template, name: "Iron Armor", item_type: "equipment", slot: "chest",
+        create(:item_template, name: "Броня новичка", item_type: "equipment", slot: "chest",
           stat_modifiers: {"defense" => 10})
       end
 
@@ -90,8 +90,8 @@ RSpec.describe Characters::VitalsService do
       it "includes equipment defense bonus in defense" do
         summary = service.stats_summary
 
-        # Base (15) + armor-family defense bonus (10 * 1.15, rounded to 12) = 27
-        expect(summary[:defense]).to eq(27)
+        # Base (15) + explicit defense bonus (10) = 25
+        expect(summary[:defense]).to eq(25)
       end
     end
   end
@@ -121,12 +121,12 @@ RSpec.describe Characters::VitalsService do
   describe "#apply_healing" do
     it "increases current HP" do
       expect {
-        service.apply_healing(15, source: "Potion")
+        service.apply_healing(15, source: "Зелье жизни")
       }.to change { character.current_hp }.from(80).to(95)
     end
 
     it "does not exceed max HP" do
-      service.apply_healing(50, source: "Potion")
+      service.apply_healing(50, source: "Зелье жизни")
 
       expect(character.current_hp).to eq(100)
     end

@@ -1,110 +1,25 @@
-<%#
-  City View
-  Shows a large city image with description and interactive buildings
+<%# City View - illustrated city with source-backed hotspots %>
+<% current_zone = local_assigns[:zone] || @zone %>
+<% hotspots = local_assigns[:hotspots] || @hotspots || [] %>
 
-  Required locals:
-    - zone: Zone model (city)
-    - position: CharacterPosition (optional, defaults to @position)
-%>
-<% zone ||= @zone %>
-<% position ||= @position %>
-
-<div class="nl-city-view"
-     data-controller="city"
-     data-city-zone-id-value="<%= zone.id %>"
-     data-city-buildings-value="<%= city_buildings(zone).to_json %>">
-
-  <%# Large city image %>
-  <div class="nl-city-image-container">
-    <%= image_tag city_image(zone), class: "nl-city-image", alt: zone.name, onerror: "this.style.display='none'" rescue nil %>
-    <%# Fallback if no image %>
-    <div class="nl-city-placeholder">
-      <span class="nl-city-placeholder-icon">🏰</span>
-      <span class="nl-city-placeholder-name"><%= zone.name %></span>
-    </div>
-  </div>
-
-  <%# City description %>
-  <div class="nl-city-description">
-    <p><%= city_description(zone) %></p>
-    <% if zone.metadata&.dig("warning").present? %>
-      <p class="nl-warning"><%= zone.metadata["warning"] %></p>
-    <% end %>
-    <% if zone.metadata&.dig("quest_hint").present? %>
-      <p><span class="nl-highlight" data-action="click->city#showQuestDialog"><%= zone.metadata["quest_hint"] %></span></p>
-    <% end %>
-  </div>
-
-  <%# City header %>
+<div class="city-view-container">
   <div class="city-header">
-    <h1 class="city-name"><%= zone.name %></h1>
+    <h2 class="city-name"><%= current_zone.name %></h2>
+    <% if current_zone.metadata&.dig("description") %>
+      <p class="city-description"><%= current_zone.metadata["description"] %></p>
+    <% end %>
   </div>
 
-  <%# District navigation arrows %>
-  <div class="city-nav" data-city-target="districtNav">
-    <button class="city-nav-arrow city-nav-arrow--north"
-            data-action="click->city#navigateDistrict"
-            data-direction="north"
-            title="North District">▲</button>
-    <button class="city-nav-arrow city-nav-arrow--south"
-            data-action="click->city#navigateDistrict"
-            data-direction="south"
-            title="South District">▼</button>
-    <button class="city-nav-arrow city-nav-arrow--east"
-            data-action="click->city#navigateDistrict"
-            data-direction="east"
-            title="East District">▶</button>
-    <button class="city-nav-arrow city-nav-arrow--west"
-            data-action="click->city#navigateDistrict"
-            data-direction="west"
-            title="West District">◀</button>
-  </div>
-
-  <%# City map with buildings %>
-  <div class="city-map" data-city-target="map">
-    <%# Background decorations %>
-    <div class="city-decoration city-decoration--fountain" style="grid-column: 4; grid-row: 4;">
-      ⛲
-    </div>
-    <div class="city-decoration city-decoration--statue" style="grid-column: 2; grid-row: 2;">
-      🗿
-    </div>
-
-    <%# Dynamic buildings %>
-    <% city_buildings(zone).each do |building| %>
-      <div class="city-building city-building--<%= building[:type] %>"
-           data-building-id="<%= building[:id] %>"
-           data-building-name="<%= building[:name] %>"
-           data-building-type="<%= building[:type] %>"
-           data-building-key="<%= building[:key] %>"
-           data-building-description="<%= building[:description] %>"
-           data-building-npcs="<%= (building[:npcs] || []).to_json %>"
-           style="grid-column: <%= building[:grid_x] + 1 %>; grid-row: <%= building[:grid_y] + 1 %>;">
-        <div class="city-building-icon"><%= building_icon(building[:type]) %></div>
-        <div class="city-building-name"><%= building[:name] %></div>
-      </div>
+  <div class="city-view" data-controller="city-view" data-city-view-background-value="<%= asset_path('city.png') %>">
+    <%# Invisible hitboxes at source-backed building positions %>
+    <% hotspots.each do |hotspot| %>
+      <%= render "world/city_hotspot", hotspot: hotspot %>
     <% end %>
 
-    <%# Player marker %>
-    <div class="city-player-marker" style="grid-column: <%= position.x + 1 %>; grid-row: <%= position.y + 1 %>;">
-      <div class="player-avatar">🧙</div>
-      <div class="player-name"><%= current_character.name %></div>
-    </div>
+    <div class="city-tooltip" data-city-view-target="tooltip"></div>
   </div>
 
-  <%# Building info panel (appears on click) %>
-  <div class="city-building-info" data-city-target="buildingInfo">
-    <p class="city-hint">Click a building to see details</p>
-  </div>
-
-  <%# Quick actions %>
   <div class="city-actions">
-    <button class="btn-secondary" data-action="click->city#exitCity">
-      🚪 Exit to World Map
-    </button>
+    <span class="city-location-label"><%= current_zone.name %></span>
   </div>
-
-  <%# Tooltip (hidden by default) %>
-  <div class="city-tooltip" data-city-target="tooltip" style="display: none;"></div>
 </div>
-

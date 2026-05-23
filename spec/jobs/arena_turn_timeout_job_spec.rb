@@ -60,10 +60,9 @@ RSpec.describe ArenaTurnTimeoutJob do
 
         it "logs timeout in combat log" do
           described_class.new.perform(match_id: arena_match.id)
-          log = arena_match.reload.metadata["combat_log"]
-          timeout_entry = log.find { |e| e["type"] == "timeout" }
+          timeout_entry = arena_match.reload.combat_log_entries.find { |entry| entry.log_type == "timeout" }
           expect(timeout_entry).to be_present
-          expect(timeout_entry["description"]).to include("timeout")
+          expect(timeout_entry.message).to include("timeout")
         end
 
         it "broadcasts timeout via ActionCable" do
@@ -168,7 +167,7 @@ RSpec.describe ArenaTurnTimeoutJob do
   describe "excessive timeouts" do
     context "when timeout count reaches 3" do
       before do
-        arena_match.update!(metadata: {"timeout_count" => 2, "combat_log" => []})
+        arena_match.update!(metadata: {"timeout_count" => 2})
       end
 
       it "ends the match as a draw" do

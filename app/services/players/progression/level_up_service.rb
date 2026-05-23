@@ -18,20 +18,18 @@ module Players
     #   Character with updated level and point pools
     #
     # Usage:
-    #   service = Players::Progression::LevelUpService.new(character: warrior)
+    #   service = Players::Progression::LevelUpService.new(character: character)
     #   service.apply_experience!(250)
     #   # Character gains XP, possibly levels up, receives stat/skill points
     #
     class LevelUpService
       STAT_POINTS_PER_LEVEL = 5
-      SKILL_POINTS_PER_LEVEL = 1          # Mirrors total unspent numeric skill points
       COMBAT_SKILL_POINTS_PER_LEVEL = 1   # Combat/magic/resistance skills
       PEACE_SKILL_POINTS_START_LEVEL = 5  # Peace skills unlock at level 5
-      PEACE_SKILL_POINTS_PER_LEVEL = 1    # Peace/crafting skills
-      PERK_POINTS_LEVEL_INTERVAL = 5      # Earn 1 perk point every 5 levels
+      PEACE_SKILL_POINTS_PER_LEVEL = 1    # Peace skills
 
       Result = Struct.new(:character, :levels_gained, :stat_points_gained,
-        :combat_skill_points_gained, :peace_skill_points_gained, :perk_points_gained, keyword_init: true)
+        :combat_skill_points_gained, :peace_skill_points_gained, keyword_init: true)
 
       def initialize(character:)
         @character = character
@@ -39,7 +37,6 @@ module Players
         @stat_points_gained = 0
         @combat_skill_points_gained = 0
         @peace_skill_points_gained = 0
-        @perk_points_gained = 0
       end
 
       # Apply experience and process any resulting level ups
@@ -57,30 +54,7 @@ module Players
           levels_gained: @levels_gained,
           stat_points_gained: @stat_points_gained,
           combat_skill_points_gained: @combat_skill_points_gained,
-          peace_skill_points_gained: @peace_skill_points_gained,
-          perk_points_gained: @perk_points_gained
-        )
-      end
-
-      # Force a level up (for testing or admin purposes)
-      #
-      # @param levels [Integer] number of levels to grant (default 1)
-      # @return [Result] result with character and points gained
-      def force_level_up!(levels: 1)
-        Character.transaction do
-          levels.times do
-            grant_level_up_rewards
-          end
-          character.update!(last_level_up_at: Time.current)
-        end
-
-        Result.new(
-          character: character,
-          levels_gained: @levels_gained,
-          stat_points_gained: @stat_points_gained,
-          combat_skill_points_gained: @combat_skill_points_gained,
-          peace_skill_points_gained: @peace_skill_points_gained,
-          perk_points_gained: @perk_points_gained
+          peace_skill_points_gained: @peace_skill_points_gained
         )
       end
 
@@ -107,9 +81,6 @@ module Players
         character.increment!(:stat_points_available, STAT_POINTS_PER_LEVEL)
         @stat_points_gained += STAT_POINTS_PER_LEVEL
 
-        # Maintain the aggregate skill-point counter alongside split pools.
-        character.increment!(:skill_points_available, SKILL_POINTS_PER_LEVEL)
-
         # Grant combat skill points (every level)
         character.increment!(:combat_skill_points, COMBAT_SKILL_POINTS_PER_LEVEL)
         @combat_skill_points_gained += COMBAT_SKILL_POINTS_PER_LEVEL
@@ -118,12 +89,6 @@ module Players
         if new_level >= PEACE_SKILL_POINTS_START_LEVEL
           character.increment!(:peace_skill_points, PEACE_SKILL_POINTS_PER_LEVEL)
           @peace_skill_points_gained += PEACE_SKILL_POINTS_PER_LEVEL
-        end
-
-        # Grant perk point (every 5 levels)
-        if (new_level % PERK_POINTS_LEVEL_INTERVAL).zero?
-          character.increment!(:perk_points_available, 1)
-          @perk_points_gained += 1
         end
 
         # Restore HP/MP to full on level up

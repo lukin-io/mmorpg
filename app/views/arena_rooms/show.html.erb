@@ -1,4 +1,4 @@
-<% content_for :title, "#{@room.name} - Arena" %>
+<% content_for :title, "#{@room.name} - Арена" %>
 
 <%
   active_tab = (params[:ft].presence || "1").to_s
@@ -17,46 +17,44 @@
       <span class="nl-arena-vitals"><%= current_character.current_hp %>/<%= current_character.max_hp %> | <%= current_character.current_mp %>/<%= current_character.max_mp %></span>
     </div>
     <div class="nl-arena-controls">
-      <%= link_to "Character", player_path(name: current_character.name), class: "nl-arena-link" %>
-      <%= link_to "Inventory", inventory_path, class: "nl-arena-link" %>
-      <%= link_to "Arena", arena_index_path, class: "nl-arena-link" %>
-      <%= link_to "City", world_path, class: "nl-arena-link" %>
+      <%= link_to "Персонаж", player_path(name: current_character.name), class: "nl-arena-link" %>
+      <%= link_to "Инвентарь", inventory_path, class: "nl-arena-link" %>
+      <%= link_to "Арена", arena_index_path, class: "nl-arena-link" %>
+      <%= link_to "Город", world_path, class: "nl-arena-link" %>
     </div>
   </div>
 
   <div class="nl-arena-room-heading">
     <b><%= @room.name %></b>
-    <span>levels <%= @room.level_min %>-<%= @room.level_max %></span>
-    <% if @room.faction_restriction.present? %>
-      <span><%= @room.faction_restriction.humanize %></span>
+    <span>уровни <%= @room.level_min %>-<%= @room.level_max %></span>
+    <% if @room.alignment_restriction.present? %>
+      <span><%= @room.alignment_restriction.humanize %></span>
     <% end %>
   </div>
 
   <div class="nl-arena-status-row">
-    <span>Application filter: <%= link_to "Your level", arena_room_path(@room, ft: active_tab, level: current_character.level), class: "nl-arena-filter" %> | <%= link_to "All", arena_room_path(@room, ft: active_tab), class: "nl-arena-filter" %></span>
-    <span>Applications: <b><%= visible_applications.size %></b></span>
-    <%= link_to "Refresh", arena_room_path(@room, ft: active_tab), class: "nl-arena-link" %>
-    <%= link_to "Show building layout", arena_index_path, class: "nl-arena-link" %>
+    <span>Заявки: <%= link_to "ваш уровень", arena_room_path(@room, ft: active_tab, level: current_character.level), class: "nl-arena-filter" %> | <%= link_to "все", arena_room_path(@room, ft: active_tab), class: "nl-arena-filter" %></span>
+    <span>Всего: <b><%= visible_applications.size %></b></span>
+    <%= link_to "Обновить", arena_room_path(@room, ft: active_tab), class: "nl-arena-link" %>
+    <%= link_to "Схема залов", arena_index_path, class: "nl-arena-link" %>
   </div>
 
   <div class="nl-arena-tabs">
-    <%= link_to "Duels", arena_room_path(@room, ft: 1), class: "nl-arena-tab #{'nl-arena-tab--active' if active_tab == '1'}" %>
-    <%= link_to "Group Fights", arena_room_path(@room, ft: 2), class: "nl-arena-tab #{'nl-arena-tab--active' if active_tab == '2'}" %>
-    <%= link_to "Sacrifice", arena_room_path(@room, ft: 3), class: "nl-arena-tab #{'nl-arena-tab--active' if active_tab == '3'}" %>
-    <span class="nl-arena-tab nl-arena-tab--disabled">Tactical</span>
-    <span class="nl-arena-tab nl-arena-tab--disabled">Betting</span>
-    <%= link_to "Statistics", arena_index_path(ft: 4), class: "nl-arena-tab" %>
+    <%= link_to "Дуэли", arena_room_path(@room, ft: 1), class: "nl-arena-tab #{'nl-arena-tab--active' if active_tab == '1'}" %>
+    <%= link_to "Групповые", arena_room_path(@room, ft: 2), class: "nl-arena-tab #{'nl-arena-tab--active' if active_tab == '2'}" %>
+    <%= link_to "Жертвенные", arena_room_path(@room, ft: 3), class: "nl-arena-tab #{'nl-arena-tab--active' if active_tab == '3'}" %>
+    <%= link_to "Статистика", arena_index_path(ft: 4), class: "nl-arena-tab" %>
   </div>
 
   <div class="nl-arena-application-form" data-arena-target="formContainer">
     <% if @my_application %>
       <div class="nl-arena-current-row">
-        <b>Your application:</b>
+        <b>Ваша заявка:</b>
         <%= fight_type_label(@my_application.fight_type) %>,
         <%= fight_kind_label(@my_application.fight_kind) %>,
-        timeout <%= @my_application.timeout_seconds / 60 %> min,
-        trauma <%= @my_application.trauma_percent %>%.
-        <%= button_to "Cancel your fight application",
+        таймаут <%= @my_application.timeout_seconds / 60 %> мин,
+        травма <%= @my_application.trauma_percent %>%.
+        <%= button_to "Снять заявку",
             arena_room_arena_application_path(@room, @my_application),
             method: :delete,
             class: "nl-arena-small-button" %>
@@ -68,44 +66,44 @@
                     data: { action: "submit->arena#submitApplication" } do |f| %>
         <%= f.hidden_field :fight_type, value: tab_fight_type %>
         <%= f.select :fight_kind,
-            [["fight kind", ""], ["Bare hands", "no_weapons"], ["No artifacts", "no_artifacts"], ["Limited artifacts", "limited_artifacts"], ["Free", "free"], ["Clan vs Clan", "clan_vs_clan"], ["Faction vs Faction", "faction_vs_faction"], ["Closed fight", "closed"]],
+            [["вид боя", ""], ["Без вооружения", "no_weapons"], ["Произвольный", "free"], ["Склонность на склонность", "alignment_vs_alignment"], ["Без артефактов", "no_artifacts"], ["Ограниченные артефакты", "limited_artifacts"]],
             {},
             class: "nl-arena-select",
             required: true %>
         <%= f.select :timeout_seconds,
-            [["timeout", ""], ["2 min", 120], ["3 min", 180], ["4 min", 240], ["5 min", 300]],
+            [["таймаут", ""], ["2 мин", 120], ["3 мин", 180], ["4 мин", 240], ["5 мин", 300]],
             {},
             class: "nl-arena-select",
             required: true %>
         <%= f.select :trauma_percent,
-            [["trauma %", ""], ["light (10%)", 10], ["medium (30%)", 30], ["heavy (50%)", 50], ["very heavy (80%)", 80]],
+            [["травма", ""], ["малый (10%)", 10], ["средний (30%)", 30], ["высокий (50%)", 50], ["оч. высокий (80%)", 80]],
             {},
             class: "nl-arena-select",
             required: true %>
 
         <% if active_tab != "1" %>
           <%= f.select :wait_minutes,
-              [["wait", ""], ["5 min", 5], ["10 min", 10], ["15 min", 15], ["30 min", 30], ["45 min", 45], ["60 min", 60]],
+              [["ожидание", ""], ["5 мин", 5], ["10 мин", 10], ["15 мин", 15], ["30 мин", 30], ["45 мин", 45], ["60 мин", 60]],
               {},
               class: "nl-arena-select",
               required: true %>
           <span class="nl-arena-team-limits">
-            own team:
+            своя команда:
             <%= f.number_field :team_count, min: 1, max: 10, value: 1, class: "nl-arena-mini-input" %>
-            levels
+            уровни
             <%= f.number_field :team_level_min, min: 0, max: 33, value: [current_character.level - 1, 0].max, class: "nl-arena-mini-input" %>
             -
             <%= f.number_field :team_level_max, min: 0, max: 33, value: current_character.level + 1, class: "nl-arena-mini-input" %>
-            versus:
+            против:
             <%= f.number_field :enemy_count, min: 1, max: 10, value: 1, class: "nl-arena-mini-input" %>
-            levels
+            уровни
             <%= f.number_field :enemy_level_min, min: 0, max: 33, value: [current_character.level - 1, 0].max, class: "nl-arena-mini-input" %>
             -
             <%= f.number_field :enemy_level_max, min: 0, max: 33, value: current_character.level + 1, class: "nl-arena-mini-input" %>
           </span>
         <% end %>
 
-        <%= f.submit "Submit Application", class: "nl-arena-small-button" %>
+        <%= f.submit "Подать заявку", class: "nl-arena-small-button" %>
       <% end %>
     <% end %>
   </div>
@@ -113,17 +111,17 @@
   <table class="nl-arena-table nl-arena-applications-table arena-applications" data-arena-target="applicationList">
     <thead>
       <tr>
-        <th>Time</th>
-        <th>Side 1</th>
-        <th>Terms</th>
-        <th>Side 2</th>
-        <th>Action</th>
+        <th>Время</th>
+        <th>Сторона 1</th>
+        <th>Условия</th>
+        <th>Сторона 2</th>
+        <th>Действие</th>
       </tr>
     </thead>
     <tbody>
       <% if visible_applications.empty? %>
         <tr>
-          <td colspan="5" class="nl-arena-empty">No open applications</td>
+          <td colspan="5" class="nl-arena-empty">Нет открытых заявок</td>
         </tr>
       <% else %>
         <% visible_applications.each do |app| %>
@@ -134,25 +132,27 @@
             <td><%= app.created_at.strftime("%H:%M:%S") %></td>
             <td>
               <b><%= applicant_name %>[<%= applicant_level %>]</b>
+              <span class="nl-arena-muted"><%= arena_application_applicant_level_gate(app) %></span>
             </td>
             <td>
-              <%= fight_kind_label(app.fight_kind) %>,
-              <%= app.timeout_seconds / 60 %> min,
-              trauma <%= app.trauma_percent %>%,
-              waits <%= distance_of_time_in_words_to_now(app.expires_at) %>
+              <%= arena_application_rule_label(app) %>,
+              таймаут <%= app.timeout_seconds %>с,
+              травма <%= app.trauma_percent %>,
+              ожидание <%= distance_of_time_in_words_to_now(app.expires_at) %>
             </td>
             <td>
-              <b>no opponents</b>
+              <b>нет противников</b>
+              <span class="nl-arena-muted"><%= arena_application_open_side_level_gate(app) %></span>
             </td>
             <td>
               <% if own_app %>
-                <span>Your application</span>
-                <%= button_to "Cancel",
+                <span>Ваша заявка</span>
+                <%= button_to "Снять",
                     arena_room_arena_application_path(@room, app),
                     method: :delete,
                     class: "nl-arena-small-button" %>
               <% elsif app.acceptable_by?(current_character) %>
-                <%= button_to "Accept",
+                <%= button_to "Принять",
                     accept_arena_room_arena_application_path(@room, app),
                     method: :post,
                     class: "nl-arena-small-button",
@@ -161,7 +161,7 @@
                       application_id: app.id
                     } %>
               <% else %>
-                <span class="nl-arena-muted">cannot accept</span>
+                <span class="nl-arena-muted">нельзя принять</span>
               <% end %>
             </td>
           </tr>
@@ -172,19 +172,19 @@
 
   <% if @active_matches.any? %>
     <div class="nl-arena-active-matches">
-      <b>Active fights</b>
+      <b>Идут бои</b>
       <% @active_matches.each do |match| %>
         <div class="nl-arena-recent-row">
           <%= match.match_type.humanize %>:
           <%= match.arena_participations.map(&:participant_name).join(" vs ") %>
-          <%= link_to "watch", arena_match_path(match), class: "nl-arena-filter" %>
+          <%= link_to "смотреть", arena_match_path(match), class: "nl-arena-filter" %>
         </div>
       <% end %>
     </div>
   <% end %>
 
   <div class="arena-countdown" data-arena-target="countdown" style="display: none;">
-    <div class="arena-countdown-title">Match Starting</div>
+    <div class="arena-countdown-title">Бой начинается</div>
     <div class="arena-countdown-timer">--</div>
   </div>
 </div>

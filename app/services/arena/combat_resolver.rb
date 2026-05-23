@@ -5,8 +5,8 @@ module Arena
   #
   # The captured client flow makes AP/cost data fight-specific, then resolves a
   # submitted turn into clear outcomes: miss, dodge, block, hit, critical hit,
-  # and damage. This service keeps that result shape explicit so arena PvP and
-  # NPC fights do not drift into separate combat engines.
+  # and damage. This service keeps that result shape explicit so player, team,
+  # and NPC fights do not drift into separate combat engines.
   class CombatResolver
     BODY_PART_HIT_MODIFIERS = {
       "head" => -10,
@@ -189,7 +189,6 @@ module Arena
       chance += defense_power(defender) * 0.4
       chance += stat(defender, :agility) * 0.2
       chance += stat(defender, :dexterity) * 0.15
-      chance += stat(defender, :block_mastery) * 0.25
       chance += BODY_PART_BLOCK_MODIFIERS.fetch(body_part, 0)
       chance -= stat(attacker, :accuracy) * 0.2
       chance -= stat(attacker, :dexterity) * 0.1
@@ -243,17 +242,7 @@ module Arena
       stats = if config
         Game::World::ArenaNpcConfig.extract_stats(config)
       else
-        level = npc&.level.to_i.positive? ? npc.level.to_i : 1
-        {
-          attack: npc&.metadata&.dig("base_damage") || npc&.metadata&.dig("damage") || (level * 3 + 5),
-          defense: npc&.metadata&.dig("base_defense") || npc&.metadata&.dig("defense") || (level * 2 + 3),
-          agility: npc&.metadata&.dig("agility") || level + 5,
-          dexterity: npc&.metadata&.dig("dexterity") || level + 5,
-          evasion: npc&.metadata&.dig("evasion") || level / 2,
-          accuracy: npc&.metadata&.dig("accuracy") || level + 5,
-          luck: npc&.metadata&.dig("luck") || 5 + (level / 5),
-          critical_chance: npc&.metadata&.dig("crit_chance") || 10
-        }
+        npc&.combat_stats || {}
       end
 
       stats.with_indifferent_access

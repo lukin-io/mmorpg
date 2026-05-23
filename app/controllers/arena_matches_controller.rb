@@ -2,7 +2,7 @@
 
 class ArenaMatchesController < ApplicationController
   before_action :authenticate_user!
-  before_action :set_arena_match, only: [:show, :action, :claim_timeout, :finish, :spectate, :log]
+  before_action :set_arena_match, only: [:show, :action, :claim_timeout, :finish, :log]
   before_action :require_character, only: [:action, :claim_timeout, :finish]
   before_action :require_participant, only: [:action, :claim_timeout, :finish]
 
@@ -11,7 +11,7 @@ class ArenaMatchesController < ApplicationController
 
     # Auto-end stale or finished matches
     if @arena_match.auto_end_if_needed!
-      flash.now[:notice] = "Match ended due to timeout or completion."
+      flash.now[:notice] = "Бой завершен."
     end
 
     @participations = @arena_match.arena_participations.includes(:character, :npc_template)
@@ -26,7 +26,7 @@ class ArenaMatchesController < ApplicationController
   # GET /arena_matches/:id/log
   def log
     authorize @arena_match, :show?
-    @combat_log = @arena_match.metadata["combat_log"] || []
+    @combat_log = Arena::CombatLogPresenter.rows_for(@arena_match)
 
     respond_to do |format|
       format.html { render partial: "arena_matches/combat_log", locals: {log: @combat_log} }
@@ -35,7 +35,7 @@ class ArenaMatchesController < ApplicationController
   end
 
   # POST /arena_matches/:id/action
-  # Submit a combat action (attack, defend, skill, flee)
+  # Submit a combat action (attack, defend, turn, flee)
   def action
     authorize @arena_match
 
@@ -44,7 +44,6 @@ class ArenaMatchesController < ApplicationController
     # Build params hash for the action
     action_params = {}
     action_params[:target] = find_action_target if params[:target_id].present?
-    action_params[:skill_id] = params[:skill_id] if params[:skill_id].present?
     action_params[:attack_type] = params[:attack_type]&.to_sym if params[:attack_type].present?
     action_params[:body_part] = params[:body_part] if params[:body_part].present?
     if params[:block_parts].present?
@@ -62,7 +61,7 @@ class ArenaMatchesController < ApplicationController
 
     respond_to do |format|
       if result.success?
-        format.html { redirect_to @arena_match, notice: "Action submitted!" }
+        format.html { redirect_to @arena_match, notice: "Ход отправлен." }
         format.json { render json: {success: true, data: result.data} }
         format.turbo_stream { head :ok }
       else
@@ -84,7 +83,7 @@ class ArenaMatchesController < ApplicationController
 
     respond_to do |format|
       if result.success?
-        message = result[:mode] == "draw" ? "Timeout draw recorded." : "Victory by timeout recorded."
+        message = result[:mode] == "draw" ? "Ничья по таймауту зафиксирована." : "Победа по таймауту зафиксирована."
         format.html { redirect_to @arena_match, notice: message }
         format.json { render json: {success: true, data: result.data} }
       else
@@ -99,7 +98,7 @@ class ArenaMatchesController < ApplicationController
     authorize @arena_match
 
     unless @arena_match.completed?
-      redirect_to @arena_match, alert: "Fight is still active."
+      redirect_to @arena_match, alert: "Бой еще идет."
       return
     end
 
@@ -109,30 +108,20 @@ class ArenaMatchesController < ApplicationController
     participation.save!
     current_character.exit_combat! if current_character.in_combat?
 
-    redirect_to arena_index_path, notice: "Fight finished."
-  end
-
-  def spectate
-    authorize @arena_match, :show?
-    Arena::SpectatorBroadcaster.new(match: @arena_match).broadcast!(
-      event: "spectator_joined",
-      payload: {user_id: current_user.id, profile_name: current_user.profile_name}
-    )
-
-    redirect_to @arena_match, notice: "Spectator mode engaged."
+    redirect_to arena_index_path, notice: "Бой завершен."
   end
 
   private
 
   def require_character
     unless current_character
-      redirect_to arena_index_path, alert: "You need a character to participate"
+      redirect_to arena_index_path, alert: "Для участия нужен персонаж."
     end
   end
 
   def require_participant
     unless @arena_match.arena_participations.exists?(user: current_user)
-      redirect_to @arena_match, alert: "You are not a participant in this match"
+      redirect_to @arena_match, alert: "Вы не участвуете в этом бою."
     end
   end
 
@@ -167,18 +156,17 @@ class ArenaMatchesController < ApplicationController
       id: @arena_match.id,
       status: @arena_match.status,
       match_type: @arena_match.match_type,
-      spectator_code: @arena_match.spectator_code,
       started_at: @arena_match.started_at&.iso8601,
       ended_at: @arena_match.ended_at&.iso8601,
       duration: @arena_match.duration,
       current_user_combat: current_user_combat_payload,
+      public_log_path: @arena_match.public_log_path,
       participants: @participations.map do |p|
         {
           character_id: p.npc? ? "npc-#{p.npc_template_id}" : p.character_id,
           character_name: p.participant_name,
           team: p.team,
           result: p.result,
-          rating_delta: p.npc? ? 0 : p.rating_delta,
           is_npc: p.npc?
         }
       end

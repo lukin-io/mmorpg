@@ -1,14 +1,7 @@
 # frozen_string_literal: true
 
 module Chat
-  # Resolves the correct ChatChannel for a given context (global, local, guild, etc.)
-  # and takes care of creating system-owned channels when necessary.
-  #
-  # Usage:
-  #   channel = Chat::ChannelRouter.new(user: current_user).resolve(scope: :global)
-  #
-  # Returns:
-  #   A ChatChannel record (persisted) that the caller can use for messaging.
+  # Resolves source-backed chat channel contexts.
   class ChannelRouter
     def initialize(user:)
       @user = user
@@ -20,12 +13,6 @@ module Chat
         global_channel
       when :local
         local_channel(context)
-      when :guild
-        scoped_channel(:guild, context.fetch(:guild_id))
-      when :clan
-        scoped_channel(:clan, context.fetch(:clan_id))
-      when :party
-        scoped_channel(:party, context.fetch(:party_id))
       when :arena
         arena_channel(context)
       when :private, :whisper
@@ -59,18 +46,6 @@ module Chat
           "local_key" => key,
           "label" => context[:name]
         }.compact
-      end
-    end
-
-    def scoped_channel(type, identifier)
-      slug = "#{type}-#{identifier}"
-      ChatChannel.find_or_create_by!(slug:) do |channel|
-        channel.name = "#{type.to_s.titleize} ##{identifier}"
-        channel.channel_type = type
-        channel.system_owned = true
-        channel.metadata = {"#{type}_id" => identifier}
-      end.tap do |channel|
-        channel.ensure_membership!(user)
       end
     end
 

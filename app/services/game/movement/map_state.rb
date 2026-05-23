@@ -67,7 +67,7 @@ module Game
         provider = Game::Movement::TileProvider.new(zone: position.zone)
         validator = Game::Movement::MovementValidator.new(provider)
 
-        Game::Movement::TurnProcessor::OFFSETS.filter_map do |direction, (dx, dy)|
+        Game::Movement::Directions::OFFSETS.filter_map do |direction, (dx, dy)|
           target_x = position.x + dx
           target_y = position.y + dy
           next unless validator.valid?(target_x, target_y)
@@ -110,9 +110,7 @@ module Game
 
       def build_metadata(provider, target_x, target_y, tile_metadata)
         {
-          "biome" => provider.biome_at(target_x, target_y),
-          "terrain_type" => provider.terrain_type_at(target_x, target_y) || tile_metadata["terrain_type"],
-          "terrain_modifier" => tile_metadata["movement_modifier"]
+          "terrain_type" => provider.terrain_type_at(target_x, target_y) || tile_metadata["terrain_type"]
         }.compact
       end
     end

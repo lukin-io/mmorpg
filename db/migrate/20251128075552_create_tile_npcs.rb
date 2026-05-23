@@ -7,7 +7,6 @@ class CreateTileNpcs < ActiveRecord::Migration[8.1]
       t.integer :x, null: false
       t.integer :y, null: false
       t.references :npc_template, null: false, foreign_key: true
-      t.string :biome
       t.string :npc_key, null: false
       t.string :npc_role, null: false, default: "hostile"
       t.integer :current_hp
@@ -24,6 +23,5 @@ class CreateTileNpcs < ActiveRecord::Migration[8.1]
     add_index :tile_npcs, [:zone, :x, :y], unique: true
     add_index :tile_npcs, :respawns_at
     add_index :tile_npcs, :npc_role
-    add_index :tile_npcs, :biome
   end
 end

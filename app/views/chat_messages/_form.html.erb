@@ -14,28 +14,13 @@
   <div class="chat-input-wrapper">
     <%= form.text_field :body,
         class: "chat-input",
-        placeholder: "Type a message... (Enter to send, /w name to whisper)",
+        placeholder: "Type a message...",
         autocomplete: "off",
         data: {
           chat_target: "input",
-          action: "keydown->chat#handleKeydown input->chat#handleInput"
+          action: "keydown->chat#handleKeydown"
         } %>
-
-    <div class="emoji-picker-container" style="position: relative;">
-      <button type="button" class="emoji-toggle-btn" data-action="click->chat#toggleEmojiPicker" title="Add emoji">😊</button>
-      <div class="emoji-picker">
-        <% %w[😀 😂 😊 😍 🤔 😅 😎 🙄 😢 😡 👍 👎 ❤️ 🔥 ⚔️ 🛡️ 🗡️ 💰 ⭐ 🏆 🎮 💀 👻 🧙 🧝 🐉 🏰 ⚡ 💎 🍺].each do |emoji| %>
-          <button type="button" class="emoji-btn" data-action="click->chat#insertEmoji" data-emoji="<%= emoji %>"><%= emoji %></button>
-        <% end %>
-      </div>
-    </div>
 
     <%= form.submit "Send", class: "btn-primary chat-send-btn" %>
   </div>
-
-  <p class="chat-guidelines text-xs text-muted">
-    Be respectful. <span class="chat-guideline-link" data-controller="moderation-guideline"
-    data-action="mouseenter->moderation-guideline#show mouseleave->moderation-guideline#hide"
-    data-guideline="chat_abuse">View guidelines</span>
-  </p>
 <% end %>

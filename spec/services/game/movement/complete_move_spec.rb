@@ -3,10 +3,9 @@
 require "rails_helper"
 
 RSpec.describe Game::Movement::CompleteMove do
-  let(:zone) { create(:zone, name: "Complete Move Plains", biome: "plains", width: 10, height: 10) }
+  let(:zone) { create(:zone, name: "Окрестность Форпоста", location_type: "outdoor", width: 10, height: 10) }
   let(:character) { create(:character) }
   let!(:position) { create(:character_position, character:, zone:, x: 5, y: 5, last_turn_number: 2) }
-  let(:encounter_resolver) { instance_double(Game::Exploration::EncounterResolver, resolve: {"kind" => "none"}) }
 
   def moving_command(overrides = {})
     create(
@@ -30,7 +29,7 @@ RSpec.describe Game::Movement::CompleteMove do
   it "finalizes due movement into the authoritative character position" do
     command = moving_command
 
-    described_class.new(character:, encounter_resolver:).call
+    described_class.new(character:).call
 
     position.reload
     expect([position.x, position.y]).to eq([6, 5])
@@ -38,13 +37,13 @@ RSpec.describe Game::Movement::CompleteMove do
     expect(command.reload).to be_completed
     expect(command.completed_at).to be_present
     expect(command.processed_at).to be_present
-    expect(command.metadata).to include("source" => "spec", "encounter" => {"kind" => "none"})
+    expect(command.metadata).to include("source" => "spec")
   end
 
   it "leaves movement active until the travel timer is due" do
     command = moving_command(ends_at: 30.seconds.from_now)
 
-    described_class.new(character:, encounter_resolver:).call
+    described_class.new(character:).call
 
     expect(command.reload).to be_moving
     expect([position.reload.x, position.y]).to eq([5, 5])
@@ -54,7 +53,7 @@ RSpec.describe Game::Movement::CompleteMove do
     command = moving_command
     position.update!(x: 4)
 
-    described_class.new(character:, encounter_resolver:).call
+    described_class.new(character:).call
 
     expect(command.reload).to be_failed
     expect(command.error_message).to eq("Character is no longer at the movement source")
@@ -63,9 +62,9 @@ RSpec.describe Game::Movement::CompleteMove do
 
   it "marks movement failed when the destination becomes impassable" do
     command = moving_command
-    MapTileTemplate.create!(zone: zone.name, x: 6, y: 5, terrain_type: "mountain", passable: false, biome: "plains")
+    MapTileTemplate.create!(zone: zone.name, x: 6, y: 5, terrain_type: "outdoor", passable: false)
 
-    described_class.new(character:, encounter_resolver:).call
+    described_class.new(character:).call
 
     expect(command.reload).to be_failed
     expect(command.error_message).to eq("Tile is not passable")
@@ -77,7 +76,7 @@ RSpec.describe Game::Movement::CompleteMove do
     create(:character_position, character: other_character, zone:, x: 5, y: 5)
     other_command = moving_command(character: other_character)
 
-    described_class.new(character:, encounter_resolver:).call
+    described_class.new(character:).call
 
     expect(other_command.reload).to be_moving
   end

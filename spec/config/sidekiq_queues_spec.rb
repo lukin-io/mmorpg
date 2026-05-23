@@ -15,14 +15,6 @@ RSpec.describe "Sidekiq Queue Configuration" do
       expect(configured_queues).to include("default")
     end
 
-    it "includes the combat queue" do
-      expect(configured_queues).to include("combat")
-    end
-
-    it "includes the presence queue for session tracking" do
-      expect(configured_queues).to include("presence")
-    end
-
     it "includes the movement queue" do
       expect(configured_queues).to include("movement")
     end
@@ -31,24 +23,8 @@ RSpec.describe "Sidekiq Queue Configuration" do
       expect(configured_queues).to include("vitals")
     end
 
-    it "includes the social queue" do
-      expect(configured_queues).to include("social")
-    end
-
-    it "includes the webhooks queue" do
-      expect(configured_queues).to include("webhooks")
-    end
-
     it "includes the chat queue" do
       expect(configured_queues).to include("chat")
-    end
-
-    it "includes the moderation queue" do
-      expect(configured_queues).to include("moderation")
-    end
-
-    it "includes the live_ops queue" do
-      expect(configured_queues).to include("live_ops")
     end
 
     it "includes the low priority queue" do
@@ -93,9 +69,7 @@ RSpec.describe "Sidekiq Queue Configuration" do
       {
         "Arena::MatchStarterJob" => "arena",
         "ArenaTurnTimeoutJob" => "arena",
-        "ArenaTurnTimeoutWarningJob" => "arena",
-        "SessionPresenceJob" => "presence",
-        "BattleResolutionJob" => "combat"
+        "ArenaTurnTimeoutWarningJob" => "arena"
       }
     end
 

@@ -4,21 +4,16 @@ class SessionPingsController < ApplicationController
   protect_from_forgery except: :create
 
   def create
-    SessionPresenceJob.perform_later(
-      user_id: current_user.id,
-      device_id: device_identifier,
-      state: ping_params[:state],
-      timestamp: Time.current
-    )
+    timestamp = Time.current
+    session = current_user.user_sessions.find_or_initialize_by(device_id: device_identifier)
+    session.signed_in_at ||= timestamp
+    session.mark_seen!(timestamp: timestamp)
+    current_user.update!(last_seen_at: timestamp)
 
-    head :accepted
+    head :no_content
   end
 
   private
-
-  def ping_params
-    params.require(:session_ping).permit(:state)
-  end
 
   def device_identifier
     Auth::DeviceIdentifier.resolve(request)

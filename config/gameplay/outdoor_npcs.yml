@@ -1,0 +1,25 @@
+# Source-backed outdoor NPC configuration.
+# Captured Neverlands outdoor bot attacks near Окрестность Форпоста used
+# Чумная крыса NPCs and the normal shared fight pipeline.
+
+outpost_surroundings:
+  zone_name: "Окрестность Форпоста"
+  source_map: "m_1001_999"
+  npcs:
+    - key: plague_rat
+      name: Чумная крыса
+      role: hostile
+      level: 4
+      x: 1001
+      y: 999
+      hp: 100
+      damage: 7
+      xp: 35
+      metadata:
+        source_name: "Чумная крыса"
+        source_location: "Окрестность Форпоста"
+        source_observation: "neverlands_live_outdoor_npc_resource"
+        avatar_image: "zombie.png"
+      loot:
+        - item: rat_tail
+          source_name: "Крысиный хвост"

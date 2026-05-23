@@ -164,7 +164,7 @@ RSpec.describe Arena::MatchStarterJob, type: :job do
     end
 
     context "when match has NPC participants" do
-      let(:npc_template) { create(:npc_template, name: "Training Dummy", level: 5, role: "arena_bot") }
+      let(:npc_template) { create(:npc_template, name: "Манекен", level: 5, role: "arena_bot") }
 
       before do
         participation2.update!(character: nil, npc_template: npc_template, user: nil)
@@ -190,8 +190,6 @@ RSpec.describe Arena::MatchStarterJob, type: :job do
   describe "job scheduling via ApplicationHandler" do
     let(:handler) { Arena::ApplicationHandler.new }
     let(:other_character) { create(:character, user: create(:user), level: 10, current_hp: 100, max_hp: 100) }
-    let!(:season) { create(:arena_season, status: :live) }
-
     before do
       create(:character_position, character: other_character)
     end

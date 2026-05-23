@@ -4,51 +4,49 @@
 body_parts:
   head:
     key: "head"
-    name: "Head"
+    name: "Голова"
     damage_multiplier: 1.3
     block_difficulty: 35
   torso:
     key: "torso"
-    name: "Torso"
+    name: "Корпус"
     damage_multiplier: 1.0
     block_difficulty: 30
   stomach:
     key: "stomach"
-    name: "Stomach"
+    name: "Живот"
     damage_multiplier: 1.1
     block_difficulty: 30
   legs:
     key: "legs"
-    name: "Legs"
+    name: "Ноги"
     damage_multiplier: 0.9
     block_difficulty: 35
 
 # Attack types
-# type 1 = melee attack, type 2 = block, type 3 = instant magic
-# type 4 = potion/item, type 5 = targeted ally spell, type 6 = text action
-# type 7 = area effect
+# type 1 = attack, type 2 = block/guard
 
 attack_types:
   # Basic attacks
   simple:
     key: "simple"
-    name: "Simple Attack"
+    name: "Простой удар"
     action_cost: 45
     mana_cost: 0
     type: 1
     damage_multiplier: 1.0
     hit_bonus: 0
-    description: "A basic attack with no special targeting"
+    description: "Базовый физический удар"
 
   aimed:
     key: "aimed"
-    name: "Aimed Attack"
+    name: "Прицельный удар"
     action_cost: 65
     mana_cost: 0
     type: 1
     damage_multiplier: 1.2
     hit_bonus: 15
-    description: "A more precise attack"
+    description: "Более точный физический удар"
 
   spirit_arrow:
     key: "spirit_arrow"
@@ -76,7 +74,7 @@ attack_types:
 block_types:
   head_block:
     key: "head_block"
-    name: "Head Block"
+    name: "Блок головы"
     action_cost: 35
     mana_cost: 0
     type: 2
@@ -84,7 +82,7 @@ block_types:
 
   head_torso_block:
     key: "head_torso_block"
-    name: "Head + Torso Block"
+    name: "Блок головы и корпуса"
     action_cost: 50
     mana_cost: 0
     type: 2
@@ -92,7 +90,7 @@ block_types:
 
   head_stomach_block:
     key: "head_stomach_block"
-    name: "Head + Stomach Block"
+    name: "Блок головы и живота"
     action_cost: 60
     mana_cost: 0
     type: 2
@@ -100,7 +98,7 @@ block_types:
 
   torso_block:
     key: "torso_block"
-    name: "Torso Block"
+    name: "Блок корпуса"
     action_cost: 30
     mana_cost: 0
     type: 2
@@ -108,7 +106,7 @@ block_types:
 
   torso_stomach_block:
     key: "torso_stomach_block"
-    name: "Torso + Stomach Block"
+    name: "Блок корпуса и живота"
     action_cost: 50
     mana_cost: 0
     type: 2
@@ -116,7 +114,7 @@ block_types:
 
   torso_legs_block:
     key: "torso_legs_block"
-    name: "Torso + Legs Block"
+    name: "Блок корпуса и ног"
     action_cost: 60
     mana_cost: 0
     type: 2
@@ -124,7 +122,7 @@ block_types:
 
   stomach_block:
     key: "stomach_block"
-    name: "Stomach Block"
+    name: "Блок живота"
     action_cost: 30
     mana_cost: 0
     type: 2
@@ -132,7 +130,7 @@ block_types:
 
   stomach_legs_block:
     key: "stomach_legs_block"
-    name: "Stomach + Legs Block"
+    name: "Блок живота и ног"
     action_cost: 50
     mana_cost: 0
     type: 2
@@ -140,7 +138,7 @@ block_types:
 
   legs_block:
     key: "legs_block"
-    name: "Legs Block"
+    name: "Блок ног"
     action_cost: 35
     mana_cost: 0
     type: 2
@@ -148,25 +146,17 @@ block_types:
 
   legs_head_block:
     key: "legs_head_block"
-    name: "Legs + Head Block"
+    name: "Блок ног и головы"
     action_cost: 80
     mana_cost: 0
     type: 2
     body_parts: ["legs", "head"]
 
-  full_block:
-    key: "full_block"
-    name: "Full Body Block"
-    action_cost: 130
-    mana_cost: 0
-    type: 2
-    body_parts: ["head", "torso", "stomach", "legs"]
-
   # Shield block selectors - available when the participant profile uses the
   # shield block table.
   shield_head_block:
     key: "shield_head_block"
-    name: "Shield Head Block"
+    name: "Блок щитом: голова"
     action_cost: 45
     mana_cost: 0
     type: 2
@@ -175,7 +165,7 @@ block_types:
 
   shield_torso_block:
     key: "shield_torso_block"
-    name: "Shield Torso Block"
+    name: "Блок щитом: корпус"
     action_cost: 40
     mana_cost: 0
     type: 2
@@ -184,7 +174,7 @@ block_types:
 
   shield_stomach_block:
     key: "shield_stomach_block"
-    name: "Shield Stomach Block"
+    name: "Блок щитом: живот"
     action_cost: 40
     mana_cost: 0
     type: 2
@@ -193,7 +183,7 @@ block_types:
 
   shield_legs_block:
     key: "shield_legs_block"
-    name: "Shield Legs Block"
+    name: "Блок щитом: ноги"
     action_cost: 45
     mana_cost: 0
     type: 2
@@ -202,7 +192,7 @@ block_types:
 
   shield_head_torso_block:
     key: "shield_head_torso_block"
-    name: "Shield Head + Torso Block"
+    name: "Блок щитом: голова и корпус"
     action_cost: 65
     mana_cost: 0
     type: 2
@@ -211,7 +201,7 @@ block_types:
 
   shield_torso_stomach_block:
     key: "shield_torso_stomach_block"
-    name: "Shield Torso + Stomach Block"
+    name: "Блок щитом: корпус и живот"
     action_cost: 60
     mana_cost: 0
     type: 2
@@ -220,7 +210,7 @@ block_types:
 
   shield_stomach_legs_block:
     key: "shield_stomach_legs_block"
-    name: "Shield Stomach + Legs Block"
+    name: "Блок щитом: живот и ноги"
     action_cost: 65
     mana_cost: 0
     type: 2
@@ -229,178 +219,41 @@ block_types:
 
   shield_full_block:
     key: "shield_full_block"
-    name: "Shield Full Block"
+    name: "Полный блок щитом"
     action_cost: 100
     mana_cost: 0
     type: 2
     block_table: "shield"
     body_parts: ["head", "torso", "stomach", "legs"]
 
-# Magic spells
-magic_types:
-  # Defensive magic
   magic_shield:
     key: "magic_shield"
-    name: "Magic Shield"
+    name: "Магический щит"
     action_cost: 45
     mana_cost: 20
     type: 3
-    element: "arcane"
-    effect: "shield"
-    description: "Create a magical barrier"
+    block_table: "magic"
+    body_parts: ["head", "torso", "stomach", "legs"]
 
   rainbow_barrier:
     key: "rainbow_barrier"
-    name: "Rainbow Barrier"
+    name: "Радужный барьер"
     action_cost: 60
     mana_cost: 40
     type: 3
-    element: "arcane"
-    effect: "barrier"
-    description: "Multi-element protection"
+    block_table: "magic"
+    body_parts: ["head", "torso", "stomach", "legs"]
 
   crystal_sphere:
     key: "crystal_sphere"
-    name: "Crystal Sphere"
+    name: "Кристальная сфера"
     action_cost: 90
     mana_cost: 65
     type: 3
-    element: "earth"
-    effect: "immunity"
-    description: "Complete damage immunity for one attack"
+    block_table: "magic"
+    body_parts: ["head", "torso", "stomach", "legs"]
 
-  # Healing
-  hp_restore:
-    key: "hp_restore"
-    name: "HP Restoration"
-    action_cost: 30
-    mana_cost: 0
-    type: 4
-    effect: "heal_hp"
-    amount: 30
-    description: "Restore HP"
-
-  mp_restore:
-    key: "mp_restore"
-    name: "MP Restoration"
-    action_cost: 30
-    mana_cost: 0
-    type: 4
-    effect: "heal_mp"
-    amount: 20
-    description: "Restore MP"
-
-  # Fire magic
-  fire_arrow:
-    key: "fire_arrow"
-    name: "Fire Arrow"
-    action_cost: 100
-    mana_cost: 50
-    type: 3
-    element: "fire"
-    damage: 30
-    description: "Launch a flaming arrow"
-
-  fire_wall:
-    key: "fire_wall"
-    name: "Fire Wall"
-    action_cost: 150
-    mana_cost: 300
-    type: 3
-    element: "fire"
-    damage: 50
-    effect: "dot"
-    description: "Create a wall of flames"
-
-  # Water/Ice magic
-  ice_arrow:
-    key: "ice_arrow"
-    name: "Ice Arrow"
-    action_cost: 100
-    mana_cost: 50
-    type: 3
-    element: "water"
-    damage: 25
-    effect: "slow"
-    description: "Frozen projectile that slows target"
-
-  freeze:
-    key: "freeze"
-    name: "Freeze"
-    action_cost: 150
-    mana_cost: 150
-    type: 3
-    element: "water"
-    effect: "stun"
-    duration: 1
-    description: "Freeze target in place"
-
-  # Earth magic
-  stone_arrow:
-    key: "stone_arrow"
-    name: "Stone Arrow"
-    action_cost: 100
-    mana_cost: 75
-    type: 3
-    element: "earth"
-    damage: 35
-    description: "Heavy stone projectile"
-
-  meteor:
-    key: "meteor"
-    name: "Meteor Rain"
-    action_cost: 125
-    mana_cost: 150
-    type: 7
-    element: "earth"
-    damage: 40
-    aoe: true
-    description: "Rain meteors on all enemies"
-
-  # Air/Lightning magic
-  lightning:
-    key: "lightning"
-    name: "Lightning"
-    action_cost: 100
-    mana_cost: 50
-    type: 3
-    element: "air"
-    damage: 28
-    description: "Strike with lightning"
-
-  chain_lightning:
-    key: "chain_lightning"
-    name: "Chain Lightning"
-    action_cost: 150
-    mana_cost: 125
-    type: 7
-    element: "air"
-    damage: 25
-    chain: 3
-    description: "Lightning that jumps between targets"
-
-  # Support spells
-  healing:
-    key: "healing"
-    name: "Healing"
-    action_cost: 100
-    mana_cost: 100
-    type: 5
-    effect: "heal"
-    amount: 50
-    target: "ally"
-    description: "Heal an ally"
-
-  greater_healing:
-    key: "greater_healing"
-    name: "Greater Healing"
-    action_cost: 100
-    mana_cost: 100
-    type: 5
-    effect: "heal"
-    amount: 100
-    target: "ally"
-    description: "Powerful healing spell"
+magic_types: {}
 
 # Action point penalties for multiple attacks
 attack_penalties:

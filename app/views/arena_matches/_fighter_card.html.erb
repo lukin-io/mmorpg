@@ -1,5 +1,5 @@
 <%#
-  Fighter card for PVP arena match
+  Fighter card for a Neverlands-style arena fight
   Shows player/NPC with HP bar, stats, and status
 
   Required locals:
@@ -19,7 +19,7 @@
   <div class="fighter-avatar">
     <%= participation_avatar_tag(participation, size: :large) %>
     <% if defeated %>
-      <div class="fighter-defeated-overlay">Defeated</div>
+      <div class="fighter-defeated-overlay">Повержен</div>
     <% end %>
   </div>
 
@@ -28,7 +28,7 @@
     <span class="fighter-name <%= 'fighter-name--defeated' if defeated %>">
       <%= p_data.name %>
     </span>
-    <span class="fighter-level">[Lv.<%= p_data.level %>]</span>
+    <span class="fighter-level">[<%= p_data.level %>]</span>
     <% if p_data.is_npc %>
       <span class="fighter-badge fighter-badge--npc">NPC</span>
     <% end %>
@@ -55,34 +55,34 @@
   <% end %>
 
   <div class="fighter-combat-power">
-    <span class="fighter-power" title="Attack power includes strength, dexterity, level, and equipped weapon bonuses">
-      Atk <%= p_data.attack_power %>
+    <span class="fighter-power" title="Атака учитывает силу, ловкость, уровень и оружие">
+      Атака <%= p_data.attack_power %>
     </span>
-    <span class="fighter-power" title="Defense includes vitality, strength, level, and equipped armor bonuses">
-      Def <%= p_data.defense %>
+    <span class="fighter-power" title="Защита учитывает выносливость, силу, уровень и броню">
+      Защита <%= p_data.defense %>
     </span>
   </div>
 
   <%# Stats (shown for opponent) %>
   <% if show_stats %>
     <div class="fighter-stats fighter-stats--nl">
-      <div>Strength: <b><%= p_data.strength %></b></div>
-      <div>Dexterity: <b><%= p_data.dexterity %></b></div>
-      <div>Luck: <b><%= p_data.luck %></b></div>
-      <div>Knowledge: <b><%= p_data.knowledge %></b></div>
-      <div>Armor Class: <b><%= p_data.armor_class %></b></div>
-      <div>Evasion: <b><%= p_data.evasion %></b></div>
-      <div>Accuracy: <b><%= p_data.accuracy %></b></div>
-      <div>Crushing: <b><%= p_data.crushing %></b></div>
-      <div>Endurance: <b><%= p_data.endurance %></b></div>
-      <div>Armor Penetration: <b><%= p_data.armor_penetration %></b></div>
+      <div>Сила: <b><%= p_data.strength %></b></div>
+      <div>Ловкость: <b><%= p_data.dexterity %></b></div>
+      <div>Удача: <b><%= p_data.luck %></b></div>
+      <div>Знания: <b><%= p_data.knowledge %></b></div>
+      <div>Класс брони: <b><%= p_data.armor_class %></b></div>
+      <div>Уворот: <b><%= p_data.evasion %></b></div>
+      <div>Точность: <b><%= p_data.accuracy %></b></div>
+      <div>Сокрушение: <b><%= p_data.crushing %></b></div>
+      <div>Стойкость: <b><%= p_data.endurance %></b></div>
+      <div>Пробой брони: <b><%= p_data.armor_penetration %></b></div>
     </div>
   <% end %>
 
   <%# Result badge (if match completed) %>
   <% if participation.result.present? && participation.result != "pending" %>
     <div class="fighter-result fighter-result--<%= participation.result %>">
-      <%= participation.result.humanize %>
+      <%= { "victory" => "Победа", "defeat" => "Поражение", "draw" => "Ничья" }.fetch(participation.result, participation.result) %>
     </div>
   <% end %>
 </div>

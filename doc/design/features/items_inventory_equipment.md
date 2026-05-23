@@ -10,7 +10,8 @@ combat systems practical constraints.
 
 Inputs:
 
-- `doc/flow/neverlands_live_player.md`
+- `doc/design/reference/neverlands.md`
+- `doc/design/features/combat.md`
 
 ## Player Experience
 
@@ -30,22 +31,14 @@ Core:
 - armor;
 - jewelry/accessories;
 - consumables;
-- quest items;
-- crafting resources;
-- tools.
-
-Later:
-
-- cosmetics;
-- mounts;
-- housing decor.
+- materials.
 
 ## Equipment Rules
 
 - Items define allowed slot.
 - A character can equip only one item per slot unless a slot supports pairs.
 - Two-handed weapons occupy both hand capacity.
-- Items can require level, stats, skills, or reputation.
+- Items can require level, stats, skills, or other source-backed gates.
 - Equipment affects combat formulas, vitals, carrying capacity, and possibly
   movement cost.
 - Durability can degrade through combat or use.
@@ -73,7 +66,7 @@ Design rules:
 - clicking an occupied equipment slot removes that item through the same
   server-authorized equipment action family;
 - removing an item returns it to carried inventory if capacity and state allow;
-- equipped, broken, protected, locked, or quest-bound items can have restricted
+- equipped, broken, protected, or locked items can have restricted
   actions and must be handled server-side.
 
 Observed Neverlands action semantics:
@@ -105,6 +98,58 @@ Baseline visible slots from the Neverlands player capture:
 - armor;
 - pants;
 - relic.
+
+The 2026-05-19 starter arena fight confirmed that equipped items are also
+embedded in the active fight payload. The starter character rendered
+`Перочинный Нож` in the weapon slot and in the weapon/shield slot, and those
+equipped items coincided with the captured starter combat profile of 114 AP and
+45/65 physical attack costs. Do not treat equipment as profile-only decoration:
+the same equipment state must feed profile, inventory, and combat formula
+surfaces.
+
+## Weapon Effects On Combat
+
+Weapons change the combat profile, not only the damage number shown in an item
+row.
+
+Design rules:
+
+- equipped weapons can change AP budget, physical attack cost seed, simple
+  attack cost, aimed attack cost, hit range, accuracy, dodge, armor pierce,
+  critical chance, skill requirements, and durability loss;
+- not every equipment change must alter every combat-profile field; AP, attack
+  cost, damage, accuracy, and armor pierce are separate outputs of the formula;
+- dual-wield or weapon-plus-shield states must be explicit slot states, not
+  inferred from item names;
+- removing an equipped weapon through the inventory equipment doll must affect
+  the next generated combat profile;
+- fighting with no equipped weapon should fall back to the unarmed profile:
+  no weapon-family modifiers, no weapon durability loss, and damage/stat output
+  based on unarmed rules;
+- weapon-family skills, such as knife mastery, should affect only matching
+  weapon families unless a source capture proves a broader rule;
+- the combat screen should display the resulting AP and attack costs from the
+  generated profile so the player can see that equipment changed the fight.
+
+The live starter account wearing two knives is the verification case for this
+rule. The May 19 capture compared:
+
+1. regular mannequin fight with both knives equipped;
+2. mannequin fight using `Spirit Arrow` while both knives remained equipped;
+3. mannequin fight after both knives were removed from the inventory equipment
+   doll.
+
+Observed equipment deltas:
+
+| State | Equipped Weapon Slots | Visible Armor Pierce | Starter Fight AP/Costs |
+| --- | ---: | ---: | --- |
+| Two starter knives | 2 | 2 | 114 AP, 45/65 physical |
+| No equipped weapon | 0 | 0 | 114 AP, 45/65 physical |
+
+The two starter knives therefore affected visible armor pierce and observed
+damage output in this capture, while the AP budget and physical attack costs
+stayed stable. Treat `114` AP and `45/65` attack costs as captured starter
+profile values, not universal knife constants.
 
 The live inventory capture adds these launch requirements:
 
@@ -138,50 +183,42 @@ The live inventory capture adds these launch requirements:
 - Characters have finite carry capacity.
 - Capacity can be weight-based, slot-based, or both.
 - Stackable items stack only with matching item identity and state.
-- Quest items can be protected from normal sale/discard.
 - Inventory actions are server-authoritative.
 - Wearing, removing, using, deleting, selling, transferring, and gifting are
   separate actions and should not share client-invented state.
 
-## Current Implementation Status
+## Launch Design Target
 
-Last updated: 2026-05-11.
+The launch inventory should support:
 
-Implemented:
-
-- inventory page inside the player shell with equipment panel, stats panel,
+- inventory page inside the game shell with equipment panel, stats panel,
   category filters, sort actions, inventory mass, item rows, and empty slots;
-- item template support for equipment, consumable, material, resource, quest,
-  and misc item types;
-- item instance support for quantity, equipped slot, current durability,
-  requirement overrides, effect overrides, expiry metadata, bound/protected
-  state, and per-item properties;
-- equip, unequip, use, sort, and discard actions through Rails controllers and
-  inventory services;
+- item templates for equipment, consumables, materials, and miscellaneous items;
+- item instances with quantity, equipped slot, current durability, requirement
+  overrides, effect overrides, expiry metadata, bound/protected state, and
+  per-item properties;
+- equip, unequip, use, sort, and discard as server-authorized actions;
 - requirement validation for level, AP/action points, primary stats, and mapped
   numeric skills before equip/use;
 - equipment effects feeding character stats, effective max HP, attack, defense,
   accuracy, dodge, armor pierce, fortitude, elemental resistances, and skill
   bonuses;
-- combat durability degradation for PvE and PvP equipment;
+- combat durability degradation for player, team, and NPC fight equipment;
 - consumable durability charges before quantity consumption;
-- discard protection for equipped, bound, protected, locked, and quest items;
-- Brakeman, RuboCop, and Zeitwerk checks pass for the current implementation.
+- discard protection for equipped, bound, protected, and locked items.
 
-Missing before launch MVP is complete:
+Remaining design detail before launch:
 
 - canonical item seeds/templates matching the captured Neverlands inventory;
 - full label normalization for all captured effects and requirements;
 - complete slot rules for two-handed weapons, layered armor, rings, belt
   contents, pocket contents, and relics;
 - repair and breakage UX, including player-visible messages when gear breaks;
-- capacity enforcement across loot, pickup, trade, shop purchase, and quest
-  reward flows;
-- server-issued inventory action keys if Rails CSRF forms are not enough for
-  the final gameplay action model;
-- transfer, gift, sale, dealer, and equipment-set saving flows;
-- system/browser coverage for the inventory page after local PostgreSQL test
-  setup is fixed.
+- capacity enforcement across loot, pickup, and shop purchase flows;
+- server-issued inventory action keys when normal Rails form protection is not
+  enough for the final gameplay action model;
+- future transfer, gift, direct trade, dealer, and equipment-set saving flows
+  need source capture before implementation.
 
 ## State Concepts
 
@@ -200,50 +237,7 @@ Missing before launch MVP is complete:
 
 - `features/combat.md`: weapons and armor affect turns.
 - `features/movement.md`: carried weight can modify travel time.
-- `features/economy_trading_shops.md`: shops and market trade items.
-- `features/gathering_professions.md`: resources and tools live in inventory.
-- `features/npcs_quests.md`: quests can grant or require items.
-
-## Out Of Scope
-
-- Premium inventory boosts as a core design dependency.
-
-## Related Implementation Files
-
-Models:
-
-- `app/models/item_template.rb`
-- `app/models/inventory.rb`
-- `app/models/inventory_item.rb`
-- `app/models/trade_item.rb`
-
-Controllers and helpers:
-
-- `app/controllers/inventories_controller.rb`
-- `app/controllers/inventory_items_controller.rb`
-- `app/helpers/inventories_helper.rb`
-
-Services:
-
-- `app/services/game/inventory/manager.rb`
-- `app/services/game/inventory/equipment_service.rb`
-- `app/services/game/inventory/requirement_checker.rb`
-- `app/services/game/inventory/expansion_service.rb`
-- `app/services/game/economy/loot_generator.rb`
-
-Views and JavaScript:
-
-- `app/views/inventories/show.html.erb`
-- `app/views/inventories/_equipment.html.erb`
-- `app/views/inventories/_equipment_slot.html.erb`
-- `app/views/inventories/_stats.html.erb`
-- `app/javascript/controllers/inventory_controller.js`
-
-Specs:
-
-- `spec/models/inventory_spec.rb`
-- `spec/models/item_template_spec.rb`
-- `spec/requests/inventories_spec.rb`
-- `spec/services/game/inventory/manager_spec.rb`
-- `spec/services/game/inventory/expansion_service_spec.rb`
-- `spec/system/inventory_progression_spec.rb`
+- `features/economy_trading_shops.md`: shops buy and sell inventory items;
+  future player trade needs source capture first.
+- `features/npcs_quests.md`: future quest-item behavior needs source capture
+  before implementation.

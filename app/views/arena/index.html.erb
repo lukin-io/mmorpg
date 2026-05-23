@@ -1,4 +1,4 @@
-<% content_for :title, "Arena - Elselands" %>
+<% content_for :title, "Арена" %>
 
 <% active_tab = (params[:ft].presence || "1").to_s %>
 <% total_applications = @rooms.sum(&:open_application_count) %>
@@ -12,42 +12,40 @@
       <span class="nl-arena-vitals"><%= current_character.current_hp %>/<%= current_character.max_hp %> | <%= current_character.current_mp %>/<%= current_character.max_mp %></span>
     </div>
     <div class="nl-arena-controls">
-      <%= link_to "Character", player_path(name: current_character.name), class: "nl-arena-link" %>
-      <%= link_to "Inventory", inventory_path, class: "nl-arena-link" %>
-      <span class="nl-arena-link nl-arena-link--current">Arena</span>
-      <%= link_to "City", world_path, class: "nl-arena-link" %>
+      <%= link_to "Персонаж", player_path(name: current_character.name), class: "nl-arena-link" %>
+      <%= link_to "Инвентарь", inventory_path, class: "nl-arena-link" %>
+      <span class="nl-arena-link nl-arena-link--current">Арена</span>
+      <%= link_to "Город", world_path, class: "nl-arena-link" %>
     </div>
   </div>
 
   <div class="nl-arena-status-row">
-    <span>Application filter: <%= link_to "Your level", arena_index_path(ft: active_tab, level: current_character.level), class: "nl-arena-filter" %> | <%= link_to "All", arena_index_path(ft: active_tab), class: "nl-arena-filter" %></span>
-    <span>Applications: <b><%= total_applications %></b></span>
-    <%= link_to "Refresh", arena_index_path(ft: active_tab), class: "nl-arena-link" %>
-    <button type="button" class="nl-arena-link nl-arena-link--button" data-action="click->arena#showRooms">Show building layout</button>
+    <span>Заявки: <%= link_to "ваш уровень", arena_index_path(ft: active_tab, level: current_character.level), class: "nl-arena-filter" %> | <%= link_to "все", arena_index_path(ft: active_tab), class: "nl-arena-filter" %></span>
+    <span>Всего: <b><%= total_applications %></b></span>
+    <%= link_to "Обновить", arena_index_path(ft: active_tab), class: "nl-arena-link" %>
+    <button type="button" class="nl-arena-link nl-arena-link--button" data-action="click->arena#showRooms">Схема залов</button>
   </div>
 
   <div class="nl-arena-tabs">
-    <%= link_to "Duels", arena_index_path(ft: 1), class: "nl-arena-tab #{'nl-arena-tab--active' if active_tab == '1'}" %>
-    <%= link_to "Group Fights", arena_index_path(ft: 2), class: "nl-arena-tab #{'nl-arena-tab--active' if active_tab == '2'}" %>
-    <%= link_to "Sacrifice", arena_index_path(ft: 3), class: "nl-arena-tab #{'nl-arena-tab--active' if active_tab == '3'}" %>
-    <span class="nl-arena-tab nl-arena-tab--disabled">Tactical</span>
-    <span class="nl-arena-tab nl-arena-tab--disabled">Betting</span>
-    <%= link_to "Statistics", arena_index_path(ft: 4), class: "nl-arena-tab #{'nl-arena-tab--active' if active_tab == '4'}" %>
+    <%= link_to "Дуэли", arena_index_path(ft: 1), class: "nl-arena-tab #{'nl-arena-tab--active' if active_tab == '1'}" %>
+    <%= link_to "Групповые", arena_index_path(ft: 2), class: "nl-arena-tab #{'nl-arena-tab--active' if active_tab == '2'}" %>
+    <%= link_to "Жертвенные", arena_index_path(ft: 3), class: "nl-arena-tab #{'nl-arena-tab--active' if active_tab == '3'}" %>
+    <%= link_to "Статистика", arena_index_path(ft: 4), class: "nl-arena-tab #{'nl-arena-tab--active' if active_tab == '4'}" %>
   </div>
 
   <% if @current_application %>
     <div class="nl-arena-current-row">
-      <b>Your application:</b>
+      <b>Ваша заявка:</b>
       <%= fight_type_label(@current_application.fight_type) %>,
       <%= fight_kind_label(@current_application.fight_kind) %>,
-      timeout <%= @current_application.timeout_seconds / 60 %> min,
-      trauma <%= @current_application.trauma_percent %>%,
-      room <%= @current_application.arena_room.name %>.
-      <%= button_to "Cancel application",
+      таймаут <%= @current_application.timeout_seconds / 60 %> мин,
+      травма <%= @current_application.trauma_percent %>%,
+      зал <%= @current_application.arena_room.name %>.
+      <%= button_to "Снять заявку",
           cancel_arena_application_path(@current_application),
           method: :delete,
           class: "nl-arena-small-button",
-          data: { turbo_confirm: "Cancel your fight application?" } %>
+          data: { turbo_confirm: "Снять заявку?" } %>
     </div>
   <% end %>
 
@@ -61,9 +59,9 @@
               <b><%= room_type_badge(room.room_type) %></b> [ <%= room.open_application_count %> ]<br>
               <span><%= room.level_min %>-<%= room.level_max %></span><br>
               <% if accessible %>
-                <%= link_to "Enter", arena_room_path(room), class: "nl-arena-small-button" %>
+                <%= link_to "Войти", arena_room_path(room), class: "nl-arena-small-button" %>
               <% else %>
-                <span class="nl-arena-muted">Unavailable</span>
+                <span class="nl-arena-muted">Недоступно</span>
               <% end %>
             </td>
           <% end %>
@@ -74,18 +72,18 @@
 
   <% if active_tab == "4" %>
     <div class="nl-arena-search">
-      <b>Fight Statistics</b>
-      <span class="nl-arena-muted">Current and completed fight search will stay in this frame.</span>
+      <b>Статистика боев</b>
+      <span class="nl-arena-muted">Поиск текущих и завершенных боев остается в этом фрейме.</span>
     </div>
   <% else %>
     <table class="nl-arena-table nl-arena-summary-table">
       <thead>
         <tr>
-          <th>Room</th>
-          <th>Levels</th>
-          <th>Applications</th>
-          <th>Fights</th>
-          <th>Action</th>
+          <th>Зал</th>
+          <th>Уровни</th>
+          <th>Заявки</th>
+          <th>Бои</th>
+          <th>Действие</th>
         </tr>
       </thead>
       <tbody>
@@ -98,9 +96,9 @@
             <td><%= room.current_match_count %></td>
             <td>
               <% if accessible %>
-                <%= link_to "Enter", arena_room_path(room), class: "nl-arena-small-button" %>
+                <%= link_to "Войти", arena_room_path(room), class: "nl-arena-small-button" %>
               <% else %>
-                <span class="nl-arena-muted">level mismatch</span>
+                <span class="nl-arena-muted">неподходящий уровень</span>
               <% end %>
             </td>
           </tr>
@@ -111,14 +109,14 @@
 
   <% if @recent_matches.any? %>
     <div class="nl-arena-recent">
-      <b>Recent fights</b>
+      <b>Последние бои</b>
       <% @recent_matches.each do |participation| %>
         <% match = participation.arena_match %>
         <div class="nl-arena-recent-row">
           <%= match.match_type.humanize %> -
           <%= participation.result.humanize %>,
-          <%= time_ago_in_words(match.created_at) %> ago.
-          <%= link_to "log", arena_match_path(match), class: "nl-arena-filter" %>
+          <%= time_ago_in_words(match.created_at) %> назад.
+          <%= link_to "лог", public_fight_log_path(match), class: "nl-arena-filter" %>
         </div>
       <% end %>
     </div>
@@ -126,6 +124,6 @@
 </div>
 
 <div class="arena-countdown" data-arena-target="countdown" style="display: none;">
-  <div class="arena-countdown-title">Match Starting</div>
+  <div class="arena-countdown-title">Бой начинается</div>
   <div class="arena-countdown-timer">--</div>
 </div>

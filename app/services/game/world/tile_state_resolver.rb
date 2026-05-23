@@ -4,7 +4,7 @@ module Game
   module World
     # Materializes and returns DB-backed state for the character's current tile.
     class TileStateResolver
-      Result = Struct.new(:resource, :resource_info, :npc, :npc_info, :building, :building_info, keyword_init: true)
+      Result = Struct.new(:npc, :npc_info, :building, :building_info, keyword_init: true)
 
       def initialize(character:, position:)
         @character = character
@@ -13,8 +13,6 @@ module Game
 
       def call
         Result.new(
-          resource: resource,
-          resource_info: resource_info,
           npc: npc,
           npc_info: npc_info,
           building: building,
@@ -25,15 +23,6 @@ module Game
       private
 
       attr_reader :character, :position
-
-      def resource_service
-        @resource_service ||= Game::World::TileGatheringService.new(
-          character:,
-          zone: position.zone.name,
-          x: position.x,
-          y: position.y
-        )
-      end
 
       def npc_service
         @npc_service ||= Game::World::TileNpcService.new(
@@ -51,14 +40,6 @@ module Game
           x: position.x,
           y: position.y
         )
-      end
-
-      def resource
-        @resource ||= resource_service.tile_resource
-      end
-
-      def resource_info
-        @resource_info ||= resource_service.resource_info
       end
 
       def npc

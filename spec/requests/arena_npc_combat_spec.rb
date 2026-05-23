@@ -19,21 +19,20 @@ RSpec.describe "Arena NPC Combat", type: :request do
 
   let(:user) { create(:user) }
   let(:character) { create(:character, :with_position, user: user, level: 5, current_hp: 100, max_hp: 100) }
-  let(:arena_room) { create(:arena_room, name: "Training Grounds", slug: "training", level_min: 1, level_max: 10, active: true) }
-  let!(:arena_season) { create(:arena_season, :live) }
-
+  let(:arena_room) { create(:arena_room, name: "Тренировочный Зал", slug: "training", level_min: 1, level_max: 10, active: true) }
   let(:arena_bot) do
     create(:npc_template,
       npc_key: "arena_training_dummy",
-      name: "Training Dummy",
+      name: "Манекен",
       role: "arena_bot",
       level: 3,
       dialogue: "*creaks*",
       metadata: {
         "health" => 60,
         "base_damage" => 5,
-        "difficulty" => "easy",
-        "ai_behavior" => "defensive",
+        "ai_behavior" => "passive",
+        "defend_hp_below" => 0.7,
+        "defend_chance" => 0.5,
         "arena_rooms" => ["training"],
         "avatar" => "🎯",
         "stats" => {"attack" => 8, "defense" => 4, "hp" => 60}
@@ -58,7 +57,7 @@ RSpec.describe "Arena NPC Combat", type: :request do
 
   def enter_arena_from_city!(character)
     zone = character.position.zone
-    zone.update!(biome: "city")
+    zone.update!(location_type: "city")
     hotspot = create(:city_hotspot, :arena, zone: zone, active: true, required_level: 1)
 
     post interact_hotspot_world_path, params: {hotspot_id: hotspot.id}
@@ -137,14 +136,9 @@ RSpec.describe "Arena NPC Combat", type: :request do
     let!(:arena_match) do
       create(:arena_match, :pending,
         arena_room: arena_room,
-        arena_season: arena_season,
         match_type: :duel,
         metadata: {
-          "is_npc_fight" => true,
-          "combat_log" => [
-            {"type" => "damage", "actor_name" => character.name, "description" => "attacks Training Dummy for 15 damage"},
-            {"type" => "action", "actor_name" => "Training Dummy", "description" => "takes a defensive stance"}
-          ]
+          "is_npc_fight" => true
         })
     end
 
@@ -164,6 +158,30 @@ RSpec.describe "Arena NPC Combat", type: :request do
         team: "b",
         result: :pending,
         metadata: {"current_hp" => 60, "max_hp" => 60})
+    end
+
+    let!(:player_log_entry) do
+      create(:combat_log_entry,
+        arena_match: arena_match,
+        actor: player_participation,
+        target: npc_participation,
+        log_type: "damage",
+        message: "attacks Манекен for 15 damage",
+        payload: {"actor_name" => character.name, "description" => "attacks Манекен for 15 damage"},
+        round_number: 1,
+        sequence: 1,
+        damage_amount: 15)
+    end
+
+    let!(:npc_log_entry) do
+      create(:combat_log_entry,
+        arena_match: arena_match,
+        actor: npc_participation,
+        log_type: "action",
+        message: "takes a defensive stance",
+        payload: {"actor_name" => "Манекен", "description" => "takes a defensive stance"},
+        round_number: 1,
+        sequence: 2)
     end
 
     describe "GET /arena_matches/:id/log (combat log with NPC)" do
@@ -186,9 +204,8 @@ RSpec.describe "Arena NPC Combat", type: :request do
     let!(:arena_match) do
       create(:arena_match, :live,
         arena_room: arena_room,
-        arena_season: arena_season,
         match_type: :duel,
-        metadata: {"is_npc_fight" => true, "combat_log" => []})
+        metadata: {"is_npc_fight" => true})
     end
 
     let!(:player_participation) do
@@ -229,8 +246,7 @@ RSpec.describe "Arena NPC Combat", type: :request do
     let!(:arena_match) do
       create(:arena_match, :live,
         arena_room: arena_room,
-        arena_season: arena_season,
-        metadata: {"is_npc_fight" => true, "combat_log" => []})
+        metadata: {"is_npc_fight" => true})
     end
 
     let!(:player_participation) do
@@ -286,8 +302,14 @@ RSpec.describe "Arena NPC Combat", type: :request do
           npc_participation.update!(metadata: {"current_hp" => 10, "max_hp" => 60})
         end
 
-        it "defensive AI may defend when HP is low" do
-          arena_bot.update!(metadata: arena_bot.metadata.merge("ai_behavior" => "defensive"))
+        it "explicit defense metadata may defend when HP is low" do
+          arena_bot.update!(
+            metadata: arena_bot.metadata.merge(
+              "ai_behavior" => "passive",
+              "defend_hp_below" => 0.7,
+              "defend_chance" => 0.5
+            )
+          )
 
           defend_count = 0
           10.times do |i|

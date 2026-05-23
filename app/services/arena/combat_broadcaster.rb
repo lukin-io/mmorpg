@@ -29,7 +29,7 @@ module Arena
       })
     end
 
-    # Broadcast a combat action (attack, skill, etc.)
+    # Broadcast a combat action.
     #
     # @param action [Hash] action details
     def broadcast_action(action)
@@ -43,7 +43,6 @@ module Arena
         action_type: action[:action_type],
         description: action[:description],
         damage: action[:damage],
-        healing: action[:healing],
         is_critical: action[:is_critical],
         is_miss: action[:is_miss],
         result: format_action_result(action)
@@ -85,9 +84,7 @@ module Arena
             result: p[:result],
             damage_dealt: p[:damage_dealt],
             damage_taken: p[:damage_taken],
-            healing_done: p[:healing_done],
-            kills: p[:kills],
-            rating_delta: p[:rating_delta]
+            kills: p[:kills]
           }
         end,
         rewards: result[:rewards]
@@ -251,9 +248,7 @@ module Arena
           result: p.result,
           damage_dealt: p.metadata&.dig("damage_dealt") || 0,
           damage_taken: p.metadata&.dig("damage_taken") || 0,
-          healing_done: 0,
           kills: p.metadata&.dig("kills") || 0,
-          rating_delta: 0,
           is_npc: true
         }
       else
@@ -264,15 +259,13 @@ module Arena
           result: p.result,
           damage_dealt: p.metadata&.dig("damage_dealt") || 0,
           damage_taken: p.metadata&.dig("damage_taken") || 0,
-          healing_done: p.metadata&.dig("healing_done") || 0,
           kills: p.metadata&.dig("kills") || 0,
-          rating_delta: p.rating_delta,
           is_npc: false
         }
       end
     end
 
-    # Broadcast system message (announcements, warnings)
+    # Broadcast system message for combat warnings or status changes.
     #
     # @param message [String] the message text
     # @param severity [Symbol] :info, :warning, :error
@@ -288,20 +281,10 @@ module Arena
     def broadcast_timeout_claim_available
       broadcast({
         type: "timeout_claim_available",
-        message: "Timeout controls are available.",
+        message: "Доступно завершение по таймауту.",
         turn_number: match.current_turn_number,
         timestamp: Time.current.strftime("%H:%M:%S")
       })
-    end
-
-    # Broadcast to spectators only
-    #
-    # @param data [Hash] the data to broadcast
-    def broadcast_to_spectators(data)
-      ActionCable.server.broadcast(
-        "arena:spectate:#{match.spectator_code}",
-        data.merge(match_id: match.id)
-      )
     end
 
     private
@@ -311,21 +294,18 @@ module Arena
         match.broadcast_channel,
         data.merge(match_id: match.id)
       )
-
-      # Also broadcast to spectators
-      broadcast_to_spectators(data)
     end
 
     def countdown_message(seconds)
       case seconds
       when 0
-        "FIGHT!"
+        "Бой начался"
       when 1..3
         seconds.to_s
       when 4..10
-        "Get ready... #{seconds}"
+        "До начала боя: #{seconds}"
       else
-        "Match starts in #{seconds} seconds"
+        "Бой начнется через #{seconds} сек."
       end
     end
 
@@ -333,17 +313,13 @@ module Arena
       parts = []
 
       if action[:is_miss]
-        parts << "MISS"
+        parts << "Промах"
       elsif action[:is_critical]
-        parts << "CRITICAL"
+        parts << "Критический"
       end
 
       if action[:damage]
         parts << "-#{action[:damage]} HP"
-      end
-
-      if action[:healing]
-        parts << "+#{action[:healing]} HP"
       end
 
       parts.join(" ")
@@ -360,37 +336,35 @@ module Arena
     end
 
     def format_combat_description(actor, action_type, target, damage, body_part: nil, critical: false, miss: false, dodge: false)
-      target_name = target&.name || "opponent"
+      target_name = target&.name || "противник"
 
       case action_type.to_s
       when "miss"
         part_text = body_part ? " (#{body_part})" : ""
-        "#{actor.name} misses #{target_name}#{part_text}."
+        "#{actor.name} промахивается по #{target_name}#{part_text}."
       when "dodge"
         part_text = body_part ? " (#{body_part})" : ""
-        "#{target_name} dodges #{actor.name}'s attack#{part_text}."
+        "#{target_name} уклоняется от удара #{actor.name}#{part_text}."
       when "attack"
         if miss || dodge
           part_text = body_part ? " (#{body_part})" : ""
-          return dodge ? "#{target_name} dodges #{actor.name}'s attack#{part_text}." : "#{actor.name} misses #{target_name}#{part_text}."
+          return dodge ? "#{target_name} уклоняется от удара #{actor.name}#{part_text}." : "#{actor.name} промахивается по #{target_name}#{part_text}."
         end
 
         if damage
           part_text = body_part ? " (#{body_part})" : ""
-          crit_text = critical ? " CRITICAL!" : ""
-          "#{actor.name} hits #{target_name}#{part_text} for #{damage} damage!#{crit_text}"
+          crit_text = critical ? " Критический удар!" : ""
+          "#{actor.name} бьет #{target_name}#{part_text}: #{damage} урона.#{crit_text}"
         else
-          "#{actor.name} attacks!"
+          "#{actor.name} атакует."
         end
       when "blocked"
         part_text = body_part ? " (#{body_part})" : ""
-        "#{target_name} blocked attack#{part_text} from #{actor.name}."
+        "#{target_name} блокирует удар#{part_text} от #{actor.name}."
       when "defend"
-        "#{actor.name} takes a defensive stance."
-      when "skill"
-        "#{actor.name} uses a skill!"
+        "#{actor.name} защищается."
       else
-        "#{actor.name} performs #{action_type}."
+        "#{actor.name}: #{action_type}."
       end
     end
   end

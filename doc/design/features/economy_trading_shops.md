@@ -2,13 +2,15 @@
 
 ## Purpose
 
-The economy lets players turn combat, gathering, crafting, and exploration into
-practical choices. Shops are city buildings first; market systems grow from
-that city flow.
+The economy lets combat rewards, inventory, and city shops become practical
+choices. Shops are city buildings first.
 
 ## Neverlands Reference
 
-Primary reference: `doc/flow/neverlands_live_city_movement.md`.
+Primary references:
+
+- `doc/design/reference/neverlands.md`
+- `doc/design/reference/neverlands_live_lavka_shop.md`
 
 Observed shop flow:
 
@@ -20,6 +22,10 @@ The shop page renders a building shell, then category/item content is loaded
 inside the shop UI. Items show price, stock, properties, requirements, and buy
 availability.
 
+Do not model this as a global marketplace/kiosk route. The Neverlands-shaped
+surface is a city building with tabs for buying goods, licenses, selling goods,
+and novice goods.
+
 ## Player Experience
 
 The player enters a shop from a city hotspot, chooses a tab/category, sees item
@@ -28,10 +34,7 @@ returns to the city via `Город`.
 
 ## Currency
 
-Core currency:
-
-- normal money for shops/trade;
-- optional premium currency only if it stays outside core power progression.
+Core currency is normal money for shops.
 
 Currency should be visible in inventory/shop contexts and recorded as part of
 economy state.
@@ -46,105 +49,33 @@ economy state.
 - Selling checks ownership and whether the item can be sold.
 - Shop actions refresh the visible item list and current action keys.
 
-## Market And Trading Rules
+## Known But Deferred
 
-Core:
-
-- direct player trade;
-- market or auction building in the city;
-- vendor/shop buy and sell.
-
-Later:
-
-- advanced auctions;
-- territory taxes;
-- demand analytics.
+- Neverlands has direct player trading, but the exact flow, licenses,
+  restrictions, UI states, and settlement rules still need source capture.
+- Do not keep or rebuild a generic two-panel trade session before that capture.
 
 ## State Concepts
 
 - wallet;
 - transaction;
-- shop;
-- shop stock;
-- listing;
-- direct trade session;
-- buy order/sell order later if needed.
+- city building shop;
+- shop category;
+- shop stock with current and maximum counts;
+- shop license good.
 
 ## Interactions
 
-- `areas/cities_and_buildings.md`: shops and market are entered through city
+- `areas/cities_and_buildings.md`: shops are entered through city
   hotspots.
 - `features/items_inventory_equipment.md`: all goods are inventory items.
-- `features/gathering_professions.md`: crafted/gathered goods enter economy.
-- `features/social_chat_presence.md`: local trade chatter and party/clan trade
-  can build on chat.
+- `features/social_chat_presence.md`: future direct trade capture should account
+  for player identity and local presence.
 
 ## Out Of Scope
 
 - Standalone global shop route as the primary player path.
-- Premium store as a core GDD requirement.
-- Economy dashboards in the first playable loop.
-
-## Related Implementation Files
-
-Models:
-
-- `app/models/currency_wallet.rb`
-- `app/models/currency_transaction.rb`
-- `app/models/auction_listing.rb`
-- `app/models/auction_bid.rb`
-- `app/models/trade_session.rb`
-- `app/models/trade_item.rb`
-- `app/models/marketplace_kiosk.rb`
-- `app/models/item_template.rb`
-- `app/models/inventory_item.rb`
-
-Controllers and helpers:
-
-- `app/controllers/auction_listings_controller.rb`
-- `app/controllers/auction_bids_controller.rb`
-- `app/controllers/trade_sessions_controller.rb`
-- `app/controllers/trade_items_controller.rb`
-- `app/controllers/marketplace_kiosks_controller.rb`
-- `app/controllers/premium_store_controller.rb`
-- `app/helpers/auction_listings_helper.rb`
-- `app/helpers/trade_sessions_helper.rb`
-- `app/helpers/premium_store_helper.rb`
-
-Services and jobs:
-
-- `app/services/economy/wallet_service.rb`
-- `app/services/economy/listing_fee_calculator.rb`
-- `app/services/economy/listing_cap_enforcer.rb`
-- `app/services/economy/demand_tracker.rb`
-- `app/services/economy/medical_supply_sink.rb`
-- `app/services/economy/tax_calculator.rb`
-- `app/services/game/economy/loot_generator.rb`
-- `app/services/marketplace/listing_engine.rb`
-- `app/services/marketplace/listing_filter.rb`
-- `app/services/trades/session_manager.rb`
-- `app/services/trades/preview_builder.rb`
-- `app/services/trades/settlement_service.rb`
-- `app/jobs/economy_analytics_job.rb`
-
-Views:
-
-- `app/views/auction_listings/index.html.erb`
-- `app/views/auction_listings/show.html.erb`
-- `app/views/auction_listings/new.html.erb`
-- `app/views/auction_listings/_listing_card.html.erb`
-- `app/views/trade_sessions/show.html.erb`
-- `app/views/trade_sessions/_trade_item.html.erb`
-- `app/views/marketplace_kiosks/index.html.erb`
-- `app/views/marketplace_kiosks/show.html.erb`
-
-Specs:
-
-- `spec/requests/auction_listings_spec.rb`
-- `spec/services/economy/wallet_service_spec.rb`
-- `spec/services/economy/medical_supply_sink_spec.rb`
-- `spec/services/marketplace/listing_engine_spec.rb`
-- `spec/services/trades/session_manager_spec.rb`
-- `spec/services/trades/preview_builder_spec.rb`
-- `spec/services/trades/settlement_service_spec.rb`
-- `spec/system/economy_group_loops_spec.rb`
+- Cash or premium currency until it has a dedicated Neverlands source capture
+  and an approved scope.
+- Direct player trading until it has a dedicated Neverlands source capture and
+  approved implementation shape.

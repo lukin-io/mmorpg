@@ -12,9 +12,6 @@
       <h1><%= @chat_channel.name %></h1>
       <span class="badge badge--<%= @chat_channel.channel_type %>"><%= @chat_channel.channel_type.humanize %></span>
     </div>
-    <div class="chat-header-actions">
-      <%= link_to "← Back to Channels", chat_channels_path, class: "btn-secondary btn-sm" %>
-    </div>
   </div>
 
   <div class="chat-container">
@@ -25,7 +22,7 @@
 
       <% if @chat_messages.empty? %>
         <div class="chat-empty">
-          <p>No messages yet. Be the first to say something!</p>
+          <p>No messages yet.</p>
         </div>
       <% else %>
         <%= render partial: "chat_messages/chat_message", collection: @chat_messages, as: :chat_message %>
@@ -43,46 +40,5 @@
     </div>
   </div>
 
-  <%# Channel info sidebar %>
-  <aside class="chat-sidebar">
-    <div class="chat-sidebar-section">
-      <h3>Channel Info</h3>
-      <p class="text-muted text-sm">
-        <% case @chat_channel.channel_type %>
-        <% when "global" %>
-          Public channel visible to all players.
-        <% when "guild" %>
-          Guild members only.
-        <% when "party" %>
-          Party members only.
-        <% when "whisper" %>
-          Private conversation.
-        <% else %>
-          <%= @chat_channel.channel_type.humanize %> channel.
-        <% end %>
-      </p>
-    </div>
-
-    <div class="chat-sidebar-section">
-      <h3>Online Now</h3>
-      <div class="chat-online-users" data-chat-target="onlineCount">
-        <p class="text-muted text-sm">
-          <%= pluralize(@chat_channel.memberships.count, "member") %>
-        </p>
-      </div>
-    </div>
-
-    <div class="chat-sidebar-section">
-      <h3>Chat Commands</h3>
-      <ul class="chat-commands-list">
-        <li><code>/w [name]</code> - Whisper</li>
-        <li><code>/me [action]</code> - Emote</li>
-        <li><code>/ignore [name]</code> - Ignore user</li>
-        <li><code>@name</code> - Mention user</li>
-      </ul>
-    </div>
-  </aside>
-
-  <%# User context menu (appears on right-click of username) %>
   <div class="user-menu" data-chat-target="userMenu"></div>
 </section>

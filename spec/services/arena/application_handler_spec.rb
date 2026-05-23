@@ -14,14 +14,10 @@ RSpec.describe Arena::ApplicationHandler do
       slug: "test-arena",
       level_min: 1,
       level_max: 100,
-      room_type: :challenge,
+      room_type: :trial,
       active: true,
       max_concurrent_matches: 10)
   end
-  let!(:arena_season) do
-    create(:arena_season, status: :live)
-  end
-
   before do
     create(:character_position, character: character)
     create(:character_position, character: other_character)
@@ -75,7 +71,7 @@ RSpec.describe Arena::ApplicationHandler do
         )
 
         expect(result.success?).to be false
-        expect(result.errors).to include("You cannot access this arena room")
+        expect(result.errors).to include("Этот зал арены недоступен")
       end
     end
 
@@ -114,7 +110,7 @@ RSpec.describe Arena::ApplicationHandler do
         )
 
         expect(result.success?).to be false
-        expect(result.errors).to include("This arena room is at capacity")
+        expect(result.errors).to include("Зал арены заполнен")
       end
     end
   end
@@ -375,7 +371,7 @@ RSpec.describe Arena::ApplicationHandler do
     # ============================================
 
     context "with NPC application" do
-      let(:npc_template) { create(:npc_template, name: "Training Dummy", level: 5, role: "arena_bot") }
+      let(:npc_template) { create(:npc_template, name: "Манекен", level: 5, role: "arena_bot") }
       let!(:npc_application) do
         create(:arena_application,
           applicant: nil,
@@ -386,10 +382,8 @@ RSpec.describe Arena::ApplicationHandler do
           timeout_seconds: 120)
       end
 
-      it "accepts NPC application with shorter countdown" do
-        expect(Arena::MatchStarterJob).to receive(:set)
-          .with(wait: 5.seconds) # NPC fights have 5 second countdown
-          .and_return(double(perform_later: true))
+      it "accepts NPC application and starts the fight immediately" do
+        expect(Arena::MatchStarterJob).not_to receive(:set)
 
         result = handler.accept_npc_application(
           application: npc_application,
@@ -397,6 +391,8 @@ RSpec.describe Arena::ApplicationHandler do
         )
 
         expect(result.success?).to be true
+        expect(result.match).to be_live
+        expect(character.reload.in_combat?).to be true
       end
 
       it "creates NPC participation" do

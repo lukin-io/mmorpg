@@ -2,14 +2,14 @@
 
 FactoryBot.define do
   factory :arena_room do
-    sequence(:name) { |n| "Arena Room #{n}" }
-    sequence(:slug) { |n| "arena-room-#{n}" }
+    sequence(:name) { |n| "Тренировочный Зал #{n}" }
+    sequence(:slug) { |n| "training-room-#{n}" }
     room_type { :training }
     level_min { 1 }
     level_max { 100 }
     max_concurrent_matches { 10 }
     active { true }
-    faction_restriction { nil }
+    alignment_restriction { nil }
 
     trait :training do
       room_type { :training }
@@ -24,7 +24,7 @@ FactoryBot.define do
     end
 
     trait :standard do
-      room_type { :challenge }
+      room_type { :trial }
       level_min { 1 }
       level_max { 100 }
     end
@@ -39,9 +39,9 @@ FactoryBot.define do
       active { false }
     end
 
-    trait :law_faction do
+    trait :law_alignment do
       room_type { :law }
-      faction_restriction { "alliance" }
+      alignment_restriction { "law" }
     end
   end
 end

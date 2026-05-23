@@ -1,35 +1,27 @@
 require "rails_helper"
 
 RSpec.describe UserSession, type: :model do
-  describe "#mark_active!" do
-    it "updates last_seen_at and status" do
-      session = create(:user_session, status: "idle", last_seen_at: 5.minutes.ago)
+  describe "#mark_seen!" do
+    it "updates last_seen_at and keeps the session open" do
+      session = create(:user_session, last_seen_at: 5.minutes.ago, signed_out_at: 1.minute.ago)
+      timestamp = Time.current
 
-      session.mark_active!(timestamp: Time.current)
+      session.mark_seen!(timestamp: timestamp)
 
       expect(session.reload).to have_attributes(
-        status: "online"
+        last_seen_at: be_within(1.second).of(timestamp),
+        signed_out_at: nil
       )
     end
   end
 
-  describe "#mark_idle!" do
-    it "marks status as idle" do
-      session = create(:user_session, status: "online")
-
-      session.mark_idle!(timestamp: Time.current)
-
-      expect(session.reload.status).to eq("idle")
-    end
-  end
-
-  describe "#mark_offline!" do
-    it "marks session as offline and records sign out" do
+  describe "#close!" do
+    it "records sign out" do
       session = create(:user_session, signed_out_at: nil)
 
-      session.mark_offline!(timestamp: Time.current)
+      session.close!(timestamp: Time.current)
 
-      expect(session.reload).to be_offline_status
+      session.reload
       expect(session.signed_out_at).not_to be_nil
     end
   end

@@ -2,7 +2,7 @@
 
 module Arena
   # Deterministic AI decision-making for NPC arena combat
-  # Makes combat decisions based on AI behavior type and current battle state
+  # Makes combat decisions based on AI behavior type and current fight state
   #
   # Purpose: Control NPC actions during arena fights
   #
@@ -141,11 +141,7 @@ module Arena
       configured = npc_template.metadata&.dig("max_attacks_per_turn").to_i
       return configured.clamp(1, 4) if configured.positive?
 
-      case behavior
-      when :aggressive then 3
-      when :defensive then 1
-      else 2
-      end
+      Game::Combat::ActionCatalog::BODY_PARTS.size
     end
 
     def attack_package_cost(attacks, simple_cost)

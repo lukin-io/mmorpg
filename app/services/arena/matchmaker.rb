@@ -39,8 +39,7 @@ module Arena
     def check_eligibility(character, application)
       return false if character.level < (application.team_level_min || 0)
       return false if character.level > (application.team_level_max || 100)
-      return false if application.closed_fight? && !application.invited?(character)
-      return false if application.faction_restricted? && !application.faction_matches?(character)
+      return false if application.alignment_restricted? && !application.alignment_matches?(character)
 
       true
     end
@@ -134,9 +133,11 @@ module Arena
       # Levels should overlap
       return false unless ranges_overlap?(range1, range2)
 
-      # Check faction compatibility for faction fights
-      if app1.faction_restricted? || app2.faction_restricted?
-        return app1.applicant.faction_alignment != app2.applicant.faction_alignment
+      if app1.alignment_restricted? || app2.alignment_restricted?
+        return false if app1.applicant.alignment == Character::ALIGNMENTS[:none]
+        return false if app2.applicant.alignment == Character::ALIGNMENTS[:none]
+
+        return app1.applicant.alignment != app2.applicant.alignment
       end
 
       true
@@ -168,7 +169,6 @@ module Arena
     def create_sacrifice_match(applications, room)
       match = ArenaMatch.create!(
         arena_room: room,
-        arena_season: ArenaSeason.current.first,
         match_type: :sacrifice,
         status: :pending,
         metadata: {

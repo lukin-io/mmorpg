@@ -3,9 +3,9 @@ require "rails_helper"
 RSpec.describe Game::Movement::CommandQueue do
   let(:zone) { create(:zone, width: 3, height: 3) }
   let!(:spawn_point) { create(:spawn_point, zone:, x: 0, y: 0, default_entry: true) }
-  let!(:tile_origin) { MapTileTemplate.create!(zone: zone.name, x: 0, y: 0, terrain_type: "plaza", passable: true, biome: zone.biome) }
-  let!(:tile_east) { MapTileTemplate.create!(zone: zone.name, x: 1, y: 0, terrain_type: "road", passable: true, biome: zone.biome) }
-  let(:character) { create(:character, faction_alignment: "neutral") }
+  let!(:tile_origin) { MapTileTemplate.create!(zone: zone.name, x: 0, y: 0, terrain_type: "outdoor", passable: true) }
+  let!(:tile_east) { MapTileTemplate.create!(zone: zone.name, x: 1, y: 0, terrain_type: "outdoor", passable: true) }
+  let(:character) { create(:character, alignment: "none") }
   let(:queue) { described_class.new(character:) }
 
   before do
@@ -28,7 +28,7 @@ RSpec.describe Game::Movement::CommandQueue do
       expect(command.predicted_y).to eq(0)
       expect(command.action_key).to be_present
       expect(command.travel_seconds).to eq(30)
-      expect(command.metadata["terrain_type"]).to eq("road")
+      expect(command.metadata["terrain_type"]).to eq("outdoor")
 
       job = ActiveJob::Base.queue_adapter.enqueued_jobs.last
       expect(job[:job]).to eq(Game::MovementCommandProcessorJob)
@@ -49,7 +49,7 @@ RSpec.describe Game::Movement::CommandQueue do
       expect(character.reload.position.x).to eq(0)
     end
 
-    it "finalizes queued travel through the completion service after its timer" do
+    it "finalizes accepted travel through the completion service after its timer" do
       command = queue.enqueue(direction: :east)
       queue.process(command.id)
       command.reload.update!(ends_at: 1.second.ago)

@@ -45,8 +45,9 @@ class ArenaChannel < ApplicationCable::Channel
           id: app.id,
           fight_type: app.fight_type,
           fight_kind: app.fight_kind,
-          applicant_name: app.applicant.name,
-          applicant_level: app.applicant.level,
+          applicant_name: app.applicant_name,
+          applicant_level: app.applicant_level,
+          is_npc: app.npc_application?,
           expires_in: app.time_until_expiration
         }
       end

@@ -27,7 +27,7 @@ module Arena
     def create(character:, room:, params:)
       # Validate room access
       unless room.accessible_by?(character)
-        return Result.new(success?: false, errors: ["You cannot access this arena room"])
+        return Result.new(success?: false, errors: ["Этот зал арены недоступен"])
       end
 
       # Check for existing application
@@ -37,7 +37,7 @@ module Arena
 
       # Check room capacity
       unless room.has_capacity?
-        return Result.new(success?: false, errors: ["This arena room is at capacity"])
+        return Result.new(success?: false, errors: ["Зал арены заполнен"])
       end
 
       application = ArenaApplication.new(
@@ -53,8 +53,7 @@ module Arena
         enemy_count: params[:enemy_count],
         enemy_level_min: params[:enemy_level_min],
         enemy_level_max: params[:enemy_level_max],
-        wait_minutes: params[:wait_minutes] || 10,
-        closed_fight: params[:closed_fight] || false
+        wait_minutes: params[:wait_minutes] || 10
       )
 
       if application.save
@@ -127,7 +126,11 @@ module Arena
     def accept_npc_application(application:, acceptor:)
       # Validate room access
       unless application.arena_room.accessible_by?(acceptor)
-        return Result.new(success?: false, errors: ["You cannot access this arena room"])
+        return Result.new(success?: false, errors: ["Этот зал арены недоступен"])
+      end
+
+      unless application.acceptable_by?(acceptor)
+        return Result.new(success?: false, errors: [application.rejection_reason_for(acceptor) || "You cannot accept this application"])
       end
 
       # Check if player already in combat
@@ -146,9 +149,9 @@ module Arena
           arena_match: match
         )
 
-        # NPC fights start immediately (shorter countdown for training)
-        npc_countdown = 5 # 5 seconds for NPC fights
-        schedule_match_start(match, npc_countdown)
+        # NPC training fights enter the captured active combat screen
+        # immediately after accepting the open side.
+        Arena::CombatProcessor.new(match).start_match
 
         broadcast_npc_match_created(match, application, acceptor)
 
@@ -187,7 +190,6 @@ module Arena
     def create_match_from_applications(application, acceptor)
       match = ArenaMatch.create!(
         arena_room: application.arena_room,
-        arena_season: ArenaSeason.current.first,
         match_type: application.fight_type,
         status: :pending,
         turn_timeout_seconds: application.timeout_seconds,
@@ -222,7 +224,6 @@ module Arena
 
       match = ArenaMatch.create!(
         arena_room: application.arena_room,
-        arena_season: ArenaSeason.current.first,
         match_type: application.fight_type,
         status: :pending,
         turn_timeout_seconds: application.timeout_seconds,
@@ -232,7 +233,6 @@ module Arena
           is_npc_fight: true,
           npc_template_id: npc.id,
           npc_name: npc.name,
-          npc_difficulty: npc.arena_difficulty,
           npc_ai_behavior: npc.ai_behavior
         }
       )
@@ -323,6 +323,8 @@ module Arena
           type: "npc_match_created",
           match_id: match.id,
           application_id: application.id,
+          countdown: 0,
+          redirect_url: "/arena_matches/#{match.id}",
           npc_name: application.npc_template&.name,
           player_name: acceptor.name
         }
@@ -334,10 +336,10 @@ module Arena
         {
           type: "arena_npc_match_starting",
           match_id: match.id,
-          countdown: 5,
+          countdown: 0,
+          redirect_url: "/arena_matches/#{match.id}",
           npc_name: application.npc_template&.name,
-          npc_level: application.npc_template&.level,
-          npc_difficulty: application.npc_template&.arena_difficulty
+          npc_level: application.npc_template&.level
         }
       )
     end
@@ -368,7 +370,6 @@ module Arena
       if application.npc_application?
         payload.merge!(
           is_npc: true,
-          npc_difficulty: application.npc_difficulty,
           npc_avatar: application.npc_template&.avatar_emoji
         )
       end

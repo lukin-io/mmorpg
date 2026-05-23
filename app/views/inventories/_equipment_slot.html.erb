@@ -3,7 +3,7 @@
      data-action="click->inventory#clickEquipmentSlot"
      title="<%= label %>">
   <% if item %>
-    <div class="equipped-item item-rarity--<%= item.item_template.rarity %>">
+    <div class="equipped-item">
       <span class="slot-label"><%= label %></span>
       <strong><%= item.item_template.name %></strong>
       <% if inventory_item_durability(item) %>

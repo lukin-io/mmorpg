@@ -2,171 +2,144 @@
 
 ## Purpose
 
-NPCs make locations readable and useful. Quests give movement, combat,
-gathering, and city visits a structured purpose.
+NPCs make locations readable and useful. Source-backed quest behavior still
+needs a dedicated Neverlands capture before Rails implementation.
 
 ## Source Material
 
 Inputs:
 
-- Neverlands-derived NPC, trainer, shopkeeper, quest, and tile-action rules
-  folded into this file.
+- live arena mannequin and outdoor hostile-NPC captures;
+- observed NPC drop/result behavior;
+- documented movement, tile-action, and shop captures.
 
 ## Player Experience
 
-The player encounters NPCs on tiles, in city nodes, or inside buildings. NPCs
-can talk, offer quests, trade, train, guard, heal, bank, or start combat.
+The player encounters NPCs as source-backed combatants: outdoor hostile NPCs
+on world tiles and arena training opponents inside the arena flow.
 
-Quests appear as clear tasks with current objective, location hint, reward, and
-completion state.
+Building services are not NPC dialogue yet. `Лавка` is a documented shop
+building, not a generic town vendor NPC. Any future building NPC, service NPC,
+or quest NPC must be captured from Neverlands before adding tables, routes, or
+UI.
+
+Quest interaction is intentionally not implemented right now. It should be
+documented from Neverlands before adding tables, routes, or UI.
 
 ## NPC Roles
 
 Core:
 
 - hostile monster;
-- quest giver;
-- vendor/shopkeeper;
-- trainer;
-- guard;
-- banker;
-- innkeeper/healer;
-- arena announcer.
+- arena training opponent;
+- loot-bearing combatant.
 
-Later:
+Deferred until capture:
 
-- clan officer;
-- event announcer;
-- rare roaming merchant.
+- building/service NPCs;
+- quest NPCs;
+- dialogue/action entry points;
+- training, storage, banking, transport, or other town services.
 
 ## NPC Rules
 
 - NPC availability is tied to location.
 - NPC role defines default actions.
-- Dialogue can branch but should stay functional and concise.
 - Hostile NPCs can start PvE combat.
-- Vendor NPCs should use the shop/economy rules.
-- Trainers interact with stats/skills/professions.
+- Outdoor hostile NPCs can interrupt normal tile actions and hand the player
+  into combat from the current coordinate.
+- Arena training NPCs can appear as normal arena application participants and
+  resolve through the same combat rules as player and team fights after the
+  player accepts the open side.
+- No town service role may create an action until its Neverlands behavior is
+  documented.
 
-## Quest Rules
+## NPC Loot And Drops
 
-- Quests have objective, current progress, completion condition, and reward.
-- Quest objectives should point back into existing core actions:
-  movement, combat, gathering, shop, NPC dialogue, or arena.
-- Quest progress is server-authoritative.
-- Quest rewards can include XP, money, items, reputation, skill points, recipes,
-  or access unlocks.
-- Repeatable quests are allowed, but authored starter quests come first.
+NPC drops are part of NPC design, even when the NPC appears inside the arena.
+Arena training opponents, wilderness monsters, dungeon blockers, and bosses can
+all own loot rules.
 
-## Starter Quest Shape
+Design rules:
 
-Starter quests should teach:
+- an NPC can define a loot table with item entries, drop chances, quantity, and
+  optional conditions;
+- loot is rolled after combat victory and before or during the result-finish
+  step;
+- the combat log/result should show whether the NPC was searched and whether
+  anything was found;
+- dropped items enter the same inventory/capacity rules as loot and shop
+  purchases;
+- capacity, protected-item rules, and binding rules must be enforced before the
+  item becomes carried inventory;
+- arena rewards and NPC drops are separate concepts: a mannequin dropping wood
+  chips is an NPC loot-table result, not a generic arena payout;
+- NPC templates can share a loot table, but individual spawned NPCs can also
+  override it when a source-backed capture proves that behavior.
 
-1. move on the world map;
-2. enter the city;
-3. enter a shop;
-4. inspect inventory/equipment;
-5. fight a training NPC;
-6. allocate a stat or skill point;
-7. gather a resource.
+The mannequin/wood-chips case belongs here: `Манекен` is an arena training NPC,
+and wood chips are a low-value material drop from that NPC role. The May 19
+starter capture won three mannequin fights and each result log included a bot
+search result of `Вещь «Щепки»`; inventory then showed `Щепки` as carried item
+rows. The drop should flow through combat result -> loot check -> inventory
+item/material, then feed shop economy rules.
+
+The outdoor rat-tail case belongs here as well. The May 20 capture near
+`Окрестность Форпоста` entered two bot-ambush fights against paired
+`Чумная крыса` NPCs. In that capture, each defeated rat passed its random
+bot-specific loot roll and produced a separate search result line of
+`Вещь «Крысиный хвост»`. In the first fight, the first rat was searched before
+the second rat was defeated, proving that per-NPC loot checks can happen during
+a multi-NPC fight and not only after the fight-level victory line.
+
+## Outdoor Hostile NPCs
+
+Outdoor hostile NPCs are tile-local combatants. They can be presented as
+visible actions later, but the captured source behavior also allows them to
+attack as an interruption during normal outdoor actions.
+
+Design rules:
+
+- NPC availability and hostile attack eligibility are resolved from current
+  tile state;
+- a hostile check can run before a mutating outdoor action completes;
+- a bot attack creates a normal fight with side/team membership, not a special
+  wild-combat shortcut;
+- a fight can include multiple NPCs on one side;
+- when one NPC in a multi-NPC fight loses, the fight can continue against the
+  remaining NPCs;
+- each defeated loot-bearing NPC can run its own bot-specific random loot-table
+  check.
+
+## Quest Behavior Status
+
+Quest behavior is required for the final Neverlands-based design, but the old
+generic quest/story implementation was removed. Do not rebuild quest chains,
+daily tasks, repeatable tasks, cutscenes, branching story steps, quest boards,
+or quest-giver roles until a Neverlands capture documents the exact behavior.
+
+Required future capture:
+
+- where quest entry points appear in the UI;
+- how NPC dialogue or action links start a quest;
+- how active tasks/journal state is displayed;
+- how progress is updated through movement, combat, shop, or NPC actions;
+- how completion, turn-in, reward, cancel, failure, and repeatability behave;
+- whether quest items exist and how they are protected from sale/discard.
 
 ## State Concepts
 
 - NPC template;
 - NPC instance/location;
-- dialogue node;
-- quest;
-- quest step;
-- quest assignment;
-- objective progress;
-- reward;
-- reputation/faction state.
+- hostile encounter rule;
+- spawned tile NPC;
+- loot table;
+- drop result;
+- future captured quest/action state.
 
 ## Interactions
 
-- `areas/world_map.md`: outdoor NPCs and quest objectives.
-- `areas/cities_and_buildings.md`: city NPCs and service buildings.
-- `areas/arena.md`: arena announcers and training fights.
+- `areas/world_map.md`: outdoor NPCs and tile-local actions.
+- `areas/cities_and_buildings.md`: building entry points.
+- `areas/arena.md`: arena training fights.
 - `features/combat.md`: hostile and training combat.
-- `features/gathering_professions.md`: resource objectives and trainers.
-
-## Out Of Scope
-
-- Procedural quest generator before the starter authored loop.
-- Live event tooling in the core GDD.
-- NPC moderation/admin features as player-facing design.
-
-## Related Implementation Files
-
-Models:
-
-- `app/models/npc_template.rb`
-- `app/models/tile_npc.rb`
-- `app/models/spawn_point.rb`
-- `app/models/spawn_schedule.rb`
-- `app/models/quest.rb`
-- `app/models/quest_assignment.rb`
-- `app/models/quest_chain.rb`
-- `app/models/quest_chapter.rb`
-- `app/models/quest_step.rb`
-- `app/models/quest_objective.rb`
-- `app/models/concerns/npc/combat_stats.rb`
-- `app/models/concerns/npc/combatable.rb`
-
-Controllers:
-
-- `app/controllers/quests_controller.rb`
-- `app/controllers/spawn_schedules_controller.rb`
-- `app/controllers/npc_reports_controller.rb`
-- `app/controllers/world_controller.rb`
-
-NPC and quest services:
-
-- `app/services/game/npc/dialogue_service.rb`
-- `app/services/game/world/tile_npc_service.rb`
-- `app/services/game/world/biome_npc_config.rb`
-- `app/services/game/world/population_directory.rb`
-- `app/services/game/world/region_catalog.rb`
-- `app/services/game/quests/tutorial_bootstrapper.rb`
-- `app/services/game/quests/static_quest_builder.rb`
-- `app/services/game/quests/storyline_progression.rb`
-- `app/services/game/quests/story_step_runner.rb`
-- `app/services/game/quests/quest_gate_evaluator.rb`
-- `app/services/game/quests/reward_service.rb`
-- `app/services/game/quests/map_overlay_presenter.rb`
-
-Views and JavaScript:
-
-- `app/views/world/dialogue.html.erb`
-- `app/views/world/_dialogue_quests.html.erb`
-- `app/views/world/_dialogue_vendor.html.erb`
-- `app/views/world/_dialogue_trainer.html.erb`
-- `app/views/world/_dialogue_hostile.html.erb`
-- `app/views/quests/index.html.erb`
-- `app/views/quests/show.html.erb`
-- `app/views/quests/_assignment.html.erb`
-- `app/views/quests/_story_step.html.erb`
-- `app/views/quests/_map_overlay.html.erb`
-- `app/javascript/controllers/quest_dialog_controller.js`
-
-Config:
-
-- `config/gameplay/quests/static.yml`
-- `config/gameplay/biome_npcs.yml`
-- `config/gameplay/world/npcs.yml`
-- `config/gameplay/world/regions.yml`
-
-Specs:
-
-- `spec/models/npc_template_spec.rb`
-- `spec/models/tile_npc_spec.rb`
-- `spec/models/concerns/npc/combat_stats_spec.rb`
-- `spec/models/concerns/npc/combatable_spec.rb`
-- `spec/services/game/quests/tutorial_bootstrapper_spec.rb`
-- `spec/services/game/quests/storyline_progression_spec.rb`
-- `spec/services/game/quests/story_step_runner_spec.rb`
-- `spec/services/game/quests/quest_gate_evaluator_spec.rb`
-- `spec/services/game/quests/reward_service_spec.rb`
-- `spec/services/game/quests/map_overlay_presenter_spec.rb`
-- `spec/system/quests_ui_spec.rb`
-- `spec/requests/world_spec.rb`

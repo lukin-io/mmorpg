@@ -2,18 +2,17 @@
 
 module Game
   module World
-    # TileNpcService handles NPC spawning and interaction at map tiles.
-    # Spawns random NPCs based on biome when players visit tiles.
+    # TileNpcService materializes source-backed hostile NPCs at captured map tiles.
     #
     # Usage:
     #   service = Game::World::TileNpcService.new(
     #     character: current_character,
-    #     zone: "Starter Plains",
+    #     zone: "Окрестность Форпоста",
     #     x: 5,
     #     y: 7
     #   )
     #   npc_info = service.npc_info
-    #   # => { name: "Wild Boar", role: "hostile", level: 2, ... }
+    #   # => { name: "Plague Rat", role: "hostile", level: 4, ... }
     #
     class TileNpcService
       def initialize(character:, zone:, x:, y:)
@@ -73,27 +72,21 @@ module Game
       end
 
       def spawn_new_npc
-        biome = determine_biome
-        return nil unless BiomeNpcConfig.has_npcs?(biome)
-
-        npc_data = BiomeNpcConfig.sample_npc(biome)
+        npc_data = OutdoorNpcConfig.source_npc_for_tile(zone, x, y)
         return nil unless npc_data
+        return nil unless source_npc_data_complete?(npc_data)
 
-        # Find or create NPC template
         template = find_or_create_template(npc_data)
         return nil unless template
-
-        level = calculate_spawn_level(npc_data)
 
         TileNpc.create!(
           zone: @zone,
           x: @x,
           y: @y,
-          biome: biome,
           npc_template: template,
           npc_key: npc_data[:key],
-          npc_role: npc_data[:role] || "hostile",
-          level: level,
+          npc_role: npc_data[:role],
+          level: npc_data[:level],
           current_hp: template.max_hp,
           max_hp: template.max_hp,
           metadata: npc_data[:metadata] || {}
@@ -104,51 +97,54 @@ module Game
       end
 
       def can_spawn_npc?
-        biome = determine_biome
-        BiomeNpcConfig.has_npcs?(biome)
-      end
-
-      def determine_biome
-        # Try to get biome from MapTileTemplate
-        tile = MapTileTemplate.find_by(zone: @zone, x: @x, y: @y)
-        return tile.biome if tile&.biome.present?
-
-        # Fall back to zone biome
-        zone_record = Zone.find_by(name: @zone)
-        zone_record&.biome || "plains"
-      end
-
-      def calculate_spawn_level(npc_data)
-        base_level = npc_data[:level] || 1
-        variance = npc_data[:level_variance] || 2
-
-        (base_level + rand(-variance..variance)).clamp(1, 100)
+        OutdoorNpcConfig.source_npc_for_tile(zone, x, y).present?
       end
 
       def find_or_create_template(npc_data)
         # Try to find existing template
         template = NpcTemplate.find_by(npc_key: npc_data[:key])
-        return template if template
+        if template
+          sync_template_spawn_metadata(template, npc_data)
+          return template
+        end
 
         # Create new template
         NpcTemplate.create!(
           npc_key: npc_data[:key],
           name: npc_data[:name],
-          role: npc_data[:role] || "hostile",
-          level: npc_data[:level] || 1,
+          role: npc_data[:role],
+          level: npc_data[:level],
           dialogue: npc_data[:dialogue] || "...",
-          metadata: {
-            biome: determine_biome,
-            health: npc_data[:hp] || 100,
-            base_damage: npc_data[:damage] || 10,
-            xp_reward: npc_data[:xp] || 10,
-            loot_table: npc_data[:loot] || [],
-            description: npc_data.dig(:metadata, :description)
-          }.merge(npc_data[:metadata] || {})
+          metadata: template_spawn_metadata(npc_data)
         )
       rescue ActiveRecord::RecordInvalid => e
         Rails.logger.error("Failed to create NPC template for #{npc_data[:key]}: #{e.message}")
         nil
+      end
+
+      def sync_template_spawn_metadata(template, npc_data)
+        additions = template_spawn_metadata(npc_data).compact
+        missing = additions.except(*template.metadata.keys)
+        return if missing.empty?
+
+        template.update!(metadata: template.metadata.merge(missing))
+      end
+
+      def template_spawn_metadata(npc_data)
+        {
+          "health" => npc_data[:hp],
+          "base_damage" => npc_data[:damage],
+          "xp_reward" => npc_data[:xp],
+          "loot_table" => npc_data[:loot] || [],
+          "respawn_seconds" => npc_data[:respawn_seconds],
+          "respawn_variance_seconds" => npc_data[:respawn_variance_seconds],
+          "description" => npc_data.dig(:metadata, :description),
+          "avatar_image" => npc_data.dig(:metadata, :avatar_image)
+        }.compact.merge((npc_data[:metadata] || {}).deep_stringify_keys)
+      end
+
+      def source_npc_data_complete?(npc_data)
+        npc_data.values_at(:key, :name, :role, :level, :hp, :damage).all?(&:present?)
       end
     end
   end

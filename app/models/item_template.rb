@@ -1,35 +1,31 @@
 # frozen_string_literal: true
 
 # ItemTemplate defines the base attributes for all game items.
-# Equipment items have stat modifiers, while materials are used for crafting.
+# Equipment items have stat modifiers, while materials cover observed loot.
 #
 # Purpose: Define base item properties and behaviors.
 #
 # Inputs:
 #   - name: unique item name
-#   - item_type: equipment, material/resource, consumable, quest, or misc
+#   - item_type: equipment, material, consumable, or misc
 #   - slot: equipment slot (head, chest, main_hand, etc.) or "none" for non-equipment
-#   - rarity: common, uncommon, rare, epic, legendary
 #
 # Usage:
-#   ItemTemplate.find_by(key: "iron_ore")
+#   ItemTemplate.find_by(key: "rat_tail")
 #   ItemTemplate.where(item_type: "material")
 #   template.equippable?  # => true for equipment items
 #   template.equipment_slot  # => "main_hand"
 #
 class ItemTemplate < ApplicationRecord
-  ITEM_TYPES = %w[equipment material resource consumable quest misc].freeze
+  ITEM_TYPES = %w[equipment material consumable misc].freeze
   EQUIPMENT_SLOTS = EquipmentSlots::KEYS
-  RARITIES = %w[common uncommon rare epic legendary].freeze
 
   validates :name, presence: true, uniqueness: true
   validates :slot, presence: true
-  validates :rarity, presence: true, inclusion: {in: RARITIES}
   validates :stat_modifiers, presence: true, if: :equipment?
   validates :weight, numericality: {greater_than: 0}
   validates :base_price, :durability_max, numericality: {greater_than_or_equal_to: 0}
   validates :stack_limit, numericality: {greater_than: 0}
-  validate :premium_stat_cap
   validate :equipment_slot_validity
 
   scope :materials, -> { where(item_type: "material") }
@@ -40,14 +36,14 @@ class ItemTemplate < ApplicationRecord
   #
   # @return [Boolean] true if item_type is "material"
   def material?
-    %w[material resource].include?(item_type)
+    item_type == "material"
   end
 
-  # Check if this item is equipment
+  # Check if this item is equipment.
   #
-  # @return [Boolean] true if item_type is "equipment" or nil
+  # @return [Boolean] true if item_type is "equipment"
   def equipment?
-    item_type == "equipment" || item_type.nil?
+    item_type == "equipment"
   end
 
   # Check if this item is a consumable
@@ -57,20 +53,14 @@ class ItemTemplate < ApplicationRecord
     item_type == "consumable"
   end
 
-  def quest?
-    item_type == "quest"
-  end
-
   def inventory_category
     case item_type
     when "equipment"
       "equipment"
     when "consumable"
       "consumables"
-    when "material", "resource"
+    when "material"
       "materials"
-    when "quest"
-      "quest"
     else
       "other"
     end
@@ -95,14 +85,6 @@ class ItemTemplate < ApplicationRecord
   end
 
   private
-
-  def premium_stat_cap
-    return unless premium?
-    return unless equipment?
-
-    total = stat_modifiers.to_h.values.compact.map(&:to_i).sum
-    errors.add(:stat_modifiers, "premium artifacts must stay cosmetic-balanced") if total > 10
-  end
 
   def equipment_slot_validity
     return unless equipment?

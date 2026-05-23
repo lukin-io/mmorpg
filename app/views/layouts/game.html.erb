@@ -1,7 +1,7 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
-  <title><%= content_for(:title) || "Elselands" %></title>
+  <title><%= content_for(:title) || "Neverlands" %></title>
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <%= csrf_meta_tags %>
@@ -25,15 +25,13 @@
     <%# Right: Navigation text links (like original) %>
     <nav class="nl-top-nav">
       <% if current_character %>
-        <%= link_to "Character", player_path(name: current_character.name), class: "nl-nav-link", data: { turbo_frame: "main_content" } %>
-        <%= link_to "Inventory", inventory_path, class: "nl-nav-link", data: { turbo_frame: "main_content" } %>
-        <%= link_to "Quests", quests_path, class: "nl-nav-link", data: { turbo_frame: "main_content" } %>
-        <%= link_to "Abilities", skills_character_path(current_character), class: "nl-nav-link", data: { turbo_frame: "main_content" } %>
-        <%= link_to "Perks", perks_character_path(current_character), class: "nl-nav-link", data: { turbo_frame: "main_content" } %>
-        <% if @position&.zone&.biome == "city" %>
-          <%= link_to "Exit", exit_location_world_path, class: "nl-nav-link", data: { turbo_method: :post } %>
+        <%= link_to "Персонаж", player_path(name: current_character.name), class: "nl-nav-link", data: { turbo_frame: "main_content" } %>
+        <%= link_to "Инвентарь", inventory_path, class: "nl-nav-link", data: { turbo_frame: "main_content" } %>
+        <%= link_to "Умения", skills_character_path(current_character), class: "nl-nav-link", data: { turbo_frame: "main_content" } %>
+        <% if @position&.zone&.city? %>
+          <%= link_to "Выход", exit_location_world_path, class: "nl-nav-link", data: { turbo_method: :post } %>
         <% else %>
-          <%= link_to "Enter", world_path, class: "nl-nav-link", data: { turbo_frame: "main_content" } %>
+          <%= link_to "Вернуться", world_path, class: "nl-nav-link", data: { turbo_frame: "main_content" } %>
         <% end %>
       <% end %>
     </nav>
@@ -42,8 +40,8 @@
     <div class="nl-top-right">
       <% if user_signed_in? %>
         <%= link_to destroy_user_session_path,
-            data: { turbo_method: :delete, turbo_confirm: "Leave game?" },
-            class: "nl-close-btn", title: "Exit" do %>X<% end %>
+            data: { turbo_method: :delete, turbo_confirm: "Выйти из игры?" },
+            class: "nl-close-btn", title: "Выход" do %>X<% end %>
       <% end %>
     </div>
   </header>
@@ -69,12 +67,12 @@
           <a href="#" data-action="click->game-layout#sortPlayers" data-sort="lvl-desc">33-0</a>
         </span>
         <label class="nl-refresh-check">
-          <input type="checkbox" checked data-action="change->game-layout#toggleAutoRefresh"> refresh
+          <input type="checkbox" checked data-action="change->game-layout#toggleAutoRefresh"> обновлять
         </label>
       </div>
       <div class="nl-players-location">
-        <span class="nl-location-text"><%= @position&.zone&.name || "Unknown" %> [ <%= @players_here&.count || 0 %> ]</span>
-        <span class="nl-total-online">Total [ <%= User.joins(:user_sessions).where(user_sessions: { signed_out_at: nil }).where("user_sessions.last_seen_at > ?", 5.minutes.ago).distinct.count rescue 0 %> ]</span>
+        <span class="nl-location-text"><%= @position&.zone&.name || "Неизвестно" %> [ <%= @players_here&.count || 0 %> ]</span>
+        <span class="nl-total-online">Всего [ <%= User.joins(:user_sessions).merge(UserSession.recent).distinct.count rescue 0 %> ]</span>
       </div>
       <div class="nl-players-list-float" data-game-layout-target="playersList">
         <%= render "shared/nl_players_list" %>
@@ -86,8 +84,7 @@
   <footer class="nl-bottom-bar" data-game-layout-target="bottomBar">
     <%# Left: Action buttons %>
     <div class="nl-action-area">
-      <button class="nl-action-btn-small" data-action="click->game-layout#showActionMenu">Action</button>
-      <button class="nl-action-btn-small" data-action="click->game-layout#focusChat">Say</button>
+      <button class="nl-action-btn-small" data-action="click->game-layout#focusChat">Сказать</button>
     </div>
 
     <%# Center: Chat messages area %>
@@ -104,6 +101,7 @@
         <% if chat_channel %>
           <%= form_with url: chat_channel_chat_messages_path(chat_channel),
                         method: :post,
+                        scope: :chat_message,
                         class: "nl-chat-form-inline",
                         data: { controller: "chat-input", action: "turbo:submit-end->chat-input#reset" } do |f| %>
             <%= f.text_field :body,
@@ -118,13 +116,6 @@
 
     <%# Right: Status icons %>
     <div class="nl-status-icons">
-      <div id="pvp-status" class="pvp-status-indicator">
-        <% if current_character&.pvp_flagged? %>
-          <span class="pvp-icon" title="PVP Enabled">PVP</span>
-        <% else %>
-          <span class="pvp-icon" title="PVP Disabled">PVP</span>
-        <% end %>
-      </div>
       <span class="nl-time-display"><%= Time.current.strftime("%H:%M:%S") %></span>
     </div>
   </footer>

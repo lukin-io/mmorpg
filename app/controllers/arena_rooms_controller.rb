@@ -10,7 +10,7 @@ class ArenaRoomsController < ApplicationController
   # GET /arena_rooms/:id
   def show
     unless @room.accessible_by?(current_character)
-      redirect_to arena_index_path, alert: "You cannot access this arena room"
+      redirect_to arena_index_path, alert: "Этот зал арены недоступен."
       return
     end
 
@@ -22,7 +22,7 @@ class ArenaRoomsController < ApplicationController
 
     if active_participation
       redirect_to arena_match_path(active_participation.arena_match),
-        notice: "You have an active match!"
+        notice: "У вас уже идет бой."
       return
     end
 
@@ -49,7 +49,7 @@ class ArenaRoomsController < ApplicationController
 
   def require_character
     unless current_character
-      redirect_to root_path, alert: "You need a character to enter the arena"
+      redirect_to root_path, alert: "Для входа на арену нужен персонаж."
     end
   end
 
@@ -64,7 +64,7 @@ class ArenaRoomsController < ApplicationController
         id: @room.id,
         name: @room.name,
         level_range: "#{@room.level_min}-#{@room.level_max}",
-        faction: @room.faction_restriction
+        alignment: @room.alignment_restriction
       },
       applications: @applications.map do |app|
         {

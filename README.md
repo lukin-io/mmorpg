@@ -1,7 +1,7 @@
-# Neverlands-Inspired Rails MMORPG
+# Neverlands-Based Rails MMORPG
 
-This is a server-rendered Rails MMORPG inspired by Neverlands. The project is in
-active development, and the design target is the Neverlands-style browser game
+This is a server-rendered Rails MMORPG based on Neverlands. The project is in
+active development, and the design target is the Neverlands browser game
 loop: compact UI, server-authoritative actions, tile-local context, movement
 timers, chat/social presence, and tactical turn-based play.
 
@@ -15,10 +15,8 @@ Use these files first:
   play spaces.
 - `doc/design/reference/neverlands.md` - how live Neverlands observations map
   into this game's design language.
-- `doc/flow/neverlands_live_movement.md` - live Neverlands movement observation
+- `doc/design/reference/neverlands_live_movement.md` - live Neverlands movement observation
   from 2026-05-09.
-- `doc/flow/neverlands_movement_codebase_analysis.md` - current movement gaps
-  and implementation plan.
 
 Non-Neverlands docs are legacy and should be removed, not treated as alternate
 guidance.

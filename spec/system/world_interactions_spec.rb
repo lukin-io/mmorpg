@@ -4,12 +4,17 @@ require "rails_helper"
 
 RSpec.describe "World Interactions", type: :system, js: true do
   let(:user) { create(:user) }
-  let(:zone) { create(:zone, name: "Adventure Plains", biome: "plains", width: 10, height: 10) }
+  let(:zone) { create(:zone, name: "Окрестность Форпоста", location_type: "outdoor", width: 10, height: 10) }
   let(:character) { create(:character, user: user) }
   let!(:position) { create(:character_position, character: character, zone: zone, x: 5, y: 5) }
 
   before do
     login_as(user, scope: :user)
+    (3..7).each do |x|
+      (3..7).each do |y|
+        create(:map_tile_template, zone: zone.name, x:, y:, terrain_type: "outdoor", passable: true)
+      end
+    end
   end
 
   describe "success cases" do
@@ -18,9 +23,9 @@ RSpec.describe "World Interactions", type: :system, js: true do
 
       expect(page).to have_css(".nl-location-coords", text: "[5, 5]")
 
-      click_button "East →"
+      find(".nl-tile-clickable--available[data-target-x='6'][data-target-y='5']").click
 
-      expect(page).to have_css(".movement-cooldown", text: /Moving/i)
+      expect(page).to have_css(".nl-cursor-img--moving")
       expect(page).to have_css(".nl-location-coords", text: "[5, 5]")
       expect(position.reload.x).to eq(5)
 
@@ -31,71 +36,34 @@ RSpec.describe "World Interactions", type: :system, js: true do
     end
 
     it "enters a tile building and transitions zones" do
-      destination_zone = create(:zone, name: "Hidden Hamlet", biome: "plains", width: 10, height: 10)
+      destination_zone = create(:zone, name: "Форпост", location_type: "city", width: 10, height: 10)
       create(:tile_building,
         :with_destination,
         zone: zone.name,
         x: position.x,
         y: position.y,
-        name: "Town Gate",
+        name: "Ворота Форпоста",
         destination_zone: destination_zone,
         destination_x: 2,
         destination_y: 3)
 
       visit world_path
 
-      click_button "🚪 Enter Town Gate"
+      click_button "Войти"
 
-      expect(page).to have_content("Hidden Hamlet")
-    end
-
-    it "talks to a friendly NPC from the tile action panel" do
-      create(:tile_npc,
-        :friendly,
-        zone: zone.name,
-        x: position.x,
-        y: position.y,
-        npc_template: create(:npc_template, name: "Gate Guard", role: "guard"))
-
-      visit world_path
-
-      click_button "💬 Talk"
-
-      expect(page).to have_content("Gate Guard")
-      expect(page).to have_link("Leave")
-    end
-  end
-
-  describe "failure cases" do
-    it "shows an error when gathering but the inventory has no free slots" do
-      character.inventory.update!(slot_capacity: 1)
-      create(:inventory_item, inventory: character.inventory, item_template: create(:item_template, :material))
-      create(:tile_resource,
-        zone: zone.name,
-        x: position.x,
-        y: position.y,
-        resource_key: "iron_ore",
-        resource_type: "ore",
-        quantity: 1,
-        base_quantity: 1)
-
-      visit world_path
-
-      expect(page).to have_css(".tile-resource-actions", text: /Iron Ore/i, wait: 5)
-      find("#gather_tile_resource_btn", wait: 5).click
-
-      expect(page).to have_css("#flash", text: "Inventory full")
+      expect(page).to have_content("Форпост")
     end
   end
 
   describe "null/edge cases" do
-    it "disables movement buttons at the map boundary" do
+    it "does not offer out-of-bounds movement tiles at the map boundary" do
       position.update!(x: 0, y: 0)
 
       visit world_path
 
-      expect(page).to have_css(".direction-btn--disabled", text: "↑")
-      expect(page).to have_css(".direction-btn--disabled", text: "←")
+      expect(page).not_to have_css(".direction-btn")
+      expect(page).not_to have_css(".nl-tile-clickable--available[data-target-x='-1']")
+      expect(page).not_to have_css(".nl-tile-clickable--available[data-target-y='-1']")
     end
   end
 
@@ -105,7 +73,7 @@ RSpec.describe "World Interactions", type: :system, js: true do
 
       visit world_path
 
-      expect(page).to have_current_path(/sign_in/).or have_content("Log in")
+      expect(page).to have_current_path(/sign_in/).or have_content("Вход")
     end
   end
 end

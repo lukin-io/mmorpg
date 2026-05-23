@@ -120,23 +120,6 @@ RSpec.describe ArenaMatch, "Lifecycle and Status Transitions" do
     end
   end
 
-  describe "spectator_code" do
-    it "is automatically assigned on create" do
-      match = ArenaMatch.create!(match_type: :duel, arena_room: arena_room)
-      expect(match.spectator_code).to be_present
-    end
-
-    it "generates an 8-character alphanumeric code" do
-      match = ArenaMatch.create!(match_type: :duel, arena_room: arena_room)
-      expect(match.spectator_code).to match(/\A[A-Z0-9]{8}\z/)
-    end
-
-    it "generates unique codes for different matches" do
-      codes = 5.times.map { ArenaMatch.create!(match_type: :duel, arena_room: arena_room).spectator_code }
-      expect(codes.uniq.size).to eq(5)
-    end
-  end
-
   describe "scopes" do
     let!(:pending_match) { create(:arena_match, status: :pending, arena_room: arena_room) }
     let!(:live_match) { create(:arena_match, status: :live, started_at: Time.current, arena_room: arena_room) }
@@ -161,7 +144,6 @@ RSpec.describe ArenaMatch, "Lifecycle and Status Transitions" do
 
   describe "match creation from ApplicationHandler" do
     let(:handler) { Arena::ApplicationHandler.new }
-    let!(:season) { create(:arena_season, status: :live) }
     let!(:application) do
       create(:arena_application,
         applicant: character1,
@@ -240,15 +222,6 @@ RSpec.describe ArenaMatch, "Lifecycle and Status Transitions" do
 
         Arena::MatchStarterJob.new.perform(match.id)
         expect(match.reload.status).to eq("live")
-      end
-    end
-
-    context "match with no season" do
-      it "can still be created and processed" do
-        arena_match.update!(arena_season: nil)
-
-        Arena::MatchStarterJob.new.perform(arena_match.id)
-        expect(arena_match.reload.status).to eq("live")
       end
     end
 

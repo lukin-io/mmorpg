@@ -24,7 +24,7 @@ RSpec.describe "ArenaMatches", type: :request do
       name: "Test Arena",
       level_min: 1,
       level_max: 100,
-      room_type: :challenge,
+      room_type: :trial,
       active: true)
   end
 
@@ -134,7 +134,7 @@ RSpec.describe "ArenaMatches", type: :request do
       get "/arena_matches/#{pending_match.id}"
 
       expect(response).to have_http_status(:success)
-      expect(response.body).to include("Pending")
+      expect(response.body).to include("Ожидание")
     end
 
     context "when match transitions to live" do
@@ -146,16 +146,12 @@ RSpec.describe "ArenaMatches", type: :request do
         get "/arena_matches/#{pending_match.id}"
 
         expect(response).to have_http_status(:success)
-        expect(response.body).to include("Live")
+        expect(response.body).to include("Идет")
       end
     end
   end
 
-  # ============================================
-  # Spectator Access Tests
-  # ============================================
-
-  describe "spectator access" do
+  describe "public fight-link access" do
     let!(:live_match) do
       match = create(:arena_match,
         arena_room: arena_room,
@@ -165,16 +161,10 @@ RSpec.describe "ArenaMatches", type: :request do
       match
     end
 
-    it "allows non-participants to view match (spectate)" do
+    it "allows non-participants to view the fight screen" do
       get "/arena_matches/#{live_match.id}"
 
       expect(response).to have_http_status(:success)
-    end
-
-    it "shows spectator code for non-participants" do
-      get "/arena_matches/#{live_match.id}"
-
-      expect(response.body).to include(live_match.spectator_code)
     end
   end
 
@@ -297,8 +287,6 @@ RSpec.describe "ArenaMatches", type: :request do
 
   describe "match lifecycle from application to combat" do
     include ActiveJob::TestHelper
-
-    let!(:arena_season) { create(:arena_season, status: :live) }
     let!(:application) do
       create(:arena_application,
         applicant: character,

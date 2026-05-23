@@ -1,14 +1,13 @@
 require "rails_helper"
 
 RSpec.describe "SessionPings", type: :request do
-  include ActiveJob::TestHelper
-
-  it "enqueues presence job" do
+  it "refreshes the current user session timestamp" do
     user = create(:user)
     sign_in user, scope: :user
 
-    expect do
-      post session_ping_path, params: {session_ping: {state: "active"}}
-    end.to have_enqueued_job(SessionPresenceJob)
+    post session_ping_path
+
+    expect(response).to have_http_status(:no_content)
+    expect(user.user_sessions.first.last_seen_at).to be_present
   end
 end

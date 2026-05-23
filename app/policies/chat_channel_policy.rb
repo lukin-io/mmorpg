@@ -1,10 +1,6 @@
 # frozen_string_literal: true
 
 class ChatChannelPolicy < ApplicationPolicy
-  def index?
-    user&.verified_for_social_features?
-  end
-
   def show?
     user&.verified_for_social_features? && accessible?
   end
@@ -22,6 +18,6 @@ class ChatChannelPolicy < ApplicationPolicy
   private
 
   def accessible?
-    record.global? || record.local? || record.users.exists?(user.id)
+    record.global? || record.local? || record.system? || record.arena? || record.users.exists?(user.id)
   end
 end

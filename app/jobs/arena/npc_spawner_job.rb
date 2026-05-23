@@ -17,12 +17,12 @@ module Arena
     queue_as :default
 
     # Configuration
-    MIN_NPCS_PER_ROOM = 2
+    MIN_NPCS_PER_ROOM = 1
     MAX_NPCS_PER_ROOM = 5
     RESPAWN_INTERVAL = 60.seconds # Re-check every minute
 
     # Rooms that support NPC spawning
-    NPC_ENABLED_ROOMS = %w[training trial challenge].freeze
+    NPC_ENABLED_ROOMS = %w[training].freeze
 
     def perform(room_slug: nil)
       if room_slug
@@ -61,21 +61,9 @@ module Arena
 
     def spawn_npcs(room, count)
       service = Arena::NpcApplicationService.new
-      rng = Random.new(Time.current.to_i)
 
-      count.times do |i|
-        # Alternate difficulties for variety
-        difficulty = case i % 3
-        when 0 then :easy
-        when 1 then :medium
-        else :hard
-        end
-
-        result = service.create_for_room(
-          room: room,
-          difficulty: difficulty,
-          rng: rng
-        )
+      count.times do
+        result = service.create_for_room(room: room)
 
         if result.success?
           Rails.logger.info("[ArenaNpcSpawner] Spawned NPC application in #{room.slug}: #{result.application.applicant_name}")

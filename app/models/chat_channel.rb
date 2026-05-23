@@ -6,12 +6,9 @@ class ChatChannel < ApplicationRecord
   CHANNEL_TYPES = {
     global: 0,
     local: 1,
-    guild: 2,
-    clan: 3,
-    party: 4,
-    whisper: 5,
-    system: 6,
-    arena: 7
+    whisper: 2,
+    system: 3,
+    arena: 4
   }.freeze
 
   enum :channel_type, CHANNEL_TYPES
@@ -28,12 +25,12 @@ class ChatChannel < ApplicationRecord
   validates :slug, uniqueness: true
 
   scope :system_owned, -> { where(system_owned: true) }
-  scope :public_channels, -> { where(channel_type: [channel_types[:global], channel_types[:local]]) }
+  scope :public_channels, -> { where(channel_type: [channel_types[:global], channel_types[:local], channel_types[:system]]) }
 
   before_validation :assign_slug, on: :create
 
   def membership_required?
-    !(global? || local? || arena?)
+    !(global? || local? || arena? || system?)
   end
 
   def ensure_membership!(user)

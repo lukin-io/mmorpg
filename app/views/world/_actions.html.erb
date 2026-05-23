@@ -1,244 +1,81 @@
-<div class="actions-panel">
-  <h3>Actions</h3>
+<%
+  exit_action = available_actions.find { |a| a[:type] == :exit }
+  tile_npc_action = available_actions.find { |a| a[:type] == :tile_npc }
+  tile_building_action = available_actions.find { |a| a[:type] == :tile_building }
+  local_actions_present = exit_action || tile_npc_action || tile_building_action
+%>
 
-  <%# Movement Controls %>
-  <% movement_action = available_actions.find { |a| a[:type] == :move } %>
-  <% moving_action = available_actions.find { |a| a[:type] == :moving } %>
-  <% if movement_action %>
-    <% destinations_by_direction = movement_action.fetch(:destinations, []).index_by { |destination| destination.direction.to_sym } %>
-    <div class="movement-controls">
-      <h4>Move</h4>
-      <div class="direction-pad">
-        <div class="direction-row">
-          <% if (destination = destinations_by_direction[:north]) %>
-            <%= button_to "↑ North", move_world_path,
-                method: :post,
-                params: {
-                  direction: :north,
-                  target_x: destination.target_x,
-                  target_y: destination.target_y,
-                  action_key: destination.action_key
-                },
-                class: "direction-btn direction-btn--north" %>
-          <% else %>
-            <span class="direction-btn direction-btn--disabled">↑</span>
-          <% end %>
-        </div>
-        <div class="direction-row direction-row--middle">
-          <% if (destination = destinations_by_direction[:west]) %>
-            <%= button_to "← West", move_world_path,
-                method: :post,
-                params: {
-                  direction: :west,
-                  target_x: destination.target_x,
-                  target_y: destination.target_y,
-                  action_key: destination.action_key
-                },
-                class: "direction-btn direction-btn--west" %>
-          <% else %>
-            <span class="direction-btn direction-btn--disabled">←</span>
-          <% end %>
+<% if local_actions_present %>
+  <div class="actions-panel">
+    <div class="location-actions">
+      <% if exit_action %>
+        <%= button_to exit_action[:label], exit_location_world_path,
+            method: :post, class: "btn-secondary w-full" %>
+      <% end %>
 
-          <span class="direction-center">◉</span>
-
-          <% if (destination = destinations_by_direction[:east]) %>
-            <%= button_to "East →", move_world_path,
-                method: :post,
-                params: {
-                  direction: :east,
-                  target_x: destination.target_x,
-                  target_y: destination.target_y,
-                  action_key: destination.action_key
-                },
-                class: "direction-btn direction-btn--east" %>
-          <% else %>
-            <span class="direction-btn direction-btn--disabled">→</span>
-          <% end %>
-        </div>
-        <div class="direction-row">
-          <% if (destination = destinations_by_direction[:south]) %>
-            <%= button_to "↓ South", move_world_path,
-                method: :post,
-                params: {
-                  direction: :south,
-                  target_x: destination.target_x,
-                  target_y: destination.target_y,
-                  action_key: destination.action_key
-                },
-                class: "direction-btn direction-btn--south" %>
-          <% else %>
-            <span class="direction-btn direction-btn--disabled">↓</span>
-          <% end %>
-        </div>
-      </div>
-    </div>
-  <% elsif moving_action %>
-    <div class="movement-cooldown">
-      <p class="text-muted">Moving... <%= moving_action[:remaining_seconds] %>s</p>
-    </div>
-  <% else %>
-    <div class="movement-cooldown">
-      <p class="text-muted">No movement routes available.</p>
-    </div>
-  <% end %>
-
-  <%# Location Actions %>
-  <div class="location-actions">
-    <% exit_action = available_actions.find { |a| a[:type] == :exit } %>
-    <% if exit_action %>
-      <%= button_to "🚪 #{exit_action[:label]}", exit_location_world_path,
-          method: :post, class: "btn-secondary w-full" %>
-    <% end %>
-
-    <%# City-specific actions %>
-    <% if position.zone.biome == "city" %>
-      <div class="city-actions mt-3">
-        <h4>City Services</h4>
-        <div class="action-grid">
-          <%= link_to "🏪 Marketplace", marketplace_kiosks_path, class: "action-btn" %>
-          <%= link_to "🏛️ Auction House", auction_listings_path, class: "action-btn" %>
-          <%= link_to "⚒️ Crafting", crafting_jobs_path, class: "action-btn" %>
-          <%= link_to "🏥 Infirmary", "#", class: "action-btn" %>
-          <%= link_to "🏦 Bank", "#", class: "action-btn" %>
-          <%= link_to "📜 Quest Board", quests_path, class: "action-btn" %>
-        </div>
-      </div>
-    <% end %>
-
-    <%# Gathering Actions (GatheringNode based - profession required) %>
-    <% gather_action = available_actions.find { |a| a[:type] == :gather } %>
-    <% if gather_action && gather_action[:nodes].any? %>
-      <div class="gather-actions mt-3">
-        <h4>Profession Nodes</h4>
-        <% gather_action[:nodes].each do |node| %>
-          <% offer = gather_action[:offers_by_target_id][node.id] %>
-          <% if offer %>
-            <%= button_to "🌿 Gather #{node.resource_key.titleize}",
-                gather_world_path,
-                method: :post,
-                params: {node_id: node.id, action_key: offer.action_key},
-                class: "btn-secondary" %>
-          <% else %>
-            <span class="btn-secondary disabled">🌿 Gather <%= node.resource_key.titleize %></span>
-          <% end %>
-        <% end %>
-      </div>
-    <% end %>
-
-    <%# Tile Resource Gathering (biome based - no profession required) %>
-    <% tile_resource_action = available_actions.find { |a| a[:type] == :tile_resource } %>
-    <% if tile_resource_action && tile_resource_action[:resource] %>
-      <% resource = tile_resource_action[:resource] %>
-      <% offer = tile_resource_action[:offer] %>
-      <div class="tile-resource-actions mt-3">
-        <h4>Resources Here</h4>
-        <% if resource[:available] && offer %>
-          <%= button_to resource_icon(resource[:type]) + " Gather #{resource[:name]}",
-              gather_resource_world_path,
-              method: :post,
-              params: {resource_id: resource[:id], action_key: offer.action_key},
-              id: "gather_tile_resource_btn",
-              class: "btn-gather btn-gather--#{resource[:type]}",
-              data: { turbo: true } %>
-        <% elsif resource[:available] %>
-          <div class="resource-depleted">
-            <span class="resource-icon"><%= resource_icon(resource[:type]) %></span>
-            <span class="resource-name"><%= resource[:name] %></span>
-            <span class="resource-respawn">No valid action offer.</span>
-          </div>
-        <% else %>
-          <div class="resource-depleted">
-            <span class="resource-icon"><%= resource_icon(resource[:type]) %></span>
-            <span class="resource-name"><%= resource[:name] %></span>
-            <span class="resource-respawn">
-              Respawns in <%= format_time_remaining(resource[:respawn_in]) %>
-            </span>
-          </div>
-        <% end %>
-      </div>
-    <% end %>
-
-    <%# Tile NPC (biome-based random spawns) %>
-    <% tile_npc_action = available_actions.find { |a| a[:type] == :tile_npc } %>
-    <% if tile_npc_action && tile_npc_action[:npc] %>
-      <% npc = tile_npc_action[:npc] %>
-      <% offer = tile_npc_action[:offer] %>
-      <div class="tile-npc-actions mt-3">
-        <h4>Creature Here</h4>
-        <% if npc[:alive] && offer %>
-          <div class="npc-info npc-info--<%= npc[:hostile] ? 'hostile' : 'friendly' %>">
-            <div class="npc-header">
-              <span class="npc-icon"><%= npc[:hostile] ? '👹' : '👤' %></span>
-              <span class="npc-name"><%= npc[:name] %></span>
-              <span class="npc-level">Lv.<%= npc[:level] %></span>
-            </div>
-            <% if npc[:hostile] %>
+      <% if tile_npc_action && tile_npc_action[:npc] %>
+        <% npc = tile_npc_action[:npc] %>
+        <% offer = tile_npc_action[:offer] %>
+        <div class="tile-npc-actions mt-3">
+          <% if npc[:alive] && npc[:hostile] && offer %>
+            <div class="npc-info npc-info--hostile">
+              <div class="npc-header">
+                <span class="npc-icon">!</span>
+                <span class="npc-name"><%= npc[:name] %></span>
+                <span class="npc-level">[<%= npc[:level] %>]</span>
+              </div>
               <div class="npc-hp-bar">
                 <div class="npc-hp-fill" style="width: <%= npc[:hp_percentage] %>%"></div>
                 <span class="npc-hp-text"><%= npc[:hp] %>/<%= npc[:max_hp] %></span>
               </div>
-              <%= form_with url: start_combat_path, method: :post, data: { turbo_frame: "_top" } do |f| %>
+              <%= form_with url: world_npc_fights_path, method: :post, data: { turbo_frame: "_top" } do |f| %>
                 <%= f.hidden_field :npc_template_id, value: npc[:npc_template_id] %>
                 <%= f.hidden_field :tile_npc_id, value: npc[:id] %>
                 <%= f.hidden_field :action_key, value: offer.action_key %>
-                <%= f.submit "⚔️ Attack", class: "btn-attack" %>
+                <%= f.submit "Напасть", class: "btn-attack" %>
               <% end %>
-            <% else %>
-              <p class="npc-description"><%= npc[:description] %></p>
-              <%= form_with url: interact_world_path, method: :post, data: { turbo_frame: "_top" } do |f| %>
-                <%= f.hidden_field :npc_id, value: npc[:npc_template_id] %>
-                <%= f.hidden_field :tile_npc_id, value: npc[:id] %>
-                <%= f.hidden_field :action_key, value: offer.action_key %>
-                <%= f.submit "💬 Talk", class: "btn-interact" %>
-              <% end %>
-            <% end %>
-          </div>
-        <% else %>
-          <div class="npc-defeated">
-            <span class="npc-icon">💀</span>
-            <span class="npc-name"><%= npc[:name] %></span>
-            <span class="npc-respawn">
-              Respawns in <%= format_time_remaining(npc[:respawn_in]) %>
-            </span>
-          </div>
-        <% end %>
-      </div>
-    <% end %>
-
-    <%# Tile Building (enterable structures like castles, forts, inns) %>
-    <% tile_building_action = available_actions.find { |a| a[:type] == :tile_building } %>
-    <% if tile_building_action && tile_building_action[:building] %>
-      <% building = tile_building_action[:building] %>
-      <% offer = tile_building_action[:offer] %>
-      <div class="tile-building-actions mt-3">
-        <h4>Structure Here</h4>
-        <div class="building-info building-info--<%= building[:building_type] %>">
-          <div class="building-header">
-            <span class="building-icon"><%= building[:icon] %></span>
-            <span class="building-name"><%= building[:name] %></span>
-          </div>
-          <% if building[:description].present? %>
-            <p class="building-description"><%= building[:description] %></p>
-          <% end %>
-          <% if building[:destination].present? %>
-            <p class="building-destination">
-              <small>Leads to: <strong><%= building[:destination] %></strong></small>
-            </p>
-          <% end %>
-          <% if building[:can_enter] && offer %>
-            <%= form_with url: enter_building_world_path, method: :post, data: { turbo: true } do |f| %>
-              <%= f.hidden_field :building_id, value: building[:id] %>
-              <%= f.hidden_field :action_key, value: offer.action_key %>
-              <%= f.submit "🚪 Enter #{building[:name]}", class: "btn-enter-building" %>
-            <% end %>
+            </div>
           <% else %>
-            <div class="building-blocked">
-              <span class="building-blocked-icon">🔒</span>
-              <span class="building-blocked-reason"><%= building[:blocked_reason] %></span>
+            <div class="npc-defeated">
+              <span class="npc-name"><%= npc[:name] %></span>
+              <span class="npc-respawn">
+                появится через <%= format_time_remaining(npc[:respawn_in]) %>
+              </span>
             </div>
           <% end %>
         </div>
-      </div>
-    <% end %>
+      <% end %>
+
+      <% if tile_building_action && tile_building_action[:building] %>
+        <% building = tile_building_action[:building] %>
+        <% offer = tile_building_action[:offer] %>
+        <div class="tile-building-actions mt-3">
+          <div class="building-info building-info--<%= building[:building_type] %>">
+            <div class="building-header">
+              <span class="building-icon"><%= building[:icon] %></span>
+              <span class="building-name"><%= building[:name] %></span>
+            </div>
+            <% if building[:description].present? %>
+              <p class="building-description"><%= building[:description] %></p>
+            <% end %>
+            <% if building[:destination].present? %>
+              <p class="building-destination"><%= building[:destination] %></p>
+            <% end %>
+            <% if building[:can_enter] && offer %>
+              <%= form_with url: enter_building_world_path, method: :post, data: { turbo: true } do |f| %>
+                <%= f.hidden_field :building_id, value: building[:id] %>
+                <%= f.hidden_field :action_key, value: offer.action_key %>
+                <%= f.submit "Войти", class: "btn-enter-building" %>
+              <% end %>
+            <% else %>
+              <div class="building-blocked">
+                <span class="building-blocked-icon">x</span>
+                <span class="building-blocked-reason"><%= building[:blocked_reason] %></span>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+    </div>
   </div>
-</div>
+<% end %>

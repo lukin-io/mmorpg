@@ -6,19 +6,16 @@ module Game
   module World
     # Builds persisted action offers for the current authoritative tile state.
     class ActionOfferBuilder
-      def initialize(character:, position:, tile_state:, gathering_nodes: [])
+      def initialize(character:, position:, tile_state:)
         @character = character
         @position = position
         @tile_state = tile_state
-        @gathering_nodes = gathering_nodes
       end
 
       def call
         cancel_open_offers!
 
         offers = []
-        offers.concat(gathering_node_offers)
-        offers << gather_resource_offer
         offers << npc_offer
         offers << building_offer
         offers.compact
@@ -26,7 +23,7 @@ module Game
 
       private
 
-      attr_reader :character, :position, :tile_state, :gathering_nodes
+      attr_reader :character, :position, :tile_state
 
       def cancel_open_offers!
         WorldActionOffer
@@ -38,38 +35,18 @@ module Game
           )
       end
 
-      def gathering_node_offers
-        gathering_nodes.map do |node|
-          create_offer(:gather_node, target: node, metadata: {resource_key: node.resource_key})
-        end
-      end
-
-      def gather_resource_offer
-        resource = tile_state.resource
-        return unless resource&.available?
-
-        create_offer(
-          :gather_resource,
-          target: resource,
-          metadata: {
-            resource_key: resource.resource_key,
-            resource_type: resource.resource_type
-          }
-        )
-      end
-
       def npc_offer
         npc = tile_state.npc
         return unless npc&.alive?
+        return unless npc.hostile?
 
-        action_type = npc.hostile? ? :attack_npc : :talk_npc
         create_offer(
-          action_type,
+          :attack_npc,
           target: npc,
           metadata: {
             npc_template_id: npc.npc_template_id,
             npc_key: npc.npc_key,
-            hostile: npc.hostile?
+            hostile: true
           }
         )
       end

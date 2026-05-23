@@ -6,7 +6,7 @@ FactoryBot.define do
     association :zone
     x { 5 }
     y { 5 }
-    action_type { "gather_resource" }
+    action_type { "attack_npc" }
     action_key { SecureRandom.hex(16) }
     status { :offered }
     expires_at { 10.minutes.from_now }

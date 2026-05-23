@@ -11,58 +11,30 @@ RSpec.describe Game::World::ArenaNpcConfig do
       expect(npcs.all? { |n| n[:role] == "arena_bot" }).to be true
     end
 
-    it "includes NPCs from other sections that list the room" do
+    it "does not invent NPCs for uncaptured arena rooms" do
       npcs = described_class.for_room("trial")
 
-      # Should include some NPCs from training section that list trial
-      npc_keys = npcs.map { |n| n[:key].to_s }
-      expect(npc_keys).to include("arena_apprentice_warrior")
+      expect(npcs).to be_empty
     end
 
-    it "returns default NPCs for unknown rooms" do
+    it "returns no fallback NPCs for unknown rooms" do
       npcs = described_class.for_room("unknown_room")
 
-      expect(npcs).not_to be_empty
-    end
-  end
-
-  describe ".for_room_by_difficulty" do
-    it "filters NPCs by easy difficulty" do
-      npcs = described_class.for_room_by_difficulty("training", :easy)
-
-      expect(npcs).not_to be_empty
-      expect(npcs.all? { |n| n.dig(:metadata, :difficulty) == "easy" }).to be true
-    end
-
-    it "filters NPCs by medium difficulty" do
-      npcs = described_class.for_room_by_difficulty("training", :medium)
-
-      expect(npcs).not_to be_empty
-      expect(npcs.all? { |n| n.dig(:metadata, :difficulty) == "medium" }).to be true
+      expect(npcs).to be_empty
     end
   end
 
   describe ".sample_npc" do
-    it "returns a random NPC for the room" do
+    it "returns the captured NPC for the room" do
       npc = described_class.sample_npc("training")
 
       expect(npc).to be_present
       expect(npc[:role]).to eq("arena_bot")
     end
 
-    it "respects difficulty filter" do
-      npc = described_class.sample_npc("training", difficulty: :easy)
-
-      expect(npc).to be_present
-      expect(npc.dig(:metadata, :difficulty)).to eq("easy")
-    end
-
-    it "is deterministic with seeded RNG" do
-      rng1 = Random.new(42)
-      rng2 = Random.new(42)
-
-      npc1 = described_class.sample_npc("training", rng: rng1)
-      npc2 = described_class.sample_npc("training", rng: rng2)
+    it "does not use generic random weighting" do
+      npc1 = described_class.sample_npc("training")
+      npc2 = described_class.sample_npc("training")
 
       expect(npc1[:key]).to eq(npc2[:key])
     end
@@ -81,7 +53,7 @@ RSpec.describe Game::World::ArenaNpcConfig do
       npc = described_class.find_npc(:arena_training_dummy)
 
       expect(npc).to be_present
-      expect(npc[:name]).to eq("Sparring Dummy")
+      expect(npc[:name]).to eq("Манекен")
     end
 
     it "returns nil for unknown key" do
@@ -98,7 +70,7 @@ RSpec.describe Game::World::ArenaNpcConfig do
   end
 
   describe ".extract_stats" do
-    it "extracts stats from NPC config" do
+    it "extracts only explicit stats from NPC config" do
       npc_config = {
         key: :test_npc,
         level: 5,
@@ -111,8 +83,8 @@ RSpec.describe Game::World::ArenaNpcConfig do
 
       expect(stats[:hp]).to eq(100)
       expect(stats[:attack]).to eq(15)
-      expect(stats[:defense]).to eq(13) # level * 2 + 3
-      expect(stats[:agility]).to eq(10) # level + 5
+      expect(stats[:defense]).to eq(0)
+      expect(stats[:agility]).to eq(0)
     end
 
     it "uses metadata stats when present" do
@@ -129,17 +101,6 @@ RSpec.describe Game::World::ArenaNpcConfig do
       expect(stats[:attack]).to eq(50)
       expect(stats[:defense]).to eq(30)
       expect(stats[:hp]).to eq(200)
-    end
-  end
-
-  describe ".difficulty_info" do
-    it "returns difficulty descriptions" do
-      info = described_class.difficulty_info
-
-      expect(info[:easy][:label]).to eq("Easy")
-      expect(info[:medium][:label]).to eq("Medium")
-      expect(info[:hard][:label]).to eq("Hard")
-      expect(info[:easy]).not_to have_key(:emoji)
     end
   end
 

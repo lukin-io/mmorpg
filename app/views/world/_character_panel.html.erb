@@ -49,7 +49,7 @@
   <div class="char-resources">
     <div class="char-resource">
       <span class="resource-icon">🪙</span>
-      <span class="resource-value"><%= number_with_delimiter(current_user.currency_wallet&.gold_balance || 0) %></span>
+      <span class="resource-value"><%= number_with_delimiter(current_user.currency_wallet&.nv_balance || 0) %> NV</span>
     </div>
   </div>
 </div>

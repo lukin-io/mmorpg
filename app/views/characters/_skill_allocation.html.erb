@@ -6,7 +6,6 @@
   - Dual skill point pools (Combat and Peace)
   - Tiered progression (more points at low levels, fewer at high)
   - Skills grouped by category
-  - Real-time effect preview
 %>
 <%
   # Build data structures for the Stimulus controller
@@ -27,14 +26,14 @@
   <div class="nl-allocation-pools">
     <div class="nl-allocation-pool nl-allocation-pool--combat">
       <span class="nl-allocation-pool-icon">⚔️</span>
-      <span class="nl-allocation-pool-label">Combat/Magic Points:</span>
+      <span class="nl-allocation-pool-label">Боевые очки:</span>
       <span class="nl-allocation-pool-value" data-skill-allocation-target="combatPoints">
         <%= @combat_skill_points %>
       </span>
     </div>
     <div class="nl-allocation-pool nl-allocation-pool--peace">
       <span class="nl-allocation-pool-icon">🕊️</span>
-      <span class="nl-allocation-pool-label">Peace Points:</span>
+      <span class="nl-allocation-pool-label">Мирные очки:</span>
       <span class="nl-allocation-pool-value" data-skill-allocation-target="peacePoints">
         <%= @peace_skill_points %>
       </span>
@@ -53,14 +52,10 @@
                when :combat then %><%= "⚔️" %>
             <% when :magic then %><%= "✨" %>
             <% when :resistance then %><%= "🛡️" %>
-            <% when :survival then %><%= "🏕️" %>
-            <% when :peace then %><%= "🕊️" %>
+            <% when :peace_world then %><%= "🕊️" %>
             <% end %>
           </span>
           <%= category_info[:name] %>
-          <span class="nl-skill-category-pool">
-            (uses <%= category_info[:pool] == :peace ? "Peace" : "Combat" %> points)
-          </span>
         </h3>
 
         <div class="nl-skills-grid">
@@ -112,79 +107,6 @@
                     +<%= skill_info[:points_per_spend] %>
                   <% end %>
                 </div>
-                <div class="nl-skill-effect"
-                     data-skill-allocation-target="skillEffect"
-                     data-skill="<%= skill_key %>">
-                  <%# Effect preview - updated by JS %>
-                  <% case skill_key.to_sym
-                     when :wanderer
-                       reduction = (skill_info[:level] / 100.0 * 70).round
-                       cooldown = (10 * (1 - reduction / 100.0)).round(1) %>
-                    Movement: <%= cooldown %>s (-<%= reduction %>%)
-                  <% when :melee_combat, :ranged_combat, :unarmed_combat
-                       bonus = (skill_info[:level] / 100.0 * 50).round %>
-                    Damage: +<%= bonus %>%
-                  <% when :elemental_magic
-                       bonus = (skill_info[:level] / 100.0 * 50).round %>
-                    Spell Damage: +<%= bonus %>%
-                  <% when :healing_arts
-                       bonus = (skill_info[:level] / 100.0 * 40).round %>
-                    Healing: +<%= bonus %>%
-                  <% when :critical_strikes
-                       bonus = (skill_info[:level] / 100.0 * 15).round %>
-                    Crit Chance: +<%= bonus %>%
-                  <% when :evasion
-                       bonus = (skill_info[:level] / 100.0 * 20).round %>
-                    Dodge: +<%= bonus %>%
-                  <% when :block_mastery
-                       bonus = (skill_info[:level] / 100.0 * 40).round %>
-                    Block: +<%= bonus %>%
-                  <% when :arcane_power
-                       bonus = (skill_info[:level] / 100.0 * 30).round %>
-                    Max Mana: +<%= bonus %>%
-                  <% when :spell_mastery
-                       bonus = (skill_info[:level] / 100.0 * 25).round %>
-                    Mana Cost: -<%= bonus %>%
-                  <% when :fire_resistance, :cold_resistance, :lightning_resistance
-                       bonus = (skill_info[:level] / 100.0 * 40).round %>
-                    Resist: <%= bonus %>%
-                  <% when :physical_fortitude
-                       bonus = (skill_info[:level] / 100.0 * 25).round %>
-                    Phys Resist: <%= bonus %>%
-                  <% when :endurance
-                       bonus = (skill_info[:level] / 100.0 * 50).round %>
-                    Max HP: +<%= bonus %>%
-                  <% when :perception
-                       bonus = (skill_info[:level] / 100.0 * 30).round %>
-                    Discovery: +<%= bonus %>%
-                  <% when :luck
-                       bonus = (skill_info[:level] / 100.0 * 25).round %>
-                    Loot: +<%= bonus %>%
-                  <% when :herbalism, :mining, :fishing
-                       bonus = (skill_info[:level] / 100.0 * 100).round %>
-                    Yield: +<%= bonus %>%
-                  <% when :blacksmithing
-                       tier = (skill_info[:level] / 25).floor %>
-                    Crafting Tier: <%= tier %>
-                  <% when :alchemy
-                       bonus = (skill_info[:level] / 100.0 * 50).round %>
-                    Potions: +<%= bonus %>%
-                  <% when :cooking
-                       bonus = (skill_info[:level] / 100.0 * 100).round %>
-                    Buff Duration: +<%= bonus %>%
-                  <% when :first_aid
-                       bonus = (skill_info[:level] / 100.0 * 75).round %>
-                    Regen: +<%= bonus %>%
-                  <% when :trading
-                       bonus = (skill_info[:level] / 100.0 * 20).round %>
-                    Prices: <%= bonus %>% better
-                  <% when :animal_handling
-                       bonus = (skill_info[:level] / 100.0 * 30).round %>
-                    Mount Speed: +<%= bonus %>%
-                  <% else %>
-                    Effect: <%= skill_info[:level] %>%
-                  <% end %>
-                </div>
               </div>
             </div>
           <% end %>
@@ -196,26 +118,15 @@
       <button type="button"
               class="nl-btn nl-btn--secondary"
               data-action="click->skill-allocation#reset">
-        Reset
+        Сброс
       </button>
       <button type="submit"
               class="nl-btn nl-btn--primary nl-btn--disabled"
               data-skill-allocation-target="saveButton"
               disabled>
-        Save Skills
+        Сохранить
       </button>
     </div>
   <% end %>
 
-  <%# Tiered Progression Legend %>
-  <div class="nl-skill-legend">
-    <h4>Tiered Progression</h4>
-    <p>Skills gain more points at lower levels:</p>
-    <ul>
-      <li><strong>Level 0-24:</strong> Higher gains (e.g., +10 per spend)</li>
-      <li><strong>Level 25-49:</strong> Medium gains (e.g., +8 per spend)</li>
-      <li><strong>Level 50-74:</strong> Lower gains (e.g., +6 per spend)</li>
-      <li><strong>Level 75-99:</strong> Lowest gains (e.g., +4 per spend)</li>
-    </ul>
-  </div>
 </div>

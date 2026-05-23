@@ -2,15 +2,17 @@
 
 ## Purpose
 
-Cities are compact illustrated hubs. They organize shops, banks, taverns,
-arenas, transport stations, trainers, quest NPCs, and social presence without
-using the outdoor movement timer.
+Cities are compact illustrated hubs. They organize documented building flows
+without using the outdoor movement timer.
 
 Buildings are entered from city hotspots and expose feature-specific screens.
+Current source-backed launch scope is intentionally small: Arena is implemented
+as a city building path, and `Лавка` is documented as the shop building to build
+next.
 
 ## Neverlands Reference
 
-Primary reference: `doc/flow/neverlands_live_city_movement.md`.
+Primary reference: `doc/design/reference/neverlands.md`.
 
 Observed Oktal flow:
 
@@ -63,22 +65,25 @@ node.
 - A building has a stable key and parent city node.
 - A building page has its own feature UI.
 - A building page provides a `Город` return action.
-- Shops, banks, taverns, trainers, and transport stations are buildings, not
-  top-level global pages.
+- Arena and `Лавка` are the only current building flows.
+- Other building names seen in raw city captures are not implementation scope
+  until their Neverlands behavior is captured into feature/area docs.
+- Shop access is a building flow, not a generic vendor NPC dialogue.
 - Feature-specific state should live inside the building flow.
 
-## Oktal Starter Area
+## Starter Area
 
-Use Oktal as the starter design reference:
+Use the observed city flow shape as the starter reference, but keep only the
+source-backed MVP buildings:
 
 | Node | Key | Important Hotspots |
 | --- | --- | --- |
-| Central Square | `oktal.central_square` | tavern, bank, watchtower, residential quarter, trading quarter, exit |
-| Trading Quarter | `oktal.trading_quarter` | shop, market, junk dealer, numismatics, airship station, central square, industrial quarter |
-| Shop | `oktal.shop_3` | buy, sell, licenses, novice goods, return to city |
+| City Node | `starter.city` | arena, shop, exit |
+| Arena | `starter.arena` | arena rooms, applications, player/team/NPC fights, return to city |
+| Shop | `starter.shop` | buy, sell, licenses, novice goods, return to city |
 
-Names can be adapted to original project lore, but the graph shape and flow
-should stay close to the reference.
+Future city districts and buildings must be added by capture-first expansion,
+not by importing generic town-service assumptions.
 
 ## Feature Hooks
 
@@ -92,51 +97,5 @@ should stay close to the reference.
 
 - City movement as grid movement.
 - Direct `/shop` style primary navigation that bypasses the city node.
+- Town NPC service roles inside buildings before source capture.
 - Marketing-style city landing pages.
-
-## Related Implementation Files
-
-Models:
-
-- `app/models/city_hotspot.rb`
-- `app/models/tile_building.rb`
-- `app/models/zone.rb`
-- `app/models/character_position.rb`
-
-Controller and services:
-
-- `app/controllers/world_controller.rb`
-- `app/services/game/world/city_hotspot_service.rb`
-- `app/services/game/world/tile_building_service.rb`
-- `app/helpers/world_helper.rb`
-
-Views and JavaScript:
-
-- `app/views/world/city_view.html.erb`
-- `app/views/world/_city_view.html.erb`
-- `app/views/world/_city_hotspot.html.erb`
-- `app/views/world/_actions.html.erb`
-- `app/javascript/controllers/city_controller.js`
-- `app/javascript/controllers/city_view_controller.js`
-
-Assets and data:
-
-- `app/assets/images/city.png`
-- `app/assets/images/arena.png`
-- `app/assets/images/workshop.png`
-- `app/assets/images/clinic.png`
-- `app/assets/images/gate.png`
-- `db/migrate/20251216091841_create_tile_buildings.rb`
-- `db/migrate/20251218132823_create_city_hotspots.rb`
-- `db/migrate/20251218155628_add_dimensions_to_city_hotspots.rb`
-- `db/seeds.rb`
-
-Specs:
-
-- `spec/models/city_hotspot_spec.rb`
-- `spec/models/tile_building_spec.rb`
-- `spec/services/game/world/city_hotspot_service_spec.rb`
-- `spec/services/game/world/tile_building_service_spec.rb`
-- `spec/views/world/_city_view_spec.rb`
-- `spec/system/world_map_spec.rb`
-- `spec/requests/world_spec.rb`

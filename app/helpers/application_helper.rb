@@ -1,10 +1,9 @@
 module ApplicationHelper
-  def idle_tracker_attributes
+  def online_reload_attributes
     return "" unless user_signed_in?
 
     %(
-      data-controller="idle-tracker"
-      data-idle-tracker-ping-url-value="#{session_ping_path}"
+      data-online-reload-ping-url-value="#{session_ping_path}"
     ).squish.html_safe
   end
 end

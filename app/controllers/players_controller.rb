@@ -19,7 +19,7 @@ class PlayersController < ApplicationController
 
   def set_character
     @character = Character
-      .includes(:user, :guild, :clan, {inventory: {inventory_items: :item_template}}, {position: :zone})
+      .includes(:user, {inventory: {inventory_items: :item_template}}, {position: :zone})
       .find_by!("LOWER(characters.name) = ?", params[:name].to_s.downcase)
   end
 
@@ -37,8 +37,6 @@ class PlayersController < ApplicationController
       character: {
         id: @character.id,
         name: @character.name,
-        avatar: @character.avatar,
-        avatar_path: @character.avatar_image_path,
         level: @character.level,
         experience: @character.experience,
         experience_to_next_level: @character.experience_to_next_level,
@@ -56,6 +54,22 @@ class PlayersController < ApplicationController
     position = @character.position
     return {label: "Unknown"} unless position
 
+    if (match = active_arena_match_for(@character))
+      sublocation = match.arena_room&.name || "Arena"
+      return {
+        label: "#{position.zone&.name} [in combat] #{sublocation}",
+        zone: position.zone&.name,
+        x: position.x,
+        y: position.y,
+        sublocation: sublocation,
+        active_fight: {
+          id: match.id,
+          path: public_fight_log_path(match),
+          status: match.status
+        }
+      }
+    end
+
     label = [position.zone&.name, "[#{position.x}, #{position.y}]"].compact.join(" ")
     {
       label: label,
@@ -72,12 +86,20 @@ class PlayersController < ApplicationController
         id: item.id,
         name: template&.name,
         slot: item.equipment_slot.to_s.presence || template&.slot.to_s,
-        rarity: template&.rarity,
         item_type: template&.item_type,
         quantity: item.quantity,
         current_durability: item.current_durability,
         max_durability: item.max_durability
       }
     end
+  end
+
+  def active_arena_match_for(character)
+    character.arena_participations.includes(arena_match: :arena_room).order(created_at: :desc).detect do |participation|
+      match = participation.arena_match
+      next false unless match
+
+      match.live? || match.pending? || match.matching? || (match.completed? && participation.metadata.to_h["finished_at"].blank?)
+    end&.arena_match
   end
 end

@@ -3,11 +3,9 @@ FactoryBot.define do
     sequence(:name) { |n| "Item #{n}" }
     slot { "main_hand" }
     item_type { "equipment" }
-    rarity { "common" }
     stat_modifiers { {"attack" => 5} }
     weight { 2 }
     stack_limit { 10 }
-    premium { false }
 
     trait :material do
       item_type { "material" }

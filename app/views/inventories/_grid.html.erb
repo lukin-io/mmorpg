@@ -6,7 +6,7 @@
     <div class="inventory-slot filled nl-inventory-item"
          data-item-id="<%= item.id %>"
          data-action="click->inventory#selectItem">
-      <div class="nl-inventory-item-icon item-rarity--<%= item.item_template.rarity %>">
+      <div class="nl-inventory-item-icon">
         <span><%= item_slot_icon(item.item_template) %></span>
         <% if item.quantity > 1 %>
           <strong><%= item.quantity %></strong>
@@ -20,16 +20,16 @@
         <div class="nl-inventory-item-actions">
           <% if item.item_template.equippable? && !item.equipped? %>
             <% if item.broken? || item.expired? %>
-              <span class="invbut invbut--disabled">Wear</span>
+              <span class="invbut invbut--disabled">Надеть</span>
             <% else %>
-              <%= button_to "Wear", equip_inventory_path(item_id: item.id, category: category), method: :post, class: "invbut", data: {turbo: true} %>
+              <%= button_to "Надеть", equip_inventory_path(item_id: item.id, category: category), method: :post, class: "invbut", data: {turbo: true} %>
             <% end %>
           <% end %>
           <% if item.item_template.consumable? %>
             <% if item.broken? || item.expired? %>
-              <span class="invbut invbut--disabled">Use</span>
+              <span class="invbut invbut--disabled">Использовать</span>
             <% else %>
-              <%= button_to "Use", use_inventory_path(item_id: item.id, category: category), method: :post, class: "invbut", data: {turbo: true} %>
+              <%= button_to "Использовать", use_inventory_path(item_id: item.id, category: category), method: :post, class: "invbut", data: {turbo: true} %>
             <% end %>
           <% end %>
           <span class="invbut invbut--disabled">Transfer</span>

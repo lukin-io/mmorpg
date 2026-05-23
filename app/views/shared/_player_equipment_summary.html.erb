@@ -15,7 +15,7 @@
 
     <div class="nl-equipment-portrait">
       <% if character %>
-        <%= image_tag character.avatar_image_path, alt: character.name, class: "nl-equipment-character-image", loading: "lazy" %>
+        <%= character_avatar_tag(character, size: :xlarge, class: "nl-equipment-character-image") %>
       <% end %>
     </div>
 
