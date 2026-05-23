@@ -189,7 +189,6 @@ RSpec.describe CityHotspot, type: :model do
 
       expect(hotspot.navigate_url).to be_nil
     end
-
   end
 
   describe "#clickable?" do
@@ -223,7 +222,6 @@ RSpec.describe CityHotspot, type: :model do
       hotspot.hotspot_type = "exit"
       expect(hotspot.display_icon).to eq("🚪")
     end
-
   end
 
   describe "#css_class" do
