@@ -27,7 +27,7 @@ module Arena
     def create(character:, room:, params:)
       # Validate room access
       unless room.accessible_by?(character)
-        return Result.new(success?: false, errors: ["You cannot access this arena room"])
+        return Result.new(success?: false, errors: ["Этот зал арены недоступен"])
       end
 
       # Check for existing application
@@ -37,7 +37,7 @@ module Arena
 
       # Check room capacity
       unless room.has_capacity?
-        return Result.new(success?: false, errors: ["This arena room is at capacity"])
+        return Result.new(success?: false, errors: ["Зал арены заполнен"])
       end
 
       application = ArenaApplication.new(
@@ -126,7 +126,7 @@ module Arena
     def accept_npc_application(application:, acceptor:)
       # Validate room access
       unless application.arena_room.accessible_by?(acceptor)
-        return Result.new(success?: false, errors: ["You cannot access this arena room"])
+        return Result.new(success?: false, errors: ["Этот зал арены недоступен"])
       end
 
       unless application.acceptable_by?(acceptor)

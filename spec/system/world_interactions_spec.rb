@@ -10,6 +10,11 @@ RSpec.describe "World Interactions", type: :system, js: true do
 
   before do
     login_as(user, scope: :user)
+    (3..7).each do |x|
+      (3..7).each do |y|
+        create(:map_tile_template, zone: zone.name, x:, y:, terrain_type: "outdoor", passable: true)
+      end
+    end
   end
 
   describe "success cases" do
@@ -18,9 +23,9 @@ RSpec.describe "World Interactions", type: :system, js: true do
 
       expect(page).to have_css(".nl-location-coords", text: "[5, 5]")
 
-      click_button "East →"
+      find(".nl-tile-clickable--available[data-target-x='6'][data-target-y='5']").click
 
-      expect(page).to have_css(".movement-cooldown", text: /Moving/i)
+      expect(page).to have_css(".nl-cursor-img--moving")
       expect(page).to have_css(".nl-location-coords", text: "[5, 5]")
       expect(position.reload.x).to eq(5)
 
@@ -44,20 +49,21 @@ RSpec.describe "World Interactions", type: :system, js: true do
 
       visit world_path
 
-      click_button "🚪 Enter Ворота Форпоста"
+      click_button "Войти"
 
       expect(page).to have_content("Форпост")
     end
   end
 
   describe "null/edge cases" do
-    it "disables movement buttons at the map boundary" do
+    it "does not offer out-of-bounds movement tiles at the map boundary" do
       position.update!(x: 0, y: 0)
 
       visit world_path
 
-      expect(page).to have_css(".direction-btn--disabled", text: "↑")
-      expect(page).to have_css(".direction-btn--disabled", text: "←")
+      expect(page).not_to have_css(".direction-btn")
+      expect(page).not_to have_css(".nl-tile-clickable--available[data-target-x='-1']")
+      expect(page).not_to have_css(".nl-tile-clickable--available[data-target-y='-1']")
     end
   end
 

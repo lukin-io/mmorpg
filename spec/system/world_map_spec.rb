@@ -50,7 +50,7 @@ RSpec.describe "World Map Navigation", type: :system do
     it "displays the outdoor location context" do
       visit world_path
 
-      expect(page).to have_content("outside")
+      expect(page).to have_content("На этой местности возможны нападения ботов.")
     end
 
     it "shows the map viewport" do
@@ -130,13 +130,15 @@ RSpec.describe "World Map Navigation", type: :system do
     it "shows location info" do
       visit world_path
 
-      expect(page).to have_css(".location-info-panel").or have_content("Current Location")
+      expect(page).to have_css(".location-info-panel")
+      expect(page).to have_content("Местность")
     end
 
-    it "shows available actions" do
+    it "does not show duplicate generic movement actions" do
       visit world_path
 
-      expect(page).to have_css(".actions-panel").or have_content("Actions")
+      expect(page).not_to have_content("Actions")
+      expect(page).not_to have_css(".direction-btn")
     end
   end
 
@@ -147,10 +149,10 @@ RSpec.describe "World Map Navigation", type: :system do
       expect(page).to have_css("#movement-form", visible: :all)
     end
 
-    it "displays movement buttons" do
+    it "offers movement through clickable map tiles" do
       visit world_path
 
-      expect(page).to have_button("↑ North").or have_css(".direction-btn")
+      expect(page).to have_css(".nl-tile-clickable--available")
     end
   end
 end

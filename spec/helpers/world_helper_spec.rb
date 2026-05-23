@@ -4,36 +4,36 @@ require "rails_helper"
 
 RSpec.describe WorldHelper, type: :helper do
   describe "#format_time_remaining" do
-    it "returns 'now' for nil" do
-      expect(helper.format_time_remaining(nil)).to eq("now")
+    it "returns current-state text for nil" do
+      expect(helper.format_time_remaining(nil)).to eq("сейчас")
     end
 
-    it "returns 'now' for zero" do
-      expect(helper.format_time_remaining(0)).to eq("now")
+    it "returns current-state text for zero" do
+      expect(helper.format_time_remaining(0)).to eq("сейчас")
     end
 
-    it "returns 'now' for negative numbers" do
-      expect(helper.format_time_remaining(-5)).to eq("now")
+    it "returns current-state text for negative numbers" do
+      expect(helper.format_time_remaining(-5)).to eq("сейчас")
     end
 
     it "formats seconds only" do
-      expect(helper.format_time_remaining(45)).to eq("45s")
+      expect(helper.format_time_remaining(45)).to eq("45 сек.")
     end
 
     it "formats minutes and seconds" do
-      expect(helper.format_time_remaining(90)).to eq("1m 30s")
+      expect(helper.format_time_remaining(90)).to eq("1 мин. 30 сек.")
     end
 
     it "formats minutes only when no remaining seconds" do
-      expect(helper.format_time_remaining(120)).to eq("2m")
+      expect(helper.format_time_remaining(120)).to eq("2 мин.")
     end
 
     it "formats hours and minutes" do
-      expect(helper.format_time_remaining(3900)).to eq("1h 5m")
+      expect(helper.format_time_remaining(3900)).to eq("1 ч. 5 мин.")
     end
 
     it "formats hours only when no remaining minutes" do
-      expect(helper.format_time_remaining(7200)).to eq("2h")
+      expect(helper.format_time_remaining(7200)).to eq("2 ч.")
     end
   end
 

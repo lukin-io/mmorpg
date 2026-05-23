@@ -1,7 +1,7 @@
 <%# Hitbox at building position %>
 <% w = hotspot.width.presence || 150 %>
 <% h = hotspot.height.presence || 100 %>
-<% label = hotspot.hotspot_type == "exit" ? "Exit" : "Enter #{hotspot.name}" %>
+<% label = hotspot.hotspot_type == "exit" ? "Выйти" : "Войти" %>
 
 <div class="city-hitbox"
      style="left:<%= hotspot.position_x %>px;top:<%= hotspot.position_y %>px;width:<%= w %>px;height:<%= h %>px;"

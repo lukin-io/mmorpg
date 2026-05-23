@@ -95,7 +95,7 @@ RSpec.describe "Arena", type: :request do
       it "shows enter button for accessible rooms" do
         get arena_index_path
 
-        expect(response.body).to include("Enter")
+        expect(response.body).to include("Войти")
       end
 
       it "includes room level range" do

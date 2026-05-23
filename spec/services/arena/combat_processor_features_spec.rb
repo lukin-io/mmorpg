@@ -363,7 +363,7 @@ RSpec.describe Arena::CombatProcessor, "Neverlands-style combat features" do
           )
 
           expect(result.success?).to be false
-          expect(result.error).to include("Invalid body part")
+          expect(result.error).to include("Недопустимая зона удара")
         end
       end
 
@@ -377,7 +377,7 @@ RSpec.describe Arena::CombatProcessor, "Neverlands-style combat features" do
           )
 
           expect(result.success?).to be false
-          expect(result.error).to include("Invalid attack type")
+          expect(result.error).to include("Недопустимый тип удара")
         end
       end
     end
@@ -507,7 +507,7 @@ RSpec.describe Arena::CombatProcessor, "Neverlands-style combat features" do
             target: teammate
           )
           expect(result.success?).to be false
-          expect(result.error).to eq("Cannot attack ally")
+          expect(result.error).to eq("Нельзя атаковать союзника")
         end
       end
 
@@ -515,7 +515,7 @@ RSpec.describe Arena::CombatProcessor, "Neverlands-style combat features" do
         it "returns failure" do
           result = processor.process_action(character1, :flee)
           expect(result.success?).to be false
-          expect(result.error).to include("Cannot flee")
+          expect(result.error).to include("Нельзя сбежать")
         end
       end
     end

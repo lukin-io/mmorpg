@@ -161,7 +161,7 @@ export default class extends Controller {
   handleTurnTimeout(data) {
     this.appendSystemMessage({
       timestamp: data.timestamp,
-      message: data.message || "Turn ended by timeout",
+      message: data.message || "Ход завершен по таймауту",
       severity: data.claim_available ? "warning" : "info"
     })
 

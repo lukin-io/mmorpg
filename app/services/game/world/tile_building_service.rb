@@ -67,14 +67,14 @@ module Game
         unless building
           return Result.new(
             success: false,
-            message: "No building found at this location."
+            message: "На этой клетке нет здания."
           )
         end
 
         unless building.active?
           return Result.new(
             success: false,
-            message: "This building is currently inaccessible.",
+            message: "Здание сейчас недоступно.",
             building: building
           )
         end
@@ -91,14 +91,14 @@ module Game
         if building.enter!(character)
           Result.new(
             success: true,
-            message: "You enter #{building.display_name}.",
+            message: "Вход: #{building.display_name}.",
             building: building,
             destination_zone: building.destination_zone
           )
         else
           Result.new(
             success: false,
-            message: "Failed to enter #{building.display_name}.",
+            message: "Не удалось войти: #{building.display_name}.",
             building: building
           )
         end

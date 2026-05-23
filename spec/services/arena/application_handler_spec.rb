@@ -71,7 +71,7 @@ RSpec.describe Arena::ApplicationHandler do
         )
 
         expect(result.success?).to be false
-        expect(result.errors).to include("You cannot access this arena room")
+        expect(result.errors).to include("Этот зал арены недоступен")
       end
     end
 
@@ -110,7 +110,7 @@ RSpec.describe Arena::ApplicationHandler do
         )
 
         expect(result.success?).to be false
-        expect(result.errors).to include("This arena room is at capacity")
+        expect(result.errors).to include("Зал арены заполнен")
       end
     end
   end

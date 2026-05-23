@@ -66,7 +66,7 @@ class WorldController < ApplicationController
     @position = result.position.reload
     respond_to do |format|
       format.turbo_stream { render_map_update }
-      format.html { redirect_to world_path, notice: "Moving #{result.command.direction}." }
+      format.html { redirect_to world_path, notice: "Переход начат." }
     end
   rescue Game::Movement::MovementViolationError => e
     respond_to do |format|
@@ -82,13 +82,13 @@ class WorldController < ApplicationController
     target_zone = Zone.find_by("LOWER(name) = ?", location_key.to_s.downcase)
 
     if target_zone.nil?
-      return redirect_to world_path, alert: "Location not found."
+      return redirect_to world_path, alert: "Локация не найдена."
     end
 
     spawn_point = target_zone.spawn_points.default_entries.first
 
     if spawn_point.nil?
-      return redirect_to world_path, alert: "No entry point available."
+      return redirect_to world_path, alert: "Точка входа не настроена."
     end
 
     # Move character to new zone
@@ -99,7 +99,7 @@ class WorldController < ApplicationController
       last_action_at: Time.current
     )
 
-    redirect_to world_path, notice: "Entered #{target_zone.name}."
+    redirect_to world_path, notice: "Вход: #{target_zone.name}."
   end
 
   def exit_location
@@ -124,7 +124,7 @@ class WorldController < ApplicationController
       last_action_at: Time.current
     )
 
-    redirect_to world_path, notice: "Exited to #{exit_zone.name}."
+    redirect_to world_path, notice: "Выход: #{exit_zone.name}."
   end
 
   # POST /world/interact_hotspot
@@ -175,8 +175,8 @@ class WorldController < ApplicationController
 
     unless building
       return respond_to do |format|
-        format.html { redirect_to world_path, alert: "Building not found." }
-        format.turbo_stream { render_error("Building not found.") }
+        format.html { redirect_to world_path, alert: "Здание не найдено." }
+        format.turbo_stream { render_error("Здание не найдено.") }
       end
     end
 
@@ -395,24 +395,11 @@ class WorldController < ApplicationController
   def available_actions
     actions = []
 
-    if @active_movement
-      actions << {
-        type: :moving,
-        command: @active_movement,
-        remaining_seconds: @active_movement.remaining_seconds
-      }
-      return actions
-    elsif @movement_destinations&.any?
-      actions << {
-        type: :move,
-        directions: @movement_destinations.map { |destination| destination.direction.to_sym },
-        destinations: @movement_destinations
-      }
-    end
+    return actions if @active_movement
 
     # Location-specific actions
     if @position.zone.city? && @position.zone.metadata&.dig("exit_to").present?
-      actions << {type: :exit, label: "Exit City"}
+      actions << {type: :exit, label: "Выйти из города"}
     end
 
     # Tile NPC actions

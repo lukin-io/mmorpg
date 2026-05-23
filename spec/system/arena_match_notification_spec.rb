@@ -154,7 +154,7 @@ RSpec.describe "Arena Match Notification System", type: :system do
       visit arena_index_path
 
       expect(page).to have_current_path(arena_match_path(arena_match))
-      expect(page).to have_content("You have an active match!")
+      expect(page).to have_content("У вас уже идет бой.")
     end
 
     it "redirects user with active match from room page to match page" do
@@ -163,7 +163,7 @@ RSpec.describe "Arena Match Notification System", type: :system do
       visit arena_room_path(arena_room)
 
       expect(page).to have_current_path(arena_match_path(arena_match))
-      expect(page).to have_content("You have an active match!")
+      expect(page).to have_content("У вас уже идет бой.")
     end
 
     it "redirects user with pending match to match page" do
@@ -188,7 +188,7 @@ RSpec.describe "Arena Match Notification System", type: :system do
       visit arena_index_path
 
       expect(page).to have_current_path(arena_index_path)
-      expect(page).not_to have_content("You have an active match!")
+      expect(page).not_to have_content("У вас уже идет бой.")
     end
   end
 

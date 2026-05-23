@@ -266,10 +266,10 @@ module Arena
     def claim_timeout(character, mode: nil)
       return failure("Бой не активен") unless match.live?
       return failure("Персонаж не участвует в этом бою") unless participant?(character)
-      return failure("Turn timer has not expired") unless match.turn_timed_out?
+      return failure("Таймер хода еще не истек") unless match.turn_timed_out?
 
       participation = match.arena_participations.find_by(character:)
-      return failure("Submit a turn before claiming timeout") unless pending_turn_data(participation).present?
+      return failure("Сначала отправьте ход") unless pending_turn_data(participation).present?
 
       normalized_mode = mode.to_s == "draw" ? "draw" : "victory"
       winning_team = (normalized_mode == "draw") ? nil : participation.team
@@ -489,8 +489,8 @@ module Arena
     end
 
     def process_attack(attacker, target, attack_type: :simple, body_part: "torso")
-      return failure("Invalid attack type: #{attack_type}") if Game::Combat::ActionCatalog.attack_config(attack_type).blank?
-      return failure("Invalid body part: #{body_part}") unless BODY_PARTS.include?(body_part.to_s)
+      return failure("Недопустимый тип удара: #{attack_type}") if Game::Combat::ActionCatalog.attack_config(attack_type).blank?
+      return failure("Недопустимая зона удара: #{body_part}") unless BODY_PARTS.include?(body_part.to_s)
 
       # Find target - could be Character or NPC participation
       target_participation = find_target_participation(attacker, target)
@@ -505,7 +505,7 @@ module Arena
     end
 
     def process_attack_on_player(attacker, target, attack_type: :simple, body_part: "torso")
-      return failure("Cannot attack ally") if same_team?(attacker, target)
+      return failure("Нельзя атаковать союзника") if same_team?(attacker, target)
       return failure("Target is dead") if target.current_hp <= 0
 
       attacker_participation = match.arena_participations.find_by(character: attacker)
@@ -830,7 +830,7 @@ module Arena
     end
 
     def process_flee(character)
-      return failure("Cannot flee from arena matches") if match.match_type == "duel"
+      return failure("Нельзя сбежать с арены") if match.match_type == "duel"
 
       # Only allowed in sacrifice/FFA mode with HP penalty
       penalty = (character.max_hp * 0.2).round
@@ -1067,43 +1067,43 @@ module Arena
       unless valid_neverlands_turn_shape?(attacks, blocks, skills)
         errors << "Choose at least one valid attack, block, or magic/action slot"
       end
-      errors << "Only one block can be selected per turn" if blocks.size > 1
-      errors << "Maximum 4 attacks per turn" if attacks.size > 4
+      errors << "За ход можно выбрать только один блок" if blocks.size > 1
+      errors << "За ход можно выбрать максимум 4 удара" if attacks.size > 4
       attack_parts = attacks.map { |attack| attack[:body_part] }
       if attack_parts.include?("head") && attack_parts.include?("legs")
-        errors << "Cannot attack head and legs in the same turn"
+        errors << "Нельзя атаковать голову и ноги в одном ходе"
       end
 
       attacks.each_with_index do |attack, index|
         unless BODY_PARTS.include?(attack[:body_part])
-          errors << "Invalid body part for attack #{index + 1}: #{attack[:body_part]}"
+          errors << "Недопустимая зона удара #{index + 1}: #{attack[:body_part]}"
         end
 
         unless Game::Combat::ActionCatalog.attack_config(attack[:action_key]).present?
-          errors << "Invalid attack type for attack #{index + 1}: #{attack[:action_key]}"
+          errors << "Недопустимый тип удара #{index + 1}: #{attack[:action_key]}"
         end
       end
 
       blocks.each_with_index do |block, index|
         if block[:body_parts].blank?
-          errors << "Block #{index + 1} must cover at least one body part"
+          errors << "Блок #{index + 1} должен закрывать хотя бы одну зону"
           next
         end
 
         block[:body_parts].each do |part|
-          errors << "Invalid body part in block #{index + 1}: #{part}" unless BODY_PARTS.include?(part)
+          errors << "Недопустимая зона блока #{index + 1}: #{part}" unless BODY_PARTS.include?(part)
         end
       end
 
       skills.each_with_index do |skill, index|
         unless Game::Combat::ActionCatalog.magic_config(skill[:key]).present?
-          errors << "Invalid magic/action slot #{index + 1}: #{skill[:key]}"
+          errors << "Недопустимая магия #{index + 1}: #{skill[:key]}"
         end
       end
 
       total_ap = calculate_turn_ap_cost(attacks, blocks, skills, actor:)
       ap_limit = actor.present? ? combat_ap_limit_for(actor) : AP_PER_TURN
-      errors << "Actions exceed AP limit (#{total_ap}/#{ap_limit})" if total_ap > ap_limit
+      errors << "Превышен лимит ОД (#{total_ap}/#{ap_limit})" if total_ap > ap_limit
 
       errors
     end

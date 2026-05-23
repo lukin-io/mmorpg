@@ -77,7 +77,7 @@ RSpec.describe Game::World::TileBuildingService do
       result = service.enter!
 
       expect(result.success).to be false
-      expect(result.message).to include("level 20")
+      expect(result.message).to include("уровень 20")
       expect(character.position.reload.zone).to eq(source_zone)
     end
   end

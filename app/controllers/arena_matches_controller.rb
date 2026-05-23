@@ -115,13 +115,13 @@ class ArenaMatchesController < ApplicationController
 
   def require_character
     unless current_character
-      redirect_to arena_index_path, alert: "You need a character to participate"
+      redirect_to arena_index_path, alert: "Для участия нужен персонаж."
     end
   end
 
   def require_participant
     unless @arena_match.arena_participations.exists?(user: current_user)
-      redirect_to @arena_match, alert: "You are not a participant in this match"
+      redirect_to @arena_match, alert: "Вы не участвуете в этом бою."
     end
   end
 

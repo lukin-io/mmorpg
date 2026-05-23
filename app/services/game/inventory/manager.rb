@@ -133,7 +133,7 @@ module Game
         while remaining.positive?
           stack = find_or_build_stack(item_template:)
           capacity = item_template.stack_limit - stack.quantity
-          raise CapacityExceededError, "Stack limit reached" if capacity <= 0
+          raise CapacityExceededError, "Превышен лимит стопки" if capacity <= 0
 
           to_add = [remaining, capacity].min
           ensure_weight_capacity!(item_template.weight * to_add)

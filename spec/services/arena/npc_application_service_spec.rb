@@ -83,7 +83,7 @@ RSpec.describe Arena::NpcApplicationService do
         result2 = service.create_with_template(room: arena_room, npc_template: npc)
 
         expect(result2.success?).to be false
-        expect(result2.errors).to include("This NPC already has an open application")
+        expect(result2.errors).to include("У этого бота уже есть открытая заявка")
       end
     end
   end

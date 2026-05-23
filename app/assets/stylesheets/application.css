@@ -1380,38 +1380,6 @@ textarea {
   color: var(--nl-text-muted);
 }
 
-.actions-panel h4 { font-size: 0.85rem; color: var(--nl-text-muted); margin: var(--nl-space-sm) 0; }
-
-.direction-pad {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  padding: var(--nl-space-sm);
-  background: var(--nl-bg-dark);
-  border-radius: var(--nl-radius-md);
-}
-
-.direction-row { display: flex; gap: 4px; justify-content: center; }
-.direction-row--middle { align-items: center; }
-
-.direction-btn {
-  min-width: 80px;
-  padding: var(--nl-space-sm) var(--nl-space-md);
-  background: var(--nl-accent);
-  border: 2px solid var(--nl-border-medium);
-  border-radius: var(--nl-radius-sm);
-  color: var(--nl-text-primary);
-  font-size: 0.85rem;
-  font-weight: bold;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.direction-btn:hover { background: var(--nl-accent-hover); border-color: var(--nl-gold); }
-.direction-btn--disabled { opacity: 0.3; cursor: not-allowed; background: var(--nl-bg-secondary); }
-.direction-center { font-size: 1.5rem; color: var(--nl-gold); padding: 0 var(--nl-space-sm); }
-
 .action-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--nl-space-xs); }
 
 .action-btn {
@@ -1438,12 +1406,6 @@ textarea {
   border-radius: var(--nl-radius-md);
   padding: var(--nl-space-sm);
   margin-top: var(--nl-space-sm);
-}
-
-.tile-npc-actions h4 {
-  color: #c34a4a;
-  font-size: 0.8rem;
-  margin-bottom: var(--nl-space-xs);
 }
 
 .npc-info {

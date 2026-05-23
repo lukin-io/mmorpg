@@ -5,9 +5,9 @@ class WorldNpcFightsController < ApplicationController
 
   def create
     tile_npc = TileNpc.find_by(id: params[:tile_npc_id])
-    return respond_with_error("NPC not found") unless tile_npc
-    return respond_with_error("This NPC is not available") unless tile_npc.alive?
-    return respond_with_error("This NPC is not hostile") unless tile_npc.hostile?
+    return respond_with_error("Бот не найден.") unless tile_npc
+    return respond_with_error("Бот недоступен.") unless tile_npc.alive?
+    return respond_with_error("Этот бот не враждебен.") unless tile_npc.hostile?
 
     action_offer = Game::World::AcceptAction.new(
       character: current_character,
@@ -24,7 +24,7 @@ class WorldNpcFightsController < ApplicationController
     end
 
     respond_to do |format|
-      format.html { redirect_to arena_match_path(match), notice: "Fight started." }
+      format.html { redirect_to arena_match_path(match), notice: "Бой начат." }
       format.turbo_stream { redirect_to arena_match_path(match), status: :see_other }
       format.json { render json: {success: true, match_id: match.id, redirect_url: arena_match_path(match)} }
     end
@@ -41,7 +41,7 @@ class WorldNpcFightsController < ApplicationController
     zone = Zone.find_by(name: tile_npc.zone) || current_character.position&.zone
     npc_hp = [tile_npc.current_hp.to_i, npc.health.to_i].find(&:positive?)
     unless npc_hp
-      raise Game::World::AcceptAction::ActionViolationError, "NPC combat stats are not captured"
+      raise Game::World::AcceptAction::ActionViolationError, "Боевые параметры бота не задокументированы."
     end
 
     match = ArenaMatch.create!(

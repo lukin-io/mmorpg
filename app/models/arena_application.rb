@@ -128,12 +128,12 @@ class ArenaApplication < ApplicationRecord
   # @param character [Character] the character to check
   # @return [String, nil] reason why character cannot accept, or nil if they can
   def rejection_reason_for(character)
-    return "Application is not open" unless open?
-    return "Cannot accept your own application" if applicant == character
-    return "Cannot access this arena room" unless arena_room.accessible_by?(character)
-    return "Alignment restriction not met" if alignment_restricted? && !alignment_matches?(character)
-    return "Recover before fighting - you are too weakened! (Need #{MIN_HP_PERCENT_FOR_ARENA}% HP)" unless character_hp_sufficient?(character)
-    return "Level requirement not met" unless level_matches?(character)
+    return "Заявка закрыта" unless open?
+    return "Нельзя принять свою заявку" if applicant == character
+    return "Зал арены недоступен" unless arena_room.accessible_by?(character)
+    return "Не подходит склонность" if alignment_restricted? && !alignment_matches?(character)
+    return "Нужно восстановиться перед боем: минимум #{MIN_HP_PERCENT_FOR_ARENA}% HP" unless character_hp_sufficient?(character)
+    return "Не подходит уровень" unless level_matches?(character)
 
     nil
   end

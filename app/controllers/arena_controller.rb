@@ -17,7 +17,7 @@ class ArenaController < ApplicationController
 
     if active_participation
       redirect_to arena_match_path(active_participation.arena_match),
-        notice: "You have an active match!"
+        notice: "У вас уже идет бой."
       return
     end
 
@@ -45,7 +45,7 @@ class ArenaController < ApplicationController
 
   def require_character
     unless current_character
-      redirect_to root_path, alert: "You need a character to enter the arena"
+      redirect_to root_path, alert: "Для входа на арену нужен персонаж."
     end
   end
 

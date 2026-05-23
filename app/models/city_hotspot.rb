@@ -18,7 +18,7 @@ class CityHotspot < ApplicationRecord
   }.freeze
 
   PENDING_FEATURES = {
-    "shop" => "Shop is documented from Neverlands and pending implementation."
+    "shop" => "Лавка задокументирована по Neverlands и ожидает реализации."
   }.freeze
 
   belongs_to :zone
@@ -55,8 +55,8 @@ class CityHotspot < ApplicationRecord
   # @param character [Character] the character trying to interact
   # @return [String, nil] error message or nil if can interact
   def interaction_blocked_reason(character)
-    return "This location is currently unavailable." unless active?
-    return "You must be level #{required_level} to enter." if character.level < required_level
+    return "Локация сейчас недоступна." unless active?
+    return "Нужен уровень #{required_level}." if character.level < required_level
 
     nil
   end

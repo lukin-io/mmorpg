@@ -1,16 +1,15 @@
 <div class="location-info-panel">
-  <h3>Current Location</h3>
+  <h3>Местность</h3>
 
   <div class="location-description">
     <% if zone.city? %>
-      <p>You are in <strong><%= zone.name %></strong>, a compact city node with
-         source-backed hotspots.</p>
-      <p class="location-hint">Городская сцена открывает документированные здания: Арену и Лавку.</p>
+      <p><strong><%= zone.name %></strong></p>
+      <p class="location-hint">Доступны документированные здания: Арена и Лавка.</p>
     <% elsif zone.outdoor? %>
-      <p>You are outside at <strong><%= zone.name %></strong>.</p>
-      <p class="location-hint">⚠️ Wild creatures may attack travelers here.</p>
+      <p><strong><%= zone.name %></strong></p>
+      <p class="location-hint">На этой местности возможны нападения ботов.</p>
     <% else %>
-      <p>You are at <strong><%= zone.name %></strong> [<%= position.x %>, <%= position.y %>].</p>
+      <p><strong><%= zone.name %></strong> [<%= position.x %>, <%= position.y %>]</p>
     <% end %>
   </div>
 

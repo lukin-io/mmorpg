@@ -210,7 +210,7 @@ RSpec.describe "World", type: :request do
 
         expect(response).to redirect_to(world_path)
         follow_redirect!
-        expect(response.body).to include("Moving")
+        expect(response.body).to include("Переход начат.")
       end
 
       it "returns turbo stream movement state" do
@@ -347,7 +347,7 @@ RSpec.describe "World", type: :request do
 
         expect(response).to redirect_to(world_path)
         follow_redirect!
-        expect(response.body).to include("not found")
+        expect(response.body).to include("не найдена")
       end
     end
   end
@@ -706,7 +706,7 @@ RSpec.describe "World", type: :request do
 
         expect(response).to redirect_to(world_path)
         follow_redirect!
-        expect(response.body).to include("not found")
+        expect(response.body).to include("Здание не найдено.")
       end
 
       it "returns turbo stream error for non-existent building" do
@@ -737,7 +737,7 @@ RSpec.describe "World", type: :request do
 
         expect(response).to redirect_to(world_path)
         follow_redirect!
-        expect(response.body).to include("No building found")
+        expect(response.body).to include("На этой клетке нет здания.")
       end
 
       it "does not move character" do
@@ -768,9 +768,7 @@ RSpec.describe "World", type: :request do
 
         expect(response).to redirect_to(world_path)
         follow_redirect!
-        # Building is found but service rejects entry due to inactive status
-        # Message is "This building is currently inaccessible."
-        expect(response.body).to include("inaccessible")
+        expect(response.body).to include("Здание сейчас недоступно.")
       end
 
       it "does not move character" do
@@ -808,7 +806,7 @@ RSpec.describe "World", type: :request do
 
         expect(response).to redirect_to(world_path)
         follow_redirect!
-        expect(response.body).to include("level 50")
+        expect(response.body).to include("уровень 50")
       end
 
       it "does not move character" do
@@ -843,7 +841,7 @@ RSpec.describe "World", type: :request do
 
         expect(response).to redirect_to(world_path)
         follow_redirect!
-        expect(response.body).to include("inaccessible")
+        expect(response.body).to include("Здание сейчас недоступно.")
       end
 
       it "does not move character" do
@@ -863,7 +861,7 @@ RSpec.describe "World", type: :request do
 
         expect(response).to redirect_to(world_path)
         follow_redirect!
-        expect(response.body).to include("not found")
+        expect(response.body).to include("Здание не найдено.")
       end
     end
 
@@ -873,7 +871,7 @@ RSpec.describe "World", type: :request do
 
         expect(response).to redirect_to(world_path)
         follow_redirect!
-        expect(response.body).to include("not found")
+        expect(response.body).to include("Здание не найдено.")
       end
     end
 
@@ -883,7 +881,7 @@ RSpec.describe "World", type: :request do
 
         expect(response).to redirect_to(world_path)
         follow_redirect!
-        expect(response.body).to include("not found")
+        expect(response.body).to include("Здание не найдено.")
       end
     end
 
@@ -906,7 +904,7 @@ RSpec.describe "World", type: :request do
 
         expect(response).to redirect_to(world_path)
         follow_redirect!
-        expect(response.body).to include("No building found")
+        expect(response.body).to include("На этой клетке нет здания.")
       end
     end
   end
@@ -970,7 +968,7 @@ RSpec.describe "World", type: :request do
         get world_path
 
         expect(response.body).to include("Current Position City Gate")
-        expect(response.body).to include("Enter")
+        expect(response.body).to include("Войти")
       end
     end
 
@@ -1055,7 +1053,7 @@ RSpec.describe "World", type: :request do
       it "shows enter button" do
         get world_path
 
-        expect(response.body).to include("Enter")
+        expect(response.body).to include("Войти")
       end
 
       it "shows building description" do
@@ -1087,8 +1085,8 @@ RSpec.describe "World", type: :request do
       it "shows blocked reason instead of enter button" do
         get world_path
 
-        expect(response.body).to include("level 20")
-        expect(response.body).to include("🔒")
+        expect(response.body).to include("уровень 20")
+        expect(response.body).to include("building-blocked")
       end
     end
   end
@@ -1167,7 +1165,7 @@ RSpec.describe "World", type: :request do
             params: {hotspot_id: arena_hotspot.id},
             headers: {"Accept" => "text/vnd.turbo-stream.html"}
 
-          expect(flash[:notice]).to include("Entering")
+          expect(flash[:notice]).to include("Вход")
         end
       end
     end
@@ -1184,7 +1182,7 @@ RSpec.describe "World", type: :request do
         post interact_hotspot_world_path, params: {hotspot_id: shop_hotspot.id}
 
         expect(response).to redirect_to(world_path)
-        expect(flash[:alert]).to include("pending implementation")
+        expect(flash[:alert]).to include("ожидает реализации")
       end
 
       it "returns a turbo stream error while pending" do
@@ -1193,7 +1191,7 @@ RSpec.describe "World", type: :request do
           headers: {"Accept" => "text/vnd.turbo-stream.html"}
 
         expect(response.media_type).to eq("text/vnd.turbo-stream.html")
-        expect(response.body).to include("pending implementation")
+        expect(response.body).to include("ожидает реализации")
       end
     end
 
@@ -1254,7 +1252,7 @@ RSpec.describe "World", type: :request do
 
         expect(response).to redirect_to(world_path)
         follow_redirect!
-        expect(response.body).to include("not found")
+        expect(response.body).to include("не найдена")
       end
 
       it "returns turbo stream error for Turbo format" do
@@ -1282,7 +1280,7 @@ RSpec.describe "World", type: :request do
 
         expect(response).to redirect_to(world_path)
         follow_redirect!
-        expect(response.body).to include("level 50")
+        expect(response.body).to include("уровень 50")
       end
 
       it "returns turbo stream error for Turbo format" do
@@ -1307,7 +1305,7 @@ RSpec.describe "World", type: :request do
 
         expect(response).to redirect_to(world_path)
         follow_redirect!
-        expect(response.body).to include("unavailable").or include("cannot")
+        expect(response.body).to include("недоступна")
       end
     end
 
@@ -1334,7 +1332,7 @@ RSpec.describe "World", type: :request do
 
         expect(response).to redirect_to(world_path)
         follow_redirect!
-        expect(response.body).to include("not found")
+        expect(response.body).to include("не найдена")
       end
     end
   end
@@ -1387,7 +1385,7 @@ RSpec.describe "World", type: :request do
         post interact_hotspot_world_path, params: {hotspot_id: shop.id}
 
         expect(response).to redirect_to(world_path)
-        expect(flash[:alert]).to include("pending implementation")
+        expect(flash[:alert]).to include("ожидает реализации")
       end
 
       it "exit gate transitions to destination zone" do

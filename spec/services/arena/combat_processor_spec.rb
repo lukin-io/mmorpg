@@ -627,7 +627,7 @@ RSpec.describe Arena::CombatProcessor do
           actor: character1
         )
 
-        expect(errors).to include("Invalid magic/action slot 1: unknown_action")
+        expect(errors).to include("Недопустимая магия 1: unknown_action")
       end
 
       it "rejects captured magic blocks above the fight mana ceiling" do
@@ -716,7 +716,7 @@ RSpec.describe Arena::CombatProcessor do
         )
 
         expect(result.success?).to be false
-        expect(result.error).to include("Actions exceed AP limit")
+        expect(result.error).to include("Превышен лимит ОД")
         expect(result.error).to include("155/#{character1_ap_limit}")
       end
 

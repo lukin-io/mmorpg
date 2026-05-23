@@ -141,7 +141,7 @@ RSpec.describe Game::World::CityHotspotService do
       it "returns failure result" do
         result = subject.interact!(99999)
         expect(result.success).to be false
-        expect(result.message).to include("not found")
+        expect(result.message).to include("не найдена")
       end
     end
 
@@ -156,7 +156,7 @@ RSpec.describe Game::World::CityHotspotService do
       it "returns failure result" do
         result = subject.interact!(high_level_hotspot.id)
         expect(result.success).to be false
-        expect(result.message).to include("level 50")
+        expect(result.message).to include("уровень 50")
       end
     end
 
@@ -170,7 +170,7 @@ RSpec.describe Game::World::CityHotspotService do
       it "returns failure result" do
         result = subject.interact!(inactive_hotspot.id)
         expect(result.success).to be false
-        expect(result.message).to include("unavailable")
+        expect(result.message).to include("недоступна")
       end
     end
 
@@ -187,7 +187,7 @@ RSpec.describe Game::World::CityHotspotService do
       it "returns failure result" do
         result = subject.interact!(broken_exit.id)
         expect(result.success).to be false
-        expect(result.message).to include("nowhere")
+        expect(result.message).to include("не настроен")
       end
     end
 
@@ -207,7 +207,7 @@ RSpec.describe Game::World::CityHotspotService do
         character.reload
         result = subject.interact!(exit_hotspot.id)
         expect(result.success).to be false
-        expect(result.message).to include("position")
+        expect(result.message).to include("позиция")
       end
     end
 
@@ -227,7 +227,7 @@ RSpec.describe Game::World::CityHotspotService do
       it "returns failure until the Neverlands shop is implemented" do
         result = subject.interact!(shop_hotspot.id)
         expect(result.success).to be false
-        expect(result.message).to include("pending implementation")
+        expect(result.message).to include("ожидает реализации")
       end
     end
   end
