@@ -68,16 +68,10 @@ Rails.application.routes.draw do
     resources :chat_messages, only: :create
   end
 
-  # UNCLARIFIED YET
+  # Non-game related
 
-  # NOTE: Devise 4.9.x generates deprecation warnings about hash arguments in Rails 8.2
-  # This is a known Devise issue and will be fixed in Devise 4.10+
-  # See: https://github.com/heartcombo/devise/issues/5644
   devise_for :users
-
   mount ActionCable.server => "/cable"
-
   resource :session_ping, only: :create
-
   get "up" => "rails/health#show", :as => :rails_health_check
 end
