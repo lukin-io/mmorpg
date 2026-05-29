@@ -21,21 +21,21 @@ module WorldHelper
   # Format time remaining in human-readable format
   #
   # @param seconds [Integer] seconds remaining
-  # @return [String] formatted time (e.g., "5 мин. 30 сек.", "1 ч. 23 мин.")
+  # @return [String] formatted time (e.g., "5m 30s", "1h 23m")
   def format_time_remaining(seconds)
-    return "сейчас" if seconds.nil? || seconds <= 0
+    return "now" if seconds.nil? || seconds <= 0
 
     seconds = seconds.to_i
     if seconds < 60
-      "#{seconds} сек."
+      "#{seconds}s"
     elsif seconds < 3600
       minutes = seconds / 60
       remaining_secs = seconds % 60
-      remaining_secs.positive? ? "#{minutes} мин. #{remaining_secs} сек." : "#{minutes} мин."
+      remaining_secs.positive? ? "#{minutes}m #{remaining_secs}s" : "#{minutes}m"
     else
       hours = seconds / 3600
       remaining_mins = (seconds % 3600) / 60
-      remaining_mins.positive? ? "#{hours} ч. #{remaining_mins} мин." : "#{hours} ч."
+      remaining_mins.positive? ? "#{hours}h #{remaining_mins}m" : "#{hours}h"
     end
   end
 

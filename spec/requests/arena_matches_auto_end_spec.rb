@@ -45,7 +45,7 @@ RSpec.describe "ArenaMatches Auto-End on View", type: :request do
 
       it "displays live status" do
         get arena_match_path(match)
-        expect(response.body).to include("Идет")
+        expect(response.body).to include("Live")
       end
     end
 
@@ -67,12 +67,12 @@ RSpec.describe "ArenaMatches Auto-End on View", type: :request do
 
       it "displays completed status" do
         get arena_match_path(match)
-        expect(response.body).to include("Завершен")
+        expect(response.body).to include("Finished")
       end
 
       it "displays victory overlay for winner" do
         get arena_match_path(match)
-        expect(response.body).to include("Победа")
+        expect(response.body).to include("Victory")
       end
     end
 
@@ -94,7 +94,7 @@ RSpec.describe "ArenaMatches Auto-End on View", type: :request do
 
       it "displays defeat overlay for loser" do
         get arena_match_path(match)
-        expect(response.body).to include("Поражение")
+        expect(response.body).to include("Defeat")
       end
     end
 
@@ -117,7 +117,7 @@ RSpec.describe "ArenaMatches Auto-End on View", type: :request do
       it "displays completed status after timeout" do
         travel_to(match.started_at + 15.minutes) do
           get arena_match_path(match)
-          expect(response.body).to include("Завершен")
+          expect(response.body).to include("Finished")
         end
       end
     end
@@ -158,7 +158,7 @@ RSpec.describe "ArenaMatches Auto-End on View", type: :request do
 
       it "displays match ended instead of victory/defeat" do
         get arena_match_path(match)
-        expect(response.body).to include("Бой завершен")
+        expect(response.body).to include("Fight finished")
       end
     end
   end

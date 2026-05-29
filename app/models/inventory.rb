@@ -12,9 +12,9 @@
 #
 # Usage:
 #   inventory = character.inventory
-#   inventory.add_item_by_name!("Крысиный хвост", quantity: 5)
-#   inventory.materials_available?({ "Крысиный хвост" => 3 })
-#   inventory.consume_materials!({ "Крысиный хвост" => 3 })
+#   inventory.add_item_by_name!("Rat Tail", quantity: 5)
+#   inventory.materials_available?({ "Rat Tail" => 3 })
+#   inventory.consume_materials!({ "Rat Tail" => 3 })
 #
 class Inventory < ApplicationRecord
   class InsufficientMaterialsError < StandardError; end

@@ -11,7 +11,7 @@ class ArenaMatchesController < ApplicationController
 
     # Auto-end stale or finished matches
     if @arena_match.auto_end_if_needed!
-      flash.now[:notice] = "Бой завершен."
+      flash.now[:notice] = "Fight finished."
     end
 
     @participations = @arena_match.arena_participations.includes(:character, :npc_template)
@@ -61,7 +61,7 @@ class ArenaMatchesController < ApplicationController
 
     respond_to do |format|
       if result.success?
-        format.html { redirect_to @arena_match, notice: "Ход отправлен." }
+        format.html { redirect_to @arena_match, notice: "Turn submitted." }
         format.json { render json: {success: true, data: result.data} }
         format.turbo_stream { head :ok }
       else
@@ -83,7 +83,7 @@ class ArenaMatchesController < ApplicationController
 
     respond_to do |format|
       if result.success?
-        message = result[:mode] == "draw" ? "Ничья по таймауту зафиксирована." : "Победа по таймауту зафиксирована."
+        message = result[:mode] == "draw" ? "Timeout draw recorded." : "Timeout victory recorded."
         format.html { redirect_to @arena_match, notice: message }
         format.json { render json: {success: true, data: result.data} }
       else
@@ -98,7 +98,7 @@ class ArenaMatchesController < ApplicationController
     authorize @arena_match
 
     unless @arena_match.completed?
-      redirect_to @arena_match, alert: "Бой еще идет."
+      redirect_to @arena_match, alert: "The fight is still active."
       return
     end
 
@@ -108,20 +108,20 @@ class ArenaMatchesController < ApplicationController
     participation.save!
     current_character.exit_combat! if current_character.in_combat?
 
-    redirect_to arena_index_path, notice: "Бой завершен."
+    redirect_to arena_index_path, notice: "Fight finished."
   end
 
   private
 
   def require_character
     unless current_character
-      redirect_to arena_index_path, alert: "Для участия нужен персонаж."
+      redirect_to arena_index_path, alert: "A character is required to participate."
     end
   end
 
   def require_participant
     unless @arena_match.arena_participations.exists?(user: current_user)
-      redirect_to @arena_match, alert: "Вы не участвуете в этом бою."
+      redirect_to @arena_match, alert: "You are not participating in this fight."
     end
   end
 

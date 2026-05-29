@@ -6,10 +6,10 @@
       current_section: :inventory %>
 
     <div class="nl-inventory-head">
-      <h1>Инвентарь</h1>
+      <h1>Inventory</h1>
       <div class="nl-inventory-balance">
         <span><%= number_with_delimiter(current_character.user&.currency_wallet&.nv_balance || 0) %> NV</span>
-        <span>Масса <%= @inventory.current_weight %>/<%= @inventory.max_weight %></span>
+        <span>Mass <%= @inventory.current_weight %>/<%= @inventory.max_weight %></span>
       </div>
     </div>
 
@@ -40,8 +40,8 @@
           </div>
 
           <div class="nl-inventory-sort">
-            <%= button_to "Sort Type", sort_inventory_path(sort_type: :type, category: @category), method: :post, class: "lbut" %>
-            <%= button_to "Sort Name", sort_inventory_path(sort_type: :name, category: @category), method: :post, class: "lbut" %>
+            <%= button_to "Sort by type", sort_inventory_path(sort_type: :type, category: @category), method: :post, class: "lbut" %>
+            <%= button_to "Sort by name", sort_inventory_path(sort_type: :name, category: @category), method: :post, class: "lbut" %>
           </div>
         </div>
 

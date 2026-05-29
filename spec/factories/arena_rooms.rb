@@ -2,7 +2,7 @@
 
 FactoryBot.define do
   factory :arena_room do
-    sequence(:name) { |n| "Тренировочный Зал #{n}" }
+    sequence(:name) { |n| "Training Hall #{n}" }
     sequence(:slug) { |n| "training-room-#{n}" }
     room_type { :training }
     level_min { 1 }

@@ -6,11 +6,11 @@ class Character < ApplicationRecord
   PRIMARY_STATS = %i[strength dexterity luck vitality intelligence].freeze
   BASE_PRIMARY_STATS = PRIMARY_STATS.index_with { 1 }.freeze
   STAT_LABELS = {
-    strength: "Сила",
-    dexterity: "Ловкость",
-    luck: "Удача",
-    vitality: "Здоровье",
-    intelligence: "Знания"
+    strength: "Strength",
+    dexterity: "Dexterity",
+    luck: "Luck",
+    vitality: "Health",
+    intelligence: "Knowledge"
   }.freeze
   STAT_ALIASES = {
     "strength" => :strength,
@@ -29,12 +29,12 @@ class Character < ApplicationRecord
     dark: "dark"
   }.freeze
   ALIGNMENT_LABELS = {
-    "none" => "Нет",
-    "law" => "Закон",
-    "light" => "Свет",
-    "balance" => "Равновесие",
-    "chaos" => "Хаос",
-    "dark" => "Тьма"
+    "none" => "None",
+    "law" => "Law",
+    "light" => "Light",
+    "balance" => "Balance",
+    "chaos" => "Chaos",
+    "dark" => "Dark"
   }.freeze
 
   EQUIPMENT_STAT_ALIASES = {
@@ -114,7 +114,7 @@ class Character < ApplicationRecord
   end
 
   def alignment_label
-    ALIGNMENT_LABELS.fetch(alignment, "Нет")
+    ALIGNMENT_LABELS.fetch(alignment, "None")
   end
 
   def alignment_display
@@ -515,7 +515,7 @@ class Character < ApplicationRecord
   # ===================
 
   # Calculate effective maximum MP.
-  # Neverlands exposes `Быстрое восстановление маны` as an allocatable skill, but the
+  # Neverlands exposes `Fast Mana Regeneration` as an allocatable skill, but the
   # exact MP max/cost formulas are not source-captured yet.
   #
   # @return [Integer] effective maximum mana points

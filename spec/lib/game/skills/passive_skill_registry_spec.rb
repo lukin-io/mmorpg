@@ -74,7 +74,7 @@ RSpec.describe Game::Skills::PassiveSkillRegistry do
     it "returns skill definition by key" do
       definition = described_class.find(:wanderer)
 
-      expect(definition[:name]).to eq("Странник")
+      expect(definition[:name]).to eq("Wanderer")
       expect(definition[:source_id]).to eq(26)
       expect(definition[:category]).to eq(:peace_world)
     end

@@ -3,7 +3,7 @@
 require "rails_helper"
 
 RSpec.describe "world/_actions.html.erb", type: :view do
-  let(:zone) { create(:zone, name: "Окрестность Форпоста", location_type: "outdoor") }
+  let(:zone) { create(:zone, name: "Outpost Surroundings", location_type: "outdoor") }
   let(:position) { create(:character_position, zone:, x: 5, y: 5) }
   let(:offer) { OpenStruct.new(action_key: "attack-action-key") }
 
@@ -38,7 +38,7 @@ RSpec.describe "world/_actions.html.erb", type: :view do
             npc_template_id: 2,
             alive: true,
             hostile: true,
-            name: "Крыса",
+            name: "Rat",
             level: 1,
             hp: 10,
             max_hp: 10,
@@ -50,10 +50,9 @@ RSpec.describe "world/_actions.html.erb", type: :view do
       position:
     }
 
-    expect(rendered).to have_button("Напасть")
+    expect(rendered).to have_button("Attack")
     expect(rendered).to have_css("input[name='action_key'][value='attack-action-key']", visible: :all)
     expect(rendered).not_to include("Creature Here")
-    expect(rendered).not_to include("Attack")
   end
 
   it "renders source-backed building entry without generic structure labels" do
@@ -63,10 +62,10 @@ RSpec.describe "world/_actions.html.erb", type: :view do
           type: :tile_building,
           building: {
             id: 1,
-            name: "Ворота Форпоста",
+            name: "Outpost Gate",
             icon: ">",
             building_type: "city_gate",
-            destination: "Форпост",
+            destination: "Outpost",
             can_enter: true
           },
           offer: OpenStruct.new(action_key: "building-action-key")
@@ -75,10 +74,9 @@ RSpec.describe "world/_actions.html.erb", type: :view do
       position:
     }
 
-    expect(rendered).to have_content("Ворота Форпоста")
-    expect(rendered).to have_button("Войти")
+    expect(rendered).to have_content("Outpost Gate")
+    expect(rendered).to have_button("Enter")
     expect(rendered).to have_css("input[name='action_key'][value='building-action-key']", visible: :all)
     expect(rendered).not_to include("Structure Here")
-    expect(rendered).not_to include("Enter")
   end
 end

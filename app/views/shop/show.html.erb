@@ -1,0 +1,72 @@
+<%= turbo_frame_tag "main_content" do %>
+  <div class="nl-player-subpage nl-shop-page">
+    <%= render "shared/player_context_buttons",
+      character: current_character,
+      viewer_character: current_character,
+      current_section: :shop %>
+
+    <div class="nl-shop-frame">
+      <div class="nl-shop-topline">
+        <div class="nl-shop-title">
+          <h1>Shop</h1>
+          <span><%= current_character.name %>[<%= current_character.level %>]</span>
+        </div>
+        <div class="nl-shop-controls">
+          <%= link_to "City", world_path, class: "nl-arena-link" %>
+          <%= link_to "Inventory", inventory_path, class: "nl-arena-link" %>
+          <%= link_to "Refresh", shop_path(mode: @mode, category: @category), class: "nl-arena-link" %>
+        </div>
+      </div>
+
+      <div class="nl-shop-status-row">
+        <span>NV: <b><%= number_with_delimiter(@wallet.nv_balance) %></b></span>
+        <span>Mass: <b><%= @inventory.current_weight %>/<%= @inventory.weight_capacity %></b></span>
+        <span>Slots: <b><%= @inventory.inventory_items.count %>/<%= @inventory.slot_capacity %></b></span>
+      </div>
+
+      <div class="nl-shop-tabs">
+        <% shop_mode_options.each do |key, label| %>
+          <% if @mode == key %>
+            <span class="nl-arena-tab nl-arena-tab--active"><%= label %></span>
+          <% else %>
+            <%= link_to label, shop_path(mode: key, category: @category), class: "nl-arena-tab" %>
+          <% end %>
+        <% end %>
+      </div>
+
+      <%= form_with url: shop_path, method: :get, class: "nl-shop-filters", local: true do |f| %>
+        <%= f.hidden_field :mode, value: @mode %>
+        <label>
+          Section
+          <%= f.select :category,
+            options_for_select(shop_category_options.map { |key, label| [label, key] }, @category),
+            {},
+            class: "nl-shop-select" %>
+        </label>
+        <label>
+          Level from
+          <%= f.number_field :min_level, value: params[:min_level], min: 0, class: "nl-shop-mini-input" %>
+        </label>
+        <label>
+          to
+          <%= f.number_field :max_level, value: params[:max_level], min: 0, class: "nl-shop-mini-input" %>
+        </label>
+        <label>
+          Price from
+          <%= f.number_field :min_price, value: params[:min_price], min: 0, class: "nl-shop-mini-input" %>
+        </label>
+        <label>
+          to
+          <%= f.number_field :max_price, value: params[:max_price], min: 0, class: "nl-shop-mini-input" %>
+        </label>
+        <%= f.submit "Show", class: "nl-arena-small-button" %>
+      <% end %>
+
+      <% if @mode == "sell" %>
+        <%= render "shop/sell_table", items: @sell_items %>
+      <% else %>
+        <%= render "shop/buy_table", items: @shop_items %>
+      <% end %>
+    </div>
+  </div>
+<% end %>

@@ -11,6 +11,7 @@ modern social dashboard.
 Reference material:
 
 - `doc/design/reference/neverlands.md`
+- `doc/design/reference/neverlands_live_game_shell_ui.md`
 - `doc/design/reference/source_material.md`
 
 Borrowed feel:
@@ -24,6 +25,12 @@ Borrowed feel:
 - chat smile codes use the captured `:NNN:` code family with a maximum of
   three replacements per message when smile assets are implemented;
 - the layout is dense and operational.
+
+The 2026-05-25 live shell capture confirms the persistent chat/presence control
+set: local player sorting, auto-refresh toggle, manual refresh, current
+location count, total online count, chat action checkbox, send, clear input,
+smile buttons, manual chat refresh, clear chat, all/private/none mode cycle,
+refresh speed cycle, transliteration toggle, and server time display.
 
 ## Player Experience
 
@@ -51,6 +58,8 @@ captured Neverlands design.
 - Movement completion refreshes nearby players.
 - City navigation refreshes nearby players.
 - Player list should show name, level, and basic status/signs.
+- Player list should provide sorting by name and level and a visible refresh
+  mode.
 - Silence/chat restriction is a player-level status, not a per-channel
   moderator role system.
 - Generic busy/idle/presence broadcast states are not part of the captured

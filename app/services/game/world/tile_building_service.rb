@@ -20,11 +20,11 @@ module Game
     # Usage:
     #   service = Game::World::TileBuildingService.new(
     #     character: current_character,
-    #     zone: "Окрестность Форпоста",
+    #     zone: "Outpost Surroundings",
     #     x: 5,
     #     y: 5
     #   )
-    #   info = service.building_info  # => { id: 1, name: "Ворота Форпоста", ... }
+    #   info = service.building_info  # => { id: 1, name: "Outpost Gate", ... }
     #   result = service.enter!       # => Result(success: true, ...)
     #
     class TileBuildingService
@@ -67,14 +67,14 @@ module Game
         unless building
           return Result.new(
             success: false,
-            message: "На этой клетке нет здания."
+            message: "There is no building on this tile."
           )
         end
 
         unless building.active?
           return Result.new(
             success: false,
-            message: "Здание сейчас недоступно.",
+            message: "Building is currently unavailable.",
             building: building
           )
         end
@@ -91,14 +91,14 @@ module Game
         if building.enter!(character)
           Result.new(
             success: true,
-            message: "Вход: #{building.display_name}.",
+            message: "Entered #{building.display_name}.",
             building: building,
             destination_zone: building.destination_zone
           )
         else
           Result.new(
             success: false,
-            message: "Не удалось войти: #{building.display_name}.",
+            message: "Could not enter: #{building.display_name}.",
             building: building
           )
         end

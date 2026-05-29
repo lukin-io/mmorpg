@@ -281,7 +281,7 @@ module Arena
     def broadcast_timeout_claim_available
       broadcast({
         type: "timeout_claim_available",
-        message: "Доступно завершение по таймауту.",
+        message: "Timeout finish is available.",
         turn_number: match.current_turn_number,
         timestamp: Time.current.strftime("%H:%M:%S")
       })
@@ -299,13 +299,13 @@ module Arena
     def countdown_message(seconds)
       case seconds
       when 0
-        "Бой начался"
+        "Fight started"
       when 1..3
         seconds.to_s
       when 4..10
-        "До начала боя: #{seconds}"
+        "Fight starts in: #{seconds}"
       else
-        "Бой начнется через #{seconds} сек."
+        "Fight starts in #{seconds}s"
       end
     end
 
@@ -313,9 +313,9 @@ module Arena
       parts = []
 
       if action[:is_miss]
-        parts << "Промах"
+        parts << "Miss"
       elsif action[:is_critical]
-        parts << "Критический"
+        parts << "Critical"
       end
 
       if action[:damage]
@@ -336,33 +336,33 @@ module Arena
     end
 
     def format_combat_description(actor, action_type, target, damage, body_part: nil, critical: false, miss: false, dodge: false)
-      target_name = target&.name || "противник"
+      target_name = target&.name || "opponent"
 
       case action_type.to_s
       when "miss"
         part_text = body_part ? " (#{body_part})" : ""
-        "#{actor.name} промахивается по #{target_name}#{part_text}."
+        "#{actor.name} misses #{target_name}#{part_text}."
       when "dodge"
         part_text = body_part ? " (#{body_part})" : ""
-        "#{target_name} уклоняется от удара #{actor.name}#{part_text}."
+        "#{target_name} dodges #{actor.name}#{part_text}."
       when "attack"
         if miss || dodge
           part_text = body_part ? " (#{body_part})" : ""
-          return dodge ? "#{target_name} уклоняется от удара #{actor.name}#{part_text}." : "#{actor.name} промахивается по #{target_name}#{part_text}."
+          return dodge ? "#{target_name} dodges #{actor.name}#{part_text}." : "#{actor.name} misses #{target_name}#{part_text}."
         end
 
         if damage
           part_text = body_part ? " (#{body_part})" : ""
-          crit_text = critical ? " Критический удар!" : ""
-          "#{actor.name} бьет #{target_name}#{part_text}: #{damage} урона.#{crit_text}"
+          crit_text = critical ? " Critical hit!" : ""
+          "#{actor.name} hits #{target_name}#{part_text}: #{damage} damage.#{crit_text}"
         else
-          "#{actor.name} атакует."
+          "#{actor.name} attacks."
         end
       when "blocked"
         part_text = body_part ? " (#{body_part})" : ""
-        "#{target_name} блокирует удар#{part_text} от #{actor.name}."
+        "#{target_name} blocks #{actor.name}'s attack#{part_text}."
       when "defend"
-        "#{actor.name} защищается."
+        "#{actor.name} defends."
       else
         "#{actor.name}: #{action_type}."
       end

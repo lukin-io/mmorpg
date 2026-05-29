@@ -84,12 +84,12 @@ module Arena
     def create_application(room:, npc_template:)
       # Check if this NPC already has an open application in this room
       if ArenaApplication.open.exists?(arena_room: room, npc_template: npc_template)
-        return Result.new(success?: false, errors: ["У этого бота уже есть открытая заявка"])
+        return Result.new(success?: false, errors: ["This NPC already has an open application"])
       end
 
       # Check room capacity
       unless room.has_capacity?
-        return Result.new(success?: false, errors: ["Зал арены заполнен"])
+        return Result.new(success?: false, errors: ["Arena room is full"])
       end
 
       application = ArenaApplication.new(

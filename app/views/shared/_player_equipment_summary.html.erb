@@ -1,55 +1,20 @@
 <% character ||= nil %>
 <% equipment ||= {} %>
+<% show_money = local_assigns.fetch(:show_money, false) %>
 
 <div class="nl-equipment-summary">
-  <div class="nl-equipment-paperdoll">
-    <div class="nl-equipment-side nl-equipment-side--left">
-      <% EquipmentSlots::LEFT.each do |slot_key, label| %>
-        <% item = equipment[slot_key] || equipment[slot_key.to_sym] %>
-        <div class="nl-profile-slot <%= 'nl-profile-slot--filled' if item %>">
-          <span class="nl-profile-slot-label"><%= label %></span>
-          <span class="nl-profile-slot-value"><%= item&.item_template&.name || "empty" %></span>
-        </div>
-      <% end %>
-    </div>
+  <%= render "shared/equipment_paperdoll", character: character, equipment: equipment, interactive: false %>
 
-    <div class="nl-equipment-portrait">
-      <% if character %>
-        <%= character_avatar_tag(character, size: :xlarge, class: "nl-equipment-character-image") %>
-      <% end %>
-    </div>
-
-    <div class="nl-equipment-side nl-equipment-side--right">
-      <% EquipmentSlots::RIGHT.each do |slot_key, label| %>
-        <% item = equipment[slot_key] || equipment[slot_key.to_sym] %>
-        <div class="nl-profile-slot <%= 'nl-profile-slot--filled' if item %>">
-          <span class="nl-profile-slot-label"><%= label %></span>
-          <span class="nl-profile-slot-value"><%= item&.item_template&.name || "empty" %></span>
-        </div>
-      <% end %>
-    </div>
-
-    <div class="nl-equipment-lower-slots">
-      <% EquipmentSlots::LOWER.each do |slot_key, label| %>
-        <% item = equipment[slot_key] || equipment[slot_key.to_sym] %>
-        <div class="nl-profile-slot nl-profile-slot--compact <%= 'nl-profile-slot--filled' if item %>">
-          <span class="nl-profile-slot-label"><%= label %></span>
-          <span class="nl-profile-slot-value"><%= item&.item_template&.name || "empty" %></span>
-        </div>
-      <% end %>
-    </div>
-  </div>
   <div class="nl-equipment-location">
     <span>Location</span>
     <strong><%= profile_location(character) %></strong>
   </div>
-  <% if equipment.empty? %>
-    <div class="nl-profile-empty">No equipped items.</div>
-  <% else %>
-    <div class="nl-equipped-items-list">
-      <% equipment.values.each do |item| %>
-        <span><%= item.item_template&.name %></span>
-      <% end %>
+
+  <% if show_money %>
+    <% wallet = character&.user&.currency_wallet %>
+    <div class="nl-equipment-location">
+      <span>Money</span>
+      <strong><%= number_with_delimiter(wallet&.nv_balance || 0) %> NV</strong>
     </div>
   <% end %>
 </div>

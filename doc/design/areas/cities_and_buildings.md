@@ -14,6 +14,8 @@ next.
 
 Primary reference: `doc/design/reference/neverlands.md`.
 
+Live UI reference: `doc/design/reference/neverlands_live_game_shell_ui.md`.
+
 Observed Oktal flow:
 
 ```text
@@ -50,12 +52,33 @@ Building entry is a hotspot from a city node.
 Building exit uses a `Город` return action that goes back to the parent city
 node.
 
+## Live City UI Observation
+
+The 2026-05-25 Forpost capture confirms the city node interaction model:
+
+- city page refreshes the local player list;
+- top shell shows character, vitals, quest/profile/inventory/current-city
+  controls, and exit;
+- city art is the main surface;
+- hotspots are absolute-positioned image controls;
+- hover swaps the hotspot art to a highlighted variant and shows a tooltip;
+- each hotspot submits a server-issued action key;
+- building return generates fresh city hotspot action keys.
+
+Observed Forpost hotspots included arena, `Лавка`, city exit, district
+transitions, and several non-MVP buildings such as tavern, workshop, hospital,
+and guard tower. Do not implement those extra buildings from names alone.
+Capture their behavior first or leave them as inactive/blocked flavor.
+
 ## City Node Rules
 
 - A city is a graph of named nodes, not a coordinate grid.
 - A city node has a stable key, title, background image, and hotspot list.
 - Every city navigation refreshes the available outgoing hotspots.
 - Local player/location presence refreshes after navigation.
+- Hotspots must have keyboard-accessible equivalents and text labels in the
+  Rails implementation; source image maps are a visual reference, not enough UI
+  by themselves.
 - City nodes can show a disabled/current marker in the top action area.
 - District-to-district navigation is immediate unless a future city explicitly
   defines a delay.

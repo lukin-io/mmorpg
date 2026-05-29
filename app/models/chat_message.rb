@@ -30,7 +30,7 @@ class ChatMessage < ApplicationRecord
   end
 
   def display_body
-    body.to_s.gsub(/script/i, "скрипт")
+    body.to_s.gsub(/script/i, "[removed]")
   end
 
   def addressed_to?(user)

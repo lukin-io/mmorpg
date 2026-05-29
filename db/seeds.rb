@@ -33,9 +33,9 @@ def zone_metadata_for(name)
   case name
   when "Outpost"
     {
-      "exit_to" => "Окрестность Форпоста"
+      "exit_to" => "Outpost Surroundings"
     }
-  when "Окрестность Форпоста"
+  when "Outpost Surroundings"
     {
       "source_map" => "m_1001_999"
     }
@@ -47,7 +47,7 @@ end
 if defined?(Zone)
   [
     {name: "Outpost", location_type: "city", width: 10, height: 10},
-    {name: "Окрестность Форпоста", location_type: "outdoor", width: 15, height: 15}
+    {name: "Outpost Surroundings", location_type: "outdoor", width: 15, height: 15}
   ].each do |attrs|
     Zone.find_or_create_by!(name: attrs[:name]) do |zone|
       zone.location_type = attrs[:location_type]
@@ -61,7 +61,7 @@ end
 if defined?(SpawnPoint) && defined?(Zone)
   {
     "Outpost" => [{x: 5, y: 5, default_entry: true}],
-    "Окрестность Форпоста" => [{x: 7, y: 7, default_entry: true}]
+    "Outpost Surroundings" => [{x: 7, y: 7, default_entry: true}]
   }.each do |zone_name, points|
     zone = Zone.find_by(name: zone_name)
     next unless zone
@@ -83,13 +83,13 @@ if defined?(MapTileTemplate)
   if outpost
     zone_name = outpost.name  # Store zone name as string, not the Zone object
     city_tiles << {zone: zone_name, x: 5, y: 5, terrain_type: "city", metadata: {"building" => "Town Square"}}
-    city_tiles << {zone: zone_name, x: 6, y: 5, terrain_type: "city", metadata: {"building" => "Лавка"}}
+    city_tiles << {zone: zone_name, x: 6, y: 5, terrain_type: "city", metadata: {"building" => "Shop"}}
     city_tiles << {zone: zone_name, x: 4, y: 5, terrain_type: "city", metadata: {"building" => "Arena"}}
     city_tiles << {zone: zone_name, x: 5, y: 9, terrain_type: "city", metadata: {"building" => "South Gate"}}
   end
 
-  # Окрестность Форпоста - captured outdoor map area with city return.
-  outpost_surroundings = Zone.find_by(name: "Окрестность Форпоста")
+  # Outpost Surroundings - captured outdoor map area with city return.
+  outpost_surroundings = Zone.find_by(name: "Outpost Surroundings")
   outdoor_tiles = []
   if outpost_surroundings
     outdoor_zone_name = outpost_surroundings.name  # Store zone name as string, not the Zone object
@@ -178,8 +178,8 @@ end
 if defined?(ItemTemplate)
   # Source-backed NPC material item templates.
   material_items = [
-    {key: "wood_chips", name: "Щепки", item_type: "material", weight: 1},
-    {key: "rat_tail", name: "Крысиный хвост", item_type: "material", weight: 1}
+    {key: "wood_chips", name: "Wood Chips", item_type: "material", weight: 1},
+    {key: "rat_tail", name: "Rat Tail", item_type: "material", weight: 1}
   ]
 
   material_items.each do |attrs|
@@ -193,6 +193,76 @@ if defined?(ItemTemplate)
     end
   end
   puts "Created #{material_items.size} material item templates"
+
+  shop_items = [
+    {
+      key: "practice_knife",
+      name: "Practice Knife",
+      item_type: "equipment",
+      slot: "main_hand",
+      weight: 3,
+      stack_limit: 1,
+      base_price: 35,
+      durability_max: 20,
+      requirements: {"level" => 1, "ap" => 45},
+      stat_modifiers: {"attack" => 2}
+    },
+    {
+      key: "militia_sword",
+      name: "Militia Sword",
+      item_type: "equipment",
+      slot: "main_hand",
+      weight: 7,
+      stack_limit: 1,
+      base_price: 160,
+      durability_max: 34,
+      requirements: {"level" => 3, "strength" => 2, "ap" => 48},
+      stat_modifiers: {"attack" => 5}
+    },
+    {
+      key: "padded_jacket",
+      name: "Padded Jacket",
+      item_type: "equipment",
+      slot: "chest",
+      weight: 5,
+      stack_limit: 1,
+      base_price: 95,
+      durability_max: 28,
+      requirements: {"level" => 1, "strength" => 1},
+      stat_modifiers: {"defense" => 3}
+    },
+    {
+      key: "minor_healing_elixir",
+      name: "Minor Healing Elixir",
+      item_type: "consumable",
+      slot: "none",
+      weight: 1,
+      stack_limit: 20,
+      base_price: 24,
+      durability_max: 0,
+      requirements: {"level" => 1},
+      stat_modifiers: {"heal_hp" => 35}
+    },
+    {
+      key: "license_market_stall",
+      name: "Trader License",
+      item_type: "misc",
+      slot: "none",
+      weight: 1,
+      stack_limit: 1,
+      base_price: 500,
+      durability_max: 0,
+      requirements: {"level" => 5},
+      stat_modifiers: {}
+    }
+  ]
+
+  shop_items.each do |attrs|
+    item = ItemTemplate.find_or_initialize_by(key: attrs[:key])
+    item.assign_attributes(attrs)
+    item.save!
+  end
+  puts "Created/Updated #{shop_items.size} shop item templates"
 end
 
 if defined?(CurrencyWallet)
@@ -215,7 +285,7 @@ puts "Seeding Arena Rooms..."
 if defined?(ArenaRoom)
   arena_rooms = [
     {
-      name: "Тренировочный Зал",
+      name: "Training Hall",
       slug: "training",
       room_type: :training,
       level_min: 0,
@@ -247,12 +317,12 @@ puts "Arena rooms seeding complete!"
 puts "Seeding Tile Buildings..."
 
 if defined?(TileBuilding) && defined?(Zone)
-  outpost_surroundings = Zone.find_by(name: "Окрестность Форпоста")
+  outpost_surroundings = Zone.find_by(name: "Outpost Surroundings")
   outpost = Zone.find_by(name: "Outpost")
 
   tile_buildings = []
 
-  # City entrance from Окрестность Форпоста to Outpost
+  # City entrance from Outpost Surroundings to Outpost
   if outpost_surroundings && outpost
     tile_buildings << {
       zone: outpost_surroundings.name,
@@ -260,14 +330,14 @@ if defined?(TileBuilding) && defined?(Zone)
       y: 0,
       building_key: "outpost_gate",
       building_type: "city",
-      name: "Ворота Форпоста",
+      name: "Outpost Gate",
       destination_zone: outpost,
       destination_x: 5,
       destination_y: 9,
       icon: "🏙️",
       required_level: 1,
       metadata: {
-        "description" => "Enter Форпост."
+        "description" => "Enter Outpost."
       }
     }
   end
@@ -300,7 +370,7 @@ puts "Tile buildings seeding complete!"
 puts "\n=== Seeding City Hotspots ==="
 
 outpost = Zone.find_by(name: "Outpost")
-outpost_surroundings = Zone.find_by(name: "Окрестность Форпоста")
+outpost_surroundings = Zone.find_by(name: "Outpost Surroundings")
 
 if outpost
   city_hotspots = []
@@ -309,8 +379,8 @@ if outpost
   # CITY HOTSPOT POSITIONING GUIDE
   # ==========================================================================
   # - city.png is 1536x1024 pixels
-  # - Each overlay image (arena.png, gate.png, etc.) is also 1536x1024 with
-  #   transparent areas except for the highlighted building
+  # - The city view uses city.png as the only rendered location image.
+  # - Hotspots are invisible rectangles with text labels/tooltips only.
   # - position_x/y: Where to place the HITBOX (invisible clickable area)
   #   This should be the top-left corner of the building's clickable area
   # - width/height: Size of the HITBOX (clickable area)
@@ -323,17 +393,16 @@ if outpost
   # 4. Measure the building's width and height in pixels
   # ==========================================================================
 
-  # Outpost gate / Exit - leads back to Окрестность Форпоста.
+  # Outpost gate / Exit - leads back to Outpost Surroundings.
   city_hotspots << {
     zone: outpost,
     key: "city_gate",
-    name: "Ворота Форпоста",
+    name: "Outpost Gate",
     hotspot_type: "exit",
-    position_x: 680,
-    position_y: 850,
-    width: 180,
-    height: 150,
-    image_hover: "gate.png",
+    position_x: 0,
+    position_y: 325,
+    width: 235,
+    height: 175,
     action_type: "enter_zone",
     destination_zone: outpost_surroundings,
     action_params: {"destination_x" => 7, "destination_y" => 0},
@@ -347,51 +416,128 @@ if outpost
     key: "arena",
     name: "Arena",
     hotspot_type: "building",
-    position_x: 1050,
-    position_y: 200,
-    width: 300,
-    height: 250,
-    image_hover: "arena.png",
+    position_x: 455,
+    position_y: 55,
+    width: 790,
+    height: 500,
     action_type: "open_feature",
     action_params: {"feature" => "arena"},
     required_level: 5,
     z_index: 20
   }
 
-  # Лавка - documented Neverlands shop, pending Rails implementation
+  # Shop - documented Neverlands shop, implemented as Rails shop frame
   city_hotspots << {
     zone: outpost,
     key: "shop",
-    name: "Лавка",
+    name: "Shop",
     hotspot_type: "building",
-    position_x: 100,
-    position_y: 350,
-    width: 250,
-    height: 200,
-    image_hover: "shop.png",
+    position_x: 60,
+    position_y: 520,
+    width: 360,
+    height: 255,
     action_type: "open_feature",
     action_params: {"feature" => "shop"},
     required_level: 1,
     z_index: 20
   }
 
+  # Other visible city buildings are source-backed for hover/keyboard coverage.
+  # They intentionally stay unavailable until their feature routes are promoted.
+  city_hotspots << {
+    zone: outpost,
+    key: "town_hall",
+    name: "Town Hall",
+    hotspot_type: "building",
+    position_x: 315,
+    position_y: 0,
+    width: 275,
+    height: 225,
+    action_type: "open_feature",
+    action_params: {"feature" => "town_hall"},
+    required_level: 1,
+    z_index: 20
+  }
+
+  city_hotspots << {
+    zone: outpost,
+    key: "watchtower",
+    name: "Watchtower",
+    hotspot_type: "building",
+    position_x: 55,
+    position_y: 35,
+    width: 145,
+    height: 205,
+    action_type: "open_feature",
+    action_params: {"feature" => "watchtower"},
+    required_level: 1,
+    z_index: 20
+  }
+
+  city_hotspots << {
+    zone: outpost,
+    key: "market",
+    name: "Market",
+    hotspot_type: "building",
+    position_x: 455,
+    position_y: 485,
+    width: 285,
+    height: 105,
+    action_type: "open_feature",
+    action_params: {"feature" => "market"},
+    required_level: 1,
+    z_index: 20
+  }
+
+  city_hotspots << {
+    zone: outpost,
+    key: "tavern",
+    name: "Tavern",
+    hotspot_type: "building",
+    position_x: 1000,
+    position_y: 525,
+    width: 355,
+    height: 250,
+    action_type: "open_feature",
+    action_params: {"feature" => "tavern"},
+    required_level: 1,
+    z_index: 20
+  }
+
+  city_hotspots << {
+    zone: outpost,
+    key: "smithy",
+    name: "Smithy",
+    hotspot_type: "building",
+    position_x: 1190,
+    position_y: 760,
+    width: 310,
+    height: 175,
+    action_type: "open_feature",
+    action_params: {"feature" => "smithy"},
+    required_level: 1,
+    z_index: 20
+  }
+
   city_hotspots.each do |attrs|
-    CityHotspot.find_or_create_by!(zone: attrs[:zone], key: attrs[:key]) do |hotspot|
-      hotspot.name = attrs[:name]
-      hotspot.hotspot_type = attrs[:hotspot_type]
-      hotspot.position_x = attrs[:position_x]
-      hotspot.position_y = attrs[:position_y]
-      hotspot.width = attrs[:width]
-      hotspot.height = attrs[:height]
-      hotspot.image_normal = nil  # Not used - overlay approach uses full-size images
-      hotspot.image_hover = attrs[:image_hover]
-      hotspot.action_type = attrs[:action_type]
-      hotspot.destination_zone = attrs[:destination_zone]
-      hotspot.action_params = attrs[:action_params] || {}
-      hotspot.required_level = attrs[:required_level] || 1
-      hotspot.z_index = attrs[:z_index] || 0
-      hotspot.active = true
-    end
+    hotspot = CityHotspot.find_or_initialize_by(zone: attrs[:zone], key: attrs[:key])
+    hotspot.assign_attributes(
+      name: attrs[:name],
+      hotspot_type: attrs[:hotspot_type],
+      position_x: attrs[:position_x],
+      position_y: attrs[:position_y],
+      width: attrs[:width],
+      height: attrs[:height],
+      image_normal: nil,  # Not used - overlay approach uses full-size images
+      image_hover: attrs[:image_hover],
+      action_type: attrs[:action_type],
+      destination_zone: attrs[:destination_zone],
+      action_params: attrs[:action_params] || {},
+      required_level: attrs[:required_level] || 1,
+      z_index: attrs[:z_index] || 0,
+      active: true
+    )
+    hotspot.save!
     puts "  Created/Found CityHotspot: #{attrs[:name]}"
   end
 else

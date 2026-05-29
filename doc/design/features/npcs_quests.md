@@ -127,6 +127,11 @@ Required future capture:
 - how completion, turn-in, reward, cancel, failure, and repeatability behave;
 - whether quest items exist and how they are protected from sale/discard.
 
+The 2026-05-25 shell/UI pass captured only the generic quest modal shape:
+`Квесты` can appear in the top shell, open a modal overlay through keyed AJAX,
+paginate dialogue text, and expose final get/finish actions. This is enough to
+design an accessible modal shell later, but not enough to rebuild quest rules.
+
 ## State Concepts
 
 - NPC template;

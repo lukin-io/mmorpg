@@ -42,14 +42,14 @@
   <div class="arena-application-meta">
     <% if application.expires_at %>
         <span class="arena-application-timer <%= 'arena-application-timer--urgent' if application.time_until_expiration && application.time_until_expiration < 60 %>"
-            title="Истекает <%= l(application.expires_at, format: :short) %>">
-        Осталось <%= distance_of_time_in_words_to_now(application.expires_at) %>
+            title="Expires <%= l(application.expires_at, format: :short) %>">
+        Remaining <%= distance_of_time_in_words_to_now(application.expires_at) %>
       </span>
     <% end %>
 
     <% if application.team_level_min || application.team_level_max %>
       <span class="arena-application-levels badge">
-        Ур. <%= application.team_level_min || application.arena_room.level_min %>-<%= application.team_level_max || application.arena_room.level_max %>
+        Lvl. <%= application.team_level_min || application.arena_room.level_min %>-<%= application.team_level_max || application.arena_room.level_max %>
       </span>
     <% end %>
   </div>
@@ -57,9 +57,9 @@
   <div class="arena-application-actions">
     <% if defined?(current_character) %>
       <% if application.applicant == current_character %>
-        <span class="text-muted">Ваша заявка</span>
+        <span class="text-muted">Your application</span>
       <% elsif application.acceptable_by?(current_character) %>
-        <%= button_to "Принять",
+        <%= button_to "Accept",
             accept_arena_application_path(application),
             method: :post,
             class: "btn-primary btn-sm",
@@ -69,8 +69,8 @@
               application_id: application.id
             } %>
       <% else %>
-        <span class="text-muted text-sm" title="Не выполнены требования по уровню или склонности">
-          Недоступно
+        <span class="text-muted text-sm" title="Level or alignment requirements are not met">
+          Unavailable
         </span>
       <% end %>
     <% end %>

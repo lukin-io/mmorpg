@@ -39,7 +39,7 @@ class ApplicationController < ActionController::Base
 
         redirect_target = nil if redirect_target == request.url
 
-        redirect_to(redirect_target || root_path, alert: "Нет доступа к этому действию.")
+        redirect_to(redirect_target || root_path, alert: "You do not have access to this action.")
       end
       format.turbo_stream { head :forbidden }
       format.json { render json: {error: "forbidden"}, status: :forbidden }

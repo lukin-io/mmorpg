@@ -1,5 +1,5 @@
 <div class="login-container">
-  <h1>Регистрация в Neverlands</h1>
+  <h1>Sign Up for Neverlands</h1>
 
   <%= form_for(resource, as: resource_name, url: registration_path(resource_name)) do |f| %>
     <%= render "devise/shared/error_messages", resource: resource %>
@@ -12,7 +12,7 @@
     <div class="field">
       <%= f.label :password %>
       <% if @minimum_password_length %>
-        <span class="text-muted text-sm">(<%= @minimum_password_length %> символов минимум)</span>
+        <span class="text-muted text-sm">(<%= @minimum_password_length %> characters minimum)</span>
       <% end %>
       <%= f.password_field :password, autocomplete: "new-password" %>
     </div>
@@ -23,13 +23,13 @@
     </div>
 
     <div class="field">
-      <%= f.submit "Создать аккаунт", class: "btn-primary w-full" %>
+      <%= f.submit "Create Account", class: "btn-primary w-full" %>
     </div>
   <% end %>
 
   <hr>
 
   <div class="text-center">
-    <%= link_to "Уже есть аккаунт? Войти", new_session_path(resource_name) %>
+    <%= link_to "Already have an account? Sign in", new_session_path(resource_name) %>
   </div>
 </div>

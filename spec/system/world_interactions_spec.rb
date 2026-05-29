@@ -4,7 +4,7 @@ require "rails_helper"
 
 RSpec.describe "World Interactions", type: :system, js: true do
   let(:user) { create(:user) }
-  let(:zone) { create(:zone, name: "Окрестность Форпоста", location_type: "outdoor", width: 10, height: 10) }
+  let(:zone) { create(:zone, name: "Outpost Surroundings", location_type: "outdoor", width: 10, height: 10) }
   let(:character) { create(:character, user: user) }
   let!(:position) { create(:character_position, character: character, zone: zone, x: 5, y: 5) }
 
@@ -36,22 +36,22 @@ RSpec.describe "World Interactions", type: :system, js: true do
     end
 
     it "enters a tile building and transitions zones" do
-      destination_zone = create(:zone, name: "Форпост", location_type: "city", width: 10, height: 10)
+      destination_zone = create(:zone, name: "Outpost", location_type: "city", width: 10, height: 10)
       create(:tile_building,
         :with_destination,
         zone: zone.name,
         x: position.x,
         y: position.y,
-        name: "Ворота Форпоста",
+        name: "Outpost Gate",
         destination_zone: destination_zone,
         destination_x: 2,
         destination_y: 3)
 
       visit world_path
 
-      click_button "Войти"
+      click_button "Enter"
 
-      expect(page).to have_content("Форпост")
+      expect(page).to have_content("Outpost")
     end
   end
 
@@ -73,7 +73,7 @@ RSpec.describe "World Interactions", type: :system, js: true do
 
       visit world_path
 
-      expect(page).to have_current_path(/sign_in/).or have_content("Вход")
+      expect(page).to have_current_path(/sign_in/).or have_content("Sign In")
     end
   end
 end

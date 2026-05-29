@@ -27,11 +27,11 @@ class CharactersController < ApplicationController
     total_spent = allocated.values.sum
 
     if total_spent > @character.stat_points_available
-      return respond_with_error("Недостаточно свободных очков характеристик")
+      return respond_with_error("Not enough free stat points")
     end
 
     if total_spent <= 0
-      return respond_with_error("Характеристики не выбраны")
+      return respond_with_error("No stats selected")
     end
 
     # Merge with existing allocated stats
@@ -47,13 +47,13 @@ class CharactersController < ApplicationController
     )
 
     respond_to do |format|
-      format.html { redirect_to stats_character_path(@character), notice: "Характеристики сохранены" }
+      format.html { redirect_to stats_character_path(@character), notice: "Stats saved" }
       format.turbo_stream do
         @stats_data = build_stats_data
         @allocatable_stats = allocatable_stat_keys
         render turbo_stream: [
           turbo_stream.replace("stat-allocation", partial: "characters/stat_allocation"),
-          turbo_stream.update("flash", partial: "shared/flash", locals: {type: "notice", message: "Характеристики сохранены"})
+          turbo_stream.update("flash", partial: "shared/flash", locals: {type: "notice", message: "Stats saved"})
         ]
       end
     end
@@ -80,7 +80,7 @@ class CharactersController < ApplicationController
     allocated = parse_skill_allocations(params[:allocated_skills])
 
     if allocated.values.sum <= 0
-      return respond_with_error("Умения не выбраны")
+      return respond_with_error("No skills selected")
     end
 
     # Separate allocations by pool type (skip unknown skills)
@@ -107,11 +107,11 @@ class CharactersController < ApplicationController
     peace_spends_total = peace_allocations.values.sum
 
     if combat_spends_total > @character.available_combat_skill_points
-      return respond_with_error("Недостаточно боевых очков")
+      return respond_with_error("Not enough combat points")
     end
 
     if peace_spends_total > @character.available_peace_skill_points
-      return respond_with_error("Недостаточно мирных очков")
+      return respond_with_error("Not enough peace points")
     end
 
     # Apply tiered progression for each skill spend
@@ -152,7 +152,7 @@ class CharactersController < ApplicationController
     @character.clear_passive_skill_cache!
 
     respond_to do |format|
-      format.html { redirect_to skills_character_path(@character), notice: "Умения сохранены" }
+      format.html { redirect_to skills_character_path(@character), notice: "Skills saved" }
       format.turbo_stream do
         @skills_data = build_skills_data
         @skill_definitions = Game::Skills::PassiveSkillRegistry.all
@@ -161,7 +161,7 @@ class CharactersController < ApplicationController
         @peace_skill_points = @character.available_peace_skill_points
         render turbo_stream: [
           turbo_stream.replace("skill-allocation", partial: "characters/skill_allocation"),
-          turbo_stream.update("flash", partial: "shared/flash", locals: {type: "notice", message: "Умения сохранены"})
+          turbo_stream.update("flash", partial: "shared/flash", locals: {type: "notice", message: "Skills saved"})
         ]
       end
     end
@@ -175,7 +175,7 @@ class CharactersController < ApplicationController
 
   def authorize_character!
     unless @character.user_id == current_user.id
-      redirect_to root_path, alert: "Можно управлять только своим персонажем."
+      redirect_to root_path, alert: "You can only manage your own character."
     end
   end
 

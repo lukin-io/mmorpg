@@ -78,9 +78,9 @@ module Arena
     #   - block_parts: Array of body parts to block
     # @return [Result] the result of the action
     def process_action(character, action_type, **params)
-      return failure("Бой не активен") unless match.live?
-      return failure("Персонаж не участвует в этом бою") unless participant?(character)
-      return failure("Персонаж повержен") if character.current_hp <= 0
+      return failure("Fight is not active") unless match.live?
+      return failure("Character is not participating in this fight") unless participant?(character)
+      return failure("Character is defeated") if character.current_hp <= 0
 
       combat_profile_for(character)
 
@@ -99,7 +99,7 @@ module Arena
       current_ap = get_character_ap(character)
 
       if current_ap < ap_cost
-        return failure("Недостаточно ОД (нужно #{ap_cost}, есть #{current_ap})")
+        return failure("Not enough AP (need #{ap_cost}, have #{current_ap})")
       end
 
       result = case action_type.to_sym
@@ -235,18 +235,18 @@ module Arena
       # End match messages
       case reason
       when :timeout
-        log_entry("timeout", nil, "Бой завершен по таймауту")
+        log_entry("timeout", nil, "Fight ended by timeout")
       when :forfeit
-        log_entry("system", nil, "Бой завершен сдачей")
+        log_entry("system", nil, "Fight ended by surrender")
       else
         if winning_team
           if npc_fight?
             winner_name = match.arena_participations.find_by(team: winning_team)&.participant_name
-            log_entry("victory", nil, "Победа: #{winner_name}.") if winner_name.present?
+            log_entry("victory", nil, "Victory: #{winner_name}.") if winner_name.present?
           end
-          log_entry("victory", nil, "Бой завершен. Победитель: сторона #{winning_team.upcase}")
+          log_entry("victory", nil, "Fight finished. Winner: side #{winning_team.upcase}")
         else
-          log_entry("draw", nil, "Бой завершился ничьей")
+          log_entry("draw", nil, "Fight ended in a draw")
         end
       end
 
@@ -264,12 +264,12 @@ module Arena
     # Resolve a Neverlands-style waiting timeout. The claimant must have
     # already submitted the current turn and be waiting for the opponent.
     def claim_timeout(character, mode: nil)
-      return failure("Бой не активен") unless match.live?
-      return failure("Персонаж не участвует в этом бою") unless participant?(character)
-      return failure("Таймер хода еще не истек") unless match.turn_timed_out?
+      return failure("Fight is not active") unless match.live?
+      return failure("Character is not participating in this fight") unless participant?(character)
+      return failure("Turn timer has not expired yet") unless match.turn_timed_out?
 
       participation = match.arena_participations.find_by(character:)
-      return failure("Сначала отправьте ход") unless pending_turn_data(participation).present?
+      return failure("Submit your turn first") unless pending_turn_data(participation).present?
 
       normalized_mode = mode.to_s == "draw" ? "draw" : "victory"
       winning_team = (normalized_mode == "draw") ? nil : participation.team
@@ -381,7 +381,7 @@ module Arena
 
     def process_player_turn_submission(character, target: nil, attacks: [], blocks: [], skills: [])
       participation = match.arena_participations.find_by(character:)
-      return failure("Персонаж не участвует в этом бою") unless participation
+      return failure("Character is not participating in this fight") unless participation
 
       normalized_attacks = normalize_turn_attacks(attacks)
       normalized_blocks = normalize_turn_blocks(blocks)
@@ -489,8 +489,8 @@ module Arena
     end
 
     def process_attack(attacker, target, attack_type: :simple, body_part: "torso")
-      return failure("Недопустимый тип удара: #{attack_type}") if Game::Combat::ActionCatalog.attack_config(attack_type).blank?
-      return failure("Недопустимая зона удара: #{body_part}") unless BODY_PARTS.include?(body_part.to_s)
+      return failure("Invalid attack type: #{attack_type}") if Game::Combat::ActionCatalog.attack_config(attack_type).blank?
+      return failure("Invalid attack zone: #{body_part}") unless BODY_PARTS.include?(body_part.to_s)
 
       # Find target - could be Character or NPC participation
       target_participation = find_target_participation(attacker, target)
@@ -505,7 +505,7 @@ module Arena
     end
 
     def process_attack_on_player(attacker, target, attack_type: :simple, body_part: "torso")
-      return failure("Нельзя атаковать союзника") if same_team?(attacker, target)
+      return failure("Cannot attack an ally") if same_team?(attacker, target)
       return failure("Target is dead") if target.current_hp <= 0
 
       attacker_participation = match.arena_participations.find_by(character: attacker)
@@ -715,7 +715,7 @@ module Arena
       else
         found = drops.map do |drop|
           quantity = drop[:quantity] > 1 ? " x#{drop[:quantity]}" : ""
-          "Вещь «#{drop[:item].name}»#{quantity}"
+          "Item «#{drop[:item].name}»#{quantity}"
         end.join(", ")
         log_entry("loot", defeated_by, "#{defeated_by.name} searched #{npc.name}. Found #{found}.")
       end
@@ -830,7 +830,7 @@ module Arena
     end
 
     def process_flee(character)
-      return failure("Нельзя сбежать с арены") if match.match_type == "duel"
+      return failure("Cannot flee from the arena") if match.match_type == "duel"
 
       # Only allowed in sacrifice/FFA mode with HP penalty
       penalty = (character.max_hp * 0.2).round
@@ -1067,43 +1067,43 @@ module Arena
       unless valid_neverlands_turn_shape?(attacks, blocks, skills)
         errors << "Choose at least one valid attack, block, or magic/action slot"
       end
-      errors << "За ход можно выбрать только один блок" if blocks.size > 1
-      errors << "За ход можно выбрать максимум 4 удара" if attacks.size > 4
+      errors << "Only one block can be selected per turn" if blocks.size > 1
+      errors << "Only up to 4 attacks can be selected per turn" if attacks.size > 4
       attack_parts = attacks.map { |attack| attack[:body_part] }
       if attack_parts.include?("head") && attack_parts.include?("legs")
-        errors << "Нельзя атаковать голову и ноги в одном ходе"
+        errors << "Cannot attack head and legs in the same turn"
       end
 
       attacks.each_with_index do |attack, index|
         unless BODY_PARTS.include?(attack[:body_part])
-          errors << "Недопустимая зона удара #{index + 1}: #{attack[:body_part]}"
+          errors << "Invalid attack zone #{index + 1}: #{attack[:body_part]}"
         end
 
         unless Game::Combat::ActionCatalog.attack_config(attack[:action_key]).present?
-          errors << "Недопустимый тип удара #{index + 1}: #{attack[:action_key]}"
+          errors << "Invalid attack type #{index + 1}: #{attack[:action_key]}"
         end
       end
 
       blocks.each_with_index do |block, index|
         if block[:body_parts].blank?
-          errors << "Блок #{index + 1} должен закрывать хотя бы одну зону"
+          errors << "Block #{index + 1} must cover at least one zone"
           next
         end
 
         block[:body_parts].each do |part|
-          errors << "Недопустимая зона блока #{index + 1}: #{part}" unless BODY_PARTS.include?(part)
+          errors << "Invalid block zone #{index + 1}: #{part}" unless BODY_PARTS.include?(part)
         end
       end
 
       skills.each_with_index do |skill, index|
         unless Game::Combat::ActionCatalog.magic_config(skill[:key]).present?
-          errors << "Недопустимая магия #{index + 1}: #{skill[:key]}"
+          errors << "Invalid magic #{index + 1}: #{skill[:key]}"
         end
       end
 
       total_ap = calculate_turn_ap_cost(attacks, blocks, skills, actor:)
       ap_limit = actor.present? ? combat_ap_limit_for(actor) : AP_PER_TURN
-      errors << "Превышен лимит ОД (#{total_ap}/#{ap_limit})" if total_ap > ap_limit
+      errors << "AP limit exceeded (#{total_ap}/#{ap_limit})" if total_ap > ap_limit
 
       errors
     end
@@ -1124,7 +1124,7 @@ module Arena
       errors = []
 
       if total_mana > character.current_mp.to_i
-        errors << "Недостаточно MP (нужно #{total_mana}, есть #{character.current_mp.to_i})"
+        errors << "Not enough MP (need #{total_mana}, have #{character.current_mp.to_i})"
       end
 
       magic_limit = combat_profile_for(character).fetch("max_magic_mana", character.max_mp.to_i).to_i

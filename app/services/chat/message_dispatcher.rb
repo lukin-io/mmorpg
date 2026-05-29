@@ -38,7 +38,7 @@ module Chat
       return unless user.respond_to?(:chat_muted_until)
       return unless user.chat_muted_until.present? && user.chat_muted_until.future?
 
-      raise Chat::Errors::MutedError, "Вы не можете писать в чат."
+      raise Chat::Errors::MutedError, "You cannot post in chat."
     end
 
     def ensure_privacy_respected!
@@ -51,7 +51,7 @@ module Chat
       return unless target
       return if Chat::IgnoreFilter.can_view_messages?(target, user)
 
-      raise Chat::Errors::PrivacyBlockedError, "#{target.profile_name} не принимает приватные сообщения."
+      raise Chat::Errors::PrivacyBlockedError, "#{target.profile_name} does not accept private messages."
     end
 
     def whisper_target_id

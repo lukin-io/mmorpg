@@ -74,14 +74,14 @@ module InventoriesHelper
       lines << [label.to_s.titleize, value]
     end
 
-    lines.presence || [["Описание", template.item_type.to_s.titleize]]
+    lines.presence || [["Description", template.item_type.to_s.titleize]]
   end
 
   def inventory_item_requirements(item)
     template = item.item_template
     requirements = template.requirements.to_h.merge(item.properties.to_h.fetch("requirements", {}))
     weight = item.weight.to_i.positive? ? item.weight : template.weight
-    lines = [["Масса", weight]]
+    lines = [["Mass", weight]]
 
     requirements.each do |label, value|
       lines << [label.to_s.titleize, value]

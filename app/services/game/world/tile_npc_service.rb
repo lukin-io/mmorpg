@@ -7,7 +7,7 @@ module Game
     # Usage:
     #   service = Game::World::TileNpcService.new(
     #     character: current_character,
-    #     zone: "Окрестность Форпоста",
+    #     zone: "Outpost Surroundings",
     #     x: 5,
     #     y: 7
     #   )

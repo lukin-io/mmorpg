@@ -162,12 +162,12 @@ RSpec.describe CityHotspot, type: :model do
 
     it "returns unavailable message when inactive" do
       hotspot.update!(active: false)
-      expect(hotspot.interaction_blocked_reason(character)).to include("недоступна")
+      expect(hotspot.interaction_blocked_reason(character)).to include("unavailable")
     end
 
     it "returns level message when level too low" do
       hotspot.update!(required_level: 20)
-      expect(hotspot.interaction_blocked_reason(character)).to include("уровень 20")
+      expect(hotspot.interaction_blocked_reason(character)).to include("level 20")
     end
   end
 
@@ -184,10 +184,10 @@ RSpec.describe CityHotspot, type: :model do
       expect(hotspot.navigate_url).to eq("/arena")
     end
 
-    it "returns nil for documented but unimplemented feature routes" do
+    it "returns feature URL for the implemented shop route" do
       hotspot.update!(action_type: "open_feature", action_params: {"feature" => "shop"})
 
-      expect(hotspot.navigate_url).to be_nil
+      expect(hotspot.navigate_url).to eq("/shop")
     end
   end
 
@@ -268,6 +268,7 @@ RSpec.describe CityHotspot, type: :model do
 
     it "defines FEATURE_ROUTES" do
       expect(described_class::FEATURE_ROUTES["arena"]).to eq("/arena")
+      expect(described_class::FEATURE_ROUTES["shop"]).to eq("/shop")
       expect(described_class::FEATURE_ROUTES).not_to have_key("bank")
     end
   end

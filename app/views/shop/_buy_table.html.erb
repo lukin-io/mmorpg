@@ -1,0 +1,62 @@
+<% if items.any? %>
+  <table class="nl-shop-table">
+    <thead>
+      <tr>
+        <th>Item</th>
+        <th>Properties</th>
+        <th>Requirements</th>
+        <th>Stock</th>
+        <th>Price</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% items.each do |template| %>
+        <% block_reason = shop_buy_block_reason(template) %>
+        <tr>
+          <td class="nl-shop-item-cell">
+            <span class="nl-shop-item-icon"><%= shop_item_icon(template) %></span>
+            <strong><%= template.name %></strong>
+          </td>
+          <td>
+            <table class="nl-profile-table nl-shop-inner-table">
+              <% shop_item_properties(template).each do |label, value| %>
+                <tr>
+                  <th><%= label %></th>
+                  <td><%= value %></td>
+                </tr>
+              <% end %>
+            </table>
+          </td>
+          <td>
+            <ul class="nl-shop-requirements">
+              <% shop_item_requirements(template).each do |label, value, met| %>
+                <li class="<%= 'nl-shop-requirement--missing' unless met %>">
+                  <span><%= label %></span>
+                  <b><%= value %></b>
+                </li>
+              <% end %>
+            </ul>
+          </td>
+          <td><%= shop_stock_label(template) %></td>
+          <td><b><%= number_with_delimiter(template.base_price) %> NV</b></td>
+          <td>
+            <% if block_reason %>
+              <span class="invbut invbut--disabled"><%= block_reason %></span>
+            <% else %>
+              <%= form_with url: buy_shop_path, method: :post, class: "nl-shop-action-form" do |f| %>
+                <%= f.hidden_field :mode, value: @mode %>
+                <%= f.hidden_field :category, value: @category %>
+                <%= f.hidden_field :item_template_id, value: template.id %>
+                <%= f.number_field :quantity, value: 1, min: 1, max: template.stack_limit, class: "nl-shop-qty", aria: {label: "Quantity #{template.name}"} %>
+                <%= f.submit "Buy", class: "invbut", data: {turbo_confirm: "Buy #{template.name}?"} %>
+              <% end %>
+            <% end %>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+<% else %>
+  <p class="nl-profile-empty nl-shop-empty">There are no items in this shop section.</p>
+<% end %>

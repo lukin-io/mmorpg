@@ -11,6 +11,7 @@ Primary references:
 
 - `doc/design/reference/neverlands.md`
 - `doc/design/reference/neverlands_live_lavka_shop.md`
+- `doc/design/reference/neverlands_live_game_shell_ui.md`
 
 Observed shop flow:
 
@@ -25,6 +26,11 @@ availability.
 Do not model this as a global marketplace/kiosk route. The Neverlands-shaped
 surface is a city building with tabs for buying goods, licenses, selling goods,
 and novice goods.
+
+The 2026-05-25 shell/UI capture confirms the shop is a normal building shell:
+top vitals/actions remain visible, `Город` is the return action, shop content
+loads inside the main surface, and each AJAX response refreshes profile,
+inventory, return, and shop action keys.
 
 ## Player Experience
 
@@ -48,6 +54,14 @@ economy state.
 - Buying checks money, stock, item requirements, and inventory capacity.
 - Selling checks ownership and whether the item can be sold.
 - Shop actions refresh the visible item list and current action keys.
+- Shop tabs are buy goods, licenses, sell goods, and novice goods.
+- Buy/sell/novice modes use category filters plus level and price filters.
+- License mode hides the category/price filters and loads license goods.
+- Item rows show player wallet, carried mass, shop funds, stock, price,
+  properties, requirements, and unavailable reasons.
+- Buying and selling are confirmable, item-specific, server-authorized actions.
+- After any shop request, replace the item list from the server response
+  instead of mutating it only in browser state.
 
 ## Known But Deferred
 

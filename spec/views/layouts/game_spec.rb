@@ -5,7 +5,7 @@ require "rails_helper"
 RSpec.describe "layouts/game.html.erb", type: :view do
   let(:user) { create(:user) }
   let(:character) { create(:character, user: user, name: "max_kerby_layout", level: 10) }
-  let(:zone) { create(:zone, name: "Окрестность Форпоста", location_type: "outdoor") }
+  let(:zone) { create(:zone, name: "Outpost Surroundings", location_type: "outdoor") }
   let(:position) { create(:character_position, character: character, zone: zone) }
   let(:chat_channel) { create(:chat_channel, name: "Global", channel_type: :global) }
 
@@ -82,13 +82,13 @@ RSpec.describe "layouts/game.html.erb", type: :view do
     it "includes character link" do
       render template: "layouts/game", layout: false
 
-      expect(rendered).to have_link("Персонаж", class: "nl-nav-link")
+      expect(rendered).to have_link("Character", class: "nl-nav-link")
     end
 
     it "includes inventory link" do
       render template: "layouts/game", layout: false
 
-      expect(rendered).to have_link("Инвентарь", class: "nl-nav-link")
+      expect(rendered).to have_link("Inventory", class: "nl-nav-link")
     end
 
     it "includes return/exit link" do
@@ -155,7 +155,7 @@ RSpec.describe "layouts/game.html.erb", type: :view do
       render template: "layouts/game", layout: false
 
       expect(rendered).to have_css(".nl-action-area")
-      expect(rendered).to have_css(".nl-action-btn-small", text: "Сказать")
+      expect(rendered).to have_css(".nl-action-btn-small", text: "Say")
     end
 
     it "includes chat area" do
@@ -211,7 +211,7 @@ RSpec.describe "layouts/game.html.erb", type: :view do
     it "shows city exit link" do
       render template: "layouts/game", layout: false
 
-      expect(rendered).to have_link("Выход", class: "nl-nav-link")
+      expect(rendered).to have_link("Exit", class: "nl-nav-link")
     end
   end
 

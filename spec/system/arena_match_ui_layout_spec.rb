@@ -97,13 +97,13 @@ RSpec.describe "Arena Match UI Layout", type: :system do
 
     it "shows attack selectors with dynamic physical costs" do
       visit arena_match_path(match)
-      expect(page).to have_css(".nl-fight-selector-table option", text: "Простой удар [ 45 ]")
-      expect(page).to have_css(".nl-fight-selector-table option", text: "Прицельный удар [ 65 ]")
+      expect(page).to have_css(".nl-fight-selector-table option", text: "Simple Attack [ 45 ]")
+      expect(page).to have_css(".nl-fight-selector-table option", text: "Aimed Attack [ 65 ]")
     end
 
     it "shows turn submit button" do
       visit arena_match_path(match)
-      expect(page).to have_button("Сделать ход")
+      expect(page).to have_button("Submit Turn")
     end
 
     it "shows body part selection dropdown" do
@@ -113,8 +113,8 @@ RSpec.describe "Arena Match UI Layout", type: :system do
 
     it "shows defense/block selector" do
       visit arena_match_path(match)
-      expect(page).to have_css(".nl-fight-selector-table option", text: "Блок корпуса [ 30 ]")
-      expect(page).to have_css(".nl-fight-selector-table option", text: "Блок головы [ 35 ]")
+      expect(page).to have_css(".nl-fight-selector-table option", text: "Torso Block [ 30 ]")
+      expect(page).to have_css(".nl-fight-selector-table option", text: "Head Block [ 35 ]")
     end
 
     it "shows shield block table when current fighter has a shield equipped" do
@@ -125,7 +125,7 @@ RSpec.describe "Arena Match UI Layout", type: :system do
       create(:inventory_item, inventory: character1.inventory, item_template: shield, equipped: true)
 
       visit arena_match_path(match)
-      expect(page).to have_css(".nl-fight-selector-table option", text: "Блок щитом: корпус [ 40 ]")
+      expect(page).to have_css(".nl-fight-selector-table option", text: "Shield Block: Torso [ 40 ]")
     end
   end
 
@@ -137,7 +137,7 @@ RSpec.describe "Arena Match UI Layout", type: :system do
 
     it "shows fight-start message for live match" do
       visit arena_match_path(match)
-      expect(page).to have_css(".combat-log-entry", text: "Бой начался")
+      expect(page).to have_css(".combat-log-entry", text: "Fight started")
     end
   end
 
@@ -149,12 +149,12 @@ RSpec.describe "Arena Match UI Layout", type: :system do
 
     it "shows match type" do
       visit arena_match_path(match)
-      expect(page).to have_content("Дуэли")
+      expect(page).to have_content("Duels")
     end
 
     it "shows match status" do
       visit arena_match_path(match)
-      expect(page).to have_css(".badge", text: "Идет")
+      expect(page).to have_css(".badge", text: "Live")
     end
 
     it "shows room name" do
@@ -166,30 +166,30 @@ RSpec.describe "Arena Match UI Layout", type: :system do
   describe "Opponent Stats Display" do
     it "shows opponent stats" do
       visit arena_match_path(match)
-      expect(page).to have_content("Сила:")
+      expect(page).to have_content("Strength:")
     end
 
     it "displays strength label" do
       visit arena_match_path(match)
-      expect(page).to have_content("Сила: 1")
+      expect(page).to have_content("Strength: 1")
     end
 
     it "displays dexterity label" do
       visit arena_match_path(match)
-      expect(page).to have_content("Ловкость: 1")
+      expect(page).to have_content("Dexterity: 1")
     end
   end
 
   describe "Status Badge" do
     it "shows Live badge for active match" do
       visit arena_match_path(match)
-      expect(page).to have_css(".badge--live", text: "Идет")
+      expect(page).to have_css(".badge--live", text: "Live")
     end
 
     it "shows Completed badge when match ends" do
       character2.update!(current_hp: 0)
       visit arena_match_path(match)
-      expect(page).to have_css(".badge--completed", text: "Завершен")
+      expect(page).to have_css(".badge--completed", text: "Finished")
     end
   end
 
@@ -202,7 +202,7 @@ RSpec.describe "Arena Match UI Layout", type: :system do
       it "shows victory text" do
         visit arena_match_path(match)
         expect(page).to have_css(".arena-result--victory")
-        expect(page).to have_content("Победа")
+        expect(page).to have_content("Victory")
       end
 
       it "shows winner name" do
@@ -212,14 +212,14 @@ RSpec.describe "Arena Match UI Layout", type: :system do
 
       it "shows finish fight button before returning to arena" do
         visit arena_match_path(match)
-        expect(page).to have_button("Завершить бой")
+        expect(page).to have_button("Finish Fight")
       end
 
       it "shows return to arena after the result screen is finished" do
         participation1.update!(metadata: {"finished_at" => Time.current.iso8601})
 
         visit arena_match_path(match)
-        expect(page).to have_link("К арене")
+        expect(page).to have_link("To Arena")
       end
     end
 
@@ -231,7 +231,7 @@ RSpec.describe "Arena Match UI Layout", type: :system do
       it "shows defeat text" do
         visit arena_match_path(match)
         expect(page).to have_css(".arena-result--defeat")
-        expect(page).to have_content("Поражение")
+        expect(page).to have_content("Defeat")
       end
     end
   end
@@ -251,9 +251,9 @@ RSpec.describe "Arena Match UI Layout", type: :system do
       expect(page).not_to have_css(".arena-action-panel")
     end
 
-    it "shows Просмотр text" do
+    it "shows Spectating text" do
       visit arena_match_path(match)
-      expect(page).to have_content("Просмотр")
+      expect(page).to have_content("Spectating")
     end
 
     context "when match ends" do
@@ -263,7 +263,7 @@ RSpec.describe "Arena Match UI Layout", type: :system do
 
       it "shows winner in combat log" do
         visit arena_match_path(match)
-        expect(page).to have_content("Победитель")
+        expect(page).to have_content("Winner")
       end
     end
   end

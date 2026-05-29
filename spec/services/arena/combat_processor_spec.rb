@@ -143,7 +143,7 @@ RSpec.describe Arena::CombatProcessor do
         )
 
         expect(result.success?).to be false
-        expect(result.error).to eq("Бой не активен")
+        expect(result.error).to eq("Fight is not active")
       end
     end
 
@@ -162,7 +162,7 @@ RSpec.describe Arena::CombatProcessor do
         )
 
         expect(result.success?).to be false
-        expect(result.error).to eq("Персонаж не участвует в этом бою")
+        expect(result.error).to eq("Character is not participating in this fight")
       end
     end
 
@@ -179,7 +179,7 @@ RSpec.describe Arena::CombatProcessor do
         )
 
         expect(result.success?).to be false
-        expect(result.error).to eq("Персонаж повержен")
+        expect(result.error).to eq("Character is defeated")
       end
     end
   end
@@ -245,13 +245,13 @@ RSpec.describe Arena::CombatProcessor do
     let(:npc_template) do
       create(:npc_template,
         role: "arena_bot",
-        name: "Манекен",
+        name: "Training Dummy",
         level: 5,
         metadata: {
           "base_damage" => 15,
           "ai_behavior" => "passive",
           "loot_table" => [
-            {"item_key" => "wood_chips", "item_name" => "Щепки", "chance" => 1.0, "quantity" => 1}
+            {"item_key" => "wood_chips", "item_name" => "Wood Chips", "chance" => 1.0, "quantity" => 1}
           ]
         })
     end
@@ -260,7 +260,7 @@ RSpec.describe Arena::CombatProcessor do
       create(:item_template,
         :material,
         key: "wood_chips",
-        name: "Щепки",
+        name: "Wood Chips",
         weight: 1,
         stack_limit: 99)
     end
@@ -332,7 +332,7 @@ RSpec.describe Arena::CombatProcessor do
 
       expect(result).to be_success
       expect(result[:attacks].size).to eq(2)
-      damage_entries = npc_match.reload.combat_log_entries.select { |entry| entry.log_type == "damage" && entry.message.include?("Манекен attacks") }
+      damage_entries = npc_match.reload.combat_log_entries.select { |entry| entry.log_type == "damage" && entry.message.include?("Training Dummy attacks") }
       expect(damage_entries.map(&:message).join(" ")).to include("stomach", "legs")
     end
 
@@ -356,12 +356,12 @@ RSpec.describe Arena::CombatProcessor do
       log_entries = npc_match.reload.combat_log_entries
       expect(log_entries.map(&:log_type)).to include("defeat", "loot", "victory")
       loot_entry = log_entries.find { |entry| entry.log_type == "loot" }
-      expect(loot_entry.message).to include("searched Манекен")
-      expect(loot_entry.message).to include("Вещь «Щепки»")
+      expect(loot_entry.message).to include("searched Training Dummy")
+      expect(loot_entry.message).to include("Item «Wood Chips»")
       expect(character1.inventory.inventory_items.find_by(item_template: wood_chips).quantity).to eq(1)
       expect(npc_player_participation.reload.metadata["loot_drops"].last).to include(
         "item_key" => "wood_chips",
-        "item_name" => "Щепки",
+        "item_name" => "Wood Chips",
         "quantity" => 1
       )
     end
@@ -426,7 +426,7 @@ RSpec.describe Arena::CombatProcessor do
         )
 
         expect(result.success?).to be false
-        expect(result.error).to include("Недостаточно ОД")
+        expect(result.error).to include("Not enough AP")
       end
 
       it "processes a Neverlands-style turn package with attack and block" do
@@ -627,7 +627,7 @@ RSpec.describe Arena::CombatProcessor do
           actor: character1
         )
 
-        expect(errors).to include("Недопустимая магия 1: unknown_action")
+        expect(errors).to include("Invalid magic 1: unknown_action")
       end
 
       it "rejects captured magic blocks above the fight mana ceiling" do
@@ -716,7 +716,7 @@ RSpec.describe Arena::CombatProcessor do
         )
 
         expect(result.success?).to be false
-        expect(result.error).to include("Превышен лимит ОД")
+        expect(result.error).to include("AP limit exceeded")
         expect(result.error).to include("155/#{character1_ap_limit}")
       end
 

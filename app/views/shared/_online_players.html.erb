@@ -10,7 +10,7 @@
      .limit(50) rescue [] %>
 
 <div class="online-header">
-  Онлайн
+  Online
   <span class="online-count">(<%= online_users.size %>)</span>
 </div>
 
@@ -26,7 +26,7 @@
 
   <% if online_users.empty? %>
     <div class="online-empty">
-      <p class="text-muted text-sm">Нет игроков</p>
+      <p class="text-muted text-sm">No players</p>
     </div>
   <% end %>
 </div>

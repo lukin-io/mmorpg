@@ -14,12 +14,11 @@ class CityHotspot < ApplicationRecord
   ACTION_TYPES = %w[enter_zone open_feature].freeze
 
   FEATURE_ROUTES = {
-    "arena" => "/arena"
+    "arena" => "/arena",
+    "shop" => "/shop"
   }.freeze
 
-  PENDING_FEATURES = {
-    "shop" => "Лавка задокументирована по Neverlands и ожидает реализации."
-  }.freeze
+  PENDING_FEATURES = {}.freeze
 
   belongs_to :zone
   belongs_to :destination_zone, class_name: "Zone", optional: true
@@ -55,8 +54,8 @@ class CityHotspot < ApplicationRecord
   # @param character [Character] the character trying to interact
   # @return [String, nil] error message or nil if can interact
   def interaction_blocked_reason(character)
-    return "Локация сейчас недоступна." unless active?
-    return "Нужен уровень #{required_level}." if character.level < required_level
+    return "Location is currently unavailable." unless active?
+    return "Requires level #{required_level}." if character.level < required_level
 
     nil
   end

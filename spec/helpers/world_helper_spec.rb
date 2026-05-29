@@ -5,41 +5,41 @@ require "rails_helper"
 RSpec.describe WorldHelper, type: :helper do
   describe "#format_time_remaining" do
     it "returns current-state text for nil" do
-      expect(helper.format_time_remaining(nil)).to eq("сейчас")
+      expect(helper.format_time_remaining(nil)).to eq("now")
     end
 
     it "returns current-state text for zero" do
-      expect(helper.format_time_remaining(0)).to eq("сейчас")
+      expect(helper.format_time_remaining(0)).to eq("now")
     end
 
     it "returns current-state text for negative numbers" do
-      expect(helper.format_time_remaining(-5)).to eq("сейчас")
+      expect(helper.format_time_remaining(-5)).to eq("now")
     end
 
     it "formats seconds only" do
-      expect(helper.format_time_remaining(45)).to eq("45 сек.")
+      expect(helper.format_time_remaining(45)).to eq("45s")
     end
 
     it "formats minutes and seconds" do
-      expect(helper.format_time_remaining(90)).to eq("1 мин. 30 сек.")
+      expect(helper.format_time_remaining(90)).to eq("1m 30s")
     end
 
     it "formats minutes only when no remaining seconds" do
-      expect(helper.format_time_remaining(120)).to eq("2 мин.")
+      expect(helper.format_time_remaining(120)).to eq("2m")
     end
 
     it "formats hours and minutes" do
-      expect(helper.format_time_remaining(3900)).to eq("1 ч. 5 мин.")
+      expect(helper.format_time_remaining(3900)).to eq("1h 5m")
     end
 
     it "formats hours only when no remaining minutes" do
-      expect(helper.format_time_remaining(7200)).to eq("2 ч.")
+      expect(helper.format_time_remaining(7200)).to eq("2h")
     end
   end
 
   describe "#in_city?" do
-    let(:city_zone) { create(:zone, name: "Форпост", location_type: "city") }
-    let(:outdoor_zone) { create(:zone, name: "Окрестность Форпоста", location_type: "outdoor") }
+    let(:city_zone) { create(:zone, name: "Outpost", location_type: "city") }
+    let(:outdoor_zone) { create(:zone, name: "Outpost Surroundings", location_type: "outdoor") }
     let(:character) { create(:character) }
 
     it "returns true for city location type" do

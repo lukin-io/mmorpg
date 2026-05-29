@@ -32,32 +32,32 @@ RSpec.describe "Inventory & Progression UI", type: :system, js: true do
 
   describe "success cases" do
     it "equips and unequips an item from the inventory UI" do
-      sword_template = create(:item_template, name: "Перочинный Нож", item_type: "equipment", slot: "main_hand")
+      sword_template = create(:item_template, name: "Pocket Knife", item_type: "equipment", slot: "main_hand")
       sword = create(:inventory_item, inventory: character.inventory, item_template: sword_template)
 
       visit inventory_path
 
-      click_visible_button_in(".inventory-slot.filled[data-item-id='#{sword.id}']", "Надеть")
+      click_visible_button_in(".inventory-slot.filled[data-item-id='#{sword.id}']", "Wear")
 
       expect(page).to have_css(".equipment-slot--main_hand.filled", wait: 5)
 
       equipment_slot = find(".equipment-slot--main_hand", wait: 5)
       scroll_to(equipment_slot, align: :center)
-      equipment_slot.click
+      within(equipment_slot) { click_button "Remove Weapon" }
 
       expect(page).to have_css(".equipment-slot--main_hand:not(.filled)", wait: 5)
     end
 
     it "uses a consumable item from the inventory UI" do
-      potion_template = create(:item_template, :consumable, name: "Зелье жизни", stat_modifiers: {"heal_hp" => 10})
+      potion_template = create(:item_template, :consumable, name: "Life Potion", stat_modifiers: {"heal_hp" => 10})
       potion = create(:inventory_item, inventory: character.inventory, item_template: potion_template)
       character.update!(current_hp: 50, max_hp: 100)
 
       visit inventory_path
 
-      click_visible_button_in(".inventory-slot.filled[data-item-id='#{potion.id}']", "Использовать")
+      click_visible_button_in(".inventory-slot.filled[data-item-id='#{potion.id}']", "Use")
 
-      expect(page).to have_css("#flash", text: "Восстановлено", wait: 5)
+      expect(page).to have_css("#flash", text: "Restored", wait: 5)
       expect(page).to have_no_css(".inventory-slot.filled[data-item-id='#{potion.id}']", wait: 5)
     end
 
@@ -65,29 +65,29 @@ RSpec.describe "Inventory & Progression UI", type: :system, js: true do
       visit stats_character_path(character)
 
       click_visible("button[data-stat-allocation-stat-param='strength'].nl-stat-btn--plus")
-      click_visible_button("Сохранить")
+      click_visible_button("Save")
 
-      expect(page).to have_css("#flash", text: "Характеристики сохранены")
+      expect(page).to have_css("#flash", text: "Stats saved")
     end
 
     it "allocates passive skill points with client-side +/- and saves via Turbo" do
       visit skills_character_path(character)
 
       click_visible("button[data-skill-allocation-skill-param='unarmed_combat'].nl-stat-btn--plus")
-      click_visible_button("Сохранить")
+      click_visible_button("Save")
 
-      expect(page).to have_css("#flash", text: "Умения сохранены")
+      expect(page).to have_css("#flash", text: "Skills saved")
     end
   end
 
   describe "failure cases" do
     it "shows a notification when attempting to equip a non-equipment item" do
-      consumable_template = create(:item_template, :consumable, name: "Зелье")
+      consumable_template = create(:item_template, :consumable, name: "Potion")
       item = create(:inventory_item, inventory: character.inventory, item_template: consumable_template)
 
       visit inventory_path
 
-      expect(page).to have_no_button("Надеть", disabled: false)
+      expect(page).to have_no_button("Wear", disabled: false)
 
       expect(page).to have_css(".inventory-slot.filled[data-item-id='#{item.id}']", wait: 5)
     end
@@ -102,9 +102,9 @@ RSpec.describe "Inventory & Progression UI", type: :system, js: true do
         document.querySelector('[data-stat-allocation-target="saveButton"]').removeAttribute("disabled")
       JS
 
-      click_visible_button("Сохранить")
+      click_visible_button("Save")
 
-      expect(page).to have_css("#flash", text: "Недостаточно свободных очков характеристик")
+      expect(page).to have_css("#flash", text: "Not enough free stat points")
     end
 
     it "rejects skill allocations that exceed available points (server-side validation)" do
@@ -117,22 +117,22 @@ RSpec.describe "Inventory & Progression UI", type: :system, js: true do
         document.querySelector('[data-skill-allocation-target="saveButton"]').removeAttribute("disabled")
       JS
 
-      click_visible_button("Сохранить")
+      click_visible_button("Save")
 
-      expect(page).to have_css("#flash", text: "Недостаточно боевых очков")
+      expect(page).to have_css("#flash", text: "Not enough combat points")
     end
   end
 
   describe "null/edge cases" do
     it "shows an error when using a consumable with no effect" do
-      empty_consumable = create(:item_template, item_type: "consumable", slot: "none", stat_modifiers: {"mystery" => 1}, name: "Неизвестное зелье")
+      empty_consumable = create(:item_template, item_type: "consumable", slot: "none", stat_modifiers: {"mystery" => 1}, name: "Unknown Potion")
       item = create(:inventory_item, inventory: character.inventory, item_template: empty_consumable)
 
       visit inventory_path
 
-      click_visible_button_in(".inventory-slot.filled[data-item-id='#{item.id}']", "Использовать")
+      click_visible_button_in(".inventory-slot.filled[data-item-id='#{item.id}']", "Use")
 
-      expect(page).to have_css("#flash", text: "Нет подходящего эффекта", wait: 5)
+      expect(page).to have_css("#flash", text: "No usable effect", wait: 5)
     end
   end
 
@@ -143,7 +143,7 @@ RSpec.describe "Inventory & Progression UI", type: :system, js: true do
 
       visit stats_character_path(other_character)
 
-      expect(page).to have_css("#flash", text: "Можно управлять только своим персонажем")
+      expect(page).to have_css("#flash", text: "You can only manage your own character")
     end
 
     it "redirects unauthenticated users to login" do
@@ -151,7 +151,7 @@ RSpec.describe "Inventory & Progression UI", type: :system, js: true do
 
       visit inventory_path
 
-      expect(page).to have_current_path(/sign_in/).or have_content("Вход")
+      expect(page).to have_current_path(/sign_in/).or have_content("Sign In")
     end
   end
 end

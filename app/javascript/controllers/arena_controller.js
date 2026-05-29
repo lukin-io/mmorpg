@@ -86,7 +86,7 @@ export default class extends Controller {
       const data = await response.json()
 
       if (data.success) {
-        this.showSuccess("Заявка подана.")
+        this.showSuccess("Application submitted.")
         form.reset()
         this.disableForm()
       } else {
@@ -138,7 +138,7 @@ export default class extends Controller {
     event.preventDefault()
     const applicationId = event.currentTarget.dataset.applicationId
 
-    if (!confirm("Снять заявку?")) {
+    if (!confirm("Cancel application?")) {
       return
     }
 
@@ -154,7 +154,7 @@ export default class extends Controller {
       const data = await response.json()
 
       if (data.success) {
-        this.showSuccess("Заявка снята.")
+        this.showSuccess("Application canceled.")
         this.enableForm()
       } else {
         this.showError(data.errors?.join(", ") || "Failed to cancel application")
@@ -181,7 +181,7 @@ export default class extends Controller {
     if (!this.hasCountdownTarget) return
 
     if (seconds <= 0) {
-      this.countdownTarget.querySelector(".arena-countdown-timer").textContent = "Бой начался"
+      this.countdownTarget.querySelector(".arena-countdown-timer").textContent = "Fight started"
       this.countdownTarget.querySelector(".arena-countdown-timer").classList.add("arena-countdown-timer--final")
 
       // Redirect to match after brief delay
@@ -270,14 +270,14 @@ export default class extends Controller {
         <div class="arena-application-info">
           <strong>${app.applicant_name}</strong> [${app.applicant_level}]
           <span class="arena-application-timer">
-            Осталось ${Math.floor(app.expires_in / 60)} мин
+            Remaining ${Math.floor(app.expires_in / 60)} min
           </span>
         </div>
         <div class="arena-application-actions">
           <button class="btn-primary btn-sm"
                   data-action="click->arena#acceptApplication"
                   data-application-id="${app.id}">
-            Принять
+            Accept
           </button>
         </div>
       </div>
@@ -286,9 +286,9 @@ export default class extends Controller {
 
   fightTypeLabel(type) {
     const labels = {
-      duel: "Дуэли",
-      team_battle: "Групповые",
-      sacrifice: "Жертвенные"
+      duel: "Duels",
+      team_battle: "Team Battles",
+      sacrifice: "Sacrifice"
     }
     return labels[type] || type
   }
@@ -300,12 +300,12 @@ export default class extends Controller {
     const timeout = formData.get("timeout_seconds")
 
     if (!fightType) {
-      this.showError("Выберите тип боя")
+      this.showError("Choose a fight kind")
       return false
     }
 
     if (!timeout) {
-      this.showError("Выберите таймаут")
+      this.showError("Choose a timeout")
       return false
     }
 

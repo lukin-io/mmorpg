@@ -5,7 +5,7 @@ require "rails_helper"
 RSpec.describe Game::Movement::AcceptMove do
   include ActiveSupport::Testing::TimeHelpers
 
-  let(:zone) { create(:zone, name: "Окрестность Форпоста", location_type: "outdoor", width: 10, height: 10) }
+  let(:zone) { create(:zone, name: "Outpost Surroundings", location_type: "outdoor", width: 10, height: 10) }
   let(:character) { create(:character) }
   let!(:position) { create(:character_position, character:, zone:, x: 5, y: 5) }
 

@@ -19,7 +19,7 @@
   <div class="fighter-avatar">
     <%= participation_avatar_tag(participation, size: :large) %>
     <% if defeated %>
-      <div class="fighter-defeated-overlay">Повержен</div>
+      <div class="fighter-defeated-overlay">Defeated</div>
     <% end %>
   </div>
 
@@ -55,34 +55,34 @@
   <% end %>
 
   <div class="fighter-combat-power">
-    <span class="fighter-power" title="Атака учитывает силу, ловкость, уровень и оружие">
-      Атака <%= p_data.attack_power %>
+    <span class="fighter-power" title="Attack uses strength, dexterity, level, and weapon">
+      Attack <%= p_data.attack_power %>
     </span>
-    <span class="fighter-power" title="Защита учитывает выносливость, силу, уровень и броню">
-      Защита <%= p_data.defense %>
+    <span class="fighter-power" title="Defense uses vitality, strength, level, and armor">
+      Defense <%= p_data.defense %>
     </span>
   </div>
 
   <%# Stats (shown for opponent) %>
   <% if show_stats %>
     <div class="fighter-stats fighter-stats--nl">
-      <div>Сила: <b><%= p_data.strength %></b></div>
-      <div>Ловкость: <b><%= p_data.dexterity %></b></div>
-      <div>Удача: <b><%= p_data.luck %></b></div>
-      <div>Знания: <b><%= p_data.knowledge %></b></div>
-      <div>Класс брони: <b><%= p_data.armor_class %></b></div>
-      <div>Уворот: <b><%= p_data.evasion %></b></div>
-      <div>Точность: <b><%= p_data.accuracy %></b></div>
-      <div>Сокрушение: <b><%= p_data.crushing %></b></div>
-      <div>Стойкость: <b><%= p_data.endurance %></b></div>
-      <div>Пробой брони: <b><%= p_data.armor_penetration %></b></div>
+      <div>Strength: <b><%= p_data.strength %></b></div>
+      <div>Dexterity: <b><%= p_data.dexterity %></b></div>
+      <div>Luck: <b><%= p_data.luck %></b></div>
+      <div>Knowledge: <b><%= p_data.knowledge %></b></div>
+      <div>Armor Class: <b><%= p_data.armor_class %></b></div>
+      <div>Dodge: <b><%= p_data.evasion %></b></div>
+      <div>Accuracy: <b><%= p_data.accuracy %></b></div>
+      <div>Crushing: <b><%= p_data.crushing %></b></div>
+      <div>Fortitude: <b><%= p_data.endurance %></b></div>
+      <div>Armor Pierce: <b><%= p_data.armor_penetration %></b></div>
     </div>
   <% end %>
 
   <%# Result badge (if match completed) %>
   <% if participation.result.present? && participation.result != "pending" %>
     <div class="fighter-result fighter-result--<%= participation.result %>">
-      <%= { "victory" => "Победа", "defeat" => "Поражение", "draw" => "Ничья" }.fetch(participation.result, participation.result) %>
+      <%= { "victory" => "Victory", "defeat" => "Defeat", "draw" => "Draw" }.fetch(participation.result, participation.result) %>
     </div>
   <% end %>
 </div>

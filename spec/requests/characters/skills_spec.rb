@@ -22,26 +22,26 @@ RSpec.describe "Characters Skills", type: :request do
 
       it "displays skill names" do
         get skills_character_path(character)
-        expect(response.body).to include("Странник")
-        expect(response.body).to include("Рукопашный бой")
-        expect(response.body).to include("Самолечение")
+        expect(response.body).to include("Wanderer")
+        expect(response.body).to include("Unarmed Combat")
+        expect(response.body).to include("Self-Healing")
       end
 
       it "displays combat skill points" do
         get skills_character_path(character)
-        expect(response.body).to include("Боевые очки:")
+        expect(response.body).to include("Combat points:")
       end
 
       it "displays peace skill points" do
         get skills_character_path(character)
-        expect(response.body).to include("Мирные очки:")
+        expect(response.body).to include("Peace points:")
       end
 
       it "displays skill categories" do
         get skills_character_path(character)
-        expect(response.body).to include("Боевые умения")
-        expect(response.body).to include("Магия")
-        expect(response.body).to include("Мирные умения")
+        expect(response.body).to include("Combat Skills")
+        expect(response.body).to include("Magic")
+        expect(response.body).to include("Peace Skills")
       end
 
       it "displays skill level format" do

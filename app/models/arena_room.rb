@@ -76,17 +76,17 @@ class ArenaRoom < ApplicationRecord
   # @param character [Character] the character to check
   # @return [String] explanation of access requirement
   def access_requirement_text(character)
-    return "Зал недоступен" unless active?
+    return "Room is unavailable" unless active?
 
     unless character.level.between?(level_min, level_max)
-      return "Нужен уровень #{level_min}-#{level_max}; ваш уровень #{character.level}"
+      return "Requires level #{level_min}-#{level_max}; your level #{character.level}"
     end
 
     if alignment_restriction.present? && character.alignment != alignment_restriction
-      return "Не подходит склонность"
+      return "Alignment does not match"
     end
 
-    "Доступно"
+    "Available"
   end
 
   private

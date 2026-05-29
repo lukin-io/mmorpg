@@ -32,14 +32,14 @@
                 <%= f.hidden_field :npc_template_id, value: npc[:npc_template_id] %>
                 <%= f.hidden_field :tile_npc_id, value: npc[:id] %>
                 <%= f.hidden_field :action_key, value: offer.action_key %>
-                <%= f.submit "Напасть", class: "btn-attack" %>
+                <%= f.submit "Attack", class: "btn-attack" %>
               <% end %>
             </div>
           <% else %>
             <div class="npc-defeated">
               <span class="npc-name"><%= npc[:name] %></span>
               <span class="npc-respawn">
-                появится через <%= format_time_remaining(npc[:respawn_in]) %>
+                respawns in <%= format_time_remaining(npc[:respawn_in]) %>
               </span>
             </div>
           <% end %>
@@ -65,7 +65,7 @@
               <%= form_with url: enter_building_world_path, method: :post, data: { turbo: true } do |f| %>
                 <%= f.hidden_field :building_id, value: building[:id] %>
                 <%= f.hidden_field :action_key, value: offer.action_key %>
-                <%= f.submit "Войти", class: "btn-enter-building" %>
+                <%= f.submit "Enter", class: "btn-enter-building" %>
               <% end %>
             <% else %>
               <div class="building-blocked">

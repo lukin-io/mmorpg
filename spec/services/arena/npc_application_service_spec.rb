@@ -20,7 +20,7 @@ RSpec.describe Arena::NpcApplicationService do
       it "uses the captured mannequin application contract in the training room" do
         result = service.create_for_room(room: arena_room)
 
-        expect(result.application.applicant_name).to eq("Манекен")
+        expect(result.application.applicant_name).to eq("Training Dummy")
         expect(result.application.applicant_level).to eq(1)
         expect(result.application.fight_kind).to eq("free")
         expect(result.application.timeout_seconds).to eq(300)
@@ -43,7 +43,7 @@ RSpec.describe Arena::NpcApplicationService do
         result = service.create_for_room(room: arena_room)
 
         expect(result.success?).to be true
-        expect(result.application.applicant_name).to eq("Манекен")
+        expect(result.application.applicant_name).to eq("Training Dummy")
         expect(result.application.metadata).not_to have_key("difficulty")
       end
 
@@ -83,7 +83,7 @@ RSpec.describe Arena::NpcApplicationService do
         result2 = service.create_with_template(room: arena_room, npc_template: npc)
 
         expect(result2.success?).to be false
-        expect(result2.errors).to include("У этого бота уже есть открытая заявка")
+        expect(result2.errors).to include("This NPC already has an open application")
       end
     end
   end
@@ -126,7 +126,7 @@ RSpec.describe Arena::NpcApplicationService do
       results = service.spawn_batch(room: arena_room, count: 3)
       names = results.map { |r| r.application&.applicant_name }.compact
 
-      expect(names).to eq(["Манекен"])
+      expect(names).to eq(["Training Dummy"])
     end
   end
 end

@@ -31,6 +31,38 @@ module PlayerProfileHelper
     45
   end
 
+  # Primary stats with the character's own value (base + allocated) and the
+  # delta contributed by equipped items, matching the captured profile surface.
+  def profile_primary_stats(character)
+    effective = character.stats
+    allocated = character.allocated_stats || {}
+
+    Character::PRIMARY_STATS.map do |key|
+      own = Character::BASE_PRIMARY_STATS.fetch(key) +
+        allocated.sum { |stat, value| (Character.normalize_stat_key(stat) == key) ? value.to_i : 0 }
+      total = effective.get(key).to_i
+
+      {key: key, label: Character.stat_label(key), base: own, equipment: total - own, total: total}
+    end
+  end
+
+  # Derived combat/equipment values shown in the profile capture.
+  def profile_combat_stats(character)
+    {
+      "Attack" => character.attack_power,
+      "Defense" => character.defense,
+      "Critical chance" => "#{character.critical_chance}%",
+      "Action points" => character.max_action_points,
+      "Attack cost" => profile_attack_cost,
+      "Armor class" => character.equipment_effect_value("armor_class"),
+      "Dodge" => "#{character.dodge_bonus}%",
+      "Accuracy" => "#{character.accuracy_bonus}%",
+      "Crushing" => "#{character.equipment_effect_value("crushing")}%",
+      "Fortitude" => "#{character.fortitude_percent}%",
+      "Armor pierce" => "#{character.armor_pierce_percent}%"
+    }
+  end
+
   def profile_fatigue(character)
     character.fatigue_percent.to_i
   end

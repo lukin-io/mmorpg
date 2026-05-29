@@ -48,9 +48,11 @@ Features:
 
 Documentation process:
 
+- `doc/README.md`
 - `doc/design/README.md`
 - `doc/design/launch_mvp_plan.md`
 - `doc/design/reference/neverlands.md`
+- `doc/design/reference/neverlands_live_game_shell_ui.md`
 - `doc/design/reference/source_material.md`
 
 ## Vision

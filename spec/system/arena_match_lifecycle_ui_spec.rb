@@ -61,7 +61,7 @@ RSpec.describe "Arena Match Lifecycle UI", type: :system, js: true do
     it "displays 'Pending' status badge" do
       visit arena_match_path(pending_match)
 
-      expect(page).to have_css(".badge", text: "Ожидание")
+      expect(page).to have_css(".badge", text: "Waiting")
     end
 
     it "displays both participants" do
@@ -74,7 +74,7 @@ RSpec.describe "Arena Match Lifecycle UI", type: :system, js: true do
     it "displays match type" do
       visit arena_match_path(pending_match)
 
-      expect(page).to have_content("Дуэли")
+      expect(page).to have_content("Duels")
     end
 
     it "displays arena room name" do
@@ -87,7 +87,7 @@ RSpec.describe "Arena Match Lifecycle UI", type: :system, js: true do
       visit arena_match_path(pending_match)
 
       within(".arena-combat-log") do
-        expect(page).to have_content("Бой создан")
+        expect(page).to have_content("Fight created")
       end
     end
 
@@ -135,14 +135,14 @@ RSpec.describe "Arena Match Lifecycle UI", type: :system, js: true do
     it "displays active status badge" do
       visit arena_match_path(live_match)
 
-      expect(page).to have_css(".badge", text: "Идет")
+      expect(page).to have_css(".badge", text: "Live")
     end
 
     it "displays fight-start message in combat log" do
       visit arena_match_path(live_match)
 
       within(".arena-combat-log") do
-        expect(page).to have_content("Бой начался")
+        expect(page).to have_content("Fight started")
       end
     end
 
@@ -157,8 +157,8 @@ RSpec.describe "Arena Match Lifecycle UI", type: :system, js: true do
     it "displays attack type choices" do
       visit arena_match_path(live_match)
 
-      expect(page).to have_content("Простой удар")
-      expect(page).to have_content("Прицельный удар")
+      expect(page).to have_content("Simple Attack")
+      expect(page).to have_content("Aimed Attack")
     end
 
     it "displays body part targeting selectors" do
@@ -171,7 +171,7 @@ RSpec.describe "Arena Match Lifecycle UI", type: :system, js: true do
       visit arena_match_path(live_match)
 
       expect(page).to have_css("[data-arena-match-target='blockSelect']")
-      expect(page).to have_content("Блок корпуса").or have_content("Блок головы")
+      expect(page).to have_content("Torso Block").or have_content("Head Block")
     end
 
     it "displays HP info for both participants" do
@@ -191,7 +191,7 @@ RSpec.describe "Arena Match Lifecycle UI", type: :system, js: true do
       visit arena_match_path(live_match)
 
       expect(page).to have_css(".arena-match-bar")
-      expect(page).to have_content("Дуэли")
+      expect(page).to have_content("Duels")
     end
   end
 
@@ -232,7 +232,7 @@ RSpec.describe "Arena Match Lifecycle UI", type: :system, js: true do
     it "page shows updated status after refresh when match goes live" do
       visit arena_match_path(transitioning_match)
 
-      expect(page).to have_content("Ожидание")
+      expect(page).to have_content("Waiting")
 
       # Simulate job execution
       Arena::MatchStarterJob.new.perform(transitioning_match.id)
@@ -240,7 +240,7 @@ RSpec.describe "Arena Match Lifecycle UI", type: :system, js: true do
       # Refresh page
       visit arena_match_path(transitioning_match)
 
-      expect(page).to have_content("Идет")
+      expect(page).to have_content("Live")
     end
   end
 
@@ -279,13 +279,13 @@ RSpec.describe "Arena Match Lifecycle UI", type: :system, js: true do
     it "displays 'Completed' status badge" do
       visit arena_match_path(completed_match)
 
-      expect(page).to have_css(".badge", text: "Завершен")
+      expect(page).to have_css(".badge", text: "Finished")
     end
 
     it "displays victory overlay for winner" do
       visit arena_match_path(completed_match)
 
-      expect(page).to have_content("Победа")
+      expect(page).to have_content("Victory")
         .or have_css(".arena-result--victory")
     end
 
@@ -293,14 +293,14 @@ RSpec.describe "Arena Match Lifecycle UI", type: :system, js: true do
       visit arena_match_path(completed_match)
 
       within(".arena-combat-log") do
-        expect(page).to have_content("Победитель")
+        expect(page).to have_content("Winner")
       end
     end
 
     it "displays return to arena link" do
       visit arena_match_path(completed_match)
 
-      expect(page).to have_link("К арене")
+      expect(page).to have_link("To Arena")
     end
 
     it "does NOT display action buttons" do
@@ -313,7 +313,7 @@ RSpec.describe "Arena Match Lifecycle UI", type: :system, js: true do
       visit arena_match_path(completed_match)
 
       expect(page).to have_css(".arena-match-bar")
-      expect(page).to have_content("Длительность")
+      expect(page).to have_content("Duration")
     end
   end
 
@@ -342,7 +342,7 @@ RSpec.describe "Arena Match Lifecycle UI", type: :system, js: true do
     it "displays viewing state for non-participants" do
       visit arena_match_path(live_match)
 
-      expect(page).to have_content("Просмотр")
+      expect(page).to have_content("Spectating")
     end
 
     it "does NOT display action buttons for non-participants" do

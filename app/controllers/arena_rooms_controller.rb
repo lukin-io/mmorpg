@@ -10,7 +10,7 @@ class ArenaRoomsController < ApplicationController
   # GET /arena_rooms/:id
   def show
     unless @room.accessible_by?(current_character)
-      redirect_to arena_index_path, alert: "Этот зал арены недоступен."
+      redirect_to arena_index_path, alert: "This arena room is unavailable."
       return
     end
 
@@ -22,7 +22,7 @@ class ArenaRoomsController < ApplicationController
 
     if active_participation
       redirect_to arena_match_path(active_participation.arena_match),
-        notice: "У вас уже идет бой."
+        notice: "You already have an active fight."
       return
     end
 
@@ -49,7 +49,7 @@ class ArenaRoomsController < ApplicationController
 
   def require_character
     unless current_character
-      redirect_to root_path, alert: "Для входа на арену нужен персонаж."
+      redirect_to root_path, alert: "A character is required to enter the arena."
     end
   end
 

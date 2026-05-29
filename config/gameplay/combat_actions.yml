@@ -4,22 +4,22 @@
 body_parts:
   head:
     key: "head"
-    name: "Голова"
+    name: "Head"
     damage_multiplier: 1.3
     block_difficulty: 35
   torso:
     key: "torso"
-    name: "Корпус"
+    name: "Torso"
     damage_multiplier: 1.0
     block_difficulty: 30
   stomach:
     key: "stomach"
-    name: "Живот"
+    name: "Abdomen"
     damage_multiplier: 1.1
     block_difficulty: 30
   legs:
     key: "legs"
-    name: "Ноги"
+    name: "Legs"
     damage_multiplier: 0.9
     block_difficulty: 35
 
@@ -30,23 +30,23 @@ attack_types:
   # Basic attacks
   simple:
     key: "simple"
-    name: "Простой удар"
+    name: "Simple Attack"
     action_cost: 45
     mana_cost: 0
     type: 1
     damage_multiplier: 1.0
     hit_bonus: 0
-    description: "Базовый физический удар"
+    description: "Basic physical attack"
 
   aimed:
     key: "aimed"
-    name: "Прицельный удар"
+    name: "Aimed Attack"
     action_cost: 65
     mana_cost: 0
     type: 1
     damage_multiplier: 1.2
     hit_bonus: 15
-    description: "Более точный физический удар"
+    description: "More accurate physical attack"
 
   spirit_arrow:
     key: "spirit_arrow"
@@ -74,7 +74,7 @@ attack_types:
 block_types:
   head_block:
     key: "head_block"
-    name: "Блок головы"
+    name: "Head Block"
     action_cost: 35
     mana_cost: 0
     type: 2
@@ -82,7 +82,7 @@ block_types:
 
   head_torso_block:
     key: "head_torso_block"
-    name: "Блок головы и корпуса"
+    name: "Head and Torso Block"
     action_cost: 50
     mana_cost: 0
     type: 2
@@ -90,7 +90,7 @@ block_types:
 
   head_stomach_block:
     key: "head_stomach_block"
-    name: "Блок головы и живота"
+    name: "Head and Abdomen Block"
     action_cost: 60
     mana_cost: 0
     type: 2
@@ -98,7 +98,7 @@ block_types:
 
   torso_block:
     key: "torso_block"
-    name: "Блок корпуса"
+    name: "Torso Block"
     action_cost: 30
     mana_cost: 0
     type: 2
@@ -106,7 +106,7 @@ block_types:
 
   torso_stomach_block:
     key: "torso_stomach_block"
-    name: "Блок корпуса и живота"
+    name: "Torso and Abdomen Block"
     action_cost: 50
     mana_cost: 0
     type: 2
@@ -114,7 +114,7 @@ block_types:
 
   torso_legs_block:
     key: "torso_legs_block"
-    name: "Блок корпуса и ног"
+    name: "Torso and Legs Block"
     action_cost: 60
     mana_cost: 0
     type: 2
@@ -122,7 +122,7 @@ block_types:
 
   stomach_block:
     key: "stomach_block"
-    name: "Блок живота"
+    name: "Abdomen Block"
     action_cost: 30
     mana_cost: 0
     type: 2
@@ -130,7 +130,7 @@ block_types:
 
   stomach_legs_block:
     key: "stomach_legs_block"
-    name: "Блок живота и ног"
+    name: "Abdomen and Legs Block"
     action_cost: 50
     mana_cost: 0
     type: 2
@@ -138,7 +138,7 @@ block_types:
 
   legs_block:
     key: "legs_block"
-    name: "Блок ног"
+    name: "Legs Block"
     action_cost: 35
     mana_cost: 0
     type: 2
@@ -146,7 +146,7 @@ block_types:
 
   legs_head_block:
     key: "legs_head_block"
-    name: "Блок ног и головы"
+    name: "Legs and Head Block"
     action_cost: 80
     mana_cost: 0
     type: 2
@@ -156,7 +156,7 @@ block_types:
   # shield block table.
   shield_head_block:
     key: "shield_head_block"
-    name: "Блок щитом: голова"
+    name: "Shield Block: Head"
     action_cost: 45
     mana_cost: 0
     type: 2
@@ -165,7 +165,7 @@ block_types:
 
   shield_torso_block:
     key: "shield_torso_block"
-    name: "Блок щитом: корпус"
+    name: "Shield Block: Torso"
     action_cost: 40
     mana_cost: 0
     type: 2
@@ -174,7 +174,7 @@ block_types:
 
   shield_stomach_block:
     key: "shield_stomach_block"
-    name: "Блок щитом: живот"
+    name: "Shield Block: Abdomen"
     action_cost: 40
     mana_cost: 0
     type: 2
@@ -183,7 +183,7 @@ block_types:
 
   shield_legs_block:
     key: "shield_legs_block"
-    name: "Блок щитом: ноги"
+    name: "Shield Block: Legs"
     action_cost: 45
     mana_cost: 0
     type: 2
@@ -192,7 +192,7 @@ block_types:
 
   shield_head_torso_block:
     key: "shield_head_torso_block"
-    name: "Блок щитом: голова и корпус"
+    name: "Shield Block: Head and Torso"
     action_cost: 65
     mana_cost: 0
     type: 2
@@ -201,7 +201,7 @@ block_types:
 
   shield_torso_stomach_block:
     key: "shield_torso_stomach_block"
-    name: "Блок щитом: корпус и живот"
+    name: "Shield Block: Torso and Abdomen"
     action_cost: 60
     mana_cost: 0
     type: 2
@@ -210,7 +210,7 @@ block_types:
 
   shield_stomach_legs_block:
     key: "shield_stomach_legs_block"
-    name: "Блок щитом: живот и ноги"
+    name: "Shield Block: Abdomen and Legs"
     action_cost: 65
     mana_cost: 0
     type: 2
@@ -219,7 +219,7 @@ block_types:
 
   shield_full_block:
     key: "shield_full_block"
-    name: "Полный блок щитом"
+    name: "Full Shield Block"
     action_cost: 100
     mana_cost: 0
     type: 2
@@ -228,7 +228,7 @@ block_types:
 
   magic_shield:
     key: "magic_shield"
-    name: "Магический щит"
+    name: "Magic Shield"
     action_cost: 45
     mana_cost: 20
     type: 3
@@ -237,7 +237,7 @@ block_types:
 
   rainbow_barrier:
     key: "rainbow_barrier"
-    name: "Радужный барьер"
+    name: "Rainbow Barrier"
     action_cost: 60
     mana_cost: 40
     type: 3
@@ -246,7 +246,7 @@ block_types:
 
   crystal_sphere:
     key: "crystal_sphere"
-    name: "Кристальная сфера"
+    name: "Crystal Sphere"
     action_cost: 90
     mana_cost: 65
     type: 3

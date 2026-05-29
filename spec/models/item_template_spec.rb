@@ -10,8 +10,8 @@ RSpec.describe ItemTemplate, type: :model do
     end
 
     it "requires name to be unique" do
-      create(:item_template, name: "Перочинный Нож")
-      template = build(:item_template, name: "Перочинный Нож")
+      create(:item_template, name: "Pocket Knife")
+      template = build(:item_template, name: "Pocket Knife")
       expect(template).not_to be_valid
     end
 
@@ -43,8 +43,8 @@ RSpec.describe ItemTemplate, type: :model do
 
   describe "scopes" do
     let!(:equipment) { create(:item_template, item_type: "equipment") }
-    let!(:material) { create(:item_template, :material, name: "Щепки") }
-    let!(:consumable) { create(:item_template, :consumable, name: "Зелье") }
+    let!(:material) { create(:item_template, :material, name: "Wood Chips") }
+    let!(:consumable) { create(:item_template, :consumable, name: "Potion") }
 
     describe ".materials" do
       it "returns only materials" do

@@ -1,24 +1,33 @@
 <%# Hitbox at building position %>
 <% w = hotspot.width.presence || 150 %>
 <% h = hotspot.height.presence || 100 %>
-<% label = hotspot.hotspot_type == "exit" ? "Выйти" : "Войти" %>
+<% image_width = 1536.0 %>
+<% image_height = 1024.0 %>
+<% left_pct = ((hotspot.position_x.to_f / image_width) * 100).round(4) %>
+<% top_pct = ((hotspot.position_y.to_f / image_height) * 100).round(4) %>
+<% width_pct = ((w.to_f / image_width) * 100).round(4) %>
+<% height_pct = ((h.to_f / image_height) * 100).round(4) %>
+<% label = hotspot.hotspot_type == "exit" ? "Exit" : "Enter" %>
+<% accessible_label = "#{label}: #{hotspot.name}" %>
 
 <div class="city-hitbox"
-     style="left:<%= hotspot.position_x %>px;top:<%= hotspot.position_y %>px;width:<%= w %>px;height:<%= h %>px;"
+     style="left:<%= left_pct %>%;top:<%= top_pct %>%;width:<%= width_pct %>%;height:<%= height_pct %>%;"
      data-hotspot-key="<%= hotspot.key %>"
      data-tooltip="<%= hotspot.name %>"
-     data-action="mouseenter->city-view#showOverlay mouseleave->city-view#hideOverlay">
+     data-action="mouseenter->city-view#showOverlay mouseleave->city-view#hideOverlay focusin->city-view#showOverlay focusout->city-view#hideOverlay">
 
   <% if hotspot.clickable? && hotspot.can_interact?(current_character) %>
     <%= form_with url: interact_hotspot_world_path, method: :post, local: false, data: { turbo: true } do |f| %>
       <%= f.hidden_field :hotspot_id, value: hotspot.id %>
-      <button type="submit" class="city-hitbox-btn">
+      <button type="submit" class="city-hitbox-btn" aria-label="<%= accessible_label %>" title="<%= accessible_label %>">
         <span class="city-hitbox-label"><%= label %></span>
       </button>
     <% end %>
 
   <% elsif hotspot.action_type != "none" %>
-    <span class="city-hitbox-label city-hitbox-label--locked">🔒 <%= hotspot.name %></span>
+    <span class="city-hitbox-label city-hitbox-label--locked" title="<%= hotspot.interaction_blocked_reason(current_character) %>">
+      Unavailable: <%= hotspot.name %>
+    </span>
 
   <% else %>
     <%# Decoration - no label %>
