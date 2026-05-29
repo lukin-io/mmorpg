@@ -1170,7 +1170,7 @@ RSpec.describe "World", type: :request do
       end
     end
 
-    context "with documented pending shop hotspot" do
+    context "with implemented shop hotspot" do
       let!(:shop_hotspot) do
         create(:city_hotspot, :shop,
           zone: city_zone,
@@ -1178,20 +1178,20 @@ RSpec.describe "World", type: :request do
           active: true)
       end
 
-      it "redirects back to world with pending message on HTML" do
+      it "redirects to the shop on HTML" do
         post interact_hotspot_world_path, params: {hotspot_id: shop_hotspot.id}
 
-        expect(response).to redirect_to(world_path)
-        expect(flash[:alert]).to include("ожидает реализации")
+        expect(response).to redirect_to("/shop")
+        expect(flash[:notice]).to include("Лавка")
       end
 
-      it "returns a turbo stream error while pending" do
+      it "returns a turbo redirect to the shop" do
         post interact_hotspot_world_path,
           params: {hotspot_id: shop_hotspot.id},
           headers: {"Accept" => "text/vnd.turbo-stream.html"}
 
-        expect(response.media_type).to eq("text/vnd.turbo-stream.html")
-        expect(response.body).to include("ожидает реализации")
+        expect(response).to have_http_status(:see_other)
+        expect(response).to redirect_to("/shop")
       end
     end
 
@@ -1381,11 +1381,11 @@ RSpec.describe "World", type: :request do
         expect(response).to redirect_to("/arena")
       end
 
-      it "shop hotspot stays pending until the Neverlands shop is implemented" do
+      it "shop hotspot navigates to the shop page" do
         post interact_hotspot_world_path, params: {hotspot_id: shop.id}
 
-        expect(response).to redirect_to(world_path)
-        expect(flash[:alert]).to include("ожидает реализации")
+        expect(response).to redirect_to("/shop")
+        expect(flash[:notice]).to include("Лавка")
       end
 
       it "exit gate transitions to destination zone" do

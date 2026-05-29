@@ -14,12 +14,11 @@ class CityHotspot < ApplicationRecord
   ACTION_TYPES = %w[enter_zone open_feature].freeze
 
   FEATURE_ROUTES = {
-    "arena" => "/arena"
+    "arena" => "/arena",
+    "shop" => "/shop"
   }.freeze
 
-  PENDING_FEATURES = {
-    "shop" => "Лавка задокументирована по Neverlands и ожидает реализации."
-  }.freeze
+  PENDING_FEATURES = {}.freeze
 
   belongs_to :zone
   belongs_to :destination_zone, class_name: "Zone", optional: true

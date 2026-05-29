@@ -193,6 +193,76 @@ if defined?(ItemTemplate)
     end
   end
   puts "Created #{material_items.size} material item templates"
+
+  shop_items = [
+    {
+      key: "practice_knife",
+      name: "Учебный нож",
+      item_type: "equipment",
+      slot: "main_hand",
+      weight: 3,
+      stack_limit: 1,
+      base_price: 35,
+      durability_max: 20,
+      requirements: {"level" => 1, "ap" => 45},
+      stat_modifiers: {"attack" => 2}
+    },
+    {
+      key: "militia_sword",
+      name: "Меч ополченца",
+      item_type: "equipment",
+      slot: "main_hand",
+      weight: 7,
+      stack_limit: 1,
+      base_price: 160,
+      durability_max: 34,
+      requirements: {"level" => 3, "strength" => 2, "ap" => 48},
+      stat_modifiers: {"attack" => 5}
+    },
+    {
+      key: "padded_jacket",
+      name: "Стеганая куртка",
+      item_type: "equipment",
+      slot: "chest",
+      weight: 5,
+      stack_limit: 1,
+      base_price: 95,
+      durability_max: 28,
+      requirements: {"level" => 1, "strength" => 1},
+      stat_modifiers: {"defense" => 3}
+    },
+    {
+      key: "minor_healing_elixir",
+      name: "Малый эликсир жизни",
+      item_type: "consumable",
+      slot: "none",
+      weight: 1,
+      stack_limit: 20,
+      base_price: 24,
+      durability_max: 0,
+      requirements: {"level" => 1},
+      stat_modifiers: {"heal_hp" => 35}
+    },
+    {
+      key: "license_market_stall",
+      name: "Лицензия торговца",
+      item_type: "misc",
+      slot: "none",
+      weight: 1,
+      stack_limit: 1,
+      base_price: 500,
+      durability_max: 0,
+      requirements: {"level" => 5},
+      stat_modifiers: {}
+    }
+  ]
+
+  shop_items.each do |attrs|
+    item = ItemTemplate.find_or_initialize_by(key: attrs[:key])
+    item.assign_attributes(attrs)
+    item.save!
+  end
+  puts "Created/Updated #{shop_items.size} shop item templates"
 end
 
 if defined?(CurrencyWallet)
@@ -309,8 +379,8 @@ if outpost
   # CITY HOTSPOT POSITIONING GUIDE
   # ==========================================================================
   # - city.png is 1536x1024 pixels
-  # - Each overlay image (arena.png, gate.png, etc.) is also 1536x1024 with
-  #   transparent areas except for the highlighted building
+  # - The city view uses city.png as the only rendered location image.
+  # - Hotspots are invisible rectangles with text labels/tooltips only.
   # - position_x/y: Where to place the HITBOX (invisible clickable area)
   #   This should be the top-left corner of the building's clickable area
   # - width/height: Size of the HITBOX (clickable area)
@@ -329,11 +399,10 @@ if outpost
     key: "city_gate",
     name: "Ворота Форпоста",
     hotspot_type: "exit",
-    position_x: 680,
-    position_y: 850,
-    width: 180,
-    height: 150,
-    image_hover: "gate.png",
+    position_x: 0,
+    position_y: 325,
+    width: 235,
+    height: 175,
     action_type: "enter_zone",
     destination_zone: outpost_surroundings,
     action_params: {"destination_x" => 7, "destination_y" => 0},
@@ -347,51 +416,128 @@ if outpost
     key: "arena",
     name: "Arena",
     hotspot_type: "building",
-    position_x: 1050,
-    position_y: 200,
-    width: 300,
-    height: 250,
-    image_hover: "arena.png",
+    position_x: 455,
+    position_y: 55,
+    width: 790,
+    height: 500,
     action_type: "open_feature",
     action_params: {"feature" => "arena"},
     required_level: 5,
     z_index: 20
   }
 
-  # Лавка - documented Neverlands shop, pending Rails implementation
+  # Лавка - documented Neverlands shop, implemented as Rails shop frame
   city_hotspots << {
     zone: outpost,
     key: "shop",
     name: "Лавка",
     hotspot_type: "building",
-    position_x: 100,
-    position_y: 350,
-    width: 250,
-    height: 200,
-    image_hover: "shop.png",
+    position_x: 60,
+    position_y: 520,
+    width: 360,
+    height: 255,
     action_type: "open_feature",
     action_params: {"feature" => "shop"},
     required_level: 1,
     z_index: 20
   }
 
+  # Other visible city buildings are source-backed for hover/keyboard coverage.
+  # They intentionally stay unavailable until their feature routes are promoted.
+  city_hotspots << {
+    zone: outpost,
+    key: "town_hall",
+    name: "Ратуша",
+    hotspot_type: "building",
+    position_x: 315,
+    position_y: 0,
+    width: 275,
+    height: 225,
+    action_type: "open_feature",
+    action_params: {"feature" => "town_hall"},
+    required_level: 1,
+    z_index: 20
+  }
+
+  city_hotspots << {
+    zone: outpost,
+    key: "watchtower",
+    name: "Сторожевая башня",
+    hotspot_type: "building",
+    position_x: 55,
+    position_y: 35,
+    width: 145,
+    height: 205,
+    action_type: "open_feature",
+    action_params: {"feature" => "watchtower"},
+    required_level: 1,
+    z_index: 20
+  }
+
+  city_hotspots << {
+    zone: outpost,
+    key: "market",
+    name: "Рынок",
+    hotspot_type: "building",
+    position_x: 455,
+    position_y: 485,
+    width: 285,
+    height: 105,
+    action_type: "open_feature",
+    action_params: {"feature" => "market"},
+    required_level: 1,
+    z_index: 20
+  }
+
+  city_hotspots << {
+    zone: outpost,
+    key: "tavern",
+    name: "Таверна",
+    hotspot_type: "building",
+    position_x: 1000,
+    position_y: 525,
+    width: 355,
+    height: 250,
+    action_type: "open_feature",
+    action_params: {"feature" => "tavern"},
+    required_level: 1,
+    z_index: 20
+  }
+
+  city_hotspots << {
+    zone: outpost,
+    key: "smithy",
+    name: "Кузница",
+    hotspot_type: "building",
+    position_x: 1190,
+    position_y: 760,
+    width: 310,
+    height: 175,
+    action_type: "open_feature",
+    action_params: {"feature" => "smithy"},
+    required_level: 1,
+    z_index: 20
+  }
+
   city_hotspots.each do |attrs|
-    CityHotspot.find_or_create_by!(zone: attrs[:zone], key: attrs[:key]) do |hotspot|
-      hotspot.name = attrs[:name]
-      hotspot.hotspot_type = attrs[:hotspot_type]
-      hotspot.position_x = attrs[:position_x]
-      hotspot.position_y = attrs[:position_y]
-      hotspot.width = attrs[:width]
-      hotspot.height = attrs[:height]
-      hotspot.image_normal = nil  # Not used - overlay approach uses full-size images
-      hotspot.image_hover = attrs[:image_hover]
-      hotspot.action_type = attrs[:action_type]
-      hotspot.destination_zone = attrs[:destination_zone]
-      hotspot.action_params = attrs[:action_params] || {}
-      hotspot.required_level = attrs[:required_level] || 1
-      hotspot.z_index = attrs[:z_index] || 0
-      hotspot.active = true
-    end
+    hotspot = CityHotspot.find_or_initialize_by(zone: attrs[:zone], key: attrs[:key])
+    hotspot.assign_attributes(
+      name: attrs[:name],
+      hotspot_type: attrs[:hotspot_type],
+      position_x: attrs[:position_x],
+      position_y: attrs[:position_y],
+      width: attrs[:width],
+      height: attrs[:height],
+      image_normal: nil,  # Not used - overlay approach uses full-size images
+      image_hover: attrs[:image_hover],
+      action_type: attrs[:action_type],
+      destination_zone: attrs[:destination_zone],
+      action_params: attrs[:action_params] || {},
+      required_level: attrs[:required_level] || 1,
+      z_index: attrs[:z_index] || 0,
+      active: true
+    )
+    hotspot.save!
     puts "  Created/Found CityHotspot: #{attrs[:name]}"
   end
 else

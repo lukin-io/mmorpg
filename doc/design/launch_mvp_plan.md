@@ -29,6 +29,9 @@ not implemented.
 - Player, team, and NPC fights use the same combat mechanics.
 - Arena is entered through the city/gameplay path, not as a standalone product
   surface.
+- The authenticated UI is one persistent game shell. Do not copy Neverlands'
+  frameset technically; preserve the shell contract with Rails, Hotwire/Turbo,
+  Stimulus, and server-rendered state.
 - Marketplace/shop access is entered through a city building such as `Лавка`,
   not through a generic global marketplace or kiosk route.
 - Wild cell actions are tied to the current coordinate and expire when the
@@ -36,6 +39,9 @@ not implemented.
 - Outdoor local actions can be interrupted by source-backed hostile NPC rules.
 - Legacy or unrelated systems should not be part of the MVP path unless they
   directly support one of the four pillars.
+- UI/AX is launch scope: image hotspots, icon actions, timers, locks,
+  unavailable states, combat waiting, and shop errors need keyboard-accessible
+  controls and text equivalents.
 
 ## Scope Terms
 
@@ -321,6 +327,7 @@ adding any Rails shop code.
 
 | Area | Documentation Status | Implementation Status | Next Step |
 | --- | --- | --- | --- |
+| Game shell and UI/AX | Documented in layout docs and 2026-05-25 live shell capture. | Partial. | Use one Rails game layout with persistent vitals/chat/presence, Turbo-updated main content, Stimulus-only local affordances, accessible hotspots, and no iframe/frameset clone. |
 | Person | Documented across vitals, progression, inventory/equipment, and live player captures. | Partially implemented. | Consolidate formulas, item seeds, slot rules, capacity, durability, vitals, and cross-system tests. |
 | Neverlands `Навыки` boolean perks | Documented in live player/skills captures. | Not implemented after generic perk cleanup. | Rebuild exact yes/no perk allocation from captured source IDs, point counter, and mutual-exclusion rules; no generic perk catalog. |
 | Movement | Documented across movement and live movement/city captures. | Partially implemented. | Unify city hotspots with server-authored action offers, polish presence refresh and locks. |
@@ -342,6 +349,7 @@ the next implementation step is.
 | Area | Documented | Implemented | Next Step |
 | --- | --- | --- | --- |
 | Game client layout | Yes: gameplay shell docs and live player capture. | Partial. | Make the game shell the default authenticated surface across world, city, building, arena, shop, and combat screens. |
+| UI/AX shell behavior | Yes: 2026-05-25 shell/UI capture. | Partial. | Add keyboard/focus/label equivalents for hotspots and icon actions; expose timers, locks, errors, and waiting states as text; keep chat/presence persistent during main-content swaps. |
 | World map | Yes: coordinate movement and outdoor captures. | Partial. | Build deterministic starter coordinates and make every current-tile action a persisted server offer. |
 | Cities and buildings | Yes: live city movement and building captures. | Partial. | Build the starter city graph with city hotspots, `Лавка` entry, arena entry, and local presence refresh. |
 | Arena | Yes: arena docs, live combat captures, public log captures. | Partial. | Route arena entry/return through city buildings and keep application rows compact, side-based, and action-key validated. |
@@ -375,6 +383,23 @@ the next implementation step is.
 | Context-first navigation | Features should be reached through current location actions first. Global shortcuts can exist for development, but they are not the primary player flow. |
 | Compact game UI | Keep dense operational screens; avoid landing-page layouts inside authenticated gameplay. |
 | Starter content | Create one canonical starter path: outside tile -> city gate -> city node -> trading quarter -> shop -> city -> outside. |
+
+### UI Integration Order
+
+Connect implemented features to the MVP shell in this order:
+
+1. Authenticated login/resume opens the game layout and selected character
+   state.
+2. Top vitals and context buttons render from current server state.
+3. World/city/building/arena/profile/inventory/combat render inside the same
+   main content region.
+4. Chat and local presence stay persistent and refresh by location.
+5. City hotspots submit server-authored actions and support hover, focus,
+   keyboard, and text labels.
+6. `Лавка` is added as the first missing building feature: tabs, filters,
+   item rows, wallet/mass, buy/sell/licenses/novice actions, refreshed keys.
+7. Arena NPC rows, wild NPC fights, and combat results share the same combat
+   UI/result/log contract.
 
 ## Not MVP
 

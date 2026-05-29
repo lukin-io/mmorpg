@@ -31,6 +31,11 @@ Rails.application.routes.draw do
   end
   resources :inventory_items, only: [:destroy], path: "inventory/items"
 
+  resource :shop, only: [:show], controller: "shop" do
+    post :buy
+    post :sell
+  end
+
   resources :arena, only: [:index], controller: "arena" do
     collection do
       get :lobby

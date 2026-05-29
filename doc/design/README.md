@@ -79,6 +79,8 @@ Features:
 Reference:
 
 - `reference/` - observed Neverlands behavior and source-material mapping.
+- `reference/neverlands_live_game_shell_ui.md` - 2026-05-25 sanitized live
+  shell/UI capture for MVP UI/AX integration.
 
 ## Document Types
 
@@ -170,6 +172,13 @@ Which feature documents this area activates.
 - Write focused tests for every new model/service/controller path and update
   affected tests with the new design contract.
 - Prefer deterministic data in tests and starter content.
+- Preserve the Neverlands frame contract with modern Rails primitives rather
+  than framesets: one persistent game layout, one replaceable main content
+  region, persistent chat, persistent presence, and server-authored actions.
+- Use Stimulus for local interaction affordances and Turbo/Hotwire for
+  server-rendered state changes. Do not introduce Tailwind CSS for MVP unless a
+  specific view rewrite justifies the migration cost against the existing
+  Neverlands-style CSS token surface.
 
 ## Removed
 

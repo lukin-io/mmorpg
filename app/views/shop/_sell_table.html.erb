@@ -1,0 +1,50 @@
+<% if items.any? %>
+  <table class="nl-shop-table">
+    <thead>
+      <tr>
+        <th>Предмет</th>
+        <th>Количество</th>
+        <th>Свойства</th>
+        <th>Цена выкупа</th>
+        <th>Действие</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% items.each do |item| %>
+        <% block_reason = shop_sell_block_reason(item) %>
+        <tr>
+          <td class="nl-shop-item-cell">
+            <span class="nl-shop-item-icon"><%= shop_item_icon(item.item_template) %></span>
+            <strong><%= item.item_template.name %></strong>
+          </td>
+          <td><%= item.quantity %></td>
+          <td>
+            <table class="nl-profile-table nl-shop-inner-table">
+              <% shop_item_properties(item.item_template).each do |label, value| %>
+                <tr>
+                  <th><%= label %></th>
+                  <td><%= value %></td>
+                </tr>
+              <% end %>
+            </table>
+          </td>
+          <td><b><%= number_with_delimiter(shop_sale_price(item)) %> NV</b></td>
+          <td>
+            <% if block_reason %>
+              <span class="invbut invbut--disabled"><%= block_reason %></span>
+            <% else %>
+              <%= form_with url: sell_shop_path, method: :post, class: "nl-shop-action-form" do |f| %>
+                <%= f.hidden_field :mode, value: "sell" %>
+                <%= f.hidden_field :item_id, value: item.id %>
+                <%= f.number_field :quantity, value: 1, min: 1, max: item.quantity, class: "nl-shop-qty", aria: {label: "Количество #{item.item_template.name}"} %>
+                <%= f.submit "Продать", class: "invbut", data: {turbo_confirm: "Продать #{item.item_template.name}?"} %>
+              <% end %>
+            <% end %>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+<% else %>
+  <p class="nl-profile-empty nl-shop-empty">В инвентаре нет предметов для продажи.</p>
+<% end %>

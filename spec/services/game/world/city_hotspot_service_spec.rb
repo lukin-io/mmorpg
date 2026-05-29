@@ -211,7 +211,7 @@ RSpec.describe Game::World::CityHotspotService do
       end
     end
 
-    context "with documented pending shop feature" do
+    context "with implemented shop feature" do
       let!(:shop_hotspot) do
         create(:city_hotspot,
           zone: city_zone,
@@ -224,10 +224,11 @@ RSpec.describe Game::World::CityHotspotService do
           active: true)
       end
 
-      it "returns failure until the Neverlands shop is implemented" do
+      it "returns success with the shop redirect" do
         result = subject.interact!(shop_hotspot.id)
-        expect(result.success).to be false
-        expect(result.message).to include("ожидает реализации")
+        expect(result.success).to be true
+        expect(result.redirect_url).to eq("/shop")
+        expect(result.message).to include("Лавка")
       end
     end
   end

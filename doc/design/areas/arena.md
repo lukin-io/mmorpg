@@ -12,6 +12,10 @@ Neverlands arena observations are folded into this document. Combat turn
 mechanics are folded into `doc/design/features/combat.md`. These two files are
 the arena/fight source of truth.
 
+Reference captures:
+
+- `doc/design/reference/neverlands_live_game_shell_ui.md`
+
 Observed arena behavior shows:
 
 - a persistent game shell where arena replaces only the main gameplay frame;
@@ -118,6 +122,13 @@ The 2026-05-19 live starter pass entered the authenticated game frame and
 landed in the arena surface for `max_kerby[2]`. The arena page loaded the
 frame CSS and arena/vitals scripts, then rendered the arena through compact
 JavaScript state.
+
+The 2026-05-25 shell/UI pass confirmed the same arena structure for
+`max_kerby[5]` entering from the Forpost city hotspot. The account could switch
+to `Тренировочный зал`; the duel tab contained two `Манекен[1]` NPC
+applications with open opponent sides. This reinforces that starter NPC
+training belongs in the normal duel application list, not in a separate
+training screen.
 
 Observed top strip:
 

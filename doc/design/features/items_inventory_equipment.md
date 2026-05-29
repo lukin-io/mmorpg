@@ -11,6 +11,7 @@ combat systems practical constraints.
 Inputs:
 
 - `doc/design/reference/neverlands.md`
+- `doc/design/reference/neverlands_live_game_shell_ui.md`
 - `doc/design/features/combat.md`
 
 ## Player Experience
@@ -177,6 +178,12 @@ The live inventory capture adds these launch requirements:
 - transfer, gift, sale, and delete are tokenized/server-authorized actions;
   launch MVP needs equip/use/delete first, with transfer/gift/sale deferred
   unless the economy loop explicitly needs them.
+
+The 2026-05-25 live shell pass also confirms that inventory actions remain
+inside the persistent game shell. The current page action is disabled,
+profile/return/city actions remain available, inventory mass is shown above the
+item list, and use/delete actions ask for confirmation before submitting
+item-specific tokens.
 
 ## Inventory Rules
 
