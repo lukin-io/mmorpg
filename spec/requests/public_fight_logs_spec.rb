@@ -3,10 +3,10 @@
 require "rails_helper"
 
 RSpec.describe "Public fight logs", type: :request do
-  let(:room) { create(:arena_room, name: "Тренировочный Зал", slug: "training") }
+  let(:room) { create(:arena_room, name: "Training Hall", slug: "training") }
   let(:user) { create(:user) }
   let(:character) { create(:character, user: user, name: "max_kerby") }
-  let(:npc) { create(:npc_template, name: "Манекен", npc_key: "training_mannequin") }
+  let(:npc) { create(:npc_template, name: "Training Dummy", npc_key: "training_mannequin") }
   let(:match) { create(:arena_match, :completed, arena_room: room, match_type: :duel, winning_team: "a") }
   let!(:player_participation) do
     create(:arena_participation, arena_match: match, character: character, user: user, team: "a")
@@ -23,7 +23,7 @@ RSpec.describe "Public fight logs", type: :request do
       log_type: "damage",
       round_number: 1,
       sequence: 1,
-      message: "max_kerby бьет Манекен (Корпус): 6 урона [14/20]",
+      message: "max_kerby hits Training Dummy (Torso): 6 damage [14/20]",
       damage_amount: 6,
       body_part: "torso",
       tags: %w[damage arena torso])
@@ -33,8 +33,8 @@ RSpec.describe "Public fight logs", type: :request do
     get public_fight_log_path(match)
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("Лог боя ##{match.id}")
-    expect(response.body).to include("max_kerby бьет Манекен")
+    expect(response.body).to include("Fight Log ##{match.id}")
+    expect(response.body).to include("max_kerby hits Training Dummy")
   end
 
   it "exports log entries as JSON" do
@@ -43,7 +43,7 @@ RSpec.describe "Public fight logs", type: :request do
     expect(response).to have_http_status(:ok)
     body = JSON.parse(response.body)
     expect(body["fight_id"]).to eq(match.id)
-    expect(body["entries"].first["description"]).to include("Манекен")
+    expect(body["entries"].first["description"]).to include("Training Dummy")
   end
 
   it "renders statistics from the same fight log entries" do

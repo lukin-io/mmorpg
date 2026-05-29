@@ -312,7 +312,7 @@ RSpec.describe Arena::CombatProcessor, "Neverlands-style combat features" do
       expect(arena_match.timed_out).to be true
 
       timeout_entry = arena_match.combat_log_entries.find { |entry| entry.log_type == "timeout" }
-      expect(timeout_entry.message).to include("таймаут")
+      expect(timeout_entry.message).to include("timeout")
     end
 
     it "handles normal victory" do
@@ -320,7 +320,7 @@ RSpec.describe Arena::CombatProcessor, "Neverlands-style combat features" do
 
       arena_match.reload
       victory_entry = arena_match.combat_log_entries.find { |entry| entry.log_type == "victory" }
-      expect(victory_entry.message).to include("Победитель")
+      expect(victory_entry.message).to include("Winner")
     end
 
     it "handles draw" do
@@ -328,7 +328,7 @@ RSpec.describe Arena::CombatProcessor, "Neverlands-style combat features" do
 
       arena_match.reload
       draw_entry = arena_match.combat_log_entries.find { |entry| entry.log_type == "draw" }
-      expect(draw_entry.message).to include("ничь")
+      expect(draw_entry.message).to include("draw")
     end
   end
 
@@ -363,7 +363,7 @@ RSpec.describe Arena::CombatProcessor, "Neverlands-style combat features" do
           )
 
           expect(result.success?).to be false
-          expect(result.error).to include("Недопустимая зона удара")
+          expect(result.error).to include("Invalid attack zone")
         end
       end
 
@@ -377,7 +377,7 @@ RSpec.describe Arena::CombatProcessor, "Neverlands-style combat features" do
           )
 
           expect(result.success?).to be false
-          expect(result.error).to include("Недопустимый тип удара")
+          expect(result.error).to include("Invalid attack type")
         end
       end
     end
@@ -484,7 +484,7 @@ RSpec.describe Arena::CombatProcessor, "Neverlands-style combat features" do
         it "returns failure with error message" do
           result = processor.process_action(non_participant, :attack, target: character2)
           expect(result.success?).to be false
-          expect(result.error).to eq("Персонаж не участвует в этом бою")
+          expect(result.error).to eq("Character is not participating in this fight")
         end
       end
 
@@ -507,7 +507,7 @@ RSpec.describe Arena::CombatProcessor, "Neverlands-style combat features" do
             target: teammate
           )
           expect(result.success?).to be false
-          expect(result.error).to eq("Нельзя атаковать союзника")
+          expect(result.error).to eq("Cannot attack an ally")
         end
       end
 
@@ -515,7 +515,7 @@ RSpec.describe Arena::CombatProcessor, "Neverlands-style combat features" do
         it "returns failure" do
           result = processor.process_action(character1, :flee)
           expect(result.success?).to be false
-          expect(result.error).to include("Нельзя сбежать")
+          expect(result.error).to include("Cannot flee")
         end
       end
     end

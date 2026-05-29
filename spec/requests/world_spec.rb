@@ -48,7 +48,7 @@ RSpec.describe "World", type: :request do
 
   describe "GET /world" do
     let(:user) { create(:user) }
-    let(:zone) { create(:zone, name: "Окрестность Форпоста", location_type: "outdoor", width: 20, height: 20) }
+    let(:zone) { create(:zone, name: "Outpost Surroundings", location_type: "outdoor", width: 20, height: 20) }
     let(:character) { create(:character, user: user) }
     let!(:position) { create(:character_position, character: character, zone: zone, x: 5, y: 5) }
 
@@ -65,7 +65,7 @@ RSpec.describe "World", type: :request do
 
       it "displays the zone name" do
         get world_path
-        expect(response.body).to include("Окрестность Форпоста")
+        expect(response.body).to include("Outpost Surroundings")
       end
 
       it "displays the player coordinates" do
@@ -120,11 +120,11 @@ RSpec.describe "World", type: :request do
     context "when in a city zone" do
       let(:city_zone) do
         create(:zone,
-          name: "Форпост",
+          name: "Outpost",
           location_type: "city",
           width: 15,
           height: 15,
-          metadata: {"description" => "Форпост"})
+          metadata: {"description" => "Outpost"})
       end
 
       before do
@@ -139,7 +139,7 @@ RSpec.describe "World", type: :request do
 
       it "includes the city description from metadata" do
         get world_path
-        expect(response.body).to include("Форпост")
+        expect(response.body).to include("Outpost")
       end
     end
 
@@ -147,7 +147,7 @@ RSpec.describe "World", type: :request do
       before { position.destroy }
 
       it "creates a default position and renders successfully" do
-        starter_zone = create(:zone, location_type: "city", name: "Форпост")
+        starter_zone = create(:zone, location_type: "city", name: "Outpost")
         create(:spawn_point, zone: starter_zone, x: 3, y: 4, default_entry: true)
 
         get world_path
@@ -162,7 +162,7 @@ RSpec.describe "World", type: :request do
 
   describe "POST /world/move" do
     let(:user) { create(:user) }
-    let(:zone) { create(:zone, name: "Окрестность Форпоста", location_type: "outdoor", width: 20, height: 20) }
+    let(:zone) { create(:zone, name: "Outpost Surroundings", location_type: "outdoor", width: 20, height: 20) }
     let(:character) { create(:character, user: user) }
     let!(:position) { create(:character_position, character: character, zone: zone, x: 5, y: 5) }
 
@@ -210,7 +210,7 @@ RSpec.describe "World", type: :request do
 
         expect(response).to redirect_to(world_path)
         follow_redirect!
-        expect(response.body).to include("Переход начат.")
+        expect(response.body).to include("Move started.")
       end
 
       it "returns turbo stream movement state" do
@@ -314,8 +314,8 @@ RSpec.describe "World", type: :request do
 
   describe "POST /world/enter" do
     let(:user) { create(:user) }
-    let(:outdoor_zone) { create(:zone, name: "Окрестность Форпоста", location_type: "outdoor", width: 20, height: 20) }
-    let(:city_zone) { create(:zone, name: "Форпост", location_type: "city", width: 10, height: 10) }
+    let(:outdoor_zone) { create(:zone, name: "Outpost Surroundings", location_type: "outdoor", width: 20, height: 20) }
+    let(:city_zone) { create(:zone, name: "Outpost", location_type: "city", width: 10, height: 10) }
     let(:character) { create(:character, user: user) }
     let!(:position) { create(:character_position, character: character, zone: outdoor_zone, x: 5, y: 5) }
     let!(:spawn_point) { create(:spawn_point, zone: city_zone, x: 3, y: 3, default_entry: true) }
@@ -337,7 +337,7 @@ RSpec.describe "World", type: :request do
 
         expect(response).to redirect_to(world_path)
         follow_redirect!
-        expect(response.body).to include("Entered").or include("Форпост")
+        expect(response.body).to include("Entered").or include("Outpost")
       end
     end
 
@@ -347,7 +347,7 @@ RSpec.describe "World", type: :request do
 
         expect(response).to redirect_to(world_path)
         follow_redirect!
-        expect(response.body).to include("не найдена")
+        expect(response.body).to include("not found")
       end
     end
   end
@@ -356,13 +356,13 @@ RSpec.describe "World", type: :request do
     let(:user) { create(:user) }
     let(:city_zone) do
       create(:zone,
-        name: "Форпост",
+        name: "Outpost",
         location_type: "city",
         width: 10,
         height: 10,
-        metadata: {"exit_to" => "Окрестность Форпоста"})
+        metadata: {"exit_to" => "Outpost Surroundings"})
     end
-    let(:outdoor_zone) { create(:zone, name: "Окрестность Форпоста", location_type: "outdoor", width: 20, height: 20) }
+    let(:outdoor_zone) { create(:zone, name: "Outpost Surroundings", location_type: "outdoor", width: 20, height: 20) }
     let(:character) { create(:character, user: user) }
     let!(:position) { create(:character_position, character: character, zone: city_zone, x: 3, y: 3) }
     let!(:spawn_point) { create(:spawn_point, zone: outdoor_zone, x: 10, y: 10, default_entry: true) }
@@ -381,7 +381,7 @@ RSpec.describe "World", type: :request do
 
       expect(response).to redirect_to(world_path)
       follow_redirect!
-      expect(response.body).to include("Exited").or include("Окрестность Форпоста")
+      expect(response.body).to include("Exited").or include("Outpost Surroundings")
     end
   end
 
@@ -477,7 +477,7 @@ RSpec.describe "World", type: :request do
 
     describe "TileNpc display" do
       context "when database TileNpc exists and is alive" do
-        let(:npc_template) { create(:npc_template, name: "Чумная крыса", npc_key: "plague_rat_visible") }
+        let(:npc_template) { create(:npc_template, name: "Plague Rat", npc_key: "plague_rat_visible") }
         let!(:db_npc) do
           create(:tile_npc,
             zone: zone.name,
@@ -492,7 +492,7 @@ RSpec.describe "World", type: :request do
         it "shows the database NPC on the map" do
           get world_path
 
-          expect(response.body).to include("Чумная крыса")
+          expect(response.body).to include("Plague Rat")
         end
 
         it "shows NPC marker" do
@@ -503,7 +503,7 @@ RSpec.describe "World", type: :request do
       end
 
       context "when database TileNpc exists but is dead (defeated)" do
-        let(:npc_template) { create(:npc_template, name: "Побежденная крыса", npc_key: "plague_rat_defeated") }
+        let(:npc_template) { create(:npc_template, name: "Defeated Rat", npc_key: "plague_rat_defeated") }
         let(:defeated_by_character) { create(:character) }
         let!(:dead_db_npc) do
           create(:tile_npc, :defeated,
@@ -517,19 +517,19 @@ RSpec.describe "World", type: :request do
         it "does not show the defeated NPC on the map" do
           get world_path
 
-          expect(response.body).not_to include("Побежденная крыса")
+          expect(response.body).not_to include("Defeated Rat")
         end
 
         it "hides NPC until respawn time passes" do
           get world_path
 
           # The defeated NPC tile should not have NPC marker
-          expect(response.body).not_to include('title="Побежденная крыса"')
+          expect(response.body).not_to include('title="Defeated Rat"')
         end
       end
 
       context "when database TileNpc is alive" do
-        let(:npc_template) { create(:npc_template, name: "Живая крыса", npc_key: "plague_rat_alive") }
+        let(:npc_template) { create(:npc_template, name: "Live Rat", npc_key: "plague_rat_alive") }
         let!(:alive_npc) do
           create(:tile_npc,
             zone: zone.name,
@@ -543,7 +543,7 @@ RSpec.describe "World", type: :request do
         it "shows the alive NPC on the map" do
           get world_path
 
-          expect(response.body).to include("Живая крыса")
+          expect(response.body).to include("Live Rat")
         end
       end
     end
@@ -570,7 +570,7 @@ RSpec.describe "World", type: :request do
   # ===========================================================================
   describe "POST /world/enter_building" do
     let(:user) { create(:user) }
-    let(:source_zone) { create(:zone, name: "Окрестность Форпоста", location_type: "outdoor", width: 20, height: 20) }
+    let(:source_zone) { create(:zone, name: "Outpost Surroundings", location_type: "outdoor", width: 20, height: 20) }
     let(:destination_zone) { create(:zone, name: "Outpost", location_type: "city", width: 10, height: 10) }
     let(:character) { create(:character, user: user, level: 10) }
     let!(:position) { create(:character_position, character: character, zone: source_zone, x: 5, y: 5) }
@@ -606,7 +606,7 @@ RSpec.describe "World", type: :request do
           x: 5,
           y: 5,
           building_key: "outpost_gate",
-          name: "Ворота Форпоста",
+          name: "Outpost Gate",
           building_type: "city",
           destination_zone: destination_zone,
           destination_x: 7,
@@ -635,7 +635,7 @@ RSpec.describe "World", type: :request do
 
         expect(response).to redirect_to(world_path)
         follow_redirect!
-        expect(response.body).to include("Ворота Форпоста").or include("enter")
+        expect(response.body).to include("Outpost Gate").or include("enter")
       end
 
       it "redirects on turbo stream format to trigger full page reload" do
@@ -706,7 +706,7 @@ RSpec.describe "World", type: :request do
 
         expect(response).to redirect_to(world_path)
         follow_redirect!
-        expect(response.body).to include("Здание не найдено.")
+        expect(response.body).to include("Building not found.")
       end
 
       it "returns turbo stream error for non-existent building" do
@@ -737,7 +737,7 @@ RSpec.describe "World", type: :request do
 
         expect(response).to redirect_to(world_path)
         follow_redirect!
-        expect(response.body).to include("На этой клетке нет здания.")
+        expect(response.body).to include("There is no building on this tile.")
       end
 
       it "does not move character" do
@@ -768,7 +768,7 @@ RSpec.describe "World", type: :request do
 
         expect(response).to redirect_to(world_path)
         follow_redirect!
-        expect(response.body).to include("Здание сейчас недоступно.")
+        expect(response.body).to include("Building is currently unavailable.")
       end
 
       it "does not move character" do
@@ -806,7 +806,7 @@ RSpec.describe "World", type: :request do
 
         expect(response).to redirect_to(world_path)
         follow_redirect!
-        expect(response.body).to include("уровень 50")
+        expect(response.body).to include("level 50")
       end
 
       it "does not move character" do
@@ -841,7 +841,7 @@ RSpec.describe "World", type: :request do
 
         expect(response).to redirect_to(world_path)
         follow_redirect!
-        expect(response.body).to include("Здание сейчас недоступно.")
+        expect(response.body).to include("Building is currently unavailable.")
       end
 
       it "does not move character" do
@@ -861,7 +861,7 @@ RSpec.describe "World", type: :request do
 
         expect(response).to redirect_to(world_path)
         follow_redirect!
-        expect(response.body).to include("Здание не найдено.")
+        expect(response.body).to include("Building not found.")
       end
     end
 
@@ -871,7 +871,7 @@ RSpec.describe "World", type: :request do
 
         expect(response).to redirect_to(world_path)
         follow_redirect!
-        expect(response.body).to include("Здание не найдено.")
+        expect(response.body).to include("Building not found.")
       end
     end
 
@@ -881,7 +881,7 @@ RSpec.describe "World", type: :request do
 
         expect(response).to redirect_to(world_path)
         follow_redirect!
-        expect(response.body).to include("Здание не найдено.")
+        expect(response.body).to include("Building not found.")
       end
     end
 
@@ -904,7 +904,7 @@ RSpec.describe "World", type: :request do
 
         expect(response).to redirect_to(world_path)
         follow_redirect!
-        expect(response.body).to include("На этой клетке нет здания.")
+        expect(response.body).to include("There is no building on this tile.")
       end
     end
   end
@@ -968,7 +968,7 @@ RSpec.describe "World", type: :request do
         get world_path
 
         expect(response.body).to include("Current Position City Gate")
-        expect(response.body).to include("Войти")
+        expect(response.body).to include("Enter")
       end
     end
 
@@ -998,7 +998,7 @@ RSpec.describe "World", type: :request do
           x: 9,
           y: 10,
           building_key: "test_shop",
-          name: "Лавка",
+          name: "Shop",
           building_type: "shop",
           icon: "🏪",
           destination_zone: destination_zone,
@@ -1053,7 +1053,7 @@ RSpec.describe "World", type: :request do
       it "shows enter button" do
         get world_path
 
-        expect(response.body).to include("Войти")
+        expect(response.body).to include("Enter")
       end
 
       it "shows building description" do
@@ -1085,7 +1085,7 @@ RSpec.describe "World", type: :request do
       it "shows blocked reason instead of enter button" do
         get world_path
 
-        expect(response.body).to include("уровень 20")
+        expect(response.body).to include("level 20")
         expect(response.body).to include("building-blocked")
       end
     end
@@ -1114,7 +1114,7 @@ RSpec.describe "World", type: :request do
   describe "POST /world/interact_hotspot" do
     let(:user) { create(:user) }
     let(:city_zone) { create(:zone, name: "Hotspot Test City", location_type: "city", width: 20, height: 20) }
-    let(:destination_zone) { create(:zone, name: "Окрестность Форпоста", location_type: "outdoor", width: 20, height: 20) }
+    let(:destination_zone) { create(:zone, name: "Outpost Surroundings", location_type: "outdoor", width: 20, height: 20) }
     let(:character) { create(:character, user: user, level: 10) }
     let!(:position) { create(:character_position, character: character, zone: city_zone, x: 5, y: 5) }
     let!(:spawn_point) { create(:spawn_point, zone: destination_zone, x: 5, y: 5, default_entry: true) }
@@ -1165,7 +1165,7 @@ RSpec.describe "World", type: :request do
             params: {hotspot_id: arena_hotspot.id},
             headers: {"Accept" => "text/vnd.turbo-stream.html"}
 
-          expect(flash[:notice]).to include("Вход")
+          expect(flash[:notice]).to include("Entered")
         end
       end
     end
@@ -1182,7 +1182,7 @@ RSpec.describe "World", type: :request do
         post interact_hotspot_world_path, params: {hotspot_id: shop_hotspot.id}
 
         expect(response).to redirect_to("/shop")
-        expect(flash[:notice]).to include("Лавка")
+        expect(flash[:notice]).to include("Shop")
       end
 
       it "returns a turbo redirect to the shop" do
@@ -1252,7 +1252,7 @@ RSpec.describe "World", type: :request do
 
         expect(response).to redirect_to(world_path)
         follow_redirect!
-        expect(response.body).to include("не найдена")
+        expect(response.body).to include("not found")
       end
 
       it "returns turbo stream error for Turbo format" do
@@ -1280,7 +1280,7 @@ RSpec.describe "World", type: :request do
 
         expect(response).to redirect_to(world_path)
         follow_redirect!
-        expect(response.body).to include("уровень 50")
+        expect(response.body).to include("level 50")
       end
 
       it "returns turbo stream error for Turbo format" do
@@ -1305,7 +1305,7 @@ RSpec.describe "World", type: :request do
 
         expect(response).to redirect_to(world_path)
         follow_redirect!
-        expect(response.body).to include("недоступна")
+        expect(response.body).to include("unavailable")
       end
     end
 
@@ -1332,7 +1332,7 @@ RSpec.describe "World", type: :request do
 
         expect(response).to redirect_to(world_path)
         follow_redirect!
-        expect(response.body).to include("не найдена")
+        expect(response.body).to include("not found")
       end
     end
   end
@@ -1363,8 +1363,8 @@ RSpec.describe "World", type: :request do
 
         expect(response).to have_http_status(:success)
         expect(response.body).to include("Arena")
-        expect(response.body).to include("Лавка")
-        expect(response.body).to include("Ворота Форпоста")
+        expect(response.body).to include("Shop")
+        expect(response.body).to include("Outpost Gate")
       end
 
       it "includes form for each interactive hotspot" do
@@ -1385,7 +1385,7 @@ RSpec.describe "World", type: :request do
         post interact_hotspot_world_path, params: {hotspot_id: shop.id}
 
         expect(response).to redirect_to("/shop")
-        expect(flash[:notice]).to include("Лавка")
+        expect(flash[:notice]).to include("Shop")
       end
 
       it "exit gate transitions to destination zone" do

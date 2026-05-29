@@ -2,7 +2,7 @@
 
 FactoryBot.define do
   factory :tile_building do
-    zone { "Окрестность Форпоста" }
+    zone { "Outpost Surroundings" }
     sequence(:x) { |n| n % 100 }
     sequence(:y) { |n| (n / 100) % 100 }
     sequence(:building_key) { |n| "building_#{n}" }

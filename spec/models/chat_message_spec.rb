@@ -8,7 +8,7 @@ RSpec.describe ChatMessage, type: :model do
 
       message = described_class.create!(chat_channel: channel, sender: user, body: "Hello script world")
 
-      expect(message.display_body).to eq("Hello скрипт world")
+      expect(message.display_body).to eq("Hello [removed] world")
     end
   end
 end

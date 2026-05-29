@@ -9,7 +9,7 @@ RSpec.describe Game::Movement::TileProvider do
   #
   # Fix: MapTileTemplate.zone= setter converts Zone objects to names
 
-  let(:zone) { create(:zone, name: "Окрестность Форпоста") }
+  let(:zone) { create(:zone, name: "Outpost Surroundings") }
 
   before do
     # Create tiles with proper zone name strings

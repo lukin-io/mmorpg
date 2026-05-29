@@ -2,11 +2,11 @@
   <table class="nl-shop-table">
     <thead>
       <tr>
-        <th>Предмет</th>
-        <th>Количество</th>
-        <th>Свойства</th>
-        <th>Цена выкупа</th>
-        <th>Действие</th>
+        <th>Item</th>
+        <th>Quantity</th>
+        <th>Properties</th>
+        <th>Buyback Price</th>
+        <th>Action</th>
       </tr>
     </thead>
     <tbody>
@@ -36,8 +36,8 @@
               <%= form_with url: sell_shop_path, method: :post, class: "nl-shop-action-form" do |f| %>
                 <%= f.hidden_field :mode, value: "sell" %>
                 <%= f.hidden_field :item_id, value: item.id %>
-                <%= f.number_field :quantity, value: 1, min: 1, max: item.quantity, class: "nl-shop-qty", aria: {label: "Количество #{item.item_template.name}"} %>
-                <%= f.submit "Продать", class: "invbut", data: {turbo_confirm: "Продать #{item.item_template.name}?"} %>
+                <%= f.number_field :quantity, value: 1, min: 1, max: item.quantity, class: "nl-shop-qty", aria: {label: "Quantity #{item.item_template.name}"} %>
+                <%= f.submit "Sell", class: "invbut", data: {turbo_confirm: "Sell #{item.item_template.name}?"} %>
               <% end %>
             <% end %>
           </td>
@@ -46,5 +46,5 @@
     </tbody>
   </table>
 <% else %>
-  <p class="nl-profile-empty nl-shop-empty">В инвентаре нет предметов для продажи.</p>
+  <p class="nl-profile-empty nl-shop-empty">There are no sellable items in inventory.</p>
 <% end %>

@@ -7,7 +7,7 @@
 <% top_pct = ((hotspot.position_y.to_f / image_height) * 100).round(4) %>
 <% width_pct = ((w.to_f / image_width) * 100).round(4) %>
 <% height_pct = ((h.to_f / image_height) * 100).round(4) %>
-<% label = hotspot.hotspot_type == "exit" ? "Выйти" : "Войти" %>
+<% label = hotspot.hotspot_type == "exit" ? "Exit" : "Enter" %>
 <% accessible_label = "#{label}: #{hotspot.name}" %>
 
 <div class="city-hitbox"
@@ -26,7 +26,7 @@
 
   <% elsif hotspot.action_type != "none" %>
     <span class="city-hitbox-label city-hitbox-label--locked" title="<%= hotspot.interaction_blocked_reason(current_character) %>">
-      Недоступно: <%= hotspot.name %>
+      Unavailable: <%= hotspot.name %>
     </span>
 
   <% else %>

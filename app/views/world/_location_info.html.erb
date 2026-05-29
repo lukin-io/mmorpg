@@ -1,13 +1,13 @@
 <div class="location-info-panel">
-  <h3>Местность</h3>
+  <h3>Location</h3>
 
   <div class="location-description">
     <% if zone.city? %>
       <p><strong><%= zone.name %></strong></p>
-      <p class="location-hint">Доступны документированные здания: Арена и Лавка.</p>
+      <p class="location-hint">Documented buildings are available: Arena and Shop.</p>
     <% elsif zone.outdoor? %>
       <p><strong><%= zone.name %></strong></p>
-      <p class="location-hint">На этой местности возможны нападения ботов.</p>
+      <p class="location-hint">Hostile NPCs may attack in this area.</p>
     <% else %>
       <p><strong><%= zone.name %></strong> [<%= position.x %>, <%= position.y %>]</p>
     <% end %>

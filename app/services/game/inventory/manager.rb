@@ -133,7 +133,7 @@ module Game
         while remaining.positive?
           stack = find_or_build_stack(item_template:)
           capacity = item_template.stack_limit - stack.quantity
-          raise CapacityExceededError, "Превышен лимит стопки" if capacity <= 0
+          raise CapacityExceededError, "Stack limit exceeded" if capacity <= 0
 
           to_add = [remaining, capacity].min
           ensure_weight_capacity!(item_template.weight * to_add)
@@ -166,7 +166,7 @@ module Game
           stack.destroy if stack.quantity.zero?
         end
 
-        raise InventoryUnderflowError, "Недостаточно предметов" if remaining.positive?
+        raise InventoryUnderflowError, "Not enough items" if remaining.positive?
       end
 
       private
@@ -193,12 +193,12 @@ module Game
 
       def ensure_slot_capacity!
         used_slots = inventory.inventory_items.count
-        raise CapacityExceededError, "Нет свободных мест в инвентаре" if used_slots >= inventory.slot_capacity
+        raise CapacityExceededError, "No free inventory slots" if used_slots >= inventory.slot_capacity
       end
 
       def ensure_weight_capacity!(delta)
         projected = inventory.current_weight + delta
-        raise CapacityExceededError, "Инвентарь перегружен" if projected > inventory.weight_capacity
+        raise CapacityExceededError, "Inventory is overloaded" if projected > inventory.weight_capacity
       end
 
       def increment_weight!(delta)

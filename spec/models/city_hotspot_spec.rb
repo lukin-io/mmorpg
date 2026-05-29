@@ -162,12 +162,12 @@ RSpec.describe CityHotspot, type: :model do
 
     it "returns unavailable message when inactive" do
       hotspot.update!(active: false)
-      expect(hotspot.interaction_blocked_reason(character)).to include("недоступна")
+      expect(hotspot.interaction_blocked_reason(character)).to include("unavailable")
     end
 
     it "returns level message when level too low" do
       hotspot.update!(required_level: 20)
-      expect(hotspot.interaction_blocked_reason(character)).to include("уровень 20")
+      expect(hotspot.interaction_blocked_reason(character)).to include("level 20")
     end
   end
 

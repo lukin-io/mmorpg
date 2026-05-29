@@ -3,8 +3,8 @@
 require "rails_helper"
 
 RSpec.describe TileBuilding, type: :model do
-  let(:source_zone) { create(:zone, name: "Окрестность Форпоста", location_type: "outdoor") }
-  let(:destination_zone) { create(:zone, name: "Форпост", location_type: "city") }
+  let(:source_zone) { create(:zone, name: "Outpost Surroundings", location_type: "outdoor") }
+  let(:destination_zone) { create(:zone, name: "Outpost", location_type: "city") }
 
   let(:valid_attributes) do
     {
@@ -13,7 +13,7 @@ RSpec.describe TileBuilding, type: :model do
       y: 5,
       building_key: "outpost_gate_#{SecureRandom.hex(4)}",
       building_type: "city",
-      name: "Ворота Форпоста",
+      name: "Outpost Gate",
       destination_zone: destination_zone,
       required_level: 1,
       active: true
@@ -107,16 +107,16 @@ RSpec.describe TileBuilding, type: :model do
       building = described_class.new(
         valid_attributes.merge(
           icon: "🚪",
-          metadata: {"description" => "Enter Форпост."}
+          metadata: {"description" => "Enter Outpost."}
         )
       )
 
       expect(building.to_info_hash).to include(
-        name: "Ворота Форпоста",
+        name: "Outpost Gate",
         building_type: "city",
         icon: "🚪",
-        destination: "Форпост",
-        description: "Enter Форпост."
+        destination: "Outpost",
+        description: "Enter Outpost."
       )
     end
   end

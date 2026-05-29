@@ -515,7 +515,7 @@ class Character < ApplicationRecord
   # ===================
 
   # Calculate effective maximum MP.
-  # Neverlands exposes `Быстрое восстановление маны` as an allocatable skill, but the
+  # Neverlands exposes `Fast Mana Regeneration` as an allocatable skill, but the
   # exact MP max/cost formulas are not source-captured yet.
   #
   # @return [Integer] effective maximum mana points

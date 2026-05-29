@@ -111,7 +111,7 @@ export default class extends Controller {
     this.timerTarget.classList.add("visible")
 
     if (seconds <= 0) {
-      this.timerTarget.textContent = "Бой начался"
+      this.timerTarget.textContent = "Fight started"
       this.timerTarget.classList.add("arena-countdown-timer--final")
       setTimeout(() => this.timerTarget.classList.remove("visible"), 2000)
     } else if (seconds <= 3) {
@@ -161,7 +161,7 @@ export default class extends Controller {
   handleTurnTimeout(data) {
     this.appendSystemMessage({
       timestamp: data.timestamp,
-      message: data.message || "Ход завершен по таймауту",
+      message: data.message || "Turn ended by timeout",
       severity: data.claim_available ? "warning" : "info"
     })
 
@@ -185,7 +185,7 @@ export default class extends Controller {
         this.disableTurnComposer()
         this.appendSystemMessage({
           timestamp: new Date().toLocaleTimeString(),
-          message: "Ожидание хода противника",
+          message: "Waiting for opponent turn",
           severity: "info"
         })
       }
@@ -194,7 +194,7 @@ export default class extends Controller {
 
     this.appendSystemMessage({
       timestamp: new Date().toLocaleTimeString(),
-      message: data.error || "Действие не принято",
+      message: data.error || "Action was not accepted",
       severity: "error"
     })
   }
@@ -510,7 +510,7 @@ export default class extends Controller {
     // Log match start
     this.appendSystemMessage({
       timestamp: new Date().toLocaleTimeString(),
-      message: "Бой начался",
+      message: "Fight started",
       severity: "info"
     })
   }
@@ -570,22 +570,22 @@ export default class extends Controller {
       <div class="arena-result-stats">
         <div class="arena-result-stat">
           <div class="arena-result-stat-value">${data.duration}s</div>
-          <div class="arena-result-stat-label">Длительность</div>
+          <div class="arena-result-stat-label">Duration</div>
         </div>
         <div class="arena-result-stat">
           <div class="arena-result-stat-value">${this.totalDamage(data.participants)}</div>
-          <div class="arena-result-stat-label">Урон</div>
+          <div class="arena-result-stat-label">Damage</div>
         </div>
         <div class="arena-result-stat">
           <div class="arena-result-stat-value">${data.winning_team}</div>
-          <div class="arena-result-stat-label">Победитель</div>
+          <div class="arena-result-stat-label">Winner</div>
         </div>
       </div>
 
       ${data.rewards ? this.renderRewards(data.rewards) : ""}
 
       <button class="btn-primary" onclick="window.location.href='/arena'">
-        К арене
+        To Arena
       </button>
     `
   }
@@ -598,10 +598,10 @@ export default class extends Controller {
 
   resultTitle(resultClass) {
     switch (resultClass) {
-      case "victory": return "Победа"
-      case "defeat": return "Поражение"
-      case "draw": return "Ничья"
-      default: return "Бой завершен"
+      case "victory": return "Victory"
+      case "defeat": return "Defeat"
+      case "draw": return "Draw"
+      default: return "Fight finished"
     }
   }
 

@@ -6,7 +6,7 @@ RSpec.describe "World Map Navigation", type: :system do
   include Warden::Test::Helpers
 
   let(:user) { create(:user) }
-  let(:zone) { create(:zone, name: "Окрестность Форпоста", location_type: "outdoor", width: 50, height: 50) }
+  let(:zone) { create(:zone, name: "Outpost Surroundings", location_type: "outdoor", width: 50, height: 50) }
   let(:character) { create(:character, user: user, name: "max_kerby_world", level: 5) }
   let!(:position) { create(:character_position, character: character, zone: zone, x: 25, y: 25) }
 
@@ -38,7 +38,7 @@ RSpec.describe "World Map Navigation", type: :system do
     it "displays the current zone name" do
       visit world_path
 
-      expect(page).to have_content("Окрестность Форпоста")
+      expect(page).to have_content("Outpost Surroundings")
     end
 
     it "displays the current coordinates" do
@@ -50,7 +50,7 @@ RSpec.describe "World Map Navigation", type: :system do
     it "displays the outdoor location context" do
       visit world_path
 
-      expect(page).to have_content("На этой местности возможны нападения ботов.")
+      expect(page).to have_content("Hostile NPCs may attack in this area.")
     end
 
     it "shows the map viewport" do
@@ -90,11 +90,11 @@ RSpec.describe "World Map Navigation", type: :system do
   describe "city view" do
     let(:city_zone) do
       create(:zone,
-        name: "Форпост",
+        name: "Outpost",
         location_type: "city",
         width: 15,
         height: 15,
-        metadata: {"description" => "Форпост"})
+        metadata: {"description" => "Outpost"})
     end
 
     before do
@@ -110,7 +110,7 @@ RSpec.describe "World Map Navigation", type: :system do
     it "shows city description" do
       visit world_path
 
-      expect(page).to have_content("Форпост")
+      expect(page).to have_content("Outpost")
     end
   end
 
@@ -118,20 +118,20 @@ RSpec.describe "World Map Navigation", type: :system do
     it "shows navigation links" do
       visit world_path
 
-      expect(page).to have_link("Персонаж")
+      expect(page).to have_link("Character")
     end
 
     it "shows zone name" do
       visit world_path
 
-      expect(page).to have_content("Окрестность Форпоста")
+      expect(page).to have_content("Outpost Surroundings")
     end
 
     it "shows location info" do
       visit world_path
 
       expect(page).to have_css(".location-info-panel")
-      expect(page).to have_content("Местность")
+      expect(page).to have_content("Location")
     end
 
     it "does not show duplicate generic movement actions" do

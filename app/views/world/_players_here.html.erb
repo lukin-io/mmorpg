@@ -1,5 +1,5 @@
 <div class="players-panel">
-  <h3>Игроки на клетке</h3>
+  <h3>Players on this tile</h3>
   <% if players.any? %>
     <ul class="players-list">
       <% players.each do |pos| %>
@@ -10,12 +10,12 @@
             <span class="player-level">[<%= pos.character.level %>]</span>
           </div>
           <div class="player-actions">
-            <%= link_to "Инфо", player_path(name: pos.character.name), title: "Персонаж" %>
+            <%= link_to "Info", player_path(name: pos.character.name), title: "Character" %>
           </div>
         </li>
       <% end %>
     </ul>
   <% else %>
-    <p class="text-muted text-sm">Нет игроков рядом.</p>
+    <p class="text-muted text-sm">No players nearby.</p>
   <% end %>
 </div>

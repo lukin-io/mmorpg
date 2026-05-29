@@ -5,7 +5,7 @@ require "rails_helper"
 RSpec.describe "layouts/game.html.erb", type: :view do
   let(:user) { create(:user) }
   let(:character) { create(:character, user: user, name: "max_kerby_layout", level: 10) }
-  let(:zone) { create(:zone, name: "Окрестность Форпоста", location_type: "outdoor") }
+  let(:zone) { create(:zone, name: "Outpost Surroundings", location_type: "outdoor") }
   let(:position) { create(:character_position, character: character, zone: zone) }
   let(:chat_channel) { create(:chat_channel, name: "Global", channel_type: :global) }
 

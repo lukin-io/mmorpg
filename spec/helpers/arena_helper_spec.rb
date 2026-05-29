@@ -6,7 +6,7 @@ RSpec.describe ArenaHelper, type: :helper do
   let(:user) { create(:user) }
   let(:character) { create(:character, user: user, level: 10, current_hp: 80, max_hp: 100) }
   let(:arena_room) do
-    create(:arena_room, name: "Тренировочный Зал", level_min: 1, level_max: 100, active: true)
+    create(:arena_room, name: "Training Hall", level_min: 1, level_max: 100, active: true)
   end
   let(:arena_match) do
     create(:arena_match, arena_room: arena_room, status: :live, match_type: :duel)
@@ -63,7 +63,7 @@ RSpec.describe ArenaHelper, type: :helper do
 
       it "returns HP recovery warning" do
         reason = helper.arena_access_reason(character)
-        expect(reason).to include("Восстановитесь")
+        expect(reason).to include("Recover")
         expect(reason).to include("30%")
         expect(reason).to include("50%")
       end
@@ -71,7 +71,7 @@ RSpec.describe ArenaHelper, type: :helper do
 
     context "when character is nil" do
       it "returns not logged in message" do
-        expect(helper.arena_access_reason(nil)).to eq("Нет персонажа")
+        expect(helper.arena_access_reason(nil)).to eq("No character")
       end
     end
   end
@@ -79,12 +79,12 @@ RSpec.describe ArenaHelper, type: :helper do
   describe "#fight_type_with_icon" do
     it "returns label for duel" do
       result = helper.fight_type_with_icon("duel")
-      expect(result).to eq("Дуэли")
+      expect(result).to eq("Duels")
     end
 
     it "returns label for team_battle" do
       result = helper.fight_type_with_icon("team_battle")
-      expect(result).to eq("Групповые")
+      expect(result).to eq("Team Battles")
     end
 
     it "handles unknown fight types gracefully" do
@@ -96,12 +96,12 @@ RSpec.describe ArenaHelper, type: :helper do
   describe "#room_type_badge" do
     it "returns badge for training room" do
       badge = helper.room_type_badge(:training)
-      expect(badge).to include("Тренировочный Зал")
+      expect(badge).to include("Training Hall")
     end
 
     it "returns badge for trial room" do
       badge = helper.room_type_badge(:trial)
-      expect(badge).to include("Зал Испытаний")
+      expect(badge).to include("Trial Hall")
     end
   end
 

@@ -71,7 +71,7 @@ RSpec.describe Arena::ApplicationHandler do
         )
 
         expect(result.success?).to be false
-        expect(result.errors).to include("Этот зал арены недоступен")
+        expect(result.errors).to include("This arena room is unavailable")
       end
     end
 
@@ -110,7 +110,7 @@ RSpec.describe Arena::ApplicationHandler do
         )
 
         expect(result.success?).to be false
-        expect(result.errors).to include("Зал арены заполнен")
+        expect(result.errors).to include("Arena room is full")
       end
     end
   end
@@ -371,7 +371,7 @@ RSpec.describe Arena::ApplicationHandler do
     # ============================================
 
     context "with NPC application" do
-      let(:npc_template) { create(:npc_template, name: "Манекен", level: 5, role: "arena_bot") }
+      let(:npc_template) { create(:npc_template, name: "Training Dummy", level: 5, role: "arena_bot") }
       let!(:npc_application) do
         create(:arena_application,
           applicant: nil,

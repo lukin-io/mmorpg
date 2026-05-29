@@ -79,11 +79,11 @@ class TileBuilding < ApplicationRecord
   # @param character [Character] the character trying to enter
   # @return [String, nil] error message or nil if can enter
   def entry_blocked_reason(character)
-    return "Здание сейчас недоступно." unless accessible?
-    return "Нужен уровень #{required_level}." if character.level < required_level
+    return "Building is currently unavailable." unless accessible?
+    return "Requires level #{required_level}." if character.level < required_level
 
     unless check_metadata_requirements(character)
-      return metadata["requirement_message"] || "Требования для входа не выполнены."
+      return metadata["requirement_message"] || "Entry requirements are not met."
     end
 
     nil

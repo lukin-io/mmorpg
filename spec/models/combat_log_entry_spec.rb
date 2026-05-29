@@ -85,10 +85,10 @@ RSpec.describe CombatLogEntry do
     it "stores structured payload data" do
       entry = create(:combat_log_entry,
         arena_match: arena_match,
-        message: "max_kerby hit Чумная крыса (torso) for -3 [7/10]",
+        message: "max_kerby hit Plague Rat (torso) for -3 [7/10]",
         payload: {
           "attacker" => "max_kerby",
-          "defender" => "Чумная крыса",
+          "defender" => "Plague Rat",
           "damage" => 25,
           "body_part" => "torso",
           "outcome" => "damage"
@@ -110,7 +110,7 @@ RSpec.describe CombatLogEntry do
     it "can distinguish captured fight action types" do
       attack = create(:combat_log_entry, arena_match: arena_match, log_type: "attack", message: "Attack")
       block = create(:combat_log_entry, arena_match: arena_match, log_type: "block", message: "Block")
-      loot = create(:combat_log_entry, arena_match: arena_match, log_type: "loot", message: "Крысиный хвост")
+      loot = create(:combat_log_entry, arena_match: arena_match, log_type: "loot", message: "Rat Tail")
 
       expect(attack.log_type).to eq("attack")
       expect(block.log_type).to eq("block")

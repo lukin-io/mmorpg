@@ -97,7 +97,7 @@ RSpec.describe ArenaApplication, "HP Recovery Gate" do
 
       it "returns HP recovery message" do
         reason = application.rejection_reason_for(acceptor)
-        expect(reason).to include("Нужно восстановиться перед боем")
+        expect(reason).to include("Recover before fighting")
         expect(reason).to include("50%")
       end
     end
@@ -112,7 +112,7 @@ RSpec.describe ArenaApplication, "HP Recovery Gate" do
       before { application.update!(status: :cancelled) }
 
       it "returns appropriate message" do
-        expect(application.rejection_reason_for(acceptor)).to eq("Заявка закрыта")
+        expect(application.rejection_reason_for(acceptor)).to eq("Application is closed")
       end
     end
 
@@ -122,7 +122,7 @@ RSpec.describe ArenaApplication, "HP Recovery Gate" do
       it "returns appropriate access message" do
         reason = application.rejection_reason_for(acceptor)
         # May be level or room access depending on validation order
-        expect(reason).to include("Зал арены").or include("уровень")
+        expect(reason).to include("Arena room").or include("level")
       end
     end
   end

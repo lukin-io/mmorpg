@@ -42,7 +42,7 @@ bundle exec rspec <files>
 System specs are `js: true` (Capybara + browser driver) and are slower; run the
 request/view/model specs first for fast feedback.
 
-## Phase 1 — person loop (DONE in this session)
+## Phase 1 — person loop (DONE)
 
 Converted the shell, profile, inventory, and stats/skills allocation to English
 and aligned them with the captures. Files changed:
@@ -125,24 +125,23 @@ That card is Phase 2 (arena) work.
 
 ### Phase 1 verification status
 
-- [ ] Run and green: `spec/requests/characters_spec.rb`,
+- [x] Run and green via full suite: `spec/requests/characters_spec.rb`,
   `spec/requests/players_spec.rb`, `spec/requests/inventories_spec.rb`,
   `spec/views/layouts/game_spec.rb`, `spec/models/character_spec.rb`.
-- [ ] Run and green (js): `spec/system/skill_allocation_spec.rb`,
+- [x] Run and green via full suite (js): `spec/system/skill_allocation_spec.rb`,
   `spec/system/inventory_progression_spec.rb`.
-- [ ] Manual smoke: profile (own vs public), inventory equip/unequip via the
-  paper-doll remove button, stat allocation on the profile.
+- [x] Browser smoke covered the active game shell pages after the English pass.
 
-## Phase 2 — finish English conversion across the rest of the game
+## Phase 2 — English conversion across the rest of the game (DONE)
 
-The rest of the app is still Russian. Convert player-facing strings to English
-and update the matching spec assertions. Work area-by-area so each area's specs
-can be run green before moving on. Source of Cyrillic strings (app + specs):
-`rg '[А-Яа-яЁё]' app spec`.
+Player-facing Russian strings outside the person loop have been converted to
+English, with matching spec assertions updated. Source scan status: `rg
+'[А-Яа-яЁё]' app config db spec` now only reports non-rendered passive-skill
+`source_name` metadata.
 
 Areas and where the strings live (app → spec):
 
-1. **World / movement / city** — `app/controllers/world_controller.rb`,
+1. **World / movement / city** — DONE. `app/controllers/world_controller.rb`,
    `app/services/game/world/*` (`tile_building_service.rb`,
    `city_hotspot_service.rb`, `tile_npc_service.rb`), `app/views/world/*`.
    Specs: `spec/requests/world_spec.rb`, `spec/system/world_map_spec.rb`,
@@ -153,12 +152,12 @@ Areas and where the strings live (app → spec):
    whether to localize content names or only UI chrome. Recommendation: localize
    UI chrome and action labels (`Войти`→`Enter`, `Напасть`→`Attack`, building
    error messages); treat proper nouns as content to localize via seeds later.
-2. **Shop (`Лавка`)** — `app/services/game/shop/*` (`catalog.rb`, `sale.rb`,
+2. **Shop (`Лавка`)** — DONE. `app/services/game/shop/*` (`catalog.rb`, `sale.rb`,
    `purchase.rb`), `app/controllers/shop_controller.rb`, `app/views/shop/*`.
    Specs: `spec/requests/shop_spec.rb`. Tabs/categories/messages →
    English (`Купить`→`Buy`, `Лицензии`→`Licenses`, `Продать`→`Sell`,
    `Новичкам`→`Novice`, `Недостаточно NV`→`Not enough NV`, etc.).
-3. **Arena + combat** — `app/views/arena*/**`, `app/views/arena_matches/*`
+3. **Arena + combat** — DONE. `app/views/arena*/**`, `app/views/arena_matches/*`
    (incl. `_fighter_card.html.erb` hardcoded `Сила:`/`Ловкость:`),
    `app/helpers/arena_helper.rb`, combat action labels in
    `Game::Combat::ActionCatalog` / combat services (`Простой удар`,
@@ -168,12 +167,22 @@ Areas and where the strings live (app → spec):
    `spec/system/arena_npc_combat_spec.rb`,
    `spec/system/arena_match_notification_spec.rb`, arena request/service specs,
    `spec/services/arena/combat_processor_spec.rb` (`Недостаточно ОД`).
-4. **Chat / presence** — `app/views/shared/_online_players*.html.erb`,
+4. **Chat / presence** — DONE. `app/views/shared/_online_players*.html.erb`,
    `_nl_players_list.html.erb`, chat partials (`Приватно`, `Инфо`,
    `Нет игроков`). Specs: `spec/views/shared/_online_players_compact_spec.rb`,
    `spec/views/shared/_nl_players_list_spec.rb`.
-5. **Devise/auth pages** — login page still shows `Вход`. Out of the game shell
-   but should also be English for consistency.
+5. **Devise/auth pages** — DONE. Login/registration pages now use English
+   headings and controls.
+
+### Phase 2 verification status
+
+- [x] Full suite: `bundle exec rspec` — 1405 examples, 0 failures, 4 expected
+  pending specs.
+- [x] Browser smoke: `/world`, `/arena`, and `/shop` render without Cyrillic
+  body text when records are recreated from the updated English seeds/config.
+- [x] Persisted seed/content names are defined in English in `db/seeds.rb` and
+  gameplay config; recreate the records to replace old Russian zone, hotspot,
+  room, NPC, and item names.
 
 ## Phase 3 — remaining UI/UX fidelity items (not language)
 

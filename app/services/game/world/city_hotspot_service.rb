@@ -73,14 +73,14 @@ module Game
         unless hotspot
           return Result.new(
             success: false,
-            message: "Локация не найдена."
+            message: "Location not found."
           )
         end
 
         unless hotspot.can_interact?(character)
           return Result.new(
             success: false,
-            message: hotspot.interaction_blocked_reason(character) || "Сюда нельзя перейти.",
+            message: hotspot.interaction_blocked_reason(character) || "You cannot go there.",
             hotspot: hotspot
           )
         end
@@ -93,7 +93,7 @@ module Game
         else
           Result.new(
             success: false,
-            message: "У этой области нет действия.",
+            message: "This area has no action.",
             hotspot: hotspot
           )
         end
@@ -105,7 +105,7 @@ module Game
         unless hotspot.destination_zone
           return Result.new(
             success: false,
-            message: "Переход не настроен.",
+            message: "Transition is not configured.",
             hotspot: hotspot
           )
         end
@@ -119,7 +119,7 @@ module Game
           unless spawn_point
             return Result.new(
               success: false,
-              message: "Точка входа не настроена.",
+              message: "Entry point is not configured.",
               hotspot: hotspot
             )
           end
@@ -143,14 +143,14 @@ module Game
 
           Result.new(
             success: true,
-            message: "Переход: #{hotspot.destination_zone.name}.",
+            message: "Moved to #{hotspot.destination_zone.name}.",
             hotspot: hotspot,
             destination_zone: hotspot.destination_zone
           )
         else
           Result.new(
             success: false,
-            message: "Переход невозможен: позиция не найдена.",
+            message: "Transition unavailable: position not found.",
             hotspot: hotspot
           )
         end
@@ -171,14 +171,14 @@ module Game
         unless url
           return Result.new(
             success: false,
-            message: "#{hotspot.name} недоступно.",
+            message: "#{hotspot.name} unavailable.",
             hotspot: hotspot
           )
         end
 
         Result.new(
           success: true,
-          message: "Вход: #{hotspot.name}.",
+          message: "Entered #{hotspot.name}.",
           hotspot: hotspot,
           redirect_url: url
         )

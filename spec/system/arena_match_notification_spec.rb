@@ -48,7 +48,7 @@ RSpec.describe "Arena Match Notification System", type: :system do
 
         within ".arena-applications" do
           expect(page).to have_content("Fighter A")
-          expect(page).to have_button("Принять")
+          expect(page).to have_button("Accept")
         end
       end
 
@@ -59,7 +59,7 @@ RSpec.describe "Arena Match Notification System", type: :system do
         visit arena_room_path(arena_room)
 
         # Accept the application (via form submission, no JS needed)
-        click_button "Принять"
+        click_button "Accept"
 
         # Should be redirected to match page
         expect(page).to have_current_path(%r{/arena_matches/\d+})
@@ -70,7 +70,7 @@ RSpec.describe "Arena Match Notification System", type: :system do
         enter_arena_from_city!(character_b)
 
         visit arena_room_path(arena_room)
-        click_button "Принять"
+        click_button "Accept"
 
         expect(application.reload.status).to eq("matched")
       end
@@ -110,7 +110,7 @@ RSpec.describe "Arena Match Notification System", type: :system do
       enter_arena_from_city!(character_b)
 
       visit arena_room_path(arena_room)
-      click_button "Принять"
+      click_button "Accept"
 
       # Should be on match page
       expect(page).to have_current_path(%r{/arena_matches/\d+})
@@ -125,7 +125,7 @@ RSpec.describe "Arena Match Notification System", type: :system do
       enter_arena_from_city!(character_b)
 
       visit arena_room_path(arena_room)
-      click_button "Принять"
+      click_button "Accept"
 
       # Verify application status
       expect(application.reload.status).to eq("matched")
@@ -154,7 +154,7 @@ RSpec.describe "Arena Match Notification System", type: :system do
       visit arena_index_path
 
       expect(page).to have_current_path(arena_match_path(arena_match))
-      expect(page).to have_content("У вас уже идет бой.")
+      expect(page).to have_content("You already have an active fight.")
     end
 
     it "redirects user with active match from room page to match page" do
@@ -163,7 +163,7 @@ RSpec.describe "Arena Match Notification System", type: :system do
       visit arena_room_path(arena_room)
 
       expect(page).to have_current_path(arena_match_path(arena_match))
-      expect(page).to have_content("У вас уже идет бой.")
+      expect(page).to have_content("You already have an active fight.")
     end
 
     it "redirects user with pending match to match page" do
@@ -188,7 +188,7 @@ RSpec.describe "Arena Match Notification System", type: :system do
       visit arena_index_path
 
       expect(page).to have_current_path(arena_index_path)
-      expect(page).not_to have_content("У вас уже идет бой.")
+      expect(page).not_to have_content("You already have an active fight.")
     end
   end
 
@@ -213,7 +213,7 @@ RSpec.describe "Arena Match Notification System", type: :system do
       enter_arena_from_city!(character_b)
 
       visit arena_room_path(arena_room)
-      click_button "Принять"
+      click_button "Accept"
 
       # Should see countdown or be redirected
       expect(page).to have_css(".arena-countdown", visible: true, wait: 3).or(
@@ -234,14 +234,14 @@ RSpec.describe "Arena Match Notification System", type: :system do
       visit arena_room_path(arena_room)
 
       # Fill out application form
-      select "Произвольный", from: "fight_kind"
-      select "3 мин", from: "timeout_seconds"
-      select "средний (30%)", from: "trauma_percent"
+      select "Free", from: "fight_kind"
+      select "3 min", from: "timeout_seconds"
+      select "medium (30%)", from: "trauma_percent"
 
-      click_button "Подать заявку"
+      click_button "Submit Application"
 
       # Should show success message
-      expect(page).to have_content("Заявка подана")
+      expect(page).to have_content("Application submitted")
     end
 
     it "creates application record after form submission" do
@@ -250,12 +250,12 @@ RSpec.describe "Arena Match Notification System", type: :system do
 
       visit arena_room_path(arena_room)
 
-      select "Произвольный", from: "fight_kind"
-      select "3 мин", from: "timeout_seconds"
-      select "средний (30%)", from: "trauma_percent"
+      select "Free", from: "fight_kind"
+      select "3 min", from: "timeout_seconds"
+      select "medium (30%)", from: "trauma_percent"
 
       expect {
-        click_button "Подать заявку"
+        click_button "Submit Application"
       }.to change(ArenaApplication, :count).by(1)
 
       expect(ArenaApplication.last.applicant).to eq(character_a)
@@ -276,8 +276,8 @@ RSpec.describe "Arena Match Notification System", type: :system do
 
       # Should see their own application without accept button
       within "[data-application-id='#{application.id}']" do
-        expect(page).to have_content("Ваша заявка")
-        expect(page).not_to have_button("Принять")
+        expect(page).to have_content("Your application")
+        expect(page).not_to have_button("Accept")
       end
     end
 
@@ -296,8 +296,8 @@ RSpec.describe "Arena Match Notification System", type: :system do
 
       # Should see accept button (use first match since there might be duplicate elements)
       within ".arena-applications [data-application-id='#{application.id}']", match: :first do
-        expect(page).to have_button("Принять")
-        expect(page).not_to have_content("Ваша заявка")
+        expect(page).to have_button("Accept")
+        expect(page).not_to have_content("Your application")
       end
     end
   end

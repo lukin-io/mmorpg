@@ -5,8 +5,8 @@ require "rails_helper"
 RSpec.describe Game::World::TileBuildingService do
   let(:user) { create(:user) }
   let(:character) { create(:character, user: user, level: 10) }
-  let(:source_zone) { create(:zone, name: "Окрестность Форпоста", location_type: "outdoor") }
-  let(:destination_zone) { create(:zone, name: "Форпост", location_type: "city") }
+  let(:source_zone) { create(:zone, name: "Outpost Surroundings", location_type: "outdoor") }
+  let(:destination_zone) { create(:zone, name: "Outpost", location_type: "city") }
   let!(:building) do
     create(
       :tile_building,
@@ -15,13 +15,13 @@ RSpec.describe Game::World::TileBuildingService do
       y: 3,
       building_key: "outpost_gate",
       building_type: "city",
-      name: "Ворота Форпоста",
+      name: "Outpost Gate",
       destination_zone: destination_zone,
       destination_x: 7,
       destination_y: 7,
       required_level: 5,
       active: true,
-      metadata: {"description" => "Enter Форпост."}
+      metadata: {"description" => "Enter Outpost."}
     )
   end
 
@@ -35,12 +35,12 @@ RSpec.describe Game::World::TileBuildingService do
     it "returns source-backed building display data" do
       expect(service.building_info).to include(
         id: building.id,
-        name: "Ворота Форпоста",
+        name: "Outpost Gate",
         building_type: "city",
         icon: "🏙️",
-        destination: "Форпост",
+        destination: "Outpost",
         required_level: 5,
-        description: "Enter Форпост.",
+        description: "Enter Outpost.",
         active: true
       )
     end
@@ -65,7 +65,7 @@ RSpec.describe Game::World::TileBuildingService do
       result = service.enter!
 
       expect(result.success).to be true
-      expect(result.message).to include("Ворота Форпоста")
+      expect(result.message).to include("Outpost Gate")
       expect(character.position.reload.zone).to eq(destination_zone)
       expect(character.position.x).to eq(7)
       expect(character.position.y).to eq(7)
@@ -77,7 +77,7 @@ RSpec.describe Game::World::TileBuildingService do
       result = service.enter!
 
       expect(result.success).to be false
-      expect(result.message).to include("уровень 20")
+      expect(result.message).to include("level 20")
       expect(character.position.reload.zone).to eq(source_zone)
     end
   end

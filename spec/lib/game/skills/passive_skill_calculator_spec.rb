@@ -36,7 +36,7 @@ RSpec.describe Game::Skills::PassiveSkillCalculator do
 
       expect(wanderer).to include(
         source_id: 26,
-        name: "Странник",
+        name: "Wanderer",
         level: 25,
         max_level: 100,
         progression_rate: "2:2:2:2",

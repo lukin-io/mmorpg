@@ -38,9 +38,9 @@
 
           <nav class="game-nav">
             <% if current_user %>
-              <%= link_to "Карта", root_path, class: ("active" if controller_name == "world") %>
+              <%= link_to "Map", root_path, class: ("active" if controller_name == "world") %>
               <% if player_profile_path %>
-                <%= link_to "Персонаж", player_profile_path, class: ("active" if controller_name == "players") %>
+                <%= link_to "Character", player_profile_path, class: ("active" if controller_name == "players") %>
               <% end %>
             <% end %>
           </nav>
@@ -48,10 +48,10 @@
           <div class="user-status-bar">
             <% if current_user %>
               <span class="user-nickname"><%= current_user.profile_name || current_user.email %></span>
-              <%= button_to "Выход", destroy_user_session_path, method: :delete, class: "btn-secondary btn-sm" %>
+              <%= button_to "Log Out", destroy_user_session_path, method: :delete, class: "btn-secondary btn-sm" %>
             <% else %>
-              <%= link_to "Вход", new_user_session_path, class: "btn-secondary btn-sm" %>
-              <%= link_to "Регистрация", new_user_registration_path, class: "btn-primary btn-sm" %>
+              <%= link_to "Sign In", new_user_session_path, class: "btn-secondary btn-sm" %>
+              <%= link_to "Sign Up", new_user_registration_path, class: "btn-primary btn-sm" %>
             <% end %>
           </div>
         </div>
@@ -93,13 +93,13 @@
         <nav class="mobile-hud" data-mobile-hud-target="hud">
           <div class="mobile-hud-inner">
             <%= link_to root_path, class: "mobile-hud-btn" do %>
-              <span class="icon">Карта</span>
-              <span>Карта</span>
+              <span class="icon">Map</span>
+              <span>Map</span>
             <% end %>
             <% if player_profile_path %>
               <%= link_to player_profile_path, class: "mobile-hud-btn" do %>
-                <span class="icon">Персонаж</span>
-                <span>Персонаж</span>
+                <span class="icon">Character</span>
+                <span>Character</span>
               <% end %>
             <% end %>
           </div>

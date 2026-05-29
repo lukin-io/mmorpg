@@ -51,7 +51,7 @@ class ShopController < ApplicationController
   def ensure_shop_access!
     position = current_character.position
     unless position&.zone&.city? && shop_hotspot_available?(position.zone)
-      redirect_to world_path, alert: "Лавка доступна только из городского здания."
+      redirect_to world_path, alert: "Shop is only available from the city building."
     end
   end
 

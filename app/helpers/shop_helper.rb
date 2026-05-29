@@ -19,10 +19,10 @@ module ShopHelper
 
   def shop_item_properties(template)
     lines = []
-    lines << ["Тип", template.item_type.to_s.titleize]
-    lines << ["Слот", EquipmentSlots::LABELS[template.slot] || template.slot] if template.equippable?
-    lines << ["Цена", "#{number_with_delimiter(template.base_price)} NV"]
-    lines << ["Прочность", template.durability_max] if template.durability_max.to_i.positive?
+    lines << ["Type", template.item_type.to_s.titleize]
+    lines << ["Slot", EquipmentSlots::LABELS[template.slot] || template.slot] if template.equippable?
+    lines << ["Price", "#{number_with_delimiter(template.base_price)} NV"]
+    lines << ["Durability", template.durability_max] if template.durability_max.to_i.positive?
 
     template.stat_modifiers.to_h.each do |stat, value|
       next if value.blank?
@@ -30,16 +30,16 @@ module ShopHelper
       lines << [stat.to_s.titleize, signed_shop_value(value)]
     end
 
-    lines.presence || [["Описание", "Предмет лавки"]]
+    lines.presence || [["Description", "Shop item"]]
   end
 
   def shop_item_requirements(template)
-    rows = [["Масса", template.weight, inventory_can_carry?(template.weight)]]
+    rows = [["Mass", template.weight, inventory_can_carry?(template.weight)]]
     template.requirements.to_h.each do |key, value|
       current = shop_requirement_current_value(key)
       met = current.nil? || current.to_i >= value.to_i
       label = key.to_s.titleize
-      display = current.nil? ? value : "#{value} (сейчас #{current})"
+      display = current.nil? ? value : "#{value} (current #{current})"
       rows << [label, display, met]
     end
     rows
@@ -50,23 +50,23 @@ module ShopHelper
   end
 
   def shop_buy_block_reason(template)
-    return "нет цены" unless template.base_price.to_i.positive?
-    return "не хватает NV" if @wallet.nv_balance.to_i < template.base_price.to_i
-    return "перегруз" unless inventory_can_carry?(template.weight)
-    return "нет места" unless inventory_has_slot_for?(template)
+    return "no price" unless template.base_price.to_i.positive?
+    return "not enough NV" if @wallet.nv_balance.to_i < template.base_price.to_i
+    return "overweight" unless inventory_can_carry?(template.weight)
+    return "no room" unless inventory_has_slot_for?(template)
 
     nil
   end
 
   def shop_sell_block_reason(item)
-    return "надето или защищено" if item.protected_from_discard?
-    return "не принимается" unless shop_sale_price(item).positive?
+    return "equipped or protected" if item.protected_from_discard?
+    return "not accepted" unless shop_sale_price(item).positive?
 
     nil
   end
 
   def shop_stock_label(_template)
-    "в наличии"
+    "in stock"
   end
 
   def shop_item_icon(template)

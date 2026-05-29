@@ -8,20 +8,20 @@
     <div class="nl-shop-frame">
       <div class="nl-shop-topline">
         <div class="nl-shop-title">
-          <h1>Лавка</h1>
+          <h1>Shop</h1>
           <span><%= current_character.name %>[<%= current_character.level %>]</span>
         </div>
         <div class="nl-shop-controls">
-          <%= link_to "Город", world_path, class: "nl-arena-link" %>
-          <%= link_to "Инвентарь", inventory_path, class: "nl-arena-link" %>
-          <%= link_to "Обновить", shop_path(mode: @mode, category: @category), class: "nl-arena-link" %>
+          <%= link_to "City", world_path, class: "nl-arena-link" %>
+          <%= link_to "Inventory", inventory_path, class: "nl-arena-link" %>
+          <%= link_to "Refresh", shop_path(mode: @mode, category: @category), class: "nl-arena-link" %>
         </div>
       </div>
 
       <div class="nl-shop-status-row">
         <span>NV: <b><%= number_with_delimiter(@wallet.nv_balance) %></b></span>
-        <span>Масса: <b><%= @inventory.current_weight %>/<%= @inventory.weight_capacity %></b></span>
-        <span>Места: <b><%= @inventory.inventory_items.count %>/<%= @inventory.slot_capacity %></b></span>
+        <span>Mass: <b><%= @inventory.current_weight %>/<%= @inventory.weight_capacity %></b></span>
+        <span>Slots: <b><%= @inventory.inventory_items.count %>/<%= @inventory.slot_capacity %></b></span>
       </div>
 
       <div class="nl-shop-tabs">
@@ -37,29 +37,29 @@
       <%= form_with url: shop_path, method: :get, class: "nl-shop-filters", local: true do |f| %>
         <%= f.hidden_field :mode, value: @mode %>
         <label>
-          Раздел
+          Section
           <%= f.select :category,
             options_for_select(shop_category_options.map { |key, label| [label, key] }, @category),
             {},
             class: "nl-shop-select" %>
         </label>
         <label>
-          Уровень от
+          Level from
           <%= f.number_field :min_level, value: params[:min_level], min: 0, class: "nl-shop-mini-input" %>
         </label>
         <label>
-          до
+          to
           <%= f.number_field :max_level, value: params[:max_level], min: 0, class: "nl-shop-mini-input" %>
         </label>
         <label>
-          Цена от
+          Price from
           <%= f.number_field :min_price, value: params[:min_price], min: 0, class: "nl-shop-mini-input" %>
         </label>
         <label>
-          до
+          to
           <%= f.number_field :max_price, value: params[:max_price], min: 0, class: "nl-shop-mini-input" %>
         </label>
-        <%= f.submit "Показать", class: "nl-arena-small-button" %>
+        <%= f.submit "Show", class: "nl-arena-small-button" %>
       <% end %>
 
       <% if @mode == "sell" %>

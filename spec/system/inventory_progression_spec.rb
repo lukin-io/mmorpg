@@ -32,7 +32,7 @@ RSpec.describe "Inventory & Progression UI", type: :system, js: true do
 
   describe "success cases" do
     it "equips and unequips an item from the inventory UI" do
-      sword_template = create(:item_template, name: "Перочинный Нож", item_type: "equipment", slot: "main_hand")
+      sword_template = create(:item_template, name: "Pocket Knife", item_type: "equipment", slot: "main_hand")
       sword = create(:inventory_item, inventory: character.inventory, item_template: sword_template)
 
       visit inventory_path
@@ -49,7 +49,7 @@ RSpec.describe "Inventory & Progression UI", type: :system, js: true do
     end
 
     it "uses a consumable item from the inventory UI" do
-      potion_template = create(:item_template, :consumable, name: "Зелье жизни", stat_modifiers: {"heal_hp" => 10})
+      potion_template = create(:item_template, :consumable, name: "Life Potion", stat_modifiers: {"heal_hp" => 10})
       potion = create(:inventory_item, inventory: character.inventory, item_template: potion_template)
       character.update!(current_hp: 50, max_hp: 100)
 
@@ -82,7 +82,7 @@ RSpec.describe "Inventory & Progression UI", type: :system, js: true do
 
   describe "failure cases" do
     it "shows a notification when attempting to equip a non-equipment item" do
-      consumable_template = create(:item_template, :consumable, name: "Зелье")
+      consumable_template = create(:item_template, :consumable, name: "Potion")
       item = create(:inventory_item, inventory: character.inventory, item_template: consumable_template)
 
       visit inventory_path
@@ -125,7 +125,7 @@ RSpec.describe "Inventory & Progression UI", type: :system, js: true do
 
   describe "null/edge cases" do
     it "shows an error when using a consumable with no effect" do
-      empty_consumable = create(:item_template, item_type: "consumable", slot: "none", stat_modifiers: {"mystery" => 1}, name: "Неизвестное зелье")
+      empty_consumable = create(:item_template, item_type: "consumable", slot: "none", stat_modifiers: {"mystery" => 1}, name: "Unknown Potion")
       item = create(:inventory_item, inventory: character.inventory, item_template: empty_consumable)
 
       visit inventory_path
@@ -151,7 +151,7 @@ RSpec.describe "Inventory & Progression UI", type: :system, js: true do
 
       visit inventory_path
 
-      expect(page).to have_current_path(/sign_in/).or have_content("Вход")
+      expect(page).to have_current_path(/sign_in/).or have_content("Sign In")
     end
   end
 end

@@ -61,15 +61,15 @@ RSpec.describe "Arena", type: :request do
       it "shows arena rooms section" do
         get arena_index_path
 
-        expect(response.body).to include("Схема залов")
+        expect(response.body).to include("Room Map")
       end
 
       it "shows fight type tabs" do
         get arena_index_path
 
-        expect(response.body).to include("Дуэли")
-        expect(response.body).to include("Групповые")
-        expect(response.body).to include("Жертвенные")
+        expect(response.body).to include("Duels")
+        expect(response.body).to include("Team Battles")
+        expect(response.body).to include("Sacrifice")
       end
     end
 
@@ -95,7 +95,7 @@ RSpec.describe "Arena", type: :request do
       it "shows enter button for accessible rooms" do
         get arena_index_path
 
-        expect(response.body).to include("Войти")
+        expect(response.body).to include("Enter")
       end
 
       it "includes room level range" do
@@ -119,13 +119,13 @@ RSpec.describe "Arena", type: :request do
       it "displays current application status" do
         get arena_index_path
 
-        expect(response.body).to include("Ваша заявка")
+        expect(response.body).to include("Your application")
       end
 
       it "shows cancel button for active application" do
         get arena_index_path
 
-        expect(response.body).to include("Снять заявку")
+        expect(response.body).to include("Cancel Application")
       end
     end
 
@@ -153,7 +153,7 @@ RSpec.describe "Arena", type: :request do
       it "shows room as unavailable when level too low" do
         get arena_index_path
 
-        expect(response.body).to include("Недоступно").or include("неподходящий уровень")
+        expect(response.body).to include("Unavailable").or include("level mismatch")
       end
     end
   end

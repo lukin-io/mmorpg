@@ -74,9 +74,9 @@ class ArenaTurnTimeoutJob < ApplicationJob
 
   def broadcast_timeout(match, claim_available:)
     message = if claim_available
-      "Таймер хода истек. Доступно завершение по таймауту."
+      "Turn timer expired. Timeout finish is available."
     else
-      "Ход завершен по таймауту"
+      "Turn ended by timeout"
     end
 
     ActionCable.server.broadcast(

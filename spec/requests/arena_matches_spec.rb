@@ -134,7 +134,7 @@ RSpec.describe "ArenaMatches", type: :request do
       get "/arena_matches/#{pending_match.id}"
 
       expect(response).to have_http_status(:success)
-      expect(response.body).to include("Ожидание")
+      expect(response.body).to include("Waiting")
     end
 
     context "when match transitions to live" do
@@ -146,7 +146,7 @@ RSpec.describe "ArenaMatches", type: :request do
         get "/arena_matches/#{pending_match.id}"
 
         expect(response).to have_http_status(:success)
-        expect(response.body).to include("Идет")
+        expect(response.body).to include("Live")
       end
     end
   end

@@ -13,11 +13,11 @@ module Game
       end
 
       def call
-        return failure("Предмет не найден.") unless inventory_item
-        return failure("Некорректное количество.") unless quantity.positive?
-        return failure("В стопке нет столько предметов.") if quantity > inventory_item.quantity.to_i
-        return failure("Этот предмет нельзя продать.") if inventory_item.protected_from_discard?
-        return failure("Этот предмет нельзя продать.") unless unit_price.positive?
+        return failure("Item not found.") unless inventory_item
+        return failure("Invalid quantity.") unless quantity.positive?
+        return failure("Not enough items in stack.") if quantity > inventory_item.quantity.to_i
+        return failure("This item cannot be sold.") if inventory_item.protected_from_discard?
+        return failure("This item cannot be sold.") unless unit_price.positive?
 
         ApplicationRecord.transaction do
           inventory.lock!
@@ -34,7 +34,7 @@ module Game
           )
         end
 
-        Result.new(success: true, message: "Продано: #{template.name} x#{quantity}.", item: inventory_item)
+        Result.new(success: true, message: "Sold: #{template.name} x#{quantity}.", item: inventory_item)
       end
 
       private

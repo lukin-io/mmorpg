@@ -2,19 +2,19 @@
 # Captured Neverlands-based arena NPC applications only.
 
 training:
-  description: "Тренировочный Зал NPC applications for new players"
+  description: "Training Hall NPC applications for new players"
   npcs:
     - key: arena_training_dummy
-      name: Манекен
+      name: Training Dummy
       role: arena_bot
       level: 1
       hp: 30
       damage: 1
       xp: 5
-      dialogue: "*скрипит и покачивается*"
+      dialogue: "*creaks and sways*"
       loot_table:
         - item_key: wood_chips
-          item_name: Щепки
+          item_name: Wood Chips
           chance: 1.0
           quantity: 1
           item_type: material

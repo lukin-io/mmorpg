@@ -34,10 +34,10 @@ RSpec.describe "Shop", type: :request do
       get shop_path
 
       expect(response).to have_http_status(:success)
-      expect(response.body).to include("Лавка")
-      expect(response.body).to include("Купить")
+      expect(response.body).to include("Shop")
+      expect(response.body).to include("Buy")
       expect(response.body).to include("Shop Spec Knife")
-      expect(response.body).to include("Масса")
+      expect(response.body).to include("Mass")
     end
   end
 
@@ -51,7 +51,7 @@ RSpec.describe "Shop", type: :request do
       stack = inventory.inventory_items.find_by(item_template:)
       expect(stack.quantity).to eq(2)
       expect(response).to redirect_to(shop_path)
-      expect(flash[:notice]).to include("Куплено")
+      expect(flash[:notice]).to include("Bought")
     end
 
     it "rejects a purchase when the wallet cannot pay" do
@@ -62,7 +62,7 @@ RSpec.describe "Shop", type: :request do
       }.not_to change { inventory.inventory_items.count }
 
       expect(response).to redirect_to(shop_path)
-      expect(flash[:alert]).to include("Недостаточно NV")
+      expect(flash[:alert]).to include("Not enough NV")
     end
   end
 
@@ -83,7 +83,7 @@ RSpec.describe "Shop", type: :request do
 
       expect(inventory_item.reload.quantity).to eq(1)
       expect(response).to redirect_to(shop_path(mode: "sell"))
-      expect(flash[:notice]).to include("Продано")
+      expect(flash[:notice]).to include("Sold")
     end
 
     it "rejects equipped items" do
@@ -94,7 +94,7 @@ RSpec.describe "Shop", type: :request do
       }.not_to change { wallet.reload.nv_balance }
 
       expect(response).to redirect_to(shop_path(mode: "sell"))
-      expect(flash[:alert]).to include("нельзя продать")
+      expect(flash[:alert]).to include("cannot be sold")
     end
   end
 
@@ -107,7 +107,7 @@ RSpec.describe "Shop", type: :request do
       get shop_path
 
       expect(response).to redirect_to(world_path)
-      expect(flash[:alert]).to include("городского здания")
+      expect(flash[:alert]).to include("city building")
     end
   end
 end

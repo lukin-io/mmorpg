@@ -5,20 +5,20 @@ module Game
     # Server-authored shop catalog for the city shop frame.
     class Catalog
       MODES = [
-        ["buy", "Купить"],
-        ["licenses", "Лицензии"],
-        ["sell", "Продать"],
-        ["novice", "Новичкам"]
+        ["buy", "Buy"],
+        ["licenses", "Licenses"],
+        ["sell", "Sell"],
+        ["novice", "Novice"]
       ].freeze
 
       CATEGORIES = [
-        ["all", "Все"],
-        ["weapons", "Оружие"],
-        ["armor", "Броня"],
-        ["jewelry", "Бижутерия"],
-        ["consumables", "Эликсиры"],
-        ["materials", "Ресурсы"],
-        ["misc", "Разное"]
+        ["all", "All"],
+        ["weapons", "Weapons"],
+        ["armor", "Armor"],
+        ["jewelry", "Jewelry"],
+        ["consumables", "Elixirs"],
+        ["materials", "Resources"],
+        ["misc", "Misc"]
       ].freeze
 
       WEAPON_SLOTS = %w[main_hand].freeze
@@ -129,7 +129,7 @@ module Game
       def license?(template)
         key = template.key.to_s.downcase
         name = template.name.to_s.downcase
-        key.start_with?("license") || name.include?("license") || name.include?("лиценз")
+        key.start_with?("license") || name.include?("license")
       end
     end
   end

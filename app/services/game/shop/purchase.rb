@@ -13,9 +13,9 @@ module Game
       end
 
       def call
-        return failure("Некорректное количество.") unless quantity.positive?
-        return failure("Этот предмет нельзя купить.") unless item_template&.base_price.to_i.positive?
-        return failure("Недостаточно NV.") if wallet.nv_balance < total_price
+        return failure("Invalid quantity.") unless quantity.positive?
+        return failure("This item cannot be bought.") unless item_template&.base_price.to_i.positive?
+        return failure("Not enough NV.") if wallet.nv_balance < total_price
 
         ApplicationRecord.transaction do
           inventory.lock!
@@ -31,11 +31,11 @@ module Game
           Game::Inventory::Manager.new(inventory:).add_item!(item_template:, quantity:)
         end
 
-        Result.new(success: true, message: "Куплено: #{item_template.name} x#{quantity}.", item: item_template)
+        Result.new(success: true, message: "Bought: #{item_template.name} x#{quantity}.", item: item_template)
       rescue Game::Inventory::Manager::CapacityExceededError => e
         failure(e.message)
       rescue Economy::WalletService::InsufficientFundsError
-        failure("Недостаточно NV.")
+        failure("Not enough NV.")
       end
 
       private

@@ -1,4 +1,4 @@
-<% content_for :title, "Бой ##{@arena_match.id}" %>
+<% content_for :title, "Fight ##{@arena_match.id}" %>
 
 <%
   # Get participants by team (a/alpha vs b/beta)
@@ -12,7 +12,7 @@
   attack_options = arena_attack_options(current_participation, combat_config)
   block_options = arena_block_options(current_participation, combat_config)
   magic_options = combat_config["magic_types"] || {}
-  body_parts = [["head", "Голова"], ["torso", "Корпус"], ["stomach", "Живот"], ["legs", "Ноги"]]
+  body_parts = [["head", "Head"], ["torso", "Torso"], ["stomach", "Abdomen"], ["legs", "Legs"]]
   block_parts = body_parts
 %>
 
@@ -23,7 +23,7 @@
      data-arena-match-read-only-value="<%= !current_user_participating? %>">
 
   <div class="page-header page-header--compact">
-    <%= link_to "← К арене", arena_index_path, class: "btn-secondary btn-sm" %>
+    <%= link_to "← To Arena", arena_index_path, class: "btn-secondary btn-sm" %>
     <h1>
       <%= fight_type_label(@arena_match.match_type) %>
       <span class="badge badge--<%= @arena_match.status %>"><%= arena_match_status_badge(@arena_match.status) %></span>
@@ -40,7 +40,7 @@
             show_stats: (user_team == "b" || user_team == "beta"),
             position: :left %>
       <% else %>
-        <div class="arena-fighter-empty">Ожидание противника...</div>
+        <div class="arena-fighter-empty">Waiting for opponent...</div>
       <% end %>
     </div>
 
@@ -59,17 +59,17 @@
       <% if @arena_match.live? && current_user_participating? && current_user_pending_arena_turn? %>
         <div class="arena-action-panel nl-fight-wait-panel">
           <div class="nl-fight-wait-state">
-            <b>Ожидание хода противника</b>
+            <b>Waiting for opponent turn</b>
           </div>
 
           <% if arena_timeout_claim_available? %>
             <div class="nl-fight-wait-actions">
-              <%= button_to "Победа по таймауту",
+              <%= button_to "Timeout Victory",
                   claim_timeout_arena_match_path(@arena_match),
                   method: :post,
                   params: {mode: "victory"},
                   class: "nl-arena-small-button" %>
-              <%= button_to "Принять ничью",
+              <%= button_to "Accept Draw",
                   claim_timeout_arena_match_path(@arena_match),
                   method: :post,
                   params: {mode: "draw"},
@@ -89,13 +89,13 @@
           </div>
 
           <div class="nl-fight-controls">
-            <%= link_to "Инвентарь", inventory_path, class: "nl-arena-small-button" %>
-            <button type="button" class="nl-arena-small-button" data-action="click->arena-match#requestMatchState">Обновить</button>
+            <%= link_to "Inventory", inventory_path, class: "nl-arena-small-button" %>
+            <button type="button" class="nl-arena-small-button" data-action="click->arena-match#requestMatchState">Refresh</button>
           </div>
 
           <div class="nl-fight-budget">
-            Действия: <b><%= ap_limit %></b>
-            <span>Выбрано: <b data-arena-match-target="turnCostValue">0/<%= ap_limit %></b></span>
+            Actions: <b><%= ap_limit %></b>
+            <span>Selected: <b data-arena-match-target="turnCostValue">0/<%= ap_limit %></b></span>
           </div>
 
           <div class="nl-fight-magic-slots">
@@ -118,10 +118,10 @@
           <div class="arena-turn-composer nl-fight-turn-composer">
             <table class="nl-fight-selector-table">
               <tr>
-                <th>Удар</th>
-                <th>Действие</th>
-                <th>Блок</th>
-                <th>Действие</th>
+                <th>Attack</th>
+                <th>Action</th>
+                <th>Block</th>
+                <th>Action</th>
               </tr>
               <% body_parts.each_with_index do |(part, attack_label), idx| %>
                 <% block_part_key, block_label = block_parts[idx] %>
@@ -132,7 +132,7 @@
                             data-action="change->arena-match#updateTurnCost"
                             data-body-part="<%= part %>"
                             class="form-select form-select--compact nl-fight-select">
-                      <option value="none" data-ap-cost="0" data-mana-cost="0">нет</option>
+                      <option value="none" data-ap-cost="0" data-mana-cost="0">none</option>
                       <% attack_options.each do |key, config| %>
                         <option value="<%= key %>"
                                 data-ap-cost="<%= config['action_cost'] %>"
@@ -149,7 +149,7 @@
                             data-action="change->arena-match#updateTurnCost"
                             data-body-part="<%= block_part_key %>"
                             class="form-select form-select--compact nl-fight-select">
-                      <option value="none" data-ap-cost="0" data-body-parts="">нет</option>
+                      <option value="none" data-ap-cost="0" data-body-parts="">none</option>
                       <% block_options.each do |key, config| %>
                         <% covered_parts = config["body_parts"] || [config["body_part"]].compact %>
                         <% next unless covered_parts.include?(block_part_key) %>
@@ -171,10 +171,10 @@
             <div class="arena-turn-submit">
               <button class="btn-attack btn-attack--submit nl-arena-small-button"
                       data-action="click->arena-match#submitTurn">
-                Сделать ход
+                Submit Turn
               </button>
               <button type="button" class="nl-arena-small-button" data-action="click->arena-match#resetTurn">
-                Сброс
+                Reset
               </button>
             </div>
           </div>
@@ -185,12 +185,12 @@
       <div class="arena-combat-log" data-arena-match-target="combatLog">
         <div class="combat-log-entry combat-log--system">
           <span class="combat-time"><%= @arena_match.created_at.strftime("%H:%M:%S") %></span>
-          Бой создан
+          Fight created
         </div>
         <% if @arena_match.started_at %>
           <div class="combat-log-entry combat-log--system combat-log--highlight">
             <span class="combat-time"><%= @arena_match.started_at.strftime("%H:%M:%S") %></span>
-            Бой начался
+            Fight started
           </div>
         <% end %>
         <% arena_match_combat_log(@arena_match).each do |entry| %>
@@ -202,7 +202,7 @@
         <% if @arena_match.completed? %>
           <div class="combat-log-entry combat-log--<%= @arena_match.winning_team ? 'victory' : 'draw' %>">
             <span class="combat-time"><%= @arena_match.ended_at&.strftime("%H:%M:%S") %></span>
-            <%= @arena_match.winning_team ? "Победитель: #{winner_name(@arena_match)}" : "Ничья" %>
+            <%= @arena_match.winning_team ? "Winner: #{winner_name(@arena_match)}" : "Draw" %>
           </div>
         <% end %>
       </div>
@@ -216,7 +216,7 @@
             show_stats: (user_team == "a" || user_team == "alpha"),
             position: :right %>
       <% else %>
-        <div class="arena-fighter-empty">Ожидание противника...</div>
+        <div class="arena-fighter-empty">Waiting for opponent...</div>
       <% end %>
     </div>
   </div>
@@ -226,27 +226,27 @@
     <span class="match-bar-item">
       <strong><%= fight_type_label(@arena_match.match_type) %></strong>
       <% if @arena_match.arena_room %>
-        в <%= @arena_match.arena_room.name %>
+        in <%= @arena_match.arena_room.name %>
       <% end %>
     </span>
     <% if @arena_match.started_at %>
-      <span class="match-bar-item">Начало: <%= l(@arena_match.started_at, format: :short) %></span>
+      <span class="match-bar-item">Started: <%= l(@arena_match.started_at, format: :short) %></span>
     <% end %>
     <% if @arena_match.duration && @arena_match.duration < 3600 %>
-      <span class="match-bar-item">Длительность: <%= format_duration(@arena_match.duration) %></span>
+      <span class="match-bar-item">Duration: <%= format_duration(@arena_match.duration) %></span>
     <% end %>
     <% if @arena_match.turn_timeout_seconds %>
-      <span class="match-bar-item">Таймаут: <%= @arena_match.turn_timeout_seconds / 60 %> мин</span>
+      <span class="match-bar-item">Timeout: <%= @arena_match.turn_timeout_seconds / 60 %> min</span>
     <% end %>
     <% unless current_user_participating? %>
-      <span class="match-bar-item text-muted">Просмотр</span>
+      <span class="match-bar-item text-muted">Spectating</span>
     <% end %>
   </div>
 
   <%# Countdown timer overlay %>
   <div class="arena-countdown-overlay" data-arena-match-target="timer" style="display: none;">
     <div class="arena-countdown-content">
-      <div class="arena-countdown-title">Бой начинается</div>
+      <div class="arena-countdown-title">Fight starting</div>
       <div class="arena-countdown-timer">--</div>
     </div>
   </div>
@@ -257,20 +257,20 @@
          data-arena-match-target="resultOverlay">
       <div class="arena-result-content">
         <h1 class="arena-result-title">
-          <%= current_user_won? ? "Победа" : (current_user_participating? ? "Поражение" : "Бой завершен") %>
+          <%= current_user_won? ? "Victory" : (current_user_participating? ? "Defeat" : "Fight finished") %>
         </h1>
         <div class="arena-result-details">
           <% if @arena_match.winning_team %>
-            <p>Победитель: <strong><%= winner_name(@arena_match) %></strong></p>
+            <p>Winner: <strong><%= winner_name(@arena_match) %></strong></p>
           <% else %>
-            <p>Бой завершился ничьей</p>
+            <p>Fight ended in a draw</p>
           <% end %>
-          <p class="text-muted">Длительность: <%= format_duration(@arena_match.duration || 0) %></p>
+          <p class="text-muted">Duration: <%= format_duration(@arena_match.duration || 0) %></p>
         </div>
         <% if current_user_participating? && !current_user_finished_arena_match? %>
-          <%= button_to "Завершить бой", finish_arena_match_path(@arena_match), method: :post, class: "btn-primary" %>
+          <%= button_to "Finish Fight", finish_arena_match_path(@arena_match), method: :post, class: "btn-primary" %>
         <% else %>
-          <%= link_to "К арене", arena_index_path, class: "btn-primary" %>
+          <%= link_to "To Arena", arena_index_path, class: "btn-primary" %>
         <% end %>
       </div>
     </div>

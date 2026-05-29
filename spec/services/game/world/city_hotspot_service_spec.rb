@@ -141,7 +141,7 @@ RSpec.describe Game::World::CityHotspotService do
       it "returns failure result" do
         result = subject.interact!(99999)
         expect(result.success).to be false
-        expect(result.message).to include("не найдена")
+        expect(result.message).to include("not found")
       end
     end
 
@@ -156,7 +156,7 @@ RSpec.describe Game::World::CityHotspotService do
       it "returns failure result" do
         result = subject.interact!(high_level_hotspot.id)
         expect(result.success).to be false
-        expect(result.message).to include("уровень 50")
+        expect(result.message).to include("level 50")
       end
     end
 
@@ -170,7 +170,7 @@ RSpec.describe Game::World::CityHotspotService do
       it "returns failure result" do
         result = subject.interact!(inactive_hotspot.id)
         expect(result.success).to be false
-        expect(result.message).to include("недоступна")
+        expect(result.message).to include("unavailable")
       end
     end
 
@@ -187,7 +187,7 @@ RSpec.describe Game::World::CityHotspotService do
       it "returns failure result" do
         result = subject.interact!(broken_exit.id)
         expect(result.success).to be false
-        expect(result.message).to include("не настроен")
+        expect(result.message).to include("not configured")
       end
     end
 
@@ -207,7 +207,7 @@ RSpec.describe Game::World::CityHotspotService do
         character.reload
         result = subject.interact!(exit_hotspot.id)
         expect(result.success).to be false
-        expect(result.message).to include("позиция")
+        expect(result.message).to include("position")
       end
     end
 
@@ -216,7 +216,7 @@ RSpec.describe Game::World::CityHotspotService do
         create(:city_hotspot,
           zone: city_zone,
           key: "shop",
-          name: "Лавка",
+          name: "Shop",
           hotspot_type: "building",
           action_type: "open_feature",
           action_params: {"feature" => "shop"},
@@ -228,7 +228,7 @@ RSpec.describe Game::World::CityHotspotService do
         result = subject.interact!(shop_hotspot.id)
         expect(result.success).to be true
         expect(result.redirect_url).to eq("/shop")
-        expect(result.message).to include("Лавка")
+        expect(result.message).to include("Shop")
       end
     end
   end
