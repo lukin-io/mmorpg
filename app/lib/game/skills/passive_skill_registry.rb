@@ -14,51 +14,56 @@ module Game
       POOL_COMBAT = :combat
       POOL_PEACE = :peace
 
+      # Player-facing labels are English (launch principle: English-only).
+      # The original Neverlands Russian source label is preserved alongside for
+      # traceability back to the capture.
       CATEGORIES = {
-        combat: {name: "Боевые умения", pool: POOL_COMBAT},
-        resistance: {name: "Сопротивления", pool: POOL_COMBAT},
-        magic: {name: "Магия", pool: POOL_COMBAT},
-        peace_world: {name: "Мирные умения", pool: POOL_PEACE}
+        combat: {name: "Combat Skills", pool: POOL_COMBAT},
+        resistance: {name: "Resistances", pool: POOL_COMBAT},
+        magic: {name: "Magic", pool: POOL_COMBAT},
+        peace_world: {name: "Peace Skills", pool: POOL_PEACE}
       }.freeze
 
+      # [source_id, key, english_name, russian_source_name, category, rate]
       SKILL_ROWS = [
-        [0, :unarmed_combat, "Рукопашный бой", :combat, "10:8:6:4"],
-        [1, :sword_mastery, "Владение мечами", :combat, "8:6:4:2"],
-        [2, :axe_mastery, "Владение топорами", :combat, "8:6:4:2"],
-        [3, :bludgeoning_mastery, "Владение дробящим оружием", :combat, "8:6:4:2"],
-        [4, :knife_mastery, "Владение ножами", :combat, "8:6:4:2"],
-        [5, :throwing_mastery, "Владение метательным оружием", :combat, "8:6:4:2"],
-        [6, :polearm_mastery, "Владение алебардами и копьями", :combat, "8:6:4:2"],
-        [7, :staff_mastery, "Владение посохами", :combat, "8:6:4:2"],
-        [8, :exotic_weapon_mastery, "Владение экзотическим оружием", :combat, "6:4:4:2"],
-        [9, :two_handed_mastery, "Владение двуручным оружием", :combat, "10:8:6:4"],
-        [10, :dual_wielding, "Владение двумя руками", :combat, "4:4:2:2"],
-        [11, :extra_action_points, "Доп. очки действия", :combat, "2:2:2:2"],
-        [16, :fire_magic_resistance, "Сопротивление магии огня", :resistance, "6:4:2:2"],
-        [17, :water_magic_resistance, "Сопротивление магии воды", :resistance, "6:4:2:2"],
-        [18, :air_magic_resistance, "Сопротивление магии воздуха", :resistance, "6:4:2:2"],
-        [19, :earth_magic_resistance, "Сопротивление магии земли", :resistance, "6:4:2:2"],
-        [20, :physical_damage_resistance, "Сопротивление физ. поврежд.", :resistance, "6:4:2:2"],
-        [12, :fire_magic, "Магия огня", :magic, "8:6:4:2"],
-        [13, :water_magic, "Магия воды", :magic, "8:6:4:2"],
-        [14, :air_magic, "Магия воздуха", :magic, "8:6:4:2"],
-        [15, :earth_magic, "Магия земли", :magic, "8:6:4:2"],
-        [22, :caution, "Осторожность", :peace_world, "2:2:2:2"],
-        [23, :stealth, "Скрытность", :peace_world, "2:2:2:2"],
-        [24, :observation, "Наблюдательность", :peace_world, "2:2:2:2"],
-        [26, :wanderer, "Странник", :peace_world, "2:2:2:2"],
-        [27, :linguistics, "Языковедение", :peace_world, "2:2:2:2"],
-        [30, :self_healing, "Самолечение", :peace_world, "2:2:2:2"],
-        [33, :fast_mana_regeneration, "Быстрое восстановление маны", :peace_world, "2:2:2:2"],
-        [34, :leadership, "Лидерство", :peace_world, "6:4:3:2"]
+        [0, :unarmed_combat, "Unarmed Combat", "Рукопашный бой", :combat, "10:8:6:4"],
+        [1, :sword_mastery, "Sword Mastery", "Владение мечами", :combat, "8:6:4:2"],
+        [2, :axe_mastery, "Axe Mastery", "Владение топорами", :combat, "8:6:4:2"],
+        [3, :bludgeoning_mastery, "Bludgeoning Mastery", "Владение дробящим оружием", :combat, "8:6:4:2"],
+        [4, :knife_mastery, "Knife Mastery", "Владение ножами", :combat, "8:6:4:2"],
+        [5, :throwing_mastery, "Throwing Mastery", "Владение метательным оружием", :combat, "8:6:4:2"],
+        [6, :polearm_mastery, "Polearm Mastery", "Владение алебардами и копьями", :combat, "8:6:4:2"],
+        [7, :staff_mastery, "Staff Mastery", "Владение посохами", :combat, "8:6:4:2"],
+        [8, :exotic_weapon_mastery, "Exotic Weapon Mastery", "Владение экзотическим оружием", :combat, "6:4:4:2"],
+        [9, :two_handed_mastery, "Two-Handed Mastery", "Владение двуручным оружием", :combat, "10:8:6:4"],
+        [10, :dual_wielding, "Dual Wielding", "Владение двумя руками", :combat, "4:4:2:2"],
+        [11, :extra_action_points, "Extra Action Points", "Доп. очки действия", :combat, "2:2:2:2"],
+        [16, :fire_magic_resistance, "Fire Magic Resistance", "Сопротивление магии огня", :resistance, "6:4:2:2"],
+        [17, :water_magic_resistance, "Water Magic Resistance", "Сопротивление магии воды", :resistance, "6:4:2:2"],
+        [18, :air_magic_resistance, "Air Magic Resistance", "Сопротивление магии воздуха", :resistance, "6:4:2:2"],
+        [19, :earth_magic_resistance, "Earth Magic Resistance", "Сопротивление магии земли", :resistance, "6:4:2:2"],
+        [20, :physical_damage_resistance, "Physical Damage Resistance", "Сопротивление физ. поврежд.", :resistance, "6:4:2:2"],
+        [12, :fire_magic, "Fire Magic", "Магия огня", :magic, "8:6:4:2"],
+        [13, :water_magic, "Water Magic", "Магия воды", :magic, "8:6:4:2"],
+        [14, :air_magic, "Air Magic", "Магия воздуха", :magic, "8:6:4:2"],
+        [15, :earth_magic, "Earth Magic", "Магия земли", :magic, "8:6:4:2"],
+        [22, :caution, "Caution", "Осторожность", :peace_world, "2:2:2:2"],
+        [23, :stealth, "Stealth", "Скрытность", :peace_world, "2:2:2:2"],
+        [24, :observation, "Observation", "Наблюдательность", :peace_world, "2:2:2:2"],
+        [26, :wanderer, "Wanderer", "Странник", :peace_world, "2:2:2:2"],
+        [27, :linguistics, "Linguistics", "Языковедение", :peace_world, "2:2:2:2"],
+        [30, :self_healing, "Self-Healing", "Самолечение", :peace_world, "2:2:2:2"],
+        [33, :fast_mana_regeneration, "Fast Mana Regeneration", "Быстрое восстановление маны", :peace_world, "2:2:2:2"],
+        [34, :leadership, "Leadership", "Лидерство", :peace_world, "6:4:3:2"]
       ].freeze
 
-      SKILLS = SKILL_ROWS.each_with_object({}) do |(source_id, key, name, category, progression_rate), memo|
+      SKILLS = SKILL_ROWS.each_with_object({}) do |(source_id, key, name, source_name, category, progression_rate), memo|
         memo[key] = {
           key:,
           source_id:,
           name:,
-          description: "Умение Neverlands ##{source_id}.",
+          source_name:,
+          description: "Neverlands numeric skill ##{source_id}.",
           max_level: MAX_LEVEL,
           category:,
           pool: CATEGORIES.fetch(category).fetch(:pool),

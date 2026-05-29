@@ -18,13 +18,13 @@ RSpec.describe Character, type: :model do
 
     it "defaults to no alignment" do
       expect(character.alignment).to eq("none")
-      expect(character.alignment_label).to eq("Нет")
+      expect(character.alignment_label).to eq("None")
     end
 
     it "uses source-backed alignment labels" do
       character.update!(alignment: "light")
 
-      expect(character.alignment_display).to eq("Свет")
+      expect(character.alignment_display).to eq("Light")
     end
   end
 

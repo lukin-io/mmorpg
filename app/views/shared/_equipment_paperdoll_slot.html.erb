@@ -1,0 +1,40 @@
+<%#
+  One equipment slot inside the shared paper doll.
+
+  Locals:
+    slot        - slot key (string/sym)
+    label       - English slot label
+    item        - equipped InventoryItem or nil
+    interactive - when true, a filled slot offers a server-authorized remove action
+    compact     - smaller box for ring/belt/pocket content slots
+%>
+<% compact = local_assigns.fetch(:compact, false) %>
+<% interactive = local_assigns.fetch(:interactive, false) %>
+<%
+  classes = ["nl-profile-slot"]
+  classes << "nl-profile-slot--compact" if compact
+  classes << "nl-profile-slot--filled" if item
+  if interactive
+    classes << "equipment-slot" << "equipment-slot--#{slot}"
+    classes << "filled" if item
+  end
+%>
+<div class="<%= classes.join(" ") %>" title="<%= label %>">
+  <span class="nl-profile-slot-label"><%= label %></span>
+  <% if item %>
+    <span class="nl-profile-slot-value"><%= item.item_template&.name %></span>
+    <% if (durability = inventory_item_durability(item)) %>
+      <span class="nl-profile-slot-durability"><%= durability %></span>
+    <% end %>
+    <% if interactive %>
+      <%= button_to unequip_inventory_path(slot: slot),
+            method: :post,
+            class: "nl-slot-unequip",
+            title: "Remove #{label}",
+            aria: {label: "Remove #{label}"},
+            data: {turbo: true} do %>&times;<% end %>
+    <% end %>
+  <% else %>
+    <span class="nl-profile-slot-value nl-profile-slot-value--empty">empty</span>
+  <% end %>
+</div>

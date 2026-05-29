@@ -1,0 +1,50 @@
+<%#
+  Shared equipment paper doll.
+
+  Renders the Neverlands-style equipment slots around a center character
+  portrait. Used read-only on the player profile (source `slots_pla`) and as an
+  interactive remove surface on the inventory page (source `slots_inv`).
+
+  Locals:
+    character   - Character whose doll is shown
+    equipment   - Hash of slot_key (sym or str) => InventoryItem
+    interactive - when true, filled slots render a server-authorized remove action
+%>
+<% character ||= nil %>
+<% equipment ||= {} %>
+<% interactive = local_assigns.fetch(:interactive, false) %>
+
+<div class="nl-equipment-paperdoll">
+  <div class="nl-equipment-side nl-equipment-side--left">
+    <% EquipmentSlots::LEFT.each do |slot_key, label| %>
+      <%= render "shared/equipment_paperdoll_slot",
+            slot: slot_key, label: label,
+            item: (equipment[slot_key] || equipment[slot_key.to_sym]),
+            interactive: interactive %>
+    <% end %>
+  </div>
+
+  <div class="nl-equipment-portrait">
+    <% if character %>
+      <%= character_avatar_tag(character, size: :xlarge, class: "nl-equipment-character-image") %>
+    <% end %>
+  </div>
+
+  <div class="nl-equipment-side nl-equipment-side--right">
+    <% EquipmentSlots::RIGHT.each do |slot_key, label| %>
+      <%= render "shared/equipment_paperdoll_slot",
+            slot: slot_key, label: label,
+            item: (equipment[slot_key] || equipment[slot_key.to_sym]),
+            interactive: interactive %>
+    <% end %>
+  </div>
+
+  <div class="nl-equipment-lower-slots">
+    <% EquipmentSlots::LOWER.each do |slot_key, label| %>
+      <%= render "shared/equipment_paperdoll_slot",
+            slot: slot_key, label: label,
+            item: (equipment[slot_key] || equipment[slot_key.to_sym]),
+            interactive: interactive, compact: true %>
+    <% end %>
+  </div>
+</div>

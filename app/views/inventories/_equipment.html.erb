@@ -1,17 +1,5 @@
 <% character ||= current_character %>
 
 <div class="nl-inventory-equipment">
-  <div class="nl-equipment-paperdoll">
-    <span class="nl-equipment-avatar-name"><%= character.name %></span>
-    <span class="nl-equipment-avatar-kind">Level <%= character.level %></span>
-  </div>
-
-  <div class="equipment-slots nl-inventory-equipment-slots">
-    <% EquipmentSlots::ORDERED.each do |slot_key, label| %>
-      <%= render "inventories/equipment_slot",
-        slot: slot_key.to_sym,
-        item: equipment[slot_key.to_sym],
-        label: label %>
-    <% end %>
-  </div>
+  <%= render "shared/equipment_paperdoll", character: character, equipment: equipment, interactive: true %>
 </div>

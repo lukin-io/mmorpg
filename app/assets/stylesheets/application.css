@@ -8844,6 +8844,49 @@ turbo-frame[busy] {
   overflow-wrap: anywhere;
 }
 
+.nl-profile-slot-value--empty {
+  font-weight: normal;
+  color: var(--nl-text-muted);
+}
+
+.nl-profile-slot-durability {
+  display: block;
+  color: var(--nl-text-muted);
+  font-size: 9px;
+}
+
+.nl-profile-slot {
+  position: relative;
+}
+
+.nl-slot-unequip {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  padding: 0 4px;
+  border: 1px solid var(--nl-border-medium);
+  background: #ffffff;
+  color: var(--nl-danger);
+  font-size: 11px;
+  line-height: 1.3;
+  cursor: pointer;
+}
+
+.nl-slot-unequip:hover {
+  background: var(--nl-bg-secondary);
+}
+
+.nl-profile-slot form.button_to {
+  display: inline;
+  margin: 0;
+}
+
+.nl-stat-equip-delta {
+  margin-left: 4px;
+  color: var(--nl-gold-dark);
+  font-weight: normal;
+}
+
 .nl-equipment-location {
   display: flex;
   justify-content: space-between;

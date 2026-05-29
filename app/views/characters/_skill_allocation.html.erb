@@ -26,14 +26,14 @@
   <div class="nl-allocation-pools">
     <div class="nl-allocation-pool nl-allocation-pool--combat">
       <span class="nl-allocation-pool-icon">⚔️</span>
-      <span class="nl-allocation-pool-label">Боевые очки:</span>
+      <span class="nl-allocation-pool-label">Combat points:</span>
       <span class="nl-allocation-pool-value" data-skill-allocation-target="combatPoints">
         <%= @combat_skill_points %>
       </span>
     </div>
     <div class="nl-allocation-pool nl-allocation-pool--peace">
       <span class="nl-allocation-pool-icon">🕊️</span>
-      <span class="nl-allocation-pool-label">Мирные очки:</span>
+      <span class="nl-allocation-pool-label">Peace points:</span>
       <span class="nl-allocation-pool-value" data-skill-allocation-target="peacePoints">
         <%= @peace_skill_points %>
       </span>
@@ -118,13 +118,13 @@
       <button type="button"
               class="nl-btn nl-btn--secondary"
               data-action="click->skill-allocation#reset">
-        Сброс
+        Reset
       </button>
       <button type="submit"
               class="nl-btn nl-btn--primary nl-btn--disabled"
               data-skill-allocation-target="saveButton"
               disabled>
-        Сохранить
+        Save
       </button>
     </div>
   <% end %>

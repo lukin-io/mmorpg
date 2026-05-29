@@ -17,33 +17,33 @@ RSpec.describe "Skill Allocation", type: :system, js: true do
     before { visit skills_character_path(character) }
 
     it "displays the skill allocation page" do
-      expect(page).to have_content("Умения")
+      expect(page).to have_content("Skills")
       expect(page).to have_content(character.name)
     end
 
     it "displays both captured skill point pools" do
       within(".nl-allocation-pool--combat") do
-        expect(page).to have_content("Боевые очки:")
+        expect(page).to have_content("Combat points:")
         expect(page).to have_content("10")
       end
 
       within(".nl-allocation-pool--peace") do
-        expect(page).to have_content("Мирные очки:")
+        expect(page).to have_content("Peace points:")
         expect(page).to have_content("5")
       end
     end
 
     it "displays captured Neverlands skill categories" do
-      expect(page).to have_content("Боевые умения")
-      expect(page).to have_content("Магия")
-      expect(page).to have_content("Сопротивления")
-      expect(page).to have_content("Мирные умения")
+      expect(page).to have_content("Combat Skills")
+      expect(page).to have_content("Magic")
+      expect(page).to have_content("Resistances")
+      expect(page).to have_content("Peace Skills")
       expect(page).not_to have_content("Survival")
     end
 
     it "displays skills with source-backed values and gains" do
-      expect(page).to have_content("Рукопашный бой")
-      expect(page).to have_content("Странник")
+      expect(page).to have_content("Unarmed Combat")
+      expect(page).to have_content("Wanderer")
       expect(page).to have_content("[000/100]")
       expect(page).to have_css(".nl-skill-gain[data-skill='unarmed_combat']", text: "+10")
       expect(page).to have_css(".nl-skill-gain[data-skill='self_healing']", text: "+2")
@@ -56,8 +56,8 @@ RSpec.describe "Skill Allocation", type: :system, js: true do
     end
 
     it "displays allocation controls" do
-      expect(page).to have_button("Сохранить", disabled: true)
-      expect(page).to have_button("Сброс")
+      expect(page).to have_button("Save", disabled: true)
+      expect(page).to have_button("Reset")
     end
   end
 
@@ -72,7 +72,7 @@ RSpec.describe "Skill Allocation", type: :system, js: true do
       end
 
       within(".nl-allocation-pool--combat") { expect(page).to have_content("9") }
-      expect(page).to have_button("Сохранить", disabled: false)
+      expect(page).to have_button("Save", disabled: false)
     end
 
     it "increments peace skill level from the peace pool" do
@@ -132,7 +132,7 @@ RSpec.describe "Skill Allocation", type: :system, js: true do
       within_skill_row(:unarmed_combat) { click_button "−" }
 
       within(".nl-allocation-pool--combat") { expect(page).to have_content("10") }
-      expect(page).to have_button("Сохранить", disabled: true)
+      expect(page).to have_button("Save", disabled: true)
     end
 
     it "cannot remove below base level" do
@@ -152,7 +152,7 @@ RSpec.describe "Skill Allocation", type: :system, js: true do
     end
 
     it "resets all pending changes" do
-      click_button "Сброс"
+      click_button "Reset"
 
       within_skill_row(:unarmed_combat) do
         expect(page).to have_content("[000/100]")
@@ -173,9 +173,9 @@ RSpec.describe "Skill Allocation", type: :system, js: true do
     end
 
     it "saves skill allocation to database" do
-      click_button "Сохранить"
+      click_button "Save"
 
-      expect(page).to have_content("Умения сохранены")
+      expect(page).to have_content("Skills saved")
       character.reload
       expect(character.passive_skill_level(:unarmed_combat)).to eq(10)
       expect(character.combat_skill_points).to eq(9)
@@ -184,8 +184,8 @@ RSpec.describe "Skill Allocation", type: :system, js: true do
     it "saves multiple pool allocations atomically" do
       within_skill_row(:self_healing) { click_button "+" }
 
-      click_button "Сохранить"
-      expect(page).to have_content("Умения сохранены", wait: 5)
+      click_button "Save"
+      expect(page).to have_content("Skills saved", wait: 5)
 
       character.reload
       expect(character.passive_skill_level(:unarmed_combat)).to eq(10)
@@ -333,10 +333,10 @@ RSpec.describe "Skill Allocation", type: :system, js: true do
 
     it "form submits via Turbo" do
       within_skill_row(:unarmed_combat) { click_button "+" }
-      click_button "Сохранить"
+      click_button "Save"
 
       expect(page).to have_css("#skill-allocation")
-      expect(page).to have_content("Умения сохранены")
+      expect(page).to have_content("Skills saved")
     end
   end
 

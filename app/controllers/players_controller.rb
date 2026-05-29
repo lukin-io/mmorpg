@@ -8,6 +8,12 @@ class PlayersController < ApplicationController
   def show
     @equipment = equipped_items_for(@character)
     @viewer_character = current_user&.character if user_signed_in?
+    @own_profile = @viewer_character.present? && @viewer_character.id == @character.id
+
+    if @own_profile
+      @stats_data = build_stats_data
+      @allocatable_stats = Character::PRIMARY_STATS
+    end
 
     respond_to do |format|
       format.html
@@ -16,6 +22,20 @@ class PlayersController < ApplicationController
   end
 
   private
+
+  def build_stats_data
+    allocated = @character.allocated_stats || {}
+    effective_stats = @character.stats
+
+    Character::PRIMARY_STATS.index_with do |stat_key|
+      {
+        label: Character.stat_label(stat_key),
+        base: Character::BASE_PRIMARY_STATS.fetch(stat_key),
+        allocated: allocated.sum { |key, value| (Character.normalize_stat_key(key) == stat_key) ? value.to_i : 0 },
+        total: effective_stats.get(stat_key)
+      }
+    end
+  end
 
   def set_character
     @character = Character

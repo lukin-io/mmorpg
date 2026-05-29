@@ -37,13 +37,13 @@ RSpec.describe "Inventory & Progression UI", type: :system, js: true do
 
       visit inventory_path
 
-      click_visible_button_in(".inventory-slot.filled[data-item-id='#{sword.id}']", "Надеть")
+      click_visible_button_in(".inventory-slot.filled[data-item-id='#{sword.id}']", "Wear")
 
       expect(page).to have_css(".equipment-slot--main_hand.filled", wait: 5)
 
       equipment_slot = find(".equipment-slot--main_hand", wait: 5)
       scroll_to(equipment_slot, align: :center)
-      equipment_slot.click
+      within(equipment_slot) { click_button "Remove Weapon" }
 
       expect(page).to have_css(".equipment-slot--main_hand:not(.filled)", wait: 5)
     end
@@ -55,9 +55,9 @@ RSpec.describe "Inventory & Progression UI", type: :system, js: true do
 
       visit inventory_path
 
-      click_visible_button_in(".inventory-slot.filled[data-item-id='#{potion.id}']", "Использовать")
+      click_visible_button_in(".inventory-slot.filled[data-item-id='#{potion.id}']", "Use")
 
-      expect(page).to have_css("#flash", text: "Восстановлено", wait: 5)
+      expect(page).to have_css("#flash", text: "Restored", wait: 5)
       expect(page).to have_no_css(".inventory-slot.filled[data-item-id='#{potion.id}']", wait: 5)
     end
 
@@ -65,18 +65,18 @@ RSpec.describe "Inventory & Progression UI", type: :system, js: true do
       visit stats_character_path(character)
 
       click_visible("button[data-stat-allocation-stat-param='strength'].nl-stat-btn--plus")
-      click_visible_button("Сохранить")
+      click_visible_button("Save")
 
-      expect(page).to have_css("#flash", text: "Характеристики сохранены")
+      expect(page).to have_css("#flash", text: "Stats saved")
     end
 
     it "allocates passive skill points with client-side +/- and saves via Turbo" do
       visit skills_character_path(character)
 
       click_visible("button[data-skill-allocation-skill-param='unarmed_combat'].nl-stat-btn--plus")
-      click_visible_button("Сохранить")
+      click_visible_button("Save")
 
-      expect(page).to have_css("#flash", text: "Умения сохранены")
+      expect(page).to have_css("#flash", text: "Skills saved")
     end
   end
 
@@ -87,7 +87,7 @@ RSpec.describe "Inventory & Progression UI", type: :system, js: true do
 
       visit inventory_path
 
-      expect(page).to have_no_button("Надеть", disabled: false)
+      expect(page).to have_no_button("Wear", disabled: false)
 
       expect(page).to have_css(".inventory-slot.filled[data-item-id='#{item.id}']", wait: 5)
     end
@@ -102,9 +102,9 @@ RSpec.describe "Inventory & Progression UI", type: :system, js: true do
         document.querySelector('[data-stat-allocation-target="saveButton"]').removeAttribute("disabled")
       JS
 
-      click_visible_button("Сохранить")
+      click_visible_button("Save")
 
-      expect(page).to have_css("#flash", text: "Недостаточно свободных очков характеристик")
+      expect(page).to have_css("#flash", text: "Not enough free stat points")
     end
 
     it "rejects skill allocations that exceed available points (server-side validation)" do
@@ -117,9 +117,9 @@ RSpec.describe "Inventory & Progression UI", type: :system, js: true do
         document.querySelector('[data-skill-allocation-target="saveButton"]').removeAttribute("disabled")
       JS
 
-      click_visible_button("Сохранить")
+      click_visible_button("Save")
 
-      expect(page).to have_css("#flash", text: "Недостаточно боевых очков")
+      expect(page).to have_css("#flash", text: "Not enough combat points")
     end
   end
 
@@ -130,9 +130,9 @@ RSpec.describe "Inventory & Progression UI", type: :system, js: true do
 
       visit inventory_path
 
-      click_visible_button_in(".inventory-slot.filled[data-item-id='#{item.id}']", "Использовать")
+      click_visible_button_in(".inventory-slot.filled[data-item-id='#{item.id}']", "Use")
 
-      expect(page).to have_css("#flash", text: "Нет подходящего эффекта", wait: 5)
+      expect(page).to have_css("#flash", text: "No usable effect", wait: 5)
     end
   end
 
@@ -143,7 +143,7 @@ RSpec.describe "Inventory & Progression UI", type: :system, js: true do
 
       visit stats_character_path(other_character)
 
-      expect(page).to have_css("#flash", text: "Можно управлять только своим персонажем")
+      expect(page).to have_css("#flash", text: "You can only manage your own character")
     end
 
     it "redirects unauthenticated users to login" do

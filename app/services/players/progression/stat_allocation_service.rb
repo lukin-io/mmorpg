@@ -17,7 +17,7 @@ module Players
       def allocate!(allocations)
         normalized_allocations = normalize_allocations(allocations)
         total_requested = normalized_allocations.values.sum
-        raise ArgumentError, "Недостаточно свободных очков характеристик" if total_requested > character.stat_points_available
+        raise ArgumentError, "Not enough free stat points" if total_requested > character.stat_points_available
 
         character.stat_points_available -= total_requested
         normalized_allocations.each do |stat, value|

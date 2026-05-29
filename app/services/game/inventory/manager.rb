@@ -101,17 +101,17 @@ module Game
         if stats["heal_hp"]
           amount = stats["heal_hp"].to_i
           actual_healed = Characters::VitalsService.new(character).apply_healing(amount, source: template.name)
-          return {success: true, message: "Восстановлено #{actual_healed} HP"}
+          return {success: true, message: "Restored #{actual_healed} HP"}
         end
 
         if stats["restore_mp"]
           amount = stats["restore_mp"].to_i
           actual_restored = Characters::VitalsService.new(character).restore_mana(amount, source: template.name)
-          return {success: true, message: "Восстановлено #{actual_restored} MP"}
+          return {success: true, message: "Restored #{actual_restored} MP"}
         end
 
         # Default case - item has no known effect
-        {success: false, error: "Нет подходящего эффекта"}
+        {success: false, error: "No usable effect"}
       end
 
       def self.decrement_inventory_weight!(inventory, delta)

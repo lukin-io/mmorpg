@@ -6,28 +6,29 @@
   <div class="nl-player-context-buttons">
     <% profile_target = player_path(name: viewer_character.name) %>
     <% if current_section.to_sym == :profile && character == viewer_character %>
-      <span class="lbutdis">Ваш персонаж</span>
+      <span class="lbutdis">Your character</span>
     <% else %>
-      <%= link_to "Ваш персонаж", profile_target, class: "lbut" %>
-    <% end %>
-
-    <% if current_section.to_sym == :stats %>
-      <span class="lbutdis">Характеристики</span>
-    <% else %>
-      <%= link_to "Характеристики", stats_character_path(viewer_character), class: "lbut" %>
+      <%= link_to "Your character", profile_target, class: "lbut" %>
     <% end %>
 
     <% if current_section.to_sym == :inventory %>
-      <span class="lbutdis">Инвентарь</span>
+      <span class="lbutdis">Inventory</span>
     <% else %>
-      <%= link_to "Инвентарь", inventory_path, class: "lbut" %>
+      <%= link_to "Inventory", inventory_path, class: "lbut" %>
     <% end %>
 
     <% if current_section.to_sym == :skills %>
-      <span class="lbutdis">Умения</span>
+      <span class="lbutdis">Skills</span>
     <% else %>
-      <%= link_to "Умения", skills_character_path(viewer_character), class: "lbut" %>
+      <%= link_to "Skills", skills_character_path(viewer_character), class: "lbut" %>
     <% end %>
-    <%= link_to "Вернуться", world_path, class: "lbut" %>
+
+    <% if current_section.to_sym == :stats %>
+      <span class="lbutdis">Stats</span>
+    <% else %>
+      <%= link_to "Stats", stats_character_path(viewer_character), class: "lbut" %>
+    <% end %>
+
+    <%= link_to "Return", world_path, class: "lbut" %>
   </div>
 <% end %>
