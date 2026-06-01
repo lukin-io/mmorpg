@@ -9,10 +9,37 @@ module Game
         "dexterity" => :dexterity,
         "luck" => :luck,
         "intelligence" => :intelligence,
-        "vitality" => :vitality
+        "knowledge" => :intelligence,
+        "vitality" => :vitality,
+        "health" => :vitality
       }.freeze
 
-      IGNORED_KEYS = %w[mass weight price durability].freeze
+      IGNORED_KEYS = %w[mass weight price durability current_durability max_durability].freeze
+      SKILL_ALIASES = {
+        "unarmed_skill" => :unarmed_combat,
+        "unarmed_combat" => :unarmed_combat,
+        "knife_skill" => :knife_mastery,
+        "knife_mastery" => :knife_mastery,
+        "sword_skill" => :sword_mastery,
+        "sword_mastery" => :sword_mastery,
+        "axe_skill" => :axe_mastery,
+        "axe_mastery" => :axe_mastery,
+        "blunt_skill" => :bludgeoning_mastery,
+        "bludgeoning_skill" => :bludgeoning_mastery,
+        "bludgeoning_mastery" => :bludgeoning_mastery,
+        "throwing_skill" => :throwing_mastery,
+        "throwing_mastery" => :throwing_mastery,
+        "polearm_skill" => :polearm_mastery,
+        "polearm_mastery" => :polearm_mastery,
+        "staff_skill" => :staff_mastery,
+        "staff_mastery" => :staff_mastery,
+        "two_handed_skill" => :two_handed_mastery,
+        "two_handed_mastery" => :two_handed_mastery,
+        "dual_wield_skill" => :dual_wielding,
+        "dual_wielding" => :dual_wielding,
+        "linguistics" => :linguistics,
+        "stealth" => :stealth
+      }.freeze
 
       def self.call(character:, item:)
         new(character:, item:).call
@@ -80,7 +107,7 @@ module Game
         stat_key = STAT_ALIASES[normalized]
         return character.stats.get(stat_key).to_i if stat_key
 
-        skill_key = normalized.to_sym
+        skill_key = SKILL_ALIASES.fetch(normalized, normalized.to_sym)
         return character.passive_skill_level(skill_key).to_i if Game::Skills::PassiveSkillRegistry.valid?(skill_key)
 
         nil

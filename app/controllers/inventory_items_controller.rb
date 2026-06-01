@@ -24,6 +24,6 @@ class InventoryItemsController < ApplicationController
     category = params[:category].presence
     return inventory_path if category.blank? || category == "all"
 
-    inventory_path(category: category)
+    inventory_path(category:, subcategory: params[:subcategory], info: params[:info])
   end
 end

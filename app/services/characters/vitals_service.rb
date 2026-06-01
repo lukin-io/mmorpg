@@ -74,7 +74,7 @@ module Characters
     # @return [Integer] actual amount restored
     def restore_mana(amount, source:)
       character.with_lock do
-        restored = [amount, character.max_mp - character.current_mp].min
+        restored = [amount, effective_max_mp - character.current_mp].min
         character.current_mp += restored
         character.save!
 
@@ -89,15 +89,15 @@ module Characters
     def tick_regeneration
       return false unless out_of_combat? && needs_regen?
 
-      character.with_lock do
-        hp_gain = hp_per_tick
-        mp_gain = mp_per_tick
+        character.with_lock do
+          hp_gain = hp_per_tick
+          mp_gain = mp_per_tick
 
-        character.current_hp = [character.current_hp + hp_gain, effective_max_hp].min
-        character.current_mp = [character.current_mp + mp_gain, character.max_mp].min
-        character.last_regen_tick_at = Time.current
-        character.save!
-      end
+          character.current_hp = [character.current_hp + hp_gain, effective_max_hp].min
+          character.current_mp = [character.current_mp + mp_gain, effective_max_mp].min
+          character.last_regen_tick_at = Time.current
+          character.save!
+        end
 
       true
     end
@@ -120,7 +120,7 @@ module Characters
     #
     # @return [Boolean] true if HP or MP below max
     def needs_regen?
-      character.current_hp < effective_max_hp || character.current_mp < character.max_mp
+      character.current_hp < effective_max_hp || character.current_mp < effective_max_mp
     end
 
     # Calculate HP regen per tick (formula: maxHP / interval)
@@ -136,7 +136,7 @@ module Characters
     # @return [Float] MP to regenerate per tick
     def mp_per_tick
       return 0 if character.mp_regen_interval.nil? || character.mp_regen_interval.zero?
-      (character.max_mp.to_f / character.mp_regen_interval).round(2)
+      (effective_max_mp.to_f / character.mp_regen_interval).round(2)
     end
 
     # Calculate HP percentage
@@ -151,8 +151,8 @@ module Characters
     #
     # @return [Float] MP as percentage (0-100)
     def mp_percent
-      return 0 if character.max_mp.zero?
-      ((character.current_mp.to_f / character.max_mp) * 100).round(1)
+      return 0 if effective_max_mp.zero?
+      ((character.current_mp.to_f / effective_max_mp) * 100).round(1)
     end
 
     # Returns a summary hash of character stats for display
@@ -160,12 +160,13 @@ module Characters
     # @return [Hash] stats summary with base stats and derived values
     def stats_summary
       stats = character.stats
+      primary_breakdown = primary_stat_breakdown(stats)
 
       {
         current_hp: character.current_hp,
         max_hp: effective_max_hp,
         current_mp: character.current_mp,
-        max_mp: character.max_mp,
+        max_mp: effective_max_mp,
         strength: stats.get(:strength),
         dexterity: stats.get(:dexterity),
         luck: stats.get(:luck),
@@ -174,6 +175,7 @@ module Characters
         attack_power: character.attack_power,
         defense: character.defense,
         crit_rate: character.critical_chance,
+        primary_stats: primary_breakdown,
         combat_power_breakdown: character.combat_power_breakdown
       }
     end
@@ -184,6 +186,30 @@ module Characters
       return character.effective_max_hp if character.respond_to?(:effective_max_hp)
 
       character.max_hp
+    end
+
+    def effective_max_mp
+      return character.effective_max_mp if character.respond_to?(:effective_max_mp)
+
+      character.max_mp
+    end
+
+    def primary_stat_breakdown(stats)
+      Character::PRIMARY_STATS.to_h do |stat|
+        base = Character::BASE_PRIMARY_STATS.fetch(stat)
+        allocated = character.allocated_stats.to_h[stat.to_s].to_i
+        base_total = base + allocated
+        total = stats.get(stat).to_i
+
+        [
+          stat,
+          {
+            base: base_total,
+            equipment: total - base_total,
+            total:
+          }
+        ]
+      end
     end
   end
 end

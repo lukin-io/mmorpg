@@ -221,6 +221,13 @@ gameplay/ajax/shop_ajax.php?action=inv_show_items
 For the captured character/session, every category returned only the
 player/shop economy header and no sellable rows.
 
+The 2026-06-01 inventory/items capture observed eligible jewelry sell rows in
+the same `Лавка` flow. Those rows showed item instance identity, current
+durability, shop stock context, and sell buttons such as `Продать за 3.6 NV`.
+That capture suggests resale value is base price times `20%`, prorated by
+current durability. Treat that as an observed inference until another item
+family confirms it.
+
 The JavaScript sell action, when sell rows exist, is:
 
 ```js

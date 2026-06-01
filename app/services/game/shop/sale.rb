@@ -54,7 +54,7 @@ module Game
       end
 
       def unit_price
-        @unit_price ||= Game::Shop::Catalog.sale_price(template)
+        @unit_price ||= Game::Shop::Catalog.sale_price_for_item(inventory_item)
       end
 
       def total_price
@@ -70,6 +70,7 @@ module Game
 
         removed_weight = inventory_item.weight.to_i * quantity
         inventory.update!(current_weight: [inventory.current_weight.to_i - removed_weight, 0].max)
+        template.increment_shop_stock!(quantity)
       end
 
       def failure(message)

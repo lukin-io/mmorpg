@@ -1,8 +1,12 @@
 <% inventory ||= @inventory %>
 <% category ||= @category || "all" %>
+<% subcategory ||= @subcategory || "all" %>
+<% info_mode ||= @info_mode || "full" %>
 
 <div class="nl-inventory-list">
   <% items.each do |item| %>
+    <% action_availability = inventory_action_availability(item) %>
+    <% requirements_allowed = action_availability.fetch(:allowed) %>
     <div class="inventory-slot filled nl-inventory-item"
          data-item-id="<%= item.id %>"
          data-action="click->inventory#selectItem">
@@ -19,27 +23,61 @@
       <div class="nl-inventory-item-body">
         <div class="nl-inventory-item-actions">
           <% if item.item_template.equippable? && !item.equipped? %>
-            <% if item.broken? || item.expired? %>
-              <span class="invbut invbut--disabled">Wear</span>
-            <% else %>
-              <%= button_to "Wear", equip_inventory_path(item_id: item.id, category: category), method: :post, class: "invbut", data: {turbo: true} %>
+            <% if requirements_allowed %>
+              <%= button_to "Wear", equip_inventory_path(item_id: item.id, category: category, subcategory: subcategory, info: info_mode), method: :post, class: "invbut", data: {turbo: true} %>
             <% end %>
           <% end %>
           <% if item.item_template.consumable? %>
-            <% if item.broken? || item.expired? %>
-              <span class="invbut invbut--disabled">Use</span>
-            <% else %>
-              <%= button_to "Use", use_inventory_path(item_id: item.id, category: category), method: :post, class: "invbut", data: {turbo: true} %>
+            <% if requirements_allowed %>
+              <%= button_to "Use", use_inventory_path(item_id: item.id, category: category, subcategory: subcategory, info: info_mode), method: :post, class: "invbut", data: {turbo: true} %>
             <% end %>
           <% end %>
-          <span class="invbut invbut--disabled">Transfer</span>
-          <span class="invbut invbut--disabled">Gift</span>
-          <span class="invbut invbut--disabled">Sell</span>
-          <%= button_to "Delete",
-            inventory_item_path(item, category: category),
-            method: :delete,
-            class: "invbut invbut--danger",
-            form: {data: {turbo_confirm: "Delete #{item.item_template.name}?"}} %>
+          <% unless item.equipped? || item.protected_from_discard? %>
+            <details class="nl-inline-action">
+              <summary class="invbut">Transfer</summary>
+              <%= form_with url: transfer_item_inventory_path, method: :post, class: "nl-inline-action-form" do |f| %>
+                <%= f.hidden_field :item_id, value: item.id %>
+                <%= f.hidden_field :category, value: category %>
+                <%= f.hidden_field :subcategory, value: subcategory %>
+                <%= f.hidden_field :info, value: info_mode %>
+                <%= f.text_field :recipient_name, placeholder: "Recipient", maxlength: 25, class: "LogintextBox" %>
+                <%= f.number_field :quantity, value: 1, min: 1, max: item.quantity, class: "LogintextBox2" %>
+                <%= f.submit "Transfer", class: "lbut" %>
+              <% end %>
+            </details>
+            <details class="nl-inline-action">
+              <summary class="invbut">Gift</summary>
+              <%= form_with url: gift_item_inventory_path, method: :post, class: "nl-inline-action-form" do |f| %>
+                <%= f.hidden_field :item_id, value: item.id %>
+                <%= f.hidden_field :category, value: category %>
+                <%= f.hidden_field :subcategory, value: subcategory %>
+                <%= f.hidden_field :info, value: info_mode %>
+                <%= f.text_field :recipient_name, placeholder: "Recipient", maxlength: 25, class: "LogintextBox" %>
+                <%= f.number_field :quantity, value: 1, min: 1, max: item.quantity, class: "LogintextBox2" %>
+                <%= f.submit "Gift", class: "lbut" %>
+              <% end %>
+            </details>
+            <details class="nl-inline-action">
+              <summary class="invbut">Sell</summary>
+              <%= form_with url: sell_to_player_inventory_path, method: :post, class: "nl-inline-action-form" do |f| %>
+                <%= f.hidden_field :item_id, value: item.id %>
+                <%= f.hidden_field :category, value: category %>
+                <%= f.hidden_field :subcategory, value: subcategory %>
+                <%= f.hidden_field :info, value: info_mode %>
+                <%= f.text_field :recipient_name, placeholder: "Recipient", maxlength: 25, class: "LogintextBox" %>
+                <%= f.number_field :price, placeholder: "NV", min: 0.01, step: 0.01, class: "LogintextBox2" %>
+                <%= f.number_field :quantity, value: 1, min: 1, max: item.quantity, class: "LogintextBox2" %>
+                <%= f.submit "Sell", class: "lbut" %>
+              <% end %>
+            </details>
+          <% end %>
+          <% unless item.protected_from_discard? %>
+            <%= button_to "Delete",
+              inventory_item_path(item, category: category, subcategory: subcategory, info: info_mode),
+              method: :delete,
+              class: "invbut invbut--danger",
+              form: {data: {turbo_confirm: "Delete #{item.item_template.name}?"}} %>
+          <% end %>
         </div>
 
         <div class="nl-inventory-item-details">
@@ -50,22 +88,30 @@
                 <th>Name</th>
                 <td><%= item.item_template.name %></td>
               </tr>
-              <% inventory_item_properties(item).each do |label, value| %>
-                <tr>
-                  <th><%= label %></th>
-                  <td><%= value %></td>
-                </tr>
+              <% if info_mode == "full" %>
+                <% inventory_item_properties(item).each do |label, value| %>
+                  <tr>
+                    <th><%= label %></th>
+                    <td><%= value %></td>
+                  </tr>
+                <% end %>
               <% end %>
             </table>
           </section>
 
-          <section>
+          <section class="<%= 'nl-inventory-details--compact' if info_mode == 'short' %>">
             <h3>Requirements</h3>
             <table class="nl-profile-table">
-              <% inventory_item_requirements(item).each do |label, value| %>
-                <tr>
-                  <th><%= label %></th>
-                  <td><%= value %></td>
+              <% inventory_requirement_rows(item).each do |row| %>
+                <tr class="<%= 'nl-requirement-missing' unless row[:met] %>">
+                  <th><%= row[:label] %></th>
+                  <td><%= row[:value] %></td>
+                </tr>
+              <% end %>
+              <% unless requirements_allowed %>
+                <tr class="nl-requirement-missing">
+                  <th>Action</th>
+                  <td><%= action_availability[:error].presence || "Unavailable until requirements are met" %></td>
                 </tr>
               <% end %>
             </table>
@@ -76,7 +122,7 @@
   <% end %>
 
   <% if items.empty? %>
-    <p class="nl-profile-empty">No items in this category.</p>
+    <p class="nl-profile-empty"><%= inventory_empty_message(category) %></p>
   <% end %>
 
   <% [inventory.max_slots - inventory.inventory_items.count, 0].max.times do |i| %>

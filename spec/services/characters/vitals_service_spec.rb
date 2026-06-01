@@ -93,6 +93,28 @@ RSpec.describe Characters::VitalsService do
         # Base (15) + explicit defense bonus (10) = 25
         expect(summary[:defense]).to eq(25)
       end
+
+      it "includes equipment HP and mana bonuses in visible vitals" do
+        belt_template = create(:item_template, name: "Emerald Sash", item_type: "equipment", slot: "belt",
+          stat_modifiers: {"hp" => 40, "mana" => 20})
+        create(:inventory_item, inventory: character.inventory, item_template: belt_template, equipped: true)
+
+        summary = service.stats_summary
+
+        expect(summary[:max_hp]).to eq(140)
+        expect(summary[:max_mp]).to eq(70)
+      end
+
+      it "maps health equipment modifiers to the Neverlands health primary stat" do
+        ring_template = create(:item_template, name: "Health Ring", item_type: "equipment", slot: "ring",
+          stat_modifiers: {"health" => 3})
+        create(:inventory_item, inventory: character.inventory, item_template: ring_template, equipped: true)
+
+        summary = service.stats_summary
+
+        expect(summary[:vitality]).to eq(15)
+        expect(summary.dig(:primary_stats, :vitality, :equipment)).to eq(3)
+      end
     end
   end
 

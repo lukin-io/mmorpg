@@ -39,6 +39,24 @@ RSpec.describe "Shop", type: :request do
       expect(response.body).to include("Shop Spec Knife")
       expect(response.body).to include("Mass")
     end
+
+    it "classifies aliased Neverlands equipment slots under the correct shop category" do
+      create(:item_template,
+        key: "shop_spec_ring",
+        name: "Shop Spec Ring",
+        item_type: "equipment",
+        slot: "ring",
+        base_price: 18,
+        weight: 1,
+        stack_limit: 1,
+        durability_max: 30,
+        stat_modifiers: {"knowledge" => 3})
+
+      get shop_path(category: "jewelry")
+
+      expect(response.body).to include("Shop Spec Ring")
+      expect(response.body).not_to include("Shop Spec Knife")
+    end
   end
 
   describe "POST /shop/buy" do
@@ -78,12 +96,20 @@ RSpec.describe "Shop", type: :request do
     it "sells one item from a stack and credits the wallet" do
       expect {
         post sell_shop_path, params: {item_id: inventory_item.id, quantity: 1}
-      }.to change { wallet.reload.nv_balance }.by(20)
+      }.to change { wallet.reload.nv_balance }.by(8)
         .and change { inventory.reload.current_weight }.by(-3)
 
       expect(inventory_item.reload.quantity).to eq(1)
       expect(response).to redirect_to(shop_path(mode: "sell"))
       expect(flash[:notice]).to include("Sold")
+    end
+
+    it "prorates resale price by current durability" do
+      inventory_item.update!(properties: {"current_durability" => 6, "max_durability" => 12})
+
+      expect {
+        post sell_shop_path, params: {item_id: inventory_item.id, quantity: 1}
+      }.to change { wallet.reload.nv_balance }.by(4)
     end
 
     it "rejects equipped items" do

@@ -9006,11 +9006,53 @@ turbo-frame[busy] {
   gap: 8px;
 }
 
+.nl-inventory-layout--family {
+  grid-template-columns: 1fr;
+}
+
 .nl-inventory-side,
 .nl-inventory-main {
   display: flex;
   flex-direction: column;
   gap: 6px;
+}
+
+.nl-inventory-subcategories {
+  width: 100%;
+  padding-top: 4px;
+  border-top: 1px solid var(--nl-border-light);
+}
+
+.nl-inventory-bulk-actions,
+.nl-equipment-sets,
+.nl-money-transfer-panel {
+  font-size: 11px;
+}
+
+.nl-inline-action {
+  display: inline-block;
+}
+
+.nl-inline-action summary {
+  list-style: none;
+  cursor: pointer;
+}
+
+.nl-inline-action summary::-webkit-details-marker {
+  display: none;
+}
+
+.nl-inline-action-form {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 3px;
+  margin: 2px 0;
+}
+
+.nl-inline-action-form input,
+.nl-inline-action-form select {
+  max-width: 140px;
 }
 
 .nl-inventory-equipment {
@@ -9148,6 +9190,10 @@ turbo-frame[busy] {
   gap: 4px;
 }
 
+.nl-inventory-details--compact {
+  display: none;
+}
+
 .nl-inventory-item-details h3 {
   margin: 0;
   padding: 2px;
@@ -9164,6 +9210,42 @@ turbo-frame[busy] {
   background: var(--nl-bg-secondary);
   color: var(--nl-text-muted);
   font-size: 10px;
+  text-align: center;
+}
+
+.nl-requirement-missing th,
+.nl-requirement-missing td,
+.nl-shop-requirement--missing {
+  color: var(--nl-danger);
+}
+
+.nl-family-inventory {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.nl-family-inventory-section {
+  border: 1px solid var(--nl-border);
+  background: #ffffff;
+}
+
+.nl-family-inventory-section header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 5px;
+  background: var(--nl-bg-secondary);
+}
+
+.nl-family-inventory-section h3 {
+  margin: 0;
+  font-size: 12px;
+}
+
+.nl-family-inventory-section .nl-profile-empty {
+  padding: 8px;
   text-align: center;
 }
 

@@ -1,5 +1,11 @@
 <% character ||= current_character %>
 
 <div class="nl-inventory-equipment">
-  <%= render "shared/equipment_paperdoll", character: character, equipment: equipment, interactive: true %>
+  <%= render "shared/equipment_paperdoll",
+    character: character,
+    equipment: equipment,
+    interactive: true,
+    category: local_assigns[:category],
+    subcategory: local_assigns[:subcategory],
+    info_mode: local_assigns[:info_mode] %>
 </div>

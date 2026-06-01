@@ -10,7 +10,7 @@ module Economy
     end
 
     def adjust!(amount:, reason:, metadata: {})
-      amount = amount.to_i
+      amount = BigDecimal(amount.to_s)
       raise ArgumentError, "amount cannot be zero" if amount.zero?
 
       ApplicationRecord.transaction do

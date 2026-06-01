@@ -13,19 +13,37 @@
       </div>
     </div>
 
-    <div class="nl-inventory-layout">
+    <div class="nl-inventory-layout <%= 'nl-inventory-layout--family' unless inventory_equipment_family?(@category) %>">
+      <% if inventory_equipment_family?(@category) %>
       <aside class="nl-inventory-side">
         <div class="nl-profile-panel">
           <h2><%= current_character.name %> [<%= current_character.level %>]</h2>
           <div id="equipment_panel">
-            <%= render "inventories/equipment", equipment: @equipment, character: current_character %>
+            <%= render "inventories/equipment",
+              equipment: @equipment,
+              character: current_character,
+              category: @category,
+              subcategory: @subcategory,
+              info_mode: @info_mode %>
           </div>
+          <% if @equipment.values.compact.uniq.any? %>
+            <div class="nl-inventory-bulk-actions">
+              <%= button_to "Remove all gear",
+                unequip_all_inventory_path(category: @category, subcategory: @subcategory, info: @info_mode),
+                method: :post,
+                class: "lbut",
+                data: {turbo_confirm: "Remove all equipped items?"} %>
+            </div>
+          <% end %>
         </div>
 
         <div id="stats_panel" class="nl-profile-panel">
           <%= render "inventories/stats", stats: @stats %>
         </div>
+
+        <%= render "inventories/equipment_sets" %>
       </aside>
+      <% end %>
 
       <main class="nl-inventory-main">
         <div class="nl-inventory-toolbar">
@@ -34,25 +52,62 @@
               <% if @category == key %>
                 <span class="lbutdis"><%= label %></span>
               <% else %>
-                <%= link_to label, inventory_path(category: key), class: "lbut" %>
+                <%= link_to label, inventory_path(category: key, info: @info_mode), class: "lbut" %>
               <% end %>
             <% end %>
           </div>
 
+          <% if inventory_equipment_family?(@category) %>
+            <div class="nl-inventory-categories nl-inventory-subcategories">
+              <% inventory_things_subcategory_options.each do |key, label| %>
+                <% if @subcategory == key %>
+                  <span class="lbutdis"><%= label %></span>
+                <% else %>
+                  <%= link_to label, inventory_path(category: @category, subcategory: key, info: @info_mode), class: "lbut" %>
+                <% end %>
+              <% end %>
+            </div>
+          <% end %>
+
           <div class="nl-inventory-sort">
-            <%= button_to "Sort by type", sort_inventory_path(sort_type: :type, category: @category), method: :post, class: "lbut" %>
-            <%= button_to "Sort by name", sort_inventory_path(sort_type: :name, category: @category), method: :post, class: "lbut" %>
+            <%= link_to (@info_mode == "short" ? "Full info" : "Short info"),
+              inventory_path(category: @category, subcategory: @subcategory, info: (@info_mode == "short" ? "full" : "short")),
+              class: "lbut" %>
+            <%= link_to "Reset filter", inventory_path(info: @info_mode), class: "lbut" %>
+            <%= button_to "Sort by type", sort_inventory_path(sort_type: :type, category: @category, subcategory: @subcategory, info: @info_mode), method: :post, class: "lbut" %>
+            <%= button_to "Sort by name", sort_inventory_path(sort_type: :name, category: @category, subcategory: @subcategory, info: @info_mode), method: :post, class: "lbut" %>
           </div>
+        </div>
+
+        <div class="nl-profile-panel nl-money-transfer-panel">
+          <h2>Money Transfer</h2>
+          <%= form_with url: transfer_money_inventory_path, method: :post, class: "nl-inline-action-form" do |f| %>
+            <%= f.hidden_field :category, value: @category %>
+            <%= f.hidden_field :subcategory, value: @subcategory %>
+            <%= f.hidden_field :info, value: @info_mode %>
+            <%= f.text_field :recipient_name, placeholder: "Recipient", maxlength: 25, class: "LogintextBox" %>
+            <%= f.number_field :amount, placeholder: "NV", min: 0.01, step: 0.01, class: "LogintextBox2" %>
+            <%= f.submit "Transfer", class: "lbut" %>
+          <% end %>
         </div>
 
         <div class="nl-profile-panel">
           <div class="nl-inventory-list-head">
-            <h2>Bag</h2>
+            <h2><%= @category == "all" ? "Bag" : inventory_category_options.to_h.fetch(@category, "Bag") %></h2>
             <span><%= @items.count %>/<%= @inventory.max_slots %> slots</span>
           </div>
 
           <div id="inventory_grid">
-            <%= render "inventories/grid", items: @items, inventory: @inventory, category: @category %>
+            <% if inventory_family_sections(@category).any? && @items.empty? %>
+              <%= render "inventories/family_sections", category: @category %>
+            <% else %>
+              <%= render "inventories/grid",
+                items: @items,
+                inventory: @inventory,
+                category: @category,
+                subcategory: @subcategory,
+                info_mode: @info_mode %>
+            <% end %>
           </div>
         </div>
       </main>

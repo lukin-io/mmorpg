@@ -12,6 +12,7 @@ Inputs:
 
 - `doc/design/reference/neverlands.md`
 - `doc/design/reference/neverlands_live_game_shell_ui.md`
+- `doc/design/reference/neverlands_live_inventory_items.md`
 - `doc/design/features/combat.md`
 
 ## Player Experience
@@ -185,6 +186,51 @@ profile/return/city actions remain available, inventory mass is shown above the
 item list, and use/delete actions ask for confirmation before submitting
 item-specific tokens.
 
+The 2026-06-01 inventory/items capture confirms the launch item-row contract in
+full-information mode:
+
+- inventory rows have short and full display modes;
+- full mode renders `свойства` and `требования` columns for each item;
+- properties include price, current/max durability, damage, armor class,
+  pockets, HP, mana, primary stat modifiers, combat modifiers, weapon-skill
+  modifiers, elemental resistances, expiry, and descriptions;
+- requirements include mass, level, primary stats, AP/action points, numeric
+  weapon skills, and non-combat skills such as stealth or linguistics;
+- unmet requirements are visible in red and should be shown, not hidden;
+- inventory equip/use availability is separate from item visibility: rows with
+  unmet requirements stay visible but may not expose `Wear` or `Use`;
+- wearing `Кольцо Знаний` moved the item instance into a ring slot and changed
+  visible `Знания` from `14` to `17`, with the breakdown displayed as
+  `(14+3)`;
+- removing the same ring moved it back to carried inventory, restored
+  `Знания` to `14`, and issued fresh action keys;
+- inventory mass stayed `57.00/155` before, during, and after wearing the
+  ring, so equipped items still counted toward carried mass in this capture;
+- the `Снять все вещи` utility appears after gear is equipped and should be a
+  deferred but source-backed bulk unequip action.
+- `Вещи` is the equipment/item-row family. Other inventory families can replace
+  the equipment doll and stat/mass side layout with family-specific panels:
+  elixir empty state, alchemy/fishing/cooking/carpentry inventory sections,
+  resource sections, discard actions, and quest-journal empty state.
+- equipment sets are source-backed: `Запомнить комплект` saves a named current
+  equipment set, existing sets can be worn through a multi-item equipment
+  action, and set deletion is confirmable. This is a deferred loadout feature,
+  not required for first equip/unequip.
+- transfer, gift, player-targeted sale, and currency transfer open tokenized
+  inline forms in the same inventory surface. They are separate from shop sell
+  and stay deferred until a dedicated direct-trade capture defines them.
+- item use can be immediate, targeted by nickname, combat-contextual,
+  doctor/healing priced, teleport/destination-based, or attack/protection
+  scroll based. Only captured simple use behavior belongs in the launch scope.
+- fight slot rendering can make selected slotted items clickable combat
+  actions, so the equipment model must be able to feed both passive stats and
+  future active item actions.
+
+Launch implementation must support visible base-plus-equipment stat deltas on
+the profile/inventory stat panel. The same effective stat result must later be
+used by combat profile generation, vitals, skill gates, item gates, and
+movement/carry calculations.
+
 ## Inventory Rules
 
 - Characters have finite carry capacity.
@@ -207,25 +253,39 @@ The launch inventory should support:
 - equip, unequip, use, sort, and discard as server-authorized actions;
 - requirement validation for level, AP/action points, primary stats, and mapped
   numeric skills before equip/use;
-- equipment effects feeding character stats, effective max HP, attack, defense,
-  accuracy, dodge, armor pierce, fortitude, elemental resistances, and skill
-  bonuses;
+- visible unmet requirements and availability reasons without hiding the item
+  row;
+- visible base-plus-equipment stat deltas after any equipment change;
+- equipped item instances shown in the equipment doll and removed from carried
+  item rows while still counting toward carried mass;
+- equipment effects feeding character stats, effective max HP/MP, attack,
+  defense, accuracy, dodge, armor pierce, fortitude, elemental resistances, and
+  skill bonuses;
+- family-aware inventory renderers so non-equipment families can show explicit
+  empty states and later production/resource actions without being forced into
+  equipment rows;
+- aliased Neverlands slot handling for rings, weapon/shield, jewelry, and
+  explicit two-handed weapons occupying both hand capacity;
+- canonical captured item seeds/templates for the observed ring, jewelry,
+  armor, belt, boots, gloves, bracers, weapon, staff, and scroll examples;
 - combat durability degradation for player, team, and NPC fight equipment;
 - consumable durability charges before quantity consumption;
 - discard protection for equipped, bound, protected, and locked items.
 
 Remaining design detail before launch:
 
-- canonical item seeds/templates matching the captured Neverlands inventory;
-- full label normalization for all captured effects and requirements;
-- complete slot rules for two-handed weapons, layered armor, rings, belt
-  contents, pocket contents, and relics;
+- exact slot rules for layered armor, belt contents, pocket contents, relic
+  activation, and combat-clickable slotted items;
+- exact MVP boundary for non-equipment families: empty states are captured, but
+  crafting/production/resource behavior needs separate source capture before
+  implementation;
 - repair and breakage UX, including player-visible messages when gear breaks;
 - capacity enforcement across loot, pickup, and shop purchase flows;
 - server-issued inventory action keys when normal Rails form protection is not
   enough for the final gameplay action model;
-- future transfer, gift, direct trade, dealer, and equipment-set saving flows
-  need source capture before implementation.
+- direct trade settlement edge cases, dealer transfers, targeted scroll/doctor
+  effects, and combat item-use slots need dedicated source capture before they
+  go beyond the basic inventory forms.
 
 ## State Concepts
 

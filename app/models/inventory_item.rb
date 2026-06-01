@@ -35,6 +35,10 @@ class InventoryItem < ApplicationRecord
     max_durability.to_i.positive?
   end
 
+  def two_handed?
+    item_template.two_handed?
+  end
+
   def broken?
     durable? && current_durability.to_i <= 0
   end

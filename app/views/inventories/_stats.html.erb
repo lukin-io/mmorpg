@@ -11,19 +11,19 @@
   </tr>
   <tr>
     <th>Strength</th>
-    <td><%= stats[:strength] %></td>
+    <td><%= stats[:strength] %><%= render "inventories/stat_delta", stat: stats.dig(:primary_stats, :strength) %></td>
   </tr>
   <tr>
     <th>Dexterity</th>
-    <td><%= stats[:dexterity] %></td>
+    <td><%= stats[:dexterity] %><%= render "inventories/stat_delta", stat: stats.dig(:primary_stats, :dexterity) %></td>
   </tr>
   <tr>
     <th>Knowledge</th>
-    <td><%= stats[:intelligence] %></td>
+    <td><%= stats[:intelligence] %><%= render "inventories/stat_delta", stat: stats.dig(:primary_stats, :intelligence) %></td>
   </tr>
   <tr>
     <th>Health</th>
-    <td><%= stats[:vitality] %></td>
+    <td><%= stats[:vitality] %><%= render "inventories/stat_delta", stat: stats.dig(:primary_stats, :vitality) %></td>
   </tr>
   <tr>
     <th>Attack</th>

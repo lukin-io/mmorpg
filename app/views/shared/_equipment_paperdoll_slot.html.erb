@@ -18,6 +18,10 @@
     classes << "equipment-slot" << "equipment-slot--#{slot}"
     classes << "filled" if item
   end
+  unequip_params = {slot: slot}
+  unequip_params[:category] = local_assigns[:category] if local_assigns[:category].present?
+  unequip_params[:subcategory] = local_assigns[:subcategory] if local_assigns[:subcategory].present?
+  unequip_params[:info] = local_assigns[:info_mode] if local_assigns[:info_mode].present?
 %>
 <div class="<%= classes.join(" ") %>" title="<%= label %>">
   <span class="nl-profile-slot-label"><%= label %></span>
@@ -27,7 +31,7 @@
       <span class="nl-profile-slot-durability"><%= durability %></span>
     <% end %>
     <% if interactive %>
-      <%= button_to unequip_inventory_path(slot: slot),
+      <%= button_to unequip_inventory_path(unequip_params),
             method: :post,
             class: "nl-slot-unequip",
             title: "Remove #{label}",
