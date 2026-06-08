@@ -1,0 +1,493 @@
+.nl-player-subpage,
+.nl-player-profile,
+.nl-allocation-page {
+  color: var(--nl-text);
+}
+
+.nl-player-profile-grid {
+  display: grid;
+  grid-template-columns: minmax(300px, 420px) minmax(0, 1fr);
+  gap: 8px;
+}
+
+.nl-player-profile-left,
+.nl-player-profile-main,
+.nl-player-profile-identity {
+  min-width: 0;
+}
+
+.nl-player-profile-main,
+.nl-player-profile-left {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+}
+
+.nl-profile-subline {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px;
+  color: var(--nl-text-muted);
+  font-size: 11px;
+}
+
+.nl-player-context-buttons,
+.nl-player-profile-head,
+.nl-inventory-head,
+.nl-inventory-toolbar,
+.nl-inventory-list-head,
+.nl-allocation-header,
+.nl-allocation-points,
+.nl-allocation-pools,
+.nl-family-inventory-section header {
+  border-color: var(--nl-border);
+  background: linear-gradient(180deg, #fbf6e7 0%, #e8dab6 100%);
+}
+
+.nl-player-profile-head h1,
+.nl-inventory-head h1,
+.nl-inventory-list-head h2,
+.nl-allocation-title {
+  color: var(--nl-text-primary);
+}
+
+.nl-profile-panel h2,
+.nl-family-inventory-section h3,
+.nl-skill-category-header,
+.nl-skill-legend h4 {
+  color: var(--nl-blue-dark);
+}
+
+.nl-equipment-paperdoll,
+.nl-equipment-portrait {
+  border-color: var(--nl-border);
+  background:
+    linear-gradient(90deg, rgba(183, 156, 69, 0.12), transparent 24%, transparent 76%, rgba(183, 156, 69, 0.12)),
+    linear-gradient(180deg, #fffef9 0%, #f6efdb 100%);
+}
+
+.nl-profile-slot,
+.equipment-slot,
+.nl-inventory-empty-slot,
+.nl-inventory-item,
+.nl-family-inventory-section,
+.nl-skill-row,
+.nl-stat-row {
+  border-color: var(--nl-border-light);
+  background: #fffef9;
+}
+
+.nl-profile-slot--filled,
+.equipment-slot.filled,
+.nl-inventory-item.selected {
+  border-color: var(--nl-border-dark);
+  background: var(--nl-yellow-soft);
+}
+
+.nl-profile-slot-label,
+.nl-profile-slot-value--empty,
+.nl-profile-slot-durability,
+.equipment-slot .slot-label,
+.equipment-slot .slot-placeholder,
+.equipment-slot .slot-durability,
+.nl-inventory-balance,
+.nl-allocation-subtitle,
+.nl-skill-description,
+.nl-skill-legend {
+  color: var(--nl-text-muted);
+}
+
+.nl-slot-unequip,
+.unequip-btn {
+  min-width: 18px;
+  min-height: 18px;
+  padding: 0 4px;
+  border: 1px solid #b9685f;
+  background: #fffef9;
+  color: var(--nl-red);
+  line-height: 1;
+}
+
+.nl-slot-unequip:hover,
+.unequip-btn:hover {
+  background: var(--nl-red-soft);
+}
+
+.nl-inventory-categories,
+.nl-inventory-sort,
+.nl-inventory-subcategories,
+.nl-inventory-item-actions {
+  gap: 3px;
+}
+
+.nl-inventory-layout {
+  grid-template-columns: minmax(430px, 470px) minmax(0, 1fr);
+}
+
+.nl-inventory-side,
+.nl-inventory-main {
+  min-width: 0;
+}
+
+.nl-inventory-page,
+.inventory-page {
+  min-width: 0;
+}
+
+.nl-inventory-equipment {
+  display: block;
+}
+
+.nl-inventory-side .nl-equipment-paperdoll {
+  grid-template-columns: 96px minmax(150px, 1fr) 96px;
+  gap: 4px;
+  padding: 6px;
+}
+
+.nl-equipment-side--left,
+.nl-equipment-side--right {
+  min-width: 0;
+}
+
+.nl-inventory-side .nl-equipment-portrait {
+  min-height: 300px;
+}
+
+.nl-inventory-side .nl-equipment-character-image {
+  width: min(100%, 170px);
+  height: 292px;
+}
+
+.nl-inventory-layout--family {
+  grid-template-columns: 1fr;
+}
+
+.nl-inventory-bulk-actions,
+.nl-money-transfer-panel {
+  margin-top: 6px;
+}
+
+.nl-money-transfer-panel .nl-inline-action-form,
+.nl-equipment-sets > .nl-inline-action-form,
+.nl-family-inventory-section .nl-inline-action-form {
+  box-shadow: none;
+}
+
+.nl-inventory-item-icon,
+.nl-shop-item-icon {
+  border-color: var(--nl-border);
+  background: linear-gradient(180deg, #fffef9 0%, #eee5cb 100%);
+  box-shadow: inset 0 1px 0 #ffffff;
+}
+
+.nl-durability-bar {
+  border-color: var(--nl-border-light);
+  background: #ddd2b6;
+}
+
+.nl-durability-bar span {
+  background: linear-gradient(180deg, #55a95c 0%, var(--nl-green) 100%);
+}
+
+.nl-allocation-panel,
+.nl-skill-legend {
+  border-color: var(--nl-border);
+  background: var(--nl-bg-panel);
+}
+
+.nl-allocation-pool--combat,
+.nl-skill-category-header--combat {
+  border-color: var(--nl-red);
+  background: var(--nl-red-soft);
+}
+
+.nl-allocation-pool--peace,
+.nl-skill-category-header--peace_world {
+  border-color: var(--nl-green);
+  background: var(--nl-green-soft);
+}
+
+.nl-skill-category-header--magic {
+  border-color: #7a5fac;
+  background: #f4f0fb;
+}
+
+.nl-skill-category-header--resistance {
+  border-color: var(--nl-blue);
+  background: var(--nl-blue-soft);
+}
+
+.nl-skill-gain {
+  border-color: #6aa06d;
+  background: var(--nl-green-soft);
+  color: var(--nl-green);
+}
+
+.nl-skill-gain--max {
+  border-color: var(--nl-border);
+  background: var(--nl-bg-secondary);
+  color: var(--nl-border-dark);
+}
+
+@media (max-width: 900px) {
+  .nl-inventory-toolbar,
+  .nl-player-context-buttons {
+    align-items: stretch;
+  }
+
+  .nl-inventory-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .nl-inventory-side .nl-equipment-paperdoll {
+    grid-template-columns: 1fr;
+  }
+
+  .nl-inventory-side .nl-equipment-side {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: none;
+  }
+
+  .nl-inventory-side .nl-equipment-lower-slots {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .nl-inventory-side .nl-equipment-portrait {
+    min-height: 240px;
+  }
+
+  .nl-inventory-side .nl-equipment-character-image {
+    width: min(100%, 150px);
+    height: 230px;
+  }
+
+.nl-inventory-categories,
+.nl-inventory-sort {
+    width: 100%;
+  }
+}
+
+.nl-inventory-list {
+  display: grid;
+  gap: 5px;
+}
+
+.nl-inventory-item {
+  display: grid;
+  grid-template-columns: 58px minmax(0, 1fr);
+  gap: 6px;
+  min-height: 66px;
+  padding: 5px;
+}
+
+.nl-inventory-item-body,
+.nl-inventory-item-details,
+.nl-inventory-item-details section {
+  min-width: 0;
+}
+
+.nl-inventory-item-details {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 5px;
+}
+
+.nl-inventory-item-details h3 {
+  margin: 0 0 3px;
+  color: var(--nl-blue-dark);
+  font-size: 11px;
+}
+
+.nl-inventory-details--compact .nl-profile-table tr:not(.nl-requirement-missing):nth-child(n + 4) {
+  display: none;
+}
+
+.nl-requirement-missing th,
+.nl-requirement-missing td {
+  background: var(--nl-red-soft);
+  color: var(--nl-red);
+}
+
+.nl-inline-action {
+  position: relative;
+  display: inline-block;
+}
+
+.nl-inline-action summary {
+  list-style: none;
+}
+
+.nl-inline-action summary::-webkit-details-marker {
+  display: none;
+}
+
+.nl-inline-action[open] summary {
+  border-color: var(--nl-border-dark);
+  background: var(--nl-yellow-soft);
+}
+
+.nl-inline-action-form {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  min-width: min(320px, calc(100vw - 24px));
+  padding: 5px;
+  border: 1px solid var(--nl-border-dark);
+  background: #fffef9;
+  box-shadow: 0 2px 5px rgba(45, 36, 14, 0.22);
+}
+
+.nl-inventory-item-actions .nl-inline-action-form {
+  position: absolute;
+  top: calc(100% + 2px);
+  left: 0;
+  z-index: 25;
+}
+
+.nl-inline-action-form .LogintextBox,
+.nl-inline-action-form .LogintextBox2,
+.nl-inline-action-form .LogintextBox4 {
+  flex: 1 1 88px;
+  min-width: 72px;
+}
+
+.nl-equipment-set-table {
+  width: 100%;
+  margin-top: 6px;
+  font-size: 11px;
+}
+
+.nl-equipment-set-table th {
+  width: 100%;
+  text-align: left;
+}
+
+.nl-family-inventory {
+  display: grid;
+  gap: 6px;
+}
+
+.nl-family-inventory-section {
+  overflow: hidden;
+}
+
+.nl-family-inventory-section header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 5px 6px;
+}
+
+.nl-family-inventory-section h3 {
+  margin: 0;
+  font-size: 12px;
+}
+
+.nl-profile-table--wide {
+  width: 100%;
+}
+
+.nl-profile-skill-list {
+  display: grid;
+  gap: 3px;
+}
+
+.nl-profile-skill-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  min-height: 22px;
+  padding: 3px 6px;
+  border: 1px solid var(--nl-border-light);
+  background: #fffef9;
+}
+
+.nl-profile-skill-row span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.weaponch {
+  min-height: var(--nl-control-height);
+  padding: 2px 8px;
+  border: 1px solid var(--nl-control-border);
+  border-right-color: #6d5c32;
+  border-bottom-color: #6d5c32;
+  border-radius: 0;
+  background: linear-gradient(180deg, #fffef9 0%, #efe6ca 100%);
+  color: var(--nl-text-link);
+  box-shadow: var(--nl-control-shadow);
+  cursor: pointer;
+  font-family: var(--nl-control-font);
+  font-size: 11px;
+}
+
+.nl-profile-empty {
+  margin: 0;
+  padding: 7px;
+  color: var(--nl-text-muted);
+}
+
+.nl-profile-slot-value {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--nl-text-primary);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nl-stat-equip-delta {
+  color: var(--nl-green);
+  font-size: 10px;
+}
+
+.nl-equipment-location {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 5px 6px;
+  border: 1px solid var(--nl-border-light);
+  background: #fffef9;
+}
+
+.nl-equipment-location span {
+  color: var(--nl-text-muted);
+}
+
+.inventory-slot.empty,
+.nl-inventory-empty-slot {
+  min-height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--nl-text-dim);
+  font-size: 10px;
+  text-transform: lowercase;
+}
+
+@media (max-width: 720px) {
+  .nl-player-profile-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .nl-inventory-item {
+    grid-template-columns: 46px minmax(0, 1fr);
+  }
+
+  .nl-inventory-item-details {
+    grid-template-columns: 1fr;
+  }
+
+  .nl-inventory-item-actions .nl-inline-action-form {
+    position: static;
+    min-width: 0;
+    margin-top: 4px;
+  }
+}

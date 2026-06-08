@@ -1,0 +1,852 @@
+.nl-arena-frame {
+  color: var(--nl-text);
+  background: #fffef9;
+}
+
+.nl-arena-topline,
+.nl-arena-status-row,
+.nl-arena-room-heading,
+.nl-arena-current-row,
+.nl-arena-application-form,
+.nl-fight-budget,
+.nl-fight-controls {
+  border-color: var(--nl-border);
+  background: linear-gradient(180deg, #fbf6e7 0%, #e7d8b3 100%);
+}
+
+.nl-arena-tabs,
+.nl-fight-magic-slots {
+  border-color: var(--nl-border);
+  background: var(--nl-bg-secondary);
+}
+
+.nl-arena-link--current,
+.nl-arena-tab--active {
+  border-color: var(--nl-border-dark);
+  background: linear-gradient(180deg, #fffef9 0%, #f0e4c5 100%);
+  color: var(--nl-text-primary);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.55);
+}
+
+.nl-arena-muted {
+  color: var(--nl-text-muted);
+}
+
+.nl-arena-topline,
+.nl-arena-status-row,
+.nl-arena-current-row,
+.nl-arena-search,
+.nl-arena-recent,
+.nl-arena-room-scheme {
+  padding: 5px 6px;
+}
+
+.nl-arena-topline,
+.nl-arena-status-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.nl-arena-character,
+.nl-arena-controls,
+.nl-arena-vitals,
+.nl-arena-team-limits {
+  min-width: 0;
+}
+
+.nl-arena-character {
+  color: var(--nl-text-primary);
+  font-weight: 700;
+}
+
+.nl-arena-vitals {
+  margin-left: 4px;
+  color: var(--nl-text-muted);
+  font-weight: 400;
+}
+
+.nl-arena-controls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 3px;
+}
+
+.nl-arena-link--button {
+  font: inherit;
+}
+
+.nl-arena-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  padding: 4px;
+}
+
+.nl-arena-current-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.nl-arena-inline-form {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  min-width: 0;
+}
+
+.nl-arena-room-scheme {
+  overflow-x: auto;
+}
+
+.nl-arena-room-cell {
+  min-width: 92px;
+  padding: 5px;
+  text-align: center;
+  vertical-align: top;
+}
+
+.nl-arena-room-cell--open {
+  background: var(--nl-green-soft);
+}
+
+.nl-arena-room-cell--locked,
+.nl-arena-row--locked {
+  background: var(--nl-red-soft);
+  color: var(--nl-text-muted);
+}
+
+.nl-arena-summary-table,
+.nl-arena-rooms-table,
+.nl-arena-applications-table {
+  width: 100%;
+  font-size: 11px;
+}
+
+.nl-arena-search,
+.nl-arena-recent {
+  border: 1px solid var(--nl-border);
+  background: var(--nl-bg-panel);
+}
+
+.nl-arena-recent-row {
+  padding: 3px 0;
+  border-top: 1px solid var(--nl-border-light);
+}
+
+.nl-arena-active-matches,
+.nl-arena-empty {
+  border: 1px solid var(--nl-border);
+  background: #fffef9;
+}
+
+.nl-arena-row--own {
+  background: var(--nl-blue-soft);
+}
+
+.nl-arena-row--npc {
+  background: var(--nl-row-alt);
+}
+
+.nl-fight-magic-slot {
+  min-height: 44px;
+  border: 1px solid var(--nl-control-border);
+  background: #fffef9;
+  box-shadow: var(--nl-control-shadow);
+  font-size: 11px;
+}
+
+.nl-fight-magic-slot:hover {
+  background: var(--nl-blue-soft);
+  border-color: var(--nl-blue);
+}
+
+.nl-fight-magic-slot--active {
+  background: var(--nl-yellow-soft);
+  border-color: var(--nl-warning);
+}
+
+.nl-fight-selector-table {
+  background: #fffef9;
+}
+
+.arena-action-panel,
+.arena-combat-log,
+.arena-fighter-card,
+.arena-fighter-empty,
+.nl-fight-wait-panel {
+  border-color: var(--nl-border);
+  background: var(--nl-bg-panel);
+}
+
+.arena-vs-badge {
+  border-color: var(--nl-border-dark);
+  background: linear-gradient(180deg, #fffef9 0%, #e2d2aa 100%);
+  color: var(--nl-red);
+  box-shadow: var(--nl-control-shadow);
+}
+
+.arena-ap-bar,
+.arena-timeout-bar,
+.match-info-bar {
+  border-color: var(--nl-border);
+  background: var(--nl-bg-secondary);
+}
+
+.btn-defend {
+  border-color: #5d8ab0;
+  background: linear-gradient(180deg, #fffef9 0%, #dcebf4 100%);
+  color: var(--nl-blue);
+}
+
+.btn-attack--aimed,
+.btn-attack--submit {
+  font-weight: 700;
+}
+
+.combat-log-entry,
+.public-log-entry {
+  border-color: var(--nl-border-light);
+}
+
+.combat-log--system,
+.log-entry--system {
+  color: var(--nl-text-muted);
+}
+
+.combat-log--victory,
+.log-entry--victory {
+  color: var(--nl-green);
+}
+
+.combat-log--damage,
+.combat-log--critical,
+.log-entry--damage,
+.log-entry--critical {
+  color: var(--nl-red);
+}
+
+.combat-log-tabs {
+  border-color: var(--nl-border);
+  background: var(--nl-bg-secondary);
+}
+
+.combat-log-tabs .tab.active {
+  border-color: var(--nl-border-dark);
+  background: #fffef9;
+  color: var(--nl-text-primary);
+}
+
+.page-header,
+.page-header--compact,
+.arena-match-page,
+.arena-room,
+.arena-form,
+.arena-applications,
+.arena-applications-list,
+.arena-team,
+.arena-result,
+.combat-log,
+.combat-log-container {
+  color: var(--nl-text);
+}
+
+.page-header,
+.page-header--compact {
+  border: 1px solid var(--nl-border);
+  background: linear-gradient(180deg, #fbf6e7 0%, #e8dab6 100%);
+  box-shadow: 0 1px 2px rgba(54, 43, 18, 0.12);
+}
+
+.page-header h1,
+.page-header--compact h1 {
+  margin: 0;
+  border: 0;
+  color: var(--nl-text-primary);
+  font-size: 15px;
+}
+
+.badge,
+.fighter-badge,
+.npc-badge,
+.arena-application-levels {
+  min-height: 18px;
+  border: 1px solid var(--nl-border);
+  border-radius: 0;
+  background: var(--nl-bg-secondary);
+  color: var(--nl-text-secondary);
+  font-size: 10px;
+  line-height: 1.1;
+}
+
+.badge--npc,
+.fighter-badge--npc {
+  border-color: #b9685f;
+  background: var(--nl-red-soft);
+  color: var(--nl-red);
+}
+
+.arena-rooms,
+.arena-applications-list {
+  display: grid;
+  gap: 5px;
+}
+
+.arena-room,
+.arena-form,
+.arena-empty,
+.arena-application,
+.fighter-card,
+.arena-match-bar,
+.arena-team,
+.arena-result,
+.combat-log {
+  border: 1px solid var(--nl-border);
+  background: #fffef9;
+  box-shadow: 0 1px 2px rgba(54, 43, 18, 0.12);
+}
+
+.arena-room {
+  padding: 6px;
+}
+
+.arena-room:hover,
+.arena-application:hover,
+.fighter-card:hover {
+  border-color: var(--nl-border-dark);
+  background: var(--nl-yellow-soft);
+}
+
+.arena-room--available,
+.arena-application--own {
+  border-left: 3px solid var(--nl-green);
+}
+
+.arena-room--unavailable {
+  border-left: 3px solid var(--nl-red);
+  background: var(--nl-red-soft);
+}
+
+.arena-room--current {
+  border-left: 3px solid var(--nl-blue);
+  background: var(--nl-blue-soft);
+}
+
+.arena-tabs,
+.arena-form-row,
+.arena-application-header,
+.arena-application-meta,
+.arena-application-actions {
+  border-color: var(--nl-border-light);
+}
+
+.arena-tab,
+.arena-form-select,
+.arena-form-input {
+  border-color: var(--nl-control-border);
+  background: #fffef9;
+}
+
+.arena-application {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 5px 8px;
+  padding: 5px 6px;
+}
+
+.arena-application--npc {
+  border-left: 3px solid var(--nl-red);
+}
+
+.arena-application-header,
+.arena-application-info,
+.arena-application-details,
+.arena-application-players,
+.arena-application-meta,
+.arena-application-actions {
+  min-width: 0;
+}
+
+.arena-application-header,
+.arena-application-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.arena-application-info {
+  grid-column: 1;
+}
+
+.arena-application-actions {
+  grid-row: 1 / span 3;
+  grid-column: 2;
+  display: flex;
+  align-items: center;
+}
+
+.arena-application-type,
+.arena-application-kind {
+  color: var(--nl-text-primary);
+  font-weight: 700;
+}
+
+.arena-application-type--duel { color: var(--nl-blue); }
+.arena-application-type--group { color: var(--nl-green); }
+.arena-application-type--sacrifice { color: var(--nl-red); }
+
+.arena-application-timer {
+  color: var(--nl-text-muted);
+  font-size: 10px;
+}
+
+.arena-application-timer--urgent {
+  color: var(--nl-red);
+  font-weight: 700;
+}
+
+.npc-nameplate {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  min-width: 0;
+}
+
+.npc-avatar img,
+.fighter-avatar img,
+.arena-participant-avatar img {
+  max-width: 100%;
+  height: auto;
+}
+
+.arena-fight-layout {
+  align-items: start;
+  gap: 8px;
+}
+
+.arena-fighter,
+.arena-fighter--left,
+.arena-fighter--right {
+  min-width: 0;
+}
+
+.arena-center {
+  display: grid;
+  gap: 6px;
+}
+
+.fighter-card {
+  padding: 6px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(247, 240, 221, 0.92)),
+    #fffef9;
+}
+
+.fighter-card--defeated {
+  opacity: 0.78;
+}
+
+.fighter-card--npc {
+  border-left: 3px solid var(--nl-red);
+}
+
+.fighter-avatar {
+  border: 1px solid var(--nl-border);
+  background: var(--nl-bg-secondary);
+}
+
+.fighter-defeated-overlay {
+  background: rgba(78, 18, 12, 0.78);
+  color: #ffffff;
+  font-size: 11px;
+}
+
+.fighter-header {
+  min-width: 0;
+  color: var(--nl-text-primary);
+}
+
+.fighter-name {
+  color: var(--nl-text-primary);
+  overflow-wrap: anywhere;
+}
+
+.fighter-name--defeated {
+  color: var(--nl-red);
+  text-decoration: line-through;
+}
+
+.fighter-level,
+.fighter-hp-percent {
+  color: var(--nl-text-muted);
+}
+
+.fighter-hp,
+.fighter-mp {
+  min-width: 0;
+}
+
+.fighter-hp-bar,
+.fighter-mp-bar,
+.arena-hp-bar,
+.arena-mp-bar,
+.ap-bar-container {
+  border: 1px solid #6f6245;
+  border-radius: 0;
+  background: #2a2a22;
+  box-shadow: inset 1px 1px 1px rgba(0, 0, 0, 0.32);
+}
+
+.fighter-hp-fill {
+  height: 100%;
+}
+
+.fighter-hp-fill--high,
+.arena-hp-fill {
+  background: linear-gradient(180deg, #55a95c 0%, var(--nl-green) 100%);
+}
+
+.fighter-hp-fill--medium {
+  background: linear-gradient(180deg, #f6bf53 0%, #c98310 100%);
+}
+
+.fighter-hp-fill--low,
+.fighter-hp-fill--critical {
+  background: linear-gradient(180deg, #d75e38 0%, #b40000 65%, #7b0000 100%);
+}
+
+.fighter-mp-fill,
+.arena-mp-fill {
+  background: linear-gradient(180deg, #5791c0 0%, #276ca4 65%, #0f456f 100%);
+}
+
+.fighter-hp-text,
+.fighter-mp-text,
+.arena-hp-text,
+.arena-mp-text {
+  color: #ffffff;
+  font-size: 10px;
+  text-shadow: 0 1px 1px #000000;
+}
+
+.fighter-combat-power,
+.fighter-stats,
+.fighter-stats--nl,
+.stats-grid--compact {
+  border: 1px solid var(--nl-border-light);
+  background: #fffef9;
+}
+
+.fighter-power,
+.fighter-stat,
+.stat-item {
+  border-color: var(--nl-border-light);
+  background: var(--nl-bg-secondary);
+  color: var(--nl-text-secondary);
+}
+
+.fighter-result,
+.arena-result-title {
+  letter-spacing: 0;
+  text-shadow: none;
+}
+
+.fighter-result {
+  border: 1px solid var(--nl-border);
+  background: var(--nl-bg-secondary);
+}
+
+.fighter-result--victory,
+.arena-result--victory .arena-result-title {
+  border-color: #6aa06d;
+  background: var(--nl-green-soft);
+  color: var(--nl-green);
+}
+
+.fighter-result--defeat,
+.arena-result--defeat .arena-result-title {
+  border-color: #b9685f;
+  background: var(--nl-red-soft);
+  color: var(--nl-red);
+}
+
+.fighter-result--draw,
+.arena-result--ended .arena-result-title,
+.arena-result--draw .arena-result-title {
+  border-color: var(--nl-border);
+  background: var(--nl-yellow-soft);
+  color: var(--nl-warning);
+}
+
+.arena-ap-bar {
+  gap: 5px;
+  color: var(--nl-text-secondary);
+}
+
+.ap-bar-fill {
+  background: linear-gradient(180deg, #62b86a 0%, #087c20 100%);
+}
+
+.ap-value,
+.ap-label,
+.combat-time {
+  color: var(--nl-text-muted);
+  font-size: 10px;
+}
+
+.arena-turn-composer,
+.nl-fight-turn-composer {
+  border: 1px solid var(--nl-border);
+  background: var(--nl-bg-secondary);
+}
+
+.nl-fight-selector-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+}
+
+.nl-fight-selector-table th,
+.nl-fight-selector-table td {
+  border: 1px solid var(--nl-border-light);
+  padding: 3px;
+}
+
+.nl-fight-selector-table th {
+  background: linear-gradient(180deg, #efe7cf 0%, #ded1ae 100%);
+}
+
+.nl-fight-select {
+  width: 100%;
+}
+
+.arena-turn-submit,
+.nl-fight-wait-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.arena-combat-log,
+.combat-log {
+  max-height: 300px;
+  overflow-y: auto;
+  color: var(--nl-text);
+  font-size: 11px;
+}
+
+.combat-log-entry {
+  padding: 3px 5px;
+  border-bottom: 1px solid var(--nl-border-light);
+  background: #fffef9;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.combat-log--highlight {
+  background: var(--nl-yellow-soft);
+}
+
+.combat-log--action {
+  color: var(--nl-text);
+}
+
+.combat-log--miss,
+.combat-log--dodge {
+  color: var(--nl-text-muted);
+  font-style: italic;
+}
+
+.combat-log--block,
+.combat-log--defend {
+  color: var(--nl-blue);
+}
+
+.combat-log--death,
+.combat-log--defeat {
+  color: var(--nl-red);
+  font-weight: 700;
+}
+
+.combat-log--draw {
+  color: var(--nl-warning);
+  font-weight: 700;
+}
+
+.arena-match-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 5px 7px;
+  color: var(--nl-text-secondary);
+  font-size: 11px;
+}
+
+.match-bar-item {
+  min-width: 0;
+}
+
+.arena-countdown-overlay,
+.arena-result-overlay {
+  background: rgba(34, 28, 12, 0.55);
+}
+
+.arena-countdown {
+  border: 1px solid var(--nl-border-dark);
+  background: #fffef9;
+  color: var(--nl-text-primary);
+  box-shadow: 0 2px 6px rgba(33, 26, 10, 0.18);
+}
+
+.arena-countdown-content,
+.arena-result-content {
+  border: 1px solid var(--nl-border-dark);
+  background: #fffef9;
+  color: var(--nl-text);
+  box-shadow: 0 3px 10px rgba(34, 28, 12, 0.28);
+}
+
+.arena-result-details {
+  color: var(--nl-text-secondary);
+}
+
+.arena-result-details strong {
+  color: var(--nl-text-primary);
+}
+
+.nl-fight-wait-state {
+  color: var(--nl-text-secondary);
+}
+
+.arena-countdown-title,
+.arena-countdown-timer {
+  color: var(--nl-text-primary);
+}
+
+.arena-countdown-timer--urgent,
+.arena-countdown-timer--final {
+  color: var(--nl-red);
+}
+
+.arena-participant {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) auto;
+  gap: 6px;
+  align-items: center;
+  padding: 5px;
+  border-color: var(--nl-border-light);
+  background: #fffef9;
+}
+
+.arena-participant--dead {
+  background: var(--nl-red-soft);
+}
+
+.arena-participant--self {
+  border-left: 3px solid var(--nl-blue);
+  background: var(--nl-blue-soft);
+}
+
+.arena-participant--npc {
+  border-left: 3px solid var(--nl-red);
+}
+
+.arena-participant-avatar {
+  min-width: 0;
+}
+
+.arena-participant-info,
+.arena-opponent-stats {
+  min-width: 0;
+}
+
+.arena-participant-header {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 3px;
+}
+
+.arena-participant-name {
+  color: var(--nl-text-primary);
+  font-weight: 700;
+}
+
+.arena-participant-level,
+.arena-participant-hp-pct {
+  color: var(--nl-text-muted);
+}
+
+.arena-bars {
+  display: grid;
+  gap: 3px;
+  margin-top: 3px;
+}
+
+.arena-opponent-stats {
+  margin-top: 5px;
+}
+
+.arena-result-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 20px;
+  padding: 2px 6px;
+  border: 1px solid var(--nl-border);
+  background: var(--nl-bg-secondary);
+  color: var(--nl-text-secondary);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.arena-result-badge--victory {
+  border-color: #6aa06d;
+  background: var(--nl-green-soft);
+  color: var(--nl-green);
+}
+
+.arena-result-badge--defeat {
+  border-color: #b9685f;
+  background: var(--nl-red-soft);
+  color: var(--nl-red);
+}
+
+.arena-result-badge--draw {
+  background: var(--nl-yellow-soft);
+  color: var(--nl-warning);
+}
+
+@media (max-width: 900px) {
+  .arena-fight-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .arena-application {
+    grid-template-columns: 1fr;
+  }
+
+  .arena-application-actions {
+    grid-row: auto;
+    grid-column: auto;
+    justify-content: flex-start;
+  }
+
+  .arena-participant {
+    grid-template-columns: 36px minmax(0, 1fr);
+  }
+
+  .arena-result-badge {
+    grid-column: 2;
+    justify-self: start;
+  }
+}

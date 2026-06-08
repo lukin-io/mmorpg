@@ -1,0 +1,74 @@
+.nl-shop-page {
+  color: var(--nl-text);
+}
+
+.nl-shop-frame {
+  background: #fffef9;
+}
+
+.nl-shop-topline,
+.nl-shop-status-row,
+.nl-shop-filters {
+  border-color: var(--nl-border);
+  background: linear-gradient(180deg, #fbf6e7 0%, #e7d8b3 100%);
+}
+
+.nl-shop-tabs {
+  border-color: var(--nl-border);
+  background: var(--nl-bg-secondary);
+}
+
+.nl-shop-title h1 {
+  color: var(--nl-text-primary);
+}
+
+.nl-shop-title span,
+.nl-shop-status-row,
+.nl-shop-filters label {
+  color: var(--nl-text-muted);
+}
+
+.nl-shop-table {
+  background: #fffef9;
+}
+
+.nl-shop-inner-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.nl-shop-requirements li {
+  border-color: var(--nl-border-light);
+  background: var(--nl-row-alt);
+}
+
+.nl-shop-requirement--missing {
+  border-color: #d9a09a;
+  background: var(--nl-red-soft);
+  color: var(--nl-red);
+}
+
+.nl-shop-empty {
+  background: #fffef9;
+  color: var(--nl-text-muted);
+}
+
+.nl-shop-action-form {
+  gap: 4px;
+}
+
+.item-context-menu {
+  border-color: var(--nl-border-dark);
+  background: #fffef9;
+  box-shadow: 0 2px 8px rgba(35, 28, 10, 0.18);
+}
+
+.context-menu-btn {
+  min-height: 22px;
+  color: var(--nl-text-link);
+}
+
+.context-menu-btn:hover {
+  background: var(--nl-control-bg-hover);
+  color: var(--nl-text-link-hover);
+}
