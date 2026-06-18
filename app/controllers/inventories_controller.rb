@@ -13,10 +13,13 @@ class InventoriesController < ApplicationController
   # GET /inventory
   def show
     @inventory = current_character.inventory || current_character.create_inventory!
-    @category = params[:category].presence || "all"
-    @items = filtered_inventory_items(@inventory, @category)
+    @category = current_category
+    @subcategory = current_subcategory
+    @info_mode = current_info_mode
+    @items = filtered_inventory_items(@inventory, @category, @subcategory)
     @equipment = current_character_equipment
     @stats = Characters::VitalsService.new(current_character).stats_summary
+    @equipment_sets = Game::Inventory::EquipmentSetService.new(character: current_character).all
   end
 
   # POST /inventory/equip
@@ -32,11 +35,11 @@ class InventoriesController < ApplicationController
       if result[:success]
         format.turbo_stream do
           @inventory = current_character.inventory.reload
-          items = filtered_inventory_items(@inventory, current_category)
+          items = filtered_inventory_items(@inventory, current_category, current_subcategory)
           stats = Characters::VitalsService.new(current_character).stats_summary
 
           render turbo_stream: [
-            turbo_stream.update("inventory_grid", partial: "inventories/grid", locals: {items:, inventory: @inventory, category: current_category}),
+            turbo_stream.update("inventory_grid", partial: "inventories/grid", locals: {items:, inventory: @inventory, category: current_category, subcategory: current_subcategory, info_mode: current_info_mode}),
             turbo_stream.update("equipment_panel", partial: "inventories/equipment", locals: {equipment: current_character_equipment}),
             turbo_stream.update("stats_panel", partial: "inventories/stats", locals: {stats: stats})
           ]
@@ -68,11 +71,11 @@ class InventoriesController < ApplicationController
       if result[:success]
         format.turbo_stream do
           @inventory = current_character.inventory.reload
-          items = filtered_inventory_items(@inventory, current_category)
+          items = filtered_inventory_items(@inventory, current_category, current_subcategory)
           stats = Characters::VitalsService.new(current_character).stats_summary
 
           render turbo_stream: [
-            turbo_stream.update("inventory_grid", partial: "inventories/grid", locals: {items:, inventory: @inventory, category: current_category}),
+            turbo_stream.update("inventory_grid", partial: "inventories/grid", locals: {items:, inventory: @inventory, category: current_category, subcategory: current_subcategory, info_mode: current_info_mode}),
             turbo_stream.update("equipment_panel", partial: "inventories/equipment", locals: {equipment: current_character_equipment}),
             turbo_stream.update("stats_panel", partial: "inventories/stats", locals: {stats: stats})
           ]
@@ -91,6 +94,13 @@ class InventoriesController < ApplicationController
     end
   end
 
+  # POST /inventory/unequip_all
+  def unequip_all
+    result = Game::Inventory::EquipmentService.new(character: current_character).unequip_all!
+
+    redirect_to inventory_redirect_path, notice: "Removed #{result[:count]} equipped item(s)."
+  end
+
   # POST /inventory/use
   def use
     item = current_character.inventory.inventory_items.find(params[:item_id])
@@ -101,11 +111,11 @@ class InventoriesController < ApplicationController
       if result[:success]
         format.turbo_stream do
           @inventory = current_character.inventory.reload
-          items = filtered_inventory_items(@inventory, current_category)
+          items = filtered_inventory_items(@inventory, current_category, current_subcategory)
           stats = Characters::VitalsService.new(current_character).stats_summary
 
           render turbo_stream: [
-            turbo_stream.update("inventory_grid", partial: "inventories/grid", locals: {items:, inventory: @inventory, category: current_category}),
+            turbo_stream.update("inventory_grid", partial: "inventories/grid", locals: {items:, inventory: @inventory, category: current_category, subcategory: current_subcategory, info_mode: current_info_mode}),
             turbo_stream.update("stats_panel", partial: "inventories/stats", locals: {stats: stats}),
             turbo_stream.update("flash", partial: "shared/flash", locals: {type: "notice", message: result[:message]})
           ]
@@ -146,49 +156,136 @@ class InventoriesController < ApplicationController
     redirect_to inventory_redirect_path, notice: "Inventory sorted."
   end
 
+  def save_equipment_set
+    result = Game::Inventory::EquipmentSetService.new(character: current_character).save!(params[:set_name])
+
+    redirect_to inventory_redirect_path, flash_for_result(result)
+  end
+
+  def wear_equipment_set
+    result = Game::Inventory::EquipmentSetService.new(character: current_character).wear!(params[:set_name])
+
+    redirect_to inventory_redirect_path, flash_for_result(result)
+  end
+
+  def delete_equipment_set
+    result = Game::Inventory::EquipmentSetService.new(character: current_character).delete!(params[:set_name])
+
+    redirect_to inventory_redirect_path, flash_for_result(result)
+  end
+
+  def transfer_item
+    item = current_character.inventory.inventory_items.find(params[:item_id])
+    result = transfer_service.transfer_item!(
+      item:,
+      recipient_name: params[:recipient_name],
+      quantity: transfer_quantity
+    )
+
+    redirect_to inventory_redirect_path, flash_for_result(result)
+  end
+
+  def gift_item
+    item = current_character.inventory.inventory_items.find(params[:item_id])
+    result = transfer_service.transfer_item!(
+      item:,
+      recipient_name: params[:recipient_name],
+      quantity: transfer_quantity,
+      gift: true
+    )
+
+    redirect_to inventory_redirect_path, flash_for_result(result)
+  end
+
+  def sell_to_player
+    item = current_character.inventory.inventory_items.find(params[:item_id])
+    result = transfer_service.sell_item!(
+      item:,
+      recipient_name: params[:recipient_name],
+      quantity: transfer_quantity,
+      price: params[:price]
+    )
+
+    redirect_to inventory_redirect_path, flash_for_result(result)
+  end
+
+  def transfer_money
+    result = transfer_service.transfer_money!(
+      recipient_name: params[:recipient_name],
+      amount: params[:amount]
+    )
+
+    redirect_to inventory_redirect_path, flash_for_result(result)
+  end
+
   private
 
-  def filtered_inventory_items(inventory, category)
-    items = inventory.inventory_items.joins(:item_template).includes(:item_template).order(:slot_index)
+  def filtered_inventory_items(inventory, category, subcategory)
+    items = inventory.inventory_items.where(equipped: false).joins(:item_template).includes(:item_template).order(:slot_index)
     return items if category == "all"
 
-    item_types = inventory_category_item_types(category)
-    return items if item_types.empty?
+    filtered = items.select { |item| item.item_template.inventory_family == category }
+    filtered = filtered.select { |item| item.item_template.inventory_subcategory == subcategory } if subcategory.present? && subcategory != "all"
+    InventoryItem.where(id: filtered.map(&:id)).includes(:item_template).order(:slot_index)
+  end
 
-    items.where(item_templates: {item_type: item_types})
+  def normalize_category(category)
+    case category.to_s
+    when "", "all"
+      "all"
+    when "equipment"
+      "things"
+    when "consumables"
+      "elixirs"
+    when "materials"
+      "resources"
+    else
+      category.to_s
+    end
   end
 
   def current_category
-    params[:category].presence || "all"
+    normalize_category(params[:category].presence || "all")
+  end
+
+  def current_subcategory
+    params[:subcategory].presence || "all"
+  end
+
+  def current_info_mode
+    params[:info].presence == "short" ? "short" : "full"
   end
 
   def inventory_redirect_path
     category = current_category
     return inventory_path if category == "all"
 
-    inventory_path(category: category)
-  end
-
-  def inventory_category_item_types(category)
-    case category
-    when "equipment"
-      ["equipment"]
-    when "consumables"
-      ["consumable"]
-    when "materials"
-      ["material"]
-    else
-      []
-    end
+    inventory_path(category:, subcategory: current_subcategory, info: current_info_mode)
   end
 
   def current_character_equipment
-    EquipmentSlots::ORDERED.to_h do |slot_key, _label|
+    equipment = EquipmentSlots::ORDERED.to_h do |slot_key, _label|
       [slot_key.to_sym, equipped_item(slot_key)]
     end
+
+    main_hand = equipment[:main_hand]
+    equipment[:off_hand] ||= main_hand if main_hand&.two_handed?
+    equipment
   end
 
   def equipped_item(slot)
     current_character.inventory.inventory_items.find_by(equipped: true, equipment_slot: slot)
+  end
+
+  def transfer_service
+    @transfer_service ||= Game::Inventory::TransferService.new(character: current_character)
+  end
+
+  def transfer_quantity
+    params[:quantity].to_i.clamp(1, 99)
+  end
+
+  def flash_for_result(result)
+    result.success ? {notice: result.message} : {alert: result.message}
   end
 end

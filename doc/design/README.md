@@ -81,6 +81,9 @@ Reference:
 - `reference/` - observed Neverlands behavior and source-material mapping.
 - `reference/neverlands_live_game_shell_ui.md` - 2026-05-25 sanitized live
   shell/UI capture for MVP UI/AX integration.
+- `reference/neverlands_live_inventory_items.md` - 2026-06-01 sanitized live
+  inventory, item-family, equip/unequip, item-row, adjacent item-action, and
+  shop buy/sell capture.
 
 ## Document Types
 
@@ -331,8 +334,10 @@ Neverlands-based behavior first.
 - legacy aggregate numeric-skill point pool (`skill_points_available`); the
   implementation now keeps only the captured combat and peace point pools.
 - legacy item requirement compatibility, including per-item `level_required`
-  properties and generic stat/skill aliases. Item requirements now use the
-  normalized template/item requirement hashes only.
+  properties and uncaptured stat/skill aliases. Item requirements now use the
+  normalized template/item requirement hashes plus source-backed Neverlands
+  aliases such as `knowledge`, `health`, and captured numeric weapon-skill
+  labels.
 - legacy queued/processed movement-command states. Wilderness movement now uses
   only server-offered destination commands, active travel, completion,
   cancellation, and failure states.
@@ -340,7 +345,9 @@ Neverlands-based behavior first.
   player resource is the profile fatigue percentage, now stored directly as
   `fatigue_percent`.
 - generic primary-stat alias normalization. Character stats and equipment stat
-  modifiers now use only the canonical stored primary stat keys.
+  modifiers use canonical stored primary stat keys internally, with only
+  source-backed Neverlands labels such as `knowledge` and `health` mapped at
+  item/profile boundaries.
 - direction-only movement acceptance. Movement mutations now require a
   server-authored action key tied to a concrete offered destination.
 - invented NPC/player avatar initials in arena helpers. NPC visual identity now

@@ -1,0 +1,339 @@
+html {
+  background: var(--nl-bg-primary);
+}
+
+body,
+.nl-game-layout {
+  color: var(--nl-text);
+  background: var(--nl-bg-primary);
+  font-family: var(--nl-control-font);
+}
+
+a {
+  color: var(--nl-text-link);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+
+a:hover {
+  color: var(--nl-text-link-hover);
+}
+
+button,
+input,
+select,
+textarea {
+  font-family: var(--nl-control-font);
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="search"],
+input[type="tel"],
+input[type="url"],
+select,
+textarea,
+.LogintextBox,
+.LogintextBox2,
+.LogintextBox3,
+.LogintextBox4,
+.nl-arena-select,
+.nl-arena-mini-input,
+.nl-fight-select,
+.nl-shop-select,
+.nl-shop-mini-input,
+.nl-shop-qty {
+  min-height: var(--nl-control-height);
+  border: 1px solid var(--nl-control-border);
+  border-top-color: #7f6e42;
+  border-left-color: #7f6e42;
+  border-radius: 0;
+  background: #fffef9;
+  color: var(--nl-text);
+  box-shadow: inset 1px 1px 1px rgba(40, 32, 14, 0.18);
+  font-size: 11px;
+  line-height: 1.2;
+}
+
+input:focus,
+select:focus,
+textarea:focus,
+.LogintextBox:focus,
+.LogintextBox2:focus,
+.LogintextBox3:focus,
+.LogintextBox4:focus,
+.nl-chat-input-field:focus {
+  border-color: var(--nl-blue);
+  box-shadow: var(--nl-focus-ring), inset 1px 1px 1px rgba(40, 32, 14, 0.18);
+  outline: 0;
+}
+
+input[type="checkbox"],
+input[type="radio"] {
+  accent-color: var(--nl-blue);
+}
+
+.btn,
+.btn-primary,
+.btn-secondary,
+.btn-success,
+.btn-danger,
+.lbut,
+.lbutdis,
+.invbut,
+.nl-btn,
+.nl-btn--primary,
+.nl-btn--secondary,
+.nl-btn-primary,
+.nl-btn-secondary,
+.nl-arena-link,
+.nl-arena-small-button,
+.nl-arena-tab,
+.nl-action-btn-small,
+.nl-action-btn-large,
+.chat-control-btn,
+.chat-send-btn,
+.nl-chat-send-btn,
+.export-btn,
+.combat-log-tabs .tab,
+button[type="submit"],
+input[type="submit"] {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--nl-control-height);
+  max-width: 100%;
+  padding: 2px 9px;
+  border: 1px solid var(--nl-control-border);
+  border-right-color: #6d5c32;
+  border-bottom-color: #6d5c32;
+  border-radius: 0;
+  background: linear-gradient(180deg, #fffef9 0%, #efe6ca 100%);
+  color: var(--nl-text-link);
+  box-shadow: var(--nl-control-shadow);
+  cursor: pointer;
+  font-family: var(--nl-control-font);
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 1.15;
+  letter-spacing: 0;
+  text-align: center;
+  text-decoration: none;
+  text-shadow: none;
+  text-transform: none;
+  white-space: normal;
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, box-shadow 0.12s ease;
+}
+
+.btn:hover,
+.btn-primary:hover,
+.btn-secondary:hover,
+.btn-success:hover,
+.btn-danger:hover,
+.lbut:hover,
+.invbut:hover,
+.nl-btn:hover,
+.nl-btn--primary:hover,
+.nl-btn--secondary:hover,
+.nl-btn-primary:hover,
+.nl-btn-secondary:hover,
+.nl-arena-link:hover,
+.nl-arena-small-button:hover,
+.nl-arena-tab:hover,
+.nl-action-btn-small:hover,
+.nl-action-btn-large:hover,
+.chat-control-btn:hover,
+.chat-send-btn:hover,
+.nl-chat-send-btn:hover,
+.export-btn:hover,
+.combat-log-tabs .tab:hover,
+button[type="submit"]:hover,
+input[type="submit"]:hover {
+  background: linear-gradient(180deg, #ffffff 0%, var(--nl-control-bg-hover) 100%);
+  border-color: var(--nl-border-dark);
+  color: var(--nl-text-link-hover);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 1px 2px rgba(44, 34, 12, 0.2);
+  text-decoration: none;
+}
+
+.btn:active,
+.btn-primary:active,
+.btn-secondary:active,
+.lbut:active,
+.invbut:active,
+.nl-btn:active,
+.nl-arena-link:active,
+.nl-arena-small-button:active,
+.nl-arena-tab:active,
+.nl-action-btn-small:active,
+.nl-action-btn-large:active,
+button[type="submit"]:active,
+input[type="submit"]:active {
+  background: var(--nl-control-bg-active);
+  border-color: #6d5c32;
+  box-shadow: var(--nl-control-shadow-active);
+  transform: translateY(1px);
+}
+
+.btn-primary,
+.nl-btn--primary,
+.nl-btn-primary {
+  background: linear-gradient(180deg, #377aaa 0%, #1d5f91 100%);
+  border-color: #0f456f;
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.btn-primary:hover,
+.nl-btn--primary:hover,
+.nl-btn-primary:hover {
+  background: linear-gradient(180deg, #4589b8 0%, #0f527f 100%);
+  color: #ffffff;
+}
+
+.btn-danger,
+.invbut--danger {
+  color: var(--nl-red);
+  border-color: #b9685f;
+  background: linear-gradient(180deg, #fffdf9 0%, #f3d9d3 100%);
+}
+
+.btn-success {
+  color: var(--nl-green);
+  border-color: #6aa06d;
+  background: linear-gradient(180deg, #fffdf9 0%, #d9efd6 100%);
+}
+
+.btn-sm {
+  min-height: 20px;
+  padding: 1px 7px;
+  font-size: 10px;
+}
+
+.form-select,
+.form-select--compact {
+  max-width: 100%;
+}
+
+.form-select--compact {
+  min-height: 20px;
+  padding-top: 1px;
+  padding-bottom: 1px;
+  font-size: 10px;
+}
+
+.lbutdis,
+.invbut--disabled,
+.nl-btn--disabled,
+.nl-arena-tab--disabled,
+button:disabled,
+input[type="submit"]:disabled {
+  border-color: var(--nl-control-border-light);
+  background: var(--nl-control-disabled-bg);
+  color: var(--nl-control-disabled-text);
+  box-shadow: none;
+  cursor: default;
+  opacity: 1;
+  pointer-events: none;
+}
+
+.nl-stat-btn {
+  width: 22px;
+  min-width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid var(--nl-control-border);
+  background: linear-gradient(180deg, #fffef9 0%, #efe6ca 100%);
+  box-shadow: var(--nl-control-shadow);
+  font-size: 15px;
+  line-height: 1;
+}
+
+.nl-stat-btn--plus {
+  color: var(--nl-green);
+}
+
+.nl-stat-btn--minus {
+  color: var(--nl-red);
+}
+
+.nl-stat-btn:hover {
+  background: var(--nl-control-bg-hover);
+}
+
+.nl-stat-btn:disabled {
+  border-color: var(--nl-control-border-light);
+  background: var(--nl-control-disabled-bg);
+  color: var(--nl-control-disabled-text);
+  box-shadow: none;
+}
+
+.nl-arena-filter,
+.nl-player-name-link,
+.nl-sort-links a,
+.nl-players-sort a {
+  color: var(--nl-text-link);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.nl-arena-filter:hover,
+.nl-player-name-link:hover,
+.nl-sort-links a:hover,
+.nl-players-sort a:hover {
+  color: var(--nl-text-link-hover);
+}
+
+.nl-profile-panel,
+.nl-equipment-summary,
+.nl-inventory-head,
+.nl-inventory-toolbar,
+.nl-arena-frame,
+.nl-shop-frame,
+.nl-allocation-panel,
+.panel,
+.card {
+  border-color: var(--nl-border);
+  background: var(--nl-bg-panel);
+  box-shadow: 0 1px 2px rgba(54, 43, 18, 0.12);
+}
+
+.nl-profile-table,
+.nl-arena-table,
+.nl-shop-table,
+.nl-table {
+  border-collapse: collapse;
+  background: #fffef9;
+}
+
+.nl-profile-table th,
+.nl-profile-table td,
+.nl-arena-table th,
+.nl-arena-table td,
+.nl-shop-table th,
+.nl-shop-table td,
+.nl-table th,
+.nl-table td {
+  border: 1px solid var(--nl-border-light);
+}
+
+.nl-profile-table th,
+.nl-arena-table th,
+.nl-shop-table th,
+.nl-table th {
+  background: linear-gradient(180deg, #efe7cf 0%, #ded1ae 100%);
+  color: var(--nl-text-secondary);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}

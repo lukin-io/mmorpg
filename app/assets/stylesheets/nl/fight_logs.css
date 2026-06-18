@@ -1,0 +1,274 @@
+.combat-log-viewer,
+.nl-public-fight-log {
+  display: grid;
+  gap: 6px;
+  max-width: 1040px;
+  margin: 0 auto;
+  color: var(--nl-text);
+}
+
+.combat-log-header,
+.fight-participants,
+.combat-log-content,
+.log-pagination {
+  border: 1px solid var(--nl-border);
+  background: #fffef9;
+  box-shadow: 0 1px 2px rgba(54, 43, 18, 0.12);
+}
+
+.combat-log-header {
+  padding: 7px 8px;
+  background: linear-gradient(180deg, #fbf6e7 0%, #e7d8b3 100%);
+}
+
+.combat-log-header h1 {
+  margin: 0;
+  border: 0;
+  color: var(--nl-text-primary);
+  font-size: 15px;
+  line-height: 1.2;
+}
+
+.header-content {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+
+.fight-meta {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin: 0;
+  color: var(--nl-text-muted);
+  font-size: 11px;
+}
+
+.fight-meta .status,
+.combat-log-header .status {
+  color: var(--nl-blue-dark);
+  font-weight: 700;
+}
+
+.fight-meta .status.completed,
+.combat-log-header .status.completed {
+  color: var(--nl-green);
+}
+
+.fight-meta .status.ongoing,
+.combat-log-header .status.ongoing,
+.fight-meta .status.live,
+.combat-log-header .status.live {
+  color: var(--nl-warning);
+}
+
+.fight-participants {
+  padding: 6px;
+  background: var(--nl-bg-secondary);
+}
+
+.teams-display {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+}
+
+.team {
+  min-width: 0;
+  padding: 5px 7px;
+  border: 1px solid var(--nl-border-light);
+  background: #fffef9;
+  overflow-wrap: anywhere;
+}
+
+.team-alpha {
+  border-left: 3px solid var(--nl-blue);
+}
+
+.team-beta {
+  border-left: 3px solid var(--nl-green);
+}
+
+.participant {
+  color: var(--nl-text-primary);
+  font-weight: 700;
+}
+
+.participant .vitals {
+  color: var(--nl-text-muted);
+  font-weight: 400;
+}
+
+.participant.dead {
+  color: var(--nl-red);
+  text-decoration: line-through;
+}
+
+.participant.alive {
+  color: var(--nl-green);
+}
+
+.vs {
+  min-width: 30px;
+  color: var(--nl-red);
+  font-weight: 700;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.combat-log-content {
+  padding: 6px;
+}
+
+.log-entries {
+  display: grid;
+  gap: 6px;
+}
+
+.round-group {
+  border: 1px solid var(--nl-border-light);
+  background: #fffef9;
+}
+
+.round-header {
+  padding: 4px 7px;
+  border-bottom: 1px solid var(--nl-border);
+  background: linear-gradient(180deg, #efe7cf 0%, #ded1ae 100%);
+  color: var(--nl-blue-dark);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.log-entry {
+  display: grid;
+  grid-template-columns: 88px minmax(0, 1fr);
+  gap: 6px;
+  padding: 4px 7px;
+  border-bottom: 1px solid var(--nl-border-light);
+  border-left: 3px solid transparent;
+  background: #fffef9;
+  color: var(--nl-text);
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.log-entry:hover {
+  background: var(--nl-blue-soft);
+}
+
+.log-entry:last-child {
+  border-bottom: 0;
+}
+
+.log-type-attack,
+.log-entry--damage,
+.log-entry--critical {
+  border-left-color: var(--nl-red);
+}
+
+.log-type-block,
+.log-entry--block {
+  border-left-color: var(--nl-blue);
+}
+
+.log-type-system,
+.log-entry--system {
+  border-left-color: var(--nl-warning);
+}
+
+.log-type-loot,
+.log-entry--victory {
+  border-left-color: var(--nl-green);
+}
+
+.entry-header {
+  display: flex;
+  gap: 4px;
+  color: var(--nl-text-dim);
+  white-space: nowrap;
+}
+
+.entry-sequence {
+  color: var(--nl-text-muted);
+}
+
+.entry-time {
+  color: var(--nl-text-dim);
+}
+
+.entry-content {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.raw-message {
+  color: var(--nl-text);
+}
+
+.damage {
+  display: inline-block;
+  margin-left: 5px;
+  color: var(--nl-red);
+  font-weight: 700;
+}
+
+.nl-fight-stat-table {
+  width: 100%;
+  margin-bottom: 8px;
+  font-size: 11px;
+}
+
+.log-pagination {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 6px;
+}
+
+.page-label {
+  color: var(--nl-text-muted);
+}
+
+.page-link,
+.current-page {
+  display: inline-flex;
+  min-width: 22px;
+  min-height: 22px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--nl-control-border);
+  background: linear-gradient(180deg, #fffef9 0%, #efe6ca 100%);
+  color: var(--nl-text-link);
+  text-decoration: none;
+}
+
+.current-page {
+  border-color: var(--nl-border-dark);
+  background: var(--nl-yellow-soft);
+  color: var(--nl-text-primary);
+  font-weight: 700;
+}
+
+@media (max-width: 720px) {
+  .header-content,
+  .teams-display {
+    grid-template-columns: 1fr;
+  }
+
+  .header-content {
+    display: grid;
+  }
+
+  .vs {
+    justify-self: start;
+  }
+
+  .log-entry {
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
+}

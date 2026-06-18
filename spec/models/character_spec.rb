@@ -88,6 +88,22 @@ RSpec.describe Character, type: :model do
       expect(character.attack_power).to eq(31)
       expect(character.effective_max_hp).to eq(character.read_attribute(:max_hp) + 20)
     end
+
+    it "maps direct Neverlands skill item effects into effective skill levels" do
+      knife = create(:item_template, item_type: "equipment", slot: "main_hand",
+        stat_modifiers: {"knife_skill" => 5})
+      create(:inventory_item, inventory: character.inventory, item_template: knife, equipped: true)
+
+      expect(character.passive_skill_level(:knife_mastery)).to eq(5)
+    end
+
+    it "maps nested Neverlands skill item effects into effective skill levels" do
+      gloves = create(:item_template, item_type: "equipment", slot: "hands",
+        stat_modifiers: {"skill_bonuses" => {"knife_skill" => 5}})
+      create(:inventory_item, inventory: character.inventory, item_template: gloves, equipped: true)
+
+      expect(character.passive_skill_level(:knife_mastery)).to eq(5)
+    end
   end
 
   # ============================================

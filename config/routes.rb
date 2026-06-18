@@ -26,8 +26,16 @@ Rails.application.routes.draw do
   resource :inventory, only: [:show] do
     post :equip
     post :unequip
+    post :unequip_all
     post :use
     post :sort
+    post :save_equipment_set
+    post :wear_equipment_set
+    delete :delete_equipment_set
+    post :transfer_item
+    post :gift_item
+    post :sell_to_player
+    post :transfer_money
   end
   resources :inventory_items, only: [:destroy], path: "inventory/items"
 

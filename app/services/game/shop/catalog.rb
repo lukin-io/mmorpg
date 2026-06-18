@@ -59,7 +59,15 @@ module Game
         base_price = template.base_price.to_i
         return 0 unless base_price.positive?
 
-        [(base_price / 2.0).ceil, 1].max
+        [(base_price * 0.20).round(2), 1].max
+      end
+
+      def self.sale_price_for_item(item)
+        base = sale_price(item.item_template)
+        max_durability = item.max_durability.to_f
+        return base if max_durability <= 0
+
+        (base * (item.current_durability.to_f / max_durability)).round(2)
       end
 
       def self.required_level(template)
@@ -69,9 +77,10 @@ module Game
       def self.category_for(template)
         case template.item_type
         when "equipment"
-          return "weapons" if WEAPON_SLOTS.include?(template.slot)
-          return "armor" if ARMOR_SLOTS.include?(template.slot)
-          return "jewelry" if JEWELRY_SLOTS.include?(template.slot)
+          slot = template.equipment_slot.to_s
+          return "weapons" if WEAPON_SLOTS.include?(slot)
+          return "armor" if ARMOR_SLOTS.include?(slot)
+          return "jewelry" if JEWELRY_SLOTS.include?(slot)
 
           "misc"
         when "consumable"

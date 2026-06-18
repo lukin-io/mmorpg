@@ -12,6 +12,7 @@ Primary references:
 - `doc/design/reference/neverlands.md`
 - `doc/design/reference/neverlands_live_lavka_shop.md`
 - `doc/design/reference/neverlands_live_game_shell_ui.md`
+- `doc/design/reference/neverlands_live_inventory_items.md`
 
 Observed shop flow:
 
@@ -51,7 +52,9 @@ economy state.
 - Shops can have category tabs.
 - Shop inventory can have stock counts.
 - Items show price, requirements, and properties.
-- Buying checks money, stock, item requirements, and inventory capacity.
+- Buying checks money, stock, purchase-specific gates when captured, and
+  inventory capacity. Equipment/use requirements are still displayed but are
+  not automatically purchase blockers.
 - Selling checks ownership and whether the item can be sold.
 - Shop actions refresh the visible item list and current action keys.
 - Shop tabs are buy goods, licenses, sell goods, and novice goods.
@@ -62,11 +65,27 @@ economy state.
 - Buying and selling are confirmable, item-specific, server-authorized actions.
 - After any shop request, replace the item list from the server response
   instead of mutating it only in browser state.
+- Purchase eligibility is separate from equip/use eligibility. A shop row can
+  show unmet item requirements in red and still expose `Buy` when stock, money,
+  and carry mass allow purchase.
+- Out-of-stock rows remain visible and show no buy action.
+- Money or carry-capacity failures remain visible and show the unavailable
+  reason `Недостаточно средств или превышена допустимая масса`.
+- Sell rows are player inventory rows inside the shop tab. They show the
+  item's base shop price, current durability, shop stock context, and a
+  server-authorized sell button.
+- The 2026-06-01 jewelry sell capture suggests resale price is base item price
+  times `20%`, prorated by current durability. This is an observed inference,
+  not yet a universal rule for all shops or item families.
 
 ## Known But Deferred
 
 - Neverlands has direct player trading, but the exact flow, licenses,
   restrictions, UI states, and settlement rules still need source capture.
+- Inventory-side forms show the source shape for transfer, gift,
+  player-targeted sale, normal currency transfer, and DNV transfer: all are
+  tokenized inline forms with recipient nickname fields. Treat this as
+  adjacency evidence, not enough to implement settlement or abuse rules.
 - Do not keep or rebuild a generic two-panel trade session before that capture.
 
 ## State Concepts
@@ -76,7 +95,8 @@ economy state.
 - city building shop;
 - shop category;
 - shop stock with current and maximum counts;
-- shop license good.
+- shop license good;
+- resale value.
 
 ## Interactions
 

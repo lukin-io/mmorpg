@@ -20,7 +20,10 @@
       <%= render "shared/equipment_paperdoll_slot",
             slot: slot_key, label: label,
             item: (equipment[slot_key] || equipment[slot_key.to_sym]),
-            interactive: interactive %>
+            interactive: interactive,
+            category: local_assigns[:category],
+            subcategory: local_assigns[:subcategory],
+            info_mode: local_assigns[:info_mode] %>
     <% end %>
   </div>
 
@@ -35,7 +38,10 @@
       <%= render "shared/equipment_paperdoll_slot",
             slot: slot_key, label: label,
             item: (equipment[slot_key] || equipment[slot_key.to_sym]),
-            interactive: interactive %>
+            interactive: interactive,
+            category: local_assigns[:category],
+            subcategory: local_assigns[:subcategory],
+            info_mode: local_assigns[:info_mode] %>
     <% end %>
   </div>
 
@@ -44,7 +50,11 @@
       <%= render "shared/equipment_paperdoll_slot",
             slot: slot_key, label: label,
             item: (equipment[slot_key] || equipment[slot_key.to_sym]),
-            interactive: interactive, compact: true %>
+            interactive: interactive,
+            compact: true,
+            category: local_assigns[:category],
+            subcategory: local_assigns[:subcategory],
+            info_mode: local_assigns[:info_mode] %>
     <% end %>
   </div>
 </div>

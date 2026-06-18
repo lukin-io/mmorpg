@@ -5,6 +5,7 @@
         <th>Item</th>
         <th>Quantity</th>
         <th>Properties</th>
+        <th>Shop Stock</th>
         <th>Buyback Price</th>
         <th>Action</th>
       </tr>
@@ -26,8 +27,15 @@
                   <td><%= value %></td>
                 </tr>
               <% end %>
+              <% if item.durable? %>
+                <tr>
+                  <th>Current Durability</th>
+                  <td><%= item.current_durability %>/<%= item.max_durability %></td>
+                </tr>
+              <% end %>
             </table>
           </td>
+          <td><%= shop_stock_label(item.item_template) %></td>
           <td><b><%= number_with_delimiter(shop_sale_price(item)) %> NV</b></td>
           <td>
             <% if block_reason %>

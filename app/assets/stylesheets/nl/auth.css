@@ -1,0 +1,144 @@
+.game-wrapper > .game-content .game-main {
+  background: var(--nl-bg-panel);
+}
+
+.game-header {
+  border-color: var(--nl-border-dark);
+  background: linear-gradient(180deg, #f8f3e4 0%, #e0d1aa 100%);
+  box-shadow: inset 0 1px 0 #ffffff, 0 1px 3px rgba(39, 31, 12, 0.16);
+}
+
+.game-logo,
+.game-logo:hover {
+  color: var(--nl-text-primary);
+  letter-spacing: 0;
+  text-shadow: none;
+}
+
+.game-nav a {
+  color: var(--nl-text-link);
+}
+
+.game-nav a:hover,
+.game-nav a.active {
+  border-color: var(--nl-control-border);
+  background: rgba(255, 255, 255, 0.46);
+  color: var(--nl-text-link-hover);
+  box-shadow: none;
+}
+
+.user-nickname {
+  color: var(--nl-text-primary);
+}
+
+.field {
+  margin-bottom: 10px;
+}
+
+.field label {
+  margin-bottom: 3px;
+  color: var(--nl-text-secondary);
+  font-size: 11px;
+}
+
+.actions {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.login-container {
+  max-width: 420px;
+  margin: 24px auto;
+  padding: 14px;
+  border: 1px solid var(--nl-border-dark);
+  border-radius: 0;
+  background: #fffef9;
+  color: var(--nl-text);
+  box-shadow: 0 2px 6px rgba(39, 31, 12, 0.16);
+}
+
+.login-container::before,
+.login-container::after {
+  content: none;
+}
+
+.login-container h1 {
+  margin: -14px -14px 12px;
+  padding: 7px 10px;
+  border: 0;
+  border-bottom: 1px solid var(--nl-border);
+  background: linear-gradient(180deg, #fbf6e7 0%, #e7d8b3 100%);
+  color: var(--nl-text-primary);
+  font-size: 15px;
+  letter-spacing: 0;
+  text-align: left;
+  text-shadow: none;
+}
+
+.login-container hr {
+  height: 1px;
+  margin: 12px 0;
+  border: 0;
+  background: var(--nl-border-light);
+}
+
+.login-container a {
+  color: var(--nl-text-link);
+}
+
+.login-container a:hover {
+  color: var(--nl-text-link-hover);
+  text-shadow: none;
+}
+
+.login-container .field {
+  display: grid;
+  gap: 3px;
+}
+
+.login-container input[type="email"],
+.login-container input[type="password"] {
+  width: 100%;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.text-muted {
+  color: var(--nl-text-muted) !important;
+}
+
+.text-sm {
+  font-size: 11px;
+}
+
+.w-full {
+  width: 100%;
+}
+
+.flash,
+.nl-flash,
+.nl-notification {
+  border-radius: 0;
+}
+
+.flash.notice,
+.flash.success,
+.nl-flash--notice,
+.nl-flash--success {
+  border-color: #6aa06d;
+  background: var(--nl-green-soft);
+  color: var(--nl-green);
+}
+
+.flash.alert,
+.flash.error,
+.nl-flash--alert,
+.nl-flash--error {
+  border-color: #b9685f;
+  background: var(--nl-red-soft);
+  color: var(--nl-red);
+}

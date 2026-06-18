@@ -1,0 +1,17 @@
+<div class="nl-family-inventory">
+  <% inventory_family_sections(category).each do |title, empty_message, discardable| %>
+    <section class="nl-family-inventory-section">
+      <header>
+        <h3><%= title %></h3>
+        <% if discardable %>
+          <%= form_with url: inventory_path, method: :get, class: "nl-inline-action-form" do |f| %>
+            <%= f.hidden_field :category, value: category %>
+            <%= f.select :subact, [["choose action", "0"], ["discard", "discard"]], {}, class: "LogintextBox" %>
+            <%= f.submit "OK", class: "weaponch", data: {turbo_confirm: "Discard resources from #{title}?"} %>
+          <% end %>
+        <% end %>
+      </header>
+      <p class="nl-profile-empty"><%= empty_message %></p>
+    </section>
+  <% end %>
+</div>

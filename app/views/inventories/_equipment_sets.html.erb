@@ -1,0 +1,36 @@
+<div class="nl-profile-panel nl-equipment-sets">
+  <h2>Equipment Sets</h2>
+
+  <%= form_with url: save_equipment_set_inventory_path, method: :post, class: "nl-inline-action-form" do |f| %>
+    <%= f.hidden_field :category, value: @category %>
+    <%= f.hidden_field :subcategory, value: @subcategory %>
+    <%= f.hidden_field :info, value: @info_mode %>
+    <%= f.text_field :set_name, placeholder: "Set name", maxlength: 30, class: "LogintextBox4" %>
+    <%= f.submit "Remember", class: "lbut" %>
+  <% end %>
+
+  <% if inventory_equipment_sets.any? %>
+    <table class="nl-profile-table nl-equipment-set-table">
+      <% inventory_equipment_sets.each do |name, _payload| %>
+        <tr>
+          <th><%= name %></th>
+          <td>
+            <%= button_to "Wear",
+              wear_equipment_set_inventory_path(set_name: name, category: @category, subcategory: @subcategory, info: @info_mode),
+              method: :post,
+              class: "invbut" %>
+          </td>
+          <td>
+            <%= button_to "Delete",
+              delete_equipment_set_inventory_path(set_name: name, category: @category, subcategory: @subcategory, info: @info_mode),
+              method: :delete,
+              class: "invbut invbut--danger",
+              data: {turbo_confirm: "Delete equipment set #{name}?"} %>
+          </td>
+        </tr>
+      <% end %>
+    </table>
+  <% else %>
+    <p class="nl-profile-empty">No saved equipment sets.</p>
+  <% end %>
+</div>

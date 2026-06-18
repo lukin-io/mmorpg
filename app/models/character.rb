@@ -17,7 +17,9 @@ class Character < ApplicationRecord
     "dexterity" => :dexterity,
     "luck" => :luck,
     "intelligence" => :intelligence,
-    "vitality" => :vitality
+    "knowledge" => :intelligence,
+    "vitality" => :vitality,
+    "health" => :vitality
   }.freeze
 
   ALIGNMENTS = {
@@ -42,7 +44,32 @@ class Character < ApplicationRecord
     "dexterity" => :dexterity,
     "luck" => :luck,
     "intelligence" => :intelligence,
-    "vitality" => :vitality
+    "knowledge" => :intelligence,
+    "vitality" => :vitality,
+    "health" => :vitality
+  }.freeze
+  EQUIPMENT_SKILL_ALIASES = {
+    "unarmed_skill" => :unarmed_combat,
+    "unarmed_combat" => :unarmed_combat,
+    "sword_skill" => :sword_mastery,
+    "sword_mastery" => :sword_mastery,
+    "axe_skill" => :axe_mastery,
+    "axe_mastery" => :axe_mastery,
+    "blunt_skill" => :bludgeoning_mastery,
+    "bludgeoning_skill" => :bludgeoning_mastery,
+    "bludgeoning_mastery" => :bludgeoning_mastery,
+    "knife_skill" => :knife_mastery,
+    "knife_mastery" => :knife_mastery,
+    "throwing_skill" => :throwing_mastery,
+    "throwing_mastery" => :throwing_mastery,
+    "polearm_skill" => :polearm_mastery,
+    "polearm_mastery" => :polearm_mastery,
+    "staff_skill" => :staff_mastery,
+    "staff_mastery" => :staff_mastery,
+    "two_handed_skill" => :two_handed_mastery,
+    "two_handed_mastery" => :two_handed_mastery,
+    "dual_wield_skill" => :dual_wielding,
+    "dual_wielding" => :dual_wielding
   }.freeze
 
   belongs_to :user
@@ -520,7 +547,7 @@ class Character < ApplicationRecord
   #
   # @return [Integer] effective maximum mana points
   def effective_max_mp
-    read_attribute(:max_mp) || 50
+    (read_attribute(:max_mp) || 50).to_i + equipment_effect_value("mp", "mana", "max_mp").to_i
   end
 
   # Return base mana cost until a Neverlands mana-cost formula is captured.
@@ -642,12 +669,27 @@ class Character < ApplicationRecord
     return 0 unless inventory
 
     key = skill_key.to_s
+    normalized_key = normalize_equipment_effect_key(key)
     inventory.inventory_items.equipped.includes(:item_template).sum do |item|
       next 0 if item.broken?
 
-      skill_mods = item.effect_modifiers&.dig("skill_bonuses")
-      next 0 unless skill_mods.is_a?(Hash)
-      (skill_mods[key] || skill_mods[skill_key.to_sym]).to_i
+      effects = item.effect_modifiers.to_h
+      skill_mods = effects["skill_bonuses"] || effects[:skill_bonuses] || {}
+      nested_bonus = if skill_mods.is_a?(Hash)
+        skill_mods.sum do |effect_key, value|
+          mapped = EQUIPMENT_SKILL_ALIASES.fetch(normalize_equipment_effect_key(effect_key), normalize_equipment_effect_key(effect_key).to_sym)
+          mapped.to_s == normalized_key ? numeric_equipment_effect(value).to_i : 0
+        end
+      else
+        0
+      end
+
+      direct_bonus = effects.sum do |effect_key, value|
+        mapped = EQUIPMENT_SKILL_ALIASES[normalize_equipment_effect_key(effect_key)]
+        mapped.to_s == normalized_key ? numeric_equipment_effect(value).to_i : 0
+      end
+
+      nested_bonus + direct_bonus
     end
   end
 

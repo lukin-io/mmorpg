@@ -1,0 +1,3 @@
+<% if stat && stat[:equipment].to_i != 0 %>
+  <span class="nl-stat-equip-delta">(<%= stat[:base] %><%= stat[:equipment].positive? ? "+#{stat[:equipment]}" : stat[:equipment] %>)</span>
+<% end %>

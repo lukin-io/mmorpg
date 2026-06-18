@@ -110,6 +110,18 @@ module Game
           return {success: true, message: "Restored #{actual_restored} MP"}
         end
 
+        if truthy_effect?(stats["reset_allocation"])
+          character.update!(
+            allocated_stats: {},
+            passive_skills: {},
+            stat_points_available: character.stat_points_available.to_i + allocated_stat_points(character),
+            combat_skill_points: character.combat_skill_points.to_i + allocated_skill_points(character, :combat),
+            peace_skill_points: character.peace_skill_points.to_i + allocated_skill_points(character, :peace)
+          )
+          character.clear_passive_skill_cache!
+          return {success: true, message: "Parameters, skills, and perks reset."}
+        end
+
         # Default case - item has no known effect
         {success: false, error: "No usable effect"}
       end
@@ -121,6 +133,24 @@ module Game
       end
 
       private_class_method :apply_item_effect, :decrement_inventory_weight!
+
+      def self.truthy_effect?(value)
+        return false if value.nil?
+
+        value == true || value.to_s == "true" || value.to_i == 1
+      end
+
+      def self.allocated_stat_points(character)
+        character.allocated_stats.to_h.values.sum(&:to_i)
+      end
+
+      def self.allocated_skill_points(character, pool)
+        Game::Skills::PassiveSkillRegistry.by_pool(pool).sum do |skill|
+          character.base_passive_skill_level(skill[:key]).positive? ? 1 : 0
+        end
+      end
+
+      private_class_method :truthy_effect?, :allocated_stat_points, :allocated_skill_points
 
       def initialize(inventory:)
         @inventory = inventory

@@ -14,6 +14,7 @@ presence, turn combat, inventory weight, shops, and social chat.
 | City movement capture | City entry, city node navigation, shop entry, building return flow |
 | Game shell/UI capture | Login shell, persistent frame contract, top context buttons, city hotspots, shop tabs, arena rows, chat/presence controls, quest modal shape |
 | Player profile capture | Player shell, vitals strip, equipment slots, trainable `Умения`, boolean `Навыки` |
+| Inventory/items/shop-row capture | Full inventory item rows, family-specific inventory renderers, filter categories, equip/unequip stat deltas, equipment sets, direct item social actions, item requirement visibility, shop buy availability, and observed sell-price behavior |
 | Arena and combat captures | Arena rooms, applications, NPC training rows, city-entry context, public `[ в бою ]` profile link, AP/body-part combat, magic opener, equipment deltas, turn submit contract, logs, result step, NPC drop check |
 | Public fight log captures | `logs.fcg?fid=<id>` pages, JavaScript log arrays, shared participant renderer, paginated public logs, aggregate statistics view |
 | Outdoor NPC/resource capture | Outdoor `Оглядеться` resource search, bot ambush handoff, multi-NPC rat fights, per-NPC loot checks, outdoor return routing |
@@ -55,6 +56,12 @@ differ, prefer the current wiki.
   controls. They should be refreshed from server state rather than treated as
   static global navigation.
 - Inventory and equipment are practical constraints, not only collection UI.
+- Inventory items, shop stock rows, and sell rows share the same item contract:
+  icon, durability, properties, requirements, current availability, and
+  server-authorized action keys.
+- Equipment inventory is one inventory family. Elixirs, production resources,
+  wood, hunting/cooking, fishing, and quest journal can render different
+  family-specific panels inside the same inventory shell.
 - The player profile is an in-game surface: vitals, equipment, stats,
   experience, numeric skills, and boolean perks all hang off the active
   character rather than a separate account dashboard.

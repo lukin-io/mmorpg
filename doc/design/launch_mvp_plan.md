@@ -90,8 +90,16 @@ Required behavior:
 - Inventory needs Neverlands-based category filters, visible item
   properties/requirements/durability, equip/use/discard actions, requirement
   validation, discard protection, and combat durability degradation.
-- Equipped item effects feed primary stats, effective max HP, attack, defense,
-  accuracy, dodge, armor pierce, fortitude, resistances, and skill bonuses.
+- Inventory should keep the Neverlands family structure: `Вещи` gets the
+  equipment/item-row renderer for launch, while elixirs, production resources,
+  wood, hunting/cooking, fishing, and quest journal can start as captured empty
+  states until their mechanics are explicitly scoped.
+- Equipped item effects feed primary stats, effective max HP/MP, attack,
+  defense, accuracy, dodge, armor pierce, fortitude, resistances, and skill
+  bonuses.
+- The 2026-06-01 live inventory capture is the launch reference for item rows,
+  equip/unequip, visible requirement failures, base-plus-equipment stat deltas,
+  and representative starter item templates.
 - Vitals are documented in `doc/design/features/character_vitals.md`.
 - Progression and skills are documented in
   `doc/design/features/progression_stats_skills.md`.
@@ -109,10 +117,11 @@ Required behavior:
 
 - Formula consolidation across character vitals, combat profile generation,
   equipment families, and UI previews.
-- Inventory still needs canonical item seeds/templates based on the captured
-  live items, complete slot rules, repair/breakage UX, capacity enforcement
-  across pickup, loot, and shop flows, and system coverage. Direct player trade
-  capacity rules are deferred until trade capture.
+- Inventory still needs repair/breakage UX, exact layered armor/belt/pocket
+  content rules, capacity enforcement across pickup and loot flows, and
+  broader cross-system coverage. Targeted scrolls, doctor effects, dealer
+  transfers, and combat item-use slots are source-backed but deferred until
+  dedicated captures define their launch behavior.
 - Level-up UX and allocation UX need to be treated as part of the main
   character loop, not an admin/debug sidebar.
 - Numeric `Умения` and boolean `Навыки` are the main launch progression
@@ -319,22 +328,23 @@ login
 -> return to arena, city, or world context
 ```
 
-The shop step is required for MVP, but it is currently design-only. The
-implementation should follow the documented Neverlands `Лавка` behavior before
-adding any Rails shop code.
+The shop step is required for MVP. The starter implementation now follows the
+documented Neverlands `Лавка` behavior for buy, licenses, sell, novice goods,
+stock, wallet/mass validation, and durability-adjusted resale pricing; deeper
+action-key discipline remains tracked in the checklist below.
 
 ## Launch Build Summary
 
 | Area | Documentation Status | Implementation Status | Next Step |
 | --- | --- | --- | --- |
 | Game shell and UI/AX | Documented in layout docs and 2026-05-25 live shell capture. | Partial. | Use one Rails game layout with persistent vitals/chat/presence, Turbo-updated main content, Stimulus-only local affordances, accessible hotspots, and no iframe/frameset clone. |
-| Person | Documented across vitals, progression, inventory/equipment, and live player captures. | Partially implemented. | Consolidate formulas, item seeds, slot rules, capacity, durability, vitals, and cross-system tests. |
+| Person | Documented across vitals, progression, inventory/equipment, live player captures, and 2026-06-01 live inventory/items capture. | Partially implemented; captured inventory/item row subset is implemented. | Consolidate remaining formulas, repair/breakage, capacity across loot/pickup, and cross-system tests. |
 | Neverlands `Навыки` boolean perks | Documented in live player/skills captures. | Not implemented after generic perk cleanup. | Rebuild exact yes/no perk allocation from captured source IDs, point counter, and mutual-exclusion rules; no generic perk catalog. |
 | Movement | Documented across movement and live movement/city captures. | Partially implemented. | Unify city hotspots with server-authored action offers, polish presence refresh and locks. |
 | Arena | Documented across arena, combat, live arena captures, and public log captures. | Partially implemented. | Finish city entry/return cleanup, formula tuning, magic/special balancing, and shared fight coverage. |
 | Combat | Documented across combat reference captures, arena observations, logs, and equipment effects. | Partially implemented. | Keep one resolver/log contract across arena player/team, arena NPC, and wild NPC fights. |
 | Wild cells | Documented across outdoor movement, hostile NPC capture, and tile-action notes. | Partially implemented. | Wire wild NPC handoff to shared combat, loot result step, and exact return routing. |
-| Neverlands marketplace/shop | `Лавка` documented in `doc/design/reference/neverlands_live_lavka_shop.md`; feature guidance in `doc/design/features/economy_trading_shops.md`. | Not implemented after generic kiosk cleanup. | Build `Лавка` as a city building with buy goods, licenses, sell goods, novice goods, category filters, stock, requirements, and action-key validation. |
+| Neverlands marketplace/shop | `Лавка` documented in `doc/design/reference/neverlands_live_lavka_shop.md`; feature guidance in `doc/design/features/economy_trading_shops.md`. | Starter city shop implemented with buy/sell/licenses/novice categories, stock, wallet/mass checks, and durability resale pricing. | Replace generic Rails form authorization with source-style action-key offers if the final gameplay action model needs it. |
 | Neverlands NPC quest interactions | Needs dedicated Neverlands capture. | Not implemented; generic quest/story stack removed. | Capture exact NPC quest entry points, dialogue/action states, journal/task display, reward/turn-in rules, location gates, and failure/cancel states before rebuilding. |
 
 ## Neverlands Coverage Checklist
@@ -368,9 +378,9 @@ the next implementation step is.
 | Arena combat | Yes: arena rooms/applications and NPC training captures. | Partial. | Bind NPC training, player, and team applications to the same combat profile and result flow. |
 | Character vitals | Yes: live player capture and vitals doc. | Partial. | Make vitals a shell-level component and document exact regen formulas. |
 | Progression, stats, and skills | Yes: profile allocation, exact numeric skill IDs, and captured tier rates. | Partial: stat allocation and source-backed numeric skill allocation exist; generic formulas/prereqs were removed. | Make the player profile the primary allocation surface, then capture exact movement/combat/recovery formulas before wiring skill effects. |
-| Items, inventory, equipment | Yes: inventory/equipment, weapon formula, and shop item-row captures. | Partial. | Connect equipment to combat/vitals/movement, enforce capacity, persist durability, award NPC drops through inventory, and share item-row behavior with shops. |
-| Neverlands marketplace/shop | Yes: `Лавка` tabs, categories, filters, stock, item rows, licenses, sell/novice modes captured. | Not implemented. | Build the starter `Лавка` city building with server-authorized buy/sell/license/novice actions and no generic marketplace/kiosk route. |
-| Direct player trading | Needs dedicated Neverlands capture. | Not implemented; generic trade sessions removed. | Capture exact player-to-player trade entry, license requirements, UI states, cancellation/timeout, currency/item transfer, and settlement rules before implementation. |
+| Items, inventory, equipment | Yes: inventory/equipment, weapon formula, 2026-06-01 item-row/equip capture, and shop item-row captures. | Captured item-row/equipment subset implemented. | Finish repair/breakage UX, exact layered armor/belt/pocket/relic rules, pickup/loot capacity coverage, and movement/carry formula wiring. |
+| Neverlands marketplace/shop | Yes: `Лавка` tabs, categories, filters, stock, item rows, licenses, sell/novice modes, buy availability, and jewelry resale rows captured. | Starter implementation exists. | Keep the starter `Лавка` constrained to buy/sell/license/novice rows, stock, wallet/mass validation, durability-adjusted resale pricing, and no generic marketplace/kiosk route. |
+| Direct player trading | Partially captured through inventory inline transfer/gift/sale/currency forms; full trade settlement needs a dedicated capture. | Basic inventory transfer/gift/player-sale/NV forms implemented; generic trade sessions removed. | Capture exact cancellation, timeout, visibility, commission, dealer, and settlement rules before adding a broader trade session system. |
 | Social chat and presence | Yes: chat and player-list captures. | Partial. | Make local presence location-aware for both coordinate cells and city nodes. |
 | Dungeons | Yes from source material, but post-MVP. | Not implemented for MVP. | Keep deferred until launch movement, city, combat, inventory, and social loops are stable. |
 
@@ -432,4 +442,5 @@ Reference:
 
 - `doc/design/reference/neverlands.md`
 - `doc/design/reference/neverlands_live_lavka_shop.md`
+- `doc/design/reference/neverlands_live_inventory_items.md`
 - `doc/design/reference/source_material.md`

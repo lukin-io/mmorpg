@@ -17,3 +17,8 @@ promoted into `doc/design/features/*`, `doc/design/areas/*`, or
 Do not store live credentials, cookies, session tokens, or volatile action
 tokens in tracked documentation. Live observations belong in
 `doc/design/reference/`; reusable mechanics belong in feature and area docs.
+
+Latest Neverlands inventory/item capture, including adjacent inventory-family
+and item-action behavior:
+
+- `doc/design/reference/neverlands_live_inventory_items.md`
