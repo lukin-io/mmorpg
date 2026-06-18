@@ -99,7 +99,10 @@ RSpec.describe "Inventory & Progression UI", type: :system, js: true do
 
       page.execute_script <<~JS
         document.querySelector('input[name="allocated_stats[strength]"]').value = "2"
-        document.querySelector('[data-stat-allocation-target="saveButton"]').removeAttribute("disabled")
+        const saveButton = document.querySelector('[data-stat-allocation-target="saveButton"]')
+        saveButton.removeAttribute("disabled")
+        saveButton.classList.remove("nl-btn--disabled")
+        saveButton.classList.add("nl-btn--primary")
       JS
 
       click_visible_button("Save")
@@ -114,7 +117,10 @@ RSpec.describe "Inventory & Progression UI", type: :system, js: true do
 
       page.execute_script <<~JS
         document.querySelector('input[name="allocated_skills[unarmed_combat]"]').value = "1"
-        document.querySelector('[data-skill-allocation-target="saveButton"]').removeAttribute("disabled")
+        const saveButton = document.querySelector('[data-skill-allocation-target="saveButton"]')
+        saveButton.removeAttribute("disabled")
+        saveButton.classList.remove("nl-btn--disabled")
+        saveButton.classList.add("nl-btn--primary")
       JS
 
       click_visible_button("Save")
