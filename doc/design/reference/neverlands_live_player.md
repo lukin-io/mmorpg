@@ -937,13 +937,16 @@ Implementation consequence:
 
 ## Current Implementation Progress
 
-Last updated: 2026-05-11.
+Last updated: 2026-07-20.
 
 This pass moved inventory from a mostly visual page toward the Neverlands-style
 player loop documented above.
 
 Done:
 
+- the captured starter `Навыки` save path is implemented for perk id `7`
+  (`Больше силы`) with its own point pool and binary ownership; no strength
+  effect is applied because the source formula remains uncaptured;
 - inventory and profile use the same character/equipment slot model;
 - inventory has Neverlands-based category filters for things, elixirs,
   alchemy, fishing, hunting/food, resources, wood, and quest journal;

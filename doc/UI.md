@@ -19,11 +19,12 @@ profile, inventory, and the stats/skills allocation surfaces.
    player-facing Russian string to English. Keep the original Russian only as
    non-rendered source/traceability metadata (see `source_name` in the skill
    registry) or in capture docs under `doc/design/reference/`.
-2. **No live-site scraping.** Do not attempt to log into `neverlands.ru`. The
-   capture discipline in `doc/design/reference/neverlands_live_player.md` warns
-   that repeated logins lock the account for 30 minutes. The captures already in
-   `doc/design/reference/` (including the 2026-05-25 `max_kerby` game-shell
-   capture) are the authoritative reference.
+2. **Live-site access is exceptional.** Existing sanitized captures remain the
+   normal implementation reference. Log in only when the maintainer explicitly
+   authorizes the account and requested flow. Use one Chrome-shaped login
+   request, reuse its cookie jar, avoid automated retries because repeated
+   attempts can lock the profile for 30 minutes, and never track credentials,
+   cookies, `vcode` values, or action tokens.
 3. **Reference, not literal clone.** No iframes/frameset. One persistent Rails
    game layout, replaceable `main_content` Turbo frame, persistent chat/presence,
    server-authored actions. Reuse the existing `nl-*` CSS token surface; do not
@@ -201,11 +202,13 @@ consistent. Cross-check each against the cited capture before building.
 - **Item seeds**: recreate the captured live inventory items + exact
   requirements/effects (capture: "Captured Inventory Contents").
 - **Durability/repair UX**: breakage messages, repair flow.
-- **`Навыки` boolean perks**: not implemented after the generic-perk cleanup;
-  rebuild only from captured perk IDs/point pool/exclusions if the MVP loop
-  needs them (`launch_mvp_plan.md`).
-- **Quests modal, `Лавка` shop building, wild NPC handoff**: documented but not
-  implemented; out of UI/UX-pass scope but tracked in `launch_mvp_plan.md`.
+- **`Навыки` boolean perks**: the captured starter perk id `7` is implemented
+  with its own point pool and preview/save flow. Capture names and requirements
+  for the excluded branches before exposing more choices.
+- **Quests modal**: documented capture is still missing and implementation is
+  intentionally absent. **`Лавка`** has a starter buy/sell implementation, and
+  **wild NPC handoff** is partial; remaining work is tracked in
+  `launch_mvp_plan.md`.
 
 ## Working rules for the next agent
 

@@ -70,12 +70,19 @@ Future local actions must be documented from Neverlands before implementation.
 ## Rules
 
 - Outdoor movement is coordinate-based.
+- Launch has one logical `1000 x 1000` outdoor region; additional regions are
+  post-MVP.
 - Destination availability is server-authored.
 - Movement is accepted by the server before the UI enters travelling state.
 - Movement completion updates the authoritative coordinate.
 - Reload during travel resumes the travelling state from server time.
 - The map does not invent passability in the browser.
 - The local player list refreshes after movement completion.
+
+The region does not require one database record per cell. Static records may
+be sparse, provided the server has one deterministic rule for missing cells
+and applies the same result when rendering and validating movement. The current
+`15 x 15` seed is a traversal prototype, not the launch region boundary.
 
 ## World State Persistence
 
@@ -179,6 +186,10 @@ The outdoor map is a coordinate graph. In the starter reference area:
 
 The graph may later expand to more coordinates, roads, and terrain costs, but
 starter implementation should remain deterministic and source-backed.
+
+The captured coordinates exceed `1000`; they may be global coordinates or use
+a region origin offset. Keep them as source identifiers until the mapping to
+the MVP region's `1000 x 1000` local bounds is captured.
 
 ## Feature Hooks
 

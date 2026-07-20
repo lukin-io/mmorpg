@@ -718,6 +718,165 @@ RSpec.describe CharactersController, type: :request do
   end
 
   # ============================================
+  # GET/PATCH /characters/:id/perks
+  # ============================================
+  describe "GET /characters/:id/perks" do
+    before { character.update!(perk_points: 1) }
+
+    it "renders the captured binary perk and separate point pool" do
+      get perks_character_path(character)
+
+      expect(response).to have_http_status(:success)
+      expect(response.body).to include("Possible new perks:")
+      expect(response.body).to include("More Strength")
+      expect(response.body).to include("Source #7")
+      expect(response.body).to include("exact gameplay effect is not yet captured")
+    end
+
+    it "requires authentication" do
+      sign_out :user
+
+      get perks_character_path(character)
+
+      expect(response).to redirect_to(new_user_session_path)
+    end
+
+    it "does not allow managing another user's perks" do
+      other_character = create(:character)
+
+      get perks_character_path(other_character)
+
+      expect(response).to redirect_to(root_path)
+    end
+
+    it "returns not found for a missing character" do
+      get perks_character_path(id: 999_999)
+
+      expect(response).to have_http_status(:not_found)
+    end
+  end
+
+  describe "PATCH /characters/:id/perks" do
+    before { character.update!(perk_points: 1) }
+
+    it "saves a captured perk and spends the separate point" do
+      patch perks_character_path(character), params: {
+        selected_perks: {more_strength: 1}
+      }
+
+      expect(response).to redirect_to(perks_character_path(character))
+      expect(character.reload).to be_owns_perk(:more_strength)
+      expect(character.perk_points).to eq(0)
+    end
+
+    it "rejects unknown perk keys" do
+      patch perks_character_path(character), params: {
+        selected_perks: {invented_perk: 1}
+      }
+
+      expect(response).to redirect_to(perks_character_path(character))
+      follow_redirect!
+      expect(response.body).to include("Unknown perk selection")
+      expect(character.reload.perk_points).to eq(1)
+    end
+
+    it "rejects allocation without perk points" do
+      character.update!(perk_points: 0)
+
+      patch perks_character_path(character), params: {
+        selected_perks: {more_strength: 1}
+      }
+
+      expect(response).to redirect_to(perks_character_path(character))
+      expect(character.reload).not_to be_owns_perk(:more_strength)
+    end
+
+    it "treats a false selection as empty" do
+      patch perks_character_path(character), params: {
+        selected_perks: {more_strength: 0}
+      }
+
+      expect(response).to redirect_to(perks_character_path(character))
+      expect(character.reload.perk_points).to eq(1)
+    end
+
+    it "rejects a null selection without changing state" do
+      patch perks_character_path(character), params: {selected_perks: nil}
+
+      expect(response).to redirect_to(perks_character_path(character))
+      expect(character.reload.perk_points).to eq(1)
+      expect(character.owned_perk_keys).to be_empty
+    end
+
+    it "rejects an empty selection without changing state" do
+      patch perks_character_path(character), params: {selected_perks: {}}
+
+      expect(response).to redirect_to(perks_character_path(character))
+      expect(character.reload.perk_points).to eq(1)
+      expect(character.owned_perk_keys).to be_empty
+    end
+
+    it "rejects a missing selection without changing state" do
+      patch perks_character_path(character), params: {}
+
+      expect(response).to redirect_to(perks_character_path(character))
+      expect(character.reload.perk_points).to eq(1)
+      expect(character.owned_perk_keys).to be_empty
+    end
+
+    it "returns a turbo stream update on success" do
+      patch perks_character_path(character), params: {
+        selected_perks: {more_strength: 1}
+      }, headers: {"Accept" => "text/vnd.turbo-stream.html"}
+
+      expect(response.media_type).to eq("text/vnd.turbo-stream.html")
+      expect(response.body).to include("perk-allocation")
+      expect(response.body).to include("Perks saved")
+    end
+
+    it "returns a turbo stream error without changing state" do
+      patch perks_character_path(character), params: {
+        selected_perks: {invented_perk: 1}
+      }, headers: {"Accept" => "text/vnd.turbo-stream.html"}
+
+      expect(response).to have_http_status(:success)
+      expect(response.media_type).to eq("text/vnd.turbo-stream.html")
+      expect(response.body).to include("Unknown perk selection")
+      expect(character.reload.perk_points).to eq(1)
+    end
+
+    it "requires authentication" do
+      sign_out :user
+
+      patch perks_character_path(character), params: {
+        selected_perks: {more_strength: 1}
+      }
+
+      expect(response).to redirect_to(new_user_session_path)
+      expect(character.reload.perk_points).to eq(1)
+    end
+
+    it "requires ownership" do
+      other_character = create(:character, perk_points: 1)
+
+      patch perks_character_path(other_character), params: {
+        selected_perks: {more_strength: 1}
+      }
+
+      expect(response).to redirect_to(root_path)
+      expect(other_character.reload.perk_points).to eq(1)
+    end
+
+    it "returns not found for a missing character" do
+      patch perks_character_path(id: 999_999), params: {
+        selected_perks: {more_strength: 1}
+      }
+
+      expect(response).to have_http_status(:not_found)
+    end
+  end
+
+  # ============================================
   # Integration Tests
   # ============================================
   describe "integration scenarios" do

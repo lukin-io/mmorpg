@@ -1,13 +1,16 @@
 # frozen_string_literal: true
 
 # CharactersController handles the Neverlands-style character profile allocation
-# surfaces currently implemented: primary stats and numeric skills.
+# surfaces currently implemented: primary stats, numeric skills, and binary
+# perks.
 #
 # Usage:
 #   GET /characters/:id/stats       - Show stat allocation page
 #   PATCH /characters/:id/stats     - Save stat allocations
 #   GET /characters/:id/skills      - Show numeric skill allocation page
 #   PATCH /characters/:id/skills    - Save numeric skill allocations
+#   GET /characters/:id/perks       - Show boolean perk allocation page
+#   PATCH /characters/:id/perks     - Save boolean perk allocations
 class CharactersController < ApplicationController
   include CurrentCharacterContext
 
@@ -167,6 +170,30 @@ class CharactersController < ApplicationController
     end
   end
 
+  # GET /characters/:id/perks
+  def perks
+    build_perks_data
+  end
+
+  # PATCH /characters/:id/perks
+  def update_perks
+    selected_keys = parse_perk_selections(params[:selected_perks])
+    Game::Skills::PerkAllocation.new(@character).call(selected_keys:)
+
+    respond_to do |format|
+      format.html { redirect_to perks_character_path(@character), notice: "Perks saved" }
+      format.turbo_stream do
+        build_perks_data
+        render turbo_stream: [
+          turbo_stream.replace("perk-allocation", partial: "characters/perk_allocation"),
+          turbo_stream.update("flash", partial: "shared/flash", locals: {type: "notice", message: "Perks saved"})
+        ]
+      end
+    end
+  rescue Game::Skills::PerkAllocation::AllocationError => e
+    respond_with_error(e.message, fallback_location: perks_character_path(@character))
+  end
+
   private
 
   def set_character
@@ -174,9 +201,9 @@ class CharactersController < ApplicationController
   end
 
   def authorize_character!
-    unless @character.user_id == current_user.id
-      redirect_to root_path, alert: "You can only manage your own character."
-    end
+    authorize @character, :manage_progression?
+  rescue Pundit::NotAuthorizedError
+    redirect_to root_path, alert: "You can only manage your own character."
   end
 
   def build_stats_data
@@ -224,6 +251,11 @@ class CharactersController < ApplicationController
     skills
   end
 
+  def build_perks_data
+    @perk_definitions = Game::Skills::PerkRegistry.all
+    @perk_points = @character.perk_points.to_i
+  end
+
   def parse_stat_allocations(stat_params)
     return {} unless stat_params.is_a?(ActionController::Parameters) || stat_params.is_a?(Hash)
 
@@ -247,9 +279,19 @@ class CharactersController < ApplicationController
     result
   end
 
-  def respond_with_error(message)
+  def parse_perk_selections(perk_params)
+    return [] unless perk_params.is_a?(ActionController::Parameters) || perk_params.is_a?(Hash)
+
+    selected_keys = []
+    perk_params.each_pair do |key, selected|
+      selected_keys << key.to_s if ActiveModel::Type::Boolean.new.cast(selected)
+    end
+    selected_keys
+  end
+
+  def respond_with_error(message, fallback_location: root_path)
     respond_to do |format|
-      format.html { redirect_back fallback_location: root_path, alert: message }
+      format.html { redirect_back fallback_location:, alert: message }
       format.turbo_stream do
         render turbo_stream: turbo_stream.update("flash", partial: "shared/flash", locals: {type: "alert", message: message})
       end

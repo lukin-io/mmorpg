@@ -204,9 +204,19 @@ The world is a tile grid split into zones or regions. Zones define:
 - tile templates;
 - allowed local action types.
 
+The launch MVP contains exactly one outdoor region with a logical size of
+`1000 x 1000` cells. More regions are post-MVP content, but region identity and
+coordinate bounds must remain first-class so the world can expand without
+rewriting character positions or movement commands. The implementation should
+store sparse authored tile overrides rather than eagerly create one million
+database rows.
+
 Starter world data should be deterministic. The first canonical movement test
 area should use a Neverlands-based coordinate neighborhood around
 `1019,1025` so docs, seeds, tests, and UI examples talk about the same place.
+The relationship between those observed source coordinates and the MVP
+region's local coordinates or origin offset still needs capture; do not assume
+that `1019,1025` means local cell `19,25`.
 
 ## Tile-Local Actions
 
@@ -266,9 +276,14 @@ Characters grow through:
 
 - experience and levels;
 - stat allocation;
-- passive skills;
+- 0-100 numeric skills;
+- separately allocated yes/no perks;
 - Neverlands alignment/sign markers where source-backed;
 - equipment and inventory growth.
+
+Numeric skills and boolean perks must remain separate progression surfaces
+with separate point pools. A captured perk can be owned before its mechanical
+effect is wired; effect formulas must not be inferred from its label.
 
 Movement-affecting progression, such as Wanderer skill, encumbrance, or terrain
 mastery, must feed the canonical travel-time formula.

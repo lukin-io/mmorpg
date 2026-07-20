@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_09_211000) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_20_090000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -148,12 +148,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_09_211000) do
     t.string "name", null: false
     t.jsonb "passive_skills", default: {}, null: false
     t.integer "peace_skill_points", default: 0, null: false
+    t.integer "perk_points", default: 0, null: false
+    t.jsonb "perks", default: {}, null: false
     t.integer "stat_points_available", default: 0, null: false
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
     t.index ["combat_skill_points"], name: "index_characters_on_combat_skill_points", where: "(combat_skill_points > 0)"
     t.index ["name"], name: "index_characters_on_name", unique: true
     t.index ["peace_skill_points"], name: "index_characters_on_peace_skill_points", where: "(peace_skill_points > 0)"
+    t.index ["perk_points"], name: "index_characters_on_perk_points", where: "(perk_points > 0)"
     t.index ["user_id"], name: "index_characters_on_user_id"
   end
 

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
   <title><%= content_for(:title) || "Neverlands" %></title>
   <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -28,6 +28,7 @@
         <%= link_to "Character", player_path(name: current_character.name), class: "nl-nav-link", data: { turbo_frame: "main_content" } %>
         <%= link_to "Inventory", inventory_path, class: "nl-nav-link", data: { turbo_frame: "main_content" } %>
         <%= link_to "Skills", skills_character_path(current_character), class: "nl-nav-link", data: { turbo_frame: "main_content" } %>
+        <%= link_to "Perks", perks_character_path(current_character), class: "nl-nav-link", data: { turbo_frame: "main_content" } %>
         <% if @position&.zone&.city? %>
           <%= link_to "Exit", exit_location_world_path, class: "nl-nav-link", data: { turbo_method: :post } %>
         <% else %>

@@ -7,7 +7,9 @@ FactoryBot.define do
     stat_points_available { 0 }
     combat_skill_points { 0 }
     peace_skill_points { 0 }
+    perk_points { 0 }
     allocated_stats { {} }
+    perks { {} }
     alignment { Character::ALIGNMENTS[:none] }
     fatigue_percent { 0 }
 
@@ -20,6 +22,18 @@ FactoryBot.define do
         zone = create(:zone)
         create(:character_position, character:, zone:)
       end
+    end
+
+    trait :with_new_perk_point do
+      perk_points { 1 }
+    end
+
+    trait :with_more_strength_perk do
+      perks { {"more_strength" => true} }
+    end
+
+    trait :without_perk_points do
+      perk_points { 0 }
     end
   end
 end

@@ -87,6 +87,7 @@ class Character < ApplicationRecord
   validates :experience, numericality: {greater_than_or_equal_to: 0}
   validates :stat_points_available, numericality: {greater_than_or_equal_to: 0}
   validates :combat_skill_points, :peace_skill_points, numericality: {greater_than_or_equal_to: 0}, allow_nil: true
+  validates :perk_points, numericality: {greater_than_or_equal_to: 0}
   validates :fatigue_percent, numericality: {greater_than_or_equal_to: 0, less_than_or_equal_to: 100}
   validates :alignment, inclusion: {in: ALIGNMENTS.values}
 
@@ -364,6 +365,21 @@ class Character < ApplicationRecord
     updates[:combat_skill_points] = combat_skill_points + combat_points if combat_points.positive?
     updates[:peace_skill_points] = peace_skill_points + peace_points if peace_points.positive?
     update!(updates) if updates.present?
+  end
+
+  def owns_perk?(perk_key)
+    perks.to_h[perk_key.to_s] == true
+  end
+
+  def owned_perk_keys
+    Game::Skills::PerkRegistry.all_keys.select { |key| owns_perk?(key) }
+  end
+
+  def award_perk_points!(amount = 1)
+    points = amount.to_i
+    return if points <= 0
+
+    increment!(:perk_points, points)
   end
 
   # Get a calculator for all passive skill effects

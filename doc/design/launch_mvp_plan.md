@@ -19,7 +19,7 @@ The Neverlands-based marketplace/shop loop is also required for MVP. It is not
 a separate pillar because it depends on person, city movement, inventory, and
 server-authored actions, but the launch loop is incomplete without a
 city-building shop path. Current status: documented from live `Лавка` capture,
-not implemented.
+with a starter buy/sell/licenses/novice-goods implementation in the city shop.
 
 ## Launch Principles
 
@@ -69,8 +69,8 @@ Required behavior:
 - every character has a public Neverlands-style info URL at
   `/player/<character-name>`;
 - profile/player summary owns the implemented launch allocation loop: available
-  stat increases and numeric skill increases are visible there and saved
-  explicitly;
+  stat increases, numeric skill increases, and captured boolean-perk choices
+  are visible there and saved explicitly;
 - inventory is reachable from the player shell and shows equipment slots,
   inventory mass, category filters, item properties, item requirements,
   durability, and compact equip/use/delete actions;
@@ -143,6 +143,8 @@ outside the city, and lands at the next authoritative location.
 Required behavior:
 
 - login opens the gameplay shell at the persisted character location;
+- launch exposes one logical `1000 x 1000` outdoor region, with region identity
+  and coordinate bounds persisted for later multi-region expansion;
 - wilderness movement uses timed, server-issued movement offers;
 - position changes only when movement completes;
 - reload resumes active movement or finalizes completed movement;
@@ -164,6 +166,10 @@ Required behavior:
 
 ### Remaining Design Detail
 
+- The current `15 x 15` outdoor seed is only a prototype. Expand it to the
+  logical `1000 x 1000` launch region without eagerly materializing one million
+  tile rows, after capturing how Neverlands' observed global coordinates map to
+  the local region origin.
 - City hotspots still need to be fully aligned with the same action-offer
   discipline used by wilderness cells.
 - Local presence refresh after movement completion is not yet launch-polished.
@@ -339,8 +345,8 @@ action-key discipline remains tracked in the checklist below.
 | --- | --- | --- | --- |
 | Game shell and UI/AX | Documented in layout docs and 2026-05-25 live shell capture. | Partial. | Use one Rails game layout with persistent vitals/chat/presence, Turbo-updated main content, Stimulus-only local affordances, accessible hotspots, and no iframe/frameset clone. |
 | Person | Documented across vitals, progression, inventory/equipment, live player captures, and 2026-06-01 live inventory/items capture. | Partially implemented; captured inventory/item row subset is implemented. | Consolidate remaining formulas, repair/breakage, capacity across loot/pickup, and cross-system tests. |
-| Neverlands `Навыки` boolean perks | Documented in live player/skills captures. | Not implemented after generic perk cleanup. | Rebuild exact yes/no perk allocation from captured source IDs, point counter, and mutual-exclusion rules; no generic perk catalog. |
-| Movement | Documented across movement and live movement/city captures. | Partially implemented. | Unify city hotspots with server-authored action offers, polish presence refresh and locks. |
+| Neverlands `Навыки` boolean perks | Documented in live player/skills captures. | Starter captured slice implemented: source perk `7` (`Больше силы`), separate point pool, preview/save, ownership, and source-ID exclusion registry. | Capture names and requirements for the mutually exclusive magic/warrior branches before exposing them; do not infer the `more_strength` stat formula. |
+| Movement | Documented across movement and live movement/city captures, including the one-region `1000 x 1000` launch boundary. | Partially implemented; current outdoor seed is a `15 x 15` prototype. | Capture the source-coordinate/region-origin mapping, implement a sparse `1000 x 1000` region, unify city hotspots with server-authored action offers, and polish presence refresh and locks. |
 | Arena | Documented across arena, combat, live arena captures, and public log captures. | Partially implemented. | Finish city entry/return cleanup, formula tuning, magic/special balancing, and shared fight coverage. |
 | Combat | Documented across combat reference captures, arena observations, logs, and equipment effects. | Partially implemented. | Keep one resolver/log contract across arena player/team, arena NPC, and wild NPC fights. |
 | Wild cells | Documented across outdoor movement, hostile NPC capture, and tile-action notes. | Partially implemented. | Wire wild NPC handoff to shared combat, loot result step, and exact return routing. |
@@ -360,7 +366,7 @@ the next implementation step is.
 | --- | --- | --- | --- |
 | Game client layout | Yes: gameplay shell docs and live player capture. | Partial. | Make the game shell the default authenticated surface across world, city, building, arena, shop, and combat screens. |
 | UI/AX shell behavior | Yes: 2026-05-25 shell/UI capture. | Partial. | Add keyboard/focus/label equivalents for hotspots and icon actions; expose timers, locks, errors, and waiting states as text; keep chat/presence persistent during main-content swaps. |
-| World map | Yes: coordinate movement and outdoor captures. | Partial. | Build deterministic starter coordinates and make every current-tile action a persisted server offer. |
+| World map | Yes: coordinate movement, outdoor captures, and one `1000 x 1000` MVP region. | Partial; seed bounds are still `15 x 15`. | Capture the region-origin mapping, implement sparse deterministic `1000 x 1000` bounds, and make every current-tile action a persisted server offer. |
 | Cities and buildings | Yes: live city movement and building captures. | Partial. | Build the starter city graph with city hotspots, `Лавка` entry, arena entry, and local presence refresh. |
 | Arena | Yes: arena docs, live combat captures, public log captures. | Partial. | Route arena entry/return through city buildings and keep application rows compact, side-based, and action-key validated. |
 

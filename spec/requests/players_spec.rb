@@ -6,7 +6,11 @@ RSpec.describe "Players", type: :request do
   describe "GET /player/:name" do
     it "renders a Neverlands-style public character page by character name" do
       zone = create(:zone, name: "Outpost Surroundings")
-      character = create(:character, user: user, name: "max_kerby")
+      character = create(:character,
+        user: user,
+        name: "max_kerby",
+        passive_skills: {"unarmed_combat" => 10},
+        perks: {"more_strength" => true})
       create(:character_position, character: character, zone: zone, x: 7, y: 9)
       sword = create(:item_template, name: "Knife", slot: "main_hand")
       create(:inventory_item,
@@ -29,7 +33,11 @@ RSpec.describe "Players", type: :request do
 
     it "returns location, equipment, and public player path in JSON" do
       zone = create(:zone, name: "Outpost")
-      character = create(:character, user: user, name: "max_kerby")
+      character = create(:character,
+        user: user,
+        name: "max_kerby",
+        passive_skills: {"unarmed_combat" => 10},
+        perks: {"more_strength" => true})
       create(:character_position, character: character, zone: zone, x: 3, y: 4)
 
       sword = create(:item_template, name: "Knife", slot: "main_hand")
@@ -53,7 +61,24 @@ RSpec.describe "Players", type: :request do
       expect(character_payload.dig("location", "label")).to eq("Outpost [3, 4]")
       expect(character_payload).not_to have_key("stats")
       expect(character_payload.dig("equipment", "main_hand", "name")).to eq("Knife")
+      expect(character_payload.dig("numeric_skills", "unarmed_combat")).to eq(10)
+      expect(character_payload.fetch("perks")).to include(
+        {"key" => "more_strength", "name" => "More Strength", "source_id" => 7}
+      )
       expect(body).not_to have_key("email")
+    end
+
+    it "renders owned binary perks on the public player page" do
+      character = create(:character,
+        user: user,
+        name: "perk_hero",
+        perks: {"more_strength" => true})
+
+      get player_path(name: character.name)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("Perks")
+      expect(response.body).to include("More Strength")
     end
 
     it "shows an unfinished arena fight link in the public location" do

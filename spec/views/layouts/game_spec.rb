@@ -25,6 +25,12 @@ RSpec.describe "layouts/game.html.erb", type: :view do
   end
 
   describe "layout structure" do
+    it "declares English as the player-facing document language" do
+      render template: "layouts/game", layout: false
+
+      expect(rendered).to have_css("html[lang='en']")
+    end
+
     it "renders the game layout body class" do
       render template: "layouts/game", layout: false
 
@@ -89,6 +95,12 @@ RSpec.describe "layouts/game.html.erb", type: :view do
       render template: "layouts/game", layout: false
 
       expect(rendered).to have_link("Inventory", class: "nl-nav-link")
+    end
+
+    it "includes the separate perks link" do
+      render template: "layouts/game", layout: false
+
+      expect(rendered).to have_link("Perks", class: "nl-nav-link")
     end
 
     it "includes return/exit link" do

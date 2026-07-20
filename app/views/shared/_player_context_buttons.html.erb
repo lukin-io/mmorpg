@@ -23,6 +23,12 @@
       <%= link_to "Skills", skills_character_path(viewer_character), class: "lbut" %>
     <% end %>
 
+    <% if current_section.to_sym == :perks %>
+      <span class="lbutdis">Perks</span>
+    <% else %>
+      <%= link_to "Perks", perks_character_path(viewer_character), class: "lbut" %>
+    <% end %>
+
     <% if current_section.to_sym == :stats %>
       <span class="lbutdis">Stats</span>
     <% else %>

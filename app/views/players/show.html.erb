@@ -117,6 +117,7 @@
             <h2>Skills</h2>
             <% if @own_profile %>
               <%= link_to "Train skills", skills_character_path(@character), class: "lbut" %>
+              <%= link_to "Choose perks", perks_character_path(@character), class: "lbut" %>
             <% end %>
           </div>
           <div class="nl-profile-skill-list">
@@ -124,6 +125,25 @@
               <div class="nl-profile-skill-row">
                 <span><%= definition[:name] %></span>
                 <strong>[<%= profile_skill_level(@character, key) %>/100]</strong>
+              </div>
+            <% end %>
+          </div>
+        </div>
+
+        <div class="nl-profile-panel">
+          <h2>Perks</h2>
+          <div class="nl-profile-skill-list">
+            <% if @character.owned_perk_keys.any? %>
+              <% @character.owned_perk_keys.each do |perk_key| %>
+                <% definition = Game::Skills::PerkRegistry.find(perk_key) %>
+                <div class="nl-profile-skill-row">
+                  <span><%= definition[:name] %></span>
+                  <strong>Yes</strong>
+                </div>
+              <% end %>
+            <% else %>
+              <div class="nl-profile-skill-row">
+                <span>No perks selected</span>
               </div>
             <% end %>
           </div>

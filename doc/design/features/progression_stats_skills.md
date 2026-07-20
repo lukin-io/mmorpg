@@ -191,6 +191,34 @@ Profession counters such as trading, herbalism, mining, and fishing were visible
 in the source page, but not as the current allocatable numeric skill controls.
 They need dedicated capture before implementation.
 
+## Boolean Perks
+
+`Навыки` are a separate yes/no progression surface. They do not share the
+0-100 numeric-skill registry or either numeric-skill point pool.
+
+The launch-safe captured subset is deliberately small:
+
+| Source ID | Local Key | Source Label | Launch Behavior |
+| ---: | --- | --- | --- |
+| 7 | `more_strength` | `Больше силы` | Spend one new-perk point to save the perk as owned. |
+
+The source capture proves the selection and save behavior, but not the perk's
+exact strength formula. Owning `more_strength` therefore does not change a
+stat or combat formula until that effect is captured.
+
+Perk allocation rules:
+
+- available new-perk points are shown on the dedicated perks page;
+- an unowned, captured perk can be previewed with plus/minus controls;
+- save validates the current point pool and persists the binary choice;
+- an owned perk is displayed as `Yes` and is not removable through the normal
+  allocation UI;
+- incompatible branches are rejected server-side and hidden or disabled in
+  the preview UI;
+- the captured exclusion table is retained by source ID, but unnamed branch
+  perks are not rendered or selectable until their labels and requirements are
+  captured.
+
 ## Rules
 
 - Points are earned through level-up and relevant gameplay.
@@ -199,6 +227,8 @@ They need dedicated capture before implementation.
   additions per stat.
 - Numeric skills are stored and displayed as 0-100 values.
 - Boolean perks are stored and displayed as selected/unselected values.
+- Numeric skills and boolean perks use separate registries, pages, and point
+  pools.
 - Numeric skill allocation can preview client-side, but the final save must be
   validated server-side.
 - Numeric skill point pools are separate: combat/magic/resistance and

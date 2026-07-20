@@ -8101,6 +8101,35 @@ turbo-frame[busy] {
   border-color: #DECFA6;
 }
 
+.nl-perk-state {
+  min-width: 42px;
+  text-align: center;
+  font-weight: bold;
+}
+
+.nl-perk-state--owned,
+.nl-perk-state--pending {
+  color: #009D29;
+}
+
+.nl-perk-state--pending::after {
+  content: " (pending)";
+  color: #666666;
+  font-size: 9px;
+  font-weight: normal;
+}
+
+.nl-perk-source-id,
+.nl-perk-empty-points {
+  color: #666666;
+  font-size: 10px;
+}
+
+.nl-perk-empty-points {
+  margin: 8px 0 0;
+  text-align: center;
+}
+
 .nl-skill-effect {
   font-size: 10px;
   color: #666666;

@@ -12,6 +12,8 @@ Rails.application.routes.draw do
       patch :stats, action: :update_stats
       get :skills
       patch :skills, action: :update_skills
+      get :perks
+      patch :perks, action: :update_perks
     end
   end
 
