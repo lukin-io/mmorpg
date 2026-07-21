@@ -150,8 +150,8 @@ Required behavior:
 - position changes only when movement completes;
 - reload resumes active movement or finalizes completed movement;
 - city navigation uses hotspot/building transitions;
-- moving refreshes NPCs, buildings, and local action offers for the
-  new cell;
+- moving refreshes hidden NPC encounter state, buildings, cell art, and visible
+  local-action offers for the new cell;
 - movement locks conflicting actions while travel is active.
 - in-bounds cells without an authored override use the same passable outdoor
   default in rendering and validation;
@@ -165,8 +165,9 @@ Required behavior:
   selected offer, start timed travel, and finalize due travel.
 - Persist accepted movement state with source, target, action key, start time,
   end time, completion, and failure state.
-- Use short-lived contextual action offers for movement, NPC, and
-  building/city/resource-local actions.
+- Use short-lived contextual action offers for movement and visible
+  building/city/resource-local actions; hostile NPCs remain hidden and enter
+  combat by interrupting those actions.
 - Materialize current tile state before rendering available actions.
 - Movement design is documented in `doc/design/features/movement.md`.
 
@@ -176,7 +177,8 @@ Required behavior:
    tile rows sparse.
 2. Make missing in-bounds cells consistently passable in both map rendering and
    movement validation.
-3. Keep NPCs, entrances, and validated local actions as composable cell layers.
+3. Keep hidden NPCs, entrances, validated cell art, and local actions as
+   composable cell layers.
 4. Remove the generic location-name entry bypass; accept entrances only through
    short-lived current-cell offers.
 5. Implement `look` / resource search as a local action, including hostile NPC
@@ -187,12 +189,13 @@ Required behavior:
 Open-world spec strategy for this HTML/Turbo slice:
 
 - model specs validate region dimensions, authoritative character/offer
-  coordinates, sparse tiles, captured local-action identifiers,
-  malformed/null metadata, inactive actions, and `0..999` boundaries;
+  coordinates, sparse tiles, configured 100px cell-art keys/slices, captured
+  local-action identifiers, malformed/null metadata, inactive actions, and
+  `0..999` boundaries;
 - service specs cover cell composition, offer issuance, action acceptance,
   hostile interruption, fight creation, stale state, and wrong-cell failures;
 - request and routing specs cover sparse interior/edge rendering, composed
-  NPC/entrance/local-action cells, offer refresh and cross-character isolation,
+  hidden-NPC/entrance/local-action cells, offer refresh and cross-character isolation,
   successful HTML/Turbo/optional JSON actions, missing/expired offers,
   mismatched cells/targets, authentication, ownership authorization, and
   removal of arbitrary location-name entry;
@@ -216,9 +219,9 @@ layer. The current implementation maps to that contract as follows:
 | Implemented slice | Model spec | Request spec | Policy spec | Factory edge traits | Justified non-applicability |
 | --- | --- | --- | --- | --- | --- |
 | Sparse `1000 x 1000` region and authoritative coordinates | `Zone`, `CharacterPosition`, `MapTileTemplate`, and `WorldActionOffer` dimensions/bounds | sparse interior, origin/edge movement, and unauthenticated world access | Not applicable: rendering is read-only; mutating movement already accepts only the signed-in character's persisted offer | minimum/region/edge/outside coordinate traits | No separate world-read policy is introduced because authentication and current-character scoping are the authorization boundary. |
-| Composed cell state and source-backed local actions | local-action schema, source IDs, inactive/malformed/duplicate/null metadata, offer types | HTML/Turbo success, missing/null/expired/mismatched state, wrong cell, combat interruption, and cross-user/unauthenticated denial | `WorldActionOfferPolicy#accept?` owner, foreign owner, nil user, and missing character | resource search, deferred fishing, inactive action, expired/cancelled/targetless offer, boundary traits | No policy per local-action type: all mutations share the same owned server-offer resource. |
+| Composed cell state, source-backed cell art, and local actions | cell-art catalog key/slice/source validation plus local-action schema, source IDs, inactive/malformed/duplicate/null metadata, and offer types | HTML/Turbo art override/fallback, hidden NPC presentation, local-action success, missing/expired/mismatched state, combat interruption, and cross-user/unauthenticated denial | `WorldActionOfferPolicy#accept?` owner, foreign owner, nil user, and missing character | valid/invalid cell art, resource search, deferred fishing, inactive action, expired/cancelled/targetless offer, boundary traits | Cell-art rendering is read-only and server-configured; mutations share the owned server-offer resource. |
 | Entrance-only building/city transitions | building types, access, destination transition, offer bounds | success/failure/null/wrong-zone/inactive/level/foreign-offer/authentication plus removed-route coverage | shared owned-offer policy | destination, building type, special location, inactive, and high-level traits | Removal of `/world/enter` is a routing assertion because no controller request can reach an unroutable endpoint. |
-| Shared wild-NPC combat handoff | No new model domain behavior; match/participation persistence is exercised through the service | direct and interrupted-fight success, stale/dead/null/wrong-cell/startup-failure, foreign-offer, JSON, and authentication | shared owned-offer policy | defeated, respawn, edge, and missing-health NPC traits | `StartNpcFight` is orchestration over existing models, so its dedicated service spec replaces a redundant new model spec. |
+| Shared hidden wild-NPC combat handoff | No new model domain behavior; match/participation persistence is exercised through the service | interrupted movement/entrance/local/shell success, stale/dead/null/wrong-cell/startup failure, duplicate start, and authentication | current-character scoping plus combat participant policy; no client-selected NPC offer exists | defeated, respawn, multi-NPC, edge, and missing-health NPC traits | `StartNpcFight` is orchestration over existing models, so its dedicated service spec replaces a redundant new model spec. |
 | Nine-node city graph, three gates, and building entry | `Zone`, `CityHotspot`, and city action offer types/coordinates | immediate node/building/gate success; fresh keys; missing/null/expired/mismatched/wrong-node/foreign failures; exact gate cells; authentication | shared owned-offer policy | city node, district, read-only building, city transition/building entry, expired, and foreign-owner traits | Catalog/service specs cover immutable graph topology and read-only source data; no separate mutable city-graph model is introduced. |
 | Exact logout/login resume for world, city, Shop, and read-only city interiors | gameplay-context normalization, persistence, malformed/null rejection | outdoor/city/building success, failed login, stale/malformed/injected context, cross-user isolation, missing character, wrong-node access, and authentication | Not applicable: no client-selected record is authorized; paths are generated from the signed-in character's allowlisted server state and building access is rechecked | Shop/building resume, malformed, null, and malformed-building context traits | A new Pundit resource would duplicate Devise current-user ownership and the current-node building accessibility gate without adding an authorization boundary. |
 | Outdoor NPC configuration and starter seeds | configuration parsing/materialization plus stale-data upgrade and idempotent seed integration | rendered coordinates and current-cell behavior are covered by world requests | Not applicable: configuration is not user-addressable | outdoor/edge/missing-health NPC traits | Seed execution is data setup rather than a request or authorization surface. |
@@ -347,16 +350,18 @@ Build and verify the launch loop in this order:
 
 ### MVP Target
 
-Wild cells are the open-world counterpart to arena. Each cell can expose local
-NPCs, buildings, and actions. Hostile NPCs and manual NPC attacks
-enter the same combat mechanics used by arena player/team and arena NPC fights.
+Wild cells are the open-world counterpart to arena. Each cell can compose
+hidden NPC state, source-backed image-cell art, buildings, and actions. A
+hostile NPC enters the same combat mechanics used by arena player/team and
+arena NPC fights when it interrupts a wilderness action.
 
 Required behavior:
 
-- each cell resolves sparse tile state, NPCs, entrances, local actions, and offers from
-  server-side tile state;
-- NPC actions are tied to the current cell and action key;
-- hostile NPCs can attack or be attacked from the wild cell;
+- each cell resolves sparse tile state, validated cell art, hidden NPCs,
+  entrances, local actions, and offers from server-side state;
+- NPC identity and presence remain hidden on the map;
+- hostile NPCs attack by interrupting a wilderness action; there is no manual
+  outdoor Attack control;
 - hostile NPC checks can interrupt normal outdoor actions before those actions
   complete;
 - wild NPC combat uses the shared turn package, body-part rules, AP, blocks,
@@ -371,7 +376,8 @@ Required behavior:
 
 ### Build Guidance
 
-- Treat NPCs, buildings, and action offers as tile-local context.
+- Treat hidden NPCs, source-backed cell art, buildings, and action offers as
+  tile-local context.
 - Treat `look`, `fis`, `dri`, and `dig` as source identifiers, not generic
   inspect/gather actions. Only `look` has launch behavior until the other
   successful flows are captured.
@@ -422,7 +428,7 @@ action-key discipline remains tracked in the checklist below.
 | Game shell and UI/AX | Documented in layout docs and 2026-05-25 live shell capture. | Partial. | Use one Rails game layout with persistent vitals/chat/presence, Turbo-updated main content, Stimulus-only local affordances, accessible hotspots, and no iframe/frameset clone. |
 | Person | Documented across vitals, progression, inventory/equipment, live player captures, and 2026-06-01 live inventory/items capture. | Partially implemented; captured inventory/item row subset is implemented. | Consolidate remaining formulas, repair/breakage, capacity across loot/pickup, and cross-system tests. |
 | Neverlands `Навыки` boolean perks | Full id/name/category catalog, starter save flow, and exclusion rules are documented from live captures. | Starter captured slice implemented: source perk `7` (`Больше силы`), separate point pool, preview/save, ownership, and source-ID exclusion registry. | Capture prerequisites, point-grant timing, and effects before exposing the now-named magic/warrior/profession branches; do not infer formulas from labels. |
-| Movement | Documented across movement and live movement/city captures, including three city gates, local resource actions, the `100 x 100` client cell presentation, and the one-region `1000 x 1000` launch boundary. | MVP world/city client pass implemented: timed wilderness offers, sparse bounds, composed cell state, fixed-cursor sliding terrain, immediate illustrated nine-node city movement, and three exact gate pairs. | Keep the uncaptured source-coordinate origin as metadata; capture encumbrance and terrain timing before formula changes. |
+| Movement | Documented across movement and live movement/city captures, including three city gates, local resource actions, the `100 x 100` image-cell presentation, hidden outdoor NPCs, and the one-region `1000 x 1000` launch boundary. | MVP world/city client pass implemented: timed wilderness offers, sparse bounds, validated cell-art slices, hidden NPC encounter state, fixed-cursor sliding terrain, immediate illustrated nine-node city movement, and three exact gate pairs. | Add special-location art only after its Neverlands image-cell is captured; keep the uncaptured source-coordinate origin as metadata. |
 | Arena | Documented across arena, combat, live arena captures, and public log captures. | Partially implemented; Arena entry/return is wired through Central Square with owned action keys. | Continue formula tuning, magic/special balancing, and shared fight coverage. |
 | Combat | Documented across combat reference captures, arena observations, logs, and equipment effects. | Partially implemented. | Keep one resolver/log contract across arena player/team, arena NPC, and wild NPC fights. |
 | Wild cells | Documented across outdoor movement, hostile NPC capture, composable cell contents, and `look` resource-action notes. | Fully implemented for the declared MVP World boundary: composed cells, `look`, movement/building/shell interruption, paired-NPC shared combat, participant loot timing, surrender integration, duplicate-start protection, and allowlisted post-fight return. | Capture exact gathering rewards and any new encounter compositions before extending authored content. |
@@ -442,7 +448,7 @@ the next implementation step is.
 | --- | --- | --- | --- |
 | Game client layout | Yes: gameplay shell docs and live player capture. | Partial. | Make the game shell the default authenticated surface across world, city, building, arena, shop, and combat screens. |
 | UI/AX shell behavior | Yes: live shell, outdoor movement, and city image-map captures. | MVP world/city shell pass implemented: dense top vitals/actions, persistent chat/presence, labeled movement buttons, accessible city proxies, tooltip/focus behavior, and textual timer state. | Carry the same shell contract through remaining combat and building feature screens. |
-| World map | Yes: coordinate movement, `100 x 100` cells, fixed-cursor travel, composable cell contents, outdoor captures, and one `1000 x 1000` MVP region. | MVP client pass implemented with a clipped buffered terrain view, red current offers, server-timed map translation, sparse deterministic bounds, current-cell actions, hostile interruption, three city entrances, and layered specs. | Source-coordinate mapping remains metadata-only; finish exact resource rewards and local presence polish. |
+| World map | Yes: coordinate movement, `100 x 100` image-cells, fixed-cursor travel, hidden NPC encounters, composable cell contents, outdoor captures, and one `1000 x 1000` MVP region. | MVP client pass implemented with a clipped buffered terrain view, source-backed per-cell art overrides, coordinate fallback, red current offers, server-timed map translation, sparse deterministic bounds, hidden hostile interruption, three city entrances, and layered specs. | Add building/lake/fishing/resource artwork only from captured Neverlands image-cells; source-coordinate mapping remains metadata-only. |
 | Cities and buildings | Yes: complete nine-node live graph, `760 x 255` image-map interaction, three gate/cell mappings, availability-specific hotspots, and selected service captures. | Complete for the captured MVP navigation/client slice: illustrated nodes, polygons/route regions, tooltips, keyboard proxies, 22 directed district links, three gates, Shop/Arena, five read-only service interiors, owned fresh action keys, and exact-node/interior resume. | Keep deferred service mutations disabled until their success/failure rules are captured. |
 | Arena | Yes: arena docs, live combat captures, public log captures. | Partial; entry/return is routed through the Central Square building hotspot and action-key validated. | Keep application rows compact and side-based; finish combat formula/content work. |
 

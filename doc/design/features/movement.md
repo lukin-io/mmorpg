@@ -162,16 +162,16 @@ The open-world map should use one server-authored state-building pipeline:
 1. Finalize due movement for the character.
 2. Load the current authoritative character location.
 3. Materialize tile context for the current location:
-   - NPCs;
+   - hidden NPC encounter state;
    - building, city, dungeon, or portal entrances;
    - authored resource-search and other captured local actions;
-   - terrain and passability.
+   - terrain, validated `100 x 100` cell art, and passability.
 4. Create short-lived action offers for everything the player can do:
    - movement offers;
-   - attack/talk offers;
    - enter city/building/dungeon offers;
    - inspect/profile/inventory offers when needed by the UI.
-5. Render only those offers to the browser.
+5. Render only visible offers to the browser; resolve hidden hostile
+   interruption before the selected action completes.
 6. Accept an action only when its action key still matches the current
    character, zone, coordinate, target, and action type.
 
@@ -203,6 +203,11 @@ A cell can contain an NPC, an entrance, and local actions at the same time.
 Movement completion rebuilds all of them. The launch resource action is
 Neverlands `look` / `Оглядеться`: it searches for herbs or local resources and
 can be interrupted by a hostile NPC before the resource action completes.
+
+Movement consumes the resolved 100px cell presentation but does not own its
+asset keys or sheet geometry. Add special-cell art through the authoring workflow
+in `doc/features/world.md`, section 7.2; do not encode art selection in movement
+commands or browser animation state.
 
 The source client also recognizes fishing, drinking, and digging actions. Keep
 those identifiers valid in authored tile data, but do not invent their rewards,

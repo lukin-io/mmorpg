@@ -26,10 +26,11 @@ RSpec.describe "World Interactions", type: :system, js: true do
       find(".nl-tile-clickable--available[data-target-x='6'][data-target-y='5']").click
 
       expect(page).to have_css(".nl-cursor-img--moving")
+      expect(page).to have_css(".nl-map-container[data-nl-world-map-movement-active-value='true']")
       expect(page).to have_css(".nl-location-coords", text: "[5, 5]", visible: :all)
       expect(position.reload.x).to eq(5)
 
-      MovementCommand.moving.last.update!(ends_at: 1.second.ago)
+      MovementCommand.moving.find_by!(character:).update!(ends_at: 1.second.ago)
       visit world_path
 
       expect(page).to have_css(".nl-location-coords", text: "[6, 5]", visible: :all)

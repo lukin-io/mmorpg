@@ -38,6 +38,7 @@ class MapTileTemplate < ApplicationRecord
   validates :terrain_type, presence: true
   validates :terrain_type, inclusion: {in: TERRAIN_TYPES}
   validate :zone_must_be_string
+  validate :cell_art_must_be_source_backed
   validate :local_actions_must_be_source_backed
 
   # Custom setter to ensure zone is always stored as a string name
@@ -69,6 +70,17 @@ class MapTileTemplate < ApplicationRecord
 
   def blocked?
     !passable || metadata&.dig("blocked")
+  end
+
+  def cell_art
+    raw_cell_art = metadata&.dig("cell_art")
+    return unless raw_cell_art.respond_to?(:deep_stringify_keys)
+
+    raw_cell_art.deep_stringify_keys
+  end
+
+  def cell_art_presentation
+    Game::World::CellArtCatalog.resolve(cell_art)
   end
 
   def local_actions
@@ -110,6 +122,24 @@ class MapTileTemplate < ApplicationRecord
   end
 
   private
+
+  def cell_art_must_be_source_backed
+    raw_cell_art = metadata&.dig("cell_art")
+    return if raw_cell_art.nil?
+
+    unless raw_cell_art.respond_to?(:to_h)
+      errors.add(:metadata, "cell_art must be an object")
+      return
+    end
+
+    unless metadata&.dig("source_map").present?
+      errors.add(:metadata, "cell_art requires a Neverlands source_map")
+    end
+
+    unless Game::World::CellArtCatalog.valid_reference?(raw_cell_art)
+      errors.add(:metadata, "cell_art must use a configured 100x100 source-backed art slice")
+    end
+  end
 
   def local_actions_must_be_source_backed
     raw_actions = metadata&.dig("local_actions")

@@ -3,7 +3,7 @@
 Contract metadata:
 
 - updated_at: `2026-07-21`
-- why_changed: "The MVP process now makes server authority, persistent gameplay transition contracts, retry/concurrency safety, deterministic tests, content identity, and the core player loop explicit."
+- why_changed: "The contract now routes Ruby/Rails features, behavior changes, bug fixes, and refactors through the full-stack Ruby 4.0, Rails 8.1, and Hotwire technical guide while preserving Neverlands and feature-document authority."
 
 Why/Impact:
 
@@ -12,6 +12,7 @@ Why/Impact:
 - Persistent gameplay mutations are server-authoritative, atomic where needed, safe against duplicate/concurrent execution, and covered at their behavioral boundaries.
 - Verification is read-only, uses the repository's real RSpec/system/security split, and reports exact command outcomes.
 - Process rules, design evidence, shipped feature contracts, and runtime code now have explicit ownership and conflict handling.
+- `doc/RUBY_ON_RAILS_GUIDE.md` is the subordinate Ruby, Rails, and Hotwire implementation guide for new features, behavior changes, bug fixes, and refactors.
 
 This document is the repository-wide engineering process contract. Sections are labeled:
 
@@ -43,13 +44,15 @@ It applies to all work in this Rails MMORPG repository. System, developer, and e
 2. Neverlands live behavior and preserved source material are the sole game-design authority.
 3. `doc/design/**` records normalized Neverlands evidence, design decisions, and MVP scope.
 4. `doc/features/**` describes verified, shipped implementation contracts.
-5. Code and tests show actual current runtime behavior.
+5. `doc/RUBY_ON_RAILS_GUIDE.md` expands Ruby 4.0, Rails 8.1, Hotwire, Active Record, jobs, security, performance, and refactoring technique.
+6. Code and tests show actual current runtime behavior.
 
 No one layer silently overrides another layer outside its concern. In particular:
 
 - passing code is not evidence that an invented game mechanic is valid;
 - a feature document is not permission to ignore a newer verified Neverlands observation;
 - a Neverlands observation is not proof that an unimplemented mechanic already exists locally;
+- the Rails technical guide cannot invent game design, override this contract, or describe unverified behavior as shipped;
 - generic RPG knowledge is never an alternate product source.
 
 ### 1.2 Guide routing
@@ -59,6 +62,7 @@ No one layer silently overrides another layer outside its concern. In particular
 - Use `doc/design/reference/` for direct Neverlands evidence and observation gaps.
 - Read `doc/design/launch_mvp_plan.md` for the current delivery boundary.
 - Read the responsible document under `doc/features/` for shipped behavior and file ownership.
+- For every Rails-backed new feature, behavior change, bug fix, or refactor, read the relevant sections of `doc/RUBY_ON_RAILS_GUIDE.md` for technical boundary selection and implementation guidance.
 - Read `doc/features/README.md` before creating or materially restructuring a feature handbook.
 
 ### 1.3 Conflict protocol
@@ -83,6 +87,7 @@ Fix in-scope `[IMPL]` gaps before completion. Correct in-scope `[DOC]` gaps only
 - Canonical feature template: `doc/features/FEATURE_TEMPLATE.md`.
 - Feature document audit: `bin/feature-doc-audit`.
 - Verification wrapper: `bin/verify`.
+- Ruby/Rails/Hotwire implementation guide: `doc/RUBY_ON_RAILS_GUIDE.md`.
 
 Blueprint, Swagger/rswag, and public JSON API requirements apply only when the repository actually introduces those surfaces. They are not defaults for HTML/Turbo features.
 
@@ -90,10 +95,10 @@ Blueprint, Swagger/rswag, and public JSON API requirements apply only when the r
 
 For an ordinary implementation task, follow this sequence:
 
-1. **Orient** — read relevant design, feature, routes, models/services, UI, seeds/config, and specs.
+1. **Orient** — read relevant design, feature, `doc/RUBY_ON_RAILS_GUIDE.md` sections, routes, models/services, UI, seeds/config, and specs.
 2. **Resolve authority** — identify the Neverlands evidence and MVP boundary; report `[EVIDENCE]` before inventing behavior.
 3. **Scan implementation** — locate existing ownership and preserve unrelated user changes.
-4. **Implement** — use minimal Rails-way changes and explicit cross-feature boundaries.
+4. **Implement** — use minimal Rails-way changes, the technical boundaries in `doc/RUBY_ON_RAILS_GUIDE.md`, and explicit cross-feature boundaries.
 5. **Add/update tests** — cover all applicable layers and required categories.
 6. **Run focused verification** — run changed specs and targeted lint while iterating.
 7. **Run alignment check** — compare verified behavior with design and the existing feature handbook; resolve `[IMPL]` gaps.
@@ -170,6 +175,8 @@ Normal feature work must not modify the canonical template merely because one fe
 - Do not run `rails credentials` or change encrypted secrets unless explicitly requested.
 
 ## 6. [NORMATIVE] Engineering rules
+
+Apply `doc/RUBY_ON_RAILS_GUIDE.md` to Rails implementation and refactoring decisions. This contract wins on conflict, and Neverlands evidence remains the only game-design authority.
 
 1. Use conventional Rails patterns, clear names, and production-grade invariants.
 2. Prefer Rails-way and KISS over speculative abstractions or mini-frameworks.
@@ -574,6 +581,7 @@ Do not claim a check passed when it did not run.
 Before closing a task, confirm:
 
 - relevant authority/design/feature docs were read;
+- relevant `doc/RUBY_ON_RAILS_GUIDE.md` guidance was applied for Rails code changes;
 - optional planning gate was respected when invoked;
 - implementation is minimal and Rails/Hotwire-aligned;
 - persistent gameplay transitions define preconditions, atomicity/failure behavior, and resulting authoritative state;

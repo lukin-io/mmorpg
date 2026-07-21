@@ -89,7 +89,9 @@ if defined?(MapTileTemplate)
 
   # Outpost Surroundings uses sparse authored overrides inside one logical
   # 1000x1000 region. Missing in-bounds rows use the deterministic passable
-  # outdoor default shared by rendering and movement validation.
+  # outdoor default shared by rendering and movement validation. cell_art stores
+  # only a stable catalog key and zero-based sheet location; passability,
+  # entrances, local actions, and hidden NPCs remain independent layers.
   outpost_surroundings = Zone.find_by(name: "Outpost Surroundings")
   outdoor_tiles = []
   if outpost_surroundings
@@ -105,7 +107,12 @@ if defined?(MapTileTemplate)
         metadata: {
           "city_gate" => gate["name"],
           "source_map" => gate["source_map"],
-          "source_coordinates" => gate["source_coordinates"]
+          "source_coordinates" => gate["source_coordinates"],
+          "cell_art" => {
+            "key" => "forpost_terrain",
+            "column" => local_x.modulo(10),
+            "row" => local_y.modulo(10)
+          }
         }
       }
     end
@@ -118,6 +125,11 @@ if defined?(MapTileTemplate)
       metadata: {
         "source_map" => "m_1001_999",
         "source_coordinates" => [1001, 999],
+        "cell_art" => {
+          "key" => "forpost_terrain",
+          "column" => 7,
+          "row" => 7
+        },
         "local_actions" => [
           {
             "type" => "resource_search",

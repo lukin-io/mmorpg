@@ -16,7 +16,6 @@ module Game
         cancel_open_offers!
 
         offers = []
-        offers << npc_offer
         offers << building_offer
         offers.concat(local_action_offers)
         offers.compact
@@ -34,22 +33,6 @@ module Game
             status: WorldActionOffer.statuses.fetch("cancelled"),
             updated_at: Time.current
           )
-      end
-
-      def npc_offer
-        npc = tile_state.npc
-        return unless npc&.alive?
-        return unless npc.hostile?
-
-        create_offer(
-          :attack_npc,
-          target: npc,
-          metadata: {
-            npc_template_id: npc.npc_template_id,
-            npc_key: npc.npc_key,
-            hostile: true
-          }
-        )
       end
 
       def building_offer

@@ -144,6 +144,43 @@ RSpec.describe "World", type: :request do
         expect(response.body).to include("forpost-terrain")
       end
 
+      it "renders an exact configured cell-art slice and the regional fallback together" do
+        authored_tile = MapTileTemplate.find_by!(zone: zone.name, x: 4, y: 5)
+        authored_tile.update!(
+          metadata: {
+            "source_map" => "m_1001_999",
+            "cell_art" => {"key" => "forpost_terrain", "column" => 7, "row" => 7}
+          }
+        )
+
+        get world_path
+
+        document = Nokogiri::HTML(response.body)
+        authored_cell = document.at_css("#tile_4_5")
+        fallback_cell = document.at_css("#tile_5_5")
+        expect(authored_cell["data-cell-art-key"]).to eq("forpost_terrain")
+        expect(authored_cell["style"]).to include(
+          "background-position: -700px -700px",
+          "background-size: 1000px 1000px"
+        )
+        expect(fallback_cell["data-cell-art-key"]).to eq("")
+        expect(fallback_cell["style"]).to include("background-position: -500px -500px")
+      end
+
+      it "uses the regional fallback for malformed legacy cell-art metadata" do
+        legacy_tile = MapTileTemplate.find_by!(zone: zone.name, x: 4, y: 5)
+        legacy_tile.update_column(
+          :metadata,
+          {"source_map" => "m_legacy", "cell_art" => {"key" => "missing_art", "column" => 0, "row" => 0}}
+        )
+
+        get world_path
+
+        cell = Nokogiri::HTML(response.body).at_css("#tile_4_5")
+        expect(cell["data-cell-art-key"]).to eq("")
+        expect(cell["style"]).to include("background-position: -400px -500px")
+      end
+
 
       it "keeps the cursor centered at an outdoor region boundary" do
         position.update!(x: 0, y: 0)
@@ -474,7 +511,7 @@ RSpec.describe "World", type: :request do
       create_explicit_tiles(zone, x_range: 8..12, y_range: 8..12)
     end
 
-    describe "TileNpc display" do
+    describe "hidden TileNpc encounter state" do
       context "when database TileNpc exists and is alive" do
         let(:npc_template) { create(:npc_template, name: "Plague Rat", npc_key: "plague_rat_visible") }
         let!(:db_npc) do
@@ -488,16 +525,16 @@ RSpec.describe "World", type: :request do
             respawns_at: nil)
         end
 
-        it "shows the database NPC on the map" do
+        it "does not reveal the database NPC on the map" do
           get world_path
 
-          expect(response.body).to include("Plague Rat")
+          expect(response.body).not_to include("Plague Rat")
         end
 
-        it "shows NPC marker" do
+        it "does not render an NPC marker" do
           get world_path
 
-          expect(response.body).to include("nl-tile-npc")
+          expect(response.body).not_to include("nl-tile-npc")
         end
       end
 
@@ -539,10 +576,10 @@ RSpec.describe "World", type: :request do
             respawns_at: nil)
         end
 
-        it "shows the alive NPC on the map" do
+        it "keeps the alive NPC hidden on the map" do
           get world_path
 
-          expect(response.body).to include("Live Rat")
+          expect(response.body).not_to include("Live Rat")
         end
       end
     end

@@ -31,6 +31,23 @@ and do not store live movement tokens or session values in tracked text.
   `#world_cont`.
 - The overlay cursor/timer layer is rendered inside `#world_cont2`.
 
+## Owner-Confirmed Cell Presentation
+
+The project owner confirmed the Neverlands map contract on 2026-07-21:
+
+- a region is a logical mosaic of `1000 x 1000` coordinates;
+- each rendered map part is a `100 x 100` image-cell;
+- the browser loads only the nearby image-cells rather than one region-sized
+  browser image;
+- an authored building, gate, lake, fishing place, or other special location
+  can replace the ordinary art for its exact cell;
+- outdoor NPC placement is hidden cell state. The map does not render an NPC
+  marker, name, or manual Attack control before the NPC interrupts an action.
+
+Treat `100 x 100` as normative for the current implementation. A later size
+change requires new Neverlands evidence or an explicit product decision; it is
+not a responsive-client calculation.
+
 The full gameplay frameset loaded by `game.php` was:
 
 ```text

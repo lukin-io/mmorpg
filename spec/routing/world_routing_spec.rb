@@ -17,4 +17,8 @@ RSpec.describe "world routes", type: :routing do
   it "does not route the removed generic city-exit endpoint" do
     expect(post: "/world/exit_location").not_to be_routable
   end
+
+  it "does not expose a manual wilderness-NPC attack endpoint" do
+    expect(post: "/fight/npc").not_to be_routable
+  end
 end

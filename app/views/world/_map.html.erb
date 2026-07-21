@@ -10,7 +10,7 @@
   map_offset_y = -(gutter_y * tile_size)
   cursor_left = (visible_columns / 2) * tile_size
   cursor_top = (visible_rows / 2) * tile_size
-  terrain_texture = image_path("world/forpost-terrain.png")
+  default_terrain_texture = image_path("world/forpost-terrain.png")
 
   movement_destinations = local_assigns.fetch(:movement_destinations, @movement_destinations || []) || []
   active_movement = local_assigns.fetch(:active_movement, @active_movement)
@@ -77,8 +77,12 @@
                   tile_meta = tile.respond_to?(:metadata) ? (tile.metadata || {}) : {}
                   is_walkable = tile.respond_to?(:walkable) ? tile.walkable : !tile_meta["blocked"]
                   is_available = destination.present? && !movement_active && is_walkable && !is_player
-                  texture_x = -(tile.x.modulo(10) * tile_size)
-                  texture_y = -(tile.y.modulo(10) * tile_size)
+                  cell_art = Game::World::CellArtCatalog.resolve(tile_meta["cell_art"])
+                  terrain_texture = cell_art ? image_path(cell_art.asset) : default_terrain_texture
+                  texture_x = cell_art ? cell_art.background_x : -(tile.x.modulo(10) * tile_size)
+                  texture_y = cell_art ? cell_art.background_y : -(tile.y.modulo(10) * tile_size)
+                  texture_width = cell_art ? cell_art.sheet_width : 1000
+                  texture_height = cell_art ? cell_art.sheet_height : 1000
                 %>
 
                 <td class="nl-map-tile nl-tile-bg--<%= terrain %> <%= 'nl-map-tile--outside' if tile_meta['out_of_bounds'] %>"
@@ -86,8 +90,8 @@
                     data-x="<%= tile.x %>"
                     data-y="<%= tile.y %>"
                     data-terrain="<%= terrain %>"
-                    style="background-image: url('<%= terrain_texture %>'); background-position: <%= texture_x %>px <%= texture_y %>px;"
-                    <%= "data-npc=\"#{tile_meta['npc']}\"".html_safe if tile_meta["npc"].present? %>>
+                    data-cell-art-key="<%= cell_art&.key %>"
+                    style="background-image: url('<%= terrain_texture %>'); background-position: <%= texture_x %>px <%= texture_y %>px; background-size: <%= texture_width %>px <%= texture_height %>px;">
 
                   <% if is_available %>
                     <button type="button"
@@ -106,12 +110,6 @@
                     <div class="nl-tile-player" aria-hidden="true"></div>
                   <% else %>
                     <div class="nl-tile-inactive" aria-hidden="true"></div>
-                  <% end %>
-
-                  <% if tile_meta["npc"].present? %>
-                    <div class="nl-tile-entity nl-tile-npc" title="<%= tile_meta['npc'] %>">
-                      <span class="nl-entity-label"><%= tile_meta["npc"] %></span>
-                    </div>
                   <% end %>
 
                   <% if tile_meta["building"].present? %>

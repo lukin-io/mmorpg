@@ -1,35 +1,11 @@
 <%
-  tile_npc_action = available_actions.find { |action| action[:type] == :tile_npc }
   tile_building_action = available_actions.find { |action| action[:type] == :tile_building }
   tile_local_actions = available_actions.select { |action| action[:type] == :tile_local_action }
-  local_actions_present = tile_npc_action || tile_building_action || tile_local_actions.any?
+  local_actions_present = tile_building_action || tile_local_actions.any?
 %>
 
 <% if local_actions_present %>
   <div class="actions-panel nl-world-action-strip" aria-label="Current cell actions">
-    <% if tile_npc_action && tile_npc_action[:npc] %>
-      <% npc = tile_npc_action[:npc] %>
-      <% offer = tile_npc_action[:offer] %>
-
-      <% if npc[:alive] && npc[:hostile] && offer %>
-        <%= form_with url: world_npc_fights_path,
-                      method: :post,
-                      class: "nl-world-action-form",
-                      data: {turbo_frame: "_top"} do |f| %>
-          <%= f.hidden_field :npc_template_id, value: npc[:npc_template_id] %>
-          <%= f.hidden_field :tile_npc_id, value: npc[:id] %>
-          <%= f.hidden_field :action_key, value: offer.action_key %>
-          <%= f.submit "Attack", class: "fr_but nl-world-action-button", title: "#{npc[:name]} [#{npc[:level]}]" %>
-          <span class="nl-visually-hidden"><%= npc[:name] %> [<%= npc[:level] %>] <%= npc[:hp] %>/<%= npc[:max_hp] %></span>
-        <% end %>
-      <% else %>
-        <span class="nl-world-action-unavailable" title="<%= npc[:name] %> is unavailable">
-          <%= npc[:name] %>
-          <% if npc[:respawn_in] %>— <%= format_time_remaining(npc[:respawn_in]) %><% end %>
-        </span>
-      <% end %>
-    <% end %>
-
     <% if tile_building_action && tile_building_action[:building] %>
       <% building = tile_building_action[:building] %>
       <% offer = tile_building_action[:offer] %>

@@ -313,7 +313,6 @@ class WorldController < ApplicationController
 
     @tile = current_tile
     @nearby_tiles = nearby_tiles_with_features
-    @tile_npc = tile_npc_at_current_tile
     @tile_building = tile_building_at_current_tile
     @players_here = players_at_current_tile
     @available_actions = available_actions
@@ -367,10 +366,6 @@ class WorldController < ApplicationController
     x_range = ((@position.x - MAP_RENDER_RADIUS)..(@position.x + MAP_RENDER_RADIUS))
     y_range = ((@position.y - MAP_RENDER_RADIUS)..(@position.y + MAP_RENDER_RADIUS))
     templates = MapTileTemplate.in_zone(zone.name).in_area(x_range, y_range).index_by { |tile| [tile.x, tile.y] }
-    npcs = TileNpc.in_zone(zone.name)
-      .where(x: x_range, y: y_range)
-      .includes(:npc_template)
-      .index_by { |npc| [npc.x, npc.y] }
     buildings = TileBuilding.active.in_zone(zone.name)
       .where(x: x_range, y: y_range)
       .index_by { |building| [building.x, building.y] }
@@ -381,9 +376,8 @@ class WorldController < ApplicationController
         template = templates[[x, y]] if in_bounds
         tile = in_bounds ? (template || missing_tile(x, y)) : out_of_bounds_tile(x, y)
         metadata = (tile.metadata || {}).dup
-        metadata = add_live_tile_features(
+        metadata = add_visible_tile_features(
           metadata,
-          npc: (npcs[[x, y]] if in_bounds),
           building: (buildings[[x, y]] if in_bounds)
         )
 
@@ -410,19 +404,9 @@ class WorldController < ApplicationController
     )
   end
 
-  # Add DB-backed NPC/building data to tile metadata.
-  # Defeated NPCs are hidden.
-  def add_live_tile_features(metadata, npc:, building:)
-    if npc
-      if npc.alive?
-        metadata["npc"] = npc.display_name
-        metadata["npc_level"] = npc.level
-      else
-        metadata.delete("npc")
-        metadata.delete("npc_level")
-      end
-    end
-
+  # Buildings are visible authored cell content. Outdoor NPC placement remains
+  # server-only and is revealed only when its encounter interrupts an action.
+  def add_visible_tile_features(metadata, building:)
     if building
       metadata["building"] = building.name
     end
@@ -434,16 +418,6 @@ class WorldController < ApplicationController
     actions = []
 
     return actions if @active_movement
-
-    # Tile NPC actions
-    tile_npc = tile_npc_at_current_tile
-    if tile_npc.present?
-      actions << {
-        type: :tile_npc,
-        npc: tile_npc,
-        offer: offers_by_action("attack_npc").first
-      }
-    end
 
     # Tile Building actions (enterable structures)
     tile_building = tile_building_at_current_tile
@@ -475,20 +449,6 @@ class WorldController < ApplicationController
     end
 
     actions
-  end
-
-  def tile_npc_at_current_tile
-    return @tile_npc if defined?(@tile_npc) && @tile_npc
-    return @tile_state.npc_info if @tile_state
-
-    # Get tile NPC info at current position (for display)
-    service = Game::World::TileNpcService.new(
-      character: current_character,
-      zone: @position.zone.name,
-      x: @position.x,
-      y: @position.y
-    )
-    service.npc_info
   end
 
   def tile_building_at_current_tile

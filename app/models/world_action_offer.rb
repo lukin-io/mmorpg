@@ -3,7 +3,6 @@
 # Server-authored, short-lived action key for tile-local world actions.
 class WorldActionOffer < ApplicationRecord
   ACTION_TYPES = %w[
-    attack_npc
     enter_building
     search_resources
     fish

@@ -200,6 +200,31 @@ RSpec.describe "world/_map.html.erb", type: :view do
       expect(rendered).to include("forpost-terrain")
       expect(rendered).to include("background-position: 0px 0px")
     end
+
+    it "uses a validated source-backed cell-art slice instead of the coordinate fallback" do
+      tiles = nearby_tiles
+      tiles[1][1] = OpenStruct.new(
+        x: 9,
+        y: 9,
+        terrain_type: "outdoor",
+        walkable: true,
+        metadata: {
+          "source_map" => "m_1001_999",
+          "cell_art" => {"key" => "forpost_terrain", "column" => 7, "row" => 7}
+        }
+      )
+
+      render partial: "world/map", locals: {
+        position:,
+        nearby_tiles: tiles,
+        zone:,
+        tile_data: {}
+      }
+
+      expect(rendered).to have_css("#tile_9_9[data-cell-art-key='forpost_terrain']")
+      expect(rendered).to include("background-position: -700px -700px")
+      expect(rendered).to include("background-size: 1000px 1000px")
+    end
   end
 
   describe "clickable tiles (mouse navigation)" do
@@ -543,7 +568,7 @@ RSpec.describe "world/_map.html.erb", type: :view do
         tiles
       end
 
-      it "renders NPC marker" do
+      it "does not reveal an NPC marker" do
         render partial: "world/map", locals: {
           position: position,
           nearby_tiles: nearby_tiles_with_npc,
@@ -551,10 +576,10 @@ RSpec.describe "world/_map.html.erb", type: :view do
           tile_data: {}
         }
 
-        expect(rendered).to have_css(".nl-tile-npc")
+        expect(rendered).not_to have_css(".nl-tile-npc")
       end
 
-      it "includes NPC name in title" do
+      it "does not reveal the NPC name" do
         render partial: "world/map", locals: {
           position: position,
           nearby_tiles: nearby_tiles_with_npc,
@@ -562,7 +587,7 @@ RSpec.describe "world/_map.html.erb", type: :view do
           tile_data: {}
         }
 
-        expect(rendered).to include("Plague Rat")
+        expect(rendered).not_to include("Plague Rat")
       end
     end
   end

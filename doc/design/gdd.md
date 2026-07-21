@@ -79,8 +79,8 @@ The intended feel is:
    tile-local actions.
 3. Player chooses a server-offered destination or local action.
 4. Movement/actions lock relevant buttons and show a timer when they take time.
-5. Completion refreshes current location, available movement, tile actions,
-   NPCs, buildings, encounters, and nearby player list.
+5. Completion refreshes current location, available movement, visible tile
+   actions/buildings, hidden NPC encounter state, and nearby player list.
 6. Player gains combat progress, skill growth, or economy opportunities.
 
 ## Movement GDD
@@ -100,7 +100,8 @@ Movement follows the Neverlands-style contract:
 - reload during travel resumes from server state;
 - completion updates authoritative position and returns the next map state;
 - completion also refreshes context buttons such as character, inventory,
-  enter, NPC, building, or combat actions.
+  enter, and other source-backed local actions; hidden NPC state is not a
+  rendered button.
 
 The first implementation does not need to copy Neverlands' exact `GO@...`
 string protocol. JSON or Turbo Streams are acceptable if they preserve the same
@@ -239,19 +240,20 @@ may offer buttons for:
 - character/profile;
 - inventory;
 - enter/exit building or location;
-- talk to NPC;
-- attack hostile NPC;
 - future captured quest interaction.
 
 An outdoor cell is a composition, not one generic `feature` record. Its current
 state can combine:
 
 - sparse authored terrain/passability metadata;
+- an optional validated source-backed `100 x 100` cell-art slice;
 - one materialized hostile NPC;
 - one enterable city gate, outdoor building, or special-location entrance;
 - zero or more source-backed local actions.
 
-The captured Neverlands local-action identifiers are `look` (search for herbs
+The hostile NPC layer is server-only until it interrupts an action; the outdoor
+map does not render the NPC name, marker, or a manual Attack control. The
+captured Neverlands local-action identifiers are `look` (search for herbs
 or local resources), `fis` (fishing), `dri` (drink), and `dig` (dig). Launch
 implements the captured `look` offer/accept/refresh contract. The other action
 types may be represented by authored cell data, but their rewards, skill checks,

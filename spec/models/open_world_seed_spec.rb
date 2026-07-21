@@ -74,6 +74,11 @@ RSpec.describe "Open-world seed data", type: :model do
     expect(CityHotspot.exists?(legacy_town_hotspot.id)).to be false
     expect(tile.reload).to have_attributes(terrain_type: "outdoor", passable: true)
     expect(tile.local_action("resource_search")).to include("source_id" => "look")
+    expect(tile.cell_art).to eq(
+      "key" => "forpost_terrain",
+      "column" => 7,
+      "row" => 7
+    )
     expect(gate.reload).to have_attributes(
       zone: region.name,
       x: 7,
@@ -112,6 +117,21 @@ RSpec.describe "Open-world seed data", type: :model do
       expect(seeded_gate.destination_zone).to eq(expected_node)
       expect([seeded_gate.x, seeded_gate.y]).to eq(gate_definition["local_coordinates"])
       expect(seeded_gate.metadata["source_coordinates"]).to eq(gate_definition["source_coordinates"])
+      seeded_tile = MapTileTemplate.find_by!(
+        zone: region.name,
+        x: seeded_gate.x,
+        y: seeded_gate.y
+      )
+      expect(seeded_tile.cell_art).to eq(
+        "key" => "forpost_terrain",
+        "column" => seeded_gate.x.modulo(10),
+        "row" => seeded_gate.y.modulo(10)
+      )
+      expect(seeded_tile.cell_art_presentation).to have_attributes(
+        key: "forpost_terrain",
+        cell_width: 100,
+        cell_height: 100
+      )
     end
 
     expect(CityHotspot.active.where(zone: node_zones.values).count).to eq(32)

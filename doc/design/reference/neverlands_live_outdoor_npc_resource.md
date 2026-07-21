@@ -36,6 +36,12 @@ map = [
 ]
 ```
 
+The map state and `mapbt` exposed no Plague Rat marker, name, stats, or manual
+Attack action before combat. The two rats appeared only after the ordinary
+`look` action forced the client into the fight state. This supports treating
+outdoor NPC placement as hidden server-side cell state rather than rendered map
+content.
+
 The public profile showed:
 
 ```text

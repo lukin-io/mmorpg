@@ -88,6 +88,107 @@ RSpec.describe MapTileTemplate, type: :model do
     end
   end
 
+  describe "source-backed cell art" do
+    it "resolves a configured 100px image-cell slice" do
+      tile = build(:map_tile_template, :with_cell_art)
+
+      expect(tile).to be_valid
+      expect(tile.cell_art).to eq(
+        "key" => "forpost_terrain",
+        "column" => 7,
+        "row" => 7
+      )
+      expect(tile.cell_art_presentation).to have_attributes(
+        asset: "world/forpost-terrain.png",
+        background_x: -700,
+        background_y: -700
+      )
+    end
+
+    it "allows an ordinary sparse cell without an art override" do
+      tile = build(:map_tile_template, metadata: {})
+
+      expect(tile).to be_valid
+      expect(tile.cell_art).to be_nil
+    end
+
+    it "accepts the last zero-based coordinate in the configured sheet" do
+      tile = build(:map_tile_template, :with_cell_art_at_sheet_edge)
+
+      expect(tile).to be_valid
+      expect(tile.cell_art_presentation).to have_attributes(
+        column: 9,
+        row: 9,
+        background_x: -900,
+        background_y: -900
+      )
+    end
+
+    it "rejects an art override without Neverlands source metadata" do
+      tile = build(
+        :map_tile_template,
+        metadata: {
+          "cell_art" => {"key" => "forpost_terrain", "column" => 0, "row" => 0}
+        }
+      )
+
+      expect(tile).not_to be_valid
+      expect(tile.errors[:metadata]).to include("cell_art requires a Neverlands source_map")
+    end
+
+    it "rejects an unknown art key" do
+      tile = build(:map_tile_template, :with_invalid_cell_art)
+
+      expect(tile).not_to be_valid
+      expect(tile.errors[:metadata]).to include(
+        "cell_art must use a configured 100x100 source-backed art slice"
+      )
+    end
+
+    it "rejects malformed, null-coordinate, and out-of-bounds art references" do
+      malformed = build(:map_tile_template, metadata: {"source_map" => "m_1", "cell_art" => "gate.png"})
+      null_coordinate = build(
+        :map_tile_template,
+        metadata: {
+          "source_map" => "m_1",
+          "cell_art" => {"key" => "forpost_terrain", "column" => nil, "row" => 0}
+        }
+      )
+      out_of_bounds = build(
+        :map_tile_template,
+        metadata: {
+          "source_map" => "m_1",
+          "cell_art" => {"key" => "forpost_terrain", "column" => 10, "row" => 0}
+        }
+      )
+
+      expect(malformed).not_to be_valid
+      expect(malformed.errors[:metadata]).to include("cell_art must be an object")
+      expect(null_coordinate).not_to be_valid
+      expect(out_of_bounds).not_to be_valid
+    end
+
+    it "rejects negative and non-numeric sheet coordinates" do
+      negative = build(
+        :map_tile_template,
+        metadata: {
+          "source_map" => "m_1",
+          "cell_art" => {"key" => "forpost_terrain", "column" => -1, "row" => 0}
+        }
+      )
+      non_numeric = build(
+        :map_tile_template,
+        metadata: {
+          "source_map" => "m_1",
+          "cell_art" => {"key" => "forpost_terrain", "column" => "west", "row" => 0}
+        }
+      )
+
+      expect(negative).not_to be_valid
+      expect(non_numeric).not_to be_valid
+    end
+  end
+
   describe "source-backed local actions" do
     it "normalizes and returns an active resource-search action" do
       tile = build(:map_tile_template, :with_resource_search)

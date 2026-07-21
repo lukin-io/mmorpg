@@ -10,8 +10,6 @@ RSpec.describe "Retained city image assets" do
 
     expect(asset_paths).to all(exist)
   end
-
-
   it "keeps the project-owned Forpost wilderness texture used by 100px cells" do
     terrain = Rails.root.join("app/assets/images/world/forpost-terrain.png")
 

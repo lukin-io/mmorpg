@@ -26,6 +26,10 @@ Observed Neverlands behavior:
 - the countdown is a small red capsule centered one cell above the cursor;
 - local presence refreshes after movement completion;
 - contextual buttons such as `Войти` appear from the current tile state.
+- the logical region is a mosaic of `100 x 100` image-cells; an authored
+  special location can replace the ordinary art for its exact coordinate;
+- hostile NPC placement is not rendered as a map marker or manual attack
+  control before the hidden encounter interrupts an action;
 - local outdoor actions can be interrupted by bot ambushes and hand the player
   into the normal fight screen;
 - Character and Inventory navigation can be interrupted by the same ambush;
@@ -49,9 +53,10 @@ The implemented browser surface uses a `7 x 7` server-rendered buffer clipped
 to a `5 x 5` visible viewport. This leaves one full off-screen cell on every
 side for the one-cell travel animation and keeps the cursor centered even at
 the logical region boundary; out-of-bounds buffer cells render as inert terrain
-and can never receive an offer. Terrain is one project-owned continuous
-`1000 x 1000` artwork cropped by coordinate into `100 x 100` cells, so adjacent
-cells join naturally without a client-invented tile catalog.
+and can never receive an offer. The default terrain is one project-owned
+`1000 x 1000` art sheet cropped into `100 x 100` cells. Sparse explicit tile
+records may replace that coordinate's slice through a configured source-backed
+cell-art key; malformed or absent overrides use the coordinate-derived default.
 
 It should feel like a utilitarian MMORPG client, not a large marketing page.
 
@@ -85,7 +90,7 @@ The map can offer:
 - character profile;
 - inventory;
 - enter city/building;
-- hostile encounter or attack;
+- hidden hostile encounter interruption;
 - city or building entry.
 
 The server decides which actions exist for the current finalized location.
@@ -138,9 +143,33 @@ Static cell composition is deliberately split by responsibility:
 | Content | Source Of Truth | Can Coexist On One Cell? |
 | --- | --- | --- |
 | Terrain/passability | sparse tile template | yes |
+| Cell art | validated catalog key and sheet coordinate on a sparse tile template | yes |
 | Hostile NPC | materialized tile NPC | yes |
 | City/building/special entrance | tile entrance record | yes |
 | Resource/local action | tile template's validated local-action list | yes, including several action types |
+
+## Authoring Source-Backed Cell Art
+
+The implementation and complete authoring examples live in
+`doc/features/world.md`, section 7.2. The design boundary is:
+
+1. Capture the exact Neverlands cell appearance and source coordinate.
+2. Store the project-owned file under `app/assets/images/world/`.
+3. Register a stable asset key in `config/gameplay/world_cell_art.yml`; every
+   configured slice remains exactly `100 x 100`.
+4. Reference only that key plus a zero-based sheet column/row from a sparse
+   `MapTileTemplate` record.
+5. Leave ordinary cells unmaterialized so they continue to use the deterministic
+   coordinate-derived regional slice.
+
+A dedicated special-cell file is a `1 x 1` catalog entry. A regional mosaic is
+one larger sheet whose physical dimensions match its configured columns and
+rows multiplied by 100px. Database records never store filesystem paths or
+URLs, and renaming a catalog key requires a persisted-reference update.
+
+Artwork does not imply passability, an entrance, an NPC, or a local action.
+Those layers stay independently authored and may coexist at the same cell. This
+keeps a visual replacement from silently granting gameplay behavior.
 
 Do not restore a generic location-name `enter` endpoint. An entrance is visible
 and usable only when the current tile resolves an active record and issues a
@@ -161,7 +190,8 @@ Pipeline for every world map request:
 1. Complete due movement.
 2. Load current finalized character location.
 3. Resolve current tile state.
-4. Materialize any generated NPC before rendering it.
+4. Materialize any generated NPC as hidden server state; do not render its
+   identity or a manual attack affordance.
 5. Build movement offers and contextual action offers.
 6. Before completing a mutating outdoor action, evaluate source-backed hostile
    encounter rules for the current tile.
@@ -196,7 +226,7 @@ Action examples:
 | Action | Persistent Target | Handler |
 | --- | --- | --- |
 | Move | movement command | movement acceptance service |
-| Attack/Talk | tile NPC | combat or dialogue service |
+| Hidden hostile interruption | tile NPC | shared combat handoff |
 | Enter city/building/dungeon | tile entrance | building or city transition service |
 | Search for resources | current tile template | local-action service or hostile ambush handoff |
 
@@ -206,7 +236,8 @@ Validation rules:
   target;
 - stale offers are rejected;
 - offers are cancelled/reissued when the authoritative map state changes;
-- generated NPC state is materialized before any offer is issued;
+- generated NPC state is materialized before action resolution but is not
+  exposed as a map marker, name, or manual attack offer;
 - accepted actions write a result row or status update for audit and replay.
 - if an accepted outdoor action triggers a hostile NPC attack, the original
   action does not silently complete; the response becomes a combat state and

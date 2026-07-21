@@ -50,6 +50,13 @@ RSpec.describe WorldActionOffer, type: :model do
       end
     end
 
+    it "rejects the removed manual outdoor-NPC attack action" do
+      offer = build(:world_action_offer, action_type: "attack_npc")
+
+      expect(offer).not_to be_valid
+      expect(offer.errors[:action_type]).to be_present
+    end
+
     it "accepts city transition, building-entry, and exit offers" do
       %w[city_transition enter_city_building exit_city].each do |action_type|
         expect(build(:world_action_offer, action_type:)).to be_valid

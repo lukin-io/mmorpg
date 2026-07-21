@@ -28,7 +28,7 @@ RSpec.describe "world/_actions.html.erb", type: :view do
     expect(rendered).not_to have_css(".movement-cooldown")
   end
 
-  it "renders source-backed NPC fight action without generic creature labels" do
+  it "does not reveal the hidden source-backed NPC encounter" do
     render partial: "world/actions", locals: {
       available_actions: [
         {
@@ -50,9 +50,9 @@ RSpec.describe "world/_actions.html.erb", type: :view do
       position:
     }
 
-    expect(rendered).to have_button("Attack")
-    expect(rendered).to have_css("input[name='action_key'][value='attack-action-key']", visible: :all)
-    expect(rendered).not_to include("Creature Here")
+    expect(rendered).not_to have_button("Attack")
+    expect(rendered).not_to include("Rat")
+    expect(rendered).not_to have_css("input[name='action_key'][value='attack-action-key']", visible: :all)
   end
 
   it "renders source-backed building entry without generic structure labels" do

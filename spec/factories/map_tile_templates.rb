@@ -29,6 +29,45 @@ FactoryBot.define do
       end
     end
 
+    trait :with_cell_art do
+      metadata do
+        {
+          "source_map" => "m_1001_999",
+          "cell_art" => {
+            "key" => "forpost_terrain",
+            "column" => 7,
+            "row" => 7
+          }
+        }
+      end
+    end
+
+    trait :with_invalid_cell_art do
+      metadata do
+        {
+          "source_map" => "m_unknown",
+          "cell_art" => {
+            "key" => "unknown_art",
+            "column" => 0,
+            "row" => 0
+          }
+        }
+      end
+    end
+
+    trait :with_cell_art_at_sheet_edge do
+      metadata do
+        {
+          "source_map" => "m_sheet_edge",
+          "cell_art" => {
+            "key" => "forpost_terrain",
+            "column" => 9,
+            "row" => 9
+          }
+        }
+      end
+    end
+
     trait :with_fishing do
       metadata do
         {

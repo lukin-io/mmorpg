@@ -16,10 +16,10 @@ RSpec.describe Game::World::ActionOfferBuilder do
     )
   end
 
-  it "creates persisted action offers for current tile targets" do
+  it "creates persisted action offers only for visible current-cell actions" do
     offers = described_class.new(character:, position:, tile_state:).call
 
-    expect(offers.map(&:action_type)).to include("attack_npc", "enter_building")
+    expect(offers.map(&:action_type)).to contain_exactly("enter_building")
     expect(offers).to all(be_persisted)
     expect(offers).to all(have_attributes(character: character, zone: zone, x: 5, y: 5))
     expect(offers.map(&:action_key)).to all(be_present)
@@ -39,7 +39,7 @@ RSpec.describe Game::World::ActionOfferBuilder do
     expect(old_offer.reload).to be_cancelled
   end
 
-  it "does not issue offers for a defeated npc or inaccessible building" do
+  it "does not issue offers for a hidden npc or inaccessible building" do
     blocked_state = OpenStruct.new(
       npc: create(:tile_npc, :defeated, zone: zone.name, x: 5, y: 5),
       building: create(:tile_building, :inactive, zone: zone.name, x: 5, y: 5)
@@ -49,6 +49,15 @@ RSpec.describe Game::World::ActionOfferBuilder do
 
     expect(offers).to be_empty
     expect(WorldActionOffer.offered.where(character:)).to be_empty
+  end
+
+  it "does not reveal a live hostile NPC through an action offer" do
+    hidden_state = OpenStruct.new(npc:, building: nil, local_actions: [])
+
+    offers = described_class.new(character:, position:, tile_state: hidden_state).call
+
+    expect(offers).to be_empty
+    expect(WorldActionOffer.offered.where(character:, target: npc)).to be_empty
   end
 
   it "creates an offer only for the implemented source-backed local action" do
