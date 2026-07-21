@@ -1,23 +1,6 @@
 # frozen_string_literal: true
 
 module WorldHelper
-  # Get city image path from zone metadata
-  #
-  # @param zone [Zone] the city zone
-  # @return [String] image path or default
-  def city_image(zone)
-    zone.metadata&.dig("image") || "city_default.jpg"
-  end
-
-  # Get city description from zone metadata
-  #
-  # @param zone [Zone] the city zone
-  # @return [String] description text
-  def city_description(zone)
-    zone.metadata&.dig("description") ||
-      "A Neverlands-style city node with source-backed hotspots."
-  end
-
   # Format time remaining in human-readable format
   #
   # @param seconds [Integer] seconds remaining
@@ -37,15 +20,6 @@ module WorldHelper
       remaining_mins = (seconds % 3600) / 60
       remaining_mins.positive? ? "#{hours}h #{remaining_mins}m" : "#{hours}h"
     end
-  end
-
-  # Check if position is in a city/town zone
-  #
-  # @param position [CharacterPosition] the position
-  # @return [Boolean] true if in a city
-  def in_city?(position)
-    zone = position.zone
-    zone.city?
   end
 
   # Format coordinates for display

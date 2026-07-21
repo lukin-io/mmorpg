@@ -13,10 +13,6 @@ FactoryBot.define do
     alignment { Character::ALIGNMENTS[:none] }
     fatigue_percent { 0 }
 
-    after(:create) do |character|
-      create(:inventory, character:) unless character.inventory
-    end
-
     trait :with_position do
       after(:create) do |character|
         zone = create(:zone)
@@ -34,6 +30,47 @@ FactoryBot.define do
 
     trait :without_perk_points do
       perk_points { 0 }
+    end
+
+    trait :resuming_shop do
+      metadata do
+        {
+          Character::GAMEPLAY_CONTEXT_KEY => {
+            "name" => "shop",
+            "params" => {"mode" => "buy", "category" => "all"}
+          }
+        }
+      end
+    end
+
+    trait :with_malformed_gameplay_context do
+      metadata { {Character::GAMEPLAY_CONTEXT_KEY => "https://example.invalid"} }
+    end
+
+    trait :with_null_gameplay_context do
+      metadata { {Character::GAMEPLAY_CONTEXT_KEY => nil} }
+    end
+
+    trait :with_malformed_shop_gameplay_context do
+      metadata do
+        {
+          Character::GAMEPLAY_CONTEXT_KEY => {
+            "name" => "shop",
+            "params" => nil
+          }
+        }
+      end
+    end
+
+    trait :resuming_city_building do
+      metadata do
+        {
+          Character::GAMEPLAY_CONTEXT_KEY => {
+            "name" => "city_building",
+            "params" => {"building_key" => "market"}
+          }
+        }
+      end
     end
   end
 end

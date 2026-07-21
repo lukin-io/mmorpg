@@ -5,9 +5,8 @@ require "rails_helper"
 RSpec.describe Game::World::CityHotspotService do
   let(:user) { create(:user) }
   let(:character) { create(:character, user: user, level: 10) }
-  let(:city_zone) { create(:zone, name: "Test City", location_type: "city", width: 20, height: 20) }
-  let(:destination_zone) { create(:zone, name: "Destination", location_type: "outdoor", width: 20, height: 20) }
-  let!(:spawn_point) { create(:spawn_point, zone: destination_zone, x: 5, y: 5, default_entry: true) }
+  let(:city_zone) { create(:zone, name: "Outpost", location_type: "city", width: 20, height: 20) }
+  let(:destination_zone) { create(:zone, name: "Outpost Surroundings", location_type: "outdoor", width: 20, height: 20) }
   let!(:position) { create(:character_position, character: character, zone: city_zone, x: 5, y: 5) }
 
   subject { described_class.new(character: character, zone: city_zone) }
@@ -26,37 +25,6 @@ RSpec.describe Game::World::CityHotspotService do
     it "returns false for nil zone" do
       service = described_class.new(character: character, zone: nil)
       expect(service.city_zone?).to be false
-    end
-  end
-
-  describe "#hotspots_for_display" do
-    let!(:active_hotspot) { create(:city_hotspot, zone: city_zone, active: true, required_level: 1) }
-    let!(:inactive_hotspot) { create(:city_hotspot, zone: city_zone, active: false) }
-
-    it "returns hotspot info hashes" do
-      result = subject.hotspots_for_display
-      expect(result).to be_an(Array)
-      expect(result.first).to include(:id, :name, :can_interact)
-    end
-
-    it "excludes inactive hotspots" do
-      result = subject.hotspots_for_display
-      keys = result.map { |h| h[:id] }
-      expect(keys).to include(active_hotspot.id)
-      expect(keys).not_to include(inactive_hotspot.id)
-    end
-
-    it "includes can_interact and blocked_reason" do
-      result = subject.hotspots_for_display
-      hotspot_info = result.find { |h| h[:id] == active_hotspot.id }
-      expect(hotspot_info).to have_key(:can_interact)
-      expect(hotspot_info).to have_key(:blocked_reason)
-    end
-
-    it "returns empty array for non-city zone" do
-      plains_zone = create(:zone, location_type: "outdoor")
-      service = described_class.new(character: character, zone: plains_zone)
-      expect(service.hotspots_for_display).to eq([])
     end
   end
 
@@ -109,6 +77,7 @@ RSpec.describe Game::World::CityHotspotService do
           zone: city_zone,
           action_type: "enter_zone",
           destination_zone: destination_zone,
+          action_params: {"destination_x" => 7, "destination_y" => 0},
           required_level: 1,
           active: true)
       end
@@ -124,11 +93,11 @@ RSpec.describe Game::World::CityHotspotService do
         expect(position.zone).to eq(destination_zone)
       end
 
-      it "uses spawn point coordinates" do
+      it "uses the captured gate coordinates" do
         subject.interact!(exit_hotspot.id)
         position.reload
-        expect(position.x).to eq(spawn_point.x)
-        expect(position.y).to eq(spawn_point.y)
+        expect(position.x).to eq(7)
+        expect(position.y).to eq(0)
       end
 
       it "returns destination_zone in result" do
@@ -191,6 +160,24 @@ RSpec.describe Game::World::CityHotspotService do
       end
     end
 
+    context "when transition coordinates are missing or outside the destination" do
+      it "rejects the transition without moving the character" do
+        hotspot = create(
+          :city_hotspot,
+          :exit,
+          zone: city_zone,
+          destination_zone: destination_zone,
+          action_params: {"destination_x" => destination_zone.width, "destination_y" => nil}
+        )
+
+        result = subject.interact!(hotspot.id)
+
+        expect(result.success).to be false
+        expect(result.message).to include("coordinates")
+        expect(position.reload).to have_attributes(zone: city_zone, x: 5, y: 5)
+      end
+    end
+
     context "when character has no position" do
       before { position.destroy }
 
@@ -199,6 +186,7 @@ RSpec.describe Game::World::CityHotspotService do
           zone: city_zone,
           action_type: "enter_zone",
           destination_zone: destination_zone,
+          action_params: {"destination_x" => 7, "destination_y" => 0},
           required_level: 1,
           active: true)
       end

@@ -93,7 +93,11 @@ export default class extends Controller {
           "X-Requested-With": "XMLHttpRequest"
         }
       })
-      .then(response => response.text())
+      .then(response => {
+        if (!response.ok) throw new Error(`Presence refresh failed (${response.status})`)
+
+        return response.text()
+      })
       .then(html => {
         if (this.hasPlayersListTarget) {
           this.playersListTarget.innerHTML = html

@@ -204,6 +204,15 @@ The world is a tile grid split into zones or regions. Zones define:
 - tile templates;
 - allowed local action types.
 
+Login is an exact resume operation. The finalized `CharacterPosition` remains
+authoritative for outdoor cells and city nodes across logout, browser closure,
+and later login. A separate allowlisted gameplay context records whether the
+character last occupied the world/city surface or an implemented city interior
+such as Shop. Shop mode, category, and numeric filters may resume; arbitrary
+URLs or unrecognized context data must never be followed. If the remembered
+interior is no longer accessible, login falls back to the persisted world/city
+position without moving the character.
+
 The launch MVP contains exactly one outdoor region with a logical size of
 `1000 x 1000` cells. More regions are post-MVP content, but region identity and
 coordinate bounds must remain first-class so the world can expand without
@@ -211,12 +220,12 @@ rewriting character positions or movement commands. The implementation should
 store sparse authored tile overrides rather than eagerly create one million
 database rows.
 
-Starter world data should be deterministic. The first canonical movement test
-area should use a Neverlands-based coordinate neighborhood around
-`1019,1025` so docs, seeds, tests, and UI examples talk about the same place.
-The relationship between those observed source coordinates and the MVP
-region's local coordinates or origin offset still needs capture; do not assume
-that `1019,1025` means local cell `19,25`.
+Starter world data is deterministic. The west-gate source observation
+`m_1019_1025` is mapped to local cell `7,0`, while the outdoor NPC/resource
+observation `m_1001_999` is mapped to local cell `7,7`. The original map ids and
+coordinates remain metadata, not executable local coordinates. The exact
+source-coordinate/region-origin formula still needs capture; these two starter
+mappings do not imply a general offset.
 
 ## Tile-Local Actions
 
@@ -230,10 +239,34 @@ may offer buttons for:
 - attack hostile NPC;
 - future captured quest interaction.
 
+An outdoor cell is a composition, not one generic `feature` record. Its current
+state can combine:
+
+- sparse authored terrain/passability metadata;
+- one materialized hostile NPC;
+- one enterable city gate, outdoor building, or special-location entrance;
+- zero or more source-backed local actions.
+
+The captured Neverlands local-action identifiers are `look` (search for herbs
+or local resources), `fis` (fishing), `dri` (drink), and `dig` (dig). Launch
+implements the captured `look` offer/accept/refresh contract. The other action
+types may be represented by authored cell data, but their rewards, skill checks,
+equipment requirements, timers, and depletion rules remain unavailable until a
+successful live flow is captured.
+
+Missing sparse tile rows use the same deterministic outdoor default for both
+rendering and movement validation. A tile row is required only for an authored
+override or local action; the `1000 x 1000` region must not create one million
+records.
+
 Each action that mutates state should be server-authored, persisted, and
 validated against the current tile. The map renders action offers issued by the
 server; each offer has a short-lived action key tied to character, zone,
 coordinate, action type, and target.
+
+There is no arbitrary location-name entry route. City, building, and special
+location entry is accepted only through an entrance offered by the character's
+current outdoor cell.
 
 ## Combat
 

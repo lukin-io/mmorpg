@@ -57,6 +57,26 @@ RSpec.describe "Shop", type: :request do
       expect(response.body).to include("Shop Spec Ring")
       expect(response.body).not_to include("Shop Spec Knife")
     end
+
+    it "persists the sanitized shop state as the login resume context" do
+      get shop_path(
+        mode: "sell",
+        category: "jewelry",
+        min_level: "2",
+        max_price: "100",
+        return_to: "https://example.invalid"
+      )
+
+      expect(character.reload.gameplay_context).to eq(
+        "name" => "shop",
+        "params" => {
+          "mode" => "sell",
+          "category" => "jewelry",
+          "min_level" => "2",
+          "max_price" => "100"
+        }
+      )
+    end
   end
 
   describe "POST /shop/buy" do
@@ -134,6 +154,23 @@ RSpec.describe "Shop", type: :request do
 
       expect(response).to redirect_to(world_path)
       expect(flash[:alert]).to include("city building")
+    end
+
+    it "does not persist a shop context" do
+      get shop_path
+
+      expect(character.reload.gameplay_context).to eq("name" => "world", "params" => {})
+    end
+  end
+
+  context "without authentication" do
+    it "does not read or update the character context" do
+      sign_out user
+
+      get shop_path(mode: "sell")
+
+      expect(response).to redirect_to(new_user_session_path)
+      expect(character.reload.gameplay_context).to eq("name" => "world", "params" => {})
     end
   end
 end

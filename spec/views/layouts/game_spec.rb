@@ -97,16 +97,18 @@ RSpec.describe "layouts/game.html.erb", type: :view do
       expect(rendered).to have_link("Inventory", class: "nl-nav-link")
     end
 
-    it "includes the separate perks link" do
+    it "does not add profile subpage controls to the live game toolbar" do
       render template: "layouts/game", layout: false
 
-      expect(rendered).to have_link("Perks", class: "nl-nav-link")
+      expect(rendered).not_to have_link("Skills", class: "nl-nav-link")
+      expect(rendered).not_to have_link("Perks", class: "nl-nav-link")
     end
 
-    it "includes return/exit link" do
+    it "keeps the outdoor toolbar to the two implemented source controls" do
       render template: "layouts/game", layout: false
 
-      expect(rendered).to have_css(".nl-nav-link", minimum: 4)
+      expect(rendered).to have_css(".nl-nav-link", count: 2)
+      expect(rendered).not_to have_css(".nl-nav-link", text: "Return")
     end
   end
 
@@ -211,7 +213,7 @@ RSpec.describe "layouts/game.html.erb", type: :view do
     end
   end
 
-  describe "when in city zone" do
+  describe "when in a city node" do
     let(:city_zone) { create(:zone, name: "City", location_type: "city") }
 
     before do
@@ -220,10 +222,11 @@ RSpec.describe "layouts/game.html.erb", type: :view do
       assign(:position, position)
     end
 
-    it "shows city exit link" do
+    it "does not expose the removed generic city exit" do
       render template: "layouts/game", layout: false
 
-      expect(rendered).to have_link("Exit", class: "nl-nav-link")
+      expect(rendered).not_to have_css(".nl-top-nav a", text: "Exit")
+      expect(rendered).to have_css(".nl-nav-link--disabled", text: "City")
     end
   end
 

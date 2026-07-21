@@ -1,35 +1,25 @@
 # frozen_string_literal: true
 
-# TileBuilding tracks enterable structures at specific map tiles.
-# Buildings allow players to transition between source-backed city/building
-# contexts.
+# TileBuilding tracks a captured city entrance at a specific outdoor cell.
 #
 # Usage:
 #   TileBuilding.at_tile(zone_name, x, y) # Find building at tile
-#   TileBuilding.active                    # Buildings that can be entered
-#   building.can_enter?(character)         # Check if character meets requirements
-#   building.enter!(character)             # Move character to destination zone
+#   TileBuilding.active                    # Entrances that can be used
+#   building.can_enter?(character)         # Check whether the entrance is usable
+#   building.enter!(character)             # Move character to its authored node
 #
 class TileBuilding < ApplicationRecord
-  BUILDING_TYPES = %w[city arena shop].freeze
-
-  BUILDING_ICONS = {
-    "city" => "🏙️",
-    "arena" => "⚔️",
-    "shop" => "🏪"
-  }.freeze
+  BUILDING_TYPES = %w[city].freeze
 
   belongs_to :destination_zone, class_name: "Zone", optional: true
 
   validates :zone, :x, :y, :building_key, :name, presence: true
   validates :building_type, inclusion: {in: BUILDING_TYPES}
   validates :building_key, uniqueness: true
-  validates :required_level, numericality: {greater_than_or_equal_to: 1}
   validates :x, :y, numericality: {only_integer: true, greater_than_or_equal_to: 0}
 
   scope :in_zone, ->(zone_name) { where(zone: zone_name) }
   scope :active, -> { where(active: true) }
-  scope :by_type, ->(type) { where(building_type: type) }
 
   # Find building at specific tile coordinates (returns single record or nil)
   #
@@ -41,37 +31,22 @@ class TileBuilding < ApplicationRecord
     find_by(zone: zone, x: x, y: y)
   end
 
-  # Get display name for the building
-  #
-  # @return [String]
-  def display_name
-    name.presence || building_key.titleize
-  end
-
-  # Get the icon for this building (uses custom icon or default for type)
-  #
-  # @return [String] emoji icon
-  def display_icon
-    icon.presence || BUILDING_ICONS[building_type] || "🏙️"
-  end
-
-  # Check if building is accessible (active and destination exists)
+  # Check if the captured entrance has a complete authored destination.
   #
   # @return [Boolean]
   def accessible?
-    active? && destination_zone.present?
+    active? && destination_zone.present? && destination_coordinates_valid?
   end
 
-  # Check if a character can enter this building
+  # Check if a character can use this entrance.
   #
   # @param character [Character] the character trying to enter
   # @return [Boolean]
   def can_enter?(character)
     return false unless accessible?
-    return false if character.level < required_level
+    return false unless character
 
-    # Check additional requirements from metadata
-    check_metadata_requirements(character)
+    character.position.present?
   end
 
   # Get the reason why a character cannot enter
@@ -79,17 +54,13 @@ class TileBuilding < ApplicationRecord
   # @param character [Character] the character trying to enter
   # @return [String, nil] error message or nil if can enter
   def entry_blocked_reason(character)
-    return "Building is currently unavailable." unless accessible?
-    return "Requires level #{required_level}." if character.level < required_level
-
-    unless check_metadata_requirements(character)
-      return metadata["requirement_message"] || "Entry requirements are not met."
-    end
+    return "Entrance is currently unavailable." unless accessible?
+    return "Character is unavailable." unless character&.position
 
     nil
   end
 
-  # Move a character into this building's destination zone
+  # Move a character to this entrance's authored city node.
   #
   # @param character [Character] the character to move
   # @return [Boolean] true if successful
@@ -99,64 +70,20 @@ class TileBuilding < ApplicationRecord
     position = character.position
     return false unless position
 
-    # Determine spawn coordinates in destination
-    spawn_x = destination_x || default_spawn_x
-    spawn_y = destination_y || default_spawn_y
-    return false if spawn_x.nil? || spawn_y.nil?
-
     position.update!(
       zone: destination_zone,
-      x: spawn_x,
-      y: spawn_y,
+      x: destination_x,
+      y: destination_y,
       last_action_at: Time.current
     )
 
     true
   end
 
-  # Get building info hash for display
-  #
-  # @return [Hash]
-  def to_info_hash
-    {
-      id: id,
-      name: display_name,
-      building_type: building_type,
-      icon: display_icon,
-      destination: destination_zone&.name,
-      required_level: required_level,
-      active: active?,
-      description: metadata["description"]
-    }
-  end
-
   private
 
-  def check_metadata_requirements(character)
-    if metadata["required_item"].present?
-      return false unless character_has_item?(character, metadata["required_item"])
-    end
-
-    true
-  end
-
-  def character_has_item?(character, item_key)
-    return false unless character.respond_to?(:inventory)
-
-    character.inventory&.inventory_items&.joins(:item_template)
-      &.where(item_templates: {key: item_key})
-      &.exists? || false
-  end
-
-  def default_spawn_x
-    default_spawn_point&.x
-  end
-
-  def default_spawn_y
-    default_spawn_point&.y
-  end
-
-  def default_spawn_point
-    destination_zone&.spawn_points&.default_entries&.first
+  def destination_coordinates_valid?
+    destination_x&.between?(0, destination_zone.width - 1) &&
+      destination_y&.between?(0, destination_zone.height - 1)
   end
 end

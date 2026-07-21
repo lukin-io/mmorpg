@@ -56,15 +56,51 @@ Mutating actions performed:
 
 The exact tokenized URLs and form tokens are intentionally omitted.
 
+### Fourth Capture Pass
+
+On 2026-07-20, the returning level-16 `sesharim` account was authenticated and
+used for a read-only profile/perk verification pass. The public cookie gate was
+allowed to complete before the single credential POST. The pass then read the
+authenticated shell, workshop state, player profile, and `Навыки` page through
+one cookie jar. No stat, perk, inventory, or combat mutation was submitted.
+The later city-navigation and one-tile movement checks from the same session
+are documented separately in `neverlands_live_city_movement.md`.
+
+This pass confirmed:
+
+- login resumed inside `Форпост [Рабочая мастерская]` rather than a dashboard;
+- the main character strip showed level `16`, full `225/225` HP, `7/7` MP, and
+  the context actions `Ваш персонаж`, `Инвентарь`, and workshop exit;
+- the profile still used the same dense paper doll, money, stats, experience,
+  record, fatigue, attack-cost, and subnavigation layout;
+- `Навыки` rendered the complete source-id catalog from `0` through `41` with
+  gaps only where the source has no row;
+- the mature account had no unspent new-perk points, so saved yes/no values
+  rendered without plus/minus allocation controls.
+
+Credentials, cookies, `vcode` values, and short-lived action tokens were not
+copied into the repository.
+
 ## Authenticated Shell
 
-The public entry page first sets a `watermark` cookie, then serves the actual
-login page. The login form posts to `./game.php` with:
+The public entry page first returns a small `Please Wait... / Cookie...` page,
+sets a `watermark` cookie, and refreshes to the actual login page. Submitting
+the credential POST before completing that cookie handshake returns nginx
+`405 Not Allowed`; it is not a credential failure.
+
+The login form posts to `./game.php` with:
 
 ```html
 name="player_nick"
 name="player_password"
 ```
+
+The visible password placeholder is an old text input. Its inline focus
+handler hides itself and calls bare `getElementById('real')` instead of
+`document.getElementById('real')`. Modern Chrome can throw at that point before
+revealing the real named password input. Automation must submit the actual form
+field contract after the cookie gate instead of repeatedly retrying that broken
+focus handler.
 
 Successful login returns `game.php`, which loads `/js/game.js` and calls
 `view_frames()`. The gameplay shell is a frameset:
@@ -452,6 +488,22 @@ Observed selected stat skills:
 - `Больше удачи`: yes.
 
 Most other rows were `нет` on the observed character.
+
+The 2026-07-20 returning-account pass captured every rendered source id and
+label:
+
+| Category | Source IDs And Labels |
+| --- | --- |
+| Professions | `0` Зельеварение; `1` Горное дело; `2` Натуралист; `4` Рыбная ловля; `6` Разделка добычи; `12` Повар; `13` Дровосек; `17` Чистописание; `20` Деревообработка; `21` Карманник; `33` Плавка металлов; `34` Купец; `35` Целительство; `36` Умелые руки; `37` Огранка камней |
+| Stat skills | `7` Больше силы; `8` Больше здоровья; `9` Больше ловкости; `10` Больше удачи; `11` Больше знаний |
+| Resistances | `28` Сопротивление магии огня; `29` Сопротивление магии воды; `30` Сопротивление магии воздуха; `31` Сопротивление магии земли |
+| Magical skills | `24` Маг Воды; `25` Маг Воздуха; `26` Маг Земли; `27` Маг Огня |
+| Auxiliary skills | `3` Сильная спина; `15` Аккуратный боец; `16` Рукопашный бой; `18` Продление жизни; `22` Дитя природы; `23` Дитя подземелий |
+| Warrior skills | `5` Паладин; `14` Берсерк; `19` Дуэлянт; `32` Рыцарь; `38` Плут; `39` Гвардеец; `40` Головорез; `41` Ведьмак |
+
+Observed saved `да` rows on `sesharim` were `4`, `6`, `7`, `8`, `9`, `10`,
+`15`, and `36`. This establishes ownership display only; it does not establish
+prerequisites, point-grant timing, or gameplay formulas.
 
 `/js/addperk_v03.js` treats these as point-backed toggles. `AddPerk(perkId)`:
 
@@ -987,6 +1039,9 @@ Missing or incomplete:
   not yet a domain-level short-lived inventory action key model;
 - weight/capacity is displayed and adjusted on discard/use, but capacity should
   also block pickup, trade acceptance, and loot collection;
+- the full `Навыки` id/name/category catalog is now captured, but prerequisite
+  gates, point-grant timing, and mechanical effects still need source capture
+  before additional perks become selectable locally;
 - `Умения` and `Навыки` still need a player-profile shaped launch UX pass so
   numeric skills and boolean perks become the main progression surfaces rather
   than separate legacy trees;

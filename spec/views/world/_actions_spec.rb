@@ -63,8 +63,6 @@ RSpec.describe "world/_actions.html.erb", type: :view do
           building: {
             id: 1,
             name: "Outpost Gate",
-            icon: ">",
-            building_type: "city_gate",
             destination: "Outpost",
             can_enter: true
           },
@@ -78,5 +76,31 @@ RSpec.describe "world/_actions.html.erb", type: :view do
     expect(rendered).to have_button("Enter")
     expect(rendered).to have_css("input[name='action_key'][value='building-action-key']", visible: :all)
     expect(rendered).not_to include("Structure Here")
+  end
+
+
+  it "renders a source-backed resource-search offer" do
+    render partial: "world/actions", locals: {
+      available_actions: [
+        {
+          type: :tile_local_action,
+          local_action: {
+            tile_id: 7,
+            local_action_type: "resource_search",
+            source_id: "look",
+            label: "Look Around",
+            description: "Search for herbs and local resources."
+          },
+          offer: OpenStruct.new(action_key: "resource-action-key")
+        }
+      ],
+      position:
+    }
+
+    expect(rendered).to have_button("Look Around")
+    expect(rendered).to have_content("Search for herbs and local resources.")
+    expect(rendered).to have_css("input[name='tile_id'][value='7']", visible: :all)
+    expect(rendered).to have_css("input[name='local_action_type'][value='resource_search']", visible: :all)
+    expect(rendered).to have_css("input[name='action_key'][value='resource-action-key']", visible: :all)
   end
 end

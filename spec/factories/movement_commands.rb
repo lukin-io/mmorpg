@@ -31,5 +31,10 @@ FactoryBot.define do
       completed_at { Time.current }
       processed_at { Time.current }
     end
+
+    trait :expired do
+      offered
+      created_at { MovementCommand::OFFER_TTL.ago - 1.second }
+    end
   end
 end

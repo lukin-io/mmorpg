@@ -84,6 +84,9 @@ Reference:
 - `reference/neverlands_live_inventory_items.md` - 2026-06-01 sanitized live
   inventory, item-family, equip/unequip, item-row, adjacent item-action, and
   shop buy/sell capture.
+- `reference/neverlands_live_city_movement.md` - sanitized live city graph,
+  three-gate outdoor mapping, market/numismatics/airship observations, and
+  hospital/pharmacy service capture.
 
 ## Document Types
 
@@ -300,15 +303,16 @@ Neverlands-based behavior first.
   assignment, public avatar image paths, and the character `avatar` column.
 - generic fantasy seed/test content names, including starter fantasy equipment,
   fantasy player names, goblin/bandit test NPCs, and elite/champion copy.
-- generic terrain-label design concepts, including road/plaza/grass/water tile
-  labels for world rendering. Map tiles now use source-backed location types
-  such as `outdoor` and `city`.
+- generic terrain-label design concepts, including city/road/plaza/grass/water
+  grid tiles. Map tile rows now represent only the outdoor region; Forpost is
+  the captured city-node graph.
 - generic spawn/entry coordinate fallbacks, including first-spawn selection,
   zone-center placement, and starter-position defaults when source-backed entry
   coordinates are missing.
-- generic world navigation fallbacks, including choosing any outdoor zone when a
-  city lacks explicit `exit_to` metadata and rendering missing map templates as
-  passable source-like terrain.
+- generic world navigation fallbacks, including choosing any outdoor zone when
+  a city lacks a captured gate or inferring entrance coordinates from a zone
+  spawn point. Sparse in-bounds outdoor cells remain the explicit MVP region
+  rule.
 - generic player/spawn-point respawn timer fields, including spawn-point
   respawn seconds, character respawn availability timestamps, and unused
   downed/respawning position states. Source-backed outdoor NPC respawn remains

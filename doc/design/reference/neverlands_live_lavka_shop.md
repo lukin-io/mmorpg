@@ -320,4 +320,7 @@ infer the full licensing purchase rule from this capture alone.
 - Failed purchase validation for requirements, money, stock, or carry mass.
 - Successful sale to shop.
 - Eligible `Новичкам` rows.
-- Other shop variants such as market, junk dealer, numismatics, and workshop.
+- Successful and failed mutation outcomes for the separately captured Market,
+  Junk Dealer, and Numismatics surfaces. Their read-only 2026-07-20 capture is
+  documented in `neverlands_live_city_movement.md`.
+- Workshop purchase/sale behavior beyond the captured inventory/resource view.

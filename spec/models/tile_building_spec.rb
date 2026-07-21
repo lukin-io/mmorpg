@@ -15,6 +15,8 @@ RSpec.describe TileBuilding, type: :model do
       building_type: "city",
       name: "Outpost Gate",
       destination_zone: destination_zone,
+      destination_x: 0,
+      destination_y: 0,
       required_level: 1,
       active: true
     }
@@ -34,41 +36,20 @@ RSpec.describe TileBuilding, type: :model do
       expect(building.errors[:building_type]).to include("is not included in the list")
     end
 
-    it "accepts city, arena, and shop types" do
-      described_class::BUILDING_TYPES.each do |type|
+    it "rejects speculative non-gate types" do
+      %w[building special_location arena shop].each do |type|
         building.building_type = type
-        building.building_key = "#{type}_#{SecureRandom.hex(4)}"
 
-        expect(building).to be_valid
+        expect(building).not_to be_valid
       end
     end
   end
 
   describe "scopes" do
     let!(:city_gate) { create(:tile_building, zone: source_zone.name, x: 1, y: 1, building_type: "city") }
-    let!(:shop) { create(:tile_building, zone: source_zone.name, x: 2, y: 2, building_type: "shop") }
 
     it "finds a building at a tile" do
       expect(described_class.at_tile(source_zone.name, 1, 1)).to eq(city_gate)
-    end
-
-    it "filters by building type" do
-      expect(described_class.by_type("city")).to include(city_gate)
-      expect(described_class.by_type("city")).not_to include(shop)
-    end
-  end
-
-  describe "#display_icon" do
-    it "uses the documented type icon when no custom icon is set" do
-      building = described_class.new(valid_attributes.merge(icon: nil, building_type: "arena"))
-
-      expect(building.display_icon).to eq("⚔️")
-    end
-
-    it "falls back to the city icon" do
-      building = described_class.new(valid_attributes.merge(icon: nil, building_type: "unknown"))
-
-      expect(building.display_icon).to eq("🏙️")
     end
   end
 
@@ -100,24 +81,34 @@ RSpec.describe TileBuilding, type: :model do
 
       expect(building.enter!(character)).to be false
     end
-  end
 
-  describe "#to_info_hash" do
-    it "returns display data for the building action panel" do
-      building = described_class.new(
-        valid_attributes.merge(
-          icon: "🚪",
-          metadata: {"description" => "Enter Outpost."}
-        )
+    it "does not apply removed generic level or item gates" do
+      building.update!(
+        required_level: 50,
+        metadata: {"required_item" => "invented_gate_pass"}
       )
 
-      expect(building.to_info_hash).to include(
-        name: "Outpost Gate",
-        building_type: "city",
-        icon: "🚪",
-        destination: "Outpost",
-        description: "Enter Outpost."
-      )
+      expect(building.enter!(character)).to be true
+      expect(character.position.reload.zone).to eq(destination_zone)
+    end
+
+    it "blocks an entrance without authored destination coordinates" do
+      building.update_columns(destination_x: nil, destination_y: nil)
+
+      expect(building.enter!(character)).to be false
+      expect(character.position.reload.zone).to eq(source_zone)
+    end
+
+    it "blocks out-of-bounds destination coordinates" do
+      building.update_columns(destination_x: destination_zone.width, destination_y: 0)
+
+      expect(building.enter!(character)).to be false
+      expect(character.position.reload.zone).to eq(source_zone)
+    end
+
+    it "blocks a null character" do
+      expect(building.can_enter?(nil)).to be false
+      expect(building.entry_blocked_reason(nil)).to eq("Character is unavailable.")
     end
   end
 end

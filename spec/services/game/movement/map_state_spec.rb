@@ -28,6 +28,25 @@ RSpec.describe Game::Movement::MapState do
     expect(state.destinations.map(&:direction)).to contain_exactly("south", "southeast")
   end
 
+  it "offers movement through sparse in-bounds outdoor cells" do
+    MapTileTemplate.where(zone: zone.name).delete_all
+
+    state = described_class.new(character:).call
+
+    expect(state.destinations.size).to eq(8)
+    expect(state.destinations.map { |destination| [destination.target_x, destination.target_y] }).to include([6, 5])
+  end
+
+  it "keeps movement inside the logical 1000 x 1000 boundary" do
+    zone.update!(width: 1000, height: 1000)
+    position.update!(x: 999, y: 999)
+
+    state = described_class.new(character:).call
+
+    expect(state.destinations.map(&:direction)).to contain_exactly("north", "northwest", "west")
+    expect(state.destinations).to all(satisfy { |destination| destination.target_x < 1000 && destination.target_y < 1000 })
+  end
+
   it "cancels stale open offers before issuing fresh offers" do
     stale_offer = create(:movement_command, :offered, character:, zone:, from_x: 5, from_y: 5)
 

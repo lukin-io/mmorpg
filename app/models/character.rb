@@ -2,6 +2,8 @@
 
 class Character < ApplicationRecord
   MAX_NAME_LENGTH = 30
+  GAMEPLAY_CONTEXT_KEY = "gameplay_context"
+  GAMEPLAY_CONTEXTS = %w[world shop city_building].freeze
 
   PRIMARY_STATS = %i[strength dexterity luck vitality intelligence].freeze
   BASE_PRIMARY_STATS = PRIMARY_STATS.index_with { 1 }.freeze
@@ -94,6 +96,37 @@ class Character < ApplicationRecord
   validate :respect_character_limit, on: :create
 
   after_create :ensure_inventory!
+
+  def gameplay_context
+    payload = metadata.to_h[GAMEPLAY_CONTEXT_KEY]
+    return {"name" => "world", "params" => {}} unless payload.is_a?(Hash)
+
+    normalized = payload.deep_stringify_keys
+    return {"name" => "world", "params" => {}} unless GAMEPLAY_CONTEXTS.include?(normalized["name"])
+    return {"name" => "world", "params" => {}} unless normalized["params"].is_a?(Hash)
+
+    normalized.slice("name", "params")
+  end
+
+  def remember_gameplay_context!(name:, params: {})
+    normalized_name = name.to_s
+    raise ArgumentError, "Unsupported gameplay context" unless GAMEPLAY_CONTEXTS.include?(normalized_name)
+    raise ArgumentError, "Gameplay context params must be an object" unless params.is_a?(Hash)
+
+    payload = {
+      "name" => normalized_name,
+      "params" => params.to_h.deep_stringify_keys
+    }
+
+    with_lock do
+      reload
+      return payload if gameplay_context == payload
+
+      update!(metadata: metadata.to_h.merge(GAMEPLAY_CONTEXT_KEY => payload))
+    end
+
+    payload
+  end
 
   def stats
     base = BASE_PRIMARY_STATS.dup

@@ -12,7 +12,7 @@
           <span><%= current_character.name %>[<%= current_character.level %>]</span>
         </div>
         <div class="nl-shop-controls">
-          <%= link_to "City", world_path, class: "nl-arena-link" %>
+          <%= link_to "City", world_path, class: "nl-arena-link", data: {turbo: false} %>
           <%= link_to "Inventory", inventory_path, class: "nl-arena-link" %>
           <%= link_to "Refresh", shop_path(mode: @mode, category: @category), class: "nl-arena-link" %>
         </div>

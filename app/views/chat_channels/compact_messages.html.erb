@@ -1,0 +1,18 @@
+<%= turbo_frame_tag "chat_messages" do %>
+  <%= turbo_stream_from @chat_channel %>
+
+  <div id="<%= dom_id(@chat_channel, :messages) %>"
+       class="nl-chat-message-list"
+       data-controller="chat"
+       data-chat-auto-scroll-value="true"
+       data-chat-current-user-value="<%= current_user.profile_name %>"
+       data-chat-target="messages">
+    <% if @chat_messages.empty? %>
+      <span class="nl-chat-empty">No messages yet.</span>
+    <% else %>
+      <%= render partial: "chat_messages/chat_message",
+                 collection: @chat_messages,
+                 as: :chat_message %>
+    <% end %>
+  </div>
+<% end %>

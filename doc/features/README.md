@@ -1,0 +1,186 @@
+# Feature documentation
+
+`doc/features/` contains implementation handbooks for player-facing game features. A feature document is the bridge between Neverlands observations, the shipped Rails implementation, and the tests that protect it. It should let an engineer or AI agent understand what the player can do, where authority lives, which files own the behavior, what is intentionally deferred, and how to verify a change without reconstructing the feature from the repository.
+
+These documents describe implemented behavior. Product planning remains in `doc/design/launch_mvp_plan.md`; raw live-game evidence remains in `doc/design/reference/`; broader system design remains in `doc/design/areas/` and `doc/design/features/`.
+
+## Directory contents
+
+| Document | Purpose |
+|---|---|
+| `FEATURE_TEMPLATE.md` | Canonical structure for every new feature implementation handbook. Copy it; do not write a new format from scratch. |
+| `world.md` | Completed handbook for the open world, sparse cells, movement, outdoor actions, gates, NPC handoff, and exact-location persistence. |
+| `city.md` | Completed handbook for the Forpost node graph, illustrated navigation, gates, buildings, captured interiors, and resume behavior. |
+
+`world.md` and `city.md` are filled examples of the expected level of precision. `FEATURE_TEMPLATE.md` normalizes their shared structure into the required layout for subsequent features.
+
+## Creating a feature document
+
+1. Copy `doc/features/FEATURE_TEMPLATE.md` to a descriptive lowercase `snake_case` filename such as `doc/features/player_inventory.md`.
+2. Replace every bracketed placeholder and remove every `Template instruction` blockquote.
+3. Preserve all 18 numbered second-level sections and their order.
+4. Keep a section even when it is not applicable; explain why instead of deleting it.
+5. Use exact routes, class names, states, limits, coordinates, timing, labels, and repository-relative file paths from the current implementation.
+6. Separate interactive behavior, read-only source captures, and deferred mechanics explicitly.
+7. Keep the copied `template: feature-v1` metadata entry.
+8. Verify every listed responsible file and focused spec path exists.
+9. Run applicable focused coverage and update the version-history row.
+10. Run `bin/feature-doc-audit doc/features/<feature_name>.md`.
+
+Suggested command:
+
+```bash
+cp doc/features/FEATURE_TEMPLATE.md doc/features/<feature_name>.md
+```
+
+Do not leave placeholder text or template instructions in a completed feature document.
+
+## Automated audit
+
+Run the focused audit after creating or materially updating a feature handbook:
+
+```bash
+bin/feature-doc-audit doc/features/<feature_name>.md
+```
+
+Run the repository-wide audit through either:
+
+```bash
+bin/feature-doc-audit
+bin/verify docs
+```
+
+The audit validates required metadata, canonical section ordering for `template: feature-v1`, unresolved template content, trailing whitespace, responsible-file existence, and duplicate feature titles. `world.md` and `city.md` predate the canonical metadata and currently pass with a migration warning; migrate either document to `feature-v1` on its next material behavior update.
+
+Use `--strict` only when intentionally checking a pre-template document against the canonical 18-section layout:
+
+```bash
+bin/feature-doc-audit --strict doc/features/world.md
+```
+
+## Required layout
+
+Every new feature document follows this exact second-level structure:
+
+1. Design authority and related documents
+2. Feature summary
+3. MVP goals and non-goals
+4. Player experience
+5. Feature topology and authored content
+6. Feature surfaces and contained behavior
+7. Authoritative data and presentation model
+8. Runtime architecture
+9. HTTP and Turbo contract
+10. Client-side and CSS ownership
+11. Persistence and login resume
+12. Authorization, trust boundaries, and concurrency
+13. Failure and boundary behavior
+14. Acceptance criteria
+15. Test strategy and required coverage
+16. Responsible for Implementation Files
+17. Safe extension checklist
+18. Version history
+
+Third-level subsections may use precise feature terminology only where the template explicitly permits it. The purpose and order of the content must remain unchanged.
+
+## Documentation rules
+
+### Neverlands is the design authority
+
+Neverlands remains the only source of game-design truth. A familiar MMORPG pattern is not evidence. When behavior has not been observed or documented, list it as deferred or a non-goal instead of inventing it.
+
+If implementation and observation disagree, update them in this order:
+
+1. capture or correct the evidence in `doc/design/reference/`;
+2. update the relevant design record;
+3. change implementation and tests;
+4. update the feature handbook to describe the shipped result.
+
+### Describe current implementation
+
+Use present tense only for behavior that exists. Planned mechanics belong in goals/planning documents or must be explicitly labeled deferred. Read-only captured screens must not be described as functional transactions.
+
+The document must identify:
+
+- the player-visible entry, primary actions, feedback, and exit;
+- authoritative records and state transitions;
+- server/client ownership boundaries;
+- exact authored topology or content;
+- routes and HTML/Turbo/JSON behavior;
+- persistence and safe login resume;
+- authorization, locking, expiry, allowlists, and replay behavior;
+- failure, null, edge, and boundary outcomes;
+- cross-feature handoff ownership;
+- implemented versus deferred behavior.
+
+### Keep Responsible for Implementation Files exhaustive
+
+Section 16 is mandatory. It must list every file that directly owns the documented feature, grouped by responsibility:
+
+- requirements and design evidence;
+- routes and controllers;
+- models and policies;
+- services;
+- views, helpers, JavaScript, CSS, and assets;
+- content/configuration, seeds, schema, and feature migrations;
+- integrated feature entry points;
+- factories;
+- specs.
+
+Do not list an entire broad directory when a small explicit file list is clearer. A directory is acceptable for a cohesive service or spec family. Distinguish files directly owned by the feature from files that take ownership after a handoff.
+
+### Tests are part of the contract
+
+Every feature change must include applicable model, request, policy, service, factory, view/system, seed/config, and asset coverage. The feature document must explain the following categories:
+
+- success;
+- failure;
+- edge, null, and boundary;
+- authorization.
+
+Blueprint and Swagger/rswag specs are applicable only to a feature that actually exposes those API surfaces. They are not required for the current authenticated HTML/Turbo World and City features.
+
+Never invent a nonexistent spec path to satisfy the template. If a layer does not apply, say why. If the layer applies but coverage is missing, add the test as part of the feature change.
+
+## Status values
+
+Use one of these front-matter states:
+
+- `Implemented MVP` — all behavior described as active is shipped and covered; deferred behavior is clearly separated.
+- `Partially Implemented` — the document precisely marks which surfaces work and which are read-only, unavailable, or deferred.
+
+Do not use `Implemented MVP` for an aspirational PRD. Do not create a feature handbook containing only planned behavior.
+
+## Keeping documents current
+
+Update the responsible feature document whenever a change affects:
+
+- player-visible behavior or Neverlands fidelity;
+- routes, state transitions, validation, authorization, or timing;
+- authored topology, catalog data, seeds, or assets;
+- client-side ownership or accessibility;
+- persistence or login resume;
+- integration ownership;
+- failure behavior or coverage;
+- responsible implementation files.
+
+Small internal refactors that do not change the contract still require the responsible-file inventory and implementation notes to remain correct.
+
+## Review checklist
+
+Before considering a feature document complete, confirm:
+
+- all template placeholders and instructions are removed;
+- `template: feature-v1` remains in frontmatter;
+- all 18 sections remain in order;
+- the summary is understandable without opening code;
+- non-goals prevent generic or speculative expansion;
+- interactive, read-only, and deferred states are unambiguous;
+- the runtime diagram matches controller/service ownership;
+- every route and response mode exists;
+- authority never depends on DOM, CSS geometry, or arbitrary client values;
+- persistence and invalid-resume fallback are documented;
+- all four required coverage categories are addressed;
+- all responsible paths exist;
+- `bin/feature-doc-audit doc/features/<feature_name>.md` passes;
+- version history records the material contract change.

@@ -173,3 +173,109 @@
     width: 84px;
   }
 }
+
+/* Live game shell measurements captured from Neverlands. */
+.nl-game-layout {
+  --nl-top-bar-height: 29px;
+  --nl-players-width: 280px;
+  background: #ffffff;
+}
+
+.nl-top-bar {
+  height: var(--nl-top-bar-height);
+  padding: 3px 4px 4px;
+  border-bottom: 0;
+  background: #fcfaf3;
+  box-shadow: inset 0 -1px 0 #b9a05c, inset 0 -3px 0 #f3ecd7;
+}
+
+.nl-top-left {
+  gap: 2px;
+}
+
+.nl-player-level {
+  color: #333333;
+}
+
+.nl-vitals-inline {
+  gap: 4px;
+  margin-left: 3px;
+}
+
+.nl-hp-bar-inline {
+  width: 160px;
+  height: 8px;
+  border: 1px solid #aaaaaa;
+  background: #eeeeee;
+  box-shadow: none;
+}
+
+.nl-hp-bar-inline .nl-bar-fill {
+  background: linear-gradient(180deg, #ecaaaa 0%, #d56f6f 100%);
+}
+
+.nl-vitals-text {
+  color: #152c48;
+  font-weight: 700;
+}
+
+.nl-top-nav {
+  margin-left: auto;
+  gap: 5px;
+}
+
+.nl-nav-link {
+  display: inline-flex;
+  min-height: 18px;
+  align-items: center;
+  padding: 1px 7px;
+  border: 1px solid #c7c7c7;
+  background: linear-gradient(180deg, #ffffff 0%, #eeeeee 100%);
+  color: #222222;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 14px;
+}
+
+.nl-nav-link:hover {
+  border-color: #aaaaaa;
+  background: #ffffff;
+  color: #1d5f91;
+}
+
+.nl-nav-link--disabled {
+  border-color: #dedede;
+  background: #f6f4ed;
+  color: #c8c3b4;
+}
+
+.nl-top-right {
+  margin-left: 8px;
+}
+
+.nl-close-btn {
+  width: 17px;
+  height: 17px;
+  min-height: 17px;
+  border: 1px solid #53609a;
+  border-radius: 50%;
+  background: linear-gradient(180deg, #6676c1 0%, #243479 100%);
+  color: #ffffff;
+  font-size: 10px;
+  line-height: 15px;
+}
+
+.nl-main-area {
+  background: #ffffff;
+}
+
+.nl-players-float {
+  border-color: #a6a6a6;
+  background: #fffef9;
+  box-shadow: none;
+}
+
+.nl-players-header-float,
+.nl-players-location {
+  background: #fffef9;
+}

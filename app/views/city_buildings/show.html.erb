@@ -1,0 +1,36 @@
+<%= turbo_frame_tag "main_content" do %>
+  <div class="nl-player-subpage nl-city-building-page" data-building-key="<%= @building_key %>">
+    <%= render "shared/player_context_buttons",
+      character: current_character,
+      viewer_character: current_character,
+      current_section: :city_building %>
+
+    <section class="nl-city-building-frame">
+      <header class="nl-city-building-header">
+        <div>
+          <h1><%= @building["title"] %></h1>
+          <p><%= @building["summary"] %></p>
+        </div>
+        <%= link_to "City", world_path, class: "nl-arena-link", data: {turbo: false} %>
+      </header>
+
+      <p class="nl-city-building-notice">
+        This source-captured surface is read-only for MVP. No purchase, sale,
+        processing, healing, rental, or boarding action is exposed.
+      </p>
+
+      <% case @building["kind"] %>
+      <% when "market" %>
+        <%= render "city_buildings/market", building: @building %>
+      <% when "shop_shell" %>
+        <%= render "city_buildings/shop_shell", building: @building %>
+      <% when "numismatics" %>
+        <%= render "city_buildings/numismatics", building: @building %>
+      <% when "airship" %>
+        <%= render "city_buildings/airship", building: @building %>
+      <% when "hospital" %>
+        <%= render "city_buildings/hospital", building: @building %>
+      <% end %>
+    </section>
+  </div>
+<% end %>

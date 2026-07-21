@@ -1,25 +1,124 @@
-<%# City View - illustrated city with source-backed hotspots %>
-<% current_zone = local_assigns[:zone] || @zone %>
-<% hotspots = local_assigns[:hotspots] || @hotspots || [] %>
+<%
+  current_zone = local_assigns[:zone] || @zone
+  hotspots = local_assigns[:hotspots] || @hotspots || []
+  offers_by_hotspot_id = local_assigns[:offers_by_hotspot_id] || @city_action_offers_by_hotspot_id || {}
+  node_key = current_zone.metadata.to_h["city_node_key"]
+  presentation = Game::World::CityCatalog.presentation(node_key) || {
+    "image_position" => "50% 50%",
+    "hotspots" => {}
+  }
+%>
 
 <div class="city-view-container">
-  <div class="city-header">
-    <h2 class="city-name"><%= current_zone.name %></h2>
-    <% if current_zone.metadata&.dig("description") %>
-      <p class="city-description"><%= current_zone.metadata["description"] %></p>
-    <% end %>
-  </div>
+  <h1 class="nl-visually-hidden city-name"><%= current_zone.display_name %></h1>
 
-  <div class="city-view" data-controller="city-view" data-city-view-background-value="<%= asset_path('city.png') %>">
-    <%# Invisible hitboxes at source-backed building positions %>
-    <% hotspots.each do |hotspot| %>
-      <%= render "world/city_hotspot", hotspot: hotspot %>
-    <% end %>
+  <div class="nl-city-scene"
+       data-controller="nl-city-map"
+       aria-label="<%= current_zone.display_name %> city map">
+    <%= image_tag "city.png",
+                  class: "nl-city-scene-image",
+                  alt: "",
+                  aria: {hidden: true},
+                  style: "object-position: #{presentation['image_position']};" %>
 
-    <div class="city-tooltip" data-city-view-target="tooltip"></div>
-  </div>
+    <nav class="city-actions nl-city-hotspots" aria-label="Available city actions">
+      <% hotspots.each_with_index do |hotspot, index| %>
+        <%
+          offer = offers_by_hotspot_id[hotspot.id]
+          geometry = Game::World::CityCatalog.hotspot_presentation(node_key, hotspot.key)
+          geometry ||= {
+            "box" => [5 + ((index % 5) * 18), 82, 16, 15],
+            "marker" => [13 + ((index % 5) * 18), 89],
+            "direction" => "south"
+          }
 
-  <div class="city-actions">
-    <span class="city-location-label"><%= current_zone.name %></span>
+          hotspot_style = if geometry["polygon"]
+            "clip-path: polygon(#{geometry['polygon']}); -webkit-clip-path: polygon(#{geometry['polygon']});"
+          else
+            left, top, width, height = geometry.fetch("box")
+            "left: #{left}%; top: #{top}%; width: #{width}%; height: #{height}%;"
+          end
+
+          blocked_reason = hotspot.interaction_blocked_reason(current_character)
+          tooltip = blocked_reason.present? ? "#{hotspot.name} — #{blocked_reason}" : hotspot.name
+          hotspot_classes = ["nl-city-hotspot", "nl-city-hotspot--#{hotspot.hotspot_type}"]
+          hotspot_classes << "nl-city-hotspot--polygon" if geometry["polygon"]
+          hotspot_classes << "nl-city-hotspot--unavailable" unless offer
+          polygon_points = geometry["polygon"].to_s.scan(/(\d+(?:\.\d+)?)%\s+(\d+(?:\.\d+)?)%/).map do |x, y|
+            [x.to_f, y.to_f]
+          end
+          polygon_focus = if polygon_points.any?
+            [
+              polygon_points.sum { |point| point[0] } / polygon_points.size,
+              polygon_points.sum { |point| point[1] } / polygon_points.size
+            ]
+          end
+          tooltip_actions = "mouseover->nl-city-map#showTooltip mousemove->nl-city-map#moveTooltip mouseout->nl-city-map#hideTooltip focus->nl-city-map#showTooltip blur->nl-city-map#hideTooltip"
+        %>
+
+        <% if offer %>
+          <%= form_with url: interact_hotspot_world_path,
+                        method: :post,
+                        class: "city-action-form nl-city-hotspot-form",
+                        local: true,
+                        data: {turbo: false} do |f| %>
+            <%= f.hidden_field :hotspot_id, value: hotspot.id %>
+            <%= f.hidden_field :action_key, value: offer.action_key %>
+            <% if polygon_focus %>
+              <button type="submit"
+                      class="<%= hotspot_classes.join(' ') %> nl-city-hotspot--pointer"
+                      style="<%= hotspot_style %>"
+                      data-hotspot-key="<%= hotspot.key %>"
+                      data-tooltip="<%= tooltip %>"
+                      data-action="<%= tooltip_actions %>"
+                      tabindex="-1"
+                      aria-hidden="true"></button>
+              <button type="submit"
+                      class="nl-city-hotspot-proxy"
+                      style="left: <%= polygon_focus[0] %>%; top: <%= polygon_focus[1] %>%;"
+                      data-hotspot-key="<%= hotspot.key %>"
+                      data-tooltip="<%= tooltip %>"
+                      data-action="<%= tooltip_actions %>"
+                      aria-label="<%= hotspot.name %>">
+                <span class="nl-visually-hidden"><%= hotspot.name %></span>
+              </button>
+            <% else %>
+              <button type="submit"
+                      class="<%= hotspot_classes.join(' ') %>"
+                      style="<%= hotspot_style %>"
+                      data-hotspot-key="<%= hotspot.key %>"
+                      data-tooltip="<%= tooltip %>"
+                      data-action="<%= tooltip_actions %>"
+                      aria-label="<%= hotspot.name %>">
+                <span class="nl-visually-hidden"><%= hotspot.name %></span>
+              </button>
+            <% end %>
+          <% end %>
+        <% else %>
+          <span class="<%= hotspot_classes.join(' ') %>"
+                style="<%= hotspot_style %>"
+                data-hotspot-key="<%= hotspot.key %>"
+                data-tooltip="<%= tooltip %>"
+                data-action="<%= tooltip_actions %>"
+                role="img"
+                aria-label="<%= tooltip %>">
+            <span class="nl-visually-hidden"><%= tooltip %></span>
+          </span>
+        <% end %>
+
+        <% if geometry["marker"] %>
+          <% marker_x, marker_y = geometry["marker"] %>
+          <span class="nl-city-route-marker"
+                data-direction="<%= geometry['direction'] %>"
+                style="left: <%= marker_x %>%; top: <%= marker_y %>%;"
+                aria-hidden="true">➜</span>
+        <% end %>
+      <% end %>
+    </nav>
+
+    <div class="nl-city-tooltip"
+         data-nl-city-map-target="tooltip"
+         role="status"
+         hidden></div>
   </div>
 </div>

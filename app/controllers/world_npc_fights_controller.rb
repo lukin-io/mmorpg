@@ -4,23 +4,23 @@ class WorldNpcFightsController < ApplicationController
   before_action :ensure_active_character!
 
   def create
+    authorize_world_action_offer!(params[:action_key])
+
     tile_npc = TileNpc.find_by(id: params[:tile_npc_id])
     return respond_with_error("NPC not found.") unless tile_npc
     return respond_with_error("NPC is unavailable.") unless tile_npc.alive?
     return respond_with_error("This NPC is not hostile.") unless tile_npc.hostile?
 
-    action_offer = Game::World::AcceptAction.new(
-      character: current_character,
-      action_key: params[:action_key],
-      action_type: :attack_npc,
-      target: tile_npc
-    ).call
-
-    match = nil
-    ActiveRecord::Base.transaction do
-      match = create_match!(tile_npc)
-      Arena::CombatProcessor.new(match).start_match
+    match = ActiveRecord::Base.transaction do
+      action_offer = Game::World::AcceptAction.new(
+        character: current_character,
+        action_key: params[:action_key],
+        action_type: :attack_npc,
+        target: tile_npc
+      ).call
+      started_match = Game::World::StartNpcFight.new(character: current_character, tile_npc:).call
       action_offer.complete!
+      started_match
     end
 
     respond_to do |format|
@@ -30,62 +30,13 @@ class WorldNpcFightsController < ApplicationController
     end
   rescue Game::World::AcceptAction::ActionViolationError => e
     respond_with_error(e.message)
+  rescue Game::World::StartNpcFight::FightViolationError => e
+    respond_with_error(e.message)
   rescue ActiveRecord::RecordInvalid => e
     respond_with_error(e.record.errors.full_messages.to_sentence.presence || e.message)
   end
 
   private
-
-  def create_match!(tile_npc)
-    npc = tile_npc.npc_template
-    zone = Zone.find_by(name: tile_npc.zone) || current_character.position&.zone
-    npc_hp = [tile_npc.current_hp.to_i, npc.health.to_i].find(&:positive?)
-    unless npc_hp
-      raise Game::World::AcceptAction::ActionViolationError, "NPC combat parameters are not documented."
-    end
-
-    match = ArenaMatch.create!(
-      zone:,
-      match_type: :duel,
-      status: :pending,
-      turn_timeout_seconds: ArenaMatch::DEFAULT_TURN_TIMEOUT,
-      trauma_percent: 30,
-      metadata: {
-        "source" => "world_npc",
-        "fight_kind" => "free",
-        "is_npc_fight" => true,
-        "tile_npc_id" => tile_npc.id,
-        "npc_template_id" => npc.id,
-        "npc_name" => npc.name,
-        "npc_role" => npc.role,
-        "zone" => tile_npc.zone,
-        "x" => tile_npc.x,
-        "y" => tile_npc.y
-      }
-    )
-
-    ArenaParticipation.create!(
-      arena_match: match,
-      character: current_character,
-      user: current_character.user,
-      team: "a",
-      joined_at: Time.current
-    )
-
-    ArenaParticipation.create!(
-      arena_match: match,
-      npc_template: npc,
-      team: "b",
-      joined_at: Time.current,
-      metadata: {
-        "current_hp" => npc_hp,
-        "max_hp" => npc_hp,
-        "tile_npc_id" => tile_npc.id
-      }
-    )
-
-    match
-  end
 
   def respond_with_error(message)
     respond_to do |format|

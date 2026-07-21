@@ -206,6 +206,13 @@ The source capture proves the selection and save behavior, but not the perk's
 exact strength formula. Owning `more_strength` therefore does not change a
 stat or combat formula until that effect is captured.
 
+The full live id/name/category catalog is captured in
+`doc/design/reference/neverlands_live_player.md`. This includes all profession,
+stat, resistance, magic, auxiliary, and warrior rows, so branch names no longer
+need to be inferred. Only source id `7` remains selectable for launch because
+the returning-account page did not expose prerequisite gates, point-grant
+timing, or mechanical effect formulas for the other entries.
+
 Perk allocation rules:
 
 - available new-perk points are shown on the dedicated perks page;
@@ -215,9 +222,9 @@ Perk allocation rules:
   allocation UI;
 - incompatible branches are rejected server-side and hidden or disabled in
   the preview UI;
-- the captured exclusion table is retained by source ID, but unnamed branch
-  perks are not rendered or selectable until their labels and requirements are
-  captured.
+- the captured exclusion table is retained by source ID, but additional named
+  perks are not rendered or selectable until their requirements and effects
+  are captured.
 
 ## Rules
 

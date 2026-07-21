@@ -1,0 +1,19 @@
+<div class="nl-shop-tabs">
+  <% building["tabs"].each do |tab| %>
+    <span class="nl-arena-tab"><%= tab %></span>
+  <% end %>
+</div>
+
+<h2>Treatment shop observation</h2>
+<table class="nl-profile-table nl-city-building-table">
+  <thead><tr><th>Item</th><th>Resource</th><th>Price</th><th>Observed stock</th></tr></thead>
+  <tbody>
+    <% building["goods"].each do |name, resource, price, stock| %>
+      <tr><td><%= name %></td><td><%= resource %></td><td><%= number_with_delimiter(price) %> NV</td><td><%= stock %></td></tr>
+    <% end %>
+  </tbody>
+</table>
+
+<h2>Recovery and pharmacy</h2>
+<p>Rest room and hospital bed were observed as “Entry forbidden” for a full-health character.</p>
+<p>The Pharmacy is a resource-processing surface; processing controls remain deferred.</p>

@@ -21,24 +21,23 @@ RSpec.describe "World Interactions", type: :system, js: true do
     it "starts timed movement, then resumes at the destination after completion" do
       visit world_path
 
-      expect(page).to have_css(".nl-location-coords", text: "[5, 5]")
+      expect(page).to have_css(".nl-location-coords", text: "[5, 5]", visible: :all)
 
       find(".nl-tile-clickable--available[data-target-x='6'][data-target-y='5']").click
 
       expect(page).to have_css(".nl-cursor-img--moving")
-      expect(page).to have_css(".nl-location-coords", text: "[5, 5]")
+      expect(page).to have_css(".nl-location-coords", text: "[5, 5]", visible: :all)
       expect(position.reload.x).to eq(5)
 
       MovementCommand.moving.last.update!(ends_at: 1.second.ago)
       visit world_path
 
-      expect(page).to have_css(".nl-location-coords", text: "[6, 5]")
+      expect(page).to have_css(".nl-location-coords", text: "[6, 5]", visible: :all)
     end
 
     it "enters a tile building and transitions zones" do
       destination_zone = create(:zone, name: "Outpost", location_type: "city", width: 10, height: 10)
       create(:tile_building,
-        :with_destination,
         zone: zone.name,
         x: position.x,
         y: position.y,
@@ -52,6 +51,27 @@ RSpec.describe "World Interactions", type: :system, js: true do
       click_button "Enter"
 
       expect(page).to have_content("Outpost")
+    end
+
+    it "performs the server-offered resource search on the current cell" do
+      MapTileTemplate.find_by!(zone: zone.name, x: 5, y: 5).update!(
+        metadata: {
+          "local_actions" => [
+            {
+              "type" => "resource_search",
+              "source_id" => "look",
+              "label" => "Look Around",
+              "description" => "Search for herbs and local resources."
+            }
+          ]
+        }
+      )
+
+      visit world_path
+      click_button "Look Around"
+
+      expect(page).to have_content("You search the surroundings for herbs and local resources.")
+      expect(page).to have_button("Look Around")
     end
   end
 

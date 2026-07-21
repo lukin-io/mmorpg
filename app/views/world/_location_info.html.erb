@@ -2,31 +2,9 @@
   <h3>Location</h3>
 
   <div class="location-description">
-    <% if zone.city? %>
-      <p><strong><%= zone.name %></strong></p>
-      <p class="location-hint">Documented buildings are available: Arena and Shop.</p>
-    <% elsif zone.outdoor? %>
-      <p><strong><%= zone.name %></strong></p>
-      <p class="location-hint">Hostile NPCs may attack in this area.</p>
-    <% else %>
-      <p><strong><%= zone.name %></strong> [<%= position.x %>, <%= position.y %>]</p>
+    <p><strong><%= zone.name %></strong> [<%= position.x %>, <%= position.y %>]</p>
+    <% if tile.respond_to?(:metadata) && tile.metadata&.dig("source_coordinates").present? %>
+      <p>Neverlands source cell: <%= tile.metadata["source_coordinates"].join(", ") %></p>
     <% end %>
   </div>
-
-  <% if tile.respond_to?(:metadata) && tile.metadata.present? %>
-    <div class="tile-features">
-      <% if tile.metadata["npc"] %>
-        <div class="feature-item">
-          <span class="feature-icon">👤</span>
-          <span><%= tile.metadata["npc"] %></span>
-        </div>
-      <% end %>
-      <% if tile.metadata["shop"] %>
-        <div class="feature-item">
-          <span class="feature-icon">🏪</span>
-          <span><%= tile.metadata["shop"] %></span>
-        </div>
-      <% end %>
-    </div>
-  <% end %>
 </div>

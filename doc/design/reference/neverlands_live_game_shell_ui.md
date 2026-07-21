@@ -99,7 +99,7 @@ Observed hotspots on this Forpost city node:
 | `Лавка` | Shop building entry. |
 | `Выход из города` | Returns to outdoor/city exit context. |
 | `Мастерская` | Building entry; not MVP until source behavior is captured. |
-| `Больница` | Building entry; not MVP until source behavior is captured. |
+| `Больница` | Building entry; later read-only behavior capture is documented in `neverlands_live_city_movement.md`, but it remains outside MVP. |
 | `Сторожевая башня` | Building entry; not MVP until source behavior is captured. |
 | `Перейти в деловой квартал` | City node transition. |
 | `Перейти в жилой квартал` | City node transition. |

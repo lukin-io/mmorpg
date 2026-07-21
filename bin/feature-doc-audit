@@ -1,0 +1,19 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require_relative "../lib/feature_doc_audit"
+
+strict = ARGV.delete("--strict")
+root = File.expand_path("..", __dir__)
+result = FeatureDocAudit::Auditor.new(root:, paths: ARGV, strict:).call
+
+result.warnings.each { |warning| warn "WARN: #{warning}" }
+result.errors.each { |error| warn "ERROR: #{error}" }
+
+if result.success?
+  puts "Feature doc audit passed (#{result.documents_count} document#{'s' unless result.documents_count == 1})."
+  exit 0
+end
+
+warn "Feature doc audit failed with #{result.errors.length} error#{'s' unless result.errors.length == 1}."
+exit 1

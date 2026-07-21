@@ -33,6 +33,12 @@ building, shop, arena, and combat all replace only the main gameplay surface.
 Chat, presence, top vitals, and contextual controls remain part of the game
 client shell.
 
+The 2026-07-20 city-service pass confirms that specialized buildings keep this
+same shell and render dense feature tables inside the main surface: market
+listings and stall controls, scheduled airship rows, hospital service tabs and
+stock, and pharmacy resource rows. Preserve the compact table-first hierarchy;
+do not turn each service into an unrelated full-page dashboard.
+
 ## Modern Rails Shell Decision
 
 Neverlands frames are not a technical target. The MVP should preserve the
@@ -80,7 +86,9 @@ compact operational feel with a generic modern dashboard.
 - Action buttons are refreshed from server-authored state and are not static
   global shortcuts.
 - Text density should match a working game client, not a promotional site.
-- The layout must support reload/resume states for movement and combat.
+- The layout must support reload/login resume states for exact outdoor cells,
+  city nodes, implemented interiors such as Shop and captured read-only city
+  services, movement, and combat.
 - The UI must not hide the current location or available actions.
 
 ## Feature Hooks

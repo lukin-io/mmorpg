@@ -5,6 +5,13 @@ class WorldActionOffer < ApplicationRecord
   ACTION_TYPES = %w[
     attack_npc
     enter_building
+    search_resources
+    fish
+    drink
+    dig
+    city_transition
+    enter_city_building
+    exit_city
   ].freeze
 
   OFFER_TTL = 10.minutes
@@ -21,10 +28,11 @@ class WorldActionOffer < ApplicationRecord
   belongs_to :zone
   belongs_to :target, polymorphic: true, optional: true
 
-  validates :x, :y, numericality: {only_integer: true}
+  validates :x, :y, numericality: {only_integer: true, greater_than_or_equal_to: 0}
   validates :action_type, inclusion: {in: ACTION_TYPES}
   validates :action_key, presence: true, uniqueness: true
   validates :expires_at, presence: true
+  validate :coordinates_within_zone_bounds
 
   scope :live, -> { offered.where("expires_at > ?", Time.current) }
   scope :at_tile, ->(zone, x, y) { where(zone:, x:, y:) }
@@ -50,5 +58,14 @@ class WorldActionOffer < ApplicationRecord
 
   def fail!(message)
     update!(status: :failed, error_message: message)
+  end
+
+  private
+
+  def coordinates_within_zone_bounds
+    return unless zone && x.is_a?(Integer) && y.is_a?(Integer)
+
+    errors.add(:x, "must be within zone bounds") unless x < zone.width
+    errors.add(:y, "must be within zone bounds") unless y < zone.height
   end
 end

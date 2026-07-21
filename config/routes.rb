@@ -18,11 +18,11 @@ Rails.application.routes.draw do
   end
 
   resource :world, only: :show, controller: "world" do
+    get :players
     post :move
-    post :enter
     post :enter_building
+    post :perform_local_action
     post :interact_hotspot
-    post :exit_location
   end
 
   resource :inventory, only: [:show] do
@@ -45,6 +45,8 @@ Rails.application.routes.draw do
     post :buy
     post :sell
   end
+
+  get "city/buildings/:building_key", to: "city_buildings#show", as: :city_building
 
   resources :arena, only: [:index], controller: "arena" do
     collection do

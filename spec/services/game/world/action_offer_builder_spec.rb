@@ -8,7 +8,7 @@ RSpec.describe Game::World::ActionOfferBuilder do
   let(:character) { create(:character) }
   let(:position) { create(:character_position, character:, zone:, x: 5, y: 5) }
   let(:npc) { create(:tile_npc, zone: zone.name, x: 5, y: 5) }
-  let(:building) { create(:tile_building, :with_destination, zone: zone.name, x: 5, y: 5) }
+  let(:building) { create(:tile_building, zone: zone.name, x: 5, y: 5) }
   let(:tile_state) do
     OpenStruct.new(
       npc: npc,
@@ -23,6 +23,12 @@ RSpec.describe Game::World::ActionOfferBuilder do
     expect(offers).to all(be_persisted)
     expect(offers).to all(have_attributes(character: character, zone: zone, x: 5, y: 5))
     expect(offers.map(&:action_key)).to all(be_present)
+    entrance_offer = offers.find { |offer| offer.action_type == "enter_building" }
+    expect(entrance_offer.metadata).to include(
+      "building_key" => building.building_key,
+      "destination_zone_id" => building.destination_zone_id
+    )
+    expect(entrance_offer.metadata).not_to have_key("building_type")
   end
 
   it "cancels stale open offers before issuing new ones" do
@@ -43,5 +49,46 @@ RSpec.describe Game::World::ActionOfferBuilder do
 
     expect(offers).to be_empty
     expect(WorldActionOffer.offered.where(character:)).to be_empty
+  end
+
+  it "creates an offer only for the implemented source-backed local action" do
+    tile = create(
+      :map_tile_template,
+      zone: zone.name,
+      x: 5,
+      y: 5,
+      metadata: {
+        "local_actions" => [
+          {"type" => "resource_search", "source_id" => "look", "label" => "Look Around"},
+          {"type" => "fishing", "source_id" => "fis", "label" => "Fish"}
+        ]
+      }
+    )
+    local_state = OpenStruct.new(
+      tile:,
+      npc: nil,
+      building: nil,
+      local_actions: tile.active_local_actions
+    )
+
+    offers = described_class.new(character:, position:, tile_state: local_state).call
+
+    expect(offers.map(&:action_type)).to contain_exactly("search_resources")
+    expect(offers).to all(have_attributes(target: tile))
+    expect(offers.map { |offer| offer.metadata["source_id"] }).to contain_exactly("look")
+  end
+
+  it "does not issue an offer for an inactive local action" do
+    tile = create(:map_tile_template, :with_inactive_resource_search, zone: zone.name, x: 5, y: 5)
+    local_state = OpenStruct.new(
+      tile:,
+      npc: nil,
+      building: nil,
+      local_actions: tile.active_local_actions
+    )
+
+    offers = described_class.new(character:, position:, tile_state: local_state).call
+
+    expect(offers).to be_empty
   end
 end
