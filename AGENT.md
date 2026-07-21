@@ -436,6 +436,7 @@ Every handbook must explain:
 - acceptance criteria;
 - test strategy and focused commands;
 - an exhaustive `Responsible for Implementation Files` section;
+- reciprocal links to every directly related feature handbook with a consistent ownership/handoff boundary;
 - safe extension rules and material version history.
 
 Interactive, read-only captured, unavailable, and deferred behavior must be unambiguous.
@@ -465,6 +466,8 @@ Merge documents when:
 
 Do not merge when one document merely records an explicit cross-feature dependency. In that case, state where ownership hands off.
 
+Cross-feature references must be reciprocal and limited to direct runtime, persistence, authorization, presentation, or authored-content handoffs. When a boundary changes, update both canonical handbooks in the same change; do not create an all-to-all feature link graph.
+
 When merging:
 
 1. prefer the existing feature-owned filename;
@@ -493,6 +496,7 @@ The audit checks:
 - required metadata and allowed implementation status;
 - exact canonical section ordering for `template: feature-v1` documents;
 - unresolved template instructions/placeholders;
+- the required cross-feature relationship subsection and reciprocal feature links;
 - trailing whitespace;
 - non-empty responsible-file inventory;
 - existence of responsible repository paths;

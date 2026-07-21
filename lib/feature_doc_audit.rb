@@ -29,6 +29,8 @@ module FeatureDocAudit
   ].freeze
   COMPLETED_DOC_EXCLUSIONS = %w[FEATURE_TEMPLATE.md README.md].freeze
   REPOSITORY_PATH_PATTERN = /`((?:app|bin|config|db|doc|lib|spec)\/[^`\n]+)`/
+  CROSS_FEATURE_HEADING = "### 1.1 Cross-feature relationships"
+  FEATURE_DOC_PATH_PATTERN = /`(doc\/features\/[a-z0-9_]+\.md)`/
 
   Result = Struct.new(:documents_count, :errors, :warnings, keyword_init: true) do
     def success?
@@ -110,6 +112,7 @@ module FeatureDocAudit
         audit_legacy_layout(document, content)
       end
 
+      audit_cross_feature_relationships(document, content)
       audit_responsible_files(document, content)
       metadata
     end
@@ -213,6 +216,34 @@ module FeatureDocAudit
         next if root.join(referenced_path).exist?
 
         errors << "#{display_path(document)}: responsible path does not exist: #{referenced_path}"
+      end
+    end
+
+    def audit_cross_feature_relationships(document, content)
+      section = content[/^#{Regexp.escape(CROSS_FEATURE_HEADING)}$.*?(?=^## |\z)/m]
+      unless section
+        errors << "#{display_path(document)}: #{CROSS_FEATURE_HEADING} section is required"
+        return
+      end
+
+      section.scan(FEATURE_DOC_PATH_PATTERN).flatten.uniq.each do |related_path|
+        if related_path == display_path(document)
+          errors << "#{display_path(document)}: cross-feature relationship cannot reference itself"
+          next
+        end
+
+        related_document = root.join(related_path)
+        unless related_document.file?
+          errors << "#{display_path(document)}: related feature document does not exist: #{related_path}"
+          next
+        end
+
+        related_content = related_document.read
+        related_section = related_content[/^#{Regexp.escape(CROSS_FEATURE_HEADING)}$.*?(?=^## |\z)/m]
+        backlink = "`#{display_path(document)}`"
+        next if related_section&.include?(backlink)
+
+        errors << "#{display_path(document)}: relationship with #{related_path} is not reciprocal"
       end
     end
 

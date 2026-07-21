@@ -35,7 +35,16 @@ Supporting documents:
 - `doc/design/launch_mvp_plan.md` — [relevant MVP boundary or milestone].
 - `doc/features/[related_feature].md` — [runtime integration boundary].
 
-> Template instruction: include only relevant existing documents. State what each document contributes; do not provide an unexplained link dump.
+### 1.1 Cross-feature relationships
+
+| Related feature | Relationship | Ownership and handoff |
+|---|---|---|
+| `doc/features/[upstream_feature].md` | [What this feature receives from the related feature] | [Where upstream authority ends and this feature begins] |
+| `doc/features/[downstream_feature].md` | [What this feature provides to the related feature] | [Where this feature's authority ends and downstream authority begins] |
+
+Every cross-feature relationship must be reciprocal: the related handbook must link back and describe the same boundary from its side. Include only real runtime, persistence, authorization, presentation, or content handoffs; do not create an all-to-all link graph.
+
+> Template instruction: include only relevant existing documents. State what each document contributes; do not provide an unexplained link dump. Replace the relationship rows with every directly related feature, verify the reciprocal references, and remove any row that does not represent a shipped integration boundary. If no direct feature relationship exists, replace the table with an explicit sentence saying so; keep the subsection.
 
 ## 2. Feature summary
 
@@ -395,7 +404,8 @@ Before extending [Feature Name]:
 6. Keep unimplemented behavior read-only or unavailable; do not expose controls that imply nonexistent mutations.
 7. Preserve accessibility and the Neverlands visual language.
 8. Add success, failure, edge/null/boundary, and authorization coverage where applicable.
-9. Update non-goals, acceptance criteria, responsible files, focused checks, and version history in this document.
+9. Update both handbooks when a direct cross-feature relationship or ownership boundary changes.
+10. Update non-goals, acceptance criteria, responsible files, focused checks, and version history in this document.
 
 ## 18. Version history
 

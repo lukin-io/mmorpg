@@ -11,8 +11,11 @@ These documents describe implemented behavior. Product planning remains in `doc/
 | `FEATURE_TEMPLATE.md` | Canonical structure for every new feature implementation handbook. Copy it; do not write a new format from scratch. |
 | `world.md` | Completed handbook for the open world, sparse cells, movement, outdoor actions, gates, NPC handoff, and exact-location persistence. |
 | `city.md` | Completed handbook for the Forpost node graph, illustrated navigation, gates, buildings, captured interiors, and resume behavior. |
+| `character_progression.md` | Canonical handbook for Neverlands-based primary stats, numeric skills, boolean perks, allocation pools, and public progression display. |
+| `shop_economy.md` | Canonical handbook for the City Shop, catalog modes, NV wallet, buying, inventory selling, stock, and transaction persistence. |
+| `game_shell.md` | Canonical handbook for the persistent game frame, compact vitals, exact-cell presence, global chat, and shell preferences. |
 
-`world.md` and `city.md` are filled examples of the expected level of precision. `FEATURE_TEMPLATE.md` normalizes their shared structure into the required layout for subsequent features.
+The completed handbooks are examples of the expected level of precision. `character_progression.md`, `shop_economy.md`, and `game_shell.md` use the canonical `feature-v1` layout directly. `world.md` and `city.md` remain valid pre-template handbooks until their next material behavior update. `FEATURE_TEMPLATE.md` defines the required layout for subsequent features.
 
 ## Creating a feature document
 
@@ -50,7 +53,7 @@ bin/feature-doc-audit
 bin/verify docs
 ```
 
-The audit validates required metadata, canonical section ordering for `template: feature-v1`, unresolved template content, trailing whitespace, responsible-file existence, and duplicate feature titles. `world.md` and `city.md` predate the canonical metadata and currently pass with a migration warning; migrate either document to `feature-v1` on its next material behavior update.
+The audit validates required metadata, canonical section ordering for `template: feature-v1`, the required cross-feature relationship subsection, reciprocal feature references, unresolved template content, trailing whitespace, responsible-file existence, and duplicate feature titles. `world.md` and `city.md` predate the canonical metadata and currently pass with a migration warning; migrate either document to `feature-v1` on its next material behavior update.
 
 Use `--strict` only when intentionally checking a pre-template document against the canonical 18-section layout:
 
@@ -84,6 +87,28 @@ Every new feature document follows this exact second-level structure:
 Third-level subsections may use precise feature terminology only where the template explicitly permits it. The purpose and order of the content must remain unchanged.
 
 ## Documentation rules
+
+### Cross-reference related features
+
+Every feature handbook must cross-reference each directly related feature in section 1 and explain the boundary in both directions. A relationship is justified when the features share a runtime handoff, authoritative record, persisted resume path, authorization boundary, rendered surface, or authored-content entry point.
+
+Cross-references are reciprocal. If Feature A says it hands control or data to Feature B, Feature B must link back and describe what it accepts and what remains owned by A. Do not link every document to every other document: indirect adjacency, shared Rails infrastructure, or thematic similarity is not a feature relationship.
+
+Current direct relationships:
+
+```mermaid
+flowchart LR
+    World["World"] <--> City["City"]
+    World <--> Shell["Game Shell"]
+    World <--> Shop["Shop and Economy"]
+    City <--> Shell
+    City <--> Shop
+    Shop <--> Shell
+    Shop <--> Progression["Character Progression"]
+    Progression <--> Shell
+```
+
+When a boundary changes, update both handbooks in the same change. The owning handbook remains the sole primary contract; a cross-reference summarizes the handoff and must not duplicate the other feature's full behavior.
 
 ### Neverlands is the design authority
 
@@ -177,6 +202,7 @@ Before considering a feature document complete, confirm:
 - non-goals prevent generic or speculative expansion;
 - interactive, read-only, and deferred states are unambiguous;
 - the runtime diagram matches controller/service ownership;
+- every direct cross-feature relationship is linked reciprocally with a consistent ownership boundary;
 - every route and response mode exists;
 - authority never depends on DOM, CSS geometry, or arbitrary client values;
 - persistence and invalid-resume fallback are documented;

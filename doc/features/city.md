@@ -32,6 +32,16 @@ Supporting documents:
 - `doc/design/areas/cities_and_buildings.md` — city-area design record.
 - `doc/design/launch_mvp_plan.md` — MVP city topology and boundary.
 - `doc/features/world.md` — outdoor cells, gate entrances, authoritative position, and shared action offers.
+- `doc/features/game_shell.md` — persistent frame in which the city-node surface is rendered.
+- `doc/features/shop_economy.md` — interactive General Shop behavior reached from the Trading Quarter.
+
+### 1.1 Cross-feature relationships
+
+| Related feature | Relationship | Ownership and handoff |
+|---|---|---|
+| `doc/features/world.md` | Outdoor entrances reach authored Forpost nodes and three city gates return to explicit outdoor cells. | World owns outdoor cells, gate destinations, and the shared action-offer boundary; City owns node navigation and city hotspot availability. |
+| `doc/features/game_shell.md` | City replaces the World center while retaining shared character, presence, navigation, and chat chrome. | City owns the illustrated node surface and transitions; Game Shell owns only the surrounding persistent frame. |
+| `doc/features/shop_economy.md` | The Trading Quarter exposes the interactive General Shop and validates entry before redirect. | City owns node presence, hotspot offer, level/access gate, and exit; Shop owns catalog, buying, selling, NV, and Shop resume parameters. |
 
 ## 2. Feature summary
 
@@ -569,3 +579,4 @@ Before extending City:
 | Date | Change |
 |---|---|
 | 2026-07-21 | Created the implementation handbook for the shipped Forpost node graph, city scene, gates, interiors, resume behavior, and coverage. |
+| 2026-07-21 | Added reciprocal ownership and handoff references for World, Game Shell, and Shop and Economy. |

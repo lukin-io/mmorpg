@@ -33,6 +33,16 @@ Supporting documents:
 - `doc/design/features/movement.md` — movement design record.
 - `doc/design/launch_mvp_plan.md` — MVP boundary and seeded topology.
 - `doc/features/city.md` — city nodes, hotspots, and interior surfaces reached through the World context.
+- `doc/features/game_shell.md` — persistent frame and presentation of the current World surface and same-cell presence.
+- `doc/features/shop_economy.md` — Shop resume context that reuses World-owned position and safe fallback behavior.
+
+### 1.1 Cross-feature relationships
+
+| Related feature | Relationship | Ownership and handoff |
+|---|---|---|
+| `doc/features/city.md` | Outdoor entrances hand the character to a city node; city gates hand the character back to explicit outdoor cells. | World owns outdoor cells, entrance availability, and exact outdoor position; City owns its node graph and city hotspots after entry. |
+| `doc/features/game_shell.md` | World bootstraps the game layout and supplies current location and same-cell player data. | World owns position queries and the central map/city payload; Game Shell owns the persistent frame, nearby-player presentation, and compact chat. |
+| `doc/features/shop_economy.md` | World-owned resume context validates a saved Shop surface and falls back to World when it is unavailable. | World/City retain exact location authority; Shop owns allowlisted catalog context and exchange behavior after entry. |
 
 ## 2. Feature summary
 
@@ -545,3 +555,4 @@ Before extending the World feature:
 | Date | Change |
 |---|---|
 | 2026-07-21 | Created the implementation handbook for the shipped MVP open world, sparse cells, movement lifecycle, outdoor interactions, persistence, and coverage. |
+| 2026-07-21 | Added reciprocal ownership and handoff references for City, Game Shell, and Shop resume integration. |
