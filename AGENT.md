@@ -1,399 +1,637 @@
-# AGENT.md — General Ruby on Rails Engineering Agent
+# AGENT.md — Neverlands-Based Rails MMORPG Engineering Contract
 
-This project uses Neverlands-based design as the source of truth. Non-Neverlands
-guides are legacy and should not be used as alternate product guidance.
+Contract metadata:
 
-### Project Guides
-- [Game Design Document](doc/design/gdd.md)
-- [Launch MVP Plan](doc/design/launch_mvp_plan.md)
-- [Design Feature Specs](doc/design/features/)
-- [Design Area Specs](doc/design/areas/)
-- [Neverlands Reference](doc/design/reference/neverlands.md)
+- updated_at: `2026-07-21`
+- why_changed: "The contract now routes Ruby/Rails features, behavior changes, bug fixes, and refactors through the full-stack Ruby 4.0, Rails 8.1, and Hotwire technical guide while preserving Neverlands and feature-document authority."
 
-### When to use each guide
-- Use **doc/design/gdd.md** first for game design and player-facing behavior.
-- Use feature and area docs under **doc/design/** for implementation behavior.
-- Use Neverlands live/reference notes only as source material for updating
-  **doc/design/**.
-- Remove non-Neverlands docs instead of preserving them as historical guidance.
+Why/Impact:
 
-This repository is a **Ruby on Rails application** (HTML + Hotwire and optionally JSON APIs).
-This file defines how the engineering agent should behave when making changes.
+- Neverlands remains the only game-design authority; generic MMORPG conventions are not substitutes for observed behavior.
+- A player-facing feature is not complete until implementation and applicable tests pass, then its canonical `doc/features/**` handbook is created or updated.
+- Persistent gameplay mutations are server-authoritative, atomic where needed, safe against duplicate/concurrent execution, and covered at their behavioral boundaries.
+- Verification is read-only, uses the repository's real RSpec/system/security split, and reports exact command outcomes.
+- Process rules, design evidence, shipped feature contracts, and runtime code now have explicit ownership and conflict handling.
+- `doc/RUBY_ON_RAILS_GUIDE.md` is the subordinate Ruby, Rails, and Hotwire implementation guide for new features, behavior changes, bug fixes, and refactors.
 
-If this file conflicts with **project-specific docs** (`README`, `CONTRIBUTING`, etc.), **project docs win**.
+This document is the repository-wide engineering process contract. Sections are labeled:
 
----
+- `[NORMATIVE]` — mandatory behavior.
+- `[ILLUSTRATIVE]` — examples to adapt to the current task.
 
-## 1. Setup (run first)
-
-- Use Ruby from `.ruby-version` or `Gemfile`.
-- Install dependencies:
-
-  ```bash
-  bundle install
-  ```
-
-- Prepare databases (development + test), typically:
-
-  ```bash
-  bin/rails db:prepare
-  ```
-
-- If present, always prefer project wrappers such as:
-
-  ```bash
-  bin/setup
-  bin/dev
-  bin/ci
-  ```
-
-  instead of manually wiring processes.
-
-- Follow any additional setup instructions described in the project `README` (JS bundler, Redis, Sidekiq, etc.).
+If two repository instructions at the same authority level conflict and the precedence rules below do not resolve them, stop and ask for clarification.
 
 ---
 
-## 2. Common development commands
+## 0. [NORMATIVE] Purpose and scope
 
-These are **typical** commands for a Rails app. Use the ones that exist in this project;
-if a command is missing, skip it and mention that in your CHECKS.
+This contract defines:
 
-### 2.1 Development & console
+- game-design and implementation authority;
+- execution and optional planning gates;
+- Rails, Hotwire, game-domain, and security standards;
+- required coverage and verification;
+- post-implementation feature documentation;
+- discrepancy reporting and final handoff format.
 
-- `bin/dev` — start the full dev stack (Rails, JS bundler, background workers) if defined.
-- `bin/rails server` — start Rails server only.
-- `bin/rails console` — open Rails console.
+It applies to all work in this Rails MMORPG repository. System, developer, and explicit user instructions remain higher authority than this file.
 
-### 2.2 Tests
+## 1. [NORMATIVE] Authority and precedence
 
-Depending on whether the project uses Minitest or RSpec:
+### 1.1 Authority by concern
 
-- **Minitest style**:
-  - `bin/rails test` — run all tests.
-  - `bin/rails test:system` — system tests (use sparingly, they are slower).
-  - `bin/rails test path/to/test_file.rb` — specific test file.
-  - `bin/rails test path/to/test_file.rb:42` — specific test at line.
+1. `AGENT.md` governs repository engineering process, verification, and documentation workflow.
+2. Neverlands live behavior and preserved source material are the sole game-design authority.
+3. `doc/design/**` records normalized Neverlands evidence, design decisions, and MVP scope.
+4. `doc/features/**` describes verified, shipped implementation contracts.
+5. `doc/RUBY_ON_RAILS_GUIDE.md` expands Ruby 4.0, Rails 8.1, Hotwire, Active Record, jobs, security, performance, and refactoring technique.
+6. Code and tests show actual current runtime behavior.
 
-- **RSpec style**:
-  - `bundle exec rspec` — run the full RSpec suite.
-  - `bundle exec rspec spec/models/user_spec.rb` — specific spec file.
-  - `bundle exec rspec spec/models/user_spec.rb:42` — specific example at line.
+No one layer silently overrides another layer outside its concern. In particular:
 
-### 2.3 Linting & security
+- passing code is not evidence that an invented game mechanic is valid;
+- a feature document is not permission to ignore a newer verified Neverlands observation;
+- a Neverlands observation is not proof that an unimplemented mechanic already exists locally;
+- the Rails technical guide cannot invent game design, override this contract, or describe unverified behavior as shipped;
+- generic RPG knowledge is never an alternate product source.
 
-- `bundle exec rubocop` — Ruby linting.
-- `bundle exec brakeman` or `bin/brakeman` — security analysis (if configured).
-- `bundle exec bundle audit check --update` — check Gem vulnerabilities.
-- If the project has JS tooling:
-  - `npm run lint` / `yarn lint` — JS/TS lint.
-  - `npm run format` / `yarn format` — JS/TS format.
+### 1.2 Guide routing
 
-### 2.4 Database
+- Start with `doc/design/gdd.md` for the consolidated game-design model.
+- Read the relevant documents under `doc/design/areas/` and `doc/design/features/`.
+- Use `doc/design/reference/` for direct Neverlands evidence and observation gaps.
+- Read `doc/design/launch_mvp_plan.md` for the current delivery boundary.
+- Read the responsible document under `doc/features/` for shipped behavior and file ownership.
+- For every Rails-backed new feature, behavior change, bug fix, or refactor, read the relevant sections of `doc/RUBY_ON_RAILS_GUIDE.md` for technical boundary selection and implementation guidance.
+- Read `doc/features/README.md` before creating or materially restructuring a feature handbook.
 
-- `bin/rails db:prepare` — create and migrate DB (dev + test).
-- `bin/rails db:migrate` — run pending migrations.
-- `bin/rails db:rollback` — rollback last migration.
-- `bin/rails db:seed` — load seed data.
+### 1.3 Conflict protocol
 
----
+Classify unresolved differences explicitly:
 
-## 3. Verification checklist (before pushing / opening a PR)
+- `[IMPL]` — implementation or coverage does not satisfy the established design/feature contract.
+- `[DOC]` — feature/design documentation no longer describes verified implementation.
+- `[EVIDENCE]` — Neverlands behavior is ambiguous or insufficiently observed.
 
-**Always** run the relevant subset of these before considering a change "done".
-If a command is not available in this project, skip it and note that explicitly.
+Fix in-scope `[IMPL]` gaps before completion. Correct in-scope `[DOC]` gaps only after behavior is verified. Do not invent a resolution for `[EVIDENCE]`; observe Neverlands or ask the user.
 
-> ⚠️ **CRITICAL**: Run these commands IN ORDER before every push.
-> CI failures waste time and block merges. Catch them locally first!
+## 2. [NORMATIVE] Repository context
 
-### Quick verification (minimum required):
+- Framework: Ruby on Rails monolith.
+- Primary client: server-rendered HTML with Turbo and Stimulus.
+- Authentication: Devise.
+- Authorization: Pundit where record/action authorization applies.
+- Test framework: RSpec, including request, view, and system specs.
+- Game design: Neverlands-backed, English client for the current MVP.
+- Feature contracts: `doc/features/**`.
+- Canonical feature template: `doc/features/FEATURE_TEMPLATE.md`.
+- Feature document audit: `bin/feature-doc-audit`.
+- Verification wrapper: `bin/verify`.
+- Ruby/Rails/Hotwire implementation guide: `doc/RUBY_ON_RAILS_GUIDE.md`.
 
-```bash
-# 1. LINTING FIRST - catches 90% of CI failures
-bin/rubocop -f simple
+Blueprint, Swagger/rswag, and public JSON API requirements apply only when the repository actually introduces those surfaces. They are not defaults for HTML/Turbo features.
 
-# 2. FAST TESTS - run specs for files you changed
-bundle exec rspec spec/path/to/changed_spec.rb
+## 3. [NORMATIVE] Standard execution workflow
 
-# 3. FULL NON-SYSTEM SUITE - before final push
-RAILS_ENV=test bundle exec rake "parallel:create[4]"
-RAILS_ENV=test bundle exec rake "parallel:load_schema[4]"
-bundle exec parallel_test spec/ -n 4 --type rspec --exclude-pattern "spec/system/**/*_spec.rb"
-```
+For an ordinary implementation task, follow this sequence:
 
-> **Note**: System specs (`spec/system/**/*`) are excluded from parallel runs as they require Chrome/Selenium.
-> Run them separately with `bundle exec rspec spec/system` when UI changes are made.
+1. **Orient** — read relevant design, feature, `doc/RUBY_ON_RAILS_GUIDE.md` sections, routes, models/services, UI, seeds/config, and specs.
+2. **Resolve authority** — identify the Neverlands evidence and MVP boundary; report `[EVIDENCE]` before inventing behavior.
+3. **Scan implementation** — locate existing ownership and preserve unrelated user changes.
+4. **Implement** — use minimal Rails-way changes, the technical boundaries in `doc/RUBY_ON_RAILS_GUIDE.md`, and explicit cross-feature boundaries.
+5. **Add/update tests** — cover all applicable layers and required categories.
+6. **Run focused verification** — run changed specs and targeted lint while iterating.
+7. **Run alignment check** — compare verified behavior with design and the existing feature handbook; resolve `[IMPL]` gaps.
+8. **Create/update the feature handbook** — only after implementation and applicable checks are green.
+9. **Audit documentation** — run `bin/feature-doc-audit` for the responsible handbook.
+10. **Run completion verification** — use the appropriate `bin/verify` profile and task-specific checks.
+11. **Report** — include rationale, changed files/behavior, documentation status, discrepancies, and exact check results.
 
-### Detailed verification steps:
+Do not create a gameplay feature handbook for infrastructure, process tooling, or a documentation-only task. Update the documentation system that owns that work instead.
 
-1. **Linting** (required - run FIRST):
-   - `bin/rubocop -f simple` — this project's primary CI linter
+## 4. [NORMATIVE] Optional planning-first gate
 
-   **Common CI failures caught here:**
-   - `Layout/TrailingEmptyLines` — trailing blank lines
-   - `Style/SafeNavigation` — use `&.` instead of `if x`
-   - `Layout/ArrayAlignment` — array element alignment
-   - `Style/TernaryParentheses` — ternary expression parens
+Use this stop-gate only when the user requests planning-first work or explicitly says `Execute per AGENT.md`.
 
-2. **Factory validation** (required for model/service changes):
-   - `bundle exec rspec spec/factories --format progress`
-   - Catches: outdated attributes, missing associations, schema drift
+### Phase 0 — contract and evidence extraction (no code)
 
-3. **Tests** (required):
-   - `bundle exec parallel_test spec/ -n 4 --type rspec --exclude-pattern "spec/system/**/*_spec.rb"` — full non-system suite
-   - `bundle exec rspec spec/services/game/combat/` — combat subsystem (sequential)
-   - `bundle exec rspec spec/system` — system tests when UI changes (requires Chrome)
+- Read relevant Neverlands reference/design and existing feature handbook.
+- Extract player behavior, authoritative state, routes/actions, persistence, authorization, UI, boundaries, and deferred behavior.
+- Identify `[EVIDENCE]` gaps.
 
-4. **Security** (where configured):
-   - `bundle exec brakeman` or `bin/brakeman`
-   - `bundle exec bundle audit check --update`
+### Phase 1 — repository scan (no code)
 
-5. **JS/Frontend** (if the project uses a JS toolchain):
-   - `npm run lint` / `yarn lint`
-   - `npm run test` / `yarn test` if applicable.
+- List existing controllers, models, services, policies, views, Stimulus/CSS/assets, config/seeds, factories, and specs.
+- Summarize current behavior and discrepancies.
+- Keep excerpts short and targeted.
 
-### Combat/Game-specific verification:
+### Phase 2 — implementation plan (no code; stop afterward)
 
-When modifying combat, skills, or game engine code, also run:
+- File-by-file actions: `NEW`, `MODIFY`, or `DELETE`.
+- Responsibility and important transition for each file.
+- Test mapping for success, failure, edge/null/boundary, and authorization.
+- Up to five risks or `[IMPL]`/`[DOC]`/`[EVIDENCE]` discrepancies.
+- Feature-document creation/update plan.
 
-```bash
-# Combat subsystem (parallel)
-bundle exec parallel_test spec/services/game/combat/ spec/lib/game/ -n 8 --type rspec
-
-# Arena subsystem (parallel, ~16s for 361 specs)
-bundle exec parallel_test spec/services/arena/ spec/requests/arena* spec/models/arena* -n 8 --type rspec
-
-# Or run specific files sequentially for debugging
-bundle exec rspec spec/services/game/combat/turn_resolver_spec.rb
-```
-
-Only treat the change as ready once these checks are passing.
-
-### What to report back
-
-Always include a **CHECKS** section in your final answer listing:
-
-- Each command you attempted.
-- Whether it ran.
-- The final exit code (or “not available in this project”).
-
-Example:
+End with:
 
 ```text
-CHECKS
-- bundle exec rubocop                   # exit 0
-- bundle exec rspec                     # exit 0
-- bundle exec brakeman                  # not available in this project
-- npm run lint                          # exit 0
+CONFIRM_TO_IMPLEMENT? (yes/no)
 ```
 
----
+Wait for explicit confirmation before implementation. Ordinary tasks that do not invoke this gate should proceed autonomously.
 
-## 4. Edit scope & safety
+## 5. [NORMATIVE] Edit scope and safety
 
-### ✅ You MAY edit:
-- `app/**` (models, controllers, views, lib, services, jobs)
-- `config/**` (routes, initializers, locales)
-- `db/migrate/**` (this app is unreleased; keep migration history clean when schema resets are expected)
-- `db/seeds.rb`
+### 5.1 Allowed by default when required by the task
+
+- `app/**`
+- `config/**`
+- `db/migrate/**`, `db/schema.rb`, and `db/seeds.rb`
 - `lib/**`
 - `spec/**`
+- relevant `doc/features/**` after implementation verification
+- relevant `doc/design/**` when verified Neverlands/design facts materially change
 - `.env.example`
 
-### ❌ Do NOT edit (unless explicitly asked):
-- `doc/design/**` (portable Neverlands-based design authority; edit when implementation changes design facts)
-- Secrets/credentials
-- Production/deployment configs
+### 5.2 Requires explicit task scope
+
+- `AGENT.md`
+- `doc/features/FEATURE_TEMPLATE.md`
+- repository-wide documentation structure
 - CI/workflow files
-- Docker/Kubernetes manifests
+- production/deployment configuration
+- Docker/Kubernetes infrastructure
+- secrets or credentials
 
-For this MMORPG project, `doc/design/gdd.md` is the primary source of gameplay/domain rules;
-use it as input when making design decisions and keep it aligned with implemented Neverlands-based behavior.
+Normal feature work must not modify the canonical template merely because one feature needs unusual content. Keep all 18 sections and explain non-applicable sections.
+
+### 5.3 Safety
+
+- Preserve unrelated dirty-worktree changes.
+- Never expose, copy, or commit credentials.
+- Never run destructive database or filesystem operations without resolving exact scope.
+- Test-database preparation is allowed when needed; never mutate production data.
+- Do not run `rails credentials` or change encrypted secrets unless explicitly requested.
+
+## 6. [NORMATIVE] Engineering rules
+
+Apply `doc/RUBY_ON_RAILS_GUIDE.md` to Rails implementation and refactoring decisions. This contract wins on conflict, and Neverlands evidence remains the only game-design authority.
+
+1. Use conventional Rails patterns, clear names, and production-grade invariants.
+2. Prefer Rails-way and KISS over speculative abstractions or mini-frameworks.
+3. Respect existing HTML/Turbo/Stimulus architecture; do not introduce a SPA or custom AJAX without a demonstrated need.
+4. Keep controllers focused on request orchestration and response selection.
+5. Put associations, validations, scopes, and small domain rules in models.
+6. Use services/queries for multi-model orchestration, state machines, external side effects, or materially clearer/testable flows.
+7. Avoid N+1 queries with `includes`/`preload` and paginate genuinely large collections.
+8. Prefer database constraints for persistent invariants: `NOT NULL`, foreign keys, and unique indexes.
+9. Store time in UTC. Use ISO8601 for JSON integration responses.
+10. Use strong parameters, retain CSRF protection, escape view output, and authorize mutations.
+11. Minimize dependencies; prefer stable tools already in the stack.
+12. Keep diffs scoped to the requested feature or bug.
+
+## 7. [NORMATIVE] Game-domain rules
+
+### 7.1 Server authority and persistent transitions
+
+- The client expresses intent and displays results. The server alone decides and persists coordinates, location, availability, cooldowns, combat results, inventory, currency, ownership, rewards, and other gameplay state.
+- Treat CSS geometry, Stimulus state, hidden inputs, labels, coordinates, record ids, prices, quantities, timers, and capability flags submitted by the client as untrusted input.
+- Revalidate ownership, current position/location, target, status, availability, expiry, price/quantity, balance/capacity, and boundary conditions at mutation time.
+- Never put authoritative game calculations in controllers, views, or browser code.
+
+Every action that changes persistent gameplay state—including movement, location entry/exit, combat, inventory, currency, rewards, and resource collection—must have an identifiable transition contract in its service/model behavior and tests:
+
+1. preconditions and authoritative input records;
+2. successful state changes and side effects;
+3. failure behavior, including which state remains unchanged;
+4. transaction/locking boundary where multiple records or balances must change together;
+5. resulting state returned or rendered to the client.
+
+Use the simplest Rails/database mechanism that preserves the invariant. This may be a database transaction, constraint, row lock, uniqueness key, or command-specific idempotency guard; it does not imply a universal command bus or event-sourcing architecture.
+
+### 7.2 Retry and concurrency safety
+
+- A retried, double-clicked, replayed, or concurrent command must not duplicate rewards/items, spend currency twice, move twice, collect the same resource twice, or create incompatible/overlapping combat state.
+- Mutations vulnerable to duplicate or concurrent execution require focused coverage for the realistic conflict path, not merely sequential success coverage.
+- A rejected or failed transition must not leave partial multi-record state.
+- Do not add universal idempotency tokens preemptively. Choose a scoped guard when the action and risk require one.
+
+### 7.3 Game content and stable identity
+
+- Neverlands-derived cells, locations, exits, NPCs, shops, resources, encounters, and balance values belong in explicit records, seeds, or existing gameplay configuration—not scattered across controllers, views, or Stimulus controllers.
+- Persistent references and routing/lookup keys use stable identifiers that do not depend on translated or mutable display names.
+- Content validation belongs at its loading/persistence boundary and requires focused config/seed/model coverage where invalid content could break gameplay.
+- Do not add generic buildings, resources, rewards, professions, gates, travel rules, or combat behavior without Neverlands evidence.
+- Keep observed but unimplemented behavior read-only, disabled, or explicitly deferred.
+
+### 7.4 Determinism, time, and calculation boundaries
+
+- Never access the database from pure formula/calculation classes.
+- Inject or construct a seeded RNG for random combat, encounter, loot, spawn, and resource behavior so the same seed and inputs produce reproducible results.
+- The server clock is authoritative for cooldowns, travel durations, expiry, and other time-gated behavior.
+- Tests freeze/inject time and seed/inject randomness; they must not depend on wall-clock timing, uncontrolled randomness, execution order, or external Neverlands availability.
+- Cover exact timing and numeric boundaries: immediately before, at, and after expiry/cooldown; zero/maximum capacity; insufficient/exact balance; and map/location edges where applicable.
+
+### 7.5 MVP performance and traceability
+
+- Keep rendered map, location, inventory, shop, and combat queries bounded; prevent N+1 queries and paginate only collections that can genuinely grow large.
+- When high-value currency, inventory, reward, PvP, or administrative mutations are introduced, emit a structured audit/domain record or existing structured log sufficient to reconstruct who changed what and why. Do not introduce event sourcing solely to satisfy this rule.
+
+## 8. [NORMATIVE] Hotwire and client behavior
+
+- Prefer Turbo Drive for navigation and Turbo Frames/Streams for partial replacement.
+- Use Stimulus controllers under `app/javascript/controllers/` for focused client enhancement.
+- Do not use inline JavaScript in views.
+- Prefer `data-controller`, `data-action`, values, and targets over global state or broad DOM querying.
+- Client code may animate, submit, focus, announce, and display server state.
+- Client code must not decide authoritative availability, finalize server transitions, mint capability keys, or bypass policy/service validation.
+- UI changes require applicable view and system coverage, including keyboard/accessibility behavior when relevant.
+- Preserve retained Neverlands-backed images and assets unless the user explicitly requests their replacement/removal.
+
+## 9. [NORMATIVE] Controllers, models, policies, and services
+
+### Controllers
+
+- Prefer RESTful actions where the game interaction maps cleanly to resources.
+- Use custom member/collection actions when they accurately represent a game command.
+- Keep actions small and use strong parameters.
+- Use `before_action` for obvious shared loading/authentication only.
+- Support only response formats the feature genuinely uses.
+
+### Models
+
+- Own persistence invariants, associations, validations, enums, and reusable scopes.
+- Pair application validation with database constraints where appropriate.
+- Avoid callbacks for hidden multi-record orchestration.
+
+### Policies
+
+- Use Pundit for record/action authorization where applicable.
+- Scope every mutation to the authenticated user's authoritative character/resource before domain execution.
+- Add policy specs for permitted and forbidden ownership/role cases.
+
+### Services and query objects
+
+Create a service/query object only when it:
+
+1. orchestrates multiple records;
+2. owns a state transition or transaction;
+3. performs external IO/side effects; or
+4. materially improves clarity and testability.
+
+When creating or materially changing a service/query object:
+
+- document the class/module purpose;
+- document each public entry point's inputs, output, and important side effects;
+- document private methods only when they encode non-obvious rules, fallback resolution, caching, normalization, or external IO;
+- explain intent rather than restating Ruby syntax.
+
+## 10. [NORMATIVE] Migrations, schema, and seeds
+
+- Use one migration per logical structural responsibility.
+- Migrations must be reversible where practical.
+- Never edit a committed migration unless the user explicitly authorizes a pre-release schema-history rewrite.
+- Add indexes, foreign keys, null constraints, and uniqueness constraints that enforce the model contract.
+- A migration or backfill that transforms persisted player state must document its legacy/null-row handling and safe rollback or recovery approach. Test representative existing-state boundaries where practical.
+- Update `db/seeds.rb` or existing gameplay config for source-backed MVP content needed by the change.
+- Keep seed execution idempotent.
+- Do not invent representative game content when Neverlands-backed content is required.
+- Schema/seed changes require test database preparation, seed/config coverage, and seed verification where applicable.
+
+## 11. [NORMATIVE] Tests and required coverage
+
+Every feature, bug fix, or refactor requires tests unless the change is documentation-only and has no executable behavior. Tooling/process changes require focused tooling tests where practical.
+
+Required layers where applicable:
+
+- model specs;
+- request specs;
+- policy specs;
+- service/query specs;
+- factories with edge traits;
+- view/helper specs;
+- system specs for Turbo/Stimulus/player interaction;
+- routing specs for custom routes;
+- seed/config/schema specs;
+- asset specs when retained assets or rendering contracts matter.
+
+Required categories:
+
+- **success** — intended behavior and persisted/rendered result;
+- **failure** — validation/service failures and safe response;
+- **edge/null/boundary** — empty, nil, zero, maximum, negative/out-of-range, expiry, timing, and missing/sparse state;
+- **authorization** — anonymous, foreign ownership, wrong role/context, and policy denial.
+
+For a vulnerable persistent mutation, applicable service/request/model coverage must also exercise retry, duplicate submission, or concurrent execution and confirm there is no partial or duplicated state.
+
+Maintain one focused system-spec path for the implemented MVP core loop:
+
+```text
+login -> restore persisted location -> travel -> enter city/building -> leave -> logout -> login -> restore the same authoritative location
+```
+
+Keep this as a thin cross-feature contract. Test detailed movement, location, persistence, failure, and authorization variants in the narrower model/service/request/policy layers rather than duplicating every combination in the browser.
+
+Blueprint and Swagger/rswag specs are not required unless the feature actually introduces those surfaces.
+
+Factories must include useful edge traits for statuses, ownership, expiry, active/inactive state, nullability, and boundary values exercised by specs.
+
+## 12. [NORMATIVE] Verification contract
+
+Verification must be read-only. Never use auto-fix flags such as `standardrb --fix` or `rubocop -a` as completion checks.
+
+### 12.1 While implementing
+
+Run the smallest useful checks repeatedly:
+
+```bash
+bin/rubocop path/to/changed_file.rb
+bundle exec rspec spec/path/to/changed_spec.rb
+bin/feature-doc-audit doc/features/<feature>.md
+```
+
+Run relevant system specs whenever UI, Turbo, Stimulus, keyboard behavior, or browser navigation changes.
+
+### 12.2 Completion profiles
+
+Default completion profile:
+
+```bash
+bin/verify fast
+```
+
+`fast` runs:
+
+1. read-only RuboCop;
+2. all non-system RSpec specs;
+3. the feature-document audit.
+
+Use the full profile when:
+
+- the user requests full verification;
+- process/verification tooling or `AGENT.md` changes;
+- the change is broad or cross-feature;
+- preparing a release/push where local full CI parity is required.
+
+```bash
+bin/verify full
+```
+
+`full` adds:
+
+- system specs;
+- Brakeman;
+- Bundler Audit;
+- Importmap audit.
+
+For schema or seed changes, also run as applicable:
+
+```bash
+RAILS_ENV=test bin/rails db:prepare
+RAILS_ENV=test bin/rails db:seed:replant
+```
+
+Available focused profiles:
+
+```bash
+bin/verify lint
+bin/verify docs
+bin/verify combat
+```
+
+If a required command cannot run because of environment/dependency limitations, report the exact blocker and continue with safe checks that remain meaningful.
+
+## 13. [NORMATIVE] Feature documentation completion contract
+
+### 13.1 When a feature handbook is required
+
+After implementation and applicable focused verification pass:
+
+- create a handbook for every new player-facing feature;
+- update the canonical handbook for material behavior, UI, topology/content, route, state, authorization, persistence, integration, or ownership changes;
+- update a handbook for a bug fix/refactor only when the documented contract or responsible-file inventory changes;
+- do not create gameplay handbooks for infrastructure/process-only work.
+
+Feature documents describe verified implementation. They are not planning PRDs.
+
+### 13.2 Structural authority
+
+- Copy `doc/features/FEATURE_TEMPLATE.md` for a new handbook.
+- New canonical docs declare `template: feature-v1` in frontmatter.
+- Preserve all 18 numbered sections and their order.
+- Keep non-applicable sections and explain why.
+- Remove every template instruction and placeholder.
+- Use a feature-owned lowercase `snake_case` filename, not a task id.
+- Treat `doc/features/FEATURE_TEMPLATE.md` as structural authority.
+- Treat `world.md` and `city.md` as detailed filled examples, not alternate templates.
+
+### 13.3 Content requirements
+
+Every handbook must explain:
+
+- Neverlands evidence and related design documents;
+- shipped goals and explicit non-goals;
+- player experience and UI/CSS behavior;
+- topology/authored content;
+- authoritative data and state lifecycle;
+- runtime and HTTP/Turbo flow;
+- client/server ownership;
+- persistence/login resume;
+- authorization, trust boundaries, and concurrency;
+- failure, null, edge, and boundary behavior;
+- acceptance criteria;
+- test strategy and focused commands;
+- an exhaustive `Responsible for Implementation Files` section;
+- reciprocal links to every directly related feature handbook with a consistent ownership/handoff boundary;
+- safe extension rules and material version history.
+
+Interactive, read-only captured, unavailable, and deferred behavior must be unambiguous.
+
+### 13.4 Documentation order
+
+Use this order for a feature change:
+
+1. correct/capture Neverlands evidence when needed;
+2. update relevant design decisions when verified facts change;
+3. implement behavior and tests;
+4. run focused implementation verification;
+5. create/update the feature handbook;
+6. run `bin/feature-doc-audit doc/features/<feature>.md`;
+7. run the completion verification profile.
+
+Never update a feature handbook first and then treat its unverified text as proof of implementation.
+
+### 13.5 Canonical ownership and duplicate merge rules
+
+Each player-facing feature has one primary canonical handbook.
+
+Merge documents when:
+
+- multiple documents claim primary ownership of the same player outcome/state lifecycle;
+- behavior, authorization, persistence, or implementation history is split across duplicate primary docs.
+
+Do not merge when one document merely records an explicit cross-feature dependency. In that case, state where ownership hands off.
+
+Cross-feature references must be reciprocal and limited to direct runtime, persistence, authorization, presentation, or authored-content handoffs. When a boundary changes, update both canonical handbooks in the same change; do not create an all-to-all feature link graph.
+
+When merging:
+
+1. prefer the existing feature-owned filename;
+2. migrate unique verified content and responsible files;
+3. update inbound references;
+4. delete the duplicate, or temporarily leave a short `Superseded by:` redirect with no independent contract narrative.
+
+## 14. [NORMATIVE] Feature-document audit
+
+Run:
+
+```bash
+bin/feature-doc-audit
+```
+
+to audit all completed feature handbooks, or:
+
+```bash
+bin/feature-doc-audit doc/features/<feature>.md
+```
+
+for a focused audit.
+
+The audit checks:
+
+- required metadata and allowed implementation status;
+- exact canonical section ordering for `template: feature-v1` documents;
+- unresolved template instructions/placeholders;
+- the required cross-feature relationship subsection and reciprocal feature links;
+- trailing whitespace;
+- non-empty responsible-file inventory;
+- existence of responsible repository paths;
+- duplicate feature titles/canonical ownership.
+
+Pre-template handbooks may pass with a migration warning. Migrate them to `feature-v1` on their next material update. `--strict` forces canonical structure for explicitly selected legacy documents.
+
+## 15. [NORMATIVE] Alignment and discrepancy reporting
+
+Before feature documentation:
+
+1. re-read relevant Neverlands/design and existing feature acceptance criteria;
+2. confirm routes/actions, authoritative state, validation, auth, UI, persistence, and deferred boundaries;
+3. confirm every applicable coverage category exists;
+4. fix `[IMPL]` discrepancies within scope.
+
+After documentation:
+
+1. confirm the handbook describes only verified behavior;
+2. confirm all responsible paths and focused commands exist;
+3. run the feature-document audit;
+4. report remaining `[DOC]` or `[EVIDENCE]` items instead of concealing them.
+
+Large features may include a local acceptance-criterion-to-spec matrix inside the feature handbook. Do not force API endpoint traceability artifacts onto non-API gameplay work.
+
+## 16. [NORMATIVE] Final response format
+
+Every completed task returns these headings:
+
+### RATIONALE
+
+- Three to five bullets describing approach, important trade-offs, and Neverlands/architecture reasoning.
+
+### CHANGES
+
+- Files or coherent file groups changed.
+- Player/runtime behavior changed.
+- Feature handbook created/updated, including its path, or why no gameplay handbook applies.
+- Remaining `[IMPL]`, `[DOC]`, or `[EVIDENCE]` discrepancies, if any.
+- New dependencies, if any.
+
+### CHECKS
+
+- Every command attempted.
+- Final exit code, or an explicit environment/not-applicable reason.
+- Exact `bin/verify` profile used.
+- Exact feature-document audit command when a handbook changed.
+
+Do not claim a check passed when it did not run.
+
+## 17. [NORMATIVE] Never list
+
+- Never use non-Neverlands material as alternate game-design authority.
+- Never document planned behavior as shipped.
+- Never finish a new player-facing feature without creating/updating its canonical handbook after verification.
+- Never invent an alternate feature-document structure.
+- Never edit `FEATURE_TEMPLATE.md` during normal feature work.
+- Never create duplicate primary feature handbooks.
+- Never leave responsible implementation/spec paths knowingly stale.
+- Never require blueprint/rswag coverage for an HTML/Turbo feature that has no such surface.
+- Never use nonexistent `parallel_test` commands.
+- Never use auto-fix linters as verification.
+- Never bypass Pundit/current-character ownership where authorization applies.
+- Never put authoritative game state in the browser.
+- Never trust client-provided coordinates, prices, timers, quantities, capability flags, or computed outcomes as authoritative.
+- Never permit retries or concurrent execution to duplicate valuable state or leave a partial transition.
+- Never key persistent gameplay relationships by translated or mutable display text.
+- Never ship known N+1 behavior in rendered hot paths.
+- Never edit committed migrations without explicit authorization.
+- Never remove retained source-backed images as incidental cleanup.
+- Never commit secrets or credentials.
+
+## 18. [NORMATIVE] Completion checklist
+
+Before closing a task, confirm:
+
+- relevant authority/design/feature docs were read;
+- relevant `doc/RUBY_ON_RAILS_GUIDE.md` guidance was applied for Rails code changes;
+- optional planning gate was respected when invoked;
+- implementation is minimal and Rails/Hotwire-aligned;
+- persistent gameplay transitions define preconditions, atomicity/failure behavior, and resulting authoritative state;
+- retry/concurrency safety, deterministic time/randomness, and stable content identity were considered where applicable;
+- success, failure, edge/null/boundary, and authorization coverage exists where applicable;
+- focused checks passed;
+- implementation alignment was rechecked;
+- feature handbook was created/updated after verification when required;
+- responsible files and focused spec paths are current;
+- `bin/feature-doc-audit` passed when applicable;
+- the correct `bin/verify` profile completed or its blocker is reported;
+- final output contains `RATIONALE`, `CHANGES`, and `CHECKS` with exact outcomes.
 
 ---
 
-## 5. Non-negotiable rules
+## 19. [ILLUSTRATIVE] Compact planning output
 
-1. **Think and code like a senior Rails engineer.**
-   Use conventional Rails patterns, clear naming, and production-grade practices.
+```text
+PLAN
+1. Contract/evidence
+- Neverlands source and current feature contract
 
-2. **Rails-way + KISS.**
-   - Prefer RESTful controllers, standard routing, and ActiveRecord.
-   - Avoid speculative abstractions and "mini-frameworks".
-   - Extract services/queries only when complexity clearly warrants it.
+2. File-by-file changes
+- path | NEW/MODIFY/DELETE | responsibility
 
-3. **Respect existing architecture.**
-   - If the app uses **Hotwire**, prefer **Turbo + Stimulus** over custom AJAX or SPA frameworks.
-   - If the app exposes JSON APIs, reuse the **existing serialization approach**
-     (Jbuilder, serializers, simple `render json:`) rather than inventing a new one.
+3. Test mapping
+- success/failure/edge/auth -> spec paths
 
-4. **Tests & lint are mandatory.**
-   Any new functionality or bug fix must ship with tests. The test suite and linters should be green when you're done.
+4. Documentation
+- doc/features/<feature>.md -> create/update after verification
 
-   **Every implementation must include comprehensive tests covering:**
-   - ✅ **Success cases** — Feature works correctly as expected
-   - ✅ **Failure cases** — Validation errors, invalid inputs are handled properly
-   - ✅ **Null/edge cases** — Nil values, blank strings, boundary conditions
-   - ✅ **Authorization cases** — Forbidden access, wrong roles return proper errors
+5. Risks/discrepancies
+- [IMPL]/[DOC]/[EVIDENCE]
 
-   **Required test coverage by layer:**
-   - **Model specs** — Validations, associations, scopes, domain logic
-   - **Request specs** — Controller actions (success + error responses, auth checks)
-   - **Service specs** — Game engine classes with seeded RNG, edge cases
-   - **System specs** — Hotwire/JS/UI interactions (Turbo Frames, Stimulus)
-   - **Policy specs** — Authorization rules (if using Pundit)
+CONFIRM_TO_IMPLEMENT? (yes/no)
+```
 
-5. **Avoid N+1 and obvious performance bugs.**
-   Use `includes`/`preload` for associations rendered in views or JSON; paginate large collections.
+## 20. [ILLUSTRATIVE] Compact final output
 
-6. **Database constraints first.**
-   Use NOT NULL, foreign keys, and unique indexes to maintain invariants. Migrations must be reversible.
+```text
+RATIONALE
+- ...
 
-7. **UTC internally; ISO8601 for APIs.**
-   - Store times in UTC.
-   - For JSON, format timestamps using ISO8601.
-   - For HTML views, respect project locale settings via `I18n`.
+CHANGES
+- implementation files and behavior
+- doc/features/<feature>.md updated after verification
+- discrepancies: none
 
-8. **Minimal, scoped diffs.**
-   One feature or bug fix per change set. Avoid large, unrelated refactors.
-
-9. **Minimize dependencies.**
-   - Push Rails and the existing stack to their limits before adding new gems/JS packages.
-   - Prefer well-established, boring tools over shiny, new ones.
-   - If you add a dependency, document it under **Dependencies** in your summary and ensure it’s configured and tested.
-
-10. **Security by default.**
-    - Use strong parameters for all user input.
-    - Never trust user input; escape output in views.
-    - Honour CSRF protections.
-    - Use well-tested libraries for authentication/authorization (Devise, OmniAuth, Pundit, etc.) where appropriate.
-
----
-
-## 5.1 NEVER rules (forbidden)
-
-- **Never** put game calculations in controllers or views.
-- **Never** use unseeded randomness in game logic. Always: `Random.new(seed)`.
-- **Never** hit the DB from formula/combat classes.
-- **Never** bypass Turbo—avoid custom AJAX when Turbo suffices.
-- **Never** inline JS in views—use Stimulus controllers.
-- **Never** leave known N+1 in hot paths.
-- **Never** commit secrets or credentials.
-- **Never** edit committed migrations in shared environments.
-
----
-
-## 6. Hotwire expectations (Turbo + Stimulus)
-
-**General:**
-
-- Prefer Turbo Drive for navigation instead of custom fetch/XHR.
-- Use Turbo Frames and Turbo Streams for partial page updates.
-- Use Stimulus controllers for encapsulated client-side behavior.
-
-### 6.1 Turbo patterns
-
-- For resourceful actions (create/update/destroy) that support Hotwire:
-
-  ```ruby
-  def create
-    @post = Post.new(post_params)
-
-    if @post.save
-      respond_to do |format|
-        format.html   { redirect_to @post, notice: "Post created successfully." }
-        format.turbo_stream
-      end
-    else
-      respond_to do |format|
-        format.html   { render :new, status: :unprocessable_entity }
-        format.turbo_stream { render :new, status: :unprocessable_entity }
-      end
-    end
-  end
-  ```
-
-- On validation failure, re-render the form within the same frame with HTTP 422 (for APIs) or an appropriate status for HTML.
-
-### 6.2 Stimulus patterns
-
-- Controllers live in `app/javascript/controllers`.
-- Use `data-controller`, `data-action`, `data-*-target` attributes instead of manual DOM querying.
-- Keep controllers small and focused; avoid global state or cross-controller coupling.
-- Prefer Stimulus for enhancements (modals, toggles, client-side validation hints) over inline JS.
-
----
-
-## 7. Controllers & models (“Rails-way” in practice)
-
-- **Controllers:**
-  - RESTful actions (`index`, `show`, `new`, `create`, `edit`, `update`, `destroy`) by default.
-  - Keep actions small; push complex behavior into models or POROs/services.
-  - Use strong params methods (`def post_params`) to whitelist attributes.
-  - Use `before_action` sparingly and only for obvious shared behavior (loading resource, authentication, authorization).
-
-- **Models:**
-  - Own associations, validations, scopes, and small domain methods.
-  - Avoid bloating models with orchestration or external API calls; move those into services/jobs.
-  - Use enums and named scopes for readability and query reuse.
-
----
-
-## 8. Migrations & data
-
-- **One migration per logical schema change.**
-- In a shared project, **do not edit existing, already-run migrations.** Add new ones instead.
-- Migrations must be reversible (Rails handles most automatically, but be explicit when necessary).
-- When adding reference or seed data that other team members need, update `db/seeds.rb` or appropriate seed scripts.
-
----
-
-## 9. Development guidelines (agent-specific)
-
-- Read the project’s own conventions (`README`, `doc/design/README.md`, and
-  `doc/design/gdd.md`) before generating code.
-- Do **not** suggest running long-lived processes (e.g. `rails server`) inside responses; just mention the commands.
-- Do **not** run `rails credentials` or manipulate secrets in examples.
-- Do **not** automatically run migrations on behalf of the user; show the commands instead.
-- Prefer plain English strings in examples, but if the project already uses I18n heavily, follow that pattern instead of fighting it.
-
----
-
-## 10. Documentation
-
-- Update `CHANGELOG.md` and/or `README.md` when you:
-  - Introduce a new feature.
-  - Change setup commands or required environment variables.
-  - Introduce breaking changes or notable behaviors.
-
-- Add doc-style comments to:
-  - New POROs/services/concerns.
-  - Non-trivial class methods or scopes.
-  - Include purpose, inputs, outputs, and a usage example where helpful.
-
----
-
-## 11. Final output format (what the agent returns)
-
-Every time you complete a task, respond with:
-
-- **RATIONALE**
-  3–5 bullets describing the approach and any key trade-offs.
-
-- **CHANGES**
-  High-level summary of:
-  - Files touched.
-  - What changed in each (no full diff unless requested).
-
-- **CHECKS**
-  List of commands from §3 with their final status, for example:
-
-  ```text
-  CHECKS
-  - bundle exec rubocop           # exit 0
-  - bundle exec rspec             # exit 0
-  - bundle exec brakeman -q       # not available in this project
-  - bundle exec bundle audit ...  # exit 0
-  ```
-
-This general contract is meant to be reused across **multiple Rails projects** (monoliths, Hotwire apps, and APIs).
-When a project defines additional, stricter rules, follow those first and treat this file as the default baseline.
+CHECKS
+- bundle exec rspec spec/... # exit 0
+- bin/feature-doc-audit doc/features/<feature>.md # exit 0
+- bin/verify fast # exit 0
+```

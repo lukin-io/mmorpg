@@ -1,81 +1,51 @@
 <%
-  exit_action = available_actions.find { |a| a[:type] == :exit }
-  tile_npc_action = available_actions.find { |a| a[:type] == :tile_npc }
-  tile_building_action = available_actions.find { |a| a[:type] == :tile_building }
-  local_actions_present = exit_action || tile_npc_action || tile_building_action
+  tile_building_action = available_actions.find { |action| action[:type] == :tile_building }
+  tile_local_actions = available_actions.select { |action| action[:type] == :tile_local_action }
+  local_actions_present = tile_building_action || tile_local_actions.any?
 %>
 
 <% if local_actions_present %>
-  <div class="actions-panel">
-    <div class="location-actions">
-      <% if exit_action %>
-        <%= button_to exit_action[:label], exit_location_world_path,
-            method: :post, class: "btn-secondary w-full" %>
-      <% end %>
+  <div class="actions-panel nl-world-action-strip" aria-label="Current cell actions">
+    <% if tile_building_action && tile_building_action[:building] %>
+      <% building = tile_building_action[:building] %>
+      <% offer = tile_building_action[:offer] %>
 
-      <% if tile_npc_action && tile_npc_action[:npc] %>
-        <% npc = tile_npc_action[:npc] %>
-        <% offer = tile_npc_action[:offer] %>
-        <div class="tile-npc-actions mt-3">
-          <% if npc[:alive] && npc[:hostile] && offer %>
-            <div class="npc-info npc-info--hostile">
-              <div class="npc-header">
-                <span class="npc-icon">!</span>
-                <span class="npc-name"><%= npc[:name] %></span>
-                <span class="npc-level">[<%= npc[:level] %>]</span>
-              </div>
-              <div class="npc-hp-bar">
-                <div class="npc-hp-fill" style="width: <%= npc[:hp_percentage] %>%"></div>
-                <span class="npc-hp-text"><%= npc[:hp] %>/<%= npc[:max_hp] %></span>
-              </div>
-              <%= form_with url: world_npc_fights_path, method: :post, data: { turbo_frame: "_top" } do |f| %>
-                <%= f.hidden_field :npc_template_id, value: npc[:npc_template_id] %>
-                <%= f.hidden_field :tile_npc_id, value: npc[:id] %>
-                <%= f.hidden_field :action_key, value: offer.action_key %>
-                <%= f.submit "Attack", class: "btn-attack" %>
-              <% end %>
-            </div>
-          <% else %>
-            <div class="npc-defeated">
-              <span class="npc-name"><%= npc[:name] %></span>
-              <span class="npc-respawn">
-                respawns in <%= format_time_remaining(npc[:respawn_in]) %>
-              </span>
-            </div>
-          <% end %>
-        </div>
+      <% if building[:can_enter] && offer %>
+        <%= form_with url: enter_building_world_path,
+                      method: :post,
+                      class: "nl-world-action-form",
+                      data: {turbo: true} do |f| %>
+          <%= f.hidden_field :building_id, value: building[:id] %>
+          <%= f.hidden_field :action_key, value: offer.action_key %>
+          <%= f.submit "Enter", class: "fr_but nl-world-action-button", title: building[:name] %>
+          <span class="nl-visually-hidden"><%= building[:name] %> <%= building[:destination] %> <%= building[:description] %></span>
+        <% end %>
+      <% else %>
+        <button type="button"
+                class="fr_but nl-world-action-button"
+                title="<%= building[:blocked_reason] %>"
+                disabled>Enter</button>
+        <span class="building-blocked nl-visually-hidden"><%= building[:name] %> <%= building[:blocked_reason] %></span>
       <% end %>
+    <% end %>
 
-      <% if tile_building_action && tile_building_action[:building] %>
-        <% building = tile_building_action[:building] %>
-        <% offer = tile_building_action[:offer] %>
-        <div class="tile-building-actions mt-3">
-          <div class="building-info building-info--<%= building[:building_type] %>">
-            <div class="building-header">
-              <span class="building-icon"><%= building[:icon] %></span>
-              <span class="building-name"><%= building[:name] %></span>
-            </div>
-            <% if building[:description].present? %>
-              <p class="building-description"><%= building[:description] %></p>
-            <% end %>
-            <% if building[:destination].present? %>
-              <p class="building-destination"><%= building[:destination] %></p>
-            <% end %>
-            <% if building[:can_enter] && offer %>
-              <%= form_with url: enter_building_world_path, method: :post, data: { turbo: true } do |f| %>
-                <%= f.hidden_field :building_id, value: building[:id] %>
-                <%= f.hidden_field :action_key, value: offer.action_key %>
-                <%= f.submit "Enter", class: "btn-enter-building" %>
-              <% end %>
-            <% else %>
-              <div class="building-blocked">
-                <span class="building-blocked-icon">x</span>
-                <span class="building-blocked-reason"><%= building[:blocked_reason] %></span>
-              </div>
-            <% end %>
-          </div>
-        </div>
+    <% tile_local_actions.each do |action| %>
+      <% local_action = action[:local_action] %>
+      <% offer = action[:offer] %>
+      <%= form_with url: perform_local_action_world_path,
+                    method: :post,
+                    class: "nl-world-action-form",
+                    data: {turbo: true} do |f| %>
+        <%= f.hidden_field :tile_id, value: local_action[:tile_id] %>
+        <%= f.hidden_field :local_action_type, value: local_action[:local_action_type] %>
+        <%= f.hidden_field :action_key, value: offer.action_key %>
+        <%= f.submit local_action[:label],
+                     class: "fr_but nl-world-action-button",
+                     title: local_action[:description] %>
+        <% if local_action[:description].present? %>
+          <span class="nl-visually-hidden"><%= local_action[:description] %></span>
+        <% end %>
       <% end %>
-    </div>
+    <% end %>
   </div>
 <% end %>

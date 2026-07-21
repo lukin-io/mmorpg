@@ -24,14 +24,20 @@ export default class extends Controller {
     tileSize: { type: Number, default: 100 },
     moveCooldown: { type: Number, default: 30 },
     zoneName: String,
+    mapOffsetX: { type: Number, default: 0 },
+    mapOffsetY: { type: Number, default: 0 },
     movementActive: { type: Boolean, default: false },
     movementRemainingSeconds: { type: Number, default: 0 },
+    movementTotalSeconds: { type: Number, default: 0 },
+    movementDeltaX: { type: Number, default: 0 },
+    movementDeltaY: { type: Number, default: 0 },
     movementEndsAt: String,
     completeUrl: String
   }
 
   connect() {
     this.timerId = null
+    this.animationFrameId = null
     this.positionCursor()
 
     if (this.movementActiveValue) {
@@ -43,6 +49,10 @@ export default class extends Controller {
     if (this.timerId) {
       clearTimeout(this.timerId)
     }
+
+    if (this.animationFrameId) {
+      cancelAnimationFrame(this.animationFrameId)
+    }
   }
 
   // =====================
@@ -52,15 +62,7 @@ export default class extends Controller {
   positionCursor() {
     if (!this.hasCursorTarget) return
 
-    const playerTile = this.element.querySelector(`#tile_${this.playerXValue}_${this.playerYValue}`)
-
-    if (playerTile) {
-      this.cursorTarget.style.display = "block"
-      this.cursorTarget.style.left = `${playerTile.offsetLeft}px`
-      this.cursorTarget.style.top = `${playerTile.offsetTop}px`
-      this.cursorTarget.style.width = `${playerTile.offsetWidth}px`
-      this.cursorTarget.style.height = `${playerTile.offsetHeight}px`
-    }
+    this.cursorTarget.style.display = "block"
 
     this.setCursorMoving(this.movementActiveValue)
   }
@@ -126,8 +128,32 @@ export default class extends Controller {
 
   resumeServerMovement() {
     const seconds = this.remainingSecondsFromServer()
+    this.animateMapTravel(seconds)
     this.showTimerDisplay(seconds)
     this.startTimerCountdown(seconds)
+  }
+
+  animateMapTravel(remainingSeconds) {
+    if (!this.hasMapContainerTarget) return
+
+    const totalSeconds = Math.max(this.movementTotalSecondsValue, remainingSeconds, 1)
+    const elapsedFraction = Math.min(Math.max((totalSeconds - remainingSeconds) / totalSeconds, 0), 1)
+    const travelX = -(this.movementDeltaXValue * this.tileSizeValue)
+    const travelY = -(this.movementDeltaYValue * this.tileSizeValue)
+    const currentX = this.mapOffsetXValue + (travelX * elapsedFraction)
+    const currentY = this.mapOffsetYValue + (travelY * elapsedFraction)
+    const destinationX = this.mapOffsetXValue + travelX
+    const destinationY = this.mapOffsetYValue + travelY
+
+    this.mapContainerTarget.style.transition = "none"
+    this.mapContainerTarget.style.transform = `translate(${currentX}px, ${currentY}px)`
+
+    if (remainingSeconds <= 0) return
+
+    this.animationFrameId = requestAnimationFrame(() => {
+      this.mapContainerTarget.style.transition = `transform ${remainingSeconds}s linear`
+      this.mapContainerTarget.style.transform = `translate(${destinationX}px, ${destinationY}px)`
+    })
   }
 
   remainingSecondsFromServer() {
@@ -144,10 +170,6 @@ export default class extends Controller {
   showTimerDisplay(seconds) {
     if (this.hasTimerDivTarget) {
       this.timerDivTarget.style.display = "block"
-      if (this.hasCursorTarget) {
-        this.timerDivTarget.style.left = this.cursorTarget.style.left
-        this.timerDivTarget.style.top = this.cursorTarget.style.top
-      }
     }
 
     if (this.hasTimerSecondsTarget) {

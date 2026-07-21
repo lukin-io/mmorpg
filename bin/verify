@@ -1,17 +1,18 @@
 #!/usr/bin/env bash
 # frozen_string_literal: true
 #
-# Pre-push verification script
-# Run this before pushing to catch CI failures locally
+# Read-only local verification aligned with the RSpec CI workflow.
 #
 # Usage:
-#   bin/verify          # Full verification
-#   bin/verify quick    # Quick check (lint + model specs only)
+#   bin/verify          # Fast profile: lint + non-system specs + feature docs
+#   bin/verify fast     # Same as the default profile
+#   bin/verify full     # Fast profile + system specs + security audits
 #   bin/verify lint     # Linting only
-#   bin/verify combat   # Combat subsystem tests
+#   bin/verify docs     # Feature documentation audit only
+#   bin/verify combat   # Lint + arena/formula specs
 #
 
-set -e
+set -euo pipefail
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -36,74 +37,100 @@ echo_error() {
 }
 
 run_lint() {
-  echo_step "Running StandardRB linter..."
-  if bundle exec standardrb --fix; then
-    echo_success "StandardRB passed"
+  echo_step "Running RuboCop (read-only)..."
+  if bin/rubocop --format simple; then
+    echo_success "RuboCop passed"
   else
-    echo_error "StandardRB failed - fix issues before pushing"
-    exit 1
-  fi
-
-  echo_step "Running Rubocop auto-fix..."
-  if bundle exec rubocop -a --format simple 2>/dev/null; then
-    echo_success "Rubocop passed"
-  else
-    echo_error "Rubocop failed - fix issues before pushing"
+    echo_error "RuboCop failed"
     exit 1
   fi
 }
 
-run_factories() {
-  echo_step "Validating factories via model specs..."
-  # Model specs exercise factories heavily - catches attribute/schema issues
-  if bundle exec rspec spec/models --format progress --fail-fast 2>/dev/null; then
-    echo_success "Model specs passed (factories valid)"
+run_non_system_tests() {
+  echo_step "Running non-system RSpec suite..."
+  if bundle exec rspec --exclude-pattern "spec/system/**/*_spec.rb" --format progress; then
+    echo_success "Non-system specs passed"
   else
-    echo_error "Model specs failed - check factories and schema"
+    echo_error "Non-system specs failed"
     exit 1
   fi
 }
 
-run_tests() {
-  echo_step "Running full test suite..."
-  if bundle exec rspec --format progress; then
-    echo_success "All tests passed"
+run_system_tests() {
+  echo_step "Running system specs..."
+  if bundle exec rspec spec/system --format progress; then
+    echo_success "System specs passed"
   else
-    echo_error "Tests failed"
+    echo_error "System specs failed"
     exit 1
   fi
 }
 
 run_combat_tests() {
-  echo_step "Running combat subsystem tests..."
-  if bundle exec rspec spec/services/game/combat/ spec/lib/game/ --format progress; then
-    echo_success "Combat tests passed"
+  echo_step "Running arena and game-formula specs..."
+  if bundle exec rspec spec/services/arena spec/lib/game --format progress; then
+    echo_success "Arena and game-formula specs passed"
   else
-    echo_error "Combat tests failed"
+    echo_error "Arena or game-formula specs failed"
     exit 1
   fi
 }
 
-case "${1:-full}" in
+run_security() {
+  echo_step "Running Brakeman..."
+  bundle exec brakeman --quiet --no-pager
+
+  echo_step "Running Bundler Audit..."
+  bin/bundler-audit check --update
+
+  echo_step "Running Importmap audit..."
+  bin/importmap audit
+
+  echo_success "Security audits passed"
+}
+
+run_feature_docs() {
+  echo_step "Auditing feature documentation..."
+  bin/feature-doc-audit
+  echo_success "Feature documentation passed"
+}
+
+print_success() {
+  echo -e "\n${GREEN}═══════════════════════════════════════${NC}"
+  echo -e "${GREEN}  ✓ Verification completed successfully  ${NC}"
+  echo -e "${GREEN}═══════════════════════════════════════${NC}"
+}
+
+case "${1:-fast}" in
   lint)
     run_lint
     ;;
-  quick)
+  docs)
+    run_feature_docs
+    ;;
+  quick|fast)
     run_lint
-    run_factories
-    echo_success "Quick verification complete!"
+    run_non_system_tests
+    run_feature_docs
+    print_success
     ;;
   combat)
     run_lint
     run_combat_tests
+    run_feature_docs
+    print_success
     ;;
-  full|*)
+  full)
     run_lint
-    run_factories
-    run_tests
-
-    echo -e "\n${GREEN}═══════════════════════════════════════${NC}"
-    echo -e "${GREEN}  ✓ All checks passed - safe to push!  ${NC}"
-    echo -e "${GREEN}═══════════════════════════════════════${NC}"
+    run_non_system_tests
+    run_system_tests
+    run_security
+    run_feature_docs
+    print_success
+    ;;
+  *)
+    echo_error "Unknown profile: $1"
+    echo_info "Use: fast, full, lint, docs, or combat"
+    exit 2
     ;;
 esac

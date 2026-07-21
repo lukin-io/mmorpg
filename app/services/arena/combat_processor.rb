@@ -70,7 +70,7 @@ module Arena
     # Process a combat action from a character
     #
     # @param character [Character] the character performing the action
-    # @param action_type [Symbol] the type of action (:attack, :defend, :turn, :flee)
+    # @param action_type [Symbol] the type of action (:attack, :defend, :turn, :flee, :surrender)
     # @param params [Hash] additional parameters for the action
     #   - target: Character or ArenaParticipation to target
     #   - attack_type: :simple or :aimed (default :simple)
@@ -83,6 +83,8 @@ module Arena
       return failure("Character is defeated") if character.current_hp <= 0
 
       combat_profile_for(character)
+
+      return process_surrender(character) if action_type.to_sym == :surrender
 
       if action_type.to_sym == :turn && player_turn_commit_required?
         return process_player_turn_submission(
@@ -155,40 +157,22 @@ module Arena
     #
     # @return [Result, nil] result of NPC action or nil if no NPC
     def process_npc_turn(opposing_team: nil)
-      npc_participation = npc_turn_participations(opposing_team:).first
-      return nil unless npc_participation
+      results = []
 
-      npc = npc_participation.npc_template
-      return nil unless npc
+      npc_turn_participations(opposing_team:).each do |npc_participation|
+        break if should_end?
 
-      # Check if NPC is still alive
-      if npc_participation.current_hp <= 0
-        return nil
+        result = process_single_npc_turn(npc_participation)
+        results << result if result
       end
 
-      # Use AI to decide action
-      ai = Arena::NpcCombatAi.new(
-        npc_template: npc,
-        match: match,
-        rng: Random.new(match.id + Time.current.to_i)
+      return nil if results.empty?
+      return results.first if results.one?
+
+      success(
+        npc_turn: true,
+        actions: results.map(&:data)
       )
-
-      decision = ai.decide_action
-      decision_params = decision.params || {}
-
-      case decision.action_type
-      when :attack
-        attacks = Array(decision_params[:attacks]).presence
-        if attacks
-          process_npc_attack_sequence(npc_participation, decision.target, attacks, decision_params)
-        else
-          process_npc_attack(npc_participation, decision.target, decision_params)
-        end
-      when :defend
-        process_npc_defend(npc_participation)
-      else
-        process_npc_attack(npc_participation, decision.target, decision_params)
-      end
     end
 
     # Start the match and begin combat
@@ -658,6 +642,7 @@ module Arena
           type: "npc_vitals_update",
           npc_name: npc.name,
           npc_id: npc.id,
+          participation_id: npc_participation.id,
           current_hp: npc_participation.current_hp,
           max_hp: npc_participation.max_hp,
           hp_percent: (npc_participation.current_hp.to_f / npc_participation.max_hp * 100).round
@@ -670,7 +655,7 @@ module Arena
       npc_participation.update!(result: "defeat", ended_at: Time.current)
       log_entry("defeat", npc_participation, "#{npc.name} has been defeated!")
       award_npc_loot!(npc, defeated_by) if defeated_by
-      mark_world_tile_npc_defeated!(defeated_by) if defeated_by
+      mark_world_tile_npc_defeated!(defeated_by) if defeated_by && all_npcs_defeated?
 
       ActionCable.server.broadcast(
         match.broadcast_channel,
@@ -687,6 +672,10 @@ module Arena
 
       tile_npc = TileNpc.find_by(id: match.metadata["tile_npc_id"])
       tile_npc&.defeat!(defeated_by)
+    end
+
+    def all_npcs_defeated?
+      match.arena_participations.npcs.all? { |participation| participation.current_hp <= 0 }
     end
 
     def award_npc_loot!(npc, defeated_by)
@@ -845,6 +834,43 @@ module Arena
       participation.update!(result: "fled", ended_at: Time.current)
 
       success(fled: true, hp_penalty: penalty)
+    end
+
+    # Neverlands surrender defeats the conceding participant. The shared side
+    # only loses when every participant on that side has been defeated or has
+    # surrendered, so the same transition works for 1x1, 1xMany, and ManyxMany
+    # PvP/PvE fights.
+    def process_surrender(character)
+      result = nil
+
+      match.with_lock do
+        match.reload
+        participation = match.arena_participations.find_by(character:)
+
+        result = if !match.live?
+          failure("Fight is not active")
+        elsif participation.nil?
+          failure("Character is not participating in this fight")
+        elsif participation.result == "defeat" || character.reload.current_hp <= 0
+          failure("Character is defeated")
+        else
+          character.update!(current_hp: 0, last_combat_at: Time.current)
+          participation.update!(
+            result: :defeat,
+            ended_at: Time.current,
+            metadata: participation.metadata.to_h.merge("surrendered_at" => Time.current.iso8601)
+          )
+
+          log_entry("defeat", character, "#{character.name} surrendered.")
+          broadcaster.broadcast_vitals_update(character)
+
+          side_defeated = should_end?
+          end_match(determine_winner, reason: :forfeit) if side_defeated
+          success(surrendered: true, match_ended: side_defeated)
+        end
+      end
+
+      result
     end
 
     def calculate_base_damage(character)
@@ -1307,6 +1333,34 @@ module Arena
       # Process immediately for now, could be async with job
       # Small delay could be added with ActionCable streaming
       process_npc_turn(opposing_team: match.arena_participations.find_by(character:)&.team)
+    end
+
+    def process_single_npc_turn(npc_participation)
+      npc = npc_participation.npc_template
+      return unless npc && npc_participation.current_hp.positive?
+
+      ai = Arena::NpcCombatAi.new(
+        npc_template: npc,
+        participation: npc_participation,
+        match:,
+        rng:
+      )
+      decision = ai.decide_action
+      decision_params = decision.params || {}
+
+      case decision.action_type
+      when :attack
+        attacks = Array(decision_params[:attacks]).presence
+        if attacks
+          process_npc_attack_sequence(npc_participation, decision.target, attacks, decision_params)
+        else
+          process_npc_attack(npc_participation, decision.target, decision_params)
+        end
+      when :defend
+        process_npc_defend(npc_participation)
+      else
+        process_npc_attack(npc_participation, decision.target, decision_params)
+      end
     end
 
     def npc_response_required_for?(character)

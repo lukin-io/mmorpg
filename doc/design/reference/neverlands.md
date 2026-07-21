@@ -11,7 +11,7 @@ presence, turn combat, inventory weight, shops, and social chat.
 | Observation Area | Design Use |
 | --- | --- |
 | Wilderness movement capture | Movement timing, map state, available destination model |
-| City movement capture | City entry, city node navigation, shop entry, building return flow |
+| City movement capture | Complete nine-node city graph, three gate/cell mappings, immediate district navigation, building availability, shop/service entry, and building return flow |
 | Game shell/UI capture | Login shell, persistent frame contract, top context buttons, city hotspots, shop tabs, arena rows, chat/presence controls, quest modal shape |
 | Player profile capture | Player shell, vitals strip, equipment slots, trainable `Умения`, boolean `Навыки` |
 | Inventory/items/shop-row capture | Full inventory item rows, family-specific inventory renderers, filter categories, equip/unequip stat deltas, equipment sets, direct item social actions, item requirement visibility, shop buy availability, and observed sell-price behavior |
@@ -52,6 +52,13 @@ differ, prefer the current wiki.
 - Public player info can show a current fight/log link while keeping the
   character's city and sublocation visible.
 - Shops are entered through city buildings, then render category/item lists.
+- A single city can expose multiple gates, with each outside coordinate entering
+  the matching city node rather than a universal spawn.
+- City artwork can show unavailable services without an actionable hotspot;
+  availability comes from the current server response.
+- General shops, rented-stall markets, single-commodity exchanges, hospitals,
+  resource-processing services, and scheduled transport are distinct building
+  flows rather than interchangeable shop routes.
 - Shop, arena, profile, inventory, city, and chat buttons are current-context
   controls. They should be refreshed from server state rather than treated as
   static global navigation.

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-# Zone represents a contiguous tile grid for movement, spawn points, and city or
-# outdoor location state.
+# Zone represents either an outdoor coordinate region or one persisted city
+# node. City navigation is defined by CityHotspot actions, not zone-grid tiles.
 class Zone < ApplicationRecord
   LOCATION_TYPES = %w[outdoor city].freeze
 
@@ -20,5 +20,13 @@ class Zone < ApplicationRecord
 
   def outdoor?
     location_type == "outdoor"
+  end
+
+  def city_node_key
+    metadata.to_h["city_node_key"]
+  end
+
+  def display_name
+    metadata.to_h["title"].presence || name
   end
 end

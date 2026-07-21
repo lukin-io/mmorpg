@@ -79,8 +79,8 @@ The intended feel is:
    tile-local actions.
 3. Player chooses a server-offered destination or local action.
 4. Movement/actions lock relevant buttons and show a timer when they take time.
-5. Completion refreshes current location, available movement, tile actions,
-   NPCs, buildings, encounters, and nearby player list.
+5. Completion refreshes current location, available movement, visible tile
+   actions/buildings, hidden NPC encounter state, and nearby player list.
 6. Player gains combat progress, skill growth, or economy opportunities.
 
 ## Movement GDD
@@ -100,7 +100,8 @@ Movement follows the Neverlands-style contract:
 - reload during travel resumes from server state;
 - completion updates authoritative position and returns the next map state;
 - completion also refreshes context buttons such as character, inventory,
-  enter, NPC, building, or combat actions.
+  enter, and other source-backed local actions; hidden NPC state is not a
+  rendered button.
 
 The first implementation does not need to copy Neverlands' exact `GO@...`
 string protocol. JSON or Turbo Streams are acceptable if they preserve the same
@@ -156,16 +157,20 @@ Travel time is a GDD-level value, not a browser-only cooldown. The same formula
 must be used for destination offers, accepted movement validation, countdown
 display, and action readiness.
 
-Captured starter formula:
+The clean starter reference is `30` seconds. The MVP applies the confirmed
+Wanderer relationship as a bounded whole-second reduction:
 
 ```text
-travel_seconds = 30
+wanderer = clamp(effective_wanderer_level, 0, 100)
+reduction_seconds = floor(wanderer * 5 / 100)
+travel_seconds = clamp(30 - reduction_seconds, 25, 30)
 ```
 
 The observed Neverlands reference move from `1019,1025` to `1018,1025` used
-`30` seconds. Use that as the initial starter-area reference unless a specific
-developer-mode override is intentionally added. Do not add terrain, diagonal,
-encumbrance, or skill timing modifiers until they are source-captured.
+`30` seconds. A later character with Wanderer `100` received server values of
+`32` and then `49`, proving that the full source formula also has unisolated
+inputs. Do not add terrain, diagonal, encumbrance, fatigue, effect, profession,
+or other skill modifiers until they are source-captured.
 
 ### Direction Policy
 
@@ -204,9 +209,28 @@ The world is a tile grid split into zones or regions. Zones define:
 - tile templates;
 - allowed local action types.
 
-Starter world data should be deterministic. The first canonical movement test
-area should use a Neverlands-based coordinate neighborhood around
-`1019,1025` so docs, seeds, tests, and UI examples talk about the same place.
+Login is an exact resume operation. The finalized `CharacterPosition` remains
+authoritative for outdoor cells and city nodes across logout, browser closure,
+and later login. A separate allowlisted gameplay context records whether the
+character last occupied the world/city surface or an implemented city interior
+such as Shop. Shop mode, category, and numeric filters may resume; arbitrary
+URLs or unrecognized context data must never be followed. If the remembered
+interior is no longer accessible, login falls back to the persisted world/city
+position without moving the character.
+
+The launch MVP contains exactly one outdoor region with a logical size of
+`1000 x 1000` cells. More regions are post-MVP content, but region identity and
+coordinate bounds must remain first-class so the world can expand without
+rewriting character positions or movement commands. The implementation should
+store sparse authored tile overrides rather than eagerly create one million
+database rows.
+
+Starter world data is deterministic. The west-gate source observation
+`m_1019_1025` is mapped to local cell `7,0`, while the outdoor NPC/resource
+observation `m_1001_999` is mapped to local cell `7,7`. The original map ids and
+coordinates remain metadata, not executable local coordinates. The exact
+source-coordinate/region-origin formula still needs capture; these two starter
+mappings do not imply a general offset.
 
 ## Tile-Local Actions
 
@@ -216,14 +240,39 @@ may offer buttons for:
 - character/profile;
 - inventory;
 - enter/exit building or location;
-- talk to NPC;
-- attack hostile NPC;
 - future captured quest interaction.
+
+An outdoor cell is a composition, not one generic `feature` record. Its current
+state can combine:
+
+- sparse authored terrain/passability metadata;
+- an optional validated source-backed `100 x 100` cell-art slice;
+- one materialized hostile NPC;
+- one enterable city gate, outdoor building, or special-location entrance;
+- zero or more source-backed local actions.
+
+The hostile NPC layer is server-only until it interrupts an action; the outdoor
+map does not render the NPC name, marker, or a manual Attack control. The
+captured Neverlands local-action identifiers are `look` (search for herbs
+or local resources), `fis` (fishing), `dri` (drink), and `dig` (dig). Launch
+implements the captured `look` offer/accept/refresh contract. The other action
+types may be represented by authored cell data, but their rewards, skill checks,
+equipment requirements, timers, and depletion rules remain unavailable until a
+successful live flow is captured.
+
+Missing sparse tile rows use the same deterministic outdoor default for both
+rendering and movement validation. A tile row is required only for an authored
+override or local action; the `1000 x 1000` region must not create one million
+records.
 
 Each action that mutates state should be server-authored, persisted, and
 validated against the current tile. The map renders action offers issued by the
 server; each offer has a short-lived action key tied to character, zone,
 coordinate, action type, and target.
+
+There is no arbitrary location-name entry route. City, building, and special
+location entry is accepted only through an entrance offered by the character's
+current outdoor cell.
 
 ## Combat
 
@@ -232,9 +281,15 @@ Combat is turn-based and tactical. Core expectations:
 - PvE encounters can trigger from map movement or tile-local hostile actions;
 - player, team, and NPC fights support Neverlands-style arena duels, group
   fights, and room-based applications;
+- the same side model renders and resolves 1x1, 1xMany, and ManyxMany PvP/PvE
+  rosters; repeated NPC templates remain distinct fight participants;
+- surrender defeats one participant and produces a fight result only when the
+  conceding participant's entire side has no survivor;
 - combat uses explicit turns, action points, body-part targeting, blocks,
   skills, logs, rewards, and death/respawn consequences;
 - combat state must be resumable and auditable.
+- outdoor result finish uses a server-allowlisted return context and never an
+  arbitrary submitted URL.
 
 ## Dungeons
 
@@ -266,9 +321,14 @@ Characters grow through:
 
 - experience and levels;
 - stat allocation;
-- passive skills;
+- 0-100 numeric skills;
+- separately allocated yes/no perks;
 - Neverlands alignment/sign markers where source-backed;
 - equipment and inventory growth.
+
+Numeric skills and boolean perks must remain separate progression surfaces
+with separate point pools. A captured perk can be owned before its mechanical
+effect is wired; effect formulas must not be inferred from its label.
 
 Movement-affecting progression, such as Wanderer skill, encumbrance, or terrain
 mastery, must feed the canonical travel-time formula.

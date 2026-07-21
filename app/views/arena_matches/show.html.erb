@@ -1,9 +1,9 @@
 <% content_for :title, "Fight ##{@arena_match.id}" %>
 
 <%
-  # Get participants by team (a/alpha vs b/beta)
-  player_a = @participations.find { |p| p.team == "a" || p.team == "alpha" }
-  player_b = @participations.find { |p| p.team == "b" || p.team == "beta" }
+  # Get complete side rosters (a/alpha vs b/beta).
+  team_a = @participations.select { |p| p.team == "a" || p.team == "alpha" }
+  team_b = @participations.select { |p| p.team == "b" || p.team == "beta" }
   user_team = current_user_team
   current_participation = current_user_arena_participation
   combat_profile = arena_combat_profile(current_participation)
@@ -20,6 +20,7 @@
      data-controller="arena-match"
      data-arena-match-match-id-value="<%= @arena_match.id %>"
      data-arena-match-ap-limit-value="<%= ap_limit %>"
+     data-arena-match-user-team-value="<%= user_team %>"
      data-arena-match-read-only-value="<%= !current_user_participating? %>">
 
   <div class="page-header page-header--compact">
@@ -32,13 +33,17 @@
 
   <%# Main combat layout: Player | Actions+Log | Opponent %>
   <div class="arena-fight-layout">
-    <%# Left: Player A %>
+    <%# Left: complete side A roster %>
     <div class="arena-fighter arena-fighter--left" data-arena-match-target="fighterA">
-      <% if player_a %>
-        <%= render "arena_matches/fighter_card",
-            participation: player_a,
-            show_stats: (user_team == "b" || user_team == "beta"),
-            position: :left %>
+      <% if team_a.any? %>
+        <div class="arena-fighter-stack">
+          <% team_a.each do |participation| %>
+            <%= render "arena_matches/fighter_card",
+                participation:,
+                show_stats: (user_team == "b" || user_team == "beta"),
+                position: :left %>
+          <% end %>
+        </div>
       <% else %>
         <div class="arena-fighter-empty">Waiting for opponent...</div>
       <% end %>
@@ -55,8 +60,12 @@
         </div>
       <% end %>
 
-      <%# Combat action buttons (only for participants in live match) %>
-      <% if @arena_match.live? && current_user_participating? && current_user_pending_arena_turn? %>
+      <%# Combat action buttons (only for living participants in live match) %>
+      <% if @arena_match.live? && current_user_participating? && !current_user_active_arena_participant? %>
+        <div class="arena-action-panel nl-fight-wait-panel">
+          <div class="nl-fight-wait-state"><b>You are defeated. Waiting for fight result.</b></div>
+        </div>
+      <% elsif @arena_match.live? && current_user_participating? && current_user_pending_arena_turn? %>
         <div class="arena-action-panel nl-fight-wait-panel">
           <div class="nl-fight-wait-state">
             <b>Waiting for opponent turn</b>
@@ -76,6 +85,15 @@
                   class: "nl-arena-small-button" %>
             </div>
           <% end %>
+          <div class="nl-fight-wait-actions">
+            <%= button_to "Surrender",
+                action_arena_match_path(@arena_match),
+                method: :post,
+                params: {action_type: "surrender"},
+                class: "nl-arena-small-button nl-arena-surrender-button",
+                form: {class: "nl-inline-control-form"},
+                data: {turbo_confirm: "Surrender this fight?"} %>
+          </div>
         </div>
       <% elsif @arena_match.live? && current_user_participating? %>
         <div class="arena-action-panel" data-arena-match-target="actionButtons">
@@ -91,6 +109,13 @@
           <div class="nl-fight-controls">
             <%= link_to "Inventory", inventory_path, class: "nl-arena-small-button" %>
             <button type="button" class="nl-arena-small-button" data-action="click->arena-match#requestMatchState">Refresh</button>
+            <%= button_to "Surrender",
+                action_arena_match_path(@arena_match),
+                method: :post,
+                params: {action_type: "surrender"},
+                class: "nl-arena-small-button nl-arena-surrender-button",
+                form: {class: "nl-inline-control-form"},
+                data: {turbo_confirm: "Surrender this fight?"} %>
           </div>
 
           <div class="nl-fight-budget">
@@ -208,13 +233,17 @@
       </div>
     </div>
 
-    <%# Right: Player B %>
+    <%# Right: complete side B roster %>
     <div class="arena-fighter arena-fighter--right" data-arena-match-target="fighterB">
-      <% if player_b %>
-        <%= render "arena_matches/fighter_card",
-            participation: player_b,
-            show_stats: (user_team == "a" || user_team == "alpha"),
-            position: :right %>
+      <% if team_b.any? %>
+        <div class="arena-fighter-stack">
+          <% team_b.each do |participation| %>
+            <%= render "arena_matches/fighter_card",
+                participation:,
+                show_stats: (user_team == "a" || user_team == "alpha"),
+                position: :right %>
+          <% end %>
+        </div>
       <% else %>
         <div class="arena-fighter-empty">Waiting for opponent...</div>
       <% end %>
@@ -270,7 +299,11 @@
         <% if current_user_participating? && !current_user_finished_arena_match? %>
           <%= button_to "Finish Fight", finish_arena_match_path(@arena_match), method: :post, class: "btn-primary" %>
         <% else %>
-          <%= link_to "To Arena", arena_index_path, class: "btn-primary" %>
+          <% if @arena_match.metadata.to_h["source"] == "world_npc" %>
+            <%= link_to "Return", Game::World::CombatReturnContext.new(character: current_character).path_for(@arena_match.metadata.to_h["return_context"]), class: "btn-primary" %>
+          <% else %>
+            <%= link_to "To Arena", arena_index_path, class: "btn-primary" %>
+          <% end %>
         <% end %>
       </div>
     </div>

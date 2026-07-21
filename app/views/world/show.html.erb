@@ -4,44 +4,23 @@
 %>
 <% content_for :title, "#{@zone.name} - Neverlands" %>
 
-<% if in_city?(@position) %>
-  <%# City/Location View - large image with description %>
-  <div class="nl-world-container nl-world-container--city">
-    <%= render "world/city_view", zone: @zone, position: @position %>
+<div class="nl-world-container nl-world-container--map">
+  <turbo-frame id="available-actions">
+    <%= render "world/actions", available_actions: @available_actions, position: @position %>
+  </turbo-frame>
 
-    <%# Location entities & actions below the image %>
-    <turbo-frame id="location-info">
-      <%= render "world/location_info", position: @position, tile: @tile, zone: @zone %>
-    </turbo-frame>
+  <turbo-frame id="game-map">
+    <%= render "world/map",
+               position: @position,
+               nearby_tiles: @nearby_tiles,
+               zone: @zone,
+               tile_data: @tile_data,
+               movement_destinations: @movement_destinations,
+               active_movement: @active_movement,
+               movement_remaining_seconds: @movement_remaining_seconds %>
+  </turbo-frame>
 
-    <turbo-frame id="available-actions">
-      <%= render "world/actions", available_actions: @available_actions, position: @position %>
-    </turbo-frame>
-  </div>
-
-<% else %>
-  <%# Outdoor World Map View - tile grid with cursor %>
-  <div class="nl-world-container nl-world-container--map">
-    <%# Map Grid with tiles %>
-    <turbo-frame id="game-map">
-      <%= render "world/map",
-                 position: @position,
-                 nearby_tiles: @nearby_tiles,
-                 zone: @zone,
-                 tile_data: @tile_data,
-                 movement_destinations: @movement_destinations,
-                 active_movement: @active_movement,
-                 movement_remaining_seconds: @movement_remaining_seconds %>
-    </turbo-frame>
-
-    <%# Location Description & Entities %>
-    <turbo-frame id="location-info">
-      <%= render "world/location_info", position: @position, tile: @tile, zone: @zone %>
-    </turbo-frame>
-
-    <%# Available Actions %>
-    <turbo-frame id="available-actions">
-      <%= render "world/actions", available_actions: @available_actions, position: @position %>
-    </turbo-frame>
-  </div>
-<% end %>
+  <turbo-frame id="location-info">
+    <%= render "world/location_info", position: @position, tile: @tile, zone: @zone %>
+  </turbo-frame>
+</div>

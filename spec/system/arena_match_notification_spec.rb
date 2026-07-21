@@ -17,8 +17,18 @@ RSpec.describe "Arena Match Notification System", type: :system do
     zone = character.position.zone
     zone.update!(location_type: "city")
     hotspot = create(:city_hotspot, :arena, zone:, active: true, required_level: 1)
+    offer = create(
+      :world_action_offer,
+      :city_building_entry,
+      character:,
+      zone:,
+      x: character.position.x,
+      y: character.position.y,
+      target: hotspot
+    )
 
-    page.driver.submit :post, interact_hotspot_world_path, {hotspot_id: hotspot.id}
+    page.driver.submit :post, interact_hotspot_world_path,
+      {hotspot_id: hotspot.id, action_key: offer.action_key}
   end
 
   # ===========================================================================

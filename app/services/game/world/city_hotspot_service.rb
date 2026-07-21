@@ -11,16 +11,14 @@ module Game
     #   - character: Character instance
     #   - zone: Zone instance (city zone)
     #
-    # Returns:
-    #   - hotspots: Array of hotspot info hashes for UI
-    #   - interact!: Result struct with navigation info
+    # Returns a city hotspot relation or interaction result.
     #
     # Usage:
     #   service = Game::World::CityHotspotService.new(
     #     character: current_character,
     #     zone: current_zone
     #   )
-    #   hotspots = service.hotspots_for_display
+    #   hotspots = service.hotspots
     #   result = service.interact!(hotspot_id)
     #
     class CityHotspotService
@@ -38,20 +36,6 @@ module Game
       # @return [Boolean]
       def city_zone?
         zone&.city? || false
-      end
-
-      # Get all hotspots for display in the city view
-      #
-      # @return [Array<Hash>] array of hotspot info hashes
-      def hotspots_for_display
-        return [] unless city_zone?
-
-        CityHotspot.for_zone(zone).map do |hotspot|
-          hotspot.to_info_hash.merge(
-            can_interact: hotspot.can_interact?(character),
-            blocked_reason: hotspot.interaction_blocked_reason(character)
-          )
-        end
       end
 
       # Get hotspot records for rendering
@@ -110,34 +94,23 @@ module Game
           )
         end
 
-        dest_x = hotspot.action_params["destination_x"]
-        dest_y = hotspot.action_params["destination_y"]
-
-        unless dest_x && dest_y
-          spawn_point = hotspot.destination_zone.spawn_points.find_by(default_entry: true)
-
-          unless spawn_point
-            return Result.new(
-              success: false,
-              message: "Entry point is not configured.",
-              hotspot: hotspot
-            )
-          end
-
-          dest_x ||= spawn_point.x
-          dest_y ||= spawn_point.y
+        destination_x = Integer(hotspot.action_params["destination_x"], exception: false)
+        destination_y = Integer(hotspot.action_params["destination_y"], exception: false)
+        unless destination_coordinates_valid?(hotspot.destination_zone, destination_x, destination_y)
+          return Result.new(
+            success: false,
+            message: "Captured destination coordinates are not configured.",
+            hotspot: hotspot
+          )
         end
-
-        spawn_x = dest_x
-        spawn_y = dest_y
 
         # Update character position
         position = character.position
         if position
           position.update!(
             zone: hotspot.destination_zone,
-            x: spawn_x,
-            y: spawn_y,
+            x: destination_x,
+            y: destination_y,
             last_action_at: Time.current
           )
 
@@ -156,17 +129,12 @@ module Game
         end
       end
 
-      def handle_feature_navigation(hotspot)
-        feature_key = hotspot.action_params["feature"] || hotspot.key
-        pending_message = CityHotspot::PENDING_FEATURES[feature_key]
-        if pending_message
-          return Result.new(
-            success: false,
-            message: pending_message,
-            hotspot: hotspot
-          )
-        end
+      def destination_coordinates_valid?(destination_zone, x, y)
+        x&.between?(0, destination_zone.width - 1) &&
+          y&.between?(0, destination_zone.height - 1)
+      end
 
+      def handle_feature_navigation(hotspot)
         url = hotspot.navigate_url
         unless url
           return Result.new(

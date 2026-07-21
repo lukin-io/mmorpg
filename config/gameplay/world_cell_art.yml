@@ -1,0 +1,31 @@
+# Source-backed outdoor cell art. Paths are relative to app/assets/images and
+# must stay under world/. A MapTileTemplate stores only the stable key and a
+# zero-based sheet coordinate; it never stores an asset path or CSS dimensions.
+#
+# Every cell is exactly 100x100. Keep the physical bitmap aligned with
+# (columns * 100) x (rows * 100) and cover that invariant in an asset spec.
+# Catalog values are cached for the process lifetime, so restart the app after
+# editing this file or call Game::World::CellArtCatalog.reload! in a development
+# console or isolated spec.
+#
+# Treat keys as persisted identities. Do not rename a used key without updating
+# stored MapTileTemplate metadata. source_reference records the Neverlands
+# evidence behind the art; it must not be a generic-RPG justification.
+forpost_terrain:
+  asset: world/forpost-terrain.png
+  cell_width: 100
+  cell_height: 100
+  columns: 10
+  rows: 10
+  source_reference: neverlands_live_movement
+
+# Dedicated-cell shape (documentation only): keep this commented until the
+# exact Neverlands appearance, project-owned 100x100 asset, and tests exist.
+# forpost_west_gate:
+#   asset: world/cells/forpost-west-gate.png
+#   cell_width: 100
+#   cell_height: 100
+#   columns: 1
+#   rows: 1
+#   source_reference: neverlands_live_west_gate
+# The tile metadata would reference column: 0 and row: 0.

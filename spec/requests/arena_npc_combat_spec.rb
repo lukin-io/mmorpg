@@ -59,8 +59,17 @@ RSpec.describe "Arena NPC Combat", type: :request do
     zone = character.position.zone
     zone.update!(location_type: "city")
     hotspot = create(:city_hotspot, :arena, zone: zone, active: true, required_level: 1)
+    offer = create(
+      :world_action_offer,
+      character:,
+      zone:,
+      x: character.position.x,
+      y: character.position.y,
+      action_type: "enter_city_building",
+      target: hotspot
+    )
 
-    post interact_hotspot_world_path, params: {hotspot_id: hotspot.id}
+    post interact_hotspot_world_path, params: {hotspot_id: hotspot.id, action_key: offer.action_key}
   end
 
   # ===========================================================================

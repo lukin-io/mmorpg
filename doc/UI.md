@@ -19,11 +19,14 @@ profile, inventory, and the stats/skills allocation surfaces.
    player-facing Russian string to English. Keep the original Russian only as
    non-rendered source/traceability metadata (see `source_name` in the skill
    registry) or in capture docs under `doc/design/reference/`.
-2. **No live-site scraping.** Do not attempt to log into `neverlands.ru`. The
-   capture discipline in `doc/design/reference/neverlands_live_player.md` warns
-   that repeated logins lock the account for 30 minutes. The captures already in
-   `doc/design/reference/` (including the 2026-05-25 `max_kerby` game-shell
-   capture) are the authoritative reference.
+2. **Live-site access is exceptional.** Existing sanitized captures remain the
+   normal implementation reference. Log in only when the maintainer explicitly
+   authorizes the account and requested flow. Use one Chrome-shaped login
+   request, reuse its cookie jar, avoid automated retries because repeated
+   attempts can lock the profile for 30 minutes. Complete the public
+   `Please Wait... / Cookie...` handshake before the credential POST; an early
+   POST returns nginx `405`. Never track credentials, cookies, `vcode` values,
+   or action tokens.
 3. **Reference, not literal clone.** No iframes/frameset. One persistent Rails
    game layout, replaceable `main_content` Turbo frame, persistent chat/presence,
    server-authored actions. Reuse the existing `nl-*` CSS token surface; do not
@@ -201,11 +204,32 @@ consistent. Cross-check each against the cited capture before building.
 - **Item seeds**: recreate the captured live inventory items + exact
   requirements/effects (capture: "Captured Inventory Contents").
 - **Durability/repair UX**: breakage messages, repair flow.
-- **`Навыки` boolean perks**: not implemented after the generic-perk cleanup;
-  rebuild only from captured perk IDs/point pool/exclusions if the MVP loop
-  needs them (`launch_mvp_plan.md`).
-- **Quests modal, `Лавка` shop building, wild NPC handoff**: documented but not
-  implemented; out of UI/UX-pass scope but tracked in `launch_mvp_plan.md`.
+- **`Навыки` boolean perks**: the captured starter perk id `7` is implemented
+  with its own point pool and preview/save flow. The full source id/name/category
+  catalog is now captured; capture prerequisites, point timing, and mechanical
+  effects before exposing more choices.
+- **City graph and services**: the complete nine-node graph and all three
+  gate/cell pairs are implemented. Market, Junk Dealer, Numismatics, Airship
+  Station, and Hospital/Pharmacy are accessible as captured read-only screens;
+  their mutations remain deferred. General Shop and Arena keep their dedicated
+  interactive flows. City nodes now use the retained `city.png` as a compact
+  `760 x 255` illustrated navigation surface with positioned building polygons,
+  edge-route hit regions, arrow markers, hover/focus tooltips, and
+  keyboard-accessible proxy controls. Every actionable region still submits
+  the current server-owned action offer; unavailable illustrated features stay
+  non-actionable. The retained `arena.png` and `gate.png` assets were not
+  removed. The city-grid compatibility layer, generic entrance types/emoji
+  markers, spawn-coordinate fallback, and universal exit bypass remain absent.
+- **Outdoor client**: the launch region now renders a clipped `5 x 5` viewport
+  over a server-built `7 x 7` buffer of exact `100 x 100` cells. The player
+  cursor stays fixed in the center, only server-offered destinations receive
+  the red clickable outline, accepted travel slides the terrain beneath the
+  cursor, and a red countdown is shown one cell above it. Coordinates remain
+  available to assistive technology but are not generic visible chrome.
+- **Quests modal**: documented capture is still missing and implementation is
+  intentionally absent. **`Лавка`** has a starter buy/sell implementation, and
+  **wild NPC handoff** is partial; remaining work is tracked in
+  `launch_mvp_plan.md`.
 
 ## Working rules for the next agent
 

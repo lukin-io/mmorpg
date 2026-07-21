@@ -16,8 +16,8 @@ module Game
         cancel_open_offers!
 
         offers = []
-        offers << npc_offer
         offers << building_offer
+        offers.concat(local_action_offers)
         offers.compact
       end
 
@@ -35,22 +35,6 @@ module Game
           )
       end
 
-      def npc_offer
-        npc = tile_state.npc
-        return unless npc&.alive?
-        return unless npc.hostile?
-
-        create_offer(
-          :attack_npc,
-          target: npc,
-          metadata: {
-            npc_template_id: npc.npc_template_id,
-            npc_key: npc.npc_key,
-            hostile: true
-          }
-        )
-      end
-
       def building_offer
         building = tile_state.building
         return unless building&.can_enter?(character)
@@ -60,10 +44,33 @@ module Game
           target: building,
           metadata: {
             building_key: building.building_key,
-            building_type: building.building_type,
             destination_zone_id: building.destination_zone_id
           }
         )
+      end
+
+      def local_action_offers
+        tile = tile_state.respond_to?(:tile) ? tile_state.tile : nil
+        return [] unless tile
+
+        Array(tile_state.local_actions).filter_map do |local_action|
+          local_action_type = local_action["type"]
+          next unless MapTileTemplate.local_action_implemented?(local_action_type)
+
+          world_action_type = MapTileTemplate.world_action_type_for(local_action_type)
+          next unless world_action_type
+
+          create_offer(
+            world_action_type,
+            target: tile,
+            metadata: {
+              local_action_type:,
+              source_id: local_action["source_id"],
+              label: local_action["label"].presence ||
+                MapTileTemplate.default_local_action_label(local_action_type)
+            }
+          )
+        end
       end
 
       def create_offer(action_type, target:, metadata: {})

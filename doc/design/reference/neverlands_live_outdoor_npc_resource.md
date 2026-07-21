@@ -36,6 +36,12 @@ map = [
 ]
 ```
 
+The map state and `mapbt` exposed no Plague Rat marker, name, stats, or manual
+Attack action before combat. The two rats appeared only after the ordinary
+`look` action forced the client into the fight state. This supports treating
+outdoor NPC placement as hidden server-side cell state rather than rendered map
+content.
+
 The public profile showed:
 
 ```text
@@ -232,3 +238,28 @@ Important files:
 - `js_fight_v10.utf8.js`
 
 These files are not canonical design; this markdown file is the durable summary.
+
+## 2026-07-21 Bandit Follow-Up
+
+A returning level-16 character opened in an already-active wilderness bot
+attack containing two opponents with the same `Разбойник` identity at levels
+`13` and `15`. It used the existing `fight_v10.js`, `fight_pm`, body-part
+attack/block payload, multi-participant, result, and explicit finish contracts.
+
+The level-13 opponent was defeated first by one critical hit and immediately
+ran its participant-level loot check (`Ничего не найдено`). The level-15
+opponent remained active, confirming again that one defeated NPC does not end a
+multi-NPC fight. The remaining fight later ended through the source timeout
+result and required the normal explicit finish action.
+
+After returning to the wilderness, selecting the `Ваш персонаж` local action
+was interrupted by a new level-14 `Грабитель` bot attack. Finishing that result
+returned to the originally requested character screen rather than discarding
+the requested context entirely. This adds a nuance to the existing
+interruption rule: the server may resume the interrupted destination after the
+combat result, so the post-combat handoff must be source-context aware rather
+than always hard-coded to the map.
+
+No new local combat mechanic follows from this capture. It strengthens the
+existing shared-combat, participant-level defeat/loot, explicit-result, and
+outdoor-action interruption contracts.

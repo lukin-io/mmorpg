@@ -34,9 +34,10 @@ module Arena
     # @param npc_template [NpcTemplate] the NPC fighting (with Npc::Combatable)
     # @param match [ArenaMatch] the arena match
     # @param rng [Random] seeded random for determinism
-    def initialize(npc_template:, match:, rng: Random.new(1))
+    def initialize(npc_template:, match:, participation: nil, rng: Random.new(1))
       @npc_template = npc_template
       @match = match
+      @participation = participation
       @rng = rng
       # Use unified combat_behavior from Npc::Combatable concern
       @behavior = npc_template.combat_behavior
@@ -69,6 +70,8 @@ module Arena
 
     private
 
+    attr_reader :participation
+
     def attack_decision
       target = find_best_target
       attacks = select_attack_package
@@ -87,25 +90,23 @@ module Arena
 
     def find_best_target
       # Find opponent with lowest HP
-      opponents = match.arena_participations
-        .where.not(npc_template_id: npc_template.id)
-        .includes(:character)
+      opponents = match.arena_participations.players.includes(:character)
+      opponents = opponents.where.not(team: find_npc_participation&.team)
 
       alive_opponents = opponents.select do |p|
-        hp = p.npc? ? p.current_hp : p.character&.current_hp
-        hp.to_i > 0
+        p.character&.current_hp.to_i > 0
       end
 
       return nil if alive_opponents.empty?
 
       # Target lowest HP opponent
       alive_opponents.min_by do |p|
-        p.npc? ? p.current_hp : p.character&.current_hp.to_i
+        p.character&.current_hp.to_i
       end&.character
     end
 
     def find_npc_participation
-      match.arena_participations.find_by(npc_template_id: npc_template.id)
+      participation || match.arena_participations.find_by(npc_template_id: npc_template.id)
     end
 
     def calculate_hp_ratio(participation)

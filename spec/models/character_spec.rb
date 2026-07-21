@@ -28,6 +28,59 @@ RSpec.describe Character, type: :model do
     end
   end
 
+  describe "Neverlands boolean perks" do
+    let(:character) { create(:character, :with_new_perk_point, perks: {}) }
+
+    it "tracks captured perk ownership separately from numeric skills" do
+      character.update!(perks: {"more_strength" => true})
+
+      expect(character).to be_owns_perk(:more_strength)
+      expect(character.owned_perk_keys).to eq([:more_strength])
+      expect(character.passive_skills).to eq({})
+    end
+
+    it "awards non-negative perk points" do
+      character.award_perk_points!(2)
+      character.award_perk_points!(0)
+
+      expect(character.reload.perk_points).to eq(3)
+    end
+
+    it "rejects a negative perk-point balance" do
+      character.perk_points = -1
+
+      expect(character).not_to be_valid
+      expect(character.errors[:perk_points]).to be_present
+    end
+
+    it "accepts zero as the lower perk-point boundary" do
+      character.perk_points = 0
+
+      expect(character).to be_valid
+    end
+
+    it "rejects a null perk-point balance" do
+      character.perk_points = nil
+
+      expect(character).not_to be_valid
+      expect(character.errors[:perk_points]).to be_present
+    end
+
+    it "ignores false and unknown perk values when listing owned perks" do
+      character.update!(perks: {"more_strength" => false, "invented_perk" => true})
+
+      expect(character).not_to be_owns_perk(:more_strength)
+      expect(character.owned_perk_keys).to be_empty
+    end
+
+    it "builds the captured ownership edge state through the factory" do
+      owned_character = create(:character, :with_more_strength_perk, :without_perk_points)
+
+      expect(owned_character).to be_owns_perk(:more_strength)
+      expect(owned_character.perk_points).to eq(0)
+    end
+  end
+
   describe "#max_action_points" do
     let(:character) { create(:character, level: 10) }
 

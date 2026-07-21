@@ -27,6 +27,19 @@ RSpec.describe "World", type: :request do
     end
   end
 
+  def city_hotspot_action_params(character:, position:, hotspot:)
+    offer = create(
+      :world_action_offer,
+      character:,
+      zone: position.zone,
+      x: position.x,
+      y: position.y,
+      action_type: hotspot.world_action_type,
+      target: hotspot
+    )
+    {hotspot_id: hotspot.id, action_key: offer.action_key}
+  end
+
   describe "Zone model schema" do
     # Regression test: Zone model should not have a description column
     # This covers the bug where city_view.html.erb tried to access zone.description
@@ -61,6 +74,15 @@ RSpec.describe "World", type: :request do
       it "renders the world view successfully" do
         get world_path
         expect(response).to have_http_status(:success)
+      end
+
+
+      it "uses the compact Neverlands game shell for the playable world" do
+        get world_path
+
+        expect(response.body).to include('<body class="nl-game-layout"')
+        expect(response.body).to include("nl-top-bar")
+        expect(response.body).to include("nl-bottom-bar")
       end
 
       it "displays the zone name" do
@@ -101,6 +123,9 @@ RSpec.describe "World", type: :request do
         expect(response.body).to include('data-nl-world-map-movement-active-value="true"')
         expect(response.body).to include('data-nl-world-map-player-x-value="5"')
         expect(response.body).to include('data-nl-world-map-player-y-value="5"')
+        expect(response.body).to include('data-nl-world-map-movement-delta-x-value="0"')
+        expect(response.body).to include('data-nl-world-map-movement-delta-y-value="-1"')
+        expect(response.body).to match(/data-nl-world-map-movement-total-seconds-value="\d+"/)
         position.reload
         expect([position.x, position.y]).to eq([5, 5])
       end
@@ -108,6 +133,65 @@ RSpec.describe "World", type: :request do
       it "renders the map partial" do
         get world_path
         expect(response.body).to include("nl-map-container")
+      end
+
+
+      it "renders a seven-by-seven buffer around the clipped five-by-five viewport" do
+        get world_path
+
+        document = Nokogiri::HTML(response.body)
+        expect(document.css(".nl-map-tile").size).to eq(49)
+        expect(response.body).to include("forpost-terrain")
+      end
+
+      it "renders an exact configured cell-art slice and the regional fallback together" do
+        authored_tile = MapTileTemplate.find_by!(zone: zone.name, x: 4, y: 5)
+        authored_tile.update!(
+          metadata: {
+            "source_map" => "m_1001_999",
+            "cell_art" => {"key" => "forpost_terrain", "column" => 7, "row" => 7}
+          }
+        )
+
+        get world_path
+
+        document = Nokogiri::HTML(response.body)
+        authored_cell = document.at_css("#tile_4_5")
+        fallback_cell = document.at_css("#tile_5_5")
+        expect(authored_cell["data-cell-art-key"]).to eq("forpost_terrain")
+        expect(authored_cell["style"]).to include(
+          "background-position: -700px -700px",
+          "background-size: 1000px 1000px"
+        )
+        expect(fallback_cell["data-cell-art-key"]).to eq("")
+        expect(fallback_cell["style"]).to include("background-position: -500px -500px")
+      end
+
+      it "uses the regional fallback for malformed legacy cell-art metadata" do
+        legacy_tile = MapTileTemplate.find_by!(zone: zone.name, x: 4, y: 5)
+        legacy_tile.update_column(
+          :metadata,
+          {"source_map" => "m_legacy", "cell_art" => {"key" => "missing_art", "column" => 0, "row" => 0}}
+        )
+
+        get world_path
+
+        cell = Nokogiri::HTML(response.body).at_css("#tile_4_5")
+        expect(cell["data-cell-art-key"]).to eq("")
+        expect(cell["style"]).to include("background-position: -400px -500px")
+      end
+
+
+      it "keeps the cursor centered at an outdoor region boundary" do
+        position.update!(x: 0, y: 0)
+
+        get world_path
+
+        document = Nokogiri::HTML(response.body)
+        expect(document.css(".nl-map-tile").size).to eq(49)
+        expect(document.css(".nl-map-tile--outside")).not_to be_empty
+        expect(response.body).to include('id="tile_-3_-3"')
+        expect(response.body).to include('style="left: 200px; top: 200px;"')
       end
 
       it "includes available tile indicators for adjacent tiles" do
@@ -134,7 +218,7 @@ RSpec.describe "World", type: :request do
       it "renders the city view" do
         get world_path
         expect(response).to have_http_status(:success)
-        expect(response.body).to include("nl-city-view").or include("city-view")
+        expect(response.body).to include("city-view-container")
       end
 
       it "includes the city description from metadata" do
@@ -190,6 +274,17 @@ RSpec.describe "World", type: :request do
     end
 
     context "with valid movement offer" do
+      it "lets a same-cell hostile NPC interrupt movement before travel starts" do
+        create(:tile_npc, :multi_npc_encounter, zone: zone.name, x: 5, y: 5)
+        command = movement_offer(:north)
+
+        expect { post_offer(command) }.to change(ArenaMatch, :count).by(1)
+
+        expect(response).to redirect_to(arena_match_path(ArenaMatch.last))
+        expect(command.reload).to be_offered
+        expect(position.reload).to have_attributes(x: 5, y: 5)
+      end
+
       it "starts timed travel without changing coordinates immediately" do
         command = movement_offer(:north)
 
@@ -203,6 +298,20 @@ RSpec.describe "World", type: :request do
         expect(moving_command.direction).to eq("north")
         expect(moving_command.target_position).to eq([5, 4])
         expect(moving_command.ends_at).to be > moving_command.started_at
+      end
+
+      it "uses the persisted Wanderer level for the offered and accepted travel duration" do
+        character.update!(passive_skills: attributes_for(:character, :master_wanderer).fetch(:passive_skills))
+        command = movement_offer(:north)
+
+        expect(command.travel_seconds).to eq(25)
+        character.update!(passive_skills: {})
+
+        post_offer(command)
+
+        moving_command = command.reload
+        expect(moving_command).to be_moving
+        expect(moving_command.ends_at - moving_command.started_at).to eq(25.seconds)
       end
 
       it "redirects to world path with moving notice on HTML format" do
@@ -312,79 +421,6 @@ RSpec.describe "World", type: :request do
     end
   end
 
-  describe "POST /world/enter" do
-    let(:user) { create(:user) }
-    let(:outdoor_zone) { create(:zone, name: "Outpost Surroundings", location_type: "outdoor", width: 20, height: 20) }
-    let(:city_zone) { create(:zone, name: "Outpost", location_type: "city", width: 10, height: 10) }
-    let(:character) { create(:character, user: user) }
-    let!(:position) { create(:character_position, character: character, zone: outdoor_zone, x: 5, y: 5) }
-    let!(:spawn_point) { create(:spawn_point, zone: city_zone, x: 3, y: 3, default_entry: true) }
-
-    before { sign_in user, scope: :user }
-
-    context "with valid location" do
-      it "moves character to the new zone" do
-        post enter_world_path, params: {location_key: city_zone.name}
-
-        position.reload
-        expect(position.zone).to eq(city_zone)
-        expect(position.x).to eq(3)
-        expect(position.y).to eq(3)
-      end
-
-      it "redirects with success notice" do
-        post enter_world_path, params: {location_key: city_zone.name}
-
-        expect(response).to redirect_to(world_path)
-        follow_redirect!
-        expect(response.body).to include("Entered").or include("Outpost")
-      end
-    end
-
-    context "with invalid location" do
-      it "returns alert for non-existent location" do
-        post enter_world_path, params: {location_key: "nonexistent"}
-
-        expect(response).to redirect_to(world_path)
-        follow_redirect!
-        expect(response.body).to include("not found")
-      end
-    end
-  end
-
-  describe "POST /world/exit" do
-    let(:user) { create(:user) }
-    let(:city_zone) do
-      create(:zone,
-        name: "Outpost",
-        location_type: "city",
-        width: 10,
-        height: 10,
-        metadata: {"exit_to" => "Outpost Surroundings"})
-    end
-    let(:outdoor_zone) { create(:zone, name: "Outpost Surroundings", location_type: "outdoor", width: 20, height: 20) }
-    let(:character) { create(:character, user: user) }
-    let!(:position) { create(:character_position, character: character, zone: city_zone, x: 3, y: 3) }
-    let!(:spawn_point) { create(:spawn_point, zone: outdoor_zone, x: 10, y: 10, default_entry: true) }
-
-    before { sign_in user, scope: :user }
-
-    it "moves character to the exit zone" do
-      post exit_location_world_path
-
-      position.reload
-      expect(position.zone).to eq(outdoor_zone)
-    end
-
-    it "redirects with success notice" do
-      post exit_location_world_path
-
-      expect(response).to redirect_to(world_path)
-      follow_redirect!
-      expect(response.body).to include("Exited").or include("Outpost Surroundings")
-    end
-  end
-
   describe "map rendering" do
     let(:user) { create(:user) }
     let(:zone) { create(:zone, name: "Test Zone", location_type: "outdoor", width: 20, height: 20) }
@@ -475,7 +511,7 @@ RSpec.describe "World", type: :request do
       create_explicit_tiles(zone, x_range: 8..12, y_range: 8..12)
     end
 
-    describe "TileNpc display" do
+    describe "hidden TileNpc encounter state" do
       context "when database TileNpc exists and is alive" do
         let(:npc_template) { create(:npc_template, name: "Plague Rat", npc_key: "plague_rat_visible") }
         let!(:db_npc) do
@@ -489,16 +525,16 @@ RSpec.describe "World", type: :request do
             respawns_at: nil)
         end
 
-        it "shows the database NPC on the map" do
+        it "does not reveal the database NPC on the map" do
           get world_path
 
-          expect(response.body).to include("Plague Rat")
+          expect(response.body).not_to include("Plague Rat")
         end
 
-        it "shows NPC marker" do
+        it "does not render an NPC marker" do
           get world_path
 
-          expect(response.body).to include("nl-tile-npc")
+          expect(response.body).not_to include("nl-tile-npc")
         end
       end
 
@@ -540,10 +576,10 @@ RSpec.describe "World", type: :request do
             respawns_at: nil)
         end
 
-        it "shows the alive NPC on the map" do
+        it "keeps the alive NPC hidden on the map" do
           get world_path
 
-          expect(response.body).to include("Live Rat")
+          expect(response.body).not_to include("Live Rat")
         end
       end
     end
@@ -565,6 +601,205 @@ RSpec.describe "World", type: :request do
     end
   end
 
+  describe "POST /world/perform_local_action" do
+    let(:user) { create(:user) }
+    let(:zone) { create(:zone, name: "Local Action Zone", location_type: "outdoor", width: 1000, height: 1000) }
+    let(:character) { create(:character, user:, level: 4, current_hp: 100, max_hp: 100) }
+    let!(:position) { create(:character_position, character:, zone:, x: 5, y: 5) }
+    let!(:tile) { create(:map_tile_template, :with_resource_search, zone: zone.name, x: 5, y: 5) }
+
+    before { sign_in user, scope: :user }
+
+    def local_action_offer(owner: character, at: position, target: tile, **attributes)
+      create(
+        :world_action_offer,
+        :resource_search,
+        character: owner,
+        zone: at.zone,
+        x: at.x,
+        y: at.y,
+        target:,
+        **attributes
+      )
+    end
+
+    def post_local_action(offer, params: {}, headers: {})
+      post perform_local_action_world_path,
+        params: {
+          tile_id: tile.id,
+          local_action_type: "resource_search",
+          action_key: offer.action_key
+        }.merge(params),
+        headers:
+    end
+
+    it "renders the server-offered resource action on the current cell" do
+      get world_path
+
+      expect(response).to have_http_status(:success)
+      expect(response.body).to include("Look Around")
+      expect(response.body).to include("Search for herbs and local resources")
+      expect(response.body).to include('name="action_key"')
+    end
+
+    it "completes an uninterrupted resource-search offer without awarding invented resources" do
+      offer = local_action_offer
+
+      expect { post_local_action(offer) }.not_to change(InventoryItem, :count)
+
+      expect(response).to redirect_to(world_path)
+      expect(offer.reload).to be_completed
+      follow_redirect!
+      expect(response.body).to include("search the surroundings")
+    end
+
+    it "returns a Turbo redirect after a successful local action" do
+      offer = local_action_offer
+
+      post_local_action(offer, headers: {"Accept" => "text/vnd.turbo-stream.html"})
+
+      expect(response).to have_http_status(:see_other)
+      expect(response).to redirect_to(world_path)
+    end
+
+    it "hands a resource action off to shared combat when a hostile NPC interrupts" do
+      npc_template = create(
+        :npc_template,
+        npc_key: "resource_ambush_rat",
+        name: "Plague Rat",
+        role: "hostile",
+        metadata: {"health" => 40, "base_damage" => 4}
+      )
+      create(
+        :tile_npc,
+        npc_template:,
+        zone: zone.name,
+        x: 5,
+        y: 5,
+        current_hp: 40,
+        max_hp: 40
+      )
+      offer = local_action_offer
+
+      expect { post_local_action(offer) }.to change(ArenaMatch, :count).by(1)
+
+      expect(response).to redirect_to(arena_match_path(ArenaMatch.last))
+      expect(ArenaMatch.last.metadata["source"]).to eq("world_npc")
+      expect(offer.reload).to be_completed
+    end
+
+    it "rolls the offer back when hostile combat startup fails" do
+      npc_template = create(
+        :npc_template,
+        npc_key: "failed_resource_ambush_rat",
+        name: "Failed Ambush Rat",
+        role: "hostile",
+        metadata: {"health" => 40, "base_damage" => 4}
+      )
+      create(
+        :tile_npc,
+        npc_template:,
+        zone: zone.name,
+        x: 5,
+        y: 5,
+        current_hp: 40,
+        max_hp: 40
+      )
+      offer = local_action_offer
+      allow_any_instance_of(Game::World::StartNpcFight).to receive(:call)
+        .and_raise(Game::World::StartNpcFight::FightViolationError, "Combat startup failed.")
+
+      expect { post_local_action(offer) }.not_to change(ArenaMatch, :count)
+
+      expect(response).to redirect_to(world_path)
+      expect(offer.reload).to be_offered
+    end
+
+    it "rejects a missing tile" do
+      offer = local_action_offer
+
+      post_local_action(offer, params: {tile_id: nil})
+
+      expect(response).to redirect_to(world_path)
+      expect(offer.reload).to be_offered
+    end
+
+    it "rejects a null local action type" do
+      offer = local_action_offer
+
+      post_local_action(offer, params: {local_action_type: nil})
+
+      expect(response).to redirect_to(world_path)
+      expect(offer.reload).to be_offered
+    end
+
+    it "rejects an expired action offer" do
+      offer = local_action_offer(expires_at: 1.second.ago)
+
+      post_local_action(offer)
+
+      expect(response).to redirect_to(world_path)
+      expect(offer.reload).to be_offered
+    end
+
+    it "rejects an offer for a different local action type" do
+      offer = local_action_offer(action_type: "fish")
+
+      post_local_action(offer)
+
+      expect(response).to redirect_to(world_path)
+      expect(offer.reload).to be_offered
+    end
+
+    it "fails an accepted offer when the authored action becomes inactive" do
+      offer = local_action_offer
+      tile.update!(
+        metadata: {
+          "local_actions" => [
+            {"type" => "resource_search", "source_id" => "look", "active" => false}
+          ]
+        }
+      )
+
+      expect { post_local_action(offer) }.not_to change(InventoryItem, :count)
+
+      expect(response).to redirect_to(world_path)
+      expect(offer.reload).to be_failed
+    end
+
+    it "rejects an offer after the character changes cells" do
+      offer = local_action_offer
+      position.update!(x: 6)
+
+      post_local_action(offer)
+
+      expect(response).to redirect_to(world_path)
+      expect(offer.reload).to be_offered
+    end
+
+    it "forbids another user's action offer" do
+      other_user = create(:user)
+      other_character = create(:character, user: other_user)
+      other_position = create(:character_position, character: other_character, zone:, x: 5, y: 5)
+      offer = local_action_offer(owner: other_character, at: other_position)
+
+      post_local_action(offer)
+
+      expect(response).to redirect_to(root_path)
+      expect(offer.reload).to be_offered
+    end
+
+    it "requires authentication" do
+      offer = local_action_offer
+      sign_out user
+
+      post_local_action(offer)
+
+      expect(response).to redirect_to(new_user_session_path)
+      expect(offer.reload).to be_offered
+    end
+  end
+
   # ===========================================================================
   # TileBuilding Tests
   # ===========================================================================
@@ -574,8 +809,6 @@ RSpec.describe "World", type: :request do
     let(:destination_zone) { create(:zone, name: "Outpost", location_type: "city", width: 10, height: 10) }
     let(:character) { create(:character, user: user, level: 10) }
     let!(:position) { create(:character_position, character: character, zone: source_zone, x: 5, y: 5) }
-    let!(:spawn_point) { create(:spawn_point, zone: destination_zone, x: 3, y: 3, default_entry: true) }
-
     before { sign_in user, scope: :user }
 
     def building_entry_params(building)
@@ -662,6 +895,25 @@ RSpec.describe "World", type: :request do
         expect(offer.reload).to be_completed
       end
 
+      it "lets a same-cell hostile NPC interrupt entry without moving the character" do
+        create(:tile_npc, :multi_npc_encounter, zone: source_zone.name, x: 5, y: 5)
+        offer = world_action_offer_for(
+          character: character,
+          position: position,
+          action_type: :enter_building,
+          target: building
+        )
+
+        expect {
+          post enter_building_world_path,
+            params: {building_id: building.id, action_key: offer.action_key}
+        }.to change(ArenaMatch, :count).by(1)
+
+        expect(response).to redirect_to(arena_match_path(ArenaMatch.last))
+        expect(position.reload).to have_attributes(zone: source_zone, x: 5, y: 5)
+        expect(offer.reload).to be_completed
+      end
+
       it "rejects entry without a live action offer" do
         post enter_building_world_path, params: {building_id: building.id}
 
@@ -670,16 +922,35 @@ RSpec.describe "World", type: :request do
         expect(response.body).to include("Action offer")
         expect(position.reload.zone).to eq(source_zone)
       end
+
+      it "forbids another user's building-entry offer" do
+        other_user = create(:user)
+        other_character = create(:character, user: other_user)
+        other_position = create(:character_position, character: other_character, zone: source_zone, x: 5, y: 5)
+        offer = world_action_offer_for(
+          character: other_character,
+          position: other_position,
+          action_type: :enter_building,
+          target: building
+        )
+
+        post enter_building_world_path,
+          params: {building_id: building.id, action_key: offer.action_key}
+
+        expect(response).to redirect_to(root_path)
+        expect(position.reload.zone).to eq(source_zone)
+        expect(offer.reload).to be_offered
+      end
     end
 
-    context "with building using default spawn point" do
+    context "with an entrance missing authored destination coordinates" do
       let!(:building) do
         create(:tile_building,
           zone: source_zone.name,
           x: 5,
           y: 5,
-          building_key: "spawn_test_city_gate",
-          name: "Spawn Test Gate",
+          building_key: "unconfigured_city_gate",
+          name: "Unconfigured City Gate",
           destination_zone: destination_zone,
           destination_x: nil,
           destination_y: nil,
@@ -687,13 +958,13 @@ RSpec.describe "World", type: :request do
           active: true)
       end
 
-      it "uses destination zone spawn point when no specific coordinates" do
+      it "does not infer coordinates from a spawn point" do
         post_building_entry(building)
 
-        position.reload
-        expect(position.zone).to eq(destination_zone)
-        expect(position.x).to eq(spawn_point.x)
-        expect(position.y).to eq(spawn_point.y)
+        expect(response).to redirect_to(world_path)
+        follow_redirect!
+        expect(response.body).to include("Entrance is currently unavailable.")
+        expect(position.reload).to have_attributes(zone: source_zone, x: 5, y: 5)
       end
     end
 
@@ -737,7 +1008,7 @@ RSpec.describe "World", type: :request do
 
         expect(response).to redirect_to(world_path)
         follow_redirect!
-        expect(response.body).to include("There is no building on this tile.")
+        expect(response.body).to include("There is no city entrance on this cell.")
       end
 
       it "does not move character" do
@@ -768,7 +1039,7 @@ RSpec.describe "World", type: :request do
 
         expect(response).to redirect_to(world_path)
         follow_redirect!
-        expect(response.body).to include("Building is currently unavailable.")
+        expect(response.body).to include("Entrance is currently unavailable.")
       end
 
       it "does not move character" do
@@ -785,41 +1056,6 @@ RSpec.describe "World", type: :request do
         position.reload
         expect(position.zone).to eq(source_zone)
         expect(offer.reload).to be_failed
-      end
-    end
-
-    context "when character level is too low" do
-      let!(:high_level_building) do
-        create(:tile_building,
-          zone: source_zone.name,
-          x: 5,
-          y: 5,
-          building_key: "high_level_city_gate",
-          name: "High Level City Gate",
-          destination_zone: destination_zone,
-          required_level: 50,
-          active: true)
-      end
-
-      it "returns alert with level requirement" do
-        post_building_entry(high_level_building)
-
-        expect(response).to redirect_to(world_path)
-        follow_redirect!
-        expect(response.body).to include("level 50")
-      end
-
-      it "does not move character" do
-        post_building_entry(high_level_building)
-
-        position.reload
-        expect(position.zone).to eq(source_zone)
-      end
-
-      it "returns turbo stream error with level requirement" do
-        post_building_entry(high_level_building, headers: {"Accept" => "text/vnd.turbo-stream.html"})
-
-        expect(response.body).to include("turbo-stream")
       end
     end
 
@@ -841,7 +1077,7 @@ RSpec.describe "World", type: :request do
 
         expect(response).to redirect_to(world_path)
         follow_redirect!
-        expect(response.body).to include("Building is currently unavailable.")
+        expect(response.body).to include("Entrance is currently unavailable.")
       end
 
       it "does not move character" do
@@ -904,15 +1140,15 @@ RSpec.describe "World", type: :request do
 
         expect(response).to redirect_to(world_path)
         follow_redirect!
-        expect(response.body).to include("There is no building on this tile.")
+        expect(response.body).to include("There is no city entrance on this cell.")
       end
     end
   end
 
   describe "TileBuilding display on map" do
     let(:user) { create(:user) }
-    let(:zone) { create(:zone, name: "Building Display Zone", location_type: "outdoor", width: 20, height: 20) }
-    let(:destination_zone) { create(:zone, name: "Destination", location_type: "city") }
+    let(:zone) { create(:zone, name: "Outpost Surroundings", location_type: "outdoor", width: 20, height: 20) }
+    let(:destination_zone) { create(:zone, name: "Outpost", location_type: "city") }
     let(:character) { create(:character, user: user) }
     let!(:position) { create(:character_position, character: character, zone: zone, x: 10, y: 10) }
 
@@ -925,10 +1161,11 @@ RSpec.describe "World", type: :request do
           x: 11, # Adjacent tile (east)
           y: 10,
           building_key: "map_test_city_gate",
-          name: "Map Test City Gate",
+          name: "West Gate",
           building_type: "city",
-          icon: "🏙️",
           destination_zone: destination_zone,
+          destination_x: 0,
+          destination_y: 0,
           active: true)
       end
 
@@ -938,16 +1175,17 @@ RSpec.describe "World", type: :request do
         expect(response.body).to include("nl-tile-building")
       end
 
-      it "shows building icon on map" do
+      it "uses a compact text label instead of generic emoji artwork" do
         get world_path
 
-        expect(response.body).to include("🏙️")
+        expect(response.body).to include("nl-entity-label")
+        expect(response.body).not_to include("🏙️")
       end
 
       it "shows building name in title attribute" do
         get world_path
 
-        expect(response.body).to include("Map Test City Gate")
+        expect(response.body).to include("West Gate")
       end
     end
 
@@ -958,16 +1196,18 @@ RSpec.describe "World", type: :request do
           x: 10,
           y: 10,
           building_key: "current_position_city_gate",
-          name: "Current Position City Gate",
+          name: "West Gate",
           building_type: "city",
           destination_zone: destination_zone,
+          destination_x: 0,
+          destination_y: 0,
           active: true)
       end
 
       it "shows building in actions panel" do
         get world_path
 
-        expect(response.body).to include("Current Position City Gate")
+        expect(response.body).to include("West Gate")
         expect(response.body).to include("Enter")
       end
     end
@@ -990,47 +1230,12 @@ RSpec.describe "World", type: :request do
         expect(response.body).not_to include("Inactive Map City Gate")
       end
     end
-
-    context "with different building types" do
-      let!(:shop) do
-        create(:tile_building,
-          zone: zone.name,
-          x: 9,
-          y: 10,
-          building_key: "test_shop",
-          name: "Shop",
-          building_type: "shop",
-          icon: "🏪",
-          destination_zone: destination_zone,
-          active: true)
-      end
-
-      let!(:arena) do
-        create(:tile_building,
-          zone: zone.name,
-          x: 10,
-          y: 9,
-          building_key: "test_arena",
-          name: "Arena",
-          building_type: "arena",
-          icon: "⚔️",
-          destination_zone: destination_zone,
-          active: true)
-      end
-
-      it "shows documented icons for different building types" do
-        get world_path
-
-        expect(response.body).to include("🏪")
-        expect(response.body).to include("⚔️")
-      end
-    end
   end
 
   describe "TileBuilding actions panel display" do
     let(:user) { create(:user) }
-    let(:zone) { create(:zone, name: "Actions Panel Zone", location_type: "outdoor", width: 20, height: 20) }
-    let(:destination_zone) { create(:zone, name: "Actions Destination", location_type: "city") }
+    let(:zone) { create(:zone, name: "Outpost Surroundings", location_type: "outdoor", width: 20, height: 20) }
+    let(:destination_zone) { create(:zone, name: "Outpost", location_type: "city") }
     let(:character) { create(:character, user: user, level: 5) }
     let!(:position) { create(:character_position, character: character, zone: zone, x: 5, y: 5) }
 
@@ -1042,12 +1247,14 @@ RSpec.describe "World", type: :request do
           zone: zone.name,
           x: 5,
           y: 5,
-          building_key: "enterable_building",
-          name: "Enterable Building",
+          building_key: "west_gate_action",
+          name: "West Gate",
           destination_zone: destination_zone,
+          destination_x: 0,
+          destination_y: 0,
           required_level: 1,
           active: true,
-          metadata: {"description" => "A welcoming entrance"})
+          metadata: {"description" => "Enter Forpost through the West Gate."})
       end
 
       it "shows enter button" do
@@ -1059,33 +1266,34 @@ RSpec.describe "World", type: :request do
       it "shows building description" do
         get world_path
 
-        expect(response.body).to include("welcoming entrance")
+        expect(response.body).to include("Enter Forpost through the West Gate.")
       end
 
       it "shows destination zone name" do
         get world_path
 
-        expect(response.body).to include("Actions Destination")
+        expect(response.body).to include("Outpost")
       end
     end
 
-    context "when character cannot enter building (level too low)" do
+    context "when the entrance lacks authored destination coordinates" do
       let!(:blocked_building) do
         create(:tile_building,
           zone: zone.name,
           x: 5,
           y: 5,
-          building_key: "blocked_building",
-          name: "Blocked Building",
+          building_key: "unconfigured_gate",
+          name: "Unconfigured Gate",
           destination_zone: destination_zone,
-          required_level: 20,
+          destination_x: nil,
+          destination_y: nil,
           active: true)
       end
 
       it "shows blocked reason instead of enter button" do
         get world_path
 
-        expect(response.body).to include("level 20")
+        expect(response.body).to include("Entrance is currently unavailable.")
         expect(response.body).to include("building-blocked")
       end
     end
@@ -1117,9 +1325,20 @@ RSpec.describe "World", type: :request do
     let(:destination_zone) { create(:zone, name: "Outpost Surroundings", location_type: "outdoor", width: 20, height: 20) }
     let(:character) { create(:character, user: user, level: 10) }
     let!(:position) { create(:character_position, character: character, zone: city_zone, x: 5, y: 5) }
-    let!(:spawn_point) { create(:spawn_point, zone: destination_zone, x: 5, y: 5, default_entry: true) }
-
     before { sign_in user, scope: :user }
+
+    def city_action_params(hotspot)
+      offer = create(
+        :world_action_offer,
+        character:,
+        zone: position.zone,
+        x: position.x,
+        y: position.y,
+        action_type: hotspot.world_action_type,
+        target: hotspot
+      )
+      {hotspot_id: hotspot.id, action_key: offer.action_key}
+    end
 
     context "with open_feature hotspot (Arena)" do
       let!(:arena_hotspot) do
@@ -1131,13 +1350,13 @@ RSpec.describe "World", type: :request do
 
       describe "HTML format" do
         it "redirects to arena page on success" do
-          post interact_hotspot_world_path, params: {hotspot_id: arena_hotspot.id}
+          post interact_hotspot_world_path, params: city_action_params(arena_hotspot)
 
           expect(response).to redirect_to("/arena")
         end
 
         it "includes success notice in flash" do
-          post interact_hotspot_world_path, params: {hotspot_id: arena_hotspot.id}
+          post interact_hotspot_world_path, params: city_action_params(arena_hotspot)
 
           expect(flash[:notice]).to include("Arena")
         end
@@ -1146,7 +1365,7 @@ RSpec.describe "World", type: :request do
       describe "Turbo Stream format" do
         it "returns 303 See Other redirect for proper Turbo handling" do
           post interact_hotspot_world_path,
-            params: {hotspot_id: arena_hotspot.id},
+            params: city_action_params(arena_hotspot),
             headers: {"Accept" => "text/vnd.turbo-stream.html"}
 
           expect(response).to have_http_status(:see_other)
@@ -1154,7 +1373,7 @@ RSpec.describe "World", type: :request do
 
         it "redirects to arena page" do
           post interact_hotspot_world_path,
-            params: {hotspot_id: arena_hotspot.id},
+            params: city_action_params(arena_hotspot),
             headers: {"Accept" => "text/vnd.turbo-stream.html"}
 
           expect(response).to redirect_to("/arena")
@@ -1162,7 +1381,7 @@ RSpec.describe "World", type: :request do
 
         it "sets flash notice before redirect" do
           post interact_hotspot_world_path,
-            params: {hotspot_id: arena_hotspot.id},
+            params: city_action_params(arena_hotspot),
             headers: {"Accept" => "text/vnd.turbo-stream.html"}
 
           expect(flash[:notice]).to include("Entered")
@@ -1179,7 +1398,7 @@ RSpec.describe "World", type: :request do
       end
 
       it "redirects to the shop on HTML" do
-        post interact_hotspot_world_path, params: {hotspot_id: shop_hotspot.id}
+        post interact_hotspot_world_path, params: city_action_params(shop_hotspot)
 
         expect(response).to redirect_to("/shop")
         expect(flash[:notice]).to include("Shop")
@@ -1187,7 +1406,7 @@ RSpec.describe "World", type: :request do
 
       it "returns a turbo redirect to the shop" do
         post interact_hotspot_world_path,
-          params: {hotspot_id: shop_hotspot.id},
+          params: city_action_params(shop_hotspot),
           headers: {"Accept" => "text/vnd.turbo-stream.html"}
 
         expect(response).to have_http_status(:see_other)
@@ -1206,31 +1425,31 @@ RSpec.describe "World", type: :request do
 
       describe "HTML format" do
         it "redirects to world path after zone transition" do
-          post interact_hotspot_world_path, params: {hotspot_id: exit_hotspot.id}
+          post interact_hotspot_world_path, params: city_action_params(exit_hotspot)
 
           expect(response).to redirect_to(world_path)
         end
 
         it "updates character position to destination zone" do
-          post interact_hotspot_world_path, params: {hotspot_id: exit_hotspot.id}
+          post interact_hotspot_world_path, params: city_action_params(exit_hotspot)
 
           position.reload
           expect(position.zone).to eq(destination_zone)
         end
 
-        it "uses spawn point coordinates" do
-          post interact_hotspot_world_path, params: {hotspot_id: exit_hotspot.id}
+        it "uses the authored gate coordinates" do
+          post interact_hotspot_world_path, params: city_action_params(exit_hotspot)
 
           position.reload
-          expect(position.x).to eq(spawn_point.x)
-          expect(position.y).to eq(spawn_point.y)
+          expect(position.x).to eq(7)
+          expect(position.y).to eq(0)
         end
       end
 
       describe "Turbo Stream format" do
         it "returns 303 See Other redirect for proper Turbo handling" do
           post interact_hotspot_world_path,
-            params: {hotspot_id: exit_hotspot.id},
+            params: city_action_params(exit_hotspot),
             headers: {"Accept" => "text/vnd.turbo-stream.html"}
 
           expect(response).to have_http_status(:see_other)
@@ -1238,7 +1457,7 @@ RSpec.describe "World", type: :request do
 
         it "redirects to world path" do
           post interact_hotspot_world_path,
-            params: {hotspot_id: exit_hotspot.id},
+            params: city_action_params(exit_hotspot),
             headers: {"Accept" => "text/vnd.turbo-stream.html"}
 
           expect(response).to redirect_to(world_path)
@@ -1276,7 +1495,7 @@ RSpec.describe "World", type: :request do
       end
 
       it "redirects with alert for HTML format" do
-        post interact_hotspot_world_path, params: {hotspot_id: high_level_hotspot.id}
+        post interact_hotspot_world_path, params: city_action_params(high_level_hotspot)
 
         expect(response).to redirect_to(world_path)
         follow_redirect!
@@ -1285,7 +1504,7 @@ RSpec.describe "World", type: :request do
 
       it "returns turbo stream error for Turbo format" do
         post interact_hotspot_world_path,
-          params: {hotspot_id: high_level_hotspot.id},
+          params: city_action_params(high_level_hotspot),
           headers: {"Accept" => "text/vnd.turbo-stream.html"}
 
         expect(response.media_type).to eq("text/vnd.turbo-stream.html")
@@ -1301,7 +1520,7 @@ RSpec.describe "World", type: :request do
       end
 
       it "redirects with alert for HTML format" do
-        post interact_hotspot_world_path, params: {hotspot_id: inactive_hotspot.id}
+        post interact_hotspot_world_path, params: city_action_params(inactive_hotspot)
 
         expect(response).to redirect_to(world_path)
         follow_redirect!
@@ -1376,25 +1595,98 @@ RSpec.describe "World", type: :request do
       end
 
       it "arena hotspot navigates to arena page" do
-        post interact_hotspot_world_path, params: {hotspot_id: arena.id}
+        post interact_hotspot_world_path,
+          params: city_hotspot_action_params(character:, position:, hotspot: arena)
 
         expect(response).to redirect_to("/arena")
       end
 
       it "shop hotspot navigates to the shop page" do
-        post interact_hotspot_world_path, params: {hotspot_id: shop.id}
+        post interact_hotspot_world_path,
+          params: city_hotspot_action_params(character:, position:, hotspot: shop)
 
         expect(response).to redirect_to("/shop")
         expect(flash[:notice]).to include("Shop")
       end
 
       it "exit gate transitions to destination zone" do
-        post interact_hotspot_world_path, params: {hotspot_id: exit_gate.id}
+        post interact_hotspot_world_path,
+          params: city_hotspot_action_params(character:, position:, hotspot: exit_gate)
 
         expect(response).to redirect_to(world_path)
         position.reload
         expect(position.zone.location_type).to eq("outdoor")
       end
+    end
+  end
+
+  describe "GET /world/players" do
+    let(:user) { create(:user) }
+    let(:zone) do
+      create(:zone, name: "Presence Fields", location_type: "outdoor", width: 20, height: 20)
+    end
+    let(:character) { create(:character, user:, name: "PresenceOwner", level: 10) }
+    let!(:position) do
+      create(:character_position, character:, zone:, x: 4, y: 7)
+    end
+    let!(:low_level_player) do
+      create(:character, name: "AlphaNearby", level: 2).tap do |nearby|
+        create(:character_position, character: nearby, zone:, x: 4, y: 7)
+      end
+    end
+    let!(:high_level_player) do
+      create(:character, name: "ZuluNearby", level: 19).tap do |nearby|
+        create(:character_position, character: nearby, zone:, x: 4, y: 7)
+      end
+    end
+    let!(:other_cell_player) do
+      create(:character, name: "HiddenNeighbor", level: 30).tap do |nearby|
+        create(:character_position, character: nearby, zone:, x: 5, y: 7)
+      end
+    end
+
+    before { sign_in user, scope: :user }
+
+    it "renders only other players at the authoritative current cell" do
+      get players_world_path
+
+      expect(response).to have_http_status(:success)
+      expect(response.body).to include("AlphaNearby", "ZuluNearby")
+      expect(response.body).not_to include("PresenceOwner", "HiddenNeighbor")
+      expect(response.body).not_to include("<html")
+    end
+
+    it "sorts the refresh by the requested level order" do
+      get players_world_path, params: {sort: "lvl-desc"}
+
+      expect(response.body.index("ZuluNearby")).to be < response.body.index("AlphaNearby")
+    end
+
+    it "falls back to alphabetical order for a missing or unknown sort" do
+      get players_world_path, params: {sort: nil}
+      nil_sort_body = response.body
+
+      get players_world_path, params: {sort: "not-a-sort"}
+
+      expect(nil_sort_body.index("AlphaNearby")).to be < nil_sort_body.index("ZuluNearby")
+      expect(response.body.index("AlphaNearby")).to be < response.body.index("ZuluNearby")
+    end
+
+    it "returns the compact empty state at an unoccupied boundary cell" do
+      position.update!(x: 0, y: 0)
+
+      get players_world_path
+
+      expect(response).to have_http_status(:success)
+      expect(response.body).to include("No players nearby")
+    end
+
+    it "requires authentication" do
+      sign_out user
+
+      get players_world_path
+
+      expect(response).to redirect_to(new_user_session_path)
     end
   end
 end

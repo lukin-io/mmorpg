@@ -13,6 +13,7 @@ Primary references:
 - `doc/design/reference/neverlands_live_lavka_shop.md`
 - `doc/design/reference/neverlands_live_game_shell_ui.md`
 - `doc/design/reference/neverlands_live_inventory_items.md`
+- `doc/design/reference/neverlands_live_city_movement.md`
 
 Observed shop flow:
 
@@ -33,6 +34,22 @@ top vitals/actions remain visible, `Город` is the return action, shop conte
 loads inside the main surface, and each AJAX response refreshes profile,
 inventory, return, and shop action keys.
 
+The 2026-07-20 city pass distinguishes three additional commerce shapes from
+the launch `Лавка`:
+
+- the Junk Dealer uses the same shop shell and modes under a different building
+  key, although its stock was not loaded and must not be assumed identical;
+- the Market is a player-listing and rented-stall system with listing filters,
+  stall inventory, a stall account, skill-gated mass tiers, 30-day rent, and a
+  tier-dependent sale tax;
+- the Numismatics Shop is a single-commodity listing book with count, unit
+  price, total, and per-listing buy offers.
+
+These source-captured variants now have city-hotspot entry and read-only MVP
+screens so the city graph does not lead to generic or invented services. They
+do not turn the MVP shop into a global marketplace: only the documented
+`Лавка` loop can mutate inventory, stock, or money.
+
 ## Player Experience
 
 The player enters a shop from a city hotspot, chooses a tab/category, sees item
@@ -45,6 +62,13 @@ Core currency is normal money for shops.
 
 Currency should be visible in inventory/shop contexts and recorded as part of
 economy state.
+
+NV balances and transaction amounts use fixed `decimal(12,2)` storage. This is
+required by the captured fractional prices and prevents inventory transfers or
+player-sale settlement from truncating `12.50` NV to an integer. A forward-only
+migration repairs databases created when those columns were historically
+materialized as integers; rollback is intentionally blocked because it would
+discard fractional balances.
 
 ## Shop Rules
 
@@ -80,6 +104,12 @@ economy state.
 
 ## Known But Deferred
 
+- The player Market and Numismatics Shop have implemented read-only reference
+  screens, including the market's stall tiers and listing-management shape. Their
+  successful and failed purchase, rent, tax settlement, cancellation, expiry,
+  and authorization outcomes were not exercised, so they remain deferred.
+- The Junk Dealer exposes only its captured shop modes; its stock must not be
+  copied from the General Shop.
 - Neverlands has direct player trading, but the exact flow, licenses,
   restrictions, UI states, and settlement rules still need source capture.
 - Inventory-side forms show the source shape for transfer, gift,
@@ -97,6 +127,13 @@ economy state.
 - shop stock with current and maximum counts;
 - shop license good;
 - resale value.
+
+Deferred source-backed concepts:
+
+- player market listing;
+- rented stall, mass limit, skill requirement, rent expiry, and sale tax;
+- stall account;
+- single-commodity exchange listing.
 
 ## Interactions
 

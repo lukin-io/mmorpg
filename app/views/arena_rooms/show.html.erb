@@ -20,7 +20,7 @@
       <%= link_to "Character", player_path(name: current_character.name), class: "nl-arena-link" %>
       <%= link_to "Inventory", inventory_path, class: "nl-arena-link" %>
       <%= link_to "Arena", arena_index_path, class: "nl-arena-link" %>
-      <%= link_to "City", world_path, class: "nl-arena-link" %>
+      <%= link_to "City", world_path, class: "nl-arena-link", data: {turbo: false} %>
     </div>
   </div>
 

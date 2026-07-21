@@ -5,39 +5,30 @@ FactoryBot.define do
     zone { "Outpost Surroundings" }
     sequence(:x) { |n| n % 100 }
     sequence(:y) { |n| (n / 100) % 100 }
-    sequence(:building_key) { |n| "building_#{n}" }
+    sequence(:building_key) { |n| "city_gate_#{n}" }
     building_type { "city" }
-    name { "Test Building" }
-    destination_zone { nil }
-    destination_x { nil }
-    destination_y { nil }
-    icon { "🏙️" }
+    name { "West Gate" }
+    association :destination_zone, factory: [:zone, :city]
+    destination_x { 0 }
+    destination_y { 0 }
+    icon { nil }
     required_level { 1 }
     metadata { {} }
     active { true }
 
-    trait :with_destination do
-      association :destination_zone, factory: :zone
-      destination_x { 5 }
-      destination_y { 5 }
+    trait :without_destination do
+      destination_zone { nil }
+      destination_x { nil }
+      destination_y { nil }
     end
 
-    trait :shop do
-      building_type { "shop" }
-      icon { "🏪" }
-    end
-
-    trait :arena do
-      building_type { "arena" }
-      icon { "⚔️" }
+    trait :without_destination_coordinates do
+      destination_x { nil }
+      destination_y { nil }
     end
 
     trait :inactive do
       active { false }
-    end
-
-    trait :high_level do
-      required_level { 50 }
     end
   end
 end

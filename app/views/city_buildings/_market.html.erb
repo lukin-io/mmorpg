@@ -1,0 +1,11 @@
+<h2>Stall tiers</h2>
+<table class="nl-profile-table nl-city-building-table">
+  <thead>
+    <tr><th>Stall</th><th>Merchant skill</th><th>Mass</th><th>30-day rent</th><th>Sale tax</th></tr>
+  </thead>
+  <tbody>
+    <% building["stall_tiers"].each do |name, skill, mass, rent, tax| %>
+      <tr><td><%= name %></td><td><%= skill %></td><td><%= mass %></td><td><%= number_with_delimiter(rent) %> NV</td><td><%= tax %></td></tr>
+    <% end %>
+  </tbody>
+</table>

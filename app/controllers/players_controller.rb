@@ -65,7 +65,9 @@ class PlayersController < ApplicationController
         current_hp: @character.current_hp,
         max_hp: @character.max_hp,
         current_mp: @character.current_mp,
-        max_mp: @character.max_mp
+        max_mp: @character.max_mp,
+        numeric_skills: public_numeric_skills,
+        perks: public_perks
       }
     }
   end
@@ -111,6 +113,19 @@ class PlayersController < ApplicationController
         current_durability: item.current_durability,
         max_durability: item.max_durability
       }
+    end
+  end
+
+  def public_numeric_skills
+    Game::Skills::PassiveSkillRegistry.all_keys.index_with do |key|
+      @character.passive_skill_level(key)
+    end
+  end
+
+  def public_perks
+    @character.owned_perk_keys.map do |key|
+      definition = Game::Skills::PerkRegistry.find(key)
+      {key: key, name: definition[:name], source_id: definition[:source_id]}
     end
   end
 

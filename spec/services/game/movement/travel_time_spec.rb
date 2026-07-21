@@ -14,18 +14,39 @@ RSpec.describe Game::Movement::TravelTime do
     expect(travel_seconds).to eq(30)
   end
 
+  it "reduces a clean adjacent step by one second per 20 Wanderer levels" do
+    character.update!(passive_skills: {"wanderer" => 20})
+
+    expect(travel_seconds).to eq(29)
+  end
+
+  it "reaches the 25 second minimum at 100 Wanderer" do
+    character.update!(passive_skills: {"wanderer" => 100})
+
+    expect(travel_seconds).to eq(25)
+  end
+
+  it "keeps the duration at 30 seconds below the first whole-second boundary" do
+    character.update!(passive_skills: {"wanderer" => 19})
+
+    expect(travel_seconds).to eq(30)
+  end
+
+  it "clamps malformed negative Wanderer data to the base duration" do
+    character.update_column(:passive_skills, {"wanderer" => -10})
+
+    expect(travel_seconds).to eq(30)
+  end
+
+  it "uses the base duration when no character is supplied" do
+    expect(described_class.seconds(zone:, direction: :north, tile_metadata: {})).to eq(30)
+  end
+
   it "does not apply uncaptured diagonal travel cost" do
     expect(travel_seconds(direction: :northeast)).to eq(30)
   end
 
   it "does not apply uncaptured terrain slowdown from tile metadata" do
     expect(travel_seconds(tile_metadata: {"terrain_type" => "outdoor"})).to eq(30)
-  end
-
-  it "does not apply uncaptured wanderer passive skill reduction" do
-    character.update!(passive_skills: {"wanderer" => 100})
-    character.clear_passive_skill_cache!
-
-    expect(travel_seconds).to eq(30)
   end
 end

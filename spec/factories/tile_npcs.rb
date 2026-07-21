@@ -33,5 +33,19 @@ FactoryBot.define do
       current_hp { 100 }
       max_hp { 100 }
     end
+
+    trait :at_region_edge do
+      x { 999 }
+      y { 999 }
+    end
+
+    trait :without_combat_health do
+      current_hp { 0 }
+      max_hp { 0 }
+    end
+
+    trait :multi_npc_encounter do
+      metadata { {"encounter_count" => 2} }
+    end
   end
 end

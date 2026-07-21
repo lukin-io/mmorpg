@@ -12,15 +12,17 @@ Rails.application.routes.draw do
       patch :stats, action: :update_stats
       get :skills
       patch :skills, action: :update_skills
+      get :perks
+      patch :perks, action: :update_perks
     end
   end
 
   resource :world, only: :show, controller: "world" do
+    get :players
     post :move
-    post :enter
     post :enter_building
+    post :perform_local_action
     post :interact_hotspot
-    post :exit_location
   end
 
   resource :inventory, only: [:show] do
@@ -43,6 +45,8 @@ Rails.application.routes.draw do
     post :buy
     post :sell
   end
+
+  get "city/buildings/:building_key", to: "city_buildings#show", as: :city_building
 
   resources :arena, only: [:index], controller: "arena" do
     collection do
@@ -75,7 +79,7 @@ Rails.application.routes.draw do
   end
 
   get "log/:id", to: "public_fight_logs#show", as: :public_fight_log
-  post "fight/npc", to: "world_npc_fights#create", as: :world_npc_fights
+  post "world/context", to: "world_context_actions#create", as: :world_context_action
 
   resources :chat_channels, only: [:show] do
     resources :chat_messages, only: :create

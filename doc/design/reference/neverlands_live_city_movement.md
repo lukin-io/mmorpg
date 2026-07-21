@@ -1,9 +1,9 @@
 # Neverlands Live City Movement Observation
 
-Observed on 2026-05-09 from one authenticated Neverlands session. This is a
-game-design capture of the city navigation flow: entering Oktal from the nearby
-map tile, moving between city locations, entering the shop, and loading shop
-contents.
+Originally observed on 2026-05-09 and expanded on 2026-07-20 through authorized
+authenticated Neverlands sessions. This is a game-design capture of city
+navigation: entering from nearby map tiles, moving between city locations,
+entering buildings, and loading selected service contents.
 
 This document intentionally records behavior and page state, not account data.
 Per-page action keys are shown as `<action_key>` because the exact values are
@@ -18,6 +18,149 @@ state.
 - Move between city sub-locations.
 - Enter `Лавка`.
 - Observe how shop content is loaded after the building page appears.
+- Walk all currently actionable city nodes and exits.
+- Verify each gate's outdoor coordinate and matching city re-entry node.
+- Read selected market, transport, hospital, and resource-service states
+  without submitting their economic actions.
+
+### Full City Graph Verification: 2026-07-20
+
+A returning level-16 account was walked through all nine rendered Forpost city
+nodes in one authenticated session. Navigation used only the exact hotspot URLs
+offered by the current page, with every `vcode` redacted from this document.
+
+The live graph is:
+
+| Key | Node | Active Buildings/Services | Immediate Node Links |
+| --- | --- | --- | --- |
+| `city2_1` | Central Square | Tavern, Antique Workshop, Credit Bank, Watchtower | Residential, Trading; West Gate |
+| `city2_2` | Trading Quarter | General Shop, Market, Junk Dealer, Numismatics Shop, Oktal Airship Station | Central, Industrial |
+| `city2_3` | Residential Quarter | Hospital, Clan Hall | Central, Industrial, Knowledge |
+| `city2_4` | Industrial Quarter | Workshop, Alchemist Guild, Sawmill, Resource Warehouse, Processing Point | Trading, Residential, Business, Stables |
+| `city2_5` | Business Quarter | Postal Service, Dealer House, Jewelry Workshop | Industrial, Guild Square |
+| `city2_6` | Knowledge Quarter | Higher School of Magic | Residential, Park, Stables |
+| `city2_7` | Stables | no active building hotspot on this account | Industrial, Knowledge, Guild Square; South Gate |
+| `city2_8` | Guild Square | Craftsmen Guild, Mercenary Guild | Business, Stables; East Gate |
+| `city2_9` | Park | City Hall, Lottery House | Knowledge |
+
+Several illustrated labels were present without an `href`, so they were visible
+but unavailable for this character/state: the level-23 Arena, Sewer, Pawnshop,
+University, General School, Military School, Kennels, Stables building, Small
+Arena, and Traders Guild. Availability is therefore part of each server-rendered
+hotspot, not a fact that should be inferred from the background art.
+
+The pass exposed three active city exits, not two. Every outdoor gate cell
+offered the contextual `Войти` action back to its source city node plus one
+adjacent movement offer:
+
+| City Node | Exit | Outdoor Cell | Offered Adjacent Cell | Offered Duration |
+| --- | --- | --- | --- | --- |
+| Central Square | West Gate | `1019,1025` | `1018,1025` | 24 seconds |
+| Stables | South Gate | `1022,1028` | `1022,1029` | 24 seconds |
+| Guild Square | East Gate | `1025,1027` | `1026,1027` | 24 seconds |
+
+All three gate exits and matching re-entry targets were exercised. The East
+Gate adjacent move was also accepted through
+`/gameplay/ajax/map_ajax.php`: the response was `GO`, active travel survived a
+`main.php` reload, and completion issued fresh movement and local-action keys.
+The West and South adjacent offers were observed but deliberately not accepted.
+This mature level-16 session offered 24 seconds where the earlier level-6 west
+gate capture offered 30 seconds; the governing movement formula remains
+uncaptured and must not be inferred from the two accounts.
+
+### Client Geometry Verification: 2026-07-21
+
+A further authorized browser pass inspected the live Central Square, Trading
+Quarter, and West Gate outdoor client at rendered and script level.
+
+- City scenes render at exactly `760 x 255`. Central Square used
+  `cities/city2/city2_1.jpg`; Trading Quarter used
+  `cities/city2/city2_2_new.jpg` in the observed state.
+- City navigation is embedded in the illustration through `<area>` polygon
+  regions. The regions are visually transparent until interaction; hover shows
+  a compact tooltip, while route arrows are part of the scene presentation.
+- Outdoor `map.js?v=6` builds exact `100 x 100` cells. The terrain grid extends
+  beyond the clipped viewport so it can translate beneath a fixed central
+  cursor.
+- Only server-offered adjacent cells receive the thin solid red clickable
+  frame. Neighbor data not present in the offer array is not clickable.
+- The idle marker is compass-like. During accepted travel it becomes a walking
+  figure while the entire map moves linearly by one cell beneath it.
+- A compact red seconds capsule occupies the cell immediately above the fixed
+  cursor. Reload reconstructs the active trip from server state.
+- Current-cell actions such as `Войти` are small buttons above the map. The
+  outdoor client does not add a generic visible coordinate/location card.
+
+These observations close the presentation contract for the launch world/city
+client. They do not reveal the movement-duration formula or authorize copying
+Neverlands artwork; the project implementation uses retained project art and
+an original project-owned terrain illustration.
+
+### City Services Verification: 2026-07-20
+
+The same pass entered selected service buildings without purchasing, selling,
+renting, processing, healing, or travelling by airship.
+
+#### Trading Quarter shops
+
+- `Лавка` used the documented `shop_v04` building shell and the four modes
+  `Купить товары`, `Лицензии`, `Продать товары`, and `Новичкам`.
+- `Лавка Старьёвщика` used the same shop engine and page modes. Its building
+  key and city hotspot were distinct; this pass did not load its AJAX stock, so
+  identical inventory must not be assumed.
+- `Рынок` was a separate player-market surface with weapon, consumables, and
+  stall-management sections. Listings could be filtered by category, level,
+  price, durability/fullness, and upgrade count.
+- `Магазин Нумизматики` was a single-commodity listing book. The observed
+  commodity was `Древняя альвийская монета`; rows showed count, unit price,
+  total price, and a per-listing buy action. The page also exposed status
+  refresh and player listing/sale actions.
+
+Market stall management exposed six 30-day rental tiers:
+
+| Stall | Required Merchant Skill | Mass Limit | Rent | Sale Tax |
+| --- | ---: | ---: | ---: | ---: |
+| Newspaper display | 0 | 100 | 400 NV | 15% |
+| Small | 200 | 250 | 500 NV | 5% |
+| Medium | 400 | 450 | 750 NV | 4% |
+| Spacious | 600 | 700 | 1,000 NV | 3% |
+| Large | 800 | 1,000 | 1,250 NV | 2% |
+| Huge | 1,000 | 2,000 | 1,500 NV | 1% |
+
+The market also exposed stall opening/upgrading, inventory-to-stall item
+management, premium day extension, and a separate stall account with
+deposit/withdraw actions. All were tokenized server actions; none was submitted.
+
+#### Airship station
+
+`Станция дирижаблей Октал` rendered scheduled route rows with destination,
+price, next departure timestamp, and `Купить билет и зайти на рейс`. The live
+page offered Oktal to Forpost for 150 NV and Oktal to the Khalgan Fair for
+200 NV. The client posts the route code, displayed price, and action key to the
+airship endpoint and navigates to the main game page on success. There is no
+client-side confirmation in that function, so the route button is itself the
+purchase/boarding action. No ticket was bought.
+
+#### Hospital and pharmacy
+
+The Hospital rendered four service tabs: shop, rest room, hospital bed, and
+pharmacy. For this full-health account, both the rest room and bed rendered as
+`Вход запрещен`; the condition that enables them was not captured.
+
+The hospital shop returned trauma-treatment goods with live price and stock:
+
+| Item | Resource | Price | Observed Stock |
+| --- | --- | ---: | ---: |
+| Beginner healer bag | 10 light injuries | 300 NV | 33 |
+| Skilled healer bag | 10 medium injuries | 750 NV | 28 |
+| Experienced healer bag | 10 heavy injuries | 1,500 NV | 143 |
+| Combat first-aid kit | 1 combat injury | 7,000 NV | 1 |
+
+The `Аптека` link opened a resource-processing building rather than another
+catalog shop. In the observed state it listed the character's two units of red
+paint and offered select, quantity, discard, and process controls alongside
+resource mass, storage, expiry, and growth values. No resource action was
+submitted.
 
 The important design distinction is:
 

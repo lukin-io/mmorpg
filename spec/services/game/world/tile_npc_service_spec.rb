@@ -9,12 +9,12 @@ RSpec.describe Game::World::TileNpcService do
     Game::World::OutdoorNpcConfig.reload!
   end
 
-  it "materializes the captured Neverlands rat on the captured tile" do
+  it "materializes the captured Neverlands rat on its mapped local tile" do
     service = described_class.new(
       character:,
       zone: "Outpost Surroundings",
-      x: 1001,
-      y: 999
+      x: 7,
+      y: 7
     )
 
     npc = service.tile_npc
@@ -26,7 +26,9 @@ RSpec.describe Game::World::TileNpcService do
     expect(npc.npc_template.metadata).to include(
       "base_damage" => 7,
       "avatar_image" => "zombie.png",
-      "source_name" => "Plague Rat"
+      "source_name" => "Plague Rat",
+      "source_map" => "m_1001_999",
+      "source_coordinates" => [1001, 999]
     )
   end
 
@@ -34,8 +36,8 @@ RSpec.describe Game::World::TileNpcService do
     service = described_class.new(
       character:,
       zone: "Outpost Surroundings",
-      x: 1002,
-      y: 999
+      x: 8,
+      y: 7
     )
 
     expect(service.tile_npc).to be_nil

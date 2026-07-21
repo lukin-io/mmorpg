@@ -9,5 +9,9 @@ class ChatChannelsController < ApplicationController
     messages = @chat_channel.chat_messages.order(created_at: :desc).limit(200).reverse
     @chat_messages = Chat::IgnoreFilter.filter_for_user(messages, current_user)
     @chat_message = ChatMessage.new
+
+    if request.headers["Turbo-Frame"] == "chat_messages"
+      render "chat_channels/compact_messages", layout: false
+    end
   end
 end

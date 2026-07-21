@@ -30,11 +30,18 @@ if defined?(ChatChannel)
 end
 
 def zone_metadata_for(name)
-  case name
-  when "Outpost"
-    {
-      "exit_to" => "Outpost Surroundings"
+  city_node = Game::World::CityCatalog::NODES.values.find { |node| node["zone_name"] == name }
+  if city_node
+    city_node_key = Game::World::CityCatalog::NODES.key(city_node)
+    return {
+      "city_key" => Game::World::CityCatalog::CITY_KEY,
+      "city_node_key" => city_node_key,
+      "title" => city_node["title"],
+      "description" => "Forpost — #{city_node['title']}"
     }
+  end
+
+  case name
   when "Outpost Surroundings"
     {
       "source_map" => "m_1001_999"
@@ -45,84 +52,103 @@ def zone_metadata_for(name)
 end
 
 if defined?(Zone)
-  [
-    {name: "Outpost", location_type: "city", width: 10, height: 10},
-    {name: "Outpost Surroundings", location_type: "outdoor", width: 15, height: 15}
-  ].each do |attrs|
-    Zone.find_or_create_by!(name: attrs[:name]) do |zone|
-      zone.location_type = attrs[:location_type]
-      zone.width = attrs[:width]
-      zone.height = attrs[:height]
-      zone.metadata = zone_metadata_for(attrs[:name])
-    end
+  city_zones = Game::World::CityCatalog::NODES.values.map do |node|
+    {name: node["zone_name"], location_type: "city", width: 10, height: 10}
+  end
+  zones = city_zones + [
+    {name: "Outpost Surroundings", location_type: "outdoor", width: 1000, height: 1000}
+  ]
+
+  zones.each do |attrs|
+    zone = Zone.find_or_initialize_by(name: attrs[:name])
+    zone.location_type = attrs[:location_type]
+    zone.width = attrs[:width]
+    zone.height = attrs[:height]
+    zone.metadata = zone_metadata_for(attrs[:name])
+    zone.save!
   end
 end
 
 if defined?(SpawnPoint) && defined?(Zone)
-  {
-    "Outpost" => [{x: 5, y: 5, default_entry: true}],
-    "Outpost Surroundings" => [{x: 7, y: 7, default_entry: true}]
-  }.each do |zone_name, points|
-    zone = Zone.find_by(name: zone_name)
-    next unless zone
+  city_zone_names = Game::World::CityCatalog::NODES.values.pluck("zone_name")
+  central_square = Zone.find_by(name: Game::World::CityCatalog.node("city2_1")["zone_name"])
 
-    points.each do |point|
-      SpawnPoint.find_or_create_by!(zone:, x: point[:x], y: point[:y]) do |spawn|
-        spawn.city_key = zone_name.parameterize
-        spawn.default_entry = point.fetch(:default_entry, false)
-      end
-    end
+  SpawnPoint.where(zone: Zone.where(name: city_zone_names + ["Outpost Surroundings"])).delete_all
+  if central_square
+    spawn = SpawnPoint.find_or_initialize_by(zone: central_square, x: 0, y: 0)
+    spawn.assign_attributes(city_key: "forpost", default_entry: true)
+    spawn.save!
   end
 end
 
 if defined?(MapTileTemplate)
-  # Starter city tiles. Detailed building services are exposed through
-  # source-backed CityHotspot records instead of generic tile NPCs.
-  city_tiles = []
-  outpost = Zone.find_by(name: "Outpost")
-  if outpost
-    zone_name = outpost.name  # Store zone name as string, not the Zone object
-    city_tiles << {zone: zone_name, x: 5, y: 5, terrain_type: "city", metadata: {"building" => "Town Square"}}
-    city_tiles << {zone: zone_name, x: 6, y: 5, terrain_type: "city", metadata: {"building" => "Shop"}}
-    city_tiles << {zone: zone_name, x: 4, y: 5, terrain_type: "city", metadata: {"building" => "Arena"}}
-    city_tiles << {zone: zone_name, x: 5, y: 9, terrain_type: "city", metadata: {"building" => "South Gate"}}
-  end
+  # Neverlands cities are node graphs, not grid maps. Remove obsolete city
+  # tiles instead of retaining a parallel generic-town representation.
+  city_zone_names = Game::World::CityCatalog::NODES.values.pluck("zone_name")
+  MapTileTemplate.where(zone: city_zone_names).delete_all
 
-  # Outpost Surroundings - captured outdoor map area with city return.
+  # Outpost Surroundings uses sparse authored overrides inside one logical
+  # 1000x1000 region. Missing in-bounds rows use the deterministic passable
+  # outdoor default shared by rendering and movement validation. cell_art stores
+  # only a stable catalog key and zero-based sheet location; passability,
+  # entrances, local actions, and hidden NPCs remain independent layers.
   outpost_surroundings = Zone.find_by(name: "Outpost Surroundings")
   outdoor_tiles = []
   if outpost_surroundings
     outdoor_zone_name = outpost_surroundings.name  # Store zone name as string, not the Zone object
-    (0..14).each do |x|
-      (0..14).each do |y|
-        tile_meta = {}
-        terrain = "outdoor"
-
-        # City entrance marker
-        if x == 7 && y == 0
-          tile_meta["building"] = "Road to Outpost"
-        end
-
-        outdoor_tiles << {
-          zone: outdoor_zone_name,
-          x: x,
-          y: y,
-          terrain_type: terrain,
-          passable: !tile_meta["blocked"],
-          metadata: tile_meta
+    Game::World::CityCatalog::GATES.each_value do |gate|
+      local_x, local_y = gate["local_coordinates"]
+      outdoor_tiles << {
+        zone: outdoor_zone_name,
+        x: local_x,
+        y: local_y,
+        terrain_type: "outdoor",
+        passable: true,
+        metadata: {
+          "city_gate" => gate["name"],
+          "source_map" => gate["source_map"],
+          "source_coordinates" => gate["source_coordinates"],
+          "cell_art" => {
+            "key" => "forpost_terrain",
+            "column" => local_x.modulo(10),
+            "row" => local_y.modulo(10)
+          }
         }
-      end
+      }
     end
+    outdoor_tiles << {
+      zone: outdoor_zone_name,
+      x: 7,
+      y: 7,
+      terrain_type: "outdoor",
+      passable: true,
+      metadata: {
+        "source_map" => "m_1001_999",
+        "source_coordinates" => [1001, 999],
+        "cell_art" => {
+          "key" => "forpost_terrain",
+          "column" => 7,
+          "row" => 7
+        },
+        "local_actions" => [
+          {
+            "type" => "resource_search",
+            "source_id" => "look",
+            "label" => "Look Around",
+            "description" => "Search this cell for herbs or local resources."
+          }
+        ]
+      }
+    }
   end
 
-  # Insert all tiles
-  (city_tiles + outdoor_tiles).each do |attrs|
+  outdoor_tiles.each do |attrs|
     next unless attrs[:zone]
-    MapTileTemplate.find_or_create_by!(zone: attrs[:zone], x: attrs[:x], y: attrs[:y]) do |tile|
-      tile.terrain_type = attrs[:terrain_type]
-      tile.passable = attrs.fetch(:passable, true)
-      tile.metadata = attrs.fetch(:metadata, {})
-    end
+    tile = MapTileTemplate.find_or_initialize_by(zone: attrs[:zone], x: attrs[:x], y: attrs[:y])
+    tile.terrain_type = attrs[:terrain_type]
+    tile.passable = attrs.fetch(:passable, true)
+    tile.metadata = attrs.fetch(:metadata, {})
+    tile.save!
   end
 end
 
@@ -575,45 +601,55 @@ puts "Seeding Tile Buildings..."
 
 if defined?(TileBuilding) && defined?(Zone)
   outpost_surroundings = Zone.find_by(name: "Outpost Surroundings")
-  outpost = Zone.find_by(name: "Outpost")
-
   tile_buildings = []
 
-  # City entrance from Outpost Surroundings to Outpost
-  if outpost_surroundings && outpost
-    tile_buildings << {
-      zone: outpost_surroundings.name,
-      x: 7,
-      y: 0,
-      building_key: "outpost_gate",
-      building_type: "city",
-      name: "Outpost Gate",
-      destination_zone: outpost,
-      destination_x: 5,
-      destination_y: 9,
-      icon: "🏙️",
-      required_level: 1,
-      metadata: {
-        "description" => "Enter Outpost."
+  if outpost_surroundings
+    Game::World::CityCatalog::GATES.each do |gate_key, gate|
+      node = Game::World::CityCatalog.node(gate["node_key"])
+      destination_zone = Zone.find_by(name: node["zone_name"])
+      next unless destination_zone
+
+      local_x, local_y = gate["local_coordinates"]
+      tile_buildings << {
+        zone: outpost_surroundings.name,
+        x: local_x,
+        y: local_y,
+        building_key: (gate_key == "west" ? "outpost_gate" : "outpost_#{gate_key}_gate"),
+        building_type: "city",
+        name: gate["name"],
+        destination_zone:,
+        destination_x: 0,
+        destination_y: 0,
+        icon: nil,
+        required_level: 1,
+        metadata: {
+          "description" => "Enter Forpost through the #{gate['name']}.",
+          "source_map" => gate["source_map"],
+          "source_coordinates" => gate["source_coordinates"],
+          "source_gate" => gate_key,
+          "city_node_key" => gate["node_key"]
+        }
       }
-    }
+    end
   end
 
   tile_buildings.each do |attrs|
-    TileBuilding.find_or_create_by!(building_key: attrs[:building_key]) do |building|
-      building.zone = attrs[:zone]
-      building.x = attrs[:x]
-      building.y = attrs[:y]
-      building.building_type = attrs[:building_type]
-      building.name = attrs[:name]
-      building.destination_zone = attrs[:destination_zone]
-      building.destination_x = attrs[:destination_x]
-      building.destination_y = attrs[:destination_y]
-      building.icon = attrs[:icon]
-      building.required_level = attrs[:required_level]
-      building.active = true
-      building.metadata = attrs[:metadata] || {}
-    end
+    building = TileBuilding.find_or_initialize_by(building_key: attrs[:building_key])
+    building.assign_attributes(
+      zone: attrs[:zone],
+      x: attrs[:x],
+      y: attrs[:y],
+      building_type: attrs[:building_type],
+      name: attrs[:name],
+      destination_zone: attrs[:destination_zone],
+      destination_x: attrs[:destination_x],
+      destination_y: attrs[:destination_y],
+      icon: attrs[:icon],
+      required_level: attrs[:required_level],
+      active: true,
+      metadata: attrs[:metadata] || {}
+    )
+    building.save!
     puts "  Created/Found TileBuilding: #{attrs[:name]}"
   end
 end
@@ -622,183 +658,93 @@ puts "Tile buildings seeding complete!"
 
 # ============================================================
 # CITY HOTSPOTS
-# Interactive building hotspots for city illustrated view
+# Captured actions for each city node
 # ============================================================
 puts "\n=== Seeding City Hotspots ==="
 
-outpost = Zone.find_by(name: "Outpost")
 outpost_surroundings = Zone.find_by(name: "Outpost Surroundings")
-
-if outpost
-  city_hotspots = []
-
-  # ==========================================================================
-  # CITY HOTSPOT POSITIONING GUIDE
-  # ==========================================================================
-  # - city.png is 1536x1024 pixels
-  # - The city view uses city.png as the only rendered location image.
-  # - Hotspots are invisible rectangles with text labels/tooltips only.
-  # - position_x/y: Where to place the HITBOX (invisible clickable area)
-  #   This should be the top-left corner of the building's clickable area
-  # - width/height: Size of the HITBOX (clickable area)
-  #   Adjust these to match the building's dimensions on city.png
-  #
-  # HOW TO FIND POSITIONS:
-  # 1. Open city.png in an image editor
-  # 2. Find the building you want to make clickable
-  # 3. Note the top-left pixel coordinates (position_x, position_y)
-  # 4. Measure the building's width and height in pixels
-  # ==========================================================================
-
-  # Outpost gate / Exit - leads back to Outpost Surroundings.
-  city_hotspots << {
-    zone: outpost,
-    key: "city_gate",
-    name: "Outpost Gate",
-    hotspot_type: "exit",
-    position_x: 0,
-    position_y: 325,
-    width: 235,
-    height: 175,
-    action_type: "enter_zone",
-    destination_zone: outpost_surroundings,
-    action_params: {"destination_x" => 7, "destination_y" => 0},
-    required_level: 1,
-    z_index: 10
-  }
-
-  # Arena - for player, team, and NPC fights
-  city_hotspots << {
-    zone: outpost,
-    key: "arena",
-    name: "Arena",
-    hotspot_type: "building",
-    position_x: 455,
-    position_y: 55,
-    width: 790,
-    height: 500,
-    action_type: "open_feature",
-    action_params: {"feature" => "arena"},
-    required_level: 5,
-    z_index: 20
-  }
-
-  # Shop - documented Neverlands shop, implemented as Rails shop frame
-  city_hotspots << {
-    zone: outpost,
-    key: "shop",
-    name: "Shop",
-    hotspot_type: "building",
-    position_x: 60,
-    position_y: 520,
-    width: 360,
-    height: 255,
-    action_type: "open_feature",
-    action_params: {"feature" => "shop"},
-    required_level: 1,
-    z_index: 20
-  }
-
-  # Other visible city buildings are source-backed for hover/keyboard coverage.
-  # They intentionally stay unavailable until their feature routes are promoted.
-  city_hotspots << {
-    zone: outpost,
-    key: "town_hall",
-    name: "Town Hall",
-    hotspot_type: "building",
-    position_x: 315,
-    position_y: 0,
-    width: 275,
-    height: 225,
-    action_type: "open_feature",
-    action_params: {"feature" => "town_hall"},
-    required_level: 1,
-    z_index: 20
-  }
-
-  city_hotspots << {
-    zone: outpost,
-    key: "watchtower",
-    name: "Watchtower",
-    hotspot_type: "building",
-    position_x: 55,
-    position_y: 35,
-    width: 145,
-    height: 205,
-    action_type: "open_feature",
-    action_params: {"feature" => "watchtower"},
-    required_level: 1,
-    z_index: 20
-  }
-
-  city_hotspots << {
-    zone: outpost,
-    key: "market",
-    name: "Market",
-    hotspot_type: "building",
-    position_x: 455,
-    position_y: 485,
-    width: 285,
-    height: 105,
-    action_type: "open_feature",
-    action_params: {"feature" => "market"},
-    required_level: 1,
-    z_index: 20
-  }
-
-  city_hotspots << {
-    zone: outpost,
-    key: "tavern",
-    name: "Tavern",
-    hotspot_type: "building",
-    position_x: 1000,
-    position_y: 525,
-    width: 355,
-    height: 250,
-    action_type: "open_feature",
-    action_params: {"feature" => "tavern"},
-    required_level: 1,
-    z_index: 20
-  }
-
-  city_hotspots << {
-    zone: outpost,
-    key: "smithy",
-    name: "Smithy",
-    hotspot_type: "building",
-    position_x: 1190,
-    position_y: 760,
-    width: 310,
-    height: 175,
-    action_type: "open_feature",
-    action_params: {"feature" => "smithy"},
-    required_level: 1,
-    z_index: 20
-  }
-
-  city_hotspots.each do |attrs|
-    hotspot = CityHotspot.find_or_initialize_by(zone: attrs[:zone], key: attrs[:key])
-    hotspot.assign_attributes(
-      name: attrs[:name],
-      hotspot_type: attrs[:hotspot_type],
-      position_x: attrs[:position_x],
-      position_y: attrs[:position_y],
-      width: attrs[:width],
-      height: attrs[:height],
-      image_normal: nil,  # Not used - overlay approach uses full-size images
-      image_hover: attrs[:image_hover],
-      action_type: attrs[:action_type],
-      destination_zone: attrs[:destination_zone],
-      action_params: attrs[:action_params] || {},
-      required_level: attrs[:required_level] || 1,
-      z_index: attrs[:z_index] || 0,
-      active: true
-    )
-    hotspot.save!
-    puts "  Created/Found CityHotspot: #{attrs[:name]}"
-  end
-else
-  puts "  Skipping city hotspots: Outpost zone not found"
+city_zones_by_key = Game::World::CityCatalog::NODES.to_h do |node_key, node|
+  [node_key, Zone.find_by(name: node["zone_name"])]
 end
+city_hotspots = []
+
+Game::World::CityCatalog::NODES.each do |node_key, node|
+  zone = city_zones_by_key[node_key]
+  next unless zone
+
+  node["links"].each do |destination_key, destination_name|
+    city_hotspots << {
+      zone:,
+      key: "go_#{destination_key}",
+      name: destination_name,
+      hotspot_type: "district",
+      action_type: "enter_zone",
+      destination_zone: city_zones_by_key[destination_key],
+      action_params: {"destination_x" => 0, "destination_y" => 0},
+      required_level: 1
+    }
+  end
+
+  node["features"].each do |feature_key, feature|
+    city_hotspots << {
+      zone:,
+      key: feature_key,
+      name: feature["name"],
+      hotspot_type: "building",
+      action_type: "open_feature",
+      destination_zone: nil,
+      action_params: {"feature" => feature_key},
+      required_level: feature.fetch("required_level", 1)
+    }
+  end
+
+  Game::World::CityCatalog::GATES.each do |gate_key, gate|
+    next unless gate["node_key"] == node_key
+
+    local_x, local_y = gate["local_coordinates"]
+    city_hotspots << {
+      zone:,
+      key: "#{gate_key}_gate",
+      name: gate["name"],
+      hotspot_type: "exit",
+      action_type: "enter_zone",
+      destination_zone: outpost_surroundings,
+      action_params: {
+        "destination_x" => local_x,
+        "destination_y" => local_y,
+        "source_coordinates" => gate["source_coordinates"]
+      },
+      required_level: 1
+    }
+  end
+end
+
+seeded_hotspot_ids = city_hotspots.each_with_index.filter_map do |attrs, index|
+  next unless attrs[:destination_zone] || attrs[:action_type] == "open_feature"
+
+  hotspot = CityHotspot.find_or_initialize_by(zone: attrs[:zone], key: attrs[:key])
+  hotspot.assign_attributes(
+    name: attrs[:name],
+    hotspot_type: attrs[:hotspot_type],
+    position_x: 0,
+    position_y: 0,
+    width: nil,
+    height: nil,
+    image_normal: nil,
+    image_hover: nil,
+    action_type: attrs[:action_type],
+    destination_zone: attrs[:destination_zone],
+    action_params: attrs[:action_params] || {},
+    required_level: attrs[:required_level] || 1,
+    z_index: index,
+    active: true
+  )
+  hotspot.save!
+  puts "  Created/Found CityHotspot: #{attrs[:name]}"
+  hotspot.id
+end
+
+city_zone_ids = city_zones_by_key.values.compact.map(&:id)
+CityHotspot.where(zone_id: city_zone_ids).where.not(id: seeded_hotspot_ids).destroy_all
 
 puts "City hotspots seeding complete!"

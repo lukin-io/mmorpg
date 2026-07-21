@@ -19,7 +19,6 @@ RSpec.describe Game::World::TileBuildingService do
       destination_zone: destination_zone,
       destination_x: 7,
       destination_y: 7,
-      required_level: 5,
       active: true,
       metadata: {"description" => "Enter Outpost."}
     )
@@ -36,10 +35,7 @@ RSpec.describe Game::World::TileBuildingService do
       expect(service.building_info).to include(
         id: building.id,
         name: "Outpost Gate",
-        building_type: "city",
-        icon: "🏙️",
         destination: "Outpost",
-        required_level: 5,
         description: "Enter Outpost.",
         active: true
       )
@@ -71,13 +67,13 @@ RSpec.describe Game::World::TileBuildingService do
       expect(character.position.y).to eq(7)
     end
 
-    it "returns a failure when the building is blocked" do
-      building.update!(required_level: 20)
+    it "returns a failure when authored destination coordinates are missing" do
+      building.update_columns(destination_x: nil, destination_y: nil)
 
       result = service.enter!
 
       expect(result.success).to be false
-      expect(result.message).to include("level 20")
+      expect(result.message).to eq("Entrance is currently unavailable.")
       expect(character.position.reload.zone).to eq(source_zone)
     end
   end

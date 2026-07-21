@@ -31,6 +31,23 @@ and do not store live movement tokens or session values in tracked text.
   `#world_cont`.
 - The overlay cursor/timer layer is rendered inside `#world_cont2`.
 
+## Owner-Confirmed Cell Presentation
+
+The project owner confirmed the Neverlands map contract on 2026-07-21:
+
+- a region is a logical mosaic of `1000 x 1000` coordinates;
+- each rendered map part is a `100 x 100` image-cell;
+- the browser loads only the nearby image-cells rather than one region-sized
+  browser image;
+- an authored building, gate, lake, fishing place, or other special location
+  can replace the ordinary art for its exact cell;
+- outdoor NPC placement is hidden cell state. The map does not render an NPC
+  marker, name, or manual Attack control before the NPC interrupts an action.
+
+Treat `100 x 100` as normative for the current implementation. A later size
+change requires new Neverlands evidence or an explicit product decision; it is
+not a responsive-client calculation.
+
 The full gameplay frameset loaded by `game.php` was:
 
 ```text
@@ -637,3 +654,69 @@ One subtle detail: the `build` array still contained `m_1019_1025`
 after the client-side move completed, while `current_x/current_y` were
 updated to `1018/1025`. For movement state, `current_x/current_y` and
 `avail` were the reliable client-side values after `finFunction()`.
+
+## 2026-07-21 Returning-Character Follow-Up
+
+A second authenticated observation used a returning level-16 character in the
+`forpost1` wilderness. No credentials, session cookies, action tokens, or fight
+identifiers are retained in this document.
+
+The character profile showed:
+
+```text
+Странник [100/100]
+Усталость: 17%
+```
+
+After returning from the profile to the map, the idle source state was:
+
+```js
+map = [
+  [1039, 1018, 32, "day", [], ""],
+  [
+    [1038, 1018, "..."],
+    [1039, 1017, "..."],
+    [1039, 1019, "..."],
+    [1038, 1019, "..."],
+    [1040, 1017, "..."]
+  ]
+]
+```
+
+One westward step was submitted from `1039,1018` to `1038,1018`. The AJAX
+request returned `GO` immediately. The current step continued to use the
+submitted `32` seconds while the response supplied `49` as the travel cost for
+the next cell. The same response supplied the next reachable cells and fresh
+`inf`, `inv`, and `look` actions.
+
+Reloading before the step completed returned a resume payload shaped as:
+
+```js
+map[0] = [
+  1038,
+  1018,
+  49,
+  "day",
+  [0, <server_now>, <started_at>, <ends_at>, 1039, 1018],
+  ""
+]
+```
+
+The destination coordinate was already the map payload's logical current
+coordinate, while the timer tuple retained the source coordinate and timestamps
+needed to reconstruct the remaining animation. Once the timer elapsed,
+`map[0][4]` returned to `[]` and the character remained at `1038,1018` with the
+new destination/action set.
+
+This follow-up confirms two boundaries:
+
+- `map[0][2]` is a server-calculated per-state travel value, not a fixed client
+  constant;
+- Wanderer alone does not explain the complete source duration. Terrain,
+  fatigue, effects, carried state, or other hidden inputs can produce values
+  above the clean 30-second starter observation even at Wanderer `100`.
+
+Do not claim that Neverlands' complete timing formula was captured from these
+two points. The local MVP may isolate a deliberately bounded Wanderer effect,
+but additional source modifiers require separate observations before they are
+implemented.

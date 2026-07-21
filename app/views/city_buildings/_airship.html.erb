@@ -1,0 +1,9 @@
+<h2>Observed routes</h2>
+<table class="nl-profile-table nl-city-building-table">
+  <thead><tr><th>Destination</th><th>Price</th><th>Next departure</th></tr></thead>
+  <tbody>
+    <% building["routes"].each do |destination, price| %>
+      <tr><td><%= destination %></td><td><%= price %> NV</td><td>Schedule unavailable</td></tr>
+    <% end %>
+  </tbody>
+</table>

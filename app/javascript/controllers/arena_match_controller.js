@@ -18,7 +18,8 @@ export default class extends Controller {
   static values = {
     matchId: Number,
     apLimit: { type: Number, default: 80 },
-    readOnly: { type: Boolean, default: false }
+    readOnly: { type: Boolean, default: false },
+    userTeam: String
   }
 
   connect() {
@@ -285,7 +286,7 @@ export default class extends Controller {
 
   updateNpcHP(data) {
     this.updateParticipantHP({
-      character_id: `npc-${data.npc_id}`,
+      character_id: `npc-participation-${data.participation_id}`,
       current_hp: data.current_hp,
       max_hp: data.max_hp,
       current_mp: 0,
@@ -732,7 +733,9 @@ export default class extends Controller {
   getFirstEnemyId() {
     const fighters = this.element.querySelectorAll(".fighter-card:not(.fighter-card--defeated), .arena-participant:not(.arena-participant--dead)")
     const enemy = Array.from(fighters).find(p =>
-      p.dataset.characterId && p.dataset.currentUser !== "true"
+      p.dataset.characterId &&
+      p.dataset.currentUser !== "true" &&
+      (!this.hasUserTeamValue || p.dataset.team !== this.userTeamValue)
     )
 
     if (enemy) return enemy.dataset.characterId

@@ -5,31 +5,40 @@ require "ostruct"
 # WorldController handles the main game world view, movement between tiles,
 # and location-based interactions.
 #
-# The player sees either:
-# - A location view (city, building interior) with NPCs and actions
-# - An overworld map grid for movement between tiles
+# The player sees either the captured city-node graph or the outdoor map.
 #
 # Usage:
 #   GET /world              - Show current location
 #   POST /world/move        - Move to adjacent tile
-#   POST /world/enter       - Enter a building
-#   POST /world/exit        - Exit to overworld
-#   POST /world/interact    - Interact with NPC/object
+#   POST /world/enter_building - Enter a current-cell entrance
+#   POST /world/perform_local_action - Perform a current-cell local action
 class WorldController < ApplicationController
   include CurrentCharacterContext
+
+  layout "game"
+
+  MAP_RENDER_RADIUS = 3
+  PLAYER_SORT_ORDERS = {
+    "az" => {name: :asc},
+    "za" => {name: :desc},
+    "lvl-asc" => {level: :asc, name: :asc},
+    "lvl-desc" => {level: :desc, name: :asc}
+  }.freeze
 
   before_action :ensure_active_character!
   before_action :ensure_character_position!
   before_action :set_position
 
   def show
-    # City zones render an interactive illustrated view instead of tile grid
+    # City zones render captured node actions instead of an outdoor grid.
     if city_zone?
       @zone = @position.zone
       prepare_city_view
     else
       prepare_overworld_view
     end
+
+    Game::World::ResumeContext.new(character: current_character).remember_world!
 
     # Handle both HTML and Turbo Stream requests with full page render
     # Turbo Stream requests can come from redirects after building entry
@@ -46,15 +55,27 @@ class WorldController < ApplicationController
         # render full HTML page to avoid "Content missing"
         # Use formats: [:html] to find the .html.erb template
         if city_zone?
-          render "world/city_view", formats: [:html], layout: "application"
+          render "world/city_view", formats: [:html], layout: "game"
         else
-          render "world/show", formats: [:html], layout: "application"
+          render "world/show", formats: [:html], layout: "game"
         end
       end
     end
   end
 
+  # GET /world/players
+  # Refresh the compact location-scoped presence list without replacing the
+  # world or city surface.
+  def players
+    @players_here = players_at_current_tile(sort: params[:sort])
+
+    render partial: "shared/nl_players_list", layout: false
+  end
+
   def move
+    interruption = interrupt_world_action
+    return respond_with_world_interruption(interruption) if interruption.interrupted?
+
     result = Game::Movement::AcceptMove.new(
       character: current_character,
       action_key: params[:action_key],
@@ -68,74 +89,31 @@ class WorldController < ApplicationController
       format.turbo_stream { render_map_update }
       format.html { redirect_to world_path, notice: "Move started." }
     end
-  rescue Game::Movement::MovementViolationError => e
+  rescue Game::Movement::MovementViolationError,
+    Game::World::StartNpcFight::FightViolationError => e
     respond_to do |format|
       format.turbo_stream { render_movement_error(e.message) }
       format.html { redirect_to world_path, alert: e.message }
     end
   end
 
-  def enter
-    location_key = params[:location_key]
-
-    # Find the zone/building to enter (search by name, case-insensitive)
-    target_zone = Zone.find_by("LOWER(name) = ?", location_key.to_s.downcase)
-
-    if target_zone.nil?
-      return redirect_to world_path, alert: "Location not found."
-    end
-
-    spawn_point = target_zone.spawn_points.default_entries.first
-
-    if spawn_point.nil?
-      return redirect_to world_path, alert: "Entry point is not configured."
-    end
-
-    # Move character to new zone
-    @position.update!(
-      zone: target_zone,
-      x: spawn_point.x,
-      y: spawn_point.y,
-      last_action_at: Time.current
-    )
-
-    redirect_to world_path, notice: "Entered #{target_zone.name}."
-  end
-
-  def exit_location
-    current_zone = @position.zone
-    exit_zone_name = current_zone.metadata&.dig("exit_to")
-    exit_zone = Zone.find_by(name: exit_zone_name) if exit_zone_name.present?
-
-    if exit_zone.nil?
-      return redirect_to world_path, alert: "No exit available."
-    end
-
-    spawn_point = exit_zone.spawn_points.default_entries.first
-
-    if spawn_point.nil?
-      return redirect_to world_path, alert: "No exit entry point available."
-    end
-
-    @position.update!(
-      zone: exit_zone,
-      x: spawn_point.x,
-      y: spawn_point.y,
-      last_action_at: Time.current
-    )
-
-    redirect_to world_path, notice: "Log Out: #{exit_zone.name}."
-  end
-
   # POST /world/interact_hotspot
-  # Interact with a city hotspot (building, exit, feature)
+  # Accept a captured city transition, building, or gate offer.
   def interact_hotspot
+    hotspot = CityHotspot.find_by(id: params[:hotspot_id], zone: @position.zone)
+    return respond_with_city_action_error("Location not found.") unless hotspot
+
     service = Game::World::CityHotspotService.new(
       character: current_character,
       zone: @position.zone
     )
 
-    result = service.interact!(params[:hotspot_id])
+    result = nil
+    ActiveRecord::Base.transaction do
+      action_offer = accept_world_action!(hotspot.world_action_type, target: hotspot)
+      result = service.interact!(hotspot.id)
+      result.success ? action_offer.complete! : action_offer.fail!(result.message)
+    end
 
     if result.success
       if result.redirect_url.present?
@@ -166,6 +144,8 @@ class WorldController < ApplicationController
         format.turbo_stream { render_error(result.message) }
       end
     end
+  rescue Game::World::AcceptAction::ActionViolationError => e
+    respond_with_city_action_error(e.message)
   end
 
   # POST /world/enter_building
@@ -180,16 +160,28 @@ class WorldController < ApplicationController
       end
     end
 
-    action_offer = accept_world_action!(:enter_building, target: building)
+    action_offer = nil
+    interruption = nil
+    result = nil
 
-    service = Game::World::TileBuildingService.new(
-      character: current_character,
-      zone: @position.zone.name,
-      x: @position.x,
-      y: @position.y
-    )
+    ActiveRecord::Base.transaction do
+      action_offer = accept_world_action!(:enter_building, target: building)
+      interruption = interrupt_world_action
 
-    result = service.enter!
+      if interruption.interrupted?
+        action_offer.complete!
+      else
+        service = Game::World::TileBuildingService.new(
+          character: current_character,
+          zone: @position.zone.name,
+          x: @position.x,
+          y: @position.y
+        )
+        result = service.enter!
+      end
+    end
+
+    return respond_with_world_interruption(interruption) if interruption.interrupted?
 
     respond_to do |format|
       if result.success
@@ -208,13 +200,76 @@ class WorldController < ApplicationController
         format.turbo_stream { render_error(result.message) }
       end
     end
-  rescue Game::World::AcceptAction::ActionViolationError => e
+  rescue Game::World::AcceptAction::ActionViolationError,
+    Game::World::StartNpcFight::FightViolationError => e
+    respond_with_world_action_error(e.message)
+  end
+
+  # POST /world/perform_local_action
+  # Accept a Neverlands-shaped current-cell action such as `look`.
+  def perform_local_action
+    tile = MapTileTemplate.find_by(id: params[:tile_id])
+    return respond_with_world_action_error("Local action is no longer available.") unless tile
+
+    local_action_type = params[:local_action_type].to_s
+    world_action_type = MapTileTemplate.world_action_type_for(local_action_type)
+    return respond_with_world_action_error("Local action is not supported.") unless world_action_type
+
+    result = nil
+    interruption = nil
+
+    ActiveRecord::Base.transaction do
+      action_offer = accept_world_action!(world_action_type, target: tile)
+      result = Game::World::PerformLocalAction.new(
+        character: current_character,
+        tile:,
+        local_action_type:
+      ).call
+
+      if result.success
+        interruption = interrupt_world_action
+        action_offer.complete!
+      else
+        action_offer.fail!(result.message)
+      end
+    end
+
+    return respond_with_world_action_error(result.message) unless result.success
+
+    return respond_with_world_interruption(interruption) if interruption&.interrupted?
+
+    respond_to do |format|
+      format.html { redirect_to world_path, notice: result.message }
+      format.turbo_stream do
+        flash[:notice] = result.message
+        redirect_to world_path, status: :see_other
+      end
+    end
+  rescue Game::World::AcceptAction::ActionViolationError,
+    Game::World::StartNpcFight::FightViolationError => e
     respond_with_world_action_error(e.message)
   end
 
   private
 
-  # Check if current zone is a city (renders illustrated view)
+  def interrupt_world_action(return_context: "world")
+    Game::World::InterruptAction.new(
+      character: current_character,
+      return_context:
+    ).call
+  end
+
+  def respond_with_world_interruption(interruption)
+    respond_to do |format|
+      format.html { redirect_to arena_match_path(interruption.match), alert: interruption.message }
+      format.turbo_stream do
+        flash[:alert] = interruption.message
+        redirect_to arena_match_path(interruption.match), status: :see_other
+      end
+    end
+  end
+
+  # Check if the current zone is a captured city node.
   def city_zone?
     @position.zone.city?
   end
@@ -226,6 +281,13 @@ class WorldController < ApplicationController
       zone: @position.zone
     )
     @hotspots = @city_service.hotspots
+    @world_action_offers = Game::World::CityActionOfferBuilder.new(
+      character: current_character,
+      position: @position,
+      hotspots: @hotspots
+    ).call
+    @city_action_offers_by_hotspot_id = @world_action_offers.index_by(&:target_id)
+    @players_here = players_at_current_tile
   end
 
   def prepare_overworld_view
@@ -251,7 +313,6 @@ class WorldController < ApplicationController
 
     @tile = current_tile
     @nearby_tiles = nearby_tiles_with_features
-    @tile_npc = tile_npc_at_current_tile
     @tile_building = tile_building_at_current_tile
     @players_here = players_at_current_tile
     @available_actions = available_actions
@@ -260,8 +321,9 @@ class WorldController < ApplicationController
   def ensure_character_position!
     return if current_character.position.present?
 
-    # Create initial position in starter city zone.
-    starter_zone = Zone.find_by(location_type: "city")
+    # The captured Forpost Central Square is the only MVP spawn node.
+    starter_node = Game::World::CityCatalog.node("city2_1")
+    starter_zone = Zone.find_by(name: starter_node.fetch("zone_name"), location_type: "city")
     unless starter_zone
       return render "world/no_zones", status: :service_unavailable
     end
@@ -285,108 +347,68 @@ class WorldController < ApplicationController
   end
 
   def current_tile
-    MapTileTemplate.find_by(
-      zone: @position.zone.name,
-      x: @position.x,
-      y: @position.y
-    ) || missing_tile(@position.x, @position.y)
+    @tile_state&.tile || missing_tile(@position.x, @position.y)
   end
 
   def missing_tile(x, y)
     OpenStruct.new(
       x:,
       y:,
-      terrain_type: "unconfigured",
-      walkable: false,
-      passable: false,
-      metadata: {"missing_template" => true}
+      terrain_type: @position.zone.location_type,
+      walkable: @position.zone.outdoor?,
+      passable: @position.zone.outdoor?,
+      metadata: {"sparse_default" => true}
     )
-  end
-
-  def nearby_tiles
-    zone = @position.zone
-    tiles = []
-
-    # Prefetch all tiles in range for efficiency
-    x_range = ([@position.x - 2, 0].max..[@position.x + 2, zone.width - 1].min)
-    y_range = ([@position.y - 2, 0].max..[@position.y + 2, zone.height - 1].min)
-
-    db_tiles = MapTileTemplate.in_zone(zone.name).in_area(x_range, y_range).index_by { |t| [t.x, t.y] }
-
-    # Get 5x5 grid around player (or zone bounds)
-    y_range.each do |y|
-      row = []
-      x_range.each do |x|
-        tile = db_tiles[[x, y]] || missing_tile(x, y)
-        row << tile
-      end
-      tiles << row unless row.empty?
-    end
-
-    tiles
   end
 
   def nearby_tiles_with_features
     zone = @position.zone
-    tiles = []
+    x_range = ((@position.x - MAP_RENDER_RADIUS)..(@position.x + MAP_RENDER_RADIUS))
+    y_range = ((@position.y - MAP_RENDER_RADIUS)..(@position.y + MAP_RENDER_RADIUS))
+    templates = MapTileTemplate.in_zone(zone.name).in_area(x_range, y_range).index_by { |tile| [tile.x, tile.y] }
+    buildings = TileBuilding.active.in_zone(zone.name)
+      .where(x: x_range, y: y_range)
+      .index_by { |building| [building.x, building.y] }
 
-    # Get 5x5 grid around player
-    ((@position.y - 2)..(@position.y + 2)).each do |y|
-      row = []
-      ((@position.x - 2)..(@position.x + 2)).each do |x|
-        next if x < 0 || y < 0 || x >= zone.width || y >= zone.height
+    y_range.map do |y|
+      x_range.map do |x|
+        in_bounds = x.between?(0, zone.width - 1) && y.between?(0, zone.height - 1)
+        template = templates[[x, y]] if in_bounds
+        tile = in_bounds ? (template || missing_tile(x, y)) : out_of_bounds_tile(x, y)
+        metadata = (tile.metadata || {}).dup
+        metadata = add_visible_tile_features(
+          metadata,
+          building: (buildings[[x, y]] if in_bounds)
+        )
 
-        tile_template = MapTileTemplate.find_by(zone: zone.name, x: x, y: y)
-
-        if tile_template
-          # Use tile template but override with actual live NPC/building data
-          metadata = tile_template.respond_to?(:metadata) ? (tile_template.metadata || {}).dup : {}
-          metadata = add_live_tile_features(zone.name, x, y, metadata)
-
-          row << OpenStruct.new(
-            x: x,
-            y: y,
-            terrain_type: tile_template.respond_to?(:terrain_type) ? tile_template.terrain_type : zone.location_type,
-            walkable: tile_template.respond_to?(:walkable) ? tile_template.walkable : true,
-            metadata: metadata
-          )
-        else
-          metadata = add_live_tile_features(zone.name, x, y, {})
-          tile = missing_tile(x, y)
-          tile.metadata = tile.metadata.merge(metadata)
-          row << tile
-        end
+        OpenStruct.new(
+          x:,
+          y:,
+          terrain_type: tile.terrain_type,
+          walkable: tile.walkable,
+          passable: tile.respond_to?(:passable) ? tile.passable : tile.walkable,
+          metadata:
+        )
       end
-      tiles << row unless row.empty?
     end
-
-    tiles
   end
 
-  # Add DB-backed NPC/building data to tile metadata.
-  # Defeated NPCs are hidden.
-  def add_live_tile_features(zone_name, x, y, metadata)
-    # Check for TileNpc in database
-    npc = TileNpc.at_tile(zone_name, x, y)
+  def out_of_bounds_tile(x, y)
+    OpenStruct.new(
+      x:,
+      y:,
+      terrain_type: "outdoor",
+      walkable: false,
+      passable: false,
+      metadata: {"out_of_bounds" => true}
+    )
+  end
 
-    if npc
-      # Database record exists - show if alive
-      if npc.alive?
-        metadata["npc"] = npc.display_name
-        metadata["npc_level"] = npc.level
-      else
-        metadata.delete("npc")
-        metadata.delete("npc_level")
-      end
-    end
-
-    # Check for TileBuilding in database
-    building = TileBuilding.active.at_tile(zone_name, x, y)
-
+  # Buildings are visible authored cell content. Outdoor NPC placement remains
+  # server-only and is revealed only when its encounter interrupts an action.
+  def add_visible_tile_features(metadata, building:)
     if building
-      metadata["building"] = building.display_name
-      metadata["building_type"] = building.building_type
-      metadata["building_icon"] = building.display_icon
+      metadata["building"] = building.name
     end
 
     metadata
@@ -396,21 +418,6 @@ class WorldController < ApplicationController
     actions = []
 
     return actions if @active_movement
-
-    # Location-specific actions
-    if @position.zone.city? && @position.zone.metadata&.dig("exit_to").present?
-      actions << {type: :exit, label: "Leave City"}
-    end
-
-    # Tile NPC actions
-    tile_npc = tile_npc_at_current_tile
-    if tile_npc.present?
-      actions << {
-        type: :tile_npc,
-        npc: tile_npc,
-        offer: offers_by_action("attack_npc").first
-      }
-    end
 
     # Tile Building actions (enterable structures)
     tile_building = tile_building_at_current_tile
@@ -422,21 +429,26 @@ class WorldController < ApplicationController
       }
     end
 
+    Array(@tile_state&.local_actions).each do |local_action|
+      world_action_type = MapTileTemplate.world_action_type_for(local_action["type"])
+      offer = offers_by_action(world_action_type).first
+      next unless offer && @tile_state.tile
+
+      actions << {
+        type: :tile_local_action,
+        local_action: {
+          tile_id: @tile_state.tile.id,
+          local_action_type: local_action["type"],
+          source_id: local_action["source_id"],
+          label: local_action["label"].presence ||
+            MapTileTemplate.default_local_action_label(local_action["type"]),
+          description: local_action["description"]
+        },
+        offer:
+      }
+    end
+
     actions
-  end
-
-  def tile_npc_at_current_tile
-    return @tile_npc if defined?(@tile_npc) && @tile_npc
-    return @tile_state.npc_info if @tile_state
-
-    # Get tile NPC info at current position (for display)
-    service = Game::World::TileNpcService.new(
-      character: current_character,
-      zone: @position.zone.name,
-      x: @position.x,
-      y: @position.y
-    )
-    service.npc_info
   end
 
   def tile_building_at_current_tile
@@ -453,12 +465,19 @@ class WorldController < ApplicationController
     service.building_info
   end
 
-  def players_at_current_tile
-    CharacterPosition
-      .includes(:character)
-      .where(zone: @position.zone, x: @position.x, y: @position.y)
-      .where.not(character_id: current_character.id)
-      .where(state: :active)
+  def players_at_current_tile(sort: "az")
+    order = PLAYER_SORT_ORDERS.fetch(sort.to_s, PLAYER_SORT_ORDERS.fetch("az"))
+
+    Character
+      .joins(:position)
+      .where(character_positions: {
+        zone_id: @position.zone_id,
+        x: @position.x,
+        y: @position.y,
+        state: CharacterPosition.states.fetch("active")
+      })
+      .where.not(id: current_character.id)
+      .order(order)
       .limit(10)
   end
 
@@ -500,6 +519,7 @@ class WorldController < ApplicationController
   end
 
   def accept_world_action!(action_type, target:)
+    authorize_world_action_offer!(params[:action_key])
     Game::World::AcceptAction.new(
       character: current_character,
       action_key: params[:action_key],
@@ -514,6 +534,14 @@ class WorldController < ApplicationController
       format.html { redirect_to world_path, alert: message }
       format.turbo_stream { render_movement_error(message) }
       format.json { render json: {success: false, message: message}, status: :unprocessable_entity }
+    end
+  end
+
+  def respond_with_city_action_error(message)
+    respond_to do |format|
+      format.html { redirect_to world_path, alert: message }
+      format.turbo_stream { render_error(message) }
+      format.json { render json: {success: false, message:}, status: :unprocessable_content }
     end
   end
 

@@ -2,8 +2,7 @@
 
 module Game
   module World
-    # TileBuildingService handles building interactions at map tiles.
-    # Provides building info for display and handles zone transitions.
+    # TileBuildingService handles captured city entrances at outdoor cells.
     #
     # Purpose: Get building information at a tile and handle entry
     #
@@ -14,7 +13,7 @@ module Game
     #   - y: Y coordinate
     #
     # Returns:
-    #   - building_info: Hash with building data for UI
+    #   - building_info: Hash with entrance data for UI
     #   - enter!: Result struct with success/failure
     #
     # Usage:
@@ -48,11 +47,8 @@ module Game
 
         {
           id: active_building.id,
-          name: active_building.display_name,
-          building_type: active_building.building_type,
-          icon: active_building.display_icon,
+          name: active_building.name,
           destination: active_building.destination_zone&.name,
-          required_level: active_building.required_level,
           can_enter: active_building.can_enter?(character),
           blocked_reason: active_building.entry_blocked_reason(character),
           description: active_building.metadata&.dig("description"),
@@ -67,14 +63,14 @@ module Game
         unless building
           return Result.new(
             success: false,
-            message: "There is no building on this tile."
+            message: "There is no city entrance on this cell."
           )
         end
 
         unless building.active?
           return Result.new(
             success: false,
-            message: "Building is currently unavailable.",
+            message: "Entrance is currently unavailable.",
             building: building
           )
         end
@@ -91,14 +87,14 @@ module Game
         if building.enter!(character)
           Result.new(
             success: true,
-            message: "Entered #{building.display_name}.",
+            message: "Entered #{building.name}.",
             building: building,
             destination_zone: building.destination_zone
           )
         else
           Result.new(
             success: false,
-            message: "Could not enter: #{building.display_name}.",
+            message: "Could not enter: #{building.name}.",
             building: building
           )
         end

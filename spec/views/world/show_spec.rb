@@ -36,7 +36,6 @@ RSpec.describe "world/show.html.erb", type: :view do
     without_partial_double_verification do
       allow(view).to receive(:current_user).and_return(user)
       allow(view).to receive(:current_character).and_return(character)
-      allow(view).to receive(:in_city?).and_return(false)
     end
 
     assign(:zone, zone)
@@ -81,38 +80,6 @@ RSpec.describe "world/show.html.erb", type: :view do
       render
 
       expect(rendered).to have_css(".nl-world-container.nl-world-container--map")
-    end
-  end
-
-  describe "city view" do
-    let(:city_zone) { create(:zone, name: "City Zone", location_type: "city", width: 10, height: 10) }
-
-    before do
-      without_partial_double_verification do
-        allow(view).to receive(:in_city?).and_return(true)
-      end
-      # Update existing position to city zone
-      position.update!(zone: city_zone, x: 5, y: 5)
-      assign(:zone, city_zone)
-      assign(:position, position)
-    end
-
-    it "has world container with city class" do
-      render
-
-      expect(rendered).to have_css(".nl-world-container.nl-world-container--city")
-    end
-
-    it "wraps location-info in turbo-frame" do
-      render
-
-      expect(rendered).to have_css("turbo-frame#location-info")
-    end
-
-    it "wraps available-actions in turbo-frame" do
-      render
-
-      expect(rendered).to have_css("turbo-frame#available-actions")
     end
   end
 end

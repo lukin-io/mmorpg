@@ -11,6 +11,7 @@
 #
 class TileNpc < ApplicationRecord
   NPC_ROLES = %w[hostile].freeze
+  MAX_ENCOUNTER_SIZE = 8
 
   belongs_to :npc_template
   belongs_to :defeated_by, class_name: "Character", optional: true
@@ -18,6 +19,7 @@ class TileNpc < ApplicationRecord
   validates :zone, :x, :y, :npc_key, presence: true
   validates :npc_role, inclusion: {in: NPC_ROLES}
   validates :level, numericality: {greater_than: 0}
+  validate :encounter_size_is_supported
 
   scope :in_zone, ->(zone_name) { where(zone: zone_name) }
 
@@ -99,6 +101,14 @@ class TileNpc < ApplicationRecord
     npc_role == "hostile"
   end
 
+  # One materialized tile NPC is the encounter anchor. Neverlands can place
+  # several copies of that source NPC on the same combat side, so the explicit
+  # source metadata controls how many fight participations the anchor creates.
+  def encounter_size
+    value = Integer(metadata.to_h.fetch("encounter_count", 1), exception: false)
+    value || 0
+  end
+
   # HP percentage for display
   def hp_percentage
     return 100 if max_hp.nil? || max_hp.zero?
@@ -107,6 +117,12 @@ class TileNpc < ApplicationRecord
   end
 
   private
+
+  def encounter_size_is_supported
+    return if encounter_size.between?(1, MAX_ENCOUNTER_SIZE)
+
+    errors.add(:metadata, "encounter count must be between 1 and #{MAX_ENCOUNTER_SIZE}")
+  end
 
   def calculate_respawn_time
     return unless template_respawn_seconds

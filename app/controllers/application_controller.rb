@@ -18,8 +18,10 @@ class ApplicationController < ActionController::Base
   protected
 
   def after_sign_in_path_for(resource)
-    resource.ensure_playable_character! if resource.respond_to?(:ensure_playable_character!)
-    world_path
+    character = resource.ensure_playable_character! if resource.respond_to?(:ensure_playable_character!)
+    return world_path unless character
+
+    Game::World::ResumeContext.new(character:).resume_path
   end
 
   private
@@ -44,5 +46,11 @@ class ApplicationController < ActionController::Base
       format.turbo_stream { head :forbidden }
       format.json { render json: {error: "forbidden"}, status: :forbidden }
     end
+  end
+
+  def authorize_world_action_offer!(action_key)
+    offer = WorldActionOffer.find_by(action_key: action_key.to_s)
+    offer ||= WorldActionOffer.new(character: current_character)
+    authorize offer, :accept?
   end
 end

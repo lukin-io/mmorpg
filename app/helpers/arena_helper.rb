@@ -59,6 +59,11 @@ module ArenaHelper
     @arena_match.arena_participations.exists?(user: current_user)
   end
 
+  def current_user_active_arena_participant?(match = @arena_match)
+    participation = current_user_arena_participation(match)
+    participation.present? && !match.participant_defeated?(participation)
+  end
+
   # Check if current user won the match
   def current_user_won?
     return false unless @arena_match&.completed? && current_user
@@ -66,7 +71,7 @@ module ArenaHelper
     participation = @arena_match.arena_participations.find_by(user: current_user)
     return false unless participation
 
-    participation.team == @arena_match.winning_team
+    participation.victory?
   end
 
   # Format fight type for display with icon
@@ -199,14 +204,12 @@ module ArenaHelper
   def winner_name(match)
     return "Draw" unless match.winning_team
 
-    winner_participation = match.arena_participations.find_by(team: match.winning_team)
-    return "Unknown" unless winner_participation
+    names = match.arena_participations
+      .where(team: match.winning_team)
+      .includes(:character, :npc_template)
+      .map(&:participant_name)
 
-    if winner_participation.npc?
-      winner_participation.npc_template&.name || "NPC"
-    else
-      winner_participation.character&.name || "Character"
-    end
+    names.presence&.join(", ") || "Unknown"
   end
 
   # Format duration in human-readable format
@@ -255,7 +258,7 @@ module ArenaHelper
       max_mp = 0
       name = npc_template.name
       level = npc_template.level
-      participant_id = "npc-#{npc_template.id}"
+      participant_id = "npc-participation-#{participation.id}"
     else
       current_hp = character.current_hp
       max_hp = character.max_hp

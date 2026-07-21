@@ -191,6 +191,41 @@ Profession counters such as trading, herbalism, mining, and fishing were visible
 in the source page, but not as the current allocatable numeric skill controls.
 They need dedicated capture before implementation.
 
+## Boolean Perks
+
+`Навыки` are a separate yes/no progression surface. They do not share the
+0-100 numeric-skill registry or either numeric-skill point pool.
+
+The launch-safe captured subset is deliberately small:
+
+| Source ID | Local Key | Source Label | Launch Behavior |
+| ---: | --- | --- | --- |
+| 7 | `more_strength` | `Больше силы` | Spend one new-perk point to save the perk as owned. |
+
+The source capture proves the selection and save behavior, but not the perk's
+exact strength formula. Owning `more_strength` therefore does not change a
+stat or combat formula until that effect is captured.
+
+The full live id/name/category catalog is captured in
+`doc/design/reference/neverlands_live_player.md`. This includes all profession,
+stat, resistance, magic, auxiliary, and warrior rows, so branch names no longer
+need to be inferred. Only source id `7` remains selectable for launch because
+the returning-account page did not expose prerequisite gates, point-grant
+timing, or mechanical effect formulas for the other entries.
+
+Perk allocation rules:
+
+- available new-perk points are shown on the dedicated perks page;
+- an unowned, captured perk can be previewed with plus/minus controls;
+- save validates the current point pool and persists the binary choice;
+- an owned perk is displayed as `Yes` and is not removable through the normal
+  allocation UI;
+- incompatible branches are rejected server-side and hidden or disabled in
+  the preview UI;
+- the captured exclusion table is retained by source ID, but additional named
+  perks are not rendered or selectable until their requirements and effects
+  are captured.
+
 ## Rules
 
 - Points are earned through level-up and relevant gameplay.
@@ -199,6 +234,8 @@ They need dedicated capture before implementation.
   additions per stat.
 - Numeric skills are stored and displayed as 0-100 values.
 - Boolean perks are stored and displayed as selected/unselected values.
+- Numeric skills and boolean perks use separate registries, pages, and point
+  pools.
 - Numeric skill allocation can preview client-side, but the final save must be
   validated server-side.
 - Numeric skill point pools are separate: combat/magic/resistance and
@@ -213,8 +250,9 @@ They need dedicated capture before implementation.
 
 ## Interactions
 
-- `features/movement.md`: wanderer/travel effects need exact formula capture
-  before changing movement time.
+- `features/movement.md`: World consumes effective Wanderer with the bounded
+  MVP `30..25` second adjacent-step formula. The complete Neverlands timing
+  formula and every other movement modifier remain uncaptured.
 - `features/combat.md`: weapon, defense, magic, and resistance skills need
   exact formula capture before changing combat formulas.
 - `features/items_inventory_equipment.md`: item requirements use stats/skills.

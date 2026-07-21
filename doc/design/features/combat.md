@@ -363,6 +363,20 @@ later dungeon fights:
 - completed fights require a result-screen finish action before returning to
   arena, city, or world context.
 
+### Implemented shared-side and wilderness-NPC slice
+
+As of 2026-07-21, the Rails combat path implements the source-backed participant and result boundary used by outdoor encounters and the same PvP/PvE team model:
+
+- both side columns render every participation, so 1x1, 1xMany, and ManyxMany fights do not hide teammates or opponents;
+- repeated NPC templates use unique participation identities for selection, HP broadcasts, defeat state, and target switching;
+- every living NPC on the opposing side receives one AI action package in the NPC response, while an NPC's package may itself contain multiple physical attacks within its AP budget;
+- participant defeat and NPC loot checks happen independently, and fight victory waits until the whole opposing side is defeated;
+- surrender sets only the conceding participant to defeat/zero HP and ends the fight only when that participant's side has no survivor;
+- World-created fights store a logical allowlisted return context and retain the explicit result-finish step before returning to World, Character, or Inventory;
+- character and encounter-anchor locks prevent a duplicate wilderness action from creating overlapping active fights.
+
+This closes the captured outdoor participant/interruption/result gap. It does not promote the broader Combat area to a feature handbook: uncaptured/tuning work for magic actions, status effects, rewards, trauma, and additional combat constants remains in this design record.
+
 ## Combat Rewards And Loot Checks
 
 Combat victory can produce two different reward classes:

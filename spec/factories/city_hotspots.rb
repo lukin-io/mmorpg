@@ -4,14 +4,12 @@ FactoryBot.define do
   factory :city_hotspot do
     zone
     sequence(:key) { |n| "hotspot_#{n}" }
-    name { "Test Building" }
+    name { "Arena" }
     hotspot_type { "building" }
-    position_x { 100 }
-    position_y { 100 }
-    width { 150 }
-    height { 100 }
-    image_normal { "test_building.png" }
-    image_hover { "test_building_hl.png" }
+    position_x { 0 }
+    position_y { 0 }
+    width { nil }
+    height { nil }
     action_type { "open_feature" }
     action_params { {"feature" => "arena"} }
     required_level { 1 }
@@ -24,9 +22,19 @@ FactoryBot.define do
     end
 
     trait :exit do
+      name { "West Gate" }
       hotspot_type { "exit" }
       action_type { "enter_zone" }
       association :destination_zone, factory: :zone
+      action_params { {"destination_x" => 0, "destination_y" => 0} }
+    end
+
+    trait :district do
+      name { "Trading Quarter" }
+      hotspot_type { "district" }
+      action_type { "enter_zone" }
+      association :destination_zone, factory: [:zone, :city]
+      action_params { {"destination_x" => 0, "destination_y" => 0} }
     end
 
     trait :inactive do
@@ -43,7 +51,6 @@ FactoryBot.define do
       hotspot_type { "building" }
       action_type { "open_feature" }
       action_params { {"feature" => "arena"} }
-      image_normal { "arena.png" }
     end
 
     trait :shop do
@@ -52,7 +59,6 @@ FactoryBot.define do
       hotspot_type { "building" }
       action_type { "open_feature" }
       action_params { {"feature" => "shop"} }
-      image_normal { "shop.png" }
     end
 
     trait :city_gate do
@@ -61,7 +67,16 @@ FactoryBot.define do
       hotspot_type { "exit" }
       action_type { "enter_zone" }
       association :destination_zone, factory: :zone
-      image_normal { "gate.png" }
+      action_params { {"destination_x" => 7, "destination_y" => 0} }
+    end
+
+
+    trait :read_only_city_building do
+      key { "market" }
+      name { "Market" }
+      hotspot_type { "building" }
+      action_type { "open_feature" }
+      action_params { {"feature" => "market"} }
     end
   end
 end

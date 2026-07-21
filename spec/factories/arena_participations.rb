@@ -33,6 +33,12 @@ FactoryBot.define do
       result { :draw }
     end
 
+    trait :surrendered do
+      result { :defeat }
+      ended_at { Time.current }
+      metadata { {"surrendered_at" => Time.current.iso8601} }
+    end
+
     # NPC participant (no character or user)
     trait :npc do
       character { nil }

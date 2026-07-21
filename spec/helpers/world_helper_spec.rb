@@ -37,22 +37,6 @@ RSpec.describe WorldHelper, type: :helper do
     end
   end
 
-  describe "#in_city?" do
-    let(:city_zone) { create(:zone, name: "Outpost", location_type: "city") }
-    let(:outdoor_zone) { create(:zone, name: "Outpost Surroundings", location_type: "outdoor") }
-    let(:character) { create(:character) }
-
-    it "returns true for city location type" do
-      position = create(:character_position, character: character, zone: city_zone)
-      expect(helper.in_city?(position)).to be true
-    end
-
-    it "returns false for outdoor location type" do
-      position = create(:character_position, character: character, zone: outdoor_zone)
-      expect(helper.in_city?(position)).to be false
-    end
-  end
-
   describe "#format_coordinates" do
     it "formats coordinates correctly" do
       expect(helper.format_coordinates(10, 20)).to eq("[10, 20]")

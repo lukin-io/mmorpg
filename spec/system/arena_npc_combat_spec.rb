@@ -49,7 +49,18 @@ RSpec.describe "Arena NPC Combat UI", type: :system do
 
   def enter_arena_from_city!
     zone.update!(location_type: "city")
-    page.driver.submit :post, interact_hotspot_world_path, {hotspot_id: arena_hotspot.id}
+    offer = create(
+      :world_action_offer,
+      :city_building_entry,
+      character:,
+      zone:,
+      x: position.x,
+      y: position.y,
+      target: arena_hotspot
+    )
+
+    page.driver.submit :post, interact_hotspot_world_path,
+      {hotspot_id: arena_hotspot.id, action_key: offer.action_key}
   end
 
   # ===========================================================================

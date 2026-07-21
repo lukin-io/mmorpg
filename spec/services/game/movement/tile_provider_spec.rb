@@ -42,6 +42,31 @@ RSpec.describe Game::Movement::TileProvider do
       expect(passable_tile.passable?).to be true
       expect(impassable_tile.passable?).to be false
     end
+
+    context "with a sparse 1000 x 1000 outdoor region" do
+      let(:zone) do
+        create(
+          :zone,
+          name: "Neverlands Region",
+          location_type: "outdoor",
+          width: 1000,
+          height: 1000
+        )
+      end
+
+      it "treats an in-bounds cell without an authored row as passable" do
+        tile = provider.tile_at(999, 999)
+
+        expect(tile).to have_attributes(x: 999, y: 999)
+        expect(tile).to be_passable
+      end
+
+      it "rejects coordinates beyond the region boundary" do
+        expect(provider.tile_at(1000, 999)).to be_nil
+        expect(provider.tile_at(999, 1000)).to be_nil
+        expect(provider.tile_at(-1, 0)).to be_nil
+      end
+    end
   end
 
   describe "#terrain_type_at" do
@@ -64,13 +89,20 @@ RSpec.describe Game::Movement::TileProvider do
     subject(:provider) { described_class.new(zone: zone) }
 
     before do
-      create(:map_tile_template, zone: zone.name, x: 5, y: 5, terrain_type: "city", metadata: {"building" => "Shop"})
+      create(
+        :map_tile_template,
+        zone: zone.name,
+        x: 5,
+        y: 5,
+        terrain_type: "outdoor",
+        metadata: {"source_map" => "m_1001_999"}
+      )
     end
 
     it "returns tile metadata" do
       metadata = provider.metadata_at(5, 5)
 
-      expect(metadata["building"]).to eq("Shop")
+      expect(metadata["source_map"]).to eq("m_1001_999")
     end
 
     it "returns empty hash for tiles without metadata" do

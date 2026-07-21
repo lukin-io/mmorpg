@@ -1,18 +1,17 @@
-<%#
-  World Map - Tile-based map with click movement
-
-  Variables:
-    - position: CharacterPosition (current player position)
-    - nearby_tiles: Array of tile rows
-    - zone: Zone model
-    - tile_data: Hash of tile features (optional)
-%>
-
 <%
-  # Calculate grid dimensions
-  grid_width = nearby_tiles.first&.size || 5
+  grid_width = nearby_tiles.first&.size || 1
   grid_height = nearby_tiles.size
-  tile_size = 100  # pixels
+  tile_size = 100
+  gutter_x = grid_width >= 3 ? 1 : 0
+  gutter_y = grid_height >= 3 ? 1 : 0
+  visible_columns = [grid_width - (gutter_x * 2), 1].max
+  visible_rows = [grid_height - (gutter_y * 2), 1].max
+  map_offset_x = -(gutter_x * tile_size)
+  map_offset_y = -(gutter_y * tile_size)
+  cursor_left = (visible_columns / 2) * tile_size
+  cursor_top = (visible_rows / 2) * tile_size
+  default_terrain_texture = image_path("world/forpost-terrain.png")
+
   movement_destinations = local_assigns.fetch(:movement_destinations, @movement_destinations || []) || []
   active_movement = local_assigns.fetch(:active_movement, @active_movement)
   movement_remaining_seconds = local_assigns.fetch(
@@ -21,6 +20,21 @@
   )
   destinations_by_coord = movement_destinations.index_by { |destination| [destination.target_x, destination.target_y] }
   movement_active = active_movement.present?
+  movement_delta_x = if movement_active && active_movement.respond_to?(:target_x) && active_movement.respond_to?(:from_x)
+    active_movement.target_x.to_i - active_movement.from_x.to_i
+  else
+    0
+  end
+  movement_delta_y = if movement_active && active_movement.respond_to?(:target_y) && active_movement.respond_to?(:from_y)
+    active_movement.target_y.to_i - active_movement.from_y.to_i
+  else
+    0
+  end
+  movement_total_seconds = if movement_active && active_movement.respond_to?(:travel_seconds)
+    active_movement.travel_seconds.to_i
+  else
+    movement_remaining_seconds.to_i
+  end
 %>
 
 <div class="nl-map-container"
@@ -33,21 +47,27 @@
      data-nl-world-map-tile-size-value="<%= tile_size %>"
      data-nl-world-map-move-cooldown-value="<%= @movement_cooldown || 3 %>"
      data-nl-world-map-zone-name-value="<%= zone.name %>"
+     data-nl-world-map-map-offset-x-value="<%= map_offset_x %>"
+     data-nl-world-map-map-offset-y-value="<%= map_offset_y %>"
      data-nl-world-map-movement-active-value="<%= movement_active %>"
      data-nl-world-map-movement-remaining-seconds-value="<%= movement_remaining_seconds %>"
+     data-nl-world-map-movement-total-seconds-value="<%= movement_total_seconds %>"
+     data-nl-world-map-movement-delta-x-value="<%= movement_delta_x %>"
+     data-nl-world-map-movement-delta-y-value="<%= movement_delta_y %>"
      data-nl-world-map-movement-ends-at-value="<%= active_movement&.ends_at&.iso8601 %>"
      data-nl-world-map-complete-url-value="<%= world_path %>">
 
-  <%# Map viewport %>
   <div class="nl-map-viewport"
        id="world_cont"
-       data-nl-world-map-target="viewport">
-
-    <%# Map table with tiles %>
-    <div class="nl-map-world" id="world_map" data-nl-world-map-target="mapContainer">
+       data-nl-world-map-target="viewport"
+       style="--nl-map-visible-columns: <%= visible_columns %>; --nl-map-visible-rows: <%= visible_rows %>;">
+    <div class="nl-map-world"
+         id="world_map"
+         data-nl-world-map-target="mapContainer"
+         style="transform: translate(<%= map_offset_x %>px, <%= map_offset_y %>px);">
       <table border="0" cellpadding="0" cellspacing="0">
         <tbody>
-          <% nearby_tiles.each_with_index do |row, row_idx| %>
+          <% nearby_tiles.each do |row| %>
             <tr>
               <% row.each do |tile| %>
                 <%
@@ -56,51 +76,45 @@
                   terrain = tile.respond_to?(:terrain_type) ? tile.terrain_type : zone.location_type
                   tile_meta = tile.respond_to?(:metadata) ? (tile.metadata || {}) : {}
                   is_walkable = tile.respond_to?(:walkable) ? tile.walkable : !tile_meta["blocked"]
-
-                  # CSS class for terrain background
-                  tile_bg_class = "nl-tile-bg--#{terrain}"
-
-                  # Only server-offered destinations are clickable.
                   is_available = destination.present? && !movement_active && is_walkable && !is_player
+                  cell_art = Game::World::CellArtCatalog.resolve(tile_meta["cell_art"])
+                  terrain_texture = cell_art ? image_path(cell_art.asset) : default_terrain_texture
+                  texture_x = cell_art ? cell_art.background_x : -(tile.x.modulo(10) * tile_size)
+                  texture_y = cell_art ? cell_art.background_y : -(tile.y.modulo(10) * tile_size)
+                  texture_width = cell_art ? cell_art.sheet_width : 1000
+                  texture_height = cell_art ? cell_art.sheet_height : 1000
                 %>
-                <td class="nl-map-tile <%= tile_bg_class %>"
+
+                <td class="nl-map-tile nl-tile-bg--<%= terrain %> <%= 'nl-map-tile--outside' if tile_meta['out_of_bounds'] %>"
                     id="tile_<%= tile.x %>_<%= tile.y %>"
                     data-x="<%= tile.x %>"
                     data-y="<%= tile.y %>"
                     data-terrain="<%= terrain %>"
-                    <%= "data-npc=\"#{tile_meta['npc']}\"".html_safe if tile_meta["npc"].present? %>>
+                    data-cell-art-key="<%= cell_art&.key %>"
+                    style="background-image: url('<%= terrain_texture %>'); background-position: <%= texture_x %>px <%= texture_y %>px; background-size: <%= texture_width %>px <%= texture_height %>px;">
 
                   <% if is_available %>
-                    <%# Clickable tile - available for movement %>
-                    <div class="nl-tile-clickable nl-tile-clickable--available"
-                         data-action="click->nl-world-map#clickTile"
-                         data-available="true"
-                         data-direction="<%= destination.direction %>"
-                         data-target-x="<%= destination.target_x %>"
-                         data-target-y="<%= destination.target_y %>"
-                         data-action-key="<%= destination.action_key %>"
-                         data-travel-seconds="<%= destination.travel_seconds %>"
-                         style="cursor: pointer;">
-                    </div>
+                    <button type="button"
+                            class="nl-tile-clickable nl-tile-clickable--available"
+                            data-action="click->nl-world-map#clickTile"
+                            data-available="true"
+                            data-direction="<%= destination.direction %>"
+                            data-target-x="<%= destination.target_x %>"
+                            data-target-y="<%= destination.target_y %>"
+                            data-action-key="<%= destination.action_key %>"
+                            data-travel-seconds="<%= destination.travel_seconds %>"
+                            aria-label="Move <%= destination.direction %>">
+                      <span class="nl-visually-hidden">Move <%= destination.direction %></span>
+                    </button>
                   <% elsif is_player %>
-                    <%# Player position - show cursor here %>
-                    <div class="nl-tile-player"></div>
+                    <div class="nl-tile-player" aria-hidden="true"></div>
                   <% else %>
-                    <%# Non-clickable tile %>
-                    <div class="nl-tile-inactive"></div>
+                    <div class="nl-tile-inactive" aria-hidden="true"></div>
                   <% end %>
 
-                  <%# NPC marker %>
-                  <% if tile_meta["npc"].present? %>
-                    <div class="nl-tile-entity nl-tile-npc" title="<%= tile_meta['npc'] %>">
-                      <span class="nl-entity-icon">👹</span>
-                    </div>
-                  <% end %>
-
-                  <%# Building marker %>
                   <% if tile_meta["building"].present? %>
-                    <div class="nl-tile-entity nl-tile-building nl-tile-building--<%= tile_meta['building_type'] %>" title="<%= tile_meta['building'] %>">
-                      <span class="nl-entity-icon"><%= tile_meta['building_icon'] || '🏙️' %></span>
+                    <div class="nl-tile-entity nl-tile-building" title="<%= tile_meta['building'] %>">
+                      <span class="nl-entity-label"><%= tile_meta["building"] %></span>
                     </div>
                   <% end %>
                 </td>
@@ -111,39 +125,36 @@
       </table>
     </div>
 
-    <%# Overlay for cursor and timer %>
     <div class="nl-map-overlay" id="world_cont2" data-nl-world-map-target="overlay">
-      <%# Player cursor (red border) %>
-      <div class="nl-cursor" id="cursor" data-nl-world-map-target="cursor">
+      <div class="nl-cursor"
+           id="cursor"
+           data-nl-world-map-target="cursor"
+           style="left: <%= cursor_left %>px; top: <%= cursor_top %>px;">
         <div class="nl-cursor-img <%= movement_active ? 'nl-cursor-img--moving' : 'nl-cursor-img--idle' %>"
              data-nl-world-map-target="cursorImg"></div>
       </div>
 
-      <%# Timer countdown (red badge) %>
       <div class="nl-timer-text"
            id="timerdiv"
            data-nl-world-map-target="timerDiv"
-           style="display: <%= movement_active ? 'block' : 'none' %>;">
-        <span class="nl-timer-seconds" id="tdsec" data-nl-world-map-target="timerSeconds"><%= movement_active ? movement_remaining_seconds : "" %></span>
+           style="left: <%= cursor_left %>px; top: <%= cursor_top - tile_size %>px; display: <%= movement_active ? 'block' : 'none' %>;">
+        <span class="nl-timer-seconds"
+              id="tdsec"
+              data-nl-world-map-target="timerSeconds"><%= movement_active ? movement_remaining_seconds : "" %></span>
       </div>
     </div>
   </div>
 
-  <%# Location info %>
-  <div class="nl-map-info">
+  <div class="nl-map-info nl-visually-hidden" aria-live="polite">
     <span class="nl-location-name"><%= zone.name %></span>
     <span class="nl-location-coords">[<%= position.x %>, <%= position.y %>]</span>
   </div>
 
-  <%# Hidden form for movement - Turbo will handle the submission %>
   <%= form_with url: move_world_path,
                 method: :post,
                 id: "movement-form",
                 class: "nl-move-form",
-                data: {
-                  turbo: true,
-                  nl_world_map_target: "moveForm"
-                },
+                data: {turbo: true, nl_world_map_target: "moveForm"},
                 style: "display: none;" do |f| %>
     <%= f.hidden_field :direction, id: "movement-direction", value: "" %>
     <%= f.hidden_field :target_x, id: "movement-target-x", value: "" %>

@@ -111,8 +111,8 @@ module Arena
       if p.npc?
         npc = p.npc_template
         {
-          id: "npc-#{npc.id}",
-          character_id: "npc-#{npc.id}",
+          id: "npc-participation-#{p.id}",
+          character_id: "npc-participation-#{p.id}",
           character_name: npc.name,
           team: p.team,
           level: npc.level,
@@ -242,7 +242,7 @@ module Arena
       if p.npc?
         npc = p.npc_template
         {
-          character_id: "npc-#{npc.id}",
+          character_id: "npc-participation-#{p.id}",
           character_name: npc.name,
           team: p.team,
           result: p.result,

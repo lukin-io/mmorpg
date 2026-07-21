@@ -31,8 +31,17 @@ RSpec.describe "Arena", type: :request do
       zone = character.position.zone
       zone.update!(location_type: "city")
       hotspot = create(:city_hotspot, :arena, zone: zone, active: true, required_level: 1)
+      offer = create(
+        :world_action_offer,
+        character:,
+        zone:,
+        x: character.position.x,
+        y: character.position.y,
+        action_type: "enter_city_building",
+        target: hotspot
+      )
 
-      post interact_hotspot_world_path, params: {hotspot_id: hotspot.id}
+      post interact_hotspot_world_path, params: {hotspot_id: hotspot.id, action_key: offer.action_key}
     end
 
     context "direct route access" do
@@ -188,8 +197,17 @@ RSpec.describe "Arena", type: :request do
       zone = character.position.zone
       zone.update!(location_type: "city")
       hotspot = create(:city_hotspot, :arena, zone: zone, active: true, required_level: 1)
+      offer = create(
+        :world_action_offer,
+        character:,
+        zone:,
+        x: character.position.x,
+        y: character.position.y,
+        action_type: "enter_city_building",
+        target: hotspot
+      )
 
-      post interact_hotspot_world_path, params: {hotspot_id: hotspot.id}
+      post interact_hotspot_world_path, params: {hotspot_id: hotspot.id, action_key: offer.action_key}
     end
 
     it "shows correct active tab for duels" do
@@ -236,8 +254,21 @@ RSpec.describe "Arena", type: :request do
 
     before { sign_in user, scope: :user }
 
+    def arena_action_params
+      offer = create(
+        :world_action_offer,
+        character:,
+        zone: city_zone,
+        x: position.x,
+        y: position.y,
+        action_type: "enter_city_building",
+        target: arena_hotspot
+      )
+      {hotspot_id: arena_hotspot.id, action_key: offer.action_key}
+    end
+
     it "clicking arena hotspot navigates to arena page" do
-      post interact_hotspot_world_path, params: {hotspot_id: arena_hotspot.id}
+      post interact_hotspot_world_path, params: arena_action_params
 
       expect(response).to redirect_to("/arena")
       follow_redirect!
@@ -247,7 +278,7 @@ RSpec.describe "Arena", type: :request do
 
     it "uses Turbo Stream redirect with proper status" do
       post interact_hotspot_world_path,
-        params: {hotspot_id: arena_hotspot.id},
+        params: arena_action_params,
         headers: {"Accept" => "text/vnd.turbo-stream.html"}
 
       expect(response).to have_http_status(:see_other)

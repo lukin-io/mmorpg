@@ -10,8 +10,8 @@ outpost_surroundings:
       name: Plague Rat
       role: hostile
       level: 4
-      x: 1001
-      y: 999
+      x: 7
+      y: 7
       hp: 100
       damage: 7
       xp: 35
@@ -19,6 +19,9 @@ outpost_surroundings:
         source_name: "Plague Rat"
         source_location: "Outpost Surroundings"
         source_observation: "neverlands_live_outdoor_npc_resource"
+        source_map: "m_1001_999"
+        source_coordinates: [1001, 999]
+        encounter_count: 2
         avatar_image: "zombie.png"
       loot:
         - item: rat_tail

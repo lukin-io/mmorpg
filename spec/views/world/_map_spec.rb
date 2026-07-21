@@ -115,6 +115,19 @@ RSpec.describe "world/_map.html.erb", type: :view do
 
       expect(rendered).to have_css("[data-nl-world-map-move-cooldown-value='3']")
     end
+
+    it "publishes the clipped stage offsets used by client-side travel animation" do
+      render partial: "world/map", locals: {
+        position: position,
+        nearby_tiles: nearby_tiles,
+        zone: zone,
+        tile_data: {}
+      }
+
+      expect(rendered).to have_css("[data-nl-world-map-map-offset-x-value='-100']")
+      expect(rendered).to have_css("[data-nl-world-map-map-offset-y-value='-100']")
+      expect(rendered).to have_css(".nl-map-viewport[style*='--nl-map-visible-columns: 3']")
+    end
   end
 
   describe "map viewport" do
@@ -174,6 +187,44 @@ RSpec.describe "world/_map.html.erb", type: :view do
 
       expect(rendered).to have_css(".nl-tile-bg--outdoor")
     end
+
+
+    it "renders each cell from the original project terrain texture" do
+      render partial: "world/map", locals: {
+        position: position,
+        nearby_tiles: nearby_tiles,
+        zone: zone,
+        tile_data: {}
+      }
+
+      expect(rendered).to include("forpost-terrain")
+      expect(rendered).to include("background-position: 0px 0px")
+    end
+
+    it "uses a validated source-backed cell-art slice instead of the coordinate fallback" do
+      tiles = nearby_tiles
+      tiles[1][1] = OpenStruct.new(
+        x: 9,
+        y: 9,
+        terrain_type: "outdoor",
+        walkable: true,
+        metadata: {
+          "source_map" => "m_1001_999",
+          "cell_art" => {"key" => "forpost_terrain", "column" => 7, "row" => 7}
+        }
+      )
+
+      render partial: "world/map", locals: {
+        position:,
+        nearby_tiles: tiles,
+        zone:,
+        tile_data: {}
+      }
+
+      expect(rendered).to have_css("#tile_9_9[data-cell-art-key='forpost_terrain']")
+      expect(rendered).to include("background-position: -700px -700px")
+      expect(rendered).to include("background-size: 1000px 1000px")
+    end
   end
 
   describe "clickable tiles (mouse navigation)" do
@@ -213,7 +264,7 @@ RSpec.describe "world/_map.html.erb", type: :view do
       expect(rendered).to have_css("[data-action='click->nl-world-map#clickTile']", minimum: 4)
     end
 
-    it "sets cursor pointer style on clickable tiles" do
+    it "uses a semantic button for each clickable cell" do
       render partial: "world/map", locals: {
         position: position,
         nearby_tiles: nearby_tiles,
@@ -221,7 +272,8 @@ RSpec.describe "world/_map.html.erb", type: :view do
         tile_data: {}
       }
 
-      expect(rendered).to include("cursor: pointer")
+      expect(rendered).to have_button("Move north")
+      expect(rendered).to have_css("button.nl-tile-clickable--available[data-available='true']", minimum: 4)
     end
 
     it "does not mark player position as clickable" do
@@ -279,6 +331,32 @@ RSpec.describe "world/_map.html.erb", type: :view do
       expect(rendered).to have_css("[data-nl-world-map-movement-remaining-seconds-value='17']")
       expect(rendered).to have_css(".nl-cursor-img.nl-cursor-img--moving")
       expect(rendered).not_to have_css(".nl-tile-clickable--available")
+    end
+
+    it "publishes direction, distance, and duration for the sliding travel animation" do
+      active_movement = OpenStruct.new(
+        from_x: 10,
+        from_y: 10,
+        target_x: 11,
+        target_y: 9,
+        travel_seconds: 30,
+        remaining_seconds: 17,
+        ends_at: 17.seconds.from_now
+      )
+
+      render partial: "world/map", locals: {
+        position: position,
+        nearby_tiles: nearby_tiles,
+        zone: zone,
+        tile_data: {},
+        movement_destinations: [],
+        active_movement: active_movement,
+        movement_remaining_seconds: 17
+      }
+
+      expect(rendered).to have_css("[data-nl-world-map-movement-delta-x-value='1']")
+      expect(rendered).to have_css("[data-nl-world-map-movement-delta-y-value='-1']")
+      expect(rendered).to have_css("[data-nl-world-map-movement-total-seconds-value='30']")
     end
   end
 
@@ -490,7 +568,7 @@ RSpec.describe "world/_map.html.erb", type: :view do
         tiles
       end
 
-      it "renders NPC marker" do
+      it "does not reveal an NPC marker" do
         render partial: "world/map", locals: {
           position: position,
           nearby_tiles: nearby_tiles_with_npc,
@@ -498,10 +576,10 @@ RSpec.describe "world/_map.html.erb", type: :view do
           tile_data: {}
         }
 
-        expect(rendered).to have_css(".nl-tile-npc")
+        expect(rendered).not_to have_css(".nl-tile-npc")
       end
 
-      it "includes NPC name in title" do
+      it "does not reveal the NPC name" do
         render partial: "world/map", locals: {
           position: position,
           nearby_tiles: nearby_tiles_with_npc,
@@ -509,37 +587,37 @@ RSpec.describe "world/_map.html.erb", type: :view do
           tile_data: {}
         }
 
-        expect(rendered).to include("Plague Rat")
+        expect(rendered).not_to include("Plague Rat")
       end
     end
   end
 
-  describe "terrain types" do
-    let(:mixed_terrain_tiles) do
+  describe "terrain type" do
+    let(:outdoor_tiles) do
       [
         [
           OpenStruct.new(x: 8, y: 8, terrain_type: "outdoor", walkable: true, metadata: {}),
           OpenStruct.new(x: 9, y: 8, terrain_type: "outdoor", walkable: true, metadata: {}),
-          OpenStruct.new(x: 10, y: 8, terrain_type: "city", walkable: false, metadata: {})
+          OpenStruct.new(x: 10, y: 8, terrain_type: "outdoor", walkable: false, metadata: {})
         ],
         [
           OpenStruct.new(x: 8, y: 9, terrain_type: "outdoor", walkable: false, metadata: {}),
-          OpenStruct.new(x: 9, y: 9, terrain_type: "city", walkable: true, metadata: {}),
-          OpenStruct.new(x: 10, y: 9, terrain_type: "city", walkable: true, metadata: {})
+          OpenStruct.new(x: 9, y: 9, terrain_type: "outdoor", walkable: true, metadata: {}),
+          OpenStruct.new(x: 10, y: 9, terrain_type: "outdoor", walkable: true, metadata: {})
         ]
       ]
     end
 
-    it "renders only source-backed location classes" do
+    it "renders the source-backed outdoor location class" do
       render partial: "world/map", locals: {
         position: position,
-        nearby_tiles: mixed_terrain_tiles,
+        nearby_tiles: outdoor_tiles,
         zone: zone,
         tile_data: {}
       }
 
       expect(rendered).to have_css(".nl-tile-bg--outdoor")
-      expect(rendered).to have_css(".nl-tile-bg--city")
+      expect(rendered).not_to have_css(".nl-tile-bg--city")
       expect(rendered).not_to have_css(".nl-tile-bg--road")
       expect(rendered).not_to have_css(".nl-tile-bg--plaza")
     end

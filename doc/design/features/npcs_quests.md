@@ -94,14 +94,15 @@ a multi-NPC fight and not only after the fight-level victory line.
 
 ## Outdoor Hostile NPCs
 
-Outdoor hostile NPCs are tile-local combatants. They can be presented as
-visible actions later, but the captured source behavior also allows them to
-attack as an interruption during normal outdoor actions.
+Outdoor hostile NPCs are hidden tile-local combatants. The outdoor map does not
+present their marker, identity, stats, or a manual Attack control; the captured
+source behavior reveals them by interrupting a normal outdoor action.
 
 Design rules:
 
 - NPC availability and hostile attack eligibility are resolved from current
   tile state;
+- NPC identity and placement remain server-only until combat begins;
 - a hostile check can run before a mutating outdoor action completes;
 - a bot attack creates a normal fight with side/team membership, not a special
   wild-combat shortcut;
@@ -110,6 +111,18 @@ Design rules:
   remaining NPCs;
 - each defeated loot-bearing NPC can run its own bot-specific random loot-table
   check.
+
+Implemented MVP boundary:
+
+- the captured Plague Rat cell is represented by one persistent `TileNpc` encounter anchor with explicit `encounter_count: 2` source metadata;
+- starting the encounter creates two separate `ArenaParticipation` rows on the NPC side, even though both use the same `NpcTemplate`;
+- each living NPC acts, each defeated NPC is searched/logged separately, and the anchor is marked defeated only after all encounter participants fall;
+- offered movement, entrance, local observation, Character, and Inventory wilderness actions use one hostile-interruption query before their intended transition completes;
+- no outdoor NPC action offer, marker, name, or manual attack endpoint is
+  rendered;
+- duplicate starts reuse the character's active match, and the result finish returns through a saved allowlisted logical context.
+
+This is authored encounter composition, not a generic random-encounter table. Different group sizes or mixed NPC templates require their own Neverlands evidence and explicit content representation.
 
 ## Quest Behavior Status
 
