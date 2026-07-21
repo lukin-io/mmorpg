@@ -3,12 +3,13 @@
 Contract metadata:
 
 - updated_at: `2026-07-21`
-- why_changed: "Feature handbooks are now a post-verification completion artifact, feature documentation has a canonical template and audit command, and verification instructions match the repository's actual RSpec/Hotwire toolchain."
+- why_changed: "The MVP process now makes server authority, persistent gameplay transition contracts, retry/concurrency safety, deterministic tests, content identity, and the core player loop explicit."
 
 Why/Impact:
 
 - Neverlands remains the only game-design authority; generic MMORPG conventions are not substitutes for observed behavior.
 - A player-facing feature is not complete until implementation and applicable tests pass, then its canonical `doc/features/**` handbook is created or updated.
+- Persistent gameplay mutations are server-authoritative, atomic where needed, safe against duplicate/concurrent execution, and covered at their behavioral boundaries.
 - Verification is read-only, uses the repository's real RSpec/system/security split, and reports exact command outcomes.
 - Process rules, design evidence, shipped feature contracts, and runtime code now have explicit ownership and conflict handling.
 
@@ -185,14 +186,50 @@ Normal feature work must not modify the canonical template merely because one fe
 
 ## 7. [NORMATIVE] Game-domain rules
 
-- Never put game calculations in controllers or views.
-- Never use unseeded randomness in deterministic game logic; inject or construct a seeded RNG.
-- Never access the database from pure formula/calculation classes.
-- Keep server state authoritative for movement, combat, inventory, economy, position, availability, and rewards.
-- Treat CSS geometry, Stimulus state, hidden inputs, labels, and submitted ids as untrusted presentation/input.
-- Revalidate ownership, position/state, target, status, expiry, and boundary conditions on mutation.
+### 7.1 Server authority and persistent transitions
+
+- The client expresses intent and displays results. The server alone decides and persists coordinates, location, availability, cooldowns, combat results, inventory, currency, ownership, rewards, and other gameplay state.
+- Treat CSS geometry, Stimulus state, hidden inputs, labels, coordinates, record ids, prices, quantities, timers, and capability flags submitted by the client as untrusted input.
+- Revalidate ownership, current position/location, target, status, availability, expiry, price/quantity, balance/capacity, and boundary conditions at mutation time.
+- Never put authoritative game calculations in controllers, views, or browser code.
+
+Every action that changes persistent gameplay state—including movement, location entry/exit, combat, inventory, currency, rewards, and resource collection—must have an identifiable transition contract in its service/model behavior and tests:
+
+1. preconditions and authoritative input records;
+2. successful state changes and side effects;
+3. failure behavior, including which state remains unchanged;
+4. transaction/locking boundary where multiple records or balances must change together;
+5. resulting state returned or rendered to the client.
+
+Use the simplest Rails/database mechanism that preserves the invariant. This may be a database transaction, constraint, row lock, uniqueness key, or command-specific idempotency guard; it does not imply a universal command bus or event-sourcing architecture.
+
+### 7.2 Retry and concurrency safety
+
+- A retried, double-clicked, replayed, or concurrent command must not duplicate rewards/items, spend currency twice, move twice, collect the same resource twice, or create incompatible/overlapping combat state.
+- Mutations vulnerable to duplicate or concurrent execution require focused coverage for the realistic conflict path, not merely sequential success coverage.
+- A rejected or failed transition must not leave partial multi-record state.
+- Do not add universal idempotency tokens preemptively. Choose a scoped guard when the action and risk require one.
+
+### 7.3 Game content and stable identity
+
+- Neverlands-derived cells, locations, exits, NPCs, shops, resources, encounters, and balance values belong in explicit records, seeds, or existing gameplay configuration—not scattered across controllers, views, or Stimulus controllers.
+- Persistent references and routing/lookup keys use stable identifiers that do not depend on translated or mutable display names.
+- Content validation belongs at its loading/persistence boundary and requires focused config/seed/model coverage where invalid content could break gameplay.
 - Do not add generic buildings, resources, rewards, professions, gates, travel rules, or combat behavior without Neverlands evidence.
 - Keep observed but unimplemented behavior read-only, disabled, or explicitly deferred.
+
+### 7.4 Determinism, time, and calculation boundaries
+
+- Never access the database from pure formula/calculation classes.
+- Inject or construct a seeded RNG for random combat, encounter, loot, spawn, and resource behavior so the same seed and inputs produce reproducible results.
+- The server clock is authoritative for cooldowns, travel durations, expiry, and other time-gated behavior.
+- Tests freeze/inject time and seed/inject randomness; they must not depend on wall-clock timing, uncontrolled randomness, execution order, or external Neverlands availability.
+- Cover exact timing and numeric boundaries: immediately before, at, and after expiry/cooldown; zero/maximum capacity; insufficient/exact balance; and map/location edges where applicable.
+
+### 7.5 MVP performance and traceability
+
+- Keep rendered map, location, inventory, shop, and combat queries bounded; prevent N+1 queries and paginate only collections that can genuinely grow large.
+- When high-value currency, inventory, reward, PvP, or administrative mutations are introduced, emit a structured audit/domain record or existing structured log sufficient to reconstruct who changed what and why. Do not introduce event sourcing solely to satisfy this rule.
 
 ## 8. [NORMATIVE] Hotwire and client behavior
 
@@ -249,6 +286,7 @@ When creating or materially changing a service/query object:
 - Migrations must be reversible where practical.
 - Never edit a committed migration unless the user explicitly authorizes a pre-release schema-history rewrite.
 - Add indexes, foreign keys, null constraints, and uniqueness constraints that enforce the model contract.
+- A migration or backfill that transforms persisted player state must document its legacy/null-row handling and safe rollback or recovery approach. Test representative existing-state boundaries where practical.
 - Update `db/seeds.rb` or existing gameplay config for source-backed MVP content needed by the change.
 - Keep seed execution idempotent.
 - Do not invent representative game content when Neverlands-backed content is required.
@@ -277,6 +315,16 @@ Required categories:
 - **failure** — validation/service failures and safe response;
 - **edge/null/boundary** — empty, nil, zero, maximum, negative/out-of-range, expiry, timing, and missing/sparse state;
 - **authorization** — anonymous, foreign ownership, wrong role/context, and policy denial.
+
+For a vulnerable persistent mutation, applicable service/request/model coverage must also exercise retry, duplicate submission, or concurrent execution and confirm there is no partial or duplicated state.
+
+Maintain one focused system-spec path for the implemented MVP core loop:
+
+```text
+login -> restore persisted location -> travel -> enter city/building -> leave -> logout -> login -> restore the same authoritative location
+```
+
+Keep this as a thin cross-feature contract. Test detailed movement, location, persistence, failure, and authorization variants in the narrower model/service/request/policy layers rather than duplicating every combination in the browser.
 
 Blueprint and Swagger/rswag specs are not required unless the feature actually introduces those surfaces.
 
@@ -509,6 +557,9 @@ Do not claim a check passed when it did not run.
 - Never use auto-fix linters as verification.
 - Never bypass Pundit/current-character ownership where authorization applies.
 - Never put authoritative game state in the browser.
+- Never trust client-provided coordinates, prices, timers, quantities, capability flags, or computed outcomes as authoritative.
+- Never permit retries or concurrent execution to duplicate valuable state or leave a partial transition.
+- Never key persistent gameplay relationships by translated or mutable display text.
 - Never ship known N+1 behavior in rendered hot paths.
 - Never edit committed migrations without explicit authorization.
 - Never remove retained source-backed images as incidental cleanup.
@@ -521,6 +572,8 @@ Before closing a task, confirm:
 - relevant authority/design/feature docs were read;
 - optional planning gate was respected when invoked;
 - implementation is minimal and Rails/Hotwire-aligned;
+- persistent gameplay transitions define preconditions, atomicity/failure behavior, and resulting authoritative state;
+- retry/concurrency safety, deterministic time/randomness, and stable content identity were considered where applicable;
 - success, failure, edge/null/boundary, and authorization coverage exists where applicable;
 - focused checks passed;
 - implementation alignment was rechecked;
