@@ -250,8 +250,9 @@ Perk allocation rules:
 
 ## Interactions
 
-- `features/movement.md`: wanderer/travel effects need exact formula capture
-  before changing movement time.
+- `features/movement.md`: World consumes effective Wanderer with the bounded
+  MVP `30..25` second adjacent-step formula. The complete Neverlands timing
+  formula and every other movement modifier remain uncaptured.
 - `features/combat.md`: weapon, defense, magic, and resistance skills need
   exact formula capture before changing combat formulas.
 - `features/items_inventory_equipment.md`: item requirements use stats/skills.

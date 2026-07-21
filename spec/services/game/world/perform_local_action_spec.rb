@@ -15,7 +15,6 @@ RSpec.describe Game::World::PerformLocalAction do
   it "completes the captured resource search without inventing an item reward" do
     expect(result.success).to be true
     expect(result.message).to include("search the surroundings")
-    expect(result.interrupted_by).to be_nil
   end
 
   it "uses an authored source-backed result message when present" do
@@ -32,21 +31,6 @@ RSpec.describe Game::World::PerformLocalAction do
     )
 
     expect(result.message).to eq("Nothing was found.")
-  end
-
-  it "hands the action off to a hostile NPC on the same cell" do
-    npc = create(:tile_npc, zone: zone.name, x: 5, y: 5)
-
-    expect(result.success).to be true
-    expect(result.interrupted_by).to eq(npc)
-    expect(result.message).to include("attacks before the action completes")
-  end
-
-  it "does not let a defeated hostile NPC interrupt the action" do
-    create(:tile_npc, :defeated, zone: zone.name, x: 5, y: 5)
-
-    expect(result.success).to be true
-    expect(result.interrupted_by).to be_nil
   end
 
   it "rejects an inactive local action" do

@@ -25,8 +25,18 @@
     <%# Right: Navigation text links (like original) %>
     <nav class="nl-top-nav">
       <% if current_character %>
-        <%= link_to "Character", player_path(name: current_character.name), class: "nl-nav-link", data: { turbo_frame: "main_content" } %>
-        <%= link_to "Inventory", inventory_path, class: "nl-nav-link", data: { turbo_frame: "main_content" } %>
+        <%= button_to "Character",
+            world_context_action_path,
+            method: :post,
+            params: {context: "profile"},
+            class: "nl-nav-link nl-nav-link--button",
+            form: {class: "nl-nav-action-form"} %>
+        <%= button_to "Inventory",
+            world_context_action_path,
+            method: :post,
+            params: {context: "inventory"},
+            class: "nl-nav-link nl-nav-link--button",
+            form: {class: "nl-nav-action-form"} %>
         <% if @position&.zone&.city? %>
           <span class="nl-nav-link nl-nav-link--disabled" aria-current="page">City</span>
         <% end %>

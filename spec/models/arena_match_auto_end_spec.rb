@@ -93,6 +93,32 @@ RSpec.describe ArenaMatch, "Auto-End Functionality" do
       end
     end
 
+    context "with several participants on one side" do
+      let(:teammate) { create(:character, current_hp: 100, max_hp: 100) }
+
+      before do
+        create(:arena_participation,
+          arena_match: match,
+          character: teammate,
+          user: teammate.user,
+          team: "a")
+      end
+
+      it "keeps the fight live while one participant on the side survives" do
+        character1.update!(current_hp: 0)
+
+        expect(match.should_auto_end_defeat?).to be false
+      end
+
+      it "ends the fight when the entire side is defeated" do
+        character1.update!(current_hp: 0)
+        teammate.update!(current_hp: 0)
+
+        expect(match.should_auto_end_defeat?).to be true
+        expect(match.determine_winner).to eq("b")
+      end
+    end
+
     context "when both players are defeated (edge case)" do
       before do
         character1.update!(current_hp: 0)

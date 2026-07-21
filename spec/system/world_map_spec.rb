@@ -124,7 +124,7 @@ RSpec.describe "World Map Navigation", type: :system do
     it "shows navigation links" do
       visit world_path
 
-      expect(page).to have_link("Character")
+      expect(page).to have_button("Character")
     end
 
     it "shows zone name" do

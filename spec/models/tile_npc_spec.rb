@@ -16,6 +16,26 @@ RSpec.describe TileNpc, type: :model do
       expect(npc).not_to be_valid
       expect(npc.errors[:npc_role]).to include("is not included in the list")
     end
+
+    it "accepts the captured two-NPC encounter size" do
+      expect(build(:tile_npc, :multi_npc_encounter)).to be_valid
+    end
+
+    it "rejects null, zero, and oversized encounter counts" do
+      [nil, 0, TileNpc::MAX_ENCOUNTER_SIZE + 1].each do |count|
+        npc = build(:tile_npc, metadata: {"encounter_count" => count})
+
+        expect(npc).not_to be_valid
+        expect(npc.errors[:metadata]).to include("encounter count must be between 1 and #{TileNpc::MAX_ENCOUNTER_SIZE}")
+      end
+    end
+  end
+
+  describe "#encounter_size" do
+    it "defaults to one and returns the explicit source count" do
+      expect(build(:tile_npc).encounter_size).to eq(1)
+      expect(build(:tile_npc, :multi_npc_encounter).encounter_size).to eq(2)
+    end
   end
 
   describe ".alive" do

@@ -102,13 +102,20 @@ RSpec.describe FeatureDocAudit::Auditor do
   it "rejects unsupported status and malformed update metadata" do
     write_document(
       canonical_document
-        .sub("status: Implemented MVP", "status: Planned")
+        .sub("status: Fully Implemented", "status: Planned")
         .sub("updated: 2026-07-21", "updated: soon")
     )
 
     expect(audit).not_to be_success
     expect(audit.errors).to include(a_string_including("status must be one of"))
     expect(audit.errors).to include(a_string_including("updated must use YYYY-MM-DD"))
+  end
+
+  it "warns when a transitional handbook is not fully implemented" do
+    write_document(canonical_document.sub("status: Fully Implemented", "status: Partially Implemented"))
+
+    expect(audit).to be_success
+    expect(audit.warnings).to include(a_string_including("only Fully Implemented is green"))
   end
 
   it "allows a pre-template handbook with required ownership/history sections and emits a migration warning" do
@@ -149,7 +156,7 @@ RSpec.describe FeatureDocAudit::Auditor do
       ---
       title: Example Feature
       description: Example implementation handbook.
-      status: Implemented MVP
+      status: Fully Implemented
       updated: 2026-07-21
       owners: Example domain
       template: feature-v1

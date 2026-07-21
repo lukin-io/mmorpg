@@ -437,6 +437,21 @@
   min-width: 0;
 }
 
+.arena-fighter-stack {
+  display: grid;
+  gap: 6px;
+  width: 100%;
+}
+
+.nl-inline-control-form {
+  display: inline;
+  margin: 0;
+}
+
+.nl-arena-surrender-button {
+  color: var(--nl-red);
+}
+
 .arena-center {
   display: grid;
   gap: 6px;

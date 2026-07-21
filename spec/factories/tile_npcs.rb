@@ -43,5 +43,9 @@ FactoryBot.define do
       current_hp { 0 }
       max_hp { 0 }
     end
+
+    trait :multi_npc_encounter do
+      metadata { {"encounter_count" => 2} }
+    end
   end
 end

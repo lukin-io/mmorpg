@@ -111,6 +111,16 @@ Design rules:
 - each defeated loot-bearing NPC can run its own bot-specific random loot-table
   check.
 
+Implemented MVP boundary:
+
+- the captured Plague Rat cell is represented by one persistent `TileNpc` encounter anchor with explicit `encounter_count: 2` source metadata;
+- starting the encounter creates two separate `ArenaParticipation` rows on the NPC side, even though both use the same `NpcTemplate`;
+- each living NPC acts, each defeated NPC is searched/logged separately, and the anchor is marked defeated only after all encounter participants fall;
+- offered movement, entrance, local observation, Character, and Inventory wilderness actions use one hostile-interruption query before their intended transition completes;
+- duplicate starts reuse the character's active match, and the result finish returns through a saved allowlisted logical context.
+
+This is authored encounter composition, not a generic random-encounter table. Different group sizes or mixed NPC templates require their own Neverlands evidence and explicit content representation.
+
 ## Quest Behavior Status
 
 Quest behavior is required for the final Neverlands-based design, but the old

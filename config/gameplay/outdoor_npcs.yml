@@ -21,6 +21,7 @@ outpost_surroundings:
         source_observation: "neverlands_live_outdoor_npc_resource"
         source_map: "m_1001_999"
         source_coordinates: [1001, 999]
+        encounter_count: 2
         avatar_image: "zombie.png"
       loot:
         - item: rat_tail

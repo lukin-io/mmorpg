@@ -82,6 +82,31 @@ RSpec.describe "Arena Match UI Layout", type: :system do
       expect(page).to have_content("100/100")
     end
 
+    it "renders complete ManyxMany side rosters" do
+      teammate_a = create(:character, name: "TeamAlpha")
+      teammate_b = create(:character, name: "TeamBeta")
+      create(:arena_participation, arena_match: match, character: teammate_a, user: teammate_a.user, team: "a")
+      create(:arena_participation, arena_match: match, character: teammate_b, user: teammate_b.user, team: "b")
+
+      visit arena_match_path(match)
+
+      expect(page).to have_css(".arena-fighter--left .fighter-card", count: 2)
+      expect(page).to have_css(".arena-fighter--right .fighter-card", count: 2)
+      expect(page).to have_content("TeamAlpha")
+      expect(page).to have_content("TeamBeta")
+    end
+
+    it "gives repeated NPC templates unique participation target ids" do
+      npc = create(:npc_template, name: "Twin Rat", npc_key: "twin_rat")
+      first = create(:arena_participation, :npc, arena_match: match, npc_template: npc, team: "b")
+      second = create(:arena_participation, :npc, arena_match: match, npc_template: npc, team: "b")
+
+      visit arena_match_path(match)
+
+      expect(page).to have_css(%([data-character-id="npc-participation-#{first.id}"]))
+      expect(page).to have_css(%([data-character-id="npc-participation-#{second.id}"]))
+    end
+
     it "applies correct HP color class for high HP", skip: "HP color classes not yet implemented" do
     end
 
@@ -104,6 +129,12 @@ RSpec.describe "Arena Match UI Layout", type: :system do
     it "shows turn submit button" do
       visit arena_match_path(match)
       expect(page).to have_button("Submit Turn")
+    end
+
+    it "shows the Neverlands surrender action" do
+      visit arena_match_path(match)
+
+      expect(page).to have_button("Surrender")
     end
 
     it "shows body part selection dropdown" do

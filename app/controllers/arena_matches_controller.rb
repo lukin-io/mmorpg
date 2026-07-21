@@ -35,7 +35,7 @@ class ArenaMatchesController < ApplicationController
   end
 
   # POST /arena_matches/:id/action
-  # Submit a combat action (attack, defend, turn, flee)
+  # Submit a combat action (attack, defend, turn, flee, surrender)
   def action
     authorize @arena_match
 
@@ -55,15 +55,22 @@ class ArenaMatchesController < ApplicationController
 
     result = processor.process_action(
       current_character,
-      params[:action_type].to_sym,
+      params[:action_type].to_s.to_sym,
       **action_params
     )
 
     respond_to do |format|
       if result.success?
-        format.html { redirect_to @arena_match, notice: "Turn submitted." }
+        message = result[:surrendered] ? "Surrender recorded." : "Turn submitted."
+        format.html { redirect_to @arena_match, notice: message }
         format.json { render json: {success: true, data: result.data} }
-        format.turbo_stream { head :ok }
+        format.turbo_stream do
+          if result[:surrendered]
+            redirect_to @arena_match, notice: message, status: :see_other
+          else
+            head :ok
+          end
+        end
       else
         format.html { redirect_to @arena_match, alert: result.error }
         format.json { render json: {success: false, error: result.error}, status: :unprocessable_entity }
@@ -108,7 +115,7 @@ class ArenaMatchesController < ApplicationController
     participation.save!
     current_character.exit_combat! if current_character.in_combat?
 
-    redirect_to arena_index_path, notice: "Fight finished."
+    redirect_to finish_destination_path, notice: "Fight finished."
   end
 
   private
@@ -139,6 +146,11 @@ class ArenaMatchesController < ApplicationController
     return participation.character if participation&.character
 
     # Check if target is an NPC (format: "npc-123")
+    if target_id.to_s.start_with?("npc-participation-")
+      participation_id = target_id.to_s.delete_prefix("npc-participation-").to_i
+      return @arena_match.arena_participations.npcs.find_by(id: participation_id)
+    end
+
     if target_id.to_s.start_with?("npc-")
       npc_id = target_id.to_s.sub("npc-", "").to_i
       return @arena_match.arena_participations.find_by(npc_template_id: npc_id)
@@ -163,7 +175,7 @@ class ArenaMatchesController < ApplicationController
       public_log_path: @arena_match.public_log_path,
       participants: @participations.map do |p|
         {
-          character_id: p.npc? ? "npc-#{p.npc_template_id}" : p.character_id,
+          character_id: p.npc? ? "npc-participation-#{p.id}" : p.character_id,
           character_name: p.participant_name,
           team: p.team,
           result: p.result,
@@ -190,5 +202,13 @@ class ArenaMatchesController < ApplicationController
     Array(params[key]).map do |entry|
       entry.respond_to?(:to_unsafe_h) ? entry.to_unsafe_h : entry
     end
+  end
+
+  def finish_destination_path
+    return arena_index_path unless @arena_match.metadata.to_h["source"] == "world_npc"
+
+    Game::World::CombatReturnContext.new(character: current_character).path_for(
+      @arena_match.metadata.to_h["return_context"]
+    )
   end
 end

@@ -80,6 +80,7 @@ Rails.application.routes.draw do
 
   get "log/:id", to: "public_fight_logs#show", as: :public_fight_log
   post "fight/npc", to: "world_npc_fights#create", as: :world_npc_fights
+  post "world/context", to: "world_context_actions#create", as: :world_context_action
 
   resources :chat_channels, only: [:show] do
     resources :chat_messages, only: :create

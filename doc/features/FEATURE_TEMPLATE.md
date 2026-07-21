@@ -2,7 +2,7 @@
 ---
 title: [Feature Name] Feature
 description: Implementation handbook for [one-sentence description of the player-visible feature and its principal runtime responsibilities].
-status: [Implemented MVP | Partially Implemented]
+status: Fully Implemented
 updated: YYYY-MM-DD
 owners: [Owning domain, subsystem, or team]
 template: feature-v1

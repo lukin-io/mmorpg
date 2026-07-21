@@ -28,6 +28,10 @@ FactoryBot.define do
       perks { {"more_strength" => true} }
     end
 
+    trait :master_wanderer do
+      passive_skills { {"wanderer" => 100} }
+    end
+
     trait :without_perk_points do
       perk_points { 0 }
     end

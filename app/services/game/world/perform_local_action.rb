@@ -6,7 +6,7 @@ module Game
     # Resource rewards remain intentionally absent until a successful live
     # Neverlands resource result is captured.
     class PerformLocalAction
-      Result = Struct.new(:success, :message, :local_action, :interrupted_by, keyword_init: true)
+      Result = Struct.new(:success, :message, :local_action, keyword_init: true)
 
       def initialize(character:, tile:, local_action_type:)
         @character = character
@@ -21,22 +21,11 @@ module Game
         local_action = tile.local_action(local_action_type)
         return failure("Local action is no longer available.") unless local_action
 
-        hostile_npc = hostile_npc_at_tile
-        if hostile_npc
-          return Result.new(
-            success: true,
-            message: "#{hostile_npc.display_name} attacks before the action completes.",
-            local_action:,
-            interrupted_by: hostile_npc
-          )
-        end
-
         Result.new(
           success: true,
           message: local_action["result_message"].presence ||
             MapTileTemplate.default_local_action_message(local_action_type),
-          local_action:,
-          interrupted_by: nil
+          local_action:
         )
       end
 
@@ -52,16 +41,8 @@ module Game
           position.y == tile.y
       end
 
-      def hostile_npc_at_tile
-        TileNpc
-          .includes(:npc_template)
-          .hostile
-          .find_by(zone: tile.zone, x: tile.x, y: tile.y)
-          &.then { |npc| npc if npc.alive? }
-      end
-
       def failure(message)
-        Result.new(success: false, message:, local_action: nil, interrupted_by: nil)
+        Result.new(success: false, message:, local_action: nil)
       end
     end
   end

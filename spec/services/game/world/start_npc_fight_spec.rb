@@ -38,6 +38,34 @@ RSpec.describe Game::World::StartNpcFight do
       "y" => 5
     )
     expect(match.arena_participations.count).to eq(2)
+    expect(match.metadata["return_context"]).to eq("name" => "world")
+  end
+
+  it "creates one participation per source-backed encounter member" do
+    tile_npc.update!(metadata: {"encounter_count" => 2})
+
+    match = described_class.new(
+      character:,
+      tile_npc:,
+      return_context: "inventory"
+    ).call
+
+    expect(match).to be_team_battle
+    expect(match.metadata).to include(
+      "encounter_count" => 2,
+      "return_context" => {"name" => "inventory"}
+    )
+    expect(match.arena_participations.players.count).to eq(1)
+    expect(match.arena_participations.npcs.count).to eq(2)
+    expect(match.arena_participations.npcs.pluck(Arel.sql("metadata->>'encounter_slot'"))).to contain_exactly("1", "2")
+  end
+
+  it "returns the existing active fight on a duplicate start" do
+    first_match = described_class.new(character:, tile_npc:).call
+
+    expect {
+      expect(described_class.new(character:, tile_npc:).call).to eq(first_match)
+    }.not_to change(ArenaMatch, :count)
   end
 
   it "rolls back the match and participants when combat startup fails" do
@@ -88,5 +116,13 @@ RSpec.describe Game::World::StartNpcFight do
     expect {
       described_class.new(character:, tile_npc:).call
     }.to raise_error(described_class::FightViolationError, /not documented/)
+  end
+
+  it "rejects an invalid persisted encounter boundary" do
+    tile_npc.update_columns(metadata: {"encounter_count" => TileNpc::MAX_ENCOUNTER_SIZE + 1})
+
+    expect {
+      described_class.new(character:, tile_npc:).call
+    }.to raise_error(described_class::FightViolationError, /size is not supported/)
   end
 end

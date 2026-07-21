@@ -85,23 +85,25 @@ RSpec.describe "layouts/game.html.erb", type: :view do
       expect(rendered).to have_css(".nl-top-nav")
     end
 
-    it "includes character link" do
+    it "includes the interruptible Character action" do
       render template: "layouts/game", layout: false
 
-      expect(rendered).to have_link("Character", class: "nl-nav-link")
+      expect(rendered).to have_button("Character", class: "nl-nav-link")
+      expect(rendered).to have_css("form[action='#{world_context_action_path}'] input[name='context'][value='profile']", visible: :all)
     end
 
-    it "includes inventory link" do
+    it "includes the interruptible Inventory action" do
       render template: "layouts/game", layout: false
 
-      expect(rendered).to have_link("Inventory", class: "nl-nav-link")
+      expect(rendered).to have_button("Inventory", class: "nl-nav-link")
+      expect(rendered).to have_css("form[action='#{world_context_action_path}'] input[name='context'][value='inventory']", visible: :all)
     end
 
     it "does not add profile subpage controls to the live game toolbar" do
       render template: "layouts/game", layout: false
 
-      expect(rendered).not_to have_link("Skills", class: "nl-nav-link")
-      expect(rendered).not_to have_link("Perks", class: "nl-nav-link")
+      expect(rendered).not_to have_button("Skills", class: "nl-nav-link")
+      expect(rendered).not_to have_button("Perks", class: "nl-nav-link")
     end
 
     it "keeps the outdoor toolbar to the two implemented source controls" do

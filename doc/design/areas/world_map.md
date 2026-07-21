@@ -28,8 +28,10 @@ Observed Neverlands behavior:
 - contextual buttons such as `Войти` appear from the current tile state.
 - local outdoor actions can be interrupted by bot ambushes and hand the player
   into the normal fight screen;
-- after outdoor bot combat is finished, the player returns to the same outdoor
-  coordinate with fresh action tokens.
+- Character and Inventory navigation can be interrupted by the same ambush;
+- after outdoor bot combat is finished, the player returns to the unchanged
+  coordinate or continues to the interrupted allowlisted Character/Inventory
+  destination with fresh world action tokens on the next map render.
 
 ## Screen Model
 
@@ -166,6 +168,11 @@ Pipeline for every world map request:
 7. Render only the action offers returned by the server, or hand off to combat
    if the accepted action triggered an ambush.
 
+The implemented hostile check is also used by the persistent shell's Character
+and Inventory actions. A live fight is reused rather than duplicated. The
+captured Plague Rat anchor authors an encounter size of two, so one materialized
+cell NPC creates two distinct Arena participations on the opposing side.
+
 Suggested action-offer fields:
 
 ```text
@@ -203,7 +210,8 @@ Validation rules:
 - accepted actions write a result row or status update for audit and replay.
 - if an accepted outdoor action triggers a hostile NPC attack, the original
   action does not silently complete; the response becomes a combat state and
-  return context points back to the same world coordinate.
+  return context is an allowlisted logical World, Character, or Inventory
+  destination rather than a submitted URL.
 
 ## Captured Local Actions
 
@@ -234,7 +242,16 @@ Design rules:
 
 - hostile NPC checks belong in the server-side outdoor action pipeline;
 - ambushes are not a separate mini-game or modal;
-- the fight stores the source context needed to return to the same world cell;
+- the captured encounter creates two independently targetable NPC
+  participations even though both use the same template;
+- every living NPC opponent takes its combat action, and defeating one does
+  not end the fight or defeat the cell anchor while another survives;
+- loot resolution and defeat state are participant-level; the cell anchor is
+  defeated only after the opposing NPC side is eliminated;
+- surrender defeats only the surrendering participant, so the same rule works
+  for 1x1, 1xMany, and ManyxMany PvE/PvP sides;
+- the fight stores an allowlisted logical return context while the exact world
+  coordinate remains in `CharacterPosition`;
 - profile/location state should show the active fight while combat is active
   and clear it after the finish action;
 - local presence remains the current outdoor room after return.

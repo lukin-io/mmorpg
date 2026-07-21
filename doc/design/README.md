@@ -363,10 +363,11 @@ Neverlands-based behavior first.
 - arena target-selection self fallback in JavaScript. Client-side target
   discovery now returns an explicit opponent or no target; server validation
   remains authoritative.
-- legacy direct movement processor and passive-skill movement formula hooks.
-  Wilderness movement now uses only server-offered movement actions with the
-  captured 30-second travel duration until exact Neverlands timing formulas are
-  captured.
+- legacy direct movement processor and generic passive-skill movement formula
+  hooks. Wilderness movement uses server-offered actions and one explicit
+  Wanderer-specific `30..25` second MVP rule; terrain, diagonal, encumbrance,
+  fatigue, effect, profession, and generic skill timing remain unavailable
+  until their Neverlands inputs are isolated.
 - unused generic movement pathfinder. Outdoor movement remains adjacent
   server-offered cell travel; multi-cell path planning needs source capture
   before implementation.

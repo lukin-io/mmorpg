@@ -17,6 +17,7 @@ RSpec.describe Game::World::OutdoorNpcConfig do
       expect(npc[:damage]).to eq(7)
       expect(npc.dig(:metadata, :source_map)).to eq("m_1001_999")
       expect(npc.dig(:metadata, :source_coordinates)).to eq([1001, 999])
+      expect(npc.dig(:metadata, :encounter_count)).to eq(2)
     end
 
     it "does not invent NPCs for other coordinates in the same zone" do

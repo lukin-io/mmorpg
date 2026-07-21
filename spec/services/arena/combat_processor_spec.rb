@@ -336,6 +336,24 @@ RSpec.describe Arena::CombatProcessor do
       expect(damage_entries.map(&:message).join(" ")).to include("stomach", "legs")
     end
 
+    it "lets every living NPC on the opposing side act once" do
+      create(:arena_participation, :npc,
+        arena_match: npc_match,
+        npc_template: npc_template,
+        team: "b",
+        metadata: {"current_hp" => 105, "max_hp" => 105})
+      allow(captured_processor = deterministic_arena_processor(npc_match, 99, 99)).to receive(:process_npc_defend).and_call_original
+      decision = Arena::NpcCombatAi::Decision.new(action_type: :defend, target: nil, params: {})
+      allow(Arena::NpcCombatAi).to receive(:new)
+        .and_return(instance_double(Arena::NpcCombatAi, decide_action: decision))
+
+      result = captured_processor.process_npc_turn(opposing_team: "a")
+
+      expect(result).to be_success
+      expect(result[:actions].size).to eq(2)
+      expect(captured_processor).to have_received(:process_npc_defend).twice
+    end
+
     it "logs the automatic loot check after an NPC defeat" do
       npc_participation.update!(metadata: {"current_hp" => 1, "max_hp" => 105})
       captured_processor = deterministic_arena_processor(npc_match, 0, 99, 99, 5)
@@ -364,6 +382,81 @@ RSpec.describe Arena::CombatProcessor do
         "item_name" => "Wood Chips",
         "quantity" => 1
       )
+    end
+
+    it "marks the world encounter anchor defeated only after every NPC falls" do
+      world_zone = create(:zone, name: "Combat Encounter Woods", location_type: "outdoor")
+      world_character = create(:character, current_hp: 500, max_hp: 500)
+      create(:character_position, character: world_character, zone: world_zone, x: 4, y: 4)
+      tile_npc = create(:tile_npc, :multi_npc_encounter,
+        zone: world_zone.name,
+        x: 4,
+        y: 4,
+        current_hp: 1,
+        max_hp: 1)
+      world_match = Game::World::StartNpcFight.new(character: world_character, tile_npc:).call
+      world_processor = deterministic_arena_processor(world_match, 0, 99, 99, 5, 0, 99, 99, 5)
+      allow(world_processor.broadcaster).to receive(:broadcast_combat_action)
+      allow(world_processor.broadcaster).to receive(:broadcast_match_ended)
+      npc_participations = world_match.arena_participations.npcs.order(:id).to_a
+
+      world_processor.send(:process_attack_on_npc, world_character, npc_participations.first)
+
+      expect(tile_npc.reload).to be_alive
+      expect(world_match.reload).to be_live
+
+      world_processor.send(:process_attack_on_npc, world_character, npc_participations.second)
+
+      expect(tile_npc.reload).to be_defeated
+      expect(world_match.reload).to be_completed
+      expect(world_match.winning_team).to eq("a")
+    end
+  end
+
+  describe "surrender across shared fight shapes" do
+    it "ends a 1x1 PvP fight for the surrendering side" do
+      allow(processor.broadcaster).to receive(:broadcast_vitals_update)
+      allow(processor.broadcaster).to receive(:broadcast_match_ended)
+
+      result = processor.process_action(character1, :surrender)
+
+      expect(result).to be_success
+      expect(result.data).to include(surrendered: true, match_ended: true)
+      expect(character1.reload.current_hp).to eq(0)
+      expect(participation1.reload).to be_defeat
+      expect(participation1.metadata["surrendered_at"]).to be_present
+      expect(arena_match.reload).to be_completed
+      expect(arena_match.winning_team).to eq("b")
+    end
+
+    it "defeats only one participant while an ally remains in a ManyxMany PvP fight" do
+      teammate = create(:character, current_hp: 100, max_hp: 100)
+      create(:character_position, character: teammate)
+      create(:arena_participation,
+        arena_match: arena_match,
+        character: teammate,
+        user: teammate.user,
+        team: "a")
+      arena_match.update!(match_type: :team_battle)
+      allow(processor.broadcaster).to receive(:broadcast_vitals_update)
+
+      result = processor.process_action(character1, :surrender)
+
+      expect(result).to be_success
+      expect(result[:match_ended]).to be false
+      expect(arena_match.reload).to be_live
+      expect(teammate.reload.current_hp).to eq(100)
+      expect(participation2.reload).to be_pending
+    end
+
+    it "rejects surrender after the fight has already completed" do
+      arena_match.update!(status: :completed, ended_at: Time.current)
+
+      result = processor.process_action(character1, :surrender)
+
+      expect(result).not_to be_success
+      expect(result.error).to eq("Fight is not active")
+      expect(character1.reload.current_hp).to eq(100)
     end
   end
 

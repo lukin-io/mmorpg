@@ -73,6 +73,9 @@ class WorldController < ApplicationController
   end
 
   def move
+    interruption = interrupt_world_action
+    return respond_with_world_interruption(interruption) if interruption.interrupted?
+
     result = Game::Movement::AcceptMove.new(
       character: current_character,
       action_key: params[:action_key],
@@ -86,7 +89,8 @@ class WorldController < ApplicationController
       format.turbo_stream { render_map_update }
       format.html { redirect_to world_path, notice: "Move started." }
     end
-  rescue Game::Movement::MovementViolationError => e
+  rescue Game::Movement::MovementViolationError,
+    Game::World::StartNpcFight::FightViolationError => e
     respond_to do |format|
       format.turbo_stream { render_movement_error(e.message) }
       format.html { redirect_to world_path, alert: e.message }
@@ -156,16 +160,28 @@ class WorldController < ApplicationController
       end
     end
 
-    action_offer = accept_world_action!(:enter_building, target: building)
+    action_offer = nil
+    interruption = nil
+    result = nil
 
-    service = Game::World::TileBuildingService.new(
-      character: current_character,
-      zone: @position.zone.name,
-      x: @position.x,
-      y: @position.y
-    )
+    ActiveRecord::Base.transaction do
+      action_offer = accept_world_action!(:enter_building, target: building)
+      interruption = interrupt_world_action
 
-    result = service.enter!
+      if interruption.interrupted?
+        action_offer.complete!
+      else
+        service = Game::World::TileBuildingService.new(
+          character: current_character,
+          zone: @position.zone.name,
+          x: @position.x,
+          y: @position.y
+        )
+        result = service.enter!
+      end
+    end
+
+    return respond_with_world_interruption(interruption) if interruption.interrupted?
 
     respond_to do |format|
       if result.success
@@ -184,7 +200,8 @@ class WorldController < ApplicationController
         format.turbo_stream { render_error(result.message) }
       end
     end
-  rescue Game::World::AcceptAction::ActionViolationError => e
+  rescue Game::World::AcceptAction::ActionViolationError,
+    Game::World::StartNpcFight::FightViolationError => e
     respond_with_world_action_error(e.message)
   end
 
@@ -199,7 +216,7 @@ class WorldController < ApplicationController
     return respond_with_world_action_error("Local action is not supported.") unless world_action_type
 
     result = nil
-    match = nil
+    interruption = nil
 
     ActiveRecord::Base.transaction do
       action_offer = accept_world_action!(world_action_type, target: tile)
@@ -210,12 +227,7 @@ class WorldController < ApplicationController
       ).call
 
       if result.success
-        if result.interrupted_by
-          match = Game::World::StartNpcFight.new(
-            character: current_character,
-            tile_npc: result.interrupted_by
-          ).call
-        end
+        interruption = interrupt_world_action
         action_offer.complete!
       else
         action_offer.fail!(result.message)
@@ -224,15 +236,7 @@ class WorldController < ApplicationController
 
     return respond_with_world_action_error(result.message) unless result.success
 
-    if match
-      return respond_to do |format|
-        format.html { redirect_to arena_match_path(match), alert: result.message }
-        format.turbo_stream do
-          flash[:alert] = result.message
-          redirect_to arena_match_path(match), status: :see_other
-        end
-      end
-    end
+    return respond_with_world_interruption(interruption) if interruption&.interrupted?
 
     respond_to do |format|
       format.html { redirect_to world_path, notice: result.message }
@@ -247,6 +251,23 @@ class WorldController < ApplicationController
   end
 
   private
+
+  def interrupt_world_action(return_context: "world")
+    Game::World::InterruptAction.new(
+      character: current_character,
+      return_context:
+    ).call
+  end
+
+  def respond_with_world_interruption(interruption)
+    respond_to do |format|
+      format.html { redirect_to arena_match_path(interruption.match), alert: interruption.message }
+      format.turbo_stream do
+        flash[:alert] = interruption.message
+        redirect_to arena_match_path(interruption.match), status: :see_other
+      end
+    end
+  end
 
   # Check if the current zone is a captured city node.
   def city_zone?

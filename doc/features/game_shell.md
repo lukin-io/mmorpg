@@ -43,18 +43,18 @@ Supporting documents:
 
 | Related feature | Relationship | Ownership and handoff |
 |---|---|---|
-| `doc/features/world.md` | World bootstraps the game layout and supplies current location and exact-cell presence results. | World owns map/city dispatch and position queries; Game Shell owns their persistent frame and presence presentation. |
+| `doc/features/world.md` | World bootstraps the layout, supplies exact-cell presence, and resolves Character/Inventory shell actions against a possible wilderness NPC interruption. | Game Shell owns the visible controls/frame; World owns position, the allowlisted destination action, hostile handoff, and post-fight return context. |
 | `doc/features/city.md` | City renders its illustrated node surface in the shell's central frame. | City owns node content, navigation, and hotspot mutations; Game Shell owns only surrounding shared controls. |
 | `doc/features/character_progression.md` | Character navigation opens the profile and allocation surfaces, while the header presents current identity/vitals. | Character Progression owns allocations/profile values; Game Shell owns links, frame placement, and compact header presentation. |
 | `doc/features/shop_economy.md` | The Shop occupies the central gameplay surface after a City handoff. | Shop owns catalog and economic mutations; Game Shell owns shared navigation, presence, chat, and flash presentation. |
 
 ## 2. Feature summary
 
-After login, the player opens the World through a persistent Neverlands-shaped game frame. The top bar shows their name, level, server-rendered HP/MP, Character and Inventory links, city state, and an exit control. The center is a `main_content` Turbo frame. A floating panel shows players at the exact current location with four sorting choices and optional 30-second refresh. A slim bottom bar lazy-loads recent global chat, sends messages, focuses input through Say, and displays server-rendered time.
+After login, the player opens the World through a persistent Neverlands-shaped game frame. The top bar shows their name, level, server-rendered HP/MP, Character and Inventory actions, city state, and an exit control. Character and Inventory submit the allowlisted World context-action route so a source-backed same-cell hostile encounter can replace navigation with combat and return to the requested destination afterward. The center is a `main_content` Turbo frame. A floating panel shows players at the exact current location with four sorting choices and optional 30-second refresh. A slim bottom bar lazy-loads recent global chat, sends messages, focuses input through Say, and displays server-rendered time.
 
 The server owns identity, character state, location presence, social verification, channel visibility, message persistence, ignore filtering, and authorization. The browser owns only main-frame navigation, presence sort/refresh preferences, chat focus/scroll/reset, and notification presentation.
 
-The full game layout is selected by `WorldController`; World is the authenticated shell bootstrap and renders outdoor or city content inside it. Links marked for `main_content` can replace the central surface without replacing the shell. Direct requests to feature endpoints may use their normal application layout, so the shell is not an independent route or a universal controller layout.
+The full game layout is selected by `WorldController`; World is the authenticated shell bootstrap and renders outdoor or city content inside it. Character and Inventory use full-page POST/redirect navigation because the server may hand the action to combat first. Direct requests to feature endpoints may use their normal application layout, so the shell is not an independent route or a universal controller layout.
 
 The MVP currently contains:
 
@@ -92,13 +92,13 @@ Chat additionally requires a user verified for social features. A global channel
 
 ### 4.2 Primary surface
 
-The top bar shows `name[level]`, a red HP bar, `[current/max | current/max]` HP/MP text, Character and Inventory links, an inert `City` label when the current zone is a city, and `X` logout. The main content fills the available center.
+The top bar shows `name[level]`, a red HP bar, `[current/max | current/max]` HP/MP text, Character and Inventory button-styled actions, an inert `City` label when the current zone is a city, and `X` logout. The main content fills the available center.
 
 The bottom-right presence panel shows the current zone name, same-cell count, recent-session total, `a-z`, `z-a`, `0-33`, and `33-0` sorts, and a checked refresh toggle. The bottom chat bar shows Say, recent global messages, one text input, and server-rendered `HH:MM:SS` time.
 
 ### 4.3 Player actions and feedback
 
-The player can open Character or Inventory in `main_content`, sort nearby players, enable/disable automatic presence refresh, press Say to focus chat, submit a nonblank message with Enter, follow profile links, and exit after confirmation.
+The player can request Character or Inventory from World, sort nearby players, enable/disable automatic presence refresh, press Say to focus chat, submit a nonblank message with Enter, follow profile links, and exit after confirmation. World either redirects the context action to its allowlisted destination or starts the current hostile encounter and saves that destination for the fight's explicit finish step.
 
 Chat success clears/refocuses the inline input and arrives through the channel Turbo Stream. HTML chat success redirects with a notice; JSON success returns created status. Validation, mute, privacy, or authorization failures return an inline `422`, HTML error surface, JSON error, redirect, or forbidden response as appropriate.
 
@@ -148,7 +148,7 @@ DOM placement, displayed location text, a player-list row, local storage, or a s
 
 ### 6.2 Header, main frame, and vitals
 
-World renders outdoor or city content into the layout's single main Turbo frame. Character and Inventory links target that frame. City displays as disabled context rather than a generic exit; city movement remains inside the City surface. The logout `X` submits Devise sign-out after confirmation.
+World renders outdoor or city content into the layout's single main Turbo frame. Character and Inventory controls submit `POST /world/context`; City displays as disabled context rather than a generic exit, and city movement remains inside the City surface. The logout `X` submits Devise sign-out after confirmation.
 
 The vitals partial calculates clamped display percentages from authoritative character values and renders current/max HP and MP. It also supplies values to `nl-vitals`. The current Stimulus target contract does not match the rendered partial for empty bars, MP bars, or live text, so visible client interpolation is incomplete and must not be relied on as implemented regeneration.
 
@@ -226,7 +226,7 @@ Presence refresh submits only a sort key; World applies its constant allowlist a
 
 Presence returns an HTML partial that replaces only the list. Chat Turbo success returns an empty successful response while the after-commit broadcast appends the message; HTML redirects and JSON returns `201`. Errors return `422` surfaces, and authorization uses the shared forbidden handler.
 
-Feature navigation hands central ownership to the target controller/view. Login resume hands destination selection to Resume Context and exact position rendering to World/City.
+Feature navigation hands central ownership to the target controller/view. The Character/Inventory World-shell boundary first hands intent to `WorldContextActionsController`, which owns hostile interruption and allowlisted return metadata. Login resume hands destination selection to Resume Context and exact position rendering to World/City.
 
 ### 8.4 Concurrency behavior
 
@@ -238,6 +238,7 @@ Chat creation uses normal database persistence and after-commit broadcasting. It
 |---|---|---|---|
 | `GET /world` | Bootstrap authenticated shell and current World/City surface | Full game-layout HTML or full HTML for Turbo redirect recovery | Login/active-character failure path |
 | `GET /world/players` | Refresh exact-cell presence | Shared players-list HTML partial | Authentication/active-position failure |
+| `POST /world/context` | Request Character or Inventory from the World shell | Full redirect to the allowlisted destination or the shared hostile fight | Unsupported context falls back to World; anonymous request redirects to login. |
 | `GET /chat_channels/:id` | Render full or compact authorized channel history | HTML page or `chat_messages` frame without layout | Redirect/forbidden/not found |
 | `POST /chat_channels/:chat_channel_id/chat_messages` | Persist an authorized message | Turbo `200`, HTML redirect, or JSON `201` | Turbo/HTML/JSON `422`, or authorization failure |
 | `DELETE /users/sign_out` | Exit authenticated shell | Devise sign-out redirect | Shared authentication behavior |
@@ -293,6 +294,7 @@ The shell does not store unsent chat input, current central-frame scroll state, 
 - `ChatMessagePolicy` authorizes posting to writable public/member channels; `MessageDispatcher` rechecks mute/privacy/membership.
 - Exact location and presence come from server positions, never submitted labels or DOM rows.
 - Sort keys, resume contexts, and central destinations use server routes/allowlists.
+- Character/Inventory controls submit logical context names only; World owns hostile interruption and never follows a submitted URL.
 - After-commit broadcast prevents uncommitted messages from appearing as persisted.
 - Local storage, Turbo targets, displayed counts, and client vitals never confer authority.
 - Destination features reauthenticate and revalidate their own domain access after main-frame handoff.
@@ -316,6 +318,7 @@ The shell does not store unsent chat input, current central-frame scroll state, 
 | Malformed local-storage JSON | Warn and use default presentation preferences. |
 | Vitals Stimulus target mismatch | Server-rendered values remain visible; do not claim live interpolation. |
 | Unsupported captured shell control | Do not render a working-looking generic substitute. |
+| Unsupported World context name | Return to World; do not start combat or follow it as a URL. |
 
 ## 14. Acceptance criteria
 
@@ -328,6 +331,7 @@ The shell does not store unsent chat input, current central-frame scroll state, 
 - Login resume selects only an allowlisted supported surface and preserves World/City-owned exact location.
 - Unimplemented source controls and live client-vitals interpolation are not represented as complete behavior.
 - Central feature navigation never transfers game authority to DOM state or local storage.
+- Character and Inventory shell actions can be interrupted by the authoritative same-cell hostile encounter and resume only through World-owned allowlisted return metadata.
 
 ## 15. Test strategy and required coverage
 
@@ -378,6 +382,7 @@ Policy behavior is currently exercised through request/system coverage; dedicate
 - `config/routes.rb`
 - `app/controllers/application_controller.rb`
 - `app/controllers/world_controller.rb`
+- `app/controllers/world_context_actions_controller.rb`
 - `app/controllers/chat_channels_controller.rb`
 - `app/controllers/chat_messages_controller.rb`
 - `app/controllers/concerns/current_character_context.rb`
@@ -398,6 +403,8 @@ Policy behavior is currently exercised through request/system coverage; dedicate
 ### Services
 
 - `app/services/game/world/resume_context.rb`
+- `app/services/game/world/interrupt_action.rb`
+- `app/services/game/world/combat_return_context.rb`
 - `app/services/auth/user_session_manager.rb`
 - `app/services/chat/message_dispatcher.rb`
 - `app/services/chat/ignore_filter.rb`
@@ -437,6 +444,9 @@ Policy behavior is currently exercised through request/system coverage; dedicate
 - `app/views/world/show.html.erb`
 - `app/views/world/city_view.html.erb`
 - `app/services/game/world/resume_context.rb`
+- `app/controllers/world_context_actions_controller.rb`
+- `app/services/game/world/interrupt_action.rb`
+- `app/services/game/world/combat_return_context.rb`
 
 World owns exact position, outdoor/city content, and the presence query; destination controllers own content loaded into `main_content`. Game Shell owns their common frame and social presentation, not their mutations.
 
@@ -458,6 +468,7 @@ World owns exact position, outdoor/city content, and the presence query; destina
 - `spec/requests/chat_channels_spec.rb`
 - `spec/requests/chat_messages_spec.rb`
 - `spec/requests/world_spec.rb`
+- `spec/requests/world_context_actions_spec.rb`
 - `spec/views/layouts/game_spec.rb`
 - `spec/views/shared/_nl_players_list_spec.rb`
 - `spec/views/shared/_nl_vitals_bar_spec.rb`
@@ -482,3 +493,4 @@ Before extending Game Shell:
 | Date | Change |
 |---|---|
 | 2026-07-21 | Created the implementation handbook for the persistent game frame, exact-cell presence, compact global chat, browser preferences, and resume integration. |
+| 2026-07-21 | Routed World-shell Character and Inventory controls through the World-owned hostile interruption and allowlisted post-fight return boundary. |

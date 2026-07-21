@@ -12,6 +12,7 @@
 
 <div class="fighter-card fighter-card--<%= position %> <%= 'fighter-card--defeated' if defeated %> <%= 'fighter-card--npc' if p_data.is_npc %>"
      data-character-id="<%= p_data.id %>"
+     data-team="<%= participation.team %>"
      data-npc="<%= p_data.is_npc %>"
      data-current-user="<%= !p_data.is_npc && participation.user_id == current_user&.id %>">
 

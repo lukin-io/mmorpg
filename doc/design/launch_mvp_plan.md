@@ -385,13 +385,13 @@ Required behavior:
 
 ### Remaining Design Detail
 
-- Wild NPC ambush and manual attack should be wired through the same active
-  combat UI and finish-result contract as arena NPC fights.
-- Per-cell NPC and building action offers need complete system coverage.
-- Loot checks after wild NPC defeat need to be documented and implemented as a
-  normal result step.
-- Wild return routing needs to preserve the exact movement/city context the
-  player came from.
+- Mixed-template outdoor groups, random encounter selection, and encounter
+  probability remain deferred until direct Neverlands evidence exists; the MVP
+  implements only explicit source-authored encounter composition.
+- Successful gathering rewards and the `fis`, `dri`, and `dig` action outcomes
+  still require live capture before implementation.
+- Broader combat formula, magic/status, trauma, and reward work remains owned by
+  Pillar 3; it must continue using the same participant/result pipeline.
 
 ## MVP Flow
 
@@ -425,7 +425,7 @@ action-key discipline remains tracked in the checklist below.
 | Movement | Documented across movement and live movement/city captures, including three city gates, local resource actions, the `100 x 100` client cell presentation, and the one-region `1000 x 1000` launch boundary. | MVP world/city client pass implemented: timed wilderness offers, sparse bounds, composed cell state, fixed-cursor sliding terrain, immediate illustrated nine-node city movement, and three exact gate pairs. | Keep the uncaptured source-coordinate origin as metadata; capture encumbrance and terrain timing before formula changes. |
 | Arena | Documented across arena, combat, live arena captures, and public log captures. | Partially implemented; Arena entry/return is wired through Central Square with owned action keys. | Continue formula tuning, magic/special balancing, and shared fight coverage. |
 | Combat | Documented across combat reference captures, arena observations, logs, and equipment effects. | Partially implemented. | Keep one resolver/log contract across arena player/team, arena NPC, and wild NPC fights. |
-| Wild cells | Documented across outdoor movement, hostile NPC capture, composable cell contents, and `look` resource-action notes. | Starter cell composition, `look` completion, and hostile shared-combat handoff implemented. | Capture and implement exact resource rewards, post-fight loot/result behavior, and return routing; do not infer them. |
+| Wild cells | Documented across outdoor movement, hostile NPC capture, composable cell contents, and `look` resource-action notes. | Fully implemented for the declared MVP World boundary: composed cells, `look`, movement/building/shell interruption, paired-NPC shared combat, participant loot timing, surrender integration, duplicate-start protection, and allowlisted post-fight return. | Capture exact gathering rewards and any new encounter compositions before extending authored content. |
 | Neverlands marketplace/shop | Launch `Лавка` is documented; Market, Junk Dealer shell, and Numismatics are captured as deferred variants. | Starter city shop implemented with buy/sell/licenses/novice categories; captured variants have read-only city screens. | Keep variant mutations deferred; add them only after capture of success, failure, settlement, expiry, and authorization behavior. |
 | Neverlands NPC quest interactions | Needs dedicated Neverlands capture. | Not implemented; generic quest/story stack removed. | Capture exact NPC quest entry points, dialogue/action states, journal/task display, reward/turn-in rules, location gates, and failure/cancel states before rebuilding. |
 
@@ -451,15 +451,15 @@ the next implementation step is.
 | Feature | Documented | Implemented | Next Step |
 | --- | --- | --- | --- |
 | Login and resume | Yes: live player/location behavior and dashboard-removal decision. | Outdoor cell, exact city node, Shop, and accessible captured read-only interior resume are implemented with sanitized server-side state. | Extend the allowlisted resolver only when another source-backed interior is implemented; never persist arbitrary return URLs. |
-| Wilderness movement | Yes: live movement capture and movement feature doc. | Timed offers, acceptance, completion, reload, sparse boundaries, and stale-offer cancellation implemented; exact formula remains partial. | Capture encumbrance/terrain timing effects before replacing authoritative configured travel time. |
+| Wilderness movement | Yes: two live movement captures and movement feature doc. | Timed offers, acceptance, completion, reload, sparse boundaries, stale-offer cancellation, and bounded Wanderer `30..25` second offer timing implemented; the complete source formula remains partial. | Isolate terrain, fatigue/effect, and encumbrance timing inputs before adding any modifier beyond Wanderer. |
 | City movement | Yes: all live city nodes, illustrated hotspot behavior, three gates, matching outdoor cells, and building return behavior captured. | Implemented for MVP: immediate illustrated node transitions, fresh owned offers, retained project city art, positioned regions, tooltips, keyboard proxies, exact gate pairings, and no wilderness timer, city grid, emoji markers, spawn fallback, or universal exit bypass. | Add only source-captured nodes/services; presentation geometry must never bypass server-owned offers. |
 | Tile-local action offers | Yes: movement, outdoor NPC, city/building entry, and `look`/`fis`/`dri`/`dig` client observations. | `look` offer/accept/refresh and hostile ambush handoff implemented; the other source ids are validated authored types only. | Capture successful reward/timer/equipment flows before implementing outcomes for `look`, `fis`, `dri`, or `dig`. |
-| NPCs and drops | Yes: hostile behavior, arena mannequin drops, wild rat-tail drops, and source-backed combat handoff. | Partial. | Keep NPCs tied to tile/arena context, combat handoff, per-NPC loot checks, inventory capacity, and exact return routing. |
+| NPCs and drops | Yes: hostile behavior, arena mannequin drops, paired wild rat-tail drops, participant-level defeat, and source-backed return context. | Fully implemented for the declared World/NPC encounter boundary: explicit paired-rat composition, distinct participant targeting, all-NPC AI response, per-NPC loot checks, final anchor defeat, surrender-compatible side resolution, and exact allowlisted return. | Add mixed groups, random selection, or new drops only from explicit source evidence; quest NPC behavior remains a separate unimplemented area. |
 | NPC quest interactions | Needs dedicated Neverlands capture. | Not implemented; generic quest/story stack removed. | Capture exact quest UI, NPC dialogue flow, task/journal state, reward/turn-in rules, and location gating before implementation. |
 | Combat | Yes: combat captures, public logs, magic, equipment effects, and result flow. | Partial. | Build the shared turn UI, combat profile, resolver, combat log, NPC response, live-player waiting, timeout, NPC loot check, and finish-result step. |
 | Arena combat | Yes: arena rooms/applications and NPC training captures. | Partial. | Bind NPC training, player, and team applications to the same combat profile and result flow. |
 | Character vitals | Yes: live player capture and vitals doc. | Partial. | Make vitals a shell-level component and document exact regen formulas. |
-| Progression, stats, and skills | Yes: profile allocation, exact numeric skill IDs, and captured tier rates. | Partial: stat allocation and source-backed numeric skill allocation exist; generic formulas/prereqs were removed. | Make the player profile the primary allocation surface, then capture exact movement/combat/recovery formulas before wiring skill effects. |
+| Progression, stats, and skills | Yes: profile allocation, exact numeric skill IDs, captured tier rates, and Wanderer movement relationship. | Partial: stat allocation, source-backed numeric skill allocation, and the World-owned bounded Wanderer effect exist; generic formulas/prereqs remain removed. | Make the player profile the primary allocation surface, then isolate remaining movement/combat/recovery formulas before wiring more skill effects. |
 | Items, inventory, equipment | Yes: inventory/equipment, weapon formula, 2026-06-01 item-row/equip capture, and shop item-row captures. | Captured item-row/equipment subset implemented. | Finish repair/breakage UX, exact layered armor/belt/pocket/relic rules, pickup/loot capacity coverage, and movement/carry formula wiring. |
 | Neverlands marketplace/shop | Yes for launch `Лавка`; read-only Market, Junk Dealer shell, and Numismatics variants are also captured. | Starter `Лавка` is interactive; Market, Junk Dealer, and Numismatics are reachable read-only from the Trading Quarter. | Keep variant mutations deferred; retain stock, wallet/mass validation, durability-adjusted resale pricing, and no generic marketplace route for `Лавка`. |
 | Direct player trading | Partially captured through inventory inline transfer/gift/sale/currency forms; full trade settlement needs a dedicated capture. | Basic inventory transfer/gift/player-sale/NV forms implemented; generic trade sessions removed. | Capture exact cancellation, timeout, visibility, commission, dealer, and settlement rules before adding a broader trade session system. |
@@ -471,7 +471,7 @@ the next implementation step is.
 | Rule | Design Direction |
 | --- | --- |
 | Server-authored actions | Every mutating action in world, city, building, combat, shop, and future captured quest flows should be offered by the server and accepted by action key. |
-| Persistence after reload/login | Persist exact outdoor cells and city nodes; resume Shop and captured read-only interiors only while still accessible from the authoritative node; fall back to that unchanged position for stale/malformed state. Extend the allowlist to combat and later interiors only as those flows are completed. |
+| Persistence after reload/login | Persist exact outdoor cells and city nodes; resume Shop and captured read-only interiors only while still accessible from the authoritative node; fall back to that unchanged position for stale/malformed state. World combat now stores an allowlisted World/Character/Inventory finish context while the coordinate remains unchanged; later interiors require their own completed allowlist entry. |
 | Context-first navigation | Features should be reached through current location actions first. Global shortcuts can exist for development, but they are not the primary player flow. |
 | Compact game UI | Keep dense operational screens; avoid landing-page layouts inside authenticated gameplay. |
 | Starter content | Create one canonical starter path: outside tile -> city gate -> city node -> trading quarter -> shop -> city -> outside. |

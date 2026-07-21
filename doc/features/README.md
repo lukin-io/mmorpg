@@ -2,7 +2,15 @@
 
 `doc/features/` contains implementation handbooks for player-facing game features. A feature document is the bridge between Neverlands observations, the shipped Rails implementation, and the tests that protect it. It should let an engineer or AI agent understand what the player can do, where authority lives, which files own the behavior, what is intentionally deferred, and how to verify a change without reconstructing the feature from the repository.
 
-These documents describe implemented behavior. Product planning remains in `doc/design/launch_mvp_plan.md`; raw live-game evidence remains in `doc/design/reference/`; broader system design remains in `doc/design/areas/` and `doc/design/features/`.
+These documents describe fully implemented behavior within an explicit feature or area boundary. Product planning remains in `doc/design/launch_mvp_plan.md`; raw live-game evidence remains in `doc/design/reference/`; broader system design remains in `doc/design/areas/` and `doc/design/features/`.
+
+## Fully implemented eligibility gate
+
+`Fully Implemented` is the only green status for creating or retaining a canonical handbook in this directory. The handbook may own either one bounded player-facing feature or one coherent feature area, but every behavior it describes as active must exist, be integrated, and have all applicable tests passing before the handbook is created or promoted.
+
+Fully implemented means complete for the handbook's declared MVP boundary; it does not mean every future Neverlands mechanic is shipped. Source-observed behavior outside that boundary belongs under non-goals or in `doc/design/**`. If a material in-scope path remains partly implemented, read-only, untested, or unavailable, keep its contract in design/planning documents until the gap is closed. Do not create a narrower duplicate handbook merely to make a partial slice look complete when an existing feature or area already owns the behavior.
+
+The older `Implemented MVP` and `Partially Implemented` metadata values are transitional, non-green states. They may remain only while an existing handbook is audited, completed, merged into the correct owner, or retired. They must not be copied into a new handbook. `bin/feature-doc-audit` reports either value as a warning.
 
 ## Directory contents
 
@@ -11,24 +19,26 @@ These documents describe implemented behavior. Product planning remains in `doc/
 | `FEATURE_TEMPLATE.md` | Canonical structure for every new feature implementation handbook. Copy it; do not write a new format from scratch. |
 | `world.md` | Completed handbook for the open world, sparse cells, movement, outdoor actions, gates, NPC handoff, and exact-location persistence. |
 | `city.md` | Completed handbook for the Forpost node graph, illustrated navigation, gates, buildings, captured interiors, and resume behavior. |
-| `character_progression.md` | Canonical handbook for Neverlands-based primary stats, numeric skills, boolean perks, allocation pools, and public progression display. |
-| `shop_economy.md` | Canonical handbook for the City Shop, catalog modes, NV wallet, buying, inventory selling, stock, and transaction persistence. |
-| `game_shell.md` | Canonical handbook for the persistent game frame, compact vitals, exact-cell presence, global chat, and shell preferences. |
+| `character_progression.md` | Transitional handbook for Neverlands-based primary stats, numeric skills, boolean perks, allocation pools, and public progression display; it is not green until its declared boundary is fully implemented. |
+| `shop_economy.md` | Transitional handbook for the City Shop, catalog modes, NV wallet, buying, inventory selling, stock, and transaction persistence; it is not green until its declared boundary is fully implemented. |
+| `game_shell.md` | Transitional handbook for the persistent game frame, compact vitals, exact-cell presence, global chat, and shell preferences; it is not green until its declared boundary is fully implemented. |
 
-The completed handbooks are examples of the expected level of precision. `character_progression.md`, `shop_economy.md`, and `game_shell.md` use the canonical `feature-v1` layout directly. `world.md` and `city.md` remain valid pre-template handbooks until their next material behavior update. `FEATURE_TEMPLATE.md` defines the required layout for subsequent features.
+`world.md` is the canonical `feature-v1` example. `city.md` remains a valid pre-template handbook and should migrate to `feature-v1` on its next material behavior update. The three transitional handbooks use the canonical layout but are not completion examples while their status remains non-green. `FEATURE_TEMPLATE.md` defines the required layout for subsequent features.
 
 ## Creating a feature document
 
-1. Copy `doc/features/FEATURE_TEMPLATE.md` to a descriptive lowercase `snake_case` filename such as `doc/features/player_inventory.md`.
-2. Replace every bracketed placeholder and remove every `Template instruction` blockquote.
-3. Preserve all 18 numbered second-level sections and their order.
-4. Keep a section even when it is not applicable; explain why instead of deleting it.
-5. Use exact routes, class names, states, limits, coordinates, timing, labels, and repository-relative file paths from the current implementation.
-6. Separate interactive behavior, read-only source captures, and deferred mechanics explicitly.
-7. Keep the copied `template: feature-v1` metadata entry.
-8. Verify every listed responsible file and focused spec path exists.
-9. Run applicable focused coverage and update the version-history row.
-10. Run `bin/feature-doc-audit doc/features/<feature_name>.md`.
+1. Confirm the bounded feature or area is fully implemented and its applicable model, request, policy, service, factory, and UI coverage is green.
+2. Confirm an existing handbook does not already own the behavior; update that owner instead of creating an overlapping slice.
+3. Copy `doc/features/FEATURE_TEMPLATE.md` to a descriptive lowercase `snake_case` filename such as `doc/features/player_inventory.md`.
+4. Replace every bracketed placeholder and remove every `Template instruction` blockquote.
+5. Preserve all 18 numbered second-level sections and their order.
+6. Keep a section even when it is not applicable; explain why instead of deleting it.
+7. Use exact routes, class names, states, limits, coordinates, timing, labels, and repository-relative file paths from the current implementation.
+8. Separate interactive behavior, read-only source captures, and deferred mechanics explicitly.
+9. Keep `status: Fully Implemented` and the copied `template: feature-v1` metadata entry.
+10. Verify every listed responsible file and focused spec path exists.
+11. Run applicable focused coverage and update the version-history row.
+12. Run `bin/feature-doc-audit doc/features/<feature_name>.md`.
 
 Suggested command:
 
@@ -53,12 +63,12 @@ bin/feature-doc-audit
 bin/verify docs
 ```
 
-The audit validates required metadata, canonical section ordering for `template: feature-v1`, the required cross-feature relationship subsection, reciprocal feature references, unresolved template content, trailing whitespace, responsible-file existence, and duplicate feature titles. `world.md` and `city.md` predate the canonical metadata and currently pass with a migration warning; migrate either document to `feature-v1` on its next material behavior update.
+The audit validates required metadata, canonical section ordering for `template: feature-v1`, the required cross-feature relationship subsection, reciprocal feature references, unresolved template content, trailing whitespace, responsible-file existence, duplicate feature titles, and the green completion status. Transitional statuses emit a warning. `city.md` predates the canonical metadata and currently passes with a migration warning; migrate it to `feature-v1` on its next material behavior update.
 
 Use `--strict` only when intentionally checking a pre-template document against the canonical 18-section layout:
 
 ```bash
-bin/feature-doc-audit --strict doc/features/world.md
+bin/feature-doc-audit --strict doc/features/city.md
 ```
 
 ## Required layout
@@ -169,12 +179,9 @@ Never invent a nonexistent spec path to satisfy the template. If a layer does no
 
 ## Status values
 
-Use one of these front-matter states:
+Use `status: Fully Implemented` for every new or promoted feature/area handbook. Every active behavior must be shipped and covered; deferred behavior must be outside the declared boundary and clearly separated under non-goals.
 
-- `Implemented MVP` — all behavior described as active is shipped and covered; deferred behavior is clearly separated.
-- `Partially Implemented` — the document precisely marks which surfaces work and which are read-only, unavailable, or deferred.
-
-Do not use `Implemented MVP` for an aspirational PRD. Do not create a feature handbook containing only planned behavior.
+`Implemented MVP` and `Partially Implemented` are transitional legacy values, not green completion states. Do not use them for a new handbook, and do not create a handbook containing planned, read-only, unavailable, or materially untested in-scope behavior.
 
 ## Keeping documents current
 
@@ -196,6 +203,7 @@ Small internal refactors that do not change the contract still require the respo
 Before considering a feature document complete, confirm:
 
 - all template placeholders and instructions are removed;
+- `status: Fully Implemented` is justified by the declared feature or area boundary;
 - `template: feature-v1` remains in frontmatter;
 - all 18 sections remain in order;
 - the summary is understandable without opening code;

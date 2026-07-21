@@ -52,6 +52,10 @@ arrives at the new node or building.
 - Passability and travel time are server rules, not browser rules.
 - Client animation is linear presentation only; it never advances the
   finalized coordinate on its own.
+- Before an offered move is accepted, a live source-backed hostile encounter on
+  the current cell can replace movement with the shared fight state. The
+  movement offer remains unaccepted and the finalized coordinate does not
+  change.
 
 ## Persistence Contract
 
@@ -80,6 +84,11 @@ Expected player result: if a player walks in the open world, closes the browser,
 and opens the game later, they are still at the same finalized cell or at the
 completed destination if the travel timer elapsed while they were away.
 
+An interrupted wilderness action stores only an allowlisted logical return
+context on the fight. Finishing its explicit result returns to the unchanged
+world cell, or to Character/Inventory when that was the interrupted shell
+destination. It never stores or follows an arbitrary browser URL.
+
 If the player logged out in Shop, login reopens Shop with its sanitized tab,
 category, and numeric filters. Leaving Shop for the city records the city/world
 surface again. An inaccessible Shop record falls back to that unchanged city or
@@ -100,18 +109,31 @@ outdoor position.
 
 ## Travel Time
 
-Captured starter formula:
+The clean starter reference remains `30` seconds for a normal adjacent
+wilderness step near Oktal. The 2026-07-21 returning-character follow-up showed
+that Neverlands sends server-calculated values per map state: a character with
+Wanderer `100` received a `32`-second current step and a `49`-second next-cell
+value while other source modifiers were also present.
+
+The complete Neverlands formula is therefore still an evidence gap. For the
+MVP, isolate the explicitly required Wanderer relationship against the clean
+starter baseline:
 
 ```text
-travel_seconds = 30
+wanderer = clamp(effective_wanderer_level, 0, 100)
+reduction_seconds = floor(wanderer * 5 / 100)
+travel_seconds = clamp(30 - reduction_seconds, 25, 30)
 ```
 
-Initial starter reference: `30` seconds for a normal adjacent wilderness step
-near Oktal.
+This produces whole-second bands: `0..19 => 30`, `20..39 => 29`, `40..59 =>
+28`, `60..79 => 27`, `80..99 => 26`, and `100 => 25`. The duration is computed
+when the server creates the movement offer and remains fixed on that command
+through acceptance, reload, and completion.
 
-No terrain, diagonal, encumbrance, or skill timing modifier is implemented until
-the exact Neverlands rule is captured. Terrain labels may identify a tile, but
-they must not alter movement duration by themselves.
+No terrain, diagonal, encumbrance, fatigue, effect, or profession timing
+modifier is implemented. Terrain labels may identify a tile, but they must not
+alter movement duration by themselves. Additional modifiers require dedicated
+source observations that isolate their inputs.
 
 ## State Concepts
 

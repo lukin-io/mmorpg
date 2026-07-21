@@ -34,6 +34,7 @@ Supporting documents:
 - `doc/design/features/combat.md` owns combat effects after progression values are handed off.
 - `doc/design/launch_mvp_plan.md` defines the launch progression boundary.
 - `doc/features/game_shell.md` owns the persistent shell in which profile and allocation pages are shown.
+- `doc/features/world.md` consumes effective Wanderer when authoring a timed adjacent movement offer.
 - `doc/features/shop_economy.md` consumes progression-backed requirement values for Shop item presentation without granting purchase or equip authority.
 
 ### 1.1 Cross-feature relationships
@@ -41,6 +42,7 @@ Supporting documents:
 | Related feature | Relationship | Ownership and handoff |
 |---|---|---|
 | `doc/features/game_shell.md` | The shell links to the player profile and renders profile/allocation surfaces in its main content context. | Character Progression owns saved allocations and profile values; Game Shell owns only shared navigation, framing, and header presentation. |
+| `doc/features/world.md` | World consumes the effective Wanderer value for its bounded adjacent-travel duration. | Character Progression owns saved skill allocation and effective skill access; World owns the `30..25` second formula, command snapshot, authorization, timer, and movement completion. |
 | `doc/features/shop_economy.md` | Shop rows display item requirements against progression-backed character values. | Character Progression owns stat/skill values; Shop owns catalog presentation and trade eligibility, while Inventory owns later equip enforcement. |
 
 ## 2. Feature summary
@@ -71,7 +73,7 @@ The MVP currently contains:
 
 ### Non-goals
 
-- Applying uncaptured numeric-skill, profession, prerequisite, or perk-effect formulas.
+- Applying numeric-skill effects beyond the explicitly implemented World-owned Wanderer travel formula, or inventing profession, prerequisite, or perk-effect formulas.
 - Rendering or selecting the remaining observed `Навыки` merely because their source labels are known.
 - Free respec, saved progression builds, skill trees, classes, specializations, or generic ability unlock graphs.
 - Owning equipment, combat, movement, recovery, inventory, or profession mechanics that consume progression values.
@@ -154,7 +156,8 @@ Relationships must come from the source-backed registries. Categories, display o
 | Numeric-skill allocation | `GET/PATCH /characters/:id/skills` | Interactive | `CharactersController`, registry, and formula |
 | Boolean perk allocation | `GET/PATCH /characters/:id/perks` | Interactive subset | `PerkAllocation` and `PerkRegistry` |
 | Remaining observed perks/professions | No local route/control | Deferred | Evidence and design documents only |
-| Skill/perk gameplay effects without captured formulas | No mutation | Deferred | Downstream owning feature after evidence |
+| Wanderer movement effect | World movement-offer creation | Interactive downstream consumer | `Game::Movement::TravelTime` |
+| Other skill/perk gameplay effects without captured formulas | No mutation | Deferred | Downstream owning feature after evidence |
 
 ### 6.2 Primary stats
 
@@ -166,7 +169,9 @@ The five primary stats begin at base value `1`. Saved additions are merged into 
 
 The numeric registry contains 29 captured `Умения`, each with a source ID, local key, English/source labels, category, combat-or-peace pool, maximum `100`, and exact four-band rate. One spend consumes one point from the assigned pool and may add more than one numeric level according to the current band.
 
-Multiple pending spends are applied sequentially so crossing `25`, `50`, or `75` changes the rate used by later spends. The final value is capped at `100`. Unknown skill keys do not consume points. Equipment bonuses contribute to `passive_skill_level`; exact downstream gameplay effects remain `0`/unimplemented until separately captured.
+Multiple pending spends are applied sequentially so crossing `25`, `50`, or `75` changes the rate used by later spends. The final value is capped at `100`. Unknown skill keys do not consume points. Equipment bonuses contribute to `passive_skill_level`.
+
+World is the only current numeric-skill effect consumer: it snapshots effective Wanderer into a clean adjacent duration of `30 - floor(wanderer * 5 / 100)` seconds, bounded to `25..30`. Character Progression does not own that movement rule. Every other downstream numeric-skill effect remains `0`/unimplemented until separately captured.
 
 ### 6.4 Boolean perks and deferred behavior boundary
 
@@ -242,7 +247,7 @@ Perks convert truthy selection fields to keys, then `PerkAllocation` normalizes 
 
 HTML success redirects to the same allocation page with a notice. Turbo success replaces only `stat-allocation`, `skill-allocation`, or `perk-allocation` and updates `flash`. Allocation errors update the flash for Turbo or redirect through the configured fallback for HTML.
 
-After save, inventory requirements, vitals, profile, and combat may read the new values. Those features own their own validation and formula behavior.
+After save, inventory requirements, vitals, profile, combat, and World may read the new values. World applies a new Wanderer value only when it authors the next movement offer; an already-offered or active command retains its persisted duration. Each downstream feature owns its own validation and formula behavior.
 
 ### 8.4 Concurrency behavior
 
@@ -330,7 +335,8 @@ Arbitrary saved browser fields, translated labels, or profile URLs do not grant 
 | Already-owned perk only | Reject as `No new perks selected`; do not spend another point |
 | Conflicting captured perks | Reject the entire perk save under lock |
 | Numeric skill reaches `100` | Cap at `100`; no further visible spend is enabled |
-| Equipment changes an effective skill | Rebuild effective display; no uncaptured formula is applied |
+| Equipment changes effective Wanderer | Rebuild effective display; World uses it only for the next authored offer, never to rewrite an active command |
+| Equipment changes another effective skill | Rebuild effective display; no uncaptured formula is applied |
 | Missing public character name | Return `404`, not an account-profile fallback |
 | Simultaneous Stats/Skills saves | Not currently guaranteed safe; requires implementation and concurrency coverage |
 | Deferred profession/perk action | Render no control and create no inferred effect |
@@ -346,6 +352,7 @@ Arbitrary saved browser fields, translated labels, or profile URLs do not grant 
 - Profile HTML and JSON expose numeric skills and owned launch-registry perks without private account data.
 - Browser preview/reset behavior never mutates saved state before PATCH succeeds.
 - Saved progression survives logout/login; pending browser preview does not.
+- Effective Wanderer is available to World, which owns and tests the bounded `30..25` second movement effect.
 - Uncaptured perks, professions, prerequisites, respec, and effects remain unavailable.
 
 ## 15. Test strategy and required coverage
@@ -372,6 +379,7 @@ bundle exec rspec \
   spec/lib/game/skills/passive_skill_calculator_spec.rb \
   spec/lib/game/skills/perk_registry_spec.rb \
   spec/services/game/skills/perk_allocation_spec.rb \
+  spec/services/game/movement/travel_time_spec.rb \
   spec/services/players/progression/level_up_service_spec.rb \
   spec/requests/characters_spec.rb \
   spec/requests/characters/skills_spec.rb \
@@ -439,8 +447,9 @@ There is no dedicated view spec for each allocation partial; request and system 
 
 - `app/services/game/inventory/requirement_checker.rb`
 - `app/services/characters/vitals_service.rb`
+- `app/services/game/movement/travel_time.rb`
 
-Character Progression owns saved stats, numeric skills, perks, and their allocation. Inventory owns equipment and item requirements; Vitals/Combat own downstream formulas. Those features may consume only implemented progression values and must capture Neverlands evidence before adding a new effect.
+Character Progression owns saved stats, numeric skills, perks, and their allocation. Inventory owns equipment and item requirements; Vitals/Combat own their downstream formulas; World owns the bounded Wanderer movement formula. Those features may consume only implemented progression values and must capture Neverlands evidence before adding another effect.
 
 ### Factories
 
@@ -456,6 +465,7 @@ Character Progression owns saved stats, numeric skills, perks, and their allocat
 - `spec/lib/game/skills/passive_skill_calculator_spec.rb`
 - `spec/lib/game/skills/perk_registry_spec.rb`
 - `spec/services/game/skills/perk_allocation_spec.rb`
+- `spec/services/game/movement/travel_time_spec.rb`
 - `spec/services/players/progression/level_up_service_spec.rb`
 - `spec/requests/characters_spec.rb`
 - `spec/requests/characters/skills_spec.rb`
@@ -482,3 +492,4 @@ Before extending Character Progression:
 | Date | Change |
 |---|---|
 | 2026-07-21 | Created the canonical implementation handbook for primary stats, numeric skills, the launch-safe binary perk subset, point allocation, profile exposure, and known concurrency/effect boundaries. |
+| 2026-07-21 | Documented World as the sole current numeric-skill effect consumer through the bounded effective-Wanderer travel formula and added reciprocal ownership/coverage references. |

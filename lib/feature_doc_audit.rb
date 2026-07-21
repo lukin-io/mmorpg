@@ -6,7 +6,8 @@ require "pathname"
 # contract without loading Rails or mutating repository files.
 module FeatureDocAudit
   TEMPLATE_ID = "feature-v1"
-  ALLOWED_STATUSES = ["Implemented MVP", "Partially Implemented"].freeze
+  FULLY_IMPLEMENTED_STATUS = "Fully Implemented"
+  ALLOWED_STATUSES = [FULLY_IMPLEMENTED_STATUS, "Implemented MVP", "Partially Implemented"].freeze
   REQUIRED_SECTIONS = [
     "## 1. Design authority and related documents",
     "## 2. Feature summary",
@@ -147,6 +148,10 @@ module FeatureDocAudit
 
       unless ALLOWED_STATUSES.include?(metadata["status"])
         errors << "#{display_path(document)}: status must be one of #{ALLOWED_STATUSES.join(', ')}"
+      end
+
+      if ALLOWED_STATUSES.include?(metadata["status"]) && metadata["status"] != FULLY_IMPLEMENTED_STATUS
+        warnings << "#{display_path(document)}: #{metadata['status']} is transitional; only Fully Implemented is green for a feature or area handbook"
       end
 
       unless metadata["updated"].to_s.match?(/\A\d{4}-\d{2}-\d{2}\z/)

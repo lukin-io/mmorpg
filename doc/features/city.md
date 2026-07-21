@@ -2,7 +2,7 @@
 ---
 title: City Feature
 description: Implementation handbook for the Neverlands-inspired Forpost node graph, illustrated city navigation, gates, buildings, and persisted interior context.
-status: Implemented MVP
+status: Fully Implemented
 updated: 2026-07-21
 owners: City world context and city UI
 ---

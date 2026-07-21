@@ -66,6 +66,7 @@ module Game
       def build_destination_offers(position)
         provider = Game::Movement::TileProvider.new(zone: position.zone)
         validator = Game::Movement::MovementValidator.new(provider)
+        travel_seconds = Game::Movement::TravelTime.seconds(character:, zone: position.zone)
 
         Game::Movement::Directions::OFFSETS.filter_map do |direction, (dx, dy)|
           target_x = position.x + dx
@@ -85,12 +86,7 @@ module Game
             predicted_x: target_x,
             predicted_y: target_y,
             action_key: SecureRandom.hex(16),
-            travel_seconds: Game::Movement::TravelTime.seconds(
-              character:,
-              zone: position.zone,
-              direction:,
-              tile_metadata:
-            ),
+            travel_seconds:,
             metadata: build_metadata(provider, target_x, target_y, tile_metadata)
           )
 

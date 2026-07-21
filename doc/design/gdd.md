@@ -156,16 +156,20 @@ Travel time is a GDD-level value, not a browser-only cooldown. The same formula
 must be used for destination offers, accepted movement validation, countdown
 display, and action readiness.
 
-Captured starter formula:
+The clean starter reference is `30` seconds. The MVP applies the confirmed
+Wanderer relationship as a bounded whole-second reduction:
 
 ```text
-travel_seconds = 30
+wanderer = clamp(effective_wanderer_level, 0, 100)
+reduction_seconds = floor(wanderer * 5 / 100)
+travel_seconds = clamp(30 - reduction_seconds, 25, 30)
 ```
 
 The observed Neverlands reference move from `1019,1025` to `1018,1025` used
-`30` seconds. Use that as the initial starter-area reference unless a specific
-developer-mode override is intentionally added. Do not add terrain, diagonal,
-encumbrance, or skill timing modifiers until they are source-captured.
+`30` seconds. A later character with Wanderer `100` received server values of
+`32` and then `49`, proving that the full source formula also has unisolated
+inputs. Do not add terrain, diagonal, encumbrance, fatigue, effect, profession,
+or other skill modifiers until they are source-captured.
 
 ### Direction Policy
 
@@ -275,9 +279,15 @@ Combat is turn-based and tactical. Core expectations:
 - PvE encounters can trigger from map movement or tile-local hostile actions;
 - player, team, and NPC fights support Neverlands-style arena duels, group
   fights, and room-based applications;
+- the same side model renders and resolves 1x1, 1xMany, and ManyxMany PvP/PvE
+  rosters; repeated NPC templates remain distinct fight participants;
+- surrender defeats one participant and produces a fight result only when the
+  conceding participant's entire side has no survivor;
 - combat uses explicit turns, action points, body-part targeting, blocks,
   skills, logs, rewards, and death/respawn consequences;
 - combat state must be resumable and auditable.
+- outdoor result finish uses a server-allowlisted return context and never an
+  arbitrary submitted URL.
 
 ## Dungeons
 

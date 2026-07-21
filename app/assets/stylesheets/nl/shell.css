@@ -42,6 +42,20 @@
   text-decoration: none;
 }
 
+.nl-nav-action-form {
+  display: inline;
+  margin: 0;
+}
+
+.nl-nav-link--button {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  padding: 0;
+}
+
 .nl-player-link {
   color: #111111;
   font-weight: 700;

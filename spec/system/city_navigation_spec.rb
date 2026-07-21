@@ -67,8 +67,8 @@ RSpec.describe "City navigation", type: :system, js: true do
     expect(page).to have_css(".city-name", text: "Central Square")
 
     within(".city-actions") { click_button "West Gate" }
-    expect(position.reload).to have_attributes(zone: outdoors, x: 7, y: 0)
     expect(page).to have_content("System Forpost Region")
+    expect(position.reload).to have_attributes(zone: outdoors, x: 7, y: 0)
   end
 
 

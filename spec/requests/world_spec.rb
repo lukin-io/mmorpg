@@ -237,6 +237,17 @@ RSpec.describe "World", type: :request do
     end
 
     context "with valid movement offer" do
+      it "lets a same-cell hostile NPC interrupt movement before travel starts" do
+        create(:tile_npc, :multi_npc_encounter, zone: zone.name, x: 5, y: 5)
+        command = movement_offer(:north)
+
+        expect { post_offer(command) }.to change(ArenaMatch, :count).by(1)
+
+        expect(response).to redirect_to(arena_match_path(ArenaMatch.last))
+        expect(command.reload).to be_offered
+        expect(position.reload).to have_attributes(x: 5, y: 5)
+      end
+
       it "starts timed travel without changing coordinates immediately" do
         command = movement_offer(:north)
 
@@ -250,6 +261,20 @@ RSpec.describe "World", type: :request do
         expect(moving_command.direction).to eq("north")
         expect(moving_command.target_position).to eq([5, 4])
         expect(moving_command.ends_at).to be > moving_command.started_at
+      end
+
+      it "uses the persisted Wanderer level for the offered and accepted travel duration" do
+        character.update!(passive_skills: attributes_for(:character, :master_wanderer).fetch(:passive_skills))
+        command = movement_offer(:north)
+
+        expect(command.travel_seconds).to eq(25)
+        character.update!(passive_skills: {})
+
+        post_offer(command)
+
+        moving_command = command.reload
+        expect(moving_command).to be_moving
+        expect(moving_command.ends_at - moving_command.started_at).to eq(25.seconds)
       end
 
       it "redirects to world path with moving notice on HTML format" do
@@ -830,6 +855,25 @@ RSpec.describe "World", type: :request do
         post enter_building_world_path,
           params: {building_id: building.id, action_key: offer.action_key}
 
+        expect(offer.reload).to be_completed
+      end
+
+      it "lets a same-cell hostile NPC interrupt entry without moving the character" do
+        create(:tile_npc, :multi_npc_encounter, zone: source_zone.name, x: 5, y: 5)
+        offer = world_action_offer_for(
+          character: character,
+          position: position,
+          action_type: :enter_building,
+          target: building
+        )
+
+        expect {
+          post enter_building_world_path,
+            params: {building_id: building.id, action_key: offer.action_key}
+        }.to change(ArenaMatch, :count).by(1)
+
+        expect(response).to redirect_to(arena_match_path(ArenaMatch.last))
+        expect(position.reload).to have_attributes(zone: source_zone, x: 5, y: 5)
         expect(offer.reload).to be_completed
       end
 

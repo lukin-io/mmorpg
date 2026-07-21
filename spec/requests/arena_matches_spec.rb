@@ -194,6 +194,52 @@ RSpec.describe "ArenaMatches", type: :request do
         expect(response).to have_http_status(:success)
           .or have_http_status(:unprocessable_entity)
       end
+
+      it "records surrender through the shared combat action" do
+        post action_arena_match_path(live_match),
+          params: {action_type: "surrender"},
+          as: :json
+
+        expect(response).to have_http_status(:success)
+        expect(character.reload.current_hp).to eq(0)
+        expect(live_match.reload).to be_completed
+        expect(live_match.winning_team).to eq("b")
+        expect(live_match.arena_participations.find_by(user: user).metadata["surrendered_at"]).to be_present
+      end
+
+      it "redirects a Turbo surrender submission to the result state" do
+        post action_arena_match_path(live_match),
+          params: {action_type: "surrender"},
+          headers: {"Accept" => "text/vnd.turbo-stream.html"}
+
+        expect(response).to have_http_status(:see_other)
+        expect(response).to redirect_to(arena_match_path(live_match))
+      end
+
+      it "targets one repeated NPC template by its participation id" do
+        npc_template = create(:npc_template, name: "Plague Rat")
+        create(:arena_participation, :npc,
+          arena_match: live_match,
+          npc_template: npc_template,
+          team: "b")
+        target = create(:arena_participation, :npc,
+          arena_match: live_match,
+          npc_template: npc_template,
+          team: "b")
+        processor = instance_double(Arena::CombatProcessor)
+        result = Arena::CombatProcessor::Result.new(true, nil, {damage: 1})
+
+        expect(Arena::CombatProcessor).to receive(:new).with(live_match).and_return(processor)
+        expect(processor).to receive(:process_action)
+          .with(character, :attack, target: target)
+          .and_return(result)
+
+        post action_arena_match_path(live_match),
+          params: {action_type: "attack", target_id: "npc-participation-#{target.id}"},
+          as: :json
+
+        expect(response).to have_http_status(:success)
+      end
     end
 
     context "when user is not participant" do
@@ -356,6 +402,37 @@ RSpec.describe "ArenaMatches", type: :request do
       participation = completed_match.arena_participations.find_by(user: user)
       expect(participation.reload.metadata["finished_at"]).to be_present
       expect(character.reload).not_to be_in_combat
+    end
+
+
+    it "returns a completed wilderness fight to its saved inventory context" do
+      completed_match.update!(
+        arena_room: nil,
+        metadata: {
+          "source" => "world_npc",
+          "return_context" => {"name" => "inventory"}
+        }
+      )
+      character.update!(in_combat: true)
+
+      post finish_arena_match_path(completed_match)
+
+      expect(response).to redirect_to(inventory_path)
+      expect(character.reload).not_to be_in_combat
+    end
+
+    it "falls back to world for an invalid persisted wilderness return context" do
+      completed_match.update!(
+        arena_room: nil,
+        metadata: {
+          "source" => "world_npc",
+          "return_context" => {"name" => "https://example.test"}
+        }
+      )
+
+      post finish_arena_match_path(completed_match)
+
+      expect(response).to redirect_to(world_path)
     end
   end
 end
