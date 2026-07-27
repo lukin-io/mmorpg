@@ -20,6 +20,7 @@ presence, turn combat, inventory weight, shops, and social chat.
 | Outdoor NPC/resource capture | Outdoor `Оглядеться` resource search, bot ambush handoff, multi-NPC rat fights, per-NPC loot checks, outdoor return routing |
 | Chat and presence reference | Chat frame, player list, message styles, username actions |
 | Skill and perk reference | Stat allocation, numeric skills, boolean perks, effects |
+| Character-development wiki category | Level-0 starter state, complete level rows `0..27`, XP/fight caps, HP/MP/mass formulas, fatigue thresholds, critical damage, equipment-wear probabilities, profession taxonomy, and explicit formula gaps |
 | Neverlands wiki dungeon page | Dungeon floor objectives, movement resource, hidden rooms, bosses/chests, portal seals, timers, ratings |
 | Neverlands forum dungeon launch post | Original dungeon module structure, party entry, room blockers, dungeon inventory, effects, specialist shop |
 
@@ -72,6 +73,15 @@ differ, prefer the current wiki.
 - The player profile is an in-game surface: vitals, equipment, stats,
   experience, numeric skills, and boolean perks all hang off the active
   character rather than a separate account dashboard.
+- New characters begin at level `0` with the captured `15` stat, `10` combat,
+  `2` peace, and `1` perk pools. Level grants come from the finite source table,
+  not a generic quadratic formula.
+- Wilderness fatigue is a persistent character constraint: a step adds `1..2`,
+  one point recovers every three minutes, and Move/Look/Enter lock at `86%`.
+- Critical hits double damage. Durable equipped items can lose no more than one
+  point per fight using the source's arena/non-arena result probabilities.
+- Profession perks and profession-use counters are their own progression area;
+  they are not ordinary allocatable numeric skills or generic classes.
 - Dungeons are entered from the world, then become a separate room/floor
   exploration mode with party objectives, resource-constrained movement,
   blocking NPCs, hidden-room risk, and source-style PvE combat.

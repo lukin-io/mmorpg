@@ -1,6 +1,71 @@
 require "rails_helper"
 
 RSpec.describe Character, type: :model do
+  describe "Neverlands starter and derived values" do
+    it "loads source-backed starter defaults from the consolidated schema" do
+      character = described_class.new
+
+      expect(character).to have_attributes(
+        level: 0,
+        stat_points_available: 15,
+        combat_skill_points: 10,
+        peace_skill_points: 2,
+        perk_points: 1,
+        current_hp: 5,
+        max_hp: 5,
+        current_mp: 7,
+        max_mp: 7,
+        fatigue_percent: 0,
+        fatigue_updated_at: nil
+      )
+    end
+
+    it "accepts level zero and builds the captured starter pools" do
+      character = create(:character, :neverlands_starter)
+
+      expect(character).to have_attributes(
+        level: 0,
+        stat_points_available: 15,
+        combat_skill_points: 10,
+        peace_skill_points: 2,
+        perk_points: 1,
+        max_hp: 5,
+        max_mp: 7
+      )
+      expect(character.inventory.weight_capacity).to eq(15)
+    end
+
+    it "rejects negative and null levels" do
+      character = build(:character)
+
+      character.level = -1
+      expect(character).not_to be_valid
+      character.level = nil
+      expect(character).not_to be_valid
+    end
+
+    it "derives five HP per Health and seven MP per Knowledge" do
+      character = create(:character, allocated_stats: {"health" => 2, "knowledge" => 3})
+
+      expect(character.derived_base_max_hp).to eq(15)
+      expect(character.derived_base_max_mp).to eq(28)
+    end
+
+    it "derives mass from Strength, Health, and level" do
+      character = create(:character, level: 4, allocated_stats: {"strength" => 2, "health" => 3})
+
+      expect(character.carrying_capacity).to eq((3 * 5) + (4 * 10) + 40)
+    end
+
+    it "applies More Strength as one point per two levels, rounded down" do
+      odd = create(:character, :with_more_strength_perk, level: 5)
+      even = create(:character, :with_more_strength_perk, level: 6)
+
+      expect(odd.stats.get(:strength)).to eq(3)
+      expect(even.stats.get(:strength)).to eq(4)
+    end
+  end
+
   describe "limits" do
     it "prevents creating more than the allowed number of characters" do
       user = create(:user)

@@ -107,6 +107,10 @@ Future local actions must be documented from Neverlands before implementation.
 - Reload during travel resumes the travelling state from server time.
 - The map does not invent passability in the browser.
 - The local player list refreshes after movement completion.
+- A completed wilderness step applies the command's snapshotted `1..2`
+  fatigue gain; one point recovers per complete three-minute interval.
+- Effective fatigue at `86%` or higher suppresses and rejects wilderness Move,
+  Look, and Enter while leaving city node navigation outside that gate.
 - Visible movement targets are exactly the current server offers. The red
   border is an affordance for an offer, not a browser-side reachability rule.
 - The browser may interpolate map position from authoritative movement
@@ -198,6 +202,10 @@ Pipeline for every world map request:
 7. Render only the action offers returned by the server, or hand off to combat
    if the accepted action triggered an ambush.
 
+Before step 5, effective fatigue is derived from the persisted value and its
+recovery anchor. A blocked character still renders the current cell and
+location; it receives no named locked offers and sees the recovery explanation.
+
 The implemented hostile check is also used by the persistent shell's Character
 and Inventory actions. A live fight is reused rather than duplicated. The
 captured Plague Rat anchor authors an encounter size of two, so one materialized
@@ -229,6 +237,10 @@ Action examples:
 | Hidden hostile interruption | tile NPC | shared combat handoff |
 | Enter city/building/dungeon | tile entrance | building or city transition service |
 | Search for resources | current tile template | local-action service or hostile ambush handoff |
+
+Profession outcomes remain owned by `features/professions.md`. The presence of
+`look`, `fis`, `dri`, or `dig` metadata is not permission to invent a yield,
+profession gain, tool rule, or timer.
 
 Validation rules:
 

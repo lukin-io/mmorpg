@@ -730,7 +730,7 @@ RSpec.describe CharactersController, type: :request do
       expect(response.body).to include("Possible new perks:")
       expect(response.body).to include("More Strength")
       expect(response.body).to include("Source #7")
-      expect(response.body).to include("exact gameplay effect is not yet captured")
+      expect(response.body).to include("Adds one effective Strength for every two character levels, rounded down.")
     end
 
     it "requires authentication" do

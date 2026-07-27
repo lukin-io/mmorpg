@@ -3,8 +3,9 @@
 title: City Feature
 description: Implementation handbook for the Neverlands-inspired Forpost node graph, illustrated city navigation, gates, buildings, and persisted interior context.
 status: Fully Implemented
-updated: 2026-07-21
+updated: 2026-07-27
 owners: City world context and city UI
+template: feature-v1
 ---
 
 # City
@@ -143,7 +144,7 @@ Arena and General Shop own their established feature behavior. The City feature 
 
 Every captured building page includes a **City** return link to `/world`. Returning renders the same persisted node.
 
-## 5. Forpost topology
+## 5. Feature topology and authored content
 
 City node identifiers are captured Neverlands keys. The Rails zone names are internal persistence labels; player-facing titles come from catalog metadata.
 
@@ -171,7 +172,7 @@ The directionality above is explicit authored data. Code must not infer a revers
 
 City exit and outdoor entry are two sides of the same authored gate topology. Update both `CityHotspot` seeds and outdoor `TileBuilding` seeds when an observed gate changes.
 
-## 6. City interiors
+## 6. Feature surfaces and contained behavior
 
 ### 6.1 Interaction status
 
@@ -257,7 +258,7 @@ Although each city node is persisted as a `Zone`, the City feature is not a loca
 | `exit` | `enter_zone` | `exit_city` | Persist explicit outdoor zone and gate coordinate. |
 | `building` | `open_feature` | `enter_city_building` | Redirect to allowlisted route without changing position. |
 
-`required_level` is currently used by the Arena entry (level 23); other seeded hotspots require level 1. Inactive, characterless, or under-level hotspots do not receive offers and render their block reason.
+`required_level` is currently used by the Arena entry (level 23). Ordinary district, building, and gate hotspots have no invented level gate; they store `0` so the Wiki-backed level-zero starter can navigate Forpost. Inactive, characterless, or under-level hotspots do not receive offers and render their block reason.
 
 ## 8. Runtime architecture
 
@@ -303,7 +304,7 @@ The offer is completed on success or failed on service failure. A page refresh r
 
 Typing a valid building URL while standing in another node or outdoors redirects to World. A successfully opened interior records an allowlisted `city_building` resume context.
 
-## 9. HTTP contract
+## 9. HTTP and Turbo contract
 
 | Method and path | Purpose | State change | Failure behavior |
 |---|---|---|---|
@@ -315,7 +316,7 @@ Typing a valid building URL while standing in another node or outdoors redirects
 
 There is no public City JSON API. Swagger/rswag and blueprint documentation are intentionally outside this authenticated HTML/Turbo feature.
 
-## 10. Stimulus and CSS ownership
+## 10. Client-side and CSS ownership
 
 `nl_city_map_controller.js` owns only tooltip presentation:
 
@@ -344,7 +345,7 @@ On login:
 
 Saved routes are generated from allowlisted names and normalized parameters. Arbitrary persisted/browser URLs are never followed.
 
-## 12. Authorization and trust boundaries
+## 12. Authorization, trust boundaries, and concurrency
 
 - Devise authentication protects city and building routes.
 - `CurrentCharacterContext` scopes all behavior to the signed-in user's active playable character.
@@ -380,6 +381,7 @@ Saved routes are generated from allowlisted names and normalized parameters. Arb
 - The player can navigate all nine seeded nodes through exactly the 22 authored directed links.
 - The city uses `city.png` as the navigation surface with cataloged per-node crops and hit regions.
 - Pointer and keyboard users can activate every server-offered building polygon.
+- A level-zero starter can use ordinary district, building, and gate hotspots; the Arena remains unavailable until its observed level-23 requirement is met.
 - Central Square exposes Arena, Residential Quarter, Trading Quarter, and West Gate according to the catalog and level gate.
 - Trading Quarter exposes the five documented building destinations and its two district links.
 - Residential Quarter exposes Hospital and its three district links.
@@ -519,6 +521,7 @@ The Shop and Arena internals remain owned by their feature contracts and specs. 
 
 - `db/seeds.rb`
 - `db/schema.rb`
+- `db/migrate/20251218132823_create_city_hotspots.rb`
 
 ### Factories
 
@@ -580,3 +583,4 @@ Before extending City:
 |---|---|
 | 2026-07-21 | Created the implementation handbook for the shipped Forpost node graph, city scene, gates, interiors, resume behavior, and coverage. |
 | 2026-07-21 | Added reciprocal ownership and handoff references for World, Game Shell, and Shop and Economy. |
+| 2026-07-27 | Adopted the canonical `feature-v1` structure and aligned ordinary city navigation with the source-backed level-zero starter while retaining the observed level-23 Arena gate. |

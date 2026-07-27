@@ -27,7 +27,7 @@ RSpec.describe Game::Movement::CompleteMove do
   end
 
   it "finalizes due movement into the authoritative character position" do
-    command = moving_command
+    command = moving_command(metadata: {"source" => "spec", "fatigue_gain" => 2})
 
     described_class.new(character:).call
 
@@ -38,6 +38,8 @@ RSpec.describe Game::Movement::CompleteMove do
     expect(command.completed_at).to be_present
     expect(command.processed_at).to be_present
     expect(command.metadata).to include("source" => "spec")
+    expect(character.reload.fatigue_percent).to eq(2)
+    expect(character.fatigue_updated_at).to eq(command.ends_at)
   end
 
   it "leaves movement active until the travel timer is due" do
@@ -69,6 +71,7 @@ RSpec.describe Game::Movement::CompleteMove do
     expect(command.reload).to be_failed
     expect(command.error_message).to eq("Tile is not passable")
     expect([position.reload.x, position.y]).to eq([5, 5])
+    expect(character.reload.fatigue_percent).to eq(0)
   end
 
   it "does not complete another character's movement" do

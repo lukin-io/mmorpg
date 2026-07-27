@@ -8,6 +8,10 @@ FactoryBot.define do
     combat_skill_points { 0 }
     peace_skill_points { 0 }
     perk_points { 0 }
+    current_hp { 100 }
+    max_hp { 100 }
+    current_mp { 50 }
+    max_mp { 50 }
     allocated_stats { {} }
     perks { {} }
     alignment { Character::ALIGNMENTS[:none] }
@@ -30,6 +34,28 @@ FactoryBot.define do
 
     trait :master_wanderer do
       passive_skills { {"wanderer" => 100} }
+    end
+
+    trait :neverlands_starter do
+      level { 0 }
+      stat_points_available { 15 }
+      combat_skill_points { 10 }
+      peace_skill_points { 2 }
+      perk_points { 1 }
+      current_hp { 5 }
+      max_hp { 5 }
+      current_mp { 7 }
+      max_mp { 7 }
+    end
+
+    trait :fatigued do
+      fatigue_percent { 50 }
+      fatigue_updated_at { Time.current }
+    end
+
+    trait :fatigue_blocked do
+      fatigue_percent { 86 }
+      fatigue_updated_at { Time.current }
     end
 
     trait :without_perk_points do

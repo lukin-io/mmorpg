@@ -681,7 +681,7 @@ Game::World::CityCatalog::NODES.each do |node_key, node|
       action_type: "enter_zone",
       destination_zone: city_zones_by_key[destination_key],
       action_params: {"destination_x" => 0, "destination_y" => 0},
-      required_level: 1
+      required_level: 0
     }
   end
 
@@ -694,7 +694,7 @@ Game::World::CityCatalog::NODES.each do |node_key, node|
       action_type: "open_feature",
       destination_zone: nil,
       action_params: {"feature" => feature_key},
-      required_level: feature.fetch("required_level", 1)
+      required_level: feature.fetch("required_level", 0)
     }
   end
 
@@ -714,7 +714,7 @@ Game::World::CityCatalog::NODES.each do |node_key, node|
         "destination_y" => local_y,
         "source_coordinates" => gate["source_coordinates"]
       },
-      required_level: 1
+      required_level: 0
     }
   end
 end
@@ -735,7 +735,7 @@ seeded_hotspot_ids = city_hotspots.each_with_index.filter_map do |attrs, index|
     action_type: attrs[:action_type],
     destination_zone: attrs[:destination_zone],
     action_params: attrs[:action_params] || {},
-    required_level: attrs[:required_level] || 1,
+    required_level: attrs[:required_level] || 0,
     z_index: index,
     active: true
   )

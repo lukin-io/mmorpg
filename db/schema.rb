@@ -129,28 +129,29 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_21_090000) do
   create_table "characters", force: :cascade do |t|
     t.string "alignment", default: "none", null: false
     t.jsonb "allocated_stats", default: {}, null: false
-    t.integer "combat_skill_points", default: 0, null: false
+    t.integer "combat_skill_points", default: 10, null: false
     t.datetime "created_at", null: false
-    t.integer "current_hp", default: 100, null: false
-    t.integer "current_mp", default: 50, null: false
+    t.integer "current_hp", default: 5, null: false
+    t.integer "current_mp", default: 7, null: false
     t.bigint "experience", default: 0, null: false
     t.integer "fatigue_percent", default: 0, null: false
+    t.datetime "fatigue_updated_at"
     t.integer "hp_regen_interval", default: 300, null: false
     t.boolean "in_combat", default: false, null: false
     t.datetime "last_combat_at"
     t.datetime "last_level_up_at"
     t.datetime "last_regen_tick_at"
-    t.integer "level", default: 1, null: false
-    t.integer "max_hp", default: 100, null: false
-    t.integer "max_mp", default: 50, null: false
+    t.integer "level", default: 0, null: false
+    t.integer "max_hp", default: 5, null: false
+    t.integer "max_mp", default: 7, null: false
     t.jsonb "metadata", default: {}, null: false
     t.integer "mp_regen_interval", default: 600, null: false
     t.string "name", null: false
     t.jsonb "passive_skills", default: {}, null: false
-    t.integer "peace_skill_points", default: 0, null: false
-    t.integer "perk_points", default: 0, null: false
+    t.integer "peace_skill_points", default: 2, null: false
+    t.integer "perk_points", default: 1, null: false
     t.jsonb "perks", default: {}, null: false
-    t.integer "stat_points_available", default: 0, null: false
+    t.integer "stat_points_available", default: 15, null: false
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
     t.index ["combat_skill_points"], name: "index_characters_on_combat_skill_points", where: "(combat_skill_points > 0)"
@@ -211,7 +212,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_21_090000) do
     t.string "name", null: false
     t.integer "position_x", null: false
     t.integer "position_y", null: false
-    t.integer "required_level", default: 1
+    t.integer "required_level", default: 0
     t.datetime "updated_at", null: false
     t.integer "width"
     t.integer "z_index", default: 0

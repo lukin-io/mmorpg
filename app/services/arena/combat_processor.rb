@@ -203,34 +203,38 @@ module Arena
     # @param reason [Symbol] reason for ending (:normal, :timeout, :forfeit)
     # @return [Boolean] true if match ended successfully
     def end_match(winning_team = nil, reason: :normal)
-      return false unless match.live?
+      ApplicationRecord.transaction do
+        match.lock!
+        return false unless match.live?
 
-      winning_team ||= determine_winner
+        winning_team ||= determine_winner
 
-      match.update!(
-        status: :completed,
-        ended_at: Time.current,
-        winning_team: winning_team,
-        timed_out: reason == :timeout
-      )
+        match.update!(
+          status: :completed,
+          ended_at: Time.current,
+          winning_team: winning_team,
+          timed_out: reason == :timeout
+        )
 
-      finalize_participations(winning_team)
+        finalize_participations(winning_team)
+        finalize_rewards!(winning_team)
 
-      # End match messages
-      case reason
-      when :timeout
-        log_entry("timeout", nil, "Fight ended by timeout")
-      when :forfeit
-        log_entry("system", nil, "Fight ended by surrender")
-      else
-        if winning_team
-          if npc_fight?
-            winner_name = match.arena_participations.find_by(team: winning_team)&.participant_name
-            log_entry("victory", nil, "Victory: #{winner_name}.") if winner_name.present?
-          end
-          log_entry("victory", nil, "Fight finished. Winner: side #{winning_team.upcase}")
+        # End match messages
+        case reason
+        when :timeout
+          log_entry("timeout", nil, "Fight ended by timeout")
+        when :forfeit
+          log_entry("system", nil, "Fight ended by surrender")
         else
-          log_entry("draw", nil, "Fight ended in a draw")
+          if winning_team
+            if npc_fight?
+              winner_name = match.arena_participations.find_by(team: winning_team)&.participant_name
+              log_entry("victory", nil, "Victory: #{winner_name}.") if winner_name.present?
+            end
+            log_entry("victory", nil, "Fight finished. Winner: side #{winning_team.upcase}")
+          else
+            log_entry("draw", nil, "Fight ended in a draw")
+          end
         end
       end
 
@@ -999,6 +1003,48 @@ module Arena
           )
         end
       end
+    end
+
+    def finalize_rewards!(winning_team)
+      return if match.metadata.to_h["rewards_processed_at"].present?
+
+      xp_result = if npc_fight?
+        Arena::NpcExperienceAwarder.new(match:, winning_team:).call
+      end
+      wear_results = Arena::EquipmentWearResolver.new(match:, rng:).call
+
+      if xp_result&.experience_awarded.to_i.positive?
+        winner = Character.find(xp_result.character_id)
+        log_entry("system", winner, "#{winner.name} gains #{xp_result.experience_awarded} experience.")
+      end
+
+      wear_results.each do |result|
+        next if result.item_ids.empty?
+
+        character = Character.find(result.character_id)
+        log_entry("system", character, "#{character.name}'s equipment loses durability.")
+      end
+
+      reward_metadata = {
+        "experience" => xp_result && {
+          "character_id" => xp_result.character_id,
+          "amount" => xp_result.experience_awarded,
+          "levels_gained" => xp_result.levels_gained,
+          "skipped_reason" => xp_result.skipped_reason
+        },
+        "equipment_wear" => wear_results.map do |result|
+          {
+            "character_id" => result.character_id,
+            "chance_percent" => result.chance_percent,
+            "item_ids" => result.item_ids
+          }
+        end
+      }.compact
+
+      match.update!(metadata: match.metadata.to_h.merge(
+        "rewards_processed_at" => Time.current.iso8601,
+        "rewards" => reward_metadata
+      ))
     end
 
     def log_entry(entry_type, actor, description)

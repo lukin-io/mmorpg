@@ -19,11 +19,11 @@ The older `Implemented MVP` and `Partially Implemented` metadata values are tran
 | `FEATURE_TEMPLATE.md` | Canonical structure for every new feature implementation handbook. Copy it; do not write a new format from scratch. |
 | `world.md` | Completed handbook for the open world, sparse cells, movement, outdoor actions, gates, NPC handoff, and exact-location persistence. |
 | `city.md` | Completed handbook for the Forpost node graph, illustrated navigation, gates, buildings, captured interiors, and resume behavior. |
-| `character_progression.md` | Transitional handbook for Neverlands-based primary stats, numeric skills, boolean perks, allocation pools, and public progression display; it is not green until its declared boundary is fully implemented. |
+| `character_progression.md` | Completed handbook for level-0 startup, source-table XP/grants, primary stats and exact derived values, numeric skills, the launch perk subset, locked allocation, and public progression display. |
 | `shop_economy.md` | Transitional handbook for the City Shop, catalog modes, NV wallet, buying, inventory selling, stock, and transaction persistence; it is not green until its declared boundary is fully implemented. |
 | `game_shell.md` | Transitional handbook for the persistent game frame, compact vitals, exact-cell presence, global chat, and shell preferences; it is not green until its declared boundary is fully implemented. |
 
-`world.md` is the canonical `feature-v1` example. `city.md` remains a valid pre-template handbook and should migrate to `feature-v1` on its next material behavior update. The three transitional handbooks use the canonical layout but are not completion examples while their status remains non-green. `FEATURE_TEMPLATE.md` defines the required layout for subsequent features.
+`world.md` and `city.md` are the canonical area-level `feature-v1` examples. `character_progression.md` is a green example for a bounded feature whose broader source taxonomy remains explicitly deferred. The remaining transitional handbooks use the canonical layout but are not completion examples while their status remains non-green. `FEATURE_TEMPLATE.md` defines the required layout for subsequent features.
 
 ## Creating a feature document
 
@@ -63,7 +63,7 @@ bin/feature-doc-audit
 bin/verify docs
 ```
 
-The audit validates required metadata, canonical section ordering for `template: feature-v1`, the required cross-feature relationship subsection, reciprocal feature references, unresolved template content, trailing whitespace, responsible-file existence, duplicate feature titles, and the green completion status. Transitional statuses emit a warning. `city.md` predates the canonical metadata and currently passes with a migration warning; migrate it to `feature-v1` on its next material behavior update.
+The audit validates required metadata, canonical section ordering for `template: feature-v1`, the required cross-feature relationship subsection, reciprocal feature references, unresolved template content, trailing whitespace, responsible-file existence, duplicate feature titles, and the green completion status. Transitional statuses emit a warning.
 
 Use `--strict` only when intentionally checking a pre-template document against the canonical 18-section layout:
 

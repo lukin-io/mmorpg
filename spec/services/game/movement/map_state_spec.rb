@@ -67,6 +67,16 @@ RSpec.describe Game::Movement::MapState do
     expect(MovementCommand.offered.where(character:)).to be_empty
   end
 
+  it "does not issue destinations at the fatigue action-lock boundary" do
+    character.update!(fatigue_percent: 86, fatigue_updated_at: Time.current)
+
+    state = described_class.new(character:).call
+
+    expect(state.destinations).to be_empty
+    expect(state.locked_reason).to eq(:fatigued)
+    expect(MovementCommand.offered.where(character:)).to be_empty
+  end
+
   it "finalizes due movement before building the next state" do
     command = create(
       :movement_command,

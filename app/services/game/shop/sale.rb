@@ -17,6 +17,7 @@ module Game
         return failure("Invalid quantity.") unless quantity.positive?
         return failure("Not enough items in stack.") if quantity > inventory_item.quantity.to_i
         return failure("This item cannot be sold.") if inventory_item.protected_from_discard?
+        return failure("Broken items cannot be sold.") if inventory_item.broken?
         return failure("This item cannot be sold.") unless unit_price.positive?
 
         ApplicationRecord.transaction do

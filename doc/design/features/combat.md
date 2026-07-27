@@ -395,6 +395,21 @@ NPC drops are owned by the NPC loot design, but combat owns the timing:
 5. require the finish-result action before returning the player to arena, city,
    world, or dungeon context.
 
+The 2026-07-27 wiki audit closes three reward/result constants:
+
+- a critical hit multiplies the resolved damage by `2.0`;
+- configured defeated-NPC experience is summed for a solo winning player and
+  capped by the winner's current level-table `fight_experience_cap`;
+- equipment wear is evaluated once at fight finalization using arena
+  `victory/draw/defeat = 0/0/1%` and other-fight `2/30/50%`, with at most one
+  durability point removed per equipped item.
+
+Fight finalization locks the match and records a processed marker, so a retry
+cannot grant experience/NV or roll equipment wear twice. A level-up reached by
+the award uses the source-backed grant catalog. Group PvE experience remains
+`[EVIDENCE]`: when more than one player is on the winning side, the current
+service deliberately awards no invented distribution.
+
 Training mannequins should follow the same rule. If the source shows a
 mannequin dropping wood chips, the fight result should treat wood chips as a
 normal NPC material drop, not as a special arena reward.
@@ -574,6 +589,12 @@ restoration, direct spell damage outside captured attack rows, area damage,
 chain damage, and persisted status effects require dedicated Neverlands capture
 before implementation.
 
+The `2.0` critical damage multiplier is source-backed. Critical probability,
+AP growth, weapon-mastery AP reduction/damage gain, high-fatigue combat
+penalty, observation/drop curve, armor coefficients, and resistance
+coefficients remain separate `[EVIDENCE]` items unless a controlled live or
+complete wiki formula supplies them.
+
 Remaining source-capture work is tuning: more live Neverlands fights are needed
 to calibrate hidden item-family coefficients and compare local miss, dodge,
 block, magic, status, and player/team fight constants against external
@@ -718,6 +739,8 @@ Core fight shapes:
 - `features/items_inventory_equipment.md` provides weapon/armor stats and item
   requirements.
 - `features/character_vitals.md` owns HP/MP persistence.
+- `features/professions.md` remains outside combat until a source-backed
+  profession activity explicitly hands off to a fight.
 
 ## Out Of Scope
 

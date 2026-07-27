@@ -23,5 +23,9 @@ FactoryBot.define do
       slot { "chest" }
       stat_modifiers { {"defense" => 10} }
     end
+
+    trait :durable do
+      durability_max { 10 }
+    end
   end
 end

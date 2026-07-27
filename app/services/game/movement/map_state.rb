@@ -36,6 +36,10 @@ module Game
         return Result.new(position:, active_command:, destinations: [], locked_reason: :moving) if active_command
 
         cancel_open_offers!
+        if Characters::FatigueService.new(character:).outdoor_actions_blocked?
+          return Result.new(position:, active_command: nil, destinations: [], locked_reason: :fatigued)
+        end
+
         destinations = build_destination_offers(position)
         Result.new(position:, active_command: nil, destinations:, locked_reason: nil)
       end

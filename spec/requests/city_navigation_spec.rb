@@ -57,6 +57,18 @@ RSpec.describe "City navigation", type: :request do
     expect(MovementCommand.where(character:)).to be_empty
   end
 
+  it "offers ordinary navigation but not the level-gated Arena to a level-zero starter" do
+    character.update!(level: 0)
+
+    get world_path
+
+    expect(response).to have_http_status(:success)
+    expect(WorldActionOffer.offered.where(character:, target: to_trading)).to exist
+    expect(WorldActionOffer.offered.where(character:, target: west_gate)).to exist
+    expect(WorldActionOffer.offered.where(character:, target: arena)).not_to exist
+    expect(response.body).to include("Arena — Requires level 23.")
+  end
+
   it "moves immediately to the selected city node and completes its offer" do
     get world_path
     offer = WorldActionOffer.offered.find_by!(character:, target: to_trading)

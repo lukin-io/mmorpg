@@ -34,7 +34,7 @@ module Game
           name:,
           source_name:,
           category:,
-          description: "Neverlands boolean perk ##{source_id}; exact gameplay effect is not yet captured."
+          description: "Adds one effective Strength for every two character levels, rounded down."
         }
       end.freeze
 

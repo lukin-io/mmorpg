@@ -28,6 +28,14 @@ RSpec.describe "world/_actions.html.erb", type: :view do
     expect(rendered).not_to have_css(".movement-cooldown")
   end
 
+  it "explains the Neverlands wilderness fatigue lock" do
+    assign(:movement_state, OpenStruct.new(locked_reason: :fatigued))
+
+    render partial: "world/actions", locals: {available_actions: [], position:}
+
+    expect(rendered).to have_content("Move, Look, and Enter are unavailable")
+  end
+
   it "does not reveal the hidden source-backed NPC encounter" do
     render partial: "world/actions", locals: {
       available_actions: [

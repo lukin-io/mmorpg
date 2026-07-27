@@ -9,8 +9,11 @@ module Game
       end
 
       def call
-        due_commands.each do |command|
-          complete_command(command)
+        character.with_lock do
+          character.reload
+          due_commands.each do |command|
+            complete_command(command)
+          end
         end
       end
 
@@ -56,6 +59,14 @@ module Game
             last_action_at: command.ends_at || now,
             last_turn_number: position.last_turn_number + 1
           )
+
+          fatigue_gain = command.metadata.to_h["fatigue_gain"].to_i
+          if fatigue_gain.positive?
+            Characters::FatigueService.new(character:).increase!(
+              amount: fatigue_gain,
+              at: command.ends_at || now
+            )
+          end
 
           command.update!(
             status: :completed,

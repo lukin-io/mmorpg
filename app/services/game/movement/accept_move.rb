@@ -6,43 +6,55 @@ module Game
     class AcceptMove
       Result = Struct.new(:command, :position, keyword_init: true)
 
-      def initialize(character:, action_key: nil, target_x: nil, target_y: nil, direction: nil, respawn_service: nil)
+      def initialize(character:, action_key: nil, target_x: nil, target_y: nil, direction: nil, respawn_service: nil, rng: Random.new)
         @character = character
         @action_key = action_key.presence
         @target_x = target_x.presence&.to_i
         @target_y = target_y.presence&.to_i
         @direction = direction.presence&.to_sym
         @respawn_service = respawn_service || Game::Movement::RespawnService.new(character:)
+        @rng = rng
       end
 
       def call
         Game::Movement::CompleteMove.new(character:).call
-        position = respawn_service.ensure_position!.reload
-        ensure_not_already_moving!(position)
+        character.with_lock do
+          character.reload
+          position = respawn_service.ensure_position!.reload
+          ensure_not_already_moving!(position)
+          ensure_not_fatigued!
 
-        command = find_offer!(position)
-        validate_offer!(command, position)
+          command = find_offer!(position)
+          validate_offer!(command, position)
 
-        command.with_lock do
-          command.reload
-          raise violation("Movement offer is no longer available") unless command.offered?
+          command.with_lock do
+            command.reload
+            raise violation("Movement offer is no longer available") unless command.offered?
 
-          now = Time.current
-          command.update!(
-            status: :moving,
-            started_at: now,
-            ends_at: now + command.travel_seconds.seconds,
-            error_message: nil
-          )
+            now = Time.current
+            command.update!(
+              status: :moving,
+              started_at: now,
+              ends_at: now + command.travel_seconds.seconds,
+              error_message: nil,
+              metadata: command.metadata.to_h.merge("fatigue_gain" => rng.rand(1..2))
+            )
+          end
+          cancel_sibling_offers!(command)
+
+          Result.new(command:, position:)
         end
-        cancel_sibling_offers!(command)
-
-        Result.new(command:, position:)
       end
 
       private
 
-      attr_reader :character, :action_key, :target_x, :target_y, :direction, :respawn_service
+      attr_reader :character, :action_key, :target_x, :target_y, :direction, :respawn_service, :rng
+
+      def ensure_not_fatigued!
+        return unless Characters::FatigueService.new(character:).outdoor_actions_blocked?
+
+        raise violation("Too fatigued to move")
+      end
 
       def ensure_not_already_moving!(position)
         return unless MovementCommand.moving.where(character:, zone: position.zone).exists?

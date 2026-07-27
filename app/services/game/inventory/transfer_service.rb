@@ -114,7 +114,7 @@ module Game
         source_inventory = item.inventory
         delta_weight = item.weight.to_i * quantity
 
-        raise CapacityError, "Recipient inventory is overloaded." if recipient_inventory.current_weight.to_i + delta_weight > recipient_inventory.weight_capacity.to_i
+        raise CapacityError, "Recipient inventory is overloaded." if recipient_inventory.current_weight.to_i + delta_weight > recipient_inventory.max_weight.to_i
 
         destination_stack = find_destination_stack(recipient_inventory, item, quantity)
         needs_new_slot = destination_stack.nil?

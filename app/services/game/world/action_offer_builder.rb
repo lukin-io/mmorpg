@@ -38,6 +38,7 @@ module Game
       def building_offer
         building = tile_state.building
         return unless building&.can_enter?(character)
+        return if fatigue_locked?("enter_building")
 
         create_offer(
           :enter_building,
@@ -59,6 +60,7 @@ module Game
 
           world_action_type = MapTileTemplate.world_action_type_for(local_action_type)
           next unless world_action_type
+          next if fatigue_locked?(world_action_type)
 
           create_offer(
             world_action_type,
@@ -85,6 +87,13 @@ module Game
           expires_at: WorldActionOffer::OFFER_TTL.from_now,
           metadata:
         )
+      end
+
+      def fatigue_locked?(action_type)
+        return false unless position.zone.outdoor?
+        return false unless AcceptAction::FATIGUE_LOCKED_ACTIONS.include?(action_type.to_s)
+
+        Characters::FatigueService.new(character:).outdoor_actions_blocked?
       end
     end
   end

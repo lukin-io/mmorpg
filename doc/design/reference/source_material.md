@@ -24,10 +24,11 @@ should be removed after any valid rule is promoted into `doc/design/`.
 
 Current wiki references:
 
-- `https://wiki.neverlands.ru/wiki/Neverlands` confirms world geography includes
+- [Neverlands Wiki main page](http://wiki.neverlands.ru/wiki/%D0%97%D0%B0%D0%B3%D0%BB%D0%B0%D0%B2%D0%BD%D0%B0%D1%8F_%D1%81%D1%82%D1%80%D0%B0%D0%BD%D0%B8%D1%86%D0%B0) is the general discovery entry point for historical source material.
+- `http://wiki.neverlands.ru/wiki/Neverlands` confirms world geography includes
   cities, villages, castles, forts, unusual locations, and several transport
   forms.
-- `https://wiki.neverlands.ru/wiki/Таблица_чертежей_проф.инвентаря` confirms
+- `http://wiki.neverlands.ru/wiki/Таблица_чертежей_проф.инвентаря` confirms
   fishing and herbalism use profession equipment and skill requirements. It
   does not define the live cell-action result protocol, so those outcome rules
   still require authenticated capture.

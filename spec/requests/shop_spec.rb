@@ -142,6 +142,18 @@ RSpec.describe "Shop", type: :request do
       expect(response).to redirect_to(shop_path(mode: "sell"))
       expect(flash[:alert]).to include("cannot be sold")
     end
+
+    it "rejects an unequipped item at zero durability" do
+      inventory_item.update!(properties: {"current_durability" => 0, "max_durability" => 12})
+
+      expect {
+        post sell_shop_path, params: {item_id: inventory_item.id, quantity: 1}
+      }.not_to change { wallet.reload.nv_balance }
+
+      expect(inventory_item.reload.quantity).to eq(2)
+      expect(response).to redirect_to(shop_path(mode: "sell"))
+      expect(flash[:alert]).to include("Broken items")
+    end
   end
 
   context "outside a city shop" do

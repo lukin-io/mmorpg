@@ -49,6 +49,9 @@ arrives at the new node or building.
 - Character position finalizes when travel completes.
 - Reload during travel resumes the remaining countdown.
 - Completion refreshes available actions and local presence.
+- A completed wilderness step applies its snapshotted `1..2` fatigue gain.
+- At effective fatigue `86%` or higher, Move, Look, and Enter are unavailable
+  until natural recovery lowers the value.
 - Passability and travel time are server rules, not browser rules.
 - Client animation is linear presentation only; it never advances the
   finalized coordinate on its own.
@@ -130,10 +133,27 @@ This produces whole-second bands: `0..19 => 30`, `20..39 => 29`, `40..59 =>
 when the server creates the movement offer and remains fixed on that command
 through acceptance, reload, and completion.
 
-No terrain, diagonal, encumbrance, fatigue, effect, or profession timing
-modifier is implemented. Terrain labels may identify a tile, but they must not
+No terrain, diagonal, encumbrance, fatigue, effect, or profession **timing**
+modifier is implemented. Fatigue gates the named outdoor actions but does not
+change their duration. Terrain labels may identify a tile, but they must not
 alter movement duration by themselves. Additional modifiers require dedicated
 source observations that isolate their inputs.
+
+## Wilderness Fatigue
+
+The Neverlands wiki supplies an exact MVP-safe fatigue slice:
+
+- accepting a move snapshots a random gain of `1` or `2` on the movement
+  command so retry/reload cannot reroll it;
+- successful completion applies that gain at the authoritative movement end;
+- one fatigue point recovers for each complete three-minute interval;
+- the effective value is clamped to `0..100`;
+- at `86` or above, the server issues no wilderness movement offers and no
+  Enter/Look action offers, and acceptance rechecks the same rule;
+- city node transitions are not wilderness actions and remain available.
+
+The wiki also says high fatigue affects combat, but the penalty formula is not
+complete enough to implement. Combat must not guess it.
 
 ## State Concepts
 
@@ -143,6 +163,8 @@ source observations that isolate their inputs.
 - movement start time;
 - movement end time;
 - remaining seconds;
+- persisted fatigue and its recovery anchor;
+- snapshotted per-command fatigue gain;
 - reachable destination offers;
 - contextual action offers;
 - locked reason.
@@ -154,6 +176,8 @@ source observations that isolate their inputs.
 - `features/progression_stats_skills.md` can reduce travel time through skills.
 - `features/items_inventory_equipment.md` can increase travel time through
   carried weight.
+- `features/professions.md` may consume an eligible cell action later, but it
+  must reuse the same server-authored fatigue/action boundary.
 
 ## Rails-Friendly Direction
 

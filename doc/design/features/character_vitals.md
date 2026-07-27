@@ -20,6 +20,18 @@ ins_HP(currentHp, maxHp, currentMp, maxMp, hpFullRegenTicks, mpFullRegenTicks)
 The client redraws the bars every second, but the durable values still belong to
 the server-side character.
 
+The 2026-07-27 wiki audit adds two exact base-maximum rules that agree with the
+level-0 live profile:
+
+```text
+base_max_hp = saved Health × 5
+base_max_mp = saved Knowledge × 7
+```
+
+The observed base stats of `1` therefore produce starter maxima of `5 HP` and
+`7 MP`. Equipment effects can add separate effective maxima. Saving Health or
+Knowledge recalculates the base maximum without refilling current HP/MP.
+
 ## Player Experience
 
 The player sees:
@@ -43,15 +55,18 @@ The player sees:
 
 ## Baseline Regeneration
 
-Initial Neverlands-based baseline:
+The controlled starter capture provided this script state:
 
 ```text
-hp_full_regen_ticks = 1119
+hp_full_regen_ticks = 1500
 mp_full_regen_ticks = 9000
 ```
 
-These values can be tuned by character stats, effects, equipment, or future
-source-backed rules after they are captured.
+Other live profiles have produced different timing values. The wiki confirms
+that Self-Healing and Fast Mana Regeneration improve recovery, but the complete
+timer/multiplier formulas are still `[EVIDENCE]`. Do not treat the captured
+starter numbers or the current local regeneration fallback as universal
+Neverlands formulas.
 
 ## State Concepts
 
@@ -69,6 +84,8 @@ source-backed rules after they are captured.
 - `features/combat.md` consumes and mutates HP/MP.
 - `features/progression_stats_skills.md` defines stat-derived max values.
 - `features/items_inventory_equipment.md` can modify max values or regen.
+- `features/professions.md` must not introduce recovery effects from a
+  profession label without a separate source formula.
 
 ## Out Of Scope
 

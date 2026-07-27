@@ -76,6 +76,13 @@ Design rules:
   chips is an NPC loot-table result, not a generic arena payout;
 - NPC templates can share a loot table, but individual spawned NPCs can also
   override it when a source-backed capture proves that behavior.
+- an NPC template can provide an explicit XP reward independently from its
+  loot table;
+- a solo winning player receives the sum of configured defeated-enemy NPC XP,
+  capped by the current level's source table; multi-player distribution is not
+  implemented until the Neverlands group formula is captured;
+- Observation is known to affect drop probability, but its nonlinear formula
+  is not captured, so explicit loot-table rolls currently remain unchanged.
 
 The mannequin/wood-chips case belongs here: `Манекен` is an arena training NPC,
 and wood chips are a low-value material drop from that NPC role. The May 19
@@ -117,6 +124,8 @@ Implemented MVP boundary:
 - the captured Plague Rat cell is represented by one persistent `TileNpc` encounter anchor with explicit `encounter_count: 2` source metadata;
 - starting the encounter creates two separate `ArenaParticipation` rows on the NPC side, even though both use the same `NpcTemplate`;
 - each living NPC acts, each defeated NPC is searched/logged separately, and the anchor is marked defeated only after all encounter participants fall;
+- solo victory awards configured NPC experience through the shared idempotent
+  fight-finalization path and respects the level-specific per-fight cap;
 - offered movement, entrance, local observation, Character, and Inventory wilderness actions use one hostile-interruption query before their intended transition completes;
 - no outdoor NPC action offer, marker, name, or manual attack endpoint is
   rendered;
@@ -161,3 +170,7 @@ design an accessible modal shell later, but not enough to rebuild quest rules.
 - `areas/cities_and_buildings.md`: building entry points.
 - `areas/arena.md`: arena training fights.
 - `features/combat.md`: hostile and training combat.
+- `features/progression_stats_skills.md`: owns the level table, per-fight XP
+  cap, grants, and deliberate group-XP evidence boundary.
+- `features/professions.md`: owns future profession-gated NPC/resource activity,
+  not hostile combat templates.

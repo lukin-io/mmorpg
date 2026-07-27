@@ -80,6 +80,7 @@ discard fractional balances.
   inventory capacity. Equipment/use requirements are still displayed but are
   not automatically purchase blockers.
 - Selling checks ownership and whether the item can be sold.
+- Selling rejects zero-durability items even when they are not equipped.
 - Shop actions refresh the visible item list and current action keys.
 - Shop tabs are buy goods, licenses, sell goods, and novice goods.
 - Buy/sell/novice modes use category filters plus level and price filters.
@@ -95,6 +96,9 @@ discard fractional balances.
 - Out-of-stock rows remain visible and show no buy action.
 - Money or carry-capacity failures remain visible and show the unavailable
   reason `Недостаточно средств или превышена допустимая масса`.
+- Carry capacity is the wiki-backed derived character mass maximum:
+  `effective Strength × 5 + effective Health × 10 + level × 10`; the Shop does
+  not trust a displayed or submitted capacity.
 - Sell rows are player inventory rows inside the shop tab. They show the
   item's base shop price, current durability, shop stock context, and a
   server-authorized sell button.
@@ -142,6 +146,8 @@ Deferred source-backed concepts:
 - `features/items_inventory_equipment.md`: all goods are inventory items.
 - `features/social_chat_presence.md`: future direct trade capture should account
   for player identity and local presence.
+- `features/professions.md`: future profession resources may be sold only after
+  their gathering and settlement behavior is captured.
 
 ## Out Of Scope
 

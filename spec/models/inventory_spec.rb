@@ -41,9 +41,10 @@ RSpec.describe Inventory, type: :model do
   end
 
   describe "#max_weight" do
-    it "returns the weight_capacity value" do
-      inventory.update!(weight_capacity: 200)
-      expect(inventory.max_weight).to eq(200)
+    it "derives capacity from effective Strength, Health, and level" do
+      character.update!(level: 2, allocated_stats: {"strength" => 2, "vitality" => 3})
+
+      expect(inventory.max_weight).to eq((3 * 5) + (4 * 10) + (2 * 10))
     end
   end
 

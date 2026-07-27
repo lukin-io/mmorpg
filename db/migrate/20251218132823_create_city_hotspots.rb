@@ -16,7 +16,7 @@ class CreateCityHotspots < ActiveRecord::Migration[8.0]
       t.string :action_type, null: false, default: "open_feature"
       t.references :destination_zone, foreign_key: {to_table: :zones}
       t.jsonb :action_params, default: {}
-      t.integer :required_level, default: 1
+      t.integer :required_level, default: 0
       t.boolean :active, default: true
       t.integer :z_index, default: 0
 
