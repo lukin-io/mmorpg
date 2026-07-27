@@ -11,6 +11,7 @@ movement, combat, and source-backed social/economy access.
 Reference material:
 
 - `doc/design/reference/neverlands.md`
+- `doc/design/reference/neverlands_skills.md`
 - `doc/design/reference/source_material.md`
 
 Important borrowed ideas:
@@ -78,6 +79,32 @@ Design translation:
 - spending health/knowledge can change max HP/MP without simply refilling the
   current HP/MP values.
 
+## Level And Experience Table
+
+The 2026-07-27 wiki audit confirms that a new character is level `0` and that
+progression is table-driven. `config/gameplay/character_progression.yml`
+contains only complete source rows `0..27`. Each row defines:
+
+- the cumulative combat-experience threshold to the next level;
+- stat, combat-skill, peace-skill, perk, and NV grants;
+- maximum experience awarded by one fight at that current level;
+- the source maximum NPC group size for that level.
+
+The launch starter row is `100` XP to level `1`, `15` unspent stat points,
+`10` combat points, `2` peace points, and `1` perk point. Reaching level `1`
+grants `3` stats, `4` combat points, `3` peace points, `1` perk point, and
+`50` NV. Later grants must be read from the catalog rather than derived by a
+generic formula.
+
+Rows beyond level `27` are not implemented because the audited wiki rows are
+incomplete. A character at the highest complete row can keep experience, but
+the server does not invent a threshold or rewards for level `28`.
+
+Configured solo NPC experience is awarded at shared fight completion and
+capped by the winner's current table row. Neverlands group experience uses a
+more complex distribution that is not completely captured, so a winning side
+with multiple player participants currently receives no invented PvE XP split.
+
 ## Public Player Info
 
 Neverlands exposes public character info through a direct character-name URL.
@@ -143,6 +170,20 @@ Stats affect:
 - carried weight;
 - item requirements.
 
+Exact implemented derived rules:
+
+```text
+base_max_hp = saved Health × 5
+base_max_mp = saved Knowledge × 7
+carrying_capacity = effective Strength × 5 + effective Health × 10 + level × 10
+```
+
+Saving a stat allocation recalculates the persisted base maxima and clamps a
+current value only if it is now above its maximum. It never heals or refills
+the character. Inventory, loot, transfer, and Shop capacity checks use the
+derived mass result; the historical inventory capacity column remains schema
+compatibility state, not gameplay authority.
+
 ## Numeric Skills
 
 The implemented numeric registry stores only captured `Умения` ids and tier
@@ -200,11 +241,12 @@ The launch-safe captured subset is deliberately small:
 
 | Source ID | Local Key | Source Label | Launch Behavior |
 | ---: | --- | --- | --- |
-| 7 | `more_strength` | `Больше силы` | Spend one new-perk point to save the perk as owned. |
+| 7 | `more_strength` | `Больше силы` | Spend one new-perk point; effective Strength gains `floor(level / 2)`. |
 
-The source capture proves the selection and save behavior, but not the perk's
-exact strength formula. Owning `more_strength` therefore does not change a
-stat or combat formula until that effect is captured.
+The wiki's `Больше силы` page supplies the effect formula and the existing live
+capture supplies the selectable source identity. The perk affects effective
+Strength, including downstream mass and combat reads, but it does not rewrite
+saved stat allocation.
 
 The full live id/name/category catalog is captured in
 `doc/design/reference/neverlands_live_player.md`. This includes all profession,
@@ -229,7 +271,10 @@ Perk allocation rules:
 ## Rules
 
 - Points are earned through level-up and relevant gameplay.
+- Level thresholds and grants come only from the finite source-backed catalog.
 - Spending points is server-authoritative.
+- Stat, numeric-skill, perk, and level-up transitions reload the character
+  under a row lock before spending or granting points.
 - Primary stat allocation uses an explicit available-point counter and pending
   additions per stat.
 - Numeric skills are stored and displayed as 0-100 values.
@@ -256,6 +301,9 @@ Perk allocation rules:
 - `features/combat.md`: weapon, defense, magic, and resistance skills need
   exact formula capture before changing combat formulas.
 - `features/items_inventory_equipment.md`: item requirements use stats/skills.
+- `features/professions.md`: profession perks and use-grown counters remain a
+  separate source-backed progression area and are not allocated as ordinary
+  numeric skills.
 - `features/npcs_quests.md`: future quest interactions need source capture
   before granting skill points or unlocking future source-backed training.
 
@@ -263,3 +311,4 @@ Perk allocation rules:
 
 - Unlimited free respec.
 - Skills that only exist as UI decoration.
+- Extrapolated level rows, invented group-XP distribution, or generic classes.

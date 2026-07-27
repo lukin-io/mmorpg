@@ -20,7 +20,7 @@
 
       <div class="nl-shop-status-row">
         <span>NV: <b><%= number_with_delimiter(@wallet.nv_balance) %></b></span>
-        <span>Mass: <b><%= @inventory.current_weight %>/<%= @inventory.weight_capacity %></b></span>
+        <span>Mass: <b><%= @inventory.current_weight %>/<%= @inventory.max_weight %></b></span>
         <span>Slots: <b><%= @inventory.inventory_items.count %>/<%= @inventory.slot_capacity %></b></span>
       </div>
 

@@ -28,6 +28,13 @@ RSpec.describe CityHotspot, type: :model do
       expect(subject).to be_valid
     end
 
+    it "loads the ungated level-zero default from the consolidated schema" do
+      hotspot = described_class.new(valid_attributes.except(:required_level))
+
+      expect(hotspot.required_level).to eq(0)
+      expect(hotspot).to be_valid
+    end
+
     it "requires zone" do
       subject.zone = nil
       expect(subject).not_to be_valid
@@ -80,6 +87,24 @@ RSpec.describe CityHotspot, type: :model do
 
     it "requires non-negative position_y" do
       subject.position_y = -1
+      expect(subject).not_to be_valid
+    end
+
+    it "allows the source-backed level-zero boundary" do
+      subject.required_level = 0
+
+      expect(subject).to be_valid
+    end
+
+    it "rejects a negative required level" do
+      subject.required_level = -1
+
+      expect(subject).not_to be_valid
+    end
+
+    it "rejects a null required level" do
+      subject.required_level = nil
+
       expect(subject).not_to be_valid
     end
 
@@ -138,6 +163,13 @@ RSpec.describe CityHotspot, type: :model do
 
     it "returns true when character meets requirements" do
       expect(hotspot.can_interact?(character)).to be true
+    end
+
+    it "allows a level-zero starter through a starter-accessible hotspot" do
+      starter = create(:character, :neverlands_starter)
+      hotspot.update!(required_level: 0)
+
+      expect(hotspot.can_interact?(starter)).to be true
     end
 
     it "returns false when inactive" do

@@ -105,6 +105,10 @@ not emitted as runtime landmarks or actions.
   action key must fail without moving the character.
 - Reload and login resume the exact persisted city node. A supported building
   interior also resumes only while its parent-node hotspot is still accessible.
+- Ordinary district, building, and gate hotspots have no invented level gate;
+  their local `required_level` is `0`, allowing the Wiki-backed starter to use
+  them. The captured Arena remains a distinct unavailable hotspot until level
+  `23`.
 
 ## Building Rules
 

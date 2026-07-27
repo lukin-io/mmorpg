@@ -30,7 +30,7 @@ class CityHotspot < ApplicationRecord
   validates :action_type, presence: true, inclusion: {in: ACTION_TYPES}
   validates :position_x, :position_y, presence: true,
     numericality: {only_integer: true, greater_than_or_equal_to: 0}
-  validates :required_level, numericality: {greater_than_or_equal_to: 1}
+  validates :required_level, numericality: {only_integer: true, greater_than_or_equal_to: 0}
   validates :z_index, numericality: {only_integer: true}
 
   scope :for_zone, ->(zone) { where(zone: zone).where(active: true).order(:z_index) }

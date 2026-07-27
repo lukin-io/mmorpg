@@ -103,7 +103,7 @@ module ShopHelper
   end
 
   def inventory_can_carry?(weight)
-    @inventory.current_weight.to_i + weight.to_i <= @inventory.weight_capacity.to_i
+    @inventory.current_weight.to_i + weight.to_i <= @inventory.max_weight.to_i
   end
 
   def inventory_has_slot_for?(template)

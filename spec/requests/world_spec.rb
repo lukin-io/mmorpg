@@ -135,6 +135,17 @@ RSpec.describe "World", type: :request do
         expect(response.body).to include("nl-map-container")
       end
 
+      it "renders the fatigue lock and withholds movement offers at 86 percent" do
+        character.update!(fatigue_percent: 86, fatigue_updated_at: Time.current)
+
+        get world_path
+
+        expect(response).to have_http_status(:success)
+        expect(response.body).to include("Move, Look, and Enter are unavailable")
+        expect(response.body).not_to include("nl-tile-clickable--available")
+        expect(MovementCommand.offered.where(character:)).to be_empty
+      end
+
 
       it "renders a seven-by-seven buffer around the clipped five-by-five viewport" do
         get world_path

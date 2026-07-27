@@ -2,8 +2,8 @@
 ---
 title: Character Progression Feature
 description: Implementation handbook for Neverlands-based primary stats, numeric skills, boolean perks, point allocation, and public progression display.
-status: Partially Implemented
-updated: 2026-07-21
+status: Fully Implemented
+updated: 2026-07-27
 owners: Character Progression
 template: feature-v1
 ---
@@ -28,8 +28,10 @@ When behavior is uncertain or conflicts with this document:
 Supporting documents:
 
 - `doc/design/reference/neverlands_live_player.md` records the starter and returning-character profile, stat, `Умения`, and `Навыки` observations.
+- `doc/design/reference/neverlands_skills.md` records the wiki character-development audit, complete level rows, exact derived formulas, and unresolved evidence boundaries.
 - `doc/design/reference/neverlands.md` defines the Neverlands evidence-to-implementation rule.
 - `doc/design/features/progression_stats_skills.md` normalizes the five primary stats, 29 numeric skills, captured tier rates, point pools, and launch-safe perk subset.
+- `doc/design/features/professions.md` keeps profession access/counters outside ordinary allocation until one activity is fully captured.
 - `doc/design/features/items_inventory_equipment.md` defines equipment modifiers consumed by effective stats and skills.
 - `doc/design/features/combat.md` owns combat effects after progression values are handed off.
 - `doc/design/launch_mvp_plan.md` defines the launch progression boundary.
@@ -47,17 +49,20 @@ Supporting documents:
 
 ## 2. Feature summary
 
-An authenticated player can open their character profile and allocate saved points on three distinct Neverlands-shaped surfaces: five primary stats, 29 numeric skills, and binary perks. Each page shows current values and remaining points, lets the browser preview reversible pending additions, and submits one explicit save. Saved additions cannot be removed through the normal allocation UI.
+An authenticated player begins at level `0`, gains configured combat experience from solo PvE victories, receives exact table-authored level grants, and can allocate saved points on three distinct Neverlands-shaped surfaces: five primary stats, 29 numeric skills, and binary perks. Each page shows current values and remaining points, lets the browser preview reversible pending additions, and submits one explicit save. Saved additions cannot be removed through the normal allocation UI.
 
 The `Character` record is authoritative for saved allocations and point balances. `allocated_stats`, `passive_skills`, and `perks` are JSONB maps; `stat_points_available`, `combat_skill_points`, `peace_skill_points`, and `perk_points` are separate non-negative counters. The browser never grants points or finalizes an allocation.
 
-Numeric skill identities and four-band progression rates come from the captured Neverlands registry. Boolean perks remain deliberately narrow: only source ID `7`, `Больше силы`/`More Strength`, is selectable. Ownership is persisted, but no strength bonus is applied because its formula was not captured.
+Numeric skill identities and four-band progression rates come from the captured Neverlands registry. Boolean perks remain deliberately narrow: only source ID `7`, `Больше силы`/`More Strength`, is selectable. Ownership adds `floor(level / 2)` effective Strength from the exact wiki rule.
 
 The MVP currently contains:
 
 - five primary stats with base value `1` and additive saved allocations;
+- a finite table of complete source rows `0..27` for thresholds, stat/skill/perk/NV grants, per-fight XP caps, and source NPC-group limits;
+- exact `Health × 5` base HP, `Knowledge × 7` base MP, and `Strength × 5 + Health × 10 + level × 10` mass formulas;
 - 29 source-backed numeric skills from `0` to `100` with combat and peace point pools;
 - one selectable binary perk with a separate point pool and captured exclusion infrastructure;
+- solo configured-NPC XP award through idempotent fight finalization, capped by the current level row;
 - public HTML and JSON display of numeric skills and owned perks;
 - owner-only allocation enforced by Devise, current-character resolution, and `CharacterPolicy`.
 
@@ -69,14 +74,16 @@ The MVP currently contains:
 - Keep primary stats, numeric skills, and binary perks as separate persisted concepts and point pools.
 - Apply captured 25-level numeric-skill tier rates exactly and cap each skill at `100`.
 - Keep browser previews reversible while making the server authoritative for every save.
+- Keep XP/grant data finite and catalog-authored; do not extrapolate incomplete level rows or invent group distribution.
 - Expose only safe public progression facts and reserve mutation controls for the owning player.
 
 ### Non-goals
 
-- Applying numeric-skill effects beyond the explicitly implemented World-owned Wanderer travel formula, or inventing profession, prerequisite, or perk-effect formulas.
+- Applying numeric-skill effects beyond the explicitly implemented World-owned Wanderer travel formula, or inventing profession or prerequisite formulas.
 - Rendering or selecting the remaining observed `Навыки` merely because their source labels are known.
 - Free respec, saved progression builds, skill trees, classes, specializations, or generic ability unlock graphs.
 - Owning equipment, combat, movement, recovery, inventory, or profession mechanics that consume progression values.
+- Group PvE XP distribution, XP loss, fame/valor awards, or levels beyond the complete row `27`.
 - Recreating Neverlands CGI routes, frames, Russian player-facing copy, or token formats.
 
 ## 4. Player experience
@@ -124,7 +131,7 @@ The feature is an authored catalog and state graph rather than spatial topology.
 | `magic` | Magic skills | Spend combat points | Source IDs `12` through `15` |
 | `resistance` | Resistance skills | Spend combat points | Source IDs `16` through `20` |
 | `peace_world` | Peace/world skills | Spend peace points | Source IDs `22`, `23`, `24`, `26`, `27`, `30`, `33`, `34` |
-| `more_strength` | More Strength | Spend one perk point; persist `Yes` | Boolean perk source ID `7`; no effect formula |
+| `more_strength` | More Strength | Spend one perk point; persist `Yes` | Boolean perk source ID `7`; adds `floor(level / 2)` effective Strength |
 
 Numeric skills use captured four-value rate strings. The rate selected for a spend is based on the saved/current value before that spend:
 
@@ -152,24 +159,25 @@ Relationships must come from the source-backed registries. Categories, display o
 | Surface or behavior | Entry point | MVP status | Owning implementation |
 |---|---|---|---|
 | Public player profile | `GET /player/:name` | Interactive/read-only by viewer | `PlayersController` and profile view |
+| XP and level grants | Shared solo-PvE fight finalization | Interactive downstream entry | `NpcExperienceAwarder`, `LevelUpService`, and progression catalog |
 | Primary-stat allocation | `GET/PATCH /characters/:id/stats` | Interactive | `CharactersController` and `Character` |
 | Numeric-skill allocation | `GET/PATCH /characters/:id/skills` | Interactive | `CharactersController`, registry, and formula |
 | Boolean perk allocation | `GET/PATCH /characters/:id/perks` | Interactive subset | `PerkAllocation` and `PerkRegistry` |
-| Remaining observed perks/professions | No local route/control | Deferred | Evidence and design documents only |
+| Remaining observed perks/professions | No local route/control | Deferred outside this handbook boundary | Evidence and design documents only |
 | Wanderer movement effect | World movement-offer creation | Interactive downstream consumer | `Game::Movement::TravelTime` |
 | Other skill/perk gameplay effects without captured formulas | No mutation | Deferred | Downstream owning feature after evidence |
 
 ### 6.2 Primary stats
 
-The five primary stats begin at base value `1`. Saved additions are merged into `allocated_stats`, and the submitted total is deducted from `stat_points_available`. Each submitted field is normalized through the allowlisted aliases and clamped to `0..100` for one request. Unknown keys are ignored. A request must spend at least one point and cannot exceed the currently loaded pool.
+The five primary stats begin at base value `1`. Saved additions are merged into `allocated_stats`, and the submitted total is deducted from `stat_points_available`. Each submitted field is normalized through the allowlisted aliases and clamped to `0..100` for one request. Unknown keys are ignored. A request must spend at least one point and cannot exceed the point pool reloaded under the character row lock.
 
-`Character#stats` adds supported equipment modifiers to the saved base and returns a `Game::Systems::StatBlock`. Saved additions are permanent through the normal UI; minus removes only an unsaved preview.
+`Character#stats` adds `floor(level / 2)` Strength for owned `more_strength`, then supported equipment modifiers, and returns a `Game::Systems::StatBlock`. Saved Health and Knowledge recalculate base HP/MP at `5` and `7` per point without healing; effective Strength, Health, and level derive inventory mass. Saved additions are permanent through the normal UI; minus removes only an unsaved preview.
 
 ### 6.3 Numeric skills
 
 The numeric registry contains 29 captured `Умения`, each with a source ID, local key, English/source labels, category, combat-or-peace pool, maximum `100`, and exact four-band rate. One spend consumes one point from the assigned pool and may add more than one numeric level according to the current band.
 
-Multiple pending spends are applied sequentially so crossing `25`, `50`, or `75` changes the rate used by later spends. The final value is capped at `100`. Unknown skill keys do not consume points. Equipment bonuses contribute to `passive_skill_level`.
+Multiple pending spends are applied sequentially so crossing `25`, `50`, or `75` changes the rate used by later spends. The final value is capped at `100`; requested spends after the cap do not consume points. Unknown skill keys do not consume points. Equipment bonuses contribute to `passive_skill_level`.
 
 World is the only current numeric-skill effect consumer: it snapshots effective Wanderer into a clean adjacent duration of `30 - floor(wanderer * 5 / 100)` seconds, bounded to `25..30`. Character Progression does not own that movement rule. Every other downstream numeric-skill effect remains `0`/unimplemented until separately captured.
 
@@ -177,13 +185,17 @@ World is the only current numeric-skill effect consumer: it snapshots effective 
 
 `more_strength` is the only rendered selectable perk. Saving it consumes one `perk_points`, stores `"more_strength" => true`, and makes it non-removable through the normal UI. `PerkAllocation` rejects empty/duplicate ownership, unknown keys, insufficient points, and any captured mutually exclusive combination under a character row lock.
 
-The complete observed `Навыки` labels and saved yes/no rows are evidence, not local capabilities. Perk source ID `7` does not increase Strength because the effect formula is uncaptured. Perk-point grant timing, prerequisite gates, reset behavior, all profession mechanics, and every other perk effect remain deferred.
+The complete observed `Навыки` labels and saved yes/no rows are evidence, not local capabilities. Perk source ID `7` adds one effective Strength per two levels, rounded down, from the audited wiki rule; it does not rewrite saved allocations. Prerequisite gates, reset behavior, all profession mechanics, and every other perk effect remain deferred.
 
 ## 7. Authoritative data and presentation model
 
 | Record or component | Responsibility | Important contract |
 |---|---|---|
 | `Character` | Saved point pools, allocations, level, experience, and effective accessors | Point pools are non-negative; saved JSONB maps default to empty objects |
+| `Game::Progression::Catalog` | Complete source rows `0..27` | Thresholds and all grants are validated, contiguous, and never extrapolated |
+| `LevelUpService` | Award XP and table-authored level grants | Locks/reloads Character; grants pools and NV without refilling vitals |
+| `StatAllocationService` | Spend primary-stat points and recalculate base vitals | Locks/reloads Character and preserves current HP/MP except max clamp |
+| `SkillAllocationService` | Spend combat/peace points using tier rates | Locks/reloads Character and charges only actual pre-cap spends |
 | `PassiveSkillRegistry` | Numeric-skill identities, categories, pools, caps, and captured rates | Only captured IDs/rates are present; no invented effects/prerequisites |
 | `SkillProgressionFormula` | Apply and reverse one preview spend | Four numeric rates, 25-level bands, and `0..100` boundary |
 | `PerkRegistry` | Launch perk identity and captured exclusion table | Only named/captured launch entries are selectable |
@@ -193,7 +205,7 @@ The complete observed `Навыки` labels and saved yes/no rows are evidence, 
 
 ### 7.1 Source of truth
 
-The `characters` table is authoritative. Point counters and JSONB maps determine the saved state. Registries define valid content identity; they do not grant ownership or points. Profile values are rebuilt from the saved character, registries, and supported equipment modifiers on every request.
+The `characters` table is authoritative for character state. Point counters and JSONB maps determine saved allocation; `config/gameplay/character_progression.yml` is authoritative for complete level thresholds/grants; the NV wallet/ledger is authoritative for level currency grants. Registries define valid content identity; they do not grant ownership or points. Profile values are rebuilt from the saved character, registries, exact derived formulas, and supported equipment modifiers on every request.
 
 Missing JSON keys mean zero numeric skill, no stat addition, or unowned perk. An absent/unknown perk key is not rendered through the registry-backed profile payload.
 
@@ -203,14 +215,15 @@ Missing JSON keys mean zero numeric skill, no stat addition, or unowned perk. An
 - Numeric skill spends move points from exactly one pool to saved levels capped at `100`.
 - Perks move points from `perk_points` to permanent boolean ownership.
 - Negative point pools are rejected by `Character` validation.
-- Level-up currently grants five stat points per level, one combat point per level, and one peace point from level `5`; it does not define the uncaptured perk grant schedule.
+- Level-up walks each crossed catalog row, grants that row's stat/combat/peace/perk/NV values, records one wallet transaction, and stops before incomplete level `28`.
+- A new database-created character starts at level `0` with `15/10/2/1` allocation pools and `5/7` HP/MP maxima.
 - The public profile exposes effective numeric skill levels and owned launch-registry perks, but not private account data.
 
 ### 7.3 Presentation versus authority
 
 Plus/minus state, displayed counters, hidden inputs, category grouping, translated names, source IDs rendered in the DOM, and disabled-button CSS are presentation/input only. The server reparses allowlisted keys and checks point balances on save.
 
-The stat and numeric-skill request paths currently do not lock the character row before checking and decrementing point pools. Perk allocation does. Concurrent stat/skill submissions are therefore not guaranteed by the current implementation contract and require hardening before concurrency safety may be claimed.
+Stat, numeric-skill, perk, and XP/level transitions lock and reload the character row before checking or changing point pools. Stale competing allocation requests therefore see the current balance; a losing over-budget request leaves state unchanged.
 
 ## 8. Runtime architecture
 
@@ -221,9 +234,9 @@ flowchart LR
     C --> D["Render HTML or main-content Turbo frame"]
     E["Player previews plus/minus changes"] --> F["Stimulus writes pending hidden inputs"]
     F --> G["PATCH allocation route with CSRF"]
-    G --> H["Normalize keys and recheck point pool"]
+    G --> H["Lock Character, normalize keys, and recheck point pool"]
     H --> I{"Stats, numeric skills, or perks"}
-    I -->|stats| J["Merge stats and decrement stat pool"]
+    I -->|stats| J["Merge stats, derive HP/MP, and decrement stat pool"]
     I -->|skills| K["Apply captured rates and decrement two pools"]
     I -->|perks| L["Lock Character, validate exclusions, persist ownership"]
     J --> M["Redirect or replace frame"]
@@ -239,7 +252,7 @@ flowchart LR
 
 ### 8.2 Accept or execute action
 
-Stats and skills accept allowlisted hashes, convert values to integers, clamp each pending spend to `0..100`, reject an empty total, and recheck the applicable point pool. Stats merge additions into saved values. Skills apply each spend sequentially with the captured formula inside a character transaction.
+Stats and skills accept allowlisted hashes, convert values to integers, clamp each pending spend to `0..100`, and delegate to locked allocation services. Each service reloads the row, rejects an empty or over-budget total, and writes one atomic update. Stats merge additions and derive base HP/MP without a refill. Skills apply each actual spend sequentially and do not charge requests beyond a skill's `100` cap.
 
 Perks convert truthy selection fields to keys, then `PerkAllocation` normalizes and deduplicates them. Under `Character#with_lock`, it removes already-owned choices, checks the current perk pool and exclusions, merges new ownership, and decrements the pool.
 
@@ -251,9 +264,9 @@ After save, inventory requirements, vitals, profile, combat, and World may read 
 
 ### 8.4 Concurrency behavior
 
-Perk allocation uses a row lock, so duplicate or concurrent requests re-evaluate current ownership and points. Stats use one `update!`; numeric skills use one database transaction; however, neither explicitly locks/reloads before its balance check. They are server-authoritative in ordinary requests but are not documented as safe against simultaneous duplicate submissions.
+Stat, numeric-skill, and perk allocation use a character row lock, so duplicate or concurrent requests re-evaluate current ownership, cap, and point balances. Level-up uses the same boundary before applying XP and grants, then records a single NV ledger adjustment inside the transaction.
 
-The client disables Save until a preview exists, but that is usability only and cannot prevent replay. A future concurrency fix should add focused simultaneous-submission coverage without changing the captured allocation UX.
+The client disables Save until a preview exists, but that is usability only and cannot prevent replay. Server locks and stale-competing-request service specs protect the balance. XP is awarded only from the match's separately idempotent finalization marker.
 
 ## 9. HTTP and Turbo contract
 
@@ -313,12 +326,12 @@ Arbitrary saved browser fields, translated labels, or profile URLs do not grant 
 - Devise protects all Stats, Skills, and Perks routes.
 - `CurrentCharacterContext` resolves the signed-in user's playable character.
 - `CharacterPolicy#manage_progression?` requires ownership of the requested character.
-- `CharactersController` allowlists/normalizes stat and skill inputs and checks separate point pools.
+- `CharactersController` allowlists/normalizes stat and skill inputs; locked services recheck separate point pools.
 - `PerkAllocation` validates launch-registry membership, points, duplicate ownership, and exclusions under a row lock.
 - CSRF-backed forms protect HTML/Turbo mutations.
 - Public profile JSON omits account email, private session state, formula detail, and private owner-only stat panels.
 - DOM counters, hidden inputs, disabled states, source labels, and Stimulus state never confer authority.
-- Concurrent Stats/Skills saves remain an explicit implementation gap; do not represent client-side button disabling as a lock.
+- Concurrent Stats/Skills saves serialize on the Character row; client-side button disabling is not part of that guarantee.
 
 ## 13. Failure and boundary behavior
 
@@ -338,7 +351,11 @@ Arbitrary saved browser fields, translated labels, or profile URLs do not grant 
 | Equipment changes effective Wanderer | Rebuild effective display; World uses it only for the next authored offer, never to rewrite an active command |
 | Equipment changes another effective skill | Rebuild effective display; no uncaptured formula is applied |
 | Missing public character name | Return `404`, not an account-profile fallback |
-| Simultaneous Stats/Skills saves | Not currently guaranteed safe; requires implementation and concurrency coverage |
+| Simultaneous/stale Stats or Skills saves | Serialize under the Character row lock; recheck current pools and reject an over-budget request without a lost update |
+| XP below next threshold | Add XP with no grant or level change |
+| XP crosses several rows | Apply every complete row once and aggregate one NV ledger adjustment |
+| XP at level `27` | Persist XP but do not invent a level `28` threshold or grant |
+| Multi-player PvE winning side | Award no XP until the Neverlands group distribution formula is captured |
 | Deferred profession/perk action | Render no control and create no inferred effect |
 
 ## 14. Acceptance criteria
@@ -346,8 +363,10 @@ Arbitrary saved browser fields, translated labels, or profile URLs do not grant 
 - The owner can allocate and permanently save additions to all five primary stats.
 - The owner can spend the correct combat or peace pool across all 29 captured numeric skills.
 - Numeric skill spends use the captured four-band rate and never exceed `100`.
-- The owner can spend one perk point to acquire `more_strength`; another save cannot reacquire it.
-- `more_strength` ownership is visible but does not invent a Strength formula.
+- The owner can spend one perk point to acquire `more_strength`; another save cannot reacquire it, and effective Strength gains `floor(level / 2)`.
+- A level-0 starter receives exact catalog grants when configured solo-PvE XP crosses one or more complete thresholds.
+- Health/Knowledge allocation recalculates base maxima at `5/7` per point without healing, and mass uses the exact `5/10/10` formula.
+- Stat, skill, perk, and level transitions recheck the character under a row lock.
 - Another user and an anonymous user cannot mutate a character's progression.
 - Profile HTML and JSON expose numeric skills and owned launch-registry perks without private account data.
 - Browser preview/reset behavior never mutates saved state before PATCH succeeds.
@@ -361,24 +380,28 @@ Tests are part of the feature contract. Progression changes require applicable m
 
 | Coverage category | Representative guarantees |
 |---|---|
-| Success | Stat merge, dual-pool tiered skill spend, perk acquisition, profile rendering/JSON, and level-up point awards |
-| Failure | Empty/over-budget allocation, unknown perk, insufficient perk points, conflict, maximum skill, and safe flash response |
-| Edge/null/boundary | Nil hashes, negative/extreme inputs, zero points, exact pool exhaustion, `24/25/49/50/74/75/99/100` bands, duplicate perk ownership |
+| Success | Stat merge/vital derivation, dual-pool tiered skill spend, More Strength effect, profile rendering/JSON, XP thresholds, complete level grants, and NV ledger award |
+| Failure | Empty/over-budget allocation, unknown perk, insufficient perk points, conflict, maximum skill, invalid XP, and safe flash response |
+| Edge/null/boundary | Level `0/27/28`, nil/negative/zero XP, nil hashes, negative/extreme inputs, exact pool exhaustion, `24/25/49/50/74/75/99/100` bands, duplicate perk ownership, and stale competing spends |
 | Authorization | Anonymous request, foreign character, policy owner, public read-only profile, and current-character scoping |
 
-`spec/factories/characters.rb` must retain traits for point pools, saved stats/skills, perk points/ownership, maximum/boundary values, and foreign ownership when exercised.
+`spec/factories/characters.rb` must retain starter, fatigue, point-pool, saved stat/skill, perk ownership, maximum/boundary, and foreign-ownership traits when exercised.
 
 Focused verification command:
 
 ```bash
 bundle exec rspec \
   spec/models/character_spec.rb \
+  spec/models/inventory_spec.rb \
   spec/policies/character_policy_spec.rb \
+  spec/lib/game/progression/catalog_spec.rb \
   spec/lib/game/formulas/skill_progression_formula_spec.rb \
   spec/lib/game/skills/passive_skill_registry_spec.rb \
   spec/lib/game/skills/passive_skill_calculator_spec.rb \
   spec/lib/game/skills/perk_registry_spec.rb \
   spec/services/game/skills/perk_allocation_spec.rb \
+  spec/services/characters/stat_allocation_service_spec.rb \
+  spec/services/characters/skill_allocation_service_spec.rb \
   spec/services/game/movement/travel_time_spec.rb \
   spec/services/players/progression/level_up_service_spec.rb \
   spec/requests/characters_spec.rb \
@@ -388,7 +411,7 @@ bundle exec rspec \
   spec/system/perk_allocation_spec.rb
 ```
 
-There is no dedicated view spec for each allocation partial; request and system specs cover rendered behavior. Dedicated concurrency specs for Stats/Skills are missing and must accompany a locking fix.
+There is no dedicated view spec for each allocation partial; request and system specs cover rendered behavior. Service coverage includes stale competing request regression for Stats and Skills. Shared fight-finalization coverage protects the sole current XP caller and its idempotent reward marker.
 
 ## 16. Responsible for Implementation Files
 
@@ -396,7 +419,9 @@ There is no dedicated view spec for each allocation partial; request and system 
 
 - `doc/features/character_progression.md`
 - `doc/design/features/progression_stats_skills.md`
+- `doc/design/features/professions.md`
 - `doc/design/reference/neverlands_live_player.md`
+- `doc/design/reference/neverlands_skills.md`
 - `doc/design/reference/neverlands.md`
 - `doc/design/launch_mvp_plan.md`
 
@@ -415,10 +440,13 @@ There is no dedicated view spec for each allocation partial; request and system 
 ### Services, registries, and formulas
 
 - `app/lib/game/formulas/skill_progression_formula.rb`
+- `app/lib/game/progression/catalog.rb`
 - `app/lib/game/skills/passive_skill_registry.rb`
 - `app/lib/game/skills/passive_skill_calculator.rb`
 - `app/lib/game/skills/perk_registry.rb`
 - `app/services/game/skills/perk_allocation.rb`
+- `app/services/characters/stat_allocation_service.rb`
+- `app/services/characters/skill_allocation_service.rb`
 - `app/services/players/progression/level_up_service.rb`
 
 ### Views, helpers, client behavior, styling, and assets
@@ -440,6 +468,7 @@ There is no dedicated view spec for each allocation partial; request and system 
 ### Content, configuration, seeds, and schema
 
 - `db/schema.rb`
+- `config/gameplay/character_progression.yml`
 - `db/migrate/20251121150000_create_characters_and_privacy_settings.rb`
 - `db/migrate/20260720090000_add_perks_to_characters.rb`
 
@@ -448,6 +477,7 @@ There is no dedicated view spec for each allocation partial; request and system 
 - `app/services/game/inventory/requirement_checker.rb`
 - `app/services/characters/vitals_service.rb`
 - `app/services/game/movement/travel_time.rb`
+- `app/services/arena/npc_experience_awarder.rb`
 
 Character Progression owns saved stats, numeric skills, perks, and their allocation. Inventory owns equipment and item requirements; Vitals/Combat own their downstream formulas; World owns the bounded Wanderer movement formula. Those features may consume only implemented progression values and must capture Neverlands evidence before adding another effect.
 
@@ -459,11 +489,15 @@ Character Progression owns saved stats, numeric skills, perks, and their allocat
 ### Specs
 
 - `spec/models/character_spec.rb`
+- `spec/models/inventory_spec.rb`
 - `spec/policies/character_policy_spec.rb`
 - `spec/lib/game/formulas/skill_progression_formula_spec.rb`
 - `spec/lib/game/skills/passive_skill_registry_spec.rb`
 - `spec/lib/game/skills/passive_skill_calculator_spec.rb`
 - `spec/lib/game/skills/perk_registry_spec.rb`
+- `spec/lib/game/progression/catalog_spec.rb`
+- `spec/services/characters/stat_allocation_service_spec.rb`
+- `spec/services/characters/skill_allocation_service_spec.rb`
 - `spec/services/game/skills/perk_allocation_spec.rb`
 - `spec/services/game/movement/travel_time_spec.rb`
 - `spec/services/players/progression/level_up_service_spec.rb`
@@ -481,7 +515,7 @@ Before extending Character Progression:
 2. Add source IDs, labels, rates, prerequisites, exclusions, and effects only when directly evidenced.
 3. Keep primary stats, numeric skills, boolean perks, and profession counters separate.
 4. Keep the server authoritative for current points, valid keys, maximum values, and ownership.
-5. Add a row lock and concurrency regression coverage before claiming duplicate-safe Stats/Skills saves.
+5. Preserve row locking and stale competing-request regression coverage for Stats/Skills saves.
 6. Do not fold equipment bonuses into saved base numeric-skill levels.
 7. Keep uncaptured effects at zero/unavailable rather than inventing a plausible RPG formula.
 8. Add success, failure, edge/null/boundary, and authorization coverage where applicable.
@@ -493,3 +527,4 @@ Before extending Character Progression:
 |---|---|
 | 2026-07-21 | Created the canonical implementation handbook for primary stats, numeric skills, the launch-safe binary perk subset, point allocation, profile exposure, and known concurrency/effect boundaries. |
 | 2026-07-21 | Documented World as the sole current numeric-skill effect consumer through the bounded effective-Wanderer travel formula and added reciprocal ownership/coverage references. |
+| 2026-07-27 | Promoted the bounded feature to Fully Implemented: added level-0 defaults, complete source rows `0..27`, catalog XP/grants/NV, locked stat/skill mutations, exact HP/MP/mass and More Strength formulas, solo capped NPC XP integration, and boundary coverage. |

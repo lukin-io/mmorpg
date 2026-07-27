@@ -239,6 +239,27 @@ RSpec.describe Arena::CombatProcessor do
 
       processor.end_match("a")
     end
+
+    it "awards PvE XP and equipment wear only once when completion is retried" do
+      participation2.destroy!
+      npc = create(:npc_template, metadata: {"xp_reward" => 35})
+      create(:arena_participation, :npc, arena_match:, npc_template: npc, team: "b")
+      arena_match.update!(metadata: {"source" => "world_npc", "is_npc_fight" => true})
+      template = create(:item_template, :durable)
+      item = create(:inventory_item, :equipped, inventory: character1.inventory, item_template: template,
+        properties: {"current_durability" => 10})
+      deterministic_rng = instance_double(Random)
+      allow(deterministic_rng).to receive(:rand).with(100).and_return(0)
+      pve_processor = described_class.new(arena_match, rng: deterministic_rng)
+
+      expect(pve_processor.end_match("a")).to be(true)
+      expect(pve_processor.end_match("a")).to be(false)
+
+      expect(character1.reload.experience).to eq(35)
+      expect(item.reload.current_durability).to eq(9)
+      expect(arena_match.reload.metadata["rewards_processed_at"]).to be_present
+      expect(arena_match.metadata.dig("rewards", "experience", "amount")).to eq(35)
+    end
   end
 
   describe "NPC fight capture behavior" do

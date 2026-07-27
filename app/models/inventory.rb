@@ -34,7 +34,7 @@ class Inventory < ApplicationRecord
 
   # @return [Integer] weight capacity (max weight)
   def max_weight
-    weight_capacity
+    character.carrying_capacity
   end
 
   def material_count(item_name)

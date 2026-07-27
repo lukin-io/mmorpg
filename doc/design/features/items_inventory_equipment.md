@@ -70,6 +70,41 @@ Design rules:
 - removing an item returns it to carried inventory if capacity and state allow;
 - equipped, broken, protected, or locked items can have restricted
   actions and must be handled server-side.
+- an item at zero durability cannot be sold to the Shop.
+
+## Mass And Capacity
+
+The wiki-backed carried-mass maximum is:
+
+```text
+effective Strength × 5 + effective Health × 10 + level × 10
+```
+
+Equipped items still count toward current carried mass, matching the live ring
+capture. The derived character value is the gameplay capacity used by item
+addition, NPC loot, Shop purchase, and player transfer. The persisted legacy
+`weight_capacity` column remains validated for schema compatibility but is not
+the authoritative maximum shown to or enforced for the player.
+
+## Combat Wear
+
+Shared fight finalization evaluates every equipped durable item once and can
+remove at most one durability point from that item:
+
+| Fight context and result | Per-item wear chance |
+| --- | ---: |
+| Arena victory | `0%` |
+| Arena draw | `0%` |
+| Arena defeat | `1%` |
+| Other fight victory | `2%` |
+| Other fight draw | `30%` |
+| Other fight defeat | `50%` |
+
+The result and changed item IDs are persisted on fight participation metadata,
+and fight reward finalization is idempotent. Already-broken and non-durable
+items are skipped. The wiki names a Careful Fighter modifier, but its exact
+selectable identity/prerequisite is not captured locally, so the modifier and
+repair flow remain `[EVIDENCE]` rather than being guessed.
 
 Observed Neverlands action semantics:
 
@@ -268,7 +303,8 @@ The launch inventory should support:
   explicit two-handed weapons occupying both hand capacity;
 - canonical captured item seeds/templates for the observed ring, jewelry,
   armor, belt, boots, gloves, bracers, weapon, staff, and scroll examples;
-- combat durability degradation for player, team, and NPC fight equipment;
+- combat durability degradation for player, team, and NPC fight equipment
+  using the result/context probabilities above;
 - consumable durability charges before quantity consumption;
 - discard protection for equipped, bound, protected, and locked items.
 
@@ -279,8 +315,9 @@ Remaining design detail before launch:
 - exact MVP boundary for non-equipment families: empty states are captured, but
   crafting/production/resource behavior needs separate source capture before
   implementation;
-- repair and breakage UX, including player-visible messages when gear breaks;
-- capacity enforcement across loot, pickup, and shop purchase flows;
+- repair UX and the exact Careful Fighter modifier;
+- source rules for what happens to equipped state when a worn item reaches
+  zero durability beyond the current safe broken-item handling;
 - server-issued inventory action keys when normal Rails form protection is not
   enough for the final gameplay action model;
 - direct trade settlement edge cases, dealer transfers, targeted scroll/doctor
@@ -308,3 +345,5 @@ Remaining design detail before launch:
   future player trade needs source capture first.
 - `features/npcs_quests.md`: future quest-item behavior needs source capture
   before implementation.
+- `features/professions.md`: future tools and gathered materials reuse the same
+  capacity and item-instance rules.

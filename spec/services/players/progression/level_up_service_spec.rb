@@ -3,102 +3,88 @@
 require "rails_helper"
 
 RSpec.describe Players::Progression::LevelUpService do
-  let(:user) { create(:user) }
-  let(:character) do
-    create(:character,
-      user: user,
-      level: 1,
-      experience: 0,
-      stat_points_available: 0,
-      combat_skill_points: 0,
-      peace_skill_points: 0)
-  end
+  let(:character) { create(:character, :neverlands_starter) }
 
   describe "#apply_experience!" do
-    context "when experience is not enough to level up" do
-      it "adds experience without leveling" do
-        service = described_class.new(character: character)
-        result = service.apply_experience!(99)
+    it "adds experience below the first level threshold" do
+      result = described_class.new(character:).apply_experience!(99)
 
-        expect(result.character.experience).to eq(99)
-        expect(result.character.level).to eq(1)
-        expect(result.levels_gained).to eq(0)
-      end
+      expect(result.character).to have_attributes(level: 0, experience: 99)
+      expect(result.levels_gained).to eq(0)
     end
 
-    context "when experience triggers one level up" do
-      it "increases level and grants stat points" do
-        # Level 2 requires 100 total XP.
-        service = described_class.new(character: character)
-        result = service.apply_experience!(100)
+    it "applies the complete level-one grant without refilling vitals" do
+      character.update!(current_hp: 2, current_mp: 3)
 
-        expect(result.character.level).to eq(2)
-        expect(result.levels_gained).to eq(1)
-        expect(result.stat_points_gained).to eq(5)
-        expect(result.character.stat_points_available).to eq(5)
-      end
+      result = described_class.new(character:).apply_experience!(100)
 
-      it "grants combat skill points" do
-        service = described_class.new(character: character)
-        result = service.apply_experience!(100)
-
-        expect(result.combat_skill_points_gained).to eq(1)
-        expect(result.character.combat_skill_points).to eq(1)
-      end
-
-      it "does not grant peace skill points before level 5" do
-        service = described_class.new(character: character)
-        result = service.apply_experience!(100)
-
-        expect(result.peace_skill_points_gained).to eq(0)
-        expect(result.character.peace_skill_points).to eq(0)
-      end
+      expect(result.character).to have_attributes(
+        level: 1,
+        stat_points_available: 18,
+        combat_skill_points: 14,
+        peace_skill_points: 5,
+        perk_points: 2,
+        current_hp: 2,
+        current_mp: 3
+      )
+      expect(result).to have_attributes(
+        levels_gained: 1,
+        stat_points_gained: 3,
+        combat_skill_points_gained: 4,
+        peace_skill_points_gained: 3,
+        perk_points_gained: 1,
+        nv_gained: 50
+      )
+      expect(character.user.currency_wallet.reload.nv_balance).to eq(50)
+      expect(character.user.currency_wallet.currency_transactions.last.reason).to eq("progression.level_up")
     end
 
-    context "when leveling to level 5" do
-      let(:character) do
-        create(:character,
-          user: user,
-          level: 4,
-          experience: 900,  # Level 5 requires 1600
-          stat_points_available: 0,
-          combat_skill_points: 0,
-          peace_skill_points: 0)
-      end
+    it "applies every crossed catalog row exactly once" do
+      result = described_class.new(character:).apply_experience!(1000)
 
-      it "grants peace skill points at level 5" do
-        service = described_class.new(character: character)
-        result = service.apply_experience!(700)  # Total 1600 XP
-
-        expect(result.character.level).to eq(5)
-        expect(result.peace_skill_points_gained).to eq(1)
-        expect(result.character.peace_skill_points).to eq(1)
-      end
+      expect(result.character.level).to eq(4)
+      expect(result).to have_attributes(
+        levels_gained: 4,
+        stat_points_gained: 14,
+        combat_skill_points_gained: 18,
+        peace_skill_points_gained: 16,
+        perk_points_gained: 2,
+        nv_gained: 500
+      )
     end
 
-    context "when leveling multiple levels" do
-      it "grants cumulative rewards" do
-        # Level up from 1 to 5 requires total of 1600 XP
-        # Level 2: 100, Level 3: 400, Level 4: 900, Level 5: 1600
-        service = described_class.new(character: character)
-        result = service.apply_experience!(1600)
+    it "stops at the highest complete source row instead of extrapolating" do
+      character.update!(level: 27, experience: 15_000_000_000)
 
-        expect(result.character.level).to eq(5)
-        expect(result.levels_gained).to eq(4)
-        expect(result.stat_points_gained).to eq(20)  # 4 levels * 5 points
-        expect(result.combat_skill_points_gained).to eq(4)  # 4 levels * 1 point
-        expect(result.peace_skill_points_gained).to eq(1)  # Only level 5 grants peace points
-      end
+      result = described_class.new(character:).apply_experience!(1)
+
+      expect(result.character.level).to eq(27)
+      expect(result.levels_gained).to eq(0)
+    end
+
+    it "accepts zero as a no-op boundary" do
+      result = described_class.new(character:).apply_experience!(0)
+
+      expect(result).to have_attributes(levels_gained: 0, nv_gained: 0)
+    end
+
+    it "rejects negative and null experience" do
+      service = described_class.new(character:)
+
+      expect { service.apply_experience!(-1) }
+        .to raise_error(described_class::ProgressionError, /non-negative/)
+      expect { service.apply_experience!(nil) }
+        .to raise_error(described_class::ProgressionError, /non-negative/)
     end
   end
 
-  describe "XP formula" do
-    it "calculates correct XP for each level" do
-      # Formula: (level - 1)^2 * 100, with level 2 at 100 total XP.
-      expect(Character.xp_required_for_level(1)).to eq(0)
-      expect(Character.xp_required_for_level(2)).to eq(100)
-      expect(Character.xp_required_for_level(5)).to eq(1600)
-      expect(Character.xp_required_for_level(10)).to eq(8100)
+  describe "catalog thresholds" do
+    it "uses the source-backed cumulative experience table" do
+      expect(Character.xp_required_for_level(0)).to eq(0)
+      expect(Character.xp_required_for_level(1)).to eq(100)
+      expect(Character.xp_required_for_level(5)).to eq(1700)
+      expect(Character.xp_required_for_level(10)).to eq(20_000)
+      expect(Character.xp_required_for_level(28)).to be_nil
     end
   end
 end

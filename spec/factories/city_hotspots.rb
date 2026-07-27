@@ -12,7 +12,7 @@ FactoryBot.define do
     height { nil }
     action_type { "open_feature" }
     action_params { {"feature" => "arena"} }
-    required_level { 1 }
+    required_level { 0 }
     active { true }
     z_index { 0 }
 
@@ -43,6 +43,10 @@ FactoryBot.define do
 
     trait :high_level do
       required_level { 50 }
+    end
+
+    trait :starter_accessible do
+      required_level { 0 }
     end
 
     trait :arena do

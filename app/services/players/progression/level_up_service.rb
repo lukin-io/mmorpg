@@ -2,59 +2,50 @@
 
 module Players
   module Progression
-    # LevelUpService awards XP, handles level ups, and grants stat/skill points.
-    #
-    # Purpose:
-    #   Processes experience gains, triggers level ups, and awards:
-    #   - Stat points (5 per level)
-    #   - Combat skill points (1 per level)
-    #   - Peace skill points (1 per level, starting at level 5)
-    #
-    # Inputs:
-    #   - character: Character record to process
-    #   - amount: Integer XP to award
-    #
-    # Returns:
-    #   Character with updated level and point pools
-    #
-    # Usage:
-    #   service = Players::Progression::LevelUpService.new(character: character)
-    #   service.apply_experience!(250)
-    #   # Character gains XP, possibly levels up, receives stat/skill points
-    #
+    # Atomically awards combat experience and applies the source-backed
+    # Neverlands level grants. The table is finite by design: incomplete wiki
+    # rows are not extrapolated into invented progression.
     class LevelUpService
-      STAT_POINTS_PER_LEVEL = 5
-      COMBAT_SKILL_POINTS_PER_LEVEL = 1   # Combat/magic/resistance skills
-      PEACE_SKILL_POINTS_START_LEVEL = 5  # Peace skills unlock at level 5
-      PEACE_SKILL_POINTS_PER_LEVEL = 1    # Peace skills
+      class ProgressionError < StandardError; end
 
-      Result = Struct.new(:character, :levels_gained, :stat_points_gained,
-        :combat_skill_points_gained, :peace_skill_points_gained, keyword_init: true)
+      Result = Data.define(
+        :character,
+        :levels_gained,
+        :stat_points_gained,
+        :combat_skill_points_gained,
+        :peace_skill_points_gained,
+        :perk_points_gained,
+        :nv_gained
+      )
 
       def initialize(character:)
         @character = character
-        @levels_gained = 0
-        @stat_points_gained = 0
-        @combat_skill_points_gained = 0
-        @peace_skill_points_gained = 0
       end
 
-      # Apply experience and process any resulting level ups
-      #
-      # @param amount [Integer] XP to award
-      # @return [Result] result with character and points gained
       def apply_experience!(amount)
-        Character.transaction do
-          character.increment!(:experience, amount)
-          process_level_ups
+        gained_experience = Integer(amount, exception: false)
+        raise ProgressionError, "Experience must be a non-negative integer" unless gained_experience&.>= 0
+
+        reset_totals
+        ApplicationRecord.transaction do
+          character.with_lock do
+            character.reload
+            character.experience += gained_experience
+            process_level_ups
+            character.last_level_up_at = Time.current if @levels_gained.positive?
+            character.save!
+            award_nv!
+          end
         end
 
         Result.new(
-          character: character,
+          character:,
           levels_gained: @levels_gained,
           stat_points_gained: @stat_points_gained,
           combat_skill_points_gained: @combat_skill_points_gained,
-          peace_skill_points_gained: @peace_skill_points_gained
+          peace_skill_points_gained: @peace_skill_points_gained,
+          perk_points_gained: @perk_points_gained,
+          nv_gained: @nv_gained
         )
       end
 
@@ -62,49 +53,56 @@ module Players
 
       attr_reader :character
 
+      def reset_totals
+        @levels_gained = 0
+        @stat_points_gained = 0
+        @combat_skill_points_gained = 0
+        @peace_skill_points_gained = 0
+        @perk_points_gained = 0
+        @nv_gained = 0
+      end
+
       def process_level_ups
-        while character.experience >= xp_required_for(character.level + 1)
-          grant_level_up_rewards
-        end
+        loop do
+          next_level = character.level.to_i + 1
+          threshold = Character.xp_required_for_level(next_level)
+          break unless threshold && character.experience.to_i >= threshold
 
-        character.update!(last_level_up_at: Time.current) if @levels_gained.positive?
+          rewards = Game::Progression::Catalog.rewards_for_level(next_level)
+          break unless rewards
+
+          apply_level_rewards(next_level, rewards)
+        end
       end
 
-      def grant_level_up_rewards
-        new_level = character.level + 1
-
-        # Increment level
-        character.increment!(:level)
+      def apply_level_rewards(next_level, rewards)
+        character.level = next_level
+        add_reward(:stat_points_available, rewards, "stat_points", :@stat_points_gained)
+        add_reward(:combat_skill_points, rewards, "combat_skill_points", :@combat_skill_points_gained)
+        add_reward(:peace_skill_points, rewards, "peace_skill_points", :@peace_skill_points_gained)
+        add_reward(:perk_points, rewards, "perk_points", :@perk_points_gained)
+        @nv_gained += rewards.fetch("nv")
         @levels_gained += 1
-
-        # Grant stat points
-        character.increment!(:stat_points_available, STAT_POINTS_PER_LEVEL)
-        @stat_points_gained += STAT_POINTS_PER_LEVEL
-
-        # Grant combat skill points (every level)
-        character.increment!(:combat_skill_points, COMBAT_SKILL_POINTS_PER_LEVEL)
-        @combat_skill_points_gained += COMBAT_SKILL_POINTS_PER_LEVEL
-
-        # Grant peace skill points (from level 5 onwards)
-        if new_level >= PEACE_SKILL_POINTS_START_LEVEL
-          character.increment!(:peace_skill_points, PEACE_SKILL_POINTS_PER_LEVEL)
-          @peace_skill_points_gained += PEACE_SKILL_POINTS_PER_LEVEL
-        end
-
-        # Restore HP/MP to full on level up
-        if character.respond_to?(:max_hp) && character.respond_to?(:current_hp)
-          character.update!(current_hp: character.max_hp)
-        end
-
-        if character.respond_to?(:max_mp) && character.respond_to?(:current_mp)
-          character.update!(current_mp: character.max_mp)
-        end
       end
 
-      # XP required to reach a given level.
-      # Level 2 starts at 100 total XP, matching the observed starter profile.
-      def xp_required_for(level)
-        Character.xp_required_for_level(level)
+      def add_reward(attribute, rewards, reward_key, total_variable)
+        amount = rewards.fetch(reward_key)
+        character.public_send("#{attribute}=", character.public_send(attribute).to_i + amount)
+        instance_variable_set(total_variable, instance_variable_get(total_variable) + amount)
+      end
+
+      def award_nv!
+        return unless @nv_gained.positive?
+
+        character.user.currency_wallet.adjust!(
+          amount: @nv_gained,
+          reason: "progression.level_up",
+          metadata: {
+            "character_id" => character.id,
+            "level" => character.level,
+            "levels_gained" => @levels_gained
+          }
+        )
       end
     end
   end

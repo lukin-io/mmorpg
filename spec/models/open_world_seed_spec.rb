@@ -135,6 +135,12 @@ RSpec.describe "Open-world seed data", type: :model do
     end
 
     expect(CityHotspot.active.where(zone: node_zones.values).count).to eq(32)
+    expect(
+      CityHotspot.active.where(zone: node_zones.values).where.not(key: "arena").distinct.pluck(:required_level)
+    ).to eq([0])
+    expect(
+      CityHotspot.active.find_by!(zone: node_zones.fetch("city2_1"), key: "arena").required_level
+    ).to eq(23)
 
     expect {
       load_seed

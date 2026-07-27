@@ -7,6 +7,11 @@ class Character < ApplicationRecord
 
   PRIMARY_STATS = %i[strength dexterity luck vitality intelligence].freeze
   BASE_PRIMARY_STATS = PRIMARY_STATS.index_with { 1 }.freeze
+  HP_PER_HEALTH = 5
+  MP_PER_KNOWLEDGE = 7
+  MASS_PER_STRENGTH = 5
+  MASS_PER_HEALTH = 10
+  MASS_PER_LEVEL = 10
   STAT_LABELS = {
     strength: "Strength",
     dexterity: "Dexterity",
@@ -85,7 +90,7 @@ class Character < ApplicationRecord
   has_many :world_action_offers, dependent: :destroy
 
   validates :name, presence: true, uniqueness: true, length: {maximum: MAX_NAME_LENGTH}
-  validates :level, numericality: {greater_than: 0}
+  validates :level, numericality: {greater_than_or_equal_to: 0}
   validates :experience, numericality: {greater_than_or_equal_to: 0}
   validates :stat_points_available, numericality: {greater_than_or_equal_to: 0}
   validates :combat_skill_points, :peace_skill_points, numericality: {greater_than_or_equal_to: 0}, allow_nil: true
@@ -136,6 +141,7 @@ class Character < ApplicationRecord
 
       base[key] = base.fetch(key, 0) + value.to_i
     end
+    base[:strength] += level.to_i / 2 if owns_perk?(:more_strength)
     equipment_stat_modifiers.each do |stat, value|
       base[stat] = base.fetch(stat, 0) + value.to_i
     end
@@ -151,14 +157,48 @@ class Character < ApplicationRecord
   end
 
   def self.xp_required_for_level(level)
-    target = level.to_i
-    return 0 if target <= 1
-
-    ((target - 1)**2) * 100
+    Game::Progression::Catalog.experience_threshold_to_reach(level)
   end
 
   def experience_to_next_level
-    [self.class.xp_required_for_level(level + 1) - experience.to_i, 0].max
+    threshold = self.class.xp_required_for_level(level + 1)
+    return 0 unless threshold
+
+    [threshold - experience.to_i, 0].max
+  end
+
+  # Neverlands derives base hit points, mana, and carried mass directly from
+  # primary stats. Equipment bonuses stay separate from these persisted base
+  # values so allocating a stat cannot refill an injured character.
+  def derived_base_max_hp
+    base_primary_stat_value(:vitality) * HP_PER_HEALTH
+  end
+
+  def derived_base_max_mp
+    base_primary_stat_value(:intelligence) * MP_PER_KNOWLEDGE
+  end
+
+  def carrying_capacity
+    current_stats = stats
+    (current_stats.get(:strength).to_i * MASS_PER_STRENGTH) +
+      (current_stats.get(:vitality).to_i * MASS_PER_HEALTH) +
+      (level.to_i * MASS_PER_LEVEL)
+  end
+
+  def assign_base_vitals_from_stats
+    self.max_hp = derived_base_max_hp
+    self.max_mp = derived_base_max_mp
+    self.current_hp = [current_hp.to_i, max_hp].min
+    self.current_mp = [current_mp.to_i, max_mp].min
+  end
+
+  def base_primary_stat_value(stat_key)
+    normalized = self.class.normalize_stat_key(stat_key)
+    return 0 unless normalized
+
+    BASE_PRIMARY_STATS.fetch(normalized) + allocated_stats.to_h.sum do |key, value|
+      (self.class.normalize_stat_key(key) == normalized) ? value.to_i : 0
+    end
   end
 
   # Calculate maximum action points for combat
@@ -829,6 +869,6 @@ class Character < ApplicationRecord
   end
 
   def ensure_inventory!
-    create_inventory!(slot_capacity: 30, weight_capacity: 100) unless inventory
+    create_inventory!(slot_capacity: 30, weight_capacity: carrying_capacity) unless inventory
   end
 end

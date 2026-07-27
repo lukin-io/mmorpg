@@ -44,7 +44,28 @@ RSpec.describe Game::Movement::AcceptMove do
       expect(result.position).to eq(position)
       expect(position.reload.x).to eq(5)
       expect(position.y).to eq(5)
+      expect(result.command.metadata["fatigue_gain"]).to be_between(1, 2)
     end
+  end
+
+  it "snapshots a deterministic one-or-two point fatigue gain" do
+    command = offered_move
+    rng = instance_double(Random)
+    allow(rng).to receive(:rand).with(1..2).and_return(2)
+
+    result = described_class.new(character:, action_key: command.action_key, rng:).call
+
+    expect(result.command.reload.metadata["fatigue_gain"]).to eq(2)
+  end
+
+  it "rejects movement at the 86 percent fatigue boundary" do
+    character.update!(fatigue_percent: 86, fatigue_updated_at: Time.current)
+    command = offered_move
+
+    expect {
+      described_class.new(character:, action_key: command.action_key).call
+    }.to raise_error(Game::Movement::MovementViolationError, /fatigued/)
+    expect(command.reload).to be_offered
   end
 
   it "rejects direction-only movement without a server action key" do
@@ -99,6 +120,19 @@ RSpec.describe Game::Movement::AcceptMove do
     expect {
       described_class.new(character:, action_key: command.action_key).call
     }.to raise_error(Game::Movement::MovementViolationError, /already in progress/)
+  end
+
+  it "does not accept a sibling offer after another command has started" do
+    accepted = offered_move(direction: "north", target_x: 5, target_y: 4)
+    sibling = offered_move(direction: "east", target_x: 6, target_y: 5)
+
+    described_class.new(character:, action_key: accepted.action_key).call
+
+    expect {
+      described_class.new(character:, action_key: sibling.action_key).call
+    }.to raise_error(Game::Movement::MovementViolationError, /already in progress|no longer available/)
+    expect(MovementCommand.moving.where(character:).pluck(:id)).to eq([accepted.id])
+    expect(sibling.reload).to be_cancelled
   end
 
   it "rejects offers whose target is no longer passable" do

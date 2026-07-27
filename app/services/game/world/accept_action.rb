@@ -5,6 +5,7 @@ module Game
     # Validates and accepts a persisted world action offer.
     class AcceptAction
       class ActionViolationError < StandardError; end
+      FATIGUE_LOCKED_ACTIONS = %w[enter_building search_resources].freeze
 
       def initialize(character:, action_key:, action_type: nil, target: nil, position: nil)
         @character = character
@@ -44,6 +45,11 @@ module Game
 
         if action_type.present? && offer.action_type != action_type
           raise ActionViolationError, "Action offer does not match requested action"
+        end
+
+        if position&.zone&.outdoor? && FATIGUE_LOCKED_ACTIONS.include?(offer.action_type) &&
+            Characters::FatigueService.new(character:).outdoor_actions_blocked?
+          raise ActionViolationError, "Too fatigued for this action"
         end
 
         return unless target

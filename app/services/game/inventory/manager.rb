@@ -228,7 +228,7 @@ module Game
 
       def ensure_weight_capacity!(delta)
         projected = inventory.current_weight + delta
-        raise CapacityExceededError, "Inventory is overloaded" if projected > inventory.weight_capacity
+        raise CapacityExceededError, "Inventory is overloaded" if projected > inventory.max_weight
       end
 
       def increment_weight!(delta)

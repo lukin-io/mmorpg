@@ -8,6 +8,45 @@ Status: historical Neverlands reference. Canonical progression design lives in
 
 ---
 
+## Wiki Character-Development Audit (2026-07-27)
+
+The plain-HTTP Neverlands wiki category
+[`Развитие персонажа`](http://wiki.neverlands.ru/wiki/Категория:Развитие_персонажа)
+currently lists 48 pages. The wiki is historical and some values may have
+changed on the live game, so use this precedence:
+
+1. a current controlled live observation wins for behavior or numbers;
+2. the wiki defines taxonomy, direction, and exact values not contradicted by
+   a live observation;
+3. familiar MMORPG behavior is never a substitute for either source.
+
+The audit separates values safe to implement now from directions that still
+need an isolated capture:
+
+| Wiki area | Source-backed observation | Local use |
+| --- | --- | --- |
+| [`Персонаж`](http://wiki.neverlands.ru/wiki/Персонаж) | Character growth combines level, stats, numeric skills, binary perks, equipment, and professions. Warrior, Mage, and Dodger are build archetypes rather than a required class-selection record. | Preserve separate progression concepts; do not add a generic class selector. |
+| [`Уровень`](http://wiki.neverlands.ru/wiki/Уровень), [`Опыт`](http://wiki.neverlands.ru/wiki/Опыт), [`Таблица опыта`](http://wiki.neverlands.ru/wiki/Таблица_опыта) | A new character is level `0`; the table provides cumulative XP thresholds, level grants, per-fight XP caps, and maximum NPC group sizes. Rows `0..27` are complete; the later visible rows are incomplete. | `config/gameplay/character_progression.yml` is limited to complete rows `0..27`; no extrapolation. Solo configured NPC XP is capped by the winner's current row. Group distribution remains an evidence gap. |
+| [`Стат`](http://wiki.neverlands.ru/wiki/Стат) | Five primary stats remain the core allocation surface. | Keep Strength, Dexterity, Luck, Health, and Knowledge at base `1`, with starter pool `15`. |
+| [`Здоровье`](http://wiki.neverlands.ru/wiki/Здоровье), [`Мана`](http://wiki.neverlands.ru/wiki/Мана) | Each Health point contributes `5` maximum HP; each Knowledge point contributes `7` maximum MP. | Recalculate base maxima after a saved stat allocation without refilling current HP/MP. |
+| [`Масса`](http://wiki.neverlands.ru/wiki/Масса) | The published carried-mass formula is `Strength × 5 + Health × 10 + level × 10`. | Use the effective stat result for inventory, loot, transfer, and shop capacity checks. |
+| [`Навык`](http://wiki.neverlands.ru/wiki/Навык), [`Умение`](http://wiki.neverlands.ru/wiki/Умение), [`Боевые умения`](http://wiki.neverlands.ru/wiki/Боевые_умения), [`Мирные умения`](http://wiki.neverlands.ru/wiki/Мирные_умения) | Binary perks and `0..100` numeric skills are separate; combat and peace skill pools remain separate. | Retain the captured registries, tiered spend rates, and separate locked allocation services. |
+| [`Больше силы`](http://wiki.neverlands.ru/wiki/Больше_силы) | The perk adds one Strength for every two character levels, rounded down. | The already selectable `more_strength` perk now contributes `floor(level / 2)` effective Strength. |
+| [`Очки Действия`](http://wiki.neverlands.ru/wiki/Очки_Действия) | AP grows with level and Extra Action Points; weapon mastery can reduce matching attack cost and increase matching damage. | Direction is source-backed, but exact formulas remain `[EVIDENCE]`; do not wire skill-label guesses into the combat profile. |
+| [`Усталость`](http://wiki.neverlands.ru/wiki/Усталость) | Wilderness travel adds `1..2`; one point recovers every three minutes; at `86%` Move, Look, and Enter are unavailable. The combat penalty is described without a complete formula. | Persist retry-safe per-move gain and time-derived recovery; gate only the named outdoor actions. Do not invent a combat penalty. |
+| [`Критический удар`](http://wiki.neverlands.ru/wiki/Критический_удар) | A critical hit doubles resolved damage. | Use a `2.0` critical multiplier in the shared combat resolver. |
+| [`Поломка вещей`](http://wiki.neverlands.ru/wiki/Поломка_вещей) | Each equipped durable item can lose at most one point per fight. Arena victory/draw use `0%`, arena defeat `1%`; other fight victory/draw/defeat use `2%/30%/50%`. | Resolve wear once at shared fight finalization and reject zero-durability shop sales. Repair flow and the Careful Fighter prerequisite/effect remain separate capture work. |
+| [`Дроп`](http://wiki.neverlands.ru/wiki/Дроп), [`Наблюдательность`](http://wiki.neverlands.ru/wiki/Наблюдательность) | Observation strongly affects drop and multi-drop probability, with a nonlinear post-2013 relationship. | Existing explicit loot tables remain; the observation modifier is `[EVIDENCE]` until its exact curve is captured. |
+| [`Пробой брони`](http://wiki.neverlands.ru/wiki/Пробой_брони), [`Сопротивления`](http://wiki.neverlands.ru/wiki/Сопротивления), [`Урон`](http://wiki.neverlands.ru/wiki/Урон), [`Модификатор`](http://wiki.neverlands.ru/wiki/Модификатор), [`Класс Брони`](http://wiki.neverlands.ru/wiki/Класс_Брони) | These are distinct combat outputs affected by stats, items, skills, and effects. | Keep separate fields and combat-profile outputs. Exact coefficient changes remain combat evidence work. |
+| [`Самолечение`](http://wiki.neverlands.ru/wiki/Самолечение), [`Быстрое восстановление маны`](http://wiki.neverlands.ru/wiki/Быстрое_восстановление_маны) | The skills improve recovery, but the audited pages do not provide a safe complete local formula. | Keep the numeric skills allocatable and mechanically inert until the timing/multiplier formulas are captured. |
+| [`Профессия`](http://wiki.neverlands.ru/wiki/Профессия) | Profession perks gate matching activities and profession counters grow through use. | Treat professions as a separate design owner; one gathering loop is an MVP candidate only after tools, timer, rewards, and counter growth are captured. |
+
+This audit supports implementation only where the table above gives an exact
+rule. It does not authorize guessed AP, drop, recovery, resistance, profession,
+repair, or group-XP formulas.
+
+---
+
 ## Table of Contents
 1. [Stats System](#stats-system)
 2. [Skills System](#skills-system)

@@ -3,7 +3,7 @@
 title: Shop and Economy Feature
 description: Implementation handbook for the Neverlands-based city shop, NV wallet, catalog buying, inventory selling, and transaction ledger.
 status: Partially Implemented
-updated: 2026-07-21
+updated: 2026-07-27
 owners: Shop and Economy
 template: feature-v1
 ---
@@ -50,7 +50,7 @@ Supporting documents:
 
 ## 2. Feature summary
 
-An authenticated player standing inside an accessible city Shop can browse server-authored item templates, filter the dense Neverlands-style table, buy positive-priced items with NV, switch to Sell, and sell eligible inventory stacks back to the shop. The screen shows wallet balance, carried mass, slot use, item properties, requirements, stock, unit prices, quantity controls, and result flashes.
+An authenticated player standing inside an accessible city Shop can browse server-authored item templates, filter the dense Neverlands-style table, buy positive-priced items with NV, switch to Sell, and sell eligible non-broken inventory stacks back to the shop. The screen shows wallet balance, wiki-derived carried-mass maximum, slot use, item properties, requirements, stock, unit prices, quantity controls, and result flashes.
 
 The server is authoritative. `CurrencyWallet` owns the account's NV balance, `CurrencyTransaction` records each adjustment, `Inventory` owns carried items/capacity, `ItemTemplate` owns price and shop stock, and the current character's city context controls access. Catalog parameters and browser controls never confer purchase or sale authority.
 
@@ -150,13 +150,13 @@ Catalog order, row position, item label, CSS class, displayed price, and query p
 
 Only `ItemTemplate` rows with `base_price > 0` are buyable. Normal Buy excludes license-like templates; Licenses contains only them; Novice contains entries with required level at most `5` and integer base price at most `250`. Category and optional level/price filters narrow the results.
 
-Purchase price is the template's integer `base_price` multiplied by normalized quantity. The transaction locks the template, inventory, and wallet; rechecks limited stock; debits NV through the wallet ledger; adds items through `Game::Inventory::Manager`; and decrements limited stock. Capacity or funds failure rolls the transaction back.
+Purchase price is the template's integer `base_price` multiplied by normalized quantity. The transaction locks the template, inventory, and wallet; rechecks limited stock; debits NV through the wallet ledger; adds items through `Game::Inventory::Manager`; and decrements limited stock. Capacity uses `effective Strength × 5 + effective Health × 10 + level × 10`; capacity or funds failure rolls the transaction back.
 
 ### 6.3 Selling and NV accounting
 
 The base resale price is 20 percent of integer base price, rounded to two decimals with a minimum of `1` NV. If maximum durability is positive, the unit return is prorated by current/max durability and rounded to two decimals. This local formula is consistent with captured examples but is not evidence for unobserved item classes.
 
-Sale locks the inventory and stack, removes the requested quantity or destroys an exhausted stack, reduces carried weight without going below zero, increments limited shop stock, and credits the wallet ledger. Equipped, bound, protected, reserved, or otherwise discard-protected items cannot be sold.
+Sale locks the inventory and stack, removes the requested quantity or destroys an exhausted stack, reduces carried weight without going below zero, increments limited shop stock, and credits the wallet ledger. Equipped, bound, protected, reserved, otherwise discard-protected, or zero-durability items cannot be sold.
 
 Wallet balances and ledger amounts are decimal values. Every adjustment is non-zero, records a reason and resulting balance, and cannot leave the wallet negative.
 
@@ -173,7 +173,7 @@ The current forms do not use a one-time server-issued action capability. CSRF, a
 | `CurrencyWallet` | One user's NV balance | Unique per user and non-negative |
 | `CurrencyTransaction` | Audit one wallet adjustment | Non-zero amount, reason, metadata, and non-negative `balance_after` |
 | `ItemTemplate` | Catalog identity, price, requirements, stack/durability, stock | Buyable only when positive-priced; limited stock cannot underflow |
-| `Inventory` and `InventoryItem` | Current character's capacity and owned stacks | Sale scope and protected-state authority |
+| `Inventory` and `InventoryItem` | Current character's derived mass capacity and owned stacks | Sale scope, broken/protected state, and `Character#carrying_capacity` authority |
 | `Game::Shop::Catalog` | Authored modes, categories, filters, and resale formula | Presentation eligibility only; does not transfer value |
 | `Game::World::ResumeContext` | Current Shop availability and safe resume | Rechecks the active current-city Shop hotspot |
 
@@ -300,6 +300,7 @@ City/World own exact location persistence. Shop owns only the safe interior surf
 | Limited stock changes after render | Recheck under template lock and fail without partial mutation. |
 | Sale exceeds current stack | Reject; wallet, stack, weight, and stock remain unchanged. |
 | Equipped/bound/protected/reserved item | Reject with `This item cannot be sold.` |
+| Unequipped item at zero durability | Reject with `Broken items cannot be sold.`; preserve stack, stock, weight, and wallet. |
 | Zero/non-positive price | Template is not buyable/sellable; no transaction. |
 | Invalid mode/category/filter | Fall back or filter presentation only; never mutate domain state. |
 | Repeated valid submission | Performs another valid trade; one-time replay protection is not implemented. |
@@ -311,6 +312,8 @@ City/World own exact location persistence. Shop owns only the safe interior surf
 - Mode/category/filter selection changes only eligible rendered rows and safe saved context.
 - A valid purchase atomically debits NV, records a ledger entry, adds inventory quantity/weight, and decrements limited stock.
 - A valid sale atomically removes owned quantity/weight, credits decimal NV, records a ledger entry, and restores limited stock.
+- A zero-durability item cannot be sold, and purchase/loot capacity uses the
+  same derived character mass maximum.
 - Price, ownership, stock, protected state, capacity, and wallet balance are recalculated server-side.
 - Logout/login resumes a valid Shop surface without trusting an arbitrary URL or changing exact city location.
 - License and novice source mechanics beyond filtering/ordinary purchase remain explicitly unimplemented.
@@ -325,7 +328,7 @@ Tests are part of the feature contract. Shop changes require applicable model, r
 |---|---|
 | Success | Shop render, classification, buy, sale, durability proration, wallet/ledger persistence, inventory/stock changes, and resume context. |
 | Failure | Insufficient funds, capacity, missing item, protected item, unavailable Shop, and invalid wallet adjustment. |
-| Edge/null/boundary | Zero/negative/decimal amounts, full/partial stacks, zero durability, unlimited/limited stock, absent inventory/wallet, quantity limits, and invalid filters. |
+| Edge/null/boundary | Zero/negative/decimal amounts, full/partial stacks, zero durability sale rejection, derived mass boundary, unlimited/limited stock, absent inventory/wallet, quantity limits, and invalid filters. |
 | Authorization | Anonymous access, foreign inventory item, active-character ownership, and city hotspot availability. |
 
 Factories must retain edge traits for stock state, stack/protected/equipped/bound state, capacity boundaries, durability, positive/zero price, city Shop availability, and ownership when exercised.
@@ -363,6 +366,7 @@ bundle exec rspec \
 
 ### Models and policies
 
+- `app/models/character.rb`
 - `app/models/currency_wallet.rb`
 - `app/models/currency_transaction.rb`
 - `app/models/item_template.rb`
@@ -392,6 +396,7 @@ bundle exec rspec \
 - `db/migrate/20251121090002_create_item_templates.rb`
 - `db/migrate/20251121142307_create_economy_and_trading.rb`
 - `db/migrate/20260721090000_ensure_decimal_currency_columns.rb`
+- `db/migrate/20251121150000_create_characters_and_privacy_settings.rb`
 
 ### Integrated feature entry points
 
@@ -440,3 +445,4 @@ Before extending Shop and Economy:
 | Date | Change |
 |---|---|
 | 2026-07-21 | Created the implementation handbook for the city Shop, catalog filters, buying, selling, NV wallet, stock, and safe resume behavior. |
+| 2026-07-27 | Aligned Shop capacity with the wiki mass formula and made zero-durability sale rejection explicit in implementation, request coverage, failure rules, and file ownership. |

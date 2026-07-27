@@ -35,11 +35,9 @@ module PlayerProfileHelper
   # delta contributed by equipped items, matching the captured profile surface.
   def profile_primary_stats(character)
     effective = character.stats
-    allocated = character.allocated_stats || {}
-
     Character::PRIMARY_STATS.map do |key|
-      own = Character::BASE_PRIMARY_STATS.fetch(key) +
-        allocated.sum { |stat, value| (Character.normalize_stat_key(stat) == key) ? value.to_i : 0 }
+      own = character.base_primary_stat_value(key)
+      own += character.level.to_i / 2 if key == :strength && character.owns_perk?(:more_strength)
       total = effective.get(key).to_i
 
       {key: key, label: Character.stat_label(key), base: own, equipment: total - own, total: total}
@@ -64,7 +62,7 @@ module PlayerProfileHelper
   end
 
   def profile_fatigue(character)
-    character.fatigue_percent.to_i
+    Characters::FatigueService.new(character:).current_percent
   end
 
   private

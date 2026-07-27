@@ -4,6 +4,10 @@
   local_actions_present = tile_building_action || tile_local_actions.any?
 %>
 
+<% if @movement_state&.locked_reason == :fatigued %>
+  <p class="nl-world-action-note">Fatigue is 86% or higher. Move, Look, and Enter are unavailable until it recovers.</p>
+<% end %>
+
 <% if local_actions_present %>
   <div class="actions-panel nl-world-action-strip" aria-label="Current cell actions">
     <% if tile_building_action && tile_building_action[:building] %>

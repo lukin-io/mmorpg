@@ -5,20 +5,21 @@ class CreateCharactersAndPrivacySettings < ActiveRecord::Migration[8.1]
     create_table :characters do |t|
       t.references :user, null: false, foreign_key: true
       t.string :name, null: false
-      t.integer :level, null: false, default: 1
+      t.integer :level, null: false, default: 0
       t.bigint :experience, null: false, default: 0
-      t.integer :stat_points_available, null: false, default: 0
-      t.integer :combat_skill_points, null: false, default: 0
-      t.integer :peace_skill_points, null: false, default: 0
+      t.integer :stat_points_available, null: false, default: 15
+      t.integer :combat_skill_points, null: false, default: 10
+      t.integer :peace_skill_points, null: false, default: 2
       t.jsonb :allocated_stats, null: false, default: {}
       t.jsonb :passive_skills, null: false, default: {}
       t.string :alignment, null: false, default: "none"
       t.integer :fatigue_percent, null: false, default: 0
+      t.datetime :fatigue_updated_at
       t.datetime :last_level_up_at
-      t.integer :current_hp, null: false, default: 100
-      t.integer :max_hp, null: false, default: 100
-      t.integer :current_mp, null: false, default: 50
-      t.integer :max_mp, null: false, default: 50
+      t.integer :current_hp, null: false, default: 5
+      t.integer :max_hp, null: false, default: 5
+      t.integer :current_mp, null: false, default: 7
+      t.integer :max_mp, null: false, default: 7
       t.integer :hp_regen_interval, null: false, default: 300
       t.integer :mp_regen_interval, null: false, default: 600
       t.boolean :in_combat, null: false, default: false

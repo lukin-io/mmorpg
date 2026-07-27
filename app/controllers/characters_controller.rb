@@ -27,27 +27,7 @@ class CharactersController < ApplicationController
   # PATCH /characters/:id/stats
   def update_stats
     allocated = parse_stat_allocations(params[:allocated_stats])
-    total_spent = allocated.values.sum
-
-    if total_spent > @character.stat_points_available
-      return respond_with_error("Not enough free stat points")
-    end
-
-    if total_spent <= 0
-      return respond_with_error("No stats selected")
-    end
-
-    # Merge with existing allocated stats
-    new_allocated = @character.allocated_stats.dup
-    allocated.each do |stat, amount|
-      next unless amount.positive?
-      new_allocated[stat.to_s] = (new_allocated[stat.to_s] || 0) + amount
-    end
-
-    @character.update!(
-      allocated_stats: new_allocated,
-      stat_points_available: @character.stat_points_available - total_spent
-    )
+    Characters::StatAllocationService.new(character: @character).call(allocations: allocated)
 
     respond_to do |format|
       format.html { redirect_to stats_character_path(@character), notice: "Stats saved" }
@@ -60,6 +40,8 @@ class CharactersController < ApplicationController
         ]
       end
     end
+  rescue Characters::StatAllocationService::AllocationError => e
+    respond_with_error(e.message)
   end
 
   # GET /characters/:id/skills
@@ -81,78 +63,7 @@ class CharactersController < ApplicationController
   # grants skill levels based on the skill's tiered progression rate.
   def update_skills
     allocated = parse_skill_allocations(params[:allocated_skills])
-
-    if allocated.values.sum <= 0
-      return respond_with_error("No skills selected")
-    end
-
-    # Separate allocations by pool type (skip unknown skills)
-    combat_allocations = {}
-    peace_allocations = {}
-
-    allocated.each do |skill_key, spends|
-      next unless spends.positive?
-      # Skip unknown skills entirely - they shouldn't consume points
-      definition = Game::Skills::PassiveSkillRegistry.find(skill_key.to_sym)
-      next unless definition
-
-      pool = definition[:pool] || :combat
-      case pool
-      when :combat
-        combat_allocations[skill_key] = spends
-      when :peace
-        peace_allocations[skill_key] = spends
-      end
-    end
-
-    # Validate we have enough points in each pool
-    combat_spends_total = combat_allocations.values.sum
-    peace_spends_total = peace_allocations.values.sum
-
-    if combat_spends_total > @character.available_combat_skill_points
-      return respond_with_error("Not enough combat points")
-    end
-
-    if peace_spends_total > @character.available_peace_skill_points
-      return respond_with_error("Not enough peace points")
-    end
-
-    # Apply tiered progression for each skill spend
-    formula = Game::Formulas::SkillProgressionFormula.new
-    skill_updates = {}
-
-    allocated.each do |skill_key, spends|
-      next unless spends.positive?
-      definition = Game::Skills::PassiveSkillRegistry.find(skill_key.to_sym)
-      next unless definition
-
-      current_level = @character.passive_skill_level(skill_key)
-      max_level = definition[:max_level] || 100
-
-      # Apply each spend sequentially (tiered progression changes per tier)
-      spends.times do
-        break if current_level >= max_level
-        current_level = formula.apply_spend(
-          current_level: current_level,
-          progression_rate: definition[:progression_rate]
-        )
-      end
-
-      skill_updates[skill_key.to_s] = [current_level, max_level].min
-    end
-
-    # Apply all updates atomically
-    @character.transaction do
-      new_skills = @character.passive_skills.merge(skill_updates)
-
-      @character.update!(
-        passive_skills: new_skills,
-        combat_skill_points: @character.combat_skill_points - combat_spends_total,
-        peace_skill_points: @character.peace_skill_points - peace_spends_total
-      )
-    end
-
-    @character.clear_passive_skill_cache!
+    Characters::SkillAllocationService.new(character: @character).call(allocations: allocated)
 
     respond_to do |format|
       format.html { redirect_to skills_character_path(@character), notice: "Skills saved" }
@@ -168,6 +79,8 @@ class CharactersController < ApplicationController
         ]
       end
     end
+  rescue Characters::SkillAllocationService::AllocationError => e
+    respond_with_error(e.message)
   end
 
   # GET /characters/:id/perks

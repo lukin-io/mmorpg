@@ -151,6 +151,11 @@ The authoritative server state must be able to answer:
 - available action buttons when idle;
 - disabled/locked reason when not idle.
 
+Wilderness movement also owns persisted fatigue. Each completed step adds a
+snapshotted `1..2`, one point recovers every three minutes, and effective
+fatigue `86%+` removes Move, Look, and Enter until recovery. This is an action
+gate, not an invented travel-time or combat-penalty formula.
+
 ### Travel Time
 
 Travel time is a GDD-level value, not a browser-only cooldown. The same formula
@@ -326,9 +331,24 @@ Characters grow through:
 - Neverlands alignment/sign markers where source-backed;
 - equipment and inventory growth.
 
+New characters begin at level `0` with base primary stats of `1`, `15` stat
+points, `10` combat-skill points, `2` peace-skill points, `1` perk point,
+`5 HP`, `7 MP`, and `100` XP to level `1`. Thresholds, grants, fight-XP caps,
+and source NPC-group limits come from the complete Neverlands table rows
+`0..27`; later incomplete rows are not extrapolated.
+
+Implemented exact derived rules are `Health × 5` base HP, `Knowledge × 7` base
+MP, `Strength × 5 + Health × 10 + level × 10` carried mass, and More Strength
+adding `floor(level / 2)` effective Strength.
+
 Numeric skills and boolean perks must remain separate progression surfaces
 with separate point pools. A captured perk can be owned before its mechanical
 effect is wired; effect formulas must not be inferred from its label.
+
+Professions are a third, separate development area: binary profession access
+and use-grown counters. One gathering loop is a possible MVP extension only
+after its tool, timer, yield, failure, counter-growth, and interruption flows
+are captured end to end.
 
 Movement-affecting progression, such as Wanderer skill, encumbrance, or terrain
 mastery, must feed the canonical travel-time formula.

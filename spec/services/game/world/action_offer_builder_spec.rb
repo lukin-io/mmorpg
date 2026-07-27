@@ -100,4 +100,19 @@ RSpec.describe Game::World::ActionOfferBuilder do
 
     expect(offers).to be_empty
   end
+
+  it "withholds wilderness Enter and Look offers at 86 percent fatigue" do
+    character.update!(fatigue_percent: 86, fatigue_updated_at: Time.current)
+    tile = create(:map_tile_template, :with_resource_search, zone: zone.name, x: 5, y: 5)
+    blocked_state = OpenStruct.new(
+      tile:,
+      npc: nil,
+      building:,
+      local_actions: tile.active_local_actions
+    )
+
+    offers = described_class.new(character:, position:, tile_state: blocked_state).call
+
+    expect(offers).to be_empty
+  end
 end

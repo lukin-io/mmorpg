@@ -119,5 +119,6 @@ RSpec.describe Arena::CombatResolver do
 
     expect(result).to include(outcome: :hit, critical: true)
     expect(result[:crit_chance]).to be > 0
+    expect(described_class::CRITICAL_MULTIPLIER).to eq(2.0)
   end
 end

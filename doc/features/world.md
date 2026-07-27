@@ -3,7 +3,7 @@
 title: World Feature
 description: Implementation handbook for the Neverlands-inspired open world, cells, movement, cell content, actions, and persisted player location.
 status: Fully Implemented
-updated: 2026-07-21
+updated: 2026-07-27
 owners: Game world, movement, and world UI
 template: feature-v1
 ---
@@ -32,6 +32,7 @@ Supporting documents:
 - `doc/design/reference/neverlands_live_game_shell_ui.md` — persistent game-shell observations.
 - `doc/design/areas/world_map.md` — world-area design record.
 - `doc/design/features/movement.md` — movement design record.
+- `doc/design/features/professions.md` — explicit evidence boundary for future cell-based gathering.
 - `doc/design/launch_mvp_plan.md` — MVP boundary and seeded topology.
 - `doc/features/city.md` — city nodes, hotspots, and interior surfaces reached through the World context.
 - `doc/features/character_progression.md` — persisted Wanderer value consumed when World authors a movement offer.
@@ -51,7 +52,7 @@ Supporting documents:
 
 The MVP has one outdoor region, **Outpost Surroundings**, with local coordinates from `[0, 0]` through `[999, 999]`. A character occupies exactly one cell in exactly one `Zone`. The region is sparse: cells do not require one million database rows. An in-bounds cell without an explicit template exists as ordinary, passable outdoor terrain.
 
-The player sees a Neverlands-style 5 × 5 map viewport centered on the current cell. The server offers up to eight adjacent destinations. Clicking an offered cell starts a 25-to-30-second move based on the character's effective Wanderer level; the map animates in the browser, but the server remains authoritative and changes the persisted coordinate only when the command becomes due and is completed.
+The player sees a Neverlands-style 5 × 5 map viewport centered on the current cell. The server offers up to eight adjacent destinations. Clicking an offered cell starts a 25-to-30-second move based on the character's effective Wanderer level; the map animates in the browser, but the server remains authoritative and changes the persisted coordinate only when the command becomes due and is completed. Completion applies the command's snapshotted `1..2` fatigue gain. One point recovers every three minutes; at effective fatigue `86%+`, Move, Look, and Enter are withheld and rejected until recovery.
 
 A cell may compose several independent concerns:
 
@@ -71,6 +72,8 @@ Every state-changing click is backed by a short-lived, character-owned server of
 - Persist the exact player zone and coordinate across logout and login.
 - Offer eight-direction timed movement with a single active command.
 - Reduce clean adjacent travel from 30 to 25 whole seconds across effective Wanderer levels `0..100`.
+- Persist wilderness fatigue, recover it from server time, and gate the three
+  named source actions at the exact `86%` boundary.
 - Render only the small local map window required by the client.
 - Compose hidden NPC, entrance, local-action, cell-art, and player-presence state at a cell.
 - Render a configured source-backed image-cell slice before falling back to the
@@ -89,7 +92,7 @@ Every state-changing click is backed by a short-lived, character-owned server of
 - Multiple outdoor regions or region-to-region travel.
 - Rendering or downloading the entire 1,000 × 1,000 region.
 - Procedural biomes, pathfinding, fog of war, or minimap discovery.
-- Terrain-, encumbrance-, fatigue-, effect-, profession-, or non-Wanderer skill-based travel-time modifiers.
+- Terrain-, encumbrance-, fatigue-, effect-, profession-, or non-Wanderer skill-based travel-time modifiers; fatigue gates actions but does not alter duration.
 - Claiming to reproduce Neverlands' complete hidden travel-time formula; the live server has produced `32`- and `49`-second values under unisolated conditions.
 - Automatic movement queues or click-to-path travel.
 - Generic building types, levels, keys, item gates, or invented entrance rules.
@@ -146,6 +149,10 @@ movement, entrance, local, Character, or Inventory action.
 
 No cell actions are available while movement is active. Deferred authored actions remain unavailable rather than displaying controls that imply working gameplay.
 
+At effective fatigue `86%` or higher, the action strip explains that Move,
+Look, and Enter are unavailable. The current map/cell still renders. City node
+navigation is not a wilderness action and is not blocked by this rule.
+
 Before an offered wilderness movement, entrance, or local action completes, World checks the authoritative current cell for its live hostile encounter. The persistent shell's **Character** and **Inventory** actions pass through the same check. An attack replaces the intended action with the shared fight screen; after the explicit result step, the player returns to the saved allowlisted destination. Arbitrary submitted URLs are never accepted as return targets.
 
 ### 4.4 Players here
@@ -190,6 +197,7 @@ The config is evidence-backed content input. `TileNpcService` owns materialized 
 |---|---|---|---|
 | Outdoor map | `GET /world` in an outdoor zone | Interactive | `WorldController`, `MapState`, World views |
 | Adjacent timed movement | `POST /world/move` | Interactive | `TravelTime`, `AcceptMove`, `CompleteMove` |
+| Wilderness fatigue | Movement completion and World load | Interactive constraint | `Characters::FatigueService`, movement/action offer services |
 | Hidden current-cell NPC attack | Interruption of a visible wilderness action | Interactive handoff | World validation, then Arena combat lifecycle |
 | Current-cell city entrance | `POST /world/enter_building` | Interactive handoff | World entrance service, then City |
 | `Look Around` | `POST /world/perform_local_action` | Interactive observation/ambush handoff | World local-action pipeline |
@@ -199,7 +207,7 @@ The config is evidence-backed content input. `TileNpcService` owns materialized 
 
 ### 6.2 Movement and map behavior
 
-The server authors up to eight adjacent offers with opaque keys and a snapshotted `25..30` second duration. The browser marks only those cells, submits one offer, fixes the cursor in the center, translates the buffered map underneath it, and shows the server-derived countdown. Position remains the source cell until `CompleteMove` finalizes a due command.
+The server authors up to eight adjacent offers with opaque keys and a snapshotted `25..30` second duration. Acceptance also snapshots a `1..2` fatigue gain so reload/retry cannot reroll it. The browser marks only those cells, submits one offer, fixes the cursor in the center, translates the buffered map underneath it, and shows the server-derived countdown. Position remains the source cell until `CompleteMove` finalizes a due command and applies the stored fatigue gain.
 
 ### 6.3 Cell composition and handoffs
 
@@ -217,6 +225,7 @@ The client exposes no generic building, pathfinding, terrain-speed, gathering-re
 | `CharacterPosition` | Durable location of one character | One row per character; active character only; coordinate must be inside its zone. This is the source of truth across sessions. |
 | `MapTileTemplate` | Sparse explicit terrain/cell override | Stores a zone-name key, coordinate, passability, optional validated cell-art reference, and authored local actions. Missing in-bounds rows default to passable outdoor cells. |
 | `MovementCommand` | Offered or active timed move | Captures source, target, direction, status, action key, offer expiry, and movement timestamps. |
+| `Character` fatigue fields | Persisted fatigue and recovery anchor | Effective value is time-derived, clamped `0..100`, and gates only source-named wilderness actions. |
 | `WorldActionOffer` | Capability for one cell mutation | Character-owned, short-lived action tied to exact zone, coordinate, type, and polymorphic target. |
 | `TileNpc` | Materialized state of a configured outdoor NPC | Tracks live/defeated state and respawn timing at an exact cell. |
 | `TileBuilding` | Explicit outdoor entrance | MVP building type is only `city`; stores exact authored destination zone and coordinate. |
@@ -381,13 +390,14 @@ The important boundary is that JavaScript animates an accepted command; it does 
 
 ### 8.1 World load
 
-`Game::Movement::MapState` first asks `CompleteMove` to finalize any due command. It then:
+`Game::Movement::MapState` first asks `CompleteMove` to finalize any due command under the character lock. It then:
 
 1. returns the active movement state without new destinations when a command is still moving;
 2. otherwise cancels stale open movement offers;
-3. evaluates all eight direction offsets against bounds and passability;
-4. persists fresh `MovementCommand` offers with random action keys and a 10-minute offer TTL;
-5. returns the map state used to render the viewport.
+3. derives effective fatigue and returns a `fatigued` locked state without destinations at `86%+`;
+4. evaluates all eight direction offsets against bounds and passability;
+5. persists fresh `MovementCommand` offers with random action keys and a 10-minute offer TTL;
+6. returns the map state used to render the viewport.
 
 `WorldController` separately resolves current-cell content and rotates
 `WorldActionOffer` rows for visible entrances and implemented local actions.
@@ -415,12 +425,13 @@ This is an explicit MVP slice, not a claim about the complete Neverlands formula
 `POST /world/move` submits direction, target coordinate, and action key. `AcceptMove`:
 
 1. completes any command already due;
-2. rejects a second active movement;
+2. locks the character and rejects a second active movement;
 3. finds an offered command owned by the current character;
 4. locks it and validates TTL, direction, source position, submitted target, bounds, and current passability;
-5. changes it from `offered` to `moving`;
-6. records `started_at` and `ends_at` using the persisted offer duration;
-7. cancels sibling offers.
+5. rechecks that effective fatigue is below `86`;
+6. changes it from `offered` to `moving` and snapshots a random `fatigue_gain` of `1..2` in command metadata;
+7. records `started_at` and `ends_at` using the persisted offer duration;
+8. cancels sibling offers.
 
 The character remains on the source cell during the 25-to-30-second interval. Turbo responses refresh the relevant map/action frames; HTML requests redirect to the canonical world screen.
 
@@ -432,7 +443,7 @@ On a subsequent world-state load, `CompleteMove` locks the due command and posit
 - the target is still in bounds and passable;
 - the command is the current due `moving` command.
 
-Success updates `CharacterPosition`, advances the command to `completed`, and increments the position turn marker. A moved source or newly invalid target produces a failed command instead of teleporting the character.
+Success updates `CharacterPosition`, applies the stored fatigue gain at the authoritative `ends_at`, advances the command to `completed`, and increments the position turn marker. A moved source or newly invalid target produces a failed command without changing position or fatigue.
 
 ### 8.5 Accept a cell action
 
@@ -442,8 +453,9 @@ Visible entrance use and local actions follow the same capability pattern:
 2. The form submits its opaque action key and expected target identifiers.
 3. `WorldActionOfferPolicy` verifies ownership.
 4. `Game::World::AcceptAction` locks the row and revalidates status, expiry, position, action type, and target.
-5. The domain service performs the action.
-6. The offer becomes `completed` or `failed`; subsequent rendering creates a fresh offer if the action is still possible.
+5. For an outdoor Enter or Look offer, acceptance rechecks effective fatigue below `86`.
+6. The domain service performs the action.
+7. The offer becomes `completed` or `failed`; subsequent rendering creates a fresh offer if the action is still possible.
 
 Changing an HTML id, reusing another character's key, replaying an expired key, or moving away invalidates the action.
 
@@ -516,7 +528,9 @@ A wilderness fight does not move `CharacterPosition`. Its match metadata stores 
 - `CurrentCharacterContext` selects only the signed-in user's playable active character.
 - `WorldActionOfferPolicy` authorizes action-offer ownership.
 - Services revalidate exact zone, coordinate, action type, target, status, and expiry under locks.
-- Movement uses character-owned `MovementCommand` rows and rejects concurrent active moves.
+- Movement serializes acceptance and completion on the character lock, then locks the command/position records, so sibling retries cannot create concurrent active moves or duplicate fatigue.
+- Fatigue gain is snapshotted on acceptance and applied only by successful
+  completion; Move/Look/Enter recheck the time-derived value server-side.
 - Database state, not DOM geometry, hidden labels, or JavaScript state, decides availability.
 - Cell records store a configured art key and sheet coordinate, never an
   arbitrary asset path, URL, CSS size, or client-provided image value.
@@ -540,6 +554,10 @@ A wilderness fight does not move `CharacterPosition`. Its match metadata stores 
 | Missing out-of-bounds render-buffer cell | Inert visual placeholder only. |
 | Impassable explicit tile | No destination offer; revalidated on acceptance and completion. |
 | Active movement | No new movement or cell-action offers. |
+| Effective fatigue below `86` | Move/Look/Enter can be offered when every other rule passes. |
+| Effective fatigue `86..100` | Render the current cell and explanation, but issue/accept no wilderness Move, Look, or Enter. |
+| Three minutes elapse | Effective fatigue recovers by one; the next state can offer actions again at `85`. |
+| Movement fails before position update | Do not apply its snapshotted fatigue gain. |
 | Expired, cancelled, failed, or consumed key | Reject without state mutation. |
 | Foreign character key | Reject without revealing or applying the action. |
 | Character moved since offer creation | Reject as wrong source/current cell. |
@@ -559,6 +577,7 @@ A wilderness fight does not move `CharacterPosition`. Its match metadata stores 
 
 - A character can traverse any offered in-bounds adjacent cell, including diagonals.
 - A move lasts the server-authored 25-to-30 seconds for the effective Wanderer boundary, and only one move may be active.
+- A completed move adds its snapshotted `1..2` fatigue once; time recovers one per three minutes and the `86%` action gate is enforced on render and acceptance.
 - Wanderer `0`, `20`, and `100` produce `30`, `29`, and `25` seconds respectively; missing or malformed-negative skill data cannot exceed the 30-second base.
 - The UI animates the accepted move and reloads authoritative state at completion.
 - The region supports local coordinates through `[999, 999]` without precreating every cell.
@@ -581,9 +600,9 @@ Tests are part of the feature contract. Changes must cover the applicable model,
 
 | Coverage category | Representative guarantees |
 |---|---|
-| Success | Map load, configured cell-art slice/fallback, hidden NPC presentation, eight-direction offer, Wanderer-timed acceptance/completion, cell composition, gate/local/context interruption, multi-NPC fight, participant surrender, context return, persisted resume. |
-| Failure | Unknown/malformed cell art, invalid key/context, expired offer, wrong direction/target, impassable destination, concurrent movement, stale source, inactive entrance/NPC, surrender after completion. |
-| Edge/null/boundary | Cell-art key/source/column/row null, negative, zero, and sheet edge; Wanderer `nil`/negative/`0`/`19`/`20`/`100`; encounter count `nil`/`0`/`2`/oversized; repeated NPC template ids; first/final participant defeat; 1x1/1xMany/ManyxMany sides; invalid saved return context; map edges. |
+| Success | Map load, configured cell-art slice/fallback, hidden NPC presentation, eight-direction offer, Wanderer-timed acceptance/completion, one-time fatigue gain/recovery, cell composition, gate/local/context interruption, multi-NPC fight, participant surrender, context return, persisted resume. |
+| Failure | Unknown/malformed cell art, invalid key/context, expired offer, wrong direction/target, impassable destination, concurrent movement, fatigue-locked action, stale source, inactive entrance/NPC, surrender after completion. |
+| Edge/null/boundary | Cell-art key/source/column/row null, negative, zero, and sheet edge; Wanderer `nil`/negative/`0`/`19`/`20`/`100`; fatigue `0/85/86/100`, three-minute recovery, and `1/2` gain; encounter count `nil`/`0`/`2`/oversized; repeated NPC template ids; first/final participant defeat; 1x1/1xMany/ManyxMany sides; invalid saved return context; map edges. |
 | Authorization | Anonymous request, foreign movement/action offer, current-character scoping, World-offer policy ownership, combat participant policy. |
 
 Factories must retain edge traits for status, expiry, coordinates, passability, action types, and active/inactive content when those states are exercised.
@@ -604,6 +623,7 @@ bundle exec rspec \
   spec/models/open_world_seed_spec.rb \
   spec/policies/world_action_offer_policy_spec.rb \
   spec/services/game/movement \
+  spec/services/characters/fatigue_service_spec.rb \
   spec/services/game/world/accept_action_spec.rb \
   spec/services/game/world/action_offer_builder_spec.rb \
   spec/services/game/world/cell_art_catalog_spec.rb \
@@ -640,6 +660,7 @@ Run the complete suite before release because the world hands off to combat, cit
 - `doc/features/world.md`
 - `doc/design/areas/world_map.md`
 - `doc/design/features/movement.md`
+- `doc/design/features/professions.md`
 - `doc/design/launch_mvp_plan.md`
 - `doc/design/reference/neverlands_live_movement.md`
 - `doc/design/reference/neverlands_live_outdoor_npc_resource.md`
@@ -679,6 +700,7 @@ Run the complete suite before release because the world hands off to combat, cit
 - `app/services/game/movement/accept_move.rb`
 - `app/services/game/movement/complete_move.rb`
 - `app/services/game/movement/respawn_service.rb`
+- `app/services/characters/fatigue_service.rb`
 
 ### World-content services
 
@@ -734,6 +756,7 @@ World owns same-cell hostile validation and match creation. Arena owns the comba
 - `config/gameplay/outdoor_npcs.yml`
 - `db/seeds.rb`
 - `db/schema.rb`
+- `db/migrate/20251121150000_create_characters_and_privacy_settings.rb`
 
 ### Factories
 
@@ -763,6 +786,7 @@ World owns same-cell hostile validation and match creation. Arena owns the comba
 - `spec/models/open_world_seed_spec.rb`
 - `spec/policies/world_action_offer_policy_spec.rb`
 - `spec/services/game/movement/`
+- `spec/services/characters/fatigue_service_spec.rb`
 - `spec/services/game/world/accept_action_spec.rb`
 - `spec/services/game/world/action_offer_builder_spec.rb`
 - `spec/services/game/world/cell_art_catalog_spec.rb`
@@ -819,3 +843,4 @@ Before extending the World feature:
 | 2026-07-21 | Fixed the Neverlands image-cell contract at `100 x 100`, added validated source-backed per-cell art slices with coordinate fallback, and removed outdoor NPC markers/names/manual Attack controls while preserving hidden encounter interruption. |
 | 2026-07-21 | Added the operational cell-art authoring guide for catalog entries, sheet and dedicated-image references, sparse tile metadata, cache reloads, fallback behavior, evidence, and independent gameplay layers. |
 | 2026-07-21 | Closed cell-art coverage gaps for invalid catalog definitions, physical sheet geometry, exact sheet boundaries, seed references, and HTTP render/fallback integration. |
+| 2026-07-27 | Added the wiki-backed wilderness fatigue lifecycle: retry-safe `1..2` gain per completed step, one-point/three-minute recovery, the `86%` Move/Look/Enter gate, city exclusion, UI feedback, factories, and layered coverage. |

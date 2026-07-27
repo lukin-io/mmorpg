@@ -69,6 +69,7 @@ Features:
 - `features/movement.md`
 - `features/character_vitals.md`
 - `features/progression_stats_skills.md`
+- `features/professions.md`
 - `features/combat.md`
 - `features/items_inventory_equipment.md`
 - `features/economy_trading_shops.md`

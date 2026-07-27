@@ -6,5 +6,14 @@ FactoryBot.define do
     weight { item_template.weight }
     bound { false }
     properties { {} }
+
+    trait :equipped do
+      equipped { true }
+      equipment_slot { item_template.slot }
+    end
+
+    trait :broken do
+      properties { {"current_durability" => 0} }
+    end
   end
 end
