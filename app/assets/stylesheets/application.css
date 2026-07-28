@@ -1,6 +1,6 @@
 /*
  * Application-wide reset only.
- * Gameplay presentation lives in the ordered nl/* modules imported by
+ * Gameplay presentation lives in ordered domain modules imported by
  * controls.css. Keeping this file deliberately small prevents old generic
  * dashboard/card styles from competing with the captured Neverlands UI.
  */

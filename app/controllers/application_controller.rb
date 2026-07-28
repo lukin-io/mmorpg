@@ -7,7 +7,7 @@ class ApplicationController < ActionController::Base
 
   before_action :authenticate_user!
   before_action :ensure_device_identifier
-  before_action :prepare_game_shell_context, if: :user_signed_in?
+  before_action :prepare_game_shell_context, if: :game_shell_context_request?
 
   layout :resolved_layout
 
@@ -33,7 +33,17 @@ class ApplicationController < ActionController::Base
     user_signed_in? ? "game" : "application"
   end
 
+  def game_shell_context_request?
+    user_signed_in? &&
+      request.get? &&
+      request.format.html? &&
+      request.headers["Turbo-Frame"].blank?
+  end
+
   def prepare_game_shell_context
+    @global_chat_channel_id ||= ChatChannel.global.pick(:id)
+    @total_online ||= UserSession.recent.distinct.count(:user_id)
+
     character = current_character
     return unless character
 
@@ -50,6 +60,7 @@ class ApplicationController < ActionController::Base
         .where.not(id: character.id)
         .order(name: :asc)
         .limit(10)
+        .to_a
     else
       []
     end

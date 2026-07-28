@@ -51,7 +51,9 @@ module Game
           .select { |template| matches_level_filter?(template) }
       end
 
-      def sell_items(inventory)
+      def sell_items(inventory, loaded_items: nil)
+        return loaded_items.sort_by { |item| [item.slot_index.to_i, item.id.to_i] } if loaded_items
+
         inventory.inventory_items.includes(:item_template).order(:slot_index, :id).to_a
       end
 

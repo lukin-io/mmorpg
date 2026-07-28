@@ -2,8 +2,8 @@
 
 Contract metadata:
 
-- updated_at: `2026-07-21`
-- why_changed: "The contract now routes Ruby/Rails features, behavior changes, bug fixes, and refactors through the full-stack Ruby 4.0, Rails 8.1, and Hotwire technical guide while preserving Neverlands and feature-document authority."
+- updated_at: `2026-07-28`
+- why_changed: "The contract now requires a proportional pre-final Rails-guide review and a dated changelog record for substantive repository change sessions."
 
 Why/Impact:
 
@@ -13,6 +13,7 @@ Why/Impact:
 - Verification is read-only, uses the repository's real RSpec/system/security split, and reports exact command outcomes.
 - Process rules, design evidence, shipped feature contracts, and runtime code now have explicit ownership and conflict handling.
 - `doc/RUBY_ON_RAILS_GUIDE.md` is the subordinate Ruby, Rails, and Hotwire implementation guide for new features, behavior changes, bug fixes, and refactors.
+- Substantive change sessions finish with an auditable record under `changelogs/` after final implementation verification.
 
 This document is the repository-wide engineering process contract. Sections are labeled:
 
@@ -32,6 +33,7 @@ This contract defines:
 - Rails, Hotwire, game-domain, and security standards;
 - required coverage and verification;
 - post-implementation feature documentation;
+- pre-final Rails-guide review and session changelog creation;
 - discrepancy reporting and final handoff format.
 
 It applies to all work in this Rails MMORPG repository. System, developer, and explicit user instructions remain higher authority than this file.
@@ -88,6 +90,8 @@ Fix in-scope `[IMPL]` gaps before completion. Correct in-scope `[DOC]` gaps only
 - Feature document audit: `bin/feature-doc-audit`.
 - Verification wrapper: `bin/verify`.
 - Ruby/Rails/Hotwire implementation guide: `doc/RUBY_ON_RAILS_GUIDE.md`.
+- Session history: dated Markdown records under `changelogs/`; use the newest
+  applicable entry as the layout reference for the next record.
 
 Blueprint, Swagger/rswag, and public JSON API requirements apply only when the repository actually introduces those surfaces. They are not defaults for HTML/Turbo features.
 
@@ -101,11 +105,13 @@ For an ordinary implementation task, follow this sequence:
 4. **Implement** — use minimal Rails-way changes, the technical boundaries in `doc/RUBY_ON_RAILS_GUIDE.md`, and explicit cross-feature boundaries.
 5. **Add/update tests** — cover all applicable layers and required categories.
 6. **Run focused verification** — run changed specs and targeted lint while iterating.
-7. **Run alignment check** — compare verified behavior with design and the existing feature handbook; resolve `[IMPL]` gaps.
-8. **Create/update the feature handbook** — only after implementation and applicable checks are green.
-9. **Audit documentation** — run `bin/feature-doc-audit` for the responsible handbook.
-10. **Run completion verification** — use the appropriate `bin/verify` profile and task-specific checks.
-11. **Report** — include rationale, changed files/behavior, documentation status, discrepancies, and exact check results.
+7. **Run the pre-final technical review** — once the implementation diff is stable, review it against the applicable `doc/RUBY_ON_RAILS_GUIDE.md` sections, resolve concrete findings, and update tests when needed.
+8. **Run alignment check** — compare verified behavior with design and the existing feature handbook; resolve `[IMPL]` gaps.
+9. **Create/update the feature handbook** — only after implementation and applicable focused checks are green.
+10. **Audit documentation** — run `bin/feature-doc-audit` for the responsible handbook.
+11. **Run completion verification** — after the pre-final technical review, use the appropriate `bin/verify` profile and task-specific checks.
+12. **Create the session changelog** — after verification, add one dated record under `changelogs/` using the newest applicable record as the layout reference and include exact verification results.
+13. **Report** — include rationale, changed files/behavior, documentation and changelog status, discrepancies, and exact check results.
 
 Do not create a gameplay feature handbook for infrastructure, process tooling, or a documentation-only task. Update the documentation system that owns that work instead.
 
@@ -152,6 +158,7 @@ Wait for explicit confirmation before implementation. Ordinary tasks that do not
 - `spec/**`
 - relevant `doc/features/**` after implementation verification
 - relevant `doc/design/**` when verified Neverlands/design facts materially change
+- `changelogs/**` for the final record of a substantive change session
 - `.env.example`
 
 ### 5.2 Requires explicit task scope
@@ -353,7 +360,34 @@ bin/feature-doc-audit doc/features/<feature>.md
 
 Run relevant system specs whenever UI, Turbo, Stimulus, keyboard behavior, or browser navigation changes.
 
-### 12.2 Completion profiles
+### 12.2 Pre-final technical review
+
+For every Rails-backed feature, behavior change, bug fix, or refactor, perform a
+second, proportional review of the stabilized task diff against the applicable
+sections of `doc/RUBY_ON_RAILS_GUIDE.md` before the completion verification
+profile. This is distinct from reading the guide during orientation.
+
+Check the concerns actually touched by the task, including where applicable:
+
+- controller, model, policy, service/query, and transaction ownership;
+- server authority, Pundit/ownership checks, untrusted input, and failure state;
+- ERB/Turbo/Stimulus boundaries, including database work in views/helpers and
+  broad DOM queries;
+- bounded reads, preload reuse, N+1/query-per-row behavior, and unnecessary
+  hydration;
+- stable content/config/catalog ownership without duplicate pipelines or
+  speculative abstractions;
+- retry/concurrency, time/randomness, seed/persistence reconciliation, and
+  required coverage.
+
+Fix concrete in-scope findings, add or adjust focused coverage, and rerun the
+affected focused checks. Focused specs may run earlier during iteration; the
+point of this gate is that the **final** completion suite runs after the guide
+review and therefore covers its resulting changes. Documentation-only work
+uses this gate only when it changes Rails guidance, architecture, ownership,
+or claims about runtime behavior.
+
+### 12.3 Completion profiles
 
 Default completion profile:
 
@@ -529,7 +563,59 @@ After documentation:
 
 Large features may include a local acceptance-criterion-to-spec matrix inside the feature handbook. Do not force API endpoint traceability artifacts onto non-API gameplay work.
 
-## 16. [NORMATIVE] Final response format
+## 16. [NORMATIVE] Session changelog contract
+
+### 16.1 When a changelog record is required
+
+Create one changelog record for a coherent task/session that changes runtime
+code, tests, persisted content, seeds/config, UI/CSS/UX, process/tooling such as
+`AGENT.md`, or materially changes design/feature documentation. A changelog is
+not required for answer-only, read-only investigation, abandoned/no-change, or
+planning-only work.
+
+### 16.2 Location, name, and template
+
+- Store records under `changelogs/` at the repository root.
+- Use `YYYY-MM-DD-short-kebab-case-description.md`.
+- Use the newest applicable record in `changelogs/` as the template/layout;
+  preserve useful core sections but remove anything not applicable to the new
+  task.
+- Create a new record for a new coherent session. While the current task is
+  still open, update its one record rather than creating progress fragments.
+- Keep completeness proportional to the change. The existing detailed session
+  record is a structural example, not a minimum word count.
+
+### 16.3 Required content
+
+Record, as applicable:
+
+- date, branch/baseline or other useful scope metadata;
+- outcome and task boundary;
+- Neverlands/design/reference-copy boundary and important trade-offs;
+- architecture and maintainability decisions;
+- player/runtime behavior, UI/CSS/UX, data/cell/seed/persistence, and
+  under-the-hood Rails changes;
+- the pre-final `RUBY_ON_RAILS_GUIDE.md` review findings and resulting fixes;
+- documentation created or updated;
+- coherent implementation/responsible-file groups;
+- exact verification commands/results, including pending/skipped checks;
+- explicit `[IMPL]`, `[DOC]`, and `[EVIDENCE]` gaps, Not Done states,
+  migrations/operational cautions, and new dependencies.
+
+Never place credentials, cookies, tokens, private live-session data, or other
+secrets in a changelog.
+
+### 16.4 Ordering and final validation
+
+The changelog is the last material artifact of the task: create it after
+implementation, the pre-final Rails-guide review, applicable feature/design
+documentation, and completion verification so it can report real outcomes.
+After creating it, run read-only final checks such as `git diff --check` and
+path/link/document validation appropriate to the record. If those checks
+require a correction, update the same record and revalidate; do not claim the
+earlier result as the final state.
+
+## 17. [NORMATIVE] Final response format
 
 Every completed task returns these headings:
 
@@ -542,6 +628,7 @@ Every completed task returns these headings:
 - Files or coherent file groups changed.
 - Player/runtime behavior changed.
 - Feature handbook created/updated, including its path, or why no gameplay handbook applies.
+- Session changelog path, or why a changelog was not applicable.
 - Remaining `[IMPL]`, `[DOC]`, or `[EVIDENCE]` discrepancies, if any.
 - New dependencies, if any.
 
@@ -554,11 +641,12 @@ Every completed task returns these headings:
 
 Do not claim a check passed when it did not run.
 
-## 17. [NORMATIVE] Never list
+## 18. [NORMATIVE] Never list
 
 - Never use non-Neverlands material as alternate game-design authority.
 - Never document planned behavior as shipped.
 - Never finish a new player-facing feature without creating/updating its canonical handbook after verification.
+- Never close a substantive repository change session without its dated `changelogs/` record.
 - Never invent an alternate feature-document structure.
 - Never edit `FEATURE_TEMPLATE.md` during normal feature work.
 - Never create duplicate primary feature handbooks.
@@ -576,12 +664,13 @@ Do not claim a check passed when it did not run.
 - Never remove retained source-backed images as incidental cleanup.
 - Never commit secrets or credentials.
 
-## 18. [NORMATIVE] Completion checklist
+## 19. [NORMATIVE] Completion checklist
 
 Before closing a task, confirm:
 
 - relevant authority/design/feature docs were read;
 - relevant `doc/RUBY_ON_RAILS_GUIDE.md` guidance was applied for Rails code changes;
+- the stabilized diff received its proportional pre-final Rails-guide review before completion verification;
 - optional planning gate was respected when invoked;
 - implementation is minimal and Rails/Hotwire-aligned;
 - persistent gameplay transitions define preconditions, atomicity/failure behavior, and resulting authoritative state;
@@ -593,11 +682,12 @@ Before closing a task, confirm:
 - responsible files and focused spec paths are current;
 - `bin/feature-doc-audit` passed when applicable;
 - the correct `bin/verify` profile completed or its blocker is reported;
+- the dated session record was created under `changelogs/` after verification when required, and final read-only validation passed;
 - final output contains `RATIONALE`, `CHANGES`, and `CHECKS` with exact outcomes.
 
 ---
 
-## 19. [ILLUSTRATIVE] Compact planning output
+## 20. [ILLUSTRATIVE] Compact planning output
 
 ```text
 PLAN
@@ -619,7 +709,7 @@ PLAN
 CONFIRM_TO_IMPLEMENT? (yes/no)
 ```
 
-## 20. [ILLUSTRATIVE] Compact final output
+## 21. [ILLUSTRATIVE] Compact final output
 
 ```text
 RATIONALE
@@ -628,6 +718,7 @@ RATIONALE
 CHANGES
 - implementation files and behavior
 - doc/features/<feature>.md updated after verification
+- changelogs/YYYY-MM-DD-short-description.md created after verification
 - discrepancies: none
 
 CHECKS

@@ -43,11 +43,12 @@ class ShopController < ApplicationController
     @mode = @catalog.mode
     @category = @catalog.category
     @shop_items = @catalog.items
-    @sell_items = @catalog.sell_items(@inventory)
+    @sell_items = @catalog.sell_items(@inventory, loaded_items: @shop_inventory_items)
   end
 
   def set_inventory_and_wallet
     @inventory = current_character.inventory || current_character.create_inventory!
+    @shop_inventory_items = @inventory.inventory_items.includes(:item_template).to_a
     @wallet = current_user.currency_wallet || current_user.create_currency_wallet!(nv_balance: 0)
   end
 

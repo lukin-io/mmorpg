@@ -119,10 +119,12 @@ module ShopHelper
   end
 
   def inventory_has_slot_for?(template)
-    partial_stack = @inventory.inventory_items.where(item_template: template, equipped: false).any? do |item|
+    partial_stack = @shop_inventory_items.any? do |item|
+      next false unless item.item_template_id == template.id && !item.equipped?
+
       item.quantity.to_i < template.stack_limit.to_i
     end
-    partial_stack || @inventory.inventory_items.count < @inventory.slot_capacity.to_i
+    partial_stack || @shop_inventory_items.size < @inventory.slot_capacity.to_i
   end
 
   def shop_requirement_current_value(key)

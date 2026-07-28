@@ -54,9 +54,7 @@ module ArenaHelper
 
   # Check if current user is participating in the match
   def current_user_participating?
-    return false unless @arena_match && current_user
-
-    @arena_match.arena_participations.exists?(user: current_user)
+    current_user_arena_participation.present?
   end
 
   def current_user_active_arena_participant?(match = @arena_match)
@@ -68,10 +66,7 @@ module ArenaHelper
   def current_user_won?
     return false unless @arena_match&.completed? && current_user
 
-    participation = @arena_match.arena_participations.find_by(user: current_user)
-    return false unless participation
-
-    participation.victory?
+    current_user_arena_participation&.victory? || false
   end
 
   # Format fight type for display with icon
@@ -347,14 +342,25 @@ module ArenaHelper
   def current_user_team
     return nil unless @arena_match && current_user
 
-    participation = @arena_match.arena_participations.find_by(user: current_user)
-    participation&.team
+    current_user_arena_participation&.team
   end
 
   def current_user_arena_participation(match = @arena_match)
     return nil unless match && current_user
 
-    match.arena_participations.find_by(user: current_user)
+    unless match.equal?(@arena_match)
+      return match.arena_participations.find_by(user: current_user)
+    end
+
+    return @current_user_arena_participation if defined?(@current_user_arena_participation)
+
+    if defined?(@participations) && @participations
+      @current_user_arena_participation = @participations.find do |participation|
+        participation.user_id == current_user.id
+      end
+    else
+      @current_user_arena_participation = match.arena_participations.find_by(user_id: current_user.id)
+    end
   end
 
   def current_user_pending_arena_turn?(match = @arena_match)

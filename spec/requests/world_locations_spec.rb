@@ -95,6 +95,35 @@ RSpec.describe "Open-world locations", type: :request do
     expect(position.reload).to have_attributes(zone:, x: 4, y: 6)
   end
 
+  it "rejects another character's location-feature offer through policy authorization" do
+    foreign_user = create(:user)
+    foreign_character = create(:character, user: foreign_user)
+    foreign_offer = create(
+      :world_action_offer,
+      character: foreign_character,
+      zone:,
+      x: position.x,
+      y: position.y,
+      action_type: "open_location_feature",
+      target: building,
+      metadata: {
+        "building_key" => building.building_key,
+        "hotspot_key" => "trading_post",
+        "location_action_type" => "open_feature",
+        "feature" => "shop"
+      }
+    )
+
+    post world_location_feature_path(building.location_key), params: {
+      feature_key: "trading_post",
+      action_key: foreign_offer.action_key
+    }
+
+    expect(response).to redirect_to(root_path)
+    expect(foreign_offer.reload).to be_offered
+    expect(position.reload).to have_attributes(zone:, x: 4, y: 6)
+  end
+
   it "rejects an old feature offer after the persisted coordinate changes" do
     get world_location_path("frontier_village")
     offer = WorldActionOffer.offered.where(character:).find { |candidate| candidate.metadata["feature"] == "shop" }

@@ -12,13 +12,15 @@ class WorldLocationsController < ApplicationController
   before_action :load_location!
 
   def show
-    @players_here = players_at_entrance
+    @players_here ||= []
     @location_features = @building.location_features
     @feature_offers_by_key = build_feature_offers.index_by { |offer| offer.metadata["hotspot_key"] }
     Game::World::ResumeContext.new(character: current_character).remember_world_location!(key: @building.location_key)
   end
 
   def open_feature
+    authorize_world_action_offer!(params[:action_key])
+
     feature_key = params[:feature_key].to_s
     feature = @building.location_feature(feature_key)
     raise Game::World::AcceptAction::ActionViolationError, "Location feature is unavailable" unless feature
@@ -85,21 +87,5 @@ class WorldLocationsController < ApplicationController
     return path if path.present?
 
     raise Game::World::AcceptAction::ActionViolationError, "Location feature is unavailable"
-  end
-
-  def players_at_entrance
-    return Character.none unless @position
-
-    Character
-      .joins(:position)
-      .where(character_positions: {
-        zone_id: @position.zone_id,
-        x: @position.x,
-        y: @position.y,
-        state: CharacterPosition.states.fetch("active")
-      })
-      .where.not(id: current_character.id)
-      .order(:name)
-      .limit(10)
   end
 end

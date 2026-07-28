@@ -80,7 +80,7 @@ module Game
         position = character.position&.reload
         return false unless position
 
-        return true if world_location_shop_available?
+        return true if world_location_shop_available?(position)
         return false unless position.zone.city?
 
         CityHotspot.for_zone(position.zone).any? do |hotspot|
@@ -98,8 +98,7 @@ module Game
         building&.location? && building.location_key == key && building.can_enter?(character)
       end
 
-      def world_location_shop_available?
-        position = character.position&.reload
+      def world_location_shop_available?(position)
         building = TileBuilding.active.at_tile(position&.zone&.name, position&.x, position&.y)
 
         building&.location? &&

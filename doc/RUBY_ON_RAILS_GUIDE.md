@@ -2,7 +2,7 @@
 
 **Full-stack Ruby, Rails, and Hotwire refactoring, maintainability, correctness, and performance guide**
 
-- Updated: 2026-07-21
+- Updated: 2026-07-28
 - Status: subordinate technical guide
 - Scope: Ruby 4.0 and Rails 8.1 monolith; HTML, Turbo, and Stimulus are the primary player surface; JSON is a limited secondary integration surface
 - Primary use: new features, changes to existing features, bug fixes, and refactors
@@ -38,6 +38,8 @@ Default direction:
 - use Pundit for ownership, role, visibility, and record-action authorization;
 - use ERB and Turbo for the primary HTML surface and Stimulus for focused client
   enhancement;
+- keep Turbo frame ownership and DOM ids stable, choose `update` versus
+  `replace` intentionally, and make Stimulus lifecycle cleanup reconnect-safe;
 - preserve only the JSON formats an endpoint genuinely supports; there is no
   mandatory serializer or universal response envelope;
 - use transactions, locks, constraints, stable identities, and scoped
@@ -62,8 +64,12 @@ For a new feature, bug fix, behavior change, or refactor:
    concurrency, security, and Hotwire rules.
 5. Add or update tests at the smallest useful public boundaries.
 6. Run focused checks while iterating.
-7. Update the feature handbook only after implementation checks pass.
-8. Run the appropriate `bin/verify` profile and report exact results using the
+7. Once the task diff is stable, review it again against the applicable guide
+   sections and correct concrete ownership, security, Hotwire, query, or
+   lifecycle findings before final verification.
+8. Update the feature handbook only after implementation checks pass.
+9. Run the appropriate `bin/verify` profile, create the required dated session
+   record under `changelogs/`, and report exact results using the
    final format required by `AGENT.md`.
 
 Feature-specific examples in this document are illustrative. Do not copy their
@@ -321,39 +327,239 @@ when formatting logic has become materially difficult to understand or test.
 Avoid database queries in views/helpers and avoid `html_safe` for user- or
 content-provided strings.
 
-### 9.2 Turbo
+### 9.2 Turbo navigation and frame ownership
 
-- Prefer Turbo Drive for navigation and forms.
-- Use stable frame/DOM ids owned by the feature.
-- Use Turbo Streams for focused replacement, append, remove, or broadcast.
-- Keep stream target selection in the controller/view layer.
-- A partial reload must reconstruct state from the server.
-- Turbo responses must not bypass policy or service validation.
-- Test HTML fallback when it is a supported path.
+Prefer Turbo Drive for ordinary navigation and forms. A frame is a feature
+boundary, not merely a convenient wrapper:
 
-### 9.3 Stimulus
+- Give every replaceable region one stable, feature-owned DOM id.
+- Define each persistent frame in one place. The game shell owns
+  `main_content`, `available-actions`, and the lazy `chat_messages` boundary;
+  child feature views must not render duplicate frames with those ids.
+- A frame endpoint should render the frame/partial state it owns and should not
+  prepare unrelated full-shell queries. Use the `Turbo-Frame` request header
+  only when the response contract genuinely differs from full-page HTML.
+- Keep the full-page fallback valid when direct navigation or non-Turbo form
+  submission is supported. A frame-specific response must never be the only
+  way to recover authoritative state.
+- Use `target="_top"`, a Turbo visit, or a redirect deliberately when a
+  transition changes the whole gameplay surface, such as entering a different
+  location or finishing a fight. Do not accidentally trap full-page navigation
+  inside a child frame.
+- Lazy frames need meaningful loading/failure content and an endpoint that
+  enforces the same authentication, authorization, bounds, and escaping as a
+  normal request.
+
+Frame ids are an internal HTTP/UI contract. Renaming one requires updating the
+owning view, every stream target, any Stimulus lookup/action, and focused
+request/view/system coverage in the same change.
+
+### 9.3 Turbo mutation and stream contracts
+
+Prefer a native `form_with`/button/link and let Turbo submit it. When Stimulus
+initiates an existing form, use `requestSubmit()` so constraint validation,
+the submitter, CSRF fields, and Turbo events remain in the path; do not use
+`form.submit()` or rebuild the mutation as `fetch` without a concrete need.
+
+Choose one explicit successful response shape:
+
+- redirect with `303 See Other` when the authoritative result is a different
+  page/surface or a clean GET is the simplest reconstruction;
+- render one or more Turbo Stream actions when the current surface remains and
+  a bounded set of regions must change together;
+- return `head :ok` only when another established mechanism owns the visible
+  result, such as an after-commit chat broadcast, and the lack of an immediate
+  stream is covered.
+
+For failures, preserve authoritative state and update/render the owned error or
+form target with an appropriate non-success status. Do not return a success
+stream with only an error-looking message.
+
+Choose stream operations intentionally:
+
+- `update` preserves the target element and replaces its children. Use it for
+  stable shell/panel/frame boundaries such as `game-map`, `location-info`,
+  `available-actions`, Inventory panels, or `flash`.
+- `replace` replaces the target itself and reconnects controllers beneath the
+  new root. Use it when the feature root, form errors, controller values, or
+  allocation controller must be reconstructed.
+- `append`/`prepend` require stable child ids or another duplicate-prevention
+  rule when retry/broadcast duplication is possible.
+- `remove` must target an identity scoped to the feature or record, not a
+  display name.
+
+When one server transition changes several visible facts, prepare one coherent
+post-transition state and emit all dependent streams in one response. World
+movement, for example, updates the map, location information, and available
+actions together; Inventory equipment changes update the bag, paper doll, and
+derived stats together. Do not let independently queried fragments expose
+different snapshots of the same transition.
+
+Turbo responses must pass through the same policy, capability-offer, service,
+transaction, and failure validation as HTML. Stream target selection belongs
+to the controller/view boundary; domain services must not know DOM ids.
+
+### 9.4 Server-rendered fragments and DOM safety
+
+Prefer Rails-rendered partials for dynamic lists, errors, messages, and record
+rows. This keeps escaping, authorization, formatting, and stable ids in one
+server-owned path.
+
+- Treat Action Cable payloads, JSON, dataset strings, player names, chat text,
+  item text, and error messages as untrusted presentation input.
+- Prefer `textContent`, attribute setters, and DOM element creation for plain
+  text received by Stimulus.
+- Do not interpolate untrusted values into `innerHTML` or
+  `insertAdjacentHTML`. If structured HTML is required, broadcast/render an
+  escaped server partial or sanitize through an explicitly owned boundary.
+- Assign `classList` only from an allowlisted event/state mapping. Do not use a
+  server- or player-provided arbitrary class name.
+- Replacing a target with same-origin server-rendered HTML is acceptable only
+  when the endpoint owns escaping and authorization and the client does not
+  concatenate additional untrusted markup.
+- Avoid `html_safe`/raw strings in ERB and avoid duplicating ERB templates as
+  JavaScript template literals.
+
+### 9.5 Stimulus scope, targets, values, and actions
 
 Stimulus may:
 
-- animate accepted state;
-- submit player intent;
-- manage focus and keyboard behavior;
-- show server-derived countdowns;
-- toggle presentation modes;
-- reconnect/reload authoritative state.
+- animate already-accepted or server-reported state;
+- submit player intent through an existing form;
+- manage focus, keyboard, pointer, touch, scroll, and responsive panning;
+- show a countdown derived from a server timestamp;
+- preview allocation/turn cost before authoritative submission;
+- toggle presentation modes and store non-gameplay preferences;
+- reconnect, reload, or request an authoritative state snapshot.
 
 Stimulus must not:
 
 - mint action keys;
 - decide reachable cells or available actions;
-- persist coordinates, inventory, currency, or fight outcomes;
-- treat hidden fields or `data-*` values as trusted authority;
-- complete a server transition solely because an animation ended.
+- persist coordinates, inventory, currency, skills, AP, HP, or fight outcomes;
+- treat hidden fields, values, or `data-*` attributes as trusted authority;
+- complete a server transition solely because an animation/countdown ended;
+- make CSS visibility equivalent to authorization.
 
-Keep controllers focused and use declared targets, values, and actions instead
-of global DOM state. Do not add inline JavaScript.
+Keep each controller rooted at the smallest element that owns the interaction.
+Use declared `static targets`, typed `static values`, and `data-action`
+bindings. Prefer `this.element.querySelector(...)` for a genuinely internal
+repeated descendant; reserve `document`/`window` access for real global
+concerns such as resize, Escape, or outside-click handling. Store cross-surface
+coordination in server state or an explicit event, not an unrelated global DOM
+lookup.
 
-### 9.4 CSS and assets
+Guard optional targets with `has...Target`. Missing required targets should be
+caught by view coverage instead of silently driving a fallback selector. One
+element may be a target for two controllers—for example a shell chat input and
+its input-specific controller—when both responsibilities are explicit and
+namespaced.
+
+Use values/datasets for serialized server presentation state and opaque intent
+tokens: record ids, offer keys, absolute end timestamps, scene focus points,
+and already-calculated costs. The server must still reload and validate every
+submitted record, capability, position, cost, and transition.
+
+### 9.6 Lifecycle cleanup under Turbo
+
+Turbo can connect and disconnect a controller many times without a full page
+reload. Treat `connect()` as repeatable setup and `disconnect()` as mandatory
+cleanup.
+
+- Store the exact bound listener reference once, then pass that same reference
+  to both `addEventListener` and `removeEventListener`. Calling `.bind(this)`
+  separately in each call does not remove the original listener.
+- Clear every interval and timeout owned by the controller.
+- Cancel pending `requestAnimationFrame` callbacks.
+- Remove `window`, `document`, element, and Turbo event listeners.
+- Unsubscribe Action Cable subscriptions and disconnect observers.
+- Abort or ignore stale fetches so a disconnected controller cannot patch a
+  new page/frame instance.
+- Make setup idempotent: reconnecting must not create a second ticker,
+  subscription, resize listener, or countdown.
+
+Use `requestAnimationFrame` after connect or stream rendering when measurements
+depend on final layout. The World, City, and linked-location controllers use
+this pattern to center fixed-pixel scenes after insertion. Responsive resize
+handlers must be removable and must not change authoritative scene geometry.
+
+Do not rely on in-memory controller fields surviving a Turbo replacement.
+Reconstruct presentation from typed values, current DOM, or a fresh server
+snapshot.
+
+### 9.7 Timers, animation, previews, and local storage
+
+The server clock and persisted state remain authoritative:
+
+- Prefer an absolute server `ends_at` timestamp over decrementing a browser-only
+  duration. Recompute remaining time from `Date.now()` after connect/reconnect.
+- Animation may interpolate from the current server snapshot to its reported
+  destination, but animation completion only triggers a reload/visit or a
+  server command. It does not persist movement or combat state.
+- Vitals regeneration, AP bars, allocation counters, and turn costs may be
+  presentation previews. The server recomputes and rejects stale/invalid
+  submissions; broadcasts or navigation replace previews with authoritative
+  values.
+- When the tab sleeps, the next tick must derive from the absolute timestamp or
+  authoritative snapshot rather than assuming every one-second callback ran.
+- Use `localStorage` only for non-authoritative preferences such as presence
+  sorting or refresh display settings. Namespace keys, validate parsed shape,
+  and tolerate unavailable/corrupt storage.
+
+### 9.8 Fetch, Turbo Streams, and Action Cable boundaries
+
+Do not use custom `fetch` merely to avoid a form or Turbo Frame. It is justified
+for a narrow limited-JSON interaction, presence polling, a same-origin partial,
+or a beacon-like liveness signal when those are already the feature contract.
+When used:
+
+- send the accurate `Accept` header;
+- include same-origin credentials and CSRF protection for mutations;
+- check `response.ok` before parsing;
+- handle network, forbidden, validation, and stale/disconnected cases;
+- keep URLs and payload shape at the controller/view integration boundary;
+- never trust a successful HTTP response as proof of a client-calculated game
+  result.
+
+Choose one real-time presentation owner:
+
+- Use Turbo Stream broadcasts when the server owns an escaped HTML fragment,
+  as with chat message append.
+- Use typed Action Cable events when a high-frequency surface needs focused DOM
+  patches/animation, as with Arena HP/AP/log updates.
+- Do not broadcast the same visible transition through both mechanisms unless
+  there is an explicit deduplication contract.
+
+An Action Cable channel must authorize its stream scope. Broadcast only
+committed state. Event `type` and payload fields are a stable internal
+contract and require broadcaster/channel/controller coverage. On connection or
+reconnection, request or render an authoritative snapshot—Arena's
+`request_match_state` pattern—because events can be missed, duplicated, or
+received after an old DOM instance disconnected. Render event text safely as
+described in section 9.4.
+
+### 9.9 Current application Hotwire ownership map
+
+Use these existing boundaries instead of creating a parallel client path:
+
+| Surface | Rails/Turbo or realtime owner | Stimulus responsibility | Stimulus must not own |
+| --- | --- | --- | --- |
+| Authenticated shell | `layouts/game`, `main_content`, `available-actions`, lazy `chat_messages`, and bounded controller-prepared shell state | focus, local preferences, presence refresh, and notification presentation | character/location state or shell-wide database retrieval |
+| Outdoor World | `WorldController` plus movement/action services; coherent streams for `game-map`, `location-info`, `available-actions`, and `flash` | submit an opaque offered move, center/pan, animate server timing, and reload at expiry | reachability, travel duration, offer creation, or movement completion |
+| City and linked locations | server-rendered hotspot/feature forms backed by character-owned offers | native-pixel centering, tooltips, keyboard/pointer presentation | whether a hotspot exists, is accessible, or changes location |
+| Inventory and progression | inventory/progression services plus multi-target streams and server-rendered partials | selection and allocation previews, keyboard state, and `requestSubmit()` | item ownership, equip/use result, point balance, or derived final stats |
+| Chat and presence | policy/dispatcher, bounded channel reads, and after-commit Turbo broadcast | input/focus, auto-scroll, local menu, and refresh presentation | message permission, ignore/privacy rules, or arbitrary message HTML |
+| Arena/Fight | combat services, jobs, authorized channels, broadcaster payloads, and state snapshot | composer preview, countdown, log/vitals/AP DOM patches, and reconnect request | combat resolution, AP validation, timeout result, target validity, or victory |
+| Vitals bar | server-provided current/max values and persisted character state | smooth display-only interpolation | persisted regeneration, damage, healing, or combat authority |
+
+This map records the intended existing ownership/integration seams; it is not a
+blanket certification that every older controller already satisfies every rule
+in this expanded section. Do not copy legacy dynamic-HTML, broad-selector, or
+lifecycle-cleanup shortcuts as examples. Correct a security-sensitive case in
+scope, and otherwise record a focused follow-up rather than hiding it inside an
+unrelated feature diff.
+
+### 9.10 CSS and assets
 
 CSS owns presentation, not authority. Geometry may display a map or hotspot but
 cannot decide whether a move or entry is valid.
@@ -363,13 +569,38 @@ the responsible asset/config boundary with validation and asset coverage. Use
 Propshaft-compatible paths and do not introduce a second frontend bundler
 without a demonstrated need.
 
-### 9.5 Accessibility and resilience
+### 9.11 Accessibility and resilience
 
 - Keep interactive controls keyboard-reachable and named.
+- Prefer real buttons, links, forms, selects, and inputs over clickable `div`
+  elements; retain visible focus and use the native disabled state where
+  applicable.
 - Preserve semantic text when visual UI is compact.
+- Announce material asynchronous results through a stable flash/status/live
+  region; do not rely on color, animation, or toast disappearance alone.
+- Pair hover behavior with focus/blur and pointer/touch-accessible behavior.
 - Avoid motion-only status; honor reduced-motion presentation where practical.
 - Reload/reconnect must recover from persisted server state.
 - Turbo/Stimulus changes require applicable view and system coverage.
+
+### 9.12 Hotwire and Stimulus coverage
+
+Use layered coverage rather than testing private JavaScript methods:
+
+- View specs assert stable frame ids, feature-owned target ids, native controls,
+  Stimulus controller/action/target/value wiring, and escaped semantic output.
+- Request specs assert HTML versus Turbo media type, status/redirect behavior,
+  exact stream actions/targets, authorization, and the persisted result.
+- Service/job/channel specs assert that broadcasts happen after the owning
+  transition and contain the required scoped event/record fields.
+- System specs cover the meaningful browser contract: form submission,
+  Turbo replacement/reconnect, keyboard behavior, responsive panning,
+  countdown/state refresh, and HTML fallback where supported.
+
+Do not assert an entire rendered page when the contract is a frame id and three
+stream targets. Conversely, a request body containing `<turbo-stream>` alone
+does not prove that the browser reconnects the controller or preserves focus;
+use a focused system spec for that behavior.
 
 ## 10. Service objects
 
@@ -594,6 +825,19 @@ Broadcast committed state. Do not tell clients that a transition completed
 before its transaction commits. Re-query or render from the authoritative
 record state and keep broadcast targets scoped to authorized audiences.
 
+- Prefer record/feature-scoped stream names over broad global channels.
+- Turbo broadcasts should render the same escaped partial contract used by a
+  normal request when practical.
+- Typed Action Cable events require an allowlisted event type, a stable payload
+  shape, authorized subscription scope, and a reconnect/state-snapshot path.
+- A client may display a broadcast, but it must not use receipt order as the
+  only source of truth for a valuable transition. Make repeated/out-of-order
+  presentation safe or reconcile from current server state.
+- Test the transition and its broadcast boundary; do not test only that a
+  JavaScript handler happens to recognize a string.
+
+See sections 9.4 and 9.8 for DOM-safety and realtime presentation ownership.
+
 ## 16. Error handling
 
 Use explicit categories:
@@ -800,9 +1044,11 @@ Implementation documentation follows `AGENT.md`:
 1. establish Neverlands/design authority;
 2. implement behavior and tests;
 3. run focused verification;
-4. update/create the canonical `doc/features/**` handbook;
-5. run `bin/feature-doc-audit`;
-6. run the appropriate completion profile.
+4. review the stabilized diff against the applicable sections of this guide;
+5. update/create the canonical `doc/features/**` handbook;
+6. run `bin/feature-doc-audit`;
+7. run the appropriate completion profile;
+8. create the dated `changelogs/**` session record required by `AGENT.md`.
 
 Useful commands:
 
@@ -882,6 +1128,23 @@ Avoid:
 - request params passed deep into models/services;
 - rendering or redirects inside services;
 - database queries in views, helpers, pure formulas, or Stimulus;
+- duplicate Turbo frame ids or a child view redefining a shell-owned frame;
+- choosing `replace`, `update`, or `append` without considering controller
+  reconnect and retry/duplicate behavior;
+- `form.submit()` or custom mutation `fetch` when an existing form's
+  `requestSubmit()` preserves validation, CSRF, and Turbo behavior;
+- global DOM queries where a controller target or `this.element` owns the
+  interaction;
+- listeners registered with an anonymous/bound function that cannot be removed
+  in `disconnect()`;
+- intervals, timeouts, animation frames, subscriptions, observers, or fetches
+  that survive Stimulus disconnect;
+- interpolating Action Cable, JSON, dataset, or player/content strings into
+  `innerHTML`;
+- browser countdown/animation completion persisting movement, combat, rewards,
+  or other gameplay state;
+- parallel Turbo Stream and typed Action Cable renderers for the same visible
+  transition without deduplication and one documented owner;
 - manual outdoor action availability in CSS/JavaScript;
 - unstable display names as persistent identities;
 - arbitrary asset paths/URLs in content records;
@@ -911,6 +1174,12 @@ During implementation:
 
 - [ ] Keep server authority and revalidate mutations.
 - [ ] Keep controllers/views/Stimulus within their boundaries.
+- [ ] Keep frame ids/stream targets single-owned and choose stream operations
+      intentionally.
+- [ ] Use declared Stimulus targets/values/actions and make connect/disconnect
+      cleanup idempotent.
+- [ ] Render dynamic text safely and reconcile timers/realtime state from the
+      server.
 - [ ] Preserve stable ids, routes, frames, and supported response formats.
 - [ ] Use transactions/locks/constraints where persistent correctness needs them.
 - [ ] Prevent duplicate/retry/concurrent valuable state changes.
@@ -921,10 +1190,15 @@ During implementation:
 Before completion:
 
 - [ ] Run focused specs and read-only lint.
+- [ ] Review the stabilized diff against the applicable sections of this guide
+      before the completion verification profile.
+- [ ] Verify HTML/Turbo response shapes, frame/target wiring, reconnect
+      behavior, and fallback at the applicable request/view/system layers.
 - [ ] Reconcile implementation with Neverlands/design and the feature contract.
 - [ ] Update the canonical feature handbook after checks are green.
 - [ ] Run the focused feature-document audit.
 - [ ] Run `bin/verify fast` or `bin/verify full` as required.
+- [ ] Create the required dated `changelogs/**` record after verification.
 - [ ] Report exact commands, outcomes, documentation status, and discrepancies
       using the `AGENT.md` final format.
 

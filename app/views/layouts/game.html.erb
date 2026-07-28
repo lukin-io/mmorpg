@@ -12,6 +12,7 @@
 </head>
 <body class="nl-game-layout" data-controller="game-layout">
   <% world_travel_active = controller_name == "world" && @active_movement.present? %>
+  <% shell_chat_channel_id = @chat_channel&.id || @global_chat_channel_id %>
 
   <%# === TOP STATUS BAR (like original: name[lv] + HP/MP + text links) === %>
   <header class="nl-top-bar">
@@ -102,8 +103,7 @@
   <%# Neverlands chmain/ch_list frames translated into one persistent row. %>
   <section class="nl-social-row" aria-label="Chat and nearby players">
     <div class="nl-chat-history" id="chat-messages" data-game-layout-target="chatMessages">
-      <% global_chat = ChatChannel.global.first %>
-      <%= turbo_frame_tag "chat_messages", src: global_chat ? chat_channel_path(global_chat) : nil, loading: "lazy" do %>
+      <%= turbo_frame_tag "chat_messages", src: shell_chat_channel_id ? chat_channel_path(shell_chat_channel_id) : nil, loading: "lazy" do %>
         <div class="nl-chat-loading">Loading...</div>
       <% end %>
     </div>
@@ -123,8 +123,8 @@
         </label>
       </div>
       <div class="nl-players-location">
-        <span class="nl-location-text"><%= @position&.zone&.name || "Unknown" %> [ <%= @players_here&.count || 0 %> ]</span>
-        <span class="nl-total-online">Total [ <%= User.joins(:user_sessions).merge(UserSession.recent).distinct.count rescue 0 %> ]</span>
+        <span class="nl-location-text"><%= @position&.zone&.name || "Unknown" %> [ <%= @players_here&.size || 0 %> ]</span>
+        <span class="nl-total-online">Total [ <%= @total_online.to_i %> ]</span>
       </div>
       <div class="nl-players-list-float" data-game-layout-target="playersList">
         <%= render "shared/nl_players_list" %>
@@ -142,23 +142,26 @@
     </div>
 
     <div class="nl-chat-input-bar" data-game-layout-target="chatArea">
-        <% unless content_for?(:hide_shell_chat_composer) %>
-          <% chat_channel = @chat_channel || ChatChannel.global.first %>
-          <% if chat_channel %>
-            <%= form_with url: chat_channel_chat_messages_path(chat_channel),
-                          method: :post,
-                          scope: :chat_message,
-                          class: "nl-chat-form-inline",
-                          data: { controller: "chat-input", action: "turbo:submit-end->chat-input#reset" } do |f| %>
-              <%= f.text_field :body,
-                  class: "nl-chat-input-field",
-                  placeholder: "",
-                  maxlength: 250,
-                  autocomplete: "off",
-                  data: { chat_input_target: "input", action: "keydown->chat-input#handleKeydown" } %>
-            <% end %>
+      <% unless content_for?(:hide_shell_chat_composer) %>
+        <% if shell_chat_channel_id %>
+          <%= form_with url: chat_channel_chat_messages_path(shell_chat_channel_id),
+                        method: :post,
+                        scope: :chat_message,
+                        class: "nl-chat-form-inline",
+                        data: { controller: "chat-input", action: "turbo:submit-end->chat-input#reset" } do |f| %>
+            <%= f.text_field :body,
+                class: "nl-chat-input-field",
+                placeholder: "",
+                maxlength: 250,
+                autocomplete: "off",
+                data: {
+                  game_layout_target: "chatInput",
+                  chat_input_target: "input",
+                  action: "keydown->chat-input#handleKeydown"
+                } %>
           <% end %>
         <% end %>
+      <% end %>
     </div>
 
     <div class="nl-chat-toolstrip" aria-label="Chat controls">
