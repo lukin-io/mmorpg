@@ -60,17 +60,19 @@ For a new feature, bug fix, behavior change, or refactor:
    handbook as routed by `AGENT.md`.
 2. Identify the existing player/runtime contract and responsible files.
 3. Choose the smallest Rails-native boundary that owns the behavior.
-4. Implement server-authoritative behavior with applicable persistence,
+4. With the first material repository edit, create the session's one living
+   changelog record, or update it if the current conversation already owns one.
+5. Implement server-authoritative behavior with applicable persistence,
    concurrency, security, and Hotwire rules.
-5. Add or update tests at the smallest useful public boundaries.
-6. Run focused checks while iterating.
-7. Once the task diff is stable, review it again against the applicable guide
+6. Add or update tests at the smallest useful public boundaries.
+7. Run focused checks while iterating and keep the same session record current.
+8. Once the task diff is stable, review it again against the applicable guide
    sections and correct concrete ownership, security, Hotwire, query, or
    lifecycle findings before final verification.
-8. Update the feature handbook only after implementation checks pass.
-9. Run the appropriate `bin/verify` profile, create the required dated session
-   record under `changelogs/`, and report exact results using the
-   final format required by `AGENT.md`.
+9. Update the feature handbook only after implementation checks pass.
+10. Run the appropriate `bin/verify` profile, finalize the same session record
+    with exact results, and report using the final format required by
+    `AGENT.md`.
 
 Feature-specific examples in this document are illustrative. Do not copy their
 names, content, or mechanics into unrelated features without Neverlands
@@ -1042,13 +1044,16 @@ Testing rules:
 Implementation documentation follows `AGENT.md`:
 
 1. establish Neverlands/design authority;
-2. implement behavior and tests;
-3. run focused verification;
-4. review the stabilized diff against the applicable sections of this guide;
-5. update/create the canonical `doc/features/**` handbook;
-6. run `bin/feature-doc-audit`;
-7. run the appropriate completion profile;
-8. create the dated `changelogs/**` session record required by `AGENT.md`.
+2. open or update the current session's one living `changelogs/**` record with
+   the first material repository edit;
+3. implement behavior and tests while keeping that record current;
+4. run focused verification;
+5. review the stabilized diff against the applicable sections of this guide;
+6. update/create the canonical `doc/features/**` handbook;
+7. run `bin/feature-doc-audit`;
+8. run the appropriate completion profile;
+9. finalize the same living session record as required
+   by `AGENT.md`.
 
 Useful commands:
 
@@ -1186,6 +1191,8 @@ During implementation:
 - [ ] Keep reads bounded and preloading explicit.
 - [ ] Keep jobs retry-safe and broadcasts commit-safe.
 - [ ] Add focused tests as behavior is implemented.
+- [ ] Create or update the current session's one living changelog with the
+      first material edit, then keep it current across follow-up prompts.
 
 Before completion:
 
@@ -1198,7 +1205,8 @@ Before completion:
 - [ ] Update the canonical feature handbook after checks are green.
 - [ ] Run the focused feature-document audit.
 - [ ] Run `bin/verify fast` or `bin/verify full` as required.
-- [ ] Create the required dated `changelogs/**` record after verification.
+- [ ] Finalize the current session's one living `changelogs/**` record after
+      verification; do not create a new record for a follow-up prompt.
 - [ ] Report exact commands, outcomes, documentation status, and discrepancies
       using the `AGENT.md` final format.
 

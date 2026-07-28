@@ -3,7 +3,7 @@
 Contract metadata:
 
 - updated_at: `2026-07-28`
-- why_changed: "The contract now requires a proportional pre-final Rails-guide review and a dated changelog record for substantive repository change sessions."
+- why_changed: "A substantive Codex session now owns one living changelog record, created with its first material edit and updated across every follow-up prompt until final handoff."
 
 Why/Impact:
 
@@ -13,7 +13,10 @@ Why/Impact:
 - Verification is read-only, uses the repository's real RSpec/system/security split, and reports exact command outcomes.
 - Process rules, design evidence, shipped feature contracts, and runtime code now have explicit ownership and conflict handling.
 - `doc/RUBY_ON_RAILS_GUIDE.md` is the subordinate Ruby, Rails, and Hotwire implementation guide for new features, behavior changes, bug fixes, and refactors.
-- Substantive change sessions finish with an auditable record under `changelogs/` after final implementation verification.
+- A substantive Codex session maintains one auditable living record under
+  `changelogs/`: create it with the session's first material repository change,
+  update it across follow-up prompts, and finalize its verification evidence at
+  handoff.
 
 This document is the repository-wide engineering process contract. Sections are labeled:
 
@@ -33,7 +36,7 @@ This contract defines:
 - Rails, Hotwire, game-domain, and security standards;
 - required coverage and verification;
 - post-implementation feature documentation;
-- pre-final Rails-guide review and session changelog creation;
+- pre-final Rails-guide review and the living session-changelog lifecycle;
 - discrepancy reporting and final handoff format.
 
 It applies to all work in this Rails MMORPG repository. System, developer, and explicit user instructions remain higher authority than this file.
@@ -90,8 +93,10 @@ Fix in-scope `[IMPL]` gaps before completion. Correct in-scope `[DOC]` gaps only
 - Feature document audit: `bin/feature-doc-audit`.
 - Verification wrapper: `bin/verify`.
 - Ruby/Rails/Hotwire implementation guide: `doc/RUBY_ON_RAILS_GUIDE.md`.
-- Session history: dated Markdown records under `changelogs/`; use the newest
-  applicable entry as the layout reference for the next record.
+- Session history: one dated living Markdown record under `changelogs/` per
+  substantive Codex session. Reuse the current session's record across all of
+  its prompts; use the newest completed session record only as the layout
+  reference when a genuinely new session starts.
 
 Blueprint, Swagger/rswag, and public JSON API requirements apply only when the repository actually introduces those surfaces. They are not defaults for HTML/Turbo features.
 
@@ -102,16 +107,24 @@ For an ordinary implementation task, follow this sequence:
 1. **Orient** — read relevant design, feature, `doc/RUBY_ON_RAILS_GUIDE.md` sections, routes, models/services, UI, seeds/config, and specs.
 2. **Resolve authority** — identify the Neverlands evidence and MVP boundary; report `[EVIDENCE]` before inventing behavior.
 3. **Scan implementation** — locate existing ownership and preserve unrelated user changes.
-4. **Implement** — use minimal Rails-way changes, the technical boundaries in `doc/RUBY_ON_RAILS_GUIDE.md`, and explicit cross-feature boundaries.
-5. **Add/update tests** — cover all applicable layers and required categories.
-6. **Run focused verification** — run changed specs and targeted lint while iterating.
-7. **Run the pre-final technical review** — once the implementation diff is stable, review it against the applicable `doc/RUBY_ON_RAILS_GUIDE.md` sections, resolve concrete findings, and update tests when needed.
-8. **Run alignment check** — compare verified behavior with design and the existing feature handbook; resolve `[IMPL]` gaps.
-9. **Create/update the feature handbook** — only after implementation and applicable focused checks are green.
-10. **Audit documentation** — run `bin/feature-doc-audit` for the responsible handbook.
-11. **Run completion verification** — after the pre-final technical review, use the appropriate `bin/verify` profile and task-specific checks.
-12. **Create the session changelog** — after verification, add one dated record under `changelogs/` using the newest applicable record as the layout reference and include exact verification results.
-13. **Report** — include rationale, changed files/behavior, documentation and changelog status, discrepancies, and exact check results.
+4. **Open the session changelog** — with the first material repository edit,
+   create the session's one dated record, or update the existing record when
+   this is a follow-up prompt in the same session. Record work as in progress;
+   do not claim unverified behavior as complete.
+5. **Implement** — use minimal Rails-way changes, the technical boundaries in `doc/RUBY_ON_RAILS_GUIDE.md`, and explicit cross-feature boundaries.
+6. **Add/update tests** — cover all applicable layers and required categories.
+7. **Run focused verification** — run changed specs and targeted lint while iterating.
+8. **Update the session changelog** — keep the same record current as scope,
+   decisions, responsible files, checks, gaps, and follow-up prompts evolve.
+9. **Run the pre-final technical review** — once the implementation diff is stable, review it against the applicable `doc/RUBY_ON_RAILS_GUIDE.md` sections, resolve concrete findings, and update tests when needed.
+10. **Run alignment check** — compare verified behavior with design and the existing feature handbook; resolve `[IMPL]` gaps.
+11. **Create/update the feature handbook** — only after implementation and applicable focused checks are green.
+12. **Audit documentation** — run `bin/feature-doc-audit` for the responsible handbook.
+13. **Run completion verification** — after the pre-final technical review, use the appropriate `bin/verify` profile and task-specific checks.
+14. **Finalize the session changelog** — update that same record with exact
+    final verification results and final Done/Not Done state, then perform
+    read-only path/link/diff validation.
+15. **Report** — include rationale, changed files/behavior, documentation and changelog status, discrepancies, and exact check results.
 
 Do not create a gameplay feature handbook for infrastructure, process tooling, or a documentation-only task. Update the documentation system that owns that work instead.
 
@@ -158,7 +171,7 @@ Wait for explicit confirmation before implementation. Ordinary tasks that do not
 - `spec/**`
 - relevant `doc/features/**` after implementation verification
 - relevant `doc/design/**` when verified Neverlands/design facts materially change
-- `changelogs/**` for the final record of a substantive change session
+- `changelogs/**` for the one living record of a substantive change session
 - `.env.example`
 
 ### 5.2 Requires explicit task scope
@@ -565,23 +578,44 @@ Large features may include a local acceptance-criterion-to-spec matrix inside th
 
 ## 16. [NORMATIVE] Session changelog contract
 
-### 16.1 When a changelog record is required
+### 16.1 One living record per session
 
-Create one changelog record for a coherent task/session that changes runtime
-code, tests, persisted content, seeds/config, UI/CSS/UX, process/tooling such as
-`AGENT.md`, or materially changes design/feature documentation. A changelog is
-not required for answer-only, read-only investigation, abandoned/no-change, or
-planning-only work.
+Create exactly one changelog record for a substantive Codex session that
+changes runtime code, tests, persisted content, seeds/config, UI/CSS/UX,
+process/tooling such as `AGENT.md`, or materially changes design/feature
+documentation. Create it with the session's first material repository edit and
+keep updating that same file until the session's final handoff.
+
+For this contract, a session is the continuous task conversation/thread, not
+an individual user prompt or implementation subtask. A follow-up prompt,
+approval, correction, review request, CI failure, or newly added work area in
+the same ongoing conversation continues the same session and must update its
+existing record. It must not create another changelog file. A new record is
+appropriate only for a genuinely new Codex session/thread or when the user
+explicitly declares that the previous session is closed and a new one begins.
+
+A changelog is not required for answer-only, read-only investigation,
+abandoned/no-change, or planning-only work. If such a prompt follows material
+work in the same open session, the existing record remains the sole session
+record; update it only when there is new material progress worth recording.
 
 ### 16.2 Location, name, and template
 
 - Store records under `changelogs/` at the repository root.
-- Use `YYYY-MM-DD-short-kebab-case-description.md`.
-- Use the newest applicable record in `changelogs/` as the template/layout;
-  preserve useful core sections but remove anything not applicable to the new
-  task.
-- Create a new record for a new coherent session. While the current task is
-  still open, update its one record rather than creating progress fragments.
+- Use `YYYY-MM-DD-short-kebab-case-description.md` for a genuinely new session.
+- Before creating a file, check whether the current session already has a
+  record. If it does, update that file regardless of how many prompts, fixes,
+  approvals, or work areas have followed.
+- Use the newest completed record from an earlier session as the layout
+  reference only when starting a new session; preserve useful core sections
+  but remove anything not applicable.
+- Choose a broad initial description suitable for the session. Do not create a
+  second file merely because later prompts expand the scope, and do not rename
+  the active file solely to mirror every scope change; reflect expansion in its
+  title, metadata, outcome, or sections when useful.
+- If multiple records were accidentally created for one session, consolidate
+  their unique history, decisions, checks, gaps, and outcomes into the original
+  or broadest session record, then delete the redundant fragments.
 - Keep completeness proportional to the change. The existing detailed session
   record is a structural example, not a minimum word count.
 
@@ -605,15 +639,26 @@ Record, as applicable:
 Never place credentials, cookies, tokens, private live-session data, or other
 secrets in a changelog.
 
-### 16.4 Ordering and final validation
+### 16.4 Lifecycle, truthfulness, and final validation
 
-The changelog is the last material artifact of the task: create it after
-implementation, the pre-final Rails-guide review, applicable feature/design
-documentation, and completion verification so it can report real outcomes.
-After creating it, run read-only final checks such as `git diff --check` and
-path/link/document validation appropriate to the record. If those checks
-require a correction, update the same record and revalidate; do not claim the
-earlier result as the final state.
+The changelog is a living session artifact:
+
+1. Create it alongside the first material repository change.
+2. Update it after meaningful progress and every later prompt that materially
+   changes scope, decisions, implementation, documentation, checks, or gaps.
+3. Label incomplete or unverified work accurately; never write a planned or
+   running check as passed.
+4. After completion verification, finalize the same record with exact command
+   results and final Done/Not Done state.
+5. Run read-only final checks such as `git diff --check` and path/link/document
+   validation appropriate to the record.
+
+If final validation requires a changelog-only correction, update the same file
+and revalidate. If implementation or other material artifacts change after the
+recorded completion suite, rerun the applicable verification, replace the
+stale result in the same record, and revalidate. Never create a prompt-level,
+progress-fragment, review-only, guide-only, or CI-fix changelog for work that
+belongs to the current session record.
 
 ## 17. [NORMATIVE] Final response format
 
@@ -628,7 +673,8 @@ Every completed task returns these headings:
 - Files or coherent file groups changed.
 - Player/runtime behavior changed.
 - Feature handbook created/updated, including its path, or why no gameplay handbook applies.
-- Session changelog path, or why a changelog was not applicable.
+- Current session changelog path, confirming that follow-up prompts updated the
+  same record, or why a changelog was not applicable.
 - Remaining `[IMPL]`, `[DOC]`, or `[EVIDENCE]` discrepancies, if any.
 - New dependencies, if any.
 
@@ -646,7 +692,10 @@ Do not claim a check passed when it did not run.
 - Never use non-Neverlands material as alternate game-design authority.
 - Never document planned behavior as shipped.
 - Never finish a new player-facing feature without creating/updating its canonical handbook after verification.
-- Never close a substantive repository change session without its dated `changelogs/` record.
+- Never close a substantive repository change session without its one dated
+  `changelogs/` record.
+- Never create multiple changelog files for prompts, subtasks, reviews, guide
+  updates, CI fixes, or corrections within one continuous session.
 - Never invent an alternate feature-document structure.
 - Never edit `FEATURE_TEMPLATE.md` during normal feature work.
 - Never create duplicate primary feature handbooks.
@@ -682,7 +731,9 @@ Before closing a task, confirm:
 - responsible files and focused spec paths are current;
 - `bin/feature-doc-audit` passed when applicable;
 - the correct `bin/verify` profile completed or its blocker is reported;
-- the dated session record was created under `changelogs/` after verification when required, and final read-only validation passed;
+- exactly one dated record exists for the session; it was created with the
+  first material edit, updated across follow-up prompts, finalized after
+  verification, and passed final read-only validation;
 - final output contains `RATIONALE`, `CHANGES`, and `CHECKS` with exact outcomes.
 
 ---
@@ -718,7 +769,8 @@ RATIONALE
 CHANGES
 - implementation files and behavior
 - doc/features/<feature>.md updated after verification
-- changelogs/YYYY-MM-DD-short-description.md created after verification
+- changelogs/YYYY-MM-DD-short-description.md maintained as the session's one
+  living record and finalized after verification
 - discrepancies: none
 
 CHECKS

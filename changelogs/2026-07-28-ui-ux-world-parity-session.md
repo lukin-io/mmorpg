@@ -7,6 +7,8 @@
 - Session commits: `75dd8bd`, `78edefe`, and `ccf67ea`
 - Committed session diff: 150 files, 9,660 insertions, 13,407 deletions
 - Review authority: `doc/RUBY_ON_RAILS_GUIDE.md`
+- Changelog lifecycle: this is the one living record for the complete Codex
+  session; later prompts update this file instead of creating fragments
 
 ## Outcome
 
@@ -261,13 +263,117 @@ parallel world catalog was added. Those guide sections were not applicable to
 the concrete review findings and would have increased abstraction without
 solving a measured problem.
 
+## Engineering process and technical guidance
+
+### Pre-final review and living-session changelog workflow
+
+The session made the proportional pre-final Rails review explicit in
+`AGENT.md`: a stabilized implementation diff is checked against the applicable
+technical-guide sections before the final completion suite. Focused checks may
+run during implementation, but the completion profile must cover any fixes
+resulting from that final review.
+
+The changelog workflow was first formalized by moving the singular
+`changelog/` directory to `changelogs/`. A later prompt in this same session
+clarified the correct unit of history and consolidated the initially created
+prompt-level fragments:
+
+- one continuous Codex conversation/thread is one session, even when it has
+  multiple prompts, approvals, corrections, reviews, work areas, or CI fixes;
+- create one living record with the session's first material repository edit;
+- update that same record as scope, implementation, documentation, checks, and
+  gaps evolve;
+- record incomplete or unverified work truthfully rather than anticipating a
+  passing result;
+- finalize exact verification evidence and Done/Not Done state after the
+  completion suite, followed by read-only validation;
+- create a new file only for a genuinely new session/thread or an explicitly
+  closed-and-restarted session; and
+- consolidate accidental same-session fragments into the original or broadest
+  record and remove the redundant files.
+
+The same lifecycle wording was aligned in `doc/RUBY_ON_RAILS_GUIDE.md` so the
+subordinate guide no longer tells agents to create a second record after each
+prompt's verification.
+
+The pre-final documentation review found and corrected two residual
+ambiguities: the allowed edit scope still described the changelog only as a
+final artifact, and the Rails guide described finalization without explicitly
+opening/updating the record at the first material edit. Both documents now
+state the complete create/update/finalize lifecycle.
+
+### Application-specific Hotwire and Stimulus guide
+
+`doc/RUBY_ON_RAILS_GUIDE.md` was extended with practices derived from the
+application's active Shell, World, City, linked-location, Inventory,
+progression, chat/presence, Arena/Fight, and vitals surfaces. It remains
+subordinate to `AGENT.md` and does not create another gameplay-design source.
+
+The added guidance covers:
+
+- stable, single-owner Turbo frame and DOM ids, including `main_content`,
+  `available-actions`, and lazy `chat_messages` ownership;
+- full-page and direct-request fallbacks for frame endpoints;
+- native forms and `requestSubmit()` rather than `form.submit()` or custom
+  mutation fetches;
+- deliberate `303`, Turbo Stream, `update`, `replace`, append/prepend, and
+  remove contracts, including reconnect and duplicate implications;
+- coherent multi-target snapshots for World, Inventory, and progression;
+- declared Stimulus targets, typed values, scoped queries, optional targets,
+  idempotent connect/disconnect, and removable listener references;
+- cleanup for intervals, timeouts, animation frames, observers,
+  subscriptions, and stale fetches;
+- absolute server timestamps, sleeping-tab recovery, and presentation-only
+  vitals/AP/allocation/countdown previews;
+- namespaced, validated `localStorage` for non-authoritative preferences only;
+- safe dynamic text through `textContent`/DOM APIs or escaped server partials;
+- limited fetch boundaries with Accept/CSRF/status/stale-request handling;
+- one realtime renderer per visible transition: Turbo Stream fragments for
+  server-rendered rows and typed Action Cable events for focused Arena updates;
+- authorized channel scope, after-commit broadcasts, stable payload contracts,
+  and authoritative reconnect snapshots;
+- a repository-specific ownership matrix for all active UI areas; and
+- layered view/request/service/job/channel/system coverage, accessibility,
+  responsive panning, and HTML fallback.
+
+The guide review added a qualifier that its ownership matrix identifies
+intended seams rather than certifying every legacy controller. It also records
+three focused future implementation audits: dynamic HTML construction in
+Arena/chat, old countdown cleanup after disconnect, and removable touch
+listeners if `mobile_hud_controller.js` is mounted again. These remain
+`[IMPL]` follow-ups, not claims of completed work.
+
+### Linux World viewport CI correction
+
+A GitHub Actions system failure exposed a scrollbar-dependent World width. At
+the tested 1326-pixel browser viewport, Linux Chrome reserved 15 pixels for the
+outer page's classic vertical scrollbar. The previous
+`calc(100% - 24px)` fallback therefore rendered the map at 1,287 pixels while
+the overlay-scrollbar development browser retained the intended 1,302 pixels.
+
+`app/assets/stylesheets/world.css` now caps the desktop
+`.nl-map-viewport` fallback at `100%`, allowing the page scrollbar to consume
+surrounding space rather than one of the thirteen visible 100-pixel cells. The
+preferred 1,302-by-702 geometry, 15-by-9 render buffer, cursor position,
+centering, and scrolling remain unchanged. The existing
+`@media (max-width: 940px)` 12-pixel mobile/tablet inset also remains unchanged.
+
+The exact system expectation was retained as the portability contract. No
+browser-specific CSS, test relaxation, gameplay rule, JavaScript, asset,
+dependency, or persisted-data change was introduced.
+
 ## Documentation updated
 
 ### Policy and handoff
 
+- `AGENT.md` — proportional pre-final Rails-guide review, one living changelog
+  per continuous Codex session, first-edit creation, follow-up prompt reuse,
+  truthful progress updates, finalization, consolidation, and validation rules.
 - `doc/README.md` — explicit reference boundary, ASCII/text replacement rule,
   domain-SRP UI guide entry, and link to the authoritative cell lifecycle.
 - `doc/UI.md` — current English-only UI handoff and implementation status.
+- `doc/RUBY_ON_RAILS_GUIDE.md` — application-specific Turbo, Stimulus,
+  realtime, accessibility, coverage, and living-session changelog guidance.
 - `doc/features/README.md` — canonical feature-doc index and ownership links.
 
 ### Planning and design
@@ -349,6 +455,11 @@ paths `application_controller.rb`, `public_fight_logs_controller.rb`,
 `world/resume_context.rb`, `layouts/game.html.erb`, `shop/show.html.erb`,
 `application.css`, and `world_locations_spec.rb`.
 
+Later prompts in this same session also modified `AGENT.md`,
+`doc/RUBY_ON_RAILS_GUIDE.md`, and `app/assets/stylesheets/world.css`. All
+same-session changelog history is consolidated in this file; the former
+process-only, guide-only, and CI-only records were removed.
+
 ## Verification evidence
 
 - Focused RuboCop over the Rails-review Ruby paths: passed, 9 files, 0
@@ -367,6 +478,30 @@ paths `application_controller.rb`, `public_fight_logs_controller.rb`,
   - Feature-document audit: passed for 7 documents; it retained the expected
     warnings that Game Shell and Shop Economy are partially, not fully,
     implemented.
+- Hotwire/Stimulus guide validation: every named frame, target, snapshot, and
+  form API example was found in the current `app/**` paths.
+- `bin/verify fast` after the Hotwire/Stimulus guide update: passed — RuboCop
+  inspected 375 files with 0 offenses, non-system RSpec passed 1,580 examples
+  with 0 failures, and the 7-document feature audit passed with the same two
+  transitional warnings.
+- User-provided GitHub Actions log: isolated the responsive World failure to
+  `spec/system/responsive_neverlands_ui_spec.rb:113`, actual width 1,287 versus
+  expected 1,302 with every other geometry value exact. `gh --version` could
+  not run because GitHub CLI was unavailable, but the supplied log was
+  complete.
+- `bundle exec rspec spec/system/responsive_neverlands_ui_spec.rb:113` after
+  the CSS correction: passed, 1 example, 0 failures.
+- `bin/verify full` after the Linux viewport correction: passed — RuboCop 375
+  files/0 offenses, non-system RSpec 1,580 examples/0 failures, system RSpec
+  203 examples/0 failures/4 explicit pending examples, Brakeman 0 warnings,
+  dependency audits clean, and feature documentation passed with the same two
+  transitional warnings.
+- `bin/verify full` after the living-session contract correction and changelog
+  consolidation: passed — RuboCop 375 files/0 offenses, non-system RSpec 1,580
+  examples/0 failures, system RSpec 203 examples/0 failures/4 explicit pending
+  examples, Brakeman 0 warnings, Bundler Audit and Importmap audit clean, and
+  the 7-document feature audit passed with the same expected transitional
+  warnings for partially implemented Game Shell and Shop Economy handbooks.
 
 ## Explicit remaining gaps and operational cautions
 
@@ -387,3 +522,6 @@ paths `application_controller.rb`, `public_fight_logs_controller.rb`,
 - The responsive behavior is a required local extension. It adapts the same
   captured controls and information for tablet/mobile; it is not evidence that
   the reference site itself supports responsive layouts.
+- The four existing Arena system examples remain explicitly pending for their
+  recorded reasons. The viewport fix and changelog consolidation do not alter
+  their behavior.
