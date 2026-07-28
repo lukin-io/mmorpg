@@ -11,6 +11,7 @@ RSpec.describe "Skill Allocation", type: :system, js: true do
   before do
     login_as(user, scope: :user)
     allow_any_instance_of(CharactersController).to receive(:current_character).and_return(character)
+    page.current_window.resize_to(955, 817)
   end
 
   describe "skills page display" do
@@ -122,14 +123,14 @@ RSpec.describe "Skill Allocation", type: :system, js: true do
 
     it "decrements skill level when clicking -" do
       within_skill_row(:unarmed_combat) do
-        click_button "−"
+        click_button "-"
         expect(page).to have_content("[000/100]")
         expect(page).not_to have_content("(+10)")
       end
     end
 
     it "restores combat points and disables save when reset to original" do
-      within_skill_row(:unarmed_combat) { click_button "−" }
+      within_skill_row(:unarmed_combat) { click_button "-" }
 
       within(".nl-allocation-pool--combat") { expect(page).to have_content("10") }
       expect(page).to have_button("Save", disabled: true)
@@ -137,8 +138,8 @@ RSpec.describe "Skill Allocation", type: :system, js: true do
 
     it "cannot remove below base level" do
       within_skill_row(:unarmed_combat) do
-        click_button "−"
-        click_button "−"
+        click_button "-"
+        click_button "-"
         expect(page).to have_content("[000/100]")
       end
     end
@@ -266,7 +267,7 @@ RSpec.describe "Skill Allocation", type: :system, js: true do
 
       it "cannot remove below existing level" do
         within_skill_row(:unarmed_combat) do
-          click_button "−"
+          click_button "-"
           expect(page).to have_content("[050/100]")
         end
       end

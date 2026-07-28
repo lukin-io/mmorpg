@@ -5,6 +5,7 @@ require "rails_helper"
 RSpec.describe TileBuilding, type: :model do
   let(:source_zone) { create(:zone, name: "Outpost Surroundings", location_type: "outdoor") }
   let(:destination_zone) { create(:zone, name: "Outpost", location_type: "city") }
+  let(:location_metadata) { build(:tile_building, :world_location).metadata }
 
   let(:valid_attributes) do
     {
@@ -27,6 +28,50 @@ RSpec.describe TileBuilding, type: :model do
 
     it "is valid with a source-backed building type" do
       expect(building).to be_valid
+    end
+
+    it "accepts an allowlisted open-world location entrance" do
+      building.assign_attributes(
+        building_type: "location",
+        destination_zone: nil,
+        destination_x: nil,
+        destination_y: nil,
+        metadata: location_metadata
+      )
+
+      expect(building).to be_valid
+      expect(building).to be_accessible
+      expect(building.location_features.pluck("key")).to contain_exactly("trading_post", "exit")
+    end
+
+    it "rejects an unconfigured or unsupported location definition" do
+      building.assign_attributes(
+        building_type: "location",
+        destination_zone: nil,
+        destination_x: nil,
+        destination_y: nil,
+        metadata: {}
+      )
+
+      expect(building).not_to be_valid
+      expect(building).not_to be_accessible
+
+      building.metadata = location_metadata.deep_merge(
+        "location" => {
+          "features" => [
+            {
+              "key" => "mine",
+              "label" => "Mine",
+              "action_type" => "open_feature",
+              "feature" => "mine",
+              "polygon" => [[1, 1], [4, 1], [2, 4]]
+            }
+          ]
+        }
+      )
+
+      expect(building).not_to be_valid
+      expect(building.errors[:metadata]).to include("location feature destination is unsupported")
     end
 
     it "requires a documented building type" do
@@ -109,6 +154,21 @@ RSpec.describe TileBuilding, type: :model do
     it "blocks a null character" do
       expect(building.can_enter?(nil)).to be false
       expect(building.entry_blocked_reason(nil)).to eq("Character is unavailable.")
+    end
+
+    it "opens a location interior without replacing the persisted outdoor cell" do
+      location = create(
+        :tile_building,
+        :world_location,
+        zone: source_zone.name,
+        x: 6,
+        y: 7,
+        building_key: "frontier_village"
+      )
+      character.position.update!(x: location.x, y: location.y)
+
+      expect(location.enter!(character)).to be true
+      expect(character.position.reload).to have_attributes(zone: source_zone, x: 6, y: 7)
     end
   end
 end

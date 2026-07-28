@@ -69,6 +69,8 @@ RSpec.describe "layouts/game.html.erb", type: :view do
       render template: "layouts/game", layout: false
 
       expect(rendered).to have_css(".nl-vitals-inline")
+      expect(rendered).to have_css(".nl-hp-bar-inline")
+      expect(rendered).to have_css(".nl-mp-bar-inline")
     end
 
     it "shows exit/close button" do
@@ -85,10 +87,10 @@ RSpec.describe "layouts/game.html.erb", type: :view do
       expect(rendered).to have_css(".nl-top-nav")
     end
 
-    it "includes the interruptible Character action" do
+    it "includes the interruptible character action" do
       render template: "layouts/game", layout: false
 
-      expect(rendered).to have_button("Character", class: "nl-nav-link")
+      expect(rendered).to have_button("Your character", class: "nl-nav-link")
       expect(rendered).to have_css("form[action='#{world_context_action_path}'] input[name='context'][value='profile']", visible: :all)
     end
 
@@ -106,11 +108,25 @@ RSpec.describe "layouts/game.html.erb", type: :view do
       expect(rendered).not_to have_button("Perks", class: "nl-nav-link")
     end
 
-    it "keeps the outdoor toolbar to the two implemented source controls" do
+    it "keeps the three captured main-frame context controls" do
       render template: "layouts/game", layout: false
 
-      expect(rendered).to have_css(".nl-nav-link", count: 2)
-      expect(rendered).not_to have_css(".nl-nav-link", text: "Return")
+      expect(rendered).to have_css(".nl-nav-link", count: 3)
+      expect(rendered).to have_button("Return", class: "nl-nav-link")
+      expect(rendered).to have_css("form[action='#{world_context_action_path}'] input[name='context'][value='world']", visible: :all)
+    end
+
+    it "owns the current-cell action frame when rendering the outdoor world" do
+      without_partial_double_verification do
+        allow(view).to receive(:controller_name).and_return("world")
+      end
+      assign(:zone, zone)
+      assign(:available_actions, [])
+
+      render template: "layouts/game", layout: false
+
+      expect(rendered).to have_css(".nl-top-nav turbo-frame#available-actions")
+      expect(rendered).to have_css("turbo-frame#available-actions.nl-world-action-frame")
     end
   end
 
@@ -171,19 +187,19 @@ RSpec.describe "layouts/game.html.erb", type: :view do
       render template: "layouts/game", layout: false
 
       expect(rendered).to have_css(".nl-action-area")
-      expect(rendered).to have_css(".nl-action-btn-small", text: "Say")
+      expect(rendered).to have_css(".nl-chat-image-button--say", text: "Say")
     end
 
     it "includes chat area" do
       render template: "layouts/game", layout: false
 
-      expect(rendered).to have_css(".nl-chat-area")
+      expect(rendered).to have_css(".nl-chat-input-bar")
     end
 
     it "includes chat messages container" do
       render template: "layouts/game", layout: false
 
-      expect(rendered).to have_css(".nl-chat-messages")
+      expect(rendered).to have_css(".nl-chat-history")
     end
 
     it "includes chat input field" do
@@ -196,6 +212,17 @@ RSpec.describe "layouts/game.html.erb", type: :view do
       render template: "layouts/game", layout: false
 
       expect(rendered).to have_css(".nl-time-display")
+    end
+
+    it "renders the compact game-owned text-control sequence" do
+      render template: "layouts/game", layout: false
+
+      expect(rendered).to have_css(".nl-chat-toolstrip .nl-chat-tool", count: 9)
+      expect(rendered).to have_css(".nl-chat-tool--send")
+      expect(rendered).to have_css(".nl-chat-tool--clear-input")
+      expect(rendered).to have_css(".nl-chat-tool--refresh")
+      expect(rendered).to have_css(".nl-chat-tool--clear-chat")
+      expect(rendered).not_to include("assets/neverlands")
     end
   end
 
@@ -224,11 +251,11 @@ RSpec.describe "layouts/game.html.erb", type: :view do
       assign(:position, position)
     end
 
-    it "does not expose the removed generic city exit" do
+    it "keeps the contextual return action instead of a generic city exit" do
       render template: "layouts/game", layout: false
 
       expect(rendered).not_to have_css(".nl-top-nav a", text: "Exit")
-      expect(rendered).to have_css(".nl-nav-link--disabled", text: "City")
+      expect(rendered).to have_button("Return", class: "nl-nav-link")
     end
   end
 

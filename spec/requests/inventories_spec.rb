@@ -26,7 +26,10 @@ RSpec.describe "Inventories", type: :request do
       get inventory_path
 
       expect(response.body).to include("Inventory")
-      expect(response.body).to include("Bag")
+      expect(response.body).to include("Inventory mass")
+      expect(response.body).to include("Inventory categories")
+      expect(response.body).to include("nl-source-inventory-icon--text")
+      expect(response.body).not_to include("assets/neverlands")
       expect(response.body).not_to include("nl-inventory-empty-slot")
     end
 

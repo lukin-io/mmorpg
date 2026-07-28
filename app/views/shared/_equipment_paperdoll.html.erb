@@ -9,6 +9,7 @@
     character   - Character whose doll is shown
     equipment   - Hash of slot_key (sym or str) => InventoryItem
     interactive - when true, filled slots render a server-authorized remove action
+    portrait_html - optional source-backed NPC portrait rendered in the center
 %>
 <% character ||= nil %>
 <% equipment ||= {} %>
@@ -27,10 +28,34 @@
     <% end %>
   </div>
 
-  <div class="nl-equipment-portrait">
-    <% if character %>
-      <%= character_avatar_tag(character, size: :xlarge, class: "nl-equipment-character-image") %>
-    <% end %>
+  <div class="nl-equipment-center">
+    <div class="nl-equipment-portrait">
+      <% if local_assigns[:portrait_html].present? %>
+        <%= local_assigns[:portrait_html] %>
+      <% elsif character %>
+        <span class="nl-equipment-character-figure" role="img" aria-label="<%= character.name %>">
+          <span class="nl-character-figure-head" aria-hidden="true"></span>
+          <span class="nl-character-figure-body" aria-hidden="true"></span>
+          <span class="nl-character-figure-arm nl-character-figure-arm--left" aria-hidden="true"></span>
+          <span class="nl-character-figure-arm nl-character-figure-arm--right" aria-hidden="true"></span>
+          <span class="nl-character-figure-leg nl-character-figure-leg--left" aria-hidden="true"></span>
+          <span class="nl-character-figure-leg nl-character-figure-leg--right" aria-hidden="true"></span>
+        </span>
+      <% end %>
+    </div>
+
+    <div class="nl-equipment-lower-slots">
+      <% EquipmentSlots::LOWER.each do |slot_key, label| %>
+        <%= render "shared/equipment_paperdoll_slot",
+              slot: slot_key, label: label,
+              item: (equipment[slot_key] || equipment[slot_key.to_sym]),
+              interactive: interactive,
+              compact: true,
+              category: local_assigns[:category],
+              subcategory: local_assigns[:subcategory],
+              info_mode: local_assigns[:info_mode] %>
+      <% end %>
+    </div>
   </div>
 
   <div class="nl-equipment-side nl-equipment-side--right">
@@ -39,19 +64,6 @@
             slot: slot_key, label: label,
             item: (equipment[slot_key] || equipment[slot_key.to_sym]),
             interactive: interactive,
-            category: local_assigns[:category],
-            subcategory: local_assigns[:subcategory],
-            info_mode: local_assigns[:info_mode] %>
-    <% end %>
-  </div>
-
-  <div class="nl-equipment-lower-slots">
-    <% EquipmentSlots::LOWER.each do |slot_key, label| %>
-      <%= render "shared/equipment_paperdoll_slot",
-            slot: slot_key, label: label,
-            item: (equipment[slot_key] || equipment[slot_key.to_sym]),
-            interactive: interactive,
-            compact: true,
             category: local_assigns[:category],
             subcategory: local_assigns[:subcategory],
             info_mode: local_assigns[:info_mode] %>

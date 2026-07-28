@@ -61,7 +61,7 @@ RSpec.describe "World Map Navigation", type: :system do
       visit world_path
 
       expect(page).to have_css(".nl-map-viewport")
-      expect(page).to have_css(".nl-map-tile", count: 49)
+      expect(page).to have_css(".nl-map-tile", count: 135)
     end
 
     it "shows the cursor element" do
@@ -142,7 +142,7 @@ RSpec.describe "World Map Navigation", type: :system do
     it "shows navigation links" do
       visit world_path
 
-      expect(page).to have_button("Character")
+      expect(page).to have_button("Your character")
     end
 
     it "shows zone name" do
@@ -185,9 +185,9 @@ RSpec.describe "World Map Navigation", type: :system do
 
       visit world_path
 
-      expect(page).to have_css(".nl-map-tile", count: 49)
+      expect(page).to have_css(".nl-map-tile", count: 135)
       expect(page).to have_css(".nl-map-tile--outside")
-      expect(page).to have_css(".nl-cursor[style*='left: 200px'][style*='top: 200px']")
+      expect(page).to have_css(".nl-cursor[style*='left: 600px'][style*='top: 300px']")
     end
   end
 end

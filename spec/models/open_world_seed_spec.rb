@@ -66,7 +66,7 @@ RSpec.describe "Open-world seed data", type: :model do
     expect(city.reload).to have_attributes(width: 10, height: 10)
     expect(city.metadata).to include(
       "city_key" => "forpost",
-      "city_node_key" => "city2_1",
+      "city_node_key" => "main",
       "title" => "Central Square"
     )
     expect(MapTileTemplate.exists?(legacy_south_gate_id)).to be false
@@ -98,19 +98,19 @@ RSpec.describe "Open-world seed data", type: :model do
     node_zones = Game::World::CityCatalog::NODES.transform_values do |node|
       Zone.find_by!(name: node["zone_name"])
     end
-    expect(node_zones.size).to eq(9)
+    expect(node_zones.size).to eq(5)
     expect(node_zones.transform_values(&:city_node_key)).to eq(
       Game::World::CityCatalog::NODES.keys.index_with(&:itself)
     )
     expect(SpawnPoint.where(zone: node_zones.values).pluck(:zone_id, :x, :y, :default_entry)).to eq(
-      [[node_zones.fetch("city2_1").id, 0, 0, true]]
+      [[node_zones.fetch("main").id, 0, 0, true]]
     )
     expect(SpawnPoint.where(zone: region)).to be_empty
 
     seeded_gates = TileBuilding.where(
       building_key: ["outpost_gate", "outpost_south_gate", "outpost_east_gate"]
     ).index_by { |building| building.metadata["source_gate"] }
-    expect(seeded_gates.keys).to contain_exactly("west", "south", "east")
+    expect(seeded_gates.keys).to contain_exactly("west")
     Game::World::CityCatalog::GATES.each do |gate_key, gate_definition|
       seeded_gate = seeded_gates.fetch(gate_key)
       expected_node = node_zones.fetch(gate_definition["node_key"])
@@ -134,13 +134,42 @@ RSpec.describe "Open-world seed data", type: :model do
       )
     end
 
-    expect(CityHotspot.active.where(zone: node_zones.values).count).to eq(32)
+    village = TileBuilding.find_by!(building_key: "frontier_village_entrance")
+    expect(village).to have_attributes(
+      zone: region.name,
+      x: 4,
+      y: 6,
+      building_type: "location",
+      destination_zone: nil,
+      destination_x: nil,
+      destination_y: nil,
+      active: true
+    )
+    expect(village.metadata).to include(
+      "source_map" => "m_998_998",
+      "source_coordinates" => [998, 998],
+      "landmark_kind" => "village"
+    )
+    expect(village.location_key).to eq("frontier_village_entrance")
+    expect(village.location_scene_size).to eq([760, 255])
+    expect(village.location_features.pluck("key", "action_type", "feature")).to contain_exactly(
+      ["trading_post", "open_feature", "shop"],
+      ["exit", "return_world", nil]
+    )
+    expect(village.location_feature("trading_post").fetch("polygon")).to eq(
+      [
+        [237, 194], [205, 196], [141, 177], [86, 154], [85, 146],
+        [108, 123], [189, 114], [219, 156], [221, 173], [238, 180]
+      ]
+    )
+
+    expect(CityHotspot.active.where(zone: node_zones.values).count).to eq(14)
     expect(
       CityHotspot.active.where(zone: node_zones.values).where.not(key: "arena").distinct.pluck(:required_level)
     ).to eq([0])
     expect(
-      CityHotspot.active.find_by!(zone: node_zones.fetch("city2_1"), key: "arena").required_level
-    ).to eq(23)
+      CityHotspot.active.find_by!(zone: node_zones.fetch("main"), key: "arena").required_level
+    ).to eq(0)
 
     expect {
       load_seed
@@ -148,7 +177,9 @@ RSpec.describe "Open-world seed data", type: :model do
       [
         Zone.where(name: [city.name, region.name] + node_zones.values.map(&:name)).count,
         MapTileTemplate.where(zone: region.name).count,
-        TileBuilding.where(building_key: seeded_gates.values.map(&:building_key)).count,
+        TileBuilding.where(
+          building_key: seeded_gates.values.map(&:building_key) + [village.building_key]
+        ).count,
         CityHotspot.active.where(zone: node_zones.values).count,
         SpawnPoint.where(zone: node_zones.values).count
       ]

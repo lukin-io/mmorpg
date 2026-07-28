@@ -133,7 +133,7 @@ RSpec.describe MapTileTemplate, type: :model do
       )
 
       expect(tile).not_to be_valid
-      expect(tile.errors[:metadata]).to include("cell_art requires a Neverlands source_map")
+      expect(tile.errors[:metadata]).to include("cell_art requires source_map metadata")
     end
 
     it "rejects an unknown art key" do

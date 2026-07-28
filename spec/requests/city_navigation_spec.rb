@@ -6,24 +6,24 @@ RSpec.describe "City navigation", type: :request do
   let(:user) { create(:user) }
   let(:character) { create(:character, user:, level: 10) }
   let(:central) { create(:zone, :city_node, name: "Central Square") }
-  let(:trading) do
+  let(:business) do
     create(
       :zone,
       :city,
-      name: "Trading Quarter",
-      metadata: {"city_key" => "forpost", "city_node_key" => "city2_2", "title" => "Trading Quarter"}
+      name: "Business Quarter",
+      metadata: {"city_key" => "forpost", "city_node_key" => "forpost3", "title" => "Business Quarter"}
     )
   end
   let(:outdoors) { create(:zone, :mvp_outdoor_region, name: "Forpost Region") }
   let!(:position) { create(:character_position, character:, zone: central, x: 5, y: 5) }
-  let!(:to_trading) do
+  let!(:to_business) do
     create(
       :city_hotspot,
       :district,
       zone: central,
-      destination_zone: trading,
-      key: "go_city2_2",
-      name: "Trading Quarter"
+      destination_zone: business,
+      key: "go_forpost3",
+      name: "Business Quarter"
     )
   end
   let!(:west_gate) do
@@ -37,7 +37,7 @@ RSpec.describe "City navigation", type: :request do
       action_params: {"destination_x" => 7, "destination_y" => 0}
     )
   end
-  let!(:arena) { create(:city_hotspot, :arena, zone: central, required_level: 23) }
+  let!(:arena) { create(:city_hotspot, :arena, zone: central, required_level: 0) }
 
   before { sign_in user, scope: :user }
 
@@ -45,46 +45,45 @@ RSpec.describe "City navigation", type: :request do
     get world_path
 
     expect(response).to have_http_status(:success)
-    expect(response.body).to include("Central Square", "Trading Quarter", "West Gate")
-    expect(response.body).to include("Arena — Requires level 23.")
+    expect(response.body).to include("Central Square", "Business Quarter", "West Gate", "Arena")
     expect(response.body).to include('name="action_key"')
     expect(response.body).to include("nl-city-scene-image", "nl-city-hotspots")
     expect(response.body).not_to include("city-hitbox", "Observed landmarks")
     expect(WorldActionOffer.offered.where(character:).pluck(:action_type)).to contain_exactly(
       "city_transition",
+      "enter_city_building",
       "exit_city"
     )
     expect(MovementCommand.where(character:)).to be_empty
   end
 
-  it "offers ordinary navigation but not the level-gated Arena to a level-zero starter" do
+  it "offers ordinary navigation and the observed starter-accessible Arena" do
     character.update!(level: 0)
 
     get world_path
 
     expect(response).to have_http_status(:success)
-    expect(WorldActionOffer.offered.where(character:, target: to_trading)).to exist
+    expect(WorldActionOffer.offered.where(character:, target: to_business)).to exist
     expect(WorldActionOffer.offered.where(character:, target: west_gate)).to exist
-    expect(WorldActionOffer.offered.where(character:, target: arena)).not_to exist
-    expect(response.body).to include("Arena — Requires level 23.")
+    expect(WorldActionOffer.offered.where(character:, target: arena)).to exist
   end
 
   it "moves immediately to the selected city node and completes its offer" do
     get world_path
-    offer = WorldActionOffer.offered.find_by!(character:, target: to_trading)
+    offer = WorldActionOffer.offered.find_by!(character:, target: to_business)
 
     post interact_hotspot_world_path,
-      params: {hotspot_id: to_trading.id, action_key: offer.action_key}
+      params: {hotspot_id: to_business.id, action_key: offer.action_key}
 
     expect(response).to redirect_to(world_path)
-    expect(position.reload).to have_attributes(zone: trading, x: 0, y: 0)
+    expect(position.reload).to have_attributes(zone: business, x: 0, y: 0)
     expect(offer.reload).to be_completed
     expect(MovementCommand.where(character:)).to be_empty
   end
 
   it "enters a documented building with its current-node offer" do
-    position.update!(zone: trading)
-    market = create(:city_hotspot, :read_only_city_building, zone: trading)
+    position.update!(zone: business)
+    market = create(:city_hotspot, :read_only_city_building, zone: business)
     get world_path
     offer = WorldActionOffer.offered.find_by!(character:, target: market)
 
@@ -93,7 +92,7 @@ RSpec.describe "City navigation", type: :request do
 
     expect(response).to redirect_to(city_building_path("market"))
     expect(offer.reload).to be_completed
-    expect(position.reload).to have_attributes(zone: trading, x: 5, y: 5)
+    expect(position.reload).to have_attributes(zone: business, x: 5, y: 5)
   end
 
   it "returns through the exact West Gate cell" do
@@ -109,16 +108,16 @@ RSpec.describe "City navigation", type: :request do
 
   it "rotates outgoing offers whenever the city node refreshes" do
     get world_path
-    first_offer = WorldActionOffer.offered.find_by!(character:, target: to_trading)
+    first_offer = WorldActionOffer.offered.find_by!(character:, target: to_business)
 
     get world_path
 
     expect(first_offer.reload).to be_cancelled
-    expect(WorldActionOffer.offered.find_by!(character:, target: to_trading).action_key).not_to eq(first_offer.action_key)
+    expect(WorldActionOffer.offered.find_by!(character:, target: to_business).action_key).not_to eq(first_offer.action_key)
   end
 
   it "rejects missing, expired, mismatched, and wrong-node offers" do
-    post interact_hotspot_world_path, params: {hotspot_id: to_trading.id, action_key: nil}
+    post interact_hotspot_world_path, params: {hotspot_id: to_business.id, action_key: nil}
     expect(position.reload.zone).to eq(central)
 
     expired = create(
@@ -129,9 +128,9 @@ RSpec.describe "City navigation", type: :request do
       x: 5,
       y: 5,
       action_type: "city_transition",
-      target: to_trading
+      target: to_business
     )
-    post interact_hotspot_world_path, params: {hotspot_id: to_trading.id, action_key: expired.action_key}
+    post interact_hotspot_world_path, params: {hotspot_id: to_business.id, action_key: expired.action_key}
     expect(position.reload.zone).to eq(central)
 
     mismatched = create(
@@ -143,12 +142,12 @@ RSpec.describe "City navigation", type: :request do
       action_type: "exit_city",
       target: west_gate
     )
-    post interact_hotspot_world_path, params: {hotspot_id: to_trading.id, action_key: mismatched.action_key}
+    post interact_hotspot_world_path, params: {hotspot_id: to_business.id, action_key: mismatched.action_key}
     expect(position.reload.zone).to eq(central)
 
-    position.update!(zone: trading)
-    post interact_hotspot_world_path, params: {hotspot_id: to_trading.id, action_key: mismatched.action_key}
-    expect(position.reload.zone).to eq(trading)
+    position.update!(zone: business)
+    post interact_hotspot_world_path, params: {hotspot_id: to_business.id, action_key: mismatched.action_key}
+    expect(position.reload.zone).to eq(business)
   end
 
   it "forbids another character's city offer" do
@@ -162,11 +161,11 @@ RSpec.describe "City navigation", type: :request do
       x: 5,
       y: 5,
       action_type: "city_transition",
-      target: to_trading
+      target: to_business
     )
 
     post interact_hotspot_world_path,
-      params: {hotspot_id: to_trading.id, action_key: foreign_offer.action_key}
+      params: {hotspot_id: to_business.id, action_key: foreign_offer.action_key}
 
     expect(response).to redirect_to(root_path)
     expect(position.reload.zone).to eq(central)

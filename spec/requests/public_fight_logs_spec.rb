@@ -34,7 +34,11 @@ RSpec.describe "Public fight logs", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("Fight Log ##{match.id}")
-    expect(response.body).to include("max_kerby hits Training Dummy")
+    expect(Nokogiri::HTML(response.body).text.squish).to include("max_kerby hits Training Dummy")
+    expect(response.body).to include("nl-public-layout--fight-log")
+    expect(response.body).not_to include("nl-game-layout")
+    expect(response.body).not_to include("Neverlands administration")
+    expect(response.body).not_to include("assets/neverlands")
   end
 
   it "exports log entries as JSON" do
@@ -52,5 +56,21 @@ RSpec.describe "Public fight logs", type: :request do
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("max_kerby")
     expect(response.body).to include("<td>6</td>")
+  end
+
+  it "escapes non-participant log text while adding participant color spans" do
+    create(:combat_log_entry,
+      arena_match: match,
+      actor: player_participation,
+      target: npc_participation,
+      round_number: 1,
+      sequence: 2,
+      message: "max_kerby sees <script>alert('unsafe')</script>")
+
+    get public_fight_log_path(match)
+
+    expect(response.body).to include("nl-log-name--alpha")
+    expect(response.body).to include("&lt;script&gt;alert(&#39;unsafe&#39;)&lt;/script&gt;")
+    expect(response.body).not_to include("<script>alert('unsafe')</script>")
   end
 end

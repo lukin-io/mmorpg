@@ -210,6 +210,15 @@ height = Math.max(1, Math.floor(((documentHeight / 100) - 1) / 2))
 It then renders a `(width * 2 + 1)` by `(height * 2 + 1)` grid. In the
 observed 1280x900 browser context, that produced an 1100x500 map area.
 
+An intermediate authenticated Chrome pass on 2026-07-28 used a `955 × 817`
+game viewport. The live formula produced `width=4`, `height=3`, hence a 9 × 7
+render of 63 nearby 100px cells. The map container measured `902 × 702` at
+`x=28`, `y=40`; the main frame clipped its lower portion while retaining
+scrolling. This remains useful evidence that the source viewport scales its
+cell count with frame size, but it is not the current desktop parity target.
+The wider `1326 × 817` observation later in this document supersedes it for
+local desktop geometry. No source cells are runtime assets.
+
 Tile background image paths are deterministic:
 
 ```text
@@ -720,3 +729,86 @@ Do not claim that Neverlands' complete timing formula was captured from these
 two points. The local MVP may isolate a deliberately bounded Wanderer effect,
 but additional source modifiers require separate observations before they are
 implemented.
+
+## 2026-07-28 Open-World And Village Follow-Up
+
+A fresh authenticated Chrome observation used a `1326 × 817` gameplay
+viewport and one continuous session. Credentials, cookies, transient action
+codes, and source image files are not retained.
+
+### Desktop world geometry
+
+- The idle visible world table was exactly 13 columns × 7 rows of `100 × 100`
+  cells: `1300 × 700`, beginning approximately at `x=14`, `y=41` inside its
+  clipped owner.
+- After the first accepted step, the rendered mosaic expanded to a 15 × 9
+  buffer offset by one `100px` cell above and left of the visible 13 × 7 area.
+  The player marker remained centered while terrain moved beneath it.
+- At logical map boundaries the source can vary the total rendered extent, but
+  the observed desktop owner continued to expose the same native 13 × 7
+  surface. Responsive local clients must pan this geometry, not scale cells.
+- Only server-offered destinations received a thin dark-red cell outline and
+  pointer cursor. Non-offered cells had no invented plus/cross marker and no
+  measurable hover transformation.
+- Idle used a compass-like centered marker. Travel replaced it with a tiny
+  direction-specific walker and a small countdown layer.
+- During travel the Profile, Inventory, and contextual controls became
+  disabled and offered outlines disappeared.
+
+### Timing and cell actions
+
+Several observed road/grass steps were `24` seconds. The north step from
+`[1002,999]` to `[1002,998]` was `32` seconds. This is direct evidence that
+duration is already calculated by the source per map state or destination;
+the browser consumes it rather than deriving it from direction or CSS.
+
+Cells composed independent state:
+
+- ordinary terrain could have no contextual cell action;
+- a resource-capable cell exposed `Look Around`;
+- an entrance cell exposed `Enter`;
+- terrain presentation, resource action, and entrance availability did not
+  imply one another.
+
+`Look Around` began an approximately 28-second action lock. Movement and shell
+controls were disabled and a centered result overlay reported that nothing
+useful was found. The source modal artwork is observation evidence only; local
+presentation must use project-owned CSS/text while preserving the lock and
+result hierarchy.
+
+### Observed village route and persistence boundary
+
+The observed route was:
+
+```text
+[1000,1000] -> [1000,999] -> [999,999] -> [998,999] -> [998,998]
+```
+
+The two horizontal moves appeared rightward from the player's visual route
+description while the source x-coordinate decreased. The final upward step
+landed on the village entrance. The exterior village illustration occupied
+several surrounding cells, but `Enter` belonged to a specific current cell.
+
+The source retained the exact outdoor coordinate while the village interior
+was open. Therefore a local interior must not relocate the character to a
+synthetic zone or browser-only position. Logout/login resumes from the durable
+outdoor cell and may reopen the interior only if the same entrance is still
+active and accessible there.
+
+### Village interior and linked Shop
+
+- The interior navigation scene was centered at native `760 × 255` geometry.
+- It used an image-map interaction model: the building and exit were irregular
+  regions over the scene, each carrying a short-lived server action code.
+- The observed Trading Post polygon was
+  `237,194 205,196 141,177 86,154 85,146 108,123 189,114 219,156 221,173 238,180`.
+- The observed exit polygon was
+  `527,235 554,238 551,245 566,243 577,239 569,227 561,218 557,224 544,213 536,210`.
+- Entering the Trading Post handed off to the ordinary Shop surface; using the
+  exit returned to the unchanged outdoor cell.
+
+For this project, preserve the measured scene and hotspot geometry with
+semantic server-offered controls, keyboard labels, CSS focus/hover feedback,
+and responsive panning. Do not copy the village bitmap, source icons, branding,
+or platform prose. The current evidence completes only this village/Shop/exit
+slice; mines, exchanges, and other linked-location families remain uncaptured.

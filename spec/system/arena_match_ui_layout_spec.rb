@@ -71,6 +71,13 @@ RSpec.describe "Arena Match UI Layout", type: :system do
       expect(page).to have_css(".arena-fighter", count: 2)
     end
 
+    it "renders the source equipment paper doll around both combatants" do
+      visit arena_match_path(match)
+
+      expect(page).to have_css(".fighter-paperdoll .nl-equipment-paperdoll", count: 2)
+      expect(page).to have_css(".fighter-paperdoll .nl-profile-slot", count: 40)
+    end
+
     it "shows fighter name and level" do
       visit arena_match_path(match)
       expect(page).to have_content("WarriorAlpha")
@@ -128,7 +135,20 @@ RSpec.describe "Arena Match UI Layout", type: :system do
 
     it "shows turn submit button" do
       visit arena_match_path(match)
-      expect(page).to have_button("Submit Turn")
+      expect(page).to have_button("Turn")
+    end
+
+    it "shows the five captured combat quick slots" do
+      visit arena_match_path(match)
+
+      expect(page).to have_css(".nl-fight-magic-slot", count: 5)
+    end
+
+    it "shows the current turn cost once beside the AP limit" do
+      visit arena_match_path(match)
+
+      expect(page).to have_css(".nl-fight-budget", text: /Used:\s*75\/\d+/)
+      expect(page).not_to have_css(".nl-fight-budget", text: %r{75/\d+/\d+})
     end
 
     it "shows the Neverlands surrender action" do
@@ -310,6 +330,16 @@ RSpec.describe "Arena Match UI Layout", type: :system do
         expect(page).to have_css(".arena-fight-layout")
         expect(page).to have_content("WarriorAlpha")
         expect(page).to have_content("MageBeta")
+        expect(page.evaluate_script(<<~JS)).to be(true)
+          (() => {
+            const layout = document.querySelector(".arena-fight-layout")
+            const main = document.querySelector(".nl-main-area")
+            const page = document.querySelector(".arena-match-page")
+            const styles = getComputedStyle(layout)
+            return styles.gridTemplateAreas.includes("fighter-left") &&
+              page.scrollWidth <= main.clientWidth + 1
+          })()
+        JS
       end
     end
   end

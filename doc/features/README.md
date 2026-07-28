@@ -20,10 +20,12 @@ The older `Implemented MVP` and `Partially Implemented` metadata values are tran
 | `world.md` | Completed handbook for the open world, sparse cells, movement, outdoor actions, gates, NPC handoff, and exact-location persistence. |
 | `city.md` | Completed handbook for the Forpost node graph, illustrated navigation, gates, buildings, captured interiors, and resume behavior. |
 | `character_progression.md` | Completed handbook for level-0 startup, source-table XP/grants, primary stats and exact derived values, numeric skills, the launch perk subset, locked allocation, and public progression display. |
+| `player_inventory.md` | Completed bounded handbook for authoritative carried/equipped state and the fresh Neverlands-matched equipment-family Inventory surface. |
+| `arena_combat.md` | Completed bounded handbook for Arena applications, shared player/NPC turn combat, active-fight presentation, completion, and public fight logs. |
 | `shop_economy.md` | Transitional handbook for the City Shop, catalog modes, NV wallet, buying, inventory selling, stock, and transaction persistence; it is not green until its declared boundary is fully implemented. |
 | `game_shell.md` | Transitional handbook for the persistent game frame, compact vitals, exact-cell presence, global chat, and shell preferences; it is not green until its declared boundary is fully implemented. |
 
-`world.md` and `city.md` are the canonical area-level `feature-v1` examples. `character_progression.md` is a green example for a bounded feature whose broader source taxonomy remains explicitly deferred. The remaining transitional handbooks use the canonical layout but are not completion examples while their status remains non-green. `FEATURE_TEMPLATE.md` defines the required layout for subsequent features.
+`world.md` and `city.md` are the canonical area-level `feature-v1` examples. `character_progression.md`, `player_inventory.md`, and `arena_combat.md` are green examples for bounded features whose broader source taxonomy remains explicitly deferred. The remaining transitional handbooks use the canonical layout but are not completion examples while their status remains non-green. `FEATURE_TEMPLATE.md` defines the required layout for subsequent features.
 
 ## Creating a feature document
 
@@ -116,6 +118,13 @@ flowchart LR
     Shop <--> Shell
     Shop <--> Progression["Character Progression"]
     Progression <--> Shell
+    Arena["Arena Combat"] <--> World
+    Arena <--> Shell
+    Arena <--> Progression
+    Arena <--> Inventory["Player Inventory"]
+    Inventory <--> World
+    Inventory <--> Shell
+    Inventory <--> Progression
 ```
 
 When a boundary changes, update both handbooks in the same change. The owning handbook remains the sole primary contract; a cross-reference summarizes the handoff and must not duplicate the other feature's full behavior.

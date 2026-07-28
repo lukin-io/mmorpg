@@ -26,7 +26,9 @@ RSpec.describe "Players", type: :request do
       expect(response.body).not_to include('<body class="nl-game-layout"')
       expect(response.body).to include("max_kerby [#{character.level}]")
       expect(response.body).to include("Outpost Surroundings [7, 9]")
-      expect(response.body).to include("avatar--fallback")
+      expect(response.body).to include("nl-equipment-character-figure")
+      expect(response.body).not_to include("assets/neverlands")
+      expect(response.body).not_to include("Neverlands administration")
       expect(response.body).to include("Knife")
       expect(response.body).not_to include("Primary Stats")
       expect(response.body).not_to include("Combat Parameters")
@@ -43,7 +45,7 @@ RSpec.describe "Players", type: :request do
 
       expect(response).to have_http_status(:ok)
       expect(response.body).to include('<body class="nl-game-layout"')
-      expect(response.body).to include('class="nl-player-subnavigation"')
+      expect(response.body).to include('class="nl-source-profile-tabs"')
       expect(response.body).to include("Character sections")
     end
 

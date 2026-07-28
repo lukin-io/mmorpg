@@ -25,6 +25,9 @@ Rails.application.routes.draw do
     post :interact_hotspot
   end
 
+  get "world/locations/:key", to: "world_locations#show", as: :world_location
+  post "world/locations/:key/features", to: "world_locations#open_feature", as: :world_location_feature
+
   resource :inventory, only: [:show] do
     post :equip
     post :unequip

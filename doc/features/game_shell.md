@@ -37,7 +37,9 @@ Supporting documents:
 - `doc/features/world.md` owns outdoor/city world content and the same-cell presence query.
 - `doc/features/city.md` owns city-node content rendered in the main frame.
 - `doc/features/character_progression.md` owns the linked player profile.
+- `doc/features/player_inventory.md` owns the linked carried/equipment surface.
 - `doc/features/shop_economy.md` owns the Shop surface loaded from City.
+- `doc/features/arena_combat.md` owns Arena and active-fight content rendered in the shell, plus the intentionally shell-free public fight log.
 
 ### 1.1 Cross-feature relationships
 
@@ -46,13 +48,20 @@ Supporting documents:
 | `doc/features/world.md` | World bootstraps the layout, supplies exact-cell presence, and resolves Character/Inventory shell actions against a possible wilderness NPC interruption. | Game Shell owns the visible controls/frame; World owns position, the allowlisted destination action, hostile handoff, and post-fight return context. |
 | `doc/features/city.md` | City renders its illustrated node surface in the shell's central frame. | City owns node content, navigation, and hotspot mutations; Game Shell owns only surrounding shared controls. |
 | `doc/features/character_progression.md` | Character navigation opens the profile and allocation surfaces, while the header presents current identity/vitals. | Character Progression owns allocations/profile values; Game Shell owns links, frame placement, and compact header presentation. |
+| `doc/features/player_inventory.md` | Inventory navigation opens the carried/equipment surface in the main frame. | Player Inventory owns stacks, equipment, capacity, and page content; Game Shell owns the surrounding navigation, vitals, chat, and presence. |
 | `doc/features/shop_economy.md` | The Shop occupies the central gameplay surface after a City handoff. | Shop owns catalog and economic mutations; Game Shell owns shared navigation, presence, chat, and flash presentation. |
+| `doc/features/arena_combat.md` | Arena and active fights occupy the authenticated main surface, while `/log/:id` explicitly uses the public layout. | Game Shell owns the authenticated frame; Arena Combat owns fight content and the public log's deliberate shell exclusion. |
 
 ## 2. Feature summary
 
-After login, the player opens the World through a persistent Neverlands-shaped game frame. The top bar shows their name, level, server-rendered HP/MP, Character and Inventory actions, city state, and an exit control. Character and Inventory submit the allowlisted World context-action route so a source-backed same-cell hostile encounter can replace navigation with combat and return to the requested destination afterward. The center is a `main_content` Turbo frame. A floating panel shows players at the exact current location with four sorting choices and optional 30-second refresh. A slim bottom bar lazy-loads recent global chat, sends messages, focuses input through Say, and displays server-rendered time.
+After login, the player opens the World through a persistent Neverlands-shaped game frame. The live-measured `955 × 817` composition uses a 29px top strip, flexible scrolling main frame, 8px resize band, 240px chat/presence row with a 300px right presence column, 1px separator, and 30px CSS/text chat controls. The header shows name, level, stacked server-rendered HP/MP strips, Character and Inventory actions, contextual Return/Look around, and a CSS/text exit control. Character and Inventory submit the allowlisted World context-action route so a source-backed same-cell hostile encounter can replace navigation with combat and return to the requested destination afterward.
 
 The server owns identity, character state, location presence, social verification, channel visibility, message persistence, ignore filtering, and authorization. The browser owns only main-frame navigation, presence sort/refresh preferences, chat focus/scroll/reset, and notification presentation.
+
+Desktop source parity and responsive adaptation are separate contracts. The
+`955 × 817` measurement remains exact at desktop. Tablet and mobile widths
+reflow the same semantic regions without creating a second feature layout or
+moving any authority into CSS/JavaScript.
 
 `ApplicationController` selects the full game layout for every authenticated HTML gameplay surface, while anonymous authentication and public-profile requests use the minimal public layout. World remains the shell bootstrap and owns Character/Inventory context actions that may hand navigation to combat before the allowlisted destination. Full-page redirects therefore preserve the same top/main/presence/chat composition instead of falling back to a separate account-dashboard layout.
 
@@ -76,8 +85,10 @@ The MVP currently contains:
 
 ### Non-goals
 
-- Recreating Neverlands framesets, CGI URLs, browser quirks, Russian copy, or every top/bottom icon.
-- Inventing manual refresh, transliteration, smile pickers, chat font/color controls, private-mode toggles, or uncaptured commands.
+- Recreating Neverlands framesets, CGI URLs, browser quirks, or Russian copy.
+- Copying Neverlands images, sprites, logos, decorative artwork, branding,
+  signatures, administration text, or project/service prose into runtime UI.
+- Claiming the currently inert smile palettes, chat mode/speed cycles, transliteration, or player-action popup are complete before their live states are captured and implemented.
 - Making presence into movement authority, a precise global-online system, or a remote-player locator.
 - Treating client-side HP/MP interpolation as authoritative regeneration.
 - Owning World, City, Inventory, Profile, Shop, Arena, or Combat domain mutations rendered in the main frame.
@@ -86,15 +97,22 @@ The MVP currently contains:
 
 ### 4.1 Entry conditions
 
-Every game request requires Devise authentication. On sign-in, the application ensures a playable character and resolves an allowlisted resume path. World is the default entry and the only controller currently selecting `layout "game"`; it ensures the character has an authoritative position before rendering the shell.
+Every game request requires Devise authentication. On sign-in, the application ensures a playable character and resolves an allowlisted resume path. World is the default entry and ensures the character has an authoritative position before rendering; `ApplicationController` selects the persistent game layout for authenticated gameplay pages.
 
 Chat additionally requires a user verified for social features. A global channel must exist for the lazy message frame and inline form to appear; otherwise the shell renders the loading placeholder without a submission form.
 
 ### 4.2 Primary surface
 
-The top bar shows `name[level]`, a red HP bar, `[current/max | current/max]` HP/MP text, Character and Inventory button-styled actions, an inert `City` label when the current zone is a city, and `X` logout. The main content fills the available center.
+The top bar shows `name[level]`, stacked 160 × 6px red HP and blue MP strips, `[current/max | current/max]` text, Your character and Inventory controls, contextual Return/Look around, and the 15px source logout image. The main content fills the flexible central row.
 
-The bottom-right presence panel shows the current zone name, same-cell count, recent-session total, `a-z`, `z-a`, `0-33`, and `33-0` sorts, and a checked refresh toggle. The bottom chat bar shows Say, recent global messages, one text input, and server-rendered `HH:MM:SS` time.
+The 240px social row shows chronological chat on the left and the current zone, same-cell count, recent-session total, `a-z`, `z-a`, `0-33`, `33-0`, and refresh controls in a 300px right column. The 30px bottom strip uses project-owned text/glyph controls in the captured order around one text input and server-rendered `HH:MM:SS` time.
+
+At `<=940px` the shell removes its desktop minimum width, compacts presence to
+260px, and keeps the bottom control strip usable. At `<=720px` the header uses
+two rows with horizontally scrollable context navigation, chat and presence
+stack in the social region, and the bottom controls use two rows. The flexible
+main region remains the owning feature's scroll container. At `<=420px` only
+the compact vitals geometry changes further.
 
 ### 4.3 Player actions and feedback
 
@@ -143,14 +161,15 @@ DOM placement, displayed location text, a player-list row, local storage, or a s
 | Same-cell presence | `GET /world/players` | Interactive/read-only | World query and shared list partial |
 | Compact global chat | lazy `GET /chat_channels/:id` | Interactive | Chat controllers/views/services |
 | Chat creation | `POST /chat_channels/:chat_channel_id/chat_messages` | Interactive | Policy and `MessageDispatcher` |
-| Inline HP/MP | Every shell render | Server-rendered; client interpolation incomplete | Shared vitals partial and Stimulus controller |
-| Remaining captured shell controls | No route/control | Deferred | Evidence only |
+| Inline HP/MP | Every shell render | Interactive presentation over authoritative values | Shared vitals partial and Stimulus controller |
+| Send, clear input, refresh chat, clear visible chat | Bottom controls | Interactive | `game-layout` presentation actions plus chat form/frame |
+| Smile palettes, chat mode/speed, transliteration, player actions | Bottom controls | Not Done | Measured CSS/text controls rendered; transition states remain evidence/implementation gaps |
 
 ### 6.2 Header, main frame, and vitals
 
 World renders outdoor or city content into the layout's single main Turbo frame. Character and Inventory controls submit `POST /world/context`; City displays as disabled context rather than a generic exit, and city movement remains inside the City surface. The logout `X` submits Devise sign-out after confirmation.
 
-The vitals partial calculates clamped display percentages from authoritative character values and renders current/max HP and MP. It also supplies values to `nl-vitals`. The current Stimulus target contract does not match the rendered partial for empty bars, MP bars, or live text, so visible client interpolation is incomplete and must not be relied on as implemented regeneration.
+The vitals partial calculates clamped display percentages from authoritative character values and renders current/max HP and MP. It supplies the same values to `nl-vitals`, whose targets update both strips and the compact text between server renders. This interpolation remains presentation only and never persists vitals.
 
 ### 6.3 Presence and layout preferences
 
@@ -162,7 +181,7 @@ Presence includes other positioned characters with the same zone, x, and y; excl
 
 The lazy compact frame loads at most the latest 200 channel messages in chronological display order after policy scope and ignore filtering. It subscribes to the channel Turbo Stream, shows an explicit empty state, escapes rendered bodies, and replaces case-insensitive `script` text with `[removed]` before display.
 
-Message creation strips surrounding whitespace, rejects blank bodies, ensures social verification, blocks system-channel posting and active mutes, checks whisper privacy, ensures membership where required, persists the message, and broadcasts after commit. There is no implemented maximum message length, command execution, transliteration, smile picker, formatting palette, manual presence refresh, or captured private-only toggle.
+Message creation strips surrounding whitespace, rejects blank bodies, ensures social verification, blocks system-channel posting and active mutes, checks whisper privacy, ensures membership where required, persists the message, and broadcasts after commit. The source send and clear-input buttons drive the same form/input; refresh reloads the compact frame and clear removes its visible rows locally. There is no implemented command execution, transliteration, smile picker, formatting palette, chat-mode cycle, refresh-speed cycle, or player-action popup.
 
 ## 7. Authoritative data and presentation model
 
@@ -254,7 +273,7 @@ The shell is HTML/Turbo-first. Chat exposes a small internal JSON response but n
 - Say-to-chat focus;
 - transient client notification rendering.
 
-`app/javascript/controllers/chat_controller.js` and `app/javascript/controllers/chat_input_controller.js` own scroll behavior, Enter submission, successful reset/focus, and presentation-only username helpers. `app/javascript/controllers/nl_vitals_controller.js` receives display values, but its current target mismatch means live visible regeneration is incomplete.
+`app/javascript/controllers/chat_controller.js` and `app/javascript/controllers/chat_input_controller.js` own scroll behavior, Enter submission, successful reset/focus, and presentation-only username helpers. `app/javascript/controllers/nl_vitals_controller.js` receives display values and updates the stacked source strips and text without persisting game state.
 
 They must not:
 
@@ -263,7 +282,20 @@ They must not:
 - invent channel capabilities or trust local-storage sort values;
 - treat an interpolated vital as a server mutation.
 
-`app/assets/stylesheets/application.css` is now only a small application reset. `app/assets/stylesheets/controls.css` imports the ordered Neverlands modules; `tokens.css` and `primitives.css` own the captured Verdana/Tahoma typography, white/`#fcfaf3` surfaces, beige separators, compact controls, and flat table treatment. `shell.css` and `chat_presence.css` own the measured 29px top strip, central frame, 300px presence block, 30px chat strip, compact messages, flashes, and responsive shell behavior. The presence block accepts pointer input only on its real links/form controls so its fixed background cannot intercept main-frame actions beneath it.
+`app/assets/stylesheets/application.css` is only a small reset. `controls.css` imports ordered flat modules: `tokens.css` and `primitives.css` own shared typography/colors/flat controls; `shell.css` owns the `29 / flexible / 8 / 240 / 1 / 30px` frame, stacked vitals, contextual header, and CSS/ASCII bottom controls; `chat_presence.css` owns chat and nearby-player rows. This is SRP by UI domain, with no Tailwind dependency and no nested `nl/` stylesheet folder.
+
+Domain-SRP is the maintainability rule for all central surfaces. World/City,
+Profile/Inventory, Shop, Arena/Fight, and public logs own their selectors,
+composition, responsive behavior, and local Stimulus presentation. A domain
+must not reuse an unrelated domain class as a styling shortcut; shared rules
+move to `tokens.css` or `primitives.css` only when they express the same stable
+semantic primitive in multiple domains. Similar appearance alone is not enough
+to create shared ownership.
+
+`shell.css` also owns the explicit tablet/mobile row reflow; destination feature
+stylesheets own only their main-surface adaptation. This keeps responsive rules
+next to the desktop component they modify instead of adding a global mobile
+override layer.
 
 Accessibility behavior:
 
@@ -316,9 +348,10 @@ The shell does not store unsent chat input, current central-frame scroll state, 
 | Ignored relationship | Filter initial history; whisper privacy is rejected. |
 | Repeated valid chat submission | Creates another message; chat requests are not idempotent. |
 | Malformed local-storage JSON | Warn and use default presentation preferences. |
-| Vitals Stimulus target mismatch | Server-rendered values remain visible; do not claim live interpolation. |
+| Vitals client/controller failure | Server-rendered values remain visible and authoritative. |
 | Unsupported captured shell control | Do not render a working-looking generic substitute. |
 | Unsupported World context name | Return to World; do not start combat or follow it as a URL. |
+| Tablet/mobile viewport | Reflow shell rows and contain tool strips without whole-page horizontal overflow. |
 
 ## 14. Acceptance criteria
 
@@ -329,9 +362,11 @@ The shell does not store unsent chat input, current central-frame scroll state, 
 - Compact global chat loads at most 200 authorized/filtered messages and appends persisted messages through Turbo Streams.
 - Blank, muted, privacy-blocked, system-channel, unauthorized, and anonymous chat actions create nothing.
 - Login resume selects only an allowlisted supported surface and preserves World/City-owned exact location.
-- Unimplemented source controls and live client-vitals interpolation are not represented as complete behavior.
+- Unimplemented auxiliary source controls are not represented as complete behavior; client-vitals interpolation remains presentation-only.
 - Central feature navigation never transfers game authority to DOM state or local storage.
 - Character and Inventory shell actions can be interrupted by the authoritative same-cell hostile encounter and resume only through World-owned allowlisted return metadata.
+- The `955 × 817` desktop shell geometry remains unchanged while 820px and
+  390px viewports reflow the same controls without whole-page overflow.
 
 ## 15. Test strategy and required coverage
 
@@ -359,10 +394,11 @@ bundle exec rspec \
   spec/views/layouts/game_spec.rb \
   spec/views/shared/_nl_players_list_spec.rb \
   spec/views/shared/_nl_vitals_bar_spec.rb \
-  spec/system/social_ui_spec.rb
+  spec/system/social_ui_spec.rb \
+  spec/system/responsive_neverlands_ui_spec.rb
 ```
 
-Policy behavior is currently exercised through request/system coverage; dedicated `ChatChannelPolicy` and `ChatMessagePolicy` specs are a justified gap for future policy changes. There is no dedicated full-shell browser system spec; the layout view spec and social system spec divide that coverage today. Run the complete suite before release because the shell integrates authentication, sessions, World/City, character state, Turbo Streams, and social persistence.
+Policy behavior is currently exercised through request/system coverage; dedicated `ChatChannelPolicy` and `ChatMessagePolicy` specs are a justified gap for future policy changes. `responsive_neverlands_ui_spec.rb` is the focused full-shell browser contract for mobile header/main/social/bottom row sizes and whole-page overflow. Run the complete suite before release because the shell integrates authentication, sessions, World/City, character state, Turbo Streams, and social persistence.
 
 ## 16. Responsible for Implementation Files
 
@@ -475,6 +511,7 @@ World owns exact position, outdoor/city content, and the presence query; destina
 - `spec/views/shared/_nl_players_list_spec.rb`
 - `spec/views/shared/_nl_vitals_bar_spec.rb`
 - `spec/system/social_ui_spec.rb`
+- `spec/system/responsive_neverlands_ui_spec.rb`
 
 ## 17. Safe extension checklist
 
@@ -485,7 +522,7 @@ Before extending Game Shell:
 3. Add only the smallest server/client contract needed for captured behavior.
 4. Keep identity, exact position, channel access, messages, and vitals server-authoritative.
 5. Do not derive capabilities from DOM placement, local storage, display text, or submitted channel/location labels.
-6. Repair and test the vitals DOM/controller contract before claiming live interpolation.
+6. Keep client vitals interpolation presentation-only and preserve the server-rendered fallback.
 7. Preserve keyboard focus, semantic controls, readable text feedback, and compact Neverlands styling.
 8. Add success, failure, edge/null/boundary, authorization, policy, and browser coverage where applicable.
 9. Update status, non-goals, acceptance criteria, responsible files, focused checks, and version history here.
@@ -497,3 +534,7 @@ Before extending Game Shell:
 | 2026-07-21 | Created the implementation handbook for the persistent game frame, exact-cell presence, compact global chat, browser preferences, and resume integration. |
 | 2026-07-21 | Routed World-shell Character and Inventory controls through the World-owned hostile interruption and allowlisted post-fight return boundary. |
 | 2026-07-28 | Made the Neverlands game frame universal for authenticated gameplay, removed the legacy dashboard layout/CSS, applied live shell measurements and compact primitives, and kept fixed presence from blocking main-frame controls. |
+| 2026-07-28 | Matched the fresh 955 × 817 frame rows, stacked CSS HP/MP strips, 240px chat/presence row, CSS/text bottom-control sequence, and documented the auxiliary chat-control states that remain Not Done. |
+| 2026-07-28 | Removed source-owned runtime images and branded/service copy; preserved the measured shell contract with project-owned CSS, semantic controls, and ASCII/plain-text affordances. |
+| 2026-07-28 | Added a source-faithful responsive adaptation layer at 940/720/420px while preserving the exact desktop row contract and keeping responsive ownership inside Shell CSS. |
+| 2026-07-28 | Made domain-SRP the UI maintainability rule: shared tokens/primitives stay minimal, each gameplay area owns its selectors/responsive/controller presentation, and unrelated domain classes cannot be reused as styling shortcuts. |

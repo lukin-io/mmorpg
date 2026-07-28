@@ -2,11 +2,11 @@
 <% players = @players_here || [] %>
 <% players.each do |player| %>
   <div class="nl-player-entry">
-    <span class="nl-player-arrow">→</span>
+    <span class="nl-player-arrow">&gt;</span>
     <% if player.respond_to?(:alignment) && player.alignment.present? %>
-      <span class="nl-player-icon nl-alignment-<%= player.alignment.downcase %>">☠</span>
+      <span class="nl-player-icon nl-alignment-<%= player.alignment.downcase %>">X</span>
     <% else %>
-      <span class="nl-player-icon">→</span>
+      <span class="nl-player-icon">&gt;</span>
     <% end %>
     <a href="<%= player_path(name: player.name) %>" class="nl-player-name-link"><%= player.name %></a><span class="nl-player-lvl">[<%= player.level %>]</span><span class="nl-player-status">g</span>
   </div>

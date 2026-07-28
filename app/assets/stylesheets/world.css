@@ -91,109 +91,6 @@
   color: var(--nl-blue);
 }
 
-.city-header {
-  border-color: var(--nl-border-dark);
-  background: linear-gradient(180deg, #f7f1dd 0%, #e5d5ad 100%);
-}
-
-.nl-tile-clickable--available {
-  border-color: var(--nl-red);
-}
-
-.nl-timer-seconds {
-  border-radius: 0;
-  background: linear-gradient(180deg, #d85a45 0%, #b40000 100%);
-}
-
-.nl-map-viewport {
-  border: 1px solid var(--nl-border-dark);
-  background: #d9ceb3;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.45);
-}
-
-.nl-map-world table {
-  border-collapse: collapse;
-}
-
-.nl-map-tile {
-  border: 1px solid rgba(118, 97, 51, 0.42);
-  background: #e6dcc0;
-}
-
-.nl-tile-bg--outdoor {
-  background: #d8e5c4;
-}
-
-.nl-tile-clickable,
-.nl-tile-inactive,
-.nl-tile-player {
-  min-width: 100%;
-  min-height: 100%;
-}
-
-.nl-tile-clickable--available {
-  outline: 2px solid rgba(180, 0, 0, 0.7);
-  outline-offset: -3px;
-  background: rgba(255, 240, 237, 0.2);
-}
-
-.nl-tile-clickable--available:hover {
-  background: rgba(255, 240, 237, 0.42);
-}
-
-.nl-tile-player {
-  outline: 2px solid var(--nl-blue);
-  outline-offset: -3px;
-  background: rgba(233, 242, 248, 0.34);
-}
-
-.nl-tile-entity {
-  border: 1px solid var(--nl-border-dark);
-  background: rgba(255, 254, 249, 0.84);
-  box-shadow: 0 1px 2px rgba(34, 28, 12, 0.18);
-}
-
-.nl-tile-npc {
-  color: var(--nl-red);
-}
-
-.nl-tile-building {
-  color: var(--nl-blue-dark);
-}
-
-.nl-entity-label {
-  color: currentColor;
-  font-size: 11px;
-  line-height: 1;
-}
-
-.nl-map-overlay,
-.nl-cursor,
-.nl-timer-text {
-  pointer-events: none;
-}
-
-.nl-cursor {
-  border: 2px solid var(--nl-red);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.72), 0 0 0 1px rgba(0, 0, 0, 0.3);
-}
-
-.nl-cursor-img {
-  background: rgba(180, 0, 0, 0.14);
-}
-
-.nl-cursor-img--idle {
-  background: rgba(180, 0, 0, 0.1);
-}
-
-.nl-cursor-img--moving {
-  background: rgba(184, 93, 0, 0.2);
-}
-
-.nl-move-form {
-  display: none;
-}
-
 .nl-location-name {
   color: var(--nl-text-primary);
   font-weight: 700;
@@ -479,7 +376,7 @@
 .nl-world-container--map {
   display: block;
   height: 100%;
-  overflow: auto;
+  overflow: hidden auto;
   background: #ffffff;
 }
 
@@ -493,16 +390,75 @@
 }
 
 .nl-world-action-strip {
-  display: flex;
-  min-height: 26px;
+  display: inline-flex;
+  min-height: 18px;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 4px;
-  padding: 3px 6px;
+  padding: 0;
   border: 0;
-  border-bottom: 1px solid #b9a05c;
-  background: #fcfaf3;
+  background: transparent;
   box-shadow: none;
+}
+
+.nl-tile-building--village {
+  top: -96px;
+  right: auto;
+  bottom: auto;
+  left: -104px;
+  width: 250px;
+  max-width: none;
+  height: 176px;
+  padding: 0;
+  overflow: visible;
+  border: 0;
+  background: transparent;
+  pointer-events: none;
+}
+
+.nl-tile-building--village::before {
+  position: absolute;
+  inset: 38px 9px 12px;
+  border: 4px solid #5f482d;
+  border-radius: 48% 43% 38% 45%;
+  background: rgba(86, 111, 49, 0.18);
+  box-shadow: inset 0 0 0 2px rgba(205, 181, 118, 0.48);
+  content: "";
+}
+
+.nl-tile-building--village::after {
+  position: absolute;
+  top: 62px;
+  left: 40px;
+  width: 42px;
+  height: 28px;
+  border: 2px solid #4f3824;
+  background: #9b7444;
+  box-shadow:
+    55px -19px 0 -2px #b08a56,
+    103px 7px 0 -3px #85613b,
+    146px -12px 0 -4px #a27a49,
+    34px 50px 0 -5px #86613a,
+    112px 51px 0 -4px #aa814d;
+  content: "";
+  transform: skewY(-5deg);
+}
+
+.nl-tile-village-hut {
+  position: absolute;
+  top: 50px;
+  left: 33px;
+  z-index: 1;
+  width: 58px;
+  height: 24px;
+  background: #4b3320;
+  clip-path: polygon(0 100%, 50% 0, 100% 100%);
+}
+
+turbo-frame.nl-world-action-frame {
+  display: inline-flex;
+  min-height: 18px;
+  align-items: center;
 }
 
 .nl-world-action-form {
@@ -511,11 +467,11 @@
 }
 
 .nl-world-action-button {
-  min-height: 19px;
-  padding: 1px 7px;
-  border-color: #b7b7b7;
-  background: linear-gradient(180deg, #ffffff 0%, #eeeeee 100%);
-  color: #1d5f91;
+  min-height: 18px;
+  padding: 0 7px;
+  border-color: #decfa6;
+  background: #ffffff;
+  color: #333333;
   font-size: 11px;
   font-weight: 700;
 }
@@ -535,14 +491,16 @@
 
 .nl-map-viewport {
   position: relative;
-  width: calc(var(--nl-map-visible-columns) * 100px);
-  max-width: calc(100vw - 12px);
-  height: calc(var(--nl-map-visible-rows) * 100px);
+  width: min(calc(var(--nl-map-visible-columns) * 100px + 2px), calc(100% - 24px));
+  height: calc(var(--nl-map-visible-rows) * 100px + 2px);
   margin: 10px auto 0;
-  overflow: hidden;
+  overflow: auto;
   border: 1px solid #000000;
   background: #ffffff;
   box-shadow: none;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  touch-action: pan-x pan-y;
 }
 
 .nl-map-world {
@@ -569,9 +527,13 @@
   min-width: 100px;
   height: 100px;
   border: 0;
-  background-color: #657b3a;
-  background-repeat: no-repeat;
-  background-size: 1000px 1000px;
+  background-color: hsl(82deg 34% var(--nl-terrain-tone, 38%));
+  background-image:
+    radial-gradient(ellipse at 18px 24px, rgba(224, 223, 169, 0.28) 0 7px, transparent 8px),
+    radial-gradient(ellipse at 73px 69px, rgba(41, 70, 30, 0.3) 0 11px, transparent 12px),
+    repeating-linear-gradient(128deg, rgba(255, 255, 255, 0.06) 0 2px, rgba(21, 48, 24, 0.08) 3px 7px);
+  background-position: var(--nl-terrain-x, 0) var(--nl-terrain-y, 0);
+  background-size: 100px 100px, 100px 100px, 19px 23px;
 }
 
 .nl-tile-bg--outdoor {
@@ -597,7 +559,7 @@ button.nl-tile-clickable--available {
   z-index: 5;
   display: block;
   padding: 0;
-  border: 2px solid #f00000;
+  border: 0;
   border-radius: 0;
   outline: 0;
   background: transparent;
@@ -607,12 +569,23 @@ button.nl-tile-clickable--available {
   transition: none;
 }
 
+.nl-destination-marker {
+  position: absolute;
+  inset: 0;
+  display: block;
+  border: 1px solid rgba(166, 25, 15, 0.72);
+  box-shadow: none;
+}
+
+.nl-destination-marker::before,
+.nl-destination-marker::after {
+  display: none;
+}
+
 button.nl-tile-clickable--available:hover,
 button.nl-tile-clickable--available:focus-visible {
-  border-color: #ff0000;
-  outline: 1px solid rgba(255, 255, 255, 0.9);
-  outline-offset: -4px;
-  background: rgba(255, 255, 255, 0.08);
+  outline: 0;
+  background: transparent;
   box-shadow: none;
   transform: none;
 }
@@ -673,39 +646,27 @@ button.nl-tile-clickable--available:focus-visible {
 
 .nl-cursor-img--idle::before {
   position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 34px;
-  height: 34px;
-  border: 3px solid #111111;
-  background: conic-gradient(
-    #d8d8d8 0deg 22.5deg,
-    #1c2527 22.5deg 45deg,
-    #a5201b 45deg 67.5deg,
-    #e9e5d7 67.5deg 90deg,
-    #1c2527 90deg 135deg,
-    #d8d8d8 135deg 180deg,
-    #1c2527 180deg 225deg,
-    #e9e5d7 225deg 270deg,
-    #1c2527 270deg 315deg,
-    #d8d8d8 315deg 360deg
-  );
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.75);
+  top: 34px;
+  left: 34px;
+  width: 32px;
+  height: 32px;
+  background: conic-gradient(from 45deg, #f1f1f1 0 12.5%, #9c0000 0 25%, #f1f1f1 0 37.5%, #9c0000 0 50%, #f1f1f1 0 62.5%, #9c0000 0 75%, #f1f1f1 0 87.5%, #9c0000 0 100%);
+  clip-path: polygon(50% 0, 61% 35%, 100% 50%, 65% 61%, 50% 100%, 39% 65%, 0 50%, 35% 39%);
   content: "";
-  transform: translate(-50%, -50%) rotate(22.5deg);
+  filter: drop-shadow(0 0 1px #202020);
+  transform: rotate(45deg);
 }
 
 .nl-cursor-img--idle::after {
   position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 8px;
-  height: 8px;
-  border: 2px solid #111111;
+  top: 47px;
+  left: 47px;
+  width: 6px;
+  height: 6px;
+  border: 1px solid #4b0000;
   border-radius: 50%;
-  background: #d6281d;
+  background: #f4d8c5;
   content: "";
-  transform: translate(-50%, -50%);
 }
 
 .nl-cursor-img--moving::before {
@@ -719,6 +680,9 @@ button.nl-tile-clickable--available:focus-visible {
   background: #6a5642;
   box-shadow: -5px 18px 0 -2px #241f18, 5px 18px 0 -2px #241f18;
   content: "";
+}
+
+.nl-cursor-img--moving::before {
   animation: nl-walker-bob 0.45s steps(2, end) infinite;
 }
 
@@ -789,29 +753,48 @@ button.nl-tile-clickable--available:focus-visible {
 .city-view-container {
   width: 100%;
   margin: 0;
-  padding: 10px 0 0;
+  padding: 0;
   border: 0;
   background: #ffffff;
 }
 
+.nl-city-viewport {
+  position: relative;
+  width: min(1250px, 100%);
+  height: 600px;
+  margin: 0 auto;
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-color: #a8a8a8 #ececec;
+  scrollbar-width: thin;
+  touch-action: pan-x pan-y;
+}
+
 .nl-city-scene {
   position: relative;
-  width: 760px;
-  max-width: calc(100vw - 16px);
-  aspect-ratio: 760 / 255;
-  margin: 0 auto;
+  width: 1250px;
+  min-width: 1250px;
+  height: 600px;
+  min-height: 600px;
   overflow: hidden;
-  background: #5d6047;
+  isolation: isolate;
+  background: #525a41;
 }
 
 .nl-city-scene-image {
+  position: absolute;
+  z-index: 0;
   display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+  width: 1536px;
+  max-width: none;
+  height: 1024px;
+  object-fit: fill;
+  user-select: none;
+  pointer-events: none;
 }
 
-.city-actions.nl-city-hotspots {
+.city-actions.nl-city-hotspots,
+.nl-city-landmarks {
   position: absolute;
   inset: 0;
   display: block;
@@ -843,76 +826,76 @@ button.nl-city-hotspot,
   transition: none;
 }
 
-button.nl-city-hotspot--polygon,
-.nl-city-hotspot--polygon {
-  inset: 0;
-  width: 100%;
-  height: 100%;
+.nl-city-landmarks {
+  z-index: 2;
 }
 
-button.nl-city-hotspot:hover,
-button.nl-city-hotspot:active,
-button.nl-city-hotspot:focus,
-.nl-city-hotspot:hover {
+.nl-city-hotspot::before {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background-image: var(--nl-city-image-url);
+  background-position:
+    calc(var(--nl-city-image-x) - var(--nl-city-hotspot-x))
+    calc(var(--nl-city-image-y) - var(--nl-city-hotspot-y));
+  background-repeat: no-repeat;
+  background-size: 1536px 1024px;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 214, 0.48);
+  content: "";
+  filter: brightness(1.22) contrast(1.04) saturate(1.18);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.nl-city-hotspot--district::before {
+  display: none;
+}
+
+.nl-city-hotspot:hover::before,
+.nl-city-hotspot:focus-visible::before {
+  opacity: 0.88;
+}
+
+.nl-city-hotspot:hover,
+.nl-city-hotspot:active,
+.nl-city-hotspot:focus {
   border: 0;
-  background: rgba(255, 255, 255, 0.06);
+  background: transparent;
   box-shadow: none;
   transform: none;
 }
 
-button.nl-city-hotspot:focus-visible {
-  outline: 2px solid #f7d763;
+.nl-city-hotspot:focus-visible {
+  outline: 2px solid #fff4a8;
   outline-offset: -2px;
 }
 
-.nl-city-hotspot--unavailable {
+.nl-city-hotspot--unavailable,
+.nl-city-hotspot--landmark {
   cursor: help;
-}
-
-button.nl-city-hotspot-proxy {
-  position: absolute;
-  z-index: 5;
-  display: block;
-  width: 24px;
-  min-width: 24px;
-  height: 24px;
-  min-height: 24px;
-  margin: -12px 0 0 -12px;
-  padding: 0;
-  border: 0;
-  border-radius: 0;
-  outline: 0;
-  background: transparent;
-  box-shadow: none;
-  cursor: pointer;
-  opacity: 1;
-}
-
-button.nl-city-hotspot-proxy:hover,
-button.nl-city-hotspot-proxy:active,
-button.nl-city-hotspot-proxy:focus {
-  border: 0;
-  background: transparent;
-  box-shadow: none;
-  transform: none;
-}
-
-button.nl-city-hotspot-proxy:focus-visible {
-  outline: 2px solid #f7d763;
-  outline-offset: 1px;
 }
 
 .nl-city-route-marker {
   position: absolute;
-  z-index: 6;
-  color: #f4c632;
+  top: 50%;
+  left: 50%;
+  z-index: 1;
+  display: block;
+  color: #f2d32e;
   font-family: Arial, sans-serif;
-  font-size: 28px;
+  font-size: 66px;
   font-weight: 900;
-  line-height: 1;
-  text-shadow: -1px -1px 0 #704612, 1px -1px 0 #704612, -1px 1px 0 #704612, 1px 1px 0 #704612, 0 2px 2px #111111;
+  line-height: 0.8;
+  text-shadow: 0 2px 1px #5a3300, 0 0 5px rgba(255, 241, 99, 0.95);
+  -webkit-text-stroke: 2px #986100;
   transform: translate(-50%, -50%);
   pointer-events: none;
+}
+
+.nl-city-hotspot:hover .nl-city-route-marker,
+.nl-city-hotspot:focus-visible .nl-city-route-marker {
+  color: #fff36a;
+  filter: brightness(1.2);
 }
 
 .nl-city-route-marker[data-direction="southeast"] { transform: translate(-50%, -50%) rotate(45deg); }
@@ -927,15 +910,16 @@ button.nl-city-hotspot-proxy:focus-visible {
   position: absolute;
   z-index: 20;
   max-width: 260px;
-  padding: 3px 6px;
-  border: 1px solid #777777;
-  background: #fffef9;
+  padding: 2px 4px;
+  border: 1px solid #808080;
+  background: #ffffff;
   color: #111111;
-  box-shadow: 1px 1px 2px rgba(0, 0, 0, 0.42);
-  font-family: Tahoma, Verdana, Arial, sans-serif;
-  font-size: 11px;
-  font-weight: 700;
-  line-height: 1.25;
+  box-shadow: 1px 1px 1px rgba(0, 0, 0, 0.32);
+  font-family: Arial, sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 14px;
+  white-space: nowrap;
   pointer-events: none;
 }
 
@@ -948,8 +932,243 @@ button.nl-city-hotspot-proxy:focus-visible {
     margin-left: 6px;
     margin-right: 6px;
   }
+}
 
-  .nl-city-route-marker {
-    font-size: 22px;
+/* The source map keeps native 100px cells. Narrow clients pan the captured
+ * 15x9 buffered surface instead of shrinking terrain, hit targets, or the
+ * center cursor. */
+@media (max-width: 940px) {
+  .nl-map-viewport {
+    width: calc(100% - 12px);
+    max-width: 1302px;
+  }
+
+  .nl-city-viewport {
+    width: 100%;
+    height: clamp(360px, calc(100dvh - 302px), 600px);
+  }
+}
+
+/* Open-world linked location interiors. This domain owns only the fixed scene,
+ * its CSS-built project artwork, hotspots, and responsive panning. */
+.nl-world-location-page {
+  width: 100%;
+  min-height: 100%;
+  padding-top: 10px;
+  overflow: hidden auto;
+  background: #ffffff;
+}
+
+.nl-world-location-viewport {
+  width: min(var(--nl-location-width, 760px), calc(100% - 12px));
+  height: var(--nl-location-height, 255px);
+  margin: 0 auto;
+  overflow: auto hidden;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  touch-action: pan-x;
+}
+
+.nl-world-location-scene {
+  position: relative;
+  width: var(--nl-location-width, 760px);
+  min-width: var(--nl-location-width, 760px);
+  height: var(--nl-location-height, 255px);
+  overflow: hidden;
+  isolation: isolate;
+  background: #6e764a;
+}
+
+.nl-village-sky,
+.nl-village-ground,
+.nl-village-palisade,
+.nl-village-chapel,
+.nl-village-house,
+.nl-village-windmill,
+.nl-village-well {
+  position: absolute;
+}
+
+.nl-village-sky {
+  inset: 0 0 112px;
+  z-index: 0;
+  background:
+    linear-gradient(168deg, transparent 0 28%, rgba(77, 63, 47, 0.82) 29% 43%, transparent 44%) 0 0 / 260px 140px,
+    linear-gradient(192deg, transparent 0 32%, rgba(92, 77, 56, 0.74) 33% 48%, transparent 49%) 190px 0 / 310px 150px,
+    linear-gradient(#a8b18d, #687755);
+}
+
+.nl-village-ground {
+  inset: 105px 0 0;
+  z-index: 1;
+  background:
+    radial-gradient(ellipse at 50% 32%, #4b4233 0 72px, transparent 73px),
+    repeating-linear-gradient(165deg, rgba(48, 42, 30, 0.16) 0 3px, transparent 4px 12px),
+    #596443;
+}
+
+.nl-village-palisade {
+  right: 42px;
+  bottom: 20px;
+  left: 36px;
+  z-index: 4;
+  height: 55px;
+  border: 8px solid #493821;
+  border-top-width: 5px;
+  border-radius: 48% 45% 36% 40%;
+  box-shadow: inset 0 0 0 2px #8d7245;
+}
+
+.nl-village-chapel {
+  top: 50px;
+  left: 176px;
+  z-index: 3;
+  width: 72px;
+  height: 91px;
+  border: 3px solid #3e3024;
+  background: #8b7654;
+  box-shadow: inset 0 0 18px rgba(255, 228, 143, 0.35);
+}
+
+.nl-village-chapel::before {
+  position: absolute;
+  top: -38px;
+  left: 12px;
+  width: 48px;
+  height: 40px;
+  background: #40372c;
+  clip-path: polygon(50% 0, 100% 100%, 0 100%);
+  content: "";
+}
+
+.nl-village-chapel span {
+  position: absolute;
+  top: 16px;
+  left: 26px;
+  color: #eee3bd;
+  font: bold 31px/1 Georgia, serif;
+}
+
+.nl-village-house {
+  z-index: 3;
+  width: 112px;
+  height: 56px;
+  border: 3px solid #3f3020;
+  background: repeating-linear-gradient(90deg, #8a6843 0 13px, #6f5234 14px 16px);
+}
+
+.nl-village-house::before {
+  position: absolute;
+  top: -31px;
+  left: -8px;
+  width: 128px;
+  height: 34px;
+  background: #514232;
+  clip-path: polygon(10% 100%, 28% 10%, 88% 0, 100% 100%);
+  content: "";
+}
+
+.nl-village-house--one { top: 123px; left: 76px; }
+.nl-village-house--two { top: 91px; left: 284px; transform: scale(0.82); }
+.nl-village-house--three { top: 134px; right: 105px; transform: scale(0.9); }
+
+.nl-village-windmill {
+  top: 55px;
+  right: 130px;
+  z-index: 3;
+  width: 58px;
+  height: 105px;
+  background: #5b4731;
+  clip-path: polygon(27% 100%, 38% 0, 68% 0, 81% 100%);
+}
+
+.nl-village-windmill::before,
+.nl-village-windmill::after {
+  position: absolute;
+  top: 21px;
+  left: -24px;
+  width: 108px;
+  height: 8px;
+  background: #d9c65e;
+  box-shadow: 0 0 0 1px #473b20;
+  content: "";
+  transform: rotate(45deg);
+}
+
+.nl-village-windmill::after { transform: rotate(-45deg); }
+
+.nl-village-well {
+  top: 165px;
+  left: 360px;
+  z-index: 5;
+  width: 47px;
+  height: 20px;
+  border: 4px solid #4e3b2a;
+  border-radius: 50%;
+  background: #28312d;
+}
+
+.nl-world-location-hotspots {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+}
+
+.nl-world-location-hotspot-form {
+  display: contents;
+}
+
+.nl-world-location-hotspot {
+  position: absolute;
+  inset: 0;
+  display: block;
+  border: 0;
+  background: transparent;
+  clip-path: var(--nl-location-hotspot);
+  cursor: pointer;
+}
+
+.nl-world-location-hotspot:hover,
+.nl-world-location-hotspot:focus,
+.nl-world-location-hotspot:active {
+  border: 0;
+  background: rgba(255, 255, 210, 0.08);
+  box-shadow: none;
+}
+
+.nl-world-location-hotspot:focus-visible {
+  outline: 2px solid #fff4a8;
+  outline-offset: -2px;
+}
+
+.nl-location-exit-mark {
+  position: absolute;
+  top: 209px;
+  left: 530px;
+  display: inline-flex;
+  width: 45px;
+  height: 31px;
+  align-items: center;
+  justify-content: center;
+  border: 3px ridge #777777;
+  border-radius: 50%;
+  background: linear-gradient(180deg, #f5f3e9, #8e9cad);
+  color: #5a6b88;
+  font: bold 28px/1 Arial, sans-serif;
+  text-shadow: 0 1px #ffffff;
+  transform: rotate(18deg);
+}
+
+@media (max-width: 720px) {
+  .nl-map-viewport {
+    height: clamp(202px, calc(100dvh - 330px), 502px);
+  }
+
+  .nl-city-viewport {
+    height: clamp(300px, calc(100dvh - 345px), 520px);
+  }
+
+  .nl-world-location-viewport {
+    width: calc(100% - 12px);
   }
 }

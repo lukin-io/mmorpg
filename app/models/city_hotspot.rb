@@ -67,8 +67,12 @@ class CityHotspot < ApplicationRecord
     when "enter_zone"
       nil # Handled by controller to update character position
     when "open_feature"
-      FEATURE_ROUTES[action_params.to_h["feature"]]
+      self.class.feature_route(action_params.to_h["feature"])
     end
+  end
+
+  def self.feature_route(feature)
+    FEATURE_ROUTES[feature.to_s]
   end
 
   def world_action_type

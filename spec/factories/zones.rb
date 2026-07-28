@@ -21,7 +21,7 @@ FactoryBot.define do
       metadata do
         {
           "city_key" => "forpost",
-          "city_node_key" => "city2_1",
+          "city_node_key" => "main",
           "title" => "Central Square"
         }
       end

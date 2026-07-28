@@ -1,6 +1,7 @@
 .nl-game-layout {
   --nl-top-bar-height: 29px;
-  --nl-bottom-bar-height: 30px;
+  --nl-social-height: 240px;
+  --nl-chat-controls-height: 30px;
   --nl-players-width: 300px;
   display: grid;
   width: 100%;
@@ -8,7 +9,7 @@
   height: 100dvh;
   min-width: 760px;
   min-height: 420px;
-  grid-template-rows: 29px minmax(0, 1fr) 30px;
+  grid-template-rows: var(--nl-top-bar-height) minmax(0, 1fr) 8px var(--nl-social-height) 1px var(--nl-chat-controls-height);
   overflow: hidden;
   background: #ffffff;
   color: #222222;
@@ -21,12 +22,12 @@
   display: flex;
   min-width: 0;
   height: 29px;
-  align-items: center;
+  align-items: flex-start;
   gap: 4px;
-  padding: 3px 4px 4px;
+  padding: 2px 4px 5px;
   border: 0;
-  box-shadow: inset 0 -1px 0 #b9a05c, inset 0 -3px 0 #f3ecd7;
   background: #ffffff;
+  box-shadow: inset 0 -1px #d3c79f, inset 0 -4px #f6f2e6;
   white-space: nowrap;
 }
 
@@ -39,10 +40,7 @@
   align-items: center;
 }
 
-.nl-top-left {
-  flex: 0 1 auto;
-  gap: 1px;
-}
+.nl-top-left { flex: 0 1 auto; gap: 1px; }
 
 .nl-player-link {
   color: #111111;
@@ -50,41 +48,50 @@
   text-decoration: none;
 }
 
-.nl-player-link:hover {
-  color: #336699;
-}
-
-.nl-player-level {
-  color: #333333;
-}
+.nl-player-link:hover { color: #336699; }
+.nl-player-level { color: #333333; }
 
 .nl-vitals-inline {
-  gap: 4px;
+  gap: 3px;
   margin-left: 3px;
+}
+
+.nl-vitals-bars {
+  display: grid;
+  width: 160px;
+  height: 14px;
+  grid-template-rows: 6px 6px;
+  gap: 1px;
 }
 
 .nl-hp-bar-inline,
 .nl-mp-bar-inline {
   position: relative;
   width: 160px;
-  height: 8px;
+  height: 6px;
   overflow: hidden;
-  border: 1px solid #aaaaaa;
-  background: #eeeeee;
-  box-shadow: none;
+  border: 0;
+  background-color: #efefef;
+  background-repeat: repeat-x;
+  background-position: left center;
 }
+
+.nl-hp-bar-inline { background: linear-gradient(180deg, #d7d7d7 0%, #f5f5f5 48%, #b8b8b8 100%); }
+.nl-mp-bar-inline { background: linear-gradient(180deg, #d7d7d7 0%, #f5f5f5 48%, #b8b8b8 100%); }
 
 .nl-bar-fill {
   display: block;
   height: 100%;
+  background-repeat: repeat-x;
+  background-position: left center;
 }
 
-.nl-hp-bar-inline .nl-bar-fill { background: #d56f6f; }
-.nl-mp-bar-inline .nl-bar-fill { background: #6b91bd; }
+.nl-hp-bar-inline .nl-bar-fill { background: linear-gradient(180deg, #ff7373 0%, #d50000 52%, #8b0000 100%); }
+.nl-mp-bar-inline .nl-bar-fill { background: linear-gradient(180deg, #65d9ef 0%, #009bb8 52%, #00677b 100%); }
 
 .nl-vitals-text {
   color: #152c48;
-  font: bold 10px/12px Verdana, Tahoma, Arial, sans-serif;
+  font: bold 11px/13px Verdana, Tahoma, Arial, sans-serif;
 }
 
 .nl-top-nav {
@@ -92,63 +99,61 @@
   gap: 5px;
 }
 
-.nl-nav-action-form {
-  display: inline;
-  margin: 0;
-}
+.nl-nav-action-form { display: inline; margin: 0; }
 
 button.nl-nav-link,
 .nl-nav-link {
   display: inline-flex;
   min-height: 18px;
   align-items: center;
-  padding: 1px 7px;
-  border: 1px solid #c7c7c7;
+  padding: 0 7px;
+  border: 1px solid #decfa6;
   background: #ffffff;
-  color: #222222;
-  box-shadow: none;
+  color: #333333;
   cursor: pointer;
-  font: bold 11px/14px Tahoma, Verdana, Arial, sans-serif;
+  font: bold 11px/16px Tahoma, Verdana, Arial, sans-serif;
   text-decoration: none;
 }
 
 button.nl-nav-link:hover,
 .nl-nav-link:hover {
-  border-color: #aaaaaa;
-  background: #f6f6f6;
-  color: #336699;
+  border-color: #b9a05c;
+  background: #f3ecd7;
+  color: #003366;
   text-decoration: none;
 }
 
 .nl-nav-link--disabled {
-  border-color: #dedede;
-  background: #f6f4ed;
-  color: #c8c3b4;
+  border-color: #decfa6;
+  background: #f3ecd7;
+  color: #aaaaaa;
+  cursor: default;
 }
 
-.nl-top-right {
-  margin-left: 4px;
+button.nl-nav-link:disabled {
+  border-color: #decfa6;
+  background: #f3ecd7;
+  color: #aaaaaa;
+  cursor: default;
 }
+
+.nl-top-right { margin-left: 4px; }
 
 .nl-close-btn {
   display: inline-flex;
-  width: 17px;
-  height: 17px;
+  width: 15px;
+  height: 15px;
   align-items: center;
   justify-content: center;
-  border: 1px solid #53609a;
-  border-radius: 50%;
-  background: #394b96;
-  color: #ffffff;
-  font: bold 10px/15px Verdana, Tahoma, Arial, sans-serif;
+  overflow: visible;
+  border: 1px solid #8f8f8f;
+  background: linear-gradient(180deg, #ffffff, #d9d9d9);
+  color: #7d0000;
+  font: bold 11px/13px Arial, sans-serif;
   text-decoration: none;
 }
 
-.nl-close-btn:hover {
-  background: #263775;
-  color: #ffffff;
-  text-decoration: none;
-}
+.nl-close-btn:hover { border-color: #730000; background: #f4dddd; color: #b00000; }
 
 .nl-main-area {
   position: relative;
@@ -164,27 +169,41 @@ button.nl-nav-link:hover,
   min-height: 100%;
 }
 
+.nl-frame-resizer {
+  border-top: 1px solid #777777;
+  border-bottom: 1px solid #8c8c8c;
+  background: linear-gradient(#efefef 0 35%, #bcbcbc 36% 58%, #e7e7e7 59% 100%);
+}
+
+.nl-social-row {
+  display: grid;
+  min-width: 0;
+  min-height: 0;
+  grid-template-columns: minmax(0, 1fr) var(--nl-players-width);
+  overflow: hidden;
+  background: #f5f5f5;
+}
+
+.nl-chat-history {
+  min-width: 0;
+  height: 240px;
+  overflow: auto;
+  border-right: 1px solid #eeeeee;
+  background: #f5f5f5;
+  color: #222222;
+  font: 12px/18px Verdana, Tahoma, Arial, sans-serif;
+}
+
+.nl-chat-history > turbo-frame { display: block; min-height: 100%; }
+
 .nl-players-float {
-  position: fixed;
-  right: 0;
-  bottom: 30px;
-  z-index: 30;
   width: 300px;
-  height: 236px;
+  height: 240px;
   overflow: hidden;
   border: 0;
   background: #fcfaf3;
-  box-shadow: inset 1px 0 0 #d8cdaf, inset 0 1px 0 #d8cdaf;
   color: #222222;
   font: 10px Verdana, Tahoma, Arial, sans-serif;
-  pointer-events: none;
-}
-
-.nl-players-float a,
-.nl-players-float button,
-.nl-players-float input,
-.nl-players-float label {
-  pointer-events: auto;
 }
 
 .nl-players-header-float,
@@ -196,7 +215,6 @@ button.nl-nav-link:hover,
   gap: 4px;
   padding: 1px 5px;
   border: 0;
-  border-bottom: 1px solid #eee8d8;
   background: #fcfaf3;
 }
 
@@ -204,32 +222,51 @@ button.nl-nav-link:hover,
 .nl-refresh-check,
 .nl-location-text,
 .nl-total-online {
-  color: #666666;
+  color: #333333;
   font-size: 10px;
   white-space: nowrap;
 }
 
-.nl-sort-links a {
-  color: #336699;
-  text-decoration: underline;
-}
+.nl-sort-links a { color: #336699; text-decoration: underline; }
 
 .nl-refresh-check {
   display: inline-flex;
   align-items: center;
-  gap: 2px;
+  gap: 3px;
 }
 
 .nl-refresh-check input {
-  width: 12px;
-  height: 12px;
+  width: 13px;
+  height: 13px;
   margin: 0;
 }
 
+.nl-refresh-image {
+  display: inline-flex;
+  min-width: 69px;
+  height: 15px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #decfa6;
+  background: #ffffff;
+  color: #333333;
+  font: bold 10px/13px Tahoma, Verdana, sans-serif;
+}
+
+.nl-players-location {
+  justify-content: center;
+  min-height: 34px;
+  flex-direction: column;
+  gap: 0;
+  font-weight: 700;
+}
+
+.nl-players-location span { font-weight: 700; }
+
 .nl-players-list-float {
-  height: calc(100% - 36px);
+  height: 188px;
   overflow-y: auto;
-  padding: 2px 4px;
+  padding: 2px 8px;
   background: #fcfaf3;
 }
 
@@ -251,23 +288,24 @@ button.nl-nav-link:hover,
 .nl-player-lvl,
 .nl-player-status {
   flex: 0 0 auto;
-  color: #666666;
+  color: #333333;
   font-size: 10px;
 }
+
+.nl-player-arrow { color: #b6a000; font-size: 14px; font-weight: 700; }
 
 .nl-player-name-link {
   min-width: 0;
   overflow: hidden;
-  color: #336699;
+  color: #222222;
+  font-weight: 700;
   text-overflow: ellipsis;
 }
 
 .nl-no-players,
-.nl-players-empty {
-  padding: 5px;
-  color: #888888;
-  text-align: center;
-}
+.nl-players-empty { padding: 5px; color: #888888; text-align: center; }
+
+.nl-frame-separator { background: #9a9a9a; }
 
 .nl-bottom-bar {
   position: relative;
@@ -275,57 +313,46 @@ button.nl-nav-link:hover,
   display: grid;
   height: 30px;
   min-width: 0;
-  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-columns: 138px minmax(120px, 1fr) 223px minmax(146px, 291px);
   align-items: center;
-  gap: 4px;
-  padding: 2px 5px;
+  padding: 0;
   border: 0;
-  border-top: 1px solid #a6a6a6;
-  background: #dedede;
-  box-shadow: none;
+  background: linear-gradient(180deg, #eeeeee 0%, #c7c7c7 42%, #e8e8e8 100%);
 }
 
 .nl-action-area,
-.nl-status-icons {
+.nl-status-icons,
+.nl-chat-toolstrip {
   display: flex;
+  height: 30px;
   align-items: center;
 }
 
-button.nl-action-btn-small,
-.nl-action-btn-small {
-  min-height: 17px;
-  padding: 0 7px;
-  border: 1px solid #999999;
-  background: #eeeeee;
-  color: #222222;
-  font: 10px/15px Verdana, Tahoma, Arial, sans-serif;
-}
+.nl-action-area { padding-left: 8px; gap: 2px; }
 
-.nl-chat-area {
-  display: grid;
-  min-width: 0;
-  grid-template-columns: minmax(90px, 0.35fr) minmax(160px, 1fr);
+.nl-action-check {
+  display: inline-flex;
   align-items: center;
-  gap: 3px;
+  color: #666666;
+  font: 10px/30px Tahoma, Verdana, sans-serif;
 }
 
-.nl-chat-messages {
-  min-width: 0;
-  height: 18px;
+.nl-action-check input { width: 13px; height: 13px; margin: 0 2px 0 0; }
+
+.nl-chat-image-button {
+  width: 75px;
+  height: 30px;
   overflow: hidden;
+  padding: 0;
+  border: 1px solid #8b8b8b;
+  background: linear-gradient(180deg, #ffffff 0%, #d8d8d8 100%);
   color: #333333;
-  font-size: 10px;
-  line-height: 17px;
-  white-space: nowrap;
+  font: bold 10px/28px Tahoma, Verdana, sans-serif;
 }
 
 .nl-chat-input-bar,
-.nl-chat-form-inline {
-  display: flex;
-  min-width: 0;
-  align-items: center;
-}
-
+.nl-chat-form-inline { display: flex; min-width: 0; align-items: center; }
+.nl-chat-input-bar { height: 30px; padding: 6px 0 7px 5px; background: linear-gradient(180deg, #ececec, #cfcfcf 48%, #e6e6e6); }
 .nl-chat-form-inline { width: 100%; }
 
 input.nl-chat-input-field,
@@ -334,24 +361,62 @@ input.nl-chat-input-field,
   height: 17px;
   min-height: 17px;
   padding: 0 3px;
-  border: 1px solid #aaaaaa;
+  border: 1px solid #a3a3a3;
   background: #ffffff;
   color: #222222;
   font: 11px/15px Verdana, Tahoma, Arial, sans-serif;
 }
 
-.nl-time-display,
-.nl-chat-loading {
-  color: #555555;
-  font-size: 10px;
+.nl-chat-toolstrip { background: linear-gradient(180deg, #ececec, #c8c8c8 48%, #e6e6e6); }
+
+.nl-chat-tool {
+  display: inline-flex;
+  height: 30px;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  border-left: 1px solid rgba(120, 120, 120, 0.55);
+  overflow: hidden;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(190, 190, 190, 0.52));
+  color: #27313a;
+  cursor: pointer;
+  font: bold 8px/29px Arial, sans-serif;
+  text-align: center;
+  text-shadow: 0 1px rgba(255, 255, 255, 0.8);
+}
+
+.nl-chat-tool:hover { background: linear-gradient(180deg, #ffffff, #d6cba9); color: #003c6a; }
+.nl-chat-tool--send { width: 23px; font-size: 13px; }
+.nl-chat-tool--clear-input { width: 19px; font-size: 12px; }
+.nl-chat-tool--smiles-one { width: 11px; font-size: 7px; }
+.nl-chat-tool--smiles-two { width: 10px; font-size: 7px; }
+.nl-chat-tool--refresh { width: 30px; margin-left: 18px; font-size: 13px; }
+.nl-chat-tool--clear-chat { width: 28px; color: #850000; font-size: 9px; }
+.nl-chat-tool--messages { width: 28px; }
+.nl-chat-tool--speed { width: 28px; }
+.nl-chat-tool--language { width: 28px; }
+.nl-chat-tool--sound { width: 26px; margin-right: 4px; letter-spacing: 1px; }
+
+.nl-status-icons {
+  justify-content: space-between;
+  padding-left: 16px;
+  background: linear-gradient(180deg, #ececec, #c8c8c8 48%, #e6e6e6);
+}
+
+.nl-time-display {
+  color: #999999;
+  font: italic 18px/30px Georgia, serif;
   white-space: nowrap;
 }
+
+.nl-chat-loading { padding: 5px; color: #555555; font-size: 10px; }
 
 .nl-flash-container,
 .nl-notifications {
   position: fixed;
   right: 306px;
-  bottom: 36px;
+  bottom: 276px;
   z-index: 90;
   display: grid;
   width: min(340px, calc(100vw - 312px));
@@ -359,21 +424,166 @@ input.nl-chat-input-field,
   max-width: 340px;
 }
 
-@media (max-width: 900px) {
+/*
+ * Responsive shell adaptation.
+ *
+ * The captured 955px composition remains the desktop contract above.
+ * Narrower clients keep the same frame order, compact text controls, and
+ * information hierarchy; only the frame geometry changes so no surface is
+ * clipped behind a legacy minimum width.
+ */
+@media (max-width: 940px) {
   .nl-game-layout {
-    --nl-players-width: 220px;
-    min-width: 640px;
+    --nl-players-width: 260px;
+    min-width: 0;
   }
 
-  .nl-players-float { width: 220px; }
+  .nl-players-float { width: var(--nl-players-width); }
+
+  .nl-bottom-bar {
+    grid-template-columns: 118px minmax(120px, 1fr) 223px minmax(80px, 100px);
+  }
+
+  .nl-action-area { padding-left: 3px; }
+  .nl-action-check { display: none; }
+  .nl-status-icons { padding-left: 4px; }
 
   .nl-flash-container,
   .nl-notifications {
-    right: 226px;
-    width: min(340px, calc(100vw - 232px));
+    right: 8px;
+    width: min(340px, calc(100vw - 16px));
+  }
+}
+
+@media (max-width: 720px) {
+  .nl-game-layout {
+    --nl-top-bar-height: 54px;
+    --nl-social-height: 190px;
+    --nl-chat-controls-height: 60px;
+    grid-template-rows: var(--nl-top-bar-height) minmax(0, 1fr) 6px var(--nl-social-height) 1px var(--nl-chat-controls-height);
+    min-height: 520px;
   }
 
-  .nl-mp-bar-inline { display: none; }
-  .nl-chat-area { grid-template-columns: minmax(0, 1fr); }
-  .nl-chat-messages { display: none; }
+  .nl-top-bar {
+    display: grid;
+    height: var(--nl-top-bar-height);
+    grid-template-columns: minmax(0, 1fr) 18px;
+    grid-template-rows: 23px 25px;
+    align-items: center;
+    gap: 1px 3px;
+    padding: 1px 3px 5px;
+  }
+
+  .nl-top-left {
+    grid-row: 1;
+    grid-column: 1;
+    overflow: hidden;
+  }
+
+  .nl-top-right {
+    grid-row: 1;
+    grid-column: 2;
+    margin-left: 0;
+  }
+
+  .nl-top-nav {
+    grid-row: 2;
+    grid-column: 1 / -1;
+    width: 100%;
+    justify-content: flex-start;
+    margin-left: 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: thin;
+  }
+
+  button.nl-nav-link,
+  .nl-nav-link { flex: 0 0 auto; }
+
+  .nl-social-row {
+    grid-template-columns: 1fr;
+    grid-template-rows: 100px 90px;
+  }
+
+  .nl-chat-history {
+    width: 100%;
+    height: 100px;
+    border-right: 0;
+    border-bottom: 1px solid #d8cdaf;
+  }
+
+  .nl-players-float {
+    display: grid;
+    width: 100%;
+    height: 90px;
+    grid-template-columns: minmax(135px, 42%) minmax(0, 1fr);
+    grid-template-rows: 22px 68px;
+  }
+
+  .nl-players-header-float {
+    grid-row: 1;
+    grid-column: 1 / -1;
+    min-height: 22px;
+    overflow-x: auto;
+  }
+
+  .nl-players-location {
+    grid-row: 2;
+    grid-column: 1;
+    min-height: 68px;
+    overflow: hidden;
+  }
+
+  .nl-players-list-float {
+    grid-row: 2;
+    grid-column: 2;
+    height: 68px;
+    border-left: 1px solid #d8cdaf;
+  }
+
+  .nl-bottom-bar {
+    height: 60px;
+    grid-template-areas:
+      "action input input"
+      "tools tools status";
+    grid-template-columns: 118px minmax(0, 1fr) 52px;
+    grid-template-rows: 30px 30px;
+  }
+
+  .nl-action-area { grid-area: action; }
+  .nl-chat-input-bar { grid-area: input; padding-left: 2px; }
+
+  .nl-chat-toolstrip {
+    grid-area: tools;
+    min-width: 0;
+    justify-content: flex-start;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: thin;
+  }
+
+  .nl-status-icons {
+    grid-area: status;
+    justify-content: flex-end;
+    padding-left: 0;
+  }
+
+  .nl-time-display { display: none; }
+  .nl-chat-tool--refresh { margin-left: 8px; }
+
+  .nl-flash-container,
+  .nl-notifications {
+    right: 6px;
+    bottom: 256px;
+    width: calc(100vw - 12px);
+  }
+}
+
+@media (max-width: 420px) {
+  .nl-vitals-bars,
+  .nl-hp-bar-inline,
+  .nl-mp-bar-inline { width: 128px; }
+
+  .nl-vitals-text { font-size: 10px; }
+  .nl-refresh-image { min-width: 52px; }
 }

@@ -43,7 +43,7 @@ RSpec.describe "Login location resume", type: :system do
 
     expect(page).to have_current_path(shop_path(mode: "sell", category: "jewelry"))
     expect(page).to have_css(".nl-shop-page")
-    expect(page).to have_css(".nl-arena-tab--active", text: "Sell")
+    expect(page).to have_css(".nl-shop-tab--active", text: "Sell Goods")
     expect(position.reload).to have_attributes(zone: city, x: 4, y: 6)
   end
 end

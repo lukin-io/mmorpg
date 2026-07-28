@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <title><%= content_for(:title) || "Neverlands" %></title>
+    <title><%= content_for(:title) || "RPG" %></title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="theme-color" content="#fcfaf3">
@@ -17,7 +17,7 @@
     <%= javascript_importmap_tags %>
   </head>
 
-  <body class="nl-public-layout">
+  <body class="nl-public-layout<%= " #{content_for(:body_class)}" if content_for?(:body_class) %>">
     <div id="flash" class="nl-public-flash">
       <% flash.each do |type, message| %>
         <div class="nl-flash nl-flash--<%= type %>"><%= message %></div>

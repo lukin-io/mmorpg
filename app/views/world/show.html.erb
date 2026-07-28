@@ -2,13 +2,9 @@
   World View
   Uses game.html.erb layout with top bar, main content, and bottom panel
 %>
-<% content_for :title, "#{@zone.name} - Neverlands" %>
+<% content_for :title, @zone.name %>
 
 <div class="nl-world-container nl-world-container--map">
-  <turbo-frame id="available-actions">
-    <%= render "world/actions", available_actions: @available_actions, position: @position %>
-  </turbo-frame>
-
   <turbo-frame id="game-map">
     <%= render "world/map",
                position: @position,

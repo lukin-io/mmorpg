@@ -18,14 +18,15 @@ Observed Neverlands behavior:
 - offered cells use a thin solid red outline while non-offered cells remain
   ordinary terrain;
 - each destination has its own short-lived action key;
-- movement has a server-offered travel duration: 30 seconds for the earlier
-  level-6 west-gate account and 24 seconds for the returning level-16 account;
+- movement has a server-offered travel duration: `30` seconds in the earlier
+  west-gate capture, repeated `24`-second steps in the fresh route, and a
+  `32`-second destination-specific step;
 - the idle cursor is a compass-like marker fixed over the central cell;
 - during travel, the cursor changes to a walking figure and the terrain slides
   linearly beneath that fixed marker by one cell;
 - the countdown is a small red capsule centered one cell above the cursor;
 - local presence refreshes after movement completion;
-- contextual buttons such as `Войти` appear from the current tile state.
+- contextual buttons such as Enter and Look appear from the current tile state;
 - the logical region is a mosaic of `100 x 100` image-cells; an authored
   special location can replace the ordinary art for its exact coordinate;
 - hostile NPC placement is not rendered as a map marker or manual attack
@@ -33,6 +34,10 @@ Observed Neverlands behavior:
 - local outdoor actions can be interrupted by bot ambushes and hand the player
   into the normal fight screen;
 - Character and Inventory navigation can be interrupted by the same ambush;
+- an entrance can open an allowlisted linked-location scene while the durable
+  outdoor coordinate remains unchanged;
+- the captured village interior uses a native `760 × 255` navigation scene
+  with server-coded Trading Post and exit regions;
 - after outdoor bot combat is finished, the player returns to the unchanged
   coordinate or continues to the interrupted allowlisted Character/Inventory
   destination with fresh world action tokens on the next map render.
@@ -49,11 +54,12 @@ The world map screen is a compact game surface:
 - local player list/presence panel;
 - chat frame or chat bar.
 
-The implemented browser surface uses a `7 x 7` server-rendered buffer clipped
-to a `5 x 5` visible viewport. This leaves one full off-screen cell on every
-side for the one-cell travel animation and keeps the cursor centered even at
-the logical region boundary; out-of-bounds buffer cells render as inert terrain
-and can never receive an offer. The default terrain is one project-owned
+The implemented desktop surface uses a `15 x 9` server-rendered buffer clipped
+to a `13 x 7`, `1302 × 702` visible viewport. This leaves one full off-screen
+cell on every side for the one-cell travel animation and keeps the cursor
+centered even at the logical region boundary; out-of-bounds buffer cells render
+as inert terrain and can never receive an offer. Tablet/mobile clients pan the
+same native cell geometry inside a bounded owner. The default terrain is one project-owned
 `1000 x 1000` art sheet cropped into `100 x 100` cells. Sparse explicit tile
 records may replace that coordinate's slice through a configured source-backed
 cell-art key; malformed or absent overrides use the coordinate-derived default.
@@ -79,6 +85,7 @@ Players leave the world map by:
 
 - entering a city through a contextual action;
 - entering a tile building when offered;
+- entering an allowlisted linked location while preserving the outdoor cell;
 - starting combat or another feature overlay;
 - using teleport/respawn systems when available.
 
@@ -90,6 +97,7 @@ The map can offer:
 - character profile;
 - inventory;
 - enter city/building;
+- enter linked world location and use its offered interior features;
 - hidden hostile encounter interruption;
 - city or building entry.
 
@@ -141,6 +149,9 @@ Persistent state sources:
 - tile NPCs: spawned NPC identity, HP, defeated state, respawn, and template;
 - tile entrances: city gates and other source-backed enterable structures
   attached to a coordinate.
+- linked-location definition on the tile entrance record: captured interior
+  geometry and feature names, separate from the persisted coordinate but not
+  from the movable/deactivatable entrance content record.
 
 Static cell composition is deliberately split by responsibility:
 
@@ -151,6 +162,13 @@ Static cell composition is deliberately split by responsibility:
 | Hostile NPC | materialized tile NPC | yes |
 | City/building/special entrance | tile entrance record | yes |
 | Resource/local action | tile template's validated local-action list | yes, including several action types |
+
+An outdoor linked location is a view over the persisted cell, not a new source
+of position truth. `building_type: location` identifies the entrance; validated
+scene and feature metadata live on that same `TileBuilding` row. Every interior
+hotspot receives a new character/zone/coordinate/target-bound offer. Moving,
+replacing, or deactivating the entrance—or moving the character—immediately
+changes availability and invalidates interior resume and linked Shop access.
 
 ## Authoring Source-Backed Cell Art
 
@@ -202,6 +220,16 @@ Pipeline for every world map request:
 7. Render only the action offers returned by the server, or hand off to combat
    if the accepted action triggered an ambush.
 
+For a linked location, the equivalent interior pipeline is:
+
+1. Load the same persisted outdoor position.
+2. Resolve the active location entrance at that exact cell.
+3. Read its validated persisted scene and feature definitions.
+4. Cancel prior open interior-feature offers and issue fresh ones for only the
+   captured hotspots.
+5. Revalidate position, entrance, feature, target, ownership, and expiry on
+   submission before handing off to Shop or World.
+
 Before step 5, effective fatigue is derived from the persisted value and its
 recovery anchor. A blocked character still renders the current cell and
 location; it receives no named locked offers and sees the recovery explanation.
@@ -236,6 +264,7 @@ Action examples:
 | Move | movement command | movement acceptance service |
 | Hidden hostile interruption | tile NPC | shared combat handoff |
 | Enter city/building/dungeon | tile entrance | building or city transition service |
+| Open linked location feature | same location entrance | allowlisted location controller, then Shop or World |
 | Search for resources | current tile template | local-action service or hostile ambush handoff |
 
 Profession outcomes remain owned by `features/professions.md`. The presence of

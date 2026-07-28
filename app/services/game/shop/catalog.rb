@@ -5,10 +5,10 @@ module Game
     # Server-authored shop catalog for the city shop frame.
     class Catalog
       MODES = [
-        ["buy", "Buy"],
+        ["buy", "Buy Goods"],
         ["licenses", "Licenses"],
-        ["sell", "Sell"],
-        ["novice", "Novice"]
+        ["sell", "Sell Goods"],
+        ["novice", "For Beginners"]
       ].freeze
 
       CATEGORIES = [

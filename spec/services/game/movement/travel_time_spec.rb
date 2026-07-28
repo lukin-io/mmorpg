@@ -20,14 +20,14 @@ RSpec.describe Game::Movement::TravelTime do
     expect(travel_seconds).to eq(29)
   end
 
-  it "reaches the 25 second minimum at 100 Wanderer" do
+  it "reaches the captured 24 second minimum at 100 Wanderer" do
     character.update!(passive_skills: {"wanderer" => 100})
 
-    expect(travel_seconds).to eq(25)
+    expect(travel_seconds).to eq(24)
   end
 
   it "keeps the duration at 30 seconds below the first whole-second boundary" do
-    character.update!(passive_skills: {"wanderer" => 19})
+    character.update!(passive_skills: {"wanderer" => 16})
 
     expect(travel_seconds).to eq(30)
   end
@@ -46,7 +46,11 @@ RSpec.describe Game::Movement::TravelTime do
     expect(travel_seconds(direction: :northeast)).to eq(30)
   end
 
-  it "does not apply uncaptured terrain slowdown from tile metadata" do
+  it "does not invent terrain slowdown without an authored duration" do
     expect(travel_seconds(tile_metadata: {"terrain_type" => "outdoor"})).to eq(30)
+  end
+
+  it "uses an exact server-authored destination duration" do
+    expect(travel_seconds(tile_metadata: {"travel_seconds" => 32})).to eq(32)
   end
 end

@@ -2,16 +2,12 @@
   grid_width = nearby_tiles.first&.size || 1
   grid_height = nearby_tiles.size
   tile_size = 100
-  gutter_x = grid_width >= 3 ? 1 : 0
-  gutter_y = grid_height >= 3 ? 1 : 0
-  visible_columns = [grid_width - (gutter_x * 2), 1].max
-  visible_rows = [grid_height - (gutter_y * 2), 1].max
-  map_offset_x = -(gutter_x * tile_size)
-  map_offset_y = -(gutter_y * tile_size)
+  visible_columns = [grid_width - 2, 1].max
+  visible_rows = [grid_height - 2, 1].max
+  map_offset_x = grid_width > visible_columns ? -tile_size : 0
+  map_offset_y = grid_height > visible_rows ? -tile_size : 0
   cursor_left = (visible_columns / 2) * tile_size
   cursor_top = (visible_rows / 2) * tile_size
-  default_terrain_texture = image_path("world/forpost-terrain.png")
-
   movement_destinations = local_assigns.fetch(:movement_destinations, @movement_destinations || []) || []
   active_movement = local_assigns.fetch(:active_movement, @active_movement)
   movement_remaining_seconds = local_assigns.fetch(
@@ -67,9 +63,9 @@
          style="transform: translate(<%= map_offset_x %>px, <%= map_offset_y %>px);">
       <table border="0" cellpadding="0" cellspacing="0">
         <tbody>
-          <% nearby_tiles.each do |row| %>
+          <% nearby_tiles.each_with_index do |row, row_index| %>
             <tr>
-              <% row.each do |tile| %>
+              <% row.each_with_index do |tile, column_index| %>
                 <%
                   is_player = tile.x == position.x && tile.y == position.y
                   destination = destinations_by_coord[[tile.x, tile.y]]
@@ -78,11 +74,13 @@
                   is_walkable = tile.respond_to?(:walkable) ? tile.walkable : !tile_meta["blocked"]
                   is_available = destination.present? && !movement_active && is_walkable && !is_player
                   cell_art = Game::World::CellArtCatalog.resolve(tile_meta["cell_art"])
-                  terrain_texture = cell_art ? image_path(cell_art.asset) : default_terrain_texture
-                  texture_x = cell_art ? cell_art.background_x : -(tile.x.modulo(10) * tile_size)
-                  texture_y = cell_art ? cell_art.background_y : -(tile.y.modulo(10) * tile_size)
-                  texture_width = cell_art ? cell_art.sheet_width : 1000
-                  texture_height = cell_art ? cell_art.sheet_height : 1000
+                  terrain_style = if cell_art
+                    "background-image: url('#{image_path(cell_art.asset)}'); background-position: #{cell_art.background_x}px #{cell_art.background_y}px; background-size: #{cell_art.sheet_width}px #{cell_art.sheet_height}px;"
+                  else
+                    terrain_x = -(tile.x.to_i.modulo(10) * tile_size)
+                    terrain_y = -(tile.y.to_i.modulo(10) * tile_size)
+                    "background-image: url('#{image_path('world/forpost-terrain.png')}'); background-position: #{terrain_x}px #{terrain_y}px; background-size: 1000px 1000px;"
+                  end
                 %>
 
                 <td class="nl-map-tile nl-tile-bg--<%= terrain %> <%= 'nl-map-tile--outside' if tile_meta['out_of_bounds'] %>"
@@ -91,7 +89,7 @@
                     data-y="<%= tile.y %>"
                     data-terrain="<%= terrain %>"
                     data-cell-art-key="<%= cell_art&.key %>"
-                    style="background-image: url('<%= terrain_texture %>'); background-position: <%= texture_x %>px <%= texture_y %>px; background-size: <%= texture_width %>px <%= texture_height %>px;">
+                    style="<%= terrain_style %>">
 
                   <% if is_available %>
                     <button type="button"
@@ -104,6 +102,7 @@
                             data-action-key="<%= destination.action_key %>"
                             data-travel-seconds="<%= destination.travel_seconds %>"
                             aria-label="Move <%= destination.direction %>">
+                      <span class="nl-destination-marker" aria-hidden="true"></span>
                       <span class="nl-visually-hidden">Move <%= destination.direction %></span>
                     </button>
                   <% elsif is_player %>
@@ -113,8 +112,12 @@
                   <% end %>
 
                   <% if tile_meta["building"].present? %>
-                    <div class="nl-tile-entity nl-tile-building" title="<%= tile_meta['building'] %>">
-                      <span class="nl-entity-label"><%= tile_meta["building"] %></span>
+                    <div class="nl-tile-entity nl-tile-building nl-tile-building--<%= tile_meta['building_kind'] %>"
+                         title="<%= tile_meta['building'] %>">
+                      <% if tile_meta["building_kind"] == "village" %>
+                        <span class="nl-tile-village-hut" aria-hidden="true"></span>
+                      <% end %>
+                      <span class="nl-entity-label nl-visually-hidden"><%= tile_meta["building"] %></span>
                     </div>
                   <% end %>
                 </td>

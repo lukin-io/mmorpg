@@ -38,7 +38,11 @@ export default class extends Controller {
   connect() {
     this.timerId = null
     this.animationFrameId = null
+    this.viewportFrameId = null
+    this.boundCenterViewport = this.centerViewport.bind(this)
     this.positionCursor()
+    window.addEventListener("resize", this.boundCenterViewport)
+    this.viewportFrameId = requestAnimationFrame(this.boundCenterViewport)
 
     if (this.movementActiveValue) {
       this.resumeServerMovement()
@@ -53,6 +57,12 @@ export default class extends Controller {
     if (this.animationFrameId) {
       cancelAnimationFrame(this.animationFrameId)
     }
+
+    if (this.viewportFrameId) {
+      cancelAnimationFrame(this.viewportFrameId)
+    }
+
+    window.removeEventListener("resize", this.boundCenterViewport)
   }
 
   // =====================
@@ -65,6 +75,19 @@ export default class extends Controller {
     this.cursorTarget.style.display = "block"
 
     this.setCursorMoving(this.movementActiveValue)
+  }
+
+  centerViewport() {
+    if (!this.hasViewportTarget || !this.hasCursorTarget) return
+
+    const viewport = this.viewportTarget
+    const cursorCenterX = this.cursorTarget.offsetLeft + (this.tileSizeValue / 2)
+    const cursorCenterY = this.cursorTarget.offsetTop + (this.tileSizeValue / 2)
+    const maxScrollLeft = Math.max(0, viewport.scrollWidth - viewport.clientWidth)
+    const maxScrollTop = Math.max(0, viewport.scrollHeight - viewport.clientHeight)
+
+    viewport.scrollLeft = Math.min(maxScrollLeft, Math.max(0, cursorCenterX - (viewport.clientWidth / 2)))
+    viewport.scrollTop = Math.min(maxScrollTop, Math.max(0, cursorCenterY - (viewport.clientHeight / 2)))
   }
 
   // =====================
@@ -111,6 +134,10 @@ export default class extends Controller {
     this.element.querySelectorAll("[data-available='true']").forEach((tile) => {
       tile.dataset.available = "false"
       tile.style.cursor = "default"
+    })
+
+    document.querySelectorAll(".nl-top-nav button").forEach((button) => {
+      button.disabled = true
     })
   }
 

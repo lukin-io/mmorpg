@@ -11,7 +11,7 @@ import { Controller } from "@hotwired/stimulus"
  *   MP += maxMP / mpRegenRate per tick
  */
 export default class extends Controller {
-  static targets = ["hpFill", "hpEmpty", "mpFill", "mpEmpty", "hbar"]
+  static targets = ["hpFill", "mpFill", "text"]
 
   static values = {
     currentHp: Number,
@@ -19,8 +19,7 @@ export default class extends Controller {
     currentMp: Number,
     maxMp: Number,
     hpRegenRate: { type: Number, default: 1500 },  // Ticks to full HP
-    mpRegenRate: { type: Number, default: 9000 },  // Ticks to full MP
-    barWidth: { type: Number, default: 160 }
+    mpRegenRate: { type: Number, default: 9000 }  // Ticks to full MP
   }
 
   interval = null
@@ -61,25 +60,22 @@ export default class extends Controller {
       return
     }
 
-    // Calculate bar widths
-    const hpWidth = Math.round(this.barWidthValue * (this.currentHpValue / this.maxHpValue))
-    const mpWidth = Math.round(this.barWidthValue * (this.currentMpValue / this.maxMpValue))
+    const hpPercent = this.maxHpValue > 0 ? (this.currentHpValue / this.maxHpValue) * 100 : 0
+    const mpPercent = this.maxMpValue > 0 ? (this.currentMpValue / this.maxMpValue) * 100 : 0
 
     // Update HP bar
-    if (this.hasHpFillTarget && this.hasHpEmptyTarget) {
-      this.hpFillTarget.width = hpWidth
-      this.hpEmptyTarget.width = this.barWidthValue - hpWidth
+    if (this.hasHpFillTarget) {
+      this.hpFillTarget.style.width = `${hpPercent}%`
     }
 
     // Update MP bar
-    if (this.hasMpFillTarget && this.hasMpEmptyTarget) {
-      this.mpFillTarget.width = mpWidth
-      this.mpEmptyTarget.width = this.barWidthValue - mpWidth
+    if (this.hasMpFillTarget) {
+      this.mpFillTarget.style.width = `${mpPercent}%`
     }
 
     // Update text display
-    if (this.hasHbarTarget) {
-      this.hbarTarget.innerHTML = `&nbsp;[<span class="nl-hp-text"><b>${Math.round(this.currentHpValue)}</b>/<b>${this.maxHpValue}</b></span> | <span class="nl-mp-text"><b>${Math.round(this.currentMpValue)}</b>/<b>${this.maxMpValue}</b></span>]`
+    if (this.hasTextTarget) {
+      this.textTarget.textContent = `[${Math.round(this.currentHpValue)}/${this.maxHpValue} | ${Math.round(this.currentMpValue)}/${this.maxMpValue}]`
     }
 
     // Regenerate per tick
@@ -113,4 +109,3 @@ export default class extends Controller {
     this.tick()
   }
 }
-

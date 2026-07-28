@@ -53,34 +53,44 @@ RSpec.describe WorldHelper, type: :helper do
 
   describe "#direction_arrow" do
     it "returns correct arrow for north" do
-      expect(helper.direction_arrow(:north)).to eq("▲")
+      expect(helper.direction_arrow(:north)).to eq("^")
     end
 
     it "returns correct arrow for south" do
-      expect(helper.direction_arrow(:south)).to eq("▼")
+      expect(helper.direction_arrow(:south)).to eq("v")
     end
 
     it "returns correct arrow for east" do
-      expect(helper.direction_arrow(:east)).to eq("▶")
+      expect(helper.direction_arrow(:east)).to eq(">")
     end
 
     it "returns correct arrow for west" do
-      expect(helper.direction_arrow(:west)).to eq("◀")
+      expect(helper.direction_arrow(:west)).to eq("<")
     end
 
     it "returns correct arrow for diagonal directions" do
-      expect(helper.direction_arrow(:northeast)).to eq("↗")
-      expect(helper.direction_arrow(:northwest)).to eq("↖")
-      expect(helper.direction_arrow(:southeast)).to eq("↘")
-      expect(helper.direction_arrow(:southwest)).to eq("↙")
+      expect(helper.direction_arrow(:northeast)).to eq("NE")
+      expect(helper.direction_arrow(:northwest)).to eq("NW")
+      expect(helper.direction_arrow(:southeast)).to eq("SE")
+      expect(helper.direction_arrow(:southwest)).to eq("SW")
     end
 
     it "returns default for unknown direction" do
-      expect(helper.direction_arrow(:unknown)).to eq("•")
+      expect(helper.direction_arrow(:unknown)).to eq(".")
     end
 
     it "handles string input" do
-      expect(helper.direction_arrow("north")).to eq("▲")
+      expect(helper.direction_arrow("north")).to eq("^")
+    end
+  end
+
+  describe "#world_location_polygon" do
+    it "formats persisted integer points as a safe CSS polygon" do
+      feature = {"polygon" => [[85, 146], [238, 180], [205, 196]]}
+
+      expect(helper.world_location_polygon(feature)).to eq(
+        "85px 146px, 238px 180px, 205px 196px"
+      )
     end
   end
 end

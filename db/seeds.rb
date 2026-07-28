@@ -71,7 +71,9 @@ end
 
 if defined?(SpawnPoint) && defined?(Zone)
   city_zone_names = Game::World::CityCatalog::NODES.values.pluck("zone_name")
-  central_square = Zone.find_by(name: Game::World::CityCatalog.node("city2_1")["zone_name"])
+  central_square = Zone.find_by(
+    name: Game::World::CityCatalog.node(Game::World::CityCatalog::STARTER_NODE_KEY)["zone_name"]
+  )
 
   SpawnPoint.where(zone: Zone.where(name: city_zone_names + ["Outpost Surroundings"])).delete_all
   if central_square
@@ -140,6 +142,22 @@ if defined?(MapTileTemplate)
         ]
       }
     }
+    outdoor_tiles << {
+      zone: outdoor_zone_name,
+      x: 4,
+      y: 6,
+      terrain_type: "outdoor",
+      passable: true,
+      metadata: {
+        "source_map" => "m_998_998",
+        "source_coordinates" => [998, 998],
+        "cell_art" => {
+          "key" => "forpost_terrain",
+          "column" => 4,
+          "row" => 6
+        }
+      }
+    }
   end
 
   outdoor_tiles.each do |attrs|
@@ -149,6 +167,16 @@ if defined?(MapTileTemplate)
     tile.passable = attrs.fetch(:passable, true)
     tile.metadata = attrs.fetch(:metadata, {})
     tile.save!
+  end
+
+  if outpost_surroundings
+    current_gate_cells = Game::World::CityCatalog::GATES.values.map { |gate| gate["local_coordinates"] }
+    MapTileTemplate.where(zone: outpost_surroundings.name).find_each do |authored_tile|
+      next unless authored_tile.metadata.to_h["city_gate"].present?
+      next if current_gate_cells.include?([authored_tile.x, authored_tile.y])
+
+      authored_tile.destroy!
+    end
   end
 end
 
@@ -631,6 +659,52 @@ if defined?(TileBuilding) && defined?(Zone)
         }
       }
     end
+
+    tile_buildings << {
+      zone: outpost_surroundings.name,
+      x: 4,
+      y: 6,
+      building_key: "frontier_village_entrance",
+      building_type: "location",
+      name: "Frontier Village",
+      destination_zone: nil,
+      destination_x: nil,
+      destination_y: nil,
+      icon: nil,
+      required_level: 1,
+      metadata: {
+        "description" => "Enter the village from this world cell.",
+        "source_map" => "m_998_998",
+        "source_coordinates" => [998, 998],
+        "landmark_kind" => "village",
+        "location" => {
+          "short_label" => "Village",
+          "kind" => "village",
+          "scene" => {"width" => 760, "height" => 255},
+          "features" => [
+            {
+              "key" => "trading_post",
+              "label" => "Trading Post",
+              "action_type" => "open_feature",
+              "feature" => "shop",
+              "polygon" => [
+                [237, 194], [205, 196], [141, 177], [86, 154], [85, 146],
+                [108, 123], [189, 114], [219, 156], [221, 173], [238, 180]
+              ]
+            },
+            {
+              "key" => "exit",
+              "label" => "Leave the village",
+              "action_type" => "return_world",
+              "polygon" => [
+                [527, 235], [554, 238], [551, 245], [566, 243], [577, 239],
+                [569, 227], [561, 218], [557, 224], [544, 213], [536, 210]
+              ]
+            }
+          ]
+        }
+      }
+    }
   end
 
   tile_buildings.each do |attrs|
@@ -652,6 +726,12 @@ if defined?(TileBuilding) && defined?(Zone)
     building.save!
     puts "  Created/Found TileBuilding: #{attrs[:name]}"
   end
+
+
+  current_city_gate_keys = tile_buildings.pluck(:building_key)
+  TileBuilding.where(building_key: %w[outpost_gate outpost_south_gate outpost_east_gate])
+    .where.not(building_key: current_city_gate_keys)
+    .destroy_all
 end
 
 puts "Tile buildings seeding complete!"

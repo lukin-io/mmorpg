@@ -6,12 +6,12 @@ RSpec.describe "City navigation", type: :system, js: true do
   let(:user) { create(:user) }
   let(:character) { create(:character, user:, level: 10) }
   let(:central) { create(:zone, :city_node, name: "System Central Square") }
-  let(:trading) do
+  let(:business) do
     create(
       :zone,
       :city,
-      name: "System Trading Quarter",
-      metadata: {"city_key" => "forpost", "city_node_key" => "city2_2", "title" => "Trading Quarter"}
+      name: "System Business Quarter",
+      metadata: {"city_key" => "forpost", "city_node_key" => "forpost3", "title" => "Business Quarter"}
     )
   end
   let(:outdoors) { create(:zone, :mvp_outdoor_region, name: "System Forpost Region") }
@@ -22,19 +22,19 @@ RSpec.describe "City navigation", type: :system, js: true do
       :city_hotspot,
       :district,
       zone: central,
-      destination_zone: trading,
-      key: "go_city2_2",
-      name: "Trading Quarter"
+      destination_zone: business,
+      key: "go_forpost3",
+      name: "Business Quarter"
     )
     create(
       :city_hotspot,
       :district,
-      zone: trading,
+      zone: business,
       destination_zone: central,
-      key: "go_city2_1",
+      key: "go_main",
       name: "Central Square"
     )
-    create(:city_hotspot, :shop, zone: trading, name: "General Shop")
+    create(:city_hotspot, :shop, zone: central, name: "Shop")
     create(
       :city_hotspot,
       :city_gate,
@@ -47,23 +47,23 @@ RSpec.describe "City navigation", type: :system, js: true do
     login_as(user, scope: :user)
   end
 
-  it "walks city node to Shop and returns through the exact gate" do
+  it "walks the observed district graph, enters the Central Shop, and returns through the exact gate" do
     visit world_path
     expect(page).to have_css(".city-name", text: "Central Square")
     expect(page).to have_css(".nl-city-scene-image")
     expect(page).to have_css(".nl-city-route-marker")
 
-    within(".city-actions") { click_button "Trading Quarter" }
-    expect(page).to have_css(".city-name", text: "Trading Quarter")
-    expect(position.reload.zone).to eq(trading)
+    within(".city-actions") { click_button "Business Quarter" }
+    expect(page).to have_css(".city-name", text: "Business Quarter")
+    expect(position.reload.zone).to eq(business)
 
-    within(".city-actions") { click_button "General Shop" }
+    within(".city-actions") { click_button "Central Square" }
+    expect(page).to have_css(".city-name", text: "Central Square")
+
+    within(".city-actions") { click_button "Shop" }
     expect(page).to have_css(".nl-shop-page")
 
     click_link "City"
-    expect(page).to have_css(".city-name", text: "Trading Quarter")
-
-    within(".city-actions") { click_button "Central Square" }
     expect(page).to have_css(".city-name", text: "Central Square")
 
     within(".city-actions") { click_button "West Gate" }
@@ -75,8 +75,8 @@ RSpec.describe "City navigation", type: :system, js: true do
   it "shows the image-map tooltip for a server-offered route" do
     visit world_path
 
-    find("button[aria-label='Trading Quarter']").hover
+    find("button[aria-label='Business Quarter']").hover
 
-    expect(page).to have_css(".nl-city-tooltip", text: "Trading Quarter", visible: :visible)
+    expect(page).to have_css(".nl-city-tooltip", text: "Business Quarter", visible: :visible)
   end
 end

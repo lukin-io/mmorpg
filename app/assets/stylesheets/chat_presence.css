@@ -255,3 +255,30 @@
 .nl-bottom-bar .chat-msg-header,
 .nl-bottom-bar .chat-msg-body,
 .nl-bottom-bar .chat-msg-content { display: inline; }
+
+/* Persistent Neverlands chmain frame. */
+.nl-chat-history .chat-channel-page { display: block; min-height: 100%; background: #f5f5f5; font-size: 12px; }
+.nl-chat-history .chat-header,
+.nl-chat-history .chat-input-area,
+.nl-chat-history .new-message-indicator,
+.nl-chat-history .user-menu { display: none; }
+.nl-chat-history .chat-container { display: block; min-height: 100%; border: 0; background: #f5f5f5; }
+.nl-chat-history .chat-messages-container { max-height: none; padding: 2px 5px; overflow: visible; background: #f5f5f5; }
+.nl-chat-history .chat-msg {
+  display: flex;
+  min-height: 18px;
+  align-items: baseline;
+  gap: 4px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font: 12px/18px Verdana, Tahoma, Arial, sans-serif;
+}
+.nl-chat-history .chat-msg-avatar { display: none; }
+.nl-chat-history .chat-msg-body,
+.nl-chat-history .chat-msg-header,
+.nl-chat-history .chat-msg-content { display: contents; }
+.nl-chat-history .chat-msg-time { order: -1; color: #555555; font: 10px/18px Verdana, Tahoma, Arial, sans-serif; }
+.nl-chat-history .chat-msg-sender { color: #222222; font-weight: 700; }
+.nl-chat-history .chat-msg-content { color: #222222; }
+.nl-chat-history .chat-msg--system .chat-msg-content { font-weight: 700; }

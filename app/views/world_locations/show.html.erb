@@ -1,0 +1,51 @@
+<% content_for :title, @building.name %>
+
+<%
+  scene_width, scene_height = @building.location_scene_size
+  location_kind = @building.location_kind
+%>
+
+<div class="nl-world-location-page">
+  <div class="nl-world-location-viewport"
+       data-controller="nl-location-scene"
+       data-nl-location-scene-target="viewport"
+       style="--nl-location-width: <%= scene_width %>px; --nl-location-height: <%= scene_height %>px;">
+    <section class="nl-world-location-scene nl-world-location-scene--<%= location_kind %>"
+             aria-label="<%= @building.name %>"
+             style="--nl-location-width: <%= scene_width %>px; --nl-location-height: <%= scene_height %>px;">
+      <div class="nl-village-sky" aria-hidden="true"></div>
+      <div class="nl-village-ground" aria-hidden="true"></div>
+      <div class="nl-village-palisade" aria-hidden="true"></div>
+      <div class="nl-village-chapel" aria-hidden="true"><span>+</span></div>
+      <div class="nl-village-house nl-village-house--one" aria-hidden="true"></div>
+      <div class="nl-village-house nl-village-house--two" aria-hidden="true"></div>
+      <div class="nl-village-house nl-village-house--three" aria-hidden="true"></div>
+      <div class="nl-village-windmill" aria-hidden="true"><span></span></div>
+      <div class="nl-village-well" aria-hidden="true"></div>
+
+      <nav class="nl-world-location-hotspots" aria-label="Location actions">
+        <% @location_features.each do |feature| %>
+          <% feature_key = feature.fetch("key") %>
+          <% style = "--nl-location-hotspot: polygon(#{world_location_polygon(feature)});" %>
+          <%= form_with url: world_location_feature_path(@building.location_key),
+                        method: :post,
+                        class: "nl-world-location-hotspot-form",
+                        local: true do |form| %>
+            <%= form.hidden_field :feature_key, value: feature_key %>
+            <%= form.hidden_field :action_key, value: @feature_offers_by_key.fetch(feature_key).action_key %>
+            <button type="submit"
+                    class="nl-world-location-hotspot nl-world-location-hotspot--<%= feature_key %>"
+                    style="<%= style %>"
+                    title="<%= feature.fetch('label') %>"
+                    aria-label="<%= feature.fetch('label') %>">
+              <% if feature.fetch("action_type") == "return_world" %>
+                <span class="nl-location-exit-mark" aria-hidden="true">&gt;</span>
+              <% end %>
+              <span class="nl-visually-hidden"><%= feature.fetch("label") %></span>
+            </button>
+          <% end %>
+        <% end %>
+      </nav>
+    </section>
+  </div>
+</div>

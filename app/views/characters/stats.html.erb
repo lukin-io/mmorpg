@@ -1,34 +1,20 @@
 <% content_for :title, "Stats - #{@character.name}" %>
 
-<div class="nl-allocation-page nl-player-subpage">
-    <%= render "shared/player_context_buttons",
-      character: @character,
-      viewer_character: current_character,
-      current_section: :stats %>
+<section class="nl-allocation-page nl-source-character-page">
+  <div class="nl-source-character-grid">
+    <aside class="nl-source-character-left">
+      <%= render "shared/neverlands_character_sheet",
+        character: @character,
+        equipment: @equipment,
+        interactive: false,
+        show_money: true %>
+    </aside>
 
-    <div class="nl-allocation-layout">
-      <aside class="nl-allocation-character">
-        <h1><%= @character.name %> [<%= @character.level %>]</h1>
-        <%= render "shared/player_equipment_summary", character: @character, equipment: @equipment, show_money: true %>
-      </aside>
-
-      <main class="nl-allocation-main">
-        <%= render "shared/player_subnavigation", character: @character, current_section: :stats %>
-
-        <div class="nl-allocation-header">
-          <h1 class="nl-allocation-title">Stats</h1>
-          <p class="nl-allocation-subtitle"><%= @character.name %> [<%= @character.level %>] stat allocation</p>
-        </div>
-
-        <turbo-frame id="stat-allocation">
-          <%= render "characters/stat_allocation" %>
-        </turbo-frame>
-
-        <div class="nl-allocation-footer">
-          <%= link_to "Character", player_path(name: @character.name), class: "nl-btn nl-btn--secondary" %>
-          <%= link_to "Skills", skills_character_path(@character), class: "nl-btn nl-btn--secondary" %>
-          <%= link_to "Perks", perks_character_path(@character), class: "nl-btn nl-btn--secondary" %>
-        </div>
-      </main>
-    </div>
-</div>
+    <main class="nl-source-character-right">
+      <%= render "shared/neverlands_profile_navigation", character: @character, current_section: :stats %>
+      <turbo-frame id="stat-allocation" class="nl-source-allocation nl-source-allocation--page">
+        <%= render "characters/stat_allocation" %>
+      </turbo-frame>
+    </main>
+  </div>
+</section>

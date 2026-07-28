@@ -82,7 +82,7 @@ module Game
 
       def parse_rates(rate)
         unless rate.is_a?(String) && rate.match?(RATE_PATTERN)
-          raise ArgumentError, "progression_rate must be a captured Neverlands rate string"
+          raise ArgumentError, "progression_rate must be a supported rate string"
         end
 
         rate.split(":").map(&:to_i)

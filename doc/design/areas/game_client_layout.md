@@ -63,6 +63,38 @@ a Neverlands-style CSS token surface. Introduce Tailwind only if a specific
 screen rewrite proves it reduces real maintenance cost without replacing the
 compact operational feel with a generic modern dashboard.
 
+## UI Style Maintainability And Domain SRP
+
+UI maintainability follows single responsibility by gameplay domain:
+
+- Shared tokens and primitives own only genuinely cross-domain values and
+  controls: typography, colors, borders, compact buttons, form baselines, and
+  accessibility helpers.
+- The persistent shell, chat/presence, World/City, Profile/Inventory,
+  Shop, Arena/Fight, and public logs each own their layout, component selectors,
+  responsive rules, and local interaction presentation.
+- A feature must not borrow another domain's selector merely because it looks
+  similar. For example, Shop tabs must not depend on Arena tab classes. If two
+  domains need the same semantic primitive, promote the smallest stable rule to
+  the shared primitive layer and keep each domain's composition local.
+- Desktop and responsive rules stay beside the component/domain they modify.
+  Do not create an unrelated global mobile override layer.
+- Stimulus follows the same ownership boundary: each controller owns local
+  presentation behavior only, while server-rendered state remains authoritative.
+- Stylesheets remain a flat, discoverable domain set. Do not add an `nl/`
+  subfolder or one monolithic stylesheet that makes ownership ambiguous.
+- Source image controls are rebuilt with maintainable CSS plus suitable
+  ASCII/plain text. Project-owned images are reserved for genuine game artwork.
+- World owns `world.css`, the fixed-cell map, movement affordances, outdoor
+  entrance landmarks, and linked-location interior geometry. Shop owns its
+  catalog and commerce layout after a location hotspot hands off to it; neither
+  domain reaches into the other's selectors.
+
+Domain SRP does not require one stylesheet per partial. It requires one clear
+owner for every selector and prevents cross-feature coupling. A change to one
+gameplay area should normally be testable and reviewable without modifying an
+unrelated area's stylesheet.
+
 ## UI/AX Rules
 
 - Image hotspots must also be focusable controls with labels, visible focus

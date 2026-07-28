@@ -38,6 +38,8 @@ Supporting documents:
 - `doc/features/game_shell.md` owns the persistent shell in which profile and allocation pages are shown.
 - `doc/features/world.md` consumes effective Wanderer when authoring a timed adjacent movement offer.
 - `doc/features/shop_economy.md` consumes progression-backed requirement values for Shop item presentation without granting purchase or equip authority.
+- `doc/features/player_inventory.md` displays effective values and enforces equip/use requirements.
+- `doc/features/arena_combat.md` consumes combat values and calls the bounded idempotent solo-NPC XP award on eligible finalization.
 
 ### 1.1 Cross-feature relationships
 
@@ -46,6 +48,8 @@ Supporting documents:
 | `doc/features/game_shell.md` | The shell links to the player profile and renders profile/allocation surfaces in its main content context. | Character Progression owns saved allocations and profile values; Game Shell owns only shared navigation, framing, and header presentation. |
 | `doc/features/world.md` | World consumes the effective Wanderer value for its bounded adjacent-travel duration. | Character Progression owns saved skill allocation and effective skill access; World owns the `30..25` second formula, command snapshot, authorization, timer, and movement completion. |
 | `doc/features/shop_economy.md` | Shop rows display item requirements against progression-backed character values. | Character Progression owns stat/skill values; Shop owns catalog presentation and trade eligibility, while Inventory owns later equip enforcement. |
+| `doc/features/player_inventory.md` | The shared character sheet and item rows consume effective stats/skills. | Character Progression owns saved/effective values; Player Inventory owns equipment state, capacity display, and requirement enforcement. |
+| `doc/features/arena_combat.md` | Fight profiles consume effective character values and eligible completed solo NPC fights may award capped XP. | Character Progression owns values, thresholds, and grants; Arena Combat owns match resolution and the idempotent award handoff. |
 
 ## 2. Feature summary
 
@@ -108,6 +112,12 @@ Each allocation page uses the compact Neverlands player-subpage language:
 - profile, Stats, Skills, and Perks navigation.
 
 Numeric skills render as `[NNN/100]` and show the gain for the next spend. Perks render as `Yes` or `No`. Existing owned perks remain `Yes` and do not expose a normal removal control.
+
+The desktop owner profile retains the 463/5/467 composition and shared
+258/5/200 sheet. At `<=800px` its columns stack; at `<=520px` the CSS paper
+doll is centered above full-width parameters and the dense internal navigation
+scrolls within its own strip. Public profile semantics remain intact at the
+same breakpoints.
 
 ### 4.3 Player actions and feedback
 
@@ -300,11 +310,21 @@ They must not:
 - apply gameplay effects or prerequisites;
 - authorize another character or bypass the final server check.
 
-`app/assets/stylesheets/player_inventory.css` owns the live-measured 470px paper-doll column, dense profile/allocation tables, internal subnavigation, point counters, row states, and controls. `app/assets/stylesheets/application.css` is reset-only; shared controls and shell styling are owned by the ordered `tokens.css`, `primitives.css`, and `shell.css` modules.
+`app/assets/stylesheets/player_inventory.css` owns the fresh live-measured
+463/5/467 profile composition and the shared 258/5/200 character sheet inside
+its left column, including the 115 × 255 CSS character silhouette, dense stat tables,
+service/tab bands, allocation rows, point counters, and controls. The reusable
+markup lives in `app/views/shared/_neverlands_character_sheet.html.erb`, which
+Profile and Inventory consume without sharing their domain actions. Shared
+controls and shell styling remain owned by the ordered `tokens.css`,
+`primitives.css`, and `shell.css` modules; no Tailwind layer is introduced.
+The same feature stylesheet owns the explicit 940/800/520px adaptations so the
+desktop measurements and responsive behavior cannot drift into separate CSS
+systems.
 
 Accessibility behavior:
 
-- plus, minus, Reset, Save, and navigation are native buttons/links;
+- plus, minus, Reset, Save, and navigation use semantic buttons/links;
 - disabled Save and maximum-skill controls use actual `disabled` state;
 - text counters and `Yes`/`No` labels expose status without relying only on color;
 - Turbo replaces the named allocation frame and updates a visible flash message.
@@ -373,6 +393,8 @@ Arbitrary saved browser fields, translated labels, or profile URLs do not grant 
 - Browser preview/reset behavior never mutates saved state before PATCH succeeds.
 - Saved progression survives logout/login; pending browser preview does not.
 - Effective Wanderer is available to World, which owns and tests the bounded `30..25` second movement effect.
+- Owner and public profile surfaces preserve their desktop source geometry and
+  reflow without whole-page overflow at 820px and 390px.
 - Uncaptured perks, professions, prerequisites, respec, and effects remain unavailable.
 
 ## 15. Test strategy and required coverage
@@ -412,7 +434,7 @@ bundle exec rspec \
   spec/system/perk_allocation_spec.rb
 ```
 
-There is no dedicated view spec for each allocation partial; request and system specs cover rendered behavior. Service coverage includes stale competing request regression for Stats and Skills. Shared fight-finalization coverage protects the sole current XP caller and its idempotent reward marker.
+There is no dedicated view spec for each allocation partial; request and system specs cover rendered behavior. Service coverage includes stale competing request regression for Stats and Skills. Shared fight-finalization coverage protects the sole current XP caller and its idempotent reward marker. `spec/system/responsive_neverlands_ui_spec.rb` protects the owner profile's single-column mobile composition and page-overflow boundary.
 
 ## 16. Responsible for Implementation Files
 
@@ -458,6 +480,8 @@ There is no dedicated view spec for each allocation partial; request and system 
 - `app/views/shared/_player_equipment_summary.html.erb`
 - `app/views/shared/_equipment_paperdoll.html.erb`
 - `app/views/shared/_equipment_paperdoll_slot.html.erb`
+- `app/views/shared/_neverlands_character_sheet.html.erb`
+- `app/views/shared/_neverlands_profile_navigation.html.erb`
 - `app/views/characters/stats.html.erb`
 - `app/views/characters/_stat_allocation.html.erb`
 - `app/views/characters/skills.html.erb`
@@ -511,6 +535,7 @@ Character Progression owns saved stats, numeric skills, perks, and their allocat
 - `spec/requests/players_spec.rb`
 - `spec/system/skill_allocation_spec.rb`
 - `spec/system/perk_allocation_spec.rb`
+- `spec/system/responsive_neverlands_ui_spec.rb`
 
 ## 17. Safe extension checklist
 
@@ -534,3 +559,6 @@ Before extending Character Progression:
 | 2026-07-21 | Documented World as the sole current numeric-skill effect consumer through the bounded effective-Wanderer travel formula and added reciprocal ownership/coverage references. |
 | 2026-07-27 | Promoted the bounded feature to Fully Implemented: added level-0 defaults, complete source rows `0..27`, catalog XP/grants/NV, locked stat/skill mutations, exact HP/MP/mass and More Strength formulas, solo capped NPC XP integration, and boundary coverage. |
 | 2026-07-28 | Aligned owner profile and all allocation pages to the live Neverlands two-column paper-doll/table composition, separated shell context actions from internal profile navigation, and retained the minimal public profile layout. |
+| 2026-07-28 | Re-measured the authenticated owner profile in Chrome and fixed the implementation contract at 463/5/467 columns with a shared 258/5/200 character sheet and 115 × 255 character region. |
+| 2026-07-28 | Added the local-only responsive profile contract: stack below 800px, center the CSS paper doll below 520px, and keep dense navigation internally scrollable. |
+| 2026-07-28 | Removed source-owned portrait and source-specific project/service copy while preserving profile hierarchy and geometry with CSS and local gameplay copy. |

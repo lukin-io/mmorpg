@@ -116,6 +116,33 @@ export default class extends Controller {
     input?.focus()
   }
 
+  sendChat() {
+    const input = document.querySelector(".nl-chat-input-field")
+    input?.form?.requestSubmit()
+  }
+
+  clearChatInput() {
+    const input = document.querySelector(".nl-chat-input-field")
+    if (!input) return
+
+    input.value = ""
+    input.focus()
+  }
+
+  refreshChat() {
+    const frame = this.chatMessagesTarget.querySelector("turbo-frame")
+    if (!frame?.src) return
+
+    const source = frame.src
+    frame.removeAttribute("src")
+    frame.src = source
+  }
+
+  clearChat() {
+    const frame = this.chatMessagesTarget.querySelector("turbo-frame")
+    frame?.replaceChildren()
+  }
+
   // =====================
   // PERSISTENCE
   // =====================

@@ -320,10 +320,22 @@ module ArenaHelper
   # @param participation [ArenaParticipation] the participation record
   # @param size [Symbol] :small, :medium, or :large
   # @return [ActiveSupport::SafeBuffer] HTML span element with avatar
-  def participation_avatar_tag(participation, size: :medium)
-    return npc_avatar_tag(participation.npc_template, size:) if participation.npc?
+  def participation_avatar_tag(participation, size: :medium, **options)
+    return npc_avatar_tag(participation.npc_template, size:, **options) if participation.npc?
 
-    character_avatar_tag(participation.character, size:)
+    character_avatar_tag(participation.character, size:, **options)
+  end
+
+  # Equipment shown around a combatant uses the same authoritative equipped
+  # inventory records as Profile and Inventory. NPCs deliberately return an
+  # empty slot set because their visible equipment is part of captured art.
+  def arena_fighter_equipment(participation)
+    inventory = participation.character&.inventory
+    return {} unless inventory
+
+    inventory.inventory_items.select(&:equipped?).index_by do |item|
+      item.equipment_slot.to_s.presence || item.item_template&.slot.to_s
+    end
   end
 
   # ===========================================================================

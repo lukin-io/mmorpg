@@ -17,7 +17,7 @@ RSpec.describe "Perk Allocation", type: :system, js: true do
       expect(page).to have_content("No")
       click_button "+"
       expect(page).to have_css(".nl-perk-state--pending", text: "Yes")
-      click_button "−"
+      click_button "-"
       expect(page).to have_content("No")
       click_button "+"
     end

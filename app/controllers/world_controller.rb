@@ -17,7 +17,10 @@ class WorldController < ApplicationController
 
   layout "game"
 
-  MAP_RENDER_RADIUS = 3
+  # The live world keeps one native 100px buffer cell outside a 13x7 desktop
+  # viewport. Narrow clients retain this 15x9 surface and pan it responsively.
+  MAP_RENDER_X_RADIUS = 7
+  MAP_RENDER_Y_RADIUS = 4
   PLAYER_SORT_ORDERS = {
     "az" => {name: :asc},
     "za" => {name: :desc},
@@ -186,13 +189,20 @@ class WorldController < ApplicationController
     respond_to do |format|
       if result.success
         action_offer.complete!
-        # Always redirect after entering a building - the target zone may be a city
-        # which requires the full city_view template instead of partial updates
-        format.html { redirect_to world_path, notice: result.message }
+        destination_path = if result.location_key.present?
+          world_location_path(result.location_key)
+        else
+          world_path
+        end
+
+        # Always redirect after entering a building. A city changes the
+        # persisted zone; an open-world location keeps the persisted cell and
+        # opens its allowlisted interior surface.
+        format.html { redirect_to destination_path, notice: result.message }
         format.turbo_stream do
           # Redirect via Turbo - triggers full page navigation
           flash[:notice] = result.message
-          redirect_to world_path, status: :see_other
+          redirect_to destination_path, status: :see_other
         end
       else
         action_offer.fail!(result.message)
@@ -322,7 +332,7 @@ class WorldController < ApplicationController
     return if current_character.position.present?
 
     # The captured Forpost Central Square is the only MVP spawn node.
-    starter_node = Game::World::CityCatalog.node("city2_1")
+    starter_node = Game::World::CityCatalog.node(Game::World::CityCatalog::STARTER_NODE_KEY)
     starter_zone = Zone.find_by(name: starter_node.fetch("zone_name"), location_type: "city")
     unless starter_zone
       return render "world/no_zones", status: :service_unavailable
@@ -363,8 +373,8 @@ class WorldController < ApplicationController
 
   def nearby_tiles_with_features
     zone = @position.zone
-    x_range = ((@position.x - MAP_RENDER_RADIUS)..(@position.x + MAP_RENDER_RADIUS))
-    y_range = ((@position.y - MAP_RENDER_RADIUS)..(@position.y + MAP_RENDER_RADIUS))
+    x_range = ((@position.x - MAP_RENDER_X_RADIUS)..(@position.x + MAP_RENDER_X_RADIUS))
+    y_range = ((@position.y - MAP_RENDER_Y_RADIUS)..(@position.y + MAP_RENDER_Y_RADIUS))
     templates = MapTileTemplate.in_zone(zone.name).in_area(x_range, y_range).index_by { |tile| [tile.x, tile.y] }
     buildings = TileBuilding.active.in_zone(zone.name)
       .where(x: x_range, y: y_range)
@@ -409,6 +419,7 @@ class WorldController < ApplicationController
   def add_visible_tile_features(metadata, building:)
     if building
       metadata["building"] = building.name
+      metadata["building_kind"] = building.metadata.to_h["landmark_kind"].presence || building.building_type
     end
 
     metadata

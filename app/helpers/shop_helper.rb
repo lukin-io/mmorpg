@@ -17,6 +17,18 @@ module ShopHelper
     shop_category_options.to_h.fetch(category, category.to_s)
   end
 
+  def shop_category_glyph(category)
+    {
+      "all" => "ALL",
+      "weapons" => "WP",
+      "armor" => "AR",
+      "jewelry" => "JR",
+      "consumables" => "EL",
+      "materials" => "RS",
+      "misc" => "OT"
+    }.fetch(category.to_s, "--")
+  end
+
   def shop_item_properties(template)
     lines = []
     lines << ["Type", template.item_type.to_s.titleize]
@@ -59,9 +71,9 @@ module ShopHelper
 
   def shop_buy_block_reason(template)
     return "no price" unless template.base_price.to_i.positive?
-    return "Нет в наличии" if template.out_of_stock?
-    return "Недостаточно средств или превышена допустимая масса" if @wallet.nv_balance.to_d < template.base_price.to_d
-    return "Недостаточно средств или превышена допустимая масса" unless inventory_can_carry?(template.weight)
+    return "Out of stock" if template.out_of_stock?
+    return "Insufficient funds or carrying capacity" if @wallet.nv_balance.to_d < template.base_price.to_d
+    return "Insufficient funds or carrying capacity" unless inventory_can_carry?(template.weight)
     return "no room" unless inventory_has_slot_for?(template)
 
     nil

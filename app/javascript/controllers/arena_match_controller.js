@@ -379,7 +379,7 @@ export default class extends Controller {
     this.enforceHeadLegAttackRule(event?.currentTarget)
     const cost = this.selectedAttackCost() + this.selectedAttackPenalty() + this.selectedBlockCost() + this.selectedMagicCost()
     const apLimit = this.apLimitValue || 80
-    this.turnCostValueTarget.textContent = `${cost}/${apLimit}`
+    this.turnCostValueTarget.textContent = cost
     this.turnCostValueTarget.classList.toggle("arena-turn-cost--invalid", cost > apLimit)
 
     const submitButton = this.element.querySelector(".btn-attack--submit")
