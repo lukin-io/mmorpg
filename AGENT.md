@@ -90,13 +90,14 @@ Fix in-scope `[IMPL]` gaps before completion. Correct in-scope `[DOC]` gaps only
 - Game design: Neverlands-backed, English client for the current MVP.
 - Feature contracts: `doc/features/**`.
 - Canonical feature template: `doc/features/FEATURE_TEMPLATE.md`.
+- Canonical session changelog template: `changelogs/CHANGELOG_TEMPLATE.md`.
 - Feature document audit: `bin/feature-doc-audit`.
 - Verification wrapper: `bin/verify`.
 - Ruby/Rails/Hotwire implementation guide: `doc/RUBY_ON_RAILS_GUIDE.md`.
 - Session history: one dated living Markdown record under `changelogs/` per
   substantive Codex session. Reuse the current session's record across all of
-  its prompts; use the newest completed session record only as the layout
-  reference when a genuinely new session starts.
+  its prompts; copy `changelogs/CHANGELOG_TEMPLATE.md` when a genuinely new
+  session starts.
 
 Blueprint, Swagger/rswag, and public JSON API requirements apply only when the repository actually introduces those surfaces. They are not defaults for HTML/Turbo features.
 
@@ -108,9 +109,10 @@ For an ordinary implementation task, follow this sequence:
 2. **Resolve authority** — identify the Neverlands evidence and MVP boundary; report `[EVIDENCE]` before inventing behavior.
 3. **Scan implementation** — locate existing ownership and preserve unrelated user changes.
 4. **Open the session changelog** — with the first material repository edit,
-   create the session's one dated record, or update the existing record when
-   this is a follow-up prompt in the same session. Record work as in progress;
-   do not claim unverified behavior as complete.
+   copy `changelogs/CHANGELOG_TEMPLATE.md` to the session's one dated record,
+   or update the existing record when this is a follow-up prompt in the same
+   session. Record work as in progress; do not claim unverified behavior as
+   complete.
 5. **Implement** — use minimal Rails-way changes, the technical boundaries in `doc/RUBY_ON_RAILS_GUIDE.md`, and explicit cross-feature boundaries.
 6. **Add/update tests** — cover all applicable layers and required categories.
 7. **Run focused verification** — run changed specs and targeted lint while iterating.
@@ -602,13 +604,17 @@ record; update it only when there is new material progress worth recording.
 ### 16.2 Location, name, and template
 
 - Store records under `changelogs/` at the repository root.
+- `changelogs/CHANGELOG_TEMPLATE.md` is the canonical layout. It is a template,
+  not a session record, and does not count toward the one-record-per-session
+  limit.
 - Use `YYYY-MM-DD-short-kebab-case-description.md` for a genuinely new session.
 - Before creating a file, check whether the current session already has a
   record. If it does, update that file regardless of how many prompts, fixes,
   approvals, or work areas have followed.
-- Use the newest completed record from an earlier session as the layout
-  reference only when starting a new session; preserve useful core sections
-  but remove anything not applicable.
+- If no current record exists, copy `changelogs/CHANGELOG_TEMPLATE.md`, replace
+  all placeholders, remove its template instructions, and retain every
+  applicable core section. A completed historical changelog is evidence of its
+  own session, not the generation template.
 - Choose a broad initial description suitable for the session. Do not create a
   second file merely because later prompts expand the scope, and do not rename
   the active file solely to mirror every scope change; reflect expansion in its
@@ -696,6 +702,8 @@ Do not claim a check passed when it did not run.
   `changelogs/` record.
 - Never create multiple changelog files for prompts, subtasks, reviews, guide
   updates, CI fixes, or corrections within one continuous session.
+- Never generate a new session changelog from an older completed record when
+  `changelogs/CHANGELOG_TEMPLATE.md` is available.
 - Never invent an alternate feature-document structure.
 - Never edit `FEATURE_TEMPLATE.md` during normal feature work.
 - Never create duplicate primary feature handbooks.

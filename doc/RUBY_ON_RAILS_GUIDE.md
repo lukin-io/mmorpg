@@ -60,8 +60,9 @@ For a new feature, bug fix, behavior change, or refactor:
    handbook as routed by `AGENT.md`.
 2. Identify the existing player/runtime contract and responsible files.
 3. Choose the smallest Rails-native boundary that owns the behavior.
-4. With the first material repository edit, create the session's one living
-   changelog record, or update it if the current conversation already owns one.
+4. With the first material repository edit, copy
+   `changelogs/CHANGELOG_TEMPLATE.md` into the session's one living changelog
+   record, or update the record if the current conversation already owns one.
 5. Implement server-authoritative behavior with applicable persistence,
    concurrency, security, and Hotwire rules.
 6. Add or update tests at the smallest useful public boundaries.
@@ -1044,8 +1045,9 @@ Testing rules:
 Implementation documentation follows `AGENT.md`:
 
 1. establish Neverlands/design authority;
-2. open or update the current session's one living `changelogs/**` record with
-   the first material repository edit;
+2. copy `changelogs/CHANGELOG_TEMPLATE.md` into the current session's one
+   living record with the first material repository edit, or update the
+   session's existing record;
 3. implement behavior and tests while keeping that record current;
 4. run focused verification;
 5. review the stabilized diff against the applicable sections of this guide;
@@ -1191,8 +1193,9 @@ During implementation:
 - [ ] Keep reads bounded and preloading explicit.
 - [ ] Keep jobs retry-safe and broadcasts commit-safe.
 - [ ] Add focused tests as behavior is implemented.
-- [ ] Create or update the current session's one living changelog with the
-      first material edit, then keep it current across follow-up prompts.
+- [ ] With the first material edit, copy
+      `changelogs/CHANGELOG_TEMPLATE.md` or update the current session's
+      existing living record, then keep it current across follow-up prompts.
 
 Before completion:
 

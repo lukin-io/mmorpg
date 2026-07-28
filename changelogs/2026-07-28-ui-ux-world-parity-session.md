@@ -302,6 +302,18 @@ final artifact, and the Rails guide described finalization without explicitly
 opening/updating the record at the first material edit. Both documents now
 state the complete create/update/finalize lifecycle.
 
+A later improvement added `changelogs/CHANGELOG_TEMPLATE.md`, derived from the
+useful structure of this consolidated record but reduced to proportional,
+reusable sections. New sessions now copy that canonical template rather than
+using an older completed session as an implicit layout. The template itself is
+not a session record and does not affect the one-record-per-session rule.
+
+The proportional review of that template/process diff caught one stale
+repository-context sentence that still named the newest completed record as a
+layout reference. It was corrected to point to the canonical template, and the
+Rails-guide implementation checklist was aligned with the same copy-or-update
+rule.
+
 ### Application-specific Hotwire and Stimulus guide
 
 `doc/RUBY_ON_RAILS_GUIDE.md` was extended with practices derived from the
@@ -368,7 +380,10 @@ dependency, or persisted-data change was introduced.
 
 - `AGENT.md` — proportional pre-final Rails-guide review, one living changelog
   per continuous Codex session, first-edit creation, follow-up prompt reuse,
-  truthful progress updates, finalization, consolidation, and validation rules.
+  truthful progress updates, canonical template use, finalization,
+  consolidation, and validation rules.
+- `changelogs/CHANGELOG_TEMPLATE.md` — canonical reusable living-session
+  record structure and truthful progress/finalization instructions.
 - `doc/README.md` — explicit reference boundary, ASCII/text replacement rule,
   domain-SRP UI guide entry, and link to the authoritative cell lifecycle.
 - `doc/UI.md` — current English-only UI handoff and implementation status.
@@ -502,6 +517,12 @@ process-only, guide-only, and CI-only records were removed.
   examples, Brakeman 0 warnings, Bundler Audit and Importmap audit clean, and
   the 7-document feature audit passed with the same expected transitional
   warnings for partially implemented Game Shell and Shop Economy handbooks.
+- `bin/verify full` after the canonical changelog-template/process update:
+  passed — RuboCop 375 files/0 offenses, non-system RSpec 1,580 examples/0
+  failures, system RSpec 203 examples/0 failures/4 explicit pending examples,
+  Brakeman 0 warnings, Bundler Audit and Importmap audit clean, and the
+  7-document feature audit passed with the same expected transitional warnings
+  for partially implemented Game Shell and Shop Economy handbooks.
 
 ## Explicit remaining gaps and operational cautions
 
