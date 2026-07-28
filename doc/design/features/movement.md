@@ -238,6 +238,10 @@ object:
 | World action offer | short-lived character/zone/coordinate/action/target authorization |
 
 A cell can contain an NPC, an entrance, and local actions at the same time.
+`doc/features/world.md`, section 7.4, is the operational authoring contract for
+those layers. It maps `db/seeds.rb`, the outdoor-NPC config, persisted records,
+resolution, offers, cleanup, and coverage. Movement must consume that composed
+state; it must not introduce another building/resource/NPC source.
 Movement completion rebuilds all of them. The launch resource action is
 Neverlands `look` / `Оглядеться`: it searches for herbs or local resources and
 can be interrupted by a hostile NPC before the resource action completes.

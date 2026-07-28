@@ -46,6 +46,14 @@ Start here:
 4. `doc/design/areas/game_client_layout.md` — UI/AX and domain-SRP style ownership guide
 5. `doc/design/reference/neverlands.md`
 
+Verified shipped behavior and implementation ownership live under
+`doc/features/`; start with `doc/features/README.md`. For outdoor cells,
+buildings, local actions/resources, and NPC placement, use
+`doc/features/world.md`, especially section 7.4. That section owns the
+seed/config lifecycle and the add/adjust/move/deactivate/remove examples. The
+design documents explain why the pipeline exists; they do not authorize a
+parallel runtime catalog or a second source of cell truth.
+
 ## Neverlands source entry point
 
 - [Neverlands Wiki main page](http://wiki.neverlands.ru/wiki/%D0%97%D0%B0%D0%B3%D0%BB%D0%B0%D0%B2%D0%BD%D0%B0%D1%8F_%D1%81%D1%82%D1%80%D0%B0%D0%BD%D0%B8%D1%86%D0%B0) — primary index for historical Neverlands mechanics, locations, buildings, character development, professions, and other source material. Use plain HTTP because the legacy Wiki is not reliably accessible over HTTPS.

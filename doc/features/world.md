@@ -85,7 +85,7 @@ Every state-changing click is backed by a short-lived, character-owned server of
   falling back to the coordinate-derived project-owned regional sheet slice.
 - Keep outdoor NPC identity and placement absent from the map and top-context row
   until the hidden encounter interrupts an action.
-- Enter the three observed Forpost gates through explicit authored destinations.
+- Enter the one verified Forpost gate through its explicit authored destination.
 - Enter the captured Frontier Village from its exact world cell without
   replacing the persisted outdoor coordinate, then use offered Shop/exit
   hotspots in its fixed `760 × 255` CSS-built scene.
@@ -209,15 +209,16 @@ The MVP topology is one sparse `1,000 × 1,000` outdoor region. Coordinates are 
   arbitrary asset path.
 - **Cell composition** — terrain/art/passability plus independently materialized hidden NPC, entrance, local-action, and exact-cell presence layers.
 
-### 5.2 Forpost entrances
+### 5.2 Forpost entrance
 
 | Entrance | Local coordinate | Captured source coordinate | Destination |
 |---|---:|---:|---|
-| West Gate | `[7, 0]` | `[1019, 1025]` | Forpost Central Square (`city2_1`) at `[0, 0]` |
-| South Gate | `[10, 3]` | `[1022, 1028]` | Forpost Stables (`city2_7`) at `[0, 0]` |
-| East Gate | `[13, 2]` | `[1025, 1027]` | Forpost Guild District (`city2_8`) at `[0, 0]` |
+| Central Square exit | `[7, 0]` | `[1019, 1025]` | Forpost Central Square (`main`) at `[0, 0]` |
 
-Each gate is an explicit active `TileBuilding`. There is no North gate in the captured live topology.
+The gate is the active `outpost_gate` `TileBuilding`. Seeds remove the stale
+South/East gate rows from the superseded city topology. The illustrated Law
+Quarter exit remains a non-mutating city landmark until its outdoor handoff is
+captured; it must not be inferred as another outdoor entrance.
 
 ### 5.3 Captured linked location
 
@@ -442,6 +443,253 @@ Authored `local_actions` are validated structured data. Supported definitions ar
 | `digging` | `dig` | `dig` | No |
 
 Invalid kinds, source-id mismatches, duplicates, and malformed array/object shapes are rejected. Only implemented definitions become `WorldActionOffer` rows. `Look Around` currently returns the authored observation message; it deliberately grants no invented item or currency reward.
+
+### 7.4 Cell-content authoring and lifecycle
+
+This is the operational source-of-truth guide for outdoor content. Design notes
+describe the observed behavior; they do not introduce another catalog. Choose
+the existing owner before editing data:
+
+| Cell concern | Authored declaration | Persisted/materialized state | Runtime owner |
+|---|---|---|---|
+| Terrain, passability, art reference, and local resource/action definitions | `outdoor_tiles` in `db/seeds.rb` | `MapTileTemplate` | movement `TileProvider` plus current-cell `TileStateResolver` |
+| City or linked-location entrance | `Game::World::CityCatalog::GATES` for the verified city pair; `tile_buildings` in `db/seeds.rb` for the persisted entrance attributes | `TileBuilding` | `TileBuildingService` and `TileStateResolver` |
+| Hostile outdoor NPC placement/template input | `config/gameplay/outdoor_npcs.yml` | lazily created `NpcTemplate` and exact-cell `TileNpc` | `OutdoorNpcConfig`, `TileNpcService`, and `TileStateResolver` |
+| Visible current-cell capabilities | never hand-authored or seeded | short-lived `WorldActionOffer` | `ActionOfferBuilder`, `AcceptAction`, then the owning transition service |
+| Hidden hostile interruption | never represented by a visible offer | current live `TileNpc` state | `InterruptAction` and `StartNpcFight` |
+
+`TileStateResolver` is the one composition point for the finalized cell.
+`ActionOfferBuilder` derives capabilities from its result. Do not seed
+`WorldActionOffer`, read seed/config files in controllers or views, or create a
+`LocationCatalog`, resource catalog, or second NPC-placement service.
+
+#### Rules shared by every authored cell change
+
+1. Capture the Neverlands state and record its reference before adding gameplay
+   content. Generic RPG expectations are not evidence.
+2. Use the local `Zone` name and local `[x, y]` as runtime identity. Keep source
+   map/coordinates only as traceability metadata.
+3. Preserve stable keys (`building_key`, local-action `type`, and NPC `key`)
+   while adjusting the same content. A replacement with different identity gets
+   a new key and an explicit retirement of the old key.
+4. Change the declaration source and reconcile already-persisted state. Removing
+   a Ruby hash or YAML entry alone does not necessarily remove its database row.
+5. Keep cleanup exact: stable key or exact zone/coordinate. Never delete every
+   row absent from one partial seed list because separately authored layers may
+   coexist in that zone.
+6. Run the seed twice when `db/seeds.rb` changes and prove the second pass does
+   not duplicate or resurrect retired content.
+
+#### Add or adjust a building/entrance
+
+The verified city pair is authored once in `CityCatalog::GATES`; `db/seeds.rb`
+derives both its outdoor `MapTileTemplate` presentation metadata and its
+`TileBuilding`. Do not add a second literal for that same gate. A linked
+location such as the village is declared in the `tile_buildings` list with a
+stable key. Its current persisted shape is equivalent to:
+
+```ruby
+{
+  zone: outpost_surroundings.name,
+  x: 4,
+  y: 6,
+  building_key: "frontier_village_entrance",
+  building_type: "location",
+  name: "Frontier Village",
+  destination_zone: nil,
+  destination_x: nil,
+  destination_y: nil,
+  icon: nil,
+  required_level: 1,
+  metadata: {
+    "description" => "Enter the village from this world cell.",
+    "source_map" => "m_998_998",
+    "source_coordinates" => [998, 998],
+    "landmark_kind" => "village",
+    "location" => {
+      "short_label" => "Village",
+      "kind" => "village",
+      "scene" => {"width" => 760, "height" => 255},
+      "features" => [
+        {
+          "key" => "trading_post",
+          "label" => "Trading Post",
+          "action_type" => "open_feature",
+          "feature" => "shop",
+          "polygon" => [
+            [237, 194], [205, 196], [141, 177], [86, 154], [85, 146],
+            [108, 123], [189, 114], [219, 156], [221, 173], [238, 180]
+          ]
+        },
+        {
+          "key" => "exit",
+          "label" => "Leave the village",
+          "action_type" => "return_world",
+          "polygon" => [
+            [527, 235], [554, 238], [551, 245], [566, 243], [577, 239],
+            [569, 227], [561, 218], [557, 224], [544, 213], [536, 210]
+          ]
+        }
+      ]
+    }
+  }
+}
+```
+
+The existing `find_or_initialize_by(building_key:)` upsert in `db/seeds.rb`
+means changing `x`/`y` moves the same entrance, and changing scene/features
+updates that same row. `TileBuilding` validates scene dimensions, feature keys,
+allowlisted action types/routes, and polygons before the seed can persist it.
+A building does not require a `MapTileTemplate` unless that cell also needs an
+explicit terrain, passability, art, timing, or local-action override.
+
+For a temporary runtime removal, explicitly set the exact persisted building
+inactive in an idempotent retirement block after the active declarations:
+
+```ruby
+TileBuilding.where(building_key: %w[retired_building_key]).update_all(
+  active: false,
+  updated_at: Time.current
+)
+```
+
+For permanent removal, delete the declaration and explicitly `destroy_all` only
+the retired stable keys after verifying that no retained content or historical
+relationship requires them. Merely deleting an entry from `tile_buildings`
+does not remove an existing row. Replacing one building with a different
+identity on the same cell must retire the old row before the new upsert because
+`[zone, x, y]` is unique. Tests must cover the stale offer and saved-interior
+fallback: moved, inactive, replaced, or removed entrances issue no capability
+at the old cell and never relocate the character during fallback.
+
+#### Add, adjust, deactivate, or remove a resource/local action
+
+Local resource interactions live in the exact cell's
+`MapTileTemplate.metadata["local_actions"]`; they are not separate resource
+records. The shipped `Look Around` declaration demonstrates how the action
+coexists with the same tile's presentation metadata:
+
+```ruby
+outdoor_tiles << {
+  zone: outpost_surroundings.name,
+  x: 7,
+  y: 7,
+  terrain_type: "outdoor",
+  passable: true,
+  metadata: {
+    "source_map" => "m_1001_999",
+    "source_coordinates" => [1001, 999],
+    "cell_art" => {
+      "key" => "forpost_terrain",
+      "column" => 7,
+      "row" => 7
+    },
+    "local_actions" => [
+      {
+        "type" => "resource_search",
+        "source_id" => "look",
+        "label" => "Look Around",
+        "description" => "Search this cell for herbs or local resources."
+      }
+    ]
+  }
+}
+```
+
+Adjust the same hash and rerun seeds to replace that tile's authored metadata.
+Set `"active" => false` to keep an observed action definition while withholding
+its offer. To remove only the action, keep the tile declaration and remove the
+action from its metadata so the seed overwrites the persisted row without it.
+If the tile has no remaining override, add an exact cleanup such as
+`MapTileTemplate.where(zone: zone_name, x: local_x, y: local_y).destroy_all`;
+deleting the whole `outdoor_tiles` entry alone leaves the old row in an existing
+database.
+
+Only `resource_search` has a shipped outcome. Adding a different action requires
+captured evidence plus an existing-owner change to
+`MapTileTemplate::LOCAL_ACTION_DEFINITIONS`, `ActionOfferBuilder`,
+`AcceptAction`, its transition service, UI, and coverage. Adding arbitrary JSON
+to seeds must never make an unimplemented action interactive or invent a reward.
+
+#### Add, move, adjust, or remove an outdoor NPC
+
+NPC placement is declared in `config/gameplay/outdoor_npcs.yml`, not in a new
+Ruby catalog and not as a pre-seeded `TileNpc`. This minimal declaration uses
+the current entry's required coordinate/template fields and source-backed
+encounter metadata:
+
+```yaml
+outpost_surroundings:
+  zone_name: "Outpost Surroundings"
+  source_map: "m_1001_999"
+  npcs:
+    - key: plague_rat
+      name: Plague Rat
+      role: hostile
+      level: 4
+      x: 7
+      y: 7
+      hp: 100
+      damage: 7
+      xp: 35
+      metadata:
+        source_map: "m_1001_999"
+        source_coordinates: [1001, 999]
+        encounter_count: 2
+      loot:
+        - item: rat_tail
+          source_name: "Rat Tail"
+```
+
+`OutdoorNpcConfig` is cached; restart the app after changing the file or call
+`Game::World::OutdoorNpcConfig.reload!` in a development console or isolated
+spec. On first resolution, `TileNpcService` lazily materializes the exact-cell
+`TileNpc` and its `NpcTemplate`. One anchor is supported per cell by the unique
+`[zone, x, y]` index. Repeated copies of the same captured opponent use the
+validated `encounter_count` metadata; a mixed-NPC cell requires new evidence
+and an extension of this existing model/service pipeline.
+
+YAML is a spawn declaration, not automatic reconciliation of a materialized
+row. Apply changes as follows:
+
+| Change | Required persisted-state reconciliation |
+|---|---|
+| Add a new exact-cell entry | No pre-seed is required; config/spec validation first, then `TileNpcService` materializes it on resolution. |
+| Move the same NPC key | Change YAML coordinates and explicitly destroy the old exact-cell `TileNpc`; the new cell materializes on demand. |
+| Change name, level, HP, damage, XP, loot, or respawn data | Change YAML and add a scoped idempotent data migration/seed reconciliation for the existing `NpcTemplate` and materialized anchor. Do not assume cached or already-materialized rows update themselves. |
+| Remove the NPC | Delete the YAML entry and explicitly destroy the exact old `TileNpc`. Keep `NpcTemplate` by default because combat history or another placement may reference it. |
+
+An exact retirement cleanup is intentionally narrow:
+
+```ruby
+TileNpc.where(
+  zone: "Outpost Surroundings",
+  x: 7,
+  y: 7,
+  npc_key: "retired_npc_key"
+).destroy_all
+```
+
+Do not use a broad `TileNpc.where.not(...)` cleanup: a runtime row may carry
+defeat/respawn state and independently authored placements may coexist in the
+zone. Moving/removing an NPC must cover the old and new coordinates, config
+cache reload, materialization, hidden presentation, interruption eligibility,
+and any retained defeated state expected by the captured behavior.
+
+#### Required checks for cell-content changes
+
+Update the declaration and its owning coverage together:
+
+| Change | Minimum focused coverage |
+|---|---|
+| Tile/resource/local action | `map_tile_template_spec`, `open_world_seed_spec`, `tile_state_resolver_spec`, `action_offer_builder_spec`, relevant World request/system spec |
+| Building or linked location | `tile_building_spec`, `open_world_seed_spec`, `tile_building_service_spec`, `action_offer_builder_spec`, `world_locations_spec`, resume/system coverage |
+| Outdoor NPC | `outdoor_npc_config_spec`, `tile_npc_service_spec`, `tile_npc_spec`, resolver/interruption/combat handoff coverage |
+
+For a seed change, run `RAILS_ENV=test bin/rails db:seed:replant`, then run it a
+second time or retain the idempotency assertion in `open_world_seed_spec`.
+Production content retirement must use an explicit deployment-safe data change;
+the test replant command is never a production cleanup procedure.
 
 ## 8. Runtime architecture
 
@@ -699,7 +947,8 @@ A wilderness fight does not move `CharacterPosition`. Its match metadata stores 
 - Source-backed `100 x 100` cell-art overrides render at their configured sheet
   slice and ordinary cells retain the coordinate-derived terrain fallback.
 - Exact-cell hidden NPC state, visible entrance/local action, and player-presence composition resolves correctly without revealing the NPC on the outdoor map.
-- West, South, and East gates enter their explicit Forpost node.
+- The verified Central Square gate round-trips through the explicit `[7, 0]`
+  outdoor cell; stale or uncaptured gate rows do not become available.
 - The captured village cell exposes Enter, preserves its exact coordinate,
   renders the `760 × 255` responsive/pannable CSS scene, and accepts only its
   fresh Trading Post and exit offers.
@@ -882,13 +1131,29 @@ presence, and login-resume behavior.
 
 World owns same-cell hostile validation and match creation. Arena owns the combat lifecycle after `StartNpcFight` hands off the created match.
 
+### Integrated City and Shop entry
+
+- `app/models/city_hotspot.rb`
+- `app/services/game/world/city_catalog.rb`
+
+`CityCatalog::GATES` owns the verified reciprocal city/outdoor gate definition
+used by World seeds. `CityHotspot.feature_route` owns the allowlist used to
+validate and route a linked-location `open_feature`; City or Shop takes
+ownership after the World capability is accepted.
+
 ### Content, seeds, and schema
 
 - `config/gameplay/world_cell_art.yml`
 - `config/gameplay/outdoor_npcs.yml`
 - `db/seeds.rb`
 - `db/schema.rb`
+- `db/migrate/20251121090004_create_map_tile_templates.rb`
 - `db/migrate/20251121150000_create_characters_and_privacy_settings.rb`
+- `db/migrate/20251122120000_create_world_navigation_systems.rb`
+- `db/migrate/20251124130000_create_movement_commands.rb`
+- `db/migrate/20251128075552_create_tile_npcs.rb`
+- `db/migrate/20251216091841_create_tile_buildings.rb`
+- `db/migrate/20260509211000_create_world_action_offers.rb`
 
 ### Factories
 
@@ -958,13 +1223,21 @@ Before extending the World feature:
 
 1. Capture the corresponding Neverlands behavior and UI.
 2. State whether the change affects sparse cell resolution, movement, cell composition, or another feature reached from the cell.
-3. Keep server offers and exact-position revalidation for every new mutation.
-4. Do not place game authority in CSS geometry, Stimulus state, or submitted labels.
-5. Add only the models/services needed for the captured MVP behavior.
-6. Update seeds/config only for explicit authored content; use the cell-art
-   workflow in section 7.2 for presentation overrides.
-7. Add success, failure, edge/null/boundary, and authorization coverage where applicable.
-8. Update this document's non-goals, acceptance criteria, responsible files, and version history.
+3. Use section 7.4 to identify the declaration, persisted record, resolver, and
+   transition owner. Extend that owner; do not create a parallel catalog,
+   registry, resolver, or offer pipeline for the same cell concern.
+4. Keep server offers and exact-position revalidation for every new mutation.
+5. Do not place game authority in CSS geometry, Stimulus state, or submitted labels.
+6. Add a new model/service only after recording why `MapTileTemplate`,
+   `TileBuilding`, `TileNpc`, `TileStateResolver`, `ActionOfferBuilder`, and
+   their existing transition services cannot own the captured responsibility.
+7. Update seeds/config only for explicit authored content; use the cell-art
+   workflow in section 7.2 and the complete content lifecycle in section 7.4.
+8. Reconcile exact stale persisted rows for moved, deactivated, replaced, or
+   removed content; deleting a declaration is not assumed to delete state.
+9. Add success, failure, edge/null/boundary, authorization, seed/config, and
+   idempotency coverage where applicable.
+10. Update this document's non-goals, acceptance criteria, responsible files, and version history.
 
 ## 18. Version history
 
@@ -984,3 +1257,4 @@ Before extending the World feature:
 | 2026-07-28 | Superseded the earlier narrow measurement with the fresh 13 × 7 visible / 15 × 9 buffered desktop world, thin offered-cell borders, top-context actions, and captured `24`/`32`-second timing behavior. |
 | 2026-07-28 | Added the captured Frontier Village entrance, CSS-built `760 × 255` interior, server-offered Trading Post/exit hotspots, exact-cell persistence, linked-Shop resume, responsive panning, and an explicit Not-Done boundary for uncaptured location families. |
 | 2026-07-28 | Removed the parallel linked-location catalog. The existing DB-backed cell pipeline now owns the entire village: `TileBuilding` persists and validates scene/features, `TileStateResolver` composes it at the exact cell, and `ActionOfferBuilder` issues entrance/interior capabilities. Moving, replacing, or deactivating the row changes runtime availability immediately. |
+| 2026-07-28 | Added the complete cell-content ownership and lifecycle guide: seed/config sources, persisted/materialized records, add/adjust/move/deactivate/remove examples for buildings, local resources/actions, and NPCs, scoped stale-data reconciliation, idempotency requirements, exhaustive schema migrations, and an explicit prohibition on parallel catalogs. Corrected the World contract to the one currently verified city gate. |

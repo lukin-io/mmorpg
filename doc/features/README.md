@@ -173,6 +173,25 @@ Section 16 is mandatory. It must list every file that directly owns the document
 
 Do not list an entire broad directory when a small explicit file list is clearer. A directory is acceptable for a cohesive service or spec family. Distinguish files directly owned by the feature from files that take ownership after a handoff.
 
+For authored gameplay content, a file inventory alone is not sufficient. The
+owning handbook must also provide an operational lifecycle that identifies:
+
+- the declaration source, such as `db/seeds.rb` or an existing gameplay config;
+- the persisted/materialized records produced from that declaration;
+- the resolver and capability/transition services that consume those records;
+- how to add, adjust, move, deactivate, and permanently remove one exact piece
+  of content;
+- whether removing a seed/config declaration also removes already-persisted
+  state, and the scoped reconciliation required when it does not;
+- the model, seed/config, service, request, and system coverage that protects
+  the lifecycle.
+
+Extend the listed owner before creating a new catalog, registry, resolver, or
+content pipeline. A new abstraction is justified only when the handbook first
+shows that none of the existing owners can represent the captured behavior
+without violating its current responsibility. Never treat a second source of
+truth as an easier authoring shortcut.
+
 ### Tests are part of the contract
 
 Every feature change must include applicable model, request, policy, service, factory, view/system, seed/config, and asset coverage. The feature document must explain the following categories:

@@ -163,6 +163,13 @@ Static cell composition is deliberately split by responsibility:
 | City/building/special entrance | tile entrance record | yes |
 | Resource/local action | tile template's validated local-action list | yes, including several action types |
 
+The operational source-of-truth matrix and complete add, adjust, move,
+deactivate, and remove examples live in `doc/features/world.md`, section 7.4.
+That handbook also explains when `db/seeds.rb` reconciles a DB-backed row, when
+`config/gameplay/outdoor_npcs.yml` only defines future materialization, and
+which persisted rows require explicit scoped cleanup. Do not create a second
+location, resource, or NPC catalog from this design document.
+
 An outdoor linked location is a view over the persisted cell, not a new source
 of position truth. `building_type: location` identifies the entrance; validated
 scene and feature metadata live on that same `TileBuilding` row. Every interior
