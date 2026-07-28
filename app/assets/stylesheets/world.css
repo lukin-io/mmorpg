@@ -491,7 +491,7 @@ turbo-frame.nl-world-action-frame {
 
 .nl-map-viewport {
   position: relative;
-  width: min(calc(var(--nl-map-visible-columns) * 100px + 2px), calc(100% - 24px));
+  width: min(calc(var(--nl-map-visible-columns) * 100px + 2px), 100%);
   height: calc(var(--nl-map-visible-rows) * 100px + 2px);
   margin: 10px auto 0;
   overflow: auto;
