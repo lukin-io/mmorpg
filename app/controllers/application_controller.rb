@@ -7,6 +7,9 @@ class ApplicationController < ActionController::Base
 
   before_action :authenticate_user!
   before_action :ensure_device_identifier
+  before_action :prepare_game_shell_context, if: :user_signed_in?
+
+  layout :resolved_layout
 
   # Changes to the importmap will invalidate the etag for HTML responses
   stale_when_importmap_changes
@@ -25,6 +28,32 @@ class ApplicationController < ActionController::Base
   end
 
   private
+
+  def resolved_layout
+    user_signed_in? ? "game" : "application"
+  end
+
+  def prepare_game_shell_context
+    character = current_character
+    return unless character
+
+    @position ||= character.position
+    @players_here ||= if @position
+      Character
+        .joins(:position)
+        .where(character_positions: {
+          zone_id: @position.zone_id,
+          x: @position.x,
+          y: @position.y,
+          state: CharacterPosition.states.fetch("active")
+        })
+        .where.not(id: character.id)
+        .order(name: :asc)
+        .limit(10)
+    else
+      []
+    end
+  end
 
   def ensure_device_identifier
     current_device_id if user_signed_in?

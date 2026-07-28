@@ -251,7 +251,7 @@ It must not:
 - grant a license or novice privilege;
 - persist a trade without server validation.
 
-`app/assets/stylesheets/nl/shop.css` owns the compact tabs, filters, status strip, item tables, property/requirement cells, quantity controls, and action presentation. Shared frames and controls remain owned by Game Shell.
+`app/assets/stylesheets/shop.css` owns the compact tabs, filters, status strip, item tables, property/requirement cells, quantity controls, and action presentation. Shared frames and controls remain owned by Game Shell.
 
 Accessibility behavior:
 
@@ -386,8 +386,8 @@ bundle exec rspec \
 - `app/views/shop/show.html.erb`
 - `app/views/shop/_buy_table.html.erb`
 - `app/views/shop/_sell_table.html.erb`
-- `app/assets/stylesheets/nl/shop.css`
-- `app/assets/stylesheets/nl/controls.css`
+- `app/assets/stylesheets/shop.css`
+- `app/assets/stylesheets/controls.css`
 
 ### Content, configuration, seeds, and schema
 

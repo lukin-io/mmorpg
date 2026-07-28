@@ -500,7 +500,7 @@ outside this feature.
 
 It must not calculate reachable destinations, invent an action key, change coordinates, or mark a command complete. Those remain service responsibilities.
 
-`app/assets/stylesheets/nl/world.css` owns the clipped 5 × 5 viewport, buffered
+`app/assets/stylesheets/world.css` owns the clipped 5 × 5 viewport, buffered
 100px cells, red offered-cell border, fixed center marker, walking state, and
 timer placement. `Game::World::CellArtCatalog` owns the allowlisted asset and
 sheet dimensions. The renderer uses an explicit valid cell-art reference first
@@ -728,9 +728,9 @@ Run the complete suite before release because the world hands off to combat, cit
 - `app/views/world/_location_info.html.erb`
 - `app/javascript/controllers/game_layout_controller.js`
 - `app/javascript/controllers/nl_world_map_controller.js`
-- `app/assets/stylesheets/nl/world.css`
-- `app/assets/stylesheets/nl/shell.css`
-- `app/assets/stylesheets/nl/chat_presence.css`
+- `app/assets/stylesheets/world.css`
+- `app/assets/stylesheets/shell.css`
+- `app/assets/stylesheets/chat_presence.css`
 - `app/assets/images/world/forpost-terrain.png`
 - `app/assets/images/gate.png`
 
@@ -746,7 +746,7 @@ Run the complete suite before release because the world hands off to combat, cit
 - `app/views/arena_matches/show.html.erb`
 - `app/views/arena_matches/_fighter_card.html.erb`
 - `app/javascript/controllers/arena_match_controller.js`
-- `app/assets/stylesheets/nl/arena.css`
+- `app/assets/stylesheets/arena.css`
 
 World owns same-cell hostile validation and match creation. Arena owns the combat lifecycle after `StartNpcFight` hands off the created match.
 

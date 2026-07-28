@@ -1,28 +1,27 @@
 <% content_for :title, "#{@character.name} - Character" %>
 
-<%= turbo_frame_tag "main_content" do %>
-  <section class="nl-player-profile">
+<section class="nl-player-profile">
     <%= render "shared/player_context_buttons",
       character: @character,
       viewer_character: @viewer_character,
       current_section: :profile %>
 
-    <div class="nl-player-profile-head">
-      <div class="nl-player-profile-identity">
-        <div>
-          <h1><%= @character.name %> [<%= @character.level %>]</h1>
-          <div class="nl-profile-subline">
-            <span>Player</span>
-            <span><%= profile_location(@character) %></span>
-            <span>Created <%= l(@character.created_at.to_date, format: :default) %></span>
-          </div>
-        </div>
-      </div>
-      <%= render "shared/nl_vitals_bar", character: @character %>
-    </div>
-
     <div class="nl-player-profile-grid">
       <aside class="nl-player-profile-left">
+        <div class="nl-player-profile-head">
+          <div class="nl-player-profile-identity">
+            <div>
+              <h1><%= @character.name %> [<%= @character.level %>]</h1>
+              <div class="nl-profile-subline">
+                <span>Player</span>
+                <span><%= profile_location(@character) %></span>
+                <span>Created <%= l(@character.created_at.to_date, format: :default) %></span>
+              </div>
+            </div>
+          </div>
+          <%= render "shared/nl_vitals_bar", character: @character %>
+        </div>
+
         <%= render "shared/player_equipment_summary", character: @character, equipment: @equipment, show_money: @own_profile %>
 
         <% if @own_profile %>
@@ -45,6 +44,10 @@
       </aside>
 
       <main class="nl-player-profile-main">
+        <% if @own_profile %>
+          <%= render "shared/player_subnavigation", character: @character, current_section: :profile %>
+        <% end %>
+
         <% if @own_profile && @character.stat_points_available.to_i.positive? %>
           <div class="nl-profile-panel">
             <h2>Allocate stat points</h2>
@@ -150,5 +153,4 @@
         </div>
       </main>
     </div>
-  </section>
-<% end %>
+</section>

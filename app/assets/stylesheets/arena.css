@@ -752,6 +752,334 @@
   color: var(--nl-red);
 }
 
+/* Live fight capture: three columns, dense body-part selectors, flat AP budget,
+ * and a chronological text log. Kept at the end so older arena-card rules do
+ * not reintroduce gradients, rounded panels, or oversized controls. */
+.arena-match-page {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 3px 4px 6px;
+  color: #222222;
+  font: 10px Verdana, Tahoma, Arial, sans-serif;
+}
+
+.page-header--compact {
+  display: flex;
+  min-height: 22px;
+  align-items: center;
+  gap: 4px;
+  margin: 0 0 3px;
+  padding: 1px 3px;
+  border-bottom: 1px solid #d8cdaf;
+}
+
+.page-header--compact h1 {
+  margin: 0;
+  color: #222222;
+  font: bold 11px/15px Verdana, Tahoma, Arial, sans-serif;
+}
+
+.arena-fight-layout {
+  display: grid;
+  min-height: 430px;
+  grid-template-columns: minmax(190px, 27%) minmax(380px, 1fr) minmax(190px, 27%);
+  align-items: start;
+  gap: 3px;
+}
+
+.arena-fighter {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.arena-fighter-stack {
+  display: grid;
+  width: 100%;
+  gap: 3px;
+}
+
+.arena-fighter-empty {
+  padding: 6px;
+  color: #777777;
+  text-align: center;
+}
+
+.fighter-card,
+.fighter-card--npc {
+  position: relative;
+  width: 100%;
+  padding: 3px;
+  border: 1px solid #d8cdaf;
+  border-radius: 0;
+  background: #ffffff;
+  box-shadow: none;
+  text-align: center;
+}
+
+.fighter-card--npc { border-left: 1px solid #d8cdaf; }
+.fighter-card--defeated { opacity: 0.7; }
+
+.fighter-avatar {
+  position: relative;
+  min-height: 148px;
+  margin: 0 0 2px;
+  overflow: hidden;
+  border: 1px solid #eee8d8;
+  background: #ffffff;
+}
+
+.fighter-avatar img {
+  width: 100%;
+  max-height: 210px;
+  object-fit: contain;
+}
+
+.fighter-defeated-overlay {
+  position: absolute;
+  inset: 50% auto auto 50%;
+  padding: 2px 4px;
+  transform: translate(-50%, -50%);
+  background: #ffffff;
+  color: #cc0000;
+  font-size: 10px;
+}
+
+.fighter-header {
+  margin: 0 0 2px;
+  color: #222222;
+}
+
+.fighter-name {
+  color: #336699;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.fighter-level,
+.fighter-hp-percent,
+.fighter-badge {
+  color: #666666;
+  font-size: 9px;
+}
+
+.fighter-hp,
+.fighter-mp {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 2px;
+  margin: 0 0 2px;
+}
+
+.fighter-hp-bar,
+.fighter-mp-bar,
+.arena-hp-bar,
+.arena-mp-bar,
+.ap-bar-container {
+  position: relative;
+  flex: 1 1 auto;
+  height: 8px;
+  overflow: hidden;
+  border: 1px solid #aaaaaa;
+  border-radius: 0;
+  background: #eeeeee;
+  box-shadow: none;
+}
+
+.fighter-mp-bar { height: 7px; }
+.fighter-hp-fill--high,
+.fighter-hp-fill--medium,
+.fighter-hp-fill--low,
+.fighter-hp-fill--critical,
+.arena-hp-fill { background: #d56f6f; }
+.fighter-mp-fill,
+.arena-mp-fill { background: #6b91bd; }
+
+.fighter-hp-text,
+.fighter-mp-text,
+.arena-hp-text,
+.arena-mp-text {
+  position: absolute;
+  inset: 50% auto auto 50%;
+  transform: translate(-50%, -50%);
+  color: #152c48;
+  font-size: 8px;
+  text-shadow: none;
+}
+
+.fighter-combat-power,
+.fighter-stats,
+.fighter-stats--nl {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 3px;
+  margin-top: 2px;
+  padding: 2px;
+  border: 1px solid #eee8d8;
+  background: #ffffff;
+  font-size: 9px;
+  text-align: left;
+}
+
+.fighter-power {
+  min-width: 0;
+  padding: 1px;
+  border: 0;
+  background: #ffffff;
+}
+
+.arena-center {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+}
+
+.arena-vs-badge {
+  padding: 1px;
+  color: #666666;
+  font-size: 10px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.arena-timeout-bar,
+.nl-fight-budget {
+  min-height: 18px;
+  padding: 1px 4px;
+  border-bottom: 1px solid #d8cdaf;
+  background: #ffffff;
+  color: #666666;
+  text-align: center;
+}
+
+.arena-action-panel,
+.nl-fight-wait-panel {
+  padding: 3px;
+  border: 1px solid #d8cdaf;
+  border-radius: 0;
+  background: #ffffff;
+  box-shadow: none;
+}
+
+.arena-ap-bar,
+.nl-fight-controls,
+.nl-fight-magic-slots,
+.arena-turn-submit,
+.nl-fight-wait-actions {
+  display: flex;
+  min-height: 19px;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 3px;
+  margin: 0 0 2px;
+}
+
+.arena-ap-bar {
+  padding: 1px 3px;
+  border-bottom: 1px solid #eee8d8;
+}
+
+.ap-bar-container { max-width: 160px; }
+.ap-bar-fill { height: 100%; background: #009d29; }
+.ap-label,
+.ap-value { color: #555555; font-size: 9px; font-weight: 400; }
+
+.nl-fight-magic-slot {
+  min-height: 18px;
+  padding: 1px 4px;
+  border: 1px solid #decfa6;
+  border-radius: 0;
+  background: #ffffff;
+  color: #333333;
+  box-shadow: none;
+  font-size: 9px;
+}
+
+.nl-fight-magic-slot small { font-size: 8px; }
+
+.arena-turn-composer,
+.nl-fight-turn-composer {
+  padding: 2px;
+  border: 1px solid #d8cdaf;
+  background: #ffffff;
+}
+
+.nl-fight-selector-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 10px;
+}
+
+.nl-fight-selector-table th,
+.nl-fight-selector-table td {
+  padding: 1px 3px;
+  border: 0;
+  border-bottom: 1px solid #eee8d8;
+}
+
+.nl-fight-selector-table th {
+  background: #d8cdaf;
+  color: #333333;
+  font-weight: 400;
+  text-align: center;
+}
+
+select.nl-fight-select,
+.nl-fight-select {
+  width: 100%;
+  min-height: 17px;
+  padding: 0 2px;
+  border: 1px solid #cccccc;
+  background: #ffffff;
+  color: #222222;
+  font: 10px/15px Verdana, Tahoma, Arial, sans-serif;
+}
+
+.arena-combat-log,
+.combat-log {
+  max-height: 300px;
+  overflow-y: auto;
+  border: 1px solid #d8cdaf;
+  background: #ffffff;
+  color: #222222;
+  font-size: 10px;
+}
+
+.combat-log-entry {
+  min-height: 16px;
+  padding: 1px 3px;
+  border: 0;
+  border-bottom: 1px solid #eee8d8;
+  background: #ffffff;
+  line-height: 13px;
+}
+
+.combat-log--highlight { background: #fcfaf3; }
+.combat-time { margin-right: 4px; color: #888888; font-size: 9px; }
+
+.arena-match-bar {
+  display: flex;
+  min-height: 20px;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 3px;
+  padding: 1px 4px;
+  border-top: 1px solid #d8cdaf;
+  color: #555555;
+  font-size: 9px;
+}
+
+@media (max-width: 900px) {
+  .arena-fight-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
 .arena-participant {
   display: grid;
   grid-template-columns: 44px minmax(0, 1fr) auto;

@@ -2,17 +2,23 @@
 <html lang="en">
 <head>
   <title><%= content_for(:title) || "Neverlands" %></title>
+  <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#fcfaf3">
   <%= csrf_meta_tags %>
   <%= csp_meta_tag %>
-  <%= stylesheet_link_tag "application", "nl/controls", data: { turbo_track: "reload" } %>
+  <%= stylesheet_link_tag "application", "controls", data: { turbo_track: "reload" } %>
   <%= javascript_importmap_tags %>
 </head>
 <body class="nl-game-layout" data-controller="game-layout">
 
   <%# === TOP STATUS BAR (like original: name[lv] + HP/MP + text links) === %>
   <header class="nl-top-bar">
+    <div class="sr-only" data-controller="online-reload" <%= online_reload_attributes %> aria-hidden="true"></div>
+    <% if user_signed_in? %>
+      <%= turbo_stream_from ["notifications", current_user.id] %>
+    <% end %>
+
     <%# Left: Character name + level + HP/MP bars %>
     <div class="nl-top-left">
       <% if current_character %>
@@ -104,18 +110,20 @@
         <% end %>
       </div>
       <div class="nl-chat-input-bar">
-        <% chat_channel = @chat_channel || ChatChannel.global.first %>
-        <% if chat_channel %>
-          <%= form_with url: chat_channel_chat_messages_path(chat_channel),
-                        method: :post,
-                        scope: :chat_message,
-                        class: "nl-chat-form-inline",
-                        data: { controller: "chat-input", action: "turbo:submit-end->chat-input#reset" } do |f| %>
-            <%= f.text_field :body,
-                class: "nl-chat-input-field",
-                placeholder: "Type message...",
-                autocomplete: "off",
-                data: { chat_input_target: "input", action: "keydown->chat-input#handleKeydown" } %>
+        <% unless content_for?(:hide_shell_chat_composer) %>
+          <% chat_channel = @chat_channel || ChatChannel.global.first %>
+          <% if chat_channel %>
+            <%= form_with url: chat_channel_chat_messages_path(chat_channel),
+                          method: :post,
+                          scope: :chat_message,
+                          class: "nl-chat-form-inline",
+                          data: { controller: "chat-input", action: "turbo:submit-end->chat-input#reset" } do |f| %>
+              <%= f.text_field :body,
+                  class: "nl-chat-input-field",
+                  placeholder: "Type message...",
+                  autocomplete: "off",
+                  data: { chat_input_target: "input", action: "keydown->chat-input#handleKeydown" } %>
+            <% end %>
           <% end %>
         <% end %>
       </div>

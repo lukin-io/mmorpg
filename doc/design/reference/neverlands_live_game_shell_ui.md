@@ -333,6 +333,50 @@ This is only UI-shape evidence. It is not enough to rebuild quests. Exact quest
 entry points, journal behavior, progress rules, reward rules, cancel/failure
 states, and quest-item protection still need dedicated source capture.
 
+## Fight Main-Frame Addendum (2026-07-28)
+
+An outdoor hostile interruption started while the authenticated profile and
+inventory navigation was being observed. The fight resolved quickly, so no
+combat mutation was submitted; the rendered DOM, controls, rosters, log, and
+loaded live stylesheets were captured from the existing authenticated session.
+
+The fight replaces the same `main_top` content surface and keeps the surrounding
+shell. Its player-visible composition is three columns:
+
+- the player's equipment/portrait and combat state on the left;
+- fight controls, action budget, turn composer, roster, and chronological log
+  in the center;
+- the selected opponent's equipment/portrait and combat state on the right.
+
+The center toolbar exposed fight type, five-minute timeout, trauma state,
+Inventory, Mercenary, Surrender, Fight Log, Refresh, and opponent switching.
+The turn composer showed a `200` action-point budget with `0` used, a mana
+constraint of `5..180`, four attack selectors (head, torso, abdomen, legs), and
+four block selectors. Attack choices included simple, aimed, and magic actions;
+block choices included single-part, double-part, and magic-shield actions. Each
+select option displayed its action cost. The primary action submitted the whole
+turn and a secondary control reset the preview.
+
+The roster showed one player side against three NPCs, confirming that one fight
+may retain several opponents while a selected target changes. The text combat
+log remained below the composer in chronological order.
+
+Live `game.css` measurements used by this capture:
+
+- base fight copy remains `12px` Verdana (`.fighttxt`), with gray `12px` timing
+  copy (`.fighttime`);
+- weapon/action labels use `11px` copy (`.weaponch`);
+- fight selects use a white background, `10px` Verdana, and a source width of
+  about `210px` (`.selfight`);
+- submit/reset controls are compact flat browser-game controls (`.buttonSub`),
+  not oversized RPG action cards.
+
+Design translation: combat must preserve the three-column participant/action
+composition, four body-part attack and block rows, visible AP/mana costs,
+multi-opponent roster, and chronological log. The browser may preview a turn,
+but Rails remains authoritative for available actions, target, cost, timeout,
+and final resolution.
+
 ## MVP UI And Architecture Implications
 
 - Do not implement the old frameset or iframes. Implement the same product

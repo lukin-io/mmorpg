@@ -4,107 +4,28 @@
     <title><%= content_for(:title) || "Neverlands" %></title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="application-name" content="Neverlands">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="theme-color" content="#3D3929">
+    <meta name="theme-color" content="#fcfaf3">
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
-
     <%= yield :head %>
-
-    <%# Enable PWA manifest for installable apps (make sure to enable in config/routes.rb too!) %>
-    <%#= tag.link rel: "manifest", href: pwa_manifest_path(format: :json) %>
 
     <link rel="icon" href="/icon.png" type="image/png">
     <link rel="icon" href="/icon.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="/icon.png">
 
-    <%# Includes all stylesheet files in app/assets/stylesheets %>
-    <%= stylesheet_link_tag :application, "nl/controls", "data-turbo-track": "reload" %>
+    <%= stylesheet_link_tag "application", "controls", data: {turbo_track: "reload"} %>
     <%= javascript_importmap_tags %>
   </head>
 
-  <body <%= online_reload_attributes %> data-controller="<%= ["mobile-hud", ("online-reload" if user_signed_in?)].compact.join(" ") %>">
-    <div class="game-wrapper">
-      <%# Game Header with navigation %>
-      <header class="game-header">
-        <div class="game-header-inner">
-          <%= link_to "Neverlands", root_path, class: "game-logo" %>
-          <% player_character = current_user&.character %>
-          <% player_profile_path = if player_character
-               player_path(name: player_character.name)
-             end %>
-
-          <nav class="game-nav">
-            <% if current_user %>
-              <%= link_to "Map", root_path, class: ("active" if controller_name == "world") %>
-              <% if player_profile_path %>
-                <%= link_to "Character", player_profile_path, class: ("active" if controller_name == "players") %>
-              <% end %>
-            <% end %>
-          </nav>
-
-          <div class="user-status-bar">
-            <% if current_user %>
-              <span class="user-nickname"><%= current_user.profile_name || current_user.email %></span>
-              <%= button_to "Log Out", destroy_user_session_path, method: :delete, class: "btn-secondary btn-sm" %>
-            <% else %>
-              <%= link_to "Sign In", new_user_session_path, class: "btn-secondary btn-sm" %>
-              <%= link_to "Sign Up", new_user_registration_path, class: "btn-primary btn-sm" %>
-            <% end %>
-          </div>
-        </div>
-      </header>
-
-      <%# Flash Messages - Turbo Stream target for dynamic updates %>
-      <div id="flash" class="flash-messages container">
-        <% flash.each do |type, message| %>
-          <div class="flash <%= type %>"><%= message %></div>
-        <% end %>
-      </div>
-
-      <%# Real-time notifications %>
-      <% if current_user %>
-        <%= turbo_stream_from ["notifications", current_user.id] %>
-      <% end %>
-      <div id="notifications" class="notifications"></div>
-
-      <%# Main Content %>
-      <div class="game-content">
-        <% if content_for?(:sidebar) %>
-          <aside class="game-sidebar">
-            <%= yield :sidebar %>
-          </aside>
-        <% end %>
-
-        <main class="game-main" id="game-main">
-          <%= yield %>
-        </main>
-      </div>
-
-      <%# Footer %>
-      <footer class="game-footer">
-        <p class="copy">© <%= Time.current.year %> Neverlands</p>
-      </footer>
-
-      <%# Mobile Bottom Navigation %>
-      <% if current_user %>
-        <nav class="mobile-hud" data-mobile-hud-target="hud">
-          <div class="mobile-hud-inner">
-            <%= link_to root_path, class: "mobile-hud-btn" do %>
-              <span class="icon">Map</span>
-              <span>Map</span>
-            <% end %>
-            <% if player_profile_path %>
-              <%= link_to player_profile_path, class: "mobile-hud-btn" do %>
-                <span class="icon">Character</span>
-                <span>Character</span>
-              <% end %>
-            <% end %>
-          </div>
-        </nav>
+  <body class="nl-public-layout">
+    <div id="flash" class="nl-public-flash">
+      <% flash.each do |type, message| %>
+        <div class="nl-flash nl-flash--<%= type %>"><%= message %></div>
       <% end %>
     </div>
+    <main class="nl-public-main" id="game-main">
+      <%= yield %>
+    </main>
+    <div id="notifications" class="nl-notifications"></div>
   </body>
 </html>

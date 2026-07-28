@@ -1,5 +1,4 @@
-<%= turbo_frame_tag "main_content" do %>
-  <div class="nl-player-subpage nl-city-building-page" data-building-key="<%= @building_key %>">
+<div class="nl-player-subpage nl-city-building-page" data-building-key="<%= @building_key %>">
     <%= render "shared/player_context_buttons",
       character: current_character,
       viewer_character: current_character,
@@ -32,5 +31,4 @@
         <%= render "city_buildings/hospital", building: @building %>
       <% end %>
     </section>
-  </div>
-<% end %>
+</div>

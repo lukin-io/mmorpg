@@ -327,7 +327,7 @@ There is no public City JSON API. Swagger/rswag and blueprint documentation are 
 
 It does not determine accessibility, destinations, required level, or available actions. Forms and offers are server rendered.
 
-`app/assets/stylesheets/nl/world.css` owns both World and City scene styling because both contexts occupy the same Neverlands map surface. City-specific rules define scene dimensions, image cropping, transparent hit areas, proxies, route markers, unavailable state, tooltips, and read-only building tables. The retained `city.png`, `arena.png`, and `gate.png` assets must not be removed as cleanup; they are source-backed UI assets or integration assets.
+`app/assets/stylesheets/world.css` owns both World and City scene styling because both contexts occupy the same Neverlands map surface. City-specific rules define scene dimensions, image cropping, transparent hit areas, proxies, route markers, unavailable state, tooltips, and read-only building tables. The retained `city.png`, `arena.png`, and `gate.png` assets must not be removed as cleanup; they are source-backed UI assets or integration assets.
 
 ## 11. Persistence and login resume
 
@@ -498,8 +498,8 @@ Run the complete suite before release because City integrates World position, Sh
 - `app/views/city_buildings/_hospital.html.erb`
 - `app/javascript/controllers/nl_city_map_controller.js`
 - `app/javascript/controllers/game_layout_controller.js`
-- `app/assets/stylesheets/nl/world.css`
-- `app/assets/stylesheets/nl/shell.css`
+- `app/assets/stylesheets/world.css`
+- `app/assets/stylesheets/shell.css`
 - `app/assets/images/city.png`
 - `app/assets/images/arena.png`
 - `app/assets/images/gate.png`
@@ -510,10 +510,10 @@ Run the complete suite before release because City integrates World position, Sh
 - `app/services/game/shop/catalog.rb`
 - `app/services/game/shop/purchase.rb`
 - `app/services/game/shop/sale.rb`
-- `app/assets/stylesheets/nl/shop.css`
+- `app/assets/stylesheets/shop.css`
 - `app/controllers/arena_controller.rb`
 - `app/controllers/concerns/arena_entry_gate.rb`
-- `app/assets/stylesheets/nl/arena.css`
+- `app/assets/stylesheets/arena.css`
 
 The Shop and Arena internals remain owned by their feature contracts and specs. City owns the source node, offer, entry gate, and redirect integration.
 

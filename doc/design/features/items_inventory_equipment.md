@@ -280,7 +280,9 @@ movement/carry calculations.
 The launch inventory should support:
 
 - inventory page inside the game shell with equipment panel, stats panel,
-  category filters, sort actions, inventory mass, item rows, and empty slots;
+  category filters, sort actions, inventory mass, item rows, and visible empty
+  equipment-doll slots; the carried list uses an explicit empty message rather
+  than fabricated empty bag rows;
 - item templates for equipment, consumables, materials, and miscellaneous items;
 - item instances with quantity, equipped slot, current durability, requirement
   overrides, effect overrides, expiry metadata, bound/protected state, and

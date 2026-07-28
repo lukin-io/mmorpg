@@ -3,7 +3,7 @@
 title: Game Shell Feature
 description: Implementation handbook for the Neverlands-based persistent game frame, compact vitals, location presence, global chat, and shell preferences.
 status: Partially Implemented
-updated: 2026-07-21
+updated: 2026-07-28
 owners: Game Shell and Social Presence
 template: feature-v1
 ---
@@ -54,7 +54,7 @@ After login, the player opens the World through a persistent Neverlands-shaped g
 
 The server owns identity, character state, location presence, social verification, channel visibility, message persistence, ignore filtering, and authorization. The browser owns only main-frame navigation, presence sort/refresh preferences, chat focus/scroll/reset, and notification presentation.
 
-The full game layout is selected by `WorldController`; World is the authenticated shell bootstrap and renders outdoor or city content inside it. Character and Inventory use full-page POST/redirect navigation because the server may hand the action to combat first. Direct requests to feature endpoints may use their normal application layout, so the shell is not an independent route or a universal controller layout.
+`ApplicationController` selects the full game layout for every authenticated HTML gameplay surface, while anonymous authentication and public-profile requests use the minimal public layout. World remains the shell bootstrap and owns Character/Inventory context actions that may hand navigation to combat before the allowlisted destination. Full-page redirects therefore preserve the same top/main/presence/chat composition instead of falling back to a separate account-dashboard layout.
 
 The MVP currently contains:
 
@@ -263,7 +263,7 @@ They must not:
 - invent channel capabilities or trust local-storage sort values;
 - treat an interpolated vital as a server mutation.
 
-`app/assets/stylesheets/nl/shell.css` and `app/assets/stylesheets/nl/chat_presence.css` own the fixed bars, central frame, floating presence, compact messages, input, flashes, and responsive shell behavior. Tokens/primitives provide the shared Neverlands visual vocabulary.
+`app/assets/stylesheets/application.css` is now only a small application reset. `app/assets/stylesheets/controls.css` imports the ordered Neverlands modules; `tokens.css` and `primitives.css` own the captured Verdana/Tahoma typography, white/`#fcfaf3` surfaces, beige separators, compact controls, and flat table treatment. `shell.css` and `chat_presence.css` own the measured 29px top strip, central frame, 300px presence block, 30px chat strip, compact messages, flashes, and responsive shell behavior. The presence block accepts pointer input only on its real links/form controls so its fixed background cannot intercept main-frame actions beneath it.
 
 Accessibility behavior:
 
@@ -412,6 +412,7 @@ Policy behavior is currently exercised through request/system coverage; dedicate
 
 ### Views, helpers, client behavior, styling, and assets
 
+- `app/views/layouts/application.html.erb`
 - `app/views/layouts/game.html.erb`
 - `app/views/shared/_nl_players_list.html.erb`
 - `app/views/shared/_nl_vitals_bar.html.erb`
@@ -424,11 +425,12 @@ Policy behavior is currently exercised through request/system coverage; dedicate
 - `app/javascript/controllers/chat_controller.js`
 - `app/javascript/controllers/chat_input_controller.js`
 - `app/javascript/controllers/nl_vitals_controller.js`
-- `app/assets/stylesheets/nl/controls.css`
-- `app/assets/stylesheets/nl/tokens.css`
-- `app/assets/stylesheets/nl/primitives.css`
-- `app/assets/stylesheets/nl/shell.css`
-- `app/assets/stylesheets/nl/chat_presence.css`
+- `app/assets/stylesheets/controls.css`
+- `app/assets/stylesheets/tokens.css`
+- `app/assets/stylesheets/primitives.css`
+- `app/assets/stylesheets/shell.css`
+- `app/assets/stylesheets/chat_presence.css`
+- `app/assets/stylesheets/application.css`
 
 ### Content, configuration, seeds, and schema
 
@@ -494,3 +496,4 @@ Before extending Game Shell:
 |---|---|
 | 2026-07-21 | Created the implementation handbook for the persistent game frame, exact-cell presence, compact global chat, browser preferences, and resume integration. |
 | 2026-07-21 | Routed World-shell Character and Inventory controls through the World-owned hostile interruption and allowlisted post-fight return boundary. |
+| 2026-07-28 | Made the Neverlands game frame universal for authenticated gameplay, removed the legacy dashboard layout/CSS, applied live shell measurements and compact primitives, and kept fixed presence from blocking main-frame controls. |

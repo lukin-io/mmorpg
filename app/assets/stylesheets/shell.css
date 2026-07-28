@@ -1,0 +1,379 @@
+.nl-game-layout {
+  --nl-top-bar-height: 29px;
+  --nl-bottom-bar-height: 30px;
+  --nl-players-width: 300px;
+  display: grid;
+  width: 100%;
+  height: 100vh;
+  height: 100dvh;
+  min-width: 760px;
+  min-height: 420px;
+  grid-template-rows: 29px minmax(0, 1fr) 30px;
+  overflow: hidden;
+  background: #ffffff;
+  color: #222222;
+  font: 12px Verdana, Tahoma, Arial, sans-serif;
+}
+
+.nl-top-bar {
+  position: relative;
+  z-index: 40;
+  display: flex;
+  min-width: 0;
+  height: 29px;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 4px 4px;
+  border: 0;
+  box-shadow: inset 0 -1px 0 #b9a05c, inset 0 -3px 0 #f3ecd7;
+  background: #ffffff;
+  white-space: nowrap;
+}
+
+.nl-top-left,
+.nl-top-nav,
+.nl-top-right,
+.nl-vitals-inline {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+}
+
+.nl-top-left {
+  flex: 0 1 auto;
+  gap: 1px;
+}
+
+.nl-player-link {
+  color: #111111;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.nl-player-link:hover {
+  color: #336699;
+}
+
+.nl-player-level {
+  color: #333333;
+}
+
+.nl-vitals-inline {
+  gap: 4px;
+  margin-left: 3px;
+}
+
+.nl-hp-bar-inline,
+.nl-mp-bar-inline {
+  position: relative;
+  width: 160px;
+  height: 8px;
+  overflow: hidden;
+  border: 1px solid #aaaaaa;
+  background: #eeeeee;
+  box-shadow: none;
+}
+
+.nl-bar-fill {
+  display: block;
+  height: 100%;
+}
+
+.nl-hp-bar-inline .nl-bar-fill { background: #d56f6f; }
+.nl-mp-bar-inline .nl-bar-fill { background: #6b91bd; }
+
+.nl-vitals-text {
+  color: #152c48;
+  font: bold 10px/12px Verdana, Tahoma, Arial, sans-serif;
+}
+
+.nl-top-nav {
+  margin-left: auto;
+  gap: 5px;
+}
+
+.nl-nav-action-form {
+  display: inline;
+  margin: 0;
+}
+
+button.nl-nav-link,
+.nl-nav-link {
+  display: inline-flex;
+  min-height: 18px;
+  align-items: center;
+  padding: 1px 7px;
+  border: 1px solid #c7c7c7;
+  background: #ffffff;
+  color: #222222;
+  box-shadow: none;
+  cursor: pointer;
+  font: bold 11px/14px Tahoma, Verdana, Arial, sans-serif;
+  text-decoration: none;
+}
+
+button.nl-nav-link:hover,
+.nl-nav-link:hover {
+  border-color: #aaaaaa;
+  background: #f6f6f6;
+  color: #336699;
+  text-decoration: none;
+}
+
+.nl-nav-link--disabled {
+  border-color: #dedede;
+  background: #f6f4ed;
+  color: #c8c3b4;
+}
+
+.nl-top-right {
+  margin-left: 4px;
+}
+
+.nl-close-btn {
+  display: inline-flex;
+  width: 17px;
+  height: 17px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #53609a;
+  border-radius: 50%;
+  background: #394b96;
+  color: #ffffff;
+  font: bold 10px/15px Verdana, Tahoma, Arial, sans-serif;
+  text-decoration: none;
+}
+
+.nl-close-btn:hover {
+  background: #263775;
+  color: #ffffff;
+  text-decoration: none;
+}
+
+.nl-main-area {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  background: #ffffff;
+}
+
+.nl-main-area > turbo-frame {
+  display: block;
+  width: 100%;
+  min-height: 100%;
+}
+
+.nl-players-float {
+  position: fixed;
+  right: 0;
+  bottom: 30px;
+  z-index: 30;
+  width: 300px;
+  height: 236px;
+  overflow: hidden;
+  border: 0;
+  background: #fcfaf3;
+  box-shadow: inset 1px 0 0 #d8cdaf, inset 0 1px 0 #d8cdaf;
+  color: #222222;
+  font: 10px Verdana, Tahoma, Arial, sans-serif;
+  pointer-events: none;
+}
+
+.nl-players-float a,
+.nl-players-float button,
+.nl-players-float input,
+.nl-players-float label {
+  pointer-events: auto;
+}
+
+.nl-players-header-float,
+.nl-players-location {
+  display: flex;
+  min-height: 18px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  padding: 1px 5px;
+  border: 0;
+  border-bottom: 1px solid #eee8d8;
+  background: #fcfaf3;
+}
+
+.nl-sort-links,
+.nl-refresh-check,
+.nl-location-text,
+.nl-total-online {
+  color: #666666;
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.nl-sort-links a {
+  color: #336699;
+  text-decoration: underline;
+}
+
+.nl-refresh-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.nl-refresh-check input {
+  width: 12px;
+  height: 12px;
+  margin: 0;
+}
+
+.nl-players-list-float {
+  height: calc(100% - 36px);
+  overflow-y: auto;
+  padding: 2px 4px;
+  background: #fcfaf3;
+}
+
+.nl-player-entry {
+  display: flex;
+  min-height: 17px;
+  align-items: center;
+  gap: 2px;
+  padding: 0 2px;
+  border: 0;
+  background: transparent;
+  white-space: nowrap;
+}
+
+.nl-player-entry:hover { background: #f3ecd7; }
+
+.nl-player-arrow,
+.nl-player-icon,
+.nl-player-lvl,
+.nl-player-status {
+  flex: 0 0 auto;
+  color: #666666;
+  font-size: 10px;
+}
+
+.nl-player-name-link {
+  min-width: 0;
+  overflow: hidden;
+  color: #336699;
+  text-overflow: ellipsis;
+}
+
+.nl-no-players,
+.nl-players-empty {
+  padding: 5px;
+  color: #888888;
+  text-align: center;
+}
+
+.nl-bottom-bar {
+  position: relative;
+  z-index: 35;
+  display: grid;
+  height: 30px;
+  min-width: 0;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 5px;
+  border: 0;
+  border-top: 1px solid #a6a6a6;
+  background: #dedede;
+  box-shadow: none;
+}
+
+.nl-action-area,
+.nl-status-icons {
+  display: flex;
+  align-items: center;
+}
+
+button.nl-action-btn-small,
+.nl-action-btn-small {
+  min-height: 17px;
+  padding: 0 7px;
+  border: 1px solid #999999;
+  background: #eeeeee;
+  color: #222222;
+  font: 10px/15px Verdana, Tahoma, Arial, sans-serif;
+}
+
+.nl-chat-area {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: minmax(90px, 0.35fr) minmax(160px, 1fr);
+  align-items: center;
+  gap: 3px;
+}
+
+.nl-chat-messages {
+  min-width: 0;
+  height: 18px;
+  overflow: hidden;
+  color: #333333;
+  font-size: 10px;
+  line-height: 17px;
+  white-space: nowrap;
+}
+
+.nl-chat-input-bar,
+.nl-chat-form-inline {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+}
+
+.nl-chat-form-inline { width: 100%; }
+
+input.nl-chat-input-field,
+.nl-chat-input-field {
+  width: 100%;
+  height: 17px;
+  min-height: 17px;
+  padding: 0 3px;
+  border: 1px solid #aaaaaa;
+  background: #ffffff;
+  color: #222222;
+  font: 11px/15px Verdana, Tahoma, Arial, sans-serif;
+}
+
+.nl-time-display,
+.nl-chat-loading {
+  color: #555555;
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.nl-flash-container,
+.nl-notifications {
+  position: fixed;
+  right: 306px;
+  bottom: 36px;
+  z-index: 90;
+  display: grid;
+  width: min(340px, calc(100vw - 312px));
+  gap: 3px;
+  max-width: 340px;
+}
+
+@media (max-width: 900px) {
+  .nl-game-layout {
+    --nl-players-width: 220px;
+    min-width: 640px;
+  }
+
+  .nl-players-float { width: 220px; }
+
+  .nl-flash-container,
+  .nl-notifications {
+    right: 226px;
+    width: min(340px, calc(100vw - 232px));
+  }
+
+  .nl-mp-bar-inline { display: none; }
+  .nl-chat-area { grid-template-columns: minmax(0, 1fr); }
+  .nl-chat-messages { display: none; }
+}

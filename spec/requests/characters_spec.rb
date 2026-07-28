@@ -29,6 +29,8 @@ RSpec.describe CharactersController, type: :request do
         get stats_character_path(character)
 
         expect(response).to have_http_status(:success)
+        expect(response.body).to include('<body class="nl-game-layout"')
+        expect(response.body).to include('class="nl-allocation-character"')
         expect(response.body).to include("Stats")
         expect(response.body).to include("Free points")
       end

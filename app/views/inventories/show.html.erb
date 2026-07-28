@@ -1,5 +1,4 @@
-<%= turbo_frame_tag "main_content" do %>
-  <div class="inventory-page nl-player-subpage nl-inventory-page" data-controller="inventory">
+<div class="inventory-page nl-player-subpage nl-inventory-page" data-controller="inventory">
     <%= render "shared/player_context_buttons",
       character: current_character,
       viewer_character: current_character,
@@ -112,5 +111,4 @@
         </div>
       </main>
     </div>
-  </div>
-<% end %>
+</div>

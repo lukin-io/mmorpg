@@ -1,4 +1,5 @@
 <% content_for :title, "#{@chat_channel.name} - Chat" %>
+<% content_for :hide_shell_chat_composer, true %>
 
 <%# Subscribe to real-time updates via ActionCable/Turbo Streams %>
 <%= turbo_stream_from @chat_channel %>

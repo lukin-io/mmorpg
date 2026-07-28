@@ -3,7 +3,7 @@
 title: Character Progression Feature
 description: Implementation handbook for Neverlands-based primary stats, numeric skills, boolean perks, point allocation, and public progression display.
 status: Fully Implemented
-updated: 2026-07-27
+updated: 2026-07-28
 owners: Character Progression
 template: feature-v1
 ---
@@ -90,7 +90,7 @@ The MVP currently contains:
 
 ### 4.1 Entry conditions
 
-The public profile is available at `/player/:name` by case-insensitive active character name. An owner reaches Stats, Skills, and Perks from profile context buttons. Allocation routes require an authenticated user, an active playable character, and ownership of the requested `Character`.
+The public profile is available at `/player/:name` by case-insensitive active character name in the minimal public layout. A signed-in owner sees the same profile inside the persistent game shell and reaches Stats, Skills, and Perks from the profile's internal subnavigation. Allocation routes require an authenticated user, an active playable character, and ownership of the requested `Character`.
 
 The profile is not an account dashboard. It shows the gameplay character, equipment summary, vitals, progress, record, numeric skill summary, and owned perks. Only the owner sees primary-stat detail and progression mutation links.
 
@@ -99,6 +99,7 @@ The profile is not an account dashboard. It shows the gameplay character, equipm
 Each allocation page uses the compact Neverlands player-subpage language:
 
 - character name and level;
+- the same equipment paper doll, location, and money summary as the profile left column;
 - a visible remaining-point counter;
 - dense rows grouped by stat or captured skill category;
 - plus and minus controls for pending changes;
@@ -299,7 +300,7 @@ They must not:
 - apply gameplay effects or prerequisites;
 - authorize another character or bypass the final server check.
 
-`app/assets/stylesheets/nl/player_inventory.css` and the retained allocation rules in `app/assets/stylesheets/application.css` own the compact profile/allocation grids, point counters, row states, and controls. The shared primitive controls and shell remain owned by the shared UI layer.
+`app/assets/stylesheets/player_inventory.css` owns the live-measured 470px paper-doll column, dense profile/allocation tables, internal subnavigation, point counters, row states, and controls. `app/assets/stylesheets/application.css` is reset-only; shared controls and shell styling are owned by the ordered `tokens.css`, `primitives.css`, and `shell.css` modules.
 
 Accessibility behavior:
 
@@ -453,6 +454,10 @@ There is no dedicated view spec for each allocation partial; request and system 
 
 - `app/views/players/show.html.erb`
 - `app/views/shared/_player_context_buttons.html.erb`
+- `app/views/shared/_player_subnavigation.html.erb`
+- `app/views/shared/_player_equipment_summary.html.erb`
+- `app/views/shared/_equipment_paperdoll.html.erb`
+- `app/views/shared/_equipment_paperdoll_slot.html.erb`
 - `app/views/characters/stats.html.erb`
 - `app/views/characters/_stat_allocation.html.erb`
 - `app/views/characters/skills.html.erb`
@@ -463,7 +468,7 @@ There is no dedicated view spec for each allocation partial; request and system 
 - `app/javascript/controllers/skill_allocation_controller.js`
 - `app/javascript/controllers/perk_allocation_controller.js`
 - `app/assets/stylesheets/application.css`
-- `app/assets/stylesheets/nl/player_inventory.css`
+- `app/assets/stylesheets/player_inventory.css`
 
 ### Content, configuration, seeds, and schema
 
@@ -528,3 +533,4 @@ Before extending Character Progression:
 | 2026-07-21 | Created the canonical implementation handbook for primary stats, numeric skills, the launch-safe binary perk subset, point allocation, profile exposure, and known concurrency/effect boundaries. |
 | 2026-07-21 | Documented World as the sole current numeric-skill effect consumer through the bounded effective-Wanderer travel formula and added reciprocal ownership/coverage references. |
 | 2026-07-27 | Promoted the bounded feature to Fully Implemented: added level-0 defaults, complete source rows `0..27`, catalog XP/grants/NV, locked stat/skill mutations, exact HP/MP/mass and More Strength formulas, solo capped NPC XP integration, and boundary coverage. |
+| 2026-07-28 | Aligned owner profile and all allocation pages to the live Neverlands two-column paper-doll/table composition, separated shell context actions from internal profile navigation, and retained the minimal public profile layout. |

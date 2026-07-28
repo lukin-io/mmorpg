@@ -1,5 +1,4 @@
-<%= turbo_frame_tag "main_content" do %>
-  <div class="nl-player-subpage nl-shop-page">
+<div class="nl-player-subpage nl-shop-page">
     <%= render "shared/player_context_buttons",
       character: current_character,
       viewer_character: current_character,
@@ -70,5 +69,4 @@
         <%= render "shop/buy_table", items: @shop_items %>
       <% end %>
     </div>
-  </div>
-<% end %>
+</div>
