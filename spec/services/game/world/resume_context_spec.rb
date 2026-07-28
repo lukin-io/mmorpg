@@ -113,4 +113,44 @@ RSpec.describe Game::World::ResumeContext do
 
     expect(resume_context.resume_path).to eq("/world")
   end
+
+  it "resumes an allowlisted world location from the unchanged persisted entrance cell" do
+    outdoors = create(:zone, :mvp_outdoor_region, name: "Village Resume Region")
+    position.update!(zone: outdoors, x: 4, y: 6)
+    create(
+      :tile_building,
+      :world_location,
+      zone: outdoors.name,
+      x: 4,
+      y: 6,
+      building_key: "frontier_village"
+    )
+
+    resume_context.remember_world_location!(key: "frontier_village")
+
+    expect(character.reload.gameplay_context).to eq(
+      "name" => "world_location",
+      "params" => {"key" => "frontier_village"}
+    )
+    expect(resume_context.resume_path).to eq("/world/locations/frontier_village")
+    expect(position.reload).to have_attributes(zone: outdoors, x: 4, y: 6)
+  end
+
+  it "allows the linked shop only while the player remains on its location entrance" do
+    outdoors = create(:zone, :mvp_outdoor_region, name: "Village Shop Region")
+    position.update!(zone: outdoors, x: 4, y: 6)
+    create(
+      :tile_building,
+      :world_location,
+      zone: outdoors.name,
+      x: 4,
+      y: 6,
+      building_key: "frontier_village"
+    )
+
+    expect(resume_context).to be_shop_available
+
+    position.update!(x: 5)
+    expect(resume_context).not_to be_shop_available
+  end
 end

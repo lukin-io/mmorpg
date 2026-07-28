@@ -101,6 +101,30 @@ RSpec.describe Game::World::ActionOfferBuilder do
     expect(offers).to be_empty
   end
 
+  it "uses the same offer pipeline for persisted linked-location features" do
+    location = create(
+      :tile_building,
+      :world_location,
+      zone: zone.name,
+      x: position.x,
+      y: position.y,
+      building_key: "frontier_village"
+    )
+    location_state = OpenStruct.new(building: location)
+
+    offers = described_class.new(
+      character:,
+      position:,
+      tile_state: location_state,
+      context: :location
+    ).call
+
+    expect(offers.map(&:action_type)).to contain_exactly("open_location_feature", "open_location_feature")
+    expect(offers).to all(have_attributes(target: location, x: position.x, y: position.y))
+    expect(offers.map { |offer| offer.metadata["hotspot_key"] }).to contain_exactly("trading_post", "exit")
+    expect(offers.map { |offer| offer.metadata["building_key"] }).to all(eq(location.building_key))
+  end
+
   it "withholds wilderness Enter and Look offers at 86 percent fatigue" do
     character.update!(fatigue_percent: 86, fatigue_updated_at: Time.current)
     tile = create(:map_tile_template, :with_resource_search, zone: zone.name, x: 5, y: 5)

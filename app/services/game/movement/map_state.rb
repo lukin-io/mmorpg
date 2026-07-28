@@ -70,14 +70,18 @@ module Game
       def build_destination_offers(position)
         provider = Game::Movement::TileProvider.new(zone: position.zone)
         validator = Game::Movement::MovementValidator.new(provider)
-        travel_seconds = Game::Movement::TravelTime.seconds(character:, zone: position.zone)
-
         Game::Movement::Directions::OFFSETS.filter_map do |direction, (dx, dy)|
           target_x = position.x + dx
           target_y = position.y + dy
           next unless validator.valid?(target_x, target_y)
 
           tile_metadata = provider.metadata_at(target_x, target_y) || {}
+          travel_seconds = Game::Movement::TravelTime.seconds(
+            character:,
+            zone: position.zone,
+            terrain_type: provider.terrain_type_at(target_x, target_y),
+            metadata: tile_metadata
+          )
           command = MovementCommand.create!(
             character:,
             zone: position.zone,

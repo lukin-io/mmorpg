@@ -1,18 +1,26 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <title><%= content_for(:title) || "Neverlands" %></title>
+  <title><%= content_for(:title) || "RPG" %></title>
+  <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#fcfaf3">
   <%= csrf_meta_tags %>
   <%= csp_meta_tag %>
-  <%= stylesheet_link_tag "application", "nl/controls", data: { turbo_track: "reload" } %>
+  <%= stylesheet_link_tag "application", "controls", data: { turbo_track: "reload" } %>
   <%= javascript_importmap_tags %>
 </head>
 <body class="nl-game-layout" data-controller="game-layout">
+  <% world_travel_active = controller_name == "world" && @active_movement.present? %>
+  <% shell_chat_channel_id = @chat_channel&.id || @global_chat_channel_id %>
 
   <%# === TOP STATUS BAR (like original: name[lv] + HP/MP + text links) === %>
   <header class="nl-top-bar">
+    <div class="sr-only" data-controller="online-reload" <%= online_reload_attributes %> aria-hidden="true"></div>
+    <% if user_signed_in? %>
+      <%= turbo_stream_from ["notifications", current_user.id] %>
+    <% end %>
+
     <%# Left: Character name + level + HP/MP bars %>
     <div class="nl-top-left">
       <% if current_character %>
@@ -25,20 +33,45 @@
     <%# Right: Navigation text links (like original) %>
     <nav class="nl-top-nav">
       <% if current_character %>
-        <%= button_to "Character",
-            world_context_action_path,
-            method: :post,
-            params: {context: "profile"},
-            class: "nl-nav-link nl-nav-link--button",
-            form: {class: "nl-nav-action-form"} %>
-        <%= button_to "Inventory",
-            world_context_action_path,
-            method: :post,
-            params: {context: "inventory"},
-            class: "nl-nav-link nl-nav-link--button",
-            form: {class: "nl-nav-action-form"} %>
-        <% if @position&.zone&.city? %>
-          <span class="nl-nav-link nl-nav-link--disabled" aria-current="page">City</span>
+        <% if controller_name == "players" %>
+          <span class="nl-nav-link nl-nav-link--disabled" aria-current="page">Your character</span>
+        <% else %>
+          <%= button_to "Your character",
+              world_context_action_path,
+              method: :post,
+              params: {context: "profile"},
+              class: "nl-nav-link nl-nav-link--button",
+              disabled: world_travel_active,
+              form: {class: "nl-nav-action-form"} %>
+        <% end %>
+        <% if controller_name == "inventories" %>
+          <span class="nl-nav-link nl-nav-link--disabled" aria-current="page">Inventory</span>
+        <% else %>
+          <%= button_to "Inventory",
+              world_context_action_path,
+              method: :post,
+              params: {context: "inventory"},
+              class: "nl-nav-link nl-nav-link--button",
+              disabled: world_travel_active,
+              form: {class: "nl-nav-action-form"} %>
+        <% end %>
+        <% if controller_name == "world" %>
+          <% if @zone&.outdoor? %>
+            <%= turbo_frame_tag "available-actions", class: "nl-world-action-frame" do %>
+              <%= render "world/actions", available_actions: @available_actions || [], position: @position %>
+            <% end %>
+          <% else %>
+            <span class="nl-nav-link nl-nav-link--disabled" aria-current="page"><%= @zone&.display_name || "City" %></span>
+          <% end %>
+        <% elsif controller_name == "world_locations" %>
+          <span class="nl-nav-link nl-nav-link--disabled" aria-current="page"><%= @building&.location_short_label || "Location" %></span>
+        <% else %>
+          <%= button_to "Return",
+              world_context_action_path,
+              method: :post,
+              params: {context: "world"},
+              class: "nl-nav-link nl-nav-link--button",
+              form: {class: "nl-nav-action-form"} %>
         <% end %>
       <% end %>
     </nav>
@@ -53,7 +86,7 @@
     </div>
   </header>
 
-  <%# === MAIN CONTENT AREA (full width, takes most of screen) === %>
+  <%# Neverlands main_top frame: the only scrolling gameplay surface. %>
   <main class="nl-main-area" data-game-layout-target="mainContent">
     <%= turbo_frame_tag "main_content" do %>
       <% if content_for?(:main_content) %>
@@ -63,7 +96,18 @@
       <% end %>
     <% end %>
 
-    <%# === FLOATING PLAYERS PANEL (bottom-right corner) === %>
+  </main>
+
+  <div class="nl-frame-resizer" aria-hidden="true"></div>
+
+  <%# Neverlands chmain/ch_list frames translated into one persistent row. %>
+  <section class="nl-social-row" aria-label="Chat and nearby players">
+    <div class="nl-chat-history" id="chat-messages" data-game-layout-target="chatMessages">
+      <%= turbo_frame_tag "chat_messages", src: shell_chat_channel_id ? chat_channel_path(shell_chat_channel_id) : nil, loading: "lazy" do %>
+        <div class="nl-chat-loading">Loading...</div>
+      <% end %>
+    </div>
+
     <aside class="nl-players-float" data-game-layout-target="playersPanel">
       <div class="nl-players-header-float">
         <span class="nl-sort-links">
@@ -74,56 +118,67 @@
           <a href="#" data-action="click->game-layout#sortPlayers" data-sort="lvl-desc">33-0</a>
         </span>
         <label class="nl-refresh-check">
-          <input type="checkbox" checked data-action="change->game-layout#toggleAutoRefresh"> refresh
+          <input type="checkbox" checked data-action="change->game-layout#toggleAutoRefresh">
+          <span class="nl-refresh-image">refresh</span>
         </label>
       </div>
       <div class="nl-players-location">
-        <span class="nl-location-text"><%= @position&.zone&.name || "Unknown" %> [ <%= @players_here&.count || 0 %> ]</span>
-        <span class="nl-total-online">Total [ <%= User.joins(:user_sessions).merge(UserSession.recent).distinct.count rescue 0 %> ]</span>
+        <span class="nl-location-text"><%= @position&.zone&.name || "Unknown" %> [ <%= @players_here&.size || 0 %> ]</span>
+        <span class="nl-total-online">Total [ <%= @total_online.to_i %> ]</span>
       </div>
       <div class="nl-players-list-float" data-game-layout-target="playersList">
         <%= render "shared/nl_players_list" %>
       </div>
     </aside>
-  </main>
+  </section>
 
-  <%# === BOTTOM CHAT BAR (small strip at very bottom) === %>
+  <div class="nl-frame-separator" aria-hidden="true"></div>
+
+  <%# Compact game-owned chat controls using text and CSS only. %>
   <footer class="nl-bottom-bar" data-game-layout-target="bottomBar">
-    <%# Left: Action buttons %>
     <div class="nl-action-area">
-      <button class="nl-action-btn-small" data-action="click->game-layout#focusChat">Say</button>
+      <label class="nl-action-check"><input type="checkbox"> Action</label>
+      <button type="button" class="nl-chat-image-button nl-chat-image-button--say" data-action="click->game-layout#focusChat" title="Say">Say</button>
     </div>
 
-    <%# Center: Chat messages area %>
-    <div class="nl-chat-area" data-game-layout-target="chatArea">
-      <div class="nl-chat-messages" id="chat-messages" data-game-layout-target="chatMessages">
-        <%# Chat messages loaded via Turbo %>
-        <% global_chat = ChatChannel.global.first %>
-        <%= turbo_frame_tag "chat_messages", src: global_chat ? chat_channel_path(global_chat) : nil, loading: "lazy" do %>
-          <div class="nl-chat-loading">Loading...</div>
-        <% end %>
-      </div>
-      <div class="nl-chat-input-bar">
-        <% chat_channel = @chat_channel || ChatChannel.global.first %>
-        <% if chat_channel %>
-          <%= form_with url: chat_channel_chat_messages_path(chat_channel),
+    <div class="nl-chat-input-bar" data-game-layout-target="chatArea">
+      <% unless content_for?(:hide_shell_chat_composer) %>
+        <% if shell_chat_channel_id %>
+          <%= form_with url: chat_channel_chat_messages_path(shell_chat_channel_id),
                         method: :post,
                         scope: :chat_message,
                         class: "nl-chat-form-inline",
                         data: { controller: "chat-input", action: "turbo:submit-end->chat-input#reset" } do |f| %>
             <%= f.text_field :body,
                 class: "nl-chat-input-field",
-                placeholder: "Type message...",
+                placeholder: "",
+                maxlength: 250,
                 autocomplete: "off",
-                data: { chat_input_target: "input", action: "keydown->chat-input#handleKeydown" } %>
+                data: {
+                  game_layout_target: "chatInput",
+                  chat_input_target: "input",
+                  action: "keydown->chat-input#handleKeydown"
+                } %>
           <% end %>
         <% end %>
-      </div>
+      <% end %>
     </div>
 
-    <%# Right: Status icons %>
+    <div class="nl-chat-toolstrip" aria-label="Chat controls">
+      <button type="button" class="nl-chat-tool nl-chat-tool--send" aria-label="Send message" title="Send message" data-action="click->game-layout#sendChat">&gt;</button>
+      <button type="button" class="nl-chat-tool nl-chat-tool--clear-input" aria-label="Clear input" title="Clear input" data-action="click->game-layout#clearChatInput">X</button>
+      <button type="button" class="nl-chat-tool nl-chat-tool--smiles-one" aria-label="Emoticons" title="Emoticons">:)</button>
+      <button type="button" class="nl-chat-tool nl-chat-tool--smiles-two" aria-label="More emoticons" title="More emoticons">:D</button>
+      <button type="button" class="nl-chat-tool nl-chat-tool--refresh" aria-label="Refresh chat" title="Refresh chat" data-action="click->game-layout#refreshChat">R</button>
+      <button type="button" class="nl-chat-tool nl-chat-tool--clear-chat" aria-label="Clear chat" title="Clear chat" data-action="click->game-layout#clearChat">X</button>
+      <button type="button" class="nl-chat-tool nl-chat-tool--messages" aria-label="Show all messages" title="Show all messages">All</button>
+      <button type="button" class="nl-chat-tool nl-chat-tool--speed" aria-label="Refresh every 10 seconds" title="Refresh every 10 seconds">10s</button>
+      <button type="button" class="nl-chat-tool nl-chat-tool--language" aria-label="Text mode" title="Text mode">Aa</button>
+    </div>
+
     <div class="nl-status-icons">
       <span class="nl-time-display"><%= Time.current.strftime("%H:%M:%S") %></span>
+      <button type="button" class="nl-chat-tool nl-chat-tool--sound" aria-label="Player actions" title="Player actions">...</button>
     </div>
   </footer>
 

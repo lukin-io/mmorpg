@@ -15,7 +15,7 @@ module Game
       def call
         return failure("Invalid quantity.") unless quantity.positive?
         return failure("This item cannot be bought.") unless item_template&.base_price.to_i.positive?
-        return failure("Нет в наличии.") if item_template.out_of_stock?
+        return failure("Out of stock.") if item_template.out_of_stock?
         return failure("Not enough stock.") if item_template.shop_stock_limited? && item_template.shop_stock_current.to_i < quantity
         return failure("Not enough NV.") if wallet.nv_balance < total_price
 

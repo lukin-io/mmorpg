@@ -66,9 +66,9 @@ module Game
       end
 
       def validate!(entries)
-        raise "Neverlands progression table must start at level 0" unless entries.key?(0)
+        raise "Progression table must start at level 0" unless entries.key?(0)
         expected_levels = (0..entries.keys.max).to_a
-        raise "Neverlands progression levels must be contiguous" unless entries.keys.sort == expected_levels
+        raise "Progression levels must be contiguous" unless entries.keys.sort == expected_levels
 
         entries.each do |level_number, row|
           missing = ["experience_to_next_level", *REQUIRED_REWARD_KEYS] - row.keys
@@ -80,7 +80,7 @@ module Game
         end
 
         thresholds = entries.values.map { |row| row.fetch("experience_to_next_level") }
-        raise "Neverlands experience thresholds must be strictly increasing" unless thresholds.each_cons(2).all? { |left, right| right > left }
+        raise "Experience thresholds must be strictly increasing" unless thresholds.each_cons(2).all? { |left, right| right > left }
       end
       private_class_method :validate!
     end

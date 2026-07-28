@@ -97,18 +97,25 @@ category, and numeric filters. Leaving Shop for the city records the city/world
 surface again. An inaccessible Shop record falls back to that unchanged city or
 outdoor position.
 
-## City Rules
+## City And Linked-Location Rules
 
 - City entry is a contextual action offered by an outside tile.
 - City nodes are named locations in a graph.
 - City node transitions are immediate unless explicitly designed otherwise.
-- The illustrated `760 x 255` scene is the navigation surface: polygon or
-  positioned regions show tooltips and submit server-owned action keys.
+- Current city nodes use their captured native scene geometry and
+  server-offered polygon/positioned regions. Do not reuse the village size for
+  city districts.
 - Keyboard/focus proxies expose the same action names without adding a
   separate visible generic navigation menu.
 - Building entry is a city hotspot action.
 - Building return goes to the parent city node via `Город`.
 - Leaving a city returns to an outside map tile.
+- An outdoor `location` entrance opens an allowlisted interior without
+  replacing the persisted outdoor coordinate.
+- The captured village interior uses a native `760 × 255` CSS-built scene;
+  Trading Post and exit polygons each submit fresh server-owned action keys.
+- Linked Shop access and login resume remain valid only while the exact
+  entrance cell is still active and accessible.
 
 ## Travel Time
 
@@ -118,26 +125,32 @@ that Neverlands sends server-calculated values per map state: a character with
 Wanderer `100` received a `32`-second current step and a `49`-second next-cell
 value while other source modifiers were also present.
 
-The complete Neverlands formula is therefore still an evidence gap. For the
-MVP, isolate the explicitly required Wanderer relationship against the clean
-starter baseline:
+The 2026-07-28 village route added several `24`-second steps plus a `32`-second
+step. The complete Neverlands formula is therefore still an evidence gap. For
+the MVP, preserve an exact positive duration authored in destination metadata;
+otherwise isolate the Wanderer fallback against the clean starter baseline:
 
 ```text
-wanderer = clamp(effective_wanderer_level, 0, 100)
-reduction_seconds = floor(wanderer * 5 / 100)
-travel_seconds = clamp(30 - reduction_seconds, 25, 30)
+if destination.metadata.travel_seconds is a positive integer:
+  travel_seconds = destination.metadata.travel_seconds
+else:
+  wanderer = clamp(effective_wanderer_level, 0, 100)
+  reduction_seconds = floor(wanderer * 6 / 100)
+  travel_seconds = clamp(30 - reduction_seconds, 24, 30)
 ```
 
-This produces whole-second bands: `0..19 => 30`, `20..39 => 29`, `40..59 =>
-28`, `60..79 => 27`, `80..99 => 26`, and `100 => 25`. The duration is computed
-when the server creates the movement offer and remains fixed on that command
-through acceptance, reload, and completion.
+The fallback produces whole-second bands: `0..16 => 30`, `17..33 => 29`,
+`34..49 => 28`, `50..66 => 27`, `67..83 => 26`, `84..99 => 25`, and
+`100 => 24`. The duration is computed when the server creates the movement
+offer and remains fixed on that command through acceptance, reload, and
+completion.
 
-No terrain, diagonal, encumbrance, fatigue, effect, or profession **timing**
-modifier is implemented. Fatigue gates the named outdoor actions but does not
-change their duration. Terrain labels may identify a tile, but they must not
-alter movement duration by themselves. Additional modifiers require dedicated
-source observations that isolate their inputs.
+No inferred terrain, diagonal, encumbrance, fatigue, effect, or profession
+**timing** modifier is implemented. Fatigue gates the named outdoor actions but
+does not change their duration. A terrain label alone must not alter movement
+duration; only the exact authored `travel_seconds` override may do so.
+Additional formula modifiers require dedicated source observations that
+isolate their inputs.
 
 ## Wilderness Fatigue
 
@@ -220,10 +233,15 @@ object:
 | --- | --- |
 | Sparse tile template | terrain/passability override and authored local-action definitions |
 | Tile NPC | materialized hostile NPC state, HP, defeat, respawn, and combat target |
-| Tile entrance | the three captured Forpost city gates; future entrance types require capture |
+| Tile entrance | captured Forpost city gates or allowlisted linked-location entrance; future types require capture |
+| Tile entrance location metadata | captured interior geometry and features on the same persisted building record; never position authority |
 | World action offer | short-lived character/zone/coordinate/action/target authorization |
 
 A cell can contain an NPC, an entrance, and local actions at the same time.
+`doc/features/world.md`, section 7.4, is the operational authoring contract for
+those layers. It maps `db/seeds.rb`, the outdoor-NPC config, persisted records,
+resolution, offers, cleanup, and coverage. Movement must consume that composed
+state; it must not introduce another building/resource/NPC source.
 Movement completion rebuilds all of them. The launch resource action is
 Neverlands `look` / `Оглядеться`: it searches for herbs or local resources and
 can be interrupted by a hostile NPC before the resource action completes.

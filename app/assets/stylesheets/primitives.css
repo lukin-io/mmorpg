@@ -1,0 +1,324 @@
+html,
+body,
+.nl-game-layout,
+.nl-public-layout {
+  color: var(--nl-text);
+  background: var(--nl-bg-primary);
+  font-family: Verdana, Tahoma, Arial, sans-serif;
+  font-size: 12px;
+}
+
+a {
+  color: var(--nl-text-link);
+  text-decoration: none;
+}
+
+a:hover {
+  color: var(--nl-text-link-hover);
+  text-decoration: underline;
+}
+
+button,
+input,
+select,
+textarea {
+  border-radius: 0;
+  font-family: var(--nl-control-font);
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="search"],
+input[type="tel"],
+input[type="url"],
+select,
+textarea,
+.LogintextBox,
+.LogintextBox2,
+.LogintextBox3,
+.LogintextBox4,
+.nl-arena-select,
+.nl-arena-mini-input,
+.nl-fight-select,
+.nl-shop-select,
+.nl-shop-mini-input,
+.nl-shop-qty {
+  min-height: 17px;
+  padding: 1px 3px;
+  border: 1px solid #cccccc;
+  background: #ffffff;
+  color: #222222;
+  box-shadow: none;
+  font: 11px Verdana, Tahoma, Arial, sans-serif;
+  line-height: 14px;
+}
+
+input:focus,
+select:focus,
+textarea:focus,
+.LogintextBox:focus,
+.LogintextBox2:focus,
+.LogintextBox3:focus,
+.LogintextBox4:focus,
+.nl-chat-input-field:focus {
+  border-color: var(--nl-blue);
+  box-shadow: var(--nl-focus-ring);
+  outline: 0;
+}
+
+input[type="checkbox"],
+input[type="radio"] {
+  accent-color: #336699;
+}
+
+.btn,
+.btn-primary,
+.btn-secondary,
+.btn-success,
+.btn-danger,
+.lbut,
+.lbutdis,
+.nl-btn,
+.nl-btn--primary,
+.nl-btn--secondary,
+.nl-btn-primary,
+.nl-btn-secondary,
+.nl-arena-link,
+.nl-arena-small-button,
+.nl-arena-tab,
+.nl-action-btn-small,
+.nl-action-btn-large,
+.chat-control-btn,
+.chat-send-btn,
+.nl-chat-send-btn,
+.export-btn,
+.combat-log-tabs .tab,
+button[type="submit"],
+input[type="submit"] {
+  display: inline-flex;
+  min-height: 18px;
+  max-width: 100%;
+  align-items: center;
+  justify-content: center;
+  padding: 1px 6px;
+  border: 1px solid #decfa6;
+  border-radius: 0;
+  background: #ffffff;
+  color: #333333;
+  box-shadow: none;
+  cursor: pointer;
+  font: bold 11px/14px Tahoma, Verdana, Arial, sans-serif;
+  letter-spacing: 0;
+  text-align: center;
+  text-decoration: none;
+  text-shadow: none;
+  text-transform: none;
+  white-space: nowrap;
+}
+
+.btn:hover,
+.btn-primary:hover,
+.btn-secondary:hover,
+.btn-success:hover,
+.btn-danger:hover,
+.lbut:hover,
+.nl-btn:hover,
+.nl-btn--primary:hover,
+.nl-btn--secondary:hover,
+.nl-btn-primary:hover,
+.nl-btn-secondary:hover,
+.nl-arena-link:hover,
+.nl-arena-small-button:hover,
+.nl-arena-tab:hover,
+.nl-action-btn-small:hover,
+.nl-action-btn-large:hover,
+.chat-control-btn:hover,
+.chat-send-btn:hover,
+.nl-chat-send-btn:hover,
+.export-btn:hover,
+.combat-log-tabs .tab:hover,
+button[type="submit"]:hover,
+input[type="submit"]:hover {
+  border-color: #b9a05c;
+  background: #f3ecd7;
+  color: #003366;
+  text-decoration: none;
+}
+
+.btn:active,
+.btn-primary:active,
+.btn-secondary:active,
+.lbut:active,
+.nl-btn:active,
+.nl-arena-link:active,
+.nl-arena-small-button:active,
+.nl-arena-tab:active,
+.nl-action-btn-small:active,
+.nl-action-btn-large:active,
+button[type="submit"]:active,
+input[type="submit"]:active {
+  background: #e8dfc4;
+  transform: none;
+}
+
+.lbutdis,
+.invbut--disabled,
+.nl-btn--disabled,
+.nl-arena-tab--disabled,
+button:disabled,
+input[type="submit"]:disabled {
+  border-color: #decfa6;
+  background: #f3ecd7;
+  color: #c7bea6;
+  box-shadow: none;
+  cursor: default;
+  opacity: 1;
+  pointer-events: none;
+}
+
+.invbut {
+  display: inline-flex;
+  min-height: 16px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 5px;
+  border: 1px solid #ce0202;
+  background: #ffffff;
+  color: #333333;
+  cursor: pointer;
+  font: 10px/14px Verdana, Tahoma, Arial, sans-serif;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.invbut:hover,
+.invbut--danger:hover {
+  background: #fff2f2;
+  color: #cc0000;
+  text-decoration: none;
+}
+
+.invbut--danger,
+.btn-danger {
+  border-color: #ce0202;
+  background: #ffffff;
+  color: #cc0000;
+}
+
+.btn-sm {
+  min-height: 16px;
+  padding: 0 5px;
+  font-size: 10px;
+  line-height: 14px;
+}
+
+.nl-stat-btn {
+  display: inline-flex;
+  width: 17px;
+  min-width: 17px;
+  height: 17px;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid #decfa6;
+  background: #ffffff;
+  box-shadow: none;
+  cursor: pointer;
+  font: bold 12px/15px Verdana, Tahoma, Arial, sans-serif;
+}
+
+.nl-stat-btn--plus { color: #009d29; }
+.nl-stat-btn--minus { color: #cc0000; }
+.nl-stat-btn:hover { background: #f3ecd7; }
+
+.nl-profile-panel,
+.nl-equipment-summary,
+.nl-inventory-head,
+.nl-inventory-toolbar,
+.nl-arena-frame,
+.nl-shop-frame,
+.nl-allocation-panel,
+.panel,
+.card {
+  border: 1px solid var(--nl-border);
+  border-radius: 0;
+  background: #ffffff;
+  box-shadow: none;
+}
+
+.nl-profile-table,
+.nl-arena-table,
+.nl-shop-table,
+.nl-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #ffffff;
+  font-size: 11px;
+}
+
+.nl-profile-table th,
+.nl-profile-table td,
+.nl-arena-table th,
+.nl-arena-table td,
+.nl-shop-table th,
+.nl-shop-table td,
+.nl-table th,
+.nl-table td {
+  padding: 2px 4px;
+  border: 0;
+  border-bottom: 1px solid var(--nl-border-light);
+}
+
+.nl-profile-table th,
+.nl-arena-table th,
+.nl-shop-table th,
+.nl-table th {
+  background: #f3ecd7;
+  color: #333333;
+  font-weight: 400;
+  text-align: left;
+}
+
+.nl-public-main {
+  width: 100%;
+  min-height: 100vh;
+  padding: 4px;
+}
+
+.nl-public-flash {
+  position: fixed;
+  top: 4px;
+  right: 4px;
+  z-index: 100;
+}
+
+.flash,
+.nl-flash,
+.nl-notification {
+  display: block;
+  padding: 3px 6px;
+  border: 1px solid #b9a05c;
+  background: #fcfaf3;
+  color: #333333;
+  font-size: 11px;
+}
+
+.nl-flash--alert,
+.nl-notification--alert,
+.flash.alert { color: #cc0000; }
+.nl-flash--notice,
+.nl-notification--notice,
+.flash.success { color: #006600; }
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}

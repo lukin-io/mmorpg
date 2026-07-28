@@ -1,0 +1,19 @@
+<% character ||= current_character %>
+<% current_section ||= :profile %>
+
+<% if character %>
+  <nav class="nl-player-subnavigation" aria-label="Character sections">
+    <% {
+      profile: ["Profile", player_path(name: character.name)],
+      stats: ["Stats", stats_character_path(character)],
+      skills: ["Skills", skills_character_path(character)],
+      perks: ["Perks", perks_character_path(character)]
+    }.each do |section, (label, path)| %>
+      <% if current_section.to_sym == section %>
+        <span class="lbutdis" aria-current="page"><%= label %></span>
+      <% else %>
+        <%= link_to label, path, class: "lbut" %>
+      <% end %>
+    <% end %>
+  </nav>
+<% end %>

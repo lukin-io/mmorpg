@@ -125,6 +125,6 @@ module AvatarHelper
     dimensions = avatar_dimensions(size)
     classes = ["avatar", "avatar--#{size}", "avatar--fallback", options[:class]].compact.join(" ")
 
-    content_tag(:span, "👤", class: classes, style: "font-size: #{dimensions / 2}px; line-height: #{dimensions}px;")
+    content_tag(:span, "P", class: classes, style: "font-size: #{dimensions / 2}px; line-height: #{dimensions}px;")
   end
 end

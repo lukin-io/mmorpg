@@ -1,6 +1,6 @@
 # Neverlands Live City Movement Observation
 
-Originally observed on 2026-05-09 and expanded on 2026-07-20 through authorized
+Originally observed on 2026-05-09 and expanded on 2026-07-20 and 2026-07-28 through authorized
 authenticated Neverlands sessions. This is a game-design capture of city
 navigation: entering from nearby map tiles, moving between city locations,
 entering buildings, and loading selected service contents.
@@ -23,7 +23,93 @@ state.
 - Read selected market, transport, hospital, and resource-service states
   without submitting their economic actions.
 
-### Full City Graph Verification: 2026-07-20
+### Current Forpost verification: 2026-07-28
+
+This fresh authenticated observation supersedes the older nine-node/760 × 255
+topology below for the current Forpost implementation. The older capture is
+retained as historical evidence for a different city/revision and must not be
+used to restore `city2_*` nodes, stale gates, or stale building placement.
+
+The current main frame renders one 1250 × 600 city scene. Each building and
+district arrow is an independent transparent source layer; pointer hover swaps
+that layer to an `_hl` variant and opens a small white tooltip approximately
+15px below/right of the pointer. The local game recreates this interaction with
+project-owned art plus CSS-generated highlight crops and styled ASCII `>` arrows. No
+source city layer, hover layer, tooltip bitmap, or Shop illustration may ship.
+
+#### Current node graph
+
+| Runtime key | District | Directed links | Visible buildings/services |
+|---|---|---|---|
+| `main` | Central Square | Business, Residential | Tavern, Arena, Shop, City Exit, Workshop, Hospital, Guard Tower |
+| `forpost1` | Residential Quarter | Central, Knowledge, Law | Airship Station, Clan Hall, Market, Post, City Hall |
+| `forpost2` | Knowledge Quarter | Residential | Magic School, Library, General School, Military School |
+| `forpost3` | Business Quarter | Central | Auction, Souvenir Shop, Dealer House, Obelisk, Temple, Bank |
+| `forpost4` | Law Quarter | Residential | Law Abode, City Exit, Gallows; Prison illustrated without an active link |
+
+The verified graph has five nodes and eight directed links: `main <-> forpost3`,
+`main <-> forpost1`, `forpost1 <-> forpost2`, and `forpost1 <-> forpost4`.
+
+#### Current native-pixel geometry
+
+All coordinates are scene-local `[x, y, width, height]` inside 1250 × 600.
+
+| District | Building/route | Geometry |
+|---|---|---:|
+| Central | Tavern | `[154,167,192,117]` |
+| Central | Arena | `[374,0,570,336]` |
+| Central | Shop | `[96,303,320,182]` |
+| Central | City Exit | `[0,25,168,307]` |
+| Central | Workshop | `[982,182,245,112]` |
+| Central | Hospital | `[807,282,441,266]` |
+| Central | Guard Tower | `[240,20,79,158]` |
+| Central | Business arrow | `[308,512,76,99]` |
+| Central | Residential arrow | `[900,505,68,104]` |
+| Residential | Airship Station | `[794,125,262,354]` |
+| Residential | Clan Hall | `[514,48,336,246]` |
+| Residential | Market | `[278,338,368,184]` |
+| Residential | Post | `[123,236,146,196]` |
+| Residential | City Hall | `[184,0,305,333]` |
+| Residential | Central arrow | `[39,540,90,66]` |
+| Residential | Knowledge arrow | `[780,503,68,104]` |
+| Residential | Law arrow | `[1105,448,90,67]` |
+| Knowledge | Magic School | `[202,224,209,344]` |
+| Knowledge | Library | `[156,120,355,230]` |
+| Knowledge | General School | `[660,82,362,189]` |
+| Knowledge | Military School | `[842,283,315,250]` |
+| Knowledge | Residential arrow | `[245,30,89,84]` |
+| Business | Auction | `[244,311,666,289]` |
+| Business | Souvenir Shop | `[231,233,210,207]` |
+| Business | Dealer House | `[73,0,310,219]` |
+| Business | Obelisk | `[602,52,63,207]` |
+| Business | Temple | `[812,156,435,444]` |
+| Business | Bank | `[871,17,237,215]` |
+| Business | Central arrow | `[650,17,57,104]` |
+| Law | Law Abode | `[55,0,370,332]` |
+| Law | City Exit | `[46,343,371,257]` |
+| Law | Prison | `[578,81,379,419]` |
+| Law | Gallows | `[472,154,176,99]` |
+| Law | Residential arrow | `[84,297,76,100]` |
+
+The current level-16 character had an active Arena link, so the prior
+level-23 City entry requirement is invalid for this state and has been removed.
+The Central exit's established outdoor handoff remains `[1019,1025]` / local
+`[7,0]`. The Law exit was observed as a link, but its resulting outdoor
+coordinate was not exercised; it remains presentation-only locally.
+
+#### Current Shop presentation verification
+
+Entering Central Shop produced a 1250 × 600 building illustration followed by
+one centered 800px control surface, a four-tab row approximately 21px high, a
+61px icon-category strip, and a 30px filter row with level `0..33`, price
+`0..1000000 NV`, and Apply. The tabs correspond to Buy Goods, Licenses, Sell
+Goods, and For Beginners; City is the building return control.
+
+No item rows loaded in this session, so this observation verifies Shop shell,
+entry/return, tab/category/filter hierarchy, and dimensions rather than a new
+stock or transaction state.
+
+### Historical city graph capture: 2026-07-20
 
 A returning level-16 account was walked through all nine rendered Forpost city
 nodes in one authenticated session. Navigation used only the exact hotspot URLs

@@ -3,7 +3,7 @@
 title: Shop and Economy Feature
 description: Implementation handbook for the Neverlands-based city shop, NV wallet, catalog buying, inventory selling, and transaction ledger.
 status: Partially Implemented
-updated: 2026-07-27
+updated: 2026-07-28
 owners: Shop and Economy
 template: feature-v1
 ---
@@ -16,7 +16,7 @@ It describes what exists now. It does not treat every captured Neverlands city c
 
 ## 1. Design authority and related documents
 
-Neverlands is the sole game-design and visual reference for this feature. The local implementation adapts the observed `Лавка` density, item rows, tabs, filters, NV prices, mass/slot summaries, and explicit buy/sell actions to Rails and the current English client.
+Neverlands is the sole game-design and visual reference for this feature. The local implementation adapts the observed Shop density, item rows, tabs, filters, NV prices, mass/slot summaries, and explicit buy/sell actions to Rails and the current English client. Source runtime images, logos, project identity, and service/administration prose are evidence only; the shipped scene uses project-owned CSS, generic game wording, and styled ASCII/text category tokens instead of copied icon bitmaps.
 
 When behavior is uncertain or conflicts with this document:
 
@@ -38,15 +38,17 @@ Supporting documents:
 - `doc/features/city.md` owns entry to the Shop building.
 - `doc/features/character_progression.md` owns the stats and skills displayed as item requirements.
 - `doc/features/game_shell.md` owns the persistent frame surrounding the shop.
+- `doc/features/player_inventory.md` owns carried stacks and equipment after a trade.
 
 ### 1.1 Cross-feature relationships
 
 | Related feature | Relationship | Ownership and handoff |
 |---|---|---|
 | `doc/features/world.md` | Shop uses World-owned resume context and falls back to World when a saved Shop is no longer accessible. | World/City own exact location and safe destination selection; Shop owns only its allowlisted surface context and transactions. |
-| `doc/features/city.md` | The Trading Quarter exposes and authorizes entry to the General Shop. | City owns the node, hotspot offer, level/access check, and return; Shop owns behavior after the entry handoff. |
+| `doc/features/city.md` | Central Square exposes and authorizes entry to the Shop. | City owns the node, hotspot offer, level/access check, and return; Shop owns behavior after the entry handoff. |
 | `doc/features/character_progression.md` | Shop item rows present requirements derived from character stats/skills. | Character Progression owns the values; Shop may display them but does not decide equipment eligibility or mutate progression. |
 | `doc/features/game_shell.md` | Shop can render as the central gameplay surface inside the persistent shell. | Shop owns catalog/trade responses; Game Shell owns shared framing, navigation, presence, chat, and flashes. |
+| `doc/features/player_inventory.md` | Shop purchases add carried stacks and Shop sales remove eligible stacks. | Shop owns exchange value/stock transactions; Player Inventory owns the resulting stack, mass, durability, and equipment rules. |
 
 ## 2. Feature summary
 
@@ -92,7 +94,9 @@ An inventory and wallet are created with safe defaults if the current character/
 
 ### 4.2 Primary surface
 
-The shop is a compact framed page with mode links for Buy, Licenses, Sell, and Novice; category links for All, Weapons, Armor, Jewelry, Elixirs, Resources, and Misc; minimum/maximum level and price filters; and a status line for NV, mass, and slots.
+The current Shop starts with a project-owned CSS illustration using the observed 1250 × 600 scene ratio. Beneath it, one centered 800px frame contains a compact status/return row, four equal approximately 21px mode tabs (Buy Goods, Licenses, Sell Goods, and For Beginners), a 61px icon-category strip, and a 30px level/price filter row. Local categories are All, Weapons, Armor, Jewelry, Elixirs, Resources, and Misc; the mechanics are not expanded merely to fill every source icon slot.
+
+On tablet/mobile the decorative scene scales because it owns no action geometry. The frame remains within the main content; category and table regions own their own horizontal overflow instead of widening the page.
 
 Buy-like modes render dense item rows with name, properties, requirements, stock, NV price, quantity, and an action. Sell renders carried stacks with item state, quantity, calculated unit return, and a sell action. The surrounding header, vitals, nearby players, and chat belong to Game Shell.
 
@@ -251,7 +255,7 @@ It must not:
 - grant a license or novice privilege;
 - persist a trade without server validation.
 
-`app/assets/stylesheets/nl/shop.css` owns the compact tabs, filters, status strip, item tables, property/requirement cells, quantity controls, and action presentation. Shared frames and controls remain owned by Game Shell.
+`app/assets/stylesheets/shop.css` owns the project-created CSS Shop illustration, 1250 × 600 scene ratio, centered 800px frame, compact tabs, 61px category strip, filters, status strip, locally scrollable item tables, property/requirement cells, quantity controls, and responsive overflow. Shared framing remains owned by Game Shell.
 
 Accessibility behavior:
 
@@ -319,6 +323,8 @@ City/World own exact location persistence. Shop owns only the safe interior surf
 - License and novice source mechanics beyond filtering/ordinary purchase remain explicitly unimplemented.
 - Insufficient funds, capacity, stale stock, invalid quantity, and protected/foreign item failures cause no partial transfer.
 - Anonymous and out-of-Shop requests cannot trade or persist Shop context.
+- The current empty-catalog shell matches the observed scene/control hierarchy at desktop and remains usable without document overflow at `820px` and `390px`.
+- No Neverlands Shop illustration, icon bitmap, logo, signature, administration copy, or source asset URL is shipped.
 
 ## 15. Test strategy and required coverage
 
@@ -386,8 +392,8 @@ bundle exec rspec \
 - `app/views/shop/show.html.erb`
 - `app/views/shop/_buy_table.html.erb`
 - `app/views/shop/_sell_table.html.erb`
-- `app/assets/stylesheets/nl/shop.css`
-- `app/assets/stylesheets/nl/controls.css`
+- `app/assets/stylesheets/shop.css`
+- `app/assets/stylesheets/controls.css`
 
 ### Content, configuration, seeds, and schema
 
@@ -446,3 +452,4 @@ Before extending Shop and Economy:
 |---|---|
 | 2026-07-21 | Created the implementation handbook for the city Shop, catalog filters, buying, selling, NV wallet, stock, and safe resume behavior. |
 | 2026-07-27 | Aligned Shop capacity with the wiki mass formula and made zero-durability sale rejection explicit in implementation, request coverage, failure rules, and file ownership. |
+| 2026-07-28 | Moved current Shop access to Central Square; added the project-owned CSS scene, measured 800px control frame, four mode tabs, icon category strip, compact filters, local table overflow, responsive acceptance, and source-asset/text boundary. |

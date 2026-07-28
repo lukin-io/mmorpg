@@ -102,6 +102,18 @@ module InventoriesHelper
     "misc" => "IT"
   }.freeze
 
+  INVENTORY_CATEGORY_MARKS = {
+    "all" => "All",
+    "things" => "Gear",
+    "elixirs" => "Elx",
+    "fishing" => "Fish",
+    "alchemy" => "Alch",
+    "hunting" => "Hunt",
+    "resources" => "Res",
+    "wood" => "Wood",
+    "quests" => "Quest"
+  }.freeze
+
   ITEM_DETAIL_LABELS = {
     "ap" => "Action Points",
     "action_points" => "Action Points",
@@ -165,7 +177,7 @@ module InventoriesHelper
   ].freeze
 
   def equipment_slot_icon(slot)
-    SLOT_ICONS[slot.to_sym] || "◻️"
+    SLOT_ICONS[slot.to_sym] || "[ ]"
   end
 
   def item_slot_icon(item_template)
@@ -177,6 +189,10 @@ module InventoriesHelper
 
   def inventory_category_options
     INVENTORY_CATEGORIES
+  end
+
+  def inventory_category_mark(category)
+    INVENTORY_CATEGORY_MARKS.fetch(category.to_s, INVENTORY_CATEGORY_MARKS.fetch("all"))
   end
 
   def inventory_things_subcategory_options

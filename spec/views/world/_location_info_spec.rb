@@ -7,12 +7,13 @@ RSpec.describe "world/_location_info.html.erb", type: :view do
   let(:zone) { build_stubbed(:zone, name: "Outpost Surroundings", location_type: "outdoor") }
   let(:position) { build_stubbed(:character_position, zone:, x: 7, y: 0) }
 
-  it "renders the exact outdoor cell and captured source coordinates" do
+  it "renders the local outdoor cell without exposing source coordinates" do
     tile = OpenStruct.new(metadata: {"source_coordinates" => [1019, 1025]})
 
     render partial: "world/location_info", locals: {zone:, position:, tile:}
 
-    expect(rendered).to include("Outpost Surroundings", "[7, 0]", "1019, 1025")
+    expect(rendered).to include("Outpost Surroundings", "[7, 0]")
+    expect(rendered).not_to include("1019, 1025")
   end
 
   it "does not invent generic NPC or shop hints for a sparse cell" do

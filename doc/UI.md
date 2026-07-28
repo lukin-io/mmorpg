@@ -208,24 +208,23 @@ consistent. Cross-check each against the cited capture before building.
   with its own point pool and preview/save flow. The full source id/name/category
   catalog is now captured; capture prerequisites, point timing, and mechanical
   effects before exposing more choices.
-- **City graph and services**: the complete nine-node graph and all three
-  gate/cell pairs are implemented. Market, Junk Dealer, Numismatics, Airship
-  Station, and Hospital/Pharmacy are accessible as captured read-only screens;
-  their mutations remain deferred. General Shop and Arena keep their dedicated
-  interactive flows. City nodes now use the retained `city.png` as a compact
-  `760 x 255` illustrated navigation surface with positioned building polygons,
-  edge-route hit regions, arrow markers, hover/focus tooltips, and
-  keyboard-accessible proxy controls. Every actionable region still submits
-  the current server-owned action offer; unavailable illustrated features stay
-  non-actionable. The retained `arena.png` and `gate.png` assets were not
-  removed. The city-grid compatibility layer, generic entrance types/emoji
-  markers, spawn-coordinate fallback, and universal exit bypass remain absent.
-- **Outdoor client**: the launch region now renders a clipped `5 x 5` viewport
-  over a server-built `7 x 7` buffer of exact `100 x 100` cells. The player
-  cursor stays fixed in the center, only server-offered destinations receive
-  the red clickable outline, accepted travel slides the terrain beneath the
-  cursor, and a red countdown is shown one cell above it. Coordinates remain
-  available to assistive technology but are not generic visible chrome.
+- **City graph and services**: the fresh city capture is implemented as five
+  native `1250 × 600` district scenes with eight directed routes, project-owned
+  CSS/art presentation, ASCII/text arrows, hover/focus tooltips, and
+  keyboard-accessible server-offered hotspots. Only captured interactive
+  buildings are enabled; uncaptured service mutations and the Law outdoor
+  handoff remain deferred.
+- **Outdoor client**: the launch region renders a clipped 13 × 7 desktop
+  viewport over a server-built 15 × 9 buffer of exact `100 x 100` project-owned
+  terrain slices. The player cursor stays fixed in the center, only
+  server-offered destinations receive the thin red clickable outline, accepted
+  travel slides the terrain beneath the cursor, and a red countdown is shown
+  one cell above it. Tablet/mobile clients pan the same unscaled geometry.
+  Context actions stay in the shell's top row.
+- **Outdoor linked location**: the captured Frontier Village exact-cell
+  entrance, CSS-built `760 × 255` scene, Trading Post/exit hotspot offers,
+  linked Shop, and DB-backed login resume are implemented. Mines, exchanges,
+  and other uncaptured location families remain intentionally unavailable.
 - **Quests modal**: documented capture is still missing and implementation is
   intentionally absent. **`Лавка`** has a starter buy/sell implementation, and
   **wild NPC handoff** is partial; remaining work is tracked in

@@ -76,5 +76,20 @@ RSpec.describe Game::World::TileBuildingService do
       expect(result.message).to eq("Entrance is currently unavailable.")
       expect(character.position.reload.zone).to eq(source_zone)
     end
+
+    it "returns the persisted building key while preserving the world cell" do
+      building.update!(
+        building_type: "location",
+        destination_zone: nil,
+        destination_x: nil,
+        destination_y: nil,
+        metadata: build(:tile_building, :world_location).metadata
+      )
+
+      result = service.enter!
+
+      expect(result).to have_attributes(success: true, location_key: building.building_key, destination_zone: nil)
+      expect(character.position.reload).to have_attributes(zone: source_zone, x: 3, y: 3)
+    end
   end
 end

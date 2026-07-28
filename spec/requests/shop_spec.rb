@@ -165,7 +165,7 @@ RSpec.describe "Shop", type: :request do
       get shop_path
 
       expect(response).to redirect_to(world_path)
-      expect(flash[:alert]).to include("city building")
+      expect(flash[:alert]).to include("accessible trading location")
     end
 
     it "does not persist a shop context" do

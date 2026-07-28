@@ -125,9 +125,4 @@
     <p class="nl-profile-empty"><%= inventory_empty_message(category) %></p>
   <% end %>
 
-  <% [inventory.max_slots - inventory.inventory_items.count, 0].max.times do |i| %>
-    <div class="inventory-slot empty nl-inventory-empty-slot" data-slot-index="<%= inventory.inventory_items.count + i %>">
-      empty
-    </div>
-  <% end %>
 </div>

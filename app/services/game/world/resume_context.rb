@@ -43,6 +43,16 @@ module Game
         )
       end
 
+      def remember_world_location!(key:)
+        normalized_key = key.to_s
+        raise ArgumentError, "World location is unavailable" unless world_location_available?(normalized_key)
+
+        character.remember_gameplay_context!(
+          name: "world_location",
+          params: {"key" => normalized_key}
+        )
+      end
+
       def resume_path
         context = character.gameplay_context
 
@@ -56,14 +66,22 @@ module Game
           return world_path unless CityBuildingCatalog.accessible?(character:, building_key:)
 
           CityBuildingCatalog.path_for(building_key)
+        when "world_location"
+          key = context.dig("params", "key").to_s
+          return world_path unless world_location_available?(key)
+
+          world_location_path(key)
         else
           world_path
         end
       end
 
       def shop_available?
-        position = character.position
-        return false unless position&.zone&.city?
+        position = character.position&.reload
+        return false unless position
+
+        return true if world_location_shop_available?(position)
+        return false unless position.zone.city?
 
         CityHotspot.for_zone(position.zone).any? do |hotspot|
           hotspot.action_params.to_h["feature"] == "shop" && hotspot.can_interact?(character)
@@ -73,6 +91,20 @@ module Game
       private
 
       attr_reader :character
+
+      def world_location_available?(key)
+        position = character.position&.reload
+        building = TileBuilding.active.at_tile(position&.zone&.name, position&.x, position&.y)
+        building&.location? && building.location_key == key && building.can_enter?(character)
+      end
+
+      def world_location_shop_available?(position)
+        building = TileBuilding.active.at_tile(position&.zone&.name, position&.x, position&.y)
+
+        building&.location? &&
+          building.can_enter?(character) &&
+          building.location_feature_available?("shop")
+      end
 
       def normalized_shop_params(params)
         raw = params.respond_to?(:to_h) ? params.to_h.deep_stringify_keys : {}

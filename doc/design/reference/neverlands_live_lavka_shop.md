@@ -6,6 +6,20 @@ Character used: `max_kerby`, level 4.
 
 Observed place: `Форпост`, `Лавка`, building key `shop_1`.
 
+Supplemental presentation verification: 2026-07-28, current level-16
+authenticated session. Entry from the freshly observed Forpost Central Square
+rendered a 1250 × 600 building scene, followed by a centered 800px control
+surface. The mode row measured approximately 21px high, the icon category strip
+61px, and the numeric filter row 30px. The filters showed level `0..33`, price
+`0..1000000 NV`, and Apply. The four modes and City return matched the hierarchy
+already documented below. No item rows loaded in this supplemental state, so it
+adds shell geometry and responsive implementation evidence but does not replace
+the earlier populated catalog observations.
+
+The source building illustration and category bitmaps are reference evidence
+only. Local implementation must use project-owned CSS/HTML/text or project
+assets and must not copy source images, identity text, or asset URLs.
+
 ## Purpose
 
 This capture documents the Neverlands `Лавка` shop flow that should replace

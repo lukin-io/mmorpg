@@ -3,12 +3,56 @@
 `doc/design/` is the active Neverlands-based design library and the single
 point of truth for current game design.
 
+## Reference-boundary rule
+
+Neverlands is the observation and reference source for game design and the
+measurable UI/UX contract. The boundary is between **RPG-domain content** and
+**Neverlands platform identity**:
+
+- Reproduce mechanics, formulas, topology, information hierarchy, dimensions,
+  density, spacing, typography, colors, control order, interaction flows, state
+  transitions, and responsive adaptation.
+- Gameplay-domain terminology may be retained when it is an intentional part
+  of the adopted RPG design. This includes stats, skills, abilities, item types
+  and names, actions, combat terms, and other gameplay labels. Generic terms
+  such as `Ability`, `Strength`, `Inventory`, and `Fight Log` are not
+  Neverlands branding.
+- Rewrite descriptive, instructional, status, and flavor copy in this game's
+  language while preserving the observed gameplay meaning. Player-facing text
+  must describe this game and only behavior implemented locally.
+- Do not copy or ship Neverlands platform identity or source-owned presentation
+  content: its product name or logo, administration signatures, account/about/
+  contact/project/service copy, images, sprites, icons, crests, decorative
+  artwork, or prose that is unrelated to the adopted RPG design.
+- Recreate visual primitives with this project's own maintainable CSS and
+  semantic HTML. When the source uses an image only as a control, indicator, or
+  icon, replace it with a suitable styled ASCII/plain-text equivalent that
+  preserves its meaning: for example `X` for close/clear, `>` for a direction,
+  `+`/`-` for adjustment, `R` for refresh, or a short text abbreviation. Do not
+  leave the affordance missing merely because its source bitmap is prohibited.
+- Use project-owned images only for genuine game artwork that cannot be
+  represented clearly as CSS/text. Do not vendor a source stylesheet wholesale
+  when it carries source assets, branding, or obsolete implementation details.
+
+Reference screenshots, source text, and observations may remain under
+`doc/design/reference/` as evidence, but source-owned product content must not
+become runtime assets or platform copy.
+
 Start here:
 
 1. `doc/design/README.md`
 2. `doc/design/gdd.md`
 3. `doc/design/launch_mvp_plan.md`
-4. `doc/design/reference/neverlands.md`
+4. `doc/design/areas/game_client_layout.md` — UI/AX and domain-SRP style ownership guide
+5. `doc/design/reference/neverlands.md`
+
+Verified shipped behavior and implementation ownership live under
+`doc/features/`; start with `doc/features/README.md`. For outdoor cells,
+buildings, local actions/resources, and NPC placement, use
+`doc/features/world.md`, especially section 7.4. That section owns the
+seed/config lifecycle and the add/adjust/move/deactivate/remove examples. The
+design documents explain why the pipeline exists; they do not authorize a
+parallel runtime catalog or a second source of cell truth.
 
 ## Neverlands source entry point
 

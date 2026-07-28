@@ -1,154 +1,37 @@
 <% content_for :title, "#{@character.name} - Character" %>
 
-<%= turbo_frame_tag "main_content" do %>
-  <section class="nl-player-profile">
-    <%= render "shared/player_context_buttons",
-      character: @character,
-      viewer_character: @viewer_character,
-      current_section: :profile %>
-
-    <div class="nl-player-profile-head">
-      <div class="nl-player-profile-identity">
-        <div>
-          <h1><%= @character.name %> [<%= @character.level %>]</h1>
-          <div class="nl-profile-subline">
-            <span>Player</span>
-            <span><%= profile_location(@character) %></span>
-            <span>Created <%= l(@character.created_at.to_date, format: :default) %></span>
-          </div>
-        </div>
-      </div>
-      <%= render "shared/nl_vitals_bar", character: @character %>
-    </div>
-
-    <div class="nl-player-profile-grid">
-      <aside class="nl-player-profile-left">
-        <%= render "shared/player_equipment_summary", character: @character, equipment: @equipment, show_money: @own_profile %>
-
-        <% if @own_profile %>
-          <div class="nl-profile-panel">
-            <h2>Primary stats</h2>
-            <table class="nl-profile-table">
-              <% profile_primary_stats(@character).each do |stat| %>
-                <tr>
-                  <th><%= stat[:label] %></th>
-                  <td>
-                    <%= stat[:total] %><% if stat[:equipment] != 0 %>
-                      <span class="nl-stat-equip-delta"><%= signed_value(stat[:equipment]) %></span>
-                    <% end %>
-                  </td>
-                </tr>
-              <% end %>
-            </table>
-          </div>
+<section class="nl-player-profile nl-source-character-page">
+  <div class="nl-visually-hidden" aria-live="polite">
+    <h1><%= @character.name %> [<%= @character.level %>]</h1>
+    <p><%= profile_location(@character) %></p>
+    <% if @character.owned_perk_keys.any? %>
+      <h2>Perks</h2>
+      <ul>
+        <% @character.owned_perk_keys.each do |perk_key| %>
+          <% definition = Game::Skills::PerkRegistry.find(perk_key) %>
+          <li><%= definition[:name] %></li>
         <% end %>
-      </aside>
+      </ul>
+    <% end %>
+  </div>
+  <div class="nl-source-character-grid">
+    <aside class="nl-source-character-left">
+      <%= render "shared/neverlands_character_sheet",
+        character: @character,
+        equipment: @equipment,
+        interactive: false,
+        show_money: @own_profile %>
+    </aside>
 
-      <main class="nl-player-profile-main">
-        <% if @own_profile && @character.stat_points_available.to_i.positive? %>
-          <div class="nl-profile-panel">
-            <h2>Allocate stat points</h2>
-            <turbo-frame id="stat-allocation">
-              <%= render "characters/stat_allocation" %>
-            </turbo-frame>
-          </div>
-        <% end %>
+    <main class="nl-source-character-right">
+      <%= render "shared/neverlands_profile_navigation", character: @character %>
 
-        <div class="nl-profile-panel">
-          <h2>Progress</h2>
-          <table class="nl-profile-table nl-profile-table--wide">
-            <tr>
-              <th>Combat experience</th>
-              <td><%= number_with_delimiter(@character.experience) %></td>
-            </tr>
-            <tr>
-              <th>To next level</th>
-              <td><%= number_with_delimiter(@character.experience_to_next_level) %></td>
-            </tr>
-            <tr>
-              <th>Alignment</th>
-              <td><%= @character.alignment_label %></td>
-            </tr>
-            <tr>
-              <th>Valor</th>
-              <td><%= number_with_delimiter(@character.metadata.to_h.fetch("valor", 0)) %></td>
-            </tr>
-            <tr>
-              <th>Fatigue</th>
-              <td><%= profile_fatigue(@character) %>%</td>
-            </tr>
-          </table>
-        </div>
+      <% if @own_profile && @character.stat_points_available.to_i.positive? %>
+        <turbo-frame id="stat-allocation" class="nl-source-allocation">
+          <%= render "characters/stat_allocation" %>
+        </turbo-frame>
+      <% end %>
 
-        <% if @own_profile %>
-          <div class="nl-profile-panel">
-            <h2>Combat profile</h2>
-            <table class="nl-profile-table nl-profile-table--wide">
-              <% profile_combat_stats(@character).each do |label, value| %>
-                <tr>
-                  <th><%= label %></th>
-                  <td><%= value %></td>
-                </tr>
-              <% end %>
-            </table>
-          </div>
-        <% end %>
-
-        <div class="nl-profile-panel">
-          <h2>Combat record</h2>
-          <table class="nl-profile-table nl-profile-table--wide">
-            <tr>
-              <th>Wins vs players</th>
-              <td><%= @character.metadata.to_h.fetch("player_wins", 0) %></td>
-              <th>Losses vs players</th>
-              <td><%= @character.metadata.to_h.fetch("player_losses", 0) %></td>
-            </tr>
-            <tr>
-              <th>Wins vs NPCs</th>
-              <td><%= @character.metadata.to_h.fetch("npc_wins", 0) %></td>
-              <th>Losses vs NPCs</th>
-              <td><%= @character.metadata.to_h.fetch("npc_losses", 0) %></td>
-            </tr>
-          </table>
-        </div>
-
-        <div class="nl-profile-panel">
-          <div class="nl-inventory-list-head">
-            <h2>Skills</h2>
-            <% if @own_profile %>
-              <%= link_to "Train skills", skills_character_path(@character), class: "lbut" %>
-              <%= link_to "Choose perks", perks_character_path(@character), class: "lbut" %>
-            <% end %>
-          </div>
-          <div class="nl-profile-skill-list">
-            <% Game::Skills::PassiveSkillRegistry.all.first(12).each do |key, definition| %>
-              <div class="nl-profile-skill-row">
-                <span><%= definition[:name] %></span>
-                <strong>[<%= profile_skill_level(@character, key) %>/100]</strong>
-              </div>
-            <% end %>
-          </div>
-        </div>
-
-        <div class="nl-profile-panel">
-          <h2>Perks</h2>
-          <div class="nl-profile-skill-list">
-            <% if @character.owned_perk_keys.any? %>
-              <% @character.owned_perk_keys.each do |perk_key| %>
-                <% definition = Game::Skills::PerkRegistry.find(perk_key) %>
-                <div class="nl-profile-skill-row">
-                  <span><%= definition[:name] %></span>
-                  <strong>Yes</strong>
-                </div>
-              <% end %>
-            <% else %>
-              <div class="nl-profile-skill-row">
-                <span>No perks selected</span>
-              </div>
-            <% end %>
-          </div>
-        </div>
-      </main>
-    </div>
-  </section>
-<% end %>
+    </main>
+  </div>
+</section>

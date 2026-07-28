@@ -32,6 +32,7 @@ RSpec.describe "Arena Match Lifecycle UI", type: :system, js: true do
   before do
     create(:character_position, character: character1)
     create(:character_position, character: character2)
+    page.current_window.resize_to(955, 817)
   end
 
   # =============================================================================
@@ -297,10 +298,11 @@ RSpec.describe "Arena Match Lifecycle UI", type: :system, js: true do
       end
     end
 
-    it "displays return to arena link" do
+    it "requires the explicit Neverlands finish step before returning" do
       visit arena_match_path(completed_match)
 
-      expect(page).to have_link("To Arena")
+      expect(page).to have_button("Finish Fight")
+      expect(page).not_to have_link("To Arena")
     end
 
     it "does NOT display action buttons" do

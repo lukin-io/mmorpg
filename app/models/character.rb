@@ -3,7 +3,7 @@
 class Character < ApplicationRecord
   MAX_NAME_LENGTH = 30
   GAMEPLAY_CONTEXT_KEY = "gameplay_context"
-  GAMEPLAY_CONTEXTS = %w[world shop city_building].freeze
+  GAMEPLAY_CONTEXTS = %w[world shop city_building world_location].freeze
 
   PRIMARY_STATS = %i[strength dexterity luck vitality intelligence].freeze
   BASE_PRIMARY_STATS = PRIMARY_STATS.index_with { 1 }.freeze

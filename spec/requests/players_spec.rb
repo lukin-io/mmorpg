@@ -22,13 +22,31 @@ RSpec.describe "Players", type: :request do
       get player_path(name: character.name)
 
       expect(response).to have_http_status(:ok)
+      expect(response.body).to include('<body class="nl-public-layout"')
+      expect(response.body).not_to include('<body class="nl-game-layout"')
       expect(response.body).to include("max_kerby [#{character.level}]")
       expect(response.body).to include("Outpost Surroundings [7, 9]")
-      expect(response.body).to include("avatar--fallback")
+      expect(response.body).to include("nl-equipment-character-figure")
+      expect(response.body).not_to include("assets/neverlands")
+      expect(response.body).not_to include("Neverlands administration")
       expect(response.body).to include("Knife")
       expect(response.body).not_to include("Primary Stats")
       expect(response.body).not_to include("Combat Parameters")
       expect(response.body).not_to include(user.email)
+    end
+
+    it "keeps an owner's profile inside the persistent game shell" do
+      character = create(:character, user: user, name: "shell_hero")
+      zone = create(:zone, name: "Outpost")
+      create(:character_position, character: character, zone: zone, x: 1, y: 2)
+      sign_in user, scope: :user
+
+      get player_path(name: character.name)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include('<body class="nl-game-layout"')
+      expect(response.body).to include('class="nl-source-profile-tabs"')
+      expect(response.body).to include("Character sections")
     end
 
     it "returns location, equipment, and public player path in JSON" do

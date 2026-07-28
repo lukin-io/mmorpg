@@ -14,7 +14,10 @@ class ArenaMatchesController < ApplicationController
       flash.now[:notice] = "Fight finished."
     end
 
-    @participations = @arena_match.arena_participations.includes(:character, :npc_template)
+    @participations = @arena_match.arena_participations.includes(
+      :npc_template,
+      character: {inventory: {inventory_items: :item_template}}
+    )
     @broadcaster = Arena::CombatBroadcaster.new(@arena_match)
 
     respond_to do |format|

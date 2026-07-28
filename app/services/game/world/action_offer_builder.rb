@@ -6,14 +6,17 @@ module Game
   module World
     # Builds persisted action offers for the current authoritative tile state.
     class ActionOfferBuilder
-      def initialize(character:, position:, tile_state:)
+      def initialize(character:, position:, tile_state:, context: :tile)
         @character = character
         @position = position
         @tile_state = tile_state
+        @context = context.to_sym
       end
 
       def call
         cancel_open_offers!
+
+        return location_feature_offers if context == :location
 
         offers = []
         offers << building_offer
@@ -23,7 +26,7 @@ module Game
 
       private
 
-      attr_reader :character, :position, :tile_state
+      attr_reader :character, :position, :tile_state, :context
 
       def cancel_open_offers!
         WorldActionOffer
@@ -71,6 +74,24 @@ module Game
               label: local_action["label"].presence ||
                 MapTileTemplate.default_local_action_label(local_action_type)
             }
+          )
+        end
+      end
+
+      def location_feature_offers
+        building = tile_state.building
+        return [] unless building&.location? && building.can_enter?(character)
+
+        building.location_features.map do |feature|
+          create_offer(
+            :open_location_feature,
+            target: building,
+            metadata: {
+              building_key: building.building_key,
+              hotspot_key: feature.fetch("key"),
+              location_action_type: feature.fetch("action_type"),
+              feature: feature["feature"]
+            }.compact
           )
         end
       end

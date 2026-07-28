@@ -3,10 +3,18 @@
 require "rails_helper"
 
 RSpec.describe Game::World::CityCatalog do
-  it "defines the complete nine-node source graph" do
+  it "defines the observed five-node Forpost graph" do
+    expect(described_class::STARTER_NODE_KEY).to eq("main")
     expect(described_class::NODES.keys).to contain_exactly(
-      "city2_1", "city2_2", "city2_3", "city2_4", "city2_5",
-      "city2_6", "city2_7", "city2_8", "city2_9"
+      "main", "forpost1", "forpost2", "forpost3", "forpost4"
+    )
+
+    expect(described_class::NODES.transform_values { |node| node["links"].keys }).to eq(
+      "main" => %w[forpost3 forpost1],
+      "forpost1" => %w[main forpost2 forpost4],
+      "forpost2" => %w[forpost1],
+      "forpost3" => %w[main],
+      "forpost4" => %w[forpost1]
     )
 
     described_class::NODES.each do |node_key, node|
@@ -15,55 +23,37 @@ RSpec.describe Game::World::CityCatalog do
           "expected #{node_key} destination #{destination_key} to exist"
       end
     end
-
-
-    expect(described_class::NODES.transform_values { |node| node["links"].keys }).to eq(
-      "city2_1" => %w[city2_3 city2_2],
-      "city2_2" => %w[city2_1 city2_4],
-      "city2_3" => %w[city2_1 city2_4 city2_6],
-      "city2_4" => %w[city2_2 city2_3 city2_5 city2_7],
-      "city2_5" => %w[city2_4 city2_8],
-      "city2_6" => %w[city2_3 city2_9 city2_7],
-      "city2_7" => %w[city2_4 city2_6 city2_8],
-      "city2_8" => %w[city2_5 city2_7],
-      "city2_9" => %w[city2_6]
-    )
   end
 
-  it "keeps interactive and read-only features on their observed nodes" do
+  it "keeps interactive features on their currently observed districts" do
     expect(described_class::NODES.transform_values { |node| node["features"].keys }).to eq(
-      "city2_1" => ["arena"],
-      "city2_2" => %w[shop market junk_dealer numismatics airship_station],
-      "city2_3" => ["hospital"],
-      "city2_4" => [],
-      "city2_5" => [],
-      "city2_6" => [],
-      "city2_7" => [],
-      "city2_8" => [],
-      "city2_9" => []
+      "main" => %w[arena shop hospital],
+      "forpost1" => %w[airship_station market],
+      "forpost2" => [],
+      "forpost3" => [],
+      "forpost4" => []
+    )
+    expect(described_class.node("main").dig("features", "arena", "required_level")).to eq(0)
+  end
+
+  it "keeps only the outdoor gate whose destination cell was verified" do
+    expect(described_class::GATES.keys).to eq(["west"])
+    expect(described_class::GATES.fetch("west")).to include(
+      "name" => "City Exit",
+      "node_key" => "main",
+      "local_coordinates" => [7, 0],
+      "source_coordinates" => [1019, 1025]
     )
   end
 
-  it "defines West, South, and East gates with distinct nodes and source cells" do
-    expect(described_class::GATES.transform_values { |gate| gate["node_key"] }).to eq(
-      "west" => "city2_1",
-      "south" => "city2_7",
-      "east" => "city2_8"
-    )
-    expect(described_class::GATES.transform_values { |gate| gate["source_coordinates"] }).to eq(
-      "west" => [1019, 1025],
-      "south" => [1022, 1028],
-      "east" => [1025, 1027]
-    )
-    expect(described_class::GATES.values.map { |gate| gate["local_coordinates"] }.uniq.size).to eq(3)
+  it "uses the observed native scene and project image dimensions" do
+    expect(described_class::SCENE_WIDTH).to eq(1250)
+    expect(described_class::SCENE_HEIGHT).to eq(600)
+    expect(described_class::IMAGE_WIDTH).to eq(1536)
+    expect(described_class::IMAGE_HEIGHT).to eq(1024)
   end
 
-  it "returns nil for null and unsupported node keys" do
-    expect(described_class.node(nil)).to be_nil
-    expect(described_class.node("city2_99")).to be_nil
-  end
-
-  it "defines image-map presentation geometry for every seeded city action" do
+  it "defines pixel geometry for every seeded city action" do
     described_class::NODES.each do |node_key, node|
       expected_hotspot_keys = node["links"].keys.map { |destination| "go_#{destination}" }
       expected_hotspot_keys.concat(node["features"].keys)
@@ -73,26 +63,37 @@ RSpec.describe Game::World::CityCatalog do
 
       presentation = described_class.presentation(node_key)
 
-      expect(presentation).to include("image_position")
+      expect(presentation.fetch("image_offset").size).to eq(2)
+      expect(presentation.fetch("focus").size).to eq(2)
       expect(presentation.fetch("hotspots").keys).to contain_exactly(*expected_hotspot_keys)
       presentation.fetch("hotspots").each_value do |geometry|
-        expect(geometry.key?("polygon") ^ geometry.key?("box")).to be(true)
+        left, top, width, height = geometry.fetch("box")
+        expect(left).to be_between(0, described_class::SCENE_WIDTH)
+        expect(top).to be_between(0, described_class::SCENE_HEIGHT)
+        expect(width).to be_positive
+        expect(height).to be_positive
       end
     end
   end
 
-  it "keeps the observed central and trading interaction shapes explicit" do
-    expect(described_class.hotspot_presentation("city2_1", "arena")).to include("polygon")
-    expect(described_class.hotspot_presentation("city2_1", "west_gate")).to include(
-      "marker" => [7, 57],
-      "direction" => "west"
+  it "keeps current Central Square and Residential Quarter geometry explicit" do
+    expect(described_class.hotspot_presentation("main", "shop")).to eq(
+      "box" => [96, 303, 320, 182]
     )
-    expect(described_class.hotspot_presentation("city2_2", "market")).to include("polygon")
+    expect(described_class.hotspot_presentation("main", "go_forpost1")).to include(
+      "box" => [900, 496, 68, 104],
+      "direction" => "southeast"
+    )
+    expect(described_class.presentation("forpost1").dig("landmarks", "clan_hall")).to include(
+      "name" => "Clan Hall"
+    )
   end
 
-  it "returns nil for unsupported presentation keys" do
+  it "returns nil for null and unsupported keys" do
+    expect(described_class.node(nil)).to be_nil
+    expect(described_class.node("forpost99")).to be_nil
     expect(described_class.presentation(nil)).to be_nil
-    expect(described_class.hotspot_presentation("city2_1", nil)).to be_nil
-    expect(described_class.hotspot_presentation("city2_99", "arena")).to be_nil
+    expect(described_class.hotspot_presentation("main", nil)).to be_nil
+    expect(described_class.hotspot_presentation("forpost99", "arena")).to be_nil
   end
 end

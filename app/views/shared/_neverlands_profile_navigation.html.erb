@@ -1,0 +1,19 @@
+<% current_section ||= nil %>
+
+<nav class="nl-source-profile-tabs" aria-label="Character sections">
+  <% if current_section.nil? %>
+    <span class="lbutdis" aria-current="page">Overview</span>
+  <% else %>
+    <%= link_to "Overview", player_path(name: character.name), class: "lbut" %>
+  <% end %>
+  <% if current_section == :skills %>
+    <span class="lbutdis" aria-current="page">Skills</span>
+  <% else %>
+    <%= link_to "Skills", skills_character_path(character), class: "lbut" %>
+  <% end %>
+  <% if current_section == :perks %>
+    <span class="lbutdis" aria-current="page">Perks</span>
+  <% else %>
+    <%= link_to "Perks", perks_character_path(character), class: "lbut" %>
+  <% end %>
+</nav>

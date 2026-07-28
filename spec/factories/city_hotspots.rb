@@ -30,7 +30,7 @@ FactoryBot.define do
     end
 
     trait :district do
-      name { "Trading Quarter" }
+      name { "Business Quarter" }
       hotspot_type { "district" }
       action_type { "enter_zone" }
       association :destination_zone, factory: [:zone, :city]

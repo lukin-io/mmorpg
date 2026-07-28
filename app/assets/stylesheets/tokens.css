@@ -1,0 +1,38 @@
+:root,
+.nl-game-layout,
+.nl-public-layout {
+  --nl-bg-primary: #ffffff;
+  --nl-bg-secondary: #fcfaf3;
+  --nl-bg-panel: #ffffff;
+  --nl-border: #d8cdaf;
+  --nl-border-light: #eee8d8;
+  --nl-border-dark: #b9a05c;
+  --nl-text: #222222;
+  --nl-text-primary: #111111;
+  --nl-text-secondary: #333333;
+  --nl-text-muted: #666666;
+  --nl-text-dim: #999999;
+  --nl-text-link: #336699;
+  --nl-text-link-hover: #003366;
+  --nl-blue: #336699;
+  --nl-blue-dark: #003366;
+  --nl-blue-soft: #f1f5f8;
+  --nl-red: #cc0000;
+  --nl-red-soft: #fff2f2;
+  --nl-green: #009d29;
+  --nl-green-soft: #f0fff2;
+  --nl-warning: #b85d00;
+  --nl-yellow-soft: #f3ecd7;
+  --nl-row-alt: #fcfaf3;
+  --nl-control-font: Tahoma, Verdana, Arial, sans-serif;
+  --nl-control-height: 18px;
+  --nl-control-bg-hover: #f3ecd7;
+  --nl-control-bg-active: #e8dfc4;
+  --nl-control-border: #decfa6;
+  --nl-control-border-light: #e8dfc4;
+  --nl-control-disabled-bg: #f3ecd7;
+  --nl-control-disabled-text: #c7bea6;
+  --nl-control-shadow: none;
+  --nl-control-shadow-active: none;
+  --nl-focus-ring: 0 0 0 1px #336699;
+}

@@ -1,8 +1,11 @@
 # frozen_string_literal: true
 
 class PublicFightLogsController < ApplicationController
+  layout "application"
+
   skip_before_action :authenticate_user!
   skip_before_action :ensure_device_identifier
+  skip_before_action :prepare_game_shell_context
 
   before_action :set_arena_match
 

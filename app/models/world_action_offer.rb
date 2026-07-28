@@ -10,6 +10,7 @@ class WorldActionOffer < ApplicationRecord
     dig
     city_transition
     enter_city_building
+    open_location_feature
     exit_city
   ].freeze
 

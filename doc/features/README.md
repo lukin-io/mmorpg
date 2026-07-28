@@ -20,10 +20,12 @@ The older `Implemented MVP` and `Partially Implemented` metadata values are tran
 | `world.md` | Completed handbook for the open world, sparse cells, movement, outdoor actions, gates, NPC handoff, and exact-location persistence. |
 | `city.md` | Completed handbook for the Forpost node graph, illustrated navigation, gates, buildings, captured interiors, and resume behavior. |
 | `character_progression.md` | Completed handbook for level-0 startup, source-table XP/grants, primary stats and exact derived values, numeric skills, the launch perk subset, locked allocation, and public progression display. |
+| `player_inventory.md` | Completed bounded handbook for authoritative carried/equipped state and the fresh Neverlands-matched equipment-family Inventory surface. |
+| `arena_combat.md` | Completed bounded handbook for Arena applications, shared player/NPC turn combat, active-fight presentation, completion, and public fight logs. |
 | `shop_economy.md` | Transitional handbook for the City Shop, catalog modes, NV wallet, buying, inventory selling, stock, and transaction persistence; it is not green until its declared boundary is fully implemented. |
 | `game_shell.md` | Transitional handbook for the persistent game frame, compact vitals, exact-cell presence, global chat, and shell preferences; it is not green until its declared boundary is fully implemented. |
 
-`world.md` and `city.md` are the canonical area-level `feature-v1` examples. `character_progression.md` is a green example for a bounded feature whose broader source taxonomy remains explicitly deferred. The remaining transitional handbooks use the canonical layout but are not completion examples while their status remains non-green. `FEATURE_TEMPLATE.md` defines the required layout for subsequent features.
+`world.md` and `city.md` are the canonical area-level `feature-v1` examples. `character_progression.md`, `player_inventory.md`, and `arena_combat.md` are green examples for bounded features whose broader source taxonomy remains explicitly deferred. The remaining transitional handbooks use the canonical layout but are not completion examples while their status remains non-green. `FEATURE_TEMPLATE.md` defines the required layout for subsequent features.
 
 ## Creating a feature document
 
@@ -116,6 +118,13 @@ flowchart LR
     Shop <--> Shell
     Shop <--> Progression["Character Progression"]
     Progression <--> Shell
+    Arena["Arena Combat"] <--> World
+    Arena <--> Shell
+    Arena <--> Progression
+    Arena <--> Inventory["Player Inventory"]
+    Inventory <--> World
+    Inventory <--> Shell
+    Inventory <--> Progression
 ```
 
 When a boundary changes, update both handbooks in the same change. The owning handbook remains the sole primary contract; a cross-reference summarizes the handoff and must not duplicate the other feature's full behavior.
@@ -163,6 +172,25 @@ Section 16 is mandatory. It must list every file that directly owns the document
 - specs.
 
 Do not list an entire broad directory when a small explicit file list is clearer. A directory is acceptable for a cohesive service or spec family. Distinguish files directly owned by the feature from files that take ownership after a handoff.
+
+For authored gameplay content, a file inventory alone is not sufficient. The
+owning handbook must also provide an operational lifecycle that identifies:
+
+- the declaration source, such as `db/seeds.rb` or an existing gameplay config;
+- the persisted/materialized records produced from that declaration;
+- the resolver and capability/transition services that consume those records;
+- how to add, adjust, move, deactivate, and permanently remove one exact piece
+  of content;
+- whether removing a seed/config declaration also removes already-persisted
+  state, and the scoped reconciliation required when it does not;
+- the model, seed/config, service, request, and system coverage that protects
+  the lifecycle.
+
+Extend the listed owner before creating a new catalog, registry, resolver, or
+content pipeline. A new abstraction is justified only when the handbook first
+shows that none of the existing owners can represent the captured behavior
+without violating its current responsibility. Never treat a second source of
+truth as an easier authoring shortcut.
 
 ### Tests are part of the contract
 

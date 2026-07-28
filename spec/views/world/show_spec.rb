@@ -64,10 +64,10 @@ RSpec.describe "world/show.html.erb", type: :view do
       expect(rendered).to have_css("turbo-frame#location-info")
     end
 
-    it "wraps available-actions in turbo-frame with id 'available-actions'" do
+    it "does not duplicate the shell-owned available-actions frame in the body" do
       render
 
-      expect(rendered).to have_css("turbo-frame#available-actions")
+      expect(rendered).not_to have_css("turbo-frame#available-actions")
     end
 
     it "renders the map partial inside game-map frame" do

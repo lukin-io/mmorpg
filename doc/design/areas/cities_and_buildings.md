@@ -1,198 +1,128 @@
-# Cities And Buildings Area
+# Cities And Buildings
 
 ## Purpose
 
-Cities are compact illustrated hubs. They organize documented building flows
-without using the outdoor movement timer.
+Define the current City navigation model and the boundary between an illustrated landmark, an enterable building, and an implemented building service.
 
-Buildings are entered from city hotspots and expose feature-specific screens.
-The implemented Forpost launch slice contains the complete captured nine-node
-city graph, all three observed gate pairs, the interactive Arena and General
-Shop, and read-only source-captured surfaces for the Market, Junk Dealer,
-Numismatics Shop, Airship Station, and Hospital/Pharmacy.
+The current launch slice is the five-district Forpost graph freshly observed on 2026-07-28. It supersedes the older nine-node `city2_*` interpretation for this city.
 
 ## Neverlands Reference
 
-Primary reference: `doc/design/reference/neverlands.md`.
+Current Forpost behavior:
 
-Live UI reference: `doc/design/reference/neverlands_live_game_shell_ui.md`.
+- a city is a graph of illustrated locations rather than a walkable tile grid;
+- the current frame is a native 1250 × 600 scene;
+- buildings and district arrows are independent pointer targets;
+- hover swaps the visible target to a highlighted state and opens a small white tooltip near the pointer;
+- district arrows perform immediate location changes with fresh action keys;
+- building entry preserves the current district and City returns to it;
+- Shop is entered from Central Square and places an 800px control surface below its 1250 × 600 illustration.
 
-Observed Oktal flow:
+Reference evidence lives in:
 
-```text
-outside tile -> click Войти -> central square
-central square -> trading quarter
-trading quarter -> Лавка
-Лавка -> Город -> trading quarter
-trading quarter -> central square
-central square -> outside tile
-```
+- `doc/design/reference/neverlands_live_city_movement.md`;
+- `doc/design/reference/neverlands_live_lavka_shop.md`;
+- `doc/design/launch_mvp_plan.md`.
 
-The complete 2026-07-20 Forpost capture confirms nine illustrated city nodes
-and three active gates: West Gate from Central Square, South Gate from Stables,
-and East Gate from Guild Square. The Rails starter content implements that
-complete graph rather than collapsing it into a generic single city node.
-
-The matching outdoor cells were `1019,1025` (West), `1022,1028` (South), and
-`1025,1027` (East). Re-entering from each cell returned to that gate's city
-node rather than a universal city spawn.
+Runtime images, hover layers, logos, identity text, and service/admin copy from Neverlands are prohibited. The local system recreates the design and interaction contract with project-owned artwork, CSS, semantic HTML, and suitable ASCII/plain-text controls. Source image controls are replaced rather than removed; for example, route images become styled `>` arrows and close images become styled `X` controls.
 
 ## Screen Model
 
-A city node is an illustrated scene with clickable hotspots.
+City replaces the outdoor map inside the persistent game shell. The center surface is:
 
-Each hotspot can be:
+1. a scroll viewport up to 1250 × 600;
+2. a fixed 1250 × 600 canvas;
+3. a native 1536 × 1024 project-owned city image positioned by district offset;
+4. server-backed action boxes and presentation-only landmark boxes;
+5. large directional CSS/text arrows;
+6. one pointer/focus tooltip layer.
 
-- a district transition;
-- a building entry;
-- an exit to the outdoor map.
-
-City movement is immediate page/state navigation. It does not use the outdoor
-travel countdown.
+Desktop shows the full scene when space permits. Tablet/mobile keep the scene unscaled and pan it around an authored focal point. The page must not acquire body-level horizontal overflow.
 
 ## Entry And Exit
 
-City entry is offered by the current outside tile as a contextual action, such
-as `Войти`.
+The verified outdoor entrance at Outpost Surroundings `[7,0]` enters `main` / Central Square `[0,0]`. Central City Exit returns to that exact cell.
 
-City exit is a hotspot from a city node back to the outside map.
+The Law Quarter visibly contains another City Exit, but its outdoor result was not exercised in the current capture. It is a presentation-only landmark until the destination is verified. Older South/East gates are not part of the current Forpost seed topology.
 
-Building entry is a hotspot from a city node.
+## Current Forpost Graph
 
-Building exit uses a `Город` return action that goes back to the parent city
-node.
+| Runtime key | District | Directed links | Interactive local features |
+|---|---|---|---|
+| `main` | Central Square | Business, Residential | Arena, Shop, Hospital, verified City Exit |
+| `forpost1` | Residential Quarter | Central, Knowledge, Law | Airship Station, Market |
+| `forpost2` | Knowledge Quarter | Residential | None |
+| `forpost3` | Business Quarter | Central | None |
+| `forpost4` | Law Quarter | Residential | None |
 
-## Live City UI Observation
-
-The 2026-05-25 Forpost capture confirms the city node interaction model:
-
-- city page refreshes the local player list;
-- top shell shows character, vitals, quest/profile/inventory/current-city
-  controls, and exit;
-- city art is the main surface;
-- hotspots are absolute-positioned image controls;
-- hover swaps the hotspot art to a highlighted variant and shows a tooltip;
-- each hotspot submits a server-issued action key;
-- building return generates fresh city hotspot action keys.
-
-Observed Forpost hotspots included arena, `Лавка`, city exits, district
-transitions, and additional illustrated buildings such as tavern, workshop,
-hospital, and guard tower. The 2026-07-20 pass added read-only captures for the
-Hospital, Market, Numismatics Shop, Junk Dealer shell, and Airship Station.
-Those five captured buildings are navigable read-only reference surfaces in
-the MVP; they deliberately expose no economic, healing, processing, rental, or
-travel mutations. Buildings observed only by name remain capture notes and are
-not emitted as runtime landmarks or actions.
+This is eight directed edges across four bidirectional pairs. Connectivity is explicit catalog data, never inferred from arrow location or visual proximity.
 
 ## City Node Rules
 
-- A city is a graph of named nodes, not a coordinate grid.
-- A city node has a stable key, title, background image, and hotspot list.
-- Every city navigation refreshes the available outgoing hotspots.
-- A city may have multiple outdoor exits, and each gate returns to its own
-  source-backed outdoor coordinate.
-- Local player/location presence refreshes after navigation.
-- Hotspots must have keyboard-accessible equivalents and text labels in the
-  Rails implementation; source image maps are a visual reference, not enough UI
-  by themselves.
-- City nodes can show a disabled/current marker in the top action area.
-- District-to-district navigation is immediate unless a future city explicitly
-  defines a delay.
-- Illustrated but unavailable buildings remain visible without an actionable
-  hotspot; the client must not manufacture an action from artwork or label text.
-- Every actionable hotspot is paired with a short-lived, character-owned
-  server offer. A missing, expired, foreign, wrong-node, or target-mismatched
-  action key must fail without moving the character.
-- Reload and login resume the exact persisted city node. A supported building
-  interior also resumes only while its parent-node hotspot is still accessible.
-- Ordinary district, building, and gate hotspots have no invented level gate;
-  their local `required_level` is `0`, allowing the Wiki-backed starter to use
-  them. The captured Arena remains a distinct unavailable hotspot until level
-  `23`.
+- Each district is a separate city `Zone` with sentinel coordinate `[0,0]`.
+- `CharacterPosition.zone` is authoritative.
+- A district action requires a fresh character-owned offer for the current zone.
+- Accepted movement immediately stores the explicit destination zone.
+- No city timer, interpolation, free-position avatar, or coordinate pathfinding is introduced.
+- Every current action uses required level `0`; the stale level-23 Arena City gate is removed.
+- Scene geometry is presentation metadata and grants no authority.
+
+## Hover, Arrow, And Tooltip Rules
+
+- Action/landmark boxes use native scene pixels.
+- Building/landmark hover and keyboard focus reveal a CSS-generated brightened crop of the project image.
+- Route arrows are project-owned, CSS-styled ASCII `>` controls, not copied image assets.
+- Arrow orientation comes from catalog data and the arrow remains inside its route button.
+- Tooltip copy is server-rendered RPG-domain text; it follows the pointer and is clamped to the scene.
+- Blocked actions remain discoverable with a reason but cannot submit.
+- Presentation-only landmarks are keyboard focusable and never render inside a form.
 
 ## Building Rules
 
-- A building has a stable key and parent city node.
-- A building page has its own feature UI.
-- A building page provides a `Город` return action.
-- Arena and General Shop are the only current mutating launch-MVP building
-  flows.
-- Hospital, Market, Numismatics, Junk Dealer, and Airship Station expose only
-  their captured read-only structure. Their transactions and service actions
-  remain deferred.
-- Other building names seen only on city art are not implementation scope until
-  their Neverlands behavior is captured into feature/area docs.
-- Shop access is a building flow, not a generic vendor NPC dialogue.
-- Feature-specific state should live inside the building flow.
+Three separate states must remain explicit:
 
-## Implemented Forpost Graph
+1. **Interactive feature** — a current hotspot plus allowlisted route and owning runtime behavior.
+2. **Read-only interior** — a current hotspot plus an allowlisted informational surface with no invented mutation.
+3. **Illustrated landmark** — hover/focus label only, no server offer and no implied interior.
 
-| Node key | Node | Connected nodes | Active feature or gate |
-| --- | --- | --- | --- |
-| `city2_1` | Central Square | Residential, Trading | Arena; West Gate |
-| `city2_2` | Trading Quarter | Central, Industrial | General Shop, Market, Junk Dealer, Numismatics, Airship Station |
-| `city2_3` | Residential Quarter | Central, Industrial, Knowledge | Hospital/Pharmacy |
-| `city2_4` | Industrial Quarter | Trading, Residential, Business, Stables | — |
-| `city2_5` | Business Quarter | Industrial, Guild | — |
-| `city2_6` | Knowledge Quarter | Residential, Park, Stables | — |
-| `city2_7` | Stables | Industrial, Knowledge, Guild | South Gate |
-| `city2_8` | Guild Square | Business, Stables | East Gate |
-| `city2_9` | Park | Knowledge | — |
+Current interactive integrations are Arena and Shop. Hospital, Market, and Airship Station retain existing bounded read-only interiors. All other current city buildings are illustrated landmarks.
 
-The three source-to-local outdoor mappings are retained explicitly:
+Shop is on Central Square. Its feature owns the mode/category/filter hierarchy and buy/sell transactions after City validates entry. Returning through City preserves Central Square.
 
-| Gate | City node | Observed source cell | Starter-region cell |
-| --- | --- | --- | --- |
-| West | Central Square | `1019,1025` | `7,0` |
-| South | Stables | `1022,1028` | `10,3` |
-| East | Guild Square | `1025,1027` | `13,2` |
+## Server Authority
 
-The local positions preserve the observed relative offsets anchored to the
-already-established West Gate starter cell. The source coordinates remain
-metadata because the Neverlands global-region origin is not captured.
+- `CityCatalog` owns graph and presentation metadata.
+- `CityHotspot` owns persisted action definitions.
+- `CityActionOfferBuilder` rotates short-lived exact capabilities.
+- `CityHotspotService` validates and completes the selected action.
+- `CharacterPosition` owns the durable district.
+- The browser owns centering, panning, hover/focus presentation, and tooltip placement only.
 
-The current city renderer uses the retained project `city.png` as a compact
-`760 x 255` illustrated node surface. Each cataloged feature has a polygon
-region; district and gate transitions use edge regions with directional arrow
-markers. Hover and focus reveal a small tooltip. The geometry is presentation
-metadata paired with the existing source-backed city graph, never an authority:
-only a current server offer makes a region submit, and unavailable features are
-read-only. Keyboard users receive an accessible proxy at a polygon's centroid.
-The retained `arena.png` and `gate.png` files remain available for their own
-feature surfaces and were not deleted.
+## Responsive Acceptance
 
-Generic legacy removed from this slice:
+At desktop width, the canvas remains exactly 1250 × 600. At 820px and 390px:
 
-- no city grid or city `MapTileTemplate` compatibility layer;
-- no metadata-driven universal city exit; the three captured gates are the
-  only city exits;
-- no artwork or client geometry can manufacture runtime behavior; city regions
-  are usable only when paired with a current owned action offer;
-- no inactive-landmark debug list or generic fallback service registry;
-- no unused pending-feature registry or generic city presentation hashes;
-- no speculative outdoor shop/arena/special-location entrance types, emoji
-  artwork, level/item gate rules, or spawn-point coordinate fallback;
-- the three outdoor gate records point to explicit city nodes. City node
-  positions use the non-grid `[0, 0]` storage sentinel; only Central Square is
-  a starter entry point.
+- the canvas still measures 1250 × 600;
+- the scroll viewport is no wider than the main content;
+- initial horizontal scroll is centered on the authored district focal point;
+- arrows/hit regions retain native size;
+- keyboard/touch actions remain reachable;
+- document width does not exceed viewport width.
 
-Future buildings must continue through capture-first expansion, not generic
-town-service assumptions.
+Shop may scale its decorative CSS illustration because it contains no action geometry. Its tabs, category strip, filters, and tables own their overflow locally.
 
 ## Feature Hooks
 
-- `features/economy_trading_shops.md`
-- `features/social_chat_presence.md`
-- `features/npcs_quests.md`
-- `features/items_inventory_equipment.md`
-- `areas/arena.md`
+- Arena entry redirects to `/arena` and leaves position in Central Square.
+- Shop entry redirects to `/shop`, revalidates City availability, and owns wallet/inventory transactions.
+- Read-only building entry redirects only through `CityHotspot::FEATURE_ROUTES`.
+- Outdoor exit moves to the exact verified Outpost Surroundings cell.
+- Login resume rechecks saved interior context against the current node.
 
 ## Out Of Scope
 
-- City movement as grid movement.
-- A universal metadata-configured city exit that bypasses the captured gate.
-- Direct `/shop` style primary navigation that bypasses the city node.
-- Town NPC service roles inside buildings before source capture.
-- Market purchases/listings/rent/tax, junk-dealer trading, numismatics
-  purchases, airship ticketing/boarding, and hospital healing/processing.
-- Marketing-style city landing pages.
+- Source city or Shop art, highlighted PNG layers, arrows, logos, or source-specific prose.
+- Services for Auction, Bank, Clan Hall, schools, prison, temple, tavern, workshop, or other landmarks without complete current captures.
+- An inferred Law exit destination.
+- A global marketplace/kiosk detached from City.
+- Restoring the historical nine-node topology without a newer live observation that proves it has returned.

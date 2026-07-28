@@ -44,7 +44,7 @@ RSpec.describe Zone, type: :model do
     it "exposes the stable node key and player-facing title" do
       node = build(:zone, :city_node)
 
-      expect(node.city_node_key).to eq("city2_1")
+      expect(node.city_node_key).to eq("main")
       expect(node.display_name).to eq("Central Square")
     end
 

@@ -2,7 +2,8 @@
 
 module Game
   module World
-    # TileBuildingService handles captured city entrances at outdoor cells.
+    # TileBuildingService handles captured city and location entrances at
+    # outdoor cells.
     #
     # Purpose: Get building information at a tile and handle entry
     #
@@ -27,7 +28,14 @@ module Game
     #   result = service.enter!       # => Result(success: true, ...)
     #
     class TileBuildingService
-      Result = Struct.new(:success, :message, :building, :destination_zone, keyword_init: true)
+      Result = Struct.new(
+        :success,
+        :message,
+        :building,
+        :destination_zone,
+        :location_key,
+        keyword_init: true
+      )
 
       attr_reader :character, :zone, :x, :y
 
@@ -48,7 +56,9 @@ module Game
         {
           id: active_building.id,
           name: active_building.name,
-          destination: active_building.destination_zone&.name,
+          destination: building_destination(active_building),
+          building_type: active_building.building_type,
+          location_key: active_building.location_key.presence,
           can_enter: active_building.can_enter?(character),
           blocked_reason: active_building.entry_blocked_reason(character),
           description: active_building.metadata&.dig("description"),
@@ -89,7 +99,8 @@ module Game
             success: true,
             message: "Entered #{building.name}.",
             building: building,
-            destination_zone: building.destination_zone
+            destination_zone: building.destination_zone,
+            location_key: building.location_key.presence
           )
         else
           Result.new(
@@ -109,6 +120,12 @@ module Game
       end
 
       private
+
+      def building_destination(candidate)
+        return candidate.destination_zone&.name unless candidate.location?
+
+        candidate.name
+      end
 
       # Find building at tile (without active filter so we can check status)
       def building

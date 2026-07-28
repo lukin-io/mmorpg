@@ -133,7 +133,7 @@ class MapTileTemplate < ApplicationRecord
     end
 
     unless metadata&.dig("source_map").present?
-      errors.add(:metadata, "cell_art requires a Neverlands source_map")
+      errors.add(:metadata, "cell_art requires source_map metadata")
     end
 
     unless Game::World::CellArtCatalog.valid_reference?(raw_cell_art)

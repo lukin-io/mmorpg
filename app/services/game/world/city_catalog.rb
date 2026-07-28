@@ -2,216 +2,150 @@
 
 module Game
   module World
-    # Source-backed Forpost city graph captured from Neverlands. The Rails MVP
-    # uses local outdoor coordinates while retaining observed source coordinates
-    # as metadata; no global-region origin is inferred from the capture.
+    # Authored Forpost city graph and presentation metadata. Geometry is stored
+    # in native scene pixels so the illustration, hover regions, and route
+    # arrows retain their desktop proportions while narrow clients pan it.
     class CityCatalog
       CITY_KEY = "forpost"
-      SCENE_WIDTH = 760
-      SCENE_HEIGHT = 255
+      STARTER_NODE_KEY = "main"
+      SCENE_WIDTH = 1250
+      SCENE_HEIGHT = 600
+      IMAGE_WIDTH = 1536
+      IMAGE_HEIGHT = 1024
 
       NODES = {
-        "city2_1" => {
+        "main" => {
           "zone_name" => "Outpost",
           "title" => "Central Square",
           "links" => {
-            "city2_3" => "Residential Quarter",
-            "city2_2" => "Trading Quarter"
+            "forpost3" => "Business Quarter",
+            "forpost1" => "Residential Quarter"
           },
           "features" => {
-            "arena" => {"name" => "Arena", "required_level" => 23}
-          }
-        },
-        "city2_2" => {
-          "zone_name" => "Outpost Trading Quarter",
-          "title" => "Trading Quarter",
-          "links" => {
-            "city2_1" => "Central Square",
-            "city2_4" => "Industrial Quarter"
-          },
-          "features" => {
-            "shop" => {"name" => "General Shop"},
-            "market" => {"name" => "Market"},
-            "junk_dealer" => {"name" => "Junk Dealer"},
-            "numismatics" => {"name" => "Numismatics Shop"},
-            "airship_station" => {"name" => "Oktal Airship Station"}
-          }
-        },
-        "city2_3" => {
-          "zone_name" => "Outpost Residential Quarter",
-          "title" => "Residential Quarter",
-          "links" => {
-            "city2_1" => "Central Square",
-            "city2_4" => "Industrial Quarter",
-            "city2_6" => "Knowledge Quarter"
-          },
-          "features" => {
+            "arena" => {"name" => "Arena", "required_level" => 0},
+            "shop" => {"name" => "Shop"},
             "hospital" => {"name" => "Hospital"}
           }
         },
-        "city2_4" => {
-          "zone_name" => "Outpost Industrial Quarter",
-          "title" => "Industrial Quarter",
+        "forpost1" => {
+          "zone_name" => "Outpost Residential Quarter",
+          "title" => "Residential Quarter",
           "links" => {
-            "city2_2" => "Trading Quarter",
-            "city2_3" => "Residential Quarter",
-            "city2_5" => "Business Quarter",
-            "city2_7" => "Stables"
+            "main" => "Central Square",
+            "forpost2" => "Knowledge Quarter",
+            "forpost4" => "Law Quarter"
           },
-          "features" => {}
+          "features" => {
+            "airship_station" => {"name" => "Airship Station"},
+            "market" => {"name" => "Market"}
+          }
         },
-        "city2_5" => {
-          "zone_name" => "Outpost Business Quarter",
-          "title" => "Business Quarter",
-          "links" => {
-            "city2_4" => "Industrial Quarter",
-            "city2_8" => "Guild Square"
-          },
-          "features" => {}
-        },
-        "city2_6" => {
+        "forpost2" => {
           "zone_name" => "Outpost Knowledge Quarter",
           "title" => "Knowledge Quarter",
-          "links" => {
-            "city2_3" => "Residential Quarter",
-            "city2_9" => "Park",
-            "city2_7" => "Stables"
-          },
+          "links" => {"forpost1" => "Residential Quarter"},
           "features" => {}
         },
-        "city2_7" => {
-          "zone_name" => "Outpost Stables",
-          "title" => "Stables",
-          "links" => {
-            "city2_4" => "Industrial Quarter",
-            "city2_6" => "Knowledge Quarter",
-            "city2_8" => "Guild Square"
-          },
+        "forpost3" => {
+          "zone_name" => "Outpost Business Quarter",
+          "title" => "Business Quarter",
+          "links" => {"main" => "Central Square"},
           "features" => {}
         },
-        "city2_8" => {
-          "zone_name" => "Outpost Guild Square",
-          "title" => "Guild Square",
-          "links" => {
-            "city2_5" => "Business Quarter",
-            "city2_7" => "Stables"
-          },
-          "features" => {}
-        },
-        "city2_9" => {
-          "zone_name" => "Outpost Park",
-          "title" => "Park",
-          "links" => {
-            "city2_6" => "Knowledge Quarter"
-          },
+        "forpost4" => {
+          "zone_name" => "Outpost Law Quarter",
+          "title" => "Law Quarter",
+          "links" => {"forpost1" => "Residential Quarter"},
           "features" => {}
         }
       }.freeze
 
+      # The exact outdoor handoff has been verified for the Central Square
+      # exit. The second illustrated exit in the Law Quarter remains a
+      # presentation-only landmark until its outdoor destination is captured.
       GATES = {
         "west" => {
-          "name" => "West Gate",
-          "node_key" => "city2_1",
+          "name" => "City Exit",
+          "node_key" => "main",
           "local_coordinates" => [7, 0],
           "source_coordinates" => [1019, 1025],
           "source_map" => "m_1019_1025"
-        },
-        "south" => {
-          "name" => "South Gate",
-          "node_key" => "city2_7",
-          "local_coordinates" => [10, 3],
-          "source_coordinates" => [1022, 1028],
-          "source_map" => "m_1022_1028"
-        },
-        "east" => {
-          "name" => "East Gate",
-          "node_key" => "city2_8",
-          "local_coordinates" => [13, 2],
-          "source_coordinates" => [1025, 1027],
-          "source_map" => "m_1025_1027"
         }
       }.freeze
 
-      # Presentation geometry follows the live Neverlands city contract: one
-      # illustrated 760x255 scene, invisible building regions, and compact
-      # route markers around the scene edge. Percentages keep the hit targets
-      # aligned when the scene is scaled down on a narrow viewport.
       PRESENTATIONS = {
-        "city2_1" => {
-          "image_position" => "50% 42%",
+        "main" => {
+          "image_offset" => [-143, -212],
+          "focus" => [625, 300],
           "hotspots" => {
-            "arena" => {"polygon" => "26% 0%, 76% 0%, 82% 58%, 73% 72%, 29% 72%, 20% 56%"},
-            "west_gate" => {"box" => [0, 18, 17, 72], "marker" => [7, 57], "direction" => "west"},
-            "go_city2_3" => {"box" => [18, 77, 29, 23], "marker" => [31, 89], "direction" => "southwest"},
-            "go_city2_2" => {"box" => [55, 77, 29, 23], "marker" => [69, 89], "direction" => "southeast"}
+            "arena" => {"box" => [374, 0, 570, 336]},
+            "shop" => {"box" => [96, 303, 320, 182]},
+            "hospital" => {"box" => [807, 282, 441, 266]},
+            "west_gate" => {"box" => [0, 25, 168, 307]},
+            "go_forpost3" => {"box" => [308, 501, 76, 99], "direction" => "southwest"},
+            "go_forpost1" => {"box" => [900, 496, 68, 104], "direction" => "southeast"}
+          },
+          "landmarks" => {
+            "tavern" => {"name" => "Tavern", "box" => [154, 167, 192, 117]},
+            "workshop" => {"name" => "Workshop", "box" => [982, 182, 245, 112]},
+            "guard_tower" => {"name" => "Guard Tower", "box" => [240, 20, 79, 158]}
           }
         },
-        "city2_2" => {
-          "image_position" => "76% 76%",
+        "forpost1" => {
+          "image_offset" => [0, -280],
+          "focus" => [625, 330],
           "hotspots" => {
-            "shop" => {"polygon" => "14% 8%, 29% 8%, 29% 57%, 22% 69%, 14% 64%"},
-            "market" => {"polygon" => "0% 56%, 54% 56%, 57% 100%, 0% 100%"},
-            "junk_dealer" => {"polygon" => "78% 34%, 100% 28%, 100% 92%, 84% 88%"},
-            "numismatics" => {"polygon" => "61% 4%, 82% 4%, 80% 48%, 64% 49%"},
-            "airship_station" => {"polygon" => "31% 0%, 62% 0%, 62% 47%, 36% 48%"},
-            "go_city2_1" => {"box" => [0, 20, 14, 31], "marker" => [5, 35], "direction" => "west"},
-            "go_city2_4" => {"box" => [60, 76, 24, 24], "marker" => [72, 89], "direction" => "south"}
+            "airship_station" => {"box" => [794, 125, 262, 354]},
+            "market" => {"box" => [278, 338, 368, 184]},
+            "go_main" => {"box" => [39, 534, 90, 66], "direction" => "west"},
+            "go_forpost2" => {"box" => [780, 496, 68, 104], "direction" => "southeast"},
+            "go_forpost4" => {"box" => [1105, 448, 90, 67], "direction" => "east"}
+          },
+          "landmarks" => {
+            "clan_hall" => {"name" => "Clan Hall", "box" => [514, 48, 336, 246]},
+            "post" => {"name" => "Post", "box" => [123, 236, 146, 196]},
+            "city_hall" => {"name" => "City Hall", "box" => [184, 0, 305, 333]}
           }
         },
-        "city2_3" => {
-          "image_position" => "18% 70%",
+        "forpost2" => {
+          "image_offset" => [-120, 0],
+          "focus" => [625, 300],
           "hotspots" => {
-            "hospital" => {"polygon" => "53% 7%, 94% 7%, 94% 78%, 75% 84%, 55% 67%"},
-            "go_city2_1" => {"box" => [0, 21, 14, 31], "marker" => [5, 36], "direction" => "west"},
-            "go_city2_4" => {"box" => [86, 22, 14, 31], "marker" => [95, 37], "direction" => "east"},
-            "go_city2_6" => {"box" => [46, 76, 28, 24], "marker" => [60, 89], "direction" => "south"}
+            "go_forpost1" => {"box" => [245, 30, 89, 84], "direction" => "northwest"}
+          },
+          "landmarks" => {
+            "magic_school" => {"name" => "Magic School", "box" => [202, 224, 209, 344]},
+            "library" => {"name" => "Library", "box" => [156, 120, 355, 230]},
+            "general_school" => {"name" => "General School", "box" => [660, 82, 362, 189]},
+            "military_school" => {"name" => "Military School", "box" => [842, 283, 315, 250]}
           }
         },
-        "city2_4" => {
-          "image_position" => "84% 58%",
+        "forpost3" => {
+          "image_offset" => [-286, -250],
+          "focus" => [625, 320],
           "hotspots" => {
-            "go_city2_2" => {"box" => [0, 19, 14, 31], "marker" => [5, 34], "direction" => "west"},
-            "go_city2_3" => {"box" => [10, 76, 25, 24], "marker" => [22, 89], "direction" => "southwest"},
-            "go_city2_5" => {"box" => [63, 76, 25, 24], "marker" => [76, 89], "direction" => "southeast"},
-            "go_city2_7" => {"box" => [86, 19, 14, 31], "marker" => [95, 34], "direction" => "east"}
+            "go_main" => {"box" => [650, 17, 57, 104], "direction" => "north"}
+          },
+          "landmarks" => {
+            "auction" => {"name" => "Auction", "box" => [244, 311, 666, 289]},
+            "souvenir_shop" => {"name" => "Souvenir Shop", "box" => [231, 233, 210, 207]},
+            "dealer_house" => {"name" => "Dealer House", "box" => [73, 0, 310, 219]},
+            "obelisk" => {"name" => "Obelisk", "box" => [602, 52, 63, 207]},
+            "temple" => {"name" => "Temple", "box" => [812, 156, 435, 444]},
+            "bank" => {"name" => "Bank", "box" => [871, 17, 237, 215]}
           }
         },
-        "city2_5" => {
-          "image_position" => "67% 62%",
+        "forpost4" => {
+          "image_offset" => [-286, -20],
+          "focus" => [625, 300],
           "hotspots" => {
-            "go_city2_4" => {"box" => [0, 24, 14, 31], "marker" => [5, 39], "direction" => "west"},
-            "go_city2_8" => {"box" => [86, 27, 14, 31], "marker" => [95, 42], "direction" => "east"}
-          }
-        },
-        "city2_6" => {
-          "image_position" => "22% 38%",
-          "hotspots" => {
-            "go_city2_3" => {"box" => [0, 24, 14, 31], "marker" => [5, 39], "direction" => "west"},
-            "go_city2_9" => {"box" => [37, 0, 26, 24], "marker" => [50, 10], "direction" => "north"},
-            "go_city2_7" => {"box" => [86, 27, 14, 31], "marker" => [95, 42], "direction" => "east"}
-          }
-        },
-        "city2_7" => {
-          "image_position" => "88% 86%",
-          "hotspots" => {
-            "go_city2_4" => {"box" => [0, 14, 14, 31], "marker" => [5, 29], "direction" => "west"},
-            "go_city2_6" => {"box" => [22, 0, 26, 24], "marker" => [35, 10], "direction" => "northwest"},
-            "go_city2_8" => {"box" => [86, 14, 14, 31], "marker" => [95, 29], "direction" => "east"},
-            "south_gate" => {"box" => [37, 76, 26, 24], "marker" => [50, 91], "direction" => "south"}
-          }
-        },
-        "city2_8" => {
-          "image_position" => "56% 22%",
-          "hotspots" => {
-            "go_city2_5" => {"box" => [0, 20, 14, 31], "marker" => [5, 35], "direction" => "west"},
-            "go_city2_7" => {"box" => [26, 76, 28, 24], "marker" => [40, 89], "direction" => "southwest"},
-            "east_gate" => {"box" => [86, 23, 14, 31], "marker" => [95, 38], "direction" => "east"}
-          }
-        },
-        "city2_9" => {
-          "image_position" => "40% 82%",
-          "hotspots" => {
-            "go_city2_6" => {"box" => [37, 76, 26, 24], "marker" => [50, 89], "direction" => "south"}
+            "go_forpost1" => {"box" => [84, 297, 76, 100], "direction" => "west"}
+          },
+          "landmarks" => {
+            "law_abode" => {"name" => "Law Abode", "box" => [55, 0, 370, 332]},
+            "city_exit" => {"name" => "City Exit", "box" => [46, 343, 371, 257]},
+            "prison" => {"name" => "Prison", "box" => [578, 81, 379, 419]},
+            "gallows" => {"name" => "Gallows", "box" => [472, 154, 176, 99]}
           }
         }
       }.freeze

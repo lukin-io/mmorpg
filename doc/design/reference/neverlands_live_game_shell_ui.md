@@ -1,6 +1,7 @@
 # Neverlands Live Game Shell And MVP UI Observation
 
-Capture date: 2026-05-25.
+Initial capture date: 2026-05-25. Fresh authenticated visual parity pass:
+2026-07-28.
 
 Authenticated account observed: `max_kerby`. Credentials, cookies, and volatile
 action tokens are intentionally not recorded. Any token-like value below is
@@ -20,9 +21,11 @@ systems:
 - chat and local presence controls;
 - quest modal entry shape.
 
-The capture used direct HTTP inspection of the same pages and AJAX endpoints
-the browser loads. The managed browser surface was unavailable in this session,
-so no screenshots were taken.
+The initial capture used direct HTTP inspection of the same pages and AJAX
+endpoints the browser loads. The 2026-07-28 follow-up used the authenticated
+Chrome session for fresh screenshots, DOM inspection, computed dimensions, and
+live stylesheet/asset capture. Credentials, cookies, and action tokens are not
+stored in the repository.
 
 ## Login And Shell Entry
 
@@ -332,6 +335,220 @@ UI shape:
 This is only UI-shape evidence. It is not enough to rebuild quests. Exact quest
 entry points, journal behavior, progress rules, reward rules, cancel/failure
 states, and quest-item protection still need dedicated source capture.
+
+## Fresh Chrome Geometry And Asset Pass (2026-07-28)
+
+The existing authenticated session was reused; no second login was performed.
+At a `955 × 817` viewport, the live frame stack measured as follows:
+
+| Region | Live geometry |
+| --- | --- |
+| `main_top` including its header | `y=0`, `h=537`; the header itself is 29px |
+| resize band | `y=537`, `h=8` |
+| temporary separator | `y=545`, `h=1` |
+| chat and presence row | `y=546`, `h=240`; presence is the rightmost 300px |
+| lower separator | `y=786`, `h=1` |
+| chat controls | `y=787`, `h=30` |
+
+The local shell implements the same visible row contract without reproducing
+the frameset. The top bar uses CSS-rendered 160px HP/MP strips stacked at 6px
+each, a CSS/text exit control, compact contextual buttons, and the same disabled
+current-page treatment. The bottom bar retains the measured control sizes and
+order using project-owned text/glyph controls: send, clear input, smile set 1,
+smile set 2, refresh chat, clear chat, mode, speed, transliteration, time, and
+player actions.
+
+The live chat-control DOM confirmed the control order and intent: send, clear
+input, smile set 1, smile set 2, refresh chat, clear chat, show-all/private/none
+mode, 10/30/60-second refresh speed, Latin/Russian transliteration, and player
+actions. The local send, clear-input, refresh, and local clear-view actions are
+interactive. The two smile palettes, mode/speed cycles, transliteration, and
+player-action popup remain `Not Done`; matching icon placement alone is not
+treated as UX completion.
+
+### Open world
+
+The live world used a `902 × 702` map container at `x=28`, `y=40`. The nearby
+cell renderer produced exactly nine columns by seven rows of `100 × 100px`
+cells. Its selected-destination overlay and fixed center cursor establish the
+geometry and state language. The local surface recreates those states with
+project-owned CSS terrain, markers, and cursor shapes, renders no decorative
+cell gutters, and keeps semantic movement buttons inside the same 100px cells.
+
+### Profile and inventory
+
+Both live pages begin at `x=10` below the 29px header and use a 463px left
+column, 5px gap, and 467px right column. The left character sheet is itself
+258px paper doll, 5px gap, and 200px statistics. The body region measures
+`115 × 255px`; the local implementation fills it with a CSS character
+silhouette. Equipment cells and text are dense rather than card-based.
+
+Inventory retains the character sheet and uses `41 × 53px` CSS/text controls,
+a compact centered mass strip, then vertically stacked item rows.
+Each row places its action buttons first and divides the text body into flat
+`properties` and `requirements` columns. The local authenticated owner profile
+and current equipment-family inventory were captured after implementation and
+matched against these measurements.
+
+### Stylesheet responsibility
+
+Tailwind was deliberately not introduced. The current Rails/Hotwire client has
+a small ordered shared layer (`tokens.css`, `primitives.css`) followed by
+single-responsibility domain modules under `app/assets/stylesheets/`:
+
+- `shell.css` owns frame geometry, top vitals/navigation, and CSS/text bottom
+  controls;
+- `chat_presence.css` owns message and nearby-player row presentation;
+- `world.css` owns outdoor map/cursor/available-cell and city-scene rendering;
+- `player_inventory.css` owns the shared character sheet plus Profile and
+  Inventory composition;
+- `arena.css` owns arena and active-fight composition.
+
+Shared character-sheet markup lives in one partial, while each feature retains
+its own controller/view semantics. There is no `nl/` stylesheet folder.
+Runtime presentation uses project-owned CSS, semantic HTML, text/glyph
+controls, and project-owned assets; Neverlands captures remain documentation
+evidence only. Styles remain flat, ordered, and searchable by domain.
+
+### Runtime copy boundary
+
+These observations document measurable UI/UX evidence; they do not authorize
+runtime reuse of source images, sprites, logos, crests, decorative artwork,
+branding, signatures, administration text, project/service copy, or other
+source-specific prose. Local parity work recreates the observed structure and
+interaction contract with project-owned primitives.
+
+## Fight Main-Frame Addendum (2026-07-28)
+
+An outdoor hostile interruption started while the authenticated profile and
+inventory navigation was being observed. The fight resolved quickly, so no
+combat mutation was submitted; the rendered DOM, controls, rosters, log, and
+loaded live stylesheets were captured from the existing authenticated session.
+
+The fight replaces the same `main_top` content surface and keeps the surrounding
+shell. Its player-visible composition is three columns:
+
+- the player's equipment/portrait and combat state on the left;
+- fight controls, action budget, turn composer, roster, and chronological log
+  in the center;
+- the selected opponent's equipment/portrait and combat state on the right.
+
+The center toolbar exposed fight type, five-minute timeout, trauma state,
+Inventory, Mercenary, Surrender, Fight Log, Refresh, and opponent switching.
+The turn composer showed a `200` action-point budget with `0` used, a mana
+constraint of `5..180`, four attack selectors (head, torso, abdomen, legs), and
+four block selectors. Attack choices included simple, aimed, and magic actions;
+block choices included single-part, double-part, and magic-shield actions. Each
+select option displayed its action cost. The primary action submitted the whole
+turn and a secondary control reset the preview.
+
+The roster showed one player side against three NPCs, confirming that one fight
+may retain several opponents while a selected target changes. The text combat
+log remained below the composer in chronological order.
+
+Live `game.css` measurements used by this capture:
+
+- base fight copy remains `12px` Verdana (`.fighttxt`), with gray `12px` timing
+  copy (`.fighttime`);
+- weapon/action labels use `11px` copy (`.weaponch`);
+- fight selects use a white background, `10px` Verdana, and a source width of
+  about `210px` (`.selfight`);
+- submit/reset controls are compact flat browser-game controls (`.buttonSub`),
+  not oversized RPG action cards.
+
+Design translation: combat must preserve the three-column participant/action
+composition, four body-part attack and block rows, visible AP/mana costs,
+multi-opponent roster, and chronological log. The browser may preview a turn,
+but Rails remains authoritative for available actions, target, cost, timeout,
+and final resolution.
+
+### Full-width fight clarification from supplied captures
+
+Two later user-supplied images preserve the fight at higher fidelity. The full
+browser capture is `2048 × 726`; unlike the earlier cropped image, it proves
+that the two participant rails stay approximately paper-doll width while the
+center fight surface consumes all remaining width.
+
+Observed order and geometry:
+
+- each side begins with `name[level]`, a green percentage, stacked HP/MP bars,
+  and a complete equipment silhouette around the portrait;
+- the equipment rails remain fixed while the center is fluid;
+- the center begins with a compact source-image icon strip, then a gray budget
+  band: magic-hit mana `5-180`, action points `200`, and used points;
+- the four attack selects and four block selects are arranged as two centered
+  columns. Body-part copy is inside each select (head, torso, abdomen, legs),
+  rather than a separate large form label;
+- the action row contains the compact turn and reset controls in the supplied
+  active state;
+- a selected-opponent line shows both names and current/max HP immediately
+  above the chronological text log;
+- participant stats remain below the right paper doll; side-item art is part of
+  the source composition rather than a generic character card.
+
+This clarification supersedes the earlier statement that `258/420/258` is a
+fixed three-column page width. `258px` remains the local fixed participant
+rail; the center is `minmax(420px, 1fr)` on desktop. The local implementation
+now follows that topology, including equipment silhouettes, body-part copy in
+the select values, the target/HP line, and the chronological center log.
+
+Known completion boundary: the exact live equipment item images and top
+fight-icon sequence show control positions and states, but the source images
+themselves must not become runtime assets. The active-fight matrix row remains
+`Not Done` until equivalent project-owned controls and every observed state are
+freshly compared, even though the structural and responsive implementation
+exists.
+
+### Separate public fight-log capture
+
+The second supplied image is a distinct public-link page, not the authenticated
+shell or the center-column log expanded. It has:
+
+- a wide ornamental crest/header and decorated side/footer frame;
+- a white/very-light patterned reading field;
+- one continuous chronological list with gray `HH:MM` times;
+- side-colored participant names (blue and green), dark event text, and gray
+  body-part copy;
+- no card borders, round headers, hover treatments, export toolbar, or game
+  shell around the captured log view;
+- a thin divider followed by `Fight participants:` with names, level, and
+  current/max HP;
+- plain underlined numeric pagination below the participant summary.
+
+The local public log now always uses the public application layout, safely adds
+side-color spans around escaped durable log text, places participants and pages
+after the entries, and responds down to mobile width. Source crest and ornament
+assets are reference evidence only and must not be copied. The project-owned CSS
+preserves measured space and contrast, but still requires a fresh geometry/state
+comparison before it is 1:1 completion evidence.
+
+## Local Responsive Adaptation Contract (2026-07-28)
+
+Neverlands itself does not support responsive layouts. Responsive behavior is a
+mandatory local product requirement layered over—not substituted for—the
+captured desktop contract.
+
+Breakpoint behavior implemented and verified:
+
+- desktop (`>= 941px`) retains the measured Neverlands frame and fixed feature
+  geometry;
+- tablet (`721..940px`) removes legacy page minimum widths, keeps the same
+  visual language, narrows presence/fight rails where required, and exposes
+  fixed-size control bands through local scrolling;
+- mobile (`<= 720px`) uses a two-row top strip, stacked chat/presence, a two-row
+  CSS/text bottom control strip, one-column Profile/Inventory content, two compact
+  fight participant rails followed by the full-width composer, and the
+  shell-free responsive public log;
+- the World never scales its `100 × 100` CSS cells or movement targets.
+  Instead, the `9 × 7` surface becomes touch-pannable and Stimulus centers the
+  fixed cursor on connect and viewport resize;
+- no breakpoint moves gameplay authority into CSS or JavaScript. Select costs,
+  movement availability, HP/MP, position, participants, and log content remain
+  server-authored.
+
+Acceptance viewports are desktop `955 × 817`, tablet `820 × 900`, and mobile
+`390 × 844`. These dimensions validate local reflow; they are not attributed to
+live Neverlands.
 
 ## MVP UI And Architecture Implications
 

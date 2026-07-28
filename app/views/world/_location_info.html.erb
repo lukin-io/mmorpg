@@ -3,8 +3,5 @@
 
   <div class="location-description">
     <p><strong><%= zone.name %></strong> [<%= position.x %>, <%= position.y %>]</p>
-    <% if tile.respond_to?(:metadata) && tile.metadata&.dig("source_coordinates").present? %>
-      <p>Neverlands source cell: <%= tile.metadata["source_coordinates"].join(", ") %></p>
-    <% end %>
   </div>
 </div>

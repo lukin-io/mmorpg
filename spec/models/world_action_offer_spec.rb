@@ -58,7 +58,7 @@ RSpec.describe WorldActionOffer, type: :model do
     end
 
     it "accepts city transition, building-entry, and exit offers" do
-      %w[city_transition enter_city_building exit_city].each do |action_type|
+      %w[city_transition enter_city_building open_location_feature exit_city].each do |action_type|
         expect(build(:world_action_offer, action_type:)).to be_valid
       end
     end

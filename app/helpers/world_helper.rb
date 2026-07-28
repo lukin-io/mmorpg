@@ -37,15 +37,23 @@ module WorldHelper
   # @return [String] arrow character
   def direction_arrow(direction)
     arrows = {
-      north: "▲",
-      south: "▼",
-      east: "▶",
-      west: "◀",
-      northeast: "↗",
-      northwest: "↖",
-      southeast: "↘",
-      southwest: "↙"
+      north: "^",
+      south: "v",
+      east: ">",
+      west: "<",
+      northeast: "NE",
+      northwest: "NW",
+      southeast: "SE",
+      southwest: "SW"
     }
-    arrows[direction.to_sym] || "•"
+    arrows[direction.to_sym] || "."
+  end
+
+  def world_location_polygon(feature)
+    Array(feature["polygon"]).filter_map do |point|
+      next unless point.is_a?(Array) && point.size == 2
+
+      "#{point[0].to_i}px #{point[1].to_i}px"
+    end.join(", ")
   end
 end

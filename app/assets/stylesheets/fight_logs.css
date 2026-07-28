@@ -1,0 +1,254 @@
+body.nl-public-layout--fight-log {
+  min-height: 100vh;
+  min-height: 100dvh;
+  background:
+    repeating-linear-gradient(135deg, rgba(0, 0, 0, 0.018) 0 1px, transparent 1px 3px),
+    #f7f7f7;
+}
+
+.nl-public-layout--fight-log .nl-public-main {
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding: 0;
+}
+
+.combat-log-viewer.nl-public-fight-log {
+  position: relative;
+  display: grid;
+  width: 100%;
+  max-width: none;
+  min-height: 100vh;
+  min-height: 100dvh;
+  align-content: start;
+  gap: 0;
+  margin: 0;
+  padding: 138px 90px 110px;
+  overflow: hidden;
+  border-right: 10px solid transparent;
+  border-left: 10px solid transparent;
+  border-image: repeating-linear-gradient(180deg, #8f8f8f 0 8px, #d6d6d6 8px 16px, #737373 16px 22px) 10;
+  background:
+    repeating-linear-gradient(135deg, rgba(0, 0, 0, 0.016) 0 1px, transparent 1px 3px),
+    rgba(255, 255, 255, 0.86);
+  color: #151515;
+  font: 16px/1.42 Arial, Helvetica, sans-serif;
+}
+
+/* Preserve the measured header space and contrast with project-owned CSS.
+ * Source logos, crests, artwork, and branding are reference evidence only. */
+.nl-public-fight-log::before {
+  position: absolute;
+  top: 0;
+  right: 44px;
+  left: 44px;
+  height: 120px;
+  border-bottom: 1px solid #aaaaaa;
+  background:
+    linear-gradient(160deg, transparent 0 34%, #6e0000 35% 40%, #d10000 41% 47%, #2b2b2b 48% 54%, transparent 55%) left top / 50% 100% no-repeat,
+    linear-gradient(200deg, transparent 0 34%, #6e0000 35% 40%, #d10000 41% 47%, #2b2b2b 48% 54%, transparent 55%) right top / 50% 100% no-repeat;
+  content: "FIGHT LOG";
+  color: #d41414;
+  font: 900 22px/112px Arial, Helvetica, sans-serif;
+  letter-spacing: 0.16em;
+  text-align: center;
+  text-shadow: -2px -2px #111111, 2px 2px #ffffff;
+}
+
+.nl-public-fight-log::after {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 42px;
+  border-top: 1px solid #b9b9b9;
+  background: repeating-linear-gradient(135deg, #dddddd 0 4px, #f7f7f7 4px 8px, #a9a9a9 8px 10px);
+  content: "";
+}
+
+.nl-public-fight-log > * {
+  position: relative;
+  z-index: 1;
+}
+
+.combat-log-content {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.log-entries { display: block; }
+
+.round-group {
+  display: block;
+  border: 0;
+  background: transparent;
+}
+
+.round-header { display: none; }
+
+.log-entry {
+  display: grid;
+  grid-template-columns: 62px minmax(0, 1fr);
+  gap: 2px;
+  padding: 4px 0;
+  border: 0;
+  background: transparent;
+  color: #151515;
+  font: 16px/1.42 Arial, Helvetica, sans-serif;
+}
+
+.log-entry:hover { background: transparent; }
+
+.entry-header {
+  display: block;
+  color: #888888;
+  white-space: nowrap;
+}
+
+.entry-time { color: #888888; }
+.entry-sequence { display: none; }
+
+.entry-content {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.raw-message { color: #151515; }
+.damage { display: none; }
+
+.nl-log-name,
+.participant { font-weight: 700; }
+
+.nl-log-name--alpha { color: #1768ac; }
+.nl-log-name--beta { color: #18852e; }
+
+.fight-participants {
+  display: flex;
+  min-width: 0;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 18px;
+  padding: 8px 0 0;
+  border: 0;
+  border-top: 1px solid #bbbbbb;
+  background: transparent;
+  box-shadow: none;
+}
+
+.participants-label { font-weight: 400; }
+
+.team {
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.participant .vitals {
+  color: #333333;
+  font-weight: 400;
+}
+
+.participant.dead { text-decoration: line-through; }
+.participant.alive { text-decoration: none; }
+
+.vs {
+  min-width: 0;
+  color: #222222;
+  font-weight: 400;
+  text-align: left;
+  text-transform: none;
+}
+
+.log-pagination {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 24px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.page-label { color: #888888; }
+
+.page-link,
+.current-page {
+  display: inline;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #111111;
+  font-weight: 700;
+  text-decoration: underline;
+}
+
+.current-page { text-decoration: none; }
+
+.nl-fight-stat-table {
+  width: 100%;
+  margin: 0 0 12px;
+  border-collapse: collapse;
+  background: rgba(255, 255, 255, 0.82);
+  font-size: 13px;
+}
+
+.nl-fight-stat-table th,
+.nl-fight-stat-table td {
+  padding: 3px 5px;
+  border-bottom: 1px solid #cccccc;
+}
+
+@media (max-width: 900px) {
+  .combat-log-viewer.nl-public-fight-log {
+    padding: 104px 36px 76px;
+    font-size: 14px;
+  }
+
+  .nl-public-fight-log::before {
+    right: 22px;
+    left: 22px;
+    height: 86px;
+    font-size: 34px;
+    line-height: 82px;
+  }
+
+  .log-entry {
+    grid-template-columns: 56px minmax(0, 1fr);
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 520px) {
+  .combat-log-viewer.nl-public-fight-log {
+    padding: 76px 12px 58px;
+    border-right-width: 5px;
+    border-left-width: 5px;
+    font-size: 12px;
+  }
+
+  .nl-public-fight-log::before {
+    right: 8px;
+    left: 8px;
+    height: 62px;
+    font-size: 25px;
+    line-height: 58px;
+  }
+
+  .nl-public-fight-log::after { height: 30px; }
+
+  .log-entry {
+    grid-template-columns: 46px minmax(0, 1fr);
+    padding: 3px 0;
+    font-size: 12px;
+  }
+
+  .fight-participants { margin-top: 12px; }
+  .log-pagination { margin-top: 16px; }
+}

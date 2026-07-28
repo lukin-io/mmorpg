@@ -16,6 +16,7 @@ export default class extends Controller {
     "playersPanel",
     "playersList",
     "chatArea",
+    "chatInput",
     "chatMessages",
     "notifications"
   ]
@@ -112,8 +113,32 @@ export default class extends Controller {
   // =====================
 
   focusChat() {
-    const input = document.querySelector(".nl-chat-input-field")
-    input?.focus()
+    if (this.hasChatInputTarget) this.chatInputTarget.focus()
+  }
+
+  sendChat() {
+    if (this.hasChatInputTarget) this.chatInputTarget.form?.requestSubmit()
+  }
+
+  clearChatInput() {
+    if (!this.hasChatInputTarget) return
+
+    this.chatInputTarget.value = ""
+    this.chatInputTarget.focus()
+  }
+
+  refreshChat() {
+    const frame = this.chatMessagesTarget.querySelector("turbo-frame")
+    if (!frame?.src) return
+
+    const source = frame.src
+    frame.removeAttribute("src")
+    frame.src = source
+  }
+
+  clearChat() {
+    const frame = this.chatMessagesTarget.querySelector("turbo-frame")
+    frame?.replaceChildren()
   }
 
   // =====================

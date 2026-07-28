@@ -1,0 +1,81 @@
+<% character ||= current_character %>
+<% equipment ||= {} %>
+<% interactive = local_assigns.fetch(:interactive, false) %>
+<% show_money = local_assigns.fetch(:show_money, true) %>
+<% metadata = character.metadata.to_h %>
+
+<section class="nl-character-sheet" aria-label="<%= character.name %> character sheet">
+  <div class="nl-character-doll-column">
+    <%= render "shared/equipment_paperdoll",
+      character: character,
+      equipment: equipment,
+      interactive: interactive,
+      category: local_assigns[:category],
+      subcategory: local_assigns[:subcategory],
+      info_mode: local_assigns[:info_mode] %>
+
+    <div class="nl-effects-strip">
+      <span class="nl-effect-icon" title="Active effect">*</span>
+      <span>Total effects: <b><%= metadata.fetch("active_effects", []).size %></b> / 99</span>
+    </div>
+  </div>
+
+  <div class="nl-character-parameters">
+    <% if show_money %>
+      <div class="nl-character-money">
+        <span class="nl-money-mark" aria-hidden="true">NV</span>
+        <span>Money:</span>
+        <b><%= number_with_delimiter(character.user&.currency_wallet&.nv_balance || 0) %> NV</b>
+      </div>
+    <% end %>
+
+    <table class="nl-source-stat-table nl-source-stat-table--primary">
+      <tbody>
+        <% profile_primary_stats(character).each do |stat| %>
+          <tr>
+            <th><%= stat[:label] %>:</th>
+            <td><b><%= stat[:total] %></b> (<%= stat[:base] %><%= signed_value(stat[:equipment]) if stat[:equipment] != 0 %>)</td>
+            <td class="nl-stat-adjust"><span>+</span><span>-</span></td>
+          </tr>
+        <% end %>
+        <tr>
+          <th>Wisdom:</th>
+          <td><b><%= metadata.fetch("wisdom", 0) %></b></td>
+          <td class="nl-stat-adjust"><span>+</span><span>-</span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="nl-sheet-link-row"><%= link_to "Save", player_path(name: character.name) %></div>
+
+    <table class="nl-source-stat-table">
+      <caption>Experience</caption>
+      <tbody>
+        <tr><th>Combat:</th><td class="nl-stat-red"><%= number_with_delimiter(character.experience) %></td></tr>
+        <tr><th>Glory:</th><td class="nl-stat-green"><%= number_with_delimiter(metadata.fetch("glory", 0)) %></td></tr>
+        <tr><th>Valor:</th><td><%= number_with_delimiter(metadata.fetch("valor", 0)) %></td></tr>
+        <tr><th>To next level:</th><td><b><%= number_with_delimiter(character.experience_to_next_level) %></b></td></tr>
+      </tbody>
+    </table>
+
+    <table class="nl-source-stat-table nl-source-stat-table--record">
+      <tbody>
+        <tr><th>Wins:</th><td><b><%= metadata.fetch("player_wins", 0) %></b></td></tr>
+        <tr><th>Losses:</th><td><b><%= metadata.fetch("player_losses", 0) %></b></td></tr>
+        <tr><th>NPC wins:</th><td><b><%= metadata.fetch("npc_wins", 0) %></b></td></tr>
+        <tr><th>NPC losses:</th><td><b><%= metadata.fetch("npc_losses", 0) %></b></td></tr>
+      </tbody>
+    </table>
+
+    <div class="nl-source-points">Increases: <b><%= character.stat_points_available.to_i %></b></div>
+
+    <table class="nl-source-stat-table nl-source-stat-table--combat">
+      <tbody>
+        <tr><th>Fatigue:</th><td class="nl-source-meter"><span style="width: <%= profile_fatigue(character) %>%"></span><b><%= profile_fatigue(character) %>%</b></td></tr>
+        <% profile_combat_stats(character).each do |label, value| %>
+          <tr><th><%= label %>:</th><td class="nl-source-value"><b><%= value %></b></td></tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</section>

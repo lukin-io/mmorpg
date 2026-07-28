@@ -16,9 +16,9 @@ RSpec.describe "world/_map.html.erb", type: :view do
   end
 
   let(:nearby_tiles) do
-    # Generate a 5x5 grid of tiles
-    (8..12).map do |y|
-      (8..12).map do |x|
+    # Generate the 15x9 source-shaped render buffer around a 13x7 viewport.
+    (6..14).map do |y|
+      (3..17).map do |x|
         OpenStruct.new(
           x: x,
           y: y,
@@ -116,7 +116,7 @@ RSpec.describe "world/_map.html.erb", type: :view do
       expect(rendered).to have_css("[data-nl-world-map-move-cooldown-value='3']")
     end
 
-    it "publishes the clipped stage offsets used by client-side travel animation" do
+    it "publishes the one-cell source buffer around the visible stage" do
       render partial: "world/map", locals: {
         position: position,
         nearby_tiles: nearby_tiles,
@@ -126,7 +126,7 @@ RSpec.describe "world/_map.html.erb", type: :view do
 
       expect(rendered).to have_css("[data-nl-world-map-map-offset-x-value='-100']")
       expect(rendered).to have_css("[data-nl-world-map-map-offset-y-value='-100']")
-      expect(rendered).to have_css(".nl-map-viewport[style*='--nl-map-visible-columns: 3']")
+      expect(rendered).to have_css(".nl-map-viewport[style*='--nl-map-visible-columns: 13'][style*='--nl-map-visible-rows: 7']")
     end
   end
 
@@ -189,7 +189,7 @@ RSpec.describe "world/_map.html.erb", type: :view do
     end
 
 
-    it "renders each cell from the original project terrain texture" do
+    it "renders each ordinary cell from the project-owned regional mosaic" do
       render partial: "world/map", locals: {
         position: position,
         nearby_tiles: nearby_tiles,
@@ -197,13 +197,13 @@ RSpec.describe "world/_map.html.erb", type: :view do
         tile_data: {}
       }
 
-      expect(rendered).to include("forpost-terrain")
-      expect(rendered).to include("background-position: 0px 0px")
+      expect(rendered).to include("world/forpost-terrain", "background-size: 1000px 1000px")
+      expect(rendered).not_to include("neverlands_outskirts")
     end
 
     it "uses a validated source-backed cell-art slice instead of the coordinate fallback" do
       tiles = nearby_tiles
-      tiles[1][1] = OpenStruct.new(
+      tiles[3][6] = OpenStruct.new(
         x: 9,
         y: 9,
         terrain_type: "outdoor",

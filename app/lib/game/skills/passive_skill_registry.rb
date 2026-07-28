@@ -63,7 +63,7 @@ module Game
           source_id:,
           name:,
           source_name:,
-          description: "Neverlands numeric skill ##{source_id}.",
+          description: "Character skill ##{source_id}.",
           max_level: MAX_LEVEL,
           category:,
           pool: CATEGORIES.fetch(category).fetch(:pool),

@@ -5,7 +5,8 @@
 %>
 
 <% if @movement_state&.locked_reason == :fatigued %>
-  <p class="nl-world-action-note">Fatigue is 86% or higher. Move, Look, and Enter are unavailable until it recovers.</p>
+  <span class="nl-world-action-unavailable" title="Fatigue is 86% or higher. Move, Look, and Enter are unavailable until it recovers.">Actions unavailable</span>
+  <span class="nl-visually-hidden">Move, Look, and Enter are unavailable until fatigue recovers.</span>
 <% end %>
 
 <% if local_actions_present %>
@@ -21,12 +22,12 @@
                       data: {turbo: true} do |f| %>
           <%= f.hidden_field :building_id, value: building[:id] %>
           <%= f.hidden_field :action_key, value: offer.action_key %>
-          <%= f.submit "Enter", class: "fr_but nl-world-action-button", title: building[:name] %>
+          <%= f.submit "Enter", class: "nl-nav-link nl-world-action-button", title: building[:name] %>
           <span class="nl-visually-hidden"><%= building[:name] %> <%= building[:destination] %> <%= building[:description] %></span>
         <% end %>
       <% else %>
         <button type="button"
-                class="fr_but nl-world-action-button"
+                class="nl-nav-link nl-world-action-button"
                 title="<%= building[:blocked_reason] %>"
                 disabled>Enter</button>
         <span class="building-blocked nl-visually-hidden"><%= building[:name] %> <%= building[:blocked_reason] %></span>
@@ -44,7 +45,7 @@
         <%= f.hidden_field :local_action_type, value: local_action[:local_action_type] %>
         <%= f.hidden_field :action_key, value: offer.action_key %>
         <%= f.submit local_action[:label],
-                     class: "fr_but nl-world-action-button",
+                     class: "nl-nav-link nl-world-action-button",
                      title: local_action[:description] %>
         <% if local_action[:description].present? %>
           <span class="nl-visually-hidden"><%= local_action[:description] %></span>

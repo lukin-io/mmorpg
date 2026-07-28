@@ -10,6 +10,19 @@ RSpec.describe "world routes", type: :routing do
     )
   end
 
+  it "routes allowlisted world-location scenes and their offered features" do
+    expect(get: "/world/locations/frontier_village").to route_to(
+      controller: "world_locations",
+      action: "show",
+      key: "frontier_village"
+    )
+    expect(post: "/world/locations/frontier_village/features").to route_to(
+      controller: "world_locations",
+      action: "open_feature",
+      key: "frontier_village"
+    )
+  end
+
   it "does not route the removed arbitrary location-name entry endpoint" do
     expect(post: "/world/enter").not_to be_routable
   end

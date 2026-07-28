@@ -15,6 +15,6 @@ module CurrentCharacterContext
   end
 
   def current_character
-    @current_character
+    @current_character ||= current_user&.character
   end
 end

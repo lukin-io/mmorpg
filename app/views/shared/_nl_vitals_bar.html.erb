@@ -20,9 +20,14 @@
      data-nl-vitals-hp-regen-rate-value="<%= character.hp_regen_interval || 300 %>"
      data-nl-vitals-mp-regen-rate-value="<%= character.mp_regen_interval || 600 %>">
 
-  <%# HP Bar (red) %>
-  <div class="nl-hp-bar-inline" data-nl-vitals-target="hpBar">
-    <div class="nl-bar-fill" style="width: <%= hp_percent %>%;" data-nl-vitals-target="hpFill"></div>
+  <%# Source bar stack: HP above MP in the same 160px strip. %>
+  <div class="nl-vitals-bars">
+    <div class="nl-hp-bar-inline" data-nl-vitals-target="hpBar">
+      <div class="nl-bar-fill" style="width: <%= hp_percent %>%;" data-nl-vitals-target="hpFill"></div>
+    </div>
+    <div class="nl-mp-bar-inline" data-nl-vitals-target="mpBar">
+      <div class="nl-bar-fill" style="width: <%= mp_percent %>%;" data-nl-vitals-target="mpFill"></div>
+    </div>
   </div>
 
   <%# Values text: [HP/MaxHP | MP/MaxMP] %>

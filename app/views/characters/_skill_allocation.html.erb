@@ -25,14 +25,14 @@
   <%# Dual Skill Point Pools %>
   <div class="nl-allocation-pools">
     <div class="nl-allocation-pool nl-allocation-pool--combat">
-      <span class="nl-allocation-pool-icon">⚔️</span>
+      <span class="nl-allocation-pool-icon" aria-hidden="true">C</span>
       <span class="nl-allocation-pool-label">Combat points:</span>
       <span class="nl-allocation-pool-value" data-skill-allocation-target="combatPoints">
         <%= @combat_skill_points %>
       </span>
     </div>
     <div class="nl-allocation-pool nl-allocation-pool--peace">
-      <span class="nl-allocation-pool-icon">🕊️</span>
+      <span class="nl-allocation-pool-icon" aria-hidden="true">P</span>
       <span class="nl-allocation-pool-label">Peace points:</span>
       <span class="nl-allocation-pool-value" data-skill-allocation-target="peacePoints">
         <%= @peace_skill_points %>
@@ -49,10 +49,10 @@
         <h3 class="nl-skill-category-header nl-skill-category-header--<%= category_key %>">
           <span class="nl-skill-category-icon">
             <% case category_key
-               when :combat then %><%= "⚔️" %>
-            <% when :magic then %><%= "✨" %>
-            <% when :resistance then %><%= "🛡️" %>
-            <% when :peace_world then %><%= "🕊️" %>
+               when :combat then %><%= "C" %>
+            <% when :magic then %><%= "M" %>
+            <% when :resistance then %><%= "R" %>
+            <% when :peace_world then %><%= "P" %>
             <% end %>
           </span>
           <%= category_info[:name] %>
@@ -74,7 +74,7 @@
                         data-skill-allocation-skill-param="<%= skill_key %>"
                         data-skill-allocation-pool-param="<%= definition[:pool] %>"
                         data-skill-allocation-rate-param="<%= definition[:progression_rate] %>">
-                  −
+                  -
                 </button>
 
                 <span class="nl-skill-value"
