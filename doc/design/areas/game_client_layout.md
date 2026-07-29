@@ -71,8 +71,9 @@ UI maintainability follows single responsibility by gameplay domain:
   controls: typography, colors, borders, compact buttons, form baselines, and
   accessibility helpers.
 - The persistent shell, chat/presence, World/City, Profile/Inventory,
-  Shop, Arena/Fight, and public logs each own their layout, component selectors,
-  responsive rules, and local interaction presentation.
+  Shop, Arena/Fight, public logs, and the admin-only Manage surface each own
+  their layout, component selectors, responsive rules, and local interaction
+  presentation.
 - A feature must not borrow another domain's selector merely because it looks
   similar. For example, Shop tabs must not depend on Arena tab classes. If two
   domains need the same semantic primitive, promote the smallest stable rule to
@@ -89,6 +90,9 @@ UI maintainability follows single responsibility by gameplay domain:
   entrance landmarks, and linked-location interior geometry. Shop owns its
   catalog and commerce layout after a location hotspot hands off to it; neither
   domain reaches into the other's selectors.
+- Manage owns `manage.css`, its compact tables/forms/navigation and responsive
+  overflow. It composes shared controls but does not reuse gameplay layout
+  selectors or join the persistent game shell.
 
 Domain SRP does not require one stylesheet per partial. It requires one clear
 owner for every selector and prevents cross-feature coupling. A change to one

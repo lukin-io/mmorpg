@@ -58,6 +58,7 @@ Each layer answers one question and must not impersonate another layer.
 | Delivery/parity plan | `doc/design/launch_mvp_plan.md` | What is required, Done, Not Done, or blocked by evidence? | Detailed runtime architecture |
 | Verified implementation handbook | `doc/features/**` | What is verifiably shipped locally now, and which files own it? | Unverified future behavior |
 | Engineering guidance | `doc/RUBY_ON_RAILS_GUIDE.md` | How should Rails/Hotwire implementation be structured safely? | Neverlands game design |
+| Operational and extension guides | `doc/guides/**` | How does an operator use a shipped tool, and how does an engineer extend it safely? | Duplicate feature truth, product design, or completion claims |
 | Runtime truth | Code, seeds/config, schema, and tests | What does the application actually do? | Product authority by itself |
 | Session history | `changelogs/**` | What changed during one Codex session? | Canonical product/design rules |
 
@@ -81,6 +82,8 @@ doc/
 ├── README.md                       # concise portal and copy boundary
 ├── DOCUMENTATION.md                # this architecture and domain map
 ├── RUBY_ON_RAILS_GUIDE.md          # Rails/Hotwire implementation guide
+├── guides/                         # operator/developer procedures
+│   └── managing_game_content.md    # /manage usage and extension guide
 │
 ├── design/
 │   ├── README.md                   # design-layer rules
@@ -243,6 +246,24 @@ Implementation handbooks own:
 
 They describe only verified local behavior. Observed or planned behavior stays
 in evidence/design/plan documents until implemented.
+
+### 4.6 Operational and extension guide
+
+Use `doc/guides/**` for cross-feature procedures that explain how to operate a
+shipped tool or extend its adapters without replacing canonical ownership. A
+guide may combine task-oriented steps from several feature handbooks, but it
+must link to those owners and must not redefine their mechanics, persistence,
+security, or completion status.
+
+The current guide is:
+
+- `doc/guides/managing_game_content.md` — admin `/manage` usage, World/City
+  content lifecycle, audit/failure behavior, and the explicit Rails extension
+  pattern for future player and item management.
+
+Guides use lowercase `snake_case` names. Add one only when a real workflow
+crosses feature boundaries or needs richer operator/developer examples than a
+canonical handbook should contain.
 
 ## 5. Proposed metadata
 

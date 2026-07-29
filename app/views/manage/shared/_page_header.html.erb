@@ -1,0 +1,11 @@
+<header class="nl-manage-page-header">
+  <div>
+    <h1><%= title %></h1>
+    <% if local_assigns[:description].present? %>
+      <p><%= description %></p>
+    <% end %>
+  </div>
+  <% if local_assigns[:new_path].present? %>
+    <%= link_to local_assigns[:new_label] || "Create", new_path, class: "lbut" %>
+  <% end %>
+</header>

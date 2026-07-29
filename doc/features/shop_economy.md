@@ -434,6 +434,10 @@ City/Resume Context own building access and exact-location resume before the Sho
 
 ## 17. Safe extension checklist
 
+`doc/guides/managing_game_content.md` documents how a future explicit
+`ItemTemplate` management adapter must preserve Shop catalog, price, stock, and
+owned-inventory boundaries. The example does not mark that route as shipped.
+
 Before extending Shop and Economy:
 
 1. Capture the exact Neverlands counter, row, control, response, and currency behavior.
@@ -453,3 +457,4 @@ Before extending Shop and Economy:
 | 2026-07-21 | Created the implementation handbook for the city Shop, catalog filters, buying, selling, NV wallet, stock, and safe resume behavior. |
 | 2026-07-27 | Aligned Shop capacity with the wiki mass formula and made zero-durability sale rejection explicit in implementation, request coverage, failure rules, and file ownership. |
 | 2026-07-28 | Moved current Shop access to Central Square; added the project-owned CSS scene, measured 800px control frame, four mode tabs, icon category strip, compact filters, local table overflow, responsive acceptance, and source-asset/text boundary. |
+| 2026-07-29 | Linked the cross-feature management guide's future explicit `ItemTemplate` adapter while retaining Shop ownership of catalog visibility, price, stock, and transaction invariants. |

@@ -1,0 +1,15 @@
+<% if pagination.total_pages > 1 %>
+  <nav class="nl-manage-pagination" aria-label="Pagination">
+    <% if pagination.previous_page %>
+      <%= link_to "< Previous", url_for(request.query_parameters.merge(page: pagination.previous_page)), class: "lbut" %>
+    <% else %>
+      <span class="lbutdis" aria-disabled="true">&lt; Previous</span>
+    <% end %>
+    <span>Page <%= pagination.page %> of <%= pagination.total_pages %> · <%= pagination.total_count %> records</span>
+    <% if pagination.next_page %>
+      <%= link_to "Next >", url_for(request.query_parameters.merge(page: pagination.next_page)), class: "lbut" %>
+    <% else %>
+      <span class="lbutdis" aria-disabled="true">Next &gt;</span>
+    <% end %>
+  </nav>
+<% end %>

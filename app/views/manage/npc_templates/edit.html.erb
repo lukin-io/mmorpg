@@ -1,0 +1,2 @@
+<%= render "manage/shared/page_header", title: "Edit NPC Template", description: @npc_template.name %>
+<%= render "form", npc_template: @npc_template, url: manage_npc_template_path(@npc_template), submit_label: "Save NPC template", cancel_path: manage_npc_template_path(@npc_template) %>

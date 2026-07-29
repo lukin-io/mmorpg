@@ -43,7 +43,7 @@ Related documents:
 
 Forpost is a graph of five city `Zone` records. Each node uses sentinel coordinate `[0,0]`; `CharacterPosition.zone` is the authoritative district. A district click accepts a fresh character-owned `WorldActionOffer`, persists the destination zone immediately, and renders the next scene without a movement timer.
 
-Every node uses one project-owned `city.png` at its native 1536 × 1024 size behind a 1250 × 600 crop. `CityCatalog` supplies per-node image offset, focal point, action rectangles, presentation-only landmarks, and arrow direction. Hover/focus recreates the source image-swap behavior by drawing a brightened CSS crop from the same project asset; no Neverlands city image is bundled.
+Every node uses one project-owned `city.png` at its native 1536 × 1024 size behind a 1250 × 600 crop. `CityCatalog` supplies the baseline seed declaration; persisted `Zone.metadata.city_presentation` supplies each runtime image offset, focal point, and presentation-only landmark, while `CityHotspot` supplies action rectangles and arrow direction. Hover/focus recreates the source image-swap behavior by drawing a brightened CSS crop from the same project asset; no Neverlands city image is bundled.
 
 The current slice contains:
 
@@ -102,7 +102,7 @@ The scene contract is:
 - routes: large gold CSS/text arrows inside authored hit areas;
 - tooltip: 12px Arial, white background, 1px gray border, pointer/focus relative and scene-clamped.
 
-On desktop the whole scene is visible when space allows. At `820px` and `390px`, the viewport pans the unscaled scene and initially centers the catalog focal point. The page itself must not gain horizontal overflow.
+On desktop the whole scene is visible when space allows. At `820px` and `390px`, the viewport pans the unscaled scene and initially centers the persisted focal point. The page itself must not gain horizontal overflow.
 
 ### 4.3 Hover, pointer, touch, and keyboard
 
@@ -179,16 +179,20 @@ Building names, visible tabs, prices, routes, or “entry forbidden” states ca
 
 | Component | Responsibility | Contract |
 |---|---|---|
-| `Zone` | Durable district | `metadata.city_node_key` links persistence to the catalog. |
+| `Zone` | Durable district and runtime scene presentation | Stable city/node keys, title, image offset, focus, and presentation-only landmarks live in metadata. |
 | `CharacterPosition` | Exact current district | Zone and `[0,0]` survive reload/login. |
-| `CityCatalog` | Graph and presentation | Five nodes, eight links, features, one gate, dimensions, offsets, boxes, arrows, focus, and landmarks. |
-| `CityHotspot` | Persisted action definition | Zone-scoped type, destination/feature, active state, and required level. |
+| `CityCatalog` | Baseline declaration used by seeds | Five source-backed nodes, links, features, one gate, dimensions, offsets, boxes, arrows, focus, and landmarks; runtime does not require a second action lookup here. |
+| `CityHotspot` | Persisted action and presentation definition | Zone-scoped type, destination/feature, active state, required level, native pixel box, direction, and z-order. |
 | `WorldActionOffer` | Short-lived per-character capability | Exact node/position/target, opaque key, expiry, and status. |
 | `ResumeContext` | Safe last-surface routing | Stores allowlisted context; never replaces authoritative position. |
 
 ### 7.1 Graph versus presentation
 
-City zones are not local grids. Seeds remove city `MapTileTemplate` rows; catalog links alone define navigation. Pixel boxes and image offsets are presentation metadata and never decide availability or destination.
+City zones are not local grids. Seeds remove city `MapTileTemplate` rows and
+materialize catalog declarations into `Zone` plus `CityHotspot`. Runtime graph
+navigation comes from active hotspot records. Pixel boxes, image offsets, and
+directions are persisted presentation metadata and never decide availability
+or destination.
 
 ### 7.2 Hotspot types
 
@@ -202,10 +206,11 @@ All current Forpost actions use required level `0`, including Arena as observed 
 
 ### 7.3 Persisted graph reconciliation
 
-`CityCatalog` is the authored graph and `db/seeds.rb` is its one persisted
-materialization pipeline. A graph replacement must reconcile both declarations
-and already-stored state; adding a second runtime catalog or presentation-only
-compatibility graph is not allowed.
+`CityCatalog` is the baseline authored declaration and `db/seeds.rb` is its one
+persisted materialization pipeline. `Zone` and `CityHotspot` are runtime truth.
+A graph replacement must reconcile both declarations and already-stored state;
+adding a second runtime catalog or presentation-only compatibility graph is not
+allowed.
 
 The current sync performs these changes together:
 
@@ -217,6 +222,33 @@ The current sync performs these changes together:
 - obsolete City spawn/tile rows and South/East outdoor gate buildings are
   removed;
 - a second seed run makes no further state change.
+
+### 7.4 Admin management surface
+
+For task-oriented City node/hotspot examples and the safe extension pattern for
+additional management resources, use `doc/guides/managing_game_content.md`.
+This handbook remains authoritative for City runtime and content lifecycle.
+
+The admin-only `/manage/cities` CRUD edits city `Zone` records and JSON scene
+metadata. `/manage/city_hotspots` edits the same routes, building entries,
+exits, destinations, feature keys, required levels, active state, pixel boxes,
+directions, and z-order consumed by `WorldController` and
+`CityActionOfferBuilder`. `/manage/audit_events` exposes their immutable
+mutation history.
+
+Changes are visible on the next City render. Editing or deleting a hotspot
+cancels its offered/accepted capabilities in the same transaction as the
+content change and audit event. A city node referenced by positions, hotspots,
+incoming routes, or gates cannot be deleted until those dependencies are moved
+or removed. JSON must parse as an object, and feature navigation remains
+restricted by `CityHotspot::FEATURE_ROUTES`. Successful writes redirect with
+`303 See Other`; audit actor, record identity, and action vocabulary also have
+database constraints.
+
+`/manage` changes the database only. Running `bin/rails db:seed` later restores
+the source-backed Forpost baseline from `CityCatalog`; promote an intentional
+baseline edit into the catalog/seeds and coverage rather than relying on one
+environment's managed override.
 
 ## 8. Runtime architecture
 
@@ -234,7 +266,12 @@ flowchart LR
 
 ### 8.1 Render
 
-`WorldController#prepare_city_view` loads the current-zone hotspots and builds fresh offers. The partial renders all persisted hotspots, but only offered ones become form buttons. Catalog landmarks render separately and never create offers.
+`WorldController#prepare_city_view` loads the current-zone hotspots and builds
+fresh offers. The partial renders persisted Zone scene metadata and every
+active persisted hotspot, but only offered hotspots become form buttons.
+Persisted presentation-only landmarks render separately and never create
+offers. A catalog fallback remains only for pre-sync legacy rows missing the
+new metadata; seeded and managed records take precedence.
 
 ### 8.2 Accept
 
@@ -253,6 +290,9 @@ flowchart LR
 | `GET /city/buildings/:building_key` | Render allowlisted read-only interior | Saves safe interior context only. |
 | `GET /shop` | Render Shop from Central Square | Shop owns later mutations. |
 | `GET /arena` | Render Arena from Central Square | Arena owns later behavior. |
+| `GET/POST/PATCH/DELETE /manage/cities` | Admin-only city-node CRUD | Atomically changes persisted City data and writes an audit event. |
+| `GET/POST/PATCH/DELETE /manage/city_hotspots` | Admin-only route/building/exit CRUD | Atomically changes the existing action owner and cancels stale targeted offers. |
+| `GET /manage/audit_events` and `GET /manage/audit_events/:id` | Review immutable content changes | Read-only bounded HTML. |
 
 City has no public JSON API; blueprint and Swagger/rswag coverage do not apply.
 
@@ -261,6 +301,11 @@ City has no public JSON API; blueprint and Swagger/rswag coverage do not apply.
 `app/assets/stylesheets/world.css` owns City viewport/canvas dimensions, project-image positioning, CSS hover crops, route arrows, tooltips, focus states, and responsive panning. It must not introduce source runtime image URLs or brand-specific copy.
 
 `app/javascript/controllers/nl_city_map_controller.js` owns only centering and tooltip presentation. Forms, IDs, action keys, labels, blocked reasons, and routes are server-rendered.
+
+`app/assets/stylesheets/manage.css` and the server-rendered `manage` layout own
+the separate admin interface. It composes shared control tokens, uses local
+table/nav overflow on narrow screens, and never joins the persistent gameplay
+shell or turns browser geometry into game authority.
 
 ## 11. Persistence and login resume
 
@@ -274,6 +319,11 @@ District changes persist immediately in `CharacterPosition`. Returning from Shop
 - Browser geometry, labels, hidden IDs, arrow direction, and tooltip content grant no authority.
 - Destination zones/coordinates and feature routes come from server-authored records/allowlists.
 - Accepted actions complete atomically at the service boundary; stale/replayed keys fail.
+- `ManagePolicy` requires the explicit admin role; moderator, GM, player, and
+  anonymous sessions cannot read or mutate management records.
+- Management controllers allowlist fields and parse JSON server-side.
+  `Manage::ContentMutation` commits the content change, stale-offer
+  cancellation, and immutable audit event atomically.
 
 ## 13. Failure and boundary behavior
 
@@ -287,6 +337,9 @@ District changes persist immediately in `CharacterPosition`. Returning from Shop
 | Law Quarter City Exit | Show as landmark only until outdoor handoff is verified. |
 | Missing project image | Preserve controls/labels; never fall back to a Neverlands URL. |
 | Existing `city2_*` persisted graph | Run the convergent seed sync; retained nodes keep their identity, removed-only positions recover to Central Square, and obsolete actions cannot remain interactive. |
+| Invalid management JSON or hotspot/zone value | Render HTTP 422 with errors; write no content or audit event. |
+| City node still has positions/routes/buildings | Refuse deletion and preserve the complete graph. |
+| Managed hotspot changes while an offer exists | Cancel the stale targeted offer in the same transaction; render a fresh offer from the new record. |
 
 ## 14. Acceptance criteria
 
@@ -300,6 +353,9 @@ District changes persist immediately in `CharacterPosition`. Returning from Shop
 - Central exit round-trips to the verified outdoor cell; stale South/East gate seeds are removed.
 - An existing nine-node database converges to the five-node graph without stranding a character or leaving a live obsolete exit capability.
 - No Neverlands city/Shop image, logo, signature, administration copy, or asset URL is shipped.
+- `/manage` edits the same `Zone` and `CityHotspot` records rendered by City;
+  actions are audited, responsive, dependency-safe, and do not create a
+  parallel graph.
 
 ## 15. Test strategy and required coverage
 
@@ -313,7 +369,11 @@ bundle exec rspec \
   spec/models/open_world_seed_spec.rb \
   spec/views/world/_city_view_spec.rb \
   spec/requests/city_navigation_spec.rb \
+  spec/requests/manage/content_management_spec.rb \
+  spec/policies/manage_policy_spec.rb \
+  spec/services/manage/content_mutation_spec.rb \
   spec/system/city_navigation_spec.rb \
+  spec/system/manage_content_spec.rb \
   spec/system/responsive_neverlands_ui_spec.rb
 ```
 
@@ -342,6 +402,24 @@ Run `bin/feature-doc-audit doc/features/city.md doc/features/shop_economy.md` an
 - `app/controllers/world_controller.rb`
 - `db/seeds.rb`
 
+### Admin authoring and audit
+
+- `config/routes.rb`
+- `app/controllers/manage/application_controller.rb`
+- `app/controllers/manage/dashboard_controller.rb`
+- `app/controllers/manage/cities_controller.rb`
+- `app/controllers/manage/city_hotspots_controller.rb`
+- `app/controllers/manage/audit_events_controller.rb`
+- `app/policies/manage_policy.rb`
+- `app/models/management_audit_event.rb`
+- `app/services/manage/content_mutation.rb`
+- `app/queries/manage/paginated_relation.rb`
+- `app/helpers/manage_helper.rb`
+- `app/views/layouts/manage.html.erb`
+- `app/views/manage/`
+- `app/assets/stylesheets/manage.css`
+- `db/migrate/20260729120000_create_management_audit_events.rb`
+
 ### Presentation
 
 - `app/views/world/_city_view.html.erb`
@@ -359,6 +437,14 @@ Run `bin/feature-doc-audit doc/features/city.md doc/features/shop_economy.md` an
 - `spec/requests/city_navigation_spec.rb`
 - `spec/system/city_navigation_spec.rb`
 - `spec/system/responsive_neverlands_ui_spec.rb`
+- `spec/factories/management_audit_events.rb`
+- `spec/models/management_audit_event_spec.rb`
+- `spec/policies/manage_policy_spec.rb`
+- `spec/queries/manage/paginated_relation_spec.rb`
+- `spec/services/manage/content_mutation_spec.rb`
+- `spec/requests/manage/content_management_spec.rb`
+- `spec/routing/manage_routing_spec.rb`
+- `spec/system/manage_content_spec.rb`
 
 ## 17. Safe extension checklist
 
@@ -370,9 +456,14 @@ Run `bin/feature-doc-audit doc/features/city.md doc/features/shop_economy.md` an
 6. Preserve native desktop geometry and add responsive acceptance.
 7. Add success, failure, authorization, stale-capability, and boundary coverage.
 8. Update evidence, parity matrix, and feature contracts in the same change.
+9. Use `/manage` for a scoped persisted override or inspection; promote
+   baseline changes into `CityCatalog`, seeds, and this contract. Add future
+   management resources through explicit namespaced controllers and allowlisted
+   forms rather than arbitrary model reflection.
 
 ## 18. Version history
 
 - 2026-07-29: fixed existing-database City Exit interaction by making the one seed pipeline reconcile the complete historical `city2_*` graph, retire stale hotspots/offers/gates, preserve retained-node positions, recover removed-node positions to Central Square, and prove convergence plus idempotency.
+- 2026-07-29: added admin-only responsive City node/action CRUD, dependency-safe atomic audit records, stale-offer cancellation, runtime precedence for managed `Zone` scene metadata plus `CityHotspot` geometry/direction, and the task-oriented cross-feature management-guide link. `CityCatalog` remains the source-backed seed declaration, not a parallel runtime graph.
 - 2026-07-28: replaced the stale nine-node/760 × 255 model with the freshly observed five-district/1250 × 600 Forpost graph; moved Shop/Hospital to Central and Market/Airship to Residential; removed stale Arena and South/East gate assumptions; added exact pixel hotspots, presentation landmarks, CSS hover crops, large route arrows, centered responsive panning, Shop scene/control alignment, seed cleanup, tests, and updated evidence.
 - 2026-07-27: documented the earlier nine-node implementation before fresh live verification superseded it.

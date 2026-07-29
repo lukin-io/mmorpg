@@ -35,11 +35,13 @@ class MapTileTemplate < ApplicationRecord
 
   validates :zone, presence: true
   validates :x, :y, numericality: {only_integer: true, greater_than_or_equal_to: 0}
+  validates :x, uniqueness: {scope: [:zone, :y]}
   validates :terrain_type, presence: true
   validates :terrain_type, inclusion: {in: TERRAIN_TYPES}
   validate :zone_must_be_string
   validate :cell_art_must_be_source_backed
   validate :local_actions_must_be_source_backed
+  validate :coordinates_must_fit_known_zone
 
   # Custom setter to ensure zone is always stored as a string name
   def zone=(value)
@@ -173,5 +175,13 @@ class MapTileTemplate < ApplicationRecord
 
     duplicate_types = normalized_actions.map { |action| action["type"] }.compact.tally.select { |_, count| count > 1 }.keys
     errors.add(:metadata, "contains duplicate local action types: #{duplicate_types.join(', ')}") if duplicate_types.any?
+  end
+
+  def coordinates_must_fit_known_zone
+    known_zone = Zone.find_by(name: zone)
+    return unless known_zone && x.is_a?(Integer) && y.is_a?(Integer)
+
+    errors.add(:x, "must be within zone bounds") unless x < known_zone.width
+    errors.add(:y, "must be within zone bounds") unless y < known_zone.height
   end
 end

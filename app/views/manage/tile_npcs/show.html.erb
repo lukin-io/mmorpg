@@ -1,0 +1,9 @@
+<%= render "manage/shared/page_header", title: @tile_npc.display_name, description: @tile_npc.npc_key %>
+<table class="nl-sheet-table nl-manage-detail">
+  <tr><th>Cell</th><td><%= @tile_npc.zone %> [<%= @tile_npc.x %>, <%= @tile_npc.y %>]</td></tr><tr><th>Template</th><td><%= @tile_npc.npc_template.name %></td></tr>
+  <tr><th>Role / level</th><td><%= @tile_npc.npc_role %> / <%= @tile_npc.level %></td></tr><tr><th>HP</th><td><%= @tile_npc.current_hp %>/<%= @tile_npc.max_hp %></td></tr>
+  <tr><th>Defeated at</th><td><%= @tile_npc.defeated_at || "—" %></td></tr><tr><th>Respawns at</th><td><%= @tile_npc.respawns_at || "—" %></td></tr>
+</table>
+<h2 class="invtitle">Metadata</h2><pre class="nl-manage-json"><%= pretty_json(@tile_npc.metadata) %></pre>
+<%= render "manage/shared/record_actions", edit_path: edit_manage_tile_npc_path(@tile_npc),
+      delete_path: manage_tile_npc_path(@tile_npc), back_path: manage_tile_npcs_path %>

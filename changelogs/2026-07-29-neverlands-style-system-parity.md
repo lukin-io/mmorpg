@@ -1,16 +1,45 @@
-# Neverlands Style System Parity: Shell, Profile, Inventory
+# Neverlands UI/UX, World/City Parity, and Content Management
 
 - Record type: mixed session changelog (implementation + design evidence)
 - Date: 2026-07-29
 - Branch: `chore/ui_styles`
 - Baseline: clean worktree at the end of the 2026-07-28 world-parity session
-- Session status: Done
+- Session status: Complete
 - Review authority: `doc/RUBY_ON_RAILS_GUIDE.md`
 - Changelog lifecycle: one living record for this complete Codex session
 
 ## Outcome
 
-Done. A single authenticated Neverlands capture was taken on 2026-07-29 and
+The World/City management follow-up is Done. The app now has an admin-only,
+responsive `/manage` surface for world cells/resources, cell buildings, the NPC
+catalog, cell NPC placements, cities, and city actions, plus a read-only audit
+log. It deliberately manages the existing persisted owners consumed by
+`TileStateResolver`, `ActionOfferBuilder`, and the City runtime instead of
+introducing a parallel gameplay catalog. Explicit resource controllers and
+forms share management authorization, pagination, JSON parsing, mutation,
+audit, layout, and navigation infrastructure, providing a repeatable extension
+pattern for future DB-backed management resources without unsafe reflection.
+
+Outdoor NPC runtime state is now consistently database-owned: seed/config data
+materializes `NpcTemplate` and `TileNpc` rows, runtime lookup never creates
+content on demand, and the manager edits the same rows the game consumes. City
+presentation metadata and hotspot geometry/directions are likewise persisted
+and editable, with the existing catalog retained as the seed baseline/fallback.
+All management mutations are allowlisted, admin-authorized, transactional,
+audited, dependency-safe, and invalidate outstanding capabilities targeting
+changed content. Full verification is green.
+
+The management-documentation follow-up is also Done. The new cross-feature
+operator/developer guide at `doc/guides/managing_game_content.md` explains every
+currently manageable entity, safe UI workflows, seed/runtime precedence,
+audit/failure behavior, and the explicit Rails extension pattern for future
+resources. Worked future examples distinguish `ItemTemplate` catalog CRUD from
+service-backed inventory grants and protected player/account commands; they are
+clearly labeled as extension guidance rather than shipped routes or approved
+game balance.
+
+The completed presentation work remains unchanged: a single authenticated
+Neverlands capture was taken on 2026-07-29 and
 normalized into a new presentation-layer reference. The implementation rebuilds
 the project's CSS foundation, the shared character sheet, the player profile,
 and the inventory around the measured source values, and deletes the older
@@ -65,6 +94,30 @@ persisted graph while preserving the single City/Open World action pipeline.
   `primitives.css`. The `nl-source-*` prefix was dropped from view classes in
   favor of plain domain names.
 - New dependencies: none.
+- The management surface uses explicit REST resources under the `Manage`
+  namespace. It does not build a reflection-driven generic CRUD engine:
+  resource-specific controllers own strong parameters, filters, associations,
+  and form options, while `Manage::ApplicationController`,
+  `Manage::PaginatedRelation`, and `Manage::ContentMutation` provide the safe
+  reusable seams.
+- `ManagePolicy` is the single management access gate and only permits users
+  with the existing `admin` role. The dedicated layout avoids paying for the
+  player game-shell query context on admin requests.
+- `ManagementAuditEvent` is an immutable persisted record, not a gameplay
+  event source. The mutation and audit row commit in one transaction; a failed
+  validation, dependency, or audit write rolls the entire operation back.
+- World management writes directly to `MapTileTemplate`, `TileBuilding`,
+  `NpcTemplate`, and `TileNpc`; City management writes directly to `Zone` and
+  `CityHotspot`. `TileStateResolver` and `ActionOfferBuilder` remain the only
+  composition/interaction pipeline.
+- `manage.css` owns management composition and responsive behavior while
+  reusing shared Neverlands-derived tokens and control primitives. No gameplay
+  domain stylesheet owns admin layout, and the admin stylesheet does not
+  redefine shared visual primitives.
+- `doc/guides/**` is now the explicit documentation owner for operational and
+  cross-feature extension procedures. It links to feature handbooks for
+  canonical runtime truth and does not duplicate Neverlands evidence, product
+  design, or completion status.
 
 ## Player/runtime behavior
 
@@ -100,6 +153,24 @@ persisted graph while preserving the single City/Open World action pipeline.
 - The vitals readout uses the source `.hpfont` treatment with the HP pair in
   the combat color and the MP pair in the link color.
 
+### World and City content management
+
+- `/manage` exposes a dashboard and seven sections: World Cells, Cell
+  Buildings, NPC Catalog, Cell NPCs, Cities, City Actions, and Audit Log.
+- The first six sections support create, inspect, edit, and delete operations;
+  the audit log is intentionally read-only.
+- World cell/resource edits change `MapTileTemplate` rows, building edits
+  change `TileBuilding`, and NPC catalog/placement edits change
+  `NpcTemplate`/`TileNpc`. These are the same records composed on the next
+  gameplay request by `TileStateResolver`.
+- City records manage `Zone` nodes and their presentation metadata; City
+  Actions manage `CityHotspot` transitions/actions and their persisted layout
+  box/direction. The existing City runtime consumes those persisted values.
+- Dependent records cannot be silently orphaned. Failed deletes return the
+  operator to the record with a visible error and create no false audit event.
+- Successful create/update/delete submissions use `303 See Other`, preventing
+  a browser refresh from replaying the mutation.
+
 ## UI, CSS, and UX
 
 - Deleted: `app/assets/stylesheets/player_inventory.css`.
@@ -115,6 +186,20 @@ persisted graph while preserving the single City/Open World action pipeline.
   `shared/_player_subnavigation`, `shared/_player_context_buttons`,
   `shared/_online_players`, `shared/_online_players_compact`,
   `inventories/_equipment`, `inventories/_stats`, `inventories/_stat_delta`.
+- Added `manage.css` as the domain-SRP owner for the management dashboard,
+  filters, forms, details, tables, status chips, pagination, and responsive
+  navigation. It composes the shared palette, typography, borders, controls,
+  and buttons already used by the game rather than copying source assets.
+- Desktop management pages preserve the dense information hierarchy; at
+  tablet/mobile widths dashboard cards stack, the navigation scrolls within
+  its own strip, and wide record tables scroll inside their panel rather than
+  widening the document.
+- Browser verification at 1280 × 720 and 390 × 844 found no document-level
+  horizontal overflow or console errors. Native labels, links, buttons,
+  selects, text fields, and text areas preserve keyboard/focus behavior.
+- No Neverlands image, logo, decorative asset, or identity-specific source
+  text was added. The management interface uses project-owned CSS and plain
+  semantic text.
 
 ## Data, content, cells, seeds, and persistence
 
@@ -136,9 +221,42 @@ uses its existing City materialization pipeline to:
 - leave only the verified West Gate pair; and
 - converge without further changes on a second run.
 
-No schema migration or parallel location/catalog pipeline was added. The
-idempotent seed sync was run twice against development, and the local player
-was left at Central Square after a verified browser round trip.
+That City-exit correction added no schema migration or parallel
+location/catalog pipeline. Its idempotent seed sync was run twice against
+development, and the local player was left at Central Square after a verified
+browser round trip.
+
+The later management tranche adds one schema migration for immutable
+`management_audit_events`. The table has required actor/action/record identity,
+non-null JSONB change/metadata objects, foreign-key/index support, and a DB
+check constraining action to create/update/destroy.
+
+| Concern | Declaration/configuration | Persisted state | Runtime owner |
+|---|---|---|---|
+| World terrain/resources | `db/seeds.rb` / map seed declarations | `MapTileTemplate` | `TileStateResolver` |
+| Cell buildings/transitions | seed declarations | `TileBuilding` | `TileStateResolver` + `ActionOfferBuilder` |
+| NPC definitions | `config/game/outdoor_npcs.yml` seed baseline | `NpcTemplate` | `TileNpc` encounter/combat services |
+| Cell NPC placements | outdoor NPC seed baseline | `TileNpc` | `TileStateResolver` + `ActionOfferBuilder` |
+| City nodes/presentation | `CityCatalog` seed baseline/fallback | `Zone.metadata` | City World controller/view pipeline |
+| City actions/layout | City hotspot seed declarations | `CityHotspot` | `CityHotspotService` + action offers |
+| Management history | management mutation service | `ManagementAuditEvent` | read-only management audit views |
+
+- `db/seeds.rb` now materializes every declared outdoor NPC definition and
+  placement. Seed-owned rows carry `seed_source: outdoor_npcs.yml`; removed
+  declarations remove only stale seed-owned placements, not operator-created
+  rows.
+- Seed reruns replace seed-owned template/placement metadata so removed keys
+  converge, while preserving a surviving NPC placement's combat state such as
+  current HP and defeated/respawn lifecycle.
+- `TileNpcService` reads the database only and never lazily recreates a deleted
+  placement from YAML. `TileNpc#respawn!` restores the same persisted placement
+  from its associated template instead of consulting configuration.
+- Seeded City nodes now persist `city_presentation`, and seeded hotspots
+  persist their box/direction geometry. Runtime prefers persisted data and uses
+  `CityCatalog` only as a compatibility fallback.
+- Updating or deleting managed content cancels outstanding offered/accepted
+  `WorldActionOffer` rows targeting it inside the same transaction. A stale
+  client therefore cannot execute an older definition after an admin change.
 
 ## Under-the-hood Rails and Hotwire work
 
@@ -155,6 +273,26 @@ was left at Central Square after a verified browser round trip.
   `CharacterPosition` transition were retained unchanged. The regression was
   stale materialized content, not a missing controller/service or a reason to
   create a second navigation path.
+- `Manage::ApplicationController` centralizes admin authorization, the
+  management layout, shared navigation, bounded pagination, strict JSON-object
+  parsing, and mutation error normalization. It skips the unrelated player
+  game-shell context query.
+- Each managed resource has an explicit REST controller and strong parameter
+  boundary. Association choices are loaded from the authoritative models;
+  operator-controlled JSON accepts objects only. The NPC form uses an
+  allowlisted request field named `npc_role` and explicitly maps it to the
+  domain model's `role`, avoiding a generic role mass-assignment boundary.
+- `Manage::PaginatedRelation` caps pages at 50 rows by default and 100 at the
+  service boundary. Index controllers use eager loading where associated
+  labels/counts are rendered.
+- `Manage::ContentMutation` owns atomic create/update/destroy, filtered change
+  capture, targeted capability cancellation, and audit persistence. Resource
+  controllers remain thin and do not duplicate this transaction protocol.
+- Model associations use `restrict_with_error` where an operator must resolve
+  dependencies explicitly. Coordinate bounds/uniqueness and non-negative
+  level/HP validations protect the state expected by the runtime resolver.
+- No new Stimulus or Turbo authority path was required. Forms remain normal
+  Rails submissions and successful mutations redirect with `303 See Other`.
 
 ## Pre-final Rails-guide review
 
@@ -186,6 +324,32 @@ resolved during the review:
   proves idempotency. Bulk offer updates intentionally bypass callbacks (the
   model has none), set timestamps explicitly, and detach polymorphic targets
   before their retired content is destroyed.
+- The management tranche was reviewed with the guide's authorization,
+  strong-parameter, service-transaction, pagination/preload, lifecycle,
+  responsive/accessibility, migration, seed, security-audit, and
+  documentation/completion sections.
+- Successful POST/PATCH/DELETE flows initially used default redirects; the
+  review changed them to explicit `303 See Other` responses and request specs
+  now assert that contract.
+- The audit migration initially relied only on model validation for its action
+  enum and carried a redundant actor index. The review added database non-null
+  and action-check constraints, retained the useful composite actor/time
+  index, and proved rollback/reapply on development and test databases.
+- Seed metadata initially merged new keys into seed-owned metadata, which
+  could preserve removed configuration. The review changed it to replace the
+  source-owned metadata while preserving runtime combat fields, and added
+  convergence coverage.
+- The first full verification exposed Brakeman's mass-assignment warning for
+  the model field named `role`. The request boundary now accepts the explicit
+  `npc_role` field and maps it after strong-parameter allowlisting. Focused
+  request/system tests and Brakeman were rerun before the final full profile.
+- The documentation-only follow-up was reviewed against the guide's Rails-native
+  boundary selection, explicit REST/controller policy, strong parameters,
+  service-object criteria, authorization/security, persistent gameplay
+  transition, anti-pattern, and documentation/verification sections. The guide
+  keeps simple catalog CRUD separate from valuable inventory/player commands,
+  prohibits reflection-based arbitrary-model editors, and does not claim its
+  future examples are implemented. No runtime correction was required.
 
 ## Documentation architecture follow-up
 
@@ -209,6 +373,13 @@ resolved during the review:
 
 ## Documentation updated
 
+- `doc/guides/managing_game_content.md` — created as the self-contained
+  operator/developer guide for current `/manage` resources, safe CRUD,
+  seed/runtime ownership, audit/failure behavior, troubleshooting, extension
+  checklist, and future item/player management examples.
+- `doc/DOCUMENTATION.md` — added `doc/guides/**` as the operational/extension
+  truth type, documented its ownership contract, and placed the new guide in
+  the recommended physical tree.
 - `doc/DOCUMENTATION.md` — created; documentation ownership model, domain map,
   document contracts, metadata, cross-links, workflow, audit findings, and
   incremental migration plan.
@@ -225,10 +396,23 @@ resolved during the review:
 - `doc/features/game_shell.md` — header/vitals contract, control-chrome
   ownership, and version history.
 - `doc/features/city.md` — existing-database graph reconciliation, recovery
-  behavior, operational seed command, failure boundary, acceptance criteria,
-  responsible pipeline, and version history.
+  behavior, persisted presentation/hotspot ownership, `/manage` City resource
+  contract, authorization/failure behavior, extension checklist, operational
+  seed command, acceptance criteria, responsible pipeline, and version history.
 - `doc/features/world.md` — reciprocal gate reconciliation and outdoor-position
-  preservation contract.
+  preservation contract; DB-only NPC materialization/runtime ownership;
+  `/manage` World resource contract, security/failure rules, extension recipe,
+  responsible files, verification surface, and version history.
+- `doc/README.md`, `doc/features/world.md`, `doc/features/city.md`,
+  `doc/features/player_inventory.md`, and `doc/features/shop_economy.md` — link
+  the procedure guide from the portal and canonical domain owners while making
+  its current-versus-future boundary explicit.
+- `doc/design/areas/world_map.md` — management writes are explicitly routed
+  through existing cell owners; no parallel location catalog is permitted.
+- `doc/design/areas/cities_and_buildings.md` — persisted City presentation and
+  hotspot management ownership.
+- `doc/design/areas/game_client_layout.md` — `manage.css` added to the flat
+  domain-SRP stylesheet ownership map.
 
 ## Implementation and responsible paths
 
@@ -244,15 +428,22 @@ resolved during the review:
 | Specs | `spec/requests/inventories_spec.rb`, `spec/requests/players_spec.rb`, `spec/system/responsive_neverlands_ui_spec.rb`, `spec/system/inventory_progression_spec.rb`, `spec/system/arena_match_ui_layout_spec.rb`, `spec/views/shared/_nl_vitals_bar_spec.rb` |
 | Documentation architecture | `doc/DOCUMENTATION.md`, `doc/README.md` |
 | City graph persistence and regression coverage | `db/seeds.rb`, `spec/models/open_world_seed_spec.rb`, `doc/features/city.md`, `doc/features/world.md` |
+| Management routing/auth/layout | `config/routes.rb`, `app/controllers/manage/application_controller.rb`, `app/controllers/manage/dashboard_controller.rb`, `app/policies/manage_policy.rb`, `app/views/layouts/manage.html.erb` |
+| Explicit content CRUD | `app/controllers/manage/world_cells_controller.rb`, `app/controllers/manage/tile_buildings_controller.rb`, `app/controllers/manage/npc_templates_controller.rb`, `app/controllers/manage/tile_npcs_controller.rb`, `app/controllers/manage/cities_controller.rb`, `app/controllers/manage/city_hotspots_controller.rb`, `app/views/manage/**` |
+| Shared management infrastructure | `app/queries/manage/paginated_relation.rb`, `app/services/manage/content_mutation.rb`, `app/helpers/manage_helper.rb`, `app/assets/stylesheets/manage.css` |
+| Audit persistence/read model | `db/migrate/20260729120000_create_management_audit_events.rb`, `app/models/management_audit_event.rb`, `app/controllers/manage/audit_events_controller.rb` |
+| Persisted World/City runtime convergence | `db/seeds.rb`, `app/services/game/world/tile_npc_service.rb`, `app/models/tile_npc.rb`, `app/models/zone.rb`, `app/models/city_hotspot.rb`, `app/views/world/_city_view.html.erb` |
+| Management verification | `spec/requests/manage/content_management_spec.rb`, `spec/system/manage_content_spec.rb`, `spec/services/manage/content_mutation_spec.rb`, `spec/queries/manage/paginated_relation_spec.rb`, `spec/policies/manage_policy_spec.rb`, `spec/models/management_audit_event_spec.rb`, `spec/routing/manage_routing_spec.rb` |
+| Management operator/extension documentation | `doc/guides/managing_game_content.md`, `doc/README.md`, `doc/DOCUMENTATION.md`, `doc/features/world.md`, `doc/features/city.md`, `doc/features/player_inventory.md`, `doc/features/shop_economy.md` |
 
 ## Verification evidence
 
 | Command | Result |
 |---|---|
-| Latest `bin/verify full` (after City fix) | exit 0 |
-| — RuboCop (read-only) | 374 files inspected, no offenses detected |
-| — Non-system RSpec | 1567 examples, 0 failures |
-| — System RSpec | 203 examples, 0 failures, 4 pending (all pre-existing) |
+| Latest `bin/verify full` (after management security correction) | exit 0 |
+| — RuboCop (read-only) | 397 files inspected, no offenses detected |
+| — Non-system RSpec | 1593 examples, 0 failures |
+| — System RSpec | 204 examples, 0 failures, 4 pending (all pre-existing) |
 | — Brakeman | 0 security warnings |
 | — Bundler Audit | no vulnerabilities |
 | — Importmap audit | no vulnerable packages |
@@ -265,6 +456,15 @@ resolved during the review:
 | `bin/feature-doc-audit doc/features/city.md doc/features/world.md` | exit 0 |
 | Development `bin/rails db:seed` (two runs) | exit 0; five-node actionable City graph, one West exit/building pair |
 | Browser City Exit round trip | Central Square → Outpost Surroundings `[7,0]` → Central Square |
+| Focused management request + system specs | 10 examples, 0 failures |
+| Focused management/seed/audit/service specs after Rails-guide corrections | 18 examples, 0 failures |
+| Focused Brakeman after the request-boundary correction | 0 security warnings |
+| Migration rollback/reapply (development and test) | exit 0 |
+| `RAILS_ENV=test bin/rails db:seed:replant` | exit 0 |
+| Browser management desktop/mobile pass | dashboard, navigation, tables, forms, and local overflow verified; no console errors |
+| `bin/feature-doc-audit doc/features/world.md doc/features/city.md doc/features/player_inventory.md doc/features/shop_economy.md` | exit 0; 4 documents passed, with the pre-existing transitional Shop warning |
+| `bin/verify docs` after management-guide follow-up | exit 0; 7 documents passed, with the 2 pre-existing transitional warnings |
+| Management-guide referenced-path audit | exit 0; 36 unique repository paths resolved |
 | `git diff --check` | exit 0 |
 
 Presentation was also inspected visually at 1280 × 900 by capturing the
@@ -295,6 +495,9 @@ remains on disk.
   so it is not rendered.
 - Not Done: rows already marked Not Done in
   `doc/design/launch_mvp_plan.md` are unchanged by this session.
-- Migration/operations: no schema migration. Existing environments must run
-  the documented idempotent `bin/rails db:seed` content sync after this graph
-  change; development was reconciled during this session.
+- Migration/operations: deploys must run `bin/rails db:migrate` for the
+  management audit table and the documented idempotent `bin/rails db:seed`
+  content sync for City/NPC materialization. Development/test migration
+  rollback/reapply and test seed replant were verified.
+- Pending/skipped checks: none. Four unrelated system examples remain
+  explicitly pending for their pre-existing reasons.

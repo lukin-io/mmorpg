@@ -338,6 +338,11 @@ boundary.
 
 ## 17. Safe extension checklist
 
+`doc/guides/managing_game_content.md` documents the future explicit
+`ItemTemplate` management adapter and the separate service-backed inventory
+grant/revoke pattern. Those examples are extension guidance, not currently
+shipped Inventory management routes.
+
 1. Capture the exact Neverlands state first.
 2. Add stable server content/identity, never DOM-derived authority.
 3. Keep the shared sheet markup reusable and domain actions separate.
@@ -356,3 +361,4 @@ boundary.
 | 2026-07-28 | Added the local-only responsive contract: preserve desktop measured geometry, retain tablet columns, stack below 800px, center the CSS paper doll, and contain control overflow within its band. |
 | 2026-07-28 | Replaced source-owned runtime images and source-specific copy with a CSS character silhouette, CSS/text controls, and game-specific copy while preserving measured geometry and hierarchy. |
 | 2026-07-29 | Rebuilt the surface from a second authenticated capture: `EquipmentSlots` now carries the measured per-slot geometry, the doll renders the source column order, the two icon rows collapsed into the source's single strip plus subcategory row, and `player_inventory.css` was replaced by `character_sheet.css` and `inventory.css`. |
+| 2026-07-29 | Linked the cross-feature management guide's future `ItemTemplate` adapter and service-backed inventory grant/revoke pattern without claiming those routes are shipped. |

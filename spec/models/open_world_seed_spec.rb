@@ -54,6 +54,30 @@ RSpec.describe "Open-world seed data", type: :model do
     )
     create(:spawn_point, zone: city, x: 5, y: 5, default_entry: true)
     create(:spawn_point, zone: region, x: 7, y: 7, default_entry: true)
+    stale_seeded_npc = create(
+      :tile_npc,
+      zone: region.name,
+      x: 50,
+      y: 50,
+      metadata: {"seed_source" => "outdoor_npcs.yml"}
+    )
+    stale_plague_rat_template = create(
+      :npc_template,
+      npc_key: "plague_rat",
+      name: "Stale Plague Rat",
+      metadata: {"obsolete" => true}
+    )
+    create(
+      :tile_npc,
+      zone: region.name,
+      x: 7,
+      y: 7,
+      npc_template: stale_plague_rat_template,
+      npc_key: "plague_rat",
+      current_hp: 55,
+      max_hp: 60,
+      metadata: {"seed_source" => "outdoor_npcs.yml", "obsolete" => true}
+    )
 
     load_seed
 
@@ -69,9 +93,14 @@ RSpec.describe "Open-world seed data", type: :model do
       "city_node_key" => "main",
       "title" => "Central Square"
     )
+    expect(city.city_presentation).to include(
+      "image_offset" => [-143, -212],
+      "focus" => [625, 300]
+    )
     expect(MapTileTemplate.exists?(legacy_south_gate_id)).to be false
     expect(MapTileTemplate.where(zone: city.name)).to be_empty
     expect(CityHotspot.exists?(legacy_town_hotspot.id)).to be false
+    expect(TileNpc.exists?(stale_seeded_npc.id)).to be false
     expect(tile.reload).to have_attributes(terrain_type: "outdoor", passable: true)
     expect(tile.local_action("resource_search")).to include("source_id" => "look")
     expect(tile.cell_art).to eq(
@@ -170,6 +199,29 @@ RSpec.describe "Open-world seed data", type: :model do
     expect(
       CityHotspot.active.find_by!(zone: node_zones.fetch("main"), key: "arena").required_level
     ).to eq(0)
+    expect(CityHotspot.active.find_by!(zone: node_zones.fetch("main"), key: "shop")).to have_attributes(
+      position_x: 96,
+      position_y: 303,
+      width: 320,
+      height: 182
+    )
+    expect(CityHotspot.active.find_by!(zone: node_zones.fetch("main"), key: "go_forpost3")).to have_attributes(
+      presentation_direction: "southwest"
+    )
+
+    plague_rat = TileNpc.find_by!(zone: region.name, x: 7, y: 7)
+    expect(plague_rat).to have_attributes(npc_key: "plague_rat", level: 4, current_hp: 55, max_hp: 100)
+    expect(plague_rat.metadata).to include(
+      "seed_source" => "outdoor_npcs.yml",
+      "encounter_count" => 2
+    )
+    expect(plague_rat.metadata).not_to have_key("obsolete")
+    expect(plague_rat.npc_template.metadata).to include(
+      "health" => 100,
+      "base_damage" => 7,
+      "seed_source" => "outdoor_npcs.yml"
+    )
+    expect(plague_rat.npc_template.metadata).not_to have_key("obsolete")
 
     expect {
       load_seed
@@ -181,6 +233,7 @@ RSpec.describe "Open-world seed data", type: :model do
           building_key: seeded_gates.values.map(&:building_key) + [village.building_key]
         ).count,
         CityHotspot.active.where(zone: node_zones.values).count,
+        TileNpc.where("metadata ->> 'seed_source' = ?", "outdoor_npcs.yml").count,
         SpawnPoint.where(zone: node_zones.values).count
       ]
     }

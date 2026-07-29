@@ -1,4 +1,15 @@
 Rails.application.routes.draw do
+  namespace :manage do
+    root "dashboard#index"
+    resources :world_cells
+    resources :tile_buildings
+    resources :npc_templates
+    resources :tile_npcs
+    resources :cities
+    resources :city_hotspots
+    resources :audit_events, only: [:index, :show]
+  end
+
   # Already implemented MVP Neverlands-based game-design routes.
   # These are the canonical player-facing routes for features already promoted
   # into doc/design.

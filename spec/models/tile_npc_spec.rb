@@ -83,4 +83,18 @@ RSpec.describe TileNpc, type: :model do
       end
     end
   end
+
+  describe "#respawn!" do
+    it "restores the same persisted placement without consulting runtime configuration" do
+      npc = create(:tile_npc, :defeated, current_hp: 0, max_hp: 80)
+
+      expect(npc.respawn!).to be true
+      expect(npc.reload).to have_attributes(
+        current_hp: 80,
+        defeated_at: nil,
+        defeated_by_id: nil,
+        respawns_at: nil
+      )
+    end
+  end
 end

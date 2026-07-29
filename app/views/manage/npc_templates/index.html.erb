@@ -1,0 +1,19 @@
+<% content_for :title, "NPC Catalog · Management" %>
+<%= render "manage/shared/page_header", title: "NPC Catalog", description: "Reusable NPC identity, combat, respawn, and reward definitions.", new_path: new_manage_npc_template_path, new_label: "Create NPC template" %>
+
+<%= form_with url: manage_npc_templates_path, method: :get, class: "nl-manage-filter", local: true do |form| %>
+  <%= form.label :role %><%= form.select :role, NpcTemplate::ROLES, include_blank: "All roles", selected: params[:role] %>
+  <%= form.submit "Filter", class: "lbut" %><%= link_to "Clear", manage_npc_templates_path, class: "lbut" %>
+<% end %>
+
+<div class="nl-manage-table-wrap"><table class="nl-manage-table">
+  <thead><tr><th>Key</th><th>Name</th><th>Role</th><th>Level</th><th>HP</th><th>Cell placements</th><th>Actions</th></tr></thead>
+  <tbody>
+    <% @npc_templates.each do |npc| %>
+      <tr><td><%= npc.npc_key.presence || "—" %></td><td><%= npc.name %></td><td><%= npc.role %></td><td><%= npc.level %></td><td><%= npc.max_hp %></td><td><%= npc.tile_npcs.size %></td>
+        <td class="nl-manage-table-actions"><%= link_to "View", manage_npc_template_path(npc) %> <%= link_to "Edit", edit_manage_npc_template_path(npc) %></td></tr>
+    <% end %>
+    <% if @npc_templates.empty? %><tr><td colspan="7" class="nl-manage-empty">No NPC templates found.</td></tr><% end %>
+  </tbody>
+</table></div>
+<%= render "manage/shared/pagination", pagination: @pagination %>

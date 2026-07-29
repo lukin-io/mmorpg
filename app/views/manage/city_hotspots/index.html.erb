@@ -1,0 +1,20 @@
+<% content_for :title, "City Actions · Management" %>
+<%= render "manage/shared/page_header", title: "City Actions and Buildings", description: "Routes, building entries, and city exits attached to city nodes.", new_path: new_manage_city_hotspot_path, new_label: "Create city action" %>
+
+<%= form_with url: manage_city_hotspots_path, method: :get, class: "nl-manage-filter", local: true do |form| %>
+  <%= form.label :zone_id, "City node" %><%= form.select :zone_id, options_from_collection_for_select(@cities, :id, :display_name, params[:zone_id]), include_blank: "All city nodes" %>
+  <%= form.submit "Filter", class: "lbut" %><%= link_to "Clear", manage_city_hotspots_path, class: "lbut" %>
+<% end %>
+
+<div class="nl-manage-table-wrap"><table class="nl-manage-table">
+  <thead><tr><th>City node</th><th>Key</th><th>Name</th><th>Type</th><th>Action</th><th>Geometry</th><th>Active</th><th>Actions</th></tr></thead>
+  <tbody>
+    <% @city_hotspots.each do |hotspot| %>
+      <tr><td><%= hotspot.zone.display_name %></td><td><%= hotspot.key %></td><td><%= hotspot.name %></td><td><%= hotspot.hotspot_type %></td><td><%= hotspot.action_type %></td>
+        <td><%= hotspot.position_x %>,<%= hotspot.position_y %> · <%= hotspot.width || "—" %>×<%= hotspot.height || "—" %></td><td><%= management_boolean(hotspot.active?) %></td>
+        <td class="nl-manage-table-actions"><%= link_to "View", manage_city_hotspot_path(hotspot) %> <%= link_to "Edit", edit_manage_city_hotspot_path(hotspot) %></td></tr>
+    <% end %>
+    <% if @city_hotspots.empty? %><tr><td colspan="8" class="nl-manage-empty">No city actions found.</td></tr><% end %>
+  </tbody>
+</table></div>
+<%= render "manage/shared/pagination", pagination: @pagination %>

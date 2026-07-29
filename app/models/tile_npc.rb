@@ -19,6 +19,9 @@ class TileNpc < ApplicationRecord
   validates :zone, :x, :y, :npc_key, presence: true
   validates :npc_role, inclusion: {in: NPC_ROLES}
   validates :level, numericality: {greater_than: 0}
+  validates :x, :y, numericality: {only_integer: true, greater_than_or_equal_to: 0}
+  validates :x, uniqueness: {scope: [:zone, :y]}
+  validates :current_hp, :max_hp, numericality: {only_integer: true, greater_than_or_equal_to: 0}, allow_nil: true
   validate :encounter_size_is_supported
 
   scope :in_zone, ->(zone_name) { where(zone: zone_name) }
@@ -68,25 +71,13 @@ class TileNpc < ApplicationRecord
     true
   end
 
-  # Respawn the NPC using the explicit source-backed zone definition.
+  # Respawn the same persisted NPC placement from its explicit template.
   def respawn!
-    new_npc_data = Game::World::OutdoorNpcConfig.source_npc_for_tile(zone, x, y)
-    return false unless new_npc_data
-
-    template = find_or_create_template(new_npc_data)
-    return false unless template
-
     update!(
-      npc_template: template,
-      npc_key: new_npc_data[:key].to_s,
-      npc_role: new_npc_data[:role].to_s,
-      level: new_npc_data[:level],
-      current_hp: template.health,
-      max_hp: template.health,
+      current_hp: max_hp.presence || npc_template.health,
       respawns_at: nil,
       defeated_at: nil,
-      defeated_by: nil,
-      metadata: new_npc_data[:metadata] || {}
+      defeated_by: nil
     )
     true
   end
@@ -154,71 +145,6 @@ class TileNpc < ApplicationRecord
     value = metadata_integer("respawn_variance_seconds") ||
       metadata_integer("spawn_respawn_variance_seconds")
     value if value && value >= 0
-  end
-
-  def find_or_create_template(npc_data)
-    # Normalize key to string for consistent lookups
-    npc_key = npc_data[:key].to_s
-    npc_name = npc_data[:name].to_s
-
-    # Try to find existing template by npc_key first, then by name
-    template = NpcTemplate.find_by(npc_key: npc_key) ||
-      NpcTemplate.find_by(name: npc_name)
-
-    if template
-      # Update npc_key if missing (for templates created by factory)
-      template.update!(npc_key: npc_key) if template.npc_key.blank?
-      sync_template_spawn_metadata(template, npc_data)
-      return template
-    end
-
-    # Create new template with retry for race condition handling
-    create_npc_template_with_retry(npc_key, npc_name, npc_data)
-  end
-
-  def create_npc_template_with_retry(npc_key, npc_name, npc_data, retries: 3)
-    NpcTemplate.create!(
-      npc_key: npc_key,
-      name: npc_name,
-      role: npc_data[:role].to_s,
-      level: npc_data[:level],
-      dialogue: npc_data[:dialogue]&.to_s || "...",
-      metadata: template_spawn_metadata(npc_data)
-    )
-  rescue ActiveRecord::RecordInvalid, ActiveRecord::RecordNotUnique => e
-    Rails.logger.warn("NPC template creation conflict for #{npc_key}: #{e.message}")
-
-    # Try to find existing template (race condition: another process created it)
-    template = NpcTemplate.find_by(npc_key: npc_key) || NpcTemplate.find_by(name: npc_name)
-    return template if template
-
-    # Retry with backoff if template not found yet (transaction not committed)
-    if retries > 0
-      sleep(0.05 * (4 - retries)) # 50ms, 100ms, 150ms backoff
-      return create_npc_template_with_retry(npc_key, npc_name, npc_data, retries: retries - 1)
-    end
-
-    Rails.logger.error("Failed to find or create NPC template for #{npc_key} after retries")
-    nil
-  end
-
-  def sync_template_spawn_metadata(template, npc_data)
-    additions = template_spawn_metadata(npc_data).compact
-    missing = additions.except(*template.metadata.keys)
-    return if missing.empty?
-
-    template.update!(metadata: template.metadata.merge(missing))
-  end
-
-  def template_spawn_metadata(npc_data)
-    {
-      "health" => npc_data[:hp],
-      "base_damage" => npc_data[:damage],
-      "xp_reward" => npc_data[:xp],
-      "loot_table" => npc_data[:loot] || [],
-      "respawn_seconds" => npc_data[:respawn_seconds],
-      "respawn_variance_seconds" => npc_data[:respawn_variance_seconds]
-    }.compact.merge((npc_data[:metadata] || {}).deep_stringify_keys)
   end
 
   def positive_metadata_integer(key)

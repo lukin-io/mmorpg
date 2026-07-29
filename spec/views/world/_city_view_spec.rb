@@ -119,4 +119,29 @@ RSpec.describe "world/_city_view.html.erb", type: :view do
     expect(rendered).to have_button("Custom Route")
     expect(rendered).to have_css("[data-hotspot-key='custom_route'][style*='width: 180px']", visible: :all)
   end
+
+  it "prefers managed zone and hotspot presentation records over catalog fallbacks" do
+    zone.update!(
+      metadata: zone.metadata.merge(
+        "city_presentation" => {
+          "image_offset" => [-10, -20],
+          "focus" => [300, 250],
+          "landmarks" => {
+            "managed_landmark" => {"name" => "Managed Landmark", "box" => [4, 5, 60, 70]}
+          }
+        }
+      )
+    )
+    shop.update!(position_x: 10, position_y: 20, width: 210, height: 110)
+
+    render partial: "world/city_view", locals: {
+      zone:,
+      hotspots: [shop],
+      offers_by_hotspot_id: offers
+    }
+
+    expect(rendered).to include("--nl-city-image-x: -10px", "--nl-city-image-y: -20px")
+    expect(rendered).to have_css("[data-hotspot-key='shop'][style*='width: 210px']", visible: :all)
+    expect(rendered).to have_css("[data-landmark-key='managed_landmark'][aria-label='Managed Landmark']", visible: :all)
+  end
 end

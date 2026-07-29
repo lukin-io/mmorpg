@@ -1,0 +1,11 @@
+<%= render "manage/shared/page_header", title: @tile_building.name, description: @tile_building.building_key %>
+<table class="nl-sheet-table nl-manage-detail">
+  <tr><th>Source cell</th><td><%= @tile_building.zone %> [<%= @tile_building.x %>, <%= @tile_building.y %>]</td></tr>
+  <tr><th>Type</th><td><%= @tile_building.building_type %></td></tr>
+  <tr><th>Destination</th><td><%= @tile_building.destination_zone&.display_name || "Linked location" %> [<%= @tile_building.destination_x || "—" %>, <%= @tile_building.destination_y || "—" %>]</td></tr>
+  <tr><th>Required level</th><td><%= @tile_building.required_level %></td></tr>
+  <tr><th>Active</th><td><%= management_boolean(@tile_building.active?) %></td></tr>
+</table>
+<h2 class="invtitle">Metadata</h2><pre class="nl-manage-json"><%= pretty_json(@tile_building.metadata) %></pre>
+<%= render "manage/shared/record_actions", edit_path: edit_manage_tile_building_path(@tile_building),
+      delete_path: manage_tile_building_path(@tile_building), back_path: manage_tile_buildings_path %>

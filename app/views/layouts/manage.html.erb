@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title><%= content_for(:title) || "World Management" %></title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="theme-color" content="#fcfaf3">
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+    <%= stylesheet_link_tag "application", "controls", data: {turbo_track: "reload"} %>
+    <%= javascript_importmap_tags %>
+  </head>
+  <body class="nl-manage-layout">
+    <header class="nl-manage-header">
+      <div>
+        <%= link_to "World Management", manage_root_path, class: "nl-manage-brand" %>
+        <span class="nl-manage-user"><%= current_user.profile_name %></span>
+      </div>
+      <%= link_to "Return to game", world_path, class: "lbut" %>
+    </header>
+
+    <nav class="nl-manage-nav" aria-label="Management sections">
+      <% management_sections.each do |section| %>
+        <%= link_to section[:label], section[:path],
+              class: management_section_current?(section[:key]) ? "lbutdis" : "lbut",
+              aria: (management_section_current?(section[:key]) ? {current: "page"} : {}) %>
+      <% end %>
+    </nav>
+
+    <div id="flash" class="nl-manage-flash" aria-live="polite">
+      <% flash.each do |type, message| %>
+        <div class="nl-flash nl-flash--<%= type %>"><%= message %></div>
+      <% end %>
+    </div>
+
+    <main class="nl-manage-main" id="manage-main">
+      <%= yield %>
+    </main>
+  </body>
+</html>

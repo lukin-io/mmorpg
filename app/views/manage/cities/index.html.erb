@@ -1,0 +1,13 @@
+<% content_for :title, "Cities · Management" %>
+<%= render "manage/shared/page_header", title: "City Nodes", description: "Persisted city districts and their scene metadata.", new_path: new_manage_city_path, new_label: "Create city node" %>
+<div class="nl-manage-table-wrap"><table class="nl-manage-table">
+  <thead><tr><th>City key</th><th>Node key</th><th>Title</th><th>Zone name</th><th>Size</th><th>Actions</th></tr></thead>
+  <tbody>
+    <% @cities.each do |city| %>
+      <tr><td><%= city.metadata.to_h["city_key"].presence || "—" %></td><td><%= city.city_node_key.presence || "—" %></td><td><%= city.display_name %></td><td><%= city.name %></td><td><%= city.width %> × <%= city.height %></td>
+        <td class="nl-manage-table-actions"><%= link_to "View", manage_city_path(city) %> <%= link_to "Edit", edit_manage_city_path(city) %></td></tr>
+    <% end %>
+    <% if @cities.empty? %><tr><td colspan="6" class="nl-manage-empty">No city nodes found.</td></tr><% end %>
+  </tbody>
+</table></div>
+<%= render "manage/shared/pagination", pagination: @pagination %>

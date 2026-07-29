@@ -1,0 +1,2 @@
+<%= render "manage/shared/page_header", title: "Edit World Cell", description: "#{@world_cell.zone} [#{@world_cell.x}, #{@world_cell.y}]" %>
+<%= render "form", world_cell: @world_cell, url: manage_world_cell_path(@world_cell), submit_label: "Save world cell", cancel_path: manage_world_cell_path(@world_cell) %>

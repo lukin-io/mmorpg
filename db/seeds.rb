@@ -33,11 +33,13 @@ def zone_metadata_for(name)
   city_node = Game::World::CityCatalog::NODES.values.find { |node| node["zone_name"] == name }
   if city_node
     city_node_key = Game::World::CityCatalog::NODES.key(city_node)
+    city_presentation = Game::World::CityCatalog.presentation(city_node_key)
     return {
       "city_key" => Game::World::CityCatalog::CITY_KEY,
       "city_node_key" => city_node_key,
       "title" => city_node["title"],
-      "description" => "Forpost — #{city_node['title']}"
+      "description" => "Forpost — #{city_node['title']}",
+      "city_presentation" => city_presentation
     }
   end
 
@@ -200,6 +202,59 @@ if defined?(MapTileTemplate)
       authored_tile.destroy!
     end
   end
+end
+
+if defined?(TileNpc) && defined?(NpcTemplate)
+  seeded_tile_npc_ids = []
+
+  Game::World::OutdoorNpcConfig.config.each_value do |zone_config|
+    zone_name = zone_config[:zone_name].to_s
+
+    Array(zone_config[:npcs]).each do |npc_data|
+      template_metadata = {
+        "health" => npc_data[:hp],
+        "base_damage" => npc_data[:damage],
+        "xp_reward" => npc_data[:xp],
+        "loot_table" => npc_data[:loot] || [],
+        "respawn_seconds" => npc_data[:respawn_seconds],
+        "respawn_variance_seconds" => npc_data[:respawn_variance_seconds],
+        "seed_source" => "outdoor_npcs.yml"
+      }.compact.merge((npc_data[:metadata] || {}).deep_stringify_keys)
+
+      template = NpcTemplate.find_by(npc_key: npc_data[:key].to_s) ||
+        NpcTemplate.find_by(name: npc_data[:name].to_s) ||
+        NpcTemplate.new
+      template.assign_attributes(
+        npc_key: npc_data[:key].to_s,
+        name: npc_data[:name].to_s,
+        role: npc_data[:role].to_s,
+        level: npc_data[:level],
+        dialogue: npc_data[:dialogue].presence || "...",
+        metadata: template_metadata
+      )
+      template.save!
+
+      placement_metadata = (npc_data[:metadata] || {}).deep_stringify_keys.merge(
+        "seed_source" => "outdoor_npcs.yml"
+      )
+      tile_npc = TileNpc.find_or_initialize_by(zone: zone_name, x: npc_data[:x], y: npc_data[:y])
+      tile_npc.assign_attributes(
+        npc_template: template,
+        npc_key: npc_data[:key].to_s,
+        npc_role: npc_data[:role].to_s,
+        level: npc_data[:level],
+        max_hp: npc_data[:hp],
+        metadata: placement_metadata
+      )
+      tile_npc.current_hp = npc_data[:hp] if tile_npc.new_record? || tile_npc.current_hp.nil?
+      tile_npc.save!
+      seeded_tile_npc_ids << tile_npc.id
+    end
+  end
+
+  TileNpc.where("metadata ->> 'seed_source' = ?", "outdoor_npcs.yml")
+    .where.not(id: seeded_tile_npc_ids)
+    .destroy_all
 end
 
 # ------------------------------------------------------------------
@@ -779,6 +834,7 @@ Game::World::CityCatalog::NODES.each do |node_key, node|
   next unless zone
 
   node["links"].each do |destination_key, destination_name|
+    presentation = Game::World::CityCatalog.hotspot_presentation(node_key, "go_#{destination_key}") || {}
     city_hotspots << {
       zone:,
       key: "go_#{destination_key}",
@@ -786,12 +842,18 @@ Game::World::CityCatalog::NODES.each do |node_key, node|
       hotspot_type: "district",
       action_type: "enter_zone",
       destination_zone: city_zones_by_key[destination_key],
-      action_params: {"destination_x" => 0, "destination_y" => 0},
+      action_params: {
+        "destination_x" => 0,
+        "destination_y" => 0,
+        "direction" => presentation["direction"]
+      }.compact,
+      presentation:,
       required_level: 0
     }
   end
 
   node["features"].each do |feature_key, feature|
+    presentation = Game::World::CityCatalog.hotspot_presentation(node_key, feature_key) || {}
     city_hotspots << {
       zone:,
       key: feature_key,
@@ -800,6 +862,7 @@ Game::World::CityCatalog::NODES.each do |node_key, node|
       action_type: "open_feature",
       destination_zone: nil,
       action_params: {"feature" => feature_key},
+      presentation:,
       required_level: feature.fetch("required_level", 0)
     }
   end
@@ -820,6 +883,7 @@ Game::World::CityCatalog::NODES.each do |node_key, node|
         "destination_y" => local_y,
         "source_coordinates" => gate["source_coordinates"]
       },
+      presentation: Game::World::CityCatalog.hotspot_presentation(node_key, "#{gate_key}_gate") || {},
       required_level: 0
     }
   end
@@ -828,14 +892,15 @@ end
 seeded_hotspot_ids = city_hotspots.each_with_index.filter_map do |attrs, index|
   next unless attrs[:destination_zone] || attrs[:action_type] == "open_feature"
 
+  left, top, width, height = attrs.fetch(:presentation, {}).fetch("box", [0, 0, nil, nil])
   hotspot = CityHotspot.find_or_initialize_by(zone: attrs[:zone], key: attrs[:key])
   hotspot.assign_attributes(
     name: attrs[:name],
     hotspot_type: attrs[:hotspot_type],
-    position_x: 0,
-    position_y: 0,
-    width: nil,
-    height: nil,
+    position_x: left,
+    position_y: top,
+    width:,
+    height:,
     image_normal: nil,
     image_hover: nil,
     action_type: attrs[:action_type],

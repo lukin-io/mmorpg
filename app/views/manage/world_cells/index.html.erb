@@ -1,0 +1,37 @@
+<% content_for :title, "World Cells · Management" %>
+<%= render "manage/shared/page_header",
+      title: "World Cells and Resources",
+      description: "Sparse outdoor cell overrides, passability, art references, and local resource actions.",
+      new_path: new_manage_world_cell_path,
+      new_label: "Create world cell" %>
+
+<%= form_with url: manage_world_cells_path, method: :get, class: "nl-manage-filter", local: true do |form| %>
+  <%= form.label :zone, "Outdoor zone" %>
+  <%= form.select :zone, options_from_collection_for_select(@zones, :name, :name, params[:zone]), include_blank: "All zones" %>
+  <%= form.submit "Filter", class: "lbut" %>
+  <%= link_to "Clear", manage_world_cells_path, class: "lbut" %>
+<% end %>
+
+<div class="nl-manage-table-wrap">
+  <table class="nl-manage-table">
+    <thead><tr><th>Zone</th><th>Cell</th><th>Terrain</th><th>Passable</th><th>Resources</th><th>Updated</th><th>Actions</th></tr></thead>
+    <tbody>
+      <% @world_cells.each do |cell| %>
+        <tr>
+          <td><%= cell.zone %></td>
+          <td>[<%= cell.x %>, <%= cell.y %>]</td>
+          <td><%= cell.terrain_type %></td>
+          <td><%= management_boolean(cell.passable?) %></td>
+          <td><%= cell.local_actions.map { |action| action["label"].presence || action["type"] }.join(", ").presence || "—" %></td>
+          <td><%= l(cell.updated_at, format: :short) %></td>
+          <td class="nl-manage-table-actions">
+            <%= link_to "View", manage_world_cell_path(cell) %>
+            <%= link_to "Edit", edit_manage_world_cell_path(cell) %>
+          </td>
+        </tr>
+      <% end %>
+      <% if @world_cells.empty? %><tr><td colspan="7" class="nl-manage-empty">No world cells found.</td></tr><% end %>
+    </tbody>
+  </table>
+</div>
+<%= render "manage/shared/pagination", pagination: @pagination %>

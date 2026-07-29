@@ -9,6 +9,17 @@ class Zone < ApplicationRecord
   has_many :character_positions, dependent: :restrict_with_exception
   has_many :world_action_offers, dependent: :destroy
   has_many :arena_matches, dependent: :nullify
+  has_many :city_hotspots, dependent: :restrict_with_error
+  has_many :incoming_city_hotspots,
+    class_name: "CityHotspot",
+    foreign_key: :destination_zone_id,
+    inverse_of: :destination_zone,
+    dependent: :restrict_with_error
+  has_many :destination_tile_buildings,
+    class_name: "TileBuilding",
+    foreign_key: :destination_zone_id,
+    inverse_of: :destination_zone,
+    dependent: :restrict_with_error
 
   validates :name, presence: true, uniqueness: true
   validates :location_type, presence: true, inclusion: {in: LOCATION_TYPES}
@@ -28,5 +39,10 @@ class Zone < ApplicationRecord
 
   def display_name
     metadata.to_h["title"].presence || name
+  end
+
+  def city_presentation
+    value = metadata.to_h["city_presentation"]
+    value.respond_to?(:deep_stringify_keys) ? value.deep_stringify_keys : {}
   end
 end

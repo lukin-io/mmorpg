@@ -1,0 +1,7 @@
+<%= render "manage/shared/page_header", title: @city.display_name, description: @city.name %>
+<table class="nl-sheet-table nl-manage-detail">
+  <tr><th>City key</th><td><%= @city.metadata.to_h["city_key"].presence || "—" %></td></tr><tr><th>Node key</th><td><%= @city.city_node_key.presence || "—" %></td></tr>
+  <tr><th>Grid size</th><td><%= @city.width %> × <%= @city.height %></td></tr><tr><th>Active city actions</th><td><%= @city.city_hotspots.active.count %></td></tr>
+</table>
+<h2 class="invtitle">City data</h2><pre class="nl-manage-json"><%= pretty_json(@city.metadata) %></pre>
+<%= render "manage/shared/record_actions", edit_path: edit_manage_city_path(@city), delete_path: manage_city_path(@city), back_path: manage_cities_path %>

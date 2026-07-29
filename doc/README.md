@@ -57,6 +57,18 @@ seed/config lifecycle and the add/adjust/move/deactivate/remove examples. The
 design documents explain why the pipeline exists; they do not authorize a
 parallel runtime catalog or a second source of cell truth.
 
+## Operational and extension guides
+
+- `doc/guides/managing_game_content.md` — self-contained guide to the
+  admin-only `/manage` surface: current entities, safe create/edit/deactivate/
+  delete workflows, seed/runtime ownership, audit and failure behavior, and
+  the conventional extension pattern for future player, item-template,
+  inventory-grant, and other database-backed management resources.
+
+Guides explain procedures across feature boundaries. They link back to the
+canonical `doc/features/**` owners and do not replace feature contracts,
+Neverlands evidence, or design approval.
+
 ## Neverlands source entry point
 
 - [Neverlands Wiki main page](http://wiki.neverlands.ru/wiki/%D0%97%D0%B0%D0%B3%D0%BB%D0%B0%D0%B2%D0%BD%D0%B0%D1%8F_%D1%81%D1%82%D1%80%D0%B0%D0%BD%D0%B8%D1%86%D0%B0) — primary index for historical Neverlands mechanics, locations, buildings, character development, professions, and other source material. Use plain HTTP because the legacy Wiki is not reliably accessible over HTTPS.

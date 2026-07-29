@@ -1,0 +1,9 @@
+<%= render "manage/shared/page_header", title: @npc_template.name, description: @npc_template.npc_key.presence || "No stable key" %>
+<table class="nl-sheet-table nl-manage-detail">
+  <tr><th>Role</th><td><%= @npc_template.role %></td></tr><tr><th>Level</th><td><%= @npc_template.level %></td></tr>
+  <tr><th>HP</th><td><%= @npc_template.max_hp %></td></tr><tr><th>Attack</th><td><%= @npc_template.attack_power %></td></tr>
+  <tr><th>Cell placements</th><td><%= @npc_template.tile_npcs.size %></td></tr><tr><th>Dialogue</th><td><%= @npc_template.dialogue %></td></tr>
+</table>
+<h2 class="invtitle">Metadata</h2><pre class="nl-manage-json"><%= pretty_json(@npc_template.metadata) %></pre>
+<%= render "manage/shared/record_actions", edit_path: edit_manage_npc_template_path(@npc_template),
+      delete_path: manage_npc_template_path(@npc_template), back_path: manage_npc_templates_path %>

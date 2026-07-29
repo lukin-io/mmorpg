@@ -1,0 +1,12 @@
+<%= render "manage/shared/page_header", title: "World Cell", description: "#{@world_cell.zone} [#{@world_cell.x}, #{@world_cell.y}]" %>
+<table class="nl-sheet-table nl-manage-detail">
+  <tr><th>Terrain</th><td><%= @world_cell.terrain_type %></td></tr>
+  <tr><th>Passable</th><td><%= management_boolean(@world_cell.passable?) %></td></tr>
+  <tr><th>Local actions/resources</th><td><%= @world_cell.local_actions.map { |action| action["label"].presence || action["type"] }.join(", ").presence || "None" %></td></tr>
+  <tr><th>Updated</th><td><%= l(@world_cell.updated_at, format: :long) %></td></tr>
+</table>
+<h2 class="invtitle">Metadata</h2>
+<pre class="nl-manage-json"><%= pretty_json(@world_cell.metadata) %></pre>
+<%= render "manage/shared/record_actions",
+      edit_path: edit_manage_world_cell_path(@world_cell), delete_path: manage_world_cell_path(@world_cell),
+      back_path: manage_world_cells_path %>

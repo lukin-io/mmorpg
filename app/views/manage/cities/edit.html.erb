@@ -1,0 +1,2 @@
+<%= render "manage/shared/page_header", title: "Edit City Node", description: @city.display_name %>
+<%= render "form", city: @city, url: manage_city_path(@city), submit_label: "Save city node", cancel_path: manage_city_path(@city) %>

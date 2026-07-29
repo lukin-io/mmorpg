@@ -1,0 +1,16 @@
+<% content_for :title, "Audit Log · Management" %>
+<%= render "manage/shared/page_header", title: "Management Audit Log", description: "Immutable records of World and City content mutations." %>
+<%= form_with url: manage_audit_events_path, method: :get, class: "nl-manage-filter", local: true do |form| %>
+  <%= form.label :record_type %><%= form.select :record_type, @record_types, include_blank: "All record types", selected: params[:record_type] %>
+  <%= form.submit "Filter", class: "lbut" %><%= link_to "Clear", manage_audit_events_path, class: "lbut" %>
+<% end %>
+<div class="nl-manage-table-wrap"><table class="nl-manage-table">
+  <thead><tr><th>Time</th><th>Administrator</th><th>Action</th><th>Record type</th><th>Record</th><th>Details</th></tr></thead>
+  <tbody>
+    <% @audit_events.each do |event| %>
+      <tr><td><%= l(event.created_at, format: :long) %></td><td><%= event.actor.profile_name %></td><td><%= event.action %></td><td><%= event.record_type %></td><td><%= event.record_label %></td><td><%= link_to "View", manage_audit_event_path(event) %></td></tr>
+    <% end %>
+    <% if @audit_events.empty? %><tr><td colspan="6" class="nl-manage-empty">No audit events found.</td></tr><% end %>
+  </tbody>
+</table></div>
+<%= render "manage/shared/pagination", pagination: @pagination %>
