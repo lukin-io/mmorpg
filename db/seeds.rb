@@ -69,13 +69,35 @@ if defined?(Zone)
   end
 end
 
+forpost_city_zones = if defined?(Zone)
+  Zone.where(location_type: "city").select do |zone|
+    zone.metadata.to_h["city_key"] == Game::World::CityCatalog::CITY_KEY
+  end
+else
+  []
+end
+
+retire_world_action_targets = if defined?(WorldActionOffer)
+  lambda do |target_type, targets|
+    target_offers = WorldActionOffer.where(target_type:, target_id: targets.select(:id))
+    live_statuses = WorldActionOffer.statuses.values_at("offered", "accepted")
+    target_offers.where(status: live_statuses).update_all(
+      status: WorldActionOffer.statuses.fetch("cancelled"),
+      error_message: "Authored world content was updated.",
+      updated_at: Time.current
+    )
+    target_offers.update_all(target_type: nil, target_id: nil, updated_at: Time.current)
+  end
+end
+
 if defined?(SpawnPoint) && defined?(Zone)
   city_zone_names = Game::World::CityCatalog::NODES.values.pluck("zone_name")
   central_square = Zone.find_by(
     name: Game::World::CityCatalog.node(Game::World::CityCatalog::STARTER_NODE_KEY)["zone_name"]
   )
 
-  SpawnPoint.where(zone: Zone.where(name: city_zone_names + ["Outpost Surroundings"])).delete_all
+  seeded_world_zones = Zone.where(name: city_zone_names + ["Outpost Surroundings"])
+  SpawnPoint.where(zone: seeded_world_zones.or(Zone.where(id: forpost_city_zones.map(&:id)))).delete_all
   if central_square
     spawn = SpawnPoint.find_or_initialize_by(zone: central_square, x: 0, y: 0)
     spawn.assign_attributes(city_key: "forpost", default_entry: true)
@@ -86,7 +108,7 @@ end
 if defined?(MapTileTemplate)
   # Neverlands cities are node graphs, not grid maps. Remove obsolete city
   # tiles instead of retaining a parallel generic-town representation.
-  city_zone_names = Game::World::CityCatalog::NODES.values.pluck("zone_name")
+  city_zone_names = forpost_city_zones.map(&:name)
   MapTileTemplate.where(zone: city_zone_names).delete_all
 
   # Outpost Surroundings uses sparse authored overrides inside one logical
@@ -729,9 +751,13 @@ if defined?(TileBuilding) && defined?(Zone)
 
 
   current_city_gate_keys = tile_buildings.pluck(:building_key)
-  TileBuilding.where(building_key: %w[outpost_gate outpost_south_gate outpost_east_gate])
+  retired_city_gates = TileBuilding
+    .where(building_key: %w[outpost_gate outpost_south_gate outpost_east_gate])
     .where.not(building_key: current_city_gate_keys)
-    .destroy_all
+  ApplicationRecord.transaction do
+    retire_world_action_targets&.call("TileBuilding", retired_city_gates)
+    retired_city_gates.destroy_all
+  end
 end
 
 puts "Tile buildings seeding complete!"
@@ -825,6 +851,30 @@ seeded_hotspot_ids = city_hotspots.each_with_index.filter_map do |attrs, index|
 end
 
 city_zone_ids = city_zones_by_key.values.compact.map(&:id)
-CityHotspot.where(zone_id: city_zone_ids).where.not(id: seeded_hotspot_ids).destroy_all
+forpost_city_zone_ids = forpost_city_zones.map(&:id)
+retired_city_zone_ids = forpost_city_zone_ids - city_zone_ids
+stale_hotspots = CityHotspot.where(zone_id: forpost_city_zone_ids).where.not(id: seeded_hotspot_ids)
+
+ApplicationRecord.transaction do
+  if defined?(WorldActionOffer)
+    live_statuses = WorldActionOffer.statuses.values_at("offered", "accepted")
+    WorldActionOffer.where(zone_id: retired_city_zone_ids, status: live_statuses).update_all(
+      status: WorldActionOffer.statuses.fetch("cancelled"),
+      error_message: "City layout was updated.",
+      updated_at: Time.current
+    )
+  end
+
+  retire_world_action_targets&.call("CityHotspot", stale_hotspots)
+
+  central_square = city_zones_by_key[Game::World::CityCatalog::STARTER_NODE_KEY]
+  if defined?(CharacterPosition) && central_square && retired_city_zone_ids.any?
+    CharacterPosition.where(zone_id: retired_city_zone_ids).find_each do |position|
+      position.update!(zone: central_square, x: 0, y: 0)
+    end
+  end
+
+  stale_hotspots.destroy_all
+end
 
 puts "City hotspots seeding complete!"

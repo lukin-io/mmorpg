@@ -185,4 +185,101 @@ RSpec.describe "Open-world seed data", type: :model do
       ]
     }
   end
+
+  it "retires the historical city graph without stranding characters or live actions" do
+    central = create(
+      :zone,
+      :city,
+      name: "Outpost",
+      metadata: {"city_key" => "forpost", "city_node_key" => "city2_1"}
+    )
+    knowledge = create(
+      :zone,
+      :city,
+      name: "Outpost Knowledge Quarter",
+      metadata: {"city_key" => "forpost", "city_node_key" => "city2_6"}
+    )
+    retired_stables = create(
+      :zone,
+      :city,
+      name: "Outpost Stables",
+      metadata: {"city_key" => "forpost", "city_node_key" => "city2_7"}
+    )
+    outdoors = create(:zone, :mvp_outdoor_region, name: "Outpost Surroundings")
+    retained_position = create(:character_position, zone: knowledge, x: 4, y: 4)
+    retired_position = create(:character_position, zone: retired_stables, x: 3, y: 2)
+    create(:spawn_point, zone: retired_stables, x: 0, y: 0)
+    retired_tile = create(:map_tile_template, zone: retired_stables.name, x: 0, y: 0)
+    stale_central_route = create(
+      :city_hotspot,
+      :district,
+      zone: central,
+      destination_zone: retired_stables,
+      key: "go_city2_7"
+    )
+    stale_exit = create(
+      :city_hotspot,
+      :city_gate,
+      zone: retired_stables,
+      destination_zone: outdoors,
+      key: "south_gate",
+      action_params: {"destination_x" => 10, "destination_y" => 3}
+    )
+    stale_offer = create(
+      :world_action_offer,
+      character: retired_position.character,
+      zone: retired_stables,
+      x: retired_position.x,
+      y: retired_position.y,
+      action_type: "exit_city",
+      target: stale_exit
+    )
+    stale_gate = create(
+      :tile_building,
+      zone: outdoors.name,
+      x: 10,
+      y: 3,
+      building_key: "outpost_south_gate",
+      destination_zone: retired_stables
+    )
+    outdoor_position = create(:character_position, zone: outdoors, x: 10, y: 3)
+    stale_gate_offer = create(
+      :world_action_offer,
+      character: outdoor_position.character,
+      zone: outdoors,
+      x: outdoor_position.x,
+      y: outdoor_position.y,
+      action_type: "enter_building",
+      target: stale_gate
+    )
+
+    load_seed
+
+    canonical_central = Zone.find_by!(name: "Outpost")
+    expect(knowledge.reload.city_node_key).to eq("forpost2")
+    expect(retained_position.reload).to have_attributes(zone: knowledge, x: 4, y: 4)
+    expect(retired_position.reload).to have_attributes(zone: canonical_central, x: 0, y: 0)
+    expect(SpawnPoint.where(zone: retired_stables)).to be_empty
+    expect(MapTileTemplate.exists?(retired_tile.id)).to be false
+    expect(CityHotspot.where(id: [stale_central_route.id, stale_exit.id])).to be_empty
+    expect(stale_offer.reload).to be_cancelled
+    expect(stale_offer.target).to be_nil
+    expect(stale_gate_offer.reload).to be_cancelled
+    expect(stale_gate_offer.target).to be_nil
+    expect(TileBuilding.where(building_key: "outpost_south_gate")).to be_empty
+    expect(CityHotspot.active.where(hotspot_type: "exit").pluck(:key)).to eq(["west_gate"])
+
+    expect {
+      load_seed
+    }.not_to change {
+      [
+        retained_position.reload.attributes.slice("zone_id", "x", "y"),
+        retired_position.reload.attributes.slice("zone_id", "x", "y"),
+        CityHotspot.active.where(zone: Game::World::CityCatalog::NODES.values.filter_map { |node|
+          Zone.find_by(name: node["zone_name"])
+        }).count,
+        TileBuilding.where(building_key: %w[outpost_gate outpost_south_gate outpost_east_gate]).count
+      ]
+    }
+  end
 end

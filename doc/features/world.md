@@ -3,7 +3,7 @@
 title: World Feature
 description: Implementation handbook for the Neverlands-based open world, cells, movement, cell content, actions, and persisted player location.
 status: Fully Implemented
-updated: 2026-07-28
+updated: 2026-07-29
 owners: Game world, movement, and world UI
 template: feature-v1
 ---
@@ -219,6 +219,12 @@ The gate is the active `outpost_gate` `TileBuilding`. Seeds remove the stale
 South/East gate rows from the superseded city topology. The illustrated Law
 Quarter exit remains a non-mutating city landmark until its outdoor handoff is
 captured; it must not be inferred as another outdoor entrance.
+
+For an existing database, `bin/rails db:seed` synchronizes both sides of this
+pair and retires the historical South/East entrances plus their stale City
+hotspots/offers. The operation preserves characters on retained City nodes and
+recovers only characters stranded in removed-only nodes to Central Square
+`[0,0]`; it never resets an outdoor `CharacterPosition`.
 
 ### 5.3 Captured linked location
 
@@ -1258,3 +1264,4 @@ Before extending the World feature:
 | 2026-07-28 | Added the captured Frontier Village entrance, CSS-built `760 × 255` interior, server-offered Trading Post/exit hotspots, exact-cell persistence, linked-Shop resume, responsive panning, and an explicit Not-Done boundary for uncaptured location families. |
 | 2026-07-28 | Removed the parallel linked-location catalog. The existing DB-backed cell pipeline now owns the entire village: `TileBuilding` persists and validates scene/features, `TileStateResolver` composes it at the exact cell, and `ActionOfferBuilder` issues entrance/interior capabilities. Moving, replacing, or deactivating the row changes runtime availability immediately. |
 | 2026-07-28 | Added the complete cell-content ownership and lifecycle guide: seed/config sources, persisted/materialized records, add/adjust/move/deactivate/remove examples for buildings, local resources/actions, and NPCs, scoped stale-data reconciliation, idempotency requirements, exhaustive schema migrations, and an explicit prohibition on parallel catalogs. Corrected the World contract to the one currently verified city gate. |
+| 2026-07-29 | Hardened the existing City/World seed pipeline so historical nine-node databases converge to the verified West Gate pair without stale South/East entrances, live obsolete offers, or stranded City positions. |

@@ -22,6 +22,13 @@ document contracts, observation-to-implementation workflow, known drift, and
 an incremental migration plan. No physical documentation migration or gameplay
 completion claim was performed by that planning change.
 
+The City-exit regression follow-up is Done. Browser reproduction found that the
+transition pipeline and verified West Gate destination were correct, but a
+pre-parity nine-node Forpost graph was still persisted in development. Its
+legacy `city2_*` metadata forced generic hotspot geometry, placing the exit
+under the fixed chat layer. The existing seed pipeline now reconciles that
+persisted graph while preserving the single City/Open World action pipeline.
+
 ## Authority and reference boundary
 
 - `doc/design/reference/neverlands_live_style_system.md` is the new measurement
@@ -111,9 +118,27 @@ completion claim was performed by that planning change.
 
 ## Data, content, cells, seeds, and persistence
 
-Not applicable. No migration, seed, or persisted-content change is part of this
-session; `EquipmentSlots` describes slot presentation order and size rather
-than persisted rows, and equipment remains keyed by `key`.
+The original style-system tranche had no migration, seed, or persisted-content
+change; `EquipmentSlots` describes slot presentation order and size rather than
+persisted rows, and equipment remains keyed by `key`.
+
+The City-exit follow-up found a real existing-database gap. The development
+database still contained the superseded nine-node `city2_*` graph even though
+the runtime catalog and clean seed spec described five nodes. `db/seeds.rb` now
+uses its existing City materialization pipeline to:
+
+- update retained zones to canonical node keys;
+- remove legacy City map/spawn rows and hotspots from retained and retired
+  Forpost zones;
+- cancel and detach live capabilities for retired hotspots and gate buildings;
+- recover characters on removed-only nodes to Central Square `[0,0]` while
+  preserving positions on retained nodes and all outdoor cells;
+- leave only the verified West Gate pair; and
+- converge without further changes on a second run.
+
+No schema migration or parallel location/catalog pipeline was added. The
+idempotent seed sync was run twice against development, and the local player
+was left at Central Square after a verified browser round trip.
 
 ## Under-the-hood Rails and Hotwire work
 
@@ -126,6 +151,10 @@ than persisted rows, and equipment remains keyed by `key`.
 - `stat_allocation_controller.js` and `skill_allocation_controller.js` no longer
   toggle an `nl-btn--primary` class that had no styles; the meaningful state is
   the existing disabled state.
+- The City exit form, `WorldActionOffer`, `CityHotspotService`, and
+  `CharacterPosition` transition were retained unchanged. The regression was
+  stale materialized content, not a missing controller/service or a reason to
+  create a second navigation path.
 
 ## Pre-final Rails-guide review
 
@@ -149,6 +178,14 @@ resolved during the review:
 - The review kept source evidence, normalized design, parity status, current
   implementation, engineering guidance, and session history as separate truth
   types. No additional runtime or gameplay correction was required.
+- The City follow-up was reviewed against the guide's persisted-transition,
+  batching, bulk-write lifecycle, catalog/config, safe-backfill, and seed-test
+  sections. Reconciliation stays in the existing seed owner, batches character
+  recovery with `find_each`, runs capability retirement/location recovery/
+  hotspot deletion transactionally, documents the removed-node fallback, and
+  proves idempotency. Bulk offer updates intentionally bypass callbacks (the
+  model has none), set timestamps explicitly, and detach polymorphic targets
+  before their retired content is destroyed.
 
 ## Documentation architecture follow-up
 
@@ -187,6 +224,11 @@ resolved during the review:
   chip set, responsible files, and version history.
 - `doc/features/game_shell.md` — header/vitals contract, control-chrome
   ownership, and version history.
+- `doc/features/city.md` — existing-database graph reconciliation, recovery
+  behavior, operational seed command, failure boundary, acceptance criteria,
+  responsible pipeline, and version history.
+- `doc/features/world.md` — reciprocal gate reconciliation and outdoor-position
+  preservation contract.
 
 ## Implementation and responsible paths
 
@@ -201,14 +243,15 @@ resolved during the review:
 | Arena reuse of the shared doll | `app/assets/stylesheets/arena.css` |
 | Specs | `spec/requests/inventories_spec.rb`, `spec/requests/players_spec.rb`, `spec/system/responsive_neverlands_ui_spec.rb`, `spec/system/inventory_progression_spec.rb`, `spec/system/arena_match_ui_layout_spec.rb`, `spec/views/shared/_nl_vitals_bar_spec.rb` |
 | Documentation architecture | `doc/DOCUMENTATION.md`, `doc/README.md` |
+| City graph persistence and regression coverage | `db/seeds.rb`, `spec/models/open_world_seed_spec.rb`, `doc/features/city.md`, `doc/features/world.md` |
 
 ## Verification evidence
 
 | Command | Result |
 |---|---|
-| `bin/verify full` | exit 0 |
+| Latest `bin/verify full` (after City fix) | exit 0 |
 | — RuboCop (read-only) | 374 files inspected, no offenses detected |
-| — Non-system RSpec | 1566 examples, 0 failures |
+| — Non-system RSpec | 1567 examples, 0 failures |
 | — System RSpec | 203 examples, 0 failures, 4 pending (all pre-existing) |
 | — Brakeman | 0 security warnings |
 | — Bundler Audit | no vulnerabilities |
@@ -217,6 +260,11 @@ resolved during the review:
 | `bin/feature-doc-audit doc/features/player_inventory.md` | exit 0 |
 | `bin/feature-doc-audit doc/features/character_progression.md` | exit 0 |
 | `bin/feature-doc-audit doc/features/game_shell.md` | exit 0 |
+| Focused City/World specs | 38 examples, 0 failures |
+| `bundle exec rubocop db/seeds.rb spec/models/open_world_seed_spec.rb` | 2 files inspected, no offenses |
+| `bin/feature-doc-audit doc/features/city.md doc/features/world.md` | exit 0 |
+| Development `bin/rails db:seed` (two runs) | exit 0; five-node actionable City graph, one West exit/building pair |
+| Browser City Exit round trip | Central Square → Outpost Surroundings `[7,0]` → Central Square |
 | `git diff --check` | exit 0 |
 
 Presentation was also inspected visually at 1280 × 900 by capturing the
@@ -247,4 +295,6 @@ remains on disk.
   so it is not rendered.
 - Not Done: rows already marked Not Done in
   `doc/design/launch_mvp_plan.md` are unchanged by this session.
-- Migration/operations: none.
+- Migration/operations: no schema migration. Existing environments must run
+  the documented idempotent `bin/rails db:seed` content sync after this graph
+  change; development was reconciled during this session.

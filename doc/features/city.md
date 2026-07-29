@@ -3,7 +3,7 @@
 title: City Feature
 description: Implementation handbook for the observed five-district Forpost graph, illustrated navigation, buildings, gate handoff, responsive panning, and persisted context.
 status: Fully Implemented
-updated: 2026-07-28
+updated: 2026-07-29
 owners: City world context and city UI
 template: feature-v1
 ---
@@ -79,9 +79,17 @@ The current slice contains:
 
 ### 4.1 Entering City
 
-The verified `outpost_gate` outdoor building enters `main` / Central Square at `[0,0]`. A new playable character with no position also starts there. Existing characters keep their current location.
+The verified `outpost_gate` outdoor building enters `main` / Central Square at `[0,0]`. A new playable character with no position also starts there. Existing characters on one of the five retained nodes keep that exact district and coordinate.
 
 The matching Central Square `west_gate` action exits to Outpost Surroundings `[7,0]`, whose captured source coordinate is `[1019,1025]`. Seeds remove superseded South/East gate buildings and authored city-gate cells. The illustrated Law Quarter exit remains a focusable landmark until its outdoor destination is captured.
+
+An existing database must run `bin/rails db:seed` after receiving a City catalog
+change. The seed is an idempotent authored-content sync: it updates retained
+zone metadata, replaces legacy hotspots, removes retired City tile/spawn rows,
+cancels live capabilities for retired actions, and moves a character stranded
+on a removed `city2_*`-only node to Central Square `[0,0]`. Do not use
+`db:seed:replant` for this upgrade because it destroys unrelated development
+data.
 
 ### 4.2 City scene
 
@@ -192,6 +200,24 @@ City zones are not local grids. Seeds remove city `MapTileTemplate` rows; catalo
 
 All current Forpost actions use required level `0`, including Arena as observed with a level-16 account. Inactive, characterless, or under-level records receive no offer and expose their block reason only.
 
+### 7.3 Persisted graph reconciliation
+
+`CityCatalog` is the authored graph and `db/seeds.rb` is its one persisted
+materialization pipeline. A graph replacement must reconcile both declarations
+and already-stored state; adding a second runtime catalog or presentation-only
+compatibility graph is not allowed.
+
+The current sync performs these changes together:
+
+- retained zone names receive their canonical `main` / `forpost1..4` metadata;
+- current hotspots are upserted and every stale hotspot across old Forpost
+  zones is retired;
+- open or accepted offers tied to retired zones/actions are cancelled;
+- characters on removed-only nodes are recovered to Central Square `[0,0]`;
+- obsolete City spawn/tile rows and South/East outdoor gate buildings are
+  removed;
+- a second seed run makes no further state change.
+
 ## 8. Runtime architecture
 
 ```mermaid
@@ -260,6 +286,7 @@ District changes persist immediately in `CharacterPosition`. Returning from Shop
 | Narrow viewport | Pan the fixed canvas; no page-level horizontal clipping. |
 | Law Quarter City Exit | Show as landmark only until outdoor handoff is verified. |
 | Missing project image | Preserve controls/labels; never fall back to a Neverlands URL. |
+| Existing `city2_*` persisted graph | Run the convergent seed sync; retained nodes keep their identity, removed-only positions recover to Central Square, and obsolete actions cannot remain interactive. |
 
 ## 14. Acceptance criteria
 
@@ -271,6 +298,7 @@ District changes persist immediately in `CharacterPosition`. Returning from Shop
 - `820px` and `390px` clients pan a centered fixed canvas without body overflow.
 - Only current server offers create form actions; presentation-only landmarks cannot mutate.
 - Central exit round-trips to the verified outdoor cell; stale South/East gate seeds are removed.
+- An existing nine-node database converges to the five-node graph without stranding a character or leaving a live obsolete exit capability.
 - No Neverlands city/Shop image, logo, signature, administration copy, or asset URL is shipped.
 
 ## 15. Test strategy and required coverage
@@ -345,5 +373,6 @@ Run `bin/feature-doc-audit doc/features/city.md doc/features/shop_economy.md` an
 
 ## 18. Version history
 
+- 2026-07-29: fixed existing-database City Exit interaction by making the one seed pipeline reconcile the complete historical `city2_*` graph, retire stale hotspots/offers/gates, preserve retained-node positions, recover removed-node positions to Central Square, and prove convergence plus idempotency.
 - 2026-07-28: replaced the stale nine-node/760 × 255 model with the freshly observed five-district/1250 × 600 Forpost graph; moved Shop/Hospital to Central and Market/Airship to Residential; removed stale Arena and South/East gate assumptions; added exact pixel hotspots, presentation landmarks, CSS hover crops, large route arrows, centered responsive panning, Shop scene/control alignment, seed cleanup, tests, and updated evidence.
 - 2026-07-27: documented the earlier nine-node implementation before fresh live verification superseded it.
