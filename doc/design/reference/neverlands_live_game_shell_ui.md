@@ -400,8 +400,10 @@ single-responsibility domain modules under `app/assets/stylesheets/`:
   controls;
 - `chat_presence.css` owns message and nearby-player row presentation;
 - `world.css` owns outdoor map/cursor/available-cell and city-scene rendering;
-- `player_inventory.css` owns the shared character sheet plus Profile and
-  Inventory composition;
+- `character_sheet.css` owns the paper doll and the shared 200px parameter
+  column;
+- `player.css` owns the profile tab band and the allocation surfaces;
+- `inventory.css` owns the icon strip, mass line, and carried-item rows;
 - `arena.css` owns arena and active-fight composition.
 
 Shared character-sheet markup lives in one partial, while each feature retains

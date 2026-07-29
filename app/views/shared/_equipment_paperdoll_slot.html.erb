@@ -1,44 +1,54 @@
 <%#
-  One equipment slot inside the shared paper doll.
+  One equipment cell inside the shared paper doll.
+
+  The live client renders a filled inventory slot as a clickable image that
+  posts the unequip action, and an empty slot as a non-interactive placeholder
+  with `cursor: default`. This partial keeps that behavior while using a real
+  button so the action is keyboard reachable.
 
   Locals:
-    slot        - slot key (string/sym)
-    label       - English slot label
-    item        - equipped InventoryItem or nil
+    slot        - EquipmentSlots::Slot (key, label, width, height)
+    equipment   - Hash of slot key (sym or str) => InventoryItem
     interactive - when true, a filled slot offers a server-authorized remove action
-    compact     - smaller box for ring/belt/pocket content slots
 %>
-<% compact = local_assigns.fetch(:compact, false) %>
 <% interactive = local_assigns.fetch(:interactive, false) %>
+<% item = equipment[slot.key] || equipment[slot.key.to_sym] %>
 <%
-  classes = ["nl-profile-slot"]
-  classes << "nl-profile-slot--compact" if compact
-  classes << "nl-profile-slot--filled" if item
+  classes = ["nl-doll-slot", "nl-doll-slot--#{slot.key}"]
+  classes << "nl-doll-slot--filled" if item
   if interactive
-    classes << "equipment-slot" << "equipment-slot--#{slot}"
+    classes << "equipment-slot" << "equipment-slot--#{slot.key}"
     classes << "filled" if item
   end
-  unequip_params = {slot: slot}
+
+  # Slot geometry is owned by EquipmentSlots, so it is handed to CSS as custom
+  # properties instead of being duplicated as per-slot rules in the stylesheet.
+  size = "--nl-slot-w: #{slot.width}px; --nl-slot-h: #{slot.height}px"
+
+  unequip_params = {slot: slot.key}
   unequip_params[:category] = local_assigns[:category] if local_assigns[:category].present?
   unequip_params[:subcategory] = local_assigns[:subcategory] if local_assigns[:subcategory].present?
   unequip_params[:info] = local_assigns[:info_mode] if local_assigns[:info_mode].present?
 %>
-<div class="<%= classes.join(" ") %>" title="<%= label %>">
-  <span class="nl-profile-slot-label"><%= label %></span>
-  <% if item %>
-    <span class="nl-profile-slot-value"><%= item.item_template&.name %></span>
-    <% if (durability = inventory_item_durability(item)) %>
-      <span class="nl-profile-slot-durability"><%= durability %></span>
-    <% end %>
-    <% if interactive %>
-      <%= button_to unequip_inventory_path(unequip_params),
-            method: :post,
-            class: "nl-slot-unequip",
-            title: "Remove #{label}",
-            aria: {label: "Remove #{label}"},
-            data: {turbo: true} do %>&times;<% end %>
-    <% end %>
-  <% else %>
-    <span class="nl-profile-slot-value nl-profile-slot-value--empty">empty</span>
+
+<% if item && interactive %>
+  <%= button_to unequip_inventory_path(unequip_params),
+        method: :post,
+        class: classes.join(" "),
+        style: size,
+        title: paperdoll_slot_tooltip(item, slot.label),
+        aria: {label: "Remove #{item.item_template&.name || slot.label} from #{slot.label}"},
+        form: {class: "nl-doll-slot-form"} do %>
+    <span class="nl-doll-slot-name"><%= item.item_template&.name %></span>
+    <span class="nl-doll-slot-wear" style="width: <%= inventory_item_durability_percent(item) %>%" aria-hidden="true"></span>
   <% end %>
-</div>
+<% elsif item %>
+  <span class="<%= classes.join(" ") %>" style="<%= size %>" title="<%= paperdoll_slot_tooltip(item, slot.label) %>">
+    <span class="nl-doll-slot-name"><%= item.item_template&.name %></span>
+    <span class="nl-doll-slot-wear" style="width: <%= inventory_item_durability_percent(item) %>%" aria-hidden="true"></span>
+  </span>
+<% else %>
+  <span class="<%= classes.join(" ") %>" style="<%= size %>" title="<%= slot.label %>">
+    <span class="nl-doll-slot-empty"><%= slot.label %></span>
+  </span>
+<% end %>

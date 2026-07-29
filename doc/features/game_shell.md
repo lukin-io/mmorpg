@@ -284,6 +284,14 @@ They must not:
 
 `app/assets/stylesheets/application.css` is only a small reset. `controls.css` imports ordered flat modules: `tokens.css` and `primitives.css` own shared typography/colors/flat controls; `shell.css` owns the `29 / flexible / 8 / 240 / 1 / 30px` frame, stacked vitals, contextual header, and CSS/ASCII bottom controls; `chat_presence.css` owns chat and nearby-player rows. This is SRP by UI domain, with no Tailwind dependency and no nested `nl/` stylesheet folder.
 
+The header strip reproduces the captured `#FCFAF3` band closed by the source's
+1px white / 1px gold / 2px cream accent rows, and the vitals readout carries the
+source `.hpfont` treatment with the HP pair in the combat color and the MP pair
+in the link color. Control chrome is never redefined in `shell.css`: the top
+navigation composes the `.lbut` primitive and only overrides padding plus the
+current-page label color, because the source's disabled pill hides its text and
+this shell navigates by text rather than by images.
+
 Domain-SRP is the maintainability rule for all central surfaces. World/City,
 Profile/Inventory, Shop, Arena/Fight, and public logs own their selectors,
 composition, responsive behavior, and local Stimulus presentation. A domain
@@ -538,3 +546,4 @@ Before extending Game Shell:
 | 2026-07-28 | Removed source-owned runtime images and branded/service copy; preserved the measured shell contract with project-owned CSS, semantic controls, and ASCII/plain-text affordances. |
 | 2026-07-28 | Added a source-faithful responsive adaptation layer at 940/720/420px while preserving the exact desktop row contract and keeping responsive ownership inside Shell CSS. |
 | 2026-07-28 | Made domain-SRP the UI maintainability rule: shared tokens/primitives stay minimal, each gameplay area owns its selectors/responsive/controller presentation, and unrelated domain classes cannot be reused as styling shortcuts. |
+| 2026-07-29 | Rebuilt the header band and vitals readout from a second authenticated capture, moved shell control chrome onto the `.lbut` primitive, and replaced the remaining raw hex/font literals with tokens. |

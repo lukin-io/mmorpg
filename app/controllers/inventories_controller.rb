@@ -18,7 +18,6 @@ class InventoriesController < ApplicationController
     @info_mode = current_info_mode
     @items = filtered_inventory_items(@inventory, @category, @subcategory)
     @equipment = current_character_equipment
-    @stats = Characters::VitalsService.new(current_character).stats_summary
     @equipment_sets = Game::Inventory::EquipmentSetService.new(character: current_character).all
   end
 
@@ -35,14 +34,8 @@ class InventoriesController < ApplicationController
       if result[:success]
         format.turbo_stream do
           @inventory = current_character.inventory.reload
-          items = filtered_inventory_items(@inventory, current_category, current_subcategory)
-          stats = Characters::VitalsService.new(current_character).stats_summary
 
-          render turbo_stream: [
-            turbo_stream.update("inventory_grid", partial: "inventories/grid", locals: {items:, inventory: @inventory, category: current_category, subcategory: current_subcategory, info_mode: current_info_mode}),
-            turbo_stream.update("equipment_panel", partial: "inventories/equipment", locals: {equipment: current_character_equipment}),
-            turbo_stream.update("stats_panel", partial: "inventories/stats", locals: {stats: stats})
-          ]
+          render turbo_stream: [inventory_grid_stream, character_sheet_stream]
         end
         format.html { redirect_to inventory_redirect_path, notice: "Item worn!" }
       else
@@ -71,14 +64,8 @@ class InventoriesController < ApplicationController
       if result[:success]
         format.turbo_stream do
           @inventory = current_character.inventory.reload
-          items = filtered_inventory_items(@inventory, current_category, current_subcategory)
-          stats = Characters::VitalsService.new(current_character).stats_summary
 
-          render turbo_stream: [
-            turbo_stream.update("inventory_grid", partial: "inventories/grid", locals: {items:, inventory: @inventory, category: current_category, subcategory: current_subcategory, info_mode: current_info_mode}),
-            turbo_stream.update("equipment_panel", partial: "inventories/equipment", locals: {equipment: current_character_equipment}),
-            turbo_stream.update("stats_panel", partial: "inventories/stats", locals: {stats: stats})
-          ]
+          render turbo_stream: [inventory_grid_stream, character_sheet_stream]
         end
         format.html { redirect_to inventory_redirect_path, notice: "Item removed!" }
       else
@@ -111,12 +98,10 @@ class InventoriesController < ApplicationController
       if result[:success]
         format.turbo_stream do
           @inventory = current_character.inventory.reload
-          items = filtered_inventory_items(@inventory, current_category, current_subcategory)
-          stats = Characters::VitalsService.new(current_character).stats_summary
 
           render turbo_stream: [
-            turbo_stream.update("inventory_grid", partial: "inventories/grid", locals: {items:, inventory: @inventory, category: current_category, subcategory: current_subcategory, info_mode: current_info_mode}),
-            turbo_stream.update("stats_panel", partial: "inventories/stats", locals: {stats: stats}),
+            inventory_grid_stream,
+            character_sheet_stream,
             turbo_stream.update("flash", partial: "shared/flash", locals: {type: "notice", message: result[:message]})
           ]
         end
@@ -220,6 +205,39 @@ class InventoriesController < ApplicationController
 
   private
 
+  # Both fragments below are re-rendered together after any equip/use action:
+  # the carried list and the whole character sheet, because equipping changes
+  # the doll, the stat breakdown, and the combat chips at once.
+  def inventory_grid_stream
+    turbo_stream.update(
+      "inventory_grid",
+      partial: "inventories/grid",
+      locals: {
+        items: filtered_inventory_items(@inventory, current_category, current_subcategory),
+        inventory: @inventory,
+        category: current_category,
+        subcategory: current_subcategory,
+        info_mode: current_info_mode
+      }
+    )
+  end
+
+  def character_sheet_stream
+    turbo_stream.update(
+      "equipment_panel",
+      partial: "shared/neverlands_character_sheet",
+      locals: {
+        character: current_character,
+        equipment: current_character_equipment,
+        interactive: true,
+        show_money: true,
+        category: current_category,
+        subcategory: current_subcategory,
+        info_mode: current_info_mode
+      }
+    )
+  end
+
   def filtered_inventory_items(inventory, category, subcategory)
     items = inventory.inventory_items.where(equipped: false).joins(:item_template).includes(:item_template).order(:slot_index)
     return items if category == "all"
@@ -264,8 +282,8 @@ class InventoriesController < ApplicationController
   end
 
   def current_character_equipment
-    equipment = EquipmentSlots::ORDERED.to_h do |slot_key, _label|
-      [slot_key.to_sym, equipped_item(slot_key)]
+    equipment = EquipmentSlots::ORDERED.to_h do |slot|
+      [slot.key.to_sym, equipped_item(slot.key)]
     end
 
     main_hand = equipment[:main_hand]

@@ -1,16 +1,16 @@
-<div class="nl-player-subpage nl-city-building-page" data-building-key="<%= @building_key %>">
-    <%= render "shared/player_context_buttons",
-      character: current_character,
-      viewer_character: current_character,
-      current_section: :city_building %>
-
+<%#
+  Read-only city building interior. Navigation away from the building is owned
+  by the shell header, as in the source, so this page adds no second context
+  strip of its own.
+%>
+<div class="nl-city-building-page" data-building-key="<%= @building_key %>">
     <section class="nl-city-building-frame">
       <header class="nl-city-building-header">
         <div>
           <h1><%= @building["title"] %></h1>
           <p><%= @building["summary"] %></p>
         </div>
-        <%= link_to "City", world_path, class: "nl-arena-link", data: {turbo: false} %>
+        <%= link_to "City", world_path, class: "lbut", data: {turbo: false} %>
       </header>
 
       <p class="nl-city-building-notice">

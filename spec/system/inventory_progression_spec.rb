@@ -43,7 +43,7 @@ RSpec.describe "Inventory & Progression UI", type: :system, js: true do
 
       equipment_slot = find(".equipment-slot--main_hand", wait: 5)
       scroll_to(equipment_slot, align: :center)
-      within(equipment_slot) { click_button "Remove Weapon" }
+      equipment_slot.click
 
       expect(page).to have_css(".equipment-slot--main_hand:not(.filled)", wait: 5)
     end

@@ -1,7 +1,9 @@
 # Documentation
 
-`doc/design/` is the active Neverlands-based design library and the single
-point of truth for current game design.
+Documentation is separated by truth type. `doc/design/` owns Neverlands
+evidence and normalized product design; `doc/features/` owns verified local
+implementation handbooks. `doc/DOCUMENTATION.md` is the architecture, domain
+map, observation-to-implementation workflow, and incremental migration plan.
 
 ## Reference-boundary rule
 
@@ -40,11 +42,12 @@ become runtime assets or platform copy.
 
 Start here:
 
-1. `doc/design/README.md`
-2. `doc/design/gdd.md`
-3. `doc/design/launch_mvp_plan.md`
-4. `doc/design/areas/game_client_layout.md` — UI/AX and domain-SRP style ownership guide
-5. `doc/design/reference/neverlands.md`
+1. `doc/DOCUMENTATION.md`
+2. `doc/design/README.md`
+3. `doc/design/gdd.md`
+4. `doc/design/launch_mvp_plan.md`
+5. `doc/design/areas/game_client_layout.md` — UI/AX and domain-SRP style ownership guide
+6. `doc/design/reference/neverlands.md`
 
 Verified shipped behavior and implementation ownership live under
 `doc/features/`; start with `doc/features/README.md`. For outdoor cells,

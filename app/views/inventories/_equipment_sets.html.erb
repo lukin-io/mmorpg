@@ -1,4 +1,4 @@
-<div class="nl-profile-panel nl-equipment-sets">
+<div class="nl-panel nl-equipment-sets">
   <h2>Equipment Sets</h2>
 
   <%= form_with url: save_equipment_set_inventory_path, method: :post, class: "nl-inline-action-form" do |f| %>
@@ -10,7 +10,7 @@
   <% end %>
 
   <% if inventory_equipment_sets.any? %>
-    <table class="nl-profile-table nl-equipment-set-table">
+    <table class="nl-detail-table nl-equipment-set-table">
       <% inventory_equipment_sets.each do |name, _payload| %>
         <tr>
           <th><%= name %></th>
@@ -31,6 +31,6 @@
       <% end %>
     </table>
   <% else %>
-    <p class="nl-profile-empty">No saved equipment sets.</p>
+    <p class="nl-empty-note">No saved equipment sets.</p>
   <% end %>
 </div>

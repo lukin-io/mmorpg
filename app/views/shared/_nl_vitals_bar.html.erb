@@ -30,8 +30,11 @@
     </div>
   </div>
 
-  <%# Values text: [HP/MaxHP | MP/MaxMP] %>
-  <span class="nl-vitals-text" data-nl-vitals-target="text">
-    [<%= character.current_hp.round %>/<%= character.max_hp %> | <%= character.current_mp.round %>/<%= character.max_mp %>]
-  </span>
+  <%#
+    Source readout: `[curHP/maxHP | curMP/maxMP]` in `.hpfont`, with the HP pair
+    in the combat color and the MP pair in the link color.
+  %>
+  <span class="nl-vitals-text">[<span
+    class="nl-vitals-hp" data-nl-vitals-target="hpText"><%= character.current_hp.round %>/<%= character.max_hp %></span> | <span
+    class="nl-vitals-mp" data-nl-vitals-target="mpText"><%= character.current_mp.round %>/<%= character.max_mp %></span>]</span>
 </div>

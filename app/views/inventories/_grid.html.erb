@@ -76,14 +76,14 @@
               inventory_item_path(item, category: category, subcategory: subcategory, info: info_mode),
               method: :delete,
               class: "invbut invbut--danger",
-              form: {data: {turbo_confirm: "Delete #{item.item_template.name}?"}} %>
+              form: {class: "nl-inventory-discard", data: {turbo_confirm: "Delete #{item.item_template.name}?"}} %>
           <% end %>
         </div>
 
         <div class="nl-inventory-item-details">
           <section>
             <h3>Properties</h3>
-            <table class="nl-profile-table">
+            <table class="nl-detail-table">
               <tr>
                 <th>Name</th>
                 <td><%= item.item_template.name %></td>
@@ -101,7 +101,7 @@
 
           <section class="<%= 'nl-inventory-details--compact' if info_mode == 'short' %>">
             <h3>Requirements</h3>
-            <table class="nl-profile-table">
+            <table class="nl-detail-table">
               <% inventory_requirement_rows(item).each do |row| %>
                 <tr class="<%= 'nl-requirement-missing' unless row[:met] %>">
                   <th><%= row[:label] %></th>
@@ -122,7 +122,7 @@
   <% end %>
 
   <% if items.empty? %>
-    <p class="nl-profile-empty"><%= inventory_empty_message(category) %></p>
+    <p class="nl-empty-note"><%= inventory_empty_message(category) %></p>
   <% end %>
 
 </div>

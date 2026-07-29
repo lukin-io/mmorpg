@@ -1,8 +1,8 @@
 <% content_for :title, "Skills - #{@character.name}" %>
 
-<section class="nl-allocation-page nl-source-character-page">
-  <div class="nl-source-character-grid">
-    <aside class="nl-source-character-left">
+<section class="nl-allocation-page nl-character-page">
+  <div class="nl-character-page-grid">
+    <aside class="nl-character-page-aside">
       <%= render "shared/neverlands_character_sheet",
         character: @character,
         equipment: @equipment,
@@ -10,9 +10,9 @@
         show_money: true %>
     </aside>
 
-    <main class="nl-source-character-right">
+    <main class="nl-character-page-main">
       <%= render "shared/neverlands_profile_navigation", character: @character, current_section: :skills %>
-      <turbo-frame id="skill-allocation" class="nl-source-allocation nl-source-allocation--page">
+      <turbo-frame id="skill-allocation" class="nl-allocation-frame">
         <%= render "characters/skill_allocation" %>
       </turbo-frame>
     </main>

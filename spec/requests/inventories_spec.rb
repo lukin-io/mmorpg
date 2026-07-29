@@ -28,7 +28,7 @@ RSpec.describe "Inventories", type: :request do
       expect(response.body).to include("Inventory")
       expect(response.body).to include("Inventory mass")
       expect(response.body).to include("Inventory categories")
-      expect(response.body).to include("nl-source-inventory-icon--text")
+      expect(response.body).to include("nl-icon-strip-item")
       expect(response.body).not_to include("assets/neverlands")
       expect(response.body).not_to include("nl-inventory-empty-slot")
     end
@@ -85,7 +85,9 @@ RSpec.describe "Inventories", type: :request do
 
       get inventory_path
 
-      expect(response.body.scan("Knowledge Ring").size).to eq(1)
+      page = Nokogiri::HTML(response.body)
+      expect(page.css(".nl-doll-slot--ring_1").text).to include("Knowledge Ring")
+      expect(page.css(".nl-inventory-list").text).not_to include("Knowledge Ring")
       expect(response.body).to include("Remove all gear")
     end
 

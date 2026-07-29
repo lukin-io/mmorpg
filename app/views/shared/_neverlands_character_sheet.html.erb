@@ -1,8 +1,17 @@
+<%#
+  Character sheet shared by the player profile and the inventory page.
+
+  Composition follows the live main-frame capture: a 258px paper doll beside a
+  fixed 200px parameter column ordered money, primary stats, save, experience,
+  record, increases banner, combat chips, effects.
+  See doc/design/reference/neverlands_live_style_system.md.
+%>
 <% character ||= current_character %>
 <% equipment ||= {} %>
 <% interactive = local_assigns.fetch(:interactive, false) %>
 <% show_money = local_assigns.fetch(:show_money, true) %>
 <% metadata = character.metadata.to_h %>
+<% fatigue = profile_fatigue(character) %>
 
 <section class="nl-character-sheet" aria-label="<%= character.name %> character sheet">
   <div class="nl-character-doll-column">
@@ -13,69 +22,86 @@
       category: local_assigns[:category],
       subcategory: local_assigns[:subcategory],
       info_mode: local_assigns[:info_mode] %>
-
-    <div class="nl-effects-strip">
-      <span class="nl-effect-icon" title="Active effect">*</span>
-      <span>Total effects: <b><%= metadata.fetch("active_effects", []).size %></b> / 99</span>
-    </div>
   </div>
 
   <div class="nl-character-parameters">
     <% if show_money %>
-      <div class="nl-character-money">
-        <span class="nl-money-mark" aria-hidden="true">NV</span>
-        <span>Money:</span>
-        <b><%= number_with_delimiter(character.user&.currency_wallet&.nv_balance || 0) %> NV</b>
-      </div>
+      <table class="nl-sheet-table nl-sheet-table--money">
+        <tbody>
+          <tr>
+            <th><span class="nl-money-mark" aria-hidden="true">NV</span> Money:</th>
+            <td><%= number_with_delimiter(character.user&.currency_wallet&.nv_balance || 0) %> NV</td>
+          </tr>
+        </tbody>
+      </table>
     <% end %>
 
-    <table class="nl-source-stat-table nl-source-stat-table--primary">
+    <table class="nl-sheet-table nl-sheet-table--stats">
+      <caption class="nl-visually-hidden">Primary stats</caption>
       <tbody>
         <% profile_primary_stats(character).each do |stat| %>
           <tr>
             <th><%= stat[:label] %>:</th>
-            <td><b><%= stat[:total] %></b> (<%= stat[:base] %><%= signed_value(stat[:equipment]) if stat[:equipment] != 0 %>)</td>
-            <td class="nl-stat-adjust"><span>+</span><span>-</span></td>
+            <td class="nl-sheet-stat-total"><%= stat[:total] %></td>
+            <td class="nl-sheet-stat-breakdown">
+              <% if stat[:equipment] != 0 %>
+                (<%= stat[:base] %>+<span class="nl-sheet-bonus"><%= stat[:equipment] %></span>)
+              <% end %>
+            </td>
           </tr>
         <% end %>
         <tr>
           <th>Wisdom:</th>
-          <td><b><%= metadata.fetch("wisdom", 0) %></b></td>
-          <td class="nl-stat-adjust"><span>+</span><span>-</span></td>
+          <td class="nl-sheet-stat-total"><%= metadata.fetch("wisdom", 0) %></td>
+          <td class="nl-sheet-stat-breakdown"></td>
         </tr>
       </tbody>
     </table>
 
     <div class="nl-sheet-link-row"><%= link_to "Save", player_path(name: character.name) %></div>
 
-    <table class="nl-source-stat-table">
+    <hr class="nl-sheet-divider">
+
+    <table class="nl-sheet-table nl-sheet-table--experience">
       <caption>Experience</caption>
       <tbody>
-        <tr><th>Combat:</th><td class="nl-stat-red"><%= number_with_delimiter(character.experience) %></td></tr>
-        <tr><th>Glory:</th><td class="nl-stat-green"><%= number_with_delimiter(metadata.fetch("glory", 0)) %></td></tr>
-        <tr><th>Valor:</th><td><%= number_with_delimiter(metadata.fetch("valor", 0)) %></td></tr>
-        <tr><th>To next level:</th><td><b><%= number_with_delimiter(character.experience_to_next_level) %></b></td></tr>
+        <tr><th>Combat:</th><td class="nl-sheet-xp-combat"><%= number_with_delimiter(character.experience) %></td></tr>
+        <tr><th>Glory:</th><td class="nl-sheet-xp-glory"><%= number_with_delimiter(metadata.fetch("glory", 0)) %></td></tr>
+        <tr><th>Valor:</th><td class="nl-sheet-xp-valor"><%= number_with_delimiter(metadata.fetch("valor", 0)) %></td></tr>
+        <tr><th>To level:</th><td><%= number_with_delimiter(character.experience_to_next_level) %></td></tr>
       </tbody>
     </table>
 
-    <table class="nl-source-stat-table nl-source-stat-table--record">
+    <hr class="nl-sheet-divider">
+
+    <table class="nl-sheet-table nl-sheet-table--record">
+      <caption class="nl-visually-hidden">Fight record</caption>
       <tbody>
-        <tr><th>Wins:</th><td><b><%= metadata.fetch("player_wins", 0) %></b></td></tr>
-        <tr><th>Losses:</th><td><b><%= metadata.fetch("player_losses", 0) %></b></td></tr>
-        <tr><th>NPC wins:</th><td><b><%= metadata.fetch("npc_wins", 0) %></b></td></tr>
-        <tr><th>NPC losses:</th><td><b><%= metadata.fetch("npc_losses", 0) %></b></td></tr>
+        <tr><th>Wins:</th><td><%= metadata.fetch("player_wins", 0) %></td></tr>
+        <tr><th>Losses:</th><td><%= metadata.fetch("player_losses", 0) %></td></tr>
+        <tr><th>Wins over NPC:</th><td><%= metadata.fetch("npc_wins", 0) %></td></tr>
+        <tr><th>Losses to NPC:</th><td><%= metadata.fetch("npc_losses", 0) %></td></tr>
       </tbody>
     </table>
 
-    <div class="nl-source-points">Increases: <b><%= character.stat_points_available.to_i %></b></div>
+    <div class="nl-sheet-increases">Increases: <%= character.stat_points_available.to_i %></div>
 
-    <table class="nl-source-stat-table nl-source-stat-table--combat">
+    <table class="nl-sheet-table nl-sheet-table--chips">
+      <caption class="nl-visually-hidden">Combat parameters</caption>
       <tbody>
-        <tr><th>Fatigue:</th><td class="nl-source-meter"><span style="width: <%= profile_fatigue(character) %>%"></span><b><%= profile_fatigue(character) %>%</b></td></tr>
+        <tr>
+          <th>Fatigue:</th>
+          <td class="nl-sheet-chip nl-sheet-chip--fatigue"><%= fatigue %>%</td>
+        </tr>
         <% profile_combat_stats(character).each do |label, value| %>
-          <tr><th><%= label %>:</th><td class="nl-source-value"><b><%= value %></b></td></tr>
+          <tr>
+            <th><%= label %>:</th>
+            <td class="nl-sheet-chip"><%= value %></td>
+          </tr>
         <% end %>
       </tbody>
     </table>
+
+    <p class="nl-sheet-effects">Total effects: <%= metadata.fetch("active_effects", []).size %> / 99</p>
   </div>
 </section>

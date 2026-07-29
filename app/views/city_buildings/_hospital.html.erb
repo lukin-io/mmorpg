@@ -1,11 +1,11 @@
-<div class="nl-shop-tabs">
+<div class="nl-city-building-tabs">
   <% building["tabs"].each do |tab| %>
-    <span class="nl-arena-tab"><%= tab %></span>
+    <span class="nl-city-building-tab"><%= tab %></span>
   <% end %>
 </div>
 
 <h2>Treatment shop observation</h2>
-<table class="nl-profile-table nl-city-building-table">
+<table class="nl-detail-table nl-city-building-table">
   <thead><tr><th>Item</th><th>Resource</th><th>Price</th><th>Observed stock</th></tr></thead>
   <tbody>
     <% building["goods"].each do |name, resource, price, stock| %>

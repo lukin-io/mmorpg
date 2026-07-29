@@ -361,18 +361,6 @@
 /* Neverlands map and city navigation surfaces                                */
 /* ========================================================================== */
 
-.nl-visually-hidden {
-  position: absolute !important;
-  width: 1px !important;
-  height: 1px !important;
-  padding: 0 !important;
-  overflow: hidden !important;
-  clip: rect(0, 0, 0, 0) !important;
-  clip-path: inset(50%) !important;
-  border: 0 !important;
-  white-space: nowrap !important;
-}
-
 .nl-world-container--map {
   display: block;
   height: 100%;
@@ -1157,6 +1145,105 @@ button.nl-city-hotspot,
   font: bold 28px/1 Arial, sans-serif;
   text-shadow: 0 1px #ffffff;
   transform: rotate(18deg);
+}
+
+/* ========================================================================== */
+/* Read-only city building interiors                                          */
+/*                                                                            */
+/* Framed like the source's inner service tables: a hairline outer frame, a   */
+/* `#FCFAF3` header strip, and dense `.weaponch` rows.                        */
+/* ========================================================================== */
+
+.nl-city-building-page {
+  padding: 0 var(--nl-frame-gutter);
+}
+
+.nl-city-building-frame {
+  border: 1px solid var(--nl-rule);
+  background: var(--nl-surface);
+}
+
+.nl-city-building-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 4px 6px;
+  border-bottom: 1px solid var(--nl-rule-gold);
+  background: var(--nl-surface-header);
+}
+
+.nl-city-building-header h1 {
+  margin: 0;
+  color: var(--nl-text);
+  font: bold 12px/16px var(--nl-font-verdana);
+}
+
+.nl-city-building-header p {
+  margin: 0;
+  color: var(--nl-text-soft);
+  font: 11px/15px var(--nl-font-tahoma);
+}
+
+.nl-city-building-notice {
+  margin: 0;
+  padding: 3px 6px;
+  background: var(--nl-surface-band);
+  color: var(--nl-text-soft);
+  font: 11px/15px var(--nl-font-tahoma);
+}
+
+.nl-city-building-frame h2 {
+  margin: 6px 6px 3px;
+  color: var(--nl-text);
+  font: bold 11px/15px var(--nl-font-tahoma);
+}
+
+.nl-city-building-frame > p {
+  margin: 0 6px 3px;
+  color: var(--nl-text-soft);
+  font: 11px/15px var(--nl-font-tahoma);
+}
+
+.nl-city-building-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  padding: 0 6px 3px;
+}
+
+.nl-city-building-tab {
+  padding: 1px 6px;
+  border: 1px solid var(--nl-control-border);
+  background: var(--nl-surface-accent);
+  color: var(--nl-text-soft);
+  font: bold 10px/14px var(--nl-font-tahoma);
+}
+
+.nl-city-building-table {
+  width: calc(100% - 12px);
+  margin: 0 6px 6px;
+}
+
+.nl-city-building-table th,
+.nl-city-building-table td {
+  width: auto;
+  padding: 1px 4px;
+  border-bottom: 1px solid var(--nl-rule-soft);
+}
+
+.nl-city-building-table thead th {
+  background: var(--nl-surface-column-head);
+  color: #000000;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+@media (max-width: 520px) {
+  .nl-city-building-page {
+    padding: 0 4px;
+  }
 }
 
 @media (max-width: 720px) {

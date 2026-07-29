@@ -1,9 +1,19 @@
+/*
+ * Stylesheet manifest.
+ *
+ * Order matters: tokens define the measured Neverlands literals, primitives
+ * define the source text/control classes on top of them, and each domain file
+ * below composes those primitives. Domain files never redefine control chrome.
+ */
+
 @import url("./tokens.css");
 @import url("./primitives.css");
 @import url("./shell.css");
 @import url("./chat_presence.css");
 @import url("./world.css");
-@import url("./player_inventory.css");
+@import url("./character_sheet.css");
+@import url("./player.css");
+@import url("./inventory.css");
 @import url("./arena.css");
 @import url("./fight_logs.css");
 @import url("./shop.css");

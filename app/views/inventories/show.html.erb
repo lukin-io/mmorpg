@@ -1,9 +1,18 @@
 <% content_for :title, "Inventory" %>
 
-<section class="inventory-page nl-inventory-page" data-controller="inventory">
-  <div class="nl-source-character-grid nl-source-inventory-grid <%= 'nl-source-inventory-grid--family' unless inventory_equipment_family?(@category) %>">
+<%#
+  Inventory screen.
+
+  Layout mirrors the live capture: character sheet on the left, and a right
+  column made of one icon strip (eight families followed by the three utility
+  actions), an optional subcategory strip for the equipment family, the mass
+  line, and the item list. See
+  doc/design/reference/neverlands_live_style_system.md.
+%>
+<section class="nl-inventory-page" data-controller="inventory">
+  <div class="nl-inventory-grid <%= "nl-inventory-grid--family" unless inventory_equipment_family?(@category) %>">
     <% if inventory_equipment_family?(@category) %>
-      <aside class="nl-source-character-left">
+      <aside class="nl-inventory-sheet">
         <div id="equipment_panel">
           <%= render "shared/neverlands_character_sheet",
             character: current_character,
@@ -15,64 +24,72 @@
             info_mode: @info_mode %>
         </div>
 
-        <% if @equipment.values.compact.uniq.any? %>
-          <div class="nl-source-equipment-actions">
-            <%= button_to "Remove all gear",
-              unequip_all_inventory_path(category: @category, subcategory: @subcategory, info: @info_mode),
-              method: :post,
-              class: "invbut",
-              data: {turbo_confirm: "Remove all equipped items?"} %>
-          </div>
-        <% end %>
-
         <%= render "inventories/equipment_sets" %>
       </aside>
     <% end %>
 
-    <main class="nl-source-inventory-main">
-      <nav class="nl-source-inventory-icons nl-source-inventory-icons--utilities" aria-label="Inventory display controls">
-        <%= link_to "Gear",
-          inventory_path(category: @category, subcategory: @subcategory, info: @info_mode),
-          class: "nl-source-inventory-icon nl-source-inventory-icon--text nl-source-inventory-icon--active",
-          title: "Equipment" %>
-        <%= link_to "Brief",
-          inventory_path(category: @category, subcategory: @subcategory, info: "short"),
-          class: "nl-source-inventory-icon nl-source-inventory-icon--text",
-          title: "Short information" %>
-        <%= link_to "Reset",
-          inventory_path(info: @info_mode),
-          class: "nl-source-inventory-icon nl-source-inventory-icon--text",
-          title: "Reset filter" %>
-      </nav>
-
-      <nav class="nl-source-inventory-icons nl-source-inventory-icons--categories" aria-label="Inventory categories">
-        <% inventory_category_options.reject { |key, _label| key == "things" }.each do |key, label| %>
-          <% mark = inventory_category_mark(key) %>
-          <% if @category == key %>
-            <span class="nl-source-inventory-icon nl-source-inventory-icon--text nl-source-inventory-icon--active" title="<%= label %>" aria-current="page"><%= mark %></span>
+    <main class="nl-inventory-main">
+      <nav class="nl-icon-strip" aria-label="Inventory categories">
+        <% InventoriesHelper::INVENTORY_FAMILY_STRIP.each do |key| %>
+          <% label = inventory_category_label(key) %>
+          <% active = @category == key || (key == "things" && @category == "all") %>
+          <% if active %>
+            <span class="nl-icon-strip-item nl-icon-strip-item--active" title="<%= label %>" aria-current="page"><%= inventory_category_mark(key) %></span>
           <% else %>
-            <%= link_to mark,
+            <%= link_to inventory_category_mark(key),
               inventory_path(category: key, info: @info_mode),
-              class: "nl-source-inventory-icon nl-source-inventory-icon--text",
+              class: "nl-icon-strip-item",
               title: label,
               aria: {label: label} %>
           <% end %>
         <% end %>
-        <%= link_to "Gear",
-          inventory_path(category: "things", info: @info_mode),
-          class: "nl-source-inventory-icon nl-source-inventory-icon--text",
-          title: "Equipment" %>
-        <%= link_to "Brief",
-          inventory_path(category: @category, subcategory: @subcategory, info: "short"),
-          class: "nl-source-inventory-icon nl-source-inventory-icon--text",
-          title: "Short information" %>
+
+        <span class="nl-icon-strip-gap" aria-hidden="true"></span>
+
+        <% if @equipment.values.compact.uniq.any? %>
+          <%= button_to "Strip",
+            unequip_all_inventory_path(category: @category, subcategory: @subcategory, info: @info_mode),
+            method: :post,
+            class: "nl-icon-strip-item",
+            title: "Remove all gear",
+            aria: {label: "Remove all gear"},
+            form: {class: "nl-icon-strip-form", data: {turbo_confirm: "Remove all equipped items?"}} %>
+        <% end %>
+
+        <% if @info_mode == "short" %>
+          <%= link_to "Full",
+            inventory_path(category: @category, subcategory: @subcategory, info: "full"),
+            class: "nl-icon-strip-item",
+            title: "Full information" %>
+        <% else %>
+          <%= link_to "Brief",
+            inventory_path(category: @category, subcategory: @subcategory, info: "short"),
+            class: "nl-icon-strip-item",
+            title: "Short information" %>
+        <% end %>
+
         <%= link_to "Reset",
           inventory_path(info: @info_mode),
-          class: "nl-source-inventory-icon nl-source-inventory-icon--text",
+          class: "nl-icon-strip-item",
           title: "Reset filter" %>
       </nav>
 
-      <div class="nl-source-inventory-mass">
+      <% if inventory_equipment_family?(@category) %>
+        <nav class="nl-icon-strip nl-icon-strip--sub" aria-label="Equipment subcategories">
+          <% InventoriesHelper::THINGS_SUBCATEGORIES.each do |key, label| %>
+            <% if @subcategory == key %>
+              <span class="nl-icon-strip-item nl-icon-strip-item--active" title="<%= label %>" aria-current="page"><%= label %></span>
+            <% else %>
+              <%= link_to label,
+                inventory_path(category: "things", subcategory: key, info: @info_mode),
+                class: "nl-icon-strip-item",
+                title: label %>
+            <% end %>
+          <% end %>
+        </nav>
+      <% end %>
+
+      <div class="nl-inventory-mass">
         Inventory mass: <b><%= @inventory.current_weight %>/<%= @inventory.max_weight %></b>
       </div>
 

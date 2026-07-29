@@ -104,15 +104,16 @@ RSpec.describe "shared/_nl_vitals_bar.html.erb", type: :view do
     it "displays values in format [HP/MaxHP | MP/MaxMP]" do
       render partial: "shared/nl_vitals_bar", locals: {character: character}
 
-      # Format: [75/100 | 40/80]
-      expect(rendered).to include("[75/100")
-      expect(rendered).to include("40/80]")
+      expect(rendered.squish).to include("[<span class=\"nl-vitals-hp\"")
+      expect(rendered).to have_css(".nl-vitals-hp", text: "75/100")
+      expect(rendered).to have_css(".nl-vitals-mp", text: "40/80")
     end
 
-    it "includes text stimulus target" do
+    it "includes the HP and MP stimulus targets" do
       render partial: "shared/nl_vitals_bar", locals: {character: character}
 
-      expect(rendered).to have_css("[data-nl-vitals-target='text']")
+      expect(rendered).to have_css("[data-nl-vitals-target='hpText']")
+      expect(rendered).to have_css("[data-nl-vitals-target='mpText']")
     end
   end
 

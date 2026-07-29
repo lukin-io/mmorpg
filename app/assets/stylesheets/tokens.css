@@ -1,38 +1,67 @@
+/*
+ * Neverlands presentation tokens.
+ *
+ * Every value below is measured from the authenticated live client and is
+ * recorded in `doc/design/reference/neverlands_live_style_system.md`. The live
+ * client has no variables: colors are emitted as `bgcolor`/`<font color>`
+ * attributes and typography lives in per-class font declarations. This file is
+ * the single place where those literals are named so domain stylesheets can
+ * compose them instead of repeating hex codes.
+ *
+ * Only genuinely cross-domain values belong here. Feature geometry stays in
+ * the owning domain stylesheet.
+ */
+
 :root,
 .nl-game-layout,
 .nl-public-layout {
-  --nl-bg-primary: #ffffff;
-  --nl-bg-secondary: #fcfaf3;
-  --nl-bg-panel: #ffffff;
-  --nl-border: #d8cdaf;
-  --nl-border-light: #eee8d8;
-  --nl-border-dark: #b9a05c;
+  /* Surfaces */
+  --nl-surface: #ffffff;
+  --nl-surface-header: #fcfaf3;
+  --nl-surface-value: #fafafa;
+  --nl-surface-accent: #f3ecd7;
+  --nl-surface-inset: #f5f5f5;
+  --nl-surface-band: #eaeaea;
+  --nl-surface-column-head: #d8cdaf;
+
+  /* Rules and borders */
+  --nl-rule: #cccccc;
+  --nl-rule-soft: #e0e0e0;
+  --nl-rule-gold: #b9a05c;
+  --nl-rule-gold-soft: #e0d6bb;
+  --nl-rule-blue: #3564a5;
+
+  /* Text */
   --nl-text: #222222;
-  --nl-text-primary: #111111;
-  --nl-text-secondary: #333333;
-  --nl-text-muted: #666666;
-  --nl-text-dim: #999999;
-  --nl-text-link: #336699;
-  --nl-text-link-hover: #003366;
-  --nl-blue: #336699;
-  --nl-blue-dark: #003366;
-  --nl-blue-soft: #f1f5f8;
-  --nl-red: #cc0000;
-  --nl-red-soft: #fff2f2;
-  --nl-green: #009d29;
-  --nl-green-soft: #f0fff2;
-  --nl-warning: #b85d00;
-  --nl-yellow-soft: #f3ecd7;
-  --nl-row-alt: #fcfaf3;
-  --nl-control-font: Tahoma, Verdana, Arial, sans-serif;
-  --nl-control-height: 18px;
-  --nl-control-bg-hover: #f3ecd7;
-  --nl-control-bg-active: #e8dfc4;
+  --nl-text-soft: #333333;
+  --nl-text-muted: #888888;
+  --nl-text-inverse: #ffffff;
+  --nl-link: #336699;
+  --nl-link-strong: #3564a5;
+
+  /* Semantic gameplay colors */
+  --nl-combat-xp: #bb0000;
+  --nl-glory-xp: #0a8900;
+  --nl-valor-xp: #004bbb;
+  --nl-bonus: #cc0000;
+  --nl-chip-combat: #d16f67;
+  --nl-chip-fatigue: #336699;
+  --nl-hp: #bb0000;
+  --nl-mp: #336699;
+
+  /* Control chrome */
   --nl-control-border: #decfa6;
-  --nl-control-border-light: #e8dfc4;
-  --nl-control-disabled-bg: #f3ecd7;
-  --nl-control-disabled-text: #c7bea6;
-  --nl-control-shadow: none;
-  --nl-control-shadow-active: none;
+  --nl-control-border-strong: #b9a05c;
+  --nl-control-danger-border: #ce0202;
+
+  /* Typography stacks */
+  --nl-font-verdana: Verdana, Arial, Helvetica, Tahoma, sans-serif;
+  --nl-font-tahoma: Tahoma, Verdana, Arial, Helvetica, sans-serif;
+
+  /* Shared geometry measured from the live main frame */
+  --nl-frame-gutter: 10px;
+  --nl-frame-gap: 5px;
+  --nl-vitals-width: 160px;
+  --nl-vitals-bar-height: 6px;
   --nl-focus-ring: 0 0 0 1px #336699;
 }
