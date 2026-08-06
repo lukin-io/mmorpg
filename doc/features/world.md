@@ -16,6 +16,8 @@ It describes what exists now. It does not turn deferred Neverlands mechanics int
 
 ## 1. Design authority and related documents
 
+Domain navigation: `doc/domains/world.md`.
+
 Neverlands is the sole game-design reference for this feature. The local implementation adapts the observed behavior to Rails, Turbo, Stimulus, and the current English-only client; it must not be expanded with generic legacy-RPG conventions.
 
 When behavior is uncertain or conflicts with this document:
@@ -27,9 +29,9 @@ When behavior is uncertain or conflicts with this document:
 
 Supporting documents:
 
-- `doc/design/reference/neverlands_live_movement.md` — live movement observations.
-- `doc/design/reference/neverlands_live_outdoor_npc_resource.md` — observed outdoor cell, NPC, and resource behavior.
-- `doc/design/reference/neverlands_live_game_shell_ui.md` — persistent game-shell observations.
+- `doc/design/reference/world/observations/2026-05-09_overworld_movement.md` — live movement observations.
+- `doc/design/reference/world/observations/2026-05-20_outdoor_npc_resource.md` — observed outdoor cell, NPC, and resource behavior.
+- `doc/design/reference/shell/observations/2026-07-28_game_shell_and_mvp_surfaces.md` — persistent game-shell observations.
 - `doc/design/areas/world_map.md` — world-area design record.
 - `doc/design/features/movement.md` — movement design record.
 - `doc/design/features/professions.md` — explicit evidence boundary for future cell-based gathering.
@@ -1127,9 +1129,9 @@ presence, and login-resume behavior.
 - `doc/design/features/movement.md`
 - `doc/design/features/professions.md`
 - `doc/design/launch_mvp_plan.md`
-- `doc/design/reference/neverlands_live_movement.md`
-- `doc/design/reference/neverlands_live_outdoor_npc_resource.md`
-- `doc/design/reference/neverlands_live_game_shell_ui.md`
+- `doc/design/reference/world/observations/2026-05-09_overworld_movement.md`
+- `doc/design/reference/world/observations/2026-05-20_outdoor_npc_resource.md`
+- `doc/design/reference/shell/observations/2026-07-28_game_shell_and_mvp_surfaces.md`
 
 ### Routes and controllers
 

@@ -1,482 +1,334 @@
-# Documentation Architecture and Migration Plan
+# Documentation Architecture
 
-- Status: Proposed; current paths remain authoritative until a migration phase
-  is explicitly implemented and verified.
+- Status: Current
 - Updated: 2026-07-29
-- Scope: Neverlands observations, normalized game design, delivery/parity
-  planning, verified local implementation handbooks, engineering guidance, and
-  session history.
+- Scope: Neverlands observations, normalized local design, delivery/parity,
+  current RPG implementation, engineering guidance, operations, and session
+  history.
 
 ## TL;DR
 
-Organize documentation by **truth type**, then provide a **domain-first map**
-for navigation.
-
-Do not physically nest “Current RPG” beneath “Neverlands.” Evidence and shipped
-implementation have different authority and update lifecycles. Instead, every
-domain should be traceable through this chain:
+Documentation is stored by **truth type** and navigated by **game domain**.
+Start with `doc/domains/README.md`, select a domain, and follow one explicit
+chain:
 
 ```text
 Neverlands observation
-→ current source summary
-→ normalized local design/adaptation
-→ launch/parity status
-→ verified current-RPG implementation handbook
-→ code and tests
+-> current Neverlands source summary
+-> normalized local design and responsive adaptation
+-> launch/parity ID and state
+-> current RPG implementation handbook
+-> responsible code and tests
 ```
 
-The user's desired view still exists, but as navigation rather than duplicated
-content:
+This gives the desired “Neverlands → Current RPG” view without nesting shipped
+implementation inside evidence or duplicating the same claim in several files.
 
-```text
-Inventory
-├── Neverlands evidence
-├── Local product design
-├── MVP/parity status
-└── Current RPG implementation
+## 1. Authority by truth type
 
-City and Buildings
-├── Neverlands evidence
-├── Local product design
-├── MVP/parity status
-└── Current RPG implementation and interior-feature handoffs
-```
+Each layer owns one question and must not impersonate another layer.
 
-The repository already has most of these layers. The best next step is to make
-their ownership explicit, index them by stable domain, then clean and split
-mixed documents incrementally without a high-risk repository-wide move.
-
-## 1. One fact, one owner
-
-Each layer answers one question and must not impersonate another layer.
-
-| Layer | Canonical location | Question it answers | Must not own |
+| Layer | Canonical location | Question it answers | Must not claim |
 |---|---|---|---|
-| Documentation policy | `AGENT.md`, `doc/README.md`, this document | How documentation is organized and maintained | Game rules or shipped behavior |
-| Neverlands evidence | `doc/design/reference/**` | What was directly observed or found in Neverlands? | Local completion claims or Rails design |
-| Normalized product design | `doc/design/gdd.md`, `doc/design/areas/**`, `doc/design/features/**` | What does this RPG adopt, translate, adapt, or defer? | App file inventories or session history |
-| Delivery/parity plan | `doc/design/launch_mvp_plan.md` | What is required, Done, Not Done, or blocked by evidence? | Detailed runtime architecture |
-| Verified implementation handbook | `doc/features/**` | What is verifiably shipped locally now, and which files own it? | Unverified future behavior |
-| Engineering guidance | `doc/RUBY_ON_RAILS_GUIDE.md` | How should Rails/Hotwire implementation be structured safely? | Neverlands game design |
-| Operational and extension guides | `doc/guides/**` | How does an operator use a shipped tool, and how does an engineer extend it safely? | Duplicate feature truth, product design, or completion claims |
-| Runtime truth | Code, seeds/config, schema, and tests | What does the application actually do? | Product authority by itself |
-| Session history | `changelogs/**` | What changed during one Codex session? | Canonical product/design rules |
+| Process policy | `AGENT.md` | How work, verification, and documentation are maintained | Game rules |
+| Domain navigation | `doc/domains/**` | Where is every layer for this product area? | New evidence, mechanics, or exhaustive implementation detail |
+| Neverlands evidence | `doc/design/reference/**` | What was directly observed or preserved from Neverlands? | Local completion or invented behavior |
+| Normalized product design | `doc/design/gdd.md`, `doc/design/areas/**`, `doc/design/features/**` | What is adopted, translated, locally adapted, deferred, or prohibited? | Shipped status by implication |
+| Delivery/parity | `doc/design/launch_mvp_plan.md` | What bounded state is Done, Not Done, or blocked? | Detailed runtime architecture |
+| Implementation handbook | `doc/features/**` | What is verified locally now and which files own it? | Unverified future behavior |
+| Rails/Hotwire guidance | `doc/RUBY_ON_RAILS_GUIDE.md` | How is implementation structured safely? | Neverlands game design |
+| Operational guides | `doc/guides/**` | How is a shipped cross-feature tool used or extended? | Replacement mechanics or ownership |
+| Runtime | Code, seeds/config, schema, tests | What does the application actually do? | Product authority on its own |
+| Session history | `changelogs/**` | What changed during one Codex session? | Canonical design or feature truth |
 
-Examples of single ownership:
+When two layers disagree, use `[EVIDENCE]`, `[IMPL]`, or `[DOC]` as defined in
+`AGENT.md`. Fix the owner of the fact; do not make every document repeat the
+correction.
 
-- A measured `1302 × 702` Neverlands map viewport first belongs in a dated
-  evidence record.
-- The decision to reproduce that desktop geometry and add mandatory local
-  responsive behavior belongs in area/design documentation.
-- Whether the World row is Done belongs in the parity matrix.
-- CSS classes, Stimulus controllers, Rails services, seeds, and exact specs
-  belong in `doc/features/world.md`.
-- The work performed in one session belongs in its single living changelog.
-
-## 2. Recommended physical structure
-
-Keep the current layer-first structure and improve it incrementally:
+## 2. Current physical structure
 
 ```text
 doc/
-├── README.md                       # concise portal and copy boundary
-├── DOCUMENTATION.md                # this architecture and domain map
-├── RUBY_ON_RAILS_GUIDE.md          # Rails/Hotwire implementation guide
-├── guides/                         # operator/developer procedures
-│   └── managing_game_content.md    # /manage usage and extension guide
-│
+├── README.md
+├── DOCUMENTATION.md
+├── DOCUMENTATION_MIGRATION_MANIFEST.md
+├── RUBY_ON_RAILS_GUIDE.md
+├── domains/
+│   ├── README.md
+│   └── <domain>.md
+├── templates/
+│   ├── README.md
+│   ├── DOMAIN_INDEX_TEMPLATE.md
+│   ├── NEVERLANDS_SOURCE_SUMMARY_TEMPLATE.md
+│   ├── NEVERLANDS_OBSERVATION_TEMPLATE.md
+│   └── DESIGN_PLACEHOLDER_TEMPLATE.md
 ├── design/
-│   ├── README.md                   # design-layer rules
-│   ├── gdd.md                      # vision, core loop, cross-domain invariants
-│   ├── launch_mvp_plan.md          # one launch/parity status system
-│   │
-│   ├── reference/                  # Neverlands evidence, not local design
-│   │   ├── README.md               # evidence manifest (recommended next)
-│   │   ├── shell/                  # optional incremental grouping
-│   │   │   ├── README.md           # current source summary
-│   │   │   └── observations/       # dated, sanitized capture records
-│   │   ├── character/
-│   │   ├── inventory/
-│   │   ├── world/
-│   │   ├── city/
-│   │   ├── economy/
-│   │   └── combat/
-│   │
-│   ├── areas/                      # places, surfaces, topology, entry/exit
-│   └── features/                   # intended mechanics and state lifecycles
-│
-└── features/                       # verified local implementation handbooks
-    ├── README.md
-    ├── FEATURE_TEMPLATE.md
-    └── *.md
+│   ├── README.md
+│   ├── gdd.md
+│   ├── launch_mvp_plan.md
+│   ├── reference/
+│   │   ├── README.md
+│   │   └── <domain>/
+│   │       ├── README.md
+│   │       └── observations/
+│   ├── areas/
+│   └── features/
+├── features/
+│   ├── README.md
+│   ├── FEATURE_TEMPLATE.md
+│   ├── NOT_IMPLEMENTED_TEMPLATE.md
+│   └── <implemented_or_explicitly_missing_feature>.md
+└── guides/
+    └── managing_game_content.md
 
-changelogs/                          # repository root; session history only
+changelogs/
+├── CHANGELOG_TEMPLATE.md
+└── <one living record per substantive Codex session>.md
 ```
 
-The domain subfolders under `reference/` are a target, not an immediate move.
-Start with `doc/design/reference/README.md`; move one domain only when that
-domain is next actively observed, and update every inbound link atomically.
+The two directories named `features` are intentionally different:
 
-Keep both existing feature directories for now:
+- `doc/design/features/` owns intended mechanic design.
+- `doc/features/` owns verified implementation contracts or explicit audited
+  `NOT_IMPLEMENTED` placeholders.
 
-- `doc/design/features/` means **intended mechanic design**.
-- `doc/features/` means **verified implementation handbook**.
+## 3. Domain registry
 
-Renaming `doc/design/features/` to `doc/design/systems/` would reduce ambiguity,
-but it should be a later dedicated migration because it touches many links,
-`AGENT.md`, indexes, and audit expectations.
+`doc/domains/README.md` is the canonical domain list. Its eleven indexes cover:
 
-## 3. Domain-first navigation map
+- Shell;
+- Social, Chat, and Presence;
+- Character and Progression;
+- Inventory and Equipment;
+- Open World and Movement;
+- City and Buildings;
+- Economy and Shop;
+- Combat and Arena;
+- NPCs and Quests;
+- Professions;
+- Dungeons.
 
-This matrix provides the mental model “Neverlands area → our design → current
-implementation” without mixing those truths in one file.
+Every domain index provides scope, evidence/source-summary links, design
+owners, stable parity IDs, implementation status, handbook links, important
+responsible files, and current gaps. It is a navigation document, so exhaustive
+file ownership remains in section 16 of the implementation handbook.
 
-| Domain | Neverlands evidence | Normalized local design | Delivery/parity owner | Current RPG implementation |
-|---|---|---|---|---|
-| Shell, chat, presence, shared style | `reference/neverlands_live_game_shell_ui.md`, `reference/neverlands_chat.md`, `reference/neverlands_live_style_system.md` | `areas/game_client_layout.md`, `features/social_chat_presence.md`, `features/character_vitals.md` | Shell and responsive rows in `launch_mvp_plan.md` | `features/game_shell.md` |
-| Player Profile and progression | `reference/neverlands_live_player.md`, `reference/neverlands_skills.md`, `reference/neverlands_live_style_system.md` | `features/progression_stats_skills.md`, `features/character_vitals.md` | Profile and character-development rows | `features/character_progression.md`, with Inventory/Shell handoffs |
-| Inventory and equipment | `reference/neverlands_live_inventory_items.md`, `reference/neverlands_live_style_system.md` | `features/items_inventory_equipment.md` | Inventory rows | `features/player_inventory.md` |
-| Open World, movement, cell content | `reference/neverlands_live_movement.md`, `reference/neverlands_live_outdoor_npc_resource.md` | `areas/world_map.md`, `features/movement.md`, relevant NPC/profession design | World and linked-location rows | `features/world.md` |
-| City and Buildings | `reference/neverlands_live_city_movement.md`, relevant shell captures | `areas/cities_and_buildings.md` | City and building-interior rows | `features/city.md`, then each interior feature after handoff |
-| Shop and economy | `reference/neverlands_live_lavka_shop.md`, `reference/neverlands_live_inventory_items.md` | `features/economy_trading_shops.md` | Shop rows | `features/shop_economy.md` |
-| Arena, Fight, public log | fight sections in `reference/neverlands_live_game_shell_ui.md` and future dedicated captures | `areas/arena.md`, `features/combat.md` | Fight and public-log rows | `features/arena_combat.md` |
-| NPCs and local actions | `reference/neverlands_live_outdoor_npc_resource.md` | `features/npcs_quests.md`, `features/professions.md`, World area rules | Per-flow Not Done/Done rows | World handbook until an independent verified lifecycle exists |
-| Professions | future dedicated observations | `features/professions.md` | Profession/gathering rows | No handbook until a bounded flow is fully implemented |
-| Dungeons | future dedicated observations | `features/dungeons.md` | Deferred launch row | No implementation handbook yet |
+Composite pages use explicit handoffs:
 
-Paths in the table are relative to `doc/design/` except the final column, which
-is relative to `doc/`.
-
-Composite surfaces should use handoffs rather than duplicate handbooks:
-
-- **Player Profile** composes Progression, Vitals, Inventory/Equipment, and
-  Shell presentation. Create a separate Profile implementation handbook only
-  if it gains an independent authoritative lifecycle not owned by those
-  features.
-- **Buildings** are not one generic runtime feature. City owns discovery,
-  hotspot authority, entry/return, and resume. Shop owns commerce after entry;
-  future Hospital, Market, Airship, or other interiors own their behavior only
-  after each is observed and implemented.
+- Player Profile composes Character, Vitals, Inventory, and Shell ownership.
+- City owns building discovery, hotspot authority, entry/return, and resume;
+  Shop owns commerce after entry.
+- NPC combat is implemented through World and Arena. Quests are a separate
+  `NOT_IMPLEMENTED` lifecycle.
+- Professions must extend verified World/Inventory handoffs after evidence;
+  resource labels do not create a second cell/action pipeline.
 
 ## 4. Document contracts
 
-### 4.1 Dated Neverlands observation
+### 4.1 Neverlands observation
 
-A capture record contains evidence only:
+Use `doc/templates/NEVERLANDS_OBSERVATION_TEMPLATE.md` in the relevant
+`doc/design/reference/<domain>/observations/` directory.
 
-- capture date and source type (`authenticated-live`, Wiki, supplied image);
+An observation records:
+
+- capture date and source type;
 - sanitized preconditions and player state, never credentials or tokens;
 - browser and viewport when geometry matters;
 - actions performed and states reached;
-- measured dimensions, density, typography, colors, control order, hover/focus
-  behavior, transitions, and wording relevant to game mechanics;
-- direct observation versus inference;
-- states not exercised;
-- evidence gaps and superseded observations.
+- measured dimensions, density, typography, colors, controls, hover/focus,
+  transitions, and game-mechanic wording;
+- direct evidence separately from inference;
+- states not exercised and evidence gaps;
+- supersession relationship when newer evidence replaces a conclusion;
+- **Local Implementation Linkage**, including current local status, handbook,
+  and important responsible implementation files.
 
-Recommended future name:
+The linkage section is allowed and required for practical context, but must be
+clearly labeled local context rather than Neverlands evidence. It is not the
+canonical exhaustive file inventory.
 
-```text
-doc/design/reference/world/observations/2026-07-28_outdoor_travel_to_village.md
-```
+Use `YYYY-MM-DD_<bounded_flow>.md` for live dated captures. Preserved legacy
+analysis may use a descriptive `legacy_*.md` name and must state its limits.
 
-Observation history should be preserved. A new capture marks an older record
-superseded rather than silently rewriting what was seen at that date.
+### 4.2 Neverlands source summary
 
-### 4.2 Current Neverlands source summary
+Use `doc/templates/NEVERLANDS_SOURCE_SUMMARY_TEMPLATE.md` for
+`doc/design/reference/<domain>/README.md`.
 
-Each future domain `reference/<domain>/README.md` is the mutable summary of the
-latest non-superseded evidence. It answers only “What does Neverlands do?” and
-links back to every supporting observation.
+The source summary is the mutable index of current, historical, superseded, and
+missing evidence for a domain. It records observed behavior and evidence gaps,
+links to normalized design, and contains a bounded **Local Implementation
+Linkage** section with current status, handbook, and important responsible
+files. It must not turn that local context into source evidence.
 
-It must not decide Rails classes, local implementation status, mandatory
-responsive adaptation, or which source identity content ships.
-
-### 4.3 Normalized local design
-
-Every area/mechanic design document distinguishes:
-
-1. source invariants adopted from Neverlands;
-2. local adaptations, including English copy and mandatory responsiveness;
-3. unresolved `[EVIDENCE]` questions;
-4. explicit non-goals and prohibited generic-RPG invention.
+### 4.3 Normalized design
 
 Area documents describe places, screen families, topology, entry/exit, and
-available action language. Feature/mechanic documents describe formulas,
-authoritative state concepts, transitions, and cross-area interactions.
+available action language. Mechanic documents describe authoritative state,
+rules, formulas, transitions, and cross-area interactions.
 
-Design documents should remain portable. Concrete app classes, routes, file
-inventories, seeds, migration instructions, and spec paths belong in the
-verified implementation handbook.
+Every design distinguishes:
+
+1. source invariants adopted from Neverlands;
+2. English/project wording and other local translation;
+3. mandatory responsive behavior, which is a local requirement because
+   Neverlands is desktop-only;
+4. unresolved `[EVIDENCE]` questions;
+5. non-goals and prohibited generic-RPG invention;
+6. responsible implementation context where an existing local owner matters.
+
+When design is missing, copy `doc/templates/DESIGN_PLACEHOLDER_TEMPLATE.md`,
+use exact status `DESIGN_NEEDED`, and do not invent the missing behavior.
 
 ### 4.4 Delivery and parity
 
-Planning/status does not belong in raw evidence or normalized design. Keep one
-canonical status row per reachable state/flow with a stable ID, for example
-`WORLD-UI-001` or `COMBAT-UX-004`:
+`doc/design/launch_mvp_plan.md` owns stable flow IDs and Done/Not Done state.
+Examples include `WORLD-CELL-001`, `CITY-GATE-001`, and
+`COMBAT-FIGHT-UI-001`.
 
-| ID | State/flow | Evidence | Design target | Local surface | Stage | Overall | Next gap |
-|---|---|---|---|---|---|---|---|
-| `WORLD-UI-001` | Outdoor idle/travel | [links] | [links] | [route/spec] | `complete` | `Done` | — |
+`Done` requires the exact bounded acceptance surface to have current evidence,
+normalized design, reachable implementation, desktop comparison, mandatory
+tablet/mobile verification, tests, and an accurate implementation handbook.
+Passing tests or using similar colors alone is not 1:1 parity. A neighboring
+uncaptured state remains Not Done.
 
-Use `Done` and `Not Done` for the overall result. A separate stage may be:
+### 4.5 Current RPG implementation handbook
 
-```text
-evidence_needed → observed → design_ready → implementing
-→ verification_needed → complete
-```
+For shipped behavior, copy `doc/features/FEATURE_TEMPLATE.md`. Preserve its 18
+sections and use `status: Fully Implemented` only for a verified bounded
+contract.
 
-`deferred` is allowed for explicitly out-of-scope work. A row is `Done` only
-when current evidence, local design, reachable implementation, focused
-coverage, desktop comparison, required tablet/mobile verification, and the
-canonical implementation handbook are all complete.
+When a domain/design exists but no local runtime exists, copy
+`doc/features/NOT_IMPLEMENTED_TEMPLATE.md`. Preserve the same 18 sections, use
+the exact `NOT_IMPLEMENTED` keyword, list only real evidence/design paths, and
+state explicitly that routes, runtime owners, persistence, CSS, and specs do
+not exist. Such a placeholder is discoverability and anti-invention tooling;
+it is never a completion claim.
 
-### 4.5 Verified implementation handbook
-
-Keep `doc/features/FEATURE_TEMPLATE.md` and its audited 18-section contract.
 Implementation handbooks own:
 
-- routes, Turbo/HTML flow, and player-visible shipped behavior;
-- authoritative models, services, offers, policies, persistence, and resume;
-- CSS/Stimulus/asset ownership;
-- security, concurrency, stale-state, and failure behavior;
+- routes and HTML/Turbo behavior;
+- authoritative models, services, policies, state, persistence, and resume;
+- UI, domain-SRP CSS, Stimulus, and project-owned assets;
+- security, concurrency, stale-state, failure, and boundary behavior;
 - content/seeds/config lifecycle;
-- responsible implementation files and exact specs;
-- reciprocal runtime handoffs to other implementation handbooks.
-
-They describe only verified local behavior. Observed or planned behavior stays
-in evidence/design/plan documents until implemented.
+- reciprocal shipped feature handoffs;
+- exhaustive responsible implementation files and exact specs.
 
 ### 4.6 Operational and extension guide
 
-Use `doc/guides/**` for cross-feature procedures that explain how to operate a
-shipped tool or extend its adapters without replacing canonical ownership. A
-guide may combine task-oriented steps from several feature handbooks, but it
-must link to those owners and must not redefine their mechanics, persistence,
-security, or completion status.
+Use `doc/guides/**` when one real operational workflow crosses several feature
+owners. A guide may assemble procedures and worked examples, but it links back
+to the canonical handbooks and must not create another gameplay pipeline.
 
-The current guide is:
+### 4.7 Compatibility alias
 
-- `doc/guides/managing_game_content.md` — admin `/manage` usage, World/City
-  content lifecycle, audit/failure behavior, and the explicit Rails extension
-  pattern for future player and item management.
+Moved observation paths may retain a short alias so old links and historical
+changelogs remain readable. An alias points to the canonical domain-scoped
+file and contains no independent evidence. New and materially updated active
+documents link to the canonical path.
 
-Guides use lowercase `snake_case` names. Add one only when a real workflow
-crosses feature boundaries or needs richer operator/developer examples than a
-canonical handbook should contain.
+## 5. Copy boundary
 
-## 5. Proposed metadata
+Neverlands is the only product/game-design reference, but reference material is
+not copied wholesale into the project.
 
-Add metadata incrementally when a document is next touched; do not run a
-repository-wide formatting rewrite solely for metadata.
+Allowed to reproduce or adapt:
 
-Observation:
+- mechanics, information hierarchy, interaction order, density, geometry,
+  CSS-driven styling, hover/focus behavior, and game-domain terminology;
+- project-language wording that preserves the mechanic;
+- responsive reflow of the same information and controls;
+- project-owned CSS, semantic HTML, ASCII/plain-text controls such as `X`, `>`,
+  `+`, `-`, and short labels.
 
-```yaml
-doc_type: neverlands-observation
-domain: world
-captured_at: 2026-07-28
-source_type: authenticated-live
-evidence_status: current
-supersedes: []
+Not allowed:
+
+- Neverlands runtime images, sprites, logos, decorative artwork, or copied
+  control bitmaps;
+- Neverlands brand/administration/signature/service copy;
+- credentials, cookies, tokens, or private session data;
+- generic RPG behavior substituted for missing evidence.
+
+Project-owned artwork is appropriate only for genuine game art that CSS and
+text cannot communicate clearly.
+
+## 6. Observation-to-implementation workflow
+
+1. Start at `doc/domains/README.md` and select the domain.
+2. Read its source summary and current non-superseded observations.
+3. When evidence is missing, create an `EVIDENCE_NEEDED` observation record.
+4. Capture only the authorized bounded flow, sanitize it, and update the source
+   summary.
+5. Update normalized design with adopted invariants and local adaptations.
+6. Add or update the stable parity ID; keep it Not Done while a gate remains.
+7. Read the implementation handbook and its section 16 before choosing code
+   ownership.
+8. Extend the existing Rails/content/style pipeline; do not create a parallel
+   catalog, resolver, action path, CSS framework, or browser authority.
+9. Implement behavior and focused tests.
+10. Perform the proportional `doc/RUBY_ON_RAILS_GUIDE.md` pre-final review.
+11. Verify desktop fidelity and mandatory tablet/mobile usability.
+12. Update the implementation handbook after behavior is verified.
+13. Promote the parity row only when its exact definition of Done is met.
+14. Update the session's one living changelog and run required audits/checks.
+
+## 7. Creating a new domain or document
+
+Follow `doc/templates/README.md` and its decision table.
+
+For a new domain:
+
+1. add the name to `doc/domains/README.md`;
+2. copy `doc/templates/DOMAIN_INDEX_TEMPLATE.md`;
+3. create `doc/design/reference/<domain>/README.md` from the source-summary
+   template and an `observations/` directory;
+4. link existing design or add a `DESIGN_NEEDED` placeholder;
+5. add a stable delivery/parity ID;
+6. link an existing implementation handbook or add an audited
+   `NOT_IMPLEMENTED` placeholder;
+7. extend the documentation architecture audit's domain registry;
+8. update this architecture, the migration manifest when relevant, and the
+   living session changelog.
+
+Never create an empty unlabeled file. A missing layer is represented by the
+corresponding complete template with its exact status keyword and known links.
+
+## 8. Auditing and maintenance
+
+Run:
+
+```bash
+bin/documentation-architecture-audit
+bin/feature-doc-audit
+bin/verify docs
 ```
 
-Source summary:
+The architecture audit checks domain indexes, source summaries, observation
+directories, evidence and implementation placeholders, Local Implementation
+Linkage/important responsible-file context, and the complete 43-document
+baseline manifest. The feature audit checks handbook metadata, status,
+structure, placeholders, cross-feature links, responsible paths, and ownership.
 
-```yaml
-doc_type: neverlands-source-summary
-domain: world
-updated: 2026-07-29
-evidence_status: incomplete
-```
+`doc/DOCUMENTATION_MIGRATION_MANIFEST.md` records the disposition of every one
+of the 43 baseline documents. Compatibility aliases are excluded from
+canonical truth but retained for link safety.
 
-Product design:
+## 9. Definition of done for documentation architecture
 
-```yaml
-doc_type: product-design
-domain: world
-updated: 2026-07-29
-design_status: adopted
-```
+The structure is healthy when:
 
-Delivery plan:
-
-```yaml
-doc_type: delivery-plan
-domain: world
-updated: 2026-07-29
-plan_status: active
-```
-
-Do not force one ambiguous universal `status` across all types. Evidence can be
-current while implementation is Not Done. Existing `feature-v1` handbook
-metadata and its `Fully Implemented` audit rule remain unchanged unless the
-template and audit are deliberately migrated together.
-
-Use lowercase `snake_case` for canonical documents/directories and
-`YYYY-MM-DD_<flow>.md` for dated observations. Canonical summaries, design
-documents, and implementation handbooks do not need dates in filenames.
-
-## 6. Cross-link rules
-
-Use directed links that explain provenance and ownership:
-
-```text
-Observation → domain source summary
-Source summary → supporting observations
-Product design → source summary/evidence + applicable design foundations
-Parity row → evidence + product design + implementation owner
-Implementation handbook → evidence/design/parity + direct feature handoffs
-Implementation handbook section 16 → code, assets, seeds/config, and tests
-```
-
-Rules:
-
-- One canonical owner per fact at each layer.
-- Link to detail; do not copy the complete observation into design.
-- Do not copy runtime architecture or file maps into portable design.
-- Do not copy future design into an implementation handbook as shipped.
-- Cross-feature runtime handoffs are reciprocal; unrelated features do not
-  need all-to-all links.
-- A design document may feed several implementation handbooks and vice versa.
-- Classify disagreement as `[EVIDENCE]`, `[IMPL]`, or `[DOC]` using `AGENT.md`.
-
-## 7. Observation-to-implementation workflow
-
-1. Start from the domain map in this document.
-2. Read the domain's current Neverlands summary and non-superseded observations.
-3. Capture missing states in one authorized Chrome session; sanitize the
-   evidence and record what was not exercised.
-4. Update the source summary with verified facts only.
-5. Update area/mechanic design with adopted invariants, English/source-copy
-   boundaries, and mandatory responsive adaptation.
-6. Update the parity row but leave it `Not Done` until every acceptance gate is
-   satisfied.
-7. Read the current implementation handbook and locate existing Rails,
-   seed/config, asset, CSS, and test ownership.
-8. Extend the existing pipeline; do not create a parallel catalog, controller
-   path, style system, or browser-authoritative behavior.
-9. Implement focused behavior and coverage.
-10. Perform the required `doc/RUBY_ON_RAILS_GUIDE.md` pre-final review.
-11. Compare the desktop state against Neverlands and verify the same controls
-    and information at required tablet/mobile widths.
-12. Update the implementation handbook only after implementation checks pass.
-13. Mark the parity row `Done` only after evidence, design, implementation,
-    comparison, responsive behavior, tests, and handbook are all green.
-14. Update the session's one living changelog and run the required completion
-    verification profile.
-
-## 8. Incremental migration plan
-
-Do not perform a big-bang rewrite.
-
-### Phase 1 — Navigation and evidence manifest
-
-1. Keep this file as the architecture and domain map.
-2. Make `doc/README.md` a concise portal that links here, the copy boundary,
-   design entry point, implementation handbook index, Rails guide, and MVP
-   plan.
-3. Add `doc/design/reference/README.md` indexing every capture by domain,
-   capture date, `current`/`historical`/`superseded` status, and successor.
-4. Add type-specific metadata when each document is next touched.
-
-### Phase 2 — Correct authority drift
-
-1. Correct known contradictions before moving files:
-   - the GDD's stale `25..30` Wanderer range versus the current `24..30`
-     design/implementation;
-   - the stale nine-node/three-gate city statement in
-     `reference/neverlands.md` versus the current five-district observation.
-2. Move app-specific progress/conclusions out of evidence files and into
-   design, parity, or implementation owners while preserving raw observations.
-3. Move concrete class/file/config ownership out of portable design documents
-   and into the responsible `doc/features/**` handbook.
-4. Clarify `doc/design/README.md`: authority is by concern, not one linear
-   precedence list that can make stale overview text override fresh evidence.
-
-### Phase 3 — Remove duplicated planning/history
-
-1. Reduce `launch_mvp_plan.md` to one canonical scope/parity status system;
-   link to implementation handbooks instead of repeating their runtime detail.
-2. Move durable UI rules from `doc/UI.md` into
-   `design/areas/game_client_layout.md` or the responsible design document.
-3. Keep current implementation ownership in `doc/features/**` and completed
-   session history in `changelogs/**`, then retire `doc/UI.md` or leave a short
-   redirect during migration.
-4. Keep `gdd.md` high level: vision, core loop, and cross-domain invariants;
-   link to exact formula owners instead of duplicating values that can drift.
-
-### Phase 4 — Optional physical grouping
-
-1. Move one active evidence domain at a time into
-   `reference/<domain>/observations/` using `git mv`.
-2. Add/update the domain source-summary `README.md`.
-3. Update all inbound links, indexes, and metadata atomically.
-4. Preserve historical capture meaning and explicit supersession.
-5. Consider renaming `doc/design/features/` to `doc/design/systems/` only as a
-   separate migration after link/audit coverage exists.
-
-### Phase 5 — Documentation auditing
-
-Extend documentation checks to validate:
-
-- internal Markdown paths and anchors;
-- required type-specific metadata;
-- observation supersession targets;
-- one canonical owner per domain/layer responsibility;
-- parity rows link to evidence, design, and implementation;
-- implementation handbook responsible paths still exist;
-- prohibited secrets and source-identity runtime references remain absent.
-
-Keep `AGENT.md`, `doc/README.md`, `doc/design/README.md`, templates, and audit
-scripts synchronized whenever canonical paths change.
-
-## 9. Current audit findings to resolve during migration
-
-The current tree is usable and its literal `doc/**/*.md` path references
-resolve, but semantic drift exists:
-
-- `doc/UI.md` mixes durable UI policy, old progress phases, changed-file lists,
-  verification history, and next-agent instructions. Those concerns now have
-  separate canonical owners.
-- `doc/design/gdd.md` duplicates an outdated Wanderer range while newer design
-  and implementation documents contain the current range.
-- `doc/design/reference/neverlands.md` retains a superseded city topology.
-- `launch_mvp_plan.md` contains several overlapping status/checklist systems.
-- Several reference files mix observations with “current implementation,”
-  Rails conclusions, or app-specific implications.
-- Some portable design documents contain concrete class/config/file names that
-  belong in implementation handbooks.
-- `doc/design/features/` and `doc/features/` are semantically different but
-  easy to confuse without this map.
-- `doc/design/reference/` has no complete evidence manifest.
-
-These are `[DOC]` migration items, not permission to change mechanics or claim
-unobserved states as implemented.
-
-## 10. Definition of done for the reorganization
-
-The documentation reorganization is complete when:
-
-- a reader can start from any domain row and reach current evidence, adopted
-  design, parity status, verified implementation, and responsible tests;
-- every important fact has one clear owner at each layer;
-- current, historical, and superseded evidence are distinguishable;
-- source invariants and local adaptations are explicitly separated;
-- `Done`/`Not Done` has one canonical planning owner;
-- implementation handbooks describe only verified local behavior;
-- no design document is required to discover current Rails/file ownership;
-- all inbound links and anchors pass automated validation;
-- `AGENT.md` and documentation indexes route agents through the same workflow;
-- no credentials, source identity assets/text, or generic-RPG invention enter
-  runtime documentation or implementation.
-
-## 11. Non-goals of this plan
-
-- No immediate mass move or rename.
-- No rewrite of every existing document in one session.
-- No new gameplay mechanic or completion claim.
-- No duplication of one handbook per visual page when existing features own
-  the underlying lifecycle.
-- No replacement of `doc/features/FEATURE_TEMPLATE.md` or its audit contract.
-- No relocation of `changelogs/` into `doc/`.
+- every registered domain links evidence, design, parity, implementation, and
+  important responsible files;
+- all baseline documents have a recorded disposition;
+- missing layers use `EVIDENCE_NEEDED`, `DESIGN_NEEDED`, or `NOT_IMPLEMENTED`
+  without invented content;
+- observations keep source evidence separate from local linkage;
+- one parity ID owns Done/Not Done for each bounded flow;
+- implementation handbooks describe only verified behavior or explicitly
+  declare no runtime;
+- templates and automated audits prevent silent gaps;
+- canonical Markdown paths and responsible implementation paths resolve;
+- no credentials or prohibited Neverlands identity assets/text enter runtime
+  or committed documentation.

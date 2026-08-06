@@ -1,5 +1,7 @@
 # Character Vitals
 
+Domain navigation: `doc/domains/character.md` and `doc/domains/shell.md`.
+
 ## Purpose
 
 Vitals make the character feel persistent across travel, combat, and

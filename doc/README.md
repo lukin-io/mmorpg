@@ -2,8 +2,9 @@
 
 Documentation is separated by truth type. `doc/design/` owns Neverlands
 evidence and normalized product design; `doc/features/` owns verified local
-implementation handbooks. `doc/DOCUMENTATION.md` is the architecture, domain
-map, observation-to-implementation workflow, and incremental migration plan.
+implementation handbooks and explicit audited `NOT_IMPLEMENTED` placeholders.
+`doc/DOCUMENTATION.md` is the current architecture and workflow;
+`doc/domains/README.md` is the domain-first navigation map.
 
 ## Reference-boundary rule
 
@@ -43,19 +44,34 @@ become runtime assets or platform copy.
 Start here:
 
 1. `doc/DOCUMENTATION.md`
-2. `doc/design/README.md`
-3. `doc/design/gdd.md`
-4. `doc/design/launch_mvp_plan.md`
-5. `doc/design/areas/game_client_layout.md` — UI/AX and domain-SRP style ownership guide
-6. `doc/design/reference/neverlands.md`
+2. `doc/domains/README.md`
+3. the selected domain page under `doc/domains/`
+4. `doc/design/reference/README.md` and the domain source summary
+5. `doc/design/README.md`
+6. `doc/design/gdd.md`
+7. `doc/design/launch_mvp_plan.md`
+8. `doc/design/areas/game_client_layout.md` — UI/AX and domain-SRP style ownership guide
 
 Verified shipped behavior and implementation ownership live under
-`doc/features/`; start with `doc/features/README.md`. For outdoor cells,
+`doc/features/`; explicit missing runtimes use exact `NOT_IMPLEMENTED` status.
+Start with `doc/features/README.md`. For outdoor cells,
 buildings, local actions/resources, and NPC placement, use
 `doc/features/world.md`, especially section 7.4. That section owns the
 seed/config lifecycle and the add/adjust/move/deactivate/remove examples. The
 design documents explain why the pipeline exists; they do not authorize a
 parallel runtime catalog or a second source of cell truth.
+
+## Templates and architecture checks
+
+- `doc/templates/README.md` routes new observations, source summaries, domain
+  indexes, and design gaps to their canonical templates.
+- `doc/features/FEATURE_TEMPLATE.md` is for verified shipped behavior.
+- `doc/features/NOT_IMPLEMENTED_TEMPLATE.md` records a known missing runtime
+  without inventing routes, classes, or specs.
+- `doc/DOCUMENTATION_MIGRATION_MANIFEST.md` accounts for every one of the 43
+  baseline documentation files.
+- `bin/documentation-architecture-audit` checks layer and domain coverage;
+  `bin/feature-doc-audit` checks implementation handbooks.
 
 ## Operational and extension guides
 
@@ -84,4 +100,4 @@ tokens in tracked documentation. Live observations belong in
 Latest Neverlands inventory/item capture, including adjacent inventory-family
 and item-action behavior:
 
-- `doc/design/reference/neverlands_live_inventory_items.md`
+- `doc/design/reference/inventory/observations/2026-06-01_inventory_items_and_shop_rows.md`

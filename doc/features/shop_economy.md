@@ -16,6 +16,8 @@ It describes what exists now. It does not treat every captured Neverlands city c
 
 ## 1. Design authority and related documents
 
+Domain navigation: `doc/domains/economy.md`.
+
 Neverlands is the sole game-design and visual reference for this feature. The local implementation adapts the observed Shop density, item rows, tabs, filters, NV prices, mass/slot summaries, and explicit buy/sell actions to Rails and the current English client. Source runtime images, logos, project identity, and service/administration prose are evidence only; the shipped scene uses project-owned CSS, generic game wording, and styled ASCII/text category tokens instead of copied icon bitmaps.
 
 When behavior is uncertain or conflicts with this document:
@@ -27,10 +29,10 @@ When behavior is uncertain or conflicts with this document:
 
 Supporting documents:
 
-- `doc/design/reference/neverlands_live_lavka_shop.md` records the live shop tabs, filters, tables, quantities, stock, prices, requirements, and status strip.
-- `doc/design/reference/neverlands_live_inventory_items.md` records source inventory and item presentation used by selling and capacity feedback.
-- `doc/design/reference/neverlands_live_city_movement.md` records how the city exposes building entry and exit.
-- `doc/design/reference/neverlands_live_game_shell_ui.md` records the compact surrounding interface.
+- `doc/design/reference/economy/observations/2026-05-21_lavka_shop.md` records the live shop tabs, filters, tables, quantities, stock, prices, requirements, and status strip.
+- `doc/design/reference/inventory/observations/2026-06-01_inventory_items_and_shop_rows.md` records source inventory and item presentation used by selling and capacity feedback.
+- `doc/design/reference/city/observations/2026-07-28_city_movement_and_services.md` records how the city exposes building entry and exit.
+- `doc/design/reference/shell/observations/2026-07-28_game_shell_and_mvp_surfaces.md` records the compact surrounding interface.
 - `doc/design/features/economy_trading_shops.md` defines the local economy and shop boundary.
 - `doc/design/areas/cities_and_buildings.md` owns the authored building topology.
 - `doc/design/launch_mvp_plan.md` defines the MVP trading/economy boundary.
@@ -358,10 +360,10 @@ bundle exec rspec \
 - `doc/features/shop_economy.md`
 - `doc/design/features/economy_trading_shops.md`
 - `doc/design/areas/cities_and_buildings.md`
-- `doc/design/reference/neverlands_live_lavka_shop.md`
-- `doc/design/reference/neverlands_live_inventory_items.md`
-- `doc/design/reference/neverlands_live_city_movement.md`
-- `doc/design/reference/neverlands_live_game_shell_ui.md`
+- `doc/design/reference/economy/observations/2026-05-21_lavka_shop.md`
+- `doc/design/reference/inventory/observations/2026-06-01_inventory_items_and_shop_rows.md`
+- `doc/design/reference/city/observations/2026-07-28_city_movement_and_services.md`
+- `doc/design/reference/shell/observations/2026-07-28_game_shell_and_mvp_surfaces.md`
 - `doc/design/launch_mvp_plan.md`
 
 ### Routes and controllers

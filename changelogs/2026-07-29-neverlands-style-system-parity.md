@@ -4,7 +4,7 @@
 - Date: 2026-07-29
 - Branch: `chore/ui_styles`
 - Baseline: clean worktree at the end of the 2026-07-28 world-parity session
-- Session status: Complete
+- Session status: Complete; external dependency security blocker reported
 - Review authority: `doc/RUBY_ON_RAILS_GUIDE.md`
 - Changelog lifecycle: one living record for this complete Codex session
 
@@ -38,6 +38,15 @@ service-backed inventory grants and protected player/account commands; they are
 clearly labeled as extension guidance rather than shipped routes or approved
 game balance.
 
+The approved documentation-architecture migration is implemented. Every one of
+the 43 pre-migration files under `doc/` has an
+explicit disposition. Eleven domain indexes now connect Neverlands source
+summaries/observations, normalized design, stable parity IDs, current RPG
+implementation status, and responsible files. Observations are domain-scoped
+with compatibility aliases, evidence retains clearly separated local
+implementation linkage, and missing Quest, Profession, and Dungeon runtimes use
+audited `EVIDENCE_NEEDED` and `NOT_IMPLEMENTED` records instead of silent gaps.
+
 The completed presentation work remains unchanged: a single authenticated
 Neverlands capture was taken on 2026-07-29 and
 normalized into a new presentation-layer reference. The implementation rebuilds
@@ -60,10 +69,11 @@ persisted graph while preserving the single City/Open World action pipeline.
 
 ## Authority and reference boundary
 
-- `doc/design/reference/neverlands_live_style_system.md` is the new measurement
-  evidence for this session: live class contract, palette, typography, control
-  chrome, paper-doll slot geometry, profile parameter column, and inventory row
-  structure.
+- `doc/design/reference/shell/observations/2026-07-29_style_system.md` is the
+  canonical measurement evidence for this session: live class contract,
+  palette, typography, control chrome, paper-doll slot geometry, profile
+  parameter column, and inventory row structure. Its previous flat path remains
+  a compatibility alias.
 - Structure, geometry, color, and typography are reproduced with project-owned
   CSS and semantic HTML. Source images, sprites, logos, decorative artwork, and
   identity copy remain outside the copy boundary and are not bundled.
@@ -350,26 +360,63 @@ resolved during the review:
   keeps simple catalog CRUD separate from valuable inventory/player commands,
   prohibits reflection-based arbitrary-model editors, and does not claim its
   future examples are implemented. No runtime correction was required.
+- The documentation-architecture tranche was reviewed against the guide's
+  authority/routing, KISS, testability, documentation-order, anti-invention,
+  audit, and completion sections. The audit remains a dependency-free,
+  read-only Ruby object plus a thin executable; it does not load Rails or
+  mutate documentation. Review tightened repository-path parsing so inline
+  commands are not mistaken for files, required domain/source registries to
+  link every domain, and verifies each domain's stable parity IDs against the
+  launch plan. No Rails/Hotwire runtime behavior was changed.
 
 ## Documentation architecture follow-up
 
-- Added `doc/DOCUMENTATION.md` as a proposed documentation architecture and
-  domain map. It preserves separate evidence, normalized design, delivery
-  status, and verified implementation truth while giving each domain the
-  requested Neverlands → local design → current RPG navigation chain.
-- Recommended a layer-first physical structure instead of nesting current
-  implementation beneath Neverlands evidence, preventing observation history,
-  product decisions, and shipped behavior from becoming one ambiguous owner.
-- Recorded type-specific document contracts, metadata, cross-link rules, the
-  complete observation-to-implementation workflow, and a five-phase safe
-  migration plan.
-- The plan identifies current `[DOC]` drift without changing it in this prompt:
-  stale detail in `gdd.md` and `reference/neverlands.md`, overlapping status in
-  `launch_mvp_plan.md`, mixed implementation conclusions in evidence files,
-  implementation paths leaking into portable design, and stale `doc/UI.md`.
-- Updated `doc/README.md` to route readers through the new architecture plan.
-- No existing design/reference/feature file was moved or renamed, and no
-  gameplay or runtime completion status changed.
+- Replaced the proposed migration plan in `doc/DOCUMENTATION.md` with the
+  current architecture contract: truth-layer authority, physical structure,
+  domain registry, document contracts, copy boundary, workflow, creation
+  rules, audits, and definition of done.
+- Added `doc/domains/README.md` plus Shell, Social, Character, Inventory,
+  World, City, Economy, Combat, NPC/Quest, Profession, and Dungeon indexes.
+  Each index links the source summary/observations, normalized design, stable
+  parity IDs, implementation handbook/status, important responsible paths, and
+  remaining gaps.
+- Added `doc/design/reference/README.md` plus eleven domain source summaries.
+  The ten pre-existing flat observations moved into domain-specific
+  `observations/` directories; short aliases retain every old path for
+  historical links without owning duplicate evidence.
+- Added explicit `EVIDENCE_NEEDED` observation records for the missing complete
+  Quest, Profession, and Dungeon flows.
+- Added the audited `doc/features/NOT_IMPLEMENTED_TEMPLATE.md` and complete
+  `NOT_IMPLEMENTED` handbooks for Quests, Professions, and Dungeons. These
+  documents claim no routes, runtime files, persistence, UI/CSS, or specs.
+- Added `doc/templates/**` layouts and workflow for domain indexes, source
+  summaries, dated observations, and `DESIGN_NEEDED` gaps. No current domain
+  needed an actual design placeholder because all eleven already have an area
+  or mechanic design owner.
+- Added stable flow IDs to `doc/design/launch_mvp_plan.md` so domain pages link
+  one status owner without deleting the existing detailed matrices.
+- Added `doc/DOCUMENTATION_MIGRATION_MANIFEST.md`, which individually accounts
+  for all 43 baseline documents and the additions made by the migration.
+- Updated `AGENT.md`, `doc/README.md`, `doc/design/README.md`,
+  `doc/features/README.md`, `doc/RUBY_ON_RAILS_GUIDE.md`, templates, current
+  design documents, and current implementation handbooks to route through the
+  new architecture. `doc/UI.md`, `reference/neverlands.md`, and
+  `reference/source_material.md` remain compatibility/history records with
+  explicit canonical routing rather than being silently removed.
+- Retained the requested local context inside observations/source summaries:
+  every canonical source document has a separate Local Implementation Linkage
+  section and important responsible-file list, while section 16 of the feature
+  handbook remains exhaustive.
+- Added the read-only `bin/documentation-architecture-audit` and integrated it
+  into every `bin/verify` profile that runs documentation checks. This was the
+  justified extra addition: it enforces all registered domains, summaries,
+  observation directories, aliases, missing-state records, responsible-path
+  context, and 43-of-43 migration accounting.
+- Extended `bin/feature-doc-audit` to accept exact `NOT_IMPLEMENTED` as an
+  allowed non-green status and to exclude both canonical templates from the
+  handbook count. `Fully Implemented` remains the only green status.
+- No gameplay/runtime behavior, schema, seed data, dependency, or player-facing
+  completion state changed in this documentation-architecture tranche.
 
 ## Documentation updated
 
@@ -383,12 +430,16 @@ resolved during the review:
 - `doc/DOCUMENTATION.md` — created; documentation ownership model, domain map,
   document contracts, metadata, cross-links, workflow, audit findings, and
   incremental migration plan.
+- Documentation architecture migration — `doc/DOCUMENTATION.md` is now the
+  current contract; `doc/domains/**`, `doc/templates/**`, domain-scoped
+  `doc/design/reference/**`, `doc/DOCUMENTATION_MIGRATION_MANIFEST.md`, three
+  evidence gaps, and three `NOT_IMPLEMENTED` handbooks implement it.
 - `doc/README.md` — updated as the concise portal to the documentation
   architecture and existing design/implementation layers.
-- `doc/design/reference/neverlands_live_style_system.md` — created; records the
-  2026-07-29 authenticated capture of the live presentation layer.
-- `doc/design/reference/neverlands_live_game_shell_ui.md` — stylesheet
-  responsibility list updated for the new modules.
+- `doc/design/reference/shell/observations/2026-07-29_style_system.md` — records
+  the 2026-07-29 authenticated capture of the live presentation layer.
+- `doc/design/reference/shell/observations/2026-07-28_game_shell_and_mvp_surfaces.md`
+  — stylesheet responsibility list updated for the new modules.
 - `doc/features/player_inventory.md` — CSS ownership, responsible files, safe
   extension rule, and version history.
 - `doc/features/character_progression.md` — parameter-column contract, combat
@@ -418,7 +469,7 @@ resolved during the review:
 
 | Responsibility | Paths |
 |---|---|
-| Design evidence | `doc/design/reference/neverlands_live_style_system.md`, `doc/design/reference/neverlands_live_game_shell_ui.md` |
+| Design evidence | `doc/design/reference/shell/observations/2026-07-29_style_system.md`, `doc/design/reference/shell/observations/2026-07-28_game_shell_and_mvp_surfaces.md` |
 | Shared style foundation | `app/assets/stylesheets/tokens.css`, `app/assets/stylesheets/primitives.css`, `app/assets/stylesheets/controls.css`, `app/assets/stylesheets/application.css` |
 | Character sheet | `app/assets/stylesheets/character_sheet.css`, `app/models/equipment_slots.rb`, `app/views/shared/_neverlands_character_sheet.html.erb`, `app/views/shared/_equipment_paperdoll.html.erb`, `app/views/shared/_equipment_paperdoll_slot.html.erb` |
 | Profile and allocation | `app/assets/stylesheets/player.css`, `app/views/players/show.html.erb`, `app/views/characters/**`, `app/helpers/player_profile_helper.rb` |
@@ -426,7 +477,8 @@ resolved during the review:
 | Shell and chat | `app/assets/stylesheets/shell.css`, `app/assets/stylesheets/chat_presence.css`, `app/views/shared/_nl_vitals_bar.html.erb`, `app/javascript/controllers/nl_vitals_controller.js` |
 | Arena reuse of the shared doll | `app/assets/stylesheets/arena.css` |
 | Specs | `spec/requests/inventories_spec.rb`, `spec/requests/players_spec.rb`, `spec/system/responsive_neverlands_ui_spec.rb`, `spec/system/inventory_progression_spec.rb`, `spec/system/arena_match_ui_layout_spec.rb`, `spec/views/shared/_nl_vitals_bar_spec.rb` |
-| Documentation architecture | `doc/DOCUMENTATION.md`, `doc/README.md` |
+| Documentation architecture | `doc/DOCUMENTATION.md`, `doc/DOCUMENTATION_MIGRATION_MANIFEST.md`, `doc/domains/**`, `doc/templates/**`, `doc/design/reference/**`, `doc/features/NOT_IMPLEMENTED_TEMPLATE.md` |
+| Documentation enforcement | `lib/documentation_architecture_audit.rb`, `bin/documentation-architecture-audit`, `lib/feature_doc_audit.rb`, `bin/verify`, `spec/lib/documentation_architecture_audit_spec.rb`, `spec/lib/feature_doc_audit_spec.rb`, `spec/scripts/verify_script_spec.rb` |
 | City graph persistence and regression coverage | `db/seeds.rb`, `spec/models/open_world_seed_spec.rb`, `doc/features/city.md`, `doc/features/world.md` |
 | Management routing/auth/layout | `config/routes.rb`, `app/controllers/manage/application_controller.rb`, `app/controllers/manage/dashboard_controller.rb`, `app/policies/manage_policy.rb`, `app/views/layouts/manage.html.erb` |
 | Explicit content CRUD | `app/controllers/manage/world_cells_controller.rb`, `app/controllers/manage/tile_buildings_controller.rb`, `app/controllers/manage/npc_templates_controller.rb`, `app/controllers/manage/tile_npcs_controller.rb`, `app/controllers/manage/cities_controller.rb`, `app/controllers/manage/city_hotspots_controller.rb`, `app/views/manage/**` |
@@ -440,7 +492,19 @@ resolved during the review:
 
 | Command | Result |
 |---|---|
-| Latest `bin/verify full` (after management security correction) | exit 0 |
+| Documentation-architecture `bin/verify full` | exit 1 at Bundler Audit after all lint/spec/system/Brakeman stages passed; the refreshed advisory DB flags Active Storage 8.1.3 under CVE-2026-66066 and requires Rails/Active Storage 8.1.3.1 or another patched series |
+| — RuboCop (read-only) | 399 files inspected, no offenses detected |
+| — Non-system RSpec | 1600 examples, 0 failures |
+| — System RSpec | 204 examples, 0 failures, 4 pre-existing pending |
+| — Brakeman | 0 security warnings |
+| — Bundler Audit | failed: one newly published/refreshed Active Storage advisory for the locked 8.1.3 dependency |
+| `bin/importmap audit` after the wrapper stopped | exit 0; no vulnerable packages |
+| `bin/verify docs` after final architecture changes | exit 0; 10 feature documents passed with 3 intentional `NOT_IMPLEMENTED` and 2 pre-existing partial-status warnings; architecture audit passed with 59 documents inspected |
+| Focused audit/tooling specs | 21 examples, 0 failures |
+| Focused audit/tooling RuboCop | 5 files inspected, no offenses |
+| Repository-root Markdown path audit | exit 0; all concrete backticked repository paths in `AGENT.md`, root `README.md`, and `doc/**/*.md` resolve |
+| `git diff --check` after final documentation changes | exit 0 |
+| Prior `bin/verify full` (after management security correction, before the advisory refresh) | exit 0 |
 | — RuboCop (read-only) | 397 files inspected, no offenses detected |
 | — Non-system RSpec | 1593 examples, 0 failures |
 | — System RSpec | 204 examples, 0 failures, 4 pending (all pre-existing) |
@@ -483,10 +547,15 @@ remains on disk.
 
 ## Explicit remaining gaps and operational cautions
 
-- `[IMPL]` None open from this session.
-- `[DOC]` The architecture audit found the migration items listed in
-  `doc/DOCUMENTATION.md` section 9. They are explicitly planned, not silently
-  claimed as fixed by adding the map.
+- `[IMPL]` No new runtime discrepancy was introduced by this documentation-only
+  tranche.
+- `[DOC]` No unaccounted documentation-architecture gap remains from the
+  migration: all 43 baseline files have a disposition and all eleven domains
+  have evidence, design, parity, and implementation routing. Historical
+  compatibility documents remain explicitly non-canonical.
+- `[IMPL]` Quests, Professions, and Dungeons remain intentionally
+  `NOT_IMPLEMENTED`; their complete source flows remain `EVIDENCE_NEEDED`.
+  These are product gaps, not hidden documentation gaps or completion claims.
 - `[EVIDENCE]` The live capture covers the outdoor shell, profile, and
   inventory. No fight started during the capture window, so the active-fight
   screen was not re-measured in this session; the arena surface still uses the
@@ -499,5 +568,13 @@ remains on disk.
   management audit table and the documented idempotent `bin/rails db:seed`
   content sync for City/NPC materialization. Development/test migration
   rollback/reapply and test seed replant were verified.
-- Pending/skipped checks: none. Four unrelated system examples remain
-  explicitly pending for their pre-existing reasons.
+- Dependency/security blocker: the final full wrapper cannot be green while
+  the repository remains locked to Rails/Active Storage 8.1.3. Bundler Audit's
+  refreshed database requires 8.1.3.1 or another patched series for
+  CVE-2026-66066. This documentation task did not silently broaden scope into a
+  dependency/lockfile upgrade.
+- Pending/skipped checks: the full wrapper stopped before its built-in
+  Importmap and documentation stages because Bundler Audit correctly failed;
+  both remaining read-only stages were run separately and passed. Four
+  unrelated system examples remain explicitly pending for their pre-existing
+  reasons.

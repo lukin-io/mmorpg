@@ -51,6 +51,40 @@ with a starter buy/sell/licenses/novice-goods implementation in the city shop.
 - `Remaining design detail`: known design work before launch is complete.
 - `Deferred`: useful later, but not required for the launch MVP.
 
+## Stable Domain Flow Index
+
+These identifiers are the canonical cross-document handles for delivery and
+parity state. Detailed matrices and pillar narratives below retain the measured
+evidence and acceptance detail; domain indexes link to these IDs rather than
+duplicating that detail. A row may be Fully Implemented within a bounded local
+contract while an adjacent uncaptured state remains Not Done.
+
+| Stable ID | Domain flow | Current state | Detailed owner below |
+|---|---|---|---|
+| `SHELL-UI-001` | Persistent authenticated shell and shared chrome | Done for captured base frame | Neverlands 1:1 UI/UX parity matrix |
+| `SHELL-CHAT-001` | Auxiliary shell/chat controls | Not Done | Neverlands 1:1 UI/UX parity matrix |
+| `RESPONSIVE-001` | Mandatory tablet and mobile adaptation | Done for listed bounded surfaces | Neverlands 1:1 UI/UX parity matrix |
+| `SOCIAL-CHAT-001` | Chat, channels, presence, and player context | Partially Implemented | Social/chat design and shell parity rows |
+| `CHARACTER-PROGRESSION-001` | Profile, stats, skills, perks, and allocation | Fully Implemented within declared boundary | Character-development audit and Pillar 1 |
+| `INVENTORY-UI-001` | Current equipment-family layout | Done | Neverlands 1:1 UI/UX parity matrix |
+| `INVENTORY-ACTIONS-001` | Remaining item families and action states | Not Done | Neverlands 1:1 UI/UX parity matrix |
+| `WORLD-UI-001` | Outdoor map presentation and shell continuity | Done | Neverlands 1:1 UI/UX parity matrix |
+| `WORLD-MOVE-001` | Server-authoritative outdoor movement | Fully Implemented within declared boundary | Pillar 2 |
+| `WORLD-CELL-001` | Persisted cell buildings, NPCs, resources, and offers | Fully Implemented within declared boundary | Pillar 4 |
+| `WORLD-LOCATION-001` | Observed Frontier Village linked location | Done | Neverlands 1:1 UI/UX parity matrix |
+| `CITY-NAV-001` | Five-district navigation and hotspots | Done | Neverlands 1:1 UI/UX parity matrix |
+| `CITY-GATE-001` | Verified City-to-World handoff | Done | Neverlands 1:1 UI/UX parity matrix |
+| `CITY-SERVICES-001` | Complete building/service interiors | Not Done | Neverlands 1:1 UI/UX parity matrix |
+| `ECONOMY-SHOP-001` | Current Shop shell and browse state | Done | Neverlands 1:1 UI/UX parity matrix |
+| `ECONOMY-TRANSACTIONS-001` | Captured populated buy/sell/license variants | Not Done for full parity | Neverlands 1:1 UI/UX parity matrix |
+| `COMBAT-ARENA-001` | Bounded Arena lifecycle and authoritative resolution | Fully Implemented within declared boundary | Pillar 3 |
+| `COMBAT-FIGHT-UI-001` | Active fight composer and state variants | Not Done | Neverlands 1:1 UI/UX parity matrix |
+| `COMBAT-LOG-001` | Separate public fight log parity | Not Done | Neverlands 1:1 UI/UX parity matrix |
+| `NPC-RUNTIME-001` | Outdoor and Arena NPC combat | Implemented within World/Arena boundaries | Pillars 3 and 4 |
+| `QUEST-FLOW-001` | Complete Quest lifecycle | `NOT_IMPLEMENTED`; `EVIDENCE_NEEDED` | NPC/Quest design and implementation placeholder |
+| `PROFESSION-FLOW-001` | Complete profession action lifecycle | `NOT_IMPLEMENTED`; `EVIDENCE_NEEDED` | Character-development audit and profession design |
+| `DUNGEON-FLOW-001` | Complete dungeon lifecycle | `NOT_IMPLEMENTED`; `EVIDENCE_NEEDED` | Dungeon design and implementation placeholder |
+
 ## Neverlands 1:1 UI/UX Parity Matrix (2026-07-28)
 
 For launch UI work, `Done` means the reachable local state has been compared
@@ -106,7 +140,7 @@ itself supplied responsive behavior.
 | Shop — stock, license, sell, novice, and mutation variants | Populated item rows, selection, disabled/eligible states, confirmations, successful/failed purchase and sale, and result feedback. | Every reachable Shop mode/category/action state. | **Not Done** | Server-authoritative buy/sell behavior and dense tables exist, but the fresh session loaded no rows. Keep this row Not Done until populated live/local states are captured and visually compared. |
 
 Evidence for each completed row belongs in
-`doc/design/reference/neverlands_live_game_shell_ui.md`; implementation status
+`doc/design/reference/shell/observations/2026-07-28_game_shell_and_mvp_surfaces.md`; implementation status
 and responsible file ownership belong in the corresponding
 `doc/features/**` handbook.
 
@@ -629,6 +663,6 @@ Canonical design:
 Reference:
 
 - `doc/design/reference/neverlands.md`
-- `doc/design/reference/neverlands_live_lavka_shop.md`
-- `doc/design/reference/neverlands_live_inventory_items.md`
+- `doc/design/reference/economy/observations/2026-05-21_lavka_shop.md`
+- `doc/design/reference/inventory/observations/2026-06-01_inventory_items_and_shop_rows.md`
 - `doc/design/reference/source_material.md`

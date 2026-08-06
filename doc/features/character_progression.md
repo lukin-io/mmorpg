@@ -16,6 +16,8 @@ It describes what exists now. It does not treat the complete observed Neverlands
 
 ## 1. Design authority and related documents
 
+Domain navigation: `doc/domains/character.md`.
+
 Neverlands is the sole game-design and visual reference for this feature. The local implementation adapts its dense player profile and explicit plus/minus/save allocation flow to Rails, HTML/Turbo, Stimulus, and the current English client.
 
 When behavior is uncertain or conflicts with this document:
@@ -27,8 +29,8 @@ When behavior is uncertain or conflicts with this document:
 
 Supporting documents:
 
-- `doc/design/reference/neverlands_live_player.md` records the starter and returning-character profile, stat, `Умения`, and `Навыки` observations.
-- `doc/design/reference/neverlands_skills.md` records the wiki character-development audit, complete level rows, exact derived formulas, and unresolved evidence boundaries.
+- `doc/design/reference/character/observations/2026-05-11_player_profile_and_development.md` records the starter and returning-character profile, stat, `Умения`, and `Навыки` observations.
+- `doc/design/reference/character/observations/legacy_skills_and_arena_analysis.md` records the wiki character-development audit, complete level rows, exact derived formulas, and unresolved evidence boundaries.
 - `doc/design/reference/neverlands.md` defines the Neverlands evidence-to-implementation rule.
 - `doc/design/features/progression_stats_skills.md` normalizes the five primary stats, 29 numeric skills, captured tier rates, point pools, and launch-safe perk subset.
 - `doc/design/features/professions.md` keeps profession access/counters outside ordinary allocation until one activity is fully captured.
@@ -449,8 +451,8 @@ There is no dedicated view spec for each allocation partial; request and system 
 - `doc/features/character_progression.md`
 - `doc/design/features/progression_stats_skills.md`
 - `doc/design/features/professions.md`
-- `doc/design/reference/neverlands_live_player.md`
-- `doc/design/reference/neverlands_skills.md`
+- `doc/design/reference/character/observations/2026-05-11_player_profile_and_development.md`
+- `doc/design/reference/character/observations/legacy_skills_and_arena_analysis.md`
 - `doc/design/reference/neverlands.md`
 - `doc/design/launch_mvp_plan.md`
 

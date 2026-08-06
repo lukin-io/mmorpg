@@ -21,5 +21,6 @@ RSpec.describe "bin/verify" do
     expect(script).to include("bin/bundler-audit check --update")
     expect(script).to include("bin/importmap audit")
     expect(script).to include("bin/feature-doc-audit")
+    expect(script).to include("bin/documentation-architecture-audit")
   end
 end

@@ -1,5 +1,7 @@
 # Game Client Layout
 
+Domain navigation: `doc/domains/shell.md` and `doc/domains/social.md`.
+
 ## Purpose
 
 The game client layout is the persistent browser MMORPG shell. It keeps
@@ -11,7 +13,7 @@ movement, city navigation, combat, and social play feel connected.
 Reference material:
 
 - `doc/design/reference/neverlands.md`
-- `doc/design/reference/neverlands_live_game_shell_ui.md`
+- `doc/design/reference/shell/observations/2026-07-28_game_shell_and_mvp_surfaces.md`
 - `doc/design/reference/source_material.md`
 
 Neverlands uses a frame-like layout: a main content frame, chat/messages,

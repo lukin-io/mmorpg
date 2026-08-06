@@ -15,7 +15,7 @@ Use these files first:
   play spaces.
 - `doc/design/reference/neverlands.md` - how live Neverlands observations map
   into this game's design language.
-- `doc/design/reference/neverlands_live_movement.md` - live Neverlands movement observation
+- `doc/design/reference/world/observations/2026-05-09_overworld_movement.md` - live Neverlands movement observation
   from 2026-05-09.
 
 Non-Neverlands docs are legacy and should be removed, not treated as alternate

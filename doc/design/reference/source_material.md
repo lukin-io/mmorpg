@@ -1,5 +1,10 @@
 # Source Material Map
 
+> Compatibility/source-material overview: use
+> `doc/design/reference/README.md` and its domain source summaries for current
+> evidence routing, status, gaps, and local implementation linkage. The map
+> below remains historical provenance and does not own delivery status.
+
 This file records the remaining Neverlands-based source material and where its
 rules belong in the design hierarchy. Non-Neverlands source docs are legacy and
 should be removed after any valid rule is promoted into `doc/design/`.

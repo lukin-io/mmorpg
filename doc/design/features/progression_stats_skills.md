@@ -1,5 +1,7 @@
 # Progression, Stats, And Skills
 
+Domain navigation: `doc/domains/character.md`.
+
 ## Purpose
 
 Progression turns repeated play into long-term character growth. Stats define
@@ -11,7 +13,7 @@ movement, combat, and source-backed social/economy access.
 Reference material:
 
 - `doc/design/reference/neverlands.md`
-- `doc/design/reference/neverlands_skills.md`
+- `doc/design/reference/character/observations/legacy_skills_and_arena_analysis.md`
 - `doc/design/reference/source_material.md`
 
 Important borrowed ideas:
@@ -249,7 +251,7 @@ Strength, including downstream mass and combat reads, but it does not rewrite
 saved stat allocation.
 
 The full live id/name/category catalog is captured in
-`doc/design/reference/neverlands_live_player.md`. This includes all profession,
+`doc/design/reference/character/observations/2026-05-11_player_profile_and_development.md`. This includes all profession,
 stat, resistance, magic, auxiliary, and warrior rows, so branch names no longer
 need to be inferred. Only source id `7` remains selectable for launch because
 the returning-account page did not expose prerequisite gates, point-grant

@@ -1,5 +1,7 @@
 # Combat
 
+Domain navigation: `doc/domains/combat.md`.
+
 ## Purpose
 
 Combat is a turn-based tactical feature built around explicit choices:

@@ -1,5 +1,7 @@
 # Cities And Buildings
 
+Domain navigation: `doc/domains/city.md`.
+
 ## Purpose
 
 Define the current City navigation model and the boundary between an illustrated landmark, an enterable building, and an implemented building service.
@@ -20,8 +22,8 @@ Current Forpost behavior:
 
 Reference evidence lives in:
 
-- `doc/design/reference/neverlands_live_city_movement.md`;
-- `doc/design/reference/neverlands_live_lavka_shop.md`;
+- `doc/design/reference/city/observations/2026-07-28_city_movement_and_services.md`;
+- `doc/design/reference/economy/observations/2026-05-21_lavka_shop.md`;
 - `doc/design/launch_mvp_plan.md`.
 
 Runtime images, hover layers, logos, identity text, and service/admin copy from Neverlands are prohibited. The local system recreates the design and interaction contract with project-owned artwork, CSS, semantic HTML, and suitable ASCII/plain-text controls. Source image controls are replaced rather than removed; for example, route images become styled `>` arrows and close images become styled `X` controls.

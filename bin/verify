@@ -8,7 +8,7 @@
 #   bin/verify fast     # Same as the default profile
 #   bin/verify full     # Fast profile + system specs + security audits
 #   bin/verify lint     # Linting only
-#   bin/verify docs     # Feature documentation audit only
+#   bin/verify docs     # Feature and architecture documentation audits
 #   bin/verify combat   # Lint + arena/formula specs
 #
 
@@ -93,6 +93,10 @@ run_feature_docs() {
   echo_step "Auditing feature documentation..."
   bin/feature-doc-audit
   echo_success "Feature documentation passed"
+
+  echo_step "Auditing documentation architecture..."
+  bin/documentation-architecture-audit
+  echo_success "Documentation architecture passed"
 }
 
 print_success() {

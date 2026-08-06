@@ -20,7 +20,11 @@ at `/manage`. It covers:
   player administration, or inventory grants.
 
 This is a procedure guide, not a new source of game-design or runtime truth.
-The canonical behavior remains in the responsible feature handbook:
+Domain-first navigation starts at `doc/domains/README.md`; the directly related
+indexes are `doc/domains/world.md`, `doc/domains/city.md`,
+`doc/domains/inventory.md`, `doc/domains/economy.md`, and
+`doc/domains/character.md`. Canonical behavior remains in the responsible
+feature handbook:
 
 - World cells, local resources/actions, outdoor buildings, and outdoor NPCs:
   `doc/features/world.md`.
@@ -768,7 +772,8 @@ For a current resource edit, verify at least:
 
 For a new management resource, run focused model/policy/service/request/system
 coverage, relevant feature integration tests, `bin/feature-doc-audit` for every
-changed handbook, and the completion profile required by `AGENT.md`. Review the
+changed handbook, `bin/documentation-architecture-audit` when adding a domain
+or missing-layer record, and the completion profile required by `AGENT.md`. Review the
 stabilized diff against the applicable sections of
 `doc/RUBY_ON_RAILS_GUIDE.md` before the completion run.
 

@@ -2,8 +2,8 @@
 
 Contract metadata:
 
-- updated_at: `2026-07-28`
-- why_changed: "A substantive Codex session now owns one living changelog record, created with its first material edit and updated across every follow-up prompt until final handoff."
+- updated_at: `2026-07-29`
+- why_changed: "Documentation now has audited domain navigation, evidence/design/implementation templates, and explicit NOT_IMPLEMENTED placeholders without weakening shipped-feature completion rules."
 
 Why/Impact:
 
@@ -12,6 +12,8 @@ Why/Impact:
 - Persistent gameplay mutations are server-authoritative, atomic where needed, safe against duplicate/concurrent execution, and covered at their behavioral boundaries.
 - Verification is read-only, uses the repository's real RSpec/system/security split, and reports exact command outcomes.
 - Process rules, design evidence, shipped feature contracts, and runtime code now have explicit ownership and conflict handling.
+- `doc/domains/**` provides domain-first navigation while truth remains owned
+  by evidence, design, parity, implementation, runtime, and history layers.
 - `doc/RUBY_ON_RAILS_GUIDE.md` is the subordinate Ruby, Rails, and Hotwire implementation guide for new features, behavior changes, bug fixes, and refactors.
 - A substantive Codex session maintains one auditable living record under
   `changelogs/`: create it with the session's first material repository change,
@@ -47,8 +49,8 @@ It applies to all work in this Rails MMORPG repository. System, developer, and e
 
 1. `AGENT.md` governs repository engineering process, verification, and documentation workflow.
 2. Neverlands live behavior and preserved source material are the sole game-design authority.
-3. `doc/design/**` records normalized Neverlands evidence, design decisions, and MVP scope.
-4. `doc/features/**` describes verified, shipped implementation contracts.
+3. `doc/design/**` records Neverlands evidence, normalized design decisions, and MVP scope, each in its designated sublayer.
+4. `doc/features/**` describes verified, shipped implementation contracts or an explicit audited `NOT_IMPLEMENTED` absence; it never makes planned behavior shipped.
 5. `doc/RUBY_ON_RAILS_GUIDE.md` expands Ruby 4.0, Rails 8.1, Hotwire, Active Record, jobs, security, performance, and refactoring technique.
 6. Code and tests show actual current runtime behavior.
 
@@ -62,11 +64,17 @@ No one layer silently overrides another layer outside its concern. In particular
 
 ### 1.2 Guide routing
 
-- Start with `doc/design/gdd.md` for the consolidated game-design model.
-- Read the relevant documents under `doc/design/areas/` and `doc/design/features/`.
-- Use `doc/design/reference/` for direct Neverlands evidence and observation gaps.
+- Start with `doc/DOCUMENTATION.md`, then use `doc/domains/README.md` and the
+  relevant domain page to locate every truth layer.
+- Use `doc/design/reference/README.md`, the domain source summary, and its
+  observations for direct Neverlands evidence and evidence gaps.
+- Read `doc/design/gdd.md` for the consolidated game-design model, then the
+  relevant documents under `doc/design/areas/` and `doc/design/features/`.
 - Read `doc/design/launch_mvp_plan.md` for the current delivery boundary.
-- Read the responsible document under `doc/features/` for shipped behavior and file ownership.
+- Read the responsible document under `doc/features/` for shipped behavior and
+  file ownership, or for an explicit `NOT_IMPLEMENTED` runtime gap.
+- Read `doc/templates/README.md` before adding an observation, source summary,
+  design placeholder, domain index, or implementation placeholder.
 - For every Rails-backed new feature, behavior change, bug fix, or refactor, read the relevant sections of `doc/RUBY_ON_RAILS_GUIDE.md` for technical boundary selection and implementation guidance.
 - Read `doc/features/README.md` before creating or materially restructuring a feature handbook.
 
@@ -90,8 +98,12 @@ Fix in-scope `[IMPL]` gaps before completion. Correct in-scope `[DOC]` gaps only
 - Game design: Neverlands-backed, English client for the current MVP.
 - Feature contracts: `doc/features/**`.
 - Canonical feature template: `doc/features/FEATURE_TEMPLATE.md`.
+- Canonical unimplemented-feature template: `doc/features/NOT_IMPLEMENTED_TEMPLATE.md`.
+- Documentation architecture and domain registry: `doc/DOCUMENTATION.md` and `doc/domains/README.md`.
+- Evidence/design/domain templates: `doc/templates/**`.
 - Canonical session changelog template: `changelogs/CHANGELOG_TEMPLATE.md`.
 - Feature document audit: `bin/feature-doc-audit`.
+- Documentation architecture audit: `bin/documentation-architecture-audit`.
 - Verification wrapper: `bin/verify`.
 - Ruby/Rails/Hotwire implementation guide: `doc/RUBY_ON_RAILS_GUIDE.md`.
 - Session history: one dated living Markdown record under `changelogs/` per
@@ -120,15 +132,19 @@ For an ordinary implementation task, follow this sequence:
    decisions, responsible files, checks, gaps, and follow-up prompts evolve.
 9. **Run the pre-final technical review** — once the implementation diff is stable, review it against the applicable `doc/RUBY_ON_RAILS_GUIDE.md` sections, resolve concrete findings, and update tests when needed.
 10. **Run alignment check** — compare verified behavior with design and the existing feature handbook; resolve `[IMPL]` gaps.
-11. **Create/update the feature handbook** — only after implementation and applicable focused checks are green.
-12. **Audit documentation** — run `bin/feature-doc-audit` for the responsible handbook.
+11. **Create/update the feature handbook** — only after implementation and applicable focused checks are green. A documentation-architecture task may instead create an audited `NOT_IMPLEMENTED` placeholder that claims no runtime and follows its dedicated template.
+12. **Audit documentation** — run `bin/feature-doc-audit` for the responsible handbook and `bin/documentation-architecture-audit` when architecture, domains, references, or templates changed.
 13. **Run completion verification** — after the pre-final technical review, use the appropriate `bin/verify` profile and task-specific checks.
 14. **Finalize the session changelog** — update that same record with exact
     final verification results and final Done/Not Done state, then perform
     read-only path/link/diff validation.
 15. **Report** — include rationale, changed files/behavior, documentation and changelog status, discrepancies, and exact check results.
 
-Do not create a gameplay feature handbook for infrastructure, process tooling, or a documentation-only task. Update the documentation system that owns that work instead.
+Do not create a shipped gameplay handbook for infrastructure, process tooling,
+or an ordinary documentation-only task. A repository-wide documentation
+architecture migration may register a proven missing gameplay layer with the
+audited `NOT_IMPLEMENTED` template; update the documentation system that owns
+the migration and do not imply runtime work.
 
 ## 4. [NORMATIVE] Optional planning-first gate
 
@@ -414,7 +430,7 @@ bin/verify fast
 
 1. read-only RuboCop;
 2. all non-system RSpec specs;
-3. the feature-document audit.
+3. the feature-document and documentation-architecture audits.
 
 Use the full profile when:
 
@@ -464,15 +480,26 @@ After implementation and applicable focused verification pass:
 
 Feature documents describe verified implementation. They are not planning PRDs.
 
+An exception exists for an explicit missing-runtime record required by the
+documentation architecture: copy `doc/features/NOT_IMPLEMENTED_TEMPLATE.md`,
+use exact `status: NOT_IMPLEMENTED`, retain all 18 sections, and claim no
+routes, runtime owners, persistence, CSS/assets, or runtime specs. This record
+improves discoverability and prevents invented implementation; it is not a
+feature plan, partial implementation, or completion claim.
+
 ### 13.2 Structural authority
 
-- Copy `doc/features/FEATURE_TEMPLATE.md` for a new handbook.
+- Copy `doc/features/FEATURE_TEMPLATE.md` for shipped behavior. Copy
+  `doc/features/NOT_IMPLEMENTED_TEMPLATE.md` only for a documented missing
+  runtime.
 - New canonical docs declare `template: feature-v1` in frontmatter.
 - Preserve all 18 numbered sections and their order.
 - Keep non-applicable sections and explain why.
 - Remove every template instruction and placeholder.
 - Use a feature-owned lowercase `snake_case` filename, not a task id.
 - Treat `doc/features/FEATURE_TEMPLATE.md` as structural authority.
+- Treat `doc/features/NOT_IMPLEMENTED_TEMPLATE.md` as the structural/content
+  authority for missing-runtime records; it uses the same section order.
 - Treat `world.md` and `city.md` as detailed filled examples, not alternate templates.
 
 ### 13.3 Content requirements
@@ -497,6 +524,10 @@ Every handbook must explain:
 
 Interactive, read-only captured, unavailable, and deferred behavior must be unambiguous.
 
+For `NOT_IMPLEMENTED`, every applicable runtime section must explicitly say no
+runtime exists, section 16 lists only real evidence/design/placeholder paths,
+and cross-feature prose must not manufacture a shipped relationship.
+
 ### 13.4 Documentation order
 
 Use this order for a feature change:
@@ -510,6 +541,11 @@ Use this order for a feature change:
 7. run the completion verification profile.
 
 Never update a feature handbook first and then treat its unverified text as proof of implementation.
+
+For documentation-architecture gap registration only, create the
+`NOT_IMPLEMENTED` record after confirming no runtime exists. Replace it in
+place—after implementation and verification—rather than creating a second
+handbook.
 
 ### 13.5 Canonical ownership and duplicate merge rules
 
@@ -539,7 +575,8 @@ Run:
 bin/feature-doc-audit
 ```
 
-to audit all completed feature handbooks, or:
+to audit all canonical feature handbooks, including explicit
+`NOT_IMPLEMENTED` records, or:
 
 ```bash
 bin/feature-doc-audit doc/features/<feature>.md
@@ -549,7 +586,8 @@ for a focused audit.
 
 The audit checks:
 
-- required metadata and allowed implementation status;
+- required metadata and allowed implemented, transitional, or
+  `NOT_IMPLEMENTED` status; only `Fully Implemented` is green;
 - exact canonical section ordering for `template: feature-v1` documents;
 - unresolved template instructions/placeholders;
 - the required cross-feature relationship subsection and reciprocal feature links;
@@ -559,6 +597,11 @@ The audit checks:
 - duplicate feature titles/canonical ownership.
 
 Pre-template handbooks may pass with a migration warning. Migrate them to `feature-v1` on their next material update. `--strict` forces canonical structure for explicitly selected legacy documents.
+
+Run `bin/documentation-architecture-audit` after changing domain indexes,
+source summaries/observations, templates, architecture routing, evidence/design
+gaps, or the migration manifest. `bin/verify docs` runs both documentation
+audits.
 
 ## 15. [NORMATIVE] Alignment and discrepancy reporting
 
@@ -697,6 +740,8 @@ Do not claim a check passed when it did not run.
 
 - Never use non-Neverlands material as alternate game-design authority.
 - Never document planned behavior as shipped.
+- Never treat an `EVIDENCE_NEEDED`, `DESIGN_NEEDED`, or `NOT_IMPLEMENTED`
+  record as proof of runtime behavior.
 - Never finish a new player-facing feature without creating/updating its canonical handbook after verification.
 - Never close a substantive repository change session without its one dated
   `changelogs/` record.
@@ -705,6 +750,8 @@ Do not claim a check passed when it did not run.
 - Never generate a new session changelog from an older completed record when
   `changelogs/CHANGELOG_TEMPLATE.md` is available.
 - Never invent an alternate feature-document structure.
+- Never create an empty unlabeled document for a missing layer; use the
+  designated template and exact missing-state keyword.
 - Never edit `FEATURE_TEMPLATE.md` during normal feature work.
 - Never create duplicate primary feature handbooks.
 - Never leave responsible implementation/spec paths knowingly stale.
@@ -738,6 +785,8 @@ Before closing a task, confirm:
 - feature handbook was created/updated after verification when required;
 - responsible files and focused spec paths are current;
 - `bin/feature-doc-audit` passed when applicable;
+- `bin/documentation-architecture-audit` passed when documentation structure,
+  domains, references, templates, or missing-layer records changed;
 - the correct `bin/verify` profile completed or its blocker is reported;
 - exactly one dated record exists for the session; it was created with the
   first material edit, updated across follow-up prompts, finalized after

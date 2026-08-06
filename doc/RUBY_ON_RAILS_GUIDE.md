@@ -1044,18 +1044,28 @@ Testing rules:
 
 Implementation documentation follows `AGENT.md`:
 
-1. establish Neverlands/design authority;
+1. start at `doc/domains/README.md` and establish the domain's Neverlands
+   evidence, normalized design, stable parity ID, and current implementation
+   owner;
 2. copy `changelogs/CHANGELOG_TEMPLATE.md` into the current session's one
    living record with the first material repository edit, or update the
    session's existing record;
 3. implement behavior and tests while keeping that record current;
 4. run focused verification;
 5. review the stabilized diff against the applicable sections of this guide;
-6. update/create the canonical `doc/features/**` handbook;
-7. run `bin/feature-doc-audit`;
+6. update/create the canonical shipped `doc/features/**` handbook;
+7. run `bin/feature-doc-audit` and, when documentation architecture changed,
+   `bin/documentation-architecture-audit`;
 8. run the appropriate completion profile;
 9. finalize the same living session record as required
    by `AGENT.md`.
+
+An architecture/documentation migration may register a verified missing
+runtime by copying `doc/features/NOT_IMPLEMENTED_TEMPLATE.md`. The record must
+use exact `NOT_IMPLEMENTED` status, preserve all 18 sections, list only real
+evidence/design paths, and invent no Rails classes, routes, persistence,
+Stimulus/CSS owners, or specs. It is replaced in place only after runtime work
+and applicable checks are green.
 
 Useful commands:
 
@@ -1063,6 +1073,7 @@ Useful commands:
 bin/rubocop path/to/changed_file.rb
 bundle exec rspec spec/path/to/changed_spec.rb
 bin/feature-doc-audit doc/features/<feature>.md
+bin/documentation-architecture-audit
 bin/verify fast
 bin/verify full
 ```
@@ -1071,8 +1082,8 @@ Use `full` when required by `AGENT.md`, including process/verification contract
 changes, broad cross-feature changes, release/push verification, or explicit
 user request.
 
-There is no `bin/contract_audit` in this repository. Do not invent verification
-commands.
+Use the documented audit commands only; do not invent similarly named
+verification commands.
 
 ## 23. Refactoring workflow
 
@@ -1164,13 +1175,17 @@ Avoid:
 - `delete_all`/`update_all` without lifecycle analysis;
 - speculative dependencies and architecture frameworks;
 - JSON/serializer/API documentation for endpoints that are HTML/Turbo-only;
-- feature handbooks written as plans before implementation is verified.
+- feature handbooks written as plans before implementation is verified;
+- `NOT_IMPLEMENTED` handbooks containing invented runtime paths or partial
+  shipped behavior.
 
 ## 25. Implementation checklist
 
 Before implementation:
 
 - [ ] Read `AGENT.md` and the relevant design/feature documents.
+- [ ] Start from the relevant `doc/domains/**` index and confirm evidence,
+      design, parity, and implementation ownership.
 - [ ] Identify the player/runtime contract and existing responsible files.
 - [ ] Classify `[IMPL]`, `[DOC]`, and `[EVIDENCE]` gaps.
 - [ ] Choose the smallest Rails-native owner for the behavior.
@@ -1207,6 +1222,8 @@ Before completion:
 - [ ] Reconcile implementation with Neverlands/design and the feature contract.
 - [ ] Update the canonical feature handbook after checks are green.
 - [ ] Run the focused feature-document audit.
+- [ ] Run the documentation architecture audit when domain/reference/template
+      structure or missing-layer records changed.
 - [ ] Run `bin/verify fast` or `bin/verify full` as required.
 - [ ] Finalize the current session's one living `changelogs/**` record after
       verification; do not create a new record for a follow-up prompt.

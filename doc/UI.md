@@ -1,5 +1,12 @@
 # UI/UX Alignment Plan (English-only player loop)
 
+> Compatibility/historical record: durable current UI rules are owned by
+> `doc/design/areas/game_client_layout.md`; Neverlands observations are indexed
+> by `doc/design/reference/shell/README.md`; delivery state is owned by stable
+> IDs in `doc/design/launch_mvp_plan.md`; and shipped ownership is documented in
+> `doc/features/game_shell.md` plus each domain handbook. The phase history
+> below is retained for provenance and must not override those canonical owners.
+
 This document is a handoff plan for continuing the Neverlands-based UI/UX
 alignment work. It is written so another agent can pick up execution without
 re-deriving context.
@@ -61,7 +68,8 @@ App (shell):
 - `app/views/layouts/game.html.erb`: top nav (`Character`/`Inventory`/`Skills`/
   `Return`/`Exit`), chat `Say` button, players panel (`refresh`/`Unknown`/
   `Total`), exit confirm text — all English.
-- `app/views/shared/_player_context_buttons.html.erb`: English; aligned to the
+- Historical path later removed — app/views/shared/_player_context_buttons.html.erb:
+  English; aligned to the
   captured strip (`Your character` / `Inventory` / `Skills` / `Stats` /
   `Return`).
 
@@ -78,7 +86,8 @@ App (profile):
   `@allocatable_stats` for the owner; added `build_stats_data`.
 - `app/helpers/player_profile_helper.rb`: added `profile_primary_stats` and
   `profile_combat_stats`.
-- `app/views/shared/_player_equipment_summary.html.erb`: uses the shared
+- Historical path later removed — app/views/shared/_player_equipment_summary.html.erb:
+  used the shared
   paper-doll; money row gated behind `show_money` local.
 
 App (shared paper-doll — unifies profile + inventory dolls):
@@ -88,15 +97,18 @@ App (shared paper-doll — unifies profile + inventory dolls):
   inventory (`interactive: true`, source `slots_inv`) via an accessible
   per-slot remove button. Interactive filled slots keep the
   `equipment-slot--<slot>` + `filled` classes for styling/specs.
-- DELETED `app/views/inventories/_equipment_slot.html.erb` (superseded).
+- Deleted historical path: app/views/inventories/_equipment_slot.html.erb
+  (superseded).
 
 App (inventory):
 - `app/views/inventories/show.html.erb`: `Inventory`, `Mass`, `Sort by type`/
   `Sort by name`.
-- `app/views/inventories/_equipment.html.erb`: renders the shared interactive
+- Historical path later removed — app/views/inventories/_equipment.html.erb:
+  rendered the shared interactive
   paper-doll.
 - `app/views/inventories/_grid.html.erb`: `Wear`/`Use` actions (were Russian).
-- `app/views/inventories/_stats.html.erb`: English parameter labels.
+- Historical path later removed — app/views/inventories/_stats.html.erb:
+  English parameter labels.
 - `app/helpers/inventories_helper.rb`: `Mass`/`Description` labels.
 
 App (allocation pages + flashes):
@@ -172,7 +184,8 @@ Areas and where the strings live (app → spec):
    `spec/services/arena/combat_processor_spec.rb` (`Недостаточно ОД`).
 4. **Chat / presence** — DONE. `app/views/shared/_online_players*.html.erb`,
    `_nl_players_list.html.erb`, chat partials (`Приватно`, `Инфо`,
-   `Нет игроков`). Specs: `spec/views/shared/_online_players_compact_spec.rb`,
+   `Нет игроков`). Historical spec later removed:
+   spec/views/shared/_online_players_compact_spec.rb,
    `spec/views/shared/_nl_players_list_spec.rb`.
 5. **Devise/auth pages** — DONE. Login/registration pages now use English
    headings and controls.

@@ -1,5 +1,7 @@
 # Social Chat And Presence
 
+Domain navigation: `doc/domains/social.md` and `doc/domains/shell.md`.
+
 ## Purpose
 
 Social systems make the world feel populated. Chat and local player lists
@@ -11,7 +13,7 @@ modern social dashboard.
 Reference material:
 
 - `doc/design/reference/neverlands.md`
-- `doc/design/reference/neverlands_live_game_shell_ui.md`
+- `doc/design/reference/shell/observations/2026-07-28_game_shell_and_mvp_surfaces.md`
 - `doc/design/reference/source_material.md`
 
 Borrowed feel:

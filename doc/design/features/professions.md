@@ -1,5 +1,7 @@
 # Professions
 
+Domain navigation: `doc/domains/professions.md`.
+
 ## Purpose
 
 Professions turn eligible world cells and gathered resources into long-term
@@ -12,9 +14,9 @@ Primary sources:
 
 - [`Профессия`](http://wiki.neverlands.ru/wiki/Профессия)
 - [`Охотник`](http://wiki.neverlands.ru/wiki/Охотник)
-- `doc/design/reference/neverlands_skills.md`
-- `doc/design/reference/neverlands_live_inventory_items.md`
-- `doc/design/reference/neverlands_live_outdoor_npc_resource.md`
+- `doc/design/reference/character/observations/legacy_skills_and_arena_analysis.md`
+- `doc/design/reference/inventory/observations/2026-06-01_inventory_items_and_shop_rows.md`
+- `doc/design/reference/world/observations/2026-05-20_outdoor_npc_resource.md`
 
 The wiki establishes the direction: a matching binary profession perk grants
 access to the activity, and a profession-specific counter improves through

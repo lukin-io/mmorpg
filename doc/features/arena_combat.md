@@ -19,10 +19,12 @@ is not implied by functional completion of this runtime.
 
 ## 1. Design authority and related documents
 
+Domain navigation: `doc/domains/combat.md`.
+
 Neverlands is the sole game-design and presentation authority. The normalized
 Arena contract lives in `doc/design/areas/arena.md`; turn rules live in
 `doc/design/features/combat.md`; the measured active-fight and public-log
-captures live in `doc/design/reference/neverlands_live_game_shell_ui.md`.
+captures live in `doc/design/reference/shell/observations/2026-07-28_game_shell_and_mvp_surfaces.md`.
 `doc/design/launch_mvp_plan.md` is the visual-parity completion authority.
 
 ### 1.1 Cross-feature relationships
@@ -420,7 +422,7 @@ World, Inventory, Progression, the game shell, jobs, and Action Cable.
 - `doc/features/arena_combat.md`
 - `doc/design/areas/arena.md`
 - `doc/design/features/combat.md`
-- `doc/design/reference/neverlands_live_game_shell_ui.md`
+- `doc/design/reference/shell/observations/2026-07-28_game_shell_and_mvp_surfaces.md`
 - `doc/design/launch_mvp_plan.md`
 
 ### Routes and controllers

@@ -16,15 +16,17 @@ A visible landmark is not automatically an implemented service. The City navigat
 
 ## 1. Design authority and related documents
 
+Domain navigation: `doc/domains/city.md`.
+
 Neverlands is the sole game-design and visual/interaction reference for City. Local code recreates that contract using project-owned artwork, CSS, semantic HTML, and suitable ASCII/plain-text controls. Neverlands runtime images, logos, identity text, administration copy, and decorative assets are evidence only and must not be shipped. A prohibited image control must be replaced by a styled text equivalent such as `X` or `>`, not silently omitted.
 
 When live behavior and this handbook disagree, re-observe once in the existing session, record the evidence, then update catalog, seeds, presentation, tests, and this handbook as one change.
 
 Related documents:
 
-- `doc/design/reference/neverlands_live_city_movement.md` — current five-district observation plus historical captures.
-- `doc/design/reference/neverlands_live_lavka_shop.md` — Shop hierarchy and controls.
-- `doc/design/reference/neverlands_live_game_shell_ui.md` — persistent shell and responsive acceptance.
+- `doc/design/reference/city/observations/2026-07-28_city_movement_and_services.md` — current five-district observation plus historical captures.
+- `doc/design/reference/economy/observations/2026-05-21_lavka_shop.md` — Shop hierarchy and controls.
+- `doc/design/reference/shell/observations/2026-07-28_game_shell_and_mvp_surfaces.md` — persistent shell and responsive acceptance.
 - `doc/design/areas/cities_and_buildings.md` — design-area summary.
 - `doc/design/launch_mvp_plan.md` — 1:1 UI/UX parity matrix.
 - `doc/features/world.md` — outdoor cells, movement, offers, and gate entry.
@@ -385,8 +387,8 @@ Run `bin/feature-doc-audit doc/features/city.md doc/features/shop_economy.md` an
 
 - `doc/features/city.md`
 - `doc/features/shop_economy.md`
-- `doc/design/reference/neverlands_live_city_movement.md`
-- `doc/design/reference/neverlands_live_lavka_shop.md`
+- `doc/design/reference/city/observations/2026-07-28_city_movement_and_services.md`
+- `doc/design/reference/economy/observations/2026-05-21_lavka_shop.md`
 - `doc/design/areas/cities_and_buildings.md`
 - `doc/design/launch_mvp_plan.md`
 

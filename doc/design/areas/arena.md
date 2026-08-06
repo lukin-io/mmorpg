@@ -1,5 +1,7 @@
 # Arena Area
 
+Domain navigation: `doc/domains/combat.md`.
+
 ## Purpose
 
 The arena is the structured fight hub. It provides room-based fight
@@ -14,7 +16,7 @@ the arena/fight source of truth.
 
 Reference captures:
 
-- `doc/design/reference/neverlands_live_game_shell_ui.md`
+- `doc/design/reference/shell/observations/2026-07-28_game_shell_and_mvp_surfaces.md`
 
 Observed arena behavior shows:
 

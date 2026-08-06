@@ -1,5 +1,11 @@
 # Neverlands Reference
 
+> Compatibility/source overview: new evidence is indexed by
+> `doc/design/reference/README.md` and the domain summaries under
+> `doc/design/reference/<domain>/README.md`. Historical detail below is retained
+> for provenance; a current domain summary and dated observation win when this
+> overview contains an older conclusion.
+
 Neverlands is the design source for this project. The goal is not to copy
 source code, URLs, assets, names, or copyrighted content; the goal is to keep
 the observed game mechanics and browser MMORPG feel: compact UI,

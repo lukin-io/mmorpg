@@ -118,6 +118,24 @@ RSpec.describe FeatureDocAudit::Auditor do
     expect(audit.warnings).to include(a_string_including("only Fully Implemented is green"))
   end
 
+  it "accepts an explicit NOT_IMPLEMENTED handbook as non-green" do
+    write_document(canonical_document.sub("status: Fully Implemented", "status: NOT_IMPLEMENTED"))
+
+    expect(audit).to be_success
+    expect(audit.warnings).to include(a_string_including("NOT_IMPLEMENTED is non-green"))
+  end
+
+  it "excludes both handbook templates from the repository-wide audit" do
+    paths = []
+    write_document(canonical_document)
+    root.join("doc/features/NOT_IMPLEMENTED_TEMPLATE.md").write("template content")
+
+    result = described_class.new(root:, paths:).call
+
+    expect(result).to be_success
+    expect(result.documents_count).to eq(1)
+  end
+
   it "allows a pre-template handbook with required ownership/history sections and emits a migration warning" do
     write_document(legacy_document)
 

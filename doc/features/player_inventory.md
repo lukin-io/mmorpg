@@ -19,9 +19,11 @@ in the launch parity matrix.
 
 ## 1. Design authority and related documents
 
+Domain navigation: `doc/domains/inventory.md`.
+
 Neverlands is the sole UI, UX, and game-design authority. Direct evidence lives
-in `doc/design/reference/neverlands_live_game_shell_ui.md` and
-`doc/design/reference/neverlands_live_inventory_items.md`. MVP completion is
+in `doc/design/reference/shell/observations/2026-07-28_game_shell_and_mvp_surfaces.md` and
+`doc/design/reference/inventory/observations/2026-06-01_inventory_items_and_shop_rows.md`. MVP completion is
 tracked in `doc/design/launch_mvp_plan.md`.
 
 ### 1.1 Cross-feature relationships
@@ -279,8 +281,8 @@ boundary.
 ### Requirements and design evidence
 
 - `doc/design/features/items_inventory_equipment.md`
-- `doc/design/reference/neverlands_live_game_shell_ui.md`
-- `doc/design/reference/neverlands_live_inventory_items.md`
+- `doc/design/reference/shell/observations/2026-07-28_game_shell_and_mvp_surfaces.md`
+- `doc/design/reference/inventory/observations/2026-06-01_inventory_items_and_shop_rows.md`
 - `doc/design/launch_mvp_plan.md`
 
 ### Routes and controllers

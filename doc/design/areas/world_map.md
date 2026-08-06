@@ -1,5 +1,7 @@
 # World Map Area
 
+Domain navigation: `doc/domains/world.md`.
+
 ## Purpose
 
 The world map is the outdoor exploration surface. It is where players travel

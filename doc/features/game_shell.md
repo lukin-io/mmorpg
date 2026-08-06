@@ -16,6 +16,8 @@ It describes what exists now. It does not turn every visible Neverlands toolbar 
 
 ## 1. Design authority and related documents
 
+Domain navigation: `doc/domains/shell.md` and `doc/domains/social.md`.
+
 Neverlands is the sole game-design and visual reference for this feature. The local implementation adapts its compact framed game client, bracketed character/vitals state, text-link toolbar, floating nearby-player panel, and bottom chat strip to Rails, Turbo, Stimulus, and the current English client.
 
 When behavior is uncertain or conflicts with this document:
@@ -27,9 +29,9 @@ When behavior is uncertain or conflicts with this document:
 
 Supporting documents:
 
-- `doc/design/reference/neverlands_live_game_shell_ui.md` records the live frame layout, toolbar, location/presence block, and chat strip.
-- `doc/design/reference/neverlands_chat.md` records earlier chat observations and explicitly separated unknowns.
-- `doc/design/reference/neverlands_live_player.md` records the player/vitals presentation linked from the shell.
+- `doc/design/reference/shell/observations/2026-07-28_game_shell_and_mvp_surfaces.md` records the live frame layout, toolbar, location/presence block, and chat strip.
+- `doc/design/reference/social/observations/legacy_chat_system_analysis.md` records earlier chat observations and explicitly separated unknowns.
+- `doc/design/reference/character/observations/2026-05-11_player_profile_and_development.md` records the player/vitals presentation linked from the shell.
 - `doc/design/areas/game_client_layout.md` defines shared client-layout ownership.
 - `doc/design/features/social_chat_presence.md` defines chat, membership, ignore, and presence behavior.
 - `doc/design/features/character_vitals.md` defines authoritative vitals consumed by the header.
@@ -416,9 +418,9 @@ Policy behavior is currently exercised through request/system coverage; dedicate
 - `doc/design/areas/game_client_layout.md`
 - `doc/design/features/social_chat_presence.md`
 - `doc/design/features/character_vitals.md`
-- `doc/design/reference/neverlands_live_game_shell_ui.md`
-- `doc/design/reference/neverlands_chat.md`
-- `doc/design/reference/neverlands_live_player.md`
+- `doc/design/reference/shell/observations/2026-07-28_game_shell_and_mvp_surfaces.md`
+- `doc/design/reference/social/observations/legacy_chat_system_analysis.md`
+- `doc/design/reference/character/observations/2026-05-11_player_profile_and_development.md`
 - `doc/design/launch_mvp_plan.md`
 
 ### Routes and controllers
