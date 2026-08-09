@@ -4,7 +4,7 @@
 - Date: 2026-07-29
 - Branch: `chore/ui_styles`
 - Baseline: clean worktree at the end of the 2026-07-28 world-parity session
-- Session status: Complete; external dependency security blocker reported
+- Session status: Complete
 - Review authority: `doc/RUBY_ON_RAILS_GUIDE.md`
 - Changelog lifecycle: one living record for this complete Codex session
 
@@ -46,6 +46,14 @@ implementation status, and responsible files. Observations are domain-scoped
 with compatibility aliases, evidence retains clearly separated local
 implementation linkage, and missing Quest, Profession, and Dungeon runtimes use
 audited `EVIDENCE_NEEDED` and `NOT_IMPLEMENTED` records instead of silent gaps.
+
+The 2026-08-09 CI security follow-up is Done. The supplied GitHub Actions log
+identified CVE-2026-66066 in Active Storage 8.1.3. The lockfile now resolves the
+synchronized Rails framework family at 8.1.3.1, the smallest patched release
+allowed by the existing `~> 8.1.3` Gemfile constraint. The Rails application
+boots with Rails and Active Storage 8.1.3.1, Bundler Audit reports no
+vulnerabilities, and the complete verification profile is green. No unrelated
+gem or application behavior changed.
 
 The completed presentation work remains unchanged: a single authenticated
 Neverlands capture was taken on 2026-07-29 and
@@ -104,6 +112,10 @@ persisted graph while preserving the single City/Open World action pipeline.
   `primitives.css`. The `nl-source-*` prefix was dropped from view classes in
   favor of plain domain names.
 - New dependencies: none.
+- The CI security follow-up adds no dependency and changes no Gemfile
+  constraint. `Gemfile.lock` moves only Rails and its tightly version-coupled
+  framework components from 8.1.3 to 8.1.3.1 so Active Storage receives the
+  upstream security patch without a mixed Rails component set.
 - The management surface uses explicit REST resources under the `Manage`
   namespace. It does not build a reflection-driven generic CRUD engine:
   resource-specific controllers own strong parameters, filters, associations,
@@ -368,6 +380,13 @@ resolved during the review:
   commands are not mistaken for files, required domain/source registries to
   link every domain, and verifies each domain's stable parity IDs against the
   launch plan. No Rails/Hotwire runtime behavior was changed.
+- The 2026-08-09 CI security correction was reviewed against the guide's
+  smallest-safe-change, dependency, security, application-boot, and completion
+  rules. The existing Gemfile constraint already permits the patched release,
+  so only `Gemfile.lock` changes. Rails' tightly coupled framework gems move
+  together to 8.1.3.1; no audit ignore, mixed component version, new dependency,
+  application-code workaround, schema change, or asset pipeline change is
+  introduced.
 
 ## Documentation architecture follow-up
 
@@ -479,6 +498,7 @@ resolved during the review:
 | Specs | `spec/requests/inventories_spec.rb`, `spec/requests/players_spec.rb`, `spec/system/responsive_neverlands_ui_spec.rb`, `spec/system/inventory_progression_spec.rb`, `spec/system/arena_match_ui_layout_spec.rb`, `spec/views/shared/_nl_vitals_bar_spec.rb` |
 | Documentation architecture | `doc/DOCUMENTATION.md`, `doc/DOCUMENTATION_MIGRATION_MANIFEST.md`, `doc/domains/**`, `doc/templates/**`, `doc/design/reference/**`, `doc/features/NOT_IMPLEMENTED_TEMPLATE.md` |
 | Documentation enforcement | `lib/documentation_architecture_audit.rb`, `bin/documentation-architecture-audit`, `lib/feature_doc_audit.rb`, `bin/verify`, `spec/lib/documentation_architecture_audit_spec.rb`, `spec/lib/feature_doc_audit_spec.rb`, `spec/scripts/verify_script_spec.rb` |
+| Rails security patch | `Gemfile.lock` — synchronized Rails/Active Storage 8.1.3.1 resolution for CVE-2026-66066 |
 | City graph persistence and regression coverage | `db/seeds.rb`, `spec/models/open_world_seed_spec.rb`, `doc/features/city.md`, `doc/features/world.md` |
 | Management routing/auth/layout | `config/routes.rb`, `app/controllers/manage/application_controller.rb`, `app/controllers/manage/dashboard_controller.rb`, `app/policies/manage_policy.rb`, `app/views/layouts/manage.html.erb` |
 | Explicit content CRUD | `app/controllers/manage/world_cells_controller.rb`, `app/controllers/manage/tile_buildings_controller.rb`, `app/controllers/manage/npc_templates_controller.rb`, `app/controllers/manage/tile_npcs_controller.rb`, `app/controllers/manage/cities_controller.rb`, `app/controllers/manage/city_hotspots_controller.rb`, `app/views/manage/**` |
@@ -492,6 +512,17 @@ resolved during the review:
 
 | Command | Result |
 |---|---|
+| 2026-08-09 `bin/verify full` after the Rails security patch | exit 0; complete verification succeeded |
+| — RuboCop | 399 files inspected, no offenses detected |
+| — Non-system RSpec | 1600 examples, 0 failures |
+| — System RSpec | 204 examples, 0 failures, 4 pre-existing pending |
+| — Brakeman | 0 security warnings |
+| — Bundler Audit | no vulnerabilities; ruby-advisory-db at 1231 advisories / `36427421334c837ac49f3fd8ed5d31046d384af7` |
+| — Importmap audit | no vulnerable packages |
+| — Feature documentation audit | passed (10 documents); expected warnings for 3 intentional `NOT_IMPLEMENTED` and 2 pre-existing partial handbooks |
+| — Documentation architecture audit | passed (59 documents inspected) |
+| Rails application boot (`bin/rails runner`) | Rails 8.1.3.1 and Active Storage 8.1.3.1 loaded successfully |
+| `bundle check` | dependencies satisfied |
 | Documentation-architecture `bin/verify full` | exit 1 at Bundler Audit after all lint/spec/system/Brakeman stages passed; the refreshed advisory DB flags Active Storage 8.1.3 under CVE-2026-66066 and requires Rails/Active Storage 8.1.3.1 or another patched series |
 | — RuboCop (read-only) | 399 files inspected, no offenses detected |
 | — Non-system RSpec | 1600 examples, 0 failures |
@@ -568,13 +599,10 @@ remains on disk.
   management audit table and the documented idempotent `bin/rails db:seed`
   content sync for City/NPC materialization. Development/test migration
   rollback/reapply and test seed replant were verified.
-- Dependency/security blocker: the final full wrapper cannot be green while
-  the repository remains locked to Rails/Active Storage 8.1.3. Bundler Audit's
-  refreshed database requires 8.1.3.1 or another patched series for
-  CVE-2026-66066. This documentation task did not silently broaden scope into a
-  dependency/lockfile upgrade.
-- Pending/skipped checks: the full wrapper stopped before its built-in
-  Importmap and documentation stages because Bundler Audit correctly failed;
-  both remaining read-only stages were run separately and passed. Four
-  unrelated system examples remain explicitly pending for their pre-existing
-  reasons.
+- Resolved dependency/security blocker: Rails and Active Storage are locked to
+  8.1.3.1, satisfying the patched-version requirement for CVE-2026-66066. The
+  2026-08-09 Bundler Audit and complete verification profile pass without an
+  advisory ignore.
+- Pending/skipped checks: none for the CI security correction. Four unrelated
+  system examples remain explicitly pending for their pre-existing reasons and
+  do not fail the suite.
