@@ -26,6 +26,10 @@ class User < ApplicationRecord
   has_many :ignored_by_users, through: :ignored_by_entries, source: :user
   has_many :arena_participations, dependent: :destroy
   has_many :arena_matches, through: :arena_participations
+  has_many :management_audit_events,
+    foreign_key: :actor_id,
+    inverse_of: :actor,
+    dependent: :restrict_with_error
   after_create :assign_default_role
   after_create :ensure_currency_wallet!
   before_validation :ensure_profile_name

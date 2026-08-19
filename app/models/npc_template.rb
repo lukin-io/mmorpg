@@ -22,7 +22,12 @@ class NpcTemplate < ApplicationRecord
 
   ROLES = %w[hostile arena_bot].freeze
 
+  has_many :tile_npcs, dependent: :restrict_with_error
+  has_many :arena_applications, dependent: :restrict_with_error
+  has_many :arena_participations, dependent: :restrict_with_error
+
   validates :name, presence: true, uniqueness: true
+  validates :npc_key, uniqueness: true, allow_blank: true
   validates :level, numericality: {greater_than: 0}
   validates :role, presence: true, inclusion: {in: ROLES}
   validates :dialogue, presence: true

@@ -44,14 +44,16 @@ module PlayerProfileHelper
     end
   end
 
-  # Derived combat/equipment values shown in the profile capture.
+  # Derived combat values shown as chips under the profile parameter column.
+  #
+  # Row set and order follow the live profile capture recorded in
+  # `doc/design/reference/neverlands_live_style_system.md`. Fatigue is rendered
+  # separately because the source gives it its own chip color. The source
+  # "artifact coefficient" row is intentionally absent: its mechanic is not
+  # captured, so it is not invented here.
   def profile_combat_stats(character)
     {
-      "Attack" => character.attack_power,
-      "Defense" => character.defense,
-      "Critical chance" => "#{character.critical_chance}%",
-      "Action points" => character.max_action_points,
-      "Attack cost" => profile_attack_cost,
+      "AP per strike" => profile_attack_cost,
       "Armor class" => character.equipment_effect_value("armor_class"),
       "Dodge" => "#{character.dodge_bonus}%",
       "Accuracy" => "#{character.accuracy_bonus}%",

@@ -4,7 +4,7 @@
 possible to copy this folder into a fresh Rails app and still understand what to
 build.
 
-## Authority
+## Authority by concern
 
 The active game design is the Neverlands-based design documented here. Treat
 this folder as the single point of truth for current mechanics, UI structure,
@@ -15,14 +15,14 @@ should be removed rather than treated as a competing reference. If a legacy doc
 contains a still-valid Neverlands-based rule, promote that rule into a feature
 or area doc first.
 
-When documents disagree, use this order:
+Authority is not one linear precedence list. `reference/**` owns what was
+observed; `areas/**` and `features/**` own the normalized local design;
+`launch_mvp_plan.md` owns delivery/parity state; and `gdd.md` owns the
+whole-game vision and cross-domain invariants. A stale overview cannot override
+newer verified evidence, and raw evidence cannot claim local completion.
 
-```text
-gdd.md
--> launch_mvp_plan.md
--> features/* and areas/*
--> reference/*
-```
+Use `[EVIDENCE]`, `[IMPL]`, and `[DOC]` from `AGENT.md` when layers disagree.
+Start from `doc/domains/README.md` to see all layer owners for one domain.
 
 ## Translation Rule
 
@@ -41,11 +41,12 @@ mechanics and UX structure only; it does not make Russian a product language.
 
 ## Reading Order
 
-1. `gdd.md`
-2. `launch_mvp_plan.md`
-3. `reference/neverlands.md`
-4. Area docs for the surface being built.
-5. Feature docs for the mechanics involved.
+1. `../domains/README.md` and the selected domain index.
+2. `reference/README.md` and the domain source summary/observations.
+3. `gdd.md` for cross-game invariants.
+4. Area docs for the surface and feature docs for the mechanics.
+5. `launch_mvp_plan.md` for the stable delivery/parity IDs.
+6. `../features/README.md` and the current implementation handbook.
 
 Deferred canonical feature docs, such as `features/dungeons.md`, are still
 design authority for their feature even when they are explicitly outside launch
@@ -79,15 +80,12 @@ Features:
 
 Reference:
 
-- `reference/` - observed Neverlands behavior and source-material mapping.
-- `reference/neverlands_live_game_shell_ui.md` - 2026-05-25 sanitized live
-  shell/UI capture for MVP UI/AX integration.
-- `reference/neverlands_live_inventory_items.md` - 2026-06-01 sanitized live
-  inventory, item-family, equip/unequip, item-row, adjacent item-action, and
-  shop buy/sell capture.
-- `reference/neverlands_live_city_movement.md` - sanitized live city graph,
-  three-gate outdoor mapping, market/numismatics/airship observations, and
-  hospital/pharmacy service capture.
+- `reference/README.md` — evidence registry and domain routing.
+- `reference/<domain>/README.md` — current source summary, evidence gaps,
+  design linkage, and clearly separated local implementation linkage.
+- `reference/<domain>/observations/` — dated or preserved legacy evidence.
+- Flat historical paths under `reference/` may remain compatibility aliases;
+  new active links use the domain-scoped canonical path.
 
 ## Document Types
 
@@ -97,7 +95,7 @@ Reference:
 | Launch plan | `launch_mvp_plan.md` | MVP scope, order, and coverage checklist |
 | Feature spec | `features/` | One mechanic or system per file |
 | Area spec | `areas/` | One world area, screen family, or place type |
-| Reference | `reference/` | Observations and provenance, not new rules |
+| Reference | `reference/` | Observations/provenance plus clearly labeled local implementation linkage, not new rules or completion authority |
 
 ## Update Rule
 
@@ -105,14 +103,26 @@ When implementation reveals a better design fact, update the feature or area
 doc first, then update code and tests. Do not hide new rules only in code or
 test files.
 
-Do not put current-app file maps, class names, route names, migration notes, or
-test paths in this folder. Keep `doc/design/` copyable.
+Observation and source-summary documents keep a bounded **Local Implementation
+Linkage** section with the current handbook and important responsible files for
+context. That section must say it is local context, not source evidence;
+section 16 of the implementation handbook remains the exhaustive inventory.
+Portable normalized-design sections should avoid exhaustive app file maps.
 
 When adding live-analysis notes, keep reusable mechanics in `features/` or
 `areas/`, and raw observation details in `reference/`. Do not store live session
 tokens, passwords, or finish/challenge codes in tracked docs.
 
 ## Feature Template
+
+Use the canonical templates in `doc/templates/`:
+
+- `doc/templates/NEVERLANDS_OBSERVATION_TEMPLATE.md`;
+- `doc/templates/NEVERLANDS_SOURCE_SUMMARY_TEMPLATE.md`;
+- `doc/templates/DESIGN_PLACEHOLDER_TEMPLATE.md`;
+- `doc/templates/DOMAIN_INDEX_TEMPLATE.md`.
+
+The compact layouts below remain illustrative for implemented design prose.
 
 ```md
 # Feature Name

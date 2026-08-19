@@ -1,0 +1,31 @@
+<% content_for :title, "Cell Buildings · Management" %>
+<%= render "manage/shared/page_header",
+      title: "Open-World Cell Buildings",
+      description: "City gates and linked-location entrances attached to exact outdoor cells.",
+      new_path: new_manage_tile_building_path,
+      new_label: "Create cell building" %>
+
+<%= form_with url: manage_tile_buildings_path, method: :get, class: "nl-manage-filter", local: true do |form| %>
+  <%= form.label :zone, "Outdoor zone" %>
+  <%= form.select :zone, options_from_collection_for_select(@zones, :name, :name, params[:zone]), include_blank: "All zones" %>
+  <%= form.submit "Filter", class: "lbut" %>
+  <%= link_to "Clear", manage_tile_buildings_path, class: "lbut" %>
+<% end %>
+
+<div class="nl-manage-table-wrap"><table class="nl-manage-table">
+  <thead><tr><th>Key</th><th>Name</th><th>Source cell</th><th>Type</th><th>Destination</th><th>Active</th><th>Actions</th></tr></thead>
+  <tbody>
+    <% @tile_buildings.each do |building| %>
+      <tr>
+        <td><%= building.building_key %></td><td><%= building.name %></td>
+        <td><%= building.zone %> [<%= building.x %>, <%= building.y %>]</td>
+        <td><%= building.building_type %></td>
+        <td><%= building.destination_zone&.display_name || building.location_short_label %></td>
+        <td><%= management_boolean(building.active?) %></td>
+        <td class="nl-manage-table-actions"><%= link_to "View", manage_tile_building_path(building) %> <%= link_to "Edit", edit_manage_tile_building_path(building) %></td>
+      </tr>
+    <% end %>
+    <% if @tile_buildings.empty? %><tr><td colspan="7" class="nl-manage-empty">No cell buildings found.</td></tr><% end %>
+  </tbody>
+</table></div>
+<%= render "manage/shared/pagination", pagination: @pagination %>

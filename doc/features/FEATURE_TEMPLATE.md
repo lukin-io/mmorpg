@@ -12,6 +12,8 @@ template: feature-v1
 
 > Template instruction: copy this file to `doc/features/<feature_name>.md`, replace every bracketed placeholder, and remove all template-instruction blockquotes. Preserve the 18 numbered sections and their order. If a section does not apply, keep it and explain why.
 
+> Template instruction: if no runtime behavior exists, do not use this shipped-feature template. Copy `doc/features/NOT_IMPLEMENTED_TEMPLATE.md` and use exact `NOT_IMPLEMENTED` status instead.
+
 This document is the implementation contract for the current [Feature Name] feature. It explains [player-visible behavior], [authoritative state], [principal flows], UI ownership, integration boundaries, persistence, security, authored content, failure behavior, and test coverage.
 
 It describes what exists now. It does not turn deferred Neverlands mechanics, observations, or possible future work into shipped requirements by implication.

@@ -1,5 +1,7 @@
 # Cities And Buildings
 
+Domain navigation: `doc/domains/city.md`.
+
 ## Purpose
 
 Define the current City navigation model and the boundary between an illustrated landmark, an enterable building, and an implemented building service.
@@ -20,8 +22,8 @@ Current Forpost behavior:
 
 Reference evidence lives in:
 
-- `doc/design/reference/neverlands_live_city_movement.md`;
-- `doc/design/reference/neverlands_live_lavka_shop.md`;
+- `doc/design/reference/city/observations/2026-07-28_city_movement_and_services.md`;
+- `doc/design/reference/economy/observations/2026-05-21_lavka_shop.md`;
 - `doc/design/launch_mvp_plan.md`.
 
 Runtime images, hover layers, logos, identity text, and service/admin copy from Neverlands are prohibited. The local system recreates the design and interaction contract with project-owned artwork, CSS, semantic HTML, and suitable ASCII/plain-text controls. Source image controls are replaced rather than removed; for example, route images become styled `>` arrows and close images become styled `X` controls.
@@ -55,7 +57,9 @@ The Law Quarter visibly contains another City Exit, but its outdoor result was n
 | `forpost3` | Business Quarter | Central | None |
 | `forpost4` | Law Quarter | Residential | None |
 
-This is eight directed edges across four bidirectional pairs. Connectivity is explicit catalog data, never inferred from arrow location or visual proximity.
+This is eight directed edges across four bidirectional pairs. The baseline is
+declared in the catalog and materialized as persisted hotspot data;
+connectivity is never inferred from arrow location or visual proximity.
 
 ## City Node Rules
 
@@ -72,7 +76,8 @@ This is eight directed edges across four bidirectional pairs. Connectivity is ex
 - Action/landmark boxes use native scene pixels.
 - Building/landmark hover and keyboard focus reveal a CSS-generated brightened crop of the project image.
 - Route arrows are project-owned, CSS-styled ASCII `>` controls, not copied image assets.
-- Arrow orientation comes from catalog data and the arrow remains inside its route button.
+- Arrow orientation comes from persisted hotspot data seeded from the captured
+  baseline, and the arrow remains inside its route button.
 - Tooltip copy is server-rendered RPG-domain text; it follows the pointer and is clamped to the scene.
 - Blocked actions remain discoverable with a reason but cannot submit.
 - Presentation-only landmarks are keyboard focusable and never render inside a form.
@@ -91,12 +96,20 @@ Shop is on Central Square. Its feature owns the mode/category/filter hierarchy a
 
 ## Server Authority
 
-- `CityCatalog` owns graph and presentation metadata.
-- `CityHotspot` owns persisted action definitions.
+- `CityCatalog` owns the source-backed baseline declaration used by seeds.
+- `Zone` owns persisted runtime scene/focus/landmark metadata.
+- `CityHotspot` owns persisted runtime action definitions, native pixel boxes,
+  direction, and z-order.
 - `CityActionOfferBuilder` rotates short-lived exact capabilities.
 - `CityHotspotService` validates and completes the selected action.
 - `CharacterPosition` owns the durable district.
 - The browser owns centering, panning, hover/focus presentation, and tooltip placement only.
+
+`/manage/cities` and `/manage/city_hotspots` edit these same persisted owners;
+they are admin authoring surfaces rather than another City graph. Baseline
+changes still update `CityCatalog` plus the idempotent seed. Every managed
+mutation is allowlisted, dependency-safe, and atomically audited, and hotspot
+changes cancel stale targeted offers.
 
 ## Responsive Acceptance
 

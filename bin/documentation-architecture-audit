@@ -1,0 +1,17 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require_relative "../lib/documentation_architecture_audit"
+
+root = File.expand_path("..", __dir__)
+result = DocumentationArchitectureAudit::Auditor.new(root:).call
+
+result.errors.each { |error| warn "ERROR: #{error}" }
+
+if result.success?
+  puts "Documentation architecture audit passed (#{result.documents_count} documents inspected)."
+  exit 0
+end
+
+warn "Documentation architecture audit failed with #{result.errors.length} error#{'s' unless result.errors.length == 1}."
+exit 1

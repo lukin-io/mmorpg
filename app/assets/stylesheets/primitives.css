@@ -1,29 +1,247 @@
+/*
+ * Shared Neverlands primitives: base elements, the source text classes, the
+ * source control chrome, and the dense label/value table used by every
+ * gameplay domain.
+ *
+ * Source contract: `doc/design/reference/neverlands_live_style_system.md`.
+ * Domain composition (paper doll, world map, shop tables, fight rails) belongs
+ * to the owning stylesheet, not here.
+ */
+
 html,
 body,
 .nl-game-layout,
 .nl-public-layout {
   color: var(--nl-text);
-  background: var(--nl-bg-primary);
-  font-family: Verdana, Tahoma, Arial, sans-serif;
-  font-size: 12px;
+  background: var(--nl-surface);
+  font: 12px var(--nl-font-verdana);
 }
 
 a {
-  color: var(--nl-text-link);
+  color: var(--nl-link);
   text-decoration: none;
 }
 
 a:hover {
-  color: var(--nl-text-link-hover);
+  color: var(--nl-link-strong);
   text-decoration: underline;
 }
+
+:focus-visible {
+  outline: 1px solid var(--nl-link);
+  outline-offset: 1px;
+}
+
+/* ---------------------------------------------------------------- *
+ * Source text classes (game.css)
+ * ---------------------------------------------------------------- */
+
+.nickname { color: var(--nl-text); font: 12px var(--nl-font-verdana); }
+.travma { color: var(--nl-text); font: 11px var(--nl-font-tahoma); }
+.proce { color: var(--nl-bonus); font: 10px var(--nl-font-verdana); }
+.weaponch { color: var(--nl-text-soft); font: 11px var(--nl-font-tahoma); }
+.freemain { color: var(--nl-text); font: 12px var(--nl-font-tahoma); }
+.placename { color: var(--nl-text); font: 12px var(--nl-font-tahoma); }
+.hpfont { color: #003366; font: 11px var(--nl-font-verdana); }
+.text { color: var(--nl-text-soft); font: 11px var(--nl-font-verdana); }
+.freetxt { color: var(--nl-text); font: 10px var(--nl-font-verdana); }
+
+.invtitle {
+  color: #000000;
+  font: bold 11px var(--nl-font-tahoma);
+}
+
+.inv {
+  color: #716e44;
+  font: 12px var(--nl-font-tahoma);
+}
+
+/* ---------------------------------------------------------------- *
+ * Source control chrome (game.css)
+ *
+ * `.lbut` is the standard game control. `.lbutdis` is the current-page state:
+ * the source renders white text on the pale disabled fill so the control reads
+ * as an empty pill. The accessible name stays in the element text.
+ *
+ * The bare submit selectors are wrapped in `:where()` so an unclassed submit
+ * still looks like a game control while any component class (a paper-doll
+ * slot, an icon-strip cell) overrides it without a specificity fight.
+ * ---------------------------------------------------------------- */
+
+.lbut,
+.lbutdis,
+.invbut,
+.nbut1,
+.buttonSub,
+.addza,
+.submit,
+.chatpostbut,
+.nl-btn,
+.nl-nav-link,
+:where(button[type="submit"], input[type="submit"]) {
+  display: inline-flex;
+  max-width: 100%;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0;
+  box-shadow: none;
+  cursor: pointer;
+  letter-spacing: 0;
+  text-align: center;
+  text-decoration: none;
+  text-shadow: none;
+  text-transform: none;
+  white-space: nowrap;
+}
+
+.lbut,
+.nl-btn,
+.nl-nav-link,
+:where(button[type="submit"], input[type="submit"]) {
+  min-height: 18px;
+  padding: 1px 6px;
+  border: 1px solid var(--nl-control-border);
+  background: var(--nl-surface);
+  color: var(--nl-text-soft);
+  font: bold 11px/14px var(--nl-font-tahoma);
+}
+
+.lbut:hover,
+.nl-btn:hover,
+.nl-nav-link:hover,
+:where(button[type="submit"], input[type="submit"]):hover {
+  border-color: var(--nl-control-border-strong);
+  background: var(--nl-surface-accent);
+  color: var(--nl-link);
+  text-decoration: none;
+}
+
+.lbut:active,
+.nl-btn:active,
+:where(button[type="submit"], input[type="submit"]):active {
+  background: #e8dfc4;
+}
+
+.lbutdis,
+.nl-btn--disabled,
+.nl-nav-link--disabled,
+.lbut:disabled,
+.nl-btn:disabled,
+.nl-nav-link:disabled,
+:where(button[type="submit"], input[type="submit"]):disabled {
+  min-height: 18px;
+  padding: 1px 6px;
+  border: 1px solid var(--nl-control-border);
+  background: var(--nl-surface-accent);
+  color: var(--nl-text-inverse);
+  cursor: default;
+  font: bold 11px/14px var(--nl-font-tahoma);
+  opacity: 1;
+  pointer-events: none;
+}
+
+.invbut {
+  min-height: 16px;
+  padding: 0 5px;
+  border: 1px solid var(--nl-control-danger-border);
+  background: var(--nl-surface);
+  color: var(--nl-text-soft);
+  font: 10px/14px var(--nl-font-verdana);
+}
+
+.invbut:hover {
+  background: #fff2f2;
+  color: var(--nl-bonus);
+  text-decoration: none;
+}
+
+.invbut:disabled {
+  border-color: #e0b3b3;
+  color: #aaaaaa;
+  cursor: default;
+  pointer-events: none;
+}
+
+.nbut1 {
+  width: 80px;
+  min-height: 18px;
+  border: 0;
+  background: var(--nl-chip-combat);
+  color: var(--nl-text-inverse);
+  font: bold 11px/16px var(--nl-font-verdana);
+}
+
+.buttonSub {
+  min-height: 17px;
+  padding: 0 4px;
+  border: 1px solid #adadad;
+  background: #dddddd;
+  color: #000000;
+  font: 10px/15px Verdana, sans-serif;
+}
+
+.addza {
+  min-height: 16px;
+  padding: 0 4px;
+  border: 1px solid var(--nl-rule);
+  background: #e0e0e0;
+  color: var(--nl-text-soft);
+  font: bold 10px/14px var(--nl-font-verdana);
+}
+
+.submit {
+  min-height: 18px;
+  padding: 1px 8px;
+  border: 1px solid #7a6848;
+  background: #a29275;
+  color: var(--nl-text-inverse);
+  font: bold 11px/14px Verdana, Helvetica, sans-serif;
+}
+
+.submit:hover { background: #8d7d61; }
+
+.chatpostbut {
+  min-height: 20px;
+  padding: 0 6px;
+  border: 0;
+  background: #e7e7e7;
+  color: #724000;
+  font: bold 12px/18px var(--nl-font-tahoma);
+}
+
+/* Small square increase/decrease controls used by the allocation surfaces. */
+.nl-stat-btn {
+  display: inline-flex;
+  width: 15px;
+  min-width: 15px;
+  height: 15px;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--nl-link-strong);
+  cursor: pointer;
+  font: 12px/15px var(--nl-font-verdana);
+  text-decoration: underline;
+}
+
+.nl-stat-btn:disabled {
+  color: #b0b0b0;
+  cursor: default;
+  text-decoration: none;
+}
+
+/* ---------------------------------------------------------------- *
+ * Form fields (game.css textBox family)
+ * ---------------------------------------------------------------- */
 
 button,
 input,
 select,
 textarea {
   border-radius: 0;
-  font-family: var(--nl-control-font);
+  font-family: var(--nl-font-verdana);
 }
 
 input[type="text"],
@@ -35,251 +253,192 @@ input[type="tel"],
 input[type="url"],
 select,
 textarea,
+.textBox,
 .LogintextBox,
 .LogintextBox2,
 .LogintextBox3,
-.LogintextBox4,
-.nl-arena-select,
-.nl-arena-mini-input,
-.nl-fight-select,
-.nl-shop-select,
-.nl-shop-mini-input,
-.nl-shop-qty {
+.LogintextBox4 {
   min-height: 17px;
   padding: 1px 3px;
-  border: 1px solid #cccccc;
-  background: #ffffff;
-  color: #222222;
+  border: 1px solid #767676;
+  background: var(--nl-surface);
+  color: var(--nl-text-soft);
   box-shadow: none;
-  font: 11px Verdana, Tahoma, Arial, sans-serif;
-  line-height: 14px;
+  font: 11px/14px Verdana, Arial, sans-serif;
 }
+
+.LogintextBox { width: 150px; }
+.LogintextBox2 { width: 80px; }
+.LogintextBox3 { width: 530px; max-width: 100%; }
+.LogintextBox4 { width: 200px; }
 
 input:focus,
 select:focus,
-textarea:focus,
-.LogintextBox:focus,
-.LogintextBox2:focus,
-.LogintextBox3:focus,
-.LogintextBox4:focus,
-.nl-chat-input-field:focus {
-  border-color: var(--nl-blue);
+textarea:focus {
+  border-color: var(--nl-link);
   box-shadow: var(--nl-focus-ring);
   outline: 0;
 }
 
 input[type="checkbox"],
 input[type="radio"] {
-  accent-color: #336699;
+  accent-color: var(--nl-link);
 }
 
-.btn,
-.btn-primary,
-.btn-secondary,
-.btn-success,
-.btn-danger,
-.lbut,
-.lbutdis,
-.nl-btn,
-.nl-btn--primary,
-.nl-btn--secondary,
-.nl-btn-primary,
-.nl-btn-secondary,
-.nl-arena-link,
-.nl-arena-small-button,
-.nl-arena-tab,
-.nl-action-btn-small,
-.nl-action-btn-large,
-.chat-control-btn,
-.chat-send-btn,
-.nl-chat-send-btn,
-.export-btn,
-.combat-log-tabs .tab,
-button[type="submit"],
-input[type="submit"] {
-  display: inline-flex;
-  min-height: 18px;
-  max-width: 100%;
-  align-items: center;
-  justify-content: center;
-  padding: 1px 6px;
-  border: 1px solid #decfa6;
-  border-radius: 0;
-  background: #ffffff;
-  color: #333333;
-  box-shadow: none;
-  cursor: pointer;
-  font: bold 11px/14px Tahoma, Verdana, Arial, sans-serif;
-  letter-spacing: 0;
-  text-align: center;
-  text-decoration: none;
-  text-shadow: none;
-  text-transform: none;
-  white-space: nowrap;
-}
+/* ---------------------------------------------------------------- *
+ * Dense label/value table
+ *
+ * The live client builds every parameter block from a `cellspacing=1` table
+ * with a `#FCFAF3` label cell and a `#FAFAFA` value cell. This is the shared
+ * primitive for those blocks.
+ * ---------------------------------------------------------------- */
 
-.btn:hover,
-.btn-primary:hover,
-.btn-secondary:hover,
-.btn-success:hover,
-.btn-danger:hover,
-.lbut:hover,
-.nl-btn:hover,
-.nl-btn--primary:hover,
-.nl-btn--secondary:hover,
-.nl-btn-primary:hover,
-.nl-btn-secondary:hover,
-.nl-arena-link:hover,
-.nl-arena-small-button:hover,
-.nl-arena-tab:hover,
-.nl-action-btn-small:hover,
-.nl-action-btn-large:hover,
-.chat-control-btn:hover,
-.chat-send-btn:hover,
-.nl-chat-send-btn:hover,
-.export-btn:hover,
-.combat-log-tabs .tab:hover,
-button[type="submit"]:hover,
-input[type="submit"]:hover {
-  border-color: #b9a05c;
-  background: #f3ecd7;
-  color: #003366;
-  text-decoration: none;
-}
-
-.btn:active,
-.btn-primary:active,
-.btn-secondary:active,
-.lbut:active,
-.nl-btn:active,
-.nl-arena-link:active,
-.nl-arena-small-button:active,
-.nl-arena-tab:active,
-.nl-action-btn-small:active,
-.nl-action-btn-large:active,
-button[type="submit"]:active,
-input[type="submit"]:active {
-  background: #e8dfc4;
-  transform: none;
-}
-
-.lbutdis,
-.invbut--disabled,
-.nl-btn--disabled,
-.nl-arena-tab--disabled,
-button:disabled,
-input[type="submit"]:disabled {
-  border-color: #decfa6;
-  background: #f3ecd7;
-  color: #c7bea6;
-  box-shadow: none;
-  cursor: default;
-  opacity: 1;
-  pointer-events: none;
-}
-
-.invbut {
-  display: inline-flex;
-  min-height: 16px;
-  align-items: center;
-  justify-content: center;
-  padding: 0 5px;
-  border: 1px solid #ce0202;
-  background: #ffffff;
-  color: #333333;
-  cursor: pointer;
-  font: 10px/14px Verdana, Tahoma, Arial, sans-serif;
-  text-decoration: none;
-  white-space: nowrap;
-}
-
-.invbut:hover,
-.invbut--danger:hover {
-  background: #fff2f2;
-  color: #cc0000;
-  text-decoration: none;
-}
-
-.invbut--danger,
-.btn-danger {
-  border-color: #ce0202;
-  background: #ffffff;
-  color: #cc0000;
-}
-
-.btn-sm {
-  min-height: 16px;
-  padding: 0 5px;
-  font-size: 10px;
-  line-height: 14px;
-}
-
-.nl-stat-btn {
-  display: inline-flex;
-  width: 17px;
-  min-width: 17px;
-  height: 17px;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  border: 1px solid #decfa6;
-  background: #ffffff;
-  box-shadow: none;
-  cursor: pointer;
-  font: bold 12px/15px Verdana, Tahoma, Arial, sans-serif;
-}
-
-.nl-stat-btn--plus { color: #009d29; }
-.nl-stat-btn--minus { color: #cc0000; }
-.nl-stat-btn:hover { background: #f3ecd7; }
-
-.nl-profile-panel,
-.nl-equipment-summary,
-.nl-inventory-head,
-.nl-inventory-toolbar,
-.nl-arena-frame,
-.nl-shop-frame,
-.nl-allocation-panel,
-.panel,
-.card {
-  border: 1px solid var(--nl-border);
-  border-radius: 0;
-  background: #ffffff;
-  box-shadow: none;
-}
-
-.nl-profile-table,
-.nl-arena-table,
-.nl-shop-table,
-.nl-table {
+.nl-sheet-table {
   width: 100%;
-  border-collapse: collapse;
-  background: #ffffff;
-  font-size: 11px;
+  border-collapse: separate;
+  border-spacing: 1px;
+  background: var(--nl-surface);
+  font: 11px/15px var(--nl-font-tahoma);
 }
 
-.nl-profile-table th,
-.nl-profile-table td,
-.nl-arena-table th,
-.nl-arena-table td,
-.nl-shop-table th,
-.nl-shop-table td,
-.nl-table th,
-.nl-table td {
-  padding: 2px 4px;
+.nl-sheet-table th,
+.nl-sheet-table td {
+  padding: 0 3px;
   border: 0;
-  border-bottom: 1px solid var(--nl-border-light);
-}
-
-.nl-profile-table th,
-.nl-arena-table th,
-.nl-shop-table th,
-.nl-table th {
-  background: #f3ecd7;
-  color: #333333;
   font-weight: 400;
   text-align: left;
+  vertical-align: middle;
 }
+
+.nl-sheet-table th {
+  width: 1%;
+  background: var(--nl-surface-header);
+  color: var(--nl-text);
+  white-space: nowrap;
+}
+
+.nl-sheet-table td {
+  background: var(--nl-surface-value);
+  color: var(--nl-text);
+  font-weight: 700;
+}
+
+.nl-sheet-table caption {
+  padding: 0 3px;
+  background: var(--nl-surface-header);
+  color: var(--nl-text);
+  font-weight: 700;
+  text-align: left;
+}
+
+/* Horizontal rule between parameter blocks: white / blue / white. */
+.nl-sheet-divider {
+  height: 5px;
+  border: 0;
+  border-top: 2px solid var(--nl-surface);
+  border-bottom: 2px solid var(--nl-surface);
+  margin: 0;
+  background: var(--nl-rule-blue);
+}
+
+/* ---------------------------------------------------------------- *
+ * Detail table
+ *
+ * The `.weaponch` label/value list the source uses for item properties,
+ * requirements, building services, and shop rows. Unlike `.nl-sheet-table` it
+ * has no alternating cell fills: it sits directly on its container surface.
+ * ---------------------------------------------------------------- */
+
+.nl-detail-table {
+  border-collapse: collapse;
+  color: var(--nl-text-soft);
+  font: 11px/15px var(--nl-font-tahoma);
+}
+
+.nl-detail-table--wide {
+  width: 100%;
+}
+
+.nl-detail-table th,
+.nl-detail-table td {
+  padding: 0 4px 0 0;
+  border: 0;
+  font-weight: 400;
+  text-align: left;
+  vertical-align: top;
+}
+
+.nl-detail-table th {
+  width: 1%;
+  color: var(--nl-text-soft);
+  white-space: nowrap;
+}
+
+.nl-detail-table td {
+  font-weight: 700;
+}
+
+/* Unmet requirement, or any value the source renders in its warning color. */
+.nl-requirement-missing th,
+.nl-requirement-missing td {
+  color: var(--nl-bonus);
+}
+
+/* ---------------------------------------------------------------- *
+ * Panels and empty states
+ * ---------------------------------------------------------------- */
+
+.nl-panel {
+  padding: 4px;
+  border: 1px solid var(--nl-rule);
+  background: var(--nl-surface);
+}
+
+.nl-panel > h2,
+.nl-panel > h3 {
+  margin: 0 0 3px;
+  color: var(--nl-text);
+  font: bold 11px/15px var(--nl-font-tahoma);
+}
+
+.nl-empty-note {
+  margin: 0;
+  padding: 3px;
+  color: var(--nl-text-muted);
+  font: 11px/15px var(--nl-font-tahoma);
+}
+
+.nl-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  border: 0;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ---------------------------------------------------------------- *
+ * Flash and notification surfaces
+ * ---------------------------------------------------------------- */
+
+.nl-flash,
+.nl-notification {
+  display: block;
+  padding: 3px 6px;
+  border: 1px solid var(--nl-rule-gold);
+  background: var(--nl-surface-header);
+  color: var(--nl-text-soft);
+  font: 11px/15px var(--nl-font-tahoma);
+}
+
+.nl-flash--alert,
+.nl-notification--alert { color: var(--nl-bonus); }
+
+.nl-flash--notice,
+.nl-notification--notice { color: #006600; }
 
 .nl-public-main {
   width: 100%;
@@ -293,24 +452,6 @@ input[type="submit"]:disabled {
   right: 4px;
   z-index: 100;
 }
-
-.flash,
-.nl-flash,
-.nl-notification {
-  display: block;
-  padding: 3px 6px;
-  border: 1px solid #b9a05c;
-  background: #fcfaf3;
-  color: #333333;
-  font-size: 11px;
-}
-
-.nl-flash--alert,
-.nl-notification--alert,
-.flash.alert { color: #cc0000; }
-.nl-flash--notice,
-.nl-notification--notice,
-.flash.success { color: #006600; }
 
 @media (prefers-reduced-motion: reduce) {
   *,

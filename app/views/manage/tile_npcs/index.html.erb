@@ -1,0 +1,19 @@
+<% content_for :title, "Cell NPCs · Management" %>
+<%= render "manage/shared/page_header", title: "Open-World Cell NPCs", description: "Persisted NPC placements consumed by the world tile resolver.", new_path: new_manage_tile_npc_path, new_label: "Create cell NPC" %>
+
+<%= form_with url: manage_tile_npcs_path, method: :get, class: "nl-manage-filter", local: true do |form| %>
+  <%= form.label :zone, "Outdoor zone" %><%= form.select :zone, options_from_collection_for_select(@zones, :name, :name, params[:zone]), include_blank: "All zones" %>
+  <%= form.submit "Filter", class: "lbut" %><%= link_to "Clear", manage_tile_npcs_path, class: "lbut" %>
+<% end %>
+
+<div class="nl-manage-table-wrap"><table class="nl-manage-table">
+  <thead><tr><th>NPC</th><th>Key</th><th>Cell</th><th>Level</th><th>HP</th><th>State</th><th>Actions</th></tr></thead>
+  <tbody>
+    <% @tile_npcs.each do |npc| %>
+      <tr><td><%= npc.display_name %></td><td><%= npc.npc_key %></td><td><%= npc.zone %> [<%= npc.x %>, <%= npc.y %>]</td><td><%= npc.level %></td><td><%= npc.current_hp %>/<%= npc.max_hp %></td><td><%= npc.alive? ? "Alive" : "Defeated" %></td>
+        <td class="nl-manage-table-actions"><%= link_to "View", manage_tile_npc_path(npc) %> <%= link_to "Edit", edit_manage_tile_npc_path(npc) %></td></tr>
+    <% end %>
+    <% if @tile_npcs.empty? %><tr><td colspan="7" class="nl-manage-empty">No cell NPCs found.</td></tr><% end %>
+  </tbody>
+</table></div>
+<%= render "manage/shared/pagination", pagination: @pagination %>

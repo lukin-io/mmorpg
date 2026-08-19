@@ -19,9 +19,11 @@ in the launch parity matrix.
 
 ## 1. Design authority and related documents
 
+Domain navigation: `doc/domains/inventory.md`.
+
 Neverlands is the sole UI, UX, and game-design authority. Direct evidence lives
-in `doc/design/reference/neverlands_live_game_shell_ui.md` and
-`doc/design/reference/neverlands_live_inventory_items.md`. MVP completion is
+in `doc/design/reference/shell/observations/2026-07-28_game_shell_and_mvp_surfaces.md` and
+`doc/design/reference/inventory/observations/2026-06-01_inventory_items_and_shop_rows.md`. MVP completion is
 tracked in `doc/design/launch_mvp_plan.md`.
 
 ### 1.1 Cross-feature relationships
@@ -211,14 +213,20 @@ behavior. No public JSON inventory API is part of this feature.
 
 ## 10. Client-side and CSS ownership
 
-`inventory_controller.js` owns selection-only presentation. Shared controls
-come from `tokens.css`/`primitives.css`; `player_inventory.css` alone owns the
-Profile/Inventory sheet geometry and dense rows. The shared character-sheet
-partial owns repeated markup. There is no Tailwind dependency and no `nl/`
-stylesheet folder; this is SRP by UI domain rather than utility-class sprawl.
-The same domain stylesheet owns the explicit `940/800/520px` adaptations:
-measured control geometry remains stable, dense controls scroll inside their
-own bands when required, and the whole page does not overflow.
+`inventory_controller.js` owns selection-only presentation. Shared controls,
+the detail table, and the panel/empty-state surfaces come from `tokens.css` and
+`primitives.css`. `character_sheet.css` owns the paper doll and the 200px
+parameter column shared with Profile; `inventory.css` owns the icon strip, mass
+line, item rows, family sections, and equipment sets. The shared
+character-sheet partial owns repeated markup.
+
+Slot pixel geometry is not duplicated in CSS: `EquipmentSlots` is the single
+source of truth and each cell receives its measured size as the `--nl-slot-w`
+and `--nl-slot-h` custom properties. There is no Tailwind dependency and no
+`nl/` stylesheet folder; this is SRP by UI domain rather than utility-class
+sprawl. `inventory.css` also owns the `780/520px` adaptations: measured control
+geometry remains stable, dense controls scroll inside their own bands when
+required, and the whole page does not overflow.
 
 ## 11. Persistence and login resume
 
@@ -273,8 +281,8 @@ boundary.
 ### Requirements and design evidence
 
 - `doc/design/features/items_inventory_equipment.md`
-- `doc/design/reference/neverlands_live_game_shell_ui.md`
-- `doc/design/reference/neverlands_live_inventory_items.md`
+- `doc/design/reference/shell/observations/2026-07-28_game_shell_and_mvp_surfaces.md`
+- `doc/design/reference/inventory/observations/2026-06-01_inventory_items_and_shop_rows.md`
 - `doc/design/launch_mvp_plan.md`
 
 ### Routes and controllers
@@ -298,9 +306,12 @@ boundary.
 - `app/views/inventories/**`
 - `app/views/shared/_neverlands_character_sheet.html.erb`
 - `app/views/shared/_equipment_paperdoll.html.erb`
+- `app/views/shared/_equipment_paperdoll_slot.html.erb`
+- `app/models/equipment_slots.rb`
 - `app/helpers/inventories_helper.rb`
 - `app/javascript/controllers/inventory_controller.js`
-- `app/assets/stylesheets/player_inventory.css`
+- `app/assets/stylesheets/character_sheet.css`
+- `app/assets/stylesheets/inventory.css`
 
 ### Content, configuration, seeds, and schema
 
@@ -329,10 +340,18 @@ boundary.
 
 ## 17. Safe extension checklist
 
+`doc/guides/managing_game_content.md` documents the future explicit
+`ItemTemplate` management adapter and the separate service-backed inventory
+grant/revoke pattern. Those examples are extension guidance, not currently
+shipped Inventory management routes.
+
 1. Capture the exact Neverlands state first.
 2. Add stable server content/identity, never DOM-derived authority.
 3. Keep the shared sheet markup reusable and domain actions separate.
-4. Extend only `player_inventory.css` for Inventory/Profile composition.
+4. Extend `character_sheet.css` for shared sheet geometry and `inventory.css`
+   for the carried-item column; never redefine control chrome outside
+   `primitives.css`, and never restate slot pixel sizes outside
+   `EquipmentSlots`.
 5. Cover success, failure, boundary, ownership, and concurrency as applicable.
 6. Update the launch matrix and this handbook only after verification.
 
@@ -343,3 +362,5 @@ boundary.
 | 2026-07-28 | Created the canonical Inventory handbook after the fresh authenticated Neverlands parity pass and documented the matched baseline plus remaining state gaps. |
 | 2026-07-28 | Added the local-only responsive contract: preserve desktop measured geometry, retain tablet columns, stack below 800px, center the CSS paper doll, and contain control overflow within its band. |
 | 2026-07-28 | Replaced source-owned runtime images and source-specific copy with a CSS character silhouette, CSS/text controls, and game-specific copy while preserving measured geometry and hierarchy. |
+| 2026-07-29 | Rebuilt the surface from a second authenticated capture: `EquipmentSlots` now carries the measured per-slot geometry, the doll renders the source column order, the two icon rows collapsed into the source's single strip plus subcategory row, and `player_inventory.css` was replaced by `character_sheet.css` and `inventory.css`. |
+| 2026-07-29 | Linked the cross-feature management guide's future `ItemTemplate` adapter and service-backed inventory grant/revoke pattern without claiming those routes are shipped. |

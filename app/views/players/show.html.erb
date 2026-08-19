@@ -1,21 +1,23 @@
 <% content_for :title, "#{@character.name} - Character" %>
 
-<section class="nl-player-profile nl-source-character-page">
-  <div class="nl-visually-hidden" aria-live="polite">
-    <h1><%= @character.name %> [<%= @character.level %>]</h1>
-    <p><%= profile_location(@character) %></p>
-    <% if @character.owned_perk_keys.any? %>
-      <h2>Perks</h2>
-      <ul>
-        <% @character.owned_perk_keys.each do |perk_key| %>
-          <% definition = Game::Skills::PerkRegistry.find(perk_key) %>
-          <li><%= definition[:name] %></li>
-        <% end %>
-      </ul>
-    <% end %>
-  </div>
-  <div class="nl-source-character-grid">
-    <aside class="nl-source-character-left">
+<%#
+  Player profile.
+
+  For the owner this renders inside the game shell, whose header already
+  carries the name, level, and vitals, so the sheet starts directly with the
+  paper doll as in the live capture. A visitor gets that identity line here
+  instead, because the public layout has no shell header.
+%>
+<section class="nl-character-page">
+  <% unless @own_profile %>
+    <header class="nl-profile-identity">
+      <h1><%= @character.name %> [<%= @character.level %>]</h1>
+      <p><%= profile_location(@character) %></p>
+    </header>
+  <% end %>
+
+  <div class="nl-character-page-grid">
+    <aside class="nl-character-page-aside">
       <%= render "shared/neverlands_character_sheet",
         character: @character,
         equipment: @equipment,
@@ -23,15 +25,25 @@
         show_money: @own_profile %>
     </aside>
 
-    <main class="nl-source-character-right">
-      <%= render "shared/neverlands_profile_navigation", character: @character %>
+    <main class="nl-character-page-main">
+      <% if @own_profile %>
+        <%= render "shared/neverlands_profile_navigation", character: @character %>
 
-      <% if @own_profile && @character.stat_points_available.to_i.positive? %>
-        <turbo-frame id="stat-allocation" class="nl-source-allocation">
-          <%= render "characters/stat_allocation" %>
-        </turbo-frame>
+        <% if @character.stat_points_available.to_i.positive? %>
+          <turbo-frame id="stat-allocation" class="nl-allocation-frame">
+            <%= render "characters/stat_allocation" %>
+          </turbo-frame>
+        <% end %>
+      <% elsif @character.owned_perk_keys.any? %>
+        <div class="nl-panel">
+          <h2>Perks</h2>
+          <ul class="nl-profile-perk-list">
+            <% @character.owned_perk_keys.each do |perk_key| %>
+              <li><%= Game::Skills::PerkRegistry.find(perk_key)[:name] %></li>
+            <% end %>
+          </ul>
+        </div>
       <% end %>
-
     </main>
   </div>
 </section>

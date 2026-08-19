@@ -1,22 +1,29 @@
 # Feature documentation
 
-`doc/features/` contains implementation handbooks for player-facing game features. A feature document is the bridge between Neverlands observations, the shipped Rails implementation, and the tests that protect it. It should let an engineer or AI agent understand what the player can do, where authority lives, which files own the behavior, what is intentionally deferred, and how to verify a change without reconstructing the feature from the repository.
+`doc/features/` contains implementation handbooks for player-facing game features. A feature document is the bridge between Neverlands observations, the shipped Rails implementation, and the tests that protect it. It should let an engineer or AI agent understand what the player can do, where authority lives, which files own the behavior, what is intentionally deferred, and how to verify a change without reconstructing the feature from the repository. A bounded feature that has design/navigation ownership but no runtime may have an audited `NOT_IMPLEMENTED` placeholder so its absence is explicit rather than silently invented.
 
-These documents describe fully implemented behavior within an explicit feature or area boundary. Product planning remains in `doc/design/launch_mvp_plan.md`; raw live-game evidence remains in `doc/design/reference/`; broader system design remains in `doc/design/areas/` and `doc/design/features/`.
+Shipped handbooks describe fully implemented behavior within an explicit feature or area boundary. `NOT_IMPLEMENTED` handbooks describe no runtime behavior and must say so in every applicable section. Product planning remains in `doc/design/launch_mvp_plan.md`; raw live-game evidence remains in `doc/design/reference/`; broader system design remains in `doc/design/areas/` and `doc/design/features/`.
 
 ## Fully implemented eligibility gate
 
-`Fully Implemented` is the only green status for creating or retaining a canonical handbook in this directory. The handbook may own either one bounded player-facing feature or one coherent feature area, but every behavior it describes as active must exist, be integrated, and have all applicable tests passing before the handbook is created or promoted.
+`Fully Implemented` is the only green status. The handbook may own either one bounded player-facing feature or one coherent feature area, but every behavior it describes as active must exist, be integrated, and have all applicable tests passing before the handbook is promoted.
 
 Fully implemented means complete for the handbook's declared MVP boundary; it does not mean every future Neverlands mechanic is shipped. Source-observed behavior outside that boundary belongs under non-goals or in `doc/design/**`. If a material in-scope path remains partly implemented, read-only, untested, or unavailable, keep its contract in design/planning documents until the gap is closed. Do not create a narrower duplicate handbook merely to make a partial slice look complete when an existing feature or area already owns the behavior.
 
-The older `Implemented MVP` and `Partially Implemented` metadata values are transitional, non-green states. They may remain only while an existing handbook is audited, completed, merged into the correct owner, or retired. They must not be copied into a new handbook. `bin/feature-doc-audit` reports either value as a warning.
+The exact `NOT_IMPLEMENTED` status is allowed only for a discoverability
+placeholder copied from `NOT_IMPLEMENTED_TEMPLATE.md`. It claims that no route,
+runtime owner, persistent lifecycle, UI/CSS owner, or runtime spec exists for
+that feature boundary. It is non-green and cannot be used to describe a
+partially shipped feature. The older `Implemented MVP` and `Partially
+Implemented` values remain transitional and non-green. The audit warns for all
+three non-green statuses.
 
 ## Directory contents
 
 | Document | Purpose |
 |---|---|
 | `FEATURE_TEMPLATE.md` | Canonical structure for every new feature implementation handbook. Copy it; do not write a new format from scratch. |
+| `NOT_IMPLEMENTED_TEMPLATE.md` | Canonical 18-section structure for an explicitly missing runtime; never treat it as a planning PRD or completion claim. |
 | `world.md` | Completed handbook for the open world, sparse cells, movement, outdoor actions, gates, NPC handoff, and exact-location persistence. |
 | `city.md` | Completed handbook for the Forpost node graph, illustrated navigation, gates, buildings, captured interiors, and resume behavior. |
 | `character_progression.md` | Completed handbook for level-0 startup, source-table XP/grants, primary stats and exact derived values, numeric skills, the launch perk subset, locked allocation, and public progression display. |
@@ -24,8 +31,26 @@ The older `Implemented MVP` and `Partially Implemented` metadata values are tran
 | `arena_combat.md` | Completed bounded handbook for Arena applications, shared player/NPC turn combat, active-fight presentation, completion, and public fight logs. |
 | `shop_economy.md` | Transitional handbook for the City Shop, catalog modes, NV wallet, buying, inventory selling, stock, and transaction persistence; it is not green until its declared boundary is fully implemented. |
 | `game_shell.md` | Transitional handbook for the persistent game frame, compact vitals, exact-cell presence, global chat, and shell preferences; it is not green until its declared boundary is fully implemented. |
+| `quests.md` | `NOT_IMPLEMENTED` placeholder linked to the complete-Quest evidence gap. |
+| `professions.md` | `NOT_IMPLEMENTED` placeholder linked to the complete-profession evidence gap. |
+| `dungeons.md` | `NOT_IMPLEMENTED` placeholder linked to the complete-dungeon evidence gap. |
 
 `world.md` and `city.md` are the canonical area-level `feature-v1` examples. `character_progression.md`, `player_inventory.md`, and `arena_combat.md` are green examples for bounded features whose broader source taxonomy remains explicitly deferred. The remaining transitional handbooks use the canonical layout but are not completion examples while their status remains non-green. `FEATURE_TEMPLATE.md` defines the required layout for subsequent features.
+
+## Recording an unimplemented feature
+
+Use a `NOT_IMPLEMENTED` handbook only when the domain or normalized design is
+already part of the documentation registry and discoverability would otherwise
+leave an implementation gap. Copy `doc/features/NOT_IMPLEMENTED_TEMPLATE.md`,
+retain all 18 sections, replace all template content, and link only real
+evidence/design files. Do not invent routes, models, services, stylesheets,
+assets, migrations, seeds, or specs. Section 16 must identify the placeholder
+and its existing evidence/design owners, then state that runtime/spec ownership
+is `NOT_IMPLEMENTED`.
+
+When work is later implemented, verify code and tests first, then rewrite the
+same canonical handbook from the shipped-feature template and promote its
+status. Do not create a second handbook.
 
 ## Creating a feature document
 
@@ -65,7 +90,12 @@ bin/feature-doc-audit
 bin/verify docs
 ```
 
-The audit validates required metadata, canonical section ordering for `template: feature-v1`, the required cross-feature relationship subsection, reciprocal feature references, unresolved template content, trailing whitespace, responsible-file existence, duplicate feature titles, and the green completion status. Transitional statuses emit a warning.
+The audit validates required metadata, allowed implemented/transitional/
+`NOT_IMPLEMENTED` status, canonical section ordering for `template:
+feature-v1`, the required cross-feature relationship subsection, reciprocal
+shipped-feature references, unresolved template content, trailing whitespace,
+responsible-file existence, duplicate feature titles, and green completion.
+Every non-green status emits a warning.
 
 Use `--strict` only when intentionally checking a pre-template document against the canonical 18-section layout:
 
@@ -210,6 +240,11 @@ Never invent a nonexistent spec path to satisfy the template. If a layer does no
 Use `status: Fully Implemented` for every new or promoted feature/area handbook. Every active behavior must be shipped and covered; deferred behavior must be outside the declared boundary and clearly separated under non-goals.
 
 `Implemented MVP` and `Partially Implemented` are transitional legacy values, not green completion states. Do not use them for a new handbook, and do not create a handbook containing planned, read-only, unavailable, or materially untested in-scope behavior.
+
+Use `status: NOT_IMPLEMENTED` only for a complete placeholder copied from
+`NOT_IMPLEMENTED_TEMPLATE.md`. It is deliberately non-green and contains no
+active behavior. `EVIDENCE_NEEDED` and `DESIGN_NEEDED` belong to the reference
+and design layers, not feature-handbook metadata.
 
 ## Keeping documents current
 

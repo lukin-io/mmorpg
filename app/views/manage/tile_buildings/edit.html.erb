@@ -1,0 +1,2 @@
+<%= render "manage/shared/page_header", title: "Edit Cell Building", description: @tile_building.name %>
+<%= render "form", tile_building: @tile_building, url: manage_tile_building_path(@tile_building), submit_label: "Save cell building", cancel_path: manage_tile_building_path(@tile_building) %>

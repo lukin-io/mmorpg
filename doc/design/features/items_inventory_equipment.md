@@ -1,5 +1,7 @@
 # Items, Inventory, And Equipment
 
+Domain navigation: `doc/domains/inventory.md`.
+
 ## Purpose
 
 Items make character progression concrete. Inventory limits, equipment
@@ -11,8 +13,8 @@ combat systems practical constraints.
 Inputs:
 
 - `doc/design/reference/neverlands.md`
-- `doc/design/reference/neverlands_live_game_shell_ui.md`
-- `doc/design/reference/neverlands_live_inventory_items.md`
+- `doc/design/reference/shell/observations/2026-07-28_game_shell_and_mvp_surfaces.md`
+- `doc/design/reference/inventory/observations/2026-06-01_inventory_items_and_shop_rows.md`
 - `doc/design/features/combat.md`
 
 ## Player Experience

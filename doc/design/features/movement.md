@@ -1,5 +1,7 @@
 # Movement
 
+Domain navigation: `doc/domains/world.md`.
+
 ## Purpose
 
 Movement gives the world weight. Outdoor travel should feel deliberate,

@@ -160,14 +160,7 @@ export default class extends Controller {
 
     const hasChanges = this.hasUnsavedChanges()
     this.saveButtonTarget.disabled = !hasChanges
-
-    if (hasChanges) {
-      this.saveButtonTarget.classList.remove("nl-btn--disabled")
-      this.saveButtonTarget.classList.add("nl-btn--primary")
-    } else {
-      this.saveButtonTarget.classList.add("nl-btn--disabled")
-      this.saveButtonTarget.classList.remove("nl-btn--primary")
-    }
+    this.saveButtonTarget.classList.toggle("nl-btn--disabled", !hasChanges)
   }
 
   /**

@@ -114,6 +114,11 @@ module InventoriesHelper
     "quests" => "Quest"
   }.freeze
 
+  # Family strip order observed in the live inventory capture. The source has no
+  # "all" icon: its first family is the equipment family, so the local default
+  # `all` category highlights the same cell.
+  INVENTORY_FAMILY_STRIP = %w[things elixirs alchemy fishing hunting resources wood quests].freeze
+
   ITEM_DETAIL_LABELS = {
     "ap" => "Action Points",
     "action_points" => "Action Points",
@@ -193,6 +198,10 @@ module InventoriesHelper
 
   def inventory_category_mark(category)
     INVENTORY_CATEGORY_MARKS.fetch(category.to_s, INVENTORY_CATEGORY_MARKS.fetch("all"))
+  end
+
+  def inventory_category_label(category)
+    INVENTORY_CATEGORIES.to_h.fetch(category.to_s, category.to_s.humanize)
   end
 
   def inventory_things_subcategory_options
@@ -286,6 +295,32 @@ module InventoriesHelper
     return nil if current.to_i.zero? && maximum.to_i.zero?
 
     [current || maximum, maximum || current].join("/")
+  end
+
+  # Tooltip for a filled paper-doll slot.
+  #
+  # Mirrors the live `sl_alts` shape: item name first, then only the combat
+  # values the source exposes on hover, then durability. Rendered as a plain
+  # multi-line `title` so it stays available to keyboard and screen readers.
+  def paperdoll_slot_tooltip(item, label)
+    template = item.item_template
+    modifiers = template.stat_modifiers.to_h
+    lines = [template.name.presence || label]
+
+    damage_min = modifiers["damage_min"].to_i
+    damage_max = modifiers["damage_max"].to_i
+    lines << "Damage: #{damage_min}-#{damage_max}" if damage_min.positive? || damage_max.positive?
+
+    {"Armor class" => "armor_class", "Armor pierce" => "armor_pierce", "HP" => "max_hp", "Mana" => "max_mp"}
+      .each do |title, key|
+        amount = modifiers[key].to_i
+        lines << "#{title}: #{signed_value(amount)}" unless amount.zero?
+      end
+
+    durability = inventory_item_durability(item)
+    lines << "Durability: #{durability}" if durability
+
+    lines.join("\n")
   end
 
   def inventory_item_durability_percent(item)

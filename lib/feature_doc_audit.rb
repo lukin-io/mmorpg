@@ -2,12 +2,18 @@
 
 require "pathname"
 
-# Validates completed feature handbooks against the canonical documentation
-# contract without loading Rails or mutating repository files.
+# Validates canonical feature handbooks, including explicit missing-runtime
+# records, without loading Rails or mutating repository files.
 module FeatureDocAudit
   TEMPLATE_ID = "feature-v1"
   FULLY_IMPLEMENTED_STATUS = "Fully Implemented"
-  ALLOWED_STATUSES = [FULLY_IMPLEMENTED_STATUS, "Implemented MVP", "Partially Implemented"].freeze
+  NOT_IMPLEMENTED_STATUS = "NOT_IMPLEMENTED"
+  ALLOWED_STATUSES = [
+    FULLY_IMPLEMENTED_STATUS,
+    "Implemented MVP",
+    "Partially Implemented",
+    NOT_IMPLEMENTED_STATUS
+  ].freeze
   REQUIRED_SECTIONS = [
     "## 1. Design authority and related documents",
     "## 2. Feature summary",
@@ -28,8 +34,12 @@ module FeatureDocAudit
     "## 17. Safe extension checklist",
     "## 18. Version history"
   ].freeze
-  COMPLETED_DOC_EXCLUSIONS = %w[FEATURE_TEMPLATE.md README.md].freeze
-  REPOSITORY_PATH_PATTERN = /`((?:app|bin|config|db|doc|lib|spec)\/[^`\n]+)`/
+  DOCUMENT_EXCLUSIONS = %w[
+    FEATURE_TEMPLATE.md
+    NOT_IMPLEMENTED_TEMPLATE.md
+    README.md
+  ].freeze
+  REPOSITORY_PATH_PATTERN = /`((?:app|bin|config|db|doc|lib|spec)\/[^`\s]+)`/
   CROSS_FEATURE_HEADING = "### 1.1 Cross-feature relationships"
   FEATURE_DOC_PATH_PATTERN = /`(doc\/features\/[a-z0-9_]+\.md)`/
 
@@ -39,7 +49,7 @@ module FeatureDocAudit
     end
   end
 
-  # Audits explicit feature documents or every completed handbook under
+  # Audits explicit feature documents or every canonical handbook under
   # doc/features when no paths are provided.
   class Auditor
     # @param root [String, Pathname] repository root
@@ -80,7 +90,7 @@ module FeatureDocAudit
     def documents_to_audit
       documents = if paths.empty?
         root.join("doc/features").glob("*.md").reject do |document|
-          COMPLETED_DOC_EXCLUSIONS.include?(document.basename.to_s)
+          DOCUMENT_EXCLUSIONS.include?(document.basename.to_s)
         end
       else
         paths.map { |document| resolve_path(document) }
@@ -151,7 +161,7 @@ module FeatureDocAudit
       end
 
       if ALLOWED_STATUSES.include?(metadata["status"]) && metadata["status"] != FULLY_IMPLEMENTED_STATUS
-        warnings << "#{display_path(document)}: #{metadata['status']} is transitional; only Fully Implemented is green for a feature or area handbook"
+        warnings << "#{display_path(document)}: #{metadata['status']} is non-green; only Fully Implemented is green for a feature or area handbook"
       end
 
       unless metadata["updated"].to_s.match?(/\A\d{4}-\d{2}-\d{2}\z/)

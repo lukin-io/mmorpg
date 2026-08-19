@@ -31,12 +31,12 @@ RSpec.describe "Responsive Neverlands UI", type: :system, js: true do
     visit player_path(name: character.name)
 
     expect(page).to have_css("body.nl-game-layout")
-    expect(page).to have_css(".nl-source-character-page")
+    expect(page).to have_css(".nl-character-page")
     expect(page.evaluate_script(<<~JS)).to eq({"shellFits" => true, "profileFits" => true, "singleColumn" => true, "topHeight" => 54, "bottomHeight" => 60})
       (() => {
         const shell = document.querySelector(".nl-game-layout")
         const main = document.querySelector(".nl-main-area")
-        const profile = document.querySelector(".nl-source-character-page")
+        const profile = document.querySelector(".nl-character-page")
         const sheet = document.querySelector(".nl-character-sheet")
         return {
           shellFits: shell.scrollWidth <= window.innerWidth + 1,
@@ -58,7 +58,7 @@ RSpec.describe "Responsive Neverlands UI", type: :system, js: true do
       (() => {
         const inventory = document.querySelector(".nl-inventory-page")
         const main = document.querySelector(".nl-main-area")
-        const grid = document.querySelector(".nl-source-character-grid")
+        const grid = document.querySelector(".nl-inventory-grid")
         return inventory.scrollWidth <= main.clientWidth + 1 &&
           getComputedStyle(grid).gridTemplateColumns.split(" ").length === 2
       })()
@@ -70,8 +70,8 @@ RSpec.describe "Responsive Neverlands UI", type: :system, js: true do
       (() => {
         const inventory = document.querySelector(".nl-inventory-page")
         const main = document.querySelector(".nl-main-area")
-        const grid = document.querySelector(".nl-source-character-grid")
-        const categories = document.querySelector(".nl-source-inventory-icons--categories")
+        const grid = document.querySelector(".nl-inventory-grid")
+        const categories = document.querySelector(".nl-icon-strip")
         return inventory.scrollWidth <= main.clientWidth + 1 &&
           getComputedStyle(grid).gridTemplateColumns.split(" ").length === 1 &&
           categories.scrollWidth >= categories.clientWidth

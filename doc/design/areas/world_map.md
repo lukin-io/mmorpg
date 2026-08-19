@@ -1,5 +1,7 @@
 # World Map Area
 
+Domain navigation: `doc/domains/world.md`.
+
 ## Purpose
 
 The world map is the outdoor exploration surface. It is where players travel
@@ -164,11 +166,12 @@ Static cell composition is deliberately split by responsibility:
 | Resource/local action | tile template's validated local-action list | yes, including several action types |
 
 The operational source-of-truth matrix and complete add, adjust, move,
-deactivate, and remove examples live in `doc/features/world.md`, section 7.4.
-That handbook also explains when `db/seeds.rb` reconciles a DB-backed row, when
-`config/gameplay/outdoor_npcs.yml` only defines future materialization, and
-which persisted rows require explicit scoped cleanup. Do not create a second
-location, resource, or NPC catalog from this design document.
+deactivate, and remove examples live in `doc/features/world.md`, sections 7.4
+and 7.5. That handbook explains how `db/seeds.rb` materializes baseline
+`config/gameplay/outdoor_npcs.yml` declarations, how `/manage` edits the same
+persisted owners directly, and when a later seed intentionally reconciles a
+managed override. Do not create a second location, resource, or NPC catalog
+from this design document.
 
 An outdoor linked location is a view over the persisted cell, not a new source
 of position truth. `building_type: location` identifies the entrance; validated
@@ -219,8 +222,9 @@ Pipeline for every world map request:
 1. Complete due movement.
 2. Load current finalized character location.
 3. Resolve current tile state.
-4. Materialize any generated NPC as hidden server state; do not render its
-   identity or a manual attack affordance.
+4. Resolve any persisted exact-cell NPC as hidden server state; do not render
+   its identity or a manual attack affordance. Config-to-DB materialization is
+   a seed responsibility, never a request-time side effect.
 5. Build movement offers and contextual action offers.
 6. Before completing a mutating outdoor action, evaluate source-backed hostile
    encounter rules for the current tile.
@@ -284,8 +288,8 @@ Validation rules:
   target;
 - stale offers are rejected;
 - offers are cancelled/reissued when the authoritative map state changes;
-- generated NPC state is materialized before action resolution but is not
-  exposed as a map marker, name, or manual attack offer;
+- persisted NPC state is resolved before action resolution but is not exposed
+  as a map marker, name, or manual attack offer;
 - accepted actions write a result row or status update for audit and replay.
 - if an accepted outdoor action triggers a hostile NPC attack, the original
   action does not silently complete; the response becomes a combat state and

@@ -1,0 +1,286 @@
+/*
+ * Player profile and the stat / skill / perk allocation surfaces.
+ *
+ * The profile's fluid right column in the source is a `#FCFAF3` tab panel of
+ * `.lbut` controls sitting under a `#E0D6BB` rule. The allocation screens
+ * reuse that panel, because the source reaches them from the same tab band.
+ * Source: doc/design/reference/neverlands_live_style_system.md
+ * ("Profile Parameter Column").
+ */
+
+/*
+ * Visitor-facing identity line. The owner's copy of this information lives in
+ * the shell header, so this block only renders for a visitor.
+ */
+.nl-profile-identity {
+  padding: 4px var(--nl-frame-gutter);
+  border-bottom: 1px solid var(--nl-rule-gold);
+  background: var(--nl-surface-header);
+}
+
+.nl-profile-identity h1 {
+  margin: 0;
+  color: var(--nl-text);
+  font: bold 12px/16px var(--nl-font-verdana);
+}
+
+.nl-profile-identity p {
+  margin: 0;
+  color: var(--nl-text);
+  font: 12px/16px var(--nl-font-tahoma);
+}
+
+.nl-profile-perk-list {
+  margin: 0;
+  padding-left: 16px;
+  color: var(--nl-text-soft);
+  font: 11px/15px var(--nl-font-tahoma);
+}
+
+.nl-profile-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  border-top: 1px solid var(--nl-rule-gold-soft);
+  background: var(--nl-surface-header);
+}
+
+.nl-player-subnavigation,
+.nl-player-context-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+
+/* ---------------------------------------------------------------- *
+ * Allocation panels
+ * ---------------------------------------------------------------- */
+
+.nl-allocation-frame {
+  display: block;
+  margin-top: 3px;
+}
+
+.nl-allocation-panel {
+  padding: 4px;
+  border: 1px solid var(--nl-rule);
+  background: var(--nl-surface);
+}
+
+.nl-allocation-points,
+.nl-allocation-pool {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 4px;
+  background: var(--nl-surface-header);
+  color: var(--nl-text);
+  font: 11px/15px var(--nl-font-tahoma);
+}
+
+.nl-allocation-points-value,
+.nl-allocation-pool-value {
+  font-weight: 700;
+}
+
+.nl-allocation-pools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.nl-allocation-pool {
+  flex: 1 1 160px;
+}
+
+.nl-allocation-pool-icon {
+  display: inline-flex;
+  width: 15px;
+  height: 15px;
+  align-items: center;
+  justify-content: center;
+  color: var(--nl-text-inverse);
+  font: bold 9px/15px var(--nl-font-tahoma);
+}
+
+.nl-allocation-pool--combat .nl-allocation-pool-icon { background: var(--nl-chip-combat); }
+.nl-allocation-pool--peace .nl-allocation-pool-icon { background: var(--nl-chip-fatigue); }
+
+.nl-allocation-form {
+  display: block;
+  margin-top: 4px;
+}
+
+.nl-allocation-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  padding-top: 4px;
+}
+
+/* ---------------------------------------------------------------- *
+ * Stat rows
+ * ---------------------------------------------------------------- */
+
+.nl-stats-grid,
+.nl-skills-grid {
+  display: grid;
+  gap: 1px;
+  background: var(--nl-rule);
+  border: 1px solid var(--nl-rule);
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.nl-stat-row {
+  display: grid;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 4px;
+  background: var(--nl-surface);
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.nl-stat-name {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px;
+  font: 12px/16px var(--nl-font-verdana);
+}
+
+.nl-stat-base,
+.nl-skill-description,
+.nl-perk-source-id {
+  color: var(--nl-text-muted);
+  font: 10px/14px var(--nl-font-tahoma);
+}
+
+.nl-stat-controls,
+.nl-skill-controls {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  white-space: nowrap;
+}
+
+.nl-stat-value,
+.nl-skill-value {
+  min-width: 56px;
+  color: var(--nl-text);
+  font: 11px/15px var(--nl-font-verdana);
+  text-align: center;
+}
+
+/* Pending client-side allocation, before the form is saved. */
+.nl-stat-added,
+.nl-skill-added {
+  color: var(--nl-glory-xp);
+  font-weight: 700;
+}
+
+/* ---------------------------------------------------------------- *
+ * Skill and perk rows
+ * ---------------------------------------------------------------- */
+
+.nl-skill-category-section + .nl-skill-category-section {
+  margin-top: 4px;
+}
+
+.nl-skill-category-header {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0;
+  padding: 2px 4px;
+  background: var(--nl-surface-column-head);
+  color: #000000;
+  font: bold 11px/15px var(--nl-font-tahoma);
+}
+
+.nl-skill-category-icon {
+  display: inline-flex;
+  width: 15px;
+  height: 15px;
+  align-items: center;
+  justify-content: center;
+  background: var(--nl-surface);
+  font: bold 9px/15px var(--nl-font-tahoma);
+}
+
+.nl-skill-row {
+  display: grid;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 4px;
+  background: var(--nl-surface);
+  grid-template-columns: minmax(0, 1fr) auto auto;
+}
+
+.nl-skill-info {
+  min-width: 0;
+}
+
+.nl-skill-name {
+  display: block;
+  color: var(--nl-text);
+  font: 12px/16px var(--nl-font-verdana);
+}
+
+.nl-skill-description {
+  margin: 0;
+}
+
+.nl-skill-meta {
+  min-width: 34px;
+  text-align: right;
+}
+
+.nl-skill-gain {
+  color: var(--nl-glory-xp);
+  font: bold 10px/14px var(--nl-font-tahoma);
+}
+
+.nl-skill-gain--max {
+  color: var(--nl-text-muted);
+}
+
+.nl-perk-state {
+  min-width: 34px;
+  color: var(--nl-text-muted);
+  font: 11px/15px var(--nl-font-tahoma);
+  text-align: center;
+}
+
+.nl-perk-state--owned {
+  color: var(--nl-glory-xp);
+  font-weight: 700;
+}
+
+.nl-perk-state--pending {
+  color: var(--nl-link-strong);
+  font-weight: 700;
+}
+
+.nl-perk-empty-points {
+  margin: 4px 0 0;
+  color: var(--nl-text-muted);
+  font: 11px/15px var(--nl-font-tahoma);
+}
+
+/* ---------------------------------------------------------------- *
+ * Responsive fallback (local addition)
+ * ---------------------------------------------------------------- */
+
+@media (max-width: 520px) {
+  .nl-skill-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .nl-skill-meta {
+    grid-column: 2;
+  }
+}

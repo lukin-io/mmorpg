@@ -3,7 +3,7 @@
 title: World Feature
 description: Implementation handbook for the Neverlands-based open world, cells, movement, cell content, actions, and persisted player location.
 status: Fully Implemented
-updated: 2026-07-28
+updated: 2026-07-29
 owners: Game world, movement, and world UI
 template: feature-v1
 ---
@@ -16,6 +16,8 @@ It describes what exists now. It does not turn deferred Neverlands mechanics int
 
 ## 1. Design authority and related documents
 
+Domain navigation: `doc/domains/world.md`.
+
 Neverlands is the sole game-design reference for this feature. The local implementation adapts the observed behavior to Rails, Turbo, Stimulus, and the current English-only client; it must not be expanded with generic legacy-RPG conventions.
 
 When behavior is uncertain or conflicts with this document:
@@ -27,9 +29,9 @@ When behavior is uncertain or conflicts with this document:
 
 Supporting documents:
 
-- `doc/design/reference/neverlands_live_movement.md` — live movement observations.
-- `doc/design/reference/neverlands_live_outdoor_npc_resource.md` — observed outdoor cell, NPC, and resource behavior.
-- `doc/design/reference/neverlands_live_game_shell_ui.md` — persistent game-shell observations.
+- `doc/design/reference/world/observations/2026-05-09_overworld_movement.md` — live movement observations.
+- `doc/design/reference/world/observations/2026-05-20_outdoor_npc_resource.md` — observed outdoor cell, NPC, and resource behavior.
+- `doc/design/reference/shell/observations/2026-07-28_game_shell_and_mvp_surfaces.md` — persistent game-shell observations.
 - `doc/design/areas/world_map.md` — world-area design record.
 - `doc/design/features/movement.md` — movement design record.
 - `doc/design/features/professions.md` — explicit evidence boundary for future cell-based gathering.
@@ -220,6 +222,12 @@ South/East gate rows from the superseded city topology. The illustrated Law
 Quarter exit remains a non-mutating city landmark until its outdoor handoff is
 captured; it must not be inferred as another outdoor entrance.
 
+For an existing database, `bin/rails db:seed` synchronizes both sides of this
+pair and retires the historical South/East entrances plus their stale City
+hotspots/offers. The operation preserves characters on retained City nodes and
+recovers only characters stranded in removed-only nodes to Central Square
+`[0,0]`; it never resets an outdoor `CharacterPosition`.
+
 ### 5.3 Captured linked location
 
 The local `[4, 6]` cell carries source metadata for the observed village
@@ -246,7 +254,10 @@ states, actions, and failure rules are captured.
 
 The explicit cell at local `[7, 7]` corresponds to captured Neverlands coordinate `[1001, 999]`. It stores the validated `forpost_terrain` cell-art slice, supplies the authored outdoor observation/resource context, and materializes a hidden hostile Plague Rat encounter anchor from `config/gameplay/outdoor_npcs.yml` with level, health, damage, experience, respawn, loot, and `encounter_count: 2` metadata. Starting its fight creates two distinct Plague Rat participations on side B, matching the captured paired-rat ambush.
 
-The config is evidence-backed content input. `TileNpcService` owns materialized runtime state; changing YAML alone is not an authorization mechanism. Local and source coordinates must never be mixed in services or requests.
+The config is evidence-backed seed input. `db/seeds.rb` reconciles the
+persisted placement and `TileNpcService` reads that DB state only; changing YAML
+alone is neither a runtime mutation nor an authorization mechanism. Local and
+source coordinates must never be mixed in services or requests.
 
 ## 6. Feature surfaces and contained behavior
 
@@ -305,7 +316,7 @@ The client exposes no generic building, pathfinding, terrain-speed, gathering-re
 | `MovementCommand` | Offered or active timed move | Captures source, target, direction, status, action key, offer expiry, and movement timestamps. |
 | `Character` fatigue fields | Persisted fatigue and recovery anchor | Effective value is time-derived, clamped `0..100`, and gates only source-named wilderness actions. |
 | `WorldActionOffer` | Capability for one cell mutation | Character-owned, short-lived action tied to exact zone, coordinate, type, and polymorphic target. |
-| `TileNpc` | Materialized state of a configured outdoor NPC | Tracks live/defeated state and respawn timing at an exact cell. |
+| `TileNpc` | Persisted state of an outdoor NPC placement | Tracks exact-cell identity, live/defeated state, and respawn timing. Runtime resolution never recreates a deleted placement from config. |
 | `TileBuilding` | Explicit outdoor entrance and linked-location content owner | `city` stores an authored destination zone/coordinate; `location` stores validated scene/feature metadata on the same movable/deactivatable DB row and preserves the outdoor coordinate. |
 
 ### 7.1 Sparse-cell rule
@@ -454,7 +465,7 @@ the existing owner before editing data:
 |---|---|---|---|
 | Terrain, passability, art reference, and local resource/action definitions | `outdoor_tiles` in `db/seeds.rb` | `MapTileTemplate` | movement `TileProvider` plus current-cell `TileStateResolver` |
 | City or linked-location entrance | `Game::World::CityCatalog::GATES` for the verified city pair; `tile_buildings` in `db/seeds.rb` for the persisted entrance attributes | `TileBuilding` | `TileBuildingService` and `TileStateResolver` |
-| Hostile outdoor NPC placement/template input | `config/gameplay/outdoor_npcs.yml` | lazily created `NpcTemplate` and exact-cell `TileNpc` | `OutdoorNpcConfig`, `TileNpcService`, and `TileStateResolver` |
+| Hostile outdoor NPC placement/template input | `config/gameplay/outdoor_npcs.yml` | seed-materialized `NpcTemplate` and exact-cell `TileNpc` | `db/seeds.rb`, then DB-only `TileNpcService` and `TileStateResolver` |
 | Visible current-cell capabilities | never hand-authored or seeded | short-lived `WorldActionOffer` | `ActionOfferBuilder`, `AcceptAction`, then the owning transition service |
 | Hidden hostile interruption | never represented by a visible offer | current live `TileNpc` state | `InterruptAction` and `StartNpcFight` |
 
@@ -472,8 +483,10 @@ the existing owner before editing data:
 3. Preserve stable keys (`building_key`, local-action `type`, and NPC `key`)
    while adjusting the same content. A replacement with different identity gets
    a new key and an explicit retirement of the old key.
-4. Change the declaration source and reconcile already-persisted state. Removing
-   a Ruby hash or YAML entry alone does not necessarily remove its database row.
+4. For baseline source-backed content, change the declaration source and
+   reconcile already-persisted state. For an intentional environment-local
+   override, use `/manage`; a later seed run deliberately restores the baseline
+   declaration and retires stale seed-owned rows.
 5. Keep cleanup exact: stable key or exact zone/coordinate. Never delete every
    row absent from one partial seed list because separately authored layers may
    coexist in that zone.
@@ -613,10 +626,11 @@ to seeds must never make an unimplemented action interactive or invent a reward.
 
 #### Add, move, adjust, or remove an outdoor NPC
 
-NPC placement is declared in `config/gameplay/outdoor_npcs.yml`, not in a new
-Ruby catalog and not as a pre-seeded `TileNpc`. This minimal declaration uses
-the current entry's required coordinate/template fields and source-backed
-encounter metadata:
+Baseline NPC placement is declared in `config/gameplay/outdoor_npcs.yml`, not
+in a new Ruby catalog. `db/seeds.rb` materializes it into the same `NpcTemplate`
+and `TileNpc` records that `/manage` edits and runtime resolves. This minimal
+declaration uses the current entry's required coordinate/template fields and
+source-backed encounter metadata:
 
 ```yaml
 outpost_surroundings:
@@ -641,23 +655,26 @@ outpost_surroundings:
           source_name: "Rat Tail"
 ```
 
-`OutdoorNpcConfig` is cached; restart the app after changing the file or call
-`Game::World::OutdoorNpcConfig.reload!` in a development console or isolated
-spec. On first resolution, `TileNpcService` lazily materializes the exact-cell
-`TileNpc` and its `NpcTemplate`. One anchor is supported per cell by the unique
+`OutdoorNpcConfig` is cached; restart before running seeds after changing the
+file or call `Game::World::OutdoorNpcConfig.reload!` in a development console
+or isolated spec. Run `bin/rails db:seed` to reconcile the exact-cell `TileNpc`
+and its `NpcTemplate`. `TileNpcService` then performs a DB-only lookup; deleting
+a placement in `/manage` removes it immediately and it is not recreated during
+World rendering. One anchor is supported per cell by the unique
 `[zone, x, y]` index. Repeated copies of the same captured opponent use the
 validated `encounter_count` metadata; a mixed-NPC cell requires new evidence
 and an extension of this existing model/service pipeline.
 
-YAML is a spawn declaration, not automatic reconciliation of a materialized
-row. Apply changes as follows:
+Seed-owned placement rows carry `metadata.seed_source: outdoor_npcs.yml`, so
+the scoped seed cleanup can distinguish them from management-created content.
+Apply baseline changes as follows:
 
 | Change | Required persisted-state reconciliation |
 |---|---|
-| Add a new exact-cell entry | No pre-seed is required; config/spec validation first, then `TileNpcService` materializes it on resolution. |
-| Move the same NPC key | Change YAML coordinates and explicitly destroy the old exact-cell `TileNpc`; the new cell materializes on demand. |
-| Change name, level, HP, damage, XP, loot, or respawn data | Change YAML and add a scoped idempotent data migration/seed reconciliation for the existing `NpcTemplate` and materialized anchor. Do not assume cached or already-materialized rows update themselves. |
-| Remove the NPC | Delete the YAML entry and explicitly destroy the exact old `TileNpc`. Keep `NpcTemplate` by default because combat history or another placement may reference it. |
+| Add a new exact-cell entry | Add YAML plus config/seed coverage, then run `bin/rails db:seed`; the persisted placement is available on the next World render. |
+| Move the same NPC key | Change YAML coordinates and run the seed; it upserts the new cell and deletes only stale rows marked with this seed source. |
+| Change name, level, HP, damage, XP, loot, or respawn data | Change YAML and run the seed; explicit template/placement fields converge while active defeat/current-HP state is not reset unnecessarily. |
+| Remove the NPC | Delete the YAML entry and run the seed; the exact stale seed-owned placement is destroyed. Keep `NpcTemplate` by default because combat history or another placement may reference it. |
 
 An exact retirement cleanup is intentionally narrow:
 
@@ -670,11 +687,11 @@ TileNpc.where(
 ).destroy_all
 ```
 
-Do not use a broad `TileNpc.where.not(...)` cleanup: a runtime row may carry
-defeat/respawn state and independently authored placements may coexist in the
-zone. Moving/removing an NPC must cover the old and new coordinates, config
-cache reload, materialization, hidden presentation, interruption eligibility,
-and any retained defeated state expected by the captured behavior.
+Do not use a broad `TileNpc.where.not(...)` cleanup without the seed-source
+predicate: management-created placements and separately authored content may
+coexist in the zone. Moving/removing an NPC must cover old/new coordinates,
+config cache reload, seed reconciliation, DB-only lookup, hidden presentation,
+interruption eligibility, and retained defeated state.
 
 #### Required checks for cell-content changes
 
@@ -690,6 +707,49 @@ For a seed change, run `RAILS_ENV=test bin/rails db:seed:replant`, then run it a
 second time or retain the idempotency assertion in `open_world_seed_spec`.
 Production content retirement must use an explicit deployment-safe data change;
 the test replant command is never a production cleanup procedure.
+
+### 7.5 Admin management surface
+
+For task-oriented create/edit/deactivate/delete examples and the safe extension
+pattern for additional management resources, use
+`doc/guides/managing_game_content.md`. This handbook remains authoritative for
+World runtime and content lifecycle behavior.
+
+Administrators may manage the same persisted owners at `/manage`; this is an
+authoring interface, not another world-state pipeline:
+
+| Management route | Persisted owner | Purpose |
+|---|---|---|
+| `/manage/world_cells` | `MapTileTemplate` | Create/edit/delete sparse terrain, passability, cell-art metadata, and `local_actions` resource definitions. |
+| `/manage/tile_buildings` | `TileBuilding` | Place, move, deactivate, edit, or remove outdoor gates and linked locations. |
+| `/manage/npc_templates` | `NpcTemplate` | Maintain reusable explicit NPC identity/combat/reward metadata. |
+| `/manage/tile_npcs` | `TileNpc` | Place, move, edit, or remove exact-cell NPC state. |
+| `/manage/audit_events` | `ManagementAuditEvent` | Read the immutable administrator/action/record/change history. |
+
+Forms expose typed fields plus JSON objects for extensible metadata. JSON must
+parse as an object and still passes the owning model validations; the interface
+cannot enable an unsupported local-action kind, unsafe art reference, invalid
+linked-location polygon, or oversized encounter. Indexes are bounded to 50
+rows per page and offer zone filters for cell-owned content.
+
+Every successful create/update/delete and its audit event commit atomically.
+Successful form mutations redirect with `303 See Other`, so Turbo and ordinary
+HTML clients reconstruct the authoritative GET surface without replaying the
+write method. Audit identity/action fields are protected by PostgreSQL null,
+foreign-key, index, and action check constraints in addition to model feedback.
+Updating or deleting a `MapTileTemplate` or `TileBuilding` cancels offered or
+accepted `WorldActionOffer` rows targeting that record, preventing stale
+browser capabilities from executing the previous definition. Failed JSON,
+validation, foreign-key, or dependency changes write neither partial content
+nor a false audit event. NPC templates and zones with dependent live content
+must be unlinked explicitly before deletion.
+
+Direct `/manage` changes are durable database changes and affect the next
+World render. They do not edit `db/seeds.rb` or YAML. If the record is also
+seed-owned, a later `bin/rails db:seed` intentionally reconciles it back to the
+source-backed declaration. Promote a tested management experiment into the
+appropriate seed/config plus handbook coverage before treating it as baseline
+game content.
 
 ## 8. Runtime architecture
 
@@ -727,8 +787,8 @@ The important boundary is that JavaScript animates an accepted command; it does 
 
 `WorldController` separately resolves current-cell content and rotates
 `WorldActionOffer` rows for visible entrances and implemented local actions.
-It materializes hostile NPC state for interruption without serializing the NPC
-name, marker, stats, or a manual attack action into the map surface.
+It resolves persisted hostile NPC state for interruption without serializing
+the NPC name, marker, stats, or a manual attack action into the map surface.
 
 ### 8.2 Travel duration
 
@@ -823,6 +883,8 @@ Arena's shared processor lets each living NPC on the opposing side act, performs
 | `POST /world/context` | Open Character or Inventory from the wilderness shell | Allowlisted destination or hostile fight transition with saved return context | Unsupported context returns to World; no arbitrary URL is followed. |
 | `POST /world/interact_hotspot` | Shared city hotspot action | See `doc/features/city.md` | See city contract. |
 | `POST /arena_matches/:id/finish` | Finish a completed wilderness result | Marks the participant result viewed, exits combat, and returns to saved World/Character/Inventory context | Reject active fight or non-participant; malformed context falls back to World. |
+| `GET/POST/PATCH/DELETE /manage/world_cells`, `/manage/tile_buildings`, `/manage/npc_templates`, `/manage/tile_npcs` | Admin-only persisted content CRUD | Atomically changes the existing resolver owners and records an audit event | Anonymous redirects to sign-in; non-admin is denied; invalid/dependent changes preserve state. |
+| `GET /manage/audit_events` and `GET /manage/audit_events/:id` | Admin-only immutable audit history | Bounded HTML index/detail | No create/update/delete route exists. |
 
 There is no separately versioned public World API. HTML/Turbo is the
 player-facing contract. Hidden hostile encounters transition through the same
@@ -898,6 +960,14 @@ A wilderness fight does not move `CharacterPosition`. Its match metadata stores 
 - Repeated NPC templates use participation ids for targeting and broadcasts; a template id is not unique inside a multi-NPC fight.
 - Post-fight destinations are logical allowlisted contexts, never request-provided or persisted URLs.
 - Missing/invalid offers do not leak another character's capability.
+- `/manage` requires the explicit `admin` role through `ManagePolicy`;
+  moderator, GM, player, anonymous, CSS, and submitted role values grant no
+  access.
+- Management fields use controller allowlists. JSON metadata is parsed
+  server-side, mutations/audits share one transaction, and targeted stale
+  capabilities are cancelled before commit. Successful writes use `303` HTML
+  redirects; the audit table independently constrains actor, record identity,
+  and the create/update/destroy action vocabulary.
 
 ## 13. Failure and boundary behavior
 
@@ -931,6 +1001,9 @@ A wilderness fight does not move `CharacterPosition`. Its match metadata stores 
 | Duplicate fight start | Return the character's existing active match; do not create another match or participant set. |
 | Invalid/foreign post-fight context | Fall back to the unchanged World cell; never follow the submitted value as a URL. |
 | No persisted position | Bootstrap once to Forpost Central Square. |
+| Invalid management JSON or model value | Render the form with errors and HTTP 422; persist no content or audit event. |
+| Managed content has dependents | Refuse deletion with a visible error; preserve the record, dependents, and audit history. |
+| Admin edits/deletes offered target content | Cancel its live targeted offers atomically; the next World render resolves fresh DB state. |
 
 ## 14. Acceptance criteria
 
@@ -965,6 +1038,9 @@ A wilderness fight does not move `CharacterPosition`. Its match metadata stores 
   internal panning without scaling cells or causing whole-page horizontal
   overflow.
 - Anonymous, expired, stale, mismatched, remote, and foreign-character actions cannot mutate state.
+- Admin CRUD changes the same `MapTileTemplate`, `TileBuilding`, `NpcTemplate`,
+  and `TileNpc` records used by `TileStateResolver`; mutations are audited,
+  dependency-safe, responsive, and do not create a parallel catalog.
 
 ## 15. Test strategy and required coverage
 
@@ -972,10 +1048,10 @@ Tests are part of the feature contract. Changes must cover the applicable model,
 
 | Coverage category | Representative guarantees |
 |---|---|
-| Success | Map load, configured cell-art slice/fallback, hidden NPC presentation, eight-direction offer, exact/fallback timed completion, one-time fatigue gain/recovery, cell composition, gate/village/local/context handoff, village Shop/exit offers, multi-NPC fight, participant surrender, context return, persisted resume. |
-| Failure | Unknown/malformed cell art or location key, invalid key/context, expired/mismatched feature offer, wrong direction/target, impassable destination, concurrent movement, fatigue-locked action, stale source, inactive entrance/NPC, surrender after completion. |
-| Edge/null/boundary | Cell-art key/source/column/row null, negative, zero, and sheet edge; authored travel `24/32`, fallback Wanderer `nil`/negative/`0`/`20`/`100`; fatigue `0/85/86/100`, three-minute recovery, and `1/2` gain; linked-location exact/wrong cell; encounter count `nil`/`0`/`2`/oversized; repeated NPC template ids; first/final participant defeat; 1x1/1xMany/ManyxMany sides; invalid saved return context; map edges. |
-| Authorization | Anonymous request, foreign movement/action offer, current-character scoping, World-offer policy ownership, combat participant policy. |
+| Success | Map load, configured cell-art slice/fallback, hidden NPC presentation, eight-direction offer, exact/fallback timed completion, one-time fatigue gain/recovery, cell composition, gate/village/local/context handoff, village Shop/exit offers, multi-NPC fight, participant surrender, context return, persisted resume, management CRUD/audit. |
+| Failure | Unknown/malformed cell art or location key, invalid key/context, expired/mismatched feature offer, wrong direction/target, impassable destination, concurrent movement, fatigue-locked action, stale source, inactive entrance/NPC, surrender after completion, invalid JSON/dependent management deletion. |
+| Edge/null/boundary | Cell-art key/source/column/row null, negative, zero, and sheet edge; authored travel `24/32`, fallback Wanderer `nil`/negative/`0`/`20`/`100`; fatigue `0/85/86/100`, three-minute recovery, and `1/2` gain; linked-location exact/wrong cell; encounter count `nil`/`0`/`2`/oversized; repeated NPC template ids; first/final participant defeat; 1x1/1xMany/ManyxMany sides; invalid saved return context; map edges; management pagination and 390px overflow. |
+| Authorization | Anonymous request, foreign movement/action offer, current-character scoping, World-offer policy ownership, combat participant policy, admin versus moderator/player management access. |
 
 Factories must retain edge traits for status, expiry, coordinates, passability, action types, and active/inactive content when those states are exercised.
 
@@ -1025,6 +1101,19 @@ bundle exec rspec \
   spec/assets/world_cell_art_assets_spec.rb
 ```
 
+Management-specific focused coverage:
+
+```bash
+bundle exec rspec \
+  spec/models/management_audit_event_spec.rb \
+  spec/policies/manage_policy_spec.rb \
+  spec/queries/manage/paginated_relation_spec.rb \
+  spec/services/manage/content_mutation_spec.rb \
+  spec/requests/manage/content_management_spec.rb \
+  spec/routing/manage_routing_spec.rb \
+  spec/system/manage_content_spec.rb
+```
+
 `spec/system/responsive_neverlands_ui_spec.rb` protects fixed 100px cells, the
 bounded scrollable viewport, current-cursor centering, the native village scene,
 and page-overflow separation at narrow widths. Run the complete suite before
@@ -1040,9 +1129,9 @@ presence, and login-resume behavior.
 - `doc/design/features/movement.md`
 - `doc/design/features/professions.md`
 - `doc/design/launch_mvp_plan.md`
-- `doc/design/reference/neverlands_live_movement.md`
-- `doc/design/reference/neverlands_live_outdoor_npc_resource.md`
-- `doc/design/reference/neverlands_live_game_shell_ui.md`
+- `doc/design/reference/world/observations/2026-05-09_overworld_movement.md`
+- `doc/design/reference/world/observations/2026-05-20_outdoor_npc_resource.md`
+- `doc/design/reference/shell/observations/2026-07-28_game_shell_and_mvp_surfaces.md`
 
 ### Routes and controllers
 
@@ -1095,6 +1184,24 @@ presence, and login-resume behavior.
 - `app/services/game/world/combat_return_context.rb`
 - `app/services/game/world/start_npc_fight.rb`
 - `app/services/game/world/resume_context.rb`
+
+### Management authoring and audit
+
+- `app/controllers/manage/application_controller.rb`
+- `app/controllers/manage/dashboard_controller.rb`
+- `app/controllers/manage/world_cells_controller.rb`
+- `app/controllers/manage/tile_buildings_controller.rb`
+- `app/controllers/manage/npc_templates_controller.rb`
+- `app/controllers/manage/tile_npcs_controller.rb`
+- `app/controllers/manage/audit_events_controller.rb`
+- `app/policies/manage_policy.rb`
+- `app/models/management_audit_event.rb`
+- `app/services/manage/content_mutation.rb`
+- `app/queries/manage/paginated_relation.rb`
+- `app/helpers/manage_helper.rb`
+- `app/views/layouts/manage.html.erb`
+- `app/views/manage/`
+- `app/assets/stylesheets/manage.css`
 
 ### Views, client behavior, styling, and assets
 
@@ -1154,6 +1261,7 @@ ownership after the World capability is accepted.
 - `db/migrate/20251128075552_create_tile_npcs.rb`
 - `db/migrate/20251216091841_create_tile_buildings.rb`
 - `db/migrate/20260509211000_create_world_action_offers.rb`
+- `db/migrate/20260729120000_create_management_audit_events.rb`
 
 ### Factories
 
@@ -1168,6 +1276,7 @@ ownership after the World capability is accepted.
 - `spec/factories/tile_npcs.rb`
 - `spec/factories/arena_matches.rb`
 - `spec/factories/arena_participations.rb`
+- `spec/factories/management_audit_events.rb`
 
 ### Specs
 
@@ -1216,6 +1325,13 @@ ownership after the World capability is accepted.
 - `spec/system/login_resume_spec.rb`
 - `spec/assets/city_image_assets_spec.rb`
 - `spec/assets/world_cell_art_assets_spec.rb`
+- `spec/models/management_audit_event_spec.rb`
+- `spec/policies/manage_policy_spec.rb`
+- `spec/queries/manage/paginated_relation_spec.rb`
+- `spec/services/manage/content_mutation_spec.rb`
+- `spec/requests/manage/content_management_spec.rb`
+- `spec/routing/manage_routing_spec.rb`
+- `spec/system/manage_content_spec.rb`
 
 ## 17. Safe extension checklist
 
@@ -1238,6 +1354,10 @@ Before extending the World feature:
 9. Add success, failure, edge/null/boundary, authorization, seed/config, and
    idempotency coverage where applicable.
 10. Update this document's non-goals, acceptance criteria, responsible files, and version history.
+11. Use `/manage` for scoped DB authoring/inspection, not as a substitute for
+    source evidence or baseline seed/config updates. Add a conventional
+    namespaced controller and allowlisted form when another content owner is
+    admitted; do not add reflection-based arbitrary-model CRUD.
 
 ## 18. Version history
 
@@ -1258,3 +1378,5 @@ Before extending the World feature:
 | 2026-07-28 | Added the captured Frontier Village entrance, CSS-built `760 × 255` interior, server-offered Trading Post/exit hotspots, exact-cell persistence, linked-Shop resume, responsive panning, and an explicit Not-Done boundary for uncaptured location families. |
 | 2026-07-28 | Removed the parallel linked-location catalog. The existing DB-backed cell pipeline now owns the entire village: `TileBuilding` persists and validates scene/features, `TileStateResolver` composes it at the exact cell, and `ActionOfferBuilder` issues entrance/interior capabilities. Moving, replacing, or deactivating the row changes runtime availability immediately. |
 | 2026-07-28 | Added the complete cell-content ownership and lifecycle guide: seed/config sources, persisted/materialized records, add/adjust/move/deactivate/remove examples for buildings, local resources/actions, and NPCs, scoped stale-data reconciliation, idempotency requirements, exhaustive schema migrations, and an explicit prohibition on parallel catalogs. Corrected the World contract to the one currently verified city gate. |
+| 2026-07-29 | Hardened the existing City/World seed pipeline so historical nine-node databases converge to the verified West Gate pair without stale South/East entrances, live obsolete offers, or stranded City positions. |
+| 2026-07-29 | Added admin-only responsive CRUD over the existing persisted World/City owners, atomic immutable mutation auditing, bounded pagination, validated JSON metadata, dependent-delete protection, stale-offer cancellation, and the task-oriented cross-feature management-guide link. Outdoor NPC config now materializes through the idempotent seed pipeline while runtime `TileNpcService` reads only managed DB state, so deletes and moves take effect without a parallel catalog or lazy respawn. |

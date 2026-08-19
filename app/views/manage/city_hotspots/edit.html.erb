@@ -1,0 +1,2 @@
+<%= render "manage/shared/page_header", title: "Edit City Action", description: @city_hotspot.name %>
+<%= render "form", city_hotspot: @city_hotspot, url: manage_city_hotspot_path(@city_hotspot), submit_label: "Save city action", cancel_path: manage_city_hotspot_path(@city_hotspot) %>

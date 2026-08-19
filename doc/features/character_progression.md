@@ -16,6 +16,8 @@ It describes what exists now. It does not treat the complete observed Neverlands
 
 ## 1. Design authority and related documents
 
+Domain navigation: `doc/domains/character.md`.
+
 Neverlands is the sole game-design and visual reference for this feature. The local implementation adapts its dense player profile and explicit plus/minus/save allocation flow to Rails, HTML/Turbo, Stimulus, and the current English client.
 
 When behavior is uncertain or conflicts with this document:
@@ -27,8 +29,8 @@ When behavior is uncertain or conflicts with this document:
 
 Supporting documents:
 
-- `doc/design/reference/neverlands_live_player.md` records the starter and returning-character profile, stat, `Умения`, and `Навыки` observations.
-- `doc/design/reference/neverlands_skills.md` records the wiki character-development audit, complete level rows, exact derived formulas, and unresolved evidence boundaries.
+- `doc/design/reference/character/observations/2026-05-11_player_profile_and_development.md` records the starter and returning-character profile, stat, `Умения`, and `Навыки` observations.
+- `doc/design/reference/character/observations/legacy_skills_and_arena_analysis.md` records the wiki character-development audit, complete level rows, exact derived formulas, and unresolved evidence boundaries.
 - `doc/design/reference/neverlands.md` defines the Neverlands evidence-to-implementation rule.
 - `doc/design/features/progression_stats_skills.md` normalizes the five primary stats, 29 numeric skills, captured tier rates, point pools, and launch-safe perk subset.
 - `doc/design/features/professions.md` keeps profession access/counters outside ordinary allocation until one activity is fully captured.
@@ -310,17 +312,23 @@ They must not:
 - apply gameplay effects or prerequisites;
 - authorize another character or bypass the final server check.
 
-`app/assets/stylesheets/player_inventory.css` owns the fresh live-measured
-463/5/467 profile composition and the shared 258/5/200 character sheet inside
-its left column, including the 115 × 255 CSS character silhouette, dense stat tables,
-service/tab bands, allocation rows, point counters, and controls. The reusable
-markup lives in `app/views/shared/_neverlands_character_sheet.html.erb`, which
-Profile and Inventory consume without sharing their domain actions. Shared
-controls and shell styling remain owned by the ordered `tokens.css`,
-`primitives.css`, and `shell.css` modules; no Tailwind layer is introduced.
-The same feature stylesheet owns the explicit 940/800/520px adaptations so the
-desktop measurements and responsive behavior cannot drift into separate CSS
-systems.
+`app/assets/stylesheets/character_sheet.css` owns the live-measured 463/5/fluid
+page composition and the shared 258/5/200 character sheet, including the
+115 × 255 CSS character silhouette, the dense stat/experience/record tables,
+the increases banner, and the combat chips. `app/assets/stylesheets/player.css`
+owns the profile tab band, the allocation panels, and the stat/skill/perk rows.
+The reusable markup lives in
+`app/views/shared/_neverlands_character_sheet.html.erb`, which Profile and
+Inventory consume without sharing their domain actions. Shared controls and
+shell styling remain owned by the ordered `tokens.css`, `primitives.css`, and
+`shell.css` modules; no Tailwind layer is introduced. `character_sheet.css`
+owns the explicit 780/520px adaptations so the desktop measurements and
+responsive behavior cannot drift into separate CSS systems.
+
+The combat chip rows follow the captured profile order and set: fatigue, AP per
+strike, armor class, dodge, accuracy, crushing, fortitude, and armor pierce.
+The source's artifact-coefficient row is deliberately absent because its
+mechanic is not captured. `[EVIDENCE]`
 
 Accessibility behavior:
 
@@ -443,8 +451,8 @@ There is no dedicated view spec for each allocation partial; request and system 
 - `doc/features/character_progression.md`
 - `doc/design/features/progression_stats_skills.md`
 - `doc/design/features/professions.md`
-- `doc/design/reference/neverlands_live_player.md`
-- `doc/design/reference/neverlands_skills.md`
+- `doc/design/reference/character/observations/2026-05-11_player_profile_and_development.md`
+- `doc/design/reference/character/observations/legacy_skills_and_arena_analysis.md`
 - `doc/design/reference/neverlands.md`
 - `doc/design/launch_mvp_plan.md`
 
@@ -475,9 +483,6 @@ There is no dedicated view spec for each allocation partial; request and system 
 ### Views, helpers, client behavior, styling, and assets
 
 - `app/views/players/show.html.erb`
-- `app/views/shared/_player_context_buttons.html.erb`
-- `app/views/shared/_player_subnavigation.html.erb`
-- `app/views/shared/_player_equipment_summary.html.erb`
 - `app/views/shared/_equipment_paperdoll.html.erb`
 - `app/views/shared/_equipment_paperdoll_slot.html.erb`
 - `app/views/shared/_neverlands_character_sheet.html.erb`
@@ -492,7 +497,10 @@ There is no dedicated view spec for each allocation partial; request and system 
 - `app/javascript/controllers/skill_allocation_controller.js`
 - `app/javascript/controllers/perk_allocation_controller.js`
 - `app/assets/stylesheets/application.css`
-- `app/assets/stylesheets/player_inventory.css`
+- `app/assets/stylesheets/character_sheet.css`
+- `app/assets/stylesheets/player.css`
+- `app/helpers/player_profile_helper.rb`
+- `app/models/equipment_slots.rb`
 
 ### Content, configuration, seeds, and schema
 
@@ -562,3 +570,4 @@ Before extending Character Progression:
 | 2026-07-28 | Re-measured the authenticated owner profile in Chrome and fixed the implementation contract at 463/5/467 columns with a shared 258/5/200 character sheet and 115 × 255 character region. |
 | 2026-07-28 | Added the local-only responsive profile contract: stack below 800px, center the CSS paper doll below 520px, and keep dense navigation internally scrollable. |
 | 2026-07-28 | Removed source-owned portrait and source-specific project/service copy while preserving profile hierarchy and geometry with CSS and local gameplay copy. |
+| 2026-07-29 | Reordered the parameter column to the captured profile sequence, dropped the uncaptured Attack/Defense/Critical rows, gave the visitor profile its own identity line, and split the presentation into `character_sheet.css` and `player.css`. |

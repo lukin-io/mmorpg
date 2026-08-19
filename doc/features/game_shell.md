@@ -16,6 +16,8 @@ It describes what exists now. It does not turn every visible Neverlands toolbar 
 
 ## 1. Design authority and related documents
 
+Domain navigation: `doc/domains/shell.md` and `doc/domains/social.md`.
+
 Neverlands is the sole game-design and visual reference for this feature. The local implementation adapts its compact framed game client, bracketed character/vitals state, text-link toolbar, floating nearby-player panel, and bottom chat strip to Rails, Turbo, Stimulus, and the current English client.
 
 When behavior is uncertain or conflicts with this document:
@@ -27,9 +29,9 @@ When behavior is uncertain or conflicts with this document:
 
 Supporting documents:
 
-- `doc/design/reference/neverlands_live_game_shell_ui.md` records the live frame layout, toolbar, location/presence block, and chat strip.
-- `doc/design/reference/neverlands_chat.md` records earlier chat observations and explicitly separated unknowns.
-- `doc/design/reference/neverlands_live_player.md` records the player/vitals presentation linked from the shell.
+- `doc/design/reference/shell/observations/2026-07-28_game_shell_and_mvp_surfaces.md` records the live frame layout, toolbar, location/presence block, and chat strip.
+- `doc/design/reference/social/observations/legacy_chat_system_analysis.md` records earlier chat observations and explicitly separated unknowns.
+- `doc/design/reference/character/observations/2026-05-11_player_profile_and_development.md` records the player/vitals presentation linked from the shell.
 - `doc/design/areas/game_client_layout.md` defines shared client-layout ownership.
 - `doc/design/features/social_chat_presence.md` defines chat, membership, ignore, and presence behavior.
 - `doc/design/features/character_vitals.md` defines authoritative vitals consumed by the header.
@@ -284,6 +286,14 @@ They must not:
 
 `app/assets/stylesheets/application.css` is only a small reset. `controls.css` imports ordered flat modules: `tokens.css` and `primitives.css` own shared typography/colors/flat controls; `shell.css` owns the `29 / flexible / 8 / 240 / 1 / 30px` frame, stacked vitals, contextual header, and CSS/ASCII bottom controls; `chat_presence.css` owns chat and nearby-player rows. This is SRP by UI domain, with no Tailwind dependency and no nested `nl/` stylesheet folder.
 
+The header strip reproduces the captured `#FCFAF3` band closed by the source's
+1px white / 1px gold / 2px cream accent rows, and the vitals readout carries the
+source `.hpfont` treatment with the HP pair in the combat color and the MP pair
+in the link color. Control chrome is never redefined in `shell.css`: the top
+navigation composes the `.lbut` primitive and only overrides padding plus the
+current-page label color, because the source's disabled pill hides its text and
+this shell navigates by text rather than by images.
+
 Domain-SRP is the maintainability rule for all central surfaces. World/City,
 Profile/Inventory, Shop, Arena/Fight, and public logs own their selectors,
 composition, responsive behavior, and local Stimulus presentation. A domain
@@ -408,9 +418,9 @@ Policy behavior is currently exercised through request/system coverage; dedicate
 - `doc/design/areas/game_client_layout.md`
 - `doc/design/features/social_chat_presence.md`
 - `doc/design/features/character_vitals.md`
-- `doc/design/reference/neverlands_live_game_shell_ui.md`
-- `doc/design/reference/neverlands_chat.md`
-- `doc/design/reference/neverlands_live_player.md`
+- `doc/design/reference/shell/observations/2026-07-28_game_shell_and_mvp_surfaces.md`
+- `doc/design/reference/social/observations/legacy_chat_system_analysis.md`
+- `doc/design/reference/character/observations/2026-05-11_player_profile_and_development.md`
 - `doc/design/launch_mvp_plan.md`
 
 ### Routes and controllers
@@ -538,3 +548,4 @@ Before extending Game Shell:
 | 2026-07-28 | Removed source-owned runtime images and branded/service copy; preserved the measured shell contract with project-owned CSS, semantic controls, and ASCII/plain-text affordances. |
 | 2026-07-28 | Added a source-faithful responsive adaptation layer at 940/720/420px while preserving the exact desktop row contract and keeping responsive ownership inside Shell CSS. |
 | 2026-07-28 | Made domain-SRP the UI maintainability rule: shared tokens/primitives stay minimal, each gameplay area owns its selectors/responsive/controller presentation, and unrelated domain classes cannot be reused as styling shortcuts. |
+| 2026-07-29 | Rebuilt the header band and vitals readout from a second authenticated capture, moved shell control chrome onto the `.lbut` primitive, and replaced the remaining raw hex/font literals with tokens. |

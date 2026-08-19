@@ -1395,13 +1395,13 @@ select.nl-fight-select,
   overflow: hidden;
 }
 
-.fighter-paperdoll > .nl-equipment-paperdoll {
+.fighter-paperdoll > .nl-doll {
   transform: scale(var(--nl-fight-doll-scale));
   transform-origin: top left;
 }
 
-.fighter-paperdoll .nl-equipment-portrait > .nl-fight-npc-portrait,
-.fighter-paperdoll .nl-equipment-portrait > .avatar--fallback {
+.fighter-paperdoll .nl-doll-portrait > .nl-fight-npc-portrait,
+.fighter-paperdoll .nl-doll-portrait > .avatar--fallback {
   display: block;
   width: 115px;
   height: 255px;
@@ -1447,7 +1447,8 @@ select.nl-fight-select,
   cursor: not-allowed;
 }
 
-.fighter-paperdoll .nl-profile-slot-value--empty { display: none; }
+/* Fight rails carry no slot captions in the source; only filled art shows. */
+.fighter-paperdoll .nl-doll-slot-empty { display: none; }
 
 .arena-ap-bar { display: none; }
 

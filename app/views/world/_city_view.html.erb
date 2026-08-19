@@ -3,7 +3,7 @@
   hotspots = local_assigns[:hotspots] || @hotspots || []
   offers_by_hotspot_id = local_assigns[:offers_by_hotspot_id] || @city_action_offers_by_hotspot_id || {}
   node_key = current_zone.metadata.to_h["city_node_key"]
-  presentation = Game::World::CityCatalog.presentation(node_key) || {
+  presentation = current_zone.city_presentation.presence || Game::World::CityCatalog.presentation(node_key) || {
     "image_offset" => [0, 0],
     "focus" => [Game::World::CityCatalog::SCENE_WIDTH / 2, Game::World::CityCatalog::SCENE_HEIGHT / 2],
     "hotspots" => {},
@@ -37,10 +37,14 @@
         <% hotspots.each_with_index do |hotspot, index| %>
           <%
             offer = offers_by_hotspot_id[hotspot.id]
-            geometry = Game::World::CityCatalog.hotspot_presentation(node_key, hotspot.key) || {
+            catalog_geometry = Game::World::CityCatalog.hotspot_presentation(node_key, hotspot.key) || {
               "box" => [25 + ((index % 5) * 205), 500, 180, 80],
               "direction" => (hotspot.hotspot_type == "district" ? "south" : nil)
             }
+            geometry = catalog_geometry.merge(
+              "box" => hotspot.presentation_box || catalog_geometry.fetch("box"),
+              "direction" => hotspot.presentation_direction || catalog_geometry["direction"]
+            )
             left, top, width, height = geometry.fetch("box")
             hotspot_style = "left: #{left}px; top: #{top}px; width: #{width}px; height: #{height}px; --nl-city-hotspot-x: #{left}px; --nl-city-hotspot-y: #{top}px;"
             blocked_reason = hotspot.interaction_blocked_reason(current_character)

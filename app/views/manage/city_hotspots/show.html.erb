@@ -1,0 +1,10 @@
+<%= render "manage/shared/page_header", title: @city_hotspot.name, description: "#{@city_hotspot.zone.display_name} · #{@city_hotspot.key}" %>
+<table class="nl-sheet-table nl-manage-detail">
+  <tr><th>Type / action</th><td><%= @city_hotspot.hotspot_type %> / <%= @city_hotspot.action_type %></td></tr>
+  <tr><th>Destination</th><td><%= @city_hotspot.destination_zone&.display_name || "Feature route" %></td></tr>
+  <tr><th>Geometry</th><td><%= @city_hotspot.position_x %>, <%= @city_hotspot.position_y %> · <%= @city_hotspot.width || "—" %> × <%= @city_hotspot.height || "—" %></td></tr>
+  <tr><th>Required level</th><td><%= @city_hotspot.required_level %></td></tr><tr><th>Active</th><td><%= management_boolean(@city_hotspot.active?) %></td></tr>
+</table>
+<h2 class="invtitle">Action parameters</h2><pre class="nl-manage-json"><%= pretty_json(@city_hotspot.action_params) %></pre>
+<%= render "manage/shared/record_actions", edit_path: edit_manage_city_hotspot_path(@city_hotspot),
+      delete_path: manage_city_hotspot_path(@city_hotspot), back_path: manage_city_hotspots_path %>

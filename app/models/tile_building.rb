@@ -13,12 +13,14 @@ class TileBuilding < ApplicationRecord
   LOCATION_ACTION_TYPES = %w[open_feature return_world].freeze
   LOCATION_KEY_FORMAT = /\A[a-z0-9_-]+\z/
 
-  belongs_to :destination_zone, class_name: "Zone", optional: true
+  belongs_to :destination_zone, class_name: "Zone", inverse_of: :destination_tile_buildings, optional: true
 
   validates :zone, :x, :y, :building_key, :name, presence: true
   validates :building_type, inclusion: {in: BUILDING_TYPES}
   validates :building_key, uniqueness: true
   validates :x, :y, numericality: {only_integer: true, greater_than_or_equal_to: 0}
+  validates :x, uniqueness: {scope: [:zone, :y]}
+  validates :required_level, numericality: {only_integer: true, greater_than_or_equal_to: 0}
   validate :location_configuration_must_be_valid
 
   scope :in_zone, ->(zone_name) { where(zone: zone_name) }

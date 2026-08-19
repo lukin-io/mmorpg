@@ -10,6 +10,10 @@ FactoryBot.define do
       after(:create) { |user| user.add_role(:moderator) }
     end
 
+    trait :admin do
+      after(:create) { |user| user.add_role(:admin) }
+    end
+
     trait :with_fractional_nv_balance do
       after(:create) { |user| user.currency_wallet.update!(nv_balance: BigDecimal("12.50")) }
     end

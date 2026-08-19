@@ -1,5 +1,7 @@
 # Game Design Document
 
+Domain-first navigation: `doc/domains/README.md`.
+
 This is the design source of truth for the project. The game is a
 Neverlands-based browser MMORPG, not a one-to-one asset or content clone.
 When implementation docs, tests, or code disagree with this file, this file wins
@@ -52,7 +54,7 @@ Documentation process:
 - `doc/design/README.md`
 - `doc/design/launch_mvp_plan.md`
 - `doc/design/reference/neverlands.md`
-- `doc/design/reference/neverlands_live_game_shell_ui.md`
+- `doc/design/reference/shell/observations/2026-07-28_game_shell_and_mvp_surfaces.md`
 - `doc/design/reference/source_material.md`
 
 ## Vision

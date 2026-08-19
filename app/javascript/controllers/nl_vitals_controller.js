@@ -11,7 +11,7 @@ import { Controller } from "@hotwired/stimulus"
  *   MP += maxMP / mpRegenRate per tick
  */
 export default class extends Controller {
-  static targets = ["hpFill", "mpFill", "text"]
+  static targets = ["hpFill", "mpFill", "hpText", "mpText"]
 
   static values = {
     currentHp: Number,
@@ -73,9 +73,12 @@ export default class extends Controller {
       this.mpFillTarget.style.width = `${mpPercent}%`
     }
 
-    // Update text display
-    if (this.hasTextTarget) {
-      this.textTarget.textContent = `[${Math.round(this.currentHpValue)}/${this.maxHpValue} | ${Math.round(this.currentMpValue)}/${this.maxMpValue}]`
+    if (this.hasHpTextTarget) {
+      this.hpTextTarget.textContent = `${Math.round(this.currentHpValue)}/${this.maxHpValue}`
+    }
+
+    if (this.hasMpTextTarget) {
+      this.mpTextTarget.textContent = `${Math.round(this.currentMpValue)}/${this.maxMpValue}`
     }
 
     // Regenerate per tick

@@ -1,5 +1,7 @@
 # Economy, Trading, And Shops
 
+Domain navigation: `doc/domains/economy.md`.
+
 ## Purpose
 
 The economy lets combat rewards, inventory, and city shops become practical
@@ -10,10 +12,10 @@ choices. Shops are city buildings first.
 Primary references:
 
 - `doc/design/reference/neverlands.md`
-- `doc/design/reference/neverlands_live_lavka_shop.md`
-- `doc/design/reference/neverlands_live_game_shell_ui.md`
-- `doc/design/reference/neverlands_live_inventory_items.md`
-- `doc/design/reference/neverlands_live_city_movement.md`
+- `doc/design/reference/economy/observations/2026-05-21_lavka_shop.md`
+- `doc/design/reference/shell/observations/2026-07-28_game_shell_and_mvp_surfaces.md`
+- `doc/design/reference/inventory/observations/2026-06-01_inventory_items_and_shop_rows.md`
+- `doc/design/reference/city/observations/2026-07-28_city_movement_and_services.md`
 
 Observed shop flow:
 

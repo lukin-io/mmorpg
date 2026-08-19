@@ -74,8 +74,8 @@ RSpec.describe "Arena Match UI Layout", type: :system do
     it "renders the source equipment paper doll around both combatants" do
       visit arena_match_path(match)
 
-      expect(page).to have_css(".fighter-paperdoll .nl-equipment-paperdoll", count: 2)
-      expect(page).to have_css(".fighter-paperdoll .nl-profile-slot", count: 40)
+      expect(page).to have_css(".fighter-paperdoll .nl-doll", count: 2)
+      expect(page).to have_css(".fighter-paperdoll .nl-doll-slot", count: EquipmentSlots::KEYS.size * 2)
     end
 
     it "shows fighter name and level" do

@@ -1,0 +1,325 @@
+/*
+ * Inventory screen: icon strip, mass line, item rows, family sections, and
+ * equipment sets.
+ *
+ * Geometry source: doc/design/reference/neverlands_live_style_system.md
+ * ("Inventory Right Column"). The source frames every block in a `#CCCCCC`
+ * table with `cellspacing=1`; locally that is a 1px grid gap over a `#CCCCCC`
+ * background, which needs no spacer cells.
+ */
+
+.nl-inventory-grid {
+  display: grid;
+  align-items: start;
+  gap: var(--nl-frame-gap);
+  grid-template-columns: calc(var(--nl-doll-width) + var(--nl-frame-gap) + var(--nl-parameters-width)) minmax(0, 1fr);
+}
+
+.nl-inventory-grid--family {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.nl-inventory-sheet,
+.nl-inventory-main {
+  min-width: 0;
+}
+
+.nl-inventory-sheet > * + * {
+  margin-top: var(--nl-frame-gap);
+}
+
+.nl-inventory-main > * + * {
+  margin-top: 3px;
+}
+
+/* ---------------------------------------------------------------- *
+ * Icon strip
+ *
+ * The source strip is a row of 41x53 category images followed by the utility
+ * controls. Locally the cells carry short labels instead of the source art,
+ * with the full category name as the accessible name and tooltip.
+ * ---------------------------------------------------------------- */
+
+.nl-icon-strip {
+  display: flex;
+  overflow-x: auto;
+  align-items: stretch;
+  gap: 1px;
+  padding-bottom: 2px;
+}
+
+.nl-icon-strip-item {
+  display: inline-flex;
+  min-width: 41px;
+  height: 53px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+  border: 1px solid var(--nl-rule);
+  background: var(--nl-surface-header);
+  color: var(--nl-link);
+  cursor: pointer;
+  font: bold 10px/13px var(--nl-font-tahoma);
+  text-align: center;
+  text-decoration: none;
+}
+
+.nl-icon-strip-item:hover {
+  border-color: var(--nl-rule-gold);
+  background: var(--nl-surface-accent);
+  text-decoration: none;
+}
+
+.nl-icon-strip-item--active {
+  border-color: var(--nl-rule-gold);
+  background: var(--nl-surface-accent);
+  color: var(--nl-text);
+  cursor: default;
+}
+
+.nl-icon-strip-form {
+  display: contents;
+}
+
+/* Pushes the utility controls to the far end, as in the source strip. */
+.nl-icon-strip-gap {
+  flex: 1 1 8px;
+  min-width: 8px;
+}
+
+.nl-icon-strip--sub .nl-icon-strip-item {
+  min-width: 0;
+  height: 18px;
+  font-weight: 400;
+  white-space: nowrap;
+}
+
+/* ---------------------------------------------------------------- *
+ * Mass strip
+ * ---------------------------------------------------------------- */
+
+.nl-inventory-mass {
+  padding: 2px;
+  border: 1px solid var(--nl-rule);
+  background: var(--nl-surface-inset);
+  color: #716e44;
+  font: bold 12px/16px var(--nl-font-tahoma);
+  text-align: center;
+}
+
+/* ---------------------------------------------------------------- *
+ * Item rows
+ * ---------------------------------------------------------------- */
+
+.nl-inventory-list {
+  display: grid;
+  gap: 1px;
+  padding: 1px;
+  background: var(--nl-rule);
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.nl-inventory-list:empty {
+  display: none;
+}
+
+.nl-inventory-item {
+  display: grid;
+  gap: 1px;
+  background: var(--nl-rule);
+  grid-template-columns: 72px minmax(0, 1fr);
+}
+
+.nl-inventory-item-icon {
+  position: relative;
+  display: flex;
+  min-height: 46px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 4px 6px;
+  background: var(--nl-surface-inset);
+  color: var(--nl-text-soft);
+  font: 18px/20px var(--nl-font-tahoma);
+}
+
+/* Stack count, drawn over the icon as in the source cell. */
+.nl-inventory-item-icon strong {
+  color: var(--nl-text);
+  font: bold 10px/12px var(--nl-font-tahoma);
+}
+
+/* 62x2 durability strip directly beneath the item image. */
+.nl-durability-bar {
+  position: absolute;
+  bottom: 4px;
+  left: 50%;
+  width: 62px;
+  height: 2px;
+  background: #d9d9d9;
+  transform: translateX(-50%);
+}
+
+.nl-durability-bar span {
+  display: block;
+  height: 100%;
+  background: var(--nl-rule-blue);
+}
+
+.nl-inventory-item-body {
+  display: grid;
+  gap: 1px;
+  background: var(--nl-rule);
+  grid-template-rows: auto auto;
+}
+
+.nl-inventory-item-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 3px;
+  padding: 3px;
+  background: var(--nl-surface);
+}
+
+/* The source puts the discard control alone at the right edge of the row. */
+.nl-inventory-discard {
+  margin-left: auto;
+}
+
+/* Transfer / gift / sell forms open in place instead of a source popup. */
+.nl-inline-action summary {
+  display: inline-flex;
+  list-style: none;
+}
+
+.nl-inline-action summary::-webkit-details-marker {
+  display: none;
+}
+
+.nl-inline-action[open] {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 3px;
+}
+
+.nl-inline-action-form,
+.nl-inline-control-form {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 3px;
+}
+
+/* Two 50% detail columns with the gold divider running through the body. */
+.nl-inventory-item-details {
+  display: grid;
+  gap: 1px;
+  background: var(--nl-rule-gold);
+  grid-template-columns: 1fr 1fr;
+}
+
+.nl-inventory-item-details > section {
+  padding: 0 0 4px;
+  background: var(--nl-surface-header);
+}
+
+.nl-inventory-item-details h3 {
+  margin: 0 0 3px;
+  padding: 1px 5px;
+  background: var(--nl-surface-column-head);
+  color: #000000;
+  font: bold 11px/15px var(--nl-font-tahoma);
+}
+
+.nl-inventory-item-details .nl-detail-table {
+  padding: 0 5px;
+  font-size: 10px;
+  line-height: 13px;
+}
+
+.nl-inventory-item-details .nl-detail-table th,
+.nl-inventory-item-details .nl-detail-table td {
+  overflow-wrap: anywhere;
+}
+
+/* Short information mode keeps the name and any unmet requirement only. */
+.nl-inventory-details--compact .nl-detail-table tr:not(.nl-requirement-missing):nth-child(n + 4) {
+  display: none;
+}
+
+/* ---------------------------------------------------------------- *
+ * Family sections and equipment sets
+ * ---------------------------------------------------------------- */
+
+.nl-family-inventory {
+  display: grid;
+  gap: 1px;
+  padding: 1px;
+  background: var(--nl-rule);
+}
+
+.nl-family-inventory-section {
+  padding: 4px;
+  background: var(--nl-surface);
+}
+
+.nl-family-inventory-section header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  padding: 1px 4px;
+  background: #f0f0f0;
+}
+
+.nl-family-inventory-section h3 {
+  margin: 0;
+  color: var(--nl-text);
+  font: bold 11px/15px var(--nl-font-tahoma);
+}
+
+.nl-equipment-sets {
+  border-color: var(--nl-rule);
+}
+
+.nl-equipment-set-table {
+  width: 100%;
+  margin-top: 3px;
+}
+
+.nl-equipment-set-table th {
+  width: auto;
+  font-weight: 700;
+}
+
+.nl-equipment-set-table td {
+  width: 1%;
+  padding-right: 3px;
+  white-space: nowrap;
+}
+
+/* ---------------------------------------------------------------- *
+ * Responsive fallback (local addition; desktop geometry is unchanged)
+ * ---------------------------------------------------------------- */
+
+/* Two columns hold down to the point where the fixed sheet leaves the item
+ * list less than roughly a third of the row. */
+@media (max-width: 780px) {
+  .nl-inventory-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 520px) {
+  .nl-inventory-item {
+    grid-template-columns: 56px minmax(0, 1fr);
+  }
+
+  .nl-inventory-item-details {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

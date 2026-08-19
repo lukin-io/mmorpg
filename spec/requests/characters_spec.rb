@@ -30,7 +30,7 @@ RSpec.describe CharactersController, type: :request do
 
         expect(response).to have_http_status(:success)
         expect(response.body).to include('<body class="nl-game-layout"')
-        expect(response.body).to include('class="nl-source-character-grid"')
+        expect(response.body).to include('class="nl-character-page-grid"')
         expect(response.body).to include("Stats")
         expect(response.body).to include("Free points")
       end

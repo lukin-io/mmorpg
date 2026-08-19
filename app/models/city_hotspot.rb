@@ -22,7 +22,7 @@ class CityHotspot < ApplicationRecord
   }.freeze
 
   belongs_to :zone
-  belongs_to :destination_zone, class_name: "Zone", optional: true
+  belongs_to :destination_zone, class_name: "Zone", inverse_of: :incoming_city_hotspots, optional: true
 
   validates :key, presence: true, uniqueness: {scope: :zone_id}
   validates :name, presence: true
@@ -80,5 +80,15 @@ class CityHotspot < ApplicationRecord
     return "city_transition" if destination_zone&.city?
 
     "exit_city"
+  end
+
+  def presentation_box
+    return unless width.to_i.positive? && height.to_i.positive?
+
+    [position_x, position_y, width, height]
+  end
+
+  def presentation_direction
+    action_params.to_h["direction"].presence
   end
 end

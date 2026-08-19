@@ -1,5 +1,7 @@
 # Dungeons
 
+Domain navigation: `doc/domains/dungeons.md`.
+
 ## Purpose
 
 Dungeons are a post-MVP Neverlands-based feature. They are not part of the

@@ -1,0 +1,355 @@
+/*
+ * Character sheet: the paper doll and the 200px parameter column.
+ *
+ * Shared by the player profile, the inventory screen, and the allocation
+ * screens, exactly as the live client shares `slots_pla` / `slots_inv`.
+ * Geometry source: doc/design/reference/neverlands_live_style_system.md
+ * ("Character Sheet Geometry", "Profile Parameter Column").
+ *
+ * Slot pixel sizes are not written here: they are owned by `EquipmentSlots`
+ * and arrive as the `--nl-slot-w` / `--nl-slot-h` custom properties.
+ */
+
+:root {
+  --nl-doll-rail: 62px;
+  --nl-doll-center: 130px;
+  --nl-doll-height: 335px;
+  --nl-doll-width: 258px;
+  --nl-parameters-width: 200px;
+}
+
+/* ---------------------------------------------------------------- *
+ * Page scaffolding shared by profile, inventory, and allocation
+ * ---------------------------------------------------------------- */
+
+.nl-character-page,
+.nl-inventory-page,
+.nl-allocation-page {
+  display: block;
+  padding: 0 var(--nl-frame-gutter);
+}
+
+.nl-character-page-grid {
+  display: grid;
+  align-items: start;
+  gap: var(--nl-frame-gap);
+  grid-template-columns: calc(var(--nl-doll-width) + var(--nl-frame-gap) + var(--nl-parameters-width)) minmax(0, 1fr);
+}
+
+.nl-character-page-aside,
+.nl-character-page-main {
+  min-width: 0;
+}
+
+/* ---------------------------------------------------------------- *
+ * Sheet layout
+ * ---------------------------------------------------------------- */
+
+.nl-character-sheet {
+  display: grid;
+  gap: var(--nl-frame-gap);
+  grid-template-columns: var(--nl-doll-width) var(--nl-parameters-width);
+}
+
+.nl-character-doll-column,
+.nl-character-parameters {
+  min-width: 0;
+}
+
+/* ---------------------------------------------------------------- *
+ * Paper doll
+ *
+ * Columns 62 | 2 | 130 | 2 | 62. Both rails total 335px with no gaps, so the
+ * slot heights alone position every cell. The shorter center column spreads
+ * its three rows across the same height.
+ * ---------------------------------------------------------------- */
+
+.nl-doll {
+  display: grid;
+  width: var(--nl-doll-width);
+  height: var(--nl-doll-height);
+  gap: 2px;
+  grid-template-columns: var(--nl-doll-rail) var(--nl-doll-center) var(--nl-doll-rail);
+}
+
+.nl-doll-rail,
+.nl-doll-center {
+  display: flex;
+  flex-direction: column;
+}
+
+.nl-doll-center {
+  align-items: center;
+  justify-content: space-between;
+}
+
+.nl-doll-pocket-row,
+.nl-doll-rings,
+.nl-doll-belt-content {
+  display: flex;
+  gap: 1px;
+}
+
+.nl-doll-portrait {
+  display: flex;
+  width: 115px;
+  height: 255px;
+  align-items: flex-end;
+  justify-content: center;
+  border: 1px solid var(--nl-rule);
+  background: var(--nl-surface-inset);
+}
+
+/*
+ * Project-owned stand-in for the source portrait art, which is not copied.
+ * A neutral silhouette keeps the 115x255 cell from reading as a broken image.
+ */
+.nl-doll-figure {
+  position: relative;
+  display: block;
+  width: 74px;
+  height: 210px;
+  margin-bottom: 12px;
+}
+
+.nl-doll-figure span {
+  position: absolute;
+  background: #cfc7ae;
+}
+
+.nl-doll-figure-head {
+  top: 0;
+  left: 25px;
+  width: 24px;
+  height: 26px;
+  border-radius: 50%;
+}
+
+.nl-doll-figure-body {
+  top: 30px;
+  left: 19px;
+  width: 36px;
+  height: 82px;
+  border-radius: 6px;
+}
+
+.nl-doll-figure-arm {
+  top: 34px;
+  width: 12px;
+  height: 74px;
+  border-radius: 6px;
+}
+
+.nl-doll-figure-arm--left { left: 3px; }
+.nl-doll-figure-arm--right { right: 3px; }
+
+.nl-doll-figure-leg {
+  top: 114px;
+  width: 15px;
+  height: 96px;
+  border-radius: 6px;
+}
+
+.nl-doll-figure-leg--left { left: 21px; }
+.nl-doll-figure-leg--right { right: 21px; }
+
+/* ---------------------------------------------------------------- *
+ * Doll slots
+ * ---------------------------------------------------------------- */
+
+.nl-doll-slot-form {
+  display: contents;
+}
+
+.nl-doll-slot {
+  position: relative;
+  display: flex;
+  overflow: hidden;
+  width: var(--nl-slot-w, var(--nl-doll-rail));
+  height: var(--nl-slot-h, 40px);
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  padding: 1px;
+  border: 1px solid var(--nl-rule);
+  margin: 0;
+  background: var(--nl-surface-inset);
+  color: var(--nl-text-soft);
+  cursor: default;
+  font: 9px/11px var(--nl-font-tahoma);
+  text-align: center;
+  white-space: normal;
+}
+
+.nl-doll-slot--filled {
+  border-color: var(--nl-rule-gold);
+  background: var(--nl-surface-header);
+  color: var(--nl-text);
+}
+
+button.nl-doll-slot--filled {
+  cursor: pointer;
+}
+
+button.nl-doll-slot--filled:hover {
+  border-color: var(--nl-control-danger-border);
+  background: #fff6f4;
+}
+
+.nl-doll-slot-empty {
+  overflow: hidden;
+  color: #a09a86;
+  text-overflow: ellipsis;
+}
+
+.nl-doll-slot-name {
+  display: -webkit-box;
+  width: 100%;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+  font-weight: 700;
+  hyphens: auto;
+  overflow-wrap: anywhere;
+}
+
+/* Durability strip pinned to the bottom edge, as in the source item cell. */
+.nl-doll-slot-wear {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 2px;
+  background: var(--nl-rule-blue);
+}
+
+/* ---------------------------------------------------------------- *
+ * Parameter column
+ * ---------------------------------------------------------------- */
+
+.nl-character-parameters > * + * {
+  margin-top: 2px;
+}
+
+.nl-sheet-table--money .nl-money-mark {
+  display: inline-block;
+  min-width: 16px;
+  padding: 0 2px;
+  background: var(--nl-rule-gold);
+  color: var(--nl-text-inverse);
+  font: bold 9px/13px var(--nl-font-tahoma);
+  text-align: center;
+}
+
+.nl-sheet-table--stats th {
+  width: 55%;
+}
+
+.nl-sheet-stat-total {
+  width: 20%;
+  text-align: right;
+}
+
+.nl-sheet-stat-breakdown {
+  width: 25%;
+  color: var(--nl-text);
+  font-weight: 400;
+  white-space: nowrap;
+}
+
+.nl-sheet-bonus {
+  color: var(--nl-bonus);
+}
+
+.nl-sheet-link-row {
+  padding: 2px 0;
+  font: 12px/16px var(--nl-font-tahoma);
+  text-align: center;
+}
+
+.nl-sheet-link-row a {
+  color: var(--nl-link-strong);
+}
+
+.nl-sheet-table--experience caption {
+  font: bold 11px/15px var(--nl-font-tahoma);
+}
+
+.nl-sheet-table--experience th,
+.nl-sheet-table--record th {
+  width: 70%;
+}
+
+.nl-sheet-table--experience td,
+.nl-sheet-table--record td {
+  text-align: right;
+}
+
+.nl-sheet-xp-combat { color: var(--nl-combat-xp); }
+.nl-sheet-xp-glory { color: var(--nl-glory-xp); }
+.nl-sheet-xp-valor { color: var(--nl-valor-xp); }
+
+.nl-sheet-increases {
+  padding: 1px 3px;
+  background: var(--nl-rule-blue);
+  color: var(--nl-text-inverse);
+  font: bold 11px/15px var(--nl-font-tahoma);
+  text-align: center;
+}
+
+/*
+ * Combat parameter rows: pale label at 75% width, solid chip value.
+ */
+.nl-sheet-table--chips th {
+  width: 75%;
+  background: var(--nl-surface-value);
+  color: var(--nl-bonus);
+  font: 10px/14px var(--nl-font-verdana);
+}
+
+.nl-sheet-chip {
+  background: var(--nl-chip-combat);
+  color: var(--nl-text-inverse);
+  font: bold 10px/14px var(--nl-font-verdana);
+  text-align: center;
+}
+
+.nl-sheet-chip--fatigue {
+  background: var(--nl-chip-fatigue);
+}
+
+.nl-sheet-effects {
+  margin: 2px 0 0;
+  color: var(--nl-text);
+  font: 11px/15px var(--nl-font-tahoma);
+}
+
+/* ---------------------------------------------------------------- *
+ * Responsive fallback
+ *
+ * Local addition. The desktop geometry above is the source of truth; these
+ * rules only stack the columns once the fixed widths no longer fit.
+ * ---------------------------------------------------------------- */
+
+@media (max-width: 780px) {
+  .nl-character-page-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 520px) {
+  .nl-character-page,
+  .nl-inventory-page,
+  .nl-allocation-page {
+    padding: 0 4px;
+  }
+
+  .nl-character-sheet {
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: center;
+  }
+
+  .nl-character-parameters {
+    width: 100%;
+    max-width: var(--nl-parameters-width);
+  }
+}

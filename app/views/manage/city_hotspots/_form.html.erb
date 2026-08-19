@@ -1,0 +1,23 @@
+<%= render "manage/shared/errors", record: city_hotspot %>
+<%= form_with model: city_hotspot, url:, class: "nl-manage-form" do |form| %>
+  <div class="nl-manage-field-grid">
+    <div class="nl-manage-field"><%= form.label :zone_id, "City node" %><%= form.collection_select :zone_id, @cities, :id, :display_name, prompt: "Select a city node" %></div>
+    <div class="nl-manage-field"><%= form.label :key %><%= form.text_field :key, required: true %></div>
+    <div class="nl-manage-field"><%= form.label :name %><%= form.text_field :name, required: true %></div>
+    <div class="nl-manage-field"><%= form.label :hotspot_type %><%= form.select :hotspot_type, CityHotspot::HOTSPOT_TYPES %></div>
+    <div class="nl-manage-field"><%= form.label :action_type %><%= form.select :action_type, CityHotspot::ACTION_TYPES %></div>
+    <div class="nl-manage-field"><%= form.label :destination_zone_id %><%= form.collection_select :destination_zone_id, @destination_zones, :id, :display_name, include_blank: "No destination zone" %></div>
+    <div class="nl-manage-field"><%= form.label :position_x %><%= form.number_field :position_x, min: 0, required: true %></div>
+    <div class="nl-manage-field"><%= form.label :position_y %><%= form.number_field :position_y, min: 0, required: true %></div>
+    <div class="nl-manage-field"><%= form.label :width %><%= form.number_field :width, min: 1 %></div>
+    <div class="nl-manage-field"><%= form.label :height %><%= form.number_field :height, min: 1 %></div>
+    <div class="nl-manage-field"><%= form.label :required_level %><%= form.number_field :required_level, min: 0 %></div>
+    <div class="nl-manage-field"><%= form.label :z_index %><%= form.number_field :z_index %></div>
+    <div class="nl-manage-field"><%= form.label :active %><%= form.check_box :active %></div>
+    <div class="nl-manage-field nl-manage-field--wide">
+      <%= form.label :action_params %><%= form.text_area :action_params, value: pretty_json(city_hotspot.action_params), spellcheck: false %>
+      <small class="nl-manage-help"><code>enter_zone</code> uses destination_x/y and optional direction. <code>open_feature</code> uses an allowlisted feature key such as arena, shop, market, airship_station, or hospital.</small>
+    </div>
+  </div>
+  <%= render "manage/shared/form_actions", form:, submit_label:, cancel_path: %>
+<% end %>

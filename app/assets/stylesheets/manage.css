@@ -1,0 +1,251 @@
+/*
+ * Admin-only World/City content management.
+ *
+ * This module composes the shared measured control/text primitives while
+ * owning only management layout, tables, forms, and responsive behavior.
+ */
+
+.nl-manage-layout {
+  min-width: 0;
+  min-height: 100vh;
+  background: var(--nl-surface);
+  color: var(--nl-text);
+  font: 11px/15px var(--nl-font-verdana);
+}
+
+.nl-manage-header,
+.nl-manage-nav,
+.nl-manage-page-header,
+.nl-manage-form-actions,
+.nl-manage-record-actions,
+.nl-manage-pagination,
+.nl-manage-filter {
+  display: flex;
+  align-items: center;
+}
+
+.nl-manage-header {
+  min-height: 34px;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 5px 10px;
+  border-bottom: 1px solid var(--nl-rule-gold);
+  background: var(--nl-surface-header);
+}
+
+.nl-manage-brand {
+  color: var(--nl-text);
+  font: bold 13px var(--nl-font-tahoma);
+}
+
+.nl-manage-user {
+  margin-left: 8px;
+  color: var(--nl-text-muted);
+}
+
+.nl-manage-nav {
+  gap: 3px;
+  padding: 4px 10px;
+  overflow-x: auto;
+  border-bottom: 1px solid var(--nl-rule-soft);
+  background: var(--nl-surface-accent);
+  scrollbar-width: thin;
+}
+
+.nl-manage-nav > * { flex: 0 0 auto; }
+
+.nl-manage-main {
+  width: min(1440px, 100%);
+  margin: 0 auto;
+  padding: 10px;
+}
+
+.nl-manage-flash { padding: 0 10px; }
+
+.nl-manage-page-header {
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 6px;
+  border-bottom: 2px solid var(--nl-rule-blue);
+}
+
+.nl-manage-page-header h1,
+.nl-manage-note h2 {
+  margin: 0;
+  color: var(--nl-text);
+  font: bold 12px/18px var(--nl-font-tahoma);
+}
+
+.nl-manage-page-header p,
+.nl-manage-note p { margin: 2px 0 0; }
+
+.nl-manage-dashboard {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 5px;
+  margin-top: 8px;
+}
+
+.nl-manage-dashboard-card {
+  display: flex;
+  min-height: 54px;
+  flex-direction: column;
+  justify-content: center;
+  padding: 6px 8px;
+  border: 1px solid var(--nl-rule-gold-soft);
+  background: var(--nl-surface-header);
+}
+
+.nl-manage-dashboard-card:hover {
+  border-color: var(--nl-rule-gold);
+  background: var(--nl-surface-accent);
+  text-decoration: none;
+}
+
+.nl-manage-dashboard-card span { color: var(--nl-text-muted); }
+
+.nl-manage-note {
+  margin-top: 10px;
+  padding: 6px 8px;
+  border: 1px solid var(--nl-rule-soft);
+  background: var(--nl-surface-value);
+}
+
+.nl-manage-table-wrap {
+  width: 100%;
+  margin-top: 7px;
+  overflow-x: auto;
+  border: 1px solid var(--nl-rule);
+}
+
+.nl-manage-table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: collapse;
+  font: 11px/15px var(--nl-font-tahoma);
+}
+
+.nl-manage-table th,
+.nl-manage-table td {
+  padding: 3px 5px;
+  border-right: 1px solid var(--nl-rule-soft);
+  border-bottom: 1px solid var(--nl-rule-soft);
+  text-align: left;
+  vertical-align: top;
+  white-space: nowrap;
+}
+
+.nl-manage-table th {
+  background: var(--nl-surface-column-head);
+  font-weight: 700;
+}
+
+.nl-manage-table tbody tr:nth-child(even) { background: var(--nl-surface-value); }
+.nl-manage-table tbody tr:hover { background: var(--nl-surface-accent); }
+.nl-manage-table .nl-manage-table-actions { white-space: nowrap; }
+.nl-manage-table-actions > * { margin-right: 3px; }
+
+.nl-manage-filter {
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 7px;
+  padding: 5px;
+  background: var(--nl-surface-header);
+}
+
+.nl-manage-form {
+  width: min(880px, 100%);
+  margin-top: 8px;
+}
+
+.nl-manage-field-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 5px 10px;
+}
+
+.nl-manage-field {
+  display: grid;
+  grid-template-columns: minmax(130px, 180px) minmax(0, 1fr);
+  align-items: start;
+  gap: 5px;
+}
+
+.nl-manage-field--wide { grid-column: 1 / -1; }
+.nl-manage-field > label { padding-top: 2px; font-weight: 700; }
+.nl-manage-field input:not([type="checkbox"]),
+.nl-manage-field select,
+.nl-manage-field textarea { width: 100%; }
+
+.nl-manage-field textarea {
+  min-height: 220px;
+  resize: vertical;
+  font: 11px/15px ui-monospace, SFMono-Regular, Consolas, monospace;
+}
+
+.nl-manage-field .nl-manage-short-textarea { min-height: 60px; }
+
+.nl-manage-help {
+  grid-column: 2;
+  color: var(--nl-text-muted);
+  font-size: 10px;
+}
+
+.nl-manage-form-actions,
+.nl-manage-record-actions,
+.nl-manage-pagination {
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 8px;
+}
+
+.nl-manage-pagination { justify-content: center; }
+
+.nl-manage-errors {
+  margin: 7px 0;
+  padding: 5px 8px;
+  border: 1px solid var(--nl-control-danger-border);
+  background: #fff2f2;
+  color: var(--nl-bonus);
+}
+
+.nl-manage-errors ul { margin: 3px 0 0 18px; padding: 0; }
+
+.nl-manage-detail {
+  width: min(980px, 100%);
+  margin-top: 8px;
+}
+
+.nl-manage-json {
+  max-width: 100%;
+  margin: 0;
+  padding: 6px;
+  overflow: auto;
+  border: 1px solid var(--nl-rule-soft);
+  background: var(--nl-surface-inset);
+  font: 11px/15px ui-monospace, SFMono-Regular, Consolas, monospace;
+  white-space: pre-wrap;
+}
+
+.nl-manage-empty {
+  padding: 10px;
+  color: var(--nl-text-muted);
+  text-align: center;
+}
+
+@media (max-width: 760px) {
+  .nl-manage-header { align-items: flex-start; }
+  .nl-manage-main { padding: 7px; }
+  .nl-manage-page-header { align-items: flex-start; }
+  .nl-manage-field-grid { grid-template-columns: 1fr; }
+  .nl-manage-field--wide { grid-column: auto; }
+}
+
+@media (max-width: 520px) {
+  .nl-manage-header,
+  .nl-manage-page-header { flex-direction: column; }
+  .nl-manage-field { grid-template-columns: 1fr; }
+  .nl-manage-help { grid-column: 1; }
+  .nl-manage-field > label { padding-top: 0; }
+  .nl-manage-dashboard { grid-template-columns: 1fr; }
+}

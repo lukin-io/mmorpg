@@ -1,5 +1,7 @@
 # NPCs And Quests
 
+Domain navigation: `doc/domains/npcs_quests.md`.
+
 ## Purpose
 
 NPCs make locations readable and useful. Source-backed quest behavior still

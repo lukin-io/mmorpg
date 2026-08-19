@@ -1,0 +1,19 @@
+<% content_for :title, "World Management" %>
+<%= render "manage/shared/page_header",
+      title: "World and City Management",
+      description: "Edit the persisted records consumed by the existing World and City runtime pipeline." %>
+
+<div class="nl-manage-dashboard">
+  <% management_sections.each do |section| %>
+    <%= link_to section[:path], class: "nl-manage-dashboard-card" do %>
+      <strong><%= section[:label] %></strong>
+      <span><%= @resource_counts.fetch(section[:key]) %> records</span>
+    <% end %>
+  <% end %>
+</div>
+
+<section class="nl-manage-note">
+  <h2>Authoritative pipeline</h2>
+  <p><code>TileStateResolver</code> composes managed world cells, buildings, NPC placements, and local actions. <code>ActionOfferBuilder</code> issues short-lived capabilities from that resolved state. City nodes and city actions use the same persisted-zone and offer boundaries.</p>
+  <p>Changes take effect on the next server render. Existing live offers targeting edited or deleted content are cancelled automatically.</p>
+</section>

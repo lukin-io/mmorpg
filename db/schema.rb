@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_21_090000) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_29_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -337,6 +337,22 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_21_090000) do
     t.index ["slot"], name: "index_item_templates_on_slot"
   end
 
+  create_table "management_audit_events", force: :cascade do |t|
+    t.string "action", null: false
+    t.bigint "actor_id", null: false
+    t.jsonb "change_set", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.jsonb "metadata", default: {}, null: false
+    t.bigint "record_id", null: false
+    t.string "record_label", null: false
+    t.string "record_type", null: false
+    t.datetime "updated_at", null: false
+    t.index ["actor_id", "created_at"], name: "index_management_audit_events_on_actor_id_and_created_at"
+    t.index ["created_at"], name: "index_management_audit_events_on_created_at"
+    t.index ["record_type", "record_id"], name: "index_management_audit_events_on_record_type_and_record_id"
+    t.check_constraint "action::text = ANY (ARRAY['create'::character varying, 'update'::character varying, 'destroy'::character varying]::text[])", name: "management_audit_events_action_check"
+  end
+
   create_table "map_tile_templates", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.jsonb "metadata", default: {}, null: false
@@ -579,6 +595,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_21_090000) do
   add_foreign_key "inventories", "characters"
   add_foreign_key "inventory_items", "inventories"
   add_foreign_key "inventory_items", "item_templates"
+  add_foreign_key "management_audit_events", "users", column: "actor_id"
   add_foreign_key "movement_commands", "characters"
   add_foreign_key "movement_commands", "zones"
   add_foreign_key "spawn_points", "zones"

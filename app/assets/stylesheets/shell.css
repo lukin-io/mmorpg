@@ -1,3 +1,10 @@
+/*
+ * Persistent game shell: the local translation of the live frameset
+ * (`main_top`, `chmain`, `ch.php?lo=1`, `ch/but.php`) into one grid.
+ * Source: doc/design/reference/neverlands_live_style_system.md
+ * ("Main Frame Page Skeleton", "Bottom Chat Control Strip").
+ */
+
 .nl-game-layout {
   --nl-top-bar-height: 29px;
   --nl-social-height: 240px;
@@ -11,23 +18,34 @@
   min-height: 420px;
   grid-template-rows: var(--nl-top-bar-height) minmax(0, 1fr) 8px var(--nl-social-height) 1px var(--nl-chat-controls-height);
   overflow: hidden;
-  background: #ffffff;
-  color: #222222;
-  font: 12px Verdana, Tahoma, Arial, sans-serif;
+  background: var(--nl-surface);
+  color: var(--nl-text);
+  font: 12px var(--nl-font-verdana);
 }
 
+/*
+ * The header strip is `#FCFAF3` and is closed by the source accent rows:
+ * 1px white, 1px gold, 2px cream. A gradient reproduces those exact bands
+ * without the source spacer table.
+ */
 .nl-top-bar {
   position: relative;
   z-index: 40;
   display: flex;
   min-width: 0;
-  height: 29px;
-  align-items: flex-start;
+  height: var(--nl-top-bar-height);
+  align-items: center;
   gap: 4px;
-  padding: 2px 4px 5px;
+  padding: 0 4px 4px;
   border: 0;
-  background: #ffffff;
-  box-shadow: inset 0 -1px #d3c79f, inset 0 -4px #f6f2e6;
+  background:
+    linear-gradient(
+      to bottom,
+      var(--nl-surface-header) 0 calc(100% - 4px),
+      var(--nl-surface) calc(100% - 4px) calc(100% - 3px),
+      var(--nl-rule-gold) calc(100% - 3px) calc(100% - 2px),
+      var(--nl-surface-accent) calc(100% - 2px) 100%
+    );
   white-space: nowrap;
 }
 
@@ -43,56 +61,54 @@
 .nl-top-left { flex: 0 1 auto; gap: 1px; }
 
 .nl-player-link {
-  color: #111111;
+  color: var(--nl-text);
   font-weight: 700;
   text-decoration: none;
 }
 
-.nl-player-link:hover { color: #336699; }
-.nl-player-level { color: #333333; }
+.nl-player-link:hover { color: var(--nl-link); }
+.nl-player-level { color: var(--nl-text-soft); }
 
 .nl-vitals-inline {
   gap: 3px;
   margin-left: 3px;
 }
 
+/* Two 160x6 bars stacked with a 1px white separator, as measured in hp.js. */
 .nl-vitals-bars {
   display: grid;
-  width: 160px;
-  height: 14px;
-  grid-template-rows: 6px 6px;
+  width: var(--nl-vitals-width);
+  height: 13px;
+  grid-template-rows: var(--nl-vitals-bar-height) var(--nl-vitals-bar-height);
   gap: 1px;
 }
 
 .nl-hp-bar-inline,
 .nl-mp-bar-inline {
   position: relative;
-  width: 160px;
-  height: 6px;
+  width: var(--nl-vitals-width);
+  height: var(--nl-vitals-bar-height);
   overflow: hidden;
   border: 0;
-  background-color: #efefef;
-  background-repeat: repeat-x;
-  background-position: left center;
+  background: linear-gradient(180deg, #d7d7d7 0%, #f5f5f5 48%, #b8b8b8 100%);
 }
-
-.nl-hp-bar-inline { background: linear-gradient(180deg, #d7d7d7 0%, #f5f5f5 48%, #b8b8b8 100%); }
-.nl-mp-bar-inline { background: linear-gradient(180deg, #d7d7d7 0%, #f5f5f5 48%, #b8b8b8 100%); }
 
 .nl-bar-fill {
   display: block;
   height: 100%;
-  background-repeat: repeat-x;
-  background-position: left center;
 }
 
 .nl-hp-bar-inline .nl-bar-fill { background: linear-gradient(180deg, #ff7373 0%, #d50000 52%, #8b0000 100%); }
 .nl-mp-bar-inline .nl-bar-fill { background: linear-gradient(180deg, #65d9ef 0%, #009bb8 52%, #00677b 100%); }
 
+/* `.hpfont`: the bracketed readout, with each pair in its own color. */
 .nl-vitals-text {
-  color: #152c48;
-  font: bold 11px/13px Verdana, Tahoma, Arial, sans-serif;
+  color: #003366;
+  font: 11px/13px var(--nl-font-verdana);
 }
+
+.nl-vitals-hp { color: var(--nl-hp); font-weight: 700; }
+.nl-vitals-mp { color: var(--nl-mp); font-weight: 700; }
 
 .nl-top-nav {
   margin-left: auto;
@@ -101,51 +117,31 @@
 
 .nl-nav-action-form { display: inline; margin: 0; }
 
+/* Chrome comes from the `.lbut` primitive; only spacing is set here. */
 button.nl-nav-link,
 .nl-nav-link {
-  display: inline-flex;
-  min-height: 18px;
-  align-items: center;
   padding: 0 7px;
-  border: 1px solid #decfa6;
-  background: #ffffff;
-  color: #333333;
-  cursor: pointer;
-  font: bold 11px/16px Tahoma, Verdana, Arial, sans-serif;
-  text-decoration: none;
 }
 
-button.nl-nav-link:hover,
-.nl-nav-link:hover {
-  border-color: #b9a05c;
-  background: #f3ecd7;
-  color: #003366;
-  text-decoration: none;
-}
-
-.nl-nav-link--disabled {
-  border-color: #decfa6;
-  background: #f3ecd7;
-  color: #aaaaaa;
-  cursor: default;
-}
-
+/*
+ * The source's disabled pill hides its label because its navigation is
+ * pictorial. This shell navigates by text, so the current-page control keeps
+ * the disabled fill but stays readable.
+ */
+.nl-nav-link--disabled,
 button.nl-nav-link:disabled {
-  border-color: #decfa6;
-  background: #f3ecd7;
-  color: #aaaaaa;
-  cursor: default;
+  color: var(--nl-text-muted);
 }
 
 .nl-top-right { margin-left: 4px; }
 
+/* Source exit control: a 15x15 square at the right edge of the header. */
 .nl-close-btn {
   display: inline-flex;
   width: 15px;
   height: 15px;
   align-items: center;
   justify-content: center;
-  overflow: visible;
   border: 1px solid #8f8f8f;
   background: linear-gradient(180deg, #ffffff, #d9d9d9);
   color: #7d0000;
@@ -160,7 +156,8 @@ button.nl-nav-link:disabled {
   min-width: 0;
   min-height: 0;
   overflow: auto;
-  background: #ffffff;
+  padding: var(--nl-frame-gap) 0;
+  background: var(--nl-surface);
 }
 
 .nl-main-area > turbo-frame {
@@ -181,7 +178,7 @@ button.nl-nav-link:disabled {
   min-height: 0;
   grid-template-columns: minmax(0, 1fr) var(--nl-players-width);
   overflow: hidden;
-  background: #f5f5f5;
+  background: var(--nl-surface-inset);
 }
 
 .nl-chat-history {
@@ -189,9 +186,9 @@ button.nl-nav-link:disabled {
   height: 240px;
   overflow: auto;
   border-right: 1px solid #eeeeee;
-  background: #f5f5f5;
-  color: #222222;
-  font: 12px/18px Verdana, Tahoma, Arial, sans-serif;
+  background: var(--nl-surface-inset);
+  color: var(--nl-text);
+  font: 12px/18px var(--nl-font-verdana);
 }
 
 .nl-chat-history > turbo-frame { display: block; min-height: 100%; }
@@ -201,9 +198,9 @@ button.nl-nav-link:disabled {
   height: 240px;
   overflow: hidden;
   border: 0;
-  background: #fcfaf3;
-  color: #222222;
-  font: 10px Verdana, Tahoma, Arial, sans-serif;
+  background: var(--nl-surface-header);
+  color: var(--nl-text);
+  font: 10px var(--nl-font-verdana);
 }
 
 .nl-players-header-float,
@@ -215,19 +212,19 @@ button.nl-nav-link:disabled {
   gap: 4px;
   padding: 1px 5px;
   border: 0;
-  background: #fcfaf3;
+  background: var(--nl-surface-header);
 }
 
 .nl-sort-links,
 .nl-refresh-check,
 .nl-location-text,
 .nl-total-online {
-  color: #333333;
+  color: var(--nl-text-soft);
   font-size: 10px;
   white-space: nowrap;
 }
 
-.nl-sort-links a { color: #336699; text-decoration: underline; }
+.nl-sort-links a { color: var(--nl-link); text-decoration: underline; }
 
 .nl-refresh-check {
   display: inline-flex;
@@ -247,10 +244,10 @@ button.nl-nav-link:disabled {
   height: 15px;
   align-items: center;
   justify-content: center;
-  border: 1px solid #decfa6;
-  background: #ffffff;
-  color: #333333;
-  font: bold 10px/13px Tahoma, Verdana, sans-serif;
+  border: 1px solid var(--nl-control-border);
+  background: var(--nl-surface);
+  color: var(--nl-text-soft);
+  font: bold 10px/13px var(--nl-font-tahoma);
 }
 
 .nl-players-location {
@@ -267,7 +264,7 @@ button.nl-nav-link:disabled {
   height: 188px;
   overflow-y: auto;
   padding: 2px 8px;
-  background: #fcfaf3;
+  background: var(--nl-surface-header);
 }
 
 .nl-player-entry {
@@ -281,14 +278,14 @@ button.nl-nav-link:disabled {
   white-space: nowrap;
 }
 
-.nl-player-entry:hover { background: #f3ecd7; }
+.nl-player-entry:hover { background: var(--nl-surface-accent); }
 
 .nl-player-arrow,
 .nl-player-icon,
 .nl-player-lvl,
 .nl-player-status {
   flex: 0 0 auto;
-  color: #333333;
+  color: var(--nl-text-soft);
   font-size: 10px;
 }
 
@@ -297,13 +294,13 @@ button.nl-nav-link:disabled {
 .nl-player-name-link {
   min-width: 0;
   overflow: hidden;
-  color: #222222;
+  color: var(--nl-text);
   font-weight: 700;
   text-overflow: ellipsis;
 }
 
 .nl-no-players,
-.nl-players-empty { padding: 5px; color: #888888; text-align: center; }
+.nl-players-empty { padding: 5px; color: var(--nl-text-muted); text-align: center; }
 
 .nl-frame-separator { background: #9a9a9a; }
 
@@ -334,7 +331,7 @@ button.nl-nav-link:disabled {
   display: inline-flex;
   align-items: center;
   color: #666666;
-  font: 10px/30px Tahoma, Verdana, sans-serif;
+  font: 10px/30px var(--nl-font-tahoma);
 }
 
 .nl-action-check input { width: 13px; height: 13px; margin: 0 2px 0 0; }
@@ -346,8 +343,8 @@ button.nl-nav-link:disabled {
   padding: 0;
   border: 1px solid #8b8b8b;
   background: linear-gradient(180deg, #ffffff 0%, #d8d8d8 100%);
-  color: #333333;
-  font: bold 10px/28px Tahoma, Verdana, sans-serif;
+  color: var(--nl-text-soft);
+  font: bold 10px/28px var(--nl-font-tahoma);
 }
 
 .nl-chat-input-bar,
@@ -362,9 +359,9 @@ input.nl-chat-input-field,
   min-height: 17px;
   padding: 0 3px;
   border: 1px solid #a3a3a3;
-  background: #ffffff;
-  color: #222222;
-  font: 11px/15px Verdana, Tahoma, Arial, sans-serif;
+  background: var(--nl-surface);
+  color: var(--nl-text);
+  font: 11px/15px var(--nl-font-verdana);
 }
 
 .nl-chat-toolstrip { background: linear-gradient(180deg, #ececec, #c8c8c8 48%, #e6e6e6); }
