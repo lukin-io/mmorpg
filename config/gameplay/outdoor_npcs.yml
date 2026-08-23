@@ -24,5 +24,6 @@ outpost_surroundings:
         encounter_count: 2
         avatar_image: "zombie.png"
       loot:
-        - item: rat_tail
+        - kind: item
+          item: rat_tail
           source_name: "Rat Tail"

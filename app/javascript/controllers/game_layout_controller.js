@@ -17,8 +17,7 @@ export default class extends Controller {
     "playersList",
     "chatArea",
     "chatInput",
-    "chatMessages",
-    "notifications"
+    "chatMessages"
   ]
 
   static values = {
@@ -168,33 +167,5 @@ export default class extends Controller {
     } catch (e) {
       console.warn("Failed to save layout preferences:", e)
     }
-  }
-
-  // =====================
-  // NOTIFICATIONS
-  // =====================
-
-  showNotification(message) {
-    let container = this.hasNotificationsTarget
-      ? this.notificationsTarget
-      : document.querySelector(".nl-notifications")
-
-    if (!container) {
-      container = document.createElement("div")
-      container.className = "nl-notifications"
-      document.body.appendChild(container)
-    }
-
-    const notification = document.createElement("div")
-    notification.className = "nl-notification"
-    notification.textContent = message
-
-    container.appendChild(notification)
-
-    // Auto-remove after delay
-    setTimeout(() => {
-      notification.style.opacity = "0"
-      setTimeout(() => notification.remove(), 300)
-    }, 2500)
   }
 }

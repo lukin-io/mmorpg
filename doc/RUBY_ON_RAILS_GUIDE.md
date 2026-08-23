@@ -527,7 +527,7 @@ When used:
 Choose one real-time presentation owner:
 
 - Use Turbo Stream broadcasts when the server owns an escaped HTML fragment,
-  as with chat message append.
+  as with chat-message and gameplay-event timeline append.
 - Use typed Action Cable events when a high-frequency surface needs focused DOM
   patches/animation, as with Arena HP/AP/log updates.
 - Do not broadcast the same visible transition through both mechanisms unless
@@ -547,12 +547,13 @@ Use these existing boundaries instead of creating a parallel client path:
 
 | Surface | Rails/Turbo or realtime owner | Stimulus responsibility | Stimulus must not own |
 | --- | --- | --- | --- |
-| Authenticated shell | `layouts/game`, `main_content`, `available-actions`, lazy `chat_messages`, and bounded controller-prepared shell state | focus, local preferences, presence refresh, and notification presentation | character/location state or shell-wide database retrieval |
+| Authenticated shell | `layouts/game`, `main_content`, `available-actions`, lazy mixed chat/game-event history, and bounded controller-prepared shell state | focus, local preferences, presence refresh, and timeline presentation | character/location state, event audience/body, or shell-wide database retrieval |
 | Outdoor World | `WorldController` plus movement/action services; coherent streams for `game-map`, `location-info`, `available-actions`, and `flash` | submit an opaque offered move, center/pan, animate server timing, and reload at expiry | reachability, travel duration, offer creation, or movement completion |
 | City and linked locations | server-rendered hotspot/feature forms backed by character-owned offers | native-pixel centering, tooltips, keyboard/pointer presentation | whether a hotspot exists, is accessible, or changes location |
 | Inventory and progression | inventory/progression services plus multi-target streams and server-rendered partials | selection and allocation previews, keyboard state, and `requestSubmit()` | item ownership, equip/use result, point balance, or derived final stats |
-| Chat and presence | policy/dispatcher, bounded channel reads, and after-commit Turbo broadcast | input/focus, auto-scroll, local menu, and refresh presentation | message permission, ignore/privacy rules, or arbitrary message HTML |
-| Arena/Fight | combat services, jobs, authorized channels, broadcaster payloads, and state snapshot | composer preview, countdown, log/vitals/AP DOM patches, and reconnect request | combat resolution, AP validation, timeout result, target validity, or victory |
+| Chat and presence | policy/dispatcher, audience-scoped `Chat::Timeline`, stable-key `Chat::EventPublisher`, and signed after-commit Turbo streams | input/focus, auto-scroll, local menu, and refresh presentation | message permission, event audience/body, ignore/privacy rules, or arbitrary message/event HTML |
+| Arena/Fight | combat services, typed per-NPC loot awarder, jobs, authorized channels, broadcaster payloads, and state snapshot | composer preview, countdown, log/vitals/AP DOM patches, and reconnect request | combat resolution, loot roll/grant, AP validation, timeout result, target validity, or victory |
+| Shop/Economy | Shop services plus the wallet/ledger boundary used by trades and authoritative NPC-loot ingress | native form/redirect presentation inside the shell | price, stock, wallet balance, ledger adjustment, or reward eligibility |
 | Vitals bar | server-provided current/max values and persisted character state | smooth display-only interpolation | persisted regeneration, damage, healing, or combat authority |
 
 This map records the intended existing ownership/integration seams; it is not a

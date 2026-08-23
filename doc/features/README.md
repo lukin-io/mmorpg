@@ -28,9 +28,9 @@ three non-green statuses.
 | `city.md` | Completed handbook for the Forpost node graph, illustrated navigation, gates, buildings, captured interiors, and resume behavior. |
 | `character_progression.md` | Completed handbook for level-0 startup, source-table XP/grants, primary stats and exact derived values, numeric skills, the launch perk subset, locked allocation, and public progression display. |
 | `player_inventory.md` | Completed bounded handbook for authoritative carried/equipped state and the fresh Neverlands-matched equipment-family Inventory surface. |
-| `arena_combat.md` | Completed bounded handbook for Arena applications, shared player/NPC turn combat, active-fight presentation, completion, and public fight logs. |
-| `shop_economy.md` | Transitional handbook for the City Shop, catalog modes, NV wallet, buying, inventory selling, stock, and transaction persistence; it is not green until its declared boundary is fully implemented. |
-| `game_shell.md` | Transitional handbook for the persistent game frame, compact vitals, exact-cell presence, global chat, and shell preferences; it is not green until its declared boundary is fully implemented. |
+| `arena_combat.md` | Completed bounded handbook for Arena applications, shared player/NPC turn combat, typed item/NV loot, active-fight presentation, completion, and public fight logs. |
+| `shop_economy.md` | Transitional handbook for the City Shop, catalog modes, NV wallet and ledger (including combat-loot ingress), buying, inventory selling, stock, and transaction persistence; it is not green until its declared boundary is fully implemented. |
+| `game_shell.md` | Transitional handbook for the persistent game frame, compact vitals, exact-cell presence, global chat, the durable mixed chat/game-event timeline for fight/item/NV/world information, and shell preferences; it is not green until its declared boundary is fully implemented. |
 | `quests.md` | `NOT_IMPLEMENTED` placeholder linked to the complete-Quest evidence gap. |
 | `professions.md` | `NOT_IMPLEMENTED` placeholder linked to the complete-profession evidence gap. |
 | `dungeons.md` | `NOT_IMPLEMENTED` placeholder linked to the complete-dungeon evidence gap. |
@@ -152,6 +152,7 @@ flowchart LR
     Arena <--> Shell
     Arena <--> Progression
     Arena <--> Inventory["Player Inventory"]
+    Arena <--> Shop
     Inventory <--> World
     Inventory <--> Shell
     Inventory <--> Progression

@@ -14,6 +14,7 @@ Reference material:
 
 - `doc/design/reference/neverlands.md`
 - `doc/design/reference/character/observations/legacy_skills_and_arena_analysis.md`
+- `doc/design/reference/social/observations/2026-08-23_chat_game_event_timeline.md`
 - `doc/design/reference/source_material.md`
 
 Important borrowed ideas:
@@ -106,6 +107,10 @@ Configured solo NPC experience is awarded at shared fight completion and
 capped by the winner's current table row. Neverlands group experience uses a
 more complex distribution that is not completely captured, so a winning side
 with multiple player participants currently receives no invented PvE XP split.
+The persistent chat timeline may display the exact awarded amount in a concise
+fight-completion row after finalization. Character progression remains the XP,
+threshold, and grant authority; that feedback row cannot award or recalculate
+experience.
 
 ## Public Player Info
 
@@ -303,6 +308,8 @@ Perk allocation rules:
 - `features/combat.md`: weapon, defense, magic, and resistance skills need
   exact formula capture before changing combat formulas.
 - `features/items_inventory_equipment.md`: item requirements use stats/skills.
+- `features/social_chat_presence.md`: presents the authoritative combat-XP
+  amount supplied by finalization; it does not own XP or level grants.
 - `features/professions.md`: profession perks and use-grown counters remain a
   separate source-backed progression area and are not allocated as ordinary
   numeric skills.

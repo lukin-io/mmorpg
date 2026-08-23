@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_29_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_23_220000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -272,6 +272,24 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_29_120000) do
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
     t.index ["user_id"], name: "index_currency_wallets_on_user_id", unique: true
+  end
+
+  create_table "game_events", force: :cascade do |t|
+    t.text "body", null: false
+    t.datetime "created_at", null: false
+    t.string "event_key", null: false
+    t.string "event_type", null: false
+    t.datetime "occurred_at", null: false
+    t.jsonb "payload", default: {}, null: false
+    t.bigint "recipient_id"
+    t.datetime "updated_at", null: false
+    t.index ["event_key"], name: "index_game_events_on_event_key", unique: true
+    t.index ["occurred_at"], name: "index_game_events_on_occurred_at"
+    t.index ["recipient_id", "occurred_at"], name: "index_game_events_on_recipient_id_and_occurred_at"
+    t.index ["recipient_id"], name: "index_game_events_on_recipient_id"
+    t.check_constraint "event_type::text = 'world_announcement'::text AND recipient_id IS NULL OR event_type::text <> 'world_announcement'::text AND recipient_id IS NOT NULL", name: "game_events_audience_check"
+    t.check_constraint "event_type::text = ANY (ARRAY['fight_finished'::character varying, 'item_found'::character varying, 'money_found'::character varying, 'system_information'::character varying, 'world_announcement'::character varying]::text[])", name: "game_events_type_check"
+    t.check_constraint "jsonb_typeof(payload) = 'object'::text", name: "game_events_payload_object_check"
   end
 
   create_table "ignore_list_entries", force: :cascade do |t|
@@ -590,6 +608,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_29_120000) do
   add_foreign_key "combat_log_entries", "arena_matches"
   add_foreign_key "currency_transactions", "currency_wallets"
   add_foreign_key "currency_wallets", "users"
+  add_foreign_key "game_events", "users", column: "recipient_id"
   add_foreign_key "ignore_list_entries", "users"
   add_foreign_key "ignore_list_entries", "users", column: "ignored_user_id"
   add_foreign_key "inventories", "characters"

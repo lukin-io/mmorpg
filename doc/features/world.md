@@ -3,7 +3,7 @@
 title: World Feature
 description: Implementation handbook for the Neverlands-based open world, cells, movement, cell content, actions, and persisted player location.
 status: Fully Implemented
-updated: 2026-07-29
+updated: 2026-08-23
 owners: Game world, movement, and world UI
 template: feature-v1
 ---
@@ -31,6 +31,7 @@ Supporting documents:
 
 - `doc/design/reference/world/observations/2026-05-09_overworld_movement.md` — live movement observations.
 - `doc/design/reference/world/observations/2026-05-20_outdoor_npc_resource.md` — observed outdoor cell, NPC, and resource behavior.
+- `doc/design/reference/social/observations/2026-08-23_chat_game_event_timeline.md` — supplied item/NV search-result evidence used to bound the typed loot handoff without inventing an NPC assignment.
 - `doc/design/reference/shell/observations/2026-07-28_game_shell_and_mvp_surfaces.md` — persistent game-shell observations.
 - `doc/design/areas/world_map.md` — world-area design record.
 - `doc/design/features/movement.md` — movement design record.
@@ -52,7 +53,7 @@ Supporting documents:
 | `doc/features/game_shell.md` | World bootstraps the game layout and supplies current location and same-cell player data. | World owns position queries and the central map/city payload; Game Shell owns the persistent frame, nearby-player presentation, and compact chat. |
 | `doc/features/shop_economy.md` | World-owned resume context validates a saved Shop surface and falls back to World when it is unavailable. | World/City retain exact location authority; Shop owns allowlisted catalog context and exchange behavior after entry. |
 | `doc/features/player_inventory.md` | Outdoor Inventory requests may be replaced by the current hidden hostile encounter and resumed after fight completion. | World owns interruption and allowlisted return context; Player Inventory owns carried/equipment state and destination rendering. |
-| `doc/features/arena_combat.md` | A hidden same-cell hostile encounter creates the shared match and later returns through World metadata. | World owns encounter eligibility, match-creation handoff, and allowlisted return context; Arena Combat owns match resolution, logs, and Finish after creation. |
+| `doc/features/arena_combat.md` | A hidden same-cell hostile encounter creates the shared match and later returns through World metadata. | World owns encounter eligibility, match-creation handoff, authored NPC loot-table input, and allowlisted return context; Arena Combat owns match resolution, per-NPC typed item/NV loot persistence, logs, and Finish after creation. |
 
 ## 2. Feature summary
 
@@ -651,9 +652,19 @@ outpost_surroundings:
         source_coordinates: [1001, 999]
         encounter_count: 2
       loot:
-        - item: rat_tail
+        - kind: item
+          item: rat_tail
           source_name: "Rat Tail"
 ```
+
+Loot entries use the Arena-owned typed award contract after World hands off the
+match. `kind: item` resolves `item`, `item_key`, or `key` to an existing
+`ItemTemplate`; an omitted `chance` means the authored entry is deterministic,
+while an explicit chance accepts `0..1` fraction or `0..100` percent. A future
+`kind: currency` entry requires a positive integer `amount` and `currency: NV`.
+The supplied `24 NV` search-result row does not identify a source NPC or drop
+probability, so this production World declaration remains item-only until that
+evidence exists.
 
 `OutdoorNpcConfig` is cached; restart before running seeds after changing the
 file or call `Game::World::OutdoorNpcConfig.reload!` in a development console
@@ -867,7 +878,14 @@ Changing an HTML id, reusing another character's key, replaying an expired key, 
 
 On interruption, `StartNpcFight` locks the character and encounter anchor, returns an existing active match on a duplicate request, and otherwise creates one player participation plus the source-authored number of NPC participations. The paired-rat cell creates a `team_battle` with two independently targetable NPC records. Match metadata records the source cell, encounter count, and normalized `world`, `profile`, or `inventory` return context. The outdoor map does not implement a separate combat engine.
 
-Arena's shared processor lets each living NPC on the opposing side act, performs defeat and loot per NPC, and ends the fight only after an entire side is defeated. Surrender follows the same participant rule for PvE and PvP side sizes. `ArenaMatchesController#finish` clears the player's combat flag and resolves World-fight return metadata through `CombatReturnContext`; invalid persisted context falls back to the unchanged world cell.
+Arena's shared processor lets each living NPC on the opposing side act,
+performs defeat and typed loot resolution once per NPC, and ends the fight only
+after an entire side is defeated. Item awards enter Inventory; any future
+evidence-authored NV award enters the Economy wallet ledger. Surrender follows
+the same participant rule for PvE and PvP side sizes.
+`ArenaMatchesController#finish` clears the player's combat flag and resolves
+World-fight return metadata through `CombatReturnContext`; invalid persisted
+context falls back to the unchanged world cell.
 
 ## 9. HTTP and Turbo contract
 
@@ -995,7 +1013,7 @@ A wilderness fight does not move `CharacterPosition`. Its match metadata stores 
 | Deferred local action definition | Do not create an offer. |
 | `Look Around` with no hostile interruption | Return authored message; grant no invented reward. |
 | Valid wilderness action with a live hostile encounter | Do not complete its intended domain transition; start or reuse the shared fight and preserve its allowlisted destination. |
-| First NPC defeated in a multi-NPC fight | Award/log that participant's loot check; keep the encounter anchor and fight live while another opposing participant survives. |
+| First NPC defeated in a multi-NPC fight | Resolve/mark/log that participant's typed loot check once; keep the encounter anchor and fight live while another opposing participant survives. |
 | Final NPC defeated | Mark the encounter anchor defeated and complete the fight-level result. |
 | Player surrenders | Defeat only that participant; finish only when the participant's entire side is defeated. |
 | Duplicate fight start | Return the character's existing active match; do not create another match or participant set. |
@@ -1029,7 +1047,7 @@ A wilderness fight does not move `CharacterPosition`. Its match metadata stores 
   cell and resumes only while that entrance remains accessible.
 - Hostile same-cell interaction starts the shared NPC fight implementation.
 - Movement, entrance, local, Character, and Inventory wilderness actions can be replaced by the same hostile encounter check.
-- The captured Plague Rat encounter remains invisible on the map, then the fight renders and resolves two independently targetable NPCs; both living NPCs can act, the first defeat does not end the fight, and each defeated NPC receives its own loot check.
+- The captured Plague Rat encounter remains invisible on the map, then the fight renders and resolves two independently targetable NPCs; both living NPCs can act, the first defeat does not end the fight, and each defeated NPC receives one retry-safe item-loot resolution into Inventory.
 - The shared fight surface renders complete 1x1, 1xMany, and ManyxMany side rosters for PvE/PvP and applies surrender to one participant at a time.
 - Finishing a wilderness result returns to World, Character, or Inventory according to validated match metadata; invalid metadata falls back to World.
 - Logout/login preserves exact outdoor coordinates.
@@ -1132,6 +1150,7 @@ presence, and login-resume behavior.
 - `doc/design/reference/world/observations/2026-05-09_overworld_movement.md`
 - `doc/design/reference/world/observations/2026-05-20_outdoor_npc_resource.md`
 - `doc/design/reference/shell/observations/2026-07-28_game_shell_and_mvp_surfaces.md`
+- `doc/design/reference/social/observations/2026-08-23_chat_game_event_timeline.md`
 
 ### Routes and controllers
 
@@ -1229,6 +1248,7 @@ presence, and login-resume behavior.
 - `app/controllers/arena_matches_controller.rb`
 - `app/helpers/arena_helper.rb`
 - `app/services/arena/combat_processor.rb`
+- `app/services/arena/npc_loot_awarder.rb`
 - `app/services/arena/combat_broadcaster.rb`
 - `app/services/arena/npc_combat_ai.rb`
 - `app/views/arena_matches/show.html.erb`
@@ -1310,6 +1330,7 @@ ownership after the World capability is accepted.
 - `spec/requests/world_context_actions_spec.rb`
 - `spec/requests/arena_matches_spec.rb`
 - `spec/services/arena/combat_processor_spec.rb`
+- `spec/services/arena/npc_loot_awarder_spec.rb`
 - `spec/services/arena/npc_combat_ai_spec.rb`
 - `spec/models/arena_match_auto_end_spec.rb`
 - `spec/policies/arena_match_policy_spec.rb`
@@ -1380,3 +1401,4 @@ Before extending the World feature:
 | 2026-07-28 | Added the complete cell-content ownership and lifecycle guide: seed/config sources, persisted/materialized records, add/adjust/move/deactivate/remove examples for buildings, local resources/actions, and NPCs, scoped stale-data reconciliation, idempotency requirements, exhaustive schema migrations, and an explicit prohibition on parallel catalogs. Corrected the World contract to the one currently verified city gate. |
 | 2026-07-29 | Hardened the existing City/World seed pipeline so historical nine-node databases converge to the verified West Gate pair without stale South/East entrances, live obsolete offers, or stranded City positions. |
 | 2026-07-29 | Added admin-only responsive CRUD over the existing persisted World/City owners, atomic immutable mutation auditing, bounded pagination, validated JSON metadata, dependent-delete protection, stale-offer cancellation, and the task-oriented cross-feature management-guide link. Outdoor NPC config now materializes through the idempotent seed pipeline while runtime `TileNpcService` reads only managed DB state, so deletes and moves take effect without a parallel catalog or lazy respawn. |
+| 2026-08-23 | Normalized the authored Plague Rat reward to the shared typed `kind: item` contract and documented the Arena-owned persistence/idempotency handoff. The observed standalone `24 NV` result remains unassigned until its NPC and probability are evidenced. |

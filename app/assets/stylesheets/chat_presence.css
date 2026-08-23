@@ -64,6 +64,11 @@
   text-align: center;
 }
 
+.chat-messages-container:has(> .chat-msg, > .game-event) > .chat-empty,
+.nl-chat-message-list:has(> .chat-msg, > .game-event) > .nl-chat-empty {
+  display: none;
+}
+
 .chat-msg {
   display: grid;
   min-height: 17px;
@@ -137,6 +142,41 @@
   margin: 0;
   overflow-wrap: anywhere;
   color: inherit;
+}
+
+.game-event {
+  display: flex;
+  min-height: 17px;
+  align-items: baseline;
+  gap: 4px;
+  padding: 1px 2px;
+  border-bottom: 1px solid #eee8d8;
+  background: var(--nl-surface);
+  color: var(--nl-text);
+  font: 10px/14px var(--nl-font-verdana);
+}
+
+.game-event-time {
+  flex: 0 0 auto;
+  color: var(--nl-chat-time);
+  font: 11px/14px var(--nl-font-tahoma);
+  white-space: nowrap;
+}
+
+.game-event-content { min-width: 0; overflow-wrap: anywhere; }
+.game-event-system-label,
+.game-event-item,
+.game-event-money { font-weight: 700; }
+.game-event-attention,
+.game-event-combat-xp { color: var(--nl-combat-xp); font-weight: 700; }
+
+.game-event-source {
+  flex: 0 0 auto;
+  padding: 0 3px;
+  background: var(--nl-announcement);
+  color: var(--nl-text-inverse);
+  font: 11px/14px var(--nl-font-tahoma);
+  white-space: nowrap;
 }
 
 .chat-input-area { padding: 2px; }
@@ -286,7 +326,16 @@
 .nl-chat-history .chat-msg-body,
 .nl-chat-history .chat-msg-header,
 .nl-chat-history .chat-msg-content { display: contents; }
-.nl-chat-history .chat-msg-time { order: -1; color: #003366; font: 11px/18px var(--nl-font-tahoma); }
+.nl-chat-history .chat-msg-time { order: -1; color: var(--nl-chat-time); font: 11px/18px var(--nl-font-tahoma); }
 .nl-chat-history .chat-msg-sender { color: var(--nl-text); font-weight: 700; }
 .nl-chat-history .chat-msg-content { color: var(--nl-text); }
 .nl-chat-history .chat-msg--system .chat-msg-content { font-weight: 700; }
+.nl-chat-history .game-event {
+  min-height: 18px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font: 13px/18px var(--nl-font-verdana);
+}
+.nl-chat-history .game-event-time,
+.nl-chat-history .game-event-source { line-height: 18px; }

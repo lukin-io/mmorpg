@@ -120,8 +120,7 @@
 }
 
 .flash,
-.nl-flash,
-.nl-notification {
+.nl-flash {
   border-radius: 0;
 }
 

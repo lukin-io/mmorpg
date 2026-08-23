@@ -17,10 +17,6 @@
   <%# === TOP STATUS BAR (like original: name[lv] + HP/MP + text links) === %>
   <header class="nl-top-bar">
     <div class="sr-only" data-controller="online-reload" <%= online_reload_attributes %> aria-hidden="true"></div>
-    <% if user_signed_in? %>
-      <%= turbo_stream_from ["notifications", current_user.id] %>
-    <% end %>
-
     <%# Left: Character name + level + HP/MP bars %>
     <div class="nl-top-left">
       <% if current_character %>
@@ -103,8 +99,10 @@
   <%# Neverlands chmain/ch_list frames translated into one persistent row. %>
   <section class="nl-social-row" aria-label="Chat and nearby players">
     <div class="nl-chat-history" id="chat-messages" data-game-layout-target="chatMessages">
-      <%= turbo_frame_tag "chat_messages", src: shell_chat_channel_id ? chat_channel_path(shell_chat_channel_id) : nil, loading: "lazy" do %>
-        <div class="nl-chat-loading">Loading...</div>
+      <% unless content_for?(:hide_shell_chat_history) %>
+        <%= turbo_frame_tag "chat_messages", src: shell_chat_channel_id ? chat_channel_path(shell_chat_channel_id) : nil, loading: "lazy" do %>
+          <div class="nl-chat-loading">Loading...</div>
+        <% end %>
       <% end %>
     </div>
 
@@ -188,9 +186,6 @@
       <div class="nl-flash nl-flash--<%= type %>"><%= message %></div>
     <% end %>
   </div>
-
-  <%# Notification toasts %>
-  <div id="notifications" class="nl-notifications" data-game-layout-target="notifications"></div>
 
 </body>
 </html>

@@ -191,7 +191,8 @@ Which feature documents this area activates.
 - Prefer deterministic data in tests and starter content.
 - Preserve the Neverlands frame contract with modern Rails primitives rather
   than framesets: one persistent game layout, one replaceable main content
-  region, persistent chat, persistent presence, and server-authored actions.
+  region, one persistent mixed chat/game-event history, persistent presence,
+  and server-authored actions.
 - Use Stimulus for local interaction affordances and Turbo/Hotwire for
   server-rendered state changes. Do not introduce Tailwind CSS for MVP unless a
   specific view rewrite justifies the migration cost against the existing
@@ -210,7 +211,9 @@ Neverlands-based behavior first.
 - generic housing, decor, and storage expansion;
 - generic spawn schedules;
 - generic game events, community objectives, leaderboards, competition
-  brackets, and arena tournaments;
+  brackets, and arena tournaments; the separate source-backed personal/world
+  rows adopted in `features/social_chat_presence.md` are concise chat feedback,
+  not restoration of this removed generic event system;
 - generic party finder, group listings, ready checks, and party chat;
 - generic clan implementation, including clan XP, strongholds, research,
   treasury, applications, message boards, permissions, quest boards, wars, and

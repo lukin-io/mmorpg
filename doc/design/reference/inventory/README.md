@@ -2,7 +2,7 @@
 
 - Document type: neverlands-source-summary
 - Domain: inventory
-- Updated: 2026-07-29
+- Updated: 2026-08-23
 - Evidence status: current for the bounded launch surface
 
 ## Current observations
@@ -12,12 +12,17 @@
   `doc/design/reference/character/observations/2026-05-11_player_profile_and_development.md`
 - Character-sheet/item-row measurements in
   `doc/design/reference/shell/observations/2026-07-29_style_system.md`
+- Successful bot-search item-found feedback, adjacent to a separate NV variant, in
+  `doc/design/reference/social/observations/2026-08-23_chat_game_event_timeline.md`
 
 ## Current Neverlands behavior
 
 Inventory combines a paper doll, item families/subcategories, dense item rows,
 requirements, properties, durability, carried mass, and server-issued item
-actions. Shop rows reuse the item vocabulary but Shop owns commerce.
+actions. Shop rows reuse the item vocabulary but Shop owns commerce. A supplied
+chat capture also confirms concise successful item-found feedback, but it does
+not establish failed-capacity behavior or make that row inventory authority.
+The NV variant is Economy-owned and does not create an inventory item.
 
 ## Evidence gaps
 

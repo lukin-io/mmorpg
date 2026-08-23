@@ -131,6 +131,18 @@ RSpec.describe "Inventories", type: :request do
         expect(response).to have_http_status(:success)
         expect(response.media_type).to eq("text/vnd.turbo-stream.html")
       end
+
+      it "renders equipment failures into the stable flash surface" do
+        item_template.update!(requirements: {"level" => character.level + 1})
+
+        post equip_inventory_path, params: {item_id: inventory_item.id},
+          headers: {"Accept" => "text/vnd.turbo-stream.html"}
+
+        expect(response).to have_http_status(:unprocessable_content)
+        expect(response.body).to include('action="update" target="flash"')
+        expect(response.body).not_to include('target="notifications"')
+        expect(inventory_item.reload.equipped).to be false
+      end
     end
   end
 

@@ -6,8 +6,7 @@ class ChatChannelsController < ApplicationController
     @chat_channel = policy_scope(ChatChannel).find(params[:id])
     authorize @chat_channel, :show?
 
-    messages = @chat_channel.chat_messages.order(created_at: :desc).limit(200).reverse
-    @chat_messages = Chat::IgnoreFilter.filter_for_user(messages, current_user)
+    @chat_entries = Chat::Timeline.new(channel: @chat_channel, viewer: current_user).call
     @chat_message = ChatMessage.new
 
     if request.headers["Turbo-Frame"] == "chat_messages"

@@ -300,19 +300,6 @@ module Arena
           redirect_url: "/arena_matches/#{match.id}"
         }
       )
-
-      # Also notify participants directly (for when they're not on the room page)
-      match.arena_participations.players.each do |participation|
-        ActionCable.server.broadcast(
-          "user:#{participation.user_id}:notifications",
-          {
-            type: "arena_match_starting",
-            match_id: match.id,
-            countdown: 10,
-            redirect_url: "/arena_matches/#{match.id}"
-          }
-        )
-      end
     end
 
     def broadcast_npc_match_created(match, application, acceptor)
@@ -327,19 +314,6 @@ module Arena
           redirect_url: "/arena_matches/#{match.id}",
           npc_name: application.npc_template&.name,
           player_name: acceptor.name
-        }
-      )
-
-      # Notify the player
-      ActionCable.server.broadcast(
-        "user:#{acceptor.user_id}:notifications",
-        {
-          type: "arena_npc_match_starting",
-          match_id: match.id,
-          countdown: 0,
-          redirect_url: "/arena_matches/#{match.id}",
-          npc_name: application.npc_template&.name,
-          npc_level: application.npc_template&.level
         }
       )
     end

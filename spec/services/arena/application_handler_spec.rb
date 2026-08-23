@@ -323,7 +323,7 @@ RSpec.describe Arena::ApplicationHandler do
     # ============================================
     # Broadcast Tests (Bug Fix Coverage)
     # ============================================
-    # Ensures both participants receive match notification
+    # The room update identifies both participants; there is no parallel toast stream.
 
     context "broadcasting match created" do
       it "broadcasts with participant_ids for client-side detection" do
@@ -335,16 +335,6 @@ RSpec.describe Arena::ApplicationHandler do
             countdown: 10,
             redirect_url: an_instance_of(String)
           )
-        )
-
-        # Also expect user notifications
-        expect(ActionCable.server).to receive(:broadcast).with(
-          "user:#{user.id}:notifications",
-          hash_including(type: "arena_match_starting")
-        )
-        expect(ActionCable.server).to receive(:broadcast).with(
-          "user:#{other_user.id}:notifications",
-          hash_including(type: "arena_match_starting")
         )
 
         handler.accept(application: application, acceptor: character)

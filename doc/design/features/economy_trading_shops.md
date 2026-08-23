@@ -16,6 +16,7 @@ Primary references:
 - `doc/design/reference/shell/observations/2026-07-28_game_shell_and_mvp_surfaces.md`
 - `doc/design/reference/inventory/observations/2026-06-01_inventory_items_and_shop_rows.md`
 - `doc/design/reference/city/observations/2026-07-28_city_movement_and_services.md`
+- `doc/design/reference/social/observations/2026-08-23_chat_game_event_timeline.md`
 
 Observed shop flow:
 
@@ -64,6 +65,14 @@ Core currency is normal money for shops.
 
 Currency should be visible in inventory/shop contexts and recorded as part of
 economy state.
+
+The supplied NPC-search addendum confirms a successful `24 NV` result row. The
+local design adopts that as a typed combat-loot ingress into the same
+authoritative NV wallet used by shops. A successful outcome must credit
+`CurrencyWallet` and append a `CurrencyTransaction` with its fight/NPC source
+identity before the social layer publishes money-found feedback. A
+per-NPC-participation processing marker makes retry safe; `GameEvent` is not the
+money authority.
 
 NV balances and transaction amounts use fixed `decimal(12,2)` storage. This is
 required by the captured fractional prices and prevents inventory transfers or
@@ -128,6 +137,7 @@ discard fractional balances.
 
 - wallet;
 - transaction;
+- typed NPC currency award source;
 - city building shop;
 - shop category;
 - shop stock with current and maximum counts;
@@ -146,6 +156,8 @@ Deferred source-backed concepts:
 - `areas/cities_and_buildings.md`: shops are entered through city
   hotspots.
 - `features/items_inventory_equipment.md`: all goods are inventory items.
+- `features/combat.md`: a configured NPC NV outcome credits the economy wallet
+  through the shared ledger before Combat publishes player feedback.
 - `features/social_chat_presence.md`: future direct trade capture should account
   for player identity and local presence.
 - `features/professions.md`: future profession resources may be sold only after

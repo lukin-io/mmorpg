@@ -2,7 +2,7 @@
 
 - Document type: neverlands-source-summary
 - Domain: character
-- Updated: 2026-07-29
+- Updated: 2026-08-23
 - Evidence status: current with preserved legacy analysis
 
 ## Current observations
@@ -12,12 +12,15 @@
 | Profile, stats, skills, perks, Inventory adjacency | `doc/design/reference/character/observations/2026-05-11_player_profile_and_development.md` | current within captured states |
 | Skills, effects, and Arena source analysis | `doc/design/reference/character/observations/legacy_skills_and_arena_analysis.md` | mixed current/historical; verify per flow |
 | Profile/Inventory geometry | `doc/design/reference/shell/observations/2026-07-29_style_system.md` | current presentation evidence |
+| Recipient-visible awarded combat XP | `doc/design/reference/social/observations/2026-08-23_chat_game_event_timeline.md` | current bounded feedback evidence |
 
 ## Current Neverlands behavior
 
 Character presentation combines identity, equipment, primary parameters,
 experience, numeric skills, boolean perks, effects, and linked Inventory. The
-server validates allocation and persisted character state.
+server validates allocation and persisted character state. A concise
+fight-completion row may display awarded combat XP, but the capture does not
+make chat the source of progression state.
 
 ## Evidence gaps
 

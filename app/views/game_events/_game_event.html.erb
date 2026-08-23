@@ -1,0 +1,30 @@
+<%= tag.article id: dom_id(game_event),
+                class: ["game-event", "game-event--#{game_event.event_type.dasherize}", ("game-event--global" if game_event.global?)],
+                data: {event_id: game_event.id, event_type: game_event.event_type} do %>
+  <% if game_event.global? %>
+    <time class="sr-only" datetime="<%= game_event.occurred_at.iso8601 %>"><%= game_event.occurred_at.strftime("%H:%M:%S") %></time>
+    <span class="game-event-source">World</span>
+    <span class="game-event-content">
+      <strong class="game-event-attention">Attention!</strong>
+      <%= game_event.body %>
+    </span>
+  <% else %>
+    <time class="game-event-time"
+          datetime="<%= game_event.occurred_at.iso8601 %>"
+          title="<%= l(game_event.occurred_at, format: :long) %>"><%= game_event.occurred_at.strftime("%H:%M:%S") %></time>
+    <span class="game-event-content">
+      <% if game_event.item_found? || game_event.money_found? %><strong class="game-event-attention">Attention!</strong><% end %>
+      <strong class="game-event-system-label">System information.</strong>
+      <%= game_event.body %>
+
+      <% if game_event.fight_finished? %>
+        Combat experience gained:
+        <strong class="game-event-combat-xp"><%= game_event.payload.fetch("experience", 0) %></strong>.
+      <% elsif game_event.item_found? && game_event.payload["item_name"].present? %>
+        Item «<strong class="game-event-item"><%= game_event.payload["item_name"] %></strong>»<% if game_event.payload.fetch("quantity", 1).to_i > 1 %> ×<%= game_event.payload["quantity"] %><% end %>.
+      <% elsif game_event.money_found? && game_event.payload["amount"].present? %>
+        Funds «<strong class="game-event-money"><%= game_event.payload.fetch("amount") %> <%= game_event.payload.fetch("currency", "NV") %></strong>».
+      <% end %>
+    </span>
+  <% end %>
+<% end %>

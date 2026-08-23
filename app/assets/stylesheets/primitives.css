@@ -421,11 +421,10 @@ input[type="radio"] {
 }
 
 /* ---------------------------------------------------------------- *
- * Flash and notification surfaces
+ * Flash surfaces
  * ---------------------------------------------------------------- */
 
-.nl-flash,
-.nl-notification {
+.nl-flash {
   display: block;
   padding: 3px 6px;
   border: 1px solid var(--nl-rule-gold);
@@ -434,11 +433,9 @@ input[type="radio"] {
   font: 11px/15px var(--nl-font-tahoma);
 }
 
-.nl-flash--alert,
-.nl-notification--alert { color: var(--nl-bonus); }
+.nl-flash--alert { color: var(--nl-bonus); }
 
-.nl-flash--notice,
-.nl-notification--notice { color: #006600; }
+.nl-flash--notice { color: #006600; }
 
 .nl-public-main {
   width: 100%;

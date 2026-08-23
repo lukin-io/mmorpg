@@ -13,6 +13,8 @@ Inputs:
 
 - live arena mannequin and outdoor hostile-NPC captures;
 - observed NPC drop/result behavior;
+- supplied mixed chat/game-event timeline observation in
+  `doc/design/reference/social/observations/2026-08-23_chat_game_event_timeline.md`;
 - documented movement, tile-action, and shop captures.
 
 ## Player Experience
@@ -65,13 +67,20 @@ all own loot rules.
 Design rules:
 
 - an NPC can define a loot table with item entries, drop chances, quantity, and
-  optional conditions;
+  optional conditions; typed entries currently support items and NV;
 - loot is rolled after combat victory and before or during the result-finish
   step;
-- the combat log/result should show whether the NPC was searched and whether
-  anything was found;
+- the canonical combat log/result should show whether the NPC was searched and
+  whether anything was found;
 - dropped items enter the same inventory/capacity rules as loot and shop
   purchases;
+- a successful carried-item award also creates a recipient-only item-found row
+  in the persistent chat timeline; a failed capacity or validation outcome
+  must not claim that an item was awarded;
+- a successful NV outcome credits the player's persisted wallet and immutable
+  transaction ledger before creating a recipient-only money-found row;
+- one persisted per-NPC-participation resolution marker makes item/NV award
+  processing retry safe independently of the presentation event;
 - capacity, protected-item rules, and binding rules must be enforced before the
   item becomes carried inventory;
 - arena rewards and NPC drops are separate concepts: a mannequin dropping wood
@@ -90,8 +99,10 @@ The mannequin/wood-chips case belongs here: `Манекен` is an arena trainin
 and wood chips are a low-value material drop from that NPC role. The May 19
 starter capture won three mannequin fights and each result log included a bot
 search result of `Вещь «Щепки»`; inventory then showed `Щепки` as carried item
-rows. The drop should flow through combat result -> loot check -> inventory
-item/material, then feed shop economy rules.
+rows. The drop should flow through combat result -> loot check -> validated
+inventory item/material -> personal timeline fact, then feed shop economy
+rules. The inventory row remains the item authority; the timeline row is
+feedback only.
 
 The outdoor rat-tail case belongs here as well. The May 20 capture near
 `Окрестность Форпоста` entered two bot-ambush fights against paired
@@ -174,5 +185,9 @@ design an accessible modal shell later, but not enough to rebuild quest rules.
 - `features/combat.md`: hostile and training combat.
 - `features/progression_stats_skills.md`: owns the level table, per-fight XP
   cap, grants, and deliberate group-XP evidence boundary.
+- `features/social_chat_presence.md`: owns the personal item-found projection
+  and money-found projection after Combat confirms the authoritative award.
+- `features/economy_trading_shops.md`: owns the NV wallet and transaction
+  ledger used by a configured NPC currency outcome.
 - `features/professions.md`: owns future profession-gated NPC/resource activity,
   not hostile combat templates.

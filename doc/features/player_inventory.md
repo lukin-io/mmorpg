@@ -3,7 +3,7 @@
 title: Player Inventory Feature
 description: Implementation handbook for the Neverlands-based carried inventory, equipment paper doll, capacity, filters, item rows, and item actions.
 status: Fully Implemented
-updated: 2026-07-28
+updated: 2026-08-23
 owners: Player Inventory
 template: feature-v1
 ---
@@ -30,11 +30,11 @@ tracked in `doc/design/launch_mvp_plan.md`.
 
 | Related feature | Relationship | Ownership and handoff |
 |---|---|---|
-| `doc/features/game_shell.md` | Inventory replaces only the main gameplay surface. | Shell owns header/chat/presence; Inventory owns its page. |
+| `doc/features/game_shell.md` | Inventory replaces only the main gameplay surface and reports request failures through the shared flash target. | Shell owns header/chat/presence and stable flash presentation; Inventory owns its page, mutation result, and error copy. |
 | `doc/features/character_progression.md` | The shared sheet reads effective character values. | Progression owns saved values; Inventory owns display and equip requirements. |
 | `doc/features/shop_economy.md` | Shop buys/sells carried stacks. | Shop owns exchange; Inventory owns stack, mass, durability, and equipment state. |
 | `doc/features/world.md` | Outdoor Inventory navigation may be interrupted by an NPC. | World owns interruption/return context; Inventory owns the destination page. |
-| `doc/features/arena_combat.md` | Active fights render the character's current equipment in the shared paper doll and may apply server-resolved wear. | Inventory owns equipped state, durability, and slot identity; Arena Combat preloads that state for presentation and owns fight resolution/wear. |
+| `doc/features/arena_combat.md` | Active fights render current equipment, may apply server-resolved wear, and may award NPC item loot into carried inventory. | Inventory owns equipped/carried state, durability, capacity, and item-award validation; Arena Combat owns fight resolution/wear, typed loot resolution, and item-found feedback after a successful award. NV loot does not create an `InventoryItem`; Shop and Economy own its wallet/ledger persistence. |
 
 ## 2. Feature summary
 
@@ -42,7 +42,8 @@ The signed-in player opens a dense two-column page. A 463px left column shows
 the shared paper doll and character parameters. After a 5px gap, the right
 column begins at 467px minimum width and shows measured CSS/text control rows,
 current/max mass, then flat item rows with actions, properties, and
-requirements. Item/currency mutations remain server-authoritative.
+requirements. Item mutations remain Inventory-authoritative; NV remains
+authoritative in the user's Economy wallet and ledger.
 
 ## 3. MVP goals and non-goals
 
@@ -148,7 +149,7 @@ Existing mutation routes do not prove visual parity for those states.
 
 | Record/component | Responsibility | Important contract |
 |---|---|---|
-| `Inventory` | Capacity, current weight, currency storage, owner | One per character |
+| `Inventory` | Capacity, current weight, and item owner | One per character; it does not own NV balance |
 | `InventoryItem` | Owned stack, quantity, durability, equipped state | Always scoped through current inventory |
 | `ItemTemplate` | Stable properties, slot, requirements, modifiers | Server-authored content |
 | `Character` | Effective requirement/carry values | Progression/equipment source of truth |
@@ -209,7 +210,10 @@ requires it. A stale row cannot bypass current ownership/protection checks.
 `GET /inventory` renders HTML. Existing collection/member actions handle
 equip, unequip, use, transfer, gift, sale, discard, sort, equipment-set, and
 money operations. Forms retain CSRF protection and normal Rails/Turbo response
-behavior. No public JSON inventory API is part of this feature.
+behavior. Failed Turbo equip/unequip requests return `422 Unprocessable
+Content` and replace the shared `flash` target; they do not address a removed
+toast/notification container. No public JSON inventory API is part of this
+feature.
 
 ## 10. Client-side and CSS ownership
 
@@ -246,7 +250,7 @@ capacity overflow, and protected stacks are rejected by server boundaries.
 | Condition | Required behavior |
 |---|---|
 | Missing/foreign item | Reject without mutation |
-| Unmet equip/use requirements | Show unavailable reason; preserve state |
+| Unmet equip/use requirements | Show the reason on the shared flash surface; preserve state; equip/unequip Turbo failures return 422 |
 | Full mass/slots | Reject additions without partial value change |
 | Equipped/bound/protected item | Reject forbidden transfer/sale/discard |
 | Invalid family/mode | Normalize to an allowlisted default |
@@ -364,3 +368,4 @@ shipped Inventory management routes.
 | 2026-07-28 | Replaced source-owned runtime images and source-specific copy with a CSS character silhouette, CSS/text controls, and game-specific copy while preserving measured geometry and hierarchy. |
 | 2026-07-29 | Rebuilt the surface from a second authenticated capture: `EquipmentSlots` now carries the measured per-slot geometry, the doll renders the source column order, the two icon rows collapsed into the source's single strip plus subcategory row, and `player_inventory.css` was replaced by `character_sheet.css` and `inventory.css`. |
 | 2026-07-29 | Linked the cross-feature management guide's future `ItemTemplate` adapter and service-backed inventory grant/revoke pattern without claiming those routes are shipped. |
+| 2026-08-23 | Documented the successful NPC item-loot handoff to Arena's item-found feedback, distinguished Economy-owned NV loot from Inventory state, and kept inventory validation on the shared flash surface after removal of the legacy toast path; equip/unequip Turbo failures now return 422 without mutating equipment. |

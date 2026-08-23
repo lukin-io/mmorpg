@@ -3,12 +3,15 @@
 ## Scope
 
 Character identity, profile, vitals, primary stats, experience, numeric skills,
-binary perks, derived presentation, and authoritative allocation.
+binary perks, derived presentation, authoritative allocation, and the
+awarded-XP feedback handoff after combat.
 
 ## Documentation chain
 
 - Neverlands source summary: `doc/design/reference/character/README.md`
 - Current observations: `doc/design/reference/character/observations/`
+- Cross-domain awarded-XP feedback observation:
+  `doc/design/reference/social/observations/2026-08-23_chat_game_event_timeline.md`
 - Normalized designs: `doc/design/features/character_vitals.md` and
   `doc/design/features/progression_stats_skills.md`
 - Delivery ID: `CHARACTER-PROGRESSION-001` in
@@ -19,7 +22,9 @@ binary perks, derived presentation, and authoritative allocation.
 
 Fully Implemented for the bounded progression contract. Uncaptured high-level
 tables, formulas, prerequisites, resets, and skill effects remain outside that
-boundary.
+boundary. Combat may project the actual persisted XP award into the shell
+timeline; Character Progression remains authoritative for experience and level
+grants.
 
 ## Important responsible implementation files
 

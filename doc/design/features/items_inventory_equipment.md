@@ -15,13 +15,16 @@ Inputs:
 - `doc/design/reference/neverlands.md`
 - `doc/design/reference/shell/observations/2026-07-28_game_shell_and_mvp_surfaces.md`
 - `doc/design/reference/inventory/observations/2026-06-01_inventory_items_and_shop_rows.md`
+- `doc/design/reference/social/observations/2026-08-23_chat_game_event_timeline.md`
 - `doc/design/features/combat.md`
 
 ## Player Experience
 
 The player opens inventory, sees equipped gear and carried items, compares item
 requirements, equips usable gear, sells or buys goods in shops, and feels weight
-or capacity as a real travel/economy constraint.
+or capacity as a real travel/economy constraint. When Combat successfully adds
+an NPC drop, the player can also read a concise item-found row in the
+persistent shell timeline.
 
 Inventory is player-related functionality. It belongs beside the character
 profile, stats, skills, perks, vitals, and equipment formula, not in a separate
@@ -87,6 +90,12 @@ capture. The derived character value is the gameplay capacity used by item
 addition, NPC loot, Shop purchase, and player transfer. The persisted legacy
 `weight_capacity` column remains validated for schema compatibility but is not
 the authoritative maximum shown to or enforced for the player.
+
+An NPC search/drop roll is not a successful carried-item award until these
+capacity and item rules persist the addition. Combat's typed loot transaction
+may publish an item-found timeline fact only after that success; the inventory
+item remains authoritative and failed additions must not produce success
+feedback. NV outcomes bypass Inventory and use the Economy-owned wallet ledger.
 
 ## Combat Wear
 
@@ -349,5 +358,7 @@ Remaining design detail before launch:
   future player trade needs source capture first.
 - `features/npcs_quests.md`: future quest-item behavior needs source capture
   before implementation.
+- `features/social_chat_presence.md`: may present a concise item-found fact
+  after Combat confirms a successful inventory award; it never grants the item.
 - `features/professions.md`: future tools and gathered materials reuse the same
   capacity and item-instance rules.

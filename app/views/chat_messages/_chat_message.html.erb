@@ -18,7 +18,7 @@
       <time class="chat-msg-time"
             datetime="<%= chat_message.created_at.iso8601 %>"
             title="<%= l(chat_message.created_at, format: :long) %>">
-        <%= time_ago_in_words(chat_message.created_at) %> ago
+        <%= chat_message_time(chat_message) %>
       </time>
 
     </header>

@@ -32,6 +32,8 @@ with a starter buy/sell/licenses/novice-goods implementation in the city shop.
 - The authenticated UI is one persistent game shell. Do not copy Neverlands'
   frameset technically; preserve the shell contract with Rails, Hotwire/Turbo,
   Stimulus, and server-rendered state.
+- Personal gameplay results and game-wide notices share the durable chat
+  timeline; do not split MVP event feedback into a separate toast center.
 - Marketplace/shop access is entered through a city building such as `Лавка`,
   not through a generic global marketplace or kiosk route.
 - Wild cell actions are tied to the current coordinate and expire when the
@@ -64,7 +66,7 @@ contract while an adjacent uncaptured state remains Not Done.
 | `SHELL-UI-001` | Persistent authenticated shell and shared chrome | Done for captured base frame | Neverlands 1:1 UI/UX parity matrix |
 | `SHELL-CHAT-001` | Auxiliary shell/chat controls | Not Done | Neverlands 1:1 UI/UX parity matrix |
 | `RESPONSIVE-001` | Mandatory tablet and mobile adaptation | Done for listed bounded surfaces | Neverlands 1:1 UI/UX parity matrix |
-| `SOCIAL-CHAT-001` | Chat, channels, presence, and player context | Partially Implemented | Social/chat design and shell parity rows |
+| `SOCIAL-CHAT-001` | Chat, mixed gameplay-event timeline, channels, presence, and player context | Partially Implemented; captured fight/item/NV event-timeline subset is implemented | Social/chat design and shell parity rows |
 | `CHARACTER-PROGRESSION-001` | Profile, stats, skills, perks, and allocation | Fully Implemented within declared boundary | Character-development audit and Pillar 1 |
 | `INVENTORY-UI-001` | Current equipment-family layout | Done | Neverlands 1:1 UI/UX parity matrix |
 | `INVENTORY-ACTIONS-001` | Remaining item families and action states | Not Done | Neverlands 1:1 UI/UX parity matrix |
@@ -123,6 +125,7 @@ itself supplied responsive behavior.
 | --- | --- | --- | --- | --- |
 | Persistent shell — base frame | Top frame, main-frame boundary, local presence, chat history, bottom controls, contextual navigation, and exit control. | Authenticated layout across World, Inventory, Player, and Fight at `955 × 817`, `820 × 900`, and `390 × 844`. | **Done** | Desktop retains the `29 / flexible / 8 / 240 / 1 / 30px` row contract and 300px presence column. Tablet/mobile reflow the same header, chat/presence, and CSS/text bottom controls without body overflow. |
 | Persistent shell — auxiliary chat controls | Both smile palettes, chat-mode cycle, refresh-speed cycle, transliteration state, and player-action menu. | Bottom control transitions beyond send, clear input, refresh, and clear visible chat. | **Not Done** | The measured control positions are implemented with project-owned CSS and ASCII/plain-text controls; these popup/cycle states remain unimplemented and therefore prevent claiming complete shell UX parity. |
+| Persistent chat — mixed gameplay-event timeline | Ordinary/private chat interleaved with exact-time personal fight/item/NV system rows and orange-marked untimed world announcements. | Global chat history/live stream, recipient isolation, reload persistence, fight XP, successful NPC item/NV loot, empty-first append, and no separate toast surface. | **Done for the captured bounded event subset** | Structured immutable event projections use stable producer keys and a latest-200 combined timeline. Item and NV rows follow successful inventory/wallet transactions. The world-announcement API is server-only and intentionally has no invented runtime announcements; links, authoring operations, retention controls, additional event families, and NPC-specific NV probabilities remain evidence gaps. |
 | Open world / World | Idle outdoor map, offered movement cells, center cursor, current coordinate/location copy, local actions, travel/countdown state, and shell continuity. | `WorldController#show` idle, available movement/action, and active movement states at desktop/tablet/mobile widths. | **Done** | Fresh capture now defines a 13 × 7, `1302 × 702` visible desktop surface over a 15 × 9 server render buffer. Exact 100px project-owned terrain slices, thin dark-red offers, CSS cursor/walker/timer, top-context actions, captured `24`/`32`-second duration handling, and centered responsive panning are implemented without source assets. |
 | Open-world linked location — Frontier Village | Exact entrance cell, multi-cell landmark, Enter, native interior geometry, irregular building/exit hotspots, linked Shop, unchanged outdoor coordinate, and login resume. | Seeded `[4,6]` entrance (source evidence `[998,998]`), village scene, Shop/exit offers, stale-cell rejection, and desktop/tablet/mobile panning. | **Done** | The observed village slice is implemented with a CSS-built `760 × 255` scene and fresh owned hotspot offers. Entering, visiting Shop, exiting, and login resume preserve the DB-backed outdoor coordinate. This status does not include other location families. |
 | Open-world linked locations — mines/exchanges/other families | Each source-specific exterior cell, entrance, interior, controls, prerequisites, outcomes, and return behavior. | Per-family live capture and local parity evidence before any route/catalog entry exists. | **Not Done** | No generic location implementation is inferred from the village. Capture each family before adding it. |
@@ -412,6 +415,8 @@ Required behavior:
   and public log/stat pages all resolve through the same fight-log identity;
 - training NPC drops, such as mannequin wood chips, use the same NPC loot-check
   and inventory award rules as wild NPC drops;
+- completed fights and successfully awarded NPC item/NV drops publish idempotent
+  recipient-only system rows into the persistent chat timeline;
 - completed fights require an explicit finish action before returning to arena
   or world.
 
@@ -435,6 +440,13 @@ Required behavior:
   arena NPC fights, and arena player/team fights write through the shared log
   writer. Wild NPC fights should keep using the same layer instead of adding a
   separate transcript store.
+- `Arena::NpcLootAwarder` dispatches typed item/NV entries, persists an
+  NPC-participation processing marker with the inventory/wallet mutation, and
+  uses stable keys so retries cannot duplicate value.
+- `GameEvent` is a separate shell-owned player-feedback projection: combat
+  finalization and the typed loot awarder supply stable keys and persisted facts
+  through `Chat::EventPublisher`. It does not replace the canonical fight log,
+  inventory, wallet ledger, or become combat authority.
 - The 2026-05-19 starter arena combat capture confirms the launch training
   loop: duel-tab NPC row, eligible open side, immediate NPC fight, `114` AP
   starter profile, `45/65` physical costs, injected magic selector options,
@@ -501,9 +513,12 @@ Required behavior:
   magic/action slots, combat log, and result-finish step;
 - after a wild fight, the player returns to the world/city movement context,
   not the arena;
-- loot checks are visible after the result step.
-- NPC drops are defined by the NPC loot design and awarded through inventory,
-  not hard-coded into the combat screen.
+- per-NPC loot checks remain visible in the canonical combat log/result when
+  they occur, including before fight-level completion in a multi-NPC fight;
+- NPC drops are defined by the NPC loot design, not hard-coded into the combat
+  screen. Items are awarded through Inventory; configured NV is credited
+  through the Economy wallet ledger. A successful award also supplies the
+  matching recipient item-found or money-found fact to the shell timeline.
 - the captured resource-search action can complete without an invented item
   reward or hand off into a hostile NPC fight from the same cell.
 
@@ -558,7 +573,7 @@ action-key discipline remains tracked in the checklist below.
 
 | Area | Documentation Status | Implementation Status | Next Step |
 | --- | --- | --- | --- |
-| Game shell and UI/AX | Documented in layout docs and 2026-05-25 live shell capture. | Partial. | Use one Rails game layout with persistent vitals/chat/presence, Turbo-updated main content, Stimulus-only local affordances, accessible hotspots, and no iframe/frameset clone. |
+| Game shell and UI/AX | Documented in layout docs, the 2026-05-25 live shell capture, and the supplied 2026-08-23 mixed chat/event capture plus NV addendum. | Partial overall; the captured fight/item/NV/world event-timeline subset is implemented with durable history and live delivery. | Finish auxiliary chat controls and remaining parity states while retaining one shell, one mixed chat timeline, and no iframe/frameset or toast-notification clone. |
 | Person | Documented across vitals, progression, inventory/equipment, live player captures, wiki development audit, and 2026-06-01 live inventory/items capture. | Bounded Character Progression is fully implemented: level-0 start, table XP/grants, locked allocation, exact HP/MP/mass, More Strength, and public display. Inventory/equipment remains partial beyond the implemented mass/wear/broken-sale slice. | Capture regeneration/AP/drop/repair formulas and finish remaining inventory family/equipment UX. |
 | Neverlands `Навыки` boolean perks | Full id/name/category catalog, starter save flow, exclusion rules, and More Strength wiki effect are documented. | Source perk `7` (`Больше силы`) is fully implemented for the MVP subset: separate pool, preview/save, ownership, exclusion registry, and `floor(level / 2)` effective Strength. | Capture prerequisites/reset and exact effects before exposing other magic/warrior/profession branches. |
 | Movement | Documented across movement, fatigue wiki rules, and live movement/city/village captures, including the verified gate, local actions, 13 × 7 visible / 15 × 9 buffered `100 x 100` geometry, `24`/`32`-second travel states, hidden NPCs, and the one-region `1000 x 1000` boundary. | MVP world/city/village pass implemented: exact/fallback timed offers, sparse bounds, project-owned cell-art slices, fixed-cursor animation, current city gate, village location handoff, plus persisted `1..2` step fatigue, three-minute recovery, and the `86%` outdoor action gate. | Capture each additional linked-location family separately; verify the Law exit handoff before adding a second outdoor gate. |
@@ -593,17 +608,17 @@ the next implementation step is.
 | Wilderness movement | Yes: live movement captures, wiki fatigue rules, and movement feature doc. | Timed offers, acceptance, completion, reload, sparse boundaries, stale-offer cancellation, bounded Wanderer timing, `1..2` step fatigue, three-minute recovery, and `86%` Move/Look/Enter gate implemented. | Isolate terrain/effect/encumbrance timing and high-fatigue combat inputs before adding them. |
 | City movement | Yes: the current five live nodes, native-pixel hotspot/hover behavior, eight route arrows, Central gate handoff, building return, and level-16 Arena availability are captured. | Implemented for MVP: immediate five-node transitions, level-zero Arena, fresh owned offers, project city art with CSS highlight crops, large styled ASCII arrows, tooltips, keyboard landmarks, centered responsive panning, exact Central gate pairing, and no city grid/timer or geometry authority. | Capture the Law exit result and each deferred service interior before extending actions. |
 | Tile-local action offers | Yes: movement, outdoor NPC, city/building entry, and `look`/`fis`/`dri`/`dig` client observations. | `look` offer/accept/refresh and hostile ambush handoff implemented; the other source ids are validated authored types only. | Capture successful reward/timer/equipment flows before implementing outcomes for `look`, `fis`, `dri`, or `dig`. |
-| NPCs and drops | Yes: hostile behavior, arena mannequin drops, paired wild rat-tail drops, participant-level defeat, XP caps, and source-backed return context. | Fully implemented for the declared World/NPC encounter boundary: explicit paired rats, distinct targeting, all-NPC response, per-NPC loot, capped solo XP, final anchor defeat, surrender-compatible sides, and allowlisted return. | Capture Observation/multi-drop and group-XP formulas before applying modifiers/distribution; quest NPC behavior remains separate. |
+| NPCs and drops | Yes: hostile behavior, arena mannequin drops, paired wild rat-tail drops, supplied `24 NV` result, participant-level defeat, XP caps, and source-backed return context. | Fully implemented for the declared World/NPC encounter boundary: explicit paired rats, distinct targeting, all-NPC response, typed retry-safe item/NV awards, capped solo XP, final anchor defeat, surrender-compatible sides, and allowlisted return. | Capture Observation/multi-drop, group-XP, and NPC-specific NV probability rules before applying modifiers/distribution or authoring money onto a production NPC; quest NPC behavior remains separate. |
 | NPC quest interactions | Needs dedicated Neverlands capture. | Not implemented; generic quest/story stack removed. | Capture exact quest UI, NPC dialogue flow, task/journal state, reward/turn-in rules, and location gating before implementation. |
-| Combat | Yes: combat captures, public logs, wiki critical/wear/XP constants, magic, equipment effects, and result flow. | Partial overall; shared resolver/result path, 2× critical, participant loot, capped solo NPC XP, idempotent reward marker, and equipment wear are implemented. | Capture/tune AP/mastery, fatigue penalty, group XP, Observation/drop, remaining magic/status, and repair behavior. |
+| Combat | Yes: combat captures, public logs, wiki critical/wear/XP constants, item/NV search outputs, magic, equipment effects, and result flow. | Partial overall; shared resolver/result path, 2× critical, typed transactionally idempotent participant loot, capped solo NPC XP, reward marker, and equipment wear are implemented. | Capture/tune AP/mastery, fatigue penalty, group XP, Observation/drop and NPC-specific NV probabilities, remaining magic/status, and repair behavior. |
 | Arena combat | Yes: arena rooms/applications and NPC training captures. | Partial. | Bind NPC training, player, and team applications to the same combat profile and result flow. |
 | Character vitals | Yes: live player capture, wiki HP/MP maxima, and vitals doc. | Exact starter/base `Health × 5` HP and `Knowledge × 7` MP are implemented; broader regeneration remains partial. | Capture the complete Self-Healing/Fast Mana Regeneration timer formulas. |
 | Progression, stats, and skills | Yes: live profile allocation, wiki level table/formulas, exact numeric IDs/rates, More Strength, and Wanderer. | Fully implemented for the declared handbook boundary: level-0/table grants, locked allocations, exact HP/MP/mass/perk formula, public display, and solo capped NPC XP. | Keep uncaptured skill effects, prerequisites, group XP, level `28+`, and profession counters unavailable. |
-| Items, inventory, equipment | Yes: inventory/equipment, wiki mass/wear rules, 2026-06-01 item-row/equip capture, and shop rows. | Captured subset implemented, including derived mass enforcement, source-result combat wear, and zero-durability sale rejection. | Finish repair/Careful Fighter evidence, exact layered armor/belt/pocket/relic rules, and remaining family UX. |
+| Items, inventory, equipment | Yes: inventory/equipment, wiki mass/wear rules, 2026-06-01 item-row/equip capture, NPC item-found output, and shop rows. | Captured subset implemented, including persisted successful NPC item awards, derived mass enforcement, source-result combat wear, and zero-durability sale rejection. | Finish repair/Careful Fighter evidence, exact layered armor/belt/pocket/relic rules, and remaining family UX. |
 | Professions | Wiki direction and inventory/world adjacency documented in `features/professions.md`. | Not implemented; `look` intentionally grants no resource/counter. | MVP evidence gap: capture one complete perk/tool/timer/yield/counter/failure/interruption loop, then implement only that profession. |
 | Neverlands marketplace/shop | Yes for the launch Shop hierarchy; current empty-shell geometry and older populated catalog states are captured separately. | Central Shop is interactive with buy/sell/licenses/novice modes, project-owned CSS scene, centered controls, wallet/mass validation, durability-adjusted resale pricing, and no generic marketplace route. | Capture fresh populated and mutation-result states before marking those visual variants Done. |
 | Direct player trading | Partially captured through inventory inline transfer/gift/sale/currency forms; full trade settlement needs a dedicated capture. | Basic inventory transfer/gift/player-sale/NV forms implemented; generic trade sessions removed. | Capture exact cancellation, timeout, visibility, commission, dealer, and settlement rules before adding a broader trade session system. |
-| Social chat and presence | Yes: chat and player-list captures. | Partial. | Make local presence location-aware for both coordinate cells and city nodes. |
+| Social chat and presence | Yes: chat/player-list captures plus the current mixed personal/global gameplay-event timeline and NV addendum. | Partial overall; ordinary chat, recipient-scoped fight/item/NV events, server-owned world announcements, bounded combined history, exact-time rows, and Turbo delivery share one persistent surface. | Capture announcement operations, retention/reconnect behavior, remaining event families, NPC-specific NV probabilities, and local-presence city-node rules before extending them. |
 | Dungeons | Yes from source material, but post-MVP. | Not implemented for MVP. | Keep deferred until launch movement, city, combat, inventory, and social loops are stable. |
 
 ### Cross-Feature Rules
@@ -625,7 +640,9 @@ Connect implemented features to the MVP shell in this order:
 2. Top vitals and context buttons render from current server state.
 3. World/city/building/arena/profile/inventory/combat render inside the same
    main content region.
-4. Chat and local presence stay persistent and refresh by location.
+4. Chat, personal gameplay results, game-wide notices, and local presence stay
+   persistent; chat/event rows share one timeline and presence refreshes by
+   location.
 5. City hotspots submit server-authored actions and support hover, focus,
    keyboard, and text labels.
 6. `Лавка` is added as the first missing building feature: tabs, filters,

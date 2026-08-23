@@ -17,6 +17,7 @@ the arena/fight source of truth.
 Reference captures:
 
 - `doc/design/reference/shell/observations/2026-07-28_game_shell_and_mvp_surfaces.md`
+- `doc/design/reference/social/observations/2026-08-23_chat_game_event_timeline.md`
 
 Observed arena behavior shows:
 
@@ -229,6 +230,8 @@ The first playable arena loop should follow the captured Neverlands shape:
 - arena fights return to arena context, while wilderness fights return to
   world/city context;
 - completed fights show a finish-result step before routing back;
+- finalized player results and successful NPC item/NV awards also appear as
+  recipient-only rows in the persistent shell chat timeline;
 - direct match screens may exist for active participants and public fight-link
   viewers, but creating arena matches should happen by accepting room
   applications.
@@ -250,7 +253,13 @@ Arena combat uses the shared combat contract from `features/combat.md`:
 Arena training drops are still NPC drops. If a mannequin drops wood chips, the
 wood chips belong to the mannequin NPC loot table and then flow through the
 shared combat result and inventory rules. Arena room/application rules should
-not special-case that reward outside the NPC/combat contract.
+not special-case that reward outside the NPC/combat contract. After a
+successful inventory award, Combat supplies an item-found fact to the
+shell-owned timeline. A configured NV outcome credits the Economy-owned wallet
+and transaction ledger before supplying a money-found fact. Finalization
+separately supplies each player participant's completion and awarded-XP fact.
+Those concise rows do not replace the canonical fight log, inventory, or wallet
+records.
 
 ## Adjacent Next Work
 
