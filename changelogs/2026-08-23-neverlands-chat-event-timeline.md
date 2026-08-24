@@ -138,6 +138,12 @@ rollback plus retry behavior without introducing a generic handler framework.
 - Repository navigation and engineering guidance now route to the current
   mixed timeline: evidence/domain/feature indexes, compatibility overviews,
   source-material mapping, and the Rails/Hotwire ownership map.
+- The follow-up maintainer pass documents how to add an authoritative producer
+  using existing semantics versus how to introduce a genuinely new event type:
+  transaction ordering, deterministic keys, allowlisted schema/publisher/view
+  changes, layered coverage, and required documentation updates. The existing
+  Game Shell handbook remains the canonical owner; no duplicate handbook was
+  created.
 - `doc/UI.md` remains intentionally unchanged as a historical compatibility
   record under the documentation migration manifest; its canonical links route
   readers to the updated owners.
@@ -192,6 +198,11 @@ rollback plus retry behavior without introducing a generic handler framework.
   examples/0 failures/4 pre-existing pending; Brakeman 0 warnings; Bundler and
   Importmap audits found no vulnerabilities; feature-document and
   documentation-architecture audits passed.
+- Follow-up maintainer-documentation checks: focused
+  `bin/feature-doc-audit doc/features/game_shell.md`, direct
+  `bin/documentation-architecture-audit`, aggregate `bin/verify docs`, and
+  `git diff --check` all exited 0. Expected non-green handbook status warnings
+  remain unchanged.
 
 ## Explicit remaining gaps and operational cautions
 

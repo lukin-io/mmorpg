@@ -79,6 +79,11 @@ captured Neverlands design.
   row has no recipient. Recipient selection never comes from browser params.
 - Producers publish structured allowlisted facts with stable keys at the
   authoritative gameplay transition. Repeating the same key is idempotent.
+- A producer reuses `system_information` only when its personal audience,
+  generic system meaning, and rendering match. A distinct semantic or visual
+  family requires an allowlisted event type, database-constraint migration,
+  validated publisher method, explicit renderer, layered retry/audience tests,
+  and updates through the evidence/design/handbook/launch chain.
 - Item and NV rows are success projections only. `InventoryItem` remains item
   ownership authority; `CurrencyWallet` plus `CurrencyTransaction` remain NV
   authority. A failed capacity check or rolled-back wallet credit publishes no
@@ -86,6 +91,9 @@ captured Neverlands design.
 - Event rows are immutable player-facing projections and audit aids. Gameplay
   records remain authoritative; this is not event sourcing or a generic pub/sub
   command bus.
+- Event publication has no generic browser/admin endpoint. Domain services call
+  the publisher inside the transaction that persists the source transition;
+  after-commit broadcasting and bounded history are presentation/read concerns.
 - World-announcement creation is a server-side service boundary only. No player
   or generic admin publishing endpoint is implied by the captured evidence.
 - Announcement links, scheduling/operations, retention tools, and additional

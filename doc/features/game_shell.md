@@ -226,6 +226,42 @@ palette, chat-mode cycle, refresh-speed cycle, or player-action popup.
 both record types after commit. It alone owns event stream names, the stable DOM
 target, and partial selection; persistence models do not know view identities.
 
+#### Adding a gameplay-event producer or type
+
+Gameplay code never creates `GameEvent` directly. A domain service first
+persists its authoritative transition, then calls the appropriate public method
+on an injected `Chat::EventPublisher` inside the same database transaction.
+The publisher receives a server-derived recipient, structured payload, and a
+deterministic source key such as
+`quest:<quest-id>:character:<character-id>:completed`. A matching retry returns
+the existing event; using that key for different content raises a conflict.
+After commit, the model callback delegates delivery to
+`Chat::TimelineBroadcaster`, and `Chat::Timeline` recovers the same row on
+reload.
+
+Use `system_information!` only when a verified producer needs the existing
+generic personal-system semantics and rendering. Use `world_announcement!`
+only for a server-owned global transition; it accepts no recipient. Existing
+fight, item, and NV producers use their typed publisher methods so validation
+and payload shape stay explicit. There is no browser/admin create endpoint.
+
+A genuinely new semantic/rendering family requires one coordinated change:
+
+1. add the type to `GameEvent::EVENT_TYPES` and the database check constraint
+   through a new migration;
+2. add a narrow publisher method that validates its server-owned facts;
+3. render the type explicitly in `_game_event.html.erb` and its domain CSS;
+4. add factory, model, publisher, renderer, timeline/delivery, producer retry,
+   failure/rollback, and audience-isolation coverage as applicable;
+5. update the Neverlands observation/design chain, this handbook's responsible
+   files and acceptance contract, the launch matrix, and the session changelog.
+
+Do not add a generic event endpoint, command bus, unrestricted type string,
+random event key, or Pub/Sub layer merely to avoid this allowlisted boundary.
+When a new reward also changes gameplay value, its domain owner must commit
+that value before the event projection, as Inventory and Economy do for item
+and NV loot.
+
 ## 7. Authoritative data and presentation model
 
 | Record or component | Responsibility | Important contract |
@@ -651,12 +687,14 @@ Before extending Game Shell:
    producer facts, and vitals server-authoritative.
 5. Give each new event producer a stable source key, publish only after its
    authoritative mutation, and do not turn `GameEvent` into gameplay state.
-6. Do not derive capabilities from DOM placement, local storage, display text,
+6. Reuse an existing publisher method only when audience, payload semantics,
+   and rendering match; otherwise migrate and cover a new allowlisted type.
+7. Do not derive capabilities from DOM placement, local storage, display text,
    or submitted channel/location/event labels.
-7. Keep client vitals interpolation presentation-only and preserve the server-rendered fallback.
-8. Preserve keyboard focus, semantic controls, readable text feedback, and compact Neverlands styling.
-9. Add success, failure, edge/null/boundary, authorization, retry, policy, and browser coverage where applicable.
-10. Update status, non-goals, acceptance criteria, responsible files, focused checks, and version history here.
+8. Keep client vitals interpolation presentation-only and preserve the server-rendered fallback.
+9. Preserve keyboard focus, semantic controls, readable text feedback, and compact Neverlands styling.
+10. Add success, failure, edge/null/boundary, authorization, retry, policy, and browser coverage where applicable.
+11. Update status, non-goals, acceptance criteria, responsible files, focused checks, and version history here.
 
 ## 18. Version history
 
@@ -672,3 +710,4 @@ Before extending Game Shell:
 | 2026-07-29 | Rebuilt the header band and vitals readout from a second authenticated capture, moved shell control chrome onto the `.lbut` primitive, and replaced the remaining raw hex/font literals with tokens. |
 | 2026-08-23 | Added the durable mixed chat/game-event timeline from supplied Neverlands evidence: exact-time recipient fight/item rows, unbranded world announcements, stable-key publishing, bounded history, signed after-commit Turbo delivery, Arena producer handoff, and removal of the separate legacy toast path. |
 | 2026-08-23 | Extended the source-backed search-result projection with typed NV awards: committed item loot remains Inventory-owned, committed NV enters the Economy wallet ledger, and both publish one retry-safe recipient row only after their authoritative mutation succeeds. |
+| 2026-08-23 | Added the maintainer workflow for introducing a producer versus a genuinely new event type, including transaction ordering, deterministic keys, migration/rendering/coverage requirements, and the explicit no-generic-endpoint/PubSub boundary. |
