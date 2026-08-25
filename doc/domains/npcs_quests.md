@@ -34,6 +34,7 @@ observation of a modal shape is not a complete Quest mechanic.
 - `app/services/game/world/start_npc_fight.rb`
 - `app/services/arena/combat_processor.rb`
 - `app/services/arena/npc_loot_awarder.rb`
+- `app/services/game/loot_entry.rb`
 - `app/services/chat/event_publisher.rb` (shell-owned presentation handoff)
 - Quest runtime: `NOT_IMPLEMENTED`
 
@@ -44,3 +45,5 @@ combat. `doc/features/quests.md` explicitly records the missing runtime.
 
 A complete Quest entry-to-resolution flow is `EVIDENCE_NEEDED`; do not infer
 dialogue, rewards, journal state, or persistence from generic RPG conventions.
+Exact Plague Rat item and NPC-specific NV probabilities are also evidence gaps;
+missing configured chances are rejected rather than interpreted as guaranteed.

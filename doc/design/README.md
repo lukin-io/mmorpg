@@ -21,7 +21,7 @@ observed; `areas/**` and `features/**` own the normalized local design;
 whole-game vision and cross-domain invariants. A stale overview cannot override
 newer verified evidence, and raw evidence cannot claim local completion.
 
-Use `[EVIDENCE]`, `[IMPL]`, and `[DOC]` from `AGENT.md` when layers disagree.
+Use `[EVIDENCE]`, `[IMPL]`, and `[DOC]` from `AGENTS.md` when layers disagree.
 Start from `doc/domains/README.md` to see all layer owners for one domain.
 
 ## Translation Rule

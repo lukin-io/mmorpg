@@ -3,7 +3,7 @@
 title: Player Inventory Feature
 description: Implementation handbook for the Neverlands-based carried inventory, equipment paper doll, capacity, filters, item rows, and item actions.
 status: Fully Implemented
-updated: 2026-08-23
+updated: 2026-08-25
 owners: Player Inventory
 template: feature-v1
 ---
@@ -132,6 +132,11 @@ Equipped stacks are resolved by normalized slot. Capacity and current mass come
 from authoritative Inventory/Character state. The page does not recalculate
 carry rules from CSS or submitted values.
 
+`Game::Inventory::Manager#add_item!` locks the Inventory and uses a nested
+transaction/savepoint for the complete requested quantity. This lets Shop,
+Combat loot, and future authoritative callers rescue a capacity error without
+retaining an earlier stack fill or mass increment.
+
 ### 6.3 Item rows and actions
 
 Each row renders action buttons, durability, properties, and requirement rows.
@@ -153,6 +158,7 @@ Existing mutation routes do not prove visual parity for those states.
 | `InventoryItem` | Owned stack, quantity, durability, equipped state | Always scoped through current inventory |
 | `ItemTemplate` | Stable properties, slot, requirements, modifiers | Server-authored content |
 | `Character` | Effective requirement/carry values | Progression/equipment source of truth |
+| `Game::Inventory::Manager` | Stack and carried-mass mutation | Multi-unit additions persist every unit or none under one Inventory lock/savepoint |
 | Helpers/views/CSS | Presentation and action forms | Never authority |
 
 ### 7.1 Source of truth
@@ -164,7 +170,10 @@ mode, row labels, and icon state are presentation inputs only.
 
 Actions recheck ownership, equipped/protected state, requirements, quantity,
 capacity, recipient, and relevant currency before persistence. Multi-record
-transitions use their existing transactional service/model boundaries.
+transitions use their existing transactional service/model boundaries. Item
+addition serializes on the Inventory row; a failed multi-stack request rolls
+back all stack and mass writes even when an outer loot transition records the
+capacity failure and continues.
 
 ### 7.3 Presentation versus authority
 
@@ -243,7 +252,8 @@ resume/context returns to it through an allowlisted logical destination.
 Devise authentication and current-character scoping are mandatory. Submitted
 item, recipient, quantity, price, category, or mode values are untrusted.
 Foreign item IDs, invalid categories, unavailable actions, insufficient funds,
-capacity overflow, and protected stacks are rejected by server boundaries.
+capacity overflow, and protected stacks are rejected by server boundaries. The
+Inventory lock serializes concurrent additions against the same capacity state.
 
 ## 13. Failure and boundary behavior
 
@@ -251,7 +261,7 @@ capacity overflow, and protected stacks are rejected by server boundaries.
 |---|---|
 | Missing/foreign item | Reject without mutation |
 | Unmet equip/use requirements | Show the reason on the shared flash surface; preserve state; equip/unequip Turbo failures return 422 |
-| Full mass/slots | Reject additions without partial value change |
+| Full mass/slots, including a quantity that only partly fits | Roll back the complete addition, including any earlier stack and mass increment |
 | Equipped/bound/protected item | Reject forbidden transfer/sale/discard |
 | Invalid family/mode | Normalize to an allowlisted default |
 | Empty family | Render a captured dense empty state |
@@ -265,6 +275,8 @@ capacity overflow, and protected stacks are rejected by server boundaries.
 - At 820px the source columns remain usable, and at 390px they stack without
   whole-page horizontal overflow or a scaled-down desktop canvas.
 - Every mutation resolves current ownership and revalidates its preconditions.
+- A multi-unit addition that cannot fit completely preserves the exact prior
+  stack quantities and current mass.
 - The page remains inside the persistent shell and preserves public semantics.
 - Uncaptured states remain marked Not Done in the launch matrix.
 
@@ -369,3 +381,4 @@ shipped Inventory management routes.
 | 2026-07-29 | Rebuilt the surface from a second authenticated capture: `EquipmentSlots` now carries the measured per-slot geometry, the doll renders the source column order, the two icon rows collapsed into the source's single strip plus subcategory row, and `player_inventory.css` was replaced by `character_sheet.css` and `inventory.css`. |
 | 2026-07-29 | Linked the cross-feature management guide's future `ItemTemplate` adapter and service-backed inventory grant/revoke pattern without claiming those routes are shipped. |
 | 2026-08-23 | Documented the successful NPC item-loot handoff to Arena's item-found feedback, distinguished Economy-owned NV loot from Inventory state, and kept inventory validation on the shared flash surface after removal of the legacy toast path; equip/unequip Turbo failures now return 422 without mutating equipment. |
+| 2026-08-25 | Made the shared multi-unit item-add contract explicitly atomic: an Inventory lock plus nested savepoint rolls back partial stack and carried-mass writes before a caller records a capacity failure. |

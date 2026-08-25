@@ -25,13 +25,16 @@ composition, and presentation shared by gameplay surfaces.
 Partially Implemented. The shared frame, responsive layout, ASCII/plain-text
 control policy, core chat/presence surfaces, and captured durable
 fight/item/NV/world event-timeline boundary exist. Uncaptured auxiliary chat
-controls and source state variants remain Not Done.
+controls and source state variants remain Not Done. Devise account deletion is
+explicitly unavailable until immutable gameplay/audit retention or
+anonymization has a deliberate policy.
 
 ## Important responsible implementation files
 
 - `app/views/layouts/application.html.erb`
 - `app/controllers/chat_channels_controller.rb`
 - `app/controllers/chat_messages_controller.rb`
+- `app/controllers/user_registrations_controller.rb`
 - `app/models/game_event.rb`
 - `app/queries/chat/timeline.rb`
 - `app/services/chat/event_publisher.rb`
@@ -49,3 +52,5 @@ Section 16 of `doc/features/game_shell.md` is the exhaustive inventory.
 
 Transient palettes, chat-mode cycles, refresh-speed cycles, transliteration,
 and player action menus require bounded evidence and implementation work.
+Account deletion/anonymization is a separate platform-policy gap, not a
+Neverlands gameplay rule.

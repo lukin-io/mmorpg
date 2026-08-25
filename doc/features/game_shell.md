@@ -3,7 +3,7 @@
 title: Game Shell Feature
 description: Implementation handbook for the Neverlands-based persistent game frame, compact vitals, location presence, mixed chat/game-event timeline, and shell preferences.
 status: Partially Implemented
-updated: 2026-08-23
+updated: 2026-08-25
 owners: Game Shell and Social Presence
 template: feature-v1
 ---
@@ -68,6 +68,12 @@ moving any authority into CSS/JavaScript.
 
 `ApplicationController` selects the full game layout for every authenticated HTML gameplay surface, while anonymous authentication and public-profile requests use the minimal public layout. World remains the shell bootstrap and owns Character/Inventory context actions that may hand navigation to combat before the allowlisted destination. Full-page redirects therefore preserve the same top/main/presence/chat composition instead of falling back to a separate account-dashboard layout.
 
+Devise registration and account updates remain available, but account deletion
+is explicitly unavailable in the current MVP. Neverlands evidence does not
+define this platform retention operation, and the local runtime must not purge
+or falsely report deletion of immutable gameplay/audit history without a
+separate retention or anonymization policy.
+
 The MVP currently contains:
 
 - a source-shaped authenticated top/main/presence/chat frame around World and City;
@@ -97,12 +103,19 @@ The MVP currently contains:
 - Making presence into movement authority, a precise global-online system, or a remote-player locator.
 - Treating client-side HP/MP interpolation as authoritative regeneration.
 - Owning World, City, Inventory, Profile, Shop, Arena, or Combat domain mutations rendered in the main frame.
+- Purging or anonymizing accounts and immutable gameplay/management history
+  before a deliberate retention policy is designed and covered.
 
 ## 4. Player experience
 
 ### 4.1 Entry conditions
 
 Every game request requires Devise authentication. On sign-in, the application ensures a playable character and resolves an allowlisted resume path. World is the default entry and ensures the character has an authoritative position before rendering; `ApplicationController` selects the persistent game layout for authenticated gameplay pages.
+
+The Devise edit-registration page supports normal account updates but offers no
+account-cancellation control. A direct `DELETE /users` request is intercepted by
+`UserRegistrationsController`, leaves the account/session unchanged, and
+redirects back with an explicit unavailable message.
 
 Chat additionally requires a user verified for social features. A global channel must exist for the lazy message frame and inline form to appear; otherwise the shell renders the loading placeholder without a submission form.
 
@@ -353,6 +366,7 @@ Chat creation uses normal database persistence and after-commit broadcasting. It
 | `POST /world/context` | Request Character or Inventory from the World shell | Full redirect to the allowlisted destination or the shared hostile fight | Unsupported context falls back to World; anonymous request redirects to login. |
 | `GET /chat_channels/:id` | Render full or compact authorized channel history | HTML page or `chat_messages` frame without layout | Redirect/forbidden/not found |
 | `POST /chat_channels/:chat_channel_id/chat_messages` | Persist an authorized message | Turbo `200`, HTML redirect, or JSON `201` | Turbo/HTML/JSON `422`, or authorization failure |
+| `DELETE /users` | Request account deletion | Rejected with `303` to account edit; user and session remain intact | Deletion is unavailable until a retention/anonymization policy exists |
 | `DELETE /users/sign_out` | Exit authenticated shell | Devise sign-out redirect | Shared authentication behavior |
 
 The shell is HTML/Turbo-first. Chat exposes a small internal JSON response but no separately versioned public API or serializer contract. Game-event publication has no HTTP endpoint, so blueprint and Swagger/rswag coverage are not applicable.
@@ -411,6 +425,13 @@ Accessibility behavior:
 
 Character identity/vitals, exact position, gameplay context, sessions, channels, memberships, messages, immutable gameplay-event projections, and ignore relationships persist in the database. Awarded items and NV remain authoritative in Inventory and the Economy wallet/ledger respectively; the event row is only their durable timeline projection. Sort/refresh preferences persist only in browser local storage under `browser_rpg_layout`; they are not synchronized across devices or accounts.
 
+`game_events` and management audit rows intentionally retain their user
+references. The custom Devise registrations controller rejects account destroy
+before Active Record deletion, so Devise cannot sign the player out and display
+a false destroyed-account message. The `money_found` event-type expansion is a
+forward-only migration: immutable money rows cannot be transformed or deleted
+safely merely to restore the previous check constraint.
+
 On login or return:
 
 - a valid Shop context resumes Shop after access revalidation;
@@ -426,6 +447,9 @@ history is intentionally stored in `game_events` and reloaded with chat.
 ## 12. Authorization, trust boundaries, and concurrency
 
 - Devise authentication protects shell, World presence, channels, messages, and sign-out.
+- The custom registration destroy action rejects account deletion explicitly;
+  association restrictions are a persistence backstop, not user-facing flow
+  control.
 - `CurrentCharacterContext` scopes World/header/presence behavior to the signed-in user's active character.
 - `ChatChannelPolicy` scopes readable channels to verified users and public/member access.
 - `ChatMessagePolicy` authorizes posting to writable public/member channels; `MessageDispatcher` rechecks mute/privacy/membership.
@@ -456,6 +480,7 @@ history is intentionally stored in `game_events` and reloaded with chat.
 | Retried matching game-event key | Return the existing row and broadcast no duplicate. |
 | Reused event key with conflicting identity | Raise a publisher conflict and preserve the original immutable row. |
 | Item or NV award persistence fails | Roll back that authoritative loot resolution and publish no success row. |
+| Direct account-deletion request | Keep the user and authenticated session, redirect to account edit with an unavailable alert, and never report successful destruction. |
 | First live row after empty history | Append to `chat_timeline` and hide the empty placeholder. |
 | More than 10 co-located players | Show only first 10 under selected server sort. |
 | Ignored relationship | Filter initial history; whisper privacy is rejected. |
@@ -483,6 +508,9 @@ history is intentionally stored in `game_events` and reloaded with chat.
   recipient never receives another recipient's personal row.
 - Blank, muted, privacy-blocked, system-channel, unauthorized, and anonymous chat actions create nothing.
 - Login resume selects only an allowlisted supported surface and preserves World/City-owned exact location.
+- Account editing does not expose a cancellation control, and a direct destroy
+  request cannot delete or falsely report deletion of an account with durable
+  gameplay history.
 - Unimplemented auxiliary source controls are not represented as complete behavior; client-vitals interpolation remains presentation-only.
 - Central feature navigation never transfers game authority to DOM state or local storage.
 - Character and Inventory shell actions can be interrupted by the authoritative same-cell hostile encounter and resume only through World-owned allowlisted return metadata.
@@ -496,7 +524,7 @@ Tests are part of the feature contract. Changes require applicable model, reques
 | Coverage category | Representative guarantees |
 |---|---|
 | Success | Layout regions, current player/vitals, exact-cell presence/sorts, mixed chat/event history/live delivery, message send, fight/item/NV projection, membership, and resume integration. |
-| Failure | Blank/muted/privacy/system posts, conflicting event keys, malformed event payload/audience, missing global channel, refresh failure behavior, and missing current state. |
+| Failure | Blank/muted/privacy/system posts, conflicting event keys, malformed event payload/audience, rejected account deletion, missing global channel, refresh failure behavior, and missing current state. |
 | Edge/null/boundary | Zero nearby players, first live row over empty history, 10-player cap, 200-entry combined history, event ordering ties, unknown sort, five-minute session boundary, malformed preferences, and vitals zero maximum. |
 | Authorization | Anonymous routes, unverified social user, inaccessible membership channel, foreign channel/message attempt, cross-recipient event isolation, and current-character presence scope. |
 | Retry/concurrency | Matching stable event-key retry, database uniqueness, combat finalization retry, and after-commit delivery. |
@@ -517,6 +545,7 @@ bundle exec rspec \
   spec/services/arena/combat_processor_spec.rb \
   spec/requests/chat_channels_spec.rb \
   spec/requests/chat_messages_spec.rb \
+  spec/requests/user_registrations_spec.rb \
   spec/requests/inventories_spec.rb \
   spec/requests/world_spec.rb \
   spec/views/layouts/game_spec.rb \
@@ -551,6 +580,7 @@ Policy behavior is currently exercised through request/system coverage; dedicate
 - `app/controllers/world_context_actions_controller.rb`
 - `app/controllers/chat_channels_controller.rb`
 - `app/controllers/chat_messages_controller.rb`
+- `app/controllers/user_registrations_controller.rb`
 - `app/controllers/concerns/current_character_context.rb`
 
 ### Models and policies
@@ -592,6 +622,7 @@ Policy behavior is currently exercised through request/system coverage; dedicate
 - `app/views/chat_messages/_chat_message.html.erb`
 - `app/views/chat_messages/_form.html.erb`
 - `app/views/game_events/_game_event.html.erb`
+- `app/views/devise/registrations/edit.html.erb`
 - `app/helpers/chat_messages_helper.rb`
 - `app/javascript/controllers/game_layout_controller.js`
 - `app/javascript/controllers/chat_controller.js`
@@ -666,6 +697,7 @@ domain mutations.
 - `spec/services/arena/npc_loot_awarder_spec.rb`
 - `spec/requests/chat_channels_spec.rb`
 - `spec/requests/chat_messages_spec.rb`
+- `spec/requests/user_registrations_spec.rb`
 - `spec/requests/inventories_spec.rb`
 - `spec/requests/world_spec.rb`
 - `spec/requests/world_context_actions_spec.rb`
@@ -711,3 +743,4 @@ Before extending Game Shell:
 | 2026-08-23 | Added the durable mixed chat/game-event timeline from supplied Neverlands evidence: exact-time recipient fight/item rows, unbranded world announcements, stable-key publishing, bounded history, signed after-commit Turbo delivery, Arena producer handoff, and removal of the separate legacy toast path. |
 | 2026-08-23 | Extended the source-backed search-result projection with typed NV awards: committed item loot remains Inventory-owned, committed NV enters the Economy wallet ledger, and both publish one retry-safe recipient row only after their authoritative mutation succeeds. |
 | 2026-08-23 | Added the maintainer workflow for introducing a producer versus a genuinely new event type, including transaction ordering, deterministic keys, migration/rendering/coverage requirements, and the explicit no-generic-endpoint/PubSub boundary. |
+| 2026-08-25 | Made account retention behavior explicit: the cancellation UI is removed, direct Devise destroy requests preserve the user/session with an unavailable alert, and the immutable `money_found` event-type migration is documented as forward-only instead of falsely reversible. |

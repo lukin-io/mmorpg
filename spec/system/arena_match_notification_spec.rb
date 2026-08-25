@@ -2,7 +2,7 @@
 
 require "rails_helper"
 
-RSpec.describe "Arena Match Notification System", type: :system do
+RSpec.describe "Arena match transition and reconciliation", type: :system do
   let(:user_a) { create(:user, email: "user_a@test.com", password: "password123") }
   let(:user_b) { create(:user, email: "user_b@test.com", password: "password123") }
   let!(:character_a) { create(:character, user: user_a, name: "Fighter A", level: 15, current_hp: 100, max_hp: 100) }
@@ -32,12 +32,12 @@ RSpec.describe "Arena Match Notification System", type: :system do
   end
 
   # ===========================================================================
-  # BUG FIX: Match starts for BOTH applicant and acceptor
+  # Match creation persists for both participants. The room-scoped live update
+  # starts the countdown only for participants currently viewing that room;
+  # other Arena pages reconcile from the authoritative match on navigation.
   # ===========================================================================
-  # Regression test for: When User B accepts User A's application, both users
-  # should see the countdown and be redirected to the match.
 
-  describe "match notification for both participants" do
+  describe "match creation for both participants" do
     let!(:application) do
       create(:arena_application,
         applicant: character_a,
@@ -83,6 +83,25 @@ RSpec.describe "Arena Match Notification System", type: :system do
         click_button "Accept"
 
         expect(application.reload.status).to eq("matched")
+      end
+
+      it "redirects an applicant waiting on the Arena index from persisted match state" do
+        login_as user_a, scope: :user
+        enter_arena_from_city!(character_a)
+        visit arena_index_path
+
+        result = Arena::ApplicationHandler.new.accept(
+          application:,
+          acceptor: character_b
+        )
+
+        expect(result.success?).to be(true)
+        expect(page).to have_current_path(arena_index_path)
+
+        visit arena_index_path
+
+        expect(page).to have_current_path(arena_match_path(result.match))
+        expect(page).to have_content("You already have an active fight.")
       end
     end
   end

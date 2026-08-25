@@ -30,7 +30,7 @@ Each layer owns one question and must not impersonate another layer.
 
 | Layer | Canonical location | Question it answers | Must not claim |
 |---|---|---|---|
-| Process policy | `AGENT.md` | How work, verification, and documentation are maintained | Game rules |
+| Process policy | `AGENTS.md` | How work, verification, and documentation are maintained | Game rules |
 | Domain navigation | `doc/domains/**` | Where is every layer for this product area? | New evidence, mechanics, or exhaustive implementation detail |
 | Neverlands evidence | `doc/design/reference/**` | What was directly observed or preserved from Neverlands? | Local completion or invented behavior |
 | Normalized product design | `doc/design/gdd.md`, `doc/design/areas/**`, `doc/design/features/**` | What is adopted, translated, locally adapted, deferred, or prohibited? | Shipped status by implication |
@@ -42,7 +42,7 @@ Each layer owns one question and must not impersonate another layer.
 | Session history | `changelogs/**` | What changed during one Codex session? | Canonical design or feature truth |
 
 When two layers disagree, use `[EVIDENCE]`, `[IMPL]`, or `[DOC]` as defined in
-`AGENT.md`. Fix the owner of the fact; do not make every document repeat the
+`AGENTS.md`. Fix the owner of the fact; do not make every document repeat the
 correction.
 
 ## 2. Current physical structure

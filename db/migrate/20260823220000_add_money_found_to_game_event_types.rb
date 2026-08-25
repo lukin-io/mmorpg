@@ -2,14 +2,14 @@
 
 class AddMoneyFoundToGameEventTypes < ActiveRecord::Migration[8.1]
   CURRENT_TYPES = %w[fight_finished item_found money_found system_information world_announcement].freeze
-  PREVIOUS_TYPES = %w[fight_finished item_found system_information world_announcement].freeze
 
   def up
     replace_type_constraint(CURRENT_TYPES)
   end
 
   def down
-    replace_type_constraint(PREVIOUS_TYPES)
+    raise ActiveRecord::IrreversibleMigration,
+      "money_found events are immutable and cannot be removed safely during rollback"
   end
 
   private

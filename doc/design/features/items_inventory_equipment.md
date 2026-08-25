@@ -282,6 +282,8 @@ movement/carry calculations.
 - Characters have finite carry capacity.
 - Capacity can be weight-based, slot-based, or both.
 - Stackable items stack only with matching item identity and state.
+- A multi-unit addition is all-or-nothing: if every unit cannot fit by slot and
+  carried-mass rules, no earlier stack or mass increment remains persisted.
 - Inventory actions are server-authoritative.
 - Wearing, removing, using, deleting, selling, transferring, and gifting are
   separate actions and should not share client-invented state.

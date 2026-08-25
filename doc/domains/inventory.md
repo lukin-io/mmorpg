@@ -23,7 +23,8 @@ Fully Implemented for the declared current equipment/item boundary. Empty or
 uncaptured production families, transfers, targeted use, repair, and some
 fight-slot behaviors remain outside it. A personal item-found event is emitted
 by Combat only after Inventory reports a successful NPC-loot award; it is not
-item ownership state.
+item ownership state. Multi-unit additions are atomic under one Inventory lock
+and savepoint, including when a Combat caller records a capacity failure.
 
 ## Important responsible implementation files
 

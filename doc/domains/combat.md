@@ -30,6 +30,7 @@ reward, inventory, wallet, ledger, or log records.
 
 - `app/services/arena/combat_processor.rb`
 - `app/services/arena/npc_loot_awarder.rb`
+- `app/services/game/loot_entry.rb`
 - `app/services/arena/combat_resolver.rb`
 - `app/services/chat/event_publisher.rb` (shell-owned presentation handoff)
 - `app/controllers/arena_matches_controller.rb`

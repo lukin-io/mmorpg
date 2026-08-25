@@ -34,7 +34,8 @@ RSpec.describe Arena::NpcLootAwarder do
         {
           "kind" => "item",
           "item" => "small_strange_potion",
-          "quantity" => 1
+          "quantity" => 1,
+          "chance" => 1.0
         }
       ]
     end
@@ -151,6 +152,51 @@ RSpec.describe Arena::NpcLootAwarder do
     end
   end
 
+  context "when only part of a multi-unit item award fits" do
+    let!(:item_template) do
+      create(
+        :item_template,
+        :material,
+        key: "partial_fit_loot",
+        name: "Partial fit loot",
+        weight: 1,
+        stack_limit: 10
+      )
+    end
+    let!(:existing_stack) do
+      character.inventory.inventory_items.create!(
+        item_template:,
+        quantity: 8,
+        weight: item_template.weight
+      )
+    end
+    let(:loot_table) do
+      [
+        {
+          "kind" => "item",
+          "item_key" => "partial_fit_loot",
+          "quantity" => 5,
+          "chance" => 1.0
+        }
+      ]
+    end
+
+    before do
+      character.inventory.update!(slot_capacity: 1, current_weight: 8)
+    end
+
+    it "records one failed resolution without retaining the portion that initially fit" do
+      result = award_loot
+
+      expect(result.awards).to be_empty
+      expect(result.failures.map(&:message)).to contain_exactly("No free inventory slots")
+      expect(existing_stack.reload.quantity).to eq(8)
+      expect(character.inventory.reload.current_weight).to eq(8)
+      expect(GameEvent.where(event_type: :item_found, recipient: user)).to be_empty
+      expect(npc_participation.reload.metadata.dig("loot_resolution", "failures")).to be_present
+    end
+  end
+
   context "with a malformed entry" do
     let(:loot_table) { ["not-an-object"] }
 
@@ -161,6 +207,21 @@ RSpec.describe Arena::NpcLootAwarder do
       expect(result.failures.map(&:message)).to contain_exactly("Loot entry must be an object")
       expect(GameEvent.where(recipient: user)).to be_empty
       expect(npc_participation.reload.metadata.dig("loot_resolution", "failures")).to be_present
+    end
+  end
+
+  context "with an entry that omits chance" do
+    let(:loot_table) do
+      [{"kind" => "item", "item_key" => "unresolved_probability", "quantity" => 1}]
+    end
+
+    it "records a configuration failure instead of changing the old zero-percent default to a guaranteed drop" do
+      result = award_loot
+
+      expect(result.awards).to be_empty
+      expect(result.failures.map(&:message)).to contain_exactly("Loot chance is required")
+      expect(character.inventory.inventory_items).to be_empty
+      expect(GameEvent.where(recipient: user)).to be_empty
     end
   end
 

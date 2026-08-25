@@ -18,6 +18,14 @@ historical timeline reads, and removal of the separate legacy
 toast-notification path. Successful NPC item loot persists in Inventory and NV
 loot persists in the user's wallet/ledger before its timeline row is created.
 
+The current follow-up hardens the reviewed boundaries before merge: inventory
+grants must roll back as a unit, every loot entry must declare its probability,
+account deletion must not report success while immutable records retain the
+user, the `money_found` constraint migration must state its forward-only
+rollback contract, and Arena match-start delivery must accurately document and
+test its room-scoped live-update plus persisted-state reconciliation behavior.
+The requested PR title/body work was explicitly excluded and remains untouched.
+
 ## Authority and reference boundary
 
 - The user-supplied 2026-08-23 Neverlands screenshot and sanitized text show
@@ -47,8 +55,20 @@ loot persists in the user's wallet/ledger before its timeline row is created.
   `currency` resolution. It locks the source/recipient participations, commits
   Inventory or Economy state with a durable resolution marker, and delegates
   only the successful feedback fact to the publisher.
+- `Game::LootEntry` is the shared PORO boundary for developer-authored loot
+  probability. It requires an explicit valid chance without becoming a generic
+  reward framework or inventing Neverlands balance data.
+- `Game::Inventory::Manager#add_item!` locks the Inventory and uses a nested
+  transaction/savepoint, making the complete requested quantity atomic even
+  when an outer awarder rescues a capacity exception.
+- Devise registration updates remain available, while a dedicated
+  registrations controller explicitly rejects deletion until immutable
+  gameplay/audit retention or anonymization has a deliberate policy.
 - Turbo broadcasts remain an after-commit presentation projection, with
   separate global and recipient-scoped streams.
+- Arena match-created broadcasts are room-scoped presentation signals and are
+  registered with `after_all_transactions_commit`; persisted match state is
+  the reconciliation authority for participants waiting elsewhere.
 - New dependencies: none.
 
 ## Player/runtime behavior
@@ -62,10 +82,20 @@ loot persists in the user's wallet/ledger before its timeline row is created.
   and an immutable `combat.npc_loot` ledger row was created.
 - A per-NPC-participation processing marker prevents retry rerolls/regrants;
   event publication and authoritative award persistence roll back together.
+- Every authored loot entry declares a `0..1` fractional or `0..100`
+  percentage chance. Missing/invalid values fail validation rather than
+  becoming guaranteed; the uncaptured Plague Rat probability remains an
+  explicit local `0.0` evidence hold that preserves the prior no-drop state.
+- A multi-unit item award that fills one stack but cannot create the next now
+  restores the exact prior stack quantities and carried mass before recording
+  its failed resolution.
 - Server-owned world systems can publish global
   announcement rows through a narrow service API.
 - Repeated publication with the same stable event key will return the existing
   row instead of duplicating a notification.
+- Account editing no longer offers cancellation. A direct deletion request
+  preserves both account and authenticated session and reports that deletion
+  is unavailable instead of Devise's false success.
 
 ### Legacy notification cleanup
 
@@ -90,9 +120,13 @@ loot persists in the user's wallet/ledger before its timeline row is created.
 | Gameplay event timeline | Developer-owned event type allowlist | `game_events` | `GameEvent`, `Chat::EventPublisher`, `Chat::Timeline` |
 | NPC item award | Typed NPC loot entry | `inventory_items` plus participation resolution metadata | `Arena::NpcLootAwarder`, `Game::Inventory::Manager` |
 | NPC NV award | Typed `currency` entry with positive NV amount | `currency_wallets`, `currency_transactions`, plus participation resolution metadata | `Arena::NpcLootAwarder`, `Economy::WalletService` |
+| NPC probability | Every typed entry declares `chance`; unknown Plague Rat value is held at local `0.0` | None; validated when developer-authored YAML loads and again at award resolution | `Game::LootEntry`, Arena/Outdoor NPC config loaders |
 
-- Reversible migrations add event identity, audience, payload, occurrence-time
-  constraints/indexes, and the allowlisted `money_found` type.
+- The initial event-table migration owns event identity, audience, payload,
+  occurrence-time constraints, and indexes. The later migration that admits
+  immutable `money_found` rows is explicitly forward-only: its `down` raises
+  `ActiveRecord::IrreversibleMigration` instead of restoring a rejecting
+  constraint over retained rows.
 - Existing historical fights and loot will not be backfilled because the
   screenshot does not establish a reconstruction contract.
 - No seed content or generic global announcements will be invented.
@@ -110,6 +144,13 @@ loot persists in the user's wallet/ledger before its timeline row is created.
   selection so persistence models do not know presentation identities.
 - Full-channel rendering suppresses the shell's lazy duplicate history frame;
   one document has one `chat_timeline` target.
+- Both authored NPC config loaders validate the shared explicit-chance contract
+  at load time. Runtime NPC templates are validated again by the awarder so
+  sparse legacy data records a no-award failure safely.
+- Arena match-created room delivery occurs only after the outermost database
+  transaction commits; a rollback produces neither a match nor a live signal.
+- Devise destroy is handled explicitly with an HTTP 303 back to account edit,
+  keeping the current authenticated account intact.
 
 ## Pre-final Rails-guide review
 
@@ -123,6 +164,13 @@ delivery. The extension review extracted typed loot from the combat processor,
 kept Inventory and Economy as value authorities, added participant validation,
 made malformed content a recorded no-award failure, and covered transaction
 rollback plus retry behavior without introducing a generic handler framework.
+The merge-review follow-up rechecked the stabilized Inventory, Combat/config,
+Devise, migration, and Arena changes. It added the Inventory savepoint and row
+lock, centralized explicit probability validation in a PORO, rejected account
+deletion explicitly, marked the immutable type migration irreversible, and
+moved Arena room signals to the outermost after-commit boundary after a
+rollback-focused review exposed that presentation side effect inside the
+transaction.
 
 ## Documentation updated
 
@@ -144,6 +192,13 @@ rollback plus retry behavior without introducing a generic handler framework.
   changes, layered coverage, and required documentation updates. The existing
   Game Shell handbook remains the canonical owner; no duplicate handbook was
   created.
+- The merge-review follow-up updates the canonical Game Shell, Arena Combat,
+  Player Inventory, and World handbooks plus the directly affected design and
+  domain navigation records. They now state atomic item grants, required loot
+  probabilities, the Plague Rat evidence hold, room-scoped Arena delivery and
+  reconciliation, disabled account deletion, and the forward-only migration.
+- Active documentation routing now follows the user-owned repository rename to
+  `AGENTS.md`; historical changelog references were left as historical text.
 - `doc/UI.md` remains intentionally unchanged as a historical compatibility
   record under the documentation migration manifest; its canonical links route
   readers to the updated owners.
@@ -157,9 +212,13 @@ rollback plus retry behavior without introducing a generic handler framework.
 | Timeline history and delivery | `app/queries/chat/timeline.rb`, `app/services/chat/timeline_broadcaster.rb`, chat controllers/models/helper/views |
 | Source-backed presentation | `app/views/game_events/_game_event.html.erb`, shell/chat styles and layouts, legacy notification deletion |
 | Gameplay producers | `app/services/arena/combat_processor.rb`, `app/services/arena/npc_loot_awarder.rb`, `app/services/economy/wallet_service.rb`, `app/services/game/inventory/manager.rb`, dead Arena toast broadcasts removed from `app/services/arena/application_handler.rb` |
+| Loot probability/config validation | `app/services/game/loot_entry.rb`, `app/services/game/world/arena_npc_config.rb`, `app/services/game/world/outdoor_npc_config.rb`, `config/gameplay/outdoor_npcs.yml` |
+| Arena room delivery/reconciliation | `app/services/arena/application_handler.rb`, `spec/services/arena/application_handler_spec.rb`, `spec/system/arena_match_notification_spec.rb` |
+| Account-retention guard | `app/controllers/user_registrations_controller.rb`, `config/routes.rb`, `app/views/devise/registrations/edit.html.erb`, `spec/requests/user_registrations_spec.rb` |
 | Validation surface cleanup | `app/controllers/inventories_controller.rb`, `app/views/shared/_notification.html.erb` removed |
 | Tests | GameEvent factory/model/query/publisher/broadcaster/view specs plus typed loot, wallet, Chat/Arena/Inventory/layout/system integration coverage |
 | Documentation | Social observation plus Shell/Social/Combat/NPC/Inventory/Economy/Character summaries, designs, domains, indexes, launch plan, Rails guide, and reciprocal handbooks |
+| Documentation contract routing | `doc/DOCUMENTATION.md`, `doc/RUBY_ON_RAILS_GUIDE.md`, `doc/design/README.md`, `doc/guides/managing_game_content.md`, `doc/templates/README.md` |
 | Security verification remediation | `Gemfile.lock` conservatively updates `json` 2.21.1 → 2.21.2 and `mail` 2.9.0 → 2.9.1 |
 
 ## Verification evidence
@@ -203,6 +262,42 @@ rollback plus retry behavior without introducing a generic handler framework.
   `bin/documentation-architecture-audit`, aggregate `bin/verify docs`, and
   `git diff --check` all exited 0. Expected non-green handbook status warnings
   remain unchanged.
+- Merge-review atomic-add focused check: RuboCop inspected 3 files with 0
+  offenses; RSpec completed 23 examples with 0 failures.
+- Explicit-chance/config focused check: RuboCop inspected 8 files with 0
+  offenses; RSpec completed 31 examples with 0 failures.
+- Account-retention focused check: RuboCop inspected 3 files with 0 offenses;
+  request/onboarding RSpec completed 7 examples with 0 failures; the Devise
+  registration route inspection exited 0 and mapped `DELETE /users` to
+  `UserRegistrationsController#destroy`.
+- Initial migration/Arena-scope focused check: RuboCop inspected 2 files with 0
+  offenses; RSpec completed 43 examples with 0 failures and 1 pre-existing
+  display-dependent pending example.
+- Post-guide Arena after-commit check: RuboCop inspected 2 files with 0
+  offenses; RSpec completed 44 examples with 0 failures and the same 1
+  display-dependent pending example.
+- Combined follow-up RuboCop: exit 0, 17 files inspected, 0 offenses. Combined
+  focused RSpec: exit 0, 92 examples, 0 failures, 1 pre-existing
+  display-dependent pending example.
+- `RAILS_ENV=test bin/rails db:prepare`: exit 0.
+  `RAILS_ENV=test bin/rails db:seed:replant`: exit 0 and all authored catalogs
+  seeded successfully. The read-only migration runner check exited 0 after
+  observing the expected `ActiveRecord::IrreversibleMigration` message.
+- Focused audits for `game_shell`, `arena_combat`, `player_inventory`, and
+  `world` exited 0; the expected Game Shell transitional-status warning remains.
+- The first direct documentation-architecture audit after the user-owned
+  `AGENT.md` to `AGENTS.md` rename exited 1 because two active indexes still
+  referenced the deleted filename. Active documentation references were
+  aligned; the rerun exited 0 with 60 documents inspected.
+- `bin/verify docs`: exit 0; all 10 feature handbooks and all 60 documentation
+  architecture records passed, with only intentional non-green status warnings.
+- Final follow-up `bin/verify full`: exit 0 — RuboCop 417 files/0 offenses;
+  non-system RSpec 1,653 examples/0 failures; system RSpec 206 examples/0
+  failures/4 pre-existing pending; Brakeman 0 warnings; Bundler Audit and
+  Importmap Audit found no vulnerabilities; all 10 feature handbooks and all
+  60 documentation-architecture records passed.
+- Final changelog-only handoff revalidation: the exact four-handbook audit and
+  the 60-document architecture audit exited 0; `git diff --check` exited 0.
 
 ## Explicit remaining gaps and operational cautions
 
@@ -218,8 +313,9 @@ rollback plus retry behavior without introducing a generic handler framework.
   current item/NV awarder is not a generic command bus.
 - Not Done: auxiliary shell chat controls and the broader social/presence flow
   remain Partially Implemented under `SOCIAL-CHAT-001`.
-- Migration/operations: deploy both reversible `game_events` migrations; no
-  historical event backfill, authored money drop, or world-announcement seed is
-  required.
+- Migration/operations: deploy the event migrations forward. The
+  `money_found` allowlist migration intentionally cannot migrate down because
+  retained immutable rows would violate the previous constraint; no historical
+  event backfill, authored money drop, or world-announcement seed is required.
 - The four system pending examples reported by the full profile predate and are
   outside this feature; no required check is skipped or failing.

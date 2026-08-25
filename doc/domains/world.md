@@ -33,6 +33,8 @@ Other linked-location and action families remain Not Done.
 - `app/services/game/world/tile_state_resolver.rb`
 - `app/services/game/world/action_offer_builder.rb`
 - `app/services/game/world/accept_action.rb`
+- `app/services/game/world/outdoor_npc_config.rb`
+- `app/services/game/loot_entry.rb`
 - `db/seeds.rb`
 
 Section 16 of `doc/features/world.md` is exhaustive.
@@ -42,3 +44,5 @@ Section 16 of `doc/features/world.md` is exhaustive.
 Extend the existing persisted records and resolver/action-offer pipeline. Do
 not add a parallel location catalog. Mines, exchanges, additional settlements,
 and full profession yields require per-family evidence before implementation.
+The authored Plague Rat item identity remains disabled at an explicit local
+`0.0` evidence hold until its exact Neverlands probability is captured.

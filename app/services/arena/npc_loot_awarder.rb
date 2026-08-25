@@ -115,11 +115,14 @@ module Arena
       failures = []
 
       Array(npc_participation.npc_template.loot_table).each_with_index do |raw_entry, entry_index|
-        entry = normalize_entry(raw_entry)
-        next unless roll_succeeds?(entry)
+        loot_entry = Game::LootEntry.new(raw_entry)
+        entry = loot_entry.attributes
+        next unless roll_succeeds?(loot_entry)
 
         awards << award_entry(entry, entry_index)
-      rescue Game::Inventory::Manager::CapacityExceededError, InvalidEntryError => e
+      rescue Game::Inventory::Manager::CapacityExceededError,
+        Game::LootEntry::InvalidError,
+        InvalidEntryError => e
         failures << Failure.new(entry_index:, message: e.message)
       end
 
@@ -130,24 +133,8 @@ module Arena
       Result.new(awards:, failures:, already_processed: false)
     end
 
-    def roll_succeeds?(entry)
-      chance = Float(entry.fetch(:chance, 1.0), exception: false)
-      raise InvalidEntryError, "Loot chance must be between 0 and 100" unless chance
-
-      chance_percent = chance <= 1 ? chance * 100 : chance
-      unless chance_percent.between?(0, 100)
-        raise InvalidEntryError, "Loot chance must be between 0 and 100"
-      end
-
-      rng.rand(100) < chance_percent
-    end
-
-    def normalize_entry(raw_entry)
-      unless raw_entry.respond_to?(:each_pair)
-        raise InvalidEntryError, "Loot entry must be an object"
-      end
-
-      raw_entry.to_h.with_indifferent_access
+    def roll_succeeds?(loot_entry)
+      rng.rand(100) < loot_entry.chance_percent
     end
 
     def award_entry(entry, entry_index)

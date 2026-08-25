@@ -3,6 +3,38 @@
 require "rails_helper"
 
 RSpec.describe Game::World::ArenaNpcConfig do
+  before do
+    described_class.reload!
+  end
+
+  describe ".config" do
+    it "loads only explicit valid probabilities from the production catalog" do
+      entries = described_class.all_npcs.flat_map do |npc|
+        Array(npc[:loot_table] || npc[:loot])
+      end
+
+      expect(entries).not_to be_empty
+      expect(entries).to all(satisfy { |entry| Game::LootEntry.new(entry).chance_percent.between?(0, 100) })
+    end
+
+    it "rejects a developer-authored loot entry without an explicit chance" do
+      invalid_config = {
+        training: {
+          npcs: [{key: "invalid", loot_table: [{kind: "item", item_key: "wood_chips"}]}]
+        }
+      }
+      allow(YAML).to receive(:load_file).with(described_class::CONFIG_PATH).and_return(invalid_config)
+      described_class.instance_variable_set(:@config, nil)
+
+      expect { described_class.config }.to raise_error(
+        described_class::InvalidConfigurationError,
+        /NPC invalid loot entry 0: Loot chance is required/
+      )
+    ensure
+      described_class.instance_variable_set(:@config, nil)
+    end
+  end
+
   describe ".for_room" do
     it "returns NPCs for training room" do
       npcs = described_class.for_room("training")

@@ -58,7 +58,7 @@ Every registered domain also has a navigation page under `doc/domains/`.
     Implementation Linkage section. Evidence may carry status and responsible
     file context, but those notes must not be presented as Neverlands facts.
 11. Run the documentation audits, applicable focused coverage, Rails-guide
-    review, and the completion profile from `AGENT.md`.
+    review, and the completion profile from `AGENTS.md`.
 
 ## Status vocabulary
 

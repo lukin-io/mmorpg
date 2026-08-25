@@ -773,7 +773,7 @@ For a current resource edit, verify at least:
 For a new management resource, run focused model/policy/service/request/system
 coverage, relevant feature integration tests, `bin/feature-doc-audit` for every
 changed handbook, `bin/documentation-architecture-audit` when adding a domain
-or missing-layer record, and the completion profile required by `AGENT.md`. Review the
+or missing-layer record, and the completion profile required by `AGENTS.md`. Review the
 stabilized diff against the applicable sections of
 `doc/RUBY_ON_RAILS_GUIDE.md` before the completion run.
 

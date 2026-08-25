@@ -68,6 +68,9 @@ Design rules:
 
 - an NPC can define a loot table with item entries, drop chances, quantity, and
   optional conditions; typed entries currently support items and NV;
+- every authored loot entry declares its chance explicitly as either a `0..1`
+  fraction or `0..100` percent; an omitted chance is invalid rather than a
+  silent guaranteed award;
 - loot is rolled after combat victory and before or during the result-finish
   step;
 - the canonical combat log/result should show whether the NPC was searched and
@@ -111,6 +114,12 @@ bot-specific loot roll and produced a separate search result line of
 `Вещь «Крысиный хвост»`. In the first fight, the first rat was searched before
 the second rat was defeated, proving that per-NPC loot checks can happen during
 a multi-NPC fight and not only after the fight-level victory line.
+
+The capture proves that Plague Rats can drop Rat Tails but does not establish
+their exact probability. The local production entry therefore retains the
+pre-existing no-drop behavior through an explicit `0.0` evidence hold. That
+value is not a Neverlands balance claim; replace it only after the probability
+is observed, then cover and document the source-backed value.
 
 ## Outdoor Hostile NPCs
 

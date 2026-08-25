@@ -110,7 +110,9 @@ module Arena
         match_countdown = 10 # 10 seconds countdown before match starts
         schedule_match_start(match, match_countdown)
 
-        broadcast_match_created(match, application)
+        ActiveRecord.after_all_transactions_commit do
+          broadcast_match_created(match, application)
+        end
 
         Result.new(success?: true, application: application, match: match)
       end
@@ -153,7 +155,9 @@ module Arena
         # immediately after accepting the open side.
         Arena::CombatProcessor.new(match).start_match
 
-        broadcast_npc_match_created(match, application, acceptor)
+        ActiveRecord.after_all_transactions_commit do
+          broadcast_npc_match_created(match, application, acceptor)
+        end
 
         Result.new(success?: true, application: application, match: match)
       end

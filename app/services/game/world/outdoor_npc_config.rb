@@ -4,11 +4,17 @@ module Game
   module World
     # Loads source-backed outdoor NPC definitions by explicit zone name.
     class OutdoorNpcConfig
+      class InvalidConfigurationError < StandardError; end
+
       CONFIG_PATH = Rails.root.join("config/gameplay/outdoor_npcs.yml")
 
       class << self
         def config
-          @config ||= YAML.load_file(CONFIG_PATH).deep_symbolize_keys
+          @config ||= begin
+            parsed = YAML.load_file(CONFIG_PATH).deep_symbolize_keys
+            validate_loot_entries!(parsed)
+            parsed
+          end
         end
 
         def reload!
@@ -48,6 +54,22 @@ module Game
 
         def all_npcs
           config.flat_map { |_, zone_config| zone_config[:npcs] || [] }.uniq { |entry| entry[:key] }
+        end
+
+        private
+
+        def validate_loot_entries!(parsed)
+          parsed.each_value do |zone_config|
+            Array(zone_config[:npcs]).each do |npc|
+              entries = npc[:loot_table] || npc[:loot] || []
+              Array(entries).each_with_index do |entry, index|
+                Game::LootEntry.new(entry)
+              rescue Game::LootEntry::InvalidError => e
+                raise InvalidConfigurationError,
+                  "#{CONFIG_PATH}: NPC #{npc[:key] || "unknown"} loot entry #{index}: #{e.message}"
+              end
+            end
+          end
         end
       end
     end

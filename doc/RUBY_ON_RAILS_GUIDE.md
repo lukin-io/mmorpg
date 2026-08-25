@@ -11,9 +11,9 @@
 
 ## 0. Authority and purpose
 
-`AGENT.md` is the repository-wide normative engineering contract. This guide
+`AGENTS.md` is the repository-wide normative engineering contract. This guide
 expands its Rails implementation direction; it does not replace or override it.
-If the two documents conflict, follow `AGENT.md`.
+If the two documents conflict, follow `AGENTS.md`.
 
 Neverlands live behavior and preserved source material remain the only
 game-design authority. This guide can answer how to implement verified behavior
@@ -57,7 +57,7 @@ Default direction:
 For a new feature, bug fix, behavior change, or refactor:
 
 1. Read the relevant Neverlands evidence, design document, and canonical feature
-   handbook as routed by `AGENT.md`.
+   handbook as routed by `AGENTS.md`.
 2. Identify the existing player/runtime contract and responsible files.
 3. Choose the smallest Rails-native boundary that owns the behavior.
 4. With the first material repository edit, copy
@@ -73,7 +73,7 @@ For a new feature, bug fix, behavior change, or refactor:
 9. Update the feature handbook only after implementation checks pass.
 10. Run the appropriate `bin/verify` profile, finalize the same session record
     with exact results, and report using the final format required by
-    `AGENT.md`.
+    `AGENTS.md`.
 
 Feature-specific examples in this document are illustrative. Do not copy their
 names, content, or mechanics into unrelated features without Neverlands
@@ -981,7 +981,7 @@ shape is valuable, and fix concrete N+1/hydration problems.
   a backfill.
 
 Do not edit a committed migration unless explicitly authorized under
-`AGENT.md`.
+`AGENTS.md`.
 
 ## 20. Observability and regression detection
 
@@ -1003,7 +1003,7 @@ refactor.
 
 ## 21. Testing policy
 
-Follow the normative coverage requirements in `AGENT.md`. Choose the applicable
+Follow the normative coverage requirements in `AGENTS.md`. Choose the applicable
 layers:
 
 | Boundary | Representative spec |
@@ -1043,7 +1043,7 @@ Testing rules:
 
 ## 22. Feature documentation and verification
 
-Implementation documentation follows `AGENT.md`:
+Implementation documentation follows `AGENTS.md`:
 
 1. start at `doc/domains/README.md` and establish the domain's Neverlands
    evidence, normalized design, stable parity ID, and current implementation
@@ -1059,7 +1059,7 @@ Implementation documentation follows `AGENT.md`:
    `bin/documentation-architecture-audit`;
 8. run the appropriate completion profile;
 9. finalize the same living session record as required
-   by `AGENT.md`.
+   by `AGENTS.md`.
 
 An architecture/documentation migration may register a verified missing
 runtime by copying `doc/features/NOT_IMPLEMENTED_TEMPLATE.md`. The record must
@@ -1079,7 +1079,7 @@ bin/verify fast
 bin/verify full
 ```
 
-Use `full` when required by `AGENT.md`, including process/verification contract
+Use `full` when required by `AGENTS.md`, including process/verification contract
 changes, broad cross-feature changes, release/push verification, or explicit
 user request.
 
@@ -1184,7 +1184,7 @@ Avoid:
 
 Before implementation:
 
-- [ ] Read `AGENT.md` and the relevant design/feature documents.
+- [ ] Read `AGENTS.md` and the relevant design/feature documents.
 - [ ] Start from the relevant `doc/domains/**` index and confirm evidence,
       design, parity, and implementation ownership.
 - [ ] Identify the player/runtime contract and existing responsible files.
@@ -1229,7 +1229,7 @@ Before completion:
 - [ ] Finalize the current session's one living `changelogs/**` record after
       verification; do not create a new record for a follow-up prompt.
 - [ ] Report exact commands, outcomes, documentation status, and discrepancies
-      using the `AGENT.md` final format.
+      using the `AGENTS.md` final format.
 
 ## 26. Final decision rule
 

@@ -354,6 +354,23 @@ RSpec.describe Arena::ApplicationHandler do
 
         handler.accept(application: application, acceptor: character)
       end
+
+      it "does not broadcast a room transition when an outer transaction rolls back" do
+        expect(ActionCable.server).not_to receive(:broadcast).with(
+          "arena:room:#{arena_room.id}",
+          hash_including(type: "match_created")
+        )
+
+        ActiveRecord::Base.transaction do
+          result = handler.accept(application: application, acceptor: character)
+          expect(result.success?).to be(true)
+
+          raise ActiveRecord::Rollback
+        end
+
+        expect(application.reload).to be_open
+        expect(ArenaMatch.where(arena_room:)).to be_empty
+      end
     end
 
     # ============================================

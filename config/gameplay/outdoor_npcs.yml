@@ -27,3 +27,6 @@ outpost_surroundings:
         - kind: item
           item: rat_tail
           source_name: "Rat Tail"
+          # Exact Neverlands probability is not captured. Preserve the prior
+          # no-drop behavior until source evidence supplies a value.
+          chance: 0.0

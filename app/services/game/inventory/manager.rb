@@ -156,7 +156,45 @@ module Game
         @inventory = inventory
       end
 
+      # Adds the complete requested quantity while holding the authoritative
+      # inventory lock. The nested transaction is a savepoint when a caller
+      # already owns a wider gameplay transaction, so a rescued capacity error
+      # cannot leave an earlier stack or weight increment persisted.
+      #
+      # @param item_template [ItemTemplate] stable item definition to add
+      # @param quantity [Integer] number of units to add
+      # @return [InventoryItem] the last stack that received units
+      # @raise [CapacityExceededError] when every unit cannot fit
       def add_item!(item_template:, quantity: 1)
+        ApplicationRecord.transaction(requires_new: true) do
+          inventory.lock!
+          persist_item_stacks!(item_template:, quantity:)
+        end
+      end
+
+      def remove_item!(item_template:, quantity: 1)
+        remaining = quantity
+        inventory.inventory_items.where(item_template:).order(:created_at).each do |stack|
+          break if remaining <= 0
+
+          to_remove = [remaining, stack.quantity].min
+          stack.decrement!(:quantity, to_remove)
+          decrement_weight!(stack.weight * to_remove)
+          remaining -= to_remove
+          stack.destroy if stack.quantity.zero?
+        end
+
+        raise InventoryUnderflowError, "Not enough items" if remaining.positive?
+      end
+
+      private
+
+      class CapacityExceededError < StandardError; end
+      class InventoryUnderflowError < StandardError; end
+
+      attr_reader :inventory
+
+      def persist_item_stacks!(item_template:, quantity:)
         remaining = quantity
         last_stack = nil
 
@@ -183,28 +221,6 @@ module Game
 
         last_stack
       end
-
-      def remove_item!(item_template:, quantity: 1)
-        remaining = quantity
-        inventory.inventory_items.where(item_template:).order(:created_at).each do |stack|
-          break if remaining <= 0
-
-          to_remove = [remaining, stack.quantity].min
-          stack.decrement!(:quantity, to_remove)
-          decrement_weight!(stack.weight * to_remove)
-          remaining -= to_remove
-          stack.destroy if stack.quantity.zero?
-        end
-
-        raise InventoryUnderflowError, "Not enough items" if remaining.positive?
-      end
-
-      private
-
-      class CapacityExceededError < StandardError; end
-      class InventoryUnderflowError < StandardError; end
-
-      attr_reader :inventory
 
       def find_or_build_stack(item_template:)
         stack = inventory.inventory_items.where(item_template:, equipped: false).order(:created_at).detect do |existing|

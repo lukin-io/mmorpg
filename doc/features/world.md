@@ -3,7 +3,7 @@
 title: World Feature
 description: Implementation handbook for the Neverlands-based open world, cells, movement, cell content, actions, and persisted player location.
 status: Fully Implemented
-updated: 2026-08-23
+updated: 2026-08-25
 owners: Game world, movement, and world UI
 template: feature-v1
 ---
@@ -655,12 +655,18 @@ outpost_surroundings:
         - kind: item
           item: rat_tail
           source_name: "Rat Tail"
+          # Local evidence hold, not a Neverlands probability claim.
+          chance: 0.0
 ```
 
 Loot entries use the Arena-owned typed award contract after World hands off the
 match. `kind: item` resolves `item`, `item_key`, or `key` to an existing
-`ItemTemplate`; an omitted `chance` means the authored entry is deterministic,
-while an explicit chance accepts `0..1` fraction or `0..100` percent. A future
+`ItemTemplate`; every entry must declare `chance` as a `0..1` fraction or
+`0..100` percent. Missing or invalid probabilities fail configuration loading
+instead of silently becoming guaranteed drops. The source proves a Rat Tail
+can drop but not its exact probability, so the production Plague Rat entry is
+explicitly `0.0` to preserve the prior no-drop behavior until new Neverlands
+evidence replaces that local hold. A future
 `kind: currency` entry requires a positive integer `amount` and `currency: NV`.
 The supplied `24 NV` search-result row does not identify a source NPC or drop
 probability, so this production World declaration remains item-only until that
@@ -1014,6 +1020,7 @@ A wilderness fight does not move `CharacterPosition`. Its match metadata stores 
 | `Look Around` with no hostile interruption | Return authored message; grant no invented reward. |
 | Valid wilderness action with a live hostile encounter | Do not complete its intended domain transition; start or reuse the shared fight and preserve its allowlisted destination. |
 | First NPC defeated in a multi-NPC fight | Resolve/mark/log that participant's typed loot check once; keep the encounter anchor and fight live while another opposing participant survives. |
+| Outdoor NPC loot entry omits or invalidates `chance` | Reject the developer-authored configuration at load; do not infer a probability or grant value. |
 | Final NPC defeated | Mark the encounter anchor defeated and complete the fight-level result. |
 | Player surrenders | Defeat only that participant; finish only when the participant's entire side is defeated. |
 | Duplicate fight start | Return the character's existing active match; do not create another match or participant set. |
@@ -1047,7 +1054,7 @@ A wilderness fight does not move `CharacterPosition`. Its match metadata stores 
   cell and resumes only while that entrance remains accessible.
 - Hostile same-cell interaction starts the shared NPC fight implementation.
 - Movement, entrance, local, Character, and Inventory wilderness actions can be replaced by the same hostile encounter check.
-- The captured Plague Rat encounter remains invisible on the map, then the fight renders and resolves two independently targetable NPCs; both living NPCs can act, the first defeat does not end the fight, and each defeated NPC receives one retry-safe item-loot resolution into Inventory.
+- The captured Plague Rat encounter remains invisible on the map, then the fight renders and resolves two independently targetable NPCs; both living NPCs can act, the first defeat does not end the fight, and each defeated NPC receives one retry-safe typed-loot resolution. Only a successful explicit roll can add Inventory value; the unknown production Rat Tail probability remains disabled.
 - The shared fight surface renders complete 1x1, 1xMany, and ManyxMany side rosters for PvE/PvP and applies surrender to one participant at a time.
 - Finishing a wilderness result returns to World, Character, or Inventory according to validated match metadata; invalid metadata falls back to World.
 - Logout/login preserves exact outdoor coordinates.
@@ -1067,7 +1074,7 @@ Tests are part of the feature contract. Changes must cover the applicable model,
 | Coverage category | Representative guarantees |
 |---|---|
 | Success | Map load, configured cell-art slice/fallback, hidden NPC presentation, eight-direction offer, exact/fallback timed completion, one-time fatigue gain/recovery, cell composition, gate/village/local/context handoff, village Shop/exit offers, multi-NPC fight, participant surrender, context return, persisted resume, management CRUD/audit. |
-| Failure | Unknown/malformed cell art or location key, invalid key/context, expired/mismatched feature offer, wrong direction/target, impassable destination, concurrent movement, fatigue-locked action, stale source, inactive entrance/NPC, surrender after completion, invalid JSON/dependent management deletion. |
+| Failure | Unknown/malformed cell art or location key, invalid key/context, expired/mismatched feature offer, wrong direction/target, impassable destination, concurrent movement, fatigue-locked action, stale source, inactive entrance/NPC, missing/invalid loot chance, surrender after completion, invalid JSON/dependent management deletion. |
 | Edge/null/boundary | Cell-art key/source/column/row null, negative, zero, and sheet edge; authored travel `24/32`, fallback Wanderer `nil`/negative/`0`/`20`/`100`; fatigue `0/85/86/100`, three-minute recovery, and `1/2` gain; linked-location exact/wrong cell; encounter count `nil`/`0`/`2`/oversized; repeated NPC template ids; first/final participant defeat; 1x1/1xMany/ManyxMany sides; invalid saved return context; map edges; management pagination and 390px overflow. |
 | Authorization | Anonymous request, foreign movement/action offer, current-character scoping, World-offer policy ownership, combat participant policy, admin versus moderator/player management access. |
 
@@ -1101,6 +1108,7 @@ bundle exec rspec \
   spec/services/game/world/tile_building_service_spec.rb \
   spec/services/game/world/tile_npc_service_spec.rb \
   spec/services/game/world/outdoor_npc_config_spec.rb \
+  spec/services/game/loot_entry_spec.rb \
   spec/requests/world_spec.rb \
   spec/requests/world_locations_spec.rb \
   spec/requests/open_world_regions_spec.rb \
@@ -1197,6 +1205,7 @@ presence, and login-resume behavior.
 - `app/services/game/world/tile_state_resolver.rb`
 - `app/services/game/world/tile_building_service.rb`
 - `app/services/game/world/outdoor_npc_config.rb`
+- `app/services/game/loot_entry.rb`
 - `app/services/game/world/tile_npc_service.rb`
 - `app/services/game/world/perform_local_action.rb`
 - `app/services/game/world/interrupt_action.rb`
@@ -1319,6 +1328,7 @@ ownership after the World capability is accepted.
 - `spec/services/game/world/tile_state_resolver_spec.rb`
 - `spec/services/game/world/tile_building_service_spec.rb`
 - `spec/services/game/world/outdoor_npc_config_spec.rb`
+- `spec/services/game/loot_entry_spec.rb`
 - `spec/services/game/world/tile_npc_service_spec.rb`
 - `spec/services/game/world/perform_local_action_spec.rb`
 - `spec/services/game/world/interrupt_action_spec.rb`
@@ -1402,3 +1412,4 @@ Before extending the World feature:
 | 2026-07-29 | Hardened the existing City/World seed pipeline so historical nine-node databases converge to the verified West Gate pair without stale South/East entrances, live obsolete offers, or stranded City positions. |
 | 2026-07-29 | Added admin-only responsive CRUD over the existing persisted World/City owners, atomic immutable mutation auditing, bounded pagination, validated JSON metadata, dependent-delete protection, stale-offer cancellation, and the task-oriented cross-feature management-guide link. Outdoor NPC config now materializes through the idempotent seed pipeline while runtime `TileNpcService` reads only managed DB state, so deletes and moves take effect without a parallel catalog or lazy respawn. |
 | 2026-08-23 | Normalized the authored Plague Rat reward to the shared typed `kind: item` contract and documented the Arena-owned persistence/idempotency handoff. The observed standalone `24 NV` result remains unassigned until its NPC and probability are evidenced. |
+| 2026-08-25 | Required explicit validated loot probabilities, preserved the pre-existing Plague Rat no-drop behavior as a documented `0.0` evidence hold, and corrected the World acceptance contract so a per-NPC resolution is not misreported as a guaranteed Inventory award. |
