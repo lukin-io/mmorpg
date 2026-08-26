@@ -2,13 +2,18 @@
 
 - Baseline: 43 Markdown documents present under `doc/` before the 2026-07-29
   architecture migration
-- Status: Current and fully accounted for
-- Updated: 2026-07-29
+- Status: Historical migration record; not a current inventory gate
+- Updated: 2026-08-26
 
 This manifest proves that the migration did not silently drop an existing
 document. It records the canonical owner or compatibility disposition for each
 baseline path. New domain indexes, templates, evidence-gap records, and
 `NOT_IMPLEMENTED` handbooks are additions and therefore are listed separately.
+
+The baseline count is preserved as evidence about that migration only.
+`bin/documentation-architecture-audit` no longer requires this document or a
+fixed repository-wide document count; current ownership and link integrity are
+validated through the live domain registries and canonical paths.
 
 ## Baseline inventory and disposition
 

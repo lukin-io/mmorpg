@@ -234,6 +234,16 @@ RSpec.describe Arena::CombatProcessor do
       expect(participation2.reload.result).to eq("defeat")
     end
 
+    it "records a private completion event for every PvP participant" do
+      expect do
+        processor.end_match("a")
+      end.to change(GameEvent.where(event_type: :fight_finished), :count).by(2)
+
+      events = GameEvent.where(event_type: :fight_finished).order(:recipient_id)
+      expect(events.pluck(:recipient_id)).to contain_exactly(user1.id, user2.id)
+      expect(events.map { |event| event.payload["experience"] }).to all(eq(0))
+    end
+
     it "broadcasts match ended" do
       expect(processor.broadcaster).to receive(:broadcast_match_ended).with("a", reason: :normal)
 
@@ -259,6 +269,8 @@ RSpec.describe Arena::CombatProcessor do
       expect(item.reload.current_durability).to eq(9)
       expect(arena_match.reload.metadata["rewards_processed_at"]).to be_present
       expect(arena_match.metadata.dig("rewards", "experience", "amount")).to eq(35)
+      expect(GameEvent.where(event_type: :fight_finished, recipient: user1).count).to eq(1)
+      expect(GameEvent.find_by!(event_type: :fight_finished, recipient: user1).payload["experience"]).to eq(35)
     end
   end
 
@@ -402,6 +414,44 @@ RSpec.describe Arena::CombatProcessor do
         "item_key" => "wood_chips",
         "item_name" => "Wood Chips",
         "quantity" => 1
+      )
+      item_event = GameEvent.find_by!(event_type: :item_found, recipient: user1)
+      expect(item_event.payload).to include(
+        "item_name" => "Wood Chips",
+        "quantity" => 1,
+        "npc_participation_id" => npc_participation.id
+      )
+    end
+
+    it "deposits and reports an NV loot result after an NPC defeat" do
+      npc_template.update!(metadata: npc_template.metadata.merge(
+        "loot_table" => [
+          {"kind" => "currency", "currency" => "NV", "amount" => 24, "chance" => 1.0}
+        ]
+      ))
+      npc_participation.update!(metadata: {"current_hp" => 1, "max_hp" => 105})
+      captured_processor = deterministic_arena_processor(npc_match, 0, 99, 99, 5)
+      allow(captured_processor.broadcaster).to receive(:broadcast_ap_update)
+      allow(captured_processor.broadcaster).to receive(:broadcast_vitals_update)
+      allow(captured_processor.broadcaster).to receive(:broadcast_combat_action)
+      allow(captured_processor.broadcaster).to receive(:broadcast_match_ended)
+
+      expect do
+        captured_processor.process_action(
+          character1,
+          :attack,
+          target: npc_participation,
+          attack_type: :simple,
+          body_part: "torso"
+        )
+      end.to change { user1.currency_wallet.reload.nv_balance }.by(24)
+
+      loot_entry = npc_match.reload.combat_log_entries.find { |entry| entry.log_type == "loot" }
+      expect(loot_entry.message).to include("Funds «24 NV»")
+      expect(user1.currency_wallet.currency_transactions.find_by!(reason: "combat.npc_loot").amount).to eq(24)
+      expect(GameEvent.find_by!(event_type: :money_found, recipient: user1).payload).to include(
+        "amount" => 24,
+        "currency" => "NV"
       )
     end
 

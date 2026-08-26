@@ -2,7 +2,7 @@
 
 - Document type: neverlands-source-summary
 - Domain: shell
-- Updated: 2026-07-29
+- Updated: 2026-08-23
 - Evidence status: current
 
 ## Scope
@@ -17,11 +17,15 @@ desktop measurements.
 |---|---|---|
 | Persistent shell and MVP surfaces | `doc/design/reference/shell/observations/2026-07-28_game_shell_and_mvp_surfaces.md` | current |
 | Shared CSS/style system | `doc/design/reference/shell/observations/2026-07-29_style_system.md` | current |
+| Mixed chat/game-event rows (cross-domain; Social owns the evidence) | `doc/design/reference/social/observations/2026-08-23_chat_game_event_timeline.md` | current |
 
 ## Current Neverlands behavior
 
 - A persistent compact frame surrounds World, Profile, Inventory, City, Shop,
   Arena, and Fight content.
+- Its persistent chat region can interleave player messages with personal
+  gameplay results and game-wide announcements; Social owns the row evidence
+  and behavior details.
 - Typography, small controls, borders, vitals, character-sheet geometry, and
   information density form one shared visual language.
 - Neverlands itself is desktop-oriented; responsive tablet/mobile adaptation is

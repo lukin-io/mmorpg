@@ -1,18 +1,22 @@
 <%= turbo_frame_tag "chat_messages" do %>
   <%= turbo_stream_from @chat_channel %>
+  <% if @chat_channel.global? %>
+    <%= turbo_stream_from Chat::TimelineBroadcaster::GLOBAL_STREAM %>
+    <%= turbo_stream_from Chat::TimelineBroadcaster::PERSONAL_STREAM, current_user %>
+  <% end %>
 
-  <div id="<%= dom_id(@chat_channel, :messages) %>"
+  <div id="<%= chat_timeline_dom_id %>"
        class="nl-chat-message-list"
+       role="log"
+       aria-live="polite"
        data-controller="chat"
        data-chat-auto-scroll-value="true"
        data-chat-current-user-value="<%= current_user.profile_name %>"
        data-chat-target="messages">
-    <% if @chat_messages.empty? %>
+    <% if @chat_entries.empty? %>
       <span class="nl-chat-empty">No messages yet.</span>
     <% else %>
-      <%= render partial: "chat_messages/chat_message",
-                 collection: @chat_messages,
-                 as: :chat_message %>
+      <%= render "chat_channels/timeline_entries", entries: @chat_entries %>
     <% end %>
   </div>
 <% end %>

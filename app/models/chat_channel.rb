@@ -1,8 +1,6 @@
 # frozen_string_literal: true
 
 class ChatChannel < ApplicationRecord
-  include ActionView::RecordIdentifier
-
   CHANNEL_TYPES = {
     global: 0,
     local: 1,
@@ -38,10 +36,6 @@ class ChatChannel < ApplicationRecord
     return if memberships.exists?(user:)
 
     memberships.create!(user:)
-  end
-
-  def stream_dom_id
-    dom_id(self, :messages)
   end
 
   private

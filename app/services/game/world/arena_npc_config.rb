@@ -4,11 +4,17 @@ module Game
   module World
     # ArenaNpcConfig loads captured Neverlands arena NPC definitions.
     class ArenaNpcConfig
+      class InvalidConfigurationError < StandardError; end
+
       CONFIG_PATH = Rails.root.join("config/gameplay/arena_npcs.yml")
 
       class << self
         def config
-          @config ||= YAML.load_file(CONFIG_PATH).deep_symbolize_keys
+          @config ||= begin
+            parsed = YAML.load_file(CONFIG_PATH).deep_symbolize_keys
+            validate_loot_entries!(parsed)
+            parsed
+          end
         end
 
         def reload!
@@ -98,6 +104,22 @@ module Game
           Npc::CombatStats::STAT_KEYS.each_with_object({}) do |key, result|
             result[key] = (stats[key] || stats[key.to_s] || 0).to_i
           end.with_indifferent_access
+        end
+
+        private
+
+        def validate_loot_entries!(parsed)
+          parsed.each_value do |section_config|
+            Array(section_config[:npcs]).each do |npc|
+              entries = npc[:loot_table] || npc[:loot] || []
+              Array(entries).each_with_index do |entry, index|
+                Game::LootEntry.new(entry)
+              rescue Game::LootEntry::InvalidError => e
+                raise InvalidConfigurationError,
+                  "#{CONFIG_PATH}: NPC #{npc[:key] || "unknown"} loot entry #{index}: #{e.message}"
+              end
+            end
+          end
         end
       end
     end

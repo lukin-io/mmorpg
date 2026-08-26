@@ -1,6 +1,10 @@
 # frozen_string_literal: true
 
 module ChatMessagesHelper
+  def chat_timeline_dom_id
+    Chat::TimelineBroadcaster::TARGET_DOM_ID
+  end
+
   def chat_message_classes(message)
     classes = ["chat-msg"]
     classes << "chat-msg--system" if message.system?
@@ -23,7 +27,11 @@ module ChatMessagesHelper
     sender = message.sender
     return message.metadata&.dig("sender_name") || "Unknown" unless sender
 
-    character = sender.character
+    character = if sender.association(:characters).loaded?
+      sender.characters.min_by(&:created_at)
+    else
+      sender.character
+    end
     parts = [character&.name || sender.profile_name]
     parts << "[#{character.level}]" if character&.level
 
@@ -31,6 +39,6 @@ module ChatMessagesHelper
   end
 
   def chat_message_time(message)
-    message.created_at.strftime("%H:%M")
+    message.created_at.strftime("%H:%M:%S")
   end
 end

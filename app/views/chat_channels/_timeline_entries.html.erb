@@ -1,0 +1,7 @@
+<% entries.each do |entry| %>
+  <% if entry.is_a?(ChatMessage) %>
+    <%= render "chat_messages/chat_message", chat_message: entry %>
+  <% elsif entry.is_a?(GameEvent) %>
+    <%= render "game_events/game_event", game_event: entry %>
+  <% end %>
+<% end %>

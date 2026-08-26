@@ -2,8 +2,8 @@
 
 require "pathname"
 
-# Validates the domain-first documentation registry and its links without
-# loading Rails or mutating repository files.
+# Validates objective documentation ownership and link integrity without
+# enforcing prose, a frozen file inventory, or workflow metadata.
 module DocumentationArchitectureAudit
   DOMAINS = %w[
     shell
@@ -17,64 +17,6 @@ module DocumentationArchitectureAudit
     npcs_quests
     professions
     dungeons
-  ].freeze
-
-  BASELINE_DOC_PATHS = %w[
-    doc/DOCUMENTATION.md
-    doc/README.md
-    doc/RUBY_ON_RAILS_GUIDE.md
-    doc/UI.md
-    doc/design/README.md
-    doc/design/gdd.md
-    doc/design/launch_mvp_plan.md
-    doc/design/areas/arena.md
-    doc/design/areas/cities_and_buildings.md
-    doc/design/areas/game_client_layout.md
-    doc/design/areas/world_map.md
-    doc/design/features/character_vitals.md
-    doc/design/features/combat.md
-    doc/design/features/dungeons.md
-    doc/design/features/economy_trading_shops.md
-    doc/design/features/items_inventory_equipment.md
-    doc/design/features/movement.md
-    doc/design/features/npcs_quests.md
-    doc/design/features/professions.md
-    doc/design/features/progression_stats_skills.md
-    doc/design/features/social_chat_presence.md
-    doc/design/reference/neverlands.md
-    doc/design/reference/neverlands_chat.md
-    doc/design/reference/neverlands_live_city_movement.md
-    doc/design/reference/neverlands_live_game_shell_ui.md
-    doc/design/reference/neverlands_live_inventory_items.md
-    doc/design/reference/neverlands_live_lavka_shop.md
-    doc/design/reference/neverlands_live_movement.md
-    doc/design/reference/neverlands_live_outdoor_npc_resource.md
-    doc/design/reference/neverlands_live_player.md
-    doc/design/reference/neverlands_live_style_system.md
-    doc/design/reference/neverlands_skills.md
-    doc/design/reference/source_material.md
-    doc/features/FEATURE_TEMPLATE.md
-    doc/features/README.md
-    doc/features/arena_combat.md
-    doc/features/character_progression.md
-    doc/features/city.md
-    doc/features/game_shell.md
-    doc/features/player_inventory.md
-    doc/features/shop_economy.md
-    doc/features/world.md
-    doc/guides/managing_game_content.md
-  ].freeze
-
-  IMPLEMENTATION_PLACEHOLDERS = %w[
-    doc/features/quests.md
-    doc/features/professions.md
-    doc/features/dungeons.md
-  ].freeze
-
-  EVIDENCE_PLACEHOLDERS = %w[
-    doc/design/reference/npcs_quests/observations/evidence_needed_complete_quest_flow.md
-    doc/design/reference/professions/observations/evidence_needed_complete_profession_flow.md
-    doc/design/reference/dungeons/observations/evidence_needed_dungeon_flow.md
   ].freeze
 
   COMPATIBILITY_ALIASES = {
@@ -100,8 +42,24 @@ module DocumentationArchitectureAudit
       "doc/design/reference/character/observations/legacy_skills_and_arena_analysis.md"
   }.freeze
 
-  REPOSITORY_PATH_PATTERN = /`((?:(?:app|bin|config|db|doc|lib|spec)\/[^`\s]+|AGENT\.md|README\.md))`/
-  PARITY_ID_PATTERN = /`([A-Z][A-Z0-9_-]+-\d{3})`/
+  REQUIRED_ENTRY_POINTS = %w[
+    doc/README.md
+    doc/DOCUMENTATION.md
+    doc/domains/README.md
+    doc/design/reference/README.md
+    doc/templates/README.md
+    doc/templates/DOMAIN_INDEX_TEMPLATE.md
+    doc/templates/NEVERLANDS_SOURCE_SUMMARY_TEMPLATE.md
+    doc/templates/NEVERLANDS_OBSERVATION_TEMPLATE.md
+    doc/templates/DESIGN_PLACEHOLDER_TEMPLATE.md
+    doc/features/README.md
+    doc/features/FEATURE_TEMPLATE.md
+    doc/features/NOT_IMPLEMENTED_TEMPLATE.md
+  ].freeze
+
+  REPOSITORY_PATH_PATTERN =
+    /`((?:(?:app|bin|changelogs|config|db|doc|lib|spec|\.github)\/[^`\s]+|AGENTS?\.md|README\.md))`/
+  MARKDOWN_DOC_LINK_PATTERN = /\]\((?!https?:|mailto:|#)([^)]+\.md(?:#[^)]+)?)\)/
   UNRESOLVED_PATH_PATTERN = /[\[\]<>*{}]/
 
   Result = Data.define(:documents_count, :errors) do
@@ -111,30 +69,20 @@ module DocumentationArchitectureAudit
   end
 
   class Auditor
-    def initialize(
-      root:,
-      domains: DOMAINS,
-      baseline_paths: BASELINE_DOC_PATHS,
-      implementation_placeholders: IMPLEMENTATION_PLACEHOLDERS,
-      evidence_placeholders: EVIDENCE_PLACEHOLDERS,
-      compatibility_aliases: COMPATIBILITY_ALIASES
-    )
+    def initialize(root:, domains: DOMAINS, compatibility_aliases: COMPATIBILITY_ALIASES)
       @root = Pathname(root).expand_path
       @domains = domains
-      @baseline_paths = baseline_paths
-      @implementation_placeholders = implementation_placeholders
-      @evidence_placeholders = evidence_placeholders
       @compatibility_aliases = compatibility_aliases
       @errors = []
       @audited_documents = []
     end
 
     def call
-      audit_architecture_entry_points
+      audit_entry_points
+      audit_domain_registry
       audit_domains
       audit_placeholders
       audit_compatibility_aliases
-      audit_baseline_manifest
       audit_repository_paths
 
       Result.new(documents_count: audited_documents.uniq.length, errors:)
@@ -142,26 +90,23 @@ module DocumentationArchitectureAudit
 
     private
 
-    attr_reader :root, :domains, :baseline_paths, :implementation_placeholders,
-      :evidence_placeholders, :compatibility_aliases, :errors, :audited_documents
+    attr_reader :root, :domains, :compatibility_aliases, :errors, :audited_documents
 
-    def audit_architecture_entry_points
-      %w[
-        doc/DOCUMENTATION.md
-        doc/DOCUMENTATION_MIGRATION_MANIFEST.md
-        doc/templates/README.md
-        doc/templates/DOMAIN_INDEX_TEMPLATE.md
-        doc/templates/NEVERLANDS_SOURCE_SUMMARY_TEMPLATE.md
-        doc/templates/NEVERLANDS_OBSERVATION_TEMPLATE.md
-        doc/templates/DESIGN_PLACEHOLDER_TEMPLATE.md
-        doc/features/NOT_IMPLEMENTED_TEMPLATE.md
-      ].each { |path| require_file(path) }
+    def audit_entry_points
+      REQUIRED_ENTRY_POINTS.each { |path| require_file(path) }
+    end
 
-      domain_registry = require_file("doc/domains/README.md")
+    def audit_domain_registry
+      registry = require_file("doc/domains/README.md")
       reference_registry = require_file("doc/design/reference/README.md")
+
       domains.each do |domain|
-        require_content("doc/domains/README.md", domain_registry, "doc/domains/#{domain}.md")
-        require_content(
+        require_unique_reference(
+          "doc/domains/README.md",
+          registry,
+          "doc/domains/#{domain}.md"
+        )
+        require_unique_reference(
           "doc/design/reference/README.md",
           reference_registry,
           "doc/design/reference/#{domain}/README.md"
@@ -178,64 +123,27 @@ module DocumentationArchitectureAudit
         domain_content = require_file(domain_path)
         summary_content = require_file(summary_path)
 
-        audit_domain_index(domain_path, domain, summary_path, domain_content)
-        audit_source_document(summary_path, domain, summary_content)
-
-        unless observations_path.directory?
-          errors << "#{relative_path(observations_path)}: observations directory is required"
-          next
+        require_content(domain_path, domain_content, summary_path)
+        unless domain_content.match?(/`doc\/features\/[a-z0-9_]+\.md`/)
+          errors << "#{domain_path}: at least one feature-handbook owner is required"
         end
+        require_content(summary_path, summary_content, "Domain: #{domain}")
 
-        observations_path.glob("*.md").sort.each do |observation|
-          content = read_file(observation)
-          audit_source_document(relative_path(observation), domain, content)
+        if observations_path.directory?
+          observations_path.glob("*.md").sort.each { |path| read_file(path) }
         end
-      end
-    end
-
-    def audit_domain_index(path, domain, summary_path, content)
-      require_content(path, content, "## Documentation chain")
-      require_content(path, content, "## Current RPG status")
-      require_content(path, content, "## Important responsible implementation files")
-      require_content(path, content, summary_path)
-      require_content(path, content, "doc/design/launch_mvp_plan.md")
-      audit_parity_ids(path, content)
-      errors << "#{path}: domain name #{domain.inspect} is not represented" unless path.include?(domain)
-    end
-
-    def audit_parity_ids(path, content)
-      parity_ids = content.scan(PARITY_ID_PATTERN).flatten.uniq
-      if parity_ids.empty?
-        errors << "#{path}: at least one stable parity ID is required"
-        return
-      end
-
-      parity_plan = require_file("doc/design/launch_mvp_plan.md")
-      parity_ids.each { |parity_id| require_content(path, parity_plan, "`#{parity_id}`") }
-    end
-
-    def audit_source_document(path, domain, content)
-      require_content(path, content, "Domain: #{domain}")
-      require_content(path, content, "## Local Implementation Linkage")
-      unless content.match?(/Responsible[^\n]*files/i)
-        errors << "#{path}: responsible implementation-file context is required"
-      end
-      unless content.match?(/Local implementation linkage.*?context.*?Neverlands evidence/im)
-        errors << "#{path}: local linkage must be labeled as context, not Neverlands evidence"
       end
     end
 
     def audit_placeholders
-      implementation_placeholders.each do |path|
-        content = require_file(path)
-        require_content(path, content, "status: NOT_IMPLEMENTED")
-        require_content(path, content, "## 16. Responsible for Implementation Files")
+      root.glob("doc/design/reference/**/observations/*evidence_needed*.md").sort.each do |path|
+        content = read_file(path)
+        require_content(relative_path(path), content, "Evidence status: EVIDENCE_NEEDED")
       end
 
-      evidence_placeholders.each do |path|
-        content = require_file(path)
-        require_content(path, content, "Evidence status: EVIDENCE_NEEDED")
-        require_content(path, content, "## Local Implementation Linkage")
+      root.glob("doc/design/**/*design_needed*.md").sort.each do |path|
+        content = read_file(path)
+        require_content(relative_path(path), content, "DESIGN_NEEDED")
       end
     end
 
@@ -247,22 +155,46 @@ module DocumentationArchitectureAudit
       end
     end
 
-    def audit_baseline_manifest
-      path = "doc/DOCUMENTATION_MIGRATION_MANIFEST.md"
-      content = require_file(path)
-      baseline_paths.each { |baseline_path| require_content(path, content, baseline_path) }
-      require_content(path, content, "#{baseline_paths.length} of #{baseline_paths.length}")
-    end
-
     def audit_repository_paths
       audited_documents.uniq.each do |document|
-        read_file(document).scan(REPOSITORY_PATH_PATTERN).flatten.uniq.each do |referenced_path|
-          next if referenced_path.match?(UNRESOLVED_PATH_PATTERN)
-          next if root.join(referenced_path).exist?
+        content = read_file(document)
 
-          errors << "#{relative_path(document)}: referenced repository path does not exist: #{referenced_path}"
+        content.scan(REPOSITORY_PATH_PATTERN).flatten.uniq.each do |path|
+          audit_root_relative_path(document, path)
+        end
+
+        content.scan(MARKDOWN_DOC_LINK_PATTERN).flatten.uniq.each do |link|
+          audit_markdown_link(document, link)
         end
       end
+    end
+
+    def audit_root_relative_path(document, path)
+      return if path.match?(UNRESOLVED_PATH_PATTERN)
+      return if root.join(path).exist?
+
+      errors << "#{relative_path(document)}: referenced repository path does not exist: #{path}"
+    end
+
+    def audit_markdown_link(document, link)
+      path = link.sub(/#.*/, "")
+      return if path.empty? || path.match?(UNRESOLVED_PATH_PATTERN)
+
+      destination = if path.start_with?("doc/", "README.md", "AGENTS.md")
+        root.join(path)
+      else
+        document.dirname.join(path).cleanpath
+      end
+      return if destination.file?
+
+      errors << "#{relative_path(document)}: referenced Markdown document does not exist: #{link}"
+    end
+
+    def require_unique_reference(path, content, expected)
+      count = content.scan(expected).length
+      return if count == 1
+
+      errors << "#{path}: expected exactly one reference to #{expected}, found #{count}"
     end
 
     def require_file(path)

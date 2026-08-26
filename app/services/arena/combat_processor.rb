@@ -13,7 +13,7 @@ module Arena
   #   result = processor.process_action(character, :attack, target: other_character)
   #
   class CombatProcessor
-    attr_reader :match, :broadcaster, :rng
+    attr_reader :match, :broadcaster, :rng, :event_publisher, :loot_awarder_class
 
     # Action Points per turn
     AP_PER_TURN = Game::Combat::ActionCatalog::DEFAULT_AP_PER_TURN
@@ -31,9 +31,16 @@ module Arena
     # Initialize the combat processor
     #
     # @param match [ArenaMatch] the arena match to process
-    def initialize(match, rng: Random.new)
+    def initialize(
+      match,
+      rng: Random.new,
+      event_publisher: Chat::EventPublisher.new,
+      loot_awarder_class: Arena::NpcLootAwarder
+    )
       @match = match
       @rng = rng
+      @event_publisher = event_publisher
+      @loot_awarder_class = loot_awarder_class
       @broadcaster = Arena::CombatBroadcaster.new(match)
     end
 
@@ -658,7 +665,7 @@ module Arena
       npc = npc_participation.npc_template
       npc_participation.update!(result: "defeat", ended_at: Time.current)
       log_entry("defeat", npc_participation, "#{npc.name} has been defeated!")
-      award_npc_loot!(npc, defeated_by) if defeated_by
+      award_npc_loot!(npc_participation, defeated_by) if defeated_by
       mark_world_tile_npc_defeated!(defeated_by) if defeated_by && all_npcs_defeated?
 
       ActionCable.server.broadcast(
@@ -682,80 +689,29 @@ module Arena
       match.arena_participations.npcs.all? { |participation| participation.current_hp <= 0 }
     end
 
-    def award_npc_loot!(npc, defeated_by)
-      loot_table = Array(npc.loot_table)
-      if loot_table.empty?
-        log_entry("loot", defeated_by, "#{defeated_by.name} searched #{npc.name}. Result: nothing found.")
-        return []
+    def award_npc_loot!(npc_participation, defeated_by)
+      npc = npc_participation.npc_template
+      result = loot_awarder_class.new(
+        match:,
+        npc_participation:,
+        character: defeated_by,
+        rng:,
+        event_publisher:
+      ).call
+      return [] if result.already_processed?
+
+      result.failures.each do |failure|
+        log_entry("loot", defeated_by, "#{defeated_by.name} searched #{npc.name}. #{failure.message}.")
       end
 
-      drops = roll_npc_loot(loot_table).filter_map do |entry|
-        item_template = loot_item_template(entry)
-        next unless item_template
-
-        quantity = [entry.fetch("quantity", entry.fetch(:quantity, 1)).to_i, 1].max
-        Game::Inventory::Manager.new(inventory: defeated_by.inventory).add_item!(item_template:, quantity:)
-        {item: item_template, quantity:}
-      rescue Game::Inventory::Manager::CapacityExceededError => e
-        log_entry("loot", defeated_by, "#{defeated_by.name} searched #{npc.name}. #{e.message}.")
-        nil
-      end
-
-      record_loot_drops!(defeated_by, npc, drops)
-
-      if drops.empty?
+      if result.awards.empty? && result.failures.empty?
         log_entry("loot", defeated_by, "#{defeated_by.name} searched #{npc.name}. Result: nothing found.")
-      else
-        found = drops.map do |drop|
-          quantity = drop[:quantity] > 1 ? " x#{drop[:quantity]}" : ""
-          "Item «#{drop[:item].name}»#{quantity}"
-        end.join(", ")
+      elsif result.awards.any?
+        found = result.awards.map(&:description).join(", ")
         log_entry("loot", defeated_by, "#{defeated_by.name} searched #{npc.name}. Found #{found}.")
       end
 
-      drops
-    end
-
-    def roll_npc_loot(loot_table)
-      loot_table.select do |entry|
-        chance = entry.fetch("chance", entry.fetch(:chance, 0)).to_f
-        chance_percent = chance <= 1 ? chance * 100 : chance
-        rng.rand(100) < chance_percent
-      end
-    end
-
-    def loot_item_template(entry)
-      key = entry["item_key"] || entry[:item_key] || entry["key"] || entry[:key]
-      name = entry["item_name"] || entry[:item_name] || entry["name"] || entry[:name] || key.to_s.humanize
-      return nil if key.blank? && name.blank?
-
-      ItemTemplate.find_by(key:) || ItemTemplate.find_by(name:) || ItemTemplate.create!(
-        key: key.presence || name.parameterize(separator: "_"),
-        name:,
-        item_type: entry["item_type"] || entry[:item_type] || "material",
-        slot: "none",
-        stat_modifiers: {},
-        weight: [entry.fetch("weight", entry.fetch(:weight, 1)).to_i, 1].max,
-        stack_limit: [entry.fetch("stack_limit", entry.fetch(:stack_limit, 99)).to_i, 1].max
-      )
-    end
-
-    def record_loot_drops!(character, npc, drops)
-      participation = match.arena_participations.find_by(character:)
-      return unless participation
-
-      participation.metadata ||= {}
-      participation.metadata["loot_drops"] ||= []
-      participation.metadata["loot_drops"] += drops.map do |drop|
-        {
-          "npc_key" => npc.npc_key,
-          "item_key" => drop[:item].key,
-          "item_name" => drop[:item].name,
-          "quantity" => drop[:quantity],
-          "awarded_at" => Time.current.iso8601
-        }
-      end
-      participation.save!
+      result.awards
     end
 
     def process_defend(character, block_parts: nil, block_key: nil)
@@ -1025,6 +981,8 @@ module Arena
         log_entry("system", character, "#{character.name}'s equipment loses durability.")
       end
 
+      publish_fight_finished_events!(xp_result, winning_team)
+
       reward_metadata = {
         "experience" => xp_result && {
           "character_id" => xp_result.character_id,
@@ -1045,6 +1003,33 @@ module Arena
         "rewards_processed_at" => Time.current.iso8601,
         "rewards" => reward_metadata
       ))
+    end
+
+    def publish_fight_finished_events!(xp_result, winning_team)
+      match.arena_participations.players.includes(:character, :user).each do |participation|
+        recipient = participation.user || participation.character&.user
+        next unless recipient
+
+        experience = if xp_result&.character_id == participation.character_id
+          xp_result.experience_awarded
+        else
+          0
+        end
+
+        event_publisher.fight_finished!(
+          recipient:,
+          experience:,
+          event_key: "arena-match:#{match.id}:participation:#{participation.id}:finished",
+          payload: {
+            arena_match_id: match.id,
+            character_id: participation.character_id,
+            participation_id: participation.id,
+            result: participation.result,
+            winning_team:,
+            source: match.metadata.to_h["source"]
+          }.compact
+        )
+      end
     end
 
     def log_entry(entry_type, actor, description)

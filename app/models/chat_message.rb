@@ -1,8 +1,6 @@
 # frozen_string_literal: true
 
 class ChatMessage < ApplicationRecord
-  include ActionView::RecordIdentifier
-
   VISIBILITIES = {
     normal: 0,
     system: 1
@@ -42,17 +40,16 @@ class ChatMessage < ApplicationRecord
     end
   end
 
+  def timeline_at
+    created_at
+  end
+
   private
 
   def broadcast_new_message
     excluded_ids = Chat::IgnoreFilter.excluded_recipient_ids(sender)
     return if excluded_ids.any?
 
-    broadcast_append_later_to(
-      chat_channel,
-      target: dom_id(chat_channel, :messages),
-      partial: "chat_messages/chat_message",
-      locals: {chat_message: self}
-    )
+    Chat::TimelineBroadcaster.chat_message_created(self)
   end
 end

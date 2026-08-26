@@ -3,7 +3,7 @@
 title: Character Progression Feature
 description: Implementation handbook for Neverlands-based primary stats, numeric skills, boolean perks, point allocation, and public progression display.
 status: Fully Implemented
-updated: 2026-07-28
+updated: 2026-08-23
 owners: Character Progression
 template: feature-v1
 ---
@@ -31,6 +31,7 @@ Supporting documents:
 
 - `doc/design/reference/character/observations/2026-05-11_player_profile_and_development.md` records the starter and returning-character profile, stat, `Умения`, and `Навыки` observations.
 - `doc/design/reference/character/observations/legacy_skills_and_arena_analysis.md` records the wiki character-development audit, complete level rows, exact derived formulas, and unresolved evidence boundaries.
+- `doc/design/reference/social/observations/2026-08-23_chat_game_event_timeline.md` records recipient-visible fight completion with awarded combat XP in the persistent chat history.
 - `doc/design/reference/neverlands.md` defines the Neverlands evidence-to-implementation rule.
 - `doc/design/features/progression_stats_skills.md` normalizes the five primary stats, 29 numeric skills, captured tier rates, point pools, and launch-safe perk subset.
 - `doc/design/features/professions.md` keeps profession access/counters outside ordinary allocation until one activity is fully captured.
@@ -51,7 +52,7 @@ Supporting documents:
 | `doc/features/world.md` | World consumes the effective Wanderer value for its bounded adjacent-travel duration. | Character Progression owns saved skill allocation and effective skill access; World owns the `30..25` second formula, command snapshot, authorization, timer, and movement completion. |
 | `doc/features/shop_economy.md` | Shop rows display item requirements against progression-backed character values. | Character Progression owns stat/skill values; Shop owns catalog presentation and trade eligibility, while Inventory owns later equip enforcement. |
 | `doc/features/player_inventory.md` | The shared character sheet and item rows consume effective stats/skills. | Character Progression owns saved/effective values; Player Inventory owns equipment state, capacity display, and requirement enforcement. |
-| `doc/features/arena_combat.md` | Fight profiles consume effective character values and eligible completed solo NPC fights may award capped XP. | Character Progression owns values, thresholds, and grants; Arena Combat owns match resolution and the idempotent award handoff. |
+| `doc/features/arena_combat.md` | Fight profiles consume effective character values and eligible completed solo NPC fights may award capped XP, whose actual amount is passed onward for concise shell feedback. | Character Progression owns values, thresholds, and grants; Arena Combat owns match resolution, the idempotent award handoff, and the persisted fact supplied to Game Shell. |
 
 ## 2. Feature summary
 
@@ -571,3 +572,4 @@ Before extending Character Progression:
 | 2026-07-28 | Added the local-only responsive profile contract: stack below 800px, center the CSS paper doll below 520px, and keep dense navigation internally scrollable. |
 | 2026-07-28 | Removed source-owned portrait and source-specific project/service copy while preserving profile hierarchy and geometry with CSS and local gameplay copy. |
 | 2026-07-29 | Reordered the parameter column to the captured profile sequence, dropped the uncaptured Attack/Defense/Critical rows, gave the visitor profile its own identity line, and split the presentation into `character_sheet.css` and `player.css`. |
+| 2026-08-23 | Documented that Arena supplies the actual persisted solo-NPC XP award for recipient fight-completion feedback while Character Progression remains the XP/level authority. |

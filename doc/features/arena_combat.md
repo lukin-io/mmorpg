@@ -3,7 +3,7 @@
 title: Arena Combat Runtime Feature
 description: Implementation handbook for arena applications, shared player and NPC turn combat, combat presentation, completion, and public fight logs.
 status: Fully Implemented
-updated: 2026-07-28
+updated: 2026-08-25
 owners: Arena and Combat
 template: feature-v1
 ---
@@ -25,6 +25,8 @@ Neverlands is the sole game-design and presentation authority. The normalized
 Arena contract lives in `doc/design/areas/arena.md`; turn rules live in
 `doc/design/features/combat.md`; the measured active-fight and public-log
 captures live in `doc/design/reference/shell/observations/2026-07-28_game_shell_and_mvp_surfaces.md`.
+The supplied mixed-chat fight/item/NV evidence lives in
+`doc/design/reference/social/observations/2026-08-23_chat_game_event_timeline.md`.
 `doc/design/launch_mvp_plan.md` is the visual-parity completion authority.
 
 ### 1.1 Cross-feature relationships
@@ -32,10 +34,11 @@ captures live in `doc/design/reference/shell/observations/2026-07-28_game_shell_
 | Related feature | Relationship | Ownership and handoff |
 |---|---|---|
 | `doc/features/city.md` | Central Square exposes the current level-zero Arena hotspot and validates the building handoff. | City owns node availability and entry capability; Arena Combat owns lobby, applications, matches, and return after handoff. |
-| `doc/features/game_shell.md` | Authenticated Arena and active fights render in the persistent game frame; the public log deliberately does not. | Game Shell owns shared framing, navigation, chat, and presence; Arena Combat owns its central surface and public-log layout. |
+| `doc/features/game_shell.md` | Authenticated Arena and active fights render in the persistent game frame; the public log deliberately does not. Completed fights and successful NPC item/NV loot also supply player-facing facts to the shell timeline. | Arena Combat owns match/reward facts and stable producer identities. Game Shell owns shared framing, chat/event persistence and presentation, presence, and the public log's shell exclusion. |
 | `doc/features/world.md` | A source-backed wilderness interruption creates a shared Arena match and supplies an allowlisted return context. | World owns encounter eligibility, creation handoff, and return destination; Arena Combat owns the match after creation and its finish result. |
-| `doc/features/player_inventory.md` | Equipped items supply combat presentation and profile inputs. | Player Inventory owns equipment state and requirements; Arena Combat reads preloaded equipment and owns combat wear/resolution. |
-| `doc/features/character_progression.md` | Combat reads effective values and a completed eligible solo NPC fight may award capped XP. | Character Progression owns saved stats, formulas, and level grants; Arena Combat owns match finalization and the idempotent award call. |
+| `doc/features/player_inventory.md` | Equipped items supply combat presentation/profile inputs, and successful NPC item loot can add a carried item. | Player Inventory owns equipment/item state, capacity, and item-award validation; Arena Combat owns combat wear/resolution, typed loot rolls, and publication of an item-found fact only after the inventory award succeeds. |
+| `doc/features/character_progression.md` | Combat reads effective values and a completed eligible solo NPC fight may award capped XP. | Character Progression owns saved stats, formulas, experience, and level grants; Arena Combat owns match finalization, the idempotent award call, and publication of the actual awarded amount as a shell feedback fact. |
+| `doc/features/shop_economy.md` | Successful NPC currency loot credits the same persisted NV wallet used by Shop transactions. | Shop and Economy own `CurrencyWallet`, `CurrencyTransaction`, and adjustment invariants; Arena Combat owns typed loot eligibility, a per-NPC resolution marker, and source metadata passed to the wallet credit. |
 
 ## 2. Feature summary
 
@@ -51,7 +54,12 @@ slots, attack and block selectors, Turn/reset controls, the selected opponents,
 and the chronological combat log. The server validates participant, target,
 action catalog, AP, MP, body parts, current match state, and timeout. Completion
 requires the participant to finish the result before the stored Arena or World
-destination is restored.
+destination is restored. Match finalization publishes one recipient-only fight
+completion row per player participation, including actual awarded NPC XP where
+applicable. Each defeated NPC resolves its typed loot table once: item awards
+persist through Inventory, NV awards persist through the Economy wallet ledger,
+and each success publishes the matching item- or money-found row. All appear in
+the persistent shell chat timeline.
 
 Every fight also has `/log/:id`: a public, shell-free, paginated chronological
 log with team-colored names, participant totals, and an optional statistics or
@@ -68,6 +76,8 @@ JSON representation.
 - Render the captured desktop fight hierarchy and adapt it at tablet/mobile
   widths without introducing horizontal page overflow.
 - Keep durable public logs readable outside the authenticated game shell.
+- Project completed-fight and successfully awarded item/NV facts into the
+  shell-owned mixed chat timeline without replacing the canonical fight log.
 - Preload participant, NPC, inventory, item, and template records required by
   the active fight renderer.
 
@@ -79,6 +89,8 @@ JSON representation.
   have been freshly compared using project-owned presentation primitives.
 - Inventing uncaptured spells, items, arena rooms, fight kinds, group rules,
   rewards, or AI behavior.
+- Assigning the observed `24 NV` result to a production NPC or inventing its
+  drop probability before Neverlands evidence identifies those facts.
 - Treating CSS geometry, selected options, displayed AP, or Stimulus state as
   permission to mutate combat.
 - Replacing server-rendered Rails/Hotwire surfaces with a client game engine.
@@ -125,6 +137,13 @@ waiting participants can claim a timeout victory or draw after expiry. A live
 participant may surrender. Every accepted action appends durable log entries
 and broadcasts the resulting state.
 
+Successful NPC item and NV awards create recipient-only item- or money-found
+rows only after Inventory or wallet-ledger persistence. Finalization
+creates one recipient-only fight-completion row for every player participation;
+the eligible NPC winner receives the authoritative awarded XP amount and other
+participants receive zero. These rows are durable feedback projections and do
+not affect match resolution or reward authority.
+
 Validation failures preserve authoritative state and return alert feedback or
 an unprocessable HTML/Turbo/JSON response. The client AP counter is preview
 only; the processor calculates and rechecks the submitted package.
@@ -147,6 +166,8 @@ The shipped topology is:
 - matches in `pending`, `matching`, `live`, `completed`, or `cancelled` states;
 - player and NPC participations assigned to named teams;
 - ordered durable combat-log entries;
+- shell-owned immutable gameplay-event projections for successful item/NV loot and
+  player fight completion;
 - configured Arena and wilderness NPC templates;
 - public log/statistics projection over the durable match.
 
@@ -172,6 +193,7 @@ The shipped topology is:
 | Turn/timeout/finish | Match member POST routes | Interactive | Policy, controller, combat processor, return context |
 | Incremental match log | `GET /arena_matches/:id/log` | Authenticated HTML/JSON | Presenter and match controller |
 | Public durable log | `GET /log/:id` | Public HTML/JSON | Public controller/helper/view and statistics service |
+| Recipient chat feedback | Successful NPC item/NV loot and match finalization | Durable/streamed projection | Arena producer facts through injected `Chat::EventPublisher`; Game Shell owns storage/rendering |
 | Measured fight UI and uncaptured states | Launch parity matrix | Not part of runtime completion | `[EVIDENCE]` and project-owned presentation work |
 
 ### 6.2 Arena applications and match start
@@ -181,21 +203,45 @@ cancellation, transactionally-created matches/participations, countdown jobs,
 and broadcasts. NPC applications use the same visible list and validation but
 enter the shared fight immediately after an accepted open side.
 
+The PvP `match_created` live update is room-scoped and includes both persisted
+participant character IDs. A participant still viewing that Arena room starts
+the countdown and redirects; there is no parallel per-user toast/notification
+stream. An applicant waiting on the Arena index or another page reconciles from
+the persisted active match on the next Arena navigation. The HTTP acceptor
+redirect and persisted match remain authoritative even if Action Cable is
+disconnected. Player and NPC room broadcasts register through
+`ActiveRecord.after_all_transactions_commit`, so rolled-back match creation is
+never announced.
+
 ### 6.3 Turn combat and completion
 
 `Arena::CombatProcessor` owns profile preparation, AP/MP validation, attacks,
 blocks, skills, seeded resolution, NPC responses, surrender, timeout claim,
 match completion, participation results, equipment wear, reward finalization,
-and log recording. `finish` is a later presentation/result acknowledgement and
-does not rerun rewards.
+log recording, and delegation of each defeated NPC's loot table to
+`Arena::NpcLootAwarder`. The awarder accepts typed `item` and `currency`
+entries, requires an explicit validated probability through `Game::LootEntry`,
+rolls with the injected RNG, locks the NPC/player participations, and records
+one `loot_resolution` marker per NPC participation. It persists item awards
+through the Inventory manager's locked savepoint or NV through
+`CurrencyWallet#adjust!` and publishes the corresponding event inside the same
+outer transaction. Failed capacity or invalid-entry outcomes publish no success
+row and cannot retain a partially filled item stack. Fight-completion
+events are emitted under finalization before
+the reward marker is committed; the surrounding transaction and stable keys
+make retry safe. `finish` is a later presentation/result acknowledgement and
+does not rerun rewards or publish another completion row.
 
 ### 6.4 Deferred behavior boundary
 
-Unobserved fight variants, the full Neverlands spell/item action catalog,
-complete group/sacrifice rules, and uncaptured Arena-room presentation states
+Unobserved fight variants, quest/reputation loot effects, the full Neverlands
+spell/item action catalog, complete group/sacrifice rules, and uncaptured
+Arena-room presentation states
 remain outside this bounded runtime contract. They must be observed before
 implementation. Source artwork is documentation evidence and must not be
-copied into runtime assets.
+copied into runtime assets. The typed awarder is intentionally small: add a new
+kind only when its authoritative owner and source behavior are captured. No
+production NPC receives an invented NV entry from the supplied standalone row.
 
 ## 7. Authoritative data and presentation model
 
@@ -206,7 +252,12 @@ copied into runtime assets.
 | `ArenaMatch` | Match state, timers, teams, return metadata | Active state gates actions and completion |
 | `ArenaParticipation` | Player/NPC side, result, combat metadata | Exactly one player character or NPC template |
 | `CombatLogEntry` | Ordered durable event | Source for active and public logs |
-| `Character`/`InventoryItem` | Vitals, combat flag, equipment/wear | Owned outside Arena; mutated only by server services |
+| `Arena::NpcLootAwarder` | One defeated NPC's typed loot resolution | Participation locks and `loot_resolution` marker make reward persistence retry-safe |
+| `Game::LootEntry` | Shared typed-loot probability normalization | Chance is explicit and valid as `0..1` fraction or `0..100` percent |
+| `Game::Inventory::Manager` | Atomic item stack/mass addition | Inventory lock plus nested savepoint rolls back every unit when the complete quantity cannot fit |
+| `GameEvent` / `Chat::EventPublisher` | Player-facing completion/item/NV projection | Owned by Game Shell; never combat or reward authority |
+| `Character`/`InventoryItem` | Vitals, combat flag, equipment/wear/item ownership | Owned outside Arena; mutated only by server services |
+| `CurrencyWallet` / `CurrencyTransaction` | Persisted NV balance and adjustment ledger | Owned by Shop and Economy; credited through its public wallet boundary |
 | Stimulus/CSS | Composer preview and responsive presentation | Never authoritative |
 
 ### 7.1 Source of truth
@@ -222,7 +273,12 @@ Acceptance creates the match and participations inside a transaction. Starting
 persists combat profiles and marks player characters in combat. Turn processing
 revalidates live state, participant, target, body parts, action keys, AP, MP,
 and defeat state. Match finalization locks the match so rewards/results are
-written once; Finish records per-participant acknowledgement afterward.
+written once. The same boundary publishes deterministic per-participation
+completion keys; successful per-NPC loot awards use deterministic drop keys.
+The per-NPC `loot_resolution` marker prevents a retry from rerolling or granting
+again. Loot catalogs and persisted entries must declare a valid chance; missing
+chance is a recorded no-award configuration failure, never an implicit 100%
+drop. Finish records per-participant acknowledgement afterward.
 
 ### 7.3 Presentation versus authority
 
@@ -242,6 +298,12 @@ flowchart LR
   E --> F["CombatProcessor"]
   F --> G["Durable log and broadcasts"]
   F --> H["Completed result"]
+  F --> K["NpcLootAwarder"]
+  K --> M["Inventory item or Economy NV ledger"]
+  M --> N["Stable successful-loot fact"]
+  F --> O["Stable fight-completion fact"]
+  N --> L["Shell-owned Chat::EventPublisher"]
+  O --> L
   H --> I["Arena or allowlisted World return"]
   G --> J["Public /log/:id"]
 ```
@@ -262,10 +324,17 @@ any persisted combat effect.
 
 ### 8.3 Complete, redirect, or hand off
 
-Completion persists winner/draw results, reward markers, wear, and durable log
-entries under the match finalization boundary. Finish clears the current
-participant's combat flag and redirects to Arena or `CombatReturnContext`.
-Public log reads the same ordered entries without mutation.
+Completion persists winner/draw results, reward markers, wear, durable log
+entries, and stable per-player completion projections under the match
+finalization boundary. Per-NPC item/NV resolution persists the authoritative
+inventory/wallet mutation, event projection, and processing marker atomically.
+Item additions use an Inventory-row lock and nested transaction/savepoint so a
+capacity exception rescued by the per-entry awarder rolls back any earlier
+stack and mass increments.
+Finish clears the current participant's combat flag and
+redirects to Arena or `CombatReturnContext`. Public log reads the same ordered
+combat-log entries without mutation; chat events are a separate shell-owned
+feedback projection.
 
 ### 8.4 Concurrency behavior
 
@@ -273,7 +342,13 @@ Application match creation is transactional. Combat finalization locks the
 match and returns false if another worker already completed it. Pending PvP
 turns are stored per participation and resolve only when the required live
 players have submitted. Timeout jobs recheck current match/turn state instead
-of trusting their scheduled time, and reward markers prevent duplicate XP.
+of trusting their scheduled time. Reward markers prevent duplicate XP.
+Per-NPC loot-resolution markers prevent a reroll/regrant, while database-unique
+deterministic game-event keys prevent duplicate player-facing completion or
+loot rows if a producer is retried. Arena room broadcasts are presentation
+signals emitted only after every surrounding transaction commits; participants
+outside the room recover from the persisted active match on a later Arena
+request.
 
 ## 9. HTTP and Turbo contract
 
@@ -298,7 +373,9 @@ introduced, so Swagger/rswag and serializer coverage do not apply.
 ## 10. Client-side and CSS ownership
 
 `arena_controller.js` owns room/application live updates and participant
-redirect presentation. `arena_match_controller.js` owns select interactions,
+redirect presentation. Its match-created subscription is deliberately scoped
+to the viewed room; it does not subscribe every gameplay page to an Arena
+notification stream. `arena_match_controller.js` owns select interactions,
 AP preview, reset, target choice, subscriptions, timer display, and reload of
 server-rendered match state. Neither controller resolves combat.
 
@@ -317,7 +394,10 @@ separate intentional internal-pan exception.
 ## 11. Persistence and login resume
 
 Applications, matches, participations, profiles, turn metadata, results, and
-combat logs persist in the database. A character's `in_combat` flag allows the
+combat logs persist in the database. Item loot persists as `InventoryItem`, NV
+loot persists as a wallet balance plus `CurrencyTransaction`, and the NPC
+participation persists its loot-resolution marker. Shell-owned fight/item/NV
+`GameEvent` rows also persist for recent chat-history reloads. A character's `in_combat` flag allows the
 authenticated resume flow to return to an active or unfinished match. Arena
 matches return to Arena after Finish. Wilderness matches retain only a
 server-authored logical return context and fall back to World if it is invalid.
@@ -340,6 +420,11 @@ layout do not persist as gameplay state.
   coloring known participant names.
 - Match finalization and idempotent reward markers protect valuable outcomes;
   browser disabling and Action Cable delivery are never concurrency controls.
+- NPC/player participation locks plus the per-NPC loot-resolution marker
+  prevent retry rerolls and duplicate item/NV grants.
+- Event audience is derived from the persisted participation/user, and stable
+  producer keys are built from match/participation/NPC-drop identity rather
+  than submitted browser values.
 
 ## 13. Failure and boundary behavior
 
@@ -356,7 +441,13 @@ layout do not persist as gameplay state.
 | Finish before completion | Redirect back with `The fight is still active.` |
 | Stale live match | Auto-end once from current authoritative state |
 | Duplicate finalization/job | Match lock/state and reward markers prevent duplicate outcome |
+| Duplicate NPC-loot resolution | Return the processed result without rerolling, re-adding an item, re-crediting NV, or publishing again |
+| Missing/invalid explicit loot chance | Reject production config at load or record a persisted-entry failure; never convert it to a guaranteed drop |
+| Inventory capacity or invalid typed loot entry | Roll back the complete requested item quantity and mass change, record the per-entry failure, publish no successful loot row, and leave prior Inventory state unchanged |
+| Wallet/event persistence error during NV award | Roll back the credit, ledger row, event, and per-NPC processing marker together |
+| Duplicate event publication | Stable database-unique producer key returns the existing matching row; conflicting reuse fails |
 | Invalid World return metadata | Clear combat through normal Finish and fall back to World |
+| Applicant is not viewing the accepted Arena room | Send no page-global toast; redirect from the authoritative persisted match on the participant's next Arena navigation |
 | Missing public match | Return `404` text/JSON without exposing another record |
 | Malicious log text | Escape content; only known participant-name fragments receive color spans |
 | Narrow viewport | Reflow rails/center/log without whole-page horizontal overflow |
@@ -367,10 +458,23 @@ layout do not persist as gameplay state.
   already has an active match.
 - Eligible applications create the expected player/NPC participations and
   enter the shared combat lifecycle.
+- A participant viewing the accepted room can consume its room-scoped
+  match-created update; an applicant elsewhere is recovered by persisted
+  active-match routing on the next Arena navigation.
 - Turn submission validates target, body parts, action catalog, AP, MP, state,
   and participant on the server.
 - PvP pending turns, NPC responses, surrender, timeout, defeat, wear, logs, and
   final rewards use the shared processor and persist once.
+- Every player participation receives one durable recipient-only completion
+  row, with authoritative awarded NPC XP where applicable; each successful NPC
+  item award receives one item-found row and each successful NV award receives
+  one money-found row.
+- Item loot is present in the winning character's Inventory before feedback;
+  NV loot is present in the user's wallet and immutable adjustment ledger before
+  feedback. A multi-unit item award either persists every unit or none;
+  retrying the same NPC resolution grants neither item nor NV twice.
+- Chat feedback does not replace `CombatLogEntry`, rerun on Finish, or become
+  authority for match/reward state.
 - The active fight renders two equipment-style rails, five quick slots, the
   compact two-column composer, target line, and chronological log.
 - Desktop uses source-derived fixed rails with a fluid center; tablet/mobile
@@ -392,11 +496,11 @@ safe coloring/escaping, and responsive system behavior.
 
 | Coverage category | Representative guarantees |
 |---|---|
-| Success | Application lifecycle, match start, turn resolution, NPC response, finish return, public log, and responsive surface |
-| Failure | Entry gate, invalid application/action, insufficient AP/MP, premature finish, missing log, and escaped content |
+| Success | Application lifecycle, match start, turn resolution, NPC response, item/NV persistence plus event handoff, completion, finish return, public log, and responsive surface |
+| Failure | Entry gate, invalid application/action, insufficient AP/MP, partial item capacity, missing/invalid loot chance, malformed loot, wallet/event rollback, premature finish, missing log, and escaped content |
 | Edge/null/boundary | Empty slots, zero HP, multi-NPC side, timeout boundary, stale match, page boundaries, 940/720/420 layouts |
 | Authorization | Anonymous Arena, non-participant mutation, participant-only finish, public read-only log |
-| Retry/concurrency | Duplicate finalization/reward marker, stale timeout job, competing PvP turns, transactional match creation |
+| Retry/concurrency | Duplicate finalization/reward/event key, duplicate per-NPC item/NV resolution, rolled-back room broadcast suppression, stale timeout job, competing PvP turns, transactional match creation |
 
 Focused verification command:
 
@@ -405,10 +509,15 @@ bundle exec rspec \
   spec/models/arena_match_lifecycle_spec.rb \
   spec/policies/arena_match_policy_spec.rb \
   spec/services/arena/combat_processor_spec.rb \
+  spec/services/arena/npc_loot_awarder_spec.rb \
+  spec/services/game/loot_entry_spec.rb \
+  spec/services/game/inventory/manager_spec.rb \
+  spec/services/chat/event_publisher_spec.rb \
   spec/requests/arena_applications_spec.rb \
   spec/requests/arena_matches_spec.rb \
   spec/requests/public_fight_logs_spec.rb \
   spec/system/arena_match_ui_layout_spec.rb \
+  spec/system/arena_match_notification_spec.rb \
   spec/system/responsive_neverlands_ui_spec.rb
 ```
 
@@ -422,7 +531,9 @@ World, Inventory, Progression, the game shell, jobs, and Action Cable.
 - `doc/features/arena_combat.md`
 - `doc/design/areas/arena.md`
 - `doc/design/features/combat.md`
+- `doc/design/features/economy_trading_shops.md`
 - `doc/design/reference/shell/observations/2026-07-28_game_shell_and_mvp_surfaces.md`
+- `doc/design/reference/social/observations/2026-08-23_chat_game_event_timeline.md`
 - `doc/design/launch_mvp_plan.md`
 
 ### Routes and controllers
@@ -460,6 +571,8 @@ World, Inventory, Progression, the game shell, jobs, and Action Cable.
 - `app/services/arena/npc_application_service.rb`
 - `app/services/arena/npc_combat_ai.rb`
 - `app/services/arena/npc_experience_awarder.rb`
+- `app/services/arena/npc_loot_awarder.rb`
+- `app/services/game/loot_entry.rb`
 - `app/services/combat/fight_log_statistics.rb`
 - `app/services/game/combat/log_writer.rb`
 
@@ -488,9 +601,11 @@ World, Inventory, Progression, the game shell, jobs, and Action Cable.
 ### Content, configuration, seeds, and schema
 
 - `config/gameplay/arena_npcs.yml`
+- `config/gameplay/outdoor_npcs.yml`
 - `config/gameplay/combat_actions.yml`
 - `db/seeds.rb`
 - `db/schema.rb`
+- `db/migrate/20260823220000_add_money_found_to_game_event_types.rb`
 
 ### Integrated feature entry points
 
@@ -498,11 +613,21 @@ World, Inventory, Progression, the game shell, jobs, and Action Cable.
 - `app/services/game/world/combat_return_context.rb`
 - `app/controllers/world_context_actions_controller.rb`
 - `app/services/game/inventory/manager.rb`
+- `app/models/currency_wallet.rb`
+- `app/models/currency_transaction.rb`
+- `app/services/economy/wallet_service.rb`
 - `app/services/characters/vitals_service.rb`
+- `app/services/chat/event_publisher.rb`
+- `app/services/chat/timeline_broadcaster.rb`
+- `app/models/game_event.rb`
+- `doc/features/game_shell.md`
 
 World owns encounter creation eligibility and return context. Inventory owns
-equipment persistence. Character Progression owns effective values and grants.
-Arena Combat owns the match after those handoffs.
+equipment and item persistence. Character Progression owns effective values and
+grants. Shop and Economy own the NV wallet and adjustment ledger. Arena Combat
+owns the match and typed loot-resolution marker after those handoffs. Game Shell
+owns `GameEvent` storage, audience, history, streaming, and rendering; Arena
+supplies only authoritative completion/loot facts and stable source keys.
 
 ### Factories
 
@@ -522,6 +647,12 @@ Arena Combat owns the match after those handoffs.
 - `spec/models/combat_log_entry_spec.rb`
 - `spec/policies/arena_match_policy_spec.rb`
 - `spec/services/arena`
+- `spec/services/arena/npc_loot_awarder_spec.rb`
+- `spec/services/game/loot_entry_spec.rb`
+- `spec/services/game/inventory/manager_spec.rb`
+- `spec/services/game/world/arena_npc_config_spec.rb`
+- `spec/services/game/world/outdoor_npc_config_spec.rb`
+- `spec/services/chat/event_publisher_spec.rb`
 - `spec/jobs/arena`
 - `spec/requests/arena_spec.rb`
 - `spec/requests/arena_rooms_spec.rb`
@@ -545,12 +676,14 @@ Arena Combat owns the match after those handoffs.
    context server-authoritative.
 4. Preserve match locks, transaction boundaries, deterministic RNG tests, and
    idempotent reward markers.
-5. Preload every association used by fighter/equipment rendering.
-6. Keep Arena, active fight, and public log CSS in their domain owners; do not
+5. Give each new player-facing combat event a deterministic source key and
+   publish only facts already persisted by the authoritative match/reward path.
+6. Preload every association used by fighter/equipment rendering.
+7. Keep Arena, active fight, and public log CSS in their domain owners; do not
    add Tailwind or a nested stylesheet subsystem.
-7. Verify desktop parity and 820px/390px adaptation independently.
-8. Add success, failure, boundary, authorization, and retry coverage.
-9. Update source evidence, launch matrix, reciprocal handbooks, and this
+8. Verify desktop parity and 820px/390px adaptation independently.
+9. Add success, failure, boundary, authorization, and retry coverage.
+10. Update source evidence, launch matrix, reciprocal handbooks, and this
    contract only after implementation verification.
 
 ## 18. Version history
@@ -558,3 +691,6 @@ Arena Combat owns the match after those handoffs.
 | Date | Change |
 |---|---|
 | 2026-07-28 | Created the canonical bounded Arena Combat runtime handbook after implementing the full-width source fight hierarchy, shared player/NPC equipment rails, public shell-free fight log, eager-loaded equipment rendering, and responsive tablet/mobile adaptation. |
+| 2026-08-23 | Added the injected handoff of successful NPC loot and final participant results to the Game Shell-owned durable chat event timeline, with deterministic keys and retry coverage while preserving `CombatLogEntry` as the canonical fight log. |
+| 2026-08-23 | Extracted per-NPC typed loot resolution into `Arena::NpcLootAwarder`: item awards persist through Inventory, NV awards through the Economy wallet ledger, one participation marker prevents retry regrants, and only committed successes publish item/money timeline rows. No production NPC money probability was invented from the standalone source row. |
+| 2026-08-25 | Hardened reviewed boundaries: explicit validated loot chances prevent silent guaranteed drops, multi-stack Inventory grants roll back atomically on partial capacity, and PvP match-start delivery is documented/tested as a room-scoped presentation signal with persisted active-match reconciliation for an applicant on another page. |

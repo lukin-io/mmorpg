@@ -115,6 +115,33 @@ RSpec.describe Game::Inventory::Manager do
       end
     end
 
+    context "when only part of a multi-stack quantity fits" do
+      let(:small_stack_item) do
+        create(:item_template, :material, name: "Small stack loot", weight: 1, stack_limit: 10)
+      end
+      let!(:partial_stack) do
+        inventory.inventory_items.create!(
+          item_template: small_stack_item,
+          quantity: 8,
+          weight: small_stack_item.weight
+        )
+      end
+
+      before do
+        inventory.update!(slot_capacity: 1, current_weight: 8)
+      end
+
+      it "rolls back the filled portion and its weight when the next stack cannot be created" do
+        expect {
+          manager.add_item!(item_template: small_stack_item, quantity: 5)
+        }.to raise_error(Game::Inventory::Manager::CapacityExceededError, "No free inventory slots")
+
+        expect(partial_stack.reload.quantity).to eq(8)
+        expect(inventory.reload.current_weight).to eq(8)
+        expect(inventory.inventory_items.where(item_template: small_stack_item).count).to eq(1)
+      end
+    end
+
     context "when weight limit would be exceeded" do
       let(:heavy_item) { create(:item_template, :material, name: "Heavy Wood Chips", weight: 50, stack_limit: 10) }
 

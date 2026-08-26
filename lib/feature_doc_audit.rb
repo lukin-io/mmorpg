@@ -2,10 +2,13 @@
 
 require "pathname"
 
-# Validates canonical feature handbooks, including explicit missing-runtime
-# records, without loading Rails or mutating repository files.
+# Performs small, objective integrity checks for feature handbooks without
+# loading Rails or treating documentation format as workflow state.
 module FeatureDocAudit
-  TEMPLATE_ID = "feature-v1"
+  SHIPPED_TEMPLATE_ID = "feature-v3"
+  GAP_TEMPLATE_ID = "feature-gap-v2"
+  LEGACY_TEMPLATE_IDS = %w[feature-v1 feature-v2].freeze
+  SUPPORTED_TEMPLATE_IDS = ([SHIPPED_TEMPLATE_ID, GAP_TEMPLATE_ID] + LEGACY_TEMPLATE_IDS).freeze
   FULLY_IMPLEMENTED_STATUS = "Fully Implemented"
   NOT_IMPLEMENTED_STATUS = "NOT_IMPLEMENTED"
   ALLOWED_STATUSES = [
@@ -14,34 +17,45 @@ module FeatureDocAudit
     "Partially Implemented",
     NOT_IMPLEMENTED_STATUS
   ].freeze
-  REQUIRED_SECTIONS = [
-    "## 1. Design authority and related documents",
-    "## 2. Feature summary",
-    "## 3. MVP goals and non-goals",
-    "## 4. Player experience",
-    "## 5. Feature topology and authored content",
-    "## 6. Feature surfaces and contained behavior",
-    "## 7. Authoritative data and presentation model",
-    "## 8. Runtime architecture",
-    "## 9. HTTP and Turbo contract",
-    "## 10. Client-side and CSS ownership",
-    "## 11. Persistence and login resume",
-    "## 12. Authorization, trust boundaries, and concurrency",
-    "## 13. Failure and boundary behavior",
-    "## 14. Acceptance criteria",
-    "## 15. Test strategy and required coverage",
-    "## 16. Responsible for Implementation Files",
-    "## 17. Safe extension checklist",
-    "## 18. Version history"
+
+  SHIPPED_SECTIONS = [
+    "## 1. Authority and scope",
+    "## 2. Player contract and non-goals",
+    "## 3. Authoritative state and content",
+    "## 4. Rails and Hotwire flow",
+    "## 5. Security, concurrency, and failure behavior",
+    "## 6. Acceptance and tests",
+    "## 7. Responsible files and operations",
+    "## 8. Gaps and version history"
   ].freeze
+
+  GAP_SECTIONS = [
+    "## 1. Evidence and design",
+    "## 2. Missing runtime contract",
+    "## 3. Existing related handoffs",
+    "## 4. Prerequisites for implementation",
+    "## 5. Responsible documentation and history"
+  ].freeze
+
   DOCUMENT_EXCLUSIONS = %w[
     FEATURE_TEMPLATE.md
     NOT_IMPLEMENTED_TEMPLATE.md
     README.md
   ].freeze
-  REPOSITORY_PATH_PATTERN = /`((?:app|bin|config|db|doc|lib|spec)\/[^`\s]+)`/
-  CROSS_FEATURE_HEADING = "### 1.1 Cross-feature relationships"
-  FEATURE_DOC_PATH_PATTERN = /`(doc\/features\/[a-z0-9_]+\.md)`/
+
+  DOC_PATH_PATTERN = /\`(doc\/[a-zA-Z0-9_.\/-]+\.md)\`/
+  REPOSITORY_PATH_PATTERN = /\`((?:app|bin|config|db|doc|lib|spec)\/[^\`\s]+)\`/
+  RUNTIME_PATH_PATTERN = /\`((?:app|bin|config|db|lib|spec)\/[^\`\s]+)\`/
+  TEMPLATE_PATHS = %w[
+    doc/features/FEATURE_TEMPLATE.md
+    doc/features/NOT_IMPLEMENTED_TEMPLATE.md
+  ].freeze
+  PLACEHOLDER_PATTERNS = [
+    /<feature_name>/,
+    /YYYY-MM-DD/,
+    /Template instruction/i,
+    /> Copy this file/
+  ].freeze
 
   Result = Struct.new(:documents_count, :errors, :warnings, keyword_init: true) do
     def success?
@@ -49,12 +63,7 @@ module FeatureDocAudit
     end
   end
 
-  # Audits explicit feature documents or every canonical handbook under
-  # doc/features when no paths are provided.
   class Auditor
-    # @param root [String, Pathname] repository root
-    # @param paths [Array<String, Pathname>] explicit documents to audit
-    # @param strict [Boolean] require the canonical layout for pre-template docs
     def initialize(root:, paths: [], strict: false)
       @root = Pathname(root).expand_path
       @paths = Array(paths)
@@ -63,15 +72,11 @@ module FeatureDocAudit
       @warnings = []
     end
 
-    # Performs a read-only audit.
-    #
-    # @return [FeatureDocAudit::Result]
     def call
       documents = documents_to_audit
       metadata_by_path = documents.to_h do |document|
         content = read_document(document)
-        metadata = audit_document(document, content)
-        [document, metadata]
+        [document, audit_document(document, content)]
       end
 
       audit_duplicate_titles(metadata_by_path)
@@ -93,14 +98,14 @@ module FeatureDocAudit
           DOCUMENT_EXCLUSIONS.include?(document.basename.to_s)
         end
       else
-        paths.map { |document| resolve_path(document) }
+        paths.map { |path| resolve_path(path) }
       end
 
       documents.sort_by(&:to_s)
     end
 
-    def resolve_path(document)
-      candidate = Pathname(document)
+    def resolve_path(path)
+      candidate = Pathname(path)
       candidate.absolute? ? candidate : root.join(candidate)
     end
 
@@ -115,166 +120,187 @@ module FeatureDocAudit
       metadata = parse_frontmatter(document, content)
       audit_metadata(document, metadata)
       audit_whitespace(document, content)
-
-      if strict || metadata["template"] == TEMPLATE_ID
-        audit_canonical_layout(document, content)
-        audit_placeholders(document, content)
-      else
-        audit_legacy_layout(document, content)
-      end
-
-      audit_cross_feature_relationships(document, content)
-      audit_responsible_files(document, content)
+      audit_layout(document, content, metadata)
+      audit_placeholders(document, content, metadata)
+      audit_document_links(document, content)
+      audit_responsible_paths(document, content, metadata)
+      audit_gap_claims(document, content, metadata)
       metadata
     end
 
     def parse_frontmatter(document, content)
       lines = content.lines
-      errors << "#{display_path(document)}: first line must be # frozen_string_literal: true" unless lines.first&.strip == "# frozen_string_literal: true"
-      errors << "#{display_path(document)}: YAML metadata must begin on line 2" unless lines[1]&.strip == "---"
+      start_index = lines.first&.strip == "# frozen_string_literal: true" ? 1 : 0
 
-      closing_index = lines.each_index.drop(2).find { |index| lines[index].strip == "---" }
+      unless lines[start_index]&.strip == "---"
+        errors << "#{display_path(document)}: YAML metadata opening delimiter is missing"
+        return {}
+      end
+
+      closing_index = lines.each_index.drop(start_index + 1).find do |index|
+        lines[index].strip == "---"
+      end
       unless closing_index
         errors << "#{display_path(document)}: YAML metadata closing delimiter is missing"
         return {}
       end
 
-      lines[2...closing_index].to_h do |line|
+      lines[(start_index + 1)...closing_index].each_with_object({}) do |line, metadata|
         key, value = line.split(":", 2)
-        [key.to_s.strip, unquote(value.to_s.strip)]
+        next if key.to_s.strip.empty?
+
+        metadata[key.strip] = unquote(value.to_s.strip)
       end
     end
 
     def unquote(value)
-      return value[1...-1] if value.length >= 2 && ["\"", "'"].include?(value[0]) && value[-1] == value[0]
-
-      value
+      if value.length >= 2 && ["\"", "'"].include?(value[0]) && value[-1] == value[0]
+        value[1...-1]
+      else
+        value
+      end
     end
 
     def audit_metadata(document, metadata)
-      %w[title description status updated owners].each do |key|
+      %w[title description status updated owners template].each do |key|
         errors << "#{display_path(document)}: metadata #{key} is required" if metadata[key].to_s.empty?
       end
 
       unless ALLOWED_STATUSES.include?(metadata["status"])
-        errors << "#{display_path(document)}: status must be one of #{ALLOWED_STATUSES.join(', ')}"
-      end
-
-      if ALLOWED_STATUSES.include?(metadata["status"]) && metadata["status"] != FULLY_IMPLEMENTED_STATUS
-        warnings << "#{display_path(document)}: #{metadata['status']} is non-green; only Fully Implemented is green for a feature or area handbook"
+        errors << "#{display_path(document)}: unsupported status #{metadata['status'].inspect}"
       end
 
       unless metadata["updated"].to_s.match?(/\A\d{4}-\d{2}-\d{2}\z/)
         errors << "#{display_path(document)}: updated must use YYYY-MM-DD"
       end
 
-      template_id = metadata["template"]
-      return if template_id.nil? || template_id == TEMPLATE_ID
+      template = metadata["template"]
+      unless template.to_s.empty? || SUPPORTED_TEMPLATE_IDS.include?(template)
+        errors << "#{display_path(document)}: unsupported template #{template.inspect}"
+      end
 
-      errors << "#{display_path(document)}: unsupported template #{template_id.inspect}"
+      if metadata["status"] == NOT_IMPLEMENTED_STATUS && template != GAP_TEMPLATE_ID
+        errors << "#{display_path(document)}: NOT_IMPLEMENTED documents must use #{GAP_TEMPLATE_ID}"
+      elsif template == GAP_TEMPLATE_ID && metadata["status"] != NOT_IMPLEMENTED_STATUS
+        errors << "#{display_path(document)}: #{GAP_TEMPLATE_ID} requires NOT_IMPLEMENTED status"
+      elsif template == SHIPPED_TEMPLATE_ID && metadata["status"] == NOT_IMPLEMENTED_STATUS
+        errors << "#{display_path(document)}: #{SHIPPED_TEMPLATE_ID} cannot claim NOT_IMPLEMENTED"
+      end
+
+      if LEGACY_TEMPLATE_IDS.include?(template)
+        message = "#{display_path(document)}: legacy #{template} handbook; migrate only when materially useful"
+        errors << message if strict
+      end
+
+      if ALLOWED_STATUSES.include?(metadata["status"]) &&
+          metadata["status"] != FULLY_IMPLEMENTED_STATUS &&
+          metadata["status"] != NOT_IMPLEMENTED_STATUS
+        warnings << "#{display_path(document)}: #{metadata['status']} is intentionally non-green"
+      end
     end
 
     def audit_whitespace(document, content)
       content.lines.each_with_index do |line, index|
-        errors << "#{display_path(document)}:#{index + 1}: trailing whitespace" if line.match?(/[ \t]+$/)
+        if line.match?(/[ \t]+$/)
+          errors << "#{display_path(document)}:#{index + 1}: trailing whitespace"
+        end
       end
     end
 
-    def audit_canonical_layout(document, content)
-      actual = content.lines.grep(/^## \d+\./).map(&:strip)
-      return if actual == REQUIRED_SECTIONS
+    def audit_layout(document, content, metadata)
+      expected = case metadata["template"]
+      when SHIPPED_TEMPLATE_ID then SHIPPED_SECTIONS
+      when GAP_TEMPLATE_ID then GAP_SECTIONS
+      end
+      return unless expected
 
-      errors << "#{display_path(document)}: numbered sections must match FEATURE_TEMPLATE.md exactly"
+      actual = content.lines.grep(/^## \d+\./).map(&:strip)
+      return if actual == expected
+
+      errors << "#{display_path(document)}: sections must match #{metadata['template']} template exactly"
     end
 
-    def audit_placeholders(document, content)
-      unresolved = placeholder_tokens.select { |placeholder| content.include?(placeholder) }
-      unresolved << "Template instruction" if content.include?("Template instruction")
-      unresolved << "YYYY-MM-DD" if content.include?("YYYY-MM-DD")
-      unresolved << "<feature_name>" if content.include?("<feature_name>")
-      return if unresolved.empty?
+    def audit_placeholders(document, content, metadata)
+      return unless [SHIPPED_TEMPLATE_ID, GAP_TEMPLATE_ID].include?(metadata["template"])
 
-      errors << "#{display_path(document)}: unresolved template placeholders: #{unresolved.uniq.first(5).join(', ')}"
+      matches = placeholder_tokens.select { |token| content.include?(token) }
+      matches.concat(PLACEHOLDER_PATTERNS.filter_map { |pattern| content[pattern] })
+      matches.uniq!
+      return if matches.empty?
+
+      errors << "#{display_path(document)}: unresolved template placeholders: #{matches.first(5).join(', ')}"
     end
 
     def placeholder_tokens
-      @placeholder_tokens ||= begin
-        template = root.join("doc/features/FEATURE_TEMPLATE.md")
-        if template.file?
-          template.read.scan(/\[[^\]\n]+\]/).select { |token| token.match?(/[A-Za-z]/) }.uniq
-        else
-          []
-        end
+      @placeholder_tokens ||= TEMPLATE_PATHS.flat_map do |path|
+        template = root.join(path)
+        template.file? ? template.read.scan(/\[[^\]\n]+\]/) : []
+      end.uniq
+    end
+
+    def audit_document_links(document, content)
+      content.scan(DOC_PATH_PATTERN).flatten.uniq.each do |path|
+        next if root.join(path).file?
+
+        errors << "#{display_path(document)}: referenced document does not exist: #{path}"
       end
     end
 
-    def audit_legacy_layout(document, content)
-      unless content.match?(/^## \d+\. Responsible for Implementation Files$/)
-        errors << "#{display_path(document)}: Responsible for Implementation Files section is required"
+    def audit_responsible_paths(document, content, metadata)
+      section = responsible_section(content, metadata["template"])
+      return unless section
+
+      referenced_paths = section.scan(REPOSITORY_PATH_PATTERN).flatten.uniq
+      if referenced_paths.empty?
+        errors << "#{display_path(document)}: responsible-file section has no repository paths"
       end
-      unless content.match?(/^## \d+\. Version history$/i)
-        errors << "#{display_path(document)}: Version history section is required"
-      end
 
-      warnings << "#{display_path(document)}: pre-template handbook; migrate to #{TEMPLATE_ID} on its next material update"
-    end
+      referenced_paths.each do |path|
+        next if path.match?(/[\[\]<>*{}]/)
+        next if root.join(path).exist?
 
-    def audit_responsible_files(document, content)
-      responsible_section = content[/^## \d+\. Responsible for Implementation Files$.*?(?=^## \d+\.|\z)/m]
-      return unless responsible_section
-
-      referenced_paths = responsible_section.scan(REPOSITORY_PATH_PATTERN).flatten
-      errors << "#{display_path(document)}: responsible-file inventory is empty" if referenced_paths.empty?
-
-      referenced_paths.each do |referenced_path|
-        next if referenced_path.match?(/[\[\]<>*{}]/)
-        next if root.join(referenced_path).exist?
-
-        errors << "#{display_path(document)}: responsible path does not exist: #{referenced_path}"
+        errors << "#{display_path(document)}: responsible path does not exist: #{path}"
       end
     end
 
-    def audit_cross_feature_relationships(document, content)
-      section = content[/^#{Regexp.escape(CROSS_FEATURE_HEADING)}$.*?(?=^## |\z)/m]
-      unless section
-        errors << "#{display_path(document)}: #{CROSS_FEATURE_HEADING} section is required"
-        return
+    def responsible_section(content, template)
+      heading = case template
+      when SHIPPED_TEMPLATE_ID
+        "## 7. Responsible files and operations"
+      when GAP_TEMPLATE_ID
+        "## 5. Responsible documentation and history"
+      else
+        content[/^## \d+\. Responsible for Implementation Files$/]
       end
+      return unless heading
 
-      section.scan(FEATURE_DOC_PATH_PATTERN).flatten.uniq.each do |related_path|
-        if related_path == display_path(document)
-          errors << "#{display_path(document)}: cross-feature relationship cannot reference itself"
-          next
-        end
+      content[/^#{Regexp.escape(heading)}$.*?(?=^## \d+\.|\z)/m]
+    end
 
-        related_document = root.join(related_path)
-        unless related_document.file?
-          errors << "#{display_path(document)}: related feature document does not exist: #{related_path}"
-          next
-        end
+    def audit_gap_claims(document, content, metadata)
+      return unless metadata["status"] == NOT_IMPLEMENTED_STATUS
 
-        related_content = related_document.read
-        related_section = related_content[/^#{Regexp.escape(CROSS_FEATURE_HEADING)}$.*?(?=^## |\z)/m]
-        backlink = "`#{display_path(document)}`"
-        next if related_section&.include?(backlink)
+      runtime_paths = content.scan(RUNTIME_PATH_PATTERN).flatten.uniq
+      return if runtime_paths.empty?
 
-        errors << "#{display_path(document)}: relationship with #{related_path} is not reciprocal"
-      end
+      errors << "#{display_path(document)}: NOT_IMPLEMENTED document claims runtime paths: #{runtime_paths.join(', ')}"
     end
 
     def audit_duplicate_titles(metadata_by_path)
-      metadata_by_path.group_by { |_document, metadata| metadata["title"] }.each do |title, entries|
-        next if title.to_s.empty? || entries.one?
+      metadata_by_path.group_by { |_path, metadata| metadata["title"].to_s.strip }
+        .each_value do |entries|
+          title = entries.first.last["title"].to_s.strip
+          next if title.empty? || entries.one?
 
-        paths = entries.map { |document, _metadata| display_path(document) }.join(", ")
-        errors << "duplicate feature title #{title.inspect}: #{paths}"
-      end
+          paths = entries.map { |path, _metadata| display_path(path) }
+          errors << "duplicate feature title #{title.inspect}: #{paths.join(', ')}"
+        end
     end
 
-    def display_path(document)
-      document.relative_path_from(root).to_s
+    def display_path(path)
+      path.relative_path_from(root).to_s
     rescue ArgumentError
-      document.to_s
+      path.to_s
     end
   end
 end

@@ -16,6 +16,10 @@ class User < ApplicationRecord
   has_many :chat_channel_memberships, dependent: :destroy
   has_many :chat_channels, through: :chat_channel_memberships
   has_many :chat_messages, foreign_key: :sender_id, dependent: :nullify
+  has_many :game_events,
+    foreign_key: :recipient_id,
+    inverse_of: :recipient,
+    dependent: :restrict_with_error
   has_one :currency_wallet, dependent: :destroy
   has_many :ignore_list_entries, dependent: :destroy
   has_many :ignored_users, through: :ignore_list_entries, source: :ignored_user

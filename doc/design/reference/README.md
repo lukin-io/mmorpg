@@ -2,7 +2,7 @@
 
 - Document type: evidence registry
 - Status: Current
-- Updated: 2026-07-29
+- Updated: 2026-08-23
 
 This directory contains sanitized Neverlands observations and provenance. It
 answers what was directly observed or found in source material. Product
@@ -15,12 +15,12 @@ decisions live under `doc/design/`; delivery status lives in
 | Domain | Current source summary | Primary observations |
 |---|---|---|
 | Shell/shared style | `doc/design/reference/shell/README.md` | Shell/UI and style-system captures |
-| Social/chat/presence | `doc/design/reference/social/README.md` | Legacy chat-system analysis plus shell capture |
+| Social/chat/presence | `doc/design/reference/social/README.md` | Current supplied mixed chat/game-event timeline including item/NV search results, legacy chat analysis, and shell capture |
 | Character/profile/progression | `doc/design/reference/character/README.md` | Player/profile and skills analyses |
 | Inventory/items/equipment | `doc/design/reference/inventory/README.md` | Inventory/item/shop-row capture |
 | Open World/movement | `doc/design/reference/world/README.md` | Movement and outdoor NPC/resource captures |
 | City/buildings | `doc/design/reference/city/README.md` | City movement/services capture |
-| Economy/Shop | `doc/design/reference/economy/README.md` | Lavka and item-row captures |
+| Economy/Shop | `doc/design/reference/economy/README.md` | Lavka/item-row captures plus the supplied NPC-search NV result |
 | Combat/Arena | `doc/design/reference/combat/README.md` | Cross-domain fight/Arena observations |
 | NPCs/Quests | `doc/design/reference/npcs_quests/README.md` | Outdoor NPC evidence and incomplete Quest evidence |
 | Professions | `doc/design/reference/professions/README.md` | Cross-domain direction; complete flow missing |
@@ -56,5 +56,6 @@ summaries.
 Every canonical observation and source summary includes a clearly separated
 Local Implementation Linkage section. It may list local status, parity IDs,
 handbooks, responsive adaptation context, and responsible files. That section
-is local context, not a Neverlands fact; the exhaustive current file inventory
-belongs to section 16 of the responsible implementation handbook.
+is local context, not a Neverlands fact; canonical file ownership belongs to
+the responsible-files section of the implementation handbook (section 7 in
+`feature-v3`, or the corresponding legacy section).

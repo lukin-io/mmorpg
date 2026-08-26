@@ -24,7 +24,7 @@ presence, turn combat, inventory weight, shops, and social chat.
 | Arena and combat captures | Arena rooms, applications, NPC training rows, city-entry context, public `[ в бою ]` profile link, AP/body-part combat, magic opener, equipment deltas, turn submit contract, logs, result step, NPC drop check |
 | Public fight log captures | `logs.fcg?fid=<id>` pages, JavaScript log arrays, shared participant renderer, paginated public logs, aggregate statistics view |
 | Outdoor NPC/resource capture | Outdoor `Оглядеться` resource search, bot ambush handoff, multi-NPC rat fights, per-NPC loot checks, outdoor return routing |
-| Chat and presence reference | Chat frame, player list, message styles, username actions |
+| Chat, presence, and mixed event-timeline reference | Chat frame, player list, message styles, username actions, personal fight/item/NV system rows, and game-wide announcement rows |
 | Skill and perk reference | Stat allocation, numeric skills, boolean perks, effects |
 | Character-development wiki category | Level-0 starter state, complete level rows `0..27`, XP/fight caps, HP/MP/mass formulas, fatigue thresholds, critical damage, equipment-wear probabilities, profession taxonomy, and explicit formula gaps |
 | Neverlands wiki dungeon page | Dungeon floor objectives, movement resource, hidden rooms, bosses/chests, portal seals, timers, ratings |
@@ -45,8 +45,12 @@ differ, prefer the current wiki.
 - Local presence matters. Movement and city navigation refresh nearby players.
 - The UI is dense and utilitarian, not a landing page.
 - The old frameset is an implementation detail. The product contract is a
-  persistent game shell with replaceable main content, persistent chat,
-  persistent local presence, and context-sensitive server-offered buttons.
+  persistent game shell with replaceable main content, one persistent mixed
+  chat/game-event history, persistent local presence, and context-sensitive
+  server-offered buttons.
+- Personal fight/item/NV results and game-wide notices share that chat history;
+  they are not a separate notification center. Gameplay records remain the
+  underlying authority for concise event feedback.
 - Combat is turn-based and explicit: attacks, blocks, body parts, AP, logs.
 - Fight logs are fight-id keyed artifacts. Public `logs.fcg` pages and
   statistics are the expected behavior for completed NPC, player, and team

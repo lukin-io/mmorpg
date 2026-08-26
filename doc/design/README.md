@@ -21,7 +21,7 @@ observed; `areas/**` and `features/**` own the normalized local design;
 whole-game vision and cross-domain invariants. A stale overview cannot override
 newer verified evidence, and raw evidence cannot claim local completion.
 
-Use `[EVIDENCE]`, `[IMPL]`, and `[DOC]` from `AGENT.md` when layers disagree.
+Use `[EVIDENCE]`, `[IMPL]`, and `[DOC]` from `AGENTS.md` when layers disagree.
 Start from `doc/domains/README.md` to see all layer owners for one domain.
 
 ## Translation Rule
@@ -106,8 +106,9 @@ test files.
 Observation and source-summary documents keep a bounded **Local Implementation
 Linkage** section with the current handbook and important responsible files for
 context. That section must say it is local context, not source evidence;
-section 16 of the implementation handbook remains the exhaustive inventory.
-Portable normalized-design sections should avoid exhaustive app file maps.
+the implementation handbook's responsible-files section remains canonical
+(section 7 in `feature-v3`, or the corresponding legacy section). Portable
+normalized-design sections should avoid exhaustive app file maps.
 
 When adding live-analysis notes, keep reusable mechanics in `features/` or
 `areas/`, and raw observation details in `reference/`. Do not store live session
@@ -191,7 +192,8 @@ Which feature documents this area activates.
 - Prefer deterministic data in tests and starter content.
 - Preserve the Neverlands frame contract with modern Rails primitives rather
   than framesets: one persistent game layout, one replaceable main content
-  region, persistent chat, persistent presence, and server-authored actions.
+  region, one persistent mixed chat/game-event history, persistent presence,
+  and server-authored actions.
 - Use Stimulus for local interaction affordances and Turbo/Hotwire for
   server-rendered state changes. Do not introduce Tailwind CSS for MVP unless a
   specific view rewrite justifies the migration cost against the existing
@@ -210,7 +212,9 @@ Neverlands-based behavior first.
 - generic housing, decor, and storage expansion;
 - generic spawn schedules;
 - generic game events, community objectives, leaderboards, competition
-  brackets, and arena tournaments;
+  brackets, and arena tournaments; the separate source-backed personal/world
+  rows adopted in `features/social_chat_presence.md` are concise chat feedback,
+  not restoration of this removed generic event system;
 - generic party finder, group listings, ready checks, and party chat;
 - generic clan implementation, including clan XP, strongholds, research,
   treasury, applications, message boards, permissions, quest boards, wars, and

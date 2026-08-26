@@ -14,6 +14,7 @@ Reference material:
 
 - `doc/design/reference/neverlands.md`
 - `doc/design/reference/shell/observations/2026-07-28_game_shell_and_mvp_surfaces.md`
+- `doc/design/reference/social/observations/2026-08-23_chat_game_event_timeline.md`
 - `doc/design/reference/source_material.md`
 
 Neverlands uses a frame-like layout: a main content frame, chat/messages,
@@ -27,7 +28,8 @@ Core shell:
 - top bar: character name, level, HP/MP, current action buttons;
 - main content: world map, city node, building, combat, inventory, profile;
 - local presence: nearby players/current location;
-- chat: messages, input, channel controls;
+- chat: one chronological history of player messages, recipient-only gameplay
+  results, and game-wide announcements, plus input and channel controls;
 - exit/logout control.
 
 The 2026-05-25 live shell capture confirms that profile, inventory, city,
@@ -50,7 +52,7 @@ product contract with modern Rails primitives:
 - one replaceable main content region for world, city, building, profile,
   inventory, arena, combat, and results;
 - persistent top vitals and context actions;
-- persistent chat and local presence;
+- persistent mixed chat/game-event history and local presence;
 - Turbo Frames or Turbo Streams for server-rendered updates;
 - Stimulus controllers for timers, hotspot hover/focus, form disabling,
   chat shortcuts, panel toggles, and local visual previews.
@@ -113,6 +115,11 @@ unrelated area's stylesheet.
 - The current page/context action should be visibly disabled.
 - Main-content swaps must not reset chat input, player list state, or top
   vitals unless the server state changed.
+- Authoritative fight completion and successful item/NV-search feedback must
+  remain readable in the persistent history after a main-content swap or
+  reload; a transient toast is not the only feedback surface.
+- Personal and world rows need visible textual labels in addition to their
+  source-derived color roles, and event bodies remain escaped text.
 - Player-facing language is English in this project even when source labels are
   Russian in reference captures.
 
@@ -120,6 +127,9 @@ unrelated area's stylesheet.
 
 - Do not start with a marketing or landing page once the player is in game.
 - Main content changes, but vitals/chat/presence remain part of the game shell.
+- Chat and gameplay-event rows share one dense chronology; do not create a
+  separate notification center or parallel event panel for captured system
+  results.
 - Action buttons are context-driven by current location/state.
 - Action buttons are refreshed from server-authored state and are not static
   global shortcuts.

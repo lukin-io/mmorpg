@@ -409,8 +409,7 @@ input.nl-chat-input-field,
 
 .nl-chat-loading { padding: 5px; color: #555555; font-size: 10px; }
 
-.nl-flash-container,
-.nl-notifications {
+.nl-flash-container {
   position: fixed;
   right: 306px;
   bottom: 276px;
@@ -445,8 +444,7 @@ input.nl-chat-input-field,
   .nl-action-check { display: none; }
   .nl-status-icons { padding-left: 4px; }
 
-  .nl-flash-container,
-  .nl-notifications {
+  .nl-flash-container {
     right: 8px;
     width: min(340px, calc(100vw - 16px));
   }
@@ -568,8 +566,7 @@ input.nl-chat-input-field,
   .nl-time-display { display: none; }
   .nl-chat-tool--refresh { margin-left: 8px; }
 
-  .nl-flash-container,
-  .nl-notifications {
+  .nl-flash-container {
     right: 6px;
     bottom: 256px;
     width: calc(100vw - 12px);

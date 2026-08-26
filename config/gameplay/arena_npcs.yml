@@ -13,7 +13,8 @@ training:
       xp: 5
       dialogue: "*creaks and sways*"
       loot_table:
-        - item_key: wood_chips
+        - kind: item
+          item_key: wood_chips
           item_name: Wood Chips
           chance: 1.0
           quantity: 1

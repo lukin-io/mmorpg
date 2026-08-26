@@ -53,8 +53,7 @@ class ChatMessagesController < ApplicationController
       format.html do
         flash.now[:alert] = message
         @chat_message = chat_message
-        messages = @chat_channel.chat_messages.order(created_at: :desc).limit(200).reverse
-        @chat_messages = Chat::IgnoreFilter.filter_for_user(messages, current_user)
+        @chat_entries = Chat::Timeline.new(channel: @chat_channel, viewer: current_user).call
         render "chat_channels/show", status: :unprocessable_entity
       end
       format.json { render json: {error: message}, status: :unprocessable_entity }

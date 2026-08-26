@@ -1,8 +1,13 @@
 <% content_for :title, "#{@chat_channel.name} - Chat" %>
 <% content_for :hide_shell_chat_composer, true %>
+<% content_for :hide_shell_chat_history, true %>
 
 <%# Subscribe to real-time updates via ActionCable/Turbo Streams %>
 <%= turbo_stream_from @chat_channel %>
+<% if @chat_channel.global? %>
+  <%= turbo_stream_from Chat::TimelineBroadcaster::GLOBAL_STREAM %>
+  <%= turbo_stream_from Chat::TimelineBroadcaster::PERSONAL_STREAM, current_user %>
+<% end %>
 
 <section class="chat-channel-page"
          data-controller="chat"
@@ -17,16 +22,18 @@
 
   <div class="chat-container">
     <%# Messages area %>
-    <div id="<%= dom_id(@chat_channel, :messages) %>"
+    <div id="<%= chat_timeline_dom_id %>"
          data-chat-target="messages"
+         role="log"
+         aria-live="polite"
          class="chat-messages-container">
 
-      <% if @chat_messages.empty? %>
+      <% if @chat_entries.empty? %>
         <div class="chat-empty">
           <p>No messages yet.</p>
         </div>
       <% else %>
-        <%= render partial: "chat_messages/chat_message", collection: @chat_messages, as: :chat_message %>
+        <%= render "chat_channels/timeline_entries", entries: @chat_entries %>
       <% end %>
     </div>
 

@@ -40,11 +40,11 @@ class InventoriesController < ApplicationController
         format.html { redirect_to inventory_redirect_path, notice: "Item worn!" }
       else
         format.turbo_stream do
-          render turbo_stream: turbo_stream.append(
-            "notifications",
-            partial: "shared/notification",
+          render turbo_stream: turbo_stream.update(
+            "flash",
+            partial: "shared/flash",
             locals: {type: :alert, message: result[:error]}
-          )
+          ), status: :unprocessable_content
         end
         format.html { redirect_to inventory_redirect_path, alert: result[:error] }
       end
@@ -70,11 +70,11 @@ class InventoriesController < ApplicationController
         format.html { redirect_to inventory_redirect_path, notice: "Item removed!" }
       else
         format.turbo_stream do
-          render turbo_stream: turbo_stream.append(
-            "notifications",
-            partial: "shared/notification",
+          render turbo_stream: turbo_stream.update(
+            "flash",
+            partial: "shared/flash",
             locals: {type: :alert, message: result[:error]}
-          )
+          ), status: :unprocessable_content
         end
         format.html { redirect_to inventory_redirect_path, alert: result[:error] }
       end

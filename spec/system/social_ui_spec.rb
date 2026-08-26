@@ -20,6 +20,22 @@ RSpec.describe "Social UI", type: :system, js: true do
       click_button "Send"
       expect(page).to have_content("Hello from system spec")
     end
+
+    it "streams a personal game event into the same chat timeline" do
+      channel = create(:chat_channel, :global, name: "Global")
+
+      visit chat_channel_path(channel)
+      expect(page).to have_css("#chat_timeline", count: 1)
+
+      Chat::EventPublisher.new.fight_finished!(
+        recipient: user,
+        experience: 10,
+        event_key: "system-spec:fight-finished:#{user.id}"
+      )
+
+      expect(page).to have_css("#chat_timeline .game-event--fight-finished", text: "Combat experience gained: 10")
+      expect(page).to have_no_content("No messages yet.")
+    end
   end
 
   describe "failure cases" do

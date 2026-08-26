@@ -234,11 +234,11 @@ RSpec.describe "layouts/game.html.erb", type: :view do
     end
   end
 
-  describe "notifications" do
-    it "renders notifications container" do
+  describe "legacy notification surface" do
+    it "does not render a separate transient toast container" do
       render template: "layouts/game", layout: false
 
-      expect(rendered).to have_css(".nl-notifications")
+      expect(rendered).not_to have_css(".nl-notifications")
     end
   end
 

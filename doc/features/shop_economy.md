@@ -3,7 +3,7 @@
 title: Shop and Economy Feature
 description: Implementation handbook for the Neverlands-based city shop, NV wallet, catalog buying, inventory selling, and transaction ledger.
 status: Partially Implemented
-updated: 2026-07-28
+updated: 2026-08-23
 owners: Shop and Economy
 template: feature-v1
 ---
@@ -33,6 +33,7 @@ Supporting documents:
 - `doc/design/reference/inventory/observations/2026-06-01_inventory_items_and_shop_rows.md` records source inventory and item presentation used by selling and capacity feedback.
 - `doc/design/reference/city/observations/2026-07-28_city_movement_and_services.md` records how the city exposes building entry and exit.
 - `doc/design/reference/shell/observations/2026-07-28_game_shell_and_mvp_surfaces.md` records the compact surrounding interface.
+- `doc/design/reference/social/observations/2026-08-23_chat_game_event_timeline.md` records the supplied Neverlands item and `24 NV` search-result rows; the row proves the result form but not a production NPC identity or probability.
 - `doc/design/features/economy_trading_shops.md` defines the local economy and shop boundary.
 - `doc/design/areas/cities_and_buildings.md` owns the authored building topology.
 - `doc/design/launch_mvp_plan.md` defines the MVP trading/economy boundary.
@@ -41,6 +42,7 @@ Supporting documents:
 - `doc/features/character_progression.md` owns the stats and skills displayed as item requirements.
 - `doc/features/game_shell.md` owns the persistent frame surrounding the shop.
 - `doc/features/player_inventory.md` owns carried stacks and equipment after a trade.
+- `doc/features/arena_combat.md` owns NPC loot eligibility and resolution before an NV wallet credit.
 
 ### 1.1 Cross-feature relationships
 
@@ -51,12 +53,19 @@ Supporting documents:
 | `doc/features/character_progression.md` | Shop item rows present requirements derived from character stats/skills. | Character Progression owns the values; Shop may display them but does not decide equipment eligibility or mutate progression. |
 | `doc/features/game_shell.md` | Shop can render as the central gameplay surface inside the persistent shell. | Shop owns catalog/trade responses; Game Shell owns shared framing, navigation, presence, chat, and flashes. |
 | `doc/features/player_inventory.md` | Shop purchases add carried stacks and Shop sales remove eligible stacks. | Shop owns exchange value/stock transactions; Player Inventory owns the resulting stack, mass, durability, and equipment rules. |
+| `doc/features/arena_combat.md` | A successful typed NPC currency award credits the same NV wallet used by Shop. | Arena Combat owns the loot roll, per-NPC retry marker, and award source metadata; Shop and Economy own wallet locking, non-negative balance, and the immutable adjustment ledger. |
 
 ## 2. Feature summary
 
 An authenticated player standing inside an accessible city Shop can browse server-authored item templates, filter the dense Neverlands-style table, buy positive-priced items with NV, switch to Sell, and sell eligible non-broken inventory stacks back to the shop. The screen shows wallet balance, wiki-derived carried-mass maximum, slot use, item properties, requirements, stock, unit prices, quantity controls, and result flashes.
 
-The server is authoritative. `CurrencyWallet` owns the account's NV balance, `CurrencyTransaction` records each adjustment, `Inventory` owns carried items/capacity, `ItemTemplate` owns price and shop stock, and the current character's city context controls access. Catalog parameters and browser controls never confer purchase or sale authority.
+The server is authoritative. `CurrencyWallet` owns the account's NV balance,
+`CurrencyTransaction` records each adjustment, `Inventory` owns carried
+items/capacity, `ItemTemplate` owns price and shop stock, and the current
+character's city context controls Shop access. The wallet is also the authority
+for source-backed NV awarded by NPC combat; the Arena transition supplies the
+reason/source metadata but does not bypass wallet invariants. Catalog parameters
+and browser controls never confer purchase, sale, or reward authority.
 
 The implemented catalog includes Buy, Licenses, Sell, and Novice modes plus seven category choices. Licenses and Novice are catalog filters using the same ordinary purchase flow; source-specific license grants, durations, or distinct novice transactions were not captured and are not implemented.
 
@@ -65,7 +74,8 @@ The MVP currently contains:
 - city-building-gated shop access and safe login resume;
 - source-shaped modes, categories, numeric filters, and dense item tables;
 - transactional buy and sell operations with wallet, inventory, capacity, durability, and stock handling;
-- one non-negative decimal NV wallet per user and an immutable adjustment ledger;
+- one non-negative decimal NV wallet per user and an immutable adjustment ledger
+  shared by Shop transfers and typed NPC-loot credits;
 - authenticated current-character scoping and safe rejection of foreign inventory item IDs.
 
 ## 3. MVP goals and non-goals
@@ -75,6 +85,8 @@ The MVP currently contains:
 - Reproduce the captured Neverlands shop layout and deliberate buy/sell interaction.
 - Keep NV, inventory contents, capacity, and shop stock server-authoritative.
 - Make each successful purchase or sale atomic across the affected records.
+- Make every NPC-loot NV credit atomic with its source resolution marker and
+  player-facing projection while retaining Economy's wallet/ledger authority.
 - Preserve only allowlisted catalog context when the player reloads or logs back in.
 - Revalidate city Shop availability and record ownership for every request.
 
@@ -147,7 +159,7 @@ Catalog order, row position, item label, CSS class, displayed price, and query p
 | Shop frame/catalog | `GET /shop` | Interactive | `ShopController` and `Game::Shop::Catalog` |
 | Catalog purchase | `POST /shop/buy` | Interactive | `Game::Shop::Purchase` |
 | Inventory sale | `POST /shop/sell` | Interactive | `Game::Shop::Sale` |
-| NV wallet and ledger | Shop services/internal callers | Interactive persistence | `CurrencyWallet` and `Economy::WalletService` |
+| NV wallet and ledger | Shop services and authoritative internal callers | Interactive persistence | `CurrencyWallet`, `CurrencyTransaction`, and `Economy::WalletService` |
 | Licenses mode | `GET /shop?mode=licenses` | Catalog-interactive only | Ordinary catalog/purchase flow |
 | Novice mode | `GET /shop?mode=novice` | Catalog-interactive only | Low-level/low-price filter |
 | Other captured city counters/interiors | City building routes | Read-only or deferred | City feature |
@@ -166,6 +178,13 @@ Sale locks the inventory and stack, removes the requested quantity or destroys a
 
 Wallet balances and ledger amounts are decimal values. Every adjustment is non-zero, records a reason and resulting balance, and cannot leave the wallet negative.
 
+NPC currency loot uses the same boundary with reason `combat.npc_loot` and
+source metadata for match, character, NPC participation/template, loot-entry
+index, and stable event key. Arena persists the wallet adjustment inside the
+same outer transaction as its per-NPC `loot_resolution` marker and recipient
+event. A retry sees that marker and does not create a second credit or ledger
+row. Item loot never enters the wallet; Inventory remains its authority.
+
 ### 6.4 Deferred behavior boundary
 
 License rows do not grant a captured license object, timer, profession permission, or alternate currency. Novice is only an authored catalog filter. There is no bargain flow, buyback, refund, repair, appraisal, player order, remote shopping, or transaction-history UI.
@@ -182,6 +201,7 @@ The current forms do not use a one-time server-issued action capability. CSRF, a
 | `Inventory` and `InventoryItem` | Current character's derived mass capacity and owned stacks | Sale scope, broken/protected state, and `Character#carrying_capacity` authority |
 | `Game::Shop::Catalog` | Authored modes, categories, filters, and resale formula | Presentation eligibility only; does not transfer value |
 | `Game::World::ResumeContext` | Current Shop availability and safe resume | Rechecks the active current-city Shop hotspot |
+| `Economy::WalletService` | Atomic positive/negative NV adjustment | Locks the wallet, rejects negative result, and records one ledger row |
 
 ### 7.1 Source of truth
 
@@ -198,6 +218,8 @@ The browser receives calculated rows and submits only IDs, quantities, and catal
 - Limited stock is checked before and after the template lock.
 - Invalid mode/category keys fall back safely; only six filter keys are retained for the redirect/resume context.
 - Decimal wallet storage is forward-only at the precision migration because reverting to integer would lose fractional sale values.
+- NPC-loot credits require a positive integer NV amount at the Arena boundary;
+  the wallet retains decimal storage for all economy ingress/egress.
 
 ### 7.3 Presentation versus authority
 
@@ -218,6 +240,8 @@ flowchart LR
     H --> I["Transfer item/stock and adjust NV with ledger"]
     I --> J["Redirect to sanitized Shop context with flash"]
     G -->|failure| K["Rollback or do nothing; redirect with alert"]
+    L["Arena typed NV award"] --> M["Lock and credit the same wallet + ledger"]
+    M --> N["Commit with Arena marker and recipient event"]
 ```
 
 ### 8.1 Load and render
@@ -235,6 +259,11 @@ Both mutations use an HTML redirect to the Shop with a notice or alert. Submitte
 ### 8.4 Concurrency behavior
 
 Wallet adjustment locks the wallet. Purchase also locks template and inventory; sale locks inventory and the selected stack. Database transactions make the value transfer atomic and stale limited stock/funds fail safely. Requests are not idempotent, and there is no consumed capability or request key preventing a deliberate/replayed second valid trade.
+
+NPC-loot ingress is not a Shop request. Arena locks its participant records,
+calls the same wallet adjustment boundary under its transaction, and persists a
+per-NPC resolution marker. That producer-owned marker, not the timeline event,
+is the idempotency authority for the credit.
 
 ## 9. HTTP and Turbo contract
 
@@ -268,7 +297,11 @@ Accessibility behavior:
 
 ## 11. Persistence and login resume
 
-Wallet balances, ledger entries, inventory stacks, carried weight, shop stock, and character gameplay context persist in the database. The Shop context stores only `mode`, `category`, `min_level`, `max_level`, `min_price`, and `max_price`; mode/category are normalized before storage.
+Wallet balances, ledger entries (including `combat.npc_loot` credits), inventory
+stacks, carried weight, shop stock, and character gameplay context persist in
+the database. The Shop context stores only `mode`, `category`, `min_level`,
+`max_level`, `min_price`, and `max_price`; mode/category are normalized before
+storage.
 
 On login or return:
 
@@ -287,6 +320,8 @@ City/World own exact location persistence. Shop owns only the safe interior surf
 - `ResumeContext#shop_available?` revalidates the current city building and level access.
 - Purchase resolves only positive-priced server templates; Sale resolves only through the current inventory.
 - Wallet, inventory, item/template row locks and transactions protect each value transfer.
+- Arena may credit NV only through the wallet's public adjustment boundary;
+  its participant locks and processing marker protect duplicate NPC rewards.
 - Mode, category, redirect filters, and resume parameters use explicit allowlists.
 - Submitted price, wallet balance, stock, requirements, weight, and item labels are never trusted.
 - Inventory and City recheck their own invariants at each cross-feature handoff.
@@ -310,6 +345,8 @@ City/World own exact location persistence. Shop owns only the safe interior surf
 | Zero/non-positive price | Template is not buyable/sellable; no transaction. |
 | Invalid mode/category/filter | Fall back or filter presentation only; never mutate domain state. |
 | Repeated valid submission | Performs another valid trade; one-time replay protection is not implemented. |
+| Retried processed NPC-loot award | Preserve the existing wallet/ledger state; create no second credit. |
+| NPC-loot event publication fails before commit | Roll back its wallet credit, ledger row, and Arena resolution marker together. |
 | Unsupported license/novice effect | Do not grant or render an implied mechanic. |
 
 ## 14. Acceptance criteria
@@ -318,6 +355,9 @@ City/World own exact location persistence. Shop owns only the safe interior surf
 - Mode/category/filter selection changes only eligible rendered rows and safe saved context.
 - A valid purchase atomically debits NV, records a ledger entry, adds inventory quantity/weight, and decrements limited stock.
 - A valid sale atomically removes owned quantity/weight, credits decimal NV, records a ledger entry, and restores limited stock.
+- A successful NPC NV award atomically credits the same wallet, records a
+  `combat.npc_loot` transaction with source metadata, and is not duplicated on
+  retry; a failed outer award transaction leaves no credit.
 - A zero-durability item cannot be sold, and purchase/loot capacity uses the
   same derived character mass maximum.
 - Price, ownership, stock, protected state, capacity, and wallet balance are recalculated server-side.
@@ -334,8 +374,8 @@ Tests are part of the feature contract. Shop changes require applicable model, r
 
 | Coverage category | Representative guarantees |
 |---|---|
-| Success | Shop render, classification, buy, sale, durability proration, wallet/ledger persistence, inventory/stock changes, and resume context. |
-| Failure | Insufficient funds, capacity, missing item, protected item, unavailable Shop, and invalid wallet adjustment. |
+| Success | Shop render, classification, buy, sale, durability proration, Shop and NPC-loot wallet/ledger persistence, inventory/stock changes, and resume context. |
+| Failure | Insufficient funds, capacity, missing item, protected item, unavailable Shop, invalid wallet adjustment, and rolled-back NPC-loot projection. |
 | Edge/null/boundary | Zero/negative/decimal amounts, full/partial stacks, zero durability sale rejection, derived mass boundary, unlimited/limited stock, absent inventory/wallet, quantity limits, and invalid filters. |
 | Authorization | Anonymous access, foreign inventory item, active-character ownership, and city hotspot availability. |
 
@@ -348,6 +388,7 @@ bundle exec rspec \
   spec/models/currency_wallet_spec.rb \
   spec/models/currency_transaction_spec.rb \
   spec/services/economy/wallet_service_spec.rb \
+  spec/services/arena/npc_loot_awarder_spec.rb \
   spec/requests/shop_spec.rb
 ```
 
@@ -364,6 +405,7 @@ bundle exec rspec \
 - `doc/design/reference/inventory/observations/2026-06-01_inventory_items_and_shop_rows.md`
 - `doc/design/reference/city/observations/2026-07-28_city_movement_and_services.md`
 - `doc/design/reference/shell/observations/2026-07-28_game_shell_and_mvp_surfaces.md`
+- `doc/design/reference/social/observations/2026-08-23_chat_game_event_timeline.md`
 - `doc/design/launch_mvp_plan.md`
 
 ### Routes and controllers
@@ -413,8 +455,14 @@ bundle exec rspec \
 - `app/services/game/world/city_catalog.rb`
 - `app/views/city_buildings/_shop_shell.html.erb`
 - `app/services/game/inventory/manager.rb`
+- `app/services/arena/npc_loot_awarder.rb`
+- `app/services/chat/event_publisher.rb`
 
-City/Resume Context own building access and exact-location resume before the Shop. Inventory Manager owns stacking and capacity during item handoff. Shop owns exchange eligibility and value transfer, not later equipment/use behavior.
+City/Resume Context own building access and exact-location resume before the
+Shop. Inventory Manager owns stacking and capacity during item handoff. Arena
+owns NPC loot eligibility and the retry marker. Shop and Economy own exchange
+eligibility plus wallet/ledger invariants, not later equipment/use behavior or
+combat reward eligibility.
 
 ### Factories
 
@@ -432,6 +480,7 @@ City/Resume Context own building access and exact-location resume before the Sho
 - `spec/models/currency_wallet_spec.rb`
 - `spec/models/currency_transaction_spec.rb`
 - `spec/services/economy/wallet_service_spec.rb`
+- `spec/services/arena/npc_loot_awarder_spec.rb`
 - `spec/requests/shop_spec.rb`
 
 ## 17. Safe extension checklist
@@ -460,3 +509,4 @@ Before extending Shop and Economy:
 | 2026-07-27 | Aligned Shop capacity with the wiki mass formula and made zero-durability sale rejection explicit in implementation, request coverage, failure rules, and file ownership. |
 | 2026-07-28 | Moved current Shop access to Central Square; added the project-owned CSS scene, measured 800px control frame, four mode tabs, icon category strip, compact filters, local table overflow, responsive acceptance, and source-asset/text boundary. |
 | 2026-07-29 | Linked the cross-feature management guide's future explicit `ItemTemplate` adapter while retaining Shop ownership of catalog visibility, price, stock, and transaction invariants. |
+| 2026-08-23 | Documented the source-backed NPC NV ingress: Arena owns typed loot eligibility/idempotency, while the existing Economy wallet service atomically credits the user's persisted balance and immutable `combat.npc_loot` ledger row before Shell feedback. |

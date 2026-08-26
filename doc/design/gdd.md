@@ -55,6 +55,7 @@ Documentation process:
 - `doc/design/launch_mvp_plan.md`
 - `doc/design/reference/neverlands.md`
 - `doc/design/reference/shell/observations/2026-07-28_game_shell_and_mvp_surfaces.md`
+- `doc/design/reference/social/observations/2026-08-23_chat_game_event_timeline.md`
 - `doc/design/reference/source_material.md`
 
 ## Vision
@@ -371,9 +372,26 @@ flow and constraints are captured.
 The game should always feel populated when other players are nearby:
 
 - location/player list;
-- chat;
-- private messages;
+- persistent chat and private messages;
+- timestamped personal gameplay results in the same chronological history;
+- game-wide announcements in that same history;
 - local player refresh after movement completion.
+
+The mixed history is a durable player-feedback surface, not a second gameplay
+authority. Combat, inventory, economy, world, and later domain records own the
+facts they produce; the social layer owns audience-safe history, delivery, and
+presentation. Personal entries are selected by the server for one recipient,
+while world announcements are server-authored for all players. Neither
+audience may be chosen through browser parameters.
+
+The launch subset includes recipient-only fight completion with awarded combat
+experience, successfully awarded NPC-loot items, and successfully deposited
+NPC-loot NV. Inventory rows and the NV wallet/ledger are authoritative; social
+events are emitted only after those mutations succeed. The subset also
+provides a narrow server-side boundary for future captured world announcements
+without inventing announcement content or a player/admin authoring screen.
+These rows stay in the persistent chat timeline across main-content transitions
+and recent reloads; they must not be reduced to transient toast notifications.
 
 ## Rails-Friendly Design Principles
 

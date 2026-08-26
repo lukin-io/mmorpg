@@ -13,6 +13,11 @@ Neverlands combat observations are folded into this document. Arena room and
 application behavior is folded into `doc/design/areas/arena.md`. These two
 files are the arena/fight source of truth.
 
+The recipient-facing completion, item-found, and money-found rows are directly observed in
+`doc/design/reference/social/observations/2026-08-23_chat_game_event_timeline.md`.
+That capture establishes their visible place in chat, not Neverlands'
+underlying persistence or transport.
+
 Borrowed feel:
 
 - AP budget per turn;
@@ -27,7 +32,11 @@ Borrowed feel:
 
 The player enters combat, sees both sides' vitals, chooses attacks and blocks,
 optionally uses a skill or spell, submits the turn, and reads the result in the
-combat log. Combat proceeds in rounds until victory, defeat, surrender, or flee.
+combat log. Combat proceeds in rounds until victory, defeat, surrender, or
+flee. After authoritative finalization, the participating player also receives
+a concise completion result in the persistent shell timeline. Successful NPC
+item and NV awards receive their own personal rows; those rows replace neither
+the detailed combat log nor inventory/wallet authority.
 
 ## UX Model
 
@@ -329,6 +338,13 @@ Stable design facts:
 - Active-turn state uses `fight_pm`; result state uses `fexp`.
 - Completed fights require a separate finish action before return routing.
 
+The current mixed-timeline capture adds a separate presentation fact: a
+recipient sees a timestamped fight-completion row with awarded combat XP, and a
+successful bot search can produce a timestamped item-found row in the same chat
+history. A supplied addendum confirms the same shape for `24 NV`. In the
+captured ordering the item row precedes the corresponding fight-completion row.
+This does not make chat the fight, inventory, or wallet authority.
+
 The outdoor rat capture adds one more stable fact: loot checks can be per
 defeated NPC, not only per completed fight. The first rat in a two-rat fight was
 searched before the second rat was defeated; in that capture its random
@@ -363,7 +379,10 @@ later dungeon fights:
 - fights with only one live player-controlled side and NPC opponents may
   resolve immediately with NPC AI response;
 - completed fights require a result-screen finish action before returning to
-  arena, city, or world context.
+  arena, city, or world context;
+- persisted participant completion plus successful NPC item/wallet-award facts
+  project recipient-only rows into the shell's mixed chat timeline with stable
+  producer identities.
 
 ### Implemented shared-side and wilderness-NPC slice
 
@@ -377,6 +396,14 @@ As of 2026-07-21, the Rails combat path implements the source-backed participant
 - World-created fights store a logical allowlisted return context and retain the explicit result-finish step before returning to World, Character, or Inventory;
 - character and encounter-anchor locks prevent a duplicate wilderness action from creating overlapping active fights.
 
+As of 2026-08-23, the same finalization path also hands persisted per-player
+completion facts and successful NPC item/NV award facts to the shell-owned
+event publisher. A typed loot awarder persists each NPC participant's
+processing marker in the same transaction as item/wallet state and its event.
+Deterministic producer keys keep retries from creating a second player-facing
+row; the fight, reward, inventory, wallet, and combat-log records remain
+authoritative.
+
 This closes the captured outdoor participant/interruption/result gap. It does not promote the broader Combat area to a feature handbook: uncaptured/tuning work for magic actions, status effects, rewards, trauma, and additional combat constants remains in this design record.
 
 ## Combat Rewards And Loot Checks
@@ -385,16 +412,23 @@ Combat victory can produce two different reward classes:
 
 - fight rewards, such as experience, money, rating, trauma/injury outcome, or
   arena/dungeon progression;
-- NPC drops, such as materials, consumables, equipment, or
+- NPC search awards, such as materials, consumables, equipment, NV, or
   dungeon-specific currency.
 
 NPC drops are owned by the NPC loot design, but combat owns the timing:
 
 1. resolve the final turn and write defeat/victory log entries;
 2. run the NPC loot check for each defeated loot-bearing NPC;
-3. show the search/drop result in the combat log or result payload;
-4. apply inventory/capacity/binding rules before awarding items;
-5. require the finish-result action before returning the player to arena, city,
+3. dispatch each rolled, allowlisted loot kind to its authoritative owner:
+   Inventory for items and the Economy wallet ledger for NV;
+4. persist a per-NPC-participation processing marker with the authoritative
+   award in one transaction so retry cannot duplicate value;
+5. show the search/drop result in the canonical combat log or result payload;
+6. publish a recipient-only item-found or money-found timeline fact only when
+   the corresponding authoritative award succeeded;
+7. publish each player participant's concise completion/awarded-XP fact once
+   fight finalization is persisted;
+8. require the finish-result action before returning the player to arena, city,
    world, or dungeon context.
 
 The 2026-07-27 wiki audit closes three reward/result constants:
@@ -741,6 +775,10 @@ Core fight shapes:
 - `features/items_inventory_equipment.md` provides weapon/armor stats and item
   requirements.
 - `features/character_vitals.md` owns HP/MP persistence.
+- `features/social_chat_presence.md` owns the durable recipient timeline after
+  Combat supplies persisted completion and successful-loot facts.
+- `features/economy_trading_shops.md` owns the NV wallet and immutable
+  transaction credited by a successful currency loot outcome.
 - `features/professions.md` remains outside combat until a source-backed
   profession activity explicitly hands off to a fight.
 

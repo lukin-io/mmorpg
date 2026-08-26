@@ -41,6 +41,8 @@
 
   /* Semantic gameplay colors */
   --nl-combat-xp: #bb0000;
+  --nl-chat-time: #003366;
+  --nl-announcement: #ef6b00;
   --nl-glory-xp: #0a8900;
   --nl-valor-xp: #004bbb;
   --nl-bonus: #cc0000;
