@@ -2,7 +2,7 @@
 
 - Document type: documentation process
 - Status: Current
-- Updated: 2026-07-29
+- Updated: 2026-08-26
 
 This directory defines how a Neverlands observation becomes normalized design,
 delivery status, a verified local implementation contract, and maintainable
@@ -53,7 +53,7 @@ Every registered domain also has a navigation page under `doc/domains/`.
    `NOT_IMPLEMENTED_TEMPLATE.md`. Never invent routes or responsible runtime
    files to make the document look complete.
 9. Implement by extending the responsible local pipeline, then update the
-   handbook's exact behavior and exhaustive section 16 file inventory.
+   handbook's exact behavior and concise responsible-file section.
 10. Update the observation/source summary's clearly separated Local
     Implementation Linkage section. Evidence may carry status and responsible
     file context, but those notes must not be presented as Neverlands facts.
@@ -87,8 +87,10 @@ section visually and semantically separate from source evidence. It contains:
 - important responsible implementation files; and
 - `NOT_IMPLEMENTED` when no runtime owner exists.
 
-The exhaustive canonical file inventory remains section 16 of the responsible
-implementation handbook. Never list a planned file as though it exists.
+The canonical handbook names the small set of implementation and spec owners a
+maintainer needs. New `feature-v3` handbooks use section 7; legacy handbooks may
+retain their existing responsible-file section. Never list a planned file as
+though it exists, and do not inventory every partial merely for completeness.
 
 ## Copy and asset boundary
 

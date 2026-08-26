@@ -18,6 +18,20 @@ defaults:
     shell: bash
 
 jobs:
+  documentation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+
+      - name: Audit documentation contracts
+        run: bin/verify docs
+
   security:
     runs-on: ubuntu-latest
     timeout-minutes: 10

@@ -4,7 +4,7 @@
 # Read-only local verification aligned with the RSpec CI workflow.
 #
 # Usage:
-#   bin/verify          # Fast profile: lint + non-system specs + feature docs
+#   bin/verify          # Fast profile: lint + non-system specs + docs
 #   bin/verify fast     # Same as the default profile
 #   bin/verify full     # Fast profile + system specs + security audits
 #   bin/verify lint     # Linting only

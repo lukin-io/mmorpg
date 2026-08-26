@@ -15,6 +15,14 @@ RSpec.describe "bin/verify" do
     expect(script).to include("bundle exec rspec spec/system")
   end
 
+  it "runs completion profiles without mutable workflow metadata" do
+    expect(script).not_to include("implementation-run-audit")
+    expect(script).not_to include("run_implementation_contract")
+    expect(script).to match(/quick\|fast\)\n\s+run_lint/)
+    expect(script).to match(/combat\)\n\s+run_lint/)
+    expect(script).to match(/full\)\n\s+run_lint/)
+  end
+
   it "includes security and feature-document checks in the full workflow" do
     expect(script).to include("bundle exec brakeman --quiet --no-pager")
     expect(script).not_to include("--exit-on-warn")

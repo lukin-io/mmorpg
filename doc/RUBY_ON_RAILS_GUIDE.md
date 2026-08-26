@@ -2,7 +2,7 @@
 
 **Full-stack Ruby, Rails, and Hotwire refactoring, maintainability, correctness, and performance guide**
 
-- Updated: 2026-07-28
+- Updated: 2026-08-26
 - Status: subordinate technical guide
 - Scope: Ruby 4.0 and Rails 8.1 monolith; HTML, Turbo, and Stimulus are the primary player surface; JSON is a limited secondary integration surface
 - Primary use: new features, changes to existing features, bug fixes, and refactors
@@ -30,6 +30,9 @@ Default direction:
 - preserve the player-facing and persisted runtime contract before refactoring;
 - use conventional Rails models, controllers, views, partials, helpers, jobs,
   policies, and POROs;
+- require every implementation approach to satisfy explicit SRP/cohesion,
+  practical dependency-injection, PORO/KISS, justified-service-object, and
+  Rails-way criteria;
 - keep controllers focused on request/response orchestration;
 - keep authoritative gameplay decisions and calculations on the server;
 - use service objects for meaningful workflows, not every private method;
@@ -44,8 +47,12 @@ Default direction:
   mandatory serializer or universal response envelope;
 - use transactions, locks, constraints, stable identities, and scoped
   idempotency guards for persistent gameplay correctness;
+- make important deferred work recoverable, cache contracts explicit, and
+  operator mutations fail closed without forcing those mechanisms on small
+  synchronous features;
 - keep time and randomness deterministic at their calculation/test boundaries;
-- prevent N+1 queries and bound map, presence, inventory, shop, and combat reads;
+- prevent N+1 queries, bound map/presence/inventory/shop/combat reads, and keep
+  structural performance budgets separate from measured latency claims;
 - avoid callback-heavy workflows, generic base services, large concerns, hidden
   IO, browser-owned game state, and service-object soup;
 - add applicable tests, then update the canonical feature handbook after
@@ -59,25 +66,41 @@ For a new feature, bug fix, behavior change, or refactor:
 1. Read the relevant Neverlands evidence, design document, and canonical feature
    handbook as routed by `AGENTS.md`.
 2. Identify the existing player/runtime contract and responsible files.
-3. Choose the smallest Rails-native boundary that owns the behavior.
-4. With the first material repository edit, copy
-   `changelogs/CHANGELOG_TEMPLATE.md` into the session's one living changelog
-   record, or update the record if the current conversation already owns one.
-5. Implement server-authoritative behavior with applicable persistence,
+3. Choose the smallest Rails-native boundary that owns the behavior and confirm
+   that it passes the implementation-approach criteria in section 4.6.
+4. Implement server-authoritative behavior with applicable persistence,
    concurrency, security, and Hotwire rules.
-6. Add or update tests at the smallest useful public boundaries.
-7. Run focused checks while iterating and keep the same session record current.
-8. Once the task diff is stable, review it again against the applicable guide
+5. Add or update tests at the smallest useful public boundaries.
+6. Run focused checks while iterating.
+7. Once the task diff is stable, review it again against the applicable guide
    sections and correct concrete ownership, security, Hotwire, query, or
    lifecycle findings before final verification.
-9. Update the feature handbook only after implementation checks pass.
-10. Run the appropriate `bin/verify` profile, finalize the same session record
-    with exact results, and report using the final format required by
-    `AGENTS.md`.
+8. Update canonical documentation only where its owned truth changed, and
+   update the feature handbook after implementation checks pass.
+9. Run the proportional `bin/verify` profile and report exact results using the
+   format required by `AGENTS.md`.
 
 Feature-specific examples in this document are illustrative. Do not copy their
 names, content, or mechanics into unrelated features without Neverlands
 evidence.
+
+### 2.1 Risk-based review prompts
+
+Use these prompts only when the changed behavior touches the concern. They are
+human/agent review guidance, not filename-inferred profiles, metadata to
+declare, or instructions to introduce the named pattern.
+
+| Concern | Ask before completion |
+|---|---|
+| Rails/SRP/DI/PORO/KISS | Is this the smallest conventional owner, cohesive at one abstraction level, with only meaningful collaborators injected and every service/query justified? |
+| Authentication and server authority | Is the request authenticated/authorized, scoped to authoritative records, and independent of client-claimed prices, state, timing, or capability? |
+| Persistence and atomicity | Are constraints, transaction/lock scope, failure rollback, and realistic duplicate/retry/concurrent behavior correct? |
+| Content and determinism | Are Neverlands-backed values stable and validated, with time/RNG controlled at testable boundaries? |
+| Hotwire lifecycle | Are HTML/server state primary, frame/stream targets single-owned, Stimulus cleanup safe, broadcasts after commit, and reload/reconnect reconcilable? |
+| Queries and performance | Are reads/preloads reused and bounded without N+1, query-per-row work, unnecessary hydration, or unsupported benchmark claims? |
+| Async and operations | If valuable work is deferred, are intent, retries, stale/final failure, idempotency, bounded recovery, and secret-safe status explicit? |
+| Cache/read model | If derived state exists, are authority, complete keys/version, freshness, fallback, publication safety, and targeted recovery defined? |
+| Coverage and docs | Do tests cover applicable public behavior and do only the canonical documents whose truth changed need updates? |
 
 ## 3. Application architecture snapshot
 
@@ -172,6 +195,44 @@ Do not extract a collaborator merely because a method is private. Extract when
 there is a meaningful capability boundary, reuse, side-effect isolation,
 transaction boundary, or material improvement in clarity and testability.
 
+### 4.6 Required implementation-approach criteria
+
+Every implementation approach must satisfy the following criteria in
+proportion to its scope. They apply whether the result is a direct Rails model
+method, a controller plus relation, a PORO, a service/query/form object, a job,
+or a Hotwire interaction. Passing the criteria does not require creating more
+objects; often the correct result is fewer boundaries.
+
+| Criterion | Expected standard | Common failure signal |
+| --- | --- | --- |
+| Rails way | Start with the repository's existing Rails primitives and conventions. Add a custom abstraction or dependency only for a demonstrated gap. | A parallel persistence, request, rendering, validation, job, or realtime pipeline duplicates Rails or an existing feature owner. |
+| SRP and cohesion | One owner has one cohesive reason to change, expressed as a game capability or technical boundary. A cohesive use-case orchestrator may coordinate several steps. | Request parsing, policy, calculation, persistence, delivery, and rendering change independently inside one object; or one workflow is fragmented into one class per private method. |
+| Dependency injection and direction | Make volatile, nondeterministic, side-effecting, or externally replaceable collaborators explicit at the owning boundary. Dependencies point toward domain behavior, never from domain code into controllers/views/DOM concerns. | Hidden clock/RNG/IO construction, service locators, global mutable collaborators, or a DI container introduced without need. |
+| PORO and KISS | Prefer a plain Ruby object when behavior needs an object but not Rails inheritance. Use the fewest indirections that keep the contract clear, safe, and testable. | A framework superclass, concern, callback, metaprogramming layer, or wrapper exists only for stylistic consistency or hypothetical reuse. |
+| Justified service objects | A service owns a meaningful workflow, transition/transaction, multi-record orchestration, external side effect, or a clarity/testability gain that can be stated concretely. | A service only forwards one model call, exists solely to make a controller look short, or accumulates unrelated operations behind `call`. |
+| Hotwire fit, when applicable | HTML remains the primary contract; Turbo owns navigation/fragment delivery and Stimulus owns focused presentation behavior. Server authority, escaping, stable DOM ownership, reconnect recovery, and accessibility remain intact. | Custom `fetch`, broad DOM state, duplicate streams/channels, or client-owned game decisions replace a conventional HTML/Turbo path without a concrete requirement. |
+
+SRP does not mean “one public method per class.” DI does not mean “inject every
+model constant” or “install a container.” PORO does not mean “extract every
+method.” Rails way does not mean putting every rule in an Active Record model.
+The intended balance is a small number of cohesive boundaries with explicit
+collaborators where variability or side effects make that useful.
+
+Before implementation and again during the pre-final review, a maintainer must
+be able to answer:
+
+1. What single capability or boundary owns this behavior?
+2. Which facts change together, and which would change for independent reasons?
+3. Which collaborators need explicit injection for determinism, side-effect
+   isolation, or replacement, and which Rails defaults can remain direct?
+4. Why does each extracted object exist now rather than for speculative reuse?
+5. Why is a service object justified, or why is a direct Rails boundary simpler?
+6. For Hotwire work, who owns the HTML, DOM id, server transition, client
+   enhancement, reconnect path, and applicable fallback?
+
+An approach that cannot answer these questions concretely is not ready merely
+because its tests pass or its classes are short.
+
 ## 5. Preserve the real contract
 
 A full-stack Rails contract is broader than a JSON payload.
@@ -244,6 +305,28 @@ Rules:
 - queries do not perform writes;
 - jobs delegate domain rules instead of implementing a second version;
 - catalog/config objects validate and normalize owned content at their boundary.
+
+### 7.1 Practical dependency injection without a container
+
+Use explicit injection where it makes ownership and testing materially clearer:
+
+- clocks and RNGs for deterministic time/randomness;
+- publishers, schedulers, delivery adapters, and external sources for side
+  effects or replaceable IO;
+- focused calculators or catalogs when the owning workflow genuinely supports
+  more than one implementation or needs isolated tests.
+
+Prefer constructor keyword injection for collaborators shared across a use
+case. Method injection is appropriate when a collaborator belongs to one call
+only. A conventional default may keep normal Rails callers concise, provided
+the dependency remains visible and tests can replace it.
+
+Do not inject dependencies that add no seam: ordinary record inputs, stable
+value objects, and direct Active Record relations usually remain normal
+arguments or model calls. Do not hide collaborators in a global registry,
+service locator, mutable singleton, or generic DI container. Tests should use
+small fakes or verifying doubles at the public boundary instead of reaching
+into private methods.
 
 ## 8. Controller and routing policy
 
@@ -606,6 +689,42 @@ stream targets. Conversely, a request body containing `<turbo-stream>` alone
 does not prove that the browser reconnects the controller or preserves focus;
 use a focused system spec for that behavior.
 
+### 9.13 Hotwire implementation-approach criteria
+
+Apply the section 4.6 criteria to Hotwire with this concrete acceptance gate:
+
+- Start with semantic, server-rendered HTML and normal Rails routes/forms.
+  Introduce a Frame for a real navigation/fragment boundary and Streams for a
+  real multi-target or live update, not merely because either mechanism exists.
+- Give each replaceable region one server-owned identity and one rendering
+  owner. Do not add a Frame only to provide a Stream target; an ordinary
+  element with a stable id is sufficient.
+- Keep each Stimulus controller cohesive around one interaction surface. Use
+  actions, targets, values, and explicit custom events as its inputs instead of
+  hidden global DOM coupling. Extract a plain JavaScript helper only for a pure
+  or genuinely reused capability.
+- Keep mutations and valuable state server-authoritative. Turbo and Stimulus
+  submit intent and present committed results; neither bypasses policy,
+  transition, transaction, validation, or escaping boundaries.
+- Choose one visible realtime owner. Scope subscriptions to authorized
+  audiences, broadcast after commit, make duplicate/out-of-order presentation
+  safe, and provide an authoritative reload/snapshot path after reconnect.
+- Make `connect()`/`disconnect()` repeatable and leak-free, preserve direct/full
+  HTML recovery where the route supports it, and retain native controls,
+  keyboard access, focus behavior, and meaningful asynchronous status.
+- Cover the contract at the lowest useful layers: view wiring, request/stream
+  shape and authorization, service/job/channel delivery, and a focused system
+  path for lifecycle or browser behavior that lower layers cannot prove.
+
+Custom `fetch`, a typed Action Cable renderer, manual DOM construction, or a
+larger Stimulus controller may still be justified, but the concrete latency,
+frequency, interaction, or rendering need must be documented and must not
+create a second authority or duplicate presentation pipeline.
+
+Framework alignment: [Turbo Frames](https://turbo.hotwired.dev/handbook/frames),
+[Turbo Streams and progressive enhancement](https://turbo.hotwired.dev/handbook/streams),
+and the [Stimulus lifecycle](https://stimulus.hotwired.dev/reference/lifecycle-callbacks).
+
 ## 10. Service objects
 
 Use a PORO service when it:
@@ -615,6 +734,14 @@ Use a PORO service when it:
 - defines a transaction/locking boundary;
 - coordinates domain-specific side effects;
 - materially improves clarity and testability.
+
+At least one of those reasons must be concrete in the current change. “Keep the
+controller skinny,” “we always use services,” and possible future reuse are not
+sufficient by themselves. A reviewer should be able to name the service's one
+use case, authoritative inputs, output/error contract, transaction owner,
+side effects, and retry behavior. If those answers describe several unrelated
+capabilities, preserve a useful facade if needed but extract the independently
+changing collaborator rather than growing a generic manager.
 
 Preferred shape:
 
@@ -815,7 +942,20 @@ Jobs should:
 - delegate domain behavior to the same service used by synchronous flows;
 - be retry-safe and idempotent for valuable mutations;
 - handle missing/stale records explicitly;
+- distinguish a proven no-op/skip from a retryable failure and a terminal
+  failure instead of rescuing every outcome into a green execution;
+- keep recurring cadence, queue ownership, and the process that consumes the
+  queue explicit when missing execution would matter;
 - avoid relying on request/session/current-user state.
+
+`perform_later` proves only that an enqueue was attempted. Queue rows and a
+queue dashboard describe execution telemetry; they are not automatically the
+application's durable record that work was required. When losing the handoff
+would leave valuable or player-visible state indefinitely stale, use the
+simplest recoverable intent already available: authoritative source state plus
+an idempotent scan, an explicit pending generation/timestamp, a delivery
+receipt, or a focused lifecycle row. Do not add a generic job ledger for work
+that can safely be recomputed or retried from existing records.
 
 ### 15.2 Transaction side effects
 
@@ -841,6 +981,40 @@ record state and keep broadcast targets scoped to authorized audiences.
   JavaScript handler happens to recognize a string.
 
 See sections 9.4 and 9.8 for DOM-safety and realtime presentation ownership.
+
+### 15.4 Retry, durable intent, and reconciliation
+
+For important asynchronous work, define the complete lifecycle before choosing
+schema or job classes:
+
+1. what committed fact creates the intent;
+2. how enqueue failure remains visible or recoverable;
+3. which failures retry, which outcomes are proven skips, and which fail
+   terminally;
+4. what stable identity prevents duplicate effects;
+5. how stale or abandoned work is detected;
+6. the bounded batch/call/time limit for reconciliation;
+7. which persisted state is authoritative when queue telemetry disagrees;
+8. what operators and players can safely observe.
+
+Keep terminal state monotonic unless the domain explicitly supports reopening.
+Fence late owners when two attempts could publish or settle the same valuable
+result. A reconciler should call the same public transition boundary as normal
+execution, process a deterministic bounded order, and leave failures visible;
+it is not permission to create a second behavior pipeline.
+
+### 15.5 Recurring and operational ownership
+
+Recurring work needs one registration owner, an explicit queue/consumer, a
+bounded unit of work, and coverage that proves the schedule key/configuration is
+actually loaded where missing execution matters. A status command may report
+facts such as last success, oldest pending work, current owner, and failure
+count, but it must not silently promote a release or mutate state.
+
+When safe recovery requires an operator command, apply section 20's fail-closed
+rules and document the exact preconditions, result, rollback/recovery path, and
+post-check. Do not make broad queue cleanup or history deletion the normal way
+to obtain a green status.
 
 ## 16. Error handling
 
@@ -888,11 +1062,43 @@ Cache only when it has a clear owner, key, invalidation rule, and fallback.
 - Version keys when serialized shape changes.
 - Include every relevant identity/context dimension.
 - Include locale only when localized cached output is introduced.
+- Name the authoritative source and decide whether a miss is allowed to compute
+  synchronously, serve bounded stale/last-known-good data, enqueue repair, or
+  fail visibly. Do not let incidental cache availability change game rules.
+- Bound process-local entries, shared-cache retention, repair batches, and lock
+  lifetimes. A fallback must not live forever or hide malformed/incompatible
+  data.
+- Define concurrent-miss behavior where an expensive build could stampede.
+  Prefer an existing lock/coalescing primitive; use owner tokens/fencing only
+  when an expired or late builder could overwrite newer state.
+- When correctness depends on several keys/parts forming one complete view,
+  validate the complete candidate before atomically publishing a small active
+  pointer or use another all-or-nothing boundary. A simple independent fragment
+  cache does not need generation machinery.
+- Keep recovery targeted: invalidate or republish the exact owned key/set,
+  preserve a validated previous value when justified, and verify state after
+  recovery. Broad cache deletion is not a default refresh or rollback plan.
 - Do not cache authorization without a safe invalidation model.
 - Do not cache movement offers, action capability keys, balances, inventory,
   combat state, or finalized positions as substitutes for authoritative records.
 - Process-local memoization is appropriate for immutable validated catalogs when
   reload behavior is explicit.
+
+For a cache, snapshot, projection, or prepared read model that materially
+changes player-visible output, document and test as applicable:
+
+- authority and ownership;
+- key/schema/context identity;
+- hit, miss, stale, malformed, and unavailable behavior;
+- invalidation/freshness and source-change races;
+- concurrent build/publication and partial-publication safety;
+- bounded fallback and recovery/rollback;
+- request-side SQL, external-call, serialization, or object-hydration budget.
+
+Do not import a complex cache topology merely because another application uses
+one. Introduce active/previous generations, read/write Redis roles, leases,
+background precomputation, or last-known-good process memory only when this
+repository has a measured problem and the added failure semantics are covered.
 
 ## 18. ActiveRecord and Ruby performance
 
@@ -965,6 +1171,30 @@ Do not trade one readable bounded query for a speculative query framework.
 Measure or inspect SQL on hot paths, add a focused regression spec when query
 shape is valuable, and fix concrete N+1/hydration problems.
 
+### 18.9 Performance evidence and budgets
+
+Use two different kinds of evidence and label them honestly:
+
+- **Structural evidence** proves bounded behavior independent of deployment:
+  maximum rows/cards/cells, SQL count, external-call count, batch size, payload
+  shape, serialization count, or absence of request-time builders.
+- **Measured evidence** reports timing/resource behavior for one controlled
+  environment and workload: code revision, data shape, warm/cold state,
+  process/thread capacity, concurrency, sample size, p50/p95/p99 or other
+  declared statistics, error count, and the exact measured boundary.
+
+A focused spec can protect a query/call budget, but it does not prove a
+production latency target. A local benchmark can compare alternatives, but it
+must not become an unexplained SLA. When a target matters for rollout, provide
+an environment-appropriate benchmark or operational check and state what it
+does not measure (for example browser rendering versus a Rails endpoint).
+
+Optimize only after locating the expensive boundary. Prefer removing repeated
+work, bounding hydration, or moving justified recomputable work outside the
+request before adding custom SQL, another cache layer, or more infrastructure.
+Record a rollback/re-evaluation condition for operational capacity changes so a
+benchmark result is not reused after its environment materially changes.
+
 ## 19. Safe migrations and backfills
 
 - Use one migration per logical structural responsibility.
@@ -1001,6 +1231,30 @@ Use Rails logs, SQL logs, ActiveSupport notifications, and focused benchmarks
 when justified. Do not build an observability framework for a small pure
 refactor.
 
+Logs, metrics, and status reports should use bounded attributes with clear
+ownership. Include stable correlation ids, event/job type, outcome, counts,
+duration, and error class where useful. Do not emit credentials, cookies,
+tokens, private payloads, raw chat/body content, exception-provider text, or
+unbounded player/context values as metric labels. A status report describes
+current facts; passing status and release approval are separate decisions.
+
+High-risk operator mutations—rollback, orphan-lock release, cache republish,
+failure-history cleanup, or player-state repair—must be exact-target and
+fail-closed:
+
+1. expose a read-only inspection/status path first;
+2. require an explicit stable target and, when races matter, the observed
+   version/fingerprint/owner;
+3. reject ambiguous, changed, active, or partially verified state before any
+   mutation;
+4. mutate atomically or leave state unchanged;
+5. rerun a read-only post-check and report the exact result;
+6. document whether and how the action can be reversed or recovered.
+
+Avoid commands whose success criterion is merely “the warning count became
+zero.” Unknown failures remain evidence to diagnose, not records to delete
+broadly.
+
 ## 21. Testing policy
 
 Follow the normative coverage requirements in `AGENTS.md`. Choose the applicable
@@ -1016,7 +1270,9 @@ layers:
 | View/helper | partial structure, native controls, escaped/semantic output |
 | Stimulus/Turbo interaction | system spec and focused JS behavior where available |
 | Route | routing spec for custom commands and removed legacy endpoints |
-| Job | job spec for delegation, stale state, retry/idempotency |
+| Job/recurring work | job/config spec for delegation, queue/schedule ownership, stale state, retry/idempotency, and bounded reconciliation where applicable |
+| Cache/projection | service/query/request spec for hit/miss/stale/malformed/unavailable state, invalidation, concurrent publication, bounded fallback, and request-side budgets as applicable |
+| Operator/recovery command | task/service spec for read-only status, exact-target rejection, unchanged failure state, successful mutation, and post-check |
 | Seed/config/catalog | idempotency, valid/invalid definitions, stable identities |
 | Asset | existence, dimensions, and rendering contract |
 | Factory | useful active/inactive, ownership, expiry, null, and boundary traits |
@@ -1048,25 +1304,45 @@ Implementation documentation follows `AGENTS.md`:
 1. start at `doc/domains/README.md` and establish the domain's Neverlands
    evidence, normalized design, stable parity ID, and current implementation
    owner;
-2. copy `changelogs/CHANGELOG_TEMPLATE.md` into the current session's one
-   living record with the first material repository edit, or update the
-   session's existing record;
-3. implement behavior and tests while keeping that record current;
-4. run focused verification;
-5. review the stabilized diff against the applicable sections of this guide;
-6. update/create the canonical shipped `doc/features/**` handbook;
-7. run `bin/feature-doc-audit` and, when documentation architecture changed,
+2. implement behavior and applicable tests through the smallest existing
+   Rails/domain owner;
+3. run focused verification while iterating;
+4. review the stabilized diff against the applicable sections of this guide;
+5. update/create the canonical shipped `doc/features/**` handbook only after
+   verified behavior or ownership changed;
+6. run `bin/feature-doc-audit` and, when documentation architecture changed,
    `bin/documentation-architecture-audit`;
-8. run the appropriate completion profile;
-9. finalize the same living session record as required
-   by `AGENTS.md`.
+7. run the proportional completion profile and report exact outcomes.
+
+Git is the default history. Use `changelogs/CHANGELOG_TEMPLATE.md` only when a
+release, rollout, explicit user request, or durable architectural decision
+benefits from a standalone note. It is not workflow state or a verification
+gate.
+
+When one shipped operational workflow crosses several feature owners, update or
+create the responsible `doc/guides/**` runbook as routed by
+`doc/DOCUMENTATION.md`. Keep four concerns distinct:
+
+- **current contract** — authoritative state, owners, invariants, and real
+  runtime topology;
+- **operation/recovery** — exact status, mutation, rollback/recovery, and
+  pre/post-check procedures;
+- **verification evidence** — commands and measurements with their scope and
+  environment;
+- **remaining gaps** — unverified rollout work, missing observations, and
+  known limits.
+
+The runbook links to canonical feature handbooks and code; it does not become a
+second feature contract. If an operational abstraction is intentionally
+removed, update all coupled callers, schedules, status/recovery commands,
+tests, and docs together rather than leaving a half-supported path.
 
 An architecture/documentation migration may register a verified missing
 runtime by copying `doc/features/NOT_IMPLEMENTED_TEMPLATE.md`. The record must
-use exact `NOT_IMPLEMENTED` status, preserve all 18 sections, list only real
-evidence/design paths, and invent no Rails classes, routes, persistence,
-Stimulus/CSS owners, or specs. It is replaced in place only after runtime work
-and applicable checks are green.
+use exact `NOT_IMPLEMENTED` status, follow the lean gap contract, list only
+real evidence/design paths, and invent no Rails classes, routes, persistence,
+Stimulus/CSS owners, or specs. Replace it in place only after runtime work and
+applicable checks are green.
 
 Useful commands:
 
@@ -1169,11 +1445,21 @@ Avoid:
 - arbitrary asset paths/URLs in content records;
 - broad exception rescue that hides partial failures;
 - non-idempotent valuable jobs or commands;
+- treating a successful enqueue or a queue dashboard row as sufficient durable
+  intent when lost work would leave valuable state stale;
+- unbounded recurring reconciliation or a second recovery pipeline with
+  different business rules;
 - broadcasting uncommitted state;
+- caches without an authority/key/invalidation/failure contract, broad cache
+  deletion as normal recovery, or partial publication of a complete read model;
 - N+1 queries in map, inventory, shop, presence, or combat surfaces;
 - hydrating unbounded records before filtering/limiting;
 - `present?`/`length` where an existence/count query is intended;
 - `delete_all`/`update_all` without lifecycle analysis;
+- destructive operator tasks that select broad/ambiguous targets or omit a
+  read-only pre/post check;
+- latency claims without the measured boundary, workload, environment, sample
+  size, percentiles, and error count;
 - speculative dependencies and architecture frameworks;
 - JSON/serializer/API documentation for endpoints that are HTML/Turbo-only;
 - feature handbooks written as plans before implementation is verified;
@@ -1190,12 +1476,19 @@ Before implementation:
 - [ ] Identify the player/runtime contract and existing responsible files.
 - [ ] Classify `[IMPL]`, `[DOC]`, and `[EVIDENCE]` gaps.
 - [ ] Choose the smallest Rails-native owner for the behavior.
+- [ ] Confirm the proposed approach passes section 4.6: SRP/cohesion, practical
+      DI, PORO/KISS, justified services, Rails way, and Hotwire fit when used.
 - [ ] Identify authorization, concurrency, time, randomness, and performance risk.
+- [ ] Identify important deferred-work loss/retry risk, cache authority and
+      invalidation, and operator recovery needs without adding speculative
+      infrastructure.
 - [ ] Map applicable tests and coverage categories.
 
 During implementation:
 
 - [ ] Keep server authority and revalidate mutations.
+- [ ] Keep each object cohesive, make only useful collaborators explicit, and
+      remove abstractions whose only rationale is style or hypothetical reuse.
 - [ ] Keep controllers/views/Stimulus within their boundaries.
 - [ ] Keep frame ids/stream targets single-owned and choose stream operations
       intentionally.
@@ -1208,33 +1501,40 @@ During implementation:
 - [ ] Prevent duplicate/retry/concurrent valuable state changes.
 - [ ] Keep reads bounded and preloading explicit.
 - [ ] Keep jobs retry-safe and broadcasts commit-safe.
+- [ ] For important async work, define durable intent versus queue telemetry,
+      retry/skip/final failure, idempotency, and bounded reconciliation.
+- [ ] For caches/read models, define authority, complete keys/version,
+      miss/stale/failure behavior, publication safety, and targeted recovery.
+- [ ] Keep status/log output bounded and secret-safe; make risky operator
+      mutations exact-target, fail-closed, and post-verified.
 - [ ] Add focused tests as behavior is implemented.
-- [ ] With the first material edit, copy
-      `changelogs/CHANGELOG_TEMPLATE.md` or update the current session's
-      existing living record, then keep it current across follow-up prompts.
 
 Before completion:
 
 - [ ] Run focused specs and read-only lint.
 - [ ] Review the stabilized diff against the applicable sections of this guide
       before the completion verification profile.
+- [ ] Confirm the section 4.6 outcome, including why each service and non-Rails
+      abstraction is justified and any Hotwire exception is needed.
 - [ ] Verify HTML/Turbo response shapes, frame/target wiring, reconnect
       behavior, and fallback at the applicable request/view/system layers.
+- [ ] Separate structural performance budgets from benchmark claims and record
+      workload/environment limits for any measured acceptance result.
 - [ ] Reconcile implementation with Neverlands/design and the feature contract.
 - [ ] Update the canonical feature handbook after checks are green.
 - [ ] Run the focused feature-document audit.
 - [ ] Run the documentation architecture audit when domain/reference/template
       structure or missing-layer records changed.
 - [ ] Run `bin/verify fast` or `bin/verify full` as required.
-- [ ] Finalize the current session's one living `changelogs/**` record after
-      verification; do not create a new record for a follow-up prompt.
 - [ ] Report exact commands, outcomes, documentation status, and discrepancies
       using the `AGENTS.md` final format.
 
 ## 26. Final decision rule
 
-When several Rails designs are valid, choose the one that makes the next
-verified change:
+First reject any approach that fails the applicable section 4.6 criteria,
+Neverlands authority, server-authority/security rules, or persistent-transition
+contract. When several remaining Rails designs are valid, choose the one that
+makes the next verified change:
 
 - easier to find;
 - easier to understand;

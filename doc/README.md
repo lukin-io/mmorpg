@@ -1,103 +1,93 @@
 # Documentation
 
-Documentation is separated by truth type. `doc/design/` owns Neverlands
-evidence and normalized product design; `doc/features/` owns verified local
-implementation handbooks and explicit audited `NOT_IMPLEMENTED` placeholders.
-`doc/DOCUMENTATION.md` is the current architecture and workflow;
-`doc/domains/README.md` is the domain-first navigation map.
+Documentation is separated by truth type:
 
-## Reference-boundary rule
+- `doc/design/reference/**` owns sanitized Neverlands evidence and gaps;
+- `doc/design/**` owns normalized target design and MVP/parity;
+- `doc/features/**` owns verified local runtime handbooks and explicit
+  `NOT_IMPLEMENTED` gaps;
+- `doc/domains/**` provides domain-first navigation;
+- `doc/DOCUMENTATION.md` defines this architecture;
+- `AGENTS.md` defines the automatic engineering workflow;
+- `doc/RUBY_ON_RAILS_GUIDE.md` provides proportional Rails/Hotwire guidance.
 
-Neverlands is the observation and reference source for game design and the
-measurable UI/UX contract. The boundary is between **RPG-domain content** and
-**Neverlands platform identity**:
+Neverlands is the sole game-design authority.
 
-- Reproduce mechanics, formulas, topology, information hierarchy, dimensions,
-  density, spacing, typography, colors, control order, interaction flows, state
-  transitions, and responsive adaptation.
-- Gameplay-domain terminology may be retained when it is an intentional part
-  of the adopted RPG design. This includes stats, skills, abilities, item types
-  and names, actions, combat terms, and other gameplay labels. Generic terms
-  such as `Ability`, `Strength`, `Inventory`, and `Fight Log` are not
-  Neverlands branding.
-- Rewrite descriptive, instructional, status, and flavor copy in this game's
-  language while preserving the observed gameplay meaning. Player-facing text
-  must describe this game and only behavior implemented locally.
-- Do not copy or ship Neverlands platform identity or source-owned presentation
-  content: its product name or logo, administration signatures, account/about/
-  contact/project/service copy, images, sprites, icons, crests, decorative
-  artwork, or prose that is unrelated to the adopted RPG design.
-- Recreate visual primitives with this project's own maintainable CSS and
-  semantic HTML. When the source uses an image only as a control, indicator, or
-  icon, replace it with a suitable styled ASCII/plain-text equivalent that
-  preserves its meaning: for example `X` for close/clear, `>` for a direction,
-  `+`/`-` for adjustment, `R` for refresh, or a short text abbreviation. Do not
-  leave the affordance missing merely because its source bitmap is prohibited.
-- Use project-owned images only for genuine game artwork that cannot be
-  represented clearly as CSS/text. Do not vendor a source stylesheet wholesale
-  when it carries source assets, branding, or obsolete implementation details.
+## Reference boundary
 
-Reference screenshots, source text, and observations may remain under
-`doc/design/reference/` as evidence, but source-owned product content must not
-become runtime assets or platform copy.
+Reproduce the RPG-domain behavior and measurable UI contract, not Neverlands
+platform identity:
 
-Start here:
+- Mechanics, formulas, topology, information hierarchy, dimensions, density,
+  spacing, typography, colors, interaction order, and responsive adaptation may
+  be reproduced.
+- Gameplay terminology may be retained when it is part of the adopted design.
+- Rewrite descriptive/status/flavor copy in this game's language and mention
+  only behavior implemented locally.
+- Do not ship Neverlands product branding, administration/service copy, images,
+  sprites, icons, crests, decorative artwork, credentials, cookies, or tokens.
+- Recreate visual primitives with semantic HTML, project-owned CSS, and clear
+  text controls such as `X`, `>`, `+`, or `-`.
+- Use project-owned images only for genuine artwork that cannot be communicated
+  clearly with CSS/text.
+
+Reference screenshots and source text may remain under
+`doc/design/reference/` as sanitized evidence. They must not become runtime
+assets or platform copy.
+
+## Start here
 
 1. `doc/DOCUMENTATION.md`
 2. `doc/domains/README.md`
-3. the selected domain page under `doc/domains/`
-4. `doc/design/reference/README.md` and the domain source summary
-5. `doc/design/README.md`
-6. `doc/design/gdd.md`
-7. `doc/design/launch_mvp_plan.md`
-8. `doc/design/areas/game_client_layout.md` — UI/AX and domain-SRP style ownership guide
+3. the selected domain page
+4. `doc/design/reference/README.md` and its domain source summary
+5. `doc/design/gdd.md`
+6. `doc/design/launch_mvp_plan.md`
+7. the responsible `doc/features/<feature>.md`
+8. `doc/design/areas/game_client_layout.md` for UI/accessibility/style ownership
+9. relevant `doc/RUBY_ON_RAILS_GUIDE.md` sections for implementation
 
-Verified shipped behavior and implementation ownership live under
-`doc/features/`; explicit missing runtimes use exact `NOT_IMPLEMENTED` status.
-Start with `doc/features/README.md`. For outdoor cells,
-buildings, local actions/resources, and NPC placement, use
-`doc/features/world.md`, especially section 7.4. That section owns the
-seed/config lifecycle and the add/adjust/move/deactivate/remove examples. The
-design documents explain why the pipeline exists; they do not authorize a
-parallel runtime catalog or a second source of cell truth.
+For outdoor cells, buildings, local actions/resources, and NPC placement, use
+`doc/features/world.md` as the runtime owner. Design explains why that pipeline
+exists; it does not authorize a parallel runtime catalog.
 
-## Templates and architecture checks
+## Templates and audits
 
-- `doc/templates/README.md` routes new observations, source summaries, domain
-  indexes, and design gaps to their canonical templates.
-- `doc/features/FEATURE_TEMPLATE.md` is for verified shipped behavior.
+- `doc/templates/README.md` chooses observation, source-summary, domain, and
+  design-gap templates.
+- `doc/features/FEATURE_TEMPLATE.md` is the lean eight-section `feature-v3`
+  contract for newly written shipped handbooks.
 - `doc/features/NOT_IMPLEMENTED_TEMPLATE.md` records a known missing runtime
-  without inventing routes, classes, or specs.
-- `doc/DOCUMENTATION_MIGRATION_MANIFEST.md` accounts for every one of the 43
-  baseline documentation files.
-- `bin/documentation-architecture-audit` checks layer and domain coverage;
-  `bin/feature-doc-audit` checks implementation handbooks.
+  without inventing implementation.
+- `bin/documentation-architecture-audit` checks domain ownership, canonical
+  paths, aliases, and evidence/design placeholders.
+- `bin/feature-doc-audit` checks feature metadata, new-template structure,
+  placeholders, duplicate titles, responsible paths, and false gap claims.
+- `bin/verify docs` runs both audits.
+
+Existing `feature-v1`/`feature-v2` handbooks remain valid until a material
+rewrite makes migration useful. Audits do not enforce README prose, a fixed file
+inventory, workflow receipts, or universal acceptance matrices.
+
+`doc/DOCUMENTATION_MIGRATION_MANIFEST.md` is historical migration context, not a
+permanent document-count gate.
 
 ## Operational and extension guides
 
-- `doc/guides/managing_game_content.md` — self-contained guide to the
-  admin-only `/manage` surface: current entities, safe create/edit/deactivate/
-  delete workflows, seed/runtime ownership, audit and failure behavior, and
-  the conventional extension pattern for future player, item-template,
-  inventory-grant, and other database-backed management resources.
+`doc/guides/managing_game_content.md` documents the admin-only `/manage`
+surface, content lifecycle, audit/failure behavior, and conventional extension
+path for future database-backed management resources.
 
-Guides explain procedures across feature boundaries. They link back to the
-canonical `doc/features/**` owners and do not replace feature contracts,
-Neverlands evidence, or design approval.
+Guides explain real procedures across feature owners. They link canonical
+handbooks and do not replace feature contracts, Neverlands evidence, or design
+approval. Async/cache/recovery guidance remains proportional to implemented
+need; another project's API, queue, Redis, or deployment topology is reference
+material only.
 
 ## Neverlands source entry point
 
-- [Neverlands Wiki main page](http://wiki.neverlands.ru/wiki/%D0%97%D0%B0%D0%B3%D0%BB%D0%B0%D0%B2%D0%BD%D0%B0%D1%8F_%D1%81%D1%82%D1%80%D0%B0%D0%BD%D0%B8%D1%86%D0%B0) — primary index for historical Neverlands mechanics, locations, buildings, character development, professions, and other source material. Use plain HTTP because the legacy Wiki is not reliably accessible over HTTPS.
+- [Neverlands Wiki main page](http://wiki.neverlands.ru/wiki/%D0%97%D0%B0%D0%B3%D0%BB%D0%B0%D0%B2%D0%BD%D0%B0%D1%8F_%D1%81%D1%82%D1%80%D0%B0%D0%BD%D0%B8%D1%86%D0%B0) — historical source index. Plain HTTP is used because the legacy Wiki is not reliably available over HTTPS.
 
-Non-Neverlands design notes are legacy unless their still-valid rule has been
-promoted into `doc/design/features/*`, `doc/design/areas/*`, or
-`doc/design/gdd.md`.
-
-Do not store live credentials, cookies, session tokens, or volatile action
-tokens in tracked documentation. Live observations belong in
-`doc/design/reference/`; reusable mechanics belong in feature and area docs.
-
-Latest Neverlands inventory/item capture, including adjacent inventory-family
-and item-action behavior:
-
-- `doc/design/reference/inventory/observations/2026-06-01_inventory_items_and_shop_rows.md`
+Non-Neverlands notes are legacy unless their still-valid rule has been promoted
+into normalized design. Never store live credentials, cookies, session tokens,
+or volatile action tokens in tracked documentation.

@@ -4,9 +4,10 @@
 - Date: 2026-08-23
 - Branch: `chore/event_logs`
 - Baseline: `85c307f` (`main`)
+- Last updated: 2026-08-26
 - Session status: Complete
 - Review authority: `doc/RUBY_ON_RAILS_GUIDE.md`
-- Changelog lifecycle: one living record for this complete Codex session
+- Record role: optional historical change note; not workflow state
 
 ## Outcome
 
@@ -25,6 +26,43 @@ user, the `money_found` constraint migration must state its forward-only
 rollback contract, and Arena match-start delivery must accurately document and
 test its room-scoped live-update plus persisted-state reconciliation behavior.
 The requested PR title/body work was explicitly excluded and remains untouched.
+
+The current documentation-only follow-up makes SRP/cohesion, practical
+dependency injection, PORO/KISS, justified service objects, Rails-native
+boundaries, and applicable Hotwire practices explicit acceptance criteria for
+every implementation approach. It changes engineering guidance only; no
+Neverlands mechanic, player behavior, runtime code, schema, or dependency is
+changed.
+
+An earlier approved process-tooling follow-up implemented `AGENTS.md` as an
+automatic Standard Implementation Run entry point. It assigned stable
+technical-profile identities in the Rails guide, added a stateful and auditable
+session receipt, and enforced that receipt against the actual Git diff through
+focused tooling, `bin/verify`, and CI. Final review found and fixed a
+receipt-only validation edge; its focused checks and the post-correction full
+profile are green. One transient Chrome inspector failure and its clean exact/
+full reruns remain recorded below. API toolkit files supplied by the user are
+reference inputs only; API-specific serialization, Swagger, endpoint,
+filtering, and pagination rules were not imported. The later approved
+simplification in this record removes that receipt/profile machinery while
+retaining the useful correctness guidance and executable checks.
+
+The current documentation and process follow-up adds a
+self-contained root README entry point for the agentic workflow, keeps
+documentation ownership explicit, and evaluates API-project reference material
+for only broadly applicable Rails lessons: preserve contracts before changing
+them, make asynchronous side effects recoverable, distinguish measured
+performance from structural assertions, and make operator mutations guarded
+and observable. API-specific endpoints, serializers, queue products,
+deployment commands, and cache topology remain outside this repository.
+
+The current approved simplification follow-up keeps the
+Neverlands authority model, server-authoritative gameplay invariants, risk-based
+Rails/Hotwire guidance, applicable tests, read-only verification, CI, and lean
+documentation ownership. It removes the machine-readable implementation
+receipt/profile lifecycle, mandatory conversation changelogs, exact README
+wording gates, and universal 18-section acceptance matrices whose maintenance
+cost exceeded their pre-launch value. No gameplay behavior is being changed.
 
 ## Authority and reference boundary
 
@@ -69,7 +107,61 @@ The requested PR title/body work was explicitly excluded and remains untouched.
 - Arena match-created broadcasts are room-scoped presentation signals and are
   registered with `after_all_transactions_commit`; persisted match state is
   the reconciliation authority for participants waiting elsewhere.
+- The Rails guide now treats SRP/DI/PORO/KISS and service-object justification
+  as one proportional decision rubric rather than class-count targets. It
+  explicitly rejects one-method-class dogma, DI containers, service-object
+  wrappers, and speculative abstraction.
+- Hotwire receives the same rubric through an HTML-first acceptance gate for
+  stable fragment ownership, cohesive Stimulus behavior, server authority,
+  after-commit/reconnect-safe realtime delivery, accessibility, and layered
+  coverage.
+- `AGENTS.md` now orchestrates a concise automatic workflow from orientation
+  through focused checks, risk-based Rails-guide review, documentation
+  alignment, proportional verification, and handoff. Planning-first approval
+  joins implementation without repeating the gate.
+- The dedicated implementation-receipt audit was removed because it validated
+  declared metadata about tests rather than test behavior and coupled ordinary
+  work to Git-diff inference and lifecycle edits.
+- New feature handbooks use the eight-section `feature-v3` contract. Existing
+  shipped `feature-v1`/`feature-v2` handbooks remain valid, while the three
+  known missing runtimes now use concise `feature-gap-v2` records.
+- The root `README.md` is now a self-contained engineering portal: authority
+  routing, owner/tool map, automatic flow, commands, examples, documentation
+  synchronization, and proportional verification are readable without prior
+  session context.
+- The larger API references contributed only proportional Rails lessons. The
+  guide now distinguishes durable async intent from queue telemetry, gives
+  caches/read models an explicit correctness contract, separates structural
+  budgets from benchmark evidence, and makes risky operator recovery
+  exact-target and fail-closed. API schemas, serializers, polling contracts,
+  Solid Queue, Redis generations, Kubernetes sizing, and AI-specific state were
+  intentionally not imported.
+- Cache/read-model and operational-recovery concerns remain proportional
+  review prompts in the Rails guide; no profile declaration or filename-based
+  inference is required.
+- The documentation-architecture audit now validates objective domain
+  ownership, canonical links/paths, aliases, and placeholders without
+  protecting exact root README wording.
 - New dependencies: none.
+
+## Agentic workflow simplification
+
+- Removed the YAML implementation receipt, lifecycle states, changed-file
+  surface/profile inference, dedicated audit executable/library/spec, and CI
+  history gate.
+- `bin/verify` now runs actual lint, tests, security, and documentation checks
+  directly; no metadata edit is needed before verification.
+- Changelogs are optional release/change/architecture notes rather than one
+  mandatory record per conversation.
+- New shipped handbooks use an eight-section `feature-v3` contract. The three
+  known missing systems use concise `feature-gap-v2` records. Legacy shipped
+  handbooks remain valid until a material rewrite is useful.
+- Rails/Hotwire technical concerns remain risk-based review prompts rather
+  than machine-inferred profile IDs.
+- The objective audits keep domain ownership, links/paths, placeholders,
+  duplicate feature titles, and false missing-runtime claims in scope.
+- No gameplay runtime, schema, content, or Neverlands behavior changed in this
+  simplification.
 
 ## Player/runtime behavior
 
@@ -151,6 +243,15 @@ The requested PR title/body work was explicitly excluded and remains untouched.
   transaction commits; a rollback produces neither a match nor a live signal.
 - Devise destroy is handled explicitly with an HTTP 303 back to account edit,
   keeping the current authenticated account intact.
+- This follow-up changes no Rails or Hotwire runtime. It adds review criteria,
+  practical constructor/method injection guidance, service justification, and
+  official-framework-aligned Hotwire decision rules to the technical guide.
+- Process enforcement is now the real read-only verification stack: focused
+  RSpec/lint while iterating, `bin/verify` completion profiles, objective
+  documentation audits, and independent CI jobs. It does not infer semantic
+  quality from filenames or require mutable workflow metadata.
+- Git remains history. Existing changelogs are retained as historical records;
+  new notes are optional and never verification prerequisites.
 
 ## Pre-final Rails-guide review
 
@@ -171,6 +272,47 @@ deletion explicitly, marked the immutable type migration irreversible, and
 moved Arena room signals to the outermost after-commit boundary after a
 rollback-focused review exposed that presentation side effect inside the
 transaction.
+
+The documentation-only diff was reviewed against `AGENTS.md` and the guide's
+authority, boundary-selection, dependency-direction, Hotwire, service-object,
+refactoring, anti-pattern, and implementation-checklist sections. The review
+found that one DI example could encourage injecting Pundit policy objects into
+domain workflows; it was narrowed to calculators/catalogs, and the final
+decision rule now rejects approaches that fail the acceptance rubric before
+comparing otherwise valid alternatives. No runtime or gameplay correction was
+needed. Final link validation also caught and corrected the initial obsolete
+Stimulus lifecycle-reference path.
+
+The process-tooling diff was reviewed against the new `ARCH-RAILS-WAY`,
+`ARCH-SRP`, `ARCH-DI`, `ARCH-PORO-KISS`, `TEST-COVERAGE`, and `DOC-ALIGNMENT`
+profiles. Concrete findings were resolved by adding automatic committed-branch
+base discovery, preserving legacy changelog truth instead of requiring
+retrofitted receipts, rejecting path traversal in declared spec paths, tying
+`ready`/`complete` states to check outcomes even during progress audits, and
+versioning feature traceability so existing handbooks remain compatible. The
+result stays two cohesive POROs plus thin executable wrappers; a plugin system,
+DI container, command bus, and API-specific contract machinery were not
+justified.
+
+The first final audit also exposed that a future commit changing only the
+living receipt could skip validation after all material paths had already been
+committed. The auditor now validates receipt-only diffs, allows an unchanged
+pre-rollout record to remain truthful when a current receipt exists, and rejects
+deletion of dated session history. Three focused lifecycle examples protect the
+correction; completion verification was deliberately made pending again before
+the code changed.
+
+The onboarding/reliability follow-up was reviewed against
+`ARCH-RAILS-WAY`, `ARCH-SRP`, `ARCH-DI`, `ARCH-PORO-KISS`, `JOB-COMMIT`,
+`CACHE-CORRECTNESS`, `OPS-RECOVERY`, `QUERY-BOUNDED`, `TEST-COVERAGE`, and
+`DOC-ALIGNMENT`. The main proportionality finding was that ordinary
+`app/jobs/**` and Action Cable changes should not automatically imply an
+operator runbook/recovery layer. The executable mapping now keeps them on
+`JOB-COMMIT`; recurring configuration, operator tasks, and operational guides
+select `OPS-RECOVERY`, while semantic risk can still add it manually. Focused
+coverage protects that distinction. The root documentation portal is enforced
+through the existing documentation audit rather than a parallel checker, and
+no runtime cache/job/recovery framework or dependency was introduced.
 
 ## Documentation updated
 
@@ -202,6 +344,25 @@ transaction.
 - `doc/UI.md` remains intentionally unchanged as a historical compatibility
   record under the documentation migration manifest; its canonical links route
   readers to the updated owners.
+- `doc/RUBY_ON_RAILS_GUIDE.md` now defines the requested implementation-approach
+  criteria, practical DI without a container, a service-object justification
+  test, a Hotwire acceptance gate, and corresponding implementation checklist
+  items. No gameplay handbook applies because runtime behavior and feature
+  ownership did not change.
+- `AGENTS.md`, `doc/DOCUMENTATION.md`, and `doc/README.md` now describe the
+  lean automatic workflow, risk-based review, proportional local verification,
+  independent CI, and documentation ownership without moving game-design
+  authority.
+- The root `README.md` now provides the complete new-engineer entry point and
+  usage examples. `AGENTS.md`, `doc/RUBY_ON_RAILS_GUIDE.md`,
+  `doc/DOCUMENTATION.md`, and `doc/README.md` align on the new async/cache/
+  performance/operations acceptance boundary and explicitly reject importing
+  the API reference project's product-specific architecture.
+- `changelogs/CHANGELOG_TEMPLATE.md` is now an optional concise release/change/
+  architecture note with no lifecycle state.
+- `doc/features/FEATURE_TEMPLATE.md` and `doc/features/README.md` introduce the
+  eight-section `feature-v3` contract; acceptance-to-spec matrices are optional
+  for high-risk or cross-cutting gameplay.
 
 ## Implementation and responsible paths
 
@@ -219,6 +380,13 @@ transaction.
 | Tests | GameEvent factory/model/query/publisher/broadcaster/view specs plus typed loot, wallet, Chat/Arena/Inventory/layout/system integration coverage |
 | Documentation | Social observation plus Shell/Social/Combat/NPC/Inventory/Economy/Character summaries, designs, domains, indexes, launch plan, Rails guide, and reciprocal handbooks |
 | Documentation contract routing | `doc/DOCUMENTATION.md`, `doc/RUBY_ON_RAILS_GUIDE.md`, `doc/design/README.md`, `doc/guides/managing_game_content.md`, `doc/templates/README.md` |
+| Engineering-approach criteria follow-up | `doc/RUBY_ON_RAILS_GUIDE.md` |
+| Agentic workflow onboarding | `README.md`, `doc/DOCUMENTATION.md`, `doc/README.md` |
+| Async/cache/operations review guidance | `AGENTS.md`, `doc/RUBY_ON_RAILS_GUIDE.md` |
+| Optional change-note policy | `AGENTS.md`, `changelogs/CHANGELOG_TEMPLATE.md` |
+| Read-only local and CI verification | `bin/verify`, `.github/workflows/ci.yml`, `spec/scripts/verify_script_spec.rb`, `spec/scripts/ci_workflow_spec.rb` |
+| Objective documentation audits | `lib/documentation_architecture_audit.rb`, `lib/feature_doc_audit.rb`, corresponding `spec/lib/**` coverage |
+| Lean feature contracts | `doc/features/FEATURE_TEMPLATE.md`, `doc/features/NOT_IMPLEMENTED_TEMPLATE.md`, `doc/features/README.md`, `lib/feature_doc_audit.rb`, `spec/lib/feature_doc_audit_spec.rb` |
 | Security verification remediation | `Gemfile.lock` conservatively updates `json` 2.21.1 → 2.21.2 and `mail` 2.9.0 → 2.9.1 |
 
 ## Verification evidence
@@ -298,6 +466,104 @@ transaction.
   60 documentation-architecture records passed.
 - Final changelog-only handoff revalidation: the exact four-handbook audit and
   the 60-document architecture audit exited 0; `git diff --check` exited 0.
+- Guide-criteria follow-up `bin/verify docs`: exit 0; all 10 feature handbooks
+  and all 60 documentation-architecture records passed. The five warnings are
+  the existing intentional transitional/`NOT_IMPLEMENTED` statuses.
+- Guide-criteria follow-up `bin/verify fast`: exit 0 — RuboCop inspected 417
+  files with 0 offenses; non-system RSpec completed 1,653 examples with 0
+  failures; all 10 feature handbooks and all 60 documentation-architecture
+  records passed. RSpec emitted the existing Rack
+  `:unprocessable_entity` deprecation warnings.
+- Final guide/changelog-only revalidation: all three official Hotwire links
+  returned HTTP 200; post-correction `bin/verify docs` exited 0 with all 10
+  feature handbooks and all 60 documentation-architecture records passing;
+  final `git diff --check` exited 0.
+- Standard Implementation Run focused RSpec: exit 0, 44 examples, 0 failures,
+  covering changed-file/base inference, receipt state/coverage/profile
+  failures, receipt-only finalization/deletion, legacy-record compatibility,
+  feature-v2 traceability, `bin/verify` integration, and CI wiring.
+- Standard Implementation Run focused RuboCop: exit 0, 7 files inspected, 0
+  offenses. Ruby syntax checks for both audit libraries and the executable plus
+  Bash syntax for `bin/verify` exited 0.
+- Process documentation check: `bin/verify docs` exited 0; all 10 feature
+  handbooks and all 60 documentation-architecture records passed with the five
+  existing intentional non-green status warnings.
+- `bin/implementation-run-audit --phase progress`: exit 0; 117 changed paths,
+  one receipt, automatic base `85c307f`, and 11 inferred surfaces were covered.
+- Standard Implementation Run pre-completion audit: exit 0; the `ready`
+  receipt covered the same 117 paths, one receipt, automatic base, and 11
+  inferred surfaces before the completion suite started.
+- First process-tooling `bin/verify full`: exit 0 — implementation receipt gate
+  passed; RuboCop inspected 420 files with 0 offenses; non-system RSpec
+  completed 1,678 examples with 0 failures; system RSpec completed 206 examples
+  with 0 failures and the same 4 pre-existing pending cases; Brakeman reported
+  0 warnings; Bundler Audit and Importmap Audit found no vulnerabilities; all
+  10 feature handbooks and all 60 documentation-architecture records passed.
+  The later receipt-only audit correction intentionally made this result stale
+  as final completion evidence.
+- First post-correction `bin/verify full` attempt: exit 1 — receipt gate and
+  RuboCop passed (420 files, 0 offenses), and non-system RSpec passed (1,681
+  examples, 0 failures). System RSpec reached 206 examples with 1 failure and 4
+  pre-existing pending cases; Chrome/Selenium returned the transient inspector
+  error `Node with given id does not belong to the document` in
+  `spec/system/city_navigation_spec.rb:70`. Security and documentation stages
+  did not run after the system-stage failure. The exact example rerun exited 0
+  with 1 example and 0 failures, confirming the driver flake; the full profile
+  rerun remains pending.
+- Pre-correction final implementation-run audits with automatic base and explicit
+  `--base 85c307f`: both exited 0, covering 117 changed paths, one complete
+  receipt, and 11 inferred surfaces. CI workflow YAML parsed successfully.
+- Pre-correction `git diff --check`: exit 0.
+- Successful post-correction `bin/verify full` rerun: exit 0 — implementation
+  receipt gate passed; RuboCop inspected 420 files with 0 offenses; non-system
+  RSpec completed 1,681 examples with 0 failures; system RSpec completed 206
+  examples with 0 failures and the same 4 pre-existing pending cases; Brakeman
+  reported 0 warnings; Bundler Audit and Importmap Audit found no
+  vulnerabilities; all 10 feature handbooks and all 60 documentation-
+  architecture records passed.
+- Post-correction final implementation-run audits with automatic base and
+  explicit `--base 85c307f`: both exited 0 over 117 paths, one complete
+  receipt, and 11 inferred surfaces. CI workflow YAML syntax and
+  `git diff --check` both passed.
+- Agentic-onboarding/reliability focused RSpec: exit 0, 30 examples, 0
+  failures. It covers the root portal contract plus cache, recurring-work,
+  ordinary-job proportionality, and operational-guide surface/profile
+  inference.
+- Agentic-onboarding/reliability focused RuboCop: exit 0, 4 files inspected, 0
+  offenses. Ruby syntax for both audit libraries/the executable, Bash syntax
+  for `bin/verify`, CI YAML parsing, and `git diff --check` also passed.
+- Follow-up progress audit: exit 0 over 120 changed paths, one receipt,
+  automatic base `85c307f`, and 12 inferred surfaces including the new
+  `operations` surface.
+- Follow-up `bin/verify docs`: exit 0; all 10 feature handbooks and all 61
+  documentation-architecture records passed. The same five intentional
+  non-green handbook warnings remain.
+- Final agentic-onboarding/reliability `bin/verify full`: exit 0 — the
+  pre-completion receipt gate covered 120 paths and 12 surfaces; RuboCop
+  inspected 420 files with 0 offenses; non-system RSpec completed 1,686
+  examples with 0 failures; system RSpec completed 206 examples with 0
+  failures and the same 4 pre-existing pending cases; Brakeman reported 0
+  warnings; Bundler Audit and Importmap Audit found no vulnerabilities; all 10
+  feature handbooks and all 61 documentation-architecture records passed.
+- Final implementation-run audits with automatic base and explicit
+  `--base 85c307f0e6a2e06bfd7b1e2d5390519d4416fc43`: both exited 0 over the
+  same 120 paths, one complete receipt, and 12 inferred surfaces. CI workflow
+  YAML parsing and `git diff --check` also exited 0.
+
+### 2026-08-26 workflow simplification verification
+
+- Focused process/audit RSpec: exit 0, 28 examples, 0 failures.
+- Focused read-only RuboCop: exit 0, 6 files inspected, 0 offenses.
+- `bin/verify docs`: exit 0; 10 feature documents and 58 documentation
+  architecture documents passed. The two warnings are intentional
+  `Partially Implemented` statuses for Game Shell and Shop/Economy.
+- Ruby syntax for both audit libraries, Bash syntax for `bin/verify`, CI YAML
+  parsing, and `git diff --check` passed before completion verification.
+- Final `bin/verify full`: exit 0 — RuboCop inspected 418 files with 0
+  offenses; non-system RSpec completed 1,660 examples with 0 failures; system
+  RSpec completed 206 examples with 0 failures and the same 4 pre-existing
+  pending cases; Brakeman reported 0 warnings; Bundler Audit and Importmap
+  Audit found no vulnerabilities; both documentation audits passed.
 
 ## Explicit remaining gaps and operational cautions
 
@@ -317,5 +583,16 @@ transaction.
   `money_found` allowlist migration intentionally cannot migrate down because
   retained immutable rows would violate the previous constraint; no historical
   event backfill, authored money drop, or world-announcement seed is required.
+- `[IMPL]`/`[DOC]`: no new discrepancy is introduced by the guide/process
+  follow-ups; no gameplay handbook or Neverlands runtime change applies.
+- API-project reference review: no API envelope, serializer/rswag rule, polling
+  lifecycle, Solid Queue dependency, Redis-generation topology, Kubernetes
+  capacity profile, or AI-specific durable model was adopted. Future runtime
+  work must still justify `CACHE-CORRECTNESS`/`OPS-RECOVERY` mechanisms against
+  a concrete RPG requirement and measured risk.
+- Process rollout: the receipt/profile experiment is superseded by the lean
+  workflow. CI independently repeats documentation, security, lint,
+  non-system, and system-test jobs without requiring Git-history inference or
+  mutable changelog state.
 - The four system pending examples reported by the full profile predate and are
   outside this feature; no required check is skipped or failing.

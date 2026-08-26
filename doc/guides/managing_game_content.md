@@ -538,8 +538,9 @@ reflection-based generic model editor.
 10. **Add coverage.** At minimum add policy/authorization, routing, request CRUD
     or command behavior, invalid/dependency failure, audit behavior, and a
     responsive system path. Add service/concurrency tests for valuable state.
-11. **Update documentation.** Update the owning feature handbook, this route
-    table/instructions, and the session's one living changelog.
+11. **Update documentation.** Update the owning feature handbook and this route
+    table/instructions. Add a change note only for a justified release,
+    rollout, explicit request, or durable architecture decision.
 12. **Review and verify.** Apply `doc/RUBY_ON_RAILS_GUIDE.md`, run focused
     checks, the handbook audit, and the appropriate `bin/verify` profile.
 
