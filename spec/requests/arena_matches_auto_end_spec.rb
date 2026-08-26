@@ -22,6 +22,14 @@ RSpec.describe "ArenaMatches Auto-End on View", type: :request do
 
   let!(:participation1) { create(:arena_participation, arena_match: match, character: character1, user: user1, team: "a") }
   let!(:participation2) { create(:arena_participation, arena_match: match, character: character2, user: user2, team: "b") }
+  let(:turn_params) do
+    {
+      action_type: "turn",
+      target_id: character2.id,
+      attacks: [{action_key: "simple", body_part: "torso"}],
+      blocks: [{action_key: "torso_block", body_parts: ["torso"]}]
+    }
+  end
 
   before do
     create(:character_position, character: character1)
@@ -166,19 +174,12 @@ RSpec.describe "ArenaMatches Auto-End on View", type: :request do
   describe "POST /arena_matches/:id/action" do
     context "when match is normal" do
       it "processes the action and redirects" do
-        post action_arena_match_path(match), params: {
-          action_type: "attack",
-          body_part: "torso",
-          attack_type: "simple"
-        }
+        post action_arena_match_path(match), params: turn_params
         expect(response).to have_http_status(:redirect)
       end
 
       it "keeps match in live status after action" do
-        post action_arena_match_path(match), params: {
-          action_type: "attack",
-          body_part: "torso"
-        }
+        post action_arena_match_path(match), params: turn_params
         expect(match.reload.status).to eq("live")
       end
     end
@@ -191,17 +192,12 @@ RSpec.describe "ArenaMatches Auto-End on View", type: :request do
       it "still processes the action (auto-end happens on show)" do
         # Note: Auto-end check happens on GET show, not on POST action
         # This tests that actions are still processed even when opponent is down
-        post action_arena_match_path(match), params: {
-          action_type: "attack",
-          body_part: "torso"
-        }
+        post action_arena_match_path(match), params: turn_params
         expect(response).to redirect_to(arena_match_path(match))
       end
 
       it "match ends when show is called afterwards" do
-        post action_arena_match_path(match), params: {
-          action_type: "attack"
-        }
+        post action_arena_match_path(match), params: turn_params
         # Now the redirect to show will trigger auto-end
         get arena_match_path(match)
         expect(match.reload.status).to eq("completed")
@@ -211,9 +207,7 @@ RSpec.describe "ArenaMatches Auto-End on View", type: :request do
     context "when match is stale (timed out)" do
       it "still processes action but show auto-ends afterwards" do
         travel_to(match.started_at + 15.minutes) do
-          post action_arena_match_path(match), params: {
-            action_type: "attack"
-          }
+          post action_arena_match_path(match), params: turn_params
           # Action redirects to show which triggers auto-end
           get arena_match_path(match)
           expect(match.reload.status).to eq("completed")

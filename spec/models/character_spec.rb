@@ -147,27 +147,30 @@ RSpec.describe Character, type: :model do
   end
 
   describe "#max_action_points" do
-    let(:character) { create(:character, level: 10) }
+    let(:character) { create(:character, level: 4) }
 
-    it "calculates AP based on level and dexterity" do
-      # Formula: 50 (base) + (level * 3) + (dexterity * 2)
-      # = 50 + (10 * 3) + (1 * 2)
-      expect(character.max_action_points).to eq(82)
+    it "uses the captured 80 AP base through level 4" do
+      expect(character.max_action_points).to eq(80)
     end
 
-    it "increases AP with higher level" do
-      character.update!(level: 20)
-      expect(character.max_action_points).to eq(112)
+    it "adds the captured ten-point level bonuses at levels 5 and 10" do
+      character.update!(level: 5)
+      expect(character.max_action_points).to eq(90)
+
+      character.update!(level: 10)
+      expect(character.max_action_points).to eq(100)
     end
 
-    it "increases AP with allocated dexterity" do
-      character.update!(allocated_stats: {"dexterity" => 5})
-      expect(character.max_action_points).to eq(92)
+    it "adds effective Extra Action Points one-for-one" do
+      character.update!(level: 6, passive_skills: {"extra_action_points" => 50})
+
+      expect(character.max_action_points).to eq(140)
     end
 
-    it "returns appropriate AP for level 1 character" do
-      low_char = create(:character, level: 1)
-      expect(low_char.max_action_points).to eq(55)
+    it "does not derive AP from dexterity" do
+      character.update!(allocated_stats: {"dexterity" => 50})
+
+      expect(character.max_action_points).to eq(80)
     end
   end
 

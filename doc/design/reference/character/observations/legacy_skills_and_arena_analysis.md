@@ -14,7 +14,7 @@ Status: historical Neverlands reference. Canonical progression design lives in
 
 ---
 
-## Wiki Character-Development Audit (2026-07-27)
+## Wiki Character-Development Audit (2026-08-26)
 
 The plain-HTTP Neverlands wiki category
 [`Развитие персонажа`](http://wiki.neverlands.ru/wiki/Категория:Развитие_персонажа)
@@ -38,18 +38,21 @@ need an isolated capture:
 | [`Масса`](http://wiki.neverlands.ru/wiki/Масса) | The published carried-mass formula is `Strength × 5 + Health × 10 + level × 10`. | Use the effective stat result for inventory, loot, transfer, and shop capacity checks. |
 | [`Навык`](http://wiki.neverlands.ru/wiki/Навык), [`Умение`](http://wiki.neverlands.ru/wiki/Умение), [`Боевые умения`](http://wiki.neverlands.ru/wiki/Боевые_умения), [`Мирные умения`](http://wiki.neverlands.ru/wiki/Мирные_умения) | Binary perks and `0..100` numeric skills are separate; combat and peace skill pools remain separate. | Retain the captured registries, tiered spend rates, and separate locked allocation services. |
 | [`Больше силы`](http://wiki.neverlands.ru/wiki/Больше_силы) | The perk adds one Strength for every two character levels, rounded down. | The already selectable `more_strength` perk now contributes `floor(level / 2)` effective Strength. |
-| [`Очки Действия`](http://wiki.neverlands.ru/wiki/Очки_Действия) | AP grows with level and Extra Action Points; weapon mastery can reduce matching attack cost and increase matching damage. | Direction is source-backed, but exact formulas remain `[EVIDENCE]`; do not wire skill-label guesses into the combat profile. |
+| [`Очки Действия`](http://wiki.neverlands.ru/wiki/Очки_Действия), [`Уровень`](http://wiki.neverlands.ru/wiki/Уровень) | Base AP is `80`; level `5` and level `10` each add `10`; every effective Extra Action Points point adds one AP. The preserved level-6 profile with Extra AP `50` produced `140`, confirming `80 + 10 + 50`. Weapon mastery reduces matching attack AP and raises matching damage, but no coefficient is published. | Derive AP as `80 + level-threshold bonuses + effective Extra Action Points`; preserve explicit per-fight profile overrides. Keep weapon-mastery cost/damage coefficients `[EVIDENCE]`. |
 | [`Усталость`](http://wiki.neverlands.ru/wiki/Усталость) | Wilderness travel adds `1..2`; one point recovers every three minutes; at `86%` Move, Look, and Enter are unavailable. The combat penalty is described without a complete formula. | Persist retry-safe per-move gain and time-derived recovery; gate only the named outdoor actions. Do not invent a combat penalty. |
 | [`Критический удар`](http://wiki.neverlands.ru/wiki/Критический_удар) | A critical hit doubles resolved damage. | Use a `2.0` critical multiplier in the shared combat resolver. |
-| [`Поломка вещей`](http://wiki.neverlands.ru/wiki/Поломка_вещей) | Each equipped durable item can lose at most one point per fight. Arena victory/draw use `0%`, arena defeat `1%`; other fight victory/draw/defeat use `2%/30%/50%`. | Resolve wear once at shared fight finalization and reject zero-durability shop sales. Repair flow and the Careful Fighter prerequisite/effect remain separate capture work. |
+| [`Поломка вещей`](http://wiki.neverlands.ru/wiki/Поломка_вещей), [`Навык`](http://wiki.neverlands.ru/wiki/Навык) | Each equipped durable item can lose at most one point per fight. Arena victory/draw use `0%`, arena defeat `1%`; other fight victory/draw/defeat use `2%/30%/50%`. Source perk ID `15`, `Аккуратный боец`, halves that chance. | Resolve independent basis-point wear rolls once at shared fight finalization; expose Careful Fighter as a binary perk and reject zero-durability shop sales. |
 | [`Дроп`](http://wiki.neverlands.ru/wiki/Дроп), [`Наблюдательность`](http://wiki.neverlands.ru/wiki/Наблюдательность) | Observation strongly affects drop and multi-drop probability, with a nonlinear post-2013 relationship. | Existing explicit loot tables remain; the observation modifier is `[EVIDENCE]` until its exact curve is captured. |
+| [`Травма`](http://wiki.neverlands.ru/wiki/Травма) | Light, medium, heavy, and combat injuries are distinct. Heavy injury blocks movement; combat injury blocks movement and inventory. Combat-trauma fights guarantee a 24-hour combat injury, repeated combat injuries add six hours, and a timeout loss always gives a heavy injury; ordinary probabilities/durations are not published. | Keep ordinary injury resolution `[EVIDENCE]`. Do not map the current percentage/risk field to an injury without a captured correspondence; a later injury owner must enforce the named movement/inventory gates. |
+| [`Ремонт`](http://wiki.neverlands.ru/wiki/Ремонт) | Repair is a workshop/profession transaction, not an inventory reset: skill gate is item level × `30`; up to three listed items use repair kits/materials; ordinary Shop/bot items lose `10%` maximum durability after repair while rare/seasonal items do not; owner retrieval and direct repairer handoff are separate states. | Preserve durability and keep one-click repair absent. Implement the workshop/profession transaction only after one authenticated end-to-end flow establishes request, payment/material, failure, retrieval, and concurrency behavior. |
 | [`Пробой брони`](http://wiki.neverlands.ru/wiki/Пробой_брони), [`Сопротивления`](http://wiki.neverlands.ru/wiki/Сопротивления), [`Урон`](http://wiki.neverlands.ru/wiki/Урон), [`Модификатор`](http://wiki.neverlands.ru/wiki/Модификатор), [`Класс Брони`](http://wiki.neverlands.ru/wiki/Класс_Брони) | These are distinct combat outputs affected by stats, items, skills, and effects. | Keep separate fields and combat-profile outputs. Exact coefficient changes remain combat evidence work. |
 | [`Самолечение`](http://wiki.neverlands.ru/wiki/Самолечение), [`Быстрое восстановление маны`](http://wiki.neverlands.ru/wiki/Быстрое_восстановление_маны) | The skills improve recovery, but the audited pages do not provide a safe complete local formula. | Keep the numeric skills allocatable and mechanically inert until the timing/multiplier formulas are captured. |
 | [`Профессия`](http://wiki.neverlands.ru/wiki/Профессия) | Profession perks gate matching activities and profession counters grow through use. | Treat professions as a separate design owner; one gathering loop is an MVP candidate only after tools, timer, rewards, and counter growth are captured. |
 
 This audit supports implementation only where the table above gives an exact
-rule. It does not authorize guessed AP, drop, recovery, resistance, profession,
-repair, or group-XP formulas.
+rule. It does not authorize guessed weapon-mastery, fatigue-combat, drop,
+recovery, resistance, profession, ordinary-injury, repair-transaction, or
+general group-XP formulas.
 
 ---
 

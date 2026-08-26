@@ -279,6 +279,9 @@ if defined?(Character) && admin
     char.metadata = {}
   end
   main_character.reload
+  unless main_character.in_combat?
+    main_character.update!(current_hp: main_character.max_hp, current_mp: main_character.max_mp)
+  end
   main_character.inventory || main_character.create_inventory!(slot_capacity: 48, weight_capacity: 160)
 
   secondary_character = Character.find_or_create_by!(user: admin, name: "max_kerby_balance") do |char|
@@ -290,6 +293,9 @@ if defined?(Character) && admin
     char.metadata = {}
   end
   secondary_character.reload
+  unless secondary_character.in_combat?
+    secondary_character.update!(current_hp: secondary_character.max_hp, current_mp: secondary_character.max_mp)
+  end
   secondary_character.inventory || secondary_character.create_inventory!(slot_capacity: 42, weight_capacity: 130)
 
   if lukin_user
@@ -302,6 +308,9 @@ if defined?(Character) && admin
       char.metadata = {}
     end
     lukin_character.reload
+    unless lukin_character.in_combat?
+      lukin_character.update!(current_hp: lukin_character.max_hp, current_mp: lukin_character.max_mp)
+    end
     lukin_character.inventory || lukin_character.create_inventory!(slot_capacity: 36, weight_capacity: 140)
   end
 end
@@ -676,23 +685,34 @@ if defined?(ArenaRoom)
       name: "Training Hall",
       slug: "training",
       room_type: :training,
-      level_min: 0,
+      level_min: 5,
       level_max: 10,
       alignment_restriction: nil,
       description: "Source-backed starter arena room for training fights."
+    },
+    {
+      name: "Trial Hall",
+      slug: "trial",
+      room_type: :trial,
+      level_min: 5,
+      level_max: 33,
+      alignment_restriction: nil,
+      description: "Source-backed unrestricted Arena room for levels 5-33."
     }
   ]
 
   arena_rooms.each do |room_data|
-    ArenaRoom.find_or_create_by!(slug: room_data[:slug]) do |room|
-      room.name = room_data[:name]
-      room.room_type = room_data[:room_type]
-      room.level_min = room_data[:level_min]
-      room.level_max = room_data[:level_max]
-      room.alignment_restriction = room_data[:alignment_restriction]
-      room.active = true
-      room.metadata = {description: room_data[:description]}
-    end
+    room = ArenaRoom.find_or_initialize_by(slug: room_data[:slug])
+    room.assign_attributes(
+      name: room_data[:name],
+      room_type: room_data[:room_type],
+      level_min: room_data[:level_min],
+      level_max: room_data[:level_max],
+      alignment_restriction: room_data[:alignment_restriction],
+      active: true,
+      metadata: {description: room_data[:description]}
+    )
+    room.save!
     puts "  Created/Found ArenaRoom: #{room_data[:name]}"
   end
 end

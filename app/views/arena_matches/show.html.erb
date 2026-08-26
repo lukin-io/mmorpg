@@ -27,7 +27,11 @@
      data-arena-match-match-id-value="<%= @arena_match.id %>"
      data-arena-match-ap-limit-value="<%= ap_limit %>"
      data-arena-match-user-team-value="<%= user_team %>"
-     data-arena-match-read-only-value="<%= !current_user_participating? %>">
+     data-arena-match-read-only-value="<%= !current_user_participating? %>"
+     data-arena-match-status-value="<%= @arena_match.status %>"
+     data-arena-match-turn-number-value="<%= @arena_match.current_turn_number.to_i %>"
+     data-arena-match-waiting-value="<%= current_user_pending_arena_turn? %>"
+     data-arena-match-starts-at-value="<%= @arena_match.scheduled_start_at&.iso8601 %>">
 
   <div class="nl-fight-topline fighttxt">
     <span><b><%= fight_type_label(@arena_match.match_type) %></b></span>
@@ -127,9 +131,11 @@
           </div>
 
           <div class="nl-fight-budget">
-            Mana: <b>5..<%= participant_data(current_participation).current_mp.to_i %></b>
+            Mana: <b>5..<%= combat_profile["max_magic_mana"] %></b>
             <span>Action points: <b><%= ap_limit %></b></span>
             <span>Used: <b data-arena-match-target="turnCostValue">0</b>/<%= ap_limit %></span>
+            <span class="nl-fight-penalty" data-arena-match-target="turnPenalty" hidden></span>
+            <strong class="nl-fight-over-budget" data-arena-match-target="turnOverBudget" hidden>OVER LIMIT!</strong>
           </div>
 
           <div class="nl-fight-magic-slots" aria-label="Combat quick slots">
@@ -177,8 +183,7 @@
                       <% attack_options.each do |key, config| %>
                         <option value="<%= key %>"
                                 data-ap-cost="<%= config['action_cost'] %>"
-                                data-mana-cost="<%= config['mana_cost'].to_i %>"
-                                <%= "selected" if part == "torso" && key == "simple" %>>
+                                data-mana-cost="<%= config['mana_cost'].to_i %>">
                           <%= attack_label %>: <%= config["name"] || key.titleize %> [ <%= config["action_cost"] %> ]
                         </option>
                       <% end %>
@@ -193,13 +198,11 @@
                       <option value="none" data-ap-cost="0" data-body-parts=""><%= block_label %> [ no block selected ]</option>
                       <% block_options.each do |key, config| %>
                         <% covered_parts = config["body_parts"] || [config["body_part"]].compact %>
-                        <% next unless covered_parts.include?(block_part_key) %>
-                        <% next if config["action_cost"].to_i > ap_limit %>
+                        <% next unless [block_part_key, "all"].include?(config["selector_part"]) %>
                         <option value="<%= key %>"
                                 data-ap-cost="<%= config['action_cost'] %>"
                                 data-mana-cost="<%= config['mana_cost'].to_i %>"
-                                data-body-parts="<%= covered_parts.join(',') %>"
-                                <%= "selected" if key == "torso_block" && block_part_key == "torso" %>>
+                                data-body-parts="<%= covered_parts.join(',') %>">
                           <%= block_label %>: <%= config["name"] || key.titleize %> [ <%= config["action_cost"] %><%= "/#{config['mana_cost'].to_i} MP" if config["mana_cost"].to_i.positive? %> ]
                         </option>
                       <% end %>
@@ -211,6 +214,8 @@
 
             <div class="arena-turn-submit">
               <button class="btn-attack btn-attack--submit nl-arena-small-button"
+                      type="submit"
+                      form="arena-turn-form-<%= @arena_match.id %>"
                       data-action="click->arena-match#submitTurn">
                 Turn
               </button>
@@ -219,6 +224,14 @@
               </button>
             </div>
           </div>
+
+          <%= form_with url: action_arena_match_path(@arena_match),
+              method: :post,
+              id: "arena-turn-form-#{@arena_match.id}",
+              class: "hidden",
+              data: {arena_match_target: "turnForm", turbo: false} do %>
+            <div data-arena-match-target="turnFields"></div>
+          <% end %>
         </div>
       <% end %>
 
@@ -309,11 +322,12 @@
 
   <%# Result overlay %>
   <% if @arena_match.completed? %>
-    <div class="arena-result-overlay arena-result--<%= current_user_won? ? 'victory' : (current_user_participating? ? 'defeat' : 'ended') %>"
+    <% result_state = current_user_arena_result %>
+    <div class="arena-result-overlay arena-result--<%= result_state %>"
          data-arena-match-target="resultOverlay">
       <div class="arena-result-content">
         <h1 class="arena-result-title">
-          <%= current_user_won? ? "Victory" : (current_user_participating? ? "Defeat" : "Fight finished") %>
+          <%= result_state == "ended" ? "Fight finished" : result_state.titleize %>
         </h1>
         <div class="arena-result-details">
           <% if @arena_match.winning_team %>
@@ -324,12 +338,19 @@
           <p class="text-muted">Duration: <%= format_duration(@arena_match.duration || 0) %></p>
         </div>
         <% if current_user_participating? && !current_user_finished_arena_match? %>
-          <%= button_to "Finish Fight", finish_arena_match_path(@arena_match), method: :post, class: "btn-primary" %>
+          <%= button_to "Finish Fight",
+              finish_arena_match_path(@arena_match),
+              method: :post,
+              class: "btn-primary",
+              form: {data: {turbo: false}} %>
         <% else %>
           <% if @arena_match.metadata.to_h["source"] == "world_npc" %>
-            <%= link_to "Return", Game::World::CombatReturnContext.new(character: current_character).path_for(@arena_match.metadata.to_h["return_context"]), class: "btn-primary" %>
+            <%= link_to "Return",
+                Game::World::CombatReturnContext.new(character: current_character).path_for(@arena_match.metadata.to_h["return_context"]),
+                class: "btn-primary",
+                data: {turbo_frame: "_top"} %>
           <% else %>
-            <%= link_to "To Arena", arena_index_path, class: "btn-primary" %>
+            <%= link_to "To Arena", arena_index_path, class: "btn-primary", data: {turbo_frame: "_top"} %>
           <% end %>
         <% end %>
       </div>

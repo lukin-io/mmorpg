@@ -510,14 +510,6 @@ RSpec.describe Arena::CombatProcessor, "Neverlands-style combat features" do
           expect(result.error).to eq("Cannot attack an ally")
         end
       end
-
-      context "when trying to flee from duel" do
-        it "returns failure" do
-          result = processor.process_action(character1, :flee)
-          expect(result.success?).to be false
-          expect(result.error).to include("Cannot flee")
-        end
-      end
     end
   end
 end

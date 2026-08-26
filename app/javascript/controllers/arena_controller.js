@@ -27,6 +27,10 @@ export default class extends Controller {
     if (this.subscription) {
       this.subscription.unsubscribe()
     }
+
+    if (this.countdownTimer) {
+      clearTimeout(this.countdownTimer)
+    }
   }
 
   // === ROOM NAVIGATION ===
@@ -55,7 +59,7 @@ export default class extends Controller {
     }
 
     // Navigate to room
-    window.location.href = `/arena_rooms/${roomId}`
+    this.visit(`/arena_rooms/${roomId}`)
   }
 
   // === APPLICATION MANAGEMENT ===
@@ -86,9 +90,7 @@ export default class extends Controller {
       const data = await response.json()
 
       if (data.success) {
-        this.showSuccess("Application submitted.")
-        form.reset()
-        this.disableForm()
+        this.refreshRoom()
       } else {
         this.showError(data.errors?.join(", ") || "Failed to submit application")
       }
@@ -154,8 +156,7 @@ export default class extends Controller {
       const data = await response.json()
 
       if (data.success) {
-        this.showSuccess("Application canceled.")
-        this.enableForm()
+        this.refreshRoom()
       } else {
         this.showError(data.errors?.join(", ") || "Failed to cancel application")
       }
@@ -172,6 +173,10 @@ export default class extends Controller {
   startCountdown(seconds, matchId) {
     if (!this.hasCountdownTarget) return
 
+    if (this.countdownTimer) {
+      clearTimeout(this.countdownTimer)
+    }
+
     this.countdownTarget.classList.add("visible")
     this.countdownMatchId = matchId
     this.updateCountdown(seconds)
@@ -185,8 +190,8 @@ export default class extends Controller {
       this.countdownTarget.querySelector(".arena-countdown-timer").classList.add("arena-countdown-timer--final")
 
       // Redirect to match after brief delay
-      setTimeout(() => {
-        window.location.href = `/arena_matches/${this.countdownMatchId}`
+      this.countdownTimer = setTimeout(() => {
+        this.visit(`/arena_matches/${this.countdownMatchId}`)
       }, 1000)
       return
     }
@@ -202,7 +207,7 @@ export default class extends Controller {
       timerElement.textContent = mins > 0 ? `${mins}:${secs.toString().padStart(2, "0")}` : `${secs}s`
     }
 
-    setTimeout(() => this.updateCountdown(seconds - 1), 1000)
+    this.countdownTimer = setTimeout(() => this.updateCountdown(seconds - 1), 1000)
   }
 
   // === WEBSOCKET ===
@@ -221,11 +226,9 @@ export default class extends Controller {
   handleBroadcast(data) {
     switch (data.type) {
       case "new_application":
-        this.addApplication(data.application)
-        break
       case "application_cancelled":
       case "application_expired":
-        this.removeApplication(data.application_id)
+        this.refreshRoom()
         break
       case "match_created":
         this.handleMatchCreated(data)
@@ -233,17 +236,24 @@ export default class extends Controller {
     }
   }
 
-  addApplication(application) {
-    if (!this.hasApplicationListTarget) return
-
-    const html = this.renderApplication(application)
-    this.applicationListTarget.insertAdjacentHTML("beforeend", html)
-  }
-
   removeApplication(applicationId) {
     const element = this.element.querySelector(`[data-application-id="${applicationId}"]`)
     if (element) {
       element.remove()
+    }
+  }
+
+  refreshRoom() {
+    if (!this.roomIdValue) return
+
+    this.visit(`/arena_rooms/${this.roomIdValue}`, "replace")
+  }
+
+  visit(path, action = "advance") {
+    if (window.Turbo?.visit) {
+      window.Turbo.visit(path, { action })
+    } else {
+      window.location.assign(path)
     }
   }
 
@@ -259,38 +269,6 @@ export default class extends Controller {
       const countdown = data.countdown || 10
       this.startCountdown(countdown, data.match_id)
     }
-  }
-
-  renderApplication(app) {
-    return `
-      <div class="arena-application" data-application-id="${app.id}">
-        <span class="arena-application-type arena-application-type--${app.fight_type}">
-          ${this.fightTypeLabel(app.fight_type)}
-        </span>
-        <div class="arena-application-info">
-          <strong>${app.applicant_name}</strong> [${app.applicant_level}]
-          <span class="arena-application-timer">
-            Remaining ${Math.floor(app.expires_in / 60)} min
-          </span>
-        </div>
-        <div class="arena-application-actions">
-          <button class="btn-primary btn-sm"
-                  data-action="click->arena#acceptApplication"
-                  data-application-id="${app.id}">
-            Accept
-          </button>
-        </div>
-      </div>
-    `
-  }
-
-  fightTypeLabel(type) {
-    const labels = {
-      duel: "Duels",
-      team_battle: "Team Battles",
-      sacrifice: "Sacrifice"
-    }
-    return labels[type] || type
   }
 
   // === FORM VALIDATION ===

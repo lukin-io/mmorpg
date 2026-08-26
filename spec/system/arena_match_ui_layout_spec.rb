@@ -147,8 +147,21 @@ RSpec.describe "Arena Match UI Layout", type: :system do
     it "shows the current turn cost once beside the AP limit" do
       visit arena_match_path(match)
 
-      expect(page).to have_css(".nl-fight-budget", text: /Used:\s*75\/\d+/)
-      expect(page).not_to have_css(".nl-fight-budget", text: %r{75/\d+/\d+})
+      expect(page).to have_css(".nl-fight-budget", text: /Used:\s*0\/\d+/)
+      expect(page).not_to have_css(".nl-fight-budget", text: %r{0/\d+/\d+})
+      expect(page).to have_button("Turn")
+    end
+
+    it "shows the fight-profile magic ceiling instead of current MP" do
+      character1.update!(current_mp: 7, max_mp: 50)
+      participation1.update!(
+        metadata: {"combat_profile" => {"max_magic_mana" => 24}}
+      )
+
+      visit arena_match_path(match)
+
+      expect(page).to have_css(".nl-fight-budget", text: /Mana:\s*5\.\.24/)
+      expect(page).not_to have_css(".nl-fight-budget", text: /Mana:\s*5\.\.7/)
     end
 
     it "shows the Neverlands surrender action" do
@@ -168,15 +181,73 @@ RSpec.describe "Arena Match UI Layout", type: :system do
       expect(page).to have_css(".nl-fight-selector-table option", text: "Head Block [ 35 ]")
     end
 
-    it "shows shield block table when current fighter has a shield equipped" do
+    it "starts empty, locks the other block rows, and resets to zero used AP" do
+      visit arena_match_path(match)
+      torso_block = find(
+        "select[data-arena-match-target='blockSelect'][data-body-part='torso']"
+      )
+
+      expect(all(".nl-fight-selector-table select").map(&:value)).to all(eq("none"))
+      torso_block.find("option[value='torso_block']").select_option
+      expect(page).to have_css("select[data-arena-match-target='blockSelect'][disabled]", count: 3)
+
+      click_button "Reset"
+      expect(all(".nl-fight-selector-table select").map(&:value)).to all(eq("none"))
+      expect(page).to have_no_css("select[data-arena-match-target='blockSelect'][disabled]")
+      expect(page).to have_css(".nl-fight-budget", text: /Used:\s*0\/\d+/)
+    end
+
+    it "shows the multi-attack penalty and warning while an over-budget Turn remains a no-op" do
+      visit arena_match_path(match)
+      torso_attack = find(
+        "select[data-arena-match-target='attackSelect'][data-body-part='torso']"
+      )
+      stomach_attack = find(
+        "select[data-arena-match-target='attackSelect'][data-body-part='stomach']"
+      )
+
+      torso_attack.find("option[value='aimed']").select_option
+      stomach_attack.find("option[value='aimed']").select_option
+
+      expect(page).to have_css(".nl-fight-penalty", text: "Penalty: 25")
+      expect(page).to have_css(".nl-fight-over-budget", text: "OVER LIMIT!")
+      expect(page).to have_button("Turn", disabled: false)
+
+      click_button "Turn"
+
+      expect(participation1.reload.metadata["pending_turn"]).to be_blank
+      expect(match.combat_log_entries.where(log_type: "action")).to be_empty
+    end
+
+    it "shows only attacks and magic blocks injected by the fight profile" do
+      match.update!(
+        metadata: {
+          "combat_profile" => {
+            "injected_attack_keys" => %w[spirit_arrow mind_blast],
+            "injected_block_keys" => %w[magic_shield rainbow_barrier crystal_sphere]
+          }
+        }
+      )
+
+      visit arena_match_path(match)
+
+      expect(page).to have_css(".nl-fight-selector-table option", text: "Spirit Arrow [ 50 ]")
+      expect(page).to have_css(".nl-fight-selector-table option", text: "Magic Shield [ 45/20 MP ]")
+    end
+
+    it "shows only the exact shield block table authored by the equipped shield" do
       shield = create(:item_template,
         name: "Arena Shield",
         slot: "off_hand",
-        stat_modifiers: {"defense" => 8, "weapon_family" => "shield"})
+        stat_modifiers: {"defense" => 8, "weapon_family" => "shield", "shield_block_table" => 90})
       create(:inventory_item, inventory: character1.inventory, item_template: shield, equipped: true)
 
       visit arena_match_path(match)
-      expect(page).to have_css(".nl-fight-selector-table option", text: "Shield Block: Torso [ 40 ]")
+      expect(page).to have_css(
+        ".nl-fight-selector-table option",
+        text: "Shield: Head, Torso, and Abdomen [ 90 ]"
+      )
+      expect(page).not_to have_css(".nl-fight-selector-table option", text: "Shield: Head [ 40 ]")
     end
   end
 
@@ -283,6 +354,21 @@ RSpec.describe "Arena Match UI Layout", type: :system do
         visit arena_match_path(match)
         expect(page).to have_css(".arena-result--defeat")
         expect(page).to have_content("Defeat")
+      end
+    end
+
+    context "when the match is a draw" do
+      before do
+        match.update!(status: :completed, ended_at: Time.current, winning_team: nil)
+        participation1.update!(result: :draw, ended_at: Time.current)
+        participation2.update!(result: :draw, ended_at: Time.current)
+      end
+
+      it "shows draw instead of defeat" do
+        visit arena_match_path(match)
+
+        expect(page).to have_css(".arena-result--draw .arena-result-title", text: "Draw")
+        expect(page).not_to have_css(".arena-result-title", text: "Defeat")
       end
     end
   end

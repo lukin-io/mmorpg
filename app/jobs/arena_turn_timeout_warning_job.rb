@@ -23,8 +23,7 @@ class ArenaTurnTimeoutWarningJob < ApplicationJob
     actual_remaining = match.seconds_until_timeout
     return unless actual_remaining && actual_remaining <= seconds_remaining + 5
 
-    ActionCable.server.broadcast(
-      match.broadcast_channel,
+    Arena::CombatBroadcaster.new(match).broadcast_event(
       {
         type: "turn_timeout_warning",
         seconds_remaining: actual_remaining,

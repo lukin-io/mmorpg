@@ -2,7 +2,7 @@
 
 - Document type: evidence registry
 - Status: Current
-- Updated: 2026-08-23
+- Updated: 2026-08-26
 
 This directory contains sanitized Neverlands observations and provenance. It
 answers what was directly observed or found in source material. Product

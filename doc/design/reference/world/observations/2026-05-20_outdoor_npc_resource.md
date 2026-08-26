@@ -170,6 +170,11 @@ The result state removed `fight_pm` and introduced:
 fexp = ["35","1",0,"...", "", "4", 0, "", 99, 0, 4, 4, 0, 4]
 ```
 
+Because this single result followed defeat of both rats in one fight, `35` is
+the exact observed encounter XP total, not `35` per NPC. The capture had one
+player, so it does not establish multi-player distribution or a general
+multi-NPC formula.
+
 `fight_v10.js` rendered the explicit finish action:
 
 ```text

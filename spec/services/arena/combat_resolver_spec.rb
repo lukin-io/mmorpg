@@ -106,6 +106,31 @@ RSpec.describe Arena::CombatResolver do
     expect(result[:damage]).to be >= 0
   end
 
+  it "does not invent a block-chance bonus from selector table identity" do
+    allow(rng).to receive(:rand).with(100).and_return(0, 99, 0, 0, 99, 0)
+
+    normal = resolver.resolve_physical_attack(
+      attacker_participation:,
+      defender_participation:,
+      action_key: "simple",
+      body_part: "torso",
+      block: {"action_key" => "torso_block", "body_parts" => ["torso"], "block_table" => "normal"}
+    )
+    shield = resolver.resolve_physical_attack(
+      attacker_participation:,
+      defender_participation:,
+      action_key: "simple",
+      body_part: "torso",
+      block: {
+        "action_key" => "shield_90_head_torso_stomach_block",
+        "body_parts" => ["torso"],
+        "block_table" => "shield_90"
+      }
+    )
+
+    expect(shield[:block_chance]).to eq(normal[:block_chance])
+  end
+
   it "marks critical hits and applies critical damage multiplier" do
     allow(rng).to receive(:rand).with(100).and_return(0, 99, 0)
     allow(rng).to receive(:rand).with(1..5).and_return(3)

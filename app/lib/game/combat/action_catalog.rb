@@ -8,29 +8,20 @@ module Game
     module ActionCatalog
       DEFAULT_AP_PER_TURN = 80
       BODY_PARTS = %w[head torso stomach legs].freeze
+      PHYSICAL_ATTACK_KEYS = %w[simple aimed].freeze
+      PHYSICAL_BLOCK_TABLES = %w[normal shield_40 shield_70 shield_90].freeze
 
       STANDARD_BLOCKS = {
-        %w[head] => {key: "head_block", name: "Head Block", action_cost: 35},
-        %w[head torso] => {key: "head_torso_block", name: "Head and Torso Block", action_cost: 50},
-        %w[head stomach] => {key: "head_stomach_block", name: "Head and Abdomen Block", action_cost: 60},
-        %w[torso] => {key: "torso_block", name: "Torso Block", action_cost: 30},
-        %w[torso stomach] => {key: "torso_stomach_block", name: "Torso and Abdomen Block", action_cost: 50},
-        %w[torso legs] => {key: "torso_legs_block", name: "Torso and Legs Block", action_cost: 60},
-        %w[stomach] => {key: "stomach_block", name: "Abdomen Block", action_cost: 30},
-        %w[stomach legs] => {key: "stomach_legs_block", name: "Abdomen and Legs Block", action_cost: 50},
-        %w[legs] => {key: "legs_block", name: "Legs Block", action_cost: 35},
-        %w[head legs] => {key: "legs_head_block", name: "Legs and Head Block", action_cost: 80}
-      }.freeze
-
-      SHIELD_BLOCKS = {
-        %w[head] => {key: "shield_head_block", name: "Shield Block: Head", action_cost: 45},
-        %w[torso] => {key: "shield_torso_block", name: "Shield Block: Torso", action_cost: 40},
-        %w[stomach] => {key: "shield_stomach_block", name: "Shield Block: Abdomen", action_cost: 40},
-        %w[legs] => {key: "shield_legs_block", name: "Shield Block: Legs", action_cost: 45},
-        %w[head torso] => {key: "shield_head_torso_block", name: "Shield Block: Head and Torso", action_cost: 65},
-        %w[torso stomach] => {key: "shield_torso_stomach_block", name: "Shield Block: Torso and Abdomen", action_cost: 60},
-        %w[stomach legs] => {key: "shield_stomach_legs_block", name: "Shield Block: Abdomen and Legs", action_cost: 65},
-        %w[head torso stomach legs] => {key: "shield_full_block", name: "Full Shield Block", action_cost: 100}
+        %w[head] => {key: "head_block", name: "Head Block", action_cost: 35, selector_part: "head"},
+        %w[head torso] => {key: "head_torso_block", name: "Head and Torso Block", action_cost: 50, selector_part: "head"},
+        %w[head stomach] => {key: "head_stomach_block", name: "Head and Abdomen Block", action_cost: 60, selector_part: "head"},
+        %w[torso] => {key: "torso_block", name: "Torso Block", action_cost: 30, selector_part: "torso"},
+        %w[torso stomach] => {key: "torso_stomach_block", name: "Torso and Abdomen Block", action_cost: 50, selector_part: "torso"},
+        %w[torso legs] => {key: "torso_legs_block", name: "Torso and Legs Block", action_cost: 60, selector_part: "torso"},
+        %w[stomach] => {key: "stomach_block", name: "Abdomen Block", action_cost: 30, selector_part: "stomach"},
+        %w[stomach legs] => {key: "stomach_legs_block", name: "Abdomen and Legs Block", action_cost: 50, selector_part: "stomach"},
+        %w[legs] => {key: "legs_block", name: "Legs Block", action_cost: 35, selector_part: "legs"},
+        %w[head legs] => {key: "legs_head_block", name: "Legs and Head Block", action_cost: 80, selector_part: "legs"}
       }.freeze
 
       MAGIC_BLOCKS = {
@@ -56,19 +47,9 @@ module Game
             "key" => entry[:key],
             "name" => entry[:name],
             "action_cost" => entry[:action_cost],
-            "body_parts" => body_parts_for_block_key(entry[:key])
-          }
-        end
-      end
-
-      def shield_blocks_config
-        SHIELD_BLOCKS.values.index_by { |entry| entry[:key] }.transform_values do |entry|
-          {
-            "key" => entry[:key],
-            "name" => entry[:name],
-            "action_cost" => entry[:action_cost],
-            "body_parts" => body_parts_for_shield_block_key(entry[:key]),
-            "block_table" => "shield"
+            "body_parts" => body_parts_for_block_key(entry[:key]),
+            "block_table" => "normal",
+            "selector_part" => entry[:selector_part]
           }
         end
       end
@@ -82,7 +63,8 @@ module Game
               "action_cost" => entry[:action_cost],
               "mana_cost" => entry[:mana_cost],
               "body_parts" => parts,
-              "block_table" => "magic"
+              "block_table" => "magic",
+              "selector_part" => "all"
             }
           end
         end
@@ -112,6 +94,18 @@ module Game
         attack_config(action_key, combat_config).fetch("mana_cost", 0).to_i
       end
 
+      def attack_options_for_profile(profile, combat_config = config)
+        injected_keys = Array(profile.to_h["injected_attack_keys"]).map(&:to_s)
+
+        (combat_config["attack_types"] || {}).select do |key, _attack|
+          PHYSICAL_ATTACK_KEYS.include?(key.to_s) || injected_keys.include?(key.to_s)
+        end
+      end
+
+      def attack_allowed_for_profile?(action_key, profile, combat_config = config)
+        attack_options_for_profile(profile, combat_config).key?(action_key.to_s)
+      end
+
       def attack_penalty(attack_count, combat_config = config)
         penalties = combat_config["attack_penalties"] || []
         penalty_entry = penalties.find { |entry| entry["attacks"].to_i == attack_count.to_i }
@@ -129,6 +123,26 @@ module Game
         return {} if action_key.blank?
 
         combat_config.dig("block_types", action_key.to_s) || {}
+      end
+
+      def block_options_for_profile(profile, combat_config = config)
+        physical_table = normalize_block_table(profile.to_h["block_table"])
+        injected_keys = Array(profile.to_h["injected_block_keys"]).map(&:to_s)
+
+        (combat_config["block_types"] || {}).select do |key, block|
+          table = block["block_table"].presence || "normal"
+          table == physical_table || (table == "magic" && injected_keys.include?(key.to_s))
+        end
+      end
+
+      def block_allowed_for_profile?(action_key, profile, combat_config = config)
+        block_options_for_profile(profile, combat_config).key?(action_key.to_s)
+      end
+
+      def normalize_block_table(value)
+        table = value.to_s
+        table = "shield_#{table}" if %w[40 70 90].include?(table)
+        PHYSICAL_BLOCK_TABLES.include?(table) ? table : "normal"
       end
 
       def magic_config(action_key, combat_config = config)
@@ -155,10 +169,6 @@ module Game
 
       def body_parts_for_block_key(key)
         STANDARD_BLOCKS.find { |_parts, config| config[:key] == key }&.first || []
-      end
-
-      def body_parts_for_shield_block_key(key)
-        SHIELD_BLOCKS.find { |_parts, config| config[:key] == key }&.first || []
       end
 
       def canonical_parts(parts)

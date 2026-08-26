@@ -32,8 +32,8 @@ Borrowed feel:
 
 The player enters combat, sees both sides' vitals, chooses attacks and blocks,
 optionally uses a skill or spell, submits the turn, and reads the result in the
-combat log. Combat proceeds in rounds until victory, defeat, surrender, or
-flee. After authoritative finalization, the participating player also receives
+combat log. Combat proceeds in rounds until victory, defeat, or surrender.
+After authoritative finalization, the participating player also receives
 a concise completion result in the persistent shell timeline. Successful NPC
 item and NV awards receive their own personal rows; those rows replace neither
 the detailed combat log nor inventory/wallet authority.
@@ -152,6 +152,63 @@ higher-level live bot captures. The no-weapon starter capture kept 114 AP and a
 45 physical seed, while the higher-level bot capture used 140 AP and a 67
 physical seed.
 
+### Current Level-17 Shield Fight
+
+The 2026-08-26 authenticated wilderness flow captured a level-17 character
+against `Орк[15]` with this active profile:
+
+| Value | Captured Number |
+| --- | ---: |
+| AP budget | 200 |
+| Current MP | 2/7 |
+| Physical seed / simple attack | 62 AP |
+| Aimed physical attack | 82 AP |
+| Displayed magic-hit mana range | 5-200 |
+| Physical shield table | 90 |
+
+The current-MP value and the profile's displayed mana ceiling are separate:
+the controls still showed `5-200` while the character had only `2/7` MP.
+Shield attempts in the resolved log succeeded and failed, one critical attack
+pierced the opponent's shield, and two landed opponent attacks dealt zero
+damage after failed player shield attempts. The exact shield-success,
+shield-pierce, and armor-mitigation coefficients remain `[EVIDENCE]`; a shield
+table must not be converted into an invented unconditional block bonus.
+
+The defeated directly opposed Orc was searched immediately and the result was
+nothing found. Finish restored wilderness cell `937,1008`; one completed move
+north and one move back restored the same cell. The one empty search and absent
+injury indicator do not establish drop or ordinary-injury probabilities. The
+full concrete flow is preserved in
+`doc/design/reference/combat/observations/2026-08-26_wilderness_shield_npc_fight.md`.
+
+The post-movement Inventory action was then interrupted by a two-opponent
+Zombie/Skeleton attack. Both opponents were defeated inside one fight with
+target switching, one fight-level victory increment, and exact encounter XP
+`111`. Credited statistics capped the two overkill hits at the opponents'
+combined `320` starting HP. No search row appeared for either NPC, so search
+eligibility must not be inferred merely from participant defeat.
+
+A controlled weapon swap retained shield table `90` and total AP `200`, but
+changed the physical seed:
+
+| Weapon | Printed AP | Effective mastery | Fight/profile seed |
+| --- | ---: | ---: | ---: |
+| Sunset Mace | 72 | Crushing weapons 150 | 62 |
+| East Dagger | 66 | Knives 130 | 58 |
+
+The reductions `10` and `8` both fit `floor(effective mastery / 15)`, but do not
+uniquely prove that rule. Weapon mastery therefore remains an explicit profile
+input and `[EVIDENCE]` coefficient rather than a locally guessed formula.
+
+The Sunset Shield's inventory row explicitly paired “three-point blocking”
+with `90` AP. Removing it kept dagger costs `58/78` and all injected magic
+blocks, but replaced shield-`90` rows with the exact normal physical table. In
+the resulting three-Skeleton encounter, an accidental package of two aimed
+attacks plus torso block displayed `211/200` including the `25` two-attack
+penalty; Turn was a no-op until Reset. The encounter then resolved through
+sequential target switching and awarded exact fight-level XP `22` for all
+three NPCs.
+
 ### Captured Outdoor Bot Ambush
 
 The 2026-05-20 outdoor capture near `Окрестность Форпоста` entered a bot fight
@@ -247,6 +304,15 @@ Standard block options:
 | Stomach | Stomach 30, Stomach+Legs 50 |
 | Legs | Legs 35, Legs+Head 80 |
 
+Physical shield selector tables are selected by exact `fight_pm[3]` identity,
+not by a generic shield flag:
+
+| Table | Selector rows and AP costs |
+| --- | --- |
+| `40` | Head `40` / Head+Torso `85`; Torso `40` / Torso+Stomach `85`; Stomach `40` / Stomach+Legs `85`; Legs `40` / Legs+Head `100` |
+| `70` | Head `45` / Head+Torso `70`; Torso+Stomach `70`; Stomach+Legs `70`; Legs+Head+Stomach `130` |
+| `90` | Head+Torso+Stomach `90`; Torso+Stomach+Legs `90` |
+
 Captured injected magic block options:
 
 | Block | AP | Mana |
@@ -263,7 +329,10 @@ Selector behavior:
 - every selected attack increments the multi-attack count;
 - multi-attack penalty is `[0, 0, 25, 75, 150, 250]`;
 - AP over-budget shows an explicit `ПРЕВЫШЕНИЕ!` warning;
-- reset returns every attack and block selector to its default state.
+- initial render and reset select the first “no attack/block selected” option in
+  every row and show `0` used AP;
+- Turn remains clickable, but an invalid or over-budget package is a client
+  no-op and is independently rejected if a forged request reaches the server.
 
 The browser may render actions the current character cannot afford in MP or
 AP. Rendering is not permission. The server validates AP, MP, requirements,
@@ -314,8 +383,8 @@ of these shapes:
 - block plus magic/action;
 - more than one attack.
 
-A single plain attack or a single plain block keeps the turn editable instead
-of submitting.
+A single attack (including a mana attack), a single block, or a lone
+magic/action slot keeps the turn editable instead of submitting.
 
 ### Resolution And Finish
 
@@ -362,10 +431,18 @@ later dungeon fights:
 
 - each participant has an AP budget, physical attack costs, max magic mana, and
   a block table for the fight;
+- the active surface displays the profile's `5..N` per-magical-hit ceiling,
+  while current MP remains a separate affordability input validated by the
+  server;
 - captured fights can override derived formulas with an exact per-fight combat
   profile;
-- normal fights derive AP, attack costs, defense, and block options from level,
-  stats, equipment, item family, skills, and status effects;
+- normal fights derive AP as base `80`, plus `10` at level `5`, another `10` at
+  level `10`, and effective Extra Action Points one-for-one; temporary effects
+  and captured payload overrides belong to the per-fight profile;
+- physical attack costs, defense, and other unresolved values use the shared
+  profile/resolver boundary without inventing weapon-mastery coefficients;
+- an item's explicit selector identity chooses normal, shield-40, shield-70,
+  or shield-90 options; item family alone does not infer a tier;
 - the combat screen renders participant panels, AP/MP, up to four attack
   selectors, one active block, magic/action slots, a turn-cost preview, submit
   control, waiting state, and timestamped combat log;
@@ -404,6 +481,13 @@ Deterministic producer keys keep retries from creating a second player-facing
 row; the fight, reward, inventory, wallet, and combat-log records remain
 authoritative.
 
+As of 2026-08-26, profile preparation and selector validation also implement
+the exact AP level/Extra-AP formula, source-injected attack/block options,
+normal and `40/70/90` physical block tables, empty reset state, and the four
+legal client turn shapes. The same validation runs for Arena, PvP, team, and
+wilderness matches. The profile's maximum magic-hit value is rendered
+independently from current MP, matching the current level-17 shield capture.
+
 This closes the captured outdoor participant/interruption/result gap. It does not promote the broader Combat area to a feature handbook: uncaptured/tuning work for magic actions, status effects, rewards, trauma, and additional combat constants remains in this design record.
 
 ## Combat Rewards And Loot Checks
@@ -431,20 +515,32 @@ NPC drops are owned by the NPC loot design, but combat owns the timing:
 8. require the finish-result action before returning the player to arena, city,
    world, or dungeon context.
 
-The 2026-07-27 wiki audit closes three reward/result constants:
+The wiki/source audit closes these bounded reward/result constants:
 
 - a critical hit multiplies the resolved damage by `2.0`;
-- configured defeated-NPC experience is summed for a solo winning player and
-  capped by the winner's current level-table `fight_experience_cap`;
+- one defeated NPC uses its configured reward; the captured two-rat encounter
+  uses one explicit fight-level `35` XP reward rather than summing `35` per rat;
+  either result is capped by the winner's current level-table
+  `fight_experience_cap`;
 - equipment wear is evaluated once at fight finalization using arena
   `victory/draw/defeat = 0/0/1%` and other-fight `2/30/50%`, with at most one
-  durability point removed per equipped item.
+  durability point removed per equipped item; source perk ID `15`, Careful
+  Fighter, halves each independent chance, including arena defeat to `0.5%`.
 
 Fight finalization locks the match and records a processed marker, so a retry
 cannot grant experience/NV or roll equipment wear twice. A level-up reached by
 the award uses the source-backed grant catalog. Group PvE experience remains
 `[EVIDENCE]`: when more than one player is on the winning side, the current
-service deliberately awards no invented distribution.
+service deliberately awards no invented distribution. A multi-NPC encounter
+without an explicit captured total likewise awards no guessed sum.
+
+Repair remains a workshop/profession transaction, not a combat or inventory
+reset. The wiki establishes item-level × `30` skill gating, up to three repair
+listings, kit/material use, and ordinary-item maximum-durability loss, but one
+authenticated request/payment/failure/retrieval flow is still required before
+shipping it. Injury taxonomy and several guaranteed cases are known, while the
+ordinary probability/duration mapping and the current Arena percentage field
+are not; no injury is inferred from that field.
 
 Training mannequins should follow the same rule. If the source shows a
 mannequin dropping wood chips, the fight result should treat wood chips as a
@@ -612,8 +708,9 @@ Captured block behavior:
 
 - single-part blocks cost `30` or `35` AP depending on body part;
 - two-part blocks use captured `50`, `60`, or `80` AP costs;
-- physical, shield, and magic block tables all use body-part coverage and AP
-  validation;
+- normal and exact shield `40/70/90` tables use their captured row placement,
+  body-part coverage, and AP costs; source-injected magic blocks remain a
+  separate allowlisted profile list;
 - a block can succeed, fail against an uncovered body part, or be consumed by
   an incoming hit.
 
@@ -625,11 +722,12 @@ restoration, direct spell damage outside captured attack rows, area damage,
 chain damage, and persisted status effects require dedicated Neverlands capture
 before implementation.
 
-The `2.0` critical damage multiplier is source-backed. Critical probability,
-AP growth, weapon-mastery AP reduction/damage gain, high-fatigue combat
-penalty, observation/drop curve, armor coefficients, and resistance
-coefficients remain separate `[EVIDENCE]` items unless a controlled live or
-complete wiki formula supplies them.
+The `2.0` critical damage multiplier and AP growth/Extra-AP formula are
+source-backed. Critical probability, weapon-mastery AP reduction/damage gain,
+high-fatigue combat penalty, Observation/drop curve, armor coefficients,
+resistance coefficients, magic/status formulas, and ordinary injury outcomes
+remain separate `[EVIDENCE]` items unless a controlled live or complete wiki
+formula supplies them.
 
 Remaining source-capture work is tuning: more live Neverlands fights are needed
 to calibrate hidden item-family coefficients and compare local miss, dodge,
@@ -795,8 +893,8 @@ with the Neverlands-style GDD.
 Not canonical for the first combat loop:
 
 - fixed global 80 AP and fixed 45/65 physical attack costs as primary rules;
-- character-derived AP that ignores fight payload, level/equipment state, and
-  weapon/item family;
+- generic stat/dexterity-derived AP, or recalculation that ignores the
+  persisted fight payload and its level/Extra-AP snapshot;
 - separate arena, NPC, and player/team fight engines with different turn
   semantics;
 - action systems that bypass body-part attacks, one block assignment, AP, mana,

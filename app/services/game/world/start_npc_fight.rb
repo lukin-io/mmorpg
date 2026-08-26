@@ -75,10 +75,12 @@ module Game
       end
 
       def encounter_size
-        source_count = OutdoorNpcConfig
-          .source_npc_for_tile(tile_npc.zone, tile_npc.x, tile_npc.y)
-          &.dig(:metadata, :encounter_count)
+        source_count = source_npc_config&.dig(:metadata, :encounter_count)
         Integer(source_count || tile_npc.encounter_size, exception: false).to_i
+      end
+
+      def source_npc_config
+        @source_npc_config ||= OutdoorNpcConfig.source_npc_for_tile(tile_npc.zone, tile_npc.x, tile_npc.y)
       end
 
       def normalized_return_context
@@ -86,26 +88,33 @@ module Game
       end
 
       def create_match!
+        metadata = {
+          "source" => "world_npc",
+          "fight_kind" => "free",
+          "is_npc_fight" => true,
+          "tile_npc_id" => tile_npc.id,
+          "npc_template_id" => tile_npc.npc_template_id,
+          "npc_name" => tile_npc.npc_template.name,
+          "npc_role" => tile_npc.npc_template.role,
+          "encounter_count" => encounter_size,
+          "return_context" => normalized_return_context,
+          "zone" => tile_npc.zone,
+          "x" => tile_npc.x,
+          "y" => tile_npc.y
+        }
+        source_metadata = source_npc_config&.dig(:metadata) || {}
+        if source_metadata[:encounter_experience_reward].present?
+          metadata["encounter_experience_reward"] = source_metadata[:encounter_experience_reward]
+        end
+        metadata["combat_profile"] = source_metadata[:combat_profile] if source_metadata[:combat_profile].present?
+
         ArenaMatch.create!(
           zone: character.position.zone,
           match_type: encounter_size > 1 ? :team_battle : :duel,
           status: :pending,
           turn_timeout_seconds: ArenaMatch::DEFAULT_TURN_TIMEOUT,
           trauma_percent: 30,
-          metadata: {
-            "source" => "world_npc",
-            "fight_kind" => "free",
-            "is_npc_fight" => true,
-            "tile_npc_id" => tile_npc.id,
-            "npc_template_id" => tile_npc.npc_template_id,
-            "npc_name" => tile_npc.npc_template.name,
-            "npc_role" => tile_npc.npc_template.role,
-            "encounter_count" => encounter_size,
-            "return_context" => normalized_return_context,
-            "zone" => tile_npc.zone,
-            "x" => tile_npc.x,
-            "y" => tile_npc.y
-          }
+          metadata:
         )
       end
 

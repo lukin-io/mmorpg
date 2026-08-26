@@ -25,13 +25,13 @@ class ArenaMatchChannel < ApplicationCable::Channel
   # Submit a combat action (only for participants)
   #
   # @param data [Hash] action data
-  #   - action_type [String] "attack", "defend", "turn", "flee"
+  #   - action_type [String] "turn" or "surrender"
   #   - target_id [Integer, nil] target character/NPC ID
-  #   - attack_type [String] "simple" or "aimed" for attacks
-  #   - body_part [String] target body part (head/torso/stomach/legs)
-  #   - block_parts [Array<String>] body parts to block
+  #   - attacks [Array<Hash>] complete attack selections
+  #   - blocks [Array<Hash>] complete block selection
+  #   - skills [Array<Hash>] complete skill selections
   def submit_action(data)
-    return unless @match&.live?
+    return unless @match&.reload&.live?
     return unless current_user_is_participant?
 
     character = current_character
@@ -42,17 +42,13 @@ class ArenaMatchChannel < ApplicationCable::Channel
     # Build params hash for the action
     action_params = {}
     action_params[:target] = find_target(data["target_id"]) if data["target_id"].present?
-    action_params[:attack_type] = data["attack_type"]&.to_sym if data["attack_type"].present?
-    action_params[:body_part] = data["body_part"] if data["body_part"].present?
-    action_params[:block_parts] = data["block_parts"] if data["block_parts"].present?
     action_params[:attacks] = data["attacks"] if data["attacks"].present?
     action_params[:blocks] = data["blocks"] if data["blocks"].present?
     action_params[:skills] = data["skills"] if data["skills"].present?
 
-    # Process the combat action (positional: character, action_type, **params)
-    result = processor.process_action(
+    result = processor.process_player_intent(
       character,
-      data["action_type"].to_sym,
+      data["action_type"],
       **action_params
     )
 
@@ -69,12 +65,16 @@ class ArenaMatchChannel < ApplicationCable::Channel
   def request_match_state
     return unless @match
 
+    @match.reload
+
     transmit({
       type: "match_state",
       match_id: @match.id,
       status: @match.status,
       started_at: @match.started_at&.iso8601,
       duration: @match.duration,
+      current_turn_number: @match.current_turn_number,
+      current_user_waiting: current_user_waiting?,
       participants: build_participants_data,
       current_user_combat: current_user_combat_data
     })
@@ -101,7 +101,12 @@ class ArenaMatchChannel < ApplicationCable::Channel
     participation = @match.arena_participations.find_by(character_id: target_id)
     return participation.character if participation&.character
 
-    # Check if target is an NPC (format: "npc-123")
+    if target_id.to_s.start_with?("npc-participation-")
+      participation_id = target_id.to_s.delete_prefix("npc-participation-").to_i
+      return @match.arena_participations.npcs.find_by(id: participation_id)
+    end
+
+    # Legacy NPC template target (format: "npc-123")
     if target_id.to_s.start_with?("npc-")
       npc_id = target_id.to_s.sub("npc-", "").to_i
       return @match.arena_participations.find_by(npc_template_id: npc_id)
@@ -115,8 +120,10 @@ class ArenaMatchChannel < ApplicationCable::Channel
       if p.npc?
         npc = p.npc_template
         {
-          id: "npc-#{npc.id}",
+          id: "npc-participation-#{p.id}",
+          character_id: "npc-participation-#{p.id}",
           name: npc.name,
+          character_name: npc.name,
           level: npc.level,
           team: p.team,
           current_hp: p.current_hp,
@@ -142,6 +149,14 @@ class ArenaMatchChannel < ApplicationCable::Channel
         }
       end
     end
+  end
+
+  def current_user_waiting?
+    participation = current_user_participation
+    pending_turn = participation&.metadata.to_h["pending_turn"]
+
+    pending_turn.present? &&
+      pending_turn["turn_number"].to_i == (@match.current_turn_number || 1).to_i
   end
 
   def current_user_combat_data

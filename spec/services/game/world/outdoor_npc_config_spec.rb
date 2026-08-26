@@ -18,6 +18,13 @@ RSpec.describe Game::World::OutdoorNpcConfig do
       expect(npc.dig(:metadata, :source_map)).to eq("m_1001_999")
       expect(npc.dig(:metadata, :source_coordinates)).to eq([1001, 999])
       expect(npc.dig(:metadata, :encounter_count)).to eq(2)
+      expect(npc.dig(:metadata, :encounter_experience_reward)).to eq(35)
+      expect(npc.dig(:metadata, :combat_profile, :injected_attack_keys)).to eq(
+        %w[spirit_arrow mind_blast]
+      )
+      expect(npc.dig(:metadata, :combat_profile, :injected_block_keys)).to eq(
+        %w[magic_shield rainbow_barrier crystal_sphere]
+      )
     end
 
     it "keeps the uncaptured Plague Rat probability explicitly disabled" do

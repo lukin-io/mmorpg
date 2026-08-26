@@ -21,6 +21,12 @@ FactoryBot.define do
       starts_at { 30.seconds.from_now }
     end
 
+    trait :started do
+      status { :started }
+      matched_at { 1.minute.ago }
+      starts_at { 30.seconds.ago }
+    end
+
     trait :expired do
       status { :expired }
       expires_at { 1.minute.ago }

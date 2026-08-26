@@ -77,6 +77,19 @@ class ArenaMatch < ApplicationRecord
     (end_time - started_at).to_i
   end
 
+  def scheduled_start_at
+    value = metadata.to_h["starts_at"]
+    return if value.blank?
+
+    Time.zone.parse(value.to_s)
+  rescue ArgumentError, TypeError
+    nil
+  end
+
+  def start_due?(now: Time.current)
+    pending? && scheduled_start_at.present? && now >= scheduled_start_at
+  end
+
   # Check if the current turn has timed out
   #
   # @return [Boolean] true if turn has exceeded timeout
@@ -242,6 +255,13 @@ class ArenaMatch < ApplicationRecord
       ArenaTurnTimeoutWarningJob.set(wait: (timeout - 30).seconds)
         .perform_later(match_id: id, seconds_remaining: 30)
     end
+
+    true
+  rescue StandardError => error
+    Rails.logger.error(
+      "[ArenaMatch] timeout_enqueue_failed match_id=#{id} error=#{error.class}"
+    )
+    false
   end
 
   private

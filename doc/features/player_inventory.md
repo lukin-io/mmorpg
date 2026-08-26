@@ -3,7 +3,7 @@
 title: Player Inventory Feature
 description: Implementation handbook for the Neverlands-based carried inventory, equipment paper doll, capacity, filters, item rows, and item actions.
 status: Fully Implemented
-updated: 2026-08-25
+updated: 2026-08-26
 owners: Player Inventory
 template: feature-v1
 ---
@@ -34,7 +34,7 @@ tracked in `doc/design/launch_mvp_plan.md`.
 | `doc/features/character_progression.md` | The shared sheet reads effective character values. | Progression owns saved values; Inventory owns display and equip requirements. |
 | `doc/features/shop_economy.md` | Shop buys/sells carried stacks. | Shop owns exchange; Inventory owns stack, mass, durability, and equipment state. |
 | `doc/features/world.md` | Outdoor Inventory navigation may be interrupted by an NPC. | World owns interruption/return context; Inventory owns the destination page. |
-| `doc/features/arena_combat.md` | Active fights render current equipment, may apply server-resolved wear, and may award NPC item loot into carried inventory. | Inventory owns equipped/carried state, durability, capacity, and item-award validation; Arena Combat owns fight resolution/wear, typed loot resolution, and item-found feedback after a successful award. NV loot does not create an `InventoryItem`; Shop and Economy own its wallet/ledger persistence. |
+| `doc/features/arena_combat.md` | Active fights render current equipment, may apply server-resolved wear, and may award NPC item loot into carried inventory. | Inventory owns equipped/carried state, durability, capacity, and item-award validation; Arena Combat owns exact result-based wear (including Careful Fighter's half chance), typed loot resolution, and item-found feedback after a successful award. NV loot does not create an `InventoryItem`; Shop and Economy own its wallet/ledger persistence. |
 
 ## 2. Feature summary
 
@@ -145,10 +145,14 @@ the item only through the current inventory before mutation.
 
 ### 6.4 Deferred behavior boundary
 
-Exact repair UX, additional belt/pocket layering, complete family-specific
-pages, and popup/confirmation layouts remain deferred until captured. Source
-item art is reference evidence only and is not runtime completion work.
-Existing mutation routes do not prove visual parity for those states.
+Repair is confirmed as a workshop/profession transaction with skill,
+kit/material, listing, maximum-durability, and owner-retrieval states; it is not
+a one-click `InventoryItem#reset_durability!` action. One authenticated
+request/payment/failure/retrieval flow is still missing, so no player repair
+route is shipped. Additional belt/pocket layering, complete family-specific
+pages, and popup/confirmation layouts remain deferred. Source item art is
+reference evidence only and is not runtime completion work. Existing mutation
+routes do not prove visual parity for those states.
 
 ## 7. Authoritative data and presentation model
 
@@ -382,3 +386,4 @@ shipped Inventory management routes.
 | 2026-07-29 | Linked the cross-feature management guide's future `ItemTemplate` adapter and service-backed inventory grant/revoke pattern without claiming those routes are shipped. |
 | 2026-08-23 | Documented the successful NPC item-loot handoff to Arena's item-found feedback, distinguished Economy-owned NV loot from Inventory state, and kept inventory validation on the shared flash surface after removal of the legacy toast path; equip/unequip Turbo failures now return 422 without mutating equipment. |
 | 2026-08-25 | Made the shared multi-unit item-add contract explicitly atomic: an Inventory lock plus nested savepoint rolls back partial stack and carried-mass writes before a caller records a capacity failure. |
+| 2026-08-26 | Clarified the Combat-owned Careful Fighter wear handoff and recorded repair as a deferred workshop/profession transaction rather than an inventory durability reset. |

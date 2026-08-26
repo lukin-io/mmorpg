@@ -10,7 +10,8 @@ RSpec.describe Arena::NpcExperienceAwarder do
     create(:arena_participation, arena_match: match, character: winner, user: winner.user, team: "a", result: :victory)
   end
 
-  it "sums defeated NPC rewards and applies the level per-fight cap" do
+  it "uses the captured total reward for the whole paired-rat encounter" do
+    match.update!(metadata: match.metadata.merge("encounter_experience_reward" => 35))
     [35, 35].each_with_index do |xp, index|
       npc = create(:npc_template, npc_key: "rat_#{index}", metadata: {"xp_reward" => xp})
       create(:arena_participation, :npc, arena_match: match, npc_template: npc, team: "b", result: :defeat)
@@ -18,8 +19,20 @@ RSpec.describe Arena::NpcExperienceAwarder do
 
     result = described_class.new(match:, winning_team: "a").call
 
-    expect(result).to have_attributes(character_id: winner.id, experience_awarded: 50, levels_gained: 0, skipped_reason: nil)
-    expect(winner.reload.experience).to eq(50)
+    expect(result).to have_attributes(character_id: winner.id, experience_awarded: 35, levels_gained: 0, skipped_reason: nil)
+    expect(winner.reload.experience).to eq(35)
+  end
+
+  it "does not sum an uncaptured multi-NPC encounter" do
+    2.times do |index|
+      npc = create(:npc_template, npc_key: "uncaptured_#{index}", metadata: {"xp_reward" => 35})
+      create(:arena_participation, :npc, arena_match: match, npc_template: npc, team: "b", result: :defeat)
+    end
+
+    result = described_class.new(match:, winning_team: "a").call
+
+    expect(result).to have_attributes(experience_awarded: 0, skipped_reason: "group_formula_not_captured")
+    expect(winner.reload.experience).to eq(0)
   end
 
   it "does not invent group distribution" do

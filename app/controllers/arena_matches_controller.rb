@@ -4,10 +4,17 @@ class ArenaMatchesController < ApplicationController
   before_action :authenticate_user!
   before_action :set_arena_match, only: [:show, :action, :claim_timeout, :finish, :log]
   before_action :require_character, only: [:action, :claim_timeout, :finish]
-  before_action :require_participant, only: [:action, :claim_timeout, :finish]
 
   def show
     authorize @arena_match
+
+    # The delayed job is the normal start path. A due pending match also starts
+    # when either participant reconnects, providing a bounded recovery path if
+    # the local worker was temporarily unavailable.
+    if @arena_match.start_due?
+      Arena::CombatProcessor.new(@arena_match).start_match
+      @arena_match.reload
+    end
 
     # Auto-end stale or finished matches
     if @arena_match.auto_end_if_needed!
@@ -38,7 +45,7 @@ class ArenaMatchesController < ApplicationController
   end
 
   # POST /arena_matches/:id/action
-  # Submit a combat action (attack, defend, turn, flee, surrender)
+  # Submit a complete turn or surrender intent.
   def action
     authorize @arena_match
 
@@ -47,35 +54,24 @@ class ArenaMatchesController < ApplicationController
     # Build params hash for the action
     action_params = {}
     action_params[:target] = find_action_target if params[:target_id].present?
-    action_params[:attack_type] = params[:attack_type]&.to_sym if params[:attack_type].present?
-    action_params[:body_part] = params[:body_part] if params[:body_part].present?
-    if params[:block_parts].present?
-      action_params[:block_parts] = params[:block_parts].is_a?(String) ? params[:block_parts].split(",") : Array(params[:block_parts])
-    end
     action_params[:attacks] = turn_action_array(:attacks) if params[:attacks].present?
     action_params[:blocks] = turn_action_array(:blocks) if params[:blocks].present?
     action_params[:skills] = turn_action_array(:skills) if params[:skills].present?
 
-    result = processor.process_action(
+    result = processor.process_player_intent(
       current_character,
-      params[:action_type].to_s.to_sym,
+      params[:action_type],
       **action_params
     )
 
     respond_to do |format|
       if result.success?
         message = result[:surrendered] ? "Surrender recorded." : "Turn submitted."
-        format.html { redirect_to @arena_match, notice: message }
+        format.html { redirect_to @arena_match, notice: message, status: :see_other }
         format.json { render json: {success: true, data: result.data} }
-        format.turbo_stream do
-          if result[:surrendered]
-            redirect_to @arena_match, notice: message, status: :see_other
-          else
-            head :ok
-          end
-        end
+        format.turbo_stream { redirect_to @arena_match, notice: message, status: :see_other }
       else
-        format.html { redirect_to @arena_match, alert: result.error }
+        format.html { redirect_to @arena_match, alert: result.error, status: :see_other }
         format.json { render json: {success: false, error: result.error}, status: :unprocessable_entity }
         format.turbo_stream { head :unprocessable_entity }
       end
@@ -94,10 +90,10 @@ class ArenaMatchesController < ApplicationController
     respond_to do |format|
       if result.success?
         message = result[:mode] == "draw" ? "Timeout draw recorded." : "Timeout victory recorded."
-        format.html { redirect_to @arena_match, notice: message }
+        format.html { redirect_to @arena_match, notice: message, status: :see_other }
         format.json { render json: {success: true, data: result.data} }
       else
-        format.html { redirect_to @arena_match, alert: result.error }
+        format.html { redirect_to @arena_match, alert: result.error, status: :see_other }
         format.json { render json: {success: false, error: result.error}, status: :unprocessable_entity }
       end
     end
@@ -108,17 +104,25 @@ class ArenaMatchesController < ApplicationController
     authorize @arena_match
 
     unless @arena_match.completed?
-      redirect_to @arena_match, alert: "The fight is still active."
+      respond_to do |format|
+        format.html { redirect_to @arena_match, alert: "The fight is still active." }
+        format.json do
+          render json: {error: "The fight is still active."}, status: :unprocessable_content
+        end
+        format.turbo_stream { head :unprocessable_content }
+      end
       return
     end
 
     participation = @arena_match.arena_participations.find_by(user: current_user)
-    participation.metadata ||= {}
-    participation.metadata["finished_at"] = Time.current.iso8601
-    participation.save!
+    participation.with_lock do
+      participation.metadata ||= {}
+      participation.metadata["finished_at"] ||= Time.current.iso8601
+      participation.save!
+    end
     current_character.exit_combat! if current_character.in_combat?
 
-    redirect_to finish_destination_path, notice: "Fight finished."
+    redirect_to finish_destination_path, notice: "Fight finished.", status: :see_other
   end
 
   private
@@ -126,12 +130,6 @@ class ArenaMatchesController < ApplicationController
   def require_character
     unless current_character
       redirect_to arena_index_path, alert: "A character is required to participate."
-    end
-  end
-
-  def require_participant
-    unless @arena_match.arena_participations.exists?(user: current_user)
-      redirect_to @arena_match, alert: "You are not participating in this fight."
     end
   end
 
@@ -174,6 +172,8 @@ class ArenaMatchesController < ApplicationController
       started_at: @arena_match.started_at&.iso8601,
       ended_at: @arena_match.ended_at&.iso8601,
       duration: @arena_match.duration,
+      current_turn_number: @arena_match.current_turn_number,
+      current_user_waiting: current_user_waiting?,
       current_user_combat: current_user_combat_payload,
       public_log_path: @arena_match.public_log_path,
       participants: @participations.map do |p|
@@ -182,7 +182,12 @@ class ArenaMatchesController < ApplicationController
           character_name: p.participant_name,
           team: p.team,
           result: p.result,
-          is_npc: p.npc?
+          is_npc: p.npc?,
+          current_hp: p.current_hp,
+          max_hp: p.max_hp,
+          current_mp: p.npc? ? 0 : p.character.current_mp,
+          max_mp: p.npc? ? 0 : p.character.max_mp,
+          is_dead: p.current_hp <= 0
         }
       end
     }
@@ -201,9 +206,35 @@ class ArenaMatchesController < ApplicationController
     }
   end
 
+  def current_user_waiting?
+    participation = @arena_match.arena_participations.find_by(user: current_user)
+    pending_turn = participation&.metadata.to_h["pending_turn"]
+
+    pending_turn.present? &&
+      pending_turn["turn_number"].to_i == (@arena_match.current_turn_number || 1).to_i
+  end
+
   def turn_action_array(key)
-    Array(params[key]).map do |entry|
-      entry.respond_to?(:to_unsafe_h) ? entry.to_unsafe_h : entry
+    Array.wrap(normalize_indexed_turn_params(params[key]))
+  end
+
+  # Browser form fields such as attacks[0][body_part] arrive as hashes keyed
+  # by numeric indexes, while JSON clients send arrays. Normalize both shapes
+  # at the HTTP boundary so the combat processor receives one stable contract.
+  def normalize_indexed_turn_params(value)
+    value = value.to_unsafe_h if value.respond_to?(:to_unsafe_h)
+
+    case value
+    when Hash
+      if value.keys.all? { |key| key.to_s.match?(/\A\d+\z/) }
+        value.sort_by { |key, _item| key.to_i }.map { |_key, item| normalize_indexed_turn_params(item) }
+      else
+        value.transform_values { |item| normalize_indexed_turn_params(item) }
+      end
+    when Array
+      value.map { |item| normalize_indexed_turn_params(item) }
+    else
+      value
     end
   end
 

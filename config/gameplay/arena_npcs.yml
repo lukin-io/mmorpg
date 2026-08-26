@@ -27,6 +27,14 @@ training:
         description: "Captured Neverlands training mannequin."
         avatar: "M"
         avatar_image: "scarecrow.png"
+        combat_profile:
+          injected_attack_keys:
+            - spirit_arrow
+            - mind_blast
+          injected_block_keys:
+            - magic_shield
+            - rainbow_barrier
+            - crystal_sphere
         stats:
           attack: 1
           defense: 0

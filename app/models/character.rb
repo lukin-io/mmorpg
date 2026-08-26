@@ -12,6 +12,8 @@ class Character < ApplicationRecord
   MASS_PER_STRENGTH = 5
   MASS_PER_HEALTH = 10
   MASS_PER_LEVEL = 10
+  BASE_ACTION_POINTS = 80
+  ACTION_POINT_LEVEL_BONUSES = {5 => 10, 10 => 10}.freeze
   STAT_LABELS = {
     strength: "Strength",
     dexterity: "Dexterity",
@@ -201,17 +203,15 @@ class Character < ApplicationRecord
     end
   end
 
-  # Calculate maximum action points for combat
-  # Formula: Base AP (50) + (Level × 3) + (Dexterity × 2)
-  # This determines how many attacks/blocks a character can perform per turn
-  #
-  # @return [Integer] the character's maximum action points
+  # Neverlands grants an 80 AP base, adds 10 AP at levels 5 and 10, and adds
+  # the effective Extra Action Points skill one-for-one. Temporary fight
+  # effects remain per-participation combat-profile inputs.
   def max_action_points
-    base_ap = 50
-    level_bonus = level * 3
-    dexterity_bonus = stats.get(:dexterity).to_i * 2
+    level_bonus = ACTION_POINT_LEVEL_BONUSES.sum do |minimum_level, bonus|
+      level.to_i >= minimum_level ? bonus : 0
+    end
 
-    base_ap + level_bonus + dexterity_bonus
+    BASE_ACTION_POINTS + level_bonus + passive_skill_level(:extra_action_points)
   end
 
   def alignment_label
@@ -619,7 +619,7 @@ class Character < ApplicationRecord
     end
   end
 
-  # Get agility stat for initiative and flee calculations
+  # Get agility used by the shared hit, dodge, and block resolver.
   #
   # @return [Integer] agility value
   def agility

@@ -30,6 +30,12 @@ RSpec.describe Arena::NpcApplicationService do
         expect(result.application.enemy_level_min).to eq(0)
         expect(result.application.enemy_level_max).to eq(33)
         expect(result.application.metadata["neverlands_rule_value"]).to eq(10)
+        expect(result.application.npc_template.metadata.dig("combat_profile", "injected_attack_keys")).to eq(
+          %w[spirit_arrow mind_blast]
+        )
+        expect(result.application.npc_template.metadata.dig("combat_profile", "injected_block_keys")).to eq(
+          %w[magic_shield rainbow_barrier crystal_sphere]
+        )
       end
 
       it "uses the captured NPC without random selection" do

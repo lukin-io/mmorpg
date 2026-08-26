@@ -183,6 +183,7 @@ Exact implemented derived rules:
 base_max_hp = saved Health × 5
 base_max_mp = saved Knowledge × 7
 carrying_capacity = effective Strength × 5 + effective Health × 10 + level × 10
+combat_action_points = 80 + (10 at level 5) + (10 at level 10) + effective Extra Action Points
 ```
 
 Saving a stat allocation recalculates the persisted base maxima and clamps a
@@ -211,6 +212,11 @@ Combat and weapon skills:
 - `9` two-handed weapon mastery, rate `10:8:6:4`;
 - `10` dual-wielding, rate `4:4:2:2`;
 - `11` extra action points, rate `2:2:2:2`.
+
+Extra Action Points is the second bounded numeric-skill effect: each effective
+point adds one AP to the character's next persisted fight profile. Weapon
+mastery still has no local AP-reduction or damage coefficient because the
+source pages publish direction but not the exact formula.
 
 Magic and resistance skills:
 
@@ -249,18 +255,20 @@ The launch-safe captured subset is deliberately small:
 | Source ID | Local Key | Source Label | Launch Behavior |
 | ---: | --- | --- | --- |
 | 7 | `more_strength` | `Больше силы` | Spend one new-perk point; effective Strength gains `floor(level / 2)`. |
+| 15 | `careful_fighter` | `Аккуратный боец` | Spend one new-perk point; halve each equipped item's post-fight durability-loss chance. |
 
-The wiki's `Больше силы` page supplies the effect formula and the existing live
-capture supplies the selectable source identity. The perk affects effective
-Strength, including downstream mass and combat reads, but it does not rewrite
-saved stat allocation.
+The wiki supplies both bounded effects and the existing live capture supplies
+their selectable source identities. `more_strength` affects effective Strength,
+including downstream mass and combat reads, but does not rewrite saved stat
+allocation. `careful_fighter` is consumed only by shared fight finalization and
+does not alter an item's stored durability outside a completed-fight roll.
 
 The full live id/name/category catalog is captured in
 `doc/design/reference/character/observations/2026-05-11_player_profile_and_development.md`. This includes all profession,
 stat, resistance, magic, auxiliary, and warrior rows, so branch names no longer
-need to be inferred. Only source id `7` remains selectable for launch because
-the returning-account page did not expose prerequisite gates, point-grant
-timing, or mechanical effect formulas for the other entries.
+need to be inferred. Only source IDs `7` and `15` are selectable for launch;
+prerequisite gates, reset behavior, and mechanical effects for the other
+entries remain uncaptured.
 
 Perk allocation rules:
 
@@ -305,8 +313,9 @@ Perk allocation rules:
 - `features/movement.md`: World consumes effective Wanderer with the bounded
   MVP `30..25` second adjacent-step formula. The complete Neverlands timing
   formula and every other movement modifier remain uncaptured.
-- `features/combat.md`: weapon, defense, magic, and resistance skills need
-  exact formula capture before changing combat formulas.
+- `features/combat.md`: Combat consumes effective Extra Action Points one-for-one
+  and Careful Fighter at finalization. Weapon mastery, defense, magic, and
+  resistance skills still need exact formula capture before changing combat.
 - `features/items_inventory_equipment.md`: item requirements use stats/skills.
 - `features/social_chat_presence.md`: presents the authoritative combat-XP
   amount supplied by finalization; it does not own XP or level grants.

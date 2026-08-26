@@ -95,6 +95,55 @@ RSpec.describe Arena::ApplicationHandler do
       end
     end
 
+    context "with an application from a completed fight" do
+      before do
+        completed_match = create(:arena_match, arena_room:, status: :completed)
+        create(:arena_application,
+          applicant: character,
+          arena_room: arena_room,
+          arena_match: completed_match,
+          status: :matched)
+      end
+
+      it "allows the character to apply for another fight" do
+        result = handler.create(character:, room: arena_room, params: valid_params)
+
+        expect(result).to be_success
+        expect(result.application).to be_open
+      end
+    end
+
+    context "when realtime delivery is unavailable" do
+      let(:server) do
+        instance_double(ActionCable::Server::Base).tap do |stub|
+          allow(stub).to receive(:broadcast).and_raise(StandardError, "redis unavailable")
+        end
+      end
+      let(:publisher) { Arena::RealtimePublisher.new(server:, logger: instance_double(ActiveSupport::Logger, warn: nil)) }
+      let(:handler) { described_class.new(publisher:) }
+
+      it "persists and returns the successful application" do
+        result = handler.create(character:, room: arena_room, params: valid_params)
+
+        expect(result).to be_success
+        expect(result.application).to be_persisted
+      end
+    end
+
+    context "when the character already has an active match" do
+      before do
+        active_match = create(:arena_match, arena_room:, status: :live)
+        create(:arena_participation, arena_match: active_match, character:, user:, team: "a")
+      end
+
+      it "rejects a second application" do
+        result = handler.create(character:, room: arena_room, params: valid_params)
+
+        expect(result).not_to be_success
+        expect(result.errors).to include("You are already in an active fight")
+      end
+    end
+
     context "when room is at capacity" do
       before do
         # Set to 1 capacity and create a match to fill it
@@ -158,6 +207,23 @@ RSpec.describe Arena::ApplicationHandler do
         match = result.match
         expect(match.arena_participations.count).to eq(2)
         expect(match.characters).to include(character, other_character)
+      end
+
+      it "rejects a duplicate acceptance without creating another match" do
+        first = handler.accept(application:, acceptor: character)
+        third_character = create(:character,
+          user: create(:user),
+          level: 10,
+          current_hp: 100,
+          max_hp: 100)
+        create(:character_position, character: third_character)
+
+        second = handler.accept(application:, acceptor: third_character)
+
+        expect(first).to be_success
+        expect(second).not_to be_success
+        expect(application.reload.arena_match).to eq(first.match)
+        expect(ArenaMatch.where(arena_room:).count).to eq(1)
       end
 
       it "assigns characters to different teams" do
@@ -378,7 +444,18 @@ RSpec.describe Arena::ApplicationHandler do
     # ============================================
 
     context "with NPC application" do
-      let(:npc_template) { create(:npc_template, name: "Training Dummy", level: 5, role: "arena_bot") }
+      let(:npc_template) do
+        create(:npc_template,
+          name: "Training Dummy",
+          level: 5,
+          role: "arena_bot",
+          metadata: {
+            "combat_profile" => {
+              "injected_attack_keys" => %w[spirit_arrow mind_blast],
+              "injected_block_keys" => %w[magic_shield rainbow_barrier crystal_sphere]
+            }
+          })
+      end
       let!(:npc_application) do
         create(:arena_application,
           applicant: nil,
@@ -425,6 +502,24 @@ RSpec.describe Arena::ApplicationHandler do
         expected_hp = npc_template.combat_stats[:hp]
         expect(npc_participation.metadata["current_hp"]).to eq(expected_hp)
         expect(npc_participation.metadata["max_hp"]).to eq(expected_hp)
+      end
+
+      it "copies captured selector injections into the shared match profile" do
+        result = handler.accept_npc_application(
+          application: npc_application,
+          acceptor: character
+        )
+
+        expect(result.match.metadata.dig("combat_profile", "injected_block_keys")).to eq(
+          %w[magic_shield rainbow_barrier crystal_sphere]
+        )
+        expect(result.match.metadata.dig("combat_profile", "injected_attack_keys")).to eq(
+          %w[spirit_arrow mind_blast]
+        )
+        expect(result.match.arena_participations.players.sole.metadata.dig(
+          "combat_profile",
+          "injected_block_keys"
+        )).to eq(%w[magic_shield rainbow_barrier crystal_sphere])
       end
     end
   end
@@ -474,6 +569,54 @@ RSpec.describe Arena::ApplicationHandler do
 
         expect(result.success?).to be false
         expect(result.errors).to include("This application cannot be cancelled")
+      end
+    end
+
+    context "when acceptance wins before a stale cancellation" do
+      it "locks and revalidates instead of cancelling the matched fight" do
+        stale_application = ArenaApplication.find(application.id)
+        accepted = handler.accept(application:, acceptor: other_character)
+
+        cancelled = handler.cancel(application: stale_application, character:)
+
+        expect(accepted).to be_success
+        expect(cancelled).not_to be_success
+        expect(cancelled.errors).to include("This application cannot be cancelled")
+        expect(application.reload).to be_matched
+        expect(application.arena_match).to eq(accepted.match)
+      end
+    end
+
+    context "when cancellation is retried" do
+      let(:publisher) { instance_double(Arena::RealtimePublisher, publish: true) }
+      let(:handler) { described_class.new(publisher:) }
+
+      it "persists one transition and publishes one room event" do
+        first = handler.cancel(application:, character:)
+        second = handler.cancel(application:, character:)
+
+        expect(first).to be_success
+        expect(second).not_to be_success
+        expect(application.reload).to be_cancelled
+        expect(publisher).to have_received(:publish).once.with(
+          channel: "arena:room:#{arena_room.id}",
+          payload: {type: "application_cancelled", application_id: application.id}
+        )
+      end
+    end
+
+    context "when an outer transaction rolls back" do
+      let(:publisher) { instance_double(Arena::RealtimePublisher, publish: true) }
+      let(:handler) { described_class.new(publisher:) }
+
+      it "rolls the state back without publishing a cancellation" do
+        ActiveRecord::Base.transaction do
+          expect(handler.cancel(application:, character:)).to be_success
+          raise ActiveRecord::Rollback
+        end
+
+        expect(application.reload).to be_open
+        expect(publisher).not_to have_received(:publish)
       end
     end
   end

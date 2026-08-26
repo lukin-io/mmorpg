@@ -17,7 +17,7 @@ RSpec.describe Arena::EquipmentWearResolver do
 
   it "removes at most one durability point from each successful wilderness-loss roll" do
     participation
-    allow(rng).to receive(:rand).with(100).and_return(0)
+    allow(rng).to receive(:rand).with(10_000).and_return(0)
 
     result = described_class.new(match:, rng:).call.sole
 
@@ -28,7 +28,7 @@ RSpec.describe Arena::EquipmentWearResolver do
 
   it "uses two percent for a wilderness victory and zero for an arena victory" do
     participation.update!(result: :victory)
-    allow(rng).to receive(:rand).with(100).and_return(99)
+    allow(rng).to receive(:rand).with(10_000).and_return(9_999)
 
     wilderness = described_class.new(match:, rng:).call.sole
     expect(wilderness.chance_percent).to eq(2)
@@ -50,5 +50,20 @@ RSpec.describe Arena::EquipmentWearResolver do
 
     expect(result.item_ids).to be_empty
     expect(non_durable.reload).to be_equipped
+  end
+
+  it "halves each wear chance for a Careful Fighter with exact half-percent resolution" do
+    participation
+    match.update!(metadata: {})
+    character.update!(perks: {"careful_fighter" => true})
+    second_item = create(:inventory_item, :equipped, inventory: character.inventory, item_template: template,
+      properties: {"current_durability" => 10})
+    allow(rng).to receive(:rand).with(10_000).and_return(49, 50)
+
+    result = described_class.new(match:, rng:).call.sole
+
+    expect(result).to have_attributes(chance_percent: 0.5, item_ids: [item.id])
+    expect(item.reload.current_durability).to eq(9)
+    expect(second_item.reload.current_durability).to eq(10)
   end
 end

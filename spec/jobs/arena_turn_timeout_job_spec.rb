@@ -3,6 +3,8 @@
 require "rails_helper"
 
 RSpec.describe ArenaTurnTimeoutJob do
+  include ActiveJob::TestHelper
+
   let(:arena_room) do
     create(:arena_room, name: "Test Arena", level_min: 1, level_max: 100, active: true)
   end
@@ -70,11 +72,15 @@ RSpec.describe ArenaTurnTimeoutJob do
           described_class.new.perform(match_id: arena_match.id)
         end
 
-        it "schedules next timeout check" do
-          # Use ActiveJob test helper
-          described_class.new.perform(match_id: arena_match.id)
-          # The next check is scheduled via match.schedule_timeout_check
-          # Just verify the job can run without error
+        it "schedules exactly one next timeout and one warning" do
+          expect do
+            described_class.new.perform(match_id: arena_match.id)
+          end.to have_enqueued_job(described_class)
+            .with(match_id: arena_match.id)
+            .exactly(:once)
+            .and have_enqueued_job(ArenaTurnTimeoutWarningJob)
+            .with(match_id: arena_match.id, seconds_remaining: 30)
+            .exactly(:once)
         end
 
         it "keeps the round waiting when one player has a pending turn" do

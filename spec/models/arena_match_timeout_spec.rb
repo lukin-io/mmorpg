@@ -172,6 +172,22 @@ RSpec.describe ArenaMatch, "Turn Timeout System" do
     end
   end
 
+  describe "timeout scheduling failure" do
+    it "keeps an authoritative turn advance when the queue is unavailable" do
+      allow(ArenaTurnTimeoutJob).to receive(:set).and_raise(StandardError, "queue unavailable")
+      allow(Rails.logger).to receive(:error)
+
+      expect do
+        arena_match.advance_turn!(timed_out: true)
+      end.to change { arena_match.reload.current_turn_number }.by(1)
+
+      expect(arena_match).to be_timed_out
+      expect(Rails.logger).to have_received(:error).with(
+        include("[ArenaMatch] timeout_enqueue_failed match_id=#{arena_match.id}")
+      )
+    end
+  end
+
   describe ".timed_out scope" do
     let!(:fresh_match) do
       create(:arena_match,

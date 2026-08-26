@@ -1200,6 +1200,15 @@ select.nl-fight-select,
 
 .nl-fight-budget { display: flex; justify-content: center; gap: 14px; }
 
+.arena-turn-cost--invalid,
+.nl-fight-over-budget {
+  color: #c00000;
+}
+
+.nl-fight-over-budget {
+  font-weight: 700;
+}
+
 .nl-fight-magic-slots { padding: 2px 0; border-top: 1px solid #eee8d8; border-bottom: 1px solid #eee8d8; }
 
 .nl-fight-magic-slot {

@@ -60,6 +60,24 @@ RSpec.describe Game::World::StartNpcFight do
     expect(match.arena_participations.npcs.pluck(Arel.sql("metadata->>'encounter_slot'"))).to contain_exactly("1", "2")
   end
 
+  it "copies the captured paired-rat XP and injected blocks into the match profile" do
+    position.update!(x: 7, y: 7)
+    tile_npc.update!(x: 7, y: 7)
+
+    match = described_class.new(character:, tile_npc:).call
+
+    expect(match.metadata).to include(
+      "encounter_count" => 2,
+      "encounter_experience_reward" => 35
+    )
+    expect(match.metadata.dig("combat_profile", "injected_attack_keys")).to eq(
+      %w[spirit_arrow mind_blast]
+    )
+    expect(match.metadata.dig("combat_profile", "injected_block_keys")).to eq(
+      %w[magic_shield rainbow_barrier crystal_sphere]
+    )
+  end
+
   it "returns the existing active fight on a duplicate start" do
     first_match = described_class.new(character:, tile_npc:).call
 

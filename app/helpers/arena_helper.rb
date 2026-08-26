@@ -69,6 +69,13 @@ module ArenaHelper
     current_user_arena_participation&.victory? || false
   end
 
+  def current_user_arena_result(match = @arena_match)
+    participation = current_user_arena_participation(match)
+    return "ended" unless participation
+
+    participation.result.in?(%w[victory defeat draw]) ? participation.result : "ended"
+  end
+
   # Format fight type for display with icon
   def fight_type_label(fight_type)
     config = FIGHT_TYPE_CONFIG[fight_type.to_sym]
@@ -391,7 +398,7 @@ module ArenaHelper
   def arena_attack_options(participation = current_user_arena_participation, combat_config = Game::Combat::ActionCatalog.config)
     profile = arena_combat_profile(participation)
 
-    (combat_config["attack_types"] || {}).each_with_object({}) do |(key, config), options|
+    Game::Combat::ActionCatalog.attack_options_for_profile(profile, combat_config).each_with_object({}) do |(key, config), options|
       option_config = config.deep_dup
       case key.to_s
       when "simple"
@@ -405,12 +412,7 @@ module ArenaHelper
 
   def arena_block_options(participation = current_user_arena_participation, combat_config = Game::Combat::ActionCatalog.config)
     profile = arena_combat_profile(participation)
-    allowed_tables = ["normal", "magic"]
-    allowed_tables << "shield" if profile["block_table"] == "shield"
-
-    (combat_config["block_types"] || {}).select do |_key, config|
-      allowed_tables.include?(config["block_table"].presence || "normal")
-    end
+    Game::Combat::ActionCatalog.block_options_for_profile(profile, combat_config)
   end
 
   def arena_timeout_claim_available?(match = @arena_match)
@@ -560,7 +562,9 @@ module ArenaHelper
       "simple_attack_cost" => seed,
       "aimed_attack_cost" => seed + Arena::CombatProfile::AIMED_ATTACK_SURCHARGE,
       "max_magic_mana" => 0,
-      "block_table" => "normal"
+      "block_table" => "normal",
+      "injected_attack_keys" => [],
+      "injected_block_keys" => []
     }
   end
 

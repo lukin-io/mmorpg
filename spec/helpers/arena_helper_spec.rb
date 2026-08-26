@@ -121,4 +121,63 @@ RSpec.describe ArenaHelper, type: :helper do
       end
     end
   end
+
+  describe "#arena_block_options" do
+    it "exposes only the participant's physical table by default" do
+      options = helper.arena_block_options(participation)
+
+      expect(options).to include("head_block", "torso_block", "legs_head_block")
+      expect(options).not_to include("shield_40_head_block", "magic_shield")
+    end
+
+    it "adds only source-injected magic blocks" do
+      arena_match.update!(
+        metadata: {
+          "combat_profile" => {
+            "injected_block_keys" => %w[magic_shield rainbow_barrier crystal_sphere]
+          }
+        }
+      )
+
+      expect(helper.arena_block_options(participation)).to include(
+        "magic_shield",
+        "rainbow_barrier",
+        "crystal_sphere"
+      )
+    end
+
+    it "uses one explicitly authored shield table instead of normal blocks" do
+      shield = create(:item_template,
+        name: "Arena Shield",
+        slot: "off_hand",
+        stat_modifiers: {"shield_block_table" => 70})
+      create(:inventory_item, inventory: character.inventory, item_template: shield, equipped: true)
+
+      options = helper.arena_block_options(participation)
+
+      expect(options).to include("shield_70_head_block", "shield_70_legs_head_stomach_block")
+      expect(options).not_to include("head_block", "shield_40_head_block", "shield_90_head_torso_stomach_block")
+    end
+  end
+
+
+  describe "#arena_attack_options" do
+    it "exposes physical attacks without inventing selector injections" do
+      expect(helper.arena_attack_options(participation).keys).to eq(%w[simple aimed])
+    end
+
+    it "adds attacks injected by the captured fight profile" do
+      arena_match.update!(
+        metadata: {
+          "combat_profile" => {
+            "injected_attack_keys" => %w[spirit_arrow mind_blast]
+          }
+        }
+      )
+
+      expect(helper.arena_attack_options(participation).keys).to eq(
+        %w[simple aimed spirit_arrow mind_blast]
+      )
+    end
+  end
 end

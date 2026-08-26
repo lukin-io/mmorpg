@@ -13,7 +13,7 @@ class ArenaMatchPolicy < ApplicationPolicy
     user.present?
   end
 
-  # Submit a combat action (attack, defend, skill, flee)
+  # Submit a complete combat turn or surrender intent.
   # Only participants can submit actions
   def action?
     return false unless user.present?
@@ -28,7 +28,6 @@ class ArenaMatchPolicy < ApplicationPolicy
 
   def finish?
     return false unless user.present?
-    return false unless record.completed?
 
     record.arena_participations.exists?(user: user)
   end

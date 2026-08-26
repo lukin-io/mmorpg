@@ -22,6 +22,15 @@ outpost_surroundings:
         source_map: "m_1001_999"
         source_coordinates: [1001, 999]
         encounter_count: 2
+        encounter_experience_reward: 35
+        combat_profile:
+          injected_attack_keys:
+            - spirit_arrow
+            - mind_blast
+          injected_block_keys:
+            - magic_shield
+            - rainbow_barrier
+            - crystal_sphere
         avatar_image: "zombie.png"
       loot:
         - kind: item

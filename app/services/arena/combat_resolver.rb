@@ -193,8 +193,6 @@ module Arena
       chance -= stat(attacker, :accuracy) * 0.2
       chance -= stat(attacker, :dexterity) * 0.1
       chance -= [covered_parts.size - 1, 0].max * 4
-      chance += 10 if block["block_table"].to_s == "shield"
-      chance += 20 if block["block_table"].to_s == "magic"
       chance = chance.clamp(5.0, 95.0)
 
       roll = rng.rand(100)

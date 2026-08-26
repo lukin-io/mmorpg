@@ -12,10 +12,11 @@ module Arena
   #   broadcaster.broadcast_action(action)
   #
   class CombatBroadcaster
-    attr_reader :match
+    attr_reader :match, :publisher
 
-    def initialize(match)
+    def initialize(match, publisher: Arena::RealtimePublisher.new)
       @match = match
+      @publisher = publisher
     end
 
     # Broadcast countdown to match start
@@ -287,12 +288,29 @@ module Arena
       })
     end
 
+    # Ask connected clients to reconcile their presentation from the
+    # authoritative server-rendered fight state after a committed transition.
+    def broadcast_state_refresh(reason:)
+      broadcast({
+        type: "state_refresh",
+        reason: reason.to_s,
+        status: match.reload.status,
+        current_turn_number: match.current_turn_number
+      })
+    end
+
+    # Typed Arena producers that already own their payload shape still use the
+    # same resilient delivery boundary.
+    def broadcast_event(payload)
+      broadcast(payload)
+    end
+
     private
 
     def broadcast(data)
-      ActionCable.server.broadcast(
-        match.broadcast_channel,
-        data.merge(match_id: match.id)
+      publisher.publish(
+        channel: match.broadcast_channel,
+        payload: data.merge(match_id: match.id)
       )
     end
 

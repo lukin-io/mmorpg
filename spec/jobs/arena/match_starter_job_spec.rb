@@ -69,6 +69,15 @@ RSpec.describe Arena::MatchStarterJob, type: :job do
         end
       end
 
+      it "opens the first authoritative round at one" do
+        expect(arena_match.current_turn_number).to eq(0)
+
+        described_class.new.perform(arena_match.id)
+
+        expect(arena_match.reload.current_turn_number).to eq(1)
+        expect(arena_match.current_turn_started_at).to be_present
+      end
+
       it "sets all participants to in_combat" do
         expect(character1.in_combat).to be false
         expect(character2.in_combat).to be false
@@ -91,9 +100,29 @@ RSpec.describe Arena::MatchStarterJob, type: :job do
       it "broadcasts match start via CombatBroadcaster" do
         broadcaster = instance_double(Arena::CombatBroadcaster)
         allow(Arena::CombatBroadcaster).to receive(:new).with(arena_match).and_return(broadcaster)
-        expect(broadcaster).to receive(:broadcast_match_start)
+        expect(broadcaster).to receive(:broadcast_match_started)
+        expect(broadcaster).to receive(:broadcast_state_refresh).with(reason: :match_started)
 
         described_class.new.perform(arena_match.id)
+      end
+
+      it "closes both matched applications when combat starts" do
+        first_application = create(:arena_application,
+          arena_match:,
+          arena_room:,
+          applicant: character1,
+          status: :matched)
+        second_application = create(:arena_application,
+          arena_match:,
+          arena_room:,
+          applicant: character2,
+          status: :matched)
+
+        described_class.new.perform(arena_match.id)
+
+        expect(first_application.reload).to be_started
+        expect(second_application.reload).to be_started
+        expect(ArenaApplication.active.where(id: [first_application.id, second_application.id])).to be_empty
       end
     end
 
@@ -171,7 +200,8 @@ RSpec.describe Arena::MatchStarterJob, type: :job do
         # Mock broadcaster to avoid nil character name issue in NPC participations
         broadcaster = instance_double(Arena::CombatBroadcaster)
         allow(Arena::CombatBroadcaster).to receive(:new).and_return(broadcaster)
-        allow(broadcaster).to receive(:broadcast_match_start)
+        allow(broadcaster).to receive(:broadcast_match_started)
+        allow(broadcaster).to receive(:broadcast_state_refresh)
       end
 
       it "transitions the match to live" do
@@ -189,14 +219,16 @@ RSpec.describe Arena::MatchStarterJob, type: :job do
 
   describe "job scheduling via ApplicationHandler" do
     let(:handler) { Arena::ApplicationHandler.new }
+    let(:available_applicant) { create(:character, user: create(:user), level: 10, current_hp: 100, max_hp: 100) }
     let(:other_character) { create(:character, user: create(:user), level: 10, current_hp: 100, max_hp: 100) }
     before do
+      create(:character_position, character: available_applicant)
       create(:character_position, character: other_character)
     end
 
     it "schedules MatchStarterJob when application is accepted" do
       application = create(:arena_application,
-        applicant: character1,
+        applicant: available_applicant,
         arena_room: arena_room,
         status: :open,
         fight_type: :duel,
@@ -210,7 +242,7 @@ RSpec.describe Arena::MatchStarterJob, type: :job do
     it "schedules job with fixed 10 second countdown (not based on turn timeout)" do
       # Turn timeout (240s) is separate from match start countdown (10s)
       application = create(:arena_application,
-        applicant: character1,
+        applicant: available_applicant,
         arena_room: arena_room,
         status: :open,
         fight_type: :duel,

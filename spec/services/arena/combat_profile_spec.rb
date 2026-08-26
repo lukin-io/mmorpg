@@ -65,14 +65,46 @@ RSpec.describe Arena::CombatProfile do
     expect(profile["aimed_attack_cost"]).to eq(65)
   end
 
-  it "switches to shield block table when a shield is equipped" do
+  it "does not infer a shield selector tier from equipment family alone" do
     shield = create(:item_template,
       name: "Round Shield",
       slot: "off_hand",
       stat_modifiers: {"defense" => 8, "weapon_family" => "shield"})
     create(:inventory_item, inventory: character.inventory, item_template: shield, equipped: true)
 
-    expect(described_class.for_participation(participation)["block_table"]).to eq("shield")
+    expect(described_class.for_participation(participation)["block_table"]).to eq("normal")
+  end
+
+  it "uses the exact shield selector table authored by the equipped item" do
+    shield = create(:item_template,
+      name: "Round Shield",
+      slot: "off_hand",
+      stat_modifiers: {"defense" => 8, "weapon_family" => "shield", "shield_block_table" => 90})
+    create(:inventory_item, inventory: character.inventory, item_template: shield, equipped: true)
+
+    expect(described_class.for_participation(participation)["block_table"]).to eq("shield_90")
+  end
+
+  it "normalizes the numeric shield selector sent by fight_pm" do
+    participation.update!(metadata: {"combat_profile" => {"block_table" => 70}})
+
+    expect(described_class.for_participation(participation)["block_table"]).to eq("shield_70")
+  end
+
+  it "retains only explicitly injected magic blocks from profile metadata" do
+    participation.update!(
+      metadata: {
+        "combat_profile" => {
+          "injected_attack_keys" => %w[spirit_arrow simple invented_attack],
+          "injected_block_keys" => %w[magic_shield torso_block invented_block]
+        }
+      }
+    )
+
+    profile = described_class.for_participation(participation)
+
+    expect(profile["injected_attack_keys"]).to eq(["spirit_arrow"])
+    expect(profile["injected_block_keys"]).to eq(["magic_shield"])
   end
 
   it "lets NPCs inherit captured fight AP without level-derived physical attack cost" do

@@ -151,6 +151,7 @@ module Arena
         description: npc_config.dig(:metadata, :description),
         avatar: npc_config.dig(:metadata, :avatar),
         avatar_image: npc_config.dig(:metadata, :avatar_image),
+        combat_profile: npc_config.dig(:metadata, :combat_profile),
         stats: npc_config.dig(:metadata, :stats)
       }.compact
     end
@@ -173,9 +174,9 @@ module Arena
     end
 
     def broadcast_new_application(application)
-      ActionCable.server.broadcast(
-        "arena:room:#{application.arena_room_id}",
-        {
+      Arena::RealtimePublisher.new.publish(
+        channel: "arena:room:#{application.arena_room_id}",
+        payload: {
           type: "new_application",
           application: application_payload(application)
         }
@@ -192,6 +193,7 @@ module Arena
         timeout_seconds: application.timeout_seconds,
         trauma_percent: application.trauma_percent,
         expires_at: application.expires_at&.iso8601,
+        expires_in: application.time_until_expiration,
         is_npc: true,
         npc_avatar: application.npc_template&.avatar_emoji
       }

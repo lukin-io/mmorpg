@@ -149,6 +149,15 @@ RSpec.describe "ArenaMatches", type: :request do
         expect(response.body).to include("Live")
       end
     end
+
+    it "recovers a due pending start when a participant reconnects" do
+      pending_match.update!(metadata: {"starts_at" => 1.second.ago.iso8601})
+
+      get arena_match_path(pending_match)
+
+      expect(response).to have_http_status(:success)
+      expect(pending_match.reload).to be_live
+    end
   end
 
   describe "public fight-link access" do
@@ -186,13 +195,82 @@ RSpec.describe "ArenaMatches", type: :request do
     end
 
     context "when user is participant" do
-      it "accepts combat action" do
+      it "accepts a complete combat turn" do
         post "/arena_matches/#{live_match.id}/action",
-          params: {action_type: "attack", target_id: other_character.id, body_part: "torso"},
+          params: {
+            action_type: "turn",
+            target_id: other_character.id,
+            attacks: [{action_key: "simple", body_part: "torso"}],
+            blocks: [{action_key: "torso_block", body_parts: ["torso"]}]
+          },
           as: :json
 
         expect(response).to have_http_status(:success)
-          .or have_http_status(:unprocessable_entity)
+        expect(live_match.arena_participations.find_by(user: user).reload.metadata["pending_turn"]).to be_present
+      end
+
+      it "accepts the indexed parameter shape submitted by the fight form" do
+        post action_arena_match_path(live_match),
+          params: {
+            action_type: "turn",
+            target_id: other_character.id,
+            attacks: {"0" => {action_key: "simple", body_part: "torso"}},
+            blocks: {"0" => {action_key: "torso_block", body_parts: {"0" => "torso"}}}
+          }
+
+        expect(response).to have_http_status(:see_other)
+        pending_turn = live_match.arena_participations.find_by(user: user).reload.metadata.fetch("pending_turn")
+        expect(pending_turn.fetch("attacks")).to eq([{"action_key" => "simple", "body_part" => "torso"}])
+        expect(pending_turn.fetch("blocks")).to eq([{"action_key" => "torso_block", "body_parts" => ["torso"]}])
+      end
+
+      it "re-renders authoritative waiting state after a Turbo turn" do
+        post action_arena_match_path(live_match),
+          params: {
+            action_type: "turn",
+            target_id: other_character.id,
+            attacks: [{action_key: "simple", body_part: "torso"}],
+            blocks: [{action_key: "torso_block", body_parts: ["torso"]}]
+          },
+          headers: {"Accept" => "text/vnd.turbo-stream.html"}
+
+        expect(response).to have_http_status(:see_other)
+        expect(response).to redirect_to(arena_match_path(live_match))
+      end
+
+      it "rejects forged direct attack, defend, and unsupported flee intents without mutating combat" do
+        initial_hp = other_character.current_hp
+        initial_log_count = live_match.combat_log_entries.count
+
+        %w[attack defend flee].each do |action_type|
+          post action_arena_match_path(live_match),
+            params: {action_type:, target_id: other_character.id, body_part: "torso", block_parts: ["torso"]},
+            as: :json
+
+          expect(response).to have_http_status(:unprocessable_entity)
+          expect(response.parsed_body["error"]).to eq("Unsupported player combat intent")
+        end
+
+        expect(other_character.reload.current_hp).to eq(initial_hp)
+        expect(live_match.combat_log_entries.count).to eq(initial_log_count)
+      end
+
+      it "rejects an allied target before storing a pending turn" do
+        initial_log_count = live_match.combat_log_entries.count
+
+        post action_arena_match_path(live_match),
+          params: {
+            action_type: "turn",
+            target_id: character.id,
+            attacks: [{action_key: "simple", body_part: "torso"}],
+            blocks: [{action_key: "torso_block", body_parts: ["torso"]}]
+          },
+          as: :json
+
+        expect(response).to have_http_status(:unprocessable_entity)
+        expect(response.parsed_body["error"]).to eq("Cannot attack an ally")
+        expect(live_match.arena_participations.find_by(user: user).reload.metadata["pending_turn"]).to be_blank
+        expect(live_match.combat_log_entries.count).to eq(initial_log_count)
       end
 
       it "records surrender through the shared combat action" do
@@ -230,12 +308,23 @@ RSpec.describe "ArenaMatches", type: :request do
         result = Arena::CombatProcessor::Result.new(true, nil, {damage: 1})
 
         expect(Arena::CombatProcessor).to receive(:new).with(live_match).and_return(processor)
-        expect(processor).to receive(:process_action)
-          .with(character, :attack, target: target)
+        expect(processor).to receive(:process_player_intent)
+          .with(
+            character,
+            "turn",
+            target: target,
+            attacks: [hash_including("action_key" => "simple", "body_part" => "torso")],
+            blocks: [hash_including("action_key" => "torso_block", "body_parts" => ["torso"])]
+          )
           .and_return(result)
 
         post action_arena_match_path(live_match),
-          params: {action_type: "attack", target_id: "npc-participation-#{target.id}"},
+          params: {
+            action_type: "turn",
+            target_id: "npc-participation-#{target.id}",
+            attacks: [{action_key: "simple", body_part: "torso"}],
+            blocks: [{action_key: "torso_block", body_parts: ["torso"]}]
+          },
           as: :json
 
         expect(response).to have_http_status(:success)
@@ -243,18 +332,33 @@ RSpec.describe "ArenaMatches", type: :request do
     end
 
     context "when user is not participant" do
-      before { sign_out user }
+      let(:outsider_user) { create(:user) }
+      let(:outsider_character) { create(:character, user: outsider_user, level: 10) }
 
-      it "rejects unauthorized action" do
-        sign_in other_user
+      before do
+        create(:character_position, character: outsider_character)
+        sign_out user
+        sign_in outsider_user
+      end
 
-        # Sign in as user who is participant but on team b, trying to act on team a's turn
+      it "rejects the mutation and leaves authoritative fight state unchanged" do
+        initial_hp = [character.current_hp, other_character.current_hp]
+        initial_log_count = live_match.combat_log_entries.count
+
         post "/arena_matches/#{live_match.id}/action",
-          params: {action_type: "attack", target_id: character.id},
+          params: {
+            action_type: "turn",
+            target_id: other_character.id,
+            attacks: [{action_key: "simple", body_part: "torso"}],
+            blocks: [{action_key: "torso_block", body_parts: ["torso"]}]
+          },
           as: :json
 
-        # Should either succeed (if team B can act) or fail authorization
-        expect(response.status).to be_in([200, 401, 403, 422])
+        expect(response).to have_http_status(:forbidden)
+        expect(response.parsed_body).to eq("error" => "forbidden")
+        expect([character.reload.current_hp, other_character.reload.current_hp]).to eq(initial_hp)
+        expect(live_match.arena_participations.pluck(:metadata)).to all(satisfy { |metadata| metadata.exclude?("pending_turn") })
+        expect(live_match.combat_log_entries.count).to eq(initial_log_count)
       end
     end
 
@@ -263,7 +367,7 @@ RSpec.describe "ArenaMatches", type: :request do
 
       it "requires authentication" do
         post "/arena_matches/#{live_match.id}/action",
-          params: {action_type: "attack"},
+          params: {action_type: "turn"},
           as: :json
 
         expect(response).to have_http_status(:unauthorized)
@@ -276,7 +380,7 @@ RSpec.describe "ArenaMatches", type: :request do
 
       it "rejects action on completed match" do
         post "/arena_matches/#{live_match.id}/action",
-          params: {action_type: "attack"},
+          params: {action_type: "turn"},
           as: :json
 
         expect(response).to have_http_status(:unprocessable_entity)
@@ -287,27 +391,14 @@ RSpec.describe "ArenaMatches", type: :request do
 
   describe "POST /arena_matches/:id/claim_timeout" do
     let!(:live_match) do
-      match = create(:arena_match,
+      match = create(:arena_match, :timeout_claimable,
         arena_room: arena_room,
-        status: :live,
-        started_at: Time.current,
-        current_turn_started_at: 6.minutes.ago,
-        current_turn_number: 1,
-        turn_timeout_seconds: 300)
-      create(:arena_participation,
+        match_type: :duel)
+      create(:arena_participation, :waiting_for_opponent,
         arena_match: match,
         character: character,
         user: user,
-        team: "a",
-        metadata: {
-          "pending_turn" => {
-            "turn_number" => 1,
-            "attacks" => [{"action_key" => "simple", "body_part" => "torso"}],
-            "blocks" => [{"action_key" => "torso_block", "body_parts" => ["torso"]}],
-            "skills" => [],
-            "total_ap" => 75
-          }
-        })
+        team: "a")
       create(:arena_participation,
         arena_match: match,
         character: other_character,
@@ -324,6 +415,48 @@ RSpec.describe "ArenaMatches", type: :request do
       expect(response).to have_http_status(:success)
       expect(live_match.reload.winning_team).to eq("a")
       expect(live_match).to be_completed
+    end
+
+    it "records an explicit draw without inferring a higher-HP winner" do
+      character.update!(current_hp: 1)
+      other_character.update!(current_hp: other_character.max_hp)
+
+      post claim_timeout_arena_match_path(live_match),
+        params: {mode: "draw"},
+        as: :json
+
+      expect(response).to have_http_status(:success)
+      expect(live_match.reload).to be_completed
+      expect(live_match.winning_team).to be_nil
+      expect(live_match.arena_participations.reload.map(&:result)).to all(eq("draw"))
+    end
+
+    it "rejects a claim before the timeout boundary without changing the match" do
+      live_match.update!(current_turn_started_at: 299.seconds.ago)
+
+      post claim_timeout_arena_match_path(live_match),
+        params: {mode: "victory"},
+        as: :json
+
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(response.parsed_body["error"]).to eq("Turn timer has not expired yet")
+      expect(live_match.reload).to be_live
+      expect(live_match.winning_team).to be_nil
+    end
+
+    it "rejects a non-participant without consuming the waiting player's claim" do
+      outsider_user = create(:user)
+      create(:character, :with_position, user: outsider_user)
+      sign_out user
+      sign_in outsider_user
+
+      post claim_timeout_arena_match_path(live_match),
+        params: {mode: "victory"},
+        as: :json
+
+      expect(response).to have_http_status(:forbidden)
+      expect(live_match.reload).to be_live
+      expect(live_match.arena_participations.find_by(user: user).metadata["pending_turn"]).to be_present
     end
   end
 
@@ -398,10 +531,60 @@ RSpec.describe "ArenaMatches", type: :request do
 
       post finish_arena_match_path(completed_match)
 
+      expect(response).to have_http_status(:see_other)
       expect(response).to redirect_to(arena_index_path)
       participation = completed_match.arena_participations.find_by(user: user)
       expect(participation.reload.metadata["finished_at"]).to be_present
       expect(character.reload).not_to be_in_combat
+    end
+
+    it "is idempotent across repeated full-page submissions" do
+      character.update!(in_combat: true)
+
+      post finish_arena_match_path(completed_match)
+      participation = completed_match.arena_participations.find_by(user: user)
+      first_finished_at = participation.reload.metadata.fetch("finished_at")
+
+      post finish_arena_match_path(completed_match)
+
+      expect(response).to have_http_status(:see_other)
+      expect(participation.reload.metadata.fetch("finished_at")).to eq(first_finished_at)
+      expect(character.reload).not_to be_in_combat
+    end
+
+    it "rejects a non-participant without clearing combat or finishing a result" do
+      outsider_user = create(:user)
+      outsider_character = create(:character, :with_position, user: outsider_user, in_combat: true)
+      participant = completed_match.arena_participations.find_by(user: user)
+      sign_out user
+      sign_in outsider_user
+
+      post finish_arena_match_path(completed_match), as: :json
+
+      expect(response).to have_http_status(:forbidden)
+      expect(participant.reload.metadata["finished_at"]).to be_blank
+      expect(outsider_character.reload).to be_in_combat
+    end
+
+    it "rejects premature finish and preserves the participant's combat state" do
+      completed_match.update!(status: :live, ended_at: nil)
+      character.update!(in_combat: true)
+
+      post finish_arena_match_path(completed_match), as: :json
+
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(response.parsed_body["error"]).to eq("The fight is still active.")
+      expect(completed_match.arena_participations.find_by(user: user).reload.metadata["finished_at"]).to be_blank
+      expect(character.reload).to be_in_combat
+    end
+
+    it "requires authentication" do
+      sign_out user
+
+      post finish_arena_match_path(completed_match)
+
+      expect(response).to redirect_to(new_user_session_path)
+      expect(completed_match.arena_participations.find_by(user: user).reload.metadata["finished_at"]).to be_blank
     end
 
 

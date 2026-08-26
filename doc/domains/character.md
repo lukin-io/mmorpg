@@ -24,7 +24,9 @@ Fully Implemented for the bounded progression contract. Uncaptured high-level
 tables, formulas, prerequisites, resets, and skill effects remain outside that
 boundary. Combat may project the actual persisted XP award into the shell
 timeline; Character Progression remains authoritative for experience and level
-grants.
+grants. Effective Extra Action Points contributes one-for-one to a new combat
+profile, and source perks `7` and `15` supply the bounded More Strength and
+Careful Fighter effects.
 
 ## Important responsible implementation files
 
@@ -37,5 +39,5 @@ Section 16 of `doc/features/character_progression.md` is exhaustive.
 
 ## Evidence and implementation gaps
 
-Capture exact high-level progression and remaining effect formulas before
-extending the bounded contract.
+Capture exact high-level progression, perk prerequisites/reset behavior, and
+remaining skill-effect formulas before extending the bounded contract.
