@@ -129,12 +129,9 @@ module DocumentationArchitectureAudit
         end
         require_content(summary_path, summary_content, "Domain: #{domain}")
 
-        unless observations_path.directory?
-          errors << "#{relative_path(observations_path)}: observations directory is required"
-          next
+        if observations_path.directory?
+          observations_path.glob("*.md").sort.each { |path| read_file(path) }
         end
-
-        observations_path.glob("*.md").sort.each { |path| read_file(path) }
       end
     end
 

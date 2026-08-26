@@ -56,5 +56,6 @@ summaries.
 Every canonical observation and source summary includes a clearly separated
 Local Implementation Linkage section. It may list local status, parity IDs,
 handbooks, responsive adaptation context, and responsible files. That section
-is local context, not a Neverlands fact; the exhaustive current file inventory
-belongs to section 16 of the responsible implementation handbook.
+is local context, not a Neverlands fact; canonical file ownership belongs to
+the responsible-files section of the implementation handbook (section 7 in
+`feature-v3`, or the corresponding legacy section).

@@ -21,6 +21,9 @@ Neverlands observation
 ```
 
 Every registered domain also has a navigation page under `doc/domains/`.
+Its source summary is required. A local `observations/` directory is created
+only with the first domain-local record; summaries may index source evidence
+canonically owned by another domain.
 
 ## Choose the correct template
 

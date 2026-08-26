@@ -35,7 +35,8 @@
 ## Responsible implementation files
 
 [List important current paths, or write `NOT_IMPLEMENTED`. Link to the
-handbook's exhaustive section 16 inventory.]
+handbook's canonical responsible-files section: section 7 in `feature-v3`, or
+the corresponding section in a legacy handbook.]
 
 ## Operations and extension
 

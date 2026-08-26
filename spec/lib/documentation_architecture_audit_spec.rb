@@ -68,12 +68,15 @@ RSpec.describe DocumentationArchitectureAudit::Auditor do
     )
   end
 
-  it "reports missing observation directories" do
+  it "allows a source summary to index evidence without a local observations directory" do
+    write(
+      "doc/design/reference/world/README.md",
+      "Domain: world\nEvidence: `doc/design/reference/shared_observation.md`\n"
+    )
+    write("doc/design/reference/shared_observation.md", "# Shared observation\n")
     FileUtils.remove_dir(root.join("doc/design/reference/world/observations"))
 
-    expect(audit.errors).to include(
-      "doc/design/reference/world/observations: observations directory is required"
-    )
+    expect(audit).to be_success
   end
 
   it "validates EVIDENCE_NEEDED placeholder markers" do

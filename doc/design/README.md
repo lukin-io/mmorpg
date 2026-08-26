@@ -106,8 +106,9 @@ test files.
 Observation and source-summary documents keep a bounded **Local Implementation
 Linkage** section with the current handbook and important responsible files for
 context. That section must say it is local context, not source evidence;
-section 16 of the implementation handbook remains the exhaustive inventory.
-Portable normalized-design sections should avoid exhaustive app file maps.
+the implementation handbook's responsible-files section remains canonical
+(section 7 in `feature-v3`, or the corresponding legacy section). Portable
+normalized-design sections should avoid exhaustive app file maps.
 
 When adding live-analysis notes, keep reusable mechanics in `features/` or
 `areas/`, and raw observation details in `reference/`. Do not store live session

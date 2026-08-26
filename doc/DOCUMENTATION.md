@@ -59,7 +59,7 @@ doc/
 │       ├── README.md
 │       └── <domain>/
 │           ├── README.md
-│           └── observations/
+│           └── observations/  # only when domain-local records exist
 ├── features/
 │   ├── README.md
 │   ├── FEATURE_TEMPLATE.md
@@ -248,7 +248,8 @@ For a new domain:
 
 1. register it in `doc/domains/README.md`;
 2. create its domain page from `doc/templates/DOMAIN_INDEX_TEMPLATE.md`;
-3. create its source summary and observations directory;
+3. create its source summary; add `observations/` with the first domain-local
+   observation rather than committing an empty directory;
 4. link existing design or add a `DESIGN_NEEDED` placeholder;
 5. add a bounded parity ID;
 6. link an implementation handbook or add a `NOT_IMPLEMENTED` gap;
@@ -269,8 +270,9 @@ bin/verify docs
 
 The architecture audit checks required entry points, unique domain registry
 ownership, domain-to-evidence/feature routing, canonical compatibility aliases,
-evidence/design placeholder markers, and resolvable repository/Markdown paths
-in audited documents.
+evidence/design placeholder markers, optional domain-local observations when
+present, and resolvable repository/Markdown paths in audited documents. A
+source summary may canonically index an observation stored under another domain.
 
 The feature audit checks metadata, recognized status/template, lean canonical
 section order, unresolved placeholders, duplicate feature titles, responsible

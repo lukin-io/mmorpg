@@ -54,7 +54,8 @@ it. Never silently rewrite historical evidence.]
 - Local status: [Fully Implemented, Partially Implemented, or NOT_IMPLEMENTED]
 - Parity IDs: [IDs]
 - Implementation handbook: `doc/features/[feature].md`
-- Canonical exhaustive file inventory: section 16 of that handbook
+- Canonical responsible-file ownership: section 7 for `feature-v3`, or the
+  corresponding responsible-files section in a legacy handbook
 
 ### Responsible implementation files
 
