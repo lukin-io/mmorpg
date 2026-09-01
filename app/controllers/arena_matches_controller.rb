@@ -57,6 +57,7 @@ class ArenaMatchesController < ApplicationController
     action_params[:attacks] = turn_action_array(:attacks) if params[:attacks].present?
     action_params[:blocks] = turn_action_array(:blocks) if params[:blocks].present?
     action_params[:skills] = turn_action_array(:skills) if params[:skills].present?
+    action_params[:expected_turn_number] = params[:turn_number] if params[:turn_number].present?
 
     result = processor.process_player_intent(
       current_character,

@@ -9,6 +9,7 @@ export default class extends Controller {
   connect() {
     this.boundCenter = this.center.bind(this)
     window.addEventListener("resize", this.boundCenter)
+    this.center()
     this.frameId = requestAnimationFrame(this.boundCenter)
   }
 
@@ -22,5 +23,6 @@ export default class extends Controller {
 
     const viewport = this.viewportTarget
     viewport.scrollLeft = Math.max(0, (viewport.scrollWidth - viewport.clientWidth) / 2)
+    viewport.dataset.nlLocationSceneCentered = "true"
   }
 }

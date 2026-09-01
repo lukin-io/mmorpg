@@ -821,6 +821,9 @@
 
 .fighter-card--npc { border-left: 1px solid #d8cdaf; }
 .fighter-card--defeated { opacity: 0.7; }
+.fighter-card--selected-target {
+  box-shadow: inset 0 0 0 2px #1768ac;
+}
 
 .fighter-avatar {
   position: relative;
@@ -1487,6 +1490,31 @@ select.nl-fight-select,
 .nl-fight-target-name { font-weight: 700; }
 .nl-fight-target-name--opponent { color: #1768ac; }
 .nl-fight-target-name--self { color: #18852e; }
+
+.nl-fight-result-table {
+  margin: 8px auto 12px;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.nl-fight-result-table th,
+.nl-fight-result-table td {
+  min-width: 72px;
+  padding: 3px 7px;
+  border: 1px solid #b8b8b8;
+  text-align: center;
+}
+
+.nl-fight-result-table th:first-child,
+.nl-fight-result-table td:first-child {
+  min-width: 140px;
+  text-align: left;
+}
+
+.nl-fight-result-table sup {
+  margin-left: 1px;
+  font-size: 9px;
+}
 
 @media (max-width: 940px) {
   .arena-match-page { min-width: 0; }

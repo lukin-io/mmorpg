@@ -187,6 +187,30 @@ RSpec.describe Arena::CombatProcessor do
         expect(entry.tags).to include("arena")
         expect(arena_match.reload.metadata).not_to have_key("combat_log")
       end
+
+      it "logs raw overkill but caps shared PvP result damage at HP removed" do
+        character2.update!(current_hp: 1)
+        allow(processor).to receive(:resolve_physical_attack).and_return(
+          outcome: :hit,
+          damage: 50,
+          critical: false,
+          block_attempted: false
+        )
+
+        result = processor.process_action(
+          character1,
+          :attack,
+          target: character2,
+          attack_type: :simple,
+          body_part: "torso"
+        )
+
+        expect(result).to be_success
+        expect(arena_match.combat_log_entries.where(log_type: "damage").last.message).to include("for -50 [0/100]")
+        expect(participation1.reload.metadata["damage_dealt"]).to eq(1)
+        expect(participation1.metadata["damage_hits"]).to eq(1)
+        expect(participation2.reload.metadata["damage_taken"]).to eq(1)
+      end
     end
 
     context "with defend action" do
@@ -340,6 +364,7 @@ RSpec.describe Arena::CombatProcessor do
       expect(pve_processor.end_match("a")).to be(false)
 
       expect(character1.reload.experience).to eq(35)
+      expect(character1.metadata["npc_wins"]).to eq(1)
       expect(item.reload.current_durability).to eq(9)
       expect(arena_match.reload.metadata["rewards_processed_at"]).to be_present
       expect(arena_match.metadata.dig("rewards", "experience", "amount")).to eq(35)
@@ -461,6 +486,23 @@ RSpec.describe Arena::CombatProcessor do
       expect(captured_processor).to have_received(:process_npc_defend).twice
     end
 
+    it "hands default and stale pending targets to the next living NPC" do
+      surviving_npc = create(:arena_participation, :npc,
+        arena_match: npc_match,
+        npc_template: npc_template,
+        team: "b",
+        metadata: {"current_hp" => 80, "max_hp" => 105})
+      npc_participation.update!(metadata: {"current_hp" => 0, "max_hp" => 105})
+      captured_processor = deterministic_arena_processor(npc_match)
+
+      expect(captured_processor.send(:find_target_participation, character1, nil)).to eq(surviving_npc)
+      expect(captured_processor.send(
+        :target_from_pending_turn,
+        npc_player_participation,
+        {"target_participation_id" => npc_participation.id}
+      )).to eq(surviving_npc)
+    end
+
     it "logs the automatic loot check after an NPC defeat" do
       npc_participation.update!(metadata: {"current_hp" => 1, "max_hp" => 105})
       captured_processor = deterministic_arena_processor(npc_match, 0, 99, 99, 5)
@@ -489,12 +531,42 @@ RSpec.describe Arena::CombatProcessor do
         "item_name" => "Wood Chips",
         "quantity" => 1
       )
+      expect(npc_player_participation.metadata["damage_dealt"]).to eq(1)
+      expect(npc_player_participation.metadata["damage_hits"]).to eq(1)
+      expect(npc_participation.reload.metadata["damage_taken"]).to eq(1)
       item_event = GameEvent.find_by!(event_type: :item_found, recipient: user1)
       expect(item_event.payload).to include(
         "item_name" => "Wood Chips",
         "quantity" => 1,
         "npc_participation_id" => npc_participation.id
       )
+    end
+
+    it "caps an NPC overkill statistic at the player's remaining HP" do
+      character1.update!(current_hp: 1)
+      captured_processor = deterministic_arena_processor(npc_match)
+      allow(captured_processor).to receive(:resolve_physical_attack).and_return(
+        outcome: :hit,
+        damage: 50,
+        critical: false,
+        block_attempted: false
+      )
+      allow(captured_processor.broadcaster).to receive(:broadcast_vitals_update)
+      allow(captured_processor.broadcaster).to receive(:broadcast_combat_action)
+      allow(captured_processor.broadcaster).to receive(:broadcast_match_ended)
+
+      result = captured_processor.send(
+        :process_npc_attack,
+        npc_participation,
+        character1,
+        {body_part: "torso", attack_type: "simple"}
+      )
+
+      expect(result).to be_success
+      expect(npc_participation.reload.metadata["damage_dealt"]).to eq(1)
+      expect(npc_participation.metadata["damage_hits"]).to eq(1)
+      expect(npc_player_participation.reload.metadata["damage_taken"]).to eq(1)
+      expect(npc_match.combat_log_entries.where(log_type: "damage").last.message).to include("for 50 damage")
     end
 
     it "deposits and reports an NV loot result after an NPC defeat" do
@@ -815,6 +887,24 @@ RSpec.describe Arena::CombatProcessor do
         expect(participation1.metadata["current_ap"]).to eq(character1_ap_limit)
         expect(participation2.metadata["current_ap"]).to eq(character2_ap_limit)
         expect(processor.broadcaster).to have_received(:broadcast_state_refresh).with(reason: :round_resolved)
+      end
+
+      it "rejects a stale posted round before storing a team/PvP turn" do
+        arena_match.update!(current_turn_number: 2, current_turn_started_at: Time.current)
+
+        result = processor.process_action(
+          character1,
+          :turn,
+          target: character2,
+          attacks: [{action_key: "simple", body_part: "torso"}],
+          blocks: [{action_key: "torso_block", body_parts: ["torso"]}],
+          expected_turn_number: 1
+        )
+
+        expect(result).not_to be_success
+        expect(result.error).to eq("Fight state changed; refresh and submit the current turn")
+        expect(participation1.reload.metadata["pending_turn"]).to be_blank
+        expect(arena_match.reload.current_turn_number).to eq(2)
       end
 
       it "uses captured Neverlands fight profile values when present" do

@@ -11,7 +11,7 @@ class PublicFightLogsController < ApplicationController
 
   def show
     @view_mode = (params[:stat] == "1") ? :statistics : :log
-    @page = (params[:p] || 1).to_i
+    @page = [(params[:p] || 1).to_i, 1].max
     @per_page = 50
     @statistics = Combat::FightLogStatistics.new(@arena_match)
     @participants = @arena_match.arena_participations.includes(:character, :npc_template)

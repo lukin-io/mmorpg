@@ -12,7 +12,8 @@ export default class extends Controller {
     "teamA", "teamB", "resultOverlay",
     "blockSelect", "turnCostValue", "turnPenalty", "turnOverBudget",
     "apBar", "apValue", "fighterA", "fighterB",
-    "attackSelect", "magicSlot", "turnForm", "turnFields"
+    "attackSelect", "magicSlot", "turnForm", "turnFields",
+    "targetName", "targetVitals"
   ]
 
   static values = {
@@ -23,10 +24,12 @@ export default class extends Controller {
     status: String,
     turnNumber: Number,
     waiting: Boolean,
+    selectedTargetId: String,
     startsAt: String
   }
 
   connect() {
+    this.syncSelectedTarget()
     this.subscribeToMatch()
     this.updateTurnCost()
     this.schedulePendingStartRefresh()
@@ -279,6 +282,8 @@ export default class extends Controller {
     if (hpText) {
       hpText.textContent = `${data.current_hp}/${data.max_hp}`
     }
+    participant.dataset.currentHp = data.current_hp
+    participant.dataset.maxHp = data.max_hp
 
     const hpPercent = participant.querySelector(".fighter-hp-percent")
     if (hpPercent) {
@@ -289,7 +294,12 @@ export default class extends Controller {
     if (data.is_dead) {
       participant.classList.add("arena-participant--dead")
       participant.classList.add("fighter-card--defeated")
+    } else {
+      participant.classList.remove("arena-participant--dead")
+      participant.classList.remove("fighter-card--defeated")
     }
+
+    this.syncSelectedTarget()
   }
 
   updateNpcHP(data) {
@@ -683,7 +693,7 @@ export default class extends Controller {
       return
     }
 
-    const targetId = this.getFirstEnemyId()
+    const targetId = this.getSelectedEnemyId()
 
     let attacks = []
     if (this.hasAttackSelectTarget) {
@@ -714,6 +724,7 @@ export default class extends Controller {
 
     const data = {
       action_type: "turn",
+      turn_number: this.turnNumberValue,
       target_id: targetId,
       attacks: attacks,
       blocks: blocks,
@@ -728,6 +739,7 @@ export default class extends Controller {
   populateTurnForm(data) {
     this.turnFieldsTarget.replaceChildren()
     this.appendTurnField("action_type", data.action_type)
+    this.appendTurnField("turn_number", data.turn_number)
     this.appendTurnField("target_id", data.target_id)
 
     data.attacks.forEach((attack, index) => {
@@ -771,7 +783,7 @@ export default class extends Controller {
       .filter(slot => slot.classList.contains("nl-fight-magic-slot--active"))
       .map(slot => ({
         key: slot.dataset.skillKey,
-        target_id: this.getFirstEnemyId()
+        target_id: this.getSelectedEnemyId()
       }))
   }
 
@@ -808,17 +820,62 @@ export default class extends Controller {
     this.updateTurnCost()
   }
 
-  getFirstEnemyId() {
-    const fighters = this.element.querySelectorAll(".fighter-card:not(.fighter-card--defeated), .arena-participant:not(.arena-participant--dead)")
-    const enemy = Array.from(fighters).find(p =>
-      p.dataset.characterId &&
-      p.dataset.currentUser !== "true" &&
-      (!this.hasUserTeamValue || p.dataset.team !== this.userTeamValue)
+  switchOpponent(event) {
+    event?.preventDefault()
+    const enemies = this.livingEnemyCards()
+    if (enemies.length < 2) return
+
+    const currentIndex = enemies.findIndex(card =>
+      card.dataset.characterId === this.selectedTargetIdValue
     )
+    const nextIndex = currentIndex >= 0 ? (currentIndex + 1) % enemies.length : 0
+    this.selectTargetCard(enemies[nextIndex])
+  }
 
-    if (enemy) return enemy.dataset.characterId
+  getSelectedEnemyId() {
+    const selected = this.syncSelectedTarget()
+    return selected?.dataset.characterId || null
+  }
 
-    return null
+  syncSelectedTarget() {
+    const enemies = this.livingEnemyCards()
+    const selected = enemies.find(card =>
+      card.dataset.characterId === this.selectedTargetIdValue
+    ) || enemies[0]
+
+    this.element.querySelectorAll(".fighter-card--selected-target").forEach(card => {
+      card.classList.remove("fighter-card--selected-target")
+    })
+
+    if (selected) this.selectTargetCard(selected)
+    return selected
+  }
+
+  selectTargetCard(card) {
+    if (!card) return
+
+    this.element.querySelectorAll(".fighter-card").forEach(candidate => {
+      candidate.classList.toggle("fighter-card--selected-target", candidate === card)
+    })
+    this.selectedTargetIdValue = card.dataset.characterId
+
+    if (this.hasTargetNameTarget) {
+      this.targetNameTarget.textContent = card.dataset.characterName
+    }
+    if (this.hasTargetVitalsTarget) {
+      this.targetVitalsTarget.textContent = `[${card.dataset.currentHp}/${card.dataset.maxHp}]`
+    }
+  }
+
+  livingEnemyCards() {
+    if (!this.hasUserTeamValue) return []
+
+    return Array.from(this.element.querySelectorAll(".fighter-card")).filter(card =>
+      card.dataset.characterId &&
+      card.dataset.team !== this.userTeamValue &&
+      Number(card.dataset.currentHp || 0) > 0 &&
+      !card.classList.contains("fighter-card--defeated")
+    )
   }
 
   isOwnTeam(team) {

@@ -77,6 +77,24 @@ body.nl-public-layout--fight-log {
   box-shadow: none;
 }
 
+.fight-log-modes {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin: 0 0 10px;
+  font-size: 13px;
+}
+
+.fight-log-modes a,
+.fight-log-modes span { color: #111111; }
+.fight-log-modes [aria-current="page"] { font-weight: 700; }
+
+.fight-log-empty {
+  margin: 0;
+  padding: 8px 0;
+  color: #666666;
+}
+
 .log-entries { display: block; }
 
 .round-group {

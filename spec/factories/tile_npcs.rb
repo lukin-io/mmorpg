@@ -47,5 +47,9 @@ FactoryBot.define do
     trait :multi_npc_encounter do
       metadata { {"encounter_count" => 2} }
     end
+
+    trait :single_npc_encounter do
+      metadata { {"encounter_count" => 1} }
+    end
   end
 end

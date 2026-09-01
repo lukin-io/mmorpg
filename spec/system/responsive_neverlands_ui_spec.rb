@@ -155,18 +155,29 @@ RSpec.describe "Responsive Neverlands UI", type: :system, js: true do
     visit world_location_path("frontier_village")
 
     expect(page).to have_css(".nl-world-location-scene--village")
-    expect(page.evaluate_script(<<~JS)).to be(true)
+    expect(page).to have_css(".nl-world-location-viewport[data-nl-location-scene-centered='true']")
+    metrics = page.evaluate_script(<<~JS)
       (() => {
         const viewport = document.querySelector(".nl-world-location-viewport")
         const scene = document.querySelector(".nl-world-location-scene")
-        return document.documentElement.scrollWidth <= window.innerWidth + 1 &&
-          viewport.clientWidth <= window.innerWidth &&
-          viewport.scrollWidth === 760 &&
-          viewport.scrollLeft > 0 &&
-          scene.offsetWidth === 760 &&
-          scene.offsetHeight === 255
+        return {
+          documentWidth: document.documentElement.scrollWidth,
+          innerWidth: window.innerWidth,
+          viewportWidth: viewport.clientWidth,
+          viewportScrollWidth: viewport.scrollWidth,
+          viewportScrollLeft: viewport.scrollLeft,
+          sceneWidth: scene.offsetWidth,
+          sceneHeight: scene.offsetHeight
+        }
       })()
     JS
+
+    expect(metrics.fetch("documentWidth")).to be <= metrics.fetch("innerWidth") + 1
+    expect(metrics.fetch("viewportWidth")).to be <= metrics.fetch("innerWidth")
+    expect(metrics.fetch("viewportScrollWidth")).to eq(760)
+    expect(metrics.fetch("viewportScrollLeft")).to be_positive
+    expect(metrics.fetch("sceneWidth")).to eq(760)
+    expect(metrics.fetch("sceneHeight")).to eq(255)
   end
 
   it "centers the native-pixel City scene in a touch-pannable mobile viewport" do
@@ -196,21 +207,34 @@ RSpec.describe "Responsive Neverlands UI", type: :system, js: true do
     visit world_path
 
     expect(page).to have_css(".nl-city-scene")
-    expect(page.evaluate_script(<<~JS)).to be(true)
+    expect(page).to have_css(".nl-city-viewport[data-nl-city-map-centered='true']")
+    metrics = page.evaluate_script(<<~JS)
       (() => {
         const viewport = document.querySelector(".nl-city-viewport")
         const scene = document.querySelector(".nl-city-scene")
         const main = document.querySelector(".nl-main-area")
         const arrow = document.querySelector(".nl-city-route-marker")
-        return document.documentElement.scrollWidth <= window.innerWidth + 1 &&
-          viewport.clientWidth <= main.clientWidth + 1 &&
-          scene.offsetWidth === 1250 &&
-          scene.offsetHeight === 600 &&
-          viewport.scrollWidth === 1250 &&
-          viewport.scrollLeft > 0 &&
-          getComputedStyle(arrow).fontSize === "66px"
+        return {
+          documentWidth: document.documentElement.scrollWidth,
+          innerWidth: window.innerWidth,
+          viewportWidth: viewport.clientWidth,
+          mainWidth: main.clientWidth,
+          sceneWidth: scene.offsetWidth,
+          sceneHeight: scene.offsetHeight,
+          viewportScrollWidth: viewport.scrollWidth,
+          viewportScrollLeft: viewport.scrollLeft,
+          arrowFontSize: getComputedStyle(arrow).fontSize
+        }
       })()
     JS
+
+    expect(metrics.fetch("documentWidth")).to be <= metrics.fetch("innerWidth") + 1
+    expect(metrics.fetch("viewportWidth")).to be <= metrics.fetch("mainWidth") + 1
+    expect(metrics.fetch("sceneWidth")).to eq(1250)
+    expect(metrics.fetch("sceneHeight")).to eq(600)
+    expect(metrics.fetch("viewportScrollWidth")).to eq(1250)
+    expect(metrics.fetch("viewportScrollLeft")).to be_positive
+    expect(metrics.fetch("arrowFontSize")).to eq("66px")
   end
 
   it "keeps Shop controls and dense tables inside mobile overflow owners" do

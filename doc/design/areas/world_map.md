@@ -35,6 +35,8 @@ Observed Neverlands behavior:
   control before the hidden encounter interrupts an action;
 - local outdoor actions can be interrupted by bot ambushes and hand the player
   into the normal fight screen;
+- a bot attack can also begin while the character remains on the outdoor
+  surface without a completed move or manual Attack action;
 - Character and Inventory navigation can be interrupted by the same ambush;
 - an entrance can open an allowlisted linked-location scene while the durable
   outdoor coordinate remains unchanged;
@@ -43,6 +45,25 @@ Observed Neverlands behavior:
 - after outdoor bot combat is finished, the player returns to the unchanged
   coordinate or continues to the interrupted allowlisted Character/Inventory
   destination with fresh world action tokens on the next map render.
+
+The exact-coordinate boundary is supported by two independent observation
+chains. At `m_1001_999`, `look` entered a hidden paired-rat fight, Finish
+returned to `m_1001_999`, and Inventory was then interrupted by another paired
+rat attack. At `937,1008`, the character finished a fight, moved north and back,
+then received further bot attacks whose Finish actions restored `937,1008`.
+This confirms current-coordinate encounter availability; it does not reveal
+Neverlands' internal bot record/table representation or selection weights.
+
+The 2026-09-01 `m_1008_1007` chain adds a second, distinct boundary: the same
+return context produced group sizes `3 -> 1 -> 1 -> 2`, including mixed
+Bandit/Robber identities and levels `7..9`. The later fights began while the
+map remained idle, with two minute-granularity intervals bounded to
+approximately `230..278` and `127..187` seconds. Source-parity World design
+must therefore allow an authored hostile coordinate to yield different
+server-selected eligible groups rather than treating one fixed composition as
+the universal rule. The complete pool, weights, probability, cooldown, delay
+distribution, and storage shape remain `[EVIDENCE]`; no equal-weight table or
+generic procedural encounter rule is authorized.
 
 ## Screen Model
 
@@ -228,7 +249,10 @@ Pipeline for every world map request:
 5. Build movement offers and contextual action offers.
 6. Before completing a mutating outdoor action, evaluate source-backed hostile
    encounter rules for the current tile.
-7. Render only the action offers returned by the server, or hand off to combat
+7. While the outdoor surface remains open, resolve passive eligibility against
+   the same current tile without accepting a coordinate, NPC, delay, or chance
+   from the browser.
+8. Render only the action offers returned by the server, or hand off to combat
    if the accepted action triggered an ambush.
 
 For a linked location, the equivalent interior pipeline is:
@@ -249,6 +273,13 @@ The implemented hostile check is also used by the persistent shell's Character
 and Inventory actions. A live fight is reused rather than duplicated. The
 captured Plague Rat anchor authors an encounter size of two, so one materialized
 cell NPC creates two distinct Arena participations on the opposing side.
+
+The passive local implementation persists a server-generated due time together
+with the exact zone/coordinate and encounter-anchor identity. Moving away,
+defeating/removing the hostile, or entering a non-outdoor zone invalidates that
+schedule. The browser only asks whether the current authoritative state is due
+and follows the returned retry delay. The local delay bounds remain provisional
+until Neverlands timing/probability evidence is captured.
 
 Suggested action-offer fields:
 

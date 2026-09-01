@@ -81,10 +81,7 @@ export default class extends Controller {
       const response = await fetch(form.action, {
         method: "POST",
         body: formData,
-        headers: {
-          "X-CSRF-Token": document.querySelector('[name="csrf-token"]').content,
-          "Accept": "application/json"
-        }
+        headers: this.jsonHeaders()
       })
 
       const data = await response.json()
@@ -111,17 +108,14 @@ export default class extends Controller {
     try {
       const response = await fetch(`/arena_applications/${applicationId}/accept`, {
         method: "POST",
-        headers: {
-          "X-CSRF-Token": document.querySelector('[name="csrf-token"]').content,
-          "Accept": "application/json"
-        }
+        headers: this.jsonHeaders()
       })
 
       const data = await response.json()
 
       if (data.success) {
         // Match created, show countdown
-        this.startCountdown(data.countdown || 30, data.match_id)
+        this.startCountdown(data.countdown ?? 30, data.match_id)
       } else {
         event.currentTarget.disabled = false
         this.showError(data.errors?.join(", ") || "Failed to accept application")
@@ -147,10 +141,7 @@ export default class extends Controller {
     try {
       const response = await fetch(`/arena_applications/${applicationId}/cancel`, {
         method: "DELETE",
-        headers: {
-          "X-CSRF-Token": document.querySelector('[name="csrf-token"]').content,
-          "Accept": "application/json"
-        }
+        headers: this.jsonHeaders()
       })
 
       const data = await response.json()
@@ -257,6 +248,17 @@ export default class extends Controller {
     }
   }
 
+  jsonHeaders() {
+    const headers = { "Accept": "application/json" }
+    const csrfToken = document.querySelector('[name="csrf-token"]')?.content
+
+    if (csrfToken) {
+      headers["X-CSRF-Token"] = csrfToken
+    }
+
+    return headers
+  }
+
   handleMatchCreated(data) {
     // Remove both applications from the list (original + acceptor's)
     this.removeApplication(data.application_id)
@@ -266,7 +268,7 @@ export default class extends Controller {
 
     // If we're a participant, start countdown and redirect to match
     if (data.participant_ids?.includes(this.characterIdValue)) {
-      const countdown = data.countdown || 10
+      const countdown = data.countdown ?? 10
       this.startCountdown(countdown, data.match_id)
     }
   }

@@ -42,4 +42,20 @@ RSpec.describe Chat::TimelineBroadcaster do
 
     described_class.game_event_created(event)
   end
+
+  it "contains an enqueue outage after the durable game event commits" do
+    event = build_stubbed(:game_event)
+    allow(event).to receive(:broadcast_append_later_to).and_raise(StandardError, "queue unavailable")
+    allow(Rails.logger).to receive(:warn)
+
+    expect(described_class.game_event_created(event)).to be(false)
+    expect(Rails.logger).to have_received(:warn).with(
+      a_string_including(
+        "[Chat::TimelineBroadcaster] delivery_failed",
+        "record_type=\"game_event\"",
+        "record_id=#{event.id}",
+        "error=StandardError"
+      )
+    )
+  end
 end

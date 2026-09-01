@@ -6,6 +6,7 @@ export default class extends Controller {
   static targets = ["viewport", "scene", "tooltip"]
 
   connect() {
+    this.centerScene()
     this.centerFrame = window.requestAnimationFrame(() => this.centerScene())
   }
 
@@ -23,6 +24,7 @@ export default class extends Controller {
 
     this.viewportTarget.scrollLeft = Math.min(Math.max(focusX - (this.viewportTarget.clientWidth / 2), 0), maxLeft)
     this.viewportTarget.scrollTop = Math.min(Math.max(focusY - (this.viewportTarget.clientHeight / 2), 0), maxTop)
+    this.viewportTarget.dataset.nlCityMapCentered = "true"
   }
 
   showTooltip(event) {

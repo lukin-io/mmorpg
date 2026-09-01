@@ -3,8 +3,9 @@
 ## Scope
 
 Outdoor coordinates, fixed-cell map presentation, movement, timers, fatigue,
-current-cell composition, local actions, NPC/resource/building presence, linked
-locations, login resume, and City handoff.
+current-cell composition, local actions, hidden hostile interruption/passive
+delivery, NPC/resource/building presence, linked locations, login resume, and
+City handoff.
 
 ## Documentation chain
 
@@ -22,8 +23,15 @@ locations, login resume, and City handoff.
 ## Current RPG status
 
 Fully Implemented for the declared outdoor movement, resolved-cell,
-Frontier-Village, NPC interruption, resource-action, and City-handoff boundary.
-Other linked-location and action families remain Not Done.
+Frontier-Village, targetless passive/synchronous NPC interruption,
+resource-action, and City-handoff boundary. Passive delivery resolves only the
+persisted source-backed same-cell hostile through a server-owned persisted due
+time. Neverlands observations confirm current-coordinate encounter
+availability and same-coordinate return; its internal storage, exact
+timing/probability distribution, complete eligible group pool, and selection
+weights remain evidence gaps. Variable same-context group size/identity/level
+output itself is now confirmed. Other linked-location and action families
+remain Not Done.
 
 ## Important responsible implementation files
 
@@ -34,6 +42,8 @@ Other linked-location and action families remain Not Done.
 - `app/services/game/world/action_offer_builder.rb`
 - `app/services/game/world/accept_action.rb`
 - `app/services/game/world/outdoor_npc_config.rb`
+- `app/controllers/world_encounter_checks_controller.rb`
+- `app/services/game/world/passive_encounter_check.rb`
 - `app/services/game/loot_entry.rb`
 - `db/seeds.rb`
 

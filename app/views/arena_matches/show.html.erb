@@ -6,10 +6,25 @@
   team_b = @participations.select { |p| p.team == "b" || p.team == "beta" }
   user_team = current_user_team
   current_participation = current_user_arena_participation
-  target_participation = if ["a", "alpha"].include?(user_team)
-    team_b.first
+  pending_turn = current_participation&.metadata.to_h["pending_turn"]
+  pending_target_id = if pending_turn.to_h["turn_number"].to_i == (@arena_match.current_turn_number || 1).to_i
+    pending_turn.to_h["target_participation_id"]
+  end
+  target_side = if ["a", "alpha"].include?(user_team)
+    team_b
   elsif ["b", "beta"].include?(user_team)
-    team_a.first
+    team_a
+  end
+  target_participation = target_side&.find do |participation|
+    participation.id == pending_target_id.to_i && participation.current_hp.positive?
+  end
+  target_participation ||= target_side&.find { |participation| participation.current_hp.positive? } || target_side&.first
+  target_candidates = if ["a", "alpha"].include?(user_team)
+    team_b.select { |participation| participation.current_hp.positive? }
+  elsif ["b", "beta"].include?(user_team)
+    team_a.select { |participation| participation.current_hp.positive? }
+  else
+    []
   end
   target_profile = participant_data(target_participation) if target_participation
   combat_profile = arena_combat_profile(current_participation)
@@ -31,6 +46,7 @@
      data-arena-match-status-value="<%= @arena_match.status %>"
      data-arena-match-turn-number-value="<%= @arena_match.current_turn_number.to_i %>"
      data-arena-match-waiting-value="<%= current_user_pending_arena_turn? %>"
+     data-arena-match-selected-target-id-value="<%= participant_data(target_participation).id if target_participation %>"
      data-arena-match-starts-at-value="<%= @arena_match.scheduled_start_at&.iso8601 %>">
 
   <div class="nl-fight-topline fighttxt">
@@ -42,7 +58,12 @@
     <span class="fr_but_dis">Mercenary</span>
     <%= link_to "Fight log", public_fight_log_path(@arena_match), class: "fr_but" %>
     <button type="button" class="fr_but" data-action="click->arena-match#requestMatchState">Refresh</button>
-    <span class="fr_but_dis">Switch opponent</span>
+    <button type="button"
+            class="fr_but"
+            data-action="click->arena-match#switchOpponent"
+            <%= "disabled" unless current_user_participating? && target_candidates.many? %>>
+      Switch opponent
+    </button>
   </div>
 
   <%# Main combat layout: Player | Actions+Log | Opponent %>
@@ -55,7 +76,8 @@
             <%= render "arena_matches/fighter_card",
                 participation:,
                 show_stats: (user_team == "b" || user_team == "beta"),
-                position: :left %>
+                position: :left,
+                selected_target: participation == target_participation %>
           <% end %>
         </div>
       <% else %>
@@ -238,8 +260,9 @@
       <% if current_participation && target_profile %>
         <% current_profile = participant_data(current_participation) %>
         <div class="nl-fight-target-line">
-          <span class="nl-fight-target-name nl-fight-target-name--opponent"><%= target_profile.name %></span>
-          [<%= target_profile.current_hp %>/<%= target_profile.max_hp %>]
+          <span class="nl-fight-target-name nl-fight-target-name--opponent"
+                data-arena-match-target="targetName"><%= target_profile.name %></span>
+          <span data-arena-match-target="targetVitals">[<%= target_profile.current_hp %>/<%= target_profile.max_hp %>]</span>
           <span>against</span>
           <span class="nl-fight-target-name nl-fight-target-name--self"><%= current_profile.name %></span>
           [<%= current_profile.current_hp %>/<%= current_profile.max_hp %>]
@@ -281,7 +304,8 @@
             <%= render "arena_matches/fighter_card",
                 participation:,
                 show_stats: (user_team == "a" || user_team == "alpha"),
-                position: :right %>
+                position: :right,
+                selected_target: participation == target_participation %>
           <% end %>
         </div>
       <% else %>
@@ -337,6 +361,30 @@
           <% end %>
           <p class="text-muted">Duration: <%= format_duration(@arena_match.duration || 0) %></p>
         </div>
+        <table class="nl-fight-result-table">
+          <thead>
+            <tr>
+              <th>Character</th>
+              <th>Physical</th>
+              <th>Total</th>
+              <th>XP</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @participations.select(&:player?).each do |participation| %>
+              <% damage = participation.metadata.to_h["damage_dealt"].to_i %>
+              <% hits = participation.metadata.to_h["damage_hits"].to_i %>
+              <% experience = @arena_match.metadata.to_h.dig("rewards", "experience") || {} %>
+              <% awarded_xp = experience["character_id"].to_i == participation.character_id ? experience["amount"].to_i : 0 %>
+              <tr>
+                <td><%= participation.participant_name %>[<%= participation.participant_level %>]</td>
+                <td><%= damage %><sup>(<%= hits %>)</sup></td>
+                <td><%= damage %><sup>(<%= hits %>)</sup></td>
+                <td><%= awarded_xp %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
         <% if current_user_participating? && !current_user_finished_arena_match? %>
           <%= button_to "Finish Fight",
               finish_arena_match_path(@arena_match),

@@ -3,7 +3,7 @@
 title: World Feature
 description: Implementation handbook for the Neverlands-based open world, cells, movement, cell content, actions, and persisted player location.
 status: Fully Implemented
-updated: 2026-08-25
+updated: 2026-09-01
 owners: Game world, movement, and world UI
 template: feature-v1
 ---
@@ -31,6 +31,10 @@ Supporting documents:
 
 - `doc/design/reference/world/observations/2026-05-09_overworld_movement.md` — live movement observations.
 - `doc/design/reference/world/observations/2026-05-20_outdoor_npc_resource.md` — observed outdoor cell, NPC, and resource behavior.
+- `doc/design/reference/combat/observations/2026-08-26_wilderness_two_orc_group_fight.md` — current multi-NPC handoff, per-NPC search, and return evidence.
+- `doc/design/reference/combat/observations/2026-08-26_wilderness_passive_goblin_fight.md` — current passive same-cell bot-attack and return evidence.
+- `doc/design/reference/combat/observations/2026-08-26_wilderness_shield_npc_fight.md` — current north/back movement, exact-cell return, and action-interruption evidence.
+- `doc/design/reference/combat/observations/2026-09-01_wilderness_bandit_group_variation_and_magic.md` — current same-return-context variable group and passive-interval evidence.
 - `doc/design/reference/social/observations/2026-08-23_chat_game_event_timeline.md` — supplied item/NV search-result evidence used to bound the typed loot handoff without inventing an NPC assignment.
 - `doc/design/reference/shell/observations/2026-07-28_game_shell_and_mvp_surfaces.md` — persistent game-shell observations.
 - `doc/design/areas/world_map.md` — world-area design record.
@@ -71,6 +75,21 @@ A cell may compose several independent concerns:
 
 Every state-changing click is backed by a short-lived, character-owned server offer. Coordinates, action type, and target are revalidated when the offer is accepted. DOM data and submitted identifiers are never authority.
 
+While the outdoor surface remains open, the game shell also performs a bounded
+passive check for the persisted same-cell hostile. The first check is immediate;
+the server then persists a due time fingerprinted by zone, coordinate, and NPC
+anchor and returns only the remaining retry delay. The endpoint accepts no NPC,
+coordinate, timer, or probability input. The provisional local `10..30`-second
+due range is a delivery choice, not a claim about Neverlands' still-unknown
+passive timer, probability, or opponent-selection weights.
+
+Current source evidence now confirms that one outdoor return context can yield
+different selected groups (`1x3 -> 1x1 -> 1x1 -> 1x2`) with mixed identities
+and levels. It also bounds two source idle intervals to approximately
+`230..278` and `127..187` seconds. The shipped local path remains one explicit
+authored anchor/composition because the complete eligible pool, weights,
+probability, cooldown, and delay distribution are still unobserved.
+
 ## 3. MVP goals and non-goals
 
 ### Goals
@@ -93,6 +112,9 @@ Every state-changing click is backed by a short-lived, character-owned server of
   replacing the persisted outdoor coordinate, then use offered Shop/exit
   hotspots in its fixed `760 × 255` CSS-built scene.
 - Interrupt offered movement, entrance, local, Character, and Inventory actions when the current source-backed hostile encounter attacks.
+- Deliver the same source-backed hidden encounter while the character remains
+  on the outdoor surface, without a manual NPC Attack control or client-supplied
+  target.
 - Start the shared combat flow with every authored NPC encounter member on one side.
 - Return from the explicit result step to the allowlisted interrupted World, Character, or Inventory destination.
 - Keep all world mutation server-authoritative and authorization-covered.
@@ -111,7 +133,10 @@ Every state-changing click is backed by a short-lived, character-owned server of
   been captured and added as validated persisted cell content.
 - Implementing deferred `fish`, `drink`, or `dig` actions.
 - Inventing gathering rewards for `Look Around` before Neverlands evidence and the corresponding inventory/economy design exist.
-- Random encounter rolls, generic encounter tables, or procedural NPC group composition beyond explicit Neverlands-backed cell metadata.
+- Generic encounter tables, equal-weight assumptions, or procedural NPC group
+  composition beyond explicit Neverlands-backed cell metadata. Source evidence
+  now confirms variable same-context groups, but the shipped path remains
+  explicit until the eligible pool/weights and timing rule are captured.
 - Invented building, lake, fishing, resource, or other special-location art
   without captured visual evidence and a project-owned implementation asset.
 - Copying Neverlands terrain images, sprites, markers, cursors, branding,
@@ -194,6 +219,15 @@ navigation is not a wilderness action and is not blocked by this rule.
 
 Before an offered wilderness movement, entrance, or local action completes, World checks the authoritative current cell for its live hostile encounter. The persistent shell's **Character** and **Inventory** actions pass through the same check. An attack replaces the intended action with the shared fight screen; after the explicit result step, the player returns to the saved allowlisted destination. Arbitrary submitted URLs are never accepted as return targets.
 
+The outdoor shell immediately asks the same server owner for encounter state.
+When an alive hostile exists on the exact authoritative cell, the server
+creates or reuses a persisted due time and returns its remaining milliseconds.
+The browser schedules only that response and asks again when due. A positive
+response stops the timer and replaces the current page with the existing or
+newly created shared fight; a failed check uses a bounded local retry. Reloading
+cannot reroll or accelerate the persisted due time. Moving to another cell,
+entering a city, or losing the live hostile invalidates the old schedule.
+
 ### 4.4 Players here
 
 The player list is scoped to active characters at the exact zone and `[x, y]`, excludes the current character, and is capped at 10 entries. Supported orders are name A–Z/Z–A and level ascending/descending. The list is refreshed through `GET /world/players`; it is presence information, not authority for interaction.
@@ -255,6 +289,21 @@ states, actions, and failure rules are captured.
 
 The explicit cell at local `[7, 7]` corresponds to captured Neverlands coordinate `[1001, 999]`. It stores the validated `forpost_terrain` cell-art slice, supplies the authored outdoor observation/resource context, and materializes a hidden hostile Plague Rat encounter anchor from `config/gameplay/outdoor_npcs.yml` with level, health, damage, experience, respawn, loot, and `encounter_count: 2` metadata. Starting its fight creates two distinct Plague Rat participations on side B, matching the captured paired-rat ambush.
 
+Neverlands observations confirm current-coordinate encounter availability, not
+this exact persistence schema: `m_1001_999` produced the hidden paired-rat
+fight, restored the same map, and produced another attack on Inventory; later
+`937,1008` flows restored that coordinate around repeated bot attacks after a
+north/back movement pair. `TileNpc` as one persisted encounter anchor and its
+explicit composition metadata are the local server-authoritative model. Exact
+Neverlands per-cell rosters, selection weights, and internal storage remain
+evidence gaps.
+
+The later `m_1008_1007` chain confirms the source behavior is broader than that
+local schema: one return context selected group sizes `3`, `1`, `1`, and `2`,
+including mixed Bandit/Robber identities and levels `7..9`. This is a known
+runtime parity gap, but the source still does not expose enough pool/weight data
+to replace the explicit local composition safely.
+
 The config is evidence-backed seed input. `db/seeds.rb` reconciles the
 persisted placement and `TileNpcService` reads that DB state only; changing YAML
 alone is neither a runtime mutation nor an authorization mechanism. Local and
@@ -270,6 +319,7 @@ source coordinates must never be mixed in services or requests.
 | Adjacent timed movement | `POST /world/move` | Interactive | `TravelTime`, `AcceptMove`, `CompleteMove` |
 | Wilderness fatigue | Movement completion and World load | Interactive constraint | `Characters::FatigueService`, movement/action offer services |
 | Hidden current-cell NPC attack | Interruption of a visible wilderness action | Interactive handoff | World validation, then Arena combat lifecycle |
+| Passive current-cell NPC attack | `POST /world/encounter_check` while waiting outdoors | Interactive handoff | `PassiveEncounterCheck`, then shared Arena combat lifecycle |
 | Current-cell city entrance | `POST /world/enter_building` | Interactive handoff | World entrance service, then City |
 | Current-cell linked-location entrance | `POST /world/enter_building` | Interactive handoff | World entrance service, then allowlisted World Location |
 | Frontier Village scene | `GET /world/locations/:building_key` | Interactive | `TileBuilding`, `TileStateResolver`, `WorldLocationsController`, World CSS |
@@ -468,7 +518,7 @@ the existing owner before editing data:
 | City or linked-location entrance | `Game::World::CityCatalog::GATES` for the verified city pair; `tile_buildings` in `db/seeds.rb` for the persisted entrance attributes | `TileBuilding` | `TileBuildingService` and `TileStateResolver` |
 | Hostile outdoor NPC placement/template input | `config/gameplay/outdoor_npcs.yml` | seed-materialized `NpcTemplate` and exact-cell `TileNpc` | `db/seeds.rb`, then DB-only `TileNpcService` and `TileStateResolver` |
 | Visible current-cell capabilities | never hand-authored or seeded | short-lived `WorldActionOffer` | `ActionOfferBuilder`, `AcceptAction`, then the owning transition service |
-| Hidden hostile interruption | never represented by a visible offer | current live `TileNpc` state | `InterruptAction` and `StartNpcFight` |
+| Hidden hostile interruption | never represented by a visible offer | current live `TileNpc` state | `InterruptAction`, `WorldEncounterChecksController`, and `StartNpcFight` |
 
 `TileStateResolver` is the one composition point for the finalized cell.
 `ActionOfferBuilder` derives capabilities from its result. Do not seed
@@ -679,8 +729,10 @@ and its `NpcTemplate`. `TileNpcService` then performs a DB-only lookup; deleting
 a placement in `/manage` removes it immediately and it is not recreated during
 World rendering. One anchor is supported per cell by the unique
 `[zone, x, y]` index. Repeated copies of the same captured opponent use the
-validated `encounter_count` metadata; a mixed-NPC cell requires new evidence
-and an extension of this existing model/service pipeline.
+validated `encounter_count` metadata. Mixed and variable same-context groups
+now have live evidence; implementing them requires an extension of this same
+model/service pipeline after the complete eligible pool and weights are
+captured, not a parallel encounter system or assumed equal weighting.
 
 Seed-owned placement rows carry `metadata.seed_source: outdoor_npcs.yml`, so
 the scoped seed cleanup can distinguish them from management-created content.
@@ -880,7 +932,7 @@ Changing an HTML id, reusing another character's key, replaying an expired key, 
 
 ### 8.6 Hostile interruption
 
-`Game::World::InterruptAction` resolves the live hostile encounter from the authoritative outdoor position. `WorldController` invokes it for movement, entrance, and implemented local actions, while `WorldContextActionsController` invokes it for the World shell's Character and Inventory destinations. City positions and already-active combat do not start another encounter.
+`Game::World::InterruptAction` resolves the live hostile encounter from the authoritative outdoor position. `WorldController` invokes it for movement, entrance, and implemented local actions, and `WorldContextActionsController` invokes it for the World shell's Character and Inventory destinations. `WorldEncounterChecksController` delegates passive delivery to `Game::World::PassiveEncounterCheck`, which resolves the same exact-cell NPC and hands due encounters to `StartNpcFight`. City positions and already-active combat do not start another encounter.
 
 On interruption, `StartNpcFight` locks the character and encounter anchor, returns an existing active match on a duplicate request, and otherwise creates one player participation plus the source-authored number of NPC participations. The paired-rat cell creates a `team_battle` with two independently targetable NPC records. Match metadata records the source cell, encounter count, and normalized `world`, `profile`, or `inventory` return context. The outdoor map does not implement a separate combat engine.
 
@@ -892,6 +944,14 @@ the same participant rule for PvE and PvP side sizes.
 `ArenaMatchesController#finish` clears the player's combat flag and resolves
 World-fight return metadata through `CombatReturnContext`; invalid persisted
 context falls back to the unchanged world cell.
+
+The passive endpoint accepts an empty JSON body. It never accepts NPC identity,
+coordinates, encounter count, return URL, timer, or chance from the browser.
+`PassiveEncounterCheck` stores `zone_id`, `x`, `y`, `tile_npc_id`, and `due_at`
+in character metadata under a bounded key. An early retry returns remaining
+time; a mismatched cell/NPC or missing live hostile clears/replaces the old
+schedule. The same character/anchor locks make concurrent due checks or retry
+delivery reuse the active match rather than creating another fight.
 
 ## 9. HTTP and Turbo contract
 
@@ -905,6 +965,7 @@ context falls back to the unchanged world cell.
 | `POST /world/locations/:key/features` | Accept a linked-location hotspot | Handoff to allowlisted Shop or unchanged World cell | Expired/foreign/mismatched/stale offer is rejected. |
 | `POST /world/perform_local_action` | Execute an offered implemented cell action | Observation result or hostile fight transition | Offer fails; no reward/state invention. |
 | `POST /world/context` | Open Character or Inventory from the wilderness shell | Allowlisted destination or hostile fight transition with saved return context | Unsupported context returns to World; no arbitrary URL is followed. |
+| `POST /world/encounter_check` | Check the persisted outdoor cell for its hidden hostile without a manual action | JSON redirect to the existing/new shared fight, or `{interrupted: false}` | Authentication failure; bounded `422` on startup error with no partial match. |
 | `POST /world/interact_hotspot` | Shared city hotspot action | See `doc/features/city.md` | See city contract. |
 | `POST /arena_matches/:id/finish` | Finish a completed wilderness result | Marks the participant result viewed, exits combat, and returns to saved World/Character/Inventory context | Reject active fight or non-participant; malformed context falls back to World. |
 | `GET/POST/PATCH/DELETE /manage/world_cells`, `/manage/tile_buildings`, `/manage/npc_templates`, `/manage/tile_npcs` | Admin-only persisted content CRUD | Atomically changes the existing resolver owners and records an audit event | Anonymous redirects to sign-in; non-admin is denied; invalid/dependent changes preserve state. |
@@ -929,6 +990,15 @@ outside this feature.
 - revisits the canonical world route when the timer reaches zero.
 
 It must not calculate reachable destinations, invent an action key, change coordinates, or mark a command complete. Those remain service responsibilities.
+
+`game_layout_controller.js` owns only passive encounter delivery while the
+outdoor World body supplies an encounter URL. It checks immediately, posts an
+empty CSRF-protected request, prevents overlap, and schedules the next request
+from the server's `retry_after_ms`. A bounded 30-second client fallback applies
+only after network/server failure. It stops on disconnect or positive handoff
+and follows only the server response through Turbo. It does not select an
+NPC/cell, generate or reroll a due time, roll probability, or decide combat
+eligibility.
 
 `app/assets/stylesheets/world.css` owns the `1302 × 702` visible nearby map
 surface, 15 × 9 fixed-cell render buffer, project-owned 100px terrain-sheet
@@ -979,6 +1049,9 @@ A wilderness fight does not move `CharacterPosition`. Its match metadata stores 
   reuses the existing `CityHotspot` feature-route allowlist.
 - NPC interruption requires a current, live, hostile, same-cell materialization;
   no NPC identity or attack capability is accepted from the browser.
+- Passive encounter requests accept no gameplay parameters and reuse the same
+  current-character, current-position, live-anchor, and active-match checks as
+  action interruption.
 - Encounter size is source metadata constrained to `1..8`; the captured paired-rat cell uses `2`.
 - `StartNpcFight` locks the character before the encounter anchor and reuses an existing active fight, preventing double-clicked or concurrent starts from creating overlapping combat.
 - Repeated NPC templates use participation ids for targeting and broadcasts; a template id is not unique inside a multi-NPC fight.
@@ -1019,6 +1092,9 @@ A wilderness fight does not move `CharacterPosition`. Its match metadata stores 
 | Deferred local action definition | Do not create an offer. |
 | `Look Around` with no hostile interruption | Return authored message; grant no invented reward. |
 | Valid wilderness action with a live hostile encounter | Do not complete its intended domain transition; start or reuse the shared fight and preserve its allowlisted destination. |
+| Passive check with a live hostile encounter | Start or reuse the same shared fight and return only its application-local redirect path. |
+| Passive check without an eligible hostile, from City, or after defeat | Return a negative result; do not create a match or alter position. |
+| Passive check repeated while startup is active | Reuse the character's existing fight; do not duplicate match/participations. |
 | First NPC defeated in a multi-NPC fight | Resolve/mark/log that participant's typed loot check once; keep the encounter anchor and fight live while another opposing participant survives. |
 | Outdoor NPC loot entry omits or invalidates `chance` | Reject the developer-authored configuration at load; do not infer a probability or grant value. |
 | Final NPC defeated | Mark the encounter anchor defeated and complete the fight-level result. |
@@ -1054,6 +1130,11 @@ A wilderness fight does not move `CharacterPosition`. Its match metadata stores 
   cell and resumes only while that entrance remains accessible.
 - Hostile same-cell interaction starts the shared NPC fight implementation.
 - Movement, entrance, local, Character, and Inventory wilderness actions can be replaced by the same hostile encounter check.
+- Remaining on the outdoor surface can trigger the same source-backed
+  same-cell encounter through a targetless passive check; the server persists
+  the due time across early checks/reload, invalidates it when authoritative
+  cell/NPC state changes, and overlapping/retried due checks reuse one active
+  match.
 - The captured Plague Rat encounter remains invisible on the map, then the fight renders and resolves two independently targetable NPCs; both living NPCs can act, the first defeat does not end the fight, and each defeated NPC receives one retry-safe typed-loot resolution. Only a successful explicit roll can add Inventory value; the unknown production Rat Tail probability remains disabled.
 - The shared fight surface renders complete 1x1, 1xMany, and ManyxMany side rosters for PvE/PvP and applies surrender to one participant at a time.
 - Finishing a wilderness result returns to World, Character, or Inventory according to validated match metadata; invalid metadata falls back to World.
@@ -1073,10 +1154,11 @@ Tests are part of the feature contract. Changes must cover the applicable model,
 
 | Coverage category | Representative guarantees |
 |---|---|
-| Success | Map load, configured cell-art slice/fallback, hidden NPC presentation, eight-direction offer, exact/fallback timed completion, one-time fatigue gain/recovery, cell composition, gate/village/local/context handoff, village Shop/exit offers, multi-NPC fight, participant surrender, context return, persisted resume, management CRUD/audit. |
-| Failure | Unknown/malformed cell art or location key, invalid key/context, expired/mismatched feature offer, wrong direction/target, impassable destination, concurrent movement, fatigue-locked action, stale source, inactive entrance/NPC, missing/invalid loot chance, surrender after completion, invalid JSON/dependent management deletion. |
+| Success | Map load, configured cell-art slice/fallback, hidden NPC presentation, eight-direction offer, exact/fallback timed completion, one-time fatigue gain/recovery, cell composition, gate/village/local/context/passive handoff, village Shop/exit offers, multi-NPC fight, participant surrender, context return, persisted resume, management CRUD/audit. |
+| Failure | Unknown/malformed cell art or location key, invalid key/context, expired/mismatched feature offer, wrong direction/target, impassable destination, concurrent movement, fatigue-locked action, stale source, inactive entrance/NPC, passive City/defeated/no-hostile result, startup rollback, missing/invalid loot chance, surrender after completion, invalid JSON/dependent management deletion. |
 | Edge/null/boundary | Cell-art key/source/column/row null, negative, zero, and sheet edge; authored travel `24/32`, fallback Wanderer `nil`/negative/`0`/`20`/`100`; fatigue `0/85/86/100`, three-minute recovery, and `1/2` gain; linked-location exact/wrong cell; encounter count `nil`/`0`/`2`/oversized; repeated NPC template ids; first/final participant defeat; 1x1/1xMany/ManyxMany sides; invalid saved return context; map edges; management pagination and 390px overflow. |
-| Authorization | Anonymous request, foreign movement/action offer, current-character scoping, World-offer policy ownership, combat participant policy, admin versus moderator/player management access. |
+| Authorization | Anonymous request including passive encounter check, foreign movement/action offer, current-character scoping, World-offer policy ownership, combat participant policy, admin versus moderator/player management access. |
+| Retry/concurrency | Duplicate movement completion, overlapping passive checks, existing-fight reuse, repeated NPC turn/Finish, per-NPC loot marker, and management mutation conflict. |
 
 Factories must retain edge traits for status, expiry, coordinates, passability, action types, and active/inactive content when those states are exercised.
 
@@ -1103,6 +1185,7 @@ bundle exec rspec \
   spec/services/game/world/tile_state_resolver_spec.rb \
   spec/services/game/world/perform_local_action_spec.rb \
   spec/services/game/world/interrupt_action_spec.rb \
+  spec/services/game/world/passive_encounter_check_spec.rb \
   spec/services/game/world/combat_return_context_spec.rb \
   spec/services/game/world/start_npc_fight_spec.rb \
   spec/services/game/world/tile_building_service_spec.rb \
@@ -1113,6 +1196,8 @@ bundle exec rspec \
   spec/requests/world_locations_spec.rb \
   spec/requests/open_world_regions_spec.rb \
   spec/requests/world_context_actions_spec.rb \
+  spec/requests/world_encounter_checks_spec.rb \
+  spec/requests/world_npc_combat_lifecycle_spec.rb \
   spec/requests/arena_matches_spec.rb \
   spec/requests/login_resume_spec.rb \
   spec/routing/world_routing_spec.rb \
@@ -1121,6 +1206,7 @@ bundle exec rspec \
   spec/views/shared/_nl_players_list_spec.rb \
   spec/system/world_map_spec.rb \
   spec/system/world_interactions_spec.rb \
+  spec/system/world_npc_encounter_spec.rb \
   spec/system/login_resume_spec.rb \
   spec/system/responsive_neverlands_ui_spec.rb \
   spec/assets/city_image_assets_spec.rb \
@@ -1157,6 +1243,10 @@ presence, and login-resume behavior.
 - `doc/design/launch_mvp_plan.md`
 - `doc/design/reference/world/observations/2026-05-09_overworld_movement.md`
 - `doc/design/reference/world/observations/2026-05-20_outdoor_npc_resource.md`
+- `doc/design/reference/combat/observations/2026-08-26_wilderness_two_orc_group_fight.md`
+- `doc/design/reference/combat/observations/2026-08-26_wilderness_passive_goblin_fight.md`
+- `doc/design/reference/combat/observations/2026-08-26_wilderness_shield_npc_fight.md`
+- `doc/design/reference/combat/observations/2026-09-01_wilderness_bandit_group_variation_and_magic.md`
 - `doc/design/reference/shell/observations/2026-07-28_game_shell_and_mvp_surfaces.md`
 - `doc/design/reference/social/observations/2026-08-23_chat_game_event_timeline.md`
 
@@ -1167,6 +1257,7 @@ presence, and login-resume behavior.
 - `app/controllers/concerns/current_character_context.rb`
 - `app/controllers/world_controller.rb`
 - `app/controllers/world_context_actions_controller.rb`
+- `app/controllers/world_encounter_checks_controller.rb`
 - `app/controllers/world_locations_controller.rb`
 
 ### Models and policy
@@ -1209,6 +1300,7 @@ presence, and login-resume behavior.
 - `app/services/game/world/tile_npc_service.rb`
 - `app/services/game/world/perform_local_action.rb`
 - `app/services/game/world/interrupt_action.rb`
+- `app/services/game/world/passive_encounter_check.rb`
 - `app/services/game/world/combat_return_context.rb`
 - `app/services/game/world/start_npc_fight.rb`
 - `app/services/game/world/resume_context.rb`
@@ -1332,12 +1424,15 @@ ownership after the World capability is accepted.
 - `spec/services/game/world/tile_npc_service_spec.rb`
 - `spec/services/game/world/perform_local_action_spec.rb`
 - `spec/services/game/world/interrupt_action_spec.rb`
+- `spec/services/game/world/passive_encounter_check_spec.rb`
 - `spec/services/game/world/combat_return_context_spec.rb`
 - `spec/services/game/world/start_npc_fight_spec.rb`
 - `spec/requests/world_spec.rb`
 - `spec/requests/world_locations_spec.rb`
 - `spec/requests/open_world_regions_spec.rb`
 - `spec/requests/world_context_actions_spec.rb`
+- `spec/requests/world_encounter_checks_spec.rb`
+- `spec/requests/world_npc_combat_lifecycle_spec.rb`
 - `spec/requests/arena_matches_spec.rb`
 - `spec/services/arena/combat_processor_spec.rb`
 - `spec/services/arena/npc_loot_awarder_spec.rb`
@@ -1353,6 +1448,7 @@ ownership after the World capability is accepted.
 - `spec/views/shared/_nl_players_list_spec.rb`
 - `spec/system/world_map_spec.rb`
 - `spec/system/world_interactions_spec.rb`
+- `spec/system/world_npc_encounter_spec.rb`
 - `spec/system/login_resume_spec.rb`
 - `spec/assets/city_image_assets_spec.rb`
 - `spec/assets/world_cell_art_assets_spec.rb`
@@ -1413,3 +1509,4 @@ Before extending the World feature:
 | 2026-07-29 | Added admin-only responsive CRUD over the existing persisted World/City owners, atomic immutable mutation auditing, bounded pagination, validated JSON metadata, dependent-delete protection, stale-offer cancellation, and the task-oriented cross-feature management-guide link. Outdoor NPC config now materializes through the idempotent seed pipeline while runtime `TileNpcService` reads only managed DB state, so deletes and moves take effect without a parallel catalog or lazy respawn. |
 | 2026-08-23 | Normalized the authored Plague Rat reward to the shared typed `kind: item` contract and documented the Arena-owned persistence/idempotency handoff. The observed standalone `24 NV` result remains unassigned until its NPC and probability are evidenced. |
 | 2026-08-25 | Required explicit validated loot probabilities, preserved the pre-existing Plague Rat no-drop behavior as a documented `0.0` evidence hold, and corrected the World acceptance contract so a per-NPC resolution is not misreported as a guaranteed Inventory award. |
+| 2026-08-26 | Added targetless passive delivery for the persisted source-backed same-cell hostile through the existing start pipeline: an immediate browser check follows a server-persisted coordinate/NPC-fingerprinted random due time, reload/early checks cannot accelerate it, cell/NPC changes invalidate it, overlapping due checks reuse one fight, and focused request/service/system coverage protects the boundary. The local `10..30` range does not claim Neverlands timing/probability. |

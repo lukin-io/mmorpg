@@ -23,19 +23,25 @@ export default class extends Controller {
   static values = {
     playersSort: { type: String, default: "az" },
     autoRefresh: { type: Boolean, default: true },
-    persistKey: { type: String, default: "browser_rpg_layout" }
+    persistKey: { type: String, default: "browser_rpg_layout" },
+    encounterUrl: String,
+    encounterInterval: { type: Number, default: 30000 }
   }
 
   // Auto-refresh interval
   refreshInterval = null
+  encounterCheckTimer = null
+  encounterCheckPending = false
 
   connect() {
     this.loadPreferences()
     this.setupAutoRefresh()
+    this.setupEncounterChecks()
   }
 
   disconnect() {
     this.stopAutoRefresh()
+    this.stopEncounterChecks()
   }
 
   // =====================
@@ -104,6 +110,74 @@ export default class extends Controller {
         }
       })
       .catch(err => console.warn("Failed to refresh players:", err))
+    }
+  }
+
+  // =====================
+  // WILDERNESS ENCOUNTERS
+  // =====================
+
+  setupEncounterChecks() {
+    if (!this.hasEncounterUrlValue || this.encounterCheckTimer) return
+
+    this.scheduleEncounterCheck(0)
+  }
+
+  stopEncounterChecks() {
+    if (this.encounterCheckTimer) {
+      clearTimeout(this.encounterCheckTimer)
+      this.encounterCheckTimer = null
+    }
+  }
+
+  scheduleEncounterCheck(delayMs) {
+    this.stopEncounterChecks()
+    this.encounterCheckTimer = setTimeout(() => {
+      this.encounterCheckTimer = null
+      this.checkWorldEncounter()
+    }, Math.max(Number(delayMs) || 0, 0))
+  }
+
+  async checkWorldEncounter() {
+    if (!this.hasEncounterUrlValue || this.encounterCheckPending) return
+
+    this.encounterCheckPending = true
+    let nextDelay = this.encounterIntervalValue
+    try {
+      const csrfToken = document.querySelector("meta[name='csrf-token']")?.content
+      const response = await fetch(this.encounterUrlValue, {
+        method: "POST",
+        credentials: "same-origin",
+        headers: {
+          "Accept": "application/json",
+          "Content-Type": "application/json",
+          "X-CSRF-Token": csrfToken || "",
+          "X-Requested-With": "XMLHttpRequest"
+        },
+        body: "{}"
+      })
+      if (!response.ok) return
+
+      const data = await response.json()
+      if (!data.interrupted || !data.redirect_url) {
+        nextDelay = Number(data.retry_after_ms) || this.encounterIntervalValue
+        return
+      }
+
+      nextDelay = null
+      this.stopEncounterChecks()
+      if (window.Turbo?.visit) {
+        window.Turbo.visit(data.redirect_url, { action: "replace" })
+      } else {
+        window.location.assign(data.redirect_url)
+      }
+    } catch (error) {
+      console.warn("Failed to check wilderness encounter:", error)
+    } finally {
+      this.encounterCheckPending = false
+      if (nextDelay !== null && this.hasEncounterUrlValue && !this.encounterCheckTimer) {
+        this.scheduleEncounterCheck(nextDelay)
+      }
     }
   }
 

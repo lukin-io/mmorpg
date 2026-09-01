@@ -21,6 +21,10 @@ RSpec.describe TileNpc, type: :model do
       expect(build(:tile_npc, :multi_npc_encounter)).to be_valid
     end
 
+    it "accepts the explicit single-NPC encounter trait" do
+      expect(build(:tile_npc, :single_npc_encounter)).to be_valid
+    end
+
     it "rejects null, zero, and oversized encounter counts" do
       [nil, 0, TileNpc::MAX_ENCOUNTER_SIZE + 1].each do |count|
         npc = build(:tile_npc, metadata: {"encounter_count" => count})
@@ -34,6 +38,7 @@ RSpec.describe TileNpc, type: :model do
   describe "#encounter_size" do
     it "defaults to one and returns the explicit source count" do
       expect(build(:tile_npc).encounter_size).to eq(1)
+      expect(build(:tile_npc, :single_npc_encounter).encounter_size).to eq(1)
       expect(build(:tile_npc, :multi_npc_encounter).encounter_size).to eq(2)
     end
   end

@@ -127,7 +127,19 @@ module Arena
           target: params[:target],
           attacks: params[:attacks],
           blocks: params[:blocks],
-          skills: params[:skills]
+          skills: params[:skills],
+          expected_turn_number: params[:expected_turn_number]
+        )
+      end
+
+      if action_type.to_sym == :turn && npc_fight?
+        return process_solo_npc_turn(
+          character,
+          target: params[:target],
+          attacks: params[:attacks],
+          blocks: params[:blocks],
+          skills: params[:skills],
+          expected_turn_number: params[:expected_turn_number]
         )
       end
 
@@ -441,7 +453,14 @@ module Arena
       success(turn: true, **turn_results)
     end
 
-    def process_player_turn_submission(character, target: nil, attacks: [], blocks: [], skills: [])
+    def process_player_turn_submission(
+      character,
+      target: nil,
+      attacks: [],
+      blocks: [],
+      skills: [],
+      expected_turn_number: nil
+    )
       participation = match.arena_participations.find_by(character:)
       return failure("Character is not participating in this fight") unless participation
 
@@ -463,21 +482,31 @@ module Arena
 
       ap_limit = combat_ap_limit_for(character)
       total_ap = calculate_turn_ap_cost(normalized_attacks, normalized_blocks, normalized_skills, actor: character)
-      pending_turn = {
-        "turn_number" => match.current_turn_number || 1,
-        "target_participation_id" => target_participation_id(target),
-        "attacks" => normalized_attacks.map { |attack| stringify_hash(attack) },
-        "blocks" => normalized_blocks.map { |block| stringify_hash(block) },
-        "skills" => normalized_skills.map { |skill| stringify_hash(skill) },
-        "total_ap" => total_ap,
-        "ap_limit" => ap_limit,
-        "submitted_at" => Time.current.iso8601
-      }
-
       resolved = false
       match.with_lock do
+        match.reload
         participation.reload
+        character.reload
+        round_number = match.current_turn_number || 1
+        expected_round = Integer(expected_turn_number, exception: false)
+
+        return failure("Fight is not active") unless match.live?
+        return failure("Character is defeated") unless character.current_hp.positive?
+        if expected_round && expected_round != round_number
+          return failure("Fight state changed; refresh and submit the current turn")
+        end
         return failure("Turn already submitted; waiting for opponent") if pending_turn_current?(participation)
+
+        pending_turn = {
+          "turn_number" => round_number,
+          "target_participation_id" => target_participation_id(target),
+          "attacks" => normalized_attacks.map { |attack| stringify_hash(attack) },
+          "blocks" => normalized_blocks.map { |block| stringify_hash(block) },
+          "skills" => normalized_skills.map { |skill| stringify_hash(skill) },
+          "total_ap" => total_ap,
+          "ap_limit" => ap_limit,
+          "submitted_at" => Time.current.iso8601
+        }
 
         spend_turn_mana!(character, normalized_attacks, normalized_blocks, normalized_skills)
 
@@ -501,6 +530,80 @@ module Arena
       end
 
       success(waiting: !resolved, resolved:, total_ap:)
+    end
+
+    def process_solo_npc_turn(
+      character,
+      target: nil,
+      attacks: [],
+      blocks: [],
+      skills: [],
+      expected_turn_number: nil
+    )
+      result = nil
+
+      match.with_lock do
+        match.reload
+        participation = match.arena_participations.find_by(character:)
+        round_number = match.current_turn_number || 1
+        expected_round = Integer(expected_turn_number, exception: false)
+
+        if !match.live?
+          result = failure("Fight is not active")
+        elsif participation.nil?
+          result = failure("Character is not participating in this fight")
+        elsif expected_round && expected_round != round_number
+          result = failure("Fight state changed; refresh and submit the current turn")
+        elsif participation.metadata.to_h["last_resolved_turn_number"].to_i >= round_number
+          result = failure("This turn was already resolved")
+        else
+          ap_cost = calculate_ap_cost(:turn, {attacks:, blocks:, skills:}, actor: character)
+          current_ap = get_character_ap(character)
+
+          if current_ap < ap_cost
+            result = failure("Not enough AP (need #{ap_cost}, have #{current_ap})")
+          else
+            turn_result = process_turn(character, target:, attacks:, blocks:, skills:)
+            if turn_result.success?
+              deduct_ap(character, ap_cost)
+              broadcaster.broadcast_ap_update(character, get_character_ap(character), combat_ap_limit_for(character))
+
+              if npc_response_required_for?(character) && !should_end?
+                process_npc_turn_after_delay(character)
+              end
+
+              participation.reload
+              participation.update!(metadata: participation.metadata.to_h.merge(
+                "last_resolved_turn_number" => round_number
+              ))
+
+              if match.reload.live?
+                clear_blocking_state(character.reload)
+                npc_turn_participations.each { |npc| clear_npc_blocking_state(npc) }
+                match.update!(
+                  current_turn_started_at: Time.current,
+                  current_turn_number: round_number + 1,
+                  current_turn_team: nil
+                )
+                reset_ap(character)
+                broadcaster.broadcast_ap_update(character, combat_ap_limit_for(character), combat_ap_limit_for(character))
+              end
+
+              result = success(**turn_result.data, resolved: true, round_number:)
+            else
+              result = turn_result
+            end
+          end
+        end
+      end
+
+      if result&.success?
+        ActiveRecord.after_all_transactions_commit do
+          broadcaster.broadcast_state_refresh(reason: :round_resolved) if match.reload.live?
+        end
+      end
+
+      result
     end
 
     def resolve_pending_player_turns!
@@ -616,8 +719,11 @@ module Arena
         log_entry("block_failed", target, "#{target.name} tried to block attack (#{body_part}) from #{attacker.name}, but it broke through")
       end
 
-      # Apply damage
-      target.current_hp = [target.current_hp - damage, 0].max
+      # Neverlands logs the rolled hit even when it exceeds the remaining HP,
+      # while fight statistics count only HP actually removed.
+      previous_hp = target.current_hp
+      target.current_hp = [previous_hp - damage, 0].max
+      applied_damage = previous_hp - target.current_hp
       target.last_combat_at = Time.current
       target.save!
 
@@ -637,7 +743,7 @@ module Arena
         end_match if should_end?
       end
 
-      track_damage!(attacker_participation, target_participation, damage)
+      track_damage!(attacker_participation, target_participation, applied_damage)
 
       success(**attack_result_payload(resolution, attack_type:, body_part:, target_hp: target.current_hp))
     end
@@ -679,8 +785,11 @@ module Arena
         log_entry("block_failed", npc_participation, "#{npc.name} tried to block attack (#{body_part}) from #{attacker.name}, but it broke through")
       end
 
-      # Apply damage to NPC
-      new_hp = [npc_participation.current_hp - damage, 0].max
+      # Preserve raw overkill in the log, but count only removed HP in the
+      # result statistics.
+      previous_hp = npc_participation.current_hp
+      new_hp = [previous_hp - damage, 0].max
+      applied_damage = previous_hp - new_hp
       npc_participation.current_hp = new_hp
       npc_participation.save!
 
@@ -700,7 +809,7 @@ module Arena
         end_match if should_end?
       end
 
-      track_damage!(attacker_participation, npc_participation, damage)
+      track_damage!(attacker_participation, npc_participation, applied_damage)
 
       success(**attack_result_payload(resolution, attack_type:, body_part:, target_hp: new_hp))
     end
@@ -713,16 +822,12 @@ module Arena
       elsif target.is_a?(ArenaParticipation)
         match.arena_participations.find_by(id: target.id)
       else
-        # Find default target (opponent with lowest HP)
+        # Find the lowest-HP living opponent. Defeated group members must not
+        # absorb the next turn after the Neverlands target handoff.
         match.arena_participations
           .where.not(team: attacker_team)
-          .min_by do |p|
-            if p.npc?
-              p.current_hp
-            else
-              p.character&.current_hp.to_i
-            end
-          end
+          .select { |participation| participation_hp(participation).positive? }
+          .min_by { |participation| participation_hp(participation) }
       end
     end
 
@@ -926,6 +1031,7 @@ module Arena
         attacker_participation.reload
         attacker_participation.metadata ||= {}
         attacker_participation.metadata["damage_dealt"] = attacker_participation.metadata["damage_dealt"].to_i + damage.to_i
+        attacker_participation.metadata["damage_hits"] = attacker_participation.metadata["damage_hits"].to_i + 1
         attacker_participation.save!
       end
 
@@ -952,12 +1058,13 @@ module Arena
     def find_default_target(attacker)
       attacker_team = match.arena_participations.find_by(character: attacker)&.team
 
-      match.arena_participations
+      participation = match.arena_participations
         .where.not(team: attacker_team)
         .includes(:character)
-        .reject { |p| p.character.current_hp <= 0 }
-        .min_by { |p| p.character.current_hp }
-        &.character
+        .select { |entry| participation_hp(entry).positive? }
+        .min_by { |entry| participation_hp(entry) }
+
+      participation&.npc? ? participation : participation&.character
     end
 
     def same_team?(char1, char2)
@@ -1002,6 +1109,7 @@ module Arena
         Arena::NpcExperienceAwarder.new(match:, winning_team:).call
       end
       wear_results = Arena::EquipmentWearResolver.new(match:, rng:).call
+      record_solo_npc_victory!(winning_team) if npc_fight?
 
       if xp_result&.experience_awarded.to_i.positive?
         winner = Character.find(xp_result.character_id)
@@ -1063,6 +1171,21 @@ module Arena
             source: match.metadata.to_h["source"]
           }.compact
         )
+      end
+    end
+
+    def record_solo_npc_victory!(winning_team)
+      return if winning_team.blank?
+
+      winners = match.arena_participations.players.where(team: winning_team).includes(:character).to_a
+      return unless winners.one?
+
+      winner = winners.first.character
+      winner.with_lock do
+        winner.reload
+        winner.update!(metadata: winner.metadata.to_h.merge(
+          "npc_wins" => winner.metadata.to_h["npc_wins"].to_i + 1
+        ))
       end
     end
 
@@ -1380,7 +1503,11 @@ module Arena
 
     def target_from_pending_turn(participation, turn)
       target_participation = match.arena_participations.find_by(id: turn["target_participation_id"])
-      return target_participation if target_participation
+      if target_participation &&
+          target_participation.team != participation.team &&
+          participation_hp(target_participation).positive?
+        return target_participation
+      end
 
       find_default_target(participation.character)
     end
@@ -1547,8 +1674,11 @@ module Arena
         log_entry("block_failed", target, "#{target.name} tried to block attack (#{body_part}) from #{npc.name}, but it broke through")
       end
 
-      # Apply damage to player
-      target.current_hp = [target.current_hp - damage, 0].max
+      # Apply damage to player while keeping result statistics bounded by the
+      # HP that was actually removed.
+      previous_hp = target.current_hp
+      target.current_hp = [previous_hp - damage, 0].max
+      applied_damage = previous_hp - target.current_hp
       target.last_combat_at = Time.current
       target.save!
 
@@ -1558,7 +1688,7 @@ module Arena
 
       broadcaster.broadcast_vitals_update(target)
       broadcast_npc_action(npc, "attack", target, damage, critical: critical, body_part: body_part)
-      track_damage!(npc_participation, target_participation, damage)
+      track_damage!(npc_participation, target_participation, applied_damage)
 
       # Check for player defeat
       if target.current_hp <= 0

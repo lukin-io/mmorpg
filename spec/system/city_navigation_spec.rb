@@ -75,6 +75,7 @@ RSpec.describe "City navigation", type: :system, js: true do
   it "shows the image-map tooltip for a server-offered route" do
     visit world_path
 
+    expect(page).to have_css(".nl-city-viewport[data-nl-city-map-centered='true']")
     find("button[aria-label='Business Quarter']").hover
 
     expect(page).to have_css(".nl-city-tooltip", text: "Business Quarter", visible: :visible)

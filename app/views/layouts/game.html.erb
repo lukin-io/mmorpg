@@ -10,7 +10,11 @@
   <%= stylesheet_link_tag "application", "controls", data: { turbo_track: "reload" } %>
   <%= javascript_importmap_tags %>
 </head>
-<body class="nl-game-layout" data-controller="game-layout">
+<body class="nl-game-layout"
+      data-controller="game-layout"
+      <% if controller_name == "world" && @zone&.outdoor? %>
+        data-game-layout-encounter-url-value="<%= world_encounter_check_path %>"
+      <% end %>>
   <% world_travel_active = controller_name == "world" && @active_movement.present? %>
   <% shell_chat_channel_id = @chat_channel&.id || @global_chat_channel_id %>
 
