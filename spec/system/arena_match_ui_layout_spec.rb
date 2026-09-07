@@ -113,12 +113,6 @@ RSpec.describe "Arena Match UI Layout", type: :system do
       expect(page).to have_css(%([data-character-id="npc-participation-#{first.id}"]))
       expect(page).to have_css(%([data-character-id="npc-participation-#{second.id}"]))
     end
-
-    it "applies correct HP color class for high HP", skip: "HP color classes not yet implemented" do
-    end
-
-    it "applies correct HP color class for critical HP", skip: "HP color classes not yet implemented" do
-    end
   end
 
   describe "Combat Action Bar", js: true do

@@ -28,7 +28,7 @@
         <span><%= current_character.name %>[<%= current_character.level %>]</span>
       </div>
       <div class="nl-shop-controls">
-        <%= link_to "City", world_path, class: "lbut", data: {turbo: false} %>
+        <%= link_to shop_location_return_label, shop_location_return_path, class: "lbut", data: {turbo: false} %>
         <%= link_to "Inventory", inventory_path, class: "lbut" %>
         <%= link_to "Refresh", shop_path(mode: @mode, category: @category, **shop_filter_context), class: "lbut" %>
       </div>

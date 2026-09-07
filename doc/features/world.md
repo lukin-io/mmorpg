@@ -2,8 +2,8 @@
 ---
 title: World Feature
 description: Implementation handbook for the Neverlands-based open world, cells, movement, cell content, actions, and persisted player location.
-status: Fully Implemented
-updated: 2026-09-01
+status: Partially Implemented
+updated: 2026-09-07
 owners: Game world, movement, and world UI
 template: feature-v1
 ---
@@ -29,12 +29,15 @@ When behavior is uncertain or conflicts with this document:
 
 Supporting documents:
 
+- `doc/design/reference/world/observations/2026-09-07_forpost_grid_and_action_audit.md` — current grid, gate route, timed Look, and village audit.
+
 - `doc/design/reference/world/observations/2026-05-09_overworld_movement.md` — live movement observations.
 - `doc/design/reference/world/observations/2026-05-20_outdoor_npc_resource.md` — observed outdoor cell, NPC, and resource behavior.
 - `doc/design/reference/combat/observations/2026-08-26_wilderness_two_orc_group_fight.md` — current multi-NPC handoff, per-NPC search, and return evidence.
 - `doc/design/reference/combat/observations/2026-08-26_wilderness_passive_goblin_fight.md` — current passive same-cell bot-attack and return evidence.
 - `doc/design/reference/combat/observations/2026-08-26_wilderness_shield_npc_fight.md` — current north/back movement, exact-cell return, and action-interruption evidence.
 - `doc/design/reference/combat/observations/2026-09-01_wilderness_bandit_group_variation_and_magic.md` — current same-return-context variable group and passive-interval evidence.
+- `doc/design/reference/combat/observations/2026-09-02_swamp_passive_rosters_search_and_timeout.md` — current large-roster, near-immediate passive-repeat, per-bot search, and timeout-anomaly evidence.
 - `doc/design/reference/social/observations/2026-08-23_chat_game_event_timeline.md` — supplied item/NV search-result evidence used to bound the typed loot handoff without inventing an NPC assignment.
 - `doc/design/reference/shell/observations/2026-07-28_game_shell_and_mvp_surfaces.md` — persistent game-shell observations.
 - `doc/design/areas/world_map.md` — world-area design record.
@@ -63,15 +66,18 @@ Supporting documents:
 
 The MVP has one outdoor region, **Outpost Surroundings**, with local coordinates from `[0, 0]` through `[999, 999]`. A character occupies exactly one cell in exactly one `Zone`. The region is sparse: cells do not require one million database rows. An in-bounds cell without an explicit template exists as ordinary, passable outdoor terrain.
 
-The player sees the fresh live-measured Neverlands nearby-cell surface centered on the current cell: at the `1326 × 817` parity viewport it exposes 13 × 7 fixed 100px cells inside a clipped `1302 × 702` owner. The server renders a 15 × 9 one-cell buffer so travel can slide terrain beneath the fixed cursor. The server offers up to eight adjacent destinations. Clicking an offered cell starts a server-authored move; captured clean steps were `24` seconds and a captured destination-specific step was `32` seconds. The local `24..30` Wanderer fallback applies only when the destination has no exact authored duration. The map animates in the browser, but the server remains authoritative and changes the persisted coordinate only when the command becomes due and is completed. Completion applies the command's snapshotted `1..2` fatigue gain. One point recovers every three minutes; at effective fatigue `86%+`, Move, Look, and Enter are withheld and rejected until recovery.
+The player sees the live-measured Neverlands nearby-cell surface centered on the current cell. The viewport exposes an odd number of fixed 100px cells within the equivalent gameplay frame (header plus main pane), capped at 13 × 7 (`1302 × 702` including borders). A `1150 × 519` source gameplay frame exposes 11 × 5 cells; seven rows require sufficient height allocated above chat. The server renders a 15 × 9 buffer so travel can slide terrain beneath the fixed cursor. The server offers up to eight adjacent destinations. Clicking an offered cell starts a server-authored move; captured clean steps were `24` seconds and a captured destination-specific step was `32` seconds. The local `24..30` Wanderer fallback applies only when the destination has no exact authored duration. The map animates in the browser, but the server remains authoritative and changes the persisted coordinate only when the command becomes due and is completed. Completion applies the command's snapshotted `1..2` fatigue gain. One point recovers every three minutes; at effective fatigue `86%+`, Move, Look, and Enter are withheld and rejected until recovery.
 
 A cell may compose several independent concerns:
 
 - terrain, passability, and an optional source-backed `100 x 100` art override;
-- one hidden materialized hostile encounter anchor whose source metadata can create several NPC fight participants;
+- one hidden materialized hostile encounter anchor whose source metadata can
+  create several NPC fight participants and, for a captured sample set, remain
+  eligible for later selections after victory;
 - an active city or linked-location entrance;
 - one or more explicitly authored local actions;
-- other players whose persisted position exactly matches the cell.
+- online playable characters whose persisted position and validated room
+  audience match the current cell/surface.
 
 Every state-changing click is backed by a short-lived, character-owned server offer. Coordinates, action type, and target are revalidated when the offer is accepted. DOM data and submitted identifiers are never authority.
 
@@ -79,16 +85,23 @@ While the outdoor surface remains open, the game shell also performs a bounded
 passive check for the persisted same-cell hostile. The first check is immediate;
 the server then persists a due time fingerprinted by zone, coordinate, and NPC
 anchor and returns only the remaining retry delay. The endpoint accepts no NPC,
-coordinate, timer, or probability input. The provisional local `10..30`-second
-due range is a delivery choice, not a claim about Neverlands' still-unknown
-passive timer, probability, or opponent-selection weights.
+coordinate, timer, or probability input. An anchor with captured
+`passive_delay_windows` selects a complete window and a delay inside it through
+server RNG; anchors without those windows use the provisional local
+`10..30`-second fallback. Neither bounded sample replay nor the fallback claims
+Neverlands' still-unknown probability, cooldown, distribution, or weights.
 
 Current source evidence now confirms that one outdoor return context can yield
 different selected groups (`1x3 -> 1x1 -> 1x1 -> 1x2`) with mixed identities
 and levels. It also bounds two source idle intervals to approximately
-`230..278` and `127..187` seconds. The shipped local path remains one explicit
-authored anchor/composition because the complete eligible pool, weights,
-probability, cooldown, and delay distribution are still unobserved.
+`230..278` and `127..187` seconds. The mapped local `[8,7]` anchor stores those
+four complete observed outputs and both elapsed-time windows. At encounter
+creation the server selects one complete roster sample, resolves its persisted
+NPC templates, and creates the ordered mixed/repeated participations with the
+captured levels, HP, encounter XP, and fight-risk value. A later no-coordinate
+swamp chain adds `1x7 -> 1x3` and `4..64`-second evidence but is not assigned to
+this cell. The complete eligible pool, source weights, probability, cooldown,
+and delay distribution remain unobserved.
 
 ## 3. MVP goals and non-goals
 
@@ -116,15 +129,19 @@ probability, cooldown, and delay distribution are still unobserved.
   on the outdoor surface, without a manual NPC Attack control or client-supplied
   target.
 - Start the shared combat flow with every authored NPC encounter member on one side.
+- For an evidenced variable cell, select one complete server-authored roster
+  sample and preserve its member order, identity, level, HP, encounter XP, and
+  injury-risk field in the created match.
 - Return from the explicit result step to the allowlisted interrupted World, Character, or Inventory destination.
 - Keep all world mutation server-authoritative and authorization-covered.
 - Match the compact Neverlands map language: fixed cell size, red available-cell borders, central cursor, walking indicator, and countdown.
 
 ### Non-goals
 
-- Multiple outdoor regions or region-to-region travel.
+- Populating additional outdoor regions or introducing region-to-region travel;
+  current delivery keeps one populated region with verified region isolation.
 - Rendering or downloading the entire 1,000 × 1,000 region.
-- Procedural biomes, pathfinding, fog of war, or minimap discovery.
+- Procedural region generation, pathfinding, fog of war, or minimap discovery.
 - Terrain-, encumbrance-, fatigue-, effect-, profession-, or non-Wanderer skill-based travel-time modifiers; fatigue gates actions but does not alter duration.
 - Claiming to reproduce Neverlands' complete hidden travel-time formula; the live server has produced `32`- and `49`-second values under unisolated conditions.
 - Automatic movement queues or click-to-path travel.
@@ -132,11 +149,12 @@ probability, cooldown, and delay distribution are still unobserved.
 - Mines, exchanges, portals, or other world-linked locations that have not
   been captured and added as validated persisted cell content.
 - Implementing deferred `fish`, `drink`, or `dig` actions.
-- Inventing gathering rewards for `Look Around` before Neverlands evidence and the corresponding inventory/economy design exist.
-- Generic encounter tables, equal-weight assumptions, or procedural NPC group
-  composition beyond explicit Neverlands-backed cell metadata. Source evidence
-  now confirms variable same-context groups, but the shipped path remains
-  explicit until the eligible pool/weights and timing rule are captured.
+- Successful gathering, deferred by the user to the alchemy skill path;
+  `Look Around` currently supports only the captured empty result and work lock.
+- Generic encounter tables, claimed equal source weights, or procedural NPC
+  group composition beyond explicit Neverlands-backed cell metadata. The
+  shipped variable path replays complete observed samples; it is not the
+  source's unknown complete pool or weighting algorithm.
 - Invented building, lake, fishing, resource, or other special-location art
   without captured visual evidence and a project-owned implementation asset.
 - Copying Neverlands terrain images, sprites, markers, cursors, branding,
@@ -174,11 +192,13 @@ The surrounding game shell owns navigation, character status, presence, inventor
 ### 4.2 Map presentation
 
 - Logical cell size: `100px × 100px`.
-- Visible desktop surface: `1302px × 702px`, exposing 13 × 7 fixed-size cells
-  at the fresh `1326 × 817` shell viewport.
+- Visible surface: whole odd cell counts derived from available width and the
+  gameplay frame's height including its status header, capped at 13 × 7 cells
+  (`1302px × 702px` including borders). The source `1150 × 519` gameplay frame
+  gives 11 × 5 cells.
 - Server render window: horizontal radius 7 and vertical radius 4, producing a
-  15 × 9 buffer where bounds permit; the owner clips one full cell on each
-  side and edge placeholders remain inert.
+  15 × 9 buffer including inert placeholders beyond region edges. The viewport
+  retains at least one full off-screen cell on each side for travel.
 - Default presentation: exact 100px slices from the project-owned
   `world/forpost-terrain.png` sheet; authored project-owned catalog art may
   still override an exact cell.
@@ -190,13 +210,17 @@ The surrounding game shell owns navigation, character status, presence, inventor
 - Active movement: the map layer translates toward the target while the cursor remains centered.
 - Countdown: a compact red capsule one cell above the cursor.
 
-Below the native desktop width, the 1302px map becomes an internally scrollable
-viewport rather than shrinking its fixed 100px cells.
-`nl_world_map_controller.js` centers that viewport on the current-cell cursor
-on connect and resize. At tablet/mobile widths the viewport height is clamped
-for two-axis touch panning. This deliberate
-internal overflow is not whole-page responsive overflow and does not influence
-server reachability.
+`nl_world_map_controller.js` applies the captured odd-cell sizing rule to the
+available width and the combined client heights of the local header and main
+rows, which together correspond to the source gameplay frame. At the default
+`1150 × 799` shell allocation, the `491px` main and `29px` header produce a
+`520px` combined height and the source-matching `1102 × 502` map. It observes both rows and centers the
+current-cell cursor on connect, window resize, and frame resize as chat
+allocation changes. Small screens retain internal touch panning with fixed 100px
+cells and the same odd-cell sizing; at `390 × 844`, the centered viewport is
+`302 × 502` (three columns and five rows). Resizing neither requests new movement offers nor changes position or
+reachability. Seven visible rows require sufficient gameplay-frame height; the
+overall browser dimensions alone do not guarantee that allocation.
 
 Cells outside the logical zone can be present only as inert render-buffer placeholders at an edge. They never receive movement offers.
 
@@ -230,7 +254,36 @@ entering a city, or losing the live hostile invalidates the old schedule.
 
 ### 4.4 Players here
 
-The player list is scoped to active characters at the exact zone and `[x, y]`, excludes the current character, and is capped at 10 entries. Supported orders are name A–Z/Z–A and level ascending/descending. The list is refreshed through `GET /world/players`; it is presence information, not authority for interaction.
+`Game::World::Presence` reads the playable character at the exact zone and
+`[x, y]`, requires an active position and a recent open user session, and
+separates saved village, Shop, city-building, and Arena rooms. Alternate owned
+characters are not made online by the playable character's session. Multiple
+open devices do not duplicate a player. The existing five-minute session
+window is a technical liveness policy; Neverlands' exact expiry remains an
+explicit evidence gap.
+
+The query returns an authored location label, the full scoped count, and up to
+ten sorted rows. The viewer follows the same scope/order/limit. Supported
+orders are name A–Z/Z–A and level ascending/descending. `GET /world/players`
+refreshes label, count, list, and total online together. Authenticated activity
+refreshes the existing open session before projection; delayed heartbeats
+cannot reopen a logged-out session or rewind a newer timestamp. SQL predicates
+bound the audience without per-player queries.
+
+Ordinary chat derives the same authoritative cell/room key. Its locked
+transitions, authorized reads/sends, login/entry cutoffs, and mixed gameplay
+event timeline are owned by `doc/features/game_shell.md`. Shared local chat
+streams are not used because old subscriptions cannot establish current
+location authorization.
+
+`OutdoorActionAvailability` applies the persisted travel/Look boundary to
+direct village/Shop, Inventory, owned Character progression, and owned HTML
+profile requests. It reconciles expired state and holds the same character
+lock through a permitted request so a concurrent move cannot cross the check.
+Blocked requests return to World without inventory, currency, progression, or
+room-context changes. Public profiles and existing combat Inventory behavior
+retain their own access rules. Purchase and inventory-transfer workflows use
+savepoints to preserve their rescued-failure rollback inside that request lock.
 
 ## 5. Feature topology and authored content
 
@@ -238,6 +291,8 @@ The MVP topology is one sparse `1,000 × 1,000` outdoor region. Coordinates are 
 
 ### 5.1 Region and cell identity
 
+- **Region** — an outdoor map partition containing cells with local coordinates; terrain, resources, NPCs, and entrances are content within its cells.
+- **Region identity** — the existing `CharacterPosition.zone_id` and `MovementCommand.zone_id`; content owners retain their unique zone names. No competing position/region model was added.
 - **Local coordinate** — stored in `CharacterPosition`, movement records, and tile records in this app.
 - **Captured source coordinate** — records where the corresponding behavior was observed in Neverlands.
 - **Sparse tile** — an explicit override/content row; it is not required for an ordinary in-bounds cell to exist.
@@ -246,11 +301,25 @@ The MVP topology is one sparse `1,000 × 1,000` outdoor region. Coordinates are 
   arbitrary asset path.
 - **Cell composition** — terrain/art/passability plus independently materialized hidden NPC, entrance, local-action, and exact-cell presence layers.
 
+Multi-region readiness is implemented through the existing `Zone` identity.
+Tests place equal local coordinates in separate test regions and verify
+independent composed content, passability, movement/action keys, and saved
+interiors. Production seeds still populate only **Outpost Surroundings**;
+additional populated regions and crossing gameplay are deferred by the user's
+delivery scope. These tests establish storage and authority isolation, not
+Neverlands crossing rules or additional authored geography.
+
+Because sparse terrain/NPC/entrance records retain the unique zone name as
+their key, a populated name cannot be renamed or its `Zone` destroyed through
+the model. Existing `metadata.title` supplies display-only naming changes.
+This prevents a surviving `zone_id` position from losing its content or a later
+region from inheriting content orphaned under a reused name.
+
 ### 5.2 Forpost entrance
 
 | Entrance | Local coordinate | Captured source coordinate | Destination |
 |---|---:|---:|---|
-| Central Square exit | `[7, 0]` | `[1019, 1025]` | Forpost Central Square (`main`) at `[0, 0]` |
+| Central Square exit | `[6, 8]` | `[1000, 1000]` | Forpost Central Square (`main`) at `[0, 0]` |
 
 The gate is the active `outpost_gate` `TileBuilding`. Seeds remove the stale
 South/East gate rows from the superseded city topology. The illustrated Law
@@ -262,6 +331,15 @@ pair and retires the historical South/East entrances plus their stale City
 hotspots/offers. The operation preserves characters on retained City nodes and
 recovers only characters stranded in removed-only nodes to Central Square
 `[0,0]`; it never resets an outdoor `CharacterPosition`.
+
+The gate `[6,8]`, intermediate `[5,7]`, and village `[4,6]` reproduce two
+northwest source steps. The resource cell `[7,7]` fits this bounded
+`source - [994,992]` cluster. Eight authored unavailable cells preserve the
+captured neighbor sets. Seeds retire the old gate template at `[7,0]` while
+preserving any character saved there. Changed entrance/hotspot definitions
+cancel their live offers atomically; unchanged targets preserve fresh offers.
+This cluster does not establish a whole-region origin or relocate separately
+authored encounter samples.
 
 ### 5.3 Captured linked location
 
@@ -280,6 +358,10 @@ from the existing `ActionOfferBuilder`.
 The former hands off to Shop; the latter returns to World. Closing the browser
 inside the village or linked Shop preserves `[4, 6]`; login resumes that
 allowlisted surface only while the same active entrance still exists there.
+The linked Shop's Village controls return to the village square; its separate
+Leave hotspot returns outdoors. Direct interior URLs during movement or Look
+redirect to World before issuing offers or replacing the saved context; an
+active fight redirects to that fight. These checks share the character lock.
 
 This completes the captured village slice only. Stock exchanges, mines, and
 other cell-linked location families remain unavailable until their own live
@@ -298,11 +380,18 @@ explicit composition metadata are the local server-authoritative model. Exact
 Neverlands per-cell rosters, selection weights, and internal storage remain
 evidence gaps.
 
-The later `m_1008_1007` chain confirms the source behavior is broader than that
-local schema: one return context selected group sizes `3`, `1`, `1`, and `2`,
-including mixed Bandit/Robber identities and levels `7..9`. This is a known
-runtime parity gap, but the source still does not expose enough pool/weight data
-to replace the explicit local composition safely.
+The later `m_1008_1007` chain is mapped to local `[8,7]`. Its anchor persists
+four complete observed group outputs (`3`, `1`, `1`, and `2` members), including
+mixed Bandit/Robber identities and levels `7..9`, plus the two captured passive
+delay windows. The runtime chooses one whole sample and one whole window through
+server-owned RNG. After every selected roster is defeated and explicitly
+finished, the sampled anchor remains alive so a fresh due time and roster can
+be selected on the same cell. This mirrors the four completed source fights on
+`m_1008_1007`. It closes the fixed-composition and permanent-exhaustion
+implementation gaps for the captured outputs, not the source-evidence gap: the
+complete pool, weights, probability, cooldown, and delay distribution are
+still unknown. The later swamp `1x7 -> 1x3` chain has no captured coordinate
+and is therefore not added to this local cell.
 
 The config is evidence-backed seed input. `db/seeds.rb` reconciles the
 persisted placement and `TileNpcService` reads that DB state only; changing YAML
@@ -324,7 +413,7 @@ source coordinates must never be mixed in services or requests.
 | Current-cell linked-location entrance | `POST /world/enter_building` | Interactive handoff | World entrance service, then allowlisted World Location |
 | Frontier Village scene | `GET /world/locations/:building_key` | Interactive | `TileBuilding`, `TileStateResolver`, `WorldLocationsController`, World CSS |
 | Village Trading Post / exit | `POST /world/locations/:building_key/features` | Interactive handoff | Persisted building feature + shared owned offer, then Shop or unchanged World cell |
-| `Look Around` | `POST /world/perform_local_action` | Interactive observation/ambush handoff | World local-action pipeline |
+| `Look Around` | `POST /world/perform_local_action` | Immediate empty result with persisted 28-second lock, or ambush handoff | `PerformLocalAction`, `LocalActionState` |
 | Character/Inventory world-shell actions | `POST /world/context` | Interactive navigation/ambush handoff | World allowlist and hostile interruption pipeline |
 | Wilderness result return | `POST /arena_matches/:id/finish` after a World fight | Interactive handoff | Arena finishes the result; World resolves the saved allowlisted destination |
 | `fish`, `drink`, and `dig` | Authored identifiers only | Deferred | No offer or mutation is exposed |
@@ -367,7 +456,7 @@ The client exposes no generic building, pathfinding, terrain-speed, gathering-re
 | `MovementCommand` | Offered or active timed move | Captures source, target, direction, status, action key, offer expiry, and movement timestamps. |
 | `Character` fatigue fields | Persisted fatigue and recovery anchor | Effective value is time-derived, clamped `0..100`, and gates only source-named wilderness actions. |
 | `WorldActionOffer` | Capability for one cell mutation | Character-owned, short-lived action tied to exact zone, coordinate, type, and polymorphic target. |
-| `TileNpc` | Persisted state of an outdoor NPC placement | Tracks exact-cell identity, live/defeated state, and respawn timing. Runtime resolution never recreates a deleted placement from config. |
+| `TileNpc` | Persisted state of an outdoor NPC placement | Tracks exact-cell identity, composition metadata, live/defeated state, and respawn timing. A fixed anchor is defeated with its final participant; an anchor with validated complete roster samples remains eligible after each selected roster. Runtime resolution never recreates a deleted placement from config. |
 | `TileBuilding` | Explicit outdoor entrance and linked-location content owner | `city` stores an authored destination zone/coordinate; `location` stores validated scene/feature metadata on the same movable/deactivatable DB row and preserves the outdoor coordinate. |
 
 ### 7.1 Sparse-cell rule
@@ -382,6 +471,13 @@ The client exposes no generic building, pathfinding, terrain-speed, gathering-re
    actions, and exact-cell players.
 
 This rule is required for a 1,000 × 1,000 MVP region. Code must not create a tile row merely because a character viewed or traversed a coordinate.
+
+`TileProvider` never materializes the region. `MapState` prefetches at most
+eight exact neighboring cells in one query. Acceptance/completion and queue
+validation read only the requested target. Sparse misses are memoized per
+provider instance; out-of-bounds coordinates cause no tile query. Rendering
+remains at most `15 × 9` cells with coordinate-bounded template/building reads.
+These are structural limits, not production latency measurements.
 
 ### 7.2 Cell-art schema
 
@@ -450,12 +546,12 @@ remain commented until the referenced asset and evidence exist.
 The tile metadata shape is the same for a dedicated image and a sheet slice:
 
 ```yaml
-source_map: m_1019_1025
-source_coordinates: [1019, 1025]
+source_map: m_1000_1000
+source_coordinates: [1000, 1000]
 cell_art:
   key: forpost_terrain
-  column: 9
-  row: 5
+  column: 6
+  row: 8
 ```
 
 Ordinary in-bounds cells need no database row and use the coordinate-derived
@@ -504,7 +600,7 @@ Authored `local_actions` are validated structured data. Supported definitions ar
 | `drinking` | `dri` | `drink` | No |
 | `digging` | `dig` | `dig` | No |
 
-Invalid kinds, source-id mismatches, duplicates, and malformed array/object shapes are rejected. Only implemented definitions become `WorldActionOffer` rows. `Look Around` currently returns the authored observation message; it deliberately grants no invented item or currency reward.
+Invalid kinds, source-id mismatches, duplicates, and malformed array/object shapes are rejected. Only implemented definitions become `WorldActionOffer` rows. `Look Around` returns the authored observation message immediately and persists a 28-second lock on its accepted offer; it grants no item or currency. Successful gathering is deferred by the user to alchemy.
 
 ### 7.4 Cell-content authoring and lifecycle
 
@@ -569,15 +665,16 @@ stable key. Its current persisted shape is equivalent to:
     "description" => "Enter the village from this world cell.",
     "source_map" => "m_998_998",
     "source_coordinates" => [998, 998],
-    "landmark_kind" => "village",
     "location" => {
       "short_label" => "Village",
+      "presence_label" => "Village Square",
       "kind" => "village",
       "scene" => {"width" => 760, "height" => 255},
       "features" => [
         {
           "key" => "trading_post",
           "label" => "Trading Post",
+          "presence_label" => "Shop",
           "action_type" => "open_feature",
           "feature" => "shop",
           "polygon" => [
@@ -606,6 +703,12 @@ updates that same row. `TileBuilding` validates scene dimensions, feature keys,
 allowlisted action types/routes, and polygons before the seed can persist it.
 A building does not require a `MapTileTemplate` unless that cell also needs an
 explicit terrain, passability, art, timing, or local-action override.
+The outdoor village marker derives from `location.kind`; do not author the
+obsolete duplicate `landmark_kind`. Optional nonblank exterior/interior/feature
+`presence_label` strings name the corresponding audience. The retained
+`required_level` field is validated/stored but does not gate TileBuilding
+entry; active/configured content and the exact source cell are the implemented
+entrance checks. CityHotspot enforces its separate level requirement.
 
 For a temporary runtime removal, explicitly set the exact persisted building
 inactive in an idempotent retirement block after the active declarations:
@@ -669,7 +772,8 @@ If the tile has no remaining override, add an exact cleanup such as
 deleting the whole `outdoor_tiles` entry alone leaves the old row in an existing
 database.
 
-Only `resource_search` has a shipped outcome. Adding a different action requires
+Only `resource_search` has a shipped empty-result/work-timer outcome. It does
+not implement gathering yields. Adding a different action requires
 captured evidence plus an existing-owner change to
 `MapTileTemplate::LOCAL_ACTION_DEFINITIONS`, `ActionOfferBuilder`,
 `AcceptAction`, its transition service, UI, and coverage. Adding arbitrary JSON
@@ -709,11 +813,66 @@ outpost_surroundings:
           chance: 0.0
 ```
 
+An evidenced variable cell declares reusable opponent templates separately and
+stores only complete observed outputs and elapsed-time windows on its placement:
+
+```yaml
+outpost_surroundings:
+  npc_templates:
+    - key: wilderness_robber
+      name: Robber
+      role: hostile
+      level: 8
+      hp: 270
+      xp: 0
+  npcs:
+    - key: wilderness_bandit
+      name: Bandit
+      role: hostile
+      level: 7
+      x: 8
+      y: 7
+      hp: 155
+      xp: 0
+      metadata:
+        encounter_selection_mode: observed_sample_replay
+        passive_delay_windows:
+          - key: observed-interval
+            min_seconds: 230
+            max_seconds: 278
+        encounter_rosters:
+          - key: observed-mixed-side
+            trauma_percent: 30
+            encounter_experience_reward: 103
+            members:
+              - npc_key: wilderness_bandit
+                level: 7
+                hp: 155
+              - npc_key: wilderness_robber
+                level: 8
+                hp: 270
+```
+
+Every roster member key must resolve to one materialized `NpcTemplate`.
+`TileNpc` rejects empty/duplicate samples, sides outside `1..10`, missing member
+keys, non-positive level/HP overrides, invalid XP/risk values, and invalid
+ordered delay bounds. `OutdoorNpcConfig` also rejects unknown template
+references before seeding. Samples are complete outcomes—not independent NPC
+draws—and their presence must not be described as knowledge of Neverlands'
+hidden pool or weights. The ten-member capacity follows the official NPC
+article captured in
+`doc/design/reference/social/observations/2026-09-07_cell_chat_and_presence_boundaries.md`;
+existing seeded groups remain their captured sizes. The same boundary applies
+when selecting persisted data and starting the shared fight: ten members create
+ten opponent slots, while eleven members fail before a partial fight exists.
+
 Loot entries use the Arena-owned typed award contract after World hands off the
 match. `kind: item` resolves `item`, `item_key`, or `key` to an existing
 `ItemTemplate`; every entry must declare `chance` as a `0..1` fraction or
 `0..100` percent. Missing or invalid probabilities fail configuration loading
-instead of silently becoming guaranteed drops. The source proves a Rat Tail
+instead of silently becoming guaranteed drops. The same item kind can award a
+consumable, weapon, armor piece, or other valid Inventory template; no separate
+equipment-only loot pipeline exists. The source proves a Rat Tail
 can drop but not its exact probability, so the production Plague Rat entry is
 explicitly `0.0` to preserve the prior no-drop behavior until new Neverlands
 evidence replaces that local hold. A future
@@ -730,9 +889,14 @@ a placement in `/manage` removes it immediately and it is not recreated during
 World rendering. One anchor is supported per cell by the unique
 `[zone, x, y]` index. Repeated copies of the same captured opponent use the
 validated `encounter_count` metadata. Mixed and variable same-context groups
-now have live evidence; implementing them requires an extension of this same
-model/service pipeline after the complete eligible pool and weights are
-captured, not a parallel encounter system or assumed equal weighting.
+use validated complete `encounter_rosters`; `EncounterRosterSelector` resolves
+one sample through an injected/server RNG and `StartNpcFight` persists the
+selection. The presence of validated samples also marks the anchor as a
+repeatable encounter source: completing one selected side does not set the
+placement's defeated state, so a later passive check can schedule a new sample
+on that cell. Fixed-composition anchors keep the ordinary defeated/respawn
+lifecycle. Adding uncaptured pool members or claiming source weights remains
+forbidden.
 
 Seed-owned placement rows carry `metadata.seed_source: outdoor_npcs.yml`, so
 the scoped seed cleanup can distinguish them from management-created content.
@@ -832,10 +996,12 @@ flowchart LR
     F --> G["Render Turbo frames"]
     D -->|city| H["Render city feature"]
     I["Click offered destination"] --> J["POST /world/move"]
-    J --> X{"Hostile encounter?"}
+    J --> Q["Lock character and validate current owned offer"]
+    Q --> X{"Hostile encounter?"}
+    Q -.->|invalid| R["Reject without movement or encounter"]
     X -->|yes| Y["Start shared multi-participant fight"]
     Y --> Z["Finish to saved allowlisted context"]
-    X -->|no| K["Lock and accept MovementCommand"]
+    X -->|no| K["Start accepted MovementCommand"]
     K --> L["Browser animates until ends_at"]
     L --> A
     B --> M["Persist target only when due"]
@@ -845,12 +1011,18 @@ The important boundary is that JavaScript animates an accepted command; it does 
 
 ### 8.1 World load
 
-`Game::Movement::MapState` first asks `CompleteMove` to finalize any due command under the character lock. It then:
+`Game::Movement::MapState` first asks `CompleteMove` to reconcile active commands
+under the character lock: a mismatched source region/cell fails immediately,
+and a due valid command completes. It then:
 
-1. returns the active movement state without new destinations when a command is still moving;
-2. otherwise cancels stale open movement offers;
+1. returns `not_outdoor` without destinations for a city, or active movement
+   state without new destinations when a command is still moving;
+2. otherwise cancels stale open movement offers and reconciles the accepted Look deadline, returning `local_action` without destinations while work remains active;
 3. derives effective fatigue and returns a `fatigued` locked state without destinations at `86%+`;
-4. evaluates all eight direction offsets against bounds and passability;
+4. evaluates all eight direction offsets against bounds and passability, where
+   a valid coordinate delta satisfies
+   `abs(target.x - current.x) <= 1`,
+   `abs(target.y - current.y) <= 1`, and target differs from current;
 5. persists fresh `MovementCommand` offers with random action keys and a 10-minute offer TTL;
 6. returns the map state used to render the viewport.
 
@@ -867,9 +1039,9 @@ the NPC name, marker, stats, or a manual attack action into the map surface.
 if destination.metadata.travel_seconds is a positive integer:
   travel_seconds = destination.metadata.travel_seconds
 else:
-wanderer = clamp(character.passive_skill_level(:wanderer), 0, 100)
-reduction_seconds = floor(wanderer * 6 / 100)
-travel_seconds = clamp(30 - reduction_seconds, 24, 30)
+  wanderer = clamp(character.passive_skill_level(:wanderer), 0, 100)
+  reduction_seconds = floor(wanderer * 6 / 100)
+  travel_seconds = clamp(30 - reduction_seconds, 24, 30)
 ```
 
 The fallback whole-second bands are `0..16 => 30`, `17..33 => 29`,
@@ -897,10 +1069,10 @@ metadata rather than an invented client formula.
 2. locks the character and rejects a second active movement;
 3. finds an offered command owned by the current character;
 4. locks it and validates TTL, direction, source position, submitted target, bounds, and current passability;
-5. rechecks that effective fatigue is below `86`;
+5. rejects active Look and rechecks effective fatigue below `86`, then evaluates hostile interruption only for this validated move;
 6. changes it from `offered` to `moving` and snapshots a random `fatigue_gain` of `1..2` in command metadata;
 7. records `started_at` and `ends_at` using the persisted offer duration;
-8. cancels sibling offers.
+8. cancels sibling movement and world-action offers.
 
 The character remains on the source cell during the server-authored interval.
 Turbo responses refresh the relevant map/action frames; HTML requests redirect
@@ -908,13 +1080,26 @@ to the canonical world screen.
 
 ### 8.4 Complete movement
 
-On a subsequent world-state load, `CompleteMove` locks the due command and position. It applies the target only if:
+On a subsequent world-state load, `CompleteMove` locks active commands and
+their character position. It fails a command whose source region or cell no
+longer matches, even before that command's deadline, so stale travel cannot
+lock a relocated character out of valid new-region offers. It applies the
+target only if:
 
 - the character still occupies the command source;
 - the target is still in bounds and passable;
 - the command is the current due `moving` command.
 
 Success updates `CharacterPosition`, applies the stored fatigue gain at the authoritative `ends_at`, advances the command to `completed`, and increments the position turn marker. A moved source or newly invalid target produces a failed command without changing position or fatigue.
+
+Arrival clears any saved interior to the `world` gameplay context and
+synchronizes `Chat::LocalContext` within the same character transaction.
+Actual city gate/node transitions also clear the previous surface before
+commit, so closing the browser before the redirected page loads cannot resume
+an old room in a new region. First-position creation and saved gameplay rooms
+use that same chat owner; duplicate completion or a
+reload of the same room preserves its persisted entry timestamp. If context
+persistence fails, the enclosing position/room transition rolls back.
 
 ### 8.5 Accept a cell action
 
@@ -923,18 +1108,57 @@ Visible entrance use and local actions follow the same capability pattern:
 1. The render pass creates a `WorldActionOffer` for the current character and exact current cell.
 2. The form submits its opaque action key and expected target identifiers.
 3. `WorldActionOfferPolicy` verifies ownership.
-4. `Game::World::AcceptAction` locks the row and revalidates status, expiry, position, action type, and target.
+4. `Game::World::AcceptAction` locks the character then the offer, reloads current position/status, rejects active travel/Look/fight, and revalidates expiry, action type, and target.
 5. For an outdoor Enter or Look offer, acceptance rechecks effective fatigue below `86`.
 6. The domain service performs the action.
-7. The offer becomes `completed` or `failed`; subsequent rendering creates a fresh offer if the action is still possible.
+7. Immediate actions become `completed` or `failed`. Look remains `accepted` until its persisted deadline; rendering issues fresh offers only when ready.
 
 Changing an HTML id, reusing another character's key, replaying an expired key, or moving away invalidates the action.
+
+`TileBuilding#enter!` additionally locks the character then the persisted
+entrance and rechecks its exact outdoor region/cell against fresh records.
+The lower-level entry service therefore cannot use matching coordinates in
+another region, and a repeated city-gate entry preserves the arrived position.
+Only `location.kind: village` has an implemented interior renderer; other
+kinds fail content validation and accessibility rather than reusing that scene.
+
+### 8.5.1 Timed Look Around
+
+`PerformLocalAction` receives an owned accepted offer and current authored
+cell. Under the character/offer lock it checks hostile interruption before work
+starts, otherwise snapshots a `28`-second `local_action_ends_at` and immediate
+`local_action_result` in offer metadata, then cancels sibling offers. No
+coordinates, inventory, or currency change. The default result is “There is no
+useful vegetation in this area.”
+
+`LocalActionState` receives the character and optional clock, returns active
+work, and completes due work from server time. Service retries retain the
+original deadline; repeat HTTP submissions during work are safely rejected.
+Stale position or malformed deadline fails the work. A passive fight may
+supersede/cancel it without adding encounter probability or timing rules.
+
+The escaped result appears in a keyboard-accessible `360 × 150` dialog over
+the gameplay frame. Close dismisses presentation only. Terrain/cursor remain
+still, and movement/Character/Inventory/Look remain locked. Refresh resumes
+the deadline without reopening the one-time result. Client expiry requests
+current World state; JavaScript never completes work. General search-time
+modifiers and successful yields remain `[EVIDENCE]` gaps.
 
 ### 8.6 Hostile interruption
 
 `Game::World::InterruptAction` resolves the live hostile encounter from the authoritative outdoor position. `WorldController` invokes it for movement, entrance, and implemented local actions, and `WorldContextActionsController` invokes it for the World shell's Character and Inventory destinations. `WorldEncounterChecksController` delegates passive delivery to `Game::World::PassiveEncounterCheck`, which resolves the same exact-cell NPC and hands due encounters to `StartNpcFight`. City positions and already-active combat do not start another encounter.
 
-On interruption, `StartNpcFight` locks the character and encounter anchor, returns an existing active match on a duplicate request, and otherwise creates one player participation plus the source-authored number of NPC participations. The paired-rat cell creates a `team_battle` with two independently targetable NPC records. Match metadata records the source cell, encounter count, and normalized `world`, `profile`, or `inventory` return context. The outdoor map does not implement a separate combat engine.
+On interruption, `StartNpcFight` locks the character and encounter anchor,
+returns an existing active match on a duplicate request, and otherwise delegates
+roster choice to `EncounterRosterSelector`. A fixed anchor repeats its template
+by the authored `encounter_count`; a sampled anchor selects one complete roster
+through server RNG and resolves every referenced persisted template before any
+match is created. It then creates one player participation plus the ordered NPC
+participations with captured level/HP overrides. Match metadata records the
+source cell, selected sample/member keys, encounter XP, injury-risk value,
+whether the source is repeatable, the five-minute World-fight deadline, and
+normalized `world`, `profile`, or `inventory` return context. The outdoor map
+does not implement a separate combat engine.
 
 Arena's shared processor lets each living NPC on the opposing side act,
 performs defeat and typed loot resolution once per NPC, and ends the fight only
@@ -950,8 +1174,10 @@ coordinates, encounter count, return URL, timer, or chance from the browser.
 `PassiveEncounterCheck` stores `zone_id`, `x`, `y`, `tile_npc_id`, and `due_at`
 in character metadata under a bounded key. An early retry returns remaining
 time; a mismatched cell/NPC or missing live hostile clears/replaces the old
-schedule. The same character/anchor locks make concurrent due checks or retry
-delivery reuse the active match rather than creating another fight.
+schedule. Delay selection uses the anchor's captured window set when present
+and otherwise the provisional `10..30`-second fallback. The same
+character/anchor locks make concurrent due checks or retry delivery reuse the
+active match rather than creating another fight.
 
 ## 9. HTTP and Turbo contract
 
@@ -989,6 +1215,14 @@ outside this feature.
 - updates the countdown;
 - revisits the canonical world route when the timer reaches zero.
 
+Ticks derive from the absolute deadline and server/client clock offset;
+skipped callbacks do not extend travel/work. Outdoor pages disable Turbo
+snapshot caching so Back obtains fresh deadlines/offers. A scoped Stimulus
+event updates declared shell navigation targets. Rejected offers and failed
+submissions restore controls, and movement buttons retain visible keyboard
+focus. Full-page responses following Turbo redirects use HTML content type
+and top-level navigation, preventing duplicate shells or stale location URLs.
+
 It must not calculate reachable destinations, invent an action key, change coordinates, or mark a command complete. Those remain service responsibilities.
 
 `game_layout_controller.js` owns only passive encounter delivery while the
@@ -1000,18 +1234,22 @@ and follows only the server response through Turbo. It does not select an
 NPC/cell, generate or reroll a due time, roll probability, or decide combat
 eligibility.
 
-`app/assets/stylesheets/world.css` owns the `1302 × 702` visible nearby map
-surface, 15 × 9 fixed-cell render buffer, project-owned 100px terrain-sheet
+`app/assets/stylesheets/world.css` owns the bounded nearby map surface
+(up to `1302 × 702`), 15 × 9 fixed-cell render buffer, project-owned 100px terrain-sheet
 slices, thin red offered-cell border, fixed center marker, walking state, timer
 placement, village map landmark, and the `760 × 255` CSS-built village scene.
 `Game::World::CellArtCatalog` owns allowlisted project assets and sheet
 dimensions. The renderer uses an explicit valid cell-art reference first and
 otherwise uses the regional terrain sheet. Neither presentation path defines passability
-or content.
+or content. Each rendered table cell is its coordinate's `100 x 100` sheet crop;
+the browser scrolls/translates that composed table beneath the fixed marker.
 
-The stylesheet also owns the responsive viewport bounds. The Stimulus
-controller only centers the scroller on the rendered cursor and preserves
-fixed cell geometry; it does not select destinations or change coordinates.
+The stylesheet supplies the responsive viewport bounds. The Stimulus
+controller observes the main pane and header, fits whole odd columns/rows to
+the equivalent source gameplay frame,
+and centers the scroller on the rendered cursor. Resize preserves fixed cell
+geometry and authoritative offers; it never selects destinations or changes
+coordinates. The observer is disconnected with its controller.
 
 Available cells remain semantic buttons with labels, while movement status is exposed as text as well as motion. The location-information frame retains semantic metadata even when visually suppressed. A reduced-motion client may minimize interpolation, but it must preserve the same server timer and completion reload.
 
@@ -1025,6 +1263,8 @@ Available cells remain semantic buttons with labels, while movement status is ex
 - the Frontier Village may resume only while the same active allowlisted
   location entrance remains at the exact persisted outdoor coordinate;
 - its linked Shop may resume under the same entrance-cell check;
+- an authorized selected Arena room resumes only with current city/hotspot and
+  room access, without requiring a previous login's entry cookie;
 - an invalid saved interior context falls back to the world without relocating the character.
 
 The only location bootstrap is for a playable character with no position row: Central Square in Forpost at `[0, 0]`. A normal login never respawns or recenters an existing character.
@@ -1052,7 +1292,7 @@ A wilderness fight does not move `CharacterPosition`. Its match metadata stores 
 - Passive encounter requests accept no gameplay parameters and reuse the same
   current-character, current-position, live-anchor, and active-match checks as
   action interruption.
-- Encounter size is source metadata constrained to `1..8`; the captured paired-rat cell uses `2`.
+- Encounter size is source metadata constrained to `1..10`; the captured paired-rat cell uses `2`.
 - `StartNpcFight` locks the character before the encounter anchor and reuses an existing active fight, preventing double-clicked or concurrent starts from creating overlapping combat.
 - Repeated NPC templates use participation ids for targeting and broadcasts; a template id is not unique inside a multi-NPC fight.
 - Post-fight destinations are logical allowlisted contexts, never request-provided or persisted URLs.
@@ -1093,11 +1333,12 @@ A wilderness fight does not move `CharacterPosition`. Its match metadata stores 
 | `Look Around` with no hostile interruption | Return authored message; grant no invented reward. |
 | Valid wilderness action with a live hostile encounter | Do not complete its intended domain transition; start or reuse the shared fight and preserve its allowlisted destination. |
 | Passive check with a live hostile encounter | Start or reuse the same shared fight and return only its application-local redirect path. |
-| Passive check without an eligible hostile, from City, or after defeat | Return a negative result; do not create a match or alter position. |
+| Passive check without an eligible hostile, from City, or after fixed-anchor defeat | Return a negative result; do not create a match or alter position. |
 | Passive check repeated while startup is active | Reuse the character's existing fight; do not duplicate match/participations. |
 | First NPC defeated in a multi-NPC fight | Resolve/mark/log that participant's typed loot check once; keep the encounter anchor and fight live while another opposing participant survives. |
 | Outdoor NPC loot entry omits or invalidates `chance` | Reject the developer-authored configuration at load; do not infer a probability or grant value. |
-| Final NPC defeated | Mark the encounter anchor defeated and complete the fight-level result. |
+| Final NPC defeated for a fixed anchor | Mark the encounter anchor defeated and complete the fight-level result. |
+| Final NPC defeated for a sampled anchor | Complete the fight-level result but keep the anchor eligible; after explicit Finish, a later passive check schedules and selects a new captured roster. |
 | Player surrenders | Defeat only that participant; finish only when the participant's entire side is defeated. |
 | Duplicate fight start | Return the character's existing active match; do not create another match or participant set. |
 | Invalid/foreign post-fight context | Fall back to the unchanged World cell; never follow the submitted value as a URL. |
@@ -1121,7 +1362,7 @@ A wilderness fight does not move `CharacterPosition`. Its match metadata stores 
 - Source-backed `100 x 100` cell-art overrides render at their configured sheet
   slice and ordinary cells retain the coordinate-derived terrain fallback.
 - Exact-cell hidden NPC state, visible entrance/local action, and player-presence composition resolves correctly without revealing the NPC on the outdoor map.
-- The verified Central Square gate round-trips through the explicit `[7, 0]`
+- The verified Central Square gate round-trips through the explicit `[6, 8]`
   outdoor cell; stale or uncaptured gate rows do not become available.
 - The captured village cell exposes Enter, preserves its exact coordinate,
   renders the `760 × 255` responsive/pannable CSS scene, and accepts only its
@@ -1136,13 +1377,22 @@ A wilderness fight does not move `CharacterPosition`. Its match metadata stores 
   cell/NPC state changes, and overlapping/retried due checks reuse one active
   match.
 - The captured Plague Rat encounter remains invisible on the map, then the fight renders and resolves two independently targetable NPCs; both living NPCs can act, the first defeat does not end the fight, and each defeated NPC receives one retry-safe typed-loot resolution. Only a successful explicit roll can add Inventory value; the unknown production Rat Tail probability remains disabled.
+- The mapped `[8,7]` encounter selects exactly one complete captured roster,
+  preserves its mixed/repeated member order, level, HP, XP, and risk metadata,
+  and chooses a due time only inside one captured window; forged browser
+  roster, coordinate, size, level, and delay values have no effect.
+- Defeating and finishing a sampled `[8,7]` roster leaves that cell's encounter
+  source eligible; a later passive schedule can start another independently
+  selected roster. Fixed anchors retain their explicit defeated/respawn state.
+- A World-created live fight reaches its timeout result at the persisted
+  `300`-second fight deadline; a late action cannot extend it.
 - The shared fight surface renders complete 1x1, 1xMany, and ManyxMany side rosters for PvE/PvP and applies surrender to one participant at a time.
 - Finishing a wilderness result returns to World, Character, or Inventory according to validated match metadata; invalid metadata falls back to World.
 - Logout/login preserves exact outdoor coordinates.
-- Desktop preserves the `1302 × 702`, 13 × 7 visible surface backed by a
-  15 × 9 render buffer; 820px and 390px viewports expose it through centered
-  internal panning without scaling cells or causing whole-page horizontal
-  overflow.
+- The visible viewport fits whole odd columns/rows within the equivalent
+  header-plus-main gameplay frame, up to `1302 × 702` (13 × 7), backed by a 15 × 9 render
+  buffer. Narrow panes preserve 100px cells and centered internal panning
+  without whole-page horizontal overflow.
 - Anonymous, expired, stale, mismatched, remote, and foreign-character actions cannot mutate state.
 - Admin CRUD changes the same `MapTileTemplate`, `TileBuilding`, `NpcTemplate`,
   and `TileNpc` records used by `TileStateResolver`; mutations are audited,
@@ -1154,11 +1404,11 @@ Tests are part of the feature contract. Changes must cover the applicable model,
 
 | Coverage category | Representative guarantees |
 |---|---|
-| Success | Map load, configured cell-art slice/fallback, hidden NPC presentation, eight-direction offer, exact/fallback timed completion, one-time fatigue gain/recovery, cell composition, gate/village/local/context/passive handoff, village Shop/exit offers, multi-NPC fight, participant surrender, context return, persisted resume, management CRUD/audit. |
-| Failure | Unknown/malformed cell art or location key, invalid key/context, expired/mismatched feature offer, wrong direction/target, impassable destination, concurrent movement, fatigue-locked action, stale source, inactive entrance/NPC, passive City/defeated/no-hostile result, startup rollback, missing/invalid loot chance, surrender after completion, invalid JSON/dependent management deletion. |
-| Edge/null/boundary | Cell-art key/source/column/row null, negative, zero, and sheet edge; authored travel `24/32`, fallback Wanderer `nil`/negative/`0`/`20`/`100`; fatigue `0/85/86/100`, three-minute recovery, and `1/2` gain; linked-location exact/wrong cell; encounter count `nil`/`0`/`2`/oversized; repeated NPC template ids; first/final participant defeat; 1x1/1xMany/ManyxMany sides; invalid saved return context; map edges; management pagination and 390px overflow. |
+| Success | Map load, configured cell-art slice/fallback, hidden NPC presentation, eight-direction offer, exact/fallback timed completion, one-time fatigue gain/recovery, cell composition, gate/village/local/context/passive handoff, captured-window and complete-roster selection, post-victory sampled-source re-scheduling, village Shop/exit offers, multi-NPC fight, participant surrender, context return, persisted resume, management CRUD/audit. |
+| Failure | Unknown/malformed cell art or location key, invalid key/context, expired/mismatched feature offer, wrong direction/target, impassable destination, concurrent movement, fatigue-locked action, stale source, inactive entrance/NPC, passive City/defeated/no-hostile result, missing roster template, startup rollback, missing/invalid loot chance, surrender after completion, invalid JSON/dependent management deletion. |
+| Edge/null/boundary | Cell-art key/source/column/row null, negative, zero, and sheet edge; authored travel `24/32`, fallback Wanderer `nil`/negative/`0`/`20`/`100`; fatigue `0/85/86/100`, three-minute recovery, and `1/2` gain; linked-location exact/wrong cell; encounter count and roster size `nil`/`0`/`1`/`2`/`10`/`11`; captured delay lower/upper bounds; repeated/mixed NPC template ids and per-member level/HP; first/final participant defeat; fixed-anchor defeat versus sampled-anchor repeatability; 1x1/1xMany/ManyxMany sides; invalid saved return context; map edges; management pagination and 390px overflow. |
 | Authorization | Anonymous request including passive encounter check, foreign movement/action offer, current-character scoping, World-offer policy ownership, combat participant policy, admin versus moderator/player management access. |
-| Retry/concurrency | Duplicate movement completion, overlapping passive checks, existing-fight reuse, repeated NPC turn/Finish, per-NPC loot marker, and management mutation conflict. |
+| Retry/concurrency | Duplicate movement completion, overlapping passive checks, existing-fight reuse, repeated NPC turn/Finish, sampled-source re-scheduling only after terminal Finish, per-NPC loot marker, and management mutation conflict. |
 
 Factories must retain edge traits for status, expiry, coordinates, passability, action types, and active/inactive content when those states are exercised.
 
@@ -1183,7 +1433,11 @@ bundle exec rspec \
   spec/services/game/world/action_offer_builder_spec.rb \
   spec/services/game/world/cell_art_catalog_spec.rb \
   spec/services/game/world/tile_state_resolver_spec.rb \
+  spec/services/game/world/resume_context_spec.rb \
+  spec/services/game/world/city_hotspot_service_spec.rb \
+  spec/services/chat/local_context_transition_spec.rb \
   spec/services/game/world/perform_local_action_spec.rb \
+  spec/services/game/world/local_action_state_spec.rb \
   spec/services/game/world/interrupt_action_spec.rb \
   spec/services/game/world/passive_encounter_check_spec.rb \
   spec/services/game/world/combat_return_context_spec.rb \
@@ -1194,6 +1448,11 @@ bundle exec rspec \
   spec/services/game/loot_entry_spec.rb \
   spec/requests/world_spec.rb \
   spec/requests/world_locations_spec.rb \
+  spec/requests/world_location_presence_spec.rb \
+  spec/requests/world_map_landmarks_spec.rb \
+  spec/requests/arena_room_context_spec.rb \
+  spec/requests/outdoor_action_availability_spec.rb \
+  spec/queries/game/world/presence_spec.rb \
   spec/requests/open_world_regions_spec.rb \
   spec/requests/world_context_actions_spec.rb \
   spec/requests/world_encounter_checks_spec.rb \
@@ -1206,6 +1465,7 @@ bundle exec rspec \
   spec/views/shared/_nl_players_list_spec.rb \
   spec/system/world_map_spec.rb \
   spec/system/world_interactions_spec.rb \
+  spec/system/world_village_resume_spec.rb \
   spec/system/world_npc_encounter_spec.rb \
   spec/system/login_resume_spec.rb \
   spec/system/responsive_neverlands_ui_spec.rb \
@@ -1232,6 +1492,104 @@ and page-overflow separation at narrow widths. Run the complete suite before
 release because the world hands off to combat, city, shop, inventory, shell,
 presence, and login-resume behavior.
 
+### 15.1 Manual Chrome verification (2026-09-07)
+
+This earlier pass precedes the session-aware presence/chat follow-up in 15.2.
+Its position-only audience result is superseded by the current session scope.
+
+The local Rails application was exercised at `http://127.0.0.1:3100` using
+the isolated `mmorpg_world_review_20260907` database and seeded characters
+`max_kerby`, `balance`, and `max_kerby_dark`. Redis and Sidekiq used separate
+local review instances. The ordinary development database was not changed.
+Temporary exact-cell/NPC fixtures below were review setup, not new seed content
+or Neverlands evidence.
+
+| Exercised case | Verified result |
+|---|---|
+| Main character's city exit and nearby entrance | Central Square's left exit reached `[6,8]` immediately with five offers. Two northwest moves reached `[4,6]`; the intervening ordinary cell had no Enter action. The village landmark and gate castle marker were visible. |
+| Travel, reload, and direct URL attempts | Accepted travel kept the source position until completion, resumed its countdown after reload, and refreshed destination offers on arrival. Inventory, Shop, and village URLs during travel returned to the locked World surface without resetting its deadline. |
+| Village, Shop, and saved location | Enter opened the village scene; Shop returned through Village to the square, then Leave restored the exact outdoor cell. Logout/login restored both a saved village interior and a saved village Shop on the relevant seeded accounts. |
+| Resource action | With the local rat anchor temporarily defeated, Look immediately displayed the empty vegetation result and a 28-second work timer. Closing the dialog and reloading preserved the remaining lock; expiry completed the saved action without movement or an item award. |
+| Hostile cell and combat return | With the rat anchor restored, Look entered the paired-rat fight. Return was blocked during the fight; defeating the first rat did not finish the pair. Winning and Finish restored `[7,7]`. Waiting on `[8,7]` triggered the authored passive Bandit encounter; surrender and Finish restored that same cell. |
+| Player audiences and account isolation | Three seeded characters on `[4,6]` in exterior, square, and Shop contexts produced the corresponding separate counts/lists, including the viewer. An adjacent character was excluded. Switching accounts restored the second character's Shop, and the first character's personal combat events were absent. |
+| Region edges and city return | Review placements at `[0,0]` and `[999,999]` offered only their three in-bounds neighbors. Enter at `[6,8]` reached Central Square with no wilderness destinations; leaving restored the gate and its West Gate label. |
+| Realtime and layout | A review-only personal game event arrived through the running worker/Cable connection without reload. At 1150px and 390px widths, cells remained 100px, page width matched the viewport, and the gate marker and Enter control remained visible. |
+
+The final `bin/verify full` run passed read-only RuboCop, 1,903 non-system
+examples, 221 system examples, and Brakeman (zero warnings). It then stopped
+on the existing `rubyzip 3.2.2` dependency advisory `CVE-2026-85396`
+(`GHSA-47m2-wp7j-p9vc`, fixed in `3.4.0`). Importmap and documentation audits
+were run separately. Broader parity gaps remain explicit in section 19.
+
+### 15.2 Follow-up manual Chrome verification (2026-09-07)
+
+The same isolated review database/app was used with two independent Chrome
+cookie origins (`localhost:3100` and `127.0.0.1:3100`), the seeded main and dark
+accounts, and the inactive balance character as a presence regression case.
+The authenticated Neverlands session was reused and returned to the village
+entrance; no second source login was made.
+
+| Case | Observed local outcome |
+|---|---|
+| Two accounts at the gate | Both directions of ordinary chat delivered. The first manual second-account post exposed a channel-reuse uniqueness error; the fixed router and regression coverage now allow both accounts to post. |
+| Movement and return | The main player moved `[6,8] → [5,7] → [6,8]` with server timers. Already delivered rows stayed visible. A gate message sent after departure was absent in the other cell and remained absent after return; fresh gate messages then delivered. |
+| City and Arena | Gate Enter reached Central Square. City Shop had a separate key/label. Selecting an accessible Arena room persisted its actual id. Logout/login restored that room, cleared ordinary chat, and retained only the main player's two personal gameplay events. |
+| Village/Shop | The second account followed `[6,8] → [5,7] → [4,6]`, received Enter at the visible village landmark, and entered the square. Keyboard activation of Trading Post reached Shop. Exterior and square did not receive Shop messages; two accounts in the same Shop received a fresh message. Shop's Village link returned to the square, with a separate Leave action for outdoors. |
+| Session and presence | A fresh second-account login restored the village Shop and cleared its ordinary rows. Village Square showed only the dark character; the balance alternate was excluded despite the main account being online elsewhere. |
+| Private-addressed input | The private prefix produced an explicit unavailable error and no public message. |
+| Clear chat | Clearing kept the timeline owner intact. New posts still arrived, and Refresh did not restore cleared ordinary rows. |
+| Responsive map | Manual native browser images confirmed 11 × 5 at 1150 × 799 and centered 3 × 5 at 390 × 844, and the 13 × 7 cap at 1326 × 1010. The last mobile pass removed legacy width/height overrides that exposed partial columns. Fixed 100px cells, Enter, and nearby players remained visible. Browser sizing was restored afterwards. |
+
+The earlier NPC/resource/fight/cooldown manual cases in section 15.1 remain
+applicable. Successful gathering is deliberately deferred, not a passed yield
+case. Detailed session expiry, stale room, foreign region, retry, concurrency,
+and authorization cases are covered at narrower automated boundaries.
+
+Follow-up `bin/verify full`: **1,999 non-system examples and 230 system
+examples passed**, with 456-file read-only RuboCop and Brakeman (zero warnings).
+The command stopped at the same pre-existing `rubyzip 3.2.2` advisory listed
+in 15.1. Importmap audit passed separately. Final viewport-only changes passed the 10-example focused responsive suite
+and a fresh complete **230-example system suite**, both with zero failures.
+Final documentation audits passed 10 feature handbooks and 65 architecture
+documents; `git diff --check` passed.
+
+### 15.3 City/Arena room-entry follow-up (2026-09-07)
+
+The City first-response presence gap and both Arena Enter-link gaps were
+reproduced before the fixes. A further deterministic request regression
+reproduced relocation between City-building access validation and context
+persistence. Entry now holds the character lock through fresh validation,
+context save, presence preparation, and rendering; a relocation that wins
+first rejects the old building and preserves the newer position/chat context.
+Arena room Enter links refresh the full shell instead of only `main_content`.
+
+Focused verification passed **13 examples**: 11 requests in
+`spec/requests/city_buildings_spec.rb` and two browser cases in
+`spec/system/arena_room_presence_spec.rb`, with zero failures. The browser
+cases exercise both summary and Room Map entry with automatic presence
+refresh disabled, checking immediate label/count/list replacement, saved room
+context, unchanged coordinates, a single chat timeline, and reload stability.
+Read-only RuboCop passed for the four changed runtime/spec files.
+
+Two seeded accounts in the isolated review application also verified immediate
+Hospital, Market, and Airship presence and City-return audience exclusion.
+The original Hospital response retained Central Square's label/count; the
+fixed response showed Hospital with both current-room players immediately.
+With automatic presence refresh disabled, the Arena summary link changed
+Training Hall's one-player audience to Trial Hall's two-player audience; the
+Room Map link returned to Training Hall's one-player audience immediately.
+Fresh login restored Training Hall, and the final locked Hospital path was
+rechecked with both accounts. Temporary review levels and both original
+World positions at `[4,6]` were restored afterwards.
+These are local regression checks, not new Neverlands service evidence.
+
+Final `bin/verify fast` passed read-only RuboCop for **457 files**, **2,005
+non-system examples** with zero failures, and documentation audits for 10
+feature handbooks and 65 architecture documents. The focused browser suite
+(`city_navigation`, `arena_room_presence`, `local_chat`, `world_village_resume`,
+and `world_interactions`) passed **24 examples** with zero failures. These
+follow-up checks supplement the historical full-suite results in section 15.2.
+
 ## 16. Responsible for Implementation Files
 
 ### Requirements and design evidence
@@ -1247,6 +1605,7 @@ presence, and login-resume behavior.
 - `doc/design/reference/combat/observations/2026-08-26_wilderness_passive_goblin_fight.md`
 - `doc/design/reference/combat/observations/2026-08-26_wilderness_shield_npc_fight.md`
 - `doc/design/reference/combat/observations/2026-09-01_wilderness_bandit_group_variation_and_magic.md`
+- `doc/design/reference/combat/observations/2026-09-02_swamp_passive_rosters_search_and_timeout.md`
 - `doc/design/reference/shell/observations/2026-07-28_game_shell_and_mvp_surfaces.md`
 - `doc/design/reference/social/observations/2026-08-23_chat_game_event_timeline.md`
 
@@ -1290,6 +1649,8 @@ presence, and login-resume behavior.
 
 ### World-content services
 
+- `app/controllers/concerns/outdoor_action_availability.rb`
+- `app/queries/game/world/presence.rb`
 - `app/services/game/world/action_offer_builder.rb`
 - `app/services/game/world/accept_action.rb`
 - `app/services/game/world/cell_art_catalog.rb`
@@ -1299,11 +1660,14 @@ presence, and login-resume behavior.
 - `app/services/game/loot_entry.rb`
 - `app/services/game/world/tile_npc_service.rb`
 - `app/services/game/world/perform_local_action.rb`
+- `app/services/game/world/local_action_state.rb`
 - `app/services/game/world/interrupt_action.rb`
 - `app/services/game/world/passive_encounter_check.rb`
+- `app/services/game/world/encounter_roster_selector.rb`
 - `app/services/game/world/combat_return_context.rb`
 - `app/services/game/world/start_npc_fight.rb`
 - `app/services/game/world/resume_context.rb`
+- `app/services/chat/local_context.rb` — shared owner invoked inside position/room transactions; full chat behavior belongs to `doc/features/game_shell.md`.
 
 ### Management authoring and audit
 
@@ -1335,6 +1699,8 @@ presence, and login-resume behavior.
 - `app/views/world_locations/show.html.erb`
 - `app/javascript/controllers/game_layout_controller.js`
 - `app/javascript/controllers/nl_world_map_controller.js`
+- `app/javascript/controllers/world_result_controller.js`
+- `app/views/world/_action_result.html.erb`
 - `app/javascript/controllers/nl_location_scene_controller.js`
 - `app/assets/stylesheets/world.css`
 - `app/assets/stylesheets/shell.css`
@@ -1418,17 +1784,27 @@ ownership after the World capability is accepted.
 - `spec/services/game/world/action_offer_builder_spec.rb`
 - `spec/services/game/world/cell_art_catalog_spec.rb`
 - `spec/services/game/world/tile_state_resolver_spec.rb`
+- `spec/services/game/world/resume_context_spec.rb`
+- `spec/services/game/world/city_hotspot_service_spec.rb`
+- `spec/services/chat/local_context_transition_spec.rb`
 - `spec/services/game/world/tile_building_service_spec.rb`
 - `spec/services/game/world/outdoor_npc_config_spec.rb`
 - `spec/services/game/loot_entry_spec.rb`
 - `spec/services/game/world/tile_npc_service_spec.rb`
 - `spec/services/game/world/perform_local_action_spec.rb`
+- `spec/services/game/world/local_action_state_spec.rb`
 - `spec/services/game/world/interrupt_action_spec.rb`
 - `spec/services/game/world/passive_encounter_check_spec.rb`
+- `spec/services/game/world/encounter_roster_selector_spec.rb`
 - `spec/services/game/world/combat_return_context_spec.rb`
 - `spec/services/game/world/start_npc_fight_spec.rb`
 - `spec/requests/world_spec.rb`
 - `spec/requests/world_locations_spec.rb`
+- `spec/requests/world_location_presence_spec.rb`
+- `spec/requests/world_map_landmarks_spec.rb`
+- `spec/requests/outdoor_action_availability_spec.rb`
+- `spec/requests/arena_room_context_spec.rb`
+- `spec/queries/game/world/presence_spec.rb`
 - `spec/requests/open_world_regions_spec.rb`
 - `spec/requests/world_context_actions_spec.rb`
 - `spec/requests/world_encounter_checks_spec.rb`
@@ -1450,6 +1826,8 @@ ownership after the World capability is accepted.
 - `spec/system/world_interactions_spec.rb`
 - `spec/system/world_npc_encounter_spec.rb`
 - `spec/system/login_resume_spec.rb`
+- `spec/system/world_village_resume_spec.rb`
+- `spec/views/world/_action_result_spec.rb`
 - `spec/assets/city_image_assets_spec.rb`
 - `spec/assets/world_cell_art_assets_spec.rb`
 - `spec/models/management_audit_event_spec.rb`
@@ -1510,3 +1888,41 @@ Before extending the World feature:
 | 2026-08-23 | Normalized the authored Plague Rat reward to the shared typed `kind: item` contract and documented the Arena-owned persistence/idempotency handoff. The observed standalone `24 NV` result remains unassigned until its NPC and probability are evidenced. |
 | 2026-08-25 | Required explicit validated loot probabilities, preserved the pre-existing Plague Rat no-drop behavior as a documented `0.0` evidence hold, and corrected the World acceptance contract so a per-NPC resolution is not misreported as a guaranteed Inventory award. |
 | 2026-08-26 | Added targetless passive delivery for the persisted source-backed same-cell hostile through the existing start pipeline: an immediate browser check follows a server-persisted coordinate/NPC-fingerprinted random due time, reload/early checks cannot accelerate it, cell/NPC changes invalidate it, overlapping due checks reuse one fight, and focused request/service/system coverage protects the boundary. The local `10..30` range does not claim Neverlands timing/probability. |
+| 2026-09-02 | Added validated exact-cell roster samples and captured delay windows through one server-owned selector/start pipeline, including mixed/repeated templates, per-member level/HP, encounter XP/risk persistence, malformed-reference failure, and seeded config convergence. Sampled anchors now remain eligible after full victory and Finish, matching the completed four-fight `m_1008_1007` chain; request coverage proves a second schedule/start on the same anchor. Seeded Chrome verified normal City exit, a mixed `[8,7]` round, five-minute timeout/Finish/return, and automatic re-entry after a server-persisted `137s` captured-window delay. Complete source pools, weights, probability, cooldown, and delay distribution remain evidence gaps. |
+
+
+## 19. Open-world parity audit (2026-09-07)
+
+The feature status is Partially Implemented for the broader requested world.
+The following distinction prevents a passing sample from implying full region
+or AOI parity.
+
+| Classification | Finding and current disposition |
+|---|---|
+| Resolved `[IMPL]` | Whole-region tile hydration replaced by eight-cell prefetch/exact-target reads; rendering stays bounded. |
+| Resolved `[IMPL]` | Fresh offer validation precedes interruption; character locking/status reload protects stale and duplicate actions, travel/work exclusions, and retry-safe completion. |
+| Resolved `[IMPL]` | Countdown sleep/Back recovery, failed-submission navigation, keyboard focus, full-page Turbo ownership, and header/list presence refresh are covered. |
+| Resolved `[IMPL]` | Look now persists the observed 28-second lock and immediate dismissible empty result. |
+| Resolved `[IMPL]` | Authored NPC groups support the documented maximum of ten with validated member slots and rejection above ten. Captured seed rosters are unchanged; no unknown group-selection formula is inferred. |
+| Resolved `[IMPL]` / `[DOC]` | Forpost's gate now uses its actual source coordinate and preserves the sampled village route. Old Oktal coordinates no longer label this gate. |
+| Resolved `[IMPL]` | Village exterior, square, and Shop use distinct saved-location presence projections and authored labels; the viewer participates in the list scope. Shop returns to the square before the separate outdoor exit. |
+| Resolved `[IMPL]` | Same coordinates in different regions remain isolated across terrain, NPC, entrance, offer, action, and resume boundaries. Populated content keys cannot be renamed or deleted; display titles remain editable. Stale active moves fail when their source region/cell changes. |
+| Resolved `[IMPL]` / `[DOC]` | The viewport fits whole odd columns/rows to the equivalent header-plus-main gameplay frame, keeping 100px cells and the fixed cursor. Village landmarks derive from canonical location kind without duplicate marker metadata. |
+| Remaining `[IMPL]` + `[EVIDENCE]` | The million-cell region remains sparse sample content with repeating project-owned terrain. Full region art, walkability, resources, NPC pools, and interconnected locations are not captured. The `[8,7]` Bandit remains a separate captured encounter sample, not evidence of adjacency to the gate cluster. |
+| Resolved `[IMPL]` / `[EVIDENCE]` | Ordinary chat is confined to the authoritative current cell or room, as confirmed by the Neverlands Chat article and the user. Each bounded poll/send reauthorizes the current session and context; ordinary local/global broadcasts are suppressed. Already delivered rows persist through movement within one login; old-login and earlier-visit rows are not fetched. Personal/world gameplay events retain their durable shared timeline. |
+| Resolved `[IMPL]` | Nearby rows/counts use recent open sessions and the playable character only, excluding logged-out users and inactive alternate characters. Session heartbeats preserve logout and monotonic last-seen state; the total refreshes with the list. |
+| Resolved `[IMPL]` | Selected Arena rooms and city building/Shop rooms use distinct saved audiences. Room access, restoration, and application boundaries reject foreign region-bound rooms; actual world-position transitions clear the previous room atomically. |
+| Resolved `[IMPL]` | City-building entry validates, saves the room, and renders presence under the character lock; a concurrent relocation cannot save stale room context. First Hospital/Market/Airship entry renders the current label/count/list immediately. Both Arena Enter links refresh the full shell, so surrounding presence changes with the selected room without waiting for automatic refresh. Request/browser coverage belongs to `doc/features/game_shell.md`, `doc/features/city.md`, and `doc/features/arena_combat.md`. |
+| Remaining `[EVIDENCE]` | Exact Neverlands disconnect/logout expiry remains unpublished and unobserved. The confirmed audience is one cell or room; the existing five-minute open-session window is a local technical liveness policy, not a claimed Neverlands interval. |
+| Deferred by user | Successful gathering belongs to the later alchemy skill path. The current empty Look result remains supported; yields, eligibility, and profession progression are not invented. |
+| Current delivery boundary | Populate one region, with region-isolated persistence, cell reads, movement, and authorization ready for additional regions. Actual crossings and additional populated regions are outside this task's acceptance boundary. |
+| Remaining `[EVIDENCE]` | General search and travel modifiers, broader location families, and full encounter probabilities/pools remain incomplete. |
+
+The renderer reloads its bounded map snapshot after travel; it does not yet
+reuse only entering/leaving DOM rows as the source client does. That is a
+presentation optimization, not whole-region loading or client-owned movement.
+No new art was needed for this pass: the existing project-owned sheet and
+fixed-cell slicing remain the presentation pipeline. A decorative castle emoji
+now identifies the seeded city entrance; its accessible name and Enter offer
+remain server-owned. The village keeps its visible, project-owned settlement
+landmark. No Neverlands assets or combat-formula changes belong to this audit.

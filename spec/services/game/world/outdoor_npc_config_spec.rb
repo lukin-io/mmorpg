@@ -36,11 +36,54 @@ RSpec.describe Game::World::OutdoorNpcConfig do
     end
 
     it "does not invent NPCs for other coordinates in the same zone" do
-      expect(described_class.source_npc_for_tile("Outpost Surroundings", 8, 7)).to be_nil
+      expect(described_class.source_npc_for_tile("Outpost Surroundings", 9, 7)).to be_nil
+    end
+
+    it "preserves the four captured m_1008_1007 roster samples and timing windows" do
+      npc = described_class.source_npc_for_tile("Outpost Surroundings", 8, 7)
+      rosters = npc.dig(:metadata, :encounter_rosters)
+
+      expect(npc[:key]).to eq("wilderness_bandit")
+      expect(npc.dig(:metadata, :source_map)).to eq("m_1008_1007")
+      expect(npc.dig(:metadata, :passive_delay_windows)).to eq(
+        [
+          {key: "2026-09-01-interval-1", min_seconds: 230, max_seconds: 278},
+          {key: "2026-09-01-interval-2", min_seconds: 127, max_seconds: 187}
+        ]
+      )
+      expect(rosters.map { |sample| sample[:key] }).to eq(
+        %w[2026-09-01-2334 2026-09-01-2340 2026-09-01-2345 2026-09-01-2351]
+      )
+      expect(rosters.map { |sample| sample[:members].size }).to eq([3, 1, 1, 2])
+      expect(rosters.last[:members].pluck(:npc_key, :level, :hp)).to eq(
+        [["wilderness_bandit", 8, 185], ["wilderness_robber", 9, 310]]
+      )
+      expect(described_class.find_npc("wilderness_robber")[:name]).to eq("Robber")
     end
   end
 
   describe ".config" do
+    it "loads a ten-member authored roster and rejects an eleventh member on reload" do
+      members = Array.new(10) { {npc_key: "capacity_spec"} }
+      boundary_config = {
+        outpost: {
+          zone_name: "Outpost",
+          npcs: [{key: "capacity_spec", metadata: {encounter_rosters: [{key: "boundary", members:}]}}]
+        }
+      }
+      allow(YAML).to receive(:load_file).with(described_class::CONFIG_PATH).and_return(boundary_config)
+
+      loaded = described_class.reload!
+      expect(loaded.dig(:outpost, :npcs, 0, :metadata, :encounter_rosters, 0, :members).size).to eq(10)
+
+      members << {npc_key: "capacity_spec"}
+      expect { described_class.reload! }.to raise_error(
+        described_class::InvalidConfigurationError, /roster 0 has invalid members/
+      )
+    ensure
+      described_class.instance_variable_set(:@config, nil)
+    end
+
     it "rejects a developer-authored loot entry without an explicit chance" do
       invalid_config = {
         outpost: {
@@ -54,6 +97,34 @@ RSpec.describe Game::World::OutdoorNpcConfig do
       expect { described_class.config }.to raise_error(
         described_class::InvalidConfigurationError,
         /NPC invalid loot entry 0: Loot chance is required/
+      )
+    ensure
+      described_class.instance_variable_set(:@config, nil)
+    end
+
+
+    it "rejects a captured roster that references an unknown template" do
+      invalid_config = {
+        outpost: {
+          zone_name: "Outpost",
+          npcs: [
+            {
+              key: "bandit",
+              metadata: {
+                encounter_rosters: [
+                  {key: "bad", members: [{npc_key: "missing", level: 7, hp: 155}]}
+                ]
+              }
+            }
+          ]
+        }
+      }
+      allow(YAML).to receive(:load_file).with(described_class::CONFIG_PATH).and_return(invalid_config)
+      described_class.instance_variable_set(:@config, nil)
+
+      expect { described_class.config }.to raise_error(
+        described_class::InvalidConfigurationError,
+        /references unknown template "missing"/
       )
     ensure
       described_class.instance_variable_set(:@config, nil)

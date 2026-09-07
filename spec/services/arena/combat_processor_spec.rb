@@ -628,6 +628,52 @@ RSpec.describe Arena::CombatProcessor do
       expect(world_match.reload).to be_completed
       expect(world_match.winning_team).to eq("a")
     end
+
+    it "keeps a sampled cell anchor eligible after every selected NPC falls" do
+      world_zone = create(:zone, name: "Repeatable Encounter Woods", location_type: "outdoor")
+      world_character = create(:character, current_hp: 500, max_hp: 500)
+      create(:character_position, character: world_character, zone: world_zone, x: 4, y: 4)
+      template = create(
+        :npc_template,
+        npc_key: "repeatable-bandit",
+        name: "Repeatable Bandit",
+        level: 7,
+        metadata: {"health" => 1, "base_damage" => 1}
+      )
+      tile_npc = create(
+        :tile_npc,
+        npc_template: template,
+        npc_key: template.npc_key,
+        zone: world_zone.name,
+        x: 4,
+        y: 4,
+        current_hp: 1,
+        max_hp: 1,
+        metadata: {
+          "encounter_rosters" => [
+            {
+              "key" => "single",
+              "members" => [{"npc_key" => template.npc_key, "level" => 7, "hp" => 1}]
+            }
+          ]
+        }
+      )
+      world_match = Game::World::StartNpcFight.new(character: world_character, tile_npc:).call
+      world_processor = deterministic_arena_processor(world_match, 0, 99, 99, 5)
+      allow(world_processor.broadcaster).to receive(:broadcast_combat_action)
+      allow(world_processor.broadcaster).to receive(:broadcast_match_ended)
+
+      world_processor.send(
+        :process_attack_on_npc,
+        world_character,
+        world_match.arena_participations.npcs.sole
+      )
+
+      expect(world_match.reload).to be_completed
+      expect(world_match.winning_team).to eq("a")
+      expect(tile_npc.reload).to be_alive
+      expect(tile_npc.current_hp).to eq(1)
+    end
   end
 
   describe "surrender across shared fight shapes" do

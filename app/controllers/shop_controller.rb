@@ -2,16 +2,21 @@
 
 class ShopController < ApplicationController
   include CurrentCharacterContext
+  include OutdoorActionAvailability
 
   before_action :ensure_active_character!
+  around_action :with_available_outdoor_actions
   before_action :ensure_shop_access!
   before_action :set_inventory_and_wallet
 
   def show
     load_shop
-    Game::World::ResumeContext.new(character: current_character).remember_shop!(
+    resume_context = Game::World::ResumeContext.new(character: current_character)
+    @shop_parent_location = resume_context.shop_parent_location
+    resume_context.remember_shop!(
       params: shop_resume_params
     )
+    prepare_presence_context
   end
 
   def buy

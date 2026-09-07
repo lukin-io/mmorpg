@@ -431,17 +431,6 @@ RSpec.describe "Arena Match Lifecycle UI", type: :system, js: true do
       match
     end
 
-    context "when character has low HP" do
-      before do
-        character1.update!(current_hp: 30, max_hp: 100) # 30% HP
-        login_as(user1, scope: :user)
-        allow_any_instance_of(ApplicationController).to receive(:current_character).and_return(character1)
-      end
-
-      it "displays HP recovery warning", skip: "HP gate validation at application creation, not match view" do
-      end
-    end
-
     context "when character has sufficient HP" do
       before do
         character1.update!(current_hp: 80, max_hp: 100) # 80% HP

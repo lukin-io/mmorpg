@@ -386,6 +386,30 @@ RSpec.describe "World", type: :request do
     end
 
     context "with invalid movement" do
+      it "rejects an invalid key before a hostile cell can start combat" do
+        create(:tile_npc, zone: zone.name, x: 5, y: 5)
+
+        expect {
+          post move_world_path, params: {direction: "north", target_x: 5, target_y: 4, action_key: "bad-key"}
+        }.not_to change(ArenaMatch, :count)
+
+        expect(response).to redirect_to(world_path)
+        expect(MovementCommand.moving).to be_empty
+        expect(position.reload).to have_attributes(x: 5, y: 5)
+      end
+
+      it "rejects an expired move before a hostile cell can start combat" do
+        command = movement_offer(:north)
+        command.update!(created_at: MovementCommand::OFFER_TTL.ago - 1.second)
+        create(:tile_npc, zone: zone.name, x: 5, y: 5)
+
+        expect { post_offer(command) }.not_to change(ArenaMatch, :count)
+
+        expect(response).to redirect_to(world_path)
+        expect(command.reload).to be_offered
+        expect(position.reload).to have_attributes(x: 5, y: 5)
+      end
+
       it "rejects movement without a valid action key" do
         post move_world_path, params: {direction: "north", target_x: 5, target_y: 4, action_key: "bad-key"}
 
@@ -613,6 +637,8 @@ RSpec.describe "World", type: :request do
   end
 
   describe "POST /world/perform_local_action" do
+    include ActiveSupport::Testing::TimeHelpers
+
     let(:user) { create(:user) }
     let(:zone) { create(:zone, name: "Local Action Zone", location_type: "outdoor", width: 1000, height: 1000) }
     let(:character) { create(:character, user:, level: 4, current_hp: 100, max_hp: 100) }
@@ -653,15 +679,61 @@ RSpec.describe "World", type: :request do
       expect(response.body).to include('name="action_key"')
     end
 
-    it "completes an uninterrupted resource-search offer without awarding invented resources" do
+    it "starts timed resource-search work without awarding invented resources" do
       offer = local_action_offer
 
       expect { post_local_action(offer) }.not_to change(InventoryItem, :count)
 
       expect(response).to redirect_to(world_path)
-      expect(offer.reload).to be_completed
+      expect(offer.reload).to be_accepted
+      expect(offer.local_action_ends_at).to be_within(1.second).of(Time.current + 28.seconds)
       follow_redirect!
-      expect(response.body).to include("search the surroundings")
+      expect(response.body).to include("There is no useful vegetation in this area.")
+      expect(offer.reload).to be_accepted
+      expect(position.reload).to have_attributes(x: 5, y: 5)
+    end
+
+    it "keeps the first persisted deadline when the same request is retried" do
+      offer = local_action_offer
+      post_local_action(offer)
+      deadline = offer.reload.local_action_ends_at
+      accepted_at = offer.accepted_at
+
+      travel_to(accepted_at + 10.seconds) do
+        expect { post_local_action(offer) }.not_to change(InventoryItem, :count)
+
+        expect(response).to redirect_to(world_path)
+        expect(offer.reload).to be_accepted
+        expect(offer.local_action_ends_at).to eq(deadline)
+        expect(offer.accepted_at).to eq(accepted_at)
+      end
+    end
+
+    it "ignores client-supplied timing and coordinate claims" do
+      offer = local_action_offer
+
+      post_local_action(offer, params: {duration_seconds: 0, ends_at: 1.day.ago.iso8601, target_x: 999, target_y: 999})
+
+      expect(response).to redirect_to(world_path)
+      expect(offer.reload.local_action_ends_at).to be_within(1.second).of(Time.current + 28.seconds)
+      expect(position.reload).to have_attributes(x: 5, y: 5)
+    end
+
+    it "completes the original accepted work only when the server deadline is due" do
+      offer = local_action_offer
+      post_local_action(offer)
+      deadline = offer.reload.local_action_ends_at
+
+      travel_to(deadline - 1.second) do
+        get world_path
+        expect(offer.reload).to be_accepted
+      end
+      travel_to(deadline, with_usec: true) do
+        get world_path
+        expect(offer.reload).to be_completed
+        expect(offer.completed_at).to eq(deadline)
+      end
+      expect(position.reload).to have_attributes(x: 5, y: 5)
     end
 
     it "returns a Turbo redirect after a successful local action" do
@@ -904,6 +976,30 @@ RSpec.describe "World", type: :request do
           params: {building_id: building.id, action_key: offer.action_key}
 
         expect(offer.reload).to be_completed
+      end
+
+      it "rolls back city entry when completing its action offer fails" do
+        offer = world_action_offer_for(character:, position:, action_type: :enter_building, target: building)
+        allow_any_instance_of(WorldActionOffer).to receive(:complete!).and_raise("completion unavailable")
+
+        expect {
+          post enter_building_world_path, params: {building_id: building.id, action_key: offer.action_key}
+        }.to raise_error(RuntimeError, "completion unavailable")
+
+        expect(position.reload).to have_attributes(zone: source_zone, x: 5, y: 5)
+        expect(offer.reload).to be_offered
+      end
+
+      it "rejects a saved entry offer while timed travel is active" do
+        offer = world_action_offer_for(character:, position:, action_type: :enter_building, target: building)
+        movement = create(:movement_command, :moving, character:, zone: source_zone)
+
+        post enter_building_world_path, params: {building_id: building.id, action_key: offer.action_key}
+
+        expect(response).to redirect_to(world_path)
+        expect(position.reload).to have_attributes(zone: source_zone, x: 5, y: 5)
+        expect(offer.reload).to be_offered
+        expect(movement.reload).to be_moving
       end
 
       it "lets a same-cell hostile NPC interrupt entry without moving the character" do
@@ -1643,27 +1739,30 @@ RSpec.describe "World", type: :request do
     let!(:low_level_player) do
       create(:character, name: "AlphaNearby", level: 2).tap do |nearby|
         create(:character_position, character: nearby, zone:, x: 4, y: 7)
+        create(:user_session, user: nearby.user)
       end
     end
     let!(:high_level_player) do
       create(:character, name: "ZuluNearby", level: 19).tap do |nearby|
         create(:character_position, character: nearby, zone:, x: 4, y: 7)
+        create(:user_session, user: nearby.user)
       end
     end
     let!(:other_cell_player) do
       create(:character, name: "HiddenNeighbor", level: 30).tap do |nearby|
         create(:character_position, character: nearby, zone:, x: 5, y: 7)
+        create(:user_session, user: nearby.user)
       end
     end
 
     before { sign_in user, scope: :user }
 
-    it "renders only other players at the authoritative current cell" do
+    it "renders the current player and others at the authoritative current cell" do
       get players_world_path
 
       expect(response).to have_http_status(:success)
-      expect(response.body).to include("AlphaNearby", "ZuluNearby")
-      expect(response.body).not_to include("PresenceOwner", "HiddenNeighbor")
+      expect(response.body).to include("AlphaNearby", "ZuluNearby", "PresenceOwner")
+      expect(response.body).not_to include("HiddenNeighbor")
       expect(response.body).not_to include("<html")
     end
 
@@ -1683,13 +1782,14 @@ RSpec.describe "World", type: :request do
       expect(response.body.index("AlphaNearby")).to be < response.body.index("ZuluNearby")
     end
 
-    it "returns the compact empty state at an unoccupied boundary cell" do
+    it "includes self at a boundary cell with no other players" do
       position.update!(x: 0, y: 0)
 
       get players_world_path
 
       expect(response).to have_http_status(:success)
-      expect(response.body).to include("No players nearby")
+      expect(response.body).to include("PresenceOwner", 'data-player-list-count="1"')
+      expect(response.body).not_to include("No players nearby", "AlphaNearby", "ZuluNearby")
     end
 
     it "requires authentication" do

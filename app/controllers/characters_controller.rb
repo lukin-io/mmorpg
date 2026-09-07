@@ -13,10 +13,12 @@
 #   PATCH /characters/:id/perks     - Save boolean perk allocations
 class CharactersController < ApplicationController
   include CurrentCharacterContext
+  include OutdoorActionAvailability
 
   before_action :ensure_active_character!
   before_action :set_character
   before_action :authorize_character!
+  around_action :with_available_outdoor_actions
   before_action :set_equipment, only: [:stats, :skills, :perks]
 
   # GET /characters/:id/stats
@@ -111,6 +113,7 @@ class CharactersController < ApplicationController
   private
 
   def set_equipment
+    @character = current_character if @character.id == current_character.id
     @equipment = @character.inventory.inventory_items.equipped.includes(:item_template).index_by do |item|
       item.equipment_slot.to_s.presence || item.item_template&.slot.to_s
     end

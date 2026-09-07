@@ -66,10 +66,11 @@ module Game
       GATES = {
         "west" => {
           "name" => "City Exit",
+          "presence_label" => "Outpost, West Gate",
           "node_key" => "main",
-          "local_coordinates" => [7, 0],
-          "source_coordinates" => [1019, 1025],
-          "source_map" => "m_1019_1025"
+          "local_coordinates" => [6, 8],
+          "source_coordinates" => [1000, 1000],
+          "source_map" => "m_1000_1000"
         }
       }.freeze
 

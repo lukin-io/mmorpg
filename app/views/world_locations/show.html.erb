@@ -30,6 +30,7 @@
           <%= form_with url: world_location_feature_path(@building.location_key),
                         method: :post,
                         class: "nl-world-location-hotspot-form",
+                        data: {turbo_frame: "_top"},
                         local: true do |form| %>
             <%= form.hidden_field :feature_key, value: feature_key %>
             <%= form.hidden_field :action_key, value: @feature_offers_by_key.fetch(feature_key).action_key %>

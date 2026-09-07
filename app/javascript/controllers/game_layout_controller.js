@@ -15,9 +15,12 @@ export default class extends Controller {
     "mainContent",
     "playersPanel",
     "playersList",
+    "playersLocation",
+    "playersTotal",
     "chatArea",
     "chatInput",
-    "chatMessages"
+    "chatMessages",
+    "worldNavigation"
   ]
 
   static values = {
@@ -42,6 +45,23 @@ export default class extends Controller {
   disconnect() {
     this.stopAutoRefresh()
     this.stopEncounterChecks()
+    this.playersRequestController?.abort()
+    this.encounterRequestController?.abort()
+    this.encounterRequestController = null
+    this.encounterCheckPending = false
+  }
+
+  updateWorldMovementState(event) {
+    this.worldNavigationTargets.forEach((button) => {
+      button.disabled = event.detail.locked === true
+    })
+  }
+
+  updateLocalChatContext(event) {
+    if (!this.hasChatInputTarget) return
+
+    const field = this.chatInputTarget.form?.elements.namedItem("context_key")
+    if (field) field.value = event.detail.key
   }
 
   // =====================
@@ -93,7 +113,11 @@ export default class extends Controller {
     const url = `/world/players?sort=${this.playersSortValue}`
 
     if (this.hasPlayersListTarget) {
+      this.playersRequestController?.abort()
+      const requestController = new AbortController()
+      this.playersRequestController = requestController
       fetch(url, {
+        signal: requestController.signal,
         headers: {
           "Accept": "text/vnd.turbo-stream.html, text/html",
           "X-Requested-With": "XMLHttpRequest"
@@ -105,11 +129,23 @@ export default class extends Controller {
         return response.text()
       })
       .then(html => {
-        if (this.hasPlayersListTarget) {
+        if (!requestController.signal.aborted && this.element.isConnected && this.hasPlayersListTarget) {
           this.playersListTarget.innerHTML = html
+          const snapshot = this.playersListTarget.querySelector("[data-player-list-count]")
+          if (snapshot && this.hasPlayersLocationTarget) {
+            this.playersLocationTarget.textContent = `${snapshot.dataset.playerListLocation} [ ${snapshot.dataset.playerListCount} ]`
+          }
+          if (snapshot && this.hasPlayersTotalTarget) {
+            this.playersTotalTarget.textContent = `Total [ ${snapshot.dataset.playerListTotal} ]`
+          }
         }
       })
-      .catch(err => console.warn("Failed to refresh players:", err))
+      .catch(err => {
+        if (err.name !== "AbortError") console.warn("Failed to refresh players:", err)
+      })
+      .finally(() => {
+        if (this.playersRequestController === requestController) this.playersRequestController = null
+      })
     }
   }
 
@@ -131,6 +167,8 @@ export default class extends Controller {
   }
 
   scheduleEncounterCheck(delayMs) {
+    if (!this.element.isConnected) return
+
     this.stopEncounterChecks()
     this.encounterCheckTimer = setTimeout(() => {
       this.encounterCheckTimer = null
@@ -139,13 +177,16 @@ export default class extends Controller {
   }
 
   async checkWorldEncounter() {
-    if (!this.hasEncounterUrlValue || this.encounterCheckPending) return
+    if (!this.hasEncounterUrlValue || this.encounterCheckPending || !this.element.isConnected) return
 
     this.encounterCheckPending = true
+    const requestController = new AbortController()
+    this.encounterRequestController = requestController
     let nextDelay = this.encounterIntervalValue
     try {
       const csrfToken = document.querySelector("meta[name='csrf-token']")?.content
       const response = await fetch(this.encounterUrlValue, {
+        signal: requestController.signal,
         method: "POST",
         credentials: "same-origin",
         headers: {
@@ -156,9 +197,10 @@ export default class extends Controller {
         },
         body: "{}"
       })
-      if (!response.ok) return
+      if (!response.ok || requestController.signal.aborted || !this.element.isConnected) return
 
       const data = await response.json()
+      if (requestController.signal.aborted || !this.element.isConnected) return
       if (!data.interrupted || !data.redirect_url) {
         nextDelay = Number(data.retry_after_ms) || this.encounterIntervalValue
         return
@@ -172,11 +214,16 @@ export default class extends Controller {
         window.location.assign(data.redirect_url)
       }
     } catch (error) {
-      console.warn("Failed to check wilderness encounter:", error)
+      if (error.name !== "AbortError") console.warn("Failed to check wilderness encounter:", error)
     } finally {
-      this.encounterCheckPending = false
-      if (nextDelay !== null && this.hasEncounterUrlValue && !this.encounterCheckTimer) {
-        this.scheduleEncounterCheck(nextDelay)
+      // An old response must not clear or reschedule a reconnected controller's
+      // current request. Aborting is best effort; identity guards the lifecycle.
+      if (this.encounterRequestController === requestController) {
+        this.encounterRequestController = null
+        this.encounterCheckPending = false
+        if (nextDelay !== null && this.element.isConnected && this.hasEncounterUrlValue && !this.encounterCheckTimer) {
+          this.scheduleEncounterCheck(nextDelay)
+        }
       }
     }
   }
@@ -210,8 +257,8 @@ export default class extends Controller {
   }
 
   clearChat() {
-    const frame = this.chatMessagesTarget.querySelector("turbo-frame")
-    frame?.replaceChildren()
+    this.chatMessagesTarget.querySelector('[data-controller~="chat"]')
+      ?.dispatchEvent(new CustomEvent("chat:clear"))
   }
 
   // =====================

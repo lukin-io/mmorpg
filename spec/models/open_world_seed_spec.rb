@@ -8,6 +8,87 @@ RSpec.describe "Open-world seed data", type: :model do
     Rails.application.load_seed
   end
 
+  it "reproduces the observed Forpost gate, village route, and resource-cell neighbors" do
+    load_seed
+    region = Zone.find_by!(name: "Outpost Surroundings")
+    expect(Zone.where(location_type: "outdoor").pluck(:id)).to eq([region.id])
+    character = create(:character)
+    position = create(:character_position, character:, zone: region, x: 6, y: 8)
+    observed_destinations = {
+      [6, 8] => [[5, 7], [6, 7], [7, 7], [5, 8], [5, 9]],
+      [5, 7] => [[4, 6], [4, 7], [6, 7], [5, 8], [6, 8]],
+      [4, 6] => [[3, 5], [4, 5], [3, 6], [3, 7], [4, 7], [5, 7]],
+      [6, 7] => [[7, 6], [5, 7], [7, 7], [5, 8], [6, 8]],
+      [7, 7] => [[7, 6], [8, 6], [6, 7], [8, 7], [6, 8]]
+    }
+
+    observed_destinations.each do |(x, y), destinations|
+      position.update!(x:, y:)
+      state = Game::Movement::MapState.new(character:).call
+      expect(state.destinations.map { |offer| [offer.target_x, offer.target_y] })
+        .to match_array(destinations), "unexpected destinations from #{[x, y]}"
+    end
+
+    expect(TileBuilding.find_by!(building_key: "frontier_village_entrance"))
+      .to have_attributes(x: 4, y: 6)
+    gate_exit = CityHotspot.find_by!(key: "west_gate", zone: Zone.find_by!(name: "Outpost"))
+    expect(gate_exit.action_params).to include("destination_x" => 6, "destination_y" => 8)
+  end
+
+  it "retires the old gate cell without relocating a saved outdoor player" do
+    region = create(:zone, :mvp_outdoor_region, name: "Outpost Surroundings")
+    old_tile = create(:map_tile_template, zone: region.name, x: 7, y: 0,
+      metadata: {"city_gate" => "City Exit", "source_map" => "m_1019_1025"})
+    position = create(:character_position, zone: region, x: 7, y: 0)
+
+    load_seed
+
+    expect(MapTileTemplate.exists?(old_tile.id)).to be false
+    expect(position.reload).to have_attributes(zone: region, x: 7, y: 0)
+    expect(TileBuilding.find_by!(building_key: "outpost_gate")).to have_attributes(x: 6, y: 8)
+    expect { load_seed }.not_to change { MapTileTemplate.count }
+    expect(position.reload).to have_attributes(zone: region, x: 7, y: 0)
+  end
+
+  it "cancels only live offers for changed seeded entrances and preserves a no-op reseed" do
+    load_seed
+    region = Zone.find_by!(name: "Outpost Surroundings")
+    city = Zone.find_by!(name: "Outpost")
+    character = create(:character)
+    position = create(:character_position, character:, zone: region, x: 7, y: 0)
+    gate = TileBuilding.find_by!(building_key: "outpost_gate")
+    exit_hotspot = CityHotspot.find_by!(zone: city, key: "west_gate")
+    gate.update!(x: 7, y: 0)
+    exit_hotspot.update!(action_params: exit_hotspot.action_params.merge("destination_x" => 7, "destination_y" => 0))
+    entry_offer = create(:world_action_offer, character:, zone: region, x: 7, y: 0,
+      target: gate, action_type: "enter_building")
+    exit_offer = create(:world_action_offer, :accepted, character:, zone: city, x: 0, y: 0,
+      target: exit_hotspot, action_type: "exit_city")
+    history = create(:world_action_offer, :completed, character:, zone: region, x: 7, y: 0,
+      target: gate, action_type: "enter_building")
+    village = TileBuilding.find_by!(building_key: "frontier_village_entrance")
+    unaffected_offer = create(:world_action_offer, character:, zone: region, x: 4, y: 6,
+      target: village, action_type: "enter_building")
+
+    load_seed
+
+    expect(entry_offer.reload).to be_cancelled
+    expect(entry_offer.target).to eq(gate)
+    expect(exit_offer.reload).to be_cancelled
+    expect(exit_offer.target).to eq(exit_hotspot)
+    expect(history.reload).to be_completed
+    expect(history.target).to eq(gate)
+    expect(unaffected_offer.reload).to be_offered
+    expect(position.reload).to have_attributes(zone: region, x: 7, y: 0)
+
+    fresh_offer = create(:world_action_offer, character:, zone: city, x: 0, y: 0,
+      target: exit_hotspot, action_type: "exit_city")
+    load_seed
+
+    expect(fresh_offer.reload).to be_offered
+    expect(unaffected_offer.reload).to be_offered
+  end
+
   it "upgrades stale starter data and remains idempotent" do
     city = create(:zone, :city, name: "Outpost", width: 5, height: 5, metadata: {"stale" => true})
     region = create(
@@ -110,8 +191,8 @@ RSpec.describe "Open-world seed data", type: :model do
     )
     expect(gate.reload).to have_attributes(
       zone: region.name,
-      x: 7,
-      y: 0,
+      x: 6,
+      y: 8,
       destination_zone: city,
       destination_x: 0,
       destination_y: 0,
@@ -119,8 +200,8 @@ RSpec.describe "Open-world seed data", type: :model do
       active: true
     )
     expect(gate.metadata).to include(
-      "source_map" => "m_1019_1025",
-      "source_coordinates" => [1019, 1025],
+      "source_map" => "m_1000_1000",
+      "source_coordinates" => [1000, 1000],
       "source_gate" => "west"
     )
 
@@ -146,6 +227,7 @@ RSpec.describe "Open-world seed data", type: :model do
       expect(seeded_gate.destination_zone).to eq(expected_node)
       expect([seeded_gate.x, seeded_gate.y]).to eq(gate_definition["local_coordinates"])
       expect(seeded_gate.metadata["source_coordinates"]).to eq(gate_definition["source_coordinates"])
+      expect(seeded_gate.presence_label).to eq("Outpost, West Gate")
       seeded_tile = MapTileTemplate.find_by!(
         zone: region.name,
         x: seeded_gate.x,
@@ -176,9 +258,10 @@ RSpec.describe "Open-world seed data", type: :model do
     )
     expect(village.metadata).to include(
       "source_map" => "m_998_998",
-      "source_coordinates" => [998, 998],
-      "landmark_kind" => "village"
+      "source_coordinates" => [998, 998]
     )
+    expect(village.metadata).not_to have_key("landmark_kind")
+    expect(village.location_kind).to eq("village")
     expect(village.location_key).to eq("frontier_village_entrance")
     expect(village.location_scene_size).to eq([760, 255])
     expect(village.location_features.pluck("key", "action_type", "feature")).to contain_exactly(
@@ -222,6 +305,25 @@ RSpec.describe "Open-world seed data", type: :model do
       "seed_source" => "outdoor_npcs.yml"
     )
     expect(plague_rat.npc_template.metadata).not_to have_key("obsolete")
+
+    bandit = TileNpc.find_by!(zone: region.name, x: 8, y: 7)
+    expect(bandit).to have_attributes(npc_key: "wilderness_bandit", level: 7, max_hp: 155)
+    expect(bandit.metadata).to include(
+      "seed_source" => "outdoor_npcs.yml",
+      "source_map" => "m_1008_1007",
+      "encounter_selection_mode" => "observed_sample_replay"
+    )
+    expect(bandit.encounter_roster_samples.map { |sample| sample["members"].size }).to eq([3, 1, 1, 2])
+    expect(bandit.passive_delay_windows).to eq(
+      [
+        {"key" => "2026-09-01-interval-1", "min_seconds" => 230, "max_seconds" => 278},
+        {"key" => "2026-09-01-interval-2", "min_seconds" => 127, "max_seconds" => 187}
+      ]
+    )
+    expect(NpcTemplate.find_by!(npc_key: "wilderness_robber")).to have_attributes(
+      name: "Robber",
+      level: 8
+    )
 
     expect {
       load_seed

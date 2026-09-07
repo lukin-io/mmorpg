@@ -133,21 +133,26 @@ module Arena
     # @param acceptor [Character] the player character accepting
     # @return [Result] result with match or errors
     def accept_npc_application(application:, acceptor:)
-      # Validate room access
-      unless application.arena_room.accessible_by?(acceptor)
-        return Result.new(success?: false, errors: ["This arena room is unavailable"])
-      end
-
-      unless application.acceptable_by?(acceptor)
-        return Result.new(success?: false, errors: [application.rejection_reason_for(acceptor) || "You cannot accept this application"])
-      end
-
-      # Check if player already in combat
-      if acceptor.in_combat?
-        return Result.new(success?: false, errors: ["You are already in combat"])
-      end
-
       ActiveRecord::Base.transaction do
+        # Match the existing player-accept order. Region/room access and the
+        # open application must remain valid until the fight is persisted.
+        application.arena_room.lock!
+        application.lock!
+        acceptor.lock!
+
+        unless application.arena_room.accessible_by?(acceptor)
+          next Result.new(success?: false, errors: ["This arena room is unavailable"])
+        end
+
+        unless application.acceptable_by?(acceptor)
+          next Result.new(success?: false, errors: [application.rejection_reason_for(acceptor) || "You cannot accept this application"])
+        end
+
+        # Check if player already in combat
+        if acceptor.in_combat?
+          next Result.new(success?: false, errors: ["You are already in combat"])
+        end
+
         # Create the match
         match = create_npc_match(application, acceptor)
 
@@ -211,6 +216,7 @@ module Arena
 
     def application_acceptance_error(application, acceptor, room)
       return "You cannot accept this application" unless application.acceptable_by?(acceptor)
+      return "Applicant can no longer access this arena room" unless room.accessible_by?(application.applicant)
       return "You are already in an active fight" if character_has_active_match?(acceptor)
       return "You already have an active fight application" if character_has_active_application?(acceptor)
       return "Applicant is already in an active fight" if character_has_active_match?(application.applicant)

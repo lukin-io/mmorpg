@@ -106,6 +106,15 @@ critical, dodge, block, timeout, defeat, victory, and current HP after damage.
   outdoor coordinate. This is supported by repeated same-map/same-coordinate
   attack and Finish-return captures; Neverlands' internal bot/spawn storage is
   not exposed and must not be claimed as evidence.
+- An authored hostile coordinate may select one complete evidenced roster,
+  including repeated or mixed NPC identities with per-member level and HP.
+  Roster selection is server-owned; the browser cannot submit a bot, group
+  size, level, or selection roll. Unknown pool members and weights are not
+  inferred.
+- A sampled hostile coordinate remains eligible after a completed selected
+  roster and explicit Finish. The `m_1008_1007` source chain completed four
+  fights and returned to the same coordinate between them; this does not
+  establish the exact cooldown, probability, or selection weights.
 - In a multi-NPC fight, defeating one opponent keeps the encounter live while
   another opponent survives, selects a living target, and resolves any
   eligible search at the defeated-NPC boundary.
@@ -113,6 +122,9 @@ critical, dodge, block, timeout, defeat, victory, and current HP after damage.
   only HP actually removed.
 - A solo player's persisted NPC-victory counter advances once for a completed
   encounter, not once per NPC participant.
+- A wilderness fight honors its explicit displayed five-minute (`300`-second)
+  fight deadline. Legal turns do not reset that global deadline; later source
+  terminations captured on 2026-09-02 are treated as an excluded anomaly.
 
 ## Observed Fight Payload And Turn Flow
 
@@ -486,6 +498,16 @@ distribution remain `[EVIDENCE]`; an equal-weight or generic RPG encounter
 table must not be invented. The concrete record is
 `doc/design/reference/combat/observations/2026-09-01_wilderness_bandit_group_variation_and_magic.md`.
 
+The 2026-09-02 swamp chain adds a `1x7` side, a later `1x3` side at
+levels `13..15`, and a no-click post-Finish interval bounded to approximately
+`4..64` seconds. Four bot searches returned nothing and one returned a Small
+strange potion; empty and item outcomes therefore occurred independently
+inside unfinished multi-NPC fights. Its exact source coordinate was not
+captured, so these outputs must not be assigned to `m_1008_1007` or another
+cell by assumption. The same flow displayed
+`62 + 62 + penalty 25 = 149 AP` for two Simple attacks. Its concrete record is
+`doc/design/reference/combat/observations/2026-09-02_swamp_passive_rosters_search_and_timeout.md`.
+
 ## Launch Combat Contract
 
 Combat should be built around one shared turn contract for every fight shape:
@@ -521,6 +543,8 @@ later dungeon fights:
 - each accepted solo-PvE turn opens the next authoritative round with a fresh
   token/AP budget when opponents survive; a replay of the resolved round is
   stale and must not resolve again;
+- a World-created fight ends at its explicit five-minute fight deadline even
+  if a shorter per-turn lifecycle would otherwise advance another round;
 - completed fights require a result-screen finish action before returning to
   arena, city, or world context;
 - persisted participant completion plus successful NPC item/wallet-award facts
@@ -565,6 +589,21 @@ early retries cannot reroll or accelerate it. The provisional local `10..30`
 second delay is delivery configuration, not a claim about Neverlands' unknown
 timer, probability, or selection weights.
 
+As of 2026-09-02, the same World-owned pipeline can materialize an evidenced
+exact-cell roster-sample set. A server RNG selects one complete persisted
+sample, `StartNpcFight` creates the ordered mixed/repeated participations with
+captured level and HP overrides, and the selected sample plus fight-level XP
+and injury-risk field are persisted on the match. The mapped `m_1008_1007`
+cell replays only its four directly observed `1x3`, `1x1`, `1x1`, and `1x2`
+outputs and samples inside its two captured timing bounds. This bounded sample
+replay does not claim a complete source pool, equal source weights, or a
+probability distribution. Other cells retain their explicit fixed composition
+and provisional delay until evidence supplies a cell-local set. Completing a
+sampled roster leaves its exact-cell source eligible for a newly scheduled
+selection after Finish; fixed anchors retain their explicit one-off defeat and
+respawn lifecycle. World-created matches also persist and enforce the explicit
+displayed `300`-second fight deadline before accepting another action.
+
 This closes the captured outdoor participant/interruption/result gap. It does not promote the broader Combat area to a feature handbook: uncaptured/tuning work for magic actions, status effects, rewards, trauma, and additional combat constants remains in this design record.
 
 ## Combat Rewards And Loot Checks
@@ -581,7 +620,8 @@ NPC drops are owned by the NPC loot design, but combat owns the timing:
 1. resolve the final turn and write defeat/victory log entries;
 2. run the NPC loot check for each defeated loot-bearing NPC;
 3. dispatch each rolled, allowlisted loot kind to its authoritative owner:
-   Inventory for items and the Economy wallet ledger for NV;
+   Inventory for items—including consumables, weapons, and armor—and the
+   Economy wallet ledger for NV;
 4. persist a per-NPC-participation processing marker with the authoritative
    award in one transaction so retry cannot duplicate value;
 5. show the search/drop result in the canonical combat log or result payload;

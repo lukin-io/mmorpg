@@ -4,21 +4,24 @@ require "rails_helper"
 
 RSpec.describe "Social UI", type: :system, js: true do
   let(:user) { create(:user) }
-  let(:other_user) { create(:user) }
+  let(:character) { create(:character, user:) }
+  let(:zone) { create(:zone, :mvp_outdoor_region) }
+  let!(:position) { create(:character_position, character:, zone:, x: 4, y: 6) }
 
   before do
     login_as(user, scope: :user)
   end
 
   describe "success cases" do
-    it "sends a chat message and renders it via Turbo Streams" do
-      channel = create(:chat_channel, name: "Global")
+    it "sends an authorized local chat message and renders its Turbo response" do
+      channel = Chat::ChannelRouter.new(user:).resolve(scope: :local)
 
       visit chat_channel_path(channel)
 
       fill_in "chat_message_body", with: "Hello from system spec"
       click_button "Send"
       expect(page).to have_content("Hello from system spec")
+      expect(ChatMessage.last).to have_attributes(chat_channel: channel, sender: user)
     end
 
     it "streams a personal game event into the same chat timeline" do
@@ -40,7 +43,7 @@ RSpec.describe "Social UI", type: :system, js: true do
 
   describe "failure cases" do
     it "shows a validation error for blank chat messages" do
-      channel = create(:chat_channel, name: "Global")
+      channel = Chat::ChannelRouter.new(user:).resolve(scope: :local)
 
       visit chat_channel_path(channel)
 

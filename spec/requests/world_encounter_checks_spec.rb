@@ -45,6 +45,58 @@ RSpec.describe "World encounter checks", type: :request do
     )
   end
 
+  it "starts one complete mixed roster sample without accepting client roster inputs" do
+    bandit = create(
+      :npc_template,
+      npc_key: "request-bandit",
+      name: "Request Bandit",
+      level: 7,
+      metadata: {"health" => 155, "base_damage" => 3}
+    )
+    robber = create(
+      :npc_template,
+      npc_key: "request-robber",
+      name: "Request Robber",
+      level: 8,
+      metadata: {"health" => 270, "base_damage" => 4}
+    )
+    create(
+      :tile_npc,
+      npc_template: bandit,
+      npc_key: bandit.npc_key,
+      zone: zone.name,
+      x: 5,
+      y: 5,
+      metadata: {
+        "encounter_rosters" => [
+          {
+            "key" => "captured-mixed",
+            "encounter_experience_reward" => 56,
+            "trauma_percent" => 30,
+            "members" => [
+              {"npc_key" => bandit.npc_key, "level" => 8, "hp" => 185},
+              {"npc_key" => robber.npc_key, "level" => 9, "hp" => 310}
+            ]
+          }
+        ]
+      }
+    )
+
+    post world_encounter_check_path, params: {npc_key: "forged", group_size: 8}, as: :json
+    post world_encounter_check_path, params: {npc_key: "forged", group_size: 8}, as: :json
+
+    match = ArenaMatch.last
+    participants = match.arena_participations.npcs.order(:id)
+    expect(response).to have_http_status(:ok)
+    expect(match.metadata).to include(
+      "encounter_roster_sample" => "captured-mixed",
+      "encounter_member_keys" => [bandit.npc_key, robber.npc_key],
+      "encounter_experience_reward" => 56
+    )
+    expect(participants.map(&:participant_level)).to eq([8, 9])
+    expect(participants.map(&:max_hp)).to eq([185, 310])
+  end
+
   it "returns the same active fight when the browser retries the check" do
     create(:tile_npc, zone: zone.name, x: 5, y: 5)
 

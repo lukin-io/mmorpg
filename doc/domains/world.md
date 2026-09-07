@@ -22,16 +22,24 @@ City handoff.
 
 ## Current RPG status
 
-Fully Implemented for the declared outdoor movement, resolved-cell,
-Frontier-Village, targetless passive/synchronous NPC interruption,
-resource-action, and City-handoff boundary. Passive delivery resolves only the
+Partially Implemented for broader open-world parity. The declared eight-neighbor
+movement, resolved-cell, Frontier Village/Shop, targetless passive/synchronous
+NPC interruption, timed empty Look result, and City-handoff boundary is covered.
+Movement reads eight adjacent coordinates or an exact target, and the nearby
+map buffer remains bounded independently of region size. Passive delivery resolves only the
 persisted source-backed same-cell hostile through a server-owned persisted due
-time. Neverlands observations confirm current-coordinate encounter
-availability and same-coordinate return; its internal storage, exact
-timing/probability distribution, complete eligible group pool, and selection
-weights remain evidence gaps. Variable same-context group size/identity/level
-output itself is now confirmed. Other linked-location and action families
-remain Not Done.
+time. A captured variable cell may select one complete validated roster sample
+and one captured delay window; fixed anchors retain their explicit composition
+and provisional delay. Neverlands observations confirm current-coordinate
+availability, same-coordinate return, variable group size/identity/level, and
+four completed same-cell sampled encounters plus three distinct interval
+bounds. A sampled local anchor therefore remains eligible after victory and
+Finish; a fixed anchor retains its defeated/respawn lifecycle. Neverlands'
+internal storage, exact timing/probability distribution, complete eligible
+group pool, and selection weights remain evidence gaps. Authored encounter
+sides support `1..10` members; the capacity does not populate unobserved rosters.
+Successful gathering is deferred by the user to the alchemy skill path. Other
+linked-location and action families remain Not Done.
 
 ## Important responsible implementation files
 
@@ -44,12 +52,27 @@ remain Not Done.
 - `app/services/game/world/outdoor_npc_config.rb`
 - `app/controllers/world_encounter_checks_controller.rb`
 - `app/services/game/world/passive_encounter_check.rb`
+- `app/services/game/world/encounter_roster_selector.rb`
 - `app/services/game/loot_entry.rb`
 - `db/seeds.rb`
 
 Section 16 of `doc/features/world.md` is exhaustive.
 
 ## Extension rule and gaps
+
+The fresh grid/action audit is
+`doc/design/reference/world/observations/2026-09-07_forpost_grid_and_action_audit.md`.
+Section 19 of `doc/features/world.md` records resolved implementation gaps and
+the remaining regional-content and source-evidence limits. Current-cell/room
+chat follows the confirmed Neverlands audience boundary; its session and
+delivery owner is the shared-shell handbook.
+`CharacterPosition.zone_id` already identifies a region; it must not be
+duplicated with a competing position/region model.
+Only Outpost Surroundings is populated. Equal coordinates in separate test
+regions prove isolation; more populated regions and crossing gameplay remain
+outside the current delivery scope. Actual world-position transitions clear
+saved interior context atomically, while valid village/Shop/city/Arena-room
+contexts can resume without changing the persisted coordinate.
 
 Extend the existing persisted records and resolver/action-offer pipeline. Do
 not add a parallel location catalog. Mines, exchanges, additional settlements,

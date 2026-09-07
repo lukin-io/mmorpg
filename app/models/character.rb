@@ -3,7 +3,7 @@
 class Character < ApplicationRecord
   MAX_NAME_LENGTH = 30
   GAMEPLAY_CONTEXT_KEY = "gameplay_context"
-  GAMEPLAY_CONTEXTS = %w[world shop city_building world_location].freeze
+  GAMEPLAY_CONTEXTS = %w[world shop city_building world_location arena_room].freeze
 
   PRIMARY_STATS = %i[strength dexterity luck vitality intelligence].freeze
   BASE_PRIMARY_STATS = PRIMARY_STATS.index_with { 1 }.freeze
@@ -115,6 +115,8 @@ class Character < ApplicationRecord
     normalized.slice("name", "params")
   end
 
+  # Save the allowlisted gameplay surface and any resulting local-chat room
+  # entry together. Reloading an unchanged surface preserves its entry time.
   def remember_gameplay_context!(name:, params: {})
     normalized_name = name.to_s
     raise ArgumentError, "Unsupported gameplay context" unless GAMEPLAY_CONTEXTS.include?(normalized_name)
@@ -127,9 +129,10 @@ class Character < ApplicationRecord
 
     with_lock do
       reload
-      return payload if gameplay_context == payload
-
-      update!(metadata: metadata.to_h.merge(GAMEPLAY_CONTEXT_KEY => payload))
+      unless gameplay_context == payload
+        update!(metadata: metadata.to_h.merge(GAMEPLAY_CONTEXT_KEY => payload))
+      end
+      Chat::LocalContext.new(character: self).synchronize!
     end
 
     payload

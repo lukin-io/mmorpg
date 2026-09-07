@@ -22,6 +22,11 @@ Fully Implemented for the declared five-node navigation and verified outdoor
 gate boundary. Visible service interiors do not imply their full mechanics are
 implemented.
 
+Building entry preserves the district. Actual Arena room entry persists its
+authorized selection, and login revalidates that room's optional city binding.
+District/gate transitions clear stale interior context and change local-chat
+audience atomically with position. Shell owns room-scoped presence and chat.
+
 ## Important responsible implementation files
 
 - `app/models/zone.rb`
@@ -35,4 +40,7 @@ Section 16 of `doc/features/city.md` is exhaustive.
 ## Evidence and implementation gaps
 
 Capture complete service-specific entry, denial, mutation, result, and return
-flows before implementing Hospital, Market, Airship, and other interiors.
+flows before adding treatment, trading, transport, or other service mutations.
+The bounded read-only Hospital/Market/Airship interiors render their saved
+room's presence in the first authorized response. Arena room entry refreshes
+the full shell; the City and Arena handbooks own the corresponding coverage.

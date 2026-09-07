@@ -11,7 +11,7 @@ class MapTileTemplate < ApplicationRecord
       "world_action_type" => "search_resources",
       "implemented" => true,
       "default_label" => "Look Around",
-      "default_message" => "You search the surroundings for herbs and local resources."
+      "default_message" => "There is no useful vegetation in this area."
     },
     "fishing" => {
       "source_id" => "fis",

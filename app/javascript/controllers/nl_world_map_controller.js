@@ -12,7 +12,8 @@ export default class extends Controller {
     "cursorImg",
     "timerDiv",
     "timerSeconds",
-    "moveForm"
+    "moveForm",
+    "destination"
   ]
 
   static values = {
@@ -22,6 +23,8 @@ export default class extends Controller {
     zoneWidth: Number,
     zoneHeight: Number,
     tileSize: { type: Number, default: 100 },
+    maxVisibleColumns: { type: Number, default: 13 },
+    maxVisibleRows: { type: Number, default: 7 },
     moveCooldown: { type: Number, default: 30 },
     zoneName: String,
     mapOffsetX: { type: Number, default: 0 },
@@ -32,6 +35,10 @@ export default class extends Controller {
     movementDeltaX: { type: Number, default: 0 },
     movementDeltaY: { type: Number, default: 0 },
     movementEndsAt: String,
+    workActive: { type: Boolean, default: false },
+    workEndsAt: String,
+    workRemainingSeconds: { type: Number, default: 0 },
+    serverNow: String,
     completeUrl: String
   }
 
@@ -39,13 +46,24 @@ export default class extends Controller {
     this.timerId = null
     this.animationFrameId = null
     this.viewportFrameId = null
+    const serverNow = Date.parse(this.serverNowValue)
+    this.serverClockOffsetMs = Number.isNaN(serverNow) ? 0 : serverNow - Date.now()
+    const remainingSeconds = this.workActiveValue ? this.workRemainingSecondsValue : this.movementRemainingSecondsValue
+    this.fallbackEndsAt = Date.now() + (remainingSeconds * 1000)
     this.boundCenterViewport = this.centerViewport.bind(this)
+    this.mainFrame = this.element.closest("main.nl-main-area")
+    this.topBar = this.mainFrame?.previousElementSibling
+    if (!this.topBar?.matches("header.nl-top-bar")) this.topBar = null
+    this.viewportResizeObserver = new ResizeObserver(this.boundCenterViewport)
+    if (this.mainFrame) this.viewportResizeObserver.observe(this.mainFrame)
+    if (this.topBar) this.viewportResizeObserver.observe(this.topBar)
     this.positionCursor()
+    this.setMovementControlsLocked(this.movementActiveValue || this.workActiveValue)
     window.addEventListener("resize", this.boundCenterViewport)
     this.viewportFrameId = requestAnimationFrame(this.boundCenterViewport)
 
-    if (this.movementActiveValue) {
-      this.resumeServerMovement()
+    if (this.movementActiveValue || this.workActiveValue) {
+      this.resumeServerTimer()
     }
   }
 
@@ -63,6 +81,7 @@ export default class extends Controller {
     }
 
     window.removeEventListener("resize", this.boundCenterViewport)
+    this.viewportResizeObserver?.disconnect()
   }
 
   // =====================
@@ -81,6 +100,16 @@ export default class extends Controller {
     if (!this.hasViewportTarget || !this.hasCursorTarget) return
 
     const viewport = this.viewportTarget
+    // Source sizing keeps an odd number of native cells around the cursor.
+    // Reserve the border and never expose more columns than the server buffer.
+    viewport.style.setProperty("--nl-map-visible-columns", this.fittedCells(this.element.clientWidth, this.maxVisibleColumnsValue))
+    if (this.mainFrame) {
+      // Neverlands measures the gameplay frame including its status header;
+      // this shell splits that frame into adjacent header and main grid rows.
+      const frameHeight = this.mainFrame.clientHeight + (this.topBar?.clientHeight || 0)
+      viewport.style.setProperty("--nl-map-visible-rows", this.fittedCells(frameHeight, this.maxVisibleRowsValue))
+    }
+
     const cursorCenterX = this.cursorTarget.offsetLeft + (this.tileSizeValue / 2)
     const cursorCenterY = this.cursorTarget.offsetTop + (this.tileSizeValue / 2)
     const maxScrollLeft = Math.max(0, viewport.scrollWidth - viewport.clientWidth)
@@ -90,6 +119,12 @@ export default class extends Controller {
     viewport.scrollTop = Math.min(maxScrollTop, Math.max(0, cursorCenterY - (viewport.clientHeight / 2)))
   }
 
+  fittedCells(availableSize, maximumCells) {
+    const availableCells = Math.max(0, availableSize - 2) / this.tileSizeValue
+    const radius = Math.max(1, Math.floor((availableCells - 1) / 2))
+    return Math.min(maximumCells, radius * 2 + 1)
+  }
+
   // =====================
   // TILE CLICK MOVEMENT
   // =====================
@@ -97,7 +132,7 @@ export default class extends Controller {
   clickTile(event) {
     event.preventDefault()
 
-    if (this.movementActiveValue) return
+    if (this.movementActiveValue || this.workActiveValue || !this.hasMoveFormTarget) return
 
     const tile = event.currentTarget
     if (tile.dataset.available !== "true") return
@@ -109,7 +144,7 @@ export default class extends Controller {
 
     if (!targetX || !targetY || !actionKey || !direction) return
 
-    this.disableMovementTiles()
+    this.setMovementControlsLocked(true)
     this.setCursorMoving(true)
     this.submitMoveForm({ direction, targetX, targetY, actionKey })
   }
@@ -130,15 +165,25 @@ export default class extends Controller {
     if (input) input.value = value
   }
 
-  disableMovementTiles() {
-    this.element.querySelectorAll("[data-available='true']").forEach((tile) => {
-      tile.dataset.available = "false"
-      tile.style.cursor = "default"
+  setMovementControlsLocked(locked) {
+    this.destinationTargets.forEach((tile) => {
+      tile.disabled = locked
     })
 
-    document.querySelectorAll(".nl-top-nav button").forEach((button) => {
-      button.disabled = true
-    })
+    this.dispatch("movement-state", { detail: { locked } })
+  }
+
+  submissionFinished(event) {
+    if (!event.detail.success) this.submissionFailed()
+  }
+
+  submissionFailed() {
+    if (!this.element.isConnected || this.movementActiveValue || this.workActiveValue) return
+
+    // Keep the same server offers for a retry. The server rejects stale keys or
+    // renders accepted travel if a response was lost after acceptance.
+    this.setMovementControlsLocked(false)
+    this.setCursorMoving(false)
   }
 
   setCursorMoving(isMoving) {
@@ -153,11 +198,11 @@ export default class extends Controller {
   // SERVER TIMER
   // =====================
 
-  resumeServerMovement() {
+  resumeServerTimer() {
     const seconds = this.remainingSecondsFromServer()
-    this.animateMapTravel(seconds)
+    if (this.movementActiveValue) this.animateMapTravel(seconds)
     this.showTimerDisplay(seconds)
-    this.startTimerCountdown(seconds)
+    this.startTimerCountdown()
   }
 
   animateMapTravel(remainingSeconds) {
@@ -184,14 +229,16 @@ export default class extends Controller {
   }
 
   remainingSecondsFromServer() {
-    if (this.hasMovementEndsAtValue && this.movementEndsAtValue) {
-      const endMs = Date.parse(this.movementEndsAtValue)
+    const endsAt = this.workActiveValue ? this.workEndsAtValue : this.movementEndsAtValue
+    if (endsAt) {
+      const endMs = Date.parse(endsAt)
       if (!Number.isNaN(endMs)) {
-        return Math.max(0, Math.ceil((endMs - Date.now()) / 1000))
+        const serverNow = Date.now() + this.serverClockOffsetMs
+        return Math.max(0, Math.ceil((endMs - serverNow) / 1000))
       }
     }
 
-    return Math.max(0, this.movementRemainingSecondsValue)
+    return Math.max(0, Math.ceil((this.fallbackEndsAt - Date.now()) / 1000))
   }
 
   showTimerDisplay(seconds) {
@@ -204,31 +251,31 @@ export default class extends Controller {
     }
   }
 
-  startTimerCountdown(seconds) {
-    let timeLeft = Math.max(0, Math.ceil(seconds))
-
+  startTimerCountdown() {
     if (this.timerId) {
       clearTimeout(this.timerId)
     }
 
     const tick = () => {
+      // A background tab may skip callbacks. Always derive the next display
+      // and refresh from the server deadline instead of counting callbacks.
+      const timeLeft = this.remainingSecondsFromServer()
       if (this.hasTimerSecondsTarget) {
         this.timerSecondsTarget.textContent = timeLeft > 0 ? timeLeft : ""
       }
 
       if (timeLeft <= 0) {
-        this.finishServerMovement()
+        this.finishServerTimer()
         return
       }
 
-      timeLeft -= 1
       this.timerId = setTimeout(tick, 1000)
     }
 
     tick()
   }
 
-  finishServerMovement() {
+  finishServerTimer() {
     if (this.hasTimerDivTarget) {
       this.timerDivTarget.style.display = "none"
     }

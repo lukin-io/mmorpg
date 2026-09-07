@@ -65,5 +65,17 @@ FactoryBot.define do
       association :npc_template
       metadata { {"current_hp" => 100, "max_hp" => 100} }
     end
+
+    trait :sampled_npc do
+      npc
+      metadata do
+        {
+          "current_hp" => 185,
+          "max_hp" => 185,
+          "level" => 8,
+          "encounter_roster_sample" => "captured-sample"
+        }
+      end
+    end
   end
 end

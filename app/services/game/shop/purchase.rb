@@ -19,7 +19,9 @@ module Game
         return failure("Not enough stock.") if item_template.shop_stock_limited? && item_template.shop_stock_current.to_i < quantity
         return failure("Not enough NV.") if wallet.nv_balance < total_price
 
-        ApplicationRecord.transaction do
+        # Preserve rollback on rescued purchase failures when a world-action
+        # availability check already holds the character transaction.
+        ApplicationRecord.transaction(requires_new: true) do
           item_template.lock!
           return failure("Not enough stock.") if item_template.shop_stock_limited? && item_template.shop_stock_current.to_i < quantity
 

@@ -11,6 +11,8 @@ module Chat
 
     class << self
       def chat_message_created(message)
+        return false if message.chat_channel.local? || message.chat_channel.global?
+
         deliver("chat_message", message.id) do
           message.broadcast_append_later_to(
             message.chat_channel,

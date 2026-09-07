@@ -2,7 +2,7 @@
 
 - Document type: evidence registry
 - Status: Current
-- Updated: 2026-08-26
+- Updated: 2026-09-07
 
 This directory contains sanitized Neverlands observations and provenance. It
 answers what was directly observed or found in source material. Product
@@ -15,14 +15,14 @@ decisions live under `doc/design/`; delivery status lives in
 | Domain | Current source summary | Primary observations |
 |---|---|---|
 | Shell/shared style | `doc/design/reference/shell/README.md` | Shell/UI and style-system captures |
-| Social/chat/presence | `doc/design/reference/social/README.md` | Current supplied mixed chat/game-event timeline including item/NV search results, legacy chat analysis, and shell capture |
+| Social/chat/presence | `doc/design/reference/social/README.md` | September 7 cell/village/Arena-room boundaries and Chat wiki rule; supplied mixed event timeline and earlier chat captures |
 | Character/profile/progression | `doc/design/reference/character/README.md` | Player/profile and skills analyses |
 | Inventory/items/equipment | `doc/design/reference/inventory/README.md` | Inventory/item/shop-row capture |
-| Open World/movement | `doc/design/reference/world/README.md` | Movement and outdoor NPC/resource captures |
+| Open World/movement | `doc/design/reference/world/README.md` | Forpost gate/grid/Look/village route, responsive frame geometry, movement, and outdoor NPC/resource captures |
 | City/buildings | `doc/design/reference/city/README.md` | City movement/services capture |
 | Economy/Shop | `doc/design/reference/economy/README.md` | Lavka/item-row captures plus the supplied NPC-search NV result |
 | Combat/Arena | `doc/design/reference/combat/README.md` | Cross-domain fight/Arena observations |
-| NPCs/Quests | `doc/design/reference/npcs_quests/README.md` | Outdoor NPC evidence and incomplete Quest evidence |
+| NPCs/Quests | `doc/design/reference/npcs_quests/README.md` | Variable outdoor group captures, Bot wiki capacity, and incomplete Quest evidence |
 | Professions | `doc/design/reference/professions/README.md` | Cross-domain direction; complete flow missing |
 | Dungeons | `doc/design/reference/dungeons/README.md` | Evidence needed |
 

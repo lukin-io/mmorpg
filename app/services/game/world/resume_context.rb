@@ -53,6 +53,51 @@ module Game
         )
       end
 
+      # Actual room entry owns persistence and the local-chat audience change.
+      # A preview cannot select a room, and a stale entry cannot replace a fight.
+      # Returns the fresh accessible room, or nil without changing context.
+      def remember_arena_room!(room:)
+        character.with_lock do
+          current_room = ArenaRoom.find_by(id: room&.id)
+          next unless arena_room_available?(room: current_room)
+          next if character.arena_participations.joins(:arena_match).merge(ArenaMatch.active).exists?
+
+          character.remember_gameplay_context!(
+            name: "arena_room",
+            params: {"room_id" => current_room.id}
+          )
+          current_room
+        end
+      end
+
+      # Reconstruct a selected room only from a saved id and current authored
+      # city/room access. This also works after a new login without an old cookie.
+      def arena_room
+        context = character.gameplay_context
+        return unless context["name"] == "arena_room"
+
+        room_id = context.dig("params", "room_id")
+        return unless room_id.is_a?(Integer) && room_id.positive?
+
+        room = ArenaRoom.find_by(id: room_id)
+        room if arena_room_available?(room:)
+      end
+
+      def arena_available?
+        position = character.position&.reload
+        return false unless position&.active? && position.zone.city?
+
+        CityHotspot.for_zone(position.zone).any? do |hotspot|
+          hotspot.action_type == "open_feature" &&
+            hotspot.action_params.to_h["feature"] == "arena" &&
+            hotspot.can_interact?(character)
+        end
+      end
+
+      def arena_room_available?(room:)
+        room&.accessible_by?(character) && arena_available?
+      end
+
       def resume_path
         context = character.gameplay_context
 
@@ -71,6 +116,9 @@ module Game
           return world_path unless world_location_available?(key)
 
           world_location_path(key)
+        when "arena_room"
+          room = arena_room
+          room ? arena_room_path(room) : world_path
         else
           world_path
         end
@@ -80,12 +128,18 @@ module Game
         position = character.position&.reload
         return false unless position
 
-        return true if world_location_shop_available?(position)
+        return true if linked_shop_location(position)
         return false unless position.zone.city?
 
         CityHotspot.for_zone(position.zone).any? do |hotspot|
           hotspot.action_params.to_h["feature"] == "shop" && hotspot.can_interact?(character)
         end
+      end
+
+      # The captured village Shop returns to its accessible parent interior.
+      # Resolve it from the persisted entrance cell, never a submitted URL.
+      def shop_parent_location
+        linked_shop_location(character.position&.reload)
       end
 
       private
@@ -98,10 +152,12 @@ module Game
         building&.location? && building.location_key == key && building.can_enter?(character)
       end
 
-      def world_location_shop_available?(position)
+      def linked_shop_location(position)
+        return unless position&.zone&.outdoor?
+
         building = TileBuilding.active.at_tile(position&.zone&.name, position&.x, position&.y)
 
-        building&.location? &&
+        building if building&.location? &&
           building.can_enter?(character) &&
           building.location_feature_available?("shop")
       end

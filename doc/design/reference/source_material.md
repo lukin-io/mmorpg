@@ -14,6 +14,7 @@ should be removed after any valid rule is promoted into `doc/design/`.
 | Source Area | Design Location |
 | --- | --- |
 | Wilderness movement capture | `features/movement.md`, `areas/world_map.md`, `reference/neverlands.md` |
+| September 7 Forpost grid/Look/village and cell/room audience follow-up | `reference/world/README.md`, `reference/social/README.md`, `areas/world_map.md`, `features/movement.md`, `features/social_chat_presence.md` |
 | City movement capture | `areas/cities_and_buildings.md`, `features/economy_trading_shops.md` |
 | Game shell/UI capture | `areas/game_client_layout.md`, `areas/cities_and_buildings.md`, `areas/arena.md`, `features/social_chat_presence.md`, `features/economy_trading_shops.md` |
 | Chat, presence, and supplied mixed event-timeline observation | `features/social_chat_presence.md`, `areas/game_client_layout.md`, `features/combat.md`, `features/npcs_quests.md`, `features/economy_trading_shops.md` |

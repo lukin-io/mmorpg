@@ -34,7 +34,7 @@ module Game
         return failure("Recipient does not have enough NV.") if buyer_wallet.nv_balance < price
         metadata = transfer_metadata(item, quantity)
 
-        ApplicationRecord.transaction do
+        ApplicationRecord.transaction(requires_new: true) do
           transfer_stack!(item:, recipient:, quantity: quantity.to_i)
           buyer_wallet.adjust!(
             amount: -price,
@@ -65,7 +65,7 @@ module Game
         sender_wallet = wallet_for(character)
         recipient_wallet = wallet_for(recipient)
 
-        ApplicationRecord.transaction do
+        ApplicationRecord.transaction(requires_new: true) do
           sender_wallet.adjust!(
             amount: -amount,
             reason: "inventory.money_transfer.sent",
@@ -94,7 +94,7 @@ module Game
         recipient = find_recipient(recipient_name)
         return recipient unless recipient.is_a?(Character)
 
-        ApplicationRecord.transaction do
+        ApplicationRecord.transaction(requires_new: true) do
           transfer_stack!(item:, recipient:, quantity: quantity.to_i, reason:)
         end
 

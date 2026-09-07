@@ -77,9 +77,53 @@ RSpec.describe "Shop", type: :request do
         }
       )
     end
+
+    it "keeps the city Shop return link on the city surface" do
+      get shop_path
+
+      controls = Nokogiri::HTML(response.body).at_css(".nl-shop-controls")
+      expect(controls.at_css("a[href='#{world_path}']").text).to eq("City")
+    end
+
+    it "returns a village Shop to the parent interior from both controls" do
+      outdoors = create(:zone, :mvp_outdoor_region, name: "Shop Village Region")
+      position.update!(zone: outdoors, x: 4, y: 6)
+      building = create(:tile_building, :world_location, zone: outdoors.name, x: 4, y: 6,
+        building_key: "shop_village")
+
+      get shop_path(return_to: "https://example.invalid")
+
+      document = Nokogiri::HTML(response.body)
+      parent_path = world_location_path(building.location_key)
+      expect(document.at_css(".nl-top-nav a[href='#{parent_path}']").text).to eq("Village")
+      expect(document.at_css(".nl-shop-controls a[href='#{parent_path}']").text).to eq("Village")
+      expect(document.css(".nl-shop-controls a[href='#{world_path}']")).to be_empty
+      expect(character.reload.gameplay_context["name"]).to eq("shop")
+      expect(position.reload).to have_attributes(zone: outdoors, x: 4, y: 6)
+
+      get parent_path
+
+      expect(response).to have_http_status(:success)
+      expect(character.reload.gameplay_context).to eq("name" => "world_location", "params" => {"key" => building.location_key})
+      expect(position.reload).to have_attributes(zone: outdoors, x: 4, y: 6)
+    end
   end
 
   describe "POST /shop/buy" do
+    it "rolls back a failed purchase inside the character availability transaction" do
+      inventory.update!(slot_capacity: 1, weight_capacity: 100, current_weight: 0)
+      item_template.update!(stack_limit: 1)
+
+      post buy_shop_path, params: {item_template_id: item_template.id, quantity: 2}
+
+      expect(response).to redirect_to(shop_path)
+      expect(flash[:alert]).to eq("No free inventory slots")
+      expect(wallet.reload.nv_balance).to eq(200)
+      expect(wallet.currency_transactions).to be_empty
+      expect(inventory.reload.current_weight).to eq(0)
+      expect(inventory.inventory_items).to be_empty
+    end
+
     it "buys an item into the character inventory" do
       expect {
         post buy_shop_path, params: {item_template_id: item_template.id, quantity: 2}

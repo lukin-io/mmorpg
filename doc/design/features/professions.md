@@ -17,6 +17,7 @@ Primary sources:
 - `doc/design/reference/character/observations/legacy_skills_and_arena_analysis.md`
 - `doc/design/reference/inventory/observations/2026-06-01_inventory_items_and_shop_rows.md`
 - `doc/design/reference/world/observations/2026-05-20_outdoor_npc_resource.md`
+- `doc/design/reference/world/observations/2026-09-07_forpost_grid_and_action_audit.md`
 
 The wiki establishes the direction: a matching binary profession perk grants
 access to the activity, and a profession-specific counter improves through
@@ -51,8 +52,15 @@ ship a generic profession framework with many empty activity types.
 
 Not implemented. The current `look` cell action is an observation/search
 handoff and may be interrupted by a hidden hostile encounter, but an
-uninterrupted search deliberately awards no invented resource or profession
-growth.
+uninterrupted search shows the captured immediate empty result and keeps its
+persisted 28-second lock even after dismissal. It awards no resource or
+profession growth.
+
+For the September 7 open-world task, successful gathering is explicitly
+deferred by the user because it requires the alchemy skill path. Keep that
+delivery gap in `doc/features/world.md`, section 19; it does not block region,
+movement, entrance, or cell-chat work. This scope decision supplies no new
+yield, eligibility threshold, or success formula.
 
 One profession is a justified MVP candidate only after a controlled Neverlands
 capture records:

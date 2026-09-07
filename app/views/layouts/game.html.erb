@@ -5,6 +5,10 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#fcfaf3">
+  <% if controller_name == "world" && @zone&.outdoor? %>
+    <%# Cached offers and acquisition timestamps cannot restore current travel. %>
+    <meta name="turbo-cache-control" content="no-cache">
+  <% end %>
   <%= csrf_meta_tags %>
   <%= csp_meta_tag %>
   <%= stylesheet_link_tag "application", "controls", data: { turbo_track: "reload" } %>
@@ -12,11 +16,11 @@
 </head>
 <body class="nl-game-layout"
       data-controller="game-layout"
+      data-action="nl-world-map:movement-state->game-layout#updateWorldMovementState chat:context->game-layout#updateLocalChatContext"
       <% if controller_name == "world" && @zone&.outdoor? %>
         data-game-layout-encounter-url-value="<%= world_encounter_check_path %>"
       <% end %>>
-  <% world_travel_active = controller_name == "world" && @active_movement.present? %>
-  <% shell_chat_channel_id = @chat_channel&.id || @global_chat_channel_id %>
+  <% world_actions_locked = controller_name == "world" && (@active_movement.present? || @active_world_action.present?) %>
 
   <%# === TOP STATUS BAR (like original: name[lv] + HP/MP + text links) === %>
   <header class="nl-top-bar">
@@ -41,7 +45,8 @@
               method: :post,
               params: {context: "profile"},
               class: "nl-nav-link nl-nav-link--button",
-              disabled: world_travel_active,
+              data: {game_layout_target: "worldNavigation"},
+              disabled: world_actions_locked,
               form: {class: "nl-nav-action-form"} %>
         <% end %>
         <% if controller_name == "inventories" %>
@@ -52,7 +57,8 @@
               method: :post,
               params: {context: "inventory"},
               class: "nl-nav-link nl-nav-link--button",
-              disabled: world_travel_active,
+              data: {game_layout_target: "worldNavigation"},
+              disabled: world_actions_locked,
               form: {class: "nl-nav-action-form"} %>
         <% end %>
         <% if controller_name == "world" %>
@@ -65,6 +71,9 @@
           <% end %>
         <% elsif controller_name == "world_locations" %>
           <span class="nl-nav-link nl-nav-link--disabled" aria-current="page"><%= @building&.location_short_label || "Location" %></span>
+        <% elsif controller_name == "shop" && @shop_parent_location %>
+          <%= link_to shop_location_return_label, shop_location_return_path,
+              class: "nl-nav-link", data: {turbo_frame: "_top"} %>
         <% else %>
           <%= button_to "Return",
               world_context_action_path,
@@ -104,7 +113,7 @@
   <section class="nl-social-row" aria-label="Chat and nearby players">
     <div class="nl-chat-history" id="chat-messages" data-game-layout-target="chatMessages">
       <% unless content_for?(:hide_shell_chat_history) %>
-        <%= turbo_frame_tag "chat_messages", src: shell_chat_channel_id ? chat_channel_path(shell_chat_channel_id) : nil, loading: "lazy" do %>
+        <%= turbo_frame_tag "chat_messages", src: current_character ? local_chat_path : nil, loading: "lazy" do %>
           <div class="nl-chat-loading">Loading...</div>
         <% end %>
       <% end %>
@@ -125,8 +134,8 @@
         </label>
       </div>
       <div class="nl-players-location">
-        <span class="nl-location-text"><%= @position&.zone&.name || "Unknown" %> [ <%= @players_here&.size || 0 %> ]</span>
-        <span class="nl-total-online">Total [ <%= @total_online.to_i %> ]</span>
+        <span class="nl-location-text" data-game-layout-target="playersLocation"><%= @presence_location_label || @position&.zone&.name || "Unknown" %> [ <%= @presence_player_count || @players_here&.size || 0 %> ]</span>
+        <span class="nl-total-online" data-game-layout-target="playersTotal">Total [ <%= @total_online.to_i %> ]</span>
       </div>
       <div class="nl-players-list-float" data-game-layout-target="playersList">
         <%= render "shared/nl_players_list" %>
@@ -145,12 +154,13 @@
 
     <div class="nl-chat-input-bar" data-game-layout-target="chatArea">
       <% unless content_for?(:hide_shell_chat_composer) %>
-        <% if shell_chat_channel_id %>
-          <%= form_with url: chat_channel_chat_messages_path(shell_chat_channel_id),
+        <% if current_character %>
+          <%= form_with url: local_chat_path,
                         method: :post,
                         scope: :chat_message,
                         class: "nl-chat-form-inline",
                         data: { controller: "chat-input", action: "turbo:submit-end->chat-input#reset" } do |f| %>
+            <%= hidden_field_tag :context_key, current_character.metadata.to_h.dig("local_chat_context", "key") %>
             <%= f.text_field :body,
                 class: "nl-chat-input-field",
                 placeholder: "",
@@ -186,7 +196,7 @@
 
   <%# Flash messages %>
   <div class="nl-flash-container" id="flash">
-    <% flash.each do |type, message| %>
+    <% flash.to_hash.except("world_action_result").each do |type, message| %>
       <div class="nl-flash nl-flash--<%= type %>"><%= message %></div>
     <% end %>
   </div>

@@ -21,15 +21,21 @@ export default class extends Controller {
 
   pingServer() {
     if (!this.pingUrlValue) return
+    const token = document.querySelector('meta[name="csrf-token"]')?.content
+    if (!token) return
+
+    const body = new FormData()
+    body.set("authenticity_token", token)
 
     if (navigator.sendBeacon) {
-      navigator.sendBeacon(this.pingUrlValue, new FormData())
-    } else {
-      fetch(this.pingUrlValue, {
-        method: "POST",
-        headers: { "X-Requested-With": "XMLHttpRequest" },
-        credentials: "same-origin"
-      })
+      if (navigator.sendBeacon(this.pingUrlValue, body)) return
     }
+
+    fetch(this.pingUrlValue, {
+      method: "POST",
+      headers: { "X-Requested-With": "XMLHttpRequest" },
+      credentials: "same-origin",
+      body
+    }).catch(() => {})
   }
 }

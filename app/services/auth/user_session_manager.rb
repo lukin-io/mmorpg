@@ -21,7 +21,7 @@ module Auth
       now = Time.current
 
       session.assign_attributes(
-        signed_in_at: session.signed_in_at || now,
+        signed_in_at: now,
         last_seen_at: now,
         signed_out_at: nil
       )

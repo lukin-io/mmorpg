@@ -11,7 +11,8 @@
 #
 class TileNpc < ApplicationRecord
   NPC_ROLES = %w[hostile].freeze
-  MAX_ENCOUNTER_SIZE = 8
+  MAX_ENCOUNTER_SIZE = 10
+  MAX_PASSIVE_DELAY_SECONDS = 24.hours.to_i
 
   belongs_to :npc_template
   belongs_to :defeated_by, class_name: "Character", optional: true
@@ -23,6 +24,8 @@ class TileNpc < ApplicationRecord
   validates :x, uniqueness: {scope: [:zone, :y]}
   validates :current_hp, :max_hp, numericality: {only_integer: true, greater_than_or_equal_to: 0}, allow_nil: true
   validate :encounter_size_is_supported
+  validate :encounter_roster_samples_are_supported
+  validate :passive_delay_windows_are_supported
 
   scope :in_zone, ->(zone_name) { where(zone: zone_name) }
 
@@ -100,6 +103,27 @@ class TileNpc < ApplicationRecord
     value || 0
   end
 
+  # Captured complete roster outputs for this exact cell. Each entry is one
+  # observed source result, not a claim about the source's hidden weights.
+  def encounter_roster_samples
+    value = metadata.to_h["encounter_rosters"]
+    value.is_a?(Array) ? value : []
+  end
+
+  # Captured elapsed-time windows for passive attacks on this exact cell.
+  # The runtime samples only inside these explicit bounds when they exist.
+  def passive_delay_windows
+    value = metadata.to_h["passive_delay_windows"]
+    value.is_a?(Array) ? value : []
+  end
+
+  # A sampled cell represents a repeatable Neverlands encounter source, not
+  # one killable NPC instance. Completing one sampled roster therefore leaves
+  # the cell eligible to schedule another independently selected encounter.
+  def repeatable_encounter_source?
+    encounter_roster_samples.any?
+  end
+
   # HP percentage for display
   def hp_percentage
     return 100 if max_hp.nil? || max_hp.zero?
@@ -113,6 +137,106 @@ class TileNpc < ApplicationRecord
     return if encounter_size.between?(1, MAX_ENCOUNTER_SIZE)
 
     errors.add(:metadata, "encounter count must be between 1 and #{MAX_ENCOUNTER_SIZE}")
+  end
+
+  def encounter_roster_samples_are_supported
+    return unless metadata.to_h.key?("encounter_rosters")
+
+    samples = metadata.to_h["encounter_rosters"]
+    unless samples.is_a?(Array) && samples.any?
+      errors.add(:metadata, "encounter rosters must be a non-empty array")
+      return
+    end
+
+    sample_keys = samples.filter_map do |raw_sample|
+      unless raw_sample.is_a?(Hash)
+        errors.add(:metadata, "encounter roster entries must be objects")
+        next
+      end
+
+      sample = raw_sample.stringify_keys
+      validate_roster_members(sample["members"])
+      validate_optional_non_negative_integer(sample, "encounter_experience_reward")
+      validate_optional_percent(sample, "trauma_percent")
+      key = sample["key"].to_s
+      errors.add(:metadata, "encounter roster key is required") if key.blank?
+      key.presence
+    end
+
+    if sample_keys.size != sample_keys.uniq.size
+      errors.add(:metadata, "encounter roster keys must be unique")
+    end
+  end
+
+  def validate_roster_members(raw_members)
+    unless raw_members.is_a?(Array) && raw_members.size.between?(1, MAX_ENCOUNTER_SIZE)
+      errors.add(:metadata, "encounter roster members must contain between 1 and #{MAX_ENCOUNTER_SIZE} entries")
+      return
+    end
+
+    raw_members.each do |raw_member|
+      unless raw_member.is_a?(Hash)
+        errors.add(:metadata, "encounter roster members must be objects")
+        next
+      end
+
+      member = raw_member.stringify_keys
+      errors.add(:metadata, "encounter roster member npc_key is required") if member["npc_key"].blank?
+      validate_optional_positive_integer(member, "level")
+      validate_optional_positive_integer(member, "hp")
+      if member.key?("metadata") && !member["metadata"].is_a?(Hash)
+        errors.add(:metadata, "encounter roster member metadata must be an object")
+      end
+    end
+  end
+
+  def passive_delay_windows_are_supported
+    return unless metadata.to_h.key?("passive_delay_windows")
+
+    windows = metadata.to_h["passive_delay_windows"]
+    unless windows.is_a?(Array) && windows.any?
+      errors.add(:metadata, "passive delay windows must be a non-empty array")
+      return
+    end
+
+    windows.each do |raw_window|
+      unless raw_window.is_a?(Hash)
+        errors.add(:metadata, "passive delay windows must contain objects")
+        next
+      end
+
+      window = raw_window.stringify_keys
+      minimum = Integer(window["min_seconds"], exception: false)
+      maximum = Integer(window["max_seconds"], exception: false)
+      unless minimum&.positive? && maximum&.between?(minimum, MAX_PASSIVE_DELAY_SECONDS)
+        errors.add(
+          :metadata,
+          "passive delay window must have positive ordered bounds up to #{MAX_PASSIVE_DELAY_SECONDS} seconds"
+        )
+      end
+    end
+  end
+
+  def validate_optional_positive_integer(data, key)
+    return unless data.key?(key)
+    return if Integer(data[key], exception: false)&.positive?
+
+    errors.add(:metadata, "#{key} must be a positive integer")
+  end
+
+  def validate_optional_non_negative_integer(data, key)
+    return unless data.key?(key)
+    value = Integer(data[key], exception: false)
+    return if value && value >= 0
+
+    errors.add(:metadata, "#{key} must be a non-negative integer")
+  end
+
+  def validate_optional_percent(data, key)
+    return unless data.key?(key)
+    return if Integer(data[key], exception: false)&.between?(0, 100)
+
+    errors.add(:metadata, "#{key} must be between 0 and 100")
   end
 
   def calculate_respawn_time

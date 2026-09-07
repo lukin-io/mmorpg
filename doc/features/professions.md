@@ -3,7 +3,7 @@
 title: Professions Feature
 description: NOT_IMPLEMENTED placeholder for source-backed gathering and production profession behavior.
 status: NOT_IMPLEMENTED
-updated: 2026-08-26
+updated: 2026-09-07
 owners: Professions domain
 template: feature-gap-v2
 ---
@@ -30,9 +30,11 @@ feature-specific Turbo/Stimulus/CSS, or runtime spec is claimed.
 
 ## 3. Existing related handoffs
 
-World owns current cell/resource actions and Inventory owns carried items and
-capacity. Those surfaces do not imply a profession, recipe, tool, yield, XP, or
-cooldown system.
+World owns the immediate empty Look result and its persisted 28-second action
+lock; Inventory owns carried items and capacity. These implemented handoffs do
+not constitute a complete profession eligibility, tool, yield, counter, or
+production loop. Successful gathering is explicitly deferred for this task
+pending the alchemy skill path; see the gap matrix in `doc/features/world.md`.
 
 ## 4. Prerequisites for implementation
 

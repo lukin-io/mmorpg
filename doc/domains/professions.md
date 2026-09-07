@@ -17,8 +17,11 @@ and Inventory handoff.
 
 ## Current RPG status
 
-`NOT_IMPLEMENTED`. Existing resource actions and skill labels are adjacent
-evidence; they do not constitute a complete profession system.
+`NOT_IMPLEMENTED`. World implements an immediate empty Look result with a
+persisted 28-second lock, but resource actions and skill labels do not
+constitute a complete profession system. Successful gathering is explicitly
+deferred for the current task pending the alchemy skill path; the World gap
+matrix retains that delivery decision.
 
 ## Important responsible implementation files
 

@@ -3,7 +3,7 @@
 title: Character Progression Feature
 description: Implementation handbook for Neverlands-based primary stats, numeric skills, boolean perks, point allocation, and public progression display.
 status: Fully Implemented
-updated: 2026-08-26
+updated: 2026-09-07
 owners: Character Progression
 template: feature-v1
 ---
@@ -100,6 +100,15 @@ The MVP currently contains:
 ### 4.1 Entry conditions
 
 The public profile is available at `/player/:name` by case-insensitive active character name in the minimal public layout. A signed-in owner sees the same profile inside the persistent game shell and reaches Stats, Skills, and Perks from the profile's internal subnavigation. Allocation routes require an authenticated user, an active playable character, and ownership of the requested `Character`.
+
+The owner's HTML profile and every Stats/Skills/Perks request also honor
+persisted outdoor travel/Look availability. `OutdoorActionAvailability`
+reconciles due work and returns active work to World with `303 See Other`;
+direct URLs or PATCH requests cannot bypass the navigation lock or spend
+points while busy. The character row remains locked through the accepted
+request. Visitor profiles and the read-only public JSON profile remain
+available. World owns the captured lock and timer behavior recorded in
+`doc/design/reference/world/observations/2026-09-07_forpost_grid_and_action_audit.md`.
 
 The profile is not an account dashboard. It shows the gameplay character, equipment summary, vitals, progress, record, numeric skill summary, and owned perks. Only the owner sees primary-stat detail and progression mutation links.
 
@@ -300,6 +309,12 @@ After save, inventory requirements, vitals, profile, combat, and World may read 
 
 Stat, numeric-skill, and perk allocation use a character row lock, so duplicate or concurrent requests re-evaluate current ownership, cap, and point balances. Level-up uses the same boundary before applying XP and grants, then records a single NV ledger adjustment inside the transaction.
 
+The shared controller guard holds that character lock from the outdoor
+availability check through the page or allocation action. Movement therefore
+cannot start between the busy check and point spending. When due movement is
+completed on entry, owner pages render the reconciled character state,
+including the newly persisted travel fatigue.
+
 The client disables Save until a preview exists, but that is usability only and cannot prevent replay. Server locks and stale-competing-request service specs protect the balance. XP is awarded only from the match's separately idempotent finalization marker.
 
 ## 9. HTTP and Turbo contract
@@ -315,6 +330,11 @@ The client disables Save until a preview exists, but that is usability only and 
 | `PATCH /characters/:id/perks` | Save new perk ownership | Redirect or Turbo frame/flash replacement | Allocation error redirect/flash; state preserved |
 
 The allocation feature is authenticated HTML/Turbo. The public profile also offers an unversioned read-only JSON representation for internal/public consumption. There is no separately versioned progression API, so Swagger/rswag and blueprint coverage are not applicable.
+
+For the owner's HTML profile and authenticated allocation routes, accepted
+outdoor travel/Look overrides the ordinary page/action response with a `303`
+World redirect. Progression fields and point balances remain unchanged. This
+availability check applies to both HTML and Turbo allocation submissions.
 
 ## 10. Client-side and CSS ownership
 
@@ -389,6 +409,7 @@ Arbitrary saved browser fields, translated labels, or profile URLs do not grant 
 |---|---|
 | Anonymous allocation request | Redirect to sign-in; no allocation mutation |
 | Foreign character | Redirect to root with ownership error; no mutation |
+| Owner request during accepted outdoor travel or Look | Redirect to World with 303; preserve allocations and available points |
 | Missing character | Return `404` |
 | Empty, nil, zero, or all-negative allocation | Show `No stats selected`, `No skills selected`, or perk allocation error |
 | Submitted amount above available pool | Reject with the matching insufficient-points message |
@@ -443,6 +464,10 @@ Tests are part of the feature contract. Progression changes require applicable m
 | Authorization | Anonymous request, foreign character, policy owner, public read-only profile, and current-character scoping |
 
 `spec/factories/characters.rb` must retain starter, fatigue, point-pool, saved stat/skill, perk ownership, maximum/boundary, and foreign-ownership traits when exercised.
+
+`spec/requests/outdoor_action_availability_spec.rb` covers busy own-profile and
+allocation URLs, rejected point spending, public read access, and fresh fatigue
+rendering after due travel completes at page entry.
 
 Focused verification command:
 
@@ -541,6 +566,7 @@ There is no dedicated view spec for each allocation partial; request and system 
 - `app/services/characters/vitals_service.rb`
 - `app/services/game/movement/travel_time.rb`
 - `app/services/arena/npc_experience_awarder.rb`
+- `app/controllers/concerns/outdoor_action_availability.rb`
 
 Character Progression owns saved stats, numeric skills, perks, and their allocation. Inventory owns equipment and item requirements; Vitals/Combat own their downstream formulas; World owns the bounded Wanderer movement formula. Those features may consume only implemented progression values and must capture Neverlands evidence before adding another effect.
 
@@ -567,6 +593,7 @@ Character Progression owns saved stats, numeric skills, perks, and their allocat
 - `spec/requests/characters_spec.rb`
 - `spec/requests/characters/skills_spec.rb`
 - `spec/requests/players_spec.rb`
+- `spec/requests/outdoor_action_availability_spec.rb`
 - `spec/system/skill_allocation_spec.rb`
 - `spec/system/perk_allocation_spec.rb`
 - `spec/system/responsive_neverlands_ui_spec.rb`

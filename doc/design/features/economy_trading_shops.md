@@ -4,8 +4,8 @@ Domain navigation: `doc/domains/economy.md`.
 
 ## Purpose
 
-The economy lets combat rewards, inventory, and city shops become practical
-choices. Shops are city buildings first.
+The economy connects combat rewards and inventory with Shops entered through
+authored City or linked-location buildings.
 
 ## Neverlands Reference
 
@@ -17,11 +17,14 @@ Primary references:
 - `doc/design/reference/inventory/observations/2026-06-01_inventory_items_and_shop_rows.md`
 - `doc/design/reference/city/observations/2026-07-28_city_movement_and_services.md`
 - `doc/design/reference/social/observations/2026-08-23_chat_game_event_timeline.md`
+- `doc/design/reference/world/observations/2026-09-07_forpost_grid_and_action_audit.md`
+- `doc/design/reference/social/observations/2026-09-07_cell_chat_and_presence_boundaries.md`
 
-Observed shop flow:
+Current observed entry and return paths:
 
 ```text
-outside tile -> city -> trading quarter -> Лавка -> shop tabs/items
+Forpost Central Square -> Shop -> same City node
+village entrance cell -> Village Square -> Shop -> Village Square -> Leave -> same outdoor cell
 ```
 
 The shop page renders a building shell, then category/item content is loaded
@@ -29,8 +32,9 @@ inside the shop UI. Items show price, stock, properties, requirements, and buy
 availability.
 
 Do not model this as a global marketplace/kiosk route. The Neverlands-shaped
-surface is a city building with tabs for buying goods, licenses, selling goods,
-and novice goods.
+surface is a location-bound building with tabs for buying goods, licenses,
+selling goods, and novice goods. The older Trading Quarter entry belongs to
+its dated capture; the current Forpost Shop is on Central Square.
 
 The 2026-05-25 shell/UI capture confirms the shop is a normal building shell:
 top vitals/actions remain visible, `Город` is the return action, shop content
@@ -48,16 +52,28 @@ the launch `Лавка`:
 - the Numismatics Shop is a single-commodity listing book with count, unit
   price, total, and per-listing buy offers.
 
-These source-captured variants now have city-hotspot entry and read-only MVP
-screens so the city graph does not lead to generic or invented services. They
-do not turn the MVP shop into a global marketplace: only the documented
-`Лавка` loop can mutate inventory, stock, or money.
+Those historical commerce captures do not define the current launch graph.
+The five-node Forpost topology retains a bounded read-only Market interior;
+it has no active Junk Dealer or Numismatics Shop integration. Their transaction
+shapes remain evidence for future work. Only the bounded Shop loop currently
+mutates inventory, stock, or money through these building surfaces.
 
 ## Player Experience
 
-The player enters a shop from a city hotspot, chooses a tab/category, sees item
-listings, checks requirements, buys available goods, sells inventory, then
-returns to the city via `Город`.
+The player enters a Shop from a City hotspot or the exact-cell linked village,
+chooses a tab/category, checks item requirements, buys available goods, and
+sells inventory. City Shop returns through `Город` to its persisted node.
+Village Shop returns through Village to Village Square; only the square's
+separate Leave action exits outdoors. The source changes both the location
+label and player list between those village rooms.
+
+The local implementation derives access and parent return from persisted
+position and active authored content. It stores sanitized Shop filters for
+login resume, revalidates the City hotspot or linked-village feature on return,
+and falls back to World if unavailable. Outdoor travel/Look blocks direct
+Shop and trade requests under the character lock. Room entry changes ordinary
+chat/presence context while preserving the physical cell; Shell owns delivery
+and online-session projection.
 
 ## Currency
 
@@ -83,7 +99,8 @@ discard fractional balances.
 
 ## Shop Rules
 
-- Shops are buildings attached to city nodes.
+- Shops belong to authored City nodes or linked-location interiors; their
+  name alone cannot authorize entry or merge audiences across locations.
 - Shops can have category tabs.
 - Shop inventory can have stock counts.
 - Items show price, requirements, and properties.
@@ -119,12 +136,11 @@ discard fractional balances.
 
 ## Known But Deferred
 
-- The player Market and Numismatics Shop have implemented read-only reference
-  screens, including the market's stall tiers and listing-management shape. Their
-  successful and failed purchase, rent, tax settlement, cancellation, expiry,
-  and authorization outcomes were not exercised, so they remain deferred.
-- The Junk Dealer exposes only its captured shop modes; its stock must not be
-  copied from the General Shop.
+- The current Market interior is read-only. Purchase, rent, tax settlement,
+  cancellation, expiry, and authorization flows remain deferred; historical
+  Numismatics and Junk Dealer captures do not imply current routes or screens.
+- The captured Junk Dealer modes do not establish its inventory; its stock
+  must not be copied from the General Shop.
 - Neverlands has direct player trading, but the exact flow, licenses,
   restrictions, UI states, and settlement rules still need source capture.
 - Inventory-side forms show the source shape for transfer, gift,
@@ -138,7 +154,8 @@ discard fractional balances.
 - wallet;
 - transaction;
 - typed NPC currency award source;
-- city building shop;
+- City or linked-location Shop and its authoritative parent;
+- saved Shop filters and location-specific chat/presence context;
 - shop category;
 - shop stock with current and maximum counts;
 - shop license good;
@@ -153,8 +170,9 @@ Deferred source-backed concepts:
 
 ## Interactions
 
-- `areas/cities_and_buildings.md`: shops are entered through city
-  hotspots.
+- `areas/cities_and_buildings.md`: City Shop entry and return preserve the node.
+- `areas/world_map.md`: linked-village Shop entry and return preserve the
+  outdoor region/cell and distinguish Village Square from Shop.
 - `features/items_inventory_equipment.md`: all goods are inventory items.
 - `features/combat.md`: a configured NPC NV outcome credits the economy wallet
   through the shared ledger before Combat publishes player feedback.

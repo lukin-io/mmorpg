@@ -17,18 +17,10 @@ RSpec.describe "Arena match transition and reconciliation", type: :system do
     zone = character.position.zone
     zone.update!(location_type: "city")
     hotspot = create(:city_hotspot, :arena, zone:, active: true, required_level: 1)
-    offer = create(
-      :world_action_offer,
-      :city_building_entry,
-      character:,
-      zone:,
-      x: character.position.x,
-      y: character.position.y,
-      target: hotspot
-    )
 
-    page.driver.submit :post, interact_hotspot_world_path,
-      {hotspot_id: hotspot.id, action_key: offer.action_key}
+    visit world_path
+    within(".city-actions") { click_button hotspot.name }
+    expect(page).to have_current_path(arena_index_path)
   end
 
   # ===========================================================================
@@ -222,7 +214,7 @@ RSpec.describe "Arena match transition and reconciliation", type: :system do
   end
 
   # ===========================================================================
-  # UI: Countdown display (requires JS - skipped in headless/CI environments)
+  # UI: Countdown display
   # ===========================================================================
 
   describe "countdown display", js: true do
@@ -237,7 +229,7 @@ RSpec.describe "Arena match transition and reconciliation", type: :system do
         trauma_percent: 30)
     end
 
-    it "shows countdown overlay when match is accepted", skip: "Requires Chrome/Selenium with display" do
+    it "shows countdown overlay when match is accepted" do
       login_as user_b, scope: :user
       enter_arena_from_city!(character_b)
 

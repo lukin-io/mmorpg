@@ -57,7 +57,7 @@ class User < ApplicationRecord
   end
 
   def character
-    characters.order(:created_at).first
+    characters.order(:created_at, :id).first
   end
 
   def ensure_playable_character!

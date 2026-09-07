@@ -864,6 +864,7 @@ module Arena
 
     def mark_world_tile_npc_defeated!(defeated_by)
       return unless match.metadata&.dig("source") == "world_npc"
+      return if match.metadata&.dig("repeatable_encounter_source") == true
 
       tile_npc = TileNpc.find_by(id: match.metadata["tile_npc_id"])
       tile_npc&.defeat!(defeated_by)

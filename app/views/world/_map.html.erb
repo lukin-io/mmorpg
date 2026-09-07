@@ -10,12 +10,20 @@
   cursor_top = (visible_rows / 2) * tile_size
   movement_destinations = local_assigns.fetch(:movement_destinations, @movement_destinations || []) || []
   active_movement = local_assigns.fetch(:active_movement, @active_movement)
+  active_world_action = local_assigns.fetch(:active_world_action, @active_world_action)
   movement_remaining_seconds = local_assigns.fetch(
     :movement_remaining_seconds,
     @movement_remaining_seconds || active_movement&.remaining_seconds || 0
   )
   destinations_by_coord = movement_destinations.index_by { |destination| [destination.target_x, destination.target_y] }
   movement_active = active_movement.present?
+  world_action_active = active_world_action.present?
+  timer_active = movement_active || world_action_active
+  timer_remaining_seconds = if world_action_active
+    active_world_action.local_action_remaining_seconds
+  else
+    movement_remaining_seconds
+  end
   movement_delta_x = if movement_active && active_movement.respond_to?(:target_x) && active_movement.respond_to?(:from_x)
     active_movement.target_x.to_i - active_movement.from_x.to_i
   else
@@ -41,6 +49,8 @@
      data-nl-world-map-zone-width-value="<%= zone.width %>"
      data-nl-world-map-zone-height-value="<%= zone.height %>"
      data-nl-world-map-tile-size-value="<%= tile_size %>"
+     data-nl-world-map-max-visible-columns-value="<%= visible_columns %>"
+     data-nl-world-map-max-visible-rows-value="<%= visible_rows %>"
      data-nl-world-map-move-cooldown-value="<%= @movement_cooldown || 3 %>"
      data-nl-world-map-zone-name-value="<%= zone.name %>"
      data-nl-world-map-map-offset-x-value="<%= map_offset_x %>"
@@ -50,7 +60,11 @@
      data-nl-world-map-movement-total-seconds-value="<%= movement_total_seconds %>"
      data-nl-world-map-movement-delta-x-value="<%= movement_delta_x %>"
      data-nl-world-map-movement-delta-y-value="<%= movement_delta_y %>"
-     data-nl-world-map-movement-ends-at-value="<%= active_movement&.ends_at&.iso8601 %>"
+     data-nl-world-map-movement-ends-at-value="<%= active_movement&.ends_at&.iso8601(3) %>"
+     data-nl-world-map-work-active-value="<%= world_action_active %>"
+     data-nl-world-map-work-ends-at-value="<%= active_world_action&.local_action_ends_at&.iso8601(3) %>"
+     data-nl-world-map-work-remaining-seconds-value="<%= world_action_active ? timer_remaining_seconds : 0 %>"
+     data-nl-world-map-server-now-value="<%= Time.current.iso8601(3) %>"
      data-nl-world-map-complete-url-value="<%= world_path %>">
 
   <div class="nl-map-viewport"
@@ -72,7 +86,7 @@
                   terrain = tile.respond_to?(:terrain_type) ? tile.terrain_type : zone.location_type
                   tile_meta = tile.respond_to?(:metadata) ? (tile.metadata || {}) : {}
                   is_walkable = tile.respond_to?(:walkable) ? tile.walkable : !tile_meta["blocked"]
-                  is_available = destination.present? && !movement_active && is_walkable && !is_player
+                  is_available = destination.present? && !timer_active && is_walkable && !is_player
                   cell_art = Game::World::CellArtCatalog.resolve(tile_meta["cell_art"])
                   terrain_style = if cell_art
                     "background-image: url('#{image_path(cell_art.asset)}'); background-position: #{cell_art.background_x}px #{cell_art.background_y}px; background-size: #{cell_art.sheet_width}px #{cell_art.sheet_height}px;"
@@ -94,6 +108,7 @@
                   <% if is_available %>
                     <button type="button"
                             class="nl-tile-clickable nl-tile-clickable--available"
+                            data-nl-world-map-target="destination"
                             data-action="click->nl-world-map#clickTile"
                             data-available="true"
                             data-direction="<%= destination.direction %>"
@@ -116,6 +131,8 @@
                          title="<%= tile_meta['building'] %>">
                       <% if tile_meta["building_kind"] == "village" %>
                         <span class="nl-tile-village-hut" aria-hidden="true"></span>
+                      <% elsif tile_meta["building_kind"] == "city" %>
+                        <span class="nl-tile-city-gate" aria-hidden="true">🏰</span>
                       <% end %>
                       <span class="nl-entity-label nl-visually-hidden"><%= tile_meta["building"] %></span>
                     </div>
@@ -140,10 +157,10 @@
       <div class="nl-timer-text"
            id="timerdiv"
            data-nl-world-map-target="timerDiv"
-           style="left: <%= cursor_left %>px; top: <%= cursor_top - tile_size %>px; display: <%= movement_active ? 'block' : 'none' %>;">
+           style="left: <%= cursor_left %>px; top: <%= cursor_top - tile_size %>px; display: <%= timer_active ? 'block' : 'none' %>;">
         <span class="nl-timer-seconds"
               id="tdsec"
-              data-nl-world-map-target="timerSeconds"><%= movement_active ? movement_remaining_seconds : "" %></span>
+              data-nl-world-map-target="timerSeconds"><%= timer_active ? timer_remaining_seconds : "" %></span>
       </div>
     </div>
   </div>
@@ -157,7 +174,11 @@
                 method: :post,
                 id: "movement-form",
                 class: "nl-move-form",
-                data: {turbo: true, nl_world_map_target: "moveForm"},
+                data: {
+                  turbo: true,
+                  nl_world_map_target: "moveForm",
+                  action: "turbo:submit-end->nl-world-map#submissionFinished turbo:fetch-request-error->nl-world-map#submissionFailed"
+                },
                 style: "display: none;" do |f| %>
     <%= f.hidden_field :direction, id: "movement-direction", value: "" %>
     <%= f.hidden_field :target_x, id: "movement-target-x", value: "" %>

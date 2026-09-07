@@ -101,17 +101,23 @@ class ArenaMatch < ApplicationRecord
     Time.current > (current_turn_started_at + timeout.seconds)
   end
 
-  # Check if the entire match has exceeded its maximum duration
-  # A match is stale if it's been live for longer than 2x the turn timeout
-  # (e.g., if turn timeout is 5 min, match is stale after 10 min of inactivity)
+  # Check if the entire match has exceeded its maximum duration. Wilderness
+  # fights persist the source-displayed fight deadline explicitly. Other match
+  # types retain the existing two-turn stale recovery boundary.
   #
   # @return [Boolean] true if match should be auto-ended
   def stale?
     return false unless live?
     return false unless started_at
 
-    max_duration = (turn_timeout_seconds || DEFAULT_TURN_TIMEOUT) * 2
-    Time.current > (started_at + max_duration.seconds)
+    Time.current >= (started_at + fight_timeout_seconds.seconds)
+  end
+
+  def fight_timeout_seconds
+    configured = Integer(metadata.to_h["fight_timeout_seconds"], exception: false)
+    return configured if configured&.positive?
+
+    (turn_timeout_seconds || DEFAULT_TURN_TIMEOUT) * 2
   end
 
   # Auto-end match if it's stale or all opponents defeated

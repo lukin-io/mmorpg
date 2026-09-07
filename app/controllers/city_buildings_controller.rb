@@ -5,12 +5,13 @@ class CityBuildingsController < ApplicationController
 
   before_action :ensure_active_character!
   before_action :load_building
-  before_action :ensure_building_access!
+  around_action :with_building_access
 
   def show
     Game::World::ResumeContext.new(character: current_character).remember_city_building!(
       building_key: params[:building_key]
     )
+    prepare_presence_context
   end
 
   private
@@ -19,6 +20,18 @@ class CityBuildingsController < ApplicationController
     @building_key = params[:building_key].to_s
     @building = Game::World::CityBuildingCatalog.fetch(@building_key)
     redirect_to(world_path, alert: "City building not found.") unless @building
+  end
+
+  # Entry changes saved room state. Revalidate and render under the same lock
+  # as city movement so a concurrent relocation cannot admit a stale building.
+  def with_building_access
+    current_character.with_lock do
+      ensure_building_access!
+      unless performed?
+        @position = current_character.position
+        yield
+      end
+    end
   end
 
   def ensure_building_access!

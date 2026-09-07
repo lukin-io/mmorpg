@@ -2,7 +2,7 @@
 
 ## Scope
 
-City Shop navigation, browse/filter modes, dense catalog rows, buying, selling,
+City and linked-village Shop navigation, browse/filter modes, dense catalog rows, buying, selling,
 stock, prices, requirements, funds, NPC-loot NV ingress, capacity, and
 transactional safety.
 
@@ -25,6 +25,13 @@ transactionally before social feedback; no production NPC amount/probability is
 authored without further evidence. Full populated live-state parity,
 market trading, licenses, repair, transfers, and other service economies do
 not.
+
+Shop revalidates the active City hotspot or exact-cell linked-village feature.
+Its saved filters resume after login only while that location is available.
+Village Shop returns to Village Square before the separate outdoor exit;
+World owns coordinates, and Shell owns the distinct room's presence/chat.
+Persisted outdoor travel or Look rejects direct Shop/trade requests without
+changing money, inventory, stock, or saved room.
 
 ## Important responsible implementation files
 

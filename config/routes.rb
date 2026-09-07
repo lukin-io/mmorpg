@@ -99,6 +99,8 @@ Rails.application.routes.draw do
   resources :chat_channels, only: [:show] do
     resources :chat_messages, only: :create
   end
+  get "chat/local", to: "chat_channels#local", as: :local_chat
+  post "chat/local", to: "chat_messages#create"
 
   # Non-game related
 

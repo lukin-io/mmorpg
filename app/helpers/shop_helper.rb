@@ -1,6 +1,14 @@
 # frozen_string_literal: true
 
 module ShopHelper
+  def shop_location_return_label
+    @shop_parent_location&.location_short_label || "City"
+  end
+
+  def shop_location_return_path
+    @shop_parent_location ? world_location_path(@shop_parent_location.location_key) : world_path
+  end
+
   def shop_mode_options
     Game::Shop::Catalog::MODES
   end

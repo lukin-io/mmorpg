@@ -74,6 +74,17 @@ RSpec.describe Game::Movement::CompleteMove do
     expect(character.reload.fatigue_percent).to eq(0)
   end
 
+  it "fails a malformed persisted command that jumps beyond an adjacent cell" do
+    command = moving_command(target_x: 7, target_y: 5)
+
+    described_class.new(character:).call
+
+    expect(command.reload).to be_failed
+    expect(command.error_message).to eq("Movement target is not an adjacent step")
+    expect([position.reload.x, position.y]).to eq([5, 5])
+    expect(character.reload.fatigue_percent).to eq(0)
+  end
+
   it "does not complete another character's movement" do
     other_character = create(:character)
     create(:character_position, character: other_character, zone:, x: 5, y: 5)
@@ -82,5 +93,61 @@ RSpec.describe Game::Movement::CompleteMove do
     described_class.new(character:).call
 
     expect(other_command.reload).to be_moving
+  end
+
+  it "applies position, turn, and fatigue only once across completion retries" do
+    command = moving_command(metadata: {"fatigue_gain" => 2})
+
+    2.times { described_class.new(character: Character.find(character.id)).call }
+
+    expect(command.reload).to be_completed
+    expect(position.reload).to have_attributes(x: 6, y: 5, last_turn_number: 3)
+    expect(character.reload.fatigue_percent).to eq(2)
+  end
+
+  it "rejects a due command from another region without relocating the character" do
+    command = moving_command(zone: create(:zone, location_type: "outdoor"), metadata: {"fatigue_gain" => 2})
+
+    described_class.new(character:).call
+
+    expect(command.reload).to be_failed
+    expect(position.reload).to have_attributes(zone:, x: 5, y: 5, last_turn_number: 2)
+    expect(character.reload.fatigue_percent).to eq(0)
+  end
+
+  it "fails travel from a previous region before its deadline without changing the new cell" do
+    other_region = create(:zone, :mvp_outdoor_region)
+    command = moving_command(ends_at: 30.seconds.from_now, metadata: {"fatigue_gain" => 2})
+    position.update!(zone: other_region)
+
+    2.times { described_class.new(character: Character.find(character.id)).call }
+
+    expect(command.reload).to be_failed
+    expect(command.error_message).to eq("Character is no longer at the movement source")
+    expect(position.reload).to have_attributes(zone: other_region, x: 5, y: 5, last_turn_number: 2)
+    expect(character.reload.fatigue_percent).to eq(0)
+  end
+
+  it "fails travel from a previous cell in the same region before its deadline" do
+    command = moving_command(ends_at: 30.seconds.from_now)
+    position.update!(x: 4)
+
+    described_class.new(character:).call
+
+    expect(command.reload).to be_failed
+    expect(position.reload).to have_attributes(zone:, x: 4, y: 5, last_turn_number: 2)
+  end
+
+  it "fails conflicting persisted movement without moving a character in an active fight" do
+    npc = create(:tile_npc, zone: zone.name, x: 5, y: 5)
+    match = Game::World::StartNpcFight.new(character:, tile_npc: npc).call
+    command = moving_command(metadata: {"fatigue_gain" => 2})
+
+    described_class.new(character:).call
+
+    expect(command.reload).to be_failed
+    expect(position.reload).to have_attributes(x: 5, y: 5, last_turn_number: 2)
+    expect(character.reload.fatigue_percent).to eq(0)
+    expect(match.reload).to be_live
   end
 end

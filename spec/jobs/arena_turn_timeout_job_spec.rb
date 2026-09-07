@@ -103,6 +103,25 @@ RSpec.describe ArenaTurnTimeoutJob do
         end
       end
 
+      context "when a wilderness fight reaches its displayed fight deadline" do
+        before do
+          arena_match.update!(
+            started_at: 5.minutes.ago,
+            current_turn_started_at: 1.minute.ago,
+            metadata: {"source" => "world_npc", "fight_timeout_seconds" => 300}
+          )
+        end
+
+        it "ends the fight once instead of extending it with another turn" do
+          expect {
+            described_class.new.perform(match_id: arena_match.id)
+          }.not_to change { arena_match.reload.current_turn_number }
+
+          expect(arena_match).to be_completed
+          expect(arena_match).to be_timed_out
+        end
+      end
+
       context "when match turn has not timed out" do
         before do
           arena_match.update!(current_turn_started_at: 1.minute.ago)

@@ -91,6 +91,9 @@ module Arena
 
     def call
       ApplicationRecord.transaction do
+        # Inventory requests hold the character before inventory/wallet rows.
+        # Keep that order when a killing turn awards loot before progression.
+        character.lock!
         npc_participation.lock!
         validate_npc_participation!
         participation = player_participation

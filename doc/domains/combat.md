@@ -16,6 +16,8 @@ player-facing completion/loot fact handoff, and responsive fight presentation.
   `doc/design/reference/combat/observations/2026-08-26_wilderness_passive_goblin_fight.md`,
   plus the current variable-group/magic chain in
   `doc/design/reference/combat/observations/2026-09-01_wilderness_bandit_group_variation_and_magic.md`
+  and the current large-roster/search/timeout chain in
+  `doc/design/reference/combat/observations/2026-09-02_swamp_passive_rosters_search_and_timeout.md`
 - Composite observations indexed by the source summary
 - Cross-domain timeline observation:
   `doc/design/reference/social/observations/2026-08-23_chat_game_event_timeline.md`
@@ -46,7 +48,18 @@ and shield `40/70/90` selector tables, preserves source turn-package/no-op
 semantics, uses the captured paired-rat encounter XP total, and applies exact
 result-based wear including Careful Fighter. The active surface displays the
 profile's `5..N` magic-hit ceiling independently from current MP, as the live
-level-17 shield flow confirmed.
+level-17 shield flow confirmed. The World entry now uses the same path for
+fixed or complete sampled mixed rosters, persists member level/HP and
+encounter XP/risk, preserves sampled-cell eligibility after full victory and
+Finish, and enforces the explicit five-minute World-fight deadline. Fixed
+anchors retain their defeated/respawn lifecycle.
+
+Actual Arena HTML room selection persists and resumes after current City,
+room activity, level/alignment, and optional city-binding checks. JSON previews
+do not select a room; entering another city clears stale selection. Shared
+ordinary chat and presence use the selected room rather than all city players.
+World-authored encounter capacity is `1..10`, with eleven rejected before
+partial fight creation; this does not add uncaptured opponents to seeded cells.
 
 ## Important responsible implementation files
 
@@ -62,6 +75,7 @@ level-17 shield flow confirmed.
 - `app/controllers/arena_matches_controller.rb`
 - `app/controllers/world_encounter_checks_controller.rb`
 - `app/services/game/world/passive_encounter_check.rb`
+- `app/services/game/world/encounter_roster_selector.rb`
 - `app/views/arena_matches/show.html.erb`
 - `app/assets/stylesheets/arena.css`
 
@@ -79,8 +93,12 @@ log/statistics/pagination states. Exact Neverlands passive timing/probability,
 per-cell roster pools/weights, general XP inputs, and player-group reward
 distribution remain separate evidence rows; they do not reopen the bounded
 physical fight lifecycle. The current source now confirms variable
-same-return-context `1x3 -> 1x1 -> 1x1 -> 1x2` output and approximately
-`230..278`- and `127..187`-second passive intervals, but four samples cannot
-supply weights or a timing distribution. The current `150 mastery -> -10 AP` and
+same-return-context `1x3 -> 1x1 -> 1x1 -> 1x2` output, a later no-coordinate
+`1x7 -> 1x3` chain, and approximately `230..278`, `127..187`, and
+`4..64`-second passive interval bounds. The mapped local cell now replays its
+four exact-coordinate roster samples and two captured windows and can schedule
+another sample after victory/Finish, but those samples cannot supply the
+source's complete pool, weights, or timing distribution. The current
+`150 mastery -> -10 AP` and
 `130 mastery -> -8 AP` observations remain insufficient to promote the fitting
 `floor(mastery / 15)` candidate into a rule.

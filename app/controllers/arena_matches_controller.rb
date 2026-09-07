@@ -49,6 +49,8 @@ class ArenaMatchesController < ApplicationController
   def action
     authorize @arena_match
 
+    @arena_match.auto_end_if_needed!
+
     processor = Arena::CombatProcessor.new(@arena_match)
 
     # Build params hash for the action
@@ -82,6 +84,8 @@ class ArenaMatchesController < ApplicationController
   # POST /arena_matches/:id/claim_timeout
   def claim_timeout
     authorize @arena_match
+
+    @arena_match.auto_end_if_needed!
 
     result = Arena::CombatProcessor.new(@arena_match).claim_timeout(
       current_character,

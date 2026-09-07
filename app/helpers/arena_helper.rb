@@ -258,8 +258,8 @@ module ArenaHelper
       max_hp = participation.metadata&.dig("max_hp") || npc_template.health
       current_mp = 0
       max_mp = 0
-      name = npc_template.name
-      level = npc_template.level
+      name = participation.participant_name
+      level = participation.participant_level
       participant_id = "npc-participation-#{participation.id}"
     else
       current_hp = character.current_hp

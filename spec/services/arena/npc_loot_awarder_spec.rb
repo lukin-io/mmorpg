@@ -62,6 +62,65 @@ RSpec.describe Arena::NpcLootAwarder do
     end
   end
 
+  context "with equipment item entries" do
+    let!(:axe) do
+      create(
+        :item_template,
+        key: "wilderness_axe",
+        name: "Wilderness axe",
+        slot: "main_hand",
+        stat_modifiers: {"weapon_family" => "axe"}
+      )
+    end
+    let!(:armor) do
+      create(:item_template, :armor, key: "wilderness_armor", name: "Wilderness armor")
+    end
+    let(:loot_table) do
+      [
+        {"kind" => "item", "item" => axe.key, "chance" => 1.0},
+        {"kind" => "item", "item" => armor.key, "chance" => 1.0}
+      ]
+    end
+
+    it "awards weapons and armor through the same typed item pipeline" do
+      result = award_loot
+
+      expect(result.awards.map(&:item_template)).to eq([axe, armor])
+      expect(character.inventory.inventory_items.pluck(:item_template_id)).to contain_exactly(axe.id, armor.id)
+      expect(GameEvent.where(event_type: :item_found, recipient: user).count).to eq(2)
+    end
+  end
+
+  context "with item and currency entries" do
+    let!(:item_template) do
+      create(:item_template, :consumable, key: "shared_lock_potion")
+    end
+    let(:loot_table) do
+      [
+        {"kind" => "item", "item" => item_template.key, "chance" => 1.0},
+        {"kind" => "currency", "currency" => "NV", "amount" => 24, "chance" => 1.0}
+      ]
+    end
+
+    it "locks the recipient before reward rows to match concurrent inventory requests" do
+      locked_tables = []
+      subscriber = lambda do |*, payload|
+        next unless payload[:sql].include?("FOR UPDATE")
+
+        locked_tables << payload[:sql][/FROM "([^"]+)"/, 1]
+      end
+
+      ActiveSupport::Notifications.subscribed(subscriber, "sql.active_record") do
+        award_loot
+      end
+
+      expect(locked_tables.first).to eq("characters")
+      expect(locked_tables).to include("arena_participations", "inventories", "currency_wallets")
+      expect(character.inventory.inventory_items.find_by!(item_template:).quantity).to eq(1)
+      expect(user.currency_wallet.reload.nv_balance).to eq(24)
+    end
+  end
+
   context "with an NV entry" do
     let(:loot_table) do
       [

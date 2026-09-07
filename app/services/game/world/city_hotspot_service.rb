@@ -47,12 +47,27 @@ module Game
         CityHotspot.for_zone(zone)
       end
 
-      # Interact with a specific hotspot
+      # Interact with a current-node hotspot under character/target locks.
+      # A successful relocation and its chat-entry context commit together.
       #
       # @param hotspot_id [Integer] the hotspot to interact with
       # @return [Result]
       def interact!(hotspot_id)
-        hotspot = CityHotspot.find_by(id: hotspot_id, zone: zone)
+        return Result.new(success: false, message: "Character is unavailable.") unless character
+
+        character.with_lock do
+          unless city_zone? && character.position&.zone_id == zone.id
+            next Result.new(success: false, message: "Location does not match current position.")
+          end
+
+          perform_interaction(hotspot_id)
+        end
+      end
+
+      private
+
+      def perform_interaction(hotspot_id)
+        hotspot = CityHotspot.lock.find_by(id: hotspot_id, zone: zone)
 
         unless hotspot
           return Result.new(
@@ -83,8 +98,6 @@ module Game
         end
       end
 
-      private
-
       def handle_zone_transition(hotspot)
         unless hotspot.destination_zone
           return Result.new(
@@ -113,6 +126,7 @@ module Game
             y: destination_y,
             last_action_at: Time.current
           )
+          ResumeContext.new(character:).remember_world!
 
           Result.new(
             success: true,

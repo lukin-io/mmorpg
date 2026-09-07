@@ -1,9 +1,13 @@
 <%= form_with model: [chat_channel, chat_message],
+              url: chat_channel.local? ? local_chat_path : chat_channel_chat_messages_path(chat_channel),
               class: "chat-form",
               data: {
                 turbo_frame: "_top",
                 action: "turbo:submit-end->chat#resetForm"
               } do |form| %>
+  <% if chat_channel.local? %>
+    <%= hidden_field_tag :context_key, chat_channel.metadata.to_h["location_key"] %>
+  <% end %>
 
   <% if chat_message.errors.any? %>
     <div class="chat-form-errors flash error">

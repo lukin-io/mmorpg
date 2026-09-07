@@ -29,6 +29,39 @@ RSpec.describe Game::World::PassiveEncounterCheck do
     )
   end
 
+  it "samples only inside captured delay windows for the exact cell" do
+    npc.update!(metadata: npc.metadata.merge(
+      "passive_delay_windows" => [
+        {"key" => "long", "min_seconds" => 230, "max_seconds" => 278},
+        {"key" => "short", "min_seconds" => 127, "max_seconds" => 187}
+      ]
+    ))
+    source_rng = instance_double(Random)
+    expect(source_rng).to receive(:rand).with(2).and_return(1)
+    expect(source_rng).to receive(:rand).with(127..187).and_return(154)
+
+    result = described_class.new(character:, clock:, rng: source_rng).call
+
+    expect(result).not_to be_interrupted
+    expect(result.retry_after_ms).to eq(154_000)
+    expect(character.reload.metadata.fetch(described_class::SCHEDULE_METADATA_KEY)).to include(
+      "due_at" => (now + 154.seconds).iso8601(6)
+    )
+  end
+
+  it "does not resample a captured delay window on an early retry" do
+    npc.update!(metadata: npc.metadata.merge(
+      "passive_delay_windows" => [{"key" => "observed", "min_seconds" => 127, "max_seconds" => 187}]
+    ))
+    source_rng = instance_double(Random, rand: 150)
+    described_class.new(character:, clock:, rng: source_rng).call
+    retry_rng = instance_double(Random)
+
+    result = described_class.new(character:, clock: -> { now + 25.seconds }, rng: retry_rng).call
+
+    expect(result.retry_after_ms).to eq(125_000)
+  end
+
   it "preserves the due time across early retries and starts the shared fight only when due" do
     first = check
     early = described_class.new(
@@ -64,6 +97,32 @@ RSpec.describe Game::World::PassiveEncounterCheck do
     expect(result.retry_after_ms).to eq(described_class::EMPTY_RECHECK_SECONDS * 1_000)
     expect(character.reload.metadata).not_to have_key(described_class::SCHEDULE_METADATA_KEY)
     expect(npc.reload.x).to eq(5)
+  end
+
+  it "clears a due source-cell schedule while timed movement is active" do
+    check
+    movement = create(:movement_command, :moving, character:, zone:)
+
+    result = described_class.new(character:, clock: -> { now + 30.seconds }, rng: instance_double(Random)).call
+
+    expect(result).not_to be_interrupted
+    expect(result.retry_after_ms).to eq(described_class::EMPTY_RECHECK_SECONDS * 1_000)
+    expect(character.reload.metadata).not_to have_key(described_class::SCHEDULE_METADATA_KEY)
+    expect(movement.reload).to be_moving
+    expect(ArenaMatch.count).to eq(0)
+  end
+
+  it "completes due travel before checking for a passive encounter at the destination" do
+    check
+    movement = create(:movement_command, :moving, character:, zone:, ends_at: 1.second.ago)
+
+    result = described_class.new(character:, clock: -> { now + 30.seconds }, rng: instance_double(Random)).call
+
+    expect(result).not_to be_interrupted
+    expect(movement.reload).to be_completed
+    expect(position.reload).to have_attributes(x: 5, y: 4)
+    expect(character.reload.metadata).not_to have_key(described_class::SCHEDULE_METADATA_KEY)
+    expect(ArenaMatch.count).to eq(0)
   end
 
   it "replaces the origin schedule with the destination cell's hostile" do

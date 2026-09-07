@@ -4,7 +4,7 @@
 class ArenaController < ApplicationController
   before_action :authenticate_user!
   before_action :require_character
-  before_action :require_city_arena_entry!
+  around_action :with_city_arena_entry
 
   # GET /arena
   # Arena lobby showing all rooms
@@ -21,7 +21,7 @@ class ArenaController < ApplicationController
       return
     end
 
-    @rooms = ArenaRoom.active.order(:room_type)
+    @rooms = ArenaRoom.active.where(zone_id: [nil, current_character.position&.zone_id]).order(:room_type)
     @current_application = current_character.arena_applications.open.first
     @recent_matches = current_character.arena_participations
       .includes(:arena_match)
@@ -29,7 +29,11 @@ class ArenaController < ApplicationController
       .limit(5)
 
     respond_to do |format|
-      format.html
+      format.html do
+        context = Game::World::ResumeContext.new(character: current_character)
+        context.remember_world! unless context.arena_room
+        prepare_presence_context
+      end
       format.json { render json: arena_lobby_payload }
     end
   end
@@ -37,7 +41,7 @@ class ArenaController < ApplicationController
   # GET /arena/lobby
   # Turbo frame for lobby updates
   def lobby
-    @rooms = ArenaRoom.active.order(:room_type)
+    @rooms = ArenaRoom.active.where(zone_id: [nil, current_character.position&.zone_id]).order(:room_type)
     render partial: "arena/lobby", locals: {rooms: @rooms}
   end
 
@@ -50,7 +54,7 @@ class ArenaController < ApplicationController
   end
 
   def current_character
-    @current_character ||= current_user.characters.first
+    @current_character ||= current_user.character
   end
   helper_method :current_character
 

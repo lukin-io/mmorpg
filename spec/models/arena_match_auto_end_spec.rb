@@ -68,6 +68,30 @@ RSpec.describe ArenaMatch, "Auto-End Functionality" do
         end
       end
     end
+
+    context "with an explicit source-displayed fight timeout" do
+      before do
+        match.update!(metadata: {"fight_timeout_seconds" => 300})
+      end
+
+      it "uses the exact before/at boundary instead of the fallback stale window" do
+        travel_to(match.started_at + 299.seconds, with_usec: true) do
+          expect(match.stale?).to be false
+        end
+
+        travel_to(match.started_at + 300.seconds, with_usec: true) do
+          expect(match.stale?).to be true
+        end
+      end
+
+      it "falls back safely when persisted timeout metadata is non-positive or malformed" do
+        [nil, 0, -1, "invalid"].each do |value|
+          match.update!(metadata: {"fight_timeout_seconds" => value})
+
+          expect(match.fight_timeout_seconds).to eq(600)
+        end
+      end
+    end
   end
 
   describe "#should_auto_end_defeat?" do

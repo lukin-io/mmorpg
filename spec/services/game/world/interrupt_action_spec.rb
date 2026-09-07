@@ -44,4 +44,38 @@ RSpec.describe Game::World::InterruptAction do
 
     expect(result).not_to be_interrupted
   end
+
+  it "rejects shell actions during travel without starting a same-cell fight" do
+    create(:tile_npc, zone: zone.name, x: 5, y: 5)
+    movement = create(:movement_command, :moving, character:, zone:)
+
+    expect { result }.to raise_error(Game::World::StartNpcFight::FightViolationError, /Movement already in progress/)
+
+    expect(ArenaMatch.count).to eq(0)
+    expect(movement.reload).to be_moving
+    expect(position.reload).to have_attributes(x: 5, y: 5)
+  end
+
+  it "finishes due travel before resolving the hostile cell for a shell action" do
+    create(:tile_npc, zone: zone.name, x: 5, y: 5)
+    movement = create(:movement_command, :moving, character:, zone:, ends_at: 1.second.ago)
+
+    expect(result).not_to be_interrupted
+
+    expect(movement.reload).to be_completed
+    expect(position.reload).to have_attributes(x: 5, y: 4)
+    expect(ArenaMatch.count).to eq(0)
+  end
+
+  it "rejects shell actions while the persisted Look timer is active" do
+    work = create(:world_action_offer, character:, zone:, x: 5, y: 5,
+      action_type: "search_resources", status: :accepted, accepted_at: Time.current,
+      metadata: {"local_action_ends_at" => 28.seconds.from_now.iso8601(6), "local_action_result" => "Nothing useful here."})
+    create(:tile_npc, zone: zone.name, x: 5, y: 5)
+
+    expect { result }.to raise_error(Game::World::StartNpcFight::FightViolationError, /local action is already in progress/)
+
+    expect(work.reload).to be_accepted
+    expect(ArenaMatch.count).to eq(0)
+  end
 end

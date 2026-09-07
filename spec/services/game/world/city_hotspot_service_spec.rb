@@ -45,6 +45,12 @@ RSpec.describe Game::World::CityHotspotService do
   end
 
   describe "#interact!" do
+    it "returns a safe failure for a missing character" do
+      service = described_class.new(character: nil, zone: city_zone)
+
+      expect(service.interact!(1)).to have_attributes(success: false, message: "Character is unavailable.")
+    end
+
     context "with valid building hotspot" do
       let!(:building) do
         create(:city_hotspot,
@@ -103,6 +109,25 @@ RSpec.describe Game::World::CityHotspotService do
       it "returns destination_zone in result" do
         result = subject.interact!(exit_hotspot.id)
         expect(result.destination_zone).to eq(destination_zone)
+      end
+
+      it "rejects a caller-selected city after the character has moved to another region" do
+        other_region = create(:zone, :mvp_outdoor_region)
+        position.update!(zone: other_region)
+
+        result = subject.interact!(exit_hotspot.id)
+
+        expect(result.success).to be false
+        expect(result.message).to eq("Location does not match current position.")
+        expect(position.reload).to have_attributes(zone: other_region, x: 5, y: 5)
+      end
+
+      it "rejects a repeated exit without relocating or touching the arrived position" do
+        expect(subject.interact!(exit_hotspot.id).success).to be true
+        arrival = position.reload.attributes.slice("zone_id", "x", "y", "last_action_at")
+
+        expect(subject.interact!(exit_hotspot.id).success).to be false
+        expect(position.reload.attributes.slice("zone_id", "x", "y", "last_action_at")).to eq(arrival)
       end
     end
 

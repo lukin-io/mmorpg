@@ -1,14 +1,18 @@
 # frozen_string_literal: true
 
 class PlayersController < ApplicationController
+  include OutdoorActionAvailability
+
   skip_before_action :authenticate_user!
   skip_before_action :ensure_device_identifier
   before_action :set_character
+  around_action :with_available_outdoor_actions, if: :own_html_profile?
 
   def show
-    @equipment = equipped_items_for(@character)
-    @viewer_character = current_user&.character if user_signed_in?
+    @viewer_character = current_character if user_signed_in?
     @own_profile = @viewer_character.present? && @viewer_character.id == @character.id
+    @character = @viewer_character if @own_profile
+    @equipment = equipped_items_for(@character)
 
     if @own_profile
       @stats_data = build_stats_data
@@ -22,6 +26,10 @@ class PlayersController < ApplicationController
   end
 
   private
+
+  def own_html_profile?
+    request.format.html? && current_character&.id == @character.id
+  end
 
   def build_stats_data
     allocated = @character.allocated_stats || {}

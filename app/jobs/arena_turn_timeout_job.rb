@@ -28,12 +28,15 @@ class ArenaTurnTimeoutJob < ApplicationJob
   def check_single_match(match_id)
     match = ArenaMatch.find_by(id: match_id)
     return unless match&.live?
+    return if match.auto_end_if_needed!
 
     process_timeout(match) if match.turn_timed_out?
   end
 
   def check_all_live_matches
     ArenaMatch.live.find_each do |match|
+      next if match.auto_end_if_needed!
+
       process_timeout(match) if match.turn_timed_out?
     end
   end

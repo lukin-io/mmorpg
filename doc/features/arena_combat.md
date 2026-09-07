@@ -3,7 +3,7 @@
 title: Arena Combat Runtime Feature
 description: Implementation handbook for arena applications, shared player and NPC turn combat, combat presentation, completion, and public fight logs.
 status: Fully Implemented
-updated: 2026-09-01
+updated: 2026-09-07
 owners: Arena and Combat
 template: feature-v1
 ---
@@ -35,8 +35,13 @@ and
 `doc/design/reference/combat/observations/2026-08-26_wilderness_passive_goblin_fight.md`.
 The current same-return-context variable-group and magic flow lives in
 `doc/design/reference/combat/observations/2026-09-01_wilderness_bandit_group_variation_and_magic.md`.
+The current swamp large-roster/search/timeout flow lives in
+`doc/design/reference/combat/observations/2026-09-02_swamp_passive_rosters_search_and_timeout.md`.
 The supplied mixed-chat fight/item/NV evidence lives in
 `doc/design/reference/social/observations/2026-08-23_chat_game_event_timeline.md`.
+The official ten-member NPC capacity and distinct Arena-room chat/presence
+evidence live in
+`doc/design/reference/social/observations/2026-09-07_cell_chat_and_presence_boundaries.md`.
 The Combat Completion Matrix in `doc/design/launch_mvp_plan.md` is the
 delivery-status authority; its bounded physical MVP is `DONE`, while full
 Neverlands Combat is `EVIDENCE_NEEDED`. Physical `1x1` PvP, bounded physical
@@ -64,7 +69,9 @@ use the same match, participation, turn, result, and log records. A persisted
 same-cell hostile can also interrupt the outdoor surface through World's
 server-authoritative passive check. World persists the coordinate/NPC-
 fingerprinted due time and returns only the remaining delay; the browser never
-submits an NPC id, coordinate, timer, or encounter roll.
+submits an NPC id, coordinate, timer, roster, group size, or encounter roll. An
+evidenced variable cell can select one complete persisted roster sample and
+captured delay window; fixed cells retain their explicit composition.
 
 During a live fight the authenticated player sees two equipment-style fighter
 rails and a fluid center composer. The center shows the AP budget and the
@@ -78,10 +85,11 @@ retains that target through waiting-state reload. Completion
 requires the participant to finish the result before the stored Arena or World
 destination is restored. Match finalization publishes one recipient-only fight
 completion row per player participation, including actual awarded NPC XP where
-applicable. Each defeated NPC resolves its typed loot table once: item awards
-persist through Inventory, NV awards persist through the Economy wallet ledger,
-and each success publishes the matching item- or money-found row. All appear in
-the persistent shell chat timeline.
+applicable. Each defeated NPC resolves its typed loot table once: consumables,
+weapons, armor, and other item templates persist through Inventory, NV awards
+persist through the Economy wallet ledger, and each success publishes the
+matching item- or money-found row. All appear in the persistent shell chat
+timeline.
 
 Every fight also has `/log/:id`: a public, shell-free, paginated chronological
 log with team-colored names, participant totals, and an optional statistics or
@@ -125,9 +133,41 @@ JSON representation.
 
 Arena lobby, room, application, and participant actions require Devise
 authentication and a current playable character. The Arena entry gate accepts
-either a City-established arena session or an already active Arena match.
+a City-established session for the current city node or a valid persisted
+selected room, after rechecking the active Arena hotspot and character access.
+An already active Arena match retains its existing gate bypass and redirect.
 Creating or accepting an application also rechecks room access, capacity,
 level/alignment rules, HP threshold, active application, and combat state.
+
+An authorized HTML room visit persists Character gameplay context
+`arena_room` with the actual integer `room_id`. `ResumeContext#arena_room`
+resolves that saved id against current city access, room activity, level and
+alignment, and the room's optional city `zone_id`; existing unbound rooms remain
+available through authorized city Arena entry. `remember_arena_room!(room:)`
+reloads and validates the target under the character lock, rejects an active
+fight, then saves the context and local-chat audience together. It returns the
+fresh room or nil without changing context. Repeating the same visit preserves
+the audience entry time. Room JSON previews never select a location.
+Lobby room lists include only current-city and existing unbound rooms.
+`ArenaRoom#accessible_by?` owns that optional region boundary for room pages,
+application lists, creation, and player/NPC acceptance, so submitting a known
+room or application id cannot bypass it.
+
+Fresh login restores a valid selected room without requiring the old city
+entry cookie; stale, missing, malformed, inaccessible, or foreign-city bound
+room contexts fall back to World. The generic lobby retains an accessible
+selected room and does not invent an initial or level-derived room selection.
+Actual world-coordinate or city-node transitions atomically clear the previous
+room context before committing the new position, including for unbound rooms.
+Actual room changes drive the shared room-specific presence and local-chat
+partition; the lobby and room views refresh presence after saving context.
+Both summary-table and Room Map Enter links target the full shell with
+`data-turbo-frame="_top"`, so the surrounding room label, count, and player
+list update immediately even when automatic presence refresh is disabled.
+Room names are presentation labels; the saved room id and persisted city/cell
+define the audience. Shell limits presence to recent open sessions and each
+user's playable character, with a bounded list and full room count. Its
+technical liveness window does not claim a captured Neverlands expiry.
 
 The public fight log requires only a valid match ID and always uses the minimal
 application layout, including when an authenticated session exists.
@@ -199,6 +239,12 @@ round number. Defeated targets cannot remain selected: an omitted or stale
 target falls back to a living opponent. Raw overkill remains in the log while
 participation/result damage counts only HP actually removed.
 
+A World-created fight snapshots the source-displayed `300`-second global fight
+deadline. Match views, timeout jobs, turn submissions, and timeout claims
+recheck that deadline; at or after it the match finalizes as a draw by timeout
+before another intent can advance the round or claim a victory. Other match
+types retain their existing per-turn timeout and stale-recovery rules.
+
 ### 4.4 Exit and integration behavior
 
 Live participants remain in combat. When the match completes, idempotent
@@ -257,7 +303,7 @@ cancellation, transactionally-created matches/participations, countdown jobs,
 and broadcasts. NPC applications use the same visible list and validation but
 enter the shared fight immediately after an accepted open side.
 
-Creation locks the room and applicant; acceptance locks the room,
+Creation locks the room and applicant; player acceptance locks the room,
 application, and both characters in stable order, then rechecks access,
 capacity, active application, active match, and combat state. Duplicate or
 competing acceptance cannot create another match. Cancellation locks and
@@ -269,6 +315,13 @@ match-start path, and stop blocking replay as soon as their match is complete.
 The normal PvP start delay is ten seconds. The delayed start is enqueued after
 commit, and a participant loading a due pending match recovers the same start
 transition if the worker was unavailable.
+
+NPC acceptance locks its room, application, and accepting character in that
+order inside the existing transaction. It reloads access, application status,
+and combat state there before creating the immediate fight, so a moved
+character, changed room, or duplicate stale acceptance cannot bypass the
+region check or create another match. Player acceptance retains its existing
+stable ordering for both character locks.
 
 The PvP `match_created` live update is room-scoped and includes both persisted
 participant character IDs. A participant still viewing that Arena room starts
@@ -284,13 +337,25 @@ database transition into an HTTP failure.
 
 ### 6.3 Turn combat and completion
 
+World-created combat reaches the shared runtime through
+`Game::World::EncounterRosterSelector` and `StartNpcFight`. The selector either
+repeats a fixed anchor template or chooses one complete captured roster sample
+through injected/server RNG, failing closed when a referenced persisted NPC
+template or combat parameter is unavailable. Start persists the selected sample
+and member identities, creates ordered mixed/repeated NPC participations with
+per-member level/HP overrides, and carries explicit encounter XP/risk plus the
+repeatable-source flag and five-minute fight deadline into the match. On final
+NPC defeat, the processor preserves a sampled anchor for a later same-cell
+schedule while fixed anchors retain their defeated/respawn lifecycle.
+
 `Arena::CombatProcessor` owns profile preparation, AP/MP validation, attacks,
 blocks, skills, seeded resolution, NPC responses, surrender, timeout claim,
 match completion, participation results, equipment wear, reward finalization,
 log recording, and delegation of each defeated NPC's loot table to
 `Arena::NpcLootAwarder`. The awarder accepts typed `item` and `currency`
 entries, requires an explicit validated probability through `Game::LootEntry`,
-rolls with the injected RNG, locks the NPC/player participations, and records
+rolls with the injected RNG, locks the recipient character before NPC/player
+participations and Inventory/wallet rows, and records
 one `loot_resolution` marker per NPC participation. It persists item awards
 through the Inventory manager's locked savepoint or NV through
 `CurrencyWallet#adjust!` and publishes the corresponding event inside the same
@@ -300,6 +365,11 @@ events are emitted under finalization before
 the reward marker is committed; the surrounding transaction and stable keys
 make retry safe. `finish` is a later presentation/result acknowledgement and
 does not rerun rewards or publish another completion row.
+
+The recipient-first reward lock order also matches the outdoor travel/Look
+request guard. It prevents an Inventory request and a physical killing turn
+from taking Character/Inventory locks in opposite order. It does not change
+the loot table, probabilities, formulas, or reward amounts.
 
 The HTTP controller and Action Cable channel call
 `CombatProcessor#process_player_intent`, whose allowlist is `turn` and
@@ -315,6 +385,8 @@ resolution or empty-turn timeout advances once and enqueues one next timeout
 check plus, when applicable, one warning. Queue failure is logged and cannot
 roll back an already-persisted round transition. Timeout victory/draw still
 requires the waiting participant's persisted turn and a server-expired timer.
+Before that per-turn path, World-created matches enforce their explicit global
+`300`-second deadline and finalize once rather than extending the fight.
 
 Solo-NPC turns use the same processor under the match lock but resolve
 immediately: one accepted player package, every living NPC response, and then
@@ -364,11 +436,18 @@ copied into runtime assets. The typed awarder is intentionally small: add a new
 kind only when its authoritative owner and source behavior are captured. No
 production NPC receives an invented NV entry from the supplied standalone row.
 Neverlands now also confirms variable same-context groups (`1x3`, `1x1`,
-`1x1`, then `1x2`), mixed bot identities/levels, and two bounded passive idle
-intervals. It still does not expose the complete eligible pool, selection
-weights, encounter probability/cooldown/delay distribution, or its internal
-bot-storage model; the explicit local anchor/composition must not be presented
-as those unknown source rules.
+`1x1`, then `1x2`), mixed bot identities/levels, two bounded exact-cell passive
+idle intervals, and a later no-coordinate `1x7 -> 1x3`/`4..64`-second chain.
+It still does not expose the complete eligible pool, selection weights,
+encounter probability/cooldown/delay distribution, or its internal bot-storage
+model. The local captured-sample replay must not be presented as those unknown
+source rules.
+
+The official NPC article establishes capacity for groups up to ten. The shared
+`TileNpc`/config/selector limit is therefore `1..10`; the fight-start boundary
+creates ten distinct opponent slots and rejects eleven without a partial
+match. This does not enlarge any captured seeded roster or determine its
+members, levels, rewards, probabilities, or selection formula.
 
 ## 7. Authoritative data and presentation model
 
@@ -376,8 +455,8 @@ as those unknown source rules.
 |---|---|---|
 | `ArenaRoom` | Access, level/alignment boundary, capacity | City-gated room authority |
 | `ArenaApplication` | Offer parameters and lifecycle | Only eligible open applications can be accepted |
-| `ArenaMatch` | Match state, timers, teams, return metadata | Active state gates actions and completion |
-| `ArenaParticipation` | Player/NPC side, result, combat metadata | Exactly one player character or NPC template |
+| `ArenaMatch` | Match state, per-turn/global timers, teams, return and selected-encounter metadata | Active state and the explicit World-fight deadline gate actions and completion |
+| `ArenaParticipation` | Player/NPC side, result, combat metadata | Exactly one player character or NPC template; NPC level/HP may be snapshotted per captured roster member |
 | `CombatLogEntry` | Ordered durable event | Source for active and public logs |
 | `Arena::CombatProfile` | Persisted AP/cost/selector snapshot | Explicit captured values override exact AP derivation; reload cannot drift an active fight |
 | `Game::Combat::ActionCatalog` | Attack and exact normal/shield/magic selector identities | Server owns costs, row placement, coverage, and profile availability |
@@ -385,6 +464,7 @@ as those unknown source rules.
 | `Arena::EquipmentWearResolver` | Independent post-fight item wear | Exact result chances, one point maximum, Careful Fighter half chance, once-only finalization |
 | `Arena::NpcLootAwarder` | One defeated NPC's typed loot resolution | Participation locks and `loot_resolution` marker make reward persistence retry-safe |
 | `Game::LootEntry` | Shared typed-loot probability normalization | Chance is explicit and valid as `0..1` fraction or `0..100` percent |
+| `Game::World::EncounterRosterSelector` | Fixed or captured-sample wilderness side selection | Server RNG selects one complete validated sample; unknown templates/parameters fail before match creation |
 | `Game::Inventory::Manager` | Atomic item stack/mass addition | Inventory lock plus nested savepoint rolls back every unit when the complete quantity cannot fit |
 | `GameEvent` / `Chat::EventPublisher` | Player-facing completion/item/NV projection | Owned by Game Shell; never combat or reward authority |
 | `Character`/`InventoryItem` | Vitals, combat flag, equipment/wear/item ownership | Owned outside Arena; mutated only by server services |
@@ -404,7 +484,10 @@ Acceptance creates the match and participations inside a transaction. Starting
 persists combat profiles and marks player characters in combat. Turn processing
 revalidates live state, participant, target, body parts, exact selector-table
 availability and canonical block coverage, legal turn shape, AP, MP, and
-defeat state. Transport boundaries reject direct attack/defend player calls
+defeat state. World start also validates complete roster size, member templates,
+level/HP, encounter XP/risk, and delay bounds; its action boundary expires the
+match at the global fight deadline before accepting intent. Transport
+boundaries reject direct attack/defend player calls
 and reject missing, allied, foreign-match, or defeated attack targets before
 AP/MP consumption or pending-turn persistence. Match finalization locks the match so rewards/results are
 written once. The same boundary publishes deterministic per-participation
@@ -444,7 +527,9 @@ flowchart LR
 
 ### 8.1 Load and render
 
-Lobby/room controllers enforce City entry and load bounded applications. The
+Lobby/room controllers enforce current City entry under the character lock and
+persist actual HTML room selection before refreshing presence. JSON room reads
+preserve saved location. The
 match controller authorizes viewing, auto-ends a stale/defeated live match when
 needed, starts a due pending match through the shared processor as worker
 recovery, and preloads participations, NPC templates, character inventories,
@@ -541,6 +626,13 @@ authenticated resume flow to return to an active or unfinished match. Arena
 matches return to Arena after Finish. Wilderness matches retain only a
 server-authored logical return context and fall back to World if it is invalid.
 
+Character metadata separately persists the selected `arena_room` id. Entry and
+fresh-login recovery revalidate it against the current City hotspot and the
+room's active/level/alignment/optional-city rules. Lobby navigation preserves a
+valid selection; JSON room previews and active-fight redirects preserve it
+without selecting another room. Actual relocation clears it with position and
+local-chat context, including for an unbound room.
+
 Public logs remain readable after match completion and do not require or alter
 resume state. Browser AP previews, reset state, selected options, and viewport
 layout do not persist as gameplay state. Once a turn is accepted, its target is
@@ -550,7 +642,8 @@ reload.
 ## 12. Authorization, trust boundaries, and concurrency
 
 - Devise protects Arena and participant match actions.
-- `ArenaEntryGate` requires City entry or an already active match.
+- `ArenaEntryGate` requires current City access plus its same-node entry session
+  or a valid saved room; an already active match retains its existing bypass.
 - `ArenaMatchPolicy` permits authenticated viewing but restricts live actions
   and completed Finish to actual participants in the correct match state.
 - Controllers resolve the current user's participation and targets only within
@@ -577,12 +670,13 @@ reload.
 | Missing current character | Redirect without creating an application/match |
 | Closed, foreign, own, inaccessible, level-invalid, or low-HP application | Reject without match creation |
 | Character already in combat | Reject NPC acceptance without partial records |
+| Missing roster template or invalid member/XP/risk/delay data | Reject config/model state or roll back World match creation; do not substitute a generic NPC |
 | Missing/foreign target, action key, selector injection, or shield table | Reject the turn without combat mutation |
 | Stale posted round | Reject before storing or resolving a pending turn; preserve the current round and participant metadata |
 | Posted block coverage differs from its catalog key | Reject it; never trust client-authored protection zones or AP |
 | Insufficient AP/MP or illegal selector combination | Reject and preserve current authoritative turn |
 | Non-participant action/timeout/finish | Policy/controller denial |
-| Action after completion | Reject because the fight is not live |
+| Action after completion or at/after a World fight deadline | Finalize the due timeout once, then reject/redirect without advancing the round |
 | Finish before completion | Redirect back with `The fight is still active.` |
 | Stale live match | Auto-end once from current authoritative state |
 | Duplicate finalization/job | Match lock/state and reward markers prevent duplicate outcome |
@@ -599,8 +693,14 @@ reload.
 
 ## 14. Acceptance criteria
 
-- Arena entry is rejected unless City established the gate or the character
-  already has an active match.
+- Arena entry is rejected unless current City access and the same-node session
+  or saved room validate, or the character already has an active match.
+- HTML room entry persists only an accessible authoritative room. JSON previews,
+  stale/foreign-city room requests, and active-fight redirects preserve the
+  saved room; fresh login restores a still-valid selection.
+- Both lobby Enter paths update the full shell's room presence immediately,
+  preserve coordinates, and retain a single chat timeline without requiring
+  automatic presence refresh.
 - Eligible applications create the expected player/NPC participations and
   enter the shared combat lifecycle.
 - A participant viewing the accepted room can consume its room-scoped
@@ -629,6 +729,14 @@ reload.
   renders `Draw` for every participant regardless of remaining HP.
 - The paired-rat authored encounter awards `35` total XP, uncaptured multi-NPC
   sums fail closed, and Careful Fighter halves each exact wear chance.
+- A sampled wilderness encounter creates exactly the selected captured side,
+  including mixed/repeated identities and per-member level/HP, while persisting
+  the sample, encounter XP, and risk; the browser cannot select those values.
+- Completing and explicitly finishing a sampled roster leaves its cell source
+  eligible for a separately scheduled selection; fixed anchors remain defeated
+  until their existing respawn lifecycle makes them available.
+- World-created fights finalize at the exact persisted `300`-second global
+  deadline before another action can extend the fight.
 - Raw overkill remains in the detailed log while result damage is capped at HP
   removed; solo NPC victory increments once per finalized encounter and is not
   duplicated by Finish/reload.
@@ -636,7 +744,8 @@ reload.
   row, with authoritative awarded NPC XP where applicable; each successful NPC
   item award receives one item-found row and each successful NV award receives
   one money-found row.
-- Item loot is present in the winning character's Inventory before feedback;
+- Item loot—including consumables, weapons, and armor—is present in the winning
+  character's Inventory before feedback;
   NV loot is present in the user's wallet and immutable adjustment ledger before
   feedback. A multi-unit item award either persists every unit or none;
   retrying the same NPC resolution grants neither item nor NV twice.
@@ -666,9 +775,9 @@ it does not depend on or mutate the two development seed accounts.
 
 | Coverage category | Representative guarantees |
 |---|---|
-| Success | Application lifecycle, exact profile/selector preparation, `3x3` synchronized turn resolution, NPC response, paired-encounter XP, Careful Fighter wear, item/NV persistence plus event handoff, completion, finish return, public log/statistics, and responsive surface |
-| Failure | Entry gate, invalid/uninjected action, wrong shield table, tampered block coverage, illegal turn shape, insufficient AP/MP, uncaptured multi-NPC XP, partial item capacity, missing/invalid loot chance, malformed loot, wallet/event rollback, premature finish, missing log, and escaped content |
-| Edge/null/boundary | Empty/reset selectors, AP level `4/5/10`, `0.5%` wear, zero HP, multi-player/NPC sides, timeout boundary, stale posted round/match, empty and 50-entry page boundaries, 940/720/420 layouts |
+| Success | Application lifecycle, exact profile/selector preparation, `3x3` synchronized turn resolution, fixed/sampled NPC response, captured-window scheduling, paired/explicit encounter XP, Careful Fighter wear, consumable/equipment/NV persistence plus event handoff, completion, finish return, public log/statistics, and responsive surface |
+| Failure | Entry gate, invalid/uninjected action, wrong shield table, tampered block coverage, illegal turn shape, insufficient AP/MP, missing sampled template/parameters, uncaptured multi-NPC XP, partial item capacity, missing/invalid loot chance, malformed loot, wallet/event rollback, premature finish, missing log, and escaped content |
+| Edge/null/boundary | Empty/reset selectors, AP level `4/5/10`, `0.5%` wear, zero HP, authored `1..10`-NPC capacity and rejected eleven-member groups, fixed/mixed and multi-player sides, captured delay bounds, exact five-minute fight deadline, stale posted round/match, empty and 50-entry page boundaries, 940/720/420 layouts |
 | Authorization | Anonymous Arena, non-participant mutation, participant-only finish, public read-only log |
 | Retry/concurrency | Duplicate finalization/reward/event key, duplicate per-NPC item/NV resolution, rolled-back room broadcast suppression, stale timeout job/posted turn, synchronized team submissions, competing PvP turns, transactional match creation |
 
@@ -725,7 +834,8 @@ Observation/drop curves, magic/statuses, injuries, or repairs.
 
 | Lifecycle slice | Model/unit and edge traits | Service/processor | Request/policy | Browser/system | Status |
 |---|---|---|---|---|---|
-| Source-backed passive start | `tile_npc_spec`; `single_npc_encounter`, `multi_npc_encounter`, and defeated traits | `passive_encounter_check_spec`, `interrupt_action_spec`, and `start_npc_fight_spec` cover persisted random due, exact-cell/NPC fingerprint invalidation, locks, active-match reuse, and source-authored count | `world_encounter_checks_spec` covers schedule/start success, retry, city/defeated no-op, startup rollback, and authentication | `world_npc_encounter_spec` executes the Stimulus fetch; seeded Chrome exited City, traversed to `[7,7]`, waited through a persisted approximately 20-second due time, and entered the shared two-NPC surface | `DONE` |
+| Source-backed passive start | `tile_npc_spec`; `single_npc_encounter`, `multi_npc_encounter`, and defeated traits | `passive_encounter_check_spec`, `interrupt_action_spec`, and `start_npc_fight_spec` cover persisted random due, exact-cell/NPC fingerprint invalidation, locks, active-match reuse, fixed and sampled source-authored sides | `world_encounter_checks_spec` covers schedule/start success, forged roster/size rejection by omission, retry, city/defeated no-op, startup rollback, and authentication | `world_npc_encounter_spec` executes the Stimulus fetch; seeded Chrome exited City, traversed to `[7,7]`, waited through a persisted approximately 20-second due time, and entered the shared two-NPC surface | `DONE` |
+| Captured roster/delay and global deadline | `tile_npc_spec`, `arena_participation_spec`, `open_world_seed_spec`, `arena_match_auto_end_spec`, and `encounter_roster_selector_spec` cover complete samples within the `1..10` authored capacity, per-member level/HP, selected XP/risk, fixed-versus-sampled lifecycle, malformed persisted data, delay bounds, and exact before/at timeout | `outdoor_npc_config_spec`, `passive_encounter_check_spec`, `start_npc_fight_spec`, `combat_processor_spec`, and `arena_turn_timeout_job_spec` cover config references, injected RNG, DB-only selection, mixed participations, sampled-anchor retention, and one terminal deadline | `world_encounter_checks_spec` verifies selected mixed metadata/roster with no client controls; `world_npc_combat_lifecycle_spec` defeats/finishes one sampled roster and schedules a second on the same anchor; `arena_matches_auto_end_spec` ends on view/action/timeout claim at `300s` | On 2026-09-02 a seeded Chrome account exited City; controlled `[8,7]` setup rendered Bandit `[8]` `185 HP` plus Robber `[9]` `310 HP`, switched target, resolved one real round with both NPCs acting, restored full AP, rendered timeout Draw at `300s`, finished, and returned to `[8,7]`. The real World page then persisted a `137s` due inside the captured `127..187` window and automatically entered another `1x2` sampled fight without a click | `DONE` |
 | Solo NPC round and stale replay | catalog/profile/resolver unit specs | deterministic `combat_processor_spec` plus locked immediate NPC response, AP reset, living-target fallback, and capped statistics | `world_npc_combat_lifecycle_spec` proves round `1` resolution, round `2` AP, and immutable stale-round rejection | `arena_npc_immediate_start_spec` covers zero-delay handoff; seeded Chrome completed one Arena NPC `1x1` and the wilderness flow showed full AP on round two | `DONE` |
 | Multi-NPC handoff and per-NPC search | repeated-participation model/factory coverage | processor target fallback and one retry-safe loot resolution per defeated participation | lifecycle spec proves first defeat keeps match/anchor live, target handoff, two search rows, and final completion | Seeded Chrome defeated the first of two rats, retained the fight, switched to the surviving rat, and resolved one search per NPC | `DONE` |
 | Result XP, damage, victory, Finish, and reload | participation/reward metadata unit coverage | capped actual-HP statistics, explicit encounter XP, one idempotent solo `npc_wins`, and wear/reward finalization | lifecycle spec proves raw overkill log, credited `10`, one XP `35`, one win, result table, repeated Finish, return, and reload | Seeded Chrome verified `10(2)` credited damage, one `35` XP award, one NPC win, Finish to `[7,7]`, reload on `[7,7]`, and no duplicate fight/reward | `DONE` |
@@ -739,16 +849,24 @@ seconds after arrival; without another browser action it entered a `1x2` Plague
 Rat fight. Two physical rounds verified AP reset, living-target handoff,
 per-NPC searches, capped damage/hit counts, one encounter XP/win result,
 explicit Finish, same-cell return, reload, and no duplicate reward. The seed
-character/NPC were restored afterward and no active match remained. Exact
-Neverlands timing/probability distribution and complete eligible-roster
-pool/selection weights remain separate `EVIDENCE_NEEDED` rows, not hidden PvE
-implementation gates.
+character/NPC were restored afterward and no active match remained. The
+2026-09-02 browser gate adds the captured mixed-roster, delay-window, and
+global-fight-deadline path detailed in the matrix. Exact Neverlands
+timing/probability distribution and complete eligible-roster pool/selection
+weights remain separate `EVIDENCE_NEEDED` rows, not hidden PvE implementation
+gates.
+
+`spec/system/arena_room_presence_spec.rb` exercises the summary and Room Map
+Enter links with automatic presence refresh disabled. It checks persisted
+room/local-chat context, the new label/count/list with old neighbors excluded,
+unchanged position, a single chat timeline, and stable reload.
 
 Focused verification command:
 
 ```bash
 bundle exec rspec \
   spec/models/arena_application_lifecycle_spec.rb \
+  spec/models/arena_participation_spec.rb \
   spec/models/arena_match_lifecycle_spec.rb \
   spec/models/arena_match_timeout_spec.rb \
   spec/policies/arena_match_policy_spec.rb \
@@ -772,6 +890,7 @@ bundle exec rspec \
   spec/channels/arena_match_channel_spec.rb \
   spec/system/arena_match_ui_layout_spec.rb \
   spec/system/arena_match_notification_spec.rb \
+  spec/system/arena_room_presence_spec.rb \
   spec/system/arena_team_combat_spec.rb \
   spec/system/arena_npc_immediate_start_spec.rb \
   spec/system/world_npc_encounter_spec.rb \
@@ -795,6 +914,7 @@ World, Inventory, Progression, the game shell, jobs, and Action Cable.
 - `doc/design/reference/combat/observations/2026-08-26_wilderness_passive_goblin_fight.md`
 - `doc/design/reference/combat/observations/2026-08-26_wilderness_shield_npc_fight.md`
 - `doc/design/reference/combat/observations/2026-09-01_wilderness_bandit_group_variation_and_magic.md`
+- `doc/design/reference/combat/observations/2026-09-02_swamp_passive_rosters_search_and_timeout.md`
 - `doc/design/launch_mvp_plan.md`
 
 ### Routes and controllers
@@ -873,6 +993,7 @@ World, Inventory, Progression, the game shell, jobs, and Action Cable.
 
 - `app/services/game/world/start_npc_fight.rb`
 - `app/services/game/world/passive_encounter_check.rb`
+- `app/services/game/world/encounter_roster_selector.rb`
 - `app/services/game/world/combat_return_context.rb`
 - `app/controllers/world_context_actions_controller.rb`
 - `app/controllers/world_encounter_checks_controller.rb`
@@ -906,7 +1027,9 @@ supplies only authoritative completion/loot facts and stable source keys.
 ### Specs
 
 - `spec/models/arena_application_hp_gate_spec.rb`
+- `spec/models/arena_room_spec.rb`
 - `spec/models/arena_application_lifecycle_spec.rb`
+- `spec/models/arena_participation_spec.rb`
 - `spec/models/arena_match_auto_end_spec.rb`
 - `spec/models/arena_match_lifecycle_spec.rb`
 - `spec/models/arena_match_timeout_spec.rb`
@@ -914,15 +1037,20 @@ supplies only authoritative completion/loot facts and stable source keys.
 - `spec/policies/arena_match_policy_spec.rb`
 - `spec/services/arena`
 - `spec/services/arena/npc_loot_awarder_spec.rb`
+- `spec/services/arena/room_region_access_spec.rb`
 - `spec/services/game/loot_entry_spec.rb`
 - `spec/services/game/inventory/manager_spec.rb`
 - `spec/services/game/world/arena_npc_config_spec.rb`
 - `spec/services/game/world/outdoor_npc_config_spec.rb`
 - `spec/services/game/world/passive_encounter_check_spec.rb`
+- `spec/services/game/world/encounter_roster_selector_spec.rb`
 - `spec/services/chat/event_publisher_spec.rb`
 - `spec/jobs/arena`
 - `spec/requests/arena_spec.rb`
 - `spec/requests/arena_rooms_spec.rb`
+- `spec/requests/arena_room_context_spec.rb`
+- `spec/system/arena_room_presence_spec.rb`
+- `spec/services/game/world/resume_context_spec.rb`
 - `spec/requests/arena_applications_spec.rb`
 - `spec/requests/arena_matches_spec.rb`
 - `spec/requests/arena_matches_auto_end_spec.rb`
@@ -975,3 +1103,4 @@ supplies only authoritative completion/loot facts and stable source keys.
 | 2026-08-26 | Closed the automated physical PvE lifecycle: passive source-backed same-cell delivery, locked immediate solo-NPC rounds with full next-round AP and stale-turn rejection, living-target handoff, raw-overkill/capped-result statistics, one idempotent solo NPC-victory increment, source-shaped result columns, and deterministic `1xN` start-to-Finish/reload coverage. |
 | 2026-08-26 | Closed the bounded physical PvE browser gate with a seeded immediate Arena NPC `1x1` and City-exit-to-`[7,7]` wilderness `1x2`: persisted random due, passive entry, AP reset, target handoff, per-NPC search, capped result, one XP/win, Finish/same-cell reload, and no duplicate reward. Added exact-cell schedule service coverage and retained timing/probability/roster selection as explicit evidence gaps. |
 | 2026-09-01 | Closed the bounded physical MVP's remaining local gates with a disposable `3x3` player browser run and deterministic request/system coverage: living-opponent switching and pending-target reload, first-five-wait/sixth-submit shared resolution, locked stale-round rejection, side surrender and six results, responsive active/waiting/timeout/result states, and shell-free public log/statistics/pagination/empty/error states. |
+| 2026-09-02 | Added source-sample wilderness selection through the existing shared combat path: validated complete roster/delay samples, server RNG, mixed/repeated per-member level/HP, persisted sample/XP/risk/repeatability, DB-only template resolution, sampled-anchor eligibility after full victory/Finish, and an explicit `300`-second World-fight deadline checked by views, jobs, and action requests. The generic typed item pipeline is now explicitly covered for consumables, weapons, and armor; exact NPC pools/probabilities remain evidence-gated. |

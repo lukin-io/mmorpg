@@ -6,7 +6,7 @@ module Game
   module Movement
     # Builds the server-authored movement state rendered by the wilderness map.
     class MapState
-      Result = Struct.new(:position, :active_command, :destinations, :locked_reason, keyword_init: true)
+      Result = Struct.new(:position, :active_command, :active_world_action, :destinations, :locked_reason, keyword_init: true)
 
       Destination = Struct.new(
         :id,
@@ -30,18 +30,29 @@ module Game
 
       def call
         Game::Movement::CompleteMove.new(character:).call
-        position = respawn_service.ensure_position!.reload
-        active_command = active_travel_for(position)
+        character.with_lock do
+          character.reload
+          position = respawn_service.ensure_position!.reload
+          unless position.zone.outdoor?
+            cancel_open_offers!
+            next Result.new(position:, destinations: [], locked_reason: :not_outdoor)
+          end
+          active_command = active_travel_for(position)
 
-        return Result.new(position:, active_command:, destinations: [], locked_reason: :moving) if active_command
+          next Result.new(position:, active_command:, destinations: [], locked_reason: :moving) if active_command
 
-        cancel_open_offers!
-        if Characters::FatigueService.new(character:).outdoor_actions_blocked?
-          return Result.new(position:, active_command: nil, destinations: [], locked_reason: :fatigued)
+          cancel_open_offers!
+          active_world_action = Game::World::LocalActionState.new(character:).call
+          if active_world_action
+            next Result.new(position:, active_world_action:, destinations: [], locked_reason: :local_action)
+          end
+          if Characters::FatigueService.new(character:).outdoor_actions_blocked?
+            next Result.new(position:, active_command: nil, destinations: [], locked_reason: :fatigued)
+          end
+
+          destinations = build_destination_offers(position)
+          Result.new(position:, active_command: nil, destinations:, locked_reason: nil)
         end
-
-        destinations = build_destination_offers(position)
-        Result.new(position:, active_command: nil, destinations:, locked_reason: nil)
       end
 
       private
@@ -68,7 +79,10 @@ module Game
       end
 
       def build_destination_offers(position)
-        provider = Game::Movement::TileProvider.new(zone: position.zone)
+        coordinates = Game::Movement::Directions::OFFSETS.values.map do |dx, dy|
+          [position.x + dx, position.y + dy]
+        end
+        provider = Game::Movement::TileProvider.new(zone: position.zone, coordinates:)
         validator = Game::Movement::MovementValidator.new(provider)
         Game::Movement::Directions::OFFSETS.filter_map do |direction, (dx, dy)|
           target_x = position.x + dx

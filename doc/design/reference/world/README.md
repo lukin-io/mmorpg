@@ -2,18 +2,21 @@
 
 - Document type: neverlands-source-summary
 - Domain: world
-- Updated: 2026-09-01
+- Updated: 2026-09-07
 - Evidence status: current for the bounded World implementation
 
 ## Current observations
 
 | Flow/state | Observation | Status |
 |---|---|---|
+| Forpost left exit, five-cell route topology, buffering, reload, timed Look, and village entrance | `doc/design/reference/world/observations/2026-09-07_forpost_grid_and_action_audit.md` | current; corrects the local Forpost/Oktal gate mismatch |
+| Ordinary chat confined to one cell/room, village/Arena lists, browser history boundary, and source-equivalent map frame | `doc/design/reference/social/observations/2026-09-07_cell_chat_and_presence_boundaries.md` | current project-wiki rule plus live follow-up |
 | Outdoor movement, map geometry, timing, village route | `doc/design/reference/world/observations/2026-05-09_overworld_movement.md` | current, with dated follow-ups |
 | Local resource action, hostile interruption, combat return | `doc/design/reference/world/observations/2026-05-20_outdoor_npc_resource.md` | current |
 | North/back movement, action interruption, and same-coordinate return | `doc/design/reference/combat/observations/2026-08-26_wilderness_shield_npc_fight.md` | current cross-domain evidence |
 | Passive bot attack without movement/manual attack and same-coordinate return | `doc/design/reference/combat/observations/2026-08-26_wilderness_passive_goblin_fight.md` | current cross-domain evidence |
 | Same-return-context `1x3 -> 1x1 -> 1x1 -> 1x2` group variation and two bounded idle attack intervals | `doc/design/reference/combat/observations/2026-09-01_wilderness_bandit_group_variation_and_magic.md` | current cross-domain evidence |
+| Swamp `1x7 -> 1x3` group variation and a bounded no-click repeat | `doc/design/reference/combat/observations/2026-09-02_swamp_passive_rosters_search_and_timeout.md` | current cross-domain evidence; exact coordinate not captured |
 | City gate handoff | `doc/design/reference/city/observations/2026-07-28_city_movement_and_services.md` | current cross-domain evidence |
 
 ## Current Neverlands behavior
@@ -32,22 +35,40 @@
   attacks there after a completed north/back movement pair.
 - One `m_1008_1007` chain produced a mixed three-opponent side, then two
   one-opponent sides, then a mixed two-opponent side. The later attacks began
-  without a click after the map remained idle. Two intervals were bounded to
-  approximately `230..278` and `127..187` seconds after map return. This
-  confirms variable per-context group output and timing; it does not establish
-  their distributions.
+  without a click after each preceding fight completed and Finish restored the
+  same coordinate. Two intervals were bounded to approximately `230..278` and
+  `127..187` seconds after map return. This confirms repeated post-victory
+  eligibility plus variable per-context group output and timing; it does not
+  establish their distributions.
+- A later swamp chain produced a seven-opponent side followed by a three-Bandit
+  side at levels `13..15`; the second attack arrived without a click about
+  `4..64` seconds after Finish. Because the exact map coordinate was not
+  captured, this strengthens the general wilderness-output rule without being
+  assigned to a specific cell pool.
 - Linked locations such as the observed village retain the authoritative
   outdoor coordinate through entry and return.
+- Forpost's left city exit is source `[1000,1000]`; the earlier
+  `[1019,1025]` gate capture was Oktal. The fresh route confirms specific
+  passable/unavailable neighboring cells, a `28`-second Look lock with an
+  immediate no-vegetation result, and dismissal that leaves the timer running.
+- The Neverlands-hosted Chat article explicitly confines ordinary messages to
+  one cell or room. Matching outdoor location labels do not combine different
+  cells. Personal system rows and world announcements share the chat frame.
 
 ## Evidence gaps
 
 - Mines, exchanges, other linked-location families, successful fishing,
   drinking, digging, and a complete profession yield loop remain unverified.
+- Full region topology and content, source region origins/crossings, and
+  online-presence expiry remain unverified. Only one populated region is required
+  now; additional region content/crossings are outside the current delivery scope.
+  The ordinary-chat audience is now established by the project wiki as one cell or room.
 - Neverlands does not expose the internal storage model for coordinate-scoped
   bots, complete eligible opponent/group tables, selection weights, passive
   delay distribution, cooldown, or encounter probability. Current-coordinate
-  availability and variable group output are observed; “one persisted bot row
-  per cell” remains a local implementation model, not a source fact.
+  availability, variable group output, and three materially different bounded
+  passive intervals are observed; “one persisted bot row per cell” remains a
+  local implementation model, not a source fact.
 
 ## Design linkage
 
@@ -58,8 +79,18 @@
 
 ## Local Implementation Linkage
 
-- Local status: Fully Implemented for the declared World boundary
-- Parity IDs: World rows in `doc/design/launch_mvp_plan.md` pending stable-ID migration
+- Local status: Partially Implemented for broader World parity; the declared movement/village boundary is covered
+- Sampled exact-cell anchors remain eligible after full victory and Finish;
+  fixed anchors retain the local defeated/respawn lifecycle
+- Parity IDs: `WORLD-UI-001`, `WORLD-MOVE-001`, `WORLD-CELL-001`, and
+  `WORLD-LOCATION-001` in `doc/design/launch_mvp_plan.md`
+- Region isolation uses the existing `zone_id` position/command identity.
+  Local map rendering uses a bounded `15 × 9` buffer and whole odd visible
+  rows/columns capped at `13 × 7`; exact-cell actions and eight-neighbor moves
+  do not load or query the whole region.
+- Authored NPC groups accept up to ten members, matching the Bot wiki maximum
+  preserved in the September 7 cross-domain observation; this supplies no
+  missing roster weights or timing formula.
 - Implementation handbook: `doc/features/world.md`
 
 ### Responsible implementation files
@@ -69,6 +100,7 @@
 - `app/services/game/world/tile_state_resolver.rb`
 - `app/services/game/world/action_offer_builder.rb`
 - `app/services/game/world/passive_encounter_check.rb`
+- `app/services/game/world/encounter_roster_selector.rb`
 - `app/assets/stylesheets/world.css`
 
 Local implementation linkage and responsive adaptation are local context, not

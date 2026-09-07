@@ -6,6 +6,9 @@ class Zone < ApplicationRecord
   LOCATION_TYPES = %w[outdoor city].freeze
 
   has_many :spawn_points, dependent: :destroy
+  has_many :map_tile_templates, foreign_key: :zone, primary_key: :name, dependent: :restrict_with_error
+  has_many :tile_npcs, foreign_key: :zone, primary_key: :name, dependent: :restrict_with_error
+  has_many :tile_buildings, foreign_key: :zone, primary_key: :name, dependent: :restrict_with_error
   has_many :character_positions, dependent: :restrict_with_exception
   has_many :world_action_offers, dependent: :destroy
   has_many :arena_matches, dependent: :nullify
@@ -24,6 +27,7 @@ class Zone < ApplicationRecord
   validates :name, presence: true, uniqueness: true
   validates :location_type, presence: true, inclusion: {in: LOCATION_TYPES}
   validates :width, :height, numericality: {greater_than: 0}
+  validate :populated_name_is_stable
 
   def city?
     location_type == "city"
@@ -44,5 +48,17 @@ class Zone < ApplicationRecord
   def city_presentation
     value = metadata.to_h["city_presentation"]
     value.respond_to?(:deep_stringify_keys) ? value.deep_stringify_keys : {}
+  end
+
+  private
+
+  # Sparse content uses the unique Zone name as its persisted region key.
+  # Display changes belong in metadata.title; renaming a populated key would
+  # detach that content while character/command zone_id references survive.
+  def populated_name_is_stable
+    return unless persisted? && will_save_change_to_name?
+    return unless [MapTileTemplate, TileNpc, TileBuilding].any? { |type| type.where(zone: name_in_database).exists? }
+
+    errors.add(:name, "identifies populated region content; change the display title instead")
   end
 end

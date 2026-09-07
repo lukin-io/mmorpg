@@ -168,6 +168,7 @@ export default class extends Controller {
       clearTimeout(this.countdownTimer)
     }
 
+    this.countdownTarget.hidden = false
     this.countdownTarget.classList.add("visible")
     this.countdownMatchId = matchId
     this.updateCountdown(seconds)

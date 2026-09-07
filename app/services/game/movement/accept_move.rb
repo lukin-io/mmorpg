@@ -2,9 +2,10 @@
 
 module Game
   module Movement
-    # Accepts a server-offered destination and starts timed travel.
+    # Validates an owned move before resolving same-cell interruption or starting
+    # timed travel. Both results share the character lock with other World actions.
     class AcceptMove
-      Result = Struct.new(:command, :position, keyword_init: true)
+      Result = Struct.new(:command, :position, :interruption, keyword_init: true)
 
       def initialize(character:, action_key: nil, target_x: nil, target_y: nil, direction: nil, respawn_service: nil, rng: Random.new)
         @character = character
@@ -21,15 +22,24 @@ module Game
         character.with_lock do
           character.reload
           position = respawn_service.ensure_position!.reload
-          ensure_not_already_moving!(position)
+          raise violation("Wilderness movement is unavailable here") unless position.zone.outdoor?
+          ensure_not_already_moving!
+          if Game::World::LocalActionState.new(character:).call
+            raise violation("A local action is already in progress")
+          end
           ensure_not_fatigued!
 
           command = find_offer!(position)
-          validate_offer!(command, position)
 
           command.with_lock do
             command.reload
             raise violation("Movement offer is no longer available") unless command.offered?
+            validate_offer!(command, position)
+
+            interruption = Game::World::InterruptAction.new(character:).call
+            if interruption.interrupted?
+              next Result.new(command:, position:, interruption:)
+            end
 
             now = Time.current
             command.update!(
@@ -39,10 +49,10 @@ module Game
               error_message: nil,
               metadata: command.metadata.to_h.merge("fatigue_gain" => rng.rand(1..2))
             )
-          end
-          cancel_sibling_offers!(command)
+            cancel_sibling_offers!(command)
 
-          Result.new(command:, position:)
+            Result.new(command:, position:)
+          end
         end
       end
 
@@ -56,8 +66,8 @@ module Game
         raise violation("Too fatigued to move")
       end
 
-      def ensure_not_already_moving!(position)
-        return unless MovementCommand.moving.where(character:, zone: position.zone).exists?
+      def ensure_not_already_moving!
+        return unless MovementCommand.moving.where(character:).exists?
 
         raise violation("Movement already in progress")
       end
@@ -78,6 +88,16 @@ module Game
           raise violation("Movement offer does not match current position")
         end
 
+        unless Game::Movement::Directions.matches?(
+          direction: command.direction,
+          from_x: command.from_x,
+          from_y: command.from_y,
+          target_x: command.target_x,
+          target_y: command.target_y
+        )
+          raise violation("Movement offer is not an adjacent step")
+        end
+
         provider = Game::Movement::TileProvider.new(zone: position.zone)
         validator = Game::Movement::MovementValidator.new(provider)
         raise violation("Tile is not passable") unless validator.valid?(command.target_x, command.target_y)
@@ -93,6 +113,10 @@ module Game
             processed_at: Time.current,
             updated_at: Time.current
           )
+        WorldActionOffer.offered.where(character:).update_all(
+          status: WorldActionOffer.statuses.fetch("cancelled"),
+          updated_at: Time.current
+        )
       end
 
       def violation(message)

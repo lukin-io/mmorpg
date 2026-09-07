@@ -3,7 +3,7 @@
 title: Player Inventory Feature
 description: Implementation handbook for the Neverlands-based carried inventory, equipment paper doll, capacity, filters, item rows, and item actions.
 status: Fully Implemented
-updated: 2026-08-26
+updated: 2026-09-07
 owners: Player Inventory
 template: feature-v1
 ---
@@ -33,7 +33,7 @@ tracked in `doc/design/launch_mvp_plan.md`.
 | `doc/features/game_shell.md` | Inventory replaces only the main gameplay surface and reports request failures through the shared flash target. | Shell owns header/chat/presence and stable flash presentation; Inventory owns its page, mutation result, and error copy. |
 | `doc/features/character_progression.md` | The shared sheet reads effective character values. | Progression owns saved values; Inventory owns display and equip requirements. |
 | `doc/features/shop_economy.md` | Shop buys/sells carried stacks. | Shop owns exchange; Inventory owns stack, mass, durability, and equipment state. |
-| `doc/features/world.md` | Outdoor Inventory navigation may be interrupted by an NPC. | World owns interruption/return context; Inventory owns the destination page. |
+| `doc/features/world.md` | Outdoor Inventory navigation may be interrupted by an NPC and is unavailable during accepted travel or Look work. | World owns interruption/return context and persisted work availability; Inventory owns the destination page and item transitions. |
 | `doc/features/arena_combat.md` | Active fights render current equipment, may apply server-resolved wear, and may award NPC item loot into carried inventory. | Inventory owns equipped/carried state, durability, capacity, and item-award validation; Arena Combat owns exact result-based wear (including Careful Fighter's half chance), typed loot resolution, and item-found feedback after a successful award. NV loot does not create an `InventoryItem`; Shop and Economy own its wallet/ledger persistence. |
 
 ## 2. Feature summary
@@ -73,6 +73,16 @@ authoritative in the user's Economy wallet and ledger.
 Authentication and a current character are required. The controller resolves
 or creates that character's inventory and builds the selected category,
 subcategory, information mode, equipment map, mass, and action availability.
+
+Accepted outdoor travel or Look work blocks direct Inventory navigation and
+every Inventory mutation, including the separate item-discard endpoint and
+item/money transfer forms. The shared `OutdoorActionAvailability` concern
+reconciles due work, then checks availability under the character row lock and
+holds that lock through the request. Busy requests redirect to World with
+`303 See Other` and preserve equipment, stacks, currency, and saved context.
+The captured navigation lock is recorded in
+`doc/design/reference/world/observations/2026-09-07_forpost_grid_and_action_audit.md`.
+Existing Inventory access during an active fight is unchanged by this guard.
 
 ### 4.2 Primary surface
 
@@ -179,6 +189,12 @@ addition serializes on the Inventory row; a failed multi-stack request rolls
 back all stack and mass writes even when an outer loot transition records the
 capacity failure and continues.
 
+`Game::Inventory::TransferService` also uses a savepoint for each transfer or
+player sale. A rescued capacity, ownership, or settlement failure rolls back
+its item, mass, and wallet writes even while the controller holds the outer
+character transaction. The same nesting rule protects Shop purchases through
+the Shop-owned purchase service.
+
 ### 7.3 Presentation versus authority
 
 The browser may select a family, open a compact form, or submit intent. It may
@@ -217,6 +233,10 @@ World owns combat interruption before Inventory entry; Shop owns trade handoff.
 
 Shared inventory/economy services lock or transact where their value transfer
 requires it. A stale row cannot bypass current ownership/protection checks.
+Player-issued requests hold the character row from the outdoor availability
+check through mutation, so a new accepted movement cannot race between those
+steps. Transfer savepoints preserve their existing failure rollback inside
+that outer transaction.
 
 ## 9. HTTP and Turbo contract
 
@@ -227,6 +247,10 @@ behavior. Failed Turbo equip/unequip requests return `422 Unprocessable
 Content` and replace the shared `flash` target; they do not address a removed
 toast/notification container. No public JSON inventory API is part of this
 feature.
+
+The outdoor busy guard runs before inventory lookup and mutation for HTML and
+Turbo requests. Its `303` World redirect applies to active travel/Look; the
+normal item-validation responses above apply once the request is available.
 
 ## 10. Client-side and CSS ownership
 
@@ -264,6 +288,7 @@ Inventory lock serializes concurrent additions against the same capacity state.
 | Condition | Required behavior |
 |---|---|
 | Missing/foreign item | Reject without mutation |
+| Accepted outdoor travel or Look | Redirect direct page/action requests to World with 303; preserve carried/equipped state, money, and resume context |
 | Unmet equip/use requirements | Show the reason on the shared flash surface; preserve state; equip/unequip Turbo failures return 422 |
 | Full mass/slots, including a quantity that only partly fits | Roll back the complete addition, including any earlier stack and mass increment |
 | Equipped/bound/protected item | Reject forbidden transfer/sale/discard |
@@ -292,6 +317,12 @@ System/view specs cover the player-visible page and allocation/equipment
 integration. Full verification is required because Inventory crosses
 Progression, Shop, World, Fight, and Shell.
 
+`spec/requests/outdoor_action_availability_spec.rb` covers direct busy-page
+requests, Turbo equip, item discard, due-work completion, and unchanged
+active-fight access. `spec/requests/inventories_spec.rb` verifies that a player
+sale whose locked buyer balance rejects settlement rolls back the item and
+mass transfer inside the request transaction.
+
 `spec/system/responsive_neverlands_ui_spec.rb` protects the 820px two-column
 state, 390px stacked state, internal icon-strip scrolling, and page overflow
 boundary.
@@ -309,6 +340,7 @@ boundary.
 
 - `config/routes.rb`
 - `app/controllers/inventories_controller.rb`
+- `app/controllers/inventory_items_controller.rb`
 
 ### Models and policies
 
@@ -320,6 +352,7 @@ boundary.
 
 - `app/services/game/inventory/manager.rb`
 - `app/services/game/inventory/requirement_checker.rb`
+- `app/services/game/inventory/transfer_service.rb`
 
 ### Views, helpers, client behavior, styling, and assets
 
@@ -342,6 +375,7 @@ boundary.
 
 - `app/controllers/world_context_actions_controller.rb`
 - `app/services/game/world/interrupt_action.rb`
+- `app/controllers/concerns/outdoor_action_availability.rb`
 - `app/controllers/shop_controller.rb`
 
 ### Factories
@@ -353,6 +387,7 @@ boundary.
 ### Specs
 
 - `spec/requests/inventories_spec.rb`
+- `spec/requests/outdoor_action_availability_spec.rb`
 - `spec/models/inventory_spec.rb`
 - `spec/services/game/inventory/manager_spec.rb`
 - `spec/system/inventory_progression_spec.rb`

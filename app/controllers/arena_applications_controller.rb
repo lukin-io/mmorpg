@@ -6,6 +6,7 @@ class ArenaApplicationsController < ApplicationController
   before_action :require_character
   before_action :require_city_arena_entry!
   before_action :set_room, only: [:index, :create]
+  before_action :ensure_room_access!, only: :index
   before_action :set_application, only: [:accept, :destroy, :cancel]
 
   # GET /arena_rooms/:arena_room_id/arena_applications
@@ -98,6 +99,17 @@ class ArenaApplicationsController < ApplicationController
     @room = ArenaRoom.find(params[:arena_room_id])
   end
 
+  def ensure_room_access!
+    return if @room.accessible_by?(current_character)
+
+    respond_to do |format|
+      format.html { redirect_to arena_index_path, alert: "This arena room is unavailable." }
+      format.json do
+        render json: {success: false, errors: ["This arena room is unavailable."]}, status: :forbidden
+      end
+    end
+  end
+
   def set_application
     @application = ArenaApplication.find(params[:id])
   end
@@ -109,7 +121,7 @@ class ArenaApplicationsController < ApplicationController
   end
 
   def current_character
-    @current_character ||= current_user.characters.first
+    @current_character ||= current_user.character
   end
   helper_method :current_character
 

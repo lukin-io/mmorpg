@@ -53,6 +53,71 @@ RSpec.describe "Open-world locations", type: :request do
     expect(position.reload).to have_attributes(zone:, x: 4, y: 6)
   end
 
+  it "preserves a legitimate persisted interior when it is reloaded" do
+    get world_location_path(building.location_key)
+    context = character.reload.gameplay_context
+
+    get world_location_path(building.location_key)
+
+    expect(response).to have_http_status(:success)
+    expect(character.reload.gameplay_context).to eq(context)
+    expect(context).to include("name" => "world_location", "params" => {"key" => building.location_key})
+    expect(position.reload).to have_attributes(zone:, x: 4, y: 6)
+  end
+
+  it "rejects a direct interior visit during travel without creating offers or saving its context" do
+    movement = create(:movement_command, :moving, character:, zone:,
+      direction: "east", from_x: 4, from_y: 6, target_x: 5, target_y: 6)
+    context = character.reload.gameplay_context
+
+    expect { get world_location_path(building.location_key) }.not_to change(WorldActionOffer, :count)
+
+    expect(response).to redirect_to(world_path)
+    expect(character.reload.gameplay_context).to eq(context)
+    expect(movement.reload).to be_moving
+    expect(position.reload).to have_attributes(zone:, x: 4, y: 6)
+  end
+
+  it "reconciles elapsed travel before allowing an old interior URL" do
+    movement = create(:movement_command, :moving, character:, zone:,
+      direction: "east", from_x: 4, from_y: 6, target_x: 5, target_y: 6, ends_at: 1.second.ago)
+
+    expect { get world_location_path(building.location_key) }.not_to change(WorldActionOffer, :count)
+
+    expect(response).to redirect_to(world_path)
+    expect(movement.reload).to be_completed
+    expect(position.reload).to have_attributes(zone:, x: 5, y: 6)
+  end
+
+  it "rejects a direct interior visit during Look without resetting the action or saving its context" do
+    work = create(:world_action_offer, :accepted, character:, zone:, x: 4, y: 6,
+      action_type: "search_resources", metadata: {
+        "local_action_ends_at" => 28.seconds.from_now.iso8601(6),
+        "local_action_result" => "There is no useful vegetation in this area."
+      })
+    context = character.reload.gameplay_context
+    deadline = work.local_action_ends_at
+
+    expect { get world_location_path(building.location_key) }.not_to change(WorldActionOffer, :count)
+
+    expect(response).to redirect_to(world_path)
+    expect(character.reload.gameplay_context).to eq(context)
+    expect(work.reload).to be_accepted
+    expect(work.local_action_ends_at).to eq(deadline)
+  end
+
+  it "resumes an active fight instead of offering an interior or overwriting its return context" do
+    npc = create(:tile_npc, zone: zone.name, x: 4, y: 6)
+    match = Game::World::StartNpcFight.new(character:, tile_npc: npc).call
+    context = character.reload.gameplay_context
+
+    expect { get world_location_path(building.location_key) }.not_to change(WorldActionOffer, :count)
+
+    expect(response).to redirect_to(arena_match_path(match))
+    expect(character.reload.gameplay_context).to eq(context)
+    expect(position.reload).to have_attributes(zone:, x: 4, y: 6)
+  end
+
   it "accepts the short-lived shop hotspot offer" do
     get world_location_path("frontier_village")
     offer = WorldActionOffer.offered.where(character:).find { |candidate| candidate.metadata["feature"] == "shop" }

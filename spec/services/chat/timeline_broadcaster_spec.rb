@@ -4,7 +4,7 @@ require "rails_helper"
 
 RSpec.describe Chat::TimelineBroadcaster do
   it "appends a chat message to the shared timeline through its channel stream" do
-    message = build_stubbed(:chat_message)
+    message = build_stubbed(:chat_message, chat_channel: build_stubbed(:chat_channel, channel_type: :whisper))
 
     expect(message).to receive(:broadcast_append_later_to).with(
       message.chat_channel,
@@ -14,6 +14,14 @@ RSpec.describe Chat::TimelineBroadcaster do
     )
 
     described_class.chat_message_created(message)
+  end
+
+  it "never sends ordinary messages to a stale shared local or global subscription" do
+    [:local, :global].each do |type|
+      message = build_stubbed(:chat_message, chat_channel: build_stubbed(:chat_channel, channel_type: type))
+      expect(message).not_to receive(:broadcast_append_later_to)
+      expect(described_class.chat_message_created(message)).to be false
+    end
   end
 
   it "appends a personal event only through its recipient stream" do

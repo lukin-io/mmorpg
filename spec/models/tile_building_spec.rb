@@ -74,11 +74,64 @@ RSpec.describe TileBuilding, type: :model do
       expect(building.errors[:metadata]).to include("location feature destination is unsupported")
     end
 
+    it "rejects a location kind without an implemented source-backed interior" do
+      location = build(:tile_building, :world_location)
+      location.metadata.fetch("location")["kind"] = "mine"
+
+      expect(location).not_to be_valid
+      expect(location).not_to be_accessible
+      expect(location.errors[:metadata]).to include("location kind is unsupported")
+    end
+
     it "requires a documented building type" do
       building.building_type = "undocumented_service"
 
       expect(building).not_to be_valid
       expect(building.errors[:building_type]).to include("is not included in the list")
+    end
+
+    it "uses authored presence labels with the location name as an optional fallback" do
+      location = build(:tile_building, :world_location)
+
+      expect(location).to be_valid
+      expect(location.location_presence_label).to eq("Village Square")
+      expect(location.location_features.first.fetch("presence_label")).to eq("Shop")
+
+      location.metadata.fetch("location").delete("presence_label")
+      location.metadata.fetch("location").fetch("features").first.delete("presence_label")
+
+      expect(location).to be_valid
+      expect(location.location_presence_label).to eq(location.name)
+    end
+
+    it "validates an optional exterior presence label independently of entrance type" do
+      building.metadata = {"presence_label" => "Outpost, West Gate"}
+      expect(building).to be_valid
+      expect(building.presence_label).to eq("Outpost, West Gate")
+
+      building.metadata = {}
+      expect(building).to be_valid
+      expect(building.presence_label).to eq(building.name)
+
+      [nil, "", " ", 3, []].each do |invalid_label|
+        building.metadata = {"presence_label" => invalid_label}
+        expect(building).not_to be_valid
+        expect(building.errors[:metadata]).to include("presence label must be a non-empty string")
+      end
+    end
+
+    it "rejects malformed authored room labels at the content boundary" do
+      [nil, "", " ", 3, []].each do |invalid_label|
+        location = build(:tile_building, :world_location)
+        location.metadata.fetch("location")["presence_label"] = invalid_label
+        location.metadata.fetch("location").fetch("features").first["presence_label"] = invalid_label
+
+        expect(location).not_to be_valid
+        expect(location.errors[:metadata]).to include(
+          "location presence label must be a non-empty string",
+          "location feature presence label must be a non-empty string"
+        )
+      end
     end
 
     it "rejects speculative non-gate types" do
@@ -125,6 +178,46 @@ RSpec.describe TileBuilding, type: :model do
       building.update!(active: false)
 
       expect(building.enter!(character)).to be false
+    end
+
+    it "rejects an entrance at matching coordinates in a different region" do
+      other_region = create(:zone, :mvp_outdoor_region)
+      character.position.update!(zone: other_region)
+
+      expect(building.can_enter?(character)).to be false
+      expect(building.entry_blocked_reason(character)).to eq("Entrance is not on your current cell.")
+      expect(building.enter!(character)).to be false
+      expect(character.position.reload).to have_attributes(zone: other_region, x: building.x, y: building.y)
+    end
+
+    it "rechecks the saved source region when a cached character position has changed" do
+      other_region = create(:zone, :mvp_outdoor_region)
+      character.position
+      CharacterPosition.find(character.position.id).update!(zone: other_region)
+
+      expect(building.enter!(character)).to be false
+      expect(character.position.reload.zone).to eq(other_region)
+    end
+
+    it "rechecks a cached entrance after its authored region changes" do
+      other_region = create(:zone, :mvp_outdoor_region)
+      TileBuilding.find(building.id).update!(zone: other_region.name)
+
+      expect(building.enter!(character)).to be false
+      expect(character.position.reload).to have_attributes(zone: source_zone, x: 5, y: 5)
+    end
+
+    it "rejects another cell in the same region and a repeated gate entry after arrival" do
+      character.position.update!(x: 4)
+      expect(building.enter!(character)).to be false
+      expect(character.position.reload.zone).to eq(source_zone)
+
+      character.position.update!(x: building.x)
+      expect(building.enter!(character)).to be true
+      arrival = character.position.reload.attributes.slice("zone_id", "x", "y", "last_action_at")
+
+      expect(building.enter!(character)).to be false
+      expect(character.position.reload.attributes.slice("zone_id", "x", "y", "last_action_at")).to eq(arrival)
     end
 
     it "does not apply removed generic level or item gates" do

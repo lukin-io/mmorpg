@@ -13,6 +13,8 @@ module Game
     #
     # Returns:
     #   MovementCommand after enqueue/process.
+    #   Invalid offers are marked failed; unexpected errors roll back processing
+    #   and propagate so a job retry can use the unchanged offered command.
     class CommandQueue
       def initialize(character:, respawn_service: nil)
         @character = character
@@ -62,26 +64,26 @@ module Game
 
       def process(command_or_id)
         command = load_command(command_or_id)
-        return command if command.moving? || command.completed? || command.failed?
+        command.character.with_lock do
+          command.reload
+          next command unless command.offered?
 
-        begin
-          result = Game::Movement::AcceptMove.new(
-            character: command.character,
-            action_key: command.action_key,
-            target_x: command.target_x,
-            target_y: command.target_y,
-            direction: command.direction,
-            respawn_service: Game::Movement::RespawnService.new(character: command.character)
-          ).call
+          begin
+            result = Game::Movement::AcceptMove.new(
+              character: command.character,
+              action_key: command.action_key,
+              target_x: command.target_x,
+              target_y: command.target_y,
+              direction: command.direction,
+              respawn_service: Game::Movement::RespawnService.new(character: command.character)
+            ).call
 
-          result.command.update!(latency_ms: compute_latency(result.command))
-          result.command.reload
-        rescue Game::Movement::MovementViolationError => e
-          mark_failed(command, e.message)
-          nil
-        rescue => e
-          mark_failed(command, e.message)
-          raise
+            result.command.update!(latency_ms: compute_latency(result.command))
+            result.command.reload
+          rescue Game::Movement::MovementViolationError => e
+            mark_failed(command, e.message)
+            nil
+          end
         end
       end
 
@@ -90,7 +92,7 @@ module Game
       attr_reader :character, :respawn_service
 
       def load_command(command_or_id)
-        command_or_id.is_a?(MovementCommand) ? command_or_id : MovementCommand.lock.find(command_or_id)
+        command_or_id.is_a?(MovementCommand) ? command_or_id : MovementCommand.find(command_or_id)
       end
 
       def build_metadata(tile_metadata, terrain_type:)

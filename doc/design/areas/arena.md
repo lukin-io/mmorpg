@@ -10,14 +10,16 @@ route into the shared turn-based combat system.
 
 ## Neverlands Reference
 
-Neverlands arena observations are folded into this document. Combat turn
-mechanics are folded into `doc/design/features/combat.md`. These two files are
-the arena/fight source of truth.
+This document normalizes the captured Arena behavior; combat turn design lives
+in `doc/design/features/combat.md`. Preserved observations and live Neverlands
+remain the source authority, and `doc/features/arena_combat.md` describes the
+verified local runtime.
 
 Reference captures:
 
 - `doc/design/reference/shell/observations/2026-07-28_game_shell_and_mvp_surfaces.md`
 - `doc/design/reference/social/observations/2026-08-23_chat_game_event_timeline.md`
+- `doc/design/reference/social/observations/2026-09-07_cell_chat_and_presence_boundaries.md`
 
 Observed arena behavior shows:
 
@@ -26,7 +28,7 @@ Observed arena behavior shows:
 - fight applications with visible sides and no-opponent waiting rows;
 - configurable fight kind, timeout, trauma, wait time, and group limits;
 - AP-based turn combat after a match starts;
-- public waiting-room social context;
+- ordinary chat and player presence scoped to the selected Arena room;
 - combat logs as part of the fight experience.
 
 ## Entry And Exit
@@ -39,6 +41,11 @@ Players leave by:
 - returning to the parent city node;
 - entering an active fight;
 - completing or surrendering a fight, then returning to arena/city state.
+
+The selected room is a distinct location within the same City node. The fresh
+source pass changed Hall of Initiation to Hall of Patrons and showed a different
+player list/count. It does not establish a universal default room or the
+source's session-expiry interval.
 
 ## Screen Model
 
@@ -118,6 +125,26 @@ JSON action keys if they preserve the same authorization contract.
   for an opponent.
 - Characters below the arena HP threshold cannot create or accept fights until
   they recover.
+
+The local persistence/access translation keeps the selected room in the
+character's allowlisted gameplay context as an integer room id. Actual HTML
+entry saves it under the character lock after current City-hotspot and room
+access checks; a JSON preview does not select a room. The lobby preserves a
+valid selection and does not infer one from level or display order.
+
+Room activity, level/alignment, and optional `ArenaRoom.zone_id` are server
+boundaries for room pages, application lists, creation, and player/NPC
+acceptance. A bound room belongs to its persisted City node; existing unbound
+rooms remain usable only through authorized City Arena entry. Fresh login can
+resume a valid selected room without an old entry cookie. Missing, malformed,
+removed, inaccessible, or foreign-city room context falls back to World, and
+an active fight takes precedence over changing the selected room.
+
+Actual position/node transitions clear the former room and update local-chat
+context in their position transaction, even for unbound rooms. Shell derives
+room presence and ordinary-chat audience from that persisted context, not the
+room label or a browser-supplied location. Online eligibility remains a
+technical local projection rather than a captured Neverlands timeout.
 
 ## Observed Arena Flow
 
@@ -215,6 +242,8 @@ Design translation:
 The first playable arena loop should follow the captured Neverlands shape:
 
 - primary entry is through a city hotspot or building path;
+- room selection and fresh-login restoration preserve an authorized saved
+  room, while City relocation clears it and previews never change it;
 - arena lobby uses a compact frame model with character/vitals strip,
   filter/status row, room scheme, tab labels, and dense room rows;
 - room screens use inline application controls and side-based rows, such as

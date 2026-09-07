@@ -44,6 +44,17 @@ arrives at the new node or building.
 ## Wilderness Rules
 
 - The server decides which nearby tiles are reachable.
+- Coordinates use `x` as the column and `y` as the row. A destination is one
+  legal eight-direction step exactly when:
+
+  ```text
+  abs(target.x - current.x) <= 1
+  AND abs(target.y - current.y) <= 1
+  AND target != current
+  ```
+
+  This is Chebyshev distance `1`: the four cardinal and four diagonal cells
+  may be offered; the current cell and every multi-cell jump may not.
 - Each offered destination includes target coordinates, travel time, and an
   action key.
 - The browser only renders server-offered destinations as clickable.
@@ -62,15 +73,46 @@ arrives at the new node or building.
   movement offer remains unaccepted and the finalized coordinate does not
   change.
 
+The visible wilderness is assembled from those same authoritative cells. Each
+`100 x 100` cell renders its coordinate's crop of an allowlisted regional map
+sheet, unless that cell has a validated explicit art override. Moving scrolls
+the assembled cells beneath the fixed player marker; artwork never decides
+passability, resources, entrances, NPCs, or other cell content.
+
 ## Persistence Contract
 
 Neverlands-style movement is persistent server state, not browser state.
 
+Conflicting player actions share the character's serialization boundary.
+Movement validates the current owned offer before evaluating a hostile
+interruption. Accepted travel and the captured Look deadline exclude a new
+move or Enter/Character/Inventory action; stale keys cannot trigger an encounter
+as a side effect of failed movement validation. Repeated processing cannot
+extend a deadline, apply fatigue twice, or change a completed command back to
+moving/failed.
+
+Spatial reads are bounded independently of region size: movement offer
+generation reads only the eight neighboring coordinates, acceptance/completion
+read the exact target, and rendering reads the nearby buffer. `zone_id` on
+position/command records is the existing region identity. Multi-region
+readiness uses this identity and independent zone-scoped content; no competing
+region/position model or extra populated region is needed. The current user
+delivery scope keeps one populated region and defers region crossings. A
+server-side relocation invalidates active travel from the previous source
+region/cell before its deadline; it cannot reuse an old region's offer at the
+same local coordinates.
+Successful movement, city-node transitions, and city-gate entry also clear the
+previous interior context in the position transaction. The shared local-chat
+owner records the resulting cell/room entry there; duplicate completion or an
+unchanged room reload cannot reset its timestamp. Region identity uses the
+existing Zone ID and stable name-keyed cell content; a populated name cannot
+be renamed or deleted while that content remains.
+
 Authoritative state:
 
 - a character location record stores the finalized coordinate and zone;
-- a movement command record stores each offered, accepted, active, completed,
-  failed, or cancelled movement;
+- a movement command record stores `offered`, `moving`, `completed`, `failed`,
+  or `cancelled` state; acceptance changes `offered` to `moving`;
 - an accepted movement does not immediately change the finalized character
   location.
 - Active movement stores source coordinate, target coordinate, start time,
@@ -79,11 +121,11 @@ Authoritative state:
   - if no movement is active, the player appears at the finalized coordinate;
   - if movement is active and not due, the countdown resumes from `ends_at`;
   - if movement is due, the server finalizes it before rendering the map.
-- Login with an existing character enters the world screen directly and uses the
-  same persisted position/resume logic. If the last accessible gameplay context
-  is an implemented city interior such as Shop, login resumes that interior
-  without changing the persisted city position. It must not route the player to
-  an unrelated dashboard before the game surface.
+- Login restores the persisted allowlisted gameplay surface: World/city,
+  village, city/village Shop, a captured read-only city building, or an
+  accessible selected Arena room. An invalid saved room falls back to World
+  without changing the persisted position. No unrelated dashboard precedes the
+  game surface.
 
 Expected player result: if a player walks in the open world, closes the browser,
 and opens the game later, they are still at the same finalized cell or at the
@@ -95,9 +137,12 @@ world cell, or to Character/Inventory when that was the interrupted shell
 destination. It never stores or follows an arbitrary browser URL.
 
 If the player logged out in Shop, login reopens Shop with its sanitized tab,
-category, and numeric filters. Leaving Shop for the city records the city/world
-surface again. An inaccessible Shop record falls back to that unchanged city or
-outdoor position.
+category, and numeric filters. City Shop returns to its city node. Village Shop
+returns to Village Square; the separate Leave action returns outdoors. Both
+village surfaces retain the exact entrance cell. A valid selected Arena room
+also resumes after login using current city and room access, without depending
+on an old entry cookie. Inaccessible saved surfaces fall back to the unchanged
+city or outdoor position.
 
 ## City And Linked-Location Rules
 
@@ -118,6 +163,8 @@ outdoor position.
   Trading Post and exit polygons each submit fresh server-owned action keys.
 - Linked Shop access and login resume remain valid only while the exact
   entrance cell is still active and accessible.
+- Actual HTML room visits update saved room identity and its presence/chat
+  audience; room JSON previews do not move the player between audiences.
 
 ## Travel Time
 
@@ -189,8 +236,9 @@ complete enough to implement. Combat must not guess it.
 - `areas/world_map.md` owns the outdoor screen.
 - `areas/cities_and_buildings.md` owns city and building movement.
 - `features/progression_stats_skills.md` can reduce travel time through skills.
-- `features/items_inventory_equipment.md` can increase travel time through
-  carried weight.
+- `features/items_inventory_equipment.md` owns carried weight and equipment;
+  carried weight does not currently modify movement duration. Supported
+  equipment skill bonuses may affect the effective Wanderer fallback.
 - `features/professions.md` may consume an eligible cell action later, but it
   must reuse the same server-authored fatigue/action boundary.
 
@@ -200,14 +248,14 @@ The open-world map should use one server-authored state-building pipeline:
 
 1. Finalize due movement for the character.
 2. Load the current authoritative character location.
-3. Materialize tile context for the current location:
+3. Resolve persisted tile context for the current location:
    - hidden NPC encounter state;
-   - building, city, dungeon, or portal entrances;
+   - the captured city gate or allowlisted village entrance;
    - authored resource-search and other captured local actions;
    - terrain, validated `100 x 100` cell art, and passability.
 4. Create short-lived action offers for everything the player can do:
    - movement offers;
-   - enter city/building/dungeon offers;
+   - enter city or village offers;
    - inspect/profile/inventory offers when needed by the UI.
 5. Render only visible offers to the browser; resolve hidden hostile
    interruption before the selected action completes.
@@ -244,9 +292,12 @@ A cell can contain an NPC, an entrance, and local actions at the same time.
 those layers. It maps `db/seeds.rb`, the outdoor-NPC config, persisted records,
 resolution, offers, cleanup, and coverage. Movement must consume that composed
 state; it must not introduce another building/resource/NPC source.
-Movement completion rebuilds all of them. The launch resource action is
-Neverlands `look` / `Оглядеться`: it searches for herbs or local resources and
-can be interrupted by a hostile NPC before the resource action completes.
+Movement completion rebuilds all of them. The implemented Neverlands `look` /
+`Оглядеться` slice shows its empty result immediately and persists a 28-second
+work deadline. It grants no item or currency; successful gathering is deferred
+by the user to alchemy. A hostile can interrupt before work starts, and a
+passive fight may supersede active work. Closing the result does not end the
+lock; reload recovers the same deadline.
 
 Movement consumes the resolved 100px cell presentation but does not own its
 asset keys or sheet geometry. Add special-cell art through the authoring workflow
@@ -263,3 +314,5 @@ flow.
 - Long-distance pathfinding as the first movement interaction.
 - Browser-only cooldowns.
 - City travel countdowns for the starter city.
+- Additional populated regions and region crossings in the current delivery.
+- Gathering yields, profession growth, or uncaptured timing modifiers.

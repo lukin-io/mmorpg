@@ -28,7 +28,7 @@ class ChatChannel < ApplicationRecord
   before_validation :assign_slug, on: :create
 
   def membership_required?
-    !(global? || local? || arena? || system?)
+    !(global? || local? || system?)
   end
 
   def ensure_membership!(user)

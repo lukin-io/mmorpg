@@ -41,11 +41,15 @@ class ArenaRoom < ApplicationRecord
   # Check if a character can access this room
   #
   # @param character [Character] the character to check
-  # @return [Boolean] true if character meets level and alignment requirements
+  # Bound rooms additionally require the character's current persisted zone.
+  # Existing unbound rooms keep their shared authored access rules.
+  # @return [Boolean] true if character meets room access requirements
   def accessible_by?(character)
+    return false unless character
     return false unless active?
     return false unless character.level.between?(level_min, level_max)
     return false if alignment_restriction.present? && character.alignment != alignment_restriction
+    return false if zone_id.present? && character.position&.reload&.zone_id != zone_id
 
     true
   end
@@ -84,6 +88,10 @@ class ArenaRoom < ApplicationRecord
 
     if alignment_restriction.present? && character.alignment != alignment_restriction
       return "Alignment does not match"
+    end
+
+    if zone_id.present? && character.position&.reload&.zone_id != zone_id
+      return "Room is in another city"
     end
 
     "Available"

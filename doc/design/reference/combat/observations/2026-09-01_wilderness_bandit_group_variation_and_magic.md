@@ -271,6 +271,9 @@ same-visible-opponent XP/risk results.
 - Local status: Fully Implemented for bounded physical `1x1`/`1xN` PvE and the
   allowlisted magic-selector boundary; NOT_IMPLEMENTED for the unresolved
   full-parity rules below.
+- The mapped sampled-cell implementation keeps its anchor eligible after a
+  completed roster and Finish, matching this four-fight same-coordinate chain;
+  a deterministic request flow proves a second schedule/start after victory.
 - Evidence-dependent local gaps: source-parity wilderness selection, general
   XP, magic/status formulas, injuries, and repairs.
 - Parity IDs: `COMBAT-PVE-PHYSICAL`, `COMBAT-WILDERNESS-SELECTION`,

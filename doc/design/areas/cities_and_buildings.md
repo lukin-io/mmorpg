@@ -24,6 +24,7 @@ Reference evidence lives in:
 
 - `doc/design/reference/city/observations/2026-07-28_city_movement_and_services.md`;
 - `doc/design/reference/economy/observations/2026-05-21_lavka_shop.md`;
+- `doc/design/reference/social/observations/2026-09-07_cell_chat_and_presence_boundaries.md`;
 - `doc/design/launch_mvp_plan.md`.
 
 Runtime images, hover layers, logos, identity text, and service/admin copy from Neverlands are prohibited. The local system recreates the design and interaction contract with project-owned artwork, CSS, semantic HTML, and suitable ASCII/plain-text controls. Source image controls are replaced rather than removed; for example, route images become styled `>` arrows and close images become styled `X` controls.
@@ -43,7 +44,7 @@ Desktop shows the full scene when space permits. Tablet/mobile keep the scene un
 
 ## Entry And Exit
 
-The verified outdoor entrance at Outpost Surroundings `[7,0]` enters `main` / Central Square `[0,0]`. Central City Exit returns to that exact cell.
+The verified outdoor entrance at Outpost Surroundings `[6,8]` enters `main` / Central Square `[0,0]`. Central City Exit returns to that exact cell.
 
 The Law Quarter visibly contains another City Exit, but its outdoor result was not exercised in the current capture. It is a presentation-only landmark until the destination is verified. Older South/East gates are not part of the current Forpost seed topology.
 
@@ -94,6 +95,11 @@ Current interactive integrations are Arena and Shop. Hospital, Market, and Airsh
 
 Shop is on Central Square. Its feature owns the mode/category/filter hierarchy and buy/sell transactions after City validates entry. Returning through City preserves Central Square.
 
+Building and selected Arena-room contexts partition ordinary chat and presence
+within that persisted city node. Entering a room preserves city coordinates;
+changing the city node clears the previous interior/room in the same position
+transition. Presence liveness and delivery remain Shell-owned projections.
+
 ## Server Authority
 
 - `CityCatalog` owns the source-backed baseline declaration used by seeds.
@@ -127,10 +133,19 @@ Shop may scale its decorative CSS illustration because it contains no action geo
 ## Feature Hooks
 
 - Arena entry redirects to `/arena` and leaves position in Central Square.
+- Actual Arena HTML room entry saves an accessible room id. A room optionally
+  bound to another city is unavailable for entry, application listing,
+  creation, or acceptance. Existing unbound rooms still require current City
+  Arena access; JSON previews and the lobby never invent a selection.
 - Shop entry redirects to `/shop`, revalidates City availability, and owns wallet/inventory transactions.
 - Read-only building entry redirects only through `CityHotspot::FEATURE_ROUTES`.
 - Outdoor exit moves to the exact verified Outpost Surroundings cell.
 - Login resume rechecks saved interior context against the current node.
+- A valid saved Arena room can resume without the old city-entry cookie;
+  its activity, level/alignment, and optional city binding are rechecked.
+- The linked outdoor village uses the same Shop feature after World validates
+  its exact entrance cell. Its Village return opens Village Square; the
+  separate Leave action returns outdoors without changing that saved cell.
 
 ## Out Of Scope
 

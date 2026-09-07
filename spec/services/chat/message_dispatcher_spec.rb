@@ -3,10 +3,13 @@ require "rails_helper"
 RSpec.describe Chat::MessageDispatcher do
   describe "#call" do
     it "persists a chat message" do
-      channel = create(:chat_channel)
       user = create(:user)
+      character = create(:character, user:)
+      create(:character_position, character:)
+      channel = Chat::ChannelRouter.new(user:).resolve(scope: :local)
 
-      result = described_class.new(user:, channel:, body: "Hello world").call
+      session = create(:user_session, user:)
+      result = described_class.new(user:, channel:, body: "Hello world", session:).call
 
       expect(result.message).to be_persisted
       expect(result).not_to be_command_executed

@@ -28,6 +28,7 @@ module Game
       end
 
       def call
+        Game::Movement::CompleteMove.new(character:).call
         if (match = active_match)
           clear_schedule!
           return Result.new(
@@ -41,7 +42,7 @@ module Game
         return decision if decision.is_a?(Result)
 
         npc = decision.fetch(:npc)
-        match = StartNpcFight.new(character:, tile_npc: npc, return_context:).call
+        match = StartNpcFight.new(character:, tile_npc: npc, return_context:, rng:).call
         clear_schedule!
 
         Result.new(
@@ -61,6 +62,10 @@ module Game
       def schedule_decision
         character.with_lock do
           character.reload
+          if MovementCommand.moving.where(character:).exists?
+            remove_schedule_from_locked_character!
+            next waiting_result(EMPTY_RECHECK_SECONDS)
+          end
           position = character.position
           npc = hostile_npc_at(position)
 
@@ -75,7 +80,7 @@ module Game
           due_at = parsed_due_at(schedule)
 
           unless schedule_matches?(schedule, fingerprint) && due_at
-            delay = rng.rand(MIN_DELAY_SECONDS..MAX_DELAY_SECONDS)
+            delay = passive_delay_for(npc)
             due_at = now + delay
             persist_schedule!(fingerprint.merge("due_at" => due_at.iso8601(6)))
             next waiting_result(delay)
@@ -107,6 +112,16 @@ module Game
           "y" => position.y,
           "tile_npc_id" => npc.id
         }
+      end
+
+      def passive_delay_for(npc)
+        windows = npc.passive_delay_windows
+        return rng.rand(MIN_DELAY_SECONDS..MAX_DELAY_SECONDS) if windows.empty?
+
+        window = windows.fetch(windows.one? ? 0 : rng.rand(windows.length)).stringify_keys
+        minimum = Integer(window.fetch("min_seconds"))
+        maximum = Integer(window.fetch("max_seconds"))
+        rng.rand(minimum..maximum)
       end
 
       def schedule_matches?(schedule, fingerprint)

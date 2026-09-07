@@ -2,10 +2,15 @@
 
 - Document type: neverlands-source-summary
 - Domain: combat
-- Updated: 2026-09-01
+- Updated: 2026-09-07
 - Evidence status: current for bounded fight/Arena states; incomplete overall
 
 ## Current observations
+
+- September 7 Arena room selection and separate room-player lists, plus the
+  official Bot article stating a maximum group size of ten, in
+  `doc/design/reference/social/observations/2026-09-07_cell_chat_and_presence_boundaries.md`;
+  this follow-up started no fight and adds no combat coefficient evidence.
 
 - Authenticated level-17 two-Orc `1x2` target-handoff, per-NPC search,
   encounter result, and wilderness return in
@@ -22,6 +27,10 @@
   Spirit Arrow turn, manual target switching, and differing
   same-visible-opponent XP/risk results in
   `doc/design/reference/combat/observations/2026-09-01_wilderness_bandit_group_variation_and_magic.md`
+- Authenticated level-17 swamp chain with source-selected `1x7` and `1x3`
+  sides, a `4..64`-second no-click repeat, independent nothing/item searches,
+  a live two-attack AP penalty, and an excluded timeout anomaly in
+  `doc/design/reference/combat/observations/2026-09-02_swamp_passive_rosters_search_and_timeout.md`
 - Fight and public-log addenda in
   `doc/design/reference/shell/observations/2026-07-28_game_shell_and_mvp_surfaces.md`
 - Outdoor hostile/multi-NPC fight in
@@ -79,7 +88,8 @@ probability, or relationship to the detailed combat log.
   (`Разбойник[7]`, `Разбойник[9]`, `Грабитель[8]`), then two separate
   one-opponent `Разбойник[7]` fights, then a mixed two-opponent group
   (`Разбойник[8]`, `Грабитель[9]`). Finish returned to the same coordinate,
-  and the later attacks began during idle waits without a click. This confirms
+  all four fights completed, and the later attacks began during idle waits
+  without a click. This confirms both repeated post-victory eligibility and
   variable group size/template/level output for one wilderness return context;
   it does not expose the complete eligible pool or weights.
 - The map remained visible for at least `230` seconds after one captured
@@ -88,6 +98,11 @@ probability, or relationship to the detailed combat log.
   to approximately `127..187` seconds, and a preceding repeat appeared
   near-immediately after Finish. The samples prove timing variation but do not
   establish a delay distribution, cooldown, or encounter probability.
+- A later `Болото Зыбкая Муть` flow produced a seven-opponent side and then a
+  three-Bandit side at levels `13`, `14`, and `15`. The second attack arrived
+  without a click approximately `4..64` seconds after Finish returned to the
+  outdoor map. Its exact coordinate was not captured, so these rosters are not
+  assigned to `m_1008_1007` or another cell by assumption.
 - The location boundary is confirmed behaviorally across independent captures.
   At `m_1001_999`, a hidden two-rat attack interrupted `look`, Finish restored
   `m_1001_999`, and Inventory was then interrupted by another two-rat attack.
@@ -118,6 +133,18 @@ probability, or relationship to the detailed combat log.
 - Bot search is tied to the directly opposed defeated bot in the captured
   source behavior; Observation is nonlinear and can permit multiple elements,
   but its probability curve is not published.
+- The later swamp chain produced four nothing-found searches and one Small
+  strange potion from separate defeated bot participations, including empty
+  and item outcomes before the same fight ended. The user confirms equipment
+  such as armor and axes can also drop; those families were not directly
+  produced in this flow, and their NPC pools/probabilities remain unknown.
+- Selecting two current `62`-AP Simple attacks displayed
+  `62 + 62 + penalty 25 = 149 AP`, independently confirming the supplied
+  script's two-attack penalty in the authenticated runtime.
+- Both swamp fights displayed a five-minute timeout but terminated anomalously
+  later. Per product direction, this is retained as a source anomaly; the
+  normalized rule remains the explicit displayed `300`-second fight limit and
+  does not reset indefinitely per legal turn.
 - Arena/non-arena durability-loss percentages and the one-point-per-item cap
   are exact. Source perk ID `15`, `Аккуратный боец`, halves each item's chance.
 - Injury taxonomy and selected guaranteed cases are known. Repair is a
@@ -132,8 +159,10 @@ probability, or relationship to the detailed combat log.
 - General solo/multi-NPC XP formula and player-group/team distribution,
   including the hidden or random input behind the `9`/`14` same-visible-Bandit
   results.
-- Exact Observation/drop probability and multi-drop curves, including the
-  Plague Rat item and money chances.
+- Exact Observation/drop probability, eligibility, multi-drop, and
+  consumable/equipment/NV pool curves, including the Plague Rat item and money
+  chances. Nothing/potion output is now directly captured, but its probability
+  is not.
 - General magic damage/statistics categories, magic blocks, resistance, and
   persisted-status resolution beyond the one bounded Spirit Arrow hit.
 - Ordinary injury probability/duration and the mapping, if any, from the
@@ -142,7 +171,8 @@ probability, or relationship to the detailed combat log.
   and owner-retrieval flow.
 - Exact per-cell eligible opponent/group tables, selection weights, passive
   timing/probability distribution, and Neverlands' internal persistence
-  representation. Variable same-context group output itself is now confirmed.
+  representation. Variable same-context group output and three materially
+  different passive interval bounds are confirmed.
 
 ## Design linkage
 
@@ -162,6 +192,13 @@ probability, or relationship to the detailed combat log.
   `COMBAT-PVE-PHYSICAL`, `COMBAT-TEAM-TURNS`, `COMBAT-FIGHT-UI-001`, and
   `COMBAT-LOG-001` are `DONE`; this evidence summary does not own implementation
   completion
+- The mapped sampled-cell runtime preserves its anchor after full victory and
+  Finish so a later server schedule can select another captured roster; fixed
+  anchors retain their existing defeated/respawn lifecycle
+- Authored NPC group capacity is `1..10`; captured seed rosters and unresolved
+  selection/probability formulas are unchanged by that validation boundary.
+- Selected accessible Arena room IDs persist for resume and scope local chat
+  and presence; the handbook owns the room/region authorization contract.
 - Implementation handbook: `doc/features/arena_combat.md`
 - Receiving shell handbook: `doc/features/game_shell.md`
 
@@ -176,6 +213,7 @@ probability, or relationship to the detailed combat log.
 - `app/services/arena/combat_resolver.rb`
 - `app/controllers/world_encounter_checks_controller.rb`
 - `app/services/game/world/passive_encounter_check.rb`
+- `app/services/game/world/encounter_roster_selector.rb`
 - `app/services/chat/event_publisher.rb` (presentation handoff)
 - `app/views/arena_matches/show.html.erb`
 - `app/assets/stylesheets/arena.css`

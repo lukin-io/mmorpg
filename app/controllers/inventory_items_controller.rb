@@ -3,8 +3,10 @@
 # Controller for individual inventory item actions (destroy).
 class InventoryItemsController < ApplicationController
   include CurrentCharacterContext
+  include OutdoorActionAvailability
 
   before_action :ensure_active_character!
+  around_action :with_available_outdoor_actions
 
   # DELETE /inventory/items/:id
   def destroy

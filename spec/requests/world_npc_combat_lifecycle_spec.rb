@@ -198,4 +198,59 @@ RSpec.describe "Physical wilderness NPC combat lifecycle", type: :request do
     }.not_to change { character.reload.metadata["npc_wins"] }
     expect(response).to redirect_to(world_path)
   end
+
+  it "schedules another sampled-cell encounter after victory and explicit finish" do
+    tile_npc.update!(metadata: {
+      "encounter_rosters" => [
+        {
+          "key" => "repeatable-single",
+          "encounter_experience_reward" => 35,
+          "trauma_percent" => 30,
+          "members" => [
+            {"npc_key" => npc_template.npc_key, "level" => 4, "hp" => 5}
+          ]
+        }
+      ]
+    })
+
+    post world_encounter_check_path, as: :json
+    post world_encounter_check_path, as: :json
+    first_match = ArenaMatch.last
+    first_npc = first_match.arena_participations.npcs.sole
+
+    post action_arena_match_path(first_match),
+      params: turn_params.merge(
+        turn_number: 1,
+        target_id: "npc-participation-#{first_npc.id}"
+      ),
+      as: :json
+
+    expect(response).to have_http_status(:ok)
+    expect(first_match.reload).to be_completed
+    expect(tile_npc.reload).to be_alive
+
+    post finish_arena_match_path(first_match)
+    expect(response).to redirect_to(world_path)
+    expect(character.reload).not_to be_in_combat
+
+    expect {
+      post world_encounter_check_path, as: :json
+    }.not_to change(ArenaMatch, :count)
+    expect(response.parsed_body).to include("interrupted" => false, "retry_after_ms" => 1_000)
+
+    expect {
+      post world_encounter_check_path, as: :json
+    }.to change(ArenaMatch, :count).by(1)
+
+    second_match = ArenaMatch.last
+    expect(response.parsed_body).to include(
+      "interrupted" => true,
+      "redirect_url" => arena_match_path(second_match)
+    )
+    expect(second_match).to be_live
+    expect(second_match.metadata).to include(
+      "encounter_roster_sample" => "repeatable-single",
+      "repeatable_encounter_source" => true
+    )
+  end
 end

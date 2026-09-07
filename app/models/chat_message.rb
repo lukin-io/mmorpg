@@ -47,6 +47,10 @@ class ChatMessage < ApplicationRecord
   private
 
   def broadcast_new_message
+    # Ordinary location chat is delivered only by a freshly authorized poll.
+    # Never publish it to old signed local/global channel subscriptions.
+    return if chat_channel.local? || chat_channel.global?
+
     excluded_ids = Chat::IgnoreFilter.excluded_recipient_ids(sender)
     return if excluded_ids.any?
 

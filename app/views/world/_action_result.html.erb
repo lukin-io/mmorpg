@@ -1,0 +1,10 @@
+<div class="nl-world-result-overlay" data-controller="world-result" data-action="keydown.esc->world-result#close">
+  <dialog class="nl-world-result"
+          aria-label="Search result"
+          aria-describedby="world-action-result-message"
+          data-world-result-target="dialog">
+    <button type="button" class="nl-world-result-x" aria-label="Close search result" data-action="world-result#close">X</button>
+    <p id="world-action-result-message"><%= message %></p>
+    <button type="button" class="nl-world-result-close" data-world-result-target="closeButton" data-action="world-result#close">Close</button>
+  </dialog>
+</div>

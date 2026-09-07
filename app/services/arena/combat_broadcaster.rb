@@ -114,9 +114,9 @@ module Arena
         {
           id: "npc-participation-#{p.id}",
           character_id: "npc-participation-#{p.id}",
-          character_name: npc.name,
+          character_name: p.participant_name,
           team: p.team,
-          level: npc.level,
+          level: p.participant_level,
           current_hp: p.current_hp || npc.health,
           max_hp: p.max_hp || npc.health,
           current_mp: 0,
@@ -241,10 +241,9 @@ module Arena
     # @return [Hash] participant result data
     def participant_result_data(p)
       if p.npc?
-        npc = p.npc_template
         {
           character_id: "npc-participation-#{p.id}",
-          character_name: npc.name,
+          character_name: p.participant_name,
           team: p.team,
           result: p.result,
           damage_dealt: p.metadata&.dig("damage_dealt") || 0,
