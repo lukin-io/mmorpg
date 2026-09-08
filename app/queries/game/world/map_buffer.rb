@@ -11,6 +11,10 @@ module Game
     # Changed/deleted authored content invalidates reuse; reload always works
     # without a token. No cache, per-client server state, or region scan is used.
     class MapBuffer
+      # Cell radii around the player: 7 columns left/right, 4 rows above/below.
+      # Including the center cell gives (2 * 7 + 1) x (2 * 4 + 1) = 15 x 9 cells.
+      # This adds one cell beyond each edge of the maximum 13 x 7 viewport,
+      # keeping terrain available while the map slides during movement.
       X_RADIUS = 7
       Y_RADIUS = 4
       Result = Data.define(:rows, :token, :base_token, :revision)
