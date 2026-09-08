@@ -55,7 +55,8 @@ RSpec.describe "Open-world regions", type: :request do
         metadata: {
           "local_actions" => [
             {"type" => "resource_search", "source_id" => "look", "label" => "Look Around"},
-            {"type" => "fishing", "source_id" => "fis", "label" => "Fish"}
+            {"type" => "fishing", "source_id" => "fis", "label" => "Fish"},
+            {"type" => "digging", "source_id" => "dig", "label" => "Dig"}
           ]
         }
       )
@@ -63,31 +64,33 @@ RSpec.describe "Open-world regions", type: :request do
     let!(:tile_npc) do
       create(:tile_npc, zone: region.name, x: position.x, y: position.y, npc_key: "cell_rat")
     end
-    it "keeps the NPC hidden while rendering the implemented local action" do
+    it "keeps the NPC hidden while rendering only the implemented local actions" do
       get world_path
 
       offers = WorldActionOffer.offered.where(character:)
       expect(response).to have_http_status(:success)
       expect(response.body).not_to include(tile_npc.display_name)
       expect(response.body).to include("Look Around")
-      expect(response.body).not_to include('value="Fish"')
-      expect(offers.pluck(:action_type)).to contain_exactly("search_resources")
+      expect(response.body).to include('value="Fish"')
+      expect(response.body).not_to include('value="Dig"')
+      expect(offers.pluck(:action_type)).to contain_exactly("search_resources", "fish")
       expect(offers.find_by(action_type: "search_resources")).to have_attributes(target: tile)
+      expect(offers.find_by(action_type: "fish")).to have_attributes(target: tile)
     end
 
     it "keeps captured but deferred actions out of offers and controls" do
       tile.update!(
         metadata: {
           "local_actions" => [
-            {"type" => "fishing", "source_id" => "fis", "label" => "Fish"}
+            {"type" => "digging", "source_id" => "dig", "label" => "Dig"}
           ]
         }
       )
 
       get world_path
 
-      expect(WorldActionOffer.offered.where(character:, action_type: "fish")).to be_empty
-      expect(response.body).not_to include('value="Fish"')
+      expect(WorldActionOffer.offered.where(character:, action_type: "dig")).to be_empty
+      expect(response.body).not_to include('value="Dig"')
     end
 
     it "rejects a manually inserted offer for a deferred action" do
@@ -97,16 +100,16 @@ RSpec.describe "Open-world regions", type: :request do
         zone: region,
         x: position.x,
         y: position.y,
-        action_type: "fish",
+        action_type: "dig",
         target: tile,
-        metadata: {"local_action_type" => "fishing", "source_id" => "fis"}
+        metadata: {"local_action_type" => "digging", "source_id" => "dig"}
       )
 
       expect {
         post perform_local_action_world_path,
           params: {
             tile_id: tile.id,
-            local_action_type: "fishing",
+            local_action_type: "digging",
             action_key: offer.action_key
           }
       }.not_to change(InventoryItem, :count)

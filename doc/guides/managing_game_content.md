@@ -2,7 +2,7 @@
 
 - Document type: operational and extension guide
 - Status: Current
-- Updated: 2026-09-07
+- Updated: 2026-09-08
 - Audience: administrators, content authors, Rails engineers, and AI agents
 - UI entry point: `/manage`
 - Controller namespace: `Manage`
@@ -50,7 +50,7 @@ it does not authorize generic RPG invention.
 5. Open the detail page before editing or deleting a record.
 6. Review `/manage/audit_events` after a mutation.
 7. Reload the affected player-facing World or City page. Managed changes are
-   consumed on the next server render.
+   consumed on the next server render or authoritative map update.
 
 Anonymous users are redirected to sign-in. Authenticated non-admin users are
 denied by `ManagePolicy`; moderator or GM status alone does not grant access.
@@ -207,25 +207,43 @@ Malformed JSON and top-level arrays return HTTP 422, display an error, and
 write neither content nor an audit event. Nested schemas still pass through the
 owning model's validations and allowlists.
 
+World Cells and Cell NPCs provide dedicated controls for common content. Their
+advanced JSON field excludes the fields owned by those controls. Edit actions,
+resource groups, activation, encounter size, and roster members in their
+dedicated controls; do not place a competing copy in the advanced field.
+Unedited action results, resource source references, and matching roster/member
+metadata are preserved. Changing a member's NPC template clears its previous
+member-specific overrides. A partial management request that omits a JSON field
+preserves the stored object; explicitly submitting `{}` replaces it.
+
 ### 5.3 Prefer deactivation when identity or history matters
 
-Use the resource's `active` flag where available when a building or hotspot is
+Use the resource's `active` flag where available when a building, NPC, or hotspot is
 temporarily unavailable or its stable identity must be retained. A deactivated
 record remains auditable but produces no interactive offer.
 
-World cells and cell NPC placements do not have a general active flag:
+The controls are independent:
 
-- remove a local resource action by removing it from `local_actions`, or set
-  that individual action's `active` property to `false`;
-- remove an NPC encounter by deleting its `TileNpc` placement, not its shared
-  `NpcTemplate`.
+- clear a World cell's **Passable** control to close movement into it;
+- clear an action's **enabled** control to hide that action;
+- clear **Group active** to retain an authored resource group while omitting it
+  from the active cell projection;
+- clear **Encounter active** to disable a cell's NPC encounter without deleting
+  its placement, roster, HP, or defeat/respawn state;
+- clear an entrance's **Active** control to hide its interaction.
+
+An NPC's activation is stored in its placement metadata; absent activation
+retains the existing active default. Deactivation does not pause an already
+persisted respawn deadline. A due respawn can restore that placement's defeat
+state while it remains disabled; repeated job delivery cannot restore it again.
 
 ### 5.4 Delete dependencies in leaf-to-root order
 
 Protected parent records cannot be deleted while dependent records reference them.
 For example:
 
-1. delete or move `TileNpc` placements before deleting their `NpcTemplate`;
+1. delete or move `TileNpc` placements and remove roster-member references
+   before deleting their `NpcTemplate`; inactive anchors retain those references;
 2. resolve sparse World cells, buildings placed on its cells, and NPC placements before
    deleting their `Zone`; these name-keyed associations reject parent deletion
    while any such content remains;
@@ -237,6 +255,12 @@ For example:
 A rejected dependency delete is expected safety behavior. It creates no
 destroy audit event.
 
+NPC template keys also cannot change while a placement or complete roster
+references them. Edit the display name instead when only wording changes.
+Roster-only dependencies use a JSONB existence query rather than loading every
+placement. Template retirement and roster writes coordinate PostgreSQL row
+locks, so a concurrent roster edit cannot commit a reference to a retired key.
+
 ## 6. World cells and local resources/actions
 
 Open `/manage/world_cells` to manage `MapTileTemplate`.
@@ -247,9 +271,15 @@ Open `/manage/world_cells` to manage `MapTileTemplate`.
 2. Enter coordinates inside that Zone's width/height.
 3. Keep terrain type `outdoor`.
 4. Choose whether the cell is passable.
-5. Add the supported action to **Metadata and resources (JSON)**.
+5. Enable the observed action under **Cell actions** and set its display label.
+6. Use **Add resource group** for each authored group, filling **Group key**,
+   **Resource kind**, **Group label**, and **Group active**.
+7. Put source references and optional art configuration in the advanced
+   **Metadata and resources (JSON)** field, then save and inspect the audit.
 
-Example for the currently implemented resource search:
+The resulting persisted shape below is also available to the seed/content
+baseline. The guided form writes `local_actions` and `resource_groups`; they
+are not separate models or harvest outcomes:
 
 ```json
 {
@@ -262,9 +292,27 @@ Example for the currently implemented resource search:
       "label": "Look Around",
       "description": "Search this cell for local resources."
     }
+  ],
+  "resource_groups": [
+    {
+      "key": "herbs_7",
+      "kind": "herbs",
+      "label": "Herbs group 7",
+      "active": true
+    }
   ]
 }
 ```
+
+A cell accepts at most 32 resource groups. Keys are unique within that cell;
+keys and kinds contain lowercase letters, digits, `_`, or `-`, begin with a
+letter/digit, and contain at most 80 characters. Labels contain 1–120
+characters. An optional `active` must be a JSON boolean; omission means active.
+The atlas's “Herbs 7” and “Herbs 11” identify groups, not quantities, yields,
+skill requirements, or proficiency. The example does not assign a captured
+herb group to the illustrated coordinates. Resource identities enter the
+server's active cell projection; no player-facing harvesting or resource-map
+overlay is created merely by authoring them.
 
 `source_map` and `source_coordinates` are traceability metadata. Do not copy a
 Neverlands image into the project. If `cell_art` is supplied, it must reference
@@ -276,8 +324,8 @@ Supported local-action schemas are defined by
 | Type | Required source id | Runtime state |
 |---|---|---|
 | `resource_search` | `look` | Immediate empty result and persisted 28-second lock; no yield |
-| `fishing` | `fis` | Observed definition only; no active outcome |
-| `drinking` | `dri` | Observed definition only; no active outcome |
+| `fishing` | `fis` | Immediate “No bait available.” result and persisted 30-second lock; no skill gate or successful catch |
+| `drinking` | `dri` | Immediate success and 2-point fatigue recovery, persisted 60-second lock, no skill gate |
 | `digging` | `dig` | Observed definition only; no active outcome |
 
 Adding JSON for an unimplemented kind does not implement a mechanic. A new
@@ -286,22 +334,38 @@ acceptance, transition, UI, and test pipeline.
 Successful gathering is deferred by the user to alchemy. The current Look
 action can be interrupted, awards no inventory/currency, and resumes its same
 deadline after reload. Closing its result does not end the lock. Do not author
-resource yields or timing modifiers by adding unsupported metadata.
+resource yields or timing modifiers by adding unsupported metadata. Drink's
+observed timer and recovery are server-owned parameters in
+`config/gameplay/world_rules.yml`; an editor label or resource-group field
+cannot change them. The configured 4-point Nature Child value remains reserved
+for the unimplemented perk path. Fishing currently reproduces the observed
+no-bait entry only; bait use, successful catches, and fishing proficiency gains
+remain deferred. Digging can be authored but stays unavailable until its
+observed skill requirements and flow are implemented.
 
 ### Edit, deactivate, or remove a resource action
 
 - Edit the same cell and preserve its zone/coordinates unless the whole cell
   override is intentionally moving.
-- To hide one observed action temporarily, add `"active": false` to that
-  action object.
-- To remove the action but retain terrain/art/passability, remove only its
-  object from `local_actions`.
+- To hide one observed action temporarily, clear its **enabled** control;
+  this persists `"active": false` on that action object.
+- To pause a resource group, clear **Group active**; use **Remove group** to
+  remove that group's identity when saving the form.
+- For permanent baseline retirement, remove only the action object from
+  `local_actions` in the approved content declaration. The guided editor
+  retains disabled action definitions so their source/result metadata is not
+  lost when they are temporarily hidden.
 - Delete the `MapTileTemplate` only when the cell has no remaining sparse
   override. The base outdoor map still exists; deleting the sparse row does not
   delete the Zone.
 
 The change appears on the next World render. Only an implemented active action
 becomes a `WorldActionOffer`.
+
+The cell detail page links directly to **Manage this cell's NPCs** and
+**Manage this cell's entrance**. These open the existing record or prefill
+the new record's region and coordinates, so contents can be managed together
+without searching each collection independently.
 
 ## 7. Outdoor buildings and linked locations
 
@@ -363,11 +427,21 @@ Metadata owns the scene and allowlisted feature handoffs:
 The coordinates above demonstrate schema shape only; replace them with
 measured source geometry. Location kind/feature keys, scene dimensions,
 polygons, action types, and feature routes are validated by `TileBuilding`.
-The currently supported `location.kind` is `village`; other kinds are rejected
-and inaccessible until their source-backed scene is implemented. The outdoor
+The implemented `location.kind` is `village`. `mine` is accepted as an inactive
+placement, described below; other kinds are rejected. The outdoor
 marker derives from this canonical kind, so omit the obsolete duplicate
 `landmark_kind` field. City entrances retain the city marker. Optional exterior,
 interior, and feature `presence_label` values must be nonblank strings.
+
+### Prepare a mine entrance
+
+Select **Building type: location**, **Linked location kind: mine**, a stable
+building key, name, and exact outdoor cell. Clear **Active** and leave the
+destination Zone/coordinates blank. The minimal stored definition is
+`{"location":{"kind":"mine"}}`; no village scene, shop, polygons, or mining
+outcome is inferred. Attempting to activate it returns HTTP 422 until a captured
+mine interior and its transition are implemented. This prepares the placement
+without claiming a usable mine.
 
 ### Move, deactivate, or delete
 
@@ -425,7 +499,14 @@ Open `/manage/tile_npcs/new`, select the template, and provide:
 - the same stable `npc_key` and supported `npc_role`;
 - level, current HP, and maximum HP;
 - optional defeated/respawn timestamps when deliberately restoring state;
-- placement metadata.
+- **Encounter active** and **Fixed encounter size**;
+- source references and advanced placement metadata.
+
+For a variable group, choose **Add encounter roster** and expand it. Enter a
+stable roster key and fill 1–10 member rows using the existing NPC templates;
+leave unused rows blank. For each member, supply an exact level or minimum and
+maximum levels, with HP where required below. **Remove roster** removes the
+sample on save. With no rosters, the fixed template, level, and size apply.
 
 Example placement metadata:
 
@@ -461,10 +542,35 @@ types use complete captured roster samples on that same placement:
 }
 ```
 
-Create every referenced `NpcTemplate` first. Each sample is one complete
-observed output, not a set of independently rolled members. Keep sides within
-`1..10`, use positive level/HP overrides and ordered positive delay bounds, and
-do not claim that repeated samples reveal Neverlands' complete pool or weights.
+Create every referenced `NpcTemplate` first. A new or changed roster rejects
+unknown template keys before it persists. Referenced templates cannot be
+deleted or have their stable keys renamed, including references from disabled
+placements; display-name changes remain allowed. Existing captured samples remain
+complete observed outputs. Keep sides within `1..10`, use positive level/HP
+overrides and ordered positive delay bounds, and do not claim that repeated
+samples reveal Neverlands' complete pool or weights.
+
+The editor and seed catalog also support explicitly authored policies for
+future content:
+
+| Field | Validated contract |
+|---|---|
+| `encounter_rosters` | 1–64 complete rosters; unique nonblank keys |
+| `members` | 1–10 ordered members with existing NPC template keys |
+| `weight` | Optional integer 1–10,000; omitted means 1 |
+| `level` | Exact positive level; mutually exclusive with a range |
+| `level_min`, `level_max` | Both integers, ordered within 1–1,000; require explicit positive integer `hp` |
+| `encounter_experience_reward` | Optional nonnegative integer |
+| `trauma_percent` | Optional integer 0–100 |
+
+One complete roster is selected using the relative authored weights, then any
+member ranges use the injected server RNG within their bounds. Exact members
+and the existing default weight behavior remain unchanged. A range does not
+scale HP, damage, or other combat statistics; the explicit HP and established
+template/profile remain authoritative. A fixed-width range needs no random
+draw. These configurable capabilities are local authoring policies, not claims
+that Neverlands uses those weights or distributions. No guessed policies are
+added to the captured seed groups.
 An anchor with validated `encounter_rosters` is repeatable: defeating one
 selected roster completes that fight but does not set the placement's defeated
 state, so an explicit Finish can be followed by a new passive schedule and
@@ -485,10 +591,13 @@ templates before placements so runtime remains DB-only.
   encounter data on `TileNpc`.
 - Do not casually reset current HP or defeated/respawn timestamps: those are
   live gameplay state.
+- Clear **Encounter active** for a temporary closure. The resolver omits the
+  disabled anchor; fight startup reloads it under lock and rejects a stale
+  reference from before deactivation.
 - Delete a placement to remove the encounter immediately. World rendering does
   not lazily recreate it.
 - Delete a template only after every placement and combat-history dependency
-  has been resolved.
+  has been resolved, including member references in other placements' rosters.
 
 Seed-owned outdoor NPCs originate in
 `config/gameplay/outdoor_npcs.yml`. A later seed run may restore their template
@@ -598,7 +707,10 @@ its own audit event.
 | Redirected away from `/manage` | The user lacks the exact `admin` role. |
 | HTTP 422 with JSON error | Fix syntax and ensure the top-level value is an object. |
 | HTTP 422 with coordinate/type/schema error | The owning model rejected invalid or unsupported content; do not bypass it. |
+| HTTP 422 for a resource group or roster | Check stable keys, existing NPC references, boolean activation, group/member limits, ordered level bounds, and explicit HP for ranges. |
+| HTTP 422 when activating a mine | The entrance placement exists, but its interior is still unimplemented; keep it inactive. |
 | Delete returns to detail with an alert | A dependency protects the record; remove/move the leaf dependency first. |
+| NPC key edit or template deletion is rejected despite no direct placement | Another cell's complete roster references that key, possibly in an inactive anchor; resolve the roster reference first. |
 | Change disappears after `bin/rails db:seed` | The row is seed-owned; update the baseline declaration if the change is permanent. |
 | Resource is visible but has no action | The action may be inactive/unimplemented or no valid offer was generated. |
 | NPC disappears and returns after seed | Its source-backed YAML declaration still exists. |
@@ -857,9 +969,13 @@ Current management coverage lives in:
 - `spec/requests/manage/content_management_spec.rb`;
 - `spec/system/manage_content_spec.rb`;
 - `spec/services/manage/content_mutation_spec.rb`;
+- `spec/services/manage/cell_editor_attributes_spec.rb`;
 - `spec/queries/manage/paginated_relation_spec.rb`;
 - `spec/models/management_audit_event_spec.rb`;
 - `spec/models/open_world_seed_spec.rb`;
+- `spec/models/cell_content_authoring_spec.rb`;
+- `spec/models/npc_template_spec.rb` for roster dependencies and competing writer locks;
+- `spec/jobs/tile_npc_respawn_job_spec.rb`;
 - World/City model, resolver, action-offer, request, view, and system specs
   listed in their feature handbooks.
 
@@ -890,11 +1006,14 @@ Shared management framework:
 - `app/policies/manage_policy.rb`
 - `app/queries/manage/paginated_relation.rb`
 - `app/services/manage/content_mutation.rb`
+- `app/services/manage/world_cell_attributes.rb`
+- `app/services/manage/tile_npc_attributes.rb`
 - `app/models/management_audit_event.rb`
 - `app/helpers/manage_helper.rb`
 - `app/views/layouts/manage.html.erb`
 - `app/views/manage/shared/`
 - `app/assets/stylesheets/manage.css`
+- `app/javascript/controllers/manage_collection_controller.js`
 - `db/migrate/20260729120000_create_management_audit_events.rb`
 
 Current resource adapters:
@@ -907,6 +1026,15 @@ Current resource adapters:
 - `app/controllers/manage/city_hotspots_controller.rb`
 - `app/controllers/manage/audit_events_controller.rb`
 - `app/views/manage/`
+
+`Manage::WorldCellAttributes` receives permitted editor attributes and the
+current cell, returning one assignment hash for the existing metadata owner.
+`Manage::TileNpcAttributes` does the same for activation, encounter size, and
+complete roster/member rows; it retains unedited metadata only for matching
+stable sample/member identities. Both normalize form values without database
+writes. The existing model validations and `Manage::ContentMutation` own
+persistence and auditing. `manage_collection_controller.js` adds/removes bounded
+form rows only; it does not decide valid content or gameplay availability.
 
 Runtime and baseline owners remain in the feature handbooks. Extend those
 owners; do not duplicate them under `Manage`.

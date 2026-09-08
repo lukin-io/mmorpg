@@ -58,6 +58,25 @@ RSpec.describe Game::Movement::AcceptMove do
     expect(result.command.reload.metadata["fatigue_gain"]).to eq(2)
   end
 
+  it "snapshots configured fatigue once while retaining the already offered travel duration" do
+    data = YAML.safe_load_file(Game::World::Rules::CONFIG_PATH, aliases: false)
+    data.fetch("movement")["base_seconds"] = 60
+    data.fetch("fatigue").merge!("movement_gain_min" => 3, "movement_gain_max" => 3)
+    rules = Game::World::Rules.new(data:)
+    command = offered_move
+    rng = instance_double(Random)
+    expect(rng).to receive(:rand).with(3..3).once.and_return(3)
+
+    result = described_class.new(character:, action_key: command.action_key, rules:, rng:).call
+
+    expect(result.command.reload.metadata["fatigue_gain"]).to eq(3)
+    expect(result.command.ends_at - result.command.started_at).to eq(30)
+    expect {
+      described_class.new(character:, action_key: command.action_key, rules:, rng:).call
+    }.to raise_error(Game::Movement::MovementViolationError, /already in progress/)
+    expect(command.reload.metadata["fatigue_gain"]).to eq(3)
+  end
+
   it "rejects movement at the 86 percent fatigue boundary" do
     character.update!(fatigue_percent: 86, fatigue_updated_at: Time.current)
     command = offered_move

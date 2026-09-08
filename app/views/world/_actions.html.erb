@@ -5,7 +5,13 @@
 %>
 
 <% if @active_world_action.present? %>
-  <button type="button" class="nl-nav-link nl-world-action-button" disabled><%= @active_world_action.metadata["label"].presence || "Look Around" %></button>
+  <% locked_actions = Array(@tile_state&.local_actions) %>
+  <% locked_actions.each do |action| %>
+    <button type="button" class="nl-nav-link nl-world-action-button" disabled><%= action["label"].presence || MapTileTemplate.default_local_action_label(action["type"]) %></button>
+  <% end %>
+  <% unless locked_actions.any? { |action| MapTileTemplate.world_action_type_for(action["type"]) == @active_world_action.action_type } %>
+    <button type="button" class="nl-nav-link nl-world-action-button" disabled><%= @active_world_action.metadata["label"].presence || "Action in progress" %></button>
+  <% end %>
 <% end %>
 
 <% if @movement_state&.locked_reason == :fatigued %>

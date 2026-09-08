@@ -41,9 +41,24 @@ module Game
       attr_reader :tile_npc, :rng
 
       def sample_index(samples)
+        unless samples.size.between?(1, TileNpc::MAX_ROSTER_SAMPLES)
+          raise InvalidRosterError, "NPC encounter roster count is unsupported."
+        end
+        weights = samples.map do |sample|
+          value = normalized_hash!(sample, "NPC encounter roster is not documented.").fetch("weight", 1)
+          unless value.is_a?(Integer) && value.between?(1, TileNpc::MAX_ROSTER_WEIGHT)
+            raise InvalidRosterError, "NPC encounter roster weight is unsupported."
+          end
+          value
+        end
         return 0 if samples.one?
 
-        rng.rand(samples.length)
+        ticket = rng.rand(weights.sum)
+        weights.each_with_index do |weight, index|
+          return index if ticket < weight
+
+          ticket -= weight
+        end
       end
 
       def build_selection(raw_sample)
@@ -68,7 +83,7 @@ module Game
           )
           Member.new(
             npc_template: template,
-            level: positive_member_value(member, "level", template.level),
+            level: member_level(member, template.level),
             max_hp: positive_member_value(member, "hp", template.health),
             metadata: member_metadata
           )
@@ -140,6 +155,20 @@ module Game
         return fallback unless member.key?(key)
 
         positive_integer(member[key]) || raise(InvalidRosterError, "NPC combat parameters are not documented.")
+      end
+
+      # A range is an explicit authoring policy, never an inferred source
+      # probability. Its HP must be supplied; level does not invent combat stats.
+      def member_level(member, fallback)
+        return positive_member_value(member, "level", fallback) unless member.key?("level_min") || member.key?("level_max")
+
+        minimum = member["level_min"]
+        maximum = member["level_max"]
+        if TileNpc.member_level_range_errors(member).any?
+          raise InvalidRosterError, "NPC encounter level range is not documented."
+        end
+
+        minimum == maximum ? minimum : rng.rand(minimum..maximum)
       end
 
       def positive_integer(value)

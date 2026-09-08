@@ -19,9 +19,13 @@ Primary sources:
 - `doc/design/reference/world/observations/2026-05-20_outdoor_npc_resource.md`
 - `doc/design/reference/world/observations/2026-09-07_forpost_grid_and_action_audit.md`
 
-The wiki establishes the direction: a matching binary profession perk grants
-access to the activity, and a profession-specific counter improves through
-use. Live inventory observations also show separate production/resource
+The wiki distinguishes access perks from profession-specific counters that
+improve through use. This must not become a universal gate: the September 8
+user clarification explicitly requires no fishing or drinking skill gate;
+successful fishing grows its separate proficiency counter. Digging remains
+skill-dependent. The Fisher article's access wording differs and remains
+recorded in `doc/design/reference/world/observations/2026-09-08_cell_content_and_world_rules.md`.
+Live inventory observations also show separate production/resource
 families. These facts do not establish exact tools, timers, success curves,
 counter gains, yields, depletion, sale values, or interruption behavior.
 
@@ -37,7 +41,8 @@ ship a generic profession framework with many empty activity types.
 
 ## Rules
 
-- A profession perk and a profession-use counter are separate values.
+- A profession perk and a profession-use counter are separate values; a
+  nonzero counter is not automatically an activity prerequisite.
 - Profession counters grow through the matching activity, not through the
   normal combat/peace allocation form.
 - World owns eligible cells and action offers.
@@ -62,10 +67,19 @@ delivery gap in `doc/features/world.md`, section 19; it does not block region,
 movement, entrance, or cell-chat work. This scope decision supplies no new
 yield, eligibility threshold, or success formula.
 
+The September 8 task keeps successful fishing and its proficiency growth
+pending the user's demonstration. The supplied Fishing `[0272]` screenshot
+establishes the separate displayed counter, not a gain rate or catch table.
+World ships the captured two-point sip with a 60-second lock and the no-bait
+fishing entry with a 30-second lock. Successful casts, catches, proficiency
+growth and digging outcomes remain unavailable. Equipped rods and bait belong
+to that future fishing flow; they are distinct from a skill requirement. No fishing/drinking skill gate should be added to
+resolve the missing tool, timer, inventory or result contract.
+
 One profession is a justified MVP candidate only after a controlled Neverlands
 capture records:
 
-1. entry and eligibility, including the exact perk;
+1. entry and eligibility, including a perk only when that activity requires it;
 2. required tool/equipment and failure without it;
 3. action timer and fatigue/resource costs;
 4. success, failure, empty-result, and interruption responses;

@@ -185,7 +185,7 @@ module Game
       def location_label
         return aboard_journey.route_label if aboard_journey
         return current_city_room.fetch(:label) if current_city_room
-        return entrance&.presence_label || position.zone.display_name unless location
+        return entrance&.presence_label || cell_presence_label || position.zone.display_name unless location
 
         case room
         when :village
@@ -196,6 +196,17 @@ module Game
         else
           location.presence_label
         end
+      end
+
+      # Only the viewer's exact outdoor cell is read. A display label never
+      # changes the stable coordinate/room key used for chat and player culling.
+      def cell_presence_label
+        return unless position.zone.outdoor?
+        return @cell_presence_label if defined?(@cell_presence_label)
+
+        @cell_presence_label = MapTileTemplate.find_by(
+          zone: position.zone.name, x: position.x, y: position.y
+        )&.presence_label
       end
     end
   end

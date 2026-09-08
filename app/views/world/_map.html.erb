@@ -1,6 +1,7 @@
 <%
-  grid_width = nearby_tiles.first&.size || 1
-  grid_height = nearby_tiles.size
+  map_buffer = local_assigns.fetch(:map_buffer, @map_buffer)
+  grid_width = map_buffer ? (Game::World::MapBuffer::X_RADIUS * 2 + 1) : (nearby_tiles.first&.size || 1)
+  grid_height = map_buffer ? (Game::World::MapBuffer::Y_RADIUS * 2 + 1) : nearby_tiles.size
   tile_size = 100
   visible_columns = [grid_width - 2, 1].max
   visible_rows = [grid_height - 2, 1].max
@@ -43,6 +44,16 @@
 
 <div class="nl-map-container"
      data-controller="nl-world-map"
+     data-action="turbo:before-stream-render@document->nl-world-map#renderMapStream turbo:frame-missing@document->nl-world-map#recoverFrameNavigation"
+     data-map-refresh="<%= request.format.turbo_stream? %>"
+     data-map-buffer="<%= map_buffer&.token %>"
+     data-map-base="<%= map_buffer&.base_token %>"
+     data-map-revision="<%= map_buffer&.revision %>"
+     data-map-zone="<%= zone.id %>"
+     data-map-min-x="<%= position.x - grid_width / 2 %>"
+     data-map-min-y="<%= position.y - grid_height / 2 %>"
+     data-map-columns="<%= grid_width %>"
+     data-map-rows="<%= grid_height %>"
      data-nl-world-map-player-x-value="<%= position.x %>"
      data-nl-world-map-player-y-value="<%= position.y %>"
      data-nl-world-map-move-url-value="<%= move_world_path %>"
@@ -78,66 +89,9 @@
       <table border="0" cellpadding="0" cellspacing="0">
         <tbody>
           <% nearby_tiles.each_with_index do |row, row_index| %>
-            <tr>
-              <% row.each_with_index do |tile, column_index| %>
-                <%
-                  is_player = tile.x == position.x && tile.y == position.y
-                  destination = destinations_by_coord[[tile.x, tile.y]]
-                  terrain = tile.respond_to?(:terrain_type) ? tile.terrain_type : zone.location_type
-                  tile_meta = tile.respond_to?(:metadata) ? (tile.metadata || {}) : {}
-                  is_walkable = tile.respond_to?(:walkable) ? tile.walkable : !tile_meta["blocked"]
-                  is_available = destination.present? && !timer_active && is_walkable && !is_player
-                  cell_art = Game::World::CellArtCatalog.resolve(tile_meta["cell_art"])
-                  terrain_style = if cell_art
-                    "background-image: url('#{image_path(cell_art.asset)}'); background-position: #{cell_art.background_x}px #{cell_art.background_y}px; background-size: #{cell_art.sheet_width}px #{cell_art.sheet_height}px;"
-                  else
-                    terrain_x = -(tile.x.to_i.modulo(10) * tile_size)
-                    terrain_y = -(tile.y.to_i.modulo(10) * tile_size)
-                    "background-image: url('#{image_path('world/forpost-terrain.png')}'); background-position: #{terrain_x}px #{terrain_y}px; background-size: 1000px 1000px;"
-                  end
-                %>
-
-                <td class="nl-map-tile nl-tile-bg--<%= terrain %> <%= 'nl-map-tile--outside' if tile_meta['out_of_bounds'] %>"
-                    id="tile_<%= tile.x %>_<%= tile.y %>"
-                    data-x="<%= tile.x %>"
-                    data-y="<%= tile.y %>"
-                    data-terrain="<%= terrain %>"
-                    data-cell-art-key="<%= cell_art&.key %>"
-                    style="<%= terrain_style %>">
-
-                  <% if is_available %>
-                    <button type="button"
-                            class="nl-tile-clickable nl-tile-clickable--available"
-                            data-nl-world-map-target="destination"
-                            data-action="click->nl-world-map#clickTile"
-                            data-available="true"
-                            data-direction="<%= destination.direction %>"
-                            data-target-x="<%= destination.target_x %>"
-                            data-target-y="<%= destination.target_y %>"
-                            data-action-key="<%= destination.action_key %>"
-                            data-travel-seconds="<%= destination.travel_seconds %>"
-                            aria-label="Move <%= destination.direction %>">
-                      <span class="nl-destination-marker" aria-hidden="true"></span>
-                      <span class="nl-visually-hidden">Move <%= destination.direction %></span>
-                    </button>
-                  <% elsif is_player %>
-                    <div class="nl-tile-player" aria-hidden="true"></div>
-                  <% else %>
-                    <div class="nl-tile-inactive" aria-hidden="true"></div>
-                  <% end %>
-
-                  <% if tile_meta["building"].present? %>
-                    <div class="nl-tile-entity nl-tile-building nl-tile-building--<%= tile_meta['building_kind'] %>"
-                         title="<%= tile_meta['building'] %>">
-                      <% if tile_meta["building_kind"] == "village" %>
-                        <span class="nl-tile-village-hut" aria-hidden="true"></span>
-                      <% elsif tile_meta["building_kind"] == "city" %>
-                        <span class="nl-tile-city-gate" aria-hidden="true">🏰</span>
-                      <% end %>
-                      <span class="nl-entity-label nl-visually-hidden"><%= tile_meta["building"] %></span>
-                    </div>
-                  <% end %>
-                </td>
+            <tr data-map-y="<%= position.y - grid_height / 2 + row_index %>">
+              <% row.each do |tile| %>
+                <%= render "world/map_cell", tile:, position:, zone:, destinations_by_coord:, timer_active:, tile_size: %>
               <% end %>
             </tr>
           <% end %>
@@ -180,9 +134,27 @@
                   action: "turbo:submit-end->nl-world-map#submissionFinished turbo:fetch-request-error->nl-world-map#submissionFailed"
                 },
                 style: "display: none;" do |f| %>
+    <%= f.hidden_field :map_buffer, value: map_buffer&.token %>
     <%= f.hidden_field :direction, id: "movement-direction", value: "" %>
     <%= f.hidden_field :target_x, id: "movement-target-x", value: "" %>
     <%= f.hidden_field :target_y, id: "movement-target-y", value: "" %>
     <%= f.hidden_field :action_key, id: "movement-action-key", value: "" %>
+  <% end %>
+
+  <%= form_with url: world_path, method: :get,
+      data: {turbo_stream: true, turbo_frame: "game-map", nl_world_map_target: "refreshForm",
+             action: "turbo:submit-end->nl-world-map#refreshFinished turbo:fetch-request-error->nl-world-map#refreshFailed"},
+      hidden: true do |f| %>
+    <%= f.hidden_field :map_buffer, value: map_buffer&.token %>
+  <% end %>
+
+  <% if map_buffer&.base_token %>
+    <template data-map-controls>
+      <% ([{x: position.x, y: position.y, destination: nil}] + movement_destinations.map { |destination| {x: destination.target_x, y: destination.target_y, destination:} }).each do |control| %>
+        <div data-x="<%= control[:x] %>" data-y="<%= control[:y] %>">
+          <%= render "world/map_control", destination: control[:destination], is_player: control[:destination].nil?, timer_active: %>
+        </div>
+      <% end %>
+    </template>
   <% end %>
 </div>

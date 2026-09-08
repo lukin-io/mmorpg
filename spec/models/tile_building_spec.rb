@@ -80,7 +80,7 @@ RSpec.describe TileBuilding, type: :model do
 
       expect(location).not_to be_valid
       expect(location).not_to be_accessible
-      expect(location.errors[:metadata]).to include("location kind is unsupported")
+      expect(location.errors[:metadata]).to include("mine entrance must remain inactive until its interior is implemented")
     end
 
     it "requires a documented building type" do

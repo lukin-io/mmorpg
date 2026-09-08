@@ -198,6 +198,33 @@ if defined?(MapTileTemplate)
       }
     }
 
+    # September 8 live pond: source [1007,1002], reached from the eastern
+    # gate. Drinking is captured; fishing's successful profession loop remains
+    # deferred. Cell art and action eligibility are independent authored data.
+    existing_pond = MapTileTemplate.find_by(zone: outdoor_zone_name, x: 13, y: 10)
+    outdoor_tiles << {
+      zone: outdoor_zone_name,
+      x: 13,
+      y: 10,
+      terrain_type: "outdoor",
+      passable: existing_pond ? existing_pond.passable : true,
+      metadata: {
+        "source_map" => "m_1007_1002",
+        "source_coordinates" => [1007, 1002],
+        "source_observation" => "2026-09-08_cell_content_and_world_rules",
+        "presence_label" => "Outpost Surroundings, Pond",
+        "cell_art" => {"key" => "forpost_pond", "column" => 2, "row" => 2},
+        "local_actions" => [
+          {"type" => "resource_search", "source_id" => "look", "label" => "Look Around", "active" => true,
+           "result_message" => "Nothing found."},
+          {"type" => "drinking", "source_id" => "dri", "label" => "Drink", "active" => true},
+          {"type" => "fishing", "source_id" => "fis", "label" => "Fish", "active" => true}
+        ]
+      }.merge(existing_pond&.metadata.to_h || {}).merge(
+        "cell_art" => {"key" => "forpost_pond", "column" => 2, "row" => 2}
+      )
+    }
+
     # The 2026-09-07 Forpost gate/village route uses local = source - [994,992].
     # These exact cells were absent from the surrounding server offers. Keep
     # the captured route's unavailable cells explicit rather than allowing
@@ -230,6 +257,26 @@ if defined?(MapTileTemplate)
     tile.save!
   end
 
+  # One cohesive project-owned landscape is displayed as 25 adjacent slices.
+  # This visual pass does not author gameplay in its surrounding cells:
+  # preserve existing passability/metadata and the sparse default for new rows.
+  # Only the captured pond center above supplies Look, Drink and Fish.
+  if outpost_surroundings
+    pond_cells = MapTileTemplate.where(zone: outpost_surroundings.name, x: 11..15, y: 8..12)
+      .index_by { |tile| [tile.x, tile.y] }
+    (8..12).each do |y|
+      (11..15).each do |x|
+        tile = pond_cells[[x, y]] || MapTileTemplate.new(
+          zone: outpost_surroundings.name, x:, y:, terrain_type: "outdoor", passable: true
+        )
+        tile.metadata = {"source_map" => "forpost_pond_neighborhood_art"}.merge(tile.metadata.to_h).merge(
+          "cell_art" => {"key" => "forpost_pond", "column" => x - 11, "row" => y - 8}
+        )
+        tile.save! if tile.new_record? || tile.has_changes_to_save?
+      end
+    end
+  end
+
   if outpost_surroundings
     current_gate_cells = Game::World::CityCatalog::GATES.values.map { |gate| gate["local_coordinates"] }
     MapTileTemplate.where(zone: outpost_surroundings.name).find_each do |authored_tile|
@@ -245,7 +292,7 @@ if defined?(TileNpc) && defined?(NpcTemplate)
   seeded_tile_npc_ids = []
   outdoor_npc_templates = {}
   placement_metadata_keys = %i[
-    combat_profile encounter_count encounter_experience_reward encounter_rosters
+    active combat_profile encounter_count encounter_experience_reward encounter_rosters
     encounter_selection_mode passive_delay_windows trauma_percent
   ].freeze
 

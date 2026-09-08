@@ -5,6 +5,10 @@ require "rails_helper"
 RSpec.describe TileNpc, type: :model do
   include ActiveSupport::Testing::TimeHelpers
 
+  before do
+    %w[rat bandit robber].each { |key| create(:npc_template, npc_key: key) }
+  end
+
   describe "validations" do
     it "accepts hostile tile NPCs" do
       expect(build(:tile_npc, npc_role: "hostile")).to be_valid

@@ -106,6 +106,49 @@ RSpec.describe Game::World::Presence do
     expect(described_class.new(character:).call).to have_attributes(label: "Outpost", count: 1)
   end
 
+  it "uses an authored exact-cell label without changing its audience identity" do
+    position.update!(x: 13, y: 10)
+    cell = create(:map_tile_template, zone: zone.name, x: 13, y: 10,
+      metadata: {"presence_label" => "Outpost Surroundings, Pond"})
+    neighbor = present_character(name: "PondNeighbor", x: 13, y: 10)
+    present_character(name: "AdjacentPondNeighbor", x: 12, y: 10)
+    presence = described_class.new(character:)
+    queries = []
+    subscriber = ->(event) { queries << event.payload[:sql] if event.payload[:sql].match?(/SELECT .*FROM "map_tile_templates"/) }
+    result = nil
+    ActiveRecord::Base.uncached do
+      ActiveSupport::Notifications.subscribed(subscriber, "sql.active_record") { result = presence.call }
+    end
+
+    expect(result).to have_attributes(label: "Outpost Surroundings, Pond", count: 2)
+    expect(result.players).to contain_exactly(character, neighbor)
+    expect(presence.context_key).to eq("zone:#{zone.id}:cell:13:10")
+    expect(queries.size).to eq(1)
+    expect(queries.first).to include('"map_tile_templates"."zone"', '"map_tile_templates"."x"', '"map_tile_templates"."y"', "LIMIT")
+
+    cell.update!(metadata: {"presence_label" => "Renamed Pond"})
+    refreshed = described_class.new(character:)
+    expect(refreshed.call.label).to eq("Renamed Pond")
+    expect(refreshed.context_key).to eq(presence.context_key)
+  end
+
+  it "does not borrow labels from neighboring cells or identical coordinates in other regions" do
+    position.update!(x: 13, y: 10)
+    other_region = create(:zone, :mvp_outdoor_region)
+    create(:map_tile_template, zone: zone.name, x: 12, y: 10, metadata: {"presence_label" => "Nearby pond"})
+    create(:map_tile_template, zone: other_region.name, x: 13, y: 10, metadata: {"presence_label" => "Other region pond"})
+
+    expect(described_class.new(character:).call.label).to eq(zone.display_name)
+  end
+
+  it "keeps validated entrance and room labels ahead of a generic cell label" do
+    create(:map_tile_template, zone: zone.name, x: 4, y: 6, metadata: {"presence_label" => "Outdoor clearing"})
+    expect(described_class.new(character:).call.label).to eq(village.presence_label)
+
+    character.remember_gameplay_context!(name: "world_location", params: {key: village.location_key})
+    expect(described_class.new(character:).call.label).to eq(village.location_presence_label)
+  end
+
   it "counts the full room while returning at most ten sorted rows, which can omit the viewer" do
     12.times { |number| present_character(name: "Neighbor#{number.to_s.rjust(2, '0')}") }
 

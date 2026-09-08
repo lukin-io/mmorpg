@@ -158,6 +158,17 @@
   margin-top: 8px;
 }
 
+.nl-manage-form fieldset {
+  min-width: 0;
+  margin: 8px 0;
+  padding: 7px;
+  border: 1px solid var(--nl-rule-soft);
+}
+
+.nl-manage-form legend,
+.nl-manage-form summary { font-weight: 700; }
+.nl-manage-form summary { cursor: pointer; padding: 5px 0; }
+
 .nl-manage-field-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

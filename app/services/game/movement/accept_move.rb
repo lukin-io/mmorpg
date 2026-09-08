@@ -7,7 +7,7 @@ module Game
     class AcceptMove
       Result = Struct.new(:command, :position, :interruption, keyword_init: true)
 
-      def initialize(character:, action_key: nil, target_x: nil, target_y: nil, direction: nil, respawn_service: nil, rng: Random.new)
+      def initialize(character:, action_key: nil, target_x: nil, target_y: nil, direction: nil, respawn_service: nil, rng: Random.new, rules: Game::World::Rules.default)
         @character = character
         @action_key = action_key.presence
         @target_x = target_x.presence&.to_i
@@ -15,6 +15,7 @@ module Game
         @direction = direction.presence&.to_sym
         @respawn_service = respawn_service || Game::Movement::RespawnService.new(character:)
         @rng = rng
+        @rules = rules
       end
 
       def call
@@ -49,7 +50,7 @@ module Game
               started_at: now,
               ends_at: now + command.travel_seconds.seconds,
               error_message: nil,
-              metadata: command.metadata.to_h.merge("fatigue_gain" => rng.rand(1..2))
+              metadata: command.metadata.to_h.merge("fatigue_gain" => rules.movement_fatigue_gain(rng:))
             )
             cancel_sibling_offers!(command)
 
@@ -60,10 +61,10 @@ module Game
 
       private
 
-      attr_reader :character, :action_key, :target_x, :target_y, :direction, :respawn_service, :rng
+      attr_reader :character, :action_key, :target_x, :target_y, :direction, :respawn_service, :rng, :rules
 
       def ensure_not_fatigued!
-        return unless Characters::FatigueService.new(character:).outdoor_actions_blocked?
+        return unless Characters::FatigueService.new(character:, rules:).outdoor_actions_blocked?
 
         raise violation("Too fatigued to move")
       end

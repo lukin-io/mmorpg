@@ -19,8 +19,8 @@ class WorldController < ApplicationController
 
   # The live world keeps one native 100px buffer cell outside a 13x7 desktop
   # viewport. Narrow clients retain this 15x9 surface and pan it responsively.
-  MAP_RENDER_X_RADIUS = 7
-  MAP_RENDER_Y_RADIUS = 4
+  MAP_RENDER_X_RADIUS = Game::World::MapBuffer::X_RADIUS
+  MAP_RENDER_Y_RADIUS = Game::World::MapBuffer::Y_RADIUS
 
   before_action :ensure_active_character!
   before_action :ensure_character_position!
@@ -36,11 +36,12 @@ class WorldController < ApplicationController
     end
 
     Game::World::ResumeContext.new(character: current_character).remember_world!
-    prepare_presence_context
     consume_world_action_result
+    incremental_response = @map_buffer && incremental_map_request?
+    incremental_response ? record_current_session_activity : prepare_presence_context
 
-    # Handle both HTML and Turbo Stream requests with full page render
-    # Turbo Stream requests can come from redirects after building entry
+    # Native reads/entry redirects render a complete page; timed map refreshes
+    # return one coherent set of bounded Turbo fragments.
     respond_to do |format|
       format.html do
         if city_zone?
@@ -50,6 +51,11 @@ class WorldController < ApplicationController
         end
       end
       format.turbo_stream do
+        if incremental_response
+          render_world_streams
+          next
+        end
+
         # For Turbo Stream requests (e.g., after enter_building redirect),
         # render full HTML page to avoid "Content missing"
         # Use formats: [:html] to find the .html.erb template
@@ -114,7 +120,6 @@ class WorldController < ApplicationController
 
     if result.success
       if result.redirect_url.present?
-        mark_city_arena_entry!(result.hotspot)
         # Navigate to a documented implemented feature page.
         respond_to do |format|
           format.html { redirect_to result.redirect_url, notice: result.message }
@@ -256,7 +261,7 @@ class WorldController < ApplicationController
     return unless offer_id.is_a?(Integer) && offer_id.positive? && @position.zone.outdoor?
 
     offer = WorldActionOffer.at_tile(@position.zone, @position.x, @position.y)
-      .where(character: current_character, action_type: "search_resources", status: %i[accepted completed])
+      .where(character: current_character, action_type: WorldActionOffer::TIMED_LOCAL_ACTION_TYPES, status: %i[accepted completed])
       .find_by(id: offer_id)
     @world_action_result = offer&.consume_local_action_result!
   end
@@ -308,7 +313,7 @@ class WorldController < ApplicationController
     @movement_remaining_seconds = @active_movement&.remaining_seconds || 0
     @movement_cooldown = @movement_destinations.first&.travel_seconds ||
       @active_movement&.travel_seconds ||
-      Game::Movement::TravelTime::BASE_TRAVEL_SECONDS
+      Game::Movement::TravelTime.seconds(wanderer_level: current_character.passive_skill_level(:wanderer))
 
     @tile_state = @active_movement ? nil : Game::World::TileStateResolver.new(
       character: current_character,
@@ -321,7 +326,11 @@ class WorldController < ApplicationController
     ).call
 
     @tile = current_tile
-    @nearby_tiles = nearby_tiles_with_features
+    @map_buffer = Game::World::MapBuffer.new(
+      position: @position,
+      token: (params[:map_buffer] if request.format.turbo_stream?)
+    ).call
+    @nearby_tiles = @map_buffer.rows
     @tile_building = tile_building_at_current_tile
     @available_actions = available_actions
   end
@@ -364,60 +373,6 @@ class WorldController < ApplicationController
       passable: @position.zone.outdoor?,
       metadata: {"sparse_default" => true}
     )
-  end
-
-  def nearby_tiles_with_features
-    zone = @position.zone
-    x_range = ((@position.x - MAP_RENDER_X_RADIUS)..(@position.x + MAP_RENDER_X_RADIUS))
-    y_range = ((@position.y - MAP_RENDER_Y_RADIUS)..(@position.y + MAP_RENDER_Y_RADIUS))
-    templates = MapTileTemplate.in_zone(zone.name).in_area(x_range, y_range).index_by { |tile| [tile.x, tile.y] }
-    buildings = TileBuilding.active.in_zone(zone.name)
-      .where(x: x_range, y: y_range)
-      .index_by { |building| [building.x, building.y] }
-
-    y_range.map do |y|
-      x_range.map do |x|
-        in_bounds = x.between?(0, zone.width - 1) && y.between?(0, zone.height - 1)
-        template = templates[[x, y]] if in_bounds
-        tile = in_bounds ? (template || missing_tile(x, y)) : out_of_bounds_tile(x, y)
-        metadata = (tile.metadata || {}).dup
-        metadata = add_visible_tile_features(
-          metadata,
-          building: (buildings[[x, y]] if in_bounds)
-        )
-
-        OpenStruct.new(
-          x:,
-          y:,
-          terrain_type: tile.terrain_type,
-          walkable: tile.walkable,
-          passable: tile.respond_to?(:passable) ? tile.passable : tile.walkable,
-          metadata:
-        )
-      end
-    end
-  end
-
-  def out_of_bounds_tile(x, y)
-    OpenStruct.new(
-      x:,
-      y:,
-      terrain_type: "outdoor",
-      walkable: false,
-      passable: false,
-      metadata: {"out_of_bounds" => true}
-    )
-  end
-
-  # Buildings are visible authored cell content. Outdoor NPC placement remains
-  # server-only and is revealed only when its encounter interrupts an action.
-  def add_visible_tile_features(metadata, building:)
-    if building
-      metadata["building"] = building.name
-      metadata["building_kind"] = building.location? ? building.location_kind : building.building_type
-    end
-
-    metadata
   end
 
   def available_actions
@@ -471,29 +426,47 @@ class WorldController < ApplicationController
     service.building_info
   end
 
-  def render_map_update
-    prepare_overworld_view
+  def incremental_map_request?
+    request.format.turbo_stream? && params[:map_buffer].present?
+  end
 
-    render turbo_stream: [
-      turbo_stream.update("game-map", partial: "world/map", locals: {
-        position: @position,
-        nearby_tiles: @nearby_tiles,
-        zone: @zone,
-        tile_data: {},
+  def render_map_update
+    current_character.with_lock do
+      prepare_overworld_view
+      render_world_streams
+    end
+  end
+
+  def render_world_streams(error: nil)
+    streams = [
+      world_stream("game-map", partial: "world/map", locals: {
+        position: @position, nearby_tiles: @nearby_tiles, zone: @zone,
         movement_destinations: @movement_destinations,
         active_movement: @active_movement,
         movement_remaining_seconds: @movement_remaining_seconds
       }),
-      turbo_stream.update("location-info", partial: "world/location_info", locals: {
-        position: @position,
-        tile: @tile,
-        zone: @zone
+      world_stream("location-info", partial: "world/location_info", locals: {
+        position: @position, tile: @tile, zone: @zone
       }),
-      turbo_stream.update("available-actions", partial: "world/actions", locals: {
-        available_actions: @available_actions,
-        position: @position
+      world_stream("available-actions", partial: "world/actions", locals: {
+        available_actions: @available_actions, position: @position
       })
     ]
+    if @world_action_result.present?
+      streams << world_stream("world-action-result", partial: "world/action_result",
+        locals: {message: @world_action_result})
+    end
+    if error
+      streams << world_stream("flash", partial: "shared/flash",
+        locals: {type: :alert, message: error})
+    end
+    render turbo_stream: streams, status: error ? :unprocessable_content : :ok
+  end
+
+  def world_stream(target, partial:, locals:)
+    helpers.turbo_stream_action_tag(:update, target:,
+      template: render_to_string(partial:, locals:, formats: [:html]),
+      "data-world-map-revision": @map_buffer.revision)
   end
 
   def render_error(message)
@@ -540,23 +513,9 @@ class WorldController < ApplicationController
   def render_movement_error(message)
     return render_error(message) if city_zone?
 
-    prepare_overworld_view
-
-    render turbo_stream: [
-      turbo_stream.update("flash", partial: "shared/flash", locals: {type: :alert, message: message}),
-      turbo_stream.update("game-map", partial: "world/map", locals: {
-        position: @position,
-        nearby_tiles: @nearby_tiles,
-        zone: @zone,
-        tile_data: {},
-        movement_destinations: @movement_destinations,
-        active_movement: @active_movement,
-        movement_remaining_seconds: @movement_remaining_seconds
-      }),
-      turbo_stream.update("available-actions", partial: "world/actions", locals: {
-        available_actions: @available_actions,
-        position: @position
-      })
-    ]
+    current_character.with_lock do
+      prepare_overworld_view
+      render_world_streams(error: message)
+    end
   end
 end

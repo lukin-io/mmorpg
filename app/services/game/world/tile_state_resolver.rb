@@ -11,6 +11,7 @@ module Game
         :building,
         :building_info,
         :local_actions,
+        :resource_groups,
         keyword_init: true
       )
 
@@ -26,7 +27,8 @@ module Game
           npc_info: npc_info,
           building: building,
           building_info: building_info,
-          local_actions: local_actions
+          local_actions: local_actions,
+          resource_groups: tile&.active_resource_groups || []
         )
       end
 

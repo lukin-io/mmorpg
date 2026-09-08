@@ -3,6 +3,18 @@
 require "rails_helper"
 
 RSpec.describe MapTileTemplate, type: :model do
+  describe "presence label" do
+    it "accepts a bounded authored label and rejects malformed labels" do
+      expect(build(:map_tile_template, metadata: {"presence_label" => "Outpost Surroundings, Pond"})).to be_valid
+      [nil, "", "  ", 123, {}, "a" * 121].each do |label|
+        cell = build(:map_tile_template, metadata: {"presence_label" => label})
+        expect(cell).not_to be_valid
+        expect(cell.presence_label).to be_nil
+      end
+      expect(build(:map_tile_template, metadata: {"presence_label" => "a" * 120})).to be_valid
+    end
+  end
+
   describe "terrain type" do
     it "accepts outdoor cells" do
       expect(build(:map_tile_template, terrain_type: "outdoor")).to be_valid
@@ -205,11 +217,11 @@ RSpec.describe MapTileTemplate, type: :model do
 
       expect(tile).to be_valid
       expect(MapTileTemplate.world_action_type_for("fishing")).to eq("fish")
-      expect(MapTileTemplate.local_action_implemented?("fishing")).to be false
+      expect(MapTileTemplate.local_action_implemented?("fishing")).to be true
       expect(tile.local_action("fishing")).to include("source_id" => "fis")
     end
 
-    it "marks only the captured launch action as implemented" do
+    it "marks the captured Look, Drink, and no-bait Fish flows as implemented" do
       expect(described_class::LOCAL_ACTION_DEFINITIONS.transform_values { |definition| definition["source_id"] }).to eq(
         "resource_search" => "look",
         "fishing" => "fis",
@@ -217,7 +229,7 @@ RSpec.describe MapTileTemplate, type: :model do
         "digging" => "dig"
       )
       expect(MapTileTemplate.local_action_implemented?("resource_search")).to be true
-      expect(MapTileTemplate.local_action_implemented?("drinking")).to be false
+      expect(MapTileTemplate.local_action_implemented?("drinking")).to be true
       expect(MapTileTemplate.local_action_implemented?("digging")).to be false
       expect(MapTileTemplate.local_action_implemented?(nil)).to be false
     end

@@ -12,7 +12,10 @@ module Manage
       @zones = Zone.where(location_type: "outdoor").order(:name)
     end
 
-    def show; end
+    def show
+      @cell_npc = TileNpc.at_tile(@world_cell.zone, @world_cell.x, @world_cell.y)
+      @cell_building = TileBuilding.at_tile(@world_cell.zone, @world_cell.x, @world_cell.y)
+    end
 
     def new
       @world_cell = MapTileTemplate.new(terrain_type: "outdoor", passable: true, metadata: {})
@@ -57,11 +60,16 @@ module Manage
     end
 
     def parsed_world_cell_params
-      parse_json_attributes(world_cell_params, @world_cell, :metadata)
+      attributes = parse_json_attributes(world_cell_params, @world_cell, :metadata)
+      Manage::WorldCellAttributes.new(attributes:, cell: @world_cell).call if attributes
     end
 
     def world_cell_params
-      params.require(:map_tile_template).permit(:zone, :x, :y, :terrain_type, :passable, :metadata)
+      params.require(:map_tile_template).permit(
+        :zone, :x, :y, :terrain_type, :passable, :metadata, :content_fields,
+        local_actions: MapTileTemplate::LOCAL_ACTION_DEFINITIONS.keys.to_h { |type| [type, [:active, :label]] },
+        resource_groups: [:key, :kind, :label, :active]
+      )
     end
 
     def load_form_options

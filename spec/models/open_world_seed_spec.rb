@@ -8,6 +8,82 @@ RSpec.describe "Open-world seed data", type: :model do
     Rails.application.load_seed
   end
 
+  it "authors the observed pond in the existing outdoor zone with drinking and the empty fishing entry" do
+    load_seed
+    zone = Zone.find_by!(name: "Outpost Surroundings")
+    pond = MapTileTemplate.find_by!(zone: zone.name, x: 13, y: 10)
+
+    expect(Zone.where(location_type: "outdoor").count).to eq(1)
+    expect(pond).to be_passable
+    expect(pond.metadata).to include("source_coordinates" => [1007, 1002])
+    expect(pond.cell_art_presentation).to have_attributes(
+      asset: "world/forpost-pond-landscape.png", column: 2, row: 2,
+      sheet_width: 500, sheet_height: 500
+    )
+    expect(pond.active_local_actions.pluck("type")).to match_array(%w[resource_search drinking fishing])
+    expect(pond.local_action("resource_search")).to include("result_message" => "Nothing found.")
+    expect(MapTileTemplate.local_action_implemented?("drinking")).to be true
+    expect(MapTileTemplate.local_action_implemented?("fishing")).to be true
+    expect { load_seed }.not_to change(MapTileTemplate, :count)
+  end
+
+  it "cuts the pond neighborhood from one continuous sheet without copying the center's actions" do
+    load_seed
+    cells = MapTileTemplate.where(zone: "Outpost Surroundings", x: 11..15, y: 8..12).order(:y, :x).to_a
+
+    expect(cells.size).to eq(25)
+    cells.each do |cell|
+      column = cell.x - 11
+      row = cell.y - 8
+      expect(cell.cell_art).to eq("key" => "forpost_pond", "column" => column, "row" => row)
+      expect(cell.cell_art_presentation).to have_attributes(
+        asset: "world/forpost-pond-landscape.png", background_x: -column * 100, background_y: -row * 100,
+        cell_width: 100, cell_height: 100, sheet_width: 500, sheet_height: 500
+      )
+      next if [cell.x, cell.y] == [13, 10]
+
+      expect(cell.active_local_actions).to be_empty
+      expect(cell.resource_groups).to be_empty
+      expect(cell).to be_passable
+      expect(cell.metadata).not_to have_key("source_coordinates")
+    end
+    expect(TileNpc.where(zone: "Outpost Surroundings", x: 11..15, y: 8..12)).to be_empty
+    expect(TileBuilding.where(zone: "Outpost Surroundings", x: 11..15, y: 8..12)).to be_empty
+  end
+
+  it "preserves gameplay layers and saved state while reconciling the neighborhood artwork" do
+    load_seed
+    region = Zone.find_by!(name: "Outpost Surroundings")
+    center = MapTileTemplate.find_by!(zone: region.name, x: 13, y: 10)
+    center.update!(passable: false, metadata: center.metadata.merge("managed_note" => "Retain pond override"))
+    neighbor = MapTileTemplate.find_by!(zone: region.name, x: 12, y: 10)
+    neighbor.update!(passable: false, metadata: {
+      "source_map" => "authored_neighbor",
+      "resource_groups" => [{"key" => "herbs_review", "kind" => "herbs", "label" => "Review group", "active" => false}],
+      "local_actions" => [{"type" => "digging", "source_id" => "dig", "active" => false}],
+      "cell_art" => {"key" => "forpost_terrain", "column" => 2, "row" => 0}
+    })
+    npc = create(:tile_npc, zone: region.name, x: 12, y: 10, current_hp: 15, metadata: {"active" => false})
+    entrance = create(:tile_building, :world_location, :inactive, zone: region.name, x: 12, y: 10)
+    position = create(:character_position, zone: region, x: 13, y: 10)
+    original_npc = npc.attributes
+    original_entrance = entrance.attributes
+    original_metadata = neighbor.metadata.except("cell_art")
+    original_center = center.metadata.except("cell_art")
+
+    expect { load_seed }.not_to change(MapTileTemplate, :count)
+
+    expect(neighbor.reload).not_to be_passable
+    expect(neighbor.metadata.except("cell_art")).to eq(original_metadata)
+    expect(neighbor.cell_art).to eq("key" => "forpost_pond", "column" => 1, "row" => 2)
+    expect(center.reload).not_to be_passable
+    expect(center.metadata.except("cell_art")).to eq(original_center)
+    expect(npc.reload.attributes).to eq(original_npc)
+    expect(entrance.reload.attributes).to eq(original_entrance)
+    expect(position.reload).to have_attributes(zone: region, x: 13, y: 10)
+    expect { load_seed }.not_to change { neighbor.reload.updated_at }
+  end
+
   it "reproduces the observed Forpost gate, village route, and resource-cell neighbors" do
     load_seed
     region = Zone.find_by!(name: "Outpost Surroundings")

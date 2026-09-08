@@ -56,6 +56,7 @@ RSpec.describe "Airship travel", type: :request do
       expect(response).to have_http_status(:ok)
       document = Nokogiri::HTML(response.body)
       expect(document.css(".nl-airship-tile").size).to eq(21)
+      expect(document.at_css(".nl-airship-cells")["data-zone-id"]).to eq(region.id.to_s)
       expect(document.at_css(".nl-airship-timer").text).to eq("00:10:00")
       expect(document.at_css(".nl-airship-page")["data-nl-airship-deadline-value"]).to eq(departure.iso8601(6))
       expect(document.at_css(".nl-airship-actions form")["data-turbo-confirm"]).to include("will not be refunded")
@@ -91,7 +92,9 @@ RSpec.describe "Airship travel", type: :request do
       get airship_path(format: :json), params: {center_x: 900, phase: "arrived"}
       snapshot = response.parsed_body
       expect(snapshot).to include("phase" => "in_flight", "center_x" => 13.0, "center_y" => 13.0)
-      expect(Nokogiri::HTML.fragment(snapshot.fetch("map_html")).css(".nl-airship-tile").size).to eq(55)
+      map = Nokogiri::HTML.fragment(snapshot.fetch("map_html"))
+      expect(map.css(".nl-airship-tile").size).to eq(55)
+      expect(map.at_css(".nl-airship-cells")["data-zone-id"]).to eq(region.id.to_s)
       expect(snapshot.fetch("velocity_x")).to eq(0.1)
       expect(position.reload).to have_attributes(zone: region, x: 13, y: 13)
       post disembark_airship_path, params: {journey_id: journey.id}

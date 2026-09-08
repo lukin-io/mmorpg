@@ -3,6 +3,22 @@
 require "rails_helper"
 
 RSpec.describe UserSession, type: :model do
+  describe ".recent" do
+    it "uses the configured server freshness boundary and excludes signed-out or unseen sessions" do
+      now = Time.zone.local(2026, 9, 8, 12, 0, 0)
+      data = YAML.safe_load_file(Game::World::Rules::CONFIG_PATH, aliases: false)
+      data.fetch("presence")["freshness_seconds"] = 60
+      rules = Game::World::Rules.new(data:)
+      fresh = create(:user_session, last_seen_at: now - 59.seconds)
+      create(:user_session, last_seen_at: now - 60.seconds)
+      create(:user_session, last_seen_at: now - 61.seconds)
+      create(:user_session, last_seen_at: now, signed_out_at: now)
+      create(:user_session, last_seen_at: nil)
+
+      expect(described_class.recent(at: now, rules:)).to contain_exactly(fresh)
+    end
+  end
+
   describe "#mark_seen!" do
     it "updates last_seen_at for an open session" do
       session = create(:user_session, last_seen_at: 5.minutes.ago)

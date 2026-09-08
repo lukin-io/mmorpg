@@ -3,8 +3,14 @@
   <tr><th>Terrain</th><td><%= @world_cell.terrain_type %></td></tr>
   <tr><th>Passable</th><td><%= management_boolean(@world_cell.passable?) %></td></tr>
   <tr><th>Local actions/resources</th><td><%= @world_cell.local_actions.map { |action| action["label"].presence || action["type"] }.join(", ").presence || "None" %></td></tr>
+  <tr><th>Resource groups</th><td><%= @world_cell.resource_groups.map { |group| "#{group['label']} (#{group['key']}; #{group['active'] == false ? 'inactive' : 'active'})" }.join(", ").presence || "None" %></td></tr>
   <tr><th>Updated</th><td><%= l(@world_cell.updated_at, format: :long) %></td></tr>
 </table>
+<p>
+  <% address = {zone: @world_cell.zone, x: @world_cell.x, y: @world_cell.y} %>
+  <%= link_to "Manage this cell's NPCs", @cell_npc ? edit_manage_tile_npc_path(@cell_npc) : new_manage_tile_npc_path(**address), class: "lbut" %>
+  <%= link_to "Manage this cell's entrance", @cell_building ? edit_manage_tile_building_path(@cell_building) : new_manage_tile_building_path(**address), class: "lbut" %>
+</p>
 <h2 class="invtitle">Metadata</h2>
 <pre class="nl-manage-json"><%= pretty_json(@world_cell.metadata) %></pre>
 <%= render "manage/shared/record_actions",

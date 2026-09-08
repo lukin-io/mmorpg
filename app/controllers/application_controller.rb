@@ -8,6 +8,7 @@ class ApplicationController < ActionController::Base
 
   before_action :authenticate_user!
   before_action :ensure_device_identifier
+  before_action :reject_closed_game_session
   around_action :with_airship_context
   before_action :prepare_game_shell_context, if: :game_shell_context_request?
 
@@ -30,6 +31,22 @@ class ApplicationController < ActionController::Base
   end
 
   private
+
+  # A late concurrent response can restore a pre-logout cookie. The existing
+  # device-session closure still revokes gameplay access; absence of a row does
+  # not introduce a new authentication prerequisite for legacy sessions.
+  def reject_closed_game_session
+    return if devise_controller? || controller_name == "session_pings" || !user_signed_in?
+    return unless current_user_session&.signed_out_at
+
+    sign_out(current_user)
+    respond_to do |format|
+      format.html { redirect_to new_user_session_path, status: :see_other }
+      format.turbo_stream { head :unauthorized }
+      format.json { head :unauthorized }
+      format.any { head :unauthorized }
+    end
+  end
 
   def resolved_layout
     user_signed_in? ? "game" : "application"

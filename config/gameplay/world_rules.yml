@@ -1,0 +1,39 @@
+# Server-owned parameters, never browser-supplied expressions. Restart the
+# process or call Game::World::Rules.reload! after editing this file.
+# Existing offered travel durations, accepted fatigue gains, and started action
+# deadlines remain snapshots; changing these defaults cannot restart that work.
+movement:
+  # The captured 24/30-second samples and Wanderer direction are established;
+  # this linear fallback is a provisional local projection, not the full
+  # Neverlands terrain/equipment/effect formula. Cell travel_seconds wins.
+  base_seconds: 30
+  minimum_seconds: 24
+  wanderer_max_level: 100
+  wanderer_max_reduction_seconds: 6
+fatigue:
+  # Captured Neverlands wiki rules. The equal selection within the observed
+  # 1..2 gain range remains a local policy; its source distribution is unknown.
+  recovery_interval_seconds: 180
+  recovery_points: 1
+  outdoor_action_lock_percent: 86
+  movement_gain_min: 1
+  movement_gain_max: 2
+local_actions:
+  resource_search:
+    # One captured empty Look sample, not a universal profession formula.
+    duration_seconds: 28
+  fishing:
+    # Captured entry with no bait: immediate error result and 30-second lock.
+    # No successful cast, catch, fatigue gain or profession growth is inferred.
+    duration_seconds: 30
+  drinking:
+    # No skill gate (user confirmation). Live pond capture: immediate success
+    # result and a 60-second action lock. Wiki: 2 fatigue points per sip, 4 with
+    # Nature Child. The perk's acquisition remains a separate feature boundary.
+    duration_seconds: 60
+    fatigue_recovery_points: 2
+    nature_child_recovery_points: 4
+# Presence freshness is an explicit local technical policy. Neverlands' exact
+# inactive-player removal interval has not been captured.
+presence:
+  freshness_seconds: 300

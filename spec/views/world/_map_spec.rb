@@ -229,6 +229,25 @@ RSpec.describe "world/_map.html.erb", type: :view do
       expect(rendered).to include("background-position: -700px -700px")
       expect(rendered).to include("background-size: 1000px 1000px")
     end
+
+    it "renders neighboring pond cells as adjacent slices of the same landscape" do
+      tiles = nearby_tiles
+      tiles.flatten.each do |tile|
+        next unless tile.x.between?(11, 15) && tile.y.between?(8, 12)
+
+        tile.metadata = {"source_map" => "pond_neighborhood_art",
+          "cell_art" => {"key" => "forpost_pond", "column" => tile.x - 11, "row" => tile.y - 8}}
+      end
+      render partial: "world/map", locals: {position:, nearby_tiles: tiles, zone:, tile_data: {}}
+
+      expect(rendered).to have_css("[data-cell-art-key='forpost_pond']", count: 25)
+      document = Nokogiri::HTML.fragment(rendered)
+      [12, 13, 14].each do |x|
+        cell = document.at_css("#tile_#{x}_10")
+        expect(cell.to_html).to include("world/forpost-pond-landscape", "background-size: 500px 500px")
+        expect(cell.to_html).to include("background-position: -#{(x - 11) * 100}px -200px")
+      end
+    end
   end
 
   describe "clickable tiles (mouse navigation)" do

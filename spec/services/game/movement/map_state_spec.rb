@@ -24,6 +24,16 @@ RSpec.describe Game::Movement::MapState do
     expect(MovementCommand.offered.where(character:).count).to eq(8)
   end
 
+  it "resolves effective Wanderer once for all eight offers instead of querying equipment per cell" do
+    character.update!(passive_skills: {"wanderer" => 20})
+    expect(character).to receive(:passive_skill_level).with(:wanderer).once.and_call_original
+
+    state = described_class.new(character:).call
+
+    expect(state.destinations.size).to eq(8)
+    expect(state.destinations.map(&:travel_seconds)).to eq([29] * 8)
+  end
+
   it "does not offer blocked or out-of-bounds destinations" do
     position.update!(x: 0, y: 0)
     MapTileTemplate.create!(zone: zone.name, x: 1, y: 0, terrain_type: "outdoor", passable: false)

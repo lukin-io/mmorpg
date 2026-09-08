@@ -13,6 +13,7 @@ export default class extends Controller {
     "timerDiv",
     "timerSeconds",
     "moveForm",
+    "refreshForm",
     "destination"
   ]
 
@@ -46,10 +47,7 @@ export default class extends Controller {
     this.timerId = null
     this.animationFrameId = null
     this.viewportFrameId = null
-    const serverNow = Date.parse(this.serverNowValue)
-    this.serverClockOffsetMs = Number.isNaN(serverNow) ? 0 : serverNow - Date.now()
-    const remainingSeconds = this.workActiveValue ? this.workRemainingSecondsValue : this.movementRemainingSecondsValue
-    this.fallbackEndsAt = Date.now() + (remainingSeconds * 1000)
+    this.resetServerClock()
     this.boundCenterViewport = this.centerViewport.bind(this)
     this.mainFrame = this.element.closest("main.nl-main-area")
     this.topBar = this.mainFrame?.previousElementSibling
@@ -61,6 +59,7 @@ export default class extends Controller {
     this.setMovementControlsLocked(this.movementActiveValue || this.workActiveValue)
     window.addEventListener("resize", this.boundCenterViewport)
     this.viewportFrameId = requestAnimationFrame(this.boundCenterViewport)
+    if (this.element.dataset.mapRefresh === "true") this.dispatch("refreshed")
 
     if (this.movementActiveValue || this.workActiveValue) {
       this.resumeServerTimer()
@@ -80,8 +79,155 @@ export default class extends Controller {
       cancelAnimationFrame(this.viewportFrameId)
     }
 
+    clearTimeout(this.refreshRetryId)
+    clearTimeout(this.refreshTimeoutId)
     window.removeEventListener("resize", this.boundCenterViewport)
     this.viewportResizeObserver?.disconnect()
+  }
+
+  resetServerClock() {
+    const serverNow = Date.parse(this.serverNowValue)
+    this.serverClockOffsetMs = Number.isNaN(serverNow) ? 0 : serverNow - Date.now()
+    const remaining = this.workActiveValue ? this.workRemainingSecondsValue : this.movementRemainingSecondsValue
+    this.fallbackEndsAt = Date.now() + (remaining * 1000)
+  }
+
+  // Turbo still owns requests and the dependent server-rendered panels. Only
+  // the map stream uses a custom renderer to retain native overlapping cells.
+  renderMapStream(event) {
+    const stream = event.target
+    const revision = Number(stream.dataset.worldMapRevision)
+    if (!revision || !this.element.isConnected) return
+
+    const currentRevision = Number(this.element.dataset.mapRevision)
+    if (revision < currentRevision || revision === this.rejectedRevision) {
+      event.detail.render = () => {}
+      return
+    }
+    if (stream.target !== "game-map") return
+
+    const next = stream.templateElement.content.querySelector(".nl-map-container")
+    if (!next) return
+    if (revision === currentRevision) {
+      this.rejectedRevision = revision
+      event.detail.render = () => {}
+      return
+    }
+    if (!next.dataset.mapBase) return // Full snapshot: normal Turbo recovery.
+
+    event.detail.render = () => {
+      if (!this.element.isConnected) return
+      if (next.dataset.mapBase !== this.element.dataset.mapBuffer || next.dataset.mapZone !== this.element.dataset.mapZone) {
+        this.rejectedRevision = revision
+        this.recoverMap()
+        return
+      }
+      this.applyMapEdges(next)
+    }
+  }
+
+  applyMapEdges(next) {
+    const currentBody = this.mapContainerTarget.querySelector("tbody")
+    const cells = new Map(Array.from(currentBody.querySelectorAll("td"), cell => [cell.id, cell]))
+    next.querySelectorAll("td").forEach(cell => cells.set(cell.id, cell))
+    const rows = new Map(Array.from(currentBody.children, row => [row.dataset.mapY, row]))
+    const minX = Number(next.dataset.mapMinX)
+    const minY = Number(next.dataset.mapMinY)
+    const columns = Number(next.dataset.mapColumns)
+    const rowCount = Number(next.dataset.mapRows)
+    const desiredRows = []
+    const desiredCells = []
+    for (let y = minY; y < minY + rowCount; y++) {
+      const row = rows.get(String(y)) || document.createElement("tr")
+      row.dataset.mapY = y
+      const rowCells = []
+      for (let x = minX; x < minX + columns; x++) {
+        const cell = cells.get(`tile_${x}_${y}`)
+        if (!cell) {
+          this.rejectedRevision = Number(next.dataset.mapRevision)
+          this.recoverMap()
+          return
+        }
+        rowCells.push(cell)
+      }
+      desiredRows.push(row)
+      desiredCells.push(rowCells)
+    }
+
+    clearTimeout(this.timerId)
+    clearTimeout(this.refreshRetryId)
+    clearTimeout(this.refreshTimeoutId)
+    cancelAnimationFrame(this.animationFrameId)
+    this.refreshPending = false
+    this.mapContainerTarget.style.transition = "none"
+    desiredRows.forEach((row, index) => this.syncChildren(row, desiredCells[index]))
+    this.syncChildren(currentBody, desiredRows)
+
+    // Offers are fresh authoritative HTML; terrain/building nodes survive.
+    currentBody.querySelectorAll(".nl-tile-clickable, .nl-tile-player").forEach(control => {
+      const inert = document.createElement("div")
+      inert.className = "nl-tile-inactive"
+      inert.setAttribute("aria-hidden", "true")
+      control.replaceWith(inert)
+    })
+    next.querySelector("template[data-map-controls]")?.content.querySelectorAll("[data-x]").forEach(control => {
+      const cell = cells.get(`tile_${control.dataset.x}_${control.dataset.y}`)
+      cell.querySelector(".nl-tile-inactive")?.replaceWith(...control.childNodes)
+    })
+    Array.from(next.attributes).forEach(attribute => this.element.setAttribute(attribute.name, attribute.value))
+    this.overlayTarget.innerHTML = next.querySelector('[data-nl-world-map-target="overlay"]').innerHTML
+    this.moveFormTarget.replaceWith(next.querySelector('[data-nl-world-map-target="moveForm"]'))
+    this.refreshFormTarget.replaceWith(next.querySelector('[data-nl-world-map-target="refreshForm"]'))
+    this.element.querySelector(".nl-map-info").replaceWith(next.querySelector(".nl-map-info"))
+    this.mapContainerTarget.style.transform = `translate(${this.mapOffsetXValue}px, ${this.mapOffsetYValue}px)`
+    this.resetServerClock()
+    this.positionCursor()
+    this.centerViewport()
+    this.setMovementControlsLocked(this.movementActiveValue || this.workActiveValue)
+    if (this.movementActiveValue || this.workActiveValue) this.resumeServerTimer()
+    this.dispatch("refreshed")
+  }
+
+  syncChildren(parent, desired) {
+    const retained = new Set(desired)
+    Array.from(parent.children).forEach(child => {
+      if (!retained.has(child)) child.remove()
+    })
+    desired.forEach((child, index) => {
+      if (parent.children[index] !== child) parent.insertBefore(child, parent.children[index] || null)
+    })
+  }
+
+  // Timer reads belong to this frame, so they cannot cancel an in-progress
+  // top-level submission such as confirmed logout. Authentication or a new
+  // location can still promote an HTML response to a normal full-page visit.
+  recoverFrameNavigation(event) {
+    if (event.target.id !== "game-map" || !this.element.isConnected) return
+    event.preventDefault()
+    event.detail.visit(event.detail.response)
+  }
+
+  recoverMap() {
+    if (this.recoveringMap) return
+    this.recoveringMap = true
+    if (window.Turbo) window.Turbo.visit(this.completeUrlValue)
+    else window.location.href = this.completeUrlValue
+  }
+
+  refreshFinished(event) {
+    if ([401, 403].includes(event.detail.fetchResponse?.statusCode)) {
+      this.recoverMap()
+    } else if (!event.detail.success) {
+      this.refreshFailed()
+    }
+  }
+
+  refreshFailed() {
+    if (!this.element.isConnected) return
+    clearTimeout(this.refreshTimeoutId)
+    clearTimeout(this.refreshRetryId)
+    this.refreshPending = false
+    this.refreshRetryId = setTimeout(() => this.finishServerTimer(), 2000)
   }
 
   // =====================
@@ -286,12 +432,15 @@ export default class extends Controller {
 
     this.setCursorMoving(false)
 
-    if (this.completeUrlValue) {
-      if (window.Turbo) {
-        window.Turbo.visit(this.completeUrlValue)
-      } else {
-        window.location.href = this.completeUrlValue
-      }
+    if (!this.completeUrlValue || this.refreshPending) return
+    if (this.hasRefreshFormTarget && this.element.dataset.mapBuffer) {
+      this.refreshPending = true
+      // A timed-out/lost completion response recovers from persisted state with
+      // a fresh full page, without allowing a second authoritative movement.
+      this.refreshTimeoutId = setTimeout(() => this.recoverMap(), 10000)
+      this.refreshFormTarget.requestSubmit()
+    } else {
+      this.recoverMap()
     }
   }
 }

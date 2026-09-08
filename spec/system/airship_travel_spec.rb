@@ -11,6 +11,12 @@ RSpec.describe "Airship travel", type: :system, js: true do
   let(:region) { create(:zone, :mvp_outdoor_region) }
   let!(:position) { create(:character_position, character:, zone: source, x: 5, y: 5) }
   let(:departure) { Time.current + 10.minutes }
+  let(:waypoints) do
+    [
+      {"offset_seconds" => 0, "zone" => region.name, "x" => 10, "y" => 10},
+      {"offset_seconds" => 120, "zone" => region.name, "x" => 22, "y" => 22}
+    ]
+  end
 
   before do
     freeze_time
@@ -25,10 +31,7 @@ RSpec.describe "Airship travel", type: :system, js: true do
         "destination_x" => 0, "destination_y" => 0,
         "label" => "Fixture Destination", "route_label" => "Fixture Airship Route", "fare_nv" => 150,
         "departures" => [departure.iso8601(6)], "duration_seconds" => 120,
-        "waypoints" => [
-          {"offset_seconds" => 0, "zone" => region.name, "x" => 10, "y" => 10},
-          {"offset_seconds" => 120, "zone" => region.name, "x" => 22, "y" => 22}
-        ]
+        "waypoints" => waypoints
       }
     })
     allow(Game::World::AirshipRoutes).to receive(:new).and_return(catalog)
@@ -214,6 +217,79 @@ RSpec.describe "Airship travel", type: :system, js: true do
     expect(character.user.currency_wallet.reload.balance).to eq(350)
   end
 
+  it "reuses overlapping terrain cells and their wrapper while adding and removing flight edges" do
+    board_flight
+    travel_to(departure + 30.seconds)
+    refresh_visible_snapshot
+    expect(page).to have_css(".nl-airship-cells[data-origin-x='8'][data-origin-y='11']", visible: :all)
+    page.execute_script(<<~JS)
+      window.retainedAirshipCells = document.querySelector('.nl-airship-cells')
+      window.retainedAirshipTile = document.querySelector('.nl-airship-tile[data-x="13"][data-y="13"]')
+      window.departingAirshipTile = document.querySelector('.nl-airship-tile[data-x="8"][data-y="11"]')
+    JS
+
+    travel_to(departure + 40.seconds)
+    refresh_visible_snapshot
+
+    expect(page).to have_css(".nl-airship-cells[data-origin-x='9'][data-origin-y='12']", visible: :all)
+    expect(page).to have_css(".nl-airship-tile", count: 55, visible: :all)
+    expect(page.evaluate_script("window.retainedAirshipCells === document.querySelector('.nl-airship-cells')")).to be(true)
+    expect(page.evaluate_script(%q(window.retainedAirshipTile === document.querySelector('.nl-airship-tile[data-x="13"][data-y="13"]')))).to be(true)
+    expect(page.evaluate_script("window.departingAirshipTile.isConnected")).to be(false)
+    expect(position.reload).to have_attributes(zone: region, x: 14, y: 14)
+  end
+
+  it "updates changed terrain art while retaining identical cells in the same snapshot" do
+    board_flight
+    travel_to(departure + 30.seconds)
+    refresh_visible_snapshot
+    expect(page).to have_css(".nl-airship-page[data-nl-airship-phase-value='in_flight']")
+    page.execute_script(<<~JS)
+      window.retainedAirshipTile = document.querySelector('.nl-airship-tile[data-x="12"][data-y="13"]')
+      window.changedAirshipTile = document.querySelector('.nl-airship-tile[data-x="13"][data-y="13"]')
+    JS
+    create(:map_tile_template, zone: region.name, x: 13, y: 13,
+      metadata: {"source_map" => "fixture_airship_art", "cell_art" => {"key" => "forpost_terrain", "column" => 7, "row" => 7}})
+
+    refresh_visible_snapshot
+
+    expect(page).to have_css('.nl-airship-tile[data-x="13"][data-y="13"][style*="background-position: -700px -700px"]', visible: :all)
+    expect(page.evaluate_script("window.changedAirshipTile.isConnected")).to be(false)
+    expect(page.evaluate_script(%q(window.retainedAirshipTile === document.querySelector('.nl-airship-tile[data-x="12"][data-y="13"]')))).to be(true)
+    expect(page).to have_css(".nl-airship-tile", count: 55, visible: :all)
+  end
+
+  context "with an explicitly mapped region crossing" do
+    let(:next_region) { create(:zone, :mvp_outdoor_region) }
+    let(:waypoints) do
+      [
+        {"offset_seconds" => 0, "zone" => region.name, "x" => 10, "y" => 10},
+        {"offset_seconds" => 60, "zone" => region.name, "x" => 16, "y" => 16},
+        {"offset_seconds" => 61, "zone" => next_region.name, "x" => 13, "y" => 13},
+        {"offset_seconds" => 120, "zone" => next_region.name, "x" => 19, "y" => 19}
+      ]
+    end
+
+    it "replaces the region wrapper even when destination coordinates and terrain happen to match" do
+      board_flight
+      travel_to(departure + 30.seconds)
+      refresh_visible_snapshot
+      expect(page).to have_css(".nl-airship-cells[data-zone-id='#{region.id}'][data-origin-x='8']", visible: :all)
+      page.execute_script(<<~JS)
+        window.previousAirshipCells = document.querySelector('.nl-airship-cells')
+        window.previousAirshipTile = document.querySelector('.nl-airship-tile[data-x="13"][data-y="13"]')
+      JS
+
+      travel_to(departure + 61.seconds)
+      refresh_visible_snapshot
+
+      expect(page).to have_css(".nl-airship-cells[data-zone-id='#{next_region.id}'][data-origin-x='8']", visible: :all)
+      expect(page.evaluate_script("window.previousAirshipCells.isConnected || window.previousAirshipTile.isConnected")).to be(false)
+      expect(page).to have_css(".nl-airship-tile", count: 55, visible: :all)
+      expect(position.reload).to have_attributes(zone: next_region, x: 13, y: 13)
+    end
+  end
+
   def board_flight
     visit city_building_path("airship_station")
     click_button "Buy a ticket and board the flight"
@@ -222,6 +298,13 @@ RSpec.describe "Airship travel", type: :system, js: true do
   end
 
   def refresh_visible_snapshot
-    page.execute_script("document.dispatchEvent(new Event('visibilitychange'))")
+    # The snapshot client deliberately spaces reads by at least 500ms.
+    page.evaluate_async_script(<<~JS)
+      const done = arguments[arguments.length - 1]
+      setTimeout(() => {
+        document.dispatchEvent(new Event('visibilitychange'))
+        done()
+      }, 550)
+    JS
   end
 end

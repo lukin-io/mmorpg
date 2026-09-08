@@ -2,21 +2,21 @@
 
 module Game
   module World
-    # Starts the captured 28-second Look Around action from an accepted owned
-    # offer. Under the character/offer lock it validates current cell content,
-    # resolves hostile interruption, then persists the immediate result and
-    # deadline. Retrying the same started offer returns its original result;
-    # a separate action cannot reset active work. No resource is awarded.
+    # Starts a captured current-cell action from an accepted owned offer. Under
+    # the character/offer lock it revalidates the cell, resolves interruption,
+    # and atomically persists the immediate result, configured deadline and
+    # Drink's fatigue recovery. Retrying a started offer returns its original
+    # result without applying recovery again. No resource or currency is awarded.
     class PerformLocalAction
-      SEARCH_SECONDS = 28
       Result = Struct.new(:success, :message, :local_action, :action_offer, :interruption, keyword_init: true)
 
-      def initialize(character:, tile:, local_action_type:, action_offer:, clock: -> { Time.current })
+      def initialize(character:, tile:, local_action_type:, action_offer:, clock: -> { Time.current }, rules: Rules.default)
         @character = character
         @tile = tile
         @local_action_type = local_action_type.to_s
         @action_offer = action_offer
         @clock = clock
+        @rules = rules
       end
 
       def call
@@ -49,10 +49,10 @@ module Game
 
           now = clock.call
           action_offer.update!(metadata: action_offer.metadata.to_h.merge(
-            "local_action_ends_at" => (now + SEARCH_SECONDS).iso8601(6),
+            "local_action_ends_at" => (now + rules.local_action_duration_seconds(local_action_type)).iso8601(6),
             "local_action_result" => local_action["result_message"].presence || MapTileTemplate.default_local_action_message(local_action_type),
             "label" => local_action["label"].presence || MapTileTemplate.default_local_action_label(local_action_type)
-          ))
+          ).merge(apply_effect(at: now)))
           cancel_sibling_offers!(now)
 
           success(local_action:)
@@ -61,7 +61,21 @@ module Game
 
       private
 
-      attr_reader :character, :tile, :local_action_type, :action_offer, :clock
+      attr_reader :character, :tile, :local_action_type, :action_offer, :clock, :rules
+
+      def apply_effect(at:)
+        return {} unless local_action_type == "drinking"
+
+        # Nature Child's 4-point value is preserved in Rules for its future
+        # perk implementation. No unsupported perk flag grants an effect here.
+        points = rules.drinking_fatigue_recovery_points
+        applied = Characters::FatigueService.new(character:, rules:).recover!(amount: points, at:)
+        {
+          "fatigue_recovery_points" => points,
+          "fatigue_recovery_applied" => applied,
+          "fatigue_recovered_at" => at.iso8601(6)
+        }
+      end
 
       def offer_matches_action?
         action_offer &&

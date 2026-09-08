@@ -14,6 +14,7 @@ Primary references:
 
 - `doc/design/reference/neverlands.md`
 - `doc/design/reference/source_material.md`
+- `doc/design/reference/world/observations/2026-09-08_cell_content_and_world_rules.md`
 
 Observed split:
 
@@ -61,10 +62,12 @@ arrives at the new node or building.
 - Accepted movement creates a travel state with start and end timestamps.
 - Character position finalizes when travel completes.
 - Reload during travel resumes the remaining countdown.
-- Completion refreshes available actions and local presence.
+- Completion refreshes available actions and local presence while retaining
+  unchanged overlapping terrain cells and updating the entering map edges.
 - A completed wilderness step applies its snapshotted `1..2` fatigue gain.
 - At effective fatigue `86%` or higher, Move, Look, and Enter are unavailable
-  until natural recovery lowers the value.
+  until recovery lowers the value. An authored water cell can still offer
+  Drink; its fatigue recovery must not inherit that gate.
 - Passability and travel time are server rules, not browser rules.
 - Client animation is linear presentation only; it never advances the
   finalized coordinate on its own.
@@ -85,22 +88,30 @@ Neverlands-style movement is persistent server state, not browser state.
 
 Conflicting player actions share the character's serialization boundary.
 Movement validates the current owned offer before evaluating a hostile
-interruption. Accepted travel and the captured Look deadline exclude a new
+interruption. Accepted travel and the captured Look, Fish, or Drink deadline exclude a new
 move or Enter/Character/Inventory action; stale keys cannot trigger an encounter
 as a side effect of failed movement validation. Repeated processing cannot
 extend a deadline, apply fatigue twice, or change a completed command back to
 moving/failed.
 
-Spatial reads are bounded independently of region size: movement offer
+Spatial reads are bounded independently of zone size: movement offer
 generation reads only the eight neighboring coordinates, acceptance/completion
-read the exact target, and rendering reads the nearby buffer. `zone_id` on
-position/command records is the existing region identity. Multi-region
-readiness uses this identity and independent zone-scoped content; no competing
-region/position model or extra populated region is needed. The current user
-delivery scope keeps one populated region. Configured airship journeys use the
-same region-qualified position and bounded cell rendering through their own
-paid transport lifecycle, defined in `doc/design/features/airship_travel.md`.
-Walking border mappings remain an evidence gap. A
+read the exact target, and rendering reads the nearby buffer. The Neverlands
+client retains overlapping cells; fresh movement controls remain server-owned.
+The local implementation supplies entering edge cells and fresh controls when
+its signed prior buffer still matches the character, zone, and content. Changed
+content, an invalid/stale buffer, or reload uses a complete bounded snapshot.
+The buffer hint never authorizes movement or decides the current position.
+
+`zone_id` on position/command records is the existing region identity.
+Multi-zone readiness uses this identity and independent zone-scoped content;
+no competing region/position model is needed. The MVP launches one outdoor
+zone. Full population of that zone is Stage 2. Additional zones, enabled
+inter-zone routes, and walking border mappings are post-MVP TODOs. Configured
+airship journeys already use the same zone-qualified position through their
+separate paid transport lifecycle, defined in
+`doc/design/features/airship_travel.md`; normal routes await destination,
+path, and schedule content. A
 server-side relocation invalidates active travel from the previous source
 region/cell before its deadline; it cannot reuse an old region's offer at the
 same local coordinates.
@@ -199,6 +210,24 @@ The fallback produces whole-second bands: `0..16 => 30`, `17..33 => 29`,
 offer and remains fixed on that command through acceptance, reload, and
 completion.
 
+### Configurable local parameters
+
+The preceding numbers describe the current defaults, not a recovered complete
+Neverlands formula. `config/gameplay/world_rules.yml` stores validated numeric
+parameters for the Wanderer fallback, fatigue gain/recovery/gates, captured
+local-action durations, and the explicitly local presence freshness policy.
+`Game::World::Rules` rejects malformed values, unsupported keys, and invalid
+ranges; it does not evaluate expressions or accept browser-supplied formulas.
+The travel calculation receives the effective Wanderer value as a scalar. Its
+caller resolves equipment and skill once for the adjacent destination batch.
+
+The normal ruleset loads on process start/use or an explicit validated reload.
+An offered movement duration, accepted fatigue gain, and started local-action
+deadline remain persisted snapshots if configuration changes. Natural recovery
+and presence freshness use the currently loaded policy. Equipment, terrain,
+effect, encounter-probability, and profession coefficients still require
+isolated Neverlands evidence before being added.
+
 No inferred terrain, diagonal, encumbrance, fatigue, effect, or profession
 **timing** modifier is implemented. Fatigue gates the named outdoor actions but
 does not change their duration. A terrain label alone must not alter movement
@@ -217,6 +246,10 @@ The Neverlands wiki supplies an exact MVP-safe fatigue slice:
 - the effective value is clamped to `0..100`;
 - at `86` or above, the server issues no wilderness movement offers and no
   Enter/Look action offers, and acceptance rechecks the same rule;
+- a Drink at an authored water cell immediately removes two fatigue points,
+  bounded at zero, and retains a 60-second work lock. No skill gate applies;
+- the wiki names four points with Nature Child. That value is preserved as
+  configuration data; the unsupported perk itself is not granted or enabled;
 - city node transitions are not wilderness actions and remain available.
 
 The wiki also says high fatigue affects combat, but the penalty formula is not
@@ -297,28 +330,45 @@ A cell can contain an NPC, an entrance, and local actions at the same time.
 those layers. It maps `db/seeds.rb`, the outdoor-NPC config, persisted records,
 resolution, offers, cleanup, and coverage. Movement must consume that composed
 state; it must not introduce another building/resource/NPC source.
-Movement completion rebuilds all of them. The implemented Neverlands `look` /
-`Оглядеться` slice shows its empty result immediately and persists a 28-second
-work deadline. It grants no item or currency; successful gathering is deferred
-by the user to alchemy. A hostile can interrupt before work starts, and a
-passive fight may supersede active work. Closing the result does not end the
-lock; reload recovers the same deadline.
+Movement completion resolves the new current cell. Unchanged overlapping map
+art remains in the browser; this does not retain stale gameplay offers.
+The September 8 water-cell capture extends the timed local-action contract:
+
+| Action | Immediate result/effect | Captured work lock |
+| --- | --- | --- |
+| Look Around (`look`) | Empty vegetation result; no item/currency | 28 seconds |
+| Drink (`dri`) | Success result and two fatigue points recovered | 60 seconds |
+| Fish (`fis`), without bait | “No bait available”; no catch, fatigue gain, or proficiency growth | 30 seconds |
+
+Only an exact current cell with the authored action may offer it. Fishing and
+drinking have no skill gate. Successful fishing still requires the separate
+rod/bait/cast flow and evidence for consumption, yields, tool wear, and
+proficiency growth; the captured empty entry is not a completed profession.
+Successful gathering remains deferred to alchemy. Digging requires a skill,
+but its eligibility and outcomes remain uncaptured.
+
+A hostile can interrupt before local work starts, and a passive fight may
+supersede active work. Closing the result hides it without cancelling the
+lock; reload recovers the same persisted deadline. Drink's fatigue change,
+result, and deadline commit together; duplicate requests cannot recover more
+fatigue or restart the timer. Result delivery is consumed once independently
+of gameplay completion.
 
 Movement consumes the resolved 100px cell presentation but does not own its
 asset keys or sheet geometry. Add special-cell art through the authoring workflow
 in `doc/features/world.md`, section 7.2; do not encode art selection in movement
 commands or browser animation state.
 
-The source client also recognizes fishing, drinking, and digging actions. Keep
-those identifiers valid in authored tile data, but do not invent their rewards,
-tools, timers, depletion, or profession formulas before capturing a successful
-flow.
+Keep source action identifiers valid in authored tile data. The captured
+Drink and empty fishing entry are distinct from successful gathering/casting;
+do not extrapolate rewards, depletion, or profession formulas from them.
 
 ## Out Of Scope
 
 - Long-distance pathfinding as the first movement interaction.
 - Browser-only cooldowns.
 - City travel countdowns for the starter city.
-- Additional populated regions and unobserved walking border mappings. Paid
+- Full zone population (Stage 2), additional outdoor zones, and unobserved
+  walking border mappings (post-MVP TODO). Paid
   airship travel is a separate capability, not an adjacent walking command.
 - Gathering yields, profession growth, or uncaptured timing modifiers.

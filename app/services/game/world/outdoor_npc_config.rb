@@ -85,6 +85,11 @@ module Game
           parsed.each_value do |zone_config|
             Array(zone_config[:npcs]).each do |npc|
               metadata = npc.fetch(:metadata, {}).to_h
+              policy_errors = TileNpc.encounter_policy_errors(metadata.deep_stringify_keys)
+              if policy_errors.any?
+                raise InvalidConfigurationError,
+                  "#{CONFIG_PATH}: NPC #{npc[:key] || 'unknown'} #{policy_errors.join('; ')}"
+              end
               validate_roster_references!(npc, metadata, template_keys)
             end
           end

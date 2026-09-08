@@ -1,0 +1,25 @@
+<details data-manage-collection-target="row">
+  <summary><%= sample["key"].presence || "New encounter roster" %></summary>
+  <% prefix = "tile_npc[rosters][#{index}]" %>
+  <% field_id = "roster_#{index}" %>
+  <div class="nl-manage-field-grid">
+    <div class="nl-manage-field"><%= label_tag "#{field_id}_key", "Roster key" %><%= text_field_tag "#{prefix}[key]", sample["key"], id: "#{field_id}_key" %></div>
+    <% {"weight" => "Selection weight", "encounter_experience_reward" => "Encounter XP", "trauma_percent" => "Injury percent"}.each do |key, label| %>
+      <div class="nl-manage-field"><%= label_tag "#{field_id}_#{key}", label %><%= number_field_tag "#{prefix}[#{key}]", sample[key], id: "#{field_id}_#{key}", min: key == "weight" ? 1 : 0 %></div>
+    <% end %>
+  </div>
+  <p class="nl-manage-help">Fill 1–10 members; leave unused rows blank. Use an exact level or a minimum/maximum pair. A range requires explicit HP and does not scale combat stats. Blank weight means 1; weights describe the authored local policy.</p>
+  <% TileNpc::MAX_ENCOUNTER_SIZE.times do |member_index| %>
+    <% member = Array(sample["members"])[member_index].to_h %>
+    <% member_prefix = "#{prefix}[members][#{member_index}]" %>
+    <% member_id = "#{field_id}_member_#{member_index}" %>
+    <fieldset class="nl-manage-field-grid">
+      <legend>Member <%= member_index + 1 %></legend>
+      <div class="nl-manage-field"><%= label_tag "#{member_id}_npc_key", "NPC template" %><%= select_tag "#{member_prefix}[npc_key]", options_from_collection_for_select(@npc_templates, :npc_key, :name, member["npc_key"]), include_blank: "Unused member", id: "#{member_id}_npc_key" %></div>
+      <% {"level" => "Exact level", "level_min" => "Minimum level", "level_max" => "Maximum level", "hp" => "HP"}.each do |key, label| %>
+        <div class="nl-manage-field"><%= label_tag "#{member_id}_#{key}", label %><%= number_field_tag "#{member_prefix}[#{key}]", member[key], id: "#{member_id}_#{key}", min: 1 %></div>
+      <% end %>
+    </fieldset>
+  <% end %>
+  <button type="button" class="lbut" data-action="manage-collection#remove">Remove roster</button>
+</details>

@@ -12,6 +12,9 @@
 class TileNpc < ApplicationRecord
   NPC_ROLES = %w[hostile].freeze
   MAX_ENCOUNTER_SIZE = 10
+  MAX_ROSTER_SAMPLES = 64
+  MAX_ROSTER_WEIGHT = 10_000
+  MAX_AUTHORED_LEVEL = 1_000
   MAX_PASSIVE_DELAY_SECONDS = 24.hours.to_i
 
   belongs_to :npc_template
@@ -26,21 +29,35 @@ class TileNpc < ApplicationRecord
   validate :encounter_size_is_supported
   validate :encounter_roster_samples_are_supported
   validate :passive_delay_windows_are_supported
+  validate :encounter_policy_is_supported
+  validate :encounter_templates_must_exist
 
   scope :in_zone, ->(zone_name) { where(zone: zone_name) }
+  scope :active, -> { where("metadata->'active' IS NULL OR metadata->'active' = 'true'::jsonb") }
 
   # Find NPC at specific tile coordinates (returns single record or nil)
   def self.at_tile(zone, x, y)
     find_by(zone: zone, x: x, y: y)
   end
-  scope :alive, -> { where("respawns_at IS NULL OR respawns_at <= ?", Time.current).where(defeated_at: nil) }
+  scope :alive, -> { active.where("respawns_at IS NULL OR respawns_at <= ?", Time.current).where(defeated_at: nil) }
   scope :defeated, -> { where.not(defeated_at: nil) }
   scope :needs_respawn, -> { where("respawns_at IS NOT NULL AND respawns_at <= ?", Time.current).where.not(defeated_at: nil) }
   scope :hostile, -> { where(npc_role: "hostile") }
 
   # Check if NPC is alive and interactable
   def alive?
-    defeated_at.nil? && (respawns_at.nil? || respawns_at <= Time.current)
+    active? && defeated_at.nil? && (respawns_at.nil? || respawns_at <= Time.current)
+  end
+
+  # Deactivation preserves the authored roster and its defeat/respawn state.
+  def active?
+    !metadata.to_h.key?("active") || metadata["active"] == true
+  end
+
+  alias_method :active, :active?
+
+  def active=(value)
+    self.metadata = metadata.to_h.merge("active" => ActiveModel::Type::Boolean.new.cast(value))
   end
 
   # Check if NPC is defeated and waiting for respawn
@@ -131,7 +148,60 @@ class TileNpc < ApplicationRecord
     ((current_hp.to_f / max_hp) * 100).round
   end
 
+  # Pure validation shared by persisted content and the seed catalog. Optional
+  # ranges/weights describe authored policy, not inferred Neverlands formulas.
+  def self.encounter_policy_errors(metadata)
+    errors = []
+    if metadata.key?("active") && ![true, false].include?(metadata["active"])
+      errors << "active must be true or false"
+    end
+    samples = metadata["encounter_rosters"]
+    return errors unless samples.is_a?(Array)
+
+    errors << "encounter rosters exceed #{MAX_ROSTER_SAMPLES} entries" if samples.size > MAX_ROSTER_SAMPLES
+    samples.grep(Hash).each do |sample|
+      weight = sample["weight"]
+      if sample.key?("weight") && !(weight.is_a?(Integer) && weight.between?(1, MAX_ROSTER_WEIGHT))
+        errors << "encounter roster weight must be between 1 and #{MAX_ROSTER_WEIGHT}"
+      end
+      Array(sample["members"]).grep(Hash).each do |member|
+        errors.concat(member_level_range_errors(member))
+      end
+    end
+    errors.uniq
+  end
+
+  def self.member_level_range_errors(member)
+    return [] unless member.key?("level_min") || member.key?("level_max")
+
+    errors = []
+    minimum = member["level_min"]
+    maximum = member["level_max"]
+    unless minimum.is_a?(Integer) && maximum.is_a?(Integer) &&
+        minimum.between?(1, MAX_AUTHORED_LEVEL) && maximum.between?(minimum, MAX_AUTHORED_LEVEL)
+      errors << "encounter roster level range must have ordered bounds between 1 and #{MAX_AUTHORED_LEVEL}"
+    end
+    errors << "encounter roster member must use either level or level range" if member.key?("level")
+    errors << "encounter roster level range requires explicit hp" unless member["hp"].is_a?(Integer) && member["hp"].positive?
+    errors
+  end
+
   private
+
+  def encounter_policy_is_supported
+    self.class.encounter_policy_errors(metadata.to_h).each { |message| errors.add(:metadata, message) }
+  end
+
+  def encounter_templates_must_exist
+    return if encounter_roster_samples.empty? || encounter_roster_samples.size > MAX_ROSTER_SAMPLES
+    return if persisted? && metadata_in_database.to_h["encounter_rosters"] == metadata.to_h["encounter_rosters"]
+
+    keys = encounter_roster_samples.grep(Hash).flat_map do |sample|
+      Array(sample["members"]).first(MAX_ENCOUNTER_SIZE).grep(Hash).filter_map { |member| member["npc_key"].presence }
+    end.uniq
+    missing = keys - NpcTemplate.where(npc_key: keys).order(:id).lock("FOR KEY SHARE").pluck(:npc_key)
+    errors.add(:metadata, "encounter roster references unknown NPC templates: #{missing.join(', ')}") if missing.any?
+  end
 
   def encounter_size_is_supported
     return if encounter_size.between?(1, MAX_ENCOUNTER_SIZE)
@@ -143,7 +213,7 @@ class TileNpc < ApplicationRecord
     return unless metadata.to_h.key?("encounter_rosters")
 
     samples = metadata.to_h["encounter_rosters"]
-    unless samples.is_a?(Array) && samples.any?
+    unless samples.is_a?(Array) && samples.size.between?(1, MAX_ROSTER_SAMPLES)
       errors.add(:metadata, "encounter rosters must be a non-empty array")
       return
     end

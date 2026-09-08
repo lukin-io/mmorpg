@@ -41,6 +41,17 @@ RSpec.describe Game::World::StartNpcFight do
     expect(match.metadata["return_context"]).to eq("name" => "world")
   end
 
+  it "revalidates an NPC deactivated after the caller loaded it" do
+    stale_npc = tile_npc
+    TileNpc.find(stale_npc.id).update!(active: false)
+
+    expect {
+      expect { described_class.new(character:, tile_npc: stale_npc).call }
+        .to raise_error(described_class::FightViolationError, "NPC is unavailable.")
+    }.not_to change(ArenaMatch, :count)
+    expect(position.reload).to have_attributes(x: 5, y: 5)
+  end
+
   it "creates one participation per source-backed encounter member" do
     tile_npc.update!(metadata: {"encounter_count" => 2})
 
@@ -280,7 +291,7 @@ RSpec.describe Game::World::StartNpcFight do
   end
 
   it "rolls back when a captured roster references a missing template" do
-    tile_npc.update!(metadata: {
+    tile_npc.update_columns(metadata: {
       "encounter_rosters" => [
         {"key" => "missing", "members" => [{"npc_key" => "removed-npc", "level" => 7, "hp" => 155}]}
       ]

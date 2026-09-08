@@ -2,26 +2,26 @@
 
 module Game
   module Movement
-    # Calculates source-backed wilderness travel duration.
+    # Calculates wilderness travel duration from a server-resolved effective
+    # Wanderer level, authored cell metadata, and validated rule parameters.
+    # This numeric boundary performs no character/equipment or database reads.
     class TravelTime
-      BASE_TRAVEL_SECONDS = 30
-      MIN_TRAVEL_SECONDS = 24
-      WANDERER_MAX_LEVEL = 100
-      WANDERER_MAX_REDUCTION_SECONDS = BASE_TRAVEL_SECONDS - MIN_TRAVEL_SECONDS
-
       # Neverlands exposes the already-calculated duration to the browser and
       # can vary it per destination terrain. Authored cells therefore own an
       # exact `travel_seconds` override; the isolated Wanderer relation remains
       # the fallback where the complete source formula has not been captured.
-      def self.seconds(character: nil, metadata: nil, tile_metadata: nil, **)
+      def self.seconds(wanderer_level: 0, metadata: nil, tile_metadata: nil, rules: Game::World::Rules.default, **)
         authored_metadata = metadata || tile_metadata || {}
         authored_seconds = Integer(authored_metadata.to_h["travel_seconds"], exception: false)
         return authored_seconds if authored_seconds&.positive?
 
-        wanderer_level = character&.passive_skill_level(:wanderer).to_i.clamp(0, WANDERER_MAX_LEVEL)
-        reduction = (wanderer_level * WANDERER_MAX_REDUCTION_SECONDS) / WANDERER_MAX_LEVEL
+        parameters = rules.movement
+        maximum_level = parameters.fetch("wanderer_max_level")
+        base_seconds = parameters.fetch("base_seconds")
+        wanderer_level = wanderer_level.to_i.clamp(0, maximum_level)
+        reduction = (wanderer_level * parameters.fetch("wanderer_max_reduction_seconds")) / maximum_level
 
-        (BASE_TRAVEL_SECONDS - reduction).clamp(MIN_TRAVEL_SECONDS, BASE_TRAVEL_SECONDS)
+        (base_seconds - reduction).clamp(parameters.fetch("minimum_seconds"), base_seconds)
       end
     end
   end

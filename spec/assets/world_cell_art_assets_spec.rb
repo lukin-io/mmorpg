@@ -37,4 +37,17 @@ RSpec.describe "World cell-art assets" do
       expect(png_dimensions(path)).to eq([columns * 100, rows * 100])
     end
   end
+
+  it "keeps the pond as one 5-by-5 landscape instead of a standalone pasted cell" do
+    pond = Game::World::CellArtCatalog.config.fetch("forpost_pond")
+
+    expect(pond).to include("asset" => "world/forpost-pond-landscape.png", "columns" => 5, "rows" => 5)
+    expect(png_dimensions(Rails.root.join("app/assets/images", pond.fetch("asset")))).to eq([500, 500])
+    presentations = (0..4).flat_map do |row|
+      (0..4).map { |column| Game::World::CellArtCatalog.resolve("key" => "forpost_pond", "column" => column, "row" => row) }
+    end
+    expect(presentations.map(&:asset).uniq).to eq([pond.fetch("asset")])
+    expect(presentations.map { |art| [art.background_x, art.background_y] }.uniq.size).to eq(25)
+    expect(Game::World::CellArtCatalog.resolve("key" => "forpost_pond", "column" => 5, "row" => 0)).to be_nil
+  end
 end

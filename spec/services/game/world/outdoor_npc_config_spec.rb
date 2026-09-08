@@ -63,6 +63,22 @@ RSpec.describe Game::World::OutdoorNpcConfig do
   end
 
   describe ".config" do
+    it "validates authored weights, level ranges and activation at the catalog boundary" do
+      member = {npc_key: "range_spec", level_min: 11, level_max: 14, hp: 200}
+      sample = {key: "range", weight: 3, members: [member]}
+      config = {outpost: {zone_name: "Outpost", npcs: [{key: "range_spec", metadata: {active: false, encounter_rosters: [sample]}}]}}
+      allow(YAML).to receive(:load_file).with(described_class::CONFIG_PATH).and_return(config)
+
+      expect(described_class.reload!.dig(:outpost, :npcs, 0, :metadata, :active)).to be false
+      sample[:weight] = 0
+      expect { described_class.reload! }.to raise_error(described_class::InvalidConfigurationError, /weight must/)
+      sample[:weight] = 1
+      member.delete(:hp)
+      expect { described_class.reload! }.to raise_error(described_class::InvalidConfigurationError, /requires explicit hp/)
+    ensure
+      described_class.instance_variable_set(:@config, nil)
+    end
+
     it "loads a ten-member authored roster and rejects an eleventh member on reload" do
       members = Array.new(10) { {npc_key: "capacity_spec"} }
       boundary_config = {

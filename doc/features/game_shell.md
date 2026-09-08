@@ -541,7 +541,7 @@ Cancelled/disconnected browser requests cannot replace newer state.
 
 | Method and path | Purpose | Success | Failure |
 |---|---|---|---|
-| `GET /world` | Bootstrap authenticated shell and current World/City surface | Full game-layout HTML or full HTML for Turbo redirect recovery | Login/active-character failure path |
+| `GET /world` | Bootstrap authenticated shell and current World/City surface | Full game-layout HTML; bounded map/location/action/result streams for timer-frame reads; full HTML for location redirect recovery | Login/closed-session/active-character failure path |
 | `GET /chat/local` | Initial mixed timeline or `poll=1` ordinary update | Authorized bounded HTML; stale-location denial returns `403` without navigation | Login/location/session denial |
 | `POST /chat/local` | Send to current room | Committed sender Turbo append, HTML redirect, or JSON `201` | Stale/foreign/private/global intent rejected without message |
 | `POST /session_ping` | Refresh this open login's activity | CSRF-protected `204`; missing/closed session unchanged | Authentication/CSRF denial |
@@ -665,6 +665,34 @@ fetch fallback. `UserSession#mark_seen!` performs an atomic conditional update
 on an existing open row; older requests cannot move `last_seen_at` backward and
 a request loaded before logout cannot reopen the closed row. Only the login
 manager reopens it. Missing rows are not synthesized by heartbeats.
+
+`ApplicationController#reject_closed_game_session` also checks an existing
+current-device session before gameplay access. If a late background response
+restores a pre-logout authenticated cookie, a closed DB row still rejects the
+next gameplay request: HTML redirects to sign-in; Turbo Stream/JSON reads or
+mutations return `401` and clear authentication. Missing tracking rows do not
+become a new authentication prerequisite. Devise authentication flows remain
+unchanged, and the heartbeat retains its harmless `204` behavior for a missing
+or closed row. This is a local authentication guarantee, not a newly inferred
+Neverlands gameplay rule.
+
+Arena building entry likewise uses server-persisted state: the accepted city
+action records the current zone in Character metadata through `ResumeContext`.
+The Arena gate rechecks that marker against the current city and active building,
+so a late shell/chat response restoring an older cookie cannot send a player
+back to World while entering a room. Initial lobby entry keeps the existing
+World/chat context; selecting a room still owns its separate persisted audience.
+
+World timer refreshes submit through their own `game-map` frame, so they do not
+replace Turbo's top-level logout submission after a confirmation held open past
+a deadline. Frame responses that require a different full page recover through
+normal navigation; `401`/`403` timer responses leave the retry loop for sign-in.
+Pending action results render into the stable `world-action-result` container
+in both full HTML and incremental responses. A map-only refresh therefore cannot
+consume a Look/Drink/Fish result without displaying its dialog, and no forced
+page reload discards the already-consumed result. Only a new pending message
+emits a result stream; an ordinary deadline refresh leaves an open modal intact
+until the player closes it.
 The heartbeat runs on connect and every 30 seconds, independently of the
 presence auto-refresh checkbox. A missing CSRF token suppresses the client
 request; Rails rejects a tokenless POST. An accepted heartbeat updates the
@@ -784,7 +812,7 @@ Tests are part of the feature contract. Changes require applicable model, reques
 | Failure | Blank/muted/private/global/system posts, stale/foreign rooms, closed login, conflicting event keys, malformed payloads, refresh failures, and missing current state. |
 | Edge/null/boundary | Self alone, missing position, stale village context, full room count beyond the ten-row list, first live row over empty history, 200-entry combined history, event ordering ties, unknown sort, five-minute session boundary, malformed preferences, and vitals zero maximum. |
 | Authorization | Anonymous routes, unverified social user, inaccessible membership channel, foreign channel/message attempt, cross-recipient event isolation, and current-character presence scope. |
-| Retry/concurrency | Matching stable event-key retry, canonical local-channel reuse by two users, movement/context rollback, stale-form rejection, no heartbeat reopening after logout, monotonic last-seen updates, and after-commit delivery. |
+| Retry/concurrency | Matching stable event-key retry, canonical local-channel reuse by two users, movement/context rollback, stale-form rejection, no heartbeat reopening after logout, closed-session rejection of stale cookies, timer/logout request isolation, monotonic last-seen updates, and after-commit delivery. |
 
 Factories must retain edge traits for channel types/membership, message visibility, verified/unverified users, recent/stale/signed-out sessions, exact/different position, ignored relationships, and vital boundaries when exercised.
 
@@ -796,6 +824,9 @@ new position and context while rejecting the previous node's building.
 checks both Arena Enter links with automatic presence refresh disabled,
 including immediate label/count/list replacement, unchanged coordinates,
 persisted room context, and reload stability.
+`spec/requests/arena_room_context_spec.rb` also replays a pre-entry cookie after
+a completed city handoff and verifies room entry while retaining direct-entry
+denial and current-city availability checks.
 
 `spec/queries/game/world/airship_presence_spec.rb` covers flight/ground and
 route/departure isolation, phase-independent membership, online playable
@@ -803,6 +834,13 @@ character filtering, bounded sorted rows/full counts, and no ground-content
 reads aboard. `spec/services/chat/airship_local_context_spec.rb` covers one
 visit across flight phases, the disembarkation boundary, and rejection of
 metadata-only flight identity.
+
+`spec/requests/closed_game_sessions_spec.rb` covers replayed pre-logout cookies,
+HTML/stream/JSON denial, unchanged movement, explicit new login, and the absence
+of a new tracking-row prerequisite. `spec/system/world_map_incremental_spec.rb`
+keeps logout confirmation open past a movement deadline and verifies closed
+session timer recovery plus login catch-up. `spec/system/world_map_result_delivery_spec.rb`
+checks pending-result delivery beside a map stream in Chrome.
 
 Focused verification command:
 

@@ -11,7 +11,8 @@
 class TileBuilding < ApplicationRecord
   BUILDING_TYPES = %w[city location].freeze
   LOCATION_ACTION_TYPES = %w[open_feature return_world].freeze
-  LOCATION_KINDS = %w[village].freeze
+  LOCATION_KINDS = %w[village mine].freeze
+  IMPLEMENTED_LOCATION_KINDS = %w[village].freeze
   LOCATION_KEY_FORMAT = /\A[a-z0-9_-]+\z/
 
   belongs_to :destination_zone, class_name: "Zone", inverse_of: :destination_tile_buildings, optional: true
@@ -45,7 +46,7 @@ class TileBuilding < ApplicationRecord
     return false unless active?
 
     if location?
-      location_configuration_errors.empty?
+      IMPLEMENTED_LOCATION_KINDS.include?(location_kind) && location_configuration_errors.empty?
     else
       destination_zone.present? && destination_coordinates_valid?
     end
@@ -190,6 +191,10 @@ class TileBuilding < ApplicationRecord
 
     kind = definition["kind"].to_s
     errors << "location kind is unsupported" unless LOCATION_KINDS.include?(kind)
+    if kind == "mine"
+      errors << "mine entrance must remain inactive until its interior is implemented" if active?
+      return errors
+    end
     if definition.key?("presence_label") && (!definition["presence_label"].is_a?(String) || definition["presence_label"].blank?)
       errors << "location presence label must be a non-empty string"
     end

@@ -9,6 +9,7 @@
 
 | Flow/state | Observation | Status |
 |---|---|---|
+| Cell NPC/herb groups, live pond drinking/empty fishing, and proficiency clarification | `doc/design/reference/world/observations/2026-09-08_cell_content_and_world_rules.md` | current; atlas annotations distinguished from source mechanics and explicit user eligibility decision |
 | Forpost-to-Oktal ticket, departure wait, flight, explicit arrival disembarkation, and station reload | `doc/design/reference/world/observations/2026-09-08_forpost_oktal_airship_journey.md` | current; completed one 150-NV trip, with destination-region semantics explicitly confirmed by the user |
 | Forpost left exit, five-cell route topology, buffering, reload, timed Look, and village entrance | `doc/design/reference/world/observations/2026-09-07_forpost_grid_and_action_audit.md` | current; corrects the local Forpost/Oktal gate mismatch |
 | Ordinary chat confined to one cell/room, village/Arena lists, browser history boundary, and source-equivalent map frame | `doc/design/reference/social/observations/2026-09-07_cell_chat_and_presence_boundaries.md` | current project-wiki rule plus live follow-up |
@@ -52,6 +53,13 @@
   `[1019,1025]` gate capture was Oktal. The fresh route confirms specific
   passable/unavailable neighboring cells, a `28`-second Look lock with an
   immediate no-vegetation result, and dismissal that leaves the timer running.
+- The September 8 Law Quarter exit reached source `[1005,1001]`; walking
+  through `[1006,1002]` reached the pond `[1007,1002]`. Drink immediately showed
+  success and retained a 60-second lock through reload. The Fatigue wiki
+  supplies two-point recovery per sip, or four with Nature Child. Fish without
+  bait showed its failure result and a 30-second lock. Neither capture is a
+  successful fishing cast. The user explicitly confirms no fishing/drinking
+  skill gate; digging requires a skill.
 - The Neverlands-hosted Chat article explicitly confines ordinary messages to
   one cell or room. Matching outdoor location labels do not combine different
   cells. Personal system rows and world announcements share the chat frame.
@@ -67,7 +75,10 @@
 ## Evidence gaps
 
 - Mines, exchanges, other linked-location families, successful fishing,
-  drinking, digging, and a complete profession yield loop remain unverified.
+  digging, and a complete profession yield loop remain unverified. Drinking
+  at zero fatigue, Nature Child's applied recovery, hostile interruption and
+  competing requests remain unexercised on the source. Successful fishing
+  proficiency growth awaits the user's demonstration.
 - Full region topology/content, source region origins and internal identifiers,
   and online-presence expiry remain unverified. The observed airship journey
   does not supply Oktal world content. Ordinary chat's one-cell/room audience
@@ -81,6 +92,10 @@
   availability, variable group output, and three materially different bounded
   passive intervals are observed; “one persisted bot row per cell” remains a
   local implementation model, not a source fact.
+- The atlas's NPC level ranges and herb-group labels organize annotated
+  content; they do not establish exact source pools, weights, yield formulas,
+  or level-zero NPC combat behavior. Herbs 7/11 are group identities rather
+  than quantities or required skill values.
 
 ## Design linkage
 
@@ -99,7 +114,16 @@
 - Region isolation uses the existing `zone_id` position/command identity.
   Local map rendering uses a bounded `15 × 9` buffer and whole odd visible
   rows/columns capped at `13 × 7`; exact-cell actions and eight-neighbor moves
-  do not load or query the whole region.
+  do not load or query the whole region. Walking retains overlapping terrain
+  and sends entering cells only, with a bounded full snapshot for recovery.
+- Local Look, Drink and no-bait Fish use their observed 28/60/30-second locks.
+  Drink persists its two-point fatigue recovery once; neither Look nor Fish
+  grants a gathering/catch reward. The pond is seeded at local `[13,10]`.
+  The newly observed eastern gate/route remains Stage 2 content; only the west
+  gate is an implemented reciprocal City/World handoff.
+- Guided per-cell resource/NPC authoring and inactive mine placement are local
+  content-management capabilities. They neither populate the full region nor
+  implement harvesting, successful fishing, mining, or an unobserved interior.
 - Authored NPC groups accept up to ten members, matching the Bot wiki maximum
   preserved in the September 7 cross-domain observation; this supplies no
   missing roster weights or timing formula.

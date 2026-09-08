@@ -6,7 +6,9 @@ class UserSession < ApplicationRecord
   validates :device_id, :signed_in_at, presence: true
   validates :device_id, uniqueness: {scope: :user_id}
 
-  scope :recent, -> { where(signed_out_at: nil).where("user_sessions.last_seen_at > ?", 5.minutes.ago) }
+  scope :recent, ->(at: Time.current, rules: Game::World::Rules.default) {
+    where(signed_out_at: nil).where("user_sessions.last_seen_at > ?", at - rules.presence_freshness_seconds)
+  }
 
   # A heartbeat may arrive after logout or after a newer heartbeat. Update only
   # an existing open row without moving its server-observed timestamp backward.

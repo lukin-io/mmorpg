@@ -40,8 +40,11 @@ persisted active journey before any stale saved ground surface.
 
 The map retains native 100px cells in a 700 × 300px viewport, 702 × 302px with
 border. Waiting/arrived maps contain 21 cells; flight maps contain at most 55
-slots. Small screens pan locally. Out-of-region slots do not invent adjacent
-terrain. The marker is original project SVG; terrain uses the existing
+slots. Successive snapshots retain identical overlapping terrain DOM nodes
+within the same region and buffer shape; changed artwork and entering/leaving
+cells are replaced individually. Region or buffer-shape changes rebuild the
+wrapper, even when coordinates match. Small screens pan locally. Out-of-region
+slots do not invent adjacent terrain. The marker is original project SVG; terrain uses the existing
 allowlisted cell-art/fallback pipeline.
 
 Non-goals are additional populated regions, an inferred recurring timetable,
@@ -76,11 +79,17 @@ outdoor path cell until explicit landing stores the destination city node.
 2. `POST /airship` submits an opaque `action_key`; `board!` revalidates and
    commits the debit and journey, then redirects to authoritative resume state.
 3. `GET /airship` reconciles and renders the current phase/map. Its JSON format
-   supplies a bounded server-rendered map fragment and short presentation
-   trajectory; it accepts no progress or coordinate input.
+   supplies the complete bounded server-rendered map fragment (21 waiting/arrival
+   cells or 55 flight slots) and a short presentation trajectory; it accepts no
+   progress or coordinate input. `.nl-airship-cells` carries the authoritative
+   `data-zone-id` alongside its origin and dimensions.
 4. Stimulus scrolls that terrain beneath the fixed marker and requests a fresh
-   snapshot at buffer/trajectory/deadline boundaries. Phase changes use Turbo
-   navigation. Visibility restoration refreshes state; disconnect aborts work.
+   snapshot at buffer/trajectory/deadline boundaries. `updateTerrain(html)`
+   parses that server HTML and retains identical cells by `(zone_id, x, y)`.
+   It updates changed art, removes departing cells, inserts/reorders entering
+   cells, and updates the wrapper origin. A region or dimension mismatch uses
+   a full replacement. This only reduces DOM changes; each JSON response still
+   renders and transmits the full bounded map. Phase changes use Turbo navigation. Visibility restoration refreshes state; disconnect aborts work.
    Failed/stalled reads clamp animation to loaded cells; a ten-second request
    timeout and two-second retry delay permit bounded recovery without blank
    terrain or client-owned location changes. Authentication/access failure
@@ -136,6 +145,7 @@ guarantee is tested; source logout/offline behavior was not exercised.
 | Arena list/boarding serialization across actual DB connections | `spec/requests/airship_arena_isolation_spec.rb` |
 | Flight roster isolation and stable chat visit | `spec/queries/game/world/airship_presence_spec.rb`, `spec/services/chat/airship_local_context_spec.rb` |
 | Station, waiting/flight/arrival, Inventory Return, native cells and mobile panning | `spec/system/airship_travel_spec.rb` |
+| Overlapping DOM identity, changed artwork, and no cell reuse across matching coordinates in different regions | `spec/system/airship_travel_spec.rb`; region identity/full snapshot size in `spec/requests/airships_spec.rb` |
 
 Local Chrome verification uses a separate seeded review database and temporary
 dated route/region fixtures. Those fixtures demonstrate the capability without
@@ -182,8 +192,13 @@ or generic job/reconciler framework is introduced.
 
 ## 8. Gaps and version history
 
+- `[IMPL]` Rendering efficiency: the client reuses unchanged airship cells, but
+  the server still renders and transmits all 21/55 cells per JSON snapshot.
+  Sending only entering/changed cells remains an explicit transport-rendering
+  gap; walking's signed-buffer delta protocol does not apply to flight maps.
 - `[IMPL]` Content boundary: normal Forpost routes cannot yet be purchased;
   their destination regions, complete path, and dated schedules are absent.
+  Enabling additional-region routes remains a TODO after the one-region MVP.
 - `[EVIDENCE]` Complete flight paths, recurring timetable/duration rules,
   walking borders and coordinate mappings remain uncaptured.
 - `[EVIDENCE]` Source offline/new-login recovery, insufficient funds/concurrent
@@ -194,3 +209,4 @@ or generic job/reconciler framework is introduced.
 | Date | Change |
 |---|---|
 | 2026-09-08 | Added evidence-backed flight lifecycle and region-ready transport capability without populated destination content. |
+| 2026-09-08 | Retained identical same-region airship DOM cells across snapshots; changed art and cross-region replacement covered in Chrome. Full bounded server snapshots remain an explicit efficiency gap. |

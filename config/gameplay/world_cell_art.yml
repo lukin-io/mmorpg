@@ -19,6 +19,14 @@ forpost_terrain:
   rows: 10
   source_reference: neverlands_live_movement
 
+forpost_pond:
+  asset: world/forpost-pond-landscape.png
+  cell_width: 100
+  cell_height: 100
+  columns: 5
+  rows: 5
+  source_reference: neverlands_live_forpost_pond_2026_09_08
+
 # Dedicated-cell shape (documentation only): keep this commented until the
 # exact Neverlands appearance, project-owned 100x100 asset, and tests exist.
 # forpost_west_gate:

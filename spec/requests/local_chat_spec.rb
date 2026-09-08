@@ -151,12 +151,12 @@ RSpec.describe "Current-location ordinary chat", type: :request do
 
     get local_chat_path(poll: 1), headers: headers
 
-    expect(response).to have_http_status(:forbidden)
+    expect(response).to have_http_status(:unauthorized)
 
     expect do
       post local_chat_path, params: {context_key: current_key, chat_message: {body: "Late post"}}, headers: headers
     end.not_to change(ChatMessage, :count)
-    expect(response).to have_http_status(:forbidden)
+    expect(response).to have_http_status(:unauthorized)
   end
 
   it "rejects a room change during an HTML chat read without redirecting back into the former room" do

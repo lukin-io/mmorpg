@@ -19,6 +19,28 @@ RSpec.describe "Arena room location context", type: :request do
     post interact_hotspot_world_path, params: {hotspot_id: hotspot.id, action_key: offer.action_key}
   end
 
+  it "keeps a completed city entry when a late response restores its older cookie" do
+    get world_path
+    before_entry_cookies = cookies.to_hash
+    enter_arena
+    get arena_index_path
+    expect(response).to have_http_status(:ok)
+
+    before_entry_cookies.each { |name, value| cookies[name] = value }
+    get arena_room_path(room)
+
+    expect(response).to have_http_status(:ok)
+    expect(character.reload.gameplay_context.dig("params", "room_id")).to eq(room.id)
+  end
+
+  it "rejects a direct room URL in an available city before the building was entered" do
+    get arena_room_path(room), as: :json
+
+    expect(response).to have_http_status(:forbidden)
+    expect(response.parsed_body.fetch("error")).to eq("arena_city_entry_required")
+    expect(character.reload.gameplay_context["name"]).to eq("world")
+  end
+
   it "persists the visited room and keeps it on room reload and lobby navigation" do
     enter_arena
     get arena_room_path(room)
@@ -129,7 +151,7 @@ RSpec.describe "Arena room location context", type: :request do
     expect(application.reload).to be_open
   end
 
-  it "rechecks current city access instead of trusting an old entry cookie" do
+  it "rechecks current city access instead of trusting an old entry marker" do
     enter_arena
     hotspot.update!(active: false)
     get arena_room_path(room)
