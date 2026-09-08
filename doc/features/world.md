@@ -1669,6 +1669,13 @@ and page-overflow separation at narrow widths. Its classic-scrollbar regression
 forces and verifies a 15px gutter on a separate probe, then checks whole-cell
 geometry and centering at 390px, 1150px, and 1326px, native horizontal wheel
 panning, chat-resize sizing, and unchanged movement offers/position.
+
+The seeded village resume system spec waits up to ten seconds for the actual
+sign-out redirect before checking shell removal, then verifies the persisted
+session is closed and a fresh World request requires authentication. This
+keeps the core-loop check valid when logout takes longer than Capybara's
+default two-second DOM wait; explicit login must still restore the village cell.
+
 Run the complete suite before
 release because the world hands off to combat, city, shop, inventory, shell,
 presence, and login-resume behavior.

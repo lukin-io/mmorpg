@@ -77,9 +77,14 @@ RSpec.describe "Seeded world village resume", type: :system, js: true do
     expect(character.reload.gameplay_context).to eq("name" => "world", "params" => {})
 
     accept_confirm("Exit the game?") { find("a[href='#{destroy_user_session_path}']").click }
+    # Wait for the sign-out redirect before inspecting the old shell: a slow
+    # response can outlast Capybara's default two-second DOM assertion window.
+    expect(page).to have_current_path(new_user_session_path, wait: 10)
     expect(page).to have_no_css(".nl-game-layout")
+    expect(user.user_sessions.sole.signed_out_at).to be_present
     expect(character.reload.gameplay_context).to eq("name" => "world", "params" => {})
-    visit new_user_session_path
+    visit world_path
+    expect(page).to have_current_path(new_user_session_path)
     fill_in "Email", with: user.email
     fill_in "Password", with: "Password123!"
     click_button "Enter"
