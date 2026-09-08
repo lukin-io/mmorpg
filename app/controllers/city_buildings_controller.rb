@@ -11,6 +11,10 @@ class CityBuildingsController < ApplicationController
     Game::World::ResumeContext.new(character: current_character).remember_city_building!(
       building_key: params[:building_key]
     )
+    @building = Game::World::CityBuildingCatalog.fetch(@building_key, zone: @position.zone)
+    if @building_key == "airship_station"
+      @airship_routes = Game::World::AirshipTravel.new(character: current_character).station_routes!
+    end
     prepare_presence_context
   end
 

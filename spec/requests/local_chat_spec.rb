@@ -159,6 +159,38 @@ RSpec.describe "Current-location ordinary chat", type: :request do
     expect(response).to have_http_status(:forbidden)
   end
 
+  it "rejects a room change during an HTML chat read without redirecting back into the former room" do
+    building = create(:tile_building, :world_location, zone: zone.name, x: 4, y: 6)
+    resume = Game::World::ResumeContext.new(character:)
+    [
+      {"Accept" => "text/html", "X-Requested-With" => "XMLHttpRequest"},
+      {"Accept" => "text/html", "Turbo-Frame" => "chat_messages"}
+    ].each do |read_headers|
+      resume.remember_world_location!(key: building.location_key)
+      # The channel has been selected, but Leave wins before the timeline's
+      # locked authorization check. No sleeps or relaxed authorization needed.
+      allow(Chat::Timeline).to receive(:new).and_wrap_original do |original, **arguments|
+        timeline = original.call(**arguments)
+        resume.remember_world!
+        timeline
+      end
+
+      get local_chat_path(poll: 1), headers: read_headers.merge("Referer" => world_location_url(building.location_key))
+
+      expect(response).to have_http_status(:forbidden)
+      expect(response.headers["Location"]).to be_nil
+      expect(response.body).to be_empty
+      expect(character.reload.gameplay_context).to eq("name" => "world", "params" => {})
+      expect(position.reload).to have_attributes(zone:, x: 4, y: 6)
+
+      allow(Chat::Timeline).to receive(:new).and_call_original
+      get local_chat_path(poll: 1), headers: read_headers
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("zone:#{zone.id}:cell:4:6:location:#{building.location_key}:outdoors")
+      expect(response.body).not_to include("location:#{building.location_key}:village")
+    end
+  end
+
   it "requires an authenticated verified player with a position" do
     sign_out user
     get local_chat_path(poll: 1)

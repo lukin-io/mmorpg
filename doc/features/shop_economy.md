@@ -3,7 +3,7 @@
 title: Shop and Economy Feature
 description: Implementation handbook for the Neverlands-based city shop, NV wallet, catalog buying, inventory selling, and transaction ledger.
 status: Partially Implemented
-updated: 2026-09-07
+updated: 2026-09-08
 owners: Shop and Economy
 template: feature-v1
 ---
@@ -46,6 +46,14 @@ Supporting documents:
 - `doc/features/arena_combat.md` owns NPC loot eligibility and resolution before an NV wallet credit.
 
 ### 1.1 Cross-feature relationships
+
+Airship boarding uses the same NV wallet and immutable adjustment ledger.
+`doc/features/airship_travel.md` owns route/offer validation, journey creation,
+the surrounding transaction, and retry protection. Its `airship_boarding`
+debit references the journey, route, and boarding offer; predeparture
+disembarkation does not refund the fare. While aboard, direct Shop access is
+unavailable even when the flight passes over a Shop's ground cell. No Shop
+stock or inventory ticket item is introduced by this handoff.
 
 | Related feature | Relationship | Ownership and handoff |
 |---|---|---|

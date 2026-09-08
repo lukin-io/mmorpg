@@ -62,7 +62,7 @@ module Game
       def schedule_decision
         character.with_lock do
           character.reload
-          if MovementCommand.moving.where(character:).exists?
+          if character.active_airship_journey || MovementCommand.moving.where(character:).exists?
             remove_schedule_from_locked_character!
             next waiting_result(EMPTY_RECHECK_SECONDS)
           end

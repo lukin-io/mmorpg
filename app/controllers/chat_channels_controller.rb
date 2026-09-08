@@ -36,6 +36,14 @@ class ChatChannelsController < ApplicationController
 
   private
 
+  # A stale passive read must not follow its old Referer back into a gameplay
+  # room. The next poll resolves the fresh audience through normal authority.
+  def user_not_authorized
+    return head :forbidden if action_name == "local"
+
+    super
+  end
+
   def game_shell_context_request?
     action_name != "local" && super
   end

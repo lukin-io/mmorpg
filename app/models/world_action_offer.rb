@@ -12,6 +12,7 @@ class WorldActionOffer < ApplicationRecord
     enter_city_building
     open_location_feature
     exit_city
+    board_airship
   ].freeze
 
   OFFER_TTL = 10.minutes
@@ -56,6 +57,21 @@ class WorldActionOffer < ApplicationRecord
   def local_action_result
     value = metadata.to_h["local_action_result"]
     value if value.is_a?(String)
+  end
+
+  # Returns the saved immediate result once, serializing concurrent deliveries.
+  # The caller resolves ownership/current cell first. Consumption records only
+  # presentation delivery; it never changes the accepted result or deadline.
+  def consume_local_action_result!(at: Time.current)
+    with_lock do
+      next unless action_type == "search_resources" && (accepted? || completed?) &&
+        local_action_ends_at && local_action_result.present?
+      next if metadata.to_h.key?("local_action_result_delivered_at")
+
+      result = local_action_result
+      update!(metadata: metadata.to_h.merge("local_action_result_delivered_at" => at.iso8601(6)))
+      result
+    end
   end
 
   def expired?

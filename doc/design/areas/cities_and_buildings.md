@@ -23,6 +23,7 @@ Current Forpost behavior:
 Reference evidence lives in:
 
 - `doc/design/reference/city/observations/2026-07-28_city_movement_and_services.md`;
+- `doc/design/reference/world/observations/2026-09-08_forpost_oktal_airship_journey.md`;
 - `doc/design/reference/economy/observations/2026-05-21_lavka_shop.md`;
 - `doc/design/reference/social/observations/2026-09-07_cell_chat_and_presence_boundaries.md`;
 - `doc/design/launch_mvp_plan.md`.
@@ -91,7 +92,12 @@ Three separate states must remain explicit:
 2. **Read-only interior** — a current hotspot plus an allowlisted informational surface with no invented mutation.
 3. **Illustrated landmark** — hover/focus label only, no server offer and no implied interior.
 
-Current interactive integrations are Arena and Shop. Hospital, Market, and Airship Station retain existing bounded read-only interiors. All other current city buildings are illustrated landmarks.
+Current interactive integrations are Arena and Shop. Hospital and Market retain
+bounded read-only interiors. Airship Station displays its origin-specific
+routes and delegates configured boarding, flight, and landing to
+`doc/design/features/airship_travel.md`. Missing destination/path/schedule
+content leaves a route unavailable. All other current city buildings are
+illustrated landmarks.
 
 Shop is on Central Square. Its feature owns the mode/category/filter hierarchy and buy/sell transactions after City validates entry. Returning through City preserves Central Square.
 

@@ -196,10 +196,18 @@ These labels preserve RPG-domain meaning but do not copy source-platform identit
 | Shop | Central | Interactive | Shop catalog, transactions, wallet/inventory, and Shop UI |
 | Hospital | Central | Read-only interior | City building catalog |
 | Market | Residential | Read-only interior | City building catalog |
-| Airship Station | Residential | Read-only interior | City building catalog |
+| Airship Station | Residential | Origin-specific route table; configured journey handoff, default routes unavailable | `doc/features/airship_travel.md` |
 | All other observed landmarks | Their illustrated district | Hover/focus only | City presentation |
 
 ### 6.2 Deferred building behavior
+
+The completed September 8 Forpost-to-Oktal capture now supports the separate
+Airship lifecycle in `doc/features/airship_travel.md`. Station access preserves
+the district until boarding. While aboard, ground City links and direct
+building URLs are rejected; explicit arrival landing saves the destination
+station. The normal Forpost table has the captured 350/150/150 NV fares, but
+paid offers require complete destination, dated schedule, and path content.
+No additional populated region is seeded.
 
 Building names, visible tabs, prices, routes, or “entry forbidden” states captured historically are evidence, not active offers. Do not add a transaction, schedule, treatment, rent, processing recipe, legal action, or profession rule until its complete current flow is captured and scoped in its owning feature.
 
@@ -332,7 +340,7 @@ unbound Arena room is cleared when the character leaves its current node.
 |---|---|---|
 | `GET /world` | Render exact current City node and live offers | Reuses exact live keys/deadlines, replaces stale actions, and cancels obsolete offers; does not move. |
 | `POST /world/interact_hotspot` | Accept route/building/exit capability | May move position or redirect to a feature. |
-| `GET /city/buildings/:building_key` | Render allowlisted read-only interior | Saves safe interior context only. |
+| `GET /city/buildings/:building_key` | Render an allowlisted interior or origin-specific airship station | Saves context; the station prepares/reuses server-owned boarding offers without charging or boarding. |
 | `GET /shop` | Render Shop from Central Square | Shop owns later mutations. |
 | `GET /arena` | Render Arena from Central Square | Arena owns later behavior. |
 | `GET/POST/PATCH/DELETE /manage/cities` | Admin-only city-node CRUD | Atomically changes persisted City data and writes an audit event. |

@@ -20,6 +20,8 @@ module Game
         Game::Movement::CompleteMove.new(character:).call
         character.with_lock do
           character.reload
+          next Result.new(interrupted: false) if character.active_airship_journey
+
           active_world_action = LocalActionState.new(character:).call
           if (match = active_match)
             next Result.new(

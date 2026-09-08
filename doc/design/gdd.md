@@ -246,8 +246,14 @@ resource cell `[1001,999]` to `[7,7]`. The bounded gate/village cluster uses
 This is a local layout choice, not the source's region origin. Other isolated
 encounter anchors remain separately authored samples. The full world mapping
 and region content coverage remain evidence gaps. Additional populated regions
-and crossings are outside this delivery boundary; region isolation is required
-now for position, movement, content reads, entrances, chat, and presence.
+and walking border mappings remain outside this delivery boundary. The
+completed Forpost-to-Oktal airship capture defines a separate paid journey:
+waiting, server-timed flight, arrived aboard, and explicit destination-station
+landing. `doc/design/features/airship_travel.md` owns that contract and its
+region-qualified path configuration. Missing destination/schedule/path content
+cannot become a paid offer. Region isolation is required for position,
+movement, content reads, entrances, chat, and presence; passengers use their
+flight audience rather than the ground cell below them.
 
 The local map reads a bounded `15 × 9` render buffer. The visible viewport uses
 whole odd rows/columns of `100px` cells, capped at `13 × 7`, fitted to the

@@ -20,7 +20,7 @@
     <%= render "world/location_info", position: @position, tile: @tile, zone: @zone %>
   </turbo-frame>
 
-  <% if flash[:world_action_result].present? %>
-    <%= render "world/action_result", message: flash[:world_action_result] %>
+  <% if @world_action_result.present? %>
+    <%= render "world/action_result", message: @world_action_result %>
   <% end %>
 </div>

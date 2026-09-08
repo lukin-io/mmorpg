@@ -1,3 +1,9 @@
+<% if @building["kind"] == "airship" %>
+  <div class="nl-airship-station-page" data-building-key="<%= @building_key %>">
+    <h1 class="nl-visually-hidden"><%= @building["title"] %></h1>
+    <%= render "city_buildings/airship", routes: @airship_routes %>
+  </div>
+<% else %>
 <%#
   Read-only city building interior. Navigation away from the building is owned
   by the shell header, as in the source, so this page adds no second context
@@ -15,7 +21,7 @@
 
       <p class="nl-city-building-notice">
         This source-captured surface is read-only for MVP. No purchase, sale,
-        processing, healing, rental, or boarding action is exposed.
+        processing, healing, or rental action is exposed.
       </p>
 
       <% case @building["kind"] %>
@@ -25,10 +31,9 @@
         <%= render "city_buildings/shop_shell", building: @building %>
       <% when "numismatics" %>
         <%= render "city_buildings/numismatics", building: @building %>
-      <% when "airship" %>
-        <%= render "city_buildings/airship", building: @building %>
       <% when "hospital" %>
         <%= render "city_buildings/hospital", building: @building %>
       <% end %>
     </section>
 </div>
+<% end %>

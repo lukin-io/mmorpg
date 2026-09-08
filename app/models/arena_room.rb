@@ -46,6 +46,7 @@ class ArenaRoom < ApplicationRecord
   # @return [Boolean] true if character meets room access requirements
   def accessible_by?(character)
     return false unless character
+    return false if character.active_airship_journey
     return false unless active?
     return false unless character.level.between?(level_min, level_max)
     return false if alignment_restriction.present? && character.alignment != alignment_restriction

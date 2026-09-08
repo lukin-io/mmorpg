@@ -97,7 +97,10 @@ read the exact target, and rendering reads the nearby buffer. `zone_id` on
 position/command records is the existing region identity. Multi-region
 readiness uses this identity and independent zone-scoped content; no competing
 region/position model or extra populated region is needed. The current user
-delivery scope keeps one populated region and defers region crossings. A
+delivery scope keeps one populated region. Configured airship journeys use the
+same region-qualified position and bounded cell rendering through their own
+paid transport lifecycle, defined in `doc/design/features/airship_travel.md`.
+Walking border mappings remain an evidence gap. A
 server-side relocation invalidates active travel from the previous source
 region/cell before its deadline; it cannot reuse an old region's offer at the
 same local coordinates.
@@ -314,5 +317,6 @@ flow.
 - Long-distance pathfinding as the first movement interaction.
 - Browser-only cooldowns.
 - City travel countdowns for the starter city.
-- Additional populated regions and region crossings in the current delivery.
+- Additional populated regions and unobserved walking border mappings. Paid
+  airship travel is a separate capability, not an adjacent walking command.
 - Gathering yields, profession growth, or uncaptured timing modifiers.

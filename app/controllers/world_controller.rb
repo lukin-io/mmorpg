@@ -37,6 +37,7 @@ class WorldController < ApplicationController
 
     Game::World::ResumeContext.new(character: current_character).remember_world!
     prepare_presence_context
+    consume_world_action_result
 
     # Handle both HTML and Turbo Stream requests with full page render
     # Turbo Stream requests can come from redirects after building entry
@@ -234,7 +235,7 @@ class WorldController < ApplicationController
 
     return respond_with_world_interruption(result.interruption) if result.interruption&.interrupted?
 
-    flash[:world_action_result] = result.message
+    flash[:world_action_result_offer_id] = result.action_offer.id
     respond_to do |format|
       format.html { redirect_to world_path }
       format.turbo_stream { redirect_to world_path, status: :see_other }
@@ -245,6 +246,20 @@ class WorldController < ApplicationController
   end
 
   private
+
+  # Flash is a delivery hint, not result authority: a late cookie response may
+  # replay it. World reads already hold the character lock; the offer lock makes
+  # the persisted result consumable once even across concurrent page requests.
+  def consume_world_action_result
+    offer_id = flash[:world_action_result_offer_id]
+    flash.delete(:world_action_result_offer_id)
+    return unless offer_id.is_a?(Integer) && offer_id.positive? && @position.zone.outdoor?
+
+    offer = WorldActionOffer.at_tile(@position.zone, @position.x, @position.y)
+      .where(character: current_character, action_type: "search_resources", status: %i[accepted completed])
+      .find_by(id: offer_id)
+    @world_action_result = offer&.consume_local_action_result!
+  end
 
   def interrupt_world_action(return_context: "world")
     Game::World::InterruptAction.new(

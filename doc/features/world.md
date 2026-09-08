@@ -138,8 +138,10 @@ and delay distribution remain unobserved.
 
 ### Non-goals
 
-- Populating additional outdoor regions or introducing region-to-region travel;
+- Populating additional outdoor regions or inventing walking border mappings;
   current delivery keeps one populated region with verified region isolation.
+  Configured airship progress and region handoffs are owned separately by
+  `doc/features/airship_travel.md` and reuse this feature's position/cell owners.
 - Rendering or downloading the entire 1,000 × 1,000 region.
 - Procedural region generation, pathfinding, fog of war, or minimap discovery.
 - Terrain-, encumbrance-, fatigue-, effect-, profession-, or non-Wanderer skill-based travel-time modifiers; fatigue gates actions but does not alter duration.
@@ -1147,7 +1149,15 @@ Stale position or malformed deadline fails the work. A passive fight may
 supersede/cancel it without adding encounter probability or timing rules.
 
 The escaped result appears in a keyboard-accessible `360 × 150` dialog over
-the gameplay frame. Close dismisses presentation only. Terrain/cursor remain
+the gameplay frame. Flash carries only the offer ID. Under its character lock,
+`WorldController#show` resolves an owned accepted/completed search offer on the
+current outdoor cell. `WorldActionOffer#consume_local_action_result!` takes an
+optional delivery time, returns the saved message once under the offer lock,
+and records `local_action_result_delivered_at` in metadata. It preserves the
+result, deadline, and action state. Replayed cookies, foreign/malformed IDs,
+and legacy flash text cannot reopen a delivered result.
+
+Close dismisses presentation only. Terrain/cursor remain
 still, and movement/Character/Inventory/Look remain locked. Refresh resumes
 the deadline without reopening the one-time result. Client expiry requests
 current World state; JavaScript never completes work. General search-time
@@ -1984,7 +1994,7 @@ or AOI parity.
 | Resolved `[IMPL]` | City-building entry validates, saves the room, and renders presence under the character lock; a concurrent relocation cannot save stale room context. First Hospital/Market/Airship entry renders the current label/count/list immediately. Both Arena Enter links refresh the full shell, so surrounding presence changes with the selected room without waiting for automatic refresh. Request/browser coverage belongs to `doc/features/game_shell.md`, `doc/features/city.md`, and `doc/features/arena_combat.md`. |
 | Remaining `[EVIDENCE]` | Exact Neverlands disconnect/logout expiry remains unpublished and unobserved. The confirmed audience is one cell or room; the existing five-minute open-session window is a local technical liveness policy, not a claimed Neverlands interval. |
 | Deferred by user | Successful gathering belongs to the later alchemy skill path. The current empty Look result remains supported; yields, eligibility, and profession progression are not invented. |
-| Current delivery boundary | Populate one region, with region-isolated persistence, cell reads, movement, and authorization ready for additional regions. Actual crossings and additional populated regions are outside this task's acceptance boundary. |
+| Current delivery boundary | Populate one region. Configured airship journeys now use persisted region-qualified paths and bounded map cells, with atomic payment, explicit landing, resume, and flight audience isolation; see `doc/features/airship_travel.md`. Default routes await destination/path/schedule content. Additional populated regions and walking border mappings remain outside the current acceptance boundary. |
 | Remaining `[EVIDENCE]` | General search and travel modifiers, broader location families, and full encounter probabilities/pools remain incomplete. |
 
 The renderer reloads its bounded map snapshot after travel; it does not yet

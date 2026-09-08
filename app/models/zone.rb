@@ -28,6 +28,7 @@ class Zone < ApplicationRecord
   validates :location_type, presence: true, inclusion: {in: LOCATION_TYPES}
   validates :width, :height, numericality: {greater_than: 0}
   validate :populated_name_is_stable
+  validate :valid_airship_station_title
 
   def city?
     location_type == "city"
@@ -50,7 +51,21 @@ class Zone < ApplicationRecord
     value.respond_to?(:deep_stringify_keys) ? value.deep_stringify_keys : {}
   end
 
+  # Authored station text stays separate from the node's title and stable name.
+  # Invalid legacy metadata falls back safely until its next validated write.
+  def airship_station_title
+    title = metadata.to_h["airship_station_title"]
+    title if title.is_a?(String) && title.present? && title.length <= 120
+  end
+
   private
+
+  def valid_airship_station_title
+    return unless metadata.to_h.key?("airship_station_title")
+    return if airship_station_title
+
+    errors.add(:metadata, "airship_station_title must be a nonblank string of at most 120 characters")
+  end
 
   # Sparse content uses the unique Zone name as its persisted region key.
   # Display changes belong in metadata.title; renaming a populated key would

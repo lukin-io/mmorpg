@@ -17,7 +17,8 @@ City handoff.
   `doc/design/features/professions.md`
 - Delivery IDs: `WORLD-UI-001`, `WORLD-MOVE-001`, `WORLD-CELL-001`, and
   `WORLD-LOCATION-001` in `doc/design/launch_mvp_plan.md`
-- Current implementation: `doc/features/world.md`
+- Current implementation: `doc/features/world.md`; configured transport:
+  `doc/features/airship_travel.md`
 - Content operations: `doc/guides/managing_game_content.md`
 
 ## Current RPG status
@@ -69,8 +70,14 @@ delivery owner is the shared-shell handbook.
 `CharacterPosition.zone_id` already identifies a region; it must not be
 duplicated with a competing position/region model.
 Only Outpost Surroundings is populated. Equal coordinates in separate test
-regions prove isolation; more populated regions and crossing gameplay remain
-outside the current delivery scope. Actual world-position transitions clear
+regions prove isolation. The completed Forpost-to-Oktal source journey is
+recorded in
+`doc/design/reference/world/observations/2026-09-08_forpost_oktal_airship_journey.md`.
+`doc/design/features/airship_travel.md` defines the configured transport
+capability: paid boarding, bounded moving cells, server-clock region progress,
+and explicit destination landing. Normal routes remain unavailable until their
+destination/path/schedule content exists; walking border mappings remain an
+evidence gap. Actual world-position transitions clear
 saved interior context atomically, while valid village/Shop/city/Arena-room
 contexts can resume without changing the persisted coordinate.
 

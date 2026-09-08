@@ -1,5 +1,11 @@
 # World Map Area
 
+Airship travel uses the same region-qualified cell-art pipeline with a captured
+seven-by-three viewport and a bounded eleven-by-five in-flight buffer. Its
+source evidence, phases, authoritative progress, and destination handoff are
+defined in `doc/design/features/airship_travel.md`. Ordinary walking retains
+the map geometry and eight-neighbor contract described below.
+
 Domain navigation: `doc/domains/world.md`.
 
 ## Purpose

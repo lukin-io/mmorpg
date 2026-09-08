@@ -74,9 +74,11 @@ RSpec.describe "Seeded world village resume", type: :system, js: true do
     expect(page).not_to have_css(".nl-world-location-scene")
     expect(page).to have_css(".nl-location-text", text: "Frontier Village [ 1 ]")
     expect(position.reload).to have_attributes(zone: region, x: 4, y: 6)
+    expect(character.reload.gameplay_context).to eq("name" => "world", "params" => {})
 
     accept_confirm("Exit the game?") { find("a[href='#{destroy_user_session_path}']").click }
     expect(page).to have_no_css(".nl-game-layout")
+    expect(character.reload.gameplay_context).to eq("name" => "world", "params" => {})
     visit new_user_session_path
     fill_in "Email", with: user.email
     fill_in "Password", with: "Password123!"

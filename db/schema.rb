@@ -10,9 +10,44 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_23_220000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_08_110000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
+
+  create_table "airship_journeys", force: :cascade do |t|
+    t.datetime "arrives_at", null: false
+    t.datetime "boarded_at", null: false
+    t.bigint "boarding_offer_id", null: false
+    t.bigint "character_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "departs_at", null: false
+    t.integer "destination_x", null: false
+    t.integer "destination_y", null: false
+    t.bigint "destination_zone_id", null: false
+    t.datetime "disembarked_at"
+    t.string "error_message"
+    t.decimal "fare_nv", precision: 12, scale: 2, null: false
+    t.integer "last_position_x", null: false
+    t.integer "last_position_y", null: false
+    t.bigint "last_position_zone_id", null: false
+    t.string "route_key", null: false
+    t.string "route_label", null: false
+    t.integer "source_x", null: false
+    t.integer "source_y", null: false
+    t.bigint "source_zone_id", null: false
+    t.integer "status", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.jsonb "waypoints", default: [], null: false
+    t.index ["boarding_offer_id"], name: "index_airship_journeys_on_boarding_offer_id", unique: true
+    t.index ["character_id"], name: "index_airship_journeys_on_character_id"
+    t.index ["character_id"], name: "index_one_aboard_airship_journey_per_character", unique: true, where: "(status = 0)"
+    t.index ["destination_zone_id"], name: "index_airship_journeys_on_destination_zone_id"
+    t.index ["last_position_zone_id"], name: "index_airship_journeys_on_last_position_zone_id"
+    t.index ["route_key", "departs_at"], name: "index_aboard_airship_flight", where: "(status = 0)"
+    t.index ["source_zone_id"], name: "index_airship_journeys_on_source_zone_id"
+    t.check_constraint "boarded_at <= departs_at AND departs_at < arrives_at", name: "airship_ordered_deadlines"
+    t.check_constraint "fare_nv > 0::numeric", name: "airship_positive_fare"
+  end
 
   create_table "arena_applications", force: :cascade do |t|
     t.bigint "applicant_id"
@@ -583,6 +618,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_23_220000) do
     t.index ["name"], name: "index_zones_on_name", unique: true
   end
 
+  add_foreign_key "airship_journeys", "characters"
+  add_foreign_key "airship_journeys", "world_action_offers", column: "boarding_offer_id"
+  add_foreign_key "airship_journeys", "zones", column: "destination_zone_id"
+  add_foreign_key "airship_journeys", "zones", column: "last_position_zone_id"
+  add_foreign_key "airship_journeys", "zones", column: "source_zone_id"
   add_foreign_key "arena_applications", "arena_applications", column: "matched_with_id"
   add_foreign_key "arena_applications", "arena_matches"
   add_foreign_key "arena_applications", "arena_rooms"

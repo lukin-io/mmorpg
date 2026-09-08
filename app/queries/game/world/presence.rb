@@ -3,7 +3,7 @@
 module Game
   module World
     # Returns up to ten online playable characters, the full audience count,
-    # and an authored label for the exact cell and validated village/city room.
+    # and an authored label for the exact cell, validated room, or aboard flight.
     # The viewer participates in the same sorted audience as other characters.
     # Inputs are authoritative character/position records plus an allowlisted
     # sort key. Reads authored room access, audience count, and a bounded list;
@@ -27,21 +27,17 @@ module Game
       def call
         return Result.new(players: [], label: "Unknown", count: 0) unless position
 
-        scope = Character.joins(:position).where(character_positions: {
-          zone_id: position.zone_id,
-          x: position.x,
-          y: position.y,
-          state: CharacterPosition.states.fetch("active")
-        }).where(user_id: UserSession.recent.select(:user_id))
-          .where(<<~SQL.squish)
-            characters.id = (
-              SELECT playable.id FROM characters playable
-              WHERE playable.user_id = characters.user_id
-              ORDER BY playable.created_at, playable.id LIMIT 1
-            )
-          SQL
-        scope = scope_to_location(scope) if location
-        scope = scope_to_city_rooms(scope) if position.zone.city?
+        scope = online_characters
+        if aboard_journey
+          passengers = AirshipJourney.aboard.where(route_key: aboard_journey.route_key,
+            departs_at: aboard_journey.departs_at)
+          scope = scope.where(id: passengers.select(:character_id))
+        else
+          scope = scope.where(character_positions: {zone_id: position.zone_id, x: position.x, y: position.y})
+            .where.not(id: AirshipJourney.aboard.select(:character_id))
+          scope = scope_to_location(scope) if location
+          scope = scope_to_city_rooms(scope) if position.zone.city?
+        end
         players = scope.order(SORT_ORDERS.fetch(sort.to_s, SORT_ORDERS.fetch("az"))).limit(LIMIT).to_a
         Result.new(players:, label: location_label, count: scope.count)
       end
@@ -50,6 +46,7 @@ module Game
       # instead of authored display labels. No player list is loaded here.
       def context_key
         return unless position
+        return "airship:#{aboard_journey.flight_key}" if aboard_journey
 
         parts = ["zone", position.zone_id, "cell", position.x, position.y]
         parts.concat(["location", location.location_key, room]) if location
@@ -60,6 +57,25 @@ module Game
       private
 
       attr_reader :character, :position, :sort
+
+      def online_characters
+        Character.joins(:position)
+          .where(character_positions: {state: CharacterPosition.states.fetch("active")})
+          .where(user_id: UserSession.recent.select(:user_id))
+          .where(<<~SQL.squish)
+            characters.id = (
+              SELECT playable.id FROM characters playable
+              WHERE playable.user_id = characters.user_id
+              ORDER BY playable.created_at, playable.id LIMIT 1
+            )
+          SQL
+      end
+
+      def aboard_journey
+        return @aboard_journey if defined?(@aboard_journey)
+
+        @aboard_journey = AirshipJourney.aboard.find_by(character_id: character&.id)
+      end
 
       def current_city_room
         return @current_city_room if defined?(@current_city_room)
@@ -76,7 +92,7 @@ module Game
         when "city_building"
           key = context.dig("params", "building_key")
           if Game::World::CityBuildingCatalog.accessible?(character:, building_key: key)
-            {key: "building:#{key}", label: Game::World::CityBuildingCatalog.fetch(key).fetch("title"),
+            {key: "building:#{key}", label: Game::World::CityBuildingCatalog.fetch(key, zone: position.zone).fetch("title"),
              context: {name: "city_building", params: {building_key: key}}}
           end
         when "arena_room"
@@ -167,6 +183,7 @@ module Game
       end
 
       def location_label
+        return aboard_journey.route_label if aboard_journey
         return current_city_room.fetch(:label) if current_city_room
         return entrance&.presence_label || position.zone.display_name unless location
 

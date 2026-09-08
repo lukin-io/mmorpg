@@ -121,6 +121,39 @@ RSpec.describe "Local chat browser buffer", type: :system, js: true do
     expect(ChatMessage.last.chat_channel).to eq(next_channel)
   end
 
+  it "retains its chat frame after a changed-room denial and reads the fresh audience on the next poll" do
+    building = create(:tile_building, :world_location, zone: zone.name, x: 4, y: 6)
+    visit world_location_path(building.location_key)
+    expect(page).to have_css("#chat_timeline[data-chat-poll-url-value]")
+    poll_chat
+    resume = Game::World::ResumeContext.new(character:)
+    changed_room = false
+    allow(Chat::Timeline).to receive(:new).and_wrap_original do |original, **arguments|
+      timeline = original.call(**arguments)
+      unless changed_room
+        changed_room = true
+        resume.remember_world!
+      end
+      timeline
+    end
+
+    poll_chat
+
+    expect(changed_room).to be(true)
+    expect(character.reload.gameplay_context).to eq("name" => "world", "params" => {})
+    expect(page).to have_css("#chat_timeline", count: 1)
+    expect(page).to have_no_css("#chat_messages .nl-world-location-scene")
+    current_channel = Chat::ChannelRouter.new(user:).resolve(scope: :local)
+    create(:chat_message, chat_channel: current_channel, body: "Outside after the room changed")
+
+    poll_chat
+
+    expect(page).to have_css("#chat_timeline article", text: "Outside after the room changed", count: 1)
+    expect(find('input[name="context_key"]', visible: false).value)
+      .to eq("zone:#{zone.id}:cell:4:6:location:#{building.location_key}:outdoors")
+    expect(character.reload.gameplay_context).to eq("name" => "world", "params" => {})
+  end
+
   it "shows the new-message indicator on a streamed row while the reader is scrolled up" do
     channel = Chat::ChannelRouter.new(user:).resolve(scope: :local)
     visit chat_channel_path(channel)

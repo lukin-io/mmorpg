@@ -3,7 +3,7 @@
 class Character < ApplicationRecord
   MAX_NAME_LENGTH = 30
   GAMEPLAY_CONTEXT_KEY = "gameplay_context"
-  GAMEPLAY_CONTEXTS = %w[world shop city_building world_location arena_room].freeze
+  GAMEPLAY_CONTEXTS = %w[world shop city_building world_location arena_room airship].freeze
 
   PRIMARY_STATS = %i[strength dexterity luck vitality intelligence].freeze
   BASE_PRIMARY_STATS = PRIMARY_STATS.index_with { 1 }.freeze
@@ -89,6 +89,7 @@ class Character < ApplicationRecord
   has_many :arena_participations, dependent: :destroy
 
   has_many :movement_commands, dependent: :destroy
+  has_many :airship_journeys, dependent: :destroy
   has_many :world_action_offers, dependent: :destroy
 
   validates :name, presence: true, uniqueness: true, length: {maximum: MAX_NAME_LENGTH}
@@ -103,6 +104,11 @@ class Character < ApplicationRecord
   validate :respect_character_limit, on: :create
 
   after_create :ensure_inventory!
+
+  # Query fresh state: boarding and disembarkation can happen in another tab.
+  def active_airship_journey
+    airship_journeys.aboard.first
+  end
 
   def gameplay_context
     payload = metadata.to_h[GAMEPLAY_CONTEXT_KEY]

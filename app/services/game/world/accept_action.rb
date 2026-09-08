@@ -21,6 +21,10 @@ module Game
         Game::Movement::CompleteMove.new(character:).call
         character.with_lock do
           character.reload
+          if character.active_airship_journey
+            raise ActionViolationError, "Disembark before interacting with the ground"
+          end
+
           @position = character.position&.reload
           if MovementCommand.moving.where(character:).exists?
             raise ActionViolationError, "Movement already in progress"

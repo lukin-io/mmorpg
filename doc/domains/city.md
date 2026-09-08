@@ -13,7 +13,8 @@ fixed-scene panning.
 - Normalized design: `doc/design/areas/cities_and_buildings.md`
 - Delivery IDs: `CITY-NAV-001`, `CITY-GATE-001`, and
   `CITY-SERVICES-001` in `doc/design/launch_mvp_plan.md`
-- Current implementation: `doc/features/city.md`
+- Current implementation: `doc/features/city.md`; paid transport lifecycle:
+  `doc/features/airship_travel.md`
 - Content operations: `doc/guides/managing_game_content.md`
 
 ## Current RPG status
@@ -40,7 +41,10 @@ Section 16 of `doc/features/city.md` is exhaustive.
 ## Evidence and implementation gaps
 
 Capture complete service-specific entry, denial, mutation, result, and return
-flows before adding treatment, trading, transport, or other service mutations.
-The bounded read-only Hospital/Market/Airship interiors render their saved
+flows before adding treatment, trading, or other service mutations. The
+September 8 completed Forpost-to-Oktal journey now supplies Airship evidence;
+its configured lifecycle and deliberately unavailable default routes are
+described in `doc/features/airship_travel.md`.
+The bounded Hospital/Market interiors and Airship station render their saved
 room's presence in the first authorized response. Arena room entry refreshes
 the full shell; the City and Arena handbooks own the corresponding coverage.

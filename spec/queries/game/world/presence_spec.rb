@@ -195,6 +195,16 @@ RSpec.describe Game::World::Presence do
       expect(result.players).to contain_exactly(character, market)
     end
 
+    it "uses the current city's authored station label without changing the room key" do
+      city.update!(metadata: {"city_key" => "forpost"})
+      create(:city_hotspot, zone: city, action_type: "open_feature", action_params: {"feature" => "airship_station"})
+      character.remember_gameplay_context!(name: "city_building", params: {building_key: "airship_station"})
+
+      presence = described_class.new(character:)
+      expect(presence.call.label).to eq("Forpost Airship Station")
+      expect(presence.context_key).to eq("zone:#{city.id}:cell:4:6:room:building:airship_station")
+    end
+
     it "isolates selected Arena rooms and falls back when a room is deactivated" do
       character.update!(level: 20)
       create(:city_hotspot, :arena, zone: city)

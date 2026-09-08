@@ -14,6 +14,7 @@ Neverlands remains the sole game-design authority.
 
 | Handbook | Current status | Primary boundary |
 |---|---|---|
+| `airship_travel.md` | Partially Implemented | Configured paid journeys, bounded flight maps, persisted region handoffs, and flight audiences; normal routes await destination/path/schedule content |
 | `arena_combat.md` | Fully Implemented | Arena creation, combat turns, NPC fights, results, and event feedback |
 | `character_progression.md` | Fully Implemented | Character vitals, attributes, skills, XP, and derived progression |
 | `city.md` | Fully Implemented | City/building entry, return, and persisted location context |

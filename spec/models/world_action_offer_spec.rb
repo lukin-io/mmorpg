@@ -151,5 +151,31 @@ RSpec.describe WorldActionOffer, type: :model do
       expect(ordinary_offer.local_action_remaining_seconds).to eq(0)
       expect(ordinary_offer.local_action_result).to be_nil
     end
+
+    it "consumes the saved result once across stale instances without changing timing or work state" do
+      offer.save!
+      stale_offer = described_class.find(offer.id)
+      result = offer.local_action_result
+
+      expect(offer.consume_local_action_result!(at: now)).to eq(result)
+      expect(stale_offer.consume_local_action_result!(at: now + 1.second)).to be_nil
+      expect(offer.reload.metadata["local_action_result_delivered_at"]).to eq(now.iso8601(6))
+      expect(offer).to have_attributes(local_action_result: result, local_action_ends_at: now + 28.seconds, status: "accepted")
+    end
+
+    it "permits an undelivered completed result and rejects cancelled, failed, and ordinary offers" do
+      offer.save!
+      offer.complete!
+      expect(offer.consume_local_action_result!(at: now + 29.seconds)).to eq(offer.local_action_result)
+
+      %w[cancelled failed offered].each do |state|
+        candidate = create(:world_action_offer, status: state, metadata: {
+          "local_action_ends_at" => (now + 28.seconds).iso8601(6), "local_action_result" => "Hidden result"
+        })
+        expect(candidate.consume_local_action_result!).to be_nil
+      end
+      ordinary_offer = create(:world_action_offer)
+      expect(ordinary_offer.consume_local_action_result!).to be_nil
+    end
   end
 end

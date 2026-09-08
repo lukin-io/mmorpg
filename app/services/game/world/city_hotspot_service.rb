@@ -56,6 +56,10 @@ module Game
         return Result.new(success: false, message: "Character is unavailable.") unless character
 
         character.with_lock do
+          if character.active_airship_journey
+            next Result.new(success: false, message: "Disembark before entering the city.")
+          end
+
           unless city_zone? && character.position&.zone_id == zone.id
             next Result.new(success: false, message: "Location does not match current position.")
           end

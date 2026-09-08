@@ -62,6 +62,9 @@ Rails.application.routes.draw do
   end
 
   get "city/buildings/:building_key", to: "city_buildings#show", as: :city_building
+  resource :airship, only: %i[show create] do
+    post :disembark
+  end
 
   resources :arena, only: [:index], controller: "arena" do
     collection do

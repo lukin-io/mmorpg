@@ -26,6 +26,14 @@ module Game
         character.remember_gameplay_context!(name: "world")
       end
 
+      def remember_airship!(journey:)
+        unless journey.character_id == character.id && journey.aboard?
+          raise ArgumentError, "Active owned airship journey required"
+        end
+
+        character.remember_gameplay_context!(name: "airship", params: {"journey_id" => journey.id})
+      end
+
       def remember_shop!(params: {})
         character.remember_gameplay_context!(
           name: "shop",
@@ -84,6 +92,8 @@ module Game
       end
 
       def arena_available?
+        return false if character.active_airship_journey
+
         position = character.position&.reload
         return false unless position&.active? && position.zone.city?
 
@@ -99,6 +109,8 @@ module Game
       end
 
       def resume_path
+        return airship_path if character.active_airship_journey
+
         context = character.gameplay_context
 
         case context["name"]
@@ -125,6 +137,8 @@ module Game
       end
 
       def shop_available?
+        return false if character.active_airship_journey
+
         position = character.position&.reload
         return false unless position
 
@@ -147,6 +161,8 @@ module Game
       attr_reader :character
 
       def world_location_available?(key)
+        return false if character.active_airship_journey
+
         position = character.position&.reload
         building = TileBuilding.active.at_tile(position&.zone&.name, position&.x, position&.y)
         building&.location? && building.location_key == key && building.can_enter?(character)

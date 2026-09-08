@@ -94,4 +94,27 @@ RSpec.describe Zone, type: :model do
       expect(zone.display_name).to eq("Fallback Zone")
     end
   end
+
+  describe "authored airship station title" do
+    it "accepts an absent title and the 120-character boundary without replacing the zone identity" do
+      zone = build(:zone, :city_node, name: "Stable Station Node")
+      expect(zone).to be_valid
+      expect(zone.airship_station_title).to be_nil
+
+      zone.metadata["airship_station_title"] = "S" * 120
+      expect(zone).to be_valid
+      expect(zone.airship_station_title).to eq("S" * 120)
+      expect(zone.display_name).to eq("Central Square")
+      expect(zone.name).to eq("Stable Station Node")
+    end
+
+    it "rejects blank, non-string, and overlong authored labels and does not expose them for rendering" do
+      [nil, "", "  ", 123, ["Station"], "S" * 121].each do |title|
+        zone = build(:zone, :city, metadata: {"airship_station_title" => title})
+        expect(zone).not_to be_valid
+        expect(zone.errors[:metadata]).to include("airship_station_title must be a nonblank string of at most 120 characters")
+        expect(zone.airship_station_title).to be_nil
+      end
+    end
+  end
 end

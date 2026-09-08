@@ -54,6 +54,10 @@ module Game
       attr_reader :character, :tile_npc, :return_context, :rng, :roster_selector_class
 
       def validate!
+        if character.active_airship_journey
+          raise FightViolationError, "Disembark before interacting with ground NPCs."
+        end
+
         if MovementCommand.moving.where(character:).exists?
           raise FightViolationError, "Movement already in progress."
         end

@@ -1,0 +1,111 @@
+.nl-airship-station {
+  width: min(760px, 100%);
+  margin: 9.5px auto 12px;
+  overflow-x: auto;
+}
+
+.nl-airship-routes {
+  width: 684px;
+  max-width: none;
+  margin: 0 auto;
+  border-collapse: collapse;
+  font: 12px Verdana, Tahoma, Arial, sans-serif;
+}
+
+.nl-airship-routes th,
+.nl-airship-routes td {
+  padding: 5px 7px;
+  border: 1px solid #d8cdaf;
+  text-align: left;
+}
+
+.nl-airship-routes th {
+  height: 32px;
+  background: #fff;
+}
+
+.nl-airship-routes td {
+  height: 37px;
+  background: #fff;
+}
+
+.nl-airship-page {
+  min-width: 0;
+  padding: 6px 0 8px;
+  text-align: center;
+}
+
+.nl-airship-pan {
+  max-width: 100%;
+  width: 702px;
+  margin: 0 auto;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+}
+
+.nl-airship-viewport {
+  position: relative;
+  box-sizing: content-box;
+  width: 700px;
+  height: 300px;
+  overflow: hidden;
+  border: 1px solid #99958a;
+  background: #818867;
+}
+
+.nl-airship-terrain {
+  position: absolute;
+  inset: 0 auto auto 0;
+  will-change: transform;
+}
+
+.nl-airship-cells {
+  display: grid;
+  gap: 0;
+}
+
+.nl-airship-tile {
+  width: 100px;
+  height: 100px;
+  background-color: #818867;
+  background-repeat: no-repeat;
+}
+
+.nl-airship-marker {
+  position: absolute;
+  z-index: 2;
+  top: 100px;
+  left: 300px;
+  width: 100px;
+  height: 100px;
+  pointer-events: none;
+}
+
+.nl-airship-marker img {
+  display: block;
+  width: 100px;
+  height: 100px;
+}
+
+.nl-airship-timer {
+  position: absolute;
+  top: -58px;
+  left: 0;
+  width: 100px;
+  padding: 2px 0;
+  border: 2px ridge #d8d8d8;
+  border-radius: 9px;
+  background: #b32d2d;
+  color: #fff;
+  font: bold 11px Verdana, Tahoma, Arial, sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+
+.nl-airship-actions {
+  margin-top: 7px;
+}
+
+.nl-airship-actions button:focus-visible {
+  outline: 2px solid #9b2020;
+  outline-offset: 2px;
+}

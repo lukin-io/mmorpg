@@ -24,7 +24,6 @@ RSpec.describe "City buildings", type: :request do
     {
       "junk_dealer" => ["Junk Dealer", "Stock was not captured"],
       "numismatics" => ["Numismatics Shop", "Ancient Alvian Coin"],
-      "airship_station" => ["Oktal Airship Station", "Khalgan Fair", "200 NV"],
       "hospital" => ["Hospital", "Beginner healer bag", "Pharmacy"]
     }.each do |building_key, expected_text|
       market.update!(key: building_key, name: expected_text.first, action_params: {"feature" => building_key})
@@ -48,7 +47,7 @@ RSpec.describe "City buildings", type: :request do
   {
     "market" => "Market",
     "hospital" => "Hospital",
-    "airship_station" => "Oktal Airship Station",
+    "airship_station" => "Forpost Airship Station",
     "junk_dealer" => "Junk Dealer",
     "numismatics" => "Numismatics Shop"
   }.each do |building_key, title|

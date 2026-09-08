@@ -21,6 +21,8 @@ module Game
         Game::Movement::CompleteMove.new(character:).call
         character.with_lock do
           character.reload
+          raise violation("Disembark before moving on foot") if character.active_airship_journey
+
           position = respawn_service.ensure_position!.reload
           raise violation("Wilderness movement is unavailable here") unless position.zone.outdoor?
           ensure_not_already_moving!

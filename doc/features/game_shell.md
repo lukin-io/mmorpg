@@ -33,6 +33,7 @@ Supporting documents:
 - `doc/design/reference/world/observations/2026-09-07_forpost_grid_and_action_audit.md` records outdoor movement locks and separate village entrance, square, and Shop presence labels/audiences.
 - `doc/design/reference/social/observations/2026-08-23_chat_game_event_timeline.md` records current supplied-image/text evidence for player chat, personal fight, item, and NV search results, and game-wide announcements in one history.
 - `doc/design/reference/social/observations/2026-09-07_cell_chat_and_presence_boundaries.md` confirms ordinary cell/room chat, distinct Arena rooms, and the browser-login history boundary.
+- `doc/design/reference/world/observations/2026-09-08_forpost_oktal_airship_journey.md` records separate station/route roster labels, waiting-state Inventory/reload recovery, and explicit arrival disembarkation; chat delivery aboard was not exercised.
 - `doc/design/reference/social/observations/legacy_chat_system_analysis.md` records earlier chat observations and explicitly separated unknowns.
 - `doc/design/reference/character/observations/2026-05-11_player_profile_and_development.md` records the player/vitals presentation linked from the shell.
 - `doc/design/areas/game_client_layout.md` defines shared client-layout ownership.
@@ -79,7 +80,7 @@ separate retention or anonymization policy.
 The MVP currently contains:
 
 - a source-shaped authenticated top/main/presence/chat frame around World and City;
-- exact-cell presence with separate validated village, Shop, city-building, and Arena rooms, the selected playable character, four server allowlisted sorts, recent-session membership/total, and optional 30-second browser refresh;
+- exact-cell presence with separate validated village, Shop, city-building, Arena-room, and aboard-flight audiences, the selected playable character, four server allowlisted sorts, recent-session membership/total, and optional 30-second browser refresh;
 - lazy local-chat history, reauthorized polling, sender responses, durable game-event streams, location policies, and mute/ignore handling;
 - a latest-200 mixed timeline combining current-login/visit ordinary messages with durable recipient-only fight/item/NV results and server-owned world announcements, with no separate toast-notification surface;
 - local browser persistence for presence sorting/refresh plus server persistence for character location and gameplay resume;
@@ -171,7 +172,7 @@ ordinary request errors continue to use the stable flash surface.
 
 ### 4.4 Exit and integration behavior
 
-Logout ends the authenticated game view. Login returns through `Game::World::ResumeContext`, which selects World, a supported City building, village interior, Shop, or validated Arena room from server-sanitized context; exact cell/node position remains owned by World/City.
+Logout ends the authenticated game view. Login returns through `Game::World::ResumeContext`, which prioritizes an active owned airship journey, then selects World, a supported City building, village interior, Shop, or validated Arena room from server-sanitized context; exact cell/node position remains owned by World/City.
 
 When central navigation hands off, the destination feature owns its content and mutation rules. Game Shell continues to own only the frame, shared navigation, current vitals presentation, presence presentation, local chat and mixed gameplay events, flashes, and client preferences.
 
@@ -183,7 +184,7 @@ The feature is a fixed shell region graph plus social channel types.
 |---|---|---|---|
 | `top_bar` | Character status/navigation | Profile, Inventory, City state, logout | Name, level, HP/MP, compact text controls |
 | `main_content` | Current feature surface | Turbo-frame navigation/handoff | World/City bootstrap and compatible feature pages |
-| `players_panel` | Nearby players | Four sorts, refresh toggle, profile links | Exact cell/room plus recent session and playable-character scope; maximum 10 rows with full count |
+| `players_panel` | Nearby players | Four sorts, refresh toggle, profile links | Exact cell/room or aboard flight, plus recent session and playable-character scope; maximum 10 rows with full count |
 | `bottom_bar` | Chat/status | Say, Enter submit, mixed history | Current local messages plus personal/world events, input, time |
 | `local` | Ordinary cell/room chat | Current-location reads/posts | Server-derived key and current login/visit bounds |
 | `global`, `system` | System audiences | Read-only to players | Global ordinary history is suppressed |
@@ -193,7 +194,7 @@ The feature is a fixed shell region graph plus social channel types.
 ### 5.1 Coordinate, key, or identity terminology
 
 - **Main content frame** — DOM identity `main_content`; a navigation target, not domain authority.
-- **Exact location** — authoritative `zone_id`, `x`, and `y` on `CharacterPosition`, plus validated village, city-building, Shop, or Arena room context.
+- **Exact location** — authoritative `zone_id`, `x`, and `y` on `CharacterPosition`, plus validated village, city-building, Shop, or Arena room context. An aboard `AirshipJourney` supplies the flight audience instead of the ground cell beneath it.
 - **Recent session** — an unsigned-out `UserSession` seen within five minutes;
   used for presence eligibility and the displayed total. Only the user's
   playable first-created character participates, not every owned alternate.
@@ -211,7 +212,7 @@ DOM placement, displayed location text, a player-list row, local storage, or a s
 |---|---|---|---|
 | Persistent game layout | `GET /world` | Interactive | `layouts/game` through `WorldController` |
 | Main feature frame | `turbo-frame#main_content` | Interactive integration | Game layout and destination controller/view |
-| Same-cell presence | `GET /world/players` | Interactive/read-only | World query and shared list partial |
+| Current-location presence | `GET /world/players` | Interactive/read-only | World query and shared list partial |
 | Compact local chat | lazy `GET /chat/local` | Interactive | Chat controllers/views/services |
 | Mixed game-event history/live delivery | Compact and full local timeline; read-only global event history | Interactive/read-only | `GameEvent`, `Chat::Timeline`, `Chat::EventPublisher`, Turbo Streams |
 | Chat creation | `POST /chat/local`; authorized explicit channel POST | Interactive | Policy and `MessageDispatcher` |
@@ -243,6 +244,21 @@ Removed or malformed contexts fall back to the cell. Multiple devices do not
 duplicate a character; another open device keeps that user eligible.
 Only the user's currently playable, first-created character participates;
 inactive alternate character rows are not made online by that user's session.
+
+An aboard `AirshipJourney` overrides ground cell/room grouping. Presence reads
+the persisted route key and exact departure time, then selects only online
+playable passengers on that same flight. Waiting, in-flight, and arrived-aboard
+phases share its key and authored route label, even as the authoritative path
+changes region/cell. Other departures/routes and ended reservations do not
+join it. Ground lists exclude all aboard characters, and aboard presence does
+not query ground NPC, tile, entrance, or room content. The same ten-row limit,
+full count, sorts, and technical session expiry apply. Presence remains a
+read-only projection; the travel owner reconciles position and disembarkation.
+
+The source pass observed station/route roster changes with one passenger;
+same-flight grouping and ordinary-chat authorization apply the established
+one-room rule locally. They do not claim source chat-delivery or internal
+flight-storage evidence.
 
 `CityBuildingsController#show` rebuilds presence after saving the authorized
 building context, so the first Hospital/Market/Airship response shows the
@@ -293,7 +309,8 @@ game events without its historical ordinary player rows.
 All message/event bodies are escaped; chat additionally replaces
 case-insensitive `script` text with `[removed]` before display.
 
-Ordinary chat belongs to the exact persisted zone/cell and validated room.
+Ordinary chat belongs to the exact persisted zone/cell and validated room,
+or to the authoritative aboard flight.
 `Chat::LocalContext` uses `Game::World::Presence#context_key` and persists
 `local_chat_context` key/entry time on the existing Character.
 `Chat::LocalContext.new(character:, clock: ...).synchronize!` returns a key and
@@ -306,6 +323,14 @@ that key; submitted local keys, labels, coordinates, or channel ids cannot
 select a remote audience. HTTP history reads do not create channels; the first
 permitted local post creates the canonical channel when it is absent.
 
+For an aboard reservation the key is `airship:<route_key>:<UTC departure>`.
+Boarding and disembarkation synchronize the audience inside their character
+transaction. Intermediate path/phase changes preserve the same key and visit
+timestamp, including arrived-aboard waiting for explicit disembarkation.
+Gameplay metadata alone cannot forge a flight audience without its persisted
+aboard reservation. Polling, current-session checks, Clear, and browser-buffer
+rules below are unchanged; a flight is not a new shared ordinary-chat stream.
+
 Local reads require the current open `UserSession` and select rows no earlier
 than both its fresh `signed_in_at` and the current context entry time. The
 browser polls this authenticated current-location endpoint every ten seconds,
@@ -314,6 +339,11 @@ Already-delivered ordinary rows survive navigation in per-tab session storage;
 a new login generation clears them. Unpolled former-cell messages and previous
 visits/logins are not replayed. Personal gameplay events remain durable under
 the user's log-system requirement, independently of the source browser buffer.
+
+If the location changes while a local timeline read is in progress, denied
+`GET /chat/local` responses return `403` without redirecting to their former
+page. A passive poll therefore cannot reopen an old village or overwrite the
+saved resume context. The next poll resolves the current authoritative room.
 
 Local/global ordinary messages never publish to shared channel streams, so an
 old signed local token receives no new ordinary messages. The shell retains
@@ -401,13 +431,13 @@ and NV loot.
 | Record or component | Responsibility | Important contract |
 |---|---|---|
 | `Character` and `CharacterPosition` | Header identity/vitals and exact presence location | Current signed-in character is authoritative |
-| `Game::World::Presence` | Bounded online playable-character list, full count, and authored label | Exact cell plus validated village/city/Arena room; never changes location, resume context, sessions, or chat |
+| `Game::World::Presence` | Bounded online playable-character list, full count, and authored label | Exact cell plus validated village/city/Arena room, or persisted route/departure aboard audience; never changes location, resume context, sessions, or chat |
 | `UserSession` | Online-total and presence liveness signal | Unsigned-out and seen strictly within five minutes; explicit login owns reopening |
 | `ChatChannel` and `ChatChannelMembership` | Channel identity, audience, membership | Local key from authoritative context; whisper/legacy arena require membership; global ordinary posts rejected |
 | `ChatMessage` | Persisted sender/body/visibility/metadata | Body present; broadcasts only after commit |
 | `GameEvent` | Immutable recipient/world gameplay-information projection | Allowlisted fight/item/money/system/world type, stable unique key, structured payload, occurrence time, and audience constraints |
 | `Chat::Timeline` | Bounded authorized history read | Current-login/visit local rows plus optional world/personal events; maximum 200 combined rows |
-| `Chat::LocalContext` | Exact ordinary-chat context and visit start | Existing Character metadata; synchronized atomically with position/room transitions |
+| `Chat::LocalContext` | Exact ordinary-chat context and visit start | Existing Character metadata; synchronized atomically with position/room/boarding/disembarkation transitions; one visit spans a flight's phases |
 | `Chat::EventPublisher` | Normalize and persist server-owned event facts | Stable keys are idempotent and conflicting reuse fails |
 | `Chat::TimelineBroadcaster` | After-commit Turbo presentation | Owns stream names, stable DOM target, and record partial selection |
 | `IgnoreListEntry` and `Chat::IgnoreFilter` | Initial-history visibility and whisper privacy | System/self messages retain explicit behavior |
@@ -440,7 +470,7 @@ preferences fall back to alphabetical sort and automatic refresh enabled.
 - Compact and full local history load at most 200 candidates per record type
   and show the latest 200 combined entries. The legacy global page shows only
   game events; explicit private channels load at most 200 messages. Presence
-  loads at most 10 co-located online playable characters.
+  loads at most 10 online playable characters from the same cell/room or flight.
 - Presence and heartbeat timers are 30 seconds; local chat polls every ten
   seconds. Presence/online total use the technical five-minute session window.
 
@@ -512,7 +542,7 @@ Cancelled/disconnected browser requests cannot replace newer state.
 | Method and path | Purpose | Success | Failure |
 |---|---|---|---|
 | `GET /world` | Bootstrap authenticated shell and current World/City surface | Full game-layout HTML or full HTML for Turbo redirect recovery | Login/active-character failure path |
-| `GET /chat/local` | Initial mixed timeline or `poll=1` ordinary update | Authorized bounded HTML | Login/location/session denial |
+| `GET /chat/local` | Initial mixed timeline or `poll=1` ordinary update | Authorized bounded HTML; stale-location denial returns `403` without navigation | Login/location/session denial |
 | `POST /chat/local` | Send to current room | Committed sender Turbo append, HTML redirect, or JSON `201` | Stale/foreign/private/global intent rejected without message |
 | `POST /session_ping` | Refresh this open login's activity | CSRF-protected `204`; missing/closed session unchanged | Authentication/CSRF denial |
 | `GET /world/players` | Refresh exact-cell presence | Shared players-list HTML partial | Authentication/active-position failure |
@@ -609,6 +639,11 @@ On login or return:
 
 - explicit login reopens its device record and sets a fresh `signed_in_at`;
   browser ordinary-chat history uses that generation and is cleared on change;
+- an active owned airship journey resumes `/airship` ahead of other saved
+  surfaces; server timestamps recover its current phase, with arrival remaining
+  aboard until explicit disembarkation. This local recovery contract extends
+  beyond the source's exercised waiting-state reload; offline flight recovery
+  was not observed in Neverlands;
 - a valid Shop context resumes Shop after access revalidation;
 - a valid supported City-building context resumes that building;
 - a valid village-interior context resumes the authored location without changing its outdoor cell;
@@ -701,6 +736,9 @@ creating another login row.
 - Presence uses exact zone/x/y, validated village/city/Arena room, and recent
   open-session scope; it supports four sorts, returns at most ten rows, and
   counts the full scoped audience.
+- Aboard presence and ordinary-chat keys use one persisted route/departure
+  audience through waiting, flight, and arrived-aboard states. Ground players,
+  other flights, offline sessions, and inactive alternate characters are excluded.
 - Automatic presence refresh runs at 30 seconds only when enabled and remembers browser-local preference.
 - Presence refresh updates the bounded list, its location/count, and total online together;
   navigation or newer requests cannot be overwritten by stale responses.
@@ -759,6 +797,13 @@ checks both Arena Enter links with automatic presence refresh disabled,
 including immediate label/count/list replacement, unchanged coordinates,
 persisted room context, and reload stability.
 
+`spec/queries/game/world/airship_presence_spec.rb` covers flight/ground and
+route/departure isolation, phase-independent membership, online playable
+character filtering, bounded sorted rows/full counts, and no ground-content
+reads aboard. `spec/services/chat/airship_local_context_spec.rb` covers one
+visit across flight phases, the disembarkation boundary, and rejection of
+metadata-only flight identity.
+
 Focused verification command:
 
 ```bash
@@ -768,11 +813,13 @@ bundle exec rspec \
   spec/models/user_session_spec.rb \
   spec/queries/chat/timeline_spec.rb \
   spec/queries/game/world/presence_spec.rb \
+  spec/queries/game/world/airship_presence_spec.rb \
   spec/services/chat/event_publisher_spec.rb \
   spec/services/chat/timeline_broadcaster_spec.rb \
   spec/services/chat/message_dispatcher_spec.rb \
   spec/services/chat/local_context_spec.rb \
   spec/services/chat/local_context_transition_spec.rb \
+  spec/services/chat/airship_local_context_spec.rb \
   spec/services/auth/user_session_manager_spec.rb \
   spec/services/arena/combat_processor_spec.rb \
   spec/requests/chat_channels_spec.rb \
@@ -941,6 +988,7 @@ domain mutations.
 - `spec/models/user_session_spec.rb`
 - `spec/queries/chat/timeline_spec.rb`
 - `spec/queries/game/world/presence_spec.rb`
+- `spec/queries/game/world/airship_presence_spec.rb`
 - `spec/requests/world_location_presence_spec.rb`
 - `spec/requests/city_buildings_spec.rb`
 - `spec/system/arena_room_presence_spec.rb`
@@ -950,6 +998,7 @@ domain mutations.
 - `spec/services/chat/message_dispatcher_spec.rb`
 - `spec/services/chat/local_context_spec.rb`
 - `spec/services/chat/local_context_transition_spec.rb`
+- `spec/services/chat/airship_local_context_spec.rb`
 - `spec/services/auth/user_session_manager_spec.rb`
 - `spec/services/arena/application_handler_spec.rb`
 - `spec/services/arena/combat_processor_spec.rb`

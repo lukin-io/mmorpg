@@ -2,13 +2,14 @@
 
 - Document type: neverlands-source-summary
 - Domain: world
-- Updated: 2026-09-07
+- Updated: 2026-09-08
 - Evidence status: current for the bounded World implementation
 
 ## Current observations
 
 | Flow/state | Observation | Status |
 |---|---|---|
+| Forpost-to-Oktal ticket, departure wait, flight, explicit arrival disembarkation, and station reload | `doc/design/reference/world/observations/2026-09-08_forpost_oktal_airship_journey.md` | current; completed one 150-NV trip, with destination-region semantics explicitly confirmed by the user |
 | Forpost left exit, five-cell route topology, buffering, reload, timed Look, and village entrance | `doc/design/reference/world/observations/2026-09-07_forpost_grid_and_action_audit.md` | current; corrects the local Forpost/Oktal gate mismatch |
 | Ordinary chat confined to one cell/room, village/Arena lists, browser history boundary, and source-equivalent map frame | `doc/design/reference/social/observations/2026-09-07_cell_chat_and_presence_boundaries.md` | current project-wiki rule plus live follow-up |
 | Outdoor movement, map geometry, timing, village route | `doc/design/reference/world/observations/2026-05-09_overworld_movement.md` | current, with dated follow-ups |
@@ -54,15 +55,26 @@
 - The Neverlands-hosted Chat article explicitly confines ordinary messages to
   one cell or room. Matching outdoor location labels do not combine different
   cells. Personal system rows and world announcements share the chat frame.
+- The Forpost-to-Oktal airship charges 150 NV on boarding, waits for the listed
+  departure, then travels beneath a fixed centered airship. Inventory and full
+  reload recover the observed departure wait. The disembark control warns of
+  no refund before departure, disappears in flight, and returns after arrival;
+  the completed trip required an explicit final disembark action. Refreshed
+  rosters distinguish the route from the origin/destination stations. The user
+  confirms that the destination city is in a different region; source internal
+  region IDs and boundaries remain unobserved.
 
 ## Evidence gaps
 
 - Mines, exchanges, other linked-location families, successful fishing,
   drinking, digging, and a complete profession yield loop remain unverified.
-- Full region topology and content, source region origins/crossings, and
-  online-presence expiry remain unverified. Only one populated region is required
-  now; additional region content/crossings are outside the current delivery scope.
-  The ordinary-chat audience is now established by the project wiki as one cell or room.
+- Full region topology/content, source region origins and internal identifiers,
+  and online-presence expiry remain unverified. The observed airship journey
+  does not supply Oktal world content. Ordinary chat's one-cell/room audience
+  is established by the project wiki; chat delivery aboard was not exercised.
+- Exact airship duration/schedule rules, actual predeparture cancellation or
+  refund outcome, insufficient funds, other routes, and in-flight/offline
+  recovery remain unobserved. The no-refund confirmation was dismissed.
 - Neverlands does not expose the internal storage model for coordinate-scoped
   bots, complete eligible opponent/group tables, selection weights, passive
   delay distribution, cooldown, or encounter probability. Current-coordinate
@@ -92,6 +104,10 @@
   preserved in the September 7 cross-domain observation; this supplies no
   missing roster weights or timing formula.
 - Implementation handbook: `doc/features/world.md`
+- Airship runtime: `doc/features/airship_travel.md` is Partially Implemented.
+  Complete authored routes support the persisted paid journey lifecycle;
+  the default Forpost rows remain unavailable until their destinations,
+  paths, and dated departures are configured. No Oktal world content is seeded.
 
 ### Responsible implementation files
 

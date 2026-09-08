@@ -3,10 +3,12 @@
 class ApplicationController < ActionController::Base
   include CurrentCharacterContext
   include ArenaEntryGate
+  include AirshipContext
   include Pundit::Authorization
 
   before_action :authenticate_user!
   before_action :ensure_device_identifier
+  around_action :with_airship_context
   before_action :prepare_game_shell_context, if: :game_shell_context_request?
 
   layout :resolved_layout
@@ -49,7 +51,7 @@ class ApplicationController < ActionController::Base
     return unless character
 
     @position ||= character.position
-    prepare_presence_context unless controller_name.in?(%w[world world_locations shop city_buildings])
+    prepare_presence_context unless controller_name.in?(%w[world world_locations shop city_buildings airships])
   end
 
   def prepare_presence_context(sort: "az")

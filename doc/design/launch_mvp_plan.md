@@ -138,7 +138,9 @@ itself supplied responsive behavior.
 | Fight — separate public log | Decorative log frame, chronological time/name-colored rows, participant summary, pagination, and separation from the authenticated shell. | `GET /log/:id` at desktop/tablet/mobile widths. | **Done for the captured bounded states** | The supplied separate-link capture is implemented as a shell-free responsive surface with matching hierarchy, typography, side colors, participant summary, log/statistics navigation, and pagination. The 2026-09-01 local browser gate verified six participants, `51` events across two pages, statistics, empty and missing states, and mobile fit; source crest/ornamental assets remain outside the copy boundary. |
 | Responsive adaptation — shared acceptance | Same source controls/information at `820 × 900` and `390 × 844`, with no page-level horizontal clipping. | Shell, owner Profile, current Inventory, World, current City, Shop, active Fight, and public Fight Log. | **Done** | System coverage confirms stacked shell regions, single/two-column Profile/Inventory reflow, centered fixed-cell World panning, centered fixed-pixel City panning, locally owned Shop control/table overflow, paired fight rails, and a shell-free public log. This row measures local responsive behavior only. |
 | City — current five-district navigation | Five native 1250 × 600 district scenes; exact building/route regions; highlighted hover state; pointer tooltip; Business/Residential/Knowledge/Law arrows; district transitions; Central exit; Arena, Shop, Hospital, Market, and Airship links. | `main`, `forpost1`, `forpost2`, `forpost3`, and `forpost4` at desktop/tablet/mobile widths. | **Done** | Fresh 2026-07-28 observation replaced the stale nine-node/760 × 255 model. Local City now uses five nodes/eight directed links, 1250 × 600 native geometry, project-owned image/CSS highlights, large styled ASCII `>` arrows, keyboard landmarks, exact server offers, and centered responsive panning. The verified Central outdoor handoff is interactive; Law exit remains a non-mutating landmark because its outdoor coordinate was not exercised. |
-| City — building/service interiors | Current interior layout, controls, denial/closed states, and service-specific transitions for every visible building. | Hospital, Market, Airship Station, Tavern, Workshop, Auction, Bank, schools, legal buildings, and other current landmarks. | **Not Done** | Only City-map hover/focus presentation and the existing bounded Hospital/Market/Airship read-only pages are implemented. Capture each interior before adding or claiming its service UX. |
+| City — building/service interiors | Current interior layout, controls, denial/closed states, and service-specific transitions for every visible building. | Hospital, Market, Airship Station, Tavern, Workshop, Auction, Bank, schools, legal buildings, and other current landmarks. | **Not Done** | Hospital/Market retain bounded read-only pages. Airship now has the separately verified configured journey capability below; normal routes await destination/path/schedule content. Other service families require their own capture. |
+| Airship — configured transport capability (`AIRSHIP-TRAVEL-001`) | Completed Forpost-to-Oktal boarding, 150 NV debit, departure wait, moving cells, arrived-aboard state, and destination station. | Owned payment/offer, server-clock region-qualified progress, 7 × 3 viewport with 11 × 5 flight buffer, explicit landing, resume, audience isolation, and mobile panning. | **Done for configured capability** | Verified with focused/concurrency/browser coverage and an isolated seeded local Chrome route across temporary review regions. Source evidence: `doc/design/reference/world/observations/2026-09-08_forpost_oktal_airship_journey.md`; runtime: `doc/features/airship_travel.md`. |
+| Airship — normal destination content and timetable | Complete regional path, exact duration/schedule rule, and authored destination access. | Purchasable normal Forpost routes. | **Not Done** | Captured fares are displayed, but no destination/path/dated departure is invented. Keep one populated region. Walking border mappings remain separate evidence work. |
 | Shop — current shell and empty catalog state | 1250 × 600 building scene; centered 800px controls; four 21px mode tabs; 61px icon category strip; 30px level/price filters; City return. | Central Shop with no loaded item rows, at desktop/tablet/mobile widths. | **Done** | The fresh live state is reproduced with a project-owned CSS illustration, generic game wording, real mode/category links, server-rendered filters, City/Inventory/Refresh controls, and locally owned mobile overflow. No Neverlands Shop image or identity copy is bundled. |
 | Shop — stock, license, sell, novice, and mutation variants | Populated item rows, selection, disabled/eligible states, confirmations, successful/failed purchase and sale, and result feedback. | Every reachable Shop mode/category/action state. | **Not Done** | Server-authoritative buy/sell behavior and dense tables exist, but the fresh session loaded no rows. Keep this row Not Done until populated live/local states are captured and visually compared. |
 
@@ -277,6 +279,10 @@ Required behavior:
 - wilderness movement uses timed, server-issued movement offers;
 - position changes only when movement completes;
 - reload resumes active movement or finalizes completed movement;
+- configured airship journeys use their separate paid lifecycle and persist
+  server-clock progress across region-qualified waypoints; arrival waits for
+  explicit landing. Normal routes remain unavailable until destination,
+  schedule, and path content is complete; see `doc/features/airship_travel.md`;
 - city navigation uses hotspot/building transitions;
 - moving refreshes hidden NPC encounter state, buildings, cell art, and visible
   local-action offers for the new cell;
@@ -397,8 +403,9 @@ because another layer has tests.
   Arena room after login.
 - One populated region is the current delivery boundary; region-isolated
   position, content, offers, actions, and resume are ready for additional
-  regions. Actual crossings are outside current acceptance.
-- First entry to read-only Hospital/Market/Airship pages renders the newly
+  regions. Configured airship journeys now support persisted region handoffs;
+  normal destination/path/timetable content and walking borders remain absent.
+- First entry to Hospital/Market interiors and the Airship station renders the newly
   saved room's presence. Both Arena Enter links refresh the full shell, so
   the surrounding label/count/list changes immediately without automatic
   refresh. Chat uses the same saved room identity.

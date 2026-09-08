@@ -1,0 +1,18 @@
+# Captured Forpost fares. Destinations, explicit dated departures, complete
+# duration, and regional waypoints must be authored before boarding is offered.
+# No Oktal/Telior/Khalgan content or invented repeating timetable is seeded.
+forpost_khalgan:
+  source_zone: Outpost Residential Quarter
+  label: Forpost - Khalgan Fair
+  route_label: Route Forpost - Khalgan Fair
+  fare_nv: 350
+forpost_telior:
+  source_zone: Outpost Residential Quarter
+  label: Forpost - Telior Island
+  route_label: Route Forpost - Telior Island
+  fare_nv: 150
+forpost_oktal:
+  source_zone: Outpost Residential Quarter
+  label: Forpost - Oktal
+  route_label: Route Forpost - Oktal
+  fare_nv: 150

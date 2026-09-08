@@ -15,6 +15,7 @@ Reference material:
 - `doc/design/reference/neverlands.md`
 - `doc/design/reference/social/observations/2026-08-23_chat_game_event_timeline.md`
 - `doc/design/reference/social/observations/2026-09-07_cell_chat_and_presence_boundaries.md`
+- `doc/design/reference/world/observations/2026-09-08_forpost_oktal_airship_journey.md`
 - `doc/design/reference/shell/observations/2026-07-28_game_shell_and_mvp_surfaces.md`
 - `doc/design/reference/source_material.md`
 
@@ -91,6 +92,20 @@ durable server history under the user's log-system requirement. These polling,
 locking, and storage choices are implementation decisions, not inferred source
 network internals.
 
+For an aboard airship journey, the local room key is the persisted route and
+exact departure, shared by waiting, in-flight, and arrived-aboard passengers.
+The moving ground cell beneath the flight is not its ordinary-chat audience.
+Boarding/disembarkation change the visit; intermediate path/phase updates
+preserve its timestamp. Other routes/departures and ground rooms remain
+separate. Current-session authorization, ten-second polling, delivered browser
+history, Clear, and fresh-login behavior retain the same rules above.
+
+The completed source trip showed distinct station/route roster labels and
+waiting-state reload recovery. Chat delivery aboard and the source's internal
+flight grouping were not exercised. Grouping the local passengers of one
+authoritative flight applies the already-confirmed one-cell/room rule; it is
+an explicit implementation choice, not additional source transport evidence.
+
 Clear is a presentation action: it keeps the timeline and delivery connected,
 removes displayed rows, and retains bounded cleared ordinary ids in that same
 login's browser buffer so the next poll does not immediately restore them.
@@ -165,6 +180,12 @@ row. List and header count use the same exact room scope, with at most ten
 visible sorted rows and the full room count. Total online counts distinct
 eligible users across locations. This bounded projection does not lock other
 players or make movement decisions.
+
+An active aboard reservation overrides cell/room presence with its route and
+departure audience until explicit disembarkation. Ground lists exclude aboard
+characters even when they share an underlying position. The flight projection
+does not load ground NPCs, tiles, or room candidates; it retains the same
+online/selected-character rules, sorted ten-row bound, and full audience count.
 
 The server refreshes an existing open session on shell, presence, and local-chat
 requests. The CSRF-protected heartbeat never creates a login record, moves a

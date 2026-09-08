@@ -1,0 +1,15 @@
+<% cells = map.tiles.flatten %>
+<div class="nl-airship-cells"
+     data-origin-x="<%= cells.map(&:x).min %>"
+     data-origin-y="<%= cells.map(&:y).min %>"
+     data-columns="<%= map.columns %>"
+     data-rows="<%= map.rows %>"
+     style="grid-template-columns: repeat(<%= map.columns %>, 100px); width: <%= map.columns * 100 %>px;">
+  <% cells.each do |tile| %>
+    <div class="nl-airship-tile"
+         data-x="<%= tile.x %>"
+         data-y="<%= tile.y %>"
+         data-terrain="<%= tile.terrain_type %>"
+         style="<%= airship_tile_style(tile) %>"></div>
+  <% end %>
+</div>

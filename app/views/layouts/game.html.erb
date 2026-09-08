@@ -5,7 +5,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#fcfaf3">
-  <% if controller_name == "world" && @zone&.outdoor? %>
+  <% if @active_airship_journey || (controller_name == "world" && @zone&.outdoor?) %>
     <%# Cached offers and acquisition timestamps cannot restore current travel. %>
     <meta name="turbo-cache-control" content="no-cache">
   <% end %>
@@ -61,7 +61,11 @@
               disabled: world_actions_locked,
               form: {class: "nl-nav-action-form"} %>
         <% end %>
-        <% if controller_name == "world" %>
+        <% if @active_airship_journey %>
+          <% unless controller_name == "airships" %>
+            <%= link_to "Return", airship_path, class: "nl-nav-link", data: {turbo_frame: "_top"} %>
+          <% end %>
+        <% elsif controller_name == "world" %>
           <% if @zone&.outdoor? %>
             <%= turbo_frame_tag "available-actions", class: "nl-world-action-frame" do %>
               <%= render "world/actions", available_actions: @available_actions || [], position: @position %>
@@ -196,7 +200,7 @@
 
   <%# Flash messages %>
   <div class="nl-flash-container" id="flash">
-    <% flash.to_hash.except("world_action_result").each do |type, message| %>
+    <% flash.to_hash.except("world_action_result", "world_action_result_offer_id").each do |type, message| %>
       <div class="nl-flash nl-flash--<%= type %>"><%= message %></div>
     <% end %>
   </div>

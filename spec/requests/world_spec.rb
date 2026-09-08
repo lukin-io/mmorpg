@@ -709,6 +709,70 @@ RSpec.describe "World", type: :request do
       end
     end
 
+    it "delivers the result once even when a late response restores the pre-render session cookie" do
+      offer = local_action_offer
+      post_local_action(offer)
+      pending_cookies = cookies.to_hash
+      deadline = offer.reload.local_action_ends_at
+      result = offer.local_action_result
+
+      follow_redirect!
+      expect(Nokogiri::HTML(response.body).css("dialog").text).to include(result)
+
+      # Reapply only the earlier browser cookies, as a late background response
+      # can do after the first result was displayed and dismissed.
+      pending_cookies.each { |name, value| cookies[name] = value }
+      get world_path
+
+      expect(Nokogiri::HTML(response.body).css("dialog")).to be_empty
+      expect(offer.reload).to have_attributes(local_action_ends_at: deadline, local_action_result: result)
+      expect(offer).to be_accepted
+    end
+
+    it "does not display or consume a result belonging to the previous authenticated character" do
+      foreign_character = create(:character)
+      foreign_position = create(:character_position, character: foreign_character, zone:, x: 5, y: 5)
+      offer = local_action_offer(owner: foreign_character, at: foreign_position)
+      sign_out user
+      sign_in foreign_character.user, scope: :user
+      post_local_action(offer)
+      sign_out foreign_character.user
+      sign_in user, scope: :user
+
+      get world_path
+
+      expect(Nokogiri::HTML(response.body).css("dialog")).to be_empty
+      expect(offer.reload.metadata).not_to have_key("local_action_result_delivered_at")
+    end
+
+    it "ignores malformed result hints and legacy flash text" do
+      [nil, -1, "12", {}, [12]].each do |hint|
+        allow_any_instance_of(WorldController).to receive(:flash).and_wrap_original do |original|
+          original.call.tap do |flash|
+            flash[:world_action_result_offer_id] = hint
+            flash[:world_action_result] = "Untrusted replayed result text"
+          end
+        end
+
+        get world_path
+
+        expect(response).to have_http_status(:ok)
+        expect(Nokogiri::HTML(response.body).css("dialog")).to be_empty
+        expect(response.body).not_to include("Untrusted replayed result text")
+      end
+    end
+
+    it "does not consume a pending result after an external relocation changes the current cell" do
+      offer = local_action_offer
+      post_local_action(offer)
+      position.update!(x: 6)
+
+      get world_path
+
+      expect(Nokogiri::HTML(response.body).css("dialog")).to be_empty
+      expect(offer.reload.metadata).not_to have_key("local_action_result_delivered_at")
+    end
+
     it "ignores client-supplied timing and coordinate claims" do
       offer = local_action_offer
 
