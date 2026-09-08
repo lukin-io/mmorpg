@@ -42,12 +42,14 @@ FactoryBot.define do
           "landmark_kind" => "village",
           "location" => {
             "short_label" => "Village",
+            "presence_label" => "Village Square",
             "kind" => "village",
             "scene" => {"width" => 760, "height" => 255},
             "features" => [
               {
                 "key" => "trading_post",
                 "label" => "Trading Post",
+                "presence_label" => "Shop",
                 "action_type" => "open_feature",
                 "feature" => "shop",
                 "polygon" => [[85, 146], [238, 180], [205, 196], [86, 154]]

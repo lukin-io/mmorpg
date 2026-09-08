@@ -27,19 +27,23 @@ When layers disagree, classify the mismatch as `[EVIDENCE]`, `[IMPL]`, or
 
 ## Current movement direction
 
-The target movement model is:
+The implemented bounded movement model is:
 
-1. The server returns reachable destination tiles.
+1. The server returns reachable cells among the eight adjacent neighbors in the current region.
 2. Each destination has target coordinates and a short-lived token.
 3. The browser can click only server-offered destinations.
-4. The move request submits target coordinates, expected travel time, and token.
+4. The move request submits the token and optional matching target/direction;
+   the persisted server offer owns duration.
 5. The server accepts the move and stores in-progress travel state.
 6. The UI disables movement/actions and shows a timer while travelling.
 7. Reload resumes movement from server state.
 8. Completion finalizes position and returns the next actions.
 
-Continue movement work from the DB-backed movement command and world
-action-offer model documented in `doc/design/features/movement.md`.
+The DB-backed position and allowlisted room context restore outdoor cells, city
+nodes, village/Shop, and accessible Arena rooms after login. The current region
+has nearby seeded gate, village, resource, and NPC cases. See
+`doc/features/world.md` for verified behavior and remaining gaps, and
+`doc/design/features/movement.md` for the movement contract.
 
 ## Stack
 

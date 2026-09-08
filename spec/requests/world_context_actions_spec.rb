@@ -57,4 +57,17 @@ RSpec.describe "World context actions", type: :request do
     expect(response).to redirect_to(new_user_session_path)
     expect(ArenaMatch.count).to eq(0)
   end
+
+  it "rejects inventory navigation while travelling without starting a fight" do
+    create(:tile_npc, zone: zone.name, x: 5, y: 5)
+    movement = create(:movement_command, :moving, character:, zone:)
+
+    post world_context_action_path, params: {context: "inventory"}
+
+    expect(response).to redirect_to(world_path)
+    expect(flash[:alert]).to include("Movement already in progress")
+    expect(ArenaMatch.count).to eq(0)
+    expect(movement.reload).to be_moving
+    expect(position.reload).to have_attributes(x: 5, y: 5)
+  end
 end

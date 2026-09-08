@@ -6,6 +6,8 @@ module Arena
   class EquipmentWearResolver
     ARENA_CHANCES = {"victory" => 0, "draw" => 0, "defeat" => 1}.freeze
     OTHER_FIGHT_CHANCES = {"victory" => 2, "draw" => 30, "defeat" => 50}.freeze
+    ROLL_SCALE = 10_000
+    BASIS_POINTS_PER_PERCENT = 100
 
     Result = Data.define(:character_id, :chance_percent, :item_ids)
 
@@ -19,9 +21,9 @@ module Arena
         character = participation.character
         next unless character&.inventory
 
-        chance = chance_for(participation.result)
+        chance = chance_for(character, participation.result)
         changed = character.inventory.inventory_items.equipped.select do |item|
-          item.durable? && !item.broken? && rng.rand(100) < chance
+          item.durable? && !item.broken? && durability_loss?(chance)
         end
         changed.each { |item| item.decrement_durability!(1) }
 
@@ -42,9 +44,16 @@ module Arena
 
     attr_reader :match, :rng
 
-    def chance_for(result)
+    def chance_for(character, result)
       chances = match.metadata.to_h["source"] == "world_npc" ? OTHER_FIGHT_CHANCES : ARENA_CHANCES
-      chances.fetch(result.to_s, 0)
+      chance = chances.fetch(result.to_s, 0)
+      character.owns_perk?(:careful_fighter) ? chance / 2.0 : chance
+    end
+
+    def durability_loss?(chance_percent)
+      return false unless chance_percent.positive?
+
+      rng.rand(ROLL_SCALE) < (chance_percent * BASIS_POINTS_PER_PERCENT).to_i
     end
   end
 end

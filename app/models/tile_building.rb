@@ -11,6 +11,7 @@
 class TileBuilding < ApplicationRecord
   BUILDING_TYPES = %w[city location].freeze
   LOCATION_ACTION_TYPES = %w[open_feature return_world].freeze
+  LOCATION_KINDS = %w[village].freeze
   LOCATION_KEY_FORMAT = /\A[a-z0-9_-]+\z/
 
   belongs_to :destination_zone, class_name: "Zone", inverse_of: :destination_tile_buildings, optional: true
@@ -21,6 +22,7 @@ class TileBuilding < ApplicationRecord
   validates :x, :y, numericality: {only_integer: true, greater_than_or_equal_to: 0}
   validates :x, uniqueness: {scope: [:zone, :y]}
   validates :required_level, numericality: {only_integer: true, greater_than_or_equal_to: 0}
+  validate :presence_label_must_be_valid
   validate :location_configuration_must_be_valid
 
   scope :in_zone, ->(zone_name) { where(zone: zone_name) }
@@ -54,10 +56,7 @@ class TileBuilding < ApplicationRecord
   # @param character [Character] the character trying to enter
   # @return [Boolean]
   def can_enter?(character)
-    return false unless accessible?
-    return false unless character
-
-    character.position.present?
+    entry_blocked_reason(character).nil?
   end
 
   # Get the reason why a character cannot enter
@@ -67,34 +66,44 @@ class TileBuilding < ApplicationRecord
   def entry_blocked_reason(character)
     return "Entrance is currently unavailable." unless accessible?
     return "Character is unavailable." unless character&.position
+    return "Disembark before entering this location." if character.active_airship_journey
+    return "Entrance is not on your current cell." unless on_current_cell?(character.position)
 
     nil
   end
 
   # Enter the authored destination. Location interiors preserve the outdoor
   # coordinate; city gates move the character to their persisted city node.
+  # Lock the character before the entrance and recheck its exact source region
+  # and cell so cached records cannot authorize another region's destination.
+  # A changed position and its local-chat entry context persist together.
   #
   # @param character [Character] the character to move
   # @return [Boolean] true if successful
   def enter!(character)
-    return false unless can_enter?(character)
+    return false unless character
 
-    position = character.position
-    return false unless position
+    character.with_lock do
+      with_lock do
+        position = character.position&.reload
+        next false unless can_enter?(character)
 
-    if location?
-      position.touch(:last_action_at)
-      return true
+        if location?
+          position.touch(:last_action_at)
+          Chat::LocalContext.new(character:).synchronize!
+        else
+          position.update!(
+            zone: destination_zone,
+            x: destination_x,
+            y: destination_y,
+            last_action_at: Time.current
+          )
+          Game::World::ResumeContext.new(character:).remember_world!
+        end
+
+        true
+      end
     end
-
-    position.update!(
-      zone: destination_zone,
-      x: destination_x,
-      y: destination_y,
-      last_action_at: Time.current
-    )
-
-    true
   end
 
   def location?
@@ -118,6 +127,14 @@ class TileBuilding < ApplicationRecord
 
   def location_short_label
     location_definition["short_label"].presence || name
+  end
+
+  def presence_label
+    metadata.to_h["presence_label"].presence || name
+  end
+
+  def location_presence_label
+    location_definition["presence_label"].presence || name
   end
 
   def location_scene
@@ -149,6 +166,17 @@ class TileBuilding < ApplicationRecord
 
   private
 
+  def on_current_cell?(position)
+    position&.zone&.outdoor? && position.zone.name == zone && position.x == x && position.y == y
+  end
+
+  def presence_label_must_be_valid
+    return unless metadata.to_h.key?("presence_label")
+
+    label = metadata["presence_label"]
+    errors.add(:metadata, "presence label must be a non-empty string") unless label.is_a?(String) && label.present?
+  end
+
   def location_configuration_must_be_valid
     return unless location?
 
@@ -161,7 +189,10 @@ class TileBuilding < ApplicationRecord
     errors << "location definition is required" if definition.empty?
 
     kind = definition["kind"].to_s
-    errors << "location kind is invalid" unless kind.match?(LOCATION_KEY_FORMAT)
+    errors << "location kind is unsupported" unless LOCATION_KINDS.include?(kind)
+    if definition.key?("presence_label") && (!definition["presence_label"].is_a?(String) || definition["presence_label"].blank?)
+      errors << "location presence label must be a non-empty string"
+    end
 
     width, height = location_scene_size
     errors << "location scene width must be positive" unless width.positive?
@@ -192,6 +223,9 @@ class TileBuilding < ApplicationRecord
     action_type = feature["action_type"].to_s
     errors << "location feature key is invalid" unless key.match?(LOCATION_KEY_FORMAT)
     errors << "location feature label is required" if feature["label"].blank?
+    if feature.key?("presence_label") && (!feature["presence_label"].is_a?(String) || feature["presence_label"].blank?)
+      errors << "location feature presence label must be a non-empty string"
+    end
     errors << "location feature action type is invalid" unless LOCATION_ACTION_TYPES.include?(action_type)
     if action_type == "open_feature" && CityHotspot.feature_route(feature["feature"]).blank?
       errors << "location feature destination is unsupported"

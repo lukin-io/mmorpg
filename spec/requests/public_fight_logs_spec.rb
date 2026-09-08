@@ -39,6 +39,7 @@ RSpec.describe "Public fight logs", type: :request do
     expect(response.body).not_to include("nl-game-layout")
     expect(response.body).not_to include("Neverlands administration")
     expect(response.body).not_to include("assets/neverlands")
+    expect(response.body).to include("Statistics")
   end
 
   it "exports log entries as JSON" do
@@ -56,6 +57,61 @@ RSpec.describe "Public fight logs", type: :request do
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("max_kerby")
     expect(response.body).to include("<td>6</td>")
+    expect(response.body).to include("Fight log")
+  end
+
+  it "paginates the durable chronological stream at fifty entries" do
+    (2..52).each do |sequence|
+      create(
+        :combat_log_entry,
+        arena_match: match,
+        actor: player_participation,
+        target: npc_participation,
+        round_number: 1,
+        sequence:,
+        message: format("Synthetic event %02d", sequence)
+      )
+    end
+
+    get public_fight_log_path(match)
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("Synthetic event 50")
+    expect(response.body).not_to include("Synthetic event 51")
+    expect(response.body).to include(public_fight_log_path(match, p: 2))
+
+    get public_fight_log_path(match, p: 2)
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("Synthetic event 51")
+    expect(response.body).to include("Synthetic event 52")
+    expect(response.body).not_to include("Synthetic event 50")
+  end
+
+  it "renders an explicit empty state and normalizes a non-positive page" do
+    empty_match = create(:arena_match, :completed, arena_room: room)
+
+    get public_fight_log_path(empty_match, p: 0)
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("No fight events recorded.")
+    expect(response.body).to include("Fight participants:")
+
+    get public_fight_log_path(empty_match, p: -4, format: :json)
+    expect(response.parsed_body.fetch("current_page")).to eq(1)
+    expect(response.parsed_body.fetch("entries")).to eq([])
+  end
+
+  it "returns bounded HTML and JSON errors for a missing fight" do
+    missing_id = ArenaMatch.maximum(:id).to_i + 10_000
+
+    get public_fight_log_path(missing_id)
+    expect(response).to have_http_status(:not_found)
+    expect(response.body).to eq("Fight log not found")
+
+    get public_fight_log_path(missing_id, format: :json)
+    expect(response).to have_http_status(:not_found)
+    expect(response.parsed_body).to eq("error" => "fight log not found")
   end
 
   it "escapes non-participant log text while adding participant color spans" do

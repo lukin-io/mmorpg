@@ -227,17 +227,27 @@ consistent. Cross-check each against the cited capture before building.
   keyboard-accessible server-offered hotspots. Only captured interactive
   buildings are enabled; uncaptured service mutations and the Law outdoor
   handoff remain deferred.
-- **Outdoor client**: the launch region renders a clipped 13 × 7 desktop
-  viewport over a server-built 15 × 9 buffer of exact `100 x 100` project-owned
-  terrain slices. The player cursor stays fixed in the center, only
+- **Outdoor client**: the launch region renders whole odd rows/columns of
+  exact `100 x 100` project-owned cells, capped at 13 × 7, over a server-built
+  15 × 9 buffer. Visible size follows the equivalent header-plus-main frame: the
+  source `1150 × 519` frame and local default 520px frame show 11 × 5; the
+  verified `390 × 844` mobile layout shows a centered 3 × 5 map (`302 × 502`). The player cursor stays fixed in the center, only
   server-offered destinations receive the thin red clickable outline, accepted
   travel slides the terrain beneath the cursor, and a red countdown is shown
   one cell above it. Tablet/mobile clients pan the same unscaled geometry.
   Context actions stay in the shell's top row.
 - **Outdoor linked location**: the captured Frontier Village exact-cell
   entrance, CSS-built `760 × 255` scene, Trading Post/exit hotspot offers,
-  linked Shop, and DB-backed login resume are implemented. Mines, exchanges,
+  linked Shop, and DB-backed login resume are implemented. The canonical
+  village kind drives its map landmark; the nearby seeded city gate uses a
+  castle marker, and Enter is offered only on the entrance cell. Mines, exchanges,
   and other uncaptured location families remain intentionally unavailable.
+- **Local social surface**: ordinary chat and presence use the authoritative
+  current cell or validated village/Shop/city/Arena room. Delivered ordinary
+  rows survive navigation within a login; fresh login clears that browser
+  history, while personal/world events retain durable history. See
+  `doc/features/game_shell.md` for buffer, Clear, polling, heartbeat, and
+  immediate City-building/Arena-room presence updates on entry.
 - **Quests modal**: documented capture is still missing and implementation is
   intentionally absent. **`Лавка`** has a starter buy/sell implementation, and
   **wild NPC handoff** is partial; remaining work is tracked in

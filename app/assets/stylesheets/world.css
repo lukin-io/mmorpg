@@ -362,10 +362,67 @@
 /* ========================================================================== */
 
 .nl-world-container--map {
+  position: relative;
   display: block;
   height: 100%;
   overflow: hidden auto;
   background: #ffffff;
+}
+
+/* Classic scrollbar gutters must not shrink the frame or its whole 100px
+   cells. Keep native scrolling/panning without allocating scrollbar tracks. */
+.nl-main-area:has(.nl-world-container--map),
+.nl-world-container--map,
+.nl-map-viewport {
+  scrollbar-width: none;
+}
+
+.nl-world-result-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 80px 16px 16px;
+  background: rgba(0, 0, 0, 0.55);
+}
+
+.nl-world-result {
+  position: relative;
+  width: 360px;
+  max-width: 100%;
+  min-height: 150px;
+  margin: 0;
+  padding: 25px 24px 45px;
+  border: 3px ridge #a4a4a4;
+  background: #eeeeee;
+  color: #222222;
+  font: 12px Tahoma, Verdana, Arial, sans-serif;
+  text-align: center;
+}
+
+.nl-world-result p {
+  margin: 8px 0;
+}
+
+.nl-world-result-x {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  min-width: 18px;
+  min-height: 18px;
+  padding: 0 3px;
+}
+
+.nl-world-result-close {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  min-height: 20px;
+  padding: 1px 18px;
+  color: #990000;
+  transform: translateX(-50%);
 }
 
 .nl-world-container--map > #location-info {
@@ -389,7 +446,7 @@
   box-shadow: none;
 }
 
-.nl-tile-building--village {
+.nl-tile-entity.nl-tile-building--village {
   top: -96px;
   right: auto;
   bottom: auto;
@@ -402,6 +459,29 @@
   border: 0;
   background: transparent;
   pointer-events: none;
+}
+
+.nl-tile-entity.nl-tile-building--city {
+  top: 7px;
+  right: auto;
+  bottom: auto;
+  left: 8px;
+  display: grid;
+  width: 84px;
+  max-width: none;
+  height: 80px;
+  place-items: center;
+  padding: 0;
+  overflow: visible;
+  border: 0;
+  background: transparent;
+  pointer-events: none;
+}
+
+.nl-tile-city-gate {
+  display: block;
+  font-size: 64px;
+  line-height: 1;
 }
 
 .nl-tile-building--village::before {
@@ -487,7 +567,6 @@ turbo-frame.nl-world-action-frame {
   background: #ffffff;
   box-shadow: none;
   overscroll-behavior: contain;
-  scrollbar-width: thin;
   touch-action: pan-x pan-y;
 }
 
@@ -570,12 +649,21 @@ button.nl-tile-clickable--available {
   display: none;
 }
 
-button.nl-tile-clickable--available:hover,
-button.nl-tile-clickable--available:focus-visible {
+button.nl-tile-clickable--available:hover {
   outline: 0;
   background: transparent;
   box-shadow: none;
   transform: none;
+}
+
+button.nl-tile-clickable--available:focus-visible {
+  outline: 2px solid #ffffff;
+  outline-offset: -4px;
+  box-shadow: inset 0 0 0 6px #8b160f;
+}
+
+button.nl-tile-clickable--available:disabled {
+  cursor: default;
 }
 
 .nl-tile-player {
@@ -915,22 +1003,7 @@ button.nl-city-hotspot,
   display: none;
 }
 
-@media (max-width: 520px) {
-  .nl-map-viewport {
-    margin-left: 6px;
-    margin-right: 6px;
-  }
-}
-
-/* The source map keeps native 100px cells. Narrow clients pan the captured
- * 15x9 buffered surface instead of shrinking terrain, hit targets, or the
- * center cursor. */
 @media (max-width: 940px) {
-  .nl-map-viewport {
-    width: calc(100% - 12px);
-    max-width: 1302px;
-  }
-
   .nl-city-viewport {
     width: 100%;
     height: clamp(360px, calc(100dvh - 302px), 600px);
@@ -1247,10 +1320,6 @@ button.nl-city-hotspot,
 }
 
 @media (max-width: 720px) {
-  .nl-map-viewport {
-    height: clamp(202px, calc(100dvh - 330px), 502px);
-  }
-
   .nl-city-viewport {
     height: clamp(300px, calc(100dvh - 345px), 520px);
   }

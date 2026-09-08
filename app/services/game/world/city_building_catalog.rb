@@ -2,8 +2,8 @@
 
 module Game
   module World
-    # Read-only source captures for city services whose economic mutations are
-    # intentionally deferred. The general Shop and Arena retain dedicated UIs.
+    # Source-backed city service labels and read-only catalog content. Airship
+    # booking, the general Shop and Arena retain their dedicated workflows.
     class CityBuildingCatalog
       BUILDINGS = {
         "market" => {
@@ -32,13 +32,9 @@ module Game
           "commodity" => "Ancient Alvian Coin"
         },
         "airship_station" => {
-          "title" => "Oktal Airship Station",
+          "title" => "Airship Station",
           "kind" => "airship",
-          "summary" => "Scheduled routes; ticket purchase and boarding are deferred.",
-          "routes" => [
-            ["Forpost", 150],
-            ["Khalgan Fair", 200]
-          ]
+          "summary" => "Scheduled airship routes."
         },
         "hospital" => {
           "title" => "Hospital",
@@ -55,8 +51,13 @@ module Game
       }.freeze
 
       class << self
-        def fetch(building_key)
-          BUILDINGS[building_key.to_s]
+        def fetch(building_key, zone: nil)
+          building = BUILDINGS[building_key.to_s]
+          return building unless building_key.to_s == "airship_station" && zone&.city?
+
+          title = zone.airship_station_title ||
+            (zone.metadata.to_h["city_key"] == "forpost" ? "Forpost Airship Station" : "Airship Station")
+          building.merge("title" => title)
         end
 
         def key?(building_key)

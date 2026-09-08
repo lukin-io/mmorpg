@@ -1,7 +1,7 @@
 # Documentation Domain Registry
 
 - Status: Current
-- Updated: 2026-08-23
+- Updated: 2026-09-07
 - Purpose: domain-first navigation across evidence, design, delivery status,
   implementation contracts, and code ownership.
 
@@ -20,11 +20,11 @@ domain index
 
 | Domain | Domain index | Current local state |
 |---|---|---|
-| Shared shell and style | `doc/domains/shell.md` | Partially Implemented; fight/item/NV mixed event subset shipped |
-| Social, chat, and presence | `doc/domains/social.md` | Partially Implemented; captured fight/item/NV event subset shipped |
+| Shared shell and style | `doc/domains/shell.md` | Partially Implemented; responsive map shell, saved-room resume, cell/room chat and mixed events shipped |
+| Social, chat, and presence | `doc/domains/social.md` | Partially Implemented; cell/room chat, session-backed presence, and durable fight/item/NV events shipped |
 | Character and progression | `doc/domains/character.md` | Fully Implemented within the declared boundary |
 | Inventory and equipment | `doc/domains/inventory.md` | Fully Implemented within the declared boundary |
-| Open world and movement | `doc/domains/world.md` | Fully Implemented within the declared boundary |
+| Open world and movement | `doc/domains/world.md` | Partially Implemented; bounded region/cell AOI, movement, village, and empty Look covered; full region content remains incomplete |
 | City and buildings | `doc/domains/city.md` | Fully Implemented within the declared navigation boundary |
 | Economy and shops | `doc/domains/economy.md` | Partially Implemented; typed NPC NV wallet ingress shipped |
 | Combat and Arena | `doc/domains/combat.md` | Arena and completion/item/NV timeline handoff implemented; broader Combat partial |

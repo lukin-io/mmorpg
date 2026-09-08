@@ -13,6 +13,8 @@ composition, and presentation shared by gameplay surfaces.
 - Mixed-timeline evidence and source summary:
   `doc/design/reference/social/observations/2026-08-23_chat_game_event_timeline.md`
   and `doc/design/reference/social/README.md`
+- Cell/room audiences, browser history, and header-plus-main frame evidence:
+  `doc/design/reference/social/observations/2026-09-07_cell_chat_and_presence_boundaries.md`
 - Normalized design: `doc/design/areas/game_client_layout.md`
 - Supporting designs: `doc/design/features/character_vitals.md` and
   `doc/design/features/social_chat_presence.md`
@@ -29,9 +31,18 @@ controls and source state variants remain Not Done. Devise account deletion is
 explicitly unavailable until immutable gameplay/audit retention or
 anonymization has a deliberate policy.
 
+Ordinary chat uses reauthorized current-room polling and a bounded per-login
+browser buffer; personal/world events retain durable signed-stream delivery.
+Presence selects the current playable character, exact validated cell/room,
+and recent open sessions; the technical five-minute window is not a captured
+Neverlands expiry. The map fits complete cells from the local header-plus-main
+frame while tablet/mobile shells reflow the same controls.
+
 ## Important responsible implementation files
 
 - `app/views/layouts/application.html.erb`
+- `app/views/layouts/game.html.erb`
+- `app/controllers/application_controller.rb`
 - `app/controllers/chat_channels_controller.rb`
 - `app/controllers/chat_messages_controller.rb`
 - `app/controllers/user_registrations_controller.rb`
@@ -45,6 +56,8 @@ anonymization has a deliberate policy.
 - `app/assets/stylesheets/chat_presence.css`
 - `app/assets/stylesheets/character_sheet.css`
 - `app/javascript/controllers/game_layout_controller.js`
+- `app/javascript/controllers/chat_controller.js`
+- `app/javascript/controllers/online_reload_controller.js`
 
 Section 16 of `doc/features/game_shell.md` is the exhaustive inventory.
 
@@ -52,5 +65,8 @@ Section 16 of `doc/features/game_shell.md` is the exhaustive inventory.
 
 Transient palettes, chat-mode cycles, refresh-speed cycles, transliteration,
 and player action menus require bounded evidence and implementation work.
+City-building and Arena-room entry render the saved room's presence
+immediately, including with automatic presence refresh disabled.
+Exact source online expiry and unfetched-message recovery remain evidence gaps.
 Account deletion/anonymization is a separate platform-policy gap, not a
 Neverlands gameplay rule.

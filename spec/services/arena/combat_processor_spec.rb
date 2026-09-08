@@ -47,6 +47,79 @@ RSpec.describe Arena::CombatProcessor do
     create(:character_position, character: character2)
   end
 
+  describe "#process_player_intent" do
+    it "accepts a complete turn package" do
+      result = processor.process_player_intent(
+        character1,
+        :turn,
+        target: character2,
+        attacks: [{action_key: "simple", body_part: "torso"}],
+        blocks: [{action_key: "torso_block", body_parts: ["torso"]}]
+      )
+
+      expect(result).to be_success
+      expect(result[:waiting]).to be true
+      expect(participation1.reload.metadata["pending_turn"]).to be_present
+    end
+
+    it "rejects direct attack, defend, and unsupported flee intents without changing fight state" do
+      initial_hp = [character1.current_hp, character2.current_hp]
+      initial_metadata = participation1.metadata.deep_dup
+      initial_log_count = arena_match.combat_log_entries.count
+
+      attack_result = processor.process_player_intent(
+        character1,
+        :attack,
+        target: character2,
+        attack_type: :simple,
+        body_part: "torso"
+      )
+      defend_result = processor.process_player_intent(
+        character1,
+        :defend,
+        block_parts: ["torso"]
+      )
+      flee_result = processor.process_player_intent(character1, :flee)
+
+      expect(attack_result.error).to eq("Unsupported player combat intent")
+      expect(defend_result.error).to eq("Unsupported player combat intent")
+      expect(flee_result.error).to eq("Unsupported player combat intent")
+      expect([character1.reload.current_hp, character2.reload.current_hp]).to eq(initial_hp)
+      expect(participation1.reload.metadata).to eq(initial_metadata)
+      expect(arena_match.combat_log_entries.count).to eq(initial_log_count)
+    end
+
+    it "rejects missing, allied, foreign, and defeated targets before committing a turn" do
+      foreign_match = create(:arena_match, arena_room:, status: :live, started_at: Time.current)
+      foreign_npc = create(:arena_participation, :npc, arena_match: foreign_match, team: "b")
+      turn = {
+        attacks: [{action_key: "simple", body_part: "torso"}],
+        blocks: [{action_key: "torso_block", body_parts: ["torso"]}]
+      }
+      processor.combat_profile_for(character1)
+      initial_current_ap = participation1.reload.metadata["current_ap"]
+      initial_mp = character1.current_mp
+      initial_log_count = arena_match.combat_log_entries.count
+
+      missing = processor.process_player_intent(character1, :turn, target: nil, **turn)
+      allied = processor.process_player_intent(character1, :turn, target: character1, **turn)
+      foreign = processor.process_player_intent(character1, :turn, target: foreign_npc, **turn)
+      character2.update!(current_hp: 0)
+      defeated = processor.process_player_intent(character1, :turn, target: character2, **turn)
+
+      expect([missing.error, allied.error, foreign.error, defeated.error]).to eq([
+        "No valid target",
+        "Cannot attack an ally",
+        "No valid target",
+        "Target is dead"
+      ])
+      expect(participation1.reload.metadata["pending_turn"]).to be_blank
+      expect(participation1.metadata["current_ap"]).to eq(initial_current_ap)
+      expect(character1.reload.current_mp).to eq(initial_mp)
+      expect(arena_match.combat_log_entries.count).to eq(initial_log_count)
+    end
+  end
+
   describe "#process_action" do
     context "with attack action" do
       it "deals damage to target" do
@@ -113,6 +186,30 @@ RSpec.describe Arena::CombatProcessor do
         expect(entry.arena_match).to eq(arena_match)
         expect(entry.tags).to include("arena")
         expect(arena_match.reload.metadata).not_to have_key("combat_log")
+      end
+
+      it "logs raw overkill but caps shared PvP result damage at HP removed" do
+        character2.update!(current_hp: 1)
+        allow(processor).to receive(:resolve_physical_attack).and_return(
+          outcome: :hit,
+          damage: 50,
+          critical: false,
+          block_attempted: false
+        )
+
+        result = processor.process_action(
+          character1,
+          :attack,
+          target: character2,
+          attack_type: :simple,
+          body_part: "torso"
+        )
+
+        expect(result).to be_success
+        expect(arena_match.combat_log_entries.where(log_type: "damage").last.message).to include("for -50 [0/100]")
+        expect(participation1.reload.metadata["damage_dealt"]).to eq(1)
+        expect(participation1.metadata["damage_hits"]).to eq(1)
+        expect(participation2.reload.metadata["damage_taken"]).to eq(1)
       end
     end
 
@@ -246,6 +343,7 @@ RSpec.describe Arena::CombatProcessor do
 
     it "broadcasts match ended" do
       expect(processor.broadcaster).to receive(:broadcast_match_ended).with("a", reason: :normal)
+      expect(processor.broadcaster).to receive(:broadcast_state_refresh).with(reason: :match_ended)
 
       processor.end_match("a")
     end
@@ -259,13 +357,14 @@ RSpec.describe Arena::CombatProcessor do
       item = create(:inventory_item, :equipped, inventory: character1.inventory, item_template: template,
         properties: {"current_durability" => 10})
       deterministic_rng = instance_double(Random)
-      allow(deterministic_rng).to receive(:rand).with(100).and_return(0)
+      allow(deterministic_rng).to receive(:rand).with(10_000).and_return(0)
       pve_processor = described_class.new(arena_match, rng: deterministic_rng)
 
       expect(pve_processor.end_match("a")).to be(true)
       expect(pve_processor.end_match("a")).to be(false)
 
       expect(character1.reload.experience).to eq(35)
+      expect(character1.metadata["npc_wins"]).to eq(1)
       expect(item.reload.current_durability).to eq(9)
       expect(arena_match.reload.metadata["rewards_processed_at"]).to be_present
       expect(arena_match.metadata.dig("rewards", "experience", "amount")).to eq(35)
@@ -387,6 +486,23 @@ RSpec.describe Arena::CombatProcessor do
       expect(captured_processor).to have_received(:process_npc_defend).twice
     end
 
+    it "hands default and stale pending targets to the next living NPC" do
+      surviving_npc = create(:arena_participation, :npc,
+        arena_match: npc_match,
+        npc_template: npc_template,
+        team: "b",
+        metadata: {"current_hp" => 80, "max_hp" => 105})
+      npc_participation.update!(metadata: {"current_hp" => 0, "max_hp" => 105})
+      captured_processor = deterministic_arena_processor(npc_match)
+
+      expect(captured_processor.send(:find_target_participation, character1, nil)).to eq(surviving_npc)
+      expect(captured_processor.send(
+        :target_from_pending_turn,
+        npc_player_participation,
+        {"target_participation_id" => npc_participation.id}
+      )).to eq(surviving_npc)
+    end
+
     it "logs the automatic loot check after an NPC defeat" do
       npc_participation.update!(metadata: {"current_hp" => 1, "max_hp" => 105})
       captured_processor = deterministic_arena_processor(npc_match, 0, 99, 99, 5)
@@ -415,12 +531,42 @@ RSpec.describe Arena::CombatProcessor do
         "item_name" => "Wood Chips",
         "quantity" => 1
       )
+      expect(npc_player_participation.metadata["damage_dealt"]).to eq(1)
+      expect(npc_player_participation.metadata["damage_hits"]).to eq(1)
+      expect(npc_participation.reload.metadata["damage_taken"]).to eq(1)
       item_event = GameEvent.find_by!(event_type: :item_found, recipient: user1)
       expect(item_event.payload).to include(
         "item_name" => "Wood Chips",
         "quantity" => 1,
         "npc_participation_id" => npc_participation.id
       )
+    end
+
+    it "caps an NPC overkill statistic at the player's remaining HP" do
+      character1.update!(current_hp: 1)
+      captured_processor = deterministic_arena_processor(npc_match)
+      allow(captured_processor).to receive(:resolve_physical_attack).and_return(
+        outcome: :hit,
+        damage: 50,
+        critical: false,
+        block_attempted: false
+      )
+      allow(captured_processor.broadcaster).to receive(:broadcast_vitals_update)
+      allow(captured_processor.broadcaster).to receive(:broadcast_combat_action)
+      allow(captured_processor.broadcaster).to receive(:broadcast_match_ended)
+
+      result = captured_processor.send(
+        :process_npc_attack,
+        npc_participation,
+        character1,
+        {body_part: "torso", attack_type: "simple"}
+      )
+
+      expect(result).to be_success
+      expect(npc_participation.reload.metadata["damage_dealt"]).to eq(1)
+      expect(npc_participation.metadata["damage_hits"]).to eq(1)
+      expect(npc_player_participation.reload.metadata["damage_taken"]).to eq(1)
+      expect(npc_match.combat_log_entries.where(log_type: "damage").last.message).to include("for 50 damage")
     end
 
     it "deposits and reports an NV loot result after an NPC defeat" do
@@ -481,6 +627,52 @@ RSpec.describe Arena::CombatProcessor do
       expect(tile_npc.reload).to be_defeated
       expect(world_match.reload).to be_completed
       expect(world_match.winning_team).to eq("a")
+    end
+
+    it "keeps a sampled cell anchor eligible after every selected NPC falls" do
+      world_zone = create(:zone, name: "Repeatable Encounter Woods", location_type: "outdoor")
+      world_character = create(:character, current_hp: 500, max_hp: 500)
+      create(:character_position, character: world_character, zone: world_zone, x: 4, y: 4)
+      template = create(
+        :npc_template,
+        npc_key: "repeatable-bandit",
+        name: "Repeatable Bandit",
+        level: 7,
+        metadata: {"health" => 1, "base_damage" => 1}
+      )
+      tile_npc = create(
+        :tile_npc,
+        npc_template: template,
+        npc_key: template.npc_key,
+        zone: world_zone.name,
+        x: 4,
+        y: 4,
+        current_hp: 1,
+        max_hp: 1,
+        metadata: {
+          "encounter_rosters" => [
+            {
+              "key" => "single",
+              "members" => [{"npc_key" => template.npc_key, "level" => 7, "hp" => 1}]
+            }
+          ]
+        }
+      )
+      world_match = Game::World::StartNpcFight.new(character: world_character, tile_npc:).call
+      world_processor = deterministic_arena_processor(world_match, 0, 99, 99, 5)
+      allow(world_processor.broadcaster).to receive(:broadcast_combat_action)
+      allow(world_processor.broadcaster).to receive(:broadcast_match_ended)
+
+      world_processor.send(
+        :process_attack_on_npc,
+        world_character,
+        world_match.arena_participations.npcs.sole
+      )
+
+      expect(world_match.reload).to be_completed
+      expect(world_match.winning_team).to eq("a")
+      expect(tile_npc.reload).to be_alive
+      expect(tile_npc.current_hp).to eq(1)
     end
   end
 
@@ -598,6 +790,7 @@ RSpec.describe Arena::CombatProcessor do
         allow(processor.broadcaster).to receive(:broadcast_combat_action)
         allow(processor.broadcaster).to receive(:broadcast_vitals_update)
         allow(processor.broadcaster).to receive(:broadcast_system_message)
+        allow(processor.broadcaster).to receive(:broadcast_state_refresh)
 
         result = processor.process_action(
           character1,
@@ -628,12 +821,10 @@ RSpec.describe Arena::CombatProcessor do
         expect(result.error).to include("valid attack")
       end
 
-      it "allows a single mana attack such as Spirit Arrow from the captured selector" do
-        allow(processor.broadcaster).to receive(:broadcast_ap_update)
-        allow(processor.broadcaster).to receive(:broadcast_combat_action)
-        allow(processor.broadcaster).to receive(:broadcast_vitals_update)
-        allow(processor.broadcaster).to receive(:broadcast_system_message)
-
+      it "rejects a single mana attack without a block or action slot" do
+        participation1.update!(
+          metadata: {"combat_profile" => {"injected_attack_keys" => ["spirit_arrow"]}}
+        )
         result = processor.process_action(
           character1,
           :turn,
@@ -641,8 +832,70 @@ RSpec.describe Arena::CombatProcessor do
           attacks: [{action_key: "spirit_arrow", body_part: "torso"}]
         )
 
-        expect(result.success?).to be true
-        expect(result[:waiting]).to be true
+        expect(result.success?).to be false
+        expect(result.error).to include("valid attack")
+        expect(participation1.reload.metadata["pending_turn"]).to be_blank
+        expect(character1.reload.current_mp).to eq(character1.max_mp)
+      end
+
+      it "rejects a selector attack not injected into the combat profile" do
+        result = processor.process_action(
+          character1,
+          :turn,
+          target: character2,
+          attacks: [{action_key: "spirit_arrow", body_part: "torso"}],
+          blocks: [{action_key: "torso_block", body_parts: ["torso"]}]
+        )
+
+        expect(result).not_to be_success
+        expect(result.error).to include("Attack type 1 is unavailable for this combat profile")
+        expect(character1.reload.current_mp).to eq(character1.max_mp)
+      end
+
+      it "rejects a block outside the actor's exact selector table" do
+        result = processor.process_action(
+          character1,
+          :turn,
+          target: character2,
+          attacks: [{action_key: "simple", body_part: "torso"}],
+          blocks: [{action_key: "shield_90_head_torso_stomach_block", body_parts: %w[head torso stomach]}]
+        )
+
+        expect(result).not_to be_success
+        expect(result.error).to include("unavailable for this combat profile")
+      end
+
+      it "rejects client-authored block coverage that differs from the catalog" do
+        result = processor.process_action(
+          character1,
+          :turn,
+          target: character2,
+          attacks: [{action_key: "simple", body_part: "torso"}],
+          blocks: [{action_key: "torso_block", body_parts: %w[head torso stomach legs]}]
+        )
+
+        expect(result).not_to be_success
+        expect(result.error).to include("do not match torso_block")
+      end
+
+      it "accepts an exact explicitly authored shield selector" do
+        shield = create(:item_template,
+          name: "Arena Shield",
+          slot: "off_hand",
+          stat_modifiers: {"shield_block_table" => 90})
+        create(:inventory_item, inventory: character1.inventory, item_template: shield, equipped: true)
+        participation1.update!(metadata: {"combat_profile" => {"ap_limit" => 140}})
+
+        result = processor.process_action(
+          character1,
+          :turn,
+          target: character2,
+          attacks: [{action_key: "simple", body_part: "torso"}],
+          blocks: [{action_key: "shield_90_head_torso_stomach_block", body_parts: %w[head torso stomach]}]
+        )
+
+        expect(result).to be_success
+        expect(result[:total_ap]).to eq(135)
       end
 
       it "waits for both players before resolving the committed round" do
@@ -650,6 +903,7 @@ RSpec.describe Arena::CombatProcessor do
         allow(processor.broadcaster).to receive(:broadcast_combat_action)
         allow(processor.broadcaster).to receive(:broadcast_vitals_update)
         allow(processor.broadcaster).to receive(:broadcast_system_message)
+        allow(processor.broadcaster).to receive(:broadcast_state_refresh)
 
         first = processor.process_action(
           character1,
@@ -678,6 +932,25 @@ RSpec.describe Arena::CombatProcessor do
         expect(participation2.reload.metadata["pending_turn"]).to be_blank
         expect(participation1.metadata["current_ap"]).to eq(character1_ap_limit)
         expect(participation2.metadata["current_ap"]).to eq(character2_ap_limit)
+        expect(processor.broadcaster).to have_received(:broadcast_state_refresh).with(reason: :round_resolved)
+      end
+
+      it "rejects a stale posted round before storing a team/PvP turn" do
+        arena_match.update!(current_turn_number: 2, current_turn_started_at: Time.current)
+
+        result = processor.process_action(
+          character1,
+          :turn,
+          target: character2,
+          attacks: [{action_key: "simple", body_part: "torso"}],
+          blocks: [{action_key: "torso_block", body_parts: ["torso"]}],
+          expected_turn_number: 1
+        )
+
+        expect(result).not_to be_success
+        expect(result.error).to eq("Fight state changed; refresh and submit the current turn")
+        expect(participation1.reload.metadata["pending_turn"]).to be_blank
+        expect(arena_match.reload.current_turn_number).to eq(2)
       end
 
       it "uses captured Neverlands fight profile values when present" do
@@ -844,6 +1117,8 @@ RSpec.describe Arena::CombatProcessor do
 
       it "records a draw when a waiting player accepts timeout draw" do
         arena_match.update!(current_turn_started_at: 6.minutes.ago, turn_timeout_seconds: 300)
+        character1.update!(current_hp: 1)
+        character2.update!(current_hp: character2.max_hp)
 
         allow(processor.broadcaster).to receive(:broadcast_match_ended)
 

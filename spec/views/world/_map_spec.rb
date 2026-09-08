@@ -3,6 +3,8 @@
 require "rails_helper"
 
 RSpec.describe "world/_map.html.erb", type: :view do
+  include ActiveSupport::Testing::TimeHelpers
+
   let(:zone) { create(:zone, name: "Test Zone", location_type: "outdoor", width: 20, height: 20) }
   let(:character) { create(:character) }
   let(:position) { create(:character_position, character: character, zone: zone, x: 10, y: 10) }
@@ -126,6 +128,8 @@ RSpec.describe "world/_map.html.erb", type: :view do
 
       expect(rendered).to have_css("[data-nl-world-map-map-offset-x-value='-100']")
       expect(rendered).to have_css("[data-nl-world-map-map-offset-y-value='-100']")
+      expect(rendered).to have_css("[data-nl-world-map-max-visible-columns-value='13']")
+      expect(rendered).to have_css("[data-nl-world-map-max-visible-rows-value='7']")
       expect(rendered).to have_css(".nl-map-viewport[style*='--nl-map-visible-columns: 13'][style*='--nl-map-visible-rows: 7']")
     end
   end
@@ -358,6 +362,40 @@ RSpec.describe "world/_map.html.erb", type: :view do
       expect(rendered).to have_css("[data-nl-world-map-movement-delta-y-value='-1']")
       expect(rendered).to have_css("[data-nl-world-map-movement-total-seconds-value='30']")
     end
+
+    it "publishes the server clock beside the authoritative movement deadline" do
+      travel_to Time.utc(2026, 9, 7, 12, 0, 0) do
+        render partial: "world/map", locals: {
+          position:,
+          nearby_tiles:,
+          zone:,
+          active_movement: OpenStruct.new(ends_at: 17.seconds.from_now),
+          movement_remaining_seconds: 17
+        }
+
+        expect(rendered).to have_css("[data-nl-world-map-server-now-value='2026-09-07T12:00:00.000Z']")
+        expect(rendered).to have_css("[data-nl-world-map-movement-ends-at-value='2026-09-07T12:00:17.000Z']")
+      end
+    end
+
+    it "renders timed local work with the stationary cursor and no movement controls" do
+      render partial: "world/map", locals: {
+        position:,
+        nearby_tiles:,
+        zone:,
+        movement_destinations:,
+        active_world_action: OpenStruct.new(
+          local_action_ends_at: 21.seconds.from_now,
+          local_action_remaining_seconds: 21
+        )
+      }
+
+      expect(rendered).to have_css("[data-nl-world-map-work-active-value='true']")
+      expect(rendered).to have_css("[data-nl-world-map-movement-active-value='false']")
+      expect(rendered).to have_css(".nl-cursor-img--idle")
+      expect(rendered).to have_css(".nl-timer-seconds", text: "21", visible: :all)
+      expect(rendered).not_to have_css(".nl-tile-clickable--available")
+    end
   end
 
   describe "cursor overlay" do
@@ -555,6 +593,21 @@ RSpec.describe "world/_map.html.erb", type: :view do
   end
 
   describe "entity markers on tiles" do
+    it "renders a decorative city entrance icon with its accessible authored name" do
+      gate_tiles = [[OpenStruct.new(x: 9, y: 9, terrain_type: "outdoor", walkable: true,
+        metadata: {"building" => "City Exit", "building_kind" => "city"})]]
+
+      render partial: "world/map", locals: {
+        position: position,
+        nearby_tiles: gate_tiles,
+        zone: zone,
+        tile_data: {}
+      }
+
+      expect(rendered).to have_css('.nl-tile-building--city[title="City Exit"] .nl-tile-city-gate[aria-hidden="true"]', text: "🏰")
+      expect(rendered).to have_css(".nl-tile-building--city .nl-entity-label", text: "City Exit", visible: :all)
+    end
+
     context "with NPC on a tile" do
       let(:nearby_tiles_with_npc) do
         tiles = nearby_tiles

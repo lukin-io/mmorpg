@@ -113,9 +113,9 @@ remove at most one durability point from that item:
 
 The result and changed item IDs are persisted on fight participation metadata,
 and fight reward finalization is idempotent. Already-broken and non-durable
-items are skipped. The wiki names a Careful Fighter modifier, but its exact
-selectable identity/prerequisite is not captured locally, so the modifier and
-repair flow remain `[EVIDENCE]` rather than being guessed.
+items are skipped. Source perk ID `15`, `Аккуратный боец`/Careful Fighter,
+halves every independent chance, including arena defeat from `1%` to `0.5%`.
+Its prerequisite/reset rules and the repair transaction remain `[EVIDENCE]`.
 
 Observed Neverlands action semantics:
 
@@ -330,7 +330,7 @@ Remaining design detail before launch:
 - exact MVP boundary for non-equipment families: empty states are captured, but
   crafting/production/resource behavior needs separate source capture before
   implementation;
-- repair UX and the exact Careful Fighter modifier;
+- an authenticated repair request/payment/failure/retrieval flow and its UX;
 - source rules for what happens to equipped state when a worn item reaches
   zero durability beyond the current safe broken-item handling;
 - server-issued inventory action keys when normal Rails form protection is not

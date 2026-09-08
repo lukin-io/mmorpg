@@ -117,4 +117,98 @@ RSpec.describe Game::Movement::TileProvider do
       expect(metadata).to eq({})
     end
   end
+
+  describe "bounded cell reads" do
+    let(:zone) do
+      create(:zone, name: "Sparse Region", location_type: "outdoor", width: 1000, height: 1000)
+    end
+
+    let(:tile_queries) { [] }
+    let(:instantiated_tiles) { [] }
+
+    def record_tile_reads
+      query_subscriber = lambda do |event|
+        sql = event.payload[:sql]
+        tile_queries << sql if sql.match?(/\ASELECT .*FROM "map_tile_templates"/)
+      end
+      row_subscriber = lambda do |event|
+        if event.payload[:class_name] == "MapTileTemplate"
+          instantiated_tiles << event.payload[:record_count]
+        end
+      end
+
+      ActiveRecord::Base.uncached do
+        ActiveSupport::Notifications.subscribed(query_subscriber, "sql.active_record") do
+          ActiveSupport::Notifications.subscribed(row_subscriber, "instantiation.active_record") do
+            yield
+          end
+        end
+      end
+    end
+
+    it "reads only requested exact cells and memoizes authored and sparse lookups" do
+      create(:map_tile_template, zone: zone.name, x: 999, y: 999, passable: false)
+
+      record_tile_reads do
+        provider = described_class.new(zone:)
+        expect(tile_queries).to be_empty
+
+        expect(provider.tile_at(0, 0)).to be_passable
+        expect(provider.metadata_at(0, 0)).to eq({})
+        expect(provider.terrain_type_at(0, 0)).to eq("outdoor")
+        expect(provider.tile_at(500, 500)).to be_passable
+        expect(provider.metadata_at(500, 500)).to eq({})
+        expect(provider.terrain_type_at(500, 500)).to be_nil
+        expect(provider.tile_at(1000, 500)).to be_nil
+        expect(provider.metadata_at(-1, 0)).to eq({})
+        expect(provider.terrain_type_at(0, 1000)).to be_nil
+      end
+
+      expect(tile_queries.size).to eq(2)
+      expect(instantiated_tiles.sum).to eq(1)
+      expect(tile_queries).to all(include('"map_tile_templates"."zone" =', '"map_tile_templates"."x" =', '"map_tile_templates"."y" ='))
+    end
+
+    it "prefetches only the eight destination cells once, isolated from other regions" do
+      coordinates = Game::Movement::Directions::OFFSETS.values.map { |dx, dy| [500 + dx, 500 + dy] }
+      coordinates.each do |x, y|
+        create(:map_tile_template, zone: zone.name, x:, y:, passable: true)
+      end
+      create(:map_tile_template, zone: zone.name, x: 500, y: 500, passable: false)
+      create(:map_tile_template, zone: zone.name, x: 999, y: 999, passable: false)
+      other_region = create(:zone, name: "Other Region", width: 1000, height: 1000)
+      coordinates.each do |x, y|
+        create(:map_tile_template, zone: other_region.name, x:, y:, passable: false)
+      end
+
+      record_tile_reads do
+        provider = described_class.new(zone:, coordinates: coordinates + coordinates)
+        coordinates.each do |x, y|
+          expect(provider.tile_at(x, y)).to be_passable
+          expect(provider.metadata_at(x, y)).to eq({})
+          expect(provider.terrain_type_at(x, y)).to eq("outdoor")
+        end
+      end
+
+      expect(tile_queries.size).to eq(1)
+      expect(instantiated_tiles.sum).to eq(8)
+    end
+
+    it "memoizes sparse prefetched cells and skips coordinates outside region bounds" do
+      coordinates = [[999, 998], [999, 999], [1000, 999], [-1, 0]]
+
+      record_tile_reads do
+        provider = described_class.new(zone:, coordinates:)
+        expect(provider.tile_at(999, 998)).to be_passable
+        expect(provider.metadata_at(999, 998)).to eq({})
+        expect(provider.tile_at(999, 999)).to be_passable
+        expect(provider.terrain_type_at(999, 999)).to be_nil
+        expect(provider.tile_at(1000, 999)).to be_nil
+        expect(provider.metadata_at(-1, 0)).to eq({})
+      end
+
+      expect(tile_queries.size).to eq(1)
+      expect(instantiated_tiles.sum).to eq(0)
+    end
+  end
 end

@@ -100,11 +100,11 @@ RSpec.describe "Arena NPC Combat", type: :request do
         expect(npc_participation.team).to eq("b")
       end
 
-      it "marks the application as matched" do
+      it "marks the application as started with the immediate NPC fight" do
         post accept_arena_application_path(npc_application)
 
         npc_application.reload
-        expect(npc_application.status).to eq("matched")
+        expect(npc_application.status).to eq("started")
       end
 
       it "sets match metadata with is_npc_fight flag" do

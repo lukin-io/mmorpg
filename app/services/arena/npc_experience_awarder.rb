@@ -19,7 +19,12 @@ module Arena
       return skipped("group_formula_not_captured") unless winners.one?
 
       winner = winners.first.character
-      configured_experience = defeated_enemy_npcs.sum { |participation| participation.npc_template.xp_reward }
+      defeated_npcs = defeated_enemy_npcs
+      configured_experience = explicit_encounter_experience
+      if configured_experience.nil? && defeated_npcs.many?
+        return skipped("group_formula_not_captured")
+      end
+      configured_experience ||= defeated_npcs.sum { |participation| participation.npc_template.xp_reward }
       return skipped("no_configured_experience") unless configured_experience.positive?
 
       cap = Game::Progression::Catalog.fight_experience_cap(winner.level)
@@ -41,6 +46,10 @@ module Arena
 
     def defeated_enemy_npcs
       match.arena_participations.npcs.where.not(team: winning_team).includes(:npc_template).select(&:defeat?)
+    end
+
+    def explicit_encounter_experience
+      Integer(match.metadata.to_h["encounter_experience_reward"], exception: false)
     end
 
     def skipped(reason)

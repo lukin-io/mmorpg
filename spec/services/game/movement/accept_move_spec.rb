@@ -68,6 +68,20 @@ RSpec.describe Game::Movement::AcceptMove do
     expect(command.reload).to be_offered
   end
 
+  it "rejects an old-region key after relocation to identical coordinates in another region" do
+    command = offered_move
+    new_region = create(:zone, :mvp_outdoor_region)
+    position.update!(zone: new_region)
+
+    expect {
+      described_class.new(character:, action_key: command.action_key).call
+    }.to raise_error(Game::Movement::MovementViolationError, /no longer available/)
+
+    expect(command.reload).to be_offered
+    expect(position.reload).to have_attributes(zone: new_region, x: 5, y: 5)
+    expect(MovementCommand.moving.where(character:)).to be_empty
+  end
+
   it "rejects direction-only movement without a server action key" do
     expect {
       described_class.new(character:, direction: :east).call
@@ -142,5 +156,79 @@ RSpec.describe Game::Movement::AcceptMove do
     expect {
       described_class.new(character:, action_key: command.action_key).call
     }.to raise_error(Game::Movement::MovementViolationError, /passable/)
+  end
+
+  it "rejects a malformed persisted offer that jumps beyond an adjacent cell" do
+    command = offered_move(direction: "east", target_x: 7, target_y: 5)
+
+    expect {
+      described_class.new(character:, action_key: command.action_key).call
+    }.to raise_error(Game::Movement::MovementViolationError, /adjacent step/)
+
+    expect(command.reload).to be_offered
+    expect([position.reload.x, position.y]).to eq([5, 5])
+  end
+
+  it "cancels current-cell actions when travel starts" do
+    action = create(:world_action_offer, character:, zone:, x: 5, y: 5)
+    command = offered_move
+
+    described_class.new(character:, action_key: command.action_key).call
+
+    expect(action.reload).to be_cancelled
+    expect(command.reload).to be_moving
+  end
+
+  it "fails old-region travel before accepting a valid offer for the current region" do
+    other_zone = create(:zone, location_type: "outdoor")
+    active = create(:movement_command, :moving, character:, zone: other_zone)
+    command = offered_move
+
+    described_class.new(character:, action_key: command.action_key).call
+
+    expect(active.reload).to be_failed
+    expect(MovementCommand.moving.where(character:).pluck(:id)).to eq([command.id])
+    expect(command.reload).to be_moving
+    expect(position.reload).to have_attributes(zone:, x: 5, y: 5)
+  end
+
+  it "does not reroll fatigue or restart travel when the accepted key is retried" do
+    command = offered_move
+    rng = instance_double(Random)
+    expect(rng).to receive(:rand).with(1..2).once.and_return(2)
+    described_class.new(character:, action_key: command.action_key, rng:).call
+    original_timing = command.reload.attributes.slice("started_at", "ends_at", "metadata")
+
+    expect {
+      described_class.new(character: Character.find(character.id), action_key: command.action_key, rng:).call
+    }.to raise_error(Game::Movement::MovementViolationError, /already in progress/)
+
+    expect(command.reload.attributes.slice("started_at", "ends_at", "metadata")).to eq(original_timing)
+  end
+
+  it "does not expose wilderness movement for a city zone" do
+    command = offered_move
+    zone.update!(location_type: "city")
+
+    expect {
+      described_class.new(character:, action_key: command.action_key).call
+    }.to raise_error(Game::Movement::MovementViolationError, /unavailable here/)
+
+    expect(command.reload).to be_offered
+  end
+
+  it "rejects a saved movement offer until the local action deadline" do
+    command = offered_move
+    action = create(:world_action_offer, character:, zone:, x: 5, y: 5,
+      action_type: "search_resources", status: :accepted, accepted_at: Time.current,
+      metadata: {"local_action_ends_at" => 28.seconds.from_now.iso8601(6), "local_action_result" => "Nothing useful here."})
+
+    expect {
+      described_class.new(character:, action_key: command.action_key).call
+    }.to raise_error(Game::Movement::MovementViolationError, /local action is already in progress/)
+
+    expect(action.reload).to be_accepted
+    expect(command.reload).to be_offered
+    expect(position.reload).to have_attributes(x: 5, y: 5)
   end
 end

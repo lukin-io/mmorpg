@@ -45,6 +45,16 @@ RSpec.describe "shared/_nl_players_list.html.erb", type: :view do
       expect(rendered).to have_css(".nl-player-entry", count: 3)
     end
 
+    it "publishes the full room count and authored label alongside a bounded list" do
+      assign(:presence_player_count, 21)
+      assign(:presence_location_label, "Village Square")
+
+      render partial: "shared/nl_players_list"
+
+      expect(rendered).to have_css('[data-player-list-count="21"][data-player-list-location="Village Square"]')
+      expect(rendered).to have_css(".nl-player-entry", count: 3)
+    end
+
     it "displays player names as links" do
       render partial: "shared/nl_players_list"
 

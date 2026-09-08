@@ -15,6 +15,8 @@ Inputs:
 - observed NPC drop/result behavior;
 - supplied mixed chat/game-event timeline observation in
   `doc/design/reference/social/observations/2026-08-23_chat_game_event_timeline.md`;
+- official NPC group-size guidance and unresolved equations preserved in
+  `doc/design/reference/social/observations/2026-09-07_cell_chat_and_presence_boundaries.md`;
 - documented movement, tile-action, and shop captures.
 
 ## Player Experience
@@ -135,7 +137,8 @@ Design rules:
 - a hostile check can run before a mutating outdoor action completes;
 - a bot attack creates a normal fight with side/team membership, not a special
   wild-combat shortcut;
-- a fight can include multiple NPCs on one side;
+- a fight can include multiple NPCs on one side, up to the official article's
+  stated ten-member maximum; this is capacity, not an uncaptured roster;
 - when one NPC in a multi-NPC fight loses, the fight can continue against the
   remaining NPCs;
 - each defeated loot-bearing NPC can run its own bot-specific random loot-table
@@ -145,15 +148,31 @@ Implemented MVP boundary:
 
 - the captured Plague Rat cell is represented by one persistent `TileNpc` encounter anchor with explicit `encounter_count: 2` source metadata;
 - starting the encounter creates two separate `ArenaParticipation` rows on the NPC side, even though both use the same `NpcTemplate`;
-- each living NPC acts, each defeated NPC is searched/logged separately, and the anchor is marked defeated only after all encounter participants fall;
+- each living NPC acts and each defeated NPC is searched/logged separately;
+  the fixed paired-rat anchor is marked defeated only after its entire side
+  falls;
+- the mapped variable encounter cell selects one complete captured roster,
+  preserving member order, identity, level/HP, XP, and injury-risk metadata;
+  after victory and Finish it can schedule another sample at the same cell;
+- fixed counts and complete samples accept `1..10` members; the model and
+  fight-start checks reject eleven without a partial fight, and the config
+  loader rejects oversized samples. Existing seeded groups are not expanded
+  to fill the capacity;
 - solo victory awards configured NPC experience through the shared idempotent
   fight-finalization path and respects the level-specific per-fight cap;
 - offered movement, entrance, local observation, Character, and Inventory wilderness actions use one hostile-interruption query before their intended transition completes;
 - no outdoor NPC action offer, marker, name, or manual attack endpoint is
   rendered;
+- targetless passive checks use a persisted exact-cell deadline, captured
+  delay windows where available, and the existing explicit local fallback
+  otherwise; the broad wiki cadence does not replace measured live windows;
 - duplicate starts reuse the character's active match, and the result finish returns through a saved allowlisted logical context.
 
-This is authored encounter composition, not a generic random-encounter table. Different group sizes or mixed NPC templates require their own Neverlands evidence and explicit content representation.
+This is authored encounter composition, not a generic random-encounter table.
+Only complete captured samples are replayed. Additional group sizes, members,
+levels, and mixed templates require their own Neverlands evidence; the complete
+eligible pool, selection weights, population/strength equations, probabilities,
+and timing distribution remain unresolved.
 
 ## Quest Behavior Status
 

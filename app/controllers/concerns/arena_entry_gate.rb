@@ -5,9 +5,29 @@ module ArenaEntryGate
 
   private
 
+  # Room/lobby HTML entry changes persisted location. Keep its availability
+  # check and rendering in the same character boundary as movement and fights.
+  # No room lock is acquired: application creation already locks room first.
+  def with_city_arena_entry
+    current_character.with_lock do
+      require_city_arena_entry!
+      unless performed?
+        @position = current_character.position
+        yield
+      end
+    end
+  end
+
   def require_city_arena_entry!
     return if current_character_has_active_arena_match?
-    return if session[:arena_city_character_id].to_i == current_character&.id.to_i
+    if current_character
+      context = Game::World::ResumeContext.new(character: current_character)
+      if context.arena_available?
+        city_session = session[:arena_city_character_id].to_i == current_character.id &&
+          session[:arena_city_zone_id].to_i == current_character.position.zone_id
+        return if city_session || context.arena_room
+      end
+    end
 
     respond_to do |format|
       format.html { redirect_to world_path, alert: "Enter the arena through the city building." }

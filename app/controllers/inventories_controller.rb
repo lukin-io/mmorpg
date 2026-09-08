@@ -7,8 +7,10 @@
 #
 class InventoriesController < ApplicationController
   include CurrentCharacterContext
+  include OutdoorActionAvailability
 
   before_action :ensure_active_character!
+  around_action :with_available_outdoor_actions
 
   # GET /inventory
   def show

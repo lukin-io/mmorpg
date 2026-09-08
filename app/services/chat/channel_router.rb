@@ -34,19 +34,24 @@ module Chat
       end
     end
 
-    def local_channel(context)
-      key = context.fetch(:local_key) { raise ArgumentError, "local_key is required" }
-      slug = "local-#{key}"
+    def local_channel(_context)
+      local = LocalContext.new(character: user.character).synchronize!
+      raise Pundit::NotAuthorizedError, "Current location required" unless local
 
-      ChatChannel.find_or_create_by!(slug:) do |channel|
-        channel.name = context[:name] || "Local (#{key})"
+      slug = "local-#{local.key}"
+      existing = ChatChannel.find_by(slug:)
+      return existing if existing
+
+      ChatChannel.create_or_find_by!(slug:) do |channel|
+        channel.name = "Local"
         channel.channel_type = :local
         channel.system_owned = true
-        channel.metadata = {
-          "local_key" => key,
-          "label" => context[:name]
-        }.compact
+        channel.metadata = {"location_key" => local.key}
       end
+    rescue ActiveRecord::RecordInvalid => error
+      raise unless error.record.errors.of_kind?(:slug, :taken)
+
+      ChatChannel.find_by!(slug:)
     end
 
     def whisper_channel(context)

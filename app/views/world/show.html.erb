@@ -19,4 +19,8 @@
   <turbo-frame id="location-info">
     <%= render "world/location_info", position: @position, tile: @tile, zone: @zone %>
   </turbo-frame>
+
+  <% if @world_action_result.present? %>
+    <%= render "world/action_result", message: @world_action_result %>
+  <% end %>
 </div>

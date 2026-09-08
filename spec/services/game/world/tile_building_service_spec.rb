@@ -67,6 +67,17 @@ RSpec.describe Game::World::TileBuildingService do
       expect(character.position.y).to eq(7)
     end
 
+    it "does not let a caller-selected region enter a foreign same-coordinate gate" do
+      other_region = create(:zone, :mvp_outdoor_region)
+      character.position.update!(zone: other_region)
+
+      result = service.enter!
+
+      expect(result.success).to be false
+      expect(result.message).to eq("Entrance is not on your current cell.")
+      expect(character.position.reload).to have_attributes(zone: other_region, x: 3, y: 3)
+    end
+
     it "returns a failure when authored destination coordinates are missing" do
       building.update_columns(destination_x: nil, destination_y: nil)
 

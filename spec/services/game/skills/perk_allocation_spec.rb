@@ -16,6 +16,14 @@ RSpec.describe Game::Skills::PerkAllocation do
     expect(character.perk_points).to eq(0)
   end
 
+  it "allows the source-backed Careful Fighter perk" do
+    result = allocation.call(selected_keys: [:careful_fighter])
+
+    expect(result.selected_keys).to eq(["careful_fighter"])
+    expect(character.reload).to be_owns_perk(:careful_fighter)
+    expect(character.perk_points).to eq(0)
+  end
+
   it "does not infer a strength effect from the perk label" do
     strength_before = character.stats.get(:strength)
 

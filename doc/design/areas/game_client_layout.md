@@ -15,6 +15,7 @@ Reference material:
 - `doc/design/reference/neverlands.md`
 - `doc/design/reference/shell/observations/2026-07-28_game_shell_and_mvp_surfaces.md`
 - `doc/design/reference/social/observations/2026-08-23_chat_game_event_timeline.md`
+- `doc/design/reference/social/observations/2026-09-07_cell_chat_and_presence_boundaries.md`
 - `doc/design/reference/source_material.md`
 
 Neverlands uses a frame-like layout: a main content frame, chat/messages,
@@ -28,8 +29,9 @@ Core shell:
 - top bar: character name, level, HP/MP, current action buttons;
 - main content: world map, city node, building, combat, inventory, profile;
 - local presence: nearby players/current location;
-- chat: one chronological history of player messages, recipient-only gameplay
-  results, and game-wide announcements, plus input and channel controls;
+- chat: one chronological history of ordinary messages from the current
+  cell/room, recipient-only gameplay results, and game-wide announcements, plus
+  input and captured chat controls;
 - exit/logout control.
 
 The 2026-05-25 live shell capture confirms that profile, inventory, city,
@@ -54,6 +56,8 @@ product contract with modern Rails primitives:
 - persistent top vitals and context actions;
 - persistent mixed chat/game-event history and local presence;
 - Turbo Frames or Turbo Streams for server-rendered updates;
+- authenticated current-location polling for ordinary chat, with signed
+  recipient/world game-event streams retained in the same timeline;
 - Stimulus controllers for timers, hotspot hover/focus, form disabling,
   chat shortcuts, panel toggles, and local visual previews.
 
@@ -66,6 +70,30 @@ Tailwind CSS is not required for launch MVP. The current Rails app already has
 a Neverlands-style CSS token surface. Introduce Tailwind only if a specific
 screen rewrite proves it reduces real maintenance cost without replacing the
 compact operational feel with a generic modern dashboard.
+
+## Frame And Responsive Adaptation
+
+The captured desktop shell keeps its status header, flexible main gameplay
+pane, social row, and bottom controls in one frame. The source `main_top`
+measurement includes the status header; the local Rails layout renders that
+header and main pane as adjacent rows. World therefore uses their combined
+client height when choosing complete 100px map rows. The separate width and
+height measurements must not change gameplay coordinates, movement offers, or
+cell authority.
+
+World owns the bounded odd-cell viewport and its recentering observer; Shell
+owns the surrounding row allocation. The observer responds to header/main
+size changes and disconnects with the map. A chat allocation change may alter
+the number of complete visible rows without resizing individual cells or
+replacing movement state. Source measurements do not establish one universal
+browser-height formula or a shipped drag-resizer control.
+
+Tablet/mobile adaptation is a local requirement. At narrow widths the shell
+reflows the header and bottom controls and stacks the social regions; the main
+pane remains the owning feature's scroll area. The map retains complete cells,
+a centered current position, and touch panning without whole-page horizontal
+overflow. `doc/features/game_shell.md` records the verified desktop/mobile
+dimensions and `doc/features/world.md` owns map behavior.
 
 ## UI Style Maintainability And Domain SRP
 
@@ -113,8 +141,15 @@ unrelated area's stylesheet.
 - Form submission should disable only the affected action group and then
   refresh from server state.
 - The current page/context action should be visibly disabled.
-- Main-content swaps must not reset chat input, player list state, or top
+- Main-frame swaps must not reset chat input, player list state, or top
   vitals unless the server state changed.
+- When navigation reloads the full shell, restore already-delivered ordinary
+  rows only within the current login's bounded browser buffer. A fresh login
+  starts an empty ordinary buffer; durable personal/world game events reload
+  independently. The local shell does not persist unsent drafts or main-pane
+  scroll positions.
+- Clear visible chat must preserve the timeline and subsequent delivery; it
+  is not a request to delete stored messages or gameplay records.
 - Authoritative fight completion and successful item/NV-search feedback must
   remain readable in the persistent history after a main-content swap or
   reload; a transient toast is not the only feedback surface.
@@ -135,9 +170,15 @@ unrelated area's stylesheet.
   global shortcuts.
 - Text density should match a working game client, not a promotional site.
 - The layout must support reload/login resume states for exact outdoor cells,
-  city nodes, implemented interiors such as Shop and captured read-only city
-  services, movement, and combat.
+  city nodes, village interiors, Shop, captured read-only city services,
+  validated Arena rooms, movement, and combat.
 - The UI must not hide the current location or available actions.
+
+Room entry must update the surrounding presence label, count, and player list
+with the saved room, including when automatic refresh is disabled. The local
+implementation prepares City-building presence after saving context and uses
+full-shell Arena entry. Runtime ownership and coverage belong in
+`doc/features/game_shell.md`.
 
 ## Feature Hooks
 

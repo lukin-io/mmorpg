@@ -21,12 +21,6 @@ class WorldController < ApplicationController
   # viewport. Narrow clients retain this 15x9 surface and pan it responsively.
   MAP_RENDER_X_RADIUS = 7
   MAP_RENDER_Y_RADIUS = 4
-  PLAYER_SORT_ORDERS = {
-    "az" => {name: :asc},
-    "za" => {name: :desc},
-    "lvl-asc" => {level: :asc, name: :asc},
-    "lvl-desc" => {level: :desc, name: :asc}
-  }.freeze
 
   before_action :ensure_active_character!
   before_action :ensure_character_position!
@@ -42,6 +36,8 @@ class WorldController < ApplicationController
     end
 
     Game::World::ResumeContext.new(character: current_character).remember_world!
+    prepare_presence_context
+    consume_world_action_result
 
     # Handle both HTML and Turbo Stream requests with full page render
     # Turbo Stream requests can come from redirects after building entry
@@ -58,9 +54,9 @@ class WorldController < ApplicationController
         # render full HTML page to avoid "Content missing"
         # Use formats: [:html] to find the .html.erb template
         if city_zone?
-          render "world/city_view", formats: [:html], layout: "game"
+          render "world/city_view", formats: [:html], layout: "game", content_type: "text/html"
         else
-          render "world/show", formats: [:html], layout: "game"
+          render "world/show", formats: [:html], layout: "game", content_type: "text/html"
         end
       end
     end
@@ -70,15 +66,12 @@ class WorldController < ApplicationController
   # Refresh the compact location-scoped presence list without replacing the
   # world or city surface.
   def players
-    @players_here = players_at_current_tile(sort: params[:sort])
+    prepare_presence_context(sort: params[:sort])
 
     render partial: "shared/nl_players_list", layout: false
   end
 
   def move
-    interruption = interrupt_world_action
-    return respond_with_world_interruption(interruption) if interruption.interrupted?
-
     result = Game::Movement::AcceptMove.new(
       character: current_character,
       action_key: params[:action_key],
@@ -86,6 +79,7 @@ class WorldController < ApplicationController
       target_y: params[:target_y],
       direction: params[:direction]
     ).call
+    return respond_with_world_interruption(result.interruption) if result.interruption&.interrupted?
 
     @position = result.position.reload
     respond_to do |format|
@@ -181,6 +175,7 @@ class WorldController < ApplicationController
           y: @position.y
         )
         result = service.enter!
+        result.success ? action_offer.complete! : action_offer.fail!(result.message)
       end
     end
 
@@ -188,7 +183,6 @@ class WorldController < ApplicationController
 
     respond_to do |format|
       if result.success
-        action_offer.complete!
         destination_path = if result.location_key.present?
           world_location_path(result.location_key)
         else
@@ -205,7 +199,6 @@ class WorldController < ApplicationController
           redirect_to destination_path, status: :see_other
         end
       else
-        action_offer.fail!(result.message)
         format.html { redirect_to world_path, alert: result.message }
         format.turbo_stream { render_error(result.message) }
       end
@@ -226,34 +219,26 @@ class WorldController < ApplicationController
     return respond_with_world_action_error("Local action is not supported.") unless world_action_type
 
     result = nil
-    interruption = nil
-
     ActiveRecord::Base.transaction do
       action_offer = accept_world_action!(world_action_type, target: tile)
       result = Game::World::PerformLocalAction.new(
         character: current_character,
         tile:,
-        local_action_type:
+        local_action_type:,
+        action_offer:
       ).call
 
-      if result.success
-        interruption = interrupt_world_action
-        action_offer.complete!
-      else
-        action_offer.fail!(result.message)
-      end
+      action_offer.fail!(result.message) unless result.success
     end
 
     return respond_with_world_action_error(result.message) unless result.success
 
-    return respond_with_world_interruption(interruption) if interruption&.interrupted?
+    return respond_with_world_interruption(result.interruption) if result.interruption&.interrupted?
 
+    flash[:world_action_result_offer_id] = result.action_offer.id
     respond_to do |format|
-      format.html { redirect_to world_path, notice: result.message }
-      format.turbo_stream do
-        flash[:notice] = result.message
-        redirect_to world_path, status: :see_other
-      end
+      format.html { redirect_to world_path }
+      format.turbo_stream { redirect_to world_path, status: :see_other }
     end
   rescue Game::World::AcceptAction::ActionViolationError,
     Game::World::StartNpcFight::FightViolationError => e
@@ -261,6 +246,20 @@ class WorldController < ApplicationController
   end
 
   private
+
+  # Flash is a delivery hint, not result authority: a late cookie response may
+  # replay it. World reads already hold the character lock; the offer lock makes
+  # the persisted result consumable once even across concurrent page requests.
+  def consume_world_action_result
+    offer_id = flash[:world_action_result_offer_id]
+    flash.delete(:world_action_result_offer_id)
+    return unless offer_id.is_a?(Integer) && offer_id.positive? && @position.zone.outdoor?
+
+    offer = WorldActionOffer.at_tile(@position.zone, @position.x, @position.y)
+      .where(character: current_character, action_type: "search_resources", status: %i[accepted completed])
+      .find_by(id: offer_id)
+    @world_action_result = offer&.consume_local_action_result!
+  end
 
   def interrupt_world_action(return_context: "world")
     Game::World::InterruptAction.new(
@@ -297,7 +296,6 @@ class WorldController < ApplicationController
       hotspots: @hotspots
     ).call
     @city_action_offers_by_hotspot_id = @world_action_offers.index_by(&:target_id)
-    @players_here = players_at_current_tile
   end
 
   def prepare_overworld_view
@@ -305,6 +303,7 @@ class WorldController < ApplicationController
     @position = @movement_state.position.reload
     @zone = @position.zone
     @active_movement = @movement_state.active_command
+    @active_world_action = @movement_state.active_world_action
     @movement_destinations = @movement_state.destinations
     @movement_remaining_seconds = @active_movement&.remaining_seconds || 0
     @movement_cooldown = @movement_destinations.first&.travel_seconds ||
@@ -315,7 +314,7 @@ class WorldController < ApplicationController
       character: current_character,
       position: @position
     ).call
-    @world_action_offers = @active_movement ? [] : Game::World::ActionOfferBuilder.new(
+    @world_action_offers = (@active_movement || @active_world_action) ? [] : Game::World::ActionOfferBuilder.new(
       character: current_character,
       position: @position,
       tile_state: @tile_state
@@ -324,7 +323,6 @@ class WorldController < ApplicationController
     @tile = current_tile
     @nearby_tiles = nearby_tiles_with_features
     @tile_building = tile_building_at_current_tile
-    @players_here = players_at_current_tile
     @available_actions = available_actions
   end
 
@@ -343,13 +341,10 @@ class WorldController < ApplicationController
       return render "world/no_zones", status: :service_unavailable
     end
 
-    current_character.create_position!(
-      zone: starter_zone,
-      x: spawn.x,
-      y: spawn.y,
-      state: :active,
-      last_turn_number: 0
-    )
+    Game::Movement::RespawnService.new(
+      character: current_character,
+      spawn_scope: starter_zone.spawn_points.where(id: spawn.id)
+    ).ensure_position!
   end
 
   def set_position
@@ -419,7 +414,7 @@ class WorldController < ApplicationController
   def add_visible_tile_features(metadata, building:)
     if building
       metadata["building"] = building.name
-      metadata["building_kind"] = building.metadata.to_h["landmark_kind"].presence || building.building_type
+      metadata["building_kind"] = building.location? ? building.location_kind : building.building_type
     end
 
     metadata
@@ -428,7 +423,7 @@ class WorldController < ApplicationController
   def available_actions
     actions = []
 
-    return actions if @active_movement
+    return actions if @active_movement || @active_world_action
 
     # Tile Building actions (enterable structures)
     tile_building = tile_building_at_current_tile
@@ -476,22 +471,6 @@ class WorldController < ApplicationController
     service.building_info
   end
 
-  def players_at_current_tile(sort: "az")
-    order = PLAYER_SORT_ORDERS.fetch(sort.to_s, PLAYER_SORT_ORDERS.fetch("az"))
-
-    Character
-      .joins(:position)
-      .where(character_positions: {
-        zone_id: @position.zone_id,
-        x: @position.x,
-        y: @position.y,
-        state: CharacterPosition.states.fetch("active")
-      })
-      .where.not(id: current_character.id)
-      .order(order)
-      .limit(10)
-  end
-
   def render_map_update
     prepare_overworld_view
 
@@ -531,13 +510,15 @@ class WorldController < ApplicationController
 
   def accept_world_action!(action_type, target:)
     authorize_world_action_offer!(params[:action_key])
-    Game::World::AcceptAction.new(
+    offer = Game::World::AcceptAction.new(
       character: current_character,
       action_key: params[:action_key],
       action_type: action_type,
       target: target,
       position: @position
     ).call
+    @position = current_character.position.reload
+    offer
   end
 
   def respond_with_world_action_error(message)
@@ -557,6 +538,8 @@ class WorldController < ApplicationController
   end
 
   def render_movement_error(message)
+    return render_error(message) if city_zone?
+
     prepare_overworld_view
 
     render turbo_stream: [

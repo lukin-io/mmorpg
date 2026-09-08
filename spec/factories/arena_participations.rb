@@ -8,6 +8,7 @@ FactoryBot.define do
     team { "a" }
     result { :pending }
     joined_at { Time.current }
+    metadata { {} }
 
     trait :team_a do
       team { "a" }
@@ -19,6 +20,24 @@ FactoryBot.define do
 
     trait :pending do
       result { :pending }
+    end
+
+    trait :waiting_for_opponent do
+      metadata do
+        {
+          "pending_turn" => {
+            "turn_number" => arena_match.current_turn_number.presence || 1,
+            "attacks" => [{"action_key" => "simple", "body_part" => "torso"}],
+            "blocks" => [{"action_key" => "torso_block", "body_parts" => ["torso"]}],
+            "skills" => [],
+            "total_ap" => 75
+          }
+        }
+      end
+    end
+
+    trait :finished do
+      metadata { {"finished_at" => Time.current.iso8601} }
     end
 
     trait :victory do
@@ -45,6 +64,18 @@ FactoryBot.define do
       user { nil }
       association :npc_template
       metadata { {"current_hp" => 100, "max_hp" => 100} }
+    end
+
+    trait :sampled_npc do
+      npc
+      metadata do
+        {
+          "current_hp" => 185,
+          "max_hp" => 185,
+          "level" => 8,
+          "encounter_roster_sample" => "captured-sample"
+        }
+      end
     end
   end
 end

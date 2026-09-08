@@ -10,26 +10,41 @@ export default class extends Controller {
   static targets = [
     "combatLog", "participantList", "actionButtons", "timer",
     "teamA", "teamB", "resultOverlay",
-    "blockSelect", "turnCostValue",
+    "blockSelect", "turnCostValue", "turnPenalty", "turnOverBudget",
     "apBar", "apValue", "fighterA", "fighterB",
-    "attackSelect", "magicSlot"
+    "attackSelect", "magicSlot", "turnForm", "turnFields",
+    "targetName", "targetVitals"
   ]
 
   static values = {
     matchId: Number,
     apLimit: { type: Number, default: 80 },
     readOnly: { type: Boolean, default: false },
-    userTeam: String
+    userTeam: String,
+    status: String,
+    turnNumber: Number,
+    waiting: Boolean,
+    selectedTargetId: String,
+    startsAt: String
   }
 
   connect() {
+    this.syncSelectedTarget()
     this.subscribeToMatch()
     this.updateTurnCost()
+    this.schedulePendingStartRefresh()
+    this.scheduleStatePolling()
   }
 
   disconnect() {
     if (this.subscription) {
       this.subscription.unsubscribe()
+    }
+    if (this.startRefreshTimer) {
+      clearTimeout(this.startRefreshTimer)
+    }
+    if (this.statePollTimer) {
+      clearInterval(this.statePollTimer)
     }
   }
 
@@ -77,7 +92,7 @@ export default class extends Controller {
         this.updateAP(data)
         break
       case "match_result":
-        this.showResult(data)
+        this.refreshAuthoritativePage()
         break
       case "system_message":
         this.appendSystemMessage(data)
@@ -100,6 +115,9 @@ export default class extends Controller {
         break
       case "action_result":
         this.handleActionResult(data)
+        break
+      case "state_refresh":
+        this.refreshAuthoritativePage()
         break
     }
   }
@@ -167,7 +185,7 @@ export default class extends Controller {
     })
 
     if (data.claim_available) {
-      this.disableTurnComposer()
+      this.refreshAuthoritativePage()
     }
   }
 
@@ -177,19 +195,12 @@ export default class extends Controller {
       message: data.message || "Timeout controls are available.",
       severity: "warning"
     })
-    this.disableTurnComposer()
+    this.refreshAuthoritativePage()
   }
 
   handleActionResult(data) {
     if (data.success) {
-      if (data.data?.waiting) {
-        this.disableTurnComposer()
-        this.appendSystemMessage({
-          timestamp: new Date().toLocaleTimeString(),
-          message: "Waiting for opponent turn",
-          severity: "info"
-        })
-      }
+      this.refreshAuthoritativePage()
       return
     }
 
@@ -271,6 +282,8 @@ export default class extends Controller {
     if (hpText) {
       hpText.textContent = `${data.current_hp}/${data.max_hp}`
     }
+    participant.dataset.currentHp = data.current_hp
+    participant.dataset.maxHp = data.max_hp
 
     const hpPercent = participant.querySelector(".fighter-hp-percent")
     if (hpPercent) {
@@ -281,7 +294,12 @@ export default class extends Controller {
     if (data.is_dead) {
       participant.classList.add("arena-participant--dead")
       participant.classList.add("fighter-card--defeated")
+    } else {
+      participant.classList.remove("arena-participant--dead")
+      participant.classList.remove("fighter-card--defeated")
     }
+
+    this.syncSelectedTarget()
   }
 
   updateNpcHP(data) {
@@ -298,6 +316,11 @@ export default class extends Controller {
   }
 
   updateMatchState(data) {
+    if (this.authoritativeStateChanged(data)) {
+      this.refreshAuthoritativePage()
+      return
+    }
+
     if (data.current_user_combat) {
       const combat = data.current_user_combat
       const maxAP = combat.max_ap || this.apLimitValue
@@ -348,10 +371,8 @@ export default class extends Controller {
     // Disable buttons if not enough AP
     this.updateButtonsForAP(data.current_ap)
 
-    if (data.current_ap >= data.max_ap) {
-      this.enableTurnComposer()
-      this.resetTurn()
-    }
+    // A full-AP snapshot can arrive while the player is composing this same
+    // round. Only Reset or an authoritative round change clears that draft.
   }
 
   updateButtonsForAP(currentAP) {
@@ -377,15 +398,24 @@ export default class extends Controller {
 
     this.enforceSingleBlock(event?.currentTarget)
     this.enforceHeadLegAttackRule(event?.currentTarget)
-    const cost = this.selectedAttackCost() + this.selectedAttackPenalty() + this.selectedBlockCost() + this.selectedMagicCost()
+    const cost = this.selectedTurnCost()
+    const penalty = this.selectedAttackPenalty()
     const apLimit = this.apLimitValue || 80
     this.turnCostValueTarget.textContent = cost
     this.turnCostValueTarget.classList.toggle("arena-turn-cost--invalid", cost > apLimit)
 
-    const submitButton = this.element.querySelector(".btn-attack--submit")
-    if (submitButton) {
-      submitButton.disabled = cost > apLimit || !this.selectedTurnValid()
+    if (this.hasTurnPenaltyTarget) {
+      this.turnPenaltyTarget.textContent = `[ Penalty: ${penalty} ]`
+      this.turnPenaltyTarget.hidden = penalty <= 0
     }
+
+    if (this.hasTurnOverBudgetTarget) {
+      this.turnOverBudgetTarget.hidden = cost <= apLimit
+    }
+  }
+
+  selectedTurnCost() {
+    return this.selectedAttackCost() + this.selectedAttackPenalty() + this.selectedBlockCost() + this.selectedMagicCost()
   }
 
   selectedAttackCost() {
@@ -428,8 +458,7 @@ export default class extends Controller {
   }
 
   selectedTurnValid() {
-    const attackOptions = this.selectedAttackOptions()
-    const attackCount = attackOptions.length
+    const attackCount = this.selectedAttackOptions().length
     const blockCount = this.selectedBlockCount()
     const magicCount = this.selectedMagicCount()
 
@@ -437,10 +466,8 @@ export default class extends Controller {
     if (attackCount > 0 && blockCount > 0) return true
     if (attackCount > 0 && magicCount > 0) return true
     if (blockCount > 0 && magicCount > 0) return true
-    if (magicCount > 0 && attackCount === 0 && blockCount === 0) return true
 
-    return attackCount === 1 && blockCount === 0 && magicCount === 0 &&
-      Number.parseInt(attackOptions[0]?.dataset.manaCost || "0", 10) > 0
+    return false
   }
 
   selectedBlockCount() {
@@ -458,19 +485,12 @@ export default class extends Controller {
   enforceSingleBlock(changedSelect = null) {
     if (!this.hasBlockSelectTarget) return
 
-    if (changedSelect && changedSelect.dataset.arenaMatchTarget === "blockSelect" && changedSelect.value !== "none") {
-      this.blockSelectTargets.forEach(select => {
-        if (select !== changedSelect) select.value = "none"
-      })
-      return
-    }
-
-    const activeBlocks = this.blockSelectTargets.filter(select => select.value && select.value !== "none")
-    if (activeBlocks.length <= 1) return
-
-    const lastChanged = activeBlocks[activeBlocks.length - 1]
+    const changedBlock = changedSelect?.dataset.arenaMatchTarget === "blockSelect" ? changedSelect : null
+    const activeBlock = changedBlock?.value && changedBlock.value !== "none"
+      ? changedBlock
+      : this.blockSelectTargets.find(select => select.value && select.value !== "none")
     this.blockSelectTargets.forEach(select => {
-      if (select !== lastChanged) select.value = "none"
+      select.disabled = Boolean(activeBlock && select !== activeBlock)
     })
   }
 
@@ -497,23 +517,64 @@ export default class extends Controller {
     headSelect.disabled = legsSelect.value && legsSelect.value !== "none"
   }
 
-  handleMatchStart(data) {
-    // Enable action buttons
-    if (this.hasActionButtonsTarget && !this.readOnlyValue) {
-      this.actionButtonsTarget.querySelectorAll("button").forEach(btn => {
-        btn.disabled = false
+  handleMatchStart() {
+    this.refreshAuthoritativePage()
+  }
+
+  schedulePendingStartRefresh() {
+    if (this.statusValue !== "pending" || !this.hasStartsAtValue) return
+
+    const startsAt = Date.parse(this.startsAtValue)
+    if (Number.isNaN(startsAt)) return
+
+    const delay = Math.max(startsAt - Date.now(), 0) + 250
+    this.startRefreshTimer = setTimeout(() => this.refreshAuthoritativePage(), delay)
+  }
+
+  scheduleStatePolling() {
+    if (!["pending", "live"].includes(this.statusValue)) return
+
+    this.statePollTimer = setInterval(() => this.pollAuthoritativeState(), 3000)
+  }
+
+  async pollAuthoritativeState() {
+    if (this.pollPending || this.refreshPending) return
+
+    this.pollPending = true
+    try {
+      const response = await fetch(`/arena_matches/${this.matchIdValue}.json`, {
+        credentials: "same-origin",
+        headers: { Accept: "application/json" }
       })
+      if (!response.ok) return
+
+      const data = await response.json()
+      if (this.authoritativeStateChanged(data)) {
+        this.refreshAuthoritativePage()
+      }
+    } catch {
+      // Action Cable remains the primary live path; polling is recovery only.
+    } finally {
+      this.pollPending = false
     }
+  }
 
-    // Show participants
-    this.renderParticipants(data.participants)
+  authoritativeStateChanged(data) {
+    const serverTurnNumber = Number(data.current_turn_number || 0)
+    return data.status !== this.statusValue ||
+      serverTurnNumber !== this.turnNumberValue ||
+      Boolean(data.current_user_waiting) !== this.waitingValue
+  }
 
-    // Log match start
-    this.appendSystemMessage({
-      timestamp: new Date().toLocaleTimeString(),
-      message: "Fight started",
-      severity: "info"
-    })
+  refreshAuthoritativePage() {
+    if (this.refreshPending) return
+
+    this.refreshPending = true
+    if (window.Turbo?.visit) {
+      window.Turbo.visit(window.location.href, { action: "replace" })
+    } else {
+      window.location.reload()
+    }
   }
 
   renderParticipants(participants) {
@@ -625,10 +686,12 @@ export default class extends Controller {
   // === COMBAT ACTIONS ===
 
   submitTurn(event) {
-    if (this.readOnlyValue) return
+    if (this.readOnlyValue || !this.selectedTurnValid() || this.selectedTurnCost() > (this.apLimitValue || 80)) {
+      event.preventDefault()
+      return
+    }
 
-    const btn = event.currentTarget
-    const targetId = this.getFirstEnemyId()
+    const targetId = this.getSelectedEnemyId()
 
     let attacks = []
     if (this.hasAttackSelectTarget) {
@@ -659,19 +722,50 @@ export default class extends Controller {
 
     const data = {
       action_type: "turn",
+      turn_number: this.turnNumberValue,
       target_id: targetId,
       attacks: attacks,
       blocks: blocks,
       skills: skills
     }
 
-    this.subscription.perform("submit_action", data)
+    if (!this.hasTurnFormTarget || !this.hasTurnFieldsTarget) return
 
-    btn.disabled = true
-    setTimeout(() => {
-      btn.disabled = false
-      this.updateTurnCost()
-    }, 1000)
+    this.populateTurnForm(data)
+  }
+
+  populateTurnForm(data) {
+    this.turnFieldsTarget.replaceChildren()
+    this.appendTurnField("action_type", data.action_type)
+    this.appendTurnField("turn_number", data.turn_number)
+    this.appendTurnField("target_id", data.target_id)
+
+    data.attacks.forEach((attack, index) => {
+      this.appendTurnField(`attacks[${index}][action_key]`, attack.action_key)
+      this.appendTurnField(`attacks[${index}][body_part]`, attack.body_part)
+    })
+
+    data.blocks.forEach((block, index) => {
+      this.appendTurnField(`blocks[${index}][action_key]`, block.action_key)
+      block.body_parts.forEach((bodyPart, bodyPartIndex) => {
+        this.appendTurnField(`blocks[${index}][body_parts][${bodyPartIndex}]`, bodyPart)
+      })
+    })
+
+    data.skills.forEach((skill, index) => {
+      this.appendTurnField(`skills[${index}][key]`, skill.key)
+      this.appendTurnField(`skills[${index}][target_id]`, skill.target_id)
+    })
+  }
+
+  appendTurnField(name, value) {
+    if (value === null || value === undefined) return
+
+    const input = document.createElement("input")
+    input.type = "hidden"
+    input.name = name
+    input.value = value
+    this.turnFieldsTarget.appendChild(input)
   }
 
   toggleMagicSlot(event) {
@@ -687,23 +781,17 @@ export default class extends Controller {
       .filter(slot => slot.classList.contains("nl-fight-magic-slot--active"))
       .map(slot => ({
         key: slot.dataset.skillKey,
-        target_id: this.getFirstEnemyId()
+        target_id: this.getSelectedEnemyId()
       }))
   }
 
   resetTurn() {
     if (this.hasAttackSelectTarget) {
-      this.attackSelectTargets.forEach(select => {
-        const defaultValue = select.dataset.bodyPart === "torso" ? "simple" : "none"
-        select.value = defaultValue
-      })
+      this.attackSelectTargets.forEach(select => { select.value = "none" })
     }
 
     if (this.hasBlockSelectTarget) {
-      this.blockSelectTargets.forEach(select => {
-        const defaultValue = select.dataset.bodyPart === "torso" ? "torso_block" : "none"
-        select.value = defaultValue
-      })
+      this.blockSelectTargets.forEach(select => { select.value = "none" })
     }
 
     if (this.hasMagicSlotTarget) {
@@ -730,17 +818,62 @@ export default class extends Controller {
     this.updateTurnCost()
   }
 
-  getFirstEnemyId() {
-    const fighters = this.element.querySelectorAll(".fighter-card:not(.fighter-card--defeated), .arena-participant:not(.arena-participant--dead)")
-    const enemy = Array.from(fighters).find(p =>
-      p.dataset.characterId &&
-      p.dataset.currentUser !== "true" &&
-      (!this.hasUserTeamValue || p.dataset.team !== this.userTeamValue)
+  switchOpponent(event) {
+    event?.preventDefault()
+    const enemies = this.livingEnemyCards()
+    if (enemies.length < 2) return
+
+    const currentIndex = enemies.findIndex(card =>
+      card.dataset.characterId === this.selectedTargetIdValue
     )
+    const nextIndex = currentIndex >= 0 ? (currentIndex + 1) % enemies.length : 0
+    this.selectTargetCard(enemies[nextIndex])
+  }
 
-    if (enemy) return enemy.dataset.characterId
+  getSelectedEnemyId() {
+    const selected = this.syncSelectedTarget()
+    return selected?.dataset.characterId || null
+  }
 
-    return null
+  syncSelectedTarget() {
+    const enemies = this.livingEnemyCards()
+    const selected = enemies.find(card =>
+      card.dataset.characterId === this.selectedTargetIdValue
+    ) || enemies[0]
+
+    this.element.querySelectorAll(".fighter-card--selected-target").forEach(card => {
+      card.classList.remove("fighter-card--selected-target")
+    })
+
+    if (selected) this.selectTargetCard(selected)
+    return selected
+  }
+
+  selectTargetCard(card) {
+    if (!card) return
+
+    this.element.querySelectorAll(".fighter-card").forEach(candidate => {
+      candidate.classList.toggle("fighter-card--selected-target", candidate === card)
+    })
+    this.selectedTargetIdValue = card.dataset.characterId
+
+    if (this.hasTargetNameTarget) {
+      this.targetNameTarget.textContent = card.dataset.characterName
+    }
+    if (this.hasTargetVitalsTarget) {
+      this.targetVitalsTarget.textContent = `[${card.dataset.currentHp}/${card.dataset.maxHp}]`
+    }
+  }
+
+  livingEnemyCards() {
+    if (!this.hasUserTeamValue) return []
+
+    return Array.from(this.element.querySelectorAll(".fighter-card")).filter(card =>
+      card.dataset.characterId &&
+      card.dataset.team !== this.userTeamValue &&
+      Number(card.dataset.currentHp || 0) > 0 &&
+      !card.classList.contains("fighter-card--defeated")
+    )
   }
 
   isOwnTeam(team) {

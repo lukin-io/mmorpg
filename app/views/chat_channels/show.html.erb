@@ -3,8 +3,10 @@
 <% content_for :hide_shell_chat_history, true %>
 
 <%# Subscribe to real-time updates via ActionCable/Turbo Streams %>
-<%= turbo_stream_from @chat_channel %>
-<% if @chat_channel.global? %>
+<% unless @chat_channel.local? || @chat_channel.global? %>
+  <%= turbo_stream_from @chat_channel %>
+<% end %>
+<% if @chat_channel.global? || @chat_channel.local? %>
   <%= turbo_stream_from Chat::TimelineBroadcaster::GLOBAL_STREAM %>
   <%= turbo_stream_from Chat::TimelineBroadcaster::PERSONAL_STREAM, current_user %>
 <% end %>
@@ -12,6 +14,11 @@
 <section class="chat-channel-page"
          data-controller="chat"
          data-chat-auto-scroll-value="true"
+         <% if @chat_channel.local? %>
+           data-chat-poll-url-value="<%= local_chat_path(poll: 1) %>"
+           data-chat-session-key-value="<%= @chat_session_key %>"
+           data-chat-context-key-value="<%= @chat_context.key %>"
+         <% end %>
          data-chat-current-user-value="<%= current_user.profile_name %>">
   <div class="chat-header">
     <div class="chat-header-info">
@@ -43,9 +50,11 @@
     </button>
 
     <%# Message input form %>
-    <div id="<%= dom_id(@chat_channel, :form) %>" class="chat-input-area">
-      <%= render "chat_messages/form", chat_channel: @chat_channel, chat_message: @chat_message %>
-    </div>
+    <% if ChatMessagePolicy.new(current_user, @chat_channel).create? %>
+      <div id="<%= dom_id(@chat_channel, :form) %>" class="chat-input-area">
+        <%= render "chat_messages/form", chat_channel: @chat_channel, chat_message: @chat_message %>
+      </div>
+    <% end %>
   </div>
 
   <div class="user-menu" data-chat-target="userMenu"></div>

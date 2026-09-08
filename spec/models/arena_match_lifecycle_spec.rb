@@ -3,6 +3,8 @@
 require "rails_helper"
 
 RSpec.describe ArenaMatch, "Lifecycle and Status Transitions" do
+  include ActiveSupport::Testing::TimeHelpers
+
   let(:user1) { create(:user) }
   let(:user2) { create(:user) }
   let(:character1) { create(:character, user: user1, level: 10, current_hp: 100, max_hp: 100) }
@@ -101,6 +103,44 @@ RSpec.describe ArenaMatch, "Lifecycle and Status Transitions" do
     end
   end
 
+  describe "scheduled start" do
+    it "is due at the persisted countdown boundary" do
+      travel_to(Time.zone.parse("2026-08-26 12:00:00")) do
+        match = build(:arena_match, :countdown, arena_room: arena_room)
+        scheduled_start_at = match.scheduled_start_at
+
+        expect(match.start_due?(now: scheduled_start_at - 0.001.seconds)).to be false
+        expect(match.start_due?(now: scheduled_start_at)).to be true
+      end
+    end
+
+    it "fails closed for absent or malformed countdown state" do
+      absent = build(:arena_match, :pending, arena_room: arena_room, metadata: {})
+      malformed = build(
+        :arena_match,
+        :pending,
+        arena_room: arena_room,
+        metadata: {"starts_at" => "not-a-time"}
+      )
+
+      expect(absent.scheduled_start_at).to be_nil
+      expect(absent.start_due?).to be false
+      expect(malformed.scheduled_start_at).to be_nil
+      expect(malformed.start_due?).to be false
+    end
+
+    it "does not restart a live match even when its persisted countdown is past" do
+      match = build(
+        :arena_match,
+        :live,
+        arena_room: arena_room,
+        metadata: {"starts_at" => 1.minute.ago.iso8601}
+      )
+
+      expect(match.start_due?).to be false
+    end
+  end
+
   describe "#team_participants" do
     it "returns participants for team a" do
       team_a = arena_match.team_participants("a")
@@ -153,6 +193,10 @@ RSpec.describe ArenaMatch, "Lifecycle and Status Transitions" do
         fight_kind: :free,
         timeout_seconds: 180,
         trauma_percent: 30)
+    end
+
+    before do
+      arena_match.update!(status: :completed, ended_at: Time.current)
     end
 
     it "creates a match in pending status" do

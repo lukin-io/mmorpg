@@ -1,0 +1,36 @@
+<% content_for :title, @active_airship_journey.route_label %>
+<div class="nl-airship-page"
+     data-controller="nl-airship"
+     data-nl-airship-snapshot-url-value="<%= airship_path(format: :json) %>"
+     data-nl-airship-phase-value="<%= @airship_state.phase %>"
+     data-nl-airship-deadline-value="<%= @airship_state.deadline&.iso8601(6) %>"
+     data-nl-airship-server-now-value="<%= @airship_server_now.iso8601(6) %>"
+     data-nl-airship-center-x-value="<%= @airship_state.map.center_x %>"
+     data-nl-airship-center-y-value="<%= @airship_state.map.center_y %>"
+     data-nl-airship-velocity-x-value="<%= @airship_state.map.velocity_x %>"
+     data-nl-airship-motion-ends-at-value="<%= @airship_state.map.motion_ends_at&.iso8601(6) %>"
+     data-nl-airship-velocity-y-value="<%= @airship_state.map.velocity_y %>">
+  <h1 class="nl-visually-hidden"><%= @active_airship_journey.route_label %></h1>
+  <div class="nl-airship-pan" data-nl-airship-target="pan">
+    <div class="nl-airship-viewport" role="img" aria-label="<%= @active_airship_journey.route_label %> airship map">
+      <div class="nl-airship-terrain" data-nl-airship-target="terrain" aria-hidden="true" style="<%= airship_terrain_style(@airship_state.map) %>">
+        <%= render "airships/map", map: @airship_state.map %>
+      </div>
+      <div class="nl-airship-marker">
+        <%= image_tag "airship.svg", alt: "Airship", width: 100, height: 100 %>
+        <% if @airship_state.deadline %>
+          <output class="nl-airship-timer" data-nl-airship-target="timer" aria-label="Time remaining"><%= airship_timer(@airship_state.remaining_seconds) %></output>
+        <% end %>
+      </div>
+    </div>
+  </div>
+  <% if @airship_state.can_disembark %>
+    <div class="nl-airship-actions">
+      <%= button_to "Disembark from the airship", disembark_airship_path,
+          method: :post,
+          params: {journey_id: @active_airship_journey.id},
+          class: "lbut",
+          form: {data: {turbo_frame: "_top", turbo_confirm: (@airship_state.confirm_disembark ? "You will disembark at the boarding point. Your ticket will not be refunded. Are you sure?" : nil)}} %>
+    </div>
+  <% end %>
+</div>

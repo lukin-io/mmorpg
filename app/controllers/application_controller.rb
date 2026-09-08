@@ -3,10 +3,12 @@
 class ApplicationController < ActionController::Base
   include CurrentCharacterContext
   include ArenaEntryGate
+  include AirshipContext
   include Pundit::Authorization
 
   before_action :authenticate_user!
   before_action :ensure_device_identifier
+  around_action :with_airship_context
   before_action :prepare_game_shell_context, if: :game_shell_context_request?
 
   layout :resolved_layout
@@ -41,6 +43,7 @@ class ApplicationController < ActionController::Base
   end
 
   def prepare_game_shell_context
+    record_current_session_activity
     @global_chat_channel_id ||= ChatChannel.global.pick(:id)
     @total_online ||= UserSession.recent.distinct.count(:user_id)
 
@@ -48,22 +51,16 @@ class ApplicationController < ActionController::Base
     return unless character
 
     @position ||= character.position
-    @players_here ||= if @position
-      Character
-        .joins(:position)
-        .where(character_positions: {
-          zone_id: @position.zone_id,
-          x: @position.x,
-          y: @position.y,
-          state: CharacterPosition.states.fetch("active")
-        })
-        .where.not(id: character.id)
-        .order(name: :asc)
-        .limit(10)
-        .to_a
-    else
-      []
-    end
+    prepare_presence_context unless controller_name.in?(%w[world world_locations shop city_buildings airships])
+  end
+
+  def prepare_presence_context(sort: "az")
+    record_current_session_activity
+    presence = Game::World::Presence.new(character: current_character, position: @position, sort:).call
+    @players_here = presence.players
+    @presence_location_label = presence.label
+    @presence_player_count = presence.count
+    @total_online = UserSession.recent.distinct.count(:user_id)
   end
 
   def ensure_device_identifier
@@ -72,6 +69,30 @@ class ApplicationController < ActionController::Base
 
   def current_device_id
     @current_device_id ||= Auth::DeviceIdentifier.resolve(request)
+  end
+
+  def current_user_session
+    current_user&.user_sessions&.find_by(device_id: current_device_id)
+  end
+
+  def record_current_session_activity
+    return if @session_activity_recorded
+
+    @session_activity_recorded = true
+    current_user_session&.mark_seen!
+  end
+
+  def prepare_local_chat_context
+    record_current_session_activity
+    @chat_session = current_user_session
+    unless @chat_session && @chat_session.signed_out_at.nil?
+      raise Pundit::NotAuthorizedError, "Active login required"
+    end
+
+    @chat_context = Chat::LocalContext.new(character: current_character).synchronize!
+    raise Pundit::NotAuthorizedError, "Current location required" unless @chat_context
+
+    @chat_session_key = "#{current_user.id}:#{@chat_session.id}:#{@chat_session.signed_in_at.iso8601(6)}"
   end
 
   def user_not_authorized

@@ -3,6 +3,8 @@
 require "rails_helper"
 
 RSpec.describe ArenaTurnTimeoutJob do
+  include ActiveJob::TestHelper
+
   let(:arena_room) do
     create(:arena_room, name: "Test Arena", level_min: 1, level_max: 100, active: true)
   end
@@ -70,11 +72,15 @@ RSpec.describe ArenaTurnTimeoutJob do
           described_class.new.perform(match_id: arena_match.id)
         end
 
-        it "schedules next timeout check" do
-          # Use ActiveJob test helper
-          described_class.new.perform(match_id: arena_match.id)
-          # The next check is scheduled via match.schedule_timeout_check
-          # Just verify the job can run without error
+        it "schedules exactly one next timeout and one warning" do
+          expect do
+            described_class.new.perform(match_id: arena_match.id)
+          end.to have_enqueued_job(described_class)
+            .with(match_id: arena_match.id)
+            .exactly(:once)
+            .and have_enqueued_job(ArenaTurnTimeoutWarningJob)
+            .with(match_id: arena_match.id, seconds_remaining: 30)
+            .exactly(:once)
         end
 
         it "keeps the round waiting when one player has a pending turn" do
@@ -94,6 +100,25 @@ RSpec.describe ArenaTurnTimeoutJob do
             described_class.new.perform(match_id: arena_match.id)
           }.not_to change { arena_match.reload.current_turn_number }
           expect(arena_match.metadata["timeout_claim_available"]).to be true
+        end
+      end
+
+      context "when a wilderness fight reaches its displayed fight deadline" do
+        before do
+          arena_match.update!(
+            started_at: 5.minutes.ago,
+            current_turn_started_at: 1.minute.ago,
+            metadata: {"source" => "world_npc", "fight_timeout_seconds" => 300}
+          )
+        end
+
+        it "ends the fight once instead of extending it with another turn" do
+          expect {
+            described_class.new.perform(match_id: arena_match.id)
+          }.not_to change { arena_match.reload.current_turn_number }
+
+          expect(arena_match).to be_completed
+          expect(arena_match).to be_timed_out
         end
       end
 

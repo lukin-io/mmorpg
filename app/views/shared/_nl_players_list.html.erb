@@ -1,16 +1,18 @@
 <%# Players list for the floating panel %>
 <% players = @players_here || [] %>
-<% players.each do |player| %>
-  <div class="nl-player-entry">
-    <span class="nl-player-arrow">&gt;</span>
-    <% if player.respond_to?(:alignment) && player.alignment.present? %>
-      <span class="nl-player-icon nl-alignment-<%= player.alignment.downcase %>">X</span>
-    <% else %>
-      <span class="nl-player-icon">&gt;</span>
-    <% end %>
-    <a href="<%= player_path(name: player.name) %>" class="nl-player-name-link"><%= player.name %></a><span class="nl-player-lvl">[<%= player.level %>]</span><span class="nl-player-status">g</span>
-  </div>
-<% end %>
-<% if players.empty? %>
-  <div class="nl-no-players">No players nearby</div>
-<% end %>
+<div data-player-list-count="<%= @presence_player_count || players.size %>" data-player-list-location="<%= @presence_location_label || @position&.zone&.name || 'Unknown' %>" data-player-list-total="<%= @total_online.to_i %>">
+  <% players.each do |player| %>
+    <div class="nl-player-entry">
+      <span class="nl-player-arrow">&gt;</span>
+      <% if player.respond_to?(:alignment) && player.alignment.present? %>
+        <span class="nl-player-icon nl-alignment-<%= player.alignment.downcase %>">X</span>
+      <% else %>
+        <span class="nl-player-icon">&gt;</span>
+      <% end %>
+      <a href="<%= player_path(name: player.name) %>" class="nl-player-name-link"><%= player.name %></a><span class="nl-player-lvl">[<%= player.level %>]</span><span class="nl-player-status">g</span>
+    </div>
+  <% end %>
+  <% if players.empty? %>
+    <div class="nl-no-players">No players nearby</div>
+  <% end %>
+</div>

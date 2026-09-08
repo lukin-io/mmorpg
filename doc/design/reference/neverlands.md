@@ -17,7 +17,7 @@ presence, turn combat, inventory weight, shops, and social chat.
 | Observation Area | Design Use |
 | --- | --- |
 | Wilderness movement capture | Movement timing, map state, available destination model |
-| City movement capture | Complete nine-node city graph, three gate/cell mappings, immediate district navigation, building availability, shop/service entry, and building return flow |
+| City movement capture | Current five-district city graph, verified Forpost left-gate pairing, immediate district navigation, and building entry/return; older city geometry is historical |
 | Game shell/UI capture | Login shell, persistent frame contract, top context buttons, city hotspots, shop tabs, arena rows, chat/presence controls, quest modal shape |
 | Player profile capture | Player shell, vitals strip, equipment slots, trainable `Умения`, boolean `Навыки` |
 | Inventory/items/shop-row capture | Full inventory item rows, family-specific inventory renderers, filter categories, equip/unequip stat deltas, equipment sets, direct item social actions, item requirement visibility, shop buy availability, and observed sell-price behavior |
@@ -25,6 +25,7 @@ presence, turn combat, inventory weight, shops, and social chat.
 | Public fight log captures | `logs.fcg?fid=<id>` pages, JavaScript log arrays, shared participant renderer, paginated public logs, aggregate statistics view |
 | Outdoor NPC/resource capture | Outdoor `Оглядеться` resource search, bot ambush handoff, multi-NPC rat fights, per-NPC loot checks, outdoor return routing |
 | Chat, presence, and mixed event-timeline reference | Chat frame, player list, message styles, username actions, personal fight/item/NV system rows, and game-wide announcement rows |
+| September 7 Forpost and local-audience follow-up | Gate/intermediate/village route, empty Look with 28-second lock, frame-fitted map geometry, and ordinary chat confined to one cell or room, including village/Shop/Arena rooms |
 | Skill and perk reference | Stat allocation, numeric skills, boolean perks, effects |
 | Character-development wiki category | Level-0 starter state, complete level rows `0..27`, XP/fight caps, HP/MP/mass formulas, fatigue thresholds, critical damage, equipment-wear probabilities, profession taxonomy, and explicit formula gaps |
 | Neverlands wiki dungeon page | Dungeon floor objectives, movement resource, hidden rooms, bosses/chests, portal seals, timers, ratings |
@@ -48,6 +49,10 @@ differ, prefer the current wiki.
   persistent game shell with replaceable main content, one persistent mixed
   chat/game-event history, persistent local presence, and context-sensitive
   server-offered buttons.
+- Ordinary messages are addressed to the current cell or room. Already-rendered
+  history surviving navigation does not prove catch-up delivery for an earlier
+  visit or durable ordinary history across logins. See the September 7
+  observation indexed by `doc/design/reference/social/README.md`.
 - Personal fight/item/NV results and game-wide notices share that chat history;
   they are not a separate notification center. Gameplay records remain the
   underlying authority for concise event feedback.
@@ -62,7 +67,9 @@ differ, prefer the current wiki.
   arena NPC fights. Local actions can be interrupted by bot ambushes.
 - Public player info can show a current fight/log link while keeping the
   character's city and sublocation visible.
-- Shops are entered through city buildings, then render category/item lists.
+- Shops are entered through source-backed city buildings or the observed
+  village Shop hotspot, then render category/item lists and return to that
+  parent location.
 - A single city can expose multiple gates, with each outside coordinate entering
   the matching city node rather than a universal spawn.
 - City artwork can show unavailable services without an actionable hotspot;

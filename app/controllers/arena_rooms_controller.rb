@@ -4,16 +4,11 @@
 class ArenaRoomsController < ApplicationController
   before_action :authenticate_user!
   before_action :require_character
-  before_action :require_city_arena_entry!
+  around_action :with_city_arena_entry
   before_action :set_room, only: :show
 
   # GET /arena_rooms/:id
   def show
-    unless @room.accessible_by?(current_character)
-      redirect_to arena_index_path, alert: "This arena room is unavailable."
-      return
-    end
-
     # Check if user is already in an active match - redirect them there
     active_participation = current_character.arena_participations
       .joins(:arena_match)
@@ -23,6 +18,12 @@ class ArenaRoomsController < ApplicationController
     if active_participation
       redirect_to arena_match_path(active_participation.arena_match),
         notice: "You already have an active fight."
+      return
+    end
+
+    context = Game::World::ResumeContext.new(character: current_character)
+    unless context.arena_room_available?(room: @room)
+      redirect_to arena_index_path, alert: "This arena room is unavailable."
       return
     end
 
@@ -36,7 +37,13 @@ class ArenaRoomsController < ApplicationController
     @active_matches = @room.arena_matches.active.includes(:arena_participations)
 
     respond_to do |format|
-      format.html
+      format.html do
+        unless context.remember_arena_room!(room: @room)
+          redirect_to arena_index_path, alert: "This arena room is unavailable."
+          next
+        end
+        prepare_presence_context
+      end
       format.json { render json: room_payload }
     end
   end
@@ -54,7 +61,7 @@ class ArenaRoomsController < ApplicationController
   end
 
   def current_character
-    @current_character ||= current_user.characters.first
+    @current_character ||= current_user.character
   end
   helper_method :current_character
 

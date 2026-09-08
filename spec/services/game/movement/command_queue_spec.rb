@@ -59,5 +59,40 @@ RSpec.describe Game::Movement::CommandQueue do
       expect(command.reload).to be_completed
       expect(character.reload.position.x).to eq(1)
     end
+
+    it "keeps accepted travel intact when another worker retries a stale offered instance" do
+      command = queue.enqueue(direction: :east)
+      stale_command = MovementCommand.find(command.id)
+      queue.process(command.id)
+      accepted_timing = command.reload.attributes.slice("started_at", "ends_at", "metadata")
+
+      result = queue.process(stale_command)
+
+      expect(result).to be_moving
+      expect(command.reload.attributes.slice("started_at", "ends_at", "metadata")).to eq(accepted_timing)
+      expect(character.reload.position.x).to eq(0)
+    end
+
+    it "does not turn a cancelled offer into a failure on a delayed retry" do
+      command = queue.enqueue(direction: :east)
+      command.update!(status: :cancelled)
+
+      expect(queue.process(command.id)).to be_cancelled
+      expect(command.reload.failed_at).to be_nil
+    end
+
+    it "rolls back processing when an unexpected failure leaves the job retryable" do
+      command = queue.enqueue(direction: :east)
+      allow_any_instance_of(Game::Movement::AcceptMove).to receive(:call).and_wrap_original do |original|
+        original.call
+        raise "temporary failure"
+      end
+
+      expect { queue.process(command.id) }.to raise_error(RuntimeError, "temporary failure")
+
+      expect(command.reload).to be_offered
+      expect(command.started_at).to be_nil
+      expect(character.reload.position.x).to eq(0)
+    end
   end
 end

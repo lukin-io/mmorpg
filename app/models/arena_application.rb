@@ -64,7 +64,11 @@ class ArenaApplication < ApplicationRecord
 
   scope :open, -> { where(status: :open) }
   scope :matched, -> { where(status: :matched) }
-  scope :active, -> { where(status: [:open, :matched]) }
+  scope :active, -> {
+    where(status: :open).or(
+      where(status: :matched, arena_match_id: ArenaMatch.active.select(:id))
+    )
+  }
   scope :expired_and_unprocessed, -> { open.where("expires_at < ?", Time.current) }
   scope :from_players, -> { where.not(applicant_id: nil) }
   scope :from_npcs, -> { where.not(npc_template_id: nil) }

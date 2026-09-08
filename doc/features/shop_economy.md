@@ -3,14 +3,14 @@
 title: Shop and Economy Feature
 description: Implementation handbook for the Neverlands-based city shop, NV wallet, catalog buying, inventory selling, and transaction ledger.
 status: Partially Implemented
-updated: 2026-08-23
+updated: 2026-09-08
 owners: Shop and Economy
 template: feature-v1
 ---
 
 # Shop and Economy
 
-This document is the implementation contract for the current Shop and Economy feature. It explains city-shop access, catalog modes and filters, NV payments, stock and inventory mutations, resale pricing, login resume, UI ownership, security, concurrency, and test coverage.
+This document is the implementation contract for the current Shop and Economy feature. It explains City and linked-village Shop access, catalog modes and filters, NV payments, stock and inventory mutations, resale pricing, login resume, UI ownership, security, concurrency, and test coverage.
 
 It describes what exists now. It does not treat every captured Neverlands city counter, license rule, novice service, or generic marketplace mechanic as shipped behavior.
 
@@ -33,6 +33,7 @@ Supporting documents:
 - `doc/design/reference/inventory/observations/2026-06-01_inventory_items_and_shop_rows.md` records source inventory and item presentation used by selling and capacity feedback.
 - `doc/design/reference/city/observations/2026-07-28_city_movement_and_services.md` records how the city exposes building entry and exit.
 - `doc/design/reference/shell/observations/2026-07-28_game_shell_and_mvp_surfaces.md` records the compact surrounding interface.
+- `doc/design/reference/world/observations/2026-09-07_forpost_grid_and_action_audit.md` records village Shop entry, its separate presence label, and return to the village square.
 - `doc/design/reference/social/observations/2026-08-23_chat_game_event_timeline.md` records the supplied Neverlands item and `24 NV` search-result rows; the row proves the result form but not a production NPC identity or probability.
 - `doc/design/features/economy_trading_shops.md` defines the local economy and shop boundary.
 - `doc/design/areas/cities_and_buildings.md` owns the authored building topology.
@@ -45,6 +46,14 @@ Supporting documents:
 - `doc/features/arena_combat.md` owns NPC loot eligibility and resolution before an NV wallet credit.
 
 ### 1.1 Cross-feature relationships
+
+Airship boarding uses the same NV wallet and immutable adjustment ledger.
+`doc/features/airship_travel.md` owns route/offer validation, journey creation,
+the surrounding transaction, and retry protection. Its `airship_boarding`
+debit references the journey, route, and boarding offer; predeparture
+disembarkation does not refund the fare. While aboard, direct Shop access is
+unavailable even when the flight passes over a Shop's ground cell. No Shop
+stock or inventory ticket item is introduced by this handoff.
 
 | Related feature | Relationship | Ownership and handoff |
 |---|---|---|
@@ -71,7 +80,7 @@ The implemented catalog includes Buy, Licenses, Sell, and Novice modes plus seve
 
 The MVP currently contains:
 
-- city-building-gated shop access and safe login resume;
+- City or exact-cell linked-village Shop access and safe login resume;
 - source-shaped modes, categories, numeric filters, and dense item tables;
 - transactional buy and sell operations with wallet, inventory, capacity, durability, and stock handling;
 - one non-negative decimal NV wallet per user and an immutable adjustment ledger
@@ -102,7 +111,7 @@ The MVP currently contains:
 
 ### 4.1 Entry conditions
 
-The player enters through an active, level-accessible Shop hotspot in their current city node. `GET /shop` rechecks that current city context; direct access from the outdoor world, another building, or an unavailable hotspot redirects to World with an alert.
+The player enters through an active, level-accessible Shop hotspot in their current city node or an authored Shop feature in the linked village at their exact outdoor cell. `GET /shop` rechecks that context; direct access from an ordinary outdoor cell or an unavailable hotspot redirects to World with an alert.
 
 An inventory and wallet are created with safe defaults if the current character/user does not yet have them. Authentication and an active playable character are required before shop state is loaded or remembered.
 
@@ -123,6 +132,22 @@ Buying checks a positive-priced template, availability, limited stock, NV balanc
 ### 4.4 Exit and integration behavior
 
 The player returns to the City through the shared building/city navigation. The Shop remembers sanitized mode, category, and numeric filter strings as gameplay context, so logout/login or a direct return resumes the same Shop screen while that Shop remains accessible.
+
+For the linked Frontier Village Shop, both visible Village return controls use
+the active same-cell parent resolved by `Game::World::ResumeContext`, returning
+to Village Square. The square's separate Leave hotspot returns outdoors. No
+browser return URL controls this destination. Shop's presence projection uses
+its own room context and refreshes after the saved Shop context changes.
+City Shop and village Shop remain separate audiences even though both display
+Shop. The shared query scopes the persisted zone/cell and room, includes only
+recent open sessions and the playable character, and supplies a bounded list
+with the full count. Ordinary chat uses that same partition; Shell owns its
+polling and login-scoped browser history.
+Direct Shop GET and trade requests also enforce the persisted outdoor
+travel/Look boundary under the character lock. A rejected request preserves
+the wallet, inventory, stock, and saved room. Purchase's existing transaction
+uses a savepoint so its rescued failures still roll back if the request already
+holds that lock.
 
 City owns the building node before entry and after exit. Inventory owns stacking, capacity, equipment state, and later item use. Character Progression owns requirement values. Shop and Economy own only catalog eligibility, exchange mutations, wallet adjustments, stock, and shop presentation.
 
@@ -200,12 +225,12 @@ The current forms do not use a one-time server-issued action capability. CSRF, a
 | `ItemTemplate` | Catalog identity, price, requirements, stack/durability, stock | Buyable only when positive-priced; limited stock cannot underflow |
 | `Inventory` and `InventoryItem` | Current character's derived mass capacity and owned stacks | Sale scope, broken/protected state, and `Character#carrying_capacity` authority |
 | `Game::Shop::Catalog` | Authored modes, categories, filters, and resale formula | Presentation eligibility only; does not transfer value |
-| `Game::World::ResumeContext` | Current Shop availability and safe resume | Rechecks the active current-city Shop hotspot |
+| `Game::World::ResumeContext` | Current Shop availability, parent interior, and safe resume | Rechecks the active City hotspot or exact outdoor linked-village Shop feature; browser URLs never choose the parent |
 | `Economy::WalletService` | Atomic positive/negative NV adjustment | Locks the wallet, rejects negative result, and records one ledger row |
 
 ### 7.1 Source of truth
 
-The wallet, ledger, item templates, inventory, stacks, character position, city node, and hotspot records are authoritative. Catalog arrays define valid presentation modes/categories. Missing inventory or wallet records are bootstrapped for the current owner with empty/zero state.
+The wallet, ledger, item templates, inventory, stacks, character position, City hotspots, and linked-location `TileBuilding` records are authoritative. Catalog arrays define valid presentation modes/categories. Missing inventory or wallet records are bootstrapped for the current owner with empty/zero state.
 
 The browser receives calculated rows and submits only IDs, quantities, and catalog context. Services reload/lock the affected records and apply authoritative price, stock, capacity, protected-state, and balance rules.
 
@@ -247,6 +272,12 @@ flowchart LR
 ### 8.1 Load and render
 
 `ShopController` authenticates, resolves the active character, calls `ResumeContext#shop_available?`, creates missing inventory/wallet records, and builds `Game::Shop::Catalog` from request parameters. The view renders buy-like or sell rows and the controller remembers sanitized context only after successful access.
+
+The request first reconciles due outdoor travel/Look under the character lock
+and rejects active work before reading or changing the Shop. After successful
+entry, context and local-chat room are saved together, then presence is rebuilt
+for that Shop. The parent Village control is derived from the same persisted
+entrance cell rather than retained request parameters.
 
 ### 8.2 Accept or execute action
 
@@ -306,18 +337,23 @@ storage.
 On login or return:
 
 - a valid saved Shop context resumes the same allowlisted catalog view;
-- Shop access is rechecked against the current city node and active accessible hotspot;
+- Shop access is rechecked against the active accessible City hotspot or the
+  exact outdoor cell's active supported village and Shop feature;
 - invalid mode/category values fall back to Buy/All;
 - an unavailable/removed Shop falls back to World without changing the authoritative location;
 - arbitrary return URLs or templates are neither stored nor followed.
 
-City/World own exact location persistence. Shop owns only the safe interior surface context once City has established entry.
+City/World own exact location persistence. Shop owns the safe interior surface
+context after either entry path. Village return restores Village Square and
+its separate Leave action returns outdoors, preserving the region and cell.
+Relocation clears stale Shop context with the position transition.
 
 ## 12. Authorization, trust boundaries, and concurrency
 
 - Devise authentication protects every Shop route.
 - `CurrentCharacterContext` scopes behavior to the signed-in user's active playable character.
-- `ResumeContext#shop_available?` revalidates the current city building and level access.
+- `ResumeContext#shop_available?` revalidates the City hotspot's level/access
+  rules or the supported active linked-village feature at the exact cell.
 - Purchase resolves only positive-priced server templates; Sale resolves only through the current inventory.
 - Wallet, inventory, item/template row locks and transactions protect each value transfer.
 - Arena may credit NV only through the wallet's public adjustment boundary;
@@ -377,7 +413,7 @@ Tests are part of the feature contract. Shop changes require applicable model, r
 | Success | Shop render, classification, buy, sale, durability proration, Shop and NPC-loot wallet/ledger persistence, inventory/stock changes, and resume context. |
 | Failure | Insufficient funds, capacity, missing item, protected item, unavailable Shop, invalid wallet adjustment, and rolled-back NPC-loot projection. |
 | Edge/null/boundary | Zero/negative/decimal amounts, full/partial stacks, zero durability sale rejection, derived mass boundary, unlimited/limited stock, absent inventory/wallet, quantity limits, and invalid filters. |
-| Authorization | Anonymous access, foreign inventory item, active-character ownership, and city hotspot availability. |
+| Authorization | Anonymous access, foreign inventory item, active-character ownership, City or linked-village availability, and active outdoor travel/Look denial. |
 
 Factories must retain edge traits for stock state, stack/protected/equipped/bound state, capacity boundaries, durability, positive/zero price, city Shop availability, and ownership when exercised.
 
@@ -413,6 +449,7 @@ bundle exec rspec \
 - `config/routes.rb`
 - `app/controllers/shop_controller.rb`
 - `app/controllers/concerns/current_character_context.rb`
+- `app/controllers/concerns/outdoor_action_availability.rb`
 
 ### Models and policies
 
@@ -451,14 +488,17 @@ bundle exec rspec \
 ### Integrated feature entry points
 
 - `app/models/city_hotspot.rb`
+- `app/models/tile_building.rb`
 - `app/services/game/world/resume_context.rb`
+- `app/queries/game/world/presence.rb`
+- `app/services/chat/local_context.rb`
 - `app/services/game/world/city_catalog.rb`
 - `app/views/city_buildings/_shop_shell.html.erb`
 - `app/services/game/inventory/manager.rb`
 - `app/services/arena/npc_loot_awarder.rb`
 - `app/services/chat/event_publisher.rb`
 
-City/Resume Context own building access and exact-location resume before the
+City/World/Resume Context own building access and exact-location resume before the
 Shop. Inventory Manager owns stacking and capacity during item handoff. Arena
 owns NPC loot eligibility and the retry marker. Shop and Economy own exchange
 eligibility plus wallet/ledger invariants, not later equipment/use behavior or
@@ -482,6 +522,10 @@ combat reward eligibility.
 - `spec/services/economy/wallet_service_spec.rb`
 - `spec/services/arena/npc_loot_awarder_spec.rb`
 - `spec/requests/shop_spec.rb`
+- `spec/requests/outdoor_action_availability_spec.rb`
+- `spec/requests/world_location_presence_spec.rb`
+- `spec/services/game/world/resume_context_spec.rb`
+- `spec/system/world_village_resume_spec.rb`
 
 ## 17. Safe extension checklist
 

@@ -41,8 +41,8 @@ RSpec.describe Game::World::CityCatalog do
     expect(described_class::GATES.fetch("west")).to include(
       "name" => "City Exit",
       "node_key" => "main",
-      "local_coordinates" => [7, 0],
-      "source_coordinates" => [1019, 1025]
+      "local_coordinates" => [6, 8],
+      "source_coordinates" => [1000, 1000]
     )
   end
 

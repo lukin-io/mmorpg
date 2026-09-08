@@ -2,7 +2,7 @@
 
 - Document type: operational and extension guide
 - Status: Current
-- Updated: 2026-07-29
+- Updated: 2026-09-07
 - Audience: administrators, content authors, Rails engineers, and AI agents
 - UI entry point: `/manage`
 - Controller namespace: `Manage`
@@ -84,6 +84,7 @@ create, update, or delete route.
 
 Not currently manageable through `/manage`:
 
+- outdoor `Zone` definitions; the Cities section manages city nodes only;
 - users, roles, suspensions, or sessions;
 - characters, progression, vitals, wallets, or current positions;
 - `ItemTemplate` catalog entries;
@@ -147,6 +148,49 @@ Cell placement identity is also exact:
 Moving a record means editing the existing stable record's coordinates. Do not
 create a duplicate at the destination and leave the old placement active.
 
+An outdoor `Zone` supplies the region identity. Characters and movement commands
+reference its `zone_id`, while
+`MapTileTemplate`, `TileBuilding`, and `TileNpc` use its unique name as their
+persisted content key. The same `[x, y]` can belong to different regions without
+identifying the same cell.
+
+Once any of those three content types references a Zone's persisted name,
+renaming it is rejected. A Zone with none of those content records may be
+renamed before its cells are authored. For display wording, update
+`metadata.title`; the existing
+`Zone#display_name` returns that title where used by presentation, with the
+stable name as fallback. It does not rewrite region identity or cell metadata.
+
+### 5.1.1 Preparing another region
+
+The shipped outdoor baseline populates only Outpost Surroundings, a logical
+`1000 × 1000` outdoor region. Region-scoped records and lookups support another
+region, but this readiness does not supply its geography, content, or crossing
+rules.
+
+When another source-backed region is in scope:
+
+1. Capture its relevant Neverlands cells, bounds, and entrance behavior. Keep
+   any unverified origin or crossing rule explicit in the design record.
+2. Declare a separate outdoor `Zone` with its own unique stable name and bounds
+   in the approved seed/content baseline. There is no outdoor-region creation
+   form in `/manage`.
+3. Select that Zone when authoring its World Cells, Cell Buildings, and Cell
+   NPCs. Their `zone` value must be the new Zone's exact name; their `[x, y]`
+   values are local to that region. Characters and movement commands continue
+   to use that Zone's persisted ID.
+4. Preserve source coordinates as traceability metadata. Do not copy the
+   current Forpost cluster's local gate `[6,8]`, village `[4,6]`, or Look cell
+   `[7,7]` into another region or infer a universal source-coordinate offset
+   from those samples.
+5. Verify that identical coordinates in two regions resolve their own cells,
+   landmarks, NPCs, and movement offers. Add a crossing only after its actual
+   source handoff is captured and implemented.
+
+Sparse authored cells and configured project-owned art remain sufficient; a
+region does not need one database row per coordinate. A new region declaration
+must not be described as a populated Neverlands map without captured content.
+
 ### 5.2 JSON fields
 
 JSON text areas accept an object at their top level. Use double-quoted JSON,
@@ -178,13 +222,16 @@ World cells and cell NPC placements do not have a general active flag:
 
 ### 5.4 Delete dependencies in leaf-to-root order
 
-Protected parent records cannot be deleted while live records reference them.
+Protected parent records cannot be deleted while dependent records reference them.
 For example:
 
 1. delete or move `TileNpc` placements before deleting their `NpcTemplate`;
-2. delete/move City hotspots, incoming transitions, cell gates, and character
-   positions before deleting a City `Zone`;
-3. delete owned inventory instances before deleting a future item template,
+2. resolve sparse World cells, buildings placed on its cells, and NPC placements before
+   deleting their `Zone`; these name-keyed associations reject parent deletion
+   while any such content remains;
+3. resolve City hotspots, incoming transitions, destination gates, and character
+   positions before deleting a referenced `Zone`;
+4. delete owned inventory instances before deleting a future item template,
    unless the intended design explicitly uses a safe archival model.
 
 A rejected dependency delete is expected safety behavior. It creates no
@@ -228,7 +275,7 @@ Supported local-action schemas are defined by
 
 | Type | Required source id | Runtime state |
 |---|---|---|
-| `resource_search` | `look` | Implemented |
+| `resource_search` | `look` | Immediate empty result and persisted 28-second lock; no yield |
 | `fishing` | `fis` | Observed definition only; no active outcome |
 | `drinking` | `dri` | Observed definition only; no active outcome |
 | `digging` | `dig` | Observed definition only; no active outcome |
@@ -236,6 +283,10 @@ Supported local-action schemas are defined by
 Adding JSON for an unimplemented kind does not implement a mechanic. A new
 kind requires evidence plus changes to the existing definition, offer,
 acceptance, transition, UI, and test pipeline.
+Successful gathering is deferred by the user to alchemy. The current Look
+action can be interrupted, awards no inventory/currency, and resumes its same
+deadline after reload. Closing its result does not end the lock. Do not author
+resource yields or timing modifiers by adding unsupported metadata.
 
 ### Edit, deactivate, or remove a resource action
 
@@ -263,11 +314,15 @@ Use `building_type: city` and provide:
 - outdoor source Zone and exact cell coordinates;
 - a stable `building_key` and display name;
 - destination City Zone and valid destination coordinates;
-- required level and active state;
+- active state and the retained required-level field;
 - optional traceability/presentation metadata.
 
 The destination must already exist. On entry, the server moves the character
 to that exact City Zone and coordinates.
+`TileBuilding.required_level` is currently validated/stored but does not gate
+entry. Runtime entrance availability checks active/configured content and the
+character's exact current source cell; do not infer a working level restriction
+from that field. CityHotspot's separate required-level rule is enforced.
 
 ### Linked location such as a village
 
@@ -280,15 +335,16 @@ Metadata owns the scene and allowlisted feature handoffs:
   "description": "Enter the village from this world cell.",
   "source_map": "captured_source_map_key",
   "source_coordinates": [998, 998],
-  "landmark_kind": "village",
   "location": {
     "short_label": "Village",
+    "presence_label": "Village Square",
     "kind": "village",
     "scene": { "width": 760, "height": 255 },
     "features": [
       {
         "key": "trading_post",
         "label": "Trading Post",
+        "presence_label": "Shop",
         "action_type": "open_feature",
         "feature": "shop",
         "polygon": [[10, 10], [110, 10], [110, 90], [10, 90]]
@@ -307,6 +363,11 @@ Metadata owns the scene and allowlisted feature handoffs:
 The coordinates above demonstrate schema shape only; replace them with
 measured source geometry. Location kind/feature keys, scene dimensions,
 polygons, action types, and feature routes are validated by `TileBuilding`.
+The currently supported `location.kind` is `village`; other kinds are rejected
+and inaccessible until their source-backed scene is implemented. The outdoor
+marker derives from this canonical kind, so omit the obsolete duplicate
+`landmark_kind` field. City entrances retain the city marker. Optional exterior,
+interior, and feature `presence_label` values must be nonblank strings.
 
 ### Move, deactivate, or delete
 
@@ -341,7 +402,7 @@ Example metadata shape:
   "base_damage": 7,
   "xp_reward": 35,
   "loot_table": [
-    { "item": "rat_tail", "quantity": 1 }
+    { "kind": "item", "item": "rat_tail", "quantity": 1, "chance": 0.25 }
   ],
   "respawn_seconds": 300,
   "respawn_variance_seconds": 30,
@@ -350,7 +411,9 @@ Example metadata shape:
 ```
 
 The values must come from evidence/design; this example shows field shape, not
-permission to add that balance. Template role is explicitly mapped from the
+permission to add that balance or probability. Item entries can resolve any
+existing Inventory template—including consumables, weapons, and armor—but
+every entry requires an evidenced explicit chance. Template role is explicitly mapped from the
 allowlisted management form field and cannot be used to assign application
 user roles.
 
@@ -374,10 +437,46 @@ Example placement metadata:
 }
 ```
 
-`encounter_count` must be between 1 and 8. One `TileNpc` is the cell's encounter
+`encounter_count` must be between 1 and 10. One `TileNpc` is the cell's encounter
 anchor; the count controls repeated copies of that captured opponent. Mixed NPC
-types on one cell require additional evidence and an extension of the existing
-model/service pipeline.
+types use complete captured roster samples on that same placement:
+
+```json
+{
+  "encounter_selection_mode": "observed_sample_replay",
+  "passive_delay_windows": [
+    { "key": "observed-window", "min_seconds": 127, "max_seconds": 187 }
+  ],
+  "encounter_rosters": [
+    {
+      "key": "observed-side",
+      "encounter_experience_reward": 56,
+      "trauma_percent": 30,
+      "members": [
+        { "npc_key": "wilderness_bandit", "level": 8, "hp": 185 },
+        { "npc_key": "wilderness_robber", "level": 9, "hp": 310 }
+      ]
+    }
+  ]
+}
+```
+
+Create every referenced `NpcTemplate` first. Each sample is one complete
+observed output, not a set of independently rolled members. Keep sides within
+`1..10`, use positive level/HP overrides and ordered positive delay bounds, and
+do not claim that repeated samples reveal Neverlands' complete pool or weights.
+An anchor with validated `encounter_rosters` is repeatable: defeating one
+selected roster completes that fight but does not set the placement's defeated
+state, so an explicit Finish can be followed by a new passive schedule and
+selection on the same cell. An anchor without samples keeps the ordinary
+defeated/respawn lifecycle.
+Ten members create ten opposing participation slots; eleven fail validation
+before a partial fight can be created. This is supported capacity from the
+captured Neverlands NPC article, not permission to add unobserved group members
+or replace the existing captured seed rosters.
+For seed-owned content, declare reusable non-anchor templates under
+`npc_templates` in `config/gameplay/outdoor_npcs.yml`; the seed materializes
+templates before placements so runtime remains DB-only.
 
 ### Move, edit, defeat-state correction, or delete
 
@@ -446,11 +545,14 @@ Enter another City node or exit to the World:
 
 ```json
 {
-  "destination_x": 7,
-  "destination_y": 0,
+  "destination_x": 6,
+  "destination_y": 8,
   "direction": "west"
 }
 ```
+
+Those coordinates are the current Forpost west-gate destination, not a generic
+city or region default. Use the captured exact destination for another action.
 
 For `enter_zone`, also select the destination Zone in the typed field. The JSON
 contains destination coordinates/direction, while the foreign key identifies

@@ -1,5 +1,11 @@
 # World Map Area
 
+Airship travel uses the same region-qualified cell-art pipeline with a captured
+seven-by-three viewport and a bounded eleven-by-five in-flight buffer. Its
+source evidence, phases, authoritative progress, and destination handoff are
+defined in `doc/design/features/airship_travel.md`. Ordinary walking retains
+the map geometry and eight-neighbor contract described below.
+
 Domain navigation: `doc/domains/world.md`.
 
 ## Purpose
@@ -35,6 +41,8 @@ Observed Neverlands behavior:
   control before the hidden encounter interrupts an action;
 - local outdoor actions can be interrupted by bot ambushes and hand the player
   into the normal fight screen;
+- a bot attack can also begin while the character remains on the outdoor
+  surface without a completed move or manual Attack action;
 - Character and Inventory navigation can be interrupted by the same ambush;
 - an entrance can open an allowlisted linked-location scene while the durable
   outdoor coordinate remains unchanged;
@@ -43,6 +51,31 @@ Observed Neverlands behavior:
 - after outdoor bot combat is finished, the player returns to the unchanged
   coordinate or continues to the interrupted allowlisted Character/Inventory
   destination with fresh world action tokens on the next map render.
+
+The exact-coordinate boundary is supported by two independent observation
+chains. At `m_1001_999`, `look` entered a hidden paired-rat fight, Finish
+returned to `m_1001_999`, and Inventory was then interrupted by another paired
+rat attack. At `937,1008`, the character finished a fight, moved north and back,
+then received further bot attacks whose Finish actions restored `937,1008`.
+This confirms current-coordinate encounter availability; it does not reveal
+Neverlands' internal bot record/table representation or selection weights.
+
+The 2026-09-01 `m_1008_1007` chain adds a second, distinct boundary: the same
+return context produced group sizes `3 -> 1 -> 1 -> 2`, including mixed
+Bandit/Robber identities and levels `7..9`. The later fights began while the
+map remained idle, with two minute-granularity intervals bounded to
+approximately `230..278` and `127..187` seconds. Source-parity World design
+must therefore allow an authored hostile coordinate to yield different
+server-selected eligible groups rather than treating one fixed composition as
+the universal rule. The complete pool, weights, probability, cooldown, delay
+distribution, and storage shape remain `[EVIDENCE]`; no equal-weight table or
+generic procedural encounter rule is authorized.
+
+The 2026-09-02 swamp chain produced `1x7` and `1x3` outputs and a third
+materially different no-click interval bounded to approximately `4..64`
+seconds. Its exact coordinate was not captured, so it strengthens the general
+variable-output rule without extending a particular cell's authored sample
+set.
 
 ## Screen Model
 
@@ -56,8 +89,12 @@ The world map screen is a compact game surface:
 - local player list/presence panel;
 - chat frame or chat bar.
 
-The implemented desktop surface uses a `15 x 9` server-rendered buffer clipped
-to a `13 x 7`, `1302 × 702` visible viewport. This leaves one full off-screen
+The implemented surface uses a `15 x 9` server-rendered buffer clipped to
+whole odd cell counts derived from the available width and the equivalent
+source gameplay-frame height (local header plus main pane), capped at `13 x 7`
+(`1302 × 702` including borders). The source `1150 × 519` frame exposes `11 x 5`
+cells; the local default `1150 × 799` browser gives a `520px` combined frame
+and the same `1102 × 502` map. This leaves at least one off-screen
 cell on every side for the one-cell travel animation and keeps the cursor
 centered even at the logical region boundary; out-of-bounds buffer cells render
 as inert terrain and can never receive an offer. Tablet/mobile clients pan the
@@ -65,6 +102,9 @@ same native cell geometry inside a bounded owner. The default terrain is one pro
 `1000 x 1000` art sheet cropped into `100 x 100` cells. Sparse explicit tile
 records may replace that coordinate's slice through a configured source-backed
 cell-art key; malformed or absent overrides use the coordinate-derived default.
+The table of crops is the scrollable map: the renderer translates it beneath a
+fixed player marker instead of moving an independently authoritative browser
+sprite across a free-form canvas.
 
 It should feel like a utilitarian MMORPG client, not a large marketing page.
 
@@ -78,10 +118,24 @@ persisted zone and cell. An implemented city interior such as Shop reopens that
 interior while retaining the same city position. A spawn point is only used to
 bootstrap a character with no saved location.
 
-Interior resume state is server-side and allowlisted. It may identify `world`
-or `shop` plus sanitized Shop view parameters; it is not a browser return URL.
+Interior resume state is server-side and allowlisted. It identifies `world`, a
+linked `world_location`, `shop` with sanitized view parameters, a captured
+`city_building`, or an authorized selected `arena_room` with its integer room
+id. Room HTML entry revalidates city/room access and active fight state;
+JSON previews preserve the current room. It is not a browser return URL.
 Stale, malformed, inaccessible, or unauthorized interior state falls back to
 the character's persisted world/city position.
+Actual coordinate/zone transitions clear the old interior context atomically
+with the new position, including when the redirected page has not yet loaded.
+
+The village Shop's Village control returns to the village square. The square's
+separate Leave hotspot returns outdoors to the same entrance cell. The three
+surfaces have distinct player-list labels and audiences in the captured
+sample: village exterior, Village Square, and Shop. The observing character
+appears in each applicable audience. These observations establish the interior
+boundaries. The subsequent Neverlands-hosted Chat article explicitly confirms
+ordinary chat is limited to one cell or room. Exact online expiry remains
+unverified; see the September 7 social follow-up observation.
 
 Players leave the world map by:
 
@@ -101,16 +155,48 @@ The map can offer:
 - enter city/building;
 - enter linked world location and use its offered interior features;
 - hidden hostile encounter interruption;
-- city or building entry.
+- the bounded Look Around observation action.
 
 The server decides which actions exist for the current finalized location.
 Future local actions must be documented from Neverlands before implementation.
 
+The captured `Look Around` empty-result flow shows its result immediately and
+locks movement, Enter, Character, Inventory, and repeat Look for `28` seconds.
+Dismissal only hides the result; reload resumes the persisted deadline. This
+bounded sample awards no resource. Successful gathering is deferred by the
+user to the alchemy skill path; yields and timing modifiers remain evidence
+gaps. The idle cursor and terrain stay still during this work
+timer, unlike movement's walking marker and terrain translation.
+
+## Captured Forpost starter route
+
+The September 7 observation places Forpost's left exit at source
+`[1000,1000]`, not the older Oktal `[1019,1025]` capture. The local gate is
+`[6,8]`; two northwest steps reach the village entrance at `[4,6]`. Its
+outdoor Enter action and interior Shop/exit preserve that durable coordinate.
+The resource-search cell remains `[7,7]` (source `[1001,999]`).
+
+This small cluster uses the explicit local adaptation
+`local = source - [994,992]`. Eight authored unavailable cells reproduce the
+observed neighbor sets at the gate, intermediate cells, village entrance, and
+resource cell. The rest of the sparse region is a local placeholder, not a
+captured region map. Separately authored encounter samples do not establish a
+continuous source-to-local world mapping.
+
 ## Rules
 
 - Outdoor movement is coordinate-based.
-- Launch has one logical `1000 x 1000` outdoor region; additional regions are
-  post-MVP.
+- Coordinates use `x` as column and `y` as row. A target is adjacent exactly
+  when `abs(target.x - current.x) <= 1`,
+  `abs(target.y - current.y) <= 1`, and target differs from current. Therefore
+  a cell can offer at most its eight cardinal/diagonal neighbors; self-moves
+  and multi-cell jumps are invalid.
+- Launch populates one logical `1000 x 1000` outdoor region. The existing
+  region identity must isolate equal local coordinates, offers, and content
+  across regions; additional populated regions and walking border mappings
+  remain outside the current delivery scope. Configured airship journeys use
+  their separate lifecycle for explicit region handoffs; normal routes await
+  destination/path/schedule content. See `doc/design/features/airship_travel.md`.
 - Destination availability is server-authored.
 - Movement is accepted by the server before the UI enters travelling state.
 - Movement completion updates the authoritative coordinate.
@@ -219,16 +305,20 @@ The world map uses a single authoritative tile-state/action-offer layer.
 
 Pipeline for every world map request:
 
-1. Complete due movement.
+1. Reconcile stale active movement and complete a due valid command.
 2. Load current finalized character location.
 3. Resolve current tile state.
 4. Resolve any persisted exact-cell NPC as hidden server state; do not render
    its identity or a manual attack affordance. Config-to-DB materialization is
    a seed responsibility, never a request-time side effect.
 5. Build movement offers and contextual action offers.
-6. Before completing a mutating outdoor action, evaluate source-backed hostile
-   encounter rules for the current tile.
-7. Render only the action offers returned by the server, or hand off to combat
+6. Validate the submitted owned offer and current state under the character
+   lock before evaluating a mutating action's source-backed hostile
+   interruption; an invalid key cannot trigger a fight.
+7. While the outdoor surface remains open, resolve passive eligibility against
+   the same current tile without accepting a coordinate, NPC, delay, or chance
+   from the browser.
+8. Render only the action offers returned by the server, or hand off to combat
    if the accepted action triggered an ambush.
 
 For a linked location, the equivalent interior pipeline is:
@@ -236,7 +326,8 @@ For a linked location, the equivalent interior pipeline is:
 1. Load the same persisted outdoor position.
 2. Resolve the active location entrance at that exact cell.
 3. Read its validated persisted scene and feature definitions.
-4. Cancel prior open interior-feature offers and issue fresh ones for only the
+4. Reconcile active travel/Look and reject a conflicting fight before changing
+   saved context; cancel prior open interior-feature offers and issue fresh ones for only the
    captured hotspots.
 5. Revalidate position, entrance, feature, target, ownership, and expiry on
    submission before handing off to Shop or World.
@@ -248,7 +339,19 @@ location; it receives no named locked offers and sees the recovery explanation.
 The implemented hostile check is also used by the persistent shell's Character
 and Inventory actions. A live fight is reused rather than duplicated. The
 captured Plague Rat anchor authors an encounter size of two, so one materialized
-cell NPC creates two distinct Arena participations on the opposing side.
+cell NPC creates two distinct Arena participations on the opposing side. The
+mapped `m_1008_1007` anchor instead stores four complete observed roster
+samples; server-side selection creates their ordered repeated/mixed
+participations with captured member level/HP and fight-level XP/risk values.
+
+The passive local implementation persists a server-generated due time together
+with the exact zone/coordinate and encounter-anchor identity. Moving away,
+defeating/removing the hostile, or entering a non-outdoor zone invalidates that
+schedule. The browser only asks whether the current authoritative state is due
+and follows the returned retry delay. The mapped `m_1008_1007` anchor samples
+inside its two directly captured elapsed-time windows. Anchors without captured
+windows retain the provisional local fallback; exact source probability,
+cooldown, distribution, and sample weights remain evidence gaps.
 
 Suggested action-offer fields:
 
@@ -274,9 +377,9 @@ Action examples:
 | --- | --- | --- |
 | Move | movement command | movement acceptance service |
 | Hidden hostile interruption | tile NPC | shared combat handoff |
-| Enter city/building/dungeon | tile entrance | building or city transition service |
+| Enter city or village | tile entrance | building or city transition service |
 | Open linked location feature | same location entrance | allowlisted location controller, then Shop or World |
-| Search for resources | current tile template | local-action service or hostile ambush handoff |
+| Look Around | current tile template | persisted empty-result work timer or hostile ambush handoff |
 
 Profession outcomes remain owned by `features/professions.md`. The presence of
 `look`, `fis`, `dri`, or `dig` metadata is not permission to invent a yield,
@@ -303,16 +406,17 @@ controls:
 
 | Source id | Meaning | Launch Status |
 | --- | --- | --- |
-| `look` | search for herbs or local resources | implement offer, acceptance, hostile interruption, and refresh |
+| `look` | search for herbs or local resources | implemented empty result, 28-second deadline, interruption, and refresh |
 | `fis` | fish at an eligible place such as a lake | recognized authored type; outcome deferred |
 | `dri` | drink at an eligible location | recognized authored type; outcome deferred |
 | `dig` | dig at an eligible location | recognized authored type; outcome deferred |
 
-The captured `look` request returned a forced reload into a normal hostile-NPC
-fight. A successful resource award was not captured, so launch must not invent
-resource quantities, skill growth, inventory creation, cooldowns, or depletion.
-Until that follow-up exists, an uninterrupted search records completion and
-refreshes cell offers without awarding an item.
+An earlier captured `look` request returned a forced reload into a normal
+hostile-NPC fight. The September 7 uninterrupted sample adds an immediate empty
+vegetation result and a 28-second lock; only server-side deadline reconciliation
+completes that work and restores offers. Successful gathering is deferred by
+the user to alchemy. No resource quantity, skill growth, inventory creation,
+depletion, or uncaptured timing modifier is inferred from the empty result.
 
 ## Outdoor Ambush Handoff
 
@@ -327,10 +431,16 @@ Design rules:
 - ambushes are not a separate mini-game or modal;
 - the captured encounter creates two independently targetable NPC
   participations even though both use the same template;
+- an evidenced cell may author several complete roster outputs; selection of
+  one persisted sample is server-owned and preserves repeated/mixed identities,
+  member levels/HP, and encounter-level reward/risk metadata;
 - every living NPC opponent takes its combat action, and defeating one does
   not end the fight or defeat the cell anchor while another survives;
-- loot resolution and defeat state are participant-level; the cell anchor is
-  defeated only after the opposing NPC side is eliminated;
+- loot resolution and defeat state are participant-level; a fixed cell anchor
+  is defeated only after the opposing NPC side is eliminated, while a sampled
+  anchor remains eligible for a later selection after explicit Finish;
+- authored sides accept `1..10` validated members, following the captured
+  Neverlands NPC article; the capacity does not add uncaptured seed rosters;
 - surrender defeats only the surrendering participant, so the same rule works
   for 1x1, 1xMany, and ManyxMany PvE/PvP sides;
 - the fight stores an allowlisted logical return context while the exact world
@@ -341,20 +451,16 @@ Design rules:
 
 ## Area Graph
 
-The outdoor map is a coordinate graph. The complete Forpost gate pass exposed
-three distinct city-entry cells:
+The outdoor map is a coordinate graph. The fresh Forpost capture establishes
+one reciprocal city-entry cell and its nearby village route:
 
-| Gate | City Node On Entry | Outdoor Cell | Offered Adjacent Cell |
+| Gate | City Node On Entry | Source Outdoor Cell | Local Outdoor Cell |
 | --- | --- | --- | --- |
-| West | Central Square | `1019,1025` | `1018,1025` |
-| South | Stables | `1022,1028` | `1022,1029` |
-| East | Guild Square | `1025,1027` | `1026,1027` |
+| West | Central Square | `1000,1000` | `6,8` |
 
-Each gate cell offered its own contextual city-entry action. The East adjacent
-move was accepted and returned to the gate; the West and South adjacent moves
-were observed without accepting them. The starter implementation may use one
-gate, but its tile-entrance model must support several coordinates entering
-different nodes of the same city.
+The earlier `1019,1025` observation was at Oktal. The old three-gate table must
+not be used as Forpost topology. Other gate families require their own current
+capture; an illustrated city exit is not an inferred outdoor destination.
 
 The graph may later expand to more coordinates, roads, and terrain costs, but
 starter implementation should remain deterministic and source-backed.

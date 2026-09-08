@@ -2,7 +2,9 @@
 
 module Game
   module World
-    # Validates and accepts a persisted world action offer.
+    # Accepts a live owned offer against fresh position/travel state. The
+    # character lock is retained through an enclosing action transaction so
+    # movement cannot race its cell-local side effects.
     class AcceptAction
       class ActionViolationError < StandardError; end
       FATIGUE_LOCKED_ACTIONS = %w[enter_building search_resources].freeze
@@ -16,15 +18,34 @@ module Game
       end
 
       def call
-        offer = find_offer
+        Game::Movement::CompleteMove.new(character:).call
+        character.with_lock do
+          character.reload
+          if character.active_airship_journey
+            raise ActionViolationError, "Disembark before interacting with the ground"
+          end
 
-        offer.with_lock do
-          offer.reload
-          validate!(offer)
-          offer.accept!
+          @position = character.position&.reload
+          if MovementCommand.moving.where(character:).exists?
+            raise ActionViolationError, "Movement already in progress"
+          end
+          if LocalActionState.new(character:).call
+            raise ActionViolationError, "A local action is already in progress"
+          end
+          if character.arena_participations.joins(:arena_match).merge(ArenaMatch.active).exists?
+            raise ActionViolationError, "Finish the active fight before continuing"
+          end
+
+          offer = find_offer
+
+          offer.with_lock do
+            offer.reload
+            validate!(offer)
+            offer.accept!
+          end
+
+          offer
         end
-
-        offer
       end
 
       private
@@ -40,6 +61,7 @@ module Game
       end
 
       def validate!(offer)
+        raise ActionViolationError, "Action offer is no longer available" unless offer.offered?
         raise ActionViolationError, "Action offer has expired" if offer.expired?
         raise ActionViolationError, "Action offer does not match current position" unless offer.matches_position?(position)
 

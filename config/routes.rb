@@ -38,6 +38,7 @@ Rails.application.routes.draw do
 
   get "world/locations/:key", to: "world_locations#show", as: :world_location
   post "world/locations/:key/features", to: "world_locations#open_feature", as: :world_location_feature
+  post "world/encounter_check", to: "world_encounter_checks#create", as: :world_encounter_check
 
   resource :inventory, only: [:show] do
     post :equip
@@ -61,6 +62,9 @@ Rails.application.routes.draw do
   end
 
   get "city/buildings/:building_key", to: "city_buildings#show", as: :city_building
+  resource :airship, only: %i[show create] do
+    post :disembark
+  end
 
   resources :arena, only: [:index], controller: "arena" do
     collection do
@@ -98,6 +102,8 @@ Rails.application.routes.draw do
   resources :chat_channels, only: [:show] do
     resources :chat_messages, only: :create
   end
+  get "chat/local", to: "chat_channels#local", as: :local_chat
+  post "chat/local", to: "chat_messages#create"
 
   # Non-game related
 

@@ -3,7 +3,7 @@
 class Character < ApplicationRecord
   MAX_NAME_LENGTH = 30
   GAMEPLAY_CONTEXT_KEY = "gameplay_context"
-  GAMEPLAY_CONTEXTS = %w[world shop city_building world_location].freeze
+  GAMEPLAY_CONTEXTS = %w[world shop city_building world_location arena_room airship].freeze
 
   PRIMARY_STATS = %i[strength dexterity luck vitality intelligence].freeze
   BASE_PRIMARY_STATS = PRIMARY_STATS.index_with { 1 }.freeze
@@ -12,6 +12,8 @@ class Character < ApplicationRecord
   MASS_PER_STRENGTH = 5
   MASS_PER_HEALTH = 10
   MASS_PER_LEVEL = 10
+  BASE_ACTION_POINTS = 80
+  ACTION_POINT_LEVEL_BONUSES = {5 => 10, 10 => 10}.freeze
   STAT_LABELS = {
     strength: "Strength",
     dexterity: "Dexterity",
@@ -87,6 +89,7 @@ class Character < ApplicationRecord
   has_many :arena_participations, dependent: :destroy
 
   has_many :movement_commands, dependent: :destroy
+  has_many :airship_journeys, dependent: :destroy
   has_many :world_action_offers, dependent: :destroy
 
   validates :name, presence: true, uniqueness: true, length: {maximum: MAX_NAME_LENGTH}
@@ -102,6 +105,11 @@ class Character < ApplicationRecord
 
   after_create :ensure_inventory!
 
+  # Query fresh state: boarding and disembarkation can happen in another tab.
+  def active_airship_journey
+    airship_journeys.aboard.first
+  end
+
   def gameplay_context
     payload = metadata.to_h[GAMEPLAY_CONTEXT_KEY]
     return {"name" => "world", "params" => {}} unless payload.is_a?(Hash)
@@ -113,6 +121,8 @@ class Character < ApplicationRecord
     normalized.slice("name", "params")
   end
 
+  # Save the allowlisted gameplay surface and any resulting local-chat room
+  # entry together. Reloading an unchanged surface preserves its entry time.
   def remember_gameplay_context!(name:, params: {})
     normalized_name = name.to_s
     raise ArgumentError, "Unsupported gameplay context" unless GAMEPLAY_CONTEXTS.include?(normalized_name)
@@ -125,9 +135,10 @@ class Character < ApplicationRecord
 
     with_lock do
       reload
-      return payload if gameplay_context == payload
-
-      update!(metadata: metadata.to_h.merge(GAMEPLAY_CONTEXT_KEY => payload))
+      unless gameplay_context == payload
+        update!(metadata: metadata.to_h.merge(GAMEPLAY_CONTEXT_KEY => payload))
+      end
+      Chat::LocalContext.new(character: self).synchronize!
     end
 
     payload
@@ -201,17 +212,15 @@ class Character < ApplicationRecord
     end
   end
 
-  # Calculate maximum action points for combat
-  # Formula: Base AP (50) + (Level × 3) + (Dexterity × 2)
-  # This determines how many attacks/blocks a character can perform per turn
-  #
-  # @return [Integer] the character's maximum action points
+  # Neverlands grants an 80 AP base, adds 10 AP at levels 5 and 10, and adds
+  # the effective Extra Action Points skill one-for-one. Temporary fight
+  # effects remain per-participation combat-profile inputs.
   def max_action_points
-    base_ap = 50
-    level_bonus = level * 3
-    dexterity_bonus = stats.get(:dexterity).to_i * 2
+    level_bonus = ACTION_POINT_LEVEL_BONUSES.sum do |minimum_level, bonus|
+      level.to_i >= minimum_level ? bonus : 0
+    end
 
-    base_ap + level_bonus + dexterity_bonus
+    BASE_ACTION_POINTS + level_bonus + passive_skill_level(:extra_action_points)
   end
 
   def alignment_label
@@ -619,7 +628,7 @@ class Character < ApplicationRecord
     end
   end
 
-  # Get agility stat for initiative and flee calculations
+  # Get agility used by the shared hit, dodge, and block resolver.
   #
   # @return [Integer] agility value
   def agility

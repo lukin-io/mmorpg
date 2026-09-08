@@ -92,6 +92,21 @@ retire_world_action_targets = if defined?(WorldActionOffer)
   end
 end
 
+# A saved capability must not silently follow a changed entrance or city
+# destination. Preserve its target for history; only deleted targets detach.
+cancel_changed_world_action_offers = lambda do |target|
+  next unless defined?(WorldActionOffer) && target.persisted? && target.has_changes_to_save?
+
+  WorldActionOffer.where(
+    target:,
+    status: WorldActionOffer.statuses.values_at("offered", "accepted")
+  ).update_all(
+    status: WorldActionOffer.statuses.fetch("cancelled"),
+    error_message: "Authored world content was updated.",
+    updated_at: Time.current
+  )
+end
+
 if defined?(SpawnPoint) && defined?(Zone)
   city_zone_names = Game::World::CityCatalog::NODES.values.pluck("zone_name")
   central_square = Zone.find_by(
@@ -182,6 +197,28 @@ if defined?(MapTileTemplate)
         }
       }
     }
+
+    # The 2026-09-07 Forpost gate/village route uses local = source - [994,992].
+    # These exact cells were absent from the surrounding server offers. Keep
+    # the captured route's unavailable cells explicit rather than allowing
+    # sparse defaults to open the city footprint or cut across the village.
+    # This bounded cluster does not establish a whole-region source origin.
+    [[7, 8], [6, 9], [7, 9], [5, 6], [6, 6], [4, 8], [5, 5], [8, 8]].each do |x, y|
+      source_x = x + 994
+      source_y = y + 992
+      outdoor_tiles << {
+        zone: outdoor_zone_name,
+        x:,
+        y:,
+        terrain_type: "outdoor",
+        passable: false,
+        metadata: {
+          "source_map" => "m_#{source_x}_#{source_y}",
+          "source_coordinates" => [source_x, source_y],
+          "source_observation" => "2026-09-07_forpost_grid_and_action_audit"
+        }
+      }
+    end
   end
 
   outdoor_tiles.each do |attrs|
@@ -206,11 +243,16 @@ end
 
 if defined?(TileNpc) && defined?(NpcTemplate)
   seeded_tile_npc_ids = []
+  outdoor_npc_templates = {}
+  placement_metadata_keys = %i[
+    combat_profile encounter_count encounter_experience_reward encounter_rosters
+    encounter_selection_mode passive_delay_windows trauma_percent
+  ].freeze
 
   Game::World::OutdoorNpcConfig.config.each_value do |zone_config|
-    zone_name = zone_config[:zone_name].to_s
-
-    Array(zone_config[:npcs]).each do |npc_data|
+    template_definitions = Array(zone_config[:npc_templates]) + Array(zone_config[:npcs])
+    template_definitions.each do |npc_data|
+      source_metadata = (npc_data[:metadata] || {}).except(*placement_metadata_keys)
       template_metadata = {
         "health" => npc_data[:hp],
         "base_damage" => npc_data[:damage],
@@ -219,7 +261,7 @@ if defined?(TileNpc) && defined?(NpcTemplate)
         "respawn_seconds" => npc_data[:respawn_seconds],
         "respawn_variance_seconds" => npc_data[:respawn_variance_seconds],
         "seed_source" => "outdoor_npcs.yml"
-      }.compact.merge((npc_data[:metadata] || {}).deep_stringify_keys)
+      }.compact.merge(source_metadata.deep_stringify_keys)
 
       template = NpcTemplate.find_by(npc_key: npc_data[:key].to_s) ||
         NpcTemplate.find_by(name: npc_data[:name].to_s) ||
@@ -233,7 +275,15 @@ if defined?(TileNpc) && defined?(NpcTemplate)
         metadata: template_metadata
       )
       template.save!
+      outdoor_npc_templates[npc_data[:key].to_s] = template
+    end
+  end
 
+  Game::World::OutdoorNpcConfig.config.each_value do |zone_config|
+    zone_name = zone_config[:zone_name].to_s
+
+    Array(zone_config[:npcs]).each do |npc_data|
+      template = outdoor_npc_templates.fetch(npc_data[:key].to_s)
       placement_metadata = (npc_data[:metadata] || {}).deep_stringify_keys.merge(
         "seed_source" => "outdoor_npcs.yml"
       )
@@ -279,6 +329,9 @@ if defined?(Character) && admin
     char.metadata = {}
   end
   main_character.reload
+  unless main_character.in_combat?
+    main_character.update!(current_hp: main_character.max_hp, current_mp: main_character.max_mp)
+  end
   main_character.inventory || main_character.create_inventory!(slot_capacity: 48, weight_capacity: 160)
 
   secondary_character = Character.find_or_create_by!(user: admin, name: "max_kerby_balance") do |char|
@@ -290,6 +343,9 @@ if defined?(Character) && admin
     char.metadata = {}
   end
   secondary_character.reload
+  unless secondary_character.in_combat?
+    secondary_character.update!(current_hp: secondary_character.max_hp, current_mp: secondary_character.max_mp)
+  end
   secondary_character.inventory || secondary_character.create_inventory!(slot_capacity: 42, weight_capacity: 130)
 
   if lukin_user
@@ -302,6 +358,9 @@ if defined?(Character) && admin
       char.metadata = {}
     end
     lukin_character.reload
+    unless lukin_character.in_combat?
+      lukin_character.update!(current_hp: lukin_character.max_hp, current_mp: lukin_character.max_mp)
+    end
     lukin_character.inventory || lukin_character.create_inventory!(slot_capacity: 36, weight_capacity: 140)
   end
 end
@@ -676,23 +735,34 @@ if defined?(ArenaRoom)
       name: "Training Hall",
       slug: "training",
       room_type: :training,
-      level_min: 0,
+      level_min: 5,
       level_max: 10,
       alignment_restriction: nil,
       description: "Source-backed starter arena room for training fights."
+    },
+    {
+      name: "Trial Hall",
+      slug: "trial",
+      room_type: :trial,
+      level_min: 5,
+      level_max: 33,
+      alignment_restriction: nil,
+      description: "Source-backed unrestricted Arena room for levels 5-33."
     }
   ]
 
   arena_rooms.each do |room_data|
-    ArenaRoom.find_or_create_by!(slug: room_data[:slug]) do |room|
-      room.name = room_data[:name]
-      room.room_type = room_data[:room_type]
-      room.level_min = room_data[:level_min]
-      room.level_max = room_data[:level_max]
-      room.alignment_restriction = room_data[:alignment_restriction]
-      room.active = true
-      room.metadata = {description: room_data[:description]}
-    end
+    room = ArenaRoom.find_or_initialize_by(slug: room_data[:slug])
+    room.assign_attributes(
+      name: room_data[:name],
+      room_type: room_data[:room_type],
+      level_min: room_data[:level_min],
+      level_max: room_data[:level_max],
+      alignment_restriction: room_data[:alignment_restriction],
+      active: true,
+      metadata: {description: room_data[:description]}
+    )
+    room.save!
     puts "  Created/Found ArenaRoom: #{room_data[:name]}"
   end
 end
@@ -729,6 +799,7 @@ if defined?(TileBuilding) && defined?(Zone)
         required_level: 1,
         metadata: {
           "description" => "Enter Forpost through the #{gate['name']}.",
+          "presence_label" => gate["presence_label"],
           "source_map" => gate["source_map"],
           "source_coordinates" => gate["source_coordinates"],
           "source_gate" => gate_key,
@@ -753,15 +824,16 @@ if defined?(TileBuilding) && defined?(Zone)
         "description" => "Enter the village from this world cell.",
         "source_map" => "m_998_998",
         "source_coordinates" => [998, 998],
-        "landmark_kind" => "village",
         "location" => {
           "short_label" => "Village",
+          "presence_label" => "Village Square",
           "kind" => "village",
           "scene" => {"width" => 760, "height" => 255},
           "features" => [
             {
               "key" => "trading_post",
               "label" => "Trading Post",
+              "presence_label" => "Shop",
               "action_type" => "open_feature",
               "feature" => "shop",
               "polygon" => [
@@ -800,7 +872,10 @@ if defined?(TileBuilding) && defined?(Zone)
       active: true,
       metadata: attrs[:metadata] || {}
     )
-    building.save!
+    ApplicationRecord.transaction do
+      cancel_changed_world_action_offers.call(building)
+      building.save!
+    end
     puts "  Created/Found TileBuilding: #{attrs[:name]}"
   end
 
@@ -910,7 +985,10 @@ seeded_hotspot_ids = city_hotspots.each_with_index.filter_map do |attrs, index|
     z_index: index,
     active: true
   )
-  hotspot.save!
+  ApplicationRecord.transaction do
+    cancel_changed_world_action_offers.call(hotspot)
+    hotspot.save!
+  end
   puts "  Created/Found CityHotspot: #{attrs[:name]}"
   hotspot.id
 end

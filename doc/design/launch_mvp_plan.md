@@ -18,8 +18,8 @@ server-authoritative action model.
 The Neverlands-based marketplace/shop loop is also required for MVP. It is not
 a separate pillar because it depends on person, city movement, inventory, and
 server-authored actions, but the launch loop is incomplete without a
-city-building shop path. Current status: documented from live `Лавка` capture,
-with a starter buy/sell/licenses/novice-goods implementation in the city shop.
+source-backed Shop entrance. Current status: city Shop and the captured
+village Trading Post share the starter buy/sell/licenses/novice-goods owner.
 
 ## Launch Principles
 
@@ -34,8 +34,8 @@ with a starter buy/sell/licenses/novice-goods implementation in the city shop.
   Stimulus, and server-rendered state.
 - Personal gameplay results and game-wide notices share the durable chat
   timeline; do not split MVP event feedback into a separate toast center.
-- Marketplace/shop access is entered through a city building such as `Лавка`,
-  not through a generic global marketplace or kiosk route.
+- Shop access follows an authored city building or the captured village
+  Trading Post entrance, with return to its validated parent location.
 - Wild cell actions are tied to the current coordinate and expire when the
   player moves or context changes.
 - Outdoor local actions can be interrupted by source-backed hostile NPC rules.
@@ -66,7 +66,7 @@ contract while an adjacent uncaptured state remains Not Done.
 | `SHELL-UI-001` | Persistent authenticated shell and shared chrome | Done for captured base frame | Neverlands 1:1 UI/UX parity matrix |
 | `SHELL-CHAT-001` | Auxiliary shell/chat controls | Not Done | Neverlands 1:1 UI/UX parity matrix |
 | `RESPONSIVE-001` | Mandatory tablet and mobile adaptation | Done for listed bounded surfaces | Neverlands 1:1 UI/UX parity matrix |
-| `SOCIAL-CHAT-001` | Chat, mixed gameplay-event timeline, channels, presence, and player context | Partially Implemented; captured fight/item/NV event-timeline subset is implemented | Social/chat design and shell parity rows |
+| `SOCIAL-CHAT-001` | Chat, mixed gameplay-event timeline, channels, presence, and player context | Partially Implemented; cell/room chat, session-backed presence, and durable fight/item/NV events are implemented | Social/chat design and shell parity rows |
 | `CHARACTER-PROGRESSION-001` | Profile, stats, skills, perks, and allocation | Fully Implemented within declared boundary | Character-development audit and Pillar 1 |
 | `INVENTORY-UI-001` | Current equipment-family layout | Done | Neverlands 1:1 UI/UX parity matrix |
 | `INVENTORY-ACTIONS-001` | Remaining item families and action states | Not Done | Neverlands 1:1 UI/UX parity matrix |
@@ -79,9 +79,9 @@ contract while an adjacent uncaptured state remains Not Done.
 | `CITY-SERVICES-001` | Complete building/service interiors | Not Done | Neverlands 1:1 UI/UX parity matrix |
 | `ECONOMY-SHOP-001` | Current Shop shell and browse state | Done | Neverlands 1:1 UI/UX parity matrix |
 | `ECONOMY-TRANSACTIONS-001` | Captured populated buy/sell/license variants | Not Done for full parity | Neverlands 1:1 UI/UX parity matrix |
-| `COMBAT-ARENA-001` | Bounded Arena lifecycle and authoritative resolution | Fully Implemented within declared boundary | Pillar 3 |
-| `COMBAT-FIGHT-UI-001` | Active fight composer and state variants | Not Done | Neverlands 1:1 UI/UX parity matrix |
-| `COMBAT-LOG-001` | Separate public fight log parity | Not Done | Neverlands 1:1 UI/UX parity matrix |
+| `COMBAT-ARENA-001` | Bounded Arena lifecycle and authoritative resolution | `DONE` for the declared runtime boundary | Pillar 3 Combat Completion Matrix |
+| `COMBAT-FIGHT-UI-001` | Active fight composer and state variants | `DONE` for the captured bounded states | Neverlands 1:1 UI/UX parity matrix and Pillar 3 Combat Completion Matrix |
+| `COMBAT-LOG-001` | Separate public fight log parity | `DONE` for the captured bounded states | Neverlands 1:1 UI/UX parity matrix and Pillar 3 Combat Completion Matrix |
 | `NPC-RUNTIME-001` | Outdoor and Arena NPC combat | Implemented within World/Arena boundaries | Pillars 3 and 4 |
 | `QUEST-FLOW-001` | Complete Quest lifecycle | `NOT_IMPLEMENTED`; `EVIDENCE_NEEDED` | NPC/Quest design and implementation placeholder |
 | `PROFESSION-FLOW-001` | Complete profession action lifecycle | `NOT_IMPLEMENTED`; `EVIDENCE_NEEDED` | Character-development audit and profession design |
@@ -125,20 +125,22 @@ itself supplied responsive behavior.
 | --- | --- | --- | --- | --- |
 | Persistent shell — base frame | Top frame, main-frame boundary, local presence, chat history, bottom controls, contextual navigation, and exit control. | Authenticated layout across World, Inventory, Player, and Fight at `955 × 817`, `820 × 900`, and `390 × 844`. | **Done** | Desktop retains the `29 / flexible / 8 / 240 / 1 / 30px` row contract and 300px presence column. Tablet/mobile reflow the same header, chat/presence, and CSS/text bottom controls without body overflow. |
 | Persistent shell — auxiliary chat controls | Both smile palettes, chat-mode cycle, refresh-speed cycle, transliteration state, and player-action menu. | Bottom control transitions beyond send, clear input, refresh, and clear visible chat. | **Not Done** | The measured control positions are implemented with project-owned CSS and ASCII/plain-text controls; these popup/cycle states remain unimplemented and therefore prevent claiming complete shell UX parity. |
-| Persistent chat — mixed gameplay-event timeline | Ordinary/private chat interleaved with exact-time personal fight/item/NV system rows and orange-marked untimed world announcements. | Global chat history/live stream, recipient isolation, reload persistence, fight XP, successful NPC item/NV loot, empty-first append, and no separate toast surface. | **Done for the captured bounded event subset** | Structured immutable event projections use stable producer keys and a latest-200 combined timeline. Item and NV rows follow successful inventory/wallet transactions. The world-announcement API is server-only and intentionally has no invented runtime announcements; links, authoring operations, retention controls, additional event families, and NPC-specific NV probabilities remain evidence gaps. |
-| Open world / World | Idle outdoor map, offered movement cells, center cursor, current coordinate/location copy, local actions, travel/countdown state, and shell continuity. | `WorldController#show` idle, available movement/action, and active movement states at desktop/tablet/mobile widths. | **Done** | Fresh capture now defines a 13 × 7, `1302 × 702` visible desktop surface over a 15 × 9 server render buffer. Exact 100px project-owned terrain slices, thin dark-red offers, CSS cursor/walker/timer, top-context actions, captured `24`/`32`-second duration handling, and centered responsive panning are implemented without source assets. |
+| Persistent chat — mixed gameplay-event timeline | Ordinary/private chat interleaved with exact-time personal fight/item/NV system rows and orange-marked untimed world announcements. | Current-cell/room ordinary-chat polling and locked sends, per-login delivered-row buffer, recipient-only durable event history/streams, fight XP, successful NPC item/NV loot, and empty-first append. | **Done for the bounded ordinary-chat and event subset** | Ordinary rows reset on fresh login; previous-cell subscriptions cannot retain an audience. Structured immutable event projections use stable producer keys and a latest-200 combined timeline. Item and NV rows follow successful inventory/wallet transactions. The world-announcement API is server-only and intentionally has no invented runtime announcements; links, authoring operations, retention controls, additional event families, and NPC-specific NV probabilities remain evidence gaps. |
+| Open world / World | Idle outdoor map, offered movement cells, center cursor, current coordinate/location copy, local actions, travel/countdown state, and shell continuity. | `WorldController#show` idle, available movement/action, and active movement states at desktop/tablet/mobile widths. | **Done** | Fresh captures define whole odd columns/rows fitted to the equivalent header-plus-main gameplay frame, capped at 13 × 7 (`1302 × 702`), over a 15 × 9 server render buffer; the `1150 × 519` source frame shows 11 × 5. Exact 100px project-owned terrain slices, thin dark-red offers, CSS cursor/walker/timer, top-context actions, captured `24`/`32`-second duration handling, and centered responsive panning are implemented without source assets. |
 | Open-world linked location — Frontier Village | Exact entrance cell, multi-cell landmark, Enter, native interior geometry, irregular building/exit hotspots, linked Shop, unchanged outdoor coordinate, and login resume. | Seeded `[4,6]` entrance (source evidence `[998,998]`), village scene, Shop/exit offers, stale-cell rejection, and desktop/tablet/mobile panning. | **Done** | The observed village slice is implemented with a CSS-built `760 × 255` scene and fresh owned hotspot offers. Entering, visiting Shop, exiting, and login resume preserve the DB-backed outdoor coordinate. This status does not include other location families. |
 | Open-world linked locations — mines/exchanges/other families | Each source-specific exterior cell, entrance, interior, controls, prerequisites, outcomes, and return behavior. | Per-family live capture and local parity evidence before any route/catalog entry exists. | **Not Done** | No generic location implementation is inferred from the village. Capture each family before adding it. |
 | Inventory — current equipment family | Paper doll, equipment slots, statistics, money/mass, icon controls, dense item rows, current-page navigation state, and available item actions. | `InventoriesController#show` with the current seeded/equipped inventory state at desktop/tablet/mobile widths. | **Done** | Desktop retains the 463/5/467 split, 258/5/200 sheet, 41 × 53 CSS/text control rows, mass strip, and dense rows. Tablet/mobile stack the same domains and make control bands independently scrollable. |
 | Inventory — uncaptured family/action states | Empty production families, confirmations, transfers/gifts/sales, use, equipment sets, and full/short transitions. | Category-specific and modal/action states. | **Not Done** | Capture and compare each reachable transition before promoting these states to 1:1. |
 | Player profile — authenticated owner | Paper doll, vitals/stat hierarchy, experience/record, increases, combat values, internal navigation, and current-page state. | `PlayersController#show` for the signed-in character at desktop/tablet/mobile widths. | **Done** | Desktop retains the 463/5/467 composition and a 115 × 255 CSS character silhouette. Tablet/mobile stack the same sheet/parameter/right-content domains and retain horizontally accessible source tabs. |
 | Player profile — public/alternate states | Public lookup, non-owner controls, filled equipment, and saved/no-allocation states. | Canonical `/player/:name` public and alternate owner views. | **Not Done** | Request behavior is covered, but each visible state still needs matching live/local visual evidence. |
-| Fight — active turn composer | Three participant/action zones, equipment paper dolls, toolbar, target switching, AP/mana information, four attack and block rows, submission/reset controls, rosters, and chronological log. | Active arena or wilderness match at desktop/tablet/mobile widths. | **Not Done** | The 2026-07-28 full-width capture corrected the layout: fixed 258px participant rails surround a fluid center; names/vitals precede equipment paper dolls; selector copy contains body parts; a target/HP line precedes the log. Those structures and responsive reflow are implemented. The remaining gap is measurable control semantics, state variants, and fresh local/live comparison using only project-owned presentation primitives—not source artwork. |
-| Fight — waiting/timeout/result variants | Waiting side, timeout claim, surrender result, victory/defeat, multi-opponent selection, and finish/return continuation. | Shared arena/wilderness non-composer match states. | **Not Done** | Runtime behavior/tests exist for several paths, but the complete state set has not been freshly matched visually against Neverlands. |
-| Fight — separate public log | Decorative log frame, chronological time/name-colored rows, participant summary, pagination, and separation from the authenticated shell. | `GET /log/:id` at desktop/tablet/mobile widths. | **Not Done** | The supplied separate-link capture is implemented as a shell-free responsive surface with matching hierarchy, typography, side colors, summary, and pagination. Fresh local/live geometry and state comparison is still required; source crest/ornamental assets are explicitly outside the copy boundary and are not completion work. |
+| Fight — active turn composer | Three participant/action zones, equipment paper dolls, toolbar, target switching, AP/mana information, four attack and block rows, submission/reset controls, rosters, and chronological log. | Active arena or wilderness match at desktop/tablet/mobile widths. | **Done for the captured bounded states** | The 2026-07-28 full-width capture defines the layout: fixed participant rails surround a fluid center; names/vitals precede equipment paper dolls; selector copy contains body parts; a target/HP line precedes the log. A 2026-09-01 local `3x3` browser gate verified six participant cards, opponent switching and reload persistence, the active composer, and no page overflow at `820 × 900` or `390 × 844`, using project-owned presentation primitives. |
+| Fight — waiting/timeout/result variants | Waiting side, timeout claim, surrender result, victory/defeat, multi-opponent selection, and finish/return continuation. | Shared arena/wilderness non-composer match states. | **Done for the captured bounded states** | Deterministic request/system coverage plus the 2026-09-01 local `3x3` browser gate verifies waiting, timeout controls, surrender, three-player side victory/defeat, multi-opponent selection, six-row result, Finish, and completed-match reload. Uncaptured variants remain separate evidence work. |
+| Fight — separate public log | Decorative log frame, chronological time/name-colored rows, participant summary, pagination, and separation from the authenticated shell. | `GET /log/:id` at desktop/tablet/mobile widths. | **Done for the captured bounded states** | The supplied separate-link capture is implemented as a shell-free responsive surface with matching hierarchy, typography, side colors, participant summary, log/statistics navigation, and pagination. The 2026-09-01 local browser gate verified six participants, `51` events across two pages, statistics, empty and missing states, and mobile fit; source crest/ornamental assets remain outside the copy boundary. |
 | Responsive adaptation — shared acceptance | Same source controls/information at `820 × 900` and `390 × 844`, with no page-level horizontal clipping. | Shell, owner Profile, current Inventory, World, current City, Shop, active Fight, and public Fight Log. | **Done** | System coverage confirms stacked shell regions, single/two-column Profile/Inventory reflow, centered fixed-cell World panning, centered fixed-pixel City panning, locally owned Shop control/table overflow, paired fight rails, and a shell-free public log. This row measures local responsive behavior only. |
 | City — current five-district navigation | Five native 1250 × 600 district scenes; exact building/route regions; highlighted hover state; pointer tooltip; Business/Residential/Knowledge/Law arrows; district transitions; Central exit; Arena, Shop, Hospital, Market, and Airship links. | `main`, `forpost1`, `forpost2`, `forpost3`, and `forpost4` at desktop/tablet/mobile widths. | **Done** | Fresh 2026-07-28 observation replaced the stale nine-node/760 × 255 model. Local City now uses five nodes/eight directed links, 1250 × 600 native geometry, project-owned image/CSS highlights, large styled ASCII `>` arrows, keyboard landmarks, exact server offers, and centered responsive panning. The verified Central outdoor handoff is interactive; Law exit remains a non-mutating landmark because its outdoor coordinate was not exercised. |
-| City — building/service interiors | Current interior layout, controls, denial/closed states, and service-specific transitions for every visible building. | Hospital, Market, Airship Station, Tavern, Workshop, Auction, Bank, schools, legal buildings, and other current landmarks. | **Not Done** | Only City-map hover/focus presentation and the existing bounded Hospital/Market/Airship read-only pages are implemented. Capture each interior before adding or claiming its service UX. |
+| City — building/service interiors | Current interior layout, controls, denial/closed states, and service-specific transitions for every visible building. | Hospital, Market, Airship Station, Tavern, Workshop, Auction, Bank, schools, legal buildings, and other current landmarks. | **Not Done** | Hospital/Market retain bounded read-only pages. Airship now has the separately verified configured journey capability below; normal routes await destination/path/schedule content. Other service families require their own capture. |
+| Airship — configured transport capability (`AIRSHIP-TRAVEL-001`) | Completed Forpost-to-Oktal boarding, 150 NV debit, departure wait, moving cells, arrived-aboard state, and destination station. | Owned payment/offer, server-clock region-qualified progress, 7 × 3 viewport with 11 × 5 flight buffer, explicit landing, resume, audience isolation, and mobile panning. | **Done for configured capability** | Verified with focused/concurrency/browser coverage and an isolated seeded local Chrome route across temporary review regions. Source evidence: `doc/design/reference/world/observations/2026-09-08_forpost_oktal_airship_journey.md`; runtime: `doc/features/airship_travel.md`. |
+| Airship — normal destination content and timetable | Complete regional path, exact duration/schedule rule, and authored destination access. | Purchasable normal Forpost routes. | **Not Done** | Captured fares are displayed, but no destination/path/dated departure is invented. Keep one populated region. Walking border mappings remain separate evidence work. |
 | Shop — current shell and empty catalog state | 1250 × 600 building scene; centered 800px controls; four 21px mode tabs; 61px icon category strip; 30px level/price filters; City return. | Central Shop with no loaded item rows, at desktop/tablet/mobile widths. | **Done** | The fresh live state is reproduced with a project-owned CSS illustration, generic game wording, real mode/category links, server-rendered filters, City/Inventory/Refresh controls, and locally owned mobile overflow. No Neverlands Shop image or identity copy is bundled. |
 | Shop — stock, license, sell, novice, and mutation variants | Populated item rows, selection, disabled/eligible states, confirmations, successful/failed purchase and sale, and result feedback. | Every reachable Shop mode/category/action state. | **Not Done** | Server-authoritative buy/sell behavior and dense tables exist, but the fresh session loaded no rows. Keep this row Not Done until populated live/local states are captured and visually compared. |
 
@@ -152,24 +154,26 @@ and responsible file ownership belong in the corresponding
 This matrix translates the 48-page Neverlands character-development category
 into coherent local ownership areas. `Implemented` means the stated bounded
 slice exists with tests; it does not imply an uncaptured formula is complete.
+This is a source/ownership audit, not a Combat delivery-status table; Combat
+status is owned by the Pillar 3 Combat Completion Matrix.
 
 | Area | MVP relevance | Implementation after audit | Remaining evidence or work |
 | --- | --- | --- | --- |
 | Level and experience table | Required | Implemented for complete rows `0..27`, level-0 defaults, cumulative thresholds, grants, per-fight XP caps, and no extrapolation. | `[EVIDENCE]` complete row `28+` values. |
-| Solo PvE XP | Required | Implemented at idempotent fight finalization from configured defeated NPCs, capped by current level. | `[EVIDENCE]` group/team distribution, fame, valor, and XP-loss rules. |
+| Solo PvE XP | Required | Implemented at idempotent fight finalization from one configured NPC or an explicit encounter-level reward; the captured paired-rat encounter awards `35` total, capped by current level. | `[EVIDENCE]` general multi-NPC formula, player-group/team distribution, fame, valor, and XP-loss rules. |
 | Primary stats | Required | Five base-1 stats, starter pool `15`, locked save, aliases, public/effective display implemented. | Other downstream formula coefficients remain owned by their features. |
 | HP and MP maxima | Required | `Health × 5` and `Knowledge × 7` implemented without allocation refill. | `[EVIDENCE]` complete regeneration timing and skill multipliers. |
 | Carrying mass | Required | `effective Strength × 5 + effective Health × 10 + level × 10` enforced for inventory add/loot, transfer, and Shop. | Travel-time encumbrance remains `[EVIDENCE]`. |
 | Numeric skills | Required | Captured 29-skill registry, separate combat/peace pools, tiered rates, locked spending, and cap charging implemented. | Most gameplay effects remain `[EVIDENCE]`; labels alone do not activate them. |
-| Binary perks | Required bounded subset | Source perk `7` save/exclusion flow and `floor(level / 2)` More Strength effect implemented. | Prerequisites/reset and other named perks remain `[EVIDENCE]`. |
+| Binary perks | Required bounded subset | Source perks `7` More Strength and `15` Careful Fighter use the shared save/exclusion flow; their exact Strength and half-wear effects are implemented. | Prerequisites/reset and other named perks remain `[EVIDENCE]`. |
 | Wilderness fatigue | Required | Step `+1..2`, three-minute recovery, `86%` Move/Look/Enter gate, reload persistence, and city exclusion implemented. | High-fatigue combat penalty is `[EVIDENCE]`. |
-| Action points and weapon mastery | Required for broader Combat | Existing fight-profile path is partial. | `[EVIDENCE]` exact AP growth, Extra AP, mastery cost reduction, and damage formulas; do not tune from wiki direction alone. |
+| Action points and weapon mastery | Required for broader Combat | New fight profiles use `80` base AP, `+10` at levels `5` and `10`, and effective Extra Action Points one-for-one; explicit captured profiles still override derivation. A live mace/dagger swap produced `72 AP/150 mastery -> 62` and `66 AP/130 mastery -> 58`. | `[EVIDENCE]` exact weapon-mastery attack-cost reduction and damage coefficients—the fitting `floor(mastery / 15)` candidate is not uniquely proved—plus temporary status modifiers. |
 | Critical hit | Required | Shared resolver uses the exact `2.0` damage multiplier. | Critical probability remains combat tuning/evidence work. |
-| Equipment wear/breakage | Required | Per-result arena/non-arena chances, max one point/item/fight, idempotent finalization, and broken Shop-sale rejection implemented. | `[EVIDENCE]` repair UX/formula and Careful Fighter identity/prerequisite. |
+| Equipment wear/breakage | Required | Per-result arena/non-arena chances, max one point/item/fight, idempotent finalization, Careful Fighter's half chance (including `0.5%`), and broken Shop-sale rejection implemented. | `[EVIDENCE]` Careful Fighter prerequisites and the authenticated repair/workshop transaction. |
 | Drop and Observation | Required bounded loot | Explicit-chance NPC loot tables and participant-level rolls implemented; omitted probabilities are rejected. | `[EVIDENCE]` exact Plague Rat probability, nonlinear Observation, and multi-drop curve; the rat entry stays at an explicit local `0.0` evidence hold and no modifier is guessed. |
-| Armor, pierce, damage, modifiers, resistances | Required for broader Combat | Separate local fields/profile outputs exist; equipment effects are integrated. | Coefficients and remaining interactions are still partial combat work. |
+| Armor, pierce, damage, modifiers, resistances | Required for broader Combat | Separate local fields/profile outputs exist; equipment effects are integrated. | `[EVIDENCE]` exact coefficients and interactions; see `COMBAT-RESOLUTION-COEFFICIENTS` in the Combat Completion Matrix. |
 | Self-healing and mana recovery | Useful for MVP readiness | Skills are allocatable; core vitals persist. | `[EVIDENCE]` exact recovery formula before either skill changes runtime. |
-| Professions | One gathering loop is an MVP gap | Separate design owner added; no profession mutation is shipped. | `[EVIDENCE]` capture one full tool/timer/yield/counter/failure/interruption loop before implementation. |
+| Professions | Successful gathering explicitly deferred for this task | Separate design owner; World ships empty Look and its 28-second lock, with no profession mutation. | `[EVIDENCE]` capture the alchemy eligibility/tool/yield/counter/failure/interruption loop before implementing successful gathering. |
 | Warrior/Mage/Dodger archetypes | Not a separate MVP system | No generic class-selection model is added. | Builds emerge from source-backed stats/skills/equipment; add no class record without evidence. |
 
 The source `max_npcs_in_group` column is retained in the progression catalog
@@ -275,6 +279,10 @@ Required behavior:
 - wilderness movement uses timed, server-issued movement offers;
 - position changes only when movement completes;
 - reload resumes active movement or finalizes completed movement;
+- configured airship journeys use their separate paid lifecycle and persist
+  server-clock progress across region-qualified waypoints; arrival waits for
+  explicit landing. Normal routes remain unavailable until destination,
+  schedule, and path content is complete; see `doc/features/airship_travel.md`;
 - city navigation uses hotspot/building transitions;
 - moving refreshes hidden NPC encounter state, buildings, cell art, and visible
   local-action offers for the new cell;
@@ -353,8 +361,8 @@ layer. The current implementation maps to that contract as follows:
 | Captured village linked location | `TileBuilding` city/location metadata validation and gameplay-context allowlist | exact-cell entry, unchanged coordinate, persisted scene/feature success, moved/replaced/inactive location, mismatch, authentication, Shop/exit handoff, and resume fallback | shared owned-offer policy for both Enter and interior feature capabilities | location entrance, inactive entrance, expired/foreign/mismatched offer | The existing DB-backed cell pipeline owns the location: `TileStateResolver` composes the `TileBuilding`, and `ActionOfferBuilder` issues both entrance and feature offers. No parallel location catalog exists; mines/exchanges remain absent by design. |
 | Shared hidden wild-NPC combat handoff | No new model domain behavior; match/participation persistence is exercised through the service | interrupted movement/entrance/local/shell success, stale/dead/null/wrong-cell/startup failure, duplicate start, and authentication | current-character scoping plus combat participant policy; no client-selected NPC offer exists | defeated, respawn, multi-NPC, edge, and missing-health NPC traits | `StartNpcFight` is orchestration over existing models, so its dedicated service spec replaces a redundant new model spec. |
 | Five-node city graph, one verified gate, and building entry | `Zone`, `CityHotspot`, and city action offer types/coordinates | immediate node/building/gate success; fresh keys; missing/null/expired/mismatched/wrong-node/foreign failures; exact gate cell; authentication | shared owned-offer policy | city node, district, read-only building, city transition/building entry, expired, and foreign-owner traits | Catalog/service specs cover immutable graph topology and read-only source data; no separate mutable city-graph model is introduced. The Law exit remains a presentation-only landmark until its outdoor handoff is captured. |
-| Exact logout/login resume for world, city, Shop, and read-only city interiors | gameplay-context normalization, persistence, malformed/null rejection | outdoor/city/building success, failed login, stale/malformed/injected context, cross-user isolation, missing character, wrong-node access, and authentication | Not applicable: no client-selected record is authorized; paths are generated from the signed-in character's allowlisted server state and building access is rechecked | Shop/building resume, malformed, null, and malformed-building context traits | A new Pundit resource would duplicate Devise current-user ownership and the current-node building accessibility gate without adding an authorization boundary. |
-| Outdoor cell content authoring and reconciliation | `MapTileTemplate`/`TileBuilding` seed convergence, outdoor-NPC config parsing, lazy `NpcTemplate`/`TileNpc` materialization, and exact stale-row cleanup | rendered coordinates, current-cell behavior, moved/inactive/removed content, and stale offers/resume are covered by World requests | Not applicable: content declarations are not user-addressable; their resulting mutations reuse owned offers | resource action, inactive entrance/action, outdoor/edge/missing-health/defeated NPC traits | `doc/features/world.md` section 7.4 is the operational contract. `db/seeds.rb` owns DB-backed tile/building declarations; the YAML config owns NPC spawn definitions; neither authorizes a parallel catalog or makes declaration deletion equivalent to persisted-state deletion. |
+| Exact logout/login resume for world, city, village, city/village Shop, read-only city interiors, and accessible Arena rooms | gameplay-context normalization, persistence, malformed/null rejection | outdoor/city/village/Shop/Arena success, room-region access, failed login, stale/malformed/injected context, cross-user isolation, missing character, wrong-node access, and authentication | Not applicable: no client-selected record is authorized; paths are generated from the signed-in character's allowlisted server state and building access is rechecked | Shop/building/village/Arena resume, malformed/null contexts, and foreign-region room cases | A new Pundit resource would duplicate Devise current-user ownership and the current-node building accessibility gate without adding an authorization boundary. |
+| Outdoor cell content authoring and reconciliation | `MapTileTemplate`/`TileBuilding` seed convergence, outdoor-NPC config parsing, seed-time `NpcTemplate`/`TileNpc` materialization with DB-only runtime reads, and exact stale-row cleanup | rendered coordinates, current-cell behavior, moved/inactive/removed content, and stale offers/resume are covered by World requests | Not applicable: content declarations are not user-addressable; their resulting mutations reuse owned offers | resource action, inactive entrance/action, outdoor/edge/missing-health/defeated NPC traits | `doc/features/world.md` section 7.4 is the operational contract. `db/seeds.rb` owns DB-backed tile/building declarations; the YAML config owns NPC spawn definitions; neither authorizes a parallel catalog or makes declaration deletion equivalent to persisted-state deletion. |
 
 This matrix is part of the implementation contract: a later feature may mark a
 layer not applicable only with a concrete boundary-based reason, not merely
@@ -374,15 +382,38 @@ because another layer has tests.
   hover/focus tooltips, keyboard proxies, and server-offer-only submission.
   Existing `arena.png` and `gate.png` remain retained.
 - The outdoor client phase is implemented: `100 x 100` terrain cells, a clipped
-  13 × 7 desktop viewport over a 15 × 9 buffer, thin red server-offer borders,
+  odd-column/row viewport fitted to its equivalent header-plus-main gameplay frame (up to 13 × 7) over a
+  15 × 9 buffer, thin red server-offer borders,
   fixed center cursor, linear map translation, and server-time countdown
   presentation. Narrow clients pan the same native geometry.
 - The captured Frontier Village slice is implemented as an exact-cell
   `location` entrance with a CSS-built `760 × 255` scene, owned Shop/exit
   feature offers, unchanged outdoor position, and validated login resume.
   Other outdoor location families remain Not Done.
-- Local presence refresh after movement completion is not yet launch-polished.
-- Movement locks and action locks need to be consistently visible in the UI.
+- Movement completion reloads the bounded map and current-cell presence from
+  authoritative state. Timer sleep/Back recovery, rejected-move navigation,
+  keyboard focus, and the captured `28`-second Look lock are covered.
+- The verified gate/village cluster now preserves its observed adjacency:
+  local `[6,8] -> [5,7] -> [4,6]`. Enter/leave and logout/login retain the
+  exact persisted location. Source and local coordinates are distinguished in
+  `doc/design/areas/world_map.md`.
+- Ordinary chat follows the confirmed current cell/room boundary, including
+  village, Shop, and selected Arena rooms, with authorization on every poll
+  and send. Persisted gameplay context also restores the selected accessible
+  Arena room after login.
+- One populated region is the current delivery boundary; region-isolated
+  position, content, offers, actions, and resume are ready for additional
+  regions. Configured airship journeys now support persisted region handoffs;
+  normal destination/path/timetable content and walking borders remain absent.
+- First entry to Hospital/Market interiors and the Airship station renders the newly
+  saved room's presence. Both Arena Enter links refresh the full shell, so
+  the surrounding label/count/list changes immediately without automatic
+  refresh. Chat uses the same saved room identity.
+- `[IMPL]` Full region topology/content remains outside the captured sample.
+  `[EVIDENCE]` Exact source presence expiry and broader content/formulas remain
+  incomplete; the atlas does not supply server rules. See the audit in
+  `doc/features/world.md` section 19. Successful alchemy gathering is explicitly
+  deferred by the user.
 - The open-world starter slice is implemented and covered through model,
   service, policy, request, routing, view, and system specs.
 
@@ -460,14 +491,80 @@ Required behavior:
   from the outdoor rat capture is treated as a source bug because the in-frame
   fight log had the complete event stream.
 
+### Combat Completion Matrix
+
+This is the canonical mechanic-level delivery roll-up for Combat. It owns the
+completion status and next gate only. Neverlands evidence remains owned by
+`doc/design/reference/combat/README.md`, normalized rules by
+`doc/design/features/combat.md`, and verified local behavior by
+`doc/features/arena_combat.md`. Those documents must link here instead of
+maintaining a second Combat completion table.
+
+Status is assigned in this precedence order:
+
+1. `EVIDENCE_NEEDED` — Neverlands proof is missing or ambiguous, so exact
+   behavior must not be invented even if a bounded local path exists.
+2. `IN_PROGRESS` — evidence is sufficient, but required local behavior or
+   coverage is not complete.
+3. `VERIFICATION_NEEDED` — the bounded runtime and focused coverage exist, but
+   the listed source comparison, browser flow, or visual validation has not
+   been recorded.
+4. `DONE` — evidence, normalized design, runtime behavior, focused coverage,
+   and documentation are verified for the row's declared boundary.
+
+The roll-up takes the highest-precedence outstanding status among its in-scope
+rows, making the two summary statuses reproducible from the table.
+
+`MVP` means the bounded physical launch loop described in this pillar, using
+only the currently evidenced profiles and allowlisted actions. It does not
+claim universal formula parity. The physical MVP becomes `DONE` only when
+every `MVP` row below is `DONE`; full Neverlands Combat becomes `DONE` only
+when every row is `DONE`. Rows are deliberately not converted into a
+percentage because they have unequal scope and risk.
+
+Current canonical roll-up:
+
+- Bounded physical MVP: `DONE`.
+- Full Neverlands Combat: `EVIDENCE_NEEDED`.
+
+| Tracking ID | Scope | Mechanic or flow | Neverlands evidence | Local runtime | Status | Exact next gate |
+|---|---|---|---|---|---|---|
+| `COMBAT-ARENA-001` | MVP | Application/start, active, waiting, timeout, surrender, result, explicit finish, and allowlisted return lifecycle | Sufficient for the bounded lifecycle; wilderness fights display a five-minute limit, while two later terminations are retained as an excluded source anomaly | Implemented and covered through the shared match runtime; World-created matches enforce their explicit `300`-second fight deadline before another turn intent | `DONE` | — |
+| `COMBAT-PVE-PHYSICAL` | MVP | Physical PvE `1x1` and `1xN` through Arena and wilderness | Bounded single- and multi-NPC flows plus passive current-coordinate entry/return are captured | Shared resolver, turn processor, NPC AI, targeting, result, and reload paths are covered; seeded Chrome completed immediate Arena `1x1`, City-exit/walk/wait wilderness `1x2`, and a sampled mixed Bandit/Robber `1x2` through target switch, both NPC responses, AP reset, exact five-minute terminal timeout, Finish/same-cell return, and a later automatic `137s` passive re-entry | `DONE` | — |
+| `COMBAT-WILDERNESS-SELECTION` | Full | Exact passive delay/probability and per-cell eligible opponent/group selection | Current-coordinate availability and variable output are confirmed: exact-cell `m_1008_1007` produced and completed mixed `1x3`, then `1x1`, `1x1`, and mixed `1x2` groups with same-cell Finish returns and intervals approximately `230..278` and `127..187` seconds; a later no-coordinate swamp chain produced `1x7 -> 1x3` and a `4..64`-second no-click interval; the complete pool, weights, probability, cooldown, delay distribution, and storage remain unexposed | One persisted cell anchor now supports validated complete roster samples and delay windows. Local `[8,7]` replays only the four exact `m_1008_1007` outputs through server RNG, persists the selected roster/levels/HP/XP/risk, and remains eligible for a newly scheduled selection after full victory and Finish; cells without samples keep explicit fixed composition and the provisional `10..30`-second fallback | `EVIDENCE_NEEDED` | Repeat controlled waits on exact hostile and adjacent non-hostile coordinates, tabulating every interval, roster, level, and fight-risk field; obtain the complete pool/weights/probability/cooldown/delay rule before replacing bounded sample replay with claimed source parity. |
+| `COMBAT-PVP-PHYSICAL` | MVP | Physical PvP `1x1` | Bounded Arena side, application, waiting, and turn behavior captured | Two seeded authenticated players are browser-verified through application/accept/countdown, both physical submissions and shared resolution, timeout victory/draw, surrender, result, idempotent finish/reload, and replay; a deterministic request integration repeats create-to-replay and the handbook maps every lifecycle slice to model/unit, service/job/channel, request/policy, and browser/system coverage | `DONE` | — |
+| `COMBAT-TEAM-TURNS` | MVP | Player/team and mixed `1xN` turn synchronization | Side/waiting behavior is sufficient for the bounded flow; reward distribution is tracked separately | Deterministic `3x3` request/system coverage and a disposable six-player browser run verify allied-target rejection, persisted opponent switching, the first five players waiting, the sixth releasing one shared resolution, stale-round rejection, side completion, six results, Finish, and reload | `DONE` | — |
+| `COMBAT-TURN-PACKAGE` | MVP | Four legal physical package shapes, one active block, reset/no-op, target selection, AP validation, and multi-attack penalties | Exact source script and live warning behavior captured; a 2026-09-02 authenticated turn independently displayed `62 + 62 + penalty 25 = 149 AP` | Server validation and source-shaped packages are implemented and covered | `DONE` | — |
+| `COMBAT-AP-PROFILE` | MVP | Base/level/Extra-AP budget and source-injected physical/magic profile limits | Exact bounded constants captured | Profile snapshot, AP budget, dynamic physical costs, and separate magic ceiling/current MP checks are implemented and covered | `DONE` | — |
+| `COMBAT-BLOCK-TABLES` | MVP | Normal and shield-selector `40/70/90` block rows and costs | Exact source rows captured | Allowlisted tables and server validation are implemented and covered | `DONE` | — |
+| `COMBAT-CRITICAL-MULTIPLIER` | MVP | Critical damage multiplier | Exact wiki value captured | `2.0` multiplier is implemented and covered | `DONE` | — |
+| `COMBAT-RESOLUTION-COEFFICIENTS` | Full | Hit, miss, dodge, critical probability, shield success/pierce, armor, and damage calibration | Outcomes captured; general coefficients remain ambiguous | Seeded bounded resolver exists, but universal Neverlands calibration is not claimed | `EVIDENCE_NEEDED` | Capture controlled equipment/stat variations or a complete source formula, then replace only disproved coefficients and verify seeded outcome boundaries. |
+| `COMBAT-WEAPON-MASTERY` | Full | Weapon-mastery AP reduction and damage gain | Two observations fit, but do not prove, `floor(mastery / 15)` | Explicit source profile inputs are supported; no global formula is inferred | `EVIDENCE_NEEDED` | Capture at least one discriminating mastery/AP point and damage comparison that separates the candidate formulas. |
+| `COMBAT-FATIGUE` | Full | High-fatigue attack, defense, recovery, and other combat penalties | Two post-fight checkpoints showed low fatigue recover `2% -> 1%` over about seven minutes despite another fight; exact cadence and high-fatigue coefficients remain missing | World fatigue/action gating exists; no source-derived combat penalty is applied | `EVIDENCE_NEEDED` | Compare otherwise equivalent fights across controlled fatigue bands and capture before/at/after recovery boundaries. |
+| `COMBAT-XP-SOLO` | MVP | Solo NPC and explicitly authored encounter XP | Starter and bounded multi-NPC totals captured | Capped, idempotent participant award and explicit encounter totals are implemented and covered | `DONE` | — |
+| `COMBAT-XP-GENERAL` | Full | General solo and multi-NPC encounter XP calculation | Two visibly equivalent level-7 Bandit `1x1` fights awarded `9` and `14` XP while their fight-risk fields differed; the controlling hidden/random inputs and general formula remain unknown | Explicit captured NPC/encounter rewards work; no visible-name/level formula or random roll is inferred | `EVIDENCE_NEEDED` | Repeat a controlled visibly equivalent opponent across risk fields and turn shapes, recording source payload, damage, duration, and XP; obtain a complete source formula or enough discriminating points before implementing non-authored rewards. |
+| `COMBAT-XP-GROUP` | Full | Player-group/team XP distribution | General distribution rule is missing | No generalized player-group distribution is claimed | `EVIDENCE_NEEDED` | Complete the same eligible encounter solo and in a player group, recording participant damage, level, result, and awarded XP. |
+| `COMBAT-LOOT-PIPELINE` | MVP | Per-defeated-NPC typed item/NV checks, atomic award, retry safety, and recipient event handoff | Bounded item/NV outputs captured; exact curves are tracked separately | Typed fail-closed probabilities, inventory/wallet mutations, processing markers, and stable publication keys are implemented and covered | `DONE` | — |
+| `COMBAT-OBSERVATION-DROPS` | Full | Observation modifier, search eligibility, multi-drop behavior, and NPC-specific item/NV probabilities | A 2026-09-02 chain visibly searched five defeated bots: four returned nothing and one returned a Small strange potion; the user confirms armor/axe equipment outcomes also exist, but exact eligibility, Observation, pool, and probability curves remain missing | Explicit known probabilities work through one generic typed-item path that accepts consumables, weapons, and armor; unknown production entries remain disabled or absent | `EVIDENCE_NEEDED` | Repeat controlled kills at materially different Observation values and capture eligibility, nothing-found, consumable/equipment/NV, and multi-drop outcomes; obtain NPC-specific pools and probabilities before authoring them. |
+| `COMBAT-MAGIC-SELECTORS` | MVP | Injected magic attack/block rows, AP/MP limits, and profile magic-hit ceiling | Bounded selector and one magic opener captured | Allowlisted profile injection and independent ceiling/current-MP validation are implemented and covered | `DONE` | — |
+| `COMBAT-MAGIC-STATUSES` | Full | Magic damage/statistics categories, resistance, blocks, and persisted status application/expiry | One current Spirit Arrow turn proves `50` AP, `5` MP, a critical magic hit for `10`, and non-naive ordinary hit-count presentation; complete formulas and status lifecycles are missing | Bounded allowlisted attack/block rows exist; no general magic coefficient or persisted-status engine is claimed | `EVIDENCE_NEEDED` | Capture one complete flow per magic/status family from selection through resistance/block, application, repeated-turn effect, expiry, and result-statistics categorization. |
+| `COMBAT-EQUIPMENT-WEAR` | MVP | Arena/non-Arena result-based durability loss and Careful Fighter | Exact rates, cap, and perk effect captured | Transactional one-point-per-item wear with perk-adjusted chance is implemented and covered | `DONE` | — |
+| `COMBAT-INJURIES` | Full | Ordinary injury chance, type, severity, duration, and Arena/wilderness risk-field mapping | Taxonomy and selected guaranteed cases are known; current same-cell fights varied from `30` medium to `80` very high, but winning results produced no injury and do not establish the outcome mapping | No ordinary source-derived outcome is inferred | `EVIDENCE_NEEDED` | Capture repeated eligible defeats across Arena and wilderness risk values, including injury display, duration, stacking, and recovery. |
+| `COMBAT-REPAIRS` | Full | Workshop request, item handoff, skill/material/payment failure, completion, and owner retrieval | Direction and item-level × `30` gate are known; one authenticated transaction is missing | No repair transaction is implemented | `EVIDENCE_NEEDED` | Record one complete authenticated success flow plus insufficient-skill, material/payment, cancellation, and retrieval failure states. |
+| `COMBAT-FIGHT-UI-001` | MVP | Active composer plus waiting, timeout, surrender, victory/defeat, multi-target, and finish states | Required structures and representative states are captured | Deterministic browser coverage and the disposable `3x3` run verify every listed state, selected-target persistence, six participant/result rows, and accessible no-overflow layouts at desktop, `820px`, and `390px` | `DONE` | — |
+| `COMBAT-LOG-001` | MVP | Public chronological log, participant summary, pagination, statistics, and shell separation | Public log/stat captures are sufficient | Request/system coverage and the disposable browser run verify a six-participant stream, `50`-entry page boundary, page `2`, statistics, Fight-log navigation, empty state, bounded `404`, shell exclusion, escaping, and mobile fit | `DONE` | — |
+
 ### Remaining Design Detail
 
-- Combat formulas need continued consolidation around item-family AP,
-  physical cost, defense, shield block, injected magic selector options, and
-  magic coefficients.
-- More tests are needed around cross-entry consistency: arena player/team
-  fights, arena NPC, and wild NPC must use the same shared combat contract. Any
-  old wrapper that cannot follow that contract should be removed.
+- Combat formulas need continued consolidation around weapon-mastery physical
+  cost/damage, defense, fatigue, magic/status, and injury coefficients. AP
+  growth, selector injection, and the four physical block tables are now exact.
+- Arena player, player-team, Arena NPC, and wild NPC physical paths use the same
+  shared combat processor. The bounded `3x3` browser/request gate is complete;
+  uncaptured team reward distribution remains the separate `COMBAT-XP-GROUP`
+  evidence row.
+- Explicit captured encounter XP is complete for the MVP; universal solo and
+  multi-NPC calculation remains the separate `COMBAT-XP-GENERAL` evidence row.
 - Magic and special action behavior needs launch-level balancing and UI
   clarity.
 - Combat logs now use the canonical event schema for arena fights. Expand
@@ -508,10 +605,15 @@ Required behavior:
 - each cell resolves sparse tile state, validated cell art, hidden NPCs,
   entrances, local actions, and offers from server-side state;
 - NPC identity and presence remain hidden on the map;
-- hostile NPCs attack by interrupting a wilderness action; there is no manual
-  outdoor Attack control;
+- hostile NPCs attack by interrupting a wilderness action or while the player
+  remains on the outdoor surface; there is no manual outdoor Attack control;
 - hostile NPC checks can interrupt normal outdoor actions before those actions
   complete;
+- a passive check resolves only the persisted source-backed same-cell hostile;
+  an immediate browser check follows a server-persisted coordinate/NPC-
+  fingerprinted due time; an evidenced cell may select one complete persisted
+  roster sample and one captured delay window, while unsampled cells retain a
+  provisional fallback that is not a claimed Neverlands probability/timer;
 - wild NPC combat uses the shared turn package, body-part rules, AP, blocks,
   magic/action slots, combat log, and result-finish step;
 - after a wild fight, the player returns to the world/city movement context,
@@ -533,6 +635,9 @@ Required behavior:
   inspect/gather actions. Only `look` has launch behavior until the other
   successful flows are captured.
 - Evaluate hostile NPC interruption before completing mutating outdoor actions.
+- Reuse that same authoritative interruption/start boundary for passive
+  outdoor delivery; persist the due state on the server and do not accept an
+  NPC, coordinate, timer, or chance from the browser.
 - NPC combat and loot design is documented in
   `doc/design/features/npcs_quests.md`.
 - Quest behavior still needs a dedicated Neverlands capture before any Rails
@@ -542,11 +647,14 @@ Required behavior:
 
 ### Remaining Design Detail
 
-- Mixed-template outdoor groups, random encounter selection, and encounter
-  probability remain deferred until direct Neverlands evidence exists; the MVP
-  implements only explicit source-authored encounter composition.
-- Successful gathering rewards and the `fis`, `dri`, and `dig` action outcomes
-  still require live capture before implementation.
+- Fixed and sampled mixed-template groups are implemented from captured
+  compositions; authored capacity is `1..10`, matching the official Bot maximum.
+  Complete per-cell pools, selection weights, and passive probability/delay
+  distributions remain evidence gaps. Bounded roster replay does not establish
+  their missing formulas.
+- Successful gathering is explicitly deferred for this task pending the
+  alchemy skill path. The `fis`, `dri`, and `dig` outcomes also require complete
+  live capture before implementation.
 - Broader combat formula, magic/status, trauma, and reward work remains owned by
   Pillar 3; it must continue using the same participant/result pipeline.
 
@@ -576,13 +684,13 @@ action-key discipline remains tracked in the checklist below.
 
 | Area | Documentation Status | Implementation Status | Next Step |
 | --- | --- | --- | --- |
-| Game shell and UI/AX | Documented in layout docs, the 2026-05-25 live shell capture, and the supplied 2026-08-23 mixed chat/event capture plus NV addendum. | Partial overall; the captured fight/item/NV/world event-timeline subset is implemented with durable history and live delivery. | Finish auxiliary chat controls and remaining parity states while retaining one shell, one mixed chat timeline, and no iframe/frameset or toast-notification clone. |
-| Person | Documented across vitals, progression, inventory/equipment, live player captures, wiki development audit, and 2026-06-01 live inventory/items capture. | Bounded Character Progression is fully implemented: level-0 start, table XP/grants, locked allocation, exact HP/MP/mass, More Strength, and public display. Inventory/equipment remains partial beyond the implemented mass/wear/broken-sale slice. | Capture regeneration/AP/drop/repair formulas and finish remaining inventory family/equipment UX. |
-| Neverlands `Навыки` boolean perks | Full id/name/category catalog, starter save flow, exclusion rules, and More Strength wiki effect are documented. | Source perk `7` (`Больше силы`) is fully implemented for the MVP subset: separate pool, preview/save, ownership, exclusion registry, and `floor(level / 2)` effective Strength. | Capture prerequisites/reset and exact effects before exposing other magic/warrior/profession branches. |
-| Movement | Documented across movement, fatigue wiki rules, and live movement/city/village captures, including the verified gate, local actions, 13 × 7 visible / 15 × 9 buffered `100 x 100` geometry, `24`/`32`-second travel states, hidden NPCs, and the one-region `1000 x 1000` boundary. | MVP world/city/village pass implemented: exact/fallback timed offers, sparse bounds, project-owned cell-art slices, fixed-cursor animation, current city gate, village location handoff, plus persisted `1..2` step fatigue, three-minute recovery, and the `86%` outdoor action gate. | Capture each additional linked-location family separately; verify the Law exit handoff before adding a second outdoor gate. |
-| Arena | Documented across arena, combat, live arena captures, and public log captures. | Partially implemented; Arena entry/return is wired through Central Square with owned action keys. | Continue formula tuning, magic/special balancing, and shared fight coverage. |
-| Combat | Documented across combat reference captures, arena observations, wiki development constants, logs, and equipment effects. | Partial overall; shared completion now adds exact 2× critical damage, solo capped NPC XP, idempotent rewards, and source-result equipment wear. | Capture AP/mastery, fatigue penalty, group XP, observation/drop, magic/status, and repair formulas while keeping one resolver. |
-| Wild cells | Documented across outdoor movement, hostile NPC capture, composable cell contents, `look`, and fatigue/XP rules. | Fully implemented for the declared World boundary: composed cells, fatigue gate, movement/building/shell interruption, paired-NPC combat, participant loot, capped solo XP, surrender, duplicate-start protection, and allowlisted return. | Capture one complete gathering/profession outcome and any new encounter composition before extending authored content. |
+| Game shell and UI/AX | Documented in layout docs, the 2026-05-25 live shell capture, and the supplied 2026-08-23 mixed chat/event capture plus NV addendum. | Partial overall; cell/room ordinary chat, per-login delivered-row history, session-backed local presence, and durable fight/item/NV/world events are implemented. | Finish auxiliary chat controls and remaining parity states while retaining one shell, one mixed chat timeline, and no iframe/frameset or toast-notification clone. |
+| Person | Documented across vitals, progression, inventory/equipment, live player captures, wiki development audit, and 2026-06-01 live inventory/items capture. | Bounded Character Progression is fully implemented: level-0 start, table XP/grants, locked allocation, exact HP/MP/mass/AP, More Strength, Careful Fighter, and public display. Inventory/equipment remains partial beyond the implemented mass/wear/broken-sale slice. | Capture regeneration, mastery, drop, and repair transaction formulas and finish remaining inventory family/equipment UX. |
+| Neverlands `Навыки` boolean perks | Full id/name/category catalog, starter save flow, exclusion rules, and the More Strength/Careful Fighter wiki effects are documented. | Source perks `7` and `15` are implemented for the MVP subset: separate pool, preview/save, ownership, exclusion registry, `floor(level / 2)` Strength, and half-probability fight wear. | Capture prerequisites/reset and exact effects before exposing other magic/warrior/profession branches. |
+| Movement | Documented across movement, fatigue wiki rules, and live movement/city/village captures, including the verified gate, local actions, frame-fitted odd visible columns/rows (up to 13 × 7) / 15 × 9 buffered `100 x 100` geometry, `24`/`32`-second travel states, hidden NPCs, and the one-region `1000 x 1000` boundary. | MVP world/city/village pass implemented: exact/fallback timed offers, sparse bounds, project-owned cell-art slices, fixed-cursor animation, current city gate, village location handoff, plus persisted `1..2` step fatigue, three-minute recovery, and the `86%` outdoor action gate. | Capture each additional linked-location family separately; verify the Law exit handoff before adding a second outdoor gate. |
+| Arena | Documented across arena, combat, live arena captures, and public log captures. | The bounded Arena lifecycle, physical `1x1` PvP, physical PvE, `3x3` team synchronization, captured fight states, and public log are `DONE`. | Keep full-combat evidence gaps separate in the Combat Completion Matrix. |
+| Combat | Documented across combat reference captures, arena observations, wiki development constants, logs, equipment effects, and the 2026-08-26 live level-17 shield fight. | Bounded physical MVP: `DONE`. Full Neverlands Combat: `EVIDENCE_NEEDED`. | Use the Combat Completion Matrix; its mechanic rows and exact next gates are canonical. |
+| Wild cells | Documented across outdoor movement, exact-current-coordinate hostile observations, variable roster/timing captures, composable cell contents, `look`, and fatigue/XP rules. | Fully implemented for the declared World boundary: composed cells, fatigue gate, movement/building/shell interruption, server-persisted passive due state, fixed or sampled mixed NPC rosters, participant loot, capped explicit solo XP, five-minute World-fight deadline, surrender, duplicate-start protection, and allowlisted return. | Keep successful gathering deferred for alchemy evidence; capture the complete per-cell pool/weights and passive probability/cooldown/delay distribution before promoting bounded sample replay to full parity. |
 | Neverlands marketplace/shop | Launch Shop is documented, including the fresh 1250 × 600 scene and centered 800px control shell; older populated rows remain historical evidence. | Central Shop is implemented with project-owned CSS presentation, buy/sell/licenses/novice categories, wallet/inventory authority, and responsive control/table overflow. | Capture fresh populated/disabled/success/failure states before marking Shop action variants 1:1. |
 | Neverlands NPC quest interactions | Needs dedicated Neverlands capture. | Not implemented; generic quest/story stack removed. | Capture exact NPC quest entry points, dialogue/action states, journal/task display, reward/turn-in rules, location gates, and failure/cancel states before rebuilding. |
 
@@ -599,29 +707,30 @@ the next implementation step is.
 | --- | --- | --- | --- |
 | Game client layout | Yes: gameplay shell docs and live player capture. | Partial. | Make the game shell the default authenticated surface across world, city, building, arena, shop, and combat screens. |
 | UI/AX shell behavior | Yes: live shell, outdoor movement, and city image-map captures. | MVP world/city shell pass implemented: dense top vitals/actions, persistent chat/presence, labeled movement buttons, accessible city proxies, tooltip/focus behavior, and textual timer state. | Carry the same shell contract through remaining combat and building feature screens. |
-| World map | Yes: coordinate movement, 13 × 7 visible / 15 × 9 buffered `100 x 100` geometry, fixed-cursor travel, fatigue, hidden NPC encounters, composable cells, the captured village location, and one `1000 x 1000` region. | MVP client pass implemented with project-owned terrain slices, thin red offers, exact/fallback server timing, sparse bounds, hidden interruption, verified Central/village entrances, village Shop/exit offers, exact-cell resume, and responsive panning. | Keep uncaptured mines/exchanges/other location families Not Done; add one gathering outcome only after complete profession evidence. |
+| World map | Yes: coordinate movement, frame-fitted odd visible columns/rows (up to 13 × 7) / 15 × 9 buffered `100 x 100` geometry, fixed-cursor travel, fatigue, hidden NPC encounters, composable cells, the captured village location, and one `1000 x 1000` region. | MVP client pass implemented with project-owned terrain slices, thin red offers, exact/fallback server timing, sparse bounds, hidden interruption, verified Central/village entrances, village Shop/exit offers, exact-cell resume, and responsive panning. | Keep uncaptured mines/exchanges/other location families Not Done; successful gathering is deferred for the current task pending alchemy evidence. |
 | Cities and buildings | Yes: current five-node graph, 1250 × 600 image-map interaction, hover swaps/tooltips, eight routes, one verified gate/cell mapping, and current Shop shell. | Complete for the freshly captured City navigation slice: fixed native scene, project-owned CSS highlights and ASCII arrows, five districts, eight routes, one verified gate, level-zero Arena, Central Shop/Hospital, Residential Market/Airship, keyboard landmarks, responsive panning, owned offers, and exact-node resume. | Keep service interiors and the Law exit handoff Not Done until their current success/failure/destination states are captured. |
-| Arena | Yes: arena docs, live combat captures, public log captures. | Partial; entry/return is routed through the Central Square building hotspot and action-key validated. | Keep application rows compact and side-based; finish combat formula/content work. |
+| Arena | Yes: arena docs, live combat captures, public log captures. | The bounded lifecycle, physical `1x1` PvP/PvE, multi-participant synchronization, captured visual states, and public log are `DONE`. | Follow the Combat Completion Matrix rather than inferring full formula parity from this summary row. |
 
 ### Features
 
 | Feature | Documented | Implemented | Next Step |
 | --- | --- | --- | --- |
-| Login and resume | Yes: live player/location behavior and dashboard-removal decision. | Outdoor cell, exact city node, Frontier Village, village-linked Shop, city Shop, and accessible captured read-only interior resume are implemented with sanitized server-side state. Village/Shop resume rechecks the exact active DB-backed entrance cell. | Extend the allowlisted resolver only when another source-backed interior is implemented; never persist arbitrary return URLs. |
+| Login and resume | Yes: live player/location behavior, dashboard-removal decision, and the completed Forpost-to-Oktal journey. | Outdoor cell, exact city node, Frontier Village, village-linked Shop, city Shop, allowlisted city interiors, and accessible selected Arena room resume are implemented with sanitized server-side state. An owned aboard airship journey takes priority and catches up from persisted deadlines. Village/Shop/Arena access is revalidated; stale chat reads cannot restore an old room. | Source new-login/offline flight behavior remains unexercised; local recovery is an engineering guarantee. Never persist arbitrary return URLs. |
+| Airship transport | Yes: the completed Forpost-to-Oktal boarding, departure wait, flight, arrival, and station-reload capture. | `AIRSHIP-TRAVEL-001` is Done for configured capability: atomic fare/boarding, persisted region-qualified progress, bounded cells, flight audience isolation, explicit landing, and recovery. | Normal routes remain unbookable until destination/path/schedule content is authored. Keep one populated region; walking border mappings remain uncaptured. |
 | Wilderness movement | Yes: live movement captures, wiki fatigue rules, and movement feature doc. | Timed offers, acceptance, completion, reload, sparse boundaries, stale-offer cancellation, bounded Wanderer timing, `1..2` step fatigue, three-minute recovery, and `86%` Move/Look/Enter gate implemented. | Isolate terrain/effect/encumbrance timing and high-fatigue combat inputs before adding them. |
 | City movement | Yes: the current five live nodes, native-pixel hotspot/hover behavior, eight route arrows, Central gate handoff, building return, and level-16 Arena availability are captured. | Implemented for MVP: immediate five-node transitions, level-zero Arena, fresh owned offers, project city art with CSS highlight crops, large styled ASCII arrows, tooltips, keyboard landmarks, centered responsive panning, exact Central gate pairing, and no city grid/timer or geometry authority. | Capture the Law exit result and each deferred service interior before extending actions. |
-| Tile-local action offers | Yes: movement, outdoor NPC, city/building entry, and `look`/`fis`/`dri`/`dig` client observations. | `look` offer/accept/refresh and hostile ambush handoff implemented; the other source ids are validated authored types only. | Capture successful reward/timer/equipment flows before implementing outcomes for `look`, `fis`, `dri`, or `dig`. |
-| NPCs and drops | Yes: hostile behavior, arena mannequin drops, paired wild rat-tail drops, supplied `24 NV` result, participant-level defeat, XP caps, and source-backed return context. | Implemented for the declared encounter/typed-award pipeline: explicit paired rats, distinct targeting, all-NPC response, atomic retry-safe item/NV awards, capped solo XP, final anchor defeat, surrender-compatible sides, and allowlisted return. The active Training Dummy item chance is explicit; the authored Plague Rat item identity remains at a `0.0` evidence hold. | Capture the exact Plague Rat item probability, Observation/multi-drop, group-XP, and NPC-specific NV probability before enabling/tuning those values or authoring money onto a production NPC; quest NPC behavior remains separate. |
+| Tile-local action offers | Yes: movement, outdoor NPC, city/building entry, and `look`/`fis`/`dri`/`dig` client observations. | Immediate dismissible empty `look`, persisted 28-second lock, and hostile ambush handoff implemented. The owned offer records result delivery once, preventing replayed session cookies from reopening the dialog; other source ids are validated authored types only. | Keep successful `look` gathering deferred for alchemy evidence; capture reward/timer/equipment flows before implementing successful gathering or `fis`/`dri`/`dig` outcomes. |
+| NPCs and drops | Yes: hostile behavior, arena mannequin drops, paired wild rat-tail drops, supplied `24 NV` result, participant-level defeat, XP caps, and source-backed return context. | Implemented for the declared encounter/typed-award pipeline: explicit paired rats, distinct targeting, all-NPC response, atomic retry-safe item/NV awards, exact `35` total paired-encounter XP, fixed-anchor final defeat, sampled-anchor post-victory eligibility, surrender-compatible sides, and allowlisted return. The active Training Dummy item chance is explicit; the authored Plague Rat item identity remains at a `0.0` evidence hold. | Capture the exact Plague Rat item probability, Observation/multi-drop, general multi-NPC/player-group XP, and NPC-specific NV probability before enabling/tuning those values or authoring money onto a production NPC; quest NPC behavior remains separate. |
 | NPC quest interactions | Needs dedicated Neverlands capture. | Not implemented; generic quest/story stack removed. | Capture exact quest UI, NPC dialogue flow, task/journal state, reward/turn-in rules, and location gating before implementation. |
-| Combat | Yes: combat captures, public logs, wiki critical/wear/XP constants, item/NV search outputs, magic, equipment effects, and result flow. | Partial overall; shared resolver/result path, 2× critical, typed transactionally idempotent participant loot, capped solo NPC XP, reward marker, and equipment wear are implemented. | Capture/tune AP/mastery, fatigue penalty, group XP, Observation/drop and NPC-specific NV probabilities, remaining magic/status, and repair behavior. |
-| Arena combat | Yes: arena rooms/applications and NPC training captures. | Partial. | Bind NPC training, player, and team applications to the same combat profile and result flow. |
+| Combat | Yes: combat captures, public logs, wiki AP/critical/wear/XP constants, item/NV search outputs, magic, equipment effects, and result flow. | Bounded physical MVP: `DONE`. Full Neverlands Combat: `EVIDENCE_NEEDED`. | Use the canonical Combat Completion Matrix for each mechanic and exact next gate. |
+| Arena combat | Yes: arena rooms/applications, NPC training, wilderness NPC captures, and public-log captures. | Bounded lifecycle, physical `1x1` PvP/PvE, `3x3` team turns, captured active/result states, and public log: `DONE`. | Preserve these gates while formula, group-XP, and wilderness-selection evidence remain separate `EVIDENCE_NEEDED` rows. |
 | Character vitals | Yes: live player capture, wiki HP/MP maxima, and vitals doc. | Exact starter/base `Health × 5` HP and `Knowledge × 7` MP are implemented; broader regeneration remains partial. | Capture the complete Self-Healing/Fast Mana Regeneration timer formulas. |
-| Progression, stats, and skills | Yes: live profile allocation, wiki level table/formulas, exact numeric IDs/rates, More Strength, and Wanderer. | Fully implemented for the declared handbook boundary: level-0/table grants, locked allocations, exact HP/MP/mass/perk formula, public display, and solo capped NPC XP. | Keep uncaptured skill effects, prerequisites, group XP, level `28+`, and profession counters unavailable. |
-| Items, inventory, equipment | Yes: inventory/equipment, wiki mass/wear rules, 2026-06-01 item-row/equip capture, NPC item-found output, and shop rows. | Captured subset implemented, including persisted successful NPC item awards, derived mass enforcement, source-result combat wear, and zero-durability sale rejection. | Finish repair/Careful Fighter evidence, exact layered armor/belt/pocket/relic rules, and remaining family UX. |
-| Professions | Wiki direction and inventory/world adjacency documented in `features/professions.md`. | Not implemented; `look` intentionally grants no resource/counter. | MVP evidence gap: capture one complete perk/tool/timer/yield/counter/failure/interruption loop, then implement only that profession. |
+| Progression, stats, and skills | Yes: live profile allocation, wiki level/AP/formulas, exact numeric IDs/rates, More Strength, Careful Fighter, and Wanderer. | Fully implemented for the declared handbook boundary: level-0/table grants, locked allocations, exact HP/MP/mass/AP and bounded perk formulas, public display, and explicit solo-encounter XP. | Keep uncaptured mastery/other skill effects, prerequisites, general group XP, level `28+`, and profession counters unavailable. |
+| Items, inventory, equipment | Yes: inventory/equipment, wiki mass/wear/repair direction, 2026-06-01 item-row/equip capture, NPC item-found output, and shop rows. | Captured subset implemented, including persisted successful NPC item awards, derived mass enforcement, source-result combat wear with Careful Fighter, and zero-durability sale rejection. | Capture one authenticated repair/workshop flow, exact layered armor/belt/pocket/relic rules, and remaining family UX. |
+| Professions | Wiki direction and inventory/world adjacency documented in `features/professions.md`. | Not implemented; empty `look` retains its 28-second lock and grants no resource/counter. | Successful gathering is explicitly deferred for this task pending alchemy evidence; a future implementation requires the complete eligibility/tool/yield/counter/failure/interruption loop. |
 | Neverlands marketplace/shop | Yes for the launch Shop hierarchy; current empty-shell geometry and older populated catalog states are captured separately. | Central Shop is interactive with buy/sell/licenses/novice modes, project-owned CSS scene, centered controls, wallet/mass validation, durability-adjusted resale pricing, and no generic marketplace route. | Capture fresh populated and mutation-result states before marking those visual variants Done. |
 | Direct player trading | Partially captured through inventory inline transfer/gift/sale/currency forms; full trade settlement needs a dedicated capture. | Basic inventory transfer/gift/player-sale/NV forms implemented; generic trade sessions removed. | Capture exact cancellation, timeout, visibility, commission, dealer, and settlement rules before adding a broader trade session system. |
-| Social chat and presence | Yes: chat/player-list captures plus the current mixed personal/global gameplay-event timeline and NV addendum. | Partial overall; ordinary chat, recipient-scoped fight/item/NV events, server-owned world announcements, bounded combined history, exact-time rows, and Turbo delivery share one persistent surface. | Capture announcement operations, retention/reconnect behavior, remaining event families, NPC-specific NV probabilities, and local-presence city-node rules before extending them. |
+| Social chat and presence | Yes: live cell/village/Arena-room lists, the observed airship route roster, the Neverlands Chat article, explicit user confirmation of one-cell/room ordinary chat, and mixed personal/world event captures. | Current-cell/room/flight chat uses authenticated bounded polling and locked sends; passengers are excluded from ground audiences. Stale local reads return `403` without navigation. Delivered browser rows survive movement within one login; personal/world events remain durable. | Source onboard chat delivery, separate-departure membership, online expiry, private/moderation controls, broader event families, and NPC-specific NV probabilities remain evidence gaps. |
 | Dungeons | Yes from source material, but post-MVP. | Not implemented for MVP. | Keep deferred until launch movement, city, combat, inventory, and social loops are stable. |
 
 ### Cross-Feature Rules
@@ -629,10 +738,10 @@ the next implementation step is.
 | Rule | Design Direction |
 | --- | --- |
 | Server-authored actions | Every mutating action in world, city, building, combat, shop, and future captured quest flows should be offered by the server and accepted by action key. |
-| Persistence after reload/login | Persist exact outdoor cells and city nodes; resume Shop and captured read-only interiors only while still accessible from the authoritative node; fall back to that unchanged position for stale/malformed state. World combat now stores an allowlisted World/Character/Inventory finish context while the coordinate remains unchanged; later interiors require their own completed allowlist entry. |
+| Persistence after reload/login | Persist exact region/cell and city-node identity. An owned aboard airship journey takes priority, catches up from server deadlines, and preserves its flight context until explicit landing. Otherwise resume village, city/village Shop, allowlisted buildings, and selected Arena rooms only while accessible. Ground relocation clears stale room state atomically; stale chat reads cannot restore former rooms. World combat retains an allowlisted World/Character/Inventory finish context; later interiors require their own completed allowlist entry. |
 | Context-first navigation | Features should be reached through current location actions first. Global shortcuts can exist for development, but they are not the primary player flow. |
 | Compact game UI | Keep dense operational screens; avoid landing-page layouts inside authenticated gameplay. |
-| Starter content | Create one canonical starter path: outside tile -> city gate -> city node -> trading quarter -> shop -> city -> outside. |
+| Starter content | Keep the nearby seeded routes discoverable: outside gate -> Central city -> Shop -> city -> outside; gate -> intermediate cell -> village entrance -> square -> Trading Post -> square -> outside. Resource and NPC sample cells use the same region/cell pipeline. |
 
 ### UI Integration Order
 
@@ -643,13 +752,14 @@ Connect implemented features to the MVP shell in this order:
 2. Top vitals and context buttons render from current server state.
 3. World/city/building/arena/profile/inventory/combat render inside the same
    main content region.
-4. Chat, personal gameplay results, game-wide notices, and local presence stay
-   persistent; chat/event rows share one timeline and presence refreshes by
-   location.
+4. Ordinary chat uses the current cell/room and retains delivered rows within
+   one login. Personal gameplay results and game-wide notices keep durable
+   history in the same timeline; presence refreshes from current server context.
 5. City hotspots submit server-authored actions and support hover, focus,
    keyboard, and text labels.
-6. `Лавка` is added as the first missing building feature: tabs, filters,
-   item rows, wallet/mass, buy/sell/licenses/novice actions, refreshed keys.
+6. City Shop and the village Trading Post share tabs, filters, item rows,
+   wallet/mass, buy/sell/licenses/novice actions, and refreshed keys; their
+   return actions retain the correct parent location.
 7. Arena NPC rows, wild NPC fights, and combat results share the same combat
    UI/result/log contract.
 

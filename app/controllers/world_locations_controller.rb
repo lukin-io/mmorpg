@@ -5,17 +5,20 @@
 # coordinate.
 class WorldLocationsController < ApplicationController
   include CurrentCharacterContext
+  include OutdoorActionAvailability
 
   layout "game"
 
   before_action :ensure_active_character!
+  around_action :with_available_outdoor_actions
+  before_action :ensure_location_not_in_combat!
   before_action :load_location!
 
   def show
-    @players_here ||= []
     @location_features = @building.location_features
     @feature_offers_by_key = build_feature_offers.index_by { |offer| offer.metadata["hotspot_key"] }
     Game::World::ResumeContext.new(character: current_character).remember_world_location!(key: @building.location_key)
+    prepare_presence_context
   end
 
   def open_feature
@@ -36,12 +39,18 @@ class WorldLocationsController < ApplicationController
 
     destination_path = location_feature_path(feature)
     offer.complete!
-    redirect_to destination_path
+    redirect_to destination_path, status: :see_other
   rescue Game::World::AcceptAction::ActionViolationError => e
-    redirect_to world_location_path(params[:key]), alert: e.message
+    redirect_to world_location_path(params[:key]), alert: e.message, status: :see_other
   end
 
   private
+
+  def ensure_location_not_in_combat!
+    active_match = current_character.arena_participations.joins(:arena_match)
+      .merge(ArenaMatch.active).order(created_at: :desc).first&.arena_match
+    redirect_to arena_match_path(active_match), status: :see_other if active_match
+  end
 
   def load_location!
     @position = current_character.position

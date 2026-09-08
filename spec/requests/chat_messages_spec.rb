@@ -1,11 +1,13 @@
 require "rails_helper"
 
 RSpec.describe "ChatMessages", type: :request do
+  let(:user) { create(:user) }
+  let(:character) { create(:character, user:) }
+  let!(:position) { create(:character_position, character:) }
+  let(:channel) { Chat::ChannelRouter.new(user:).resolve(scope: :local) }
+
   describe "POST /chat_channels/:chat_channel_id/chat_messages" do
     it "creates a chat message" do
-      user = create(:user)
-      channel = create(:chat_channel)
-
       sign_in user, scope: :user
 
       expect do
@@ -16,9 +18,6 @@ RSpec.describe "ChatMessages", type: :request do
     end
 
     it "rejects blank messages" do
-      user = create(:user)
-      channel = create(:chat_channel)
-
       sign_in user, scope: :user
 
       post chat_channel_chat_messages_path(channel), params: {chat_message: {body: ""}}

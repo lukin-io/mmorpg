@@ -22,6 +22,14 @@ RSpec.describe "ArenaMatches Auto-End on View", type: :request do
 
   let!(:participation1) { create(:arena_participation, arena_match: match, character: character1, user: user1, team: "a") }
   let!(:participation2) { create(:arena_participation, arena_match: match, character: character2, user: user2, team: "b") }
+  let(:turn_params) do
+    {
+      action_type: "turn",
+      target_id: character2.id,
+      attacks: [{action_key: "simple", body_part: "torso"}],
+      blocks: [{action_key: "torso_block", body_parts: ["torso"]}]
+    }
+  end
 
   before do
     create(:character_position, character: character1)
@@ -122,6 +130,23 @@ RSpec.describe "ArenaMatches Auto-End on View", type: :request do
       end
     end
 
+    context "when a wilderness fight reaches its displayed five-minute deadline" do
+      before do
+        match.update!(metadata: {"source" => "world_npc", "fight_timeout_seconds" => 300})
+      end
+
+      it "renders the timeout result at the exact deadline" do
+        travel_to(match.started_at + 300.seconds, with_usec: true) do
+          get arena_match_path(match)
+
+          expect(response).to have_http_status(:success)
+          expect(match.reload).to be_completed
+          expect(match).to be_timed_out
+          expect(response.body).to include("Finished")
+        end
+      end
+    end
+
     context "when match is already completed" do
       before do
         match.update!(status: :completed, winning_team: "a", ended_at: Time.current)
@@ -166,19 +191,12 @@ RSpec.describe "ArenaMatches Auto-End on View", type: :request do
   describe "POST /arena_matches/:id/action" do
     context "when match is normal" do
       it "processes the action and redirects" do
-        post action_arena_match_path(match), params: {
-          action_type: "attack",
-          body_part: "torso",
-          attack_type: "simple"
-        }
+        post action_arena_match_path(match), params: turn_params
         expect(response).to have_http_status(:redirect)
       end
 
       it "keeps match in live status after action" do
-        post action_arena_match_path(match), params: {
-          action_type: "attack",
-          body_part: "torso"
-        }
+        post action_arena_match_path(match), params: turn_params
         expect(match.reload.status).to eq("live")
       end
     end
@@ -188,35 +206,76 @@ RSpec.describe "ArenaMatches Auto-End on View", type: :request do
         character2.update!(current_hp: 0)
       end
 
-      it "still processes the action (auto-end happens on show)" do
-        # Note: Auto-end check happens on GET show, not on POST action
-        # This tests that actions are still processed even when opponent is down
-        post action_arena_match_path(match), params: {
-          action_type: "attack",
-          body_part: "torso"
-        }
-        expect(response).to redirect_to(arena_match_path(match))
-      end
+      it "ends the match before accepting another combat intent" do
+        expect {
+          post action_arena_match_path(match), params: turn_params
+        }.not_to change { match.reload.current_turn_number }
 
-      it "match ends when show is called afterwards" do
-        post action_arena_match_path(match), params: {
-          action_type: "attack"
-        }
-        # Now the redirect to show will trigger auto-end
-        get arena_match_path(match)
-        expect(match.reload.status).to eq("completed")
+        expect(response).to redirect_to(arena_match_path(match))
+        expect(match).to be_completed
+        expect(match.winning_team).to eq("a")
       end
     end
 
     context "when match is stale (timed out)" do
-      it "still processes action but show auto-ends afterwards" do
+      it "ends the match before accepting another combat intent" do
         travel_to(match.started_at + 15.minutes) do
-          post action_arena_match_path(match), params: {
-            action_type: "attack"
+          expect {
+            post action_arena_match_path(match), params: turn_params
+          }.not_to change { match.reload.current_turn_number }
+
+          expect(response).to redirect_to(arena_match_path(match))
+          expect(match).to be_completed
+          expect(match).to be_timed_out
+        end
+      end
+    end
+
+    context "when a wilderness fight deadline has elapsed" do
+      before do
+        match.update!(metadata: {"source" => "world_npc", "fight_timeout_seconds" => 300})
+      end
+
+      it "ends the fight before accepting another combat intent" do
+        travel_to(match.started_at + 300.seconds, with_usec: true) do
+          expect {
+            post action_arena_match_path(match), params: turn_params
+          }.not_to change { match.reload.current_turn_number }
+
+          expect(response).to redirect_to(arena_match_path(match))
+          expect(match).to be_completed
+          expect(match).to be_timed_out
+        end
+      end
+    end
+  end
+
+  describe "POST /arena_matches/:id/claim_timeout" do
+    context "when the wilderness fight deadline has elapsed" do
+      before do
+        match.update!(
+          current_turn_started_at: 301.seconds.ago,
+          metadata: {"source" => "world_npc", "fight_timeout_seconds" => 300}
+        )
+        participation1.update!(metadata: {
+          "pending_turn" => {
+            "turn_number" => match.current_turn_number,
+            "attacks" => [{"action_key" => "simple", "body_part" => "torso"}],
+            "blocks" => [{"action_key" => "torso_block", "body_parts" => ["torso"]}],
+            "skills" => [],
+            "total_ap" => 75
           }
-          # Action redirects to show which triggers auto-end
-          get arena_match_path(match)
-          expect(match.reload.status).to eq("completed")
+        })
+      end
+
+      it "finalizes the global timeout as a draw before a player can claim victory" do
+        travel_to(match.started_at + 300.seconds, with_usec: true) do
+          post claim_timeout_arena_match_path(match), params: {mode: "victory"}, as: :json
+
+          expect(response).to have_http_status(:unprocessable_content)
+          expect(match.reload).to be_completed
+          expect(match).to be_timed_out
+          expect(match.winning_team).to be_nil
         end
       end
     end

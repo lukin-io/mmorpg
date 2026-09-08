@@ -3,7 +3,7 @@
 title: Character Progression Feature
 description: Implementation handbook for Neverlands-based primary stats, numeric skills, boolean perks, point allocation, and public progression display.
 status: Fully Implemented
-updated: 2026-08-23
+updated: 2026-09-07
 owners: Character Progression
 template: feature-v1
 ---
@@ -60,7 +60,7 @@ An authenticated player begins at level `0`, gains configured combat experience 
 
 The `Character` record is authoritative for saved allocations and point balances. `allocated_stats`, `passive_skills`, and `perks` are JSONB maps; `stat_points_available`, `combat_skill_points`, `peace_skill_points`, and `perk_points` are separate non-negative counters. The browser never grants points or finalizes an allocation.
 
-Numeric skill identities and four-band progression rates come from the captured Neverlands registry. Boolean perks remain deliberately narrow: only source ID `7`, `Больше силы`/`More Strength`, is selectable. Ownership adds `floor(level / 2)` effective Strength from the exact wiki rule.
+Numeric skill identities and four-band progression rates come from the captured Neverlands registry. Effective Extra Action Points now contributes one-for-one to the shared fight AP profile. Boolean perks remain deliberately narrow: source ID `7`, `Больше силы`/`More Strength`, adds `floor(level / 2)` effective Strength, while source ID `15`, `Аккуратный боец`/`Careful Fighter`, halves post-fight equipment-wear probability.
 
 The MVP currently contains:
 
@@ -68,7 +68,7 @@ The MVP currently contains:
 - a finite table of complete source rows `0..27` for thresholds, stat/skill/perk/NV grants, per-fight XP caps, and source NPC-group limits;
 - exact `Health × 5` base HP, `Knowledge × 7` base MP, and `Strength × 5 + Health × 10 + level × 10` mass formulas;
 - 29 source-backed numeric skills from `0` to `100` with combat and peace point pools;
-- one selectable binary perk with a separate point pool and captured exclusion infrastructure;
+- two selectable binary perks with a separate point pool and captured exclusion infrastructure;
 - solo configured-NPC XP award through idempotent fight finalization, capped by the current level row;
 - public HTML and JSON display of numeric skills and owned perks;
 - owner-only allocation enforced by Devise, current-character resolution, and `CharacterPolicy`.
@@ -86,7 +86,9 @@ The MVP currently contains:
 
 ### Non-goals
 
-- Applying numeric-skill effects beyond the explicitly implemented World-owned Wanderer travel formula, or inventing profession or prerequisite formulas.
+- Applying numeric-skill effects beyond the explicitly implemented Wanderer
+  movement and Extra Action Points combat-profile formulas, or inventing
+  profession or prerequisite formulas.
 - Rendering or selecting the remaining observed `Навыки` merely because their source labels are known.
 - Free respec, saved progression builds, skill trees, classes, specializations, or generic ability unlock graphs.
 - Owning equipment, combat, movement, recovery, inventory, or profession mechanics that consume progression values.
@@ -98,6 +100,15 @@ The MVP currently contains:
 ### 4.1 Entry conditions
 
 The public profile is available at `/player/:name` by case-insensitive active character name in the minimal public layout. A signed-in owner sees the same profile inside the persistent game shell and reaches Stats, Skills, and Perks from the profile's internal subnavigation. Allocation routes require an authenticated user, an active playable character, and ownership of the requested `Character`.
+
+The owner's HTML profile and every Stats/Skills/Perks request also honor
+persisted outdoor travel/Look availability. `OutdoorActionAvailability`
+reconciles due work and returns active work to World with `303 See Other`;
+direct URLs or PATCH requests cannot bypass the navigation lock or spend
+points while busy. The character row remains locked through the accepted
+request. Visitor profiles and the read-only public JSON profile remain
+available. World owns the captured lock and timer behavior recorded in
+`doc/design/reference/world/observations/2026-09-07_forpost_grid_and_action_audit.md`.
 
 The profile is not an account dashboard. It shows the gameplay character, equipment summary, vitals, progress, record, numeric skill summary, and owned perks. Only the owner sees primary-stat detail and progression mutation links.
 
@@ -146,6 +157,7 @@ The feature is an authored catalog and state graph rather than spatial topology.
 | `resistance` | Resistance skills | Spend combat points | Source IDs `16` through `20` |
 | `peace_world` | Peace/world skills | Spend peace points | Source IDs `22`, `23`, `24`, `26`, `27`, `30`, `33`, `34` |
 | `more_strength` | More Strength | Spend one perk point; persist `Yes` | Boolean perk source ID `7`; adds `floor(level / 2)` effective Strength |
+| `careful_fighter` | Careful Fighter | Spend one perk point; persist `Yes` | Boolean perk source ID `15`; halves each post-fight equipment-wear chance |
 
 Numeric skills use captured four-value rate strings. The rate selected for a spend is based on the saved/current value before that spend:
 
@@ -160,7 +172,7 @@ Numeric skills use captured four-value rate strings. The rate selected for a spe
 
 - **Primary-stat key** — normalized local identity such as `strength`, `dexterity`, `luck`, `vitality`, or `intelligence`; player labels map Health to `vitality` and Knowledge to `intelligence`.
 - **Numeric-skill source ID** — stable Neverlands `Умения` identity retained in `PassiveSkillRegistry`; local symbolic keys are used in persisted JSONB.
-- **Perk source ID** — stable Neverlands `Навыки` identity retained in `PerkRegistry`; only source ID `7` has a launch-selectable local key.
+- **Perk source ID** — stable Neverlands `Навыки` identity retained in `PerkRegistry`; only source IDs `7` and `15` have launch-selectable local keys.
 - **Base value** — saved character allocation before equipment modifiers.
 - **Effective value** — base character value plus supported equipment modifiers, capped where the implementation defines a cap.
 
@@ -179,6 +191,8 @@ Relationships must come from the source-backed registries. Categories, display o
 | Boolean perk allocation | `GET/PATCH /characters/:id/perks` | Interactive subset | `PerkAllocation` and `PerkRegistry` |
 | Remaining observed perks/professions | No local route/control | Deferred outside this handbook boundary | Evidence and design documents only |
 | Wanderer movement effect | World movement-offer creation | Interactive downstream consumer | `Game::Movement::TravelTime` |
+| Extra Action Points effect | Shared combat-profile preparation | Interactive downstream consumer | `Character#max_action_points` and `Arena::CombatProfile` |
+| Careful Fighter effect | Shared fight finalization | Interactive downstream consumer | `Arena::EquipmentWearResolver` |
 | Other skill/perk gameplay effects without captured formulas | No mutation | Deferred | Downstream owning feature after evidence |
 
 ### 6.2 Primary stats
@@ -193,13 +207,28 @@ The numeric registry contains 29 captured `Умения`, each with a source ID,
 
 Multiple pending spends are applied sequentially so crossing `25`, `50`, or `75` changes the rate used by later spends. The final value is capped at `100`; requested spends after the cap do not consume points. Unknown skill keys do not consume points. Equipment bonuses contribute to `passive_skill_level`.
 
-World is the only current numeric-skill effect consumer: it snapshots effective Wanderer into a clean adjacent duration of `30 - floor(wanderer * 5 / 100)` seconds, bounded to `25..30`. Character Progression does not own that movement rule. Every other downstream numeric-skill effect remains `0`/unimplemented until separately captured.
+Two numeric skills have bounded downstream effects. World snapshots effective
+Wanderer into `30 - floor(wanderer * 5 / 100)` seconds, bounded to `25..30`.
+Combat builds AP as base `80`, plus `10` at level `5`, another `10` at level
+`10`, and one point per effective Extra Action Points value. Persisted
+per-fight profile overrides remain authoritative for captured fights. Every
+other downstream numeric-skill effect remains unimplemented until separately
+captured.
 
 ### 6.4 Boolean perks and deferred behavior boundary
 
-`more_strength` is the only rendered selectable perk. Saving it consumes one `perk_points`, stores `"more_strength" => true`, and makes it non-removable through the normal UI. `PerkAllocation` rejects empty/duplicate ownership, unknown keys, insufficient points, and any captured mutually exclusive combination under a character row lock.
+`more_strength` and `careful_fighter` are the only rendered selectable perks.
+Saving either consumes one `perk_points`, stores its key as `true`, and makes it
+non-removable through the normal UI. `PerkAllocation` rejects empty/duplicate
+ownership, unknown keys, insufficient points, and any captured mutually
+exclusive combination under a character row lock.
 
-The complete observed `Навыки` labels and saved yes/no rows are evidence, not local capabilities. Perk source ID `7` adds one effective Strength per two levels, rounded down, from the audited wiki rule; it does not rewrite saved allocations. Prerequisite gates, reset behavior, all profession mechanics, and every other perk effect remain deferred.
+The complete observed `Навыки` labels and saved yes/no rows are evidence, not
+local capabilities. Source ID `7` adds one effective Strength per two levels,
+rounded down. Source ID `15` halves the independent per-item wear chance at
+fight finalization, including the `1%` arena-defeat chance as an exact `0.5%`
+roll. Prerequisite gates, reset behavior, all profession mechanics, and every
+other perk effect remain deferred.
 
 ## 7. Authoritative data and presentation model
 
@@ -280,6 +309,12 @@ After save, inventory requirements, vitals, profile, combat, and World may read 
 
 Stat, numeric-skill, and perk allocation use a character row lock, so duplicate or concurrent requests re-evaluate current ownership, cap, and point balances. Level-up uses the same boundary before applying XP and grants, then records a single NV ledger adjustment inside the transaction.
 
+The shared controller guard holds that character lock from the outdoor
+availability check through the page or allocation action. Movement therefore
+cannot start between the busy check and point spending. When due movement is
+completed on entry, owner pages render the reconciled character state,
+including the newly persisted travel fatigue.
+
 The client disables Save until a preview exists, but that is usability only and cannot prevent replay. Server locks and stale-competing-request service specs protect the balance. XP is awarded only from the match's separately idempotent finalization marker.
 
 ## 9. HTTP and Turbo contract
@@ -295,6 +330,11 @@ The client disables Save until a preview exists, but that is usability only and 
 | `PATCH /characters/:id/perks` | Save new perk ownership | Redirect or Turbo frame/flash replacement | Allocation error redirect/flash; state preserved |
 
 The allocation feature is authenticated HTML/Turbo. The public profile also offers an unversioned read-only JSON representation for internal/public consumption. There is no separately versioned progression API, so Swagger/rswag and blueprint coverage are not applicable.
+
+For the owner's HTML profile and authenticated allocation routes, accepted
+outdoor travel/Look overrides the ordinary page/action response with a `303`
+World redirect. Progression fields and point balances remain unchanged. This
+availability check applies to both HTML and Turbo allocation submissions.
 
 ## 10. Client-side and CSS ownership
 
@@ -369,6 +409,7 @@ Arbitrary saved browser fields, translated labels, or profile URLs do not grant 
 |---|---|
 | Anonymous allocation request | Redirect to sign-in; no allocation mutation |
 | Foreign character | Redirect to root with ownership error; no mutation |
+| Owner request during accepted outdoor travel or Look | Redirect to World with 303; preserve allocations and available points |
 | Missing character | Return `404` |
 | Empty, nil, zero, or all-negative allocation | Show `No stats selected`, `No skills selected`, or perk allocation error |
 | Submitted amount above available pool | Reject with the matching insufficient-points message |
@@ -379,6 +420,7 @@ Arbitrary saved browser fields, translated labels, or profile URLs do not grant 
 | Conflicting captured perks | Reject the entire perk save under lock |
 | Numeric skill reaches `100` | Cap at `100`; no further visible spend is enabled |
 | Equipment changes effective Wanderer | Rebuild effective display; World uses it only for the next authored offer, never to rewrite an active command |
+| Equipment changes effective Extra Action Points | Rebuild effective display; Combat snapshots it only into a new fight profile, never an active profile |
 | Equipment changes another effective skill | Rebuild effective display; no uncaptured formula is applied |
 | Missing public character name | Return `404`, not an account-profile fallback |
 | Simultaneous/stale Stats or Skills saves | Serialize under the Character row lock; recheck current pools and reject an over-budget request without a lost update |
@@ -393,7 +435,9 @@ Arbitrary saved browser fields, translated labels, or profile URLs do not grant 
 - The owner can allocate and permanently save additions to all five primary stats.
 - The owner can spend the correct combat or peace pool across all 29 captured numeric skills.
 - Numeric skill spends use the captured four-band rate and never exceed `100`.
-- The owner can spend one perk point to acquire `more_strength`; another save cannot reacquire it, and effective Strength gains `floor(level / 2)`.
+- The owner can spend perk points on `more_strength` or `careful_fighter`;
+  another save cannot reacquire either, Strength gains `floor(level / 2)`, and
+  shared fight wear chances are halved for Careful Fighter.
 - A level-0 starter receives exact catalog grants when configured solo-PvE XP crosses one or more complete thresholds.
 - Health/Knowledge allocation recalculates base maxima at `5/7` per point without healing, and mass uses the exact `5/10/10` formula.
 - Stat, skill, perk, and level transitions recheck the character under a row lock.
@@ -402,6 +446,8 @@ Arbitrary saved browser fields, translated labels, or profile URLs do not grant 
 - Browser preview/reset behavior never mutates saved state before PATCH succeeds.
 - Saved progression survives logout/login; pending browser preview does not.
 - Effective Wanderer is available to World, which owns and tests the bounded `30..25` second movement effect.
+- Effective Extra Action Points contributes one AP per point to a new shared
+  combat profile after the captured level-threshold base.
 - Owner and public profile surfaces preserve their desktop source geometry and
   reflow without whole-page overflow at 820px and 390px.
 - Uncaptured perks, professions, prerequisites, respec, and effects remain unavailable.
@@ -412,12 +458,16 @@ Tests are part of the feature contract. Progression changes require applicable m
 
 | Coverage category | Representative guarantees |
 |---|---|
-| Success | Stat merge/vital derivation, dual-pool tiered skill spend, More Strength effect, profile rendering/JSON, XP thresholds, complete level grants, and NV ledger award |
+| Success | Stat merge/vital derivation, dual-pool tiered skill spend, More Strength, Extra AP and Careful Fighter effects, profile rendering/JSON, XP thresholds, complete level grants, and NV ledger award |
 | Failure | Empty/over-budget allocation, unknown perk, insufficient perk points, conflict, maximum skill, invalid XP, and safe flash response |
 | Edge/null/boundary | Level `0/27/28`, nil/negative/zero XP, nil hashes, negative/extreme inputs, exact pool exhaustion, `24/25/49/50/74/75/99/100` bands, duplicate perk ownership, and stale competing spends |
 | Authorization | Anonymous request, foreign character, policy owner, public read-only profile, and current-character scoping |
 
 `spec/factories/characters.rb` must retain starter, fatigue, point-pool, saved stat/skill, perk ownership, maximum/boundary, and foreign-ownership traits when exercised.
+
+`spec/requests/outdoor_action_availability_spec.rb` covers busy own-profile and
+allocation URLs, rejected point spending, public read access, and fresh fatigue
+rendering after due travel completes at page entry.
 
 Focused verification command:
 
@@ -516,6 +566,7 @@ There is no dedicated view spec for each allocation partial; request and system 
 - `app/services/characters/vitals_service.rb`
 - `app/services/game/movement/travel_time.rb`
 - `app/services/arena/npc_experience_awarder.rb`
+- `app/controllers/concerns/outdoor_action_availability.rb`
 
 Character Progression owns saved stats, numeric skills, perks, and their allocation. Inventory owns equipment and item requirements; Vitals/Combat own their downstream formulas; World owns the bounded Wanderer movement formula. Those features may consume only implemented progression values and must capture Neverlands evidence before adding another effect.
 
@@ -542,6 +593,7 @@ Character Progression owns saved stats, numeric skills, perks, and their allocat
 - `spec/requests/characters_spec.rb`
 - `spec/requests/characters/skills_spec.rb`
 - `spec/requests/players_spec.rb`
+- `spec/requests/outdoor_action_availability_spec.rb`
 - `spec/system/skill_allocation_spec.rb`
 - `spec/system/perk_allocation_spec.rb`
 - `spec/system/responsive_neverlands_ui_spec.rb`
@@ -573,3 +625,4 @@ Before extending Character Progression:
 | 2026-07-28 | Removed source-owned portrait and source-specific project/service copy while preserving profile hierarchy and geometry with CSS and local gameplay copy. |
 | 2026-07-29 | Reordered the parameter column to the captured profile sequence, dropped the uncaptured Attack/Defense/Critical rows, gave the visitor profile its own identity line, and split the presentation into `character_sheet.css` and `player.css`. |
 | 2026-08-23 | Documented that Arena supplies the actual persisted solo-NPC XP award for recipient fight-completion feedback while Character Progression remains the XP/level authority. |
+| 2026-08-26 | Added the exact `80 + level thresholds + Extra Action Points` combat-profile effect and source perk `15` Careful Fighter with half-probability equipment wear. |

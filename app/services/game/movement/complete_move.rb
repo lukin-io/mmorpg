@@ -2,7 +2,10 @@
 
 module Game
   module Movement
-    # Finalizes due timed movement commands into authoritative coordinates.
+    # Reconciles active travel against its exact source region/cell and
+    # finalizes due commands into authoritative coordinates. A relocated
+    # character cannot retain travel from a previous region until its timer.
+    # Successful arrival and its local-chat entry context commit together.
     class CompleteMove
       def initialize(character:)
         @character = character
@@ -11,7 +14,7 @@ module Game
       def call
         character.with_lock do
           character.reload
-          due_commands.each do |command|
+          active_commands.each do |command|
             complete_command(command)
           end
         end
@@ -21,11 +24,10 @@ module Game
 
       attr_reader :character
 
-      def due_commands
+      def active_commands
         MovementCommand
           .moving
           .where(character:)
-          .where("ends_at <= ?", Time.current)
           .order(:ends_at)
       end
 
@@ -33,13 +35,30 @@ module Game
         command.with_lock do
           command.reload
           return unless command.moving?
-          return if command.ends_at&.future?
 
           position = character.position || Game::Movement::RespawnService.new(character:).ensure_position!
           position.lock!
 
           unless source_position_matches?(command, position)
             mark_failed(command, "Character is no longer at the movement source")
+            return
+          end
+
+          return unless command.ends_at && command.ends_at <= Time.current
+
+          if character.arena_participations.joins(:arena_match).merge(ArenaMatch.active).exists?
+            mark_failed(command, "Cannot complete movement during an active fight")
+            return
+          end
+
+          unless Game::Movement::Directions.matches?(
+            direction: command.direction,
+            from_x: command.from_x,
+            from_y: command.from_y,
+            target_x: command.target_x,
+            target_y: command.target_y
+          )
+            mark_failed(command, "Movement target is not an adjacent step")
             return
           end
 
@@ -59,6 +78,7 @@ module Game
             last_action_at: command.ends_at || now,
             last_turn_number: position.last_turn_number + 1
           )
+          Game::World::ResumeContext.new(character:).remember_world!
 
           fatigue_gain = command.metadata.to_h["fatigue_gain"].to_i
           if fatigue_gain.positive?

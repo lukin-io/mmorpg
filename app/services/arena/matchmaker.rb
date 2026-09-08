@@ -201,9 +201,9 @@ module Arena
     end
 
     def broadcast_expiration(application)
-      ActionCable.server.broadcast(
-        "arena:room:#{application.arena_room_id}",
-        {
+      Arena::RealtimePublisher.new.publish(
+        channel: "arena:room:#{application.arena_room_id}",
+        payload: {
           type: "application_expired",
           application_id: application.id
         }

@@ -5,6 +5,18 @@
 outpost_surroundings:
   zone_name: "Outpost Surroundings"
   source_map: "m_1001_999"
+  npc_templates:
+    - key: wilderness_robber
+      name: Robber
+      role: hostile
+      level: 8
+      hp: 270
+      xp: 0
+      metadata:
+        source_name: "Грабитель"
+        source_observation: "2026-09-01_wilderness_bandit_group_variation_and_magic"
+        source_map: "m_1008_1007"
+        max_attacks_per_turn: 2
   npcs:
     - key: plague_rat
       name: Plague Rat
@@ -22,6 +34,15 @@ outpost_surroundings:
         source_map: "m_1001_999"
         source_coordinates: [1001, 999]
         encounter_count: 2
+        encounter_experience_reward: 35
+        combat_profile:
+          injected_attack_keys:
+            - spirit_arrow
+            - mind_blast
+          injected_block_keys:
+            - magic_shield
+            - rainbow_barrier
+            - crystal_sphere
         avatar_image: "zombie.png"
       loot:
         - kind: item
@@ -30,3 +51,69 @@ outpost_surroundings:
           # Exact Neverlands probability is not captured. Preserve the prior
           # no-drop behavior until source evidence supplies a value.
           chance: 0.0
+
+    # Local [8,7] is the project mapping for the captured m_1008_1007 cell.
+    # Each roster entry is one exact observed output. Replaying these samples
+    # is an MVP calibration and does not claim the source's hidden pool or
+    # weights.
+    - key: wilderness_bandit
+      name: Bandit
+      role: hostile
+      level: 7
+      x: 8
+      y: 7
+      hp: 155
+      xp: 0
+      metadata:
+        source_name: "Разбойник"
+        source_location: "Captured wilderness cell"
+        source_observation: "2026-09-01_wilderness_bandit_group_variation_and_magic"
+        source_map: "m_1008_1007"
+        source_coordinates: [1008, 1007]
+        max_attacks_per_turn: 2
+        encounter_selection_mode: "observed_sample_replay"
+        passive_delay_windows:
+          - key: "2026-09-01-interval-1"
+            min_seconds: 230
+            max_seconds: 278
+          - key: "2026-09-01-interval-2"
+            min_seconds: 127
+            max_seconds: 187
+        encounter_rosters:
+          - key: "2026-09-01-2334"
+            trauma_percent: 30
+            encounter_experience_reward: 103
+            members:
+              - npc_key: wilderness_bandit
+                level: 7
+                hp: 155
+              - npc_key: wilderness_bandit
+                level: 9
+                hp: 235
+              - npc_key: wilderness_robber
+                level: 8
+                hp: 270
+          - key: "2026-09-01-2340"
+            trauma_percent: 30
+            encounter_experience_reward: 9
+            members:
+              - npc_key: wilderness_bandit
+                level: 7
+                hp: 155
+          - key: "2026-09-01-2345"
+            trauma_percent: 80
+            encounter_experience_reward: 14
+            members:
+              - npc_key: wilderness_bandit
+                level: 7
+                hp: 155
+          - key: "2026-09-01-2351"
+            trauma_percent: 30
+            encounter_experience_reward: 56
+            members:
+              - npc_key: wilderness_bandit
+                level: 8
+                hp: 185
+              - npc_key: wilderness_robber
+                level: 9
+                hp: 310

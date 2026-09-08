@@ -2,7 +2,7 @@
 
 - Document type: neverlands-source-summary
 - Domain: inventory
-- Updated: 2026-08-23
+- Updated: 2026-08-26
 - Evidence status: current for the bounded launch surface
 
 ## Current observations
@@ -10,6 +10,8 @@
 - `doc/design/reference/inventory/observations/2026-06-01_inventory_items_and_shop_rows.md`
 - Inventory sections in
   `doc/design/reference/character/observations/2026-05-11_player_profile_and_development.md`
+- Wear, Careful Fighter, and repair wiki audit in
+  `doc/design/reference/character/observations/legacy_skills_and_arena_analysis.md`
 - Character-sheet/item-row measurements in
   `doc/design/reference/shell/observations/2026-07-29_style_system.md`
 - Successful bot-search item-found feedback, adjacent to a separate NV variant, in
@@ -23,11 +25,14 @@ actions. Shop rows reuse the item vocabulary but Shop owns commerce. A supplied
 chat capture also confirms concise successful item-found feedback, but it does
 not establish failed-capacity behavior or make that row inventory authority.
 The NV variant is Economy-owned and does not create an inventory item.
+Careful Fighter halves the exact per-result item-wear chance. Repair is a
+workshop/profession listing and retrieval flow rather than an Inventory reset.
 
 ## Evidence gaps
 
-- Player transfer, targeted item use, crafting/production families, and some
-  fight-slot interactions remain outside the completed local boundary.
+- Player transfer, targeted item use, crafting/production families, some
+  fight-slot interactions, and an authenticated repair transaction remain
+  outside the completed local boundary.
 
 ## Design linkage
 

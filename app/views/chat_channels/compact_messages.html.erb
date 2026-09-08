@@ -1,6 +1,8 @@
 <%= turbo_frame_tag "chat_messages" do %>
-  <%= turbo_stream_from @chat_channel %>
-  <% if @chat_channel.global? %>
+  <% unless @chat_channel.local? || @chat_channel.global? %>
+    <%= turbo_stream_from @chat_channel %>
+  <% end %>
+  <% if @chat_channel.global? || @chat_channel.local? %>
     <%= turbo_stream_from Chat::TimelineBroadcaster::GLOBAL_STREAM %>
     <%= turbo_stream_from Chat::TimelineBroadcaster::PERSONAL_STREAM, current_user %>
   <% end %>
@@ -10,7 +12,13 @@
        role="log"
        aria-live="polite"
        data-controller="chat"
+       data-action="chat:clear->chat#clearMessages"
        data-chat-auto-scroll-value="true"
+       <% if @chat_channel.local? %>
+         data-chat-poll-url-value="<%= local_chat_path(poll: 1) %>"
+         data-chat-session-key-value="<%= @chat_session_key %>"
+         data-chat-context-key-value="<%= @chat_context.key %>"
+       <% end %>
        data-chat-current-user-value="<%= current_user.profile_name %>"
        data-chat-target="messages">
     <% if @chat_entries.empty? %>

@@ -6,6 +6,9 @@ class Zone < ApplicationRecord
   LOCATION_TYPES = %w[outdoor city].freeze
 
   has_many :spawn_points, dependent: :destroy
+  has_many :map_tile_templates, foreign_key: :zone, primary_key: :name, dependent: :restrict_with_error
+  has_many :tile_npcs, foreign_key: :zone, primary_key: :name, dependent: :restrict_with_error
+  has_many :tile_buildings, foreign_key: :zone, primary_key: :name, dependent: :restrict_with_error
   has_many :character_positions, dependent: :restrict_with_exception
   has_many :world_action_offers, dependent: :destroy
   has_many :arena_matches, dependent: :nullify
@@ -24,6 +27,8 @@ class Zone < ApplicationRecord
   validates :name, presence: true, uniqueness: true
   validates :location_type, presence: true, inclusion: {in: LOCATION_TYPES}
   validates :width, :height, numericality: {greater_than: 0}
+  validate :populated_name_is_stable
+  validate :valid_airship_station_title
 
   def city?
     location_type == "city"
@@ -44,5 +49,31 @@ class Zone < ApplicationRecord
   def city_presentation
     value = metadata.to_h["city_presentation"]
     value.respond_to?(:deep_stringify_keys) ? value.deep_stringify_keys : {}
+  end
+
+  # Authored station text stays separate from the node's title and stable name.
+  # Invalid legacy metadata falls back safely until its next validated write.
+  def airship_station_title
+    title = metadata.to_h["airship_station_title"]
+    title if title.is_a?(String) && title.present? && title.length <= 120
+  end
+
+  private
+
+  def valid_airship_station_title
+    return unless metadata.to_h.key?("airship_station_title")
+    return if airship_station_title
+
+    errors.add(:metadata, "airship_station_title must be a nonblank string of at most 120 characters")
+  end
+
+  # Sparse content uses the unique Zone name as its persisted region key.
+  # Display changes belong in metadata.title; renaming a populated key would
+  # detach that content while character/command zone_id references survive.
+  def populated_name_is_stable
+    return unless persisted? && will_save_change_to_name?
+    return unless [MapTileTemplate, TileNpc, TileBuilding].any? { |type| type.where(zone: name_in_database).exists? }
+
+    errors.add(:name, "identifies populated region content; change the display title instead")
   end
 end

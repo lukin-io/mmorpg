@@ -9,7 +9,22 @@ module Game
     # without inventing relationships or labels.
     class PerkRegistry
       PERK_ROWS = [
-        [7, :more_strength, "More Strength", "Больше силы", :stat]
+        [
+          7,
+          :more_strength,
+          "More Strength",
+          "Больше силы",
+          :stat,
+          "Adds one effective Strength for every two character levels, rounded down."
+        ],
+        [
+          15,
+          :careful_fighter,
+          "Careful Fighter",
+          "Аккуратный боец",
+          :auxiliary,
+          "Halves each equipped item's post-fight durability-loss chance."
+        ]
       ].freeze
 
       EXCLUSIONS_BY_SOURCE_ID = {
@@ -27,14 +42,14 @@ module Game
         41 => [24, 25, 26, 27, 19, 38, 14, 40, 39, 32]
       }.transform_values(&:freeze).freeze
 
-      PERKS = PERK_ROWS.each_with_object({}) do |(source_id, key, name, source_name, category), memo|
+      PERKS = PERK_ROWS.each_with_object({}) do |(source_id, key, name, source_name, category, description), memo|
         memo[key] = {
           key:,
           source_id:,
           name:,
           source_name:,
           category:,
-          description: "Adds one effective Strength for every two character levels, rounded down."
+          description:
         }
       end.freeze
 

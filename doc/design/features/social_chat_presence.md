@@ -14,6 +14,8 @@ Reference material:
 
 - `doc/design/reference/neverlands.md`
 - `doc/design/reference/social/observations/2026-08-23_chat_game_event_timeline.md`
+- `doc/design/reference/social/observations/2026-09-07_cell_chat_and_presence_boundaries.md`
+- `doc/design/reference/world/observations/2026-09-08_forpost_oktal_airship_journey.md`
 - `doc/design/reference/shell/observations/2026-07-28_game_shell_and_mvp_surfaces.md`
 - `doc/design/reference/source_material.md`
 
@@ -23,7 +25,8 @@ Borrowed feel:
 - local presence refreshes after movement/city navigation;
 - usernames are interactive;
 - private messages use the captured `%<name>` addressing shape;
-- local/global/private modes are expected;
+- ordinary chat is restricted to one cell or room; global delivery is for
+  system announcements, not ordinary player messages;
 - ordinary chat, personal system results, and game-wide announcements share one
   dense chronological history;
 - successful NPC searches can report either an awarded item or deposited NV in
@@ -41,21 +44,73 @@ refresh speed cycle, transliteration toggle, and server time display.
 
 ## Player Experience
 
-The player can read chat while travelling, see who is nearby, click a player
-name for common actions, whisper, join local conversation, and read durable
-personal gameplay results and world announcements without leaving chat. A
+The player can read chat while travelling, see who is nearby, join local
+conversation, and read durable personal gameplay results and world
+announcements without leaving chat. A
 successful NPC item or NV search is visible here only after the corresponding
 inventory or wallet mutation succeeds.
 
+Private addressing and broader player-name actions belong to the captured
+target, but their complete delivery/interaction behavior remains deferred. The
+current local composer rejects a `%<name>` private-address prefix rather than
+publishing the intended private text to the room.
+
 ## Chat Channels
 
-Core:
+Source audience boundaries:
 
-- local;
-- global;
-- whisper;
-- arena room;
-- system.
+- ordinary local cell/room chat, including each selected Arena room;
+- world-wide system announcements;
+- recipient-only system information;
+- private city/region messages and separate clan-private messages, deferred.
+
+The server derives the ordinary audience from the selected playable character's
+persisted region or city node, exact cell, and validated room identity. Village
+exterior, Village Square, village/city Shop, supported city-building interiors,
+and selected Arena rooms remain separate when coordinates are unchanged.
+Display labels never identify audiences: the same named outdoor area can span
+multiple cells. Leaving a cell or room ends permission to read or post there, including through a stale
+form or subscription. Private messages use their separately captured city or
+region boundary and remain deferred; a private-address attempt must never be
+silently sent as an ordinary local message.
+
+Already-delivered ordinary rows remain in the browser's bounded chat buffer
+while moving. A new login clears ordinary browser history. Durable local
+`ChatMessage` records may support audit/debugging, but they do not authorize a
+player to replay earlier logins or visits. Recovery of messages never fetched
+before departure is not inferred. The local buffer is capped at 200 combined
+rows; personal gameplay records below retain their explicitly required durable
+history across logins.
+
+The local Rails adaptation delivers ordinary rows through authenticated
+current-location polling every ten seconds, with a direct committed sender
+response. It does not broadcast ordinary rows to shared local streams whose
+old signed subscription could outlive movement. Each read/post rechecks the
+current open login and room; a post serializes with movement and logout.
+Personal/world gameplay events retain their signed after-commit streams and
+durable server history under the user's log-system requirement. These polling,
+locking, and storage choices are implementation decisions, not inferred source
+network internals.
+
+For an aboard airship journey, the local room key is the persisted route and
+exact departure, shared by waiting, in-flight, and arrived-aboard passengers.
+The moving ground cell beneath the flight is not its ordinary-chat audience.
+Boarding/disembarkation change the visit; intermediate path/phase updates
+preserve its timestamp. Other routes/departures and ground rooms remain
+separate. Current-session authorization, ten-second polling, delivered browser
+history, Clear, and fresh-login behavior retain the same rules above.
+
+The completed source trip showed distinct station/route roster labels and
+waiting-state reload recovery. Chat delivery aboard and the source's internal
+flight grouping were not exercised. Grouping the local passengers of one
+authoritative flight applies the already-confirmed one-cell/room rule; it is
+an explicit implementation choice, not additional source transport evidence.
+
+Clear is a presentation action: it keeps the timeline and delivery connected,
+removes displayed rows, and retains bounded cleared ordinary ids in that same
+login's browser buffer so the next poll does not immediately restore them.
+It deletes no chat or gameplay-event records. The exact source behavior for
+every Clear, reconnect, and browser-storage failure variant remains uncaptured.
 
 Standalone channel dashboards, slash-command chat, shout channels, generic
 profanity dictionaries, modern Unicode emoji pickers, per-channel
@@ -64,7 +119,7 @@ captured Neverlands design.
 
 ## Game Event Timeline
 
-- Gameplay information is projected into the persistent global-chat history;
+- Gameplay information is projected into the persistent shared chat history;
   it is not a second notification panel or a browser-selected chat channel.
 - Personal system entries have an exact visible `HH:MM:SS` time, bold system
   label, and event-specific emphasis. MVP producers are fight completion with
@@ -111,6 +166,33 @@ captured Neverlands design.
   moderator role system.
 - Generic busy/idle/presence broadcast states are not part of the captured
   Neverlands design.
+- Distinct validated village, Shop, city-building, and selected Arena rooms
+  are distinct audiences even when their outdoor/city coordinates are unchanged.
+- Exact logout/disconnect expiry and temporary offline-row presentation remain
+  an evidence gap. The existing local five-minute session projection is a
+  technical membership/online-total definition, not a Neverlands expiry claim.
+
+The local presence projection includes only the user's currently playable
+character (`User#character`, first-created with id as tie-breaker), not every
+owned character. A user with at least one unsigned-out session last seen
+strictly within five minutes is eligible; multiple devices do not duplicate a
+row. List and header count use the same exact room scope, with at most ten
+visible sorted rows and the full room count. Total online counts distinct
+eligible users across locations. This bounded projection does not lock other
+players or make movement decisions.
+
+An active aboard reservation overrides cell/room presence with its route and
+departure audience until explicit disembarkation. Ground lists exclude aboard
+characters even when they share an underlying position. The flight projection
+does not load ground NPCs, tiles, or room candidates; it retains the same
+online/selected-character rules, sorted ten-row bound, and full audience count.
+
+The server refreshes an existing open session on shell, presence, and local-chat
+requests. The CSRF-protected heartbeat never creates a login record, moves a
+last-seen timestamp backward, or reopens a signed-out record. Explicit login
+owns reopening and sets a fresh generation for the ordinary browser buffer.
+These safeguards define local session integrity without claiming a source
+disconnect formula.
 
 ## State Concepts
 

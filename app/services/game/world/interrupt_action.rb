@@ -17,24 +17,38 @@ module Game
       end
 
       def call
-        if (match = active_match)
-          return Result.new(
+        Game::Movement::CompleteMove.new(character:).call
+        character.with_lock do
+          character.reload
+          next Result.new(interrupted: false) if character.active_airship_journey
+
+          active_world_action = LocalActionState.new(character:).call
+          if (match = active_match)
+            next Result.new(
+              interrupted: true,
+              match:,
+              message: "Finish the active fight before continuing."
+            )
+          end
+
+          if MovementCommand.moving.where(character:).exists?
+            raise StartNpcFight::FightViolationError, "Movement already in progress."
+          end
+          if active_world_action
+            raise StartNpcFight::FightViolationError, "A local action is already in progress."
+          end
+
+          npc = hostile_npc_at_current_cell
+          next Result.new(interrupted: false) unless npc
+
+          match = StartNpcFight.new(character:, tile_npc: npc, return_context:).call
+          Result.new(
             interrupted: true,
             match:,
-            message: "Finish the active fight before continuing."
+            npc:,
+            message: "#{npc.display_name} attacks before the action completes."
           )
         end
-
-        npc = hostile_npc_at_current_cell
-        return Result.new(interrupted: false) unless npc
-
-        match = StartNpcFight.new(character:, tile_npc: npc, return_context:).call
-        Result.new(
-          interrupted: true,
-          match:,
-          npc:,
-          message: "#{npc.display_name} attacks before the action completes."
-        )
       end
 
       private

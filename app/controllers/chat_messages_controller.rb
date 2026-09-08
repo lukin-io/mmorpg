@@ -11,13 +11,25 @@ class ChatMessagesController < ApplicationController
     dispatcher = Chat::MessageDispatcher.new(
       user: current_user,
       channel: @chat_channel,
-      body: chat_message_params[:body]
+      body: chat_message_params[:body],
+      context_key: params[:context_key],
+      session: current_user_session
     )
 
-    dispatcher.call
+    result = dispatcher.call
 
     respond_to do |format|
-      format.turbo_stream { head :ok }
+      format.turbo_stream do
+        if @chat_channel.local?
+          render turbo_stream: turbo_stream.append(
+            Chat::TimelineBroadcaster::TARGET_DOM_ID,
+            partial: "chat_messages/chat_message",
+            locals: {chat_message: result.message}
+          )
+        else
+          head :ok
+        end
+      end
       format.html { redirect_to chat_channel_path(@chat_channel), notice: "Message sent." }
       format.json { head :created }
     end
@@ -31,7 +43,16 @@ class ChatMessagesController < ApplicationController
   private
 
   def set_chat_channel
-    @chat_channel = ChatChannel.find(params[:chat_channel_id])
+    @chat_channel = if params[:chat_channel_id].present?
+      ChatChannel.find(params[:chat_channel_id])
+    else
+      current_user.ensure_social_features!
+      prepare_local_chat_context
+      unless params[:context_key].present?
+        raise Pundit::NotAuthorizedError, "Current chat location required"
+      end
+      Chat::ChannelRouter.new(user: current_user).resolve(scope: :local)
+    end
   end
 
   def chat_message_params
@@ -44,16 +65,25 @@ class ChatMessagesController < ApplicationController
 
     respond_to do |format|
       format.turbo_stream do
-        render turbo_stream: turbo_stream.replace(
-          dom_id(@chat_channel, :form),
-          partial: "chat_messages/form",
-          locals: {chat_channel: @chat_channel, chat_message:}
-        ), status: :unprocessable_entity
+        stream = if @chat_channel.local?
+          turbo_stream.update("flash", helpers.tag.div(message, class: "nl-flash nl-flash--alert"))
+        else
+          turbo_stream.replace(
+            dom_id(@chat_channel, :form),
+            partial: "chat_messages/form",
+            locals: {chat_channel: @chat_channel, chat_message:}
+          )
+        end
+        render turbo_stream: stream, status: :unprocessable_entity
       end
       format.html do
         flash.now[:alert] = message
         @chat_message = chat_message
-        @chat_entries = Chat::Timeline.new(channel: @chat_channel, viewer: current_user).call
+        prepare_local_chat_context if @chat_channel.local?
+        @chat_entries = Chat::Timeline.new(
+          channel: @chat_channel, viewer: current_user, session: current_user_session,
+          include_game_events: @chat_channel.global? || @chat_channel.local?
+        ).call
         render "chat_channels/show", status: :unprocessable_entity
       end
       format.json { render json: {error: message}, status: :unprocessable_entity }

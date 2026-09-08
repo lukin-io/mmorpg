@@ -313,6 +313,30 @@ RSpec.describe "Inventories", type: :request do
       expect(recipient_user.currency_wallet.reload.nv_balance).to eq(0.25)
       expect(recipient.inventory.inventory_items.find_by(item_template:).quantity).to eq(1)
     end
+
+    it "rolls back a transferred item when the locked buyer balance rejects settlement" do
+      inventory.update!(metadata: {"trade_license" => true})
+      user.currency_wallet.update!(nv_balance: 0)
+      recipient_user.currency_wallet.update!(nv_balance: 12.75)
+      allow_any_instance_of(CurrencyWallet).to receive(:adjust!)
+        .and_raise(Economy::WalletService::InsufficientFundsError)
+
+      post sell_to_player_inventory_path, params: {
+        item_id: inventory_item.id,
+        recipient_name: "receiver",
+        quantity: 1,
+        price: "12.50"
+      }
+
+      expect(response).to redirect_to(inventory_path)
+      expect(flash[:alert]).to eq("Recipient does not have enough NV.")
+      expect(user.currency_wallet.reload.nv_balance).to eq(0)
+      expect(recipient_user.currency_wallet.reload.nv_balance).to eq(12.75)
+      expect(inventory_item.reload.quantity).to eq(2)
+      expect(inventory.reload.current_weight).to eq(2)
+      expect(recipient.inventory.reload.current_weight).to eq(0)
+      expect(recipient.inventory.inventory_items).to be_empty
+    end
   end
 
   describe "POST /inventory/sort" do

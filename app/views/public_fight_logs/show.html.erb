@@ -4,6 +4,19 @@
 <section class="combat-log-viewer nl-public-fight-log">
   <h1 class="nl-visually-hidden">Fight Log #<%= @arena_match.id %></h1>
 
+  <nav class="fight-log-modes" aria-label="Fight log view">
+    <% if @view_mode == :log %>
+      <span aria-current="page">Fight log</span>
+    <% else %>
+      <%= link_to "Fight log", public_fight_log_path(@arena_match) %>
+    <% end %>
+    <% if @view_mode == :statistics %>
+      <span aria-current="page">Statistics</span>
+    <% else %>
+      <%= link_to "Statistics", public_fight_log_path(@arena_match, stat: 1) %>
+    <% end %>
+  </nav>
+
   <% if @view_mode == :statistics %>
     <% part_labels = {"head" => "Head", "torso" => "Torso", "stomach" => "Abdomen", "legs" => "Legs"} %>
     <div class="combat-log-content">
@@ -52,22 +65,26 @@
   <% else %>
     <div class="combat-log-content">
       <div class="log-entries">
-        <% @combat_log_entries.group_by(&:round_number).each do |round, entries| %>
-          <div class="round-group" data-round="<%= round %>">
-            <% entries.each do |entry| %>
-              <div class="log-entry log-type-<%= entry.log_type %>" data-log-id="<%= entry.id %>">
-                <div class="entry-header">
-                  <span class="entry-time"><%= entry.occurred_at_or_created_at.strftime("%H:%M:%S") %></span>
+        <% if @combat_log_entries.any? %>
+          <% @combat_log_entries.group_by(&:round_number).each do |round, entries| %>
+            <div class="round-group" data-round="<%= round %>">
+              <% entries.each do |entry| %>
+                <div class="log-entry log-type-<%= entry.log_type %>" data-log-id="<%= entry.id %>">
+                  <div class="entry-header">
+                    <span class="entry-time"><%= entry.occurred_at_or_created_at.strftime("%H:%M:%S") %></span>
+                  </div>
+                  <div class="entry-content">
+                    <span class="raw-message"><%= public_fight_log_message(entry, team_a: @team_a, team_b: @team_b) %></span>
+                    <% if entry.damage_amount.positive? %>
+                      <span class="damage"><%= entry.damage_amount %> damage</span>
+                    <% end %>
+                  </div>
                 </div>
-                <div class="entry-content">
-                  <span class="raw-message"><%= public_fight_log_message(entry, team_a: @team_a, team_b: @team_b) %></span>
-                  <% if entry.damage_amount.positive? %>
-                    <span class="damage"><%= entry.damage_amount %> damage</span>
-                  <% end %>
-                </div>
-              </div>
-            <% end %>
-          </div>
+              <% end %>
+            </div>
+          <% end %>
+        <% else %>
+          <p class="fight-log-empty" role="status">No fight events recorded.</p>
         <% end %>
       </div>
 

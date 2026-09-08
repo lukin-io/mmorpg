@@ -78,6 +78,8 @@ block_types:
     action_cost: 35
     mana_cost: 0
     type: 2
+    block_table: "normal"
+    selector_part: "head"
     body_part: "head"
 
   head_torso_block:
@@ -86,6 +88,8 @@ block_types:
     action_cost: 50
     mana_cost: 0
     type: 2
+    block_table: "normal"
+    selector_part: "head"
     body_parts: ["head", "torso"]
 
   head_stomach_block:
@@ -94,6 +98,8 @@ block_types:
     action_cost: 60
     mana_cost: 0
     type: 2
+    block_table: "normal"
+    selector_part: "head"
     body_parts: ["head", "stomach"]
 
   torso_block:
@@ -102,6 +108,8 @@ block_types:
     action_cost: 30
     mana_cost: 0
     type: 2
+    block_table: "normal"
+    selector_part: "torso"
     body_part: "torso"
 
   torso_stomach_block:
@@ -110,6 +118,8 @@ block_types:
     action_cost: 50
     mana_cost: 0
     type: 2
+    block_table: "normal"
+    selector_part: "torso"
     body_parts: ["torso", "stomach"]
 
   torso_legs_block:
@@ -118,6 +128,8 @@ block_types:
     action_cost: 60
     mana_cost: 0
     type: 2
+    block_table: "normal"
+    selector_part: "torso"
     body_parts: ["torso", "legs"]
 
   stomach_block:
@@ -126,6 +138,8 @@ block_types:
     action_cost: 30
     mana_cost: 0
     type: 2
+    block_table: "normal"
+    selector_part: "stomach"
     body_part: "stomach"
 
   stomach_legs_block:
@@ -134,6 +148,8 @@ block_types:
     action_cost: 50
     mana_cost: 0
     type: 2
+    block_table: "normal"
+    selector_part: "stomach"
     body_parts: ["stomach", "legs"]
 
   legs_block:
@@ -142,6 +158,8 @@ block_types:
     action_cost: 35
     mana_cost: 0
     type: 2
+    block_table: "normal"
+    selector_part: "legs"
     body_part: "legs"
 
   legs_head_block:
@@ -150,81 +168,162 @@ block_types:
     action_cost: 80
     mana_cost: 0
     type: 2
+    block_table: "normal"
+    selector_part: "legs"
     body_parts: ["legs", "head"]
 
-  # Shield block selectors - available when the participant profile uses the
-  # shield block table.
-  shield_head_block:
-    key: "shield_head_block"
-    name: "Shield Block: Head"
-    action_cost: 45
+  # Exact `fight_pm[3]` shield tables from fight_v10.js. A shield item must
+  # author one of these table identities explicitly; family alone is not a
+  # safe tier inference.
+  shield_40_head_block:
+    key: "shield_40_head_block"
+    name: "Shield: Head"
+    action_cost: 40
     mana_cost: 0
     type: 2
-    block_table: "shield"
+    block_table: "shield_40"
+    selector_part: "head"
     body_part: "head"
 
-  shield_torso_block:
-    key: "shield_torso_block"
-    name: "Shield Block: Torso"
-    action_cost: 40
+  shield_40_head_torso_block:
+    key: "shield_40_head_torso_block"
+    name: "Shield: Head and Torso"
+    action_cost: 85
     mana_cost: 0
     type: 2
-    block_table: "shield"
-    body_part: "torso"
-
-  shield_stomach_block:
-    key: "shield_stomach_block"
-    name: "Shield Block: Abdomen"
-    action_cost: 40
-    mana_cost: 0
-    type: 2
-    block_table: "shield"
-    body_part: "stomach"
-
-  shield_legs_block:
-    key: "shield_legs_block"
-    name: "Shield Block: Legs"
-    action_cost: 45
-    mana_cost: 0
-    type: 2
-    block_table: "shield"
-    body_part: "legs"
-
-  shield_head_torso_block:
-    key: "shield_head_torso_block"
-    name: "Shield Block: Head and Torso"
-    action_cost: 65
-    mana_cost: 0
-    type: 2
-    block_table: "shield"
+    block_table: "shield_40"
+    selector_part: "head"
     body_parts: ["head", "torso"]
 
-  shield_torso_stomach_block:
-    key: "shield_torso_stomach_block"
-    name: "Shield Block: Torso and Abdomen"
-    action_cost: 60
+  shield_40_torso_block:
+    key: "shield_40_torso_block"
+    name: "Shield: Torso"
+    action_cost: 40
     mana_cost: 0
     type: 2
-    block_table: "shield"
+    block_table: "shield_40"
+    selector_part: "torso"
+    body_part: "torso"
+
+  shield_40_torso_stomach_block:
+    key: "shield_40_torso_stomach_block"
+    name: "Shield: Torso and Abdomen"
+    action_cost: 85
+    mana_cost: 0
+    type: 2
+    block_table: "shield_40"
+    selector_part: "torso"
     body_parts: ["torso", "stomach"]
 
-  shield_stomach_legs_block:
-    key: "shield_stomach_legs_block"
-    name: "Shield Block: Abdomen and Legs"
-    action_cost: 65
+  shield_40_stomach_block:
+    key: "shield_40_stomach_block"
+    name: "Shield: Abdomen"
+    action_cost: 40
     mana_cost: 0
     type: 2
-    block_table: "shield"
+    block_table: "shield_40"
+    selector_part: "stomach"
+    body_part: "stomach"
+
+  shield_40_stomach_legs_block:
+    key: "shield_40_stomach_legs_block"
+    name: "Shield: Abdomen and Legs"
+    action_cost: 85
+    mana_cost: 0
+    type: 2
+    block_table: "shield_40"
+    selector_part: "stomach"
     body_parts: ["stomach", "legs"]
 
-  shield_full_block:
-    key: "shield_full_block"
-    name: "Full Shield Block"
+  shield_40_legs_block:
+    key: "shield_40_legs_block"
+    name: "Shield: Legs"
+    action_cost: 40
+    mana_cost: 0
+    type: 2
+    block_table: "shield_40"
+    selector_part: "legs"
+    body_part: "legs"
+
+  shield_40_legs_head_block:
+    key: "shield_40_legs_head_block"
+    name: "Shield: Legs and Head"
     action_cost: 100
     mana_cost: 0
     type: 2
-    block_table: "shield"
-    body_parts: ["head", "torso", "stomach", "legs"]
+    block_table: "shield_40"
+    selector_part: "legs"
+    body_parts: ["legs", "head"]
+
+  shield_70_head_block:
+    key: "shield_70_head_block"
+    name: "Shield: Head"
+    action_cost: 45
+    mana_cost: 0
+    type: 2
+    block_table: "shield_70"
+    selector_part: "head"
+    body_part: "head"
+
+  shield_70_head_torso_block:
+    key: "shield_70_head_torso_block"
+    name: "Shield: Head and Torso"
+    action_cost: 70
+    mana_cost: 0
+    type: 2
+    block_table: "shield_70"
+    selector_part: "head"
+    body_parts: ["head", "torso"]
+
+  shield_70_torso_stomach_block:
+    key: "shield_70_torso_stomach_block"
+    name: "Shield: Torso and Abdomen"
+    action_cost: 70
+    mana_cost: 0
+    type: 2
+    block_table: "shield_70"
+    selector_part: "torso"
+    body_parts: ["torso", "stomach"]
+
+  shield_70_stomach_legs_block:
+    key: "shield_70_stomach_legs_block"
+    name: "Shield: Abdomen and Legs"
+    action_cost: 70
+    mana_cost: 0
+    type: 2
+    block_table: "shield_70"
+    selector_part: "stomach"
+    body_parts: ["stomach", "legs"]
+
+  shield_70_legs_head_stomach_block:
+    key: "shield_70_legs_head_stomach_block"
+    name: "Shield: Legs, Head, and Abdomen"
+    action_cost: 130
+    mana_cost: 0
+    type: 2
+    block_table: "shield_70"
+    selector_part: "legs"
+    body_parts: ["legs", "head", "stomach"]
+
+  shield_90_head_torso_stomach_block:
+    key: "shield_90_head_torso_stomach_block"
+    name: "Shield: Head, Torso, and Abdomen"
+    action_cost: 90
+    mana_cost: 0
+    type: 2
+    block_table: "shield_90"
+    selector_part: "head"
+    body_parts: ["head", "torso", "stomach"]
+
+  shield_90_torso_stomach_legs_block:
+    key: "shield_90_torso_stomach_legs_block"
+    name: "Shield: Torso, Abdomen, and Legs"
+    action_cost: 90
+    mana_cost: 0
+    type: 2
+    block_table: "shield_90"
+    selector_part: "torso"
+    body_parts: ["torso", "stomach", "legs"]
 
   magic_shield:
     key: "magic_shield"
@@ -233,6 +332,7 @@ block_types:
     mana_cost: 20
     type: 3
     block_table: "magic"
+    selector_part: "all"
     body_parts: ["head", "torso", "stomach", "legs"]
 
   rainbow_barrier:
@@ -242,6 +342,7 @@ block_types:
     mana_cost: 40
     type: 3
     block_table: "magic"
+    selector_part: "all"
     body_parts: ["head", "torso", "stomach", "legs"]
 
   crystal_sphere:
@@ -251,6 +352,7 @@ block_types:
     mana_cost: 65
     type: 3
     block_table: "magic"
+    selector_part: "all"
     body_parts: ["head", "torso", "stomach", "legs"]
 
 magic_types: {}
@@ -273,8 +375,3 @@ attack_penalties:
 # Default action point budget
 defaults:
   action_points_per_turn: 80
-  max_mana_per_attack: 50
-  base_hit_chance: 85
-  base_block_chance: 50
-  critical_hit_chance: 10
-  critical_hit_multiplier: 1.5

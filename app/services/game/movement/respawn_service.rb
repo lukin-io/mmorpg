@@ -2,7 +2,9 @@
 
 module Game
   module Movement
-    # RespawnService snaps a character to the correct spawn point when they enter or recover.
+    # RespawnService creates only a missing character position from the supplied
+    # spawn scope. The character lock protects retry-safe first position and
+    # local-chat entry-context persistence in the same transaction.
     #
     # Usage:
     #   Game::Movement::RespawnService.new(character:).ensure_position!
@@ -16,10 +18,12 @@ module Game
       end
 
       def ensure_position!
-        position = character.position
-        return position if position
+        character.with_lock do
+          position = character.position
+          next position if position
 
-        create_fresh_position!
+          create_fresh_position!
+        end
       end
 
       private
@@ -28,7 +32,7 @@ module Game
 
       def create_fresh_position!
         spawn = resolve_spawn_point!
-        CharacterPosition.create!(
+        position = CharacterPosition.create!(
           character:,
           zone: spawn.zone,
           x: spawn.x,
@@ -36,6 +40,8 @@ module Game
           state: :active,
           last_action_at: nil
         )
+        Chat::LocalContext.new(character:).synchronize!
+        position
       end
 
       def resolve_spawn_point!(zone: nil)

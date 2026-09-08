@@ -12,10 +12,11 @@ module Arena
   #   broadcaster.broadcast_action(action)
   #
   class CombatBroadcaster
-    attr_reader :match
+    attr_reader :match, :publisher
 
-    def initialize(match)
+    def initialize(match, publisher: Arena::RealtimePublisher.new)
       @match = match
+      @publisher = publisher
     end
 
     # Broadcast countdown to match start
@@ -113,9 +114,9 @@ module Arena
         {
           id: "npc-participation-#{p.id}",
           character_id: "npc-participation-#{p.id}",
-          character_name: npc.name,
+          character_name: p.participant_name,
           team: p.team,
-          level: npc.level,
+          level: p.participant_level,
           current_hp: p.current_hp || npc.health,
           max_hp: p.max_hp || npc.health,
           current_mp: 0,
@@ -240,10 +241,9 @@ module Arena
     # @return [Hash] participant result data
     def participant_result_data(p)
       if p.npc?
-        npc = p.npc_template
         {
           character_id: "npc-participation-#{p.id}",
-          character_name: npc.name,
+          character_name: p.participant_name,
           team: p.team,
           result: p.result,
           damage_dealt: p.metadata&.dig("damage_dealt") || 0,
@@ -287,12 +287,29 @@ module Arena
       })
     end
 
+    # Ask connected clients to reconcile their presentation from the
+    # authoritative server-rendered fight state after a committed transition.
+    def broadcast_state_refresh(reason:)
+      broadcast({
+        type: "state_refresh",
+        reason: reason.to_s,
+        status: match.reload.status,
+        current_turn_number: match.current_turn_number
+      })
+    end
+
+    # Typed Arena producers that already own their payload shape still use the
+    # same resilient delivery boundary.
+    def broadcast_event(payload)
+      broadcast(payload)
+    end
+
     private
 
     def broadcast(data)
-      ActionCable.server.broadcast(
-        match.broadcast_channel,
-        data.merge(match_id: match.id)
+      publisher.publish(
+        channel: match.broadcast_channel,
+        payload: data.merge(match_id: match.id)
       )
     end
 

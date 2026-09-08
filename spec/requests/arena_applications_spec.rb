@@ -86,6 +86,60 @@ RSpec.describe "ArenaApplications", type: :request do
   # Success Cases
   # ============================================
 
+  describe "POST /arena_rooms/:arena_room_id/arena_applications" do
+    let(:valid_params) do
+      {
+        arena_application: {
+          fight_type: "duel",
+          fight_kind: "free",
+          timeout_seconds: 180,
+          trauma_percent: 30,
+          wait_minutes: 10
+        }
+      }
+    end
+
+    it "creates the authenticated character's application from allowlisted fields" do
+      expect do
+        post arena_room_arena_applications_path(arena_room), params: valid_params, as: :json
+      end.to change(ArenaApplication, :count).by(1)
+
+      expect(response).to have_http_status(:created)
+      application = ArenaApplication.order(:id).last
+      expect(application).to have_attributes(
+        applicant: character,
+        arena_room: arena_room,
+        fight_type: "duel",
+        fight_kind: "free",
+        timeout_seconds: 180,
+        trauma_percent: 30,
+        status: "open"
+      )
+    end
+
+    it "rejects a duplicate active application without creating another record" do
+      create(:arena_application, :open, applicant: character, arena_room: arena_room)
+
+      expect do
+        post arena_room_arena_applications_path(arena_room), params: valid_params, as: :json
+      end.not_to change(ArenaApplication, :count)
+
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(response.parsed_body.fetch("errors")).to include("You already have an active fight application")
+    end
+
+    it "rejects a timeout outside the captured allowlist" do
+      expect do
+        post arena_room_arena_applications_path(arena_room),
+          params: valid_params.deep_merge(arena_application: {timeout_seconds: 181}),
+          as: :json
+      end.not_to change(ArenaApplication, :count)
+
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(response.parsed_body.fetch("errors").join(" ")).to include("Timeout seconds is not included")
+    end
+  end
+
   describe "POST /arena_applications/:id/accept" do
     let!(:application) do
       create(:arena_application,
@@ -157,6 +211,13 @@ RSpec.describe "ArenaApplications", type: :request do
 
     it "redirects to login for cancel" do
       delete cancel_arena_application_path(application)
+
+      expect(response).to redirect_to(new_user_session_path)
+    end
+
+    it "redirects to login for create" do
+      post arena_room_arena_applications_path(arena_room),
+        params: {arena_application: {fight_type: "duel"}}
 
       expect(response).to redirect_to(new_user_session_path)
     end

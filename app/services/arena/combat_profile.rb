@@ -59,10 +59,13 @@ module Arena
         derived_physical_attack_seed
       ap_limit = explicit_integer("ap_limit") ||
         explicit_integer("action_points_per_turn") ||
-        derived_ap_limit(seed)
+        derived_ap_limit
       magic_limit = explicit_integer("max_magic_mana") ||
         explicit_integer("magic_mana_limit") ||
         derived_magic_mana_limit
+      block_table = Game::Combat::ActionCatalog.normalize_block_table(
+        explicit_profile_value("block_table") || derived_block_table
+      )
 
       {
         "ap_limit" => ap_limit,
@@ -70,7 +73,9 @@ module Arena
         "simple_attack_cost" => seed,
         "aimed_attack_cost" => seed + AIMED_ATTACK_SURCHARGE,
         "max_magic_mana" => magic_limit,
-        "block_table" => stored_profile["block_table"].presence || match_profile["block_table"].presence || derived_block_table
+        "block_table" => block_table,
+        "injected_attack_keys" => injected_attack_keys,
+        "injected_block_keys" => injected_block_keys
       }
     end
 
@@ -87,12 +92,18 @@ module Arena
     end
 
     def explicit_integer(key)
-      value = stored_profile[key.to_s]
-      value = participation&.metadata&.dig(key.to_s) if value.blank?
-      value = match_profile[key.to_s] if value.blank? && match_profile_applies_to_key?(key)
-      value = participant_character&.metadata&.dig(METADATA_KEY, key.to_s) if value.blank?
-      value = participant_character&.metadata&.dig(key.to_s) if value.blank?
+      value = explicit_profile_value(key, include_match: match_profile_applies_to_key?(key))
       integer_value(value)
+    end
+
+    def explicit_profile_value(key, include_match: true)
+      string_key = key.to_s
+      value = stored_profile[string_key]
+      value = participation&.metadata&.dig(string_key) if value.blank?
+      value = match_profile[string_key] if value.blank? && include_match
+      value = participant_character&.metadata&.dig(METADATA_KEY, string_key) if value.blank?
+      value = participant_character&.metadata&.dig(string_key) if value.blank?
+      value
     end
 
     def match_profile_applies_to_key?(key)
@@ -109,11 +120,9 @@ module Arena
       nil
     end
 
-    def derived_ap_limit(seed)
+    def derived_ap_limit
       if participant_character
-        [participant_character.max_action_points.to_i, DEFAULT_AP_LIMIT, seed + 30].max
-      elsif participation&.npc?
-        [DEFAULT_AP_LIMIT, seed + 30].max
+        participant_character.max_action_points.to_i
       else
         DEFAULT_AP_LIMIT
       end
@@ -154,7 +163,31 @@ module Arena
     end
 
     def derived_block_table
-      equipped_items.any? { |item| equipment_family(item) == "shield" } ? "shield" : "normal"
+      tables = equipped_items.filter_map { |item| explicit_item_block_table(item) }.uniq
+      tables.one? ? tables.first : "normal"
+    end
+
+    def explicit_item_block_table(item)
+      stats = item.item_template&.stat_modifiers.to_h
+      value = stats["block_table"] || stats[:block_table] ||
+        stats["shield_block_table"] || stats[:shield_block_table] ||
+        item.properties&.dig("block_table") || item.properties&.dig("shield_block_table")
+      table = Game::Combat::ActionCatalog.normalize_block_table(value)
+
+      table unless table == "normal"
+    end
+
+    def injected_block_keys
+      Array(explicit_profile_value("injected_block_keys")).map(&:to_s).uniq.select do |key|
+        Game::Combat::ActionCatalog.block_config(key)["block_table"] == "magic"
+      end
+    end
+
+    def injected_attack_keys
+      Array(explicit_profile_value("injected_attack_keys")).map(&:to_s).uniq.select do |key|
+        Game::Combat::ActionCatalog.attack_config(key).present? &&
+          !Game::Combat::ActionCatalog::PHYSICAL_ATTACK_KEYS.include?(key)
+      end
     end
 
     def equipment_attack_cost_bonus
@@ -179,14 +212,6 @@ module Arena
       return [] unless participant_character&.inventory
 
       participant_character.inventory.inventory_items.equipped.includes(:item_template)
-    end
-
-    def equipment_family(item)
-      stats = item.item_template&.stat_modifiers.to_h
-      explicit = stats["family"] || stats[:family] || stats["weapon_family"] || stats[:weapon_family] ||
-        item.properties&.dig("family") || item.properties&.dig("weapon_family")
-
-      explicit.to_s.downcase.presence
     end
   end
 end

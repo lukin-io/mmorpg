@@ -101,4 +101,81 @@ RSpec.describe WorldActionOffer, type: :model do
       expect(offer.error_message).to eq("Blocked")
     end
   end
+
+  describe "Look Around timer metadata" do
+    let(:now) { Time.current.change(usec: 0) }
+    let(:offer) do
+      build(:world_action_offer, :accepted, accepted_at: now,
+        metadata: {
+          "local_action_ends_at" => (now + 28.seconds).iso8601(6),
+          "local_action_result" => "There is no useful vegetation in this area."
+        })
+    end
+
+    it "parses the persisted deadline and computes remaining seconds from server time" do
+      expect(offer).to be_valid
+      expect(offer.local_action_ends_at).to eq(now + 28.seconds)
+      expect(offer.local_action_remaining_seconds(at: now)).to eq(28)
+      expect(offer.local_action_remaining_seconds(at: now + 27.5.seconds)).to eq(1)
+      expect(offer.local_action_remaining_seconds(at: now + 28.seconds)).to eq(0)
+      expect(offer.local_action_remaining_seconds(at: now + 29.seconds)).to eq(0)
+      expect(offer.local_action_result).to eq("There is no useful vegetation in this area.")
+    end
+
+    it "rejects missing acceptance, malformed deadlines, and non-search timer metadata" do
+      [nil, "invalid", 123, now.iso8601(6)].each do |deadline|
+        offer.metadata["local_action_ends_at"] = deadline
+        expect(offer).not_to be_valid
+      end
+
+      offer.metadata["local_action_ends_at"] = (now + 28.seconds).iso8601(6)
+      offer.accepted_at = nil
+      expect(offer).not_to be_valid
+
+      offer.accepted_at = now
+      offer.action_type = "enter_building"
+      expect(offer).not_to be_valid
+    end
+
+    it "requires the immediate result on accepted timed work" do
+      offer.metadata.delete("local_action_result")
+
+      expect(offer).not_to be_valid
+      expect(offer.errors[:metadata]).to include("must have a Look Around result")
+    end
+
+    it "returns no timer or result for ordinary offers" do
+      ordinary_offer = build(:world_action_offer)
+
+      expect(ordinary_offer.local_action_ends_at).to be_nil
+      expect(ordinary_offer.local_action_remaining_seconds).to eq(0)
+      expect(ordinary_offer.local_action_result).to be_nil
+    end
+
+    it "consumes the saved result once across stale instances without changing timing or work state" do
+      offer.save!
+      stale_offer = described_class.find(offer.id)
+      result = offer.local_action_result
+
+      expect(offer.consume_local_action_result!(at: now)).to eq(result)
+      expect(stale_offer.consume_local_action_result!(at: now + 1.second)).to be_nil
+      expect(offer.reload.metadata["local_action_result_delivered_at"]).to eq(now.iso8601(6))
+      expect(offer).to have_attributes(local_action_result: result, local_action_ends_at: now + 28.seconds, status: "accepted")
+    end
+
+    it "permits an undelivered completed result and rejects cancelled, failed, and ordinary offers" do
+      offer.save!
+      offer.complete!
+      expect(offer.consume_local_action_result!(at: now + 29.seconds)).to eq(offer.local_action_result)
+
+      %w[cancelled failed offered].each do |state|
+        candidate = create(:world_action_offer, status: state, metadata: {
+          "local_action_ends_at" => (now + 28.seconds).iso8601(6), "local_action_result" => "Hidden result"
+        })
+        expect(candidate.consume_local_action_result!).to be_nil
+      end
+      ordinary_offer = create(:world_action_offer)
+      expect(ordinary_offer.consume_local_action_result!).to be_nil
+    end
+  end
 end

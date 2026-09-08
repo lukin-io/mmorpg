@@ -25,6 +25,9 @@ fight-slot behaviors remain outside it. A personal item-found event is emitted
 by Combat only after Inventory reports a successful NPC-loot award; it is not
 item ownership state. Multi-unit additions are atomic under one Inventory lock
 and savepoint, including when a Combat caller records a capacity failure.
+Combat owns the exact result-based durability roll and Careful Fighter's
+half-chance modifier. Repair remains an unimplemented workshop/profession
+transaction, not a direct Inventory reset.
 
 ## Important responsible implementation files
 
@@ -39,4 +42,6 @@ Section 16 of `doc/features/player_inventory.md` is exhaustive.
 ## Evidence and implementation gaps
 
 Each uncaptured item family and mutating action needs its own observable flow,
-failure states, responsive acceptance, and server-authoritative contract.
+failure states, responsive acceptance, and server-authoritative contract. The
+repair flow specifically still needs authenticated request, payment/material,
+failure, completion, and owner-retrieval evidence.

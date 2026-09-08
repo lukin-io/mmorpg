@@ -139,7 +139,7 @@ RSpec.describe Game::World::ResumeContext do
   it "allows the linked shop only while the player remains on its location entrance" do
     outdoors = create(:zone, :mvp_outdoor_region, name: "Village Shop Region")
     position.update!(zone: outdoors, x: 4, y: 6)
-    create(
+    building = create(
       :tile_building,
       :world_location,
       zone: outdoors.name,
@@ -149,8 +149,129 @@ RSpec.describe Game::World::ResumeContext do
     )
 
     expect(resume_context).to be_shop_available
+    expect(resume_context.shop_parent_location).to eq(building)
 
     position.update!(x: 5)
     expect(resume_context).not_to be_shop_available
+    expect(resume_context.shop_parent_location).to be_nil
+  end
+
+  it "does not assign a village parent to a city shop" do
+    expect(resume_context).to be_shop_available
+    expect(resume_context.shop_parent_location).to be_nil
+  end
+
+  it "does not resume a different region's saved interior at identical coordinates" do
+    first_region = create(:zone, :mvp_outdoor_region)
+    next_region = create(:zone, :mvp_outdoor_region)
+    first_village = create(:tile_building, :world_location, zone: first_region.name, x: 4, y: 6)
+    next_village = create(:tile_building, :world_location, zone: next_region.name, x: 4, y: 6)
+    position.update!(zone: first_region, x: 4, y: 6)
+    resume_context.remember_world_location!(key: first_village.location_key)
+
+    position.update!(zone: next_region)
+
+    expect(described_class.new(character: Character.find(character.id)).resume_path).to eq("/world")
+    expect(resume_context.shop_parent_location).to eq(next_village)
+    expect(position.reload).to have_attributes(zone: next_region, x: 4, y: 6)
+  end
+
+  it "does not return an inactive linked Shop parent" do
+    outdoors = create(:zone, :mvp_outdoor_region)
+    position.update!(zone: outdoors, x: 4, y: 6)
+    create(:tile_building, :world_location, zone: outdoors.name, x: 4, y: 6, active: false)
+
+    expect(resume_context.shop_parent_location).to be_nil
+  end
+
+  describe "Arena room context" do
+    let!(:arena_hotspot) { create(:city_hotspot, :arena, zone: city) }
+    let(:room) { create(:arena_room, zone: city) }
+
+    it "persists an authorized room id and resolves the same room after reload" do
+      expect(resume_context.remember_arena_room!(room:)).to eq(room)
+      fresh_context = described_class.new(character: Character.find(character.id))
+
+      expect(character.reload.gameplay_context).to eq(
+        "name" => "arena_room", "params" => {"room_id" => room.id}
+      )
+      expect(fresh_context.arena_room).to eq(room)
+      expect(fresh_context.resume_path).to eq("/arena_rooms/#{room.id}")
+      expect(position.reload).to have_attributes(zone: city, x: 5, y: 5)
+    end
+
+    it "does not restart the local context on repeated entry to the same room" do
+      resume_context.remember_arena_room!(room:)
+      saved = character.reload.metadata.fetch("local_chat_context")
+
+      resume_context.remember_arena_room!(room:)
+
+      expect(character.reload.metadata.fetch("local_chat_context")).to eq(saved)
+    end
+
+    it "rolls back the selected room if its audience entry cannot be persisted" do
+      resume_context.remember_world!
+      synchronizer = instance_double(Chat::LocalContext)
+      allow(Chat::LocalContext).to receive(:new).and_return(synchronizer)
+      allow(synchronizer).to receive(:synchronize!).and_raise(ActiveRecord::StatementInvalid, "audience failure")
+
+      expect { resume_context.remember_arena_room!(room:) }
+        .to raise_error(ActiveRecord::StatementInvalid, "audience failure")
+
+      expect(character.reload.gameplay_context).to eq("name" => "world", "params" => {})
+    end
+
+    it "rechecks a stale room and character before changing saved context" do
+      resume_context.remember_world!
+      ArenaRoom.find(room.id).update!(level_min: character.level + 1)
+
+      expect(resume_context.remember_arena_room!(room:)).to be_nil
+      expect(character.reload.gameplay_context["name"]).to eq("world")
+
+      room.reload.update!(level_min: 5)
+      Character.find(character.id).update!(level: 1)
+      expect(resume_context.remember_arena_room!(room:)).to be_nil
+      expect(character.reload.gameplay_context["name"]).to eq("world")
+    end
+
+    it "does not replace saved context while an active fight exists" do
+      match = create(:arena_match, :live, arena_room: room)
+      create(:arena_participation, arena_match: match, character:, user: character.user)
+
+      expect(resume_context.remember_arena_room!(room:)).to be_nil
+      expect(character.reload.gameplay_context["name"]).to eq("world")
+    end
+
+    it "rejects a room in another city even at identical coordinates" do
+      other_city = create(:zone, :city)
+      foreign_room = create(:arena_room, zone: other_city)
+
+      expect(resume_context.remember_arena_room!(room: foreign_room)).to be_nil
+      expect(character.reload.gameplay_context["name"]).to eq("world")
+    end
+
+    it "falls back when saved room access or its city source becomes unavailable" do
+      resume_context.remember_arena_room!(room:)
+      room.update!(active: false)
+      expect(resume_context.arena_room).to be_nil
+      expect(resume_context.resume_path).to eq("/world")
+
+      room.update!(active: true)
+      arena_hotspot.update!(active: false)
+      expect(resume_context.resume_path).to eq("/world")
+
+      arena_hotspot.update!(active: true)
+      position.update!(zone: create(:zone, :mvp_outdoor_region))
+      expect(resume_context.resume_path).to eq("/world")
+    end
+
+    it "rejects malformed or deleted room identities without following arbitrary paths" do
+      character.remember_gameplay_context!(name: "arena_room", params: {room_id: "#{room.id}/../world"})
+      expect(resume_context.resume_path).to eq("/world")
+
+      resume_context.remember_arena_room!(room:)
+      room.destroy!
+      expect(resume_context.resume_path).to eq("/world")
+    end
   end
 end

@@ -192,8 +192,10 @@ Which feature documents this area activates.
 - Prefer deterministic data in tests and starter content.
 - Preserve the Neverlands frame contract with modern Rails primitives rather
   than framesets: one persistent game layout, one replaceable main content
-  region, one persistent mixed chat/game-event history, persistent presence,
-  and server-authored actions.
+  region, one mixed chat/game-event surface, current-cell/room presence, and
+  server-authored actions. Delivered ordinary chat survives navigation within
+  one login; personal/world event history is durable. Neither the browser
+  buffer nor a stale subscription determines the current chat audience.
 - Use Stimulus for local interaction affordances and Turbo/Hotwire for
   server-rendered state changes. Do not introduce Tailwind CSS for MVP unless a
   specific view rewrite justifies the migration cost against the existing

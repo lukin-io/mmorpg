@@ -28,12 +28,15 @@ class ArenaTurnTimeoutJob < ApplicationJob
   def check_single_match(match_id)
     match = ArenaMatch.find_by(id: match_id)
     return unless match&.live?
+    return if match.auto_end_if_needed!
 
     process_timeout(match) if match.turn_timed_out?
   end
 
   def check_all_live_matches
     ArenaMatch.live.find_each do |match|
+      next if match.auto_end_if_needed!
+
       process_timeout(match) if match.turn_timed_out?
     end
   end
@@ -67,9 +70,6 @@ class ArenaTurnTimeoutJob < ApplicationJob
 
     # Check if match should end after too many timeouts
     check_excessive_timeouts(match, processor)
-
-    # Schedule next timeout check
-    schedule_next_check(match)
   end
 
   def broadcast_timeout(match, claim_available:)
@@ -79,8 +79,7 @@ class ArenaTurnTimeoutJob < ApplicationJob
       "Turn ended by timeout"
     end
 
-    ActionCable.server.broadcast(
-      match.broadcast_channel,
+    Arena::CombatBroadcaster.new(match).broadcast_event(
       {
         type: "turn_timeout",
         message: message,
@@ -90,12 +89,6 @@ class ArenaTurnTimeoutJob < ApplicationJob
         timestamp: Time.current.strftime("%H:%M:%S")
       }
     )
-
-    # Also broadcast warning 30 seconds before timeout if scheduling
-    remaining = match.seconds_until_timeout
-    if remaining && remaining > 30
-      ArenaTurnTimeoutWarningJob.set(wait: (remaining - 30).seconds).perform_later(match_id: match.id)
-    end
   end
 
   def check_excessive_timeouts(match, processor)
@@ -107,12 +100,5 @@ class ArenaTurnTimeoutJob < ApplicationJob
     if timeout_count >= 3
       processor.end_match(nil) # Draw due to inactivity
     end
-  end
-
-  def schedule_next_check(match)
-    return unless match.live?
-
-    timeout_seconds = match.turn_timeout_seconds || 300
-    ArenaTurnTimeoutJob.set(wait: timeout_seconds.seconds).perform_later(match_id: match.id)
   end
 end

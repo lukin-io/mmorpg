@@ -25,8 +25,13 @@ notification surface or gameplay authority.
 ## Important responsible implementation files
 
 - `app/controllers/chat_messages_controller.rb`
+- `app/controllers/chat_channels_controller.rb`
+- `app/controllers/session_pings_controller.rb`
+- `app/models/user_session.rb`
 - `app/models/game_event.rb`
 - `app/queries/chat/timeline.rb`
+- `app/queries/game/world/presence.rb`
+- `app/services/chat/local_context.rb`
 - `app/services/chat/event_publisher.rb`
 - `app/services/chat/timeline_broadcaster.rb`
 - `app/services/chat/message_dispatcher.rb`
@@ -40,7 +45,24 @@ Section 16 of `doc/features/game_shell.md` remains the exhaustive inventory.
 
 The captured fight-completion, item-found, money-found, and mixed
 world-announcement timeline is implemented within the shared shell boundary.
-Fresh moderation, private-message, ignore, announcement-authoring,
-auxiliary-control, reconnect/retention, and high-volume failure observations
+Fresh moderation, private-message interaction, ignore, announcement-authoring,
+auxiliary-control, unfetched-message recovery, and high-volume failure observations
 are required before those broader behaviors can be claimed. NPC-specific NV
 probabilities remain an evidence gap.
+
+The September 7 source capture establishes ordinary chat within one cell or
+room. The shell now uses server-derived local audiences, reauthorized polling,
+history bounded to the current open login and visit, and a bounded browser buffer alongside
+durable personal/world game events. Presence uses the same cell/room partition
+for village, Shop, supported city buildings, and selected Arena rooms. It
+includes only the currently playable character for each user with a recent
+open session. Its five-minute liveness
+window is a technical projection; exact Neverlands expiry remains an evidence
+gap. Private city/region messaging remains deferred and private-address attempts
+are rejected instead of being published in ordinary chat.
+
+CSRF-protected heartbeats only refresh existing open login rows; explicit
+login owns reopening and starts a new ordinary-buffer generation. Clear keeps
+chat/event delivery connected. City-building and Arena-room entry render the
+new saved room's presence immediately; the shell handbook records the
+first-response and full-shell navigation coverage.
