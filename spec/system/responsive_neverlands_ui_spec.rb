@@ -213,6 +213,74 @@ RSpec.describe "Responsive Neverlands UI", type: :system, js: true do
     expect(position.reload).to have_attributes(x: 25, y: 25)
   end
 
+  it "keeps whole centered map cells when scrollbars reserve layout space", :aggregate_failures do
+    set_viewport(390, 844)
+    visit world_path
+    # Explicit scrollbar dimensions make Chromium reserve classic gutters on
+    # macOS too; the probe proves the regression is not using overlay bars.
+    page.execute_script(<<~JS)
+      const style = document.createElement("style")
+      style.textContent = "*::-webkit-scrollbar { width: 15px; height: 15px; }"
+      document.head.append(style)
+      const probe = document.createElement("div")
+      probe.id = "classic-scrollbar-probe"
+      probe.style.cssText = "position:absolute;left:-1000px;width:100px;height:100px;overflow:scroll"
+      document.body.append(probe)
+      window.dispatchEvent(new Event("resize"))
+    JS
+    expect(page.evaluate_script(<<~JS)).to eq(15)
+      (() => {
+        const probe = document.getElementById("classic-scrollbar-probe")
+        return probe.offsetWidth - probe.clientWidth
+      })()
+    JS
+    offered_keys = MovementCommand.offered.where(character:).pluck(:action_key)
+
+    [[390, 844, 3], [1150, 799, 11], [1326, 817, 13]].each do |width, height, columns|
+      set_viewport(width, height)
+      expect(page).to have_css(".nl-map-viewport[style*='--nl-map-visible-columns: #{columns}']")
+      metrics = page.evaluate_script(<<~JS)
+        (() => {
+          const viewport = document.querySelector(".nl-map-viewport")
+          const cursor = document.querySelector(".nl-cursor")
+          return {
+            outerWidth: viewport.offsetWidth,
+            innerWidth: viewport.clientWidth,
+            innerHeight: viewport.clientHeight,
+            outerHeight: viewport.offsetHeight,
+            pageCenterOffset: viewport.getBoundingClientRect().left + viewport.offsetWidth / 2 - window.innerWidth / 2,
+            cursorCenterOffset: cursor.offsetLeft + cursor.offsetWidth / 2 - viewport.scrollLeft - viewport.clientWidth / 2
+          }
+        })()
+      JS
+      expect(metrics.fetch("outerWidth")).to eq(columns * 100 + 2)
+      expect(metrics.fetch("innerWidth")).to eq(columns * 100)
+      expect(metrics.fetch("innerHeight")).to eq(metrics.fetch("outerHeight") - 2)
+      expect(metrics.fetch("pageCenterOffset")).to eq(0)
+      expect(metrics.fetch("cursorCenterOffset")).to eq(0)
+
+      if columns == 3
+        viewport = find(".nl-map-viewport")
+        before_pan = viewport.evaluate_script("this.scrollLeft")
+        origin = Selenium::WebDriver::WheelActions::ScrollOrigin.element(viewport.native)
+        page.driver.browser.action.scroll_from(origin, 100, 0).perform
+        expect(page).to have_css(".nl-map-viewport") { |element| element.evaluate_script("this.scrollLeft") == before_pan + 100 }
+      end
+    end
+
+    page.execute_script("document.querySelector('.nl-game-layout').style.setProperty('--nl-social-height', '40px')")
+    expect(page).to have_css('.nl-map-viewport[style*="--nl-map-visible-columns: 13"][style*="--nl-map-visible-rows: 7"]')
+    expect(page.evaluate_script(<<~JS)).to eq([1302, 702, 1300, 700])
+      (() => {
+        const viewport = document.querySelector(".nl-map-viewport")
+        return [viewport.offsetWidth, viewport.offsetHeight, viewport.clientWidth, viewport.clientHeight]
+      })()
+    JS
+
+    expect(MovementCommand.offered.where(character:).pluck(:action_key)).to match_array(offered_keys)
+    expect(position.reload).to have_attributes(x: 25, y: 25)
+  end
+
   it "centers the source-sized village interior in a touch-pannable mobile viewport" do
     create(
       :tile_building,

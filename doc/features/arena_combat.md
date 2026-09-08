@@ -3,7 +3,7 @@
 title: Arena Combat Runtime Feature
 description: Implementation handbook for arena applications, shared player and NPC turn combat, combat presentation, completion, and public fight logs.
 status: Fully Implemented
-updated: 2026-09-07
+updated: 2026-09-08
 owners: Arena and Combat
 template: feature-v1
 ---
@@ -603,6 +603,14 @@ AP preview, reset, living-opponent cycling, selected-card/target-line
 presentation, subscriptions, timer display, and reload of server-rendered
 match state. Neither controller resolves combat.
 
+An AP or match-state response for the same authoritative round preserves
+unsubmitted attack, block, and magic choices and the selected opponent. This
+includes a delayed initial subscription snapshot and the fight's Refresh
+control; full AP alone does not clear the draft. Reset explicitly clears the
+selected actions. A changed server round, match status, or waiting state still
+reloads the authoritative page. Draft selections remain browser state, and
+Turn submission remains subject to server validation.
+
 `arena.css` owns Arena rows and the active fight composition. It fixes source
 geometry at desktop, compacts the rails for tablet, and moves the center below
 two fighter rails on mobile. `fight_logs.css` owns only the public log. Shared
@@ -860,6 +868,13 @@ gates.
 Enter links with automatic presence refresh disabled. It checks persisted
 room/local-chat context, the new label/count/list with old neighbors excluded,
 unchanged position, a single chat timeline, and stable reload.
+
+`spec/system/arena_team_combat_spec.rb` also waits for a real Action Cable
+Refresh response after selecting an 80-AP attack/block package and another
+living opponent. It verifies that the same-round response preserves the
+choices, displayed cost, and target, then submits Turn and checks the persisted
+pending target. The response assertion observes the received AP update rather
+than treating the Refresh click alone as proof of delivery.
 
 Focused verification command:
 

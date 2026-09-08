@@ -60,6 +60,15 @@ RSpec.describe "City navigation", type: :system, js: true do
     within(".city-actions") { click_button "Central Square" }
     expect(page).to have_css(".city-name", text: "Central Square")
 
+    # A second tab or background read must not invalidate the action that is
+    # still visible in this page. Read the real endpoint without replacing it.
+    expect(page.evaluate_async_script(<<~JS, world_path)).to eq(200)
+      const done = arguments[arguments.length - 1]
+      fetch(arguments[0], { credentials: "same-origin", cache: "no-store" })
+        .then(response => response.text().then(() => done(response.status)))
+        .catch(() => done(0))
+    JS
+
     within(".city-actions") { click_button "Shop" }
     expect(page).to have_css(".nl-shop-page")
 

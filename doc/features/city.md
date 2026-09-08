@@ -3,7 +3,7 @@
 title: City Feature
 description: Implementation handbook for the observed five-district Forpost graph, illustrated navigation, buildings, gate handoff, responsive panning, and persisted context.
 status: Fully Implemented
-updated: 2026-09-07
+updated: 2026-09-08
 owners: City world context and city UI
 template: feature-v1
 ---
@@ -118,13 +118,18 @@ On desktop the whole scene is visible when space allows. At `820px` and `390px`,
 
 ### 4.4 District movement
 
-1. The current render rotates prior open City offers.
+1. The current render reuses live exact-action City offers at the same persisted position, preserving their keys and expiry deadlines.
 2. The player activates a route button and submits hotspot ID plus opaque action key.
 3. The server resolves the hotspot only from the current zone and validates the exact offer.
 4. `CharacterPosition` moves to the explicit destination zone at `[0,0]`.
 5. The offer completes and World renders the destination scene with new offers.
 
 There is no interpolation, pending movement command, browser-authored destination, or geometry-derived adjacency.
+
+A repeated or second-tab read does not invalidate a still-visible live action.
+Expired, consumed, changed, or obsolete offers are never reactivated; a newly
+available action receives a new key. Acceptance still revalidates the current
+position, hotspot, ownership, status, and expiry.
 
 ### 4.5 Building entry and return
 
@@ -278,7 +283,7 @@ environment's managed override.
 ```mermaid
 flowchart LR
     A["GET /world in a city Zone"] --> B["Load active node hotspots"]
-    B --> C["Rotate and issue exact offers"]
+    B --> C["Reuse live exact offers; replace stale actions"]
     C --> D["Render project image, pixel hit regions, arrows, landmarks"]
     D --> E["POST selected hotspot plus action key"]
     E --> F["Validate current zone, owner, expiry, type, and target"]
@@ -289,8 +294,20 @@ flowchart LR
 
 ### 8.1 Render
 
-`WorldController#prepare_city_view` loads the current-zone hotspots and builds
-fresh offers. The partial renders persisted Zone scene metadata and every
+`WorldController#prepare_city_view` supplies the current position and scoped
+hotspots to `CityActionOfferBuilder`. Under the character lock, the builder
+reloads the persisted position and available hotspots. A stale requested
+zone/cell returns no offers without cancelling those issued at the newer
+position.
+
+The builder returns live offers matching the exact character, zone/cell,
+hotspot, action type, and authored context (city node key, hotspot key,
+feature, and hotspot revision). Reuse preserves the original key and deadline.
+Expired, consumed, or changed actions receive replacements; other offered
+capabilities for that character are cancelled. Serialized repeated reads
+converge on the same live keys.
+
+The partial renders persisted Zone scene metadata and every
 active persisted hotspot, but only offered hotspots become form buttons.
 Persisted presentation-only landmarks render separately and never create
 offers. A catalog fallback remains only for pre-sync legacy rows missing the
@@ -313,7 +330,7 @@ unbound Arena room is cleared when the character leaves its current node.
 
 | Method/path | Purpose | State change |
 |---|---|---|
-| `GET /world` | Render exact current City node and fresh offers | Rotates open offers; does not move. |
+| `GET /world` | Render exact current City node and live offers | Reuses exact live keys/deadlines, replaces stale actions, and cancels obsolete offers; does not move. |
 | `POST /world/interact_hotspot` | Accept route/building/exit capability | May move position or redirect to a feature. |
 | `GET /city/buildings/:building_key` | Render allowlisted read-only interior | Saves safe interior context only. |
 | `GET /shop` | Render Shop from Central Square | Shop owns later mutations. |
@@ -368,6 +385,8 @@ interior context atomically; building entry itself does not move coordinates.
 | Unknown/missing node presentation | Render bounded project-image fallback; do not infer routes. |
 | No offer / blocked hotspot | Show tooltip/accessible reason without a submit action. |
 | Missing, expired, foreign, mismatched, or wrong-node offer | Reject and preserve position. |
+| Repeated or second-tab City read | Preserve exact live keys and deadlines so an already-visible action remains usable. |
+| Builder's requested position is stale after relocation | Return no offers without cancelling newer-position offers. |
 | Missing destination/unknown feature | Fail without movement or arbitrary redirect. |
 | City relocation wins before building entry | Reject the old-node building and preserve the newer position, gameplay context, and local-chat context. |
 | Narrow viewport | Pan the fixed canvas; no page-level horizontal clipping. |
@@ -409,12 +428,19 @@ before the entry lock.
 `spec/system/arena_room_presence_spec.rb` verifies immediate
 room-audience replacement through both Arena Enter links without automatic
 presence refresh.
+`spec/services/game/world/city_action_offer_builder_spec.rb` covers live-key
+reuse, unchanged deadlines, expiry boundaries, consumed/changed actions,
+competing reads, and stale-position preservation.
+`spec/system/city_navigation_spec.rb` exercises the district-to-Shop flow with
+an additional same-session World read before clicking the still-visible Shop
+action, then returns through City to the exact outdoor gate.
 
 Focused verification:
 
 ```bash
 bundle exec rspec \
   spec/services/game/world/city_catalog_spec.rb \
+  spec/services/game/world/city_action_offer_builder_spec.rb \
   spec/models/open_world_seed_spec.rb \
   spec/views/world/_city_view_spec.rb \
   spec/requests/city_navigation_spec.rb \

@@ -106,14 +106,55 @@ RSpec.describe "City navigation", type: :request do
     expect(offer.reload).to be_completed
   end
 
-  it "rotates outgoing offers whenever the city node refreshes" do
+  it "keeps a visible route usable after another read of the same city node" do
     get world_path
     first_offer = WorldActionOffer.offered.find_by!(character:, target: to_business)
 
     get world_path
 
-    expect(first_offer.reload).to be_cancelled
-    expect(WorldActionOffer.offered.find_by!(character:, target: to_business).action_key).not_to eq(first_offer.action_key)
+    expect(first_offer.reload).to be_offered
+    expect(WorldActionOffer.offered.find_by!(character:, target: to_business)).to eq(first_offer)
+
+    post interact_hotspot_world_path,
+      params: {hotspot_id: to_business.id, action_key: first_offer.action_key}
+
+    expect(response).to redirect_to(world_path)
+    expect(position.reload.zone).to eq(business)
+    expect(first_offer.reload).to be_completed
+  end
+
+  it "does not reactivate a consumed building key when its city is read again" do
+    shop = create(:city_hotspot, :shop, zone: central)
+    get world_path
+    first_offer = WorldActionOffer.offered.find_by!(character:, target: shop)
+    action = {hotspot_id: shop.id, action_key: first_offer.action_key}
+    post interact_hotspot_world_path, params: action
+    expect(response).to redirect_to(shop_path)
+
+    get world_path
+    next_offer = WorldActionOffer.offered.find_by!(character:, target: shop)
+    expect(next_offer).not_to eq(first_offer)
+    post interact_hotspot_world_path, params: action
+
+    expect(response).to redirect_to(world_path)
+    expect(flash[:alert]).to eq("Action offer is no longer available")
+    expect(first_offer.reload).to be_completed
+    expect(next_offer.reload).to be_offered
+    expect(position.reload).to have_attributes(zone: central, x: 5, y: 5)
+  end
+
+  it "rejects a visible building whose availability changed before entry" do
+    shop = create(:city_hotspot, :shop, zone: central)
+    get world_path
+    offer = WorldActionOffer.offered.find_by!(character:, target: shop)
+    shop.update!(active: false)
+
+    post interact_hotspot_world_path, params: {hotspot_id: shop.id, action_key: offer.action_key}
+
+    expect(response).to redirect_to(world_path)
+    expect(flash[:alert]).to eq("Location is currently unavailable.")
+    expect(position.reload).to have_attributes(zone: central, x: 5, y: 5)
+    expect(offer.reload).to be_failed
   end
 
   it "rejects missing, expired, mismatched, and wrong-node offers" do

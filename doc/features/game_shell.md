@@ -3,7 +3,7 @@
 title: Game Shell Feature
 description: Implementation handbook for the Neverlands-based persistent game frame, compact vitals, location presence, mixed chat/game-event timeline, and shell preferences.
 status: Partially Implemented
-updated: 2026-09-07
+updated: 2026-09-08
 owners: Game Shell and Social Presence
 template: feature-v1
 ---
@@ -147,7 +147,10 @@ the window or chat allocation changes, without replacing movement offers or
 changing position. It disconnects with the map. Narrow screens retain touch
 panning and the same odd-cell dimensions: the `390 × 844` layout centers a
 `302 × 502` map with three columns and five rows. Fitting the map does not
-change shell/chat row heights.
+change shell/chat row heights. World-scoped CSS suppresses native scrollbar
+tracks on the outdoor map viewport, wrapper, and containing main pane so
+classic gutters do not shrink or offset the whole-cell surface. Native
+touch/wheel panning remains available; other feature scrollers are unaffected.
 
 ### 4.3 Player actions and feedback
 

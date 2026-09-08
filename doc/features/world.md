@@ -3,7 +3,7 @@
 title: World Feature
 description: Implementation handbook for the Neverlands-based open world, cells, movement, cell content, actions, and persisted player location.
 status: Partially Implemented
-updated: 2026-09-07
+updated: 2026-09-08
 owners: Game world, movement, and world UI
 template: feature-v1
 ---
@@ -221,6 +221,12 @@ cells and the same odd-cell sizing; at `390 × 844`, the centered viewport is
 `302 × 502` (three columns and five rows). Resizing neither requests new movement offers nor changes position or
 reachability. Seven visible rows require sufficient gameplay-frame height; the
 overall browser dimensions alone do not guarantee that allocation.
+
+World suppresses native scrollbar tracks on its map viewport, map wrapper,
+and containing main pane. Native scrolling and touch/wheel panning remain
+available, while classic scrollbar gutters cannot shrink the whole-cell
+viewport or offset its center. This rule is scoped to the outdoor map;
+other feature scrollers retain their own presentation.
 
 Cells outside the logical zone can be present only as inert render-buffer placeholders at an edge. They never receive movement offers.
 
@@ -1026,10 +1032,13 @@ and a due valid command completes. It then:
 5. persists fresh `MovementCommand` offers with random action keys and a 10-minute offer TTL;
 6. returns the map state used to render the viewport.
 
-`WorldController` separately resolves current-cell content and rotates
+For outdoor cells, `WorldController` separately resolves current-cell content and rotates
 `WorldActionOffer` rows for visible entrances and implemented local actions.
 It resolves persisted hostile NPC state for interruption without serializing
 the NPC name, marker, stats, or a manual attack action into the map surface.
+City rendering instead reuses exact live hotspot offers at the same persisted
+position without extending their deadlines; its locked lifecycle is described
+in section 8.1 of `doc/features/city.md`.
 
 ### 8.2 Travel duration
 
@@ -1244,7 +1253,10 @@ otherwise uses the regional terrain sheet. Neither presentation path defines pas
 or content. Each rendered table cell is its coordinate's `100 x 100` sheet crop;
 the browser scrolls/translates that composed table beneath the fixed marker.
 
-The stylesheet supplies the responsive viewport bounds. The Stimulus
+The stylesheet supplies the responsive viewport bounds and suppresses
+layout-consuming scrollbar tracks only on the outdoor map's containing main
+pane, wrapper, and viewport. Native overflow and panning remain enabled.
+The Stimulus
 controller observes the main pane and header, fits whole odd columns/rows to
 the equivalent source gameplay frame,
 and centers the scroller on the rendered cursor. Resize preserves fixed cell
@@ -1488,7 +1500,11 @@ bundle exec rspec \
 
 `spec/system/responsive_neverlands_ui_spec.rb` protects fixed 100px cells, the
 bounded scrollable viewport, current-cursor centering, the native village scene,
-and page-overflow separation at narrow widths. Run the complete suite before
+and page-overflow separation at narrow widths. Its classic-scrollbar regression
+forces and verifies a 15px gutter on a separate probe, then checks whole-cell
+geometry and centering at 390px, 1150px, and 1326px, native horizontal wheel
+panning, chat-resize sizing, and unchanged movement offers/position.
+Run the complete suite before
 release because the world hands off to combat, city, shop, inventory, shell,
 presence, and login-resume behavior.
 
@@ -1589,6 +1605,59 @@ feature handbooks and 65 architecture documents. The focused browser suite
 (`city_navigation`, `arena_room_presence`, `local_chat`, `world_village_resume`,
 and `world_interactions`) passed **24 examples** with zero failures. These
 follow-up checks supplement the historical full-suite results in section 15.2.
+
+### 15.4 PR 119 CI remediation (2026-09-08)
+
+Classic scrollbar gutters exposed a platform-dependent sizing defect: nested
+main-pane and World-wrapper gutters reduced a 1326px frame to 1296px, fitting
+eleven columns instead of thirteen; the mobile map was also offset from the
+frame center. The World-scoped CSS rule described in sections 4.2 and 10
+preserves whole-cell client geometry while retaining native panning. The
+focused `responsive_neverlands_ui_spec` and `world_interactions_spec` run
+passed **24 examples with zero failures**, including the explicit classic-gutter
+regression and the `1302 × 702` outer / `1300 × 700` inner capped viewport.
+
+Manual local Chrome verification with the seeded main account confirmed a
+centered `302 × 502` map with 300px inner width at `390 × 844`, and a centered
+`1302 × 702` map with `1300 × 700` inner dimensions at `1326 × 1010`. Page and
+cursor offsets were zero, and the gate marker and Enter control remained
+visible. These are local regression checks, not new Neverlands evidence.
+
+City rendering previously cancelled the action keys still visible in another
+page. A deterministic additional same-session `GET /world` between the
+Central Square render and Shop click reproduced the unavailable-offer failure
+seen in CI. The original CI run's additional-read trigger remains unconfirmed.
+`CityActionOfferBuilder` now preserves exact live keys and deadlines under the
+character lock, replacing expired/consumed/changed actions and cancelling
+obsolete offers without letting a stale-position read cancel newer offers.
+The focused builder, City request, and City browser suite passed **22 examples
+with zero failures** (9 service, 11 request, and 2 browser examples).
+Manual local Chrome verification also completed City → Business Quarter →
+Central Square → Shop → City → City Exit, including a second-tab World read
+before submitting the first tab's still-visible Shop action.
+
+The initial full verification attempt also exposed an existing Arena draft
+loss: a delayed same-round full-AP snapshot cleared unfinished selections.
+The client now preserves that draft while actual round/status/waiting changes
+still reload server state; combat rules are unchanged. A real Action Cable
+Refresh regression verifies an 80-AP package and selected opponent survive
+until a successful Turn submission. The focused Arena run passed **39 examples
+with zero failures**. Manual local Refresh also retained Simple Torso plus
+Head Block and the displayed 80-AP cost; Turn then showed waiting, with the
+exact selected actions and `total_ap: 80` verified in the persisted pending turn.
+
+`Gemfile.lock` now resolves `rubyzip 3.6.0`, and the Bundler dependency security
+audit passes. This resolves the advisory that stopped the historical full
+runs in sections 15.1 and 15.2; those earlier outcomes remain recorded above.
+
+Final `bin/verify full` completed successfully against an isolated test
+database: **457 Ruby files** passed read-only lint, **2,013 non-system examples**
+and **234 system examples** passed with zero failures, Brakeman reported zero
+warnings, and Bundler/Importmap security audits found no vulnerable dependencies.
+Documentation audits passed all 10 handbooks and 65 architecture documents.
+`git diff --check` passed. The temporary manual combat fixture was removed,
+the seeded characters' prior combat flags were restored, and the main review
+character returned to its initial World cell `[5,7]`.
 
 ## 16. Responsible for Implementation Files
 

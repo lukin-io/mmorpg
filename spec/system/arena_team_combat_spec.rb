@@ -214,7 +214,50 @@ RSpec.describe "Synthetic 3x3 team combat", type: :system, js: true do
     JS
   end
 
+  it "preserves an unsubmitted turn when Refresh receives the same authoritative round" do
+    player = @teams.fetch("a").first
+    login(player)
+    visit arena_match_path(@match)
+    refresh_match_state
+    click_button "Switch opponent"
+    expect(page).to have_css("[data-arena-match-target='targetName']", text: "BrowserB2")
+    find("select[data-arena-match-target='attackSelect'][data-body-part='torso']")
+      .find("option[value='simple']").select_option
+    find("select[data-arena-match-target='blockSelect'][data-body-part='head']")
+      .find("option[value='head_block']").select_option
+    expect(page).to have_css("[data-arena-match-target='turnCostValue']", text: "80", exact_text: true)
+
+    refresh_match_state
+
+    expect(page).to have_css("select[data-body-part='torso'] option[value='simple']:checked", visible: :all)
+    expect(page).to have_css("select[data-body-part='head'] option[value='head_block']:checked", visible: :all)
+    expect(page).to have_css("[data-arena-match-target='turnCostValue']", text: "80", exact_text: true)
+    expect(page).to have_css("[data-arena-match-target='targetName']", text: "BrowserB2")
+
+    click_button "Turn"
+    wait_for_pending_turn(player)
+    expect(@participations.fetch("a").first.reload.metadata.dig("pending_turn", "target_participation_id"))
+      .to eq(@participations.fetch("b")[1].id)
+  end
+
   private
+
+  def refresh_match_state
+    # Observe the real Action Cable response updating AP; clicking Refresh alone
+    # does not prove that the asynchronously delivered snapshot reached the UI.
+    page.execute_script(<<~JS)
+      const fight = document.querySelector(".arena-match-page")
+      delete fight.dataset.testApRefreshed
+      const ap = fight.querySelector('[data-arena-match-target="apValue"]')
+      const observer = new MutationObserver(() => {
+        fight.dataset.testApRefreshed = "true"
+        observer.disconnect()
+      })
+      observer.observe(ap, {childList: true})
+    JS
+    click_button "Refresh"
+    expect(page).to have_css(".arena-match-page[data-test-ap-refreshed='true']")
+  end
 
   def login(player)
     visit public_fight_log_path(@match)

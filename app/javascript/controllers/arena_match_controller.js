@@ -371,10 +371,8 @@ export default class extends Controller {
     // Disable buttons if not enough AP
     this.updateButtonsForAP(data.current_ap)
 
-    if (data.current_ap >= data.max_ap) {
-      this.enableTurnComposer()
-      this.resetTurn()
-    }
+    // A full-AP snapshot can arrive while the player is composing this same
+    // round. Only Reset or an authoritative round change clears that draft.
   }
 
   updateButtonsForAP(currentAP) {

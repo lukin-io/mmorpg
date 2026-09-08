@@ -369,6 +369,14 @@
   background: #ffffff;
 }
 
+/* Classic scrollbar gutters must not shrink the frame or its whole 100px
+   cells. Keep native scrolling/panning without allocating scrollbar tracks. */
+.nl-main-area:has(.nl-world-container--map),
+.nl-world-container--map,
+.nl-map-viewport {
+  scrollbar-width: none;
+}
+
 .nl-world-result-overlay {
   position: absolute;
   inset: 0;
@@ -559,7 +567,6 @@ turbo-frame.nl-world-action-frame {
   background: #ffffff;
   box-shadow: none;
   overscroll-behavior: contain;
-  scrollbar-width: thin;
   touch-action: pan-x pan-y;
 }
 

@@ -106,7 +106,8 @@ transition. Presence liveness and delivery remain Shell-owned projections.
 - `Zone` owns persisted runtime scene/focus/landmark metadata.
 - `CityHotspot` owns persisted runtime action definitions, native pixel boxes,
   direction, and z-order.
-- `CityActionOfferBuilder` rotates short-lived exact capabilities.
+- `CityActionOfferBuilder` preserves live exact capabilities across repeated
+  reads without extending their deadlines, and replaces expired or changed actions.
 - `CityHotspotService` validates and completes the selected action.
 - `CharacterPosition` owns the durable district.
 - The browser owns centering, panning, hover/focus presentation, and tooltip placement only.
