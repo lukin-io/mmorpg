@@ -2,7 +2,7 @@
 
 **Server-authoritative browser MMO architecture, simulation, networking, persistence, security, and performance guide**
 
-- Updated: 2026-09-07
+- Updated: 2026-09-08
 - Status: subordinate technical guide
 - Scope: persistent web/browser MMORPG; Rails, PostgreSQL, Turbo, Stimulus, Action Cable, and background jobs are the current implementation context
 - Primary use: new gameplay features, changes to existing behavior, bug fixes, refactors, realtime delivery, world simulation, and performance work
@@ -203,19 +203,21 @@ valuable game fact.
 The following maps these engineering concepts to the current bounded World
 implementation. Other examples in this guide describe possible patterns, not
 additional shipped models, mechanics, or distributed infrastructure. Verified
-behavior and gaps belong to `doc/features/world.md` and
-`doc/features/game_shell.md`; source rules belong to their design/evidence chain.
+behavior and gaps belong to `doc/features/world.md`,
+`doc/features/airship_travel.md`, and `doc/features/game_shell.md`; source rules
+belong to their design/evidence chain.
 
 | Concern | Current repository owner and boundary |
 | --- | --- |
-| Region and position | Outdoor `Zone` plus `CharacterPosition.zone_id/x/y`; one populated `1000 × 1000` region, sparse authored overrides, and region-isolated reads/actions. Additional populated regions and crossings are outside current delivery. |
+| Region and position | Outdoor `Zone` plus `CharacterPosition.zone_id/x/y`; one populated `1000 × 1000` region, sparse authored overrides, and region-isolated reads/actions. Configured airship journeys persist cross-region progress; additional populated regions and walking border mappings remain outside current delivery. |
 | Neighbor movement | `Game::Movement::MapState`, `AcceptMove`, and `CompleteMove`; at most eight adjacent destinations, owned expiring offers, persisted server deadlines, locked validation, and retry-safe completion. |
-| Spatial loading | A bounded `15 × 9` render buffer with whole odd visible rows/columns capped at `13 × 7`; eight-neighbor offer reads and exact-target/current-cell action reads. No persisted chunk table or whole-region scan is required. |
+| Spatial loading | Walking uses a bounded `15 × 9` render buffer with whole odd visible rows/columns capped at `13 × 7`; eight-neighbor offer reads and exact-target/current-cell action reads. Airships use a `7 × 3` viewport and at most `11 × 5` flight slots. No persisted chunk table or whole-region scan is required. |
+| Airship transport | `AirshipRoutes`, `AirshipJourney`, and `AirshipTravel` own validated dated routes, immutable paid reservations, atomic retry-safe boarding, server-clock progress, and explicit landing. Time is sampled after the character lock; phase, position, and map share one snapshot. Normal Forpost fares remain unbookable until destination/path/schedule content is authored; review fixtures do not add a populated region to normal seeds. |
 | Cell content | `MapTileTemplate`, `TileBuilding`, and `TileNpc`; seeds materialize authored content, while runtime reads compose the current DB-backed cell. Hidden NPC anchors may select captured groups up to ten; they are not public map attack buttons. |
-| Entrance and resume | `Game::World::ResumeContext` validates world/city, village, city/village Shop, read-only city building, and Arena room state. Position/region transitions clear the previous room atomically; login revalidates access. |
-| Ordinary chat and presence | `Chat::LocalContext` and `Game::World::Presence` resolve the current cell or validated room. Locked sends and bounded polling use current server context/open sessions. Five-minute presence freshness is a local liveness policy, not a captured Neverlands expiry formula. |
+| Entrance and resume | `Game::World::ResumeContext` prioritizes an owned aboard journey, then validates world/city, village, city/village Shop, allowlisted city building, and Arena room state. Ground relocation clears stale interiors atomically; flight progress keeps its flight context until explicit landing. Login revalidates access and catches up from durable journey deadlines. |
+| Ordinary chat and presence | `Chat::LocalContext` and `Game::World::Presence` resolve the current cell, validated room, or flight keyed by route and departure. Ground audiences exclude passengers. Locked sends and bounded polling use current server context/open sessions; stale local reads return `403` without redirecting to a former room. Five-minute presence freshness and separate-departure flight isolation are local policies, not captured Neverlands rules. |
 | Presentation and history | Delivered ordinary rows have a bounded per-login browser buffer; personal/world `GameEvent` rows retain durable history. Broadcasts and animation do not own location, rewards, or deadlines. |
-| Gathering boundary | Empty Look has an immediate result and a persisted 28-second lock; successful gathering is deferred pending alchemy evidence. This does not constitute a shipped profession system. |
+| Gathering boundary | Empty Look has an immediate result and a persisted 28-second lock. Its owned `WorldActionOffer` records result delivery once, so replayed session cookies cannot reopen the dialog. Successful gathering is deferred pending alchemy evidence; no profession system is implied. |
 
 ## 4. Required game implementation criteria
 

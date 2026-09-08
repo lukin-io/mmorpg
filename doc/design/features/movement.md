@@ -124,8 +124,10 @@ Authoritative state:
   - if no movement is active, the player appears at the finalized coordinate;
   - if movement is active and not due, the countdown resumes from `ends_at`;
   - if movement is due, the server finalizes it before rendering the map.
-- Login restores the persisted allowlisted gameplay surface: World/city,
-  village, city/village Shop, a captured read-only city building, or an
+- Login restores an owned aboard airship journey before saved ground surfaces,
+  using the separate lifecycle in `doc/design/features/airship_travel.md`.
+  Otherwise it restores World/city, village, city/village Shop, an allowlisted
+  city building, or an
   accessible selected Arena room. An invalid saved room falls back to World
   without changing the persisted position. No unrelated dashboard precedes the
   game surface.

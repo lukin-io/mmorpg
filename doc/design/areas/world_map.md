@@ -193,8 +193,10 @@ continuous source-to-local world mapping.
   and multi-cell jumps are invalid.
 - Launch populates one logical `1000 x 1000` outdoor region. The existing
   region identity must isolate equal local coordinates, offers, and content
-  across regions; additional populated regions and crossing gameplay are
-  deferred by the current user delivery scope.
+  across regions; additional populated regions and walking border mappings
+  remain outside the current delivery scope. Configured airship journeys use
+  their separate lifecycle for explicit region handoffs; normal routes await
+  destination/path/schedule content. See `doc/design/features/airship_travel.md`.
 - Destination availability is server-authored.
 - Movement is accepted by the server before the UI enters travelling state.
 - Movement completion updates the authoritative coordinate.

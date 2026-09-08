@@ -312,10 +312,14 @@ The MVP topology is one sparse `1,000 × 1,000` outdoor region. Coordinates are 
 Multi-region readiness is implemented through the existing `Zone` identity.
 Tests place equal local coordinates in separate test regions and verify
 independent composed content, passability, movement/action keys, and saved
-interiors. Production seeds still populate only **Outpost Surroundings**;
-additional populated regions and crossing gameplay are deferred by the user's
-delivery scope. These tests establish storage and authority isolation, not
-Neverlands crossing rules or additional authored geography.
+interiors. Normal seeds still populate only **Outpost Surroundings**;
+additional populated regions and walking border mappings are outside the
+current delivery scope. Configured airship journeys separately persist progress
+across explicit region-qualified waypoints, as documented in
+`doc/features/airship_travel.md`. Their normal destination/path/schedule content
+remains unavailable. Isolation tests and temporary flight fixtures establish
+the local capability, not Neverlands border mappings or additional authored
+geography.
 
 Because sparse terrain/NPC/entrance records retain the unique zone name as
 their key, a populated name cannot be renamed or its `Zone` destroyed through
