@@ -23,6 +23,7 @@ Current Forpost behavior:
 Reference evidence lives in:
 
 - `doc/design/reference/city/observations/2026-07-28_city_movement_and_services.md`;
+- `doc/design/reference/world/observations/2026-09-09_starter_routes.md`;
 - `doc/design/reference/world/observations/2026-09-08_forpost_oktal_airship_journey.md`;
 - `doc/design/reference/economy/observations/2026-05-21_lavka_shop.md`;
 - `doc/design/reference/social/observations/2026-09-07_cell_chat_and_presence_boundaries.md`;
@@ -47,7 +48,11 @@ Desktop shows the full scene when space permits. Tablet/mobile keep the scene un
 
 The verified outdoor entrance at Outpost Surroundings `[6,8]` enters `main` / Central Square `[0,0]`. Central City Exit returns to that exact cell.
 
-The Law Quarter visibly contains another City Exit, but its outdoor result was not exercised in the current capture. It is a presentation-only landmark until the destination is verified. Older South/East gates are not part of the current Forpost seed topology.
+Law Quarter's verified eastern exit reaches Outpost Surroundings `[11,9]`,
+source `[1005,1001]`. Entering from that outdoor cell restores `forpost4` /
+Law Quarter `[0,0]`. The city route is Central Square → Residential Quarter →
+Law Quarter. The older unverified gate mappings are superseded by these two
+specific handoffs; no reverse route is inferred from artwork.
 
 ## Current Forpost Graph
 
@@ -57,9 +62,11 @@ The Law Quarter visibly contains another City Exit, but its outdoor result was n
 | `forpost1` | Residential Quarter | Central, Knowledge, Law | Airship Station, Market |
 | `forpost2` | Knowledge Quarter | Residential | None |
 | `forpost3` | Business Quarter | Central | None |
-| `forpost4` | Law Quarter | Residential | None |
+| `forpost4` | Law Quarter | Residential | Verified City Exit |
 
-This is eight directed edges across four bidirectional pairs. The baseline is
+This is eight directed edges across four bidirectional pairs. With five
+building entries and two outdoor exits, the baseline has 15 actionable
+hotspots. The baseline is
 declared in the catalog and materialized as persisted hotspot data;
 connectivity is never inferred from arrow location or visual proximity.
 
@@ -158,6 +165,6 @@ Shop may scale its decorative CSS illustration because it contains no action geo
 
 - Source city or Shop art, highlighted PNG layers, arrows, logos, or source-specific prose.
 - Services for Auction, Bank, Clan Hall, schools, prison, temple, tavern, workshop, or other landmarks without complete current captures.
-- An inferred Law exit destination.
+- Outdoor exits or destinations beyond the two captured Forpost gate handoffs.
 - A global marketplace/kiosk detached from City.
 - Restoring the historical nine-node topology without a newer live observation that proves it has returned.

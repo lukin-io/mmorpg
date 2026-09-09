@@ -5,6 +5,25 @@
 outpost_surroundings:
   zone_name: "Outpost Surroundings"
   source_map: "m_1001_999"
+  # A bootstrap of complete captured groups onto matching atlas cells, not an
+  # inferred global distance/difficulty formula. Existing cell edits survive.
+  starter_encounters:
+    atlas_names:
+      plague_rat: "Крысы"
+      wilderness_bandit: "Разбойники"
+      wilderness_robber: "Грабители"
+    profiles:
+      - key: forpost_captured_rat_pair
+        source_npc_key: plague_rat
+      - key: forpost_captured_bandit_groups
+        source_npc_key: wilderness_bandit
+    # User-reported September 9 cadence; uniform sampling within this interval
+    # is a local calibration, not a measured Neverlands distribution.
+    passive_delay_source: "user_reported_2026-09-09"
+    passive_delay_windows:
+      - key: user_reported_five_to_six_minutes
+        min_seconds: 300
+        max_seconds: 360
   npc_templates:
     - key: wilderness_robber
       name: Robber
@@ -52,7 +71,8 @@ outpost_surroundings:
           # no-drop behavior until source evidence supplies a value.
           chance: 0.0
 
-    # Local [8,7] is the project mapping for the captured m_1008_1007 cell.
+    # Source [1008,1007] maps to local [14,15] with the zone's [994,992]
+    # coordinate offset. This independent capture is not beside the west gate.
     # Each roster entry is one exact observed output. Replaying these samples
     # is an MVP calibration and does not claim the source's hidden pool or
     # weights.
@@ -60,8 +80,8 @@ outpost_surroundings:
       name: Bandit
       role: hostile
       level: 7
-      x: 8
-      y: 7
+      x: 14
+      y: 15
       hp: 155
       xp: 0
       metadata:
@@ -70,6 +90,8 @@ outpost_surroundings:
         source_observation: "2026-09-01_wilderness_bandit_group_variation_and_magic"
         source_map: "m_1008_1007"
         source_coordinates: [1008, 1007]
+        source_capture_scope: "independent_encounter_sample"
+        source_coordinate_offset: [994, 992]
         max_attacks_per_turn: 2
         encounter_selection_mode: "observed_sample_replay"
         passive_delay_windows:

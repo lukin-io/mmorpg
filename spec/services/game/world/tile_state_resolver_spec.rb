@@ -53,10 +53,26 @@ RSpec.describe Game::World::TileStateResolver do
   end
 
   it "does not expose a captured identifier whose successful flow is deferred" do
-    create(:map_tile_template, :with_fishing, zone: zone.name, x: 5, y: 5)
+    create(:map_tile_template, zone: zone.name, x: 5, y: 5, metadata: {
+      "local_actions" => [{"type" => "digging", "source_id" => "dig", "label" => "Dig"}]
+    })
 
     result = described_class.new(character:, position:).call
 
     expect(result.local_actions).to be_empty
+  end
+
+  it "omits inactive NPCs and resource groups from the exact-cell projection" do
+    create(:tile_npc, zone: zone.name, x: 5, y: 5, metadata: {"active" => false})
+    group = {"key" => "herbs_7", "kind" => "herbs", "label" => "Group 7"}
+    create(:map_tile_template, zone: zone.name, x: 5, y: 5, metadata: {
+      "resource_groups" => [group, group.merge("key" => "herbs_11", "active" => false)]
+    })
+
+    result = described_class.new(character:, position:).call
+
+    expect(result.npc).to be_nil
+    expect(result.npc_info).to be_nil
+    expect(result.resource_groups).to eq([group])
   end
 end

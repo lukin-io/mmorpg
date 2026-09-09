@@ -5,9 +5,45 @@ require "rails_helper"
 RSpec.describe TileNpc, type: :model do
   include ActiveSupport::Testing::TimeHelpers
 
+  before do
+    %w[rat bandit robber].each { |key| create(:npc_template, npc_key: key) }
+  end
+
   describe "validations" do
     it "accepts hostile tile NPCs" do
       expect(build(:tile_npc, npc_role: "hostile")).to be_valid
+    end
+
+    it "persists a level-zero anchor and exact or ranged level-zero members" do
+      npc = create(:tile_npc, level: 0, metadata: {"encounter_rosters" => [
+        {"key" => "exact", "members" => [{"npc_key" => "rat", "level" => 0, "hp" => 40}]},
+        {"key" => "range", "members" => [{"npc_key" => "rat", "level_min" => 0, "level_max" => 4, "hp" => 40}]}
+      ]})
+
+      expect(npc.reload.level).to eq(0)
+      expect(npc.encounter_roster_samples.first.fetch("members").first.fetch("level")).to eq(0)
+    end
+
+    it "rejects missing, negative, and fractional anchor or exact member levels" do
+      [nil, -1, 0.5].each do |level|
+        expect(build(:tile_npc, level:)).not_to be_valid
+        npc = build(:tile_npc, metadata: {"encounter_rosters" => [
+          {"key" => "invalid", "members" => [{"npc_key" => "rat", "level" => level, "hp" => 40}]}
+        ]})
+        expect(npc).not_to be_valid
+        expect(npc.errors[:metadata]).to include("level must be a non-negative integer")
+      end
+    end
+
+    it "rejects negative ranges and keeps HP positive even for level-zero members" do
+      [
+        {"npc_key" => "rat", "level_min" => -1, "level_max" => 4, "hp" => 40},
+        {"npc_key" => "rat", "level_min" => 0, "level_max" => 4, "hp" => 0},
+        {"npc_key" => "rat", "level" => 0, "hp" => 0}
+      ].each do |member|
+        npc = build(:tile_npc, metadata: {"encounter_rosters" => [{"key" => "invalid", "members" => [member]}]})
+        expect(npc).not_to be_valid
+      end
     end
 
     it "rejects undocumented tile NPC roles" do
@@ -91,7 +127,7 @@ RSpec.describe TileNpc, type: :model do
             "key" => "invalid",
             "encounter_experience_reward" => -1,
             "trauma_percent" => 101,
-            "members" => [{"npc_key" => "", "level" => 0, "hp" => nil, "metadata" => "invalid"}]
+            "members" => [{"npc_key" => "", "level" => -1, "hp" => nil, "metadata" => "invalid"}]
           }
         ],
         "passive_delay_windows" => [
@@ -102,7 +138,7 @@ RSpec.describe TileNpc, type: :model do
       expect(npc).not_to be_valid
       expect(npc.errors[:metadata]).to include(
         "encounter roster member npc_key is required",
-        "level must be a positive integer",
+        "level must be a non-negative integer",
         "hp must be a positive integer",
         "encounter roster member metadata must be an object",
         "encounter_experience_reward must be a non-negative integer",

@@ -1,0 +1,10 @@
+<fieldset class="nl-manage-field-grid" data-manage-collection-target="row">
+  <legend>Resource group</legend>
+  <% prefix = "map_tile_template[resource_groups][#{index}]" %>
+  <% field_id = "resource_group_#{index}" %>
+  <div class="nl-manage-field"><%= label_tag "#{field_id}_key", "Group key" %><%= text_field_tag "#{prefix}[key]", group["key"], id: "#{field_id}_key", maxlength: 80, placeholder: "herbs_7" %></div>
+  <div class="nl-manage-field"><%= label_tag "#{field_id}_kind", "Resource kind" %><%= text_field_tag "#{prefix}[kind]", group["kind"], id: "#{field_id}_kind", maxlength: 80, placeholder: "herbs" %></div>
+  <div class="nl-manage-field"><%= label_tag "#{field_id}_label", "Group label" %><%= text_field_tag "#{prefix}[label]", group["label"], id: "#{field_id}_label", maxlength: 120 %></div>
+  <div class="nl-manage-field"><%= label_tag "#{field_id}_active", "Group active" %><%= hidden_field_tag "#{prefix}[active]", "0" %><%= check_box_tag "#{prefix}[active]", "1", group["active"] != false, id: "#{field_id}_active" %></div>
+  <button type="button" class="lbut" data-action="manage-collection#remove">Remove group</button>
+</fieldset>

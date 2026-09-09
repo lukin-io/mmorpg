@@ -1,5 +1,6 @@
 <%= render "manage/shared/errors", record: world_cell %>
 <%= form_with model: world_cell, url:, class: "nl-manage-form" do |form| %>
+  <%= hidden_field_tag "map_tile_template[content_fields]", "1" %>
   <div class="nl-manage-field-grid">
     <div class="nl-manage-field">
       <%= form.label :zone %>
@@ -23,9 +24,32 @@
     </div>
     <div class="nl-manage-field nl-manage-field--wide">
       <%= form.label :metadata, "Metadata and resources (JSON)" %>
-      <%= form.text_area :metadata, value: pretty_json(world_cell.metadata), spellcheck: false %>
-      <small class="nl-manage-help">Use <code>local_actions</code> for cell resources/actions. Supported types: <%= MapTileTemplate::LOCAL_ACTION_DEFINITIONS.keys.join(", ") %>. Cell art also requires <code>source_map</code>.</small>
+      <%= form.text_area :metadata, value: pretty_json(world_cell.metadata.to_h.except("local_actions", "resource_groups")), spellcheck: false %>
+      <small class="nl-manage-help">Advanced cell properties and source references. Edit actions and resource groups below. Cell art also requires <code>source_map</code>.</small>
     </div>
   </div>
+  <fieldset>
+    <legend>Cell actions</legend>
+    <% MapTileTemplate::LOCAL_ACTION_DEFINITIONS.each do |type, definition| %>
+      <% action = world_cell.local_actions.find { |entry| entry["type"] == type } || {} %>
+      <% prefix = "map_tile_template[local_actions][#{type}]" %>
+      <div class="nl-manage-field-grid">
+        <div class="nl-manage-field"><%= label_tag "local_action_#{type}_active", "#{definition.fetch('default_label')} enabled" %><%= hidden_field_tag "#{prefix}[active]", "0" %><%= check_box_tag "#{prefix}[active]", "1", action.present? && action["active"] != false, id: "local_action_#{type}_active" %></div>
+        <div class="nl-manage-field"><%= label_tag "local_action_#{type}_label", "#{definition.fetch('default_label')} label" %><%= text_field_tag "#{prefix}[label]", action["label"].presence || definition.fetch("default_label"), id: "local_action_#{type}_label" %></div>
+      </div>
+      <% unless definition.fetch("implemented") %><p class="nl-manage-help">This action can be authored; it stays unavailable to players until its observed gameplay flow is implemented.</p><% end %>
+    <% end %>
+  </fieldset>
+  <fieldset data-controller="manage-collection" data-manage-collection-next-index-value="<%= world_cell.resource_groups.length + 1 %>" data-manage-collection-limit-value="<%= MapTileTemplate::MAX_RESOURCE_GROUPS %>">
+    <legend>Resource groups</legend>
+    <p class="nl-manage-help">Group identities describe this cell's authored content. They do not grant items or define quantities, skill requirements, or harvest outcomes.</p>
+    <div data-manage-collection-target="rows">
+      <% (world_cell.resource_groups.presence || [{}]).each_with_index do |group, index| %>
+        <%= render "resource_group", group:, index: %>
+      <% end %>
+    </div>
+    <template data-manage-collection-target="template"><%= render "resource_group", group: {}, index: "NEW_ROW" %></template>
+    <button type="button" class="lbut" data-action="manage-collection#add">Add resource group</button>
+  </fieldset>
   <%= render "manage/shared/form_actions", form:, submit_label:, cancel_path: %>
 <% end %>

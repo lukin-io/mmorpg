@@ -36,6 +36,34 @@ RSpec.describe "world/_actions.html.erb", type: :view do
     expect(rendered).to have_content("Move, Look, and Enter are unavailable")
   end
 
+  %w[drink fish].each do |action_type|
+    it "keeps all authored local actions visible and disabled during #{action_type} without creating capabilities" do
+      assign(:active_world_action, build(:world_action_offer, :accepted, action_type:, metadata: {"label" => action_type.capitalize}))
+      assign(:tile_state, Game::World::TileStateResolver::Result.new(local_actions: [
+        {"type" => "resource_search", "source_id" => "look"},
+        {"type" => "fishing", "source_id" => "fis"},
+        {"type" => "drinking", "source_id" => "dri"}
+      ]))
+
+      render partial: "world/actions", locals: {available_actions: [], position:}
+
+      ["Look Around", "Fish", "Drink"].each do |label|
+        expect(rendered).to have_button(label, disabled: true, count: 1)
+      end
+      expect(rendered).not_to have_css("form, input[name='action_key']", visible: :all)
+    end
+  end
+
+  it "retains the accepted action label if its authored declaration was removed during work" do
+    assign(:active_world_action, build(:world_action_offer, :accepted, action_type: "drink", metadata: {"label" => "Drink"}))
+    assign(:tile_state, Game::World::TileStateResolver::Result.new(local_actions: []))
+
+    render partial: "world/actions", locals: {available_actions: [], position:}
+
+    expect(rendered).to have_button("Drink", disabled: true, count: 1)
+    expect(rendered).not_to have_css("form, input[name='action_key']", visible: :all)
+  end
+
   it "does not reveal the hidden source-backed NPC encounter" do
     render partial: "world/actions", locals: {
       available_actions: [

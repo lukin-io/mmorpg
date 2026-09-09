@@ -16,7 +16,13 @@ hostile NPCs, and enter cities or buildings offered by the current tile.
 
 ## Neverlands Reference
 
-Primary reference: `doc/design/reference/neverlands.md`.
+Primary reference: `doc/design/reference/neverlands.md`. The current cell-content,
+water-action, and parameter follow-up is
+`doc/design/reference/world/observations/2026-09-08_cell_content_and_world_rules.md`.
+The bounded atlas survey, rechecked starter routes, and dated wiki inputs are
+`doc/design/reference/world/observations/2026-09-09_starter_atlas.md`,
+`doc/design/reference/world/observations/2026-09-09_starter_routes.md`, and
+`doc/design/reference/world/observations/2026-09-09_wiki_skills_and_cell_actions.md`.
 
 Observed Neverlands behavior:
 
@@ -34,7 +40,8 @@ Observed Neverlands behavior:
   linearly beneath that fixed marker by one cell;
 - the countdown is a small red capsule centered one cell above the cursor;
 - local presence refreshes after movement completion;
-- contextual buttons such as Enter and Look appear from the current tile state;
+- contextual buttons such as Enter, Look, Fish, and Drink appear from the
+  current tile state, rather than as global map actions;
 - the logical region is a mosaic of `100 x 100` image-cells; an authored
   special location can replace the ordinary art for its exact coordinate;
 - hostile NPC placement is not rendered as a map marker or manual attack
@@ -98,13 +105,27 @@ and the same `1102 × 502` map. This leaves at least one off-screen
 cell on every side for the one-cell travel animation and keeps the cursor
 centered even at the logical region boundary; out-of-bounds buffer cells render
 as inert terrain and can never receive an offer. Tablet/mobile clients pan the
-same native cell geometry inside a bounded owner. The default terrain is one project-owned
+same native cell geometry inside a bounded owner. The starter rectangle uses
+one continuous original `2100 × 1300` landscape sliced into 273 physical
+`100 × 100` PNG cells; a missing slice falls back to the matching master crop.
+Outside it, the default terrain remains the project-owned
 `1000 x 1000` art sheet cropped into `100 x 100` cells. Sparse explicit tile
 records may replace that coordinate's slice through a configured source-backed
 cell-art key; malformed or absent overrides use the coordinate-derived default.
 The table of crops is the scrollable map: the renderer translates it beneath a
 fixed player marker instead of moving an independently authoritative browser
 sprite across a free-form canvas.
+
+Neverlands retains overlapping terrain cells when the viewport advances.
+The local walking renderer now follows that approach: a valid same-zone buffer
+can retain 126 cells for an east/west step, 120 for north/south, or 112 for a
+diagonal step, rendering only the respective 9, 15, or 23 entering cells.
+Movement buttons and current-cell state are renewed from server offers.
+A signed buffer token is a rendering hint scoped to the character, zone, and
+authored content, never a movement permission. Changed or deleted content,
+invalid/stale hints, zone changes, and reload recover through a full bounded
+snapshot. These are local delivery safeguards, not claims about Neverlands'
+internal network protocol.
 
 It should feel like a utilitarian MMORPG client, not a large marketing page.
 
@@ -155,7 +176,8 @@ The map can offer:
 - enter city/building;
 - enter linked world location and use its offered interior features;
 - hidden hostile encounter interruption;
-- the bounded Look Around observation action.
+- the bounded Look Around observation action;
+- Drink and the captured empty fishing entry at an authored water cell.
 
 The server decides which actions exist for the current finalized location.
 Future local actions must be documented from Neverlands before implementation.
@@ -164,24 +186,82 @@ The captured `Look Around` empty-result flow shows its result immediately and
 locks movement, Enter, Character, Inventory, and repeat Look for `28` seconds.
 Dismissal only hides the result; reload resumes the persisted deadline. This
 bounded sample awards no resource. Successful gathering is deferred by the
-user to the alchemy skill path; yields and timing modifiers remain evidence
-gaps. The idle cursor and terrain stay still during this work
-timer, unlike movement's walking marker and terrain translation.
+user to later profession work; yields and timing modifiers remain evidence
+gaps. At the captured pond, Drink immediately shows success and reduces
+fatigue by two points, while a 60-second lock remains active. Fishing without
+bait immediately reports the missing bait and retains a 30-second lock; it
+does not establish a successful cast or catch. Neither entry has a skill gate.
+The idle cursor and terrain stay still during these work timers, unlike
+movement's walking marker and terrain translation. All three actions retain
+their deadline through result dismissal and reload.
 
-## Captured Forpost starter route
+## Captured Forpost starter routes and bounded cells
 
-The September 7 observation places Forpost's left exit at source
-`[1000,1000]`, not the older Oktal `[1019,1025]` capture. The local gate is
-`[6,8]`; two northwest steps reach the village entrance at `[4,6]`. Its
-outdoor Enter action and interior Shop/exit preserve that durable coordinate.
-The resource-search cell remains `[7,7]` (source `[1001,999]`).
+Use the explicit local adaptation `local = source - [994,992]`:
 
-This small cluster uses the explicit local adaptation
-`local = source - [994,992]`. Eight authored unavailable cells reproduce the
-observed neighbor sets at the gate, intermediate cells, village entrance, and
-resource cell. The rest of the sparse region is a local placeholder, not a
-captured region map. Separately authored encounter samples do not establish a
-continuous source-to-local world mapping.
+| Route/anchor | Live source coordinates | Local coordinates |
+|---|---|---|
+| West gate → intermediate → village entrance | `[1000,1000] → [999,999] → [998,998]` | `[6,8] → [5,7] → [4,6]` |
+| East gate → intermediate → pond | `[1005,1001] → [1006,1002] → [1007,1002]` | `[11,9] → [12,10] → [13,10]` |
+| Captured rat/search cell | `[1001,999]` | `[7,7]` |
+| Independent captured Bandit sample | `[1008,1007]` | `[14,15]` |
+| Mine lobby | `[998,997]` | `[4,5]` |
+| Resource-exchange lobby | `[998,999]` | `[4,7]` |
+
+The village Enter, Shop and exit preserve its exact outdoor coordinate. Main
+→ Residential (`forpost1`) → Law (`forpost4`) reaches the east exit. Enter
+from that gate returns to the same Law scene without a wilderness movement
+timer. This September 9 recheck supersedes the earlier description through
+Business. The older `[1019,1025]` gate is Oktal, not Forpost.
+
+The public atlas's local mapping `source = atlas + [922,954]` is corroborated
+by both gates, the village and pond. Its bounded survey contains 312 cells at
+source `x=991..1014,y=994..1006`. Only 273 fit the current local zone:
+source `x=994..1014,y=994..1006` → local `x=0..20,y=2..14`. Source columns
+`991..993` translate to local `-3..-1`; preserve them as evidence without
+clamping, wraparound or invented zone crossings.
+
+The imported subset has 118 explicitly atlas-active and 155 inactive cells.
+`config/gameplay/starter_world_cells.yml` preserves source coordinates,
+landmark labels, activity, water/fish flags, herb groups and NPC annotations.
+Its focused catalog validates complete unique coverage and coordinate/type
+integrity before seeds import facts into the existing editable tile records.
+Live Neverlands offers override conflicting atlas activity. The atlas supplies
+no terrain enum; generic local `outdoor` classification does not assert a
+captured road/forest/swamp movement modifier.
+
+The eastern intermediate `[12,10]` has the live-captured Look action with an
+immediate no-vegetation result and a 28-second lock. It has no Enter/Drink/Fish.
+The pond has herb group `2` and its separately captured Look/Drink/Fish
+controls. The Fisher wiki explicitly describes it as bot-free. The starter
+rat cell's atlas range is `0–4`, not the `0–10` label captured elsewhere.
+NPC pool annotations alone supply no roster, HP, weights, rewards or timing.
+The authorized starter distribution reuses only complete captured profiles
+whose exact NPC types and levels fit each atlas cell. It supplies 40 additional
+Bandit placements with the user's approximate five-to-six-minute
+(`300..360` seconds) passive interval. That interval is configurable reported
+policy, not an isolated formula. The original rat and Bandit anchors retain
+their captured definitions; the independent Bandit sample is outside this
+rectangle at its true `[14,15]` coordinate.
+
+Mine and exchange lobbies preserve the same outdoor coordinate on entry,
+return and login resume. Their sections expose read-only presentation only.
+Underground traversal/extraction, resource listings and exchange settlement
+remain later dedicated mechanics. Source capture and artwork provenance are
+recorded in
+`doc/design/reference/world/observations/2026-09-09_starter_landmarks_and_art.md`.
+
+Initial atlas import upgrades eligible legacy/default rows while preserving
+existing art and action metadata; unrelated authored sources are retained.
+After atlas provenance is present, reseeding preserves operator edits to
+passability, resources and actions. The continuous starter art upgrade replaces
+missing or legacy terrain/pond references only, preserving custom artwork and
+already edited starter references. It paints one pond at `[13,10]`, with nearby
+landmarks integrated into the landscape. Decorative city/village markers are
+suppressed for this catalog art, while accessible labels and offers remain.
+Road paint does not change passability or make a cell free of NPCs. Full-zone
+geography/content and artwork remain later work; this bounded starter area is
+not full Neverlands parity.
 
 ## Rules
 
@@ -191,12 +271,12 @@ continuous source-to-local world mapping.
   `abs(target.y - current.y) <= 1`, and target differs from current. Therefore
   a cell can offer at most its eight cardinal/diagonal neighbors; self-moves
   and multi-cell jumps are invalid.
-- Launch populates one logical `1000 x 1000` outdoor region. The existing
-  region identity must isolate equal local coordinates, offers, and content
-  across regions; additional populated regions and walking border mappings
-  remain outside the current delivery scope. Configured airship journeys use
-  their separate lifecycle for explicit region handoffs; normal routes await
-  destination/path/schedule content. See `doc/design/features/airship_travel.md`.
+- Launch uses one logical `1000 x 1000` outdoor zone. The existing `zone_id`
+  isolates equal local coordinates, offers, and content across zones. Full
+  population is Stage 2; additional zones, enabled inter-zone routes, and
+  walking border mappings remain post-MVP TODOs. Configured airship journeys
+  already support explicit zone handoffs; normal routes await destination,
+  path, and schedule content. See `doc/design/features/airship_travel.md`.
 - Destination availability is server-authored.
 - Movement is accepted by the server before the UI enters travelling state.
 - Movement completion updates the authoritative coordinate.
@@ -206,7 +286,7 @@ continuous source-to-local world mapping.
 - A completed wilderness step applies the command's snapshotted `1..2`
   fatigue gain; one point recovers per complete three-minute interval.
 - Effective fatigue at `86%` or higher suppresses and rejects wilderness Move,
-  Look, and Enter while leaving city node navigation outside that gate.
+  Look, and Enter while leaving Drink and city node navigation outside that gate.
 - Visible movement targets are exactly the current server offers. The red
   border is an affordance for an offer, not a browser-side reachability rule.
 - The browser may interpolate map position from authoritative movement
@@ -222,6 +302,11 @@ tile records override that default with blocked state, presentation metadata,
 or authored local actions. Rendering and movement acceptance must both use this
 rule; the UI must not render a missing row as blocked while the movement service
 accepts it.
+
+Local formula defaults are maintained in validated
+`config/gameplay/world_rules.yml`; `doc/design/features/movement.md` owns the
+parameter and snapshot contract. This makes new captured values easy to author
+without treating unknown Neverlands coefficients as established formulas.
 
 ## World State Persistence
 
@@ -277,13 +362,16 @@ The implementation and complete authoring examples live in
    configured slice remains exactly `100 x 100`.
 4. Reference only that key plus a zero-based sheet column/row from a sparse
    `MapTileTemplate` record.
-5. Leave ordinary cells unmaterialized so they continue to use the deterministic
-   coordinate-derived regional slice.
+5. Author the bounded starter cells explicitly; unmaterialized cells outside
+   that area continue to use the deterministic coordinate-derived region slice.
 
 A dedicated special-cell file is a `1 x 1` catalog entry. A regional mosaic is
 one larger sheet whose physical dimensions match its configured columns and
 rows multiplied by 100px. Database records never store filesystem paths or
 URLs, and renaming a catalog key requires a persisted-reference update.
+The server catalog may declare a safe physical-slice directory and painted
+landmarks; it retains the master as fallback. `doc/ARTWORK.md` owns the
+project's reusable illustration style and prompt workflow.
 
 Artwork does not imply passability, an entrance, an NPC, or a local action.
 Those layers stay independently authored and may coexist at the same cell. This
@@ -326,7 +414,7 @@ For a linked location, the equivalent interior pipeline is:
 1. Load the same persisted outdoor position.
 2. Resolve the active location entrance at that exact cell.
 3. Read its validated persisted scene and feature definitions.
-4. Reconcile active travel/Look and reject a conflicting fight before changing
+4. Reconcile active travel or timed local work and reject a conflicting fight before changing
    saved context; cancel prior open interior-feature offers and issue fresh ones for only the
    captured hotspots.
 5. Revalidate position, entrance, feature, target, ownership, and expiry on
@@ -380,6 +468,8 @@ Action examples:
 | Enter city or village | tile entrance | building or city transition service |
 | Open linked location feature | same location entrance | allowlisted location controller, then Shop or World |
 | Look Around | current tile template | persisted empty-result work timer or hostile ambush handoff |
+| Drink | current tile template with an active `dri` declaration | immediate bounded fatigue recovery and persisted work timer |
+| Fish without bait | current tile template with an active `fis` declaration | missing-bait result and persisted work timer, with no successful cast |
 
 Profession outcomes remain owned by `features/professions.md`. The presence of
 `look`, `fis`, `dri`, or `dig` metadata is not permission to invent a yield,
@@ -407,16 +497,36 @@ controls:
 | Source id | Meaning | Launch Status |
 | --- | --- | --- |
 | `look` | search for herbs or local resources | implemented empty result, 28-second deadline, interruption, and refresh |
-| `fis` | fish at an eligible place such as a lake | recognized authored type; outcome deferred |
-| `dri` | drink at an eligible location | recognized authored type; outcome deferred |
+| `fis` | fish at an eligible place such as a lake | implemented empty-bait result and 30-second lock; successful cast/catch deferred |
+| `dri` | drink at an eligible location | implemented immediate two-point fatigue recovery and 60-second lock |
 | `dig` | dig at an eligible location | recognized authored type; outcome deferred |
 
 An earlier captured `look` request returned a forced reload into a normal
 hostile-NPC fight. The September 7 uninterrupted sample adds an immediate empty
 vegetation result and a 28-second lock; only server-side deadline reconciliation
 completes that work and restores offers. Successful gathering is deferred by
-the user to alchemy. No resource quantity, skill growth, inventory creation,
+the user to later profession work. No resource quantity, skill growth, inventory creation,
 depletion, or uncaptured timing modifier is inferred from the empty result.
+
+The September 8 pond capture confirms immediate Drink success, recovery before
+the timer finishes, and a 60-second lock that persists after dismissal/reload.
+The action is allowed without a skill gate and remains available at the
+Move/Look/Enter fatigue threshold. Local recovery is clamped at zero and
+commits with the owned offer so retry cannot repeat it. The wiki's four-point
+Nature Child value is preserved as future perk data; the perk is not enabled
+through an arbitrary stored flag.
+
+Fishing's captured `No bait available` entry also needs no skill gate. Its
+30-second deadline is an inspection/entry boundary, not a successful fishing
+duration. The current game has no supported bait/cast flow. Rod equipment,
+bait selection/consumption, successful catches, wear, and profession growth
+remain a separate evidence and implementation boundary. The dated Fisher
+wiki provides species/bait/proficiency rows for the pond and successful-cast
+examples; those are future profession inputs, not the missing-bait timer or a
+complete formula. Naturalist/Herbalist discovery, Alchemy potion making,
+allocated Wanderer and profession counters retain their distinct meanings.
+Digging remains an authored inactive action family until its skill/tool and
+result flow is captured.
 
 ## Outdoor Ambush Handoff
 
@@ -451,23 +561,23 @@ Design rules:
 
 ## Area Graph
 
-The outdoor map is a coordinate graph. The fresh Forpost capture establishes
-one reciprocal city-entry cell and its nearby village route:
+The outdoor map is a coordinate graph. Current live evidence establishes
+two reciprocal Forpost gates:
 
 | Gate | City Node On Entry | Source Outdoor Cell | Local Outdoor Cell |
 | --- | --- | --- | --- |
-| West | Central Square | `1000,1000` | `6,8` |
+| West | Central Square (`main`) | `1000,1000` | `6,8` |
+| East | Law Quarter (`forpost4`) | `1005,1001` | `11,9` |
 
 The earlier `1019,1025` observation was at Oktal. The old three-gate table must
-not be used as Forpost topology. Other gate families require their own current
-capture; an illustrated city exit is not an inferred outdoor destination.
+not be used as Forpost topology. The September 9 eastern Enter recheck closes
+the source return-direction question; local verification is owned by the
+World handbook. Other gate families require their own capture; artwork alone
+does not establish an outdoor destination.
 
-The graph may later expand to more coordinates, roads, and terrain costs, but
-starter implementation should remain deterministic and source-backed.
-
-The captured coordinates exceed `1000`; they may be global coordinates or use
-a region origin offset. Keep them as source identifiers until the mapping to
-the MVP region's `1000 x 1000` local bounds is captured.
+The graph can expand through authored coordinates, roads and observed terrain
+costs. The bounded mapping above is sufficient for this starter area and does
+not reveal Neverlands' global coordinate origin or private zone identifiers.
 
 The difference between the observed 30-second and 24-second movement offers is
 not enough to identify the formula. Treat duration as authoritative server

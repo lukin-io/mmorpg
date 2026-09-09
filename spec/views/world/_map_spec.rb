@@ -229,6 +229,44 @@ RSpec.describe "world/_map.html.erb", type: :view do
       expect(rendered).to include("background-position: -700px -700px")
       expect(rendered).to include("background-size: 1000px 1000px")
     end
+
+    it "renders neighboring pond cells as adjacent slices of the same landscape" do
+      tiles = nearby_tiles
+      tiles.flatten.each do |tile|
+        next unless tile.x.between?(11, 15) && tile.y.between?(8, 12)
+
+        tile.metadata = {"source_map" => "pond_neighborhood_art",
+          "cell_art" => {"key" => "forpost_pond", "column" => tile.x - 11, "row" => tile.y - 8}}
+      end
+      render partial: "world/map", locals: {position:, nearby_tiles: tiles, zone:, tile_data: {}}
+
+      expect(rendered).to have_css("[data-cell-art-key='forpost_pond']", count: 25)
+      document = Nokogiri::HTML.fragment(rendered)
+      [12, 13, 14].each do |x|
+        cell = document.at_css("#tile_#{x}_10")
+        expect(cell.to_html).to include("world/forpost-pond-landscape", "background-size: 500px 500px")
+        expect(cell.to_html).to include("background-position: -#{(x - 11) * 100}px -200px")
+      end
+    end
+
+    it "renders a physical cell PNG with 100px geometry instead of the master sheet" do
+      definition = Game::World::CellArtCatalog.config.fetch("forpost_terrain").merge(
+        "slices_directory" => "world/cells/spec-starter"
+      )
+      allow(Game::World::CellArtCatalog).to receive(:config).and_return("sliced" => definition)
+      allow(Game::World::CellArtCatalog).to receive(:asset_exists?).and_call_original
+      allow(Game::World::CellArtCatalog).to receive(:asset_exists?).with("world/cells/spec-starter/7_9.png").and_return(true)
+      allow(view).to receive(:image_path).and_call_original
+      allow(view).to receive(:image_path).with("world/cells/spec-starter/7_9.png").and_return("/assets/world/cells/spec-starter/7_9.png")
+      tiles = [[OpenStruct.new(x: 9, y: 9, terrain_type: "outdoor", walkable: true,
+        metadata: {"cell_art" => {"key" => "sliced", "column" => 7, "row" => 9}})]]
+
+      render partial: "world/map", locals: {position:, nearby_tiles: tiles, zone:, tile_data: {}}
+
+      cell = Nokogiri::HTML.fragment(rendered).at_css("#tile_9_9")
+      expect(cell["style"]).to include("world/cells/spec-starter/7_9.png", "background-position: 0px 0px", "background-size: 100px 100px")
+      expect(cell["data-cell-art-key"]).to eq("sliced")
+    end
   end
 
   describe "clickable tiles (mouse navigation)" do
@@ -606,6 +644,81 @@ RSpec.describe "world/_map.html.erb", type: :view do
 
       expect(rendered).to have_css('.nl-tile-building--city[title="City Exit"] .nl-tile-city-gate[aria-hidden="true"]', text: "🏰")
       expect(rendered).to have_css(".nl-tile-building--city .nl-entity-label", text: "City Exit", visible: :all)
+    end
+
+    it "retains accessible entrance names without duplicating landmarks painted into approved art" do
+      definition = Game::World::CellArtCatalog.config.fetch("forpost_terrain").merge(
+        "landmarks_in_art" => true, "painted_landmarks" => [
+          {"column" => 0, "row" => 0, "building_key" => "village_entrance"},
+          {"column" => 1, "row" => 0, "building_key" => "east_gate"}
+        ]
+      )
+      allow(Game::World::CellArtCatalog).to receive(:config).and_return("painted" => definition)
+      tiles = [[
+        OpenStruct.new(x: 9, y: 9, building_key: "village_entrance", terrain_type: "outdoor", walkable: true, metadata: {
+          "building" => "Village Entrance", "building_kind" => "village", "cell_art" => {"key" => "painted"}
+        }),
+        OpenStruct.new(x: 10, y: 9, building_key: "east_gate", terrain_type: "outdoor", walkable: true, metadata: {
+          "building" => "East Gate", "building_kind" => "city", "cell_art" => {"key" => "painted", "column" => 1}
+        })
+      ]]
+
+      render partial: "world/map", locals: {position:, nearby_tiles: tiles, zone:, tile_data: {}}
+
+      expect(rendered).not_to have_css(".nl-tile-village-hut, .nl-tile-city-gate")
+      expect(rendered).to have_css(".nl-tile-building--painted", count: 2)
+      expect(rendered).to have_css('.nl-tile-building--village[title="Village Entrance"] .nl-entity-label', text: "Village Entrance", visible: :all)
+      expect(rendered).to have_css('.nl-tile-building--city[title="East Gate"] .nl-entity-label', text: "East Gate", visible: :all)
+    end
+
+    it "keeps the decorative entrance marker when only mutable tile metadata claims painted landmarks" do
+      tiles = [[OpenStruct.new(x: 9, y: 9, terrain_type: "outdoor", walkable: true, metadata: {
+        "building" => "City Exit", "building_kind" => "city", "landmarks_in_art" => true,
+        "cell_art" => {"key" => "forpost_terrain", "landmarks_in_art" => true}
+      })]]
+
+      render partial: "world/map", locals: {position:, nearby_tiles: tiles, zone:, tile_data: {}}
+
+      expect(rendered).to have_css(".nl-tile-city-gate", text: "🏰")
+      expect(rendered).to have_css(".nl-entity-label", text: "City Exit", visible: :all)
+    end
+
+    it "shows markers for moved or different entrances even when cell metadata spoofs the painted key" do
+      tiles = [[
+        OpenStruct.new(x: 7, y: 8, building_key: "outpost_gate", terrain_type: "outdoor", walkable: true, metadata: {
+          "building" => "Moved Gate", "building_kind" => "city", "building_key" => "outpost_gate",
+          "cell_art" => {"key" => "forpost_starter", "column" => 7, "row" => 6}
+        }),
+        OpenStruct.new(x: 6, y: 8, building_key: "new_gate", terrain_type: "outdoor", walkable: true, metadata: {
+          "building" => "New Gate", "building_kind" => "city", "building_key" => "outpost_gate",
+          "cell_art" => {"key" => "forpost_starter", "column" => 6, "row" => 6}
+        }),
+        OpenStruct.new(x: 4, y: 6, terrain_type: "outdoor", walkable: true, metadata: {
+          "building" => "Metadata Only", "building_kind" => "village", "building_key" => "frontier_village_entrance",
+          "cell_art" => {"key" => "forpost_starter", "column" => 4, "row" => 4}
+        })
+      ]]
+
+      render partial: "world/map", locals: {position:, nearby_tiles: tiles, zone:, tile_data: {}}
+
+      expect(rendered).to have_css("#tile_7_8 .nl-tile-city-gate", text: "🏰")
+      expect(rendered).to have_css("#tile_6_8 .nl-tile-city-gate", text: "🏰")
+      expect(rendered).to have_css("#tile_4_6 .nl-tile-village-hut")
+      expect(rendered).not_to have_css(".nl-tile-building--painted")
+    end
+
+    it "shows semantic labels for mine and exchange entrances absent from the painted slice" do
+      tiles = [%w[mine exchange].each_with_index.map do |kind, index|
+        OpenStruct.new(x: 7 + index, y: 8, building_key: "managed_#{kind}", terrain_type: "outdoor", walkable: true,
+          metadata: {"building" => "Managed #{kind}", "building_kind" => kind,
+            "cell_art" => {"key" => "forpost_starter", "column" => 7 + index, "row" => 6}})
+      end]
+
+      render partial: "world/map", locals: {position:, nearby_tiles: tiles, zone:, tile_data: {}}
+
+      expect(rendered).to have_css("#tile_7_8 .nl-entity-label:not(.nl-visually-hidden)", text: "Managed mine")
+      expect(rendered).to have_css("#tile_8_8 .nl-entity-label:not(.nl-visually-hidden)", text: "Managed exchange")
+      expect(rendered).not_to have_css(".nl-tile-building--painted")
     end
 
     context "with NPC on a tile" do

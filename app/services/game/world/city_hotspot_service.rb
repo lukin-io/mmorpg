@@ -162,6 +162,8 @@ module Game
           )
         end
 
+        ResumeContext.new(character:).remember_arena_entry! if hotspot.action_params["feature"] == "arena"
+
         Result.new(
           success: true,
           message: "Entered #{hotspot.name}.",

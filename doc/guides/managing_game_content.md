@@ -2,7 +2,7 @@
 
 - Document type: operational and extension guide
 - Status: Current
-- Updated: 2026-09-07
+- Updated: 2026-09-09
 - Audience: administrators, content authors, Rails engineers, and AI agents
 - UI entry point: `/manage`
 - Controller namespace: `Manage`
@@ -50,7 +50,7 @@ it does not authorize generic RPG invention.
 5. Open the detail page before editing or deleting a record.
 6. Review `/manage/audit_events` after a mutation.
 7. Reload the affected player-facing World or City page. Managed changes are
-   consumed on the next server render.
+   consumed on the next server render or authoritative map update.
 
 Anonymous users are redirected to sign-in. Authenticated non-admin users are
 denied by `ManagePolicy`; moderator or GM status alone does not grant access.
@@ -115,10 +115,12 @@ Rules:
 
 1. `/manage` edits the persisted owner only. It never edits `db/seeds.rb`, YAML,
    or a Ruby catalog.
-2. A later `bin/rails db:seed` deliberately restores seed-owned content to its
-   declared baseline. Use `/manage` for inspection, testing, or an intentional
-   environment-local override; promote durable baseline changes into the
-   declaration, coverage, and feature handbook.
+2. Seed-owned City content, shared NPC templates, and the two explicit
+   captured encounter anchors are reconciled to their declared baseline by a
+   later `bin/rails db:seed`. Atlas-backed starter cells, linked village/mine/
+   exchange entrances and derived starter encounter placements preserve managed
+   edits after initial bootstrap. Sections 6–8 explain those boundaries. Promote reusable baseline
+   changes into the declaration, coverage, and feature handbook.
 3. `TileStateResolver` remains the one World cell composition pipeline.
    `ActionOfferBuilder` derives current capabilities from that resolved state.
 4. Never create or seed `WorldActionOffer` manually. Offers are short-lived
@@ -128,6 +130,56 @@ Rules:
 6. Every successful mutation and its audit event commit in the same database
    transaction. Failed JSON, validation, dependency, or audit persistence
    leaves the content unchanged.
+
+### Seed ownership and order
+
+`db/seeds.rb` is the explicit bootstrap entry point. It loads these cohesive
+phases in dependency order; it does not discover arbitrary files or share
+local variables between phases:
+
+| Phase | Owner |
+| --- | --- |
+| `db/seeds/accounts.rb` | Existing sample accounts, roles, and global channel |
+| `db/seeds/world_zones.rb` | City nodes, the single outdoor Zone, spawn-point reconciliation |
+| `db/seeds/world_cells.rb` | Starter survey import, cell actions, artwork, obsolete gate-cell cleanup |
+| `db/seeds/starter_characters.rb` | Initial sample characters and starting inventory |
+| `db/seeds/shop_inventory.rb` | Item templates, shop stock, existing sample inventory |
+| `db/seeds/starter_wallets.rb` | One-time initial sample-wallet grants |
+| `db/seeds/arena_rooms.rb` | Arena room baseline |
+| `db/seeds/world_locations.rb` | Reconciled reciprocal city gates; bootstrap-only linked outdoor locations |
+| `db/seeds/city_hotspots.rb` | District/building navigation and retired-city recovery |
+| `db/seeds/outdoor_npcs.rb` | Captured templates/anchors, then eligible starter encounter bootstrap |
+
+Run the entry point with `bin/rails db:seed`; the individual files depend on
+earlier phases. Outdoor encounter bootstrap runs after locations so a newly
+authored entrance is already visible to its placement guard. Each phase
+resolves its persisted inputs explicitly. `Seeds::WorldContentSupport` owns
+shared city metadata lookup and action-offer cleanup; callers keep the target
+change and cancellation inside their existing transaction.
+
+`Seeds::StarterEncounterBootstrap#call` accepts one zone's validated derived
+definitions and persisted NPC templates. It reads the declared cells,
+entrances, occupied placements and original source identities, creates only
+eligible missing placements, and returns retained/created IDs for scoped
+legacy cleanup. It never updates existing placements or player positions.
+The bootstrap remains a seed-time operation; request handling continues to
+read ordinary persisted models.
+
+Linked village/mine/exchange entries are looked up by stable `building_key`.
+An existing row, including a village authored before this policy, is preserved
+with its coordinates, activation, requirements, labels, scene, features and
+current offers. A new linked location also skips a cell occupied by another
+authored entrance. Deactivate instead of deleting when the stable identity
+must remain; a deleted baseline entry may be bootstrapped again on a free cell.
+The explicit `CityCatalog` gate pair still reconciles both handoff ends and
+cancels offers only when that gate changes.
+
+Initial sample-wallet grants use `Seeds::StarterWalletGrant.call(user:,
+amount:, metadata:)`. The existing wallet row lock spans checking the
+`seed.initial_nv` ledger identity and the ordinary `WalletService` credit.
+Retries and competing bootstrap calls therefore cannot grant twice. An older
+ledger entry with that reason also counts as completion; balances, spending,
+and historical duplicate grants are retained without retroactive repair.
 
 ## 5. General create, edit, deactivate, and delete rules
 
@@ -207,25 +259,43 @@ Malformed JSON and top-level arrays return HTTP 422, display an error, and
 write neither content nor an audit event. Nested schemas still pass through the
 owning model's validations and allowlists.
 
+World Cells and Cell NPCs provide dedicated controls for common content. Their
+advanced JSON field excludes the fields owned by those controls. Edit actions,
+resource groups, activation, encounter size, and roster members in their
+dedicated controls; do not place a competing copy in the advanced field.
+Unedited action results, resource source references, and matching roster/member
+metadata are preserved. Changing a member's NPC template clears its previous
+member-specific overrides. A partial management request that omits a JSON field
+preserves the stored object; explicitly submitting `{}` replaces it.
+
 ### 5.3 Prefer deactivation when identity or history matters
 
-Use the resource's `active` flag where available when a building or hotspot is
+Use the resource's `active` flag where available when a building, NPC, or hotspot is
 temporarily unavailable or its stable identity must be retained. A deactivated
 record remains auditable but produces no interactive offer.
 
-World cells and cell NPC placements do not have a general active flag:
+The controls are independent:
 
-- remove a local resource action by removing it from `local_actions`, or set
-  that individual action's `active` property to `false`;
-- remove an NPC encounter by deleting its `TileNpc` placement, not its shared
-  `NpcTemplate`.
+- clear a World cell's **Passable** control to close movement into it;
+- clear an action's **enabled** control to hide that action;
+- clear **Group active** to retain an authored resource group while omitting it
+  from the active cell projection;
+- clear **Encounter active** to disable a cell's NPC encounter without deleting
+  its placement, roster, HP, or defeat/respawn state;
+- clear an entrance's **Active** control to hide its interaction.
+
+An NPC's activation is stored in its placement metadata; absent activation
+retains the existing active default. Deactivation does not pause an already
+persisted respawn deadline. A due respawn can restore that placement's defeat
+state while it remains disabled; repeated job delivery cannot restore it again.
 
 ### 5.4 Delete dependencies in leaf-to-root order
 
 Protected parent records cannot be deleted while dependent records reference them.
 For example:
 
-1. delete or move `TileNpc` placements before deleting their `NpcTemplate`;
+1. delete or move `TileNpc` placements and remove roster-member references
+   before deleting their `NpcTemplate`; inactive anchors retain those references;
 2. resolve sparse World cells, buildings placed on its cells, and NPC placements before
    deleting their `Zone`; these name-keyed associations reject parent deletion
    while any such content remains;
@@ -237,9 +307,85 @@ For example:
 A rejected dependency delete is expected safety behavior. It creates no
 destroy audit event.
 
+NPC template keys also cannot change while a placement or complete roster
+references them. Edit the display name instead when only wording changes.
+Roster-only dependencies use a JSONB existence query rather than loading every
+placement. Template retirement and roster writes coordinate PostgreSQL row
+locks, so a concurrent roster edit cannot commit a reference to a retired key.
+
 ## 6. World cells and local resources/actions
 
 Open `/manage/world_cells` to manage `MapTileTemplate`.
+
+### Starter survey bootstrap and later editing
+
+`config/gameplay/starter_world_cells.yml` records 273 surveyed cells around
+the two Forpost routes. Source bounds are `x=994..1014`, `y=994..1006`; the
+local origin `[994,992]` maps them to `x=0..20`, `y=2..14` in Outpost
+Surroundings. `Game::World::StarterCellCatalog` validates the bounded catalog
+before `bin/rails db:seed` imports it into the existing `MapTileTemplate`
+records. It is a seed input, not a parallel runtime cell database.
+
+On first import, the survey supplies atlas-backed passability, source
+coordinates/map identity, atlas ID and publication provenance, and herb-group
+identities where no resource groups are already authored. Live-captured cell
+actions and entrances remain separately declared. NPC type/level annotations
+are retained as evidence. The separate encounter bootstrap in section 8 uses
+eligible annotations to place configured, complete captured groups; the atlas
+does not supply HP, rewards, probabilities, or successful gathering. Neither
+labels nor atlas segment IDs introduce a new Zone.
+
+Rows already carrying `metadata.atlas` are skipped by the survey import, so
+later management changes to passability, actions, and resource groups survive
+reseeding. Unrelated rows with an explicitly authored non-survey source marker
+are also preserved. The import does not move characters or replace their
+saved positions. Existing source/default-art rows can receive the initial
+survey; those imported rows are then editable through **World Cells**.
+Do not remove the `atlas` provenance to request a routine edit: that would
+make the row eligible for another bootstrap. A deliberate survey revision
+needs a reviewed content update rather than expecting reseeding to overwrite
+managed rows.
+
+When adding, replacing or correcting a cell illustration, first read
+[ARTWORK.md](../ARTWORK.md) for style, exact prompt records and the visual guides
+in `doc/artwork/`. Use the feature's design for placement and record runtime
+integration/verification in its handbook. Finished images belong in
+`app/assets/images/`.
+
+Artwork remains a separate layer from passability and actions. The cell stores
+only its server-catalog `cell_art` key, column and row. A catalog entry may
+provide individual slices and declare painted landmarks; cell metadata cannot
+choose arbitrary files, dimensions or the decorative-marker policy. Existing
+100 × 100 PNG slices render directly; a missing slice falls back to the same
+position on its master landscape. Accessible location/entity labels remain
+available when a painted landmark replaces a decorative marker.
+
+Painted-landmark suppression requires both `landmarks_in_art: true` and an
+exact `painted_landmarks` entry such as
+`{column: 6, row: 6, building_key: outpost_gate}` in the art catalog. Each entry
+has a unique, in-bounds integer coordinate and stable building key. The map
+compares that key with the actual loaded `TileBuilding`, not a value in cell
+metadata. Moving an entrance onto an unpainted slice, or placing a different
+entrance on a painted slice, keeps its marker. Mine/exchange entrances without
+a matching painted landmark use a visible label. Matching painted entrances
+remove the whole decorative overlay, including village pseudo-elements,
+without removing their accessible names or Enter controls.
+
+The starter baseline uses `forpost_starter`: one 2100 × 1300 master and 273
+physical PNGs under `world/cells/forpost-starter`. Local `[x,y]` maps to art
+column `x`, row `y - 2`. The seed upgrades missing art and legacy
+`forpost_terrain`/`forpost_pond` references within the surveyed rectangle.
+An independent catalog key or an already edited `forpost_starter` reference
+is preserved. This replaces the older forced 25-cell pond-art reconciliation;
+the old pond catalog remains valid for independently authored content.
+Gameplay, passability, labels and saved positions are separate from this
+visual upgrade. The western intermediate `[5,7]` defaults to the captured
+village-area label while retaining no entrance; a managed label survives seeds.
+
+The survey is not a complete zone. See
+`doc/design/reference/world/observations/2026-09-09_starter_atlas.md` and
+`doc/design/reference/world/observations/2026-09-09_starter_routes.md` for the
+published annotations and directly exercised route facts.
 
 ### Create a resource-bearing cell
 
@@ -247,9 +393,15 @@ Open `/manage/world_cells` to manage `MapTileTemplate`.
 2. Enter coordinates inside that Zone's width/height.
 3. Keep terrain type `outdoor`.
 4. Choose whether the cell is passable.
-5. Add the supported action to **Metadata and resources (JSON)**.
+5. Enable the observed action under **Cell actions** and set its display label.
+6. Use **Add resource group** for each authored group, filling **Group key**,
+   **Resource kind**, **Group label**, and **Group active**.
+7. Put source references and optional art configuration in the advanced
+   **Metadata and resources (JSON)** field, then save and inspect the audit.
 
-Example for the currently implemented resource search:
+The resulting persisted shape below is also available to the seed/content
+baseline. The guided form writes `local_actions` and `resource_groups`; they
+are not separate models or harvest outcomes:
 
 ```json
 {
@@ -262,9 +414,27 @@ Example for the currently implemented resource search:
       "label": "Look Around",
       "description": "Search this cell for local resources."
     }
+  ],
+  "resource_groups": [
+    {
+      "key": "herbs_7",
+      "kind": "herbs",
+      "label": "Herbs group 7",
+      "active": true
+    }
   ]
 }
 ```
+
+A cell accepts at most 32 resource groups. Keys are unique within that cell;
+keys and kinds contain lowercase letters, digits, `_`, or `-`, begin with a
+letter/digit, and contain at most 80 characters. Labels contain 1–120
+characters. An optional `active` must be a JSON boolean; omission means active.
+The atlas's “Herbs 7” and “Herbs 11” identify groups, not quantities, yields,
+skill requirements, or proficiency. The example does not assign a captured
+herb group to the illustrated coordinates. Resource identities enter the
+server's active cell projection; no player-facing harvesting or resource-map
+overlay is created merely by authoring them.
 
 `source_map` and `source_coordinates` are traceability metadata. Do not copy a
 Neverlands image into the project. If `cell_art` is supplied, it must reference
@@ -276,8 +446,8 @@ Supported local-action schemas are defined by
 | Type | Required source id | Runtime state |
 |---|---|---|
 | `resource_search` | `look` | Immediate empty result and persisted 28-second lock; no yield |
-| `fishing` | `fis` | Observed definition only; no active outcome |
-| `drinking` | `dri` | Observed definition only; no active outcome |
+| `fishing` | `fis` | Immediate “No bait available.” result and persisted 30-second lock; no skill gate or successful catch |
+| `drinking` | `dri` | Immediate success and 2-point fatigue recovery, persisted 60-second lock, no skill gate |
 | `digging` | `dig` | Observed definition only; no active outcome |
 
 Adding JSON for an unimplemented kind does not implement a mechanic. A new
@@ -286,22 +456,38 @@ acceptance, transition, UI, and test pipeline.
 Successful gathering is deferred by the user to alchemy. The current Look
 action can be interrupted, awards no inventory/currency, and resumes its same
 deadline after reload. Closing its result does not end the lock. Do not author
-resource yields or timing modifiers by adding unsupported metadata.
+resource yields or timing modifiers by adding unsupported metadata. Drink's
+observed timer and recovery are server-owned parameters in
+`config/gameplay/world_rules.yml`; an editor label or resource-group field
+cannot change them. The configured 4-point Nature Child value remains reserved
+for the unimplemented perk path. Fishing currently reproduces the observed
+no-bait entry only; bait use, successful catches, and fishing proficiency gains
+remain deferred. Digging can be authored but stays unavailable until its
+observed skill requirements and flow are implemented.
 
 ### Edit, deactivate, or remove a resource action
 
 - Edit the same cell and preserve its zone/coordinates unless the whole cell
   override is intentionally moving.
-- To hide one observed action temporarily, add `"active": false` to that
-  action object.
-- To remove the action but retain terrain/art/passability, remove only its
-  object from `local_actions`.
+- To hide one observed action temporarily, clear its **enabled** control;
+  this persists `"active": false` on that action object.
+- To pause a resource group, clear **Group active**; use **Remove group** to
+  remove that group's identity when saving the form.
+- For permanent baseline retirement, remove only the action object from
+  `local_actions` in the approved content declaration. The guided editor
+  retains disabled action definitions so their source/result metadata is not
+  lost when they are temporarily hidden.
 - Delete the `MapTileTemplate` only when the cell has no remaining sparse
   override. The base outdoor map still exists; deleting the sparse row does not
   delete the Zone.
 
 The change appears on the next World render. Only an implemented active action
 becomes a `WorldActionOffer`.
+
+The cell detail page links directly to **Manage this cell's NPCs** and
+**Manage this cell's entrance**. These open the existing record or prefill
+the new record's region and coordinates, so contents can be managed together
+without searching each collection independently.
 
 ## 7. Outdoor buildings and linked locations
 
@@ -363,11 +549,44 @@ Metadata owns the scene and allowlisted feature handoffs:
 The coordinates above demonstrate schema shape only; replace them with
 measured source geometry. Location kind/feature keys, scene dimensions,
 polygons, action types, and feature routes are validated by `TileBuilding`.
-The currently supported `location.kind` is `village`; other kinds are rejected
-and inaccessible until their source-backed scene is implemented. The outdoor
+The implemented `location.kind` values are `village`, `mine`, and `exchange`.
+Mine/exchange support their captured lobbies, read-only sections, exact-cell
+return, and login restoration; underground travel and trading remain deferred.
+The outdoor
 marker derives from this canonical kind, so omit the obsolete duplicate
 `landmark_kind` field. City entrances retain the city marker. Optional exterior,
 interior, and feature `presence_label` values must be nonblank strings.
+
+### Author a mine or exchange lobby
+
+Select **Building type: location**, **Linked location kind: mine** or
+**exchange**, a stable building key, name, and exact outdoor cell. Leave the
+destination Zone/coordinates blank: entering a lobby preserves the outdoor
+position and persists the location key. Start from the captured declarations in
+`db/seeds/world_locations.rb`: Podgorny Mine at `[4,5]` and Resource Exchange at
+`[4,7]`.
+
+- `location.scene` supplies positive `width`/`height` and an existing project
+  image under `world/`; both captured banners are `760 × 255`.
+- The Nature return feature uses `action_type: return_world` and
+  `placement: navigation`, so it appears in the header without a scene polygon.
+  Scene hotspots retain their existing polygon validation.
+- `location.sections` contains unique `key`/`label` pairs for read-only lobby
+  tabs. Optional `summary_label` and `read_only_items` describe the captured mine
+  overview/item previews; previews contain `name` and string `details` and grant
+  no shop access, stock, items or purchases.
+- `resource_categories` supplies the exchange's captured selector labels;
+  Choose remains disabled. `unavailable_actions` supplies disabled header
+  labels, including Descend. Unsupported counters appear as dashes.
+- Exterior `metadata.presence_label` and interior
+  `metadata.location.presence_label` remain distinct. Lobby tabs share the
+  same interior chat/presence context.
+
+A planned mine may still be stored inactive with the minimal definition
+`{"location":{"kind":"mine"}}`. Activating an incomplete lobby returns HTTP
+422; provide the validated scene and return feature first. A configured lobby
+does not enable underground travel, extraction, license purchases or resource
+exchange transactions.
 
 ### Move, deactivate, or delete
 
@@ -376,8 +595,10 @@ interior, and feature `presence_label` values must be nonblank strings.
 - Temporarily remove interaction by clearing **Active**.
 - Delete permanently only after confirming no saved context, destination, or
   content baseline still requires it.
-- A seed-owned gate or linked location returns on the next seed reconciliation
-  unless its declaration and exact retirement behavior are also changed.
+- CityCatalog gates return to their declared handoff on seed reconciliation.
+  Existing linked village/mine/exchange records retain edits and deactivation.
+  Deleting a linked baseline row can recreate it on the next seed if its
+  original cell is free; change the declaration for permanent retirement.
 
 ## 8. NPC templates and exact-cell placements
 
@@ -390,7 +611,7 @@ Open `/manage/npc_templates/new` and provide:
 - stable `npc_key`;
 - unique display name;
 - supported role;
-- positive level;
+- nonnegative integer level, including `0` for source-backed starter NPCs;
 - dialogue text;
 - combat/reward/respawn metadata.
 
@@ -425,7 +646,14 @@ Open `/manage/tile_npcs/new`, select the template, and provide:
 - the same stable `npc_key` and supported `npc_role`;
 - level, current HP, and maximum HP;
 - optional defeated/respawn timestamps when deliberately restoring state;
-- placement metadata.
+- **Encounter active** and **Fixed encounter size**;
+- source references and advanced placement metadata.
+
+For a variable group, choose **Add encounter roster** and expand it. Enter a
+stable roster key and fill 1–10 member rows using the existing NPC templates;
+leave unused rows blank. For each member, supply an exact level or minimum and
+maximum levels, with HP where required below. **Remove roster** removes the
+sample on save. With no rosters, the fixed template, level, and size apply.
 
 Example placement metadata:
 
@@ -461,10 +689,39 @@ types use complete captured roster samples on that same placement:
 }
 ```
 
-Create every referenced `NpcTemplate` first. Each sample is one complete
-observed output, not a set of independently rolled members. Keep sides within
-`1..10`, use positive level/HP overrides and ordered positive delay bounds, and
-do not claim that repeated samples reveal Neverlands' complete pool or weights.
+Create every referenced `NpcTemplate` first. A new or changed roster rejects
+unknown template keys before it persists. Referenced templates cannot be
+deleted or have their stable keys renamed, including references from disabled
+placements; display-name changes remain allowed. Existing captured samples remain
+complete observed outputs. Keep sides within `1..10`, use nonnegative integer
+levels, positive HP overrides, and ordered positive delay bounds, and do not claim that repeated
+samples reveal Neverlands' complete pool or weights.
+
+The editor and seed catalog also support explicitly authored policies for
+future content:
+
+| Field | Validated contract |
+|---|---|
+| `encounter_rosters` | 1–64 complete rosters; unique nonblank keys |
+| `members` | 1–10 ordered members with existing NPC template keys |
+| `weight` | Optional integer 1–10,000; omitted means 1 |
+| `level` | Exact nonnegative integer level; mutually exclusive with a range |
+| `level_min`, `level_max` | Both integers, ordered within 0–1,000; require explicit positive integer `hp` |
+| `encounter_experience_reward` | Optional nonnegative integer |
+| `trauma_percent` | Optional integer 0–100 |
+
+One complete roster is selected using the relative authored weights, then any
+member ranges use the injected server RNG within their bounds. Exact members
+and the existing default weight behavior remain unchanged. A range does not
+scale HP, damage, or other combat statistics; the explicit HP and established
+template/profile remain authoritative. A fixed-width range needs no random
+draw. These configurable capabilities are local authoring policies, not claims
+that Neverlands uses those weights or distributions. No guessed policies are
+added to the captured seed groups.
+Level zero remains zero when the selected member enters combat, including
+when its template has a higher default level. It never implies zero HP or
+level-derived damage/rewards. Missing, negative, and fractional authored levels
+are rejected.
 An anchor with validated `encounter_rosters` is repeatable: defeating one
 selected roster completes that fight but does not set the placement's defeated
 state, so an explicit Finish can be followed by a new passive schedule and
@@ -478,6 +735,45 @@ For seed-owned content, declare reusable non-anchor templates under
 `npc_templates` in `config/gameplay/outdoor_npcs.yml`; the seed materializes
 templates before placements so runtime remains DB-only.
 
+### Bootstrap reusable starter encounter groups
+
+`starter_encounters` in `config/gameplay/outdoor_npcs.yml` gives each profile a
+stable `key` and `source_npc_key` referring to an existing captured anchor.
+`atlas_names` maps template keys to the atlas's source type labels. The pure
+`Game::World::StarterEncounterDistribution` filters complete captured rosters
+against every member's exact type and level on each surveyed cell. It returns
+40 additional placements through the zone's `starter_npcs` seed input;
+no extra NPC templates, runtime catalog lookup, HP interpolation or distance
+formula is introduced. A missing source/name, interpolated range, missing HP,
+invalid delay or ambiguous profile match fails before bootstrap.
+
+Current profiles reuse the captured rat pair and Bandit/Robber groups. Only
+the existing rat anchor matches the surveyed rat annotation, so additional
+placements are Bandits. The profile's `300..360`-second delay is marked
+`passive_delay_source: user_reported_2026-09-09`; uniform sampling inside it
+is local policy. The original Bandit anchor keeps its measured windows.
+Complete roster samples retain their exact levels, HP, XP and injury values.
+
+The initial bootstrap requires a persisted passable cell without a placement
+or entrance and excludes the evidenced pond. It records
+`seed_scope: starter_encounter_bootstrap` and `bootstrap_source_map`, whose
+original source identity survives a later managed move. An existing row for
+that original source or an occupied destination is preserved. Scoped cleanup
+never deletes bootstrap-marked rows merely because a profile changes.
+
+Manage continues to edit the same `TileNpc`: use its **Encounter active**
+control, roster rows, exact levels/HP, weights and passive-delay windows.
+Changing a reusable profile affects future bootstrap; it does not overwrite
+already managed cells. Preserve the bootstrap identity when moving a placement.
+Deactivate a group for a durable closure. Deleting it removes it immediately,
+but a later seed may bootstrap that eligible cell again.
+
+Provenance distinguishes the target `source_map`/atlas from
+`roster_source_map`/`roster_source_observation`. Reusing a complete capture on
+an eligible cell is an explicitly authorized local adaptation, not a claim
+that every destination roster was observed live. See
+`doc/design/reference/world/observations/2026-09-09_starter_encounter_authoring.md`.
+
 ### Move, edit, defeat-state correction, or delete
 
 - Move the `TileNpc` placement, not the template.
@@ -485,15 +781,19 @@ templates before placements so runtime remains DB-only.
   encounter data on `TileNpc`.
 - Do not casually reset current HP or defeated/respawn timestamps: those are
   live gameplay state.
+- Clear **Encounter active** for a temporary closure. The resolver omits the
+  disabled anchor; fight startup reloads it under lock and rejects a stale
+  reference from before deactivation.
 - Delete a placement to remove the encounter immediately. World rendering does
   not lazily recreate it.
 - Delete a template only after every placement and combat-history dependency
-  has been resolved.
+  has been resolved, including member references in other placements' rosters.
 
-Seed-owned outdoor NPCs originate in
-`config/gameplay/outdoor_npcs.yml`. A later seed run may restore their template
-and placement. Management-created placements are not removed by the scoped
-seed cleanup because they do not carry its `seed_source` marker.
+Seed-owned outdoor NPCs originate in `config/gameplay/outdoor_npcs.yml`.
+A later seed run may restore explicit captured anchors and shared templates;
+starter bootstrap placements follow the preservation rules above.
+Management-created placements are not removed by scoped seed cleanup because
+they do not carry its `seed_source` marker.
 
 ## 9. Cities, buildings, routes, and exits
 
@@ -598,7 +898,10 @@ its own audit event.
 | Redirected away from `/manage` | The user lacks the exact `admin` role. |
 | HTTP 422 with JSON error | Fix syntax and ensure the top-level value is an object. |
 | HTTP 422 with coordinate/type/schema error | The owning model rejected invalid or unsupported content; do not bypass it. |
+| HTTP 422 for a resource group or roster | Check stable keys, existing NPC references, boolean activation, group/member limits, ordered level bounds, and explicit HP for ranges. |
+| HTTP 422 when activating a mine/exchange lobby | Supply valid scene dimensions, an existing project world image and a supported return feature; an incomplete mine marker must stay inactive. Lobby activation does not activate underground or economic actions. |
 | Delete returns to detail with an alert | A dependency protects the record; remove/move the leaf dependency first. |
+| NPC key edit or template deletion is rejected despite no direct placement | Another cell's complete roster references that key, possibly in an inactive anchor; resolve the roster reference first. |
 | Change disappears after `bin/rails db:seed` | The row is seed-owned; update the baseline declaration if the change is permanent. |
 | Resource is visible but has no action | The action may be inactive/unimplemented or no valid offer was generated. |
 | NPC disappears and returns after seed | Its source-backed YAML declaration still exists. |
@@ -857,9 +1160,16 @@ Current management coverage lives in:
 - `spec/requests/manage/content_management_spec.rb`;
 - `spec/system/manage_content_spec.rb`;
 - `spec/services/manage/content_mutation_spec.rb`;
+- `spec/services/manage/cell_editor_attributes_spec.rb`;
 - `spec/queries/manage/paginated_relation_spec.rb`;
 - `spec/models/management_audit_event_spec.rb`;
 - `spec/models/open_world_seed_spec.rb`;
+- `spec/models/outdoor_npc_seed_bootstrap_spec.rb`;
+- `spec/models/starter_wallet_seed_spec.rb`;
+- `spec/models/world_location_seed_preservation_spec.rb`;
+- `spec/models/cell_content_authoring_spec.rb`;
+- `spec/models/npc_template_spec.rb` for roster dependencies and competing writer locks;
+- `spec/jobs/tile_npc_respawn_job_spec.rb`;
 - World/City model, resolver, action-offer, request, view, and system specs
   listed in their feature handbooks.
 
@@ -870,7 +1180,8 @@ For a current resource edit, verify at least:
 3. the player-facing runtime consumes the change;
 4. stale offers cannot execute after update/delete;
 5. dependency deletion fails visibly and safely;
-6. seed-owned content converges when the baseline changes;
+6. reconciled content converges to its baseline while bootstrap-owned cells
+   and encounter placements preserve management edits on reseed;
 7. desktop, tablet, and mobile layouts remain usable.
 
 For a new management resource, run focused model/policy/service/request/system
@@ -890,11 +1201,14 @@ Shared management framework:
 - `app/policies/manage_policy.rb`
 - `app/queries/manage/paginated_relation.rb`
 - `app/services/manage/content_mutation.rb`
+- `app/services/manage/world_cell_attributes.rb`
+- `app/services/manage/tile_npc_attributes.rb`
 - `app/models/management_audit_event.rb`
 - `app/helpers/manage_helper.rb`
 - `app/views/layouts/manage.html.erb`
 - `app/views/manage/shared/`
 - `app/assets/stylesheets/manage.css`
+- `app/javascript/controllers/manage_collection_controller.js`
 - `db/migrate/20260729120000_create_management_audit_events.rb`
 
 Current resource adapters:
@@ -907,6 +1221,15 @@ Current resource adapters:
 - `app/controllers/manage/city_hotspots_controller.rb`
 - `app/controllers/manage/audit_events_controller.rb`
 - `app/views/manage/`
+
+`Manage::WorldCellAttributes` receives permitted editor attributes and the
+current cell, returning one assignment hash for the existing metadata owner.
+`Manage::TileNpcAttributes` does the same for activation, encounter size, and
+complete roster/member rows; it retains unedited metadata only for matching
+stable sample/member identities. Both normalize form values without database
+writes. The existing model validations and `Manage::ContentMutation` own
+persistence and auditing. `manage_collection_controller.js` adds/removes bounded
+form rows only; it does not decide valid content or gameplay availability.
 
 Runtime and baseline owners remain in the feature handbooks. Extend those
 owners; do not duplicate them under `Manage`.

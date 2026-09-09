@@ -28,9 +28,11 @@ class NpcTemplate < ApplicationRecord
 
   validates :name, presence: true, uniqueness: true
   validates :npc_key, uniqueness: true, allow_blank: true
-  validates :level, numericality: {greater_than: 0}
+  validates :level, numericality: {only_integer: true, greater_than_or_equal_to: 0}
   validates :role, presence: true, inclusion: {in: ROLES}
   validates :dialogue, presence: true
+  validate :referenced_key_must_remain_stable
+  before_destroy :restrict_roster_reference_deletion, prepend: true
 
   # Scope to find NPCs by role
   scope :with_role, ->(role) { where(role: role) }
@@ -103,6 +105,34 @@ class NpcTemplate < ApplicationRecord
   end
 
   private
+
+  # Lock the template before checking JSON roster references. Roster writes
+  # take key-share locks on their templates, so either the reference commits
+  # first and prevents retirement, or retirement completes and the writer
+  # rejects the missing key. Inactive anchors retain these dependencies.
+  def referenced_key_must_remain_stable
+    return unless persisted? && will_save_change_to_npc_key?
+
+    current_key = self.class.where(id:).lock.pick(:npc_key)
+    if tile_npcs.exists? || roster_reference_exists?(current_key)
+      errors.add(:npc_key, "cannot change while referenced by cell encounters")
+    end
+  end
+
+  def restrict_roster_reference_deletion
+    current_key = self.class.where(id:).lock.pick(:npc_key)
+    return unless roster_reference_exists?(current_key)
+
+    errors.add(:base, "Cannot delete an NPC template referenced by cell encounter rosters")
+    throw(:abort)
+  end
+
+  def roster_reference_exists?(key)
+    return false if key.blank?
+
+    reference = {"encounter_rosters" => [{"members" => [{"npc_key" => key}]}]}
+    TileNpc.where("metadata @> ?::jsonb", reference.to_json).exists?
+  end
 
   def positive_metadata_integer(key)
     value = metadata_integer(key)

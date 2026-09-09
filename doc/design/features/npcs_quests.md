@@ -18,6 +18,10 @@ Inputs:
 - official NPC group-size guidance and unresolved equations preserved in
   `doc/design/reference/social/observations/2026-09-07_cell_chat_and_presence_boundaries.md`;
 - documented movement, tile-action, and shop captures.
+- the bounded starter atlas and explicit user-reported encounter cadence in
+  `doc/design/reference/world/observations/2026-09-09_starter_encounter_authoring.md`.
+- unresolved NPC inputs and their existing evidence in
+  `doc/design/reference/npcs_quests/observations/evidence_needed_world_npc_content_and_formulas.md`.
 
 ## Player Experience
 
@@ -164,8 +168,10 @@ Implemented MVP boundary:
 - no outdoor NPC action offer, marker, name, or manual attack endpoint is
   rendered;
 - targetless passive checks use a persisted exact-cell deadline, captured
-  delay windows where available, and the existing explicit local fallback
-  otherwise; the broad wiki cadence does not replace measured live windows;
+  delay windows on original captured anchors, the user-reported 300–360-second
+  window on new starter profiles, and the existing explicit local fallback
+  otherwise; neither a broad wiki cadence nor user approximation replaces
+  measured live windows on the original independent capture;
 - duplicate starts reuse the character's active match, and the result finish returns through a saved allowlisted logical context.
 
 This is authored encounter composition, not a generic random-encounter table.
@@ -173,6 +179,56 @@ Only complete captured samples are replayed. Additional group sizes, members,
 levels, and mixed templates require their own Neverlands evidence; the complete
 eligible pool, selection weights, population/strength equations, probabilities,
 and timing distribution remain unresolved.
+
+### Bounded starter profile reuse
+
+The user authorized populating starter encounter cells with source-backed
+groups. Named profiles reuse complete captures only where every member's type
+and exact level fits the destination cell's public atlas annotation. They do
+not interpolate HP for the other levels in a range or invent a strength ring
+around Forpost. The current projection supports 40 additional Bandit cells;
+the existing `[7,7]` cell is the only surveyed match for the captured rat pair.
+Atlas-inactive cells, entrances, the explicitly bot-free pond, and occupied
+managed cells are excluded from initial bootstrap.
+
+New sampled placements use the user's approximate five-to-six-minute interval
+as explicit configurable data, with uniform integer sampling inside
+`300..360` seconds as a local calibration. Uniformity is not a measured source
+rule. Placements can select another complete eligible sample
+after victory and Finish. Their target atlas provenance and original roster
+capture are separate. Fixed source anchors retain their existing lifecycle.
+Bootstrap writes the same editable cell records as Manage; later management
+edits, moves and deactivation survive reseeding. A deleted bootstrap record
+can be recreated by a later seed, so deactivation is the durable removal path.
+The content guide owns that operator workflow.
+
+### Remaining NPC content and formula work
+
+The [NPC-owned gap record](../reference/npcs_quests/observations/evidence_needed_world_npc_content_and_formulas.md)
+is the detailed follow-up list for this feature. It distinguishes:
+
+- **Missing combat content:** broader NPC identities and exact-level HP/stats,
+  especially rats at levels 0–3. Level-zero authoring, selection and display
+  already work; the missing part is supported content, not integer handling.
+- **Incomplete encounter pools:** every eligible whole composition, group size
+  and member combination for the target cells. The 40 added starter placements
+  reuse existing profiles; they are not 40 newly captured groups.
+- **Unresolved probability rules:** group weights, action/passive attack
+  probabilities, cooldowns, timing distributions and player-state modifiers.
+  Equal default sample weights and uniform local delays are explicit calibration,
+  not exact Neverlands formulas.
+- **Weak starter-area content:** use captured weak profiles only where atlas
+  eligibility supports them. More varied low-level encounters require more
+  content evidence; do not derive strength from distance to Forpost or assume
+  a painted road is free of NPCs.
+- **NPC reward inputs:** per-NPC drop/NV chances and reward modifiers remain
+  bounded by the NPC Loot section and the existing combat/progression owners.
+
+These are evidence/content follow-ups within the declared one-zone scope;
+additional zones do not have to exist before supported starter content can
+be added. Unknown general formulas do not justify fabricating missing stats.
+`doc/features/world.md` remains the current-runtime and verification owner,
+and the MVP plan owns scheduling rather than this evidence-gap list.
 
 ## Quest Behavior Status
 

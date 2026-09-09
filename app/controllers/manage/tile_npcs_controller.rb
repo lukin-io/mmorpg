@@ -16,6 +16,7 @@ module Manage
 
     def new
       @tile_npc = TileNpc.new(npc_role: "hostile", level: 1, metadata: {"encounter_count" => 1})
+      @tile_npc.assign_attributes(params.permit(:zone, :x, :y))
     end
 
     def edit; end
@@ -57,13 +58,17 @@ module Manage
     end
 
     def parsed_tile_npc_params
-      parse_json_attributes(tile_npc_params, @tile_npc, :metadata)
+      attributes = parse_json_attributes(tile_npc_params, @tile_npc, :metadata)
+      Manage::TileNpcAttributes.new(attributes:, npc: @tile_npc).call if attributes
     end
 
     def tile_npc_params
       params.require(:tile_npc).permit(
         :zone, :x, :y, :npc_template_id, :npc_key, :npc_role, :level,
-        :current_hp, :max_hp, :defeated_at, :respawns_at, :metadata
+        :current_hp, :max_hp, :defeated_at, :respawns_at, :metadata, :active,
+        :content_fields, :encounter_count,
+        rosters: [:key, :weight, :encounter_experience_reward, :trauma_percent,
+          members: [:npc_key, :level, :level_min, :level_max, :hp]]
       )
     end
 

@@ -16,6 +16,7 @@ module Manage
 
     def new
       @tile_building = TileBuilding.new(building_type: "city", active: true, required_level: 1, metadata: {})
+      @tile_building.assign_attributes(params.permit(:zone, :x, :y))
     end
 
     def edit; end
@@ -57,13 +58,20 @@ module Manage
     end
 
     def parsed_tile_building_params
-      parse_json_attributes(tile_building_params, @tile_building, :metadata)
+      attributes = parse_json_attributes(tile_building_params, @tile_building, :metadata)
+      return unless attributes
+
+      kind = attributes.delete("location_kind")
+      if kind.present? && attributes.fetch("building_type", @tile_building.building_type) == "location"
+        attributes["metadata"]["location"] = attributes["metadata"].fetch("location", {}).to_h.merge("kind" => kind)
+      end
+      attributes
     end
 
     def tile_building_params
       params.require(:tile_building).permit(
         :zone, :x, :y, :building_key, :building_type, :name, :destination_zone_id,
-        :destination_x, :destination_y, :required_level, :active, :metadata
+        :destination_x, :destination_y, :required_level, :active, :metadata, :location_kind
       )
     end
 

@@ -14,6 +14,7 @@ class WorldActionOffer < ApplicationRecord
     exit_city
     board_airship
   ].freeze
+  TIMED_LOCAL_ACTION_TYPES = %w[search_resources fish drink].freeze
 
   OFFER_TTL = 10.minutes
 
@@ -39,7 +40,7 @@ class WorldActionOffer < ApplicationRecord
   scope :live, -> { offered.where("expires_at > ?", Time.current) }
   scope :at_tile, ->(zone, x, y) { where(zone:, x:, y:) }
   scope :timed_local_actions, -> {
-    accepted.where(action_type: "search_resources").where("metadata ? 'local_action_ends_at'")
+    accepted.where(action_type: TIMED_LOCAL_ACTION_TYPES).where("metadata ? 'local_action_ends_at'")
   }
 
   def local_action_ends_at
@@ -64,7 +65,7 @@ class WorldActionOffer < ApplicationRecord
   # presentation delivery; it never changes the accepted result or deadline.
   def consume_local_action_result!(at: Time.current)
     with_lock do
-      next unless action_type == "search_resources" && (accepted? || completed?) &&
+      next unless TIMED_LOCAL_ACTION_TYPES.include?(action_type) && (accepted? || completed?) &&
         local_action_ends_at && local_action_result.present?
       next if metadata.to_h.key?("local_action_result_delivered_at")
 
@@ -102,10 +103,10 @@ class WorldActionOffer < ApplicationRecord
   def local_action_deadline_is_valid
     return unless accepted? && metadata.to_h.key?("local_action_ends_at")
 
-    unless action_type == "search_resources" && accepted_at && local_action_ends_at && local_action_ends_at > accepted_at
-      errors.add(:metadata, "must have a valid accepted Look Around deadline")
+    unless TIMED_LOCAL_ACTION_TYPES.include?(action_type) && accepted_at && local_action_ends_at && local_action_ends_at > accepted_at
+      errors.add(:metadata, "must have a valid accepted local action deadline")
     end
-    errors.add(:metadata, "must have a Look Around result") if local_action_result.blank?
+    errors.add(:metadata, "must have a local action result") if local_action_result.blank?
   end
 
   def coordinates_within_zone_bounds

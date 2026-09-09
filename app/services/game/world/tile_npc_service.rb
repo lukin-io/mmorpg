@@ -45,7 +45,7 @@ module Game
 
       # Check if there's an NPC at this tile
       def npc_present?
-        TileNpc.at_tile(@zone, @x, @y).present?
+        TileNpc.active.at_tile(@zone, @x, @y).present?
       end
 
       # Check if there's an alive hostile NPC (for combat)
@@ -64,7 +64,7 @@ module Game
       attr_reader :character, :zone, :x, :y
 
       def find_npc
-        TileNpc.at_tile(@zone, @x, @y)
+        TileNpc.active.at_tile(@zone, @x, @y)
       end
     end
   end

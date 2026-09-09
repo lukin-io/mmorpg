@@ -39,7 +39,26 @@ module Game
           scope = scope_to_city_rooms(scope) if position.zone.city?
         end
         players = scope.order(SORT_ORDERS.fetch(sort.to_s, SORT_ORDERS.fetch("az"))).limit(LIMIT).to_a
-        Result.new(players:, label: location_label, count: scope.count)
+        Result.new(players:, label:, count: scope.count)
+      end
+
+      # Shared location text for map descriptions and profiles. Resolves only
+      # the character's cell/room/flight; it never loads or counts an audience.
+      def label
+        return "Unknown" unless position
+        return aboard_journey.route_label if aboard_journey
+        return current_city_room.fetch(:label) if current_city_room
+        return entrance&.presence_label || cell_presence_label || position.zone.display_name unless location
+
+        case room
+        when :interior
+          location.location_presence_label
+        when :shop
+          feature = location.location_features.find { |entry| entry["feature"] == "shop" }
+          feature["presence_label"].presence || feature.fetch("label")
+        else
+          location.presence_label
+        end
       end
 
       # Chat uses the same captured cell/room partition, with stable record ids
@@ -49,7 +68,9 @@ module Game
         return "airship:#{aboard_journey.flight_key}" if aboard_journey
 
         parts = ["zone", position.zone_id, "cell", position.x, position.y]
-        parts.concat(["location", location.location_key, room]) if location
+        # Existing village chat keys remain stable as additional lobby kinds
+        # reuse the same validated interior context.
+        parts.concat(["location", location.location_key, (room == :interior ? location.location_kind : room)]) if location
         parts.concat(["room", current_city_room.fetch(:key)]) if current_city_room
         parts.join(":")
       end
@@ -159,22 +180,22 @@ module Game
 
       def room
         context = character.gameplay_context
-        return :village if context["name"] == "world_location" && context.dig("params", "key") == location.location_key
+        return :interior if context["name"] == "world_location" && context.dig("params", "key") == location.location_key
         return :shop if context["name"] == "shop" && location.location_feature_available?("shop")
 
         :outdoors
       end
 
       def scope_to_location(scope)
-        village_context = {gameplay_context: {name: "world_location", params: {key: location.location_key}}}.to_json
+        interior_context = {gameplay_context: {name: "world_location", params: {key: location.location_key}}}.to_json
         shop_context = {gameplay_context: {name: "shop", params: {}}}.to_json
         case room
-        when :village
-          scope.where("characters.metadata @> ?::jsonb", village_context)
+        when :interior
+          scope.where("characters.metadata @> ?::jsonb", interior_context)
         when :shop
           scope.where("characters.metadata @> ?::jsonb", shop_context)
         else
-          scope = scope.where.not("characters.metadata @> ?::jsonb", village_context)
+          scope = scope.where.not("characters.metadata @> ?::jsonb", interior_context)
           if location.location_feature_available?("shop")
             scope = scope.where.not("characters.metadata @> ?::jsonb", shop_context)
           end
@@ -182,20 +203,15 @@ module Game
         end
       end
 
-      def location_label
-        return aboard_journey.route_label if aboard_journey
-        return current_city_room.fetch(:label) if current_city_room
-        return entrance&.presence_label || position.zone.display_name unless location
+      # Only the viewer's exact outdoor cell is read. A display label never
+      # changes the stable coordinate/room key used for chat and player culling.
+      def cell_presence_label
+        return unless position.zone.outdoor?
+        return @cell_presence_label if defined?(@cell_presence_label)
 
-        case room
-        when :village
-          location.location_presence_label
-        when :shop
-          feature = location.location_features.find { |entry| entry["feature"] == "shop" }
-          feature["presence_label"].presence || feature.fetch("label")
-        else
-          location.presence_label
-        end
+        @cell_presence_label = MapTileTemplate.find_by(
+          zone: position.zone.name, x: position.x, y: position.y
+        )&.presence_label
       end
     end
   end

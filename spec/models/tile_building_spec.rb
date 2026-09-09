@@ -74,13 +74,57 @@ RSpec.describe TileBuilding, type: :model do
       expect(building.errors[:metadata]).to include("location feature destination is unsupported")
     end
 
-    it "rejects a location kind without an implemented source-backed interior" do
+    it "rejects an unsupported location kind" do
       location = build(:tile_building, :world_location)
-      location.metadata.fetch("location")["kind"] = "mine"
+      location.metadata.fetch("location")["kind"] = "unobserved"
 
       expect(location).not_to be_valid
       expect(location).not_to be_accessible
       expect(location.errors[:metadata]).to include("location kind is unsupported")
+    end
+
+    it "accepts captured lobbies without granting their deferred gameplay operations" do
+      %w[mine exchange].each do |kind|
+        location = build(:tile_building, :location_lobby)
+        location.metadata.fetch("location")["kind"] = kind
+
+        expect(location).to be_valid
+        expect(location).to be_accessible
+        expect(location.location_features.pluck("action_type")).to eq(["return_world"])
+        expect(location.location_feature_available?("shop")).to be false
+        expect(location.location_section("shop")).to include("label" => "Shop")
+      end
+    end
+
+    it "allows incomplete inactive mine markers but refuses to activate them" do
+      location = build(:tile_building, :location_lobby, active: false, metadata: {"location" => {"kind" => "mine"}})
+      expect(location).to be_valid
+      expect(location).not_to be_accessible
+
+      location.active = true
+      expect(location).not_to be_valid
+      expect(location.errors[:metadata]).to include("location features must be a non-empty array")
+    end
+
+    it "rejects malformed lobby presentation and unsafe asset paths" do
+      [
+        {"scene" => {"image" => "../../private.png"}},
+        {"scene" => {"image" => "https://example.com/scene.png"}},
+        {"scene" => {"image" => "world/missing-lobby-art.png"}},
+        {"scene" => {"image" => nil}},
+        {"sections" => [{"key" => "../shop", "label" => "Shop"}]},
+        {"sections" => [{"key" => "shop", "label" => "Shop"}, {"key" => "shop", "label" => "Other"}]},
+        {"sections" => [{"key" => "shop", "label" => "Shop", "read_only_items" => [{"name" => "License", "details" => nil}]}]},
+        {"resource_categories" => [nil]},
+        {"unavailable_actions" => "Descend"},
+        {"features" => [{"key" => "exit", "label" => "Nature", "action_type" => "return_world", "placement" => "unknown"}]}
+      ].each do |invalid|
+        location = build(:tile_building, :location_lobby)
+        location.metadata = location.metadata.deep_merge("location" => invalid)
+
+        expect(location).not_to be_valid
+        expect(location).not_to be_accessible
+      end
     end
 
     it "requires a documented building type" do
@@ -262,6 +306,8 @@ RSpec.describe TileBuilding, type: :model do
 
       expect(location.enter!(character)).to be true
       expect(character.position.reload).to have_attributes(zone: source_zone, x: 6, y: 7)
+      expect(character.reload.gameplay_context).to eq("name" => "world_location", "params" => {"key" => location.location_key})
+      expect(character.metadata.dig("local_chat_context", "key")).to end_with(":location:#{location.location_key}:village")
     end
   end
 end

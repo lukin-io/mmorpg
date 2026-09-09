@@ -50,9 +50,7 @@ module Game
           predicted_y: target_y,
           action_key: SecureRandom.hex(16),
           travel_seconds: Game::Movement::TravelTime.seconds(
-            character:,
-            zone: position.zone,
-            direction: direction.to_sym,
+            wanderer_level: character.passive_skill_level(:wanderer),
             tile_metadata:
           ),
           metadata: build_metadata(tile_metadata, terrain_type:)

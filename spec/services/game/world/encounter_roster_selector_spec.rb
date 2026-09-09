@@ -46,6 +46,43 @@ RSpec.describe Game::World::EncounterRosterSelector do
     expect(selection.experience_reward).to eq(35)
   end
 
+  it "preserves a fixed level-zero anchor without changing its HP or reward" do
+    tile_npc.update!(level: 0, metadata: {"encounter_experience_reward" => 0})
+
+    selection = described_class.new(tile_npc:, rng: instance_double(Random)).call
+
+    expect(selection.members.first).to have_attributes(level: 0, max_hp: 155)
+    expect(selection.experience_reward).to eq(0)
+  end
+
+  it "preserves an exact zero level over the template and samples a zero range boundary" do
+    tile_npc.update!(metadata: {"encounter_rosters" => [
+      {"key" => "zero", "members" => [
+        {"npc_key" => bandit.npc_key, "level" => 0, "hp" => 40},
+        {"npc_key" => bandit.npc_key, "level_min" => 0, "level_max" => 4, "hp" => 40}
+      ]}
+    ]})
+    rng = instance_double(Random)
+    allow(rng).to receive(:rand).with(0..4).and_return(0)
+
+    selection = described_class.new(tile_npc:, rng:).call
+
+    expect(selection.members.map(&:level)).to eq([0, 0])
+    expect(selection.members.map(&:max_hp)).to eq([40, 40])
+    expect(rng).to have_received(:rand).with(0..4).once
+  end
+
+  it "fails closed on persisted missing, negative, or fractional exact levels" do
+    [nil, -1, 0.5].each do |level|
+      tile_npc.update_columns(metadata: {"encounter_rosters" => [
+        {"key" => "invalid", "members" => [{"npc_key" => bandit.npc_key, "level" => level, "hp" => 40}]}
+      ]})
+
+      expect { described_class.new(tile_npc:).call }
+        .to raise_error(described_class::InvalidRosterError, /combat parameters/)
+    end
+  end
+
   it "preserves an explicit zero reward instead of falling back to the template" do
     bandit.update!(metadata: bandit.metadata.merge("xp_reward" => 35))
     tile_npc.update!(metadata: {"encounter_experience_reward" => 0})
@@ -98,7 +135,7 @@ RSpec.describe Game::World::EncounterRosterSelector do
   end
 
   it "fails closed when persisted roster data references a missing template" do
-    tile_npc.update!(metadata: {
+    tile_npc.update_columns(metadata: {
       "encounter_rosters" => [
         {"key" => "missing", "members" => [{"npc_key" => "deleted-template", "level" => 8, "hp" => 100}]}
       ]
@@ -128,5 +165,40 @@ RSpec.describe Game::World::EncounterRosterSelector do
     expect {
       described_class.new(tile_npc:).call
     }.to raise_error(described_class::InvalidRosterError, /member metadata is not documented/)
+  end
+
+  it "uses explicit relative weights and samples only within the authored level range" do
+    tile_npc.update!(metadata: {"encounter_rosters" => [
+      {"key" => "fixed", "weight" => 2, "members" => [{"npc_key" => bandit.npc_key}]},
+      {"key" => "ranged", "weight" => 3, "members" => [{"npc_key" => bandit.npc_key, "level_min" => 11, "level_max" => 14, "hp" => 200}]}
+    ]})
+    rng = instance_double(Random)
+    allow(rng).to receive(:rand).with(5).and_return(2)
+    allow(rng).to receive(:rand).with(11..14).and_return(14)
+
+    selection = described_class.new(tile_npc:, rng:).call
+
+    expect(selection.sample_key).to eq("ranged")
+    expect(selection.members.first).to have_attributes(level: 14, max_hp: 200)
+    expect(selection.members.first.npc_template).to eq(bandit)
+  end
+
+  it "does not draw randomness for one fixed-width level range" do
+    tile_npc.update!(metadata: {"encounter_rosters" => [
+      {"key" => "same", "members" => [{"npc_key" => bandit.npc_key, "level_min" => 8, "level_max" => 8, "hp" => 200}]}
+    ]})
+    rng = instance_double(Random)
+
+    expect(described_class.new(tile_npc:, rng:).call.members.first.level).to eq(8)
+  end
+
+  it "fails closed for malformed persisted weights and ranges" do
+    [
+      {"key" => "bad-weight", "weight" => 0, "members" => [{"npc_key" => bandit.npc_key}]},
+      {"key" => "bad-range", "members" => [{"npc_key" => bandit.npc_key, "level_min" => 8, "level_max" => 7, "hp" => 200}]}
+    ].each do |sample|
+      tile_npc.update_columns(metadata: {"encounter_rosters" => [sample]})
+      expect { described_class.new(tile_npc:).call }.to raise_error(described_class::InvalidRosterError)
+    end
   end
 end

@@ -2,7 +2,7 @@
 
 module Game
   module World
-    # Reconciles the character's accepted Look Around timer and returns its
+    # Reconciles the character's accepted Look Around, Fish, or Drink timer and returns its
     # offer while work remains active, otherwise nil. The persisted deadline
     # owns completion; reloads and modal dismissal cannot restart it. Calls
     # lock the character before the offer, complete due work, and cancel work

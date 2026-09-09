@@ -4,6 +4,8 @@
 # Note: `zone` is stored as a string (zone name), not a foreign key.
 class MapTileTemplate < ApplicationRecord
   TERRAIN_TYPES = %w[outdoor].freeze
+  MAX_RESOURCE_GROUPS = 32
+  RESOURCE_KEY_FORMAT = /\A[a-z0-9][a-z0-9_-]{0,79}\z/
 
   LOCAL_ACTION_DEFINITIONS = {
     "resource_search" => {
@@ -16,14 +18,16 @@ class MapTileTemplate < ApplicationRecord
     "fishing" => {
       "source_id" => "fis",
       "world_action_type" => "fish",
-      "implemented" => false,
-      "default_label" => "Fish"
+      "implemented" => true,
+      "default_label" => "Fish",
+      "default_message" => "No bait available."
     },
     "drinking" => {
       "source_id" => "dri",
       "world_action_type" => "drink",
-      "implemented" => false,
-      "default_label" => "Drink"
+      "implemented" => true,
+      "default_label" => "Drink",
+      "default_message" => "Everything went well."
     },
     "digging" => {
       "source_id" => "dig",
@@ -42,6 +46,8 @@ class MapTileTemplate < ApplicationRecord
   validate :cell_art_must_be_source_backed
   validate :local_actions_must_be_source_backed
   validate :coordinates_must_fit_known_zone
+  validate :resource_groups_must_be_valid
+  validate :presence_label_must_be_valid
 
   # Custom setter to ensure zone is always stored as a string name
   def zone=(value)
@@ -85,10 +91,26 @@ class MapTileTemplate < ApplicationRecord
     Game::World::CellArtCatalog.resolve(cell_art)
   end
 
+  def presence_label
+    label = metadata.to_h["presence_label"]
+    label if label.is_a?(String) && label.present? && label.length <= 120
+  end
+
   def local_actions
     Array(metadata&.dig("local_actions")).filter_map do |action|
       action.deep_stringify_keys if action.respond_to?(:deep_stringify_keys)
     end
+  end
+
+  # Authored resource/group identities are independent from action outcomes.
+  # A group number is neither a yield, a quantity nor a skill requirement.
+  def resource_groups
+    value = metadata.to_h["resource_groups"]
+    value.is_a?(Array) ? value.select { |entry| entry.is_a?(Hash) } : []
+  end
+
+  def active_resource_groups
+    resource_groups.reject { |entry| entry["active"] == false }
   end
 
   def active_local_actions
@@ -124,6 +146,13 @@ class MapTileTemplate < ApplicationRecord
   end
 
   private
+
+  def presence_label_must_be_valid
+    return unless metadata.to_h.key?("presence_label")
+    return if presence_label
+
+    errors.add(:metadata, "presence label must contain 1 to 120 characters")
+  end
 
   def cell_art_must_be_source_backed
     raw_cell_art = metadata&.dig("cell_art")
@@ -171,10 +200,44 @@ class MapTileTemplate < ApplicationRecord
       unless action["source_id"] == definition.fetch("source_id")
         errors.add(:metadata, "local action #{action['type']} must use source id #{definition.fetch('source_id')}")
       end
+      if action.key?("active") && ![true, false].include?(action["active"])
+        errors.add(:metadata, "local action active must be true or false")
+      end
     end
 
     duplicate_types = normalized_actions.map { |action| action["type"] }.compact.tally.select { |_, count| count > 1 }.keys
     errors.add(:metadata, "contains duplicate local action types: #{duplicate_types.join(', ')}") if duplicate_types.any?
+  end
+
+  def resource_groups_must_be_valid
+    value = metadata.to_h["resource_groups"]
+    return if value.nil?
+
+    unless value.is_a?(Array) && value.size <= MAX_RESOURCE_GROUPS
+      errors.add(:metadata, "resource groups must be an array of at most #{MAX_RESOURCE_GROUPS} entries")
+      return
+    end
+
+    value.each do |entry|
+      unless entry.is_a?(Hash)
+        errors.add(:metadata, "resource group must be an object")
+        next
+      end
+      unless entry["key"].is_a?(String) && entry["key"].match?(RESOURCE_KEY_FORMAT)
+        errors.add(:metadata, "resource group key must be a stable lowercase identifier")
+      end
+      unless entry["kind"].is_a?(String) && entry["kind"].match?(RESOURCE_KEY_FORMAT)
+        errors.add(:metadata, "resource group kind must be a stable lowercase identifier")
+      end
+      unless entry["label"].is_a?(String) && entry["label"].present? && entry["label"].length <= 120
+        errors.add(:metadata, "resource group label must contain 1 to 120 characters")
+      end
+      if entry.key?("active") && ![true, false].include?(entry["active"])
+        errors.add(:metadata, "resource group active must be true or false")
+      end
+    end
+    keys = value.filter_map { |entry| entry["key"] if entry.is_a?(Hash) }
+    errors.add(:metadata, "resource group keys must be unique within the cell") if keys.uniq.size != keys.size
   end
 
   def coordinates_must_fit_known_zone

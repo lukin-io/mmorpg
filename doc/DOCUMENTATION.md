@@ -18,6 +18,7 @@ Neverlands remains the sole game-design authority.
 | MVP/parity | `doc/design/launch_mvp_plan.md` | Is a bounded delivery target Done or Not Done? | Broader feature completeness |
 | Current implementation | `doc/features/**` | What does the application verifiably do now and who owns it? | Unimplemented plans |
 | Technical guidance | `doc/RUBY_ON_RAILS_GUIDE.md` | How should Rails/Hotwire code satisfy the contract? | Neverlands mechanics |
+| Original artwork production | `doc/ARTWORK.md`, with visual guides in `doc/artwork/` | Which style, exact prompts, visual inputs and packaging steps produced an illustration? | Gameplay rules or verified runtime completion |
 | Runtime authority | code, schema, config/seeds, specs | What currently executes and persists? | Product justification |
 | Optional change history | Git and justified `changelogs/**` notes | Why did a release/architecture change happen? | Workflow state |
 
@@ -29,6 +30,13 @@ When layers disagree:
 
 Fix the layer that owns the fact. Never resolve `[EVIDENCE]` through generic RPG
 assumptions.
+
+Keep detailed gaps under their owning domain: map/movement, character
+skills/perks, NPCs, professions, economy, dungeons, social or transport.
+Cross-domain audits summarize the handoff and link those owners. Distinguish
+known but unimplemented behavior from missing evidence; a published constant
+does not remain an evidence gap because its code is absent. The MVP plan owns
+delivery timing, so recording a gap does not automatically defer it past MVP.
 
 ## 2. Navigation
 
@@ -42,11 +50,27 @@ Start with:
 6. the responsible `doc/features/<feature>.md`;
 7. applicable `doc/RUBY_ON_RAILS_GUIDE.md` sections.
 
+Before generating, editing, replacing or integrating a game illustration, read
+[ARTWORK.md](ARTWORK.md) and the relevant domain's evidence/design. This applies
+to NPC/player images, buildings/interiors and outdoor landscapes. The guide owns
+shared style, prompt templates, every exact submitted generation/edit prompt
+(including unused corrections), reference roles and packaging steps.
+
+[doc/artwork/](artwork/) stores supporting visual inputs such as coordinate
+sketches and placement guides. They are linked from the corresponding prompt
+record and are not loaded by the game. Finished runtime images belong in
+`app/assets/images/`. Feature design owns the source-backed subject/layout;
+the feature handbook owns integration status and verification. Routine cell
+passability/NPC/resource edits use the content-management guide; consult the
+artwork guide when an illustration also needs to change.
+
 The physical layout is:
 
 ```text
 doc/
 ├── DOCUMENTATION.md
+├── ARTWORK.md
+├── artwork/             # visual generation guides, not runtime images
 ├── domains/
 │   ├── README.md
 │   └── <domain>.md

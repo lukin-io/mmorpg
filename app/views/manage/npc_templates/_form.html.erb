@@ -7,7 +7,7 @@
       <%= label_tag "#{form.object_name}_npc_role", "Role" %>
       <%= select_tag "#{form.object_name}[npc_role]", options_for_select(NpcTemplate::ROLES, npc_template.role), id: "#{form.object_name}_npc_role" %>
     </div>
-    <div class="nl-manage-field"><%= form.label :level %><%= form.number_field :level, min: 1, required: true %></div>
+    <div class="nl-manage-field"><%= form.label :level %><%= form.number_field :level, min: 0, required: true %></div>
     <div class="nl-manage-field nl-manage-field--wide"><%= form.label :dialogue %><%= form.text_area :dialogue, rows: 3, class: "nl-manage-short-textarea" %></div>
     <div class="nl-manage-field nl-manage-field--wide">
       <%= form.label :metadata %><%= form.text_area :metadata, value: pretty_json(npc_template.metadata), spellcheck: false %>

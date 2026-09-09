@@ -3,7 +3,7 @@
 title: Character Progression Feature
 description: Implementation handbook for Neverlands-based primary stats, numeric skills, boolean perks, point allocation, and public progression display.
 status: Fully Implemented
-updated: 2026-09-07
+updated: 2026-09-09
 owners: Character Progression
 template: feature-v1
 ---
@@ -31,6 +31,8 @@ Supporting documents:
 
 - `doc/design/reference/character/observations/2026-05-11_player_profile_and_development.md` records the starter and returning-character profile, stat, `Умения`, and `Навыки` observations.
 - `doc/design/reference/character/observations/legacy_skills_and_arena_analysis.md` records the wiki character-development audit, complete level rows, exact derived formulas, and unresolved evidence boundaries.
+- `doc/design/reference/world/observations/2026-09-09_starter_routes.md` records the public pond profile's separate zone and current-cell labels without raw coordinates.
+- `doc/design/reference/world/observations/2026-09-09_wiki_skills_and_cell_actions.md` records published Nature Child effects and distinguishes allocated skills, binary perks and profession counters.
 - `doc/design/reference/social/observations/2026-08-23_chat_game_event_timeline.md` records recipient-visible fight completion with awarded combat XP in the persistent chat history.
 - `doc/design/reference/neverlands.md` defines the Neverlands evidence-to-implementation rule.
 - `doc/design/features/progression_stats_skills.md` normalizes the five primary stats, 29 numeric skills, captured tier rates, point pools, and launch-safe perk subset.
@@ -49,7 +51,7 @@ Supporting documents:
 | Related feature | Relationship | Ownership and handoff |
 |---|---|---|
 | `doc/features/game_shell.md` | The shell links to the player profile and renders profile/allocation surfaces in its main content context. | Character Progression owns saved allocations and profile values; Game Shell owns only shared navigation, framing, and header presentation. |
-| `doc/features/world.md` | World consumes the effective Wanderer value for its bounded adjacent-travel duration. | Character Progression owns saved skill allocation and effective skill access; World owns the `30..25` second formula, command snapshot, authorization, timer, and movement completion. |
+| `doc/features/world.md` | World consumes effective Wanderer for adjacent travel and supplies the profile's current cell/room/flight label. | Character Progression owns saved skill values and profile formatting; World owns the configurable `24..30` second local fallback, exact authored durations, movement lifecycle, and `Presence#label` resolution from persisted location. |
 | `doc/features/shop_economy.md` | Shop rows display item requirements against progression-backed character values. | Character Progression owns stat/skill values; Shop owns catalog presentation and trade eligibility, while Inventory owns later equip enforcement. |
 | `doc/features/player_inventory.md` | The shared character sheet and item rows consume effective stats/skills. | Character Progression owns saved/effective values; Player Inventory owns equipment state, capacity display, and requirement enforcement. |
 | `doc/features/arena_combat.md` | Fight profiles consume effective character values and eligible completed solo NPC fights may award capped XP, whose actual amount is passed onward for concise shell feedback. | Character Progression owns values, thresholds, and grants; Arena Combat owns match resolution, the idempotent award handoff, and the persisted fact supplied to Game Shell. |
@@ -111,6 +113,14 @@ available. World owns the captured lock and timer behavior recorded in
 `doc/design/reference/world/observations/2026-09-07_forpost_grid_and_action_audit.md`.
 
 The profile is not an account dashboard. It shows the gameplay character, equipment summary, vitals, progress, record, numeric skill summary, and owned perks. Only the owner sees primary-stat detail and progression mutation links.
+
+Both owner and public profiles place the current location below the equipment
+paper doll. The first line is the zone's display name; a distinct authored
+cell, entrance, validated room, or flight label appears on the second line.
+When both labels match, one line is sufficient. HTML shows no raw coordinates,
+and a missing position displays `Unknown`. This follows the captured public
+pond profile's separate zone/cell lines; it does not claim that an already-open
+profile updates live without another request.
 
 ### 4.2 Primary surface
 
@@ -207,8 +217,12 @@ The numeric registry contains 29 captured `Умения`, each with a source ID,
 
 Multiple pending spends are applied sequentially so crossing `25`, `50`, or `75` changes the rate used by later spends. The final value is capped at `100`; requested spends after the cap do not consume points. Unknown skill keys do not consume points. Equipment bonuses contribute to `passive_skill_level`.
 
-Two numeric skills have bounded downstream effects. World snapshots effective
-Wanderer into `30 - floor(wanderer * 5 / 100)` seconds, bounded to `25..30`.
+Two numeric skills have bounded downstream effects. World snapshots an exact
+authored cell duration when present; otherwise its configurable fallback uses
+effective Wanderer. Current defaults compute `30 - floor(wanderer * 6 / 100)`
+seconds with Wanderer clamped to `0..100` and duration bounded to `24..30`.
+These values come from `config/gameplay/world_rules.yml`; the linear fallback
+is a local projection of observed samples, not the complete Neverlands formula.
 Combat builds AP as base `80`, plus `10` at level `5`, another `10` at level
 `10`, and one point per effective Extra Action Points value. Persisted
 per-fight profile overrides remain authoritative for captured fights. Every
@@ -230,6 +244,26 @@ fight finalization, including the `1%` arena-defeat chance as an exact `0.5%`
 roll. Prerequisite gates, reset behavior, all profession mechanics, and every
 other perk effect remain deferred.
 
+### 6.5 World-related skill and perk gaps
+
+This is the progression owner for the remaining World skill/perk handoffs.
+The source catalog records Nature Child as auxiliary perk ID `22`; it is
+absent from the local selectable registry. The user's
+[Nature Child wiki link](http://wiki.neverlands.ru/wiki/Дитя_природы) resolves
+to the auxiliary section of the Perk article, preserved in the September 9
+wiki observation.
+
+| Gap | Known boundary and remaining work |
+|---|---|
+| `[IMPL]` Nature Child acquisition and drinking effect | The published sip removes four fatigue points instead of two. `world_rules.yml` preserves that value, but `PerformLocalAction` currently requests ordinary two-point recovery and no supported owned-perk selection exists. Add the validated progression-to-World handoff and applicable allocation, persistence, atomic effect and retry coverage when this perk is scoped. A configured number alone does not enable the perk. |
+| `[EVIDENCE]` Nature Child variants | Capture its applicable prerequisites/selection and actual perk-dependent sip. The exact Wanderer enhancement, outdoor HP-recovery coefficient and zero-fatigue source behavior are not established by the article. Do not classify the already published four-point amount as unknown. |
+| `[EVIDENCE]` Broader movement skill/effect combinations | Effective Wanderer is already supplied to World. Terrain, equipment and effect composition beyond the current authored duration/configurable fallback need isolated inputs; the formula owner is [Movement](../design/features/movement.md#travel-time), with runtime limits in [World](world.md#19-open-world-parity-audit-updated-2026-09-09). |
+| Deferred profession progression | Successful fishing grows its profession counter per the user's confirmation; there is no initial fishing skill gate. Successful fishing/gathering/mining counters and their activity lifecycle belong to [Professions](professions.md), not ordinary allocatable peace skills. |
+
+Known-but-unimplemented effects and unresolved source coefficients are tracked
+separately. These entries do not expand the currently verified two-perk contract
+or automatically assign every gap to after MVP.
+
 ## 7. Authoritative data and presentation model
 
 | Record or component | Responsibility | Important contract |
@@ -244,6 +278,7 @@ other perk effect remain deferred.
 | `PerkRegistry` | Launch perk identity and captured exclusion table | Only named/captured launch entries are selectable |
 | `PerkAllocation` | Validate and persist new perk ownership | Locks the character, spends only new selections, and rejects conflicts |
 | `CharacterPolicy` | Owner-only progression authorization | Signed-in user must own the requested character |
+| `PlayerProfileHelper#profile_location` | HTML location and public fight-link formatting | Escapes zone/current-location labels, uses World `Presence#label`, and displays no raw coordinates |
 | Stimulus allocation controllers | Pending browser preview | May alter hidden inputs and display only; never saved authority |
 
 ### 7.1 Source of truth
@@ -330,6 +365,18 @@ The client disables Save until a preview exists, but that is usability only and 
 | `PATCH /characters/:id/perks` | Save new perk ownership | Redirect or Turbo frame/flash replacement | Allocation error redirect/flash; state preserved |
 
 The allocation feature is authenticated HTML/Turbo. The public profile also offers an unversioned read-only JSON representation for internal/public consumption. There is no separately versioned progression API, so Swagger/rswag and blueprint coverage are not applicable.
+
+`PlayersController#location_payload` retains the existing JSON `zone`, `x`,
+and `y` fields. Its human-readable `label` comes from the same
+`Game::World::Presence#label` used by HTML and the map/presence surfaces.
+Resolving that label reads only the viewed character's cell/entrance, valid
+saved room, or aboard journey; it does not load or count nearby players.
+
+An unfinished fight keeps its public log link. A real Arena room supplies the
+room name; an outdoor NPC fight retains the authored outdoor cell label
+instead of inventing an Arena location. JSON adds its existing combat label,
+`sublocation`, and `active_fight` identity/path/status fields. Location rendering
+does not change the character's position or saved room context.
 
 For the owner's HTML profile and authenticated allocation routes, accepted
 outdoor travel/Look overrides the ordinary page/action response with a `303`
@@ -445,7 +492,7 @@ Arbitrary saved browser fields, translated labels, or profile URLs do not grant 
 - Profile HTML and JSON expose numeric skills and owned launch-registry perks without private account data.
 - Browser preview/reset behavior never mutates saved state before PATCH succeeds.
 - Saved progression survives logout/login; pending browser preview does not.
-- Effective Wanderer is available to World, which owns and tests the bounded `30..25` second movement effect.
+- Effective Wanderer is available to World, which owns and tests exact authored cell durations and the configurable local movement fallback, currently bounded to `24..30` seconds.
 - Effective Extra Action Points contributes one AP per point to a new shared
   combat profile after the captured level-threshold base.
 - Owner and public profile surfaces preserve their desktop source geometry and

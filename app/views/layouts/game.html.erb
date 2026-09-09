@@ -16,7 +16,7 @@
 </head>
 <body class="nl-game-layout"
       data-controller="game-layout"
-      data-action="nl-world-map:movement-state->game-layout#updateWorldMovementState chat:context->game-layout#updateLocalChatContext"
+      data-action="nl-world-map:refreshed->game-layout#refreshPlayersList nl-world-map:refreshed->game-layout#refreshChat nl-world-map:movement-state->game-layout#updateWorldMovementState chat:context->game-layout#updateLocalChatContext"
       <% if controller_name == "world" && @zone&.outdoor? %>
         data-game-layout-encounter-url-value="<%= world_encounter_check_path %>"
       <% end %>>
@@ -74,7 +74,7 @@
             <span class="nl-nav-link nl-nav-link--disabled" aria-current="page"><%= @zone&.display_name || "City" %></span>
           <% end %>
         <% elsif controller_name == "world_locations" %>
-          <span class="nl-nav-link nl-nav-link--disabled" aria-current="page"><%= @building&.location_short_label || "Location" %></span>
+          <%= render "world_locations/navigation" %>
         <% elsif controller_name == "shop" && @shop_parent_location %>
           <%= link_to shop_location_return_label, shop_location_return_path,
               class: "nl-nav-link", data: {turbo_frame: "_top"} %>

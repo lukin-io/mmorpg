@@ -133,11 +133,21 @@ JSON representation.
 
 Arena lobby, room, application, and participant actions require Devise
 authentication and a current playable character. The Arena entry gate accepts
-a City-established session for the current city node or a valid persisted
+a City-established entry marker for the current city zone or a valid persisted
 selected room, after rechecking the active Arena hotspot and character access.
 An already active Arena match retains its existing gate bypass and redirect.
 Creating or accepting an application also rechecks room access, capacity,
 level/alignment rules, HP threshold, active application, and combat state.
+
+`CityHotspotService` calls `ResumeContext#remember_arena_entry!` within the
+accepted building action's character/target transaction. That method validates
+current Arena availability, stores the integer `arena_entry_zone_id` in the
+existing Character metadata, and returns the zone id or nil when unavailable.
+Repeated entry preserves an unchanged marker; a rolled-back city action leaves
+none. `arena_entered?` checks this marker against fresh position and authored
+building access. An older background response restoring a previous cookie
+cannot undo a completed entry, and a cookie never grants Arena entry. This
+marker does not select a room or change the initial lobby's World/chat context.
 
 An authorized HTML room visit persists Character gameplay context
 `arena_room` with the actual integer `room_id`. `ResumeContext#arena_room`
@@ -650,7 +660,7 @@ reload.
 ## 12. Authorization, trust boundaries, and concurrency
 
 - Devise protects Arena and participant match actions.
-- `ArenaEntryGate` requires current City access plus its same-node entry session
+- `ArenaEntryGate` requires current City access plus its saved same-zone entry
   or a valid saved room; an already active match retains its existing bypass.
 - `ArenaMatchPolicy` permits authenticated viewing but restricts live actions
   and completed Finish to actual participants in the correct match state.
@@ -701,8 +711,10 @@ reload.
 
 ## 14. Acceptance criteria
 
-- Arena entry is rejected unless current City access and the same-node session
+- Arena entry is rejected unless current City access and the saved same-zone entry
   or saved room validate, or the character already has an active match.
+- Replayed pre-entry cookies cannot revoke a completed city entry; a direct
+  room URL without persisted entry or a valid saved room remains forbidden.
 - HTML room entry persists only an accessible authoritative room. JSON previews,
   stale/foreign-city room requests, and active-fight redirects preserve the
   saved room; fresh login restores a still-valid selection.

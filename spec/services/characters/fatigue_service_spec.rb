@@ -37,4 +37,38 @@ RSpec.describe Characters::FatigueService do
       expect { service.increase!(amount:, at: now) }.to raise_error(ArgumentError, /positive/)
     end
   end
+
+  it "uses injected recovery and gate parameters at their exact time boundary" do
+    data = YAML.safe_load_file(Game::World::Rules::CONFIG_PATH, aliases: false)
+    data.fetch("fatigue").merge!("recovery_interval_seconds" => 60, "recovery_points" => 2,
+      "outdoor_action_lock_percent" => 85)
+    service = described_class.new(character:, rules: Game::World::Rules.new(data:))
+
+    expect(service.current_percent(at: now - 1.second)).to eq(86)
+    expect(service.current_percent(at: now + 59.seconds)).to eq(86)
+    expect(service.outdoor_actions_blocked?(at: now + 59.seconds)).to be true
+    expect(service.current_percent(at: now + 60.seconds)).to eq(84)
+    expect(service.outdoor_actions_blocked?(at: now + 60.seconds)).to be false
+    expect(service.increase!(amount: 2, at: now + 60.seconds)).to eq(86)
+    expect(character.reload.fatigue_updated_at).to eq(now + 60.seconds)
+  end
+
+  it "recovers the requested points after elapsed natural recovery and reports the actual decrease" do
+    service = described_class.new(character:)
+
+    expect(service.recover!(amount: 2, at: now + 3.minutes)).to eq(2)
+    expect(character.reload).to have_attributes(fatigue_percent: 83, fatigue_updated_at: now + 3.minutes)
+    expect(service.recover!(amount: 100, at: now + 3.minutes)).to eq(83)
+    expect(character.reload.fatigue_percent).to eq(0)
+    expect(service.recover!(amount: 2, at: now + 3.minutes)).to eq(0)
+  end
+
+  it "rejects malformed recovery amounts without changing persisted fatigue" do
+    service = described_class.new(character:)
+
+    [nil, 0, -1, "2", 1.5, true].each do |amount|
+      expect { service.recover!(amount:, at: now) }.to raise_error(ArgumentError, /positive integer/)
+    end
+    expect(character.reload).to have_attributes(fatigue_percent: 86, fatigue_updated_at: now)
+  end
 end

@@ -60,8 +60,8 @@ class ArenaParticipation < ApplicationRecord
   # @return [Integer] the participant's level
   def participant_level
     if npc?
-      level_override = Integer(metadata.to_h["level"], exception: false)
-      return level_override if level_override&.positive?
+      level_override = Integer(metadata.to_h["level"].to_s, exception: false)
+      return level_override if level_override && level_override >= 0
 
       npc_template&.level || 0
     else

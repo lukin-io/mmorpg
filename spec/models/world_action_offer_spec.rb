@@ -141,7 +141,7 @@ RSpec.describe WorldActionOffer, type: :model do
       offer.metadata.delete("local_action_result")
 
       expect(offer).not_to be_valid
-      expect(offer.errors[:metadata]).to include("must have a Look Around result")
+      expect(offer.errors[:metadata]).to include("must have a local action result")
     end
 
     it "returns no timer or result for ordinary offers" do

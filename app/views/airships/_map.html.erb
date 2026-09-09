@@ -1,5 +1,6 @@
 <% cells = map.tiles.flatten %>
 <div class="nl-airship-cells"
+     data-zone-id="<%= map.zone.id %>"
      data-origin-x="<%= cells.map(&:x).min %>"
      data-origin-y="<%= cells.map(&:y).min %>"
      data-columns="<%= map.columns %>"

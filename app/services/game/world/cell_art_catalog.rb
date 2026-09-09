@@ -3,7 +3,8 @@
 module Game
   module World
     # Resolves stable, source-backed cell-art keys to project-owned asset-sheet
-    # slices. Runtime records provide only a key and zero-based column/row;
+    # crops or individual cell PNGs. Runtime records provide only a key and
+    # zero-based column/row;
     # asset paths, fixed cell dimensions, and sheet bounds remain server-owned.
     # Configuration is cached for the process lifetime and can be explicitly
     # reloaded by development tooling or isolated specs.
@@ -19,14 +20,24 @@ module Game
         :cell_width,
         :cell_height,
         :sheet_width,
-        :sheet_height
+        :sheet_height,
+        :physical_slice,
+        :landmarks_in_art,
+        :painted_building_key
       ) do
         def background_x
-          -(column * cell_width)
+          physical_slice ? 0 : -(column * cell_width)
         end
 
         def background_y
-          -(row * cell_height)
+          physical_slice ? 0 : -(row * cell_height)
+        end
+
+        # The caller supplies the actual projected TileBuilding key, not a
+        # key copied from editable cell metadata. A blanket art flag is never
+        # enough to hide a moved or newly authored entrance.
+        def painted_building?(building_key)
+          landmarks_in_art && painted_building_key.present? && painted_building_key == building_key
         end
       end
 
@@ -46,7 +57,8 @@ module Game
 
         # Accepts hash-like tile metadata with key and optional column/row.
         # Returns a validated Presentation for rendering, or nil when the entry,
-        # asset, dimensions, or requested sheet coordinate is invalid.
+        # asset, dimensions, or requested sheet coordinate is invalid. Missing
+        # optional physical PNGs recover from the same coordinate on the master.
         def resolve(reference)
           attributes = normalize_reference(reference)
           return unless attributes
@@ -59,15 +71,22 @@ module Game
           return unless column&.between?(0, definition.fetch("columns") - 1)
           return unless row&.between?(0, definition.fetch("rows") - 1)
 
+          slice = slice_asset(definition, column, row)
+          landmark = definition.fetch("painted_landmarks").find do |entry|
+            entry["column"] == column && entry["row"] == row
+          end
           Presentation.new(
             key: attributes["key"],
-            asset: definition.fetch("asset"),
+            asset: slice || definition.fetch("asset"),
             column:,
             row:,
             cell_width: definition.fetch("cell_width"),
             cell_height: definition.fetch("cell_height"),
-            sheet_width: definition.fetch("columns") * definition.fetch("cell_width"),
-            sheet_height: definition.fetch("rows") * definition.fetch("cell_height")
+            sheet_width: slice ? CELL_SIZE : definition.fetch("columns") * CELL_SIZE,
+            sheet_height: slice ? CELL_SIZE : definition.fetch("rows") * CELL_SIZE,
+            physical_slice: slice.present?,
+            landmarks_in_art: definition.fetch("landmarks_in_art"),
+            painted_building_key: landmark&.fetch("building_key")
           )
         end
 
@@ -83,6 +102,8 @@ module Game
 
           attributes = reference.to_h.deep_stringify_keys
           attributes if attributes["key"].present?
+        rescue ArgumentError, TypeError
+          nil
         end
 
         def normalized_definition(key)
@@ -97,26 +118,68 @@ module Game
           rows = integer(attributes["rows"])
           source_reference = attributes["source_reference"].to_s
           return unless safe_asset?(asset)
+          if attributes.key?("slices_directory")
+            return unless safe_directory?(attributes["slices_directory"])
+          end
+          landmarks_in_art = attributes.fetch("landmarks_in_art", false)
+          return unless [true, false].include?(landmarks_in_art)
           return unless cell_width == CELL_SIZE && cell_height == CELL_SIZE
           return unless columns&.positive? && rows&.positive?
+          landmarks = attributes.fetch("painted_landmarks", [])
+          return unless valid_landmarks?(landmarks, columns, rows)
           return if source_reference.blank?
-          return unless Rails.root.join("app/assets/images", asset).file?
+          return unless asset_exists?(asset)
 
           attributes.merge(
             "asset" => asset,
             "cell_width" => cell_width,
             "cell_height" => cell_height,
             "columns" => columns,
-            "rows" => rows
+            "rows" => rows,
+            "landmarks_in_art" => landmarks_in_art,
+            "painted_landmarks" => landmarks
           )
+        rescue ArgumentError, TypeError
+          nil
         end
 
         def safe_asset?(asset)
-          asset.start_with?("world/") && !asset.include?("..")
+          asset.match?(%r{\Aworld/(?:[a-zA-Z0-9_-]+/)*[a-zA-Z0-9_-]+\.(?:png|jpe?g|webp|gif)\z})
+        end
+
+        def valid_landmarks?(landmarks, columns, rows)
+          return false unless landmarks.is_a?(Array)
+
+          valid = landmarks.all? do |entry|
+            entry.is_a?(Hash) && entry.keys.sort == %w[building_key column row] &&
+              entry["column"].is_a?(Integer) && entry["column"].between?(0, columns - 1) &&
+              entry["row"].is_a?(Integer) && entry["row"].between?(0, rows - 1) &&
+              entry["building_key"].is_a?(String) && entry["building_key"].match?(/\A[a-z0-9][a-z0-9_-]*\z/)
+          end
+          valid && landmarks.map { |entry| entry.values_at("column", "row") }.uniq.size == landmarks.size &&
+            landmarks.pluck("building_key").uniq.size == landmarks.size
+        end
+
+        def safe_directory?(directory)
+          directory.is_a?(String) && directory.match?(%r{\Aworld(?:/[a-zA-Z0-9_-]+)+\z})
+        end
+
+        # The catalog owns the directory and file naming. A missing individual
+        # PNG retains the correct master crop, never another cell's artwork.
+        def slice_asset(definition, column, row)
+          directory = definition["slices_directory"]
+          return unless directory
+
+          asset = "#{directory}/#{column}_#{row}.png"
+          asset if asset_exists?(asset)
+        end
+
+        def asset_exists?(asset)
+          Rails.root.join("app/assets/images", asset).file?
         end
 
         def integer(value)
-          Integer(value, exception: false)
+          Integer(value.to_s, exception: false)
         end
       end
     end

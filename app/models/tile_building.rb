@@ -11,7 +11,8 @@
 class TileBuilding < ApplicationRecord
   BUILDING_TYPES = %w[city location].freeze
   LOCATION_ACTION_TYPES = %w[open_feature return_world].freeze
-  LOCATION_KINDS = %w[village].freeze
+  LOCATION_KINDS = %w[village mine exchange].freeze
+  IMPLEMENTED_LOCATION_KINDS = LOCATION_KINDS
   LOCATION_KEY_FORMAT = /\A[a-z0-9_-]+\z/
 
   belongs_to :destination_zone, class_name: "Zone", inverse_of: :destination_tile_buildings, optional: true
@@ -45,7 +46,7 @@ class TileBuilding < ApplicationRecord
     return false unless active?
 
     if location?
-      location_configuration_errors.empty?
+      IMPLEMENTED_LOCATION_KINDS.include?(location_kind) && location_configuration_errors.empty?
     else
       destination_zone.present? && destination_coordinates_valid?
     end
@@ -90,7 +91,7 @@ class TileBuilding < ApplicationRecord
 
         if location?
           position.touch(:last_action_at)
-          Chat::LocalContext.new(character:).synchronize!
+          Game::World::ResumeContext.new(character:).remember_world_location!(key: location_key)
         else
           position.update!(
             zone: destination_zone,
@@ -145,6 +146,22 @@ class TileBuilding < ApplicationRecord
     [location_scene["width"].to_i, location_scene["height"].to_i]
   end
 
+  # Lobby sections are read-only presentation within one persisted location.
+  # They do not grant shop access, extraction, descent, or exchange operations.
+  def location_sections
+    Array(location_definition["sections"]).filter_map do |section|
+      section.deep_stringify_keys if section.respond_to?(:deep_stringify_keys)
+    end
+  end
+
+  def location_section(key)
+    location_sections.find { |section| section["key"] == key.to_s }
+  end
+
+  def location_resource_categories
+    Array(location_definition["resource_categories"])
+  end
+
   def location_features
     Array(location_definition["features"]).filter_map do |feature|
       next unless feature.respond_to?(:deep_stringify_keys)
@@ -190,6 +207,9 @@ class TileBuilding < ApplicationRecord
 
     kind = definition["kind"].to_s
     errors << "location kind is unsupported" unless LOCATION_KINDS.include?(kind)
+    # Managers may keep a planned inactive mine marker before authoring its
+    # scene. Activation always requires the complete location contract below.
+    return errors if kind == "mine" && !active? && definition["features"].blank?
     if definition.key?("presence_label") && (!definition["presence_label"].is_a?(String) || definition["presence_label"].blank?)
       errors << "location presence label must be a non-empty string"
     end
@@ -197,6 +217,16 @@ class TileBuilding < ApplicationRecord
     width, height = location_scene_size
     errors << "location scene width must be positive" unless width.positive?
     errors << "location scene height must be positive" unless height.positive?
+    image = location_scene["image"]
+    errors << "location lobby scene image is required" if %w[mine exchange].include?(kind) && image.blank?
+    if image.present?
+      if !image.is_a?(String) || !image.match?(%r{\Aworld/(?:[a-zA-Z0-9_-]+/)*[a-zA-Z0-9_-]+\.(?:png|jpe?g|webp|gif)\z})
+        errors << "location scene image must be a project world asset"
+      elsif !Rails.root.join("app/assets/images", image).file?
+        errors << "location scene image must exist"
+      end
+    end
+    errors.concat(location_section_errors(definition))
 
     features = Array(definition["features"])
     errors << "location features must be a non-empty array" unless definition["features"].is_a?(Array) && features.any?
@@ -230,10 +260,52 @@ class TileBuilding < ApplicationRecord
     if action_type == "open_feature" && CityHotspot.feature_route(feature["feature"]).blank?
       errors << "location feature destination is unsupported"
     end
-    unless valid_location_polygon?(feature["polygon"], width:, height:)
+    placement = feature.fetch("placement", "scene")
+    errors << "location feature placement is invalid" unless %w[scene navigation].include?(placement)
+    unless placement == "navigation" || valid_location_polygon?(feature["polygon"], width:, height:)
       errors << "location feature polygon is invalid"
     end
     errors
+  end
+
+  def location_section_errors(definition)
+    errors = []
+    if definition.key?("sections")
+      sections = definition["sections"]
+      valid = sections.is_a?(Array) && sections.all? do |section|
+        section.is_a?(Hash) && section["key"].to_s.match?(LOCATION_KEY_FORMAT) &&
+          section["label"].is_a?(String) && section["label"].present?
+      end
+      errors << "location sections must have valid keys and labels" unless valid
+      errors << "location section keys must be unique" if valid && sections.pluck("key").uniq.size != sections.size
+      if valid
+        sections.each do |section|
+          if section.key?("summary_label") && (!section["summary_label"].is_a?(String) || section["summary_label"].blank?)
+            errors << "location section summary label must be a non-empty string"
+          end
+          next unless section.key?("read_only_items")
+
+          items = section["read_only_items"]
+          unless items.is_a?(Array) && items.all? { |item| valid_location_item_preview?(item) }
+            errors << "location item previews must have a name and detail labels"
+          end
+        end
+      end
+    end
+    %w[resource_categories unavailable_actions].each do |key|
+      next unless definition.key?(key)
+
+      values = definition[key]
+      unless values.is_a?(Array) && values.all? { |value| value.is_a?(String) && value.present? }
+        errors << "location #{key} must be an array of labels"
+      end
+    end
+    errors
+  end
+
+  def valid_location_item_preview?(item)
+    item.is_a?(Hash) && item["name"].is_a?(String) && item["name"].present? &&
+      item["details"].is_a?(Array) && item["details"].all? { |detail| detail.is_a?(String) && detail.present? }
   end
 
   def valid_location_polygon?(polygon, width:, height:)

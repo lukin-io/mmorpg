@@ -83,11 +83,12 @@ class PlayersController < ApplicationController
   def location_payload
     position = @character.position
     return {label: "Unknown"} unless position
+    label = Game::World::Presence.new(character: @character, position:).label
 
     if (match = active_arena_match_for(@character))
-      sublocation = match.arena_room&.name || "Arena"
+      sublocation = match.arena_room&.name || label
       return {
-        label: "#{position.zone&.name} [in combat] #{sublocation}",
+        label: "#{sublocation} [in combat]",
         zone: position.zone&.name,
         x: position.x,
         y: position.y,
@@ -100,7 +101,6 @@ class PlayersController < ApplicationController
       }
     end
 
-    label = [position.zone&.name, "[#{position.x}, #{position.y}]"].compact.join(" ")
     {
       label: label,
       zone: position.zone&.name,

@@ -1,0 +1,40 @@
+<%
+  is_player = tile.x == position.x && tile.y == position.y
+  destination = destinations_by_coord[[tile.x, tile.y]]
+  terrain = tile.respond_to?(:terrain_type) ? tile.terrain_type : zone.location_type
+  tile_meta = tile.respond_to?(:metadata) ? (tile.metadata || {}) : {}
+  is_walkable = tile.respond_to?(:walkable) ? tile.walkable : !tile_meta["blocked"]
+  cell_art = Game::World::CellArtCatalog.resolve(tile_meta["cell_art"])
+  painted_building = cell_art&.painted_building?(tile.respond_to?(:building_key) ? tile.building_key : nil)
+  hidden_building_label = painted_building || %w[city village].include?(tile_meta["building_kind"])
+  terrain_style = if cell_art
+    "background-image: url('#{image_path(cell_art.asset)}'); background-position: #{cell_art.background_x}px #{cell_art.background_y}px; background-size: #{cell_art.sheet_width}px #{cell_art.sheet_height}px;"
+  else
+    terrain_x = -(tile.x.to_i.modulo(10) * tile_size)
+    terrain_y = -(tile.y.to_i.modulo(10) * tile_size)
+    "background-image: url('#{image_path('world/forpost-terrain.png')}'); background-position: #{terrain_x}px #{terrain_y}px; background-size: 1000px 1000px;"
+  end
+%>
+
+<td class="nl-map-tile nl-tile-bg--<%= terrain %> <%= 'nl-map-tile--outside' if tile_meta['out_of_bounds'] %>"
+    id="tile_<%= tile.x %>_<%= tile.y %>"
+    data-x="<%= tile.x %>"
+    data-y="<%= tile.y %>"
+    data-terrain="<%= terrain %>"
+    data-cell-art-key="<%= cell_art&.key %>"
+    style="<%= terrain_style %>">
+
+  <%= render "world/map_control", destination: (destination if is_walkable), is_player:, timer_active: %>
+
+  <% if tile_meta["building"].present? %>
+    <div class="nl-tile-entity nl-tile-building nl-tile-building--<%= tile_meta['building_kind'] %> <%= 'nl-tile-building--painted' if painted_building %>"
+         title="<%= tile_meta['building'] %>">
+      <% if !painted_building && tile_meta["building_kind"] == "village" %>
+        <span class="nl-tile-village-hut" aria-hidden="true"></span>
+      <% elsif !painted_building && tile_meta["building_kind"] == "city" %>
+        <span class="nl-tile-city-gate" aria-hidden="true">🏰</span>
+      <% end %>
+      <span class="nl-entity-label <%= 'nl-visually-hidden' if hidden_building_label %>"><%= tile_meta["building"] %></span>
+    </div>
+  <% end %>
+</td>

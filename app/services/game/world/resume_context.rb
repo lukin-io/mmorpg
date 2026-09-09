@@ -17,6 +17,7 @@ module Game
         max_price
       ].freeze
       NUMERIC_SHOP_PARAM_KEYS = %w[min_level max_level min_price max_price].freeze
+      ARENA_ENTRY_ZONE_KEY = "arena_entry_zone_id"
 
       def initialize(character:)
         @character = character
@@ -59,6 +60,28 @@ module Game
           name: "world_location",
           params: {"key" => normalized_key}
         )
+      end
+
+      # City building acceptance records entry in its existing transaction.
+      # A late cookie response cannot revoke it or select a different room.
+      # The initial lobby still shares the current World/chat context.
+      def remember_arena_entry!
+        character.with_lock do
+          next unless arena_available?
+
+          zone_id = character.position.zone_id
+          unless character.metadata.to_h[ARENA_ENTRY_ZONE_KEY] == zone_id
+            character.update!(metadata: character.metadata.to_h.merge(ARENA_ENTRY_ZONE_KEY => zone_id))
+          end
+          zone_id
+        end
+      end
+
+      # A saved entry grants nothing after the current city/building becomes
+      # unavailable. Reconstruct access from fresh position and authored data.
+      def arena_entered?
+        zone_id = character.metadata.to_h[ARENA_ENTRY_ZONE_KEY]
+        zone_id.is_a?(Integer) && arena_available? && zone_id == character.position.zone_id
       end
 
       # Actual room entry owns persistence and the local-chat audience change.

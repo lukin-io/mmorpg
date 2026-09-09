@@ -17,10 +17,12 @@
   </turbo-frame>
 
   <turbo-frame id="location-info">
-    <%= render "world/location_info", position: @position, tile: @tile, zone: @zone %>
+    <%= render "world/location_info", position: @position, location_label: @presence_location_label %>
   </turbo-frame>
 
-  <% if @world_action_result.present? %>
-    <%= render "world/action_result", message: @world_action_result %>
-  <% end %>
+  <div id="world-action-result">
+    <% if @world_action_result.present? %>
+      <%= render "world/action_result", message: @world_action_result %>
+    <% end %>
+  </div>
 </div>

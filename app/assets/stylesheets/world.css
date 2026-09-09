@@ -686,12 +686,33 @@ button.nl-tile-clickable--available:disabled {
   text-overflow: ellipsis;
   white-space: nowrap;
   box-shadow: none;
+  pointer-events: none;
 }
 
 .nl-entity-label {
   color: inherit;
   font-size: 9px;
   line-height: 1;
+}
+
+/* Painted landmarks retain their accessible entity label without overlaying
+   the legacy village shapes, gate marker, or generic entity badge. */
+.nl-tile-entity.nl-tile-building--painted {
+  inset: 0;
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  pointer-events: none;
+}
+
+.nl-tile-building--painted::before,
+.nl-tile-building--painted::after {
+  display: none;
+  content: none;
 }
 
 .nl-map-overlay {
@@ -906,6 +927,11 @@ button.nl-city-hotspot,
   z-index: 2;
 }
 
+/* Route arrows can overlap a building/exit's broad source image-map box. */
+.nl-city-hotspot.nl-city-hotspot--district {
+  z-index: 5;
+}
+
 .nl-city-hotspot::before {
   position: absolute;
   inset: 0;
@@ -1038,6 +1064,76 @@ button.nl-city-hotspot,
   overflow: hidden;
   isolation: isolate;
   background: #6e764a;
+}
+
+.nl-world-location-art {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.nl-world-location-sections {
+  width: min(760px, calc(100% - 12px));
+  margin: 0 auto;
+  color: #222;
+  font-size: 12px;
+}
+
+.nl-world-location-tabs {
+  display: flex;
+  border: 1px solid #c5b88a;
+  background: #f5f1e4;
+}
+
+.nl-world-location-tab {
+  flex: 1 1 0;
+  padding: 6px 3px;
+  border-right: 1px solid #c5b88a;
+  color: #224d7a;
+  text-align: center;
+  font-weight: bold;
+}
+
+.nl-world-location-tab:last-child { border-right: 0; }
+.nl-world-location-tab[aria-current="page"] { background: #e6dec6; }
+.nl-world-location-wallet { margin: 8px 0; }
+.nl-world-location-section { padding: 10px 0; }
+
+.nl-world-location-resource-filters {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+}
+
+.nl-world-location-resource-filters select {
+  max-width: 100%;
+  font: inherit;
+}
+
+.nl-world-location-item-previews {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.nl-world-location-item-preview {
+  padding: 8px;
+  border: 1px solid #d6cdb5;
+  background: #fcfaf3;
+}
+
+.nl-world-location-item-preview h2 { margin: 0 0 8px; font-size: 12px; }
+.nl-world-location-item-preview p { margin: 4px 0; }
+.nl-world-location-item-preview input { width: 40px; }
+
+.nl-world-location-mine-summary { width: 100%; margin-bottom: 8px; border-collapse: collapse; }
+.nl-world-location-mine-summary th,
+.nl-world-location-mine-summary td { padding: 5px; border: 1px solid #d6cdb5; text-align: center; }
+
+@media (max-width: 600px) {
+  .nl-world-location-item-previews { grid-template-columns: 1fr; }
 }
 
 .nl-village-sky,

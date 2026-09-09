@@ -3,7 +3,7 @@
 title: City Feature
 description: Implementation handbook for the observed five-district Forpost graph, illustrated navigation, buildings, gate handoff, responsive panning, and persisted context.
 status: Fully Implemented
-updated: 2026-09-08
+updated: 2026-09-09
 owners: City world context and city UI
 template: feature-v1
 ---
@@ -25,6 +25,7 @@ When live behavior and this handbook disagree, re-observe once in the existing s
 Related documents:
 
 - `doc/design/reference/city/observations/2026-07-28_city_movement_and_services.md` — current five-district observation plus historical captures.
+- `doc/design/reference/world/observations/2026-09-09_starter_routes.md` — both Forpost gates, the Residential-to-Law route, and reciprocal outdoor entry.
 - `doc/design/reference/economy/observations/2026-05-21_lavka_shop.md` — Shop hierarchy and controls.
 - `doc/design/reference/shell/observations/2026-07-28_game_shell_and_mvp_surfaces.md` — persistent shell and responsive acceptance.
 - `doc/design/reference/social/observations/2026-09-07_cell_chat_and_presence_boundaries.md` — separate City, Shop, and Arena-room audiences.
@@ -37,7 +38,7 @@ Related documents:
 
 | Related feature | Relationship | Ownership and handoff |
 |---|---|---|
-| `doc/features/world.md` | The verified Central Square exit returns to Outpost Surroundings `[6,8]`; the outdoor building enters `main`. | World owns outdoor coordinates and shared offer acceptance. City owns the node and illustrated exit hotspot. |
+| `doc/features/world.md` | Central Square round-trips through `[6,8]`; Law Quarter round-trips through `[11,9]`. | World owns outdoor coordinates and shared offer acceptance. City owns the exact node and illustrated exit hotspot. |
 | `doc/features/game_shell.md` | City replaces the outdoor center while retaining the same character, presence, chat, and navigation frame. | Shell owns persistent framing; City owns only the 1250 × 600 navigation surface. |
 | `doc/features/shop_economy.md` | Central Square exposes the active Shop hotspot and validates entry/return. | City owns availability and location. Shop owns catalog, buy/sell, wallet, and saved Shop filters. |
 | `doc/features/arena_combat.md` | Central Square exposes the active Arena hotspot without the stale level-23 gate. | City owns entry availability. Arena owns lobby, matchmaking, and combat. |
@@ -51,7 +52,7 @@ Every node uses one project-owned `city.png` at its native 1536 × 1024 size beh
 The current slice contains:
 
 - five districts and eight explicit directed links;
-- 14 seeded actionable hotspots: eight routes, five buildings, and one verified outdoor exit;
+- 15 seeded actionable hotspots: eight routes, five buildings, and two verified outdoor exits;
 - active Arena, Shop, Hospital, Market, and Airship Station entry points;
 - source-shaped CSS/text arrows, hover/focus highlighting, and pointer-following tooltips;
 - responsive native-size panning centered on an authored district focal point;
@@ -75,7 +76,7 @@ The current slice contains:
 - Copying Neverlands city/Shop images, tooltips as bitmaps, logos, or identity prose.
 - Treating presentation geometry, arrow visibility, or labels as authorization.
 - Inventing services for Auction, Bank, Clan Hall, schools, prison, temple, or other landmarks.
-- Assigning an outdoor destination to the Law Quarter exit before that handoff is verified.
+- Assigning an unobserved outdoor destination to another city exit.
 - Preserving the superseded nine-node `city2_*` topology as current Forpost behavior.
 
 ## 4. Player experience
@@ -84,7 +85,13 @@ The current slice contains:
 
 The verified `outpost_gate` outdoor building enters `main` / Central Square at `[0,0]`. A new playable character with no position also starts there. Existing characters on one of the five retained nodes keep that exact district and coordinate.
 
-The matching Central Square `west_gate` action exits to Outpost Surroundings `[6,8]`, whose captured source coordinate is `[1000,1000]`. Seeds remove superseded South/East gate buildings and authored city-gate cells. The illustrated Law Quarter exit remains a focusable landmark until its outdoor destination is captured.
+The matching Central Square `west_gate` action exits to Outpost Surroundings
+`[6,8]`, whose source coordinate is `[1000,1000]`. The second outdoor building,
+`outpost_east_gate` at `[11,9]` (source `[1005,1001]`), enters `forpost4` / Law
+Quarter `[0,0]`; its `east_gate` hotspot returns to that exact outdoor cell.
+The verified district route is Central Square → Residential Quarter → Law
+Quarter. Business Quarter is not the intermediate district. Seeds retain both
+verified gates and remove superseded gate declarations.
 
 An existing database must run `bin/rails db:seed` after receiving a City catalog
 change. The seed is an idempotent authored-content sync: it updates retained
@@ -111,6 +118,11 @@ On desktop the whole scene is visible when space allows. At `820px` and `390px`,
 
 - Pointer enter/focus reveals a brightened crop of the project city image for buildings and landmarks.
 - Route hover/focus brightens the CSS/text arrow.
+- District arrows stack above overlapping gate hit areas. In Law, the
+  Residential arrow overlaps the large east-exit rectangle; pointer activation
+  must follow the visible arrow rather than silently leave the city. Native
+  hit-testing and a real pointer click are covered by
+  `spec/system/city_pointer_navigation_spec.rb`.
 - Pointer movement repositions the tooltip with a 15px offset and clamps it inside the scene.
 - Every actionable region is a real form button with an accessible name.
 - Presentation-only landmarks and blocked actions are focusable semantic regions with text tooltips and no form.
@@ -163,7 +175,7 @@ URL and preserves the newer position and room/chat context.
 | `forpost1` | Residential Quarter | Central Square, Knowledge Quarter, Law Quarter | Airship Station, Market |
 | `forpost2` | Knowledge Quarter | Residential Quarter | None |
 | `forpost3` | Business Quarter | Central Square | None |
-| `forpost4` | Law Quarter | Residential Quarter | None |
+| `forpost4` | Law Quarter | Residential Quarter | City Exit |
 
 The directionality is explicit. Code must not infer a reverse link, shortest path, or adjacency from scene geometry.
 
@@ -175,7 +187,7 @@ The directionality is explicit. Code must not infer a reverse link, shortest pat
 | Residential | Clan Hall, Post, City Hall |
 | Knowledge | Magic School, Library, General School, Military School |
 | Business | Auction, Souvenir Shop, Dealer House, Obelisk, Temple, Bank |
-| Law | Law Abode, City Exit, Prison, Gallows |
+| Law | Law Abode, Prison, Gallows |
 
 These labels preserve RPG-domain meaning but do not copy source-platform identity text. No mutation or interior is implied.
 
@@ -184,7 +196,7 @@ These labels preserve RPG-domain meaning but do not copy source-platform identit
 | City action | Outdoor destination | Captured source coordinate | Status |
 |---|---:|---:|---|
 | Central City Exit | Outpost Surroundings `[6,8]` | `[1000,1000]` | Interactive and seeded |
-| Law City Exit | Not captured | Not captured | Presentation-only |
+| Law City Exit | Outpost Surroundings `[11,9]` | `[1005,1001]` | Interactive and seeded; outdoor entry restores Law Quarter |
 
 ## 6. Feature surfaces and contained behavior
 
@@ -217,7 +229,7 @@ Building names, visible tabs, prices, routes, or “entry forbidden” states ca
 |---|---|---|
 | `Zone` | Durable district and runtime scene presentation | Stable city/node keys, title, image offset, focus, and presentation-only landmarks live in metadata. |
 | `CharacterPosition` | Exact current district | Zone and `[0,0]` survive reload/login. |
-| `CityCatalog` | Baseline declaration used by seeds | Five source-backed nodes, links, features, one gate, dimensions, offsets, boxes, arrows, focus, and landmarks; runtime does not require a second action lookup here. |
+| `CityCatalog` | Baseline declaration used by seeds | Five source-backed nodes, links, features, two gates, dimensions, offsets, boxes, arrows, focus, and landmarks; runtime does not require a second action lookup here. |
 | `CityHotspot` | Persisted action and presentation definition | Zone-scoped type, destination/feature, active state, required level, native pixel box, direction, and z-order. |
 | `WorldActionOffer` | Short-lived per-character capability | Exact node/position/target, opaque key, expiry, and status. |
 | `ResumeContext` | Safe last-surface routing | Stores allowlisted context; never replaces authoritative position. |
@@ -255,8 +267,9 @@ The current sync performs these changes together:
   zones is retired;
 - open or accepted offers tied to retired zones/actions are cancelled;
 - characters on removed-only nodes are recovered to Central Square `[0,0]`;
-- obsolete City spawn/tile rows and South/East outdoor gate buildings are
-  removed;
+- obsolete City spawn/tile rows and retired outdoor gate buildings are
+  removed; the verified west/east gate rows are reconciled to their exact
+  destinations;
 - a second seed run makes no further state change.
 
 ### 7.4 Admin management surface
@@ -398,7 +411,7 @@ interior context atomically; building entry itself does not move coordinates.
 | Missing destination/unknown feature | Fail without movement or arbitrary redirect. |
 | City relocation wins before building entry | Reject the old-node building and preserve the newer position, gameplay context, and local-chat context. |
 | Narrow viewport | Pan the fixed canvas; no page-level horizontal clipping. |
-| Law Quarter City Exit | Show as landmark only until outdoor handoff is verified. |
+| Law Quarter City Exit | Accept the current offer to `[11,9]`; the reciprocal outdoor entrance restores `forpost4`, not Central Square. |
 | Missing project image | Preserve controls/labels; never fall back to a Neverlands URL. |
 | Existing `city2_*` persisted graph | Run the convergent seed sync; retained nodes keep their identity, removed-only positions recover to Central Square, and obsolete actions cannot remain interactive. |
 | Invalid management JSON or hotspot/zone value | Render HTTP 422 with errors; write no content or audit event. |
@@ -414,7 +427,7 @@ interior context atomically; building entry itself does not move coordinates.
 - District routes use large project-owned, CSS-styled ASCII `>` arrows with observed direction.
 - `820px` and `390px` clients pan a centered fixed canvas without body overflow.
 - Only current server offers create form actions; presentation-only landmarks cannot mutate.
-- Central exit round-trips to the verified outdoor cell; stale South/East gate seeds are removed.
+- Central and Law exits round-trip through their respective `[6,8]` and `[11,9]` outdoor cells; retired gate declarations are removed.
 - An existing nine-node database converges to the five-node graph without stranding a character or leaving a live obsolete exit capability.
 - No Neverlands city/Shop image, logo, signature, administration copy, or asset URL is shipped.
 - `/manage` edits the same `Zone` and `CityHotspot` records rendered by City;

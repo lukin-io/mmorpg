@@ -7,6 +7,10 @@ Domain navigation: `doc/domains/dungeons.md`.
 Dungeons are a post-MVP Neverlands-based feature. They are not part of the
 launch MVP in `doc/design/launch_mvp_plan.md`.
 
+This domain also holds the separate **mine underground travel** backlog, below.
+The implemented above-ground mine lobby remains a World location; it does
+not implement this dungeon feature or authorize dungeon rules for mines.
+
 The dungeon feature exists around two source-defined goals:
 
 - team goal: descend as deep as possible;
@@ -220,6 +224,28 @@ When the launch MVP is complete, implement only the source-backed path:
    interactions.
 6. Dungeon inventory, claustrophobia, magical disturbances, ratings, dungeon
    currency, and specialist shop.
+
+## Separate Mine Underground Travel Backlog
+
+The [World live observation](../reference/world/observations/2026-09-09_starter_landmarks_and_art.md)
+captures the above-ground mine lobby and its separate Descend control. The
+[wiki reference](../reference/world/observations/2026-09-09_mine_exchange_wiki.md)
+preserves stated mine travel inputs and distinguishes descent from licensed
+extraction. Neither source establishes a completed live underground loop.
+
+Use the [mine-specific capture backlog](../reference/dungeons/observations/evidence_needed_mine_underground_travel.md)
+for descent, underground cell/floor identity, allowed movement, blockers,
+timers/equipment wear, return, interruption, presence and reload/login behavior.
+Their local lifecycle is unimplemented. Do not infer a dungeon run, generated
+room graph, party, lamp-oil rule or floor prize from the mine's lobby or from
+the dungeon sections above.
+
+World owns the existing cell/lobby handoff. Professions owns digging and
+extraction, eligibility, tools/license use, yield and proficiency. Economy
+owns mine item/license acquisition and resource exchange operations. Those
+linked owners are [Professions](../../domains/professions.md) and
+[Economy](../../domains/economy.md). The launch plan remains the delivery
+authority; recording this backlog does not activate an underground feature.
 
 ## Legacy Until Proven By Source
 

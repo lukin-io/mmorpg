@@ -60,7 +60,7 @@ RSpec.describe Game::World::ActionOfferBuilder do
     expect(WorldActionOffer.offered.where(character:, target: npc)).to be_empty
   end
 
-  it "creates an offer only for the implemented source-backed local action" do
+  it "creates offers for implemented source-backed local actions while excluding deferred digging" do
     tile = create(
       :map_tile_template,
       zone: zone.name,
@@ -69,7 +69,8 @@ RSpec.describe Game::World::ActionOfferBuilder do
       metadata: {
         "local_actions" => [
           {"type" => "resource_search", "source_id" => "look", "label" => "Look Around"},
-          {"type" => "fishing", "source_id" => "fis", "label" => "Fish"}
+          {"type" => "fishing", "source_id" => "fis", "label" => "Fish"},
+          {"type" => "digging", "source_id" => "dig", "label" => "Dig"}
         ]
       }
     )
@@ -82,9 +83,9 @@ RSpec.describe Game::World::ActionOfferBuilder do
 
     offers = described_class.new(character:, position:, tile_state: local_state).call
 
-    expect(offers.map(&:action_type)).to contain_exactly("search_resources")
+    expect(offers.map(&:action_type)).to contain_exactly("search_resources", "fish")
     expect(offers).to all(have_attributes(target: tile))
-    expect(offers.map { |offer| offer.metadata["source_id"] }).to contain_exactly("look")
+    expect(offers.map { |offer| offer.metadata["source_id"] }).to contain_exactly("look", "fis")
   end
 
   it "does not issue an offer for an inactive local action" do

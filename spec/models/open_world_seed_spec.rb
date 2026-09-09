@@ -8,6 +8,123 @@ RSpec.describe "Open-world seed data", type: :model do
     Rails.application.load_seed
   end
 
+  it "imports the bounded survey, keeps NPC pools distinct, and preserves managed cells on retry" do
+    region = create(:zone, :mvp_outdoor_region, name: "Outpost Surroundings")
+    legacy = create(:map_tile_template, zone: region.name, x: 14, y: 10, passable: true,
+      metadata: {"source_map" => "forpost_pond_neighborhood_art"})
+    position = create(:character_position, zone: region, x: 14, y: 10)
+
+    load_seed
+
+    catalog = Game::World::StarterCellCatalog.default
+    imported = MapTileTemplate.where(zone: region.name, x: 0..20, y: 2..14).to_a
+    expect(imported.size).to eq(273)
+    expect(imported.count(&:passable)).to eq(118)
+    imported.each do |tile|
+      source = catalog.at(tile.x, tile.y)
+      expect(tile.metadata.fetch("atlas")).to eq(source.metadata.fetch("atlas"))
+      expect(tile.passable).to eq(source.passable)
+    end
+    expect(legacy.reload).not_to be_passable
+    expect(position.reload).to have_attributes(zone: region, x: 14, y: 10)
+    pond = imported.find { |tile| [tile.x, tile.y] == [13, 10] }
+    expect(pond.resource_groups).to eq([
+      {"key" => "herbs_2", "kind" => "herbs", "label" => "Herb group 2", "active" => true}
+    ])
+    expect(pond.metadata.dig("atlas", "npc_annotations")).to eq([])
+    rat = imported.find { |tile| [tile.x, tile.y] == [7, 7] }
+    expect(rat.metadata.dig("atlas", "npc_annotations")).to include(
+      "name" => "Крысы", "min_level" => 0, "max_level" => 4
+    )
+    placements = TileNpc.where(zone: region.name)
+    expect(placements.where("metadata ->> 'seed_scope' IS NULL").pluck(:x, :y))
+      .to contain_exactly([7, 7], [14, 15])
+    expect(placements.where("metadata ->> 'seed_scope' = ?", "starter_encounter_bootstrap").count).to eq(40)
+
+    managed = MapTileTemplate.find_by!(zone: region.name, x: 12, y: 10)
+    managed.update!(passable: false, metadata: managed.metadata.merge("resource_groups" => []))
+    original = managed.attributes
+    load_seed
+    expect(managed.reload.attributes).to eq(original)
+  end
+
+  it "authors the observed pond in the existing outdoor zone with drinking and the empty fishing entry" do
+    load_seed
+    zone = Zone.find_by!(name: "Outpost Surroundings")
+    pond = MapTileTemplate.find_by!(zone: zone.name, x: 13, y: 10)
+
+    expect(Zone.where(location_type: "outdoor").count).to eq(1)
+    expect(pond).to be_passable
+    expect(pond.metadata).to include("source_coordinates" => [1007, 1002])
+    expect(pond.cell_art_presentation).to have_attributes(
+      asset: "world/cells/forpost-starter/13_8.png", column: 13, row: 8,
+      sheet_width: 100, sheet_height: 100
+    )
+    expect(pond.active_local_actions.pluck("type")).to match_array(%w[resource_search drinking fishing])
+    expect(pond.local_action("resource_search")).to include("result_message" => "Nothing found.")
+    expect(MapTileTemplate.local_action_implemented?("drinking")).to be true
+    expect(MapTileTemplate.local_action_implemented?("fishing")).to be true
+    expect { load_seed }.not_to change(MapTileTemplate, :count)
+  end
+
+  it "keeps pond artwork independent from surveyed cell availability and actions" do
+    load_seed
+    cells = MapTileTemplate.where(zone: "Outpost Surroundings", x: 11..15, y: 8..12).order(:y, :x).to_a
+
+    expect(cells.size).to eq(25)
+    cells.each do |cell|
+      column = cell.x
+      row = cell.y - 2
+      expect(cell.cell_art).to eq("key" => "forpost_starter", "column" => column, "row" => row)
+      expect(cell.cell_art_presentation).to have_attributes(
+        asset: "world/cells/forpost-starter/#{column}_#{row}.png", background_x: 0, background_y: 0,
+        cell_width: 100, cell_height: 100, sheet_width: 100, sheet_height: 100
+      )
+      next if [cell.x, cell.y] == [13, 10]
+
+      expected_actions = [cell.x, cell.y] == [12, 10] ? ["resource_search"] : []
+      expect(cell.active_local_actions.pluck("type")).to eq(expected_actions)
+      surveyed = Game::World::StarterCellCatalog.default.at(cell.x, cell.y)
+      expect(cell.passable).to eq(surveyed.passable)
+      expect(cell.metadata["source_coordinates"]).to eq([cell.x + 994, cell.y + 992])
+    end
+    expect(TileNpc.where(zone: "Outpost Surroundings", x: 13, y: 10)).to be_empty
+    expect(TileBuilding.where(zone: "Outpost Surroundings", x: 11..15, y: 8..12).pluck(:building_key)).to eq(["outpost_east_gate"])
+  end
+
+  it "preserves gameplay layers and saved state while reconciling the neighborhood artwork" do
+    load_seed
+    region = Zone.find_by!(name: "Outpost Surroundings")
+    center = MapTileTemplate.find_by!(zone: region.name, x: 13, y: 10)
+    center.update!(passable: false, metadata: center.metadata.merge("managed_note" => "Retain pond override"))
+    neighbor = MapTileTemplate.find_by!(zone: region.name, x: 12, y: 10)
+    neighbor.update!(passable: false, metadata: {
+      "source_map" => "authored_neighbor",
+      "resource_groups" => [{"key" => "herbs_review", "kind" => "herbs", "label" => "Review group", "active" => false}],
+      "local_actions" => [{"type" => "digging", "source_id" => "dig", "active" => false}],
+      "cell_art" => {"key" => "forpost_terrain", "column" => 2, "row" => 0}
+    })
+    npc = create(:tile_npc, zone: region.name, x: 12, y: 10, current_hp: 15, metadata: {"active" => false})
+    entrance = create(:tile_building, :world_location, :inactive, zone: region.name, x: 12, y: 10)
+    position = create(:character_position, zone: region, x: 13, y: 10)
+    original_npc = npc.attributes
+    original_entrance = entrance.attributes
+    original_metadata = neighbor.metadata.except("cell_art")
+    original_center = center.metadata.except("cell_art")
+
+    expect { load_seed }.not_to change(MapTileTemplate, :count)
+
+    expect(neighbor.reload).not_to be_passable
+    expect(neighbor.metadata.except("cell_art")).to eq(original_metadata)
+    expect(neighbor.cell_art).to eq("key" => "forpost_starter", "column" => 12, "row" => 8)
+    expect(center.reload).not_to be_passable
+    expect(center.metadata.except("cell_art")).to eq(original_center)
+    expect(npc.reload.attributes).to eq(original_npc)
+    expect(entrance.reload.attributes).to eq(original_entrance)
+    expect(position.reload).to have_attributes(zone: region, x: 13, y: 10)
+    expect { load_seed }.not_to change { neighbor.reload.updated_at }
+  end
+
   it "reproduces the observed Forpost gate, village route, and resource-cell neighbors" do
     load_seed
     region = Zone.find_by!(name: "Outpost Surroundings")
@@ -19,7 +136,10 @@ RSpec.describe "Open-world seed data", type: :model do
       [5, 7] => [[4, 6], [4, 7], [6, 7], [5, 8], [6, 8]],
       [4, 6] => [[3, 5], [4, 5], [3, 6], [3, 7], [4, 7], [5, 7]],
       [6, 7] => [[7, 6], [5, 7], [7, 7], [5, 8], [6, 8]],
-      [7, 7] => [[7, 6], [8, 6], [6, 7], [8, 7], [6, 8]]
+      [7, 7] => [[7, 6], [8, 6], [6, 7], [8, 7], [6, 8]],
+      [11, 9] => [[11, 10], [12, 10]],
+      [12, 10] => [[11, 9], [11, 10], [13, 10], [11, 11], [12, 11], [13, 11]],
+      [13, 10] => [[14, 9], [12, 10], [12, 11], [13, 11], [14, 11]]
     }
 
     observed_destinations.each do |(x, y), destinations|
@@ -33,6 +153,30 @@ RSpec.describe "Open-world seed data", type: :model do
       .to have_attributes(x: 4, y: 6)
     gate_exit = CityHotspot.find_by!(key: "west_gate", zone: Zone.find_by!(name: "Outpost"))
     expect(gate_exit.action_params).to include("destination_x" => 6, "destination_y" => 8)
+  end
+
+  it "retires an obsolete gate inside the survey without deleting its blocked cell" do
+    region = create(:zone, :mvp_outdoor_region, name: "Outpost Surroundings")
+    art = {"key" => "forpost_terrain", "column" => 2, "row" => 0}
+    old_tile = create(:map_tile_template, zone: region.name, x: 10, y: 9, passable: true,
+      metadata: {"city_gate" => "Retired Gate", "source_map" => "m_1019_1025",
+                 "cell_art" => art, "managed_note" => "Retain existing content"})
+    position = create(:character_position, zone: region, x: 10, y: 9)
+
+    load_seed
+
+    expect(MapTileTemplate.exists?(old_tile.id)).to be(true)
+    expect(old_tile.reload).not_to be_passable
+    expect(old_tile.metadata).not_to have_key("city_gate")
+    expect(old_tile.metadata).to include("source_map" => "m_1004_1001", "source_coordinates" => [1004, 1001],
+      "cell_art" => {"key" => "forpost_starter", "column" => 10, "row" => 7}, "managed_note" => "Retain existing content")
+    expect(old_tile.metadata.fetch("atlas")).to eq(Game::World::StarterCellCatalog.default.at(10, 9).metadata.fetch("atlas"))
+    expect(MapTileTemplate.where(zone: region.name, x: 0..20, y: 2..14).count).to eq(273)
+    expect(position.reload).to have_attributes(zone: region, x: 10, y: 9)
+
+    original = old_tile.attributes
+    expect { load_seed }.not_to change(MapTileTemplate, :count)
+    expect(old_tile.reload.attributes).to eq(original)
   end
 
   it "retires the old gate cell without relocating a saved outdoor player" do
@@ -185,9 +329,9 @@ RSpec.describe "Open-world seed data", type: :model do
     expect(tile.reload).to have_attributes(terrain_type: "outdoor", passable: true)
     expect(tile.local_action("resource_search")).to include("source_id" => "look")
     expect(tile.cell_art).to eq(
-      "key" => "forpost_terrain",
+      "key" => "forpost_starter",
       "column" => 7,
-      "row" => 7
+      "row" => 5
     )
     expect(gate.reload).to have_attributes(
       zone: region.name,
@@ -220,26 +364,23 @@ RSpec.describe "Open-world seed data", type: :model do
     seeded_gates = TileBuilding.where(
       building_key: ["outpost_gate", "outpost_south_gate", "outpost_east_gate"]
     ).index_by { |building| building.metadata["source_gate"] }
-    expect(seeded_gates.keys).to contain_exactly("west")
+    expect(seeded_gates.keys).to contain_exactly("west", "east")
     Game::World::CityCatalog::GATES.each do |gate_key, gate_definition|
       seeded_gate = seeded_gates.fetch(gate_key)
       expected_node = node_zones.fetch(gate_definition["node_key"])
       expect(seeded_gate.destination_zone).to eq(expected_node)
       expect([seeded_gate.x, seeded_gate.y]).to eq(gate_definition["local_coordinates"])
       expect(seeded_gate.metadata["source_coordinates"]).to eq(gate_definition["source_coordinates"])
-      expect(seeded_gate.presence_label).to eq("Outpost, West Gate")
+      expect(seeded_gate.presence_label).to eq(gate_definition.fetch("presence_label"))
       seeded_tile = MapTileTemplate.find_by!(
         zone: region.name,
         x: seeded_gate.x,
         y: seeded_gate.y
       )
-      expect(seeded_tile.cell_art).to eq(
-        "key" => "forpost_terrain",
-        "column" => seeded_gate.x.modulo(10),
-        "row" => seeded_gate.y.modulo(10)
-      )
+      expected_art = {"key" => "forpost_starter", "column" => seeded_gate.x, "row" => seeded_gate.y - 2}
+      expect(seeded_tile.cell_art).to eq(expected_art)
       expect(seeded_tile.cell_art_presentation).to have_attributes(
-        key: "forpost_terrain",
+        key: expected_art.fetch("key"),
         cell_width: 100,
         cell_height: 100
       )
@@ -275,7 +416,7 @@ RSpec.describe "Open-world seed data", type: :model do
       ]
     )
 
-    expect(CityHotspot.active.where(zone: node_zones.values).count).to eq(14)
+    expect(CityHotspot.active.where(zone: node_zones.values).count).to eq(15)
     expect(
       CityHotspot.active.where(zone: node_zones.values).where.not(key: "arena").distinct.pluck(:required_level)
     ).to eq([0])
@@ -306,7 +447,7 @@ RSpec.describe "Open-world seed data", type: :model do
     )
     expect(plague_rat.npc_template.metadata).not_to have_key("obsolete")
 
-    bandit = TileNpc.find_by!(zone: region.name, x: 8, y: 7)
+    bandit = TileNpc.find_by!(zone: region.name, x: 14, y: 15)
     expect(bandit).to have_attributes(npc_key: "wilderness_bandit", level: 7, max_hp: 155)
     expect(bandit.metadata).to include(
       "seed_source" => "outdoor_npcs.yml",
@@ -422,7 +563,7 @@ RSpec.describe "Open-world seed data", type: :model do
     expect(stale_gate_offer.reload).to be_cancelled
     expect(stale_gate_offer.target).to be_nil
     expect(TileBuilding.where(building_key: "outpost_south_gate")).to be_empty
-    expect(CityHotspot.active.where(hotspot_type: "exit").pluck(:key)).to eq(["west_gate"])
+    expect(CityHotspot.active.where(hotspot_type: "exit").pluck(:key)).to contain_exactly("west_gate", "east_gate")
 
     expect {
       load_seed

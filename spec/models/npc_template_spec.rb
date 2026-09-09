@@ -3,6 +3,82 @@
 require "rails_helper"
 
 RSpec.describe NpcTemplate, type: :model do
+  describe "level authoring" do
+    it "persists level zero without deriving combat stats from it" do
+      npc = create(:npc_template, level: 0, metadata: {"health" => 40, "base_damage" => 4})
+
+      expect(npc.reload.level).to eq(0)
+      expect(npc.combat_stats).to include(hp: 40, attack: 4)
+    end
+
+    it "rejects missing, negative, and fractional levels" do
+      [nil, -1, 0.5].each do |level|
+        npc = build(:npc_template, level:)
+        expect(npc).not_to be_valid
+        expect(npc.errors[:level]).to be_present
+      end
+    end
+  end
+
+  describe "cell encounter references" do
+    let(:member_template) { create(:npc_template, npc_key: "roster_member") }
+    let(:anchor_template) { create(:npc_template, npc_key: "roster_anchor") }
+    let(:roster_metadata) { {"active" => false, "encounter_rosters" => [{"key" => "group", "members" => [{"npc_key" => member_template.npc_key}]}]} }
+
+    it "protects inactive roster-only dependencies from deletion and key changes" do
+      anchor = create(:tile_npc, npc_template: anchor_template, npc_key: anchor_template.npc_key, metadata: roster_metadata)
+      expect(member_template.tile_npcs).to be_empty
+
+      expect(member_template.destroy).to be false
+      expect(member_template.errors[:base]).to include("Cannot delete an NPC template referenced by cell encounter rosters")
+      expect(member_template.update(npc_key: "renamed_member")).to be false
+      expect(member_template.errors[:npc_key]).to include("cannot change while referenced by cell encounters")
+      expect(member_template.reload.npc_key).to eq("roster_member")
+
+      anchor.update!(metadata: {"active" => false})
+      expect(member_template.update(npc_key: "renamed_member")).to be true
+      expect(member_template.destroy).to be_destroyed
+    end
+
+    it "keeps display-name edits available while a stable key is referenced" do
+      create(:tile_npc, npc_template: anchor_template, metadata: roster_metadata)
+
+      expect(member_template.update(name: "Renamed display label")).to be true
+    end
+
+    # js selects truncation cleanup so separate PostgreSQL connections see the
+    # setup. No browser is required for this model-level lock check.
+    it "blocks a concurrent roster writer after retirement has locked the template", js: true do
+      metadata = roster_metadata
+      anchor_id = anchor_template.id
+      member_id = member_template.id
+      competing_result = nil
+      subscriber = lambda do |event|
+        next unless event.payload[:sql].include?('FROM "tile_npcs"') && event.payload[:sql].include?("metadata @>")
+
+        worker = Thread.new do
+          ActiveRecord::Base.connection_pool.with_connection do |connection|
+            ApplicationRecord.transaction do
+              connection.execute("SET LOCAL lock_timeout = '100ms'")
+              TileNpc.create!(zone: "Outpost Surroundings", x: 1, y: 1, npc_key: "roster_anchor",
+                npc_template_id: anchor_id, npc_role: "hostile", level: 1, metadata:)
+            end
+          rescue => error
+            competing_result = error
+          end
+        end
+        expect(worker.join(5)).to eq(worker)
+      end
+
+      ActiveSupport::Notifications.subscribed(subscriber, "sql.active_record") { member_template.destroy! }
+
+      expect(competing_result).to be_a(ActiveRecord::LockWaitTimeout)
+      expect(NpcTemplate.exists?(member_id)).to be false
+      expect(TileNpc.count).to eq(0)
+      expect(build(:tile_npc, npc_template: anchor_template, metadata:)).not_to be_valid
+    end
+  end
+
   describe "spawn timing metadata" do
     it "exposes respawn timing from template metadata" do
       npc = build(

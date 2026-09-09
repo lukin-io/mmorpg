@@ -93,9 +93,49 @@ RSpec.describe "World and City content management", type: :request do
       expect(response).to have_http_status(:unprocessable_content)
       expect(response.body).to include("is not valid JSON")
     end
+
+    it "edits resource identities, actions and passability without entering metadata JSON" do
+      cell = create(:map_tile_template, :with_resource_search, zone: outdoor_zone.name, x: 3, y: 4)
+      patch manage_world_cell_path(cell), params: {map_tile_template: {
+        content_fields: "1", passable: "0", metadata: JSON.generate("source_map" => "captured-map"),
+        local_actions: {resource_search: {active: "0", label: "Look Around"}, fishing: {active: "1", label: "Fish"}},
+        resource_groups: {"0" => {key: "herbs_7", kind: "herbs", label: "Herbs group 7", active: "1"}}
+      }}
+
+      expect(response).to have_http_status(:see_other)
+      expect(cell.reload).not_to be_passable
+      expect(cell.local_action("resource_search")).to be_nil
+      expect(cell.local_action("fishing")).to include("source_id" => "fis")
+      expect(cell.active_resource_groups).to contain_exactly(include("key" => "herbs_7", "active" => true))
+      expect(cell.metadata["source_map"]).to eq("captured-map")
+
+      before = cell.metadata
+      expect {
+        patch manage_world_cell_path(cell), params: {map_tile_template: {
+          content_fields: "1", metadata: "{}", resource_groups: {"0" => {key: "bad", kind: "herbs", label: "", active: "1"}}
+        }}
+      }.not_to change(ManagementAuditEvent, :count)
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(cell.reload.metadata).to eq(before)
+    end
   end
 
   describe "open-world cell buildings" do
+    it "authors a mine at one cell while keeping unobserved entry unavailable" do
+      attributes = {zone: outdoor_zone.name, x: 2, y: 3, building_key: "mine_2_3", building_type: "location",
+        location_kind: "mine", name: "Mine", active: "0", metadata: "{}"}
+      post manage_tile_buildings_path, params: {tile_building: attributes}
+
+      expect(response).to have_http_status(:see_other)
+      mine = TileBuilding.find_by!(building_key: "mine_2_3")
+      expect(mine.location_kind).to eq("mine")
+      expect(mine).not_to be_accessible
+      expect {
+        patch manage_tile_building_path(mine), params: {tile_building: attributes.merge(active: "1")}
+      }.not_to change(ManagementAuditEvent, :count)
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(mine.reload).not_to be_active
+    end
     it "creates, edits, and deletes a city gate through TileBuilding" do
       post manage_tile_buildings_path, params: {
         tile_building: {
@@ -123,25 +163,78 @@ RSpec.describe "World and City content management", type: :request do
   end
 
   describe "NPC templates and cell placements" do
+    it "rejects roster-only template retirement without changing content or auditing a success" do
+      member = create(:npc_template, npc_key: "managed_roster_member")
+      anchor = create(:npc_template, npc_key: "managed_roster_anchor")
+      create(:tile_npc, npc_template: anchor, metadata: {"active" => false,
+        "encounter_rosters" => [{"key" => "group", "members" => [{"npc_key" => member.npc_key}]}]})
+
+      expect { delete manage_npc_template_path(member) }.not_to change(ManagementAuditEvent, :count)
+      expect(response).to redirect_to(manage_npc_template_path(member))
+      expect(NpcTemplate.exists?(member.id)).to be true
+
+      expect {
+        patch manage_npc_template_path(member), params: {npc_template: {npc_key: "new_key", npc_role: "hostile"}}
+      }.not_to change(ManagementAuditEvent, :count)
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(member.reload.npc_key).to eq("managed_roster_member")
+    end
+    it "keeps existing metadata during a partial activation update and rejects missing member templates" do
+      template = create(:npc_template, npc_key: "managed_existing_rat")
+      sample = {"key" => "existing", "members" => [{"npc_key" => template.npc_key}]}
+      npc = create(:tile_npc, npc_template: template, metadata: {"encounter_rosters" => [sample]})
+      patch manage_tile_npc_path(npc), params: {tile_npc: {active: "0"}}
+      expect(response).to have_http_status(:see_other)
+      expect(npc.reload.encounter_roster_samples).to eq([sample])
+
+      expect {
+        patch manage_tile_npc_path(npc), params: {tile_npc: {
+          metadata: JSON.generate("encounter_rosters" => [{"key" => "bad", "members" => [{"npc_key" => "missing"}]}])
+        }}
+      }.not_to change(ManagementAuditEvent, :count)
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(npc.reload.encounter_roster_samples).to eq([sample])
+    end
+    it "edits weighted complete rosters and deactivates an anchor without changing its combat state" do
+      template = create(:npc_template, npc_key: "managed_roster_rat")
+      npc = create(:tile_npc, npc_template: template, zone: outdoor_zone.name, x: 4, y: 5)
+      patch manage_tile_npc_path(npc), params: {tile_npc: {
+        content_fields: "1", active: "0", encounter_count: "1", metadata: "{}",
+        rosters: {"0" => {key: "rats", weight: "3", members: {
+          "0" => {npc_key: template.npc_key, level_min: "0", level_max: "4", hp: "40"},
+          "1" => {npc_key: "", level: "", level_min: "", level_max: "", hp: ""}
+        }}}
+      }}
+
+      expect(response).to have_http_status(:see_other)
+      expect(npc.reload).not_to be_active
+      expect(npc.defeated_at).to be_nil
+      expect(npc.encounter_roster_samples).to contain_exactly(include(
+        "key" => "rats", "weight" => 3,
+        "members" => [{"npc_key" => template.npc_key, "level_min" => 0, "level_max" => 4, "hp" => 40}]
+      ))
+    end
     it "manages the catalog and its persisted TileNpc placement" do
       post manage_npc_templates_path, params: {
         npc_template: {
-          npc_key: "managed_rat", name: "Managed Rat", npc_role: "hostile", level: 4,
+          npc_key: "managed_rat", name: "Managed Rat", npc_role: "hostile", level: 0,
           dialogue: "...", metadata: JSON.generate("health" => 100, "base_damage" => 7)
         }
       }
       expect(response).to have_http_status(:see_other)
       template = NpcTemplate.find_by!(npc_key: "managed_rat")
+      expect(template.level).to eq(0)
 
       post manage_tile_npcs_path, params: {
         tile_npc: {
           zone: outdoor_zone.name, x: 9, y: 8, npc_template_id: template.id,
-          npc_key: template.npc_key, npc_role: "hostile", level: 4,
+          npc_key: template.npc_key, npc_role: "hostile", level: 0,
           current_hp: 100, max_hp: 100, metadata: JSON.generate("encounter_count" => 1)
         }
       }
       expect(response).to have_http_status(:see_other)
       placement = TileNpc.find_by!(zone: outdoor_zone.name, x: 9, y: 8)
+      expect(placement.level).to eq(0)
 
       patch manage_tile_npc_path(placement), params: {
         tile_npc: {

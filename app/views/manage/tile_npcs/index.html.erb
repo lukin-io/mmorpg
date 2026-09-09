@@ -10,7 +10,7 @@
   <thead><tr><th>NPC</th><th>Key</th><th>Cell</th><th>Level</th><th>HP</th><th>State</th><th>Actions</th></tr></thead>
   <tbody>
     <% @tile_npcs.each do |npc| %>
-      <tr><td><%= npc.display_name %></td><td><%= npc.npc_key %></td><td><%= npc.zone %> [<%= npc.x %>, <%= npc.y %>]</td><td><%= npc.level %></td><td><%= npc.current_hp %>/<%= npc.max_hp %></td><td><%= npc.alive? ? "Alive" : "Defeated" %></td>
+      <tr><td><%= npc.display_name %></td><td><%= npc.npc_key %></td><td><%= npc.zone %> [<%= npc.x %>, <%= npc.y %>]</td><td><%= npc.level %></td><td><%= npc.current_hp %>/<%= npc.max_hp %></td><td><%= npc.active? ? (npc.alive? ? "Alive" : "Defeated") : "Inactive" %></td>
         <td class="nl-manage-table-actions"><%= link_to "View", manage_tile_npc_path(npc) %> <%= link_to "Edit", edit_manage_tile_npc_path(npc) %></td></tr>
     <% end %>
     <% if @tile_npcs.empty? %><tr><td colspan="7" class="nl-manage-empty">No cell NPCs found.</td></tr><% end %>

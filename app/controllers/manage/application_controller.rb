@@ -37,6 +37,10 @@ module Manage
       attributes = permitted.to_h
 
       attribute_names.each do |attribute_name|
+        unless attributes.key?(attribute_name.to_s)
+          attributes[attribute_name.to_s] = record.public_send(attribute_name).to_h.deep_dup
+          next
+        end
         raw_value = attributes[attribute_name.to_s]
         next if raw_value.is_a?(Hash)
 

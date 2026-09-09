@@ -13,7 +13,9 @@ module Game
           @config ||= begin
             parsed = YAML.load_file(CONFIG_PATH).deep_symbolize_keys
             validate_loot_entries!(parsed)
+            validate_template_levels!(parsed)
             validate_encounter_entries!(parsed)
+            expand_starter_encounters!(parsed)
             parsed
           end
         end
@@ -63,6 +65,33 @@ module Game
 
         private
 
+        # Expands only seed inputs. Runtime NPC reads never consult this catalog.
+        def expand_starter_encounters!(parsed)
+          parsed.each_value do |zone_config|
+            next unless zone_config[:starter_encounters]
+
+            catalog = StarterCellCatalog.default
+            unless zone_config[:zone_name] == catalog.zone_name
+              raise InvalidConfigurationError, "Starter encounters must use the surveyed zone"
+            end
+            zone_config[:starter_npcs] = StarterEncounterDistribution.new(zone_config:, cells: catalog.cells).call
+          end
+        rescue StarterEncounterDistribution::InvalidConfigurationError => error
+          raise InvalidConfigurationError, error.message
+        end
+
+        def validate_template_levels!(parsed)
+          parsed.each_value do |zone_config|
+            template_entries(zone_config).each do |npc|
+              next unless npc.key?(:level)
+              next if npc[:level].is_a?(Integer) && npc[:level] >= 0
+
+              raise InvalidConfigurationError,
+                "#{CONFIG_PATH}: NPC #{npc[:key] || 'unknown'} level must be a non-negative integer"
+            end
+          end
+        end
+
         def validate_loot_entries!(parsed)
           parsed.each_value do |zone_config|
             template_entries(zone_config).each do |npc|
@@ -85,6 +114,11 @@ module Game
           parsed.each_value do |zone_config|
             Array(zone_config[:npcs]).each do |npc|
               metadata = npc.fetch(:metadata, {}).to_h
+              policy_errors = TileNpc.encounter_policy_errors(metadata.deep_stringify_keys)
+              if policy_errors.any?
+                raise InvalidConfigurationError,
+                  "#{CONFIG_PATH}: NPC #{npc[:key] || 'unknown'} #{policy_errors.join('; ')}"
+              end
               validate_roster_references!(npc, metadata, template_keys)
             end
           end

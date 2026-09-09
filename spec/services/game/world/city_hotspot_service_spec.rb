@@ -75,6 +75,24 @@ RSpec.describe Game::World::CityHotspotService do
         result = subject.interact!(building.id)
         expect(result.hotspot).to eq(building)
       end
+
+      it "persists entry to the current Arena without inventing a selected room" do
+        subject.interact!(building.id)
+
+        context = Game::World::ResumeContext.new(character: character.reload)
+        expect(context.arena_entered?).to be true
+        expect(character.gameplay_context).to eq("name" => "world", "params" => {})
+        expect(context.arena_room).to be_nil
+      end
+
+      it "rolls back the entry marker with a failed city action transaction" do
+        Character.transaction do
+          subject.interact!(building.id)
+          raise ActiveRecord::Rollback
+        end
+
+        expect(Game::World::ResumeContext.new(character: character.reload).arena_entered?).to be false
+      end
     end
 
     context "with exit hotspot" do

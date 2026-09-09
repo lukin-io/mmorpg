@@ -65,5 +65,25 @@ FactoryBot.define do
         }
       end
     end
+
+    trait :location_lobby do
+      building_type { "location" }
+      name { "Podgorny Mine" }
+      destination_zone { nil }
+      destination_x { nil }
+      destination_y { nil }
+      metadata do
+        {
+          "presence_label" => "Dragon Fang, Mine",
+          "location" => {
+            "kind" => "mine", "presence_label" => "Podgorny Mine",
+            "scene" => {"width" => 760, "height" => 255, "image" => "world/forpost-terrain.png"},
+            "features" => [{"key" => "exit", "label" => "Nature", "action_type" => "return_world", "placement" => "navigation"}],
+            "sections" => [{"key" => "entrance", "label" => "Mine entrance"}, {"key" => "shop", "label" => "Shop"}],
+            "unavailable_actions" => ["Descend"]
+          }
+        }
+      end
+    end
   end
 end

@@ -1,7 +1,7 @@
 import { Controller } from "@hotwired/stimulus"
 
 // The server owns booking, phase changes and position. This controller only
-// draws the supplied trajectory and replaces its bounded terrain projection.
+// draws the supplied trajectory and reuses unchanged cells in its bounded map.
 export default class extends Controller {
   static targets = ["pan", "terrain", "timer"]
   static values = {
@@ -138,7 +138,7 @@ export default class extends Controller {
       this.serverAt = Date.parse(snapshot.server_now)
       this.acquiredAt = performance.now()
       this.deadlineValue = snapshot.deadline || ""
-      this.terrainTarget.innerHTML = snapshot.map_html
+      this.updateTerrain(snapshot.map_html)
       this.draw(this.centerXValue, this.centerYValue)
     } catch (error) {
       if (this.connected) this.nextSnapshotAt = performance.now() + 2000
@@ -146,6 +146,42 @@ export default class extends Controller {
       clearTimeout(this.requestTimeout)
       if (this.requestController === requestController) this.requestController = null
     }
+  }
+
+  // Snapshots remain bounded server-rendered HTML. Reuse only identical cells
+  // in the same region; equal coordinates in different regions are unrelated.
+  updateTerrain(html) {
+    const template = document.createElement("template")
+    template.innerHTML = html
+    const incoming = template.content.firstElementChild
+    const current = this.terrainTarget.firstElementChild
+    if (!incoming?.matches(".nl-airship-cells")) return
+
+    if (!current?.matches(".nl-airship-cells") || !incoming.dataset.zoneId ||
+        current.dataset.zoneId !== incoming.dataset.zoneId ||
+        current.dataset.columns !== incoming.dataset.columns || current.dataset.rows !== incoming.dataset.rows) {
+      this.terrainTarget.replaceChildren(incoming)
+      return
+    }
+
+    const cells = new Map(Array.from(current.children, cell => [`${cell.dataset.x},${cell.dataset.y}`, cell]))
+    const desired = Array.from(incoming.children, cell => {
+      const existing = cells.get(`${cell.dataset.x},${cell.dataset.y}`)
+      return existing?.isEqualNode(cell) ? existing : cell
+    })
+    const retained = new Set(desired)
+    Array.from(current.children).forEach(cell => {
+      if (!retained.has(cell)) cell.remove()
+    })
+    desired.forEach((cell, index) => {
+      if (current.children[index] !== cell) current.insertBefore(cell, current.children[index] || null)
+    })
+    Array.from(current.attributes).forEach(attribute => {
+      if (!incoming.hasAttribute(attribute.name)) current.removeAttribute(attribute.name)
+    })
+    Array.from(incoming.attributes).forEach(attribute => {
+      if (current.getAttribute(attribute.name) !== attribute.value) current.setAttribute(attribute.name, attribute.value)
+    })
   }
 
   formatTime(seconds) {

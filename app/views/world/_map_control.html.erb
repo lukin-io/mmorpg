@@ -1,0 +1,21 @@
+  <% if destination.present? && !timer_active && !is_player %>
+    <button type="button"
+            class="nl-tile-clickable nl-tile-clickable--available"
+            data-nl-world-map-target="destination"
+            data-action="click->nl-world-map#clickTile"
+            data-available="true"
+            data-direction="<%= destination.direction %>"
+            data-target-x="<%= destination.target_x %>"
+            data-target-y="<%= destination.target_y %>"
+            data-action-key="<%= destination.action_key %>"
+            data-travel-seconds="<%= destination.travel_seconds %>"
+            aria-label="Move <%= destination.direction %>">
+      <span class="nl-destination-marker" aria-hidden="true"></span>
+      <span class="nl-visually-hidden">Move <%= destination.direction %></span>
+    </button>
+  <% elsif is_player %>
+    <div class="nl-tile-player" aria-hidden="true"></div>
+  <% else %>
+    <div class="nl-tile-inactive" aria-hidden="true"></div>
+  <% end %>
+

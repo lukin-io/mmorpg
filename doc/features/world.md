@@ -3,7 +3,7 @@
 title: World Feature
 description: Implementation handbook for the Neverlands-based open world, cells, movement, cell content, actions, and persisted player location.
 status: Partially Implemented
-updated: 2026-09-08
+updated: 2026-09-09
 owners: Game world, movement, and world UI
 template: feature-v1
 ---
@@ -31,7 +31,12 @@ Supporting documents:
 
 - `doc/design/reference/world/observations/2026-09-07_forpost_grid_and_action_audit.md` — current grid, gate route, timed Look, and village audit.
 
-- `doc/design/reference/world/observations/2026-05-09_overworld_movement.md` — live movement observations.
+- `doc/design/reference/world/observations/2026-05-09_overworld_movement.md`
+- `doc/design/reference/world/observations/2026-09-08_cell_content_and_world_rules.md` — live movement observations.
+- `doc/design/reference/world/observations/2026-09-09_starter_atlas.md` — bounded source topology and pool annotations.
+- `doc/design/reference/world/observations/2026-09-09_starter_encounter_authoring.md` — captured profile reuse and the user-reported interval.
+- `doc/design/reference/world/observations/2026-09-09_starter_landmarks_and_art.md` — linked landmark entry/return and starter artwork provenance.
+- `doc/ARTWORK.md` — project illustration style and asset integration workflow.
 - `doc/design/reference/world/observations/2026-05-20_outdoor_npc_resource.md` — observed outdoor cell, NPC, and resource behavior.
 - `doc/design/reference/combat/observations/2026-08-26_wilderness_two_orc_group_fight.md` — current multi-NPC handoff, per-NPC search, and return evidence.
 - `doc/design/reference/combat/observations/2026-08-26_wilderness_passive_goblin_fight.md` — current passive same-cell bot-attack and return evidence.
@@ -94,7 +99,7 @@ Neverlands' still-unknown probability, cooldown, distribution, or weights.
 Current source evidence now confirms that one outdoor return context can yield
 different selected groups (`1x3 -> 1x1 -> 1x1 -> 1x2`) with mixed identities
 and levels. It also bounds two source idle intervals to approximately
-`230..278` and `127..187` seconds. The mapped local `[8,7]` anchor stores those
+`230..278` and `127..187` seconds. The mapped local `[14,15]` anchor stores those
 four complete observed outputs and both elapsed-time windows. At encounter
 creation the server selects one complete roster sample, resolves its persisted
 NPC templates, and creates the ordered mixed/repeated participations with the
@@ -120,7 +125,9 @@ and delay distribution remain unobserved.
   falling back to the coordinate-derived project-owned regional sheet slice.
 - Keep outdoor NPC identity and placement absent from the map and top-context row
   until the hidden encounter interrupts an action.
-- Enter the one verified Forpost gate through its explicit authored destination.
+- Enter the currently implemented Forpost west gate through its explicit authored destination.
+- Enter and leave both reciprocal gates and the nearby village, mine lobby,
+  and resource-exchange lobby through their exact current-cell offers.
 - Enter the captured Frontier Village from its exact world cell without
   replacing the persisted outdoor coordinate, then use offered Shop/exit
   hotspots in its fixed `760 × 255` CSS-built scene.
@@ -148,10 +155,12 @@ and delay distribution remain unobserved.
 - Claiming to reproduce Neverlands' complete hidden travel-time formula; the live server has produced `32`- and `49`-second values under unisolated conditions.
 - Automatic movement queues or click-to-path travel.
 - Generic building/location types, levels, keys, item gates, or invented entrance rules.
-- Mines, exchanges, portals, or other world-linked locations that have not
-  been captured and added as validated persisted cell content.
-- Implementing deferred `fish`, `drink`, or `dig` actions.
-- Successful gathering, deferred by the user to the alchemy skill path;
+- Underground mine travel/extraction, exchange listings or transactions, and
+  other unimplemented location families. Mine/exchange lobbies support entry,
+  read-only sections, return and persisted resume only.
+- Successful fishing casts/catches, fishing proficiency gains, and digging.
+  The captured no-bait Fish entry and Drink are implemented.
+- Successful gathering, deferred by the user to later profession work;
   `Look Around` currently supports only the captured empty result and work lock.
 - Generic encounter tables, claimed equal source weights, or procedural NPC
   group composition beyond explicit Neverlands-backed cell metadata. The
@@ -201,9 +210,14 @@ The surrounding game shell owns navigation, character status, presence, inventor
 - Server render window: horizontal radius 7 and vertical radius 4, producing a
   15 × 9 buffer including inert placeholders beyond region edges. The viewport
   retains at least one full off-screen cell on each side for travel.
-- Default presentation: exact 100px slices from the project-owned
-  `world/forpost-terrain.png` sheet; authored project-owned catalog art may
-  still override an exact cell.
+- Incremental walking retains overlapping terrain/building DOM cells. Starting
+  a step sends no terrain; completing a horizontal/vertical/diagonal step sends
+  only 9/15/23 entering cells and fresh server-owned movement controls. A
+  content change or invalid presentation token rebuilds the bounded buffer.
+- Starter presentation: one continuous `2100 × 1300` project-owned landscape,
+  delivered as 273 physical `100 × 100` PNG slices. A missing slice uses its
+  matching master crop. Outside this authored area, coordinate-derived
+  `world/forpost-terrain.png` crops remain the fallback.
 - Explicit cell art: a `MapTileTemplate` may select a validated catalog key and
   sheet coordinate; the configured art replaces the default slice for that
   exact cell while remaining fixed at `100 x 100`.
@@ -238,6 +252,10 @@ The compact top-context row displays only visible actions the server offered for
 
 - **Enter** — accessible active city or linked-location entrance on the current cell.
 - **Look Around** — implemented `resource_search` local action on the current cell.
+- **Drink** — authored water-cell action with immediate fatigue recovery and a
+  60-second lock; no skill prerequisite.
+- **Fish** — authored fishing-cell action with the captured missing-bait result
+  and a 30-second lock; no skill prerequisite or successful catch.
 
 Outdoor NPC presence, name, level, and HP are not rendered on the map or in the
 top-context row. The source-backed encounter remains hidden until it interrupts a
@@ -327,31 +345,69 @@ the model. Existing `metadata.title` supplies display-only naming changes.
 This prevents a surviving `zone_id` position from losing its content or a later
 region from inheriting content orphaned under a reused name.
 
-### 5.2 Forpost entrance
+### 5.2 Forpost entrances and the bounded starter survey
 
 | Entrance | Local coordinate | Captured source coordinate | Destination |
 |---|---:|---:|---|
-| Central Square exit | `[6, 8]` | `[1000, 1000]` | Forpost Central Square (`main`) at `[0, 0]` |
+| Western / Central Square exit | `[6,8]` | `[1000,1000]` | Central Square (`main`) at `[0,0]` |
+| Eastern / Law exit | `[11,9]` | `[1005,1001]` | Law Quarter (`forpost4`) at `[0,0]` |
 
-The gate is the active `outpost_gate` `TileBuilding`. Seeds remove the stale
-South/East gate rows from the superseded city topology. The illustrated Law
-Quarter exit remains a non-mutating city landmark until its outdoor handoff is
-captured; it must not be inferred as another outdoor entrance.
+`outpost_gate` and `outpost_east_gate` are the reciprocal outdoor buildings.
+The eastern path is Main → Residential → Law → outdoor `[11,9]` → `[12,10]`
+→ pond `[13,10]`. The western path remains `[6,8]` → `[5,7]` → village `[4,6]`.
+City handoffs are immediate; outdoor steps use the existing server-owned timed
+movement pipeline. Both gates are available to level-zero characters. The
+September 9 live reverse entry confirms Law as the eastern return node.
 
-For an existing database, `bin/rails db:seed` synchronizes both sides of this
-pair and retires the historical South/East entrances plus their stale City
-hotspots/offers. The operation preserves characters on retained City nodes and
-recovers only characters stranded in removed-only nodes to Central Square
-`[0,0]`; it never resets an outdoor `CharacterPosition`.
+`StarterCellCatalog` validates `config/gameplay/starter_world_cells.yml` before
+its facts are imported by `db/seeds.rb`: 273 cells at local `x0..20,y2..14`,
+corresponding to source `x994..1014,y994..1006`. The initial survey has 118
+passable and 155 blocked cells. It supplies immutable coordinates, passability
+and provenance through `.load/default`, `#cells` and `#at(x,y)`; `.reload!`
+replaces the process catalog only after successful validation. It performs no
+DB writes and supplies no artwork, terrain class, action outcome or NPC roster.
+Runtime movement/rendering continue reading the same persisted cell records.
 
-The gate `[6,8]`, intermediate `[5,7]`, and village `[4,6]` reproduce two
-northwest source steps. The resource cell `[7,7]` fits this bounded
-`source - [994,992]` cluster. Eight authored unavailable cells preserve the
-captured neighbor sets. Seeds retire the old gate template at `[7,0]` while
-preserving any character saved there. Changed entrance/hotspot definitions
-cancel their live offers atomically; unchanged targets preserve fresh offers.
-This cluster does not establish a whole-region origin or relocate separately
-authored encounter samples.
+The atlas provides explicit per-cell activity flags, source labels, water/fish
+flags, herb group IDs and NPC pool annotations. Seeds materialize herb IDs as
+editable resource groups; those IDs are not quantities, yields or skill gates.
+NPC annotations remain evidence metadata. A separate validated distribution
+reuses compatible complete captured profiles for 40 additional starter
+placements, alongside the two explicit captured anchors; the atlas supplies
+neither HP nor encounter formulas. The pond has herb group 2 and no seeded hostile; its published
+no-bots rule is independently documented. Look is declared on rat `[7,7]`,
+eastern intermediate `[12,10]`, and pond `[13,10]`; only the pond offers Drink
+and Fish. The intermediate uses the captured empty-vegetation result. Visual
+terrain classification and neighboring unobserved action sets remain unknown.
+
+The import initializes new/legacy source or placeholder-art rows. Already
+atlas-backed records and unrelated independently authored source rows remain
+operator-owned: reseeding preserves managed passability, actions and resources.
+The starter art upgrade replaces only missing or legacy `forpost_terrain` /
+`forpost_pond` references across this rectangle; independent art and already
+authored `forpost_starter` references survive. A new atlas
+capture does not silently overwrite managed cells; reconcile intended changes
+through the content editor. Source metadata never becomes a second runtime
+permission lookup. Importing content does not relocate persisted players,
+including a player saved on a cell whose old sparse default is now blocked.
+Obsolete gate cleanup retains surveyed cells and removes only their stale
+`city_gate` metadata. Deleting such a row would incorrectly restore the sparse
+passable fallback until another seed run. The seed regression covers this
+ordering, retained player position, managed metadata and a second no-op run.
+
+This source offset is a bounded local adaptation. Captured source columns
+991–993 would map to negative local X and are excluded; existing local zone
+edges remain the server boundary, not a claim about Neverlands geography.
+The wider million-cell zone still uses sparse defaults outside the authored
+rectangle. Continuous starter artwork is provided for the bounded rectangle;
+full-zone population and artwork remain later work.
+
+Seeds also synchronize both sides of the gate handoffs, retire the historical
+South entrance/obsolete hotspots and cancel changed live offers. Retained City
+positions and all outdoor coordinates survive; only characters stranded on
+removed historical City nodes recover to Central Square. The independently
+captured Bandit sample is now at `[14,15]`, consistent with source `[1008,1007]`,
+rather than falsely adjacent to the western starter route.
 
 ### 5.3 Captured linked location
 
@@ -375,13 +431,18 @@ Leave hotspot returns outdoors. Direct interior URLs during movement or Look
 redirect to World before issuing offers or replacing the saved context; an
 active fight redirects to that fight. These checks share the character lock.
 
-This completes the captured village slice only. Stock exchanges, mines, and
-other cell-linked location families remain unavailable until their own live
-states, actions, and failure rules are captured.
+The same owner also supports the nearby mine lobby at `[4,5]` (source
+`[998,997]`) and resource-exchange lobby at `[4,7]` (source `[998,999]`). Entry,
+return and login resume retain the exact outdoor coordinate. Their allowlisted
+sections are read-only views within the same location; switching sections does
+not relocate the player. Captured extraction/descent, resource-query and
+trading actions remain unavailable. No section parameter can grant a Shop
+feature or an underground position. Other location families still require
+their own captured contract.
 
 ### 5.4 Captured outdoor content
 
-The explicit cell at local `[7, 7]` corresponds to captured Neverlands coordinate `[1001, 999]`. It stores the validated `forpost_terrain` cell-art slice, supplies the authored outdoor observation/resource context, and materializes a hidden hostile Plague Rat encounter anchor from `config/gameplay/outdoor_npcs.yml` with level, health, damage, experience, respawn, loot, and `encounter_count: 2` metadata. Starting its fight creates two distinct Plague Rat participations on side B, matching the captured paired-rat ambush.
+The explicit cell at local `[7, 7]` corresponds to captured Neverlands coordinate `[1001, 999]`. It stores a validated starter cell-art reference, supplies the authored outdoor observation/resource context, and materializes a hidden hostile Plague Rat encounter anchor from `config/gameplay/outdoor_npcs.yml` with level, health, damage, experience, respawn, loot, and `encounter_count: 2` metadata. Starting its fight creates two distinct Plague Rat participations on side B, matching the captured paired-rat ambush.
 
 Neverlands observations confirm current-coordinate encounter availability, not
 this exact persistence schema: `m_1001_999` produced the hidden paired-rat
@@ -392,7 +453,7 @@ explicit composition metadata are the local server-authoritative model. Exact
 Neverlands per-cell rosters, selection weights, and internal storage remain
 evidence gaps.
 
-The later `m_1008_1007` chain is mapped to local `[8,7]`. Its anchor persists
+The later `m_1008_1007` chain is mapped to local `[14,15]`. Its anchor persists
 four complete observed group outputs (`3`, `1`, `1`, and `2` members), including
 mixed Bandit/Robber identities and levels `7..9`, plus the two captured passive
 delay windows. The runtime chooses one whole sample and one whole window through
@@ -410,6 +471,40 @@ persisted placement and `TileNpcService` reads that DB state only; changing YAML
 alone is neither a runtime mutation nor an authorization mechanism. Local and
 source coordinates must never be mixed in services or requests.
 
+`StarterEncounterDistribution` builds `starter_npcs` from reusable profiles
+and atlas annotations. All members of a complete captured roster must fit a
+cell's declared NPC identities and level ranges; it never interpolates levels,
+HP, rewards or group members. The fresh starter bootstrap creates 40 additional
+Bandit placements. Their `300..360`-second passive interval is the user's
+reported five-to-six-minute rule, explicitly distinguished from the two
+captured source windows and the still-unknown general probability formula.
+The original `[7,7]` and `[14,15]` anchors retain their captured definitions.
+
+The seed checks persisted passability, existing NPCs and entrances, and the
+exact bot-free pond before creating a derived placement. Roads are not a
+special safety rule: painted roads neither enable movement nor suppress a
+configured encounter. Existing derived placements are not rewritten; their
+`bootstrap_source_map` identity prevents duplication after an operator moves
+or disables them. Section 7.4 describes source changes and cleanup.
+
+### 5.5 Shared current-location labels
+
+`Game::World::Presence#label` owns the authored current cell/entrance,
+validated village/Shop/city room, or flight name. It resolves that one context
+without loading or counting online players; `#call` uses the same label for the
+player pane. Initial map descriptions reuse the prepared label; incremental
+map fragments resolve it again from the persisted position. During an accepted
+step the source label remains until authoritative completion moves the player.
+The existing visually clipped map-description layout is preserved.
+
+Owner and visitor profiles display zone and current cell/room beneath the
+paper doll, matching the September 9 source profile observation. Coordinates
+remain structured JSON/grid data, not profile prose. Public JSON's human label
+uses the same current context. A wilderness NPC fight keeps that cell name and
+its public fight link; only a real Arena-room fight supplies an Arena-room
+sublabel. Labels are escaped presentation data and never replace the stable
+zone/cell/room keys that authorize actions, chat or presence.
+
 ## 6. Feature surfaces and contained behavior
 
 ### 6.1 Implementation status
@@ -424,11 +519,14 @@ source coordinates must never be mixed in services or requests.
 | Current-cell city entrance | `POST /world/enter_building` | Interactive handoff | World entrance service, then City |
 | Current-cell linked-location entrance | `POST /world/enter_building` | Interactive handoff | World entrance service, then allowlisted World Location |
 | Frontier Village scene | `GET /world/locations/:building_key` | Interactive | `TileBuilding`, `TileStateResolver`, `WorldLocationsController`, World CSS |
+| Mine/exchange lobby and sections | `GET /world/locations/:building_key`, optional allowlisted `section` | Exact-cell lobby and read-only sections; underground/trading controls unavailable | Same persisted `TileBuilding` and `WorldLocationsController` |
 | Village Trading Post / exit | `POST /world/locations/:building_key/features` | Interactive handoff | Persisted building feature + shared owned offer, then Shop or unchanged World cell |
 | `Look Around` | `POST /world/perform_local_action` | Immediate empty result with persisted 28-second lock, or ambush handoff | `PerformLocalAction`, `LocalActionState` |
 | Character/Inventory world-shell actions | `POST /world/context` | Interactive navigation/ambush handoff | World allowlist and hostile interruption pipeline |
 | Wilderness result return | `POST /arena_matches/:id/finish` after a World fight | Interactive handoff | Arena finishes the result; World resolves the saved allowlisted destination |
-| `fish`, `drink`, and `dig` | Authored identifiers only | Deferred | No offer or mutation is exposed |
+| `Drink` | `POST /world/perform_local_action` on an authored water cell | Immediate two-point fatigue recovery and persisted 60-second lock, or ambush handoff | `PerformLocalAction`, `LocalActionState`, `FatigueService` |
+| `Fish` without bait | `POST /world/perform_local_action` on an authored fishing cell | Immediate missing-bait result and persisted 30-second lock, or ambush handoff; no catch or proficiency award | `PerformLocalAction`, `LocalActionState` |
+| `dig` | Authored identifier only | Deferred | No offer or mutation is exposed |
 
 ### 6.2 Movement and map behavior
 
@@ -456,7 +554,7 @@ then hands the finish action back to that context.
 
 ### 6.4 Deferred behavior boundary
 
-The client exposes no generic building, pathfinding, terrain-speed, gathering-reward, or long-distance travel framework. Source-recognized action identifiers remain inert until their successful Neverlands flows, rewards, requirements, and interruption behavior are captured and implemented with tests.
+The client exposes no generic building, pathfinding, terrain-speed, gathering-reward, or long-distance travel framework. Only captured action slices are active: empty Look, the no-bait Fish entry, and Drink. Successful fishing/gathering and digging remain unavailable until their requirements, outcomes and interruption behavior are captured and implemented with tests.
 
 ## 7. Authoritative data and presentation model
 
@@ -512,6 +610,24 @@ dimensions. A dedicated future special-cell image uses a one-column/one-row
 catalog definition; no schema migration or arbitrary database asset path is
 needed.
 
+Optional catalog-only `slices_directory` resolves `<column>_<row>.png` beneath
+the allowed World asset directory. A present slice renders at `100 × 100`
+with zero background offset; a missing individual file falls back to the
+matching crop of the required master asset. Optional `landmarks_in_art` must
+be strictly boolean and works only with explicit `painted_landmarks` entries
+containing in-bounds integer `column`/`row` and a unique stable `building_key`.
+`Presentation#painted_building?` compares the current art slice and the actual
+`TileBuilding` key projected by `MapBuffer`; editable cell metadata cannot
+spoof that identity. A flag without an exact matching anchor hides nothing.
+
+Matching painted entrances suppress the complete decorative overlay, including
+village pseudo-elements and badge backgrounds/borders, while retaining the
+accessible building label and server-owned Enter offer. Moved/new/different
+entrances keep their markers; unpainted mine/exchange entrances show a visible
+semantic label. Catalog paths, anchors and this policy cannot be supplied
+through tile metadata. Browser regression coverage includes computed styles,
+not only the absence of a child icon element.
+
 #### Add an evidence-backed, project-owned art asset
 
 Use this workflow only after the corresponding live appearance has been
@@ -546,6 +662,51 @@ Its physical size is `1000 x 1000`, so column and row values are each `0..9`.
 The catalog validates configured dimensions and bounds but deliberately does
 not decode the bitmap at runtime; asset specs must confirm that the physical
 file still matches `columns * 100` by `rows * 100`.
+
+#### Continuous starter landscape
+
+`forpost_starter` selects `world/forpost-starter-landscape.png`, a
+`2100 × 1300` master, and `world/cells/forpost-starter` for its 273 physical
+PNG cells. Sheet `[column,row]` maps to local `[column,row+2]`. One pond is
+painted at local `[13,10]`; its Look/Drink/Fish capabilities still come only
+from that cell's persisted actions. Nearby city/village/mine/exchange landmarks
+are painted into the continuous landscape, without pasted marker squares.
+Paint does not claim exact source terrain or create passability, encounters,
+entrances or resources.
+
+`db/seeds/world_cells.rb` upgrades absent and the two legacy artwork keys
+inside the bounded rectangle. It preserves custom references, already edited
+starter references, unrelated metadata, gameplay layers and saved players.
+Every exact generation/edit prompt, output selection and packaging step belongs
+to `doc/ARTWORK.md`, alongside the reusable style/workflow. The starter brief
+owns the coordinate layout; the landmark observation owns live source facts.
+
+#### Historical September 8 pond landscape and asset provenance
+
+The following smaller asset was the September 8 implementation. The current
+starter bootstrap supersedes its 25-cell assignment with `forpost_starter`;
+the legacy catalog entry remains valid for retained references.
+
+`app/assets/images/world/forpost-pond-landscape.png` is one continuous
+`500 × 500` terrain image, displayed as 25 adjacent `100 × 100` slices through
+the existing `forpost_pond` catalog key. The center pond at `[13,10]` uses
+slice `[2,2]`; local cells `[11..15,8..12]` use matching sheet coordinates.
+This replaces the visibly pasted standalone pond square. Artwork is part of
+the cell terrain, not an overlay entity or a new movement partition.
+
+The visual-only neighborhood pass preserves existing metadata, passability,
+entrances and NPCs. Only the center declares pond actions; surrounding art
+slices do not infer resource availability or alter the source topology. This
+bounded example is not full authored zone content, which remains Stage 2.
+
+The source neighborhood was assembled by cutting the corresponding slices
+from the existing project-owned terrain sheet. The built-in ImageGen tool
+integrated the pond into that landscape on September 8, 2026; `sips` packaged
+the resulting sheet at 500px. No Neverlands bitmap was copied or edited. One
+shared PNG and CSS sheet offsets avoid 25 independent downloads.
+
+The exact preserved final prompt is consolidated in
+[ARTWORK.md](../ARTWORK.md#2026-09-08--preserved-pond-neighborhood-prompt).
 
 #### Configure a dedicated 100px cell
 
@@ -608,11 +769,22 @@ Authored `local_actions` are validated structured data. Supported definitions ar
 | Kind | Neverlands source id | Runtime action | Implemented |
 |---|---|---|---|
 | `resource_search` | `look` | `search_resources` | Yes |
-| `fishing` | `fis` | `fish` | No |
-| `drinking` | `dri` | `drink` | No |
+| `fishing` | `fis` | `fish` | Yes: no-bait entry and 30-second lock only |
+| `drinking` | `dri` | `drink` | Yes: captured sip and 60-second lock |
 | `digging` | `dig` | `dig` | No |
 
-Invalid kinds, source-id mismatches, duplicates, and malformed array/object shapes are rejected. Only implemented definitions become `WorldActionOffer` rows. `Look Around` returns the authored observation message immediately and persists a 28-second lock on its accepted offer; it grants no item or currency. Successful gathering is deferred by the user to alchemy.
+Invalid kinds, source-id mismatches, duplicates, and malformed array/object shapes are rejected. Only implemented definitions become `WorldActionOffer` rows. `Look Around` returns the authored observation message immediately and persists a 28-second lock on its accepted offer; it grants no item or currency. Successful gathering remains deferred to later profession work; the wiki distinguishes Naturalist/Herbalist discovery from Alchemy potion making.
+
+Drinking is cell-local: active `local_actions` data must contain `drinking`
+with source id `dri`. Neither pond artwork nor a resource-group label grants
+the action. The normal seed authors the observed pond at local `[13,10]`
+(source `[1007,1002]`) in the existing Outpost Surroundings zone, with Look Around, Drink
+and Fish. The pond Look result is “Nothing found.”; its initial source timer
+was not isolated, so it uses the configured 28-second search default. Its project-owned `forpost_starter` landscape uses contiguous 100px cell slices
+to integrate the water with surrounding terrain. Optional cell `presence_label` is a nonblank string of at most
+120 characters. Presence resolves the exact outdoor cell after entrance/room
+labels; this changes display only, preserving the same zone/cell audience.
+Successful fishing remains a separate deferred profession flow.
 
 ### 7.4 Cell-content authoring and lifecycle
 
@@ -622,9 +794,10 @@ the existing owner before editing data:
 
 | Cell concern | Authored declaration | Persisted/materialized state | Runtime owner |
 |---|---|---|---|
-| Terrain, passability, art reference, and local resource/action definitions | `outdoor_tiles` in `db/seeds.rb` | `MapTileTemplate` | movement `TileProvider` plus current-cell `TileStateResolver` |
-| City or linked-location entrance | `Game::World::CityCatalog::GATES` for the verified city pair; `tile_buildings` in `db/seeds.rb` for the persisted entrance attributes | `TileBuilding` | `TileBuildingService` and `TileStateResolver` |
-| Hostile outdoor NPC placement/template input | `config/gameplay/outdoor_npcs.yml` | seed-materialized `NpcTemplate` and exact-cell `TileNpc` | `db/seeds.rb`, then DB-only `TileNpcService` and `TileStateResolver` |
+| Terrain, passability, art reference, and local resource/action definitions | `starter_world_cells.yml` and `db/seeds/world_cells.rb` | `MapTileTemplate` | movement `TileProvider` plus current-cell `TileStateResolver` |
+| Authored resource-group identities | `metadata.resource_groups` on the same cell | `MapTileTemplate` | active group projection in `TileStateResolver`; no yield or inventory grant |
+| City or linked-location entrance | `Game::World::CityCatalog::GATES` for the verified city pair; `db/seeds/world_locations.rb` for the persisted entrance attributes | `TileBuilding` | `TileBuildingService` and `TileStateResolver` |
+| Hostile outdoor NPC placement/template input | `config/gameplay/outdoor_npcs.yml`, with atlas-filtered `StarterEncounterDistribution` for reusable starter profiles | seed-materialized `NpcTemplate` and exact-cell `TileNpc` | `db/seeds/outdoor_npcs.rb`, then DB-only `TileNpcService` and `TileStateResolver` |
 | Visible current-cell capabilities | never hand-authored or seeded | short-lived `WorldActionOffer` | `ActionOfferBuilder`, `AcceptAction`, then the owning transition service |
 | Hidden hostile interruption | never represented by a visible offer | current live `TileNpc` state | `InterruptAction`, `WorldEncounterChecksController`, and `StartNpcFight` |
 
@@ -632,6 +805,46 @@ the existing owner before editing data:
 `ActionOfferBuilder` derives capabilities from its result. Do not seed
 `WorldActionOffer`, read seed/config files in controllers or views, or create a
 `LocationCatalog`, resource catalog, or second NPC-placement service.
+
+`db/seeds.rb` loads explicit phases for accounts, zones, cells, starter
+characters, shop inventory, initial wallets, Arena rooms, linked locations,
+city hotspots and outdoor NPCs. Locations precede derived encounters so newly
+created entrances already participate in placement guards. Shared seed cleanup
+is in `Seeds::WorldContentSupport`; runtime owners remain unchanged. Detailed
+file responsibilities and preservation policies belong to
+`doc/guides/managing_game_content.md`.
+
+The guided World Cell editor exposes action toggles/labels and up to 32 resource
+groups. Each group has a stable cell-local `key`, `kind`, `label` and optional
+boolean `active`; keys/kinds accept lowercase letters, digits, `_` and `-`
+up to 80 characters, labels up to 120. Duplicate keys and malformed values
+fail before persistence. Groups describe eligible content organization; they
+do not define herb quantity, a skill gate, or a harvesting result. The supplied
+atlas's Herbs 7/11 labels describe groups, not quantities.
+
+The NPC editor preserves complete observed roster samples while accepting
+explicit authored alternatives: at most 64 rosters of 1–10 members, optional
+integer weight 1–10,000 (default 1), and either a fixed nonnegative integer level or
+`level_min`/`level_max` within 0–1000 with explicit positive HP. Range sampling
+uses the injected RNG and does not guess HP/stat scaling. No new ranges or
+weights are seeded from an unisolated observation. `metadata.active` disables
+an anchor independently of defeat/respawn; stale starts revalidate activation
+under the existing locks. Respawn retries require an actually defeated, due
+placement and cannot refill an already living NPC. Mine/exchange entrances
+support their captured lobby scope; underground and trade capabilities remain
+unavailable even while the lobby entrance is active.
+
+NPC templates, anchors and exact/ranged roster levels accept zero and reject
+negative, fractional or missing levels. HP stays positive. A zero participant
+level survives encounter selection, persistence and presentation without
+falling back to the template level. The specific starter rat pool is 0–4 in
+the atlas; no unknown level-dependent HP or selection formula is inferred.
+
+See `doc/guides/managing_game_content.md` for guided field operations and
+advanced metadata preservation. `Manage::WorldCellAttributes` and
+`Manage::TileNpcAttributes` normalize permitted editor inputs into assignment
+hashes without writes. Existing management transactions persist content,
+invalidate affected offers and append the audit event together.
 
 #### Rules shared by every authored cell change
 
@@ -644,8 +857,10 @@ the existing owner before editing data:
    a new key and an explicit retirement of the old key.
 4. For baseline source-backed content, change the declaration source and
    reconcile already-persisted state. For an intentional environment-local
-   override, use `/manage`; a later seed run deliberately restores the baseline
-   declaration and retires stale seed-owned rows.
+   override, use `/manage`. Reconciled city/shared-template/captured-anchor rows
+   return to baseline on reseed; imported atlas cells, linked village/mine/
+   exchange entrances and derived starter encounters retain operator edits.
+   Apply the owning policy explicitly.
 5. Keep cleanup exact: stable key or exact zone/coordinate. Never delete every
    row absent from one partial seed list because separately authored layers may
    coexist in that zone.
@@ -654,10 +869,10 @@ the existing owner before editing data:
 
 #### Add or adjust a building/entrance
 
-The verified city pair is authored once in `CityCatalog::GATES`; `db/seeds.rb`
+The verified city pair is authored once in `CityCatalog::GATES`; the World seed phases
 derives both its outdoor `MapTileTemplate` presentation metadata and its
 `TileBuilding`. Do not add a second literal for that same gate. A linked
-location such as the village is declared in the `tile_buildings` list with a
+location such as the village is declared in `db/seeds/world_locations.rb` with a
 stable key. Its current persisted shape is equivalent to:
 
 ```ruby
@@ -709,9 +924,13 @@ stable key. Its current persisted shape is equivalent to:
 }
 ```
 
-The existing `find_or_initialize_by(building_key:)` upsert in `db/seeds.rb`
-means changing `x`/`y` moves the same entrance, and changing scene/features
-updates that same row. `TileBuilding` validates scene dimensions, feature keys,
+The existing `find_or_initialize_by(building_key:)` lookup in `db/seeds/world_locations.rb`
+creates a missing linked entrance once, provided no other entrance owns the
+cell. Existing village/mine/exchange rows keep all operator state, including
+records authored before the preservation policy; editing declaration coordinates
+does not relocate them on reseed. Use `/manage` or an exact reviewed data change
+to move/update that stable row. The CityCatalog gate pair still reconciles both
+handoff ends. `TileBuilding` validates scene dimensions, feature keys,
 allowlisted action types/routes, and polygons before the seed can persist it.
 A building does not require a `MapTileTemplate` unless that cell also needs an
 explicit terrain, passability, art, timing, or local-action override.
@@ -775,17 +994,20 @@ outdoor_tiles << {
 }
 ```
 
-Adjust the same hash and rerun seeds to replace that tile's authored metadata.
+Adjust the declaration for future bootstrap and use the existing cell editor
+or an exact reviewed data change for an already imported cell.
 Set `"active" => false` to keep an observed action definition while withholding
-its offer. To remove only the action, keep the tile declaration and remove the
-action from its metadata so the seed overwrites the persisted row without it.
+its offer. To remove only the action, remove it from that cell's persisted
+metadata; routine seeds preserve an imported cell's operator edits.
 If the tile has no remaining override, add an exact cleanup such as
 `MapTileTemplate.where(zone: zone_name, x: local_x, y: local_y).destroy_all`;
 deleting the whole `outdoor_tiles` entry alone leaves the old row in an existing
 database.
 
-Only `resource_search` has a shipped empty-result/work-timer outcome. It does
-not implement gathering yields. Adding a different action requires
+`resource_search` has a shipped empty-result/work-timer outcome; `drinking`
+adds its captured sip/recovery lock, and `fishing` adds the no-bait entry lock.
+None implements gathering yields or a successful fishing cast. Adding another
+action or outcome requires
 captured evidence plus an existing-owner change to
 `MapTileTemplate::LOCAL_ACTION_DEFINITIONS`, `ActionOfferBuilder`,
 `AcceptAction`, its transition service, UI, and coverage. Adding arbitrary JSON
@@ -842,8 +1064,8 @@ outpost_surroundings:
       name: Bandit
       role: hostile
       level: 7
-      x: 8
-      y: 7
+      x: 14
+      y: 15
       hp: 155
       xp: 0
       metadata:
@@ -867,7 +1089,7 @@ outpost_surroundings:
 
 Every roster member key must resolve to one materialized `NpcTemplate`.
 `TileNpc` rejects empty/duplicate samples, sides outside `1..10`, missing member
-keys, non-positive level/HP overrides, invalid XP/risk values, and invalid
+keys, negative/non-integer level or non-positive HP overrides, invalid XP/risk values, and invalid
 ordered delay bounds. `OutdoorNpcConfig` also rejects unknown template
 references before seeding. Samples are complete outcomes—not independent NPC
 draws—and their presence must not be described as knowledge of Neverlands'
@@ -910,9 +1132,23 @@ on that cell. Fixed-composition anchors keep the ordinary defeated/respawn
 lifecycle. Adding uncaptured pool members or claiming source weights remains
 forbidden.
 
-Seed-owned placement rows carry `metadata.seed_source: outdoor_npcs.yml`, so
-the scoped seed cleanup can distinguish them from management-created content.
-Apply baseline changes as follows:
+Seed-owned placement rows carry `metadata.seed_source: outdoor_npcs.yml`.
+The explicit captured anchors follow the reconciled baseline table below.
+Derived starter placements additionally carry
+`seed_scope: starter_encounter_bootstrap` and `bootstrap_source_map`.
+`Seeds::StarterEncounterBootstrap#call` accepts validated definitions plus
+persisted templates, creates only missing eligible placements, and returns
+retained/created IDs for scoped cleanup. Existing placements at candidate
+coordinates are preserved; a moved/disabled derived row keeps its original
+source identity and is not recreated at its former cell. Cleanup excludes
+bootstrap-scoped rows even when profiles no longer emit them. Deactivate an
+unwanted derived group to retain identity; deleting it can allow a future
+bootstrap to recreate that eligible source.
+
+Changing a reusable profile affects future placements, not managed rows.
+Explicit per-cell edits use `/manage`; the shared template remains reconciled
+to its source-backed definition. Apply changes to the two explicit captured
+anchors as follows:
 
 | Change | Required persisted-state reconciliation |
 |---|---|
@@ -946,7 +1182,7 @@ Update the declaration and its owning coverage together:
 |---|---|
 | Tile/resource/local action | `map_tile_template_spec`, `open_world_seed_spec`, `tile_state_resolver_spec`, `action_offer_builder_spec`, relevant World request/system spec |
 | Building or linked location | `tile_building_spec`, `open_world_seed_spec`, `tile_building_service_spec`, `action_offer_builder_spec`, `world_locations_spec`, resume/system coverage |
-| Outdoor NPC | `outdoor_npc_config_spec`, `tile_npc_service_spec`, `tile_npc_spec`, resolver/interruption/combat handoff coverage |
+| Outdoor NPC | `outdoor_npc_config_spec`, `starter_encounter_distribution_spec`, `outdoor_npc_seed_bootstrap_spec`, `tile_npc_service_spec`, `tile_npc_spec`, resolver/interruption/combat handoff coverage |
 
 For a seed change, run `RAILS_ENV=test bin/rails db:seed:replant`, then run it a
 second time or retain the idempotency assertion in `open_world_seed_spec`.
@@ -990,9 +1226,9 @@ nor a false audit event. NPC templates and zones with dependent live content
 must be unlinked explicitly before deletion.
 
 Direct `/manage` changes are durable database changes and affect the next
-World render. They do not edit `db/seeds.rb` or YAML. If the record is also
-seed-owned, a later `bin/rails db:seed` intentionally reconciles it back to the
-source-backed declaration. Promote a tested management experiment into the
+World render. They do not edit `db/seeds.rb` or YAML. Reconciled city/template/
+captured-anchor rows return to baseline on a later seed. Imported atlas cells
+and linked entrances/derived starter encounter placements retain operator edits. Promote a tested management experiment into the
 appropriate seed/config plus handbook coverage before treating it as baseline
 game content.
 
@@ -1048,13 +1284,15 @@ in section 8.1 of `doc/features/city.md`.
 
 ### 8.2 Travel duration
 
-`Game::Movement::TravelTime` snapshots the duration into every offered command:
+`Game::Movement::TravelTime` is a pure scalar calculation. `MapState` reads the
+effective Wanderer value once for the whole neighboring-offer batch, then
+snapshots each calculated duration into its offered command. Defaults are:
 
 ```text
 if destination.metadata.travel_seconds is a positive integer:
   travel_seconds = destination.metadata.travel_seconds
 else:
-  wanderer = clamp(character.passive_skill_level(:wanderer), 0, 100)
+  wanderer = clamp(effective_wanderer_level, 0, 100)
   reduction_seconds = floor(wanderer * 6 / 100)
   travel_seconds = clamp(30 - reduction_seconds, 24, 30)
 ```
@@ -1075,6 +1313,18 @@ formula. The 2026-07-28 route observed several `24`-second steps and one
 `32`-second step; the earlier follow-up observed `32` and `49`. Those values
 prove destination/state inputs exist, so exact captured values belong in cell
 metadata rather than an invented client formula.
+
+`config/gameplay/world_rules.yml` owns validated numeric movement, fatigue,
+Look/Fish/Drink timing and presence parameters. `Game::World::Rules.default`
+loads an immutable catalog; `new(data:)` injects a deterministic ruleset for
+calculators/workflows. Restart processes or call `Rules.reload!` after an
+authorized edit; an invalid reload leaves the last valid catalog intact.
+Unknown keys, non-integers and out-of-range values fail clearly. There are no
+evaluated formula strings or client-supplied expressions. Accepted durations,
+fatigue gains, action deadlines and drinking recovery remain snapshots;
+effective natural recovery and presence freshness use current server policy.
+The 30-to-24-second linear Wanderer fallback and five-minute liveness window
+remain labeled provisional/local policies, not exact hidden Neverlands rules.
 
 ### 8.3 Start movement
 
@@ -1126,7 +1376,7 @@ Visible entrance use and local actions follow the same capability pattern:
 4. `Game::World::AcceptAction` locks the character then the offer, reloads current position/status, rejects active travel/Look/fight, and revalidates expiry, action type, and target.
 5. For an outdoor Enter or Look offer, acceptance rechecks effective fatigue below `86`.
 6. The domain service performs the action.
-7. Immediate actions become `completed` or `failed`. Look remains `accepted` until its persisted deadline; rendering issues fresh offers only when ready.
+7. Immediate actions become `completed` or `failed`. Look, Fish and Drink remain `accepted` until their persisted deadlines; rendering issues fresh offers only when ready.
 
 Changing an HTML id, reusing another character's key, replaying an expired key, or moving away invalidates the action.
 
@@ -1134,8 +1384,10 @@ Changing an HTML id, reusing another character's key, replaying an expired key, 
 entrance and rechecks its exact outdoor region/cell against fresh records.
 The lower-level entry service therefore cannot use matching coordinates in
 another region, and a repeated city-gate entry preserves the arrived position.
-Only `location.kind: village` has an implemented interior renderer; other
-kinds fail content validation and accessibility rather than reusing that scene.
+Allowlisted `village`, `mine` and `exchange` kinds have interior renderers.
+Only the village exposes its captured Shop handoff. Mine/exchange section
+queries are read-only presentation; invalid sections redirect to that same
+lobby, and no unavailable extraction, descent or trade action gets an offer.
 
 ### 8.5.1 Timed Look Around
 
@@ -1154,8 +1406,9 @@ supersede/cancel it without adding encounter probability or timing rules.
 
 The escaped result appears in a keyboard-accessible `360 × 150` dialog over
 the gameplay frame. Flash carries only the offer ID. Under its character lock,
-`WorldController#show` resolves an owned accepted/completed search offer on the
-current outdoor cell. `WorldActionOffer#consume_local_action_result!` takes an
+`WorldController#show` resolves an owned accepted/completed timed-action offer on the
+current outdoor cell. The same delivery owner handles Fish and Drink.
+`WorldActionOffer#consume_local_action_result!` takes an
 optional delivery time, returns the saved message once under the offer lock,
 and records `local_action_result_delivered_at` in metadata. It preserves the
 result, deadline, and action state. Replayed cookies, foreign/malformed IDs,
@@ -1166,6 +1419,34 @@ still, and movement/Character/Inventory/Look remain locked. Refresh resumes
 the deadline without reopening the one-time result. Client expiry requests
 current World state; JavaScript never completes work. General search-time
 modifiers and successful yields remain `[EVIDENCE]` gaps.
+
+### 8.5.2 Pond: Drink and the empty Fish entry
+
+Both actions require an active definition on the authoritative current cell;
+there is no fishing or drinking skill gate. Drinking remains available at high
+fatigue because the source's fatigue lock applies to Move, Look and Enter.
+The seeded pond is local `[13,10]`, source `[1007,1002]`.
+
+`PerformLocalAction` validates the owned offer and current cell under the
+character/offer lock and checks hostile interruption before applying effects.
+Drink immediately removes two effective fatigue points, clamped at zero, and
+saves the requested/actual recovery and application time together with its
+60-second deadline and success result. `FatigueService#recover!(amount:, at:)`
+returns the points removed after natural recovery; the enclosing offer
+transaction owns retry safety. A failed or interrupted start cannot grant a
+sip, and retries/reloads cannot apply another recovery. The four-point Nature
+Child parameter is reserved data; that perk is not implemented.
+
+Fish currently supports only the captured no-bait entry: the immediate result
+“No bait available.” and a 30-second lock. It creates no cast, inventory
+change, fatigue gain or proficiency. Rod equipment, bait selection/consumption,
+catch tables and successful proficiency growth remain a separate deferred
+profession flow. Resource-group identifiers do not grant those outcomes.
+
+Look, Fish and Drink share persisted deadlines, conflict checks and one-time
+result delivery. Closing a dialog affects presentation only; reloading resumes
+the saved lock. Source behavior at zero fatigue and Nature Child interaction
+still need observation; local zero-fatigue clamping is explicitly covered.
 
 ### 8.6 Hostile interruption
 
@@ -1236,7 +1517,30 @@ outside this feature.
 - derives remaining time from server `ends_at`;
 - translates the map by a fraction of one cell;
 - updates the countdown;
-- revisits the canonical world route when the timer reaches zero.
+- submits the canonical World refresh through Turbo when the timer reaches zero;
+- reconciles the signed map-buffer projection, retaining unchanged cell nodes
+  and replacing server-rendered movement controls independently of terrain.
+
+`Game::World::MapBuffer#call` returns `rows`, `token`, `base_token`, and
+`revision`. It coordinates private methods for bounded content loading,
+fingerprint-based reuse, token generation and ordered row construction in the
+same query object. Its signed presentation token identifies the character, zone,
+center and authored-content fingerprint, expires after 30 minutes, and never
+authorizes movement. Two bounded content reads cover at most a 16 × 10
+rectangle for adjacent buffers; region size never changes this budget.
+Changed/deleted terrain or buildings invalidate reuse. Missing/invalid tokens,
+different characters/zones, nonadjacent jumps or missing client cells recover
+with a full 135-cell projection. Stale responses cannot rewind the map.
+Completion updates map, location and actions together, then refreshes the
+existing cell chat/presence owners. A stable `world-action-result` container
+receives an additional revision-guarded stream only when a new saved result
+exists. Ordinary refreshes leave an open dialog intact; normal reload does not
+replay a delivered message. Rejected movement returns 422 and recovers controls.
+Timer GETs belong to the `game-map` Turbo Frame, so they cannot cancel a
+concurrent top-level logout submission. Frame/authentication recovery promotes
+the appropriate server response to normal navigation. An existing closed
+`UserSession` also rejects later gameplay requests carrying an old cookie;
+explicit sign-in restores access through the normal session lifecycle.
 
 Ticks derive from the absolute deadline and server/client clock offset;
 skipped callbacks do not extend travel/work. Outdoor pages disable Turbo
@@ -1387,6 +1691,9 @@ A wilderness fight does not move `CharacterPosition`. Its match metadata stores 
 - Explicit impassable cells and all logical edges are enforced server-side.
 - Source-backed `100 x 100` cell-art overrides render at their configured sheet
   slice and ordinary cells retain the coordinate-derived terrain fallback.
+- The bounded starter landscape renders physical 100px slices, with matching
+  master fallback and no duplicate decorative city/village marker. Independent
+  artwork, gameplay metadata and persisted positions survive its seed upgrade.
 - Exact-cell hidden NPC state, visible entrance/local action, and player-presence composition resolves correctly without revealing the NPC on the outdoor map.
 - The verified Central Square gate round-trips through the explicit `[6, 8]`
   outdoor cell; stale or uncaptured gate rows do not become available.
@@ -1395,6 +1702,9 @@ A wilderness fight does not move `CharacterPosition`. Its match metadata stores 
   fresh Trading Post and exit offers.
 - Logout/login from the village or its linked Shop preserves the same entrance
   cell and resumes only while that entrance remains accessible.
+- Mine/exchange lobbies preserve their exact outdoor cell on entry/return and
+  revalidate the same entrance on resume. Read-only section requests cannot
+  enable underground, extraction or resource-trading actions.
 - Hostile same-cell interaction starts the shared NPC fight implementation.
 - Movement, entrance, local, Character, and Inventory wilderness actions can be replaced by the same hostile encounter check.
 - Remaining on the outdoor surface can trigger the same source-backed
@@ -1403,11 +1713,11 @@ A wilderness fight does not move `CharacterPosition`. Its match metadata stores 
   cell/NPC state changes, and overlapping/retried due checks reuse one active
   match.
 - The captured Plague Rat encounter remains invisible on the map, then the fight renders and resolves two independently targetable NPCs; both living NPCs can act, the first defeat does not end the fight, and each defeated NPC receives one retry-safe typed-loot resolution. Only a successful explicit roll can add Inventory value; the unknown production Rat Tail probability remains disabled.
-- The mapped `[8,7]` encounter selects exactly one complete captured roster,
+- The mapped `[14,15]` encounter selects exactly one complete captured roster,
   preserves its mixed/repeated member order, level, HP, XP, and risk metadata,
   and chooses a due time only inside one captured window; forged browser
   roster, coordinate, size, level, and delay values have no effect.
-- Defeating and finishing a sampled `[8,7]` roster leaves that cell's encounter
+- Defeating and finishing a sampled `[14,15]` roster leaves that cell's encounter
   source eligible; a later passive schedule can start another independently
   selected roster. Fixed anchors retain their explicit defeated/respawn state.
 - A World-created live fight reaches its timeout result at the persisted
@@ -1518,6 +1828,13 @@ and page-overflow separation at narrow widths. Its classic-scrollbar regression
 forces and verifies a 15px gutter on a separate probe, then checks whole-cell
 geometry and centering at 390px, 1150px, and 1326px, native horizontal wheel
 panning, chat-resize sizing, and unchanged movement offers/position.
+
+The seeded village resume system spec waits up to ten seconds for the actual
+sign-out redirect before checking shell removal, then verifies the persisted
+session is closed and a fresh World request requires authentication. This
+keeps the core-loop check valid when logout takes longer than Capybara's
+default two-second DOM wait; explicit login must still restore the village cell.
+
 Run the complete suite before
 release because the world hands off to combat, city, shop, inventory, shell,
 presence, and login-resume behavior.
@@ -1673,6 +1990,156 @@ Documentation audits passed all 10 handbooks and 65 architecture documents.
 the seeded characters' prior combat flags were restored, and the main review
 character returned to its initial World cell `[5,7]`.
 
+### 15.5 Incremental cells, content editors and pond verification (2026-09-08)
+
+Manual Chrome verification used the running Rails application on port `3102`
+with an isolated development database populated from `db/seeds.rb`. The normal
+local application/database was not used for fixture mutations. Tests use a
+separate database.
+
+| Exercised local flow | Observed result |
+|---|---|
+| First seeded account: login → city exit → two northwest steps | Server timers completed at `[5,7]`, then village `[4,6]`; map, offered directions, entrance and presence updated. The cell editor was changed during travel, exercising content-change recovery. |
+| Village → Trading Post → Shop → Village → outdoor exit | Shop and square labels changed correctly; keyboard activation of the polygon exit returned to `[4,6]` with Enter available again. |
+| Resource-group editor | Added and saved a review-only herb group on the village cell; the guided field and metadata agreed. This fixture does not claim a captured herb assignment. |
+| NPC editor | Disabled the seeded Bandit anchor, confirmed inactive state with its complete rosters/HP retained, and re-enabled it. |
+| Pond `[13,10]` | Verified 25 contiguous landscape slices with center background offset `-200px -200px`; Drink and Fish were available, with the Pond label in the location-scoped player pane. A direct isolated-database fixture positioned the player here rather than claiming a captured local eastern-gate route. |
+| Drink from effective fatigue 20 | Database showed 18 immediately, unchanged coordinates, one accepted offer with a 60-second deadline and recorded two-point effect. Closing/reloading retained the lock and did not replay the result or recovery. |
+| Walking across the pond landscape | Timed east step arrived at `[14,10]` with pond actions absent; timed west step restored `[13,10]` and Look/Drink/Fish. The joined terrain remained coherent across cell movement. |
+| Pond Look | The second seeded player received “Nothing found.” with the configured 28-second lock; all three authored actions remained visible and disabled while work was active. |
+| Fish without bait | Immediate no-bait dialog, 30-second deadline, disabled actions and no catch; closing/reloading preserved the timer without a repeated dialog. |
+| Timer/logout overlap | Held the second player’s logout confirmation open past the Look deadline, then confirmed. Sign-in appeared; a fresh World request remained unauthorized and the database showed zero open sessions for that account. Explicit login restored the saved pond location. |
+| Logout/login | The first seeded account restored the same pond coordinate and label. The second seeded account independently restored its fixture pond position and saw its own actions/presence, with the signed-out first account absent. |
+
+Manual review caught presentation defects before completion: sibling
+cell-action buttons disappearing during timed work, and a timed map GET
+competing with logout navigation. Result recovery was then corrected to update
+one dialog container without re-fetching away its consumed message. Regression
+coverage accompanies these corrections. Detailed invalid metadata, cross-zone isolation, atomic retries,
+concurrent NPC-reference writes and time boundaries are tested at narrower
+service/model/request boundaries; manual UI checks do not substitute for them.
+
+Final completion check: `bin/verify full` passed on the isolated test database:
+**491 Ruby files lint-clean, 2,197 non-system examples and 256 Chrome system
+examples, zero failures**. Brakeman reported zero warnings; Bundler Audit and
+Importmap reported no vulnerable dependencies. Feature documentation (11
+handbooks) and architecture (67 documents) audits passed. Existing Rack
+`unprocessable_entity` deprecation notices do not represent failed examples.
+The later documentation-only check and `git diff --check` also passed.
+
+### 15.6 Starter routes, surveyed cells and location labels (2026-09-09)
+
+Live evidence is preserved in the September 9 starter-route, atlas and wiki
+observations under `doc/design/reference/world/observations/`. Local manual
+Chrome checks used Rails on `http://127.0.0.1:3102` and the isolated seeded
+development database `mmorpg_world_cells_manual_20260908`; automated checks used
+the separate `mmorpg_ci_logout_20260909` test database. Real local travel timers
+were used during manual checks. No source assets were imported or new artwork
+generated. These checks accept the bounded route/import behavior, not complete
+zone artwork, unobserved action sets or profession outcomes.
+
+| Exercised local flow | Observed result |
+|---|---|
+| Pond → eastern intermediate → east gate → Enter | Timed `[13,10] → [12,10] → [11,9]` travel changed cell-specific offers and labels; Enter returned to Law. The gate/pond neighbor directions matched the captured route, including the unavailable pond-east cell. |
+| Law → Residential → Central Square | Actual pointer activation followed the district arrow. Review exposed an overlapping east-exit hit area; district arrows now stack above it. A native hit-test/pointer regression reproduces the old failure and passes with the correction. |
+| Central Square → west gate → village entrance | The city exit reached `[6,8]`; northwest steps reached `[5,7]` and `[4,6]`. Reload during a step retained its remaining timer, source location and disabled controls; completion updated the authoritative cell. |
+| Village → Shop → village → outdoors | Actual pointer activation entered the Shop, returned to the square, and used its separate exit. The outdoor position remained `[4,6]`; Enter and the Frontier Village label returned. |
+| Eastern intermediate Look | Only Look was offered at `[12,10]`. It immediately showed “There is no useful vegetation in this area.”, disabled Character/Inventory/Look and movement during its lock, and restored the six movement offers after completion without changing coordinates. |
+| Map description, nearby pane and owner profile | Village and pond labels agreed across these surfaces. Profiles displayed the zone and distinct current location beneath the character image, without raw coordinates. Moving off the pond removed the Pond label and its Drink/Fish actions. |
+| Two seeded accounts and public profile | Logout/login restored the first account's village cell and the second account's pond cell independently. Viewing the first account's public profile as the second showed the target's village location while the viewer's nearby pane correctly remained scoped to the pond. |
+
+Catalog/seed specs verify all 273 declarations, malformed content, the exact
+route neighbor sets, managed-edit preservation, retained saved positions and
+repeat-seed convergence. The stale-gate regression also proves cleanup cannot
+delete a surveyed blocked cell and reopen its sparse fallback. NPC model,
+authoring, selection and fight-start coverage proves level zero is retained
+without accepting negative/fractional levels or invalid HP. Source NPC pools
+remain annotations; the separate captured Bandit anchor is `[14,15]`.
+
+Final stable `bin/verify full` passed: **495 Ruby files lint-clean, 2,240
+non-system examples and 258 Chrome system examples, zero failures**. Brakeman
+reported zero warnings; Bundler Audit and Importmap found no vulnerable
+dependencies. The feature audit passed for 11 handbooks and the architecture
+audit for 70 documents. The post-verification documentation audit and
+`git diff --check` also passed. The previously captured Drink and no-bait Fish
+flows were retained; this pass did not claim new successful profession outcomes.
+
+The next artwork discussion uses the unexecuted proposal in
+`doc/design/reference/world/starter_map_art_prompt.md`. The longer western-lake
+route, complete neighboring action sets, uncaptured interiors and full-zone
+population remain outside this bounded acceptance.
+
+### 15.7 Continuous starter artwork, editable content and lobbies (2026-09-09)
+
+The follow-up uses the same isolated review/test databases as section 15.6. Source
+mine/exchange entry, labels, tabs and exact-cell returns are recorded in
+`doc/design/reference/world/observations/2026-09-09_starter_landmarks_and_art.md`.
+All exact image prompts, including discarded edits and the preserved older
+pond prompt, are centralized in `doc/ARTWORK.md`. Earlier dated statements that
+artwork was pending describe their historical acceptance, not current status.
+
+The selected 2100×1300 landscape contains 273 physical 100×100 cells. Reassembling
+every slice in coordinate order and comparing it to the master produced zero
+differing pixels. The mine, village, exchange, west/east openings and pond dock
+were inspected in their actual native crops. Missing physical slices retain
+the matching master crop. Art does not make a road safe or change passability.
+
+Manual Chrome checks on the running Rails app verified:
+
+- Village → mine: normal 30-second travel, changed outdoor label, Enter,
+  original 760×255 lobby scene, Shop/Entrance sections and disabled descent.
+  Reload preserved the lobby; logout/login restored it; Nature returned to
+  the exact[4,5] cell with Enter and the exterior label restored.
+- Village → exchange: normal travel to[4,7], immediate lobby entry, all three
+  sections with two resource selectors and unavailable Choose, and Nature
+  returning to [4,7]. At 390×844 the native scene panned horizontally and its
+  controls remained available.
+- The old CSS village ellipse/huts initially overlaid the new art. The fix
+  removes every decorative pseudo-element for an exact painted anchor.
+  Chrome computed styles confirmed transparent background and no pseudo content.
+  Separate browser regression coverage verifies moved/new entrances retain
+  visible fallback markers, including mine/exchange labels.
+- Exchange →[5,7]→[6,8]→Forpost: the intermediate had its village label without
+  Enter; the west gate returned to Central Square. Main→Residential→Law→east
+  gate and Enter→Law confirmed both reciprocal city handoffs against the new art.
+- The mobile map retained native 100px cells in three visible columns, a centered
+  cursor and working movement. Desktop movement retained the continuous terrain
+  and showed the gate opening at the authoritative entry cell.
+- East gate → intermediate → pond: the intermediate's empty Look result was
+  retained, followed by normal travel to [13,10]. The pond restored Look,
+  Drink and Fish, omitted movement into its blocked eastern neighbor, and
+  matched the owner's profile and nearby-player location labels. Drink showed
+  its successful result, persisted fatigue from10% to8%, and retained the
+  existing action/movement lock on the new art. Fish retained its no-bait
+  result; after completion and dismissal the same cell's offers returned.
+- The second seeded account walked from the pond to road cell [12,11]. Its NPC
+  stayed hidden and a reload retained the same server deadline. After about
+  327 seconds, an automatic fight selected captured sample 2026-09-01-2345:
+  one level-7 Bandit with 155/155 HP. The persisted position and combat return
+  context remained [12,11]. No clock, probability or combat turn was changed
+  for this check; the review account was left in that test fight.
+
+Seed regressions reproduced and fixed resets of moved/disabled linked entrances,
+stale offers caused by reseeding, and collisions with independently authored
+entrances. Existing linked locations now remain managed; intentional CityCatalog
+gate reconciliation remains explicit. The initial NV grant is seed-scoped and
+retry/concurrency-safe, without rewriting historical balances. NPC bootstrap
+preserves managed placements and samples complete captured rosters at eligible
+atlas cells. Detailed failure/authorization/retry coverage remains at narrow
+public boundaries; browser tests protect the real Turbo/Stimulus paths.
+
+Final `bin/verify full` passed: **517 Ruby files lint-clean, 2,300 non-system
+examples and 261 Chrome system examples, zero failures**. Brakeman reported
+zero warnings; Bundler Audit and Importmap reported no vulnerable dependencies.
+Documentation audits passed 11 handbooks and 73 architecture documents.
+Rack's existing status-name deprecation notices were warnings, not failures.
+
+This acceptance covers the bounded map and location loop. It does not complete
+the zone's remaining content, unknown formulas/pools, successful professions,
+mine underground/extraction/purchases or exchange transactions. Lobbies expose
+read-only previews; unavailable operations are disabled rather than simulated.
+
+
 ## 16. Responsible for Implementation Files
 
 ### Requirements and design evidence
@@ -1683,6 +2150,7 @@ character returned to its initial World cell `[5,7]`.
 - `doc/design/features/professions.md`
 - `doc/design/launch_mvp_plan.md`
 - `doc/design/reference/world/observations/2026-05-09_overworld_movement.md`
+- `doc/design/reference/world/observations/2026-09-08_cell_content_and_world_rules.md`
 - `doc/design/reference/world/observations/2026-05-20_outdoor_npc_resource.md`
 - `doc/design/reference/combat/observations/2026-08-26_wilderness_two_orc_group_fight.md`
 - `doc/design/reference/combat/observations/2026-08-26_wilderness_passive_goblin_fight.md`
@@ -1734,9 +2202,13 @@ character returned to its initial World cell `[5,7]`.
 
 - `app/controllers/concerns/outdoor_action_availability.rb`
 - `app/queries/game/world/presence.rb`
+- `app/queries/game/world/map_buffer.rb`
+- `app/services/game/world/rules.rb`
 - `app/services/game/world/action_offer_builder.rb`
 - `app/services/game/world/accept_action.rb`
 - `app/services/game/world/cell_art_catalog.rb`
+- `app/services/game/world/starter_encounter_distribution.rb`
+- `app/services/game/world/starter_cell_catalog.rb`
 - `app/services/game/world/tile_state_resolver.rb`
 - `app/services/game/world/tile_building_service.rb`
 - `app/services/game/world/outdoor_npc_config.rb`
@@ -1764,6 +2236,9 @@ character returned to its initial World cell `[5,7]`.
 - `app/policies/manage_policy.rb`
 - `app/models/management_audit_event.rb`
 - `app/services/manage/content_mutation.rb`
+- `app/services/manage/world_cell_attributes.rb`
+- `app/services/manage/tile_npc_attributes.rb`
+- `app/javascript/controllers/manage_collection_controller.js`
 - `app/queries/manage/paginated_relation.rb`
 - `app/helpers/manage_helper.rb`
 - `app/views/layouts/manage.html.erb`
@@ -1777,6 +2252,8 @@ character returned to its initial World cell `[5,7]`.
 - `app/views/shared/_nl_players_list.html.erb`
 - `app/views/world/show.html.erb`
 - `app/views/world/_map.html.erb`
+- `app/views/world/_map_cell.html.erb`
+- `app/views/world/_map_control.html.erb`
 - `app/views/world/_actions.html.erb`
 - `app/views/world/_location_info.html.erb`
 - `app/views/world_locations/show.html.erb`
@@ -1789,6 +2266,7 @@ character returned to its initial World cell `[5,7]`.
 - `app/assets/stylesheets/shell.css`
 - `app/assets/stylesheets/chat_presence.css`
 - `app/assets/images/world/forpost-terrain.png`
+- `app/assets/images/world/forpost-pond-landscape.png`
 - `app/assets/images/gate.png`
 
 ### Integrated NPC-combat entry
@@ -1821,8 +2299,17 @@ ownership after the World capability is accepted.
 ### Content, seeds, and schema
 
 - `config/gameplay/world_cell_art.yml`
+- `config/gameplay/world_rules.yml`
+- `config/gameplay/starter_world_cells.yml`
 - `config/gameplay/outdoor_npcs.yml`
 - `db/seeds.rb`
+- `db/seeds/world_zones.rb`
+- `db/seeds/world_cells.rb`
+- `db/seeds/world_locations.rb`
+- `db/seeds/city_hotspots.rb`
+- `db/seeds/outdoor_npcs.rb`
+- `db/seeds/starter_encounter_bootstrap.rb`
+- `db/seeds/world_content_support.rb`
 - `db/schema.rb`
 - `db/migrate/20251121090004_create_map_tile_templates.rb`
 - `db/migrate/20251121150000_create_characters_and_privacy_settings.rb`
@@ -1832,6 +2319,30 @@ ownership after the World capability is accepted.
 - `db/migrate/20251216091841_create_tile_buildings.rb`
 - `db/migrate/20260509211000_create_world_action_offers.rb`
 - `db/migrate/20260729120000_create_management_audit_events.rb`
+
+### September 8 focused regression coverage
+
+- `spec/queries/game/world/map_buffer_spec.rb`
+- `spec/queries/game/world/presence_spec.rb`
+- `spec/requests/world_map_updates_spec.rb`
+- `spec/system/world_map_incremental_spec.rb`
+- `spec/services/game/world/rules_spec.rb`
+- `spec/requests/world_drinking_spec.rb`
+- `spec/system/world_drinking_spec.rb`
+- `spec/system/world_fishing_spec.rb`
+- `spec/models/cell_content_authoring_spec.rb`
+- `spec/services/game/world/starter_cell_catalog_spec.rb`
+- `spec/system/world_eastern_gate_spec.rb`
+- `spec/models/open_world_seed_spec.rb`
+- `spec/models/starter_art_seed_spec.rb`
+- `spec/models/outdoor_npc_seed_bootstrap_spec.rb`
+- `spec/models/world_location_seed_preservation_spec.rb`
+- `spec/services/game/world/starter_encounter_distribution_spec.rb`
+- `spec/requests/world_location_lobbies_spec.rb`
+- `spec/system/world_location_lobbies_spec.rb`
+- `spec/system/world_painted_landmarks_spec.rb`
+- `spec/services/manage/cell_editor_attributes_spec.rb`
+- `spec/jobs/tile_npc_respawn_job_spec.rb`
 
 ### Factories
 
@@ -1974,38 +2485,76 @@ Before extending the World feature:
 | 2026-09-02 | Added validated exact-cell roster samples and captured delay windows through one server-owned selector/start pipeline, including mixed/repeated templates, per-member level/HP, encounter XP/risk persistence, malformed-reference failure, and seeded config convergence. Sampled anchors now remain eligible after full victory and Finish, matching the completed four-fight `m_1008_1007` chain; request coverage proves a second schedule/start on the same anchor. Seeded Chrome verified normal City exit, a mixed `[8,7]` round, five-minute timeout/Finish/return, and automatic re-entry after a server-persisted `137s` captured-window delay. Complete source pools, weights, probability, cooldown, and delay distribution remain evidence gaps. |
 
 
-## 19. Open-world parity audit (2026-09-07)
+## 19. Open-world parity audit (updated 2026-09-09)
 
 The feature status is Partially Implemented for the broader requested world.
-The following distinction prevents a passing sample from implying full region
+The following distinction prevents a passing sample from implying full zone
 or AOI parity.
+
+### Remaining gaps by owning domain
+
+This table is the cross-domain overview. Detailed gaps belong to the linked
+domain/design/feature owners; a cell exposing an action does not transfer
+profession, progression or commerce ownership to World. A documented gap is
+not automatically an after-MVP commitment.
+
+| Remaining topic | Owning documentation | Delivery boundary |
+|---|---|---|
+| Full-zone terrain, artwork, passability, labels, entrances and cell content | [World map design](../design/areas/world_map.md), this handbook and [content management](../guides/managing_game_content.md) | Stage 2 beyond the bounded 273-cell starter catalog; atlas annotations do not establish every cell's complete live action set. |
+| Movement and local-action formulas | [Movement](../design/features/movement.md#travel-time) and this handbook's configurable rules/local-action sections | Refine the captured durations and provisional fallback with isolated evidence; do not invent terrain/equipment/effect coefficients. |
+| Nature Child and skill/perk handoffs | [Character Progression, section 6.5](character_progression.md#65-world-related-skill-and-perk-gaps) | The four-point sip is published but its perk integration is not implemented; other coefficients/variants need evidence. |
+| Inactive-player expiry | [Social domain](../domains/social.md#evidence-and-implementation-gaps) and [Game Shell presence](game_shell.md#63-presence-and-layout-preferences) | Five-minute freshness is a local policy; exact source expiry needs evidence. |
+| NPC statistics, pools, compositions, weights and encounter timing/probability | [NPC gap record](../design/reference/npcs_quests/observations/evidence_needed_world_npc_content_and_formulas.md#remaining-npc-gaps) and [NPC design](../design/features/npcs_quests.md) | Captured starter groups work; broader content and formulas require evidence. Level-zero support does not supply unknown rat statistics. |
+| Successful fishing/proficiency, gathering and digging | [Professions](professions.md) | Deferred profession work, with explicit user eligibility decisions and remaining evidence/implementation gaps. |
+| Mine underground topology/movement and extraction | [Dungeons](dungeons.md) for descent/underground travel; [Professions](professions.md) for extraction | World lobby entry/return/resume is complete; underground gameplay is separate unfinished work. |
+| Mine item/license purchases and resource exchange operations | [Shop and Economy](shop_economy.md#65-mine-shop-and-resource-exchange-gap-ownership) | Current mine/exchange previews are read-only; acquisition, queries, trading and storage remain unfinished. |
+| Additional zones and walking crossings | [Movement](../design/features/movement.md#persistence-contract) and [Airship gaps](airship_travel.md#8-gaps-and-version-history) | Explicitly after the one-zone MVP; destination content and walking boundary evidence/implementation are absent. |
+| Airship incremental network responses | [Airship gaps](airship_travel.md#8-gaps-and-version-history) | Later technical improvement; flight still sends bounded 21/55-cell snapshots while walking already sends deltas. |
 
 | Classification | Finding and current disposition |
 |---|---|
 | Resolved `[IMPL]` | Whole-region tile hydration replaced by eight-cell prefetch/exact-target reads; rendering stays bounded. |
 | Resolved `[IMPL]` | Fresh offer validation precedes interruption; character locking/status reload protects stale and duplicate actions, travel/work exclusions, and retry-safe completion. |
 | Resolved `[IMPL]` | Countdown sleep/Back recovery, failed-submission navigation, keyboard focus, full-page Turbo ownership, and header/list presence refresh are covered. |
-| Resolved `[IMPL]` | Look now persists the observed 28-second lock and immediate dismissible empty result. |
+| Resolved `[IMPL]` | Look persists its 28-second empty-result lock; Drink applies two fatigue points immediately with a 60-second lock; Fish reproduces the no-bait entry with a 30-second lock. All use owned offers, atomic persisted work and one-time dialog delivery. |
+| Resolved `[IMPL]` | Walking reuses overlapping cells and transmits only entering terrain (0 on acceptance, 9/15/23 on completion), with full-snapshot recovery. Airship reuses overlapping DOM cells but still transmits its bounded 21/55-cell snapshots. |
+| Resolved `[IMPL]` | Guided cell actions/resource groups, NPC activation, weighted complete rosters, explicit level ranges, passability and entrance editors validate content. Referenced NPC templates cannot be retired or renamed even through roster-only references. |
+| Resolved `[IMPL]` | Validated configurable movement, fatigue, action and presence parameters replace scattered constants; accepted work retains its saved duration/effect. Unknown formula inputs remain evidence gaps. |
 | Resolved `[IMPL]` | Authored NPC groups support the documented maximum of ten with validated member slots and rejection above ten. Captured seed rosters are unchanged; no unknown group-selection formula is inferred. |
-| Resolved `[IMPL]` / `[DOC]` | Forpost's gate now uses its actual source coordinate and preserves the sampled village route. Old Oktal coordinates no longer label this gate. |
+| Resolved `[IMPL]` / `[DOC]` | Both Forpost gates use their source coordinates and reciprocal city nodes. The west/village and east/intermediate/pond routes use surveyed neighbors; the eastern intermediate now offers its captured empty Look. |
 | Resolved `[IMPL]` | Village exterior, square, and Shop use distinct saved-location presence projections and authored labels; the viewer participates in the list scope. Shop returns to the square before the separate outdoor exit. |
 | Resolved `[IMPL]` | Same coordinates in different regions remain isolated across terrain, NPC, entrance, offer, action, and resume boundaries. Populated content keys cannot be renamed or deleted; display titles remain editable. Stale active moves fail when their source region/cell changes. |
 | Resolved `[IMPL]` / `[DOC]` | The viewport fits whole odd columns/rows to the equivalent header-plus-main gameplay frame, keeping 100px cells and the fixed cursor. Village landmarks derive from canonical location kind without duplicate marker metadata. |
-| Remaining `[IMPL]` + `[EVIDENCE]` | The million-cell region remains sparse sample content with repeating project-owned terrain. Full region art, walkability, resources, NPC pools, and interconnected locations are not captured. The `[8,7]` Bandit remains a separate captured encounter sample, not evidence of adjacency to the gate cluster. |
+| Resolved `[IMPL]` | Level-zero NPC authoring, roster selection and persisted participant display work; positive HP remains required. |
+| Resolved starter `[IMPL]` | The 273-cell starter rectangle has continuous original artwork delivered as 100px physical PNG cells with master-crop fallback. Painted landmarks suppress duplicate decorative markers, retaining accessible labels and server-owned entrance controls. Gameplay passability remains atlas/DB-backed, including roads. |
+| Resolved starter `[IMPL]` | Forty additional atlas-eligible placements reuse complete captured Bandit profiles with the user's 300–360-second interval. Initial bootstrap checks managed cells/entrances and the bot-free pond; moved/disabled existing placements survive reseed. This does not establish the source's complete pools, HP formulas or selection weights. |
+| Resolved scoped `[IMPL]` | Mine `[4,5]` and exchange `[4,7]` have exact-cell lobby entry, read-only sections, return and login resume. Underground movement/extraction and resource trading remain unavailable. |
+| Stage 2 `[EVIDENCE]` / deferred content | The million-cell zone remains sparse outside the 273-cell starter rectangle, using fallback art/default passability for unauthored cells. Full-zone art, roads, blocked cells, terrain classification, labels, settlements and broader NPC/resource population remain incomplete. Some starter annotations also lack a live-confirmed complete action set. The separate captured Bandit anchor stays at `[14,15]`; source columns requiring negative local X remain outside the bounded import. |
 | Resolved `[IMPL]` / `[EVIDENCE]` | Ordinary chat is confined to the authoritative current cell or room, as confirmed by the Neverlands Chat article and the user. Each bounded poll/send reauthorizes the current session and context; ordinary local/global broadcasts are suppressed. Already delivered rows persist through movement within one login; old-login and earlier-visit rows are not fetched. Personal/world gameplay events retain their durable shared timeline. |
 | Resolved `[IMPL]` | Nearby rows/counts use recent open sessions and the playable character only, excluding logged-out users and inactive alternate characters. Session heartbeats preserve logout and monotonic last-seen state; the total refreshes with the list. |
 | Resolved `[IMPL]` | Selected Arena rooms and city building/Shop rooms use distinct saved audiences. Room access, restoration, and application boundaries reject foreign region-bound rooms; actual world-position transitions clear the previous room atomically. |
 | Resolved `[IMPL]` | City-building entry validates, saves the room, and renders presence under the character lock; a concurrent relocation cannot save stale room context. First Hospital/Market/Airship entry renders the current label/count/list immediately. Both Arena Enter links refresh the full shell, so surrounding presence changes with the selected room without waiting for automatic refresh. Request/browser coverage belongs to `doc/features/game_shell.md`, `doc/features/city.md`, and `doc/features/arena_combat.md`. |
 | Remaining `[EVIDENCE]` | Exact Neverlands disconnect/logout expiry remains unpublished and unobserved. The confirmed audience is one cell or room; the existing five-minute open-session window is a local technical liveness policy, not a claimed Neverlands interval. |
-| Deferred by user | Successful gathering belongs to the later alchemy skill path. The current empty Look result remains supported; yields, eligibility, and profession progression are not invented. |
-| Current delivery boundary | Populate one region. Configured airship journeys now use persisted region-qualified paths and bounded map cells, with atomic payment, explicit landing, resume, and flight audience isolation; see `doc/features/airship_travel.md`. Default routes await destination/path/schedule content. Additional populated regions and walking border mappings remain outside the current acceptance boundary. |
-| Remaining `[EVIDENCE]` | General search and travel modifiers, broader location families, and full encounter probabilities/pools remain incomplete. |
+| Deferred by user | Successful gathering remains deferred to later profession work, originally grouped by the user with alchemy. Wiki evidence distinguishes Naturalist/Herbalist discovery from Alchemy potion making. The current empty Look result remains supported; yields, eligibility, and profession progression are not invented. |
+| Current delivery boundary | Release one zone; full authored population is Stage 2. Configured airship journeys now use persisted region-qualified paths and bounded map cells, with atomic payment, explicit landing, resume, and flight audience isolation; see `doc/features/airship_travel.md`. Default routes await destination/path/schedule content. Additional populated zones, normal airship route activation and walking border mappings are TODO after the one-zone MVP. |
+| Remaining `[EVIDENCE]` / deferred `[IMPL]` | General movement/search coefficients and exact encounter pools/weights/probability/timing need evidence. Nature Child's four-point recovery is known but its perk handoff is absent; successful professions, underground mine gameplay and exchange operations are unfinished. The domain owners above separate known requirements from unknown rules. Lobby support/configurability does not complete those mechanics. |
 
-The renderer reloads its bounded map snapshot after travel; it does not yet
-reuse only entering/leaving DOM rows as the source client does. That is a
-presentation optimization, not whole-region loading or client-owned movement.
-No new art was needed for this pass: the existing project-owned sheet and
-fixed-cell slicing remain the presentation pipeline. A decorative castle emoji
-now identifies the seeded city entrance; its accessible name and Enter offer
-remain server-owned. The village keeps its visible, project-owned settlement
-landmark. No Neverlands assets or combat-formula changes belong to this audit.
+The September 8 walking follow-up now reuses overlapping DOM terrain and sends
+only entering cells, with bounded full-snapshot recovery. Configurable numeric
+rules and guided cell resource/NPC authoring close the corresponding local
+maintainability gaps without filling unknown content or formulas. Full zone
+population is Stage 2. Additional-zone route activation and walking border
+mappings are TODO after the one-zone MVP. The starter landscape paints its
+landmarks once; catalog-backed presentation suppresses duplicate city/village
+decorations while accessible names and Enter offers remain server-owned.
+Moved/new entrances and older fallback art retain visible markers; suppression
+requires both the exact painted slice and the actual building key. No Neverlands
+assets or invented combat formulas belong to this audit.
+
+The current starter survey is documented in
+`doc/design/reference/world/observations/2026-09-09_starter_routes.md`,
+`doc/design/reference/world/observations/2026-09-09_starter_atlas.md`, and
+`doc/design/reference/world/observations/2026-09-09_wiki_skills_and_cell_actions.md`.
+Earlier September 8 manual travel to `[14,10]` exercised a placeholder default;
+the atlas now explicitly blocks that cell. The verified pond return uses
+`[12,10]` and the eastern gate, rather than retaining that old permissive path.

@@ -22,11 +22,7 @@ module ArenaEntryGate
     return if current_character_has_active_arena_match?
     if current_character
       context = Game::World::ResumeContext.new(character: current_character)
-      if context.arena_available?
-        city_session = session[:arena_city_character_id].to_i == current_character.id &&
-          session[:arena_city_zone_id].to_i == current_character.position.zone_id
-        return if city_session || context.arena_room
-      end
+      return if context.arena_entered? || context.arena_room
     end
 
     respond_to do |format|
@@ -41,13 +37,6 @@ module ArenaEntryGate
       end
       format.any { redirect_to world_path, alert: "Enter the arena through the city building." }
     end
-  end
-
-  def mark_city_arena_entry!(hotspot)
-    return unless hotspot&.key == "arena"
-
-    session[:arena_city_character_id] = current_character.id
-    session[:arena_city_zone_id] = current_character.position&.zone_id
   end
 
   def current_character_has_active_arena_match?

@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2100" height="1300" viewBox="0 0 2100 1300">
+<rect width="2100" height="1300" fill="#758350"/>
+<path d="M0 0H2100V200C1840 140 1690 280 1510 180S1210 260 1000 150 710 210 550 110 200 220 0 160Z" fill="#4c623d"/>
+<path d="M0 1300V820C200 910 370 980 480 900S720 990 900 1020 1240 1180 1500 1070 1810 1160 2100 1020V1300Z" fill="#506840"/>
+<path d="M0 650Q240 560 450 550L550 550L650 650 M450 550V350 M1150 750L1250 850H1350 M650 650Q570 900 580 1300 M1150 750Q1440 700 1550 450T2100 360" fill="none" stroke="#b2a080" stroke-width="32"/>
+<path d="M654 600Q900 570 1170 620L1190 800Q1130 950 850 950L660 890Z" fill="#999486" stroke="#504d42" stroke-width="20"/>
+<path d="M650 630V677 M1175 732L1185 770" stroke="#b8a27d" stroke-width="33"/>
+<g fill="#9c673e" stroke="#5c5244" stroke-width="8"><rect x="730" y="650" width="90" height="80"/><rect x="860" y="660" width="85" height="66"/><rect x="1040" y="650" width="80" height="65"/><rect x="1030" y="815" width="70" height="65"/><rect x="855" y="820" width="100" height="70"/><circle cx="746" cy="818" r="45"/></g>
+<g fill="#ae9160" stroke="#65563b" stroke-width="6"><rect x="370" y="400" width="62" height="38"/><rect x="465" y="397" width="66" height="39"/><rect x="375" y="462" width="59" height="38"/><rect x="474" y="460" width="62" height="40"/></g>
+<path d="M402 378L401 334Q450 285 501 334L500 378Z" fill="#77705c" stroke="#514837" stroke-width="8"/><rect x="431" y="339" width="40" height="40" fill="#39382d"/>
+<g fill="#a06e45" stroke="#65543e" stroke-width="6"><rect x="408" y="517" width="84" height="64"/><path d="M398 526L450 496L502 526Z"/></g>
+<path d="M1336 797Q1424 759 1480 809T1474 929Q1410 975 1345 924T1310 846Z" fill="#487875" stroke="#8f925d" stroke-width="25"/>
+<path d="M1321 859L1368 850" stroke="#a99369" stroke-width="16"/>
+<g fill="#fff" stroke="#313a2a" stroke-width="2" font-family="Arial" font-size="23" text-anchor="middle" paint-order="stroke"><text x="450" y="321">MINE [4,5]</text><text x="450" y="449">VILLAGE [4,6]</text><text x="450" y="600">EXCHANGE [4,7]</text><text x="646" y="620">WEST GATE [6,8]</text><text x="1170" y="714">EAST GATE [11,9]</text><text x="1450" y="1000">POND [13,10]</text><text x="955" y="785">WALLED CITY</text></g>
+</svg>

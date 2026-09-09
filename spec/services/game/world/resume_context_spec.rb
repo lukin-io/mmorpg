@@ -188,6 +188,33 @@ RSpec.describe Game::World::ResumeContext do
     let!(:arena_hotspot) { create(:city_hotspot, :arena, zone: city) }
     let(:room) { create(:arena_room, zone: city) }
 
+    it "persists a zone-scoped entry once and rejects it in a different city" do
+      resume_context.remember_arena_entry!
+      saved_metadata = character.reload.metadata
+      saved_update_time = character.updated_at
+      resume_context.remember_arena_entry!
+
+      expect(character.reload.metadata).to eq(saved_metadata)
+      expect(character.updated_at).to eq(saved_update_time)
+      expect(resume_context.arena_entered?).to be true
+
+      position.update!(zone: create(:zone, :city))
+      expect(resume_context.arena_entered?).to be false
+    end
+
+    it "does not grant entry when the current building is disabled" do
+      arena_hotspot.update!(active: false)
+
+      expect(resume_context.remember_arena_entry!).to be_nil
+      expect(resume_context.arena_entered?).to be false
+    end
+
+    it "rejects a malformed entry marker" do
+      character.update!(metadata: {"arena_entry_zone_id" => city.id.to_s})
+
+      expect(resume_context.arena_entered?).to be false
+    end
+
     it "persists an authorized room id and resolves the same room after reload" do
       expect(resume_context.remember_arena_room!(room:)).to eq(room)
       fresh_context = described_class.new(character: Character.find(character.id))
