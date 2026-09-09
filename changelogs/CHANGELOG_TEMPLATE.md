@@ -1,12 +1,16 @@
 # Change Note: [Short outcome]
 
-> Use this optional template for a release/rollout, a user-requested change
-> record, or a durable architectural decision that would otherwise be hard to
-> discover. Ordinary implementation work does not require a changelog, and this
-> file is never workflow state or a verification gate.
+> Required for every session that changes repository files, including
+> documentation-only work. Consolidate the whole session in one record, not one
+> per turn, commit, or subtask. Finalize only after all applicable verification
+> passes, including required manual checks; update the same record for later
+> verified work in that session. Read-only conversations need no changelog.
+> Follow `AGENTS.md` for final documentation/link/diff validation and honest
+> reporting of failed or pending checks. Never use this record as a receipt or
+> state machine to make verification pass.
 
 - Date: YYYY-MM-DD
-- Scope: [feature, release, migration, or architecture boundary]
+- Scope: [whole-session topics and boundaries, including earlier verified work]
 - Related issue/PR: [link or `Not applicable`]
 
 ## Summary
@@ -42,8 +46,14 @@ operator recovery only when the change genuinely needs it. Otherwise write
 
 ## Verification
 
-- `[exact command]` — [passed/failed and concise result]
-- `[exact command]` — [passed/failed and concise result]
+- `[exact command]` — [passing result, scope, and date/environment when material]
+- [Required manual check] — [observed result and evidence link, or why not applicable]
+- [Earlier failed check, if any] — [failure, correction, and passing rerun]
+
+[Include all applicable completion checks and final documentation/link/diff
+validation. Distinguish earlier verified work from checks run in the current
+follow-up; never imply an unrun check passed. A required failed or pending check
+prevents finalizing this record and declaring completion.]
 
 ## Documentation
 
