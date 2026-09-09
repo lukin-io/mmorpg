@@ -1312,12 +1312,19 @@ Implementation documentation follows `AGENTS.md`:
    verified behavior or ownership changed;
 6. run `bin/feature-doc-audit` and, when documentation architecture changed,
    `bin/documentation-architecture-audit`;
-7. run the proportional completion profile and report exact outcomes.
+7. pass the proportional completion profile and all other applicable checks,
+   including required manual verification;
+8. finalize the mandatory consolidated changelog for the whole session, then
+   validate final documentation, links, and diff and report exact outcomes.
 
-Git is the default history. Use `changelogs/CHANGELOG_TEMPLATE.md` only when a
-release, rollout, explicit user request, or durable architectural decision
-benefits from a standalone note. It is not workflow state or a verification
-gate.
+Every repository-changing session, including documentation-only work, uses
+one `changelogs/CHANGELOG_TEMPLATE.md` record under the rules in `AGENTS.md`.
+Later verified work in the same session updates that record. Read-only
+conversations need no changelog. Required failed or pending checks keep the
+work incomplete. Writing the final record alone does not require repeating
+passed runtime checks; validate the final documentation with `bin/verify docs`,
+repository-link review, and `git diff --check`. The record is history, not a
+receipt or state machine used to make verification pass.
 
 When one shipped operational workflow crosses several feature owners, update or
 create the responsible `doc/guides/**` runbook as routed by

@@ -944,10 +944,14 @@ reflection-based generic model editor.
     or command behavior, invalid/dependency failure, audit behavior, and a
     responsive system path. Add service/concurrency tests for valuable state.
 11. **Update documentation.** Update the owning feature handbook and this route
-    table/instructions. Add a change note only for a justified release,
-    rollout, explicit request, or durable architecture decision.
+    table/instructions.
 12. **Review and verify.** Apply `doc/RUBY_ON_RAILS_GUIDE.md`, run focused
-    checks, the handbook audit, and the appropriate `bin/verify` profile.
+    checks, the handbook audit, the appropriate `bin/verify` profile, and
+    required manual checks.
+13. **Consolidate the session.** After all applicable checks pass, finalize the
+    one mandatory whole-session changelog under `AGENTS.md`; update the same
+    record for later verified work in that session. Validate final
+    documentation, links, and diff before reporting completion.
 
 ### 11.2 Conventional CRUD skeleton
 

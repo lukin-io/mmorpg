@@ -2,7 +2,7 @@
 
 - Document type: documentation process
 - Status: Current
-- Updated: 2026-08-26
+- Updated: 2026-09-09
 
 This directory defines how a Neverlands observation becomes normalized design,
 delivery status, a verified local implementation contract, and maintainable
@@ -36,6 +36,7 @@ canonically owned by another domain.
 | Missing normalized design | `DESIGN_PLACEHOLDER_TEMPLATE.md` | `doc/design/areas/` or `doc/design/features/` |
 | Verified implemented feature | `doc/features/FEATURE_TEMPLATE.md` | `doc/features/<feature>.md` |
 | Missing implementation | `doc/features/NOT_IMPLEMENTED_TEMPLATE.md` | `doc/features/<feature>.md` |
+| Consolidated session history after applicable verification passes | `changelogs/CHANGELOG_TEMPLATE.md` | One record in `changelogs/` per repository-changing session |
 
 ## Observation-to-implementation procedure
 
@@ -62,6 +63,12 @@ canonically owned by another domain.
     file context, but those notes must not be presented as Neverlands facts.
 11. Run the documentation audits, applicable focused coverage, Rails-guide
     review, and the completion profile from `AGENTS.md`.
+12. After all applicable checks pass, including required manual verification,
+    finalize one changelog covering the whole session. Later verified work in
+    the same session updates that record. Validate the final documentation,
+    repository links, and diff under `AGENTS.md` before reporting completion.
+    Required failed or pending checks keep the work incomplete; read-only
+    conversations require no changelog.
 
 ## Status vocabulary
 

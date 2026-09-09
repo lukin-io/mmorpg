@@ -2,8 +2,8 @@
 
 Contract metadata:
 
-- updated_at: `2026-08-26`
-- why_changed: "Simplified the agentic workflow to enforce gameplay correctness, tests, documentation alignment, and verification without implementation receipts, filename-inferred profiles, or mandatory conversation changelogs."
+- updated_at: `2026-09-09`
+- why_changed: "Require one consolidated changelog for each repository-changing session, finalized after all applicable verification passes."
 
 This file is the repository entry point for engineering work. It tells an agent
 what to read, which rules are mandatory, what to verify, and what to report.
@@ -54,8 +54,9 @@ Fix in-scope `[IMPL]` and `[DOC]` gaps. Never invent a resolution for an
 
 Every implementation, bug fix, behavior change, refactor, migration, or
 executable process-tooling change automatically follows this workflow. No
-special prompt phrase, YAML receipt, profile declaration, or per-conversation
-changelog is required.
+special prompt phrase, YAML receipt, or profile declaration is required.
+Every session that changes repository files, including documentation-only
+work, requires one consolidated session changelog under section 8.
 
 Read-only explanation, review, diagnosis, and planning do not authorize edits.
 
@@ -73,9 +74,13 @@ Read-only explanation, review, diagnosis, and planning do not authorize edits.
    `doc/RUBY_ON_RAILS_GUIDE.md`; correct concrete findings before completion.
 7. **Synchronize documentation** — update each canonical document whose owned
    truth changed. Do not edit unrelated documents merely to create ceremony.
-8. **Verify** — run the proportional completion command from section 8.
-9. **Report** — summarize rationale, behavior/files, documentation, exact check
-   outcomes, and any remaining `[EVIDENCE]` or deferred risk.
+8. **Verify** — pass the proportional completion command from section 8 and
+   all other applicable checks, including required manual verification.
+9. **Consolidate the session** — finalize the single whole-session changelog
+   after verification passes, then validate the final documentation and diff
+   as described in section 8.
+10. **Report** — summarize rationale, behavior/files, documentation, exact check
+    outcomes, and any remaining `[EVIDENCE]` or deferred risk.
 
 ### Optional planning-first gate
 
@@ -94,7 +99,7 @@ the plan or asking for a second confirmation.
 ## 3. [NORMATIVE] Scope, safety, and repository care
 
 Normal implementation scope may include `app/**`, applicable `config/**`,
-`db/**`, `lib/**`, `spec/**`, relevant design/feature documents, and
+`db/**`, `lib/**`, `spec/**`, relevant design/feature documents, `changelogs/**`, and
 `.env.example`.
 
 Editing `AGENTS.md`, canonical templates, repository-wide documentation
@@ -284,9 +289,29 @@ they materially improve traceability.
 `NOT_IMPLEMENTED` documents must not invent runtime files, routes, specs, or
 state. Use the lean gap template.
 
-Changelogs/change notes are optional. Create one when the user requests it, a
-release/rollout needs it, or a durable architectural decision is otherwise hard
-to discover. They are not workflow state and do not gate verification.
+### Mandatory consolidated session changelog
+
+Every session that changes repository files must produce one consolidated
+record in `changelogs/`, using `changelogs/CHANGELOG_TEMPLATE.md`. Cover the
+whole session's authorized changes, evidence and decisions, verification,
+documentation, and remaining gaps; do not limit it to the latest turn, commit,
+or subtask. Read-only explanation, review, diagnosis, and planning require no
+fabricated changelog.
+
+Finalize the record only after all applicable verification passes: focused
+tests, required completion profile, documentation audits, stable-diff review,
+and required manual checks. If a required check fails or remains pending,
+report that fact and keep the work incomplete; never claim a completed session
+or invent a passing result. Later verified work in the same session updates
+the same record rather than creating another note. Preserve historical records
+from other sessions.
+
+After writing or updating the record and any final workflow documentation, run
+`bin/verify docs`, validate their repository links, and run `git diff --check`.
+Writing the changelog alone does not require repeating already passed runtime
+checks; new executable changes or unresolved concerns determine whether those
+checks must run again. The record is human-readable history, not a mutable
+receipt, profile declaration, or state machine used to make verification pass.
 
 ### Verification commands
 
@@ -311,8 +336,9 @@ Completion profiles:
   the broader suite.
 
 CI independently runs security, lint, non-system specs, system specs, and
-documentation audits. Local verification never requires editing a receipt or
-changelog into a special state.
+documentation audits. Verification remains read-only and does not depend on
+changelog state. The required session record follows passed checks and is
+validated as documentation before handoff.
 
 The documentation audits intentionally enforce a small set of objective facts:
 resolving canonical links/paths, required ownership/navigation, unresolved
@@ -330,6 +356,8 @@ Before reporting completion:
 - review applicable server authority, SRP/DI/PORO/KISS/service, Hotwire,
   atomicity/retry, query, async/cache, and operational risks;
 - ensure canonical documentation describes verified behavior;
+- ensure the required whole-session changelog is consolidated, current, and
+  validated after all applicable verification passes;
 - report exact checks and honest pending/pre-existing failures.
 
 Use these headings:
