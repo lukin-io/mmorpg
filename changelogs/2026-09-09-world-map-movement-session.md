@@ -1,12 +1,15 @@
 # Change Note: Neverlands world, cells, movement and starter-area session
 
-- Date: 2026-09-09
+- Session started: exact start not recorded; dated World checkpoints begin
+  2026-09-07 and cover work through 2026-09-09.
+- Last updated: 2026-09-09
 - Scope: consolidated open-world session, including source investigation,
   movement/culling, location restoration, local audiences, encounters, airship
   capability, cell actions, starter content/artwork, seeds, CI corrections,
   documentation and the final changelog workflow correction.
-- Related issue/PR: [PR 119](https://github.com/lukin-io/mmorpg/pull/119) and
-  [PR 120](https://github.com/lukin-io/mmorpg/pull/120).
+- Related issues/PRs/commits: [PR 119](https://github.com/lukin-io/mmorpg/pull/119),
+  [PR 120](https://github.com/lukin-io/mmorpg/pull/120) and documentation
+  [PR 121](https://github.com/lukin-io/mmorpg/pull/121).
 - Coverage boundary: the complete world-session work through merged commit
   `3e7297c`, plus this documentation follow-up. The separate city/shop work in
   progress on `feature/city` is outside this record. PR 119 also contained
@@ -213,6 +216,11 @@ separate from source claims and provisional local calibration.
   verification had passed. The user then required the workflow to make one
   consolidated changelog mandatory for repository-changing sessions, finalized
   after applicable verification and updated for later work in that session.
+- Refined the template and this record with session dates/multiple delivery
+  references, separate local/CI/manual verification, classified follow-ups with
+  owner links and agreed stages, explicit seed/reseed boundaries, outcome-based
+  changes and material failure summaries. The template now links the mandatory
+  workflow in `AGENTS.md` instead of repeating its detailed policy.
 
 ## Contracts and boundaries
 
@@ -237,10 +245,14 @@ separate from source claims and provisional local calibration.
   `db/migrate/20260908110000_create_airship_journeys.rb` before serving the
   airship code. No migration is added by the final changelog/workflow correction.
 - Ship the validated gameplay catalogs and artwork together with their readers.
-  Follow `doc/guides/managing_game_content.md` when running the ordered
-  `bin/rails db:seed` bootstrap; do not reset/replant a populated user database.
-  Seeds intentionally reconcile captured baselines while preserving the
-  documented managed overrides and saved positions.
+  Run the ordered `bin/rails db:seed` entry point for initial bootstrap or
+  reseeding, following [seed ownership and order](../doc/guides/managing_game_content.md#seed-ownership-and-order).
+  On an existing database, managed starter cells, linked locations and derived
+  NPC placements retain their edits; saved positions, spent balances and prior
+  wallet grants are preserved. Seed-owned city nodes/gates and original captured
+  NPC templates/anchors still reconcile. Deleted bootstrap identities may be
+  recreated; deactivate them to retain their identity. Do not reset/replant a
+  populated user database or run dependent seed phases separately.
 - Keep normal airship routes unavailable until complete destination, path and
   departure data is authored. Accepted journeys retain their snapshots; do
   not delete their referenced zones. Recovery catches up from server deadlines.
@@ -251,29 +263,48 @@ separate from source claims and provisional local calibration.
 
 ## Verification
 
-These are recorded checks from the completed session, not a claim that the
-runtime suite was rerun while writing this note. World handbook sections
-15.1–15.7 preserve the earlier attempts, fixes and manual evidence.
+### Local automated checks
+
+Runtime results below were recorded at the dated World checkpoints and later
+included in merged `3e7297c`. That merge identifies the coverage boundary, not
+an independently established tested revision. Runtime suites were not rerun
+for this documentation-only follow-up; its checkpoint is the working tree based
+on `16e22cc`, containing only the template and session-note refinements.
+The [World verification history](../doc/features/world.md#15-test-strategy-and-required-coverage)
+retains intermediate checks and detailed local evidence.
 
 | Command and checkpoint | Recorded result |
 |---|---|
-| `bin/verify full`, initial World and audience passes | 1,903 non-system/221 system, then 1,999/230 examples passed in successive runs, but both complete profiles stopped on the rubyzip advisory. They were not successful full verifications. |
-| `bin/verify fast`, immediate room-presence follow-up | Passed: 457 lint files, 2,005 non-system examples, 10 handbook/65 architecture documents. |
-| `bin/verify full`, CI remediation | Passed: 457 lint files, 2,013 non-system and 234 system examples, security clean, docs 10/65. |
-| `bin/verify full`, incremental cells/rules/pond actions | Passed: 491 lint files, 2,197 non-system and 256 Chrome system examples, security clean, docs 11/67. |
-| `bin/verify full`, starter routes/atlas/labels | Passed: 495 lint files, 2,240 non-system and 258 Chrome system examples, security clean, docs 11/70. |
-| `bin/verify full`, final starter art/content/lobbies | Passed: 517 lint files, 2,300 non-system and 261 Chrome system examples, zero failures; Brakeman zero warnings, Bundler/Importmap no vulnerable dependencies, docs 11/73. |
-| `bin/verify docs`, final domain-gap follow-up before world publication | Passed: 11 handbooks and 76 architecture documents. |
-| `git diff --cached --check`, final world publication | Passed after removing one trailing blank line from a new observation. |
-| `bin/verify docs`, consolidated changelog and mandatory-workflow follow-up | Passed: 11 handbooks and 76 architecture documents; no runtime code changed in this follow-up. |
-| `git diff --check`, final documentation follow-up | Passed. Template-heading review and explicit repository-link validation also passed for this record and the seven updated workflow documents. |
+| `bin/verify full`, September 9 final starter art/content/lobbies | Passed: 517 lint files, 2,300 non-system and 261 Chrome system examples, zero failures; Brakeman zero warnings, Bundler/Importmap no vulnerable dependencies, docs 11/73. |
+| `bin/verify docs`, September 9 domain-gap follow-up before world publication | Passed: 11 handbooks and 76 architecture documents. |
+| `git diff --cached --check`, September 9 world publication | Passed after removing one trailing blank line from a new observation. |
+| `bin/verify docs`, September 9 consolidated changelog and mandatory-workflow correction, subsequently committed as `16e22cc` | Passed: 11 handbooks and 76 architecture documents. |
+| `git diff --check`, that documentation correction | Passed. Template-heading review and explicit repository-link validation also passed for this record and the seven updated workflow documents. |
+| `bin/verify docs` and `git diff --check`, September 9 six-point template/session-note refinement in the isolated documentation worktree | Passed: 11 handbooks, 76 architecture documents, no whitespace errors. A one-off Python check validated eight section headings, session fields, 23 local links/anchors, cited paths and absence of unresolved note placeholders. Stable-diff review passed; no executable files changed. |
 
-Existing Rack status-name deprecation notices were warnings, not failed
-examples. The final security success supersedes the earlier blocked checks;
-passing local checks does not claim an unobserved CI result.
+Material failure and correction: September 7 full profiles stopped on the
+`rubyzip 3.2.2` advisory despite passing test stages. The upgrade to `3.6.0`
+removed that blocker; September 8 local `bin/verify full` then passed 2,013
+non-system and 234 system examples with security clean. The final September 9
+run above also passed. Existing Rack status-name deprecations were warnings,
+not failed examples. Detailed checks for the City action-key, scrollbar and
+logout regressions remain in the linked World history.
+
+### CI
+
+The user supplied failed CI output for the dependency audit, City navigation,
+responsive map and village logout checks. These reports drove the documented
+fixes and local reruns. A passing CI run/revision is not recorded here; local
+success or a merged PR does not establish that result.
+
+### Manual local verification
 
 Manual Chrome verification used running Rails and isolated seeded review/test
-databases, with multiple seeded accounts and real local movement timers:
+databases on September 7–9, with multiple seeded accounts and real local
+movement timers. The linked World history and [Airship acceptance](../doc/features/airship_travel.md#6-acceptance-and-tests)
+retain the supporting checks. The Neverlands captures linked under Documentation
+establish source behavior separately. No new gameplay browser check applies to
+the documentation-only follow-up.
 
 - Login → restore → city exit → timed movement → village/Shop → return →
   logout/login restored exact cells/rooms, labels, audiences and action locks.
@@ -315,24 +346,21 @@ databases, with multiple seeded accounts and real local movement timers:
 
 ## Follow-up
 
-- **Stage 2, World:** full-zone artwork/topology, roads, blockers, settlements,
-  labels and NPC/resources beyond the bounded starter content. Some cells
-  inside that starter catalog also lack a live-confirmed complete action set.
-- **Character/World/Social:** general movement/search modifiers, exact
-  inactive-player expiry and Nature Child's movement/HP coefficients/live
-  variants need evidence. Its four-point sip is already published; the
-  supported acquisition/effect handoff is an implementation gap.
-- **NPCs:** uncaptured HP/stats including rats 0–3, complete eligible groups,
-  selection weights, attack probability, timing distributions and reward inputs.
-- **Professions:** successful fishing/catches/proficiency, tools/bait,
-  gathering/herbalism, Alchemy production and digging/extraction outcomes,
-  tools/license use, requirements, failure and interruption behavior.
-- **Dungeons/Economy:** Dungeons owns mine descent/underground movement;
-  Economy owns actual mine purchases and exchange queries/listings/transactions
-  and storage. Completed lobbies do not imply these operations work.
-- **Explicitly after one-zone MVP:** additional populated zones, normal
-  airship route activation and walking boundary mappings/transitions.
-- **Later technical work:** incremental airship payloads; walking already
-  sends deltas. Detailed gaps remain in their owning domain records, linked
-  from World section 19. Documentation does not automatically schedule every
-  unresolved item after MVP.
+Delivery labels preserve agreed scope; `Not scheduled` makes no MVP or later
+commitment. Detailed backlogs belong to the linked owners, as summarized by the
+[World gap matrix](../doc/features/world.md#19-open-world-parity-audit-updated-2026-09-09).
+
+| Classification and gap | Canonical owner | Delivery |
+|---|---|---|
+| `[IMPL]` Full-zone authored terrain/artwork, roads, blockers, labels, entrances and NPC/resources beyond the starter area; `[EVIDENCE]` uncaptured cell content must be established before authoring it. | [World map](../doc/design/areas/world_map.md) | Stage 2 |
+| `[EVIDENCE]` Complete live action sets for some annotated starter cells. | [World](../doc/features/world.md#19-open-world-parity-audit-updated-2026-09-09) | Not scheduled |
+| `[EVIDENCE]` General movement/search modifiers and Nature Child movement/HP coefficients/live variants. | [Movement](../doc/design/features/movement.md#travel-time), [World actions](../doc/features/world.md#85-accept-a-cell-action), [Character](../doc/features/character_progression.md#65-world-related-skill-and-perk-gaps) | Not scheduled |
+| `[IMPL]` Nature Child acquisition/effect handoff for its known four-point sip. | [Character](../doc/features/character_progression.md#65-world-related-skill-and-perk-gaps) | Not scheduled |
+| `[EVIDENCE]` Exact inactive-player expiry; current five-minute freshness is local policy. | [Social](../doc/domains/social.md#evidence-and-implementation-gaps) | Not scheduled |
+| `[EVIDENCE]` Uncaptured NPC HP/stats, including rats 0–3, complete groups, weights, attack probability, timing distributions and reward inputs. | [NPC evidence gaps](../doc/design/reference/npcs_quests/observations/evidence_needed_world_npc_content_and_formulas.md#remaining-npc-gaps) | Not scheduled |
+| `[IMPL]` Successful fishing/catches/proficiency, tools/bait, gathering/herbalism, Alchemy production and digging/extraction. | [Professions](../doc/features/professions.md) | Deferred profession work; not scheduled |
+| `[IMPL]` Mine descent/underground movement; actual mine purchases and exchange queries/listings/transactions/storage. Lobbies remain read-only. | [Dungeons](../doc/features/dungeons.md), [Economy](../doc/features/shop_economy.md#65-mine-shop-and-resource-exchange-gap-ownership) | Not scheduled |
+| `[EVIDENCE]` Exact successful profession flows, underground topology and economic operations, including applicable requirements, tools/licenses, outcomes and interruptions. Known rules remain distinct from these missing captures. | [Professions](../doc/features/professions.md), [Dungeons](../doc/features/dungeons.md), [Economy](../doc/features/shop_economy.md#65-mine-shop-and-resource-exchange-gap-ownership) | Not scheduled |
+| `[IMPL]` Additional populated zones, normal airship route activation and walking crossings. | [Movement](../doc/design/features/movement.md#persistence-contract), [Airship](../doc/features/airship_travel.md#8-gaps-and-version-history) | After the one-zone MVP |
+| `[EVIDENCE]` Exact walking boundary mappings and source transition behavior. | [Movement](../doc/design/features/movement.md#persistence-contract) | After the one-zone MVP |
+| `[IMPL]` Incremental airship payloads; walking already sends deltas. | [Airship](../doc/features/airship_travel.md#8-gaps-and-version-history) | Later technical work; not scheduled |

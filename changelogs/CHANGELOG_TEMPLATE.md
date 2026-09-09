@@ -1,17 +1,15 @@
 # Change Note: [Short outcome]
 
-> Required for every session that changes repository files, including
-> documentation-only work. Consolidate the whole session in one record, not one
-> per turn, commit, or subtask. Finalize only after all applicable verification
-> passes, including required manual checks; update the same record for later
-> verified work in that session. Read-only conversations need no changelog.
-> Follow `AGENTS.md` for final documentation/link/diff validation and honest
-> reporting of failed or pending checks. Never use this record as a receipt or
-> state machine to make verification pass.
+> One consolidated changelog is mandatory for every session that changes
+> repository files, finalized after all applicable verification passes.
+> Update that same record for later verified work. Detailed workflow and final
+> validation belong to [AGENTS.md](../AGENTS.md#mandatory-consolidated-session-changelog).
 
-- Date: YYYY-MM-DD
+- Session started: [YYYY-MM-DD; if unknown, identify the earliest recorded work]
+- Last updated: YYYY-MM-DD
 - Scope: [whole-session topics and boundaries, including earlier verified work]
-- Related issue/PR: [link or `Not applicable`]
+- Related issues/PRs/commits: [links covering the session, including multiple
+  deliveries when applicable, or `Not applicable`]
 
 ## Summary
 
@@ -25,9 +23,11 @@ reason this change was chosen.]
 
 ## Changes
 
-- [Important behavior or ownership change.]
-- [Important persistence/UI/operational change.]
-- [Intentional deletion or simplification.]
+[Group changes by feature or outcome. Use subsections only when they help;
+include a concrete before/after example when it clarifies the change.]
+
+- [Outcome and material behavior, ownership, persistence or UI change.]
+- [Intentional deletion or simplification and its reason.]
 
 ## Contracts and boundaries
 
@@ -41,19 +41,31 @@ reason this change was chosen.]
 ## Rollout and recovery
 
 [Include migration, deployment ordering, feature flags, backfill, rollback, or
-operator recovery only when the change genuinely needs it. Otherwise write
+operator recovery only when the change genuinely needs it. For seed/content
+changes, distinguish initial bootstrap from reseeding an existing database:
+state the command/order, records reconciled or overwritten, managed content and
+player state preserved, and any required recovery procedure. Link the canonical
+operator guide rather than copying it. Otherwise write
 `No special rollout or recovery procedure.`]
 
 ## Verification
 
-- `[exact command]` — [passing result, scope, and date/environment when material]
-- [Required manual check] — [observed result and evidence link, or why not applicable]
-- [Earlier failed check, if any] — [failure, correction, and passing rerun]
+[Separate the sources below. Record the date/environment and tested commit or
+working-tree checkpoint when needed to distinguish deliveries. Do not substitute
+a later commit for an unknown tested revision. Mark an inapplicable source or an
+unobserved CI result explicitly.]
 
-[Include all applicable completion checks and final documentation/link/diff
-validation. Distinguish earlier verified work from checks run in the current
-follow-up; never imply an unrun check passed. A required failed or pending check
-prevents finalizing this record and declaring completion.]
+- Local automated checks: `[exact command]` — [result and scope, including final
+  documentation/link/diff validation].
+- CI: [run/check link, revision and observed result; local success is not CI
+  success].
+- Manual local verification: [scenario, observed result and evidence link, or why
+  not applicable]. Neverlands captures establish source behavior; they do not
+  prove the local implementation works.
+
+[Summarize material failures, corrections and passing reruns rather than every
+attempt. Link detailed verification history where useful; clearly distinguish
+earlier verified work from checks run for this follow-up.]
 
 ## Documentation
 
@@ -61,4 +73,12 @@ prevents finalizing this record and declaring completion.]
 
 ## Follow-up
 
-- [Known evidence gap, deferred work, or `None`.]
+[For each remaining item, provide its classification, canonical owner link and
+agreed delivery stage, or `Not scheduled` when no stage was agreed. Distinguish
+missing implementation from unknown source behavior; split mixed gaps when
+needed. This section links the backlog, it does not create a delivery commitment.]
+
+- `[IMPL]`, `[DOC]` or `[EVIDENCE]` — [specific gap]; owner: [canonical document
+  link]; delivery: [agreed stage or `Not scheduled`].
+
+[Write `None` when no follow-up remains.]
