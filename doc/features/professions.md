@@ -3,7 +3,7 @@
 title: Professions Feature
 description: NOT_IMPLEMENTED placeholder for source-backed gathering and production profession behavior.
 status: NOT_IMPLEMENTED
-updated: 2026-09-07
+updated: 2026-09-09
 owners: Professions domain
 template: feature-gap-v2
 ---
@@ -28,21 +28,50 @@ counter, failure, interruption, or production loop is shipped.
 No profession route, authoritative profession state, mutation, persistence,
 feature-specific Turbo/Stimulus/CSS, or runtime spec is claimed.
 
+The remaining categories belong to this domain, even though World links them
+from its map/cell gap matrix:
+
+| Missing category | Confirmed contract and unresolved scope |
+|---|---|
+| Successful fishing and counter growth | No initial skill/perk gate; growth on successful fishing is user-confirmed. Casting, catches, exact gain, probabilities, timing/modifiers and failure/interruption remain unimplemented. |
+| Plant gathering / herbalism | Successful discovery/harvest, exact requirements, yields and counter changes are missing. Naturalist/Herbalist and Observation inputs are separate from Alchemy. |
+| Alchemy production | Recipe/ingredient/tool requirements, consumption, timing, outputs and progression need a complete separate flow. |
+| Digging / extraction | Skill dependence is confirmed; exact skill/license/tool, timer, outcomes, interruption and repeatability remain unresolved. Mine lobby and read-only shop sections do not implement extraction. |
+| Equipment, bait and inventory settlement | Rod/bait requirements are confirmed direction; complete item identities, equip checks, bait use/expiry, durability, material grants, capacity failures and retry-safe settlement are missing. |
+
 ## 3. Existing related handoffs
 
-World owns the immediate empty Look result and its persisted 28-second action
-lock; Inventory owns carried items and capacity. These implemented handoffs do
-not constitute a complete profession eligibility, tool, yield, counter, or
-production loop. Successful gathering is explicitly deferred for this task
-pending the alchemy skill path; see the gap matrix in `doc/features/world.md`.
+World owns immediate empty Look with a persisted 28-second lock, immediate
+normal Drink recovery of two fatigue points with a 60-second lock, and the
+no-bait Fish result with a 30-second lock. No fish/herb award or profession
+growth is performed by those actions. Digging's identifier can be authored but
+does not produce an implemented action offer. Fishing and drinking have no
+initial skill/perk gate; a nonzero displayed proficiency is not an entry rule.
+
+Inventory owns carried/equipped items and capacity. Character Progression is
+the adjacent owner for future profession-counter persistence. World owns
+cell eligibility, offers, action locking and hostile interruption. The mine's
+outdoor entrance/read-only lobby belongs to World; descent/underground travel
+belongs to Dungeons. Professions owns mining-license use/effects; Economy owns
+purchase/payment of mine items/licenses and exchange queries, listings,
+transactions and storage. Those surfaces do not constitute successful
+extraction or production.
+
+Successful profession work remains deferred from the starter-map task. The
+earlier user shorthand grouped gathering with alchemy; the source-backed
+design now distinguishes plant discovery/harvest from potion production.
+The owning categories above and their capture checklist are canonical here;
+the World matrix is a cross-domain summary.
 
 ## 4. Prerequisites for implementation
 
-1. Capture one complete Neverlands profession flow and its failure/interruption
-   states.
-2. Normalize exact eligibility, tools, timers, yields, counters, and content.
-3. Define server-owned timing, cell/tool validation, capacity, locking, and
-   retry-safe completion.
+1. Follow the linked activity-specific capture checklist for one complete
+   Neverlands profession flow, including failure/interruption and inventory.
+2. Normalize exact eligibility, tools/bait, timers, yields and counter changes
+   without reopening the settled no-gate fishing/drinking decision.
+3. Define server-owned timing and current-cell/equipment validation, plus the
+   atomic locking boundary for proven consumption, durability, rewards and
+   counter growth. Cover capacity failure, duplicate completion and restoration.
 4. Extend World and Inventory pipelines rather than creating duplicates; add
    applicable content, service, request/policy, timing, and system coverage.
 5. Promote this handbook only after the runtime is verified.

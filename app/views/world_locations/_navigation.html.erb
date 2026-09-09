@@ -1,0 +1,15 @@
+<% @location_features.select { |feature| feature["placement"] == "navigation" }.each do |feature| %>
+  <%= button_to feature.fetch("label"), world_location_feature_path(@building.location_key),
+      method: :post,
+      params: {feature_key: feature.fetch("key"), action_key: @feature_offers_by_key.fetch(feature.fetch("key")).action_key},
+      class: "nl-nav-link nl-nav-link--button", form: {class: "nl-nav-action-form"},
+      data: {turbo_frame: "_top"} %>
+<% end %>
+<% unavailable_actions = Array(@building.location_definition["unavailable_actions"]) %>
+<% if unavailable_actions.any? %>
+  <% unavailable_actions.each do |label| %>
+    <button type="button" class="nl-nav-link nl-nav-link--button nl-nav-link--disabled" disabled><%= label %></button>
+  <% end %>
+<% else %>
+  <span class="nl-nav-link nl-nav-link--disabled" aria-current="page"><%= @building.location_short_label %></span>
+<% end %>

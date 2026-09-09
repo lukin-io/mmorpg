@@ -18,6 +18,12 @@ completion/failure, rewards, exit, stale context, and login resume.
 No bounded dungeon observation exists. Arena, outdoor combat, village, or
 generic RPG knowledge must not be substituted.
 
+The later World mine lobby is adjacent evidence only. Its separate underground
+travel questions are tracked in
+[the mine gap record](evidence_needed_mine_underground_travel.md), which links
+the existing live/wiki observations. A mine does not inherit this dungeon
+capture's party, room or reward assumptions.
+
 ## Required capture states
 
 - unavailable and available entrance;

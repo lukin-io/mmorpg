@@ -8,7 +8,7 @@
     <div class="nl-manage-field"><%= form.label :y %><%= form.number_field :y, min: 0, required: true %></div>
     <div class="nl-manage-field"><%= form.label :npc_key %><%= form.text_field :npc_key, required: true %></div>
     <div class="nl-manage-field"><%= form.label :npc_role %><%= form.select :npc_role, TileNpc::NPC_ROLES %></div>
-    <div class="nl-manage-field"><%= form.label :level %><%= form.number_field :level, min: 1, required: true %></div>
+    <div class="nl-manage-field"><%= form.label :level %><%= form.number_field :level, min: 0, required: true %></div>
     <div class="nl-manage-field"><%= form.label :active, "Encounter active" %><%= form.check_box :active %></div>
     <div class="nl-manage-field"><%= label_tag "tile_npc_encounter_count", "Fixed encounter size" %><%= number_field_tag "tile_npc[encounter_count]", tile_npc.encounter_size, id: "tile_npc_encounter_count", min: 1, max: TileNpc::MAX_ENCOUNTER_SIZE %></div>
     <div class="nl-manage-field"><%= form.label :current_hp %><%= form.number_field :current_hp, min: 0 %></div>

@@ -5,20 +5,22 @@ module PlayerProfileHelper
     position = character.position
     return "Unknown" unless position
 
+    zone_label = position.zone.display_name
+    location_label = Game::World::Presence.new(character:, position:).label
     active_match = profile_active_arena_match(character)
+    first_line = [ERB::Util.html_escape(zone_label)]
     if active_match
-      sublocation = active_match.arena_room&.name || "Arena"
-      return safe_join([
-        ERB::Util.html_escape(position.zone&.name || "Unknown"),
+      location_label = active_match.arena_room.name if active_match.arena_room
+      first_line.concat([
         " [ ",
         link_to("in combat", public_fight_log_path(active_match), class: "nl-profile-fight-link"),
-        " ]",
-        tag.br,
-        ERB::Util.html_escape(sublocation)
+        " ]"
       ])
     end
 
-    [position.zone&.name, "[#{position.x}, #{position.y}]"].compact.join(" ")
+    lines = [safe_join(first_line)]
+    lines << ERB::Util.html_escape(location_label) unless location_label == zone_label
+    safe_join(lines, tag.br)
   end
 
   def profile_skill_level(character, key)

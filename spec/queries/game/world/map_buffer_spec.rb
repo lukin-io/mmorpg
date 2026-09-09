@@ -14,16 +14,54 @@ RSpec.describe Game::World::MapBuffer do
   it "bounds the full snapshot to 135 cells even in a million-cell sparse region" do
     result = buffer
 
-    expect(result.rows.flatten.size).to eq(135)
-    expect(result.rows.flatten.map(&:x).minmax).to eq([13, 27])
-    expect(result.rows.flatten.map(&:y).minmax).to eq([16, 24])
+    expected_rows = (16..24).map { |y| (13..27).map { |x| [x, y] } }
+    expect(result.rows.map { |row| row.map { |tile| [tile.x, tile.y] } }).to eq(expected_rows)
     expect(result.base_token).to be_nil
   end
 
   it "sends no terrain again when the accepted movement retains its source center" do
     original = buffer
 
-    expect(buffer(token: original.token).rows.flatten).to be_empty
+    result = buffer(token: original.token)
+
+    expect(result.rows).to eq(Array.new(9) { [] })
+    expect(result.base_token).to eq(original.token)
+  end
+
+  it "keeps empty rows before the new southern edge, ordered west to east" do
+    original = buffer
+    position.update!(y: 21)
+
+    result = buffer(token: original.token)
+
+    expected_rows = Array.new(8) { [] } + [(13..27).map { |x| [x, 25] }]
+    expect(result.rows.map { |row| row.map { |tile| [tile.x, tile.y] } }).to eq(expected_rows)
+  end
+
+  it "orders diagonal entering cells north to south without duplicating the corner" do
+    original = buffer
+    position.update!(x: 21, y: 21)
+
+    result = buffer(token: original.token)
+
+    expected_rows = (17..24).map { |y| [[28, y]] } + [(14..28).map { |x| [x, 25] }]
+    expect(result.rows.map { |row| row.map { |tile| [tile.x, tile.y] } }).to eq(expected_rows)
+  end
+
+  it "signs the current buffer identity and returns a microsecond server revision" do
+    position
+    instant = Time.utc(2026, 9, 9, 12, 0, 0, 123456)
+
+    travel_to(instant, with_usec: true) do
+      result = buffer
+      payload = Rails.application.message_verifier("world-map-buffer").verified(result.token)
+
+      expect(payload).to match(
+        "character_id" => position.character_id, "zone_id" => zone.id,
+        "x" => 20, "y" => 20, "fingerprint" => a_string_matching(/\A[0-9a-f]{64}\z/)
+      )
+      expect(result.revision).to eq(1_788_955_200_123_456)
+    end
   end
 
   Game::Movement::Directions::OFFSETS.each do |direction, (dx, dy)|
@@ -69,6 +107,23 @@ RSpec.describe Game::World::MapBuffer do
     expect(result.rows.flatten.find { |cell| cell.x == 20 && cell.y == 20 }.metadata).not_to have_key("building")
   end
 
+  it "projects the loaded entrance key separately from forged cell metadata" do
+    create(:map_tile_template, zone: zone.name, x: 20, y: 20,
+      metadata: {"building_key" => "outpost_gate"})
+    cell = buffer.rows.flatten.find { |entry| entry.x == 20 && entry.y == 20 }
+    expect(cell.building_key).to be_nil
+
+    building = create(:tile_building, zone: zone.name, x: 20, y: 20, building_key: "managed_gate")
+    cell = buffer.rows.flatten.find { |entry| entry.x == 20 && entry.y == 20 }
+    expect(cell.building_key).to eq("managed_gate")
+    expect(cell.metadata["building_key"]).to eq("outpost_gate")
+
+    building.update!(x: 21)
+    result = buffer
+    expect(result.rows.flatten.find { |entry| entry.x == 20 && entry.y == 20 }.building_key).to be_nil
+    expect(result.rows.flatten.find { |entry| entry.x == 21 && entry.y == 20 }.building_key).to eq("managed_gate")
+  end
+
   it "renders a newly entering building without rebuilding the unchanged overlap" do
     original = buffer
     create(:tile_building, zone: zone.name, x: 28, y: 20, name: "Eastern Village")
@@ -105,6 +160,9 @@ RSpec.describe Game::World::MapBuffer do
     [nil, {}, "broken", "x" * 2049].each do |token|
       expect(buffer(token:).rows.flatten.size).to eq(135)
     end
+    travel 29.minutes do
+      expect(buffer(token: original.token).base_token).to eq(original.token)
+    end
     travel 31.minutes do
       expect(buffer(token: original.token).base_token).to be_nil
     end
@@ -122,5 +180,21 @@ RSpec.describe Game::World::MapBuffer do
     expect(queries.size).to eq(2)
     expect(queries).to all(include("BETWEEN"))
     expect(queries.join).not_to include("tile_npcs")
+  end
+
+  it "reads only the 16 by 10 union of adjacent buffers when moving diagonally" do
+    original = buffer
+    position.update!(x: 21, y: 21)
+    queries = []
+    subscriber = ->(_name, _start, _finish, _id, payload) { queries << payload if payload[:sql].match?(/SELECT.*(?:map_tile_templates|tile_buildings|tile_npcs)/) }
+
+    ActiveSupport::Notifications.subscribed(subscriber, "sql.active_record") { buffer(token: original.token) }
+
+    expect(queries.size).to eq(2)
+    queries.each do |query|
+      expect(query[:sql]).not_to include("tile_npcs")
+      expect(query[:binds].select { |bind| bind.name == "x" }.map(&:value_for_database)).to eq([13, 28])
+      expect(query[:binds].select { |bind| bind.name == "y" }.map(&:value_for_database)).to eq([16, 25])
+    end
   end
 end

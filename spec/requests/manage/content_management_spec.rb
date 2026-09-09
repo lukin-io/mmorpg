@@ -201,7 +201,7 @@ RSpec.describe "World and City content management", type: :request do
       patch manage_tile_npc_path(npc), params: {tile_npc: {
         content_fields: "1", active: "0", encounter_count: "1", metadata: "{}",
         rosters: {"0" => {key: "rats", weight: "3", members: {
-          "0" => {npc_key: template.npc_key, level_min: "1", level_max: "4", hp: "40"},
+          "0" => {npc_key: template.npc_key, level_min: "0", level_max: "4", hp: "40"},
           "1" => {npc_key: "", level: "", level_min: "", level_max: "", hp: ""}
         }}}
       }}
@@ -211,28 +211,30 @@ RSpec.describe "World and City content management", type: :request do
       expect(npc.defeated_at).to be_nil
       expect(npc.encounter_roster_samples).to contain_exactly(include(
         "key" => "rats", "weight" => 3,
-        "members" => [{"npc_key" => template.npc_key, "level_min" => 1, "level_max" => 4, "hp" => 40}]
+        "members" => [{"npc_key" => template.npc_key, "level_min" => 0, "level_max" => 4, "hp" => 40}]
       ))
     end
     it "manages the catalog and its persisted TileNpc placement" do
       post manage_npc_templates_path, params: {
         npc_template: {
-          npc_key: "managed_rat", name: "Managed Rat", npc_role: "hostile", level: 4,
+          npc_key: "managed_rat", name: "Managed Rat", npc_role: "hostile", level: 0,
           dialogue: "...", metadata: JSON.generate("health" => 100, "base_damage" => 7)
         }
       }
       expect(response).to have_http_status(:see_other)
       template = NpcTemplate.find_by!(npc_key: "managed_rat")
+      expect(template.level).to eq(0)
 
       post manage_tile_npcs_path, params: {
         tile_npc: {
           zone: outdoor_zone.name, x: 9, y: 8, npc_template_id: template.id,
-          npc_key: template.npc_key, npc_role: "hostile", level: 4,
+          npc_key: template.npc_key, npc_role: "hostile", level: 0,
           current_hp: 100, max_hp: 100, metadata: JSON.generate("encounter_count" => 1)
         }
       }
       expect(response).to have_http_status(:see_other)
       placement = TileNpc.find_by!(zone: outdoor_zone.name, x: 9, y: 8)
+      expect(placement.level).to eq(0)
 
       patch manage_tile_npc_path(placement), params: {
         tile_npc: {

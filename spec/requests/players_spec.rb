@@ -25,7 +25,9 @@ RSpec.describe "Players", type: :request do
       expect(response.body).to include('<body class="nl-public-layout"')
       expect(response.body).not_to include('<body class="nl-game-layout"')
       expect(response.body).to include("max_kerby [#{character.level}]")
-      expect(response.body).to include("Outpost Surroundings [7, 9]")
+      location = Nokogiri::HTML(response.body).at_css(".nl-character-page-aside .nl-profile-location")
+      expect(location.text).to eq("Outpost Surroundings")
+      expect(location.text).not_to include("[7, 9]")
       expect(response.body).to include("nl-doll-figure")
       expect(response.body).not_to include("assets/neverlands")
       expect(response.body).not_to include("Neverlands administration")
@@ -47,6 +49,7 @@ RSpec.describe "Players", type: :request do
       expect(response.body).to include('<body class="nl-game-layout"')
       expect(response.body).to include('class="nl-profile-tabs"')
       expect(response.body).to include("Character sections")
+      expect(Nokogiri::HTML(response.body).css(".nl-profile-location").size).to eq(1)
     end
 
     it "returns location, equipment, and public player path in JSON" do
@@ -76,7 +79,7 @@ RSpec.describe "Players", type: :request do
       expect(body).not_to have_key("profile_name")
       expect(character_payload).not_to have_key("avatar_path")
       expect(character_payload).not_to have_key("avatar")
-      expect(character_payload.dig("location", "label")).to eq("Outpost [3, 4]")
+      expect(character_payload.fetch("location")).to eq("label" => "Outpost", "zone" => "Outpost", "x" => 3, "y" => 4)
       expect(character_payload).not_to have_key("stats")
       expect(character_payload.dig("equipment", "main_hand", "name")).to eq("Knife")
       expect(character_payload.dig("numeric_skills", "unarmed_combat")).to eq(10)
@@ -114,6 +117,89 @@ RSpec.describe "Players", type: :request do
       expect(response.body).to include("in combat")
       expect(response.body).to include("Training Hall")
       expect(response.body).to include(public_fight_log_path(match))
+    end
+
+    it "shows the same current pond label to its owner, visitors, and the public JSON reader" do
+      zone = create(:zone, :mvp_outdoor_region, name: "Outpost Surroundings")
+      character = create(:character, user:, name: "pond_visitor")
+      create(:character_position, character:, zone:, x: 13, y: 10)
+      create(:map_tile_template, zone: zone.name, x: 13, y: 10,
+        metadata: {"presence_label" => "Outpost Surroundings, Pond"})
+
+      get player_path(name: character.name)
+      public_location = Nokogiri::HTML(response.body).at_css(".nl-profile-location")
+      expect(public_location.inner_html).to eq("Outpost Surroundings<br>Outpost Surroundings, Pond")
+      expect(public_location.text).not_to include("[13, 10]")
+
+      sign_in user, scope: :user
+      get player_path(name: character.name)
+      own_location = Nokogiri::HTML(response.body).at_css(".nl-profile-location")
+      expect(own_location.inner_html).to eq(public_location.inner_html)
+      expect(Nokogiri::HTML(response.body).at_css(".nl-location-text").text).to include("Outpost Surroundings, Pond")
+
+      get player_path(name: character.name, format: :json)
+      expect(response.parsed_body.dig("character", "location")).to eq(
+        "label" => "Outpost Surroundings, Pond", "zone" => "Outpost Surroundings", "x" => 13, "y" => 10
+      )
+    end
+
+    it "uses the viewed character's saved village or Shop room and drops it after leaving the cell" do
+      zone = create(:zone, :mvp_outdoor_region, name: "Profile Region")
+      character = create(:character, user:)
+      position = create(:character_position, character:, zone:, x: 4, y: 6)
+      village = create(:tile_building, :world_location, zone: zone.name, x: 4, y: 6)
+      character.remember_gameplay_context!(name: "world_location", params: {key: village.location_key})
+
+      get player_path(name: character.name)
+      expect(Nokogiri::HTML(response.body).at_css(".nl-profile-location").inner_html).to eq("Profile Region<br>Village Square")
+
+      character.remember_gameplay_context!(name: "shop")
+      get player_path(name: character.name, format: :json)
+      expect(response.parsed_body.dig("character", "location", "label")).to eq("Shop")
+
+      position.update!(x: 5, y: 7)
+      get player_path(name: character.name)
+      expect(Nokogiri::HTML(response.body).at_css(".nl-profile-location").text).to eq("Profile Region")
+    end
+
+    it "keeps an outdoor NPC fight at its authored cell instead of labeling it Arena" do
+      zone = create(:zone, :mvp_outdoor_region, name: "Wild Region")
+      character = create(:character, user:)
+      create(:character_position, character:, zone:, x: 7, y: 7)
+      create(:map_tile_template, zone: zone.name, x: 7, y: 7, metadata: {"presence_label" => "Village approach"})
+      match = create(:arena_match, :live, arena_room: nil, zone:, metadata: {"source" => "world"})
+      create(:arena_participation, arena_match: match, character:, user:, team: "a")
+
+      get player_path(name: character.name)
+      location = Nokogiri::HTML(response.body).at_css(".nl-profile-location")
+      expect(location.text).to include("Wild Region", "Village approach", "in combat")
+      expect(location.text).not_to include("Arena")
+      expect(location.at_css("a")["href"]).to eq(public_fight_log_path(match))
+
+      get player_path(name: character.name, format: :json)
+      expect(response.parsed_body.dig("character", "location")).to include(
+        "label" => "Village approach [in combat]", "sublocation" => "Village approach",
+        "active_fight" => {"id" => match.id, "path" => public_fight_log_path(match), "status" => "live"}
+      )
+    end
+
+    it "escapes authored profile location text and handles missing positions" do
+      zone = create(:zone, :mvp_outdoor_region, name: "Wild Region")
+      character = create(:character, user:)
+      position = create(:character_position, character:, zone:, x: 13, y: 10)
+      create(:map_tile_template, zone: zone.name, x: 13, y: 10,
+        metadata: {"presence_label" => "Pond <script>alert(1)</script>"})
+
+      get player_path(name: character.name)
+      location = Nokogiri::HTML(response.body).at_css(".nl-profile-location")
+      expect(location.text).to include("Pond <script>alert(1)</script>")
+      expect(location.css("script")).to be_empty
+
+      position.destroy!
+      get player_path(name: character.name)
+      expect(Nokogiri::HTML(response.body).at_css(".nl-profile-location").text).to eq("Unknown")
+      get player_path(name: character.name, format: :json)
+      expect(response.parsed_body.dig("character", "location")).to eq("label" => "Unknown")
     end
 
     it "does not resolve account profile names without a character" do

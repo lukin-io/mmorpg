@@ -30,4 +30,28 @@ RSpec.describe "World map landmarks", type: :request do
     expect(document.at_css("#tile_4_6 .nl-tile-building--city .nl-tile-city-gate").text).to eq("🏰")
     expect(document.css(".nl-tile-building--village")).to be_empty
   end
+
+  it "hides only a matching painted entrance and shows moved or replacement entrances" do
+    create(:map_tile_template, zone: zone.name, x: 4, y: 6, metadata: {
+      "source_map" => "m_998_998", "building_key" => "frontier_village_entrance",
+      "cell_art" => {"key" => "forpost_starter", "column" => 4, "row" => 4}
+    })
+    create(:map_tile_template, zone: zone.name, x: 5, y: 6, metadata: {
+      "source_map" => "m_999_998", "building_key" => "frontier_village_entrance",
+      "cell_art" => {"key" => "forpost_starter", "column" => 5, "row" => 4}
+    })
+    village = create(:tile_building, :world_location, zone: zone.name, x: 4, y: 6,
+      building_key: "frontier_village_entrance")
+    get world_path
+    document = Nokogiri::HTML(response.body)
+    expect(document.at_css("#tile_4_6 .nl-tile-village-hut")).to be_nil
+    expect(document.at_css("#tile_4_6 .nl-entity-label").text).to eq(village.name)
+
+    village.update!(x: 5)
+    create(:tile_building, :world_location, zone: zone.name, x: 4, y: 6, building_key: "replacement_village")
+    get world_path
+    document = Nokogiri::HTML(response.body)
+    expect(document.at_css("#tile_5_6 .nl-tile-village-hut")).to be_present
+    expect(document.at_css("#tile_4_6 .nl-tile-village-hut")).to be_present
+  end
 end

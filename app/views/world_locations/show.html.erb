@@ -13,18 +13,16 @@
     <section class="nl-world-location-scene nl-world-location-scene--<%= location_kind %>"
              aria-label="<%= @building.name %>"
              style="--nl-location-width: <%= scene_width %>px; --nl-location-height: <%= scene_height %>px;">
-      <div class="nl-village-sky" aria-hidden="true"></div>
-      <div class="nl-village-ground" aria-hidden="true"></div>
-      <div class="nl-village-palisade" aria-hidden="true"></div>
-      <div class="nl-village-chapel" aria-hidden="true"><span>+</span></div>
-      <div class="nl-village-house nl-village-house--one" aria-hidden="true"></div>
-      <div class="nl-village-house nl-village-house--two" aria-hidden="true"></div>
-      <div class="nl-village-house nl-village-house--three" aria-hidden="true"></div>
-      <div class="nl-village-windmill" aria-hidden="true"><span></span></div>
-      <div class="nl-village-well" aria-hidden="true"></div>
+      <% if @building.location_scene["image"].present? %>
+        <%= image_tag @building.location_scene.fetch("image"), width: scene_width, height: scene_height,
+                      alt: "", class: "nl-world-location-art" %>
+      <% elsif location_kind == "village" %>
+        <%= render "village_scene" %>
+      <% end %>
 
       <nav class="nl-world-location-hotspots" aria-label="Location actions">
         <% @location_features.each do |feature| %>
+          <% next if feature["placement"] == "navigation" %>
           <% feature_key = feature.fetch("key") %>
           <% style = "--nl-location-hotspot: polygon(#{world_location_polygon(feature)});" %>
           <%= form_with url: world_location_feature_path(@building.location_key),
@@ -49,4 +47,7 @@
       </nav>
     </section>
   </div>
+  <% if @building.location_sections.any? %>
+    <%= render "sections" %>
+  <% end %>
 </div>

@@ -140,7 +140,7 @@ module Game
       end
 
       def validate_members!(members)
-        return if members.all? { |member| member.level.to_i.positive? && member.max_hp.to_i.positive? }
+        return if members.all? { |member| non_negative_level(member.level) && member.max_hp.to_i.positive? }
 
         raise InvalidRosterError, "NPC combat parameters are not documented."
       end
@@ -160,7 +160,10 @@ module Game
       # A range is an explicit authoring policy, never an inferred source
       # probability. Its HP must be supplied; level does not invent combat stats.
       def member_level(member, fallback)
-        return positive_member_value(member, "level", fallback) unless member.key?("level_min") || member.key?("level_max")
+        unless member.key?("level_min") || member.key?("level_max")
+          return non_negative_level(member.fetch("level", fallback)) ||
+            raise(InvalidRosterError, "NPC combat parameters are not documented.")
+        end
 
         minimum = member["level_min"]
         maximum = member["level_max"]
@@ -169,6 +172,11 @@ module Game
         end
 
         minimum == maximum ? minimum : rng.rand(minimum..maximum)
+      end
+
+      def non_negative_level(value)
+        parsed = Integer(value.to_s, exception: false)
+        parsed if parsed && parsed >= 0
       end
 
       def positive_integer(value)

@@ -268,7 +268,12 @@ The full live id/name/category catalog is captured in
 stat, resistance, magic, auxiliary, and warrior rows, so branch names no longer
 need to be inferred. Only source IDs `7` and `15` are selectable for launch;
 prerequisite gates, reset behavior, and mechanical effects for the other
-entries remain uncaptured.
+entries are not fully captured or implemented. Nature Child's four-point
+drinking recovery is already published; its allocation/effect handoff remains
+unimplemented, and the exact movement/HP bonuses remain unknown. See the
+World-related skill/perk gap owner in
+`doc/features/character_progression.md` section 6.5 and the current wiki record
+`doc/design/reference/world/observations/2026-09-09_wiki_skills_and_cell_actions.md`.
 
 Perk allocation rules:
 
@@ -311,7 +316,8 @@ Perk allocation rules:
 ## Interactions
 
 - `features/movement.md`: World consumes effective Wanderer with the bounded
-  MVP `30..25` second adjacent-step formula. The complete Neverlands timing
+  MVP `30..24` second adjacent-step fallback, unless the destination has an
+  exact authored duration. The complete Neverlands timing
   formula and every other movement modifier remain uncaptured.
 - `features/combat.md`: Combat consumes effective Extra Action Points one-for-one
   and Careful Fighter at finalization. Weapon mastery, defense, magic, and

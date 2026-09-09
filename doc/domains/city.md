@@ -10,17 +10,23 @@ fixed-scene panning.
 
 - Neverlands source summary: `doc/design/reference/city/README.md`
 - Current observations: `doc/design/reference/city/observations/`
+- Latest reciprocal gate survey:
+  `doc/design/reference/world/observations/2026-09-09_starter_routes.md`
 - Normalized design: `doc/design/areas/cities_and_buildings.md`
 - Delivery IDs: `CITY-NAV-001`, `CITY-GATE-001`, and
   `CITY-SERVICES-001` in `doc/design/launch_mvp_plan.md`
 - Current implementation: `doc/features/city.md`; paid transport lifecycle:
   `doc/features/airship_travel.md`
 - Content operations: `doc/guides/managing_game_content.md`
+- Project building/interior artwork style and prompts: `doc/ARTWORK.md`
 
 ## Current RPG status
 
-Fully Implemented for the declared five-node navigation and verified outdoor
-gate boundary. Visible service interiors do not imply their full mechanics are
+Fully Implemented for the declared five-node navigation and two verified
+outdoor gates: Central Square ↔ `[6,8]` and Law Quarter ↔ `[11,9]`. The 15
+hotspots include eight district routes, five building entries, and two exits.
+The city path to the eastern gate is Central Square → Residential Quarter →
+Law Quarter. Visible service interiors do not imply their full mechanics are
 implemented.
 
 Building entry preserves the district. Actual Arena room entry persists its

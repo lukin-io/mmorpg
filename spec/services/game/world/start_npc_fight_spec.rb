@@ -52,6 +52,23 @@ RSpec.describe Game::World::StartNpcFight do
     expect(position.reload).to have_attributes(x: 5, y: 5)
   end
 
+  it "starts and retries a level-zero encounter without scaling its captured combat data" do
+    npc_template.update!(level: 4)
+    tile_npc.update!(level: 0, metadata: {"encounter_experience_reward" => 0})
+    service = described_class.new(character:, tile_npc:)
+
+    match = service.call
+    participant = match.arena_participations.npcs.sole
+
+    expect(match).to be_live
+    expect(participant.reload.participant_level).to eq(0)
+    expect(participant.metadata).to include("level" => 0, "current_hp" => 40, "max_hp" => 40)
+    expect(npc_template.combat_stats).to include(hp: 40, attack: 4)
+    expect(match.metadata.fetch("encounter_experience_reward")).to eq(0)
+    expect { expect(service.call).to eq(match) }.not_to change(ArenaParticipation, :count)
+    expect(position.reload).to have_attributes(x: 5, y: 5)
+  end
+
   it "creates one participation per source-backed encounter member" do
     tile_npc.update!(metadata: {"encounter_count" => 2})
 

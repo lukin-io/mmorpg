@@ -66,13 +66,14 @@ RSpec.describe "World content management", type: :system, js: true do
     expect(page).to have_field("Y", with: "12")
     select template.name, from: "tile_npc_npc_template_id"
     fill_in "tile_npc_npc_key", with: template.npc_key
+    fill_in "tile_npc_level", with: "0"
     uncheck "Encounter active"
     click_button "Add encounter roster"
     find("summary", text: "New encounter roster").click
     fill_in "Roster key", with: "rats"
     fill_in "Selection weight", with: "2"
     select template.name, from: "roster_0_member_0_npc_key"
-    fill_in "roster_0_member_0_level_min", with: "1"
+    fill_in "roster_0_member_0_level_min", with: "0"
     fill_in "roster_0_member_0_level_max", with: "4"
     fill_in "roster_0_member_0_hp", with: "40"
     page.current_window.resize_to(390, 844)
@@ -82,9 +83,10 @@ RSpec.describe "World content management", type: :system, js: true do
     expect(page).to have_content("Cell NPC created.")
     npc = TileNpc.find_by!(zone: zone.name, x: 11, y: 12)
     expect(npc).not_to be_active
+    expect(npc.level).to eq(0)
     expect(npc.encounter_roster_samples.first).to include("key" => "rats", "weight" => 2)
     expect(npc.encounter_roster_samples.first.fetch("members")).to eq([
-      {"npc_key" => template.npc_key, "level_min" => 1, "level_max" => 4, "hp" => 40}
+      {"npc_key" => template.npc_key, "level_min" => 0, "level_max" => 4, "hp" => 40}
     ])
   end
 end

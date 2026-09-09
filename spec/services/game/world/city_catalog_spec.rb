@@ -36,14 +36,31 @@ RSpec.describe Game::World::CityCatalog do
     expect(described_class.node("main").dig("features", "arena", "required_level")).to eq(0)
   end
 
-  it "keeps only the outdoor gate whose destination cell was verified" do
-    expect(described_class::GATES.keys).to eq(["west"])
+  it "pairs both captured gates with their exact city nodes and outdoor cells" do
+    expect(described_class::GATES.keys).to contain_exactly("west", "east")
     expect(described_class::GATES.fetch("west")).to include(
       "name" => "City Exit",
+      "presence_label" => "Outpost, West Gate",
       "node_key" => "main",
       "local_coordinates" => [6, 8],
-      "source_coordinates" => [1000, 1000]
+      "source_coordinates" => [1000, 1000],
+      "source_map" => "m_1000_1000"
     )
+    expect(described_class::GATES.fetch("east")).to include(
+      "name" => "City Exit",
+      "presence_label" => "Outpost, East Gate",
+      "node_key" => "forpost4",
+      "local_coordinates" => [11, 9],
+      "source_coordinates" => [1005, 1001],
+      "source_map" => "m_1005_1001"
+    )
+  end
+
+  it "makes the existing Law Quarter gate an action without a duplicate landmark" do
+    expect(described_class.hotspot_presentation("forpost4", "east_gate")).to eq(
+      "box" => [46, 343, 371, 257]
+    )
+    expect(described_class.presentation("forpost4").fetch("landmarks")).not_to have_key("city_exit")
   end
 
   it "uses the observed native scene and project image dimensions" do

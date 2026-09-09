@@ -248,8 +248,10 @@ The Neverlands wiki supplies an exact MVP-safe fatigue slice:
   Enter/Look action offers, and acceptance rechecks the same rule;
 - a Drink at an authored water cell immediately removes two fatigue points,
   bounded at zero, and retains a 60-second work lock. No skill gate applies;
-- the wiki names four points with Nature Child. That value is preserved as
-  configuration data; the unsupported perk itself is not granted or enabled;
+- the wiki establishes four points with Nature Child. That known value is
+  preserved as configuration data; the unsupported perk itself is not granted
+  or enabled. Character Progression owns its acquisition/effect gap in
+  `doc/features/character_progression.md` section 6.5;
 - city node transitions are not wilderness actions and remain available.
 
 The wiki also says high fatigue affects combat, but the penalty formula is not

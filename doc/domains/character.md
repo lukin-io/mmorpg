@@ -17,6 +17,7 @@ awarded-XP feedback handoff after combat.
 - Delivery ID: `CHARACTER-PROGRESSION-001` in
   `doc/design/launch_mvp_plan.md`
 - Current implementation: `doc/features/character_progression.md`
+- Project player-illustration style and prompts: `doc/ARTWORK.md`
 
 ## Current RPG status
 
@@ -41,3 +42,10 @@ Section 16 of `doc/features/character_progression.md` is exhaustive.
 
 Capture exact high-level progression, perk prerequisites/reset behavior, and
 remaining skill-effect formulas before extending the bounded contract.
+
+World-related skill/perk gaps are owned by
+[Character Progression, section 6.5](../features/character_progression.md#65-world-related-skill-and-perk-gaps).
+Nature Child has a published four-point Drink value but no supported local
+allocation/effect handoff. Its movement and outdoor HP coefficients remain
+unknown. World owns movement/search rules; use-grown fishing, gathering and
+mining counters belong to the [Professions domain](professions.md).

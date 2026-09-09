@@ -12,7 +12,6 @@
   <% unless @own_profile %>
     <header class="nl-profile-identity">
       <h1><%= @character.name %> [<%= @character.level %>]</h1>
-      <p><%= profile_location(@character) %></p>
     </header>
   <% end %>
 
@@ -23,6 +22,7 @@
         equipment: @equipment,
         interactive: false,
         show_money: @own_profile %>
+      <p class="nl-profile-location" aria-label="Current location"><%= profile_location(@character) %></p>
     </aside>
 
     <main class="nl-character-page-main">

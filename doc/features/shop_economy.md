@@ -3,7 +3,7 @@
 title: Shop and Economy Feature
 description: Implementation handbook for the Neverlands-based city shop, NV wallet, catalog buying, inventory selling, and transaction ledger.
 status: Partially Implemented
-updated: 2026-09-08
+updated: 2026-09-09
 owners: Shop and Economy
 template: feature-v1
 ---
@@ -34,6 +34,9 @@ Supporting documents:
 - `doc/design/reference/city/observations/2026-07-28_city_movement_and_services.md` records how the city exposes building entry and exit.
 - `doc/design/reference/shell/observations/2026-07-28_game_shell_and_mvp_surfaces.md` records the compact surrounding interface.
 - `doc/design/reference/world/observations/2026-09-07_forpost_grid_and_action_audit.md` records village Shop entry, its separate presence label, and return to the village square.
+- `doc/design/reference/world/observations/2026-09-09_starter_landmarks_and_art.md` records mine item-card previews and resource exchange section controls; no economic operation was submitted.
+- `doc/design/reference/world/observations/2026-09-09_mine_exchange_wiki.md` preserves the adjacent official-wiki inputs without promoting older exchange rules to verified live behavior.
+- `doc/design/reference/economy/observations/evidence_needed_mine_exchange_operations.md` owns the missing mine/exchange economic captures.
 - `doc/design/reference/social/observations/2026-08-23_chat_game_event_timeline.md` records the supplied Neverlands item and `24 NV` search-result rows; the row proves the result form but not a production NPC identity or probability.
 - `doc/design/features/economy_trading_shops.md` defines the local economy and shop boundary.
 - `doc/design/areas/cities_and_buildings.md` owns the authored building topology.
@@ -76,7 +79,12 @@ for source-backed NV awarded by NPC combat; the Arena transition supplies the
 reason/source metadata but does not bypass wallet invariants. Catalog parameters
 and browser controls never confer purchase, sale, or reward authority.
 
-The implemented catalog includes Buy, Licenses, Sell, and Novice modes plus seven category choices. Licenses and Novice are catalog filters using the same ordinary purchase flow; source-specific license grants, durations, or distinct novice transactions were not captured and are not implemented.
+The implemented catalog includes Buy, Licenses, Sell, and Novice modes plus
+seven category choices. Licenses and Novice are catalog filters using the same
+ordinary purchase flow; they do not implement timed license grants, profession
+permissions or distinct novice transactions. The later mine capture records
+displayed license durations, but those read-only World previews do not
+establish activation/expiry behavior or enable mine purchases.
 
 The MVP currently contains:
 
@@ -104,6 +112,8 @@ The MVP currently contains:
 - Inventing license effects, durations, prerequisites, or novice-only services that were not observed.
 - Player-to-player markets, auctions, barter, banking, exchange rates, credit, refunds, or generic merchant reputation.
 - Making the captured Market, Junk Dealer, Numismatics Exchange, Hospital Shop, Pharmacy, or Airship Station transactional here.
+- Activating mine item/license purchases or Resource Exchange queries,
+  listings, transactions and storage from their read-only World lobby controls.
 - Treating displayed equipment requirements as purchase prohibitions; inventory/equipment owns whether an item can be equipped.
 - Exposing a separately versioned public shop API, blueprint serializer, or Swagger/rswag contract.
 
@@ -188,6 +198,7 @@ Catalog order, row position, item label, CSS class, displayed price, and query p
 | Licenses mode | `GET /shop?mode=licenses` | Catalog-interactive only | Ordinary catalog/purchase flow |
 | Novice mode | `GET /shop?mode=novice` | Catalog-interactive only | Low-level/low-price filter |
 | Other captured city counters/interiors | City building routes | Read-only or deferred | City feature |
+| Mine Shop / Resource Exchange lobby sections | Exact-cell linked-location pages | Read-only; economic operations deferred | World owns the shipped lobbies; Economy owns the operation gaps in §6.5 |
 
 ### 6.2 Buying and stock
 
@@ -203,6 +214,15 @@ Sale locks the inventory and stack, removes the requested quantity or destroys a
 
 Wallet balances and ledger amounts are decimal values. Every adjustment is non-zero, records a reason and resulting balance, and cannot leave the wallet negative.
 
+Sample-account bootstrap grants initial NV once per wallet through
+`Seeds::StarterWalletGrant.call(user:, amount:, metadata:)`. It holds the
+wallet row lock while checking for the stable `seed.initial_nv` ledger reason
+and calling the existing wallet adjustment service. New grants also record
+`seed_grant_key: starter_initial_nv_v1`. Repeated or concurrent seed calls
+create no second credit. Historical entries without that metadata marker
+still count as completion, preserving current balances and old ledger rows;
+this does not repair historical duplicate grants or reset spent balances.
+
 NPC currency loot uses the same boundary with reason `combat.npc_loot` and
 source metadata for match, character, NPC participation/template, loot-entry
 index, and stable event key. Arena persists the wallet adjustment inside the
@@ -215,6 +235,32 @@ row. Item loot never enters the wallet; Inventory remains its authority.
 License rows do not grant a captured license object, timer, profession permission, or alternate currency. Novice is only an authored catalog filter. There is no bargain flow, buyback, refund, repair, appraisal, player order, remote shopping, or transaction-history UI.
 
 The current forms do not use a one-time server-issued action capability. CSRF, authentication, location/ownership checks, transactions, and locks protect each request, but repeating a still-valid submission performs another purchase or sale. Idempotency/replay prevention must not be claimed.
+
+### 6.5 Mine Shop and Resource Exchange gap ownership
+
+World ships the mine and exchange's cell entry, read-only sections, Nature
+return and lobby resume. Mine previews contain captured item/license details
+with disabled purchase controls; exchange tabs contain selectors and a disabled
+Choose control. They do not grant ordinary Shop access or run an economic
+query. [The World handbook](world.md) remains their runtime owner.
+
+| Remaining Economy work | Known runtime gap | Evidence needed before implementation |
+|---|---|---|
+| Mine item/license acquisition | `[IMPL]` Purchases, stock changes, NV debit and item/license receipt are absent for this lobby. Main Shop's Licenses mode does not provide them. | `[EVIDENCE]` Capture confirmation, successful acquisition, quantity/stock/funds/capacity/eligibility denials and repeat handling. Displayed prices/durations are already recorded; sampled stock is not a fixed rule. |
+| Exchange queries and listings | `[IMPL]` Choose, populated/empty listing results and listing refresh are absent. Switching a read-only section is not a resource query. | `[EVIDENCE]` Submit the observed selectors and capture actual results, row identities, filtering, refresh and stale state. |
+| Exchange transactions and settlement | `[IMPL]` Orders/trades, settlement and their wallet/resource mutations are absent. | `[EVIDENCE]` Confirm the live operation model, requirements, timing, fees if present, cancellation/expiry, failure and retry outcomes. Older wiki descriptions do not establish current settlement rules. |
+| Exchange storage operations | `[IMPL]` Resource deposit, withdrawal or claiming is absent; the exact operation model is not inferred from the tab name. | `[EVIDENCE]` Observe ownership, quantity/capacity if applicable, success, failure, persistence and repeated requests. |
+
+The canonical [capture backlog](../design/reference/economy/observations/evidence_needed_mine_exchange_operations.md)
+links the preserved live/wiki observations. These are later operation tasks,
+not unfinished starter-map entry/return work. Recording them here does not
+change the launch plan's delivery boundary.
+
+After acquisition, mining-license use/effects, tools, digging/extraction,
+yields and proficiency belong to [Professions](../domains/professions.md).
+The separate descent/underground-cell travel backlog belongs to
+[Dungeons](../domains/dungeons.md). Economy must not grant those capabilities
+because an item card or a lobby is visible.
 
 ## 7. Authoritative data and presentation model
 
@@ -438,6 +484,7 @@ bundle exec rspec \
 - `doc/design/features/economy_trading_shops.md`
 - `doc/design/areas/cities_and_buildings.md`
 - `doc/design/reference/economy/observations/2026-05-21_lavka_shop.md`
+- `doc/design/reference/economy/observations/evidence_needed_mine_exchange_operations.md`
 - `doc/design/reference/inventory/observations/2026-06-01_inventory_items_and_shop_rows.md`
 - `doc/design/reference/city/observations/2026-07-28_city_movement_and_services.md`
 - `doc/design/reference/shell/observations/2026-07-28_game_shell_and_mvp_surfaces.md`
@@ -479,6 +526,9 @@ bundle exec rspec \
 ### Content, configuration, seeds, and schema
 
 - `db/seeds.rb`
+- `db/seeds/shop_inventory.rb`
+- `db/seeds/starter_wallets.rb`
+- `db/seeds/starter_wallet_grant.rb`
 - `db/schema.rb`
 - `db/migrate/20251121090002_create_item_templates.rb`
 - `db/migrate/20251121142307_create_economy_and_trading.rb`
@@ -518,6 +568,7 @@ combat reward eligibility.
 ### Specs
 
 - `spec/models/currency_wallet_spec.rb`
+- `spec/models/starter_wallet_seed_spec.rb`
 - `spec/models/currency_transaction_spec.rb`
 - `spec/services/economy/wallet_service_spec.rb`
 - `spec/services/arena/npc_loot_awarder_spec.rb`

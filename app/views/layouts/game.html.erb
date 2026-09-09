@@ -74,7 +74,7 @@
             <span class="nl-nav-link nl-nav-link--disabled" aria-current="page"><%= @zone&.display_name || "City" %></span>
           <% end %>
         <% elsif controller_name == "world_locations" %>
-          <span class="nl-nav-link nl-nav-link--disabled" aria-current="page"><%= @building&.location_short_label || "Location" %></span>
+          <%= render "world_locations/navigation" %>
         <% elsif controller_name == "shop" && @shop_parent_location %>
           <%= link_to shop_location_return_label, shop_location_return_path,
               class: "nl-nav-link", data: {turbo_frame: "_top"} %>

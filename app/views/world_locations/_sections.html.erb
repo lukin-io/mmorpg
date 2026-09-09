@@ -1,0 +1,46 @@
+<div class="nl-world-location-sections">
+  <nav class="nl-world-location-tabs" aria-label="Location sections">
+    <% @building.location_sections.each do |section| %>
+      <%= link_to section.fetch("label"), world_location_path(@building.location_key, section: section.fetch("key")),
+          class: "nl-world-location-tab", aria: {current: (@location_section == section ? "page" : nil)},
+          data: {turbo_frame: "_top"} %>
+    <% end %>
+  </nav>
+  <% if @building.location_kind == "exchange" %>
+    <p class="nl-world-location-wallet">You have: <b><%= number_with_delimiter(@wallet&.nv_balance || 0) %> NV</b></p>
+  <% end %>
+  <% if @location_section %>
+    <section class="nl-world-location-section" aria-label="<%= @location_section.fetch('label') %>">
+      <% if @building.location_kind == "mine" && @location_section["summary_label"].present? %>
+        <%# Live mine totals describe an underground world that is not part of
+            this lobby implementation. Do not present sampled counts as ours. %>
+        <table class="nl-world-location-mine-summary">
+          <thead><tr><th>Name</th><th>Available levels</th><th>Available caves</th><th>Resource veins</th></tr></thead>
+          <tbody><tr><td><%= @location_section.fetch("summary_label") %></td><td>—</td><td>—</td><td>—</td></tr></tbody>
+        </table>
+        <button type="button" class="lbut" disabled>Descend into mine</button>
+      <% end %>
+      <% if @building.location_resource_categories.any? %>
+        <%# The captured query controls remain unavailable until their actual
+            resource listings and exchange workflow are implemented. %>
+        <div class="nl-world-location-resource-filters">
+          <%= select_tag :resource_type, options_for_select(@building.location_resource_categories), aria: {label: "Resource type"} %>
+          <%= select_tag :resource_kind, options_for_select(["All resources"]), aria: {label: "Resource"} %>
+          <button type="button" class="lbut" disabled>Choose</button>
+        </div>
+      <% end %>
+      <% if @location_section["read_only_items"].present? %>
+        <div class="nl-world-location-item-previews">
+          <% @location_section.fetch("read_only_items").each do |item| %>
+            <article class="nl-world-location-item-preview">
+              <h2><%= item.fetch("name") %></h2>
+              <% item.fetch("details").each do |detail| %><p><%= detail %></p><% end %>
+              <input type="number" value="1" min="1" disabled aria-label="Quantity for <%= item.fetch('name') %>">
+              <button type="button" class="lbut" disabled>Buy</button>
+            </article>
+          <% end %>
+        </div>
+      <% end %>
+    </section>
+  <% end %>
+</div>

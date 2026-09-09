@@ -60,9 +60,8 @@ module Game
         }
       }.freeze
 
-      # The exact outdoor handoff has been verified for the Central Square
-      # exit. The second illustrated exit in the Law Quarter remains a
-      # presentation-only landmark until its outdoor destination is captured.
+      # Each captured gate pairs a city node with its exact outdoor cell.
+      # Local coordinates use the bounded starter area's source offset.
       GATES = {
         "west" => {
           "name" => "City Exit",
@@ -71,6 +70,14 @@ module Game
           "local_coordinates" => [6, 8],
           "source_coordinates" => [1000, 1000],
           "source_map" => "m_1000_1000"
+        },
+        "east" => {
+          "name" => "City Exit",
+          "presence_label" => "Outpost, East Gate",
+          "node_key" => "forpost4",
+          "local_coordinates" => [11, 9],
+          "source_coordinates" => [1005, 1001],
+          "source_map" => "m_1005_1001"
         }
       }.freeze
 
@@ -140,11 +147,11 @@ module Game
           "image_offset" => [-286, -20],
           "focus" => [625, 300],
           "hotspots" => {
-            "go_forpost1" => {"box" => [84, 297, 76, 100], "direction" => "west"}
+            "go_forpost1" => {"box" => [84, 297, 76, 100], "direction" => "west"},
+            "east_gate" => {"box" => [46, 343, 371, 257]}
           },
           "landmarks" => {
             "law_abode" => {"name" => "Law Abode", "box" => [55, 0, 370, 332]},
-            "city_exit" => {"name" => "City Exit", "box" => [46, 343, 371, 257]},
             "prison" => {"name" => "Prison", "box" => [578, 81, 379, 419]},
             "gallows" => {"name" => "Gallows", "box" => [472, 154, 176, 99]}
           }

@@ -2,8 +2,8 @@
 
 - Document type: neverlands-source-summary
 - Domain: economy
-- Updated: 2026-09-07
-- Evidence status: current for captured Shop rows; incomplete overall
+- Updated: 2026-09-09
+- Evidence status: current for captured Shop rows and mine/exchange lobby controls; economic operation captures incomplete
 
 ## Current observations
 
@@ -18,6 +18,9 @@
   `doc/design/reference/world/observations/2026-09-07_forpost_grid_and_action_audit.md`
 - Exact cell/room ordinary-chat and presence boundaries in
   `doc/design/reference/social/observations/2026-09-07_cell_chat_and_presence_boundaries.md`
+- [Mine/exchange live lobby controls](../world/observations/2026-09-09_starter_landmarks_and_art.md)
+  and [official-wiki reference](../world/observations/2026-09-09_mine_exchange_wiki.md).
+  These observations are owned by World and linked here without copying them.
 
 ## Current Neverlands behavior
 
@@ -31,12 +34,22 @@ The supplied social addendum separately confirms a successful NPC search can
 report `24 NV`; it does not expose source wallet persistence, the NPC identity,
 or drop probability.
 
+The later mine capture records displayed item/license details and purchase
+controls; the exchange capture records three section shells and resource
+selectors. No purchase, exchange query/listing, transaction or storage action
+was submitted. The older wiki describes a distinct exchange trading model,
+whose current operation rules still need live confirmation.
+
 ## Evidence gaps
 
 - Full market trading, player transfers, license effects, repair, stock
   replenishment, and several service-building transaction flows remain open.
 - The village entry/return observation does not establish a distinct stock
   pool, new prices, or additional trading mechanics for that Shop.
+- The [mine/exchange operations backlog](observations/evidence_needed_mine_exchange_operations.md)
+  owns missing acquisition, query/listing, settlement and storage captures.
+  Displayed license durations are known; acquisition/activation/expiry and
+  successful or failed economic outcomes remain distinct questions.
 
 ## Design linkage
 
@@ -49,6 +62,11 @@ or drop probability.
 - Current entry/resume accepts an active City hotspot or exact-cell linked
   village feature; the persisted parent selects City versus Village return.
   Location and timed-action guards remain authoritative for direct requests.
+- World ships mine/exchange lobbies with read-only controls and location
+  resume. Their economic operations remain unimplemented under the
+  [Economy gap table](../../../features/shop_economy.md#65-mine-shop-and-resource-exchange-gap-ownership).
+  Professions owns license use and extraction; Dungeons tracks underground
+  travel. The lobbies do not promote either feature to implemented.
 
 ### Responsible implementation files
 

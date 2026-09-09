@@ -29,25 +29,12 @@ module Game
       # identity. Tokens are character/region scoped and expire after 30 minutes.
       def call
         previous = previous_buffer
-        old_x, old_y = previous ? previous.values_at("x", "y") : [position.x, position.y]
-        x_range = ([old_x, position.x].min - X_RADIUS)..([old_x, position.x].max + X_RADIUS)
-        y_range = ([old_y, position.y].min - Y_RADIUS)..([old_y, position.y].max + Y_RADIUS)
-        @templates = MapTileTemplate.in_zone(zone.name).in_area(x_range, y_range).index_by { |tile| [tile.x, tile.y] }
-        @buildings = TileBuilding.active.in_zone(zone.name).where(x: x_range, y: y_range).index_by { |building| [building.x, building.y] }
-        reusable = previous && previous["fingerprint"] == fingerprint(old_x, old_y)
+        load_content(previous)
+        reusable = reusable_buffer?(previous)
         revision = (Time.current.to_r * 1_000_000).to_i
-        next_token = verifier.generate({
-          "character_id" => position.character_id, "zone_id" => zone.id,
-          "x" => position.x, "y" => position.y,
-          "fingerprint" => fingerprint(position.x, position.y)
-        }, expires_in: 30.minutes)
-        rows = ((position.y - Y_RADIUS)..(position.y + Y_RADIUS)).map do |y|
-          ((position.x - X_RADIUS)..(position.x + X_RADIUS)).filter_map do |x|
-            next if reusable && x.between?(old_x - X_RADIUS, old_x + X_RADIUS) && y.between?(old_y - Y_RADIUS, old_y + Y_RADIUS)
+        next_token = generate_token
+        rows = build_rows(reusable ? previous : nil)
 
-            tile_at(x, y)
-          end
-        end
         Result.new(rows:, token: next_token, base_token: reusable ? token : nil, revision:)
       end
 
@@ -70,10 +57,44 @@ module Game
         data
       end
 
+      def load_content(previous)
+        old_x, old_y = previous ? previous.values_at("x", "y") : [position.x, position.y]
+        x_range = ([old_x, position.x].min - X_RADIUS)..([old_x, position.x].max + X_RADIUS)
+        y_range = ([old_y, position.y].min - Y_RADIUS)..([old_y, position.y].max + Y_RADIUS)
+        @templates = MapTileTemplate.in_zone(zone.name).in_area(x_range, y_range).index_by { |tile| [tile.x, tile.y] }
+        @buildings = TileBuilding.active.in_zone(zone.name).where(x: x_range, y: y_range).index_by { |building| [building.x, building.y] }
+      end
+
+      def reusable_buffer?(previous)
+        previous && previous["fingerprint"] == fingerprint(previous["x"], previous["y"])
+      end
+
+      def generate_token
+        verifier.generate({
+          "character_id" => position.character_id, "zone_id" => zone.id,
+          "x" => position.x, "y" => position.y,
+          "fingerprint" => fingerprint(position.x, position.y)
+        }, expires_in: 30.minutes)
+      end
+
+      def build_rows(reused_buffer)
+        ((position.y - Y_RADIUS)..(position.y + Y_RADIUS)).map do |y|
+          ((position.x - X_RADIUS)..(position.x + X_RADIUS)).filter_map do |x|
+            next if reused_buffer && within_buffer?(x, y, reused_buffer["x"], reused_buffer["y"])
+
+            tile_at(x, y)
+          end
+        end
+      end
+
+      def within_buffer?(x, y, center_x, center_y)
+        x.between?(center_x - X_RADIUS, center_x + X_RADIUS) && y.between?(center_y - Y_RADIUS, center_y + Y_RADIUS)
+      end
+
       def fingerprint(center_x, center_y)
         records = [templates, buildings].map do |layer|
           layer.filter_map do |(x, y), record|
-            next unless x.between?(center_x - X_RADIUS, center_x + X_RADIUS) && y.between?(center_y - Y_RADIUS, center_y + Y_RADIUS)
+            next unless within_buffer?(x, y, center_x, center_y)
 
             # Content edits, activation changes, movement, and deletion must not
             # leave an old visible cell behind. Persisted attributes also catch
@@ -101,6 +122,7 @@ module Game
         end
         OpenStruct.new(
           x:, y:, terrain_type: template&.terrain_type || zone.location_type,
+          building_key: building&.building_key,
           walkable: in_bounds && (template ? template.walkable : zone.outdoor?),
           passable: in_bounds && (template ? template.passable : zone.outdoor?), metadata:
         )

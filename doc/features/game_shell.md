@@ -3,7 +3,7 @@
 title: Game Shell Feature
 description: Implementation handbook for the Neverlands-based persistent game frame, compact vitals, location presence, mixed chat/game-event timeline, and shell preferences.
 status: Partially Implemented
-updated: 2026-09-08
+updated: 2026-09-09
 owners: Game Shell and Social Presence
 template: feature-v1
 ---
@@ -31,6 +31,7 @@ Supporting documents:
 
 - `doc/design/reference/shell/observations/2026-07-28_game_shell_and_mvp_surfaces.md` records the live frame layout, toolbar, location/presence block, and chat strip.
 - `doc/design/reference/world/observations/2026-09-07_forpost_grid_and_action_audit.md` records outdoor movement locks and separate village entrance, square, and Shop presence labels/audiences.
+- `doc/design/reference/world/observations/2026-09-09_starter_routes.md` confirms both gate labels, pond labeling, and separate zone/cell lines on the public profile.
 - `doc/design/reference/social/observations/2026-08-23_chat_game_event_timeline.md` records current supplied-image/text evidence for player chat, personal fight, item, and NV search results, and game-wide announcements in one history.
 - `doc/design/reference/social/observations/2026-09-07_cell_chat_and_presence_boundaries.md` confirms ordinary cell/room chat, distinct Arena rooms, and the browser-login history boundary.
 - `doc/design/reference/world/observations/2026-09-08_forpost_oktal_airship_journey.md` records separate station/route roster labels, waiting-state Inventory/reload recovery, and explicit arrival disembarkation; chat delivery aboard was not exercised.
@@ -269,10 +270,16 @@ Room Map Enter links target the full shell with `data-turbo-frame="_top"`; the s
 presence replaces the previous audience immediately, even with automatic
 presence refresh disabled. Local chat uses the same saved room identity.
 
-The seeded labels are Outpost, West Gate at the city entrance, Frontier Village
-outside the village, Village Square inside, and Shop in its trading feature.
-Entrance and room labels come from validated building metadata; other outdoor
-cells use their zone's authored display name. The current character belongs to the
+The seeded labels distinguish Outpost, West Gate and Outpost, East Gate,
+Frontier Village outside the village, Village Square inside, Shop in its
+trading feature, and Outpost Surroundings, Pond at the pond. Entrance and room
+labels come from validated building/context metadata; other outdoor cells use
+their exact cell's `presence_label`, falling back to the zone's display name.
+`Game::World::Presence#label` supplies this same text to the map description
+and owner/public profile without querying or counting the nearby audience.
+Character Progression owns the profile's zone/current-location lines and
+public combat link; World owns the authored label and location resolution.
+The current character belongs to the
 audience, which uses four server allowlisted sorts and returns at most ten rows.
 Unknown sorts fall back to alphabetical ascending. At a busy location the
 viewer can sort beyond those first ten rows; the header still counts the full
@@ -431,7 +438,7 @@ and NV loot.
 | Record or component | Responsibility | Important contract |
 |---|---|---|
 | `Character` and `CharacterPosition` | Header identity/vitals and exact presence location | Current signed-in character is authoritative |
-| `Game::World::Presence` | Bounded online playable-character list, full count, and authored label | Exact cell plus validated village/city/Arena room, or persisted route/departure aboard audience; never changes location, resume context, sessions, or chat |
+| `Game::World::Presence` | Bounded online playable-character list/full count through `#call`; shared current-location text through `#label` | Exact cell/entrance plus validated village/city/Arena room, or persisted aboard flight; label-only reads load no audience, and neither entry point changes location, resume context, sessions, or chat |
 | `UserSession` | Online-total and presence liveness signal | Unsigned-out and seen strictly within five minutes; explicit login owns reopening |
 | `ChatChannel` and `ChatChannelMembership` | Channel identity, audience, membership | Local key from authoritative context; whisper/legacy arena require membership; global ordinary posts rejected |
 | `ChatMessage` | Persisted sender/body/visibility/metadata | Body present; broadcasts only after commit |

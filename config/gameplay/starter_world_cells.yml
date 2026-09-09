@@ -1,0 +1,563 @@
+# Bounded Forpost starter survey; source facts from the user-supplied atlas.
+# Live Neverlands offers override this public atlas if a later capture differs.
+# NPC entries are descriptive pool annotations, NOT complete combat rosters.
+# Herb groups are identities, NOT quantities, yields, or skill thresholds.
+# This catalog provides no terrain/art, gameplay actions, HP, or probabilities.
+# Source: doc/design/reference/world/observations/2026-09-09_starter_atlas.md
+zone_name: Outpost Surroundings
+source_origin: [994, 992]
+source_bounds:
+  x: [994, 1014]
+  y: [994, 1006]
+atlas_source:
+  url: https://nlservice.cc/map/
+  dataset_version: 6025f37e018325e7
+  captured_at: '2026-09-09'
+  coordinate_offset: [922, 954]
+cells:
+  - source_coordinates: [994, 994]
+    atlas: {"id": "8-73", "coordinates": [72, 40], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [995, 994]
+    atlas: {"id": "8-74", "coordinates": [73, 40], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [996, 994]
+    atlas: {"id": "8-75", "coordinates": [74, 40], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [997, 994]
+    atlas: {"id": "8-76", "coordinates": [75, 40], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [998, 994]
+    atlas: {"id": "8-77", "coordinates": [76, 40], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [999, 994]
+    atlas: {"id": "8-78", "coordinates": [77, 40], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1000, 994]
+    atlas: {"id": "8-79", "coordinates": [78, 40], "label": "Драконий Клык", "title": "", "kind": "active", "active": true, "has_water": false, "has_fish": false, "herb_groups": [6], "npc_annotations": []}
+  - source_coordinates: [1001, 994]
+    atlas: {"id": "8-80", "coordinates": [79, 40], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1002, 994]
+    atlas: {"id": "8-81", "coordinates": [80, 40], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1003, 994]
+    atlas: {"id": "8-82", "coordinates": [81, 40], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1004, 994]
+    atlas: {"id": "8-83", "coordinates": [82, 40], "label": "Обитель ботов", "title": "", "kind": "active", "active": true, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1005, 994]
+    atlas: {"id": "8-84", "coordinates": [83, 40], "label": "Обитель ботов", "title": "", "kind": "active", "active": true, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1006, 994]
+    atlas: {"id": "8-85", "coordinates": [84, 40], "label": "Обитель ботов", "title": "", "kind": "active", "active": true, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1007, 994]
+    atlas: {"id": "8-86", "coordinates": [85, 40], "label": "Обитель ботов", "title": "", "kind": "active", "active": true, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1008, 994]
+    atlas: {"id": "8-87", "coordinates": [86, 40], "label": "Обитель ботов", "title": "", "kind": "active", "active": true, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1009, 994]
+    atlas: {"id": "8-88", "coordinates": [87, 40], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1010, 994]
+    atlas: {"id": "8-89", "coordinates": [88, 40], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1011, 994]
+    atlas: {"id": "8-90", "coordinates": [89, 40], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1012, 994]
+    atlas: {"id": "9-61", "coordinates": [90, 40], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1013, 994]
+    atlas: {"id": "9-62", "coordinates": [91, 40], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1014, 994]
+    atlas: {"id": "9-63", "coordinates": [92, 40], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [994, 995]
+    atlas: {"id": "8-103", "coordinates": [72, 41], "label": "Драконий Клык", "title": "", "kind": "active", "active": true, "has_water": false, "has_fish": false, "herb_groups": [6], "npc_annotations": [{"name": "Разбойники", "min_level": 5, "max_level": 8}, {"name": "Грабители", "min_level": 6, "max_level": 8}]}
+  - source_coordinates: [995, 995]
+    atlas: {"id": "8-104", "coordinates": [73, 41], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [996, 995]
+    atlas: {"id": "8-105", "coordinates": [74, 41], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [997, 995]
+    atlas: {"id": "8-106", "coordinates": [75, 41], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [998, 995]
+    atlas: {"id": "8-107", "coordinates": [76, 41], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [999, 995]
+    atlas: {"id": "8-108", "coordinates": [77, 41], "label": "Драконий Клык", "title": "", "kind": "active", "active": true, "has_water": false, "has_fish": false, "herb_groups": [6], "npc_annotations": []}
+  - source_coordinates: [1000, 995]
+    atlas: {"id": "8-109", "coordinates": [78, 41], "label": "Драконий Клык", "title": "", "kind": "active", "active": true, "has_water": false, "has_fish": false, "herb_groups": [6], "npc_annotations": []}
+  - source_coordinates: [1001, 995]
+    atlas: {"id": "8-110", "coordinates": [79, 41], "label": "Окрестность Форпоста", "title": "", "kind": "active", "active": true, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1002, 995]
+    atlas: {"id": "8-111", "coordinates": [80, 41], "label": "Окрестность Форпоста, Песчаная отмель", "title": "", "kind": "active", "active": true, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1003, 995]
+    atlas: {"id": "8-112", "coordinates": [81, 41], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1004, 995]
+    atlas: {"id": "8-113", "coordinates": [82, 41], "label": "Обитель ботов", "title": "", "kind": "active", "active": true, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1005, 995]
+    atlas: {"id": "8-114", "coordinates": [83, 41], "label": "Обитель ботов", "title": "", "kind": "active", "active": true, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1006, 995]
+    atlas: {"id": "8-115", "coordinates": [84, 41], "label": "Обитель ботов", "title": "", "kind": "active", "active": true, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1007, 995]
+    atlas: {"id": "8-116", "coordinates": [85, 41], "label": "Обитель ботов", "title": "", "kind": "active", "active": true, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1008, 995]
+    atlas: {"id": "8-117", "coordinates": [86, 41], "label": "Обитель ботов", "title": "", "kind": "active", "active": true, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1009, 995]
+    atlas: {"id": "8-118", "coordinates": [87, 41], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1010, 995]
+    atlas: {"id": "8-119", "coordinates": [88, 41], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1011, 995]
+    atlas: {"id": "8-120", "coordinates": [89, 41], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1012, 995]
+    atlas: {"id": "9-91", "coordinates": [90, 41], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1013, 995]
+    atlas: {"id": "9-92", "coordinates": [91, 41], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1014, 995]
+    atlas: {"id": "9-93", "coordinates": [92, 41], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [994, 996]
+    atlas: {"id": "8-133", "coordinates": [72, 42], "label": "Драконий Клык", "title": "", "kind": "active", "active": true, "has_water": false, "has_fish": false, "herb_groups": [6], "npc_annotations": [{"name": "Разбойники", "min_level": 5, "max_level": 8}, {"name": "Грабители", "min_level": 6, "max_level": 8}]}
+  - source_coordinates: [995, 996]
+    atlas: {"id": "8-134", "coordinates": [73, 42], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [996, 996]
+    atlas: {"id": "8-135", "coordinates": [74, 42], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [997, 996]
+    atlas: {"id": "8-136", "coordinates": [75, 42], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [998, 996]
+    atlas: {"id": "8-137", "coordinates": [76, 42], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [999, 996]
+    atlas: {"id": "8-138", "coordinates": [77, 42], "label": "Драконий Клык", "title": "", "kind": "active", "active": true, "has_water": false, "has_fish": false, "herb_groups": [6], "npc_annotations": []}
+  - source_coordinates: [1000, 996]
+    atlas: {"id": "8-139", "coordinates": [78, 42], "label": "Драконий Клык", "title": "", "kind": "active", "active": true, "has_water": false, "has_fish": false, "herb_groups": [6], "npc_annotations": []}
+  - source_coordinates: [1001, 996]
+    atlas: {"id": "8-140", "coordinates": [79, 42], "label": "Окрестность Форпоста", "title": "", "kind": "active", "active": true, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1002, 996]
+    atlas: {"id": "8-141", "coordinates": [80, 42], "label": "Посёлок Лазурный, Причал", "title": "Причал", "kind": "active", "active": true, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1003, 996]
+    atlas: {"id": "8-142", "coordinates": [81, 42], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1004, 996]
+    atlas: {"id": "8-143", "coordinates": [82, 42], "label": "Обитель ботов", "title": "", "kind": "active", "active": true, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1005, 996]
+    atlas: {"id": "8-144", "coordinates": [83, 42], "label": "Обитель ботов", "title": "", "kind": "active", "active": true, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1006, 996]
+    atlas: {"id": "8-145", "coordinates": [84, 42], "label": "Обитель ботов", "title": "", "kind": "active", "active": true, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1007, 996]
+    atlas: {"id": "8-146", "coordinates": [85, 42], "label": "Обитель ботов", "title": "", "kind": "active", "active": true, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1008, 996]
+    atlas: {"id": "8-147", "coordinates": [86, 42], "label": "Обитель ботов", "title": "", "kind": "active", "active": true, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1009, 996]
+    atlas: {"id": "8-148", "coordinates": [87, 42], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1010, 996]
+    atlas: {"id": "8-149", "coordinates": [88, 42], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1011, 996]
+    atlas: {"id": "8-150", "coordinates": [89, 42], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1012, 996]
+    atlas: {"id": "9-121", "coordinates": [90, 42], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1013, 996]
+    atlas: {"id": "9-122", "coordinates": [91, 42], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1014, 996]
+    atlas: {"id": "9-123", "coordinates": [92, 42], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [994, 997]
+    atlas: {"id": "8-163", "coordinates": [72, 43], "label": "Форт Клык", "title": "Форт Клык", "kind": "active", "active": true, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [995, 997]
+    atlas: {"id": "8-164", "coordinates": [73, 43], "label": "Драконий Клык", "title": "", "kind": "active", "active": true, "has_water": false, "has_fish": false, "herb_groups": [6], "npc_annotations": []}
+  - source_coordinates: [996, 997]
+    atlas: {"id": "8-165", "coordinates": [74, 43], "label": "Драконий Клык, Плавильня", "title": "Плавильня", "kind": "active", "active": true, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [997, 997]
+    atlas: {"id": "8-166", "coordinates": [75, 43], "label": "Драконий Клык", "title": "", "kind": "active", "active": true, "has_water": false, "has_fish": false, "herb_groups": [6], "npc_annotations": []}
+  - source_coordinates: [998, 997]
+    atlas: {"id": "8-167", "coordinates": [76, 43], "label": "Драконий Клык, Шахта", "title": "Рудник Подгорный", "kind": "active", "active": true, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [999, 997]
+    atlas: {"id": "8-168", "coordinates": [77, 43], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1000, 997]
+    atlas: {"id": "8-169", "coordinates": [78, 43], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1001, 997]
+    atlas: {"id": "8-170", "coordinates": [79, 43], "label": "Окрестность Форпоста", "title": "", "kind": "active", "active": true, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1002, 997]
+    atlas: {"id": "8-171", "coordinates": [80, 43], "label": "Окрестность Форпоста", "title": "", "kind": "active", "active": true, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1003, 997]
+    atlas: {"id": "8-172", "coordinates": [81, 43], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1004, 997]
+    atlas: {"id": "8-173", "coordinates": [82, 43], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1005, 997]
+    atlas: {"id": "8-174", "coordinates": [83, 43], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1006, 997]
+    atlas: {"id": "8-175", "coordinates": [84, 43], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1007, 997]
+    atlas: {"id": "8-176", "coordinates": [85, 43], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1008, 997]
+    atlas: {"id": "8-177", "coordinates": [86, 43], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1009, 997]
+    atlas: {"id": "8-178", "coordinates": [87, 43], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1010, 997]
+    atlas: {"id": "8-179", "coordinates": [88, 43], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1011, 997]
+    atlas: {"id": "8-180", "coordinates": [89, 43], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1012, 997]
+    atlas: {"id": "9-151", "coordinates": [90, 43], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1013, 997]
+    atlas: {"id": "9-152", "coordinates": [91, 43], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1014, 997]
+    atlas: {"id": "9-153", "coordinates": [92, 43], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [994, 998]
+    atlas: {"id": "8-193", "coordinates": [72, 44], "label": "Лесная дорога к хутору Гнездо", "title": "", "kind": "active", "active": true, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": [{"name": "Разбойники", "min_level": 5, "max_level": 8}, {"name": "Грабители", "min_level": 6, "max_level": 8}]}
+  - source_coordinates: [995, 998]
+    atlas: {"id": "8-194", "coordinates": [73, 44], "label": "Окрестность Форпоста", "title": "", "kind": "active", "active": true, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [996, 998]
+    atlas: {"id": "8-195", "coordinates": [74, 44], "label": "Застава", "title": "", "kind": "active", "active": true, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [997, 998]
+    atlas: {"id": "8-196", "coordinates": [75, 44], "label": "Окрестность Форпоста", "title": "", "kind": "active", "active": true, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [998, 998]
+    atlas: {"id": "8-197", "coordinates": [76, 44], "label": "Деревня Подгорная", "title": "Деревня Подгорная", "kind": "city", "active": true, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [999, 998]
+    atlas: {"id": "8-198", "coordinates": [77, 44], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1000, 998]
+    atlas: {"id": "8-199", "coordinates": [78, 44], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1001, 998]
+    atlas: {"id": "8-200", "coordinates": [79, 44], "label": "Окрестность Форпоста", "title": "", "kind": "active", "active": true, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1002, 998]
+    atlas: {"id": "8-201", "coordinates": [80, 44], "label": "Окрестность Форпоста", "title": "", "kind": "active", "active": true, "has_water": false, "has_fish": false, "herb_groups": [3], "npc_annotations": []}
+  - source_coordinates: [1003, 998]
+    atlas: {"id": "8-202", "coordinates": [81, 44], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1004, 998]
+    atlas: {"id": "8-203", "coordinates": [82, 44], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1005, 998]
+    atlas: {"id": "8-204", "coordinates": [83, 44], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1006, 998]
+    atlas: {"id": "8-205", "coordinates": [84, 44], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1007, 998]
+    atlas: {"id": "8-206", "coordinates": [85, 44], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1008, 998]
+    atlas: {"id": "8-207", "coordinates": [86, 44], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1009, 998]
+    atlas: {"id": "8-208", "coordinates": [87, 44], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1010, 998]
+    atlas: {"id": "8-209", "coordinates": [88, 44], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1011, 998]
+    atlas: {"id": "8-210", "coordinates": [89, 44], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1012, 998]
+    atlas: {"id": "9-181", "coordinates": [90, 44], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1013, 998]
+    atlas: {"id": "9-182", "coordinates": [91, 44], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1014, 998]
+    atlas: {"id": "9-183", "coordinates": [92, 44], "label": "Горные озёра", "title": "", "kind": "active", "active": true, "has_water": false, "has_fish": false, "herb_groups": [6], "npc_annotations": [{"name": "Огры", "min_level": 16, "max_level": 18}]}
+  - source_coordinates: [994, 999]
+    atlas: {"id": "8-223", "coordinates": [72, 45], "label": "Окрестность Форпоста, Млечный Тракт", "title": "", "kind": "active", "active": true, "has_water": false, "has_fish": false, "herb_groups": [2], "npc_annotations": [{"name": "Разбойники", "min_level": 5, "max_level": 8}, {"name": "Грабители", "min_level": 6, "max_level": 8}]}
+  - source_coordinates: [995, 999]
+    atlas: {"id": "8-224", "coordinates": [73, 45], "label": "Окрестность Форпоста", "title": "", "kind": "active", "active": true, "has_water": true, "has_fish": true, "herb_groups": [2], "npc_annotations": []}
+  - source_coordinates: [996, 999]
+    atlas: {"id": "8-225", "coordinates": [74, 45], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [997, 999]
+    atlas: {"id": "8-226", "coordinates": [75, 45], "label": "Окрестность Форпоста", "title": "", "kind": "active", "active": true, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [998, 999]
+    atlas: {"id": "8-227", "coordinates": [76, 45], "label": "Окрестность Форпоста, Биржа", "title": "Биржа", "kind": "active", "active": true, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [999, 999]
+    atlas: {"id": "8-228", "coordinates": [77, 45], "label": "Деревня Подгорная", "title": "", "kind": "active", "active": true, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1000, 999]
+    atlas: {"id": "8-229", "coordinates": [78, 45], "label": "Деревня Подгорная", "title": "", "kind": "active", "active": true, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1001, 999]
+    atlas: {"id": "8-230", "coordinates": [79, 45], "label": "Окрестность Форпоста", "title": "", "kind": "active", "active": true, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": [{"name": "Крысы", "min_level": 0, "max_level": 4}]}
+  - source_coordinates: [1002, 999]
+    atlas: {"id": "8-231", "coordinates": [80, 45], "label": "Окрестность Форпоста", "title": "", "kind": "active", "active": true, "has_water": false, "has_fish": false, "herb_groups": [3], "npc_annotations": []}
+  - source_coordinates: [1003, 999]
+    atlas: {"id": "8-232", "coordinates": [81, 45], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1004, 999]
+    atlas: {"id": "8-233", "coordinates": [82, 45], "label": "Мистерион", "title": "", "kind": "active", "active": true, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1005, 999]
+    atlas: {"id": "8-234", "coordinates": [83, 45], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1006, 999]
+    atlas: {"id": "8-235", "coordinates": [84, 45], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1007, 999]
+    atlas: {"id": "8-236", "coordinates": [85, 45], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1008, 999]
+    atlas: {"id": "8-237", "coordinates": [86, 45], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1009, 999]
+    atlas: {"id": "8-238", "coordinates": [87, 45], "label": "Окрестность Форпоста, Плавильня", "title": "Плавильня", "kind": "active", "active": true, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": [{"name": "Разбойники", "min_level": 6, "max_level": 9}, {"name": "Грабители", "min_level": 6, "max_level": 8}]}
+  - source_coordinates: [1010, 999]
+    atlas: {"id": "8-239", "coordinates": [88, 45], "label": "Окрестность Форпоста, Заброшенная Шахта", "title": "", "kind": "active", "active": true, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": [{"name": "Разбойники", "min_level": 6, "max_level": 9}, {"name": "Грабители", "min_level": 6, "max_level": 8}]}
+  - source_coordinates: [1011, 999]
+    atlas: {"id": "8-240", "coordinates": [89, 45], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1012, 999]
+    atlas: {"id": "9-211", "coordinates": [90, 45], "label": "Окрестность Баалгора", "title": "", "kind": "active", "active": true, "has_water": false, "has_fish": false, "herb_groups": [6], "npc_annotations": [{"name": "Разбойники", "min_level": 6, "max_level": 9}, {"name": "Грабители", "min_level": 6, "max_level": 8}]}
+  - source_coordinates: [1013, 999]
+    atlas: {"id": "9-212", "coordinates": [91, 45], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1014, 999]
+    atlas: {"id": "9-213", "coordinates": [92, 45], "label": "Горные озёра", "title": "", "kind": "active", "active": true, "has_water": false, "has_fish": false, "herb_groups": [6], "npc_annotations": [{"name": "Огры", "min_level": 16, "max_level": 18}]}
+  - source_coordinates: [994, 1000]
+    atlas: {"id": "8-253", "coordinates": [72, 46], "label": "Окрестность Форпоста, Озеро", "title": "", "kind": "active", "active": true, "has_water": true, "has_fish": false, "herb_groups": [2], "npc_annotations": [{"name": "Орки", "min_level": 3, "max_level": 4}, {"name": "Гоблины", "min_level": 3, "max_level": 4}]}
+  - source_coordinates: [995, 1000]
+    atlas: {"id": "8-254", "coordinates": [73, 46], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [996, 1000]
+    atlas: {"id": "8-255", "coordinates": [74, 46], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [997, 1000]
+    atlas: {"id": "8-256", "coordinates": [75, 46], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [998, 1000]
+    atlas: {"id": "8-257", "coordinates": [76, 46], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [999, 1000]
+    atlas: {"id": "8-258", "coordinates": [77, 46], "label": "Окрестность Форпоста", "title": "", "kind": "active", "active": true, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1000, 1000]
+    atlas: {"id": "8-259", "coordinates": [78, 46], "label": "Форпост, Западные Ворота", "title": "Форпост, Западные Ворота", "kind": "city", "active": true, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1001, 1000]
+    atlas: {"id": "8-260", "coordinates": [79, 46], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1002, 1000]
+    atlas: {"id": "8-261", "coordinates": [80, 46], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1003, 1000]
+    atlas: {"id": "8-262", "coordinates": [81, 46], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1004, 1000]
+    atlas: {"id": "8-263", "coordinates": [82, 46], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1005, 1000]
+    atlas: {"id": "8-264", "coordinates": [83, 46], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1006, 1000]
+    atlas: {"id": "8-265", "coordinates": [84, 46], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1007, 1000]
+    atlas: {"id": "8-266", "coordinates": [85, 46], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1008, 1000]
+    atlas: {"id": "8-267", "coordinates": [86, 46], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1009, 1000]
+    atlas: {"id": "8-268", "coordinates": [87, 46], "label": "Дорога к Старой шахте", "title": "", "kind": "active", "active": true, "has_water": false, "has_fish": false, "herb_groups": [3], "npc_annotations": [{"name": "Разбойники", "min_level": 6, "max_level": 9}, {"name": "Грабители", "min_level": 6, "max_level": 8}]}
+  - source_coordinates: [1010, 1000]
+    atlas: {"id": "8-269", "coordinates": [88, 46], "label": "Дорога к Старой шахте", "title": "", "kind": "active", "active": true, "has_water": false, "has_fish": false, "herb_groups": [3], "npc_annotations": [{"name": "Разбойники", "min_level": 6, "max_level": 9}, {"name": "Грабители", "min_level": 6, "max_level": 8}, {"name": "Гоблин-рудокоп", "min_level": 6, "max_level": 6}]}
+  - source_coordinates: [1011, 1000]
+    atlas: {"id": "8-270", "coordinates": [89, 46], "label": "Окрестность Форпоста", "title": "", "kind": "active", "active": true, "has_water": false, "has_fish": false, "herb_groups": [3], "npc_annotations": [{"name": "Разбойники", "min_level": 6, "max_level": 9}, {"name": "Грабители", "min_level": 6, "max_level": 8}]}
+  - source_coordinates: [1012, 1000]
+    atlas: {"id": "9-241", "coordinates": [90, 46], "label": "Окрестность Баалгора", "title": "", "kind": "active", "active": true, "has_water": false, "has_fish": false, "herb_groups": [3], "npc_annotations": [{"name": "Разбойники", "min_level": 6, "max_level": 9}, {"name": "Грабители", "min_level": 6, "max_level": 8}]}
+  - source_coordinates: [1013, 1000]
+    atlas: {"id": "9-242", "coordinates": [91, 46], "label": "Застава Предгорья", "title": "", "kind": "active", "active": true, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1014, 1000]
+    atlas: {"id": "9-243", "coordinates": [92, 46], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [994, 1001]
+    atlas: {"id": "8-283", "coordinates": [72, 47], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [995, 1001]
+    atlas: {"id": "8-284", "coordinates": [73, 47], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [996, 1001]
+    atlas: {"id": "8-285", "coordinates": [74, 47], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [997, 1001]
+    atlas: {"id": "8-286", "coordinates": [75, 47], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [998, 1001]
+    atlas: {"id": "8-287", "coordinates": [76, 47], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [999, 1001]
+    atlas: {"id": "8-288", "coordinates": [77, 47], "label": "Окрестность Форпоста", "title": "", "kind": "active", "active": true, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1000, 1001]
+    atlas: {"id": "8-289", "coordinates": [78, 47], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1001, 1001]
+    atlas: {"id": "8-290", "coordinates": [79, 47], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1002, 1001]
+    atlas: {"id": "8-291", "coordinates": [80, 47], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1003, 1001]
+    atlas: {"id": "8-292", "coordinates": [81, 47], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1004, 1001]
+    atlas: {"id": "8-293", "coordinates": [82, 47], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1005, 1001]
+    atlas: {"id": "8-294", "coordinates": [83, 47], "label": "Форпост, Восточные Ворота", "title": "Форпост, Восточные Ворота", "kind": "city", "active": true, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1006, 1001]
+    atlas: {"id": "8-295", "coordinates": [84, 47], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1007, 1001]
+    atlas: {"id": "8-296", "coordinates": [85, 47], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1008, 1001]
+    atlas: {"id": "8-297", "coordinates": [86, 47], "label": "Дорога к Старой шахте", "title": "", "kind": "active", "active": true, "has_water": false, "has_fish": false, "herb_groups": [3], "npc_annotations": [{"name": "Разбойники", "min_level": 6, "max_level": 9}, {"name": "Грабители", "min_level": 6, "max_level": 8}]}
+  - source_coordinates: [1009, 1001]
+    atlas: {"id": "8-298", "coordinates": [87, 47], "label": "Дорога к Старой шахте", "title": "", "kind": "active", "active": true, "has_water": false, "has_fish": false, "herb_groups": [3], "npc_annotations": [{"name": "Разбойники", "min_level": 6, "max_level": 9}, {"name": "Грабители", "min_level": 6, "max_level": 8}]}
+  - source_coordinates: [1010, 1001]
+    atlas: {"id": "8-299", "coordinates": [88, 47], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1011, 1001]
+    atlas: {"id": "8-300", "coordinates": [89, 47], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1012, 1001]
+    atlas: {"id": "9-271", "coordinates": [90, 47], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1013, 1001]
+    atlas: {"id": "9-272", "coordinates": [91, 47], "label": "Дорога к Горным озёрам", "title": "", "kind": "active", "active": true, "has_water": false, "has_fish": false, "herb_groups": [3], "npc_annotations": []}
+  - source_coordinates: [1014, 1001]
+    atlas: {"id": "9-273", "coordinates": [92, 47], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [994, 1002]
+    atlas: {"id": "8-313", "coordinates": [72, 48], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [995, 1002]
+    atlas: {"id": "8-314", "coordinates": [73, 48], "label": "Окрестность Форпоста", "title": "", "kind": "active", "active": true, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": [{"name": "Орки", "min_level": 3, "max_level": 4}, {"name": "Гоблины", "min_level": 3, "max_level": 4}]}
+  - source_coordinates: [996, 1002]
+    atlas: {"id": "8-315", "coordinates": [74, 48], "label": "Окрестность Форпоста, Кладбище", "title": "", "kind": "active", "active": true, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": [{"name": "Скелеты", "min_level": 7, "max_level": 9}]}
+  - source_coordinates: [997, 1002]
+    atlas: {"id": "8-316", "coordinates": [75, 48], "label": "Окрестность Форпоста, Кладбище", "title": "", "kind": "active", "active": true, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": [{"name": "Скелеты", "min_level": 7, "max_level": 9}]}
+  - source_coordinates: [998, 1002]
+    atlas: {"id": "8-317", "coordinates": [76, 48], "label": "Окрестность Форпоста, Кладбище", "title": "", "kind": "active", "active": true, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": [{"name": "Скелеты", "min_level": 7, "max_level": 9}]}
+  - source_coordinates: [999, 1002]
+    atlas: {"id": "8-318", "coordinates": [77, 48], "label": "Окрестность Форпоста", "title": "", "kind": "active", "active": true, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1000, 1002]
+    atlas: {"id": "8-319", "coordinates": [78, 48], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1001, 1002]
+    atlas: {"id": "8-320", "coordinates": [79, 48], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1002, 1002]
+    atlas: {"id": "8-321", "coordinates": [80, 48], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1003, 1002]
+    atlas: {"id": "8-322", "coordinates": [81, 48], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1004, 1002]
+    atlas: {"id": "8-323", "coordinates": [82, 48], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1005, 1002]
+    atlas: {"id": "8-324", "coordinates": [83, 48], "label": "Млечный тракт", "title": "", "kind": "active", "active": true, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1006, 1002]
+    atlas: {"id": "8-325", "coordinates": [84, 48], "label": "Окрестность Форпоста", "title": "", "kind": "active", "active": true, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1007, 1002]
+    atlas: {"id": "8-326", "coordinates": [85, 48], "label": "Окрестность Форпоста, Пруд", "title": "", "kind": "active", "active": true, "has_water": true, "has_fish": true, "herb_groups": [2], "npc_annotations": []}
+  - source_coordinates: [1008, 1002]
+    atlas: {"id": "8-327", "coordinates": [86, 48], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1009, 1002]
+    atlas: {"id": "8-328", "coordinates": [87, 48], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1010, 1002]
+    atlas: {"id": "8-329", "coordinates": [88, 48], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1011, 1002]
+    atlas: {"id": "8-330", "coordinates": [89, 48], "label": "Замок Ellary Akhe", "title": "Замок Ellary Akhe", "kind": "active", "active": true, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1012, 1002]
+    atlas: {"id": "9-301", "coordinates": [90, 48], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1013, 1002]
+    atlas: {"id": "9-302", "coordinates": [91, 48], "label": "Дорога к Горным озёрам", "title": "", "kind": "active", "active": true, "has_water": false, "has_fish": false, "herb_groups": [3], "npc_annotations": []}
+  - source_coordinates: [1014, 1002]
+    atlas: {"id": "9-303", "coordinates": [92, 48], "label": "Окрестность Форпоста, Телепорт", "title": "Окрестность Форпоста, Телепорт", "kind": "teleport", "active": true, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [994, 1003]
+    atlas: {"id": "8-343", "coordinates": [72, 49], "label": "Окрестность Форпоста", "title": "", "kind": "active", "active": true, "has_water": false, "has_fish": false, "herb_groups": [3], "npc_annotations": [{"name": "Орки", "min_level": 3, "max_level": 4}, {"name": "Гоблины", "min_level": 3, "max_level": 4}]}
+  - source_coordinates: [995, 1003]
+    atlas: {"id": "8-344", "coordinates": [73, 49], "label": "Окрестность Форпоста", "title": "", "kind": "active", "active": true, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": [{"name": "Орки", "min_level": 3, "max_level": 4}, {"name": "Гоблины", "min_level": 3, "max_level": 4}]}
+  - source_coordinates: [996, 1003]
+    atlas: {"id": "8-345", "coordinates": [74, 49], "label": "Окрестность Форпоста, Кладбище", "title": "", "kind": "active", "active": true, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": [{"name": "Скелеты", "min_level": 7, "max_level": 9}]}
+  - source_coordinates: [997, 1003]
+    atlas: {"id": "8-346", "coordinates": [75, 49], "label": "Окрестность Форпоста, Кладбище", "title": "", "kind": "active", "active": true, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": [{"name": "Скелеты", "min_level": 7, "max_level": 9}]}
+  - source_coordinates: [998, 1003]
+    atlas: {"id": "8-347", "coordinates": [76, 49], "label": "Окрестность Форпоста, Кладбище", "title": "", "kind": "active", "active": true, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": [{"name": "Скелеты", "min_level": 7, "max_level": 9}]}
+  - source_coordinates: [999, 1003]
+    atlas: {"id": "8-348", "coordinates": [77, 49], "label": "Окрестность Форпоста", "title": "", "kind": "active", "active": true, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1000, 1003]
+    atlas: {"id": "8-349", "coordinates": [78, 49], "label": "Окрестность Форпоста", "title": "", "kind": "active", "active": true, "has_water": false, "has_fish": false, "herb_groups": [3], "npc_annotations": [{"name": "Разбойники", "min_level": 5, "max_level": 8}, {"name": "Грабители", "min_level": 6, "max_level": 8}]}
+  - source_coordinates: [1001, 1003]
+    atlas: {"id": "8-350", "coordinates": [79, 49], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1002, 1003]
+    atlas: {"id": "8-351", "coordinates": [80, 49], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1003, 1003]
+    atlas: {"id": "8-352", "coordinates": [81, 49], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1004, 1003]
+    atlas: {"id": "8-353", "coordinates": [82, 49], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1005, 1003]
+    atlas: {"id": "8-354", "coordinates": [83, 49], "label": "Окрестность Форпоста", "title": "", "kind": "active", "active": true, "has_water": false, "has_fish": false, "herb_groups": [2], "npc_annotations": [{"name": "Разбойники", "min_level": 5, "max_level": 8}, {"name": "Грабители", "min_level": 6, "max_level": 8}]}
+  - source_coordinates: [1006, 1003]
+    atlas: {"id": "8-355", "coordinates": [84, 49], "label": "Млечный тракт", "title": "", "kind": "active", "active": true, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": [{"name": "Разбойники", "min_level": 5, "max_level": 8}, {"name": "Грабители", "min_level": 6, "max_level": 8}]}
+  - source_coordinates: [1007, 1003]
+    atlas: {"id": "8-356", "coordinates": [85, 49], "label": "Млечный тракт", "title": "", "kind": "active", "active": true, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": [{"name": "Разбойники", "min_level": 5, "max_level": 8}, {"name": "Грабители", "min_level": 6, "max_level": 8}]}
+  - source_coordinates: [1008, 1003]
+    atlas: {"id": "8-357", "coordinates": [86, 49], "label": "Окрестность Форпоста", "title": "", "kind": "active", "active": true, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": [{"name": "Разбойники", "min_level": 6, "max_level": 9}, {"name": "Грабители", "min_level": 6, "max_level": 8}]}
+  - source_coordinates: [1009, 1003]
+    atlas: {"id": "8-358", "coordinates": [87, 49], "label": "Окрестность Форпоста, Озеро", "title": "", "kind": "active", "active": true, "has_water": true, "has_fish": true, "herb_groups": [2], "npc_annotations": [{"name": "Разбойники", "min_level": 6, "max_level": 9}, {"name": "Грабители", "min_level": 6, "max_level": 8}]}
+  - source_coordinates: [1010, 1003]
+    atlas: {"id": "8-359", "coordinates": [88, 49], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1011, 1003]
+    atlas: {"id": "8-360", "coordinates": [89, 49], "label": "Окрестность Форпоста", "title": "", "kind": "active", "active": true, "has_water": false, "has_fish": false, "herb_groups": [3], "npc_annotations": [{"name": "Разбойники", "min_level": 6, "max_level": 9}, {"name": "Грабители", "min_level": 6, "max_level": 8}]}
+  - source_coordinates: [1012, 1003]
+    atlas: {"id": "9-331", "coordinates": [90, 49], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1013, 1003]
+    atlas: {"id": "9-332", "coordinates": [91, 49], "label": "Дорога к Горным озёрам", "title": "", "kind": "active", "active": true, "has_water": false, "has_fish": false, "herb_groups": [3], "npc_annotations": [{"name": "Разбойники", "min_level": 8, "max_level": 11}, {"name": "Грабители", "min_level": 8, "max_level": 10}]}
+  - source_coordinates: [1014, 1003]
+    atlas: {"id": "9-333", "coordinates": [92, 49], "label": "Дорога к Горным озёрам", "title": "", "kind": "active", "active": true, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": [{"name": "Разбойники", "min_level": 8, "max_level": 11}, {"name": "Грабители", "min_level": 8, "max_level": 10}]}
+  - source_coordinates: [994, 1004]
+    atlas: {"id": "8-373", "coordinates": [72, 50], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [995, 1004]
+    atlas: {"id": "8-374", "coordinates": [73, 50], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [996, 1004]
+    atlas: {"id": "8-375", "coordinates": [74, 50], "label": "Окрестность Форпоста", "title": "", "kind": "active", "active": true, "has_water": false, "has_fish": false, "herb_groups": [3], "npc_annotations": [{"name": "Орки", "min_level": 3, "max_level": 4}, {"name": "Гоблины", "min_level": 3, "max_level": 4}]}
+  - source_coordinates: [997, 1004]
+    atlas: {"id": "8-376", "coordinates": [75, 50], "label": "Окрестность Форпоста", "title": "", "kind": "active", "active": true, "has_water": false, "has_fish": false, "herb_groups": [3], "npc_annotations": [{"name": "Орки", "min_level": 3, "max_level": 4}, {"name": "Гоблины", "min_level": 3, "max_level": 4}]}
+  - source_coordinates: [998, 1004]
+    atlas: {"id": "8-377", "coordinates": [76, 50], "label": "Окрестность Форпоста", "title": "", "kind": "active", "active": true, "has_water": false, "has_fish": false, "herb_groups": [3], "npc_annotations": [{"name": "Орки", "min_level": 3, "max_level": 4}, {"name": "Гоблины", "min_level": 3, "max_level": 4}]}
+  - source_coordinates: [999, 1004]
+    atlas: {"id": "8-378", "coordinates": [77, 50], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1000, 1004]
+    atlas: {"id": "8-379", "coordinates": [78, 50], "label": "Окрестность Форпоста", "title": "", "kind": "active", "active": true, "has_water": false, "has_fish": false, "herb_groups": [3], "npc_annotations": [{"name": "Разбойники", "min_level": 5, "max_level": 8}, {"name": "Грабители", "min_level": 6, "max_level": 8}]}
+  - source_coordinates: [1001, 1004]
+    atlas: {"id": "8-380", "coordinates": [79, 50], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1002, 1004]
+    atlas: {"id": "8-381", "coordinates": [80, 50], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1003, 1004]
+    atlas: {"id": "8-382", "coordinates": [81, 50], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1004, 1004]
+    atlas: {"id": "8-383", "coordinates": [82, 50], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1005, 1004]
+    atlas: {"id": "8-384", "coordinates": [83, 50], "label": "Окрестность Форпоста, Заболоченная местность", "title": "", "kind": "active", "active": true, "has_water": true, "has_fish": true, "herb_groups": [2], "npc_annotations": [{"name": "Разбойники", "min_level": 5, "max_level": 8}, {"name": "Грабители", "min_level": 6, "max_level": 8}]}
+  - source_coordinates: [1006, 1004]
+    atlas: {"id": "8-385", "coordinates": [84, 50], "label": "Млечный тракт", "title": "", "kind": "active", "active": true, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": [{"name": "Разбойники", "min_level": 5, "max_level": 8}, {"name": "Грабители", "min_level": 6, "max_level": 8}]}
+  - source_coordinates: [1007, 1004]
+    atlas: {"id": "8-386", "coordinates": [85, 50], "label": "Окрестность Форпоста", "title": "", "kind": "active", "active": true, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": [{"name": "Разбойники", "min_level": 5, "max_level": 8}, {"name": "Грабители", "min_level": 6, "max_level": 8}]}
+  - source_coordinates: [1008, 1004]
+    atlas: {"id": "8-387", "coordinates": [86, 50], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1009, 1004]
+    atlas: {"id": "8-388", "coordinates": [87, 50], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1010, 1004]
+    atlas: {"id": "8-389", "coordinates": [88, 50], "label": "Окрестность Форпоста, Заболоченная местность", "title": "", "kind": "active", "active": true, "has_water": false, "has_fish": false, "herb_groups": [2], "npc_annotations": [{"name": "Разбойники", "min_level": 6, "max_level": 9}, {"name": "Грабители", "min_level": 6, "max_level": 8}]}
+  - source_coordinates: [1011, 1004]
+    atlas: {"id": "8-390", "coordinates": [89, 50], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1012, 1004]
+    atlas: {"id": "9-361", "coordinates": [90, 50], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1013, 1004]
+    atlas: {"id": "9-362", "coordinates": [91, 50], "label": "Дорога к Горным озёрам", "title": "", "kind": "active", "active": true, "has_water": false, "has_fish": false, "herb_groups": [3], "npc_annotations": [{"name": "Разбойники", "min_level": 8, "max_level": 11}, {"name": "Грабители", "min_level": 8, "max_level": 10}]}
+  - source_coordinates: [1014, 1004]
+    atlas: {"id": "9-363", "coordinates": [92, 50], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [994, 1005]
+    atlas: {"id": "8-403", "coordinates": [72, 51], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [995, 1005]
+    atlas: {"id": "8-404", "coordinates": [73, 51], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [996, 1005]
+    atlas: {"id": "8-405", "coordinates": [74, 51], "label": "Окрестность Форпоста", "title": "", "kind": "active", "active": true, "has_water": false, "has_fish": false, "herb_groups": [3], "npc_annotations": [{"name": "Орки", "min_level": 3, "max_level": 4}, {"name": "Гоблины", "min_level": 3, "max_level": 4}]}
+  - source_coordinates: [997, 1005]
+    atlas: {"id": "8-406", "coordinates": [75, 51], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [998, 1005]
+    atlas: {"id": "8-407", "coordinates": [76, 51], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [999, 1005]
+    atlas: {"id": "8-408", "coordinates": [77, 51], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1000, 1005]
+    atlas: {"id": "8-409", "coordinates": [78, 51], "label": "Окрестность Форпоста", "title": "", "kind": "active", "active": true, "has_water": false, "has_fish": false, "herb_groups": [3], "npc_annotations": [{"name": "Разбойники", "min_level": 5, "max_level": 8}, {"name": "Грабители", "min_level": 6, "max_level": 8}]}
+  - source_coordinates: [1001, 1005]
+    atlas: {"id": "8-410", "coordinates": [79, 51], "label": "Окрестность Форпоста", "title": "", "kind": "active", "active": true, "has_water": false, "has_fish": false, "herb_groups": [3], "npc_annotations": [{"name": "Разбойники", "min_level": 5, "max_level": 8}, {"name": "Грабители", "min_level": 6, "max_level": 8}]}
+  - source_coordinates: [1002, 1005]
+    atlas: {"id": "8-411", "coordinates": [80, 51], "label": "Замок Иных", "title": "Замок Иных", "kind": "active", "active": true, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": [{"name": "Разбойники", "min_level": 5, "max_level": 8}, {"name": "Грабители", "min_level": 6, "max_level": 8}]}
+  - source_coordinates: [1003, 1005]
+    atlas: {"id": "8-412", "coordinates": [81, 51], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1004, 1005]
+    atlas: {"id": "8-413", "coordinates": [82, 51], "label": "Окрестность Форпоста, Заболоченная местность", "title": "", "kind": "active", "active": true, "has_water": true, "has_fish": true, "herb_groups": [2], "npc_annotations": [{"name": "Разбойники", "min_level": 5, "max_level": 8}, {"name": "Грабители", "min_level": 6, "max_level": 8}]}
+  - source_coordinates: [1005, 1005]
+    atlas: {"id": "8-414", "coordinates": [83, 51], "label": "Окрестность Форпоста, Заболоченная местность", "title": "", "kind": "active", "active": true, "has_water": true, "has_fish": true, "herb_groups": [2], "npc_annotations": [{"name": "Разбойники", "min_level": 5, "max_level": 8}, {"name": "Грабители", "min_level": 6, "max_level": 8}]}
+  - source_coordinates: [1006, 1005]
+    atlas: {"id": "8-415", "coordinates": [84, 51], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1007, 1005]
+    atlas: {"id": "8-416", "coordinates": [85, 51], "label": "Последняя Застава", "title": "", "kind": "active", "active": true, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": [{"name": "Разбойники", "min_level": 5, "max_level": 8}, {"name": "Грабители", "min_level": 6, "max_level": 8}]}
+  - source_coordinates: [1008, 1005]
+    atlas: {"id": "8-417", "coordinates": [86, 51], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1009, 1005]
+    atlas: {"id": "8-418", "coordinates": [87, 51], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1010, 1005]
+    atlas: {"id": "8-419", "coordinates": [88, 51], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1011, 1005]
+    atlas: {"id": "8-420", "coordinates": [89, 51], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1012, 1005]
+    atlas: {"id": "9-391", "coordinates": [90, 51], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1013, 1005]
+    atlas: {"id": "9-392", "coordinates": [91, 51], "label": "Дорога к Горным озёрам", "title": "", "kind": "active", "active": true, "has_water": false, "has_fish": false, "herb_groups": [3], "npc_annotations": [{"name": "Разбойники", "min_level": 8, "max_level": 11}, {"name": "Грабители", "min_level": 8, "max_level": 10}]}
+  - source_coordinates: [1014, 1005]
+    atlas: {"id": "9-393", "coordinates": [92, 51], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [994, 1006]
+    atlas: {"id": "8-433", "coordinates": [72, 52], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [995, 1006]
+    atlas: {"id": "8-434", "coordinates": [73, 52], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [996, 1006]
+    atlas: {"id": "8-435", "coordinates": [74, 52], "label": "Побережье Внутреннего Моря", "title": "", "kind": "active", "active": true, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": [{"name": "Орки", "min_level": 4, "max_level": 5}, {"name": "Гоблины", "min_level": 4, "max_level": 5}]}
+  - source_coordinates: [997, 1006]
+    atlas: {"id": "8-436", "coordinates": [75, 52], "label": "Окрестность Форпоста", "title": "", "kind": "active", "active": true, "has_water": false, "has_fish": false, "herb_groups": [2], "npc_annotations": [{"name": "Орки", "min_level": 4, "max_level": 5}, {"name": "Гоблины", "min_level": 4, "max_level": 5}]}
+  - source_coordinates: [998, 1006]
+    atlas: {"id": "8-437", "coordinates": [76, 52], "label": "Окрестность Форпоста, Озеро", "title": "", "kind": "active", "active": true, "has_water": true, "has_fish": true, "herb_groups": [2], "npc_annotations": [{"name": "Орки", "min_level": 4, "max_level": 5}, {"name": "Гоблины", "min_level": 4, "max_level": 5}]}
+  - source_coordinates: [999, 1006]
+    atlas: {"id": "8-438", "coordinates": [77, 52], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1000, 1006]
+    atlas: {"id": "8-439", "coordinates": [78, 52], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1001, 1006]
+    atlas: {"id": "8-440", "coordinates": [79, 52], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1002, 1006]
+    atlas: {"id": "8-441", "coordinates": [80, 52], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1003, 1006]
+    atlas: {"id": "8-442", "coordinates": [81, 52], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1004, 1006]
+    atlas: {"id": "8-443", "coordinates": [82, 52], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1005, 1006]
+    atlas: {"id": "8-444", "coordinates": [83, 52], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1006, 1006]
+    atlas: {"id": "8-445", "coordinates": [84, 52], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1007, 1006]
+    atlas: {"id": "8-446", "coordinates": [85, 52], "label": "Млечный тракт", "title": "", "kind": "active", "active": true, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": [{"name": "Разбойники", "min_level": 5, "max_level": 8}, {"name": "Грабители", "min_level": 6, "max_level": 8}]}
+  - source_coordinates: [1008, 1006]
+    atlas: {"id": "8-447", "coordinates": [86, 52], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1009, 1006]
+    atlas: {"id": "8-448", "coordinates": [87, 52], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1010, 1006]
+    atlas: {"id": "8-449", "coordinates": [88, 52], "label": "", "title": "", "kind": "", "active": false, "has_water": false, "has_fish": false, "herb_groups": [], "npc_annotations": []}
+  - source_coordinates: [1011, 1006]
+    atlas: {"id": "8-450", "coordinates": [89, 52], "label": "Окрестности Фейдана", "title": "", "kind": "active", "active": true, "has_water": false, "has_fish": false, "herb_groups": [3], "npc_annotations": [{"name": "Разбойники", "min_level": 6, "max_level": 9}, {"name": "Грабители", "min_level": 6, "max_level": 8}, {"name": "Гоблины", "min_level": 6, "max_level": 6}]}
+  - source_coordinates: [1012, 1006]
+    atlas: {"id": "9-421", "coordinates": [90, 52], "label": "Окрестности Фейдана, Озеро Навлица", "title": "", "kind": "active", "active": true, "has_water": true, "has_fish": false, "herb_groups": [2], "npc_annotations": [{"name": "Разбойники", "min_level": 6, "max_level": 9}, {"name": "Грабители", "min_level": 6, "max_level": 8}]}
+  - source_coordinates: [1013, 1006]
+    atlas: {"id": "9-422", "coordinates": [91, 52], "label": "Окрестности Фейдана", "title": "", "kind": "active", "active": true, "has_water": false, "has_fish": false, "herb_groups": [2], "npc_annotations": [{"name": "Разбойники", "min_level": 8, "max_level": 11}, {"name": "Грабители", "min_level": 8, "max_level": 10}]}
+  - source_coordinates: [1014, 1006]
+    atlas: {"id": "9-423", "coordinates": [92, 52], "label": "Дорога к Горным озёрам", "title": "", "kind": "active", "active": true, "has_water": false, "has_fish": false, "herb_groups": [3], "npc_annotations": [{"name": "Разбойники", "min_level": 8, "max_level": 11}, {"name": "Грабители", "min_level": 8, "max_level": 10}]}

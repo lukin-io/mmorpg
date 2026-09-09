@@ -166,6 +166,26 @@ RSpec.describe Game::World::Presence do
     expect(result).to have_attributes(players: [], label: "Unknown", count: 0)
   end
 
+  it "returns a label without querying or counting the online audience" do
+    position.update!(x: 13, y: 10)
+    create(:map_tile_template, zone: zone.name, x: 13, y: 10,
+      metadata: {"presence_label" => "Outpost Surroundings, Pond"})
+    presence = described_class.new(character:, position:)
+    queries = []
+    subscriber = ->(event) { queries << event.payload[:sql] unless event.payload[:name] == "SCHEMA" }
+
+    ActiveRecord::Base.uncached do
+      ActiveSupport::Notifications.subscribed(subscriber, "sql.active_record") do
+        expect(presence.label).to eq("Outpost Surroundings, Pond")
+      end
+    end
+
+    expect(queries.grep(/FROM "(?:characters|user_sessions)"|COUNT\(/i)).to be_empty
+    expect(queries.grep(/FROM "map_tile_templates"/).size).to eq(1)
+    expect(described_class.new(character: nil).label).to eq("Unknown")
+    expect(described_class.new(character: create(:character)).label).to eq("Unknown")
+  end
+
   it "requires a recent open session, excludes the exact expiry boundary, and deduplicates devices" do
     freeze_time do
       recent = present_character(name: "RecentNeighbor")

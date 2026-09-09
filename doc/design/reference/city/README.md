@@ -2,12 +2,14 @@
 
 - Document type: neverlands-source-summary
 - Domain: city
-- Updated: 2026-09-08
+- Updated: 2026-09-09
 - Evidence status: current for the five-node Forpost graph
 
 ## Current observations
 
 - `doc/design/reference/city/observations/2026-07-28_city_movement_and_services.md`
+- Both gate handoffs and the Residential-to-Law route in
+  `doc/design/reference/world/observations/2026-09-09_starter_routes.md`
 - Current Forpost station and one completed 150-NV trip to Oktal in
   `doc/design/reference/world/observations/2026-09-08_forpost_oktal_airship_journey.md`
 - City and Shop sections in
@@ -20,12 +22,15 @@
 ## Current Neverlands behavior
 
 The current Forpost evidence establishes five illustrated City nodes, explicit
-hotspots and route arrows, one verified outdoor gate handoff, a Shop entry, and
+hotspots and route arrows, two verified outdoor gate handoffs, a Shop entry, and
 captured service interiors. Visible buildings do not imply implemented service
 mechanics.
 
-The fresh Forpost left exit reaches source `[1000,1000]`; returning through
-that gate restores City Square. The Arena pass changes between Hall of
+The Forpost left exit reaches source `[1000,1000]`; returning through that
+gate restores City Square. The eastern Law Quarter exit reaches source
+`[1005,1001]`, and its outdoor Enter returns to Law Quarter. The observed
+city path is Central Square → Residential Quarter → Law Quarter, not through
+Business Quarter. The Arena pass changes between Hall of
 Initiation and Hall of Patrons with distinct location labels and player lists.
 Ordinary chat belongs to the current cell or room, not all locations sharing
 a city name. The initially displayed Arena room may be a prior selection;
@@ -56,6 +61,9 @@ listing remains historical evidence; it is not the Forpost timetable.
 
 - Local status: Fully Implemented for the declared City navigation boundary
 - Implementation handbook: `doc/features/city.md`
+- The local five-node graph has 15 actionable hotspots. Its west gate maps to
+  `[6,8]` / `main`, and its east gate to `[11,9]` / `forpost4`; these local
+  coordinate and node identities are implementation mappings.
 - Airship journey ownership: `doc/features/airship_travel.md`, Partially
   Implemented. The station shows the current Forpost route/fare rows; boarding
   is available only for complete authored destinations, timed paths, and dated

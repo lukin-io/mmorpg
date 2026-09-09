@@ -22,7 +22,7 @@ class TileNpc < ApplicationRecord
 
   validates :zone, :x, :y, :npc_key, presence: true
   validates :npc_role, inclusion: {in: NPC_ROLES}
-  validates :level, numericality: {greater_than: 0}
+  validates :level, numericality: {only_integer: true, greater_than_or_equal_to: 0}
   validates :x, :y, numericality: {only_integer: true, greater_than_or_equal_to: 0}
   validates :x, uniqueness: {scope: [:zone, :y]}
   validates :current_hp, :max_hp, numericality: {only_integer: true, greater_than_or_equal_to: 0}, allow_nil: true
@@ -127,7 +127,7 @@ class TileNpc < ApplicationRecord
     value.is_a?(Array) ? value : []
   end
 
-  # Captured elapsed-time windows for passive attacks on this exact cell.
+  # Authored captured or user-reported timing for passive attacks on this cell.
   # The runtime samples only inside these explicit bounds when they exist.
   def passive_delay_windows
     value = metadata.to_h["passive_delay_windows"]
@@ -165,6 +165,10 @@ class TileNpc < ApplicationRecord
         errors << "encounter roster weight must be between 1 and #{MAX_ROSTER_WEIGHT}"
       end
       Array(sample["members"]).grep(Hash).each do |member|
+        if member.key?("level")
+          level = Integer(member["level"].to_s, exception: false)
+          errors << "level must be a non-negative integer" unless level && level >= 0
+        end
         errors.concat(member_level_range_errors(member))
       end
     end
@@ -178,8 +182,8 @@ class TileNpc < ApplicationRecord
     minimum = member["level_min"]
     maximum = member["level_max"]
     unless minimum.is_a?(Integer) && maximum.is_a?(Integer) &&
-        minimum.between?(1, MAX_AUTHORED_LEVEL) && maximum.between?(minimum, MAX_AUTHORED_LEVEL)
-      errors << "encounter roster level range must have ordered bounds between 1 and #{MAX_AUTHORED_LEVEL}"
+        minimum.between?(0, MAX_AUTHORED_LEVEL) && maximum.between?(minimum, MAX_AUTHORED_LEVEL)
+      errors << "encounter roster level range must have ordered bounds between 0 and #{MAX_AUTHORED_LEVEL}"
     end
     errors << "encounter roster member must use either level or level range" if member.key?("level")
     errors << "encounter roster level range requires explicit hp" unless member["hp"].is_a?(Integer) && member["hp"].positive?
@@ -252,7 +256,6 @@ class TileNpc < ApplicationRecord
 
       member = raw_member.stringify_keys
       errors.add(:metadata, "encounter roster member npc_key is required") if member["npc_key"].blank?
-      validate_optional_positive_integer(member, "level")
       validate_optional_positive_integer(member, "hp")
       if member.key?("metadata") && !member["metadata"].is_a?(Hash)
         errors.add(:metadata, "encounter roster member metadata must be an object")

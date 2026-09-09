@@ -4,12 +4,16 @@
 
 City and linked-village Shop navigation, browse/filter modes, dense catalog rows, buying, selling,
 stock, prices, requirements, funds, NPC-loot NV ingress, capacity, and
-transactional safety.
+transactional safety. Future mine item/license purchases and resource exchange
+queries, listings, transactions and storage belong here as distinct commerce
+flows.
 
 ## Documentation chain
 
 - Neverlands source summary: `doc/design/reference/economy/README.md`
 - Current observations: `doc/design/reference/economy/observations/`
+- Mine/exchange operation gaps:
+  [capture backlog](../design/reference/economy/observations/evidence_needed_mine_exchange_operations.md)
 - Cross-domain NPC-money observation:
   `doc/design/reference/social/observations/2026-08-23_chat_game_event_timeline.md`
 - Normalized design: `doc/design/features/economy_trading_shops.md`
@@ -33,6 +37,12 @@ World owns coordinates, and Shell owns the distinct room's presence/chat.
 Persisted outdoor travel or Look rejects direct Shop/trade requests without
 changing money, inventory, stock, or saved room.
 
+World also implements mine/exchange **lobbies**: entry, read-only sections,
+Nature return and location resume. The mine Shop previews do not grant access
+to the ordinary Shop catalog; its purchases and the exchange's queries,
+listings, transactions and storage operations are unimplemented. The shared
+wallet alone does not implement those flows.
+
 ## Important responsible implementation files
 
 - `app/controllers/shop_controller.rb`
@@ -49,3 +59,9 @@ Section 16 of `doc/features/shop_economy.md` is exhaustive.
 
 Capture populated, disabled, confirmation, success, and failure variants before
 claiming 1:1 parity for those states.
+
+The [Economy gap table](../features/shop_economy.md#65-mine-shop-and-resource-exchange-gap-ownership)
+separates these known `[IMPL]` absences from missing `[EVIDENCE]` for successful
+and failed operations. Mine underground descent/movement belongs to
+[Dungeons](dungeons.md); digging/extraction and license use/effects belong to
+[Professions](professions.md). World owns only the shared location handoff.

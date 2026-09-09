@@ -196,15 +196,17 @@ or generic job/reconciler framework is introduced.
   the server still renders and transmits all 21/55 cells per JSON snapshot.
   Sending only entering/changed cells remains an explicit transport-rendering
   gap; walking's signed-buffer delta protocol does not apply to flight maps.
+  This is a later technical improvement, separate from activating routes.
 - `[IMPL]` Content boundary: normal Forpost routes cannot yet be purchased;
-  their destination regions, complete path, and dated schedules are absent.
-  Enabling additional-region routes remains a TODO after the one-region MVP.
+  their destination zones/stations, complete path, and dated schedules are absent.
+  Enabling additional-zone routes remains a TODO after the one-zone MVP.
 - `[EVIDENCE]` Complete flight paths, recurring timetable/duration rules,
-  walking borders and coordinate mappings remain uncaptured.
+  walking borders and coordinate mappings remain uncaptured. Walking crossings
+  also lack their runtime transition; [Movement](../design/features/movement.md#persistence-contract)
+  owns that post-MVP work, using the existing `Zone`/`zone_id` identity.
 - `[EVIDENCE]` Source offline/new-login recovery, insufficient funds/concurrent
   purchase, and onboard chat delivery were not exercised. Local guarantees
   must not be reported as source observations.
-- Successful gathering remains deferred to the alchemy skill path.
 
 | Date | Change |
 |---|---|

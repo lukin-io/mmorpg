@@ -446,7 +446,7 @@ class WorldController < ApplicationController
         movement_remaining_seconds: @movement_remaining_seconds
       }),
       world_stream("location-info", partial: "world/location_info", locals: {
-        position: @position, tile: @tile, zone: @zone
+        position: @position, location_label: Game::World::Presence.new(character: current_character, position: @position).label
       }),
       world_stream("available-actions", partial: "world/actions", locals: {
         available_actions: @available_actions, position: @position

@@ -28,7 +28,7 @@ class NpcTemplate < ApplicationRecord
 
   validates :name, presence: true, uniqueness: true
   validates :npc_key, uniqueness: true, allow_blank: true
-  validates :level, numericality: {greater_than: 0}
+  validates :level, numericality: {only_integer: true, greater_than_or_equal_to: 0}
   validates :role, presence: true, inclusion: {in: ROLES}
   validates :dialogue, presence: true
   validate :referenced_key_must_remain_stable

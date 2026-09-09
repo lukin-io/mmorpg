@@ -17,7 +17,7 @@
       <legend>Member <%= member_index + 1 %></legend>
       <div class="nl-manage-field"><%= label_tag "#{member_id}_npc_key", "NPC template" %><%= select_tag "#{member_prefix}[npc_key]", options_from_collection_for_select(@npc_templates, :npc_key, :name, member["npc_key"]), include_blank: "Unused member", id: "#{member_id}_npc_key" %></div>
       <% {"level" => "Exact level", "level_min" => "Minimum level", "level_max" => "Maximum level", "hp" => "HP"}.each do |key, label| %>
-        <div class="nl-manage-field"><%= label_tag "#{member_id}_#{key}", label %><%= number_field_tag "#{member_prefix}[#{key}]", member[key], id: "#{member_id}_#{key}", min: 1 %></div>
+        <div class="nl-manage-field"><%= label_tag "#{member_id}_#{key}", label %><%= number_field_tag "#{member_prefix}[#{key}]", member[key], id: "#{member_id}_#{key}", min: key == "hp" ? 1 : 0 %></div>
       <% end %>
     </fieldset>
   <% end %>

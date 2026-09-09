@@ -3,6 +3,23 @@
 require "rails_helper"
 
 RSpec.describe NpcTemplate, type: :model do
+  describe "level authoring" do
+    it "persists level zero without deriving combat stats from it" do
+      npc = create(:npc_template, level: 0, metadata: {"health" => 40, "base_damage" => 4})
+
+      expect(npc.reload.level).to eq(0)
+      expect(npc.combat_stats).to include(hp: 40, attack: 4)
+    end
+
+    it "rejects missing, negative, and fractional levels" do
+      [nil, -1, 0.5].each do |level|
+        npc = build(:npc_template, level:)
+        expect(npc).not_to be_valid
+        expect(npc.errors[:level]).to be_present
+      end
+    end
+  end
+
   describe "cell encounter references" do
     let(:member_template) { create(:npc_template, npc_key: "roster_member") }
     let(:anchor_template) { create(:npc_template, npc_key: "roster_anchor") }

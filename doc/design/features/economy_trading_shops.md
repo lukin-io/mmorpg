@@ -19,6 +19,9 @@ Primary references:
 - `doc/design/reference/social/observations/2026-08-23_chat_game_event_timeline.md`
 - `doc/design/reference/world/observations/2026-09-07_forpost_grid_and_action_audit.md`
 - `doc/design/reference/social/observations/2026-09-07_cell_chat_and_presence_boundaries.md`
+- `doc/design/reference/world/observations/2026-09-09_starter_landmarks_and_art.md`
+- `doc/design/reference/world/observations/2026-09-09_mine_exchange_wiki.md`
+- `doc/design/reference/economy/observations/evidence_needed_mine_exchange_operations.md`
 
 Current observed entry and return paths:
 
@@ -66,6 +69,13 @@ sells inventory. City Shop returns through `Город` to its persisted node.
 Village Shop returns through Village to Village Square; only the square's
 separate Leave action exits outdoors. The source changes both the location
 label and player list between those village rooms.
+
+The later mine Shop and Resource Exchange are separate commerce families.
+World currently reproduces their lobby entry, read-only sections, Nature
+return and saved lobby location. Mine item cards and exchange selectors are
+presentation evidence; no purchase, query, listing, settlement or storage
+operation was exercised or implemented there. Do not route a mine Shop tab
+into the ordinary City/village catalog by name alone.
 
 The local implementation derives access and parent return from persisted
 position and active authored content. It stores sanitized Shop filters for
@@ -136,6 +146,18 @@ discard fractional balances.
 
 ## Known But Deferred
 
+- **Mine acquisition — Economy:** item/license purchases, stock, payment and
+  item receipt remain unimplemented. Captured cards establish displayed
+  details, not successful acquisition, license activation or expiry rules.
+- **Resource Exchange — Economy:** actual resource queries/listings,
+  transactions/settlement and storage remain unimplemented. Complete the
+  [operation capture backlog](../reference/economy/observations/evidence_needed_mine_exchange_operations.md)
+  before defining outcomes or reusing ordinary Shop transactions. The older
+  wiki model requires current live confirmation.
+- **Adjacent mine capabilities:** [Dungeons](../../domains/dungeons.md) tracks
+  separate descent/underground-cell travel; [Professions](../../domains/professions.md)
+  owns tools, license use/effects, digging/extraction, yield and proficiency.
+  Lobby availability does not implement any of these operations.
 - The current Market interior is read-only. Purchase, rent, tax settlement,
   cancellation, expiry, and authorization flows remain deferred; historical
   Numismatics and Junk Dealer captures do not imply current routes or screens.
@@ -180,6 +202,8 @@ Deferred source-backed concepts:
   for player identity and local presence.
 - `features/professions.md`: future profession resources may be sold only after
   their gathering and settlement behavior is captured.
+- `features/dungeons.md`: tracks the distinct mine descent/underground travel
+  handoff. Mine commerce remains Economy-owned; a lobby is not a dungeon run.
 
 ## Out Of Scope
 

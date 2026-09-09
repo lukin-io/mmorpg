@@ -2,7 +2,7 @@
 
 - Document type: neverlands-source-summary
 - Domain: character
-- Updated: 2026-08-26
+- Updated: 2026-09-09
 - Evidence status: current with preserved legacy analysis
 
 ## Current observations
@@ -13,6 +13,7 @@
 | Skills, effects, and Arena source analysis | `doc/design/reference/character/observations/legacy_skills_and_arena_analysis.md` | mixed current/historical; verify per flow |
 | Profile/Inventory geometry | `doc/design/reference/shell/observations/2026-07-29_style_system.md` | current presentation evidence |
 | Recipient-visible awarded combat XP | `doc/design/reference/social/observations/2026-08-23_chat_game_event_timeline.md` | current bounded feedback evidence |
+| Nature Child, Wanderer and profession distinctions | `doc/design/reference/world/observations/2026-09-09_wiki_skills_and_cell_actions.md` | published rules; Nature Child link rechecked September 9; no live perk allocation or bonus sip exercised |
 
 ## Current Neverlands behavior
 
@@ -30,6 +31,11 @@ Fighter's half-probability equipment-wear effect.
 
 - Weapon-mastery and other uncaptured skill effects, perk prerequisites/reset,
   high-level progression, and profession counters remain unavailable locally.
+- Nature Child's four-fatigue sip is published; it is not a missing formula.
+  Its selection prerequisites/live application, exact Wanderer enhancement and
+  outdoor HP-recovery coefficient still need bounded observation. Progression
+  owns the perk gap in `doc/features/character_progression.md` section 6.5;
+  World owns movement/Drink consumers, and Professions owns use-grown counters.
 
 ## Design linkage
 

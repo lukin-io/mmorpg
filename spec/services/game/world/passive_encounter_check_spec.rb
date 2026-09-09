@@ -62,6 +62,34 @@ RSpec.describe Game::World::PassiveEncounterCheck do
     expect(result.retry_after_ms).to eq(125_000)
   end
 
+  it "honors the starter profile's user-reported interval, reuses early retries and starts one repeatable fight at its deadline" do
+    definition = Game::World::OutdoorNpcConfig.config.fetch(:outpost_surroundings)
+      .fetch(:starter_npcs).find { |entry| entry.values_at(:x, :y) == [0, 3] }
+    template = create(:npc_template, npc_key: "wilderness_bandit", level: 7, metadata: {"health" => 155})
+    npc.update!(npc_template: template, npc_key: "wilderness_bandit", level: 7, max_hp: 155, current_hp: 155,
+      metadata: definition.fetch(:metadata).deep_stringify_keys)
+    interval_rng = instance_double(Random)
+    expect(interval_rng).to receive(:rand).with(300..360).once.and_return(300)
+
+    initial = described_class.new(character:, clock:, rng: interval_rng).call
+    expect(initial.retry_after_ms).to eq(300_000)
+    early = described_class.new(character:, clock: -> { now + 299.seconds }, rng: instance_double(Random)).call
+    expect(early.retry_after_ms).to eq(1_000)
+    expect(ArenaMatch.count).to eq(0)
+
+    selection_rng = instance_double(Random)
+    expect(selection_rng).to receive(:rand).with(2).once.and_return(0)
+    due = described_class.new(character:, clock: -> { now + 300.seconds }, rng: selection_rng).call
+    expect(due).to be_interrupted
+    expect(due.match.metadata).to include("repeatable_encounter_source" => true, "encounter_roster_sample" => "2026-09-01-2340")
+    expect(due.match.arena_participations.npcs.sole).to have_attributes(max_hp: 155, participant_level: 7)
+
+    duplicate = described_class.new(character:, clock: -> { now + 300.seconds }, rng: instance_double(Random)).call
+    expect(duplicate.match).to eq(due.match)
+    expect(ArenaMatch.count).to eq(1)
+    expect(npc.reload).to be_alive
+  end
+
   it "preserves the due time across early retries and starts the shared fight only when due" do
     first = check
     early = described_class.new(

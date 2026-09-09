@@ -40,11 +40,15 @@ RSpec.describe Game::World::OutdoorNpcConfig do
     end
 
     it "preserves the four captured m_1008_1007 roster samples and timing windows" do
-      npc = described_class.source_npc_for_tile("Outpost Surroundings", 8, 7)
+      npc = described_class.source_npc_for_tile("Outpost Surroundings", 14, 15)
       rosters = npc.dig(:metadata, :encounter_rosters)
 
       expect(npc[:key]).to eq("wilderness_bandit")
       expect(npc.dig(:metadata, :source_map)).to eq("m_1008_1007")
+      expect(npc.dig(:metadata, :source_capture_scope)).to eq("independent_encounter_sample")
+      expect(npc.dig(:metadata, :source_coordinates)).to eq([1008, 1007])
+      expect(npc.dig(:metadata, :source_coordinate_offset)).to eq([994, 992])
+      expect(described_class.source_npc_for_tile("Outpost Surroundings", 8, 7)).to be_nil
       expect(npc.dig(:metadata, :passive_delay_windows)).to eq(
         [
           {key: "2026-09-01-interval-1", min_seconds: 230, max_seconds: 278},
@@ -63,8 +67,26 @@ RSpec.describe Game::World::OutdoorNpcConfig do
   end
 
   describe ".config" do
+    it "accepts zero template/member levels and rejects negative or malformed levels on reload" do
+      member = {npc_key: "zero_rat", level: 0, hp: 40}
+      template = {key: "zero_rat", level: 0, metadata: {encounter_rosters: [{key: "zero", members: [member]}]}}
+      config = {outpost: {zone_name: "Outpost", npcs: [template]}}
+      allow(YAML).to receive(:load_file).with(described_class::CONFIG_PATH).and_return(config)
+
+      expect(described_class.reload!.dig(:outpost, :npcs, 0, :level)).to eq(0)
+      [nil, -1, 0.5].each do |invalid|
+        template[:level] = invalid
+        expect { described_class.reload! }.to raise_error(described_class::InvalidConfigurationError, /level must be a non-negative integer/)
+        template[:level] = 0
+        member[:level] = invalid
+        expect { described_class.reload! }.to raise_error(described_class::InvalidConfigurationError, /level must be a non-negative integer/)
+      end
+    ensure
+      described_class.instance_variable_set(:@config, nil)
+    end
+
     it "validates authored weights, level ranges and activation at the catalog boundary" do
-      member = {npc_key: "range_spec", level_min: 11, level_max: 14, hp: 200}
+      member = {npc_key: "range_spec", level_min: 0, level_max: 4, hp: 200}
       sample = {key: "range", weight: 3, members: [member]}
       config = {outpost: {zone_name: "Outpost", npcs: [{key: "range_spec", metadata: {active: false, encounter_rosters: [sample]}}]}}
       allow(YAML).to receive(:load_file).with(described_class::CONFIG_PATH).and_return(config)

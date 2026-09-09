@@ -106,6 +106,96 @@ RSpec.describe "City navigation", type: :request do
     expect(offer.reload).to be_completed
   end
 
+  context "with the captured eastern gate" do
+    let(:gate_definition) { Game::World::CityCatalog::GATES.fetch("east") }
+    let(:law) do
+      create(
+        :zone,
+        :city,
+        name: "Law Quarter",
+        metadata: {"city_key" => "forpost", "city_node_key" => gate_definition.fetch("node_key"), "title" => "Law Quarter"}
+      )
+    end
+    let!(:east_exit) do
+      x, y = gate_definition.fetch("local_coordinates")
+      create(
+        :city_hotspot,
+        :city_gate,
+        zone: law,
+        destination_zone: outdoors,
+        key: "east_gate",
+        name: gate_definition.fetch("name"),
+        action_params: {"destination_x" => x, "destination_y" => y}
+      )
+    end
+    let!(:east_entrance) do
+      x, y = gate_definition.fetch("local_coordinates")
+      create(
+        :tile_building,
+        zone: outdoors.name,
+        x:,
+        y:,
+        building_key: "outpost_east_gate",
+        name: gate_definition.fetch("name"),
+        destination_zone: law,
+        destination_x: 0,
+        destination_y: 0,
+        required_level: 0,
+        metadata: {"presence_label" => gate_definition.fetch("presence_label")}
+      )
+    end
+
+    before { position.update!(zone: law, x: 0, y: 0) }
+
+    it "lets a level-zero character leave and re-enter the same Law Quarter through its gate" do
+      character.update!(level: 0)
+      get world_path
+      expect(response.body).to include('data-hotspot-key="east_gate"')
+      expect(response.body).not_to include('data-landmark-key="city_exit"')
+      exit_offer = WorldActionOffer.offered.find_by!(character:, target: east_exit)
+
+      post interact_hotspot_world_path,
+        params: {hotspot_id: east_exit.id, action_key: exit_offer.action_key}
+
+      expect(response).to redirect_to(world_path)
+      expect(position.reload).to have_attributes(zone: outdoors, x: 11, y: 9)
+      expect(exit_offer.reload).to be_completed
+      expect(MovementCommand.moving.where(character:)).to be_empty
+
+      follow_redirect!
+      expect(response.body).to include("Outpost, East Gate")
+      entry_offer = WorldActionOffer.offered.find_by!(character:, target: east_entrance)
+      entry_params = {building_id: east_entrance.id, action_key: entry_offer.action_key}
+      post enter_building_world_path, params: entry_params
+
+      expect(response).to redirect_to(world_path)
+      expect(position.reload).to have_attributes(zone: law, x: 0, y: 0)
+      expect(entry_offer.reload).to be_completed
+      expect(MovementCommand.moving.where(character:)).to be_empty
+      follow_redirect!
+      expect(response.body).to include('aria-label="Law Quarter city map"')
+
+      post enter_building_world_path, params: entry_params
+
+      expect(position.reload).to have_attributes(zone: law, x: 0, y: 0)
+      expect(entry_offer.reload).to be_completed
+    end
+
+    it "rejects an eastern entrance offer after the character leaves its exact cell" do
+      position.update!(zone: outdoors, x: 11, y: 9)
+      get world_path
+      offer = WorldActionOffer.offered.find_by!(character:, target: east_entrance)
+      position.update!(x: 12, y: 10)
+
+      post enter_building_world_path,
+        params: {building_id: east_entrance.id, action_key: offer.action_key}
+
+      expect(response).to redirect_to(world_path)
+      expect(position.reload).to have_attributes(zone: outdoors, x: 12, y: 10)
+      expect(offer.reload).not_to be_completed
+    end
+  end
+
   it "keeps a visible route usable after another read of the same city node" do
     get world_path
     first_offer = WorldActionOffer.offered.find_by!(character:, target: to_business)

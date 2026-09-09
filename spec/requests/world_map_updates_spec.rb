@@ -58,6 +58,30 @@ RSpec.describe "Incremental World map updates", type: :request do
     expect(map.css("template[data-map-controls] [data-action-key]").size).to eq(8)
   end
 
+  it "uses the authoritative cell label on initial render, movement acceptance, and completion" do
+    create(:map_tile_template, zone: zone.name, x: 20, y: 20, metadata: {"presence_label" => "Village approach"})
+    create(:map_tile_template, zone: zone.name, x: 21, y: 20, metadata: {"presence_label" => "Pond bank"})
+    get world_path
+    expect(Nokogiri::HTML(response.body).at_css("#location-info strong").text).to eq("Village approach")
+    token = map["data-map-buffer"]
+    action_key = map.at_css('[data-direction="east"]')["data-action-key"]
+
+    post move_world_path, params: {action_key:, map_buffer: token}, headers: stream_headers
+
+    description = Nokogiri::HTML(response.body).at_css("turbo-stream[target='location-info']")
+    expect(description.at_css("strong").text).to eq("Village approach")
+    token = map["data-map-buffer"]
+    movement = MovementCommand.moving.find_by!(character:)
+    travel_to movement.ends_at, with_usec: true do
+      get world_path, params: {map_buffer: token}, headers: stream_headers
+    end
+
+    description = Nokogiri::HTML(response.body).at_css("turbo-stream[target='location-info']")
+    expect(description.at_css("strong").text).to eq("Pond bank")
+    expect(description.text).to include("[21, 20]")
+    expect(position.reload).to have_attributes(x: 21, y: 20)
+  end
+
   it "always renders all cells for an ordinary reload, even with an old presentation token in its URL" do
     get world_path
     token = map["data-map-buffer"]

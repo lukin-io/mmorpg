@@ -15,7 +15,13 @@ class WorldLocationsController < ApplicationController
   before_action :load_location!
 
   def show
+    @location_section = @building.location_section(params[:section])
+    if params[:section].present? && !@location_section
+      redirect_to world_location_path(@building.location_key), status: :see_other
+      return
+    end
     @location_features = @building.location_features
+    @wallet = current_user.currency_wallet if @building.location_kind == "exchange"
     @feature_offers_by_key = build_feature_offers.index_by { |offer| offer.metadata["hotspot_key"] }
     Game::World::ResumeContext.new(character: current_character).remember_world_location!(key: @building.location_key)
     prepare_presence_context
@@ -38,10 +44,14 @@ class WorldLocationsController < ApplicationController
     validate_feature_offer!(offer, feature)
 
     destination_path = location_feature_path(feature)
+    if feature["action_type"] == "return_world"
+      Game::World::ResumeContext.new(character: current_character).remember_world!
+    end
     offer.complete!
     redirect_to destination_path, status: :see_other
   rescue Game::World::AcceptAction::ActionViolationError => e
-    redirect_to world_location_path(params[:key]), alert: e.message, status: :see_other
+    redirect_to Game::World::ResumeContext.new(character: current_character).resume_path,
+      alert: e.message, status: :see_other
   end
 
   private
