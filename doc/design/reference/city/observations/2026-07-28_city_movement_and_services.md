@@ -18,6 +18,14 @@ state.
 
 ## Scope
 
+**September 9 supersession:** the gate coordinates and local availability
+statements recorded in this July observation are historical. The subsequent
+`doc/design/reference/world/observations/2026-09-09_starter_routes.md`
+verifies Central Square ↔ source `[1000,1000]` / local `[6,8]` and Law Quarter
+↔ source `[1005,1001]` / local `[11,9]`. Both gates are actionable locally.
+The source layer rectangles below remain evidence of source artwork geometry;
+they are not prescribed hit boxes for differently composed project artwork.
+
 - Starting outside the city at the Oktal west gate tile.
 - Click the `Войти` button with id `dep`.
 - Enter Oktal city view.
@@ -114,6 +122,13 @@ Goods, and For Beginners; City is the building return control.
 No item rows loaded in this session, so this observation verifies Shop shell,
 entry/return, tab/category/filter hierarchy, and dimensions rather than a new
 stock or transaction state.
+
+**Sizing correction, September 10:** the
+[current Shop measurement](../../economy/observations/2026-09-10_shop_layout_and_entrance_scale.md)
+supersedes the interpretation of this decorative illustration as a fixed
+1250 × 600 display. Those are its natural dimensions; the source scales it
+between 625 × 300 and 1250 × 600 according to gameplay-frame height. This
+correction concerns the Shop entrance, not the City hotspot coordinates.
 
 ### Historical city graph capture: 2026-07-20
 

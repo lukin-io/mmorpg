@@ -46,6 +46,13 @@ Section 16 of `doc/features/city.md` is exhaustive.
 
 ## Evidence and implementation gaps
 
+Central Square now aligns original building silhouettes with both pointer
+targets and hover/focus highlights, and labels stay inside the panned viewport.
+The other four districts still reuse Central Square artwork with different
+crops and broad hover boxes; their distinct original scenes and aligned
+silhouettes remain an `[IMPL]` visual gap. Navigation completion does not imply
+complete district artwork parity.
+
 Capture complete service-specific entry, denial, mutation, result, and return
 flows before adding treatment, trading, or other service mutations. The
 September 8 completed Forpost-to-Oktal journey now supplies Airship evidence;

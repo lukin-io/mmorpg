@@ -7,6 +7,8 @@
 
 ## Current observations
 
+- Central Square → Shop → purchase → Inventory → same Shop in
+  `doc/design/reference/economy/observations/2026-09-09_city_shop_purchase.md`
 - `doc/design/reference/city/observations/2026-07-28_city_movement_and_services.md`
 - Both gate handoffs and the Residential-to-Law route in
   `doc/design/reference/world/observations/2026-09-09_starter_routes.md`
@@ -25,6 +27,9 @@ The current Forpost evidence establishes five illustrated City nodes, explicit
 hotspots and route arrows, two verified outdoor gate handoffs, a Shop entry, and
 captured service interiors. Visible buildings do not imply implemented service
 mechanics.
+The September 9 pass reused Central Square's current Shop entry and captured
+one successful purchase and Inventory return. Its observation owns the Shop
+mutation evidence; the preserved July capture still owns hover-layer behavior.
 
 The Forpost left exit reaches source `[1000,1000]`; returning through that
 gate restores City Square. The eastern Law Quarter exit reaches source

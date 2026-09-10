@@ -56,6 +56,11 @@ has nearby seeded gate, village, resource, and NPC cases. See
 
 ## Development
 
+The schema is stored in `db/structure.sql` so fresh databases retain PostgreSQL
+Shop receipt triggers and constraints. Put compatible PostgreSQL `pg_dump` and
+`psql` client tools on `PATH` before running schema tasks. Existing databases
+advance through `bin/rails db:migrate`; do not reload a schema over player data.
+
 ```bash
 bundle install
 bin/rails db:prepare

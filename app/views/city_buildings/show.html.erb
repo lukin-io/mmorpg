@@ -5,7 +5,7 @@
   </div>
 <% else %>
 <%#
-  Read-only city building interior. Navigation away from the building is owned
+  City building interior. Navigation away from the building is owned
   by the shell header, as in the source, so this page adds no second context
   strip of its own.
 %>
@@ -20,8 +20,12 @@
       </header>
 
       <p class="nl-city-building-notice">
+        <% if @building["kind"] == "market" %>
+          Stall rentals and player listings are read-only.
+        <% else %>
         This source-captured surface is read-only for MVP. No purchase, sale,
         processing, healing, or rental action is exposed.
+        <% end %>
       </p>
 
       <% case @building["kind"] %>

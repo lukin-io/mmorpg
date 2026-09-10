@@ -33,8 +33,12 @@ building, not a generic town vendor NPC. Any future building NPC, service NPC,
 or quest NPC must be captured from Neverlands before adding tables, routes, or
 UI.
 
-Quest interaction is intentionally not implemented right now. It should be
-documented from Neverlands before adding tables, routes, or UI.
+General NPC quest interaction remains unimplemented. The official Trader wiki
+now establishes a bounded Shop-owned license prerequisite: Market acceptance,
+1,000-NV Shop receipt payment, then Market completion. The local implementation
+persists that unlock path; original dialogue and its temporary garment reward
+remain incomplete. See `features/economy_trading_shops.md` and the September 9
+economy observation; this does not establish a generic quest system.
 
 ## NPC Roles
 

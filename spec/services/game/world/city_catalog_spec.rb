@@ -94,8 +94,8 @@ RSpec.describe Game::World::CityCatalog do
   end
 
   it "keeps current Central Square and Residential Quarter geometry explicit" do
-    expect(described_class.hotspot_presentation("main", "shop")).to eq(
-      "box" => [96, 303, 320, 182]
+    expect(described_class.hotspot_presentation("main", "shop")).to include(
+      "box" => [0, 165, 402, 360]
     )
     expect(described_class.hotspot_presentation("main", "go_forpost1")).to include(
       "box" => [900, 496, 68, 104],
@@ -104,6 +104,19 @@ RSpec.describe Game::World::CityCatalog do
     expect(described_class.presentation("forpost1").dig("landmarks", "clan_hall")).to include(
       "name" => "Clan Hall"
     )
+  end
+
+  it "gives each Central Square building an original-art silhouette inside the scene" do
+    presentation = described_class.presentation("main")
+    buildings = presentation.fetch("hotspots").except("go_forpost3", "go_forpost1")
+      .merge(presentation.fetch("landmarks"))
+
+    buildings.each_value do |geometry|
+      expect(described_class.valid_polygon?(geometry.fetch("polygon"))).to be(true)
+      x, y, width, height = geometry.fetch("box")
+      expect(x + width).to be <= described_class::SCENE_WIDTH
+      expect(y + height).to be <= described_class::SCENE_HEIGHT
+    end
   end
 
   it "returns nil for null and unsupported keys" do

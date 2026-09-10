@@ -43,6 +43,7 @@ class ItemTemplate < ApplicationRecord
   validates :base_price, :durability_max, numericality: {greater_than_or_equal_to: 0}
   validates :stack_limit, numericality: {greater_than: 0}
   validate :equipment_slot_validity
+  validate :shop_catalog_validity
 
   scope :materials, -> { where(item_type: "material") }
   scope :equipment, -> { where(item_type: "equipment") }
@@ -141,6 +142,24 @@ class ItemTemplate < ApplicationRecord
     enhancement_rules.to_h["description"].presence
   end
 
+  # Definition eligibility only; the selected ShopStock is the authority for
+  # local availability and quantities, checked separately by each trade.
+  def available_in_shop?
+    return false unless shop_catalog_entry["sold"] == true && base_price.to_d.positive?
+
+    case shop_catalog_entry.fetch("mode", "buy")
+    when "buy"
+      Game::Shop::Catalog::VALID_CATEGORIES.include?(enhancement_rules.to_h["subcategory"]) &&
+        enhancement_rules.to_h["license"].blank?
+    when "licenses"
+      license = Game::Shop::LicenseRules.definition(self)
+      license.present? && stack_limit == 1 &&
+        license["required_perk"] == {"trading" => "merchant", "doctor" => "healer"}[license["kind"]]
+    else
+      false
+    end
+  end
+
   def shop_stock
     enhancement_rules.to_h["shop_stock"].presence || {}
   end
@@ -161,25 +180,6 @@ class ItemTemplate < ApplicationRecord
     shop_stock.fetch("max", shop_stock_current).to_i
   end
 
-  def out_of_stock?
-    shop_stock_limited? && shop_stock_current.to_i <= 0
-  end
-
-  def decrement_shop_stock!(quantity)
-    return unless shop_stock_limited?
-
-    update_shop_stock!([shop_stock_current.to_i - quantity.to_i, 0].max)
-  end
-
-  def increment_shop_stock!(quantity)
-    return unless shop_stock_limited?
-
-    max = shop_stock_max
-    next_value = shop_stock_current.to_i + quantity.to_i
-    next_value = [next_value, max].min if max
-    update_shop_stock!(next_value)
-  end
-
   private
 
   def equipment_slot_validity
@@ -187,6 +187,26 @@ class ItemTemplate < ApplicationRecord
     return if EQUIPMENT_SLOTS.include?(slot) || SLOT_ALIASES.key?(slot.to_s) || slot == "none"
 
     errors.add(:slot, "must be a valid equipment slot for equipment items")
+  end
+
+  def shop_catalog_entry
+    entry = enhancement_rules.to_h["shop"]
+    entry.is_a?(Hash) ? entry : {}
+  end
+
+  def shop_catalog_validity
+    return unless shop_catalog_entry["sold"] == true
+    return if available_in_shop? && (shop_stock.empty? || valid_shop_stock?)
+
+    errors.add(:enhancement_rules, "shop goods require a valid mode, definition, price, and authored stock")
+  end
+
+  def valid_shop_stock?
+    stock = shop_stock
+    return false unless stock.is_a?(Hash) && stock["current"].is_a?(Integer) && stock["current"] >= 0
+    return shop_catalog_entry["mode"] == "licenses" unless stock.key?("max")
+
+    stock["max"].is_a?(Integer) && stock["max"].positive? && stock["current"] <= stock["max"]
   end
 
   def consumable_inventory_family
@@ -213,11 +233,6 @@ class ItemTemplate < ApplicationRecord
     when "relic" then "relics"
     else "misc"
     end
-  end
-
-  def update_shop_stock!(current)
-    next_stock = shop_stock.merge("current" => current.to_i, "max" => shop_stock_max.to_i)
-    update!(enhancement_rules: enhancement_rules.to_h.merge("shop_stock" => next_stock))
   end
 
   def truthy_rule?(value)

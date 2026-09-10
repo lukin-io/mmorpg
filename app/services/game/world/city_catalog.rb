@@ -86,17 +86,40 @@ module Game
           "image_offset" => [-143, -212],
           "focus" => [625, 300],
           "hotspots" => {
-            "arena" => {"box" => [374, 0, 570, 336]},
-            "shop" => {"box" => [96, 303, 320, 182]},
-            "hospital" => {"box" => [807, 282, 441, 266]},
-            "west_gate" => {"box" => [0, 25, 168, 307]},
+            # These silhouettes follow the visible project city.png crop,
+            # not the source artwork's differently positioned image layers.
+            "arena" => {
+              "box" => [333, 0, 839, 283],
+              "polygon" => [[5, 0], [94, 0], [99, 22], [100, 52], [94, 75], [82, 91], [64, 99], [39, 100], [19, 88], [6, 67], [0, 47], [0, 27]]
+            },
+            "shop" => {
+              "box" => [0, 165, 402, 360],
+              "polygon" => [[0, 40], [25, 28], [25, 12], [22, 11], [28, 0], [32, 7], [32, 11], [44, 12], [44, 30], [53, 26], [86, 40], [91, 50], [92, 64], [100, 73], [95, 84], [73, 92], [50, 94], [39, 99], [21, 90], [7, 83], [0, 73]]
+            },
+            "hospital" => {
+              "box" => [900, 270, 350, 330],
+              "polygon" => [[0, 35], [15, 23], [25, 18], [23, 0], [51, 5], [100, 27], [100, 96], [74, 100], [38, 89], [29, 63], [6, 49]]
+            },
+            "west_gate" => {
+              "box" => [0, 110, 80, 230],
+              "polygon" => [[0, 0], [67, 0], [100, 34], [95, 62], [55, 89], [0, 100]]
+            },
             "go_forpost3" => {"box" => [308, 501, 76, 99], "direction" => "southwest"},
             "go_forpost1" => {"box" => [900, 496, 68, 104], "direction" => "southeast"}
           },
           "landmarks" => {
-            "tavern" => {"name" => "Tavern", "box" => [154, 167, 192, 117]},
-            "workshop" => {"name" => "Workshop", "box" => [982, 182, 245, 112]},
-            "guard_tower" => {"name" => "Guard Tower", "box" => [240, 20, 79, 158]}
+            "tavern" => {
+              "name" => "Tavern", "box" => [100, 35, 218, 185],
+              "polygon" => [[0, 27], [58, 0], [95, 20], [100, 36], [89, 39], [89, 76], [64, 98], [24, 88], [22, 43]]
+            },
+            "workshop" => {
+              "name" => "Workshop", "box" => [1200, 126, 50, 122],
+              "polygon" => [[0, 23], [33, 0], [100, 23], [100, 100], [29, 79], [29, 48]]
+            },
+            "guard_tower" => {
+              "name" => "Guard Tower", "box" => [0, 0, 147, 150],
+              "polygon" => [[0, 0], [100, 0], [98, 41], [86, 49], [76, 83], [48, 100], [14, 95], [0, 75]]
+            }
           }
         },
         "forpost1" => {
@@ -169,6 +192,23 @@ module Game
 
         def hotspot_presentation(node_key, hotspot_key)
           presentation(node_key)&.dig("hotspots", hotspot_key.to_s)
+        end
+
+        # Bounded percentage vertices are presentation metadata only. Validate
+        # before persistence and formatting so malformed content cannot inject
+        # CSS or collapse a building's pointer region to a line.
+        def valid_polygon?(polygon)
+          return false unless polygon.is_a?(Array) && polygon.length.between?(3, 32)
+          return false unless polygon.all? do |point|
+            point.is_a?(Array) && point.length == 2 && point.all? do |value|
+              value.is_a?(Numeric) && value.finite? && value.between?(0, 100)
+            end
+          end
+
+          polygon.each_with_index.sum do |(x, y), index|
+            next_x, next_y = polygon[(index + 1) % polygon.length]
+            (x * next_y) - (next_x * y)
+          end.abs.positive?
         end
       end
     end

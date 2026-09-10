@@ -2,7 +2,7 @@
 
 - Document type: neverlands-source-summary
 - Domain: professions
-- Updated: 2026-09-09
+- Updated: 2026-09-10
 - Evidence status: current bounded inputs; EVIDENCE_NEEDED for complete flows
 
 ## Available evidence and decisions
@@ -25,6 +25,12 @@
   separates published mining skill/license/extraction rules from descent and
   outdoor lobby entry. Its linked live landmark observation owns the later
   completed lobby capture; it is not an extraction capture.
+- The [Trader/Doctor wiki clarification](../economy/observations/2026-09-09_licenses_and_shop_selling.md#profession-prerequisites-wiki-clarification-2026-09-10)
+  owns the Merchant/Healer perk, numeric profession proficiency, qualification
+  quest and timed-license distinctions. It preserves Merchant onboarding,
+  Trading growth through Shop sales, and the Doctor proficiency requirement
+  for entering the Traumatologist quest. License purchase gates must not be
+  inferred from a profession-counter display or from a treatment requirement.
 
 These linked observations remain the source owners; this index does not
 duplicate their measurements or claim a new live fishing/gathering session.
@@ -53,8 +59,13 @@ quantities, probabilities or profession persistence.
 
 ## Local Implementation Linkage
 
-- Local status: `NOT_IMPLEMENTED`
+- Local status: `NOT_IMPLEMENTED` for complete profession activity loops
 - Implementation placeholder: `doc/features/professions.md`
+- Adjacent [Shop implementation](../../../features/shop_economy.md):
+  Merchant qualification and licensed buying/selling are implemented within
+  Economy. Automatic Trading proficiency growth, Doctor quests and medical
+  treatment remain unimplemented; this adjacency does not complete a
+  profession activity loop.
 
 ### Responsible implementation files
 

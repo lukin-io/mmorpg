@@ -32,6 +32,22 @@ a:hover {
   outline-offset: 1px;
 }
 
+/* Decorative building entrances share the source 1250:600 ratio and its
+ * 300–600px pane-dependent height. Narrow clients cap the width while keeping
+ * the ratio. Interactive city/location scenes retain their own geometry. */
+.nl-building-entrance {
+  width: min(100%, calc(var(--nl-entrance-height, 300px) * 1250 / 600));
+  margin: 0 auto 4px;
+}
+
+.nl-building-entrance__image {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1250 / 600;
+  object-fit: cover;
+}
+
 /* ---------------------------------------------------------------- *
  * Source text classes (game.css)
  * ---------------------------------------------------------------- */

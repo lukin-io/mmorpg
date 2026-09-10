@@ -32,6 +32,16 @@ RSpec.describe Game::Skills::PerkAllocation do
     expect(character.reload.stats.get(:strength)).to eq(strength_before)
   end
 
+  it "persists profession prerequisites without granting a license or quest completion" do
+    character.update!(perk_points: 2)
+    allocation.call(selected_keys: %i[merchant healer])
+
+    expect(character.reload.perks).to include("merchant" => true, "healer" => true)
+    expect(character.perk_points).to eq(0)
+    expect(character.character_licenses).to be_empty
+    expect(character.metadata["profession_unlocks"]).to be_nil
+  end
+
   it "rejects an unknown perk without spending points" do
     expect do
       allocation.call(selected_keys: [:invented_perk])

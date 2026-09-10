@@ -388,6 +388,17 @@ The economy supports:
 - inventory weight/slots;
 - city shop buy/sell flows;
 
+The September 9 observed Shop purchase links NV payment, item acquisition,
+carried mass and Shop stock consumption. The bounded local purchase saves all
+four changes and consumes its one-use action in one transaction; replay cannot
+duplicate the trade. Explicit source-backed goods and 19 category controls
+replace generic positive-price listings. Licenses grants typed, expiring
+professional permissions under their prerequisites. Licensed Sell uses the
+documented skill/durability payout, stock headroom and that Shop's funds;
+each Shop has independent economic records. Novice remains denial/empty.
+Source activation timing and profession quest gaps remain explicit.
+`doc/design/features/economy_trading_shops.md` owns this contract.
+
 Direct player trade exists in Neverlands, but it is deferred until its exact
 flow and constraints are captured.
 

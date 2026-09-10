@@ -27,6 +27,12 @@ Rails.application.routes.draw do
       patch :perks, action: :update_perks
     end
   end
+  resources :character_licenses, only: :index, path: "character/licenses"
+  resource :merchant_qualification, only: [], controller: "merchant_qualifications" do
+    post :accept
+    post :pay
+    post :complete
+  end
 
   resource :world, only: :show, controller: "world" do
     get :players

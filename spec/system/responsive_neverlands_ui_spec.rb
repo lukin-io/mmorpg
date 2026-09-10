@@ -393,9 +393,9 @@ RSpec.describe "Responsive Neverlands UI", type: :system, js: true do
     expect(page).to have_css(".nl-shop-page")
     expect(page.evaluate_script(<<~JS)).to be(true)
       (() => {
-        const scene = document.querySelector(".nl-shop-scene")
+        const scene = document.querySelector(".nl-building-entrance__image")
         const frame = document.querySelector(".nl-shop-frame")
-        const categories = document.querySelector(".nl-shop-categories")
+        const categories = document.querySelector(".nl-shop-filter-viewport")
         const tableViewport = document.querySelector(".nl-shop-table-viewport")
         return document.documentElement.scrollWidth <= window.innerWidth + 1 &&
           scene.getBoundingClientRect().width <= window.innerWidth &&

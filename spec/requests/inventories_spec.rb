@@ -41,6 +41,20 @@ RSpec.describe "Inventories", type: :request do
         get inventory_path
 
         expect(response.body).to include("Pocket Knife")
+        icon = Nokogiri::HTML(response.body).at_css(".nl-inventory-item-icon")
+        expect(icon.text).to include("EQ")
+        expect(icon.at_css("img")).to be_nil
+      end
+
+      it "renders the authored item illustration beside its item details" do
+        item_template.update!(key: "penknife")
+
+        get inventory_path
+
+        image = Nokogiri::HTML(response.body).at_css(".nl-inventory-item-icon img.nl-inventory-item-artwork")
+        expect(image["src"]).to eq(ApplicationController.helpers.image_path("items/penknife.png"))
+        expect(image.attributes.slice("width", "height", "alt").transform_values(&:value))
+          .to eq("width" => "60", "height" => "60", "alt" => "")
       end
     end
 
@@ -276,6 +290,15 @@ RSpec.describe "Inventories", type: :request do
       inventory.update!(current_weight: 2)
     end
 
+    def grant_trade_permission(owner: character, kind: "trading", expires_at: 1.day.from_now)
+      definition = create(:item_template, item_type: "misc", slot: "none")
+      offer = WorldActionOffer.create!(character: owner, zone: create(:zone), x: 0, y: 0,
+        target: definition, action_type: "shop_buy", action_key: SecureRandom.hex(16),
+        expires_at: 10.minutes.from_now)
+      CharacterLicense.create!(character: owner, item_template: definition, world_action_offer: offer,
+        kind:, tier: 1, name: "#{kind.capitalize} I", starts_at: 2.days.ago, expires_at:)
+    end
+
     it "transfers an item stack quantity to another character" do
       post transfer_item_inventory_path, params: {item_id: inventory_item.id, recipient_name: "receiver", quantity: 1}
 
@@ -296,10 +319,11 @@ RSpec.describe "Inventories", type: :request do
       expect(recipient_user.currency_wallet.reload.nv_balance).to eq(12.5)
     end
 
-    it "sells an item to another player with decimal NV settlement" do
-      inventory.update!(metadata: {"trade_license" => true})
+    it "rejects licensed player sales without moving items or debiting the named buyer" do
+      grant_trade_permission
       user.currency_wallet.update!(nv_balance: 0)
       recipient_user.currency_wallet.update!(nv_balance: 12.75)
+      expect_any_instance_of(CurrencyWallet).not_to receive(:adjust!)
 
       post sell_to_player_inventory_path, params: {
         item_id: inventory_item.id,
@@ -309,32 +333,37 @@ RSpec.describe "Inventories", type: :request do
       }
 
       expect(response).to redirect_to(inventory_path)
-      expect(user.currency_wallet.reload.nv_balance).to eq(12.5)
-      expect(recipient_user.currency_wallet.reload.nv_balance).to eq(0.25)
-      expect(recipient.inventory.inventory_items.find_by(item_template:).quantity).to eq(1)
-    end
-
-    it "rolls back a transferred item when the locked buyer balance rejects settlement" do
-      inventory.update!(metadata: {"trade_license" => true})
-      user.currency_wallet.update!(nv_balance: 0)
-      recipient_user.currency_wallet.update!(nv_balance: 12.75)
-      allow_any_instance_of(CurrencyWallet).to receive(:adjust!)
-        .and_raise(Economy::WalletService::InsufficientFundsError)
-
-      post sell_to_player_inventory_path, params: {
-        item_id: inventory_item.id,
-        recipient_name: "receiver",
-        quantity: 1,
-        price: "12.50"
-      }
-
-      expect(response).to redirect_to(inventory_path)
-      expect(flash[:alert]).to eq("Recipient does not have enough NV.")
+      expect(flash[:alert]).to eq("Player sales are currently unavailable.")
       expect(user.currency_wallet.reload.nv_balance).to eq(0)
       expect(recipient_user.currency_wallet.reload.nv_balance).to eq(12.75)
       expect(inventory_item.reload.quantity).to eq(2)
       expect(inventory.reload.current_weight).to eq(2)
       expect(recipient.inventory.reload.current_weight).to eq(0)
+      expect(recipient.inventory.inventory_items).to be_empty
+      expect(user.currency_wallet.currency_transactions).to be_empty
+      expect(recipient_user.currency_wallet.currency_transactions).to be_empty
+    end
+
+    it "does not authorize sales from a legacy boolean or an inventory license name" do
+      inventory.update!(metadata: {"trade_license" => true})
+      create(:inventory_item, inventory:, item_template: create(:item_template, name: "Trading license"))
+
+      post sell_to_player_inventory_path, params: {item_id: inventory_item.id, recipient_name: "receiver", price: "1.00"}
+
+      expect(flash[:alert]).to eq("Trade license required.")
+      expect(inventory_item.reload.quantity).to eq(2)
+      expect(recipient.inventory.inventory_items).to be_empty
+    end
+
+    it "rejects expired, doctor-only and foreign trading permissions" do
+      grant_trade_permission(expires_at: 1.day.ago)
+      grant_trade_permission(kind: "doctor")
+      grant_trade_permission(owner: recipient)
+
+      post sell_to_player_inventory_path, params: {item_id: inventory_item.id, recipient_name: "receiver", price: "1.00"}
+
+      expect(flash[:alert]).to eq("Trade license required.")
+      expect(inventory_item.reload.quantity).to eq(2)
       expect(recipient.inventory.inventory_items).to be_empty
     end
   end

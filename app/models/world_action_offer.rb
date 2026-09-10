@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# Server-authored, short-lived action key for tile-local world actions.
+# Server-authored, short-lived capability for location-bound World and Shop actions.
 class WorldActionOffer < ApplicationRecord
   ACTION_TYPES = %w[
     enter_building
@@ -13,6 +13,8 @@ class WorldActionOffer < ApplicationRecord
     open_location_feature
     exit_city
     board_airship
+    shop_buy
+    shop_sell
   ].freeze
   TIMED_LOCAL_ACTION_TYPES = %w[search_resources fish drink].freeze
 

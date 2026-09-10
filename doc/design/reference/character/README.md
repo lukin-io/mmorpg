@@ -46,11 +46,19 @@ Fighter's half-probability equipment-wear effect.
 
 - Local status: Fully Implemented for the bounded progression handbook
 - Implementation handbook: `doc/features/character_progression.md`
+- Merchant `34` and Healer `35` are selectable local perks used by Shop license
+  prerequisite checks. The owner-only Your licenses page displays separate
+  timed permissions. Shop acquisition activates them at payment locally; that
+  timing, inventory/mass handling, and renewal are not live-observed internals.
+  [License observation](../economy/observations/2026-09-09_licenses_and_shop_selling.md)
+  owns the separate source and documented-rule boundary.
 
 ### Responsible implementation files
 
 - `app/models/character.rb`
 - `app/controllers/characters_controller.rb`
+- `app/controllers/character_licenses_controller.rb`
+- `app/models/character_license.rb`
 - `app/views/players/show.html.erb`
 
 Local implementation linkage is context, not Neverlands evidence.

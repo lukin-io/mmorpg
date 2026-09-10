@@ -47,6 +47,36 @@
   background: var(--nl-surface-header);
 }
 
+.nl-profile-license-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--nl-text);
+  font: 11px/15px var(--nl-font-tahoma);
+}
+
+.nl-profile-license-list > li {
+  padding: 4px;
+  border-top: 1px solid var(--nl-rule-gold-soft);
+  overflow-wrap: anywhere;
+}
+
+.nl-profile-license-details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 12px;
+  margin: 3px 0 0;
+}
+
+.nl-profile-license-details > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+}
+
+.nl-profile-license-details dt { color: var(--nl-text-soft); }
+.nl-profile-license-details dd { margin: 0; }
+
 .nl-player-subnavigation,
 .nl-player-context-buttons {
   display: flex;

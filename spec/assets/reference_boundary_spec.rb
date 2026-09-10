@@ -30,7 +30,7 @@ RSpec.describe "Runtime reference boundary" do
     end
   end
 
-  it "uses styled ASCII text instead of copied bitmap-style controls" do
+  it "keeps navigation controls ASCII and avoids decorative control glyphs" do
     control_files = %w[
       app/views/layouts/game.html.erb
       app/views/world/_city_view.html.erb
@@ -49,7 +49,6 @@ RSpec.describe "Runtime reference boundary" do
 
       expect(control_files.fetch("app/views/layouts/game.html.erb")).to include(">X<", ">R<")
       expect(control_files.fetch("app/views/world/_city_view.html.erb")).to include("&gt;")
-      expect(control_files.fetch("app/helpers/shop_helper.rb")).to include('"weapons" => "WP"')
     end
   end
 end

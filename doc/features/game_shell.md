@@ -37,6 +37,7 @@ Supporting documents:
 - `doc/design/reference/world/observations/2026-09-08_forpost_oktal_airship_journey.md` records separate station/route roster labels, waiting-state Inventory/reload recovery, and explicit arrival disembarkation; chat delivery aboard was not exercised.
 - `doc/design/reference/social/observations/legacy_chat_system_analysis.md` records earlier chat observations and explicitly separated unknowns.
 - `doc/design/reference/character/observations/2026-05-11_player_profile_and_development.md` records the player/vitals presentation linked from the shell.
+- `doc/design/reference/economy/observations/2026-09-09_licenses_and_shop_selling.md` records Abilities → Your licenses and its empty ownership state.
 - `doc/design/areas/game_client_layout.md` defines shared client-layout ownership.
 - `doc/design/features/social_chat_presence.md` defines chat, membership, ignore, and presence behavior.
 - `doc/design/features/character_vitals.md` defines authoritative vitals consumed by the header.
@@ -54,7 +55,7 @@ Supporting documents:
 |---|---|---|
 | `doc/features/world.md` | World bootstraps the layout, supplies exact-cell presence, and resolves Character/Inventory shell actions against a possible wilderness NPC interruption. | Game Shell owns the visible controls/frame; World owns position, the allowlisted destination action, hostile handoff, and post-fight return context. |
 | `doc/features/city.md` | City renders its illustrated node surface in the shell's central frame. | City owns node content, navigation, and hotspot mutations; Game Shell owns only surrounding shared controls. |
-| `doc/features/character_progression.md` | Character navigation opens the profile and allocation surfaces, while the header presents current identity/vitals. | Character Progression owns allocations/profile values; Game Shell owns links, frame placement, and compact header presentation. |
+| `doc/features/character_progression.md` | Character navigation opens profile/allocation surfaces; Abilities opens Your licenses. | Character Progression owns allocations, profile values and current-license display; Game Shell owns links, frame placement and compact header presentation. |
 | `doc/features/player_inventory.md` | Inventory navigation opens the carried/equipment surface in the main frame and reports request failures through the shell's stable flash target. | Player Inventory owns stacks, equipment, capacity, mutations, and error copy; Game Shell owns surrounding navigation, vitals, chat, presence, and flash presentation. |
 | `doc/features/shop_economy.md` | The Shop occupies the central gameplay surface after a City or linked-village handoff. | Shop owns catalog and economic mutations; Game Shell owns shared navigation, presence, chat, and flash presentation. |
 | `doc/features/arena_combat.md` | Arena and active fights occupy the authenticated main surface, while `/log/:id` explicitly uses the public layout; authoritative completion and item/NV loot transitions also publish player-facing facts. | Arena Combat owns fight state, typed loot resolution, rewards, and the public log. Game Shell owns the authenticated frame and durable recipient event projection in the shared chat timeline. |
@@ -64,6 +65,13 @@ Supporting documents:
 After login, the player opens the persisted allowlisted gameplay surface through a persistent Neverlands-shaped game frame, with World as the bootstrap/fallback. The live-measured `955 × 817` composition uses a 29px top strip, flexible scrolling main frame, 8px resize band, 240px chat/presence row with a 300px right presence column, 1px separator, and 30px CSS/text chat controls. The header shows name, level, stacked server-rendered HP/MP strips, Character and Inventory actions, contextual Return/Look around, and a CSS/text exit control. Character and Inventory submit the allowlisted World context-action route so a source-backed same-cell hostile encounter can replace navigation with combat and return to the requested destination afterward.
 
 The server owns identity, character state, location presence, social verification, channel visibility, message and game-event persistence, event audience, ignore filtering, and authorization. The browser owns only main-frame navigation, presence sort/refresh preferences, and chat focus/scroll/reset presentation.
+
+Shop uses that same shared Inventory form with `main_content` as its target.
+This Shop-specific frame handoff retains the Shop parent URL while Inventory
+is displayed; reloading restores Shop, and the saved accessible Shop remains
+the login destination. It replaces the removed duplicate Inventory link in
+the Shop body. Other shared navigation contexts retain their existing
+behavior; the controller still validates the allowlisted Inventory action.
 
 Desktop source parity and responsive adaptation are separate contracts. The
 `955 × 817` measurement remains exact at desktop. Tablet and mobile widths
@@ -170,6 +178,14 @@ system label, and event-specific XP/item/money emphasis. Server-published world 
 use an unbranded orange `World` marker and no visible timestamp. Both initial
 history and after-commit Turbo delivery enforce recipient scope on the server;
 ordinary request errors continue to use the stable flash surface.
+
+The bottom-right `A` control is the Abilities link. It opens the current
+character's read-only Your licenses surface at `GET /character/licenses`,
+matching the September 9 source navigation. Character Progression owns that
+page and its active-license query; Shop owns purchasing and permission rules.
+This link does not activate a license, grant a perk, or implement the remaining
+Abilities actions. The page disables Turbo snapshots so returning requests
+refresh server-owned expiry.
 
 ### 4.4 Exit and integration behavior
 
@@ -553,6 +569,7 @@ Cancelled/disconnected browser requests cannot replace newer state.
 | `POST /chat/local` | Send to current room | Committed sender Turbo append, HTML redirect, or JSON `201` | Stale/foreign/private/global intent rejected without message |
 | `POST /session_ping` | Refresh this open login's activity | CSRF-protected `204`; missing/closed session unchanged | Authentication/CSRF denial |
 | `GET /world/players` | Refresh exact-cell presence | Shared players-list HTML partial | Authentication/active-position failure |
+| `GET /character/licenses` | Follow the Abilities link to current owned licenses | Read-only game-layout HTML | Authentication/owner denial; expired permissions omitted |
 | `POST /world/context` | Request Character or Inventory from the World shell | Full redirect to the allowlisted destination or the shared hostile fight | Unsupported context falls back to World; anonymous request redirects to login. |
 | `GET /chat_channels/:id` | Render full or compact authorized channel history | HTML page or `chat_messages` frame without layout | Redirect/forbidden/not found |
 | `POST /chat_channels/:chat_channel_id/chat_messages` | Persist an authorized message | Turbo `200`, HTML redirect, or JSON `201` | Turbo/HTML/JSON `422`, or authorization failure |
@@ -805,6 +822,8 @@ creating another login row.
   gameplay history.
 - Unimplemented auxiliary source controls are not represented as complete behavior; client-vitals interpolation remains presentation-only.
 - Central feature navigation never transfers game authority to DOM state or local storage.
+- The Abilities link reaches the owner-only Your licenses page; its server query
+  and expiry boundary remain Character Progression/Shop responsibilities.
 - Character and Inventory shell actions can be interrupted by the authoritative same-cell hostile encounter and resume only through World-owned allowlisted return metadata.
 - The `955 × 817` desktop shell geometry remains unchanged while 820px and
   390px viewports reflow the same controls without whole-page overflow.
@@ -888,6 +907,9 @@ bundle exec rspec \
   spec/system/arena_room_presence_spec.rb \
   spec/system/responsive_neverlands_ui_spec.rb
 ```
+
+`spec/requests/character_licenses_spec.rb` covers the bottom-right Abilities
+link, current-owner license surface, persisted grants, and exact expiry.
 
 Policy behavior is currently exercised through request/system coverage; dedicated `ChatChannelPolicy` and `ChatMessagePolicy` specs are a justified gap for future policy changes. `responsive_neverlands_ui_spec.rb` is the focused full-shell browser contract for mobile header/main/social/bottom row sizes and whole-page overflow. Run the complete suite before release because the shell integrates authentication, sessions, World/City, character state, Turbo Streams, and social persistence.
 
@@ -978,7 +1000,7 @@ Policy behavior is currently exercised through request/system coverage; dedicate
 ### Content, configuration, seeds, and schema
 
 - `db/seeds.rb`
-- `db/schema.rb`
+- `db/structure.sql`
 - `db/migrate/20251121090100_create_user_sessions.rb`
 - `db/migrate/20251121135236_create_chat_channels.rb`
 - `db/migrate/20251121135259_create_chat_messages.rb`

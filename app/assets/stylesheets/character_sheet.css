@@ -213,6 +213,13 @@ button.nl-doll-slot--filled:hover {
   overflow-wrap: anywhere;
 }
 
+.nl-doll-slot-artwork {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
 /* Durability strip pinned to the bottom edge, as in the source item cell. */
 .nl-doll-slot-wear {
   position: absolute;

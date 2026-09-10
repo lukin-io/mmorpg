@@ -3,7 +3,7 @@
 title: Player Inventory Feature
 description: Implementation handbook for the Neverlands-based carried inventory, equipment paper doll, capacity, filters, item rows, and item actions.
 status: Fully Implemented
-updated: 2026-09-07
+updated: 2026-09-10
 owners: Player Inventory
 template: feature-v1
 ---
@@ -32,7 +32,7 @@ tracked in `doc/design/launch_mvp_plan.md`.
 |---|---|---|
 | `doc/features/game_shell.md` | Inventory replaces only the main gameplay surface and reports request failures through the shared flash target. | Shell owns header/chat/presence and stable flash presentation; Inventory owns its page, mutation result, and error copy. |
 | `doc/features/character_progression.md` | The shared sheet reads effective character values. | Progression owns saved values; Inventory owns display and equip requirements. |
-| `doc/features/shop_economy.md` | Shop buys/sells carried stacks. | Shop owns exchange; Inventory owns stack, mass, durability, and equipment state. |
+| `doc/features/shop_economy.md` | Shop buys/sells carried stacks and separately grants licenses. | Shop owns exchange and timed permissions; Inventory owns stack, mass, durability, and equipment state. Licenses create no inventory item. |
 | `doc/features/world.md` | Outdoor Inventory navigation may be interrupted by an NPC and is unavailable during accepted travel or Look work. | World owns interruption/return context and persisted work availability; Inventory owns the destination page and item transitions. |
 | `doc/features/arena_combat.md` | Active fights render current equipment, may apply server-resolved wear, and may award NPC item loot into carried inventory. | Inventory owns equipped/carried state, durability, capacity, and item-award validation; Arena Combat owns exact result-based wear (including Careful Fighter's half chance), typed loot resolution, and item-found feedback after a successful award. NV loot does not create an `InventoryItem`; Shop and Economy own its wallet/ledger persistence. |
 
@@ -52,7 +52,7 @@ authoritative in the user's Economy wallet and ledger.
 - Match the captured equipment-family information hierarchy and geometry.
 - Keep equipped slots, carried stacks, capacity, durability, and requirements
   authoritative on the server.
-- Support equip, use, transfer, gift, player sale, discard, sorting, equipment
+- Support equip, use, transfer, gift, discard, sorting, equipment
   sets, and money transfer only through existing Rails actions.
 - Reuse one character-sheet partial across Profile and Inventory.
 
@@ -105,9 +105,16 @@ Turbo-refresh with server validation and flash feedback.
 
 ### 4.4 Exit and integration behavior
 
-The header disables Inventory and keeps Your character plus Return. Returning
+On a full Inventory page, the header disables Inventory and keeps Your character plus Return. Returning
 uses the World-owned allowlisted context. Inventory never decides outdoor
 position, combat interruption, wallet balance, or Shop availability.
+
+Opening Inventory through Shop's shared shell control targets `main_content`
+and retains the Shop parent URL. Reload restores that Shop; login also resumes
+its saved accessible Shop context. This frame handoff does not make Inventory
+the persistent location, and it does not alter standalone or outdoor Inventory
+navigation. [Shop and Economy](shop_economy.md#44-exit-and-integration-behavior)
+owns this parent-surface behavior.
 
 ## 5. Feature topology and authored content
 
@@ -132,7 +139,8 @@ captured empty state until their mechanics exist.
 |---|---|---|---|
 | Current equipment-family page | `GET /inventory` | 1:1 baseline Done | Inventory view/helper/domain CSS |
 | Equip/use/unequip/discard | Inventory member actions | Interactive | Controller plus inventory services/models |
-| Transfer/gift/player sale/money transfer | Inventory collection actions | Interactive | Controller plus service/model validation |
+| Transfer/gift/money transfer | Inventory collection actions | Interactive | Controller plus service/model validation |
+| Player sale | Inventory collection action | Unavailable pending buyer confirmation | `TransferService` rejects without moving items or NV |
 | Sort and equipment sets | Inventory actions | Interactive | Controller and persisted character metadata |
 | Other-family/auxiliary visual states | Category/action transitions | Outside bounded launch feature | Capture before adding to this contract |
 
@@ -147,11 +155,50 @@ transaction/savepoint for the complete requested quantity. This lets Shop,
 Combat loot, and future authoritative callers rescue a capacity error without
 retaining an earlier stack fill or mass increment.
 
+Wear moves the same owned item from its carried row to its normalized equipment
+slot and refreshes the shared character sheet with effective equipment bonuses.
+Removing that slot returns the item to the carried list and removes its bonus;
+it does not create another item. For the Shop Penknife, the visible confirmation
+is the Weapon slot's item illustration/name and Armor pierce increasing by one
+percentage point. Reloading and reopening Inventory reads the saved equipment
+state. The slot's existing Remove button reverses the transition.
+
+Durability loss and reset lock/reload the owned row before merging its JSON
+properties. A source catalog correction snapshots previously acquired maximum
+and current durability under the same row lock, so later wear/reset retains that
+snapshot rather than replacing it from a stale Ruby instance. Template changes
+therefore do not rewrite the durability of goods already acquired.
+
 ### 6.3 Item rows and actions
 
 Each row renders action buttons, durability, properties, and requirement rows.
 `RequirementChecker` determines current availability; the controller resolves
 the item only through the current inventory before mutation.
+
+The 79 authored ordinary Shop goods share original item illustrations across
+Shop Buy/Sell and carried Inventory. Equippable goods also
+reuse the same image in filled paper-doll slots.
+`InventoriesHelper::ITEM_ARTWORK_PATHS` explicitly maps stable item keys to
+`app/assets/images/items/` assets; translated names and submitted paths do not
+select images. Carried rows fit the complete image inside 60 × 60 pixels;
+equipped images fit the existing `EquipmentSlots` geometry. Names remain in
+row details, slot tooltips and accessible labels. Unmapped goods retain their
+existing type/name fallbacks. The character silhouette is unchanged by equipment.
+Exact generation prompts and selected outputs belong to [ARTWORK.md](../ARTWORK.md).
+
+Player-to-player selling remains unavailable even with an active Trading
+license: the legacy immediate debit of another player's wallet was removed.
+A source-backed offer and buyer-acceptance transition must exist before this
+action can settle. Neither a permanent metadata flag, a license-named item nor
+a valid permission can bypass that missing consent flow. Ordinary transfers
+and gifts keep their existing independent behavior and require no license.
+
+Purchased Trading/Doctor licenses are separate `CharacterLicense` permissions
+shown under Abilities → Your licenses. Local acquisition does not create a
+carried stack, occupy a slot, or add mass. The live cards' mass `1` is retained
+as source display evidence; no source acquisition/mass transition was observed.
+Shop and Character Progression own the bounded storage/activation adaptation,
+not Inventory.
 
 ### 6.4 Deferred behavior boundary
 
@@ -160,8 +207,9 @@ kit/material, listing, maximum-durability, and owner-retrieval states; it is not
 a one-click `InventoryItem#reset_durability!` action. One authenticated
 request/payment/failure/retrieval flow is still missing, so no player repair
 route is shipped. Additional belt/pocket layering, complete family-specific
-pages, and popup/confirmation layouts remain deferred. Source item art is
-reference evidence only and is not runtime completion work. Existing mutation
+pages, and popup/confirmation layouts remain deferred. Source bitmaps remain
+reference evidence only; the bounded original item illustrations above do not
+establish artwork parity for the full assortment. Existing mutation
 routes do not prove visual parity for those states.
 
 ## 7. Authoritative data and presentation model
@@ -189,11 +237,18 @@ addition serializes on the Inventory row; a failed multi-stack request rolls
 back all stack and mass writes even when an outer loot transition records the
 capacity failure and continues.
 
-`Game::Inventory::TransferService` also uses a savepoint for each transfer or
-player sale. A rescued capacity, ownership, or settlement failure rolls back
+`Game::Inventory::TransferService` also uses a savepoint for each transfer.
+A rescued capacity or ownership failure rolls back
 its item, mass, and wallet writes even while the controller holds the outer
 character transaction. The same nesting rule protects Shop purchases through
 the Shop-owned purchase service.
+
+Item transfers lock the item template, both sender/recipient inventories in
+ascending id, then reload and lock the source item. Ownership, protected state,
+durability snapshot, available slots/mass and both mass updates share that
+transaction. Ordered inventory locks prevent reciprocal gifts from deadlocking
+and serialize incoming gifts against Shop purchases, including different item
+templates competing for the recipient's last capacity.
 
 ### 7.3 Presentation versus authority
 
@@ -228,6 +283,19 @@ delegates to the existing inventory/economy transition.
 
 Success returns to the normalized category/information state with feedback.
 World owns combat interruption before Inventory entry; Shop owns trade handoff.
+The September 9 regular-goods Shop path persists one purchased item through Inventory Manager
+in the same transaction as NV payment, one-unit stock reduction and consumed
+Shop capability. For the captured Penknife, the saved instance has 10/10
+durability and adds 5 carried mass. Inventory owns the resulting item, capacity
+and later equip/use behavior; Shop owns the quote/replay boundary. The browser
+purchase-to-Inventory/reload/login path is covered by
+`spec/system/shop_purchase_spec.rb`, with atomicity/concurrency covered by
+`spec/services/game/shop/trades_spec.rb`. Licensed selling returns one unit to
+the same Shop's bounded `ShopStock`, removes the owned unit and its carried
+mass, and credits the wallet while deducting Shop funds in one transaction.
+Shop rejects missing/expired trading permission, full stock, and insufficient
+Shop NV before any value changes. [Shop and Economy](shop_economy.md) owns sale
+pricing, quote validity, and the remaining source-transaction gaps.
 
 ### 8.4 Concurrency behavior
 
@@ -319,9 +387,9 @@ Progression, Shop, World, Fight, and Shell.
 
 `spec/requests/outdoor_action_availability_spec.rb` covers direct busy-page
 requests, Turbo equip, item discard, due-work completion, and unchanged
-active-fight access. `spec/requests/inventories_spec.rb` verifies that a player
-sale whose locked buyer balance rejects settlement rolls back the item and
-mass transfer inside the request transaction.
+active-fight access. `spec/requests/inventories_spec.rb` verifies that even an
+actively licensed seller cannot move an item or debit another player's wallet
+through the unavailable player-sale endpoint.
 
 `spec/system/responsive_neverlands_ui_spec.rb` protects the 820px two-column
 state, 390px stacked state, internal icon-strip scrolling, and page overflow
@@ -353,6 +421,7 @@ boundary.
 - `app/services/game/inventory/manager.rb`
 - `app/services/game/inventory/requirement_checker.rb`
 - `app/services/game/inventory/transfer_service.rb`
+- `app/services/game/shop/license_rules.rb`
 
 ### Views, helpers, client behavior, styling, and assets
 
@@ -365,11 +434,12 @@ boundary.
 - `app/javascript/controllers/inventory_controller.js`
 - `app/assets/stylesheets/character_sheet.css`
 - `app/assets/stylesheets/inventory.css`
+- `app/assets/images/items/`
 
 ### Content, configuration, seeds, and schema
 
 - `db/seeds.rb`
-- `db/schema.rb`
+- `db/structure.sql`
 
 ### Integrated feature entry points
 
@@ -422,3 +492,4 @@ shipped Inventory management routes.
 | 2026-08-23 | Documented the successful NPC item-loot handoff to Arena's item-found feedback, distinguished Economy-owned NV loot from Inventory state, and kept inventory validation on the shared flash surface after removal of the legacy toast path; equip/unequip Turbo failures now return 422 without mutating equipment. |
 | 2026-08-25 | Made the shared multi-unit item-add contract explicitly atomic: an Inventory lock plus nested savepoint rolls back partial stack and carried-mass writes before a caller records a capacity failure. |
 | 2026-08-26 | Clarified the Combat-owned Careful Fighter wear handoff and recorded repair as a deferred workshop/profession transaction rather than an inventory durability reset. |
+| 2026-09-10 | Integrated seven original Shop-item illustrations into carried rows and shared equipment slots; extended the Shop browser flow through wear, persisted slot/stat confirmation, removal and resale. |

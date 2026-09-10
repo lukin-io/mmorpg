@@ -29,6 +29,7 @@ class Zone < ApplicationRecord
   validates :width, :height, numericality: {greater_than: 0}
   validate :populated_name_is_stable
   validate :valid_airship_station_title
+  validate :valid_city_presentation_polygons
 
   def city?
     location_type == "city"
@@ -59,6 +60,20 @@ class Zone < ApplicationRecord
   end
 
   private
+
+  def valid_city_presentation_polygons
+    %w[hotspots landmarks].each do |kind|
+      geometries = city_presentation[kind]
+      next unless geometries.is_a?(Hash)
+
+      geometries.each_value do |geometry|
+        next unless geometry.is_a?(Hash) && geometry.key?("polygon")
+        next if Game::World::CityCatalog.valid_polygon?(geometry["polygon"])
+
+        errors.add(:metadata, "city #{kind} polygon must contain 3 to 32 percentage points enclosing an area")
+      end
+    end
+  end
 
   def valid_airship_station_title
     return unless metadata.to_h.key?("airship_station_title")

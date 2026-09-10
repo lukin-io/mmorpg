@@ -143,7 +143,9 @@ local variables between phases:
 | `db/seeds/world_zones.rb` | City nodes, the single outdoor Zone, spawn-point reconciliation |
 | `db/seeds/world_cells.rb` | Starter survey import, cell actions, artwork, obsolete gate-cell cleanup |
 | `db/seeds/starter_characters.rb` | Initial sample characters and starting inventory |
-| `db/seeds/shop_inventory.rb` | Item templates, shop stock, existing sample inventory |
+| `db/seeds/data/starter_shop.json` | 79 captured ordinary Shop goods, requirements, bonuses and bootstrap stock |
+| `db/seeds/shop_inventory.rb` | Loads starter goods, six licenses and inventory-only templates; preserves owned durability and optional sample inventory |
+| `db/seeds/shop_accounts.rb` | Creates missing per-Shop stock; preserves traded stock and funds |
 | `db/seeds/starter_wallets.rb` | One-time initial sample-wallet grants |
 | `db/seeds/arena_rooms.rb` | Arena room baseline |
 | `db/seeds/world_locations.rb` | Reconciled reciprocal city gates; bootstrap-only linked outdoor locations |
@@ -859,6 +861,16 @@ contains destination coordinates/direction, while the foreign key identifies
 the destination record. Feature navigation remains restricted by
 `CityHotspot::FEATURE_ROUTES`; arbitrary URLs are not accepted.
 
+An optional `polygon` in the action-parameter JSON clips both the pointer
+target and hover highlight inside the action's bounding box. Use 3–32 numeric
+`[x,y]` percentage points within `0..100`, enclosing a nonzero area; for example,
+`"polygon": [[0, 0], [100, 0], [50, 100]]` defines a triangle. This is local
+artwork geometry, not an action or permission. Landmark entries inside
+`city_presentation.landmarks` accept the same optional polygon. Invalid
+polygons fail model validation; both bounds and silhouette must be authored
+against the actual project image. Seeded Central Square shapes live in
+`CityCatalog` and return to that baseline on a seed sync.
+
 Hotspot geometry is interactive, so verify hover, keyboard focus, arrow
 direction, desktop layout, and responsive pan/scroll behavior after editing.
 
@@ -1036,7 +1048,9 @@ Item management must preserve two different owners:
 | Concern | Owner | Correct management operation |
 |---|---|---|
 | What an axe/armor/potion is | `ItemTemplate` | Catalog CRUD or deactivate/archive policy |
-| Whether it appears in the Shop | `ItemTemplate.base_price` and `enhancement_rules.shop_stock`, consumed by `Game::Shop::Catalog` | Edit catalog definition with Shop coverage |
+| Whether it appears in a Shop | Explicit `ItemTemplate.enhancement_rules.shop` definition plus that building's `ShopStock` | Author the definition and local stock separately |
+| Shop funds and stock | `ShopAccount.nv_balance` and `ShopStock.current/maximum` | Exact-target economic adjustment; never reset through template CRUD |
+| Professional permission | `CharacterLicense` | Purchase through Shop; template names or boolean metadata grant no right |
 | What one character owns | `InventoryItem` under `Inventory` | Dedicated grant/revoke/adjust command through inventory services |
 | Equipped slot/durability | `InventoryItem`, equipment/inventory services | Dedicated validated commands; not arbitrary CRUD |
 
@@ -1071,10 +1085,15 @@ Example schema shape only:
   },
   "enhancement_rules": {
     "subcategory": "axes",
-    "shop_stock": { "current": 25, "max": 25 }
+    "shop": { "sold": true, "mode": "buy" }
   }
 }
 ```
+
+A ShopStock row in the selected ShopAccount separately supplies current count
+and captured capacity. Template JSON shop_stock values retained in seed content
+are one-time bootstrap inputs; they are not live global stock. Never infer a
+second building's opening funds or supply from the first building.
 
 Those numbers are illustrative schema values, not approved balance. Replace
 them with captured/adopted values and add requirement, equipment, inventory,

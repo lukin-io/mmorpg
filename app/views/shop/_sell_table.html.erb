@@ -1,53 +1,62 @@
 <% if items.any? %>
   <table class="nl-shop-table">
-    <thead>
-      <tr>
-        <th>Item</th>
-        <th>Quantity</th>
-        <th>Properties</th>
-        <th>Shop Stock</th>
-        <th>Buyback Price</th>
-        <th>Action</th>
-      </tr>
-    </thead>
     <tbody>
       <% items.each do |item| %>
         <% block_reason = shop_sell_block_reason(item) %>
+        <% offer = @shop_sell_offers[item.id] %>
         <tr>
-          <td class="nl-shop-item-cell">
-            <span class="nl-shop-item-icon"><%= shop_item_icon(item.item_template) %></span>
-            <strong><%= item.item_template.name %></strong>
-          </td>
-          <td><%= item.quantity %></td>
-          <td>
-            <table class="nl-detail-table nl-shop-inner-table">
-              <% shop_item_properties(item.item_template).each do |label, value| %>
-                <tr>
-                  <th><%= label %></th>
-                  <td><%= value %></td>
-                </tr>
-              <% end %>
-              <% if item.durable? %>
-                <tr>
-                  <th>Current Durability</th>
-                  <td><%= item.current_durability %>/<%= item.max_durability %></td>
-                </tr>
-              <% end %>
-            </table>
-          </td>
-          <td><%= shop_stock_label(item.item_template) %></td>
-          <td><b><%= number_with_delimiter(shop_sale_price(item)) %> NV</b></td>
-          <td>
-            <% if block_reason %>
-              <span class="invbut invbut--disabled"><%= block_reason %></span>
+          <td class="nl-shop-icon-cell">
+            <% if artwork = item_artwork_path(item.item_template) %>
+              <%= image_tag artwork, width: 62, height: 91, alt: "", class: "nl-shop-item-icon" %>
             <% else %>
-              <%= form_with url: sell_shop_path, method: :post, class: "nl-shop-action-form" do |f| %>
-                <%= f.hidden_field :mode, value: "sell" %>
-                <%= f.hidden_field :item_id, value: item.id %>
-                <%= f.number_field :quantity, value: 1, min: 1, max: item.quantity, class: "nl-shop-qty", aria: {label: "Quantity #{item.item_template.name}"} %>
-                <%= f.submit "Sell", class: "invbut", data: {turbo_confirm: "Sell #{item.item_template.name}?"} %>
-              <% end %>
+              <span class="nl-shop-category__icon nl-shop-item-icon" style="<%= shop_category_icon_style(Game::Shop::Catalog.category_for(item.item_template)) %>" aria-hidden="true"></span>
             <% end %>
+            <% if item.durable? %>
+              <meter class="nl-shop-durability" value="<%= item.current_durability %>" max="<%= item.max_durability %>" aria-label="Durability <%= item.item_template.name %>"></meter>
+            <% end %>
+          </td>
+          <td class="nl-shop-row-content">
+            <div class="nl-shop-item-heading">
+              <strong><%= item.item_template.name %></strong>
+              <span>(quantity: <%= shop_stock_label(item.item_template) %>)</span>
+              <span>Quantity: <%= item.quantity %></span>
+            </div>
+            <div class="nl-shop-item-trade">
+              <% if block_reason || !offer %>
+                <span class="nl-shop-unavailable"><%= block_reason || "Refresh to sell" %></span>
+              <% else %>
+                <%= form_with url: sell_shop_path, method: :post, class: "nl-shop-action-form", data: {turbo_confirm: "Sell #{item.item_template.name}?"} do |f| %>
+                  <%= f.hidden_field :mode, value: "sell" %>
+                  <%= f.hidden_field :category, value: @category %>
+                  <% shop_filter_context.each do |key, value| %>
+                    <%= f.hidden_field key, value: value %>
+                  <% end %>
+                  <%= f.hidden_field :item_id, value: item.id %>
+                  <%= f.hidden_field :action_key, value: offer.action_key %>
+                  <%= f.submit "Sell for #{number_with_delimiter(shop_sale_price(item))} NV", class: "invbut" %>
+                <% end %>
+              <% end %>
+            </div>
+            <div class="nl-shop-item-details">
+              <section>
+                <h2>properties</h2>
+                <dl class="nl-shop-properties">
+                  <% shop_item_properties(item.item_template, item:).each do |label, value| %>
+                    <div><dt><%= label %>:</dt> <dd><b><%= value %></b></dd></div>
+                  <% end %>
+                </dl>
+              </section>
+              <section>
+                <h2>requirements</h2>
+                <ul class="nl-shop-requirements">
+                  <% shop_item_requirements(item.item_template).each do |label, value, met| %>
+                    <li>
+                      <span><%= label %>:</span> <b class="<%= 'nl-shop-requirement--missing' unless met %>"><%= value %></b>
+                    </li>
+                  <% end %>
+                </ul>
+              </section>
+            </div>
           </td>
         </tr>
       <% end %>

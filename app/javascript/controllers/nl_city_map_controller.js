@@ -50,17 +50,25 @@ export default class extends Controller {
 
   positionTooltip(event) {
     const scene = this.sceneTarget.getBoundingClientRect()
+    const viewport = this.viewportTarget.getBoundingClientRect()
     const hotspot = event.currentTarget.getBoundingClientRect()
+    // A fixed scene extends beyond a panned viewport. Clamp to the visible
+    // canvas, and anchor keyboard labels to the visible part of their target.
+    const left = Math.max(scene.left, viewport.left + this.viewportTarget.clientLeft)
+    const top = Math.max(scene.top, viewport.top + this.viewportTarget.clientTop)
+    const right = Math.min(scene.right, viewport.left + this.viewportTarget.clientLeft + this.viewportTarget.clientWidth)
+    const bottom = Math.min(scene.bottom, viewport.top + this.viewportTarget.clientTop + this.viewportTarget.clientHeight)
     const pointerX = Number.isFinite(event.clientX) && event.clientX > 0
       ? event.clientX
-      : hotspot.left + (hotspot.width / 2)
+      : (Math.max(hotspot.left, left) + Math.min(hotspot.right, right)) / 2
     const pointerY = Number.isFinite(event.clientY) && event.clientY > 0
       ? event.clientY
-      : hotspot.top + (hotspot.height / 2)
+      : (Math.max(hotspot.top, top) + Math.min(hotspot.bottom, bottom)) / 2
+    this.tooltipTarget.style.maxWidth = `${Math.min(260, Math.max(right - left - 8, 0))}px`
     const tooltipWidth = this.tooltipTarget.offsetWidth
     const tooltipHeight = this.tooltipTarget.offsetHeight
-    const x = Math.min(Math.max(pointerX - scene.left + 15, 4), scene.width - tooltipWidth - 4)
-    const y = Math.min(Math.max(pointerY - scene.top + 15, 4), scene.height - tooltipHeight - 4)
+    const x = Math.max(left + 4, Math.min(pointerX + 15, right - tooltipWidth - 4)) - scene.left
+    const y = Math.max(top + 4, Math.min(pointerY + 15, bottom - tooltipHeight - 4)) - scene.top
 
     this.tooltipTarget.style.left = `${x}px`
     this.tooltipTarget.style.top = `${y}px`

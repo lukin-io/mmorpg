@@ -90,7 +90,9 @@ seeded_hotspot_ids = city_hotspots.each_with_index.filter_map do |attrs, index|
     image_hover: nil,
     action_type: attrs[:action_type],
     destination_zone: attrs[:destination_zone],
-    action_params: attrs[:action_params] || {},
+    action_params: (attrs[:action_params] || {}).merge(
+      attrs.fetch(:presentation, {}).slice("polygon")
+    ),
     required_level: attrs[:required_level] || 0,
     z_index: index,
     active: true

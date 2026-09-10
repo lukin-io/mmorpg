@@ -1,0 +1,2681 @@
+[
+  {
+    "key": "penknife",
+    "name": "Penknife",
+    "item_type": "equipment",
+    "slot": "main_hand",
+    "weight": 5,
+    "stack_limit": 1,
+    "base_price": 7,
+    "durability_max": 10,
+    "requirements": {
+      "level": 1,
+      "ap": 40
+    },
+    "stat_modifiers": {
+      "weapon_family": "knife",
+      "damage_min": 1,
+      "damage_max": 2,
+      "armor_pierce": 1
+    },
+    "enhancement_rules": {
+      "subcategory": "knives",
+      "source_name": "Перочинный Нож",
+      "shop": {
+        "sold": true
+      },
+      "shop_stock": {
+        "current": 196,
+        "max": 500
+      }
+    }
+  },
+  {
+    "key": "assassin_dagger",
+    "name": "Assassin Dagger",
+    "item_type": "equipment",
+    "slot": "main_hand",
+    "weight": 6,
+    "stack_limit": 1,
+    "base_price": 19,
+    "durability_max": 20,
+    "requirements": {
+      "level": 3,
+      "luck": 7,
+      "dexterity": 10,
+      "ap": 41,
+      "knife_mastery": 10
+    },
+    "stat_modifiers": {
+      "weapon_family": "knife",
+      "damage_min": 3,
+      "damage_max": 5,
+      "evasion": 5,
+      "accuracy": 5,
+      "armor_pierce": 3,
+      "luck": 1
+    },
+    "enhancement_rules": {
+      "subcategory": "knives",
+      "source_name": "Кинжал Убийцы",
+      "shop": {
+        "sold": true
+      },
+      "shop_stock": {
+        "current": 495,
+        "max": 500
+      }
+    }
+  },
+  {
+    "key": "butcher_cleaver",
+    "name": "Butcher Cleaver",
+    "item_type": "equipment",
+    "slot": "main_hand",
+    "weight": 6,
+    "stack_limit": 1,
+    "base_price": 20,
+    "durability_max": 20,
+    "requirements": {
+      "level": 3,
+      "luck": 9,
+      "ap": 51,
+      "knife_mastery": 10
+    },
+    "stat_modifiers": {
+      "weapon_family": "knife",
+      "damage_min": 3,
+      "damage_max": 5,
+      "crushing": 10,
+      "armor_pierce": 4,
+      "strength": 1
+    },
+    "enhancement_rules": {
+      "subcategory": "knives",
+      "source_name": "Мясницкий Тесак",
+      "shop": {
+        "sold": true
+      },
+      "shop_stock": {
+        "current": 490,
+        "max": 500
+      }
+    }
+  },
+  {
+    "key": "hunter_knife",
+    "name": "Hunter Knife",
+    "item_type": "equipment",
+    "slot": "main_hand",
+    "weight": 6,
+    "stack_limit": 1,
+    "base_price": 19,
+    "durability_max": 20,
+    "requirements": {
+      "level": 3,
+      "dexterity": 16,
+      "ap": 26,
+      "knife_mastery": 10,
+      "dual_wielding": 10
+    },
+    "stat_modifiers": {
+      "weapon_family": "knife",
+      "damage_min": 4,
+      "damage_max": 6,
+      "evasion": 10,
+      "armor_pierce": 5,
+      "dexterity": 1,
+      "skill_bonuses": {
+        "knife_mastery": 5
+      }
+    },
+    "enhancement_rules": {
+      "subcategory": "knives",
+      "source_name": "Нож Охотника",
+      "shop": {
+        "sold": true
+      },
+      "shop_stock": {
+        "current": 445,
+        "max": 500
+      }
+    }
+  },
+  {
+    "key": "mage_dagger",
+    "name": "Mage Dagger",
+    "item_type": "equipment",
+    "slot": "main_hand",
+    "weight": 5,
+    "stack_limit": 1,
+    "base_price": 75,
+    "durability_max": 50,
+    "requirements": {
+      "level": 5,
+      "luck": 5,
+      "knowledge": 15,
+      "ap": 55,
+      "knife_mastery": 10
+    },
+    "stat_modifiers": {
+      "weapon_family": "knife",
+      "damage_min": 4,
+      "damage_max": 9,
+      "crushing": 25,
+      "fortitude": 5,
+      "armor_pierce": 10,
+      "hp": 15,
+      "mana": 15,
+      "luck": 2
+    },
+    "enhancement_rules": {
+      "subcategory": "knives",
+      "source_name": "Кинжал Мага",
+      "shop": {
+        "sold": true
+      },
+      "shop_stock": {
+        "current": 411,
+        "max": 500
+      }
+    }
+  },
+  {
+    "key": "action_blade",
+    "name": "Action Blade",
+    "item_type": "equipment",
+    "slot": "main_hand",
+    "weight": 4,
+    "stack_limit": 1,
+    "base_price": 14,
+    "durability_max": 15,
+    "requirements": {
+      "level": 2,
+      "strength": 5,
+      "luck": 6,
+      "dexterity": 8,
+      "ap": 53,
+      "sword_mastery": 4
+    },
+    "stat_modifiers": {
+      "weapon_family": "sword",
+      "damage_min": 2,
+      "damage_max": 5,
+      "accuracy": 5,
+      "armor_pierce": 6
+    },
+    "enhancement_rules": {
+      "subcategory": "swords",
+      "source_name": "Клинок Действия",
+      "shop": {
+        "sold": true
+      },
+      "shop_stock": {
+        "current": 339,
+        "max": 500
+      }
+    }
+  },
+  {
+    "key": "sensation_sword",
+    "name": "Sensation Sword",
+    "item_type": "equipment",
+    "slot": "main_hand",
+    "weight": 5,
+    "stack_limit": 1,
+    "base_price": 14,
+    "durability_max": 15,
+    "requirements": {
+      "level": 2,
+      "strength": 5,
+      "health": 8,
+      "ap": 68,
+      "sword_mastery": 4
+    },
+    "stat_modifiers": {
+      "weapon_family": "sword",
+      "damage_min": 2,
+      "damage_max": 5,
+      "fortitude": 5,
+      "armor_pierce": 5
+    },
+    "enhancement_rules": {
+      "subcategory": "swords",
+      "source_name": "Меч Ощущений",
+      "shop": {
+        "sold": true
+      },
+      "shop_stock": {
+        "current": 322,
+        "max": 500
+      }
+    }
+  },
+  {
+    "key": "double_blade",
+    "name": "Double Blade",
+    "item_type": "equipment",
+    "slot": "main_hand",
+    "weight": 9,
+    "stack_limit": 1,
+    "base_price": 60,
+    "durability_max": 25,
+    "requirements": {
+      "level": 4,
+      "strength": 6,
+      "luck": 8,
+      "health": 6,
+      "ap": 58,
+      "sword_mastery": 10,
+      "two_handed_mastery": 10
+    },
+    "stat_modifiers": {
+      "weapon_family": "sword",
+      "damage_min": 10,
+      "damage_max": 18,
+      "crushing": 15,
+      "fortitude": 5,
+      "armor_pierce": 15,
+      "strength": 1
+    },
+    "enhancement_rules": {
+      "subcategory": "swords",
+      "source_name": "Двойной Клинок",
+      "shop": {
+        "sold": true
+      },
+      "shop_stock": {
+        "current": 433,
+        "max": 500
+      },
+      "two_handed": true
+    }
+  },
+  {
+    "key": "curved_blade",
+    "name": "Curved Blade",
+    "item_type": "equipment",
+    "slot": "main_hand",
+    "weight": 7,
+    "stack_limit": 1,
+    "base_price": 60,
+    "durability_max": 20,
+    "requirements": {
+      "level": 4,
+      "strength": 7,
+      "health": 10,
+      "ap": 72,
+      "sword_mastery": 10
+    },
+    "stat_modifiers": {
+      "weapon_family": "sword",
+      "damage_min": 4,
+      "damage_max": 7,
+      "fortitude": 15,
+      "accuracy": 5,
+      "armor_pierce": 7
+    },
+    "enhancement_rules": {
+      "subcategory": "swords",
+      "source_name": "Искривлённый Клинок",
+      "shop": {
+        "sold": true
+      },
+      "shop_stock": {
+        "current": 474,
+        "max": 500
+      }
+    }
+  },
+  {
+    "key": "smile_sword",
+    "name": "Smile Sword",
+    "item_type": "equipment",
+    "slot": "main_hand",
+    "weight": 6,
+    "stack_limit": 1,
+    "base_price": 60,
+    "durability_max": 20,
+    "requirements": {
+      "level": 4,
+      "strength": 6,
+      "luck": 9,
+      "dexterity": 11,
+      "ap": 55,
+      "sword_mastery": 10
+    },
+    "stat_modifiers": {
+      "weapon_family": "sword",
+      "damage_min": 6,
+      "damage_max": 12,
+      "evasion": 10,
+      "accuracy": 10,
+      "armor_pierce": 8
+    },
+    "enhancement_rules": {
+      "subcategory": "swords",
+      "source_name": "Меч Улыбки",
+      "shop": {
+        "sold": true
+      },
+      "shop_stock": {
+        "current": 246,
+        "max": 500
+      }
+    }
+  },
+  {
+    "key": "woodcutter_axe",
+    "name": "Woodcutter Axe",
+    "item_type": "equipment",
+    "slot": "main_hand",
+    "weight": 7,
+    "stack_limit": 1,
+    "base_price": 17,
+    "durability_max": 15,
+    "requirements": {
+      "level": 2,
+      "strength": 6,
+      "luck": 8,
+      "dexterity": 7,
+      "ap": 56,
+      "axe_mastery": 5
+    },
+    "stat_modifiers": {
+      "weapon_family": "axe",
+      "damage_min": 3,
+      "damage_max": 6,
+      "crushing": 4,
+      "armor_pierce": 6
+    },
+    "enhancement_rules": {
+      "subcategory": "axes",
+      "source_name": "Колун Дровосека",
+      "shop": {
+        "sold": true
+      },
+      "shop_stock": {
+        "current": 493,
+        "max": 500
+      }
+    }
+  },
+  {
+    "key": "search_axe",
+    "name": "Search Axe",
+    "item_type": "equipment",
+    "slot": "main_hand",
+    "weight": 6,
+    "stack_limit": 1,
+    "base_price": 15,
+    "durability_max": 15,
+    "requirements": {
+      "level": 2,
+      "strength": 5,
+      "luck": 8,
+      "health": 6,
+      "ap": 56,
+      "axe_mastery": 5
+    },
+    "stat_modifiers": {
+      "weapon_family": "axe",
+      "damage_min": 2,
+      "damage_max": 6,
+      "crushing": 5,
+      "armor_pierce": 4
+    },
+    "enhancement_rules": {
+      "subcategory": "axes",
+      "source_name": "Секира Поиска",
+      "shop": {
+        "sold": true
+      },
+      "shop_stock": {
+        "current": 471,
+        "max": 500
+      }
+    }
+  },
+  {
+    "key": "cleaving_axe",
+    "name": "Cleaving Axe",
+    "item_type": "equipment",
+    "slot": "main_hand",
+    "weight": 10,
+    "stack_limit": 1,
+    "base_price": 65,
+    "durability_max": 30,
+    "requirements": {
+      "level": 4,
+      "strength": 13,
+      "luck": 9,
+      "ap": 62,
+      "axe_mastery": 16,
+      "two_handed_mastery": 16
+    },
+    "stat_modifiers": {
+      "weapon_family": "axe",
+      "damage_min": 12,
+      "damage_max": 19,
+      "crushing": 25,
+      "fortitude": 10,
+      "evasion": -5,
+      "armor_pierce": 16
+    },
+    "enhancement_rules": {
+      "subcategory": "axes",
+      "source_name": "Разрубающий Топор",
+      "shop": {
+        "sold": true
+      },
+      "shop_stock": {
+        "current": 489,
+        "max": 500
+      },
+      "two_handed": true
+    }
+  },
+  {
+    "key": "prosperity_axe",
+    "name": "Prosperity Axe",
+    "item_type": "equipment",
+    "slot": "main_hand",
+    "weight": 9,
+    "stack_limit": 1,
+    "base_price": 65,
+    "durability_max": 30,
+    "requirements": {
+      "level": 4,
+      "strength": 8,
+      "luck": 12,
+      "dexterity": 10,
+      "ap": 60,
+      "axe_mastery": 15
+    },
+    "stat_modifiers": {
+      "weapon_family": "axe",
+      "damage_min": 7,
+      "damage_max": 12,
+      "crushing": 15,
+      "fortitude": 5,
+      "armor_pierce": 12
+    },
+    "enhancement_rules": {
+      "subcategory": "axes",
+      "source_name": "Топор Благоденствия",
+      "shop": {
+        "sold": true
+      },
+      "shop_stock": {
+        "current": 442,
+        "max": 500
+      }
+    }
+  },
+  {
+    "key": "distortion_axe",
+    "name": "Distortion Axe",
+    "item_type": "equipment",
+    "slot": "main_hand",
+    "weight": 9,
+    "stack_limit": 1,
+    "base_price": 65,
+    "durability_max": 25,
+    "requirements": {
+      "level": 4,
+      "strength": 5,
+      "luck": 12,
+      "health": 6,
+      "ap": 60,
+      "axe_mastery": 16
+    },
+    "stat_modifiers": {
+      "weapon_family": "axe",
+      "damage_min": 9,
+      "damage_max": 11,
+      "crushing": 10,
+      "fortitude": 10,
+      "armor_pierce": 8
+    },
+    "enhancement_rules": {
+      "subcategory": "axes",
+      "source_name": "Топор Искажения",
+      "shop": {
+        "sold": true
+      },
+      "shop_stock": {
+        "current": 320,
+        "max": 500
+      }
+    }
+  },
+  {
+    "key": "townsman_club",
+    "name": "Townsman Club",
+    "item_type": "equipment",
+    "slot": "main_hand",
+    "weight": 6,
+    "stack_limit": 1,
+    "base_price": 13,
+    "durability_max": 15,
+    "requirements": {
+      "level": 2,
+      "strength": 8,
+      "health": 8,
+      "ap": 67,
+      "bludgeoning_mastery": 4
+    },
+    "stat_modifiers": {
+      "weapon_family": "blunt",
+      "damage_min": 2,
+      "damage_max": 3,
+      "fortitude": 7,
+      "armor_pierce": 2
+    },
+    "enhancement_rules": {
+      "subcategory": "blunt",
+      "source_name": "Дубинка Горожанина",
+      "shop": {
+        "sold": true
+      },
+      "shop_stock": {
+        "current": 471,
+        "max": 500
+      }
+    }
+  },
+  {
+    "key": "apprentice_hammer",
+    "name": "Apprentice Hammer",
+    "item_type": "equipment",
+    "slot": "main_hand",
+    "weight": 9,
+    "stack_limit": 1,
+    "base_price": 58,
+    "durability_max": 20,
+    "requirements": {
+      "level": 4,
+      "strength": 10,
+      "luck": 8,
+      "ap": 60,
+      "bludgeoning_mastery": 16,
+      "two_handed_mastery": 16
+    },
+    "stat_modifiers": {
+      "weapon_family": "blunt",
+      "damage_min": 8,
+      "damage_max": 19,
+      "crushing": 10,
+      "fortitude": 30,
+      "evasion": -10,
+      "armor_pierce": 8
+    },
+    "enhancement_rules": {
+      "subcategory": "blunt",
+      "source_name": "Молоток Подмастерья",
+      "shop": {
+        "sold": true
+      },
+      "shop_stock": {
+        "current": 492,
+        "max": 500
+      },
+      "two_handed": true
+    }
+  },
+  {
+    "key": "steel_club",
+    "name": "Steel Club",
+    "item_type": "equipment",
+    "slot": "main_hand",
+    "weight": 10,
+    "stack_limit": 1,
+    "base_price": 58,
+    "durability_max": 25,
+    "requirements": {
+      "level": 4,
+      "strength": 10,
+      "health": 10,
+      "ap": 69,
+      "bludgeoning_mastery": 8
+    },
+    "stat_modifiers": {
+      "weapon_family": "blunt",
+      "damage_min": 5,
+      "damage_max": 9,
+      "crushing": 5,
+      "fortitude": 5,
+      "armor_pierce": 6
+    },
+    "enhancement_rules": {
+      "subcategory": "blunt",
+      "source_name": "Стальная Дубина",
+      "shop": {
+        "sold": true
+      },
+      "shop_stock": {
+        "current": 498,
+        "max": 500
+      }
+    }
+  },
+  {
+    "key": "steppe_sword",
+    "name": "Steppe Sword",
+    "item_type": "equipment",
+    "slot": "main_hand",
+    "weight": 7,
+    "stack_limit": 1,
+    "base_price": 40,
+    "durability_max": 15,
+    "requirements": {
+      "level": 4,
+      "strength": 8,
+      "health": 8,
+      "ap": 69,
+      "bludgeoning_mastery": 8
+    },
+    "stat_modifiers": {
+      "weapon_family": "blunt",
+      "damage_min": 6,
+      "damage_max": 8,
+      "fortitude": 5,
+      "armor_pierce": 6,
+      "strength": 1
+    },
+    "enhancement_rules": {
+      "subcategory": "blunt",
+      "source_name": "Степной Меч",
+      "shop": {
+        "sold": true
+      },
+      "shop_stock": {
+        "current": 48,
+        "max": 500
+      }
+    }
+  },
+  {
+    "key": "war_pick",
+    "name": "War Pick",
+    "item_type": "equipment",
+    "slot": "main_hand",
+    "weight": 9,
+    "stack_limit": 1,
+    "base_price": 85,
+    "durability_max": 25,
+    "requirements": {
+      "level": 5,
+      "strength": 10,
+      "health": 12,
+      "ap": 80,
+      "bludgeoning_mastery": 20
+    },
+    "stat_modifiers": {
+      "weapon_family": "blunt",
+      "damage_min": 6,
+      "damage_max": 8,
+      "fortitude": 25,
+      "armor_pierce": 12,
+      "hp": 15,
+      "strength": 1
+    },
+    "enhancement_rules": {
+      "subcategory": "blunt",
+      "source_name": "Клевец",
+      "shop": {
+        "sold": true
+      },
+      "shop_stock": {
+        "current": 485,
+        "max": 500
+      }
+    }
+  },
+  {
+    "key": "primitive_spear",
+    "name": "Primitive Spear",
+    "item_type": "equipment",
+    "slot": "main_hand",
+    "weight": 5,
+    "stack_limit": 1,
+    "base_price": 15,
+    "durability_max": 15,
+    "requirements": {
+      "level": 2,
+      "dexterity": 5,
+      "ap": 45,
+      "polearm_mastery": 5
+    },
+    "stat_modifiers": {
+      "weapon_family": "polearm",
+      "damage_min": 1,
+      "damage_max": 7,
+      "evasion": 5,
+      "armor_pierce": 10,
+      "skill_bonuses": {
+        "polearm_mastery": 5
+      }
+    },
+    "enhancement_rules": {
+      "subcategory": "polearms",
+      "source_name": "Примитивное Копьё",
+      "shop": {
+        "sold": true
+      },
+      "shop_stock": {
+        "current": 365,
+        "max": 500
+      }
+    }
+  },
+  {
+    "key": "parrying_spear",
+    "name": "Parrying Spear",
+    "item_type": "equipment",
+    "slot": "main_hand",
+    "weight": 12,
+    "stack_limit": 1,
+    "base_price": 60,
+    "durability_max": 27,
+    "requirements": {
+      "level": 4,
+      "strength": 8,
+      "dexterity": 6,
+      "ap": 52,
+      "polearm_mastery": 17,
+      "dual_wielding": 17
+    },
+    "stat_modifiers": {
+      "weapon_family": "polearm",
+      "damage_min": 4,
+      "damage_max": 17,
+      "crushing": 15,
+      "fortitude": 5,
+      "armor_pierce": 18,
+      "strength": 1,
+      "skill_bonuses": {
+        "polearm_mastery": 10
+      }
+    },
+    "enhancement_rules": {
+      "subcategory": "polearms",
+      "source_name": "Копьё Парирования",
+      "shop": {
+        "sold": true
+      },
+      "shop_stock": {
+        "current": 496,
+        "max": 500
+      },
+      "two_handed": true
+    }
+  },
+  {
+    "key": "pilum",
+    "name": "Pilum",
+    "item_type": "equipment",
+    "slot": "main_hand",
+    "weight": 8,
+    "stack_limit": 1,
+    "base_price": 60,
+    "durability_max": 20,
+    "requirements": {
+      "level": 4,
+      "strength": 5,
+      "dexterity": 9,
+      "ap": 47,
+      "polearm_mastery": 10
+    },
+    "stat_modifiers": {
+      "weapon_family": "polearm",
+      "damage_min": 3,
+      "damage_max": 13,
+      "fortitude": 5,
+      "evasion": 15,
+      "armor_pierce": 12,
+      "skill_bonuses": {
+        "polearm_mastery": 5
+      }
+    },
+    "enhancement_rules": {
+      "subcategory": "polearms",
+      "source_name": "Пилум",
+      "shop": {
+        "sold": true
+      },
+      "shop_stock": {
+        "current": 347,
+        "max": 500
+      }
+    }
+  },
+  {
+    "key": "adventurer_spear",
+    "name": "Adventurer Spear",
+    "item_type": "equipment",
+    "slot": "main_hand",
+    "weight": 16,
+    "stack_limit": 1,
+    "base_price": 90,
+    "durability_max": 25,
+    "requirements": {
+      "level": 5,
+      "strength": 10,
+      "dexterity": 10,
+      "health": 8,
+      "ap": 47,
+      "polearm_mastery": 20
+    },
+    "stat_modifiers": {
+      "weapon_family": "polearm",
+      "damage_min": 5,
+      "damage_max": 13,
+      "fortitude": 10,
+      "evasion": 15,
+      "armor_pierce": 11,
+      "strength": -1,
+      "dexterity": 2
+    },
+    "enhancement_rules": {
+      "subcategory": "polearms",
+      "source_name": "Копьё Авантюриста",
+      "shop": {
+        "sold": true
+      },
+      "shop_stock": {
+        "current": 491,
+        "max": 500
+      }
+    }
+  },
+  {
+    "key": "trident",
+    "name": "Trident",
+    "item_type": "equipment",
+    "slot": "main_hand",
+    "weight": 20,
+    "stack_limit": 1,
+    "base_price": 90,
+    "durability_max": 25,
+    "requirements": {
+      "level": 5,
+      "strength": 12,
+      "dexterity": 10,
+      "ap": 55,
+      "polearm_mastery": 9,
+      "two_handed_mastery": 9
+    },
+    "stat_modifiers": {
+      "weapon_family": "polearm",
+      "damage_min": 5,
+      "damage_max": 20,
+      "crushing": 20,
+      "fortitude": 5,
+      "armor_pierce": 21,
+      "strength": 2,
+      "luck": 1,
+      "dexterity": -1
+    },
+    "enhancement_rules": {
+      "subcategory": "polearms",
+      "source_name": "Трезубец",
+      "shop": {
+        "sold": true
+      },
+      "shop_stock": {
+        "current": 0,
+        "max": 500
+      },
+      "two_handed": true
+    }
+  },
+  {
+    "key": "small_earthly_blessings_staff",
+    "name": "Small Earthly Blessings Staff",
+    "item_type": "equipment",
+    "slot": "main_hand",
+    "weight": 12,
+    "stack_limit": 1,
+    "base_price": 165,
+    "durability_max": 30,
+    "requirements": {
+      "level": 6,
+      "luck": 9,
+      "dexterity": 8,
+      "knowledge": 15,
+      "ap": 63,
+      "staff_mastery": 20
+    },
+    "stat_modifiers": {
+      "weapon_family": "staff",
+      "damage_min": 8,
+      "damage_max": 14,
+      "crushing": 15,
+      "accuracy": 15,
+      "armor_pierce": 15,
+      "mana": 25,
+      "luck": 2,
+      "dexterity": 1
+    },
+    "enhancement_rules": {
+      "subcategory": "staves",
+      "source_name": "Малый Жезл Земных Благ",
+      "shop": {
+        "sold": true
+      },
+      "shop_stock": {
+        "current": 494,
+        "max": 500
+      }
+    }
+  },
+  {
+    "key": "small_crescent_staff",
+    "name": "Small Crescent Staff",
+    "item_type": "equipment",
+    "slot": "main_hand",
+    "weight": 11,
+    "stack_limit": 1,
+    "base_price": 150,
+    "durability_max": 30,
+    "requirements": {
+      "level": 6,
+      "luck": 6,
+      "dexterity": 10,
+      "knowledge": 15,
+      "ap": 63,
+      "staff_mastery": 20
+    },
+    "stat_modifiers": {
+      "weapon_family": "staff",
+      "damage_min": 6,
+      "damage_max": 11,
+      "evasion": 15,
+      "accuracy": 10,
+      "armor_pierce": 14,
+      "mana": 30,
+      "dexterity": 1,
+      "knowledge": 2
+    },
+    "enhancement_rules": {
+      "subcategory": "staves",
+      "source_name": "Малый Жезл Полумесяца",
+      "shop": {
+        "sold": true
+      },
+      "shop_stock": {
+        "current": 452,
+        "max": 500
+      }
+    }
+  },
+  {
+    "key": "small_aspiration_staff",
+    "name": "Small Aspiration Staff",
+    "item_type": "equipment",
+    "slot": "main_hand",
+    "weight": 13,
+    "stack_limit": 1,
+    "base_price": 150,
+    "durability_max": 30,
+    "requirements": {
+      "level": 6,
+      "luck": 10,
+      "dexterity": 7,
+      "knowledge": 15,
+      "ap": 63,
+      "staff_mastery": 20
+    },
+    "stat_modifiers": {
+      "weapon_family": "staff",
+      "damage_min": 6,
+      "damage_max": 13,
+      "fortitude": 15,
+      "accuracy": 10,
+      "armor_pierce": 17,
+      "mana": 40,
+      "luck": 1,
+      "dexterity": -1,
+      "knowledge": 2
+    },
+    "enhancement_rules": {
+      "subcategory": "staves",
+      "source_name": "Малый Жезл Стремлений",
+      "shop": {
+        "sold": true
+      },
+      "shop_stock": {
+        "current": 492,
+        "max": 500
+      }
+    }
+  },
+  {
+    "key": "small_power_staff",
+    "name": "Small Power Staff",
+    "item_type": "equipment",
+    "slot": "main_hand",
+    "weight": 12,
+    "stack_limit": 1,
+    "base_price": 160,
+    "durability_max": 30,
+    "requirements": {
+      "level": 6,
+      "luck": 7,
+      "dexterity": 9,
+      "knowledge": 15,
+      "ap": 63,
+      "staff_mastery": 20
+    },
+    "stat_modifiers": {
+      "weapon_family": "staff",
+      "damage_min": 7,
+      "damage_max": 12,
+      "crushing": 15,
+      "fortitude": 15,
+      "armor_pierce": 16,
+      "mana": 40,
+      "strength": 2
+    },
+    "enhancement_rules": {
+      "subcategory": "staves",
+      "source_name": "Малый Силовой Жезл",
+      "shop": {
+        "sold": true
+      },
+      "shop_stock": {
+        "current": 499,
+        "max": 500
+      }
+    }
+  },
+  {
+    "key": "earthly_blessings_staff",
+    "name": "Earthly Blessings Staff",
+    "item_type": "equipment",
+    "slot": "main_hand",
+    "weight": 13,
+    "stack_limit": 1,
+    "base_price": 290,
+    "durability_max": 60,
+    "requirements": {
+      "level": 8,
+      "luck": 14,
+      "dexterity": 11,
+      "knowledge": 16,
+      "ap": 67,
+      "staff_mastery": 40
+    },
+    "stat_modifiers": {
+      "weapon_family": "staff",
+      "damage_min": 14,
+      "damage_max": 21,
+      "crushing": 25,
+      "accuracy": 20,
+      "armor_pierce": 21,
+      "mana": 40,
+      "luck": 3,
+      "dexterity": 2
+    },
+    "enhancement_rules": {
+      "subcategory": "staves",
+      "source_name": "Жезл Земных Благ",
+      "shop": {
+        "sold": true
+      },
+      "shop_stock": {
+        "current": 488,
+        "max": 500
+      }
+    }
+  },
+  {
+    "key": "advantage_shield",
+    "name": "Advantage Shield",
+    "item_type": "equipment",
+    "slot": "off_hand",
+    "weight": 6,
+    "stack_limit": 1,
+    "base_price": 33,
+    "durability_max": 25,
+    "requirements": {
+      "level": 3,
+      "strength": 9,
+      "health": 9,
+      "ap": 40
+    },
+    "stat_modifiers": {
+      "weapon_family": "shield",
+      "damage_min": 1,
+      "damage_max": 2,
+      "accuracy": 5,
+      "armor_class": 4
+    },
+    "enhancement_rules": {
+      "subcategory": "shields",
+      "source_name": "Щит Преимущества",
+      "shop": {
+        "sold": true
+      },
+      "shop_stock": {
+        "current": 373,
+        "max": 500
+      },
+      "properties": {
+        "block_points": 1
+      }
+    }
+  },
+  {
+    "key": "stubborn_shield",
+    "name": "Stubborn Shield",
+    "item_type": "equipment",
+    "slot": "off_hand",
+    "weight": 9,
+    "stack_limit": 1,
+    "base_price": 30,
+    "durability_max": 30,
+    "requirements": {
+      "level": 3,
+      "strength": 10,
+      "health": 9,
+      "ap": 40
+    },
+    "stat_modifiers": {
+      "weapon_family": "shield",
+      "fortitude": 10,
+      "armor_class": 6
+    },
+    "enhancement_rules": {
+      "subcategory": "shields",
+      "source_name": "Щит Упрямца",
+      "shop": {
+        "sold": true
+      },
+      "shop_stock": {
+        "current": 0,
+        "max": 500
+      },
+      "properties": {
+        "block_points": 1
+      }
+    }
+  },
+  {
+    "key": "grim_shield",
+    "name": "Grim Shield",
+    "item_type": "equipment",
+    "slot": "off_hand",
+    "weight": 10,
+    "stack_limit": 1,
+    "base_price": 80,
+    "durability_max": 50,
+    "requirements": {
+      "level": 5,
+      "strength": 10,
+      "health": 12,
+      "ap": 40
+    },
+    "stat_modifiers": {
+      "weapon_family": "shield",
+      "fortitude": 10,
+      "accuracy": 10,
+      "armor_class": 10,
+      "strength": 1
+    },
+    "enhancement_rules": {
+      "subcategory": "shields",
+      "source_name": "Мрачный Щит",
+      "shop": {
+        "sold": true
+      },
+      "shop_stock": {
+        "current": 355,
+        "max": 500
+      },
+      "properties": {
+        "block_points": 1
+      }
+    }
+  },
+  {
+    "key": "dew_shield",
+    "name": "Dew Shield",
+    "item_type": "equipment",
+    "slot": "off_hand",
+    "weight": 12,
+    "stack_limit": 1,
+    "base_price": 80,
+    "durability_max": 60,
+    "requirements": {
+      "level": 5,
+      "strength": 10,
+      "health": 15,
+      "ap": 70
+    },
+    "stat_modifiers": {
+      "weapon_family": "shield",
+      "fortitude": 20,
+      "armor_class": 12,
+      "hp": 10
+    },
+    "enhancement_rules": {
+      "subcategory": "shields",
+      "source_name": "Щит Росы",
+      "shop": {
+        "sold": true
+      },
+      "shop_stock": {
+        "current": 223,
+        "max": 500
+      },
+      "properties": {
+        "block_points": 2
+      }
+    }
+  },
+  {
+    "key": "possibility_shield",
+    "name": "Possibility Shield",
+    "item_type": "equipment",
+    "slot": "off_hand",
+    "weight": 15,
+    "stack_limit": 1,
+    "base_price": 130,
+    "durability_max": 60,
+    "requirements": {
+      "level": 7,
+      "strength": 18,
+      "health": 15,
+      "ap": 70
+    },
+    "stat_modifiers": {
+      "weapon_family": "shield",
+      "fortitude": 20,
+      "accuracy": 20,
+      "armor_class": 12,
+      "hp": 30,
+      "strength": 2
+    },
+    "enhancement_rules": {
+      "subcategory": "shields",
+      "source_name": "Щит Возможностей",
+      "shop": {
+        "sold": true
+      },
+      "shop_stock": {
+        "current": 382,
+        "max": 500
+      },
+      "properties": {
+        "block_points": 2
+      }
+    }
+  },
+  {
+    "key": "caution_armor",
+    "name": "Caution Armor",
+    "item_type": "equipment",
+    "slot": "chest",
+    "weight": 9,
+    "stack_limit": 1,
+    "base_price": 20,
+    "durability_max": 10,
+    "requirements": {
+      "level": 2,
+      "strength": 8,
+      "health": 8
+    },
+    "stat_modifiers": {
+      "fortitude": 10,
+      "armor_class": 6
+    },
+    "enhancement_rules": {
+      "subcategory": "armor",
+      "source_name": "Доспех Осторожности",
+      "shop": {
+        "sold": true
+      },
+      "shop_stock": {
+        "current": 14,
+        "max": 500
+      }
+    }
+  },
+  {
+    "key": "assassin_suit",
+    "name": "Assassin Suit",
+    "item_type": "equipment",
+    "slot": "chest",
+    "weight": 1,
+    "stack_limit": 1,
+    "base_price": 20,
+    "durability_max": 10,
+    "requirements": {
+      "level": 2,
+      "dexterity": 12,
+      "health": 5
+    },
+    "stat_modifiers": {
+      "evasion": 10,
+      "armor_class": 1
+    },
+    "enhancement_rules": {
+      "subcategory": "armor",
+      "source_name": "Костюм Убийцы",
+      "shop": {
+        "sold": true
+      },
+      "shop_stock": {
+        "current": 101,
+        "max": 500
+      }
+    }
+  },
+  {
+    "key": "salvation_jacket",
+    "name": "Salvation Jacket",
+    "item_type": "equipment",
+    "slot": "chest",
+    "weight": 8,
+    "stack_limit": 1,
+    "base_price": 20,
+    "durability_max": 10,
+    "requirements": {
+      "level": 2,
+      "luck": 12,
+      "health": 5
+    },
+    "stat_modifiers": {
+      "crushing": 10,
+      "armor_class": 3
+    },
+    "enhancement_rules": {
+      "subcategory": "armor",
+      "source_name": "Куртка Спасения",
+      "shop": {
+        "sold": true
+      },
+      "shop_stock": {
+        "current": 162,
+        "max": 500
+      }
+    }
+  },
+  {
+    "key": "life_shirt",
+    "name": "Life Shirt",
+    "item_type": "equipment",
+    "slot": "chest",
+    "weight": 1,
+    "stack_limit": 1,
+    "base_price": 10,
+    "durability_max": 20,
+    "requirements": {
+      "level": 2
+    },
+    "stat_modifiers": {
+      "hp": 10
+    },
+    "enhancement_rules": {
+      "subcategory": "armor",
+      "source_name": "Рубашка Жизни",
+      "shop": {
+        "sold": true
+      },
+      "shop_stock": {
+        "current": 0,
+        "max": 500
+      }
+    }
+  },
+  {
+    "key": "knowledge_shirt",
+    "name": "Knowledge Shirt",
+    "item_type": "equipment",
+    "slot": "chest",
+    "weight": 1,
+    "stack_limit": 1,
+    "base_price": 10,
+    "durability_max": 20,
+    "requirements": {
+      "level": 2
+    },
+    "stat_modifiers": {
+      "knowledge": 1
+    },
+    "enhancement_rules": {
+      "subcategory": "armor",
+      "source_name": "Рубашка Знаний",
+      "shop": {
+        "sold": true
+      },
+      "shop_stock": {
+        "current": 70,
+        "max": 500
+      }
+    }
+  },
+  {
+    "key": "leather_cap",
+    "name": "Leather Cap",
+    "item_type": "equipment",
+    "slot": "head",
+    "weight": 2,
+    "stack_limit": 1,
+    "base_price": 20,
+    "durability_max": 10,
+    "requirements": {
+      "level": 2,
+      "dexterity": 5
+    },
+    "stat_modifiers": {
+      "evasion": 5,
+      "armor_class": 2,
+      "hp": 5
+    },
+    "enhancement_rules": {
+      "subcategory": "helmets",
+      "source_name": "Кожаная шапка",
+      "shop": {
+        "sold": true
+      },
+      "shop_stock": {
+        "current": 11,
+        "max": 500
+      }
+    }
+  },
+  {
+    "key": "earflap_hat",
+    "name": "Earflap Hat",
+    "item_type": "equipment",
+    "slot": "head",
+    "weight": 2,
+    "stack_limit": 1,
+    "base_price": 20,
+    "durability_max": 10,
+    "requirements": {
+      "level": 2
+    },
+    "stat_modifiers": {
+      "armor_class": 1,
+      "hp": 15
+    },
+    "enhancement_rules": {
+      "subcategory": "helmets",
+      "source_name": "Шапка-ушанка",
+      "shop": {
+        "sold": true
+      },
+      "shop_stock": {
+        "current": 0,
+        "max": 500
+      }
+    }
+  },
+  {
+    "key": "hunter_helmet",
+    "name": "Hunter Helmet",
+    "item_type": "equipment",
+    "slot": "head",
+    "weight": 2,
+    "stack_limit": 1,
+    "base_price": 20,
+    "durability_max": 20,
+    "requirements": {
+      "level": 2,
+      "luck": 5
+    },
+    "stat_modifiers": {
+      "armor_class": 2,
+      "luck": 1
+    },
+    "enhancement_rules": {
+      "subcategory": "helmets",
+      "source_name": "Шлем Охотника",
+      "shop": {
+        "sold": true
+      },
+      "shop_stock": {
+        "current": 0,
+        "max": 500
+      }
+    }
+  },
+  {
+    "key": "bandit_helmet",
+    "name": "Bandit Helmet",
+    "item_type": "equipment",
+    "slot": "head",
+    "weight": 2,
+    "stack_limit": 1,
+    "base_price": 20,
+    "durability_max": 10,
+    "requirements": {
+      "level": 2,
+      "strength": 4,
+      "health": 6
+    },
+    "stat_modifiers": {
+      "fortitude": 5,
+      "armor_class": 5,
+      "hp": 10
+    },
+    "enhancement_rules": {
+      "subcategory": "helmets",
+      "source_name": "Шлем Разбойника",
+      "shop": {
+        "sold": true
+      },
+      "shop_stock": {
+        "current": 3,
+        "max": 500
+      }
+    }
+  },
+  {
+    "key": "spellcaster_cap",
+    "name": "Spellcaster Cap",
+    "item_type": "equipment",
+    "slot": "head",
+    "weight": 2,
+    "stack_limit": 1,
+    "base_price": 40,
+    "durability_max": 15,
+    "requirements": {
+      "level": 3,
+      "knowledge": 10
+    },
+    "stat_modifiers": {
+      "armor_class": 1,
+      "hp": 15,
+      "mana": 20,
+      "skill_bonuses": {
+        "fast_mana_regeneration": 5
+      }
+    },
+    "enhancement_rules": {
+      "subcategory": "helmets",
+      "source_name": "Колпак Заклинателя",
+      "shop": {
+        "sold": true
+      },
+      "shop_stock": {
+        "current": 446,
+        "max": 500
+      }
+    }
+  },
+  {
+    "key": "peasant_boots",
+    "name": "Peasant Boots",
+    "item_type": "equipment",
+    "slot": "feet",
+    "weight": 3,
+    "stack_limit": 1,
+    "base_price": 15,
+    "durability_max": 10,
+    "requirements": {
+      "level": 1,
+      "health": 5
+    },
+    "stat_modifiers": {
+      "armor_class": 2,
+      "hp": 5
+    },
+    "enhancement_rules": {
+      "subcategory": "boots",
+      "source_name": "Крестьянские Сапоги",
+      "shop": {
+        "sold": true
+      },
+      "shop_stock": {
+        "current": 170,
+        "max": 500
+      }
+    }
+  },
+  {
+    "key": "military_boots",
+    "name": "Military Boots",
+    "item_type": "equipment",
+    "slot": "feet",
+    "weight": 5,
+    "stack_limit": 1,
+    "base_price": 30,
+    "durability_max": 20,
+    "requirements": {
+      "level": 3,
+      "strength": 8,
+      "health": 8
+    },
+    "stat_modifiers": {
+      "fortitude": 5,
+      "armor_class": 5,
+      "hp": 10,
+      "strength": 1
+    },
+    "enhancement_rules": {
+      "subcategory": "boots",
+      "source_name": "Военные Ботинки",
+      "shop": {
+        "sold": true
+      },
+      "shop_stock": {
+        "current": 480,
+        "max": 500
+      }
+    }
+  },
+  {
+    "key": "hunter_boots",
+    "name": "Hunter Boots",
+    "item_type": "equipment",
+    "slot": "feet",
+    "weight": 3,
+    "stack_limit": 1,
+    "base_price": 30,
+    "durability_max": 10,
+    "requirements": {
+      "level": 3,
+      "luck": 7,
+      "health": 7
+    },
+    "stat_modifiers": {
+      "crushing": 5,
+      "armor_class": 3,
+      "luck": 1
+    },
+    "enhancement_rules": {
+      "subcategory": "boots",
+      "source_name": "Охотничьи Сапоги",
+      "shop": {
+        "sold": true
+      },
+      "shop_stock": {
+        "current": 35,
+        "max": 500
+      }
+    }
+  },
+  {
+    "key": "petty_thief_sandals",
+    "name": "Petty Thief Sandals",
+    "item_type": "equipment",
+    "slot": "feet",
+    "weight": 2,
+    "stack_limit": 1,
+    "base_price": 30,
+    "durability_max": 10,
+    "requirements": {
+      "level": 3,
+      "dexterity": 7,
+      "health": 7
+    },
+    "stat_modifiers": {
+      "evasion": 5,
+      "armor_class": 1,
+      "dexterity": 1
+    },
+    "enhancement_rules": {
+      "subcategory": "boots",
+      "source_name": "Сандалии Воришки",
+      "shop": {
+        "sold": true
+      },
+      "shop_stock": {
+        "current": 0,
+        "max": 500
+      }
+    }
+  },
+  {
+    "key": "mage_apprentice_shoes",
+    "name": "Mage Apprentice Shoes",
+    "item_type": "equipment",
+    "slot": "feet",
+    "weight": 3,
+    "stack_limit": 1,
+    "base_price": 35,
+    "durability_max": 25,
+    "requirements": {
+      "level": 3,
+      "knowledge": 12
+    },
+    "stat_modifiers": {
+      "hp": 5,
+      "mana": 10,
+      "strength": -2,
+      "knowledge": 1,
+      "skill_bonuses": {
+        "staff_mastery": 5,
+        "fire_magic": 3,
+        "water_magic": 3,
+        "air_magic": 3,
+        "earth_magic": 3,
+        "fire_magic_resistance": 4,
+        "water_magic_resistance": 4,
+        "air_magic_resistance": 4,
+        "earth_magic_resistance": 4
+      }
+    },
+    "enhancement_rules": {
+      "subcategory": "boots",
+      "source_name": "Туфли Ученика Мага",
+      "shop": {
+        "sold": true
+      },
+      "shop_stock": {
+        "current": 0,
+        "max": 500
+      }
+    }
+  },
+  {
+    "key": "worn_pants",
+    "name": "Worn Pants",
+    "item_type": "equipment",
+    "slot": "legs",
+    "weight": 4,
+    "stack_limit": 1,
+    "base_price": 20,
+    "durability_max": 5,
+    "requirements": {
+      "level": 2
+    },
+    "stat_modifiers": {
+      "fortitude": 10,
+      "armor_class": 2,
+      "hp": 10
+    },
+    "enhancement_rules": {
+      "subcategory": "pants",
+      "source_name": "Ветхие Штаны",
+      "shop": {
+        "sold": true
+      },
+      "shop_stock": {
+        "current": 0,
+        "max": 500
+      }
+    }
+  },
+  {
+    "key": "peasant_trousers",
+    "name": "Peasant Trousers",
+    "item_type": "equipment",
+    "slot": "legs",
+    "weight": 8,
+    "stack_limit": 1,
+    "base_price": 80,
+    "durability_max": 40,
+    "requirements": {
+      "level": 5,
+      "luck": 19,
+      "health": 10
+    },
+    "stat_modifiers": {
+      "accuracy": 15,
+      "armor_class": 5,
+      "hp": 15,
+      "luck": 1
+    },
+    "enhancement_rules": {
+      "subcategory": "pants",
+      "source_name": "Крестьянские Порты",
+      "shop": {
+        "sold": true
+      },
+      "shop_stock": {
+        "current": 0,
+        "max": 500
+      }
+    }
+  },
+  {
+    "key": "hunter_trousers",
+    "name": "Hunter Trousers",
+    "item_type": "equipment",
+    "slot": "legs",
+    "weight": 8,
+    "stack_limit": 1,
+    "base_price": 80,
+    "durability_max": 40,
+    "requirements": {
+      "level": 5,
+      "dexterity": 19,
+      "health": 10
+    },
+    "stat_modifiers": {
+      "evasion": 15,
+      "armor_class": 5,
+      "hp": 15,
+      "dexterity": 1
+    },
+    "enhancement_rules": {
+      "subcategory": "pants",
+      "source_name": "Охотничьи Брюки",
+      "shop": {
+        "sold": true
+      },
+      "shop_stock": {
+        "current": 0,
+        "max": 500
+      }
+    }
+  },
+  {
+    "key": "recruit_chainmail_pants",
+    "name": "Recruit Chainmail Pants",
+    "item_type": "equipment",
+    "slot": "legs",
+    "weight": 11,
+    "stack_limit": 1,
+    "base_price": 140,
+    "durability_max": 60,
+    "requirements": {
+      "level": 7,
+      "strength": 18,
+      "health": 15
+    },
+    "stat_modifiers": {
+      "fortitude": 15,
+      "accuracy": 15,
+      "armor_class": 12,
+      "hp": 25,
+      "strength": 2
+    },
+    "enhancement_rules": {
+      "subcategory": "pants",
+      "source_name": "Кольчужные Штаны Новобранца",
+      "shop": {
+        "sold": true
+      },
+      "shop_stock": {
+        "current": 0,
+        "max": 500
+      }
+    }
+  },
+  {
+    "key": "leather_breeches",
+    "name": "Leather Breeches",
+    "item_type": "equipment",
+    "slot": "legs",
+    "weight": 12,
+    "stack_limit": 1,
+    "base_price": 180,
+    "durability_max": 60,
+    "requirements": {
+      "level": 8,
+      "dexterity": 27,
+      "health": 16
+    },
+    "stat_modifiers": {
+      "evasion": 35,
+      "accuracy": 15,
+      "armor_class": 10,
+      "hp": 20,
+      "dexterity": 3
+    },
+    "enhancement_rules": {
+      "subcategory": "pants",
+      "source_name": "Кожаные Бриджи",
+      "shop": {
+        "sold": true
+      },
+      "shop_stock": {
+        "current": 0,
+        "max": 500
+      }
+    }
+  },
+  {
+    "key": "advantage_belt",
+    "name": "Advantage Belt",
+    "item_type": "equipment",
+    "slot": "belt",
+    "weight": 4,
+    "stack_limit": 1,
+    "base_price": 25,
+    "durability_max": 20,
+    "requirements": {
+      "level": 3,
+      "dexterity": 8,
+      "health": 7
+    },
+    "stat_modifiers": {
+      "evasion": 10,
+      "armor_class": 1,
+      "dexterity": 1
+    },
+    "enhancement_rules": {
+      "subcategory": "belts",
+      "source_name": "Пояс Преимущества",
+      "shop": {
+        "sold": true
+      },
+      "shop_stock": {
+        "current": 0,
+        "max": 500
+      },
+      "properties": {
+        "pockets": 1
+      }
+    }
+  },
+  {
+    "key": "thick_leather_belt",
+    "name": "Thick Leather Belt",
+    "item_type": "equipment",
+    "slot": "belt",
+    "weight": 5,
+    "stack_limit": 1,
+    "base_price": 25,
+    "durability_max": 20,
+    "requirements": {
+      "level": 3,
+      "strength": 10,
+      "health": 8
+    },
+    "stat_modifiers": {
+      "fortitude": 10,
+      "armor_class": 3,
+      "strength": 1
+    },
+    "enhancement_rules": {
+      "subcategory": "belts",
+      "source_name": "Толстый Кожаный Пояс",
+      "shop": {
+        "sold": true
+      },
+      "shop_stock": {
+        "current": 0,
+        "max": 500
+      },
+      "properties": {
+        "pockets": 1
+      }
+    }
+  },
+  {
+    "key": "thin_leather_belt",
+    "name": "Thin Leather Belt",
+    "item_type": "equipment",
+    "slot": "belt",
+    "weight": 4,
+    "stack_limit": 1,
+    "base_price": 25,
+    "durability_max": 20,
+    "requirements": {
+      "level": 3,
+      "luck": 8,
+      "health": 7
+    },
+    "stat_modifiers": {
+      "crushing": 10,
+      "armor_class": 2,
+      "strength": 1
+    },
+    "enhancement_rules": {
+      "subcategory": "belts",
+      "source_name": "Тонкий Кожаный Пояс",
+      "shop": {
+        "sold": true
+      },
+      "shop_stock": {
+        "current": 0,
+        "max": 500
+      },
+      "properties": {
+        "pockets": 1
+      }
+    }
+  },
+  {
+    "key": "diamond_sash",
+    "name": "Diamond Sash",
+    "item_type": "equipment",
+    "slot": "belt",
+    "weight": 4,
+    "stack_limit": 1,
+    "base_price": 100,
+    "durability_max": 30,
+    "requirements": {
+      "level": 5,
+      "knowledge": 8,
+      "health": 6
+    },
+    "stat_modifiers": {
+      "accuracy": 20,
+      "armor_class": 3,
+      "mana": 20,
+      "luck": 1,
+      "dexterity": 1,
+      "skill_bonuses": {
+        "knife_mastery": 5,
+        "staff_mastery": 5,
+        "air_magic_resistance": 7
+      }
+    },
+    "enhancement_rules": {
+      "subcategory": "belts",
+      "source_name": "Алмазный Кушак",
+      "shop": {
+        "sold": true
+      },
+      "shop_stock": {
+        "current": 86,
+        "max": 500
+      },
+      "properties": {
+        "pockets": 2
+      }
+    }
+  },
+  {
+    "key": "emerald_sash",
+    "name": "Emerald Sash",
+    "item_type": "equipment",
+    "slot": "belt",
+    "weight": 4,
+    "stack_limit": 1,
+    "base_price": 100,
+    "durability_max": 30,
+    "requirements": {
+      "level": 5,
+      "knowledge": 8,
+      "health": 7
+    },
+    "stat_modifiers": {
+      "fortitude": 20,
+      "armor_class": 2,
+      "hp": 40,
+      "mana": 20,
+      "knowledge": 1,
+      "skill_bonuses": {
+        "knife_mastery": 5,
+        "staff_mastery": 5,
+        "earth_magic_resistance": 7
+      }
+    },
+    "enhancement_rules": {
+      "subcategory": "belts",
+      "source_name": "Изумрудный Кушак",
+      "shop": {
+        "sold": true
+      },
+      "shop_stock": {
+        "current": 195,
+        "max": 500
+      },
+      "properties": {
+        "pockets": 2
+      }
+    }
+  },
+  {
+    "key": "dexterity_gloves",
+    "name": "Dexterity Gloves",
+    "item_type": "equipment",
+    "slot": "hands",
+    "weight": 2,
+    "stack_limit": 1,
+    "base_price": 18,
+    "durability_max": 10,
+    "requirements": {
+      "level": 2,
+      "dexterity": 5
+    },
+    "stat_modifiers": {
+      "dexterity": 1
+    },
+    "enhancement_rules": {
+      "subcategory": "gloves",
+      "source_name": "Перчатки Ловкости",
+      "shop": {
+        "sold": true
+      },
+      "shop_stock": {
+        "current": 0,
+        "max": 500
+      }
+    }
+  },
+  {
+    "key": "strength_gloves",
+    "name": "Strength Gloves",
+    "item_type": "equipment",
+    "slot": "hands",
+    "weight": 2,
+    "stack_limit": 1,
+    "base_price": 18,
+    "durability_max": 10,
+    "requirements": {
+      "level": 2,
+      "strength": 5
+    },
+    "stat_modifiers": {
+      "strength": 1
+    },
+    "enhancement_rules": {
+      "subcategory": "gloves",
+      "source_name": "Перчатки Силы",
+      "shop": {
+        "sold": true
+      },
+      "shop_stock": {
+        "current": 0,
+        "max": 500
+      }
+    }
+  },
+  {
+    "key": "luck_gloves",
+    "name": "Luck Gloves",
+    "item_type": "equipment",
+    "slot": "hands",
+    "weight": 2,
+    "stack_limit": 1,
+    "base_price": 18,
+    "durability_max": 10,
+    "requirements": {
+      "level": 2,
+      "luck": 5
+    },
+    "stat_modifiers": {
+      "luck": 1
+    },
+    "enhancement_rules": {
+      "subcategory": "gloves",
+      "source_name": "Перчатки Удачи",
+      "shop": {
+        "sold": true
+      },
+      "shop_stock": {
+        "current": 0,
+        "max": 500
+      }
+    }
+  },
+  {
+    "key": "spellcaster_gloves",
+    "name": "Spellcaster Gloves",
+    "item_type": "equipment",
+    "slot": "hands",
+    "weight": 4,
+    "stack_limit": 1,
+    "base_price": 40,
+    "durability_max": 10,
+    "requirements": {
+      "level": 3,
+      "knowledge": 10
+    },
+    "stat_modifiers": {
+      "mana": 10,
+      "knowledge": 1
+    },
+    "enhancement_rules": {
+      "subcategory": "gloves",
+      "source_name": "Перчатки Заклинателя",
+      "shop": {
+        "sold": true
+      },
+      "shop_stock": {
+        "current": 0,
+        "max": 500
+      }
+    }
+  },
+  {
+    "key": "quick_strike_gloves",
+    "name": "Quick Strike Gloves",
+    "item_type": "equipment",
+    "slot": "hands",
+    "weight": 4,
+    "stack_limit": 1,
+    "base_price": 50,
+    "durability_max": 20,
+    "requirements": {
+      "level": 4,
+      "luck": 12
+    },
+    "stat_modifiers": {
+      "crushing": 5,
+      "armor_class": 1,
+      "luck": 1,
+      "skill_bonuses": {
+        "axe_mastery": 5,
+        "two_handed_mastery": 5
+      }
+    },
+    "enhancement_rules": {
+      "subcategory": "gloves",
+      "source_name": "Перчатки Быстрого Удара",
+      "shop": {
+        "sold": true
+      },
+      "shop_stock": {
+        "current": 0,
+        "max": 500
+      }
+    }
+  },
+  {
+    "key": "leather_bracers",
+    "name": "Leather Bracers",
+    "item_type": "equipment",
+    "slot": "bracers",
+    "weight": 3,
+    "stack_limit": 1,
+    "base_price": 10,
+    "durability_max": 10,
+    "requirements": {
+      "level": 1,
+      "health": 5
+    },
+    "stat_modifiers": {
+      "armor_class": 1,
+      "hp": 10
+    },
+    "enhancement_rules": {
+      "subcategory": "bracers",
+      "source_name": "Кожаные Наручи",
+      "shop": {
+        "sold": true
+      },
+      "shop_stock": {
+        "current": 0,
+        "max": 500
+      }
+    }
+  },
+  {
+    "key": "congealed_blood_bracers",
+    "name": "Congealed Blood Bracers",
+    "item_type": "equipment",
+    "slot": "bracers",
+    "weight": 4,
+    "stack_limit": 1,
+    "base_price": 25,
+    "durability_max": 20,
+    "requirements": {
+      "level": 3,
+      "luck": 10
+    },
+    "stat_modifiers": {
+      "crushing": 5,
+      "accuracy": 5,
+      "armor_class": 2,
+      "luck": 1,
+      "skill_bonuses": {
+        "two_handed_mastery": 5
+      }
+    },
+    "enhancement_rules": {
+      "subcategory": "bracers",
+      "source_name": "Наручи Застывшей Крови",
+      "shop": {
+        "sold": true
+      },
+      "shop_stock": {
+        "current": 0,
+        "max": 500
+      }
+    }
+  },
+  {
+    "key": "development_bracers",
+    "name": "Development Bracers",
+    "item_type": "equipment",
+    "slot": "bracers",
+    "weight": 5,
+    "stack_limit": 1,
+    "base_price": 25,
+    "durability_max": 20,
+    "requirements": {
+      "level": 3,
+      "dexterity": 10
+    },
+    "stat_modifiers": {
+      "evasion": 5,
+      "accuracy": 5,
+      "armor_class": 1,
+      "dexterity": 1,
+      "skill_bonuses": {
+        "knife_mastery": 5
+      }
+    },
+    "enhancement_rules": {
+      "subcategory": "bracers",
+      "source_name": "Наручи Развития",
+      "shop": {
+        "sold": true
+      },
+      "shop_stock": {
+        "current": 0,
+        "max": 500
+      }
+    }
+  },
+  {
+    "key": "stability_bracers",
+    "name": "Stability Bracers",
+    "item_type": "equipment",
+    "slot": "bracers",
+    "weight": 5,
+    "stack_limit": 1,
+    "base_price": 25,
+    "durability_max": 20,
+    "requirements": {
+      "level": 3,
+      "strength": 6,
+      "health": 7
+    },
+    "stat_modifiers": {
+      "fortitude": 5,
+      "accuracy": 5,
+      "armor_class": 3,
+      "hp": 10,
+      "skill_bonuses": {
+        "bludgeoning_mastery": 5
+      }
+    },
+    "enhancement_rules": {
+      "subcategory": "bracers",
+      "source_name": "Наручи Стабильности",
+      "shop": {
+        "sold": true
+      },
+      "shop_stock": {
+        "current": 272,
+        "max": 500
+      }
+    }
+  },
+  {
+    "key": "truth_bracers",
+    "name": "Truth Bracers",
+    "item_type": "equipment",
+    "slot": "bracers",
+    "weight": 6,
+    "stack_limit": 1,
+    "base_price": 45,
+    "durability_max": 30,
+    "requirements": {
+      "level": 4,
+      "knowledge": 10
+    },
+    "stat_modifiers": {
+      "accuracy": 5,
+      "armor_class": 1,
+      "mana": 10,
+      "knowledge": 1
+    },
+    "enhancement_rules": {
+      "subcategory": "bracers",
+      "source_name": "Наручи Правды",
+      "shop": {
+        "sold": true
+      },
+      "shop_stock": {
+        "current": 165,
+        "max": 500
+      }
+    }
+  },
+  {
+    "key": "salvation_pendant",
+    "name": "Salvation Pendant",
+    "item_type": "equipment",
+    "slot": "amulet",
+    "weight": 2,
+    "stack_limit": 1,
+    "base_price": 6,
+    "durability_max": 10,
+    "requirements": {
+      "level": 2,
+      "health": 5
+    },
+    "stat_modifiers": {
+      "hp": 10
+    },
+    "enhancement_rules": {
+      "subcategory": "jewelry",
+      "source_name": "Кулон Спасения",
+      "shop": {
+        "sold": true
+      },
+      "shop_stock": {
+        "current": 0,
+        "max": 500
+      }
+    }
+  },
+  {
+    "key": "small_life_ring",
+    "name": "Small Life Ring",
+    "item_type": "equipment",
+    "slot": "ring",
+    "weight": 1,
+    "stack_limit": 1,
+    "base_price": 6,
+    "durability_max": 10,
+    "requirements": {
+      "level": 2
+    },
+    "stat_modifiers": {
+      "hp": 10
+    },
+    "enhancement_rules": {
+      "subcategory": "jewelry",
+      "source_name": "Малое Кольцо Жизни",
+      "shop": {
+        "sold": true
+      },
+      "shop_stock": {
+        "current": 0,
+        "max": 500
+      }
+    }
+  },
+  {
+    "key": "small_protection_ring",
+    "name": "Small Protection Ring",
+    "item_type": "equipment",
+    "slot": "ring",
+    "weight": 2,
+    "stack_limit": 1,
+    "base_price": 15,
+    "durability_max": 15,
+    "requirements": {
+      "level": 2,
+      "health": 7
+    },
+    "stat_modifiers": {
+      "armor_class": 5
+    },
+    "enhancement_rules": {
+      "subcategory": "jewelry",
+      "source_name": "Малое Кольцо Защиты",
+      "shop": {
+        "sold": true
+      },
+      "shop_stock": {
+        "current": 0,
+        "max": 500
+      }
+    }
+  },
+  {
+    "key": "small_knowledge_ring",
+    "name": "Small Knowledge Ring",
+    "item_type": "equipment",
+    "slot": "ring",
+    "weight": 1,
+    "stack_limit": 1,
+    "base_price": 6,
+    "durability_max": 10,
+    "requirements": {
+      "level": 2
+    },
+    "stat_modifiers": {
+      "knowledge": 1
+    },
+    "enhancement_rules": {
+      "subcategory": "jewelry",
+      "source_name": "Малое Кольцо Знаний",
+      "shop": {
+        "sold": true
+      },
+      "shop_stock": {
+        "current": 0,
+        "max": 500
+      }
+    }
+  },
+  {
+    "key": "subtlety_ring",
+    "name": "Subtlety Ring",
+    "item_type": "equipment",
+    "slot": "ring",
+    "weight": 1,
+    "stack_limit": 1,
+    "base_price": 10,
+    "durability_max": 20,
+    "requirements": {
+      "level": 3,
+      "dexterity": 9
+    },
+    "stat_modifiers": {
+      "crushing": -5,
+      "evasion": 5,
+      "accuracy": 5
+    },
+    "enhancement_rules": {
+      "subcategory": "jewelry",
+      "source_name": "Кольцо Тонкости",
+      "shop": {
+        "sold": true
+      },
+      "shop_stock": {
+        "current": 486,
+        "max": 500
+      }
+    }
+  },
+  {
+    "key": "duel_permit_i",
+    "name": "Duel Permit I",
+    "item_type": "consumable",
+    "slot": "none",
+    "weight": 1,
+    "stack_limit": 10,
+    "base_price": 16,
+    "durability_max": 1,
+    "requirements": {
+      "level": 5,
+      "stealth": 20
+    },
+    "stat_modifiers": {},
+    "enhancement_rules": {
+      "subcategory": "scrolls",
+      "source_name": "Разрешение на поединок I",
+      "shop": {
+        "sold": true
+      },
+      "shop_stock": {
+        "current": 192,
+        "max": 500
+      },
+      "description": "Starts a low-trauma open fight.",
+      "inventory_family": "things"
+    }
+  },
+  {
+    "key": "duel_permit_ii",
+    "name": "Duel Permit II",
+    "item_type": "consumable",
+    "slot": "none",
+    "weight": 1,
+    "stack_limit": 10,
+    "base_price": 30,
+    "durability_max": 2,
+    "requirements": {
+      "level": 5,
+      "stealth": 30
+    },
+    "stat_modifiers": {},
+    "enhancement_rules": {
+      "subcategory": "scrolls",
+      "source_name": "Разрешение на поединок II",
+      "shop": {
+        "sold": true
+      },
+      "shop_stock": {
+        "current": 0,
+        "max": 500
+      },
+      "description": "Starts a low-trauma open fight.",
+      "inventory_family": "things"
+    }
+  },
+  {
+    "key": "duel_permit_iii",
+    "name": "Duel Permit III",
+    "item_type": "consumable",
+    "slot": "none",
+    "weight": 1,
+    "stack_limit": 10,
+    "base_price": 54,
+    "durability_max": 4,
+    "requirements": {
+      "level": 5,
+      "stealth": 40
+    },
+    "stat_modifiers": {},
+    "enhancement_rules": {
+      "subcategory": "scrolls",
+      "source_name": "Разрешение на поединок III",
+      "shop": {
+        "sold": true
+      },
+      "shop_stock": {
+        "current": 0,
+        "max": 500
+      },
+      "description": "Starts a low-trauma open fight.",
+      "inventory_family": "things"
+    }
+  },
+  {
+    "key": "duel_permit_iv",
+    "name": "Duel Permit IV",
+    "item_type": "consumable",
+    "slot": "none",
+    "weight": 1,
+    "stack_limit": 10,
+    "base_price": 84,
+    "durability_max": 7,
+    "requirements": {
+      "level": 5,
+      "stealth": 60
+    },
+    "stat_modifiers": {},
+    "enhancement_rules": {
+      "subcategory": "scrolls",
+      "source_name": "Разрешение на поединок IV",
+      "shop": {
+        "sold": true
+      },
+      "shop_stock": {
+        "current": 0,
+        "max": 500
+      },
+      "description": "Starts a low-trauma open fight.",
+      "inventory_family": "things"
+    }
+  }
+]

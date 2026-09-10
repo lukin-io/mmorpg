@@ -13,7 +13,9 @@ module Economy
       amount = BigDecimal(amount.to_s)
       raise ArgumentError, "amount cannot be zero" if amount.zero?
 
-      ApplicationRecord.transaction do
+      # A rescued ledger failure must roll its balance change back even when
+      # the caller continues an enclosing gameplay transaction.
+      ApplicationRecord.transaction(requires_new: true) do
         wallet.lock!
         projected_balance = wallet.nv_balance + amount
         raise InsufficientFundsError, "insufficient NV" if projected_balance.negative?

@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 admin = User.find_by(email: "first@lukin.io") || User.find_by(email: "admin@browser-rpg.test")
-lukin_user = User.find_by(email: "second@lukin.io") || User.find_by(email: "lukin.maksim@gmail.com")
 main_character = Character.find_by(user: admin, name: "max_kerby") if admin
 
 if defined?(ItemTemplate)
@@ -23,71 +22,8 @@ if defined?(ItemTemplate)
   end
   puts "Created #{material_items.size} material item templates"
 
+  # Inventory-only reference definitions remain separate from the authored Shop.
   shop_items = [
-    {
-      key: "practice_knife",
-      name: "Practice Knife",
-      item_type: "equipment",
-      slot: "main_hand",
-      weight: 3,
-      stack_limit: 1,
-      base_price: 35,
-      durability_max: 20,
-      requirements: {"level" => 1, "ap" => 45},
-      stat_modifiers: {"attack" => 2, "damage_min" => 1, "damage_max" => 2, "armor_pierce" => 1, "weapon_family" => "knife"},
-      enhancement_rules: {"subcategory" => "knives", "shop_stock" => {"current" => 464, "max" => 500}}
-    },
-    {
-      key: "militia_sword",
-      name: "Militia Sword",
-      item_type: "equipment",
-      slot: "main_hand",
-      weight: 7,
-      stack_limit: 1,
-      base_price: 160,
-      durability_max: 34,
-      requirements: {"level" => 3, "strength" => 2, "ap" => 48},
-      stat_modifiers: {"attack" => 5, "weapon_family" => "sword"},
-      enhancement_rules: {"subcategory" => "swords", "shop_stock" => {"current" => 500, "max" => 500}}
-    },
-    {
-      key: "padded_jacket",
-      name: "Padded Jacket",
-      item_type: "equipment",
-      slot: "chest",
-      weight: 5,
-      stack_limit: 1,
-      base_price: 95,
-      durability_max: 28,
-      requirements: {"level" => 1, "strength" => 1},
-      stat_modifiers: {"defense" => 3, "knowledge" => 1},
-      enhancement_rules: {"subcategory" => "armor", "shop_stock" => {"current" => 74, "max" => 500}}
-    },
-    {
-      key: "minor_healing_elixir",
-      name: "Minor Healing Elixir",
-      item_type: "consumable",
-      slot: "none",
-      weight: 1,
-      stack_limit: 20,
-      base_price: 24,
-      durability_max: 0,
-      requirements: {"level" => 1},
-      stat_modifiers: {"heal_hp" => 35},
-      enhancement_rules: {"inventory_family" => "elixirs", "shop_stock" => {"current" => 500, "max" => 500}}
-    },
-    {
-      key: "license_market_stall",
-      name: "Trader License",
-      item_type: "misc",
-      slot: "none",
-      weight: 1,
-      stack_limit: 1,
-      base_price: 500,
-      durability_max: 0,
-      requirements: {"level" => 5},
-      stat_modifiers: {}
-    },
     {
       key: "knowledge_ring",
       name: "Knowledge Ring",
@@ -115,19 +51,6 @@ if defined?(ItemTemplate)
       enhancement_rules: {"subcategory" => "jewelry", "source_name" => "Кольцо Ловкости", "shop_stock" => {"current" => 36, "max" => 500}}
     },
     {
-      key: "subtlety_ring",
-      name: "Subtlety Ring",
-      item_type: "equipment",
-      slot: "ring",
-      weight: 1,
-      stack_limit: 1,
-      base_price: 10,
-      durability_max: 30,
-      requirements: {"level" => 3, "dexterity" => 9},
-      stat_modifiers: {"crushing" => -5, "evasion" => 5, "accuracy" => 5},
-      enhancement_rules: {"subcategory" => "jewelry", "source_name" => "Кольцо Тонкости", "shop_stock" => {"current" => 477, "max" => 500}}
-    },
-    {
       key: "soul_hunter_pendant",
       name: "Soul Hunter Pendant",
       item_type: "equipment",
@@ -139,19 +62,6 @@ if defined?(ItemTemplate)
       requirements: {"level" => 5, "knowledge" => 15},
       stat_modifiers: {"hp" => 5, "mana" => 20, "strength" => -1, "knowledge" => 1},
       enhancement_rules: {"subcategory" => "jewelry", "source_name" => "Кулон Ловца Душ", "shop_stock" => {"current" => 498, "max" => 500}}
-    },
-    {
-      key: "emerald_sash",
-      name: "Emerald Sash",
-      item_type: "equipment",
-      slot: "belt",
-      weight: 4,
-      stack_limit: 1,
-      base_price: 100,
-      durability_max: 30,
-      requirements: {"level" => 5, "knowledge" => 8, "health" => 7},
-      stat_modifiers: {"fortitude" => 20, "armor_class" => 2, "hp" => 40, "mana" => 20, "knowledge" => 1, "skill_bonuses" => {"knife_mastery" => 5, "staff_mastery" => 5}, "earth_resistance" => 7},
-      enhancement_rules: {"subcategory" => "belts", "properties" => {"pockets" => 2}, "source_name" => "Изумрудный Кушак"}
     },
     {
       key: "student_boots",
@@ -180,45 +90,6 @@ if defined?(ItemTemplate)
       enhancement_rules: {"subcategory" => "gloves", "source_name" => "Трусливые Перчатки"}
     },
     {
-      key: "mage_dagger",
-      name: "Mage Dagger",
-      item_type: "equipment",
-      slot: "main_hand",
-      weight: 5,
-      stack_limit: 1,
-      base_price: 75,
-      durability_max: 50,
-      requirements: {"level" => 5, "ap" => 55, "luck" => 5, "knowledge" => 15, "knife_skill" => 10},
-      stat_modifiers: {"damage_min" => 4, "damage_max" => 9, "crushing" => 25, "fortitude" => 5, "armor_pierce" => 10, "hp" => 15, "mana" => 15, "luck" => 2, "weapon_family" => "knife"},
-      enhancement_rules: {"subcategory" => "knives", "source_name" => "Кинжал Мага"}
-    },
-    {
-      key: "hunter_knife",
-      name: "Hunter Knife",
-      item_type: "equipment",
-      slot: "main_hand",
-      weight: 6,
-      stack_limit: 1,
-      base_price: 19,
-      durability_max: 30,
-      requirements: {"level" => 3, "dexterity" => 16, "ap" => 26, "knife_skill" => 10, "dual_wield_skill" => 10},
-      stat_modifiers: {"damage_min" => 4, "damage_max" => 6, "evasion" => 10, "armor_pierce" => 5, "dexterity" => 1, "knife_skill" => 5, "weapon_family" => "knife"},
-      enhancement_rules: {"subcategory" => "knives", "source_name" => "Нож Охотника", "shop_stock" => {"current" => 460, "max" => 500}}
-    },
-    {
-      key: "small_crescent_staff",
-      name: "Small Crescent Staff",
-      item_type: "equipment",
-      slot: "main_hand",
-      weight: 11,
-      stack_limit: 1,
-      base_price: 150,
-      durability_max: 30,
-      requirements: {"level" => 6, "luck" => 6, "dexterity" => 10, "knowledge" => 15, "ap" => 63, "staff_skill" => 20},
-      stat_modifiers: {"damage_min" => 6, "damage_max" => 11, "evasion" => 15, "accuracy" => 10, "armor_pierce" => 14, "mana" => 30, "dexterity" => 1, "knowledge" => 2, "weapon_family" => "staff"},
-      enhancement_rules: {"subcategory" => "staves", "source_name" => "Малый Жезл Полумесяца", "shop_stock" => {"current" => 490, "max" => 500}}
-    },
-    {
       key: "north_wind_bracers",
       name: "North Wind Bracers",
       item_type: "equipment",
@@ -243,19 +114,6 @@ if defined?(ItemTemplate)
       requirements: {"level" => 4, "luck" => 15, "health" => 7},
       stat_modifiers: {"crushing" => 20, "armor_class" => 6, "hp" => 7, "luck" => 1},
       enhancement_rules: {"subcategory" => "armor", "properties" => {"layering" => "Can be worn over chainmail"}, "source_name" => "Доспех Повреждений"}
-    },
-    {
-      key: "knowledge_shirt",
-      name: "Knowledge Shirt",
-      item_type: "equipment",
-      slot: "chest",
-      weight: 1,
-      stack_limit: 1,
-      base_price: 10,
-      durability_max: 20,
-      requirements: {"level" => 2},
-      stat_modifiers: {"knowledge" => 1},
-      enhancement_rules: {"subcategory" => "armor", "source_name" => "Рубашка Знаний", "shop_stock" => {"current" => 74, "max" => 500}}
     },
     {
       key: "starwatcher_cap",
@@ -295,30 +153,75 @@ if defined?(ItemTemplate)
       requirements: {"level" => 8, "linguistics" => 60},
       stat_modifiers: {"production_speed_percent" => 10},
       enhancement_rules: {"inventory_family" => "things", "subcategory" => "scrolls", "description" => "Summons a helper for production speed. Requirements intentionally block low-level use.", "source_name" => "Призыв импа-помощника"}
-    },
-    {
-      key: "duel_permit_i",
-      name: "Duel Permit I",
-      item_type: "consumable",
-      slot: "none",
-      weight: 1,
-      stack_limit: 10,
-      base_price: 16,
-      durability_max: 1,
-      requirements: {"level" => 5, "stealth" => 20},
-      stat_modifiers: {},
-      enhancement_rules: {"inventory_family" => "things", "subcategory" => "scrolls", "description" => "Starts a low-trauma open fight.", "source_name" => "Разрешение на поединок I", "shop_stock" => {"current" => 459, "max" => 500}}
     }
   ]
 
+  starter_shop_goods = JSON.parse(File.read(Rails.root.join("db/seeds/data/starter_shop.json")))
+  shop_items.concat(starter_shop_goods.map(&:symbolize_keys))
+
+  license_items = [
+    {key: "trading_license_i", name: "Trading License I", kind: "trading", price: 300, days: 3, stock: 9},
+    {key: "trading_license_ii", name: "Trading License II", kind: "trading", price: 800, days: 10, stock: 666},
+    {key: "trading_license_iii", name: "Trading License III", kind: "trading", price: 2_000, days: 30, stock: 4},
+    {key: "doctor_license_i", name: "Doctor License I", kind: "doctor", price: 300, days: 5, stock: 10},
+    {key: "doctor_license_ii", name: "Doctor License II", kind: "doctor", price: 550, days: 10, stock: 9},
+    {key: "doctor_license_iii", name: "Doctor License III", kind: "doctor", price: 800, days: 15, stock: 10}
+  ]
+  license_items.each_with_index do |license, index|
+    rules = {
+      "kind" => license.fetch(:kind), "duration_days" => license.fetch(:days), "tier" => index % 3 + 1,
+      "required_perk" => license.fetch(:kind) == "trading" ? "merchant" : "healer"
+    }
+    rules["required_unlock"] = "merchant" if license.fetch(:kind) == "trading"
+    rules["required_unlock"] = "traumatologist" if license.fetch(:kind) == "doctor" && index > 3
+    description = if license.fetch(:kind) == "trading"
+      "Allows trading with other players. Requires the Merchant ability."
+    elsif index == 3
+      "Allows work as a doctor. Requires the Healer ability."
+    else
+      "Allows work as a doctor. Requires the Healer ability and completion of the Traumatologist quest."
+    end
+    shop_items << {
+      key: license.fetch(:key), name: license.fetch(:name), item_type: "misc", slot: "none",
+      weight: 1, stack_limit: 1, base_price: license.fetch(:price), durability_max: 1,
+      requirements: {}, stat_modifiers: {},
+      enhancement_rules: {
+        "inventory_family" => "things", "subcategory" => "misc",
+        "description" => description,
+        "license" => rules,
+        "shop" => {"sold" => true, "mode" => "licenses", "position" => index + 1},
+        "shop_stock" => {"current" => license.fetch(:stock)}
+      }
+    }
+  end
+
   shop_items.each do |attrs|
     item = ItemTemplate.find_or_initialize_by(key: attrs[:key])
-    item.assign_attributes(attrs)
-    item.save!
+    # Reload under lock before reading stock or correcting durability. A trade
+    # or another seed may have committed since the initial template lookup.
+    item.with_lock do
+      # A source correction changes future goods, not the durability of items
+      # already acquired. Share each owned row lock with durability writers.
+      if item.persisted? && item.durability_max != attrs.fetch(:durability_max)
+        InventoryItem.where(item_template: item).lock.find_each do |owned|
+          properties = owned.properties.to_h
+          maximum = properties["max_durability"].presence || item.durability_max
+          current = properties["current_durability"].presence || properties["durability"].presence || maximum
+          owned.update!(properties: properties.merge("max_durability" => maximum, "current_durability" => current))
+        end
+      end
+      rules = attrs.fetch(:enhancement_rules, {}).deep_dup
+      if item.persisted? && item.shop_stock_limited? && rules.key?("shop_stock")
+        rules["shop_stock"] = item.shop_stock
+      end
+      item.assign_attributes(attrs.merge(enhancement_rules: rules))
+      item.save!
+    end
   end
   puts "Created/Updated #{shop_items.size} shop item templates"
 
-  if main_character
+  # Operators can refresh authored Shop content without granting player items.
+  if main_character && ENV["SHOP_CATALOG_ONLY"] != "1"
     starter_items = {
       "knowledge_ring" => {"current_durability" => 30},
       "dexterity_ring" => {"current_durability" => 29},
@@ -337,8 +240,9 @@ if defined?(ItemTemplate)
     inventory = main_character.inventory || main_character.create_inventory!(slot_capacity: 48, weight_capacity: 160)
     starter_items.each do |key, properties|
       template = ItemTemplate.find_by!(key:)
-      item = inventory.inventory_items.where("properties ->> 'seed_key' = ?", key).first ||
-        inventory.inventory_items.build(item_template: template, weight: template.weight, quantity: 1)
+      next if inventory.inventory_items.where("properties ->> 'seed_key' = ?", key).exists?
+
+      item = inventory.inventory_items.build
       item.assign_attributes(
         item_template: template,
         weight: template.weight,

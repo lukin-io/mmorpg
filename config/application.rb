@@ -17,6 +17,8 @@ module Mmorpg
     config.autoload_lib(ignore: %w[assets tasks])
 
     config.active_job.queue_adapter = :sidekiq
+    # SQL dumps preserve the Shop receipt trigger and generated foreign keys.
+    config.active_record.schema_format = :sql
 
     config.generators do |generator|
       generator.test_framework :rspec

@@ -424,10 +424,11 @@ RSpec.describe "Open-world seed data", type: :model do
       CityHotspot.active.find_by!(zone: node_zones.fetch("main"), key: "arena").required_level
     ).to eq(0)
     expect(CityHotspot.active.find_by!(zone: node_zones.fetch("main"), key: "shop")).to have_attributes(
-      position_x: 96,
-      position_y: 303,
-      width: 320,
-      height: 182
+      position_x: 0,
+      position_y: 165,
+      width: 402,
+      height: 360,
+      presentation_polygon: Game::World::CityCatalog.hotspot_presentation("main", "shop").fetch("polygon")
     )
     expect(CityHotspot.active.find_by!(zone: node_zones.fetch("main"), key: "go_forpost3")).to have_attributes(
       presentation_direction: "southwest"

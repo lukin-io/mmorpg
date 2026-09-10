@@ -1,0 +1,49 @@
+<% if items.any? %>
+  <div class="nl-shop-licenses">
+    <% items.each do |template| %>
+      <% offer = @shop_buy_offers[template.id] %>
+      <% block_reason = shop_buy_block_reason(template) %>
+      <% unavailable_reason = block_reason || ("Refresh to buy" unless offer) %>
+      <% reason_id = dom_id(template, :shop_license_unavailable) if unavailable_reason %>
+      <% quantity_id = dom_id(template, :shop_license_quantity) %>
+      <article class="nl-shop-license" aria-label="<%= template.name %>">
+        <h2><%= template.name %></h2>
+        <p class="nl-shop-license__description">
+          <%= template.description %>
+          Valid for <%= template.enhancement_rules.fetch("license").fetch("duration_days") %> days.
+        </p>
+        <div class="nl-shop-license__facts">
+          <div>Durability: <b><%= template.durability_max %>/<%= template.durability_max %></b></div>
+          <div>Mass: <b><%= number_with_precision(template.weight, precision: 2) %></b></div>
+        </div>
+        <% if artwork = item_artwork_path(template) %>
+          <%= image_tag artwork, width: 60, height: 60, alt: "", class: "nl-shop-license__artwork" %>
+        <% end %>
+        <div class="nl-shop-license__cost"><b>Cost: <%= number_with_precision(template.base_price, precision: 2) %> NV</b></div>
+        <div class="nl-shop-license__stock">Stock: <b><%= shop_stock_label(template) %></b></div>
+        <% if unavailable_reason %>
+          <div class="nl-shop-action-form nl-shop-license__purchase">
+            <label for="<%= quantity_id %>">Quantity:</label>
+            <%= text_field_tag :quantity, 1, size: 2, inputmode: "numeric", id: quantity_id,
+                class: "nl-shop-license__quantity", disabled: true,
+                title: unavailable_reason, aria: {describedby: reason_id} %>
+            <button type="button" class="nl-shop-license__buy" disabled
+                    title="<%= unavailable_reason %>" aria-describedby="<%= reason_id %>">Buy</button>
+          </div>
+          <span id="<%= reason_id %>" class="sr-only"><%= unavailable_reason %></span>
+        <% else %>
+          <%= form_with url: buy_shop_path, method: :post, class: "nl-shop-action-form nl-shop-license__purchase", data: {turbo_confirm: "Buy #{template.name}?"} do |f| %>
+            <%= f.hidden_field :mode, value: "licenses" %>
+            <%= f.hidden_field :item_template_id, value: template.id %>
+            <%= f.hidden_field :action_key, value: offer.action_key %>
+            <%= f.label :quantity, "Quantity:", for: quantity_id %>
+            <%= f.text_field :quantity, value: 1, size: 2, inputmode: "numeric", id: quantity_id, class: "nl-shop-license__quantity" %>
+            <%= f.submit "Buy", class: "nl-shop-license__buy" %>
+          <% end %>
+        <% end %>
+      </article>
+    <% end %>
+  </div>
+<% else %>
+  <p class="nl-empty-note nl-shop-empty">There are no items in this shop section.</p>
+<% end %>

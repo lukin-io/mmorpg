@@ -243,7 +243,13 @@ Peace/world skills:
 
 Profession counters such as trading, herbalism, mining, and fishing were visible
 in the source page, but not as the current allocatable numeric skill controls.
-They need dedicated capture before implementation.
+Their activity rules must be established separately. The
+[Trader/Doctor wiki clarification](../reference/economy/observations/2026-09-09_licenses_and_shop_selling.md#profession-prerequisites-wiki-clarification-2026-09-10)
+records that Trading begins at zero, improves through Shop sales rather than
+Market/direct-player sales, and affects Shop resale rates. It does not state
+a positive Trading threshold for buying the first license. The exact growth
+chance and increment remain uncaptured; the local Shop reads saved Trading
+proficiency for its documented resale tiers but does not award growth.
 
 ## Boolean Perks
 
@@ -256,6 +262,8 @@ The launch-safe captured subset is deliberately small:
 | ---: | --- | --- | --- |
 | 7 | `more_strength` | `Больше силы` | Spend one new-perk point; effective Strength gains `floor(level / 2)`. |
 | 15 | `careful_fighter` | `Аккуратный боец` | Spend one new-perk point; halve each equipped item's post-fight durability-loss chance. |
+| 34 | `merchant` | `Купец` | Spend one new-perk point; satisfy the ability prerequisite for Merchant qualification and trading licenses. |
+| 35 | `healer` | `Целительство` | Spend one new-perk point; satisfy the ability prerequisite for doctor licenses. |
 
 The wiki supplies both bounded effects and the existing live capture supplies
 their selectable source identities. `more_strength` affects effective Strength,
@@ -266,7 +274,7 @@ does not alter an item's stored durability outside a completed-fight roll.
 The full live id/name/category catalog is captured in
 `doc/design/reference/character/observations/2026-05-11_player_profile_and_development.md`. This includes all profession,
 stat, resistance, magic, auxiliary, and warrior rows, so branch names no longer
-need to be inferred. Only source IDs `7` and `15` are selectable for launch;
+need to be inferred. Source IDs `7`, `15`, `34` and `35` are selectable for launch;
 prerequisite gates, reset behavior, and mechanical effects for the other
 entries are not fully captured or implemented. Nature Child's four-point
 drinking recovery is already published; its allocation/effect handoff remains
@@ -274,6 +282,20 @@ unimplemented, and the exact movement/HP bonuses remain unknown. See the
 World-related skill/perk gap owner in
 `doc/features/character_progression.md` section 6.5 and the current wiki record
 `doc/design/reference/world/observations/2026-09-09_wiki_skills_and_cell_actions.md`.
+
+Merchant and Healer ownership alone grant no timed license, profession skill,
+medical treatment or quest completion. Boolean perk ownership, numeric
+profession proficiency, quest qualification and a timed license are separate
+requirements and must not substitute for one another. The
+[economy design](economy_trading_shops.md) owns the license prerequisite table;
+the [Shop handbook](../../features/shop_economy.md) identifies the implemented
+Merchant qualification and the missing Doctor quest flows. Doctor II/III
+require Traumatologist quest completion. The published `100` Doctor proficiency
+threshold, including applicable equipment, is a quest-entry requirement; it is
+not evidence for an additional continuous license-purchase or validity check.
+The Doctor page does not state an additional license-purchase quest gate for
+tier I, while its separate initial medical quest governs light-injury treatment
+and bag-crafting progression.
 
 Perk allocation rules:
 

@@ -2310,7 +2310,7 @@ ownership after the World capability is accepted.
 - `db/seeds/outdoor_npcs.rb`
 - `db/seeds/starter_encounter_bootstrap.rb`
 - `db/seeds/world_content_support.rb`
-- `db/schema.rb`
+- `db/structure.sql`
 - `db/migrate/20251121090004_create_map_tile_templates.rb`
 - `db/migrate/20251121150000_create_characters_and_privacy_settings.rb`
 - `db/migrate/20251122120000_create_world_navigation_systems.rb`

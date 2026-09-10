@@ -18,7 +18,7 @@ Current Forpost behavior:
 - hover swaps the visible target to a highlighted state and opens a small white tooltip near the pointer;
 - district arrows perform immediate location changes with fresh action keys;
 - building entry preserves the current district and City returns to it;
-- Shop is entered from Central Square and places an 800px control surface below its 1250 × 600 illustration.
+- Shop is entered from Central Square and places an 800px control surface below a centered 25:12 decorative illustration, whose height follows 75% of the gameplay frame height bounded to 300–600px.
 
 Reference evidence lives in:
 
@@ -26,6 +26,7 @@ Reference evidence lives in:
 - `doc/design/reference/world/observations/2026-09-09_starter_routes.md`;
 - `doc/design/reference/world/observations/2026-09-08_forpost_oktal_airship_journey.md`;
 - `doc/design/reference/economy/observations/2026-05-21_lavka_shop.md`;
+- `doc/design/reference/economy/observations/2026-09-10_shop_layout_and_entrance_scale.md`;
 - `doc/design/reference/social/observations/2026-09-07_cell_chat_and_presence_boundaries.md`;
 - `doc/design/launch_mvp_plan.md`.
 
@@ -43,6 +44,12 @@ City replaces the outdoor map inside the persistent game shell. The center surfa
 6. one pointer/focus tooltip layer.
 
 Desktop shows the full scene when space permits. Tablet/mobile keep the scene unscaled and pan it around an authored focal point. The page must not acquire body-level horizontal overflow.
+
+The interactive City canvas is separate from a decorative building entrance.
+All decorative entrance images use the common size/fit contract in
+[ARTWORK.md](../../ARTWORK.md#decorative-building-entrance-image-specifications).
+That contract does not change City hit regions, district-scene cropping or
+the fixed coordinate systems of other interactive location canvases.
 
 ## Entry And Exit
 
@@ -83,13 +90,24 @@ connectivity is never inferred from arrow location or visual proximity.
 ## Hover, Arrow, And Tooltip Rules
 
 - Action/landmark boxes use native scene pixels.
-- Building/landmark hover and keyboard focus reveal a CSS-generated brightened crop of the project image.
+- Building/landmark hover and keyboard focus reveal a CSS-generated brightened
+  crop of the project image. Central Square uses original percentage polygons
+  around the visible project buildings; the same polygon clips pointer hit
+  testing and highlighting, so surrounding streets do not light up as a box.
+  Source layer coordinates are translated to the local artwork's composition.
 - Route arrows are project-owned, CSS-styled ASCII `>` controls, not copied image assets.
 - Arrow orientation comes from persisted hotspot data seeded from the captured
   baseline, and the arrow remains inside its route button.
-- Tooltip copy is server-rendered RPG-domain text; it follows the pointer and is clamped to the scene.
+- Tooltip copy is server-rendered RPG-domain text; it follows the pointer and
+  is clamped inside the visible panned viewport. Keyboard placement uses the
+  visible portion of the building, with wrapping available for long labels.
 - Blocked actions remain discoverable with a reason but cannot submit.
 - Presentation-only landmarks are keyboard focusable and never render inside a form.
+
+The retained image depicts Central Square. Other districts still reuse that
+image with different crops and broad hover regions. Their distinct buildings
+need original scene artwork and matching silhouettes before visual parity can
+be claimed; the known district graph and server actions remain unchanged.
 
 ## Building Rules
 
@@ -99,8 +117,11 @@ Three separate states must remain explicit:
 2. **Read-only interior** — a current hotspot plus an allowlisted informational surface with no invented mutation.
 3. **Illustrated landmark** — hover/focus label only, no server offer and no implied interior.
 
-Current interactive integrations are Arena and Shop. Hospital and Market retain
-bounded read-only interiors. Airship Station displays its origin-specific
+Current interactive integrations are Arena and Shop. Hospital remains a
+bounded read-only interior. Market lists stall information and participates in
+the Shop-owned Merchant qualification: accept, pay 1,000 NV for a receipt in the
+Central Shop, and return to Market to unlock license purchasing. Market trading
+and the qualification garment reward remain incomplete. Airship Station displays its origin-specific
 routes and delegates configured boarding, flight, and landing to
 `doc/design/features/airship_travel.md`. Missing destination/path/schedule
 content leaves a route unavailable. All other current city buildings are

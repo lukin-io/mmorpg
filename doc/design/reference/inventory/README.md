@@ -2,11 +2,13 @@
 
 - Document type: neverlands-source-summary
 - Domain: inventory
-- Updated: 2026-08-26
+- Updated: 2026-09-09
 - Evidence status: current for the bounded launch surface
 
 ## Current observations
 
+- Shop purchase and resulting carried penknife in
+  `doc/design/reference/economy/observations/2026-09-09_city_shop_purchase.md`
 - `doc/design/reference/inventory/observations/2026-06-01_inventory_items_and_shop_rows.md`
 - Inventory sections in
   `doc/design/reference/character/observations/2026-05-11_player_profile_and_development.md`
@@ -18,6 +20,11 @@
   `doc/design/reference/social/observations/2026-08-23_chat_game_event_timeline.md`
 
 ## Current Neverlands behavior
+
+The September 9 Shop purchase added one carried penknife with 10/10 durability,
+mass 5 and its observed property/requirement row. The Shop and Inventory money
+and mass displays matched; Return restored the same Shop. This confirms the
+visible acquisition handoff without claiming access to source persistence.
 
 Inventory combines a paper doll, item families/subcategories, dense item rows,
 requirements, properties, durability, carried mass, and server-issued item

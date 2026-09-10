@@ -43,10 +43,12 @@
             }
             geometry = catalog_geometry.merge(
               "box" => hotspot.presentation_box || catalog_geometry.fetch("box"),
+              "polygon" => hotspot.presentation_polygon || catalog_geometry["polygon"],
               "direction" => hotspot.presentation_direction || catalog_geometry["direction"]
             )
             left, top, width, height = geometry.fetch("box")
             hotspot_style = "left: #{left}px; top: #{top}px; width: #{width}px; height: #{height}px; --nl-city-hotspot-x: #{left}px; --nl-city-hotspot-y: #{top}px;"
+            hotspot_style += city_hotspot_polygon_style(geometry["polygon"]).to_s
             blocked_reason = hotspot.interaction_blocked_reason(current_character)
             tooltip = blocked_reason.present? ? "#{hotspot.name} - #{blocked_reason}" : hotspot.name
             hotspot_classes = ["nl-city-hotspot", "nl-city-hotspot--#{hotspot.hotspot_type}"]
@@ -96,7 +98,7 @@
         <% presentation.fetch("landmarks", {}).each do |landmark_key, landmark| %>
           <% left, top, width, height = landmark.fetch("box") %>
           <span class="nl-city-hotspot nl-city-hotspot--landmark"
-                style="left: <%= left %>px; top: <%= top %>px; width: <%= width %>px; height: <%= height %>px; --nl-city-hotspot-x: <%= left %>px; --nl-city-hotspot-y: <%= top %>px;"
+                style="left: <%= left %>px; top: <%= top %>px; width: <%= width %>px; height: <%= height %>px; --nl-city-hotspot-x: <%= left %>px; --nl-city-hotspot-y: <%= top %>px; <%= city_hotspot_polygon_style(landmark['polygon']) %>"
                 data-landmark-key="<%= landmark_key %>"
                 data-tooltip="<%= landmark.fetch('name') %>"
                 data-action="<%= tooltip_actions %>"

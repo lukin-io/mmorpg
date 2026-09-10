@@ -24,6 +24,22 @@ module Game
           "Аккуратный боец",
           :auxiliary,
           "Halves each equipped item's post-fight durability-loss chance."
+        ],
+        [
+          34,
+          :merchant,
+          "Merchant",
+          "Купец",
+          :profession,
+          "Allows entry into the trading profession. Shop selling also requires an active trading license."
+        ],
+        [
+          35,
+          :healer,
+          "Healer",
+          "Целительство",
+          :profession,
+          "Allows entry into the medical profession. Medical practice also requires a doctor license."
         ]
       ].freeze
 

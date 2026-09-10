@@ -3,6 +3,19 @@
 require "rails_helper"
 
 RSpec.describe WorldHelper, type: :helper do
+  describe "#city_hotspot_polygon_style" do
+    it "formats only validated percentage vertices as CSS" do
+      expect(helper.city_hotspot_polygon_style([[0, 0], [100, 0], [50, 100]]))
+        .to eq("--nl-city-hotspot-clip: polygon(0% 0%, 100% 0%, 50% 100%);")
+    end
+
+    it "omits malformed legacy geometry instead of interpolating it into CSS" do
+      [nil, "url(https://example.invalid)", [[0, 0], ["0); color: red", 0], [0, 100]]].each do |polygon|
+        expect(helper.city_hotspot_polygon_style(polygon)).to be_nil
+      end
+    end
+  end
+
   describe "#format_time_remaining" do
     it "returns current-state text for nil" do
       expect(helper.format_time_remaining(nil)).to eq("now")

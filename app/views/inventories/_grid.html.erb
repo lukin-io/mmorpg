@@ -11,7 +11,11 @@
          data-item-id="<%= item.id %>"
          data-action="click->inventory#selectItem">
       <div class="nl-inventory-item-icon">
-        <span><%= item_slot_icon(item.item_template) %></span>
+        <% if artwork = item_artwork_path(item.item_template) %>
+          <%= image_tag artwork, width: 60, height: 60, alt: "", class: "nl-inventory-item-artwork" %>
+        <% else %>
+          <span><%= item_slot_icon(item.item_template) %></span>
+        <% end %>
         <% if item.quantity > 1 %>
           <strong><%= item.quantity %></strong>
         <% end %>

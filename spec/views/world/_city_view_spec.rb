@@ -66,7 +66,7 @@ RSpec.describe "world/_city_view.html.erb", type: :view do
     }
 
     expect(rendered).to have_button("Shop")
-    expect(rendered).to have_css(".nl-city-hotspot[data-hotspot-key='shop'][style*='width: 320px']", visible: :all)
+    expect(rendered).to have_css(".nl-city-hotspot[data-hotspot-key='shop'][style*='width: 402px'][style*='--nl-city-hotspot-clip: polygon(']", visible: :all)
     expect(rendered).to have_css(".nl-city-hotspot[data-hotspot-key='go_forpost3']", visible: :all)
     expect(rendered).to have_css(".nl-city-route-marker[data-direction='southwest']", text: ">")
     expect(rendered).to have_css("input[name='action_key'][value='shop-action-key']", visible: :all)

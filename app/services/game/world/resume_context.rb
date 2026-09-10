@@ -205,7 +205,7 @@ module Game
         raw = params.respond_to?(:to_h) ? params.to_h.deep_stringify_keys : {}
         normalized = {
           "mode" => normalized_option(raw["mode"], Game::Shop::Catalog::VALID_MODES, "buy"),
-          "category" => normalized_option(raw["category"], Game::Shop::Catalog::VALID_CATEGORIES, "all")
+          "category" => normalized_option(raw["category"], Game::Shop::Catalog::VALID_CATEGORIES, "knives")
         }
 
         NUMERIC_SHOP_PARAM_KEYS.each do |key|

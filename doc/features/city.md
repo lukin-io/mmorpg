@@ -47,7 +47,7 @@ Related documents:
 
 Forpost is a graph of five city `Zone` records. Each node uses sentinel coordinate `[0,0]`; `CharacterPosition.zone` is the authoritative district. A district click accepts a fresh character-owned `WorldActionOffer`, persists the destination zone immediately, and renders the next scene without a movement timer.
 
-Every node uses one project-owned `city.png` at its native 1536 × 1024 size behind a 1250 × 600 crop. `CityCatalog` supplies the baseline seed declaration; persisted `Zone.metadata.city_presentation` supplies each runtime image offset, focal point, and presentation-only landmark, while `CityHotspot` supplies action rectangles and arrow direction. Hover/focus recreates the source image-swap behavior by drawing a brightened CSS crop from the same project asset; no Neverlands city image is bundled.
+Every node uses one project-owned `city.png` at its native 1536 × 1024 size behind a 1250 × 600 crop. `CityCatalog` supplies the baseline seed declaration; persisted `Zone.metadata.city_presentation` supplies each runtime image offset, focal point, and presentation-only landmark, while `CityHotspot` supplies action bounds, optional percentage polygon, and arrow direction. Central Square bounds and polygons follow visible buildings in the project image. The same CSS polygon clips pointer hit testing and the brightened hover/focus crop; no Neverlands city image is bundled.
 
 The current slice contains:
 
@@ -108,25 +108,52 @@ The scene contract is:
 - viewport: up to 1250 × 600, white page background, thin native scrollbars;
 - canvas: fixed 1250 × 600 at every breakpoint;
 - project image: fixed 1536 × 1024, positioned by node-specific pixel offsets;
-- action geometry: native-pixel boxes, never percentage-scaled;
+- action geometry: native-pixel bounding boxes, with optional percentage
+  vertices inside each box; the fixed scene and boxes never scale;
 - routes: large gold CSS/text arrows inside authored hit areas;
-- tooltip: 12px Arial, white background, 1px gray border, pointer/focus relative and scene-clamped.
+- tooltip: 12px Arial, white background, 1px gray border, pointer/focus relative
+  and clamped inside the visible panned viewport.
 
 On desktop the whole scene is visible when space allows. At `820px` and `390px`, the viewport pans the unscaled scene and initially centers the persisted focal point. The page itself must not gain horizontal overflow.
 
+Decorative building entrances have a separate shared image contract. The Shop
+uses `shared/building_entrance`: a centered 25:12 image scaled to the main
+pane plus player/navigation top bar height and contained on narrow screens.
+Its [technical specifications](../ARTWORK.md#decorative-building-entrance-image-specifications)
+apply to future decorative entrance images as well. That consumer does not
+render the City navigation canvas or change its fixed hotspot geometry.
+
 ### 4.3 Hover, pointer, touch, and keyboard
 
-- Pointer enter/focus reveals a brightened crop of the project city image for buildings and landmarks.
+- Pointer enter/focus reveals a brightened crop of the project city image for
+  buildings and landmarks. Central Square's building silhouettes exclude the
+  surrounding street from both hit testing and highlighting; there is no
+  decorative rectangular inset border.
 - Route hover/focus brightens the CSS/text arrow.
 - District arrows stack above overlapping gate hit areas. In Law, the
   Residential arrow overlaps the large east-exit rectangle; pointer activation
   must follow the visible arrow rather than silently leave the city. Native
   hit-testing and a real pointer click are covered by
   `spec/system/city_pointer_navigation_spec.rb`.
-- Pointer movement repositions the tooltip with a 15px offset and clamps it inside the scene.
+- Pointer movement repositions the tooltip with a 15px offset and clamps it
+  inside the visible viewport, including after horizontal/vertical panning.
+  Keyboard focus anchors to the visible part of a clipped building. Long
+  labels wrap within the available viewport width.
 - Every actionable region is a real form button with an accessible name.
 - Presentation-only landmarks and blocked actions are focusable semantic regions with text tooltips and no form.
 - Touch users pan the viewport and activate the same server-rendered buttons; no separate mobile map is introduced.
+
+`CityHotspot.action_params.polygon` and landmark `polygon` metadata contain
+3–32 numeric percentage `[x,y]` points within `0..100`, enclosing nonzero area.
+Model validations reject malformed polygons before persistence; rendering
+also validates before emitting CSS. Polygon data changes presentation only;
+current server offers, position and feature permissions still decide entry.
+
+**Remaining [IMPL] artwork gap:** the four other districts reuse cropped
+Central Square artwork. Their many separate building identities and rectangular
+hover crops are not full visual parity. Original district scenes and aligned
+silhouettes are still needed. Central Square's gate and workshop are partially
+cropped by the retained illustration; their targets match the visible portions.
 
 ### 4.4 District movement
 
@@ -207,7 +234,7 @@ These labels preserve RPG-domain meaning but do not copy source-platform identit
 | Arena | Central | Interactive, required level `0` | Arena controllers/services/UI |
 | Shop | Central | Interactive | Shop catalog, transactions, wallet/inventory, and Shop UI |
 | Hospital | Central | Read-only interior | City building catalog |
-| Market | Residential | Read-only interior | City building catalog |
+| Market | Residential | Stall information and Merchant license qualification | City building catalog; Shop-owned qualification service |
 | Airship Station | Residential | Origin-specific route table; configured journey handoff, default routes unavailable | `doc/features/airship_travel.md` |
 | All other observed landmarks | Their illustrated district | Hover/focus only | City presentation |
 
@@ -436,7 +463,11 @@ interior context atomically; building entry itself does not move coordinates.
 
 ## 15. Test strategy and required coverage
 
-Coverage includes catalog graph/geometry, seed convergence/idempotency, rendered action capability fields, blocked and landmark semantics, tooltip hover, district/building/gate navigation, wrong/foreign/stale offers, login context, and desktop/mobile geometry.
+Coverage includes catalog graph/geometry, polygon validation and seed persistence,
+seed convergence/idempotency, rendered action capability fields, blocked and
+landmark semantics, building pointer/keyboard highlight and tooltip bounds,
+district/building/gate navigation, wrong/foreign/stale offers, login context,
+and desktop/mobile geometry.
 
 `spec/services/game/world/city_hotspot_service_spec.rb`,
 `spec/services/chat/local_context_transition_spec.rb`, and
@@ -455,6 +486,8 @@ competing reads, and stale-position preservation.
 `spec/system/city_navigation_spec.rb` exercises the district-to-Shop flow with
 an additional same-session World read before clicking the still-visible Shop
 action, then returns through City to the exact outdoor gate.
+`spec/system/city_building_hover_spec.rb` covers building pointer/focus
+presentation and visible tooltip bounds after panning at a 390px viewport.
 
 Focused verification:
 
@@ -470,6 +503,7 @@ bundle exec rspec \
   spec/policies/manage_policy_spec.rb \
   spec/services/manage/content_mutation_spec.rb \
   spec/system/city_navigation_spec.rb \
+  spec/system/city_building_hover_spec.rb \
   spec/system/arena_room_presence_spec.rb \
   spec/system/manage_content_spec.rb \
   spec/system/responsive_neverlands_ui_spec.rb
@@ -526,6 +560,7 @@ Run `bin/feature-doc-audit doc/features/city.md doc/features/shop_economy.md` an
 ### Presentation
 
 - `app/views/world/_city_view.html.erb`
+- `app/helpers/world_helper.rb`
 - `app/javascript/controllers/nl_city_map_controller.js`
 - `app/assets/stylesheets/world.css`
 - `app/assets/images/city.png` — project-owned artwork only
@@ -544,6 +579,7 @@ Run `bin/feature-doc-audit doc/features/city.md doc/features/shop_economy.md` an
 - `spec/requests/city_buildings_spec.rb`
 - `spec/system/arena_room_presence_spec.rb`
 - `spec/system/city_navigation_spec.rb`
+- `spec/system/city_building_hover_spec.rb`
 - `spec/system/responsive_neverlands_ui_spec.rb`
 - `spec/factories/management_audit_events.rb`
 - `spec/models/management_audit_event_spec.rb`

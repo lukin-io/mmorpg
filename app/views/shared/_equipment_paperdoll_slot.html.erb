@@ -13,6 +13,7 @@
 %>
 <% interactive = local_assigns.fetch(:interactive, false) %>
 <% item = equipment[slot.key] || equipment[slot.key.to_sym] %>
+<% artwork = item_artwork_path(item.item_template) if item&.item_template %>
 <%
   classes = ["nl-doll-slot", "nl-doll-slot--#{slot.key}"]
   classes << "nl-doll-slot--filled" if item
@@ -39,12 +40,20 @@
         title: paperdoll_slot_tooltip(item, slot.label),
         aria: {label: "Remove #{item.item_template&.name || slot.label} from #{slot.label}"},
         form: {class: "nl-doll-slot-form"} do %>
-    <span class="nl-doll-slot-name"><%= item.item_template&.name %></span>
+    <% if artwork %>
+      <%= image_tag artwork, width: slot.width, height: slot.height, alt: item.item_template.name, class: "nl-doll-slot-artwork" %>
+    <% else %>
+      <span class="nl-doll-slot-name"><%= item.item_template&.name %></span>
+    <% end %>
     <span class="nl-doll-slot-wear" style="width: <%= inventory_item_durability_percent(item) %>%" aria-hidden="true"></span>
   <% end %>
 <% elsif item %>
   <span class="<%= classes.join(" ") %>" style="<%= size %>" title="<%= paperdoll_slot_tooltip(item, slot.label) %>">
-    <span class="nl-doll-slot-name"><%= item.item_template&.name %></span>
+    <% if artwork %>
+      <%= image_tag artwork, width: slot.width, height: slot.height, alt: item.item_template.name, class: "nl-doll-slot-artwork" %>
+    <% else %>
+      <span class="nl-doll-slot-name"><%= item.item_template&.name %></span>
+    <% end %>
     <span class="nl-doll-slot-wear" style="width: <%= inventory_item_durability_percent(item) %>%" aria-hidden="true"></span>
   </span>
 <% else %>
