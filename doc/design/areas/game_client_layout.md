@@ -8,6 +8,27 @@ The game client layout is the persistent browser MMORPG shell. It keeps
 character status, main gameplay, local presence, and chat visible enough that
 movement, city navigation, combat, and social play feel connected.
 
+This document also owns the shared adaptive UI requirements for every gameplay
+surface. [ARTWORK.md](../../ARTWORK.md#shared-scene-image-standard) owns image
+production, composition and dimensions; feature handbooks describe what has
+actually shipped and been verified against these requirements.
+
+## Gameplay fidelity and presentation ownership
+
+The September 10 user direction makes adaptive, accessible, maintainable UI a
+project requirement. Neverlands establishes game rules, feature identities,
+available information, action meanings and state transitions. This project
+owns modern implementation, original artwork and presentation across devices.
+The absence of responsive behavior in Neverlands is not a reason to omit it.
+
+Captured dimensions, fonts, colors and placement inform the compact visual
+baseline. They do not require copying fixed desktop widths, clipped buildings,
+tiny controls or obsolete browser behavior. Reflow, spacing, control sizing,
+image composition and breakpoints may improve usability while preserving the
+same game information, decisions, confirmations and authoritative outcomes.
+Explicitly adopted local contracts, such as the shared City/entrance image
+profile, remain binding until deliberately revised in their canonical owner.
+
 ## Neverlands Reference
 
 Reference material:
@@ -95,6 +116,61 @@ a centered current position, and touch panning without whole-page horizontal
 overflow. `doc/features/game_shell.md` records the verified desktop/mobile
 dimensions and `doc/features/world.md` owns map behavior.
 
+## Adaptive UI requirements
+
+These are shared product requirements for new or materially changed UI,
+including desktop layouts. They define the target; they are not a blanket
+claim that every existing screen already passes. Feature-owned exceptions and
+remaining implementation gaps must be recorded in the responsible handbook.
+
+| ID | Required behavior |
+|---|---|
+| `UI-ADAPT-001` — available space | Layout responds to its actual container width and height, including browser resize, orientation changes and a smaller gameplay pane. Use fluid sizing with deliberate maximum widths; support at least 320 CSS pixels of viewport width and wide desktop screens. Breakpoints follow content needs, not device names or browser detection. |
+| `UI-ADAPT-002` — reflow and overflow | Reflow text, controls and panels before introducing scrolling. No page-level horizontal overflow or inaccessible controls. Wide data tables, category strips and coordinate-based maps may have an explicitly owned scroll region when reflow would lose meaning; all content remains reachable by touch and keyboard. Clipping overflow is not a fix for missing information. |
+| `UI-ADAPT-003` — content and state | Preserve the same location, information, available actions, selected filters and authoritative state across layout changes. Resizing or rotating must not submit an action, repeat a transaction or restart gameplay. UI rearrangement cannot change permissions, prices, stock, coordinates or timers. |
+| `UI-ADAPT-004` — readable UI | Keep text as semantic HTML that wraps and supports browser zoom to 200%. Do not shrink the whole interface with a transform to fit a phone. Long names, larger balances, empty states and errors must remain readable without obscuring the action needed to continue. |
+| `UI-ADAPT-005` — input and access | Each action has a meaningful accessible name, visible keyboard focus and keyboard/touch activation. Essential information cannot depend only on hover or color. Aim for 44 × 44 CSS-pixel controls for coarse pointers; dense map silhouettes that cannot meet this size need an equivalent usable named action affordance, not overlapping invisible hit boxes. Labels/popovers remain inside the visible area and can be dismissed. |
+| `UI-ADAPT-006` — images and geometry | Apply the image profile appropriate to the asset's role. City/entrance scenes follow `ART-SCENE-001`; interactive art, hotspot buttons, arrows and hover crops share one coordinate transform. Keep tooltips and ordinary form/text controls readable outside that transform. Do not crop a building to satisfy a display size or stretch an illustration independently of its targets. |
+| `UI-ADAPT-007` — short viewports | On landscape phones, short windows or with an on-screen keyboard, navigation, form inputs, confirmations and resulting feedback remain reachable. Compact or scroll the owning panel as needed; decorative artwork must not make required controls inaccessible. |
+| `UI-ADAPT-008` — shared implementation | Reuse shared tokens, controls and applicable image consumers. Feature styles own their reflow/scroll decisions. Use CSS layout first and focused observation only when measurement is necessary; resize handling is bounded and cleans up on Turbo disconnect. Do not maintain separate mobile gameplay logic or render a second independent copy of state. |
+
+The image profile applies to scene illustrations, not every image. Equipment,
+portraits, category atlases and World cells retain their role-specific ratios
+and coordinate contracts in ARTWORK.md and their domain designs. A wide scene
+may scale uniformly; ordinary forms and text must reflow.
+
+### Adaptive UI acceptance
+
+Use real content and a real browser for a changed player-facing flow. The
+agent performs the final acceptance pass after automated checks pass, under
+[AGENTS.md](../../../AGENTS.md#manual-browser-acceptance). The
+following is the project's acceptance sample, not a required CSS breakpoint
+list or a claim about Neverlands device support:
+
+| Viewport / mode | Main check |
+|---|---|
+| 320 × 740 | Minimum-width reflow; all actions and full scene remain reachable |
+| 390 × 844 | Phone portrait; touch targets, labels, owned scrolling and core action/return |
+| 820 × 900 | Tablet; intermediate panel and control layout |
+| 1366 × 768 | Desktop; information hierarchy, mouse/keyboard and compact composition |
+| 1920 × 1080 | Wide desktop; bounded images and useful content width |
+| 844 × 390 | Short landscape; form, feedback and navigation reachability |
+| 200% browser zoom | Text/control reflow and focus reachability on the changed surface |
+
+Also resize continuously across the component's actual breakpoints; isolated
+screenshots at these sizes do not prove intermediate layouts. Check a long
+label, an empty/error state and the feature's primary action, result and return.
+For interactive images, sample roofs/walls/annexes and adjacent empty space,
+then activate a real hotspot; a clickable center alone does not prove alignment.
+
+Automated coverage should assert the changed contract at representative sizes
+and failure boundaries; it need not duplicate every manual screenshot. Record
+manual and automated evidence separately, including input mode and actual
+viewport. Reuse still-applicable checks and report any untested requirements.
+The launch plan's `RESPONSIVE-001` owns rollout status. Earlier 390px/820px
+checks remain valid within their recorded scope; they do not establish the
+new minimum-width, short-landscape, coarse-pointer or zoom requirements.
+
 ## UI Style Maintainability And Domain SRP
 
 UI maintainability follows single responsibility by gameplay domain:
@@ -117,7 +193,12 @@ UI maintainability follows single responsibility by gameplay domain:
 - Stylesheets remain a flat, discoverable domain set. Do not add an `nl/`
   subfolder or one monolithic stylesheet that makes ownership ambiguous.
 - Source image controls are rebuilt with maintainable CSS plus suitable
-  ASCII/plain text. Project-owned images are reserved for genuine game artwork.
+  ASCII/plain text. The user's explicit City exception permits original
+  generated route-arrow decorations inside semantic buttons; accessible names,
+  server actions and focus behavior remain owned by those buttons. Decorations
+  are non-interactive, scale with their scene and are never painted into its
+  background. This does not permit source image copying or automatically
+  replace other controls with bitmap assets.
 - World owns `world.css`, the fixed-cell map, movement affordances, outdoor
   entrance landmarks, and linked-location interior geometry. Shop owns its
   catalog and commerce layout after a location hotspot hands off to it; neither
@@ -143,6 +224,11 @@ unrelated area's stylesheet.
 - The current page/context action should be visibly disabled.
 - Main-frame swaps must not reset chat input, player list state, or top
   vitals unless the server state changed.
+- Transient request flashes must not remain attached to the surrounding shell
+  after main-content navigation or return through browser history. The local
+  dismissal/lifetime contract is owned by
+  [Game Shell](../../features/game_shell.md#flash-message-lifecycle); durable
+  game-event rows keep their separate persistence contract.
 - When navigation reloads the full shell, restore already-delivered ordinary
   rows only within the current login's bounded browser buffer. A fresh login
   starts an empty ordinary buffer; durable personal/world game events reload

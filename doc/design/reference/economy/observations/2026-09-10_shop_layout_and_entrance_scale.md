@@ -139,7 +139,7 @@ are owned by the existing license observation.
 - Artwork specifications and original prompt records: `doc/ARTWORK.md`.
 - The common decorative entrance is owned by
   `app/views/shared/_building_entrance.html.erb`,
-  `app/javascript/controllers/nl_building_entrance_controller.js` and
+  `app/javascript/controllers/nl_scene_size_controller.js` and
   `app/assets/stylesheets/primitives.css`; Shop-specific controls remain in
   `app/assets/stylesheets/shop.css`.
 

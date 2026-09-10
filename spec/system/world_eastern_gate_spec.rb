@@ -1,8 +1,9 @@
 # frozen_string_literal: true
 
 require "rails_helper"
+require Rails.root.join("db/seeds/forpost_gate_repair")
 
-RSpec.describe "Seeded eastern gate and pond route", type: :system, js: true do
+RSpec.describe "Repaired eastern gate and pond route", type: :system, js: true do
   def expect_idle_cell(x, y)
     expect(page).to have_css(
       ".nl-map-container[data-nl-world-map-player-x-value='#{x}']" \
@@ -16,13 +17,15 @@ RSpec.describe "Seeded eastern gate and pond route", type: :system, js: true do
     expect(page).to have_css(".nl-location-text", exact_text: "#{label} [ 1 ]")
   end
 
-  it "walks from Law Quarter to the pond and returns through the same eastern entrance" do
-    allow($stdout).to receive(:puts)
-    Rails.application.load_seed
+  it "repairs missing gate content, walks from Law Quarter to the pond and returns through the eastern entrance" do
+    create(:zone, :city_node, name: "Outpost")
+    law = create(:zone, :city, name: "Outpost Law Quarter",
+      metadata: {"city_key" => "forpost", "city_node_key" => "forpost4", "title" => "Law Quarter"})
+    outdoors = create(:zone, :mvp_outdoor_region, name: "Outpost Surroundings",
+      metadata: {"source_map" => "m_1001_999"})
+    Seeds::ForpostGateRepair.new.call
     user = create(:user)
     character = create(:character, user:, level: 0)
-    law = Zone.find_by!(name: "Outpost Law Quarter")
-    outdoors = Zone.find_by!(name: "Outpost Surroundings")
     position = create(:character_position, character:, zone: law, x: 0, y: 0)
 
     # Use the seeded cells and passability; shorten only their server-owned

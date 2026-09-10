@@ -29,7 +29,7 @@
 
     <div id="flash" class="nl-manage-flash" aria-live="polite">
       <% flash.each do |type, message| %>
-        <div class="nl-flash nl-flash--<%= type %>"><%= message %></div>
+        <%= render "shared/flash", type:, message: %>
       <% end %>
     </div>
 

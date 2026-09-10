@@ -15,28 +15,9 @@ if defined?(TileBuilding) && defined?(Zone)
       destination_zone = Zone.find_by(name: node["zone_name"])
       next unless destination_zone
 
-      local_x, local_y = gate["local_coordinates"]
-      tile_buildings << {
-        zone: outpost_surroundings.name,
-        x: local_x,
-        y: local_y,
-        building_key: (gate_key == "west" ? "outpost_gate" : "outpost_#{gate_key}_gate"),
-        building_type: "city",
-        name: gate["name"],
-        destination_zone:,
-        destination_x: 0,
-        destination_y: 0,
-        icon: nil,
-        required_level: 0,
-        metadata: {
-          "description" => "Enter Forpost through the #{gate['name']}.",
-          "presence_label" => gate["presence_label"],
-          "source_map" => gate["source_map"],
-          "source_coordinates" => gate["source_coordinates"],
-          "source_gate" => gate_key,
-          "city_node_key" => gate["node_key"]
-        }
-      }
+      tile_buildings << Seeds::WorldContentSupport.gate_building_attributes(
+        gate_key:, gate:, city_zone: destination_zone, outdoors: outpost_surroundings
+      )
     end
 
     tile_buildings << {

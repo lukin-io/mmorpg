@@ -11,6 +11,7 @@ module Game
     class CellArtCatalog
       CONFIG_PATH = Rails.root.join("config/gameplay/world_cell_art.yml")
       CELL_SIZE = 100
+      LEGACY_STARTER_KEYS = %w[forpost_terrain forpost_pond].freeze
 
       Presentation = Data.define(
         :key,
@@ -95,7 +96,27 @@ module Game
           resolve(reference).present?
         end
 
+        # Render the complete existing starter landscape even when gameplay
+        # records were imported only for a bounded route. This coordinate
+        # default is presentation-only and performs no database work. Valid
+        # independent or edited starter references win; malformed explicit
+        # references retain resolve's nil result and the renderer's recovery.
+        def resolve_for_tile(reference, zone:, x:, y:)
+          explicit = resolve(reference)
+          return explicit unless starter_region?(zone)
+          return explicit unless x.is_a?(Integer) && y.is_a?(Integer) && x.between?(0, 20) && y.between?(2, 14)
+          return explicit if reference.present? && explicit.nil?
+          return explicit if explicit && !LEGACY_STARTER_KEYS.include?(explicit.key)
+
+          resolve("key" => "forpost_starter", "column" => x, "row" => y - 2) || explicit
+        end
+
         private
+
+        def starter_region?(zone)
+          zone&.outdoor? && zone.name == "Outpost Surroundings" && zone.width == 1000 && zone.height == 1000 &&
+            zone.metadata.to_h["source_map"] == "m_1001_999"
+        end
 
         def normalize_reference(reference)
           return unless reference.respond_to?(:to_h)

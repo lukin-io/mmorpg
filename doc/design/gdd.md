@@ -19,6 +19,16 @@ to `doc/DOCUMENTATION.md`.
 
 Non-Neverlands game rules are not alternate design authority.
 
+Adaptive UI, accessibility, original art and modern engineering are project
+requirements, as clarified by the user on September 10. Preserve Neverlands'
+game rules, features, information and action outcomes while allowing deliberate
+improvements to layout, control sizing and image composition on every screen
+size. Captured desktop pixels are reference evidence, not a universal fixed
+layout requirement. The shared requirements live in
+[Game Client Layout](areas/game_client_layout.md#adaptive-ui-requirements),
+and scene composition/dimensions in
+[ARTWORK.md](../ARTWORK.md#shared-scene-image-standard).
+
 ## Design Library
 
 Use these documents when implementing or extending the game design:

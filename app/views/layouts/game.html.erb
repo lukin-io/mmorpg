@@ -203,7 +203,7 @@
   <%# Flash messages %>
   <div class="nl-flash-container" id="flash">
     <% flash.to_hash.except("world_action_result", "world_action_result_offer_id").each do |type, message| %>
-      <div class="nl-flash nl-flash--<%= type %>"><%= message %></div>
+      <%= render "shared/flash", type:, message: %>
     <% end %>
   </div>
 

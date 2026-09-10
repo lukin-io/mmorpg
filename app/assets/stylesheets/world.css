@@ -766,37 +766,55 @@ button.nl-tile-clickable--available:disabled {
   content: "";
 }
 
-.nl-cursor-img--moving::before {
-  position: absolute;
-  top: 35px;
-  left: 46px;
-  width: 8px;
-  height: 24px;
-  border: 1px solid #1b1712;
-  border-radius: 45% 45% 25% 25%;
-  background: #6a5642;
-  box-shadow: -5px 18px 0 -2px #241f18, 5px 18px 0 -2px #241f18;
-  content: "";
+.nl-cursor-img--moving {
+  background: var(--nl-walker-animation) center / 64px 64px no-repeat;
+  filter: drop-shadow(0 1px 1px #071b2b);
 }
 
-.nl-cursor-img--moving::before {
-  animation: nl-walker-bob 0.45s steps(2, end) infinite;
+.nl-cursor-img[data-direction="north"] {
+  --nl-walker-animation: url("world/traveller-walking-north.gif");
+  --nl-walker-still: url("world/traveller-walking-north-still.png");
 }
 
-.nl-cursor-img--moving::after {
-  position: absolute;
-  top: 28px;
-  left: 46px;
-  width: 8px;
-  height: 8px;
-  border: 1px solid #1b1712;
-  border-radius: 50%;
-  background: #b99671;
-  content: "";
+.nl-cursor-img[data-direction="northeast"] {
+  --nl-walker-animation: url("world/traveller-walking-northeast.gif");
+  --nl-walker-still: url("world/traveller-walking-northeast-still.png");
 }
 
-@keyframes nl-walker-bob {
-  50% { transform: translateY(2px); }
+.nl-cursor-img[data-direction="east"] {
+  --nl-walker-animation: url("world/traveller-walking-east.gif");
+  --nl-walker-still: url("world/traveller-walking-east-still.png");
+}
+
+.nl-cursor-img[data-direction="southeast"] {
+  --nl-walker-animation: url("world/traveller-walking-southeast.gif");
+  --nl-walker-still: url("world/traveller-walking-southeast-still.png");
+}
+
+.nl-cursor-img[data-direction="south"] {
+  --nl-walker-animation: url("world/traveller-walking-south.gif");
+  --nl-walker-still: url("world/traveller-walking-south-still.png");
+}
+
+.nl-cursor-img[data-direction="southwest"] {
+  --nl-walker-animation: url("world/traveller-walking-southwest.gif");
+  --nl-walker-still: url("world/traveller-walking-southwest-still.png");
+}
+
+.nl-cursor-img[data-direction="west"] {
+  --nl-walker-animation: url("world/traveller-walking-west.gif");
+  --nl-walker-still: url("world/traveller-walking-west-still.png");
+}
+
+.nl-cursor-img[data-direction="northwest"] {
+  --nl-walker-animation: url("world/traveller-walking-northwest.gif");
+  --nl-walker-still: url("world/traveller-walking-northwest-still.png");
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nl-cursor-img--moving {
+    background-image: var(--nl-walker-still);
+  }
 }
 
 .nl-timer-text {
@@ -857,23 +875,31 @@ button.nl-tile-clickable--available:disabled {
 
 .nl-city-viewport {
   position: relative;
-  width: min(1250px, 100%);
-  height: 600px;
+  width: min(100%, calc(var(--nl-scene-height, 300px) * 1250 / 600));
   margin: 0 auto;
-  overflow: auto;
-  overscroll-behavior: contain;
-  scrollbar-color: #a8a8a8 #ececec;
-  scrollbar-width: thin;
-  touch-action: pan-x pan-y;
+  overflow: clip;
+}
+
+/* The image keeps its own ratio; route controls can reflow below this frame. */
+.nl-city-image-frame {
+  position: relative;
+  aspect-ratio: 1250 / 600;
+  overflow: clip;
 }
 
 .nl-city-scene {
-  position: relative;
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform: scale(var(--nl-scene-scale, 0.5));
+  transform-origin: top left;
   width: 1250px;
   min-width: 1250px;
   height: 600px;
   min-height: 600px;
-  overflow: hidden;
+  /* Cropping must not create a scroll container: focus/scrollIntoView on a
+     scaled hotspot must never pan the larger source image inside this plane. */
+  overflow: clip;
   isolation: isolate;
   background: #525a41;
 }
@@ -882,15 +908,15 @@ button.nl-tile-clickable--available:disabled {
   position: absolute;
   z-index: 0;
   display: block;
-  width: 1536px;
+  width: var(--nl-city-image-width);
   max-width: none;
-  height: 1024px;
+  height: var(--nl-city-image-height);
   object-fit: fill;
   user-select: none;
   pointer-events: none;
 }
 
-.city-actions.nl-city-hotspots,
+.nl-city-hotspots,
 .nl-city-landmarks {
   position: absolute;
   inset: 0;
@@ -928,9 +954,22 @@ button.nl-city-hotspot,
   z-index: 2;
 }
 
-/* Route arrows can overlap a building/exit's broad source image-map box. */
-.nl-city-hotspot.nl-city-hotspot--district {
+/* Each route form is rendered once, beside the native canvas. Coordinates
+   use the same scale on desktop; narrow/coarse layouts reflow these controls. */
+.nl-city-routes {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.nl-city-routes .nl-city-hotspot {
   z-index: 5;
+  left: calc(var(--nl-city-route-x) * var(--nl-scene-scale, 0.5));
+  top: calc(var(--nl-city-route-y) * var(--nl-scene-scale, 0.5));
+  width: calc(var(--nl-city-route-width) * var(--nl-scene-scale, 0.5));
+  height: calc(var(--nl-city-route-height) * var(--nl-scene-scale, 0.5));
+  pointer-events: auto;
+  isolation: isolate;
 }
 
 .nl-city-hotspot::before {
@@ -942,7 +981,7 @@ button.nl-city-hotspot,
     calc(var(--nl-city-image-x) - var(--nl-city-hotspot-x))
     calc(var(--nl-city-image-y) - var(--nl-city-hotspot-y));
   background-repeat: no-repeat;
-  background-size: 1536px 1024px;
+  background-size: var(--nl-city-image-width) var(--nl-city-image-height);
   content: "";
   filter: brightness(1.22) contrast(1.04) saturate(1.18);
   opacity: 0;
@@ -983,22 +1022,24 @@ button.nl-city-hotspot,
   left: 50%;
   z-index: 1;
   display: block;
-  color: #f2d32e;
-  font-family: Arial, sans-serif;
-  font-size: 66px;
-  font-weight: 900;
-  line-height: 0.8;
-  text-shadow: 0 2px 1px #5a3300, 0 0 5px rgba(255, 241, 99, 0.95);
-  -webkit-text-stroke: 2px #986100;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  object-fit: contain;
+  /* Silver separates the original silhouette from green foliage and ochre
+     roofs; alpha-following shadows retain its edges without adding a badge. */
+  filter: grayscale(1) brightness(2.2) contrast(1.15) drop-shadow(0 1px 1px #071b2b) drop-shadow(0 0 2px #061623);
   transform: translate(-50%, -50%);
   pointer-events: none;
+  user-select: none;
 }
 
 .nl-city-hotspot:hover .nl-city-route-marker,
 .nl-city-hotspot:focus-visible .nl-city-route-marker {
-  color: #fff36a;
-  filter: brightness(1.2);
+  filter: grayscale(1) brightness(2.7) contrast(1.15) drop-shadow(0 0 1px #fff) drop-shadow(0 1px 3px #071b2b);
 }
+
+.nl-city-hotspot--district:focus-visible { outline: 0; }
 
 .nl-city-route-marker[data-direction="southeast"] { transform: translate(-50%, -50%) rotate(45deg); }
 .nl-city-route-marker[data-direction="south"] { transform: translate(-50%, -50%) rotate(90deg); }
@@ -1007,6 +1048,152 @@ button.nl-city-hotspot,
 .nl-city-route-marker[data-direction="northwest"] { transform: translate(-50%, -50%) rotate(225deg); }
 .nl-city-route-marker[data-direction="north"] { transform: translate(-50%, -50%) rotate(270deg); }
 .nl-city-route-marker[data-direction="northeast"] { transform: translate(-50%, -50%) rotate(315deg); }
+
+/* Unillustrated quarters expose the existing actions without a borrowed map
+   or invisible building targets. Text and controls reflow without scaling. */
+.nl-city-viewport--pending {
+  width: 100%;
+  aspect-ratio: auto;
+}
+
+.nl-city-scene--pending {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+  height: auto;
+  min-height: 0;
+  padding: 16px;
+  box-sizing: border-box;
+  background: #f5f5f5;
+  transform: none;
+}
+
+.nl-city-pending-title {
+  margin: 0 0 8px;
+  font-size: 18px;
+}
+
+.nl-city-pending-notice {
+  margin: 0 0 16px;
+}
+
+.nl-city-scene--pending .nl-city-hotspots {
+  position: static;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.nl-city-scene--pending .nl-city-hotspot {
+  position: relative;
+  min-height: 44px;
+  max-width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #808080;
+  background: #fff;
+  color: #111;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.nl-city-scene--pending .nl-city-hotspot--district {
+  padding-left: 44px;
+}
+
+.nl-city-scene--pending .nl-city-hotspot::before {
+  content: none;
+}
+
+.nl-city-scene--pending .nl-city-hotspot:hover,
+.nl-city-scene--pending .nl-city-hotspot:focus-visible {
+  background: #fff8d2;
+  outline: 2px solid #725400;
+  outline-offset: -2px;
+}
+
+.nl-city-viewport--pending .nl-city-route-marker {
+  left: 22px;
+  width: 32px;
+  height: 32px;
+}
+
+.nl-city-viewport--pending .nl-city-image-frame {
+  aspect-ratio: auto;
+}
+
+@media (max-width: 700px), (pointer: coarse) {
+  .nl-city-viewport .nl-city-routes {
+    position: relative;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 8px 2px 2px;
+  }
+
+  .nl-city-viewport .nl-city-routes .nl-city-hotspot {
+    position: relative;
+    inset: auto;
+    flex: 1 1 90px;
+    width: auto;
+    height: auto;
+    min-height: 48px;
+    padding: 6px 8px 6px 42px;
+    border: 2px solid #ddc68d;
+    border-radius: 6px;
+    background: #152631;
+    color: #fff7de;
+    font-size: 12px;
+    line-height: 1.25;
+    white-space: normal;
+  }
+
+  .nl-city-routes .nl-city-route-marker {
+    left: 21px;
+    width: 40px;
+    height: 40px;
+  }
+
+  .nl-city-routes .nl-city-route-label {
+    position: static;
+    width: auto;
+    height: auto;
+    margin: 0;
+    overflow: visible;
+    clip: auto;
+    clip-path: none;
+    white-space: normal;
+  }
+
+  .nl-city-viewport .nl-city-routes .nl-city-hotspot:hover,
+  .nl-city-viewport .nl-city-routes .nl-city-hotspot:focus-visible {
+    border-color: #fff;
+    outline: 2px solid #fff0ba;
+    outline-offset: -4px;
+    background: #294654;
+  }
+}
+
+/* Missing-art content keeps the same named controls without image geometry. */
+.nl-city-viewport--pending .nl-city-routes {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 0 16px 16px;
+}
+
+.nl-city-viewport--pending .nl-city-routes .nl-city-hotspot {
+  position: relative;
+  inset: auto;
+  width: auto;
+  height: auto;
+  min-height: 48px;
+  padding: 8px 12px 8px 44px;
+  border: 1px solid #808080;
+  background: #fff;
+  color: #111;
+  white-space: normal;
+}
 
 .nl-city-tooltip {
   position: absolute;
@@ -1029,13 +1216,6 @@ button.nl-city-hotspot,
 
 .nl-city-tooltip[hidden] {
   display: none;
-}
-
-@media (max-width: 940px) {
-  .nl-city-viewport {
-    width: 100%;
-    height: clamp(360px, calc(100dvh - 302px), 600px);
-  }
 }
 
 /* Open-world linked location interiors. This domain owns only the fixed scene,
@@ -1418,10 +1598,6 @@ button.nl-city-hotspot,
 }
 
 @media (max-width: 720px) {
-  .nl-city-viewport {
-    height: clamp(300px, calc(100dvh - 345px), 520px);
-  }
-
   .nl-world-location-viewport {
     width: calc(100% - 12px);
   }

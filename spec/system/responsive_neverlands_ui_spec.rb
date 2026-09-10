@@ -320,7 +320,7 @@ RSpec.describe "Responsive Neverlands UI", type: :system, js: true do
     expect(metrics.fetch("sceneHeight")).to eq(255)
   end
 
-  it "centers the native-pixel City scene in a touch-pannable mobile viewport" do
+  it "fits the whole City image and its native-coordinate hotspots inside a mobile viewport" do
     city = create(
       :zone,
       :city,
@@ -347,7 +347,7 @@ RSpec.describe "Responsive Neverlands UI", type: :system, js: true do
     visit world_path
 
     expect(page).to have_css(".nl-city-scene")
-    expect(page).to have_css(".nl-city-viewport[data-nl-city-map-centered='true']")
+    expect(page).to have_css(".nl-city-viewport[data-nl-scene-size-ready='true']")
     metrics = page.evaluate_script(<<~JS)
       (() => {
         const viewport = document.querySelector(".nl-city-viewport")
@@ -362,8 +362,14 @@ RSpec.describe "Responsive Neverlands UI", type: :system, js: true do
           sceneWidth: scene.offsetWidth,
           sceneHeight: scene.offsetHeight,
           viewportScrollWidth: viewport.scrollWidth,
-          viewportScrollLeft: viewport.scrollLeft,
-          arrowFontSize: getComputedStyle(arrow).fontSize
+          displayedWidth: scene.getBoundingClientRect().width,
+          displayedHeight: scene.getBoundingClientRect().height,
+          arrowWidth: arrow.offsetWidth,
+          arrowHeight: arrow.offsetHeight,
+          arrowImage: arrow.complete && arrow.naturalWidth === 256 && arrow.naturalHeight === 256,
+          routeBelowImage: arrow.closest("button").getBoundingClientRect().top >= scene.getBoundingClientRect().bottom,
+          routeHeight: arrow.closest("button").getBoundingClientRect().height,
+          visibleRouteLabel: getComputedStyle(arrow.closest("button").querySelector(".nl-city-route-label")).position === "static"
         }
       })()
     JS
@@ -372,9 +378,12 @@ RSpec.describe "Responsive Neverlands UI", type: :system, js: true do
     expect(metrics.fetch("viewportWidth")).to be <= metrics.fetch("mainWidth") + 1
     expect(metrics.fetch("sceneWidth")).to eq(1250)
     expect(metrics.fetch("sceneHeight")).to eq(600)
-    expect(metrics.fetch("viewportScrollWidth")).to eq(1250)
-    expect(metrics.fetch("viewportScrollLeft")).to be_positive
-    expect(metrics.fetch("arrowFontSize")).to eq("66px")
+    expect(metrics.fetch("displayedWidth")).to be_within(1).of(390)
+    expect(metrics.fetch("displayedHeight")).to be_within(1).of(390 * 600.0 / 1250)
+    expect(metrics).to include("arrowWidth" => 40, "arrowHeight" => 40,
+      "arrowImage" => true, "routeBelowImage" => true, "visibleRouteLabel" => true)
+    expect(metrics.fetch("routeHeight")).to be >= 48
+    expect(metrics.fetch("arrowImage")).to eq(true)
   end
 
   it "keeps Shop controls and dense tables inside mobile overflow owners" do

@@ -7,16 +7,27 @@
 
 ## Authority and boundaries
 
-Neverlands evidence owns the subject, geography, location boundaries, camera
-and interaction requirements that were actually observed. This guide owns the
+Neverlands evidence owns game subjects, geography, location boundaries and
+interaction meaning. Captured cameras and compositions are reference evidence;
+the project may recompose original art for the adopted adaptive UI contract,
+reauthoring all affected targets with it. This guide owns the
 **project's original illustration style and production workflow**. It does not
 create classes, creatures, equipment, entrances, resource yields or mechanics.
 An illustration of a place is not proof that its gameplay is implemented.
 
 Follow [DOCUMENTATION.md](DOCUMENTATION.md), the relevant domain's evidence and
 design, and [RUBY_ON_RAILS_GUIDE.md](RUBY_ON_RAILS_GUIDE.md) for integration.
-Keep controls, labels, timers, selection outlines and player cursors in semantic
+Keep controls, labels, timers, selection outlines and cursor state in semantic
 HTML/CSS. Paint the terrain, architecture, creatures and people that need art.
+The explicit City artwork request also permits separately generated original
+route-arrow decorations inside semantic buttons. The button still owns its
+accessible destination name, keyboard/focus behavior and server action;
+the decorative image owns none of those responsibilities. This narrow
+exception does not allow arrows or controls baked into a scene background.
+The explicit walking-animation request also permits an original animated GIF
+as the moving cursor's decoration, with a static reduced-motion image. Existing
+server movement state, accessible status text and the idle marker retain their
+owners; the animation cannot choose a destination or change the travel timer.
 Neverlands screenshots may establish layout and behavior; Neverlands artwork,
 logos, sprites and decorative bitmaps must not enter runtime assets.
 
@@ -54,7 +65,7 @@ selectable in gameplay.
 |---|---|---|
 | [Wolf](../app/assets/images/npc/wolf.png), [Scarecrow](../app/assets/images/npc/scarecrow.png) | Detailed painted fur, cloth and wood; sharp readable silhouette; restrained warm highlights; earthy brown/gray materials. | Dark portrait backdrop and dramatic face lighting suit these combat illustrations, not an entire outdoor landscape. Glowing eyes are subject-specific. |
 | [Pathfinder](../app/assets/images/avatars/pathfinder.png), [Ironbound](../app/assets/images/avatars/ironbound.png) | Natural body proportions; weathered leather, iron, timber and fabric; detailed illustrative edges; clear equipment shapes. | Full figure on a pale neutral backdrop. These files do not establish player classes, a portrait selector, or automatic equipment rendering. |
-| [City](../app/assets/images/city.png) | Aged gray masonry, timber framing, terracotta roofs, olive vegetation, warm cobbles; dense connected architecture and matte daylight. | Elevated city-scene camera. Preserve the scene's intended hotspot layout when replacing its art. |
+| [Central Square](../app/assets/images/city/central-square.png) | The same stone, timber, roofs and matte daylight in a complete 25:12 composition. | Full building silhouettes, separated paths and clear foreground; native 1250 × 600 image with matching authored hotspots, no crop. |
 | [Gate](../app/assets/images/gate.png), [Arena](../app/assets/images/arena.png) | Coherent stone blocks, worn wood, small color accents, solid readable architecture. | Isolated building references. Their gray backdrop and framing must not be pasted into an outdoor cell. |
 | [Outdoor terrain](../app/assets/images/world/forpost-terrain.png), [Pond neighborhood](../app/assets/images/world/forpost-pond-landscape.png) | Olive/moss greens, ochre/brown ground, subdued stone, consistent overhead scale and small natural texture variation. | Continuous terrain must join across cell boundaries. The existing repeating texture is not a complete authored geography. |
 
@@ -87,31 +98,88 @@ materials are more useful than attaching every avatar. A change to an existing
 image should be an edit with explicit invariants, not a fresh prompt that
 quietly redesigns the surroundings.
 
+## Shared scene image standard
+
+**ART-SCENE-001** applies to the illustrated City scene and decorative building
+entrance/interior scenes that share its display contract, including Shop.
+Neverlands remains the game-design authority; original artwork, complete
+composition and reliable adaptive presentation are local implementation
+requirements. Follow the mandatory
+[adaptive UI requirements](design/areas/game_client_layout.md#adaptive-ui-requirements)
+when integrating these scenes.
+
+| Requirement | Standard |
+|---|---|
+| Scene ratio | **25:12** for the native composition and displayed scene. |
+| New delivery | **1250 × 600px PNG** in `app/assets/images/`, with the full intended scene composed for that frame. Record any retained older asset exception explicitly. |
+| Encoded dimensions | The pixel dimensions of the file on disk; verify them during packaging. They are not the rendered size. |
+| Native dimensions | The unscaled composition/coordinate plane used by the consumer: 1250 × 600. City geometry is authored in that plane; decorative entrances declare the same ratio through their image dimensions. |
+| Displayed dimensions | The adaptive CSS footprint calculated below from the current gameplay pane and available width. Preserve fractional dimensions and aspect ratio. |
+| Composition | Keep each important building or focal subject complete and identifiable, including roofs, walls, towers and annexes. Allow clearance for the consumer's fit behavior; never solve layout fit by clipping an important subject. Incidental background may extend beyond the frame. |
+| Artwork/UI boundary | No controls, labels, arrows, hover masks, timers or other UI painted into the scene. Semantic controls remain HTML/CSS. Separately generated original City arrow decorations are explicitly authorized under the profile below; no Neverlands-owned imagery. |
+| Shared sizing owner | Reuse `nl-scene-size` and the common pane-derived calculation below. It observes the main pane, player/navigation top bar and scene container. Do not add separate per-building size controllers or fixed mobile/desktop image heights. |
+| Narrow containers | Show the full intended scene inside the available width, reduce height proportionally, and keep the page free of horizontal overflow. Interactive image geometry must scale with the image. |
+| Scope limit | This scene standard does not change item icons, avatars, portraits, world cells, atlases, or linked-location canvases with a separately documented ratio and consumer. Use their own specifications. |
+
+The [September 10 Shop measurement](design/reference/economy/observations/2026-09-10_shop_layout_and_entrance_scale.md)
+establishes the source sizing input. The user's City request adopts that same
+display calculation locally; it is not a new observation of Neverlands City
+sizing. Let `F` be the main gameplay pane's `clientHeight` plus the
+player/navigation top bar's `offsetHeight`, excluding chat, and let `C` be the
+available container width:
+
+```text
+requested_height = min(600, max(300, F × 0.75))
+display_width    = min(C, requested_height × 1250 / 600)
+display_height   = display_width × 600 / 1250
+scene_scale      = display_width / 1250
+```
+
+The 300–600px limits apply to the requested height **before** width containment.
+The maximum is appropriate to this scene consumer, not a global limit on every
+game image. An unconstrained display ranges from 625 × 300px to 1250 × 600px;
+a narrow container can produce a final height below 300px. Fractional CSS
+dimensions are retained so City and Shop align in the same gameplay pane.
+These are sizing examples, not new source captures:
+
+| Gameplay frame `F` | Available width `C` | Displayed scene | Scale |
+|---|---|---|---|
+| 400px or less | At least 625px | 625 × 300px | 0.5 |
+| 600px | At least 937.5px | 937.5 × 450px | 0.75 |
+| 800px or more | At least 1250px | 1250 × 600px | 1 |
+| 800px or more | 820px | 820 × 393.6px | 0.656 |
+| Any supported pane height | 390px | 390 × 187.2px | 0.312 |
+
+For each future scene asset, record its **role**, **asset path and encoded/native
+dimensions**, **fit and crop behavior**, **composition/clearance**, **owning
+consumer**, and **acceptance checks** alongside its production entry. Link
+the exact submitted prompt and the feature handbook's actual browser/test
+results; leave unperformed checks explicit. Acceptance must inspect the image
+in the real consumer at desktop and narrow widths, including complete subject
+visibility and, where interactive, aligned hover/focus/click regions. File
+generation or a correct PNG size alone does not establish acceptance.
+
 ## Decorative building entrance image specifications
 
-All decorative building entrance/interior images use one display contract.
-The [September 10 source measurement](design/reference/economy/observations/2026-09-10_shop_layout_and_entrance_scale.md)
-distinguishes an image's encoded resolution from its on-screen footprint.
-Use this contract when adding another building illustration so that different
-entrances have the same size in the same gameplay pane.
+Decorative building entrance/interior images follow
+[ART-SCENE-001](#shared-scene-image-standard). These consumer-specific rules
+ensure different entrances have the same size in the same gameplay pane.
 
 | Property | Required specification |
 |---|---|
-| Display aspect ratio | 25:12, declared by HTML `width="1250" height="600"` |
-| Preferred delivery size for new assets | 1250 × 600px PNG; a larger original with the same composition may be retained when the shared consumer controls its display dimensions |
-| Source-based display height | `clamp(300px, 75% of source-equivalent gameplay-frame height, 600px)`; locally this is main content pane plus the player/navigation top bar, excluding chat |
-| Corresponding display width | Height × 25/12: 625px at minimum, 1250px at maximum |
-| Narrow-container behavior | Cap width at 100% of the available container and reduce height proportionally; no horizontal page overflow |
+| Native ratio declaration | HTML `width="1250" height="600"`; delivery and adaptive display dimensions follow ART-SCENE-001. |
 | Placement | Centered, with 4px below the image before the building controls |
-| Fit and composition | CSS `aspect-ratio: 1250 / 600` with `object-fit: cover`; supply a 25:12 composition and keep important architecture inside that frame, with no painted buttons, labels, text or target geometry |
+| Fit | CSS `aspect-ratio: 1250 / 600` with `object-fit: cover`. A new standard-ratio asset fills the frame without subject cropping; any retained ratio exception must preserve important subjects within the resulting crop. |
 | Shared consumer | Render `shared/building_entrance` with an explicit `asset:` path; do not give individual buildings separate display heights |
-| Runtime ownership | `app/views/shared/_building_entrance.html.erb`, `app/javascript/controllers/nl_building_entrance_controller.js`, and `.nl-building-entrance` in `app/assets/stylesheets/primitives.css`; the controller observes both `.nl-main-area` and `.nl-top-bar` to match the source frame's vertical extent |
+| Runtime ownership | `app/views/shared/_building_entrance.html.erb`, `app/javascript/controllers/nl_scene_size_controller.js`, and `.nl-building-entrance` in `app/assets/stylesheets/primitives.css`; the `nl-scene-size` controller observes `.nl-main-area`, `.nl-top-bar` and its container, and publishes `--nl-scene-height` |
 | Fallback | A 625 × 300px footprint, still capped to available width, before the controller connects or when a gameplay pane is absent |
 
 The Shop is currently the only illustrated decorative entrance using this
-consumer. Its existing original PNG is **1810 × 869px**; it is retained without
-regeneration or destructive resizing and rendered through the common 25:12
-frame. The exact September 9 generation prompt below remains historical and
+consumer. Its existing original PNG is **1810 × 869px**, a documented retained
+asset exception whose ratio is very close to 25:12. It is retained without
+regeneration or destructive resizing and rendered with `cover` through the
+common frame. This exception does not change the 1250 × 600 delivery requirement
+for new scene assets. The exact September 9 generation prompt remains historical and
 unchanged. No new image prompt was submitted for the September 10 size/layout
 correction.
 
@@ -121,9 +189,139 @@ follows the approximate observed spacing; 10px is not recorded as a precise
 computed source measurement. The shared 4px spacing below the entrance remains
 unchanged.
 
-This specification applies to decorative entrances. City, village and other
-interactive location canvases retain their documented coordinate systems and
-hit regions. An entrance picture must not replace or rescale those canvases.
+The Shop retains its decorative partial; interactive City uses the same
+standard through its own scene renderer, described below.
+
+## Interactive City image specifications
+
+Illustrated City scenes follow [ART-SCENE-001](#shared-scene-image-standard).
+The September 10 user-requested correction adopts the agreed Shop display size
+for all five authored district scenes.
+This is an explicit local presentation adaptation, not a new measurement of
+Neverlands City behavior. The later September 10 regeneration replaces Central
+Square's cropped composition with a complete 25:12 illustration and reauthors
+its masks. The later fresh quarter survey supplies four distinct original
+illustrations and a separate generated arrow decoration. The old `city.png`
+remains retired; a missing explicit scene asset still produces an honest
+unfinished state instead of a borrowed image.
+
+| Property | Required specification |
+|---|---|
+| Central Square asset | Project-owned `app/assets/images/city/central-square.png`, **1250 × 600px PNG**, 25:12, selected by `image_asset` with `image_size: [1250, 600]`. |
+| Other quarter assets | Project-owned `city/residential-quarter.png`, `city/knowledge-quarter.png`, `city/business-quarter.png` and `city/law-quarter.png`; each is **1250 × 600px RGB PNG**, uses its own explicit `image_asset`, native `[1250, 600]` size and zero offset. |
+| Authored coordinate plane | **1250 × 600px, 25:12**. This is the coordinate system for image offsets, native hotspot boxes and box-relative percentage polygons. |
+| Central Square fit | **x = 0px, y = 0px**; the full raster matches the native plane edge for edge. No negative offset, cover crop, or concealed building fragments. |
+| Building clearance | Every Central building/gate silhouette stays at least 12 native pixels from every edge, and at least 40 pixels above the bottom. Full roofs, walls, towers and annexes must be visible and separated enough to trace independent masks; background wall/vegetation may continue beyond the picture. |
+| Missing district art | No implicit image fallback. A zone without explicitly configured artwork renders an unfinished notice and existing action controls, without an illustration, presentation landmarks or scene/tooltip controllers. Names/reasons remain visible; building controls wrap with a 44px minimum height and route controls with a 48px minimum height. The five authored districts now have their own assets. |
+| Display footprint | The shared standard's pane-derived dimensions apply to the inner 25:12 image frame; center it, cap width to the available container and reduce height proportionally. Reflowed route controls add normal-flow height below this frame. |
+| Uniform scale | Display width ÷ 1250; transform the native image, highlighted crops, building hotspots and landmarks together. Desktop route controls use the same scale for their overlay boxes; narrow/coarse layouts reflow those same controls outside the image plane as specified below. |
+| Hit testing and highlighting | Each building's full roof, walls and annexes share one silhouette for its click region and brightened crop. The same CSS polygon clips both; the base image and crop use the same selected asset and `image_size`. Responsive sizing scales them together without rewriting stored coordinates. |
+| Tooltip | Separate unscaled layer, 12px Arial with 14px line height; retain a 15px pointer offset and clamp it inside the displayed viewport |
+| Runtime ownership | `app/views/world/_city_view.html.erb`, its shared `world/_city_action` form renderer, `app/javascript/controllers/nl_scene_size_controller.js`, `app/javascript/controllers/nl_city_map_controller.js`, and City rules in `app/assets/stylesheets/world.css` |
+| Responsive behavior | Observe pane, top-bar and container resizing; update the common scale and hide a stale tooltip; keep the full scene inside the container without page overflow |
+| Crop stability | The illustrated native scene, inner image frame and displayed viewport use `overflow: clip`; keyboard focus and scroll-into-view must never pan any district image inside its plane |
+| Replacement artwork | Deliver a complete 25:12 composition at 1250 × 600px. Reauthor affected masks and route-marker placement alongside it; never solve fit by cutting building edges. Keep architecture identifiable at the smallest display size. No painted labels, controls, arrow glyphs, hover masks or Neverlands-owned imagery. |
+
+The [City hotspot algorithm and authoring QA](features/city.md#431-hotspot-geometry-and-highlight-algorithm)
+defines coordinate conversion, persisted override precedence, polygon
+validation, highlight cropping, layer priority and desktop/mobile checks.
+Author masks against the native 1250 × 600 plane, not a screenshot's scaled
+dimensions. A mask must follow the full visible building; a broad rectangle or
+a successful click at its center does not establish visual coverage.
+
+The initial display-size and geometry-only corrections used no new raster or
+prompt. The later replacement is recorded in
+[Central Square regeneration](#2026-09-10--central-square-complete-2512-composition).
+Sizing alone needs no reseed or data migration; a new catalog asset, dimensions,
+offset and masks must reach their persisted City/Zone owner together through
+the existing seed/content workflow. Retiring the old district-image fallback
+generated no artwork; the later
+[four-quarter production batch](#2026-09-10--four-original-forpost-quarter-scenes)
+records the new illustrations and every exact submitted prompt. Named focal
+subjects are complete and receive authored masks; peripheral background housing
+at image margins is not interactive. Final runtime acceptance remains owned by
+the City handbook rather than this production record.
+
+## City route-arrow decoration specifications
+
+The user explicitly requests original generated RPG navigation arrows for
+City. The [September 10 survey](design/reference/city/observations/2026-09-10_quarter_artwork_and_navigation.md)
+records source directions and the visual reference of ornate pale gold/silver
+with cyan insets. Original artwork must recreate that interaction language
+without copying or using source bitmaps as generation inputs.
+
+- Generate the decoration separately from the quarter scene. It is not a
+  25:12 background and does not inherit the 1250 × 600 scene delivery size.
+- Keep a single semantic button for each server-authored route. Its accessible
+  destination name and keyboard/focus behavior must remain available; the
+  decorative image is hidden from assistive naming and cannot intercept clicks.
+- Use the scene scale for the desktop route region and decoration. On narrow
+  screens or coarse pointers, reflow the same named control below the image
+  at a readable display size. Direction, dimensions, placement and hover/focus
+  presentation belong to the local consumer; no route or destination is
+  inferred from an image filename.
+- Record the actual encoded dimensions, transparency, native display size,
+  direction variants/rotation, consumer and packaging alongside every exact
+  submitted generation/edit prompt. Keep rejected or corrected prompts too.
+- Verify arrows remain distinguishable at supported display sizes, align with
+  their hit regions and lead to their labeled destinations. Asset production
+  is recorded below; the feature handbook owns actual runtime acceptance.
+
+The accepted `city/route-arrow.png` is **256 × 256px RGBA PNG** with an
+east-pointing brass/bronze design and transparent margins. Desktop CSS fills
+the authored route box after applying the common scene scale;
+`object-fit: contain` retains its full square. The retained HTML `64 × 64`
+attributes are not its CSS display size. Rotation uses 45-degree increments
+from east. The user requires retaining the original arrow silhouette while
+improving its palette: CSS applies `grayscale(1) brightness(2.2) contrast(1.15)`
+with dark silhouette-following drop-shadows, producing a pale silver display
+treatment. Hover/focus further brightens that same shape. Do not add a round
+badge, enclosing ring or backplate to the illustrated arrow.
+
+At viewport widths **700px or less**, or with a **coarse primary pointer**, the
+same route buttons reflow below the complete scene. Their minimum height is
+**48 CSS px**, the image is **40 × 40 CSS px**, and the destination label is
+visible wrapped **12px text**. This avoids tiny arrows or enlarged invisible
+hit areas over building silhouettes. Each route keeps one form and one current
+server offer through `world/_city_action`; the consumer owns this responsive
+presentation, not the raster. Missing-art fallback also uses named reflowed
+controls. The visibility correction changed CSS/template consumption only:
+no image was regenerated, cropped, repackaged or given a new prompt.
+
+The source's pale gold/silver and cyan are visual reference evidence. The
+encoded original warm-metal artwork follows the exact submitted prompt;
+the later silver CSS display treatment does not rewrite that production record.
+
+This authorization does not change the prohibition on labels, buttons or
+arrows painted into background illustrations. Historical scene prompts below
+remain unchanged and continue to describe their actual submissions.
+
+## World walking decoration specifications
+
+The user-requested traveller is original project artwork decorating the
+existing movement state, not a copied Neverlands sprite or a player class.
+Eight directions follow the preserved May 9 source observation. The idle CSS
+compass remains unchanged. The existing World controller toggles
+`.nl-cursor-img--moving` and its `data-direction`; CSS selects the directional
+animated/static decoration inside the fixed 100 × 100px cursor.
+
+| Property | Current contract |
+|---|---|
+| Animated assets | Eight `world/traveller-walking-<direction>.gif` files: north, northeast, east, southeast, south, southwest, west and northwest. Each is 96 × 96px with eight full frames. |
+| Loop | 100ms per frame, 800ms repeating indefinitely while the moving state is displayed; this loop is independent of the authoritative travel deadline |
+| Transparency | GIF binary alpha, thresholded at 50%, background disposal; at most 128 palette colors with no dithering |
+| Display | Centered 64 × 64 CSS px inside the existing 100 × 100 cursor; restrained dark drop-shadow |
+| Reduced motion | `prefers-reduced-motion: reduce` selects the matching `world/traveller-walking-<direction>-still.png`, the unthresholded first 96 × 96 RGBA frame |
+| Direction | Server rendering derives the direction from the accepted command's target-minus-origin vector using `Game::Movement::Directions::OFFSETS`; initial click feedback uses the existing offered button's direction. Reload restores the accepted direction. |
+| Source poses | Five generated sheets: East, North, South, Northeast and Southeast. West mirrors East; Northwest mirrors Northeast; Southwest mirrors Southeast. Figures are never rotated as flat images. |
+| Frame placement | Normalize each 4×2 source sheet, then use one union crop across all eight poses in that direction. Scale that common crop to 84px high and center it in the 96px canvas; do not trim or recenter frames independently. |
+| Consumer | `_map` renders movement direction, `nl_world_map_controller.js` maintains the existing cursor state/direction, and `world.css` selects the GIF or corresponding still. |
+| Source/production record | East source retained at `doc/artwork/traveller-walk-sheet.png`; other accepted source sheets use `doc/artwork/traveller-walk-<direction>-sheet.png`. Exact successful/failed prompts and final packaging are recorded below. |
+
+Terrain translation, current coordinates, action availability, countdown text
+and arrival continue through their existing owners. Reduced-motion artwork
+must not stop the server clock or change movement completion. The World
+handbook owns actual animation/reduced-motion/browser acceptance.
 
 ## Shop item and category image specifications
 
@@ -276,6 +474,10 @@ this guide does not independently redefine them.
   reuse overlap during movement. Do not claim that a full map image is sent
   on each step or that physical slicing reduces the initial request count.
   Chunked production may use overlapping references, but final joins must align.
+  The current starter consumer also resolves absent/valid legacy references by
+  the guarded Forpost coordinate, so sparse gameplay data does not leave gaps
+  in an already complete illustration. The World handbook owns exact default
+  precedence and region bounds; this is presentation, not content import.
 - Artwork never decides passability, entrance eligibility, action availability,
   NPC groups or resources. Maintain those authored layers independently and
   visually check that the illustration does not contradict them.
@@ -472,6 +674,10 @@ Constraints: no border, frame, label, legible writing, numbers, statistics, pric
 
 ### 2026-09-09 — Central Square hover silhouettes
 
+Historical record: the later complete Central Square image supersedes these
+masks, and the subsequent unfinished-quarter correction retires `city.png`
+from runtime. The following production history is retained as originally used.
+
 - Evidence: the July City capture's independent highlighted building layers;
   current Shop entry is rechecked in the September 9 purchase observation.
 - Edit type: presentation geometry only. The existing `city.png` bitmap was
@@ -488,6 +694,186 @@ Constraints: no border, frame, label, legible writing, numbers, statistics, pric
   `city.png`; their distinct source building identities need original district
   scenes before silhouette/layout parity can be claimed. This is tracked in
   the City handbook rather than inferred from reused art.
+
+### 2026-09-10 — Central Square complete 25:12 composition
+
+- Request: regenerate the main City illustration after the narrower crop cut
+  the Workshop into a small fragment and clipped the foreground buildings.
+- Source subject/interaction: the existing City evidence and
+  `doc/design/areas/cities_and_buildings.md`; no new service or navigation rule.
+- Mode: built-in imagegen, one accepted generation. Input:
+  `app/assets/images/city.png`, inspected beforehand, used only as a project
+  material/style and subject reference. No Neverlands bitmap was submitted.
+- Selected output: `exec-797c42ac-f237-45db-b75a-067159644449.png`, generated
+  at **1810 × 869px** (the requested 2000 × 960 was advisory).
+- Packaging: `sips --resampleHeightWidth 600 1250 <selected-output> --out app/assets/images/city/central-square.png`.
+  The whole generated frame was resampled to **1250 × 600px**; no crop or
+  padding was applied. The generation's near-25:12 ratio differs by less than
+  0.03%; no building was removed to achieve the final dimensions. Original
+  output remains in the tool's generated-images folder.
+- Runtime: `city/central-square.png` at offset `[0,0]`, with image and
+  hover crops both rendered at the native **1250 × 600** size before uniform
+  responsive scaling. Six action boxes (including two road arrows) and three
+  landmarks are reauthored against the new image. Workshop/Tavern/Guard Tower
+  remain presentation-only landmarks.
+- Integration and fresh browser/test results: `doc/features/city.md`.
+  At initial integration, the other four districts still used `city.png`.
+  The subsequent unfinished-quarter correction retires that runtime asset and
+  fallback; its role as the input to this generation remains historical.
+
+Exact submitted prompt:
+
+```text
+Use case: stylized-concept
+Asset type: original painted interactive Central Square scene for an existing browser RPG.
+Primary request: Regenerate the city composition to fit a WIDE 25:12 frame, ideally 2000 x 960 pixels. The entire picture will be displayed uncropped as a 1250 x 600 scene. Every selectable building must be COMPLETE within the picture, roof peaks, walls, annexes and foundations included, with breathing room to the edges.
+Input image 1: existing project-owned city.png is a STYLE AND SUBJECT reference only. Keep its aged gray masonry, half-timbering, terracotta roofs, muted olive trees, warm cobbles, matte daylight and detailed painted materials. Redesign the composition to solve its badly clipped buildings; do not preserve its crowded 3:2 framing.
+Camera: coherent elevated three-quarter city illustration, broad compact square, readable architecture at a 625 x 300 display size. No cinematic horizon; look down enough to see complete building silhouettes. Buildings are separated by visible cobbled lanes.
+Composition positions below are in a conceptual 1250 x 600 coordinate plane:
+- Upper center: one complete oval stone ARENA with open seating and restrained striped cloth canopies, bounded approximately x440..890 y60..300. It is the main landmark but does not fill the scene or touch an edge. Include its full rear rim and front wall.
+- Upper left: one complete stone GUARD TOWER around x75..185 y65..240. A short adjoining wall leads to the fully visible WEST GATE arch around x35..140 y250..370; the road alone continues off the left edge.
+- Left middle, behind the Shop and beside the tower: one complete two-storey timber TAVERN with red tile roof around x225..385 y150..285.
+- Lower left: one complete SHOP, a broad half-timbered building with a modest square roof turret and a striped merchant awning, around x160..420 y330..520. Its full footprint is inside the scene.
+- Right middle: one complete WORKSHOP with red tile gables, a stone chimney and small attached open timber work canopy around x940..1175 y150..310. Make it substantial, readable and fully inset from the right edge.
+- Lower right: one complete HOSPITAL of gray stone with terracotta gables and a small annex courtyard around x925..1190 y360..525. No red cross signage. All walls, annexes and roof edges fully visible.
+- Center foreground: a small low round fountain and open cobbled plaza, x500..800 y335..470.
+- Keep bottom margin open cobbles/low vegetation, at least 40 scene pixels beneath all building foundations. Two open routes run diagonally toward the bottom left (Business Quarter) and bottom right (Residential Quarter). Those roads need clear space for later HTML arrows; DO NOT PAINT arrows.
+Back edges may show low enclosing stone walls and restrained trees, but no extra large cropped foreground buildings or tall towers cut by frame boundaries. Maintain generous pavement between each named building so independent exact silhouette hotspots can be drawn.
+Lighting: soft matte daylight, clear roof edges and warm restrained highlights, no muddy universal brown filter.
+Constraints: Original project illustration only. No Neverlands-owned artwork, logos or identity. No people, text, letters, labels, signs, UI panels, borders, outlines, arrows, hover effects, watermark, infographic layout or diagram. Fill the rectangular frame with a coherent continuous city environment, no blank letterboxing. Never cut any of the seven named building/gate structures at a canvas edge.
+```
+
+### 2026-09-10 — Four original Forpost quarter scenes
+
+- Source: `doc/design/reference/city/observations/2026-09-10_quarter_artwork_and_navigation.md`.
+  The text briefs use that survey's subjects, broad composition and route
+  relationships; local coordinates are authored against the original outputs.
+- Tool: built-in imagegen, four independent accepted generations. No correction
+  calls or rejected variants occurred for this batch.
+- Input to each generation: `app/assets/images/city/central-square.png`, used
+  only as the original project's material/style reference. No Neverlands
+  bitmap, screenshot, hover layer or arrow was submitted.
+- Source outputs: all four are **1810 × 869px RGB PNGs**, checked from their
+  PNG headers. Each entire frame was resampled to **1250 × 600px RGB PNG** for
+  runtime, without cropping or adding padding. The near-25:12 source ratio
+  differs from the delivery ratio by less than 0.03%.
+- Composition review: every named target building/institution, aircraft and
+  gate remains complete inside the picture. Peripheral background housing,
+  walls and vegetation may reach the image edges and are not hotspot subjects.
+  Knowledge's fountain/armillary ornaments also do not create new actions.
+  Prompt clearances of 30px at the sides/top and 60px at the bottom were
+  authoring targets; actual margins vary. No exact margin compliance is claimed.
+- Runtime contract: each scene has its own explicit image asset, native
+  `[1250, 600]` size, zero offset and matching authored building/landmark masks.
+  Separate generated arrow decorations overlay the open route paths. No
+  service is enabled by merely illustrating its building.
+- Acceptance: the four packaged images were visually inspected and accepted.
+  Final runtime geometry, persisted sync, browser navigation and automated
+  outcomes belong to `doc/features/city.md`; packaging is not that verification.
+
+| Quarter | Selected generated output | Packaged runtime asset |
+|---|---|---|
+| Residential | `exec-89d2682b-bd61-499b-99fb-68c4fa7e95fd.png` | `app/assets/images/city/residential-quarter.png` |
+| Knowledge | `exec-7bf9b935-40a1-429b-946c-cfe29d50760b.png` | `app/assets/images/city/knowledge-quarter.png` |
+| Business | `exec-3b100cb8-6eb7-43d9-9b75-e862aa1ebee3.png` | `app/assets/images/city/business-quarter.png` |
+| Law | `exec-6177777b-6365-4f13-99ed-3d0b1c44654c.png` | `app/assets/images/city/law-quarter.png` |
+
+#### Residential Quarter — exact submitted prompt
+
+```text
+Use case: stylized-concept.
+Asset type: original interactive medieval fantasy city-quarter background for a Rails RPG, new illustration.
+Input image 1 is the project's Central Square STYLE REFERENCE ONLY: preserve its detailed painted weathered stone, half-timbering, muted olive vegetation, warm matte daylight, crisp small architectural detail, coherent isometric three-quarter overhead camera, and believable materials. Do not duplicate Central Square's composition or its large arena.
+Delivery composition: wide 25:12 image, designed for a 1250 by 600 native canvas. Zoom out enough that ALL named subjects, including roofs, spires, walls and annexes, fit completely. Keep important silhouettes at least 30 native pixels from side/top edges and 60 pixels from the bottom. Incidental background houses, forest or perimeter wall may extend beyond the edges. Keep subject silhouettes separated by visible paths so each can have its own accurately traced hover region. No facade hidden behind the foreground edge.
+UI boundary: paint NO arrows, labels, words, numbers, captions, hover glow, selection outlines, interface panels, logos or watermarks. Navigation arrows will be separate HTML button decorations. No people required. Do not copy any Neverlands bitmap; the text brief supplies only observed building identities and broad relationships. This must look like another district of the same original painted city, with its own visual character.
+Quarter: Residential Quarter, a welcoming civic and trading neighborhood. Distinctive palette: warm terracotta and honey timber, cream plaster, restrained colored market cloth and olive garden foliage, consistent natural daylight.
+Exactly five focal subjects: (1) a civic town hall at upper left, solid stone with a tall clock tower and modest corner turrets; (2) a fortified clan hall at upper center, broad crenellated stone facade and a few plain colored banners, no emblems or writing; (3) an airship station on the right: an entire cream-and-muted-red striped dirigible, fully visible, moored above a tall timber docking tower and platform with stairs; (4) a circular market of small canvas stalls and carts around a cobbled open center in the lower middle-left; (5) a small timber-and-plaster post office in the lower left, distinct from the larger hall.
+Compose for clarity: town hall roughly in x75–335/y50–290; clan hall x410–760/y55–285; whole station including airship x865–1190/y45–465; post x60–245/y335–475; market x320–680/y340–510. These are loose composition guides, not painted boxes. Separate neighboring roofs.
+Cobbled routes connect the subjects with incidental modest homes, shrubs and a rear stone wall. Leave empty navigable-looking paths near bottom-left (return west), lower middle-right (southeast), and right edge below the dock (east), without drawing any arrows. Full scene and every aircraft tip inside the frame.
+```
+
+#### Knowledge Quarter — exact submitted prompt
+
+```text
+Use case: stylized-concept.
+Asset type: original interactive medieval fantasy city-quarter background for a Rails RPG, new illustration.
+Input image 1 is the project's Central Square STYLE REFERENCE ONLY: preserve its detailed painted weathered stone, half-timbering, muted olive vegetation, warm matte daylight, crisp small architectural detail, coherent isometric three-quarter overhead camera, and believable materials. Do not duplicate Central Square's composition or its large arena.
+Delivery composition: wide 25:12 image, designed for a 1250 by 600 native canvas. Zoom out enough that ALL named subjects, including roofs, spires, walls and annexes, fit completely. Keep important silhouettes at least 30 native pixels from side/top edges and 60 pixels from the bottom. Incidental background houses, forest or perimeter wall may extend beyond the edges. Keep subject silhouettes separated by visible paths so each can have its own accurately traced hover region. No facade hidden behind the foreground edge.
+UI boundary: paint NO arrows, labels, words, numbers, captions, hover glow, selection outlines, interface panels, logos or watermarks. Navigation arrows will be separate HTML button decorations. No people required. Do not copy any Neverlands bitmap; the text brief supplies only observed building identities and broad relationships. This must look like another district of the same original painted city, with its own visual character.
+Quarter: Knowledge Quarter, a quiet scholarly campus within the medieval city. Distinctive palette: pale gray stone, restrained slate-blue and muted teal accents, warm brass instruments, ivy and neat lawns. Keep the project's matte painted material realism.
+Exactly four focal institutions: (1) a long arched stone library in the upper left/center, with a pitched tiled roof and a modest clock feature; (2) a half-timber general school with multiple gables in the upper right; (3) a magical school in the lower left, expressed as a tall elegant silver-and-brass spire on a stone platform, surrounded by a few narrow stone pylons with very small restrained colored magical lights, not a giant neon effect; (4) a compact circular open training school in the lower right, with stone arcades and plain blue banners. It is a small academic training courtyard, not Central Square's large arena.
+Loose composition: library x185–655/y45–230; general school x770–1180/y55–265; whole magical spire/pylon group x110–385/y265–520; training school x895–1175/y320–520. All towers and pylons complete and visually separated.
+A modest fountain and brass armillary sphere sit in the central connecting plaza as noninteractive ornaments. Stone steps, paths and clipped greenery create a measured academic layout. Leave an open return path toward the upper-left corner, clear of roofs; no painted arrow. Background houses and stone wall remain incidental.
+```
+
+#### Business Quarter — exact submitted prompt
+
+```text
+Use case: stylized-concept.
+Asset type: original interactive medieval fantasy city-quarter background for a Rails RPG, new illustration.
+Input image 1 is the project's Central Square STYLE REFERENCE ONLY: preserve its detailed painted weathered stone, half-timbering, muted olive vegetation, warm matte daylight, crisp small architectural detail, coherent isometric three-quarter overhead camera, and believable materials. Do not duplicate Central Square's composition or its large arena.
+Delivery composition: wide 25:12 image, designed for a 1250 by 600 native canvas. Zoom out enough that ALL named subjects, including roofs, spires, walls and annexes, fit completely. Keep important silhouettes at least 30 native pixels from side/top edges and 60 pixels from the bottom. Incidental background houses, forest or perimeter wall may extend beyond the edges. Keep subject silhouettes separated by visible paths so each can have its own accurately traced hover region. No facade hidden behind the foreground edge.
+UI boundary: paint NO arrows, labels, words, numbers, captions, hover glow, selection outlines, interface panels, logos or watermarks. Navigation arrows will be separate HTML button decorations. No people required. Do not copy any Neverlands bitmap; the text brief supplies only observed building identities and broad relationships. This must look like another district of the same original painted city, with its own visual character.
+Quarter: Business Quarter, an affluent mercantile and ceremonial district. Distinctive palette: sandstone, weathered copper and tawny roof tiles, richer honey-gold accents, subdued greenery; avoid a uniform brown wash.
+Exactly six focal subjects: (1) an ornate merchant/dealer house upper left with a slender facade tower and decorated stonework; (2) a small timber souvenir pavilion lower left with a modest stall awning; (3) a broad auction hall and enclosed stall courtyard across the lower center, complete roofs and frontage; (4) a narrow stone obelisk near the center on a landscaped circular terraced plaza; (5) a round bank at upper right with a shallow weathered copper dome and columned porch; (6) a substantial temple on the lower right with tall pointed windows, a clearly visible conical bell tower, and a long pitched roof.
+Arrange these as six distinct complete silhouettes, not overlapping cutouts. Loose placement: dealer x70–350/y45–285, souvenir x65–250/y340–510, auction x340–770/y365–535, obelisk around x570/y220, bank x920–1180/y45–225, temple x865–1185/y265–515. Leave enough clearance above the temple spire; zoom out rather than clip it.
+Cobbled streets and low gardens connect the subjects. Background half-timber houses establish urban density without hiding the landmarks. Leave an open street corridor toward the top just right of center for the northbound return control; do not paint the control.
+```
+
+#### Law Quarter — exact submitted prompt
+
+```text
+Use case: stylized-concept.
+Asset type: original interactive medieval fantasy city-quarter background for a Rails RPG, new illustration.
+Input image 1 is the project's Central Square STYLE REFERENCE ONLY: preserve its detailed painted weathered stone, half-timbering, muted olive vegetation, warm matte daylight, crisp small architectural detail, coherent isometric three-quarter overhead camera, and believable materials. Do not duplicate Central Square's composition or its large arena.
+Delivery composition: wide 25:12 image, designed for a 1250 by 600 native canvas. Zoom out enough that ALL named subjects, including roofs, spires, walls and annexes, fit completely. Keep important silhouettes at least 30 native pixels from side/top edges and 60 pixels from the bottom. Incidental background houses, forest or perimeter wall may extend beyond the edges. Keep subject silhouettes separated by visible paths so each can have its own accurately traced hover region. No facade hidden behind the foreground edge.
+UI boundary: paint NO arrows, labels, words, numbers, captions, hover glow, selection outlines, interface panels, logos or watermarks. Navigation arrows will be separate HTML button decorations. No people required. Do not copy any Neverlands bitmap; the text brief supplies only observed building identities and broad relationships. This must look like another district of the same original painted city, with its own visual character.
+Quarter: Law Quarter, an austere fortified administrative district. Distinctive palette: cool weathered gray stone, charcoal and desaturated ochre roofs, restrained blue banners, dark olive trees; clear daylight rather than night or horror lighting.
+Exactly four focal subjects: (1) the abode of law/courthouse upper left, a compact fortified hall with round corner towers, conical roofs and plain blue hanging banners; (2) an EMPTY wooden gallows platform toward the rear center, small and clearly separate, no people, bodies, blood or suffering; (3) a circular sunken stone prison on the right, concentric descending interior levels around a slender watchtower, with a moat and one stone footbridge, every part fully visible; (4) a complete city exit gate in the lower left, two round stone towers flanking an arched timber-and-portcullis gateway, whole towers and arch comfortably inside the image.
+Loose placement: law hall x100–425/y50–290; empty gallows x545–735/y90–205; prison/moat/watchtower group x755–1185/y185–505; gate x85–435/y340–535. Keep paths between the hall and gate and around the prison so the four silhouettes do not merge.
+Perimeter walls, subdued town houses and trees frame the district. Leave a clear westbound street at the middle-left edge between the courthouse and gate for the Residential return control; no painted arrow. Preserve the entire gate base and foreground prison wall above the lower clearance margin.
+```
+
+### 2026-09-10 — Original City route-arrow decoration
+
+- Authorization: the explicit request for generated RPG navigation arrows;
+  this is a separate decorative image inside the existing semantic control.
+- Source reference: the fresh quarter survey above records ornate pale
+  gold/silver with cyan insets. The submitted original-art brief deliberately
+  uses warm worn brass/bronze to match project materials; this is local
+  visual adaptation, not an exact color copy of the source control.
+- Tool: built-in imagegen, one accepted output; no correction prompts.
+  No source bitmap or source screenshot was used as an input.
+- Selected output: `exec-9791dfac-617e-4c1a-ae6d-915f95d103f6.png`,
+  **1254 × 1254px RGBA PNG**, verified from its PNG header. The requested
+  512 × 512 composition was advisory rather than the returned dimensions.
+- Runtime asset: `app/assets/images/city/route-arrow.png`,
+  **256 × 256px RGBA PNG**, retaining the whole square image without cropping.
+  The east-pointing design uses actual transparent alpha; it is not a scene
+  background or a replacement for the button's accessible destination name.
+- Initial consumer: `world/_city_view` rendered the same asset at **64 × 64 native
+  pixels** inside an illustrated route control. `world.css` rotates it by the
+  stored direction in 45-degree increments; the shared scene transform then
+  determines its displayed size. The image is `aria-hidden`, has empty alt text,
+  disables dragging and uses `pointer-events: none`. Hover/focus brightens the
+  decoration. Missing-art fallback controls used a 32px decoration. The later
+  CSS/template visibility correction retains this exact generated asset;
+  current sizing, contrast and named responsive controls are specified under
+  [City route-arrow decorations](#city-route-arrow-decoration-specifications).
+- Acceptance: the output was visually accepted for original artwork. Final
+  browser route/hit-region/keyboard verification belongs to the City handbook;
+  generation and packaging alone do not establish that acceptance.
+
+Exact submitted prompt:
+
+```text
+Use case: stylized-concept.
+Asset type: original fantasy RPG city-navigation arrow, a separate decorative raster inside an accessible HTML button.
+Primary request: generate exactly ONE east-pointing arrow on a genuinely transparent background, in a square 512 by 512 composition. The arrow is a bold readable silhouette with a short thick shaft and broad triangular point. Center it, keep every edge inside the central 76 percent of the canvas, and leave clear transparent margins so it can rotate into eight directions without clipping.
+Style and materials: detailed hand-painted fantasy illustration matching the project's weathered medieval stone, timber and warm earthy materials. Use worn golden brass with restrained amber highlights, a dark bronze outer rim, and subtle engraved bevels. It must read clearly when reduced to about 24 to 56 screen pixels over cobblestones and olive-green scenery. Solid crafted metal, controlled contrast, matte texture; not a glossy modern app icon.
+Lighting: shallow painted relief with a restrained highlight and dark edge; no scenery, backdrop, cast shadow outside the arrow, pedestal, frame, medallion or unrelated decoration.
+Constraints: one arrow only; point exactly right/east. No letters, text, numbers, logos, watermarks, border or checkerboard. The background must be actual transparent alpha, not a painted transparency pattern. Original project artwork, no Neverlands bitmap or recognizable copied control.
+```
 
 ### 2026-09-09 — Shop interior
 
@@ -543,6 +929,11 @@ Text: none. No labels, numbers, readable writing, logos, branding, interface con
 
 ### 2026-09-09 — starter map and landmark lobbies
 
+The original starter master from this batch was later superseded by the
+[September 10 sharper repaint](#2026-09-10--sharper-starter-landscape). The
+exact prompts, output choices and packaging record below remain historical;
+the mine/exchange lobby assets retain their existing consumers.
+
 All seven prompts below are the exact strings submitted to the built-in
 `image_gen` tool, including discarded edits. The tool exposed no model selector;
 this record does not claim a particular underlying image model. Draft filenames
@@ -555,7 +946,8 @@ References:
 - [Coordinate/layout guide](artwork/starter-layout.svg), rendered to PNG with
   `rsvg-convert` before generation.
 - [Mine placement guide](artwork/mine-placement.svg), likewise rendered to PNG.
-- [Project City](../app/assets/images/city.png) for stone, timber and roof materials.
+- Historical project City input (`app/assets/images/city.png`) for stone,
+  timber and roof materials; the runtime asset is now retired.
 - [Existing pond landscape](../app/assets/images/world/forpost-pond-landscape.png)
   for terrain/material continuity.
 - [Live landmark evidence](design/reference/world/observations/2026-09-09_starter_landmarks_and_art.md)
@@ -675,6 +1067,19 @@ exchange frontage in4_5, west/east gate openings in6_6 and11_7, and pond dock in
 Buildings and vegetation naturally span adjoining slices. Passability and
 encounter eligibility remain separately authored server data.
 
+The current `world/_map_cell` consumer uses
+`CellArtCatalog.resolve_for_tile(reference, zone:, x:, y:)`. Only the canonical
+outdoor `Outpost Surroundings` region (`1000 × 1000`, source map
+`m_1001_999`) and integer local `x0..20, y2..14` receive the starter coordinate
+default. Missing/empty and valid legacy terrain/pond references select column
+`x`, row `y - 2`; valid custom or deliberately edited starter references win.
+Nonblank invalid references retain generic terrain recovery. Outside that
+guard, the existing explicit/generic behavior remains. This makes neighboring
+gate slices join even when their gameplay rows have not been imported.
+The correction reuses these exact 273 PNGs and master without new generation,
+repackaging, prompts or database writes. Rendering and manual acceptance are
+documented in the [World handbook](features/world.md#continuous-starter-landscape).
+
 Asset dimensions, catalog fallback and marker behavior have executable coverage.
 The 273 files were also reassembled in row/column order and compared with the
 master using ImageMagick's absolute-error metric: zero differing pixels.
@@ -684,6 +1089,366 @@ visible marker. The sheet-wide flag alone never hides an entrance.
 The [World handbook](features/world.md) owns final test/manual outcomes, including
 movement through this landscape and lobby entry/return. Future corrections must
 append their exact prompts here and update the selected-output record.
+
+### 2026-09-10 — sharper starter landscape
+
+- Request: improve the soft outdoor landscape while preserving the complete
+  composition, two gate cells, verified approach paths and other landmark
+  anchors. The earlier repeated-edit master contained baked-in softness;
+  runtime World cells remain 100 CSS px with translation, not CSS zoom or blur.
+- Tool: built-in imagegen; one accepted detailed repaint. Inputs were the
+  **previous** `world/forpost-starter-landscape.png` as the edit/placement target
+  and project-owned `city/central-square.png` as a style-only reference. No
+  Neverlands bitmap or screenshot was submitted.
+- Selected output: `/Users/sesharim/.codex/generated_images/01a08659-67ef-74b0-8f14-48be8f70aac3/exec-e44a7542-dfc0-4045-9490-6fb3c269c096.png`,
+  actual **1593 × 987px PNG**. The prompt requested 4200 × 2600 or the highest
+  available native resolution; the returned file is **not native 4K or 2×
+  Retina artwork**. Packaging does not create that source detail.
+- Packaging: resize the selected whole image once to **2100 × 1300px**, replace
+  `app/assets/images/world/forpost-starter-landscape.png`, and cut the same
+  **273 non-overlapping 100 × 100px PNGs** into
+  `app/assets/images/world/cells/forpost-starter/{column}_{row}.png`. The existing
+  21-column/13-row catalog, physical-slice/master fallback and local `y = row + 2`
+  mapping remain unchanged. No per-cell repaint, independent sharpening filter,
+  enlarged CSS cells, database mutation or gameplay adjustment is involved.
+- Asset review: the repaint visibly resolves architecture, paths and vegetation
+  more clearly. Independent approximate entrance-point inspection kept all six
+  reviewed targets within their existing cells, as shown below. These are
+  sampled painted points, not new authoritative coordinate centers or exact
+  source-building dimensions.
+- Runtime acceptance: the World handbook owns fresh final automated/browser
+  checks after integration. Earlier landscape/manual results do not verify
+  this replacement. The old exact prompts remain preserved above.
+
+| Landmark | Approximate point in generated 1593 × 987 output | Approximate packaged point | Existing art cell |
+|---|---:|---:|---|
+| West gate | `(506,502)` | `(667,661)` | `6_6` |
+| East gate | `(898,569)` | `(1184,749)` | `11_7` |
+| Mine doorway | `(320,284)` | `(422,374)` | `4_3` |
+| Village entrance | `(343,323)` | `(452,425)` | `4_4` |
+| Resource exchange | `(338,393)` | `(446,518)` | `4_5` |
+| Pond dock | `(1004,629)` | `(1324,828)` | `13_8` |
+
+Exact submitted prompt:
+
+```text
+Use case: precise-object-edit / stylized-concept.
+Asset type: original RPG outdoor landscape master for a continuous grid map, high-resolution replacement of an overly soft image.
+Input image 1 is the existing landscape EDIT TARGET and exact composition/placement reference. Input image 2 is the project's Central Square STYLE REFERENCE ONLY: use its crisp architectural detail and clear materials, never its composition.
+
+Repaint the first image as a sharply resolved, richly detailed production game landscape. Preserve its entire geography, camera, roads, city outline, buildings, gate openings, village, mine, resource exchange, pond, dock, vegetation distribution and 21:13 aspect ratio. Request 4200 x 2600 pixels, or the highest available native resolution at the same aspect ratio. Full-bleed image, no frame. This is a true detailed repaint, not a blurred upscale, not a depth-of-field photograph, not a tilt-shift miniature. All foreground and background regions must be equally crisp and legible. Resolve individual stone blocks, roof tiles, wooden beams, narrow path edges, foliage clusters and ripples cleanly, matching the second image's precise illustrated rendering. Retain natural textures without smeared brushwork, gaussian blur, bloom, fog, chromatic aberration, excessive halos or artificial oversharpening.
+
+Exact gameplay alignment is mandatory. Use an invisible 21-column by 13-row grid. Do not paint the grid. Preserve these entrance/action centers and keep each inside its specified cell: western city gateway at column6,row6 (30.95% across,50% down); eastern city gateway at column11,row7 (54.76%,57.69%); village entrance courtyard at column4,row4 (21.43%,34.62%); mine doorway at column4,row3 (21.43%,26.92%); resource exchange doorway at column4,row5 (21.43%,42.31%); pond's west-bank dock approach at column13,row8 (64.29%,65.38%). City gateways must be visibly open and connected to the same outdoor trails. The mine stays immediately north of the village entrance and the exchange immediately south. Exactly one mine, one exchange, one pond and one walled city. Preserve both city gates and their paths. Do not enlarge, shift, delete or add any landmark.
+
+Match our original hand-painted medieval RPG style: warm terracotta and ochre roofs, weathered pale-gray masonry, brown timber, olive and moss-green woodland, clear teal-blue water, natural daytime light with short coherent shadows. Keep the near-orthographic elevated view without a horizon. Architecture and plants may naturally span future cell boundaries; every adjacent region must connect seamlessly. Restrained realistic materials, fine defined forms and readable contrast at game scale. This is a landscape, not a UI mockup.
+
+No people, characters, text, logos, labels, map numbers, coordinate grid, cell borders, selection boxes, arrows, compass, UI controls, watermark, gray panels, duplicated sections or pasted patches. Output only the completed sharp original landscape. Preserve the first image's composition exactly while replacing its softness with genuine visible detail.
+```
+
+### 2026-09-10 — original traveller walking animation
+
+This first east-only integration is historical. Its unsuffixed runtime GIF and
+still were removed when the eight-direction batch below was packaged; the
+accepted source atlas and exact prompt remain the East production input.
+
+- Request: replace the primitive moving figure with an original RPG walking
+  GIF while retaining the idle compass and existing server movement behavior.
+- Tool: built-in imagegen. Selected output:
+  `/Users/sesharim/.codex/generated_images/01a08b2d-e2b6-7cd3-ab50-04ef96167b77/exec-4f3f9fb3-d39d-4ccd-8bf3-29163858b0e1.png`.
+  Actual output is **1774 × 887px RGBA PNG**, not the requested 2048 × 1024.
+  The accepted original is retained unchanged as
+  [traveller-walk-sheet.png](artwork/traveller-walk-sheet.png), 870835 bytes.
+- Packaging: ImageMagick normalizes the full atlas to **1776 × 888px** (about
+  0.113%, preserving its 2:1 ratio), divides it into **four columns × two rows
+  of 444 × 444px**, reads top row left-to-right followed by bottom row, then
+  resizes each frame to **96 × 96px**. No frame order or new painted pose is
+  synthesized by runtime code.
+- Animated output: `app/assets/images/world/traveller-walking.gif`, **17633
+  bytes**, eight full frames at **100ms each**, **800ms infinite loop**,
+  background disposal, a 128-color ceiling and no dithering. GIF's binary
+  transparency uses a 50% alpha threshold.
+- Reduced-motion output: `app/assets/images/world/traveller-walking-still.png`,
+  **96 × 96px RGBA PNG**, **9006 bytes**, from the first frame before the GIF
+  alpha threshold. CSS displays either asset at 64 × 64px inside the same
+  fixed 100px cursor. The complete integration contract is under
+  [World walking decorations](#world-walking-decoration-specifications).
+- No Neverlands bitmap was used. This one right-facing traveller is decorative:
+  it grants no equipment, class, movement direction or timing behavior.
+- Asset packaging and generated frames are separate from final runtime
+  animation, reduced-motion and manual walking acceptance in the World handbook.
+
+Exact submitted prompt:
+
+```text
+Use case: stylized-concept.
+Asset type: ORIGINAL transparent eight-frame walking animation sprite sheet for a small medieval RPG map traveller.
+Primary request: Create one precisely regular 4-column by 2-row sprite sheet, exactly eight full-body images of the SAME adult human traveller walking in place toward the RIGHT in side profile, on a truly transparent RGBA background. Canvas 2048 by 1024 pixels if possible, eight equal square cells. Read animation frames left-to-right across the top row then the bottom row.
+Subject: one modest medieval traveller with a short muted blue-gray hooded shoulder cloak ending at the upper thigh, brown leather vest and belt pouch, neutral tan trousers, dark worn boots. Natural human proportions, hooded head looking right, no weapon, no staff, no shield. Original project character, no game identity, no insignia.
+Style: finely painted classic RPG game sprite, convincing cloth and leather, crisp clean silhouette and clear light-dark separation readable at 64px. Matte diffuse daylight, restrained natural earth colors, soft pale cloth edge highlights. Not cartoon, stick figure, chibi, plastic 3D, sketch or blurred miniature.
+Animation: an actual smooth eight-pose walk cycle, NOT eight repeated standing poses. Frame 1: left boot contacts forward, right boot behind; frame 2: weight lowers onto left leg, right heel lifts; frame 3: right leg passes under hips; frame 4: right knee swings forward, body slightly rises; frame 5: right boot contacts forward, left boot behind; frame 6: weight lowers onto right leg, left heel lifts; frame 7: left leg passes under hips; frame 8: left knee swings forward returning seamlessly into frame 1. Arms swing opposite legs and cloak hem responds slightly. Keep the same outfit, body volume, face orientation and scale throughout.
+Composition: In EVERY equal cell, center the traveller's torso at the exact same horizontal coordinate. Entire head and both boots visible with at least 15 percent empty padding on all sides. Same ground baseline and camera in all cells, small natural vertical walk bob only. No character may cross a cell boundary.
+Constraints: actual transparent background, no checkerboard painted into the image, no ground, no scenery, no cast shadow, no text, no numbers, no labels, no grid lines, no borders, no frame, no watermark, no logos, no symbols, no duplicated extra limbs, no cropped feet. This sheet will be sliced into eight frames, downsampled and encoded as a looping GIF.
+```
+
+### 2026-09-10 — eight-direction traveller animation
+
+This batch extends the original walking decoration to the eight directions
+recorded by the preserved
+[May 9 source observation](design/reference/world/observations/2026-05-09_overworld_movement.md).
+Its `showTransport("man", ..., 8, "gif")` selects directional presentation from
+the accepted movement vector. Original project sprite sheets reproduce that
+presentation distinction; source GIFs are not copied. The initial east-facing
+production record above remains exact history. The final packaging contract
+below applies to all eight directions; runtime acceptance is recorded in the
+World handbook, separately from generation and visual asset review.
+
+All attempts below used built-in imagegen. Referenced requests and their
+background-extraction edits returned opaque checkerboards and were rejected;
+no manual matte conversion or checkerboard image is a runtime asset. Fresh
+unreferenced generations produced the selected real-alpha sheets. Preserve
+all submitted prompts, including those failed attempts.
+
+#### North and South production attempts
+
+Generated-output directory: `/Users/sesharim/.codex/generated_images/01a08b2d-e2b6-7cd3-ab50-04ef96167b77/`. All six outputs measured
+**1774 × 887px**; none achieved the requested 2048 × 1024. The first attempt
+for each direction used the original East project atlas as character/costume
+reference. Its extraction edit used that failed output as target. The final
+selected generation used no image input, retaining the costume through text.
+
+| Direction/attempt | Generated output | Result |
+|---|---|---|
+| North referenced | `exec-84e113c0-1f80-42ea-984a-542a135bb39c.png` | Rejected RGB painted checkerboard |
+| North background extraction | `exec-45c53fa3-ee78-400f-8adf-5ea5ac6cc554.png` | Rejected RGB painted checkerboard |
+| North fresh | `exec-f8a4e38f-1c3f-412e-99b6-34789b00d359.png` | Selected real-alpha RGBA |
+| South referenced | `exec-0cf3b547-a8b5-4f82-b9e1-ba0acc8f2511.png` | Rejected RGB painted checkerboard |
+| South background extraction | `exec-ddc5e51c-3c7d-4e43-beaf-436967354d7c.png` | Rejected RGB painted checkerboard |
+| South fresh | `exec-cb617c4c-2a94-4967-b64a-9b318a31900a.png` | Selected real-alpha RGBA |
+
+##### North referenced generation — exact prompt
+
+```text
+Use case: identity-preserve.
+Asset type: ORIGINAL transparent eight-frame directional walking animation sprite sheet for a small medieval RPG map traveller.
+Input image: the supplied project-owned traveller sheet is a CHARACTER AND COSTUME REFERENCE, not a pose to copy.
+Create a new precisely regular 4-column by 2-row sheet, exactly eight full-body images of this SAME adult human traveller, one natural walking cycle in place. Canvas 2048 by 1024 pixels if possible, eight equal square cells, frames in row-major order.
+Keep this traveller's muted blue-gray hooded short cloak, brown leather vest and belt pouch, tan trousers, dark worn boots, realistic proportions, crisp classic painted RPG sprite style and matte daylight. No weapons, extra equipment, insignia or invented costume. All figures upright: do not rotate a side-facing human sprite.
+DIRECTION REQUIREMENT: Face NORTH: the traveller is walking directly AWAY from the viewer toward the top of the screen. Show the complete BACK of the hood and cloak, not the face, with the alternating boots receding naturally; straight rear view, both shoulders symmetric about vertical. Same scale as reference.
+Animate eight consecutive phases: first foot contact, weight lowers, trailing foot passes, trailing knee comes forward, opposite foot contact, weight lowers onto opposite leg, other foot passes, other knee comes forward into frame1. Arms and cloak hem respond naturally. Eight DISTINCT walking poses, no repeated standing pose.
+Every frame must use identical camera direction, body size, costume and lighting, with torso at the same cell-center horizontal coordinate, feet on the same baseline and only tiny natural walk bob. Entire head and both boots fit inside its cell with clear transparent padding. No figure crossing cell edges.
+Genuinely transparent RGBA background. No ground plane, floor, scenery or cast shadows. No checkerboard pattern, numbers, labels, text, grid, frame, logos or watermark. Keep all 8 subjects fully visible.
+```
+
+##### South referenced generation — exact prompt
+
+```text
+Use case: identity-preserve.
+Asset type: ORIGINAL transparent eight-frame directional walking animation sprite sheet for a small medieval RPG map traveller.
+Input image: the supplied project-owned traveller sheet is a CHARACTER AND COSTUME REFERENCE, not a pose to copy.
+Create a new precisely regular 4-column by 2-row sheet, exactly eight full-body images of this SAME adult human traveller, one natural walking cycle in place. Canvas 2048 by 1024 pixels if possible, eight equal square cells, frames in row-major order.
+Keep this traveller's muted blue-gray hooded short cloak, brown leather vest and belt pouch, tan trousers, dark worn boots, realistic proportions, crisp classic painted RPG sprite style and matte daylight. No weapons, extra equipment, insignia or invented costume. All figures upright: do not rotate a side-facing human sprite.
+DIRECTION REQUIREMENT: Face SOUTH: the traveller is walking directly TOWARD the viewer toward the bottom of the screen. Show the FRONT of the hood, subtle same adult man's face under its shadow and front of the vest; straight front view, both shoulders symmetric about vertical. Same scale as reference.
+Animate eight consecutive phases: first foot contact, weight lowers, trailing foot passes, trailing knee comes forward, opposite foot contact, weight lowers onto opposite leg, other foot passes, other knee comes forward into frame1. Arms and cloak hem respond naturally. Eight DISTINCT walking poses, no repeated standing pose.
+Every frame must use identical camera direction, body size, costume and lighting, with torso at the same cell-center horizontal coordinate, feet on the same baseline and only tiny natural walk bob. Entire head and both boots fit inside its cell with clear transparent padding. No figure crossing cell edges.
+Genuinely transparent RGBA background. No ground plane, floor, scenery or cast shadows. No checkerboard pattern, numbers, labels, text, grid, frame, logos or watermark. Keep all 8 subjects fully visible.
+```
+
+##### North and South background extraction — shared exact prompt
+
+The identical prompt below was submitted twice, once for each direction's
+failed sheet. The distinct edit targets and outputs are recorded above.
+
+```text
+Use case: background-extraction. Edit target: this exact original eight-frame traveller sprite sheet. Remove ONLY the entire painted gray/white checkerboard and any pale background wisps, including the gaps between arms, legs and cloak. Replace the background with REAL transparent alpha pixels in an RGBA PNG; a checkerboard pattern is not transparency. Keep all eight traveller figures, their exact north/south camera direction, costume, facial/cloth/boot details, walking poses, positions, scale, colors and row-major 4-by-2 arrangement unchanged. Preserve complete silhouettes with clean anti-aliased alpha edges. No new background, ground, shadows, labels or text. The output must have an actual alpha channel with fully transparent empty corners and empty cell gutters.
+```
+
+##### North fresh generation — exact prompt
+
+```text
+Use case: stylized-concept.
+Generate an ORIGINAL game-animation sprite sheet with a TRANSPARENT BACKGROUND and real alpha. A 4-column by 2-row arrangement of eight equally spaced full-body sprites, read left-to-right then next row. Exactly one identical medieval adult male traveller in each cell walking in place directly AWAY from the viewer, facing NORTH (top of screen). Show the rear of the hood, back of the cloak and heels. Never show a face or front vest.
+Outfit: muted blue-gray hooded wool shoulder cloak with a short ragged cape falling to upper thigh, cream long sleeves, fitted brown leather vest and belt with one small brown pouch, tan trousers, dark brown tall worn boots. Natural realistic human proportions and classic finely painted RPG sprite treatment, sharply readable silhouette with leather and cloth texture, matte daylight. Upright standing human bodies, never rotate the bitmap.
+Eight distinct sequential walking poses: foot contact, weight down, opposite foot passing, knee forward, opposite contact, weight down, other foot passing, knee forward into loop. Arms swing opposite legs, slight cape movement. Same body height and volume, identical head size, exact same costume throughout.
+Use a wide 2:1 canvas, preferably 2048×1024, with eight equal square cells. Same body-center and baseline per cell; full head and feet visible with empty padding. No scene, ground, shadows, captions, numbers, lines, logos or grid. All empty pixels must be transparent. DO NOT paint a checkerboard or gray/white pattern; output a cutout PNG with genuine alpha, like individual stickers on an empty canvas.
+```
+
+##### South fresh generation — exact prompt
+
+```text
+Use case: stylized-concept.
+Generate an ORIGINAL game-animation sprite sheet with a TRANSPARENT BACKGROUND and real alpha. A 4-column by 2-row arrangement of eight equally spaced full-body sprites, read left-to-right then next row. Exactly one identical medieval adult male traveller in each cell walking in place directly TOWARD the viewer, facing SOUTH (bottom of screen). Show a man's lightly bearded face inside the hood and the front of his leather vest.
+Outfit: muted blue-gray hooded wool shoulder cloak with a short ragged cape falling to upper thigh, cream long sleeves, fitted brown leather vest and belt with one small brown pouch, tan trousers, dark brown tall worn boots. Natural realistic human proportions and classic finely painted RPG sprite treatment, sharply readable silhouette with leather and cloth texture, matte daylight. Upright standing human bodies, never rotate the bitmap.
+Eight distinct sequential walking poses: foot contact, weight down, opposite foot passing, knee forward, opposite contact, weight down, other foot passing, knee forward into loop. Arms swing opposite legs, slight cape movement. Same body height and volume, identical head size, exact same costume throughout.
+Use a wide 2:1 canvas, preferably 2048×1024, with eight equal square cells. Same body-center and baseline per cell; full head and feet visible with empty padding. No scene, ground, shadows, captions, numbers, lines, logos or grid. All empty pixels must be transparent. DO NOT paint a checkerboard or gray/white pattern; output a cutout PNG with genuine alpha, like individual stickers on an empty canvas.
+```
+
+#### Northeast production attempts
+
+Generated-output directory: `/Users/sesharim/.codex/generated_images/01a08659-67ef-74b0-8f14-48be8f70aac3/`.
+
+##### Northeast: Referenced generation — rejected
+
+- Output: `exec-5649f373-84d8-44ec-bd4f-c4f724cfbcce.png` — 1774 × 887px RGB; a checkerboard was painted into the image instead of alpha.
+- Input role: Original east-facing project atlas as character/costume reference.
+
+Exact submitted prompt:
+
+```text
+Use case: precise-object-edit / stylized-concept.
+Asset type: original transparent eight-frame directional walking animation sprite sheet for a medieval RPG map.
+Input image: accepted traveller walking atlas, used as the EXACT character identity, costume, rendering and scale reference.
+Create the NORTHEAST direction variant of this same traveller: walking diagonally AWAY from the viewer and toward screen upper-right, seen from a rear three-quarter view. Show the back and right-facing edge of his hood and cloak, not a front view or a right-only side profile. Head, torso and feet all face northeast. Do not rotate or tilt the whole human like a flat sticker.
+
+Output one precisely regular 4-column by 2-row sheet, eight equal square cells, read left-to-right across the top row then bottom row. Request 2048 x 1024 pixels. Actual transparent RGBA background. One complete pose centered in each cell, same ground baseline and scale. Keep 15 percent clear padding around head, feet and cloak, with no limb crossing a cell boundary.
+
+Preserve the reference character: modest adult human traveller, natural human proportions, short muted blue-gray hooded shoulder cloak ending at upper thigh, brown leather vest and belt pouch, neutral tan trousers, dark worn boots, no weapon, staff or shield. Same finely painted classic RPG sprite materials, crisp silhouette, restrained earth colors, matte diffuse daylight and pale edge highlights readable at 64px.
+
+Eight successive poses of a looping in-place walk in the stated northeast direction: left contact, left down/right heel lift, right passing under hips, right up/swing forward, right contact, right down/left heel lift, left passing under hips, left up/swing forward leading seamlessly into the first pose. Arms swing opposite legs; small natural vertical bob and subtle cloak response. Maintain facing direction and costume in every frame. Include both feet and enough visible leg movement to read the gait from this rear three-quarter camera.
+
+No scenery, floor, cast shadow, checkerboard, grid, labels, text, frame numbers, borders, logo, watermark or extra limbs. Never crop a head or foot. No duplicated identical poses. No new accessories. Output only the eight original transparent northeast walk poses.
+```
+
+##### Northeast: Background-extraction correction — rejected
+
+- Output: `exec-21362594-17a7-49d7-8775-6db5af6b8e7a.png` — 1774 × 887px RGB; the output still contained an opaque checkerboard.
+- Input role: The preceding failed Northeast sheet as the edit target.
+
+Exact submitted prompt:
+
+```text
+Use case: background-extraction.
+Edit target: the provided northeast traveller animation sheet.
+Remove ONLY the entire gray-and-white checkerboard background and return real transparent RGBA pixels in its place. The checkerboard must NOT be painted into the output. Preserve all eight traveller poses, their northeast facing direction, costume, fine painted edges, exact placement, scale, 4-by-2 cell layout and canvas aspect ratio. Do not redraw the characters, change their colors or add ground/shadows. Keep the empty padding fully transparent, including between legs and under cloak edges. Output a genuinely transparent PNG sprite sheet, with no background color, pattern, text or grid.
+```
+
+##### Northeast: Fresh generation — selected
+
+- Output: `exec-08e5e9e3-4b7e-4bca-a973-32932d7c0e2f.png` — 1774 × 887px RGBA with actual transparent pixels.
+- Input role: No image input; the exact text preserves the character brief and facing direction.
+
+Exact submitted prompt:
+
+```text
+Use case: stylized-concept.
+Asset type: ORIGINAL transparent eight-frame walking animation sprite sheet for a small medieval RPG map traveller.
+Create one precisely regular 4-column by 2-row sprite sheet, exactly eight full-body images of the SAME adult human traveller walking in place toward the NORTHEAST, diagonally AWAY from the viewer and toward screen UPPER-RIGHT, in REAR THREE-QUARTER view, on a truly transparent RGBA background. Canvas 2048 by 1024 pixels if possible, eight equal square cells. Read animation frames left-to-right across the top row then the bottom row. Show the back of the hood and cloak, and the traveller's right-side edge, while head, torso and feet all face upper-right. Do not rotate or tilt the whole figure as a flat sticker.
+Subject: one modest medieval traveller with a short muted blue-gray hooded shoulder cloak ending at the upper thigh, brown leather vest and belt pouch, neutral tan trousers, dark worn boots. Natural adult human proportions, no weapon, no staff, no shield. Original project character, no game identity, no insignia.
+Style: finely painted classic RPG game sprite, convincing cloth and leather, crisp clean silhouette and clear light-dark separation readable at 64px. Matte diffuse daylight, restrained natural earth colors, soft pale cloth edge highlights. Not cartoon, stick figure, chibi, plastic 3D, sketch or blurred miniature.
+Animation: an actual smooth eight-pose walk cycle, NOT eight repeated standing poses. Frame 1: left boot contacts forward, right boot behind; frame 2: weight lowers onto left leg, right heel lifts; frame 3: right leg passes under hips; frame 4: right knee swings forward, body slightly rises; frame 5: right boot contacts forward, left boot behind; frame 6: weight lowers onto right leg, left heel lifts; frame 7: left leg passes under hips; frame 8: left knee swings forward returning seamlessly into frame 1. Arms swing opposite legs and cloak hem responds slightly. Keep the same outfit, body volume, northeast orientation and scale throughout.
+Composition: In EVERY equal cell, center the traveller's torso at the exact same horizontal coordinate. Entire head and both boots visible with at least 15 percent empty padding on all sides. Same ground baseline and camera in all cells, small natural vertical walk bob only. No character may cross a cell boundary.
+Constraints: actual transparent background, no checkerboard painted into the image, no ground, no scenery, no cast shadow, no text, no numbers, no labels, no grid lines, no borders, no frame, no watermark, no logos, no symbols, no duplicated extra limbs, no cropped feet. This sheet will be sliced into eight frames, downsampled and encoded as a looping GIF.
+```
+
+#### Southeast production attempts
+
+Generated-output directory: `/Users/sesharim/.codex/generated_images/01a0865a-0186-7781-9552-dea64d71e7ae/`.
+
+##### Southeast: Referenced generation — rejected
+
+- Output: `exec-ef207279-ab41-4cdf-9a3b-39004d36b98f.png` — 1774 × 887px RGB; the background was a painted opaque checkerboard.
+- Input role: Original east-facing project atlas as character/costume reference.
+
+Exact submitted prompt:
+
+```text
+Use case: identity-preserve.
+Asset type: original browser-RPG traveller animation sprite sheet, southeast direction.
+
+Input image1 is the exact CHARACTER IDENTITY, COSTUME, MATERIAL, PROPORTION, and PAINTING-STYLE reference. It is an existing east-facing walk cycle; change only camera-facing direction and the corresponding walk poses. Create this same adult male traveller walking diagonally toward the viewer and toward screen-right (SOUTHEAST, down-right). Every frame must show a front three-quarter view with the face and front of the torso partly visible. The heading remains southeast in all eight frames; this is not a turn animation.
+
+Keep the same muted slate-blue/charcoal hood and short weathered shoulder cape with the long hanging rear cloth, the same off-white/beige long sleeves, brown leather torso/belt and small brown belt pouch, dusty tan trousers, dark brown calf-high leather boots, face, sturdy build and realistic adult proportions. Keep accessories on the same anatomical sides as the reference; do not mirror the costume. Both hands are empty. No sword, shield, staff, weapon, backpack, new accessory, costume redesign, or character substitution. Match the fine, crisp painted material detail and restrained earthy palette of the reference. No cartoon/chibi or pixel art.
+
+One sheet with EXACTLY8 complete, separately isolated full-body sprites in a regular4-column by2-row layout, read row-major left-to-right then top-to-bottom. Prefer canvas2048x1024, a2:1 aspect. Each of the8 equal cells has identical framing, character size, center placement and baseline, with enough transparent margin to contain all hands, feet and cape. All sprites must face southeast; never the east side-view or rear three-quarter northeast. Their steps aim diagonally down-right. Use a fixed slightly elevated orthographic camera, consistent with a classic overhead RPG map.
+
+Animation: eight successive, visibly distinct evenly spaced phases of one natural in-place looping walk cycle. Alternate the legs through contact, recoil, passing and high-point poses, with counter-swinging arms and subtle cape follow-through. Frames1–4 cover one step and frames5–8 the opposite step. Both feet return smoothly into the first pose when the last frame loops. The character's body anchor stays centered in each cell and the contact baseline is consistent; there must be no whole-body drifting between frames. Preserve realistic joint anatomy and stable limb lengths; no foot sliding or duplicate frames.
+
+The background must be genuinely transparent alpha everywhere outside the character, not a drawn checkerboard, black, white, or colored background. No ground plane, cast floor shadow, scenery, text, numbering, labels, grid lines, cell borders, watermark, or UI. Only the eight southeast walk frames on transparent canvas.
+```
+
+##### Southeast: Background-extraction correction — rejected
+
+- Output: `exec-e91a509c-d3d4-4703-9e82-0efa70272736.png` — RGB with another opaque checkerboard; no genuine alpha.
+- Input role: The preceding failed Southeast sheet as the edit target.
+
+Exact submitted prompt:
+
+```text
+Use case: background-extraction.
+The input is an8-frame4-column by2-row southeast traveller walk sprite sheet. Remove ONLY the gray checkerboard background and make those pixels genuinely transparent using the PNG alpha channel. The checkerboard currently exists as opaque pixels; it must disappear completely, not be repainted lighter or darker. Preserve every pixel of the eight traveller figures, their exact poses, southeast heading, costume, face, proportions, positions, scale and layout. Retain fine antialiased edges around boots, hands and the ragged cape. Keep the exact canvas1774x887 and all eight complete figures. Output RGBA PNG with actual alpha0 outside the character silhouettes. No checkerboard, white/black matte, ground, text, grid, shadow, border or other additions. This is transparency extraction only, not a redraw of the character or animation.
+```
+
+##### Southeast: Fresh generation — selected
+
+- Output: `exec-00149983-8280-4712-b4c8-6e120aa110df.png` — 1774 × 887px RGBA with actual transparent pixels.
+- Input role: No image input; the exact text preserves the character brief and facing direction.
+
+Exact submitted prompt:
+
+```text
+Use case: stylized-concept.
+Asset type: original medieval browser-RPG traveller walking sprite sheet with a genuinely transparent background.
+
+Create one production animation sprite sheet showing the same adult male traveller in eight successive walk-cycle poses, all facing SOUTHEAST: diagonally down and right, toward the viewer at a front three-quarter angle. This is a walking cycle in place, not a turn. The face and front of the torso are partly visible in every frame. Use a fixed slightly elevated orthographic camera appropriate for a classic overhead RPG.
+
+Character identity: an ordinary sturdy adult male traveller with realistic adult proportions and a lightly weathered face, wearing a muted slate-blue/charcoal hood, short worn shoulder cape with a longer trailing back panel, an off-white/beige long-sleeved shirt, a fitted dark brown leather vest, brown leather belt and one small brown belt pouch, dusty tan trousers, and dark brown calf-high leather boots. Keep the costume, hood shape, body proportions, face, pouch side, scale and painted details identical across all frames. Hands are empty. No weapons, sword, staff, shield, backpack or additional equipment.
+
+Style: detailed, crisp, realistic painted fantasy-RPG sprite artwork, matte leather and cloth, fine worn textures, restrained earthy palette, soft consistent daylight. Not chibi, cartoon, pixel art or plastic3D. The character should remain readable when reduced to a small map cursor.
+
+Layout: exactly8 isolated full-body sprites in4 equal columns and2 equal rows, row-major left-to-right then top-to-bottom. Prefer2048x1024, exact2:1 aspect. Each cell has equal size, a consistent centered body anchor and ground-contact baseline, generous transparent padding, and the same character scale. Keep all hood, cape, hands and boots fully within the cell. No whole-body drift between frames.
+
+Animation: eight distinct, evenly spaced phases of a natural looping southeast walk. Alternate both legs and counter-swing the arms; show contact, recoil, passing and high-point stages for one step in frames1–4 and the opposite step in frames5–8. Include subtle cape follow-through. Feet point and step diagonally down-right. Stable anatomy, limb lengths and body height; no repeated identical poses, gliding, camera movement or direction changes. The last frame must lead naturally back into the first.
+
+Output a PNG with an ACTUAL TRANSPARENT ALPHA CHANNEL, alpha0 everywhere outside the character silhouettes. The background is empty and transparent. Do not paint a checkerboard or any background color. No ground plane, floor, cast shadow, scenery, grid, frame borders, labels, text, numbers, watermark or UI. Only the eight character figures on transparency.
+```
+
+#### Final eight-direction packaging and integration
+
+The five accepted originals are preserved at
+`doc/artwork/traveller-walk-sheet.png` (East) and
+`doc/artwork/traveller-walk-{north,south,northeast,southeast}-sheet.png`.
+Each is a real-alpha 1774 × 887px sheet. Final packaging supersedes the first
+East-only straight resize:
+
+1. Resize the whole 2:1 sheet to 1776 × 888px, then slice 4 × 2 equal
+   444 × 444px cells in row-major order.
+2. Measure each frame's alpha silhouette at a 50% threshold and take their
+   union within that direction. Apply the **same** crop to all eight frames;
+   the exact boxes below are expressed as `width×height+left+top`. Do not
+   individually trim/recenter poses, which would introduce positional jitter.
+3. Resize the shared crop to 84px high and center each result in a transparent
+   96 × 96px canvas. Preserve RGBA for the frame PNGs.
+4. Horizontally mirror the finished East frames for West, Northeast for
+   Northwest, and Southeast for Southwest. North and South have their own
+   generated front/back poses; no flat rotation stands in for those views.
+5. Encode eight full frames per GIF at 100ms each, an 800ms infinite loop,
+   background disposal, 128-color ceiling, no dithering and binary alpha
+   thresholded at 50%. Save the unthresholded first RGBA frame as its still.
+
+Runtime names are `world/traveller-walking-<direction>.gif` and
+`world/traveller-walking-<direction>-still.png`. The preliminary unsuffixed
+files were removed. No failed checkerboard output is shipped.
+
+| Direction | Common source-frame crop or mirror | GIF bytes | Still PNG bytes |
+|---|---|---:|---:|
+| north | `239x421+107+10` | 17293 | 6980 |
+| northeast | `184x404+136+18` | 16636 | 7298 |
+| east | `266x391+101+19` | 17473 | 8806 |
+| southeast | `249x433+90+6` | 17595 | 7820 |
+| south | `280x425+84+5` | 18732 | 7499 |
+| southwest | Mirror southeast | 17640 | 7818 |
+| west | Mirror east | 17495 | 8783 |
+| northwest | Mirror northeast | 16618 | 7273 |
+
+The eight GIFs display at 64 × 64 CSS px in the fixed 100px cursor; reduced
+motion selects the matching still. Server rendering maps the active command's
+coordinate delta through the existing direction offsets, and the controller
+preserves that data on resume while clearing it for idle/rejected movement.
+Immediate click feedback uses the offered button's direction. Sprite selection
+cannot authorize a destination, move a character or complete the server timer.
+
+Visual asset review covered all 64 packaged poses across eight directions.
+Fresh automated and manual gameplay acceptance is recorded in the World
+handbook, separately from this production review.
 
 ### 2026-09-08 — preserved pond-neighborhood prompt
 

@@ -36,7 +36,7 @@ a:hover {
  * 300–600px pane-dependent height. Narrow clients cap the width while keeping
  * the ratio. Interactive city/location scenes retain their own geometry. */
 .nl-building-entrance {
-  width: min(100%, calc(var(--nl-entrance-height, 300px) * 1250 / 600));
+  width: min(100%, calc(var(--nl-scene-height, 300px) * 1250 / 600));
   margin: 0 auto 4px;
 }
 
@@ -441,7 +441,9 @@ input[type="radio"] {
  * ---------------------------------------------------------------- */
 
 .nl-flash {
-  display: block;
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
   padding: 3px 6px;
   border: 1px solid var(--nl-rule-gold);
   background: var(--nl-surface-header);
@@ -452,6 +454,23 @@ input[type="radio"] {
 .nl-flash--alert { color: var(--nl-bonus); }
 
 .nl-flash--notice { color: #006600; }
+
+.nl-flash-message { flex: 1; overflow-wrap: anywhere; }
+
+.nl-flash-dismiss {
+  flex: 0 0 auto;
+  padding: 0 3px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.nl-flash-dismiss:focus-visible {
+  outline: 1px solid currentColor;
+  outline-offset: 1px;
+}
 
 .nl-public-main {
   width: 100%;

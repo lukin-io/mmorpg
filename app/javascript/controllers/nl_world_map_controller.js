@@ -35,6 +35,7 @@ export default class extends Controller {
     movementTotalSeconds: { type: Number, default: 0 },
     movementDeltaX: { type: Number, default: 0 },
     movementDeltaY: { type: Number, default: 0 },
+    movementDirection: String,
     movementEndsAt: String,
     workActive: { type: Boolean, default: false },
     workEndsAt: String,
@@ -291,7 +292,7 @@ export default class extends Controller {
     if (!targetX || !targetY || !actionKey || !direction) return
 
     this.setMovementControlsLocked(true)
-    this.setCursorMoving(true)
+    this.setCursorMoving(true, direction)
     this.submitMoveForm({ direction, targetX, targetY, actionKey })
   }
 
@@ -332,12 +333,13 @@ export default class extends Controller {
     this.setCursorMoving(false)
   }
 
-  setCursorMoving(isMoving) {
+  setCursorMoving(isMoving, direction = this.movementDirectionValue) {
     if (!this.hasCursorImgTarget) return
 
     this.cursorImgTarget.className = isMoving
       ? "nl-cursor-img nl-cursor-img--moving"
       : "nl-cursor-img nl-cursor-img--idle"
+    this.cursorImgTarget.dataset.direction = isMoving ? direction : ""
   }
 
   // =====================

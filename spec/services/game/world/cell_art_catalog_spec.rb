@@ -5,6 +5,85 @@ require "rails_helper"
 RSpec.describe Game::World::CellArtCatalog do
   before { described_class.reload! }
 
+  describe ".resolve_for_tile" do
+    let(:zone) do
+      Zone.new(name: "Outpost Surroundings", location_type: "outdoor", width: 1000, height: 1000,
+        metadata: {"source_map" => "m_1001_999"})
+    end
+
+    it "resolves every sparse starter coordinate to its own continuous landscape slice without SQL" do
+      region = zone
+      queries = []
+      subscriber = ->(*arguments) { queries << arguments.last.fetch(:sql) }
+      presentations = []
+      ActiveSupport::Notifications.subscribed(subscriber, "sql.active_record") do
+        (0..20).each do |x|
+          (2..14).each do |y|
+            art = described_class.resolve_for_tile(nil, zone: region, x:, y:)
+            expect(art).to have_attributes(key: "forpost_starter", column: x, row: y - 2,
+              asset: "world/cells/forpost-starter/#{x}_#{y - 2}.png")
+            presentations << art.asset
+          end
+        end
+      end
+
+      expect(presentations.uniq.size).to eq(273)
+      expect(queries).to be_empty
+    end
+
+    it "uses the same coordinate default for the two retired starter-art defaults" do
+      %w[forpost_terrain forpost_pond].each do |key|
+        art = described_class.resolve_for_tile({"key" => key, "column" => 1, "row" => 1}, zone:, x: 11, y: 9)
+        expect(art).to have_attributes(key: "forpost_starter", column: 11, row: 7)
+        expect(art.painted_building?("outpost_east_gate")).to be(true)
+        expect(art.painted_building?("moved_gate")).to be(false)
+      end
+    end
+
+    it "preserves independently authored art and deliberately edited starter coordinates" do
+      config = described_class.config.deep_dup
+      config["managed_art"] = config.fetch("forpost_terrain").deep_dup
+      allow(described_class).to receive(:config).and_return(config)
+      ["managed_art", "forpost_starter"].each do |key|
+        art = described_class.resolve_for_tile({"key" => key, "column" => 3, "row" => 4}, zone:, x: 11, y: 9)
+        expect(art).to have_attributes(key:, column: 3, row: 4)
+      end
+    end
+
+    it "does not replace an explicit invalid reference with a different semantic artwork selection" do
+      ["malformed", {"key" => "missing_custom_art"}, {"key" => "forpost_starter", "column" => 21}].each do |reference|
+        expect(described_class.resolve_for_tile(reference, zone:, x: 11, y: 9)).to be_nil
+      end
+    end
+
+    it "does not extend the starter illustration outside its captured rectangle" do
+      [[-1, 9], [21, 9], [11, 1], [11, 15], [nil, 9], [11, "9"]].each do |x, y|
+        expect(described_class.resolve_for_tile(nil, zone:, x:, y:)).to be_nil
+      end
+      reference = {"key" => "forpost_terrain", "column" => 1, "row" => 1}
+      expect(described_class.resolve_for_tile(reference, zone:, x: 21, y: 9)).to have_attributes(key: "forpost_terrain")
+    end
+
+    it "requires the canonical region name, type, bounds and source identity" do
+      [{name: "Another region"}, {location_type: "city"}, {width: 999}, {height: 999},
+        {metadata: {"source_map" => "another_source"}}].each do |attributes|
+        other = zone.dup
+        other.assign_attributes(attributes)
+        expect(described_class.resolve_for_tile(nil, zone: other, x: 11, y: 9)).to be_nil
+      end
+      expect(described_class.resolve_for_tile(nil, zone: nil, x: 11, y: 9)).to be_nil
+    end
+
+    it "retains the valid legacy reference if the starter asset is unavailable" do
+      config = described_class.config.deep_dup.except("forpost_starter")
+      allow(described_class).to receive(:config).and_return(config)
+      reference = {"key" => "forpost_terrain", "column" => 1, "row" => 1}
+
+      expect(described_class.resolve_for_tile(reference, zone:, x: 11, y: 9)).to have_attributes(key: "forpost_terrain")
+      expect(described_class.resolve_for_tile(nil, zone:, x: 11, y: 9)).to be_nil
+    end
+  end
+
   describe ".resolve" do
     let(:valid_definition) do
       {

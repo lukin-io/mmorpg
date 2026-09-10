@@ -57,17 +57,22 @@ RSpec.describe Game::World::CityCatalog do
   end
 
   it "makes the existing Law Quarter gate an action without a duplicate landmark" do
-    expect(described_class.hotspot_presentation("forpost4", "east_gate")).to eq(
-      "box" => [46, 343, 371, 257]
-    )
+    expect(described_class.hotspot_presentation("forpost4", "east_gate")).to include("polygon")
     expect(described_class.presentation("forpost4").fetch("landmarks")).not_to have_key("city_exit")
   end
 
-  it "uses the observed native scene and project image dimensions" do
+  it "gives all five districts distinct complete artwork at the shared native scene size" do
     expect(described_class::SCENE_WIDTH).to eq(1250)
     expect(described_class::SCENE_HEIGHT).to eq(600)
-    expect(described_class::IMAGE_WIDTH).to eq(1536)
-    expect(described_class::IMAGE_HEIGHT).to eq(1024)
+    assets = described_class::PRESENTATIONS.values.map { |presentation| presentation.fetch("image_asset") }
+    expect(assets.uniq.size).to eq(5)
+    described_class::PRESENTATIONS.each_value do |presentation|
+      expect(presentation).to include("image_size" => [1250, 600], "image_offset" => [0, 0])
+      image_header = File.binread(Rails.root.join("app/assets/images", presentation.fetch("image_asset")), 24)
+      expect(image_header[0, 8]).to eq("\x89PNG\r\n\x1a\n".b)
+      expect(image_header[16, 8].unpack("NN")).to eq([1250, 600])
+      expect(presentation.fetch("landmarks")).to be_present
+    end
   end
 
   it "defines pixel geometry for every seeded city action" do
@@ -89,33 +94,36 @@ RSpec.describe Game::World::CityCatalog do
         expect(top).to be_between(0, described_class::SCENE_HEIGHT)
         expect(width).to be_positive
         expect(height).to be_positive
+        expect(left + width).to be <= described_class::SCENE_WIDTH
+        expect(top + height).to be <= described_class::SCENE_HEIGHT
       end
     end
   end
 
   it "keeps current Central Square and Residential Quarter geometry explicit" do
     expect(described_class.hotspot_presentation("main", "shop")).to include(
-      "box" => [0, 165, 402, 360]
+      "box" => [98, 245, 314, 225]
     )
     expect(described_class.hotspot_presentation("main", "go_forpost1")).to include(
-      "box" => [900, 496, 68, 104],
+      "box" => [933, 511, 76, 80],
       "direction" => "southeast"
     )
-    expect(described_class.presentation("forpost1").dig("landmarks", "clan_hall")).to include(
-      "name" => "Clan Hall"
-    )
+    expect(described_class.hotspot_presentation("forpost1", "go_main")).to include("direction" => "west")
   end
 
-  it "gives each Central Square building an original-art silhouette inside the scene" do
-    presentation = described_class.presentation("main")
-    buildings = presentation.fetch("hotspots").except("go_forpost3", "go_forpost1")
-      .merge(presentation.fetch("landmarks"))
+  it "gives every named building a bounded original-art silhouette inside its scene" do
+    buildings = described_class::PRESENTATIONS.values.flat_map do |presentation|
+      presentation.fetch("hotspots").reject { |key, _| key.start_with?("go_") }
+        .merge(presentation.fetch("landmarks")).values
+    end
 
-    buildings.each_value do |geometry|
+    buildings.each do |geometry|
       expect(described_class.valid_polygon?(geometry.fetch("polygon"))).to be(true)
       x, y, width, height = geometry.fetch("box")
-      expect(x + width).to be <= described_class::SCENE_WIDTH
-      expect(y + height).to be <= described_class::SCENE_HEIGHT
+      expect(x).to be >= 12
+      expect(y).to be >= 12
+      expect(x + width).to be <= described_class::SCENE_WIDTH - 12
+      expect(y + height).to be <= described_class::SCENE_HEIGHT - 40
     end
   end
 
@@ -125,5 +133,24 @@ RSpec.describe Game::World::CityCatalog do
     expect(described_class.presentation(nil)).to be_nil
     expect(described_class.hotspot_presentation("main", nil)).to be_nil
     expect(described_class.hotspot_presentation("forpost99", "arena")).to be_nil
+  end
+
+  it "excludes the foreground Shop spire from the Guard Tower highlight" do
+    tower = described_class.presentation("main").fetch("landmarks").fetch("guard_tower")
+    shop = described_class.hotspot_presentation("main", "shop")
+    expect(contains_scene_point?(tower, [244, 283])).to be(false)
+    expect(contains_scene_point?(shop, [244, 283])).to be(true)
+    expect(contains_scene_point?(tower, [145, 188])).to be(true)
+  end
+
+  def contains_scene_point?(geometry, point)
+    left, top, width, height = geometry.fetch("box")
+    vertices = geometry.fetch("polygon").map { |u, v| [left + width * u / 100.0, top + height * v / 100.0] }
+    x, y = point
+    vertices.each_index.count do |i|
+      ax, ay = vertices[i]
+      bx, by = vertices[(i + 1) % vertices.length]
+      ((ay > y) != (by > y)) && x < ax + (y - ay) * (bx - ax) / (by - ay)
+    end.odd?
   end
 end

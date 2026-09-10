@@ -5,7 +5,7 @@ RSpec.describe "shared/_building_entrance", type: :view do
     render partial: "shared/building_entrance", locals: {asset: "shop/interior.png"}
 
     document = Nokogiri::HTML.fragment(rendered)
-    entrance = document.at_css(".nl-building-entrance[data-controller='nl-building-entrance']")
+    entrance = document.at_css(".nl-building-entrance[data-controller='nl-scene-size']")
     image = entrance.at_css("img.nl-building-entrance__image")
 
     expect(entrance["aria-hidden"]).to eq("true")

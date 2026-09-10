@@ -124,11 +124,13 @@ RSpec.describe "World Map Navigation", type: :system do
       position.update!(zone: city_zone, x: 7, y: 7)
     end
 
-    it "displays city view for city zones" do
+    it "displays an unfinished city view when no illustration is authored" do
       visit world_path
 
       expect(page).to have_css(".city-view-container")
-      expect(page).to have_css(".nl-city-scene img.nl-city-scene-image")
+      expect(page).to have_css(".nl-city-scene--pending")
+      expect(page).to have_content("This quarter is not ready yet.")
+      expect(page).not_to have_css(".nl-city-scene-image")
     end
 
     it "shows city description" do

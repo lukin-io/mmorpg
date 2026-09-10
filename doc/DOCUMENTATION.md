@@ -7,6 +7,14 @@ many competing documents.
 
 Neverlands remains the sole game-design authority.
 
+Modern adaptive presentation is a project requirement: preserve source-backed
+game behavior while making the UI usable across screen sizes and input modes.
+The canonical shared standards are
+[adaptive UI requirements](design/areas/game_client_layout.md#adaptive-ui-requirements)
+and [scene image specifications](ARTWORK.md#shared-scene-image-standard).
+Historical source measurements remain evidence; they do not prohibit these
+deliberate implementation improvements.
+
 ## 1. Truth layers and ownership
 
 | Layer | Canonical owner | Question it answers | Must not claim |
@@ -231,6 +239,8 @@ Allowed to reproduce or adapt:
   typography, colors, and CSS-driven behavior;
 - game-domain terminology and local wording that preserves observed meaning;
 - responsive reflow of the same information/controls;
+- adaptive spacing, control sizing and image/target scaling under the shared
+  local requirements, preserving gameplay meaning and access;
 - project-owned CSS, semantic HTML, and text controls such as `X`, `>`, `+`,
   `-`, or short labels.
 
@@ -256,10 +266,14 @@ cannot communicate clearly.
 7. Extend the existing Rails/content/style pipeline; do not create duplicates.
 8. Add applicable focused tests while implementing.
 9. Review the stable diff using `doc/RUBY_ON_RAILS_GUIDE.md`.
-10. Verify desktop fidelity and required tablet/mobile usability when UI changed.
-11. Update the feature handbook after behavior is verified.
-12. Promote parity only when its bounded definition of Done is met.
-13. Run proportional verification from `AGENTS.md`.
+10. Update the feature handbook to reflect verified behavior and pending checks.
+11. Run proportional automated verification from `AGENTS.md`.
+12. After automated checks pass, perform the final local browser flow and
+    applicable adaptive UI checks under
+    [manual browser acceptance](../AGENTS.md#manual-browser-acceptance).
+13. Record actual automated/manual results, tested sizes/input modes, and gaps;
+    audit any resulting documentation edits. Promote parity only when its
+    bounded definition of Done, including applicable browser acceptance, is met.
 
 No implementation receipt, profile declaration, or mandatory session changelog
 is part of this flow.

@@ -2,13 +2,14 @@
 
 - Document type: neverlands-source-summary
 - Domain: world
-- Updated: 2026-09-09
+- Updated: 2026-09-10
 - Evidence status: current for the bounded World implementation
 
 ## Current observations
 
 | Flow/state | Observation | Status |
 |---|---|---|
+| Outdoor Forpost city footprint and both gate Enter returns | `doc/design/reference/world/observations/2026-09-10_forpost_gate_presentation.md` | current authenticated live comparison; broad continuous multi-cell city and distinct Central/Law returns; footprint is approximate, not new gate geometry |
 | Bounded starter atlas topology, NPC/resource annotations, and coordinate correspondence | `doc/design/reference/world/observations/2026-09-09_starter_atlas.md` | current public atlas evidence; 312 surveyed cells, 273 fitting the local zone; live offers take precedence |
 | Rechecked starter routes and reciprocal east-gate handoff | `doc/design/reference/world/observations/2026-09-09_starter_routes.md` | current authenticated live capture; east Enter returns to Law; Main reaches Law through Residential |
 | Nearby mine/exchange entry, lobby sections and outdoor return; starter asset provenance | `doc/design/reference/world/observations/2026-09-09_starter_landmarks_and_art.md` | current bounded capture; original artwork and local runtime checks remain separate from Neverlands evidence |
@@ -31,6 +32,11 @@
 
 - Outdoor cells use 100×100 presentation tiles and server-issued movement
   destinations/action keys.
+- The September 10 gate comparison shows Forpost as a broad continuous
+  multi-cell city, approximately seven to eight columns by three rows in the
+  inspected view. The top-bar Enter control at the western gate returns to
+  Central; the eastern control returns to Law. Illustration extent does not
+  define additional entry cells or replace the captured gate coordinates.
 - The desktop viewport shows a centered fixed cursor while terrain moves during
   a timed step.
 - Current-cell context may expose buildings or local actions; hidden hostile

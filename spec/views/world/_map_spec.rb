@@ -159,6 +159,30 @@ RSpec.describe "world/_map.html.erb", type: :view do
   end
 
   describe "tile rendering" do
+    it "renders a continuous eastern-gate neighborhood around sparse content without materializing gameplay cells" do
+      zone.update!(name: "Outpost Surroundings", width: 1000, height: 1000, metadata: {"source_map" => "m_1001_999"})
+      position.update!(x: 11, y: 9)
+      create(:map_tile_template, zone: zone.name, x: 11, y: 9,
+        metadata: {"source_map" => "m_1005_1001", "cell_art" => {"key" => "forpost_starter", "column" => 11, "row" => 7}})
+      create(:map_tile_template, zone: zone.name, x: 4, y: 6,
+        metadata: {"source_map" => "m_998_998", "cell_art" => {"key" => "forpost_terrain", "column" => 4, "row" => 6}})
+      rows = Game::World::MapBuffer.new(position:).call.rows
+      original_cells = MapTileTemplate.order(:id).map(&:attributes)
+      original_position = position.attributes
+
+      render partial: "world/map", locals: {position:, nearby_tiles: rows, zone:, tile_data: {}}
+
+      document = Nokogiri::HTML.fragment(rendered)
+      expect(document.css("[data-cell-art-key='forpost_starter']").size).to eq(135)
+      rows.flatten.each do |tile|
+        style = document.at_css("#tile_#{tile.x}_#{tile.y}")["style"]
+        expect(style).to include("world/cells/forpost-starter/#{tile.x}_#{tile.y - 2}", "background-size: 100px 100px")
+      end
+      expect(rendered).not_to include("world/forpost-terrain")
+      expect(MapTileTemplate.order(:id).map(&:attributes)).to eq(original_cells)
+      expect(position.reload.attributes).to eq(original_position)
+    end
+
     it "renders tiles with correct data attributes" do
       render partial: "world/map", locals: {
         position: position,

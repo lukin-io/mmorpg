@@ -3,7 +3,7 @@
 title: World Feature
 description: Implementation handbook for the Neverlands-based open world, cells, movement, cell content, actions, and persisted player location.
 status: Partially Implemented
-updated: 2026-09-09
+updated: 2026-09-10
 owners: Game world, movement, and world UI
 template: feature-v1
 ---
@@ -34,6 +34,7 @@ Supporting documents:
 - `doc/design/reference/world/observations/2026-05-09_overworld_movement.md`
 - `doc/design/reference/world/observations/2026-09-08_cell_content_and_world_rules.md` — live movement observations.
 - `doc/design/reference/world/observations/2026-09-09_starter_atlas.md` — bounded source topology and pool annotations.
+- `doc/design/reference/world/observations/2026-09-10_forpost_gate_presentation.md` — fresh broad city-footprint comparison and both Enter returns.
 - `doc/design/reference/world/observations/2026-09-09_starter_encounter_authoring.md` — captured profile reuse and the user-reported interval.
 - `doc/design/reference/world/observations/2026-09-09_starter_landmarks_and_art.md` — linked landmark entry/return and starter artwork provenance.
 - `doc/ARTWORK.md` — project illustration style and asset integration workflow.
@@ -216,14 +217,17 @@ The surrounding game shell owns navigation, character status, presence, inventor
   content change or invalid presentation token rebuilds the bounded buffer.
 - Starter presentation: one continuous `2100 × 1300` project-owned landscape,
   delivered as 273 physical `100 × 100` PNG slices. A missing slice uses its
-  matching master crop. Outside this authored area, coordinate-derived
+  matching master crop. The bounded coordinate default also covers cells with
+  no gameplay row or a retained legacy art reference. Outside this authored area, coordinate-derived
   `world/forpost-terrain.png` crops remain the fallback.
 - Explicit cell art: a `MapTileTemplate` may select a validated catalog key and
   sheet coordinate; the configured art replaces the default slice for that
   exact cell while remaining fixed at `100 x 100`.
 - Current position: a fixed 100 × 100 overlay in the center of the viewport.
 - Available destination: thin dark-red 1px border, matching the observed Neverlands selection language.
-- Active movement: the map layer translates toward the target while the cursor remains centered.
+- Active movement: the map layer translates toward the target while an original
+  walking GIF remains centered in the cursor; reduced-motion preferences select
+  its static first frame. The idle compass remains unchanged.
 - Countdown: a compact red capsule one cell above the cursor.
 
 `nl_world_map_controller.js` applies the captured odd-cell sizing rule to the
@@ -358,6 +362,16 @@ The eastern path is Main → Residential → Law → outdoor `[11,9]` → `[12,1
 City handoffs are immediate; outdoor steps use the existing server-owned timed
 movement pipeline. Both gates are available to level-zero characters. The
 September 9 live reverse entry confirms Law as the eastern return node.
+
+For an existing development database with missing/stale gate content,
+`Seeds::ForpostGateRepair` reconciles these exact gate pairs and their bounded
+26-cell gate/eastern-path neighborhood without running the other seed phases.
+It uses the normal cell/gate attribute builders, preserves managed cells and
+rejects conflicts transactionally. The
+[City handbook](city.md#521-bounded-repair-owner) owns its public contract and
+verification; the [content-management guide](../guides/managing_game_content.md#bounded-forpost-gate-repair)
+owns the repeatable operator command. Runtime World composition and movement
+continue using their existing persisted owners.
 
 `StarterCellCatalog` validates `config/gameplay/starter_world_cells.yml` before
 its facts are imported by `db/seeds.rb`: 273 cells at local `x0..20,y2..14`,
@@ -674,6 +688,52 @@ are painted into the continuous landscape, without pasted marker squares.
 Paint does not claim exact source terrain or create passability, encounters,
 entrances or resources.
 
+`CellArtCatalog.resolve_for_tile(reference, zone:, x:, y:)` supplies this
+landscape even when only a bounded gameplay route has been imported.
+`world/_map_cell` passes the projected cell's existing art reference, current
+Zone and integer coordinates. This pure presentation lookup returns a validated
+`Presentation` or `nil`; it performs no database queries or writes and does not
+modify tile metadata. Its starter default applies only to an outdoor Zone
+named `Outpost Surroundings`, sized `1000 × 1000`, with
+`metadata.source_map == "m_1001_999"`, and integer local coordinates
+`x0..20, y2..14`. The full region identity guard prevents equal coordinates
+in another region from inheriting Forpost art.
+
+Within that exact rectangle, resolution precedence is:
+
+| Existing reference | Rendering result |
+|---|---|
+| Missing/empty reference, including a cell without a template row | `forpost_starter`, column `x`, row `y - 2` |
+| Valid legacy `forpost_terrain` or `forpost_pond` reference | The same coordinate-derived starter slice |
+| Valid independently authored key or deliberately edited `forpost_starter` coordinates | Preserve that explicit presentation |
+| Nonblank malformed/unknown reference | Return `nil`; retain the renderer's generic terrain recovery rather than silently treating it as an absent override |
+
+Outside the guarded region/rectangle, only the explicit reference is resolved.
+If the starter catalog asset cannot resolve, a valid explicit legacy
+presentation is retained; otherwise `nil` selects generic terrain. Physical
+slice-to-master fallback and painted-landmark matching continue through the
+existing catalog resolver.
+
+The September 10 disconnected-gate-image diagnosis found that only 26
+imported gate/path cells carried artwork metadata; neighboring sparse cells
+fell back to tiled grass despite all 273 accepted slices already existing.
+The presentation default restores their shared landscape without importing
+the other gameplay cells, changing passability or generating new art. The
+bounded gate repair remains a separate operation; rendering requires no seed
+or database mutation.
+
+The later sharpness correction replaces the soft repeated-edit master with an
+original detailed repaint, retaining the same `forpost_starter` key, 2100 × 1300
+master and 273 100px slices. The generator returned **1593 × 987px**; one
+whole-image resize produced the delivery master. The requested 4200 × 2600
+native output was not returned, so this is not a native 4K/2× asset. World cells
+still display at 100 CSS px and the map uses translation rather than CSS zoom
+or blur. Independent artwork review kept all six gate/village/mine/exchange/
+dock anchors inside their existing cells; source coordinates, passability and
+gameplay remain unchanged. ARTWORK.md records the exact prompt, actual sizes
+and approximate sampled artwork points. Fresh final browser/test acceptance
+belongs to the verification section, separately from prior landscape checks.
+
 `db/seeds/world_cells.rb` upgrades absent and the two legacy artwork keys
 inside the bounded rectangle. It preserves custom references, already edited
 starter references, unrelated metadata, gameplay layers and saved players.
@@ -736,11 +796,14 @@ Application code should resolve presentation through the catalog instead of
 reading YAML directly:
 
 ```ruby
-presentation = Game::World::CellArtCatalog.resolve(tile.metadata["cell_art"])
+presentation = Game::World::CellArtCatalog.resolve_for_tile(
+  tile.metadata["cell_art"], zone:, x: tile.x, y: tile.y
+)
 ```
 
-`resolve` returns `nil` for an unsafe or unknown reference, allowing the map
-renderer to use its regional fallback. A successful result supplies the
+`resolve_for_tile` applies the bounded starter default described above.
+`resolve(reference)` remains the explicit-reference validator and returns
+`nil` for an unsafe or unknown reference. A successful result supplies the
 allowlisted asset, background offsets, and full sheet dimensions needed by CSS.
 Use `valid_reference?` at a content-validation boundary such as
 `MapTileTemplate`; do not use either method to decide passability or available
@@ -1566,10 +1629,35 @@ eligibility.
 slices, thin red offered-cell border, fixed center marker, walking state, timer
 placement, village map landmark, and the `760 × 255` CSS-built village scene.
 `Game::World::CellArtCatalog` owns allowlisted project assets and sheet
-dimensions. The renderer uses an explicit valid cell-art reference first and
-otherwise uses the regional terrain sheet. Neither presentation path defines passability
+dimensions. `resolve_for_tile` applies the guarded starter-art precedence from
+section 7.2, retaining valid independent art and using the existing regional
+terrain recovery where no presentation resolves. Artwork never defines passability
 or content. Each rendered table cell is its coordinate's `100 x 100` sheet crop;
 the browser scrolls/translates that composed table beneath the fixed marker.
+
+The original moving decoration has eight directional
+`world/traveller-walking-<direction>.gif` assets. Each has eight 96 × 96px
+frames, 100ms each, looping every 800ms and displayed at 64 × 64 CSS px inside
+the existing 100px cursor. `prefers-reduced-motion: reduce` selects that
+direction's 96px RGBA first frame, `traveller-walking-<direction>-still.png`.
+Five generated pose sheets supply East, North, South, Northeast and Southeast;
+the three western views are horizontal mirrors, not rotated human images.
+Each direction uses one union crop across all poses before scaling to an 84px
+figure in a 96px canvas, avoiding independent per-frame recentering.
+
+`world/_map` derives `movement_direction` with
+`Game::Movement::Directions::OFFSETS.key([target_x - from_x, target_y - from_y])`
+from the active server command. It renders the cursor's `data-direction` and
+the controller's movement-direction value, so in-progress reload restores the
+same heading. Initial click feedback uses the offered button's rendered
+direction; `setCursorMoving` then sets or clears that decoration alongside
+the moving/idle class. CSS chooses the directional GIF/still, while the idle
+compass remains unchanged. Submitted direction and animation never authorize
+movement. GIF frames neither measure progress nor cause arrival; timer/status
+text, map translation and coordinate persistence retain their current owners.
+The source's eight directional sprites are recorded in the May 9 observation;
+all local successful/failed generation prompts, frame packaging and alpha
+details are in ARTWORK.md. The initial east-only assets were superseded.
 
 The stylesheet supplies the responsive viewport bounds and suppresses
 layout-consuming scrollbar tracks only on the outdoor map's containing main
@@ -2139,6 +2227,64 @@ the zone's remaining content, unknown formulas/pools, successful professions,
 mine underground/extraction/purchases or exchange transactions. Lobbies expose
 read-only previews; unavailable operations are disabled rather than simulated.
 
+### 15.8 Gate repair, continuous sharp landscape and directional walker (2026-09-10)
+
+This correction combines the bounded Forpost gate repair, coordinate-derived
+starter-art recovery for sparse cells, the sharper original landscape and the
+eight-direction original walking GIFs/stills. City owns the related route-arrow
+visibility/reflow contract. Source gates and directional walking remain grounded
+in the preserved source observations; neither artwork changes gameplay rules.
+
+Final automated checks on the integrated runtime passed:
+
+- `bin/verify fast`: **2,545 non-system examples, zero failures**, **559 Ruby
+  files** without lint offenses, **11 feature handbooks** and **82 architecture
+  documents** passing their audits.
+- The combined **eight system spec files passed 66 examples, zero failures**.
+  This includes quarter/navigation/hover regressions, the eastern gate handoff,
+  sparse-map presentation, responsive/coarse-pointer controls and directional
+  walking/reduced-motion behavior.
+- The earlier focused walker/map checks passed **90 examples, zero failures**:
+  `spec/assets/world_walker_assets_spec.rb`, `spec/views/world/_map_spec.rb`
+  and `spec/system/world_interactions_spec.rb`. They verify all directional
+  GIF/still assets, matching reduced-motion selection, persisted movement
+  resume, unchanged deadline/coordinates and idle restoration.
+
+The final local run logs are `tmp/city-artwork-final-fast.log` and
+`tmp/city-artwork-final-system.log`. These are local checks, not CI results.
+The intentional Partially Implemented handbook notices remain scope warnings,
+not audit failures. Exact image prompts, rejected outputs, source dimensions,
+landmark alignment and frame packaging are recorded in ARTWORK.md.
+
+After those automated checks passed, agent-operated **native Chrome at the
+existing desktop dimensions** completed the final local acceptance:
+
+- Central Square → Residential Quarter → Law Quarter; Law City Exit reached
+  `[11,9]`, and Enter returned to Law. A second exit restored the same cell.
+- A real **30-second Southeast** step moved `[11,9] → [12,10]`. Two screenshots
+  showed different walking-GIF poses over the continuous sharper landscape.
+  A real **30-second Northwest** step returned to `[11,9]` with the visibly
+  different back-facing artwork. Arrival restored the idle compass, then
+  Enter returned to Law.
+- Law → Residential → Central Square; Central City Exit reached the western
+  `[6,8]` gate. Its screenshot showed the continuous landscape, and Enter
+  returned to Central Square.
+- The Inventory view was restored with the character at Central Square.
+  Money and carried mass remained unchanged; walking consumed normal fatigue,
+  with **4% visible at the end**. No combat, chat or economy mutation was
+  performed. The source session had been restored to Central earlier and was
+  not used for these local gameplay checks.
+
+The extension debugger connection dropped, so the final pass used native
+Chrome control. The attempted phone override did not establish phone
+dimensions, and the later reset command failed against a detached source tab;
+no successful final viewport reset is claimed. **This final manual pass is
+desktop-only.** Earlier phone checks remain separate evidence. Manual walking
+visually sampled Southeast and Northwest; all eight directional assets and
+matching reduced-motion selection are covered by the automated checks, not
+claimed as eight manual walks. Final phone/touch, reduced-motion and zoom
+browser acceptance remain unperformed. This bounded pass does not complete
+the broader World-content or adaptive-input scope.
 
 ## 16. Responsible for Implementation Files
 
@@ -2267,6 +2413,9 @@ read-only previews; unavailable operations are disabled rather than simulated.
 - `app/assets/stylesheets/chat_presence.css`
 - `app/assets/images/world/forpost-terrain.png`
 - `app/assets/images/world/forpost-pond-landscape.png`
+- `app/assets/images/world/forpost-starter-landscape.png`
+- `app/assets/images/world/cells/forpost-starter/`
+- `app/assets/images/world/` — eight directional traveller GIFs and matching stills
 - `app/assets/images/gate.png`
 
 ### Integrated NPC-combat entry
@@ -2424,6 +2573,7 @@ ownership after the World capability is accepted.
 - `spec/views/world/_action_result_spec.rb`
 - `spec/assets/city_image_assets_spec.rb`
 - `spec/assets/world_cell_art_assets_spec.rb`
+- `spec/assets/world_walker_assets_spec.rb`
 - `spec/models/management_audit_event_spec.rb`
 - `spec/policies/manage_policy_spec.rb`
 - `spec/queries/manage/paginated_relation_spec.rb`

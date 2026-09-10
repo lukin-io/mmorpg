@@ -91,7 +91,8 @@ RSpec.describe "Login resume", type: :request do
     expect(response).to redirect_to(world_path)
     follow_redirect!
     expect(response.body).to include('aria-label="Resume City city map"')
-    expect(response.body).to include("nl-city-scene-image")
+    expect(response.body).to include("nl-city-scene--pending", "This quarter is not ready yet.")
+    expect(response.body).not_to include("nl-city-scene-image")
   end
 
   it "keeps the player inside the same documented city building across logout and login" do

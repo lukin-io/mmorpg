@@ -3,7 +3,7 @@
 title: Game Shell Feature
 description: Implementation handbook for the Neverlands-based persistent game frame, compact vitals, location presence, mixed chat/game-event timeline, and shell preferences.
 status: Partially Implemented
-updated: 2026-09-09
+updated: 2026-09-10
 owners: Game Shell and Social Presence
 template: feature-v1
 ---
@@ -178,6 +178,35 @@ system label, and event-specific XP/item/money emphasis. Server-published world 
 use an unbranded orange `World` marker and no visible timestamp. Both initial
 history and after-commit Turbo delivery enforce recipient scope on the server;
 ordinary request errors continue to use the stable flash surface.
+
+#### Flash message lifecycle
+
+`#flash` is the stable response target outside `main_content`. Rails session
+flash expiry alone cannot remove its already-rendered messages when a Shop
+filter or other navigation replaces only that frame. The shared
+`shared/flash` partial supplies the same per-message lifecycle for initial
+public/game/manage pages and existing Turbo Stream producers, including local
+chat errors:
+
+- `notice`/`success` messages use `role="status"` and disappear after five
+  seconds; `alert`/`error` messages use `role="alert"` and remain readable
+  until dismissed or navigation clears them.
+- Each message has a keyboard-accessible `X` button labelled
+  `Dismiss notification`. Removing a message leaves `#flash` available for
+  subsequent responses.
+- A completed `main_content` frame navigation clears previous messages.
+  Chat/presence frame refreshes do not clear them.
+- Messages are `data-turbo-temporary` and removed before Turbo snapshot
+  caching, preventing browser Back from restoring stale notices.
+- `flash_controller.js` owns only this DOM lifecycle. Each message owns its
+  timeout and clears it on disconnect, so an old timer cannot dismiss a newer
+  streamed result. Rendered message text remains escaped.
+
+The five-second success lifetime is a local UI correction, not a measured
+Neverlands timing rule. This changes presentation of messages already delivered
+to the shell; it adds no new Shop result delivery or gameplay notification
+pipeline. Durable game-event history and World action-result offer transport
+retain their existing owners and persistence.
 
 The bottom-right `A` control is the Abilities link. It opens the current
 character's read-only Your licenses surface at `GET /character/licenses`,
@@ -580,6 +609,16 @@ The shell is HTML/Turbo-first. Chat exposes a small internal JSON response but n
 
 ## 10. Client-side and CSS ownership
 
+Shared product requirements now live in
+[Game Client Layout](../design/areas/game_client_layout.md#adaptive-ui-requirements),
+including fluid sizing, readable controls, touch/keyboard access, short panes
+and zoom. City and Shop image production/display rules share
+[`ART-SCENE-001`](../ARTWORK.md#shared-scene-image-standard). These are design
+targets, not a claim that the runtime has passed every new acceptance case.
+The existing verification records below cover their named sizes and flows;
+the broader 320px, short-landscape, coarse-pointer and zoom audit remains open
+under `RESPONSIVE-001`.
+
 `app/javascript/controllers/game_layout_controller.js` owns only:
 
 - presence sort selection and 30-second list/header refresh;
@@ -868,6 +907,19 @@ keeps logout confirmation open past a movement deadline and verifies closed
 session timer recovery plus login catch-up. `spec/system/world_map_result_delivery_spec.rb`
 checks pending-result delivery beside a map stream in Chrome.
 
+`spec/views/shared/_flash_spec.rb` checks escaped text, legacy locals, message
+roles, and dismissal/timeout markup. `spec/system/flash_messages_spec.rb`
+checks real login and Shop notice expiry, same-shell Shop filter navigation,
+browser Back, streamed error replacement, unrelated chat refresh, and keyboard
+dismissal. On September 10, 2026, these passed alongside the shell layout,
+local chat, Inventory progression, and World result-delivery checks (75
+examples, zero failures). Manual local Chrome verification also confirmed that
+`Entered Shop.` disappears while staying in Shop and clears on category
+navigation; the player was returned to Central Square without a stale notice.
+The same local verification passed `bin/verify fast`: 2,507 non-system
+examples, 555 files without RuboCop offenses, and both documentation audits.
+These are local results; they do not establish a CI run.
+
 Focused verification command:
 
 ```bash
@@ -896,10 +948,12 @@ bundle exec rspec \
   spec/requests/world_location_presence_spec.rb \
   spec/requests/city_buildings_spec.rb \
   spec/views/layouts/game_spec.rb \
+  spec/views/shared/_flash_spec.rb \
   spec/views/game_events/_game_event_spec.rb \
   spec/views/shared/_nl_players_list_spec.rb \
   spec/views/shared/_nl_vitals_bar_spec.rb \
   spec/system/social_ui_spec.rb \
+  spec/system/flash_messages_spec.rb \
   spec/system/local_chat_spec.rb \
   spec/system/session_heartbeat_spec.rb \
   spec/system/world_interactions_spec.rb \
@@ -973,6 +1027,7 @@ Policy behavior is currently exercised through request/system coverage; dedicate
 
 - `app/views/layouts/application.html.erb`
 - `app/views/layouts/game.html.erb`
+- `app/views/shared/_flash.html.erb`
 - `app/views/shared/_nl_players_list.html.erb`
 - `app/views/shared/_nl_vitals_bar.html.erb`
 - `app/views/chat_channels/show.html.erb`
@@ -985,6 +1040,7 @@ Policy behavior is currently exercised through request/system coverage; dedicate
 - `app/views/devise/registrations/edit.html.erb`
 - `app/helpers/chat_messages_helper.rb`
 - `app/javascript/controllers/game_layout_controller.js`
+- `app/javascript/controllers/flash_controller.js`
 - `app/javascript/controllers/online_reload_controller.js`
 - `app/javascript/controllers/chat_controller.js`
 - `app/javascript/controllers/chat_input_controller.js`
@@ -1079,6 +1135,8 @@ domain mutations.
 - `spec/requests/world_spec.rb`
 - `spec/requests/world_context_actions_spec.rb`
 - `spec/views/layouts/game_spec.rb`
+- `spec/views/shared/_flash_spec.rb`
+- `spec/system/flash_messages_spec.rb`
 - `spec/views/game_events/_game_event_spec.rb`
 - `spec/views/shared/_nl_players_list_spec.rb`
 - `spec/views/shared/_nl_vitals_bar_spec.rb`

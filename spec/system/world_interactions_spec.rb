@@ -29,11 +29,30 @@ RSpec.describe "World Interactions", type: :system, js: true do
       expect(page).to have_css(".nl-map-container[data-nl-world-map-movement-active-value='true']")
       expect(page).to have_css(".nl-location-coords", text: "[5, 5]", visible: :all)
       expect(position.reload.x).to eq(5)
+      expect_walker_artwork("east")
 
-      MovementCommand.moving.find_by!(character:).update!(ends_at: 1.second.ago)
+      movement = MovementCommand.moving.find_by!(character:)
+      deadline = movement.ends_at
+      begin
+        page.driver.browser.execute_cdp("Emulation.setEmulatedMedia",
+          features: [{name: "prefers-reduced-motion", value: "reduce"}])
+        expect_walker_artwork("east", still: true)
+        visit world_path
+        expect_walker_artwork("east", still: true)
+        expect(movement.reload.ends_at).to eq(deadline)
+        expect(position.reload).to have_attributes(x: 5, y: 5)
+        expect(page).to have_css(".nl-map-container[data-nl-world-map-movement-active-value='true']")
+      ensure
+        page.driver.browser.execute_cdp("Emulation.setEmulatedMedia", features: [])
+      end
+      expect_walker_artwork("east")
+
+      movement.update!(ends_at: 1.second.ago)
       visit world_path
 
       expect(page).to have_css(".nl-location-coords", text: "[6, 5]", visible: :all)
+      expect(page).to have_css(".nl-cursor-img--idle")
+      expect(page.evaluate_script("getComputedStyle(document.querySelector('.nl-cursor-img')).backgroundImage")).to eq("none")
     end
 
     it "corrects a skewed browser clock and refreshes due travel after a delayed timer tick" do
@@ -190,6 +209,28 @@ RSpec.describe "World Interactions", type: :system, js: true do
     end
   end
 
+  describe "directional walking artwork" do
+    {north: [0, -1], northeast: [1, -1], east: [1, 0], southeast: [1, 1],
+     south: [0, 1], southwest: [-1, 1], west: [-1, 0], northwest: [-1, -1]}.each do |direction, (dx, dy)|
+      it "resumes #{direction} with its own animated and reduced-motion pose" do
+        movement = create(:movement_command, :moving, character:, zone:, direction:,
+          from_x: 5, from_y: 5, target_x: 5 + dx, target_y: 5 + dy,
+          started_at: Time.current, ends_at: 30.seconds.from_now, travel_seconds: 30)
+        deadline = movement.ends_at
+        visit world_path
+
+        expect_walker_artwork(direction)
+        page.driver.browser.execute_cdp("Emulation.setEmulatedMedia",
+          features: [{name: "prefers-reduced-motion", value: "reduce"}])
+        expect_walker_artwork(direction, still: true)
+        expect(movement.reload.ends_at).to eq(deadline)
+        expect(position.reload).to have_attributes(x: 5, y: 5)
+      ensure
+        page.driver.browser.execute_cdp("Emulation.setEmulatedMedia", features: [])
+      end
+    end
+  end
+
   describe "movement recovery and keyboard controls" do
     it "ignores a late passive encounter response after leaving the World surface" do
       visit player_path(name: character.name)
@@ -339,5 +380,26 @@ RSpec.describe "World Interactions", type: :system, js: true do
 
       expect(page).to have_current_path(/sign_in/).or have_content("Sign In")
     end
+  end
+
+  def expect_walker_artwork(direction, still: false)
+    filename = "traveller-walking-#{direction}#{'-still' if still}-"
+    expect(page).to have_css(".nl-cursor-img--moving[data-direction='#{direction}']") do |cursor|
+      cursor.style("background-image").fetch("background-image").include?(filename)
+    end
+    artwork = page.evaluate_async_script(<<~JS)
+      const done = arguments[arguments.length - 1]
+      const cursor = document.querySelector(".nl-cursor-img--moving")
+      const style = getComputedStyle(cursor)
+      const image = new Image()
+      image.onload = () => done({url: image.src, width: image.naturalWidth,
+        height: image.naturalHeight, size: style.backgroundSize,
+        pseudo: getComputedStyle(cursor, "::before").content})
+      image.onerror = () => done({error: "walker asset did not load"})
+      image.src = JSON.parse(style.backgroundImage.slice(4, -1))
+    JS
+    expect(artwork).to include("width" => 96, "height" => 96, "size" => "64px 64px", "pseudo" => "none")
+    expect(artwork.fetch("url")).to include(filename)
+    expect(artwork.fetch("url")).to end_with(still ? ".png" : ".gif")
   end
 end

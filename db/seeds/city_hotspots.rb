@@ -55,22 +55,9 @@ Game::World::CityCatalog::NODES.each do |node_key, node|
   Game::World::CityCatalog::GATES.each do |gate_key, gate|
     next unless gate["node_key"] == node_key
 
-    local_x, local_y = gate["local_coordinates"]
-    city_hotspots << {
-      zone:,
-      key: "#{gate_key}_gate",
-      name: gate["name"],
-      hotspot_type: "exit",
-      action_type: "enter_zone",
-      destination_zone: outpost_surroundings,
-      action_params: {
-        "destination_x" => local_x,
-        "destination_y" => local_y,
-        "source_coordinates" => gate["source_coordinates"]
-      },
-      presentation: Game::World::CityCatalog.hotspot_presentation(node_key, "#{gate_key}_gate") || {},
-      required_level: 0
-    }
+    city_hotspots << Seeds::WorldContentSupport.gate_hotspot_definition(
+      gate_key:, gate:, city_zone: zone, outdoors: outpost_surroundings
+    )
   end
 end
 

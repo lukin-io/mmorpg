@@ -111,10 +111,27 @@ one continuous original `2100 × 1300` landscape sliced into 273 physical
 Outside it, the default terrain remains the project-owned
 `1000 x 1000` art sheet cropped into `100 x 100` cells. Sparse explicit tile
 records may replace that coordinate's slice through a configured source-backed
-cell-art key; malformed or absent overrides use the coordinate-derived default.
+cell-art key. Within the canonical Forpost starter rectangle, absent or valid
+legacy references use the coordinate-derived starter default; nonblank invalid
+references retain generic terrain recovery. The guard includes the outdoor
+region identity and integer bounds, so another region's equal coordinates do
+not inherit this landscape. Valid independent/edited references are preserved.
 The table of crops is the scrollable map: the renderer translates it beneath a
 fixed player marker instead of moving an independently authoritative browser
 sprite across a free-form canvas.
+
+The user-requested local walking decoration uses eight original directional
+GIFs with eight frames each, rendered at 64px inside the existing 100px fixed
+cursor. The May 9 source observation records direction-based sprite selection.
+The idle compass remains unchanged; reduced-motion clients use the matching
+direction's static first-frame PNG.
+This local artwork choice preserves the source's walking-state distinction
+without copying its sprite. The accepted movement vector selects presentation;
+initial click feedback uses the offered direction and reload restores the
+active command's heading. The animation does not choose the destination,
+update coordinates or replace the server travel timer.
+ARTWORK.md owns its exact prompt and frame/size specifications; the World
+handbook owns runtime acceptance.
 
 Neverlands retains overlapping terrain cells when the viewport advances.
 The local walking renderer now follows that approach: a valid same-zone buffer

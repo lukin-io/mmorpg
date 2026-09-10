@@ -2,7 +2,7 @@
 
 - Document type: operational and extension guide
 - Status: Current
-- Updated: 2026-09-09
+- Updated: 2026-09-10
 - Audience: administrators, content authors, Rails engineers, and AI agents
 - UI entry point: `/manage`
 - Controller namespace: `Manage`
@@ -158,6 +158,8 @@ authored entrance is already visible to its placement guard. Each phase
 resolves its persisted inputs explicitly. `Seeds::WorldContentSupport` owns
 shared city metadata lookup and action-offer cleanup; callers keep the target
 change and cancellation inside their existing transaction.
+It also owns the starter-cell/art and reciprocal-gate attribute builders used
+by normal seeds and the bounded Forpost repair below.
 
 `Seeds::StarterEncounterBootstrap#call` accepts one zone's validated derived
 definitions and persisted NPC templates. It reads the declared cells,
@@ -182,6 +184,51 @@ amount:, metadata:)`. The existing wallet row lock spans checking the
 Retries and competing bootstrap calls therefore cannot grant twice. An older
 ledger entry with that reason also counts as completion; balances, spending,
 and historical duplicate grants are retained without retroactive repair.
+
+### Bounded Forpost gate repair
+
+Use this explicit development operation when the existing five-node City is
+present but its captured Central/Law outdoor gate content is missing or stale.
+It does not run other seed phases or recreate the database. Its canonical
+runtime contract is
+[City gate handoff and repair](../features/city.md#521-bounded-repair-owner).
+The source handoffs are Central Square ↔ `[6,8]` and Law Quarter ↔ `[11,9]`;
+the September 9 survey already captures both directions.
+
+From the repository root, run:
+
+```bash
+RAILS_ENV=development bin/rails runner 'require Rails.root.join("db/seeds/forpost_gate_repair.rb"); puts Seeds::ForpostGateRepair.new.call.inspect'
+```
+
+`Seeds::ForpostGateRepair#call` returns the changed-record counts `cells`,
+`city_exits`, `outdoor_entrances` and `retired_markers`. The class accepts an
+optional validated `cell_catalog:` dependency, defaulting to
+`Game::World::StarterCellCatalog.default`; ordinary repair uses that default.
+It locks the exact Central, Law and outdoor zones and reconciles both gate
+pairs plus the bounded 26-cell gate/eastern-path neighborhood in one
+transaction. Managed/atlas cell overrides remain intact; a blocked required
+managed path, conflicting entrance, invalid catalog coordinate or mismatched
+zone/gate identity aborts all writes with `Seeds::ForpostGateRepair::Conflict`.
+Inspect that conflict before changing the independently authored content.
+
+Changed target offers are cancelled transactionally. The repair preserves
+unrelated metadata and only removes a matching obsolete gate marker; it does
+not read or write characters, wallets, inventory or NPCs. The printed counts
+are operation output, not a management UI audit event. Record those counts,
+then repeat the same command: an already reconciled database returns zero
+for all four keys. After automated checks pass, verify both City exits and
+their outdoor Enter controls in the local browser, confirming the exact node
+and coordinates after each handoff. A zero-change rerun proves convergence,
+not browser behavior. Do not substitute a full seed or `db:seed:replant` for
+this bounded content repair.
+
+Disconnected landscape pieces around a repaired gate are a presentation issue
+when neighboring gameplay cells are still sparse. The renderer's bounded
+starter-art default covers the full authored rectangle from the existing
+273 slices; no full seed or extra cell import is needed to fill the picture.
+The artwork rules below distinguish this lookup from the repair's passability
+and entrance writes.
 
 ## 5. General create, edit, deactivate, and delete rules
 
@@ -383,6 +430,18 @@ the old pond catalog remains valid for independently authored content.
 Gameplay, passability, labels and saved positions are separate from this
 visual upgrade. The western intermediate `[5,7]` defaults to the captured
 village-area label while retaining no entrance; a managed label survives seeds.
+
+At render time, `CellArtCatalog.resolve_for_tile` also supplies this coordinate
+slice for missing/empty or valid legacy art references, including cells with
+no template row. The default is restricted to the canonical outdoor
+`Outpost Surroundings` identity (`1000 × 1000`, source map `m_1001_999`) and
+integer local `x0..20, y2..14`. Valid custom and deliberately edited starter
+references remain authoritative; nonblank invalid references use the existing
+generic recovery. Other regions and out-of-range coordinates gain no Forpost
+default. This read-only presentation lookup requires no seed, creates no cells
+or capabilities, and leaves passability/NPC/resource data unchanged. The
+[World handbook](../features/world.md#continuous-starter-landscape) defines its
+complete precedence and missing-asset behavior.
 
 The survey is not a complete zone. See
 `doc/design/reference/world/observations/2026-09-09_starter_atlas.md` and

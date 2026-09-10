@@ -1,15 +1,16 @@
-<% # Handle both old style (type, message) and new style (alert/notice) %>
-<% if local_assigns[:type] && local_assigns[:message] %>
-<% flash_class = type.to_s == "notice" ? "flash success" : "flash alert" %>
-<div class="<%= flash_class %>">
-  <%= message %>
-</div>
-<% elsif local_assigns[:alert] %>
-  <div class="flash alert">
-    <%= alert %>
-  </div>
-<% elsif local_assigns[:notice] %>
-  <div class="flash success">
-    <%= notice %>
+<%
+  flash_message = local_assigns[:message] || local_assigns[:alert] || local_assigns[:notice]
+  flash_type = local_assigns[:type] || (local_assigns[:alert] ? "alert" : "notice")
+  success = flash_type.to_s.in?(%w[notice success])
+%>
+<% if flash_message.present? %>
+  <div class="nl-flash nl-flash--<%= success ? 'notice' : 'alert' %>"
+       role="<%= success ? 'status' : 'alert' %>"
+       data-controller="flash"
+       data-flash-timeout-value="<%= success ? 5000 : 0 %>"
+       data-turbo-temporary
+       data-action="turbo:before-cache@document->flash#dismiss turbo:before-frame-render@document->flash#clearForNavigation">
+    <span class="nl-flash-message"><%= flash_message %></span>
+    <button type="button" class="nl-flash-dismiss" aria-label="Dismiss notification" data-action="flash#dismiss">X</button>
   </div>
 <% end %>

@@ -16,6 +16,10 @@ composition, and presentation shared by gameplay surfaces.
 - Cell/room audiences, browser history, and header-plus-main frame evidence:
   `doc/design/reference/social/observations/2026-09-07_cell_chat_and_presence_boundaries.md`
 - Normalized design: `doc/design/areas/game_client_layout.md`
+- Shared adaptive UI requirements and acceptance:
+  [Game Client Layout](../design/areas/game_client_layout.md#adaptive-ui-requirements)
+- Shared City/entrance image standard, composition and dimensions:
+  [ARTWORK.md](../ARTWORK.md#shared-scene-image-standard)
 - Supporting designs: `doc/design/features/character_vitals.md` and
   `doc/design/features/social_chat_presence.md`
 - Delivery IDs: `SHELL-UI-001`, `SHELL-CHAT-001`, `SOCIAL-CHAT-001`, and

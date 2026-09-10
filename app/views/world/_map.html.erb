@@ -35,6 +35,7 @@
   else
     0
   end
+  movement_direction = Game::Movement::Directions::OFFSETS.key([movement_delta_x, movement_delta_y])
   movement_total_seconds = if movement_active && active_movement.respond_to?(:travel_seconds)
     active_movement.travel_seconds.to_i
   else
@@ -71,6 +72,7 @@
      data-nl-world-map-movement-total-seconds-value="<%= movement_total_seconds %>"
      data-nl-world-map-movement-delta-x-value="<%= movement_delta_x %>"
      data-nl-world-map-movement-delta-y-value="<%= movement_delta_y %>"
+     data-nl-world-map-movement-direction-value="<%= movement_direction %>"
      data-nl-world-map-movement-ends-at-value="<%= active_movement&.ends_at&.iso8601(3) %>"
      data-nl-world-map-work-active-value="<%= world_action_active %>"
      data-nl-world-map-work-ends-at-value="<%= active_world_action&.local_action_ends_at&.iso8601(3) %>"
@@ -105,6 +107,7 @@
            data-nl-world-map-target="cursor"
            style="left: <%= cursor_left %>px; top: <%= cursor_top %>px;">
         <div class="nl-cursor-img <%= movement_active ? 'nl-cursor-img--moving' : 'nl-cursor-img--idle' %>"
+             data-direction="<%= movement_direction %>"
              data-nl-world-map-target="cursorImg"></div>
       </div>
 

@@ -30,10 +30,11 @@ RSpec.describe "Runtime reference boundary" do
     end
   end
 
-  it "keeps navigation controls ASCII and avoids decorative control glyphs" do
+  it "keeps semantic text controls and permits the requested project-owned route decoration" do
     control_files = %w[
       app/views/layouts/game.html.erb
       app/views/world/_city_view.html.erb
+      app/views/world/_city_action.html.erb
       app/views/shop/show.html.erb
       app/helpers/shop_helper.rb
       app/helpers/world_helper.rb
@@ -48,7 +49,7 @@ RSpec.describe "Runtime reference boundary" do
       end
 
       expect(control_files.fetch("app/views/layouts/game.html.erb")).to include(">X<", ">R<")
-      expect(control_files.fetch("app/views/world/_city_view.html.erb")).to include("&gt;")
+      expect(control_files.fetch("app/views/world/_city_action.html.erb")).to include('image_tag "city/route-arrow.png"')
     end
   end
 end

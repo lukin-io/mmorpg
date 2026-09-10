@@ -147,6 +147,18 @@ terrain/pond references while retaining independent and already edited starter
 art. Physical 100px PNG slices use matching master crops as fallback. Its one
 pond and painted landmarks do not create gameplay; duplicate decorative
 city/village markers are suppressed while accessible labels remain.
+`CellArtCatalog.resolve_for_tile` also gives sparse or legacy-art starter cells
+their coordinate-derived slice within the exact guarded Forpost rectangle.
+This presentation-only default closes gaps around partially imported gates
+without materializing gameplay content; valid independent/edited artwork wins.
+The World handbook owns bounds, invalid-reference behavior and acceptance.
+The subsequent original landscape repaint retains those cell anchors and
+delivery dimensions; its actual generated resolution and one-time packaging
+resize are documented without a native 4K claim. Moving state now uses an
+original eight-direction walking GIFs with matching static reduced-motion
+fallbacks, retaining the
+idle compass and server movement lifecycle. ARTWORK.md preserves both exact
+prompts; the World handbook owns final runtime acceptance.
 Derived encounter bootstrap preserves occupied cells and moved/disabled
 placements by their original source identity. Seed phases and lifecycle
 policies are documented in the content-management guide.

@@ -599,8 +599,20 @@ The feature is authenticated HTML/Turbo navigation with ordinary form redirects.
 The Shop uses server-rendered forms and links; it has no Shop transaction
 controller in JavaScript. Browser behavior consists of compact text inputs,
 native confirmation prompts, Turbo navigation and the shared shell. The shared
-`nl-building-entrance` Stimulus controller observes only the main pane and
-player/navigation top bar sizes; it does not read or decide gameplay state.
+`nl-scene-size` Stimulus controller observes only main-pane, player/navigation
+top-bar and container sizes; it does not read or decide gameplay state. City
+also uses this shared sizing calculation for its complete interactive canvas;
+Shop retains the decorative `shared/building_entrance` partial and its existing
+display contract.
+
+Its canonical image profile is
+[`ART-SCENE-001`](../ARTWORK.md#shared-scene-image-standard), shared with City;
+Shop rows, filters and controls also follow the
+[adaptive UI requirements](../design/areas/game_client_layout.md#adaptive-ui-requirements).
+The recorded desktop/820px/390px checks below establish their stated scope.
+They do not certify the newly expanded minimum-width, short-landscape,
+coarse-pointer or zoom acceptance cases, whose cross-feature audit remains
+open under `RESPONSIVE-001`.
 
 It must not:
 
@@ -824,7 +836,7 @@ Dedicated Catalog, Purchase, Sale and TradeOffers specs protect filtering, persi
 - `app/views/shop/_licenses.html.erb`
 - `app/views/shop/_merchant_qualification.html.erb`
 - `app/views/shared/_building_entrance.html.erb`
-- `app/javascript/controllers/nl_building_entrance_controller.js`
+- `app/javascript/controllers/nl_scene_size_controller.js`
 - `app/assets/images/shop/interior.png`
 - `app/assets/images/shop/categories.png`
 - `doc/ARTWORK.md`

@@ -32,6 +32,11 @@ village Trading Post share the starter Shop owner. Buy/Sell and eligible license
 - The authenticated UI is one persistent game shell. Do not copy Neverlands'
   frameset technically; preserve the shell contract with Rails, Hotwire/Turbo,
   Stimulus, and server-rendered state.
+- Adaptive UI is a launch requirement on desktop, tablet and mobile. Preserve
+  source-backed game behavior and information while improving layout,
+  accessibility and original image composition under the shared
+  [UI requirements](areas/game_client_layout.md#adaptive-ui-requirements) and
+  [scene image standard](../ARTWORK.md#shared-scene-image-standard).
 - Personal gameplay results and game-wide notices share the durable chat
   timeline; do not split MVP event feedback into a separate toast center.
 - Shop access follows an authored city building or the captured village
@@ -45,6 +50,14 @@ village Trading Post share the starter Shop owner. Buy/Sell and eligible license
   and project-owned image hotspots, plus icon actions, timers, locks, unavailable states, combat
   waiting, and shop errors need keyboard-accessible controls and text
   equivalents.
+- The explicit City artwork request permits original generated route-arrow
+  decorations inside semantic buttons. It changes only the marker's visual
+  asset; destination labels, keyboard access and authoritative actions remain
+  intact. Source arrows and arrows baked into backgrounds remain prohibited.
+- The explicit walking-animation request permits original directional GIFs inside the
+  existing moving cursor, with matching static reduced-motion fallbacks. Idle state,
+  accessible movement status and the server's travel/arrival rules retain their
+  existing owners; the decorative cycle grants no new behavior.
 
 ## Scope Terms
 
@@ -63,81 +76,84 @@ contract while an adjacent uncaptured state remains Not Done.
 
 | Stable ID | Domain flow | Current state | Detailed owner below |
 |---|---|---|---|
-| `SHELL-UI-001` | Persistent authenticated shell and shared chrome | Done for captured base frame | Neverlands 1:1 UI/UX parity matrix |
-| `SHELL-CHAT-001` | Auxiliary shell/chat controls | Not Done | Neverlands 1:1 UI/UX parity matrix |
-| `RESPONSIVE-001` | Mandatory tablet and mobile adaptation | Done for listed bounded surfaces | Neverlands 1:1 UI/UX parity matrix |
+| `SHELL-UI-001` | Persistent authenticated shell and shared chrome | Done for captured base frame | Gameplay fidelity and adaptive UI matrix |
+| `SHELL-CHAT-001` | Auxiliary shell/chat controls | Not Done | Gameplay fidelity and adaptive UI matrix |
+| `RESPONSIVE-001` | Adaptive UI across supported sizes and inputs | Done for recorded bounded checks; expanded standard audit Not Done | Gameplay fidelity and adaptive UI matrix |
 | `SOCIAL-CHAT-001` | Chat, mixed gameplay-event timeline, channels, presence, and player context | Partially Implemented; cell/room chat, session-backed presence, and durable fight/item/NV events are implemented | Social/chat design and shell parity rows |
 | `CHARACTER-PROGRESSION-001` | Profile, stats, skills, perks, and allocation | Fully Implemented within declared boundary | Character-development audit and Pillar 1 |
-| `INVENTORY-UI-001` | Current equipment-family layout | Done | Neverlands 1:1 UI/UX parity matrix |
-| `INVENTORY-ACTIONS-001` | Remaining item families and action states | Not Done | Neverlands 1:1 UI/UX parity matrix |
-| `WORLD-UI-001` | Outdoor map presentation and shell continuity | Done | Neverlands 1:1 UI/UX parity matrix |
+| `INVENTORY-UI-001` | Current equipment-family layout | Done | Gameplay fidelity and adaptive UI matrix |
+| `INVENTORY-ACTIONS-001` | Remaining item families and action states | Not Done | Gameplay fidelity and adaptive UI matrix |
+| `WORLD-UI-001` | Outdoor map presentation and shell continuity | Done | Gameplay fidelity and adaptive UI matrix |
 | `WORLD-MOVE-001` | Server-authoritative outdoor movement | Fully Implemented within declared boundary | Pillar 2 |
 | `WORLD-CELL-001` | Persisted cell buildings, NPCs, resources, and offers | Fully Implemented within declared boundary | Pillar 4 |
-| `WORLD-LOCATION-001` | Observed Frontier Village linked location | Done | Neverlands 1:1 UI/UX parity matrix |
-| `CITY-NAV-001` | Five-district navigation and hotspots | Done | Neverlands 1:1 UI/UX parity matrix |
-| `CITY-GATE-001` | Verified City-to-World handoff | Done | Neverlands 1:1 UI/UX parity matrix |
-| `CITY-SERVICES-001` | Complete building/service interiors | Not Done | Neverlands 1:1 UI/UX parity matrix |
-| `ECONOMY-SHOP-001` | Current Shop shell and browse state | Done | Neverlands 1:1 UI/UX parity matrix |
-| `ECONOMY-TRANSACTIONS-001` | Captured populated buy/sell/license variants; one-item purchase persistence complete | Not Done for full parity | Neverlands 1:1 UI/UX parity matrix |
+| `WORLD-LOCATION-001` | Observed Frontier Village linked location | Done | Gameplay fidelity and adaptive UI matrix |
+| `CITY-NAV-001` | Five-district navigation and hotspots | Done | Gameplay fidelity and adaptive UI matrix |
+| `CITY-GATE-001` | Verified City-to-World handoff | Done | Gameplay fidelity and adaptive UI matrix |
+| `CITY-SERVICES-001` | Complete building/service interiors | Not Done | Gameplay fidelity and adaptive UI matrix |
+| `ECONOMY-SHOP-001` | Current Shop shell and browse state | Done | Gameplay fidelity and adaptive UI matrix |
+| `ECONOMY-TRANSACTIONS-001` | Captured populated buy/sell/license variants; one-item purchase persistence complete | Not Done for full parity | Gameplay fidelity and adaptive UI matrix |
 | `COMBAT-ARENA-001` | Bounded Arena lifecycle and authoritative resolution | `DONE` for the declared runtime boundary | Pillar 3 Combat Completion Matrix |
-| `COMBAT-FIGHT-UI-001` | Active fight composer and state variants | `DONE` for the captured bounded states | Neverlands 1:1 UI/UX parity matrix and Pillar 3 Combat Completion Matrix |
-| `COMBAT-LOG-001` | Separate public fight log parity | `DONE` for the captured bounded states | Neverlands 1:1 UI/UX parity matrix and Pillar 3 Combat Completion Matrix |
+| `COMBAT-FIGHT-UI-001` | Active fight composer and state variants | `DONE` for the captured bounded states | Gameplay fidelity and adaptive UI matrix and Pillar 3 Combat Completion Matrix |
+| `COMBAT-LOG-001` | Separate public fight log parity | `DONE` for the captured bounded states | Gameplay fidelity and adaptive UI matrix and Pillar 3 Combat Completion Matrix |
 | `NPC-RUNTIME-001` | Outdoor and Arena NPC combat | Implemented within World/Arena boundaries | Pillars 3 and 4 |
 | `QUEST-FLOW-001` | Complete Quest lifecycle | `NOT_IMPLEMENTED`; `EVIDENCE_NEEDED` | NPC/Quest design and implementation placeholder |
 | `PROFESSION-FLOW-001` | Complete profession action lifecycle | `NOT_IMPLEMENTED`; `EVIDENCE_NEEDED` | Character-development audit and profession design |
 | `DUNGEON-FLOW-001` | Complete dungeon lifecycle | `NOT_IMPLEMENTED`; `EVIDENCE_NEEDED` | Dungeon design and implementation placeholder |
 
-## Neverlands 1:1 UI/UX Parity Matrix (2026-07-28)
+## Gameplay Fidelity and Adaptive UI Matrix
 
-For launch UI work, `Done` means the reachable local state has been compared
-against a fresh authenticated Neverlands capture and matches its visible
-information hierarchy, dimensions, density, typography, colors, controls,
-interaction order, persistent-shell composition, and state transitions. Passing
-tests or using Neverlands-inspired colors is not sufficient. Rails may replace
-the legacy frameset implementation, but the player-visible UI/UX contract must
-remain 1:1. A row stays `Not Done` while any observed gap remains.
+This matrix retains the July 28 evidence and subsequent bounded delivery
+records. The September 10 user direction supersedes its former blanket
+pixel-identical desktop requirement. Neverlands supplies game design, feature
+behavior, available information, action meanings and state transitions; modern
+adaptive presentation and original artwork are this project's responsibility.
 
-`1:1` describes the measurable layout and interaction contract, not copied
-product content. Neverlands runtime images, sprites, logos, decorative artwork,
-brand names, signatures, administration text, project/service copy, and other
-source-specific prose are prohibited. The implementation must recreate the
-observed presentation with project-owned CSS, semantic HTML, and suitable
-ASCII/plain-text controls (`X`, `>`, `+`, `-`, short labels) wherever the source
-used a control bitmap. Project-owned images are reserved for genuine game
-artwork that CSS/text cannot represent clearly. Reference captures remain
-documentation evidence only.
+For launch UI work, `Done` requires evidence-backed behavior and information
+fidelity plus verified local usability. Preserve the compact gameplay
+hierarchy and persistent shell. Captured pixel dimensions, fonts and placements
+are comparison baselines, not a prohibition on reflow, accessible controls or
+better image composition. Explicitly adopted local specifications remain owned
+by the shared UI/image standards and applicable feature design. Passing tests
+or visual resemblance alone cannot establish unobserved source behavior.
 
-Neverlands itself is desktop-only. Local acceptance therefore has two separate
-requirements:
+Neverlands runtime images, sprites, logos, decorative artwork, brand identity,
+signatures, administration text and project/service copy remain prohibited.
+Use project-owned CSS, semantic HTML, suitable text controls and original
+illustrations. Historical reference captures remain documentation evidence.
 
-1. At the captured desktop width, the reachable state must retain 1:1
-   Neverlands composition.
-2. At `820px` tablet and `390px` mobile widths, the same controls and information
-   must remain usable through intentional reflow, horizontal control strips, or
-   native-size panning. Responsive adaptation must not introduce an alternate
-   visual system, shrink map hit targets, or hide authoritative information.
+Every changed surface must satisfy the
+[adaptive UI requirements and acceptance sample](areas/game_client_layout.md#adaptive-ui-requirements)
+for its scope, including intermediate sizes, input modes, short viewports and
+zoom. City and building scenes share
+[`ART-SCENE-001`](../ARTWORK.md#shared-scene-image-standard); World cells and
+other role-specific images keep their own coordinate/fit contracts. Layout
+adaptation must preserve game state and information without clipped targets.
 
-`Done` for a responsive-enabled row requires both requirements. Mobile/tablet
-screens are source-faithful product adaptations, not a claim that Neverlands
-itself supplied responsive behavior.
+Earlier `Done` rows remain evidence for their explicitly recorded surfaces,
+sizes and flows. They do not certify the expanded adaptive standard on every
+screen. `RESPONSIVE-001` retains the completed 390px/820px and recorded desktop
+checks; a full audit of the additional 320px, short-landscape, coarse-pointer
+and zoom requirements is **Not Done**. Document and close those acceptance
+gaps per affected feature before claiming full-standard launch readiness.
 
 | Reachable area/state | Live evidence required | Local acceptance surface | Status | Remaining work |
 | --- | --- | --- | --- | --- |
 | Persistent shell — base frame | Top frame, main-frame boundary, local presence, chat history, bottom controls, contextual navigation, and exit control. | Authenticated layout across World, Inventory, Player, and Fight at `955 × 817`, `820 × 900`, and `390 × 844`. | **Done** | Desktop retains the `29 / flexible / 8 / 240 / 1 / 30px` row contract and 300px presence column. Tablet/mobile reflow the same header, chat/presence, and CSS/text bottom controls without body overflow. |
 | Persistent shell — auxiliary chat controls | Both smile palettes, chat-mode cycle, refresh-speed cycle, transliteration state, and player-action menu. | Bottom control transitions beyond send, clear input, refresh, and clear visible chat. | **Not Done** | The measured control positions are implemented with project-owned CSS and ASCII/plain-text controls; these popup/cycle states remain unimplemented and therefore prevent claiming complete shell UX parity. |
 | Persistent chat — mixed gameplay-event timeline | Ordinary/private chat interleaved with exact-time personal fight/item/NV system rows and orange-marked untimed world announcements. | Current-cell/room ordinary-chat polling and locked sends, per-login delivered-row buffer, recipient-only durable event history/streams, fight XP, successful NPC item/NV loot, and empty-first append. | **Done for the bounded ordinary-chat and event subset** | Ordinary rows reset on fresh login; previous-cell subscriptions cannot retain an audience. Structured immutable event projections use stable producer keys and a latest-200 combined timeline. Item and NV rows follow successful inventory/wallet transactions. The world-announcement API is server-only and intentionally has no invented runtime announcements; links, authoring operations, retention controls, additional event families, and NPC-specific NV probabilities remain evidence gaps. |
-| Open world / World | Idle outdoor map, offered movement cells, center cursor, current coordinate/location copy, local actions, travel/countdown state, and shell continuity. | `WorldController#show` idle, available movement/action, and active movement states at desktop/tablet/mobile widths. | **Done** | Fresh captures define whole odd columns/rows fitted to the equivalent header-plus-main gameplay frame, capped at 13 × 7 (`1302 × 702`), over a 15 × 9 server render buffer; the `1150 × 519` source frame shows 11 × 5. Exact 100px project-owned terrain slices, thin dark-red offers, CSS cursor/walker/timer, top-context actions, captured `24`/`32`-second duration handling, and centered responsive panning are implemented without source assets. |
+| Open world / World | Idle outdoor map, offered movement cells, center cursor, current coordinate/location copy, local actions, travel/countdown state, and shell continuity. | `WorldController#show` idle, available movement/action, and active movement states at desktop/tablet/mobile widths. | **Done** | Fresh captures define whole odd columns/rows fitted to the equivalent header-plus-main gameplay frame, capped at 13 × 7 (`1302 × 702`), over a 15 × 9 server render buffer; the `1150 × 519` source frame shows 11 × 5. Exact 100px project-owned terrain slices, thin dark-red offers, CSS idle cursor/timer and eight original directional walking animations with matching static reduced-motion fallbacks, top-context actions, captured `24`/`32`-second duration handling, and centered responsive panning are implemented without source assets. |
 | Open-world linked location — Frontier Village | Exact entrance cell, multi-cell landmark, Enter, native interior geometry, irregular building/exit hotspots, linked Shop, unchanged outdoor coordinate, and login resume. | Seeded `[4,6]` entrance (source evidence `[998,998]`), village scene, Shop/exit offers, stale-cell rejection, and desktop/tablet/mobile panning. | **Done** | The observed village slice is implemented with a CSS-built `760 × 255` scene and fresh owned hotspot offers. Entering, visiting Shop, exiting, and login resume preserve the DB-backed outdoor coordinate. This status does not include other location families. |
 | Open-world linked locations — mines/exchanges/other families | Each source-specific exterior cell, entrance, interior, controls, prerequisites, outcomes, and return behavior. | Per-family live capture and local parity evidence. | **Partially Implemented** | Mine/exchange lobby entry, read-only sections, return and resume are the current scope. Underground travel/extraction, resource listings/trading and other families remain deferred; the village does not authorize generic mechanics. |
 | Inventory — current equipment family | Paper doll, equipment slots, statistics, money/mass, icon controls, dense item rows, current-page navigation state, and available item actions. | `InventoriesController#show` with the current seeded/equipped inventory state at desktop/tablet/mobile widths. | **Done** | Desktop retains the 463/5/467 split, 258/5/200 sheet, 41 × 53 CSS/text control rows, mass strip, and dense rows. Tablet/mobile stack the same domains and make control bands independently scrollable. |
-| Inventory — uncaptured family/action states | Empty production families, confirmations, transfers/gifts/sales, use, equipment sets, and full/short transitions. | Category-specific and modal/action states. | **Not Done** | Capture and compare each reachable transition before promoting these states to 1:1. |
+| Inventory — uncaptured family/action states | Empty production families, confirmations, transfers/gifts/sales, use, equipment sets, and full/short transitions. | Category-specific and modal/action states. | **Not Done** | Capture and compare each reachable transition before claiming those states match source behavior. |
 | Player profile — authenticated owner | Paper doll, vitals/stat hierarchy, experience/record, increases, combat values, internal navigation, and current-page state. | `PlayersController#show` for the signed-in character at desktop/tablet/mobile widths. | **Done** | Desktop retains the 463/5/467 composition and a 115 × 255 CSS character silhouette. Tablet/mobile stack the same sheet/parameter/right-content domains and retain horizontally accessible source tabs. |
 | Player profile — public/alternate states | Public lookup, non-owner controls, filled equipment, and saved/no-allocation states. | Canonical `/player/:name` public and alternate owner views. | **Not Done** | Request behavior is covered, but each visible state still needs matching live/local visual evidence. |
 | Fight — active turn composer | Three participant/action zones, equipment paper dolls, toolbar, target switching, AP/mana information, four attack and block rows, submission/reset controls, rosters, and chronological log. | Active arena or wilderness match at desktop/tablet/mobile widths. | **Done for the captured bounded states** | The 2026-07-28 full-width capture defines the layout: fixed participant rails surround a fluid center; names/vitals precede equipment paper dolls; selector copy contains body parts; a target/HP line precedes the log. A 2026-09-01 local `3x3` browser gate verified six participant cards, opponent switching and reload persistence, the active composer, and no page overflow at `820 × 900` or `390 × 844`, using project-owned presentation primitives. |
 | Fight — waiting/timeout/result variants | Waiting side, timeout claim, surrender result, victory/defeat, multi-opponent selection, and finish/return continuation. | Shared arena/wilderness non-composer match states. | **Done for the captured bounded states** | Deterministic request/system coverage plus the 2026-09-01 local `3x3` browser gate verifies waiting, timeout controls, surrender, three-player side victory/defeat, multi-opponent selection, six-row result, Finish, and completed-match reload. Uncaptured variants remain separate evidence work. |
 | Fight — separate public log | Decorative log frame, chronological time/name-colored rows, participant summary, pagination, and separation from the authenticated shell. | `GET /log/:id` at desktop/tablet/mobile widths. | **Done for the captured bounded states** | The supplied separate-link capture is implemented as a shell-free responsive surface with matching hierarchy, typography, side colors, participant summary, log/statistics navigation, and pagination. The 2026-09-01 local browser gate verified six participants, `51` events across two pages, statistics, empty and missing states, and mobile fit; source crest/ornamental assets remain outside the copy boundary. |
-| Responsive adaptation — shared acceptance | Same source controls/information at `820 × 900` and `390 × 844`, with no page-level horizontal clipping. | Shell, owner Profile, current Inventory, World, current City, Shop, active Fight, and public Fight Log. | **Done** | System coverage confirms stacked shell regions, single/two-column Profile/Inventory reflow, centered fixed-cell World panning, centered fixed-pixel City panning, locally owned Shop control/table overflow, paired fight rails, and a shell-free public log. This row measures local responsive behavior only. |
-| City — current five-district navigation | Five native 1250 × 600 district scenes; exact building/route regions; highlighted hover state; pointer tooltip; Business/Residential/Knowledge/Law arrows; district transitions; Central exit; Arena, Shop, Hospital, Market, and Airship links. | `main`, `forpost1`, `forpost2`, `forpost3`, and `forpost4` at desktop/tablet/mobile widths. | **Done** | Fresh 2026-07-28 observation replaced the stale nine-node/760 × 255 model. Local City now uses five nodes/eight directed links, 1250 × 600 native geometry, project-owned image/CSS highlights, large styled ASCII `>` arrows, keyboard landmarks, exact server offers, and centered responsive panning. The verified Central handoff is interactive. The September 9 live recheck also establishes the reciprocal Law/east gate; its local starter acceptance is covered by the separate content gate below rather than inferred from this older Done state. |
+| Responsive adaptation — shared acceptance | Same source controls/information at `820 × 900` and `390 × 844`, with no page-level horizontal clipping. | Shell, owner Profile, current Inventory, World, current City, Shop, active Fight, and public Fight Log. | **Done for recorded checks; expanded audit Not Done** | System coverage confirms stacked shell regions, single/two-column Profile/Inventory reflow, centered fixed-cell World panning, City scene presentation, locally owned Shop control/table overflow, paired fight rails, and a shell-free public log. The September 10 City size correction uniformly scales its authored image and hit regions using the agreed Shop size; local system checks passed at five viewport sizes, and manual desktop/mobile navigation passed for that correction. The later complete Central Square image and new masks also passed fresh browser/system verification, recorded in `doc/features/city.md`. This row measures local responsive behavior only. |
+| City — current five-district navigation | Five-node graph, eight directed routes, building/gate actions, exact district return and persisted position; illustrated Central Square controls. | `main`, `forpost1`, `forpost2`, `forpost3`, and `forpost4` at desktop/tablet/mobile widths. | **Done for bounded navigation** | Fresh 2026-07-28 observation replaced the stale nine-node/760 × 255 model. Local City now uses five nodes/eight directed links, 1250 × 600 native geometry, project-owned image/CSS highlights, original generated route-arrow decorations, keyboard landmarks, exact server offers, and responsive presentation. The September 10 user-requested City adaptation keeps the 1250 × 600 authored plane and uniformly scales its image, polygons, highlights and arrows to the agreed Shop display size; fresh local system and manual browser checks passed for this display correction; it is not new source evidence. The later user-requested Central Square artwork replaces the cropped composition with original `city/central-square.png` at 1250 × 600 and offset `[0,0]`; its masks/routes follow the complete image. This local artwork change preserves source topology; the City handbook owns its fresh verification. The fresh September 10 quarter survey now supports four distinct original 1250 × 600 scenes and generated original arrow decorations with reauthored targets. Recorded acceptance is tracked in the separate artwork row; existing routes, services and gates are unchanged. The verified Central handoff is interactive. The September 9 live recheck also establishes the reciprocal Law/east gate; its local starter acceptance is covered by the separate content gate below rather than inferred from this older Done state. |
+| City — other quarter artwork and layouts | Distinct Neverlands-based Residential, Knowledge, Business and Law scenes with complete original buildings, aligned silhouettes and source-shaped layouts. | `forpost1`, `forpost2`, `forpost3`, and `forpost4`. | **Done for recorded artwork/navigation checks** | Four original scenes and a transparent generated arrow follow the fresh September 10 survey. Local checks pass for 19 subject masks; final Chrome acceptance traversed all eight routes at desktop/phone widths and inspected the new scenes/highlights. The City handbook owns exact automated/manual outcomes and the subsequent bounded repair of the development gate drift. Touch-device/zoom acceptance and new service mechanics are not claimed. |
 | City — building/service interiors | Current interior layout, controls, denial/closed states, and service-specific transitions for every visible building. | Hospital, Market, Airship Station, Tavern, Workshop, Auction, Bank, schools, legal buildings, and other current landmarks. | **Not Done** | Hospital retains a bounded read-only page. Market adds the Shop-owned Merchant qualification path; listings remain read-only. Airship now has the separately verified configured journey capability below; normal routes await destination/path/schedule content. Other service families require their own capture. |
 | Airship — configured transport capability (`AIRSHIP-TRAVEL-001`) | Completed Forpost-to-Oktal boarding, 150 NV debit, departure wait, moving cells, arrived-aboard state, and destination station. | Owned payment/offer, server-clock region-qualified progress, 7 × 3 viewport with 11 × 5 flight buffer, explicit landing, resume, audience isolation, and mobile panning. | **Done for configured capability** | Verified with focused/concurrency/browser coverage and an isolated seeded local Chrome route across temporary review regions. Source evidence: `doc/design/reference/world/observations/2026-09-08_forpost_oktal_airship_journey.md`; runtime: `doc/features/airship_travel.md`. |
 | Airship — normal destination content and timetable | Complete regional path, exact duration/schedule rule, and authored destination access. | Purchasable normal Forpost routes. | **Not Done** | Captured fares are displayed, but no destination/path/dated departure is invented. Keep one populated region. Walking border mappings remain separate evidence work. |
@@ -468,7 +484,7 @@ because another layer has tests.
   in scope now. Runtime validation outcomes belong in the World handbook.
 - The city client phase is implemented: project-owned city presentation is
   rendered as a `1250 x 600` node scene with cataloged polygons/route regions,
-  styled ASCII arrow markers,
+  original generated arrow decorations inside semantic buttons,
   hover/focus tooltips, keyboard proxies, and server-offer-only submission.
   Existing `arena.png` and `gate.png` remain retained.
 - The outdoor client phase is implemented: `100 x 100` terrain cells, a clipped
@@ -810,7 +826,7 @@ the next implementation step is.
 | Game client layout | Yes: gameplay shell docs and live player capture. | Partial. | Make the game shell the default authenticated surface across world, city, building, arena, shop, and combat screens. |
 | UI/AX shell behavior | Yes: live shell, outdoor movement, and city image-map captures. | MVP world/city shell pass implemented: dense top vitals/actions, persistent chat/presence, labeled movement buttons, accessible city proxies, tooltip/focus behavior, and textual timer state. | Carry the same shell contract through remaining combat and building feature screens. |
 | World map | Yes: coordinate movement, frame-fitted odd visible columns/rows (up to 13 × 7) / 15 × 9 buffered `100 x 100` geometry, fixed-cursor travel, fatigue, hidden NPC encounters, composable cells, the captured village location, and one `1000 x 1000` region. | MVP client pass implemented with project-owned terrain slices, thin red offers, exact/fallback server timing, sparse bounds with a 273-cell surveyed starter catalog, hidden interruption, Central/Law/village entrance content, village Shop/exit offers, exact-cell resume, and responsive panning. | Starter route/import and continuous artwork verification passed on September 9. Full-zone artwork/content remains Stage 2; deeper interiors and successful professions remain separate unfinished domain work. |
-| Cities and buildings | Yes: current five-node graph, 1250 × 600 image-map interaction, hover swaps/tooltips, eight routes, two source-verified gate/cell mappings, and current Shop shell. | Complete for the freshly captured City navigation slice: fixed native scene, project-owned CSS highlights and ASCII arrows, five districts, eight routes, Central/Law gate definitions, level-zero Arena, Central Shop/Hospital, Residential Market/Airship, keyboard landmarks, responsive panning, owned offers, and exact-node resume. | The Law/east reciprocal pairing passed September 9 local HTTP/browser and manual checks. Keep uncaptured service interiors Not Done. |
+| Cities and buildings | Yes: current five-node graph, 1250 × 600 image-map interaction, hover swaps/tooltips, eight routes, two source-verified gate/cell mappings, and current Shop shell. | Complete for the captured City navigation slice: native authored scene, project-owned CSS highlights and original route-arrow decorations, five districts, eight routes, Central/Law gate definitions, level-zero Arena, Central Shop/Hospital, Residential Market/Airship, keyboard landmarks, owned offers, and exact-node resume. The user-requested uniform display scale follows Shop sizing. Central now selects a complete original 1250 × 600 image with reauthored masks; the earlier scaling verification is distinct from replacement-image verification in the City handbook. Four distinct original quarter scenes and original generated route arrows now follow the fresh survey; final desktop/phone Chrome and automated acceptance is recorded in the City handbook, with the recorded adaptive coverage limits explicit. A subsequent bounded content repair restores both development gate pairs without a full seed. | The Law/east reciprocal pairing passed September 9 local HTTP/browser and manual checks. The bounded gate repair restores the 15-action/eight-route development baseline; final acceptance of the gate/arrow correction is tracked separately in the City handbook. Complete remaining adaptive input/zoom checks and keep uncaptured service interiors Not Done. |
 | Arena | Yes: arena docs, live combat captures, public log captures. | The bounded lifecycle, physical `1x1` PvP/PvE, multi-participant synchronization, captured visual states, and public log are `DONE`. | Follow the Combat Completion Matrix rather than inferring full formula parity from this summary row. |
 
 ### Features
@@ -820,7 +836,7 @@ the next implementation step is.
 | Login and resume | Yes: live player/location behavior, dashboard-removal decision, and the completed Forpost-to-Oktal journey. | Outdoor cell, exact city node, Frontier Village, village-linked Shop, city Shop, allowlisted city interiors, and accessible selected Arena room resume are implemented with sanitized server-side state. An owned aboard airship journey takes priority and catches up from persisted deadlines. Village/Shop/Arena access is revalidated; stale chat reads cannot restore an old room. | Source new-login/offline flight behavior remains unexercised; local recovery is an engineering guarantee. Never persist arbitrary return URLs. |
 | Airship transport | Yes: the completed Forpost-to-Oktal boarding, departure wait, flight, arrival, and station-reload capture. | `AIRSHIP-TRAVEL-001` is Done for configured capability: atomic fare/boarding, persisted region-qualified progress, bounded cells, flight audience isolation, explicit landing, and recovery. | Normal routes remain unbookable until destination/path/schedule content is authored. Keep one populated region; walking border mappings remain uncaptured. |
 | Wilderness movement | Yes: live movement captures, wiki fatigue rules, and movement feature doc. | Timed offers, acceptance, completion, reload, sparse boundaries, stale-offer cancellation, bounded Wanderer timing, `1..2` step fatigue, three-minute recovery, and `86%` Move/Look/Enter gate implemented. | Isolate terrain/effect/encumbrance timing and high-fatigue combat inputs before adding them. |
-| City movement | Yes: the current five live nodes, native-pixel hotspot/hover behavior, eight route arrows, Central and Law gate handoffs, building return, and level-16 Arena availability are captured. | Implemented for MVP: immediate five-node transitions, level-zero Arena, fresh owned offers, project city art with CSS highlight crops, large styled ASCII arrows, tooltips, keyboard landmarks, centered responsive panning, explicit Central and Law gate pairings, and no city grid/timer or geometry authority. | Use the September 9 Main → Residential → Law recheck for the eastern starter handoff; capture each deferred service interior before extending its actions. |
+| City movement | Yes: the current five live nodes, native-pixel hotspot/hover behavior, eight route arrows, Central and Law gate handoffs, building return, and level-16 Arena availability are captured. | Implemented for MVP: immediate five-node transitions, level-zero Arena, fresh owned offers, project city art with CSS highlight crops, original generated route-arrow decorations, tooltips, keyboard landmarks, shared pane-relative display sizing on a fixed native plane, a complete original Central Square image with reauthored targets, four distinct original quarter scenes, missing-art fallback controls, Central and Law gate pairings, and no city grid/timer or geometry authority. | Use the September 9 Main → Residential → Law recheck for the eastern starter handoff; capture each deferred service interior before extending its actions. |
 | Tile-local action offers | Yes: movement, outdoor NPC, city/building entry, and `look`/`fis`/`dri`/`dig` client observations. | Empty Look (28 seconds), immediate Drink recovery (two fatigue, 60-second lock), and no-bait Fish (30-second lock) are implemented with owned offers, persisted deadlines and one-time effects/results. Fishing and drinking have no skill gate; digging has no completed flow. | Keep successful fishing/proficiency, plant gathering and digging deferred. Preserve wiki inputs without inventing catch/growth formulas or underground mine mechanics. Nature Child's published four-point recovery awaits the supported perk handoff tracked by Character Progression. |
 | NPCs and drops | Yes: hostile behavior, arena mannequin drops, paired wild rat-tail drops, supplied `24 NV` result, participant-level defeat, XP caps, and source-backed return context. | Implemented for the declared encounter/typed-award pipeline: explicit paired rats, distinct targeting, all-NPC response, atomic retry-safe item/NV awards, exact `35` total paired-encounter XP, fixed-anchor final defeat, sampled-anchor post-victory eligibility, surrender-compatible sides, and allowlisted return. The active Training Dummy item chance is explicit; the authored Plague Rat item identity remains at a `0.0` evidence hold. | Capture the exact Plague Rat item probability, Observation/multi-drop, general multi-NPC/player-group XP, and NPC-specific NV probability before enabling/tuning those values or authoring money onto a production NPC; quest NPC behavior remains separate. |
 | NPC quest interactions | Needs dedicated Neverlands capture. | General NPC quest/story stack remains absent. Shop implements the published Merchant license-qualification steps, with original dialogue and garment reward incomplete. | Capture exact quest UI, NPC dialogue flow, task/journal state, reward/turn-in rules, and location gating before implementation. |

@@ -250,7 +250,7 @@ RSpec.describe "City Shop purchase", type: :system, js: true do
   end
 
   def expect_entrance_geometry
-    expect(page).to have_css(".nl-building-entrance[style*='--nl-entrance-height']")
+    expect(page).to have_css(".nl-building-entrance[style*='--nl-scene-height']")
     page.evaluate_async_script(<<~JS)
       const done = arguments[arguments.length - 1];
       requestAnimationFrame(() => requestAnimationFrame(done));
