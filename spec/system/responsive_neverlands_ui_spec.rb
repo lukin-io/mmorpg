@@ -16,6 +16,10 @@ RSpec.describe "Responsive Neverlands UI", type: :system, js: true do
     page.driver.browser.execute_cdp("Emulation.clearDeviceMetricsOverride")
   end
 
+  def movement_destinations
+    MovementCommand.offered.where(character:).pluck(:direction, :from_x, :from_y, :target_x, :target_y, :travel_seconds)
+  end
+
   def set_viewport(width, height)
     page.driver.browser.execute_cdp(
       "Emulation.setDeviceMetricsOverride",
@@ -83,7 +87,7 @@ RSpec.describe "Responsive Neverlands UI", type: :system, js: true do
     set_viewport(390, 844)
     visit world_path
 
-    expect(page).to have_css(".nl-map-tile", count: 135)
+    expect(page).to have_css(".nl-map-tile", count: 35)
     expect(page).to have_css('.nl-map-viewport[style*="--nl-map-visible-columns: 3"][style*="--nl-map-visible-rows: 5"]')
     metrics = page.evaluate_script(<<~JS)
       (() => {
@@ -111,9 +115,9 @@ RSpec.describe "Responsive Neverlands UI", type: :system, js: true do
     expect(metrics.fetch("outerWidth")).to eq(302)
     expect(metrics.fetch("outerHeight")).to eq(502)
     expect(metrics.fetch("pageCenterOffset")).to eq(0)
-    expect(metrics.fetch("tableWidth")).to eq(1500)
-    expect(metrics.fetch("scrollWidth")).to be >= 1400
-    expect(metrics.fetch("scrollLeft")).to be_positive
+    expect(metrics.fetch("tableWidth")).to eq(500)
+    expect(metrics.fetch("scrollWidth")).to eq(400)
+    expect(metrics.fetch("scrollLeft")).to eq(0)
     expect(metrics.fetch("cursorCenter") - metrics.fetch("visibleCenter")).to be_within(2).of(0)
   end
 
@@ -155,8 +159,8 @@ RSpec.describe "Responsive Neverlands UI", type: :system, js: true do
     visit world_path
 
     expect(page).to have_css('.nl-map-viewport[style*="--nl-map-visible-columns: 11"]')
-    expect(page).to have_css(".nl-map-tile", count: 135)
-    offered_keys = MovementCommand.offered.where(character:).pluck(:action_key)
+    expect(page).to have_css(".nl-map-tile", count: 91)
+    offered_destinations = movement_destinations
     dimensions = page.evaluate_script(<<~JS)
       (() => {
         const viewport = document.querySelector(".nl-map-viewport")
@@ -175,18 +179,23 @@ RSpec.describe "Responsive Neverlands UI", type: :system, js: true do
     expect(page).to have_css('.nl-map-viewport[style*="--nl-map-visible-columns: 13"]')
     expect(page.evaluate_script("document.querySelector('.nl-map-viewport').offsetWidth")).to eq(1302)
     expect(page.evaluate_script("document.querySelector('.nl-map-viewport').scrollLeft")).to eq(0)
-    expect(page).to have_css(".nl-map-tile", count: 135)
-    expect(MovementCommand.offered.where(character:).pluck(:action_key)).to match_array(offered_keys)
+    expect(page).to have_css(".nl-map-tile", count: 105)
+    expect(movement_destinations).to match_array(offered_destinations)
+    expect(page.all(".nl-tile-clickable--available", visible: :all).map { |cell| cell["data-action-key"] }).to match_array(
+      MovementCommand.offered.where(character:).pluck(:action_key)
+    )
     expect(position.reload).to have_attributes(x: 25, y: 25)
   end
 
   it "fits rows from the source frame including its header as chat allocation changes" do
     set_viewport(1150, 799)
     visit world_path
-    offered_keys = MovementCommand.offered.where(character:).pluck(:action_key)
+    expect(page).to have_css(".nl-map-container[data-viewport-ready='true']")
+    offered_destinations = movement_destinations
 
     {240 => [491, 520, 5, 502], 440 => [291, 320, 3, 302], 40 => [691, 720, 7, 702]}.each do |chat_height, (pane_height, frame_height, rows, map_height)|
       page.execute_script("document.querySelector('.nl-game-layout').style.setProperty('--nl-social-height', arguments[0])", "#{chat_height}px")
+      expect(page).to have_css(".nl-map-container[data-viewport-ready='true'][data-nl-world-map-visible-rows-value='#{rows}']")
       expect(page).to have_css(".nl-map-viewport[style*='--nl-map-visible-rows: #{rows}']")
       dimensions = page.evaluate_script(<<~JS)
         (() => {
@@ -208,8 +217,11 @@ RSpec.describe "Responsive Neverlands UI", type: :system, js: true do
         "mapWidth" => 1102, "browserHeight" => 799, "centerOffset" => 0)
     end
 
-    expect(page).to have_css(".nl-map-tile", count: 135)
-    expect(MovementCommand.offered.where(character:).pluck(:action_key)).to match_array(offered_keys)
+    expect(page).to have_css(".nl-map-tile", count: 117)
+    expect(movement_destinations).to match_array(offered_destinations)
+    expect(page.all(".nl-tile-clickable--available", visible: :all).map { |cell| cell["data-action-key"] }).to match_array(
+      MovementCommand.offered.where(character:).pluck(:action_key)
+    )
     expect(position.reload).to have_attributes(x: 25, y: 25)
   end
 
@@ -234,7 +246,7 @@ RSpec.describe "Responsive Neverlands UI", type: :system, js: true do
         return probe.offsetWidth - probe.clientWidth
       })()
     JS
-    offered_keys = MovementCommand.offered.where(character:).pluck(:action_key)
+    offered_destinations = movement_destinations
 
     [[390, 844, 3], [1150, 799, 11], [1326, 817, 13]].each do |width, height, columns|
       set_viewport(width, height)
@@ -277,7 +289,10 @@ RSpec.describe "Responsive Neverlands UI", type: :system, js: true do
       })()
     JS
 
-    expect(MovementCommand.offered.where(character:).pluck(:action_key)).to match_array(offered_keys)
+    expect(movement_destinations).to match_array(offered_destinations)
+    expect(page.all(".nl-tile-clickable--available", visible: :all).map { |cell| cell["data-action-key"] }).to match_array(
+      MovementCommand.offered.where(character:).pluck(:action_key)
+    )
     expect(position.reload).to have_attributes(x: 25, y: 25)
   end
 

@@ -46,11 +46,12 @@ verify the result in the feature's real consumer.
 | `app/assets/images/` | Finished images integrated into the application. |
 | Relevant `doc/features/**` handbook | Verified runtime behavior, integration ownership, checks and remaining gaps. |
 
-The current supporting guides are
+Supporting guides include
 [starter-layout.svg](artwork/starter-layout.svg), the planned city/gates,
 village, mine, exchange and pond composition, and
 [mine-placement.svg](artwork/mine-placement.svg), the correction guide locating
-the mine doorway. They support future edits/regeneration and are referenced in
+the mine doorway, plus the preserved
+[City clarity crop](artwork/forpost-city-clarity-layout-guide.png). They support future edits/regeneration and are referenced in
 the [production prompt records](#production-prompt-records). Their shapes and
 labels guide image generation; they do not establish new Neverlands evidence
 or change the server's cell data.
@@ -296,6 +297,30 @@ This authorization does not change the prohibition on labels, buttons or
 arrows painted into background illustrations. Historical scene prompts below
 remain unchanged and continue to describe their actual submissions.
 
+## World cell raster-density specifications
+
+World cells have a fixed **100 × 100 CSS px** logical footprint. Encoded
+bitmap size is separate: the mandatory base is 100 × 100px, and an authored
+optional density variant is 200 × 200px for that same cell. Current density
+variants cover only 32 city cells, not the complete 312-image starter scene.
+
+| Property | Current contract |
+|---|---|
+| Base | Required 100 × 100px PNG in the catalog's `slices_directory` |
+| Optional density | 200 × 200px PNG in `high_density_slices_directory`, with the same `{column}_{row}.png` identity |
+| Display | 100 × 100 CSS px at both densities; browser `image-set` chooses the raster without zooming the map |
+| Native detail | Generate at or above the final delivery dimensions; simple enlargement of the base is not native high-detail artwork |
+| Matching composition | Derive both density variants from the same final composition; preserve gate/path positions and outer cell joins |
+| Missing files | At catalog resolution, missing 2× retains 1×; missing mandatory 1× uses per-cell CSS terrain even if 2× exists; never fall back to the authoring master |
+| Authority | Density directory and paths belong to the validated server catalog; per-cell metadata cannot change paths, dimensions or density |
+| Geometry/content | Encoded resolution changes no world cell count, coordinates, walkability, entrances, offers, buffer size or travel timing |
+
+The [City density production record](#2026-09-10--city-detail-at-two-raster-densities)
+declares its actual native output, the limited interpolated terrain rim and
+both packaged resolutions. Never describe the remaining 1× landscape as a
+full native 2× map. Inspect loaded resources and the real consumer at DPR 1
+and DPR 2; CSS values alone do not establish which image was selected.
+
 ## World walking decoration specifications
 
 The user-requested traveller is original project artwork decorating the
@@ -307,21 +332,28 @@ animated/static decoration inside the fixed 100 × 100px cursor.
 
 | Property | Current contract |
 |---|---|
-| Animated assets | Eight `world/traveller-walking-<direction>.gif` files: north, northeast, east, southeast, south, southwest, west and northwest. Each is 96 × 96px with eight full frames. |
-| Loop | 100ms per frame, 800ms repeating indefinitely while the moving state is displayed; this loop is independent of the authoritative travel deadline |
+| Animated assets | Eight `world/traveller-walking-<direction>.gif` files: north, northeast, east, southeast, south, southwest, west and northwest. Each uses a 128 × 128px canvas. |
+| Loop | Cardinal directions use eight 100ms frames (800ms); diagonals use four 140ms frames (560ms), repeating while moving. Both are independent of the authoritative travel deadline. |
 | Transparency | GIF binary alpha, thresholded at 50%, background disposal; at most 128 palette colors with no dithering |
 | Display | Centered 64 × 64 CSS px inside the existing 100 × 100 cursor; restrained dark drop-shadow |
-| Reduced motion | `prefers-reduced-motion: reduce` selects the matching `world/traveller-walking-<direction>-still.png`, the unthresholded first 96 × 96 RGBA frame |
+| Reduced motion | `prefers-reduced-motion: reduce` selects the matching `world/traveller-walking-<direction>-still.png`, the unthresholded first 128 × 128 RGBA frame |
 | Direction | Server rendering derives the direction from the accepted command's target-minus-origin vector using `Game::Movement::Directions::OFFSETS`; initial click feedback uses the existing offered button's direction. Reload restores the accepted direction. |
 | Source poses | Five generated sheets: East, North, South, Northeast and Southeast. West mirrors East; Northwest mirrors Northeast; Southwest mirrors Southeast. Figures are never rotated as flat images. |
-| Frame placement | Normalize each 4×2 source sheet, then use one union crop across all eight poses in that direction. Scale that common crop to 84px high and center it in the 96px canvas; do not trim or recenter frames independently. |
+| Frame placement | Use one fixed scale per direction and register every pose's opaque head centroid at 128px canvas coordinate `[64,21]` using whole-frame integer translation. Do not center by the changing whole-figure/boot bounding box or resize individual frames. Detailed source anchors, translations and hashes are in `doc/artwork/traveller-walk-registration.json`. |
 | Consumer | `_map` renders movement direction, `nl_world_map_controller.js` maintains the existing cursor state/direction, and `world.css` selects the GIF or corresponding still. |
-| Source/production record | East source retained at `doc/artwork/traveller-walk-sheet.png`; other accepted source sheets use `doc/artwork/traveller-walk-<direction>-sheet.png`. Exact successful/failed prompts and final packaging are recorded below. |
+| Source/production record | East source remains `doc/artwork/traveller-walk-sheet.png`; North/South retain their directional source files. Current diagonals use `doc/artwork/traveller-walk-northeast-phases-sheet.png` and `doc/artwork/traveller-walk-southeast-phases-sheet.png`. Old sheets/prompts remain historical; the current registration manifest names every selected source. |
 
 Terrain translation, current coordinates, action availability, countdown text
 and arrival continue through their existing owners. Reduced-motion artwork
 must not stop the server clock or change movement completion. The World
 handbook owns actual animation/reduced-motion/browser acceptance.
+
+The repair replaces the older 96px union-crop packaging. Registering the head
+removes whole-figure jitter without requiring every lifted boot to occupy the
+same bounding box. The diagonals are stylized four-phase loops; neither the
+generated sheets nor the mechanical checks establish perfect opposite-foot
+anatomical alternation. The [repair production record](#2026-09-10--registered-traveller-frames)
+separates rejected prompts, selected poses, packaging and current acceptance.
 
 ## Shop item and category image specifications
 
@@ -469,9 +501,13 @@ this guide does not independently redefine them.
   must measure `(columns × 100)` by `(rows × 100)` pixels.
 - Render continuous landscape slices through the existing cell catalog.
   Do not generate adjacent cells independently. The starter map uses physical
-  100px files with a matching master-crop fallback: the initial bounded buffer
-  can request its visible assets, while browser caching and retained DOM cells
-  reuse overlap during movement. Do not claim that a full map image is sent
+  100px files: a declared physical slice must exist, otherwise the catalog
+  returns no art and the renderer uses that cell's CSS terrain. The master is
+  an authoring/packaging asset, never a substitute map background; valid physical
+  cells remain usable if that master is not deployed. Valid
+  explicit references to nonsliced sheets retain their configured crop behavior.
+  The initial bounded buffer can request its cell assets and unchanged DOM
+  cells retain overlap during movement. Do not claim that a full map image is sent
   on each step or that physical slicing reduces the initial request count.
   Chunked production may use overlapping references, but final joins must align.
   The current starter consumer also resolves absent/valid legacy references by
@@ -1070,13 +1106,20 @@ encounter eligibility remain separately authored server data.
 The current `world/_map_cell` consumer uses
 `CellArtCatalog.resolve_for_tile(reference, zone:, x:, y:)`. Only the canonical
 outdoor `Outpost Surroundings` region (`1000 × 1000`, source map
-`m_1001_999`) and integer local `x0..20, y2..14` receive the starter coordinate
-default. Missing/empty and valid legacy terrain/pond references select column
-`x`, row `y - 2`; valid custom or deliberately edited starter references win.
-Nonblank invalid references retain generic terrain recovery. Outside that
-guard, the existing explicit/generic behavior remains. This makes neighboring
-gate slices join even when their gameplay rows have not been imported.
-The correction reuses these exact 273 PNGs and master without new generation,
+`m_1001_999`) and integer visual local `x−3..20, y2..14` receive a starter
+default. In the main x0..20 rectangle, missing/empty and valid legacy
+terrain/pond references select `forpost_starter`, column `x`, row `y - 2`;
+valid custom or deliberately edited starter references win. Western x−3..−1
+uses `forpost_starter_west`, column `x + 3`, row `y - 2`, only for absent/empty
+references; valid explicit western art is preserved. The western margin is
+scenery only and does not change gameplay bounds or imported cells.
+Nonblank invalid references return no art. A missing required physical PNG
+also returns no art, including when replacing a legacy starter reference;
+`world/_map_cell` then uses per-cell CSS terrain, without a full master or
+implicit legacy terrain bitmap. Valid explicit nonsliced references outside
+the default selection retain their configured sheet crops. This makes
+neighboring gate slices join even when their gameplay rows have not been
+imported. The earlier sparse-cell correction reused the 273 PNGs without new generation,
 repackaging, prompts or database writes. Rendering and manual acceptance are
 documented in the [World handbook](features/world.md#continuous-starter-landscape).
 
@@ -1091,6 +1134,14 @@ movement through this landscape and lobby entry/return. Future corrections must
 append their exact prompts here and update the selected-output record.
 
 ### 2026-09-10 — sharper starter landscape
+
+**Later review disposition:** the user rejected this repaint's rounder, taller
+city composition and enlarged source image in the later September 10
+[tile-loading/city-scale comparison](design/reference/world/observations/2026-09-10_world_tile_loading_and_city_scale.md).
+The alignment checks and earlier gate/walking acceptance below remain
+historical. This repaint is now superseded in production by the native-panel
+assembly recorded below. Its exact submitted prompt and actual dimensions
+remain preserved unchanged; final acceptance belongs to the new record.
 
 - Request: improve the soft outdoor landscape while preserving the complete
   composition, two gate cells, verified approach paths and other landmark
@@ -1145,6 +1196,150 @@ Match our original hand-painted medieval RPG style: warm terracotta and ochre ro
 No people, characters, text, logos, labels, map numbers, coordinate grid, cell borders, selection boxes, arrows, compass, UI controls, watermark, gray panels, duplicated sections or pasted patches. Output only the completed sharp original landscape. Preserve the first image's composition exactly while replacing its softness with genuine visible detail.
 ```
 
+### 2026-09-10 — native-panel starter landscape
+
+The later [source tile/composition comparison](design/reference/world/observations/2026-09-10_world_tile_loading_and_city_scale.md)
+rejected the rounder, taller city and enlarged low-resolution repaint. The
+replacement uses a steep overhead view, a broad low city, two readable gate
+openings and one small pond. The same source-backed entrance/action cells and
+approaches remain authoritative. A city or village is painted across ordinary
+map cells; its exact current-cell Enter action opens its interior. No giant
+city image, city-wide clickable overlay or new entrance rule is added.
+
+**Production assets and dimensions:**
+
+| Role | Production file | Encoded dimensions and mapping |
+|---|---|---|
+| Main authoring master | [forpost-starter-landscape.png](../app/assets/images/world/forpost-starter-landscape.png) | 2100 × 1300 RGB PNG; main local x0..20, y2..14 |
+| Western scenery authoring master | [forpost-starter-west-landscape.png](../app/assets/images/world/forpost-starter-west-landscape.png) | 300 × 1300 RGB PNG; visual local x−3..−1, y2..14 |
+| Required main runtime tiles | `world/cells/forpost-starter/{column}_{row}.png` | 273 files, each 100 × 100 RGB PNG; column=x, row=y−2 |
+| Required western runtime tiles | `world/cells/forpost-starter-west/{column}_{row}.png` | 39 files, each 100 × 100 RGB PNG; column=x+3, row=y−2 |
+
+The **312 visual tiles** do not expand the **273-cell gameplay import** or the
+nonnegative region bounds. Western scenery illustrates the already surveyed
+source x991..993 in otherwise inert outside-zone buffer slots. It supplies no
+movement offer, passability, resource, NPC or entrance. `forpost_starter_west`
+is a separate art key; all main `forpost_starter` references remain unchanged.
+`CellArtCatalog.resolve_for_tile` keeps the canonical Forpost identity guard
+and validates the expanded visual rectangle x−3..20, y2..14. Missing/empty
+references select the corresponding key by x; valid explicit art in the west
+is preserved. Main legacy-reference precedence remains as documented in
+[World's cell-art contract](features/world.md#72-cell-art-schema).
+
+Each runtime cell loads its own 100px file at 100 CSS px, with zero background
+offset. Declared slices must exist; missing files return no art and use per-cell
+CSS terrain. The authoring masters are never map backgrounds or missing-slice
+fallbacks, and need not be deployed for valid physical slices to resolve.
+Explicit nonsliced catalog entries retain their configured crop behavior.
+
+This paragraph and the acceptance below describe the original panel delivery.
+The later [City detail correction](#2026-09-10--city-detail-at-two-raster-densities)
+replaces 32 base slices and adds optional 200px density variants at the same
+100 CSS px footprint. The remaining required files and geometry are unchanged.
+
+**Native generation and deterministic packaging:**
+
+1. Four composition/anchor iterations produced the accepted geometry guide.
+   Their low-resolution pixels were enlarged only to author the 2400 × 1300
+   [panel layout guide](artwork/forpost-panels-layout.png), never used as final
+   production pixels. The guide includes a 300px western scenery margin.
+2. Six original native panels cover three 800 × 650 cores across two rows.
+   Each internal edge has 40px context, creating **80px shared overlaps**.
+   Corner panels were generated at **1384 × 1136**, center panels at
+   **1417 × 1110**. Lanczos downsampling yields corner footprints 840 × 690
+   and center footprints 880 × 690; no native output is enlarged.
+3. Place west/center/east panels at combined x=0/760/1560 and north/south rows
+   at y=0/610. Crossfade horizontal and vertical shared bands over 80px to
+   assemble **2400 × 1300px**. Generated aspect ratios differ slightly from
+   their guides, requiring small independent-axis downsampling; this is not native 4K/2× art.
+4. A final gate edit, native **1774 × 887**, creates the west opening. Downsample
+   to 1000 × 500, place at combined `(750,470)`, and feather only the outer
+   24px against the assembled panels. The east opening is preserved.
+5. Export 8-bit RGB PNG. Crop the main 2100 × 1300 at `(300,0)` and west
+   300 × 1300 at `(0,0)`; cut each into lossless non-overlapping 100px PNGs.
+   No gameplay data, region coordinates, seed identities or travel timing change.
+
+**Every exact submitted prompt**, tool identity, reference role, actual output
+identity/dimensions and rejected/selected disposition is preserved in the
+[canonical generation record](artwork/forpost-panel-map-generation.md). These
+11 prompts are copied exactly once, including unsuccessful attempts:
+
+| Submission | Exact prompt and provenance |
+|---|---|
+| Initial full composition | [Composition draft](artwork/forpost-panel-map-generation.md#composition-draft) |
+| First anchor correction | [Anchor correction](artwork/forpost-panel-map-generation.md#anchor-correction) |
+| Annotated-scene correction | [Overlay correction](artwork/forpost-panel-map-generation.md#overlay-correction) |
+| Tight city/pond layout correction | [East patch](artwork/forpost-panel-map-generation.md#east-patch) |
+| Northwest native panel | [Northwest](artwork/forpost-panel-map-generation.md#north-west) |
+| North-center native panel | [North-center](artwork/forpost-panel-map-generation.md#north-center) |
+| Northeast native panel | [Northeast](artwork/forpost-panel-map-generation.md#north-east) |
+| Southwest native panel | [Southwest](artwork/forpost-panel-map-generation.md#south-west) |
+| South-center native panel | [South-center](artwork/forpost-panel-map-generation.md#south-center) |
+| Southeast native panel | [Southeast](artwork/forpost-panel-map-generation.md#south-east) |
+| Final west-gate opening | [Gate correction](artwork/forpost-panel-map-generation.md#west-gate-opening) |
+
+All generation used the built-in image tool and project-owned guides/art.
+Neverlands images were observed, not copied or supplied to generation.
+The assets are integrated. Final automated checks and subsequent Chrome
+acceptance passed for desktop, both gates, real movement and a 390px mid-travel
+resize, as recorded in the [World handbook](features/world.md#159-viewport-fit-and-revised-city-composition-2026-09-10).
+Both tile sets reconstruct their authoring masters with zero differing pixels.
+The browser displayed only individual 100px PNGs, including the inert western
+margin. This acceptance is separate from the rejected repaint's earlier checks;
+physical-touch and additional zoom acceptance are not claimed.
+
+### 2026-09-10 — City detail at two raster densities
+
+The user reopened city-building clarity after the native-panel landscape
+acceptance above. Local Chrome used device-pixel ratio 2: the original 100px
+files occupied 100 CSS pixels, with no CSS blur. This correction adds actual
+raster detail for the existing city composition. It does not change the
+Neverlands-derived cell geometry, either gate's authored entrance, paths,
+passability, records or the player movement contract.
+
+- Tool: built-in `image_gen`.
+- Edit target and layout reference: [preserved city crop](artwork/forpost-city-clarity-layout-guide.png), **800 × 400px**, cropped from the pre-correction main authoring master at `(600,500)`. It is project-owned existing art, not a source screenshot.
+- Selected original tool output: `exec-c3702e2c-3f44-4ebc-91a4-5463ca3ed914.png`, **1774 × 887px**, **3,470,715 bytes**. The request asked for at least 1600 × 800; the actual result exceeds that footprint without enlargement.
+- Final optional density patch: **1600 × 800px**. Corresponding base patch: **800 × 400px**.
+- Required base assets: the same 273 main and 39 western **100 × 100px** PNGs. Only the 32 main city slices are replaced by matching detail pixels.
+- Optional density assets: 32 **200 × 200px RGB PNGs** at `app/assets/images/world/cells/forpost-starter-2x/{column}_{row}.png`, columns `6..13`, rows `5..8`. They represent existing local cells x6..13/y7..10; they are not 32 new world cells.
+- Browser consumer: `CellArtCatalog::Presentation.high_density_asset` plus `world/_map_cell` emits `image-set` at 1×/2×; both versions retain a **100 × 100 CSS px** footprint and zero background offset.
+
+**Deterministic packaging:**
+
+1. Reject a native output smaller than 1600 × 800. Lanczos-downsample the
+   selected 1774 × 887 image to 1600 × 800; no architectural pixels are enlarged.
+2. Enlarge the old 800 × 400 guide only to supply the surrounding terrain rim.
+   Blend that rim with the new patch over the outer **16 high-density pixels
+   (8 logical pixels)**, using opacity proportional to minimum distance from
+   an image edge: `alpha = min(1, min(x, width-1-x, y, height-1-y) / 16)`.
+   At/inside 16px, the patch is entirely the new native detail.
+   This limited seam material is interpolated old terrain; do not describe
+   every pixel of the final patch or the whole map as newly generated 2× art.
+3. Downsample that final 1600 × 800 patch to 800 × 400 for the matching 1× view.
+   Composite it into the 2100 × 1300 main authoring master at `(600,500)`.
+4. Cut the high-density patch into 32 lossless 200px files and the same master
+   rectangle into the matching 100px base files. Export 8-bit RGB PNGs.
+   The two densities share composition, borders and column/row identities.
+
+The generator redraws details; geometry must still be checked against the
+preserved guide and real gate cells. Optional density does not waive base-file
+integrity: missing 2× uses 1×, while missing mandatory 1× retains per-cell CSS
+recovery. Native dimensions and a valid image file alone do not establish
+visual acceptance. Current checks and the user-reopened walking-quality work
+are recorded in [World section 15.10](features/world.md#1510-city-raster-detail-and-walking-frame-stability-2026-09-10);
+section 15.9 remains the previous dated acceptance.
+
+**Exact submitted prompt:**
+
+```text
+Use case: precise-object-edit. Asset: original sharp high-density city map tiles for a medieval browser RPG. Image1 is the EXACT EDIT TARGET and spatial layout. Preserve the entire 800:400 composition with no cropping, zoom, camera change, border, or rearrangement. The small city, all building footprints, plazas, wall bends, tower positions, both gate openings and their approach paths, trees and pond must remain in exactly their existing image locations and at the same proportions. West doorway around x74,y142; east doorway around x594,y270. These remain inside their same invisible logical cells.
+
+Correct only the soft smeared rendering of the architecture: redraw roofs with crisp coherent terracotta/slate edges and individual orderly tile courses; straight clearly separated timber beams; defined window recesses, door arches, stone courses and stair treads; clean finite wall silhouettes and short hard-edged contact shadows. Make each small building individually readable at map scale. Use a finely rendered classic RPG/strategy-game miniature scene, same olive countryside and warm earth palette, with sharp constructed forms and disciplined edge contrast. Keep the high overhead orthographic camera and modest heights. Do not make everything noisy or outline it heavily. No painterly blur, soft airbrushing, depth of field, tilt-shift, haze, bloom, vaseline lens, upscaled texture, grain, over-sharpening halos or blown white edges. Maintain matching natural light and keep the outer 20px landscape boundary as close as possible for seamless joining.
+
+Render genuinely new high-detail native pixels, ideally 2400x1200 and at least 1600x800. The final deliverable will be cut into separate 200x200 physical PNGs displayed at 100x100 CSS pixels on Retina displays. This is a resolution/detail improvement to the SAME map, not a new city. Keep west gate and east gate visibly open with dark passages, no duplicated or moved entrances. No giant arena, extra buildings, characters, labels, text, grid, cursor, border, icons or watermark. Output only the exact map rectangle in sharp full-color RGB.
+```
+
 ### 2026-09-10 — original traveller walking animation
 
 This first east-only integration is historical. Its unsuffixed runtime GIF and
@@ -1191,6 +1386,12 @@ Constraints: actual transparent background, no checkerboard painted into the ima
 ```
 
 ### 2026-09-10 — eight-direction traveller animation
+
+This original 96px/eight-frame delivery is historical and superseded by the
+[registered 128px repair](#2026-09-10--registered-traveller-frames). Its exact
+prompts, source selections, packaging recipe and original byte counts below
+remain preserved. North/South/East source sheets are reused by the later repair;
+the current diagonal sources, frame counts and registration differ.
 
 This batch extends the original walking decoration to the eight directions
 recorded by the preserved
@@ -1401,7 +1602,11 @@ Animation: eight distinct, evenly spaced phases of a natural looping southeast w
 Output a PNG with an ACTUAL TRANSPARENT ALPHA CHANNEL, alpha0 everywhere outside the character silhouettes. The background is empty and transparent. Do not paint a checkerboard or any background color. No ground plane, floor, cast shadow, scenery, grid, frame borders, labels, text, numbers, watermark or UI. Only the eight character figures on transparency.
 ```
 
-#### Final eight-direction packaging and integration
+#### Historical eight-direction packaging and integration
+
+This 96px packaging was replaced by the [registered 128px frames](#2026-09-10--registered-traveller-frames)
+after the user reported shaking. The following recipe and byte counts describe
+the earlier output only.
 
 The five accepted originals are preserved at
 `doc/artwork/traveller-walk-sheet.png` (East) and
@@ -1449,6 +1654,74 @@ cannot authorize a destination, move a character or complete the server timer.
 Visual asset review covered all 64 packaged poses across eight directions.
 Fresh automated and manual gameplay acceptance is recorded in the World
 handbook, separately from this production review.
+
+### 2026-09-10 — Registered traveller frames
+
+The user-reported shaking reopened the previous animation's acceptance.
+The repair registers the body independently of moving boots/cloak and supplies
+128px raster canvases to the existing 64 CSS px decoration. It changes no
+movement vector, timer, server coordinate, idle compass or cursor footprint.
+
+All **ten exact new generation prompts**, actual native dimensions/output
+identities, original references and rejected/selected dispositions are
+preserved once in [the repair generation record](artwork/traveller-walk-repair-generation.md).
+The earlier North/South/East sheets are reused. The fresh Northeast output
+`exec-8ee7636e-9750-4ff6-9ebb-74a9e6821610.png` and Southeast output
+`exec-b12fe981-de44-446a-866f-cd073b528272.png` are both 1774 × 887px RGBA. Only
+source frames 0–3 from each are selected; the full eight-pose sheets are not
+accepted as anatomically complete alternating cycles. The selected sheets
+are preserved as `traveller-walk-northeast-phases-sheet.png` and
+`traveller-walk-southeast-phases-sheet.png` under `doc/artwork/`.
+
+**Reproducible packaging (Ruby and ImageMagick):**
+
+1. Require 1774 × 887px RGBA source sheets. Normalize the 4×2 grid to 1776×888 and
+   extract 444 × 444px cells. This tiny grid normalization is a packaging step,
+   not a claim of new generated resolution.
+2. Select source frames 0–7 for North/South/East and 0–3 for Northeast/Southeast.
+   Define opaque geometry using alpha≥128. Measure each silhouette's height;
+   choose a single direction-wide resized-cell size
+   `round(444 ×112 / maximum_source_figure_height)`. All selected poses use
+   that same Lanczos scale; do not independently trim or resize them.
+3. For each resized pose, compute the alpha-mask centroid within the top 18%
+   of its opaque figure height. Translate the whole image by integer offsets
+   `round(64-head_x), round(21-head_y)` onto a transparent 128×128 canvas.
+   This registers the head, not the varying whole-figure bounding box.
+   Keep the complete silhouette at least 2px inside the output canvas.
+4. Mirror registered East→West, Northeast→Northwest and Southeast→Southwest.
+   Do not rotate a character to make a new facing direction.
+5. Build one shared palette per direction from all its frames: binary alpha
+   threshold 50%, at most 128 colors, no dithering. Apply that palette to every
+   GIF frame, with full-frame Background disposal, infinite looping and
+   delays 10 centiseconds for cardinals or 14 for diagonals. Copy the original
+   unthresholded registered first frame to the RGBA reduced-motion PNG.
+6. Preserve source hashes, fixed scales, per-frame anchors/translations,
+   selected indices, timings, byte counts and final hashes in
+   [traveller-walk-registration.json](artwork/traveller-walk-registration.json).
+   Decode final GIF pixels when checking registration; a matching file header
+   or source pose alone does not establish motion stability.
+
+| Direction | Frames × duration | Loop | GIF bytes | RGBA still bytes |
+|---|---|---|---:|---:|
+| north | 8 × 100ms | 800ms | 24660 | 11784 |
+| northeast | 4 × 140ms | 560ms | 11245 | 12596 |
+| east | 8 × 100ms | 800ms | 24961 | 14204 |
+| southeast | 4 × 140ms | 560ms | 12032 | 12968 |
+| south | 8 × 100ms | 800ms | 27416 | 12870 |
+| southwest | 4 × 140ms | 560ms | 12040 | 12907 |
+| west | 8 × 100ms | 800ms | 24983 | 14222 |
+| northwest | 4 × 140ms | 560ms | 11255 | 12672 |
+
+All eight GIFs and all eight stills are 128×128px, displayed at 64×64 CSS px.
+Actual decoded-frame checks bound head movement to 1 CSS px per axis and
+upper-body horizontal centroid movement to 2.25 CSS px; the measured maxima
+were 0.4626/0.47435 CSS px for the head and 1.949 CSS px for the upper body.
+Lifted boots may change silhouette bounds. The four diagonal phases are
+stylized wide/down/pass/reach motion; perfect opposite-foot anatomical
+alternation is not claimed. The timed 64px gallery review found steady heads
+and no prior sideways whole-body jump. Final checks and integrated manual
+acceptance, including four actual travel directions and the 390 × 844 idle
+layout/city-entry check, are recorded in [World section 15.10](features/world.md#1510-city-raster-detail-and-walking-frame-stability-2026-09-10).
 
 ### 2026-09-08 — preserved pond-neighborhood prompt
 

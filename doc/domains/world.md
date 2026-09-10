@@ -41,7 +41,11 @@ underground and trading flows remain deferred. Movement reads eight adjacent coo
 or an exact target. Walking reuses unchanged overlapping cells and renders
 only entering edges when the signed prior buffer is valid; fresh server offers
 remain authoritative. Content changes, stale/invalid hints, or reload recover
-through the full bounded buffer, independently of zone size.
+through the full bounded buffer, independently of zone size. The local
+viewport protocol validates odd visible dimensions and adds one overscan cell
+per edge; resize can refresh offers without altering accepted movement.
+The September 10 tile-loading observation distinguishes this local bounded
+window from the source's sampled retention of an older off-screen row.
 
 Starter authoring covers 273 cells at local `x=0..20,y=2..14` through one
 validated catalog and the existing editable tile rows: 118 atlas-active and
@@ -49,8 +53,9 @@ validated catalog and the existing editable tile rows: 118 atlas-active and
 route is `[11,9] → [12,10] → [13,10]`; the intermediate cell offers the
 captured empty Look action with a 28-second lock, while water actions belong
 to the pond. Fresh source entry returns the east gate to Law (`forpost4`), reached from Main through Residential (`forpost1`).
-Source `x=991..993` survey columns fall outside the current local origin and
-remain evidence only. Complete-zone terrain/content and artwork are still
+Source `x=991..993` survey columns fall outside the current local origin.
+Their 39 visual tiles now extend the scenery only; they remain outside the
+273-cell gameplay import and cannot receive movement offers. Complete-zone terrain/content and artwork are still
 separate from this bounded import; completed runtime checks are recorded in
 `doc/features/world.md`.
 
@@ -142,9 +147,11 @@ The MVP uses only Outpost Surroundings, with a bounded authored starter area
 and sparse defaults beyond it. Full zone population is Stage 2. Initial atlas
 import preserves existing artwork/action metadata and skips unrelated authored
 sources; once atlas provenance exists, reseeding preserves operator gameplay
-edits. One continuous 273-cell starter landscape now replaces absent and legacy
-terrain/pond references while retaining independent and already edited starter
-art. Physical 100px PNG slices use matching master crops as fallback. Its one
+edits. One continuous starter scene supplies 273 main and 39 inert western
+scenery tiles, replacing absent/legacy main art while retaining independent
+and already edited references. The 273-cell gameplay import is unchanged. Required physical 100px PNG slices
+render directly; missing files use
+per-cell CSS recovery, never an implicit master background. Its one
 pond and painted landmarks do not create gameplay; duplicate decorative
 city/village markers are suppressed while accessible labels remain.
 `CellArtCatalog.resolve_for_tile` also gives sparse or legacy-art starter cells
@@ -152,13 +159,13 @@ their coordinate-derived slice within the exact guarded Forpost rectangle.
 This presentation-only default closes gaps around partially imported gates
 without materializing gameplay content; valid independent/edited artwork wins.
 The World handbook owns bounds, invalid-reference behavior and acceptance.
-The subsequent original landscape repaint retains those cell anchors and
-delivery dimensions; its actual generated resolution and one-time packaging
-resize are documented without a native 4K claim. Moving state now uses an
-original eight-direction walking GIFs with matching static reduced-motion
-fallbacks, retaining the
-idle compass and server movement lifecycle. ARTWORK.md preserves both exact
-prompts; the World handbook owns final runtime acceptance.
+The subsequent native-panel landscape replaces the rejected rounder repaint,
+retaining the main cell anchors and adding the western scenery margin.
+Six panels and a gate correction are downsampled into the combined assembly;
+no production output is enlarged or claimed as native 4K/2×. Moving state uses
+original walking GIFs in eight directions with matching static reduced-motion
+fallbacks, retaining the idle compass and server movement lifecycle.
+ARTWORK.md preserves every exact prompt; the World handbook owns final runtime acceptance.
 Derived encounter bootstrap preserves occupied cells and moved/disabled
 placements by their original source identity. Seed phases and lifecycle
 policies are documented in the content-management guide.

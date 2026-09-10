@@ -16,6 +16,7 @@ module Game
       Presentation = Data.define(
         :key,
         :asset,
+        :high_density_asset,
         :column,
         :row,
         :cell_width,
@@ -58,8 +59,11 @@ module Game
 
         # Accepts hash-like tile metadata with key and optional column/row.
         # Returns a validated Presentation for rendering, or nil when the entry,
-        # asset, dimensions, or requested sheet coordinate is invalid. Missing
-        # optional physical PNGs recover from the same coordinate on the master.
+        # asset, dimensions, or requested sheet coordinate is invalid. A catalog
+        # declaring physical slices requires that exact PNG; its authoring
+        # master is never a runtime substitute for a missing cell. An optional
+        # 2x physical PNG enhances that same cell while retaining 100px geometry
+        # and its mandatory 1x fallback; it cannot replace a missing base PNG.
         def resolve(reference)
           attributes = normalize_reference(reference)
           return unless attributes
@@ -72,13 +76,15 @@ module Game
           return unless column&.between?(0, definition.fetch("columns") - 1)
           return unless row&.between?(0, definition.fetch("rows") - 1)
 
-          slice = slice_asset(definition, column, row)
+          slice = slice_asset(definition["slices_directory"], column, row)
+          return if definition["slices_directory"] && slice.nil?
           landmark = definition.fetch("painted_landmarks").find do |entry|
             entry["column"] == column && entry["row"] == row
           end
           Presentation.new(
             key: attributes["key"],
             asset: slice || definition.fetch("asset"),
+            high_density_asset: slice && slice_asset(definition["high_density_slices_directory"], column, row),
             column:,
             row:,
             cell_width: definition.fetch("cell_width"),
@@ -101,14 +107,17 @@ module Game
         # default is presentation-only and performs no database work. Valid
         # independent or edited starter references win; malformed explicit
         # references retain resolve's nil result and the renderer's recovery.
+        # The surveyed western margin illustrates otherwise inert outside-zone
+        # buffer cells; it does not extend gameplay coordinates or content.
         def resolve_for_tile(reference, zone:, x:, y:)
           explicit = resolve(reference)
           return explicit unless starter_region?(zone)
-          return explicit unless x.is_a?(Integer) && y.is_a?(Integer) && x.between?(0, 20) && y.between?(2, 14)
+          return explicit unless x.is_a?(Integer) && y.is_a?(Integer) && x.between?(-3, 20) && y.between?(2, 14)
           return explicit if reference.present? && explicit.nil?
-          return explicit if explicit && !LEGACY_STARTER_KEYS.include?(explicit.key)
+          return explicit if explicit && (x.negative? || !LEGACY_STARTER_KEYS.include?(explicit.key))
 
-          resolve("key" => "forpost_starter", "column" => x, "row" => y - 2) || explicit
+          key, column = x.negative? ? ["forpost_starter_west", x + 3] : ["forpost_starter", x]
+          resolve("key" => key, "column" => column, "row" => y - 2)
         end
 
         private
@@ -142,6 +151,9 @@ module Game
           if attributes.key?("slices_directory")
             return unless safe_directory?(attributes["slices_directory"])
           end
+          if attributes.key?("high_density_slices_directory")
+            return unless attributes["slices_directory"] && safe_directory?(attributes["high_density_slices_directory"])
+          end
           landmarks_in_art = attributes.fetch("landmarks_in_art", false)
           return unless [true, false].include?(landmarks_in_art)
           return unless cell_width == CELL_SIZE && cell_height == CELL_SIZE
@@ -149,7 +161,7 @@ module Game
           landmarks = attributes.fetch("painted_landmarks", [])
           return unless valid_landmarks?(landmarks, columns, rows)
           return if source_reference.blank?
-          return unless asset_exists?(asset)
+          return unless attributes["slices_directory"] || asset_exists?(asset)
 
           attributes.merge(
             "asset" => asset,
@@ -186,9 +198,8 @@ module Game
         end
 
         # The catalog owns the directory and file naming. A missing individual
-        # PNG retains the correct master crop, never another cell's artwork.
-        def slice_asset(definition, column, row)
-          directory = definition["slices_directory"]
+        # PNG fails closed instead of loading the authoring master.
+        def slice_asset(directory, column, row)
           return unless directory
 
           asset = "#{directory}/#{column}_#{row}.png"

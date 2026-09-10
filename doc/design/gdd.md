@@ -265,11 +265,15 @@ cannot become a paid offer. Region isolation is required for position,
 movement, content reads, entrances, chat, and presence; passengers use their
 flight audience rather than the ground cell below them.
 
-The local map reads a bounded `15 × 9` render buffer. The visible viewport uses
-whole odd rows/columns of `100px` cells, capped at `13 × 7`, fitted to the
-source-equivalent header-plus-main frame. Move offers query at most eight
-neighbors; cell actions and encounters resolve their exact authoritative cell.
-These are local spatial-query choices, not claims about Neverlands internals.
+The local map fits whole odd rows/columns of `100px` cells to the available
+width and header-plus-main height. The server validates visible columns
+`3..39` and rows `3..9` independently, defaulting to `3 × 5`, and adds one
+off-screen cell per edge for a maximum `41 × 11` buffer. Resizing requests a
+bounded projection without changing accepted movement or its deadline.
+Move offers query at most eight neighbors; cell actions and encounters resolve
+their exact authoritative cell. These are local spatial-query choices. The
+September 10 source tile observation records incremental growth and retention
+of an older off-screen row, not this exact buffer limit or eviction policy.
 
 ## Tile-Local Actions
 

@@ -24,8 +24,10 @@ export default class extends Controller {
     zoneWidth: Number,
     zoneHeight: Number,
     tileSize: { type: Number, default: 100 },
-    maxVisibleColumns: { type: Number, default: 13 },
-    maxVisibleRows: { type: Number, default: 7 },
+    visibleColumns: Number,
+    visibleRows: Number,
+    maxVisibleColumns: Number,
+    maxVisibleRows: Number,
     moveCooldown: { type: Number, default: 30 },
     zoneName: String,
     mapOffsetX: { type: Number, default: 0 },
@@ -82,6 +84,7 @@ export default class extends Controller {
 
     clearTimeout(this.refreshRetryId)
     clearTimeout(this.refreshTimeoutId)
+    clearTimeout(this.viewportRefreshId)
     window.removeEventListener("resize", this.boundCenterViewport)
     this.viewportResizeObserver?.disconnect()
   }
@@ -160,6 +163,7 @@ export default class extends Controller {
     clearTimeout(this.refreshTimeoutId)
     cancelAnimationFrame(this.animationFrameId)
     this.refreshPending = false
+    this.movePending = false
     this.mapContainerTarget.style.transition = "none"
     desiredRows.forEach((row, index) => this.syncChildren(row, desiredCells[index]))
     this.syncChildren(currentBody, desiredRows)
@@ -228,7 +232,7 @@ export default class extends Controller {
     clearTimeout(this.refreshTimeoutId)
     clearTimeout(this.refreshRetryId)
     this.refreshPending = false
-    this.refreshRetryId = setTimeout(() => this.finishServerTimer(), 2000)
+    this.refreshRetryId = setTimeout(() => this.requestMapRefresh(), 2000)
   }
 
   // =====================
@@ -247,14 +251,27 @@ export default class extends Controller {
     if (!this.hasViewportTarget || !this.hasCursorTarget) return
 
     const viewport = this.viewportTarget
-    // Source sizing keeps an odd number of native cells around the cursor.
-    // Reserve the border and never expose more columns than the server buffer.
-    viewport.style.setProperty("--nl-map-visible-columns", this.fittedCells(this.element.clientWidth, this.maxVisibleColumnsValue))
+    // Hints affect only the bounded presentation window. The server validates
+    // them and signs its dimensions; coordinates and offers stay authoritative.
+    const columns = this.fittedCells(this.element.clientWidth, this.maxVisibleColumnsValue)
+    let rows = this.visibleRowsValue
     if (this.mainFrame) {
       // Neverlands measures the gameplay frame including its status header;
       // this shell splits that frame into adjacent header and main grid rows.
       const frameHeight = this.mainFrame.clientHeight + (this.topBar?.clientHeight || 0)
-      viewport.style.setProperty("--nl-map-visible-rows", this.fittedCells(frameHeight, this.maxVisibleRowsValue))
+      rows = this.fittedCells(frameHeight, this.maxVisibleRowsValue)
+    }
+    viewport.style.setProperty("--nl-map-visible-columns", Math.min(columns, this.visibleColumnsValue))
+    viewport.style.setProperty("--nl-map-visible-rows", Math.min(rows, this.visibleRowsValue))
+    const ready = columns === this.visibleColumnsValue && rows === this.visibleRowsValue
+    this.element.dataset.viewportReady = String(ready)
+    for (const form of [this.moveFormTarget, this.refreshFormTarget]) {
+      form.querySelector('[name="map_columns"]').value = columns
+      form.querySelector('[name="map_rows"]').value = rows
+    }
+    clearTimeout(this.viewportRefreshId)
+    if (!ready && !this.refreshPending && !this.movePending) {
+      this.viewportRefreshId = setTimeout(() => this.requestMapRefresh(), 120)
     }
 
     const cursorCenterX = this.cursorTarget.offsetLeft + (this.tileSizeValue / 2)
@@ -292,6 +309,9 @@ export default class extends Controller {
     if (!targetX || !targetY || !actionKey || !direction) return
 
     this.setMovementControlsLocked(true)
+    this.movePending = true
+    clearTimeout(this.viewportRefreshId)
+    clearTimeout(this.refreshRetryId)
     this.setCursorMoving(true, direction)
     this.submitMoveForm({ direction, targetX, targetY, actionKey })
   }
@@ -325,12 +345,14 @@ export default class extends Controller {
   }
 
   submissionFailed() {
+    this.movePending = false
     if (!this.element.isConnected || this.movementActiveValue || this.workActiveValue) return
 
     // Keep the same server offers for a retry. The server rejects stale keys or
     // renders accepted travel if a response was lost after acceptance.
     this.setMovementControlsLocked(false)
     this.setCursorMoving(false)
+    this.centerViewport()
   }
 
   setCursorMoving(isMoving, direction = this.movementDirectionValue) {
@@ -434,7 +456,14 @@ export default class extends Controller {
 
     this.setCursorMoving(false)
 
-    if (!this.completeUrlValue || this.refreshPending) return
+    this.requestMapRefresh()
+  }
+
+  requestMapRefresh() {
+    if (!this.element.isConnected) return
+    // Both forms submit through the same Turbo frame. A resize/retry must not
+    // replace its pending Move request; accepted travel can resize normally.
+    if (!this.completeUrlValue || this.refreshPending || this.movePending) return
     if (this.hasRefreshFormTarget && this.element.dataset.mapBuffer) {
       this.refreshPending = true
       // A timed-out/lost completion response recovers from persisted state with

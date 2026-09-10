@@ -1,6 +1,6 @@
 # Starter Map Artwork Brief
 
-- Prepared: 2026-09-09.
+- Prepared: 2026-09-09; revised for the native-panel replacement: 2026-09-10.
 - Scope: the approved starter landscape, with **one pond**, city gates,
   village, mine and resource-exchange footprints.
 - Runtime generation/integration status and verification belong to
@@ -14,18 +14,32 @@
 Use the reviewed layout derived from
 `config/gameplay/starter_world_cells.yml` and
 [the starter route observation](observations/2026-09-09_starter_routes.md).
-Use [the existing starter layout guide](../../../artwork/starter-layout.svg)
-as the visual composition input. Review it against the intended cell layout
-before reuse and update the design and guide together when that layout changes.
-For a different area, prepare its own coordinate/footprint guide. These guides
-control placement and scale; their labels must not appear in the final art.
+Use the [accepted combined panel guide](../../../artwork/forpost-panels-layout.png)
+for the current composition. The [earlier starter layout](../../../artwork/starter-layout.svg)
+remains historical; it is not the replacement's city-footprint reference.
+For another area, prepare its own coordinate/footprint guide. Guides control
+placement and scale; their labels must never appear in final artwork.
 
-The approved canvas is **21 columns × 13 rows**, local `x=0..20`, `y=2..14`,
-representing source `x=994..1014`, `y=994..1006`. The full public-atlas survey
-also inspected source `x=991..993`; those negative local-x cells are outside
-this artwork extent. The final assembly is **2100 × 1300 pixels** at 100 pixels
-per cell. This is a packaging target, not a promise about the image tool's
-available output dimensions.
+The current visual assembly is **24 columns × 13 rows**, visual local
+`x=−3..20`, `y=2..14`, representing surveyed source `x=991..1014`, `y=994..1006`.
+It measures **2400 × 1300px** at 100px per cell, split into the unchanged
+**2100 × 1300 main master** (local x0..20) and a **300 × 1300 western scenery
+master** (local x−3..−1). Those 39 western images paint only inert outside-zone
+slots; the gameplay import remains 273 cells, with no negative-coordinate
+movement or new crossing. Native outputs must be at least their delivery panel
+size, then downsampled; resizing a low-resolution full-scene draft is only a
+guide-authoring step, never the final production pixel source.
+
+The [September 10 live comparison](observations/2026-09-10_world_tile_loading_and_city_scale.md)
+shows a broad low city rendered through ordinary 100px tile backgrounds.
+Its approximate source footprint does not redefine the exact gate cells.
+Keep a steep overhead camera, small legible roofs and open internal space;
+preserve both visible gate openings. Avoid the rejected tall round fortress
+composition. A city or village image is scenery across cells; the current
+cell's Enter action opens its interior without a city-wide image hit layer.
+
+The following centers use the **main master** origin, preserving the earlier
+coordinate contract. Add 300px to x for the combined 24-column assembly.
 
 | Landmark/route | Local cell | Center in the final landscape |
 |---|---|---|
@@ -38,7 +52,8 @@ available output dimensions.
 | Eastern intermediate | `[12,10]` | `(1250,850)` |
 | Pond action cell | `[13,10]` | `(1350,850)` |
 
-The pixel origin is the top-left of local cell `[0,2]`. Landmark centers are
+The main-master pixel origin is the top-left of local cell `[0,2]`.
+Landmark centers are
 alignment anchors, not proof that an entire building occupies one cell. Use
 the approved observed footprint to decide its extent. The mine and exchange
 atlas identity/placement are documented in
@@ -55,7 +70,9 @@ task, not to the entire Neverlands world.
 
 Use the continuous-landscape template from
 [ARTWORK.md](../../../ARTWORK.md#continuous-outdoor-landscape), with the
-project terrain and City material references plus the approved layout guide.
+accepted layout guide and project-owned material references. The latest panel
+inputs and every exact submitted prompt are recorded separately in
+[the generation record](../../../artwork/forpost-panel-map-generation.md).
 Append these constraints to the actual generation/edit prompt:
 
 ```text

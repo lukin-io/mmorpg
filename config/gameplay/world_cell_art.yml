@@ -2,8 +2,10 @@
 # must stay under world/. A MapTileTemplate stores only the stable key and a
 # zero-based sheet coordinate; it never stores an asset path or CSS dimensions.
 #
-# Every cell is exactly 100x100. Keep the physical bitmap aligned with
-# (columns * 100) x (rows * 100) and cover that invariant in an asset spec.
+# Every cell occupies 100x100 CSS pixels. Base sheets are aligned with
+# (columns * 100) x (rows * 100), and base slices are 100x100 pixels.
+# Optional high-density slices are 200x200 pixels with the same cell identity;
+# they retain the base geometry. Cover both densities in an asset spec.
 # Catalog values are cached for the process lifetime, so restart the app after
 # editing this file or call Game::World::CellArtCatalog.reload! in a development
 # console or isolated spec.
@@ -34,6 +36,7 @@ forpost_starter:
   columns: 21
   rows: 13
   slices_directory: world/cells/forpost-starter
+  high_density_slices_directory: world/cells/forpost-starter-2x
   landmarks_in_art: true
   painted_landmarks:
     - {column: 6, row: 6, building_key: outpost_gate}
@@ -42,6 +45,16 @@ forpost_starter:
     - {column: 4, row: 3, building_key: podgorny_mine}
     - {column: 4, row: 5, building_key: forpost_resource_exchange}
   source_reference: neverlands_live_starter_routes_and_atlas_2026_09_09
+
+# Presentation-only survey margin: local x=-3..-1 remains outside the region.
+forpost_starter_west:
+  asset: world/forpost-starter-west-landscape.png
+  cell_width: 100
+  cell_height: 100
+  columns: 3
+  rows: 13
+  slices_directory: world/cells/forpost-starter-west
+  source_reference: neverlands_live_starter_atlas_2026_09_09
 
 # Dedicated-cell shape (documentation only): keep this commented until the
 # exact Neverlands appearance, project-owned 100x100 asset, and tests exist.

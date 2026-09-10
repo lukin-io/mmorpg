@@ -607,7 +607,7 @@ turbo-frame.nl-world-action-frame {
   background-color: #657b3a;
 }
 
-.nl-map-tile--outside {
+.nl-map-tile--outside[data-cell-art-key=""] {
   filter: grayscale(0.75) brightness(0.58);
 }
 

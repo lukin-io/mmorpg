@@ -60,6 +60,10 @@ RSpec.describe "World Interactions", type: :system, js: true do
       create(:character_position, character: arrival_character, zone:, x: 6, y: 5)
       create(:user_session, user: arrival_character.user)
       visit world_path
+      expect(page).to have_css(".nl-map-container[data-viewport-ready='true']")
+      map = find(".nl-map-container")
+      old_left = map["data-map-min-x"].to_i
+      old_right = old_left + map["data-map-columns"].to_i - 1
       page.execute_script(<<~JS)
         window.worldTestNow = Date.now.bind(Date)
         Date.now = () => window.worldTestNow() + 3600000
@@ -76,8 +80,8 @@ RSpec.describe "World Interactions", type: :system, js: true do
       page.execute_script("Date.now = () => window.worldTestNow() + 3660000")
 
       expect(page).to have_css(".nl-location-coords", text: "[6, 5]", visible: :all)
-      expect(page).to have_css("#tile_13_5")
-      expect(page).not_to have_css("#tile_-2_5")
+      expect(page).to have_css("#tile_#{old_right + 1}_5")
+      expect(page).not_to have_css("#tile_#{old_left}_5")
       expect(page).to have_css(".nl-players-list-float", text: "ArrivalNeighbor")
       expect(page).to have_button("Your character", disabled: false)
       expect(position.reload.x).to eq(6)

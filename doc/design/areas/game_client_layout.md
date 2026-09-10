@@ -98,7 +98,11 @@ The captured desktop shell keeps its status header, flexible main gameplay
 pane, social row, and bottom controls in one frame. The source `main_top`
 measurement includes the status header; the local Rails layout renders that
 header and main pane as adjacent rows. World therefore uses their combined
-client height when choosing complete 100px map rows. The separate width and
+client height when choosing complete 100px map rows. Raster density is separate
+from those CSS dimensions: an optional 200px World cell image still occupies
+one 100px cell, selected by the browser through `image-set`. Its 100px base
+remains required. This presentation choice does not alter frame fitting,
+coordinates, reachability or travel timing. The separate width and
 height measurements must not change gameplay coordinates, movement offers, or
 cell authority.
 

@@ -1,7 +1,7 @@
 <%
   map_buffer = local_assigns.fetch(:map_buffer, @map_buffer)
-  grid_width = map_buffer ? (Game::World::MapBuffer::X_RADIUS * 2 + 1) : (nearby_tiles.first&.size || 1)
-  grid_height = map_buffer ? (Game::World::MapBuffer::Y_RADIUS * 2 + 1) : nearby_tiles.size
+  grid_width = map_buffer ? map_buffer.width : (nearby_tiles.first&.size || 1)
+  grid_height = map_buffer ? map_buffer.height : nearby_tiles.size
   tile_size = 100
   visible_columns = [grid_width - 2, 1].max
   visible_rows = [grid_height - 2, 1].max
@@ -61,8 +61,10 @@
      data-nl-world-map-zone-width-value="<%= zone.width %>"
      data-nl-world-map-zone-height-value="<%= zone.height %>"
      data-nl-world-map-tile-size-value="<%= tile_size %>"
-     data-nl-world-map-max-visible-columns-value="<%= visible_columns %>"
-     data-nl-world-map-max-visible-rows-value="<%= visible_rows %>"
+     data-nl-world-map-visible-columns-value="<%= visible_columns %>"
+     data-nl-world-map-visible-rows-value="<%= visible_rows %>"
+     data-nl-world-map-max-visible-columns-value="<%= Game::World::MapBuffer::MAX_COLUMNS %>"
+     data-nl-world-map-max-visible-rows-value="<%= Game::World::MapBuffer::MAX_ROWS %>"
      data-nl-world-map-move-cooldown-value="<%= @movement_cooldown || 3 %>"
      data-nl-world-map-zone-name-value="<%= zone.name %>"
      data-nl-world-map-map-offset-x-value="<%= map_offset_x %>"
@@ -138,6 +140,8 @@
                 },
                 style: "display: none;" do |f| %>
     <%= f.hidden_field :map_buffer, value: map_buffer&.token %>
+    <%= f.hidden_field :map_columns, value: visible_columns, id: nil %>
+    <%= f.hidden_field :map_rows, value: visible_rows, id: nil %>
     <%= f.hidden_field :direction, id: "movement-direction", value: "" %>
     <%= f.hidden_field :target_x, id: "movement-target-x", value: "" %>
     <%= f.hidden_field :target_y, id: "movement-target-y", value: "" %>
@@ -149,6 +153,8 @@
              action: "turbo:submit-end->nl-world-map#refreshFinished turbo:fetch-request-error->nl-world-map#refreshFailed"},
       hidden: true do |f| %>
     <%= f.hidden_field :map_buffer, value: map_buffer&.token %>
+    <%= f.hidden_field :map_columns, value: visible_columns, id: nil %>
+    <%= f.hidden_field :map_rows, value: visible_rows, id: nil %>
   <% end %>
 
   <% if map_buffer&.base_token %>

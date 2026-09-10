@@ -128,8 +128,8 @@ RSpec.describe "world/_map.html.erb", type: :view do
 
       expect(rendered).to have_css("[data-nl-world-map-map-offset-x-value='-100']")
       expect(rendered).to have_css("[data-nl-world-map-map-offset-y-value='-100']")
-      expect(rendered).to have_css("[data-nl-world-map-max-visible-columns-value='13']")
-      expect(rendered).to have_css("[data-nl-world-map-max-visible-rows-value='7']")
+      expect(rendered).to have_css("[data-nl-world-map-visible-columns-value='13'][data-nl-world-map-max-visible-columns-value='39']")
+      expect(rendered).to have_css("[data-nl-world-map-visible-rows-value='7'][data-nl-world-map-max-visible-rows-value='9']")
       expect(rendered).to have_css(".nl-map-viewport[style*='--nl-map-visible-columns: 13'][style*='--nl-map-visible-rows: 7']")
     end
   end
@@ -159,6 +159,32 @@ RSpec.describe "world/_map.html.erb", type: :view do
   end
 
   describe "tile rendering" do
+    it "paints the captured western margin while keeping outside cells inactive and farther cells unillustrated" do
+      zone.update!(name: "Outpost Surroundings", width: 1000, height: 1000, metadata: {"source_map" => "m_1001_999"})
+      position.update!(x: 0, y: 8)
+      assign(:movement_destinations, [OpenStruct.new(direction: "west", target_x: -1, target_y: 8,
+        action_key: "unavailable-west", travel_seconds: 30)])
+      rows = Game::World::MapBuffer.new(position:, columns: 7, rows: 5).call.rows
+
+      render partial: "world/map", locals: {position:, nearby_tiles: rows, zone:, tile_data: {}}
+
+      document = Nokogiri::HTML.fragment(rendered)
+      margin = document.css(".nl-map-tile--outside[data-cell-art-key='forpost_starter_west']")
+      expect(margin.size).to eq(21)
+      margin.each do |cell|
+        x, y = [cell["data-x"], cell["data-y"]].map(&:to_i)
+        expect(cell["style"]).to include("world/cells/forpost-starter-west/#{x + 3}_#{y - 2}",
+          "background-position: 0px 0px", "background-size: 100px 100px")
+        expect(cell.css(".nl-tile-inactive").size).to eq(1)
+        expect(cell.css("button, [data-action-key]")).to be_empty
+      end
+      expect(document.at_css("#tile_-4_8")["style"]).to eq("")
+      expect(document.at_css("#tile_-4_8")["data-cell-art-key"]).to eq("")
+      expect(document.at_css("#tile_0_8")["data-cell-art-key"]).to eq("forpost_starter")
+      expect(rendered).not_to include("world/forpost-starter-west-landscape")
+      expect(rows.flatten.select { |tile| tile.x.negative? }).to all(have_attributes(walkable: false, passable: false))
+    end
+
     it "renders a continuous eastern-gate neighborhood around sparse content without materializing gameplay cells" do
       zone.update!(name: "Outpost Surroundings", width: 1000, height: 1000, metadata: {"source_map" => "m_1001_999"})
       position.update!(x: 11, y: 9)
@@ -166,7 +192,7 @@ RSpec.describe "world/_map.html.erb", type: :view do
         metadata: {"source_map" => "m_1005_1001", "cell_art" => {"key" => "forpost_starter", "column" => 11, "row" => 7}})
       create(:map_tile_template, zone: zone.name, x: 4, y: 6,
         metadata: {"source_map" => "m_998_998", "cell_art" => {"key" => "forpost_terrain", "column" => 4, "row" => 6}})
-      rows = Game::World::MapBuffer.new(position:).call.rows
+      rows = Game::World::MapBuffer.new(position:, columns: 13, rows: 7).call.rows
       original_cells = MapTileTemplate.order(:id).map(&:attributes)
       original_position = position.attributes
 
@@ -179,6 +205,7 @@ RSpec.describe "world/_map.html.erb", type: :view do
         expect(style).to include("world/cells/forpost-starter/#{tile.x}_#{tile.y - 2}", "background-size: 100px 100px")
       end
       expect(rendered).not_to include("world/forpost-terrain")
+      expect(rendered).not_to include("world/forpost-starter-landscape")
       expect(MapTileTemplate.order(:id).map(&:attributes)).to eq(original_cells)
       expect(position.reload.attributes).to eq(original_position)
     end
@@ -217,7 +244,7 @@ RSpec.describe "world/_map.html.erb", type: :view do
     end
 
 
-    it "renders each ordinary cell from the project-owned regional mosaic" do
+    it "uses the generic cell CSS without loading a bitmap when artwork is unconfigured" do
       render partial: "world/map", locals: {
         position: position,
         nearby_tiles: nearby_tiles,
@@ -225,8 +252,65 @@ RSpec.describe "world/_map.html.erb", type: :view do
         tile_data: {}
       }
 
-      expect(rendered).to include("world/forpost-terrain", "background-size: 1000px 1000px")
+      expect(Nokogiri::HTML.fragment(rendered).css(".nl-map-tile").map { |cell| cell["style"] }).to all(eq(""))
+      expect(rendered).not_to include("world/forpost-terrain")
       expect(rendered).not_to include("neverlands_outskirts")
+    end
+
+    it "uses generic cell CSS when a starter PNG is missing, without loading either full atlas" do
+      zone.update!(name: "Outpost Surroundings", width: 1000, height: 1000, metadata: {"source_map" => "m_1001_999"})
+      allow(Game::World::CellArtCatalog).to receive(:asset_exists?).and_call_original
+      allow(Game::World::CellArtCatalog).to receive(:asset_exists?).with("world/cells/forpost-starter/11_7.png").and_return(false)
+      tiles = [[OpenStruct.new(x: 11, y: 9, terrain_type: "outdoor", walkable: true, metadata: {})]]
+
+      render partial: "world/map", locals: {position:, nearby_tiles: tiles, zone:, tile_data: {}}
+
+      cell = Nokogiri::HTML.fragment(rendered).at_css("#tile_11_9")
+      expect(cell["style"]).to eq("")
+      expect(cell["class"]).to include("nl-tile-bg--outdoor")
+      expect(rendered).not_to include("world/forpost-starter-landscape", "world/forpost-terrain")
+    end
+
+    it "offers aligned city images at 1x and 2x while keeping a 100px background" do
+      zone.update!(name: "Outpost Surroundings", width: 1000, height: 1000, metadata: {"source_map" => "m_1001_999"})
+      tiles = [[OpenStruct.new(x: 6, y: 8, terrain_type: "outdoor", walkable: true, metadata: {})]]
+
+      render partial: "world/map", locals: {position:, nearby_tiles: tiles, zone:, tile_data: {}}
+
+      style = Nokogiri::HTML.fragment(rendered).at_css("#tile_6_8")["style"]
+      expect(style).to start_with("background-image: url('")
+      expect(style).to match(%r{image-set\(url\('[^']*/world/cells/forpost-starter/6_6[^']*'\) 1x, url\('[^']*/world/cells/forpost-starter-2x/6_6[^']*'\) 2x\)})
+      expect(style).to include("background-position: 0px 0px", "background-size: 100px 100px")
+      expect(style).not_to include("landscape", "200px")
+    end
+
+    it "renders only the matching 1x city image when its optional 2x alternative is absent" do
+      zone.update!(name: "Outpost Surroundings", width: 1000, height: 1000, metadata: {"source_map" => "m_1001_999"})
+      allow(Game::World::CellArtCatalog).to receive(:asset_exists?).and_call_original
+      allow(Game::World::CellArtCatalog).to receive(:asset_exists?).with("world/cells/forpost-starter-2x/6_6.png").and_return(false)
+      tiles = [[OpenStruct.new(x: 6, y: 8, terrain_type: "outdoor", walkable: true, metadata: {})]]
+
+      render partial: "world/map", locals: {position:, nearby_tiles: tiles, zone:, tile_data: {}}
+
+      style = Nokogiri::HTML.fragment(rendered).at_css("#tile_6_8")["style"]
+      expect(style).to include("world/cells/forpost-starter/6_6", "background-size: 100px 100px")
+      expect(style).not_to include("image-set", "forpost-starter-2x", "landscape")
+    end
+
+    it "leaves a missing western slice inert without substituting the master or another cell" do
+      zone.update!(name: "Outpost Surroundings", width: 1000, height: 1000, metadata: {"source_map" => "m_1001_999"})
+      allow(Game::World::CellArtCatalog).to receive(:asset_exists?).and_call_original
+      allow(Game::World::CellArtCatalog).to receive(:asset_exists?).with("world/cells/forpost-starter-west/2_7.png").and_return(false)
+      tiles = [[OpenStruct.new(x: -1, y: 9, terrain_type: "outdoor", walkable: false, metadata: {"out_of_bounds" => true})]]
+
+      render partial: "world/map", locals: {position:, nearby_tiles: tiles, zone:, tile_data: {}}
+
+      cell = Nokogiri::HTML.fragment(rendered).at_css("#tile_-1_9")
+      expect(cell["style"]).to eq("")
+      expect(cell["data-cell-art-key"]).to eq("")
+      expect(cell["class"]).to include("nl-map-tile--outside")
+      expect(cell.css("button, [data-action-key]")).to be_empty
+      expect(rendered).not_to include("world/forpost-starter-west-landscape")
     end
 
     it "uses a validated source-backed cell-art slice instead of the coordinate fallback" do

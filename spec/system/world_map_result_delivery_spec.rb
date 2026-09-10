@@ -14,6 +14,8 @@ RSpec.describe "World timer-frame result delivery", type: :system, js: true do
   it "updates a pending result dialog alongside a timer-frame response without reloading the page" do
     login_as(user, scope: :user)
     visit world_path
+    expect(page).to have_css(".nl-map-container[data-viewport-ready='true']")
+    buffer_size = page.all(".nl-map-tile", visible: :all).size
     expect(page).to have_button("Look Around")
     page.execute_script("window.pendingResultMapCell = document.getElementById('tile_20_20')")
     page.evaluate_async_script(<<~JS)
@@ -31,7 +33,7 @@ RSpec.describe "World timer-frame result delivery", type: :system, js: true do
     JS
 
     expect(page).to have_css('dialog[open]', text: "There is no useful vegetation in this area.")
-    expect(page).to have_css('.nl-map-tile', count: 135)
+    expect(page).to have_css(".nl-map-tile", count: buffer_size)
     expect(page).to have_css('.nl-map-container[data-nl-world-map-work-active-value="true"]')
     expect(page).to have_css('body.nl-game-layout', count: 1)
     expect(page.evaluate_script("window.pendingResultMapCell === document.getElementById('tile_20_20')")).to be(true)
@@ -58,10 +60,12 @@ RSpec.describe "World timer-frame result delivery", type: :system, js: true do
     tile.update!(metadata: {"local_actions" => [{"type" => "drinking", "source_id" => "dri"}]})
     login_as(user, scope: :user)
     visit world_path
+    expect(page).to have_css(".nl-map-container[data-viewport-ready='true']")
     click_button "Drink"
 
     expect(page).to have_css('dialog[open]', text: "Everything went well.")
     expect(page).to have_button("Drink", disabled: true)
+    expect(page).to have_css(".nl-map-container[data-viewport-ready='true']")
     page.execute_script(<<~JS)
       window.drinkResultDialog = document.querySelector('dialog[open]')
       window.drinkResultMapCell = document.getElementById('tile_20_20')

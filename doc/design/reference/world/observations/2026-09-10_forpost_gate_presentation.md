@@ -101,6 +101,12 @@ comparison and direct reconfirmation of both return nodes. It does not
 supersede that capture's coordinates or the separate September 10 quarter
 artwork/navigation survey. Earlier local artwork and checks remain historical.
 
+The later [tile-loading and city-scale comparison](2026-09-10_world_tile_loading_and_city_scale.md)
+inspects individual cell backgrounds and a north-step buffer change, and records
+the user's subsequent rejection of the local composition. Its larger rendered
+grid does not invalidate this pass's dated visible-cell measurements. The
+source restoration stated above applies to this earlier gate pass only.
+
 ## Local Implementation Linkage
 
 - Local status: Partially Implemented for exact visual parity. The existing

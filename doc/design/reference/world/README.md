@@ -9,6 +9,7 @@
 
 | Flow/state | Observation | Status |
 |---|---|---|
+| Individual outdoor tiles, incremental north-step grid and local city-scale comparison | `doc/design/reference/world/observations/2026-09-10_world_tile_loading_and_city_scale.md` | current live sample; 100px JPG tiles, 119 → 136 rendered cells with old rows retained; source culling/cache/index internals remain unproven |
 | Outdoor Forpost city footprint and both gate Enter returns | `doc/design/reference/world/observations/2026-09-10_forpost_gate_presentation.md` | current authenticated live comparison; broad continuous multi-cell city and distinct Central/Law returns; footprint is approximate, not new gate geometry |
 | Bounded starter atlas topology, NPC/resource annotations, and coordinate correspondence | `doc/design/reference/world/observations/2026-09-09_starter_atlas.md` | current public atlas evidence; 312 surveyed cells, 273 fitting the local zone; live offers take precedence |
 | Rechecked starter routes and reciprocal east-gate handoff | `doc/design/reference/world/observations/2026-09-09_starter_routes.md` | current authenticated live capture; east Enter returns to Law; Main reaches Law through Residential |
@@ -32,6 +33,14 @@
 
 - Outdoor cells use 100×100 presentation tiles and server-issued movement
   destinations/action keys.
+- The later September 10 tile inspection confirms individual 100px JPG cell
+  backgrounds, including the city. One north step grew the rendered grid from
+  119 to 136 cells, retaining all earlier cells and an off-screen row. The
+  inspected map was 1700px wide; a 13-column ceiling or fixed 135-cell buffer
+  is not established source behavior. Immediate culling, HTTP/JavaScript cache
+  policy and spatial-tree internals were not established. A 1702 × 502px
+  clipping container held the retained 1700 × 800px table; scroll/margin offsets
+  changed its visible region, with no transform on the inspected wrappers.
 - The September 10 gate comparison shows Forpost as a broad continuous
   multi-cell city, approximately seven to eight columns by three rows in the
   inspected view. The top-bar Enter control at the western gate returns to
@@ -151,10 +160,16 @@
 - Parity IDs: `WORLD-UI-001`, `WORLD-MOVE-001`, `WORLD-CELL-001`, and
   `WORLD-LOCATION-001` in `doc/design/launch_mvp_plan.md`
 - Region isolation uses the existing `zone_id` position/command identity.
-  Local map rendering uses a bounded `15 × 9` buffer and whole odd visible
-  rows/columns capped at `13 × 7`; exact-cell actions and eight-neighbor moves
+  Local map rendering uses viewport-fitted odd visible dimensions and one
+  off-screen cell per edge, bounded independently of zone size. These are local
+  limits, not the sampled source's retention policy; exact-cell actions and eight-neighbor moves
   do not load or query the whole region. Walking retains overlapping terrain
   and sends entering cells only, with a bounded full snapshot for recovery.
+- The later native-panel original artwork supplies 273 main and 39 western
+  scenery-only tiles. The latter correspond to surveyed source x991..993 but
+  remain inert negative-x local buffer slots; the 273-cell gameplay import and
+  gate coordinates are unchanged. Final desktop/phone-viewport and gate/movement
+  acceptance is recorded in World section 15.9, separately from source evidence.
 - Local Look, Drink and no-bait Fish use their observed 28/60/30-second locks.
   Drink persists its two-point fatigue recovery once; neither Look nor Fish
   grants a gathering/catch reward. The pond is seeded at local `[13,10]`.

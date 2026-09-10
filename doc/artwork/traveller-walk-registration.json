@@ -1,0 +1,1173 @@
+{
+  "canvas": [
+    128,
+    128
+  ],
+  "display_css": [
+    64,
+    64
+  ],
+  "head_target": [
+    64,
+    21
+  ],
+  "alpha_threshold": 128,
+  "directions": {
+    "north": {
+      "source": "doc/artwork/traveller-walk-north-sheet.png",
+      "source_sha256": "0de9544d485f2e439dafd5f6030e3d929decf2d706e486379298485fbf43dc35",
+      "source_native": "1774x887 srgba 4.0",
+      "normalized_cells": [
+        444,
+        444
+      ],
+      "fixed_resized_cell": [
+        119,
+        119
+      ],
+      "delay_centiseconds": 10,
+      "frames": [
+        {
+          "source_frame": 0,
+          "head_anchor": [
+            262.3535,
+            58.5
+          ],
+          "resized_head_anchor": [
+            69.9676,
+            15.5723
+          ],
+          "translation": [
+            -6,
+            5
+          ],
+          "geometry": {
+            "bbox": [
+              43,
+              8,
+              87,
+              121
+            ],
+            "height": 113,
+            "head": [
+              63.9676,
+              20.5723
+            ],
+            "torso": [
+              63.4716,
+              50.0676
+            ]
+          }
+        },
+        {
+          "source_frame": 1,
+          "head_anchor": [
+            225.3104,
+            57.9936
+          ],
+          "resized_head_anchor": [
+            60.17,
+            15.683
+          ],
+          "translation": [
+            4,
+            5
+          ],
+          "geometry": {
+            "bbox": [
+              42,
+              8,
+              88,
+              120
+            ],
+            "height": 112,
+            "head": [
+              64.17,
+              20.683
+            ],
+            "torso": [
+              65.2957,
+              49.4573
+            ]
+          }
+        },
+        {
+          "source_frame": 2,
+          "head_anchor": [
+            217.002,
+            58.6286
+          ],
+          "resized_head_anchor": [
+            57.8225,
+            15.6302
+          ],
+          "translation": [
+            6,
+            5
+          ],
+          "geometry": {
+            "bbox": [
+              42,
+              8,
+              88,
+              120
+            ],
+            "height": 112,
+            "head": [
+              63.8225,
+              20.6302
+            ],
+            "torso": [
+              63.2851,
+              49.4531
+            ]
+          }
+        },
+        {
+          "source_frame": 3,
+          "head_anchor": [
+            189.4176,
+            57.9875
+          ],
+          "resized_head_anchor": [
+            50.383,
+            15.7018
+          ],
+          "translation": [
+            14,
+            5
+          ],
+          "geometry": {
+            "bbox": [
+              43,
+              8,
+              87,
+              120
+            ],
+            "height": 112,
+            "head": [
+              64.383,
+              20.7018
+            ],
+            "torso": [
+              64.0643,
+              49.5383
+            ]
+          }
+        },
+        {
+          "source_frame": 4,
+          "head_anchor": [
+            258.8146,
+            55.7007
+          ],
+          "resized_head_anchor": [
+            69.0031,
+            14.9228
+          ],
+          "translation": [
+            -5,
+            6
+          ],
+          "geometry": {
+            "bbox": [
+              40,
+              9,
+              87,
+              119
+            ],
+            "height": 110,
+            "head": [
+              64.0031,
+              20.9228
+            ],
+            "torso": [
+              65.0269,
+              49.411
+            ]
+          }
+        },
+        {
+          "source_frame": 5,
+          "head_anchor": [
+            230.098,
+            57.4181
+          ],
+          "resized_head_anchor": [
+            61.3063,
+            14.9813
+          ],
+          "translation": [
+            3,
+            6
+          ],
+          "geometry": {
+            "bbox": [
+              40,
+              9,
+              87,
+              120
+            ],
+            "height": 111,
+            "head": [
+              64.3063,
+              20.9813
+            ],
+            "torso": [
+              62.9261,
+              50.3182
+            ]
+          }
+        },
+        {
+          "source_frame": 6,
+          "head_anchor": [
+            214.7043,
+            56.416
+          ],
+          "resized_head_anchor": [
+            57.1887,
+            14.956
+          ],
+          "translation": [
+            7,
+            6
+          ],
+          "geometry": {
+            "bbox": [
+              41,
+              9,
+              88,
+              119
+            ],
+            "height": 110,
+            "head": [
+              64.1887,
+              20.956
+            ],
+            "torso": [
+              63.6871,
+              49.481
+            ]
+          }
+        },
+        {
+          "source_frame": 7,
+          "head_anchor": [
+            191.3324,
+            56.4871
+          ],
+          "resized_head_anchor": [
+            50.9286,
+            14.9596
+          ],
+          "translation": [
+            13,
+            6
+          ],
+          "geometry": {
+            "bbox": [
+              42,
+              9,
+              87,
+              119
+            ],
+            "height": 110,
+            "head": [
+              63.9286,
+              20.9596
+            ],
+            "torso": [
+              64.6361,
+              49.8131
+            ]
+          }
+        }
+      ],
+      "frame_count": 8,
+      "gif_bytes": 24660,
+      "still_bytes": 11784,
+      "gif_sha256": "c83af0e79cc78d4f5ed26c24fe9e6a1a6161b11d6e02139cd08fcbe3780425a9",
+      "still_sha256": "47589168cd9ec6f3f0b7a27b6e1b56c69fe7e3e987f67482b035e4e681e64226"
+    },
+    "south": {
+      "source": "doc/artwork/traveller-walk-south-sheet.png",
+      "source_sha256": "98cb0abdcaf3834f30b3f5c3dbeb218a25f0f0042e9f37a46a0509fefb064af0",
+      "source_native": "1774x887 srgba 4.0",
+      "normalized_cells": [
+        444,
+        444
+      ],
+      "fixed_resized_cell": [
+        118,
+        118
+      ],
+      "delay_centiseconds": 10,
+      "frames": [
+        {
+          "source_frame": 0,
+          "head_anchor": [
+            268.9834,
+            54.0593
+          ],
+          "resized_head_anchor": [
+            71.1775,
+            14.5296
+          ],
+          "translation": [
+            -7,
+            6
+          ],
+          "geometry": {
+            "bbox": [
+              36,
+              8,
+              90,
+              120
+            ],
+            "height": 112,
+            "head": [
+              64.1775,
+              20.5296
+            ],
+            "torso": [
+              62.6543,
+              51.0843
+            ]
+          }
+        },
+        {
+          "source_frame": 1,
+          "head_anchor": [
+            219.9695,
+            54.0145
+          ],
+          "resized_head_anchor": [
+            57.9536,
+            14.4783
+          ],
+          "translation": [
+            6,
+            7
+          ],
+          "geometry": {
+            "bbox": [
+              42,
+              9,
+              93,
+              121
+            ],
+            "height": 112,
+            "head": [
+              63.9536,
+              21.4783
+            ],
+            "torso": [
+              66.1336,
+              51.9159
+            ]
+          }
+        },
+        {
+          "source_frame": 2,
+          "head_anchor": [
+            206.8783,
+            54.073
+          ],
+          "resized_head_anchor": [
+            54.6426,
+            13.7639
+          ],
+          "translation": [
+            9,
+            7
+          ],
+          "geometry": {
+            "bbox": [
+              42,
+              9,
+              90,
+              120
+            ],
+            "height": 111,
+            "head": [
+              63.6426,
+              20.7639
+            ],
+            "torso": [
+              64.5681,
+              51.7153
+            ]
+          }
+        },
+        {
+          "source_frame": 3,
+          "head_anchor": [
+            177.9323,
+            54.2404
+          ],
+          "resized_head_anchor": [
+            46.8754,
+            14.5362
+          ],
+          "translation": [
+            17,
+            6
+          ],
+          "geometry": {
+            "bbox": [
+              40,
+              8,
+              96,
+              120
+            ],
+            "height": 112,
+            "head": [
+              63.8754,
+              20.5362
+            ],
+            "torso": [
+              65.1983,
+              51.3528
+            ]
+          }
+        },
+        {
+          "source_frame": 4,
+          "head_anchor": [
+            268.1892,
+            51.0202
+          ],
+          "resized_head_anchor": [
+            70.9758,
+            13.5848
+          ],
+          "translation": [
+            -7,
+            7
+          ],
+          "geometry": {
+            "bbox": [
+              36,
+              9,
+              90,
+              120
+            ],
+            "height": 111,
+            "head": [
+              63.9758,
+              20.5848
+            ],
+            "torso": [
+              63.504,
+              52.0153
+            ]
+          }
+        },
+        {
+          "source_frame": 5,
+          "head_anchor": [
+            219.0739,
+            51.1865
+          ],
+          "resized_head_anchor": [
+            57.7638,
+            13.6196
+          ],
+          "translation": [
+            6,
+            7
+          ],
+          "geometry": {
+            "bbox": [
+              36,
+              8,
+              91,
+              120
+            ],
+            "height": 112,
+            "head": [
+              63.7638,
+              20.6196
+            ],
+            "torso": [
+              62.8314,
+              51.1709
+            ]
+          }
+        },
+        {
+          "source_frame": 6,
+          "head_anchor": [
+            197.7108,
+            51.1463
+          ],
+          "resized_head_anchor": [
+            52.244,
+            13.5904
+          ],
+          "translation": [
+            12,
+            7
+          ],
+          "geometry": {
+            "bbox": [
+              35,
+              8,
+              90,
+              120
+            ],
+            "height": 112,
+            "head": [
+              64.244,
+              20.5904
+            ],
+            "torso": [
+              62.2353,
+              51.3098
+            ]
+          }
+        },
+        {
+          "source_frame": 7,
+          "head_anchor": [
+            176.641,
+            51.3637
+          ],
+          "resized_head_anchor": [
+            46.5465,
+            13.6456
+          ],
+          "translation": [
+            17,
+            7
+          ],
+          "geometry": {
+            "bbox": [
+              39,
+              8,
+              94,
+              120
+            ],
+            "height": 112,
+            "head": [
+              63.5465,
+              20.6456
+            ],
+            "torso": [
+              64.5698,
+              51.1305
+            ]
+          }
+        }
+      ],
+      "frame_count": 8,
+      "gif_bytes": 27416,
+      "still_bytes": 12870,
+      "gif_sha256": "bdf4f698964ec674ca060c1698efe83d6f4ebe3a5a51da43cbf720ab2655d509",
+      "still_sha256": "8906d6b28f300bad7fcd2b36dafe5ac75e4eb78e62f342e065b641ecd2ace7a0"
+    },
+    "east": {
+      "source": "doc/artwork/traveller-walk-sheet.png",
+      "source_sha256": "97b4e375cd79c5fb4231643ddb42e5bf927242a693f8cc8fb91924bfd636ed90",
+      "source_native": "1774x887 srgba 4.0",
+      "normalized_cells": [
+        444,
+        444
+      ],
+      "fixed_resized_cell": [
+        128,
+        128
+      ],
+      "delay_centiseconds": 10,
+      "frames": [
+        {
+          "source_frame": 0,
+          "head_anchor": [
+            241.0726,
+            58.4844
+          ],
+          "resized_head_anchor": [
+            69.2981,
+            16.3957
+          ],
+          "translation": [
+            -5,
+            5
+          ],
+          "geometry": {
+            "bbox": [
+              29,
+              11,
+              100,
+              122
+            ],
+            "height": 111,
+            "head": [
+              64.2981,
+              21.3957
+            ],
+            "torso": [
+              59.228,
+              55.0663
+            ]
+          }
+        },
+        {
+          "source_frame": 1,
+          "head_anchor": [
+            234.3708,
+            58.2211
+          ],
+          "resized_head_anchor": [
+            67.3243,
+            16.3324
+          ],
+          "translation": [
+            -3,
+            5
+          ],
+          "geometry": {
+            "bbox": [
+              30,
+              11,
+              87,
+              122
+            ],
+            "height": 111,
+            "head": [
+              64.3243,
+              21.3324
+            ],
+            "torso": [
+              58.512,
+              55.1818
+            ]
+          }
+        },
+        {
+          "source_frame": 2,
+          "head_anchor": [
+            224.2714,
+            58.0299
+          ],
+          "resized_head_anchor": [
+            64.1918,
+            16.8082
+          ],
+          "translation": [
+            0,
+            4
+          ],
+          "geometry": {
+            "bbox": [
+              37,
+              10,
+              77,
+              122
+            ],
+            "height": 112,
+            "head": [
+              64.1918,
+              20.8082
+            ],
+            "torso": [
+              58.0479,
+              53.5508
+            ]
+          }
+        },
+        {
+          "source_frame": 3,
+          "head_anchor": [
+            221.1824,
+            56.7406
+          ],
+          "resized_head_anchor": [
+            63.3747,
+            16.0528
+          ],
+          "translation": [
+            1,
+            5
+          ],
+          "geometry": {
+            "bbox": [
+              35,
+              10,
+              90,
+              123
+            ],
+            "height": 113,
+            "head": [
+              64.3747,
+              21.0528
+            ],
+            "torso": [
+              60.4659,
+              54.7269
+            ]
+          }
+        },
+        {
+          "source_frame": 4,
+          "head_anchor": [
+            238.3008,
+            58.0534
+          ],
+          "resized_head_anchor": [
+            68.3558,
+            16.3208
+          ],
+          "translation": [
+            -4,
+            5
+          ],
+          "geometry": {
+            "bbox": [
+              28,
+              11,
+              102,
+              122
+            ],
+            "height": 111,
+            "head": [
+              64.3558,
+              21.3208
+            ],
+            "torso": [
+              59.1397,
+              55.338
+            ]
+          }
+        },
+        {
+          "source_frame": 5,
+          "head_anchor": [
+            235.2177,
+            57.5699
+          ],
+          "resized_head_anchor": [
+            67.4236,
+            16.311
+          ],
+          "translation": [
+            -3,
+            5
+          ],
+          "geometry": {
+            "bbox": [
+              30,
+              11,
+              88,
+              122
+            ],
+            "height": 111,
+            "head": [
+              64.4236,
+              21.311
+            ],
+            "torso": [
+              59.2013,
+              55.1759
+            ]
+          }
+        },
+        {
+          "source_frame": 6,
+          "head_anchor": [
+            227.4224,
+            57.7941
+          ],
+          "resized_head_anchor": [
+            65.2439,
+            16.3198
+          ],
+          "translation": [
+            -1,
+            5
+          ],
+          "geometry": {
+            "bbox": [
+              28,
+              11,
+              88,
+              121
+            ],
+            "height": 110,
+            "head": [
+              64.2439,
+              21.3198
+            ],
+            "torso": [
+              59.1848,
+              54.1839
+            ]
+          }
+        },
+        {
+          "source_frame": 7,
+          "head_anchor": [
+            231.546,
+            57.613
+          ],
+          "resized_head_anchor": [
+            66.3887,
+            16.311
+          ],
+          "translation": [
+            -2,
+            5
+          ],
+          "geometry": {
+            "bbox": [
+              31,
+              11,
+              89,
+              122
+            ],
+            "height": 111,
+            "head": [
+              64.3887,
+              21.311
+            ],
+            "torso": [
+              59.8061,
+              55.1311
+            ]
+          }
+        }
+      ],
+      "frame_count": 8,
+      "gif_bytes": 24961,
+      "still_bytes": 14204,
+      "gif_sha256": "230e35f71566e9f8816054622abb62a6099766bce7165f48219145208bffa41f",
+      "still_sha256": "179d73ccbcf29075a6965d0fc64853e887b16140f6c126e73e6830d3b412b40f"
+    },
+    "northeast": {
+      "source": "doc/artwork/traveller-walk-northeast-phases-sheet.png",
+      "source_sha256": "c0c95aab12aa7b6ae9a6d786e6c2992c5644fe0b2bccd8f8056f6c9660bf9577",
+      "source_native": "1774x887 srgba 4.0",
+      "normalized_cells": [
+        444,
+        444
+      ],
+      "fixed_resized_cell": [
+        116,
+        116
+      ],
+      "delay_centiseconds": 14,
+      "frames": [
+        {
+          "source_frame": 0,
+          "head_anchor": [
+            248.4556,
+            54.6688
+          ],
+          "resized_head_anchor": [
+            64.4531,
+            14.0844
+          ],
+          "translation": [
+            0,
+            7
+          ],
+          "geometry": {
+            "bbox": [
+              35,
+              10,
+              88,
+              121
+            ],
+            "height": 111,
+            "head": [
+              64.4531,
+              21.0844
+            ],
+            "torso": [
+              60.3141,
+              51.067
+            ]
+          }
+        },
+        {
+          "source_frame": 1,
+          "head_anchor": [
+            236.6271,
+            55.1796
+          ],
+          "resized_head_anchor": [
+            61.4951,
+            14.177
+          ],
+          "translation": [
+            3,
+            7
+          ],
+          "geometry": {
+            "bbox": [
+              38,
+              10,
+              88,
+              119
+            ],
+            "height": 109,
+            "head": [
+              64.4951,
+              21.177
+            ],
+            "torso": [
+              60.6759,
+              49.9854
+            ]
+          }
+        },
+        {
+          "source_frame": 2,
+          "head_anchor": [
+            223.9887,
+            55.188
+          ],
+          "resized_head_anchor": [
+            58.0201,
+            14.1906
+          ],
+          "translation": [
+            6,
+            7
+          ],
+          "geometry": {
+            "bbox": [
+              41,
+              10,
+              85,
+              117
+            ],
+            "height": 107,
+            "head": [
+              64.0201,
+              21.1906
+            ],
+            "torso": [
+              61.6101,
+              50.1601
+            ]
+          }
+        },
+        {
+          "source_frame": 3,
+          "head_anchor": [
+            235.5211,
+            55.2734
+          ],
+          "resized_head_anchor": [
+            61.1093,
+            14.0643
+          ],
+          "translation": [
+            3,
+            7
+          ],
+          "geometry": {
+            "bbox": [
+              38,
+              10,
+              88,
+              121
+            ],
+            "height": 111,
+            "head": [
+              64.1093,
+              21.0643
+            ],
+            "torso": [
+              60.5,
+              51.024
+            ]
+          }
+        }
+      ],
+      "frame_count": 4,
+      "gif_bytes": 11245,
+      "still_bytes": 12596,
+      "gif_sha256": "3ec39e9f6a2b5d8702ec54895978463e662f86f67aec928466107457fae629c2",
+      "still_sha256": "056f4161479d9bfb2e58992fcb3cd0deeb93d8d19fde205d554c0811354d0d3a"
+    },
+    "southeast": {
+      "source": "doc/artwork/traveller-walk-southeast-phases-sheet.png",
+      "source_sha256": "22a5abc640bd79db308f2cf67ea3749097405e1437a174a00f8231cbe26d2ddd",
+      "source_native": "1774x887 srgba 4.0",
+      "normalized_cells": [
+        444,
+        444
+      ],
+      "fixed_resized_cell": [
+        117,
+        117
+      ],
+      "delay_centiseconds": 14,
+      "frames": [
+        {
+          "source_frame": 0,
+          "head_anchor": [
+            239.3464,
+            49.318
+          ],
+          "resized_head_anchor": [
+            62.5434,
+            13.0347
+          ],
+          "translation": [
+            1,
+            8
+          ],
+          "geometry": {
+            "bbox": [
+              37,
+              9,
+              88,
+              121
+            ],
+            "height": 112,
+            "head": [
+              63.5434,
+              21.0347
+            ],
+            "torso": [
+              60.4963,
+              50.6624
+            ]
+          }
+        },
+        {
+          "source_frame": 1,
+          "head_anchor": [
+            227.9726,
+            48.451
+          ],
+          "resized_head_anchor": [
+            59.7188,
+            12.3594
+          ],
+          "translation": [
+            4,
+            9
+          ],
+          "geometry": {
+            "bbox": [
+              37,
+              10,
+              88,
+              121
+            ],
+            "height": 111,
+            "head": [
+              63.7188,
+              21.3594
+            ],
+            "torso": [
+              60.5615,
+              51.6436
+            ]
+          }
+        },
+        {
+          "source_frame": 2,
+          "head_anchor": [
+            219.2926,
+            48.5874
+          ],
+          "resized_head_anchor": [
+            57.4686,
+            12.4025
+          ],
+          "translation": [
+            7,
+            9
+          ],
+          "geometry": {
+            "bbox": [
+              43,
+              10,
+              83,
+              121
+            ],
+            "height": 111,
+            "head": [
+              64.4686,
+              21.4025
+            ],
+            "torso": [
+              62.5291,
+              51.5414
+            ]
+          }
+        },
+        {
+          "source_frame": 3,
+          "head_anchor": [
+            221.1206,
+            47.9691
+          ],
+          "resized_head_anchor": [
+            57.935,
+            11.9061
+          ],
+          "translation": [
+            6,
+            9
+          ],
+          "geometry": {
+            "bbox": [
+              37,
+              10,
+              88,
+              115
+            ],
+            "height": 105,
+            "head": [
+              63.935,
+              20.9061
+            ],
+            "torso": [
+              60.7521,
+              48.8768
+            ]
+          }
+        }
+      ],
+      "frame_count": 4,
+      "gif_bytes": 12032,
+      "still_bytes": 12968,
+      "gif_sha256": "845aa7969472b5ce41b9b3a24f92b31ec773428a4de782b2b3478ff0cb1c5fba",
+      "still_sha256": "8a57276c2b5b85b17a988610fd13179c1494a445565149a2fbb347b79dc238ad"
+    },
+    "west": {
+      "mirrored_from": "east",
+      "delay_centiseconds": 10,
+      "frame_count": 8,
+      "gif_bytes": 24983,
+      "still_bytes": 14222,
+      "gif_sha256": "90d52231e1cd70a7d881a311a557b3f3c315b488d2b6601a27fa9c941fa0996e",
+      "still_sha256": "d36721aa54058a6a0a0ba677c3a9822b9ed573e8c6732cd8471fc91a2f176399"
+    },
+    "northwest": {
+      "mirrored_from": "northeast",
+      "delay_centiseconds": 14,
+      "frame_count": 4,
+      "gif_bytes": 11255,
+      "still_bytes": 12672,
+      "gif_sha256": "f6ddf46c242160cdc1ca38db28f9f5c73600f8bd8b1157387985bad2b5b179ce",
+      "still_sha256": "46f49bc58f56650dbae2dd9c6fdd4a6afaec79993dc1cf028b586b9a7651fe0b"
+    },
+    "southwest": {
+      "mirrored_from": "southeast",
+      "delay_centiseconds": 14,
+      "frame_count": 4,
+      "gif_bytes": 12040,
+      "still_bytes": 12907,
+      "gif_sha256": "8389f4aa962c67b5075cb9a2dd9db2d15dd1986efd8c56149291d6b8d82e4271",
+      "still_sha256": "c79a3b6646c63262647162de982baf9e8ca1d7fd0f2519c3f91e7653a4288e3c"
+    }
+  }
+}

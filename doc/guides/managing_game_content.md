@@ -226,7 +226,8 @@ this bounded content repair.
 Disconnected landscape pieces around a repaired gate are a presentation issue
 when neighboring gameplay cells are still sparse. The renderer's bounded
 starter-art default covers the full authored rectangle from the existing
-273 slices; no full seed or extra cell import is needed to fill the picture.
+273 main slices plus 39 scenery-only western slices; no full seed or extra
+cell import is needed to fill the picture.
 The artwork rules below distinguish this lookup from the repair's passability
 and entrance writes.
 
@@ -405,9 +406,21 @@ Artwork remains a separate layer from passability and actions. The cell stores
 only its server-catalog `cell_art` key, column and row. A catalog entry may
 provide individual slices and declare painted landmarks; cell metadata cannot
 choose arbitrary files, dimensions or the decorative-marker policy. Existing
-100 × 100 PNG slices render directly; a missing slice falls back to the same
-position on its master landscape. Accessible location/entity labels remain
+100 × 100 PNG slices remain the required base. A sliced catalog may additionally
+declare a safe `high_density_slices_directory` containing 200 × 200px versions
+at the same column/row filenames; browser density selection still displays
+100 × 100 CSS cells. Missing optional 2× files use the 1× image. A missing required slice returns no
+art and uses per-cell CSS terrain; restore the exact packaged PNG instead of
+relying on its authoring master. Valid explicit nonsliced catalog entries
+retain their configured sheet crops. Accessible location/entity labels remain
 available when a painted landmark replaces a decorative marker.
+
+Generate native detail at or above the optional density's delivery footprint;
+do not turn an enlarged 100px tile into a claimed native 2× asset. Keep matching
+1×/2× images in the same composition and cover their physical dimensions with
+asset specs. Density paths belong to the catalog, never to per-cell metadata,
+and introduce no gameplay records. Reload the catalog or restart the local app
+after changing its cached configuration.
 
 Painted-landmark suppression requires both `landmarks_in_art: true` and an
 exact `painted_landmarks` entry such as
@@ -422,7 +435,12 @@ without removing their accessible names or Enter controls.
 
 The starter baseline uses `forpost_starter`: one 2100 × 1300 master and 273
 physical PNGs under `world/cells/forpost-starter`. Local `[x,y]` maps to art
-column `x`, row `y - 2`. The seed upgrades missing art and legacy
+column `x`, row `y - 2`. A separate `forpost_starter_west` catalog key supplies
+39 scenery-only images from its 300 × 1300 master and
+`world/cells/forpost-starter-west`. Art column `x + 3`, row `y - 2` covers local
+x−3..−1,y2..14; these remain outside the region and cannot receive gameplay
+offers. The 312 visual images do not enlarge the 273-cell seed import.
+The seed upgrades missing art and legacy
 `forpost_terrain`/`forpost_pond` references within the surveyed rectangle.
 An independent catalog key or an already edited `forpost_starter` reference
 is preserved. This replaces the older forced 25-cell pond-art reconciliation;
@@ -435,10 +453,12 @@ At render time, `CellArtCatalog.resolve_for_tile` also supplies this coordinate
 slice for missing/empty or valid legacy art references, including cells with
 no template row. The default is restricted to the canonical outdoor
 `Outpost Surroundings` identity (`1000 × 1000`, source map `m_1001_999`) and
-integer local `x0..20, y2..14`. Valid custom and deliberately edited starter
-references remain authoritative; nonblank invalid references use the existing
-generic recovery. Other regions and out-of-range coordinates gain no Forpost
-default. This read-only presentation lookup requires no seed, creates no cells
+integer visual local `x−3..20, y2..14`. Main x0..20 selects `forpost_starter`;
+western x−3..−1 selects `forpost_starter_west` for missing/empty references.
+Valid explicit western art and valid custom/deliberately edited main art remain
+authoritative; nonblank invalid references use per-cell CSS recovery. Other
+regions and coordinates outside this visual rectangle gain no Forpost default.
+The separate tile/movement bounds still make every negative-x slot inert. This read-only presentation lookup requires no seed, creates no cells
 or capabilities, and leaves passability/NPC/resource data unchanged. The
 [World handbook](../features/world.md#continuous-starter-landscape) defines its
 complete precedence and missing-asset behavior.

@@ -7,6 +7,9 @@
 
 ## Current observations
 
+- Later outdoor tile-loading and city-scale comparison, distinguishing source
+  measurements from the local artwork rejection:
+  `doc/design/reference/world/observations/2026-09-10_world_tile_loading_and_city_scale.md`
 - Fresh outdoor city-footprint comparison and direct reconfirmation of both
   gate returns:
   `doc/design/reference/world/observations/2026-09-10_forpost_gate_presentation.md`
@@ -49,6 +52,13 @@ The source city appeared as one broad continuous landmark, approximately seven
 to eight outdoor columns by three rows, with Enter in the top control bar.
 These visual bounds are not gate-cell geometry; the September 9 coordinate
 capture remains authoritative.
+
+The later tile inspection confirms that this continuous outdoor city spans
+individual 100px JPG cell backgrounds. A sampled north step retained the old
+off-screen row while adding a new row; it establishes neither immediate
+culling nor hidden cache/spatial-index architecture. The separate local
+artwork rejection and viewport gap are recorded in that observation's local
+linkage and do not alter the verified City route graph.
 
 The Forpost left exit reaches source `[1000,1000]`; returning through that
 gate restores City Square. The eastern Law Quarter exit reaches source
