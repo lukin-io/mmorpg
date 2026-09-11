@@ -50,6 +50,9 @@ RSpec.describe "City building hover and focus", type: :system, js: true do
     set_viewport(390, 844)
     visit world_path
     expect(page).to have_css(".nl-city-viewport[data-nl-scene-size-ready='true']")
+    # Readiness precedes initial ResizeObserver delivery, which clears labels.
+    # Let that layout settle before the single pointer event under test.
+    page.evaluate_async_script("const done = arguments[arguments.length - 1]; requestAnimationFrame(() => requestAnimationFrame(done))")
 
     viewport = find(".nl-city-viewport")
     pointer = viewport.evaluate_script(<<~JS)

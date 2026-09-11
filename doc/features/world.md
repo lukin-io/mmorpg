@@ -2555,6 +2555,26 @@ travel duration remains short without racing the moving-state assertion.
 Application code, assets and the manual acceptance above are unchanged by
 these test corrections.
 
+### 15.12 Post-merge stale-offer system-spec correction (2026-09-11)
+
+[CI run 34591651881](https://github.com/lukin-io/mmorpg/actions/runs/34591651881)
+on documentation-only commit `8c61048` passed lint, non-system specs, security
+and documentation, but failed one of 293 system examples. The stale-movement
+recovery example cancelled an offer before initial viewport negotiation
+finished. An idle map refresh creates new movement offers, so the subsequent
+coordinate-selected button could submit a fresh valid key and correctly start
+movement instead of exercising rejection.
+
+The spec now waits for viewport readiness, cancels the exact offer displayed
+on the east button and clicks that same key. It checks the stale error,
+unlocked shell controls, unchanged position, no moving command and retained
+cancelled status. It then clicks the newly offered key and verifies that exact
+command starts, proving recovery beyond the presence of enabled controls.
+No sleeps, fetch stubs or gameplay changes were introduced. This correction
+affects verification only; the earlier local browser acceptance still refers
+to unchanged application code/assets. Current check results are recorded in
+the [consolidated session changelog](../../changelogs/2026-09-11-city-shop-world-art-session.md#post-push-ci-recovery).
+
 ## 16. Responsible for Implementation Files
 
 ### Requirements and design evidence

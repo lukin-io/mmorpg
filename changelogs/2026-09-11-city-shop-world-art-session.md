@@ -1,9 +1,9 @@
 # Change Note: City shopping, quarter scenes and tiled outdoor artwork
 
 - Session coverage: September 9–11, 2026, from the earliest dated Shop evidence
-  through implementation, visual corrections, pre-merge verification and this
-  consolidated documentation follow-up. The exact conversation start was not
-  recorded; older source observations remain references.
+  through implementation, visual corrections, pre-merge verification,
+  consolidated documentation and post-push CI recovery. The exact conversation
+  start was not recorded; older source observations remain references.
 - Last updated: 2026-09-11.
 - Scope: the whole city/shop/artwork session, including work completed before
   the merge, rather than only its final correction.
@@ -127,6 +127,12 @@ attached to the current gate cell.
   executing thread, retaining all same-thread SQL; short movement assertions
   control server time only while checking accepted motion, then verify actual
   completion. These correct test races, not gameplay durations.
+- After the changelog push exposed another browser-test race, synchronized
+  stale-offer setup with viewport readiness and the exact rendered offer key.
+  Recovery now proves rejection leaves state unchanged and a fresh offer can
+  start movement. The subsequent full local run exposed a mobile city-tooltip
+  initialization race; its pointer check now waits for initial resize delivery.
+  Runtime code and artwork remain unchanged by these corrections.
 
 ## Contracts and boundaries
 
@@ -231,7 +237,7 @@ on local development data, separately from Neverlands observation:
   Earlier exploratory passes and the earlier blocked Shop confirmation were
   superseded by these successful affected-flow checks.
 
-### New checks for this consolidated record
+### Checks for the original changelog-only commit
 
 - `bin/verify docs` — passed: 11 feature handbooks and 83 architecture
   documents. Four existing Partially Implemented status warnings remain
@@ -247,6 +253,52 @@ on local development data, separately from Neverlands observation:
 The documentation and link checks were repeated on the finalized record.
 No new browser pass applies: this follow-up changes only historical
 documentation. No unrelated work was staged or changed.
+
+### Post-push CI recovery
+
+[Run 34591651881](https://github.com/lukin-io/mmorpg/actions/runs/34591651881)
+checked `8c61048`, the changelog-only commit. Lint, security, non-system tests
+and documentation passed; system tests failed **1 of 293 examples** at the
+stale-movement recovery check. This does not retroactively change run 363's
+success, and the documentation commit contained no runtime change.
+
+The test cancelled an offer before the initial viewport refresh completed;
+that refresh could replace its button with a valid new offer. The correction
+waits for viewport readiness and cancels/clicks the same rendered key, then
+asserts unchanged state and successful retry with the fresh key. Details belong
+to [World §15.12](../doc/features/world.md#1512-post-merge-stale-offer-system-spec-correction-2026-09-11).
+The original example passed once locally before the change, consistent with
+an intermittent setup race; that passing run is not a claim of reproduction.
+The first corrected World interactions file passed **21 examples, zero
+failures**, and focused lint passed before the final exact-key click refinement.
+The first final `bin/verify full` passed lint and **2,602 non-system examples**,
+then failed **1 of 293 system examples**, in the existing scaled-mobile city
+tooltip test; the stale-offer example passed. Security/docs stages did not run
+because that profile stopped on the system failure. The mobile check could
+hover before initial resize callbacks cleared its label; it now waits two
+animation frames after scene readiness, as neighboring resize tests already
+do. Its visibility, text size, geometry, focus and resize assertions remain.
+See [City's verification follow-up](../doc/features/city.md#post-merge-local-verification-follow-up-september-11).
+
+After both synchronization changes,
+`bundle exec rspec spec/system/city_building_hover_spec.rb spec/system/world_interactions_spec.rb`
+passed **25 examples, zero failures**. The corresponding
+`bin/rubocop spec/system/city_building_hover_spec.rb spec/system/world_interactions_spec.rb`
+passed **two files with no offenses**.
+
+The final `bin/verify full` rerun passed **2,602 non-system and 293 system
+examples, zero failures; 562 lint files clean; Brakeman zero warnings; Bundler
+and Importmap audits clean; 11 feature handbooks and 83 architecture documents
+passed**. This is a new local run on both final spec corrections, distinct
+from the pre-merge results above. The existing Rack status-name deprecations
+and four Partially Implemented documentation warnings remain non-failing.
+After recording these results, `bin/verify docs`, explicit changelog validation
+(46 relative links, 17 anchors), `git diff --check` and staged diff validation
+passed again. Only the two specs, their City/World handbooks and this existing
+changelog changed; the subsequent pushed-commit CI is a separate check.
+
+A new manual browser pass is not applicable to these spec/documentation-only
+corrections: application behavior, UI and assets are unchanged.
 
 ## Documentation
 
@@ -270,11 +322,13 @@ preserve prompts, sources, technical packaging and unsuccessful corrections.
 own dimensions/composition and responsive/manual-check requirements. Engineering,
 UI and content-management guidance was updated during implementation.
 
-This final follow-up adds only this consolidated record. The current
+The original changelog-only follow-up added only this consolidated record. The current
 [AGENTS.md](../AGENTS.md) and
 [changelog template](CHANGELOG_TEMPLATE.md) were reread; the user's explicit
 whole-session instruction governs this record. Process files and the earlier
-World changelog are preserved, per the final narrowed request.
+World changelog were preserved, per that narrowed request. The subsequent
+reported CI failure is recorded in this same session file and the World/City
+test strategies; no separate session changelog was introduced.
 
 ## Follow-up
 

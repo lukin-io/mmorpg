@@ -270,15 +270,31 @@ RSpec.describe "World Interactions", type: :system, js: true do
 
     it "restores shell navigation and fresh movement offers after a stale offer is rejected" do
       visit world_path
-      MovementCommand.offered.find_by!(character:, target_x: 6, target_y: 5).update!(status: :cancelled)
+      # Initial viewport negotiation refreshes offers; invalidate the displayed
+      # offer only after that response has finished replacing the controls.
+      expect(page).to have_css(".nl-map-container[data-viewport-ready='true']")
+      destination = find_button("Move east")
+      stale_offer = MovementCommand.offered.find_by!(character:, action_key: destination["data-action-key"])
+      stale_offer.update!(status: :cancelled)
 
-      find(".nl-tile-clickable--available[data-target-x='6'][data-target-y='5']").click
+      find(".nl-tile-clickable--available[data-action-key='#{stale_offer.action_key}']").click
 
       expect(page).to have_content("Movement offer is no longer available")
       expect(page).to have_button("Your character", disabled: false)
       expect(page).to have_button("Inventory", disabled: false)
-      expect(page).to have_css(".nl-tile-clickable--available:not(:disabled)")
-      expect(position.reload.x).to eq(5)
+      expect(position.reload).to have_attributes(x: 5, y: 5)
+      expect(MovementCommand.moving.where(character:)).to be_empty
+      expect(stale_offer.reload).to be_cancelled
+
+      fresh_destination = find_button("Move east", disabled: false)
+      fresh_key = fresh_destination["data-action-key"]
+      expect(fresh_key).not_to eq(stale_offer.action_key)
+      expect(MovementCommand.offered.find_by!(character:, action_key: fresh_key)).to have_attributes(target_x: 6, target_y: 5)
+
+      fresh_destination.click
+
+      expect(page).to have_css(".nl-map-container[data-nl-world-map-movement-active-value='true']")
+      expect(MovementCommand.moving.find_by!(character:)).to have_attributes(action_key: fresh_key, target_x: 6, target_y: 5)
     end
 
     it "allows retry after the movement request loses its connection" do

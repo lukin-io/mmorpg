@@ -1017,6 +1017,20 @@ bundle exec rspec \
 
 Run `bin/feature-doc-audit doc/features/city.md doc/features/shop_economy.md` and `bin/verify full` for broad City/Shop changes.
 
+### Post-merge local verification follow-up: September 11
+
+During the stale-World-offer CI correction, the local full suite passed 2,602
+non-system examples but failed one of 293 system examples: the scaled-mobile
+Shop tooltip was empty at its pointer assertion. Scene readiness is set before
+initial ResizeObserver callbacks finish, and those callbacks clear city
+tooltips. The mobile example now waits two animation frames after readiness
+before its pointer event, matching the adjacent resize examples. Pointer and
+keyboard visibility, 12px text, viewport bounds and resize dismissal remain
+asserted. This changes test synchronization only, not UI code or artwork;
+earlier manual acceptance remains historical evidence for that unchanged UI.
+Final rerun results are in the
+[session changelog](../../changelogs/2026-09-11-city-shop-world-art-session.md#post-push-ci-recovery).
+
 ## 16. Responsible for Implementation Files
 
 ### Requirements and evidence
