@@ -2545,6 +2545,16 @@ pass did not reclassify the diagonal anatomy limitation. The final whole-suite
 results and repeated login acceptance after the session correction are recorded
 in [Shell's September 11 acceptance](game_shell.md#september-11-final-local-browser-acceptance).
 
+The subsequent CI correction changes only verification: the CellArtCatalog
+SQL probes measure the synchronous lookup's thread, retaining every SQL event
+from that thread while excluding unrelated connection-pool maintenance. The
+eastern-gate browser test waits for viewport readiness and freezes the server
+clock only while asserting accepted movement and the unchanged origin, then
+restores real time for normal browser-driven completion. Its one-second test
+travel duration remains short without racing the moving-state assertion.
+Application code, assets and the manual acceptance above are unchanged by
+these test corrections.
+
 ## 16. Responsible for Implementation Files
 
 ### Requirements and design evidence

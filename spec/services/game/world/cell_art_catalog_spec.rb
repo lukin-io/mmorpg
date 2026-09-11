@@ -14,7 +14,12 @@ RSpec.describe Game::World::CellArtCatalog do
     it "resolves every sparse starter coordinate to its own continuous landscape slice without SQL" do
       region = zone
       queries = []
-      subscriber = ->(*arguments) { queries << arguments.last.fetch(:sql) }
+      measured_thread = Thread.current
+      # Pool maintenance can emit SQL on another thread. Keep every SQL event
+      # from this synchronous lookup, including schema/setup statements.
+      subscriber = lambda do |*arguments|
+        queries << arguments.last.fetch(:sql) if Thread.current.equal?(measured_thread)
+      end
       presentations = []
       ActiveSupport::Notifications.subscribed(subscriber, "sql.active_record") do
         (0..20).each do |x|
@@ -34,7 +39,10 @@ RSpec.describe Game::World::CellArtCatalog do
     it "resolves all 39 surveyed western margin cells without loading or extending gameplay records" do
       region = zone
       queries = []
-      subscriber = ->(*arguments) { queries << arguments.last.fetch(:sql) }
+      measured_thread = Thread.current
+      subscriber = lambda do |*arguments|
+        queries << arguments.last.fetch(:sql) if Thread.current.equal?(measured_thread)
+      end
       presentations = []
       ActiveSupport::Notifications.subscribed(subscriber, "sql.active_record") do
         (-3..-1).each do |x|

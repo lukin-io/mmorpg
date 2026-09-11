@@ -4,6 +4,8 @@ require "rails_helper"
 require Rails.root.join("db/seeds/forpost_gate_repair")
 
 RSpec.describe "Repaired eastern gate and pond route", type: :system, js: true do
+  include ActiveSupport::Testing::TimeHelpers
+
   def expect_idle_cell(x, y)
     expect(page).to have_css(
       ".nl-map-container[data-nl-world-map-player-x-value='#{x}']" \
@@ -32,10 +34,7 @@ RSpec.describe "Repaired eastern gate and pond route", type: :system, js: true d
     # travel durations so the complete return route stays a thin browser test.
     [[11, 9], [12, 10], [13, 10]].each do |x, y|
       tile = MapTileTemplate.find_by!(zone: outdoors.name, x:, y:)
-      # The first leg also asserts the visible active/disabled state. Give that
-      # state time to render on CI; other legs only assert the completed result.
-      duration = [x, y] == [12, 10] ? 3 : 1
-      tile.update!(metadata: tile.metadata.merge("travel_seconds" => duration))
+      tile.update!(metadata: tile.metadata.merge("travel_seconds" => 1))
     end
 
     page.current_window.resize_to(1500, 1000)
@@ -51,9 +50,21 @@ RSpec.describe "Repaired eastern gate and pond route", type: :system, js: true d
       expect(page).to have_no_button("Fish")
     end
 
-    click_button "Move southeast"
-    expect(page).to have_css(".nl-map-container[data-nl-world-map-movement-active-value='true']")
-    expect(page).to have_no_css("button[aria-label^='Move ']")
+    expect(page).to have_css(".nl-map-container[data-viewport-ready='true']")
+    # The server clock owns arrival. Hold it only while checking the actual
+    # accepted UI state so CI/browser overhead cannot complete the one-second
+    # fixture step before the assertion; restoring time lets normal polling
+    # complete the same persisted movement without a second click. Preserve
+    # microseconds so the map's timestamp revision cannot move backward.
+    freeze_time(with_usec: true) do
+      click_button "Move southeast"
+      expect(page).to have_css(".nl-map-container[data-nl-world-map-movement-active-value='true']")
+      expect(page).to have_no_css("button[aria-label^='Move ']")
+      expect(position.reload).to have_attributes(zone: outdoors, x: 11, y: 9)
+      expect(MovementCommand.moving.find_by!(character:)).to have_attributes(
+        from_x: 11, from_y: 9, target_x: 12, target_y: 10
+      )
+    end
     expect_idle_cell(12, 10)
     expect_world_location("Outpost Surroundings")
     within("#available-actions") do
