@@ -3,7 +3,7 @@
 title: Game Shell Feature
 description: Implementation handbook for the Neverlands-based persistent game frame, compact vitals, location presence, mixed chat/game-event timeline, and shell preferences.
 status: Partially Implemented
-updated: 2026-09-10
+updated: 2026-09-11
 owners: Game Shell and Social Presence
 template: feature-v1
 ---
@@ -191,11 +191,15 @@ chat errors:
 - `notice`/`success` messages use `role="status"` and disappear after five
   seconds; `alert`/`error` messages use `role="alert"` and remain readable
   until dismissed or navigation clears them.
+- Only those four message types render. Internal flash values such as Devise's
+  boolean `timedout` flag or World result-offer identifiers are not player-facing
+  messages and never appear as `true` or a raw identifier beside an alert.
 - Each message has a keyboard-accessible `X` button labelled
   `Dismiss notification`. Removing a message leaves `#flash` available for
   subsequent responses.
-- A completed `main_content` frame navigation clears previous messages.
-  Chat/presence frame refreshes do not clear them.
+- A `turbo:before-frame-render` event for `main_content` clears previous
+  messages immediately before replacement content renders. Starting a request
+  alone does not clear them. Chat/presence frame refreshes do not clear them.
 - Messages are `data-turbo-temporary` and removed before Turbo snapshot
   caching, preventing browser Back from restoring stale notices.
 - `flash_controller.js` owns only this DOM lifecycle. Each message owns its
@@ -396,6 +400,10 @@ If the location changes while a local timeline read is in progress, denied
 `GET /chat/local` responses return `403` without redirecting to their former
 page. A passive poll therefore cannot reopen an old village or overwrite the
 saved resume context. The next poll resolves the current authoritative room.
+Background chat fetches refuse redirects. A login redirect therefore cannot
+fetch a second sign-in form or replace its anonymous CSRF cookie while a
+visible form is awaiting submission. Failed polling retains the current
+timeline; it does not authenticate or navigate the player.
 
 Local/global ordinary messages never publish to shared channel streams, so an
 old signed local token receives no new ordinary messages. The shell retains
@@ -732,12 +740,26 @@ manager reopens it. Missing rows are not synthesized by heartbeats.
 `ApplicationController#reject_closed_game_session` also checks an existing
 current-device session before gameplay access. If a late background response
 restores a pre-logout authenticated cookie, a closed DB row still rejects the
-next gameplay request: HTML redirects to sign-in; Turbo Stream/JSON reads or
-mutations return `401` and clear authentication. Missing tracking rows do not
-become a new authentication prerequisite. Devise authentication flows remain
-unchanged, and the heartbeat retains its harmless `204` behavior for a missing
-or closed row. This is a local authentication guarantee, not a newly inferred
-Neverlands gameplay rule.
+next gameplay request: top-level HTML redirects to sign-in; background HTML
+XHR/frame reads and Turbo Stream/JSON requests return `401` and clear
+authentication without following a sign-in form. Missing tracking rows do not
+become a new authentication prerequisite. `UserSessionsController` performs the
+same current-device closed-session check before Devise's already-authenticated
+shortcut on sign-in GET/POST. It discards stale authentication so the login
+form renders and the first password submission follows normal Devise credential
+validation. This does not reopen the session or bypass an incorrect password;
+only successful login reopens it. Existing open sessions keep Devise's usual
+already-authenticated redirect. The heartbeat retains its harmless `204`
+behavior for a missing or closed row. This is a local authentication guarantee,
+not a newly inferred Neverlands gameplay rule.
+
+CSRF verification remains enabled on sign-in. If a late response replaces the
+anonymous session that issued the displayed form token, an HTML sign-in POST
+is rejected and redirects with `303` to a fresh form and an expired-form
+message. No password is retained or replayed, and the session remains closed
+until the player explicitly resubmits valid credentials with the fresh token.
+This recovery applies only to sign-in creation; other CSRF failures retain
+their normal rejection behavior.
 
 Arena building entry likewise uses server-persisted state: the accepted city
 action records the current zone in Character metadata through `ResumeContext`.
@@ -942,6 +964,7 @@ bundle exec rspec \
   spec/requests/chat_messages_spec.rb \
   spec/requests/local_chat_spec.rb \
   spec/requests/session_pings_spec.rb \
+  spec/requests/closed_game_sessions_spec.rb \
   spec/requests/user_registrations_spec.rb \
   spec/requests/inventories_spec.rb \
   spec/requests/world_spec.rb \
@@ -966,6 +989,37 @@ bundle exec rspec \
 link, current-owner license surface, persisted grants, and exact expiry.
 
 Policy behavior is currently exercised through request/system coverage; dedicated `ChatChannelPolicy` and `ChatMessagePolicy` specs are a justified gap for future policy changes. `responsive_neverlands_ui_spec.rb` is the focused full-shell browser contract for mobile header/main/social/bottom row sizes and whole-page overflow. Run the complete suite before release because the shell integrates authentication, sessions, World/City, character state, Turbo Streams, and social persistence.
+
+### September 11 final local browser acceptance
+
+The final `bin/verify full` passed with **2,602 non-system examples and 293
+system examples, zero failures**, 562 Ruby files lint clean, no Brakeman
+warnings or dependency vulnerabilities, and documentation audits covering 11
+feature handbooks and 83 architecture documents. These are local results;
+GitHub Actions is a separate check on the pushed commit.
+
+After that run, the agent used the existing local development player in
+desktop Chrome, through native keyboard/pointer controls and actual forms:
+
+- Resubmitting the previously failed, expired sign-in form through Chrome's
+  Reload/Confirm Form Resubmission UI produced a fresh form and the readable
+  expired-form message. No exception page or automatic login occurred.
+- Entering credentials explicitly into that fresh form restored the saved
+  Shop mode and its persisted wallet/inventory state.
+- A new Shop → X → confirm Exit → sign-in sequence succeeded on the first
+  credential submission and restored the same Shop. The internal boolean
+  flash did not appear.
+- Inventory still showed mass 0, no Penknife and the 54,260.20 NV balance from
+  the verified resale. Reload restored Shop; Buy Goods showed Penknife stock
+  199. The final original-art catalog was visually inspected and left open.
+
+The earlier final-Shop-code purchase/equipment/resale and phone-sized gate
+checks are recorded in [Shop](shop_economy.md#september-11-pre-merge-manual-shop-acceptance)
+and [World](world.md#1511-pre-merge-offer-and-browser-acceptance-2026-09-11).
+This final authentication pass used the normal desktop window without another
+viewport override. Deliberate cookie replay, invalid-password denial and
+redirect suppression are deterministic automated evidence, not claims that
+those states were all manually induced in the browser.
 
 ## 16. Responsible for Implementation Files
 
@@ -992,6 +1046,7 @@ Policy behavior is currently exercised through request/system coverage; dedicate
 - `app/controllers/chat_messages_controller.rb`
 - `app/controllers/session_pings_controller.rb`
 - `app/controllers/user_registrations_controller.rb`
+- `app/controllers/user_sessions_controller.rb`
 - `app/controllers/concerns/current_character_context.rb`
 
 ### Models and policies

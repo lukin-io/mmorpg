@@ -1,6 +1,7 @@
 # Starter Map Artwork Brief
 
-- Prepared: 2026-09-09; revised for the native-panel replacement: 2026-09-10.
+- Prepared: 2026-09-09; native-panel and city-detail production: 2026-09-10;
+  production-source and density references synchronized: 2026-09-11.
 - Scope: the approved starter landscape, with **one pond**, city gates,
   village, mine and resource-exchange footprints.
 - Runtime generation/integration status and verification belong to
@@ -29,6 +30,16 @@ slots; the gameplay import remains 273 cells, with no negative-coordinate
 movement or new crossing. Native outputs must be at least their delivery panel
 size, then downsampled; resizing a low-resolution full-scene draft is only a
 guide-authoring step, never the final production pixel source.
+
+The later [city-detail correction](../../../ARTWORK.md#2026-09-10--city-detail-at-two-raster-densities)
+retains this composition and adds two raster densities for main sheet columns
+`6..13`, rows `5..8` (local x6..13/y7..10). Its preserved 1774 × 887 native
+source is downsampled into a 1600 × 800 patch for 32 physical 200px PNGs and
+a matching 800 × 400 base patch for the existing 100px slices. Both versions
+occupy the same 100 CSS px cells; the surrounding scenery remains 1×. The
+linked production entry owns its exact submitted prompt, source identity and
+limited terrain-rim blend. The scene ratio standard for indoor City/Shop
+images does not resize this outdoor cell grid.
 
 The [September 10 live comparison](observations/2026-09-10_world_tile_loading_and_city_scale.md)
 shows a broad low city rendered through ordinary 100px tile backgrounds.
@@ -73,6 +84,8 @@ Use the continuous-landscape template from
 accepted layout guide and project-owned material references. The latest panel
 inputs and every exact submitted prompt are recorded separately in
 [the generation record](../../../artwork/forpost-panel-map-generation.md).
+The subsequent [city-detail prompt and preserved source](../../../ARTWORK.md#2026-09-10--city-detail-at-two-raster-densities)
+own the architecture-density correction to that panel assembly.
 Append these constraints to the actual generation/edit prompt:
 
 ```text
@@ -98,7 +111,9 @@ grid, labels, numbers, gutter, frame, interface, cursor or selection overlay.
 
 - Match the coordinate guide, approved footprints and passage boundaries.
 - Review city edges, all four entrance families and pond banks at native 100px
-  scale; match every join to adjacent sheets.
+  CSS scale at both DPR 1 and DPR 2; match every join to adjacent tiles and
+  between the density patch and surrounding 1× terrain. Confirm selected
+  resources rather than treating a 200px filename as proof of Retina display.
 - Use the existing cell-art catalog and aligned sheet slices. Verify any
   duplicate building/emoji presentation is handled without losing the actual
   server-offered entrance control.

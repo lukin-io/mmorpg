@@ -168,8 +168,11 @@
 - The later native-panel original artwork supplies 273 main and 39 western
   scenery-only tiles. The latter correspond to surveyed source x991..993 but
   remain inert negative-x local buffer slots; the 273-cell gameplay import and
-  gate coordinates are unchanged. Final desktop/phone-viewport and gate/movement
-  acceptance is recorded in World section 15.9, separately from source evidence.
+  gate coordinates are unchanged. The later 32-cell city-detail correction
+  adds matching optional 200px rasters inside the same 100 CSS px cells, and
+  directional walking art uses registered 128px frames at 64 CSS px. World
+  section 15.10 records that later raster/walker acceptance; section 15.9
+  retains its dated viewport/composition checks. Neither is source evidence.
 - Local Look, Drink and no-bait Fish use their observed 28/60/30-second locks.
   Drink persists its two-point fatigue recovery once; neither Look nor Fish
   grants a gathering/catch reward. The pond is seeded at local `[13,10]`.
@@ -234,9 +237,14 @@ Neverlands evidence.
 terrain illustration style. `doc/design/reference/world/starter_map_art_prompt.md`
 owns the starter layout. Every exact generation/edit prompt and selected-output
 provenance is centralized in `doc/ARTWORK.md`; the landmark observation records
-live source behavior. The bounded runtime uses one continuous
-`2100 × 1300` master and 273 physical 100px PNG cells, with matching master-crop
-fallback. Its one pond and integrated landmarks do not establish source
+live source behavior. The bounded runtime loads 273 main and 39 western
+physical 100px PNG cells from a continuous assembly. The `2100 × 1300` main
+and `300 × 1300` western masters are authoring inputs, never runtime map
+backgrounds or missing-slice fallbacks. A missing required base slice uses
+per-cell CSS terrain. Thirty-two city cells also have optional 200px rasters;
+the browser selects density without changing their 100 CSS px footprint.
+The western margin is scenery in inert outside-zone slots, not additional
+gameplay cells. Its one pond and integrated landmarks do not establish source
 terrain, passability or gameplay facts. Catalog-backed rendering suppresses
 duplicate decorative city/village markers while keeping accessible labels and
 server-owned offers.

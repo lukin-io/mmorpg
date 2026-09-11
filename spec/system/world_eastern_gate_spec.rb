@@ -32,7 +32,10 @@ RSpec.describe "Repaired eastern gate and pond route", type: :system, js: true d
     # travel durations so the complete return route stays a thin browser test.
     [[11, 9], [12, 10], [13, 10]].each do |x, y|
       tile = MapTileTemplate.find_by!(zone: outdoors.name, x:, y:)
-      tile.update!(metadata: tile.metadata.merge("travel_seconds" => 1))
+      # The first leg also asserts the visible active/disabled state. Give that
+      # state time to render on CI; other legs only assert the completed result.
+      duration = [x, y] == [12, 10] ? 3 : 1
+      tile.update!(metadata: tile.metadata.merge("travel_seconds" => duration))
     end
 
     page.current_window.resize_to(1500, 1000)

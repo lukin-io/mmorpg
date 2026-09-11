@@ -81,13 +81,14 @@ No magic prompt, YAML receipt, profile list, or conversation changelog is
 needed. A request such as “implement inventory sorting using `AGENTS.md`” is
 enough.
 
-The workflow connects four things:
+The workflow connects evidence, implementation, and verification:
 
 ```text
 Neverlands evidence/design
   -> smallest Rails/Hotwire implementation
   -> applicable focused tests
-  -> synchronized canonical docs + proportional verification
+  -> synchronized canonical docs + automated verification
+  -> final local browser acceptance for changed player flows
 ```
 
 ### What each file owns
@@ -120,7 +121,11 @@ Neverlands evidence/design
    retry/concurrency coverage while implementing.
 5. Review the stable diff against the relevant Rails-guide questions.
 6. Update only canonical documents whose owned truth changed.
-7. Run proportional verification and report exact outcomes.
+7. Run proportional automated verification.
+8. After those checks pass, personally exercise affected local UI flows under
+   [manual browser acceptance](AGENTS.md#manual-browser-acceptance), including
+   the applicable responsive and visual checks.
+9. Record automated and manual outcomes separately, with any remaining gaps.
 
 A planning-first request stops after evidence extraction, repository scan, and a
 file-by-file plan. Once the user approves it, implementation continues without a

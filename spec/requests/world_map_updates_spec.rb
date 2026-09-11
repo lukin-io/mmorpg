@@ -34,6 +34,30 @@ RSpec.describe "Incremental World map updates", type: :request do
     expect(MovementCommand.moving.where(character:)).to be_empty
   end
 
+  it "accepts the still-visible Enter key after a viewport refresh at the same cell" do
+    building = create(:tile_building, :world_location, zone: zone.name, x: 20, y: 20, required_level: 0)
+    get world_path
+    original_token = map["data-map-buffer"]
+    offered = WorldActionOffer.offered.find_by!(character:, target: building, action_type: "enter_building")
+    original_key = offered.action_key
+    original_deadline = offered.expires_at
+
+    get world_path, params: {map_columns: 3, map_rows: 5, map_buffer: original_token}, headers: stream_headers
+
+    expect(response).to have_http_status(:ok)
+    expect(offered.reload).to be_offered
+    expect(offered.expires_at).to eq(original_deadline)
+    expect(response.body).to include(original_key)
+    post enter_building_world_path, params: {building_id: building.id, action_key: original_key}, headers: stream_headers
+
+    expect(response).to redirect_to(world_location_path(building.location_key))
+    expect(offered.reload).to be_completed
+    follow_redirect!
+    expect(response).to have_http_status(:ok)
+    expect(character.reload.gameplay_context).to eq("name" => "world_location", "params" => {"key" => building.location_key})
+    expect(position.reload).to have_attributes(zone:, x: 20, y: 20)
+  end
+
   it "renders the western survey margin in a wider viewport without importing or extending gameplay cells" do
     zone.update!(name: "Outpost Surroundings", metadata: {"source_map" => "m_1001_999"})
     position.update!(x: 6, y: 8)

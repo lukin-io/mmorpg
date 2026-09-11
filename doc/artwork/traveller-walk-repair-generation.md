@@ -11,7 +11,7 @@ project artwork or original pose guides; no Neverlands bitmap was supplied.
 Requested anatomy, resolution and alpha are instructions, not a claim that the
 generator satisfied them. The actual native result and review disposition are
 listed separately. The two fresh diagonal outputs supply only their first four
-poses to the registered working-tree loops; full opposite-foot anatomical
+poses to the registered runtime loops; full opposite-foot anatomical
 alternation is not claimed. Final browser acceptance is owned by
 [World section 15.10](../features/world.md#1510-city-raster-detail-and-walking-frame-stability-2026-09-10).
 

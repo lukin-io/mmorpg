@@ -62,4 +62,12 @@ RSpec.describe "shared/_flash", type: :view do
 
     expect(notification).to be_nil
   end
+
+  {timedout: true, world_action_result_offer_id: 123}.each do |type, message|
+    it "does not render the internal #{type} flash value as player-facing text" do
+      render partial: "shared/flash", locals: {type:, message:}
+
+      expect(notification).to be_nil
+    end
+  end
 end

@@ -1,6 +1,6 @@
 # Project Artwork Guide
 
-- Updated: 2026-09-10.
+- Updated: 2026-09-11.
 - Purpose: keep original game illustrations visually consistent and make new
   assets repeatable, reviewable, and safe to integrate into the existing UI.
 - Applies to NPCs, player illustrations, equipment/items, buildings/interiors, and outdoor maps.
@@ -1299,7 +1299,7 @@ passability, records or the player movement contract.
 
 - Tool: built-in `image_gen`.
 - Edit target and layout reference: [preserved city crop](artwork/forpost-city-clarity-layout-guide.png), **800 × 400px**, cropped from the pre-correction main authoring master at `(600,500)`. It is project-owned existing art, not a source screenshot.
-- Selected original tool output: `exec-c3702e2c-3f44-4ebc-91a4-5463ca3ed914.png`, **1774 × 887px**, **3,470,715 bytes**. The request asked for at least 1600 × 800; the actual result exceeds that footprint without enlargement.
+- Selected original tool output: `exec-c3702e2c-3f44-4ebc-91a4-5463ca3ed914.png`, **1774 × 887px**, **3,470,715 bytes**, preserved unchanged as [forpost-city-detail-source.png](artwork/forpost-city-detail-source.png). SHA-256: `37a6a4241f757c79369eda07f94c89c0f8c0c60978c34f5c55871917af418852`. The request asked for at least 1600 × 800; the actual result exceeds that footprint without enlargement. The source was archived in the repository on September 11; generation and the checks below remain September 10 records.
 - Final optional density patch: **1600 × 800px**. Corresponding base patch: **800 × 400px**.
 - Required base assets: the same 273 main and 39 western **100 × 100px** PNGs. Only the 32 main city slices are replaced by matching detail pixels.
 - Optional density assets: 32 **200 × 200px RGB PNGs** at `app/assets/images/world/cells/forpost-starter-2x/{column}_{row}.png`, columns `6..13`, rows `5..8`. They represent existing local cells x6..13/y7..10; they are not 32 new world cells.

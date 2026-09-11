@@ -44,8 +44,9 @@ Duplicate/expired/changed or foreign offers cannot repeat the transfer.
 Licenses has six typed purchasable permissions, prerequisite checks and saved
 expiry under Your licenses. Sell requires active trading permission, uses the
 source skill/durability price, pays from Shop funds and restores one stock unit.
-Full stock and insufficient merchant funds reject unchanged. Novice remains
-the below-level-10 denial/empty section until eligible operations are observed.
+Full stock and insufficient merchant funds reject unchanged. For Beginners
+shows the observed denial at level 10 or above; lower-level characters see an
+empty section without purchase offers until eligible operations are observed.
 
 Shop revalidates the active City hotspot or exact-cell linked-village feature.
 Its saved filters resume after login only while that location is available.

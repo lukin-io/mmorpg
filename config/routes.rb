@@ -113,7 +113,7 @@ Rails.application.routes.draw do
 
   # Non-game related
 
-  devise_for :users, controllers: {registrations: "user_registrations"}
+  devise_for :users, controllers: {registrations: "user_registrations", sessions: "user_sessions"}
   mount ActionCable.server => "/cable"
   resource :session_ping, only: :create
   get "up" => "rails/health#show", :as => :rails_health_check

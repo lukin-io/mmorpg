@@ -161,11 +161,19 @@ without materializing gameplay content; valid independent/edited artwork wins.
 The World handbook owns bounds, invalid-reference behavior and acceptance.
 The subsequent native-panel landscape replaces the rejected rounder repaint,
 retaining the main cell anchors and adding the western scenery margin.
-Six panels and a gate correction are downsampled into the combined assembly;
-no production output is enlarged or claimed as native 4K/2×. Moving state uses
-original walking GIFs in eight directions with matching static reduced-motion
-fallbacks, retaining the idle compass and server movement lifecycle.
-ARTWORK.md preserves every exact prompt; the World handbook owns final runtime acceptance.
+Six panels and a gate correction are downsampled into the base assembly.
+The later city-detail correction replaces 32 main 100px slices and adds
+matching optional 200px rasters, selected through `image-set` inside the same
+100 CSS px cells. Only the outer terrain rim blends interpolated older pixels;
+the architectural detail comes from the preserved native generated source.
+The rest of the landscape remains 1×, not a full-map 4K/2× asset. Moving state
+uses eight original directional GIFs and matching reduced-motion stills on
+128px canvases displayed at 64 CSS px. Registered heads remove whole-body
+drift; cardinal loops use eight frames, while diagonals retain four stylized
+phases without a claim of perfect opposite-foot alternation. The idle compass
+and server movement lifecycle are unchanged. ARTWORK.md owns exact prompts,
+sources and packaging; World section 15.10 owns the later raster/walker
+acceptance, separately from the section 15.9 viewport/composition checks.
 Derived encounter bootstrap preserves occupied cells and moved/disabled
 placements by their original source identity. Seed phases and lifecycle
 policies are documented in the content-management guide.

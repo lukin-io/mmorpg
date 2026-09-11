@@ -3,7 +3,7 @@
 title: Shop and Economy Feature
 description: Implementation handbook for the Neverlands-based city shop, NV wallet, catalog buying, inventory selling, and transaction ledger.
 status: Partially Implemented
-updated: 2026-09-10
+updated: 2026-09-11
 owners: Shop and Economy
 template: feature-v1
 ---
@@ -171,8 +171,9 @@ screens the decorative entrance fits proportionally, while category, filter
 and goods regions own horizontal overflow instead of widening the page.
 
 Buy renders dense item rows with name, properties, requirements, stock, NV
-price, durability and one Buy action. Sell renders carried stacks with item
-state, quantity, calculated unit return and a sell action. Their two-line
+price, durability and one Buy action. Sell renders owned stacks with item
+state, quantity, calculated unit return and a sell action; equipped or protected
+rows remain visible with the action unavailable. Their two-line
 economy strip sits below the filters: player NV and mass/max first, then Shop
 funds. Slots remain an inventory capacity rule but are not a Shop status label.
 Licenses has no economy strip. The surrounding header, vitals, nearby players
@@ -280,6 +281,12 @@ Local duration starts at the committed purchase time: this is an explicit local
 lifecycle choice from the user-authorized description-based implementation,
 not a live-confirmed Neverlands activation sequence. Expiry is authoritative at
 `starts_at <= now < expires_at`; rereading or logging in cannot extend it.
+No cron or background job deletes expired grants. Permission checks reject them
+at the server deadline, and the next Your licenses request omits them while
+retaining their purchase records. An already-open page has no expiry polling;
+its displayed row can remain until navigation or reload without authorizing a
+sale. The exact read/display contract belongs to
+[Character Progression](character_progression.md#66-purchased-licenses-and-abilities).
 
 Merchant and Healer are selectable source perks #34/#35. The
 [Neverlands prerequisite matrix](../design/reference/economy/observations/2026-09-09_licenses_and_shop_selling.md#license-purchase-requirements)
@@ -353,7 +360,7 @@ After locking the wallet, Sale also rejects a payout that cannot fit its
 existing `decimal(12,2)` storage before removing any item. The exact maximum
 9,999,999,999.99 NV remains storable. `CurrencyWallet::NV_STORAGE_LIMIT` names
 this technical boundary; it is not a newly inferred Neverlands balance cap.
-Equipped, bound, protected, reserved, broken or impossible-durability items
+Equipped, bound, protected, locked, broken or impossible-durability items
 cannot be sold.
 
 Wallet balances and ledger amounts are decimal values. Every adjustment is
@@ -557,6 +564,21 @@ entrance cell rather than retained request parameters.
 
 Buy resolves the submitted template inside the explicit authored buyable scope. Sell resolves the submitted stack through the current inventory. The controller passes the action key and one-unit intent to the service; domain services validate, start a database transaction, take row locks, recalculate authoritative values, update inventory/stock, and call the wallet service.
 
+`Game::Shop::Purchase.new(character:, item_template:, action_key:, quantity: 1).call`
+and `Game::Shop::Sale.new(character:, inventory_item:, action_key:, quantity: 1).call`
+return a `Result` with `success`, `message`, and `item`. Purchase's `item` is the
+catalog template; Sale's is the submitted owned row, which may have been
+destroyed when its last unit was sold. Neither result replaces a fresh read of
+wallet, inventory or stock. Expected unavailable/capacity failures return an
+unsuccessful result; unexpected persistence failures propagate after rollback.
+
+`TradeOffers.new(character:).issue(buy_items:, sell_items:)` returns separate
+buy/sell maps keyed by the visible template/owned-item ids, persisting new or
+cancelled offers as needed. Its `perform(action_key:, action:, target:)` entry
+point yields the locked offer and Shop account to the settlement block, then
+accepts/completes the offer in the same savepoint. It raises `Unavailable` for
+invalid context or offers; it is not a read-only catalog helper.
+
 ### 8.3 Complete, redirect, or hand off
 
 Both mutations use an HTML redirect to the Shop with a notice or alert. Submitted mode/category/filter values are allowlisted into the return URL. Sell forces `mode=sell`. The next GET rebuilds all displayed state from persisted records.
@@ -716,7 +738,7 @@ Relocation clears stale Shop context with the position transition.
 | Sale payout exceeds wallet storage | Reject before item removal; preserve wallet, item/mass, Shop funds/stock, ledger and offered action. Exact remaining fractional headroom is accepted. |
 | Limited stock changes after render | Recheck under account/stock locks and fail without partial mutation. |
 | Sale exceeds current stack | Reject; wallet, stack, weight, and stock remain unchanged. |
-| Equipped/bound/protected/reserved item | Reject with `This item cannot be sold.` |
+| Equipped/bound/protected/locked item | Reject with `This item cannot be sold.` |
 | Unequipped item at zero durability | Reject with `Broken items cannot be sold.`; preserve stack, stock, weight, and wallet. |
 | Zero/non-positive price | Template is not buyable/sellable; no transaction. |
 | Invalid mode/category/filter | Fall back or filter presentation only; never mutate domain state. |
@@ -725,6 +747,8 @@ Relocation clears stale Shop context with the position transition.
 | Receipt update/delete or second receipt for an offer | Database rejects the write; original settlement history remains unchanged. |
 | Retried processed NPC-loot award | Preserve the existing wallet/ledger state; create no second credit. |
 | NPC-loot event publication fails before commit | Roll back its wallet credit, ledger row, and Arena resolution marker together. |
+| Missing or expired Trading permission at sale | Reject without transferring item, NV, stock or mass, even if an earlier page showed an available action. |
+| Active license of the same kind at purchase | Reject another tier or copy; ordinary purchase becomes eligible again after expiry, subject to the same prerequisites, funds and stock checks. This is not renewal or extension of the old grant. |
 | Unsupported license/novice effect | Do not grant or render an implied mechanic. |
 
 ## 14. Acceptance criteria
@@ -953,8 +977,8 @@ authors 79 ordinary goods (five per equipment category and four Duel Permits);
 `db/seeds/shop_inventory.rb` adds six license definitions. Relics and Runes were
 empty in the source; the user excluded Wood Chips, so Other is also empty.
 `db/seeds.rb` already invokes the catalog and account seed owners in order.
-No separate starter import path is needed. The independent settlement-hardening
-migration below adds database protection for trades.
+No separate starter import path is needed. The settlement-hardening migration
+listed above adds database protection for trades.
 
 The [September 10 capture](../design/reference/economy/observations/2026-09-10_starter_shop_catalog.md)
 owns exact values. Initial stock includes sold-out goods, which remain visible
@@ -1145,15 +1169,45 @@ the unchanged player balance of 54,272.80 NV, Shop funds of 99,977,634.60 NV,
 Penknife stock 200, carried mass zero and no owned Penknife. The temporary
 confirmation may remain open until the Mac is unlocked.
 
-The complete manual buy/wear/remove/sell flow for the cleaned-up layout remains
-pending that interaction. Its automated browser path passed. Earlier manual
+At that checkpoint, the complete manual buy/wear/remove/sell flow for the cleaned-up
+layout remained pending that interaction. The September 11 acceptance below
+supersedes this historical blocker. Its automated browser path passed. Earlier manual
 transaction checks above belong to the earlier layout and are not a completed
 manual transaction check for this cleanup.
+
+### September 11 pre-merge manual Shop acceptance
+
+After the passing local full verification run, the agent exercised the final
+Shop in desktop Chrome at **1041 × 799 CSS px, DPR 2**, using an existing local
+development player with Merchant and an active Trading License I. The actual
+Central Square Shop hotspot, mode links, Inventory controls and Chrome native
+confirmation buttons were used; no gameplay transition was performed by direct
+request or database mutation. The browser connector stalled on native dialogs,
+so their Cancel/OK buttons were operated through native Chrome accessibility.
+
+| UI action | Observed result |
+|---|---|
+| Cancel Penknife purchase | Balance remained 54,265.80 NV, carried mass 0 and Shop stock 199. |
+| Confirm one Penknife purchase | Balance became 54,258.80 NV, mass 5, stock 198 and Shop funds 99,977,648.60 NV. |
+| Inventory → Wear → Your character → reload | One Penknife appeared in the Weapon slot with its original image and 10/10 durability; the player profile retained it after reload. |
+| Inventory → remove Weapon | The Weapon slot became empty and exactly one carried Penknife returned, with Wear available and 10/10 durability retained on revisit. Rendered equipment and carried-item views were visually inspected. |
+| Return → Central Square → Shop → Sell Goods → confirm | The displayed 1.4 NV quote was credited once: balance 54,260.20 NV, mass 0 and Shop funds 99,977,647.20 NV. Sell Goods became empty. |
+| Buy Goods → Inventory → page reload → Inventory | Penknife stock returned to 199; Inventory remained empty with mass 0. Shop's parent frame was restored by reload. |
+| Licenses / For Beginners | All six license definitions rendered; the existing trading license blocked duplicate purchase. The level-16 player received the below-level-10 beginner restriction. |
+
+This closes the cleaned-layout purchase/equipment/resale manual gap. The sale
+rate above is the observed local test player's quote, not new Neverlands
+evidence or a universal percentage. This pass did not buy another license,
+test a physical touch device, or establish missing player-to-player settlement
+or source profession behavior. The separate login/session acceptance and final
+automated completion results are recorded in
+[Shell's September 11 acceptance](game_shell.md#september-11-final-local-browser-acceptance).
 
 ## 18. Version history
 
 | Date | Change |
 |---|---|
+| 2026-09-11 | Audited expiry, sale restrictions and transaction ownership against runtime; completed the final cleaned-layout manual purchase, equipment, removal and resale flow. |
 | 2026-09-10 | Corrected the decorative entrance's frame-relative sizing; shared the entrance component and image specifications; removed duplicate Shop chrome and persistent category labels; aligned filters, economy summary, goods detail panels and license cards to fresh source measurements. Original artwork and settlement rules are preserved. |
 | 2026-09-10 | Clarified license/perk/proficiency/qualification requirements, documented local prerequisite emulation, added seven individual item illustrations shared with Inventory/equipment, verified the buy/wear/remove/resell loop, and rejected sale payouts beyond wallet storage with unchanged-state and exact-boundary coverage. |
 | 2026-09-09 | Captured a live single-item purchase and Inventory handoff; replaced generic categories and invented novice/license purchases, added original Shop art, explicit authored goods, one-use trade capabilities, atomic stock/payment/item changes and focused concurrency/browser coverage. |

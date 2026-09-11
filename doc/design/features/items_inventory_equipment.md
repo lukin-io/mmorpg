@@ -264,7 +264,11 @@ full-information mode:
   not required for first equip/unequip.
 - transfer, gift, player-targeted sale, and currency transfer open tokenized
   inline forms in the same inventory surface. They are separate from shop sell
-  and stay deferred until a dedicated direct-trade capture defines them.
+  and do not establish a complete direct-trade settlement contract. Current
+  bounded transfer/gift and NV transfer behavior is documented in
+  `doc/features/player_inventory.md`. Player-sale settlement remains blocked
+  pending buyer consent, even with an active Trading license; showing its
+  form does not mean that sale is implemented.
 - item use can be immediate, targeted by nickname, combat-contextual,
   doctor/healing priced, teleport/destination-based, or attack/protection
   scroll based. Only captured simple use behavior belongs in the launch scope.

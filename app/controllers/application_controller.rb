@@ -41,7 +41,13 @@ class ApplicationController < ActionController::Base
 
     sign_out(current_user)
     respond_to do |format|
-      format.html { redirect_to new_user_session_path, status: :see_other }
+      format.html do
+        if request.xhr? || request.headers["Turbo-Frame"].present?
+          head :unauthorized
+        else
+          redirect_to new_user_session_path, status: :see_other
+        end
+      end
       format.turbo_stream { head :unauthorized }
       format.json { head :unauthorized }
       format.any { head :unauthorized }

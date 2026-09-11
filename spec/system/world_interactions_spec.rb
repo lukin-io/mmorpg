@@ -90,6 +90,7 @@ RSpec.describe "World Interactions", type: :system, js: true do
     it "loads fresh authoritative travel when browser Back returns to the map" do
       visit world_path
       expect(page).to have_css("meta[name='turbo-cache-control'][content='no-cache']", visible: :all)
+      expect(page).to have_css(".nl-map-container[data-viewport-ready='true']")
       movement = MovementCommand.offered.find_by!(character:, target_x: 6, target_y: 5)
 
       page.execute_script("window.Turbo.visit(arguments[0])", player_path(name: character.name))
@@ -402,7 +403,7 @@ RSpec.describe "World Interactions", type: :system, js: true do
       image.onerror = () => done({error: "walker asset did not load"})
       image.src = JSON.parse(style.backgroundImage.slice(4, -1))
     JS
-    expect(artwork).to include("width" => 96, "height" => 96, "size" => "64px 64px", "pseudo" => "none")
+    expect(artwork).to include("width" => 128, "height" => 128, "size" => "64px 64px", "pseudo" => "none")
     expect(artwork.fetch("url")).to include(filename)
     expect(artwork.fetch("url")).to end_with(still ? ".png" : ".gif")
   end

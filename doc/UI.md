@@ -248,9 +248,12 @@ consistent. Cross-check each against the cited capture before building.
 - **Outdoor linked location**: the captured Frontier Village exact-cell
   entrance, CSS-built `760 × 255` scene, Trading Post/exit hotspot offers,
   linked Shop, and DB-backed login resume are implemented. The canonical
-  village kind drives its map landmark; the nearby seeded city gate uses a
-  castle marker, and Enter is offered only on the entrance cell. Mines, exchanges,
-  and other uncaptured location families remain intentionally unavailable.
+  village kind drives its map landmark. Authored village/city cell artwork
+  suppresses an extra landmark marker; the CSS hut/castle marker remains only
+  for cells whose selected art does not paint that building. Enter is offered
+  only on the entrance cell. The seeded mine and exchange support entry,
+  read-only sections, return and login resume. Underground travel, resource
+  transactions and other uncaptured location families remain unavailable.
 - **Local social surface**: ordinary chat and presence use the authoritative
   current cell or validated village/Shop/city/Arena room. Delivered ordinary
   rows survive navigation within a login; fresh login clears that browser

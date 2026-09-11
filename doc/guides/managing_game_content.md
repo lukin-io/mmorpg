@@ -1039,6 +1039,9 @@ reflection-based generic model editor.
     rollout, explicit request, or durable architecture decision.
 12. **Review and verify.** Apply `doc/RUBY_ON_RAILS_GUIDE.md`, run focused
     checks, the handbook audit, and the appropriate `bin/verify` profile.
+    After those pass, perform the affected management and player flows under
+    [manual browser acceptance](../../AGENTS.md#manual-browser-acceptance),
+    and record the actual controls, persisted results and viewport checks.
 
 ### 11.2 Conventional CRUD skeleton
 
@@ -1288,6 +1291,10 @@ changed handbook, `bin/documentation-architecture-audit` when adding a domain
 or missing-layer record, and the completion profile required by `AGENTS.md`. Review the
 stabilized diff against the applicable sections of
 `doc/RUBY_ON_RAILS_GUIDE.md` before the completion run.
+After automated checks pass, use the local browser to exercise the changed
+management forms and their affected player-facing flow, including reload and
+the relevant adaptive checks. Record that evidence separately from automated
+results under [manual browser acceptance](../../AGENTS.md#manual-browser-acceptance).
 
 ## 15. Responsible implementation files
 

@@ -3,7 +3,7 @@
 title: World Feature
 description: Implementation handbook for the Neverlands-based open world, cells, movement, cell content, actions, and persisted player location.
 status: Partially Implemented
-updated: 2026-09-10
+updated: 2026-09-11
 owners: Game world, movement, and world UI
 template: feature-v1
 ---
@@ -242,7 +242,7 @@ those rows and window resize, centers the cursor and debounces a changed
 measurement for **120ms** before a normal World GET with `map_columns` and
 `map_rows`. The server validates these untrusted presentation hints and includes
 accepted dimensions in the signed buffer identity. A resize rebuilds the
-buffer and may refresh server offer keys; it does not change position,
+buffer and preserves still-live unchanged cell-action keys; it does not change position,
 reachability, an accepted command or its deadline. Small screens retain native
 100px cells and centered internal panning without page overflow.
 
@@ -926,13 +926,23 @@ the existing owner before editing data:
 | Hidden hostile interruption | never represented by a visible offer | current live `TileNpc` state | `InterruptAction`, `WorldEncounterChecksController`, and `StartNpcFight` |
 
 `TileStateResolver` is the one composition point for the finalized cell.
-`ActionOfferBuilder` derives capabilities from its result. Do not seed
+`ActionOfferBuilder` derives capabilities from its result. Under the character
+lock it reloads the position and selected persisted targets, reuses exact live
+actions at that cell, and cancels obsolete offers. A viewport refresh or a
+competing same-cell read therefore preserves a still-visible Enter key and its
+original expiry. A stale-position invocation returns no offers without
+cancelling those at the newer position. Expired/consumed keys are not revived;
+changed, removed, moved, inactive or inaccessible targets are not reused.
+Linked-location feature offers use this same lifecycle. `target_revision` is
+part of issuance/reuse identity, not an additional acceptance permission:
+`AcceptAction` and the destination action service still revalidate current
+ownership, position, availability and target rules before mutation. Do not seed
 `WorldActionOffer`, read seed/config files in controllers or views, or create a
 `LocationCatalog`, resource catalog, or second NPC-placement service.
 
 `db/seeds.rb` loads explicit phases for accounts, zones, cells, starter
 characters, shop inventory, initial wallets, Arena rooms, linked locations,
-city hotspots and outdoor NPCs. Locations precede derived encounters so newly
+city hotspots, per-Shop accounts/stock and outdoor NPCs. Locations precede derived encounters so newly
 created entrances already participate in placement guards. Shared seed cleanup
 is in `Seeds::WorldContentSupport`; runtime owners remain unchanged. Detailed
 file responsibilities and preservation policies belong to
@@ -2502,6 +2512,39 @@ complete the stated visual correction without claiming perfect opposite-foot
 anatomy or reusing older animation acceptance. No new Neverlands gameplay rule
 is inferred from raster or animation quality work.
 
+### 15.11 Pre-merge offer and browser acceptance (2026-09-11)
+
+Viewport refresh previously replaced a still-valid Enter capability, so a
+resize could reject an otherwise valid click. `ActionOfferBuilder` now reuses
+the current unconsumed offer when its action, target and authored metadata are
+unchanged, without extending its expiry. Changed targets retire old offers;
+stale-position builders cannot cancel the new position's offers. Acceptance
+continues to revalidate current authoritative gameplay state. Focused request
+and service examples cover those boundaries, including expired, consumed and
+changed-target offers.
+
+After a passing local full verification run, actual Chrome UI acceptance used
+the final assets at **1041 × 799 CSS px, DPR 2** and **390 × 844 CSS px**:
+
+- The desktop East Gate map reported a ready viewport and equal document and
+  viewport widths of 1041px. Its city detail, tile joins and Enter control were
+  visually inspected.
+- Resizing to phone width and immediately clicking Enter opened Law Quarter.
+  Clicking its City Exit hotspot at the same phone width returned to East Gate
+  `[11,9]`, with Enter available again. This adds phone-sized exit evidence to
+  section 15.10's earlier phone entry and desktop exit checks.
+- After restoring the browser viewport, Enter → Law Quarter → Residential
+  Quarter → Central Square → Shop completed through actual route controls and
+  the Shop hotspot. The complete purchase/equipment/resale acceptance is
+  recorded in [Shop's September 11 evidence](shop_economy.md#september-11-pre-merge-manual-shop-acceptance).
+
+These are agent-performed local pointer checks with screenshots inspected, not
+physical-device touch testing, CI results or fresh Neverlands evidence. The
+previous walking-direction acceptance remains section 15.10's evidence; this
+pass did not reclassify the diagonal anatomy limitation. The final whole-suite
+results and repeated login acceptance after the session correction are recorded
+in [Shell's September 11 acceptance](game_shell.md#september-11-final-local-browser-acceptance).
+
 ## 16. Responsible for Implementation Files
 
 ### Requirements and design evidence
@@ -2630,8 +2673,15 @@ is inferred from raster or animation quality work.
 - `app/assets/images/world/forpost-terrain.png`
 - `app/assets/images/world/forpost-pond-landscape.png`
 - `app/assets/images/world/forpost-starter-landscape.png`
+- `app/assets/images/world/forpost-starter-west-landscape.png`
 - `app/assets/images/world/cells/forpost-starter/`
+- `app/assets/images/world/cells/forpost-starter-west/`
+- `app/assets/images/world/cells/forpost-starter-2x/`
 - `app/assets/images/world/` — eight directional traveller GIFs and matching stills
+- `doc/artwork/forpost-city-detail-source.png` — unchanged generated city-detail
+  source; its guide, exact prompt and density packaging belong to `doc/ARTWORK.md`
+- `doc/artwork/traveller-walk-registration.json` — source/output hashes and
+  registered frame geometry; production-only inputs, not gameplay state
 - `app/assets/images/gate.png`
 
 ### Integrated NPC-combat entry

@@ -6,6 +6,11 @@ City nodes, directed routes, building/service hotspots, hover/focus behavior,
 outdoor gates, linked interiors, persisted outdoor context, and responsive
 scaling of the authored scene and its hit regions together.
 
+World owns the outdoor city illustration: it occupies ordinary map cells and
+shares their viewport fitting and incremental updates. This domain starts at
+the authorized Enter handoff into an illustrated district; district scenes are
+not an outdoor walking grid.
+
 ## Documentation chain
 
 - Neverlands source summary: `doc/design/reference/city/README.md`
@@ -77,6 +82,14 @@ layouts reflow the same named route buttons below the image with a 48px minimum
 height. The shared action partial renders each route once. The City handbook
 owns this presentation contract and the separate correction's acceptance;
 the earlier artwork checks do not verify the later layout change.
+
+The later exterior raster/walker correction preserves City assets and routes;
+[World section 15.10](../features/world.md#1510-city-raster-detail-and-walking-frame-stability-2026-09-10)
+owns its final phone-width Enter-to-Law and desktop gate-return checks.
+The named coarse-pointer controls currently cover routes, while small building
+and exit masks still lack an equivalent named control outside the illustration.
+The City handbook records this remaining `UI-ADAPT-005` gap separately from the
+verified graph and desktop/phone-width pointer flows.
 
 The development gate-data drift found during the artwork audit is resolved by
 `Seeds::ForpostGateRepair`: Law's `[11,9]` exit/entrance and bounded route cells

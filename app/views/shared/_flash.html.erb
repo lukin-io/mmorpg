@@ -3,7 +3,7 @@
   flash_type = local_assigns[:type] || (local_assigns[:alert] ? "alert" : "notice")
   success = flash_type.to_s.in?(%w[notice success])
 %>
-<% if flash_message.present? %>
+<% if flash_message.present? && flash_type.to_s.in?(%w[notice success alert error]) %>
   <div class="nl-flash nl-flash--<%= success ? 'notice' : 'alert' %>"
        role="<%= success ? 'status' : 'alert' %>"
        data-controller="flash"

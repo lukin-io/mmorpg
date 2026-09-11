@@ -19,6 +19,14 @@ edit, each downsampled. Cropped guide coordinates below fully identify the six
 inputs. Native outputs are recorded by their generated identities; temporary
 review filenames are not runtime asset owners.
 
+This is the panel-production stage. The subsequent
+[city-detail correction](../ARTWORK.md#2026-09-10--city-detail-at-two-raster-densities)
+replaces 32 base cells and adds optional 200px rasters while keeping the same
+coordinates. Its exact prompt, preserved native source and terrain-rim blend
+are recorded there; do not treat the earlier panels as the current source of
+those architectural pixels. [World section 15.10](../features/world.md#1510-city-raster-detail-and-walking-frame-stability-2026-09-10)
+owns the later acceptance.
+
 <a id="composition-draft"></a>
 
 ## Full composition draft

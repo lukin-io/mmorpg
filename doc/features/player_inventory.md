@@ -3,7 +3,7 @@
 title: Player Inventory Feature
 description: Implementation handbook for the Neverlands-based carried inventory, equipment paper doll, capacity, filters, item rows, and item actions.
 status: Fully Implemented
-updated: 2026-09-10
+updated: 2026-09-11
 owners: Player Inventory
 template: feature-v1
 ---
@@ -58,8 +58,9 @@ authoritative in the user's Economy wallet and ledger.
 
 ### Non-goals
 
-- Inventing item art, categories, actions, repair rules, or confirmation UX not
-  captured from Neverlands.
+- Inventing item categories, actions, repair rules, or confirmation UX not
+  captured from Neverlands. Original item illustrations follow the captured
+  subject and the project-owned artwork standard in `doc/ARTWORK.md`.
 - Copying source images, sprites, icons, portraits, branding, administration
   text, or project/service prose into runtime UI.
 - Treating displayed requirements or client category state as authority.

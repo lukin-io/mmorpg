@@ -1,7 +1,7 @@
 # Documentation Domain Registry
 
 - Status: Current
-- Updated: 2026-09-09
+- Updated: 2026-09-11
 - Purpose: domain-first navigation across evidence, design, delivery status,
   implementation contracts, and code ownership.
 
@@ -26,7 +26,7 @@ domain index
 | Inventory and equipment | `doc/domains/inventory.md` | Fully Implemented within the declared boundary |
 | Open world and movement | `doc/domains/world.md` | Partially Implemented; authored starter map, movement, linked-location lobbies and captured pond actions covered; full-zone content remains incomplete |
 | City and buildings | `doc/domains/city.md` | Fully Implemented within the declared navigation boundary |
-| Economy and shops | `doc/domains/economy.md` | Partially Implemented; typed NPC NV wallet ingress shipped |
+| Economy and shops | `doc/domains/economy.md` | Partially Implemented; wallet/ledger, stocked Shop buy/sell, typed licenses and Merchant qualification shipped; full source parity remains open |
 | Combat and Arena | `doc/domains/combat.md` | Arena and completion/item/NV timeline handoff implemented; broader Combat partial |
 | NPCs and Quests | `doc/domains/npcs_quests.md` | NPC combat and successful item/NV timeline handoff implemented; Quests `NOT_IMPLEMENTED` |
 | Professions | `doc/domains/professions.md` | `NOT_IMPLEMENTED` |

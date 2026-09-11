@@ -3,7 +3,7 @@
 title: City Feature
 description: Implementation handbook for the observed five-district Forpost graph, illustrated navigation, buildings, gate handoff, responsive scene scaling, and persisted context.
 status: Fully Implemented
-updated: 2026-09-10
+updated: 2026-09-11
 owners: City world context and city UI
 template: feature-v1
 ---
@@ -13,6 +13,14 @@ template: feature-v1
 This document is the implementation contract for the current Forpost City. It covers the five-node graph observed on 2026-07-28, its authored 1250 × 600 scene, building hovers, district arrows, server-authored actions, outdoor handoff, persistence, responsive behavior, and Shop integration.
 
 A visible landmark is not automatically an implemented service. The City navigation surface may expose presentation-only buildings without inventing their economy, transport, treatment, legal, profession, or quest behavior.
+
+The city's outdoor footprint and its entered districts are different surfaces.
+Outdoors, World renders the city illustration across ordinary 100px map cells,
+with the same viewport fitting and incremental cell updates as surrounding
+terrain. Enter is offered only at the two authored gate cells. Accepting it
+opens the district graph documented here; the 1250 × 600 district scenes are
+not outdoor tiles and have no walking grid. World owns that exterior rendering
+and its separate raster-density contract.
 
 ## 1. Design authority and related documents
 
@@ -222,6 +230,12 @@ Missing-art content uses the fallback described in section 4.2.
   offers, with 48px minimum height, 40px arrow images and wrapped 12px names.
   Building masks remain aligned with the scaled image; no second map or
   duplicate route form is introduced.
+
+The named coarse-pointer alternative currently covers district routes only.
+Building and exit masks still shrink with the scene and have no equivalent
+always-visible named control outside it. Full coarse-pointer compliance for
+small building targets under `UI-ADAPT-005` remains an `[IMPL]` gap; the recorded
+phone-width pointer checks do not establish that broader requirement.
 
 #### 4.3.1 Hotspot geometry and highlight algorithm
 
@@ -549,7 +563,10 @@ or destination.
 | `exit` / `enter_zone` | `exit_city` | Move to explicit outdoor cell. |
 | `building` / `open_feature` | `enter_city_building` | Redirect through the feature allowlist without moving. |
 
-All current Forpost actions use required level `0`, including Arena as observed with a level-16 account. Inactive, characterless, or under-level records receive no offer and expose their block reason only.
+All current Forpost actions use required level `0`, including Arena as observed
+with a level-16 account. `CityHotspot.for_zone` omits inactive records from the
+rendered surface. Active records unavailable to a missing or under-level
+character receive no offer and expose their block reason without a form.
 
 ### 7.3 Persisted graph reconciliation
 
@@ -726,7 +743,7 @@ interior context atomically; building entry itself does not move coordinates.
 | City relocation wins before building entry | Reject the old-node building and preserve the newer position, gameplay context, and local-chat context. |
 | Narrow viewport/coarse pointer | Scale the illustrated image and building masks; reflow the same named route controls below it with a 48px minimum height. Unfinished content uses ordinary controls. No page-level horizontal clipping or duplicated route forms. |
 | Law Quarter City Exit | Accept the current offer to `[11,9]`; the reciprocal outdoor entrance restores `forpost4`, not Central Square. |
-| Missing project image | Preserve controls/labels; never fall back to a Neverlands URL. |
+| No selected project image | Render the missing-art controls described above. A selected asset whose file is missing is an asset-delivery defect, not this fallback; the view does not probe or repair missing image files. Never fall back to a Neverlands URL. |
 | Existing `city2_*` persisted graph | Run the convergent seed sync; retained nodes keep their identity, removed-only positions recover to Central Square, and obsolete actions cannot remain interactive. |
 | Invalid management JSON or hotspot/zone value | Render HTTP 422 with errors; write no content or audit event. |
 | City node still has positions/routes/buildings | Refuse deletion and preserve the complete graph. |
@@ -965,6 +982,17 @@ viewport reset is not claimed. Earlier phone checks remain historical;
 they are not post-check manual proof of the newest assets. Final manual
 phone/touch, reduced-motion and zoom coverage remains outside this pass.
 The linked World record owns the detailed final route and restoration evidence.
+
+### Later exterior-art acceptance: September 10
+
+The later [World section 15.10 acceptance](world.md#1510-city-raster-detail-and-walking-frame-stability-2026-09-10)
+supersedes the exterior raster and walking artwork in the preceding run. After
+its final automated checks, Chrome verified Enter into Law at 390 × 844, then
+the visible Law gate polygon back to `[11,9]` after restoring desktop mode;
+reload retained that location. City scene assets, masks and route styling did
+not change in that later correction. This is a scoped handoff check, not a new
+all-quarter, phone-exit, touch or zoom acceptance pass. World owns the final
+artwork checks, actual travel directions and their limitations.
 
 Focused verification:
 

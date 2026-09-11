@@ -16,11 +16,11 @@ Neverlands remains the sole game-design authority.
 |---|---|---|
 | `airship_travel.md` | Partially Implemented | Configured paid journeys, bounded flight maps, persisted region handoffs, and flight audiences; normal routes await destination/path/schedule content |
 | `arena_combat.md` | Fully Implemented | Arena creation, combat turns, NPC fights, results, and event feedback |
-| `character_progression.md` | Fully Implemented | Character vitals, attributes, skills, XP, and derived progression |
-| `city.md` | Fully Implemented | City/building entry, return, and persisted location context |
+| `character_progression.md` | Fully Implemented | Bounded vitals, attributes, skills, XP, perks and professional-license prerequisites |
+| `city.md` | Fully Implemented | Five-quarter navigation, original scenes and hotspots, both gate handoffs and persisted context; other service interiors remain separate |
 | `game_shell.md` | Partially Implemented | Shell, saved-context navigation, cell/room chat and presence, and durable gameplay-event composition |
 | `player_inventory.md` | Fully Implemented | Inventory, equipment, capacity, grants, and item ownership |
-| `shop_economy.md` | Partially Implemented | Wallet/ledger and implemented shop transactions |
+| `shop_economy.md` | Partially Implemented | Wallet/ledger, per-building stock and funds, atomic buy/sell, typed licenses and Merchant qualification; broader parity remains open |
 | `world.md` | Partially Implemented | Bounded region/cell reads, eight-neighbor movement, gate/village entry, empty Look, and NPC handoff; full region content and successful gathering remain gaps |
 | `quests.md` | NOT_IMPLEMENTED | Explicit Quest runtime gap |
 | `professions.md` | NOT_IMPLEMENTED | Explicit profession runtime gap |
@@ -119,7 +119,8 @@ Before changing a gap document to a shipped handbook:
 3. implement through existing Rails/domain owners;
 4. add applicable success, failure, boundary, authorization, and
    retry/concurrency coverage;
-5. verify the behavior;
+5. pass applicable automated checks, then personally verify browser-visible
+   flows under [manual browser acceptance](../../AGENTS.md#manual-browser-acceptance);
 6. replace the gap document with a completed `feature-v3` handbook.
 
 A route stub, screenshot, disabled control, or generic design idea is not an

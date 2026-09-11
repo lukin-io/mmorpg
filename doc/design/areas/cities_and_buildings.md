@@ -12,7 +12,9 @@ The current launch slice is the five-district Forpost graph freshly observed on 
 
 Current Forpost behavior:
 
-- a city is a graph of illustrated locations rather than a walkable tile grid;
+- after entering a city, its districts form a graph of illustrated locations;
+  outdoors, the city's footprint is still drawn across ordinary map cells,
+  as documented by the [tile inspection](../reference/world/observations/2026-09-10_world_tile_loading_and_city_scale.md);
 - the preserved July capture establishes a 1250 × 600 City coordinate plane;
 - buildings and district arrows are independent pointer targets;
 - hover swaps the visible target to a highlighted state and opens a small white tooltip near the pointer;
@@ -103,6 +105,12 @@ Gallows link has no captured flow and remains presentation-only locally.
 ## Entry And Exit
 
 The verified outdoor entrance at Outpost Surroundings `[6,8]` enters `main` / Central Square `[0,0]`. Central City Exit returns to that exact cell.
+
+The exterior artwork does not itself create an entrance or a walkable city
+interior. World owns its individual cell rasters, ordinary movement and exact
+gate offers. Enter switches to the district scene; it does not zoom or pan the
+outdoor image into an interior. This is the same exterior-cell/interior-surface
+separation used by the linked village, with City owning its district graph.
 
 Law Quarter's verified eastern exit reaches Outpost Surroundings `[11,9]`,
 source `[1005,1001]`. Entering from that outdoor cell restores `forpost4` /

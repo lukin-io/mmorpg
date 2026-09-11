@@ -3,7 +3,7 @@
 title: Character Progression Feature
 description: Implementation handbook for Neverlands-based primary stats, numeric skills, boolean perks, point allocation, current license permissions, and public progression display.
 status: Fully Implemented
-updated: 2026-09-10
+updated: 2026-09-11
 owners: Character Progression
 template: feature-v1
 ---
@@ -291,11 +291,13 @@ shows a separate ownership section, but activation timing and carried-mass
 effects were not exercised. `[EVIDENCE]` Renewal, stacking, activation and
 expiry-cleanup parity remain open.
 
-At `starts_at <= now < expires_at`, a grant is current. At expiry it disappears
-from this read-only list and stops authorizing licensed actions; its persisted
-purchase record remains. Reload and login rebuild the list from persisted
-permissions without extending deadlines. Turbo snapshots are disabled on this
-surface, and the browser never decides license validity. Shop implements the
+At `starts_at <= now < expires_at`, a grant is current. At expiry it stops
+authorizing licensed actions, and the next server request omits it from this
+read-only list; its persisted purchase record remains. No cron/background job
+deletes grants, and this page does not poll or remove an already-rendered row
+at the deadline. Reload and login rebuild the list from persisted permissions
+without extending deadlines. Turbo snapshots are disabled on this surface,
+and the browser never decides license validity. Shop implements the
 published Merchant license-unlock path through Market acceptance, a 1,000-NV
 Shop receipt and Market completion. Its garment reward and the Doctor quest
 flows remain `[IMPL]` gaps; exact source dialogue and temporary garment details

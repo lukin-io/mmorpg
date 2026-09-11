@@ -29,7 +29,8 @@ grants. Effective Extra Action Points contributes one-for-one to a new combat
 profile, and source perks `7` and `15` supply the bounded More Strength and
 Careful Fighter effects. Source perks `34` Merchant and `35` Healer are
 selectable and feed Shop license prerequisites. Your licenses displays current
-owned `CharacterLicense` grants; Shop owns purchase and permission rules. This
+owned `CharacterLicense` grants; expired rows disappear on the next page request
+while purchase records remain stored. Shop owns purchase and permission rules. This
 bounded handoff does not implement profession quests or medical treatment.
 
 ## Important responsible implementation files
